@@ -1,0 +1,4 @@
+#pattern  filter=crypt diff=crypt merge=crypt
+
+# Encrypt all sensitive configuration files
+apps/images/alpine/*/config/* filter=crypt diff=crypt merge=crypt

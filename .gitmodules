@@ -1,0 +1,3 @@
+[submodule "vendor/github.com/elasticdog/transcrypt"]
+	path = vendor/github.com/elasticdog/transcrypt
+	url = https://github.com/elasticdog/transcrypt.git
