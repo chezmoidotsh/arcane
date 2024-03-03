@@ -1,0 +1,44 @@
+---
+# Copyright 2024
+#
+# Everyone is permitted to copy, distribute, modify, merge, sell, publish,
+# sublicense or whatever the fuck they want with this software but at their
+# OWN RISK.
+# The author has absolutely no fucking clue what the code in this project
+# does. It might just fucking work or not, there is no third option.
+#
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+# ---
+version: "3.8"
+
+services:
+  # ┌───────────────────────────────────────────────────────────────────────────┐
+  # │ Nut Ups Daemon - Network UPS Tools                                        │
+  # │                                                                           │
+  # │ Docs: https://www.networkupstools.org/                                    │
+  # └───────────────────────────────────────────────────────────────────────────┘
+  upsd:
+    image: oci.chezmoi.sh/localhost/nut-upsd:stable
+    cap_add:
+      - CHOWN # Required to change the ownership of the USB device to the nut user.
+      - SETGID # Required to run the `upsd` command as the nut user.
+      - SETUID # Required to run the `upsd` command as the nut user.
+    cap_drop:
+      - ALL
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+    networks:
+      caddy-internal:
+    ports:
+      - 3493:3493/tcp
+    read_only: true
+    restart: unless-stopped
+    # NOTE: Required to change the ownership of the USB device to the nut user.
+    #       However, everything is running as nut user inside the container
+    #       using the Busybox `su`.
+    tmpfs:
+      - /var/run/nut
+    user: root

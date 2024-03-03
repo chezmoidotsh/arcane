@@ -1,0 +1,53 @@
+---
+# Copyright 2024
+#
+# Everyone is permitted to copy, distribute, modify, merge, sell, publish,
+# sublicense or whatever the fuck they want with this software but at their
+# OWN RISK.
+# The author has absolutely no fucking clue what the code in this project
+# does. It might just fucking work or not, there is no third option.
+#
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+# ---
+version: "3.8"
+
+services:
+  # ┌───────────────────────────────────────────────────────────────────────────┐
+  # │ Authelia - Single sign-on multi-factor authentication server for web apps │
+  # │                                                                           │
+  # │ Docs: https://www.authelia.com/docs/                                      │
+  # └───────────────────────────────────────────────────────────────────────────┘
+  oidc-provider:
+    image: oci.chezmoi.sh/localhost/authelia:stable
+    cap_drop:
+      - ALL
+    networks:
+      caddy-internal:
+      default: # NOTE: required for 3rd-party integrations
+    volumes:
+      - authelia-persistent:/var/lib/authelia
+    read_only: true
+    restart: unless-stopped
+    user: authelia
+
+  # ┌───────────────────────────────────────────────────────────────────────────┐
+  # │ yaLDAP - Yet another LDAP server implementation, made to be stateless     │
+  # │                                                                           │
+  # │ Docs: https://github.com/xunleii/yaldap/                                  │
+  # └───────────────────────────────────────────────────────────────────────────┘
+  ldap:
+    image: oci.chezmoi.sh/localhost/yaldap:stable
+    cap_drop:
+      - ALL
+    networks:
+      # NOTE: disable all communication to outside the caddy-internal network
+      caddy-internal:
+    read_only: true
+    restart: unless-stopped
+    user: yaldap
+
+volumes:
+  authelia-persistent:
