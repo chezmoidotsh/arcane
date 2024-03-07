@@ -1,0 +1,29 @@
+---
+# Copyright 2024
+#
+# Everyone is permitted to copy, distribute, modify, merge, sell, publish,
+# sublicense or whatever the fuck they want with this software but at their
+# OWN RISK.
+# The author has absolutely no fucking clue what the code in this project
+# does. It might just fucking work or not, there is no third option.
+#
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+# ---
+version: "3.8"
+
+services:
+  develop:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      platforms: [linux/amd64]
+    restart: unless-stopped
+    ports: [8080:8080]
+    volumes:
+      - ./config/default.yaml:/www/assets/config.yml:ro
+      - ./config/administration.yaml:/www/assets/admin.yml:ro
+      - ./assets/images/:/www/assets/images:ro
+      - ./assets/themes/:/www/assets/themes:ro
