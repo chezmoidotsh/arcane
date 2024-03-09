@@ -13,3 +13,4 @@ rules:
     forbid-implicit-octal: true
   braces:
     max-spaces-inside: 1
+  truthy: disable
