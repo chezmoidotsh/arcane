@@ -1,8 +1,0 @@
-# ignore everything in the root by default ...
-*
-**/*
-
-# ... except what is required for this image
-!config/
-!entrypoint
-!healthcheck
