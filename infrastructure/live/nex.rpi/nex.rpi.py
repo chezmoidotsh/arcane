@@ -20,7 +20,7 @@ with overlayfs.TemporaryDisableOverlayFS():
             "config/etc.nut/nut.conf",
             "config/etc.nut/ups.conf",
             "config/etc.nut/upsd.conf",
-            "config/etc.nut/upsd.users"            
+            "config/etc.nut/upsd.users",
         ],
-        _sudo=True
+        _sudo=True,
     )

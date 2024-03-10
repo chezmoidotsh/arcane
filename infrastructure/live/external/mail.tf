@@ -47,7 +47,7 @@ resource "aws_iam_policy" "ses_transaction_mailer" {
 }
 
 # --<User configuration>--------------------------------------------------------
-# trunk-ignore(trivy/AVD-AWS-0123): MFA is overkill for this use case (user is not a human)
+# trunk-ignore(trivy/AVD-AWS-0123): MFA is overkill for this use case
 resource "aws_iam_group" "transaction_mailer" {
   name = "TransactionMailerGroup"
 
@@ -66,7 +66,6 @@ resource "aws_iam_user" "transaction_mailer" {
   path = "/chezmoi.sh/nex.rpi/"
 }
 
-# trunk-ignore(terrascan/AC_AWS_0133): this key is required to use the SES service
 resource "aws_iam_access_key" "transaction_mailer" {
   user = aws_iam_user.transaction_mailer.name
 }
