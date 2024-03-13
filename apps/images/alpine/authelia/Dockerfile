@@ -30,7 +30,7 @@ RUN set -eux; \
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder-frontend>: build the Authelia frontend (Node.js)                 │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/node:21.5.0-alpine3.19 as builder-frontend
+FROM docker.io/library/node:21.7.1-alpine3.19@sha256:4999fa1391e09259e71845d3d0e9ddfe5f51ab30253c8b490c633f710c7446a0 as builder-frontend
 
 WORKDIR /node/src/app
 COPY --from=source /src/web ./
