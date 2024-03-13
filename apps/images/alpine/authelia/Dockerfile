@@ -45,7 +45,7 @@ RUN set -eux; \
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder-backend>: build the Authelia backend (Go)                        │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM --platform=arm64 docker.io/library/golang:1.21.5-alpine3.19 as builder-backend
+FROM --platform=arm64 docker.io/library/golang:1.22.1-alpine3.19@sha256:fc5e5848529786cf1136563452b33d713d5c60b2c787f6b2a077fa6eeefd9114 as builder-backend
 
 # renovate: datasource=repology depName=alpine_3_19/gcc versioning=semver
 ARG GCC_VERSION=13.2.1_git20231014-r0
