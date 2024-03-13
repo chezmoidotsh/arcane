@@ -16,7 +16,7 @@
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <source>: download the Homer source code and cache it for other stages    │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/alpine:3.19.0 as source
+FROM docker.io/library/alpine:3.19.0@sha256:51b67269f354137895d43f3b3d810bfacd3945438e94dc5ac55fdac340352f48 as source
 
 # renovate: datasource=github-tags depName=bastienwirtz/homer versioning=semver
 ARG HOMER_VERSION="v23.10.1"
@@ -30,7 +30,7 @@ RUN set -eux; \
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder>: build the Homer assets (Node.js)                               │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/node:21.5.0-alpine3.19 as builder
+FROM docker.io/library/node:21.5.0-alpine3.19@sha256:82c93cef3d2acbb2557c5fda48214fbc2bf5385edfb4d96d990690d75ddabf7b as builder
 
 COPY --from=source /src /app
 WORKDIR /app
