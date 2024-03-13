@@ -2,11 +2,26 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     ":dependencyDashboardApproval",
-    ":semanticCommitScope(dependencies)",
-    ":semanticCommitTypeAll(:arrow_up:)",
+    ":semanticCommits",
     "config:best-practices",
     "regexManagers:dockerfileVersions",
     "security:openssf-scorecard"
   ],
-  "ignorePaths": ["infrastructure/live/nex.rpi/requirements.txt"]
+  "ignorePaths": ["infrastructure/live/nex.rpi/requirements.txt"],
+  "labels": ["📌 dependencies"],
+  "packageRules": [
+    {
+      "commitMessagePrefix": "📌",
+      "matchUpdateTypes": ["pin"],
+      "semanticCommitType": ["📌"]
+    },
+    {
+      "commitMessagePrefix": "⬇️",
+      "matchUpdateTypes": ["rollback"],
+      "semanticCommitType": ["⬇️"]
+    }
+  ],
+  "semanticCommits": "enabled",
+  "semanticCommitScope": "dependencies",
+  "semanticCommitType": "⬆️"
 }
