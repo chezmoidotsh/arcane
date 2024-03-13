@@ -145,7 +145,7 @@ tasks:
       DOCKER_COMPOSE_FILE: '{{ print .GIT_ROOT_DIR "/apps/docker-compose.yml" | clean }}'
 
     cmds:
-      - docker --context "{{ .DOCKER_CONTEXT }}" compose --file "{{ .DOCKER_COMPOSE_FILE }}" ps --format "table {{ "{{" }} .Service }}\t{{ "{{" }} .State }} {{ "{{" }} with .Health }}({{ "{{" }} . }}){{ "{{" }} end }}"
+      - docker --context "{{ .DOCKER_CONTEXT }}" compose --file "{{ .DOCKER_COMPOSE_FILE }}" ps --format "table {{ "{{" }} .Service }}\t{{ "{{" }} .State }} {{ "{{" }} with .Health }}({{ "{{" }} . }}){{ "{{" }} end }}\t{{ "{{" }} .CreatedAt }}"
 
   # -- Deploy all services
   services:deploy:all:
