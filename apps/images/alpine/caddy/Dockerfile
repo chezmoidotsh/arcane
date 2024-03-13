@@ -19,7 +19,7 @@
 # renovate: datasource=github-tags depName=caddyserver/caddy versioning=semver
 ARG CADDY_VERSION="2.7.6"
 
-FROM docker.io/library/golang:1.22.0-alpine3.19 as builder
+FROM docker.io/library/golang:1.22.0-alpine3.19@sha256:8e96e6cff6a388c2f70f5f662b64120941fcd7d4b89d62fec87520323a316bd9 as builder
 
 # renovate: datasource=github-release depName=caddyserver/xcaddy versioning=semver
 ARG XCADDY_VERSION="v0.3.5"
@@ -79,7 +79,7 @@ RUN set -eux; \
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <error-pages>: create all static error pages using tarampampam/error-page │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/golang:1.21.5-alpine3.19 as error-pages
+FROM docker.io/library/golang:1.21.5-alpine3.19@sha256:4db4aac30880b978cae5445dd4a706215249ad4f43d28bd7cdf7906e9be8dd6b as error-pages
 
 # renovate: datasource=github-tags depName=tarampampam/error-pages versioning=semver
 ARG ERROR_PAGES_VERSION="v2.26.0"
