@@ -7,18 +7,26 @@
     "regexManagers:dockerfileVersions",
     "security:openssf-scorecard"
   ],
-  "ignorePaths": ["infrastructure/live/nex.rpi/requirements.txt"],
-  "labels": ["📌 dependencies"],
+  "ignorePaths": [
+    "infrastructure/live/nex.rpi/requirements.txt"
+  ],
+  "labels": [
+    "📌 dependencies"
+  ],
   "packageRules": [
     {
       "commitMessagePrefix": "📌",
-      "matchUpdateTypes": ["pin"],
-      "semanticCommitType": ["📌"]
+      "matchUpdateTypes": [
+        "pin"
+      ],
+      "semanticCommitType": "📌"
     },
     {
       "commitMessagePrefix": "⬇️",
-      "matchUpdateTypes": ["rollback"],
-      "semanticCommitType": ["⬇️"]
+      "matchUpdateTypes": [
+        "rollback"
+      ],
+      "semanticCommitType": "⬇️"
     }
   ],
   "semanticCommits": "enabled",
