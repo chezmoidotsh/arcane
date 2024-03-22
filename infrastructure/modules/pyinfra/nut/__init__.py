@@ -11,4 +11,5 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 # ---
+# trunk-ignore-all(ruff/F401)
 from .nut import install_nut as install
