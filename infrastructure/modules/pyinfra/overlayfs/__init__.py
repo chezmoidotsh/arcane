@@ -11,6 +11,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 # ---
-from .overlayfs import enable_overlayfs as enable
-from .overlayfs import disable_overlayfs as disable
+# trunk-ignore-all(ruff/F401)
 from .overlayfs import OverlayFSEnabled, TemporaryDisableOverlayFS
+from .overlayfs import disable_overlayfs as disable
+from .overlayfs import enable_overlayfs as enable

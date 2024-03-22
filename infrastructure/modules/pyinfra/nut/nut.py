@@ -12,26 +12,28 @@
 # DEALINGS IN THE SOFTWARE.
 # ---
 from os import path
+
 from pyinfra.api import deploy
 from pyinfra.operations import apt, files, systemd
 
+
 @deploy("Install and configure `nut`")
 def install_nut(config_files: list[str]):
-    apt.packages(
-        name="Install Nut UPS Software package",
-        packages=["nut"],
-        update=True
-    )
+    apt.packages(name="Install Nut UPS Software package", packages=["nut"], update=True)
 
     for file in config_files:
         files.put(
-            name=f'Upload {file} configuration file (/etc/nut/{path.basename(file)})',
-            src=f'{file}', dest=f'/etc/nut/{path.basename(file)}',
-            user="root", group="nut", mode=True
+            name=f"Upload {file} configuration file (/etc/nut/{path.basename(file)})",
+            src=f"{file}",
+            dest=f"/etc/nut/{path.basename(file)}",
+            user="root",
+            group="nut",
+            mode=True,
         )
 
     systemd.service(
         name="(re)Start Nut UPS service and enable auto-start",
         service="nut-server.service",
-        running=True, enabled=True
+        running=True,
+        enabled=True,
     )
