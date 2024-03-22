@@ -38,7 +38,7 @@ services:
     read_only: true
     restart: unless-stopped
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /run/user/1000/docker/containerd/containerd.sock:/var/run/docker.sock
 
   # ┌───────────────────────────────────────────────────────────────────────────┐
   # | TailScale - Secure network access for your team                           |
