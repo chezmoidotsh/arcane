@@ -16,8 +16,7 @@ version: "3.8"
 
 include:
   - apps.core.yml
-  - apps.dashboards.yml
-  - apps.hardware.yml
+  - apps.miscellaneous.yml
   - apps.security.yml
 
 networks:
