@@ -1,0 +1,6 @@
+# ignore everything in the root by default ...
+*
+**/*
+
+# ... except for these files
+!/config/gatus.yaml
