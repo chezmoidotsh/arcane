@@ -30,33 +30,6 @@ services:
     read_only: true
     restart: unless-stopped
     user: lighttpd
-  # ┌───────────────────────────────────────────────────────────────────────────┐
-  # │ Nut Ups Daemon - Network UPS Tools                                        │
-  # │                                                                           │
-  # │ Docs: https://www.networkupstools.org/                                    │
-  # └───────────────────────────────────────────────────────────────────────────┘
-  upsd:
-    image: oci.chezmoi.sh/localhost/alpine/nut-upsd:stable
-    cap_add:
-      - CHOWN # Required to change the ownership of the USB device to the nut user.
-      - SETGID # Required to run the `upsd` command as the nut user.
-      - SETUID # Required to run the `upsd` command as the nut user.
-    cap_drop:
-      - ALL
-    devices:
-      - /dev/bus/usb:/dev/bus/usb
-    networks:
-      caddy-internal:
-    ports:
-      - 3493:3493/tcp
-    read_only: true
-    restart: unless-stopped
-    # NOTE: Required to change the ownership of the USB device to the nut user.
-    #       However, everything is running as nut user inside the container
-    #       using the Busybox `su`.
-    tmpfs:
-      - /var/run/nut
-    user: root
 
   # ┌───────────────────────────────────────────────────────────────────────────┐
   # │ Gatus: A simple, fast and scalable status page for your services and APIs.│
