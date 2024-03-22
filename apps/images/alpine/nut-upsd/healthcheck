@@ -1,0 +1,13 @@
+#!/bin/sh
+# This script is a simple healthcheck for the NUT UPS daemon container. It checks
+# the status of all UPS devices and returns a non-zero exit code if any of them
+# are not online.
+
+for device in $(upsc -l); do
+	# trunk-ignore(shellcheck/SC3010): Alpine SH supports the [[ operator
+	# trunk-ignore(shellcheck/SC2076): seems not working without the quotes
+	if ! [[ "$(upsc "${device}" ups.status)" =~ "^(ALARM )?OL$" ]]; then
+		echo "UPS '${device}' is not HEALTHY"
+		exit 1
+	fi
+done
