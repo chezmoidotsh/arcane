@@ -32,6 +32,10 @@
   background-image: none !important;
 }
 
+#app.theme-default .navbar-menu {
+  box-shadow: none;
+}
+
 #app.theme-default .navbar-start i,
 #app.theme-default .navbar-end i {
   color: var(--catppuccin-text) !important;
@@ -75,4 +79,53 @@ body #bighead .navbar a {
 
 body #app .title {
   font-family: var(--catppuccin-font-family);
+}
+
+/* Special configuration to add the search bar */
+#app.theme-default .message {
+  box-shadow: none;
+}
+
+#app.theme-default .message-header {
+  display: none;
+  visibility: hidden;
+}
+
+#app.theme-default .message-body {
+  padding: 0;
+}
+
+#app.theme-default .message form.search-box {
+  margin: auto;
+  width: 85%;
+}
+
+#app.theme-default .message form.search-box input {
+  background-color: var(--catppuccin-base);
+  border-radius: 5px;
+  border: 0;
+  border: 1px solid var(--catppuccin-surface2);
+  color: var(--catppuccin-text);
+  font-size: larger;
+  height: 40px;
+  padding-left: 30px;
+  width: 100%;
+}
+
+#app.theme-default .message form.search-box input:focus-visible {
+  outline: 0;
+}
+
+#app.theme-default .message form.search-box .fa-google {
+  font-size: 16px;
+  margin: 13px 7px 0px;
+  position: absolute;
+}
+
+/* Disable search-box on small screen */
+@media screen and (max-width: 1023px) {
+  #app.theme-default .message {
+    display: none;
+    visibility: hidden;
+  }
 }
