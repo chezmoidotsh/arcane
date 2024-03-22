@@ -1,0 +1,107 @@
+---
+# Copyright 2024
+#
+# Everyone is permitted to copy, distribute, modify, merge, sell, publish,
+# sublicense or whatever the fuck they want with this software but at their
+# OWN RISK.
+# The author has absolutely no fucking clue what the code in this project
+# does. It might just fucking work or not, there is no third option.
+#
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+# ---
+version: "3.8"
+
+networks:
+  # NOTE: The caddy-internal network is used to allow Caddy to communicate with
+  #       other services without exposing them to the public internet.
+  caddy-internal:
+    name: caddy-internal
+    internal: true
+
+services:
+  # ┌───────────────────────────────────────────────────────────────────────────┐
+  # │ Autoheal - Restart unhealthy containers                                   │
+  # │                                                                           │
+  # │ Docs: https://github.com/willfarrell/docker-autoheal                      │
+  # └───────────────────────────────────────────────────────────────────────────┘
+  autoheal:
+    cap_drop:
+      - ALL
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: all
+      AUTOHEAL_START_PERIOD: 60
+    image: oci.chezmoi.sh/localhost/autoheal:stable
+    network_mode: none
+    read_only: true
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # ┌───────────────────────────────────────────────────────────────────────────┐
+  # | TailScale - Secure network access for your team                           |
+  # |                                                                           |
+  # | Docs: https://tailscale.com/                                              |
+  # └───────────────────────────────────────────────────────────────────────────┘
+  vpn:
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    cap_drop:
+      - ALL
+    devices:
+      - /dev/net/tun
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY}
+      TS_HOSTNAME: nex-pi-chezmoish
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_EXTRA_ARGS: --advertise-routes=10.0.0.0/8
+    image: oci.chezmoi.sh/localhost/tailscale:stable
+    networks:
+      default: # NOTE: This is required to allow Tailscale to communicate with internet (VPN)
+    read_only: true
+    restart: unless-stopped
+    sysctls:
+      - net.ipv4.conf.all.forwarding=1
+      - net.ipv6.conf.all.forwarding=1
+    tmpfs:
+      - /var/run/tailscale
+    volumes:
+      - tailscale-persistent:/var/lib/tailscale
+
+  # ┌───────────────────────────────────────────────────────────────────────────┐
+  # │ Caddy - Reverse proxy, SSL termination, HTTP/2, WebSockets, and more      │
+  # │                                                                           │
+  # │ Docs: https://caddyserver.com/docs/                                       │
+  # └───────────────────────────────────────────────────────────────────────────┘
+  proxy:
+    cap_drop:
+      - ALL
+    environment:
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+    expose:
+      - 2019 # metrics
+    extra_hosts:
+      - host.docker.internal:172.22.0.1
+    image: oci.chezmoi.sh/localhost/caddy:stable
+    networks:
+      caddy-internal:
+      default: # NOTE: This is required to allow Caddy to communicate with 3rd party services (e.g. Let's Encrypt)
+    ports:
+      - 80:8080 # HTTP
+      - 443:8443 # HTTPS
+      - 636:8636 # LDAPs
+    read_only: true
+    restart: unless-stopped
+    tmpfs:
+      - /var/lib/caddy/caddy
+      - /tmp/souin-nuts
+    volumes:
+      - caddy-persistent:/var/lib/caddy
+      - shared-certificates:/var/lib/caddy/certificates
+
+volumes:
+  caddy-persistent:
+  tailscale-persistent:
