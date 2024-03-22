@@ -1,0 +1,28 @@
+#!/bin/sh
+# This script is the entrypoint for the NUT UPS daemon container because it
+# requires the UPS drivers to be initialized before the daemon is started.
+
+# Ensure that all USB devices can be used by the NUT user
+printf "Setting up USB permissions ...\n"
+chown -R nut:nut /dev/bus/usb || {
+	printf "ERROR on USB permissions.\n"
+	exit
+}
+chown -R nut:nut /var/run/nut || {
+	printf "ERROR on NUT permissions.\n"
+	exit
+}
+
+# Initialize UPS drivers
+printf "Initializing UPS drivers ...\n"
+su-exec nut /usr/sbin/upsdrvctl start || {
+	printf "ERROR on driver startup.\n"
+	exit
+}
+
+# Run the ups daemon
+printf "Starting up the UPS daemon ...\n"
+su-exec nut /usr/sbin/upsd -FF -D || {
+	printf "ERROR on daemon startup.\n"
+	exit
+}
