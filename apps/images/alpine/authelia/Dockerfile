@@ -16,7 +16,7 @@
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <source>: download the Authelia source code and cache it for other stages │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/alpine:3.19.0 as source
+FROM docker.io/library/alpine:3.19.0@sha256:51b67269f354137895d43f3b3d810bfacd3945438e94dc5ac55fdac340352f48 as source
 
 # renovate: datasource=github-tags depName=authelia/authelia versioning=semver
 ARG AUTHELIA_VERSION="v4.38.0-beta3"
@@ -30,7 +30,7 @@ RUN set -eux; \
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder-frontend>: build the Authelia frontend (Node.js)                 │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/node:21.5.0-alpine3.19 as builder-frontend
+FROM docker.io/library/node:21.5.0-alpine3.19@sha256:82c93cef3d2acbb2557c5fda48214fbc2bf5385edfb4d96d990690d75ddabf7b as builder-frontend
 
 WORKDIR /node/src/app
 COPY --from=source /src/web ./
@@ -45,7 +45,7 @@ RUN set -eux; \
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder-backend>: build the Authelia backend (Go)                        │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM --platform=arm64 docker.io/library/golang:1.21.5-alpine3.19 as builder-backend
+FROM --platform=arm64 docker.io/library/golang:1.21.5-alpine3.19@sha256:4db4aac30880b978cae5445dd4a706215249ad4f43d28bd7cdf7906e9be8dd6b as builder-backend
 
 # renovate: datasource=repology depName=alpine_3_19/gcc versioning=semver
 ARG GCC_VERSION=13.2.1_git20231014-r0
