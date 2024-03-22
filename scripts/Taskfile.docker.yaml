@@ -1,0 +1,189 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+---
+# Copyright 2024
+#
+# Everyone is permitted to copy, distribute, modify, merge, sell, publish,
+# sublicense or whatever the fuck they want with this software but at their
+# OWN RISK.
+# The author has absolutely no fucking clue what the code in this project
+# does. It might just fucking work or not, there is no third option.
+#
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+# ---
+# trunk-ignore-all(yamllint/line-length): Taskfile don't handle properly multiline strings
+#
+# This Taskfile contains all recipes used to manage Docker "resources"
+version: 3
+
+vars:
+  GIT_ROOT_DIR:
+    sh: git rev-parse --show-toplevel
+  IMAGE_TAG: stable
+  OCI_REGISTRY: oci.chezmoi.sh/localhost
+
+tasks:
+  # ┌───────────────────────────────────────────────────────────────────────────┐
+  # │ Docker image management                                                   │
+  # └───────────────────────────────────────────────────────────────────────────┘
+
+  # -- Build Docker images
+  images:build:
+    desc: Build a docker image for the specified image
+    label: docker:images:build ({{ .IMAGE }})
+
+    requires:
+      vars: [IMAGE]
+    vars:
+      DOCKERFILE: '{{ print .GIT_ROOT_DIR "/apps/images/" .IMAGE "/Dockerfile" | clean }}'
+      DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
+
+      IMAGE_DIR: "{{ .DOCKERFILE | dir }}"
+      IMAGE_DEST: "{{ .IMAGE_DIR }}/dist/{{ .IMAGE }}.tar"
+
+    sources:
+      - "{{ .DOCKERFILE | dir }}/*"
+      - "{{ .DOCKERFILE | dir }}/{assets,config}/*"
+      - "{{ .DOCKERFILE | dir }}/{assets,config}/**/*"
+      - exclude: "{{ .IMAGE_DEST }}"
+    generates:
+      - "{{ .IMAGE_DEST }}"
+
+    cmds:
+      - silent: true
+        cmd: mkdir --parents "{{ .IMAGE_DEST | dir }}"
+      # NOTE: In order to increase the speed of the build, we build the image
+      #       locally and then send it to the remote context if needed.
+      - |
+        docker build \
+          --label org.opencontainers.image.created="$(date --rfc-3339=ns)" \
+          --label org.opencontainers.image.revision="$(git rev-parse HEAD)" \
+          --label org.opencontainers.image.source="https://github.com/chezmoi-sh/nex.rpi/blob/$(git rev-parse --short HEAD)/{{ regexReplaceAll ".+(apps/.+?)" .DOCKERFILE "${1}" }}" \
+          --tag "{{ .OCI_REGISTRY }}/{{ .IMAGE }}:{{ .IMAGE_TAG }}" \
+          --file "{{ .DOCKERFILE }}" "{{ .IMAGE_DIR }}" {{ if eq .DOCKER_DISABLE_CACHE "true" }}--no-cache{{ end }}
+      - docker save --output "{{ .IMAGE_DEST }}" "{{ .OCI_REGISTRY }}/{{ .IMAGE }}:{{ .IMAGE_TAG }}"
+
+  images:build:all:
+    desc: Build all docker images for the current project
+    label: docker:images:build:all
+
+    vars:
+      DOCKERFILES:
+        sh: find "{{ .GIT_ROOT_DIR }}/apps/images/" -type f -name Dockerfile -printf '%P\n' 2> /dev/null | sort -u
+
+    cmds:
+      - for: { var: DOCKERFILES, as: DOCKERFILE }
+        task: images:build
+        vars:
+          DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
+          DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
+          IMAGE: "{{ .DOCKERFILE | dir }}"
+
+  # -- Export Docker images to the remote context
+  images:export:
+    desc: Export a docker image for the specified image to the remote context
+    label: docker:images:export ({{ .IMAGE }})
+
+    requires:
+      vars: [IMAGE, DOCKER_CONTEXT]
+    vars:
+      IMAGE_DEST: '{{ print .GIT_ROOT_DIR "/apps/images/" .IMAGE "/dist/" (.IMAGE) ".tar" | clean}}'
+
+    sources:
+      - "{{ .IMAGE_DEST }}"
+
+    deps:
+      - task: images:build
+        vars:
+          IMAGE: "{{ .IMAGE}}"
+          DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
+    cmds:
+      - docker --context "{{ .DOCKER_CONTEXT }}" load --input "{{ .IMAGE_DEST }}"
+
+  images:export:all:
+    desc: Export all docker images for the current project to the remote context
+    label: docker:images:export:all
+
+    requires:
+      vars: [DOCKER_CONTEXT]
+    vars:
+      DOCKERFILES:
+        sh: find "{{ .GIT_ROOT_DIR }}/apps/images/" -type f -name Dockerfile -printf '%P\n' 2> /dev/null | sort -u
+
+    cmds:
+      - for: { var: DOCKERFILES, as: DOCKERFILE }
+        task: images:export
+        vars:
+          DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
+          DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
+          IMAGE: "{{ .DOCKERFILE | dir }}"
+
+  # ┌───────────────────────────────────────────────────────────────────────────┐
+  # │ Docker service management                                                 │
+  # └───────────────────────────────────────────────────────────────────────────┘
+
+  # -- List all services
+  services:list:
+    desc: List all defined services (aka. apps)
+    label: docker:services:list
+    aliases: [services, services:ls]
+
+    silent: true
+    cmds:
+      - docker compose --file "{{ .GIT_ROOT_DIR }}/apps/docker-compose.yml" config --format json | jq '.services | keys[]' --raw-output
+
+  # -- Fetch status of all services
+  services:status:
+    desc: Fetch the status of all services
+    label: docker:services:status
+
+    requires:
+      vars: [DOCKER_CONTEXT]
+    vars:
+      DOCKER_COMPOSE_FILE: '{{ print .GIT_ROOT_DIR "/apps/docker-compose.yml" | clean }}'
+
+    cmds:
+      - docker --context "{{ .DOCKER_CONTEXT }}" compose --file "{{ .DOCKER_COMPOSE_FILE }}" ps --format "table {{ "{{" }} .Service }}\t{{ "{{" }} .State }} {{ "{{" }} with .Health }}({{ "{{" }} . }}){{ "{{" }} end }}"
+
+  # -- Deploy all services
+  services:deploy:all:
+    desc: Deploy all services to the remote context
+    label: docker:services:deploy:all
+    aliases: [services:deploy]
+
+    requires:
+      vars: [DOCKER_CONTEXT]
+    vars:
+      DOCKER_COMPOSE_FILE: '{{ print .GIT_ROOT_DIR "/apps/docker-compose.yml" | clean }}'
+
+    deps:
+      - task: images:export:all
+        vars:
+          DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
+          DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
+
+    cmds:
+      - docker --context "{{ .DOCKER_CONTEXT }}" compose --file "{{ .DOCKER_COMPOSE_FILE }}" up --detach --no-build
+      - docker --context "{{ .DOCKER_CONTEXT }}" system prune --force
+      - task: services:status
+        vars:
+          DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
+
+  # -- Teardown all services
+  services:teardown:all:
+    desc: Teardown all services in the remote context
+    label: docker:services:teardown:all
+    aliases: [services:teardown]
+
+    requires:
+      vars: [DOCKER_CONTEXT]
+    vars:
+      DOCKER_COMPOSE_FILE: '{{ print .GIT_ROOT_DIR "/apps/docker-compose.yml" | clean }}'
+
+    cmds:
+      - docker --context "{{ .DOCKER_CONTEXT }}" compose --file "{{ .DOCKER_COMPOSE_FILE }}" down --remove-orphans
+      - task: services:status
+        vars:
+          DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
