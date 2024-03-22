@@ -21,7 +21,7 @@ services:
   # │ Docs: https://www.networkupstools.org/                                    │
   # └───────────────────────────────────────────────────────────────────────────┘
   upsd:
-    image: oci.chezmoi.sh/localhost/nut-upsd:stable
+    image: oci.chezmoi.sh/localhost/alpine/nut-upsd:stable
     cap_add:
       - CHOWN # Required to change the ownership of the USB device to the nut user.
       - SETGID # Required to run the `upsd` command as the nut user.

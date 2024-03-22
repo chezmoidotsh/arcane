@@ -21,7 +21,7 @@ services:
   # │ Docs: https://www.authelia.com/docs/                                      │
   # └───────────────────────────────────────────────────────────────────────────┘
   oidc-provider:
-    image: oci.chezmoi.sh/localhost/authelia:stable
+    image: oci.chezmoi.sh/localhost/alpine/authelia:stable
     cap_drop:
       - ALL
     networks:
@@ -39,7 +39,7 @@ services:
   # │ Docs: https://github.com/xunleii/yaldap/                                  │
   # └───────────────────────────────────────────────────────────────────────────┘
   ldap:
-    image: oci.chezmoi.sh/localhost/yaldap:stable
+    image: oci.chezmoi.sh/localhost/alpine/yaldap:stable
     cap_drop:
       - ALL
     networks:
