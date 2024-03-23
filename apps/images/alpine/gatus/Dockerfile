@@ -19,7 +19,7 @@
 FROM docker.io/library/golang:1.21.5-alpine3.19 as builder
 
 # renovate: datasource=github-tags depName=TwiN/gatus versioning=semver
-ARG GATUS_VERSION="v5.7.0"
+ARG GATUS_VERSION="v5.8.0"
 
 # trunk-ignore(hadolint/DL3018): don't care to pin dependencies on build
 RUN set -eux; \
@@ -45,7 +45,7 @@ RUN set -eux; \
 FROM --platform=arm64 oci.chezmoi.sh/localhost/alpine:stable
 
 # renovate: datasource=github-tags depName=TwiN/gatus versioning=semver
-ARG GATUS_VERSION="v5.7.0"
+ARG GATUS_VERSION="v5.8.0"
 
 RUN set -eux; \
     addgroup --system --gid 64114 gatus; \
