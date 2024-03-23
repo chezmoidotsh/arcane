@@ -16,7 +16,7 @@
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <source>: download the Authelia source code and cache it for other stages │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/alpine:3.19.0 as source
+FROM docker.io/library/alpine:3.19.1@sha256:c5b1261d6d3e43071626931fc004f70149baeba2c8ec672bd4f27761f8e1ad6b as source
 
 # renovate: datasource=github-tags depName=authelia/authelia versioning=semver
 ARG AUTHELIA_VERSION="v4.38.0-beta3"
