@@ -1,6 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
+    ":automergeStableNonMajor",
     ":dependencyDashboardApproval",
     "config:best-practices",
     "regexManagers:dockerfileVersions",
@@ -26,13 +27,16 @@
         "major",
         "minor",
         "patch",
-        "pin",
         "digest",
         "bump",
         "replacement"
       ],
       "semanticCommitType": ["⬆️"],
       "semanticCommitScope": "dependencies"
+    },
+    {
+      "matchPackagePrefixes": ["oci.chezmoi.sh/"],
+      "allowedVersions": ""
     }
   ],
   "semanticCommits": "enabled",

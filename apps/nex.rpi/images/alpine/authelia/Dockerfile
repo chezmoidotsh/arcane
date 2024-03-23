@@ -47,9 +47,9 @@ RUN set -eux; \
 # └───────────────────────────────────────────────────────────────────────────┘
 FROM --platform=arm64 docker.io/library/golang:1.21.5-alpine3.19 as builder-backend
 
-# renovate: datasource=repology depName=alpine_3_19/gcc versioning=semver
+# renovate: datasource=repology depName=alpine_3_19/gcc versioning=loose
 ARG GCC_VERSION=13.2.1_git20231014-r0
-# renovate: datasource=repology depName=alpine_3_19/musl-dev versioning=semver
+# renovate: datasource=repology depName=alpine_3_19/musl-dev versioning=loose
 ARG MUSL_DEV_VERSION=1.2.4_git20230717-r4
 
 # trunk-ignore(hadolint/DL3018): don't care to pin dependencies on build
