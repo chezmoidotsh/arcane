@@ -16,7 +16,7 @@
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder>: build the yaLDAP binary (Go)                                   │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/golang:1.21.5-alpine3.19 as builder
+FROM docker.io/library/golang:1.22.1-alpine3.19@sha256:0466223b8544fb7d4ff04748acc4d75a608234bf4e79563bff208d2060c0dd79 as builder
 
 # renovate: datasource=github-tags depName=xunleii/yaldap versioning=semver
 ARG YALDAP_VERSION="v0.2.0"
