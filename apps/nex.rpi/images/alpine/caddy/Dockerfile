@@ -82,7 +82,7 @@ RUN set -eux; \
 FROM docker.io/library/golang:1.21.5-alpine3.19 as error-pages
 
 # renovate: datasource=github-tags depName=tarampampam/error-pages versioning=semver
-ARG ERROR_PAGES_VERSION="v2.26.0"
+ARG ERROR_PAGES_VERSION="v2.27.0"
 
 # trunk-ignore(hadolint/DL3018): don't care to pin dependencies on build
 RUN set -eux; \
