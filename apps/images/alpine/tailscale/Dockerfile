@@ -19,7 +19,7 @@
 FROM docker.io/library/golang:1.22.0-alpine3.19 as builder
 
 # renovate: datasource=github-tags depName=tailscale/tailscale versioning=semver
-ARG TAILSCALE_VERSION="v1.60.0"
+ARG TAILSCALE_VERSION="v1.62.0"
 
 # trunk-ignore(hadolint/DL3018): don't care to pin dependencies on build
 RUN set -eux; \
@@ -61,7 +61,7 @@ RUN set -eux; \
 FROM --platform=arm64 oci.chezmoi.sh/localhost/alpine:stable
 
 # renovate: datasource=github-tags depName=tailscale/tailscale versioning=semver
-ARG TAILSCALE_VERSION="v1.60.0"
+ARG TAILSCALE_VERSION="v1.62.0"
 
 # renovate: datasource=repology depName=alpine_3_19/iproute2 versioning=loose
 ARG IPROUTE2_VERSION="6.6.0-r0"
