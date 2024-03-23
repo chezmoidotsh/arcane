@@ -22,7 +22,7 @@
 FROM --platform=arm64 docker.io/library/alpine:3.19.0@sha256:51b67269f354137895d43f3b3d810bfacd3945438e94dc5ac55fdac340352f48
 
 # renovate: datasource=repology depName=alpine_3_19/ca-certificates versioning=loose
-ARG CA_CERTIFICATES_VERSION=20230506-r0
+ARG CA_CERTIFICATES_VERSION=20240226-r0
 # renovate: datasource=repology depName=alpine_3_19/tzdata versioning=loose
 ARG TZDATA_VERSION=2024a-r0
 
