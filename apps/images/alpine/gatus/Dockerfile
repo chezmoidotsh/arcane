@@ -42,7 +42,7 @@ RUN set -eux; \
 # └───────────────────────────────────────────────────────────────────────────┘
 # NOTE: this base image MUST BE used by any other image of this project to be
 #       able to use cache layers and avoid downloading the same dependencies.
-FROM --platform=arm64 oci.chezmoi.sh/localhost/alpine:stable
+FROM --platform=arm64 localhost/alpine:stable
 
 # renovate: datasource=github-tags depName=TwiN/gatus versioning=semver
 ARG GATUS_VERSION="v5.8.0"
