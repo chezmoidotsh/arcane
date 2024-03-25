@@ -33,7 +33,7 @@ services:
     environment:
       AUTOHEAL_CONTAINER_LABEL: all
       AUTOHEAL_START_PERIOD: 60
-    image: oci.chezmoi.sh/localhost/alpine/autoheal:stable
+    image: localhost/alpine/autoheal:stable
     network_mode: none
     read_only: true
     restart: unless-stopped
@@ -58,7 +58,7 @@ services:
       TS_HOSTNAME: nex-pi-chezmoish
       TS_STATE_DIR: /var/lib/tailscale
       TS_EXTRA_ARGS: --advertise-routes=10.0.0.0/8
-    image: oci.chezmoi.sh/localhost/alpine/tailscale:stable
+    image: localhost/alpine/tailscale:stable
     networks:
       default: # NOTE: This is required to allow Tailscale to communicate with internet (VPN)
     read_only: true
@@ -85,7 +85,7 @@ services:
       - 2019 # metrics
     extra_hosts:
       - host.docker.internal:172.22.0.1
-    image: oci.chezmoi.sh/localhost/alpine/caddy:stable
+    image: localhost/alpine/caddy:stable
     networks:
       caddy-internal:
       default: # NOTE: This is required to allow Caddy to communicate with 3rd party services (e.g. Let's Encrypt)

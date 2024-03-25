@@ -104,7 +104,7 @@ RUN /src/error-pages --verbose build --config-file /src/error-pages.yml --disabl
 # └───────────────────────────────────────────────────────────────────────────┘
 # NOTE: this base image MUST BE used by any other image of this project to be
 #       able to use cache layers and avoid downloading the same dependencies.
-FROM --platform=arm64 oci.chezmoi.sh/localhost/alpine:stable
+FROM --platform=arm64 localhost/alpine:stable
 
 # renovate: datasource=github-tags depName=caddyserver/caddy versioning=semver
 ARG CADDY_VERSION="2.7.6"

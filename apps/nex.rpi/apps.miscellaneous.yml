@@ -21,7 +21,7 @@ services:
   # │ Docs: https://github.com/bastienwirtz/homer/blob/main/README.md#table-of-contents │
   # └───────────────────────────────────────────────────────────────────────────────────┘
   home-dashboard:
-    image: oci.chezmoi.sh/localhost/alpine/homer:stable
+    image: localhost/alpine/homer:stable
     cap_drop:
       - ALL
     networks:
@@ -37,7 +37,7 @@ services:
   # │ Docs: https://gatus.io/docs                                               │
   # └───────────────────────────────────────────────────────────────────────────┘
   status-page:
-    image: oci.chezmoi.sh/localhost/alpine/gatus:stable
+    image: localhost/alpine/gatus:stable
     cap_drop:
       - ALL
     networks:

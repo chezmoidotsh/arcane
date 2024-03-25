@@ -22,7 +22,7 @@ vars:
   GIT_ROOT_DIR:
     sh: git rev-parse --show-toplevel
   IMAGE_TAG: stable
-  OCI_REGISTRY: oci.chezmoi.sh/localhost
+  OCI_REGISTRY: localhost
 
 tasks:
   # ┌───────────────────────────────────────────────────────────────────────────┐

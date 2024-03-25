@@ -33,10 +33,6 @@
       ],
       "semanticCommitType": ["⬆️"],
       "semanticCommitScope": "dependencies"
-    },
-    {
-      "matchPackagePrefixes": ["oci.chezmoi.sh/"],
-      "allowedVersions": ""
     }
   ],
   "semanticCommits": "enabled",

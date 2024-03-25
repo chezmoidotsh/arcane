@@ -22,7 +22,7 @@
 # NOTE²: this image will must be run with the root user to access the docker
 #        socket and restart unhealthy containers.
 # TODO: rewrite this application in Go to reduce the surface attack.
-FROM --platform=arm64 oci.chezmoi.sh/localhost/alpine:stable
+FROM --platform=arm64 localhost/alpine:stable
 
 # renovate: datasource=repology depName=alpine_3_19/bash versioning=loose
 ARG BASH_VERSION="5.2.21-r0"
