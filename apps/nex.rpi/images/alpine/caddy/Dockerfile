@@ -61,22 +61,6 @@ RUN xcaddy build \
 
 
 # ┌───────────────────────────────────────────────────────────────────────────┐
-# │ <config>: create the Caddy JSON configuration from YAML                   │
-# └───────────────────────────────────────────────────────────────────────────┘
-FROM builder as config
-
-# NOTE: install jq into a dedicated stage in order to use Docker layer caching
-RUN set -eux; \
-    apk add --no-cache jq;
-
-COPY config/* /workdir/
-
-RUN set -eux; \
-    /go/caddy adapt --pretty --config /workdir/Caddyfile > /workdir/Caddyfile.json; \
-    jq --slurp '.[0] * .[1]' /workdir/Caddyfile.json /workdir/layer4.json > /workdir/caddy.json;
-
-
-# ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <error-pages>: create all static error pages using tarampampam/error-page │
 # └───────────────────────────────────────────────────────────────────────────┘
 FROM docker.io/library/golang:1.22.1-alpine3.19@sha256:0466223b8544fb7d4ff04748acc4d75a608234bf4e79563bff208d2060c0dd79 as error-pages
@@ -104,7 +88,7 @@ RUN /src/error-pages --verbose build --config-file /src/error-pages.yml --disabl
 # └───────────────────────────────────────────────────────────────────────────┘
 # NOTE: this base image MUST BE used by any other image of this project to be
 #       able to use cache layers and avoid downloading the same dependencies.
-FROM --platform=arm64 localhost/alpine:stable
+FROM --platform=arm64 localhost/alpine:stable as runtime
 
 # renovate: datasource=github-tags depName=caddyserver/caddy versioning=semver
 ARG CADDY_VERSION="2.7.6"
@@ -125,8 +109,6 @@ RUN set -eux; \
     chown caddy:caddy --recursive /etc/caddy /var/lib/caddy;
 
 COPY --from=builder /go/caddy /usr/bin/caddy
-COPY --from=config /workdir/caddy.json /etc/caddy/caddy.json
-COPY --from=error-pages /src/html/l7-light /var/www/error-pages
 
 ENV XDG_DATA_HOME=/var/lib/caddy \
     XDG_CONFIG_HOME=/var/lib/caddy
@@ -151,3 +133,28 @@ LABEL \
     org.opencontainers.image.title="caddy" \
     org.opencontainers.image.url="https://github.com/chezmoi-sh/nex.rpi" \
     org.opencontainers.image.version=${CADDY_VERSION}
+
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ <config>: create the Caddy JSON configuration from YAML                   │
+# └───────────────────────────────────────────────────────────────────────────┘
+FROM builder as config
+
+# NOTE: install jq into a dedicated stage in order to use Docker layer caching
+# trunk-ignore(hadolint/DL3018): don't care to pin dependencies on build
+RUN set -eux; \
+    apk add --no-cache jq;
+
+COPY config/* /workdir/
+
+RUN set -eux; \
+    /go/caddy adapt --pretty --config /workdir/Caddyfile > /workdir/Caddyfile.json; \
+    jq --slurp '.[0] * .[1]' /workdir/Caddyfile.json /workdir/layer4.json > /workdir/caddy.json;
+
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# └───────────────────────────────────────────────────────────────────────────┘
+FROM runtime
+
+COPY --from=config /workdir/caddy.json /etc/caddy/caddy.json
+COPY --from=error-pages /src/html/l7-light /var/www/error-pages

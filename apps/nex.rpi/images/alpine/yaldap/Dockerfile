@@ -49,7 +49,7 @@ RUN set -eux; \
 # └───────────────────────────────────────────────────────────────────────────┘
 # NOTE: this base image MUST BE used by any other image of this project to be
 #       able to use cache layers and avoid downloading the same dependencies.
-FROM --platform=arm64 localhost/alpine:stable
+FROM --platform=arm64 localhost/alpine:stable as runtime
 
 # renovate: datasource=github-tags depName=xunleii/yaldap versioning=semver
 ARG YALDAP_VERSION="v0.2.0"
@@ -59,7 +59,6 @@ RUN set -eux; \
     adduser --system --no-create-home --ingroup yaldap --uid 64885 yaldap;
 
 COPY --from=builder /src/yaldap /src/LICENSE /opt/yaldap/
-COPY --chown=yaldap:yaldap config/backend.ldap.yaml /etc/yaldap/backend.yaml
 
 ENV PATH=/opt/yaldap:${PATH}
 
@@ -83,3 +82,10 @@ LABEL \
     org.opencontainers.image.title="yaldap" \
     org.opencontainers.image.url="https://github.com/chezmoi-sh/nex.rpi" \
     org.opencontainers.image.version=${YALDAP_VERSION}
+
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# └───────────────────────────────────────────────────────────────────────────┘
+FROM runtime
+
+COPY --chown=yaldap:yaldap config/backend.ldap.yaml /etc/yaldap/backend.yaml

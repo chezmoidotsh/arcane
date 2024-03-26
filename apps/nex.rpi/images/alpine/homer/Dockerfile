@@ -44,7 +44,7 @@ RUN set -eux; \
 # └───────────────────────────────────────────────────────────────────────────┘
 # NOTE: this base image MUST BE used by any other image of this project to be
 #       able to use cache layers and avoid downloading the same dependencies.
-FROM --platform=arm64 localhost/alpine:stable
+FROM --platform=arm64 localhost/alpine:stable as runtime
 
 # renovate: datasource=github-tags depName=bastienwirtz/homer versioning=semver
 ARG HOMER_VERSION="v23.10.1"
@@ -62,9 +62,6 @@ RUN set -eux; \
     chown lighttpd:lighttpd --recursive /www;
 
 COPY config/lighttpd.conf /etc/lighttpd/lighttpd.conf
-COPY --chown=lighttpd:lighttpd assets /www/assets
-COPY --chown=lighttpd:lighttpd config/default.yaml /www/assets/config.yml
-COPY --chown=lighttpd:lighttpd config/administration.yaml /www/assets/admin.yml
 COPY --from=builder --chown=lighttpd:lighttpd /app/dist /www/
 
 USER lighttpd
@@ -87,3 +84,12 @@ LABEL \
     org.opencontainers.image.title="homer" \
     org.opencontainers.image.url="https://github.com/chezmoi-sh/nex.rpi" \
     org.opencontainers.image.version=${HOMER_VERSION}
+
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# └───────────────────────────────────────────────────────────────────────────┘
+FROM runtime
+
+COPY --chown=lighttpd:lighttpd assets /www/assets
+COPY --chown=lighttpd:lighttpd config/default.yaml /www/assets/config.yml
+COPY --chown=lighttpd:lighttpd config/administration.yaml /www/assets/admin.yml

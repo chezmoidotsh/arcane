@@ -42,7 +42,7 @@ RUN set -eux; \
 # └───────────────────────────────────────────────────────────────────────────┘
 # NOTE: this base image MUST BE used by any other image of this project to be
 #       able to use cache layers and avoid downloading the same dependencies.
-FROM --platform=arm64 localhost/alpine:stable
+FROM --platform=arm64 localhost/alpine:stable as runtime
 
 # renovate: datasource=github-tags depName=TwiN/gatus versioning=semver
 ARG GATUS_VERSION="v5.8.0"
@@ -54,7 +54,6 @@ RUN set -eux; \
     chown -R gatus:gatus /var/lib/gatus;
 
 COPY --from=builder /src/gatus /gatus
-COPY config/gatus.yaml /etc/gatus/gatus.yaml
 
 ENV GATUS_CONFIG_PATH="/etc/gatus/gatus.yaml"
 
@@ -79,3 +78,10 @@ LABEL \
     org.opencontainers.image.title="gatus" \
     org.opencontainers.image.url="https://github.com/chezmoi-sh/nex.rpi" \
     org.opencontainers.image.version=${GATUS_VERSION}
+
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# └───────────────────────────────────────────────────────────────────────────┘
+FROM runtime
+
+COPY --chown=gatus:gatus config/gatus.yaml /etc/gatus/gatus.yaml
