@@ -113,7 +113,7 @@ RUN set -eux; \
 # └───────────────────────────────────────────────────────────────────────────┘
 # NOTE: this base image MUST BE used by any other image of this project to be
 #       able to use cache layers and avoid downloading the same dependencies.
-FROM --platform=arm64 localhost/alpine:stable
+FROM --platform=arm64 localhost/alpine:stable as runtime
 
 # renovate: datasource=github-tags depName=authelia/authelia versioning=semver
 ARG AUTHELIA_VERSION="v4.38.6"
@@ -125,7 +125,6 @@ RUN set -eux; \
     chown authelia:authelia --recursive /opt/authelia /var/lib/authelia
 
 COPY --chown=authelia:authelia --from=builder-backend /go/src/app/authelia /go/src/app/LICENSE /go/src/app/healthcheck.sh /go/src/app/.healthcheck.env /opt/authelia/bin/
-COPY --chown=authelia:authelia config/configuration.yaml /etc/authelia/configuration.yaml
 
 ENV PATH=/opt/authelia/bin:${PATH}
 ENV X_AUTHELIA_CONFIG=/etc/authelia/configuration.yaml
@@ -151,3 +150,10 @@ LABEL \
     org.opencontainers.image.title="authelia" \
     org.opencontainers.image.url="https://github.com/chezmoi-sh/nex.rpi" \
     org.opencontainers.image.version=${AUTHELIA_VERSION}
+
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# └───────────────────────────────────────────────────────────────────────────┘
+FROM runtime
+
+COPY --chown=authelia:authelia config/configuration.yaml /etc/authelia/configuration.yaml
