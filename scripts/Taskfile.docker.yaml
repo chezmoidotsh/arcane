@@ -45,8 +45,10 @@ tasks:
 
     sources:
       - "{{ .DOCKERFILE | dir }}/*"
-      - "{{ .DOCKERFILE | dir }}/{assets,config}/*"
-      - "{{ .DOCKERFILE | dir }}/{assets,config}/**/*"
+      - "{{ .DOCKERFILE | dir }}/assets/*"
+      - "{{ .DOCKERFILE | dir }}/assets/**/*"
+      - "{{ .DOCKERFILE | dir }}/config/*"
+      - "{{ .DOCKERFILE | dir }}/config/**/*"
       - exclude: "{{ .IMAGE_DEST }}"
     generates:
       - "{{ .IMAGE_DEST }}"
