@@ -14,20 +14,25 @@
 # ---
 services:
   # ┌───────────────────────────────────────────────────────────────────────────────────┐
-  # │ Homer: A very simple static homepage for your server.                             │
+  # │ Homepage: A highly customizable homepage service API integrations.                │
   # │                                                                                   │
-  # │ Docs: https://github.com/bastienwirtz/homer/blob/main/README.md#table-of-contents │
+  # │ Docs: https://gethomepage.dev/latest/                                             │
   # └───────────────────────────────────────────────────────────────────────────────────┘
   home-dashboard:
-    image: localhost/alpine/homer:stable
+    image: localhost/alpine/homepage:stable
+    # cap_add:
+    #   - NET_RAW
     cap_drop:
       - ALL
+    environment:
+      LOG_LEVEL: debug
+      LOG_TARGETS: stdout
     networks:
       caddy-internal:
       default: # NOTE: Required for 3rd-party services to fetch API
     read_only: true
     restart: unless-stopped
-    user: lighttpd
+    user: homepage
 
   # ┌───────────────────────────────────────────────────────────────────────────┐
   # │ Gatus: A simple, fast and scalable status page for your services and APIs.│
