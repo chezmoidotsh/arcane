@@ -11,14 +11,18 @@
   "packageRules": [
     {
       "commitMessagePrefix": ":pushpin:",
-      "matchUpdateTypes": ["pin"],
-      "semanticCommitType": [":pushpin:"],
+      "matchUpdateTypes": [
+        "pin"
+      ],
+      "semanticCommitType": ":pushpin:",
       "semanticCommitScope": "dependencies"
     },
     {
       "commitMessagePrefix": ":arrow_down:️",
-      "matchUpdateTypes": ["rollback"],
-      "semanticCommitType": [":arrow_down:️"],
+      "matchUpdateTypes": [
+        "rollback"
+      ],
+      "semanticCommitType": ":arrow_down:️",
       "semanticCommitScope": "dependencies"
     },
     {
@@ -31,7 +35,7 @@
         "bump",
         "replacement"
       ],
-      "semanticCommitType": [":arrow_up:"],
+      "semanticCommitType": ":arrow_up:",
       "semanticCommitScope": "dependencies"
     }
   ],
