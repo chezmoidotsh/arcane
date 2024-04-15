@@ -19,7 +19,7 @@
 FROM docker.io/library/alpine:3.19.1@sha256:c5b1261d6d3e43071626931fc004f70149baeba2c8ec672bd4f27761f8e1ad6b as source
 
 # renovate: datasource=github-tags depName=authelia/authelia versioning=semver
-ARG AUTHELIA_VERSION="v4.38.7"
+ARG AUTHELIA_VERSION="v4.38.8"
 
 # trunk-ignore(hadolint/DL3018): don't care to pin dependencies on build
 RUN set -eux; \
@@ -76,7 +76,7 @@ ENV CGO_ENABLED=1 \
     CGO_LDFLAGS="-Wl,-z,relro,-z,now"
 
 # renovate: datasource=github-tags depName=authelia/authelia versioning=semver
-ARG AUTHELIA_VERSION="v4.38.7"
+ARG AUTHELIA_VERSION="v4.38.8"
 
 # this step is required to avoid downloading the dependencies every time the
 # source code changes, speeding up the build process locally.
@@ -116,7 +116,7 @@ RUN set -eux; \
 FROM --platform=arm64 localhost/alpine:stable as runtime
 
 # renovate: datasource=github-tags depName=authelia/authelia versioning=semver
-ARG AUTHELIA_VERSION="v4.38.7"
+ARG AUTHELIA_VERSION="v4.38.8"
 
 RUN set -eux; \
     addgroup -S -g 64829 authelia; \
