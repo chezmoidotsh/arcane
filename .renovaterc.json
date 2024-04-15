@@ -8,6 +8,7 @@
     "security:openssf-scorecard"
   ],
   "ignorePaths": [],
+  "osvVulnerabilityAlerts": true,
   "packageRules": [
     {
       "commitMessagePrefix": ":pushpin:",
@@ -37,5 +38,6 @@
   ],
   "semanticCommits": "enabled",
   "semanticCommitScope": "dependencies",
-  "semanticCommitType": ":arrow_up:"
+  "semanticCommitType": ":arrow_up:",
+  "vulnerabilityAlerts": { "enabled": true }
 }
