@@ -7,22 +7,22 @@
     "regexManagers:dockerfileVersions",
     "security:openssf-scorecard"
   ],
-  "ignorePaths": ["infrastructure/live/nex.rpi/requirements.txt"],
+  "ignorePaths": [],
   "packageRules": [
     {
-      "commitMessagePrefix": "📌",
+      "commitMessagePrefix": ":pushpin:",
       "matchUpdateTypes": ["pin"],
-      "semanticCommitType": ["📌"],
+      "semanticCommitType": [":pushpin:"],
       "semanticCommitScope": "dependencies"
     },
     {
-      "commitMessagePrefix": "⬇️",
+      "commitMessagePrefix": ":arrow_down:️",
       "matchUpdateTypes": ["rollback"],
-      "semanticCommitType": ["⬇️"],
+      "semanticCommitType": [":arrow_down:️"],
       "semanticCommitScope": "dependencies"
     },
     {
-      "commitMessagePrefix": "⬆️",
+      "commitMessagePrefix": ":arrow_up:",
       "matchUpdateTypes": [
         "major",
         "minor",
@@ -31,11 +31,11 @@
         "bump",
         "replacement"
       ],
-      "semanticCommitType": ["⬆️"],
+      "semanticCommitType": [":arrow_up:"],
       "semanticCommitScope": "dependencies"
     }
   ],
   "semanticCommits": "enabled",
   "semanticCommitScope": "dependencies",
-  "semanticCommitType": "⬆️"
+  "semanticCommitType": ":arrow_up:"
 }
