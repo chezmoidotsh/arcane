@@ -1,0 +1,72 @@
+---
+# trunk-ignore-all(checkov/CKV_SECRET_6): all secrets are fake
+# trunk-ignore-all(gitleaks/aws-access-token,gitleaks/generic-api-key): all secrets are fake
+# trunk-ignore-all(trufflehog/AWS): all secrets are fake
+###############################################################
+#                   Authelia configuration                    #
+###############################################################
+
+server:
+  address: tcp://:9091
+
+log:
+  level: debug
+
+totp:
+  issuer: authelia.com
+
+identity_validation:
+  reset_password:
+    jwt_secret: a_very_important_secret
+
+# duo_api:
+#  hostname: api-123456789.example.com
+#  integration_key: ABCDEF
+#  # This secret can also be set using the env variables AUTHELIA_DUO_API_SECRET_KEY_FILE
+#  secret_key: 1234567890abcdefghifjkl
+
+authentication_backend:
+  file:
+    path: /etc/authelia/users_database.yaml
+
+access_control:
+  default_policy: deny
+  rules:
+    # Rules applied to everyone
+    - domain: public.example.com
+      policy: bypass
+    - domain: traefik.example.com
+      policy: one_factor
+    - domain: secure.example.com
+      policy: two_factor
+
+session:
+  # This secret can also be set using the env variables AUTHELIA_SESSION_SECRET_FILE
+  secret: insecure_session_secret
+
+  cookies:
+    - name: authelia_session
+      domain: example.com # Should match whatever your root protected domain is
+      authelia_url: https://authelia.example.com
+      expiration: 1 hour
+      inactivity: 5 minutes
+
+regulation:
+  max_retries: 3
+  find_time: 2 minutes
+  ban_time: 5 minutes
+
+storage:
+  encryption_key: you_must_generate_a_random_string_of_more_than_twenty_chars_and_configure_this
+  local:
+    path: /tmp/db.sqlite3
+
+notifier:
+  filesystem:
+    filename: /dev/null
+# Here is an example of how to configure the SMTP notifier with AWS SES
+# smtp:
+#   address: email-smtp.eu-west-1.amazonaws.com
+#   username: AKIA34BAGDIH3Z5EEUXA
+#   password: kOl5tCSnBJOa9OjmhLtBU16qJ8HZ1NjIL5w1Po+N
+#   sender: Authelia <noreply@chezmoi.sh>

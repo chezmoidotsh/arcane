@@ -2,5 +2,8 @@
 *
 **/*
 
-# ... except for these files
-!/config/gatus.yaml
+# ... except the CI configuration
+!ci/config/
+
+# ... and what is required for this image
+!live/config/gatus.yaml

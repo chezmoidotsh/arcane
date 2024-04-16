@@ -13,12 +13,13 @@
 # ---
 # trunk-ignore-all(hadolint/DL3029,hadolint/DL3025)
 
+# This argument is used to define the build type (live or ci). It is overridden
+# by the build system to point to the correct directory (CI or build).
+ARG BUILD_TYPE "live"
+
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder>: create the Caddy builder with additional plugins               │
 # └───────────────────────────────────────────────────────────────────────────┘
-# renovate: datasource=github-tags depName=caddyserver/caddy versioning=semver
-ARG CADDY_VERSION="2.7.6"
-
 FROM docker.io/library/golang:1.22.2-alpine3.19@sha256:cdc86d9f363e8786845bea2040312b4efa321b828acdeb26f393faa864d887b0 as builder
 
 # renovate: datasource=github-release depName=caddyserver/xcaddy versioning=semver
@@ -88,7 +89,7 @@ RUN /src/error-pages --verbose build --config-file /src/error-pages.yml --disabl
 # └───────────────────────────────────────────────────────────────────────────┘
 # NOTE: this base image MUST BE used by any other image of this project to be
 #       able to use cache layers and avoid downloading the same dependencies.
-FROM --platform=arm64 localhost/alpine:stable as runtime
+FROM --platform=arm64 localhost/alpine:${BUILD_TYPE} as runtime
 
 # renovate: datasource=github-tags depName=caddyserver/caddy versioning=semver
 ARG CADDY_VERSION="2.7.6"
@@ -104,7 +105,7 @@ RUN set -eux; \
         mailcap=${MAILCAP_VERSION}; \
     \
     addgroup --system --gid 64138 caddy; \
-    adduser --system --no-create-home --ingroup caddy --uid 64138 caddy; \
+    adduser --system --home /nonexistent --no-create-home --ingroup caddy --uid 64138 caddy; \
     mkdir --parents /etc/caddy /var/lib/caddy; \
     chown caddy:caddy --recursive /etc/caddy /var/lib/caddy;
 
@@ -145,7 +146,10 @@ FROM builder as config
 RUN set -eux; \
     apk add --no-cache jq;
 
-COPY config/* /workdir/
+# # This argument is used to define the build type (live or ci). It is overridden
+# # by the build system to point to the correct directory (CI or build).
+ARG BUILD_TYPE "live"
+COPY ${BUILD_TYPE}/config/* /workdir/
 
 RUN set -eux; \
     /go/caddy adapt --pretty --config /workdir/Caddyfile > /workdir/Caddyfile.json; \

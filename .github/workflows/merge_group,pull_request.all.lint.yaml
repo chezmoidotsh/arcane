@@ -28,4 +28,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Overrides Trunk configuration for Github Action
+        run: mv .trunk/gha.yaml .trunk/user.yaml
       - uses: trunk-io/trunk-action@540e7fe497a45ae76370d26d95cc249059c4ac3a # v1.1.12

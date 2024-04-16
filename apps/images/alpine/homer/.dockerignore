@@ -1,0 +1,13 @@
+# ignore everything in the root by default ...
+*
+**/*
+
+# ... except the CI configuration
+!ci/assets/
+!ci/config/
+
+# ... and what is required for this image
+!lighttpd.conf
+!live/assets/
+!live/config/config.yaml
+!live/config/admin.yaml

@@ -13,6 +13,10 @@
 # ---
 # trunk-ignore-all(hadolint/DL3029,hadolint/DL3025)
 
+# This argument is used to define the build type (live or ci). It is overridden
+# by the build system to point to the correct directory (CI or build).
+ARG BUILD_TYPE "live"
+
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder>: build the Tailscale binary (Go)                                │
 # └───────────────────────────────────────────────────────────────────────────┘
@@ -58,7 +62,7 @@ RUN set -eux; \
 # └───────────────────────────────────────────────────────────────────────────┘
 # NOTE: this base image MUST BE used by any other image of this project to be
 #       able to use cache layers and avoid downloading the same dependencies.
-FROM --platform=arm64 localhost/alpine:stable
+FROM --platform=arm64 localhost/alpine:${BUILD_TYPE}
 
 # renovate: datasource=github-tags depName=tailscale/tailscale versioning=semver
 ARG TAILSCALE_VERSION="v1.64.0"
@@ -75,8 +79,8 @@ RUN set -eux; \
         iptables=${IPTABLES_VERSION} \
         ip6tables=${IPTABLES_VERSION}; \
     \
-    addgroup -S -g 64241 tailscale; \
-    adduser -S -H -G tailscale -u 64241 tailscale; \
+    addgroup --system --gid 64241 tailscale; \
+    adduser --system --no-create-home --home /nonexistent --ingroup tailscale --uid 64241 tailscale; \
     mkdir -p /var/lib/tailscale; \
     chown tailscale:tailscale /var/lib/tailscale;
 

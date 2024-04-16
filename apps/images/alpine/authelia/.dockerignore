@@ -2,5 +2,9 @@
 *
 **/*
 
-# ... except what is required for this image
-!config/
+# ... except the CI configuration
+!ci/config/
+
+# ... and what is required for this image
+!live/config/configuration.yaml
+!live/config/users_database.yaml
