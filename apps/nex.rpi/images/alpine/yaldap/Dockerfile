@@ -13,6 +13,10 @@
 # ---
 # trunk-ignore-all(hadolint/DL3029,hadolint/DL3025)
 
+# This argument is used to define the build type (live or ci). It is overridden
+# by the build system to point to the correct directory (CI or build).
+ARG BUILD_TYPE "live"
+
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder>: build the yaLDAP binary (Go)                                   │
 # └───────────────────────────────────────────────────────────────────────────┘
@@ -49,14 +53,14 @@ RUN set -eux; \
 # └───────────────────────────────────────────────────────────────────────────┘
 # NOTE: this base image MUST BE used by any other image of this project to be
 #       able to use cache layers and avoid downloading the same dependencies.
-FROM --platform=arm64 localhost/alpine:stable as runtime
+FROM --platform=arm64 localhost/nex.rpi/alpine:${BUILD_TYPE} as runtime
 
 # renovate: datasource=github-tags depName=xunleii/yaldap versioning=semver
 ARG YALDAP_VERSION="v0.2.0"
 
 RUN set -eux; \
     addgroup --system --gid 64885 yaldap; \
-    adduser --system --no-create-home --ingroup yaldap --uid 64885 yaldap;
+    adduser --system --no-create-home --home /nonexistent --ingroup yaldap --uid 64885 yaldap;
 
 COPY --from=builder /src/yaldap /src/LICENSE /opt/yaldap/
 
@@ -88,4 +92,8 @@ LABEL \
 # └───────────────────────────────────────────────────────────────────────────┘
 FROM runtime
 
-COPY --chown=yaldap:yaldap config/backend.ldap.yaml /etc/yaldap/backend.yaml
+# This argument is used to define the build type (live or ci). It is overridden
+# by the build system to point to the correct directory (CI or build).
+ARG BUILD_TYPE "live"
+
+COPY --chown=yaldap:yaldap ${BUILD_TYPE}/config/backend.ldap.yaml /etc/yaldap/backend.yaml

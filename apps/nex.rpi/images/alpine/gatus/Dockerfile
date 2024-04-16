@@ -13,6 +13,10 @@
 # ---
 # trunk-ignore-all(hadolint/DL3029,hadolint/DL3025)
 
+# This argument is used to define the build type (live or ci). It is overridden
+# by the build system to point to the correct directory (CI or build).
+ARG BUILD_TYPE "live"
+
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder>: build the gatus binary (Go)                                    │
 # └───────────────────────────────────────────────────────────────────────────┘
@@ -42,14 +46,14 @@ RUN set -eux; \
 # └───────────────────────────────────────────────────────────────────────────┘
 # NOTE: this base image MUST BE used by any other image of this project to be
 #       able to use cache layers and avoid downloading the same dependencies.
-FROM --platform=arm64 localhost/alpine:stable as runtime
+FROM --platform=arm64 localhost/alpine:${BUILD_TYPE} as runtime
 
 # renovate: datasource=github-tags depName=TwiN/gatus versioning=semver
 ARG GATUS_VERSION="v5.9.0"
 
 RUN set -eux; \
     addgroup --system --gid 64114 gatus; \
-    adduser --system --no-create-home --ingroup gatus --uid 64114 gatus; \
+    adduser --system --no-create-home --home /nonexistent --ingroup gatus --uid 64114 gatus; \
     mkdir -p /var/lib/gatus; \
     chown -R gatus:gatus /var/lib/gatus;
 
@@ -84,4 +88,8 @@ LABEL \
 # └───────────────────────────────────────────────────────────────────────────┘
 FROM runtime
 
-COPY --chown=gatus:gatus config/gatus.yaml /etc/gatus/gatus.yaml
+# This argument is used to define the build type (live or ci). It is overridden
+# by the build system to point to the correct directory (CI or build).
+ARG BUILD_TYPE "live"
+
+COPY --chown=gatus:gatus ${BUILD_TYPE}/config/gatus.yaml /etc/gatus/gatus.yaml

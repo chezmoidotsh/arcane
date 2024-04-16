@@ -14,6 +14,10 @@
 # trunk-ignore-all(checkov/CKV_DOCKER_8,trivy/DS002,hadolint/DL3002): This image needs to be run as root to communicate with the Docker socket
 # trunk-ignore-all(hadolint/DL3029,hadolint/DL3025)
 
+# This argument is used to define the build type (live or ci). It is overridden
+# by the build system to point to the correct directory (CI or build).
+ARG BUILD_TYPE "live"
+
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <runtime>: create the autoheal runtime image                              │
 # └───────────────────────────────────────────────────────────────────────────┘
@@ -22,7 +26,7 @@
 # NOTE²: this image will must be run with the root user to access the docker
 #        socket and restart unhealthy containers.
 # TODO: rewrite this application in Go to reduce the surface attack.
-FROM --platform=arm64 localhost/alpine:stable
+FROM --platform=arm64 localhost/nex.rpi/alpine:${BUILD_TYPE}
 
 # renovate: datasource=repology depName=alpine_3_19/bash versioning=loose
 ARG BASH_VERSION="5.2.21-r0"
