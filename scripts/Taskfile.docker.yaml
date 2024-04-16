@@ -189,3 +189,107 @@ tasks:
       - task: services:status
         vars:
           DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
+
+  # ┌───────────────────────────────────────────────────────────────────────────┐
+  # │ Docker CI management                                                      │
+  # └───────────────────────────────────────────────────────────────────────────┘
+
+  # -- Run goss tests for the specified image
+  goss:run:
+    desc: Run goss tests for the specified image
+    label: docker:goss:run ({{ .IMAGE }})
+    aliases: [ci]
+
+    requires:
+      vars: [IMAGE]
+    vars:
+      GOSS_OPTS: '{{ .GOSS_OPTS | default "" }}'
+      GOSS_SLEEP: '{{ .GOSS_SLEEP | default "2.5" }}'
+
+    cmds:
+      - task: images:build
+        vars:
+          IMAGE: "{{ .IMAGE }}"
+      - task: goss:run:_
+        vars:
+          GOSS_OPTS: "{{ .GOSS_OPTS }}"
+          GOSS_SLEEP: "{{ .GOSS_SLEEP }}"
+          IMAGE: "{{ .IMAGE }}"
+
+  # NOTE: This task is not meant to be used directly, it's a helper task for
+  #       the `goss:run` task in which we need to run the goss tests.
+  goss:run:_:
+    label: docker:goss:run ({{ .IMAGE }})
+    internal: true
+
+    requires:
+      vars: [IMAGE, GOSS_OPTS, GOSS_SLEEP]
+
+    cmds:
+      - dcgoss run {{ .IMAGE | replace "/" "_" }}
+    env:
+      GOSS_OPTS: '{{ .GOSS_OPTS | default "" }}'
+      GOSS_SLEEP: "{{ .GOSS_SLEEP }}"
+    dir: '/{{ print .GIT_ROOT_DIR "/apps/images/" .IMAGE "/ci" | clean }}'
+
+  # -- Run goss tests for all images
+  goss:run:all:
+    desc: Run goss tests for all images
+    label: docker:goss:run:all
+    aliases: [ci:all]
+
+    requires:
+      vars: [DOCKER_CONTEXT]
+    vars:
+      GOSS_FILES:
+        sh: find "apps/images/" -type f -name goss.yaml -printf '%P\n' 2> /dev/null | sort -u
+
+    cmds:
+      - for: { var: GOSS_FILES, as: GOSS_FILE }
+        task: ci
+        vars:
+          DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
+          IMAGE: "{{ .GOSS_FILE | dir | dir }}"
+          GOSS_SLEEP: '{{ .GOSS_SLEEP | default "2.5" }}'
+
+  # -- Add/Update goss tests for the specified image
+  goss:edit:
+    desc: Add/Update goss tests for the specified image
+    label: docker:goss:edit ({{ .IMAGE }})
+    aliases: [ci:edit]
+
+    requires:
+      vars: [IMAGE]
+    vars:
+      UID:
+        sh: id --user
+      GID:
+        sh: id --group
+
+    cmds:
+      - task: images:build
+        vars:
+          IMAGE: "{{ .IMAGE }}"
+      - task: goss:edit:_
+        vars:
+          GID: "{{ .GID }}"
+          IMAGE: "{{ .IMAGE }}"
+          UID: "{{ .UID }}"
+
+  # NOTE: This task is not meant to be used directly, it's a helper task for
+  #       the `goss:edit` task in which we need to get the UID and GID of the
+  #       current user. Unfortunately, we can't use the `sh` directive in the
+  #       `vars` section of the `goss:edit` task because `dir` cannot be
+  #       evaluated correctly.
+  goss:edit:_:
+    label: docker:goss:edit ({{ .IMAGE }})
+    internal: true
+
+    requires:
+      vars: [IMAGE, UID, GID]
+
+    cmds:
+      - dcgoss edit {{ .IMAGE | replace "/" "_" }}
+    dir: '/{{ print .GIT_ROOT_DIR "/apps/images/" .IMAGE "/ci" | clean }}'
+    ignore_error: true
+    interactive: true
