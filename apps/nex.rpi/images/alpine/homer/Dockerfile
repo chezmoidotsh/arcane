@@ -13,6 +13,10 @@
 # ---
 # trunk-ignore-all(hadolint/DL3029,hadolint/DL3025)
 
+# This argument is used to define the build type (live or ci). It is overridden
+# by the build system to point to the correct directory (CI or build).
+ARG BUILD_TYPE "live"
+
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <source>: download the Homer source code and cache it for other stages    │
 # └───────────────────────────────────────────────────────────────────────────┘
@@ -44,7 +48,7 @@ RUN set -eux; \
 # └───────────────────────────────────────────────────────────────────────────┘
 # NOTE: this base image MUST BE used by any other image of this project to be
 #       able to use cache layers and avoid downloading the same dependencies.
-FROM --platform=arm64 localhost/alpine:stable as runtime
+FROM --platform=arm64 localhost/alpine:${BUILD_TYPE} as runtime
 
 # renovate: datasource=github-tags depName=bastienwirtz/homer versioning=semver
 ARG HOMER_VERSION="v23.10.1"
@@ -53,15 +57,15 @@ ARG HOMER_VERSION="v23.10.1"
 ARG LIGHTTPD_VERSION=1.4.73-r0
 
 RUN set -eux; \
-    addgroup -S -g 64952 lighttpd; \
-    adduser -S -H -G lighttpd -u 64952 lighttpd; \
+    addgroup --system --gid 64952 lighttpd; \
+    adduser --system --no-create-home --home /nonexistent --ingroup lighttpd --uid 64952 lighttpd; \
     apk add --no-cache \
         lighttpd=${LIGHTTPD_VERSION}; \
     \
     mkdir --parents /www /etc/lighttpd/conf.d; \
     chown lighttpd:lighttpd --recursive /www;
 
-COPY config/lighttpd.conf /etc/lighttpd/lighttpd.conf
+COPY lighttpd.conf /etc/lighttpd/lighttpd.conf
 COPY --from=builder --chown=lighttpd:lighttpd /app/dist /www/
 
 USER lighttpd
@@ -90,6 +94,9 @@ LABEL \
 # └───────────────────────────────────────────────────────────────────────────┘
 FROM runtime
 
-COPY --chown=lighttpd:lighttpd assets /www/assets
-COPY --chown=lighttpd:lighttpd config/default.yaml /www/assets/config.yml
-COPY --chown=lighttpd:lighttpd config/administration.yaml /www/assets/admin.yml
+# This argument is used to define the build type (live or ci). It is overridden
+# by the build system to point to the correct directory (CI or build).
+ARG BUILD_TYPE "live"
+
+COPY --chown=lighttpd:lighttpd ${BUILD_TYPE}/assets /www/assets
+COPY --chown=lighttpd:lighttpd ${BUILD_TYPE}/config/ /www/assets/

@@ -1,0 +1,16 @@
+{
+  "apps": {
+    "layer4": {
+      "servers": {
+        "example": {
+          "listen": ["127.0.0.1:5000"],
+          "routes": [
+            {
+              "handle": [{ "handler": "echo" }]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

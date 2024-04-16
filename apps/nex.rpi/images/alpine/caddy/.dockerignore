@@ -2,5 +2,9 @@
 *
 **/*
 
-# ... except what is required for this image
-!config/
+# ... except the CI configuration
+!ci/config/
+
+# ... and what is required for this image
+!live/config/Caddyfile
+!live/config/layer4.json

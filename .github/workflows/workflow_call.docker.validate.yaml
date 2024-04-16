@@ -1,0 +1,74 @@
+# Copyright 2024
+#
+# Everyone is permitted to copy, distribute, modify, merge, sell, publish,
+# sublicense or whatever the fuck they want with this software but at their
+# OWN RISK.
+# The author has absolutely no fucking clue what the code in this project
+# does. It might just fucking work or not, there is no third option.
+#
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+---
+name: Validate OCI (Docker)
+
+on:
+  workflow_call:
+    inputs:
+      application:
+        description: Path of the application to (re)build
+        type: string
+        required: true
+
+env:
+  ASDF_DIR: /home/runner/.asdf
+
+permissions: {}
+
+jobs:
+  goss:
+    name: Check '${{ inputs.application }}' behavior
+    permissions:
+      checks: write
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      # Install all required tools or restore them if the cache already exists
+      - uses: actions/cache/restore@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+        id: restore-asdf
+        with:
+          path: ${{ env.ASDF_DIR }}
+          key: asdf-vm-${{ hashFiles('.tool-versions') }}
+      - uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3.0.2
+        with:
+          skip_install: ${{ steps.restore-asdf.outputs.cache-hit == 'true' }}
+
+      # Prepare the environment for the test
+      - uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
+      - uses: docker/setup-buildx-action@2b51285047da1547ffb1b2203d8be4c0af6b1f20 # v3.2.0
+      - name: Load `.envrc` context
+        run: direnv allow && direnv exec / direnv export gha >> "${GITHUB_ENV}"
+
+      # Run the tests
+      - name: Task docker:images:build (localhost/${{ inputs.application }}:ci)
+        run: |
+          task docker:images:build IMAGE=${{ inputs.application }} BUILD_TYPE=ci \
+            --output group \
+            --output-group-begin '::group::{{.TASK}} (${{ inputs.application }})' \
+            --output-group-end '::endgroup::'
+      - name: Task docker:goss:run (localhost/${{ inputs.application }}:ci)
+        run: |
+          echo '::group::docker:goss:run (${{ inputs.application }})'
+          task docker:ci IMAGE=${{ inputs.application }} GOSS_OPTS="--format junit" \
+            > "apps/images/${{ inputs.application }}/dist/ci/goss-report.xml"
+          echo '::endgroup::'
+      - uses: mikepenz/action-junit-report@9379f0ccddcab154835d4e2487555ee79614fe95 # v4.2.1
+        if: always()
+        with:
+          check_name: Goss Test Report (${{ inputs.application }})
+          commit: ${{ github.event.workflow_run.head_sha }}
+          include_passed: true
+          report_paths: apps/images/${{ inputs.application }}/dist/ci/goss-report.xml
