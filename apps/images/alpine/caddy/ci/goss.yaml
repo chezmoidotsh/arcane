@@ -1,0 +1,31 @@
+---
+user:
+  caddy:
+    exists: true
+    uid: 64138
+    gid: 64138
+    groups:
+      - caddy
+    home: /nonexistent
+    shell: /sbin/nologin
+group:
+  caddy:
+    exists: true
+    gid: 64138
+command:
+  curl http://localhost:8080:
+    exit-status: 0
+    stdout:
+      - Hello, world!
+    stderr: null
+    timeout: 0
+  curl http://localhost:8080/404:
+    exit-status: 0
+    stdout:
+      - "Error 404: Not Found"
+      - "Description: The server can not find the requested page"
+    stderr: null
+    timeout: 0
+process:
+  caddy:
+    running: true
