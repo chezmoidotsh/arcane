@@ -13,6 +13,10 @@
 # ---
 # trunk-ignore-all(hadolint/DL3029,hadolint/DL3025)
 
+# This argument is used to define the build type (live or ci). It is overridden
+# by the build system to point to the correct directory (CI or build).
+ARG BUILD_TYPE "live"
+
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <source>: download the Authelia source code and cache it for other stages │
 # └───────────────────────────────────────────────────────────────────────────┘
@@ -113,14 +117,14 @@ RUN set -eux; \
 # └───────────────────────────────────────────────────────────────────────────┘
 # NOTE: this base image MUST BE used by any other image of this project to be
 #       able to use cache layers and avoid downloading the same dependencies.
-FROM --platform=arm64 localhost/alpine:stable as runtime
+FROM --platform=arm64 localhost/alpine:${BUILD_TYPE} as runtime
 
 # renovate: datasource=github-tags depName=authelia/authelia versioning=semver
 ARG AUTHELIA_VERSION="v4.38.8"
 
 RUN set -eux; \
-    addgroup -S -g 64829 authelia; \
-    adduser -S -H -G authelia -u 64829 authelia; \
+    addgroup --system --gid 64829 authelia; \
+    adduser --system --home /nonexistent --no-create-home --ingroup authelia --uid 64829 authelia; \
     mkdir --parents /etc/authelia /opt/authelia/bin /var/lib/authelia; \
     chown authelia:authelia --recursive /opt/authelia /var/lib/authelia
 
@@ -136,6 +140,7 @@ ENTRYPOINT authelia
 EXPOSE 9091
 VOLUME /var/lib/authelia
 HEALTHCHECK --interval=5s CMD healthcheck.sh
+
 
 # metadata as defined by the Open Container Initiative (OCI) to keep traceability with 
 # the source code.
@@ -156,4 +161,8 @@ LABEL \
 # └───────────────────────────────────────────────────────────────────────────┘
 FROM runtime
 
-COPY --chown=authelia:authelia config/configuration.yaml /etc/authelia/configuration.yaml
+# This argument is used to define the build type (live or ci). It is overridden
+# by the build system to point to the correct directory (CI or build).
+ARG BUILD_TYPE "live"
+
+COPY --chown=authelia:authelia ${BUILD_TYPE}/config/ /etc/authelia/

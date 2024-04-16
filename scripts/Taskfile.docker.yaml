@@ -21,7 +21,6 @@ version: 3
 vars:
   GIT_ROOT_DIR:
     sh: git rev-parse --show-toplevel
-  IMAGE_TAG: stable
   OCI_REGISTRY: localhost
 
 tasks:
@@ -32,28 +31,33 @@ tasks:
   # -- Build Docker images
   images:build:
     desc: Build a docker image for the specified image
-    label: docker:images:build ({{ .IMAGE }})
+    label: docker:images:build ({{ .IMAGE }}:{{ .BUILD_TYPE }})
 
     requires:
       vars: [IMAGE]
     vars:
+      BUILD_TYPE: '{{ .BUILD_TYPE | default "live" }}'
+
       DOCKERFILE: '{{ print .GIT_ROOT_DIR "/apps/images/" .IMAGE "/Dockerfile" | clean }}'
       DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
 
       IMAGE_DIR: "{{ .DOCKERFILE | dir }}"
-      IMAGE_DEST: "{{ .IMAGE_DIR }}/dist/{{ .IMAGE }}.tar"
+      IMAGE_DEST: "{{ .IMAGE_DIR }}/dist/{{ .BUILD_TYPE }}/{{ .IMAGE }}.tar"
 
     sources:
       - "{{ .DOCKERFILE | dir }}/*"
-      - "{{ .DOCKERFILE | dir }}/assets/*"
-      - "{{ .DOCKERFILE | dir }}/assets/**/*"
-      - "{{ .DOCKERFILE | dir }}/config/*"
-      - "{{ .DOCKERFILE | dir }}/config/**/*"
+      - "{{ .DOCKERFILE | dir }}/{{ .BUILD_TYPE }}/config/*"
+      - "{{ .DOCKERFILE | dir }}/{{ .BUILD_TYPE }}/config/**/*"
       - exclude: "{{ .IMAGE_DEST }}"
     generates:
       - "{{ .IMAGE_DEST }}"
 
     cmds:
+      - task: images:build:rec_guard
+        vars:
+          IMAGE: '{{ (.IMAGE | default ".") | dir }}'
+          BUILD_TYPE: "{{ .BUILD_TYPE }}"
+          DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE }}"
       - silent: true
         cmd: mkdir --parents "{{ .IMAGE_DEST | dir }}"
       # NOTE: In order to increase the speed of the build, we build the image
@@ -63,15 +67,32 @@ tasks:
           --label org.opencontainers.image.created="$(date --rfc-3339=ns)" \
           --label org.opencontainers.image.revision="$(git rev-parse HEAD)" \
           --label org.opencontainers.image.source="https://github.com/chezmoi-sh/nex.rpi/blob/$(git rev-parse --short HEAD)/{{ regexReplaceAll ".+(apps/.+?)" .DOCKERFILE "${1}" }}" \
-          --tag "{{ .OCI_REGISTRY }}/{{ .IMAGE }}:{{ .IMAGE_TAG }}" \
+          --build-arg BUILD_TYPE="{{ .BUILD_TYPE }}" \
+          --tag "{{ .OCI_REGISTRY }}/{{ .IMAGE }}:{{ .BUILD_TYPE }}" \
           --file "{{ .DOCKERFILE }}" "{{ .IMAGE_DIR }}" {{ if eq .DOCKER_DISABLE_CACHE "true" }}--no-cache{{ end }}
-      - docker save --output "{{ .IMAGE_DEST }}" "{{ .OCI_REGISTRY }}/{{ .IMAGE }}:{{ .IMAGE_TAG }}"
+      - docker save --output "{{ .IMAGE_DEST }}" "{{ .OCI_REGISTRY }}/{{ .IMAGE }}:{{ .BUILD_TYPE }}"
+
+  images:build:rec_guard:
+    desc: Helper to prevent infinite recursion
+    internal: true
+    silent: true
+    requires:
+      vars: [IMAGE, BUILD_TYPE, DOCKER_DISABLE_CACHE]
+    status:
+      - test "{{ .IMAGE }}" == "."
+    cmds:
+      - task: images:build
+        vars:
+          IMAGE: "{{ .IMAGE }}"
+          BUILD_TYPE: "{{ .BUILD_TYPE }}"
+          DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE }}"
 
   images:build:all:
     desc: Build all docker images for the current project
     label: docker:images:build:all
 
     vars:
+      BUILD_TYPE: '{{ .BUILD_TYPE | default "live" }}'
       DOCKERFILES:
         sh: find "{{ .GIT_ROOT_DIR }}/apps/images/" -type f -name Dockerfile -printf '%P\n' 2> /dev/null | sort -u
 
@@ -79,6 +100,7 @@ tasks:
       - for: { var: DOCKERFILES, as: DOCKERFILE }
         task: images:build
         vars:
+          BUILD_TYPE: "{{ .BUILD_TYPE }}"
           DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
           DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
           IMAGE: "{{ .DOCKERFILE | dir }}"
@@ -99,7 +121,7 @@ tasks:
     deps:
       - task: images:build
         vars:
-          IMAGE: "{{ .IMAGE}}"
+          IMAGE: "{{ .IMAGE }}"
           DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
     cmds:
       - docker --context "{{ .DOCKER_CONTEXT }}" load --input "{{ .IMAGE_DEST }}"
@@ -210,6 +232,7 @@ tasks:
       - task: images:build
         vars:
           IMAGE: "{{ .IMAGE }}"
+          BUILD_TYPE: ci
       - task: goss:run:_
         vars:
           GOSS_OPTS: "{{ .GOSS_OPTS }}"
@@ -269,6 +292,7 @@ tasks:
     cmds:
       - task: images:build
         vars:
+          BUILD_TYPE: ci
           IMAGE: "{{ .IMAGE }}"
       - task: goss:edit:_
         vars:
