@@ -1,0 +1,47 @@
+---
+name: Refresh cache (asdf)
+on: # yamllint disable-line rule:truthy
+  push:
+    branches: [main]
+    paths: [.tool-versions]
+  schedule:
+    - cron: 12 8 * * *
+  workflow_dispatch:
+
+permissions: {}
+concurrency:
+  group: asdf-refresh-cache
+  cancel-in-progress: true
+
+env:
+  ASDF_DIR: /home/runner/.asdf
+
+jobs:
+  refresh_cache:
+    name: Refresh cache
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+
+      - uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3.0.2
+      - uses: actions/cache/save@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+        with:
+          path: ${{ env.ASDF_DIR }}
+          key: asdf-vm-${{ hashFiles('.tool-versions') }}
+
+  validate-cache:
+    name: Validate cache exists
+    runs-on: ubuntu-latest
+    permissions: {}
+    needs: refresh_cache
+    steps:
+      - uses: actions/cache/restore@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+        with:
+          fail-on-cache-miss: true
+          key: asdf-vm-${{ hashFiles('.tool-versions') }}
+          lookup-only: true
+          path: ${{ env.ASDF_DIR }}
