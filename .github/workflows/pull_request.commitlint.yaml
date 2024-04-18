@@ -14,7 +14,6 @@
 name: Validate Commit (Compliance)
 
 on:
-  merge_group: {}
   pull_request: {}
 
 permissions: {}
@@ -35,14 +34,7 @@ jobs:
         run: npm ci
 
       - name: Validate all PR commits
-        if: ${{ github.event_name == 'pull_request' }}
         run: npx commitlint --from "${FROM}" --to "${TO}"
         env:
           FROM: ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }}
           TO: ${{ github.event.pull_request.head.sha }}
-
-      - name: Validate all merge commits
-        if: ${{ github.event_name == 'merge_group' }}
-        run: npx commitlint --from "${FROM}"
-        env:
-          FROM: ${{ github.event.head_sha }}
