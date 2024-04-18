@@ -16,8 +16,8 @@
 version: 3
 
 includes:
-  docker:
-    taskfile: scripts/Taskfile.docker.yaml
+  gh:
+    taskfile: scripts/Taskfile.gh.yaml
 
 vars:
   DOCKER_CONTEXT: '{{ .DOCKER_CONTEXT | default "nex.rpi" }}'
