@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+---
+# Copyright 2024
+#
+# Everyone is permitted to copy, distribute, modify, merge, sell, publish,
+# sublicense or whatever the fuck they want with this software but at their
+# OWN RISK.
+# The author has absolutely no fucking clue what the code in this project
+# does. It might just fucking work or not, there is no third option.
+#
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+# ---
+# trunk-ignore-all(yamllint/line-length): Taskfile don't handle properly multiline strings
+#
+# This Taskfile contains all recipes used to manage some Github related resources
+version: 3
+
+vars:
+  GIT_ROOT_DIR:
+    sh: git rev-parse --show-toplevel
+
+tasks:
+  # ┌───────────────────────────────────────────────────────────────────────────┐
+  # │ Github Action helpers                                                     │
+  # └───────────────────────────────────────────────────────────────────────────┘
+
+  # -- List applications
+  helper:apps:
+    desc: List existing applications
+    silent: true
+
+    cmds:
+      - find "apps/images/" -type f -name Dockerfile -printf '%P\n' 2> /dev/null | xargs -I{} dirname {} | sort
+    dir: '{{ .GIT_ROOT_DIR }}'
+
+
+  # -- List updated applications
+  helper:apps:updated:
+    desc: List all applications between two commits
+    label: gh:helper:apps:updated
+
+    requires:
+      vars: [FROM_SHA, TO_SHA]
+
+    cmds:
+      - task: helper:apps:updated:_
+        vars:
+          FROM_SHA: '{{ .FROM_SHA }}'
+          TO_SHA: '{{ .TO_SHA }}'
+
+  helper:apps:updated:_:
+    label: gh:helper:apps:updated
+    internal: true
+    silent: true
+
+    vars:
+      UPDATED_FILES:
+        sh: git diff --name-only {{ .FROM_SHA }} {{ .TO_SHA }} | grep 'apps/images' | sort
+      AVAILABLE_APPS:
+        sh: find "apps/images/" -type f -name Dockerfile -printf '%P\n' 2> /dev/null | xargs -I{} dirname {} | sort
+    
+    cmds:
+      - for: {var: AVAILABLE_APPS, as: APP }
+        cmd: echo "{{ .UPDATED_FILES }}" | grep -q "{{ .APP }}" && echo "{{ .APP }}" || true
+    dir: '{{ .GIT_ROOT_DIR }}'

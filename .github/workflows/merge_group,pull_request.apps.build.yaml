@@ -1,0 +1,70 @@
+# Copyright 2024
+#
+# Everyone is permitted to copy, distribute, modify, merge, sell, publish,
+# sublicense or whatever the fuck they want with this software but at their
+# OWN RISK.
+# The author has absolutely no fucking clue what the code in this project
+# does. It might just fucking work or not, there is no third option.
+#
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+---
+name: Validate (Docker)
+
+on:
+  merge_group: {}
+  pull_request:
+    paths:
+      - apps/images/**
+
+permissions: {}
+
+jobs:
+  find_updated_apps:
+    name: List updated applications
+    runs-on: ubuntu-22.04
+    outputs:
+      updated_apps: ${{ steps.list_apps.outputs.updated }}
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+
+      # Install all required tools or restore them if the cache already exists
+      - uses: actions/cache/restore@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+        id: restore-asdf
+        with:
+          path: ${{ env.ASDF_DIR }}
+          key: asdf-vm-${{ hashFiles('.tool-versions') }}
+      - uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3.0.2
+        with:
+          skip_install: ${{ steps.restore-asdf.outputs.cache-hit == 'true' }}
+
+      # List all applications between two commits
+      - name: List updated applications
+        id: list_apps
+        run: |
+          (
+            echo -n 'updated='
+            task gh:helper:apps:updated FROM_SHA="${FROM}" TO_SHA="${TO}" \
+            | jq --slurp --raw-input '. | split("\n") | map(select(. != ""))' --compact-output
+          ) >> "${GITHUB_OUTPUT}"
+        env:
+          FROM: ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }}
+          TO: ${{ github.event.pull_request.head.sha }}
+
+  validate:
+    name: Validate `${{ matrix.application }}`
+    needs: find_updated_apps
+    permissions:
+      checks: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        application: ${{ fromJson(needs.find_updated_apps.outputs.updated_apps) }}
+    uses: ./.github/workflows/workflow_call.docker.validate.yaml
+    with:
+      application: ${{ matrix.application }}
