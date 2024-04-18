@@ -17,6 +17,7 @@ on:
   merge_group: {}
   pull_request:
     paths:
+      - ./.github/workflows/merge_group,pull_request.terraform.validate.yaml
       - infrastructure/live/external/**
 
 permissions: {}
@@ -30,5 +31,6 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36 # v3.0.0
+      - run: terraform init
       - run: terraform validate
         working-directory: infrastructure/live/external
