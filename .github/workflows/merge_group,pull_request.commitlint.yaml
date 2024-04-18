@@ -14,6 +14,7 @@
 name: Validate Commit (Compliance)
 
 on:
+  merge_group: {}
   pull_request: {}
 
 permissions: {}
@@ -34,7 +35,13 @@ jobs:
         run: npm ci
 
       - name: Validate all PR commits
-        run: npx commitlint --from "${FROM}" --to "${TO}"
-        env:
-          FROM: ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }}
-          TO: ${{ github.event.pull_request.head.sha }}
+        if: github.event_name == 'pull_request'
+        run: |
+          npx commitlint \
+            --from "${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }}" \
+            --to "${{ github.event.pull_request.head.sha }}"
+
+      # NOTE: This is a workaround to make commitlint required on PRs but optional on merge groups
+      - name: Allow merge group to pass
+        if: github.event_name == 'merge_group'
+        run: exit 0
