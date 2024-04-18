@@ -247,6 +247,8 @@ tasks:
 
     requires:
       vars: [IMAGE, GOSS_OPTS, GOSS_SLEEP]
+    status:
+      - '! test -f {{ print .GIT_ROOT_DIR "/apps/images/" .IMAGE "/ci/goss.yaml" | clean }}'
 
     cmds:
       - dcgoss run {{ .IMAGE | replace "/" "_" }}
