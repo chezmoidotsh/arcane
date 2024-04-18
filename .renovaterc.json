@@ -1,5 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "commitMessagePrefix": ":arrow_up: (dependencies):",
   "extends": [
     ":automergeStableNonMajor",
     ":dependencyDashboardApproval",
@@ -12,33 +13,23 @@
   "osvVulnerabilityAlerts": true,
   "packageRules": [
     {
-      "commitMessagePrefix": ":pushpin:",
-      "matchUpdateTypes": ["pin"],
-      "semanticCommitType": ":pushpin:",
-      "semanticCommitScope": "dependencies"
+      "commitMessagePrefix": ":pushpin: (dependencies):",
+      "matchUpdateTypes": ["pin"]
     },
     {
-      "commitMessagePrefix": ":arrow_down:",
-      "matchUpdateTypes": ["rollback"],
-      "semanticCommitType": ":arrow_down:",
-      "semanticCommitScope": "dependencies"
+      "commitMessagePrefix": ":arrow_down: (dependencies):",
+      "matchUpdateTypes": ["rollback"]
     },
     {
-      "commitMessagePrefix": ":arrow_up:",
-      "matchUpdateTypes": [
-        "major",
-        "minor",
-        "patch",
-        "digest",
-        "bump",
-        "replacement"
-      ],
-      "semanticCommitType": ":arrow_up:",
-      "semanticCommitScope": "dependencies"
+      "commitMessagePrefix": ":arrow_up: (dependencies):",
+      "commitMessageSuffix": "(major)",
+      "matchUpdateTypes": ["major"]
+    },
+    {
+      "commitMessagePrefix": ":arrow_up: (dependencies):",
+      "matchUpdateTypes": ["minor", "patch", "digest", "bump", "replacement"]
     }
   ],
-  "semanticCommits": "enabled",
-  "semanticCommitScope": "dependencies",
-  "semanticCommitType": ":arrow_up:",
+  "semanticCommits": "disabled",
   "vulnerabilityAlerts": { "enabled": true }
 }
