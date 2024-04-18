@@ -34,7 +34,8 @@ jobs:
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-      - run: terraform init
-        working-directory: infrastructure/live/external
-      - run: terraform validate
-        working-directory: infrastructure/live/external
+      - name: Validate Terraform files
+        run: |
+          terraform init
+          terraform validate
+          terraform fmt -check
