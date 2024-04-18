@@ -19,6 +19,9 @@ on:
     paths:
       - apps/images/**
 
+env:
+  ASDF_DIR: /home/runner/.asdf
+
 permissions: {}
 
 jobs:
@@ -55,9 +58,10 @@ jobs:
           FROM: ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }}
           TO: ${{ github.event.pull_request.head.sha }}
 
-  validate:
+  validate_images:
     name: Validate `${{ matrix.application }}`
     needs: find_updated_apps
+    if: needs.find_updated_apps.outputs.updated_apps != '[]'
     permissions:
       checks: write
       contents: read
@@ -68,3 +72,18 @@ jobs:
     uses: ./.github/workflows/workflow_call.docker.validate.yaml
     with:
       application: ${{ matrix.application }}
+
+  validate_workflow:
+    name: Summary OCI images validation
+    runs-on: ubuntu-22.04
+    needs: [validate_images, find_updated_apps]
+    if: always()
+    steps:
+      - if: needs.find_updated_apps.outputs.updated_apps == '[]'
+        run: echo "::notice title=OCI image validation::No applications to validate... succeeding."
+
+      - if: needs.find_updated_apps.outputs.updated_apps != '[]' && needs.validate_images.result == 'success'
+        run: echo "::notice title=OCI image validation::All applications have been validated successfully."
+
+      - if: needs.find_updated_apps.outputs.updated_apps != '[]' && needs.validate_images.result != 'success'
+        run: echo "::error title=OCI image validation::Some applications have not been validated successfully... see the logs for more details." && exit 1 # trunk-ignore(yamllint/line-length)
