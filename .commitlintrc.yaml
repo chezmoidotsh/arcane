@@ -60,6 +60,7 @@ rules:
       - dependencies
       - docs
       - gh-config
+      - gh-renovate
       - gh-taskfile
       - gh-trunk
       - gh-workflows

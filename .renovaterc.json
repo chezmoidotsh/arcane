@@ -3,6 +3,7 @@
   "extends": [
     ":automergeStableNonMajor",
     ":dependencyDashboardApproval",
+    ":gitSignOff",
     "config:best-practices",
     "regexManagers:dockerfileVersions",
     "security:openssf-scorecard"
