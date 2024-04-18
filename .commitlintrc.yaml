@@ -30,13 +30,13 @@ rules:
   # NOTE: empty body is allowed
   body-empty: [0, always]
   body-max-length: [2, always, Infinity]
-  body-max-line-length: [2, always, 75]
+  body-max-line-length: [2, always, 80]
   body-min-length: [2, always, 0]
   body-case: [2, always, sentence-case]
   footer-leading-blank: [2, always]
   footer-empty: [2, always]
   footer-max-length: [2, always, Infinity]
-  footer-max-line-length: [2, always, 75]
+  footer-max-line-length: [2, always, 80]
   footer-min-length: [2, always, 0]
   header-case: [2, always, sentence-case]
   header-full-stop: [2, never, .]
@@ -59,6 +59,7 @@ rules:
       - apps-yaldap
       - dependencies
       - docs
+      - gh-commitlint
       - gh-config
       - gh-renovate
       - gh-taskfile
