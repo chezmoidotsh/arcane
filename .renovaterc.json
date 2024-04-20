@@ -2,7 +2,8 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "commitMessagePrefix": ":arrow_up: (dependencies):",
   "extends": [
-    ":automergeStableNonMajor",
+    ":automergeAll",
+    ":automergeRequireAllStatusChecks",
     ":dependencyDashboardApproval",
     ":gitSignOff",
     "config:best-practices",
