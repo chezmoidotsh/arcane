@@ -23,7 +23,7 @@ ARG BUILD_TYPE "live"
 FROM docker.io/library/golang:1.22.2-alpine3.19@sha256:cdc86d9f363e8786845bea2040312b4efa321b828acdeb26f393faa864d887b0 as builder
 
 # renovate: datasource=github-tags depName=TwiN/gatus versioning=semver
-ARG GATUS_VERSION="v5.9.0"
+ARG GATUS_VERSION="v5.10.0"
 
 # trunk-ignore(hadolint/DL3018): don't care to pin dependencies on build
 RUN set -eux; \
@@ -49,7 +49,7 @@ RUN set -eux; \
 FROM --platform=arm64 localhost/alpine:${BUILD_TYPE} as runtime
 
 # renovate: datasource=github-tags depName=TwiN/gatus versioning=semver
-ARG GATUS_VERSION="v5.9.0"
+ARG GATUS_VERSION="v5.10.0"
 
 RUN set -eux; \
     addgroup --system --gid 64114 gatus; \
