@@ -21,7 +21,7 @@ ARG BUILD_TYPE "live"
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder>: build the homepage project (NodeJS)                            │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/node:18.20.1-alpine3.19@sha256:6d9d5269cbe4088803e9ef81da62ac481c063b60cadbe8e628bfcbb12296d901 as builder
+FROM docker.io/library/node:18.20.2-alpine3.19@sha256:80338ff3fc4e989c1d5264a23223cec1c6014e812e584e825e78d1a98d893381 as builder
 
 # renovate: datasource=github-tags depName=gethomepage/homepage versioning=semver
 ARG HOMEPAGE_VERSION="v0.8.12"
@@ -62,7 +62,7 @@ RUN set -eux; \
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <runtime>: create the homepage runtime image using all previous stages    │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/node:18.20.1-alpine3.19@sha256:c7133fc43172ba308c2637488ec8f031ac5fed6e1832042c3a521ff16d995d6e as runtime
+FROM docker.io/library/node:18.20.2-alpine3.19@sha256:3bb0be4d2b8ff82fb25014db75686c1946bf4c51bd37a7e1208a7fc656988eba as runtime
 
 # renovate: datasource=github-tags depName=gethomepage/homepage versioning=semver
 ARG HOMEPAGE_VERSION="v0.8.12"
