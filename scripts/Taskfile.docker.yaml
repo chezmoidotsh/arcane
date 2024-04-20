@@ -111,9 +111,9 @@ tasks:
     label: docker:images:export ({{ .IMAGE }})
 
     requires:
-      vars: [IMAGE, DOCKER_CONTEXT]
+      vars: [BUILD_TYPE, IMAGE, DOCKER_CONTEXT]
     vars:
-      IMAGE_DEST: '{{ print .GIT_ROOT_DIR "/apps/images/" .IMAGE "/dist/" (.IMAGE) ".tar" | clean}}'
+      IMAGE_DEST: '{{ print .GIT_ROOT_DIR "/apps/images/" .IMAGE "/dist/" .BUILD_TYPE "/" .IMAGE ".tar" | clean}}'
 
     sources:
       - "{{ .IMAGE_DEST }}"
@@ -121,6 +121,7 @@ tasks:
     deps:
       - task: images:build
         vars:
+          BUILD_TYPE: "{{ .BUILD_TYPE }}"
           IMAGE: "{{ .IMAGE }}"
           DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
     cmds:
@@ -131,7 +132,7 @@ tasks:
     label: docker:images:export:all
 
     requires:
-      vars: [DOCKER_CONTEXT]
+      vars: [BUILD_TYPE, DOCKER_CONTEXT]
     vars:
       DOCKERFILES:
         sh: find "{{ .GIT_ROOT_DIR }}/apps/images/" -type f -name Dockerfile -printf '%P\n' 2> /dev/null | sort -u
@@ -140,6 +141,7 @@ tasks:
       - for: { var: DOCKERFILES, as: DOCKERFILE }
         task: images:export
         vars:
+          BUILD_TYPE: "{{ .BUILD_TYPE }}"
           DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
           DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
           IMAGE: "{{ .DOCKERFILE | dir }}"
@@ -185,6 +187,7 @@ tasks:
     deps:
       - task: images:export:all
         vars:
+          BUILD_TYPE: "live"
           DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
           DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
 
