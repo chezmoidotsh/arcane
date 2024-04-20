@@ -31,14 +31,14 @@ tasks:
   # -- Build Docker images
   images:build:
     desc: Build a docker image for the specified image
-    label: docker:images:build ({{ .IMAGE }}:{{ .BUILD_TYPE }})
+    label: docker:images:build ({{ .PROJECT }}/{{ .IMAGE }}:{{ .BUILD_TYPE }})
 
     requires:
-      vars: [IMAGE]
+      vars: [PROJECT, IMAGE]
     vars:
       BUILD_TYPE: '{{ .BUILD_TYPE | default "live" }}'
 
-      DOCKERFILE: '{{ print .GIT_ROOT_DIR "/apps/images/" .IMAGE "/Dockerfile" | clean }}'
+      DOCKERFILE: '{{ print .GIT_ROOT_DIR "/apps/" .PROJECT "/images/" .IMAGE "/Dockerfile" | clean }}'
       DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
 
       IMAGE_DIR: "{{ .DOCKERFILE | dir }}"
@@ -52,12 +52,17 @@ tasks:
     generates:
       - "{{ .IMAGE_DEST }}"
 
+    preconditions:
+      - &check_project_exists
+        sh: test -d '{{ print .GIT_ROOT_DIR "/apps/" .PROJECT }}'
+        msg: Project '{{ .PROJECT }}' does not exist
     cmds:
       - task: images:build:rec_guard
         vars:
-          IMAGE: '{{ (.IMAGE | default ".") | dir }}'
           BUILD_TYPE: "{{ .BUILD_TYPE }}"
           DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE }}"
+          IMAGE: '{{ (.IMAGE | default ".") | dir }}'
+          PROJECT: "{{ .PROJECT }}"
       - silent: true
         cmd: mkdir --parents "{{ .IMAGE_DEST | dir }}"
       # NOTE: In order to increase the speed of the build, we build the image
@@ -68,34 +73,39 @@ tasks:
           --label org.opencontainers.image.revision="$(git rev-parse HEAD)" \
           --label org.opencontainers.image.source="https://github.com/chezmoi-sh/nex.rpi/blob/$(git rev-parse --short HEAD)/{{ regexReplaceAll ".+(apps/.+?)" .DOCKERFILE "${1}" }}" \
           --build-arg BUILD_TYPE="{{ .BUILD_TYPE }}" \
-          --tag "{{ .OCI_REGISTRY }}/{{ .IMAGE }}:{{ .BUILD_TYPE }}" \
+          --tag "{{ .OCI_REGISTRY }}/{{ .PROJECT }}/{{ .IMAGE }}:{{ .BUILD_TYPE }}" \
           --file "{{ .DOCKERFILE }}" "{{ .IMAGE_DIR }}" {{ if eq .DOCKER_DISABLE_CACHE "true" }}--no-cache{{ end }}
-      - docker save --output "{{ .IMAGE_DEST }}" "{{ .OCI_REGISTRY }}/{{ .IMAGE }}:{{ .BUILD_TYPE }}"
+      - docker save --output "{{ .IMAGE_DEST }}" "{{ .OCI_REGISTRY }}/{{ .PROJECT }}/{{ .IMAGE }}:{{ .BUILD_TYPE }}"
 
   images:build:rec_guard:
     desc: Helper to prevent infinite recursion
     internal: true
     silent: true
     requires:
-      vars: [IMAGE, BUILD_TYPE, DOCKER_DISABLE_CACHE]
+      vars: [PROJECT, IMAGE, BUILD_TYPE, DOCKER_DISABLE_CACHE]
     status:
       - test "{{ .IMAGE }}" == "."
     cmds:
       - task: images:build
         vars:
-          IMAGE: "{{ .IMAGE }}"
           BUILD_TYPE: "{{ .BUILD_TYPE }}"
           DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE }}"
+          IMAGE: "{{ .IMAGE }}"
+          PROJECT: "{{ .PROJECT }}"
 
   images:build:all:
     desc: Build all docker images for the current project
-    label: docker:images:build:all
+    label: docker:images:build:all ({{ .PROJECT }})
 
+    requires:
+      vars: [PROJECT]
     vars:
       BUILD_TYPE: '{{ .BUILD_TYPE | default "live" }}'
       DOCKERFILES:
-        sh: find "{{ .GIT_ROOT_DIR }}/apps/images/" -type f -name Dockerfile -printf '%P\n' 2> /dev/null | sort -u
+        sh: find "{{ .GIT_ROOT_DIR }}/apps/{{ .PROJECT }}/images/" -type f -name Dockerfile -printf '%P\n' 2> /dev/null | sort -u
 
+    preconditions:
+      - *check_project_exists
     cmds:
       - for: { var: DOCKERFILES, as: DOCKERFILE }
         task: images:build
@@ -104,16 +114,17 @@ tasks:
           DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
           DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
           IMAGE: "{{ .DOCKERFILE | dir }}"
+          PROJECT: "{{ .PROJECT }}"
 
   # -- Export Docker images to the remote context
   images:export:
     desc: Export a docker image for the specified image to the remote context
-    label: docker:images:export ({{ .IMAGE }})
+    label: docker:images:export ({{ .PROJECT }}/{{ .IMAGE }})
 
     requires:
-      vars: [IMAGE, DOCKER_CONTEXT]
+      vars: [PROJECT, BUILD_TYPE, IMAGE, DOCKER_CONTEXT]
     vars:
-      IMAGE_DEST: '{{ print .GIT_ROOT_DIR "/apps/images/" .IMAGE "/dist/" (.IMAGE) ".tar" | clean}}'
+      IMAGE_DEST: '{{ print .GIT_ROOT_DIR "/apps/" .PROJECT "/images/" .IMAGE "/dist/" .BUILD_TYPE "/" .IMAGE ".tar" | clean }}'
 
     sources:
       - "{{ .IMAGE_DEST }}"
@@ -121,28 +132,36 @@ tasks:
     deps:
       - task: images:build
         vars:
-          IMAGE: "{{ .IMAGE }}"
+          BUILD_TYPE: "{{ .BUILD_TYPE }}"
           DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
+          IMAGE: "{{ .IMAGE }}"
+          PROJECT: "{{ .PROJECT }}"
+    preconditions:
+      - *check_project_exists
     cmds:
       - docker --context "{{ .DOCKER_CONTEXT }}" load --input "{{ .IMAGE_DEST }}"
 
   images:export:all:
     desc: Export all docker images for the current project to the remote context
-    label: docker:images:export:all
+    label: docker:images:export:all ({{ .PROJECT }})
 
     requires:
-      vars: [DOCKER_CONTEXT]
+      vars: [PROJECT, BUILD_TYPE, DOCKER_CONTEXT]
     vars:
       DOCKERFILES:
-        sh: find "{{ .GIT_ROOT_DIR }}/apps/images/" -type f -name Dockerfile -printf '%P\n' 2> /dev/null | sort -u
+        sh: find "{{ .GIT_ROOT_DIR }}/apps/{{ .PROJECT }}/images/" -type f -name Dockerfile -printf '%P\n' 2> /dev/null | sort -u
 
+    preconditions:
+      - *check_project_exists
     cmds:
       - for: { var: DOCKERFILES, as: DOCKERFILE }
         task: images:export
         vars:
+          BUILD_TYPE: "{{ .BUILD_TYPE }}"
           DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
           DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
           IMAGE: "{{ .DOCKERFILE | dir }}"
+          PROJECT: "{{ .PROJECT }}"
 
   # ┌───────────────────────────────────────────────────────────────────────────┐
   # │ Docker service management                                                 │
@@ -151,66 +170,94 @@ tasks:
   # -- List all services
   services:list:
     desc: List all defined services (aka. apps)
-    label: docker:services:list
+    label: docker:services:list ({{ .PROJECT }})
     aliases: [services, services:ls]
 
-    silent: true
+    requires:
+      vars: [PROJECT]
+
+    preconditions:
+      - *check_project_exists
     cmds:
-      - docker compose --file "{{ .GIT_ROOT_DIR }}/apps/docker-compose.yml" config --format json | jq '.services | keys[]' --raw-output
+      - docker compose --file "{{ .GIT_ROOT_DIR }}/apps/{{ .PROJECT }}/docker-compose.yml" config --format json | jq '.services | keys[]' --raw-output
+    silent: true
+    env:
+      COMPOSE_FILE: '{{ .DOCKER_COMPOSE_FILE }}'
 
   # -- Fetch status of all services
   services:status:
     desc: Fetch the status of all services
-    label: docker:services:status
+    label: docker:services:status ({{ .PROJECT }})
 
     requires:
-      vars: [DOCKER_CONTEXT]
+      vars: [DOCKER_CONTEXT, PROJECT]
     vars:
-      DOCKER_COMPOSE_FILE: '{{ print .GIT_ROOT_DIR "/apps/docker-compose.yml" | clean }}'
+      DOCKER_COMPOSE_FILE: '{{ print .GIT_ROOT_DIR "/apps/" .PROJECT "/docker-compose.yml" | clean }}'
 
+    preconditions:
+      - *check_project_exists
     cmds:
-      - docker --context "{{ .DOCKER_CONTEXT }}" compose --file "{{ .DOCKER_COMPOSE_FILE }}" ps --format "table {{ "{{" }} .Service }}\t{{ "{{" }} .State }} {{ "{{" }} with .Health }}({{ "{{" }} . }}){{ "{{" }} end }}\t{{ "{{" }} .CreatedAt }}"
+      - docker compose ps --format "table {{ "{{" }} .Service }}\t{{ "{{" }} .State }} {{ "{{" }} with .Health }}({{ "{{" }} . }}){{ "{{" }} end }}\t{{ "{{" }} .CreatedAt }}"
+    env:
+      DOCKER_CONTEXT: '{{ .DOCKER_CONTEXT }}'
+      COMPOSE_FILE: '{{ .DOCKER_COMPOSE_FILE }}'
+      COMPOSE_PROJECT_NAME: '{{ .PROJECT | replace "." "_" }}'
 
   # -- Deploy all services
   services:deploy:all:
     desc: Deploy all services to the remote context
-    label: docker:services:deploy:all
+    label: docker:services:deploy:all ({{ .PROJECT }})
     aliases: [services:deploy]
 
     requires:
-      vars: [DOCKER_CONTEXT]
+      vars: [DOCKER_CONTEXT, PROJECT]
     vars:
-      DOCKER_COMPOSE_FILE: '{{ print .GIT_ROOT_DIR "/apps/docker-compose.yml" | clean }}'
+      DOCKER_COMPOSE_FILE: '{{ print .GIT_ROOT_DIR "/apps/" .PROJECT "/docker-compose.yml" | clean }}'
 
     deps:
       - task: images:export:all
         vars:
+          BUILD_TYPE: "live"
           DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
           DOCKER_DISABLE_CACHE: "{{ .DOCKER_DISABLE_CACHE | default false }}"
-
+          PROJECT: "{{ .PROJECT }}"
+    preconditions:
+      - *check_project_exists
     cmds:
-      - docker --context "{{ .DOCKER_CONTEXT }}" compose --file "{{ .DOCKER_COMPOSE_FILE }}" up --detach --no-build --remove-orphans
-      - docker --context "{{ .DOCKER_CONTEXT }}" system prune --force
+      - docker compose up --detach --no-build --remove-orphans
+      - docker system prune --force
       - task: services:status
         vars:
           DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
+          PROJECT: "{{ .PROJECT }}"
+    env:
+      DOCKER_CONTEXT: '{{ .DOCKER_CONTEXT }}'
+      COMPOSE_FILE: '{{ .DOCKER_COMPOSE_FILE }}'
+      COMPOSE_PROJECT_NAME: '{{ .PROJECT | replace "." "_" }}'
 
   # -- Teardown all services
   services:teardown:all:
     desc: Teardown all services in the remote context
-    label: docker:services:teardown:all
+    label: docker:services:teardown:all ({{ .PROJECT }})
     aliases: [services:teardown]
 
     requires:
-      vars: [DOCKER_CONTEXT]
+      vars: [DOCKER_CONTEXT, PROJECT]
     vars:
-      DOCKER_COMPOSE_FILE: '{{ print .GIT_ROOT_DIR "/apps/docker-compose.yml" | clean }}'
+      DOCKER_COMPOSE_FILE: '{{ print .GIT_ROOT_DIR "/apps/" .PROJECT "/docker-compose.yml" | clean }}'
 
+    preconditions:
+      - *check_project_exists
     cmds:
-      - docker --context "{{ .DOCKER_CONTEXT }}" compose --file "{{ .DOCKER_COMPOSE_FILE }}" down --remove-orphans
+      - docker compose down --remove-orphans
       - task: services:status
         vars:
           DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
+          PROJECT: "{{ .PROJECT }}"
+    env:
+      DOCKER_CONTEXT: '{{ .DOCKER_CONTEXT }}'
+      COMPOSE_FILE: '{{ .DOCKER_COMPOSE_FILE }}'
+      COMPOSE_PROJECT_NAME: '{{ .PROJECT | replace "." "_" }}'
 
   # ┌───────────────────────────────────────────────────────────────────────────┐
   # │ Docker CI management                                                      │
@@ -219,25 +266,29 @@ tasks:
   # -- Run goss tests for the specified image
   goss:run:
     desc: Run goss tests for the specified image
-    label: docker:goss:run ({{ .IMAGE }})
+    label: docker:goss:run ({{ .PROJECT }}/{{ .IMAGE }})
     aliases: [ci]
 
     requires:
-      vars: [IMAGE]
+      vars: [PROJECT, IMAGE]
     vars:
       GOSS_OPTS: '{{ .GOSS_OPTS | default "" }}'
       GOSS_SLEEP: '{{ .GOSS_SLEEP | default "2.5" }}'
 
+    preconditions:
+      - *check_project_exists
     cmds:
       - task: images:build
         vars:
-          IMAGE: "{{ .IMAGE }}"
           BUILD_TYPE: ci
+          IMAGE: "{{ .IMAGE }}"
+          PROJECT: "{{ .PROJECT }}"
       - task: goss:run:_
         vars:
           GOSS_OPTS: "{{ .GOSS_OPTS }}"
           GOSS_SLEEP: "{{ .GOSS_SLEEP }}"
           IMAGE: "{{ .IMAGE }}"
+          PROJECT: "{{ .PROJECT }}"
 
   # NOTE: This task is not meant to be used directly, it's a helper task for
   #       the `goss:run` task in which we need to run the goss tests.
@@ -246,29 +297,31 @@ tasks:
     internal: true
 
     requires:
-      vars: [IMAGE, GOSS_OPTS, GOSS_SLEEP]
+      vars: [PROJECT, IMAGE, GOSS_OPTS, GOSS_SLEEP]
     status:
-      - '! test -f {{ print .GIT_ROOT_DIR "/apps/images/" .IMAGE "/ci/goss.yaml" | clean }}'
+      - '! test -f {{ print .GIT_ROOT_DIR "/apps/" .PROJECT "/images/" .IMAGE "/ci/goss.yaml" | clean }}'
 
     cmds:
       - dcgoss run {{ .IMAGE | replace "/" "_" }}
     env:
       GOSS_OPTS: '{{ .GOSS_OPTS | default "" }}'
       GOSS_SLEEP: "{{ .GOSS_SLEEP }}"
-    dir: '/{{ print .GIT_ROOT_DIR "/apps/images/" .IMAGE "/ci" | clean }}'
+    dir: '/{{ print .GIT_ROOT_DIR "/apps/" .PROJECT "/images/" .IMAGE "/ci" | clean }}'
 
   # -- Run goss tests for all images
   goss:run:all:
     desc: Run goss tests for all images
-    label: docker:goss:run:all
+    label: docker:goss:run:all ({{ .PROJECT }})
     aliases: [ci:all]
 
     requires:
-      vars: [DOCKER_CONTEXT]
+      vars: [DOCKER_CONTEXT, PROJECT]
     vars:
       GOSS_FILES:
-        sh: find "apps/images/" -type f -name goss.yaml -printf '%P\n' 2> /dev/null | sort -u
+        sh: find "{{ .GIT_ROOT_DIR }}/apps/{{ .PROJECT }}/images/" -type f -name goss.yaml -printf '%P\n' 2> /dev/null | sort -u
 
+    preconditions:
+      - *check_project_exists
     cmds:
       - for: { var: GOSS_FILES, as: GOSS_FILE }
         task: ci
@@ -276,30 +329,35 @@ tasks:
           DOCKER_CONTEXT: "{{ .DOCKER_CONTEXT }}"
           IMAGE: "{{ .GOSS_FILE | dir | dir }}"
           GOSS_SLEEP: '{{ .GOSS_SLEEP | default "2.5" }}'
+          PROJECT: "{{ .PROJECT }}"
 
   # -- Add/Update goss tests for the specified image
   goss:edit:
     desc: Add/Update goss tests for the specified image
-    label: docker:goss:edit ({{ .IMAGE }})
+    label: docker:goss:edit ({{ .PROJECT }}/{{ .IMAGE }})
     aliases: [ci:edit]
 
     requires:
-      vars: [IMAGE]
+      vars: [PROJECT, IMAGE]
     vars:
       UID:
         sh: id --user
       GID:
         sh: id --group
 
+    preconditions:
+      - *check_project_exists
     cmds:
       - task: images:build
         vars:
           BUILD_TYPE: ci
           IMAGE: "{{ .IMAGE }}"
+          PROJECT: "{{ .PROJECT }}"
       - task: goss:edit:_
         vars:
           GID: "{{ .GID }}"
           IMAGE: "{{ .IMAGE }}"
+          PROJECT: "{{ .PROJECT }}"
           UID: "{{ .UID }}"
 
   # NOTE: This task is not meant to be used directly, it's a helper task for
@@ -312,10 +370,10 @@ tasks:
     internal: true
 
     requires:
-      vars: [IMAGE, UID, GID]
+      vars: [PROJECT, IMAGE, UID, GID]
 
     cmds:
       - dcgoss edit {{ .IMAGE | replace "/" "_" }}
-    dir: '/{{ print .GIT_ROOT_DIR "/apps/images/" .IMAGE "/ci" | clean }}'
+    dir: '/{{ print .GIT_ROOT_DIR "/apps/" .PROJECT "/images/" .IMAGE "/ci" | clean }}'
     ignore_error: true
     interactive: true
