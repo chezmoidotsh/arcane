@@ -15,10 +15,7 @@ name: Validate infrastructure (Terraform)
 
 on:
   merge_group: {}
-  pull_request:
-    paths:
-      - ./.github/workflows/merge_group,pull_request.terraform.validate.yaml
-      - infrastructure/live/external/**
+  pull_request: {}
 
 permissions: {}
 
@@ -30,11 +27,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - uses: tj-actions/verify-changed-files@d774a4c7ebe335445d79c7b44138f56a76058ba0 # v19.0.0
+        id: verify-changed-files
+        with:
+          files: |
+            .github/workflows/merge_group,pull_request.terraform.validate.yaml
+            infrastructure/live/external/**
+
       - uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36 # v3.0.0
+        if: steps.verify-changed-files.outputs.files-changed == 'true'
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
       - name: Validate Terraform files
+        if: steps.verify-changed-files.outputs.files-changed == 'true'
         run: |
           terraform init
           terraform validate

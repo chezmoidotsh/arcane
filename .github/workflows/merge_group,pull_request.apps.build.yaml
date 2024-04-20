@@ -15,9 +15,7 @@ name: Validate (Docker)
 
 on:
   merge_group: {}
-  pull_request:
-    paths:
-      - apps/images/**
+  pull_request: {}
 
 env:
   ASDF_DIR: /home/runner/.asdf
