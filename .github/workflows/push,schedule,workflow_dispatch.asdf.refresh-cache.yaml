@@ -28,7 +28,7 @@ jobs:
           fetch-depth: 0
 
       - uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3.0.2
-      - uses: actions/cache/save@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+      - uses: actions/cache/save@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ env.ASDF_DIR }}
           key: asdf-vm-${{ hashFiles('.tool-versions') }}
@@ -39,7 +39,7 @@ jobs:
     permissions: {}
     needs: refresh_cache
     steps:
-      - uses: actions/cache/restore@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # v4.0.0
+      - uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           fail-on-cache-miss: true
           key: asdf-vm-${{ hashFiles('.tool-versions') }}
