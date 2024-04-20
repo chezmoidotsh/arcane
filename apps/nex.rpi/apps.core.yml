@@ -12,8 +12,6 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 # ---
-version: "3.8"
-
 networks:
   # NOTE: The caddy-internal network is used to allow Caddy to communicate with
   #       other services without exposing them to the public internet.
