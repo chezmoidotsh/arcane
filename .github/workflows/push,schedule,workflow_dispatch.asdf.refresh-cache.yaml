@@ -1,5 +1,5 @@
 ---
-name: Refresh cache (asdf)
+name: ♻️ Refresh ASDF cache
 on: # yamllint disable-line rule:truthy
   push:
     branches: [main]
@@ -18,28 +18,32 @@ env:
 
 jobs:
   refresh_cache:
-    name: Refresh cache
+    name: ♻️ Refresh cache
     permissions:
       contents: read
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           fetch-depth: 0
 
-      - uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3.0.2
-      - uses: actions/cache/save@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      - name: 🚧 Install required tools
+        uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3.0.2
+      - name: 📦️ Cache all installed tools
+        uses: actions/cache/save@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ${{ env.ASDF_DIR }}
           key: asdf-vm-${{ hashFiles('.tool-versions') }}
 
   validate-cache:
-    name: Validate cache exists
+    name: ✅ Validate cache exists
     runs-on: ubuntu-latest
     permissions: {}
     needs: refresh_cache
     steps:
-      - uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      - name: 📦️ Restore cached tools
+        uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           fail-on-cache-miss: true
           key: asdf-vm-${{ hashFiles('.tool-versions') }}
