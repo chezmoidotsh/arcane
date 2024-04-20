@@ -19,7 +19,7 @@ services:
   # │ Docs: https://www.authelia.com/docs/                                      │
   # └───────────────────────────────────────────────────────────────────────────┘
   oidc-provider:
-    image: localhost/alpine/authelia:stable
+    image: localhost/alpine/authelia:live
     cap_drop:
       - ALL
     networks:
@@ -37,7 +37,7 @@ services:
   # │ Docs: https://github.com/xunleii/yaldap/                                  │
   # └───────────────────────────────────────────────────────────────────────────┘
   ldap:
-    image: localhost/alpine/yaldap:stable
+    image: localhost/alpine/yaldap:live
     cap_drop:
       - ALL
     networks:

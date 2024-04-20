@@ -55,6 +55,7 @@ rules:
       - apps-caddy
       - apps-gatus
       - apps-homer
+      - apps-homepage
       - apps-tailscale
       - apps-yaldap
       - dependencies

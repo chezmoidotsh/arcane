@@ -1,0 +1,14 @@
+# ignore everything in the root by default ...
+*
+**/*
+
+# ... except the CI configuration
+!ci/config/
+
+# ... except for these files
+!live/config/assets/
+!live/config/bookmarks.yaml
+!live/config/custom.css
+!live/config/services.yaml
+!live/config/settings.yaml
+!live/config/widgets.yaml
