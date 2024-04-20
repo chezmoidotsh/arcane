@@ -19,7 +19,7 @@ services:
   # │ Docs: https://gethomepage.dev/latest/                                             │
   # └───────────────────────────────────────────────────────────────────────────────────┘
   home-dashboard:
-    image: localhost/alpine/homepage:stable
+    image: localhost/alpine/homepage:live
     # cap_add:
     #   - NET_RAW
     cap_drop:
@@ -40,7 +40,7 @@ services:
   # │ Docs: https://gatus.io/docs                                               │
   # └───────────────────────────────────────────────────────────────────────────┘
   status-page:
-    image: localhost/alpine/gatus:stable
+    image: localhost/alpine/gatus:live
     cap_drop:
       - ALL
     networks:
