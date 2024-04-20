@@ -21,7 +21,7 @@ ARG BUILD_TYPE "live"
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder>: build the homepage project (NodeJS)                            │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/node:18.20.1-alpine3.19@sha256:c7133fc43172ba308c2637488ec8f031ac5fed6e1832042c3a521ff16d995d6e as builder
+FROM docker.io/library/node:18.20.1-alpine3.19@sha256:6d9d5269cbe4088803e9ef81da62ac481c063b60cadbe8e628bfcbb12296d901 as builder
 
 # renovate: datasource=github-tags depName=gethomepage/homepage versioning=semver
 ARG HOMEPAGE_VERSION="v0.8.11"
