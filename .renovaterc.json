@@ -31,7 +31,7 @@
     },
     {
       "dependencyDashboardApproval": true,
-      "matchFileNames": ["Dockerfile"]
+      "matchFileNames": ["**/Dockerfile"]
     }
   ],
   "semanticCommits": "disabled",
