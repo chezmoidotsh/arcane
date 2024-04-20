@@ -4,7 +4,6 @@
   "extends": [
     ":automergeAll",
     ":automergeRequireAllStatusChecks",
-    ":dependencyDashboardApproval",
     ":gitSignOff",
     "config:best-practices",
     "regexManagers:dockerfileVersions",
@@ -29,6 +28,10 @@
     {
       "commitMessagePrefix": ":arrow_up: (dependencies):",
       "matchUpdateTypes": ["minor", "patch", "digest", "bump", "replacement"]
+    },
+    {
+      "dependencyDashboardApproval": true,
+      "matchFileNames": ["Dockerfile"]
     }
   ],
   "semanticCommits": "disabled",
