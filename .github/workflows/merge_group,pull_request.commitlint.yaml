@@ -11,7 +11,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ---
-name: Validate Commit (Compliance)
+name: 💚 Validate Commit Compliancy
 
 on:
   merge_group: {}
@@ -21,20 +21,22 @@ permissions: {}
 
 jobs:
   commitlint:
-    name: Check the commits message format
+    name: ✅ Validate commits message format
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+      - name: 🚧 Prepare NodeJS environment
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
           cache: npm
-      - name: Install all dependencies
+      - name: 🚧 Install all dependencies
         run: npm ci
 
-      - name: Validate all PR commits
+      - name: ✅ Validate all PR commits
         if: github.event_name == 'pull_request'
         run: |
           npx commitlint \
@@ -43,6 +45,6 @@ jobs:
             --verbose
 
       # NOTE: This is a workaround to make commitlint required on PRs but optional on merge groups
-      - name: Allow merge group to pass
+      - name: 🙈 Allow merge group to pass
         if: github.event_name == 'merge_group'
         run: exit 0

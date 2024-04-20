@@ -11,7 +11,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ---
-name: Security hardening (Github Actions workflows)
+name: 🔒️ Security hardening (Github Actions workflows)
 
 on:
   merge_group: {}
@@ -23,14 +23,15 @@ permissions: {}
 
 jobs:
   ci_harden_security:
-    name: Github Action security hardening
+    name: 🔒️ Github Action security hardening
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - name: Lint Github Actions
+      - name: 📄 Lint Github Actions
         run: |
           curl -O https://raw.githubusercontent.com/rhysd/actionlint/main/.github/actionlint-matcher.json
 
@@ -38,5 +39,5 @@ jobs:
           bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
           ./actionlint -color
 
-      - name: Ensure SHA pinned actions
+      - name: ✅ Ensure SHA pinned actions
         uses: zgosalvez/github-actions-ensure-sha-pinned-actions@19ebcb0babbd282ae1822a0b9c28f3f1f25cea45 # v3.0.4

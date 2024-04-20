@@ -11,7 +11,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 ---
-name: Refresh Trunk cache
+name: ♻️ Refresh Trunk cache
 
 on:
   push:
@@ -22,14 +22,16 @@ permissions: {}
 
 jobs:
   trunk-cache:
-    name: Refresh Trunk cache
+    name: ♻️ Refresh Trunk cache
     runs-on: ubuntu-latest
     permissions:
       contents: read
       actions: write
 
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - uses: trunk-io/trunk-action@da67635060feab46c164bc130690e61864a5d13b # v1.1.13
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: 📦️ Populate cache with Trunk
+        uses: trunk-io/trunk-action@da67635060feab46c164bc130690e61864a5d13b # v1.1.13
         with:
           check-mode: populate_cache_only
