@@ -1,0 +1,10 @@
+# ignore everything in the root by default ...
+*
+**/*
+
+# ... except the CI configuration
+!ci/config/
+
+# ... and what is required for this image
+!entrypoint.sh
+!live/config/AdGuardHome.yaml
