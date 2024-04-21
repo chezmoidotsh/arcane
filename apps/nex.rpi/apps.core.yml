@@ -18,6 +18,10 @@ networks:
   caddy-internal:
     name: caddy-internal
     internal: true
+    ipam:
+      config:
+        - subnet: 172.23.0.0/16
+          gateway: 172.23.0.1
 
 services:
   # ┌───────────────────────────────────────────────────────────────────────────┐
@@ -37,6 +41,31 @@ services:
     restart: unless-stopped
     volumes:
       - /run/user/1000/docker/containerd/containerd.sock:/var/run/docker.sock
+
+  # ┌───────────────────────────────────────────────────────────────────────────┐
+  # │ AdGuardHome - Network-wide ads & trackers blocking DNS server             │
+  # │                                                                           │
+  # │ Docs: https://github.com/AdguardTeam/AdGuardHome                          │
+  # └───────────────────────────────────────────────────────────────────────────┘
+  dns:
+    cap_drop:
+      - ALL
+    image: localhost/alpine/adguardhome:live
+    networks:
+      caddy-internal:
+      default: # NOTE: This is required to allow AdGuardHome to communicate with external DNS servers
+    ports:
+      - 53:3053/udp # DNS
+      - 53:3053/tcp # DNS
+      - 853:3853/tcp # DNS over TLS
+      - 853:3853/udp # DNS over QUIC
+    read_only: true
+    restart: unless-stopped
+    tmpfs:
+      - /etc/adguardhome:exec,uid=64138,gid=64138
+    volumes:
+      - adguardhome-persistent:/var/lib/adguardhome
+      - shared-certificates:/var/lib/caddy/certificates
 
   # ┌───────────────────────────────────────────────────────────────────────────┐
   # | TailScale - Secure network access for your team                           |
@@ -65,7 +94,7 @@ services:
       - net.ipv4.conf.all.forwarding=1
       - net.ipv6.conf.all.forwarding=1
     tmpfs:
-      - /var/run/tailscale
+      - /var/run/tailscale:exec,uid=64241,gid=64241
     volumes:
       - tailscale-persistent:/var/lib/tailscale
 
@@ -94,12 +123,13 @@ services:
     read_only: true
     restart: unless-stopped
     tmpfs:
-      - /var/lib/caddy/caddy
-      - /tmp/souin-nuts
+      - /var/lib/caddy/caddy:exec,uid=64138,gid=64138
+      - /tmp/souin-nuts:exec,uid=64138,gid=64138
     volumes:
       - caddy-persistent:/var/lib/caddy
       - shared-certificates:/var/lib/caddy/certificates
 
 volumes:
+  adguardhome-persistent:
   caddy-persistent:
   tailscale-persistent:

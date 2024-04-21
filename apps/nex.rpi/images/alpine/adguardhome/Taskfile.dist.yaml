@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+---
+# Copyright 2024
+#
+# Everyone is permitted to copy, distribute, modify, merge, sell, publish,
+# sublicense or whatever the fuck they want with this software but at their
+# OWN RISK.
+# The author has absolutely no fucking clue what the code in this project
+# does. It might just fucking work or not, there is no third option.
+#
+# IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+# ---
+version: 3
+
+includes:
+  _:
+    taskfile: ../../../../Taskfile.dist.yaml
+    internal: true
+
+tasks:
+  agh:build:
+    desc: Build AdGuardHome `production-ready` image
+    cmds:
+      - task: _:docker:images:build
+        vars:
+          IMAGE: alpine/adguardhome
+          BUILD_TYPE: live
+
+  agh:test:
+    desc: Test AdGuardHome image
+    cmds:
+      - task: _:docker:goss:run
+        vars:
+          IMAGE: alpine/adguardhome
+
+  agh:dev:
+    desc: Run an AdGuardHome instance to quickly edit the configuration using the UI
+    interactive: true
+    cmds:
+      - task: agh:build
+      - |
+        docker run --rm --detach \
+          --name adguardhome-dev \
+          --publish 3000:3000 --publish 3053:3053 \
+          localhost/alpine/adguardhome:live
+      - defer: docker stop adguardhome-dev
+      - cmd: xdg-open http://localhost:3000
+        ignore_error: true
+      - cmd: docker logs --follow adguardhome-dev
+        ignore_error: true
+      - docker exec adguardhome-dev cat /etc/adguardhome/AdGuardHome.yaml > live/config/AdGuardHome.updated.yaml
