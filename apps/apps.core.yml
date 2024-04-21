@@ -39,6 +39,31 @@ services:
       - /run/user/1000/docker/containerd/containerd.sock:/var/run/docker.sock
 
   # ┌───────────────────────────────────────────────────────────────────────────┐
+  # │ AdGuardHome - Network-wide ads & trackers blocking DNS server             │
+  # │                                                                           │
+  # │ Docs: https://github.com/AdguardTeam/AdGuardHome                          │
+  # └───────────────────────────────────────────────────────────────────────────┘
+  dns:
+    cap_drop:
+      - ALL
+    image: localhost/alpine/adguardhome:live
+    networks:
+      caddy-internal:
+      default: # NOTE: This is required to allow AdGuardHome to communicate with external DNS servers
+    ports:
+      - 53:3053/udp # DNS
+      - 53:3053/tcp # DNS
+      - 853:3853/tcp # DNS over TLS
+      - 853:3853/udp # DNS over QUIC
+    read_only: true
+    restart: unless-stopped
+    tmpfs:
+      - /etc/adguardhome:exec,uid=64138,gid=64138
+    volumes:
+      - adguardhome-persistent:/var/lib/adguardhome
+      - shared-certificates:/var/lib/caddy/certificates
+
+  # ┌───────────────────────────────────────────────────────────────────────────┐
   # | TailScale - Secure network access for your team                           |
   # |                                                                           |
   # | Docs: https://tailscale.com/                                              |
@@ -101,5 +126,6 @@ services:
       - shared-certificates:/var/lib/caddy/certificates
 
 volumes:
+  adguardhome-persistent:
   caddy-persistent:
   tailscale-persistent:

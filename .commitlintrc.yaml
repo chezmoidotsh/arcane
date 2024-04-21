@@ -49,6 +49,7 @@ rules:
     - 2 # considered as an error
     - always
     - - apps
+      - apps-adguardhome
       - apps-alpine
       - apps-authelia
       - apps-autoheal
