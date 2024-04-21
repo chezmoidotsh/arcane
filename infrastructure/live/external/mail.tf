@@ -29,8 +29,12 @@ resource "aws_ses_email_identity" "allowed_identities" {
 # --<Policies configuration>----------------------------------------------------
 data "aws_iam_policy_document" "transaction_mailer" {
   statement {
-    actions   = ["ses:SendEmail", "ses:SendRawEmail"]
-    resources = [for _, id in aws_ses_email_identity.allowed_identities : id.arn]
+    actions = ["ses:SendEmail", "ses:SendRawEmail"]
+    resources = concat(
+      [aws_ses_email_identity.noreply.arn],
+      [for _, id in aws_ses_email_identity.allowed_identities : id.arn],
+    )
+
     condition {
       test     = "StringEquals"
       variable = "ses:FromAddress"
