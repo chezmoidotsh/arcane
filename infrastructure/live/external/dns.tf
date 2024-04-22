@@ -29,9 +29,11 @@ module "dns" {
 
   records = [
     { type = "A", name = "*.nex-rpi", value = var.main_ip, comment = "Securised SBC for critical services" },
-    { type = "CNAME", name = "home", value = "home.nex-rpi.${var.dns_zone}", ttl = 3600, comment = "Static homepage" },
-    { type = "CNAME", name = "sso", value = "sso.nex-rpi.${var.dns_zone}", ttl = 3600, comment = "Single sign-on instance" },
+
+    { type = "CNAME", name = "dns", value = "dns.nex-rpi.${var.dns_zone}", ttl = 3600, comment = "Local AdGuardHome instance" },
+    { type = "CNAME", name = "home", value = "home.nex-rpi.${var.dns_zone}", ttl = 3600, comment = "Home dashboard" },
     { type = "CNAME", name = "ldap.sso", value = "sso.nex-rpi.${var.dns_zone}", ttl = 3600, comment = "LDAP instance" },
+    { type = "CNAME", name = "sso", value = "sso.nex-rpi.${var.dns_zone}", ttl = 3600, comment = "Single sign-on instance" },
     { type = "CNAME", name = "status", value = "status.nex-rpi.${var.dns_zone}", ttl = 3600, comment = "Status page" },
   ]
 }
