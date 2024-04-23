@@ -28,7 +28,7 @@ services:
       LOG_LEVEL: debug
       LOG_TARGETS: stdout
     networks:
-      caddy-internal:
+      caddy_internal:
       default: # NOTE: Required for 3rd-party services to fetch API
     read_only: true
     restart: unless-stopped
@@ -44,7 +44,7 @@ services:
     cap_drop:
       - ALL
     networks:
-      caddy-internal:
+      caddy_internal:
       default: # NOTE: Required for 3rd-party services to receive alerts
     read_only: true
     restart: unless-stopped
