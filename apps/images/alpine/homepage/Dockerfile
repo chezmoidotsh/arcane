@@ -13,6 +13,7 @@
 # ---
 # trunk-ignore-all(hadolint/DL3025)
 # trunk-ignore-all(terrascan/AC_DOCKER_0041,terrascan/AC_DOCKER_0047,terrascan/AC_DOCKER_00024)
+# trunk-ignore-all(terrascan/AC_DOCKER_0001,hadolint/DL3029)
 
 # This argument is used to define the build type (live or ci). It is overridden
 # by the build system to point to the correct directory (CI or build).
@@ -62,7 +63,7 @@ RUN set -eux; \
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <runtime>: create the homepage runtime image using all previous stages    │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/node:21.7.3-alpine3.19@sha256:6d0f18a1c67dc218c4af50c21256616286a53c09e500fadf025b6d342e1c90ae as runtime
+FROM --platform=arm64 docker.io/library/node:21.7.3-alpine3.19@sha256:6d0f18a1c67dc218c4af50c21256616286a53c09e500fadf025b6d342e1c90ae as runtime
 
 # renovate: datasource=github-tags depName=gethomepage/homepage versioning=semver
 ARG HOMEPAGE_VERSION="v0.8.12"
