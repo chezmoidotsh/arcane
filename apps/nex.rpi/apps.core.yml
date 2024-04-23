@@ -13,10 +13,10 @@
 # DEALINGS IN THE SOFTWARE.
 # ---
 networks:
-  # NOTE: The caddy-internal network is used to allow Caddy to communicate with
+  # NOTE: The caddy_internal network is used to allow Caddy to communicate with
   #       other services without exposing them to the public internet.
-  caddy-internal:
-    name: caddy-internal
+  caddy_internal:
+    name: caddy_internal
     internal: true
     ipam:
       config:
@@ -52,7 +52,7 @@ services:
       - ALL
     image: localhost/alpine/adguardhome:live
     networks:
-      caddy-internal:
+      caddy_internal:
       default: # NOTE: This is required to allow AdGuardHome to communicate with external DNS servers
     ports:
       - 53:3053/udp # DNS
@@ -114,7 +114,7 @@ services:
       - host.docker.internal:172.22.0.1
     image: localhost/alpine/caddy:live
     networks:
-      caddy-internal:
+      caddy_internal:
       default: # NOTE: This is required to allow Caddy to communicate with 3rd party services (e.g. Let's Encrypt)
     ports:
       - 80:8080 # HTTP

@@ -23,7 +23,7 @@ services:
     cap_drop:
       - ALL
     networks:
-      caddy-internal:
+      caddy_internal:
       default: # NOTE: required for 3rd-party integrations
     volumes:
       - authelia-persistent:/var/lib/authelia
@@ -41,8 +41,8 @@ services:
     cap_drop:
       - ALL
     networks:
-      # NOTE: disable all communication to outside the caddy-internal network
-      caddy-internal:
+      # NOTE: disable all communication to outside the caddy_internal network
+      caddy_internal:
     read_only: true
     restart: unless-stopped
     user: yaldap
