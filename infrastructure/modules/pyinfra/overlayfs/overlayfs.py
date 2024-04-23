@@ -48,6 +48,7 @@ def disable_overlayfs():
     )
 
     server.reboot(name="Reboot to apply changes")
+    server.shell(name="Wait for system to synchronize date", commands=["sleep 30"])
 
 
 class OverlayFSEnabled(FactBase):

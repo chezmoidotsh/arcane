@@ -35,7 +35,7 @@ services:
     environment:
       AUTOHEAL_CONTAINER_LABEL: all
       AUTOHEAL_START_PERIOD: 60
-    image: localhost/alpine/autoheal:live
+    image: localhost/nex.rpi/alpine/autoheal:live
     network_mode: none
     read_only: true
     restart: unless-stopped
@@ -50,7 +50,7 @@ services:
   dns:
     cap_drop:
       - ALL
-    image: localhost/alpine/adguardhome:live
+    image: localhost/nex.rpi/alpine/adguardhome:live
     networks:
       caddy_internal:
       default: # NOTE: This is required to allow AdGuardHome to communicate with external DNS servers
@@ -80,12 +80,15 @@ services:
       - ALL
     devices:
       - /dev/net/tun
+    dns:
+      - 9.9.9.9
+      - 1.1.1.1
     environment:
       TS_AUTHKEY: ${TS_AUTHKEY}
       TS_HOSTNAME: nex-pi-chezmoish
       TS_STATE_DIR: /var/lib/tailscale
       TS_EXTRA_ARGS: --advertise-routes=10.0.0.0/8
-    image: localhost/alpine/tailscale:live
+    image: localhost/nex.rpi/alpine/tailscale:live
     networks:
       default: # NOTE: This is required to allow Tailscale to communicate with internet (VPN)
     read_only: true
@@ -112,7 +115,7 @@ services:
       - 2019 # metrics
     extra_hosts:
       - host.docker.internal:172.22.0.1
-    image: localhost/alpine/caddy:live
+    image: localhost/nex.rpi/alpine/caddy:live
     networks:
       caddy_internal:
       default: # NOTE: This is required to allow Caddy to communicate with 3rd party services (e.g. Let's Encrypt)
