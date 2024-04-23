@@ -80,6 +80,9 @@ services:
       - ALL
     devices:
       - /dev/net/tun
+    dns:
+      - 9.9.9.9
+      - 1.1.1.1
     environment:
       TS_AUTHKEY: ${TS_AUTHKEY}
       TS_HOSTNAME: nex-pi-chezmoish

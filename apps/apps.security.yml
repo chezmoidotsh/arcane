@@ -22,6 +22,9 @@ services:
     image: localhost/alpine/authelia:live
     cap_drop:
       - ALL
+    dns:
+      - 9.9.9.9
+      - 1.1.1.1
     networks:
       caddy_internal:
       default: # NOTE: required for 3rd-party integrations

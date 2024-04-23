@@ -13,6 +13,7 @@
 # ---
 import packages.nut as nut
 import packages.overlayfs as overlayfs
+from pyinfra.operations import files, server
 
 with overlayfs.TemporaryDisableOverlayFS():
     nut.install(
@@ -23,4 +24,29 @@ with overlayfs.TemporaryDisableOverlayFS():
             "config/etc.nut/upsd.users",
         ],
         _sudo=True,
+    )
+
+    # TODO: Add proper installation of docker-rootless
+    files.put(
+        name="Configure rootless-docker service",
+        src="config/HOME.config.systemd.user.docker.service.d/override.conf",
+        dest="/home/pi/.config/systemd/user/docker.service.d/override.conf",
+        user="pi",
+        group="pi",
+        mode=True,
+    )
+
+    server.sysctl(
+        name="Allow to route PING packets",
+        key="net.ipv4.ping_group_range",
+        value="0 2147483647",
+        persist=True,
+        persist_file="/etc/sysctl.d/99-docker-rootless-overrides.conf",
+    )
+    server.sysctl(
+        name="Allow rootless container to bind on all ports",
+        key="net.ipv4.ip_unprivileged_port_start",
+        value=0,
+        persist=True,
+        persist_file="/etc/sysctl.d/99-docker-rootless-overrides.conf",
     )
