@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ⬇️ Checkout repository
-        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4.1.3
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
 
       - name: 🔍️ Verify if anything related to Terraform has changed
         uses: tj-actions/verify-changed-files@d774a4c7ebe335445d79c7b44138f56a76058ba0 # v19.0.0
