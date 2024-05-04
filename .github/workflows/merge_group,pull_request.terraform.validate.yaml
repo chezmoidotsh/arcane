@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
 
       - name: 🔍️ Verify if anything related to Terraform has changed
-        uses: tj-actions/verify-changed-files@d774a4c7ebe335445d79c7b44138f56a76058ba0 # v19.0.0
+        uses: tj-actions/verify-changed-files@ab875806658e59162bc5f42e4df5c2d4682c459e # v20.0.0
         id: verify-changed-files
         with:
           files: |
