@@ -30,7 +30,9 @@ ARG HOMEPAGE_VERSION="v0.8.12"
 # trunk-ignore(hadolint/DL3018): don't care to pin dependencies on build
 RUN set -eux; \
     apk add --no-cache git; \
-    git clone --depth 1 --branch ${HOMEPAGE_VERSION} https://github.com/gethomepage/homepage /src;
+    git clone --depth 1 --branch ${HOMEPAGE_VERSION} https://github.com/gethomepage/homepage /src; \
+    mkdir --parent /src/config; \
+    cp /src/src/skeleton/* /src/config/;
 
 WORKDIR /src
 
