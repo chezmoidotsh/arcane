@@ -3,7 +3,7 @@
 ---
 version: 0.1
 cli:
-  version: 1.21.0
+  version: 1.22.0
 
 # Trunk provides extensibility via plugins. (https://docs.trunk.io/plugins)
 plugins:
@@ -12,7 +12,7 @@ plugins:
       ref: main
       uri: https://github.com/chezmoi-sh/libraries
     - id: trunk
-      ref: v1.4.5
+      ref: v1.5.0
       uri: https://github.com/trunk-io/plugins
 
 # Many linters and tools depend on runtimes - configure them here. (https://docs.trunk.io/runtimes)
@@ -25,30 +25,30 @@ runtimes:
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
   enabled:
-    - renovate@37.296.0
+    - renovate@37.339.0
     - terrascan@1.19.1
     - actionlint@1.6.27
     - bandit@1.7.8
-    - black@24.4.0
-    - checkov@3.2.66
+    - black@24.4.2
+    - checkov@3.2.79
     - git-diff-check
     - gitleaks@8.18.2
     - hadolint@2.12.0
     - isort@5.13.2
-    - markdownlint@0.39.0
-    - osv-scanner@1.7.0
-    - oxipng@9.0.0
+    - markdownlint@0.40.0
+    - osv-scanner@1.7.2
+    - oxipng@9.1.1
     - prettier@3.2.5
-    - ruff@0.3.7
+    - ruff@0.4.2
     - shellcheck@0.10.0
     - shfmt@3.6.0
-    - stylelint@16.3.1
+    - stylelint@16.5.0
     - svgo@3.2.0
     - taplo@0.8.1
     - terraform@1.1.0
-    - tflint@0.50.3
-    - trivy@0.50.1
-    - trufflehog@3.71.0
+    - tflint@0.51.0
+    - trivy@0.50.4
+    - trufflehog@3.75.0
     - yamllint@1.35.1
   ignore:
     - linters: [trufflehog]
