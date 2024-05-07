@@ -54,8 +54,8 @@ Linux, which is a minimalistic distribution, as base image helps to respect the 
 > NOTE: I know that the "reproducibility" constraint **is not fully respected here**, as I'm using the Alpine image as
 > a base _(that uses the Alpine pkg repository)_ and not something like `nix` which is fully reproducible. However,
 > it's a compromise I've made to keep the images simple _(using NixOS really isn't something anyone can read)_ and
-> light \_(during some tests with `nix build` and the Tailscale image, I built an image weighing 3.5x heavier because it
-> includes `systemd` inside).
+> lightweigth _(during some tests with `nix build` and the Tailscale image, I built an image weighing 3.5x heavier because it
+> includes `systemd` inside)_.
 
 Secondly, integrating the configuration and secrets in the image helps to respect the third constraint; this way, the
 image is self-contained. Of course, this is not the best practice for secrets, but it is a trade-off I made to keep
