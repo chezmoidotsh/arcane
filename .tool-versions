@@ -1,4 +1,5 @@
 direnv 2.34.0
 goss 0.4.6
+jq 1.7.1
 task 3.33.1
-terraform 1.8.2
+terraform 1.8.3
