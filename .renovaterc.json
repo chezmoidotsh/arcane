@@ -6,7 +6,7 @@
     ":automergeRequireAllStatusChecks",
     ":gitSignOff",
     "config:best-practices",
-    "regexManagers:dockerfileVersions",
+    "customManagers:dockerfileVersions",
     "security:openssf-scorecard"
   ],
   "ignorePaths": [],
@@ -14,26 +14,42 @@
   "packageRules": [
     {
       "commitMessagePrefix": ":pushpin: (dependencies):",
-      "matchUpdateTypes": ["pin"]
+      "matchUpdateTypes": [
+        "pin"
+      ]
     },
     {
       "commitMessagePrefix": ":arrow_down: (dependencies):",
-      "matchUpdateTypes": ["rollback"]
+      "matchUpdateTypes": [
+        "rollback"
+      ]
     },
     {
       "commitMessagePrefix": ":arrow_up: (dependencies):",
       "commitMessageSuffix": "(major)",
-      "matchUpdateTypes": ["major"]
+      "matchUpdateTypes": [
+        "major"
+      ]
     },
     {
       "commitMessagePrefix": ":arrow_up: (dependencies):",
-      "matchUpdateTypes": ["minor", "patch", "digest", "bump", "replacement"]
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "bump",
+        "replacement"
+      ]
     },
     {
       "dependencyDashboardApproval": true,
-      "matchFileNames": ["**/Dockerfile"]
+      "matchFileNames": [
+        "**/Dockerfile"
+      ]
     }
   ],
   "semanticCommits": "disabled",
-  "vulnerabilityAlerts": { "enabled": true }
+  "vulnerabilityAlerts": {
+    "enabled": true
+  }
 }
