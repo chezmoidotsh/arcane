@@ -52,14 +52,14 @@ jobs:
         run: |
           (
             echo -n 'updated='
-            task gh:helper:apps:updated FROM_SHA="${FROM}" TO_SHA="${TO}"
+            task gh:helper:apps:updated:json FROM_SHA="${FROM}" TO_SHA="${TO}"
           ) >> "${GITHUB_OUTPUT}"
         env:
           FROM: ${{ github.event.pull_request.head.sha }}~${{ github.event.pull_request.commits }}
           TO: ${{ github.event.pull_request.head.sha }}
 
   validate_images:
-    name: ✅ Validate `${{ matrix.updated }}`
+    name: ✅ Validate `${{ matrix.updated.project }}/${{ matrix.updated.application }}`
     needs: find_updated_apps
     if: needs.find_updated_apps.outputs.updated_apps != '[]'
     permissions:

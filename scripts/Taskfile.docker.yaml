@@ -293,7 +293,7 @@ tasks:
   # NOTE: This task is not meant to be used directly, it's a helper task for
   #       the `goss:run` task in which we need to run the goss tests.
   goss:run:_:
-    label: docker:goss:run ({{ .IMAGE }})
+    label: docker:goss:run ({{ .PROJECT }}/{{ .IMAGE }})
     internal: true
 
     requires:
