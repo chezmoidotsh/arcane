@@ -37,7 +37,7 @@ RUN set -eux; \
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder-frontend>: build the AdGuardHome frontend (Node.js)              │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/node:21.7.3-alpine3.19@sha256:db8772d9f5796ac4e8c47508038c413ea1478da010568a2e48672f19a8b80cd2 as builder-frontend
+FROM docker.io/library/node:22.2.0-alpine3.19@sha256:9e8f45fc08c709b1fd87baeeed487977f57585f85f3838c01747602cd85a64bb as builder-frontend
 
 WORKDIR /node/src/app
 COPY --from=source /src ./
