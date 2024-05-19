@@ -25,7 +25,7 @@ ARG BUILD_TYPE "live"
 FROM docker.io/library/node:21.7.3-alpine3.19@sha256:6d0f18a1c67dc218c4af50c21256616286a53c09e500fadf025b6d342e1c90ae as builder
 
 # renovate: datasource=github-tags depName=gethomepage/homepage versioning=semver
-ARG HOMEPAGE_VERSION="v0.8.12"
+ARG HOMEPAGE_VERSION="v0.8.13"
 
 # trunk-ignore(hadolint/DL3018): don't care to pin dependencies on build
 RUN set -eux; \
@@ -68,7 +68,7 @@ RUN set -eux; \
 FROM --platform=arm64 docker.io/library/node:21.7.3-alpine3.19@sha256:6d0f18a1c67dc218c4af50c21256616286a53c09e500fadf025b6d342e1c90ae as runtime
 
 # renovate: datasource=github-tags depName=gethomepage/homepage versioning=semver
-ARG HOMEPAGE_VERSION="v0.8.12"
+ARG HOMEPAGE_VERSION="v0.8.13"
 
 RUN set -eux; \
     addgroup --system --gid 64752 homepage; \
