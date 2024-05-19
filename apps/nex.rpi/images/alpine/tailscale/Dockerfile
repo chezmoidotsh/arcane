@@ -20,7 +20,7 @@ ARG BUILD_TYPE "live"
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder>: build the Tailscale binary (Go)                                │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/golang:1.22.2-alpine3.19@sha256:cdc86d9f363e8786845bea2040312b4efa321b828acdeb26f393faa864d887b0 as builder
+FROM docker.io/library/golang:1.22.3-alpine3.19@sha256:f1fe698725f6ed14eb944dc587591f134632ed47fc0732ec27c7642adbe90618 as builder
 
 # renovate: datasource=github-tags depName=tailscale/tailscale versioning=semver
 ARG TAILSCALE_VERSION="v1.66.3"

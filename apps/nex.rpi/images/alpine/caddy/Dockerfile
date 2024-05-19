@@ -20,7 +20,7 @@ ARG BUILD_TYPE "live"
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder>: create the Caddy builder with additional plugins               │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/golang:1.22.2-alpine3.19@sha256:cdc86d9f363e8786845bea2040312b4efa321b828acdeb26f393faa864d887b0 as builder
+FROM docker.io/library/golang:1.22.3-alpine3.19@sha256:f1fe698725f6ed14eb944dc587591f134632ed47fc0732ec27c7642adbe90618 as builder
 
 # renovate: datasource=github-release depName=caddyserver/xcaddy versioning=semver
 ARG XCADDY_VERSION="v0.3.5"
@@ -64,7 +64,7 @@ RUN xcaddy build \
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <error-pages>: create all static error pages using tarampampam/error-page │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/golang:1.22.2-alpine3.19@sha256:cdc86d9f363e8786845bea2040312b4efa321b828acdeb26f393faa864d887b0 as error-pages
+FROM docker.io/library/golang:1.22.3-alpine3.19@sha256:f1fe698725f6ed14eb944dc587591f134632ed47fc0732ec27c7642adbe90618 as error-pages
 
 # renovate: datasource=github-tags depName=tarampampam/error-pages versioning=semver
 ARG ERROR_PAGES_VERSION="v2.27.0"
