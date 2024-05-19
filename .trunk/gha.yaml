@@ -10,8 +10,9 @@ lint:
   ignore:
     - linters: [ALL]
       paths:
-        # This file contains an honeytoken and should not be scanned
-        - apps/images/alpine/authelia/ci/config/configuration.yaml
         # All `live` configuration files are encrypted and should not be scanned
         - apps/*/images/alpine/*/live/*
         - apps/*/images/alpine/*/live/**/*
+
+        # This file contains an honeytoken and should not be scanned
+        - apps/nex.rpi/images/alpine/authelia/ci/config/configuration.yaml

@@ -54,7 +54,8 @@ lint:
     - linters: [trufflehog]
       paths:
         # This file contains an honeytoken and should not be scanned
-        - apps/images/alpine/authelia/ci/config/configuration.yaml
+        - apps/nex.rpi/images/alpine/authelia/ci/config/configuration.yaml
+
 
 # This is the section where you manage your actions. (https://docs.trunk.io/check/advanced-setup/actions)
 actions:
