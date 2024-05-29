@@ -23,7 +23,7 @@ ARG BUILD_TYPE "live"
 FROM docker.io/library/golang:1.22.3-alpine3.19@sha256:f1fe698725f6ed14eb944dc587591f134632ed47fc0732ec27c7642adbe90618 as builder
 
 # renovate: datasource=github-tags depName=tailscale/tailscale versioning=semver
-ARG TAILSCALE_VERSION="v1.66.3"
+ARG TAILSCALE_VERSION="v1.66.4"
 
 # trunk-ignore(hadolint/DL3018): don't care to pin dependencies on build
 RUN set -eux; \
@@ -65,7 +65,7 @@ RUN set -eux; \
 FROM --platform=arm64 localhost/nex.rpi/alpine:${BUILD_TYPE}
 
 # renovate: datasource=github-tags depName=tailscale/tailscale versioning=semver
-ARG TAILSCALE_VERSION="v1.66.3"
+ARG TAILSCALE_VERSION="v1.66.4"
 
 # renovate: datasource=repology depName=alpine_3_19/iproute2 versioning=loose
 ARG IPROUTE2_VERSION="6.6.0-r0"
