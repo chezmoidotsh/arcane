@@ -25,7 +25,7 @@ ARG BUILD_TYPE "live"
 FROM docker.io/library/alpine:3.19.1@sha256:c5b1261d6d3e43071626931fc004f70149baeba2c8ec672bd4f27761f8e1ad6b as source
 
 # renovate: datasource=github-tags depName=AdguardTeam/AdGuardHome versioning=semver
-ARG ADGUARDHOME_VERSION="v0.107.48"
+ARG ADGUARDHOME_VERSION="v0.107.50"
 
 # trunk-ignore(hadolint/DL3018): don't care to pin dependencies on build
 RUN set -eux; \
@@ -65,7 +65,7 @@ COPY --from=source /src/ ./
 RUN go mod download
 
 # renovate: datasource=github-tags depName=AdguardTeam/AdGuardHome versioning=semver
-ARG ADGUARDHOME_VERSION="v0.107.48"
+ARG ADGUARDHOME_VERSION="v0.107.50"
 
 ENV GOOS=linux
 ENV GOARCH=arm64
@@ -92,7 +92,7 @@ RUN set -eux; \
 FROM --platform=arm64 localhost/nex.rpi/alpine:${BUILD_TYPE} as runtime
 
 # renovate: datasource=github-tags depName=AdguardTeam/AdGuardHome versioning=semver
-ARG ADGUARDHOME_VERSION="v0.107.48"
+ARG ADGUARDHOME_VERSION="v0.107.50"
 
 RUN set -eux; \
     addgroup --system --gid 64138 adguardhome; \
