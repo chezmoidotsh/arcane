@@ -87,7 +87,7 @@ services:
       TS_AUTHKEY: ${TS_AUTHKEY}
       TS_HOSTNAME: nex-pi-chezmoish
       TS_STATE_DIR: /var/lib/tailscale
-      TS_EXTRA_ARGS: --advertise-routes=10.0.0.0/8
+      TS_EXTRA_ARGS: --advertise-routes=10.0.0.20/32,10.0.0.89/32,10.0.3.240/32
     image: localhost/nex.rpi/alpine/tailscale:live
     networks:
       default: # NOTE: This is required to allow Tailscale to communicate with internet (VPN)
