@@ -92,7 +92,7 @@ RUN /src/error-pages --verbose build --config-file /src/error-pages.yml --disabl
 FROM --platform=arm64 localhost/nex.rpi/alpine:${BUILD_TYPE} as runtime
 
 # renovate: datasource=github-tags depName=caddyserver/caddy versioning=semver
-ARG CADDY_VERSION="2.8.3"
+ARG CADDY_VERSION="2.8.4"
 
 # renovate: datasource=repology depName=alpine_3_19/libcap versioning=loose
 ARG LIBCAP_VERSION=2.69-r1
