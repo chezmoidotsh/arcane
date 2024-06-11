@@ -1,0 +1,8 @@
+{
+  "name": "@chezmoi.sh/core",
+  "version": "1.0.0",
+  "description": "Core library for chezmoi.sh infrastructure as-code",
+  "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": true
+}
