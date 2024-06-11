@@ -42,7 +42,7 @@ function pulumi_up() {
                 'keys 
                 | map(
                     select(startswith("pulumi:policy-pack:") and . != "pulumi:policy-pack:all") 
-                    | "--policy-pack \($rootdir)/library/policy-pack/\(.[19:] | sub("[.]"; "/"; "g"))"
+                    | "--policy-pack \($rootdir)/lib/policy-pack/\(.[19:] | sub("[.]"; "/"; "g"))"
                 ) 
                 | join(" ")'
         )

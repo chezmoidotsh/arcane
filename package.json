@@ -16,9 +16,9 @@
   "workspaces": [
     "catalog",
     "catalog/**/*",
-    "library/core",
-    "library/policy-pack",
-    "library/policy-pack/*"
+    "lib/core",
+    "lib/policy-pack",
+    "lib/policy-pack/*"
   ],
   "repository": "https://github.com/chezmoi-sh/atlas",
   "private": true,
