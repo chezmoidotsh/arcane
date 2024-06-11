@@ -1,0 +1,8 @@
+{
+  "name": "@chezmoi.sh/catalog",
+  "version": "1.0.0",
+  "description": "Catalog of applications and services hosted on chezmoi.sh infrastructure",
+  "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": true
+}
