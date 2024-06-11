@@ -1,0 +1,9 @@
+{
+    "name": "@chezmoi.sh/policy-pack-docker-security",
+    "version": "1.0.0",
+    "description": "Enforce security best practices for Docker containers",
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "license": "Apache-2.0",
+    "private": true,
+    "main": "index.ts"
+}

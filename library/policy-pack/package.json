@@ -1,0 +1,11 @@
+{
+    "name": "@chezmoi.sh/policy-pack",
+    "version": "1.0.0",
+    "description": "Policy library used by chezmoi.sh infrastructure as-code",
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "license": "Apache-2.0",
+    "private": true,
+    "dependencies": {
+        "@pulumi/policy": "^1.11.0"
+    }
+}
