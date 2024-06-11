@@ -1,0 +1,6 @@
+direnv 2.34.0
+nodejs 20.14.0
+pulumi 3.119.0
+yarn 1.22.22
+snyk 1.1291.1
+jq 1.7.1

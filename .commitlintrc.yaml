@@ -1,0 +1,163 @@
+# Copyright (C) 2024 Alexandre Nicolaie (xunleii@users.noreply.github.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ----------------------------------------------------------------------------
+---
+parserPreset:
+  parserOpts:
+    headerPattern: ^(?<type>.+?) \((?<scope>.+?)\)!?\:\s(?<subject>(?:(?!#).)*(?:(?!\s).))(?:\s\(?(?<references>#\d*)\)?)?$
+    breakingHeaderPattern: ^(?<type>.+?) \((?<scope>.+?)\)!\:\s(?<subject>(?:(?!#).)*(?:(?!\s).))(?:\s\(?(?<references>#\d*)\)?)?$
+    headerCorrespondence:
+      - type
+      - scope
+      - subject
+      - references
+rules:
+  # NOTE: these rules are disabled because commitlint don't handle
+  #       properly `Signed-off-by: ` without body
+  body-full-stop: [0, always, .]
+  body-leading-blank: [0, always]
+  # NOTE: empty body is allowed
+  body-empty: [0, always]
+  body-max-length: [2, always, Infinity]
+  body-max-line-length: [2, always, 80]
+  body-min-length: [2, always, 0]
+  body-case: [2, always, sentence-case]
+  footer-leading-blank: [2, always]
+  footer-empty: [2, always]
+  footer-max-length: [2, always, Infinity]
+  footer-max-line-length: [2, always, 80]
+  footer-min-length: [2, always, 0]
+  header-case: [2, always, sentence-case]
+  header-full-stop: [2, never, .]
+  header-max-length: [2, always, 100]
+  header-min-length: [2, always, 0]
+  header-trim: [2, always]
+  # NOTE: no references are allowed
+  references-empty: [0, never]
+  scope-enum:
+    - 2 # considered as an error
+    - always
+    - - apps
+      - apps-adguardhome
+      - apps-alpine
+      - apps-authelia
+      - apps-autoheal
+      - apps-caddy
+      - apps-gatus
+      - apps-homer
+      - apps-homepage
+      - apps-tailscale
+      - apps-yaldap
+      - dependencies
+      - docs
+      - gh-commitlint
+      - gh-config
+      - gh-renovate
+      - gh-taskfile
+      - gh-trunk
+      - gh-workflows
+      - infra-live
+      - infra-modules
+  scope-case: [2, always, lower-case]
+  scope-empty: [2, never]
+  scope-max-length: [2, always, Infinity]
+  scope-min-length: [2, always, 0]
+  subject-case: [2, always, sentence-case]
+  subject-empty: [2, never]
+  subject-full-stop: [2, never, .]
+  subject-max-length: [2, always, 100]
+  subject-min-length: [2, always, 0]
+  # NOTE: exclamation mark is allowed to signal a breaking change
+  subject-exclamation-mark: [0, never]
+  type-enum:
+    - 2 # considered as an error
+    - always
+    - - ":adhesive_bandage:"
+      - ":alembic:"
+      - ":alien:"
+      - ":ambulance:"
+      - ":arrow_down:"
+      - ":arrow_up:"
+      - ":art:"
+      - ":beers:"
+      - ":bento:"
+      - ":bookmark:"
+      - ":boom:"
+      - ":bricks:"
+      - ":bug:"
+      - ":building_construction:"
+      - ":bulb:"
+      - ":busts_in_silhouette:"
+      - ":camera_flash:"
+      - ":card_file_box:"
+      - ":chart_with_upwards_trend:"
+      - ":children_crossing:"
+      - ":closed_lock_with_key:"
+      - ":clown_face:"
+      - ":coffin:"
+      - ":construction:"
+      - ":construction_worker:"
+      - ":dizzy:"
+      - ":egg:"
+      - ":fire:"
+      - ":globe_with_meridians:"
+      - ":goal_net:"
+      - ":green_heart:"
+      - ":hammer:"
+      - ":heavy_minus_sign:"
+      - ":heavy_plus_sign:"
+      - ":iphone:"
+      - ":label:"
+      - ":lipstick:"
+      - ":lock:"
+      - ":loud_sound:"
+      - ":mag:"
+      - ":memo:"
+      - ":money_with_wings:"
+      - ":monocle_face:"
+      - ":mute:"
+      - ":necktie:"
+      - ":package:"
+      - ":page_facing_up:"
+      - ":passport_control:"
+      - ":pencil2:"
+      - ":poop:"
+      - ":pushpin:"
+      - ":recycle:"
+      - ":rewind:"
+      - ":rocket:"
+      - ":rotating_light:"
+      - ":safety_vest:"
+      - ":see_no_evil:"
+      - ":seedling:"
+      - ":sparkles:"
+      - ":speech_balloon:"
+      - ":stethoscope:"
+      - ":tada:"
+      - ":technologist:"
+      - ":test_tube:"
+      - ":thread:"
+      - ":triangular_flag_on_post:"
+      - ":truck:"
+      - ":twisted_rightwards_arrows:"
+      - ":wastebasket:"
+      - ":wheelchair:"
+      - ":white_check_mark:"
+      - ":wrench:"
+      - ":zap:"
+  type-case: [2, always, lower-case]
+  type-empty: [2, never]
+  type-max-length: [2, always, Infinity]
+  type-min-length: [2, always, 0]
+  signed-off-by: [2, always, "Signed-off-by: "]

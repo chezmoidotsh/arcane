@@ -1,0 +1,68 @@
+#!/bin/env bash
+# Copyright (C) 2024 Alexandre Nicolaie (xunleii@users.noreply.github.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ----------------------------------------------------------------------------
+
+# This script wraps the pulumi CLI to add some additional functionality
+# such as automatically --policy-pack and --policy-pack-config flags
+# based on the current Pulumi project.
+# Everything is configured using the pulumi:wrapper configuration key :
+#   pulumi config set pulumi:wrapper["pulumi:policy-pack:<path.to.the.policy>"] <config>
+#   pulumi config set pulumi:wrapper.pulumi:policy-pack:all <global config>
+
+# Remove the current directory from the PATH to avoid conflicts with the Pulumi CLI.
+export PATH="$(
+    awk <<<${PATH} -v RS=: -v ORS=: '$0 != "'"$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"'"' \
+    | sed 's/:$//'
+)"
+
+# Override the pulumi up command to automatically add the policy pack flags
+# based on the current project configuration.
+function pulumi_up() {
+    local rootdir=$(perl -le 'use File::Spec; print File::Spec->abs2rel(@ARGV)' $(git rev-parse --show-toplevel) $(pwd))
+    local pulumi_policy_packs=""
+    local pulumi_policy_pack_config=""
+
+    if pulumi config get pulumi:custom > /dev/null; then
+        pulumi_policy_packs=$(
+            pulumi config get pulumi:custom \
+            | jq --raw-output \
+                --arg rootdir "${rootdir}" \
+                'keys 
+                | map(
+                    select(startswith("pulumi:policy-pack:") and . != "pulumi:policy-pack:all") 
+                    | "--policy-pack \($rootdir)/library/policy-pack/\(.[19:] | sub("[.]"; "/"; "g"))"
+                ) 
+                | join(" ")'
+        )
+
+        pulumi up \
+            ${pulumi_policy_packs} \
+            --policy-pack-config <(pulumi config get pulumi:custom \
+                | jq --raw-output --compact-output \
+                    'to_entries
+                    | map(if .key == "pulumi:policy-pack:all" then {all: .value} else .value end) 
+                    | add'
+            ) \
+            "$@"
+    else
+        pulumi up "$@"
+    fi
+}
+
+if [ "$1" == "up" ]; then
+    pulumi_up "${@:2}"
+else
+    pulumi "$@"
+fi
