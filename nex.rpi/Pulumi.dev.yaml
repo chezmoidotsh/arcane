@@ -1,0 +1,3 @@
+encryptionsalt: v1:0HxiLuOI+VA=:v1:MHyFem5LToK+f4NU:bXeC5xz7nFWGDrUJnMZ/q5RIeIQnJw==
+config:
+  nex.rpi:sh.chezmoi.environment: e2e

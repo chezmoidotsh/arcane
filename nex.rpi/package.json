@@ -1,0 +1,10 @@
+{
+    "name": "nex.rpi",
+    "version": "1.0.0",
+    "description": "Raspberry Pi hosted services for all my homelab's critical services",
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "license": "Apache-2.0",
+    "main": "index.ts",
+    "devDependencies": {},
+    "dependencies": {}
+}
