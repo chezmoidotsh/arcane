@@ -14,8 +14,9 @@
     "@pulumi/pulumi": "^3.119.0"
   },
   "workspaces": [
+    "catalog",
+    "catalog/**/*",
     "library/core",
-    "library/catalog",
     "library/policy-pack",
     "library/policy-pack/*"
   ],
