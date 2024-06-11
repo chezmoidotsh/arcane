@@ -18,7 +18,8 @@
     "catalog/**/*",
     "lib/core",
     "lib/policy-pack",
-    "lib/policy-pack/*"
+    "lib/policy-pack/*",
+    "nex.rpi"
   ],
   "repository": "https://github.com/chezmoi-sh/atlas",
   "private": true,
