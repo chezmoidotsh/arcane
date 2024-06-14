@@ -1,0 +1,88 @@
+/*
+ * Copyright (C) 2024 Alexandre Nicolaie (xunleii@users.noreply.github.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * ----------------------------------------------------------------------------
+ */
+
+// Reference:
+// - https://containers.dev/features
+// - https://containers.dev/implementors/features
+// - https://code.visualstudio.com/docs/getstarted/settings
+{
+    "name": "chezmoi.sh/atlas Dev Container",
+    "dockerFile": "Dockerfile",
+    "customizations": {
+      "vscode": {
+        "settings": [
+          "editor.gotoLocation.multipleDeclarations", "goto",
+          "editor.gotoLocation.multipleDefinitions", "goto",
+          "editor.gotoLocation.multipleImplementations", "goto",
+          "editor.gotoLocation.multipleReferences", "goto",
+          "editor.gotoLocation.multipleTypeDefinitions", "goto",
+          "editor.minimap.enabled", false,
+          "editor.quickSuggestionsDelay", 0,
+          "editor.snippetSuggestions", "top",
+          "editor.suggestSelection", "first",
+          "editor.terminal.integrated.shell.linux", "/usr/bin/zsh",
+          "explorer.openEditors.visible", 1,
+          "files.trimFinalNewlines", true,
+          "files.trimTrailingWhitespace", true,
+          "remote.containers.copyGitConfig", true
+        ],
+        "extensions": [
+            "bierner.markdown-preview-github-styles",
+            "esbenp.prettier-vscode",
+            "github.copilot",
+            "github.vscode-pull-request-github",
+            "ms-azuretools.vscode-docker",
+            "ms-vscode-remote.remote-containers",
+            "ms-vscode.makefile-tools",
+            "redhat.vscode-yaml",
+            "visualstudioexptteam.vscodeintellicode"
+        ]
+      }
+    },
+    "features": {
+      "ghcr.io/devcontainers/features/common-utils:2": {
+          "installZsh": true,
+          "configureZshAsDefaultShell": true,
+          "installOhMyZsh": true,
+          "installOhMyZshConfig": true,
+          "upgradePackages": true,
+          "nonFreePackages": true,
+          "username": "vscode",
+          "userUid": "automatic",
+          "userGid": "automatic"
+      },
+      "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+          "moby": false,
+          "installDockerBuildx": true,
+          "version": "latest",
+          "dockerDashComposeVersion": "v2"
+      },
+      "ghcr.io/devcontainers-contrib/features/direnv:1": {},
+      "ghcr.io/devcontainers-contrib/features/pulumi:1": {},
+      "ghcr.io/devcontainers-contrib/features/snyk-cli:1": {},
+      "ghcr.io/devcontainers-contrib/features/zsh-plugins:0": {
+        "plugins": "direnv docker node yarn"
+      }
+    },
+    "postCreateCommand": "git submodule update --init --recursive; docker logout; direnv allow",
+    "remoteUser": "vscode",
+    "runArgs": ["--network=host"],
+    "containerEnv": {
+      // Disable direnv log output
+      "DIRENV_LOG_FORMAT": ""
+    }
+  }
