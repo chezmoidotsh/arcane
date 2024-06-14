@@ -15,7 +15,7 @@
  * ----------------------------------------------------------------------------
  */
 
-import { PolicyPack, ReportViolation, StackValidationArgs, validateResourceOfType } from "@pulumi/policy";
+import { PolicyPack, ReportViolation, StackValidationArgs } from "@pulumi/policy";
 
 import * as snyk from "./snyk";
 

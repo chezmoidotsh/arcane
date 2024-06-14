@@ -16,18 +16,19 @@
  */
 
 import * as pulumi from "@pulumi/pulumi";
-import * as docker from "@pulumi/docker-build";
+import * as docker from "@pulumi/docker";
+import * as buildx from "@pulumi/docker-build";
 
 /**
  * The arguments for building a Docker image.
  */
 export namespace types {
     /**
-     * The set of arguments for constructing a {@link DockerImage} resource. It extends the
-     * standard {@link docker.ImageArgs} without the ability to overwrite
-     * {@link docker.ImageArgs.buildArgs} and {@link docker.ImageArgs.dockerfile}.
+     * The set of arguments for constructing a {@link Image} resource. It extends the
+     * standard {@link buildx.ImageArgs} without the ability to overwrite
+     * {@link buildx.ImageArgs.buildArgs} and {@link buildx.ImageArgs.dockerfile}.
      */
-    export interface ImageArgs extends Omit<docker.ImageArgs, "buildArgs" | "dockerfile"> { };
+    export interface ImageArgs extends Omit<buildx.ImageArgs, "buildArgs" | "dockerfile"> { };
 
     /**
      * ImageTransformation is a callback signature to modify a Docker image prior to its utilisation.
@@ -35,15 +36,20 @@ export namespace types {
      * @param {docker.Image} image The image to transform.
      * @returns {docker.Image} The transformed image. If undefined, the image will not be transformed.
      */
-    export declare type ImageTransformation = (image: docker.Image) => docker.Image;
+    export declare type ImageTransformation<T extends types.Image, U extends types.Image> = (image: T) => U;
+
+    /**
+     * Image describes a Docker image based on the standard {@link buildx.Image} resource.
+     */
+    export declare type Image = buildx.Image;
 }
 
 /**
- * DockerImage extends the standard {@link docker.Image} resource to provide some additional
+ * DockerImage extends the standard {@link buildx.Image} resource to provide some additional
  * things like setting the `org.opencontainers.image.created` label to the current date and time.
  */
-export abstract class DockerImage extends docker.Image {
-    constructor(name: string, args: docker.ImageArgs, opts?: pulumi.ComponentResourceOptions) {
+export abstract class LocalImage extends buildx.Image {
+    constructor(name: string, args: buildx.ImageArgs, opts?: pulumi.ComponentResourceOptions) {
         super(
             name,
             {

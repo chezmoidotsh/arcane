@@ -21,10 +21,12 @@ import * as os from "os";
 import * as path from "path";
 
 import { FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset";
-import * as docker from "@pulumi/docker-build";
+import * as docker from "@pulumi/docker";
+import * as buildx from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
 
 import * as asset_utils from "./asset";
+import { types as docker_types } from "@chezmoi.sh/core/docker";
 
 const busybox = "docker.io/library/busybox:stable@sha256:9ae97d36d26566ff84e8893c64a6dc4fe8ca6d1144bf5b87b2b85a32def253c7";
 
@@ -53,14 +55,14 @@ export interface ImageAsset {
  *
  * @param {ImageAsset} image The image to add assets to.
  * @param {ImageAsset[]} assets The assets to add to the image.
- * @returns {docker.Image} The new image with all assets injected into it.
+ * @returns {buildx.Image} The new image with all assets injected into it.
  */
-export function InjectAssets(image: docker.Image, ...assets: pulumi.Input<ImageAsset>[]): docker.Image {
+export function InjectAssets(image: docker_types.Image, ...assets: pulumi.Input<ImageAsset>[]): docker_types.Image {
     if (assets.length === 0) {
         return image;
     }
 
-    return new docker.Image(
+    return new buildx.Image(
         "embedded",
         {
             // Report all the same configuration as the original image
