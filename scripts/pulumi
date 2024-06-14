@@ -34,9 +34,9 @@ function pulumi_up() {
     local pulumi_policy_packs=""
     local pulumi_policy_pack_config=""
 
-    if pulumi config get pulumi:custom > /dev/null; then
+    if pulumi config get pulumi:wrapper > /dev/null; then
         pulumi_policy_packs=$(
-            pulumi config get pulumi:custom \
+            pulumi config get pulumi:wrapper \
             | jq --raw-output \
                 --arg rootdir "${rootdir}" \
                 'keys 
@@ -49,7 +49,7 @@ function pulumi_up() {
 
         pulumi up \
             ${pulumi_policy_packs} \
-            --policy-pack-config <(pulumi config get pulumi:custom \
+            --policy-pack-config <(pulumi config get pulumi:wrapper \
                 | jq --raw-output --compact-output \
                     'to_entries
                     | map(if .key == "pulumi:policy-pack:all" then {all: .value} else .value end) 
