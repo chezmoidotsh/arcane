@@ -16,4 +16,4 @@
  */
 
 export { ReadAsset } from "./asset";
-export { ImageAsset, InjectAssets } from "./docker";
+export { InjectedAsset, InjectedChownableAsset, InjectAssets } from "./docker";

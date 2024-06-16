@@ -29,19 +29,19 @@ import { Asset, FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset
  * @throws If the asset type is not supported.
  */
 export function ReadAsset<T extends Asset>(asset: T): Promise<Buffer> {
-    if (isFileAsset(asset)) {
+    if (IsFileAsset(asset)) {
         return readFileAsset({ path: asset.path });
-    } else if (isRemoteAsset(asset)) {
+    } else if (IsRemoteAsset(asset)) {
         return readRemoteAsset({ uri: asset.uri });
-    } else if (isStringAsset(asset)) {
+    } else if (IsStringAsset(asset)) {
         return readStringAsset({ text: asset.text });
     }
     throw new Error(`unsupported asset type`);
 }
 
-function isFileAsset(asset: any): asset is FileAsset { return (asset as FileAsset).path !== undefined; }
-function isRemoteAsset(asset: any): asset is RemoteAsset { return (asset as RemoteAsset).uri !== undefined; }
-function isStringAsset(asset: any): asset is StringAsset { return (asset as StringAsset).text !== undefined; }
+export function IsFileAsset(asset: any): asset is FileAsset { return (asset as FileAsset).path !== undefined; }
+export function IsRemoteAsset(asset: any): asset is RemoteAsset { return (asset as RemoteAsset).uri !== undefined; }
+export function IsStringAsset(asset: any): asset is StringAsset { return (asset as StringAsset).text !== undefined; }
 
 /**
  * Read the content of a {@link pulumi.asset.FileAsset}.
@@ -52,6 +52,7 @@ function isStringAsset(asset: any): asset is StringAsset { return (asset as Stri
  * @throws If the asset file does not exist.
  * @throws If the asset path is a directory.
  */
+
 async function readFileAsset(asset: FileAsset): Promise<Buffer> {
     return await Promise.resolve(asset.path).then(path => {
         if (!fs.existsSync(path)) {
