@@ -10,6 +10,7 @@
 <div align="center">
 
 [![License](https://img.shields.io/badge/license-GLWTS%20Public%20License-blue?logo=git&logoColor=white&logoWidth=20)](LICENSE)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/Open_in_Github_Codespace-black?logo=github)](https://github.com/codespaces/new?hide_repo_select=true&ref=poc/pulumi-alt&repo=737828332)
 
 <a href="#about">About</a> ·
 <a href="#project-structure">Project Structure</a> ·
