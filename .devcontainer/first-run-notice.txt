@@ -4,6 +4,7 @@ the Atlas infrastructure (aka. my homelab).
 
 📚 No documentation has been written yet ... but it is planned
 🚀 How to build or update the infrastructure ?
+   - `yarn`
    - `pulumi login`
    - `cd <project> && pulumi up`
 

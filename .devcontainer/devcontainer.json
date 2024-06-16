@@ -20,7 +20,7 @@
 // - https://containers.dev/implementors/features
 // - https://code.visualstudio.com/docs/getstarted/settings
 {
-  "name": "chezmoi.sh/atlas Dev Container",
+  "name": "chezmoi.sh/atlas Codespace",
   "dockerFile": "Dockerfile",
   "customizations": {
     "vscode": {
