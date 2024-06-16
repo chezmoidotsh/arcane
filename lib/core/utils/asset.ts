@@ -16,8 +16,66 @@
  */
 
 import * as fs from "fs";
+import * as path from "path";
+
 import * as pulumi from "@pulumi/pulumi";
-import { Asset, FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset";
+import {
+  Asset,
+  FileAsset,
+  RemoteAsset,
+  StringAsset,
+} from "@pulumi/pulumi/asset";
+
+/**
+ * Options for the {@link DirectoryAsset}.
+ */
+export interface DirectoryAssetOpts {
+  /**
+   * Whether to search for assets recursively.
+   * @default false
+   */
+  recursive?: boolean;
+
+  /**
+   * A list of regular expressions to filter the assets.
+   */
+  filters?: RegExp[];
+
+  /**
+   * A list of predicates to filter the assets.
+   */
+  predicates?: ((file: fs.Dirent) => boolean)[];
+}
+
+/**
+ * DirectoryAsset is a kind of asset produced from a given path to a directory on the local filesystem.
+ * It is a custom asset type that is not part of the Pulumi SDK and MUST NOT be used
+ * like a regular asset type (it represents a directory, not a file but contains several ones).
+ */
+export class DirectoryAsset {
+  /**
+   * All the assets found in the directory.
+   */
+  readonly assets: FileAsset[];
+
+  /**
+   * The path to the directory.
+   */
+  readonly path: pulumi.Output<string>;
+
+  constructor(directory: string, opts?: DirectoryAssetOpts) {
+    this.path = pulumi.output(directory);
+
+    this.assets = fs
+      .readdirSync(path.resolve(directory), {
+        withFileTypes: true,
+        recursive: opts?.recursive,
+      })
+      .filter((file) => opts?.filters?.some((rx) => rx.test(file.name)))
+      .filter((file) => opts?.predicates?.every((fnc) => fnc(file)))
+      .map((file) => new FileAsset(`${directory}/${file.name}`));
+  }
+}
 
 /**
  * Read the content of a pulumi {@link Asset}.
@@ -29,19 +87,25 @@ import { Asset, FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset
  * @throws If the asset type is not supported.
  */
 export function ReadAsset<T extends Asset>(asset: T): Promise<Buffer> {
-    if (IsFileAsset(asset)) {
-        return readFileAsset({ path: asset.path });
-    } else if (IsRemoteAsset(asset)) {
-        return readRemoteAsset({ uri: asset.uri });
-    } else if (IsStringAsset(asset)) {
-        return readStringAsset({ text: asset.text });
-    }
-    throw new Error(`unsupported asset type`);
+  if (IsFileAsset(asset)) {
+    return readFileAsset({ path: asset.path });
+  } else if (IsRemoteAsset(asset)) {
+    return readRemoteAsset({ uri: asset.uri });
+  } else if (IsStringAsset(asset)) {
+    return readStringAsset({ text: asset.text });
+  }
+  throw new Error(`unsupported asset type`);
 }
 
-export function IsFileAsset(asset: any): asset is FileAsset { return (asset as FileAsset).path !== undefined; }
-export function IsRemoteAsset(asset: any): asset is RemoteAsset { return (asset as RemoteAsset).uri !== undefined; }
-export function IsStringAsset(asset: any): asset is StringAsset { return (asset as StringAsset).text !== undefined; }
+export function IsFileAsset(asset: any): asset is FileAsset {
+  return (asset as FileAsset).path !== undefined;
+}
+export function IsRemoteAsset(asset: any): asset is RemoteAsset {
+  return (asset as RemoteAsset).uri !== undefined;
+}
+export function IsStringAsset(asset: any): asset is StringAsset {
+  return (asset as StringAsset).text !== undefined;
+}
 
 /**
  * Read the content of a {@link pulumi.asset.FileAsset}.
@@ -54,16 +118,18 @@ export function IsStringAsset(asset: any): asset is StringAsset { return (asset 
  */
 
 async function readFileAsset(asset: FileAsset): Promise<Buffer> {
-    return await Promise.resolve(asset.path).then(path => {
-        if (!fs.existsSync(path)) {
-            throw new Error(`failed to open asset file '${path}'`);
-        }
+  return await Promise.resolve(asset.path).then((path) => {
+    if (!fs.existsSync(path)) {
+      throw new Error(`failed to open asset file '${path}'`);
+    }
 
-        if (fs.lstatSync(path).isDirectory()) {
-            throw new Error(`asset path '${path}' is a directory; try using an archive`);
-        }
-        return fs.promises.readFile(path)
-    });
+    if (fs.lstatSync(path).isDirectory()) {
+      throw new Error(
+        `asset path '${path}' is a directory; try using an archive`,
+      );
+    }
+    return fs.promises.readFile(path);
+  });
 }
 
 /**
@@ -73,7 +139,9 @@ async function readFileAsset(asset: FileAsset): Promise<Buffer> {
  * @returns {Promise<Buffer>} The content of the string asset.
  */
 async function readStringAsset(asset: StringAsset): Promise<Buffer> {
-    return await Promise.resolve(asset.text).then(text => Buffer.from(text, "utf-8"));
+  return await Promise.resolve(asset.text).then((text) =>
+    Buffer.from(text, "utf-8"),
+  );
 }
 
 /**
@@ -87,22 +155,23 @@ async function readStringAsset(asset: StringAsset): Promise<Buffer> {
  * @throws If the remote asset URI is invalid.
  */
 async function readRemoteAsset(asset: RemoteAsset): Promise<Buffer> {
-    return await Promise.resolve(asset.uri).then(async u => {
-        const url = new URL(u);
+  return await Promise.resolve(asset.uri).then(async (u) => {
+    const url = new URL(u);
 
-        if (url.protocol == "http:" || url.protocol == "https:") {
-            return fetch(url).then(
-                async response => {
-                    if (!response.ok) {
-                        throw new Error(`failed to fetch remote asset '${url}': ${response.statusText}`);
-                    }
-
-                    return response.arrayBuffer().then(buffer => Buffer.from(buffer));
-                })
-        } else if (url.protocol == "file:") {
-            return readFileAsset(new FileAsset(url.pathname));
-        } else {
-            throw new Error(`unsupported remote asset URI scheme '${url.protocol}'`)
+    if (url.protocol == "http:" || url.protocol == "https:") {
+      return fetch(url).then(async (response) => {
+        if (!response.ok) {
+          throw new Error(
+            `failed to fetch remote asset '${url}': ${response.statusText}`,
+          );
         }
-    });
+
+        return response.arrayBuffer().then((buffer) => Buffer.from(buffer));
+      });
+    } else if (url.protocol == "file:") {
+      return readFileAsset(new FileAsset(url.pathname));
+    } else {
+      throw new Error(`unsupported remote asset URI scheme '${url.protocol}'`);
+    }
+  });
 }

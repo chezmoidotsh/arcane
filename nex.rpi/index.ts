@@ -19,26 +19,23 @@ import * as pulumi from "@pulumi/pulumi";
 
 import * as alpine from "@chezmoi.sh/catalog/os/alpine/3.19/docker";
 import * as yaldap from "@chezmoi.sh/catalog/security/yaldap/docker";
-import * as docker from "@chezmoi.sh/core/utils/docker";
-
-import * as fs from "fs";
-import * as path from "path";
+import * as utils from "@chezmoi.sh/core/utils";
 
 const config = new pulumi.Config();
-const assets = fs
-  .readdirSync(path.resolve(".."), { withFileTypes: true, recursive: true })
-  .filter((file) => file.isFile())
-  .filter(
+const assets = new utils.DirectoryAsset("..", {
+  recursive: true,
+  predicates: [
+    (file) => file.isFile(),
     (file) =>
-      !file.parentPath.includes(".git") &&
-      !file.parentPath.includes("node_modules") &&
-      !file.parentPath.includes("vendor"),
-  )
-  .map((file) => ({
-    source: new pulumi.asset.FileAsset(`${file.parentPath}/${file.name}`),
-    destination: `/src${file.parentPath}/${file.name}`,
-    chown: { user: "yaldap", group: "yaldap" },
-  }));
+      !file.name.includes(".git") &&
+      !file.name.includes("node_modules") &&
+      !file.name.includes("vendor"),
+  ],
+}).assets.map((file) => ({
+  source: file,
+  destination: `/src${file.path}`,
+  chown: { user: "yaldap", group: "yaldap" },
+}));
 
 const alpn = new alpine.Image("alpine", {
   push: true,
@@ -52,7 +49,7 @@ const yldp = new yaldap.Application("security.yaldap", {
     // TODO: This part will be possible once we have the ability to inject assets into the `dockerfile` property.
     //       See https://github.com/pulumi/pulumi-docker-build/issues/96 for more information.
     transformation: (image) =>
-      docker.InjectAssets(
+      utils.InjectAssets(
         image,
         {
           source:

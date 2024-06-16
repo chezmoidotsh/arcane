@@ -15,5 +15,5 @@
  * ----------------------------------------------------------------------------
  */
 
-export { ReadAsset } from "./asset";
-export { InjectedAsset, InjectedChownableAsset, InjectAssets } from "./docker";
+export { DirectoryAsset } from "./asset";
+export { InjectAssets } from "./docker";
