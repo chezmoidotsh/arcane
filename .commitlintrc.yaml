@@ -15,8 +15,8 @@
 ---
 parserPreset:
   parserOpts:
-    headerPattern: ^(?<type>.+?) \((?<scope>.+?)\)!?\:\s(?<subject>(?:(?!#).)*(?:(?!\s).))(?:\s\(?(?<references>#\d*)\)?)?$
-    breakingHeaderPattern: ^(?<type>.+?) \((?<scope>.+?)\)!\:\s(?<subject>(?:(?!#).)*(?:(?!\s).))(?:\s\(?(?<references>#\d*)\)?)?$
+    headerPattern: ^(?<type>.+?)\((?<scope>.+?)\)!?\:\s(?<subject>(?:(?!#).)*(?:(?!\s).))(?:\s\(?(?<references>#\d*)\)?)?$
+    breakingHeaderPattern: ^(?<type>.+?)\((?<scope>.+?)\)!\:\s(?<subject>(?:(?!#).)*(?:(?!\s).))(?:\s\(?(?<references>#\d*)\)?)?$
     headerCorrespondence:
       - type
       - scope
@@ -48,27 +48,11 @@ rules:
   scope-enum:
     - 2 # considered as an error
     - always
-    - - apps
-      - apps-adguardhome
-      - apps-alpine
-      - apps-authelia
-      - apps-autoheal
-      - apps-caddy
-      - apps-gatus
-      - apps-homer
-      - apps-homepage
-      - apps-tailscale
-      - apps-yaldap
-      - dependencies
-      - docs
-      - gh-commitlint
-      - gh-config
-      - gh-renovate
-      - gh-taskfile
-      - gh-trunk
-      - gh-workflows
-      - infra-live
-      - infra-modules
+    - - catalog
+      - core
+      - gh
+      - nex.rpi
+      - policy-pack
   scope-case: [2, always, lower-case]
   scope-empty: [2, never]
   scope-max-length: [2, always, Infinity]
@@ -161,3 +145,321 @@ rules:
   type-max-length: [2, always, Infinity]
   type-min-length: [2, always, 0]
   signed-off-by: [2, always, "Signed-off-by: "]
+
+prompt:
+  questions:
+    type:
+      description: "Select the type of change that you are committing:"
+      enum:
+        ":art:":
+          emoji: 🎨
+          description: Improve structure / format of the code.
+          title: ":art:"
+        ":zap:":
+          emoji: ⚡️
+          description: Improve performance.
+          title: ":zap:"
+        ":fire:":
+          emoji: 🔥
+          description: Remove code or files.
+          title: ":fire:"
+        ":bug:":
+          emoji: 🐛
+          description: Fix a bug.
+          title: ":bug:"
+        ":ambulance:":
+          emoji: 🚑️
+          description: Critical hotfix.
+          title: ":ambulance:"
+        ":sparkles:":
+          emoji: ✨
+          description: Introduce new features.
+          title: ":sparkles:"
+        ":memo:":
+          emoji: 📝
+          description: Add or update documentation.
+          title: ":memo:"
+        ":rocket:":
+          emoji: 🚀
+          description: Deploy stuff.
+          title: ":rocket:"
+        ":lipstick:":
+          emoji: 💄
+          description: Add or update the UI and style files.
+          title: ":lipstick:"
+        ":tada:":
+          emoji: 🎉
+          description: Begin a project.
+          title: ":tada:"
+        ":white_check_mark:":
+          emoji: ✅
+          description: Add update or pass tests.
+          title: ":white_check_mark:"
+        ":lock:":
+          emoji: 🔒️
+          description: Fix security or privacy issues.
+          title: ":lock:"
+        ":closed_lock_with_key:":
+          emoji: 🔐
+          description: Add or update secrets.
+          title: ":closed_lock_with_key:"
+        ":bookmark:":
+          emoji: 🔖
+          description: Release / Version tags.
+          title: ":bookmark:"
+        ":rotating_light:":
+          emoji: 🚨
+          description: Fix compiler / linter warnings.
+          title: ":rotating_light:"
+        ":construction:":
+          emoji: 🚧
+          description: Work in progress.
+          title: ":construction:"
+        ":green_heart:":
+          emoji: 💚
+          description: Fix CI Build.
+          title: ":green_heart:"
+        ":arrow_down:":
+          emoji: ⬇️
+          description: Downgrade dependencies.
+          title: ":arrow_down:"
+        ":arrow_up:":
+          emoji: ⬆️
+          description: Upgrade dependencies.
+          title: ":arrow_up:"
+        ":pushpin:":
+          emoji: 📌
+          description: Pin dependencies to specific versions.
+          title: ":pushpin:"
+        ":construction_worker:":
+          emoji: 👷
+          description: Add or update CI build system.
+          title: ":construction_worker:"
+        ":chart_with_upwards_trend:":
+          emoji: 📈
+          description: Add or update analytics or track code.
+          title: ":chart_with_upwards_trend:"
+        ":recycle:":
+          emoji: ♻️
+          description: Refactor code.
+          title: ":recycle:"
+        ":heavy_plus_sign:":
+          emoji: ➕
+          description: Add a dependency.
+          title: ":heavy_plus_sign:"
+        ":heavy_minus_sign:":
+          emoji: ➖
+          description: Remove a dependency.
+          title: ":heavy_minus_sign:"
+        ":wrench:":
+          emoji: 🔧
+          description: Add or update configuration files.
+          title: ":wrench:"
+        ":hammer:":
+          emoji: 🔨
+          description: Add or update development scripts.
+          title: ":hammer:"
+        ":globe_with_meridians:":
+          emoji: 🌐
+          description: Internationalization and localization.
+          title: ":globe_with_meridians:"
+        ":pencil2:":
+          emoji: ✏️
+          description: Fix typos.
+          title: ":pencil2:"
+        ":poop:":
+          emoji: 💩
+          description: Write bad code that needs to be improved.
+          title: ":poop:"
+        ":rewind:":
+          emoji: ⏪️
+          description: Revert changes.
+          title: ":rewind:"
+        ":twisted_rightwards_arrows:":
+          emoji: 🔀
+          description: Merge branches.
+          title: ":twisted_rightwards_arrows:"
+        ":package:":
+          emoji: 📦️
+          description: Add or update compiled files or packages.
+          title: ":package:"
+        ":alien:":
+          emoji: 👽️
+          description: Update code due to external API changes.
+          title: ":alien:"
+        ":truck:":
+          emoji: 🚚
+          description: "Move or rename resources (e.g.: files paths routes)."
+          title: ":truck:"
+        ":page_facing_up:":
+          emoji: 📄
+          description: Add or update license.
+          title: ":page_facing_up:"
+        ":boom:":
+          emoji: 💥
+          description: Introduce breaking changes.
+          title: ":boom:"
+        ":bento:":
+          emoji: 🍱
+          description: Add or update assets.
+          title: ":bento:"
+        ":wheelchair:":
+          emoji: ♿️
+          description: Improve accessibility.
+          title: ":wheelchair:"
+        ":bulb:":
+          emoji: 💡
+          description: Add or update comments in source code.
+          title: ":bulb:"
+        ":beers:":
+          emoji: 🍻
+          description: Write code drunkenly.
+          title: ":beers:"
+        ":speech_balloon:":
+          emoji: 💬
+          description: Add or update text and literals.
+          title: ":speech_balloon:"
+        ":card_file_box:":
+          emoji: 🗃️
+          description: Perform database related changes.
+          title: ":card_file_box:"
+        ":loud_sound:":
+          emoji: 🔊
+          description: Add or update logs.
+          title: ":loud_sound:"
+        ":mute:":
+          emoji: 🔇
+          description: Remove logs.
+          title: ":mute:"
+        ":busts_in_silhouette:":
+          emoji: 👥
+          description: Add or update contributor(s).
+          title: ":busts_in_silhouette:"
+        ":children_crossing:":
+          emoji: 🚸
+          description: Improve user experience / usability.
+          title: ":children_crossing:"
+        ":building_construction:":
+          emoji: 🏗️
+          description: Make architectural changes.
+          title: ":building_construction:"
+        ":iphone:":
+          emoji: 📱
+          description: Work on responsive design.
+          title: ":iphone:"
+        ":clown_face:":
+          emoji: 🤡
+          description: Mock things.
+          title: ":clown_face:"
+        ":egg:":
+          emoji: 🥚
+          description: Add or update an easter egg.
+          title: ":egg:"
+        ":see_no_evil:":
+          emoji: 🙈
+          description: Add or update a .gitignore file.
+          title: ":see_no_evil:"
+        ":camera_flash:":
+          emoji: 📸
+          description: Add or update snapshots.
+          title: ":camera_flash:"
+        ":alembic:":
+          emoji: ⚗️
+          description: Perform experiments.
+          title: ":alembic:"
+        ":mag:":
+          emoji: 🔍️
+          description: Improve SEO.
+          title: ":mag:"
+        ":label:":
+          emoji: 🏷️
+          description: Add or update types.
+          title: ":label:"
+        ":seedling:":
+          emoji: 🌱
+          description: Add or update seed files.
+          title: ":seedling:"
+        ":triangular_flag_on_post:":
+          emoji: 🚩
+          description: Add update or remove feature flags.
+          title: ":triangular_flag_on_post:"
+        ":goal_net:":
+          emoji: 🥅
+          description: Catch errors.
+          title: ":goal_net:"
+        ":dizzy:":
+          emoji: 💫
+          description: Add or update animations and transitions.
+          title: ":dizzy:"
+        ":wastebasket:":
+          emoji: 🗑️
+          description: Deprecate code that needs to be cleaned up.
+          title: ":wastebasket:"
+        ":passport_control:":
+          emoji: 🛂
+          description: Work on code related to authorization roles and permissions.
+          title: ":passport_control:"
+        ":adhesive_bandage:":
+          emoji: 🩹
+          description: Simple fix for a non-critical issue.
+          title: ":adhesive_bandage:"
+        ":monocle_face:":
+          emoji: 🧐
+          description: Data exploration/inspection.
+          title: ":monocle_face:"
+        ":coffin:":
+          emoji: ⚰️
+          description: Remove dead code.
+          title: ":coffin:"
+        ":test_tube:":
+          emoji: 🧪
+          description: Add a failing test.
+          title: ":test_tube:"
+        ":necktie:":
+          emoji: 👔
+          description: Add or update business logic.
+          title: ":necktie:"
+        ":stethoscope:":
+          emoji: 🩺
+          description: Add or update healthcheck.
+          title: ":stethoscope:"
+        ":bricks:":
+          emoji: 🧱
+          description: Infrastructure related changes.
+          title: ":bricks:"
+        ":technologist:":
+          emoji: 🧑‍💻
+          description: Improve developer experience.
+          title: ":technologist:"
+        ":money_with_wings:":
+          emoji: 💸
+          description: Add sponsorships or money related infrastructure.
+          title: ":money_with_wings:"
+        ":thread:":
+          emoji: 🧵
+          description: Add or update code related to multithreading or concurrency.
+          title: ":thread:"
+        ":safety_vest:":
+          emoji: 🦺
+          description: Add or update code related to validation.
+          title: ":safety_vest:"
+    scope:
+      description: "What is the scope of this change:"
+      enum:
+        catalog:
+          description: Anything related application catalog (@chezmoi.sh/catalog)
+        core:
+          description: Anything related to the `core` library (@chezmoi.sh/core)
+        gh:
+          description: Anything related to the repository itself (configuration, ...)
+        nex.rpi:
+          description: Anything related to the `nex.rpi` project
+        policy-pack:
+          description: Anything related to the policy-pack libraries (@chezmoi.sh/policy-pack)
+    isBreaking:
+      description: "Are there any breaking changes:"
+      enum:
+        yes:
+          description: "There are breaking changes."
+        no:
+          description: "There are no breaking changes."

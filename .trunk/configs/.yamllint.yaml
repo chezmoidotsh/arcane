@@ -1,16 +1,7 @@
----
-extends: default
-
 rules:
   quoted-strings:
     required: only-when-needed
     extra-allowed: ["{|}"]
   key-duplicates: {}
-  line-length:
-    max: 120
-  comments: disable
   octal-values:
     forbid-implicit-octal: true
-  braces:
-    max-spaces-inside: 1
-  truthy: disable
