@@ -1,8 +1,8 @@
 {
-  "name": "@catalog/os-security-alpine-3.19",
-  "version": "0.0.0",
-  "description": "Alpine Linux is a security-oriented, lightweight Linux distribution based on musl libc and busybox.",
-  "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
-  "license": "Apache-2.0",
-  "private": true
+    "name": "@catalog/os-security-alpine-3.19",
+    "version": "0.0.0",
+    "description": "Alpine Linux is a security-oriented, lightweight Linux distribution based on musl libc and busybox.",
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "license": "Apache-2.0",
+    "private": true
 }

@@ -53,12 +53,16 @@ export async function scanImage(image: string, opts?: ScanOpts): Promise<void> {
     commandArgs.push(`--severity-threshold=${opts?.severityThreshold ?? SeverityThreshold.Critical}`);
 
     await new Promise<void>((resolve, reject) => {
-        const child = spawn("snyk", commandArgs)
+        const child = spawn("snyk", commandArgs);
         const stdout: string[] = [];
         const stderr: string[] = [];
 
-        child.stdout.on("data", (data) => { stdout.push(data.toString()); });
-        child.stderr.on("data", (data) => { stderr.push(data.toString()); });
+        child.stdout.on("data", (data) => {
+            stdout.push(data.toString());
+        });
+        child.stderr.on("data", (data) => {
+            stderr.push(data.toString());
+        });
 
         child.on("error", (err) => {
             reject(`Snyk validation failed: ${err}`);
@@ -66,8 +70,12 @@ export async function scanImage(image: string, opts?: ScanOpts): Promise<void> {
         child.on("exit", (code) => {
             if (code !== 0) {
                 let err = `Snyk validation failed with code ${code}`;
-                if (stdout) { err += `\n${stdout.join("\n")}`; }
-                if (stderr) { err += `\n${stderr.join("\n")}`; }
+                if (stdout) {
+                    err += `\n${stdout.join("\n")}`;
+                }
+                if (stderr) {
+                    err += `\n${stderr.join("\n")}`;
+                }
 
                 reject(err);
             } else {

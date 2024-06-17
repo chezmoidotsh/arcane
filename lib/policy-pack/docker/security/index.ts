@@ -42,21 +42,24 @@ const policies = new PolicyPack("docker-security", {
             validateStack: async (args: StackValidationArgs, reportViolation: ReportViolation) => {
                 const opts = args.getConfig<snyk.ScanOpts>();
 
-                const legacyImages = args.resources.filter(r => r.type === "docker:index/image:Image").map(r => r.props.imageName as string);
-                const remoteImages = args.resources.filter(r => r.type === "docker:index/remoteImage:RemoteImage").map(r => r.props.repoDigest as string);
-                const buildxImages = args.resources.filter(r => r.type === "docker-build:index:Image").map(r => r.props.ref as string);
+                const legacyImages = args.resources
+                    .filter((r) => r.type === "docker:index/image:Image")
+                    .map((r) => r.props.imageName as string);
+                const remoteImages = args.resources
+                    .filter((r) => r.type === "docker:index/remoteImage:RemoteImage")
+                    .map((r) => r.props.repoDigest as string);
+                const buildxImages = args.resources
+                    .filter((r) => r.type === "docker-build:index:Image")
+                    .map((r) => r.props.ref as string);
                 const images = [...legacyImages, ...buildxImages, ...remoteImages];
 
                 let scan: Array<Promise<void>> = [];
                 for (const image of images) {
-                    scan.push(
-                        snyk.scanImage(image, opts)
-                            .catch((e: any) => reportViolation(e))
-                    );
+                    scan.push(snyk.scanImage(image, opts).catch((e: any) => reportViolation(e)));
                 }
 
                 await Promise.all(scan);
             },
-        }
-    ]
+        },
+    ],
 });

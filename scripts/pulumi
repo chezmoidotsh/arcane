@@ -39,11 +39,11 @@ function pulumi_up() {
             pulumi config get pulumi:wrapper \
             | jq --raw-output \
                 --arg rootdir "${rootdir}" \
-                'keys 
+                'keys
                 | map(
-                    select(startswith("pulumi:policy-pack:") and . != "pulumi:policy-pack:all") 
+                    select(startswith("pulumi:policy-pack:") and . != "pulumi:policy-pack:all")
                     | "--policy-pack \($rootdir)/lib/policy-pack/\(.[19:] | sub("[.]"; "/"; "g"))"
-                ) 
+                )
                 | join(" ")'
         )
 
@@ -52,7 +52,7 @@ function pulumi_up() {
             --policy-pack-config <(pulumi config get pulumi:wrapper \
                 | jq --raw-output --compact-output \
                     'to_entries
-                    | map(if .key == "pulumi:policy-pack:all" then {all: .value} else .value end) 
+                    | map(if .key == "pulumi:policy-pack:all" then {all: .value} else .value end)
                     | add'
             ) \
             "$@"

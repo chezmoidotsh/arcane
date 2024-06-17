@@ -60,8 +60,8 @@ improvements on them._
 
 ### Prerequisites
 
-- [asdf-vm](https://asdf-vm.com/)
-- [direnv](https://direnv.net/)
+-   [asdf-vm](https://asdf-vm.com/)
+-   [direnv](https://direnv.net/)
 
 ### Installation
 
@@ -72,10 +72,10 @@ task
 
 ## 🗺️ Roadmap
 
-- [ ] Add Proxmox infrastructure as-code definitions (VMs, LXC, configuration, etc.)
-- [ ] Add some tools as-code (VictoriaMetrics VM, Dataiku VM, HomeAssistant OS VM, ...)
-- [ ] Add network configuration as-code (VLANs, firewall rules, etc.)
-- [ ] Add some documentation about the homelab's architecture (hardware, network, etc.)
+-   [ ] Add Proxmox infrastructure as-code definitions (VMs, LXC, configuration, etc.)
+-   [ ] Add some tools as-code (VictoriaMetrics VM, Dataiku VM, HomeAssistant OS VM, ...)
+-   [ ] Add network configuration as-code (VLANs, firewall rules, etc.)
+-   [ ] Add some documentation about the homelab's architecture (hardware, network, etc.)
 
 ## 🛡️ License
 

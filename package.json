@@ -1,36 +1,36 @@
 {
-  "name": "atlas.chezmoi.sh",
-  "version": "0.0.0",
-  "description": "Personal homelab infrastructure as-code",
-  "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
-  "license": "Apache-2.0",
-  "repository": "https://github.com/chezmoi-sh/atlas",
-  "private": true,
-  "packageManager": "yarn@4.3.0",
-  "devDependencies": {
-    "@commitlint/cli": "^19.3.0",
-    "@commitlint/cz-commitlint": "^19.2.0",
-    "@trunkio/launcher": "^1.3.1",
-    "@types/inquirer": "^9",
-    "commitizen": "^4.3.0",
-    "inquirer": "9"
-  },
-  "dependencies": {
-    "@pulumi/docker": "^4.5.4",
-    "@pulumi/docker-build": "^0.0.2",
-    "@pulumi/pulumi": "^3.119.0"
-  },
-  "workspaces": [
-    "catalog",
-    "catalog/**/*",
-    "lib/core",
-    "lib/policy-pack",
-    "lib/policy-pack/*",
-    "nex.rpi"
-  ],
-  "config": {
-    "commitizen": {
-      "path": "@commitlint/cz-commitlint"
+    "name": "atlas.chezmoi.sh",
+    "version": "0.0.0",
+    "description": "Personal homelab infrastructure as-code",
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/chezmoi-sh/atlas",
+    "private": true,
+    "packageManager": "yarn@4.3.0",
+    "devDependencies": {
+        "@commitlint/cli": "^19.3.0",
+        "@commitlint/cz-commitlint": "^19.2.0",
+        "@trunkio/launcher": "^1.3.1",
+        "@types/inquirer": "^9",
+        "commitizen": "^4.3.0",
+        "inquirer": "9"
+    },
+    "dependencies": {
+        "@pulumi/docker": "^4.5.4",
+        "@pulumi/docker-build": "^0.0.2",
+        "@pulumi/pulumi": "^3.119.0"
+    },
+    "workspaces": [
+        "catalog",
+        "catalog/**/*",
+        "lib/core",
+        "lib/policy-pack",
+        "lib/policy-pack/*",
+        "nex.rpi"
+    ],
+    "config": {
+        "commitizen": {
+            "path": "@commitlint/cz-commitlint"
+        }
     }
-  }
 }

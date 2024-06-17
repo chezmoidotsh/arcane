@@ -1,2 +1,4 @@
+---
 # Following source doesn't work in most setups
-ignored: []
+ignored:
+    - DL3025 # Use shell form of `CMD` and `ENTRYPOINT` for better readability

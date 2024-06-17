@@ -17,9 +17,9 @@ name: nex.rpi
 runtime: nodejs
 description: Raspberry Pi hosted services for all my homelab's critical services
 config:
-  pulumi:wrapper:
-    value:
-      pulumi:policy-pack:docker.security:
-        snyk-container-scan:
-          enforcementLevel: mandatory
-          severityThreshold: critical
+    pulumi:wrapper:
+        value:
+            pulumi:policy-pack:docker.security:
+                snyk-container-scan:
+                    enforcementLevel: mandatory
+                    severityThreshold: critical

@@ -60,11 +60,9 @@ ARG YALDAP_VERSION
 
 RUN set -eux; \
     addgroup --system --gid 64885 yaldap; \
-    adduser --system --no-create-home --home /nonexistent --ingroup yaldap --uid 64885 yaldap; \
-    apk add --no-cache vim curl
+    adduser --system --no-create-home --home /nonexistent --ingroup yaldap --uid 64885 yaldap;
 
 COPY --from=builder /src/yaldap /src/LICENSE /opt/yaldap/
-ADD https://raw.githubusercontent.com/chezmoi-sh/yaldap/main/pkg/ldap/directory/yaml/fixtures/basic.yaml /etc/yaldap/backend.yaml
 
 ENV PATH=/opt/yaldap:${PATH}
 

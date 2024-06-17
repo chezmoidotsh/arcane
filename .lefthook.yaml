@@ -19,31 +19,32 @@
 
 assert_lefthook_installed: true
 output:
-  - summary # Show summary block (successful and failed steps) printing
-  - empty_summary # Show summary heading when there are no steps to run
-  - success # Show successful steps printing
-  - failure # Show failed steps printing
-  - execution_out # Show printing execution output
-  - skips # Show "skip" printing (i.e. no files matched)
+    - meta # Show meta information about lefthook (version, etc.)
+    - summary # Show summary block (successful and failed steps) printing
+    - empty_summary # Show summary heading when there are no steps to run
+    - success # Show successful steps printing
+    - failure # Show failed steps printing
+    - execution_out # Show printing execution output
+    - skips # Show "skip" printing (i.e. no files matched)
 
 commit-msg:
-  commands:
-    commitlint-check:
-      run: commitlint --edit
-      skip:
-        - run: '! test -f "$(git rev-parse --show-toplevel)/.git/COMMIT_EDITMSG"'
+    commands:
+        commitlint-check:
+            run: commitlint --edit
+            skip:
+                - run: '! test -f "$(git rev-parse --show-toplevel)/.git/COMMIT_EDITMSG"'
 
 pre-push:
-  commands:
-    trunk-check:
-      run: trunk check --diff full --print-failures {pushed_files}
-  follow: true
-  parallel: true
+    commands:
+        trunk-check:
+            run: trunk check --diff full --print-failures {push_files}
+    follow: true
+    parallel: true
 
 pre-commit:
-  commands:
-    trunk-fmt:
-      run: trunk fmt --diff compact --print-failures {staged_files}
-      stage_fixed: true
-  follow: true
-  parallel: true
+    commands:
+        trunk-fmt:
+            run: trunk fmt --diff compact --print-failures {staged_files}
+            stage_fixed: true
+    follow: true
+    parallel: true
