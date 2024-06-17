@@ -40,7 +40,51 @@
                 "explorer.openEditors.visible": 1,
                 "files.trimFinalNewlines": true,
                 "files.trimTrailingWhitespace": true,
-                "prettier.configPath": ".trunk/configs/.prettierrc"
+                "prettier.configPath": ".trunk/configs/.prettierrc",
+                "psi-header.changes-tracking": {
+                    "autoHeader": "manualSave",
+                    "enabled": true,
+                    "enforceHeader": true,
+                    "excludeGlob": ["*.json"],
+                    "replace": ["Copyright (C)"]
+                },
+                "psi-header.config": {
+                    "blankLinesAfter": 1,
+                    "forceToTop": true,
+                    "license": "Apache-2.0",
+                    "spacesBetweenYears": true
+                },
+                "psi-header.templates": [
+                    {
+                        "language": "*",
+                        "template": [
+                            "Copyright (C) <<yeartoyear(fc!P, now)>> <<author>> (<<authoremail>>)",
+                            "",
+                            "Licensed under the Apache License, Version 2.0 (the \"License\");",
+                            "you may not use this file except in compliance with the License.",
+                            "You may obtain a copy of the License at",
+                            "",
+                            "        http://www.apache.org/licenses/LICENSE-2.0",
+                            "",
+                            "Unless required by applicable law or agreed to in writing, software",
+                            "distributed under the License is distributed on an \"AS IS\" BASIS,",
+                            "WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.",
+                            "See the License for the specific language governing permissions and",
+                            "limitations under the License.",
+                            "----------------------------------------------------------------------------"
+                        ]
+                    }
+                ],
+                "psi-header.lang-config": [
+                    // Default configuration
+                    { "language": "*", "blankLinesAfter": 1, "ignoreLines": ["Copyright (C)"] },
+
+                    // YAML like comments configuration (YAML, TOML, Dockerfile, etc.)
+                    { "language": "yaml", "begin": "", "end": "", "blankLinesAfter": 0, "prefix": "# " },
+                    { "language": "dockerfile", "mapTo": "yaml" },
+                    { "language": "shellscript", "mapTo": "yaml" },
+                    { "language": "ignore", "mapTo": "yaml" }
+                ]
             },
             "extensions": [
                 "bierner.markdown-preview-github-styles",
@@ -52,7 +96,8 @@
                 "ms-vscode-remote.remote-containers",
                 "ms-vscode.makefile-tools",
                 "redhat.vscode-yaml",
-                "visualstudioexptteam.vscodeintellicode"
+                "visualstudioexptteam.vscodeintellicode",
+                "psioniq.psi-header"
             ]
         }
     },
