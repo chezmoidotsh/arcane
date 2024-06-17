@@ -16,4 +16,4 @@
  */
 
 export { DirectoryAsset } from "./asset";
-export { InjectAssets } from "./docker";
+export { InjectAssets, SecretAsset } from "./docker";

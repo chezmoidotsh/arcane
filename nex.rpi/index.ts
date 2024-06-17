@@ -55,9 +55,9 @@ const yldp = new yaldap.Application("security.yaldap", {
           source:
             config.require("sh.chezmoi.environment") == "live"
               ? new pulumi.asset.FileAsset("config/live")
-              : new pulumi.asset.RemoteAsset(
+              : new utils.SecretAsset(new pulumi.asset.RemoteAsset(
                   "https://raw.githubusercontent.com/chezmoi-sh/yaldap/main/pkg/ldap/directory/yaml/fixtures/basic.yaml",
-                ),
+                )),
           destination: "/etc/yaldap/backend.yaml",
           chown: { user: "yaldap", group: "yaldap" },
         },
