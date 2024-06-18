@@ -28,10 +28,18 @@ RUN apk add --no-cache git \
       -gcflags "all=-N -l" \
       -ldflags "-X github.com/pulumi/pulumi-docker-build/provider.Version=v0.0.2"
 
-FROM ghcr.io/pulumi/devcontainer:slim
+FROM ghcr.io/pulumi/devcontainer:slim-node
 
 # Copy custom first-run notice message
 COPY first-run-notice.txt /usr/local/etc/vscode-dev-containers/first-run-notice.txt
+
+# Install ASDF package manager
+ENV ASDF_DIR=/home/vscode/.asdf
+ENV PATH="${ASDF_DIR}/bin:${ASDF_DIR}/shims:${PATH}"
+RUN git clone https://github.com/asdf-vm/asdf.git ${ASDF_DIR} --branch v0.14.0 \
+    && asdf plugin add asdf-helper https://github.com/ngyewch/asdf-helper-plugin.git \
+    && asdf install asdf-helper latest \
+    && asdf global asdf-helper latest
 
 # Copy fixed `pulumi-resource-docker-build` provider
 COPY --from=pulumi-docker-build --chown=vscode:vscode /opt/resource-docker-build-v0.0.2 /home/vscode/.pulumi/plugins/resource-docker-build-v0.0.2/pulumi-resource-docker-build

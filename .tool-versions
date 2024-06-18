@@ -1,6 +1,5 @@
 direnv 2.34.0
 jq 1.7.1
 lefthook 1.6.16
-nodejs 20.14.0
 pulumi 3.119.0
 snyk 1.1291.1

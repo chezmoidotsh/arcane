@@ -119,14 +119,11 @@
             "version": "latest",
             "dockerDashComposeVersion": "v2"
         },
-        "ghcr.io/devcontainers-contrib/features/direnv:1": {},
-        "ghcr.io/devcontainers-contrib/features/pulumi:1": {},
-        "ghcr.io/devcontainers-contrib/features/snyk-cli:1": {},
         "ghcr.io/devcontainers-contrib/features/zsh-plugins:0": {
             "plugins": "direnv docker node yarn"
         }
     },
-    "postCreateCommand": "git submodule update --init --recursive; docker logout; direnv allow",
+    "postCreateCommand": "git submodule update --init --recursive; docker logout; asdf-helper install; direnv allow",
     // Custom "container" settings
     "containerEnv": {
         // Disable direnv log output
