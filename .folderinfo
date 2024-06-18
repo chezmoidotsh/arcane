@@ -1,0 +1,5 @@
+---
+files:
+  .envrc: Direnv configuration file
+  .tool-versions: asdf-vm configuration file
+  .lefthook.yaml: Git hooks configuration file (using Lefthook)

@@ -27,33 +27,29 @@
 ## ℹ️ About
 
 Welcome to the repository for my personal homelab infrastructure. This monorepo contains all the code and configurations for managing
-my homelab, including various services and tools.  
+my homelab, including various services and tools.
 _This repository will probably never be finished, as I'll always be adding new services or tools to my homelab, where I'd like to make
 improvements on them._
 
 ## 📁 Project Structure
 
 ```plaintext
-├── .envrc                  # direnv configuration
-├── .tool-versions          # asdf-vm tool versions
-├── Taskfile.dist.yaml      # Taskfile used to manage this repository
-├── apps                    # Project or applications definitions (this is the main part of the repository)
-│   └── nex.rpi             # └ Homelab's critical services running on a Raspberry Pi
-│       ├── config          #   Configuration files
-│       └── images          #   Docker images definitions
-├── assets                  # Images, logos, and other assets used in this repository
-├── infrastructure          # Infrastructure as-code definitions
-│   ├── live                # Live infrastructure definitions (what is actually deployed)
-│   │   ├── external        # ├ Mainly cloud-related infrastructure
-│   │   ├── nex.rpi         # ├ nex.rpi related infrastructure
-│   │   └── proxmox         # └ Proxmox related infrastructure (main hypervisor)
-│   └── modules             # Infrastucture modules or components used to build the infrastructure
-│       └── pyinfra         # pyinfra modules
-│           ├── nut         # ├ Network UPS Tools (UPS management)
-│           ├── overlayfs   # ├ OverlayFS management
-│           └── smfc        # └ SuperMicro Fan Control
+├── .devcontainer          # Development environment setup (DevContainer/Codespaces)
+│   ├── devcontainer.json  # DevContainer configuration file
+│   └── Dockerfile         # Dockerfile on which the DevContainer is based
+├── assets                 # Repository assets (images, video, etc.) used in the documentation.
+├── catalog                # Contains all images and application packages compatible with Pulumi
+│   ├── os                 # OS related images
+│   └── security           # Application related to security (authn, authz, firewall, etc.)
+├── lib
+│   ├── core               # TS libraries for containing all the buisness logic for this repository.
+│   └── policy-pack        # Policy packs used by Pulumi to enforce best practices.
 ├── scripts
-└── vendor
+│   └── src
+│       └── folderinfo     # Tools to generate the folder structure of Atlas
+├── .envrc                 # Direnv configuration file
+├── .tool-versions         # asdf-vm configuration file
+└── .lefthook.yaml         # Git hooks configuration file (using Lefthook)
 ```
 
 ## 🚀 Getting Started

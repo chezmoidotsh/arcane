@@ -38,6 +38,9 @@
                 "editor.suggestSelection": "first",
                 "editor.terminal.integrated.shell.linux": "/usr/bin/zsh",
                 "explorer.openEditors.visible": 1,
+                "files.associations": {
+                    ".folderinfo": "yaml"
+                },
                 "files.trimFinalNewlines": true,
                 "files.trimTrailingWhitespace": true,
                 "prettier.configPath": ".trunk/configs/.prettierrc",
@@ -46,6 +49,7 @@
                     "enabled": true,
                     "enforceHeader": true,
                     "excludeGlob": ["*.json"],
+                    "exclude": [".folderinfo"],
                     "replace": ["Copyright (C)"]
                 },
                 "psi-header.config": {

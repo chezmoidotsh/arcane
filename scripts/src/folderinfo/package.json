@@ -1,0 +1,11 @@
+{
+  "name": "folderinfo",
+  "version": "1.0.0",
+  "description": "Tools to generate an ANSI tree of folders and files (documentation)",
+  "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+  "license": "Apache-2.0",
+  "private": true,
+  "dependencies": {
+    "@types/js-yaml": "^4.0.9"
+  }
+}
