@@ -19,7 +19,7 @@ import * as pulumi from "@pulumi/pulumi";
 
 import * as alpine from "@chezmoi.sh/catalog/os/alpine/3.19/docker";
 import * as yaldap from "@chezmoi.sh/catalog/security/yaldap/docker";
-import * as utils from "@chezmoi.sh/core/utils";
+import * as authelia from "@chezmoi.sh/catalog/security/authelia/docker";
 
 const config = new pulumi.Config();
 const alpn = new alpine.Image("alpine", {
@@ -27,6 +27,7 @@ const alpn = new alpine.Image("alpine", {
     buildOnPreview: false,
     platforms: ["linux/amd64"],
 });
+
 const yldp = new yaldap.Application("security.yaldap", {
     configuration:
         config.require("sh.chezmoi.environment") == "live"
@@ -34,10 +35,33 @@ const yldp = new yaldap.Application("security.yaldap", {
             : new pulumi.asset.RemoteAsset(
                   "https://raw.githubusercontent.com/chezmoi-sh/yaldap/main/pkg/ldap/directory/yaml/fixtures/basic.yaml",
               ),
+
     imageOpts: { push: true, baseImage: alpn },
     containerOpts: { wait: true },
+});
+const authl = new authelia.Application("security.authelia", {
+    configuration:
+        config.require("sh.chezmoi.environment") == "live"
+            ? new pulumi.asset.FileAsset("config/live")
+            : new pulumi.asset.RemoteAsset(
+                  "https://github.com/authelia/authelia/raw/master/examples/compose/local/authelia/configuration.yml",
+              ),
+    userDatabase:
+        config.require("sh.chezmoi.environment") == "live"
+            ? undefined
+            : {
+                  source: new pulumi.asset.RemoteAsset(
+                      "https://github.com/authelia/authelia/raw/master/examples/compose/local/authelia/users_database.yml",
+                  ),
+                  destination: "/config/users_database.yml",
+              },
+
+    imageOpts: { push: true, baseImage: alpn },
+    containerOpts: { wait: false },
 });
 
 export const alpine_image = alpn.ref;
 export const yaldap_image = yldp.image.ref;
 export const yaldap_container = yldp.container.id;
+export const authelia_image = authl.image.ref;
+export const authelia_container = authl.container.id;

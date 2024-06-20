@@ -1,0 +1,9 @@
+{
+    "name": "@catalog/security-authelia",
+    "version": "0.0.0",
+    "description": "Authelia is an open-source authentication and authorization server providing two-factor authentication and single sign-on (SSO) for your applications via a web portal.",
+    "repository": "https://github.com/authelia/authelia",
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "license": "Apache-2.0",
+    "private": true
+}
