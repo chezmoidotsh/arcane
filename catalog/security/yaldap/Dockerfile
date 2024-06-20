@@ -22,7 +22,7 @@ ARG ALPN_BASE
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder>: build the yaLDAP binary (Go)                                   │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/golang:1.22.3-alpine3.19@sha256:f1fe698725f6ed14eb944dc587591f134632ed47fc0732ec27c7642adbe90618 as builder
+FROM docker.io/library/golang:1.22.3-alpine3.19@sha256:f1fe698725f6ed14eb944dc587591f134632ed47fc0732ec27c7642adbe90618 AS builder
 
 ARG YALDAP_VERSION
 
@@ -52,9 +52,7 @@ RUN set -eux; \
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <runtime>: create the yaLDAP runtime image using all previous stages      │
 # └───────────────────────────────────────────────────────────────────────────┘
-# NOTE: this base image MUST BE used by any other image of this project to be
-#       able to use cache layers and avoid downloading the same dependencies.
-FROM ${ALPN_BASE} as runtime
+FROM ${ALPN_BASE} AS runtime
 
 ARG YALDAP_VERSION
 
@@ -68,7 +66,7 @@ ENV PATH=/opt/yaldap:${PATH}
 
 USER yaldap
 WORKDIR /opt/yaldap
-ENTRYPOINT yaldap run --backend.name yaml --backend.url file:///etc/yaldap/backend.yaml
+ENTRYPOINT ["yaldap", "run", "--backend.name", "yaml", "--backend.url", "file:///etc/yaldap/backend.yaml"]
 
 EXPOSE 389
 HEALTHCHECK --interval=5s CMD nc -z localhost 389 || exit 1

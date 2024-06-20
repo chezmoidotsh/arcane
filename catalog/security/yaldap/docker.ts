@@ -15,16 +15,18 @@
  * ----------------------------------------------------------------------------
  */
 
-import * as path from "path";
-import * as docker from "@pulumi/docker";
-import * as docker_build from "@pulumi/docker-build";
-import * as pulumi from "@pulumi/pulumi";
-
-import { types, LocalImage } from "@chezmoi.sh/core/docker";
-import * as alpine from "@chezmoi.sh/catalog/os/alpine/3.19/docker";
-
 // renovate: datasource=github-tags depName=chezmoi-sh/yaldap versioning=semver
 export const Version = "v0.2.0";
+
+import * as path from "path";
+import { Asset } from "@pulumi/pulumi/asset";
+import * as docker from "@pulumi/docker";
+import * as pulumi from "@pulumi/pulumi";
+
+import { types as types, LocalImage } from "@chezmoi.sh/core/docker";
+import { InjectAssets, InjectableChownableAsset, SecretAsset } from "@chezmoi.sh/core/utils/docker";
+
+import * as alpine from "@chezmoi.sh/catalog/os/alpine/3.19/docker";
 
 /**
  * The arguments for building the yaLDAP Docker image.
@@ -47,12 +49,13 @@ export interface ImageArgs<T extends types.Image> extends types.ImageArgs {
  * This component builds the Docker image for the yaLDAP application.
  */
 export class Image<T extends types.Image> extends LocalImage {
-    constructor(name: string, args: ImageArgs<T> & docker_build.ImageArgs, opts?: pulumi.ComponentResourceOptions) {
+    constructor(name: string, args: ImageArgs<T>, opts?: pulumi.ComponentResourceOptions) {
         // Get the base image to use for building the yaLDAP image. If no base image is provided,
         // we will use the latest Alpine Linux image.
         const base = pulumi.output(
             args.baseImage || (new alpine.Image(`${name}:base`, args, { parent: opts?.parent }) as T),
         );
+        const version = args.version ?? Version;
 
         super(
             name,
@@ -79,7 +82,7 @@ export class Image<T extends types.Image> extends LocalImage {
 
                 // Default image options
                 ...{
-                    tags: [`oci.chezmoi.sh/security/yaldap:${Version}`],
+                    tags: [`oci.chezmoi.sh/security/yaldap:${version}`],
                 },
                 ...args,
 
@@ -87,9 +90,8 @@ export class Image<T extends types.Image> extends LocalImage {
                 context: { location: __dirname },
                 dockerfile: { location: path.join(__dirname, "Dockerfile") },
                 buildArgs: {
-                    ...args.buildArgs,
                     ALPN_BASE: base.ref,
-                    YALDAP_VERSION: Version,
+                    YALDAP_VERSION: version,
                 },
             },
             opts,
@@ -103,8 +105,12 @@ export class Image<T extends types.Image> extends LocalImage {
  */
 export interface ApplicationArgs<T extends types.Image, U extends types.Image> {
     /**
+     * yaLDAP YAML backend configuration file.
+     */
+    configuration: pulumi.Input<Asset>;
+
+    /**
      * The options for building the yaLDAP Docker image.
-     * @default {push: false, load: true}
      */
     imageOpts?: ImageArgs<T> & {
         /**
@@ -133,11 +139,21 @@ export class Application<T extends types.Image, U extends types.Image = T> exten
      */
     public readonly container: docker.Container;
 
-    constructor(name: string, args?: ApplicationArgs<T, U>, opts?: pulumi.ComponentResourceOptions) {
+    constructor(name: string, args: ApplicationArgs<T, U>, opts?: pulumi.ComponentResourceOptions) {
         super("chezmoi.sh:security:yaldap:Application", name, {}, opts);
 
-        const image = new Image(name, args?.imageOpts || { push: false, load: true }, { parent: this }) as T;
-        this.image = args?.imageOpts?.transformation?.(image) ?? image;
+        const image = new Image(name, args?.imageOpts || { push: true }, { parent: this }) as T;
+        const secret = pulumi.output(args.configuration).apply(
+            (src: Asset) =>
+                ({
+                    source: new SecretAsset(src),
+                    destination: "/etc/yaldap/backend.yaml",
+                    mode: 0o400,
+                    user: "yaldap",
+                }) as InjectableChownableAsset,
+        );
+        const embedded = InjectAssets(image, secret) as T;
+        this.image = args?.imageOpts?.transformation?.(embedded) ?? embedded;
 
         this.container = new docker.Container(
             name,
@@ -154,6 +170,9 @@ export class Application<T extends types.Image, U extends types.Image = T> exten
                     // Resource defaults
                     memory: 64,
                     memorySwap: 64,
+
+                    // Network defaults
+                    ports: [{ protocol: "tcp", internal: 389, external: 389 }],
                 },
                 ...args,
 

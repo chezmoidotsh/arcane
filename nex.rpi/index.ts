@@ -22,47 +22,19 @@ import * as yaldap from "@chezmoi.sh/catalog/security/yaldap/docker";
 import * as utils from "@chezmoi.sh/core/utils";
 
 const config = new pulumi.Config();
-const assets = new utils.DirectoryAsset("..", {
-    recursive: true,
-    predicates: [
-        (file) => file.isFile(),
-        (file) => !file.name.includes(".git") && !file.name.includes("node_modules") && !file.name.includes("vendor"),
-    ],
-}).assets.map((file) => ({
-    source: file,
-    destination: `/src${file.path}`,
-    chown: { user: "yaldap", group: "yaldap" },
-}));
-
 const alpn = new alpine.Image("alpine", {
     push: true,
     buildOnPreview: false,
     platforms: ["linux/amd64"],
 });
 const yldp = new yaldap.Application("security.yaldap", {
-    imageOpts: {
-        push: true,
-        baseImage: alpn,
-        // TODO: This part will be possible once we have the ability to inject assets into the `dockerfile` property.
-        //       See https://github.com/pulumi/pulumi-docker-build/issues/96 for more information.
-        transformation: (image) =>
-            utils.InjectAssets(
-                image,
-                {
-                    source:
-                        config.require("sh.chezmoi.environment") == "live"
-                            ? new pulumi.asset.FileAsset("config/live")
-                            : new utils.SecretAsset(
-                                  new pulumi.asset.RemoteAsset(
-                                      "https://raw.githubusercontent.com/chezmoi-sh/yaldap/main/pkg/ldap/directory/yaml/fixtures/basic.yaml",
-                                  ),
-                              ),
-                    destination: "/etc/yaldap/backend.yaml",
-                    chown: { user: "yaldap", group: "yaldap" },
-                },
-                ...assets,
-            ),
-    },
+    configuration:
+        config.require("sh.chezmoi.environment") == "live"
+            ? new pulumi.asset.FileAsset("config/live")
+            : new pulumi.asset.RemoteAsset(
+                  "https://raw.githubusercontent.com/chezmoi-sh/yaldap/main/pkg/ldap/directory/yaml/fixtures/basic.yaml",
+              ),
+    imageOpts: { push: true, baseImage: alpn },
     containerOpts: { wait: true },
 });
 
