@@ -332,10 +332,21 @@ COPY --from=0 ${context.contextdir} /
  */
 export class SecretAsset<T extends asset.Asset> {
     /**
+     * The asset to be mounted as a secret.
+     */
+    public readonly asset: T;
+
+    /**
      * Create a new SecretAsset wrapping the given asset.
      * @param asset Asset to be mounted as a secret.
      */
-    constructor(public readonly asset: T) {}
+    constructor(asset: T | SecretAsset<T>) {
+        if (isSecretAsset<T>(asset)) {
+            this.asset = asset.asset;
+        } else {
+            this.asset = asset;
+        }
+    }
 }
 
 /**
