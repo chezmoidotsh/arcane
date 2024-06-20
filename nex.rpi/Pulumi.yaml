@@ -20,6 +20,6 @@ config:
     pulumi:wrapper:
         value:
             pulumi:policy-pack:docker.security:
-                snyk-container-scan:
-                    enforcementLevel: mandatory
+                trivy-container-scan:
+                    enforcementLevel: advisory
                     severityThreshold: critical

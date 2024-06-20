@@ -18,7 +18,7 @@
 import { spawn } from "child_process";
 
 /**
- * Enum of possible Snyk severity thresholds.
+ * Enum of possible Trivy severity thresholds.
  */
 export declare enum SeverityThreshold {
     Low = "low",
@@ -26,34 +26,82 @@ export declare enum SeverityThreshold {
     High = "high",
     Critical = "critical",
 }
+const SeverityThresholds: Record<string, string> = {
+    ["low"]: "LOW,MEDIUM,HIGH,CRITICAL",
+    ["medium"]: "MEDIUM,HIGH,CRITICAL",
+    ["high"]: "HIGH,CRITICAL",
+    ["critical"]: "CRITICAL",
+};
 
 /**
- * Options for the Snyk scan.
+ * Enum of possible Trivy vulnerability types.
+ */
+export declare enum VulnerabilityType {
+    OS = "os",
+    Library = "library",
+}
+
+/**
+ * Options for the Trivy scan.
  */
 export interface ScanOpts {
     /**
-     * Whether to exclude base image vulnerabilities.
+     * Do not issue API requests to identify dependencies.
      */
-    excludeBaseImageVulns: boolean;
+    offlineScan: boolean;
+
+    /**
+     * Skip update of vulnerability database.
+     */
+    skipUpdate?: boolean;
+
+    /**
+     * Ignore vulnerabilities that cannot be fixed.
+     */
+    ignoreUnfixed?: boolean;
+
+    /**
+     * Show all progress and log messages.
+     */
+    verbose?: boolean;
+
+    /**
+     * List of vulnerability types to scan for.
+     */
+    vulnerabilityTypes?: VulnerabilityType[];
 
     /**
      * The severity threshold to fail on.
      */
-    severityThreshold: SeverityThreshold;
+    severityThreshold?: SeverityThreshold;
 }
 
 /**
- * Scans Docker images for vulnerabilities using Snyk.
+ * Scans Docker images for vulnerabilities using Trivy.
  */
 export async function scanImage(image: string, opts?: ScanOpts): Promise<void> {
-    const commandArgs = ["container", "test", image];
-    if (opts?.excludeBaseImageVulns) {
-        commandArgs.push("--exclude-base-image-vulns");
+    const commandArgs = ["image", "--format=table", "--exit-code=254", "--exit-on-eol=253", "--no-progress"];
+    if (opts?.offlineScan) {
+        commandArgs.push("--offline-scan");
     }
-    commandArgs.push(`--severity-threshold=${opts?.severityThreshold ?? SeverityThreshold.Critical}`);
+    if (opts?.skipUpdate) {
+        commandArgs.push("--skip-update");
+    }
+    if (opts?.ignoreUnfixed) {
+        commandArgs.push("--ignore-unfixed");
+    }
+    if (!(opts?.verbose ?? false)) {
+        commandArgs.push("--quiet");
+    }
+
+    commandArgs.push(`--severity=${SeverityThresholds[opts?.severityThreshold ?? SeverityThreshold.Critical]}`);
+    commandArgs.push(
+        `--vuln-type=${(opts?.vulnerabilityTypes ?? [VulnerabilityType.OS, VulnerabilityType.Library]).join(",")}`,
+    );
+    commandArgs.push(image);
 
     await new Promise<void>((resolve, reject) => {
-        const child = spawn("snyk", commandArgs);
+        const child = spawn("trivy", commandArgs);
         const stdout: string[] = [];
         const stderr: string[] = [];
 
@@ -65,11 +113,11 @@ export async function scanImage(image: string, opts?: ScanOpts): Promise<void> {
         });
 
         child.on("error", (err) => {
-            reject(`Snyk validation failed: ${err}`);
+            reject(`Trivy validation failed: ${err}`);
         });
         child.on("exit", (code) => {
             if (code !== 0) {
-                let err = `Snyk validation failed with code ${code}`;
+                let err = `Trivy validation failed with code ${code}`;
                 if (stdout) {
                     err += `\n${stdout.join("\n")}`;
                 }

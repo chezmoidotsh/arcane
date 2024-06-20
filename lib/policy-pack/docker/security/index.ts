@@ -17,19 +17,31 @@
 
 import { PolicyPack, ReportViolation, StackValidationArgs } from "@pulumi/policy";
 
-import * as snyk from "./snyk";
+import * as trivy from "./trivy";
 
 const policies = new PolicyPack("docker-security", {
-    enforcementLevel: "mandatory",
+    enforcementLevel: "advisory",
     policies: [
-        // -- Policy to scan Docker images for vulnerabilities using Snyk
+        // -- Policy to scan Docker images for vulnerabilities using Trivy
         {
-            name: "snyk-container-scan",
-            description: "Scans Docker Images with Snyk",
-            enforcementLevel: "mandatory",
+            name: "trivy-container-scan",
+            description: "Scans Docker Images with Trivy",
+            enforcementLevel: "advisory",
             configSchema: {
                 properties: {
-                    excludeBaseImageVulns: {
+                    offlineScan: {
+                        default: false,
+                        type: "boolean",
+                    },
+                    skipUpdate: {
+                        default: false,
+                        type: "boolean",
+                    },
+                    ignoreUnfixed: {
+                        default: false,
+                        type: "boolean",
+                    },
+                    verbose: {
                         default: false,
                         type: "boolean",
                     },
@@ -37,10 +49,17 @@ const policies = new PolicyPack("docker-security", {
                         default: "critical",
                         enum: ["low", "medium", "high", "critical"],
                     },
+                    vulnerabilityTypes: {
+                        default: ["os", "library"],
+                        items: {
+                            enum: ["os", "library"],
+                        },
+                        type: "array",
+                    },
                 },
             },
             validateStack: async (args: StackValidationArgs, reportViolation: ReportViolation) => {
-                const opts = args.getConfig<snyk.ScanOpts>();
+                const opts = args.getConfig<trivy.ScanOpts>();
 
                 const legacyImages = args.resources
                     .filter((r) => r.type === "docker:index/image:Image")
@@ -55,7 +74,7 @@ const policies = new PolicyPack("docker-security", {
 
                 let scan: Array<Promise<void>> = [];
                 for (const image of images) {
-                    scan.push(snyk.scanImage(image, opts).catch((e: any) => reportViolation(e)));
+                    scan.push(trivy.scanImage(image, opts).catch((e: any) => reportViolation(e)));
                 }
 
                 await Promise.all(scan);

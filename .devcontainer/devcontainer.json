@@ -96,12 +96,13 @@
                 "github.copilot",
                 "github.vscode-pull-request-github",
                 "golang.go",
+                "ldez.ignore-files",
                 "ms-azuretools.vscode-docker",
                 "ms-vscode-remote.remote-containers",
                 "ms-vscode.makefile-tools",
+                "psioniq.psi-header",
                 "redhat.vscode-yaml",
-                "visualstudioexptteam.vscodeintellicode",
-                "psioniq.psi-header"
+                "visualstudioexptteam.vscodeintellicode"
             ]
         }
     },
