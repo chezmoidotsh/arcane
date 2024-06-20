@@ -15,6 +15,11 @@
  * ----------------------------------------------------------------------------
  */
 
-export { DirectoryAsset } from "./asset";
-export { InjectAssets, SecretAsset } from "./docker";
-export { IsDefined } from "./type";
+/**
+ * Type guard to check if an object is defined.
+ * @param obj Object to check if it is defined
+ * @returns True if the object is defined, false otherwise
+ */
+export function IsDefined<T>(obj: T | undefined): obj is T {
+    return obj !== undefined;
+}
