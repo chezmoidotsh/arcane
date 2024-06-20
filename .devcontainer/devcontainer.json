@@ -127,7 +127,11 @@
             "plugins": "direnv docker node yarn"
         }
     },
-    "postCreateCommand": "git submodule update --init --recursive; docker logout; asdf-helper install; direnv allow",
+    "postCreateCommand": {
+        "sync submodules": "git submodule update --init --recursive",
+        "install required tools": "always_keep_download=yes asdf-helper install && direnv allow",
+        "docker logout": "docker logout"
+    },
     // Custom "container" settings
     "containerEnv": {
         // Disable direnv log output
@@ -135,5 +139,5 @@
     },
     "mounts": ["type=tmpfs,destination=/tmp"],
     "remoteUser": "vscode",
-    "runArgs": ["--network=host", "--hostname=chezmoi.sh-atlas"]
+    "runArgs": ["--network=host"]
 }

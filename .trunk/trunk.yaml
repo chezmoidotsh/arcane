@@ -25,14 +25,14 @@ lint:
     enabled:
         - taplo@0.8.1
         - actionlint@1.7.1
-        - checkov@3.2.138
+        - checkov@3.2.141
         - git-diff-check
         - hadolint@2.12.0
         - markdownlint@0.41.0
         - osv-scanner@1.7.4
         - oxipng@9.1.1
         - prettier@3.3.2
-        - renovate@37.409.1
+        - renovate@37.413.2
         - ruff@0.4.9
         - shellcheck@0.10.0
         - shfmt@3.6.0
