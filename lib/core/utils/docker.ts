@@ -34,7 +34,7 @@ const busybox =
 /**
  * Information about an asset to be injected into a Docker image.
  */
-export interface InjectedAsset {
+export interface InjectableAsset {
     /**
      * Asset to be injected into the image.
      */
@@ -52,18 +52,29 @@ export interface InjectedAsset {
     /**
      * Optional `chmod` configuration for the asset.
      */
-    chmod?: fs.Mode;
+    mode?: fs.Mode;
 }
 
 /**
  * Information about an asset to be injected into a Docker image with chown configuration.
  */
-export interface InjectedChownableAsset extends InjectedAsset {
+export interface InjectableChownableAsset extends InjectableAsset {
     /**
-     * `chown` configuration for the asset.
+     * User to be used for the asset.
      */
-    chown: { user: string | number; group?: string | number };
+    user: string | number;
+
+    /**
+     * Group to be used for the asset.
+     */
+    group?: string | number;
 }
+
+type RequiredInjectableAssets = [pulumi.Input<InjectableAsset>, ...pulumi.Input<InjectableAsset>[]];
+type RequiredInjectableChownableAssets = [
+    pulumi.Input<InjectableChownableAsset>,
+    ...pulumi.Input<InjectableChownableAsset>[],
+];
 
 /**
  * Add assets to a Docker image using root user and group.
@@ -71,11 +82,11 @@ export interface InjectedChownableAsset extends InjectedAsset {
  * WARNING: This function can be slow because it relies on where the assets are stored (local, remote, etc).
  *             It is recommended to use this function only for small assets.
  *
- * @param {InjectedAsset} image The image to add assets to.
- * @param {InjectedAsset[]} assets The assets to add to the image.
+ * @param {InjectableAsset} image The image to add assets to.
+ * @param {InjectableAsset[]} assets The assets to add to the image.
  * @returns {docker_types.Image} The new image with all assets injected into it.
  */
-export function InjectAssets(image: docker_types.Image, ...assets: pulumi.Input<InjectedAsset>[]): docker_types.Image;
+export function InjectAssets(image: docker_types.Image, ...assets: RequiredInjectableAssets): docker_types.Image;
 
 /**
  * Add assets to a Docker image using the specified user and group for each asset.
@@ -83,22 +94,19 @@ export function InjectAssets(image: docker_types.Image, ...assets: pulumi.Input<
  * WARNING: This function can be slow because it relies on where the assets are stored (local, remote, etc).
  *             It is recommended to use this function only for small assets.
  *
- * @param {InjectedAsset} image The image to add assets to.
- * @param {InjectedAsset[]} assets The assets to add to the image.
+ * @param {InjectableAsset} image The image to add assets to.
+ * @param {InjectableAsset[]} assets The assets to add to the image.
  * @returns {docker_types.Image} The new image with all assets injected into it.
  */
 export function InjectAssets(
     image: docker_types.Image,
-    ...assets: pulumi.Input<InjectedChownableAsset>[]
+    ...assets: RequiredInjectableChownableAssets
 ): docker_types.Image;
 
 export function InjectAssets(
     image: docker_types.Image,
-    ...assets: pulumi.Input<InjectedAsset>[] | pulumi.Input<InjectedChownableAsset>[]
+    ...assets: RequiredInjectableAssets | RequiredInjectableChownableAssets
 ): docker_types.Image {
-    if (assets.length === 0) {
-        return image;
-    }
     if (assets.length > 4096) {
         pulumi.log.warn(
             `Injecting a large number of assets (> 4096) can fail due to the maximum size of the GRPC request (4 Mio).`,
@@ -110,7 +118,7 @@ export function InjectAssets(
 
 function injectAssets(
     image: docker_types.Image,
-    assets: pulumi.Input<InjectedAsset | InjectedChownableAsset>[],
+    assets: pulumi.Input<InjectableAsset | InjectableChownableAsset>[],
 ): docker_types.Image {
     // Step 1: Create a temporary directory to store all assets that will be removed after the build.
     const tmpdir = tmp.dirSync({ keep: false, unsafeCleanup: true, mode: 0o700 });
@@ -267,21 +275,19 @@ function injectAssets(
                     const instructions = context.assets
                         .map((asset) => {
                             const destination = path.join(context.contextdir, asset.destination);
-                            const chmod = asset.chmod ? `chmod ${asset.chmod} ${destination}` : "";
+                            const chmod = asset.mode ? `chmod ${asset.mode} ${destination}` : "";
                             return chmod ? `RUN ${chmod}` : "";
                         })
                         .filter((v) => v);
 
-                    const areInjectedChownableAsset = (a: any): a is InjectedChownableAsset[] =>
-                        a.every((v: any) => "chown" in v);
+                    const areInjectedChownableAsset = (a: any): a is InjectableChownableAsset[] =>
+                        a.every((v: any) => "user" in v);
                     if (areInjectedChownableAsset(assets)) {
                         instructions.push(
                             ...assets.map((asset) => {
                                 const destination = path.join(context.contextdir, asset.destination);
-                                const chown = asset.chown
-                                    ? `chown ${asset.chown.user}${
-                                          asset.chown.group ? `:${asset.chown.group}` : ""
-                                      } ${destination}`
+                                const chown = asset.user
+                                    ? `chown ${asset.user}${asset.group ? `:${asset.group}` : ""} ${destination}`
                                     : "";
                                 return chown ? `RUN ${chown}` : "";
                             }),
@@ -338,5 +344,5 @@ export class SecretAsset<T extends asset.Asset> {
  * @returns true if the object is a SecretAsset, false otherwise.
  */
 function isSecretAsset<T extends asset.Asset>(asset: any): asset is SecretAsset<T> {
-    return "asset" in asset;
+    return asset.asset !== undefined;
 }
