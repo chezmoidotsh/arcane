@@ -26,6 +26,7 @@ import * as buildx from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
 
 import * as asset_utils from "./asset";
+import { IsDefined } from "./type";
 import { types as docker_types } from "@chezmoi.sh/core/docker";
 
 const busybox =
@@ -309,11 +310,11 @@ COPY --from=0 ${context.contextdir} /
             secrets: context.apply((context) =>
                 context.assets
                     .map((asset) => asset.sensitive)
-                    .filter(<T>(a: T | undefined): a is T => a !== undefined) // Filter out undefined values
+                    .filter(IsDefined) // Filter out undefined values
                     .reduce(
-                        async (acc, buff, idx) => ({
+                        (acc, buff, idx) => ({
                             ...acc,
-                            [`asset${idx}`]: pulumi.secret((await buff).toString("base64")),
+                            [`asset${idx}`]: pulumi.secret(buff.then((b) => b.toString("base64"))),
                         }),
                         {},
                     ),
