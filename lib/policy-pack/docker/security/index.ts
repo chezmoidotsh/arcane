@@ -15,18 +15,19 @@
  * ----------------------------------------------------------------------------
  */
 
-import { PolicyPack, ReportViolation, StackValidationArgs } from "@pulumi/policy";
+import * as docker from "@pulumi/docker";
+import { PolicyPack, ReportViolation, StackValidationArgs, validateResourceOfType } from "@pulumi/policy";
 
 import * as trivy from "./trivy";
+import * as pulumi from "@pulumi/pulumi";
 
 const policies = new PolicyPack("docker-security", {
-    enforcementLevel: "advisory",
+    enforcementLevel: "mandatory",
     policies: [
         // -- Policy to scan Docker images for vulnerabilities using Trivy
         {
             name: "trivy-container-scan",
             description: "Scans Docker Images with Trivy",
-            enforcementLevel: "advisory",
             configSchema: {
                 properties: {
                     offlineScan: {
@@ -58,27 +59,25 @@ const policies = new PolicyPack("docker-security", {
                     },
                 },
             },
-            validateStack: async (args: StackValidationArgs, reportViolation: ReportViolation) => {
-                const opts = args.getConfig<trivy.ScanOpts>();
+            validateResource: [
+                validateResourceOfType(docker.Container, async (container, args, reportViolation) => {
+                    const opts = args.getConfig<trivy.ScanOpts>();
+                    const sourceRef = container.labels?.find((l) => l.label === "org.opencontainers.image.source.ref");
+                    if (!sourceRef && container.image.startsWith("sha256:")) {
+                        pulumi.log.warn(
+                            `Container image "${args.name}" (${args.urn}) does not have the label "org.opencontainers.image.source.ref", ` +
+                                "which is required for this policy to work properly.\n" +
+                                "NOTE: The field 'image.name' sometimes only contains the digest which is not enough for Trivy to find " +
+                                "the image.",
+                        );
+                        return;
+                    }
 
-                const legacyImages = args.resources
-                    .filter((r) => r.type === "docker:index/image:Image")
-                    .map((r) => r.props.imageName as string);
-                const remoteImages = args.resources
-                    .filter((r) => r.type === "docker:index/remoteImage:RemoteImage")
-                    .map((r) => r.props.repoDigest as string);
-                const buildxImages = args.resources
-                    .filter((r) => r.type === "docker-build:index:Image")
-                    .map((r) => r.props.ref as string);
-                const images = [...legacyImages, ...buildxImages, ...remoteImages];
-
-                let scan: Array<Promise<void>> = [];
-                for (const image of images) {
-                    scan.push(trivy.scanImage(image, opts).catch((e: any) => reportViolation(e)));
-                }
-
-                await Promise.all(scan);
-            },
+                    await trivy
+                        .scanImage(sourceRef?.value ?? container.image, opts)
+                        .catch((e: any) => reportViolation(e));
+                }),
+            ],
         },
     ],
 });

@@ -209,12 +209,12 @@ export class Application<T extends types.Image, U extends types.Image = T> exten
             },
             {
                 parent: this,
-                // Because @pulumi/docker-build generates multi-platform images, image.ref
-                // will be the SHA256 digest of the image manifest. This means that the
-                // container will be recreated every time due to the drift between the
-                // manifest digest and the real used image digest. To avoid this, we ignore
-                // changes to the image property and manually update the container when the
-                // image changes.
+                // @pulumi/docker-build uses https://github.com/kreuzwerker/terraform-provider-docker
+                // to interact with the Docker API. Unfortunately, the provider uses SHA256 hashes
+                // as identifiers for images. Because of this and the fact that the image is built
+                // using buildx, the SHA256 hash of the image is not always the one that will be
+                // used by Docker. To avoid drift, we will ignore any changes on the image property
+                // and recreate the container if the label "org.opencontainers.image.source.ref" changes.
                 ignoreChanges: ["image"],
                 dependsOn: this.image,
                 replaceOnChanges: ['labels["org.opencontainers.image.source.ref"]'],
