@@ -22,7 +22,7 @@ ARG ALPN_BASE
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder>: build the yaLDAP binary (Go)                                   │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/golang:1.22.3-alpine3.19@sha256:f1fe698725f6ed14eb944dc587591f134632ed47fc0732ec27c7642adbe90618 AS builder
+FROM docker.io/library/golang:1.22.4-alpine3.19@sha256:c46c4609d3cc74a149347161fc277e11516f523fd8aa6347c9631527da0b7a56 AS builder
 
 ARG YALDAP_VERSION
 
