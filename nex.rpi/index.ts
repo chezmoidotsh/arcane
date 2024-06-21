@@ -43,17 +43,13 @@ const authl = new authelia.Application("security.authelia", {
     configuration:
         config.require("sh.chezmoi.environment") == "live"
             ? new pulumi.asset.FileAsset("config/live")
-            : new pulumi.asset.RemoteAsset(
-                  "https://github.com/authelia/authelia/raw/master/examples/compose/local/authelia/configuration.yml",
-              ),
+            : new pulumi.asset.FileAsset("configuration/e2e/authelia/configuration.yml"),
     userDatabase:
         config.require("sh.chezmoi.environment") == "live"
             ? undefined
             : {
-                  source: new pulumi.asset.RemoteAsset(
-                      "https://github.com/authelia/authelia/raw/master/examples/compose/local/authelia/users_database.yml",
-                  ),
-                  destination: "/config/users_database.yml",
+                  source: new pulumi.asset.FileAsset("configuration/e2e/authelia/users_database.yml"),
+                  destination: "/etc/authelia/users_database.yml",
               },
 
     imageOpts: { push: true, baseImage: alpn },

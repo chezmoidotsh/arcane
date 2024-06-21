@@ -22,4 +22,4 @@ config:
             pulumi:policy-pack:docker.security:
                 trivy-container-scan:
                     enforcementLevel: advisory
-                    severityThreshold: critical
+                    severityThreshold: high
