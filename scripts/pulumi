@@ -29,7 +29,10 @@ export PATH="$(
 
 # Override the pulumi up command to automatically add the policy pack flags
 # based on the current project configuration.
-function pulumi_up() {
+function pulumi_policy_pack_wrapper() {
+    local action="${1}"
+    local args=("${@:2}")
+
     local rootdir=$(perl -le 'use File::Spec; print File::Spec->abs2rel(@ARGV)' $(git rev-parse --show-toplevel) $(pwd))
     local pulumi_policy_packs=""
     local pulumi_policy_pack_config=""
@@ -47,7 +50,7 @@ function pulumi_up() {
                 | join(" ")'
         )
 
-        pulumi up \
+        pulumi "${action}" \
             ${pulumi_policy_packs} \
             --policy-pack-config <(pulumi config get pulumi:wrapper \
                 | jq --raw-output --compact-output \
@@ -55,14 +58,14 @@ function pulumi_up() {
                     | map(if .key == "pulumi:policy-pack:all" then {all: .value} else .value end)
                     | add'
             ) \
-            "$@"
+            "${args[@]}"
     else
-        pulumi up "$@"
+        pulumi "${action}" "${args[@]}"
     fi
 }
 
-if [ "$1" == "up" ]; then
-    pulumi_up "${@:2}"
+if [ "$1" == "preview" -o "$1" == "up" ]; then
+    pulumi_policy_pack_wrapper "$@"
 else
     pulumi "$@"
 fi

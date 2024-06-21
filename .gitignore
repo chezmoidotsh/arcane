@@ -388,4 +388,6 @@ pip-selfcheck.json
 # Don't ignore some files
 !.envrc
 !lib/
+!scripts/folderinfo
+!scripts/pulumi
 !scripts/src/
