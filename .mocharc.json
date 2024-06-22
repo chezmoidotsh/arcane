@@ -1,0 +1,10 @@
+{
+    "$schema": "https://json.schemastore.org/mocharc",
+    "check-leaks": true,
+    "diff": true,
+    "extension": ["ts"],
+    "reporter": "spec",
+    "require": "tsx",
+    "spec": ["lib/**/*.spec.ts", "catalog/**/*.spec.ts"],
+    "ui": "bdd"
+}
