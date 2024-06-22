@@ -14,11 +14,10 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
+import fs from "fs";
+import path from "path";
 
-import * as fs from "fs";
-import * as path from "path";
-
-import * as pulumi from "@pulumi/pulumi";
+import pulumi from "@pulumi/pulumi";
 import { Asset, FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset";
 
 /**
@@ -56,18 +55,18 @@ export class DirectoryAsset {
     /**
      * The path to the directory.
      */
-    readonly path: pulumi.Output<string>;
+    readonly path: string;
 
     constructor(directory: string, opts?: DirectoryAssetOpts) {
-        this.path = pulumi.output(directory);
+        this.path = directory;
 
         this.assets = fs
             .readdirSync(path.resolve(directory), {
                 withFileTypes: true,
                 recursive: opts?.recursive,
             })
-            .filter((file) => opts?.filters?.some((rx) => rx.test(file.name)))
-            .filter((file) => opts?.predicates?.every((fnc) => fnc(file)))
+            .filter((file) => opts?.filters?.some((rx) => rx.test(file.name)) ?? true)
+            .filter((file) => opts?.predicates?.every((fnc) => fnc(file)) ?? true)
             .map((file) => new FileAsset(`${directory}/${file.name}`));
     }
 }
@@ -89,17 +88,19 @@ export function ReadAsset<T extends Asset>(asset: T): Promise<Buffer> {
     } else if (IsStringAsset(asset)) {
         return readStringAsset({ text: asset.text });
     }
-    throw new Error(`unsupported asset type`);
+    throw new Error(
+        `Unsupported asset type for '${JSON.stringify(asset)}' (${typeof asset}): not a FileAsset, RemoteAsset or StringAsset`,
+    );
 }
 
 export function IsFileAsset(asset: any): asset is FileAsset {
-    return (asset as FileAsset).path !== undefined;
+    return asset?.path !== undefined;
 }
 export function IsRemoteAsset(asset: any): asset is RemoteAsset {
-    return (asset as RemoteAsset).uri !== undefined;
+    return asset?.uri !== undefined;
 }
 export function IsStringAsset(asset: any): asset is StringAsset {
-    return (asset as StringAsset).text !== undefined;
+    return asset?.text !== undefined;
 }
 
 /**
@@ -115,11 +116,11 @@ export function IsStringAsset(asset: any): asset is StringAsset {
 async function readFileAsset(asset: FileAsset): Promise<Buffer> {
     return await Promise.resolve(asset.path).then((path) => {
         if (!fs.existsSync(path)) {
-            throw new Error(`failed to open asset file '${path}'`);
+            throw new Error(`Failed to open asset file '${path}': ENOENT: no such file or directory`);
         }
 
         if (fs.lstatSync(path).isDirectory()) {
-            throw new Error(`asset path '${path}' is a directory; try using an archive`);
+            throw new Error(`Asset '${path}' is a directory; try using an archive`);
         }
         return fs.promises.readFile(path);
     });
@@ -146,21 +147,55 @@ async function readStringAsset(asset: StringAsset): Promise<Buffer> {
  * @throws If the remote asset URI is invalid.
  */
 async function readRemoteAsset(asset: RemoteAsset): Promise<Buffer> {
-    return await Promise.resolve(asset.uri).then(async (u) => {
-        const url = new URL(u);
+    return Promise.resolve(asset.uri).then(async (u) => {
+        let url: URL;
+        try {
+            url = new URL(u);
+        } catch (_) {
+            throw new Error(`Invalid remote asset URI '${u}'`);
+        }
 
         if (url.protocol == "http:" || url.protocol == "https:") {
-            return fetch(url).then(async (response) => {
-                if (!response.ok) {
-                    throw new Error(`failed to fetch remote asset '${url}': ${response.statusText}`);
-                }
-
-                return response.arrayBuffer().then((buffer) => Buffer.from(buffer));
-            });
+            const response = await fetch(new Request(url.href));
+            if (!response.ok) {
+                throw new Error(`Failed to fetch remote asset '${url}': ${response.status} (${response.statusText})`);
+            }
+            return Buffer.from(await response.arrayBuffer());
         } else if (url.protocol == "file:") {
             return readFileAsset(new FileAsset(url.pathname));
         } else {
-            throw new Error(`unsupported remote asset URI scheme '${url.protocol}'`);
+            throw new Error(`Unsupported remote asset URI scheme '${url.protocol}'`);
         }
     });
+}
+
+/**
+ * Create an asset that should be mounted as a secret during a Docker build.
+ */
+export class SecretAsset<T extends Asset> {
+    /**
+     * The asset to be mounted as a secret.
+     */
+    public readonly asset: T;
+
+    /**
+     * Create a new SecretAsset wrapping the given asset.
+     * @param asset Asset to be mounted as a secret.
+     */
+    constructor(asset: T | SecretAsset<T>) {
+        if (IsSecretAsset<T>(asset)) {
+            this.asset = asset.asset;
+        } else {
+            this.asset = asset;
+        }
+    }
+}
+
+/**
+ * Type guard function to check if an object is a SecretAsset.
+ * @param asset Object to check if it is a SecretAsset.
+ * @returns true if the object is a SecretAsset, false otherwise.
+ */
+export function IsSecretAsset<T extends Asset>(asset: any): asset is SecretAsset<T> {
+    return asset?.asset !== undefined;
 }

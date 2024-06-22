@@ -21,7 +21,8 @@ import * as os from "os";
 import * as path from "path";
 import * as tmp from "tmp";
 
-import * as asset from "@pulumi/pulumi/asset";
+import { FileAsset, StringAsset, RemoteAsset } from "@pulumi/pulumi/asset";
+import { resolveAsset, generateDeterministicContext } from "./docker.internal";
 import * as buildx from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
 
@@ -39,11 +40,7 @@ export interface InjectableAsset {
     /**
      * Asset to be injected into the image.
      */
-    source:
-        | asset.FileAsset
-        | asset.RemoteAsset
-        | asset.StringAsset
-        | SecretAsset<asset.FileAsset | asset.RemoteAsset | asset.StringAsset>;
+    source: FileAsset | RemoteAsset | StringAsset | asset_utils.SecretAsset<FileAsset | RemoteAsset | StringAsset>;
 
     /**
      * Path inside the image where the asset will be injected.
@@ -54,6 +51,9 @@ export interface InjectableAsset {
      * Optional `chmod` configuration for the asset.
      */
     mode?: fs.Mode;
+}
+export function IsInjectableAsset(asset: any): asset is InjectableAsset {
+    return asset.source !== undefined && asset.destination !== undefined;
 }
 
 /**
@@ -70,6 +70,9 @@ export interface InjectableChownableAsset extends InjectableAsset {
      */
     group?: string | number;
 }
+export function IsInjectableChownableAsset(asset: any): asset is InjectableChownableAsset {
+    return asset.user !== undefined && IsInjectableAsset(asset);
+}
 
 type RequiredInjectableAssets = [pulumi.Input<InjectableAsset>, ...pulumi.Input<InjectableAsset>[]];
 type RequiredInjectableChownableAssets = [
@@ -81,7 +84,7 @@ type RequiredInjectableChownableAssets = [
  * Add assets to a Docker image using root user and group.
  *
  * WARNING: This function can be slow because it relies on where the assets are stored (local, remote, etc).
- *             It is recommended to use this function only for small assets.
+ *          It is recommended to use this function only for small assets.
  *
  * @param {InjectableAsset} image The image to add assets to.
  * @param {InjectableAsset[]} assets The assets to add to the image.
@@ -93,7 +96,7 @@ export function InjectAssets(image: docker_types.Image, ...assets: RequiredInjec
  * Add assets to a Docker image using the specified user and group for each asset.
  *
  * WARNING: This function can be slow because it relies on where the assets are stored (local, remote, etc).
- *             It is recommended to use this function only for small assets.
+ *          It is recommended to use this function only for small assets.
  *
  * @param {InjectableAsset} image The image to add assets to.
  * @param {InjectableAsset[]} assets The assets to add to the image.
@@ -121,116 +124,34 @@ function injectAssets(
     image: docker_types.Image,
     assets: pulumi.Input<InjectableAsset | InjectableChownableAsset>[],
 ): docker_types.Image {
+    import { resolveAsset, generateDeterministicContext } from "./docker.internal";
+
+    // In order to avoid as much as possible the use of pulumi specific types, which are
+    // a bit tedious to work with on spec.ts files, we will convert the assets to a list
+    // of promises that will be easier to work with.
+    const unpulumizedAssets = assets.map(
+        (asset) =>
+            new Promise((resolve: (value: InjectableAsset | InjectableChownableAsset) => void, reject) =>
+                pulumi.output(asset).apply((v) => {
+                    if (isInjectableChownableAsset(v) || IsInjectableAsset(v)) {
+                        resolve(v);
+                    }
+                    reject(new Error(`Unsupported asset type: ${JSON.stringify(v)} (${typeof v})`));
+                }),
+            ),
+    );
+
     // Step 1: Create a temporary directory to store all assets that will be removed after the build.
     const tmpdir = tmp.dirSync({ keep: false, unsafeCleanup: true, mode: 0o700 });
     process.on("exit", () => tmpdir.removeCallback());
 
-    // Step 2: Copy all assets to the temporary directory.
-    // NOTE: All file will be stored inside the temporary directory with their digest as name.
-    const promisedAssets = pulumi.output(assets).apply((assets) =>
-        assets.map(async (asset) => {
-            let { source, ...rest } = asset;
-            let sensitive: boolean = false;
-
-            if (isSecretAsset(source)) {
-                sensitive = true;
-                source = source.asset;
-            }
-
-            if (asset_utils.IsFileAsset(source)) {
-                pulumi.log.debug(`InjectAssets<FileAsset>: Copy ${await source.path}`);
-
-                const src = await Promise.resolve(source.path);
-                const hash = await new Promise<string>((resolve, reject) => {
-                    const hash = crypto.createHash("sha256");
-                    const stream = fs.createReadStream(src);
-
-                    stream.on("data", (data) => hash.update(data));
-                    stream.on("end", () => resolve(hash.digest("hex")));
-                    stream.on("error", reject);
-                });
-
-                const target = path.join(tmpdir.name, hash);
-                if (sensitive) {
-                    // NOTE: The file has been read twice (hash and here), but I prefer to keep
-                    //       the code simple than to optimize it for now.
-                    const pbuff = fs.promises.readFile(src, { encoding: null }) as Promise<Buffer>;
-                    return { source: target, sensitive: pbuff, ...rest };
-                }
-
-                fs.copyFileSync(src, target);
-                return { source: target, sensitive: undefined, ...rest };
-            } else if (asset_utils.IsRemoteAsset(source) || asset_utils.IsStringAsset(source)) {
-                if (asset_utils.IsRemoteAsset(source)) {
-                    pulumi.log.debug(`InjectAssets<RemoteAsset>: Download ${await source.uri}`);
-                } else {
-                    pulumi.log.debug(`InjectAssets<StringAsset>: Write content`);
-                }
-
-                const buf = asset_utils.ReadAsset(source);
-                const hash = crypto
-                    .createHash("sha256")
-                    .update(await buf)
-                    .digest("hex");
-
-                const target = path.join(tmpdir.name, hash);
-                if (sensitive) {
-                    return { source: target, sensitive: buf, ...rest };
-                }
-
-                fs.writeFileSync(target, await buf);
-                return { source: target, sensitive: undefined, ...rest };
-            } else {
-                throw new Error(`Unsupported asset type: ${JSON.stringify(source)} (${typeof source})`);
-            }
-        }),
-    );
+    // Step 2: Resolve all assets and store them somewhere.
+    const promisedAssets = unpulumizedAssets.map((asset) => resolveAsset(tmpdir.name, asset));
 
     // Step 3: Generate a deterministic context for the build and link all assets to it.
     // NOTE: This step is necessary because if the context name changes, pulumi will try to
     //       rebuild the image. So using a deterministic checksum will prevent this from happening.
-    const context = promisedAssets.apply(async (preparedAsset) => {
-        const assets = await Promise.all(preparedAsset);
-
-        // Generate a checksum for all assets (a sort of "context" checksum).
-        const hash = crypto.createHash("sha256");
-        for (const asset of assets) {
-            hash.update(path.basename(asset.source));
-        }
-
-        // Create the final context directory
-        // NOTE: The final context directory will be removed after the build.
-        const stackId = crypto
-            .createHash("sha256")
-            .update(pulumi.runtime.getOrganization())
-            .update(pulumi.runtime.getProject())
-            .update(pulumi.runtime.getStack())
-            .digest("base64")
-            .substring(0, 8);
-
-        const contextdir = path.join(
-            os.tmpdir(),
-            // In order to avoid long paths, we use a shorter hash and use base64 encoding instead
-            // of hex for more entropy (64^8 vs 16^8)
-            `pulumi-${stackId}-${hash.digest("base64").substring(0, 8)}`,
-        );
-        fs.mkdirSync(contextdir, { recursive: true });
-        process.on("exit", () => fs.rmdirSync(contextdir, { recursive: true }));
-
-        // Link all assets to the context directory.
-        for (const asset of assets) {
-            if (asset.sensitive) {
-                continue;
-            }
-
-            const target = path.join(contextdir, asset.destination);
-            fs.mkdirSync(path.dirname(target), { recursive: true });
-            fs.rmSync(target, { force: true, recursive: false });
-            fs.linkSync(asset.source, target);
-            asset.source = target;
-        }
-        return { contextdir, assets };
-    });
+    const context = pulumi.output(generateDeterministicContext(promisedAssets));
 
     // Step 4: Create a new image with the assets injected.
     const newImage = new buildx.Image(
@@ -314,7 +235,7 @@ COPY --from=0 ${context.contextdir} /
                     .reduce(
                         (acc, buff, idx) => ({
                             ...acc,
-                            [`asset${idx}`]: pulumi.secret(buff.then((b) => b.toString("base64"))),
+                            [`asset${idx}`]: pulumi.secret(buff.toString("base64")),
                         }),
                         {},
                     ),
@@ -326,35 +247,4 @@ COPY --from=0 ${context.contextdir} /
     );
 
     return newImage;
-}
-
-/**
- * Create an asset that should be mounted as a secret during a Docker build.
- */
-export class SecretAsset<T extends asset.Asset> {
-    /**
-     * The asset to be mounted as a secret.
-     */
-    public readonly asset: T;
-
-    /**
-     * Create a new SecretAsset wrapping the given asset.
-     * @param asset Asset to be mounted as a secret.
-     */
-    constructor(asset: T | SecretAsset<T>) {
-        if (isSecretAsset<T>(asset)) {
-            this.asset = asset.asset;
-        } else {
-            this.asset = asset;
-        }
-    }
-}
-
-/**
- * Type guard function to check if an object is a SecretAsset.
- * @param asset Object to check if it is a SecretAsset.
- * @returns true if the object is a SecretAsset, false otherwise.
- */
-function isSecretAsset<T extends asset.Asset>(asset: any): asset is SecretAsset<T> {
-    return asset.asset !== undefined;
 }
