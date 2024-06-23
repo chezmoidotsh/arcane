@@ -13,3 +13,5 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 #
+
+.devcontainer/devcontainer-lock.json
