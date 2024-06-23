@@ -14,14 +14,14 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-
 import * as chai from "chai";
 import { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
 import fs from "fs";
-import * as sinon from "sinon";
-import { FileAsset, StringAsset, RemoteAsset } from "@pulumi/pulumi/asset";
 import nock from "nock";
+import sinon from "sinon";
+
+import { FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset";
 
 import {
     DirectoryAsset,

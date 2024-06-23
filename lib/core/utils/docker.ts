@@ -14,21 +14,19 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
+import fs from "fs";
+import path from "path";
+import tmp from "tmp";
 
-import * as crypto from "crypto";
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
-import * as tmp from "tmp";
-
-import { FileAsset, StringAsset, RemoteAsset } from "@pulumi/pulumi/asset";
-import { resolveAsset, generateDeterministicContext } from "./docker.internal";
 import * as buildx from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
+import { FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset";
 
-import * as asset_utils from "./asset";
+import { types as docker } from "@chezmoi.sh/core/docker";
+
+import { SecretAsset } from "./asset";
+import { generateDeterministicContext, resolveAsset } from "./docker.internal";
 import { IsDefined } from "./type";
-import { types as docker_types } from "@chezmoi.sh/core/docker";
 
 const busybox =
     "docker.io/library/busybox:stable@sha256:9ae97d36d26566ff84e8893c64a6dc4fe8ca6d1144bf5b87b2b85a32def253c7";
@@ -40,7 +38,7 @@ export interface InjectableAsset {
     /**
      * Asset to be injected into the image.
      */
-    source: FileAsset | RemoteAsset | StringAsset | asset_utils.SecretAsset<FileAsset | RemoteAsset | StringAsset>;
+    source: FileAsset | RemoteAsset | StringAsset | SecretAsset<FileAsset | RemoteAsset | StringAsset>;
 
     /**
      * Path inside the image where the asset will be injected.
@@ -88,9 +86,9 @@ type RequiredInjectableChownableAssets = [
  *
  * @param {InjectableAsset} image The image to add assets to.
  * @param {InjectableAsset[]} assets The assets to add to the image.
- * @returns {docker_types.Image} The new image with all assets injected into it.
+ * @returns {docker.Image} The new image with all assets injected into it.
  */
-export function InjectAssets(image: docker_types.Image, ...assets: RequiredInjectableAssets): docker_types.Image;
+export function InjectAssets(image: docker.Image, ...assets: RequiredInjectableAssets): docker.Image;
 
 /**
  * Add assets to a Docker image using the specified user and group for each asset.
@@ -100,17 +98,14 @@ export function InjectAssets(image: docker_types.Image, ...assets: RequiredInjec
  *
  * @param {InjectableAsset} image The image to add assets to.
  * @param {InjectableAsset[]} assets The assets to add to the image.
- * @returns {docker_types.Image} The new image with all assets injected into it.
+ * @returns {docker.Image} The new image with all assets injected into it.
  */
-export function InjectAssets(
-    image: docker_types.Image,
-    ...assets: RequiredInjectableChownableAssets
-): docker_types.Image;
+export function InjectAssets(image: docker.Image, ...assets: RequiredInjectableChownableAssets): docker.Image;
 
 export function InjectAssets(
-    image: docker_types.Image,
+    image: docker.Image,
     ...assets: RequiredInjectableAssets | RequiredInjectableChownableAssets
-): docker_types.Image {
+): docker.Image {
     if (assets.length > 4096) {
         pulumi.log.warn(
             `Injecting a large number of assets (> 4096) can fail due to the maximum size of the GRPC request (4 Mio).`,
@@ -121,11 +116,9 @@ export function InjectAssets(
 }
 
 function injectAssets(
-    image: docker_types.Image,
+    image: docker.Image,
     assets: pulumi.Input<InjectableAsset | InjectableChownableAsset>[],
-): docker_types.Image {
-    import { resolveAsset, generateDeterministicContext } from "./docker.internal";
-
+): docker.Image {
     // In order to avoid as much as possible the use of pulumi specific types, which are
     // a bit tedious to work with on spec.ts files, we will convert the assets to a list
     // of promises that will be easier to work with.
@@ -133,7 +126,7 @@ function injectAssets(
         (asset) =>
             new Promise((resolve: (value: InjectableAsset | InjectableChownableAsset) => void, reject) =>
                 pulumi.output(asset).apply((v) => {
-                    if (isInjectableChownableAsset(v) || IsInjectableAsset(v)) {
+                    if (IsInjectableChownableAsset(v) || IsInjectableAsset(v)) {
                         resolve(v);
                     }
                     reject(new Error(`Unsupported asset type: ${JSON.stringify(v)} (${typeof v})`));

@@ -14,12 +14,11 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-
 import * as pulumi from "@pulumi/pulumi";
 
 import * as alpine from "@chezmoi.sh/catalog/os/alpine/3.19/docker";
-import * as yaldap from "@chezmoi.sh/catalog/security/yaldap/docker";
 import * as authelia from "@chezmoi.sh/catalog/security/authelia/docker";
+import * as yaldap from "@chezmoi.sh/catalog/security/yaldap/docker";
 
 const config = new pulumi.Config();
 const alpn = new alpine.Image("alpine", {

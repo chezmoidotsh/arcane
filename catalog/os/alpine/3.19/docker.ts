@@ -14,11 +14,11 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-
 import * as path from "path";
+
 import * as pulumi from "@pulumi/pulumi";
 
-import { types, LocalImage } from "@chezmoi.sh/core/docker";
+import { LocalImage, types } from "@chezmoi.sh/core/docker";
 
 // renovate: datasource=docker depName=alpine versioning=semver
 export const Version = "3.19.1";

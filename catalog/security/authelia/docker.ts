@@ -14,20 +14,20 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
+import * as path from "path";
+
+import * as docker from "@pulumi/docker";
+import * as pulumi from "@pulumi/pulumi";
+import { Asset } from "@pulumi/pulumi/asset";
+
+import { LocalImage, types } from "@chezmoi.sh/core/docker";
+import { InjectAssets, IsDefined, SecretAsset } from "@chezmoi.sh/core/utils";
+import { InjectableChownableAsset } from "@chezmoi.sh/core/utils/docker";
+
+import * as alpine from "@chezmoi.sh/catalog/os/alpine/3.19/docker";
 
 // renovate: datasource=github-tags depName=authelia/authelia versioning=semver
 export const Version = "v4.38.8";
-
-import * as path from "path";
-import { Asset } from "@pulumi/pulumi/asset";
-import * as docker from "@pulumi/docker";
-import * as pulumi from "@pulumi/pulumi";
-
-import { types as types, LocalImage } from "@chezmoi.sh/core/docker";
-import { InjectAssets, InjectableChownableAsset, SecretAsset } from "@chezmoi.sh/core/utils/docker";
-
-import * as alpine from "@chezmoi.sh/catalog/os/alpine/3.19/docker";
-import { IsDefined } from "@chezmoi.sh/core/utils";
 
 /**
  * The arguments for building the Authelia Docker image.

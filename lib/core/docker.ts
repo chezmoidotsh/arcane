@@ -14,10 +14,9 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-
-import * as pulumi from "@pulumi/pulumi";
 import * as docker from "@pulumi/docker";
 import * as buildx from "@pulumi/docker-build";
+import * as pulumi from "@pulumi/pulumi";
 
 /**
  * The arguments for building a Docker image.

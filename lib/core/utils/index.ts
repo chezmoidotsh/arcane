@@ -15,6 +15,6 @@
  * ----------------------------------------------------------------------------
  */
 
-export { DirectoryAsset } from "./asset";
-export { InjectAssets, SecretAsset } from "./docker";
+export { DirectoryAsset, SecretAsset, ReadAsset } from "./asset";
+export { InjectAssets } from "./docker";
 export { IsDefined } from "./type";

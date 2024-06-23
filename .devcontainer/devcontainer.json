@@ -43,7 +43,8 @@
                 },
                 "files.trimFinalNewlines": true,
                 "files.trimTrailingWhitespace": true,
-                "prettier.configPath": ".trunk/configs/.prettierrc",
+                "prettier.configPath": ".trunk/configs/.prettierrc.yaml",
+                "prettier.ignorePath": ".trunk/configs/.prettierignore",
                 "psi-header.changes-tracking": {
                     "autoHeader": "manualSave",
                     "enabled": true,

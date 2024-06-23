@@ -15,6 +15,7 @@
  * ----------------------------------------------------------------------------
  */
 import { expect } from "chai";
+
 import { IsDefined } from "./type";
 
 describe("IsDefined", () => {

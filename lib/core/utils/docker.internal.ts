@@ -14,14 +14,14 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-import * as crypto from "crypto";
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
+import crypto from "crypto";
+import fs from "fs";
+import os from "os";
+import path from "path";
 
 import * as pulumi from "@pulumi/pulumi";
 
-import { IsFileAsset, IsSecretAsset, IsStringAsset, IsRemoteAsset, ReadAsset } from "./asset";
+import { IsFileAsset, IsRemoteAsset, IsSecretAsset, IsStringAsset, ReadAsset } from "./asset";
 import { InjectableAsset, InjectableChownableAsset } from "./docker";
 
 type sensitiveInjectableAsset = Omit<InjectableAsset | InjectableChownableAsset, "source"> & {

@@ -14,17 +14,17 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-
-import fs from "fs";
-import * as sinon from "sinon";
-import * as pulumi from "@pulumi/pulumi";
-
-import { InjectableAsset } from "./docker";
-import { SecretAsset } from "./asset";
-import { resolveAsset, generateDeterministicContext } from "./docker.internal";
 import { expect } from "chai";
-import { FileAsset, StringAsset, RemoteAsset } from "@pulumi/pulumi/asset";
+import fs from "fs";
 import nock from "nock";
+import sinon from "sinon";
+
+import * as pulumi from "@pulumi/pulumi";
+import { FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset";
+
+import { SecretAsset } from "./asset";
+import { InjectableAsset } from "./docker";
+import { generateDeterministicContext, resolveAsset } from "./docker.internal";
 
 // rmdirSync is automatically called by the cleanup function when the process exits
 sinon.stub(fs, "rmdirSync");

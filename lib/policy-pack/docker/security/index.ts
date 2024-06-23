@@ -14,12 +14,11 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-
 import * as docker from "@pulumi/docker";
-import { PolicyPack, ReportViolation, StackValidationArgs, validateResourceOfType } from "@pulumi/policy";
+import * as pulumi from "@pulumi/pulumi";
+import { PolicyPack, validateResourceOfType } from "@pulumi/policy";
 
 import * as trivy from "./trivy";
-import * as pulumi from "@pulumi/pulumi";
 
 const policies = new PolicyPack("docker-security", {
     enforcementLevel: "mandatory",
