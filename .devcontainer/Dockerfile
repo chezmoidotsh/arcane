@@ -24,9 +24,9 @@ FROM docker.io/library/golang:alpine as pulumi-docker-build
 RUN apk add --no-cache git \
     && git clone --branch issue-96/allow-empty-inline-on-preview https://github.com/xunleii/pulumi-docker-build \
     && cd pulumi-docker-build/provider/cmd/pulumi-resource-docker-build \
-    && go build -o /opt/resource-docker-build-v0.0.2 \
+    && go build -o /opt/resource-docker-build-v0.0.3 \
       -gcflags "all=-N -l" \
-      -ldflags "-X github.com/pulumi/pulumi-docker-build/provider.Version=v0.0.2"
+      -ldflags "-X github.com/pulumi/pulumi-docker-build/provider.Version=v0.0.3"
 
 # NOTE: This image will be cached (and the machine-id too). It is an expected behavior, as I want
 #       a persistent machine-id even if the image is rebuilt.
@@ -52,5 +52,8 @@ RUN git clone https://github.com/asdf-vm/asdf.git ${ASDF_DIR} --branch v0.14.0 \
 # Copy generated machine-id
 COPY --from=machine-id /etc/machine-id /etc/machine-id
 
+# Copy lazygit configuration
+COPY lazygit.config.yaml /home/vscode/.config/lazygit/config.yaml
+
 # Copy fixed `pulumi-resource-docker-build` provider
-COPY --from=pulumi-docker-build --chown=vscode:vscode /opt/resource-docker-build-v0.0.2 /home/vscode/.pulumi/plugins/resource-docker-build-v0.0.2/pulumi-resource-docker-build
+COPY --from=pulumi-docker-build --chown=vscode:vscode /opt/resource-docker-build-v0.0.3 /home/vscode/.pulumi/plugins/resource-docker-build-v0.0.3/pulumi-resource-docker-build

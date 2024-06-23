@@ -82,7 +82,7 @@
                 ],
                 "psi-header.lang-config": [
                     // Default configuration
-                    { "language": "*", "blankLinesAfter": 1, "ignoreLines": ["Copyright (C)"] },
+                    { "language": "*", "blankLinesAfter": 1, "ignoreLines": ["Copyright (C)"], "prefix": "# " },
 
                     // YAML like comments configuration (YAML, TOML, Dockerfile, etc.)
                     { "language": "yaml", "begin": "", "end": "", "blankLinesAfter": 0, "prefix": "# " },
@@ -119,6 +119,7 @@
             "userUid": "automatic",
             "userGid": "automatic"
         },
+        "ghcr.io/georgofenbeck/features/lazygit-linuxbinary:1": {},
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
             "moby": false,
             "installDockerBuildx": true,
@@ -131,8 +132,8 @@
     },
     "postCreateCommand": {
         "sync submodules": "git submodule update --init --recursive",
-        "install required tools": "always_keep_download=no asdf-helper install && direnv allow",
-        "docker logout": "docker logout"
+        "install required tools": "asdf-helper install > /dev/null && direnv allow",
+        "docker logout (required)": "docker logout"
     },
     // Custom "container" settings
     "containerEnv": {
