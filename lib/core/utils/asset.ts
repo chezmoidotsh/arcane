@@ -15,6 +15,7 @@
  * ----------------------------------------------------------------------------
  */
 import fs from "fs";
+import fetch from "node-fetch";
 import path from "path";
 
 import pulumi from "@pulumi/pulumi";
@@ -156,9 +157,9 @@ async function readRemoteAsset(asset: RemoteAsset): Promise<Buffer> {
         }
 
         if (url.protocol == "http:" || url.protocol == "https:") {
-            const response = await fetch(new Request(url.href));
+            const response = await fetch(url.href);
             if (!response.ok) {
-                throw new Error(`Failed to fetch remote asset '${url}': ${response.status} (${response.statusText})`);
+                throw new Error(`Failed to fetch remote asset '${url}' (${response.status})`);
             }
             return Buffer.from(await response.arrayBuffer());
         } else if (url.protocol == "file:") {

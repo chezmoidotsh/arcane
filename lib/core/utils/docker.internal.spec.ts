@@ -243,7 +243,7 @@ describe("resolveAsset", () => {
 
             await expect(resolveAsset("/tmp", asset)).eventually.to.be.rejectedWith(
                 Error,
-                "Failed to fetch remote asset 'https://example.com/remote.txt': 404 (Not Found)",
+                "Failed to fetch remote asset 'https://example.com/remote.txt' (404)",
             );
             expect(writeFileSync.calledOnce).to.be.false;
         });

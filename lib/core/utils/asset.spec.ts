@@ -186,7 +186,7 @@ describe("ReadAsset", () => {
 
             const remoteAsset = new RemoteAsset("https://example.com/remote.txt");
             await expect(ReadAsset(remoteAsset)).be.eventually.rejectedWith(
-                "Failed to fetch remote asset 'https://example.com/remote.txt': 404 (Not Found)",
+                "Failed to fetch remote asset 'https://example.com/remote.txt' (404)",
             );
         });
     });
