@@ -130,7 +130,7 @@
     },
     "postCreateCommand": {
         "sync submodules": "git submodule update --init --recursive",
-        "install required tools": "always_keep_download=yes asdf-helper install && direnv allow",
+        "install required tools": "always_keep_download=no asdf-helper install && direnv allow",
         "docker logout": "docker logout"
     },
     // Custom "container" settings
