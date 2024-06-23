@@ -18,6 +18,11 @@
 # trunk-ignore-all(trivy/DS013): Don't care about this rule
 # trunk-ignore-all(hadolint/DL3018): Don't care about pinning the version of packages, as this is a development container and only git is installed
 # trunk-ignore-all(hadolint/DL3003): Don't care about WORKDIR instruction, as this will be set by the DevContainer
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ <pulumi-docker-build>: Build a custom Pulumi Docker Build provider with   │
+# |                        support for unknwon values in inline dockerfile.   │
+# └───────────────────────────────────────────────────────────────────────────┘
 FROM docker.io/library/golang:alpine as pulumi-docker-build
 
 # Clone fixed `pulumi-resource-docker-build` provider
@@ -28,18 +33,38 @@ RUN apk add --no-cache git \
       -gcflags "all=-N -l" \
       -ldflags "-X github.com/pulumi/pulumi-docker-build/provider.Version=v0.0.3"
 
-# NOTE: This image will be cached (and the machine-id too). It is an expected behavior, as I want
-#       a persistent machine-id even if the image is rebuilt.
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ <machine-id>: Generate a machine-id for the container.                    │
+# |                                                                           │
+# │ NOTE: This image will be cached (and the machine-id too) in               │
+# │       order to have a persistent machine-id even if the                   │
+# │       image is rebuilt.                                                   │
+# └───────────────────────────────────────────────────────────────────────────┘
 FROM docker.io/library/alpine:3.20.1 as machine-id
 
 RUN apk add --no-cache dbus \
     && dbus-uuidgen > /etc/machine-id
 
 
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ <git-absorb>: Build/install git-absorb.                                   │
+# └───────────────────────────────────────────────────────────────────────────┘
+FROM docker.io/library/rust:slim as git-absorb
+
+RUN cargo install git-absorb
+
+
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ <devcontainer>: Create a slim development container with Node.js.         │
+# └───────────────────────────────────────────────────────────────────────────┘
 FROM ghcr.io/pulumi/devcontainer:slim-node
 
 # Copy custom first-run notice message
 COPY first-run-notice.txt /usr/local/etc/vscode-dev-containers/first-run-notice.txt
+
+# Copy lazygit configuration
+COPY lazygit.config.yaml /home/vscode/.config/lazygit/config.yaml
 
 # Install ASDF package manager
 ENV ASDF_DIR=/home/vscode/.asdf
@@ -52,8 +77,10 @@ RUN git clone https://github.com/asdf-vm/asdf.git ${ASDF_DIR} --branch v0.14.0 \
 # Copy generated machine-id
 COPY --from=machine-id /etc/machine-id /etc/machine-id
 
-# Copy lazygit configuration
-COPY lazygit.config.yaml /home/vscode/.config/lazygit/config.yaml
+# Copy git-absorb binary
+COPY --from=git-absorb /usr/local/cargo/bin/git-absorb /usr/bin/git-absorb
+# trunk-ignore-all(trivy/DS005,checkov/CKV_DOCKER_4): ADD makes sense here, and is recommended by Docker
+ADD https://raw.githubusercontent.com/tummychow/git-absorb/master/Documentation/git-absorb.1 /home/vscode/.local/share/man/man1/git-absorb.1
 
 # Copy fixed `pulumi-resource-docker-build` provider
 COPY --from=pulumi-docker-build --chown=vscode:vscode /opt/resource-docker-build-v0.0.3 /home/vscode/.pulumi/plugins/resource-docker-build-v0.0.3/pulumi-resource-docker-build
