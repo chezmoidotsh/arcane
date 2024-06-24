@@ -53,8 +53,8 @@
         }
     },
     "scripts": {
-        "test": "mocha",
-        "test:coverage": "nyc mocha",
+        "test": "mocha --exit 'lib/**/*.ts' 'catalog/**/*.ts'",
+        "test:coverage": "nyc mocha --exit 'lib/**/*.ts' 'catalog/**/*.ts'",
         "test:watch": "mocha --watch 'lib/**/*.ts' 'catalog/**/*.ts'"
     }
 }

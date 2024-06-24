@@ -3,8 +3,8 @@
     "check-leaks": true,
     "diff": true,
     "extension": ["ts"],
+    "global": ["globalStore"],
     "reporter": "spec",
     "require": "tsx",
-    "spec": ["lib/**/*.spec.ts", "catalog/**/*.spec.ts"],
     "ui": "bdd"
 }
