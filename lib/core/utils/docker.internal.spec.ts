@@ -14,7 +14,9 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
+import * as chai from "chai";
 import { expect } from "chai";
+import chaiAsPromised from "chai-as-promised";
 import fs from "fs";
 import nock from "nock";
 import sinon from "sinon";
@@ -26,8 +28,7 @@ import { SecretAsset } from "./asset";
 import { InjectableAsset } from "./docker";
 import { generateDeterministicContext, resolveAsset } from "./docker.internal";
 
-// rmdirSync is automatically called by the cleanup function when the process exits
-sinon.stub(fs, "rmdirSync");
+chai.use(chaiAsPromised);
 
 describe("resolveAsset", () => {
     let sandbox: sinon.SinonSandbox;
@@ -293,6 +294,7 @@ describe("generateDeterministicContext", () => {
         ];
         const result = await generateDeterministicContext(promisedAssets);
 
+        expect(result.hash).to.equal("B8Xz7TA4NMlHT8dYWj8zNeDXOWDl1Hm0C/xNeDUBDH0=");
         expect(result.contextdir).to.equal("/tmp/pulumi-JU5c7AWT-B8Xz7TA4");
         expect(result.assets).to.have.lengthOf(2);
         expect(
@@ -327,6 +329,7 @@ describe("generateDeterministicContext", () => {
         ];
         const result = await generateDeterministicContext(promisedAssets);
 
+        expect(result.hash).to.equal("XbmBIgL0nNVIEVk+HKazpp4F41jBbOqabkGYgyVQTAc=");
         expect(result.contextdir).to.equal("/tmp/pulumi-JU5c7AWT-XbmBIgL0");
         expect(result.assets).to.have.lengthOf(2);
         expect(
@@ -343,6 +346,7 @@ describe("generateDeterministicContext", () => {
         const linkSync = sandbox.stub(fs, "linkSync");
 
         const result = await generateDeterministicContext([]);
+        expect(result.hash).to.equal("47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=");
         expect(result.contextdir).to.equal("/tmp/pulumi-JU5c7AWT-47DEQpj8");
         expect(result.assets).to.have.lengthOf(0);
         expect(linkSync.called).to.be.false;

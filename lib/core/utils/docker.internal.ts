@@ -82,7 +82,7 @@ export async function resolveAsset(
  */
 export async function generateDeterministicContext(
     promisedAssets: Promise<sensitiveInjectableAsset>[],
-): Promise<{ contextdir: string; assets: sensitiveInjectableAsset[] }> {
+): Promise<{ hash: string; contextdir: string; assets: sensitiveInjectableAsset[] }> {
     const assets = await Promise.all(promisedAssets);
 
     // Generate a checksum for all assets (a sort of "context" checksum).
@@ -100,15 +100,13 @@ export async function generateDeterministicContext(
         .update(pulumi.runtime.getStack())
         .digest("base64")
         .substring(0, 8);
+    // In order to avoid long paths, we use a shorter hash and use base64 encoding instead
+    // of hex for higher entropy (64^8 vs 16^8)
+    const stackHash = hash.digest("base64");
 
-    const contextdir = path.join(
-        os.tmpdir(),
-        // In order to avoid long paths, we use a shorter hash and use base64 encoding instead
-        // of hex for higher entropy (64^8 vs 16^8)
-        `pulumi-${stackId}-${hash.digest("base64").substring(0, 8)}`,
-    );
+    const contextdir = path.join(os.tmpdir(), `pulumi-${stackId}-${stackHash.substring(0, 8)}`);
     fs.mkdirSync(contextdir, { recursive: true });
-    process.on("exit", () => fs.rmdirSync(contextdir, { recursive: true }));
+    process.on("exit", () => fs.rmSync(contextdir, { recursive: true, force: true }));
 
     // Link all assets to the context directory.
     for (const asset of assets) {
@@ -123,5 +121,5 @@ export async function generateDeterministicContext(
         fs.linkSync(asset.source, target);
         asset.source = target;
     }
-    return { contextdir, assets };
+    return { hash: stackHash, contextdir, assets };
 }

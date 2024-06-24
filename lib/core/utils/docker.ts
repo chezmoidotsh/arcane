@@ -28,7 +28,7 @@ import { SecretAsset } from "./asset";
 import { generateDeterministicContext, resolveAsset } from "./docker.internal";
 import { IsDefined } from "./type";
 
-const busybox =
+export const busybox =
     "docker.io/library/busybox:stable@sha256:9ae97d36d26566ff84e8893c64a6dc4fe8ca6d1144bf5b87b2b85a32def253c7";
 
 /**
@@ -163,6 +163,27 @@ function injectAssets(
             registries: image.registries.apply((v) => v ?? []),
             ssh: image.ssh.apply((v) => v ?? []),
             tags: image.tags.apply((v) => v ?? []),
+
+            // Add information about injection to the image
+            labels: pulumi.all([context, image.labels]).apply(([context, labels]) => {
+                let idx: number;
+
+                for (idx = 0; idx < 16; idx++) {
+                    const ref = labels?.[`sh.chezmoi.injected.${idx}.base.ref`];
+                    if (ref === undefined) {
+                        break;
+                    }
+                }
+                if (idx === 16) {
+                    throw new Error("The maximum number of injection is reached (16).");
+                }
+
+                return {
+                    ...labels,
+                    [`sh.chezmoi.injected.${idx}.hash`]: context.hash,
+                    [`sh.chezmoi.injected.${idx}.base.ref`]: image.ref,
+                };
+            }),
 
             // Always disable cache for this kind of build because it seems that the cache
             // is not working properly when using the `--mount=type=secret` flag.
