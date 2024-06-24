@@ -144,7 +144,7 @@ function injectAssets(
     // Step 3: Generate a deterministic context for the build and link all assets to it.
     // NOTE: This step is necessary because if the context name changes, pulumi will try to
     //       rebuild the image. So using a deterministic checksum will prevent this from happening.
-    const context = pulumi.output(generateDeterministicContext(promisedAssets));
+    const context = generateDeterministicContext(promisedAssets);
 
     // Step 4: Create a new image with the assets injected.
     const newImage = new buildx.Image(
@@ -191,65 +191,65 @@ function injectAssets(
             noCache: true,
 
             context: {
-                location: context.apply((context) => context.contextdir),
+                location: context.then((context) => context.contextdir),
             },
             dockerfile: {
-                inline: context.apply((context) => {
-                    // COPY asset as secret when assets are sensitives.
-                    const secrets = context.assets
-                        .filter((asset) => asset.sensitive)
-                        .map((asset, idx) =>
-                            [
-                                `RUN mkdir -p ${path.dirname(path.join(context.contextdir, asset.destination))}`,
-                                `RUN --mount=type=secret,id=asset${idx} base64 -d /run/secrets/asset${idx} > ${path.join(
-                                    context.contextdir,
-                                    asset.destination,
-                                )}`,
-                            ].join("\n"),
-                        );
+                inline: pulumi.output(
+                    context.then((context) => {
+                        // COPY asset as secret when assets are sensitives.
+                        const secrets = context.assets
+                            .filter((asset) => asset.sensitive)
+                            .map((asset, idx) =>
+                                [
+                                    `RUN mkdir -p ${path.dirname(path.join(context.contextdir, asset.destination))}`,
+                                    `RUN --mount=type=secret,id=asset${idx} base64 -d /run/secrets/asset${idx} > ${path.join(
+                                        context.contextdir,
+                                        asset.destination,
+                                    )}`,
+                                ].join("\n"),
+                            );
 
-                    const instructions = context.assets
-                        .map((asset) => {
-                            const destination = path.join(context.contextdir, asset.destination);
-                            const chmod = asset.mode ? `chmod ${asset.mode} ${destination}` : "";
-                            return chmod ? `RUN ${chmod}` : "";
-                        })
-                        .filter((v) => v);
-
-                    const areInjectedChownableAsset = (a: any): a is InjectableChownableAsset[] =>
-                        a.every((v: any) => "user" in v);
-                    if (areInjectedChownableAsset(assets)) {
-                        instructions.push(
-                            ...assets.map((asset) => {
+                        const instructions = context.assets
+                            .map((asset) => {
                                 const destination = path.join(context.contextdir, asset.destination);
-                                const chown = asset.user
-                                    ? `chown ${asset.user}${asset.group ? `:${asset.group}` : ""} ${destination}`
-                                    : "";
-                                return chown ? `RUN ${chown}` : "";
-                            }),
-                        );
-                    }
+                                const chmod = asset.mode ? `chmod ${asset.mode.toString(8)} ${destination}` : "";
+                                return chmod ? `RUN ${chmod}` : "";
+                            })
+                            .filter((v) => v);
 
-                    return pulumi.interpolate`
-FROM ${busybox}
+                        const areInjectedChownableAsset = (a: any): a is InjectableChownableAsset[] =>
+                            a.every((v: any) => "user" in v);
+                        if (areInjectedChownableAsset(assets)) {
+                            instructions.push(
+                                ...assets.map((asset) => {
+                                    const destination = path.join(context.contextdir, asset.destination);
+                                    const chown = asset.user
+                                        ? `chown ${asset.user}${asset.group ? `:${asset.group}` : ""} ${destination}`
+                                        : "";
+                                    return chown ? `RUN ${chown}` : "";
+                                }),
+                            );
+                        }
+
+                        return pulumi.interpolate`FROM ${busybox}
 COPY --from=${image.ref} /etc/passwd /etc/group /etc/
 COPY . ${context.contextdir}
 ${secrets.join("\n")}
 ${instructions.join("\n")}
 
 FROM ${image.ref}
-COPY --from=0 ${context.contextdir} /
-`;
-                }),
+COPY --from=0 ${context.contextdir} /`;
+                    }),
+                ),
             },
-            secrets: context.apply((context) =>
+            secrets: context.then((context) =>
                 context.assets
                     .map((asset) => asset.sensitive)
                     .filter(IsDefined) // Filter out undefined values
                     .reduce(
-                        (acc, buff, idx) => ({
+                        (acc, buf, idx) => ({
                             ...acc,
-                            [`asset${idx}`]: pulumi.secret(buff.toString("base64")),
+                            [`asset${idx}`]: buf.toString("base64"),
                         }),
                         {},
                     ),
