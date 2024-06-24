@@ -85,6 +85,19 @@ export async function generateDeterministicContext(
 ): Promise<{ hash: string; contextdir: string; assets: sensitiveInjectableAsset[] }> {
     const assets = await Promise.all(promisedAssets);
 
+    // Check if all assets have different destinations.
+    const dups = assets.reduce(
+        (acc, cur, idx) => ({ ...acc, [cur.destination]: [...(acc[cur.destination] ?? []), idx] }),
+        {} as Record<string, number[]>,
+    );
+    for (const [dest, idxs] of Object.entries(dups)) {
+        if (idxs.length > 1) {
+            throw new Error(
+                `Several assets (${idxs.map((i) => `#${i}`).join(", ")}) found with the same destination: ${dest}`,
+            );
+        }
+    }
+
     // Generate a checksum for all assets (a sort of "context" checksum).
     const hash = crypto.createHash("sha256");
     for (const asset of assets) {

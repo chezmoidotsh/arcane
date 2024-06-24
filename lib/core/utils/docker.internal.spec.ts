@@ -90,7 +90,7 @@ describe("resolveAsset", () => {
                 destination: "/mock-directory/file.txt",
             } as InjectableAsset);
 
-            await expect(resolveAsset("/tmp", asset)).eventually.to.be.rejectedWith(
+            await expect(resolveAsset("/tmp", asset)).to.eventually.be.rejectedWith(
                 Error,
                 "Failed to open asset file '/mock-directory/file.txt': ENOENT: no such file or directory",
             );
@@ -107,7 +107,7 @@ describe("resolveAsset", () => {
                 destination: "/mock-directory",
             } as InjectableAsset);
 
-            await expect(resolveAsset("/tmp", asset)).eventually.to.be.rejectedWith(
+            await expect(resolveAsset("/tmp", asset)).to.eventually.be.rejectedWith(
                 Error,
                 "Asset '/mock-directory' is a directory; try using an archive",
             );
@@ -211,7 +211,7 @@ describe("resolveAsset", () => {
                 destination: "/mock-directory/file.txt",
             } as InjectableAsset);
 
-            await expect(resolveAsset("/tmp", asset)).eventually.to.be.rejectedWith(
+            await expect(resolveAsset("/tmp", asset)).to.eventually.be.rejectedWith(
                 Error,
                 "Unsupported remote asset URI scheme 'ftp:'",
             );
@@ -226,7 +226,7 @@ describe("resolveAsset", () => {
                 destination: "/mock-directory/file.txt",
             } as InjectableAsset);
 
-            await expect(resolveAsset("/tmp", asset)).eventually.to.be.rejectedWith(
+            await expect(resolveAsset("/tmp", asset)).to.eventually.be.rejectedWith(
                 Error,
                 "Invalid remote asset URI 'invalid-uri'",
             );
@@ -242,7 +242,7 @@ describe("resolveAsset", () => {
                 destination: "/mock-directory/file.txt",
             } as InjectableAsset);
 
-            await expect(resolveAsset("/tmp", asset)).eventually.to.be.rejectedWith(
+            await expect(resolveAsset("/tmp", asset)).to.eventually.be.rejectedWith(
                 Error,
                 "Failed to fetch remote asset 'https://example.com/remote.txt' (404)",
             );
@@ -256,7 +256,7 @@ describe("resolveAsset", () => {
             destination: "/mock-directory/file.txt",
         } as InjectableAsset);
 
-        await expect(resolveAsset("/tmp", asset)).eventually.to.be.rejectedWith(
+        await expect(resolveAsset("/tmp", asset)).to.eventually.be.rejectedWith(
             Error,
             "Unsupported asset type for '{}' (object): not a FileAsset, RemoteAsset or StringAsset",
         );
@@ -350,5 +350,35 @@ describe("generateDeterministicContext", () => {
         expect(result.contextdir).to.equal("/tmp/pulumi-JU5c7AWT-47DEQpj8");
         expect(result.assets).to.have.lengthOf(0);
         expect(linkSync.called).to.be.false;
+    });
+
+    it("should throw an error if there is several assets with the same destination", async () => {
+        sandbox.stub(fs, "mkdirSync");
+        sandbox.stub(fs, "rmSync");
+        sandbox.stub(fs, "linkSync");
+
+        const promisedAssets = [
+            Promise.resolve({
+                source: "/tmp/27a698a834ba2d1ec188867e28aab261f1a2e1a5a4fae97912393f8d8c79a1c4",
+                destination: "/mock-directory/asset1",
+            }),
+            Promise.resolve({
+                source: "/tmp/4e17a41baf1a59f0094c4199628a2f19c7e1270dc5d9bba2aace6c28fde01141",
+                destination: "/mock-directory/asset2",
+            }),
+            Promise.resolve({
+                source: "/tmp/110edf82c6eabb98881ce1d20741e7c91f2a82682c6eca38a89a2a1fab14a71e4",
+                destination: "/mock-directory/asset1",
+            }),
+            Promise.resolve({
+                source: "/tmp/0741e7c82c6ecaa2abb9d5cd4e17a41baf1a59f0094c41959f0094c4199628a2f",
+                destination: "/mock-directory/asset1",
+            }),
+        ];
+
+        await expect(generateDeterministicContext(promisedAssets)).to.eventually.be.rejectedWith(
+            Error,
+            "Several assets (#0, #2, #3) found with the same destination: /mock-directory/asset1",
+        );
     });
 });
