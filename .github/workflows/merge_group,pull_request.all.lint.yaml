@@ -32,4 +32,4 @@ jobs:
       - name: ✏️ Overrides Trunk configuration for Github Action
         run: mv .trunk/gha.yaml .trunk/user.yaml
       - name: ⚡️ Run `trunk check`
-        uses: trunk-io/trunk-action@f6c5f1b90503c30e02059667dbc247f2257b63c5 # v1.1.15
+        uses: trunk-io/trunk-action@86b68ffae610a05105e90b1f52ad8c549ef482c2 # v1.1.16
