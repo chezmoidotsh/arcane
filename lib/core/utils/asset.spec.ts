@@ -14,12 +14,9 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-import * as chai from "chai";
-import { expect } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import fs from "fs";
 import nock from "nock";
-import sinon from "sinon";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset";
 
@@ -33,58 +30,53 @@ import {
     SecretAsset,
 } from "./asset";
 
-chai.use(chaiAsPromised);
-
 describe("DirectoryAsset", () => {
-    let sandbox: sinon.SinonSandbox;
-
-    beforeEach(() => {
-        sandbox = sinon.createSandbox();
-    });
-
     afterEach(() => {
-        sandbox.restore();
+        vi.restoreAllMocks();
     });
 
     it("should correctly initialize with assets (all files)", async () => {
-        sandbox
-            .stub(fs, "readdirSync")
-            .returns([{ name: "file1.txt" } as fs.Dirent, { name: "file2.txt" } as fs.Dirent]);
+        vi.spyOn(fs, "readdirSync").mockReturnValue([
+            { name: "file1.txt" } as fs.Dirent,
+            { name: "file2.txt" } as fs.Dirent,
+        ]);
 
         const directoryAsset = new DirectoryAsset("/mock-directory", {});
 
-        expect(directoryAsset.path).to.be.equal("/mock-directory");
-        expect(directoryAsset.assets).to.have.length(2);
+        expect(directoryAsset.path).toBe("/mock-directory");
+        expect(directoryAsset.assets).toHaveLength(2);
         expect(directoryAsset.assets[0]).to.be.instanceof(FileAsset);
-        expect(await directoryAsset.assets[0].path).to.be.equal("/mock-directory/file1.txt");
+        expect(await directoryAsset.assets[0].path).toBe("/mock-directory/file1.txt");
         expect(directoryAsset.assets[1]).to.be.instanceof(FileAsset);
-        expect(await directoryAsset.assets[1].path).to.be.equal("/mock-directory/file2.txt");
+        expect(await directoryAsset.assets[1].path).toBe("/mock-directory/file2.txt");
     });
 
     it("should filter files based on provided options (regex filter)", async () => {
-        sandbox
-            .stub(fs, "readdirSync")
-            .returns([{ name: "file1.txt" } as fs.Dirent, { name: "file2.log" } as fs.Dirent]);
+        vi.spyOn(fs, "readdirSync").mockReturnValue([
+            { name: "file1.txt" } as fs.Dirent,
+            { name: "file2.log" } as fs.Dirent,
+        ]);
 
         const directoryAsset = new DirectoryAsset("/mock-directory", {
             filters: [/\.txt$/],
         });
 
-        expect(directoryAsset.assets).to.have.length(1);
-        expect(await directoryAsset.assets[0].path).to.equal("/mock-directory/file1.txt");
+        expect(directoryAsset.assets).toHaveLength(1);
+        expect(await directoryAsset.assets[0].path).toBe("/mock-directory/file1.txt");
     });
 
     it("should filter files based on provided options (predicate filter)", async () => {
-        sandbox
-            .stub(fs, "readdirSync")
-            .returns([{ name: "file1.txt" } as fs.Dirent, { name: "file2.log" } as fs.Dirent]);
+        vi.spyOn(fs, "readdirSync").mockReturnValue([
+            { name: "file1.txt" } as fs.Dirent,
+            { name: "file2.log" } as fs.Dirent,
+        ]);
 
         const directoryAsset = new DirectoryAsset("/mock-directory", {
             predicates: [(file) => file.name.endsWith(".log")],
         });
 
-        expect(directoryAsset.assets).to.have.length(1);
-        expect(await directoryAsset.assets[0].path).to.equal("/mock-directory/file2.log");
+        expect(directoryAsset.assets).toHaveLength(1);
+        expect(await directoryAsset.assets[0].path).toBe("/mock-directory/file2.log");
     });
 });
 
@@ -93,53 +85,47 @@ describe("SecretAsset", () => {
         const asset = new StringAsset("secret");
         const sensitiveAsset = new SecretAsset(asset);
 
-        expect(sensitiveAsset.asset).to.be.equal(asset);
+        expect(sensitiveAsset.asset).toBe(asset);
     });
 
     it("should correctly initialize with SecretAsset", () => {
         const asset = new StringAsset("secret");
         const sensitiveAsset = new SecretAsset(new SecretAsset(asset));
 
-        expect(sensitiveAsset.asset).to.be.equal(asset);
+        expect(sensitiveAsset.asset).toBe(asset);
     });
 });
 
 describe("ReadAsset", () => {
-    let sandbox: sinon.SinonSandbox;
-
-    beforeEach(() => {
-        sandbox = sinon.createSandbox();
-    });
-
     afterEach(() => {
-        sandbox.restore();
+        vi.resetAllMocks();
     });
 
     describe("with FileAsset", () => {
         it("should read an existing file", async () => {
-            sandbox.stub(fs, "existsSync").returns(true);
-            sandbox.stub(fs, "lstatSync").returns({ isDirectory: () => false } as fs.Stats);
-            sandbox.stub(fs.promises, "readFile").returns(Promise.resolve(Buffer.from("file content")));
+            vi.spyOn(fs, "existsSync").mockReturnValue(true);
+            vi.spyOn(fs, "lstatSync").mockReturnValue({ isDirectory: () => false } as fs.Stats);
+            vi.spyOn(fs.promises, "readFile").mockResolvedValue(Buffer.from("file content"));
 
             const fileAsset = new FileAsset("/mock-directory/file.txt");
-            await expect(ReadAsset(fileAsset)).eventually.deep.equal(Buffer.from("file content"));
+            await expect(ReadAsset(fileAsset)).resolves.toEqual(Buffer.from("file content"));
         });
 
         it("should throw error for non-existing file", async () => {
-            sandbox.stub(fs, "existsSync").returns(false);
+            vi.spyOn(fs, "existsSync").mockReturnValue(false);
 
             const fileAsset = new FileAsset("/mock-directory/file.txt");
-            await expect(ReadAsset(fileAsset)).be.eventually.rejectedWith(
+            await expect(ReadAsset(fileAsset)).rejects.toThrow(
                 "Failed to open asset file '/mock-directory/file.txt': ENOENT: no such file or directory",
             );
         });
 
         it("should throw error for directory", async () => {
-            sandbox.stub(fs, "existsSync").returns(true);
-            sandbox.stub(fs, "lstatSync").returns({ isDirectory: () => true } as fs.Stats);
+            vi.spyOn(fs, "existsSync").mockReturnValue(true);
+            vi.spyOn(fs, "lstatSync").mockReturnValue({ isDirectory: () => true } as fs.Stats);
 
             const fileAsset = new FileAsset("/mock-directory");
-            await expect(ReadAsset(fileAsset)).be.eventually.rejectedWith(
+            await expect(ReadAsset(fileAsset)).rejects.toThrow(
                 "Asset '/mock-directory' is a directory; try using an archive",
             );
         });
@@ -148,7 +134,7 @@ describe("ReadAsset", () => {
     describe("with StringAsset", () => {
         it("should be read", async () => {
             const stringAsset = new StringAsset("string content");
-            await expect(ReadAsset(stringAsset)).be.eventually.deep.equal(Buffer.from("string content"));
+            await expect(ReadAsset(stringAsset)).resolves.toEqual(Buffer.from("string content"));
         });
     });
 
@@ -157,35 +143,33 @@ describe("ReadAsset", () => {
             nock("https://example.com").get("/remote.txt").reply(200, "remote content");
 
             const remoteAsset = new RemoteAsset("https://example.com/remote.txt");
-            await expect(ReadAsset(remoteAsset)).be.eventually.deep.equal(Buffer.from("remote content"));
+            await expect(ReadAsset(remoteAsset)).resolves.toEqual(Buffer.from("remote content"));
         });
 
         it("should handle file:// protocol", async () => {
-            sandbox.stub(fs, "existsSync").returns(true);
-            sandbox.stub(fs, "lstatSync").returns({ isDirectory: () => false } as fs.Stats);
-            sandbox.stub(fs.promises, "readFile").returns(Promise.resolve(Buffer.from("file content")));
+            vi.spyOn(fs, "existsSync").mockReturnValue(true);
+            vi.spyOn(fs, "lstatSync").mockReturnValue({ isDirectory: () => false } as fs.Stats);
+            vi.spyOn(fs.promises, "readFile").mockResolvedValue(Buffer.from("file content"));
 
             const remoteAsset = new RemoteAsset("file:///path/to/file");
-            await expect(ReadAsset(remoteAsset)).be.eventually.deep.equal(Buffer.from("file content"));
+            await expect(ReadAsset(remoteAsset)).resolves.toEqual(Buffer.from("file content"));
         });
 
         it("should throw error for unsupported protocol", async () => {
             const remoteAsset = new RemoteAsset("ftp://example.com/remote.txt");
-            await expect(ReadAsset(remoteAsset)).be.eventually.rejectedWith(
-                "Unsupported remote asset URI scheme 'ftp:'",
-            );
+            await expect(ReadAsset(remoteAsset)).rejects.toThrow("Unsupported remote asset URI scheme 'ftp:'");
         });
 
         it("should throw error for invalid URL", async () => {
             const remoteAsset = new RemoteAsset("invalid-url");
-            await expect(ReadAsset(remoteAsset)).be.eventually.rejectedWith("Invalid remote asset URI 'invalid-url'");
+            await expect(ReadAsset(remoteAsset)).rejects.toThrow("Invalid remote asset URI 'invalid-url'");
         });
 
         it("should throw error for failed fetch", async () => {
             nock("https://example.com").get("/remote.txt").reply(404);
 
             const remoteAsset = new RemoteAsset("https://example.com/remote.txt");
-            await expect(ReadAsset(remoteAsset)).be.eventually.rejectedWith(
+            await expect(ReadAsset(remoteAsset)).rejects.toThrow(
                 "Failed to fetch remote asset 'https://example.com/remote.txt' (404)",
             );
         });
@@ -204,42 +188,42 @@ describe("ReadAsset", () => {
 describe("Asset type checkers", () => {
     it("should correctly identify FileAsset", () => {
         const fileAsset = new FileAsset("/path/to/file");
-        expect(IsFileAsset(fileAsset)).to.be.true;
-        expect(IsRemoteAsset(fileAsset)).to.be.false;
-        expect(IsStringAsset(fileAsset)).to.be.false;
+        expect(IsFileAsset(fileAsset)).toBe(true);
+        expect(IsRemoteAsset(fileAsset)).toBe(false);
+        expect(IsStringAsset(fileAsset)).toBe(false);
     });
 
     it("should correctly identify RemoteAsset", () => {
         const remoteAsset = new RemoteAsset("http://example.com");
-        expect(IsFileAsset(remoteAsset)).to.be.false;
-        expect(IsRemoteAsset(remoteAsset)).to.be.true;
-        expect(IsStringAsset(remoteAsset)).to.be.false;
+        expect(IsFileAsset(remoteAsset)).toBe(false);
+        expect(IsRemoteAsset(remoteAsset)).toBe(true);
+        expect(IsStringAsset(remoteAsset)).toBe(false);
     });
 
     it("should correctly identify StringAsset", () => {
         const stringAsset = new StringAsset("content");
-        expect(IsFileAsset(stringAsset)).to.be.false;
-        expect(IsRemoteAsset(stringAsset)).to.be.false;
-        expect(IsStringAsset(stringAsset)).to.be.true;
+        expect(IsFileAsset(stringAsset)).toBe(false);
+        expect(IsRemoteAsset(stringAsset)).toBe(false);
+        expect(IsStringAsset(stringAsset)).toBe(true);
     });
 
     it("should correctly identify SecretAsset", () => {
         const secretAsset = new SecretAsset(new StringAsset("secret"));
-        expect(IsFileAsset(secretAsset)).to.be.false;
-        expect(IsRemoteAsset(secretAsset)).to.be.false;
-        expect(IsStringAsset(secretAsset)).to.be.false;
-        expect(IsSecretAsset(secretAsset)).to.be.true;
+        expect(IsFileAsset(secretAsset)).toBe(false);
+        expect(IsRemoteAsset(secretAsset)).toBe(false);
+        expect(IsStringAsset(secretAsset)).toBe(false);
+        expect(IsSecretAsset(secretAsset)).toBe(true);
     });
 
     it("should not indentify undefined or null values", () => {
-        expect(IsFileAsset(undefined)).to.be.false;
-        expect(IsRemoteAsset(undefined)).to.be.false;
-        expect(IsStringAsset(undefined)).to.be.false;
-        expect(IsSecretAsset(undefined)).to.be.false;
+        expect(IsFileAsset(undefined)).toBe(false);
+        expect(IsRemoteAsset(undefined)).toBe(false);
+        expect(IsStringAsset(undefined)).toBe(false);
+        expect(IsSecretAsset(undefined)).toBe(false);
 
-        expect(IsFileAsset(null)).to.be.false;
-        expect(IsRemoteAsset(null)).to.be.false;
-        expect(IsStringAsset(null)).to.be.false;
-        expect(IsSecretAsset(null)).to.be.false;
+        expect(IsFileAsset(null)).toBe(false);
+        expect(IsRemoteAsset(null)).toBe(false);
+        expect(IsStringAsset(null)).toBe(false);
+        expect(IsSecretAsset(null)).toBe(false);
     });
 });

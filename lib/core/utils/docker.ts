@@ -169,7 +169,7 @@ function injectAssets(
                 let idx: number;
 
                 for (idx = 0; idx < 16; idx++) {
-                    const ref = labels?.[`sh.chezmoi.injected.${idx}.base.ref`];
+                    const ref = labels?.[`sh.chezmoi.injected.${idx}.hash`];
                     if (ref === undefined) {
                         break;
                     }
@@ -221,13 +221,13 @@ function injectAssets(
                             a.every((v: any) => "user" in v);
                         if (areInjectedChownableAsset(assets)) {
                             instructions.push(
-                                ...assets.map((asset) => {
-                                    const destination = path.join(context.contextdir, asset.destination);
-                                    const chown = asset.user
-                                        ? `chown ${asset.user}${asset.group ? `:${asset.group}` : ""} ${destination}`
-                                        : "";
-                                    return chown ? `RUN ${chown}` : "";
-                                }),
+                                ...assets
+                                    .map((asset) => {
+                                        const destination = path.join(context.contextdir, asset.destination);
+                                        const chown = `chown ${asset.user}${asset.group ? `:${asset.group}` : ""} ${destination}`;
+                                        return chown ? `RUN ${chown}` : "";
+                                    })
+                                    .filter((v) => v),
                             );
                         }
 

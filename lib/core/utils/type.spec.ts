@@ -14,50 +14,23 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-import { expect } from "chai";
+import { describe, expect, it } from "vitest";
 
 import { IsDefined } from "./type";
 
-describe("IsDefined", () => {
-    it("should return false for undefined values", () => {
-        const undefinedValue = undefined;
-        const result = IsDefined(undefinedValue);
-        expect(result).to.be.false;
-    });
-
-    it("should return true for defined values (null)", () => {
-        const nullValue = null;
-        const result = IsDefined(nullValue);
-        expect(result).to.be.true;
-    });
-
-    it("should return true for defined values (empty string)", () => {
-        const emptyStringValue = "";
-        const result = IsDefined(emptyStringValue);
-        expect(result).to.be.true;
-    });
-
-    it("should return true for defined values (false)", () => {
-        const falseValue = false;
-        const result = IsDefined(falseValue);
-        expect(result).to.be.true;
-    });
-
-    it("should return true for defined values (0)", () => {
-        const zeroValue = 0;
-        const result = IsDefined(zeroValue);
-        expect(result).to.be.true;
-    });
-
-    it("should return true for defined values (object)", () => {
-        const objValue = { key: "value" };
-        const result = IsDefined(objValue);
-        expect(result).to.be.true;
-    });
-
-    it("should return true for defined values (array)", () => {
-        const arrayValue: number[] = [1, 2, 3];
-        const result = IsDefined(arrayValue);
-        expect(result).to.be.true;
+describe("#IsDefined", () => {
+    [
+        { value: undefined, expected: false },
+        { value: null, expected: true },
+        { value: "", expected: true },
+        { value: false, expected: true },
+        { value: 0, expected: true },
+        { value: { key: "value" }, expected: true },
+        { value: [1, 2, 3], expected: true },
+    ].forEach(({ value, expected }) => {
+        it(`should return ${expected} for defined value (${JSON.stringify(value)})`, () => {
+            const result = IsDefined(value);
+            expect(result).toBe(expected);
+        });
     });
 });

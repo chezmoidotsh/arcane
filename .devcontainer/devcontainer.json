@@ -103,7 +103,8 @@
                 "ms-vscode.makefile-tools",
                 "psioniq.psi-header",
                 "redhat.vscode-yaml",
-                "visualstudioexptteam.vscodeintellicode"
+                "visualstudioexptteam.vscodeintellicode",
+                "vitest.explorer"
             ]
         }
     },
