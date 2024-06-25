@@ -1,0 +1,57 @@
+# Copyright (C) 2024 Alexandre Nicolaie (xunleii@users.noreply.github.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ----------------------------------------------------------------------------
+---
+services:
+    vscode:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        cap_add:
+            - SYS_PTRACE
+        command: tail -f /dev/null
+        environment:
+            DIRENV_LOG_FORMAT: "" # disable direnv logging
+        extra_hosts:
+            - oci.local.chezmoi.sh:127.0.0.1
+        network_mode: host
+        tmpfs:
+            - /run
+            - /tmp
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ..:/workspaces/atlas:cached
+        working_dir: /workspaces/atlas
+
+    registry:
+        image: docker.io/library/registry:2.8.3@sha256:79b29591e1601a73f03fcd413e655b72b9abfae5a23f1ad2e883d4942fbb4351
+        expose:
+            - 80
+        network_mode: host
+        restart: always
+        volumes:
+            - ./config/etc.docker.registry.config.yaml:/etc/docker/registry/config.yml
+
+    registry-ui:
+        image: joxit/docker-registry-ui:2.5.7@sha256:5594b76bf8dd9de479648e28f38572d020d260568be40b7e52b9758b442275e1
+        environment:
+            DELETE_IMAGES: "true"
+            NGINX_LISTEN_PORT: 5000
+            REGISTRY_URL: http://oci.local.chezmoi.sh
+        expose:
+            - 5000
+        extra_hosts:
+            - oci.local.chezmoi.sh:127.0.0.1
+        network_mode: host
+        restart: always

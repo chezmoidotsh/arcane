@@ -83,7 +83,7 @@ export class Image<T extends types.Image> extends LocalImage {
 
                 // Default image options
                 ...{
-                    tags: [`oci.chezmoi.sh/security/yaldap:${version}`],
+                    tags: [`oci.local.chezmoi.sh/security/yaldap:${version}`],
                 },
                 ...args,
 

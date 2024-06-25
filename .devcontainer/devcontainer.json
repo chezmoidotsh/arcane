@@ -21,7 +21,8 @@
 // - https://code.visualstudio.com/docs/getstarted/settings
 {
     "name": "chezmoi.sh/atlas Codespace",
-    "dockerFile": "Dockerfile",
+    "dockerComposeFile": "docker-compose.yaml",
+    "service": "vscode",
     "customizations": {
         "vscode": {
             "settings": {
@@ -131,17 +132,8 @@
             "plugins": "direnv docker node yarn"
         }
     },
-    "postCreateCommand": {
-        "sync submodules": "git submodule update --init --recursive",
-        "install required tools": "asdf-helper install > /dev/null && direnv allow",
-        "docker logout (required)": "docker logout"
-    },
-    // Custom "container" settings
-    "containerEnv": {
-        // Disable direnv log output
-        "DIRENV_LOG_FORMAT": ""
-    },
-    "mounts": ["type=tmpfs,destination=/tmp"],
+    "postCreateCommand": "/usr/local/share/post-create-command.sh",
+    "forwardPorts": [80, 5000],
     "remoteUser": "vscode",
-    "runArgs": ["--network=host"]
+    "workspaceFolder": "/workspaces/atlas"
 }

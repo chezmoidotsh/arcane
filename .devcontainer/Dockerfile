@@ -64,7 +64,10 @@ FROM ghcr.io/pulumi/devcontainer:slim-node
 COPY first-run-notice.txt /usr/local/etc/vscode-dev-containers/first-run-notice.txt
 
 # Copy lazygit configuration
-COPY lazygit.config.yaml /home/vscode/.config/lazygit/config.yaml
+COPY config/home.vscode..config.lazygit.config.yaml /home/vscode/.config/lazygit/config.yaml
+
+# Copy postCreateCommand script
+COPY --chmod=755 scripts/post-create-command.sh /usr/local/share/post-create-command.sh
 
 # Install ASDF package manager
 ENV ASDF_DIR=/home/vscode/.asdf

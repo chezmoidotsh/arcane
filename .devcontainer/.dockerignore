@@ -1,0 +1,7 @@
+# ignore everything ...
+*
+
+# ... except what is used by the build
+!config/home.vscode..config.lazygit.config.yaml
+!first-run-notice.txt
+!scripts/post-create-command.sh

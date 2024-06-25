@@ -32,7 +32,7 @@ export class Image extends LocalImage {
         super(
             name,
             {
-                ...{ tags: [`oci.chezmoi.sh/os/alpine:${Version}`] },
+                ...{ tags: [`oci.local.chezmoi.sh/os/alpine:${Version}`] },
                 ...args,
 
                 // Build the image
