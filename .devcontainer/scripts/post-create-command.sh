@@ -66,11 +66,15 @@ do
     version="${line##* }"
     run_command "Installing ${tool}@$(gum style --foreground '#F1C40F' "${version}")" -- \
         "(asdf plugin add ${tool} && asdf install ${tool} ${version})"
+    run_command "Setting ${tool}@$(gum style --foreground '#F1C40F' "${version}") as global" -- \
+        "asdf global ${tool} ${version}"
 done < ".tool-versions"
 run_command "Allowing direnv" -- direnv allow
 run_command "Install Yarn" -- "(mkdir -p .direnv/corepack/$(cat /etc/machine-id) && corepack enable --install-directory=.direnv/corepack/$(cat /etc/machine-id) && corepack install)"
 run_command "Install all Node.js dependencies" -- "(.direnv/corepack/$(cat /etc/machine-id)/yarn install)"
 run_command "Configure git hooks" -- lefthook install
+run_command "Logout to Docker (avoid crashing issues)" -- docker logout
+run_command "Configure Docker buildx with the local registry" -- docker buildx create --use --name pulumi-buildx --config /etc/docker/pulumi-buildkitd.toml --driver-opt network=host --bootstrap
 
 # Check if git user and email are set
 ( \

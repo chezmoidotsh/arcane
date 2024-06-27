@@ -2,6 +2,7 @@
 *
 
 # ... except what is used by the build
+!config/etc.docker.pulumi-buildkitd.toml
 !config/home.vscode..config.lazygit.config.yaml
 !first-run-notice.txt
 !scripts/post-create-command.sh

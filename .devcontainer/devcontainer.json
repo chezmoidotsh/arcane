@@ -121,7 +121,6 @@
             "userUid": "automatic",
             "userGid": "automatic"
         },
-        "ghcr.io/georgofenbeck/features/lazygit-linuxbinary:1": {},
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
             "moby": false,
             "installDockerBuildx": true,
@@ -130,7 +129,8 @@
         },
         "ghcr.io/devcontainers-contrib/features/zsh-plugins:0": {
             "plugins": "direnv docker node yarn"
-        }
+        },
+        "ghcr.io/georgofenbeck/features/lazygit-linuxbinary:1": {}
     },
     "postCreateCommand": "/usr/local/share/post-create-command.sh",
     "forwardPorts": [80, 5000],
