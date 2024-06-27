@@ -18,7 +18,7 @@ import * as path from "path";
 
 import * as docker from "@pulumi/docker";
 import * as pulumi from "@pulumi/pulumi";
-import { Asset } from "@pulumi/pulumi/asset";
+import { FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset";
 
 import { LocalImage, types } from "@chezmoi.sh/core/docker";
 import { InjectAssets, SecretAsset } from "@chezmoi.sh/core/utils";
@@ -108,7 +108,7 @@ export interface ApplicationArgs {
     /**
      * yaLDAP YAML backend configuration file.
      */
-    configuration: pulumi.Input<Asset>;
+    configuration: FileAsset | RemoteAsset | StringAsset | SecretAsset<FileAsset | RemoteAsset | StringAsset>;
 
     /**
      * The options for building the yaLDAP Docker image.
@@ -133,7 +133,7 @@ export class Application extends pulumi.ComponentResource {
     /**
      * The Docker image for the yaLDAP application.
      */
-    public readonly image: types.Image;
+    public readonly image: pulumi.Output<types.Image>;
 
     /**
      * The Docker container for the yaLDAP application.
@@ -144,18 +144,25 @@ export class Application extends pulumi.ComponentResource {
         super("chezmoi.sh:security:yaldap:Application", name, {}, opts);
 
         const image = new Image(name, args?.imageOpts || { push: true }, { parent: this });
-        const secret = pulumi.output(args.configuration).apply(
-            (src: Asset) =>
-                ({
-                    source: new SecretAsset(src),
-                    destination: "/etc/yaldap/backend.yaml",
-                    mode: 0o400,
-                    user: "yaldap",
-                }) as InjectableChownableAsset,
-        );
-        const embedded = InjectAssets(image, secret);
-        this.image = args?.imageOpts?.transformation?.(embedded) ?? embedded;
+        const secret = {
+            source: new SecretAsset(args.configuration),
+            destination: "/etc/yaldap/backend.yaml",
+            mode: 0o400,
+            user: "yaldap",
+        } as InjectableChownableAsset;
 
+        let embedded = InjectAssets(image, secret);
+
+        const transformation = args?.imageOpts?.transformation;
+        if (transformation) {
+            embedded = embedded.then(transformation);
+        }
+
+        this.image = pulumi.output(
+            embedded.catch((err) => {
+                pulumi.log.error(`Failed to build the bundled yaLDAP image: ${err}`);
+            }),
+        );
         this.container = new docker.Container(
             name,
             {

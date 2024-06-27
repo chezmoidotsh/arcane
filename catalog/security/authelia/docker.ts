@@ -18,7 +18,7 @@ import * as path from "path";
 
 import * as docker from "@pulumi/docker";
 import * as pulumi from "@pulumi/pulumi";
-import { Asset } from "@pulumi/pulumi/asset";
+import { FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset";
 
 import { LocalImage, types } from "@chezmoi.sh/core/docker";
 import { InjectAssets, IsDefined, SecretAsset } from "@chezmoi.sh/core/utils";
@@ -106,13 +106,13 @@ export interface ApplicationArgs {
     /**
      * Authelia YAML configuration file.
      */
-    configuration: pulumi.Input<Asset>;
+    configuration: FileAsset | RemoteAsset | StringAsset | SecretAsset<FileAsset | RemoteAsset | StringAsset>;
 
     /**
      * The file containing all Authelia users.
      */
     userDatabase?: {
-        source: pulumi.Input<Asset>;
+        source: FileAsset | RemoteAsset | StringAsset | SecretAsset<FileAsset | RemoteAsset | StringAsset>;
         destination: string;
     };
 
@@ -139,7 +139,7 @@ export class Application extends pulumi.ComponentResource {
     /**
      * The Docker image for the Authelia application.
      */
-    public readonly image: types.Image;
+    public readonly image: pulumi.Output<types.Image>;
 
     /**
      * The Docker container for the Authelia application.
@@ -151,30 +151,33 @@ export class Application extends pulumi.ComponentResource {
 
         const image = new Image(name, args?.imageOpts || { push: true }, { parent: this });
 
-        const config = pulumi.output(args.configuration).apply(
-            (config) =>
-                ({
-                    source: new SecretAsset(config),
-                    destination: "/etc/authelia/configuration.yaml",
-                    mode: 0o400,
-                    user: "authelia",
-                }) as InjectableChownableAsset,
-        );
+        const config = {
+            source: new SecretAsset(args.configuration),
+            destination: "/etc/authelia/configuration.yaml",
+            mode: 0o400,
+            user: "authelia",
+        } as InjectableChownableAsset;
         const userDatabase = args.userDatabase
-            ? pulumi.output(args.userDatabase.source).apply(
-                  (config) =>
-                      ({
-                          source: new SecretAsset(config),
-                          destination: args.userDatabase?.destination,
-                          mode: 0o400,
-                          user: "authelia",
-                      }) as InjectableChownableAsset,
-              )
+            ? {
+                  source: new SecretAsset(args.userDatabase.source),
+                  destination: args.userDatabase.destination,
+                  mode: 0o400,
+                  user: "authelia",
+              }
             : undefined;
 
-        const embedded = InjectAssets(image, config, ...[userDatabase].filter(IsDefined));
-        this.image = args?.imageOpts?.transformation?.(embedded) ?? embedded;
+        let embedded = InjectAssets(image, config, ...[userDatabase].filter(IsDefined));
 
+        const transformation = args?.imageOpts?.transformation;
+        if (transformation) {
+            embedded = embedded.then(transformation);
+        }
+
+        this.image = pulumi.output(
+            embedded.catch((err) => {
+                pulumi.log.error(`Failed to build the bundled Authelia image: ${err}`);
+            }),
+        );
         this.container = new docker.Container(
             name,
             {

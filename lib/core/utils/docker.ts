@@ -14,7 +14,9 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
+import crypto from "crypto";
 import fs from "fs";
+import os from "os";
 import path from "path";
 import tmp from "tmp";
 
@@ -24,8 +26,7 @@ import { FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset";
 
 import { types as docker } from "@chezmoi.sh/core/docker";
 
-import { SecretAsset } from "./asset";
-import { generateDeterministicContext, resolveAsset } from "./docker.internal";
+import { IsFileAsset, IsRemoteAsset, IsSecretAsset, IsStringAsset, ReadAsset, SecretAsset } from "./asset";
 import { IsDefined } from "./type";
 
 export const busybox =
@@ -85,7 +86,7 @@ type RequiredInjectableChownableAssets = [InjectableChownableAsset, ...Injectabl
  * @param {InjectableAsset[]} assets The assets to add to the image.
  * @returns {docker.Image} The new image with all assets injected into it.
  */
-export function InjectAssets(image: docker.Image, ...assets: RequiredInjectableAssets): docker.Image;
+export async function InjectAssets(image: docker.Image, ...assets: RequiredInjectableAssets): Promise<docker.Image>;
 
 /**
  * Add assets to a Docker image using the specified user and group for each asset.
@@ -97,12 +98,15 @@ export function InjectAssets(image: docker.Image, ...assets: RequiredInjectableA
  * @param {InjectableAsset[]} assets The assets to add to the image.
  * @returns {docker.Image} The new image with all assets injected into it.
  */
-export function InjectAssets(image: docker.Image, ...assets: RequiredInjectableChownableAssets): docker.Image;
+export async function InjectAssets(
+    image: docker.Image,
+    ...assets: RequiredInjectableChownableAssets
+): Promise<docker.Image>;
 
-export function InjectAssets(
+export async function InjectAssets(
     image: docker.Image,
     ...assets: RequiredInjectableAssets | RequiredInjectableChownableAssets
-): docker.Image {
+): Promise<docker.Image> {
     if (assets.length > 4096) {
         pulumi.log.warn(
             `Injecting a large number of assets (> 4096) can fail due to the maximum size of the GRPC request (4 Mio).`,
@@ -112,18 +116,113 @@ export function InjectAssets(
     return injectAssets(image, assets);
 }
 
-function injectAssets(image: docker.Image, assets: (InjectableAsset | InjectableChownableAsset)[]): docker.Image {
+/**
+ * Inject assets into a Docker image. It returns a promise because Pulumi.output doesn't handle
+ * rejection properly and seems to hang forever when an error occurs. In this case, we want to
+ * fail fast and not hang forever.
+ *
+ * @param image Image to inject assets into.
+ * @param unpreparedAssets List of assets to inject.
+ * @returns A promise that resolves to the new image with the assets injected.
+ */
+async function injectAssets(
+    image: docker.Image,
+    unpreparedAssets: (InjectableAsset | InjectableChownableAsset)[],
+): Promise<docker.Image> {
     // Step 1: Create a temporary directory to store all assets that will be removed after the build.
     const tmpdir = tmp.dirSync({ keep: false, unsafeCleanup: true, mode: 0o700 });
     process.on("exit", () => tmpdir.removeCallback());
 
     // Step 2: Resolve all assets and store them somewhere.
-    const promisedAssets = assets.map((asset) => resolveAsset(tmpdir.name, asset));
+    const assets: (Omit<InjectableAsset | InjectableChownableAsset, "source"> & {
+        source: string;
+        sensitive?: Buffer;
+    })[] = [];
+    for (const asset of unpreparedAssets) {
+        let { source, ...rest } = asset;
+        let sensitive: boolean = false;
+
+        if (IsSecretAsset(source)) {
+            sensitive = true;
+            source = source.asset;
+        }
+
+        pulumi.log.debug(
+            IsFileAsset(source)
+                ? `InjectAssets<FileAsset>: ${await source.path}`
+                : IsRemoteAsset(source)
+                  ? `InjectAssets<RemoteAsset>: ${await source.uri}`
+                  : IsStringAsset(source)
+                    ? `InjectAssets<StringAsset>: Write content`
+                    : `Unsupported asset type: ${JSON.stringify(source)} (${typeof source})`,
+        );
+        const buf = await ReadAsset(source);
+        const hash = crypto.createHash("sha256").update(buf).digest("hex");
+
+        if (sensitive) {
+            assets.push({ source: path.join(tmpdir.name, hash), sensitive: buf, ...rest });
+            continue;
+        }
+
+        fs.writeFileSync(path.join(tmpdir.name, hash), buf);
+        assets.push({ source: path.join(tmpdir.name, hash), sensitive: undefined, ...rest });
+    }
 
     // Step 3: Generate a deterministic context for the build and link all assets to it.
     // NOTE: This step is necessary because if the context name changes, pulumi will try to
     //       rebuild the image. So using a deterministic checksum will prevent this from happening.
-    const context = generateDeterministicContext(promisedAssets);
+
+    // Check if all assets have different destinations.
+    const dups = assets.reduce(
+        (acc, cur, idx) => ({ ...acc, [cur.destination]: [...(acc[cur.destination] ?? []), idx] }),
+        {} as Record<string, number[]>,
+    );
+    for (const [dest, idxs] of Object.entries(dups)) {
+        if (idxs.length > 1) {
+            throw new Error(
+                `Several assets (${idxs.map((i) => `#${i}`).join(", ")}) found with the same destination: ${dest}`,
+            );
+        }
+    }
+
+    // Generate a checksum for all assets (a sort of "context" checksum).
+    const hash = crypto.createHash("sha256");
+    for (const asset of assets) {
+        hash.update(path.basename(asset.source));
+    }
+
+    // Create the final context directory
+    // NOTE: The final context directory will be removed after the build.
+    const stackId = crypto
+        .createHash("sha256")
+        .update(pulumi.runtime.getOrganization())
+        .update(pulumi.runtime.getProject())
+        .update(pulumi.runtime.getStack())
+        .digest("base64")
+        .substring(0, 8);
+    // In order to avoid long paths, we use a shorter hash and use base64 encoding instead
+    // of hex for higher entropy (64^8 vs 16^8)
+    const stackHash = hash.digest("base64");
+
+    // In order to avoid long paths, we use a shorter hash and use base64 encoding instead
+    // of hex for higher entropy (64^8 vs 16^8)
+    const contextdir = path.join(os.tmpdir(), `pulumi-${stackId}-${stackHash.substring(0, 8)}`);
+    fs.mkdirSync(contextdir, { recursive: true });
+    process.on("exit", () => fs.rmSync(contextdir, { recursive: true, force: true }));
+
+    // Link all assets to the context directory.
+    for (const asset of assets) {
+        if (asset.sensitive) {
+            // Ignore sensitive asset because they will be injected as secrets.
+            continue;
+        }
+
+        const target = path.join(contextdir, asset.destination);
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.rmSync(target, { force: true, recursive: false });
+        fs.linkSync(asset.source, target);
+        asset.source = target;
+    }
 
     // Step 4: Create a new image with the assets injected.
     const newImage = new buildx.Image(
@@ -143,22 +242,21 @@ function injectAssets(image: docker.Image, assets: (InjectableAsset | Injectable
             ssh: image.ssh.apply((v) => v ?? []),
 
             // Add information about injection to the image
-            labels: pulumi.all([context, image.labels]).apply(([context, labels]) => {
+            labels: image.labels.apply((labels) => {
                 let idx: number;
 
-                for (idx = 0; idx < 16; idx++) {
+                // NOTE: we allow infinite recursive injection because Docker will
+                //       stop if there is too much labels.
+                for (idx = 0; idx < Infinity; idx++) {
                     const ref = labels?.[`sh.chezmoi.injected.${idx}.hash`];
                     if (ref === undefined) {
                         break;
                     }
                 }
-                if (idx === 16) {
-                    throw new Error("The maximum number of injection is reached (16).");
-                }
 
                 return {
                     ...labels,
-                    [`sh.chezmoi.injected.${idx}.hash`]: context.hash,
+                    [`sh.chezmoi.injected.${idx}.hash`]: stackHash,
                     [`sh.chezmoi.injected.${idx}.base.ref`]: image.ref,
                 };
             }),
@@ -182,69 +280,61 @@ function injectAssets(image: docker.Image, assets: (InjectableAsset | Injectable
             noCache: true,
 
             context: {
-                location: context.then((context) => context.contextdir),
+                location: contextdir,
             },
             dockerfile: {
+                // Generate a Dockerfile based on the context
                 inline: pulumi.output(
-                    context.then((context) => {
+                    (() => {
                         // COPY asset as secret when assets are sensitives.
-                        const secrets = context.assets
-                            .filter((asset) => asset.sensitive)
-                            .map((asset, idx) =>
-                                [
-                                    `RUN mkdir -p ${path.dirname(path.join(context.contextdir, asset.destination))}`,
-                                    `RUN --mount=type=secret,id=asset${idx} base64 -d /run/secrets/asset${idx} > ${path.join(
-                                        context.contextdir,
+                        const runs: string[] = [];
+                        let secretIdx = 0;
+                        for (const idx in assets) {
+                            const asset = assets[idx];
+                            const destination = path.join(contextdir, asset.destination);
+
+                            if (asset.sensitive) {
+                                runs.push(
+                                    `RUN mkdir -p ${path.dirname(destination)}`,
+                                    `RUN --mount=type=secret,id=asset${secretIdx} base64 -d /run/secrets/asset${secretIdx} > ${path.join(
+                                        contextdir,
                                         asset.destination,
                                     )}`,
-                                ].join("\n"),
-                            );
+                                );
+                                secretIdx++;
+                            }
 
-                        const instructions = context.assets
-                            .map((asset) => {
-                                const destination = path.join(context.contextdir, asset.destination);
-                                const chmod = asset.mode ? `chmod ${asset.mode.toString(8)} ${destination}` : "";
-                                return chmod ? `RUN ${chmod}` : "";
-                            })
-                            .filter((v) => v);
+                            if (asset.mode) {
+                                runs.push(`RUN chmod ${asset.mode.toString(8)} ${destination}`);
+                            }
 
-                        const areInjectedChownableAsset = (a: any): a is InjectableChownableAsset[] =>
-                            a.every(IsInjectableChownableAsset);
-                        if (areInjectedChownableAsset(assets)) {
-                            instructions.push(
-                                ...assets
-                                    .map((asset) => {
-                                        const destination = path.join(context.contextdir, asset.destination);
-                                        const chown = `chown ${asset.user}${asset.group ? `:${asset.group}` : ""} ${destination}`;
-                                        return chown ? `RUN ${chown}` : "";
-                                    })
-                                    .filter((v) => v),
-                            );
+                            if (IsInjectableChownableAsset(asset)) {
+                                runs.push(
+                                    `RUN chown ${asset.user}${asset.group ? `:${asset.group}` : ""} ${destination}`,
+                                );
+                            }
                         }
 
                         return pulumi.interpolate`FROM ${busybox}
 COPY --from=${image.ref} /etc/passwd /etc/group /etc/
-COPY . ${context.contextdir}
-${secrets.join("\n")}
-${instructions.join("\n")}
+COPY . ${contextdir}
+${runs.join("\n")}
 
 FROM ${image.ref}
-COPY --from=0 ${context.contextdir} /`;
-                    }),
+COPY --from=0 ${contextdir} /`;
+                    })(),
                 ),
             },
-            secrets: context.then((context) =>
-                context.assets
-                    .map((asset) => asset.sensitive)
-                    .filter(IsDefined) // Filter out undefined values
-                    .reduce(
-                        (acc, buf, idx) => ({
-                            ...acc,
-                            [`asset${idx}`]: buf.toString("base64"),
-                        }),
-                        {},
-                    ),
-            ),
+            secrets: assets
+                .map((asset) => asset.sensitive)
+                .filter(IsDefined) // Filter out undefined values
+                .reduce(
+                    (acc, buf, idx) => ({
+                        ...acc,
+                        [`asset${idx}`]: buf.toString("base64"),
+                    }),
+                    {},
+                ),
         },
         {
             parent: image,

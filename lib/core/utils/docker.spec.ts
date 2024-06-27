@@ -14,11 +14,16 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
+import { rejects } from "assert";
+import { exec } from "child_process";
+import exp from "constants";
+import fs from "fs";
+import nock from "nock";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as buildx from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
-import { StringAsset } from "@pulumi/pulumi/asset";
+import { FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset";
 
 import * as docker from "./docker";
 import { SecretAsset } from "./asset";
@@ -92,7 +97,13 @@ describe("#InjectAssets", () => {
     });
 
     it("should copy the base image configuration", async () => {
-        const image = docker.InjectAssets(busybox, {
+        vi.spyOn(fs, "existsSync").mockReturnValue(true);
+        vi.spyOn(fs, "linkSync").mockReturnValue(undefined);
+        vi.spyOn(fs, "lstatSync").mockReturnValue({ isDirectory: () => false } as fs.Stats);
+        vi.spyOn(fs, "writeFileSync").mockReturnValue(undefined);
+        vi.spyOn(fs.promises, "readFile").mockResolvedValue(Buffer.from("file content"));
+
+        const image = await docker.InjectAssets(busybox, {
             destination: "/hello-world.txt",
             source: new StringAsset("hello-world.txt"),
         });
@@ -102,7 +113,6 @@ describe("#InjectAssets", () => {
         await expect(promiseOf(image.dockerfile).then((v) => v?.inline)).resolves.toBe(`FROM ${docker.busybox}
 COPY --from=undefined /etc/passwd /etc/group /etc/
 COPY . /tmp/pulumi-JU5c7AWT-Jz2nHA2W
-
 
 
 FROM undefined
@@ -140,63 +150,143 @@ COPY --from=0 /tmp/pulumi-JU5c7AWT-Jz2nHA2W /`);
         await expect(promiseOf(image.target)).resolves.toBeUndefined();
     });
 
-    it("should inject assets into the Dockerfile", async () => {
-        const image = docker.InjectAssets(
-            busybox,
-            {
-                destination: "/hello-world.txt",
-                source: new StringAsset("hello-world.txt"),
-            },
-            {
-                destination: "/goodbye-world.txt",
-                source: new StringAsset("goodbye-world.txt"),
-                mode: 0o600,
-            },
-        );
+    describe("when injection are recursively called", () => {
+        beforeEach(() => {
+            vi.spyOn(fs, "existsSync").mockReturnValue(true);
+            vi.spyOn(fs, "linkSync").mockReturnValue(undefined);
+            vi.spyOn(fs, "lstatSync").mockReturnValue({ isDirectory: () => false } as fs.Stats);
+            vi.spyOn(fs, "writeFileSync").mockReturnValue(undefined);
+            vi.spyOn(fs.promises, "readFile").mockResolvedValue(Buffer.from("file content"));
+        });
 
-        await expect(promiseOf(image.dockerfile).then((d) => d?.inline)).resolves.toBe(`FROM ${docker.busybox}
+        it(`should modify labels and tags when injecting 1 time`, async () => {
+            let image = busybox;
+            for (let i = 0; i < 1; i++) {
+                image = await docker.InjectAssets(image, {
+                    destination: "/hello-world.txt",
+                    source: new StringAsset("hello-world.txt"),
+                });
+            }
+
+            const labels = await promiseOf(image.labels);
+            const tags = await promiseOf(image.tags);
+            expect.soft(tags).toContain("oci.example.org/busybox:latest-injected.0");
+            expect.soft(labels?.[`sh.chezmoi.injected.0.hash`]).toBeDefined();
+        });
+
+        it(`should modify labels and tags when injecting 2 times`, async () => {
+            let image = busybox;
+            for (let i = 0; i < 2; i++) {
+                image = await docker.InjectAssets(image, {
+                    destination: "/hello-world.txt",
+                    source: new StringAsset("hello-world.txt"),
+                });
+            }
+
+            const labels = await promiseOf(image.labels);
+            const tags = await promiseOf(image.tags);
+            expect.soft(tags).toContain("oci.example.org/busybox:latest-injected.1");
+            expect.soft(labels?.[`sh.chezmoi.injected.0.hash`]).toBeDefined();
+            expect.soft(labels?.[`sh.chezmoi.injected.1.hash`]).toBeDefined();
+        });
+
+        it(`should modify labels and tags when injecting 4 times`, async () => {
+            let image = busybox;
+            for (let i = 0; i < 4; i++) {
+                image = await docker.InjectAssets(image, {
+                    destination: "/hello-world.txt",
+                    source: new StringAsset("hello-world.txt"),
+                });
+            }
+
+            const labels = await promiseOf(image.labels);
+            const tags = await promiseOf(image.tags);
+            expect.soft(tags).toContain("oci.example.org/busybox:latest-injected.3");
+            expect.soft(labels?.[`sh.chezmoi.injected.0.hash`]).toBeDefined();
+            expect.soft(labels?.[`sh.chezmoi.injected.1.hash`]).toBeDefined();
+            expect.soft(labels?.[`sh.chezmoi.injected.2.hash`]).toBeDefined();
+            expect.soft(labels?.[`sh.chezmoi.injected.3.hash`]).toBeDefined();
+        });
+
+        it(`should modify labels and tags when injecting 8 times`, async () => {
+            let image = busybox;
+            for (let i = 0; i < 8; i++) {
+                image = await docker.InjectAssets(image, {
+                    destination: "/hello-world.txt",
+                    source: new StringAsset("hello-world.txt"),
+                });
+            }
+
+            const labels = await promiseOf(image.labels);
+            const tags = await promiseOf(image.tags);
+            expect.soft(tags).toContain("oci.example.org/busybox:latest-injected.7");
+            expect.soft(labels?.[`sh.chezmoi.injected.0.hash`]).toBeDefined();
+            expect.soft(labels?.[`sh.chezmoi.injected.1.hash`]).toBeDefined();
+            expect.soft(labels?.[`sh.chezmoi.injected.2.hash`]).toBeDefined();
+            expect.soft(labels?.[`sh.chezmoi.injected.3.hash`]).toBeDefined();
+            expect.soft(labels?.[`sh.chezmoi.injected.4.hash`]).toBeDefined();
+            expect.soft(labels?.[`sh.chezmoi.injected.5.hash`]).toBeDefined();
+            expect.soft(labels?.[`sh.chezmoi.injected.6.hash`]).toBeDefined();
+            expect.soft(labels?.[`sh.chezmoi.injected.7.hash`]).toBeDefined();
+        });
+    });
+
+    describe("when no nothing wrong occurs", () => {
+        it("should inject assets into the Dockerfile", async () => {
+            const image = await docker.InjectAssets(
+                busybox,
+                {
+                    destination: "/hello-world.txt",
+                    source: new StringAsset("hello-world.txt"),
+                },
+                {
+                    destination: "/goodbye-world.txt",
+                    source: new StringAsset("goodbye-world.txt"),
+                    mode: 0o600,
+                },
+            );
+
+            await expect(promiseOf(image.dockerfile).then((d) => d?.inline)).resolves.toBe(`FROM ${docker.busybox}
 COPY --from=undefined /etc/passwd /etc/group /etc/
 COPY . /tmp/pulumi-JU5c7AWT-e/f07zhv
-
 RUN chmod 600 /tmp/pulumi-JU5c7AWT-e/f07zhv/goodbye-world.txt
 
 FROM undefined
 COPY --from=0 /tmp/pulumi-JU5c7AWT-e/f07zhv /`);
-        await expect(promiseOf(image.secrets)).resolves.toEqual({});
-    });
-
-    it("should inject assets into the Dockerfile with chown", async () => {
-        const image = docker.InjectAssets(busybox, {
-            destination: "/hello-world.txt",
-            source: new StringAsset("hello-world.txt"),
-            user: "bumblebee",
+            await expect(promiseOf(image.secrets)).resolves.toEqual({});
         });
 
-        await expect(promiseOf(image.dockerfile).then((d) => d?.inline)).resolves.toBe(`FROM ${docker.busybox}
+        it("should inject assets into the Dockerfile with chown", async () => {
+            const image = await docker.InjectAssets(busybox, {
+                destination: "/hello-world.txt",
+                source: new StringAsset("hello-world.txt"),
+                user: "bumblebee",
+            });
+
+            await expect(promiseOf(image.dockerfile).then((d) => d?.inline)).resolves.toBe(`FROM ${docker.busybox}
 COPY --from=undefined /etc/passwd /etc/group /etc/
 COPY . /tmp/pulumi-JU5c7AWT-Jz2nHA2W
-
 RUN chown bumblebee /tmp/pulumi-JU5c7AWT-Jz2nHA2W/hello-world.txt
 
 FROM undefined
 COPY --from=0 /tmp/pulumi-JU5c7AWT-Jz2nHA2W /`);
-    });
+        });
 
-    it("should inject assets into the Dockerfile with sensitive assets", async () => {
-        const image = docker.InjectAssets(
-            busybox,
-            {
-                destination: "/hello-world.txt",
-                source: new StringAsset("hello-world.txt"),
-            },
-            {
-                destination: "/goodbye-world.txt",
-                source: new SecretAsset(new StringAsset("goodbye-world.txt")),
-                mode: 0o600,
-            },
-        );
+        it("should inject assets into the Dockerfile with sensitive assets", async () => {
+            const image = await docker.InjectAssets(
+                busybox,
+                {
+                    destination: "/hello-world.txt",
+                    source: new StringAsset("hello-world.txt"),
+                },
+                {
+                    destination: "/goodbye-world.txt",
+                    source: new SecretAsset(new StringAsset("goodbye-world.txt")),
+                    mode: 0o600,
+                },
+            );
 
-        await expect(promiseOf(image.dockerfile).then((d) => d?.inline)).resolves.toBe(`FROM ${docker.busybox}
+            await expect(promiseOf(image.dockerfile).then((d) => d?.inline)).resolves.toBe(`FROM ${docker.busybox}
 COPY --from=undefined /etc/passwd /etc/group /etc/
 COPY . /tmp/pulumi-JU5c7AWT-e/f07zhv
 RUN mkdir -p /tmp/pulumi-JU5c7AWT-e/f07zhv
@@ -205,17 +295,17 @@ RUN chmod 600 /tmp/pulumi-JU5c7AWT-e/f07zhv/goodbye-world.txt
 
 FROM undefined
 COPY --from=0 /tmp/pulumi-JU5c7AWT-e/f07zhv /`);
-        await expect(promiseOf(image.secrets)).resolves.toEqual({ asset0: "Z29vZGJ5ZS13b3JsZC50eHQ=" });
-    });
-
-    it("should inject assets into the Dockerfile with chown and sensitive assets", async () => {
-        const image = docker.InjectAssets(busybox, {
-            destination: "/hello-world.txt",
-            source: new SecretAsset(new StringAsset("hello-world.txt")),
-            user: "bumblebee",
+            await expect(promiseOf(image.secrets)).resolves.toEqual({ asset0: "Z29vZGJ5ZS13b3JsZC50eHQ=" });
         });
 
-        await expect(promiseOf(image.dockerfile).then((d) => d?.inline)).resolves.toBe(`FROM ${docker.busybox}
+        it("should inject assets into the Dockerfile with chown and sensitive assets", async () => {
+            const image = await docker.InjectAssets(busybox, {
+                destination: "/hello-world.txt",
+                source: new SecretAsset(new StringAsset("hello-world.txt")),
+                user: "bumblebee",
+            });
+
+            await expect(promiseOf(image.dockerfile).then((d) => d?.inline)).resolves.toBe(`FROM ${docker.busybox}
 COPY --from=undefined /etc/passwd /etc/group /etc/
 COPY . /tmp/pulumi-JU5c7AWT-Jz2nHA2W
 RUN mkdir -p /tmp/pulumi-JU5c7AWT-Jz2nHA2W
@@ -224,6 +314,123 @@ RUN chown bumblebee /tmp/pulumi-JU5c7AWT-Jz2nHA2W/hello-world.txt
 
 FROM undefined
 COPY --from=0 /tmp/pulumi-JU5c7AWT-Jz2nHA2W /`);
-        await expect(promiseOf(image.secrets)).resolves.toEqual({ asset0: "aGVsbG8td29ybGQudHh0" });
+            await expect(promiseOf(image.secrets)).resolves.toEqual({ asset0: "aGVsbG8td29ybGQudHh0" });
+        });
+    });
+
+    describe("when something wrong occurs", () => {
+        describe("with invalid FileAsset", () => {
+            it("should throw error if asset path does not exist", async () => {
+                vi.spyOn(fs, "existsSync").mockReturnValue(false);
+                const writeFileSync = vi.spyOn(fs, "writeFileSync");
+
+                const image = docker.InjectAssets(busybox, {
+                    destination: "/mock-directory/file.txt",
+                    source: new FileAsset("/mock-directory/file.txt"),
+                });
+
+                await expect(image).rejects.toThrow(
+                    "Failed to open asset file '/mock-directory/file.txt': ENOENT: no such file or directory",
+                );
+                expect(writeFileSync).not.toHaveBeenCalled();
+            });
+
+            it("should throw error if asset path is a directory", async () => {
+                vi.spyOn(fs, "existsSync").mockReturnValue(true);
+                vi.spyOn(fs, "lstatSync").mockReturnValue({ isDirectory: () => true } as fs.Stats);
+                const writeFileSync = vi.spyOn(fs, "writeFileSync");
+
+                const image = docker.InjectAssets(busybox, {
+                    destination: "/mock-directory",
+                    source: new FileAsset("/mock-directory"),
+                });
+
+                await expect(image).rejects.toThrow("Asset '/mock-directory' is a directory; try using an archive");
+                expect(writeFileSync).not.toHaveBeenCalled();
+            });
+        });
+
+        describe("with invalid RemoteAsset", () => {
+            it("should throw error if remote asset URI scheme is not supported", async () => {
+                const writeFileSync = vi.spyOn(fs, "writeFileSync");
+
+                const image = docker.InjectAssets(busybox, {
+                    source: new RemoteAsset("ftp://example.com/remote.txt"),
+                    destination: "/mock-directory/file.txt",
+                });
+
+                await expect(image).rejects.toThrow("Unsupported remote asset URI scheme 'ftp:'");
+                expect(writeFileSync).not.toHaveBeenCalled();
+            });
+
+            it("should throw error for invalid remote asset URI", async () => {
+                const writeFileSync = vi.spyOn(fs, "writeFileSync");
+
+                const image = docker.InjectAssets(busybox, {
+                    source: new RemoteAsset("invalid-uri"),
+                    destination: "/mock-directory/file.txt",
+                });
+
+                await expect(image).rejects.toThrow("Invalid remote asset URI 'invalid-uri'");
+                expect(writeFileSync).not.toHaveBeenCalled();
+            });
+
+            it("should throw error for failed fetch", async () => {
+                nock("https://example.com").get("/remote.txt").reply(404);
+                const writeFileSync = vi.spyOn(fs, "writeFileSync");
+
+                const image = docker.InjectAssets(busybox, {
+                    source: new RemoteAsset("https://example.com/remote.txt"),
+                    destination: "/mock-directory/file.txt",
+                });
+
+                await expect(image).rejects.toThrow(
+                    "Failed to fetch remote asset 'https://example.com/remote.txt' (404)",
+                );
+                expect(writeFileSync).not.toHaveBeenCalled();
+            });
+        });
+
+        describe("with invalid Asset", () => {
+            it("should throw error for unsupported asset type", async () => {
+                const image = docker.InjectAssets(busybox, {
+                    destination: "/hello-world.txt",
+                    source: {},
+                } as docker.InjectableAsset);
+
+                await expect(image).rejects.toThrow("Unsupported asset type");
+            });
+        });
+
+        it("should throw an error if there is several assets with the same destination", async () => {
+            vi.spyOn(fs, "linkSync").mockReturnValue(undefined);
+            vi.spyOn(fs, "mkdirSync").mockReturnValue(undefined);
+            vi.spyOn(fs, "rmSync").mockReturnValue(undefined);
+            vi.spyOn(fs, "writeFileSync").mockReturnValue(undefined);
+
+            const image = docker.InjectAssets(
+                busybox,
+                {
+                    source: new StringAsset("asset1"),
+                    destination: "/mock-directory/asset1",
+                },
+                {
+                    source: new StringAsset("asset2"),
+                    destination: "/mock-directory/asset2",
+                },
+                {
+                    source: new StringAsset("asset3"),
+                    destination: "/mock-directory/asset1",
+                },
+                {
+                    source: new StringAsset("asset4"),
+                    destination: "/mock-directory/asset1",
+                },
+            );
+
+            await expect(image).rejects.toThrow(
+                "Several assets (#0, #2, #3) found with the same destination: /mock-directory/asset1",
+            );
+        });
     });
 });
