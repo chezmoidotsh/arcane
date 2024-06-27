@@ -2,6 +2,7 @@
     "name": "atlas.chezmoi.sh",
     "version": "0.0.0",
     "description": "Personal homelab infrastructure as-code",
+    "type": "module",
     "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
     "license": "Apache-2.0",
     "repository": "https://github.com/chezmoi-sh/atlas",
@@ -12,6 +13,7 @@
         "@commitlint/cz-commitlint": "^19.2.0",
         "@trivago/prettier-plugin-sort-imports": "^4.3.0",
         "@trunkio/launcher": "^1.3.1",
+        "@types/dockerode": "^3.3.29",
         "@types/inquirer": "^9.0.7",
         "@types/mocha": "^10.0.7",
         "@types/node": "^20.14.8",
@@ -21,6 +23,7 @@
         "@vitest/coverage-v8": "^1.6.0",
         "@vitest/ui": "^1.6.0",
         "commitizen": "^4.3.0",
+        "dockerode": "^4.0.2",
         "inquirer": "9.2.23",
         "mocha": "^10.5.1",
         "nock": "^13.5.4",
@@ -52,8 +55,10 @@
         }
     },
     "scripts": {
-        "test": "mocha --exit 'lib/**/*.ts' 'catalog/**/*.ts'",
-        "test:coverage": "nyc mocha --exit 'lib/**/*.ts' 'catalog/**/*.ts'",
-        "test:watch": "mocha --watch 'lib/**/*.ts' 'catalog/**/*.ts'"
+        "test": "vitest run",
+        "test:coverage": "vitest run --coverage",
+        "test:watch": "vitest",
+        "test:catalog:docker": "VITEST_RUN_TYPE=integration:docker vitest run catalog",
+        "test:catalog": "VITEST_RUN_TYPE=integration:docker vitest run catalog"
     }
 }

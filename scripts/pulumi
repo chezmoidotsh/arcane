@@ -30,6 +30,12 @@ export PATH="$(
 # Override the pulumi up command to automatically add the policy pack flags
 # based on the current project configuration.
 function pulumi_policy_pack_wrapper() {
+    # Don't wrap the command if we're not in a git repository.
+    if ! git rev-parse --show-toplevel 2> /dev/null; then
+        pulumi "$@"
+        return
+    fi
+
     local action="${1}"
     local args=("${@:2}")
 
