@@ -41,9 +41,9 @@ type sensitiveInjectableAsset = Omit<InjectableAsset | InjectableChownableAsset,
  */
 export async function resolveAsset(
     tmp: string,
-    asset: Promise<InjectableAsset | InjectableChownableAsset>,
+    asset: InjectableAsset | InjectableChownableAsset,
 ): Promise<sensitiveInjectableAsset> {
-    let { source, ...rest } = await asset;
+    let { source, ...rest } = asset;
     let sensitive: boolean = false;
     if (IsSecretAsset(source)) {
         sensitive = true;

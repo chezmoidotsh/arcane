@@ -72,11 +72,8 @@ export function IsInjectableChownableAsset(asset: any): asset is InjectableChown
     return asset.user !== undefined && IsInjectableAsset(asset);
 }
 
-type RequiredInjectableAssets = [pulumi.Input<InjectableAsset>, ...pulumi.Input<InjectableAsset>[]];
-type RequiredInjectableChownableAssets = [
-    pulumi.Input<InjectableChownableAsset>,
-    ...pulumi.Input<InjectableChownableAsset>[],
-];
+type RequiredInjectableAssets = [InjectableAsset, ...InjectableAsset[]];
+type RequiredInjectableChownableAssets = [InjectableChownableAsset, ...InjectableChownableAsset[]];
 
 /**
  * Add assets to a Docker image using root user and group.
@@ -115,31 +112,13 @@ export function InjectAssets(
     return injectAssets(image, assets);
 }
 
-function injectAssets(
-    image: docker.Image,
-    assets: pulumi.Input<InjectableAsset | InjectableChownableAsset>[],
-): docker.Image {
-    // In order to avoid as much as possible the use of pulumi specific types, which are
-    // a bit tedious to work with on spec.ts files, we will convert the assets to a list
-    // of promises that will be easier to work with.
-    const unpulumizedAssets = assets.map(
-        (asset) =>
-            new Promise((resolve: (value: InjectableAsset | InjectableChownableAsset) => void, reject) =>
-                pulumi.output(asset).apply((v) => {
-                    if (IsInjectableChownableAsset(v) || IsInjectableAsset(v)) {
-                        resolve(v);
-                    }
-                    reject(new Error(`Unsupported asset type: ${JSON.stringify(v)} (${typeof v})`));
-                }),
-            ),
-    );
-
+function injectAssets(image: docker.Image, assets: (InjectableAsset | InjectableChownableAsset)[]): docker.Image {
     // Step 1: Create a temporary directory to store all assets that will be removed after the build.
     const tmpdir = tmp.dirSync({ keep: false, unsafeCleanup: true, mode: 0o700 });
     process.on("exit", () => tmpdir.removeCallback());
 
     // Step 2: Resolve all assets and store them somewhere.
-    const promisedAssets = unpulumizedAssets.map((asset) => resolveAsset(tmpdir.name, asset));
+    const promisedAssets = assets.map((asset) => resolveAsset(tmpdir.name, asset));
 
     // Step 3: Generate a deterministic context for the build and link all assets to it.
     // NOTE: This step is necessary because if the context name changes, pulumi will try to
@@ -218,7 +197,7 @@ function injectAssets(
                             .filter((v) => v);
 
                         const areInjectedChownableAsset = (a: any): a is InjectableChownableAsset[] =>
-                            a.every((v: any) => "user" in v);
+                            a.every(IsInjectableChownableAsset);
                         if (areInjectedChownableAsset(assets)) {
                             instructions.push(
                                 ...assets

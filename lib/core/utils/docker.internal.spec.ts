@@ -41,10 +41,10 @@ describe("resolveAsset", () => {
             vi.spyOn(fs.promises, "readFile").mockResolvedValue(Buffer.from("file content"));
             const writeFileSync = vi.spyOn(fs, "writeFileSync");
 
-            const asset = Promise.resolve({
+            const asset = {
                 source: new FileAsset("/mock-directory/file.txt"),
                 destination: "/mock-directory/file.txt",
-            } as InjectableAsset);
+            };
 
             const result = await resolveAsset("/tmp", asset);
 
@@ -64,10 +64,10 @@ describe("resolveAsset", () => {
             vi.spyOn(fs.promises, "readFile").mockResolvedValue(Buffer.from("file content"));
             const writeFileSync = vi.spyOn(fs, "writeFileSync");
 
-            const asset = Promise.resolve({
+            const asset = {
                 source: new SecretAsset(new FileAsset("/mock-directory/file.txt")),
                 destination: "/mock-directory/file.txt",
-            } as InjectableAsset);
+            };
 
             const result = await resolveAsset("/tmp", asset);
 
@@ -81,10 +81,10 @@ describe("resolveAsset", () => {
             vi.spyOn(fs, "existsSync").mockReturnValue(false);
             const writeFileSync = vi.spyOn(fs, "writeFileSync");
 
-            const asset = Promise.resolve({
+            const asset = {
                 source: new FileAsset("/mock-directory/file.txt"),
                 destination: "/mock-directory/file.txt",
-            } as InjectableAsset);
+            };
 
             await expect(resolveAsset("/tmp", asset)).rejects.toThrow(
                 "Failed to open asset file '/mock-directory/file.txt': ENOENT: no such file or directory",
@@ -97,10 +97,10 @@ describe("resolveAsset", () => {
             vi.spyOn(fs, "lstatSync").mockReturnValue({ isDirectory: () => true } as fs.Stats);
             const writeFileSync = vi.spyOn(fs, "writeFileSync");
 
-            const asset = Promise.resolve({
+            const asset = {
                 source: new FileAsset("/mock-directory"),
                 destination: "/mock-directory",
-            } as InjectableAsset);
+            };
 
             await expect(resolveAsset("/tmp", asset)).rejects.toThrow(
                 "Asset '/mock-directory' is a directory; try using an archive",
@@ -113,10 +113,10 @@ describe("resolveAsset", () => {
         it("should resolve", async function () {
             const writeFileSync = vi.spyOn(fs, "writeFileSync");
 
-            const asset = Promise.resolve({
+            const asset = {
                 source: new StringAsset("string content"),
                 destination: "/mock-directory/file.txt",
-            } as InjectableAsset);
+            };
 
             const result = await resolveAsset("/tmp", asset);
 
@@ -129,10 +129,10 @@ describe("resolveAsset", () => {
         it("should resolve with sensitive value", async function () {
             const writeFileSync = vi.spyOn(fs, "writeFileSync");
 
-            const asset = Promise.resolve({
+            const asset = {
                 source: new SecretAsset(new StringAsset("string content")),
                 destination: "/mock-directory/file.txt",
-            } as InjectableAsset);
+            };
 
             const result = await resolveAsset("/tmp", asset);
 
@@ -148,10 +148,10 @@ describe("resolveAsset", () => {
             nock("https://example.com").get("/remote.txt").reply(200, "remote content");
             const writeFileSync = vi.spyOn(fs, "writeFileSync");
 
-            const asset = Promise.resolve({
+            const asset = {
                 source: new RemoteAsset("https://example.com/remote.txt"),
                 destination: "/mock-directory/file.txt",
-            } as InjectableAsset);
+            };
 
             const result = await resolveAsset("/tmp", asset);
 
@@ -165,10 +165,10 @@ describe("resolveAsset", () => {
             nock("https://example.com").get("/remote.txt").reply(200, "remote content");
             const writeFileSync = vi.spyOn(fs, "writeFileSync");
 
-            const asset = Promise.resolve({
+            const asset = {
                 source: new SecretAsset(new RemoteAsset("https://example.com/remote.txt")),
                 destination: "/mock-directory/file.txt",
-            } as InjectableAsset);
+            };
 
             const result = await resolveAsset("/tmp", asset);
 
@@ -184,10 +184,10 @@ describe("resolveAsset", () => {
             vi.spyOn(fs.promises, "readFile").mockResolvedValue(Buffer.from("file content"));
             const writeFileSync = vi.spyOn(fs, "writeFileSync");
 
-            const asset = Promise.resolve({
+            const asset = {
                 source: new RemoteAsset("file:///path/to/file"),
                 destination: "/mock-directory/file.txt",
-            } as InjectableAsset);
+            };
 
             const result = await resolveAsset("/tmp", asset);
 
@@ -200,10 +200,10 @@ describe("resolveAsset", () => {
         it("should throw error if remote asset URI scheme is not supported", async function () {
             const writeFileSync = vi.spyOn(fs, "writeFileSync");
 
-            const asset = Promise.resolve({
+            const asset = {
                 source: new RemoteAsset("ftp://example.com/remote.txt"),
                 destination: "/mock-directory/file.txt",
-            } as InjectableAsset);
+            };
 
             await expect(resolveAsset("/tmp", asset)).rejects.toThrow("Unsupported remote asset URI scheme 'ftp:'");
             expect(writeFileSync).not.toHaveBeenCalled();
@@ -212,10 +212,10 @@ describe("resolveAsset", () => {
         it("should throw error for invalid remote asset URI", async function () {
             const writeFileSync = vi.spyOn(fs, "writeFileSync");
 
-            const asset = Promise.resolve({
+            const asset = {
                 source: new RemoteAsset("invalid-uri"),
                 destination: "/mock-directory/file.txt",
-            } as InjectableAsset);
+            };
 
             await expect(resolveAsset("/tmp", asset)).rejects.toThrow("Invalid remote asset URI 'invalid-uri'");
             expect(writeFileSync).not.toHaveBeenCalled();
@@ -225,10 +225,10 @@ describe("resolveAsset", () => {
             nock("https://example.com").get("/remote.txt").reply(404);
             const writeFileSync = vi.spyOn(fs, "writeFileSync");
 
-            const asset = Promise.resolve({
+            const asset = {
                 source: new RemoteAsset("https://example.com/remote.txt"),
                 destination: "/mock-directory/file.txt",
-            } as InjectableAsset);
+            };
 
             await expect(resolveAsset("/tmp", asset)).rejects.toThrow(
                 "Failed to fetch remote asset 'https://example.com/remote.txt' (404)",
@@ -238,10 +238,10 @@ describe("resolveAsset", () => {
     });
 
     it("should throw error for unsupported asset type", async function () {
-        const asset = Promise.resolve({
+        const asset = {
             source: {},
             destination: "/mock-directory/file.txt",
-        } as InjectableAsset);
+        } as InjectableAsset;
 
         await expect(resolveAsset("/tmp", asset)).rejects.toThrow(
             "Unsupported asset type for '{}' (object): not a FileAsset, RemoteAsset or StringAsset",
