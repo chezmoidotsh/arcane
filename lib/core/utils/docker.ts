@@ -141,7 +141,6 @@ function injectAssets(image: docker.Image, assets: (InjectableAsset | Injectable
             push: image.push,
             registries: image.registries.apply((v) => v ?? []),
             ssh: image.ssh.apply((v) => v ?? []),
-            tags: image.tags.apply((v) => v ?? []),
 
             // Add information about injection to the image
             labels: pulumi.all([context, image.labels]).apply(([context, labels]) => {
@@ -163,6 +162,19 @@ function injectAssets(image: docker.Image, assets: (InjectableAsset | Injectable
                     [`sh.chezmoi.injected.${idx}.base.ref`]: image.ref,
                 };
             }),
+
+            // For all tags, suffix them with -injected.X where X is the index of the injection.
+            tags: image.tags.apply((v) =>
+                (v ?? []).map((l) => {
+                    const match = l.match(/-injected\.(\d+)$/);
+                    if (!match) {
+                        return `${l}-injected.0`;
+                    } else {
+                        const index = parseInt(match[1]);
+                        return `${l.replace(/-injected\.(\d+)$/, "")}-injected.${index + 1}`;
+                    }
+                }),
+            ),
 
             // Always disable cache for this kind of build because it seems that the cache
             // is not working properly when using the `--mount=type=secret` flag.

@@ -125,7 +125,10 @@ COPY --from=0 /tmp/pulumi-JU5c7AWT-Jz2nHA2W /`);
             { address: "oci.example.org", username: "user", password: "password" },
         ]);
         await expect(promiseOf(image.ssh)).resolves.toEqual([{ id: "0000" }]);
-        await expect(promiseOf(image.tags)).resolves.toEqual(["oci.example.org/busybox:latest"]);
+
+        // The tags should be overridden with injected.X suffixes to avoid conflicts
+        // with the base image.
+        await expect(promiseOf(image.tags)).resolves.toEqual(["oci.example.org/busybox:latest-injected.0"]);
 
         // All cache-related options should be overridden.
         await expect(promiseOf(image.noCache)).resolves.toBe(true);
