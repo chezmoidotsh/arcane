@@ -35,7 +35,7 @@ export namespace types {
      * @param {buildx.Image} image The image to transform.
      * @returns {buildx.Image} The transformed image. If undefined, the image will not be transformed.
      */
-    export declare type ImageTransformation<T extends types.Image, U extends types.Image> = (image: T) => U;
+    export declare type ImageTransformation = (image: types.Image) => types.Image;
 
     /**
      * Image describes a Docker image based on the standard {@link buildx.Image} resource.

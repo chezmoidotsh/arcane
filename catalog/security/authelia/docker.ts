@@ -32,7 +32,7 @@ export const Version = "v4.38.8";
 /**
  * The arguments for building the Authelia Docker image.
  */
-export interface ImageArgs<T extends types.Image> extends types.ImageArgs {
+export interface ImageArgs extends types.ImageArgs {
     /**
      * The Authelia version to build.
      * @default "latest"
@@ -43,19 +43,17 @@ export interface ImageArgs<T extends types.Image> extends types.ImageArgs {
      * The base image to use in order to build the Authelia image.
      * WARNING: The base image must be compatible a Alpine Linux image.
      */
-    baseImage?: pulumi.Input<T>;
+    baseImage?: pulumi.Input<types.Image>;
 }
 
 /**
  * This component builds the Docker image for the Authelia application.
  */
-export class Image<T extends types.Image> extends LocalImage {
-    constructor(name: string, args: ImageArgs<T>, opts?: pulumi.ComponentResourceOptions) {
+export class Image extends LocalImage {
+    constructor(name: string, args: ImageArgs, opts?: pulumi.ComponentResourceOptions) {
         // Get the base image to use for building the Authelia image. If no base image is provided,
         // we will use the latest Alpine Linux image.
-        const base = pulumi.output(
-            args.baseImage || (new alpine.Image(`${name}:base`, args, { parent: opts?.parent }) as T),
-        );
+        const base = pulumi.output(args.baseImage || new alpine.Image(`${name}:base`, args, { parent: opts?.parent }));
         const version = args.version ?? Version;
 
         super(
@@ -104,7 +102,7 @@ export class Image<T extends types.Image> extends LocalImage {
  * The arguments for the Authelia application.
  * @see {@link Application}
  */
-export interface ApplicationArgs<T extends types.Image, U extends types.Image> {
+export interface ApplicationArgs {
     /**
      * Authelia YAML configuration file.
      */
@@ -121,11 +119,11 @@ export interface ApplicationArgs<T extends types.Image, U extends types.Image> {
     /**
      * The options for building the Authelia Docker image.
      */
-    imageOpts?: ImageArgs<T> & {
+    imageOpts?: ImageArgs & {
         /**
          * A function to transform the Authelia Docker image.
          */
-        transformation?: types.ImageTransformation<T, U>;
+        transformation?: types.ImageTransformation;
     };
 
     /**
@@ -137,7 +135,7 @@ export interface ApplicationArgs<T extends types.Image, U extends types.Image> {
 /**
  * This component deploys the Authelia application through a Docker container.
  */
-export class Application<T extends types.Image, U extends types.Image = T> extends pulumi.ComponentResource {
+export class Application extends pulumi.ComponentResource {
     /**
      * The Docker image for the Authelia application.
      */
@@ -148,10 +146,10 @@ export class Application<T extends types.Image, U extends types.Image = T> exten
      */
     public readonly container: docker.Container;
 
-    constructor(name: string, args: ApplicationArgs<T, U>, opts?: pulumi.ComponentResourceOptions) {
+    constructor(name: string, args: ApplicationArgs, opts?: pulumi.ComponentResourceOptions) {
         super("chezmoi.sh:security:authelia:Application", name, {}, opts);
 
-        const image = new Image(name, args?.imageOpts || { push: true }, { parent: this }) as T;
+        const image = new Image(name, args?.imageOpts || { push: true }, { parent: this });
 
         const config = pulumi.output(args.configuration).apply(
             (config) =>
@@ -174,7 +172,7 @@ export class Application<T extends types.Image, U extends types.Image = T> exten
               )
             : undefined;
 
-        const embedded = InjectAssets(image, config, ...[userDatabase].filter(IsDefined)) as T;
+        const embedded = InjectAssets(image, config, ...[userDatabase].filter(IsDefined));
         this.image = args?.imageOpts?.transformation?.(embedded) ?? embedded;
 
         this.container = new docker.Container(
