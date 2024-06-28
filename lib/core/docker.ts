@@ -152,3 +152,98 @@ export class RemoteImage extends pulumi.ComponentResource implements types.Image
         this.ref = image.repoDigest;
     }
 }
+
+/**
+ * ExecutionContainerArgs is a set of options that can be used to configure the execution of a container.
+ */
+export declare type ExecutionContainerArgs =
+    | "attach"
+    | "mustRun"
+    | "start"
+    | "stdinOpen"
+    | "tty"
+    | "wait"
+    | "waitTimeout";
+
+/**
+ * CommandContainerArgs is a set of options that can be used to configure the command of a container.
+ */
+export declare type CommandContainerArgs = "command" | "entrypoints" | "envs" | "image" | "workingDir";
+
+/**
+ * DNSContainerArgs is a set of options that can be used to configure the DNS of a container.
+ */
+export declare type DNSContainerArgs = "dns" | "dnsOpts" | "dnsSearches";
+
+/**
+ * ExposeContainerArgs is a set of options that can be used to configure the exposed ports of a container.
+ */
+export declare type ExposeContainerArgs = "ports" | "publishAllPorts";
+
+/**
+ * HostnameContainerArgs is a set of options that can be used to configure some hostname-related settings
+ * of a container.
+ */
+export declare type HostnameContainerArgs = "domainname" | "hostname" | "hosts";
+
+/**
+ * LifecycleContainerArgs is a set of options that can be used to configure the lifecycle of a container.
+ */
+export declare type LifecycleContainerArgs =
+    | "containerReadRefreshTimeoutMilliseconds"
+    | "destroyGraceSeconds"
+    | "healthcheck"
+    | "maxRetryCount"
+    | "restart"
+    | "rm"
+    | "stopSignal"
+    | "stopTimeout";
+
+/**
+ * NetworkContainerArgs is a set of options that can be used to configure the network of a container.
+ */
+export declare type NetworkContainerArgs = "hosts" | "networkMode" | "networksAdvanced";
+
+/**
+ * ResourceContainerArgs is a set of options that can be used to configure the resources of a container.
+ */
+export declare type ResourceContainerArgs =
+    | "memory"
+    | "memorySwap"
+    | "cpuShares"
+    | "cpuPeriod"
+    | "cpuQuota"
+    | "cpuSet"
+    | "shmSize";
+
+/**
+ * RuntimeContainerArgs is a set of options that can be used to configure the runtime of a container.
+ */
+export declare type RuntimeContainerArgs =
+    | "cgroupnsMode"
+    | "groupAdds"
+    | "init"
+    | "ipcMode"
+    | "logs"
+    | "logDriver"
+    | "logOpts"
+    | "pidMode"
+    | "runtime";
+
+/**
+ * SecurityContainerArgs is a set of options that can be used to configure the security of a container.
+ */
+export declare type SecurityContainerArgs =
+    | "capabilities"
+    | "privileged"
+    | "readOnly"
+    | "removeVolumes"
+    | "securityOpts"
+    | "sysctls"
+    | "user"
+    | "usernsMode";
+
+/**
+ * StorageContainerArgs is a set of options that can be used to configure the storage of a container.
+ */
+export declare type StorageContainerArgs = "mounts" | "storageOpts" | "tmpfs" | "volumes";

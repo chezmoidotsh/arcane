@@ -1,0 +1,8 @@
+{
+    "name": "@catalog/system-network-tailscale",
+    "version": "0.0.0",
+    "description": "Tailscale is a Zero config VPN for individuals and teams.",
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "license": "Apache-2.0",
+    "private": true
+}
