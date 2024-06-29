@@ -50,7 +50,7 @@
                     "autoHeader": "manualSave",
                     "enabled": true,
                     "enforceHeader": true,
-                    "excludeGlob": ["*.json"],
+                    "excludeGlob": ["*.json", "*.spec.ts"],
                     "exclude": [".folderinfo"],
                     "replace": ["Copyright (C)"]
                 },
