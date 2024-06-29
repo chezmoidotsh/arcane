@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 vscode (you@you.you)
+ * Copyright (C) 2024 Alexandre Nicolaie (xunleii@users.noreply.github.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-import { defineConfig } from "vitest/config";
 
-export default defineConfig({
-    test: {
-        coverage: {
-            provider: "v8",
-            exclude: ["**/index.ts"],
-        },
-        exclude: ["**/node_modules/**", ".trunk/**"],
-    },
-});
+// renovate: datasource=github-tags depName=TwiN/gatus versioning=semver
+export const Version = "v5.11.0";

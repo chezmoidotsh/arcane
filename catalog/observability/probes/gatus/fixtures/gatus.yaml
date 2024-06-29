@@ -1,0 +1,70 @@
+# Copyright (C) 2024 Alexandre Nicolaie (xunleii@users.noreply.github.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ----------------------------------------------------------------------------
+---
+metrics: true
+
+endpoints:
+    - name: front-end
+      group: core
+      url: https://twin.sh/health
+      interval: 5m
+      conditions:
+          - "[STATUS] == 200"
+          - "[BODY].status == UP"
+          - "[RESPONSE_TIME] < 150"
+
+    - name: back-end
+      group: core
+      url: https://example.org/
+      interval: 5m
+      conditions:
+          - "[STATUS] == 200"
+          - "[CERTIFICATE_EXPIRATION] > 48h"
+
+    - name: monitoring
+      group: internal
+      url: https://example.org/
+      interval: 5m
+      conditions:
+          - "[STATUS] == 200"
+
+    - name: nas
+      group: internal
+      url: https://example.org/
+      interval: 5m
+      conditions:
+          - "[STATUS] == 200"
+
+    - name: example-dns-query
+      url: 8.8.8.8 # Address of the DNS server to use
+      interval: 5m
+      dns:
+          query-name: example.com
+          query-type: A
+      conditions:
+          - "[BODY] == 93.184.216.34"
+          - "[DNS_RCODE] == NOERROR"
+
+    - name: icmp-ping
+      url: icmp://example.org
+      interval: 1m
+      conditions:
+          - "[CONNECTED] == true"
+
+    - name: check-domain-expiration
+      url: https://example.org/
+      interval: 1h
+      conditions:
+          - "[DOMAIN_EXPIRATION] > 720h"
