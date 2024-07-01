@@ -1,10 +1,10 @@
 import { randomUUID } from "crypto";
 import { getRandomPort } from "get-port-please";
+import fetch from "node-fetch";
 import tmp from "tmp";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import * as automation from "@pulumi/pulumi/automation";
-import { ContainerPort } from "@pulumi/docker/types/output";
 import { asset } from "@pulumi/pulumi";
 
 import { DirectoryAsset } from "@chezmoi.sh/core/utils";
@@ -18,14 +18,15 @@ const HomepageImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh
 
 describe.runIf(isIntegration)("(Miscellaneous/Startpage) Homepage", () => {
     describe("Homepage", () => {
-        describe("when it is deployed", { timeout }, () => {
+        describe("when it is deployed", { timeout }, async () => {
+            const ports = {
+                http: await getRandomPort(),
+            };
+
             // -- Prepare Pulumi execution --
             const program = async () => {
                 const homepage = new Homepage(randomUUID(), {
-                    public: new DirectoryAsset(`${__dirname}/fixtures/assets`).assets.reduce(
-                        (acc, asset) => ({ ...acc, [asset.destination]: asset.source }),
-                        {},
-                    ),
+                    public: new DirectoryAsset(`${__dirname}/fixtures/assets`).assets,
                     configuration: {
                         bookmarks: new asset.FileAsset(`${__dirname}/fixtures/bookmarks.yaml`),
                         customCSS: new asset.FileAsset(`${__dirname}/fixtures/custom.css`),
@@ -37,13 +38,7 @@ describe.runIf(isIntegration)("(Miscellaneous/Startpage) Homepage", () => {
 
                     imageArgs: { push: true, tags: [HomepageImageTag] },
                     containerArgs: {
-                        ports: [
-                            {
-                                internal: 3000,
-                                external: await getRandomPort(),
-                                protocol: "tcp",
-                            },
-                        ],
+                        ports: [{ internal: 3000, external: ports.http, protocol: "tcp" }],
                         wait: true,
                     },
                 });
@@ -84,8 +79,7 @@ describe.runIf(isIntegration)("(Miscellaneous/Startpage) Homepage", () => {
 
             // -- Assertions --
             it("should be locally accessible", async () => {
-                const ports = result.outputs?.ports.value as ContainerPort[];
-                const response = await fetch(`http://localhost:${ports[0].external}/`);
+                const response = await fetch(`http://localhost:${ports.http}/`);
 
                 expect(response.status).toBe(200);
             });

@@ -58,8 +58,7 @@ export interface HomepageArgs extends HomepageConfiguration {
         | "name"
         | "gpus"
         | "uploads"
-    > &
-        Pick<docker.ContainerArgs, "volumes">;
+    >;
 }
 
 /**
@@ -119,7 +118,7 @@ export class Homepage extends pulumi.ComponentResource {
                     ? [{ source: args.configuration.widgets, destination: "/app/config/widgets.yaml" }]
                     : [],
             )
-            .map((c) => ({ ...c, mode: 0o440, user: "homepage" }));
+            .map((c) => ({ ...c, mode: 0o400, user: "homepage" }));
 
         const image = new HomepageImage(name, args.imageArgs, { parent: this });
         this.image = pulumi.output(
@@ -127,7 +126,6 @@ export class Homepage extends pulumi.ComponentResource {
                 pulumi.log.error(`Failed to build the bundled Homepage image: ${err}`);
             }),
         );
-
         this.container = new docker.Container(
             name,
             {

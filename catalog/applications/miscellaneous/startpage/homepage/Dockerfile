@@ -93,5 +93,5 @@ LABEL \
     org.opencontainers.image.revision="" \
     org.opencontainers.image.source="" \
     org.opencontainers.image.title="homepage" \
-    org.opencontainers.image.url="https://github.com/chezmoi-sh/nex.rpi" \
+    org.opencontainers.image.url="https://github.com/chezmoi-sh/atlas" \
     org.opencontainers.image.version=${HOMEPAGE_VERSION}

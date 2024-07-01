@@ -1,21 +1,20 @@
 <!-- markdownlint-disable MD033 -->
 <h1 align="center">
-  catalog.chezmoi.sh · Miscellaneous / Startpage · Homepage
+  Miscellaneous / Startpage · Homepage
   <br/>
-  <img src="docs/assets/homepage.png" alt="homepage application logo" height="100">
+  <img src="docs/homepage.png" alt="homepage application logo" height="75">
 </h1>
 
 <h3 align="center">Homepage - A highly customizable homepage</h3>
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/Version-v0.8.13-orange.svg)
-![Category](https://img.shields.io/badge/Category-Miscellaneous/Startpage-purple.svg)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../../../LICENSE)
+[![Version](https://img.shields.io/badge/Version-v0.8.13-orange.svg)](https://github.com/gethomepage/homepage/releases/tag/v0.8.13)
+[![Category](https://img.shields.io/badge/Category-Miscellaneous-purple.svg)](../../)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../../../../LICENSE)
 <br>
-<br>
-![Unofficial repository](https://img.shields.io/badge/Unofficial_Repository-coral.svg)
-[![Official documentation](https://img.shields.io/badge/Official_documentation-333.svg?logo=github)](http://gethomepage.dev/latest/)
+[![Unofficial distribution](https://img.shields.io/badge/Unofficial_Distribution-coral.svg?logo=gitlfs&logoColor=white)]()
+[![Official documentation](https://img.shields.io/badge/Official_documentation-333.svg?logo=github)](https://gethomepage.dev/latest/)
 
 <a href="#about">About</a> ·
 <a href="#getting-started">Getting Started</a> ·
@@ -36,7 +35,7 @@ through docker and kubernetes label discovery.
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-  <img src="docs/assets/homepage_demo.png" alt="Homepage screenshot" />
+  <img src="docs/homepage_demo.png" alt="Homepage screenshot" />
 </p>
 <!-- markdownlint-enable MD033 -->
 
@@ -82,10 +81,7 @@ import { Homepage, Version } from "@catalog.chezmoi.sh/miscellaneous.startpage~h
 import { DirectoryAsset, SecretAsset } from "@chezmoi.sh/core/utils";
 
 const homepage = new Homepage("homepage", {
-    public: new DirectoryAsset(`public`).assets.reduce(
-        (acc, asset) => ({ ...acc, [asset.destination]: asset.source }),
-        {},
-    ),
+    public: new DirectoryAsset(`public`).assets,
     configuration: {
         bookmarks: new asset.FileAsset(`bookmarks.yaml`),
         customCSS: new asset.FileAsset(`custom.css`),
@@ -107,7 +103,7 @@ const homepage = new Homepage("homepage", {
 
 One of my visions is to provide a secure environment for all applications that I run at home. This is why all images are
 built locally, why all dependencies, when it make sense, are pinned, and why all images are scanned for vulnerabilities
-before running them (see [my Pulumi policy packs](../../../../lib/policy-pack)).
+before running them (see [my Pulumi policy packs](../../../../../lib/policy-pack)).
 However, even with all these precautions, I'm not a security expert, so I can't guarantee that this project is 100%
 secure.
 
@@ -117,7 +113,7 @@ when using this project.
 
 ## License
 
-This project is licensed under the Apache 2.0 License - see the [LICENSE](../../../../LICENSE) file for details.
+This project is licensed under the Apache 2.0 License - see the [LICENSE](../../../../../LICENSE) file for details.
 
 > [!NOTE]
 > This project is not affiliated with the Homepage project, which can be viewed on
