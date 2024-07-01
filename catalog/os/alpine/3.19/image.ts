@@ -20,19 +20,18 @@ import * as pulumi from "@pulumi/pulumi";
 
 import { LocalImage, types } from "@chezmoi.sh/core/docker";
 
-// renovate: datasource=docker depName=alpine versioning=semver
-export const Version = "3.19.1";
-const shasum = "sha256:c5b1261d6d3e43071626931fc004f70149baeba2c8ec672bd4f27761f8e1ad6b";
+import { Version, VersionSHA256Sum } from "./version";
+
+export { Version };
 
 /**
  * Alpine is a lightweight Linux distribution based on musl libc and BusyBox.
  */
-export class Image extends LocalImage {
+export class AlpineImage extends LocalImage {
     constructor(name: string, args: types.ImageArgs, opts?: pulumi.ComponentResourceOptions) {
         super(
             name,
             {
-                ...{ tags: [`oci.local.chezmoi.sh/os/alpine:${Version}`] },
                 ...args,
 
                 // Build the image
@@ -40,7 +39,7 @@ export class Image extends LocalImage {
                 dockerfile: { location: path.join(__dirname, "Dockerfile") },
                 buildArgs: {
                     ALPN_VERSION: Version,
-                    ALPN_VERSION_SHASUM: shasum,
+                    ALPN_VERSION_SHASUM: VersionSHA256Sum,
                 },
             },
             opts,

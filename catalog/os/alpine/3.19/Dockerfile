@@ -19,20 +19,15 @@
 ARG ALPN_VERSION
 ARG ALPN_VERSION_SHASUM
 
+
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <runtime>: create the Alpine base image with all dependencies shared by   │
 # |            all other images of this project.                              │
 # └───────────────────────────────────────────────────────────────────────────┘
 FROM docker.io/library/alpine:${ALPN_VERSION}@${ALPN_VERSION_SHASUM} AS runtime
 
-# renovate: datasource=repology depName=alpine_3_19/bash versioning=loose
-ARG BASH_VERSION=5.2.21-r0
 # renovate: datasource=repology depName=alpine_3_19/ca-certificates versioning=loose
 ARG CA_CERTIFICATES_VERSION=20240226-r0
-# renovate: datasource=repology depName=alpine_3_19/curl versioning=loose
-ARG CURL_VERSION=8.5.0-r0
-# renovate: datasource=repology depName=alpine_3_19/openldap-clients versioning=loose
-ARG OPENLDAP_CLIENTS_VERSION=2.6.6-r1
 # renovate: datasource=repology depName=alpine_3_19/tzdata versioning=loose
 ARG TZDATA_VERSION=2024a-r0
 
@@ -48,10 +43,10 @@ RUN set -eux; \
 LABEL \
     org.opencontainers.image.authors="chezmoi.sh <xunleii@users.noreply.github.com>" \
     org.opencontainers.image.created="1970-01-01 00:00:00.000000000Z" \
-    org.opencontainers.image.description="Alpine base image used by all projects." \
+    org.opencontainers.image.description="A security-oriented, lightweight Linux distribution." \
     org.opencontainers.image.documentation="https://docs.alpinelinux.org" \
-    org.opencontainers.image.licenses="MIT" \
+    org.opencontainers.image.licenses="Apache-2.0" \
     org.opencontainers.image.revision="" \
     org.opencontainers.image.source="" \
     org.opencontainers.image.title="alpine" \
-    org.opencontainers.image.url="https://github.com/chezmoi-sh/nex.rpi"
+    org.opencontainers.image.url="https://github.com/chezmoi-sh/atlas"

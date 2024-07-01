@@ -1,8 +1,13 @@
 {
-    "name": "@catalog/os-security-alpine-3.19",
-    "version": "0.0.0",
+    "name": "@catalog.chezmoi.sh/os~alpine-3.19",
+    "version": "3.19.1",
+    "private": true,
     "description": "Alpine Linux is a security-oriented, lightweight Linux distribution based on musl libc and busybox.",
-    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
     "license": "Apache-2.0",
-    "private": true
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "scripts": {
+        "dev": "VITEST_RUN_TYPE=integration:docker vitest --ui --coverage .",
+        "test": "VITEST_RUN_TYPE=integration:docker vitest run .",
+        "test:coverage": "VITEST_RUN_TYPE=integration:docker vitest run --coverage ."
+    }
 }
