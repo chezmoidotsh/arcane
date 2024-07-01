@@ -1,0 +1,6 @@
+# ignore everything but what we need
+*
+**/*
+
+# ... except what is used by the build
+!rootfs/entrypoint

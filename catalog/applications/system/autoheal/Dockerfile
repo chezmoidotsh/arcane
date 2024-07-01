@@ -21,6 +21,7 @@
 # the runtime image.
 ARG ALPN_BASE
 
+
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <runtime>: create the Authelia runtime image using all previous stages    │
 # └───────────────────────────────────────────────────────────────────────────┘
@@ -44,7 +45,7 @@ RUN set -eux; \
         curl=${CURL_VERSION} \
         jq=${JQ_VERSION};
 
-COPY --chmod=555 entrypoint.sh /entrypoint
+COPY --chmod=555 rootfs/entrypoint /entrypoint
 
 ENV AUTOHEAL_CONTAINER_LABEL=autoheal \
     AUTOHEAL_DEFAULT_STOP_TIMEOUT=10 \
@@ -67,5 +68,5 @@ LABEL \
     org.opencontainers.image.revision="" \
     org.opencontainers.image.source="" \
     org.opencontainers.image.title="autoheal" \
-    org.opencontainers.image.url="https://github.com/chezmoi-sh/nex.rpi" \
+    org.opencontainers.image.url="https://github.com/chezmoi-sh/atlas" \
     org.opencontainers.image.version=${AUTOHEAL_VERSION}
