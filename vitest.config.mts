@@ -20,8 +20,9 @@ export default defineConfig({
     test: {
         coverage: {
             provider: "v8",
-            exclude: ["**/index.ts"],
+            exclude: ["**/index.ts", ".trunk/**"],
         },
         exclude: ["**/node_modules/**", ".trunk/**"],
+        includeSource: ["**/*.ts"],
     },
 });
