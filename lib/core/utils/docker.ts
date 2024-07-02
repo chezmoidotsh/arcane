@@ -176,6 +176,8 @@ export async function InjectAssetsWithOptions(
     );
 }
 
+const __contextDirToCleanup: string[] = [];
+
 /**
  * Inject assets into a Docker image. It returns a promise because Pulumi.output doesn't handle
  * rejection properly and seems to hang forever when an error occurs. In this case, we want to
@@ -191,8 +193,7 @@ async function injectAssets(
     unpreparedAssets: (InjectableAsset | InjectableChownableAsset)[],
 ): Promise<docker.Image> {
     // Step 1: Create a temporary directory to store all assets that will be removed after the build.
-    const tmpdir = tmp.dirSync({ keep: false, unsafeCleanup: true, mode: 0o700 });
-    process.on("exit", () => tmpdir.removeCallback());
+    const tmpdir = tmp.dirSync({ unsafeCleanup: true, mode: 0o700 });
 
     // Step 2: Resolve all assets and store them somewhere.
     const assets: (Omit<InjectableAsset | InjectableChownableAsset, "source"> & {
@@ -269,7 +270,14 @@ async function injectAssets(
     // of hex for higher entropy (64^8 vs 16^8)
     const contextdir = path.join(os.tmpdir(), `pulumi-${stackId}-${stackHash.substring(0, 8)}`);
     fs.mkdirSync(contextdir, { recursive: true });
-    process.on("exit", () => fs.rmSync(contextdir, { recursive: true, force: true }));
+    if (__contextDirToCleanup.length === 0) {
+        process.on("exit", () => {
+            for (const dir of __contextDirToCleanup) {
+                fs.rmSync(dir, { recursive: true, force: true });
+            }
+        });
+    }
+    __contextDirToCleanup.push(contextdir);
 
     // Link all assets to the context directory.
     for (const asset of assets) {
