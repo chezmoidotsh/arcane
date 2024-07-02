@@ -25,9 +25,10 @@ export namespace types {
     /**
      * The set of arguments for constructing a {@link Image} resource. It extends the
      * standard {@link buildx.ImageArgs} without the ability to overwrite
-     * {@link buildx.ImageArgs.buildArgs} and {@link buildx.ImageArgs.dockerfile}.
+     * {@link buildx.ImageArgs.buildArgs}, {@link buildx.ImageArgs.context} and
+     * {@link buildx.ImageArgs.dockerfile}.
      */
-    export interface ImageArgs extends Omit<buildx.ImageArgs, "buildArgs" | "dockerfile"> {}
+    export interface ImageArgs extends Omit<buildx.ImageArgs, "buildArgs" | "context" | "dockerfile"> {}
 
     /**
      * ImageTransformation is a callback signature to modify a Docker image prior to its utilisation.
