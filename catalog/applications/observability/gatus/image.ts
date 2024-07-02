@@ -20,8 +20,6 @@ import * as pulumi from "@pulumi/pulumi";
 
 import { LocalImage, types } from "@chezmoi.sh/core/docker";
 
-import * as alpine from "@chezmoi.sh/catalog/os/alpine/3.19/docker";
-
 import { Version } from "./version";
 
 export { Version };
@@ -34,7 +32,7 @@ export interface ImageArgs extends types.ImageArgs {
      * The base image to use in order to build the Gatus image.
      * WARNING: The base image must be compatible a Alpine Linux image.
      */
-    baseImage?: pulumi.Input<types.Image>;
+    from: pulumi.Input<types.Image>;
 }
 
 /**
@@ -43,9 +41,7 @@ export interface ImageArgs extends types.ImageArgs {
  */
 export class GatusImage extends LocalImage {
     constructor(name: string, args: ImageArgs, opts?: pulumi.ComponentResourceOptions) {
-        // Get the base image to use for building the Gatus image. If no base image is provided,
-        // we will use the latest Alpine Linux image in the Atlas catalog.
-        const base = pulumi.output(args.baseImage || new alpine.Image(`${name}:base`, args, { parent: opts?.parent }));
+        const base = pulumi.output(args.from);
 
         super(
             name,
@@ -67,11 +63,11 @@ export class GatusImage extends LocalImage {
                     push: base.push,
                     registries: base.registries.apply((v) => v ?? []),
                     ssh: base.ssh.apply((v) => v ?? []),
+                    tags: base.tags.apply((v) => v ?? []),
                 },
                 ...args,
 
                 // Build the image
-                context: { location: __dirname },
                 dockerfile: { location: path.join(__dirname, "Dockerfile") },
                 buildArgs: {
                     ALPN_BASE: base.ref,

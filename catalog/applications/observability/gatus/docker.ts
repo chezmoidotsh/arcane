@@ -16,7 +16,7 @@
  */
 import * as docker from "@pulumi/docker";
 import * as pulumi from "@pulumi/pulumi";
-import { FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset";
+import { ContainerVolume } from "@pulumi/docker/types/input";
 
 import {
     CommandContainerArgs,
@@ -27,35 +27,28 @@ import {
     StorageContainerArgs,
     types,
 } from "@chezmoi.sh/core/docker";
-import { SecretAsset } from "@chezmoi.sh/core/utils";
 import { InjectAssets, InjectableChownableAsset } from "@chezmoi.sh/core/utils/docker";
 
-import { GatusImage, ImageArgs as ImageOpts } from "./image";
+import { GatusImage, ImageArgs } from "./image";
+import { GatusConfiguration } from "./types";
 import { Version } from "./version";
 
-export { GatusImage };
-export { Version };
+export { GatusImage, Version };
 
 /**
  * The set of arguments for constructing a Gatus application.
  * @see {@link Gatus}
  */
-export interface GatusOpts {
-    /**
-     * The Gatus configuration file.
-     * @see {@link https://gatus.io/docs}
-     */
-    configuration: FileAsset | RemoteAsset | StringAsset | SecretAsset<FileAsset | RemoteAsset | StringAsset>;
-
+export interface GatusArgs extends GatusConfiguration {
     /**
      * The set of arguments for constructing the Gatus Docker image.
      */
-    imageOpts: ImageOpts;
+    imageArgs: ImageArgs;
 
     /**
      * The set of arguments for constructing the Gatus Docker container.
      */
-    containerOpts?: Omit<
+    containerArgs?: Omit<
         docker.ContainerArgs,
         | CommandContainerArgs
         | HostnameContainerArgs
@@ -66,8 +59,9 @@ export interface GatusOpts {
         | "name"
         | "gpus"
         | "uploads"
-    > &
-        Pick<docker.ContainerArgs, "volumes">;
+    > & {
+        volumes?: [ContainerVolume & { containerPath: "/var/lib/gatus" }];
+    };
 }
 
 /**
@@ -93,21 +87,19 @@ export class Gatus extends pulumi.ComponentResource {
      */
     public readonly container: docker.Container;
 
-    constructor(name: string, args: GatusOpts, opts?: pulumi.ComponentResourceOptions) {
-        super("chezmoi.sh:observability/probes:gatus:Application", name, {}, opts);
+    constructor(name: string, args: GatusArgs, opts?: pulumi.ComponentResourceOptions) {
+        super("chezmoi.sh:observability:gatus:Application", name, {}, opts);
 
         const config = {
-            source: new SecretAsset(args.configuration),
+            source: args.configuration,
             destination: "/etc/gatus/gatus.yaml",
             mode: 0o400,
             user: "gatus",
         } as InjectableChownableAsset;
 
-        const image = new GatusImage(name, args.imageOpts, { parent: this });
-        let embedded = InjectAssets(image, config);
-
+        const image = new GatusImage(name, args.imageArgs, { parent: this });
         this.image = pulumi.output(
-            embedded.catch((err) => {
+            InjectAssets(image, config).catch((err) => {
                 pulumi.log.error(`Failed to build the bundled Gatus image: ${err}`);
             }),
         );
@@ -120,7 +112,7 @@ export class Gatus extends pulumi.ComponentResource {
                         { internal: 8080, external: 80, protocol: "tcp" }, // Web interface (HTTP)
                     ],
                 },
-                ...args.containerOpts,
+                ...args.containerArgs,
 
                 // Enforce some container options
                 name: name,
@@ -135,23 +127,17 @@ export class Gatus extends pulumi.ComponentResource {
                 readOnly: true,
 
                 // Add persistent storage
-                volumes: pulumi
-                    .all([
-                        args.containerOpts?.volumes,
-                        new docker.Volume("persistent-volume", { name: `${name}-persistent` }).name,
-                    ])
-                    .apply(([volumes, persistent]) => {
-                        return (volumes ?? []).concat([
-                            {
-                                volumeName: persistent,
-                                containerPath: "/var/lib/gatus",
-                            },
-                        ]);
-                    }),
+                volumes: args.containerArgs?.volumes ?? [
+                    {
+                        volumeName: new docker.Volume("var.lib.gatus", { name: `${name}-persistent` }, { parent: this })
+                            .name,
+                        containerPath: "/var/lib/gatus",
+                    },
+                ],
 
                 // Add metadata to the container
                 labels: pulumi
-                    .all([args?.containerOpts?.labels, this.image.ref])
+                    .all([args?.containerArgs?.labels, this.image.ref])
                     .apply(([labels, ref]) =>
                         (labels ?? []).concat([{ label: "org.opencontainers.image.source.ref", value: ref }]),
                     ),
