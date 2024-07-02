@@ -1,13 +1,38 @@
 {
     "name": "atlas.chezmoi.sh",
     "version": "0.0.0",
-    "description": "Personal homelab infrastructure as-code",
-    "type": "module",
-    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
-    "license": "Apache-2.0",
-    "repository": "https://github.com/chezmoi-sh/atlas",
     "private": true,
-    "packageManager": "yarn@4.3.0",
+    "description": "Personal homelab infrastructure as-code",
+    "repository": "https://github.com/chezmoi-sh/atlas",
+    "license": "Apache-2.0",
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "workspaces": [
+        "catalog",
+        "catalog/**/*",
+        "lib/core",
+        "lib/policy-pack",
+        "lib/policy-pack/*",
+        "nex.rpi",
+        "scripts/src/**/*"
+    ],
+    "scripts": {
+        "test": "vitest run",
+        "test:catalog": "VITEST_RUN_TYPE=integration:docker vitest run catalog",
+        "test:catalog:docker": "VITEST_RUN_TYPE=integration:docker vitest run catalog",
+        "test:coverage": "vitest run --coverage",
+        "test:watch": "vitest"
+    },
+    "config": {
+        "commitizen": {
+            "path": "@commitlint/cz-commitlint"
+        }
+    },
+    "dependencies": {
+        "@pulumi/docker": "^4.5.4",
+        "@pulumi/docker-build": "^0.0.3",
+        "@pulumi/pulumi": "^3.121.0",
+        "node-fetch": "2.7.0"
+    },
     "devDependencies": {
         "@commitlint/cli": "^19.3.0",
         "@commitlint/cz-commitlint": "^19.2.0",
@@ -34,31 +59,5 @@
         "typescript": "^5.5.2",
         "vitest": "^1.6.0"
     },
-    "dependencies": {
-        "@pulumi/docker": "^4.5.4",
-        "@pulumi/docker-build": "^0.0.3",
-        "@pulumi/pulumi": "^3.121.0",
-        "node-fetch": "2.7.0"
-    },
-    "workspaces": [
-        "catalog",
-        "catalog/**/*",
-        "lib/core",
-        "lib/policy-pack",
-        "lib/policy-pack/*",
-        "nex.rpi",
-        "scripts/src/**/*"
-    ],
-    "config": {
-        "commitizen": {
-            "path": "@commitlint/cz-commitlint"
-        }
-    },
-    "scripts": {
-        "test": "vitest run",
-        "test:coverage": "vitest run --coverage",
-        "test:watch": "vitest",
-        "test:catalog:docker": "VITEST_RUN_TYPE=integration:docker vitest run catalog",
-        "test:catalog": "VITEST_RUN_TYPE=integration:docker vitest run catalog"
-    }
+    "packageManager": "yarn@4.3.0"
 }
