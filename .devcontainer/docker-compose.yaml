@@ -23,6 +23,7 @@ services:
         command: tail -f /dev/null
         environment:
             DIRENV_LOG_FORMAT: "" # disable direnv logging
+            DOCKER_HOST: unix:///var/run/docker-host.sock
         extra_hosts:
             - oci.local.chezmoi.sh:127.0.0.1
         network_mode: host
@@ -30,7 +31,6 @@ services:
             - /run
             - /tmp
         volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
             - ..:/workspaces/atlas:cached
         working_dir: /workspaces/atlas
 

@@ -5,4 +5,6 @@
 !config/etc.docker.pulumi-buildkitd.toml
 !config/home.vscode..config.lazygit.config.yaml
 !first-run-notice.txt
+!scripts/atlas-utils.lib.sh
 !scripts/post-create-command.sh
+!scripts/post-start-command.sh

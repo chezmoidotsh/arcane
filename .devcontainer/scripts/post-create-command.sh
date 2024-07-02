@@ -13,43 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ----------------------------------------------------------------------------
-
-function run_command() {
-    local temp_dir="$(mktemp -d)"
-
-    local stdout="${temp_dir}/stdout"
-    local stderr="${temp_dir}/stderr"
-    local exit_code="${temp_dir}/exit_code"
-    # trap "rm --recursive --force ${temp_dir}" RETURN
-
-    cat <<EOS > "${temp_dir}/cmdline"
-${@:3} 2> ${stderr} 1> ${stdout}; echo \$? > ${exit_code}
-EOS
-
-    local title="${1}"
-    gum spin --title "${title}" --spinner minidot --spinner.foreground "#F1C40F"  -- sh "${temp_dir}/cmdline"
-
-    local exit_code=$(cat "${exit_code}")
-    if [[ "${exit_code}" -eq 0 ]]; then
-        gum style "$(gum style --foreground '#2ECC71' '✓') ${title}"
-        if [[ -s "${stdout}" ]] || [[ -s "${stderr}" ]]; then
-            (
-                [[ -s "${stdout}" ]] && cat "${stdout}"
-                [[ -s "${stderr}" ]] && cat "${stderr}"
-            ) | sed 's/^/\|  /g' | gum style --faint --margin "0 0 0 2"
-        fi
-    else
-        gum style "$(gum style --foreground '#E74C3C' '✗') ${title} $(gum style --faint --italic "(exit ${exit_code})" --foreground '#E74C3C')"
-        if [[ -s "${stdout}" ]] || [[ -s "${stderr}" ]]; then
-            (
-                [[ -s "${stdout}" ]] && cat "${stdout}"
-                [[ -s "${stderr}" ]] && cat "${stderr}"
-            ) | sed 's/^/\|  /g' | gum style --faint --foreground '#E74C3C'
-        fi
-    fi
-}
-
-# ----------------------------------------------------------------------------
+source /usr/local/share/atlas-utils.lib.sh
 
 cat <<'EOF' | gum style --border rounded --padding "1 2" --foreground '#3498DB' --border-foreground '#3498DB'
    db    88888 8       db    .d88b.            888b.             w      888             w        8 8
@@ -60,15 +24,14 @@ EOF
 echo
 
 run_command "Synchronizing git submodules" -- git submodule update --init --recursive
-while IFS= read -r line
-do
-    tool="${line%% *}"
-    version="${line##* }"
-    run_command "Installing ${tool}@$(gum style --foreground '#F1C40F' "${version}")" -- \
-        "(asdf plugin add ${tool} && asdf install ${tool} ${version})"
-    run_command "Setting ${tool}@$(gum style --foreground '#F1C40F' "${version}") as global" -- \
-        "asdf global ${tool} ${version}"
-done < ".tool-versions"
+while IFS= read -r line; do
+	tool="${line%% *}"
+	version="${line##* }"
+	run_command "Installing ${tool}@$(gum style --foreground '#F1C40F' "${version}")" -- \
+		"(asdf plugin add ${tool} && asdf install ${tool} ${version})"
+	run_command "Setting ${tool}@$(gum style --foreground '#F1C40F' "${version}") as global" -- \
+		"asdf global ${tool} ${version}"
+done <".tool-versions"
 run_command "Allowing direnv" -- direnv allow
 run_command "Install Yarn" -- "(mkdir -p .direnv/corepack/$(cat /etc/machine-id) && corepack enable --install-directory=.direnv/corepack/$(cat /etc/machine-id) && corepack install)"
 run_command "Install all Node.js dependencies" -- "(.direnv/corepack/$(cat /etc/machine-id)/yarn install)"
@@ -77,15 +40,12 @@ run_command "Logout to Docker (avoid crashing issues)" -- docker logout
 run_command "Configure Docker buildx with the local registry" -- docker buildx create --use --name pulumi-buildx --config /etc/docker/pulumi-buildkitd.toml --driver-opt network=host --bootstrap
 
 # Check if git user and email are set
-( \
-    ([[ -z "$(git config user.name)" ]] && [[ -z "$(git config user.email)" ]]) && \
-    ([[ -z "$(git config --global user.name)" ]] && [[ -z "$(git config --global user.email)" ]]) \
-) && (
-    echo
-    cat<<EOF | gum style --border rounded --padding "1 2" --foreground '#E67E22' --border-foreground '#E67E22'
+if [[ -z "$(git config user.name)" ]] && [[ -z "$(git config user.email)" ]] && [[ -z "$(git config --global user.name)" ]] && [[ -z "$(git config --global user.email)" ]]; then
+	echo
+	cat <<EOF | gum style --border rounded --padding "1 2" --foreground '#E67E22' --border-foreground '#E67E22'
 You are missing your git user and email configuration!
 Please set your git user and email with the following commands:
   git config --global user.name "Your Name"
   git config --global user.email "Your Email"
 EOF
-)
+fi

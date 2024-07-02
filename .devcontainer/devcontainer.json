@@ -133,6 +133,7 @@
         "ghcr.io/georgofenbeck/features/lazygit-linuxbinary:1": {}
     },
     "postCreateCommand": "/usr/local/share/post-create-command.sh",
+    "postStartCommand": "/usr/local/share/post-start-command.sh",
     "forwardPorts": [80, 5000],
     "remoteUser": "vscode",
     "workspaceFolder": "/workspaces/atlas"

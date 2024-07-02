@@ -87,7 +87,10 @@ COPY --from=gum /go/bin/gum /usr/bin/gum
 # Copy fixed `pulumi-resource-docker-build` provider
 COPY --from=pulumi-docker-build --chown=vscode:vscode /opt/resource-docker-build-v0.0.3 /home/vscode/.pulumi/plugins/resource-docker-build-v0.0.3/pulumi-resource-docker-build
 
+COPY scripts/atlas-utils.lib.sh /usr/local/share/atlas-utils.lib.sh
 COPY --chmod=755 scripts/post-create-command.sh /usr/local/share/post-create-command.sh
+COPY --chmod=755 scripts/post-start-command.sh /usr/local/share/post-start-command.sh
+
 COPY config/home.vscode..config.lazygit.config.yaml /home/vscode/.config/lazygit/config.yaml
 COPY config/etc.docker.pulumi-buildkitd.toml /etc/docker/pulumi-buildkitd.toml
 COPY first-run-notice.txt /usr/local/etc/vscode-dev-containers/first-run-notice.txt
