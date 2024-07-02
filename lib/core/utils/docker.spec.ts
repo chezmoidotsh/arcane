@@ -1,22 +1,3 @@
-/*
- * Copyright (C) 2024 Alexandre Nicolaie (xunleii@users.noreply.github.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * ----------------------------------------------------------------------------
- */
-import { rejects } from "assert";
-import { exec } from "child_process";
-import exp from "constants";
 import fs from "fs";
 import nock from "nock";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -232,6 +213,18 @@ COPY --from=0 /tmp/pulumi-JU5c7AWT-Jz2nHA2W /`);
     });
 
     describe("when no nothing wrong occurs", () => {
+        it("should warn if no assets are provided", async () => {
+            vi.spyOn(pulumi.log, "warn").mockResolvedValue();
+
+            const image = await docker.InjectAssets(busybox);
+
+            const busyboxRef = await promiseOf(busybox.ref);
+            await expect(promiseOf(image.ref)).resolves.toBe(busyboxRef);
+            expect(pulumi.log.warn).toHaveBeenCalledWith(
+                "No assets provided to inject into the Docker image; the image will be unchanged.",
+            );
+        });
+
         it("should inject assets into the Dockerfile", async () => {
             const image = await docker.InjectAssets(
                 busybox,
@@ -433,4 +426,29 @@ COPY --from=0 /tmp/pulumi-JU5c7AWT-Jz2nHA2W /`);
             );
         });
     });
+});
+
+describe("#convertSuffixToRegex", () => {
+    const cases = [
+        { suffix: "-injected.{idx}", expected: "-injected\\.(\\d+)", match: "-injected.0" },
+        { suffix: ".{+{{idx}", expected: "\\.\\{\\+\\{(\\d+)", match: ".{+{0" },
+        { suffix: ".+.{idx}-.+*", expected: "\\.\\+\\.(\\d+)-\\.\\+\\*", match: ".+.0-.+*" },
+        { suffix: "{{idx}}", expected: "\\{(\\d+)\\}", match: "{0}" },
+        { suffix: "start-{idx}-end", expected: "start-(\\d+)-end", match: "start-0-end" },
+        { suffix: "{idx}.{idx}.{idx}", expected: "(\\d+)\\.(\\d+)\\.(\\d+)", match: "0.0.0" },
+        { suffix: "({idx}) and {idx}", expected: "\\((\\d+)\\) and (\\d+)", match: "(0) and 0" },
+        { suffix: "a+b*{idx}?", expected: "a\\+b\\*(\\d+)\\?", match: "a+b*0?" },
+        { suffix: "{idx}\\{idx}", expected: "(\\d+)\\\\(\\d+)", match: "0\\0" },
+        { suffix: "!@#{idx}$%^", expected: "!@#(\\d+)\\$%\\^", match: "!@#0$%^" },
+        { suffix: "[a-z]{idx}[A-Z]", expected: "\\[a-z\\](\\d+)\\[A-Z\\]", match: "[a-z]0[A-Z]" },
+        { suffix: "*{idx}+{idx}?", expected: "\\*(\\d+)\\+(\\d+)\\?", match: "*0+0?" },
+    ];
+
+    for (const test of cases) {
+        it(`should convert "${test.suffix}"`, () => {
+            const rx = docker.convertSuffixToRegex(test.suffix);
+            expect(rx.source).toBe(test.expected);
+            expect(rx.test(test.match)).toBe(true);
+        });
+    }
 });

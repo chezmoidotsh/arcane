@@ -73,8 +73,18 @@ export function IsInjectableChownableAsset(asset: any): asset is InjectableChown
     return asset.user !== undefined && IsInjectableAsset(asset);
 }
 
-type RequiredInjectableAssets = [InjectableAsset, ...InjectableAsset[]];
-type RequiredInjectableChownableAssets = [InjectableChownableAsset, ...InjectableChownableAsset[]];
+/**
+ * Additional options for injecting assets into a Docker image.
+ */
+export interface InjectAssetsOpts {
+    /**
+     * Suffix to append to the image tags after injecting assets. Use this option to avoid
+     * overwriting the original image.
+     * The placeholder `{idx}` will be replaced by the index of the injection.
+     * @default "-injected.{idx}"
+     */
+    suffix?: string;
+}
 
 /**
  * Add assets to a Docker image using root user and group.
@@ -86,7 +96,7 @@ type RequiredInjectableChownableAssets = [InjectableChownableAsset, ...Injectabl
  * @param {InjectableAsset[]} assets The assets to add to the image.
  * @returns {docker.Image} The new image with all assets injected into it.
  */
-export async function InjectAssets(image: docker.Image, ...assets: RequiredInjectableAssets): Promise<docker.Image>;
+export async function InjectAssets(image: docker.Image, ...assets: InjectableAsset[]): Promise<docker.Image>;
 
 /**
  * Add assets to a Docker image using the specified user and group for each asset.
@@ -98,22 +108,72 @@ export async function InjectAssets(image: docker.Image, ...assets: RequiredInjec
  * @param {InjectableAsset[]} assets The assets to add to the image.
  * @returns {docker.Image} The new image with all assets injected into it.
  */
-export async function InjectAssets(
-    image: docker.Image,
-    ...assets: RequiredInjectableChownableAssets
-): Promise<docker.Image>;
+export async function InjectAssets(image: docker.Image, ...assets: InjectableChownableAsset[]): Promise<docker.Image>;
 
 export async function InjectAssets(
     image: docker.Image,
-    ...assets: RequiredInjectableAssets | RequiredInjectableChownableAssets
+    ...assets: (InjectableAsset | InjectableChownableAsset)[]
 ): Promise<docker.Image> {
+    return InjectAssetsWithOptions(image, {}, ...assets);
+}
+
+/**
+ * Add assets to a Docker image using root user and group.
+ *
+ * WARNING: This function can be slow because it relies on where the assets are stored (local, remote, etc).
+ *          It is recommended to use this function only for small assets.
+ *
+ * @param {InjectableAsset} image The image to add assets to.
+ * @param {InjectAssetsOpts} opts Additional options for injecting assets.
+ * @param {InjectableAsset[]} assets The assets to add to the image.
+ * @returns {docker.Image} The new image with all assets injected into it.
+ */
+export async function InjectAssetsWithOptions(
+    image: docker.Image,
+    opts: InjectAssetsOpts,
+    ...assets: InjectableAsset[]
+): Promise<docker.Image>;
+
+/**
+ * Add assets to a Docker image using the specified user and group for each asset.
+ *
+ * WARNING: This function can be slow because it relies on where the assets are stored (local, remote, etc).
+ *          It is recommended to use this function only for small assets.
+ *
+ * @param {InjectableAsset} image The image to add assets to.
+ * @param {InjectAssetsOpts} opts Additional options for injecting assets.
+ * @param {InjectableAsset[]} assets The assets to add to the image.
+ * @returns {docker.Image} The new image with all assets injected into it.
+ */
+export async function InjectAssetsWithOptions(
+    image: docker.Image,
+    opts: InjectAssetsOpts,
+    ...assets: InjectableChownableAsset[]
+): Promise<docker.Image>;
+
+export async function InjectAssetsWithOptions(
+    image: docker.Image,
+    opts: InjectAssetsOpts,
+    ...assets: (InjectableAsset | InjectableChownableAsset)[]
+): Promise<docker.Image> {
+    if (assets.length === 0) {
+        pulumi.log.warn(`No assets provided to inject into the Docker image; the image will be unchanged.`);
+        return image;
+    }
+
     if (assets.length > 4096) {
         pulumi.log.warn(
             `Injecting a large number of assets (> 4096) can fail due to the maximum size of the GRPC request (4 Mio).`,
         );
     }
 
-    return injectAssets(image, assets);
+    return injectAssets(
+        image,
+        {
+            suffix: opts?.suffix ?? "-injected.{idx}",
+        },
+        assets,
+    );
 }
 
 /**
@@ -127,6 +187,7 @@ export async function InjectAssets(
  */
 async function injectAssets(
     image: docker.Image,
+    opts: Required<InjectAssetsOpts>,
     unpreparedAssets: (InjectableAsset | InjectableChownableAsset)[],
 ): Promise<docker.Image> {
     // Step 1: Create a temporary directory to store all assets that will be removed after the build.
@@ -264,12 +325,17 @@ async function injectAssets(
             // For all tags, suffix them with -injected.X where X is the index of the injection.
             tags: image.tags.apply((v) =>
                 (v ?? []).map((l) => {
-                    const match = l.match(/-injected\.(\d+)$/);
+                    if (!opts.suffix.includes("{idx}")) {
+                        return `${l}${opts.suffix}`;
+                    }
+
+                    const rx = convertSuffixToRegex(opts.suffix);
+                    const match = l.match(rx);
                     if (!match) {
-                        return `${l}-injected.0`;
+                        return `${l}${opts.suffix.replace("{idx}", "0")}`;
                     } else {
                         const index = parseInt(match[1]);
-                        return `${l.replace(/-injected\.(\d+)$/, "")}-injected.${index + 1}`;
+                        return `${l.replace(rx, opts.suffix.replace("{idx}", (index + 1).toString()))}`;
                     }
                 }),
             ),
@@ -342,4 +408,18 @@ COPY --from=0 ${contextdir} /`;
     );
 
     return newImage;
+}
+
+/**
+ * Convert a suffix to a regular expression.
+ * @param suffix Suffix to convert to a regex.
+ * @returns Regular expression that matches the suffix.
+ */
+export function convertSuffixToRegex(suffix: string): RegExp {
+    return new RegExp(
+        suffix
+            .replaceAll("{idx}", "\u{f8ff}")
+            .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+            .replaceAll("\u{f8ff}", "(\\d+)"),
+    );
 }
