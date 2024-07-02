@@ -12,40 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ----------------------------------------------------------------------------
+import error_pages.Caddyfile
+
 {
 	admin off
 	http_port 8080
 
 	storage file_system {
 		root /var/lib/caddy
-	}
-}
-
-# -- Snippet to handle error pages
-# NOTE: all error pages are static page commming from https://github.com/tarampampam/error-pages
-(error_pages) {
-	@tarampamp-error status 400 401 403 404 405 407 408 409 410 411 412 413 416 418 429 500 502 503 504 505
-	@4xx status 4xx
-	@5xx status 5xx
-	handle_response @tarampamp-error {
-		rewrite * /{rp.status_code}.html
-		file_server {
-			root /var/www/error-pages/
-		}
-	}
-
-	handle_response @4xx {
-		rewrite * /400.html
-		file_server {
-			root /var/www/error-pages/
-		}
-	}
-
-	handle_response @5xx {
-		rewrite * /500.html
-		file_server {
-			root /var/www/error-pages/
-		}
 	}
 }
 
@@ -57,17 +31,17 @@
 }
 
 :8080 {
-	handle / {
-		respond "Hello, world!"
-	}
+        handle / {
+                respond "Hello, world!"
+        }
 
-	handle /404 {
-		reverse_proxy localhost:8081 {
-			import error_pages
-		}
-	}
+        handle /404 {
+                reverse_proxy localhost:8081 {
+                        import error_pages
+                }
+        }
 }
 
 :8081 {
-	respond 404
+        respond 404
 }

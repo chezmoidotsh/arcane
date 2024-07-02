@@ -2,3 +2,5 @@
 *
 
 # ... except what is used by the build
+!rootfs/entrypoint
+!rootfs/etc/caddy/error_pages.Caddyfile

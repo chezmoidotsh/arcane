@@ -1,0 +1,12 @@
+{
+    "apps": {
+        "layer4": {
+            "servers": {
+                "example": {
+                    "listen": ["0.0.0.0:5000"],
+                    "routes": [{ "handle": [{ "handler": "proxy", "upstreams": [{ "dial": ["1.1.1.1:80"] }] }] }]
+                }
+            }
+        }
+    }
+}

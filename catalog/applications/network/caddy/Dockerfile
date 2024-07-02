@@ -78,7 +78,7 @@ RUN set -eux; \
         -o /src/error-pages \
         -ldflags="-s -w -X gh.tarampamp.am/error-pages/internal/version.version=${ERROR_PAGES_VERSION}" \
         ./cmd/error-pages/;
-RUN /src/error-pages --verbose build --config-file /src/error-pages.yml --disable-l10n /src/html
+RUN /src/error-pages --verbose build --config-file /src/error-pages.yml /src/html
 
 
 # ┌───────────────────────────────────────────────────────────────────────────┐
@@ -90,6 +90,8 @@ FROM ${ALPN_BASE} AS runtime
 
 ARG CADDY_VERSION
 
+# renovate: datasource=repology depName=alpine_3_19/jq versioning=loose
+ARG JQ_VERSION=1.7.1-r0
 # renovate: datasource=repology depName=alpine_3_19/libcap versioning=loose
 ARG LIBCAP_VERSION=2.69-r1
 # renovate: datasource=repology depName=alpine_3_19/mailcap versioning=loose
@@ -97,6 +99,7 @@ ARG MAILCAP_VERSION=2.1.54-r0
 
 RUN set -eux; \
     apk add --no-cache \
+        jq=${JQ_VERSION} \
         libcap=${LIBCAP_VERSION} \
         mailcap=${MAILCAP_VERSION}; \
     \
@@ -106,14 +109,19 @@ RUN set -eux; \
     chown caddy:caddy --recursive /etc/caddy /var/lib/caddy;
 
 COPY --from=builder /go/caddy /usr/bin/caddy
-COPY --from=error-pages --chown=caddy:caddy /src/html/l7-light /var/www/error-pages
+
+ARG ERROR_PAGES_THEME
+COPY --from=error-pages --chown=caddy:caddy /src/html/${ERROR_PAGES_THEME} /var/www/error-pages
+
+COPY --chmod=755 rootfs/entrypoint /entrypoint
+COPY --chmod=400 --chown=caddy:caddy rootfs/etc/caddy/ /etc/caddy/
 
 ENV XDG_DATA_HOME=/var/lib/caddy \
     XDG_CONFIG_HOME=/var/lib/caddy
 
 USER caddy
 WORKDIR /var/lib/caddy
-ENTRYPOINT ["caddy", "run", "--config", "/etc/caddy/caddy.json"]
+ENTRYPOINT ["/entrypoint"]
 
 VOLUME /var/lib/caddy
 HEALTHCHECK --interval=15s CMD wget --no-verbose --tries=1 --spider http://localhost:2019/metrics || exit 1
