@@ -43,7 +43,7 @@ function pulumi_policy_pack_wrapper() {
     local pulumi_policy_packs=""
     local pulumi_policy_pack_config=""
 
-    if pulumi config get pulumi:wrapper > /dev/null; then
+    if pulumi config get pulumi:wrapper 2> /dev/null >&2; then
         pulumi_policy_packs=$(
             pulumi config get pulumi:wrapper \
             | jq --raw-output \
