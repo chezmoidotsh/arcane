@@ -51,7 +51,7 @@ export class DirectoryAsset {
     /**
      * All the assets found in the directory.
      */
-    readonly assets: FileAsset[];
+    readonly assets: Record<string, FileAsset>;
 
     /**
      * The path to the directory.
@@ -66,9 +66,18 @@ export class DirectoryAsset {
                 withFileTypes: true,
                 recursive: opts?.recursive,
             })
+            .filter((file) => file.isFile() || file.isSymbolicLink())
             .filter((file) => opts?.filters?.some((rx) => rx.test(file.name)) ?? true)
             .filter((file) => opts?.predicates?.every((fnc) => fnc(file)) ?? true)
-            .map((file) => new FileAsset(`${directory}/${file.name}`));
+            .reduce(
+                (acc, file) => ({
+                    ...acc,
+                    [`${file.parentPath}/${file.name}`.replace(`${directory}/`, "")]: new FileAsset(
+                        `${file.parentPath}/${file.name}`,
+                    ),
+                }),
+                {} as Record<string, FileAsset>,
+            );
     }
 }
 

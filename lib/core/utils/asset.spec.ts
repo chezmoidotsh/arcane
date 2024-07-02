@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2024 Alexandre Nicolaie (xunleii@users.noreply.github.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * ----------------------------------------------------------------------------
- */
 import fs from "fs";
 import nock from "nock";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -35,48 +19,66 @@ describe("DirectoryAsset", () => {
         vi.restoreAllMocks();
     });
 
-    it("should correctly initialize with assets (all files)", async () => {
-        vi.spyOn(fs, "readdirSync").mockReturnValue([
-            { name: "file1.txt" } as fs.Dirent,
-            { name: "file2.txt" } as fs.Dirent,
-        ]);
+    it("should correctly find all assets (not recursive)", async () => {
+        const directoryAsset = new DirectoryAsset(`${__dirname}/fixtures/DirectoryAsset`, { recursive: false });
 
-        const directoryAsset = new DirectoryAsset("/mock-directory", {});
+        expect(directoryAsset.path).toBe(`${__dirname}/fixtures/DirectoryAsset`);
+        expect(Object.keys(directoryAsset.assets)).toHaveLength(2);
+        await expect(directoryAsset.assets["file1.txt"].path).resolves.toBe(
+            `${__dirname}/fixtures/DirectoryAsset/file1.txt`,
+        );
+        await expect(directoryAsset.assets["file2.txt"].path).resolves.toBe(
+            `${__dirname}/fixtures/DirectoryAsset/file2.txt`,
+        );
+    });
 
-        expect(directoryAsset.path).toBe("/mock-directory");
-        expect(directoryAsset.assets).toHaveLength(2);
-        expect(directoryAsset.assets[0]).to.be.instanceof(FileAsset);
-        expect(await directoryAsset.assets[0].path).toBe("/mock-directory/file1.txt");
-        expect(directoryAsset.assets[1]).to.be.instanceof(FileAsset);
-        expect(await directoryAsset.assets[1].path).toBe("/mock-directory/file2.txt");
+    it("should correctly find all assets (recursive)", async () => {
+        const directoryAsset = new DirectoryAsset(`${__dirname}/fixtures/DirectoryAsset`, { recursive: true });
+
+        expect(directoryAsset.path).toBe(`${__dirname}/fixtures/DirectoryAsset`);
+        expect(Object.keys(directoryAsset.assets)).toHaveLength(4);
+        await expect(directoryAsset.assets["file1.txt"].path).resolves.toBe(
+            `${__dirname}/fixtures/DirectoryAsset/file1.txt`,
+        );
+        await expect(directoryAsset.assets["file2.txt"].path).resolves.toBe(
+            `${__dirname}/fixtures/DirectoryAsset/file2.txt`,
+        );
+        await expect(directoryAsset.assets["subfolder/file1.txt"].path).resolves.toBe(
+            `${__dirname}/fixtures/DirectoryAsset/subfolder/file1.txt`,
+        );
+        await expect(directoryAsset.assets["subfolder/file2.txt"].path).resolves.toBe(
+            `${__dirname}/fixtures/DirectoryAsset/subfolder/file2.txt`,
+        );
     });
 
     it("should filter files based on provided options (regex filter)", async () => {
-        vi.spyOn(fs, "readdirSync").mockReturnValue([
-            { name: "file1.txt" } as fs.Dirent,
-            { name: "file2.log" } as fs.Dirent,
-        ]);
-
-        const directoryAsset = new DirectoryAsset("/mock-directory", {
-            filters: [/\.txt$/],
+        const directoryAsset = new DirectoryAsset(`${__dirname}/fixtures/DirectoryAsset`, {
+            recursive: true,
+            filters: [/1\.txt$/],
         });
 
-        expect(directoryAsset.assets).toHaveLength(1);
-        expect(await directoryAsset.assets[0].path).toBe("/mock-directory/file1.txt");
+        expect(Object.keys(directoryAsset.assets)).toHaveLength(2);
+        await expect(directoryAsset.assets["file1.txt"].path).resolves.toBe(
+            `${__dirname}/fixtures/DirectoryAsset/file1.txt`,
+        );
+        await expect(directoryAsset.assets["subfolder/file1.txt"].path).resolves.toBe(
+            `${__dirname}/fixtures/DirectoryAsset/subfolder/file1.txt`,
+        );
     });
 
     it("should filter files based on provided options (predicate filter)", async () => {
-        vi.spyOn(fs, "readdirSync").mockReturnValue([
-            { name: "file1.txt" } as fs.Dirent,
-            { name: "file2.log" } as fs.Dirent,
-        ]);
-
-        const directoryAsset = new DirectoryAsset("/mock-directory", {
-            predicates: [(file) => file.name.endsWith(".log")],
+        const directoryAsset = new DirectoryAsset(`${__dirname}/fixtures/DirectoryAsset`, {
+            recursive: true,
+            predicates: [(file) => file.parentPath.endsWith("subfolder")],
         });
 
-        expect(directoryAsset.assets).toHaveLength(1);
-        expect(await directoryAsset.assets[0].path).toBe("/mock-directory/file2.log");
+        expect(Object.keys(directoryAsset.assets)).toHaveLength(2);
+        await expect(directoryAsset.assets["subfolder/file1.txt"].path).resolves.toBe(
+            `${__dirname}/fixtures/DirectoryAsset/subfolder/file1.txt`,
+        );
+        await expect(directoryAsset.assets["subfolder/file2.txt"].path).resolves.toBe(
+            `${__dirname}/fixtures/DirectoryAsset/subfolder/file2.txt`,
+        );
     });
 });
 
