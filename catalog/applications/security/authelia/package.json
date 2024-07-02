@@ -1,0 +1,17 @@
+{
+    "name": "@catalog.chezmoi.sh/security~authelia",
+    "version": "4.38.8",
+    "private": true,
+    "description": "Authelia is an open-source authentication and authorization server providing two-factor authentication and single sign-on (SSO) for your applications via a web portal.",
+    "repository": "https://github.com/authelia/authelia",
+    "license": "Apache-2.0",
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "scripts": {
+        "dev": "VITEST_RUN_TYPE=integration:docker vitest --ui --coverage .",
+        "test": "VITEST_RUN_TYPE=integration:docker vitest run .",
+        "test:coverage": "VITEST_RUN_TYPE=integration:docker vitest run --coverage ."
+    },
+    "devDependencies": {
+        "get-port-please": "^3.1.2"
+    }
+}

@@ -19,6 +19,7 @@
 # the runtime image.
 ARG ALPN_BASE
 
+
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <source>: download the Authelia source code and cache it for other stages │
 # └───────────────────────────────────────────────────────────────────────────┘
@@ -151,5 +152,5 @@ LABEL \
     org.opencontainers.image.revision="" \
     org.opencontainers.image.source="" \
     org.opencontainers.image.title="authelia" \
-    org.opencontainers.image.url="https://github.com/chezmoi-sh/nex.rpi" \
+    org.opencontainers.image.url="https://github.com/chezmoi-sh/atlas" \
     org.opencontainers.image.version=${AUTHELIA_VERSION}
