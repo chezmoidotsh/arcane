@@ -1,0 +1,13 @@
+{
+    "name": "@catalog.chezmoi.sh/network~tailscale",
+    "version": "1.66.4",
+    "private": true,
+    "description": "Tailscale is a Zero config VPN for individuals and teams.",
+    "license": "Apache-2.0",
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "scripts": {
+        "dev": "VITEST_RUN_TYPE=integration:docker vitest --ui --coverage .",
+        "test": "VITEST_RUN_TYPE=integration:docker vitest run .",
+        "test:coverage": "VITEST_RUN_TYPE=integration:docker vitest run --coverage ."
+    }
+}

@@ -19,6 +19,8 @@
 # the runtime image.
 ARG ALPN_BASE
 
+
+
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <builder>: build the Tailscale binary (Go)                                │
 # └───────────────────────────────────────────────────────────────────────────┘
@@ -101,9 +103,9 @@ LABEL \
     org.opencontainers.image.created="01/01/1970T00:00:00.000" \
     org.opencontainers.image.description="The easiest, most secure way to use WireGuard and 2FA" \
     org.opencontainers.image.documentation="https://tailscale.com" \
-    org.opencontainers.image.licenses="BSD-3-Clause" \
+    org.opencontainers.image.licenses="Apache-2.0" \
     org.opencontainers.image.revision="" \
     org.opencontainers.image.source="" \
     org.opencontainers.image.title="tailscale" \
-    org.opencontainers.image.url="https://github.com/chezmoi-sh/nex.rpi" \
+    org.opencontainers.image.url="https://github.com/chezmoi-sh/atlas" \
     org.opencontainers.image.version=${TAILSCALE_VERSION}
