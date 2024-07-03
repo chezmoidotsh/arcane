@@ -9,9 +9,9 @@
     "workspaces": [
         "catalog",
         "catalog/**/*",
-        "lib/core",
-        "lib/policy-pack",
-        "lib/policy-pack/*",
+        "src/core",
+        "src/policy-pack",
+        "src/policy-pack/*",
         "nex.rpi",
         "scripts/src/**/*"
     ],
