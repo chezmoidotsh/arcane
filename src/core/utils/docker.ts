@@ -20,11 +20,9 @@ import os from "os";
 import path from "path";
 import tmp from "tmp";
 
-import * as buildx from "@pulumi/docker-build";
+import * as buildkit from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
 import { FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset";
-
-import { types as docker } from "@chezmoi.sh/core/docker";
 
 import { IsFileAsset, IsRemoteAsset, IsSecretAsset, IsStringAsset, ReadAsset, SecretAsset } from "./asset";
 import { IsDefined } from "./type";
@@ -94,9 +92,9 @@ export interface InjectAssetsOpts {
  *
  * @param {InjectableAsset} image The image to add assets to.
  * @param {InjectableAsset[]} assets The assets to add to the image.
- * @returns {docker.Image} The new image with all assets injected into it.
+ * @returns {buildkit.Image} The new image with all assets injected into it.
  */
-export async function InjectAssets(image: docker.Image, ...assets: InjectableAsset[]): Promise<docker.Image>;
+export async function InjectAssets(image: buildkit.Image, ...assets: InjectableAsset[]): Promise<buildkit.Image>;
 
 /**
  * Add assets to a Docker image using the specified user and group for each asset.
@@ -106,14 +104,17 @@ export async function InjectAssets(image: docker.Image, ...assets: InjectableAss
  *
  * @param {InjectableAsset} image The image to add assets to.
  * @param {InjectableAsset[]} assets The assets to add to the image.
- * @returns {docker.Image} The new image with all assets injected into it.
+ * @returns {buildkit.Image} The new image with all assets injected into it.
  */
-export async function InjectAssets(image: docker.Image, ...assets: InjectableChownableAsset[]): Promise<docker.Image>;
+export async function InjectAssets(
+    image: buildkit.Image,
+    ...assets: InjectableChownableAsset[]
+): Promise<buildkit.Image>;
 
 export async function InjectAssets(
-    image: docker.Image,
+    image: buildkit.Image,
     ...assets: (InjectableAsset | InjectableChownableAsset)[]
-): Promise<docker.Image> {
+): Promise<buildkit.Image> {
     return InjectAssetsWithOptions(image, {}, ...assets);
 }
 
@@ -126,13 +127,13 @@ export async function InjectAssets(
  * @param {InjectableAsset} image The image to add assets to.
  * @param {InjectAssetsOpts} opts Additional options for injecting assets.
  * @param {InjectableAsset[]} assets The assets to add to the image.
- * @returns {docker.Image} The new image with all assets injected into it.
+ * @returns {buildkit.Image} The new image with all assets injected into it.
  */
 export async function InjectAssetsWithOptions(
-    image: docker.Image,
+    image: buildkit.Image,
     opts: InjectAssetsOpts,
     ...assets: InjectableAsset[]
-): Promise<docker.Image>;
+): Promise<buildkit.Image>;
 
 /**
  * Add assets to a Docker image using the specified user and group for each asset.
@@ -143,19 +144,19 @@ export async function InjectAssetsWithOptions(
  * @param {InjectableAsset} image The image to add assets to.
  * @param {InjectAssetsOpts} opts Additional options for injecting assets.
  * @param {InjectableAsset[]} assets The assets to add to the image.
- * @returns {docker.Image} The new image with all assets injected into it.
+ * @returns {buildkit.Image} The new image with all assets injected into it.
  */
 export async function InjectAssetsWithOptions(
-    image: docker.Image,
+    image: buildkit.Image,
     opts: InjectAssetsOpts,
     ...assets: InjectableChownableAsset[]
-): Promise<docker.Image>;
+): Promise<buildkit.Image>;
 
 export async function InjectAssetsWithOptions(
-    image: docker.Image,
+    image: buildkit.Image,
     opts: InjectAssetsOpts,
     ...assets: (InjectableAsset | InjectableChownableAsset)[]
-): Promise<docker.Image> {
+): Promise<buildkit.Image> {
     if (assets.length === 0) {
         pulumi.log.warn(`No assets provided to inject into the Docker image; the image will be unchanged.`);
         return image;
@@ -188,10 +189,10 @@ const __contextDirToCleanup: string[] = [];
  * @returns A promise that resolves to the new image with the assets injected.
  */
 async function injectAssets(
-    image: docker.Image,
+    image: buildkit.Image,
     opts: Required<InjectAssetsOpts>,
     unpreparedAssets: (InjectableAsset | InjectableChownableAsset)[],
-): Promise<docker.Image> {
+): Promise<buildkit.Image> {
     // Step 1: Create a temporary directory to store all assets that will be removed after the build.
     const tmpdir = tmp.dirSync({ unsafeCleanup: true, mode: 0o700 });
 
@@ -294,7 +295,7 @@ async function injectAssets(
     }
 
     // Step 4: Create a new image with the assets injected.
-    const newImage = new buildx.Image(
+    const newImage = new buildkit.Image(
         "embedded",
         {
             // Report all the same configuration as the original image

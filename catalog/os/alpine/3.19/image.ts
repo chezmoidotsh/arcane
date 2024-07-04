@@ -16,9 +16,8 @@
  */
 import * as path from "path";
 
+import * as buildkit from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
-
-import { LocalImage, types } from "@chezmoi.sh/core/docker";
 
 import { Version, VersionSHA256Sum } from "./version";
 
@@ -27,8 +26,8 @@ export { Version };
 /**
  * Alpine is a lightweight Linux distribution based on musl libc and BusyBox.
  */
-export class AlpineImage extends LocalImage {
-    constructor(name: string, args: types.ImageArgs, opts?: pulumi.ComponentResourceOptions) {
+export class AlpineImage extends buildkit.Image {
+    constructor(name: string, args: buildkit.ImageArgs, opts?: pulumi.ComponentResourceOptions) {
         super(
             name,
             {

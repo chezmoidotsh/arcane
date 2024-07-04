@@ -15,6 +15,7 @@
  * ----------------------------------------------------------------------------
  */
 import * as docker from "@pulumi/docker";
+import * as buildkit from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
 import { ContainerVolume } from "@pulumi/docker/types/input";
 import { StringAsset } from "@pulumi/pulumi/asset";
@@ -26,7 +27,6 @@ import {
     RuntimeContainerArgs,
     SecurityContainerArgs,
     StorageContainerArgs,
-    types,
 } from "@chezmoi.sh/core/docker";
 import { InjectAssets, InjectableChownableAsset } from "@chezmoi.sh/core/utils/docker";
 
@@ -89,7 +89,7 @@ export class Caddy extends pulumi.ComponentResource {
     /**
      * The Docker image for the Caddy application.
      */
-    public readonly image: pulumi.Output<types.Image>;
+    public readonly image: pulumi.Output<buildkit.Image>;
 
     /**
      * The Docker volume name where all the certificates are stored.

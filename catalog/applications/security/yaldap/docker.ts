@@ -15,6 +15,7 @@
  * ----------------------------------------------------------------------------
  */
 import * as docker from "@pulumi/docker";
+import * as builkit from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
 import { ContainerPort } from "@pulumi/docker/types/input";
 
@@ -25,7 +26,6 @@ import {
     RuntimeContainerArgs,
     SecurityContainerArgs,
     StorageContainerArgs,
-    types,
 } from "@chezmoi.sh/core/docker";
 import { InjectAssets } from "@chezmoi.sh/core/utils";
 import { InjectableChownableAsset } from "@chezmoi.sh/core/utils/docker";
@@ -80,7 +80,7 @@ export class yaLDAP extends pulumi.ComponentResource {
     /**
      * The Docker image for the yaLDAP application.
      */
-    public readonly image: pulumi.Output<types.Image>;
+    public readonly image: pulumi.Output<builkit.Image>;
 
     /**
      * The Docker container for the yaLDAP application.

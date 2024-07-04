@@ -16,9 +16,8 @@
  */
 import path from "path";
 
+import * as buildkit from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
-
-import { LocalImage, types } from "@chezmoi.sh/core/docker";
 
 import { Version } from "./version";
 
@@ -27,13 +26,13 @@ export { Version };
 /**
  * The set of arguments for constructing the Homepage Docker image.
  */
-export type ImageArgs = types.ImageArgs;
+export type ImageArgs = Omit<buildkit.ImageArgs, "buildArgs" | "context" | "dockerfile">;
 
 /**
- * A Homepage Docker image baked by buildx -- Docker's interface to the improved
+ * A Homepage Docker image baked by buildkit -- Docker's interface to the improved
  * BuildKit backend.
  */
-export class HomepageImage extends LocalImage {
+export class HomepageImage extends buildkit.Image {
     constructor(name: string, args: ImageArgs, opts?: pulumi.ComponentResourceOptions) {
         super(
             name,

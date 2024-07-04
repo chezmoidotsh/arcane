@@ -16,9 +16,8 @@
  */
 import path from "path";
 
+import * as buildkit from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
-
-import { LocalImage, types } from "@chezmoi.sh/core/docker";
 
 import { Version } from "./version";
 
@@ -27,7 +26,7 @@ export { Version };
 /**
  * The set of arguments for constructing the Caddy Docker image.
  */
-export interface ImageArgs extends Partial<types.ImageArgs> {
+export interface ImageArgs extends Partial<Omit<buildkit.ImageArgs, "buildArgs" | "context" | "dockerfile">> {
     /**
      * The error pages theme bundled with Caddy.
      * @see {@link https://github.com/tarampampam/error-pages} for more information.
@@ -50,14 +49,14 @@ export interface ImageArgs extends Partial<types.ImageArgs> {
      * The base image to use in order to build the Caddy image.
      * WARNING: The base image must be compatible a Alpine Linux image.
      */
-    from: pulumi.Input<types.Image>;
+    from: pulumi.Input<buildkit.Image>;
 }
 
 /**
- * A Caddy Docker image baked by buildx -- Docker's interface to the improved
+ * A Caddy Docker image baked by buildkit -- Docker's interface to the improved
  * BuildKit backend.
  */
-export class CaddyImage extends LocalImage {
+export class CaddyImage extends buildkit.Image {
     constructor(name: string, args: ImageArgs, opts?: pulumi.ComponentResourceOptions) {
         const base = pulumi.output(args.from);
 

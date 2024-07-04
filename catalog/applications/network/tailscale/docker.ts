@@ -15,6 +15,7 @@
  * ----------------------------------------------------------------------------
  */
 import * as docker from "@pulumi/docker";
+import * as buildkit from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
 import { ContainerDevice, ContainerVolume } from "@pulumi/docker/types/input";
 
@@ -26,7 +27,6 @@ import {
     RuntimeContainerArgs,
     SecurityContainerArgs,
     StorageContainerArgs,
-    types,
 } from "@chezmoi.sh/core/docker";
 import { ReadAsset } from "@chezmoi.sh/core/utils";
 
@@ -77,7 +77,7 @@ export class Tailscale extends pulumi.ComponentResource {
     /**
      * The Docker image for the Tailscale application.
      */
-    public readonly image: pulumi.Output<types.Image>;
+    public readonly image: pulumi.Output<buildkit.Image>;
 
     /**
      * The Docker container for the Tailscale application.

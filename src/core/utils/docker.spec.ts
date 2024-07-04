@@ -2,7 +2,7 @@ import fs from "fs";
 import nock from "nock";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import * as buildx from "@pulumi/docker-build";
+import * as buildkit from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
 import { FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset";
 
@@ -14,7 +14,7 @@ function promiseOf<T>(output: pulumi.Output<T>): Promise<T> {
 }
 
 describe("#InjectAssets", () => {
-    const busybox = new buildx.Image("busybox", {
+    const busybox = new buildkit.Image("busybox", {
         builder: { name: "default" },
         buildOnPreview: true,
         cacheFrom: [{ gha: { url: "https://example.org" } }],
@@ -26,7 +26,7 @@ describe("#InjectAssets", () => {
         load: true,
         network: "default",
         noCache: false,
-        platforms: [buildx.Platform.Linux_amd64, buildx.Platform.Linux_arm64],
+        platforms: [buildkit.Platform.Linux_amd64, buildkit.Platform.Linux_arm64],
         pull: true,
         push: true,
         registries: [{ address: "oci.example.org", username: "user", password: "password" }],
@@ -107,8 +107,8 @@ COPY --from=0 /tmp/pulumi-JU5c7AWT-Jz2nHA2W /`);
         await expect(promiseOf(image.load)).resolves.toBe(true);
         await expect(promiseOf(image.network)).resolves.toBe("default");
         await expect(promiseOf(image.platforms)).resolves.toEqual([
-            buildx.Platform.Linux_amd64,
-            buildx.Platform.Linux_arm64,
+            buildkit.Platform.Linux_amd64,
+            buildkit.Platform.Linux_arm64,
         ]);
         await expect(promiseOf(image.pull)).resolves.toBe(true);
         await expect(promiseOf(image.push)).resolves.toBe(true);

@@ -4,7 +4,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { automation } from "@pulumi/pulumi";
 
-import { AlpineImage } from "../../../os/alpine/3.19";
+import { AlpineImage } from "@catalog.chezmoi.sh/os~alpine-3.19";
+
 import { AdGuardHomeImage } from "./image";
 
 const isIntegration = (process.env.VITEST_RUN_TYPE ?? "").includes("integration:docker");

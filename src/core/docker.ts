@@ -15,64 +15,16 @@
  * ----------------------------------------------------------------------------
  */
 import * as docker from "@pulumi/docker";
-import * as buildx from "@pulumi/docker-build";
+import * as buildkit from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
 
 /**
- * The arguments for building a Docker image.
+ * ImageTransformation is a callback signature to modify a Docker image prior to its utilisation.
+ *
+ * @param {buildkit.Image} image The image to transform.
+ * @returns {buildkit.Image} The transformed image. If undefined, the image will not be transformed.
  */
-export namespace types {
-    /**
-     * The set of arguments for constructing a {@link Image} resource. It extends the
-     * standard {@link buildx.ImageArgs} without the ability to overwrite
-     * {@link buildx.ImageArgs.buildArgs}, {@link buildx.ImageArgs.context} and
-     * {@link buildx.ImageArgs.dockerfile}.
-     */
-    export interface ImageArgs extends Omit<buildx.ImageArgs, "buildArgs" | "context" | "dockerfile"> {}
-
-    /**
-     * ImageTransformation is a callback signature to modify a Docker image prior to its utilisation.
-     *
-     * @param {buildx.Image} image The image to transform.
-     * @returns {buildx.Image} The transformed image. If undefined, the image will not be transformed.
-     */
-    export declare type ImageTransformation = (image: types.Image) => types.Image;
-
-    /**
-     * Image describes a Docker image based on the standard {@link buildx.Image} resource.
-     */
-    export declare type Image = buildx.Image;
-}
-
-/**
- * DockerImage extends the standard {@link buildx.Image} resource to provide some additional
- * things like setting the `org.opencontainers.image.created` label to the current date and time.
- */
-export abstract class LocalImage extends buildx.Image {
-    constructor(name: string, args: buildx.ImageArgs, opts?: pulumi.ComponentResourceOptions) {
-        super(
-            name,
-            {
-                ...args,
-
-                // Enhance some user-provided information
-                labels: {
-                    ...args.labels,
-                    // WARN: because ignoreChanges cannot be used on these key, all labels will be ignored to avoid drift
-                    "org.opencontainers.image.created": new Date().toISOString(),
-                },
-            },
-            {
-                ...opts,
-
-                // NOTE:
-                //   - `context` is ignored to avoid drift if we build the image in a different location
-                //   - `labels` is ignored to avoid drift due to the `org.opencontainers.image.created` label
-                ignoreChanges: (opts?.ignoreChanges || []).concat(["context", "labels"]),
-            },
-        );
-    }
-}
+export declare type ImageTransformation = (image: buildkit.Image) => buildkit.Image;
 
 /**
  * The set of arguments for constructing a RemoteImage resource.
@@ -88,7 +40,7 @@ export type RemoteImageArgs = Omit<docker.RemoteImageArgs, "build" | "forceRemov
  *       fields required generally by the {@link types.Image} interface but cannot be set on a remote image.
  *       The single exception is the `push` field which is set to `true` by default.
  */
-export class RemoteImage extends pulumi.ComponentResource implements types.Image {
+export class RemoteImage extends pulumi.ComponentResource implements buildkit.Image {
     public readonly addHosts: pulumi.Output<string[] | undefined> =
         pulumi.output<pulumi.Output<string[] | undefined>>(undefined);
     public readonly buildArgs: pulumi.Output<{ [key: string]: string } | undefined> =
@@ -96,49 +48,49 @@ export class RemoteImage extends pulumi.ComponentResource implements types.Image
     public readonly buildOnPreview: pulumi.OutputInstance<boolean | undefined> = pulumi.output<boolean | undefined>(
         undefined,
     );
-    public readonly builder: pulumi.Output<buildx.types.output.BuilderConfig | undefined> = pulumi.output<
-        buildx.types.output.BuilderConfig | undefined
+    public readonly builder: pulumi.Output<buildkit.types.output.BuilderConfig | undefined> = pulumi.output<
+        buildkit.types.output.BuilderConfig | undefined
     >(undefined);
-    public readonly cacheFrom: pulumi.Output<buildx.types.output.CacheFrom[] | undefined> = pulumi.output<
-        buildx.types.output.CacheFrom[] | undefined
+    public readonly cacheFrom: pulumi.Output<buildkit.types.output.CacheFrom[] | undefined> = pulumi.output<
+        buildkit.types.output.CacheFrom[] | undefined
     >(undefined);
-    public readonly cacheTo: pulumi.Output<buildx.types.output.CacheTo[] | undefined> = pulumi.output<
-        buildx.types.output.CacheTo[] | undefined
+    public readonly cacheTo: pulumi.Output<buildkit.types.output.CacheTo[] | undefined> = pulumi.output<
+        buildkit.types.output.CacheTo[] | undefined
     >(undefined);
-    public readonly context: pulumi.Output<buildx.types.output.BuildContext | undefined> = pulumi.output<
-        buildx.types.output.BuildContext | undefined
+    public readonly context: pulumi.Output<buildkit.types.output.BuildContext | undefined> = pulumi.output<
+        buildkit.types.output.BuildContext | undefined
     >(undefined);
     public readonly contextHash: pulumi.Output<string> = pulumi.output("");
-    public readonly dockerfile: pulumi.Output<buildx.types.output.Dockerfile | undefined> = pulumi.output<
-        buildx.types.output.Dockerfile | undefined
+    public readonly dockerfile: pulumi.Output<buildkit.types.output.Dockerfile | undefined> = pulumi.output<
+        buildkit.types.output.Dockerfile | undefined
     >(undefined);
     public readonly exec: pulumi.OutputInstance<boolean | undefined> = pulumi.output<boolean | undefined>(undefined);
-    public readonly exports: pulumi.Output<buildx.types.output.Export[] | undefined> = pulumi.output<
-        buildx.types.output.Export[] | undefined
+    public readonly exports: pulumi.Output<buildkit.types.output.Export[] | undefined> = pulumi.output<
+        buildkit.types.output.Export[] | undefined
     >(undefined);
     public readonly labels: pulumi.Output<{ [key: string]: string } | undefined> = pulumi.output<
         { [key: string]: string } | undefined
     >(undefined);
     public readonly load: pulumi.OutputInstance<boolean | undefined> = pulumi.output<boolean | undefined>(undefined);
-    public readonly network: pulumi.Output<buildx.NetworkMode | undefined> = pulumi.output<
-        buildx.NetworkMode | undefined
+    public readonly network: pulumi.Output<buildkit.NetworkMode | undefined> = pulumi.output<
+        buildkit.NetworkMode | undefined
     >(undefined);
     public readonly noCache: pulumi.OutputInstance<boolean | undefined> = pulumi.output<boolean | undefined>(undefined);
     public readonly pull: pulumi.OutputInstance<boolean | undefined> = pulumi.output<boolean | undefined>(undefined);
     public readonly push: pulumi.OutputInstance<boolean> = pulumi.output<boolean>(true);
-    public readonly registries: pulumi.Output<buildx.types.output.Registry[] | undefined> = pulumi.output<
-        buildx.types.output.Registry[] | undefined
+    public readonly registries: pulumi.Output<buildkit.types.output.Registry[] | undefined> = pulumi.output<
+        buildkit.types.output.Registry[] | undefined
     >(undefined);
     public readonly secrets: pulumi.Output<{ [key: string]: string } | undefined> = pulumi.output<
         { [key: string]: string } | undefined
     >(undefined);
-    public readonly ssh: pulumi.Output<buildx.types.output.SSH[] | undefined> = pulumi.output<
-        buildx.types.output.SSH[] | undefined
+    public readonly ssh: pulumi.Output<buildkit.types.output.SSH[] | undefined> = pulumi.output<
+        buildkit.types.output.SSH[] | undefined
     >(undefined);
     public readonly tags: pulumi.Output<string[] | undefined> = pulumi.output<string[] | undefined>(undefined);
     public readonly target: pulumi.Output<string | undefined> = pulumi.output<string | undefined>(undefined);
 
-    public readonly platforms: pulumi.Output<buildx.Platform[] | undefined>;
+    public readonly platforms: pulumi.Output<buildkit.Platform[] | undefined>;
     public readonly digest: pulumi.Output<string>;
     public readonly id: pulumi.Output<string>;
     public readonly ref: pulumi.Output<string>;
@@ -149,7 +101,9 @@ export class RemoteImage extends pulumi.ComponentResource implements types.Image
         const image = new docker.RemoteImage(name, args, { parent: this });
         this.digest = image.repoDigest.apply((v) => v?.split("@").pop() ?? "");
         this.id = image.imageId;
-        this.platforms = image.platform.apply((v) => (v ? [buildx.Platform[v as keyof typeof buildx.Platform]] : []));
+        this.platforms = image.platform.apply((v) =>
+            v ? [buildkit.Platform[v as keyof typeof buildkit.Platform]] : [],
+        );
         this.ref = image.repoDigest;
     }
 }
