@@ -67,6 +67,7 @@ export class yaLDAPImage extends LocalImage {
                 ...args,
 
                 // Build the image
+                context: { location: __dirname },
                 dockerfile: { location: path.join(__dirname, "Dockerfile") },
                 buildArgs: {
                     ALPN_BASE: base.ref,
