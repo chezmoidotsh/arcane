@@ -96,6 +96,33 @@ describe("SecretAsset", () => {
 
         expect(sensitiveAsset.asset).toBe(asset);
     });
+
+    describe("#fromString", () => {
+        it("should create a new SecretAsset from a string", () => {
+            const sensitiveAsset = SecretAsset.fromString("secret");
+
+            expect(sensitiveAsset).toBeInstanceOf(SecretAsset);
+            expect(sensitiveAsset.asset).toBeInstanceOf(StringAsset);
+        });
+    });
+
+    describe("#fromFile", () => {
+        it("should create a new SecretAsset from a file", () => {
+            const sensitiveAsset = SecretAsset.fromFile("/path/to/file");
+
+            expect(sensitiveAsset).toBeInstanceOf(SecretAsset);
+            expect(sensitiveAsset.asset).toBeInstanceOf(FileAsset);
+        });
+    });
+
+    describe("#fromRemote", () => {
+        it("should create a new SecretAsset from a remote asset", () => {
+            const sensitiveAsset = SecretAsset.fromRemote("https://example.com/remote.txt");
+
+            expect(sensitiveAsset).toBeInstanceOf(SecretAsset);
+            expect(sensitiveAsset.asset).toBeInstanceOf(RemoteAsset);
+        });
+    });
 });
 
 describe("ReadAsset", () => {

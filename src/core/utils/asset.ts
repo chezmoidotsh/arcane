@@ -199,6 +199,36 @@ export class SecretAsset<T extends Asset> {
             this.asset = asset;
         }
     }
+
+    /**
+     * Secret StringAsset produced from an in-memory UTF8-encoded string.
+     * @param text The string contents.
+     * @returns A new SecretAsset wrapping the StringAsset.
+     */
+    static fromString(text: string | Promise<string>): SecretAsset<StringAsset> {
+        return new SecretAsset(new StringAsset(text));
+    }
+
+    /**
+     * Secret FileAsset produced from a given path to a file on the local filesystem.
+     * @param path The path to the asset file.
+     * @returns A new SecretAsset wrapping the FileAsset.
+     */
+    static fromFile(path: string | Promise<string>): SecretAsset<FileAsset> {
+        return new SecretAsset(new FileAsset(path));
+    }
+
+    /**
+     * Secret RemoteAsset produced from a given URI string. The URI's scheme dictates the protocol for fetching
+     * contents: `file://` specifies a local file, `http://` and `https://` specify HTTP and HTTPS, respectively.
+     * Note that specific providers may recognize alternative schemes; this is merely the base-most set that all
+     * providers support.
+     * @param uri The URI where the asset lives.
+     * @returns A new SecretAsset wrapping the RemoteAsset.
+     */
+    static fromRemote(uri: string | Promise<string>): SecretAsset<RemoteAsset> {
+        return new SecretAsset(new RemoteAsset(uri));
+    }
 }
 
 /**
