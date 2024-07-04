@@ -58,7 +58,6 @@ export interface TailscaleArgs extends TailscaleConfiguration {
         | RuntimeContainerArgs
         | SecurityContainerArgs
         | StorageContainerArgs
-        | "name"
         | "gpus"
         | "uploads"
     > & {
@@ -114,12 +113,12 @@ export class Tailscale extends pulumi.ComponentResource {
             {
                 // Default container options
                 ...{
+                    name: name,
                     dns: ["9.9.9.9", "1.1.1.1"], // Use external DNS servers in order to avoid any local DNS issues
                 },
                 ...args.containerArgs,
 
                 // Enforce some container options
-                name: name,
                 destroyGraceSeconds: 60, // Give enough time for Tailscale to stop all connections
                 envs: [
                     pulumi.interpolate`TS_AUTHKEY=${pulumi.secret(

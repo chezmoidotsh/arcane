@@ -56,7 +56,6 @@ export interface GatusArgs extends GatusConfiguration {
         | RuntimeContainerArgs
         | SecurityContainerArgs
         | StorageContainerArgs
-        | "name"
         | "gpus"
         | "uploads"
     > & {
@@ -108,6 +107,7 @@ export class Gatus extends pulumi.ComponentResource {
             {
                 // Default container options
                 ...{
+                    name: name,
                     ports: [
                         { internal: 8080, external: 80, protocol: "tcp" }, // Web interface (HTTP)
                     ],
@@ -115,7 +115,6 @@ export class Gatus extends pulumi.ComponentResource {
                 ...args.containerArgs,
 
                 // Enforce some container options
-                name: name,
                 destroyGraceSeconds: 15,
                 image: this.image.ref,
                 restart: "unless-stopped",

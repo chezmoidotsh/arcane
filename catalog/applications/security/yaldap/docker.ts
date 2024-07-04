@@ -14,8 +14,6 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-import internal from "stream";
-
 import * as docker from "@pulumi/docker";
 import * as pulumi from "@pulumi/pulumi";
 import { ContainerPort } from "@pulumi/docker/types/input";
@@ -59,7 +57,6 @@ export interface yaLDAPArgs extends yaLDAPConfiguration {
         | RuntimeContainerArgs
         | SecurityContainerArgs
         | StorageContainerArgs
-        | "name"
         | "gpus"
         | "uploads"
     > & {
@@ -112,6 +109,7 @@ export class yaLDAP extends pulumi.ComponentResource {
             {
                 // Default container options
                 ...{
+                    name: name,
                     ports: [
                         { internal: 389, external: 389, protocol: "tcp" }, // Web interface (HTTP)
                     ],
@@ -119,7 +117,6 @@ export class yaLDAP extends pulumi.ComponentResource {
                 ...args.containerArgs,
 
                 // Enforce some container options
-                name: name,
                 destroyGraceSeconds: 20,
                 image: this.image.ref,
                 restart: "unless-stopped",

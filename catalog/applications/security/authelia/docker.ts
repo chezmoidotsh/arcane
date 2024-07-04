@@ -17,7 +17,6 @@
 import * as docker from "@pulumi/docker";
 import * as pulumi from "@pulumi/pulumi";
 import { ContainerVolume } from "@pulumi/docker/types/input";
-import { ContainerPort } from "@pulumi/docker/types/output";
 
 import {
     CommandContainerArgs,
@@ -58,7 +57,6 @@ export interface AutheliaArgs extends AutheliaConfiguration {
         | RuntimeContainerArgs
         | SecurityContainerArgs
         | StorageContainerArgs
-        | "name"
         | "gpus"
         | "uploads"
     > & {
@@ -119,6 +117,7 @@ export class Authelia extends pulumi.ComponentResource {
             {
                 // Default container options
                 ...{
+                    name: name,
                     ports: [
                         { internal: 9091, external: 80, protocol: "tcp" }, // Web interface (HTTP)
                     ],
@@ -126,7 +125,6 @@ export class Authelia extends pulumi.ComponentResource {
                 ...args.containerArgs,
 
                 // Enforce some container options
-                name: name,
                 destroyGraceSeconds: 20,
                 image: this.image.ref,
                 restart: "unless-stopped",

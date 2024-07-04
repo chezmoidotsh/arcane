@@ -55,7 +55,6 @@ export interface HomepageArgs extends HomepageConfiguration {
         | RuntimeContainerArgs
         | SecurityContainerArgs
         | StorageContainerArgs
-        | "name"
         | "gpus"
         | "uploads"
     >;
@@ -131,15 +130,15 @@ export class Homepage extends pulumi.ComponentResource {
             {
                 // Default container options
                 ...{
+                    name: name,
+                    envs: ["LOG_LEVEL=debug", "LOG_TARGETS=stdout"],
                     ports: [
                         { internal: 3000, external: 80, protocol: "tcp" }, // Web interface (HTTP)
                     ],
-                    envs: ["LOG_LEVEL=debug", "LOG_TARGETS=stdout"],
                 },
                 ...args.containerArgs,
 
                 // Enforce some container options
-                name: name,
                 destroyGraceSeconds: 20,
                 image: this.image.ref,
                 restart: "unless-stopped",

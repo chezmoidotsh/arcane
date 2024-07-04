@@ -57,7 +57,6 @@ export interface CaddyArgs extends CaddyConfiguration {
         | RuntimeContainerArgs
         | SecurityContainerArgs
         | StorageContainerArgs
-        | "name"
         | "gpus"
         | "uploads"
     > & {
@@ -145,6 +144,7 @@ export class Caddy extends pulumi.ComponentResource {
             {
                 // Default container options
                 ...{
+                    name: name,
                     ports: [
                         { internal: 8080, external: 80 },
                         { internal: 8443, external: 443 },
@@ -153,7 +153,6 @@ export class Caddy extends pulumi.ComponentResource {
                 ...args.containerArgs,
 
                 // Enforce some container options
-                name: name,
                 destroyGraceSeconds: 60, // Give enough time for Caddy to stop all connections
                 image: this.image.ref,
                 restart: "unless-stopped",

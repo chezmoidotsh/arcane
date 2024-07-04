@@ -57,7 +57,6 @@ export interface AutoHealArgs extends AutoHealConfiguration {
         | RuntimeContainerArgs
         | SecurityContainerArgs
         | StorageContainerArgs
-        | "name"
         | "gpus"
         | "uploads"
         | "wait"
@@ -100,10 +99,13 @@ export class AutoHeal extends pulumi.ComponentResource {
         this.container = new docker.Container(
             name,
             {
+                // Default container options
+                ...{
+                    name: name,
+                },
                 ...args.containerArgs,
 
                 // Enforce some container options
-                name: name,
                 destroyGraceSeconds: 20,
                 envs: [
                     `AUTOHEAL_CONTAINER_LABEL=${args?.container_label ?? "all"}`,

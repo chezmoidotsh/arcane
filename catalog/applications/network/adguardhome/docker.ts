@@ -56,7 +56,6 @@ export interface AdGuardHomeArgs extends AdGuardHomeConfiguration {
         | RuntimeContainerArgs
         | SecurityContainerArgs
         | StorageContainerArgs
-        | "name"
         | "gpus"
         | "uploads"
     > & {
@@ -108,6 +107,7 @@ export class AdGuardHome extends pulumi.ComponentResource {
             {
                 // Default container options
                 ...{
+                    name: name,
                     ports: [
                         { internal: 3053, external: 53, protocol: "udp" }, // DNS
                         { internal: 3053, external: 53, protocol: "tcp" }, // DNS
@@ -120,7 +120,6 @@ export class AdGuardHome extends pulumi.ComponentResource {
                 ...args.containerArgs,
 
                 // Enforce some container options
-                name: name,
                 destroyGraceSeconds: 15,
                 image: this.image.ref,
                 restart: "unless-stopped",
