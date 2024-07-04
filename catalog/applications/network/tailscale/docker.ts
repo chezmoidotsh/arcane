@@ -61,7 +61,7 @@ export interface TailscaleArgs extends TailscaleConfiguration {
         | "gpus"
         | "uploads"
     > & {
-        volumes?: [ContainerVolume & { containerPath: "/var/lib/tailscale" }];
+        volumes?: [ContainerVolume & { containerPath: "/var/lib/tailscale"; permissions: "rwm" }];
         devices?: [ContainerDevice & { containerPath: "/dev/net/tun" }];
     };
 }
@@ -129,6 +129,8 @@ export class Tailscale extends pulumi.ComponentResource {
                             }),
                     )}`,
                     `TS_EXTRA_ARGS=${flags}`,
+                    "TS_STATE_DIR=/var/lib/tailscale",
+                    "TS_USERSPACE=true",
                 ],
                 image: this.image.ref,
                 restart: "unless-stopped",
