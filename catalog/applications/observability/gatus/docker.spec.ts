@@ -29,7 +29,7 @@ describe.runIf(isIntegration)("(Network) Gatus", () => {
                 const gatus = new Gatus(randomUUID(), {
                     configuration: new asset.FileAsset(`${__dirname}/fixtures/gatus.yaml`),
 
-                    imageArgs: { from: alpine, push: true, tags: [GatusImageTag] },
+                    imageArgs: { from: alpine, tags: [GatusImageTag] },
                     containerArgs: {
                         ports: [{ internal: 8080, external: ports.http, protocol: "tcp" }],
                         wait: true,

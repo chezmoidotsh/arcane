@@ -21,7 +21,6 @@ describe.runIf(isIntegration)("(System) AutoHeal", () => {
             const alpine = new AlpineImage(randomUUID(), { push: true, tags: [AlpineImageTag] });
             const autoheal = new AutoHealImage(randomUUID(), {
                 from: alpine,
-                push: true,
                 tags: [AutoHealImageTag],
             });
             return { ...autoheal };

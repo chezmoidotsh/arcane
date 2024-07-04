@@ -27,7 +27,7 @@ export { Version };
 /**
  * The set of arguments for constructing the Caddy Docker image.
  */
-export interface ImageArgs extends types.ImageArgs {
+export interface ImageArgs extends Partial<types.ImageArgs> {
     /**
      * The error pages theme bundled with Caddy.
      * @see {@link https://github.com/tarampampam/error-pages} for more information.

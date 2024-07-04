@@ -31,7 +31,7 @@ describe.runIf(isIntegration)("(Network) Caddy", () => {
                     caddyfile: new asset.FileAsset(`${__dirname}/fixtures/Caddyfile`),
                     layer4: new asset.FileAsset(`${__dirname}/fixtures/layer4.json`),
 
-                    imageArgs: { from: alpine, push: true, tags: [CaddyImageTag] },
+                    imageArgs: { from: alpine, tags: [CaddyImageTag] },
                     containerArgs: {
                         ports: [
                             { internal: 8080, external: ports.http, protocol: "tcp" },

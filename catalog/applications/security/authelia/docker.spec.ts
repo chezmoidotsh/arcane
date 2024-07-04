@@ -35,7 +35,7 @@ describe.runIf(isIntegration)("(Security) Authelia", () => {
                         destination: "/etc/authelia/users_database.yml",
                     },
 
-                    imageArgs: { from: alpine, push: true, tags: [AutheliaImageTag] },
+                    imageArgs: { from: alpine, tags: [AutheliaImageTag] },
                     containerArgs: {
                         ports: [{ internal: 9091, external: ports.http, protocol: "tcp" }],
                         wait: true,

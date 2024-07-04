@@ -28,7 +28,7 @@ describe.runIf(isIntegration)("(Network) Tailscale", () => {
                     acceptRoutes: true,
                     advertiseRoutes: ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"],
 
-                    imageArgs: { from: alpine, push: true, tags: [TailscaleImageTag] },
+                    imageArgs: { from: alpine, tags: [TailscaleImageTag] },
                     containerArgs: {
                         wait: false, // Tailscale cannot be healthy without a valid authkey
                     },

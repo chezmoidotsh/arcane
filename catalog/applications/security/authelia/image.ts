@@ -27,7 +27,7 @@ export { Version };
 /**
  * The set of arguments for constructing the Authelia Docker image.
  */
-export interface ImageArgs extends types.ImageArgs {
+export interface ImageArgs extends Partial<types.ImageArgs> {
     /**
      * The base image to use in order to build the Authelia image.
      * WARNING: The base image must be compatible a Alpine Linux image.

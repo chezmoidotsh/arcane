@@ -21,7 +21,6 @@ describe.runIf(isIntegration)("(Network) Tailscale", () => {
             const alpine = new AlpineImage(randomUUID(), { push: true, tags: [AlpineImageTag] });
             const tailscale = new TailscaleImage(randomUUID(), {
                 from: alpine,
-                push: true,
                 tags: [TailscaleImageTag],
             });
             return { ...tailscale };

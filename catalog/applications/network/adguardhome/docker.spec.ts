@@ -31,7 +31,7 @@ describe.runIf(isIntegration)("(Network) AdGuardHome", () => {
                 const adguardhome = new AdGuardHome(randomUUID(), {
                     configuration: new asset.FileAsset(`${__dirname}/fixtures/AdGuardHome.yaml`),
 
-                    imageArgs: { from: alpine, push: true, tags: [AdGuardHomeImageTag] },
+                    imageArgs: { from: alpine, tags: [AdGuardHomeImageTag] },
                     containerArgs: {
                         ports: [
                             { internal: 3000, external: ports.http, protocol: "tcp" },

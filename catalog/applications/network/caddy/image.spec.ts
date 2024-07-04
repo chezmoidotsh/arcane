@@ -21,7 +21,6 @@ describe.runIf(isIntegration)("(Network) Caddy", () => {
             const alpine = new AlpineImage(randomUUID(), { push: true, tags: [AlpineImageTag] });
             const caddy = new CaddyImage(randomUUID(), {
                 from: alpine,
-                push: true,
                 tags: [CaddyImageTag],
             });
             return { ...caddy };

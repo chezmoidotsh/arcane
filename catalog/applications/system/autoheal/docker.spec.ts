@@ -20,7 +20,7 @@ describe.runIf(isIntegration)("(System) AutoHeal", () => {
             const program = async () => {
                 const alpine = new AlpineImage(randomUUID(), { push: true, tags: [AlpineImageTag] });
                 const autoheal = new AutoHeal(randomUUID(), {
-                    imageArgs: { from: alpine, push: true, tags: [AutoHealImageTag] },
+                    imageArgs: { from: alpine, tags: [AutoHealImageTag] },
                     containerArgs: {
                         volumes: [
                             {

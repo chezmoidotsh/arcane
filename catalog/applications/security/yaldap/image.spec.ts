@@ -21,7 +21,6 @@ describe.runIf(isIntegration)("(Security) yaLDAP", () => {
             const alpine = new AlpineImage(randomUUID(), { push: true, tags: [AlpineImageTag] });
             const yaldap = new yaLDAPImage(randomUUID(), {
                 from: alpine,
-                push: true,
                 tags: [yaLDAPImageTag],
             });
             return { ...yaldap };

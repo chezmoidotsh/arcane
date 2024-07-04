@@ -21,7 +21,6 @@ describe.runIf(isIntegration)("(Security) Authelia", () => {
             const alpine = new AlpineImage(randomUUID(), { push: true, tags: [AlpineImageTag] });
             const authelia = new AutheliaImage(randomUUID(), {
                 from: alpine,
-                push: true,
                 tags: [AutheliaImageTag],
             });
             return { ...authelia };

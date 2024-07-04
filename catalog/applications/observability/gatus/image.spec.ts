@@ -21,7 +21,6 @@ describe.runIf(isIntegration)("(Network) Gatus", () => {
             const alpine = new AlpineImage(randomUUID(), { push: true, tags: [AlpineImageTag] });
             const gatus = new GatusImage(randomUUID(), {
                 from: alpine,
-                push: true,
                 tags: [GatusImageTag],
             });
             return { ...gatus };

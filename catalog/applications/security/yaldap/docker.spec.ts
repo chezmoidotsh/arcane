@@ -31,7 +31,7 @@ describe.runIf(isIntegration)("(Security) yaLDAP", () => {
                 const yaldap = new yaLDAP(randomUUID(), {
                     configuration: new SecretAsset(new FileAsset(`${__dirname}/fixtures/backend.yaml`)),
 
-                    imageArgs: { from: alpine, push: true, tags: [yaLDAPImageTag] },
+                    imageArgs: { from: alpine, tags: [yaLDAPImageTag] },
                     containerArgs: {
                         ports: [{ internal: 389, external: ports.ldap, protocol: "tcp" }],
                         wait: true,

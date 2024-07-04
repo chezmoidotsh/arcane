@@ -20,7 +20,6 @@ describe.runIf(isIntegration)("(Network) AdGuardHome", () => {
             const alpine = new AlpineImage(randomUUID(), { push: true, tags: [AlpineImageTag] });
             const adguardhome = new AdGuardHomeImage(randomUUID(), {
                 from: alpine,
-                push: true,
                 tags: [AdGuardHomeImageTag],
             });
             return { ...adguardhome };
