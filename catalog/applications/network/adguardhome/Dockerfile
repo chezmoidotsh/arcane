@@ -97,7 +97,7 @@ COPY --chmod=755 rootfs/entrypoint /entrypoint
 COPY --from=builder-backend /go/src/app/AdGuardHome /opt/adguardhome/bin/
 
 USER adguardhome
-WORKDIR /var/lib/adguard
+WORKDIR /var/lib/adguardhome
 ENTRYPOINT ["/entrypoint"]
 
 EXPOSE 3000 3443 3053 3853
