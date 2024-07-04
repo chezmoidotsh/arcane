@@ -60,6 +60,7 @@ export interface AutoHealArgs extends AutoHealConfiguration {
         | "gpus"
         | "uploads"
         | "wait"
+        | "waitTimeout"
     > & {
         volumes: [
             Pick<ContainerVolume, "containerPath" | "hostPath" | "readOnly"> & {
