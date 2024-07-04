@@ -133,7 +133,7 @@ export class Tailscale extends pulumi.ComponentResource {
                 ],
                 image: this.image.ref,
                 restart: "unless-stopped",
-                tmpfs: { "/var/run/tailscale": "exec,uid=64241,gid=64241" },
+                tmpfs: { "/var/run/tailscale": "uid=64241,gid=64241" },
                 user: "tailscale",
 
                 // Enforce security options

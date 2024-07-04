@@ -125,7 +125,7 @@ export class AdGuardHome extends pulumi.ComponentResource {
                 image: this.image.ref,
                 restart: "unless-stopped",
                 tmpfs: {
-                    "/var/lib/adguardhome/transient-config": "exec,uid=64138,gid=64138",
+                    "/var/lib/adguardhome/transient-config": "uid=64138,gid=64138",
                 },
                 user: "adguardhome",
 

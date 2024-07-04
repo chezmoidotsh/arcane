@@ -158,9 +158,9 @@ export class Caddy extends pulumi.ComponentResource {
                 image: this.image.ref,
                 restart: "unless-stopped",
                 tmpfs: {
-                    "/var/lib/caddy/caddy": "exec,uid=64138,gid=64138",
-                    "/var/run/caddy": "exec,uid=64138,gid=64138",
-                    "/tmp/souin-nuts": "exec,uid=64138,gid=64138",
+                    "/var/lib/caddy/caddy": "uid=64138,gid=64138",
+                    "/var/run/caddy": "uid=64138,gid=64138",
+                    "/tmp/souin-nuts": "uid=64138,gid=64138",
                 },
                 user: "caddy",
 
