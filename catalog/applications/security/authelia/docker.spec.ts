@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { getRandomPort } from "get-port-please";
+import Dockerode from "dockerode";
 import fetch from "node-fetch";
 import tmp from "tmp";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -9,25 +9,26 @@ import { asset } from "@pulumi/pulumi";
 
 import { SecretAsset } from "@chezmoi.sh/core/utils";
 
-import { AlpineImage, Version as AlpineVersion } from "../../../os/alpine/3.19";
-import { Authelia, Version } from "./docker";
+import { AlpineImage } from "../../../os/alpine/3.19";
+import { Authelia } from "./docker";
 
 const isIntegration = (process.env.VITEST_RUN_TYPE ?? "").includes("integration:docker");
-const timeout = 2 * 60 * 1000; // 2 minutes
+const timeout = 5 * 60 * 1000; // 5 minutes
 
-const AlpineImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh"}/os/alpine:${AlpineVersion}`;
-const AutheliaImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh"}/security/authelia:${Version}`;
+const AlpineImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh:5000"}/os/alpine:${randomUUID()}`;
+const AutheliaImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh:5000"}/security/authelia:${randomUUID()}`;
 
 describe.runIf(isIntegration)("(Security) Authelia", () => {
     describe("Authelia", () => {
         describe("when it is deployed", { timeout }, async () => {
-            const ports = {
-                http: await getRandomPort(),
-            };
-
             // -- Prepare Pulumi execution --
             const program = async () => {
-                const alpine = new AlpineImage(randomUUID(), { push: true, tags: [AlpineImageTag] });
+                const alpine = new AlpineImage(randomUUID(), {
+                    builder: { name: "pulumi-buildkit" },
+                    exports: [{ image: { ociMediaTypes: true, push: true } }],
+                    push: false,
+                    tags: [AlpineImageTag],
+                });
                 const authelia = new Authelia(randomUUID(), {
                     configuration: new SecretAsset(new asset.FileAsset(`${__dirname}/fixtures/configuration.yaml`)),
                     userDatabase: {
@@ -37,8 +38,9 @@ describe.runIf(isIntegration)("(Security) Authelia", () => {
 
                     imageArgs: { from: alpine, tags: [AutheliaImageTag] },
                     containerArgs: {
-                        ports: [{ internal: 9091, external: ports.http, protocol: "tcp" }],
+                        ports: [],
                         wait: true,
+                        waitTimeout: 30,
                     },
                 });
                 return { ...authelia.container };
@@ -46,6 +48,7 @@ describe.runIf(isIntegration)("(Security) Authelia", () => {
 
             let stack: automation.Stack;
             let result: automation.UpResult;
+            let container: Dockerode.ContainerInspectInfo;
             beforeAll(async () => {
                 const tmpdir = tmp.dirSync();
                 stack = await automation.LocalWorkspace.createOrSelectStack(
@@ -66,6 +69,7 @@ describe.runIf(isIntegration)("(Security) Authelia", () => {
                     },
                 );
                 result = await stack.up();
+                container = await new Dockerode().getContainer(result.outputs?.id.value).inspect();
             }, timeout);
 
             beforeEach(() => {
@@ -78,7 +82,7 @@ describe.runIf(isIntegration)("(Security) Authelia", () => {
 
             // -- Assertions --
             it("should be locally accessible", { concurrent: true }, async () => {
-                const response = await fetch(`http://localhost:${ports.http}/`);
+                const response = await fetch(`http://${container.NetworkSettings.IPAddress}:9091/`, { timeout: 500 });
 
                 expect(response.ok).toBeTruthy();
             });

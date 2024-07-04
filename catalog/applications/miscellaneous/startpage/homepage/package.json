@@ -11,6 +11,7 @@
         "test:coverage": "VITEST_RUN_TYPE=integration:docker vitest run --coverage ."
     },
     "devDependencies": {
-        "get-port-please": "^3.1.2"
+        "@types/dockerode": "^3.3.29",
+        "dockerode": "^4.0.2"
     }
 }

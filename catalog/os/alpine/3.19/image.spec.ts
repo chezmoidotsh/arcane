@@ -4,12 +4,12 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { automation } from "@pulumi/pulumi";
 
-import { AlpineImage, Version } from "./image";
+import { AlpineImage } from "./image";
 
 const isIntegration = (process.env.VITEST_RUN_TYPE ?? "").includes("integration:docker");
 const timeout = 60 * 1000; // 1 minute
 
-const AlpineImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh"}/os/alpine:${Version}`;
+const AlpineImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh:5000"}/os/alpine:${randomUUID()}`;
 
 describe.runIf(isIntegration)("(OS) Alpine 3.19", () => {
     describe("AlpineImage", () => {
@@ -17,7 +17,9 @@ describe.runIf(isIntegration)("(OS) Alpine 3.19", () => {
             // -- Prepare Pulumi execution --
             const program = async () => {
                 const alpine = new AlpineImage(randomUUID(), {
-                    push: true,
+                    builder: { name: "pulumi-buildkit" },
+                    exports: [{ image: { ociMediaTypes: true, push: true } }],
+                    push: false,
                     tags: [AlpineImageTag],
                 });
                 return { ...alpine };

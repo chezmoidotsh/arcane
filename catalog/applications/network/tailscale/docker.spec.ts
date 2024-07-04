@@ -7,21 +7,26 @@ import { StringAsset } from "@pulumi/pulumi/asset";
 
 import { SecretAsset } from "@chezmoi.sh/core/utils";
 
-import { AlpineImage, Version as AlpineVersion } from "../../../os/alpine/3.19";
-import { Tailscale, Version } from "./docker";
+import { AlpineImage } from "../../../os/alpine/3.19";
+import { Tailscale } from "./docker";
 
 const isIntegration = (process.env.VITEST_RUN_TYPE ?? "").includes("integration:docker");
 const timeout = 3 * 60 * 1000; // 3 minutes
 
-const AlpineImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh"}/os/alpine:${AlpineVersion}`;
-const TailscaleImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh"}/network/tailscale:${Version}`;
+const AlpineImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh:5000"}/os/alpine:${randomUUID()}`;
+const TailscaleImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh:5000"}/network/tailscale:${randomUUID()}`;
 
 describe.runIf(isIntegration)("(Network) Tailscale", () => {
     describe("Tailscale", () => {
         describe("when it is deployed", { timeout }, () => {
             // -- Prepare Pulumi execution --
             const program = async () => {
-                const alpine = new AlpineImage(randomUUID(), { push: true, tags: [AlpineImageTag] });
+                const alpine = new AlpineImage(randomUUID(), {
+                    builder: { name: "pulumi-buildkit" },
+                    exports: [{ image: { ociMediaTypes: true, push: true } }],
+                    push: false,
+                    tags: [AlpineImageTag],
+                });
                 const tailscale = new Tailscale(randomUUID(), {
                     authkey: new SecretAsset(new StringAsset("authkey")),
                     acceptDNS: false,

@@ -21,12 +21,15 @@ services:
         cap_add:
             - SYS_PTRACE
         command: tail -f /dev/null
+        container_name: atlas_vscode
         environment:
             DIRENV_LOG_FORMAT: "" # disable direnv logging
             DOCKER_HOST: unix:///var/run/docker-host.sock
         extra_hosts:
             - oci.local.chezmoi.sh:127.0.0.1
-        network_mode: host
+        network_mode: bridge
+        ports:
+            - 5000:5000
         tmpfs:
             - /run
             - /tmp
@@ -35,23 +38,11 @@ services:
         working_dir: /workspaces/atlas
 
     registry:
-        image: docker.io/library/registry:2.8.3@sha256:79b29591e1601a73f03fcd413e655b72b9abfae5a23f1ad2e883d4942fbb4351
-        expose:
-            - 80
-        network_mode: host
+        container_name: atlas_registry
+        image: ghcr.io/project-zot/zot-linux-amd64:v2.0.4@sha256:e102152bbe51cc7aa6f14fcd71df094a761be240426a6bf0c72e7cd05e0e36c5
+        network_mode: container:atlas_vscode
         restart: always
+        tmpfs:
+            - /tmp
         volumes:
-            - ./config/etc.docker.registry.config.yaml:/etc/docker/registry/config.yml
-
-    registry-ui:
-        image: joxit/docker-registry-ui:2.5.7@sha256:5594b76bf8dd9de479648e28f38572d020d260568be40b7e52b9758b442275e1
-        environment:
-            DELETE_IMAGES: "true"
-            NGINX_LISTEN_PORT: 5000
-            REGISTRY_URL: http://oci.local.chezmoi.sh
-        expose:
-            - 5000
-        extra_hosts:
-            - oci.local.chezmoi.sh:127.0.0.1
-        network_mode: host
-        restart: always
+            - ./config/etc.zot.config.json:/etc/zot/config.json:ro

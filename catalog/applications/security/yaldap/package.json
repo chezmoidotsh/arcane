@@ -12,8 +12,9 @@
         "test:coverage": "VITEST_RUN_TYPE=integration:docker vitest run --coverage ."
     },
     "devDependencies": {
+        "@types/dockerode": "^3.3.29",
         "@types/ldapjs-client": "^0.1.5",
-        "get-port-please": "^3.1.2",
+        "dockerode": "^4.0.2",
         "ldapjs-client": "^0.1.2"
     }
 }

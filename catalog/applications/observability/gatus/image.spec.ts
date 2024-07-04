@@ -4,21 +4,26 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { automation } from "@pulumi/pulumi";
 
-import { AlpineImage, Version as AlpineVersion } from "@catalog.chezmoi.sh/os~alpine-3.19";
+import { AlpineImage } from "@catalog.chezmoi.sh/os~alpine-3.19";
 
-import { GatusImage, Version } from "./image";
+import { GatusImage } from "./image";
 
 const isIntegration = (process.env.VITEST_RUN_TYPE ?? "").includes("integration:docker");
 const timeout = 3 * 60 * 1000; // 3 minutes
 
-const AlpineImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh"}/os/alpine:${AlpineVersion}`;
-const GatusImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh"}/observability/gatus:${Version}`;
+const AlpineImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh:5000"}/os/alpine:${randomUUID()}`;
+const GatusImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh:5000"}/observability/gatus:${randomUUID()}`;
 
 describe.runIf(isIntegration)("(Network) Gatus", () => {
     describe("GatusImage", () => {
         // -- Prepare Pulumi execution --
         const program = async () => {
-            const alpine = new AlpineImage(randomUUID(), { push: true, tags: [AlpineImageTag] });
+            const alpine = new AlpineImage(randomUUID(), {
+                builder: { name: "pulumi-buildkit" },
+                exports: [{ image: { ociMediaTypes: true, push: true } }],
+                push: false,
+                tags: [AlpineImageTag],
+            });
             const gatus = new GatusImage(randomUUID(), {
                 from: alpine,
                 tags: [GatusImageTag],

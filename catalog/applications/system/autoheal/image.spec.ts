@@ -4,21 +4,26 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { automation } from "@pulumi/pulumi";
 
-import { AlpineImage, Version as AlpineVersion } from "@catalog.chezmoi.sh/os~alpine-3.19";
+import { AlpineImage } from "@catalog.chezmoi.sh/os~alpine-3.19";
 
-import { AutoHealImage, Version } from "./image";
+import { AutoHealImage } from "./image";
 
 const isIntegration = (process.env.VITEST_RUN_TYPE ?? "").includes("integration:docker");
 const timeout = 2 * 60 * 1000; // 2 minutes
 
-const AlpineImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh"}/os/alpine:${AlpineVersion}`;
-const AutoHealImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh"}/system/autoheal:${Version}`;
+const AlpineImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh:5000"}/os/alpine:${randomUUID()}`;
+const AutoHealImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh:5000"}/system/autoheal:${randomUUID()}`;
 
 describe.runIf(isIntegration)("(System) AutoHeal", () => {
     describe("AutoHealImage", () => {
         // -- Prepare Pulumi execution --
         const program = async () => {
-            const alpine = new AlpineImage(randomUUID(), { push: true, tags: [AlpineImageTag] });
+            const alpine = new AlpineImage(randomUUID(), {
+                builder: { name: "pulumi-buildkit" },
+                exports: [{ image: { ociMediaTypes: true, push: true } }],
+                push: false,
+                tags: [AlpineImageTag],
+            });
             const autoheal = new AutoHealImage(randomUUID(), {
                 from: alpine,
                 tags: [AutoHealImageTag],

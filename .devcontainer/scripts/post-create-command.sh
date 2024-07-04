@@ -37,7 +37,7 @@ run_command "Install Yarn" -- "(mkdir -p .direnv/corepack/$(cat /etc/machine-id)
 run_command "Install all Node.js dependencies" -- "(.direnv/corepack/$(cat /etc/machine-id)/yarn install)"
 run_command "Configure git hooks" -- lefthook install
 run_command "Logout to Docker (avoid crashing issues)" -- docker logout
-run_command "Configure Docker buildx with the local registry" -- docker buildx create --use --name pulumi-buildx --config /etc/docker/pulumi-buildkitd.toml --driver-opt network=host --bootstrap
+run_command "Configure Docker buildx with the local registry" -- docker buildx create --use --name pulumi-buildkit --config /etc/docker/pulumi-buildkitd.toml --driver-opt network=container:atlas_vscode --bootstrap
 
 # Check if git user and email are set
 if [[ -z "$(git config user.name)" ]] && [[ -z "$(git config user.email)" ]] && [[ -z "$(git config --global user.name)" ]] && [[ -z "$(git config --global user.email)" ]]; then

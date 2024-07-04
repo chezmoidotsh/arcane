@@ -1,6 +1,6 @@
 import * as dns from "dns/promises";
 import { randomUUID } from "crypto";
-import { getRandomPort } from "get-port-please";
+import Dockerode from "dockerode";
 import fetch from "node-fetch";
 import tmp from "tmp";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -8,36 +8,34 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import * as automation from "@pulumi/pulumi/automation";
 import { asset } from "@pulumi/pulumi";
 
-import { AlpineImage, Version as AlpineVersion } from "../../../os/alpine/3.19";
-import { AdGuardHome, Version } from "./docker";
+import { AlpineImage } from "../../../os/alpine/3.19";
+import { AdGuardHome } from "./docker";
 
 const isIntegration = (process.env.VITEST_RUN_TYPE ?? "").includes("integration:docker");
 const timeout = 2 * 60 * 1000; // 2 minutes
 
-const AlpineImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh"}/os/alpine:${AlpineVersion}`;
-const AdGuardHomeImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh"}/network/adguardhome:${Version}`;
+const AlpineImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh:5000"}/os/alpine:${randomUUID()}`;
+const AdGuardHomeImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh:5000"}/network/adguardhome:${randomUUID()}`;
 
 describe.runIf(isIntegration)("(Network) AdGuardHome", () => {
     describe("AdGuardHome", () => {
         describe("when it is deployed", { timeout }, async () => {
-            const ports = {
-                dns: await getRandomPort(),
-                http: await getRandomPort(),
-            };
-
             // -- Prepare Pulumi execution --
             const program = async () => {
-                const alpine = new AlpineImage(randomUUID(), { push: true, tags: [AlpineImageTag] });
+                const alpine = new AlpineImage(randomUUID(), {
+                    builder: { name: "pulumi-buildkit" },
+                    exports: [{ image: { ociMediaTypes: true, push: true } }],
+                    push: false,
+                    tags: [AlpineImageTag],
+                });
                 const adguardhome = new AdGuardHome(randomUUID(), {
                     configuration: new asset.FileAsset(`${__dirname}/fixtures/AdGuardHome.yaml`),
 
                     imageArgs: { from: alpine, tags: [AdGuardHomeImageTag] },
                     containerArgs: {
-                        ports: [
-                            { internal: 3000, external: ports.http, protocol: "tcp" },
-                            { internal: 3053, external: ports.dns, protocol: "udp" },
-                        ],
+                        ports: [],
                         wait: true,
+                        waitTimeout: 30,
                     },
                 });
                 return { ...adguardhome.container };
@@ -45,6 +43,7 @@ describe.runIf(isIntegration)("(Network) AdGuardHome", () => {
 
             let stack: automation.Stack;
             let result: automation.UpResult;
+            let container: Dockerode.ContainerInspectInfo;
             beforeAll(async () => {
                 const tmpdir = tmp.dirSync();
                 stack = await automation.LocalWorkspace.createOrSelectStack(
@@ -65,6 +64,7 @@ describe.runIf(isIntegration)("(Network) AdGuardHome", () => {
                     },
                 );
                 result = await stack.up();
+                container = await new Dockerode().getContainer(result.outputs?.id.value).inspect();
             }, timeout);
 
             beforeEach(() => {
@@ -77,7 +77,7 @@ describe.runIf(isIntegration)("(Network) AdGuardHome", () => {
 
             // -- Assertions --
             it("should be locally accessible", { concurrent: true }, async () => {
-                const response = await fetch(`http://localhost:${ports.http}/`);
+                const response = await fetch(`http://${container.NetworkSettings.IPAddress}:3000/`, { timeout: 500 });
 
                 expect(response.ok).toBeTruthy();
             });
@@ -87,7 +87,7 @@ describe.runIf(isIntegration)("(Network) AdGuardHome", () => {
                 expect(await dns.resolve4("one.one.one.one")).toEqual(expect.arrayContaining(["1.1.1.1"]));
 
                 const resolver = new dns.Resolver();
-                resolver.setServers([`127.0.0.1:${ports.dns}`]);
+                resolver.setServers([`${container.NetworkSettings.IPAddress}:3053`]);
                 expect(await resolver.resolve4("one.one.one.one")).toEqual(expect.arrayContaining(["1.1.1.1"]));
             });
         });

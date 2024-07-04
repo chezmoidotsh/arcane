@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { getRandomPort } from "get-port-please";
+import Dockerode from "dockerode";
 import fetch from "node-fetch";
 import tmp from "tmp";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -9,20 +9,16 @@ import { asset } from "@pulumi/pulumi";
 
 import { DirectoryAsset } from "@chezmoi.sh/core/utils";
 
-import { Homepage, Version } from "./docker";
+import { Homepage } from "./docker";
 
 const isIntegration = (process.env.VITEST_RUN_TYPE ?? "").includes("integration:docker");
 const timeout = 2 * 60 * 1000; // 2 minutes
 
-const HomepageImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh"}/miscellaneous/startpage/homepage:${Version}`;
+const HomepageImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh:5000"}/miscellaneous/startpage/homepage:${randomUUID()}`;
 
 describe.runIf(isIntegration)("(Miscellaneous/Startpage) Homepage", () => {
     describe("Homepage", () => {
         describe("when it is deployed", { timeout }, async () => {
-            const ports = {
-                http: await getRandomPort(),
-            };
-
             // -- Prepare Pulumi execution --
             const program = async () => {
                 const homepage = new Homepage(randomUUID(), {
@@ -36,10 +32,16 @@ describe.runIf(isIntegration)("(Miscellaneous/Startpage) Homepage", () => {
                         widgets: new asset.FileAsset(`${__dirname}/fixtures/widgets.yaml`),
                     },
 
-                    imageArgs: { push: true, tags: [HomepageImageTag] },
+                    imageArgs: {
+                        builder: { name: "pulumi-buildkit" },
+                        exports: [{ image: { ociMediaTypes: true, push: true } }],
+                        push: false,
+                        tags: [HomepageImageTag],
+                    },
                     containerArgs: {
-                        ports: [{ internal: 3000, external: ports.http, protocol: "tcp" }],
+                        ports: [],
                         wait: true,
+                        waitTimeout: 30,
                     },
                 });
                 return { ...homepage.container };
@@ -47,6 +49,7 @@ describe.runIf(isIntegration)("(Miscellaneous/Startpage) Homepage", () => {
 
             let stack: automation.Stack;
             let result: automation.UpResult;
+            let container: Dockerode.ContainerInspectInfo;
             beforeAll(async () => {
                 const tmpdir = tmp.dirSync();
                 stack = await automation.LocalWorkspace.createOrSelectStack(
@@ -67,6 +70,7 @@ describe.runIf(isIntegration)("(Miscellaneous/Startpage) Homepage", () => {
                     },
                 );
                 result = await stack.up();
+                container = await new Dockerode().getContainer(result.outputs?.id.value).inspect();
             }, timeout);
 
             beforeEach(() => {
@@ -79,7 +83,9 @@ describe.runIf(isIntegration)("(Miscellaneous/Startpage) Homepage", () => {
 
             // -- Assertions --
             it("should be locally accessible", async () => {
-                const response = await fetch(`http://localhost:${ports.http}/`);
+                const response = await fetch(`http://${container.NetworkSettings.IPAddress}:3000/`, {
+                    timeout: 2500,
+                });
 
                 expect(response.status).toBe(200);
             });

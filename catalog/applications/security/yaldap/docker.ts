@@ -60,7 +60,7 @@ export interface yaLDAPArgs extends yaLDAPConfiguration {
         | "gpus"
         | "uploads"
     > & {
-        ports?: [ContainerPort & { internal: 389; protocol: "tcp" }];
+        ports?: [ContainerPort & { internal: 389; protocol: "tcp" }] | [];
     };
 }
 
