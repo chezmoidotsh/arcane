@@ -51,7 +51,7 @@ rules:
         - - catalog
           - core
           - gh
-          - nex.rpi
+          - nex·rpi
           - policy-pack
     scope-case: [2, always, lower-case]
     scope-empty: [2, never]

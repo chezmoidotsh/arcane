@@ -9,7 +9,7 @@
 
 <div align="center">
 
-[![License](https://img.shields.io/badge/license-GLWTS%20Public%20License-blue?logo=git&logoColor=white&logoWidth=20)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git&logoColor=white&logoWidth=20)](LICENSE)
 [![Open in GitHub Codespaces](https://img.shields.io/badge/Open_in_Github_Codespace-black?logo=github)](https://github.com/codespaces/new?hide_repo_select=true&ref=poc/pulumi-alt&repo=737828332)
 
 <a href="#about">About</a> ·
@@ -59,22 +59,37 @@ devcontainer exec --workspace-folder . -- zsh
 ## 📁 Project Structure
 
 ```plaintext
-├── .devcontainer          # Development environment setup (DevContainer/Codespaces)
-│   ├── devcontainer.json  # DevContainer configuration file
-│   └── Dockerfile         # Dockerfile on which the DevContainer is based
-├── assets                 # Repository assets (images, video, etc.) used in the documentation.
-├── catalog                # Contains all images and application packages compatible with Pulumi
-│   ├── os                 # OS related images
-│   └── security           # Application related to security (authn, authz, firewall, etc.)
-├── lib
-│   ├── core               # TS libraries for containing all the buisness logic for this repository.
-│   └── policy-pack        # Policy packs used by Pulumi to enforce best practices.
+├── .devcontainer             # Development environment setup (DevContainer/Codespaces)
+│   ├── devcontainer.json     # DevContainer configuration file
+│   └── Dockerfile            # Dockerfile on which the DevContainer is based
+├── assets                    # Repository assets (images, video, etc.) used in the documentation.
+├── catalog                   # Application and Image catalog compatible with Pulumi
+│   └── applications
+│       ├── miscellaneous
+│       │   └── startpage
+│       │       └── homepage  # A highly customizable homepage (or startpage / application dashboard)
+│       ├── network
+│       │   ├── adguardhome   # A network-wide ads & tracking blocking DNS server
+│       │   ├── caddy         # A fast and extensible multi-platform HTTP/1-2-3 web server with automatic HTTPS
+│       │   └── tailscale     # A Zero config VPN for individuals and teams
+│       ├── observability
+│       │   └── gatus         # Gatus is a simple and automated status page
+│       ├── security
+│       │   ├── authelia      # A Single Sign-On Multi-Factor portal for web apps
+│       │   └── yaldap        # An easy-to-use LDAP server using YAML file as directory definition
+│       └── system
+│           └── autoheal      # Monitor and restart unhealthy docker containers
+├── projects
+│   └── nex·rpi               # Mission-critical applications for the homelab (NEXus · Raspberry PI)
 ├── scripts
 │   └── src
-│       └── folderinfo     # Tools to generate the folder structure of Atlas
-├── .envrc                 # Direnv configuration file
-├── .tool-versions         # asdf-vm configuration file
-└── .lefthook.yaml         # Git hooks configuration file (using Lefthook)
+│       └── folderinfo        # Tools to generate the folder structure of Atlas
+├── src
+│   ├── core                  # TS libraries for containing all the buisness logic for this repository.
+│   └── policy-pack           # Policy packs used by Pulumi to enforce best practices.
+├── .envrc                    # Direnv configuration file
+├── .tool-versions            # asdf-vm configuration file
+└── .lefthook.yaml            # Git hooks configuration file (using Lefthook)
 ```
 
 ## 🗺️ Roadmap
