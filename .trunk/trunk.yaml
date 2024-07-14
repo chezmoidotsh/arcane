@@ -39,15 +39,15 @@ lint:
         - markdown-link-check@3.12.2
         - taplo@0.8.1
         - actionlint@1.7.1
-        - checkov@3.2.164
+        - checkov@3.2.186
         - git-diff-check
         - hadolint@2.12.0
         - markdownlint@0.41.0
-        - osv-scanner@1.8.1
+        - osv-scanner@1.8.2
         - oxipng@9.1.1
         - prettier@3.3.2
-        - renovate@37.421.8
-        - ruff@0.5.0
+        - renovate@37.429.1
+        - ruff@0.5.1
         - shellcheck@0.10.0
         - shfmt@3.6.0
         - trivy@0.52.2
