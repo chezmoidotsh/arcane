@@ -21,7 +21,7 @@ function run_command() {
 	local stdout="${temp_dir}/stdout"
 	local stderr="${temp_dir}/stderr"
 	local exit_code="${temp_dir}/exit_code"
-	# trap "rm --recursive --force ${temp_dir}" RETURN
+	trap "rm --recursive --force ${temp_dir}" RETURN
 
 	cat <<EOS >"${temp_dir}/cmdline"
 ${@:3} 2> ${stderr} 1> ${stdout}; echo \$? > ${exit_code}
@@ -45,7 +45,7 @@ EOS
 			(
 				[[ -s ${stdout} ]] && cat "${stdout}"
 				[[ -s ${stderr} ]] && cat "${stderr}"
-			) | sed 's/^/\|  /g' | gum style --faint --foreground '#E74C3C'
+			) | sed 's/^/\|  /g' | gum style --faint --foreground '#E74C3C' --margin "0 0 0 2"
 		fi
 	fi
 }

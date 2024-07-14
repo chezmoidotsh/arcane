@@ -24,20 +24,19 @@ EOF
 echo
 
 run_command "Synchronizing git submodules" -- git submodule update --init --recursive
-while IFS= read -r line; do
-	tool="${line%% *}"
-	version="${line##* }"
-	run_command "Installing ${tool}@$(gum style --foreground '#F1C40F' "${version}")" -- \
-		"(asdf plugin add ${tool} && asdf install ${tool} ${version})"
-	run_command "Setting ${tool}@$(gum style --foreground '#F1C40F' "${version}") as global" -- \
-		"asdf global ${tool} ${version}"
-done <".tool-versions"
+run_command "Activate mise" : \
+  && (echo; echo 'eval "$(/usr/local/bin/mise activate zsh)"') >> ~/.zshrc \
+  && (echo; echo 'eval "$(/usr/local/bin/mise activate bash)"') >> ~/.bashrc \
+  && source ~/.bashrc
+run_command "Install all dependencies" -- mise install --yes --quiet
 run_command "Allowing direnv" -- direnv allow
 run_command "Install Yarn" -- "(mkdir -p .direnv/corepack/$(cat /etc/machine-id) && corepack enable --install-directory=.direnv/corepack/$(cat /etc/machine-id) && corepack install)"
 run_command "Install all Node.js dependencies" -- "(.direnv/corepack/$(cat /etc/machine-id)/yarn install)"
-run_command "Configure git hooks" -- lefthook install
 run_command "Logout to Docker (avoid crashing issues)" -- docker logout
 run_command "Configure Docker buildx with the local registry" -- docker buildx create --use --name pulumi-buildkit --config /etc/docker/pulumi-buildkitd.toml --driver-opt network=container:atlas_vscode --bootstrap
+
+# Run commands freshly installed
+run_command "Configure git hooks" -- $(mise which lefthook) install
 
 # Check if git user and email are set
 if [[ -z "$(git config user.name)" ]] && [[ -z "$(git config user.email)" ]] && [[ -z "$(git config --global user.name)" ]] && [[ -z "$(git config --global user.email)" ]]; then

@@ -32,7 +32,7 @@ services:
             - 5000:5000
         tmpfs:
             - /run
-            - /tmp
+            - /tmp:exec
         volumes:
             - ..:/workspaces/atlas:cached
         working_dir: /workspaces/atlas
