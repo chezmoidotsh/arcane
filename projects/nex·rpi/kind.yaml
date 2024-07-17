@@ -12,25 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ----------------------------------------------------------------------------
-source_up_if_exists
-
-# - Load the NodeJS environment
-layout node
-(
-    mkdir -p "$(direnv_layout_dir)/corepack/$(cat /etc/machine-id)"
-    corepack enable --install-directory=$(direnv_layout_dir)/corepack/$(cat /etc/machine-id)
-)
-
-# - Custom PATH entries
-PATH_add "$(direnv_layout_dir)/corepack/$(cat /etc/machine-id)"
-PATH_add "${PWD}/scripts"
-
-# - Custom MAN pages
-MANPATH_add "${PWD}/vendor/github.com/elasticdog/transcrypt/man"
-
-# - Environment variables
-export PULUMI_PREFER_YARN="true"
-export ATLAS_ROOTDIR="${PWD}"
-
-# TODO: set an empty passphrase for testing purposes only
-export PULUMI_CONFIG_PASSPHRASE=
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+containerdConfigPatches:
+- |-
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."oci.local.chezmoi.sh:5000"]
+    endpoint = ["http://oci.local.chezmoi.sh:5000"]
+  [plugins."io.containerd.grpc.v1.cri".registry.configs."oci.local.chezmoi.sh:5000".tls]
+    insecure_skip_verify = true
+nodes:
+- role: control-plane

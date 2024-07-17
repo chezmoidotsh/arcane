@@ -13,6 +13,13 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 ---
+networks:
+    atlas:
+        driver: bridge
+    kind: # kubernetes-in-docker network, required to use the local registry
+        name: kind
+        external: true
+
 services:
     vscode:
         build:
@@ -25,11 +32,9 @@ services:
         environment:
             DIRENV_LOG_FORMAT: "" # disable direnv logging
             DOCKER_HOST: unix:///var/run/docker-host.sock
-        extra_hosts:
-            - oci.local.chezmoi.sh:127.0.0.1
-        network_mode: bridge
-        ports:
-            - 5000:5000
+        networks:
+            atlas:
+            kind:
         tmpfs:
             - /run
             - /tmp:exec
@@ -40,7 +45,13 @@ services:
     registry:
         container_name: atlas_registry
         image: ghcr.io/project-zot/zot-linux-amd64:v2.0.4@sha256:e102152bbe51cc7aa6f14fcd71df094a761be240426a6bf0c72e7cd05e0e36c5
-        network_mode: container:atlas_vscode
+        networks:
+            atlas:
+                aliases: [oci.local.chezmoi.sh]
+            kind:
+                aliases: [oci.local.chezmoi.sh]
+        ports:
+            - 5000:5000
         restart: always
         tmpfs:
             - /tmp
