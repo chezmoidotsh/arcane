@@ -8,10 +8,11 @@
 <div align="center">
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git&logoColor=white&logoWidth=20)](../../LICENSE)
+[![Made with Pulumi](https://img.shields.io/badge/Made_with-Pulumi-f7bf2a?logo=pulumi&logoColor=white&logoWidth=20)]()
 
 <a href="#about">About</a> ·
-<a href="#mission-critcal-services">Mission-Critical services</a> ·
-<a href="#how-to-use--how-to-develop-on-it">How to use / How to develop on it</a> ·
+<a href="#mission-critcal-services">Services</a> ·
+<a href="#how-to-use--how-to-develop-on-it">How to use</a> ·
 <a href="#disaster-recovery-plan-drp">Disaster Recovery Plan (DRP)</a> ·
 <a href="#roadmap">Roadmap</a> ·
 <a href="#license">License</a>
@@ -71,6 +72,11 @@ without[^1] the need of third-party services.
   ❗**Why is it mission-critical?** All Docker images used by other services are in this registry, and without it, no
   service can be deployed.
 
+- **Secrets vault based on ??**: Stores all secrets used by other services in a secure way.
+
+  **Why is it mission-critical?** It ensures that all secrets are stored securely and can be accessed by services that
+  need them with the right ACLs.
+
 ### 📦 Others
 
 - **NUT server**: Monitors UPS status and battery level, ideal for Raspberry Pi due to its low power consumption.
@@ -120,6 +126,10 @@ In case of a disaster, the following steps should be taken:
 - [ ] Deploy the project on a Raspberry Pi 5 and test it.
 - [ ] Replace the old _Nex.RPi_ project with this one.
 - [ ] Make the project easier to test and to work on.
+
+## 📝 Changelog
+
+The ~~changelog~~ history of this project is available [here](CHANGELOG.md).
 
 ## 🛡️ License
 
