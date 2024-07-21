@@ -1,0 +1,80 @@
+# Copyright (C) 2024 Alexandre Nicolaie (xunleii@users.noreply.github.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ----------------------------------------------------------------------------
+
+[env]
+CATALOG_ROOTDIR = "{{config_root}}"
+HELM_CACHE_HOME = "{{config_root}}/../.direnv/helm/cache"
+HELM_CONFIG_HOME = "{{config_root}}/../.direnv/helm/config"
+HELM_DATA_HOME = "{{config_root}}/../.direnv/helm/data"
+KUBECONFIG = "{{config_root}}/../.direnv/kubeconfig-integ"
+
+
+[tasks."dev:start"]
+description = "Prepare the development environment"
+run = [
+  "mise run kind:create",
+  "mise run kind:kubeconfig",
+  "mise run kind:prepare",
+]
+
+[tasks."dev:teardown"]
+description = "Tears down the development environment"
+run = "mise run kind:delete"
+
+
+[tasks."kind:create"]
+description = "Starts a kind cluster `atlas-catalog`"
+run = "kind create cluster --name atlas-catalog --config ${CATALOG_ROOTDIR}/kind.yaml"
+
+[tasks."kind:kubeconfig"]
+description = "Gets the kubeconfig for the `atlas-catalog` cluster"
+run = "kind get kubeconfig --name atlas-catalog | sed 's/127.0.0.1:.*/atlas-catalog-control-plane:6443/g' > ${KUBECONFIG}"
+
+[tasks."kind:prepare"]
+description = "Prepares the kind cluster `atlas-catalog`"
+depends = ["kind:prepare:*"]
+
+[tasks."kind:prepare:traefik-ingress"]
+description = "Installs the traefik ingress controller in the kind cluster `atlas-catalog`"
+depends = ["kind:kubeconfig"]
+run = [
+  "helm repo add traefik https://helm.traefik.io/traefik --force-update",
+  "helm repo update",
+  '''
+    helm upgrade --install traefik \
+        --kube-context kind-atlas-catalog \
+        --namespace traefik-system --create-namespace \
+        --set experimental.kubernetesGateway.enabled=true \
+        --set ingressClass.enabled=false \
+        --set ports.ldap.expose.default=true \
+        --set ports.ldap.exposedPort=389 \
+        --set ports.ldap.hostPort=389 \
+        --set ports.ldap.port=8389 \
+        --set ports.ldap.protocol=TCP \
+        --set ports.web.hostPort=80 \
+        --set providers.kubernetesCRD.enabled=false \
+        --set providers.kubernetesGateway.enabled=true \
+        --set providers.kubernetesGateway.experimentalChannel=true \
+        --set providers.kubernetesIngress.enabled=false \
+        traefik/traefik
+    ''',
+]
+
+[tasks."kind:delete"]
+description = "Deletes the kind cluster `atlas-catalog`"
+run = "kind delete cluster --name atlas-catalog"
+
+[tools]
+helm = "3.15.3"

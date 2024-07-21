@@ -24,7 +24,6 @@ rules:
     indentation:
         spaces: consistent # Enforce consistent use of spaces for indentation
         indent-sequences: true # Require indentation for sequence items
-        check-multi-line-strings: true # Check indentation for multi-line strings
     key-duplicates:
         forbid-duplicated-merge-keys: false # Allow duplicated merge keys in mappings
     key-ordering: disable # Do not enforce key ordering

@@ -12,25 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ----------------------------------------------------------------------------
-source_up_if_exists
 
-# - Load the NodeJS environment
-layout node
-(
-    mkdir -p "$(direnv_layout_dir)/corepack/$(cat /etc/machine-id)"
-    corepack enable --install-directory=$(direnv_layout_dir)/corepack/$(cat /etc/machine-id)
-)
+[env]
+MISE_CONFIG_ROOT = "{{config_root}}"
 
-# - Custom PATH entries
-PATH_add "$(direnv_layout_dir)/corepack/$(cat /etc/machine-id)"
-PATH_add "${PWD}/scripts"
+[tasks."crds:generate:gateway"]
+description = "Generate the Gateway CRDs"
+run = '''
+curl -sL https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/experimental-install.yaml \
+| crd2pulumi --nodejs \
+    --nodejsName kubernetes-gateway.networking.k8s.io \
+    --nodejsPath ${MISE_CONFIG_ROOT}/kubernetes/crds/gateway.networking.k8s.io \
+    --force -
+'''
 
-# - Custom MAN pages
-MANPATH_add "${PWD}/vendor/github.com/elasticdog/transcrypt/man"
-
-# - Environment variables
-export ATLAS_ROOTDIR="${PWD}"
-export DIRENV_LAYOUTDIR="$(direnv_layout_dir)"
-
-export PULUMI_PREFER_YARN="true"
-export PULUMI_CONFIG_PASSPHRASE= # TODO: set an empty passphrase for testing purposes only
+[tools]
+"go:github.com/pulumi/crd2pulumi" = "v1.4.0"

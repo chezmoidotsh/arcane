@@ -32,7 +32,7 @@
                     "keepTags": [
                         {
                             "patterns": [".*"],
-                            "pushedWithin": "15m"
+                            "pushedWithin": "12h"
                         }
                     ]
                 }

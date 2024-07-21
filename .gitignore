@@ -386,6 +386,7 @@ pip-selfcheck.json
 # End of https://www.toptal.com/developers/gitignore/api/node,venv,dotenv,python,terraform,visualstudiocode,direnv
 
 # Don't ignore some files
+!.devcontainer/
 !.envrc
 !lib/
 !scripts/folderinfo

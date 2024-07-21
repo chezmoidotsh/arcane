@@ -15,3 +15,4 @@
 #
 
 .devcontainer/devcontainer-lock.json
+src/core/kubernetes/crds

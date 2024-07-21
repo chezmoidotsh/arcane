@@ -19,6 +19,8 @@ import path from "path";
 import * as buildkit from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
 
+import { getProvider } from "@chezmoi.sh/core/utils";
+
 import { Version } from "./version";
 
 export { Version };
@@ -26,12 +28,12 @@ export { Version };
 /**
  * The set of arguments for constructing the yaLDAP Docker image.
  */
-export interface ImageArgs extends Partial<Omit<buildkit.ImageArgs, "buildArgs" | "context" | "dockerfile">> {
+export interface ImageArgs extends Partial {
     /**
      * The base image to use in order to build the yaLDAP image.
      * WARNING: The base image must be compatible a Alpine Linux image.
      */
-    from: pulumi.Input<buildkit.Image>;
+    from: pulumi.Input;
 }
 
 /**
@@ -73,7 +75,7 @@ export class yaLDAPImage extends buildkit.Image {
                     YALDAP_VERSION: Version,
                 },
             },
-            opts,
+            { ...opts, ...{ provider: getProvider(buildkit.Provider, opts), providers: undefined } },
         );
     }
 }

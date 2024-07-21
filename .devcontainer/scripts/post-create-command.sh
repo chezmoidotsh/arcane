@@ -30,6 +30,7 @@ run_command "Activate mise" : \
   && source ~/.bashrc
 run_command "Install all dependencies" -- mise install --yes --quiet
 run_command "Allowing direnv" -- direnv allow
+run_command "Trust root mise file" -- mise trust
 run_command "Install Yarn" -- "(mkdir -p .direnv/corepack/$(cat /etc/machine-id) && corepack enable --install-directory=.direnv/corepack/$(cat /etc/machine-id) && corepack install)"
 run_command "Install all Node.js dependencies" -- "(.direnv/corepack/$(cat /etc/machine-id)/yarn install)"
 run_command "Logout to Docker (avoid crashing issues)" -- docker logout

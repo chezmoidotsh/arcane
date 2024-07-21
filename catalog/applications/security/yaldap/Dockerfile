@@ -67,9 +67,9 @@ ENV PATH=/opt/yaldap:${PATH}
 
 USER yaldap
 WORKDIR /opt/yaldap
-ENTRYPOINT ["yaldap", "run", "--backend.name", "yaml", "--backend.url", "file:///etc/yaldap/backend.yaml"]
+ENTRYPOINT ["yaldap", "run", "--backend.name", "yaml", "--backend.url", "file:///etc/yaldap/backend.yaml", "--listen-address", ":8389"]
 
-EXPOSE 389
+EXPOSE 8389
 HEALTHCHECK --interval=5s CMD nc -z localhost 389 || exit 1
 
 # metadata as defined by the Open Container Initiative (OCI) to keep traceability with

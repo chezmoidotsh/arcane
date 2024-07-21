@@ -11,7 +11,14 @@
         "test": "VITEST_RUN_TYPE=integration:docker vitest run .",
         "test:coverage": "VITEST_RUN_TYPE=integration:docker vitest run --coverage ."
     },
+    "dependencies": {
+        "@pulumi/docker-build": "^0.0.4",
+        "@pulumi/kubernetes": "^4.15.0",
+        "@pulumi/kubernetes-gateway.networking.k8s.io": "workspace:^",
+        "@pulumi/pulumi": "^3.124.0"
+    },
     "devDependencies": {
+        "@kubernetes/client-node": "^0.21.0",
         "@types/dockerode": "^3.3.29",
         "@types/ldapjs-client": "^0.1.5",
         "dockerode": "^4.0.2",
