@@ -17,4 +17,5 @@
 
 export { DirectoryAsset, SecretAsset, ReadAsset } from "./asset";
 export { InjectAssets } from "./docker";
+export { getProvider } from "./pulumi";
 export { IsDefined } from "./type";

@@ -23,5 +23,5 @@ export interface yaLDAPConfiguration {
      * yaLDAP YAML backend configuration file.
      * @see {@link https://github.com/chezmoi-sh/yaldap}
      */
-    configuration: SecretAsset<FileAsset | RemoteAsset | StringAsset>;
+    configuration: SecretAsset;
 }

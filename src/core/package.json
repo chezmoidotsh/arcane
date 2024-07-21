@@ -4,5 +4,18 @@
     "private": true,
     "description": "Core library for chezmoi.sh infrastructure as-code",
     "license": "Apache-2.0",
-    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>"
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "scripts": {
+        "test": "vitest",
+        "test:coverage": "vitest --coverage",
+        "test:watch": "vitest --watch"
+    },
+    "dependencies": {
+        "@pulumi/kubernetes": "^4.15.0"
+    },
+    "devDependencies": {
+        "@kubernetes/client-node": "^0.21.0",
+        "@pulumi/aws": "^6.45.0",
+        "@pulumi/docker": "^4.5.4"
+    }
 }
