@@ -19,7 +19,9 @@ import * as path from "path";
 import * as buildkit from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
 
-import { Version, VersionSHA256Sum } from "./version";
+import { getProvider } from "@chezmoi.sh/core/utils";
+
+import { Version } from "./version";
 
 export { Version };
 
@@ -36,12 +38,8 @@ export class AlpineImage extends buildkit.Image {
                 // Build the image
                 context: { location: __dirname },
                 dockerfile: { location: path.join(__dirname, "Dockerfile") },
-                buildArgs: {
-                    ALPN_VERSION: Version,
-                    ALPN_VERSION_SHASUM: VersionSHA256Sum,
-                },
             },
-            opts,
+            { ...opts, ...{ provider: getProvider(buildkit.Provider, opts), providers: undefined } },
         );
     }
 }

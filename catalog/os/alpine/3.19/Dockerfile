@@ -16,15 +16,11 @@
 # trunk-ignore-all(trivy/DS002,checkov/CKV_DOCKER_3): This is a base image and should not be run directly, so no USER required.
 # trunk-ignore-all(trivy/DS026,checkov/CKV_DOCKER_2): This is a base image and should not be run directly, so no HEALTHCHECK required.
 
-ARG ALPN_VERSION
-ARG ALPN_VERSION_SHASUM
-
-
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <runtime>: create the Alpine base image with all dependencies shared by   │
 # |            all other images of this project.                              │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/alpine:${ALPN_VERSION}@${ALPN_VERSION_SHASUM} AS runtime
+FROM docker.io/library/alpine:3.19.2@sha256:af4785ccdbcd5cde71bfd5b93eabd34250b98651f19fe218c91de6c8d10e21c5 AS runtime
 
 # renovate: datasource=repology depName=alpine_3_19/ca-certificates versioning=loose
 ARG CA_CERTIFICATES_VERSION=20240226-r0

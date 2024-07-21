@@ -1,6 +1,6 @@
 {
     "name": "@catalog.chezmoi.sh/os~alpine-3.19",
-    "version": "3.19.1",
+    "version": "3.19.2",
     "private": true,
     "description": "Alpine Linux is a security-oriented, lightweight Linux distribution based on musl libc and busybox.",
     "license": "Apache-2.0",
