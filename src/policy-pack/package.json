@@ -4,8 +4,5 @@
     "private": true,
     "description": "Policy library used by chezmoi.sh infrastructure as-code",
     "license": "Apache-2.0",
-    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
-    "dependencies": {
-        "@pulumi/policy": "^1.11.0"
-    }
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>"
 }

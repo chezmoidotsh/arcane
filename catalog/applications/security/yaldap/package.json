@@ -7,21 +7,21 @@
     "license": "Apache-2.0",
     "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
     "scripts": {
-        "dev": "VITEST_RUN_TYPE=integration:docker vitest --ui --coverage .",
         "test": "VITEST_RUN_TYPE=integration:docker vitest run .",
         "test:coverage": "VITEST_RUN_TYPE=integration:docker vitest run --coverage ."
     },
     "dependencies": {
+        "@chezmoi.sh/core": "workspace:^",
         "@pulumi/docker-build": "^0.0.4",
         "@pulumi/kubernetes": "^4.15.0",
         "@pulumi/kubernetes-gateway.networking.k8s.io": "workspace:^",
-        "@pulumi/pulumi": "^3.124.0"
+        "@pulumi/pulumi": "^3.125.0"
     },
     "devDependencies": {
-        "@kubernetes/client-node": "^0.21.0",
-        "@types/dockerode": "^3.3.29",
-        "@types/ldapjs-client": "^0.1.5",
-        "dockerode": "^4.0.2",
-        "ldapjs-client": "^0.1.2"
+        "@catalog.chezmoi.sh/os~alpine-3.19": "workspace:^",
+        "@types/node": "^20.14.11",
+        "ldapts": "^7.1.0",
+        "typescript": "^5.5.3",
+        "vitest": "^2.0.3"
     }
 }

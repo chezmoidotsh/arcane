@@ -5,5 +5,10 @@
     "description": "Enforce security best practices for Docker containers",
     "license": "Apache-2.0",
     "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
-    "main": "index.ts"
+    "main": "index.ts",
+    "dependencies": {
+        "@pulumi/docker": "^4.5.4",
+        "@pulumi/policy": "^1.11.0",
+        "@pulumi/pulumi": "^3.125.0"
+    }
 }

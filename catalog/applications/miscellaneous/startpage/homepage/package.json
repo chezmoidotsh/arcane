@@ -10,8 +10,18 @@
         "test": "VITEST_RUN_TYPE=integration:docker vitest run .",
         "test:coverage": "VITEST_RUN_TYPE=integration:docker vitest run --coverage ."
     },
+    "dependencies": {
+        "@chezmoi.sh/core": "workspace:^",
+        "@pulumi/docker": "^4.5.4",
+        "@pulumi/docker-build": "^0.0.4",
+        "@pulumi/pulumi": "^3.125.0"
+    },
     "devDependencies": {
-        "@types/dockerode": "^3.3.29",
-        "dockerode": "^4.0.2"
+        "@types/dockerode": "^3.3.30",
+        "@types/node-fetch": "^2.6.11",
+        "dockerode": "^4.0.2",
+        "node-fetch": "^3.3.2",
+        "typescript": "^5.5.3",
+        "vitest": "^2.0.3"
     }
 }
