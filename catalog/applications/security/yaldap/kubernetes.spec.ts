@@ -380,7 +380,12 @@ describe("(Security) yaLDAP", () => {
                 expect(context.result?.summary.result).toBe("succeeded");
             });
 
-            it("should be able to resolve LDAP queries", { timeout: 10 * 1000 }, async () => {
+            let debounceRetry: number | undefined = undefined;
+            it("should be able to resolve LDAP queries", { timeout: 10 * 1000, retry: 3 }, async () => {
+                await new Promise((resolve) => {
+                    setTimeout(resolve, debounceRetry ?? 0);
+                });
+                debounceRetry = debounceRetry ? debounceRetry * 2 : 1000;
                 const addr = new URL(context.kubeconfig.getCurrentCluster()?.server ?? "").hostname;
                 const client = new LdapClient({ url: `ldap://${addr}:389` });
                 await client.bind("cn=alice,ou=people,c=fr,dc=example,dc=org", "alice");
