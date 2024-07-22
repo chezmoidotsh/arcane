@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import LdapClient from "ldapjs-client";
+import { Client as LdapClient } from "ldapts";
 import { describe, expect, it } from "vitest";
 
 import * as kubernetes from "@pulumi/kubernetes";
@@ -391,7 +391,7 @@ describe("(Security) yaLDAP", () => {
                 await client.bind("cn=alice,ou=people,c=fr,dc=example,dc=org", "alice");
 
                 const entries = await client.search("dc=example,dc=org", { scope: "sub", filter: "(objectClass=*)" });
-                expect(entries).toHaveLength(16);
+                expect(entries.searchEntries).toHaveLength(16);
             });
         },
     );
