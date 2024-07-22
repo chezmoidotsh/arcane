@@ -43,12 +43,6 @@ The following is a simple diagram of the architecture:
 </p>
 <!-- markdownlint-enable MD033 -->
 
-**Authelia** can be installed as a standalone service from the [AUR](https://aur.archlinux.org/packages/authelia/),
-[APT](https://apt.authelia.com/stable/debian/packages/authelia/),
-[FreeBSD Ports](https://svnweb.freebsd.org/ports/head/www/authelia/), or using a
-[static binary](https://github.com/authelia/authelia/releases/tag/v4.38.9),
-[.deb package](https://github.com/authelia/authelia/releases/tag/v4.38.9), as a container on Docker or Kubernetes.
-
 ### Features summary
 
 This is a list of the key features of Authelia:
