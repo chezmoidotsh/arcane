@@ -16,8 +16,8 @@
  */
 import * as builkit from "@pulumi/docker-build";
 import * as kubernetes from "@pulumi/kubernetes";
+import * as gateway from "@pulumi/kubernetes-gateway.networking.k8s.io";
 import * as pulumi from "@pulumi/pulumi";
-import { gateway } from "@pulumi/kubernetes-gateway.networking.k8s.io/types/input";
 import { FileAsset, RemoteAsset, StringAsset } from "@pulumi/pulumi/asset";
 
 import { ReadAsset, SecretAsset, getProvider } from "@chezmoi.sh/core/utils";
@@ -43,7 +43,7 @@ export interface yaLDAPArgs {
     /**
      * The metadata for the yaLDAP Kubernetes resources.
      */
-    metadata?: Pick;
+    metadata?: Pick<kubernetes.types.input.meta.v1.ObjectMeta, "annotations" | "labels" | "namespace">;
 
     /**
      * The set of arguments for constructing the yaLDAP Docker image.
@@ -59,13 +59,13 @@ export interface yaLDAPArgs {
                * Raw yaLDAP YAML backend configuration content.
                * @see {@link https://github.com/chezmoi-sh/yaldap}
                */
-              raw: SecretAsset;
+              raw: SecretAsset<FileAsset | RemoteAsset | StringAsset>;
           }
         | {
               /**
                *
                */
-              secret: pulumi.Input;
+              secret: pulumi.Input<kubernetes.types.input.core.v1.SecretVolumeSource>;
           };
 
     /**
@@ -76,12 +76,12 @@ export interface yaLDAPArgs {
          * List of references to secrets in the same namespace to use for pulling any of the
          * images used by the yaLDAP workload.
          */
-        imagePullSecrets?: pulumi.Input;
+        imagePullSecrets?: pulumi.Input<kubernetes.types.input.core.v1.LocalObjectReference[]>;
 
         /**
          * Scheduling constraints required the yaLDAP workload.
          */
-        scheduling?: Pick;
+        scheduling?: Pick<kubernetes.types.input.core.v1.PodSpec, "affinity" | "nodeSelector" | "tolerations">;
 
         /**
          * Compute Resources required by the yaLDAP workload.
@@ -92,7 +92,7 @@ export interface yaLDAPArgs {
         /**
          * Ingress endpoints configuration for the yaLDAP workload.
          */
-        endpoints?: Pick;
+        endpoints?: Pick<gateway.types.input.gateway.v1alpha2.TCPRouteSpecArgs, "parentRefs">;
     };
 }
 

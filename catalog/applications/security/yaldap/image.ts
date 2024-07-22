@@ -28,12 +28,12 @@ export { Version };
 /**
  * The set of arguments for constructing the yaLDAP Docker image.
  */
-export interface ImageArgs extends Partial {
+export interface ImageArgs extends Partial<Omit<buildkit.ImageArgs, "buildArgs" | "context" | "dockerfile">> {
     /**
      * The base image to use in order to build the yaLDAP image.
      * WARNING: The base image must be compatible a Alpine Linux image.
      */
-    from: pulumi.Input;
+    from: pulumi.Input<buildkit.Image>;
 }
 
 /**

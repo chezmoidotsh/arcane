@@ -75,7 +75,7 @@ describe("(Security) yaLDAP", () => {
     );
 
     describe("when it is deployed with customization", () => {
-        const program = async (opts: ComponentResourceOptions, randomName: () => string, args: Partial) => {
+        const program = async (opts: ComponentResourceOptions, randomName: () => string, args: Partial<yaLDAPArgs>) => {
             const alpine = new AlpineImage(
                 randomUUID(),
                 {

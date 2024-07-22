@@ -49,7 +49,7 @@ export { toHaveCompliantLabels, toHaveCompliantSecurity };
 export function fakeKubernetesScenario(
     name: string,
     options: TestOptions & { expectedResult?: automation.UpdateResult },
-    program: (opts: ComponentResourceOptions, dns1035: () => string) => Promise,
+    program: (opts: ComponentResourceOptions, dns1035: () => string) => Promise<Record<string, any> | void>,
     assertions: (context: { result?: automation.UpResult }) => void,
 ) {
     pulumiScenario(
@@ -100,7 +100,7 @@ export function fakeKubernetesScenario(
 export function kubernetesScenario(
     name: string,
     options: TestOptions & { expectedResult?: automation.UpdateResult },
-    program: (opts: ComponentResourceOptions, dns1035: () => string) => Promise,
+    program: (opts: ComponentResourceOptions, dns1035: () => string) => Promise<Record<string, any> | void>,
     assertions: (context: { result?: automation.UpResult; kubeconfig: KubeConfig }) => void,
 ) {
     const kubeconfig = new KubeConfig();

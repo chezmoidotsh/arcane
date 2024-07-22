@@ -45,7 +45,9 @@ lint:
         - markdownlint@0.41.0
         - osv-scanner@1.8.2
         - oxipng@9.1.1
-        - prettier@3.3.2
+        - prettier@3.3.2:
+              packages:
+                  - "@trivago/prettier-plugin-sort-imports@4.3.0"
         - renovate@37.429.1
         - ruff@0.5.1
         - shellcheck@0.10.0
