@@ -11,13 +11,13 @@
         "test:coverage": "VITEST_RUN_TYPE=integration:docker vitest run --coverage ."
     },
     "dependencies": {
-        "@chezmoi.sh/core": "workspace:^",
+        "@chezmoi.sh/core": "workspace:*",
         "@pulumi/docker": "^4.5.4",
         "@pulumi/docker-build": "^0.0.4",
         "@pulumi/pulumi": "^3.125.0"
     },
     "devDependencies": {
-        "@catalog.chezmoi.sh/os~alpine-3.19": "workspace:^",
+        "@catalog.chezmoi.sh/os~alpine-3.19": "workspace:*",
         "@types/node": "^20.14.11",
         "typescript": "^5.5.3",
         "vitest": "^2.0.3"

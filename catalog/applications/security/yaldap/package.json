@@ -11,16 +11,18 @@
         "test:coverage": "VITEST_RUN_TYPE=integration:docker vitest run --coverage ."
     },
     "dependencies": {
-        "@chezmoi.sh/core": "workspace:^",
+        "@chezmoi.sh/core": "workspace:*",
         "@pulumi/docker-build": "^0.0.4",
         "@pulumi/kubernetes": "^4.15.0",
-        "@pulumi/kubernetes-gateway.networking.k8s.io": "workspace:^",
+        "@pulumi/kubernetes-gateway.networking.k8s.io": "workspace:*",
         "@pulumi/pulumi": "^3.125.0"
     },
     "devDependencies": {
-        "@catalog.chezmoi.sh/os~alpine-3.19": "workspace:^",
+        "@catalog.chezmoi.sh/os~alpine-3.19": "workspace:*",
         "@types/node": "^20.14.11",
+        "@types/tmp": "^0.2.6",
         "ldapts": "^7.1.0",
+        "tmp": "^0.2.3",
         "typescript": "^5.5.3",
         "vitest": "^2.0.3"
     }

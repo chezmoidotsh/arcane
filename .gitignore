@@ -385,6 +385,9 @@ pip-selfcheck.json
 
 # End of https://www.toptal.com/developers/gitignore/api/node,venv,dotenv,python,terraform,visualstudiocode,direnv
 
+# Ignore PNPM store
+.pnpm-store/
+
 # Don't ignore some files
 !.devcontainer/
 !.envrc

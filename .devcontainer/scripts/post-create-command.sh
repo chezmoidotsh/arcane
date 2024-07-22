@@ -42,8 +42,8 @@ run_command "Activate mise" : &&
 run_command "Install all dependencies" -- mise install --yes --quiet
 run_command "Allowing direnv" -- direnv allow
 run_command "Trust root mise file" -- mise trust
-run_command "Install Yarn" -- "(mkdir -p .direnv/corepack/$(cat /etc/machine-id) && corepack enable --install-directory=.direnv/corepack/$(cat /etc/machine-id) && corepack install)"
-run_command "Install all Node.js dependencies" -- "(.direnv/corepack/$(cat /etc/machine-id)/yarn install)"
+run_command "Install package manager" -- "(mkdir -p .direnv/corepack/$(cat /etc/machine-id) && corepack enable --install-directory=.direnv/corepack/$(cat /etc/machine-id) && corepack install)"
+run_command "Install all Node.js dependencies" -- "(.direnv/corepack/$(cat /etc/machine-id)/pnpm install)"
 run_command "Logout to Docker (avoid crashing issues)" -- docker logout
 run_command "Configure Docker buildx with the local registry" -- docker buildx create --use --name pulumi-buildkit --config /etc/docker/pulumi-buildkitd.toml --driver-opt network=container:atlas_vscode --bootstrap
 
