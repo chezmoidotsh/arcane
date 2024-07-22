@@ -82,7 +82,7 @@ const adguardhome = new AdGuardHome("agduardhome", {
 
 One of my visions is to provide a secure environment for all applications that I run at home. This is why all images are
 built locally, why all dependencies, when it make sense, are pinned, and why all images are scanned for vulnerabilities
-before running them (see [my Pulumi policy packs](../../../../lib/policy-pack/)).
+before running them (see [my Pulumi policy packs](../../../../src/policy-pack/)).
 However, even with all these precautions, I'm not a security expert, so I can't guarantee that this project is 100%
 secure.
 
