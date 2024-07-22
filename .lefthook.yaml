@@ -31,8 +31,6 @@ commit-msg:
     commands:
         commitlint-check:
             run: commitlint --edit
-            skip:
-                - run: '! test -f "$(git rev-parse --show-toplevel)/.git/COMMIT_EDITMSG"'
 
 pre-push:
     commands:
