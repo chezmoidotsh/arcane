@@ -13,14 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ----------------------------------------------------------------------------
+# trunk-ignore-all(shellcheck/SC2312)
 
 # run_command - Run a command in a more visually appealing way
 function run_command() {
-	local temp_dir="$(mktemp -d)"
+	local temp_dir
+	temp_dir="$(mktemp -d)"
 
 	local stdout="${temp_dir}/stdout"
 	local stderr="${temp_dir}/stderr"
 	local exit_code="${temp_dir}/exit_code"
+	# trunk-ignore(shellcheck/SC2064): we want to expand the temp_dir variable now and not when the trap is executed
 	trap "rm --recursive --force ${temp_dir}" RETURN
 
 	cat <<EOS >"${temp_dir}/cmdline"
@@ -30,7 +33,8 @@ EOS
 	local title="${1}"
 	gum spin --title "${title}" --spinner minidot --spinner.foreground "#F1C40F" -- sh "${temp_dir}/cmdline"
 
-	local exit_code=$(cat "${exit_code}")
+	local exit_code
+	exit_code=$(cat "${exit_code}")
 	if [[ ${exit_code} -eq 0 ]]; then
 		gum style "$(gum style --foreground '#2ECC71' '✓') ${title}"
 		if [[ -s ${stdout} ]] || [[ -s ${stderr} ]]; then

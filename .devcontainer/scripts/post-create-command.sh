@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ----------------------------------------------------------------------------
+# trunk-ignore-all(shellcheck/SC2312)
+
 source /usr/local/share/atlas-utils.lib.sh
 
 cat <<'EOF' | gum style --border rounded --padding "1 2" --foreground '#3498DB' --border-foreground '#3498DB'
@@ -24,10 +26,19 @@ EOF
 echo
 
 run_command "Synchronizing git submodules" -- git submodule update --init --recursive
-run_command "Activate mise" : \
-  && (echo; echo 'eval "$(/usr/local/bin/mise activate zsh)"') >> ~/.zshrc \
-  && (echo; echo 'eval "$(/usr/local/bin/mise activate bash)"') >> ~/.bashrc \
-  && source ~/.bashrc
+run_command "Activate mise" : &&
+	(
+		echo
+		# trunk-ignore(shellcheck/SC2016): we don't want to expand the variable as it is used in the shell rc
+		echo 'eval "$(/usr/local/bin/mise activate zsh)"'
+	) >>~/.zshrc &&
+	(
+		echo
+		# trunk-ignore(shellcheck/SC2016): we don't want to expand the variable as it is used in the shell rc
+		echo 'eval "$(/usr/local/bin/mise activate bash)"'
+	) >>~/.bashrc &&
+	# trunk-ignore(shellcheck/SC1090): we want shellcheck to follow this source
+	source ~/.bashrc
 run_command "Install all dependencies" -- mise install --yes --quiet
 run_command "Allowing direnv" -- direnv allow
 run_command "Trust root mise file" -- mise trust
@@ -37,7 +48,7 @@ run_command "Logout to Docker (avoid crashing issues)" -- docker logout
 run_command "Configure Docker buildx with the local registry" -- docker buildx create --use --name pulumi-buildkit --config /etc/docker/pulumi-buildkitd.toml --driver-opt network=container:atlas_vscode --bootstrap
 
 # Run commands freshly installed
-run_command "Configure git hooks" -- $(mise which lefthook) install
+run_command "Configure git hooks" -- "$(mise which lefthook)" install
 
 # Check if git user and email are set
 if [[ -z "$(git config user.name)" ]] && [[ -z "$(git config user.email)" ]] && [[ -z "$(git config --global user.name)" ]] && [[ -z "$(git config --global user.email)" ]]; then

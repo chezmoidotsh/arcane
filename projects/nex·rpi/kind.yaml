@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ----------------------------------------------------------------------------
+---
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 containerdConfigPatches:
-- |-
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."oci.local.chezmoi.sh:5000"]
-    endpoint = ["http://oci.local.chezmoi.sh:5000"]
-  [plugins."io.containerd.grpc.v1.cri".registry.configs."oci.local.chezmoi.sh:5000".tls]
-    insecure_skip_verify = true
+    - |-
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."oci.local.chezmoi.sh:5000"]
+          endpoint = ["http://oci.local.chezmoi.sh:5000"]
+        [plugins."io.containerd.grpc.v1.cri".registry.configs."oci.local.chezmoi.sh:5000".tls]
+          insecure_skip_verify = true
 nodes:
-- role: control-plane
+    - role: control-plane
