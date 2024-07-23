@@ -2,7 +2,7 @@
 <h1 align="center">
   chezmoi.sh · Atlas
   <br/>
-  <img src="assets/159c3cee-7092-4f4c-8b32-cd5c96466c69.png" alt="Bernese Mountain Dog as logo" height="250">
+  <img src=".github/assets/159c3cee-7092-4f4c-8b32-cd5c96466c69.png" alt="Bernese Mountain Dog as logo" height="250">
 </h1>
 
 <h4 align="center">Atlas - My homelab infrastructure as-code</h4>

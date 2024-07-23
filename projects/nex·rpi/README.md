@@ -13,7 +13,7 @@
 <!-- trunk-ignore-begin(markdown-link-check/404) -->
 
 <a href="#ℹ%EF%B8%8F-about">About</a> ·
-<a href="#%EF%B8%8F-mission-critcal-services">Services</a> ·
+<a href="#%EF%B8%8F-mission-critical-services">Services</a> ·
 <a href="#-how-to-use--how-to-develop-on-it">How to use</a> ·
 <a href="#-disaster-recovery-plan-drp">Disaster Recovery Plan (DRP)</a> ·
 <a href="#%EF%B8%8F-roadmap">Roadmap</a> ·
@@ -29,11 +29,13 @@
 
 ## ℹ️ About
 
-Nex · RPi is a project that aims to transform a Raspberry Pi 5 into the most critical component of my homelab.
+Nex·RPi is a project that aims to transform a Raspberry Pi 5 into the most critical component of my homelab.
 This project integrates several essential components to allow other projects to be deployed and managed securely,
 without[^1] the need of third-party services.
 
-## 🛠️ Mission-Critcal services
+## 🛠️ Mission-Critical services
+
+![Architecture diagram](./assets/architecture.svg)
 
 ### 🌐 Networking
 
@@ -76,7 +78,7 @@ without[^1] the need of third-party services.
     ❗**Why is it mission-critical?** All Docker images used by other services are in this registry, and without it, no
     service can be deployed.
 
--   **Secrets vault based on ??**: Stores all secrets used by other services in a secure way.
+-   **Secrets vault based on [kubevault](https://github.com/chezmoi-sh/kubevault)**: Stores all secrets used by other services in a secure way.
 
     **Why is it mission-critical?** It ensures that all secrets are stored securely and can be accessed by services that
     need them with the right ACLs.

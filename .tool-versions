@@ -1,6 +1,7 @@
 cargo:git-absorb                    latest
 direnv                              latest
 go:github.com/jesseduffield/lazygit latest
+go:oss.terrastruct.com/d2           latest
 jq                                  latest
 kind                                latest
 kubectl                             latest

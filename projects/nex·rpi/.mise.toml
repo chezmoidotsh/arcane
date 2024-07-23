@@ -35,3 +35,7 @@ run = "kind get kubeconfig --name nexrpi-kubernetes | sed 's/127.0.0.1:.*/nexrpi
 [tasks."kind:delete"]
 description = "Deletes the kind cluster for nex·rpi"
 run = "kind delete cluster --name nexrpi-kubernetes"
+
+[tasks."doc:generate:diagram"]
+description = "Generates the architecture diagram for nex·rpi"
+run = "d2 --layout elk --sketch architecture.d2 assets/architecture.svg"

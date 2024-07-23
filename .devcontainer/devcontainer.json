@@ -105,7 +105,8 @@
                 "psioniq.psi-header",
                 "redhat.vscode-yaml",
                 "visualstudioexptteam.vscodeintellicode",
-                "vitest.explorer"
+                "vitest.explorer",
+                "Terrastruct.d2"
             ]
         }
     },
