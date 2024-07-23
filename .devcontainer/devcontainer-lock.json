@@ -24,11 +24,6 @@
       "version": "1.2.0",
       "resolved": "ghcr.io/devcontainers/features/rust@sha256:87e1306eef9c1bbc3896e65af91c520f2e78f520d1c2e183ee27c2b11a9397ef",
       "integrity": "sha256:87e1306eef9c1bbc3896e65af91c520f2e78f520d1c2e183ee27c2b11a9397ef"
-    },
-    "ghcr.io/georgofenbeck/features/lazygit-linuxbinary:1": {
-      "version": "1.0.0",
-      "resolved": "ghcr.io/georgofenbeck/features/lazygit-linuxbinary@sha256:5f95752dbaf9a2798039e7cfd09887dca886654899de5c3c257d870c74230523",
-      "integrity": "sha256:5f95752dbaf9a2798039e7cfd09887dca886654899de5c3c257d870c74230523"
     }
   }
 }

@@ -18,3 +18,10 @@ git:
         signOff: true
     overrideGpg: true
     parseEmoji: true
+customCommands:
+    - command: git cz --signoff --gpg-sign
+      context: files
+      description: Run commitizen to commit files
+      key: c
+      loadingText: Opening git cz - Loading...
+      subprocess: true

@@ -131,8 +131,7 @@
         "ghcr.io/devcontainers/features/rust:1.2.0": {},
         "ghcr.io/devcontainers-contrib/features/zsh-plugins:0": {
             "plugins": "direnv docker node yarn"
-        },
-        "ghcr.io/georgofenbeck/features/lazygit-linuxbinary:1": {}
+        }
     },
     "postCreateCommand": "/usr/local/share/post-create-command.sh",
     "postStartCommand": "/usr/local/share/post-start-command.sh",

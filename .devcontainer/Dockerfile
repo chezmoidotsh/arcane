@@ -68,6 +68,6 @@ COPY scripts/atlas-utils.lib.sh /usr/local/share/atlas-utils.lib.sh
 COPY --chmod=755 scripts/post-create-command.sh /usr/local/share/post-create-command.sh
 COPY --chmod=755 scripts/post-start-command.sh /usr/local/share/post-start-command.sh
 
-COPY config/home.vscode..config.lazygit.config.yaml /home/vscode/.config/lazygit/config.yaml
+COPY --chown=vscode:vscode config/home.vscode..config.lazygit.config.yaml /home/vscode/.config/lazygit/config.yml
 COPY config/etc.docker.pulumi-buildkitd.toml /etc/docker/pulumi-buildkitd.toml
 COPY first-run-notice.txt /usr/local/etc/vscode-dev-containers/first-run-notice.txt

@@ -8,10 +8,14 @@
     "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
     "config": {
         "commitizen": {
-            "path": "@commitlint/cz-commitlint"
+            "path": "node_modules/cz-git"
         }
     },
     "devDependencies": {
+        "@commitlint/cli": "^19.3.0",
+        "commitizen": "^4.3.0",
+        "cz-git": "^1.9.4",
+        "czg": "^1.9.4",
         "typescript": "^5.5.3",
         "vitest": "^2.0.3"
     },
