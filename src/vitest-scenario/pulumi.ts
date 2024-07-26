@@ -18,7 +18,27 @@ import { randomUUID } from "crypto";
 import tmp from "tmp";
 import { TestOptions, afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { automation } from "@pulumi/pulumi";
+import { Output, automation } from "@pulumi/pulumi";
+
+/**
+ * The `PulumiScenarioOptions` interface contains all options required to create a new
+ * Pulumi scenario on Pulumi.
+ */
+export interface PulumiScenarioOptions extends TestOptions {
+    /**
+     * The expected result of the stack update operation.
+     * @default "succeeded"
+     */
+    expectedResult?: automation.UpdateResult;
+    /**
+     * A callback to be executed when the operation produces output.
+     */
+    onOutput?: (out: string) => void;
+    /**
+     * Print detailed debugging output during resource operations.
+     * */
+    debug?: boolean;
+}
 
 /**
  * Pulumi scenario is an extension of the `describe` vitest function that
@@ -41,9 +61,9 @@ import { automation } from "@pulumi/pulumi";
  */
 export function pulumiScenario(
     name: string,
-    options: TestOptions & { expectedResult?: automation.UpdateResult },
+    options: PulumiScenarioOptions,
     program: automation.PulumiFn,
-    assertions: (context: { result?: automation.UpResult }) => void,
+    assertions?: (context: { result?: automation.UpResult }) => void,
 ) {
     describe(name, options, () => {
         const tmpdir = tmp.dirSync({ unsafeCleanup: true });
@@ -70,7 +90,7 @@ export function pulumiScenario(
         let context: { result?: automation.UpResult } = {};
 
         beforeAll(async () => {
-            const result = await stack.then((s) => s.up());
+            const result = await stack.then((s) => s.up({ onOutput: options.onOutput, debug: options.debug }));
             if (result.summary.result != "succeeded") {
                 console.info(result.stdout);
                 console.error(result.stderr);
@@ -91,6 +111,14 @@ export function pulumiScenario(
             const result = context.result;
             expect(result?.summary.result).toEqual(options.expectedResult ?? "succeeded");
         });
-        assertions(context);
+        assertions?.(context);
     });
+}
+
+/**
+ * Promisify a Pulumi output.
+ * @param output - The Pulumi output to be promisified.
+ */
+export function promisifyPulumiOutput<T>(output?: Output<T>): Promise<T> {
+    return new Promise((resolve) => output?.apply(resolve));
 }

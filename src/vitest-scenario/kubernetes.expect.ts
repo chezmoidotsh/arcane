@@ -14,7 +14,6 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-import { expect } from "vitest";
 
 /**
  * Extends the `expect` vitest object with custom matchers to validate Kubernetes objects
@@ -40,7 +39,6 @@ export function toHaveCompliantLabels(received: any) {
         "app.kubernetes.io/instance",
         "app.kubernetes.io/managed-by",
         "app.kubernetes.io/name",
-        "app.kubernetes.io/part-of",
         "app.kubernetes.io/version",
         "pulumi.com/project",
         "pulumi.com/stack",

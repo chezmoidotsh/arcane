@@ -17,15 +17,12 @@
 import { KubeConfig } from "@kubernetes/client-node";
 import { randomUUID } from "crypto";
 import tmp from "tmp";
-import { TestOptions } from "vitest";
 
 import * as kubernetes from "@pulumi/kubernetes";
+import * as pulumi from "@pulumi/pulumi";
 import { ComponentResourceOptions, automation } from "@pulumi/pulumi";
 
-import { toHaveCompliantLabels, toHaveCompliantSecurity } from "./kubernetes.expect";
-import { pulumiScenario } from "./pulumi";
-
-export { toHaveCompliantLabels, toHaveCompliantSecurity };
+import { PulumiScenarioOptions, pulumiScenario } from "./pulumi";
 
 /**
  * `fakeKubernetesScenario` sets up a test scenario using a fake Kubernetes
@@ -48,9 +45,9 @@ export { toHaveCompliantLabels, toHaveCompliantSecurity };
  */
 export function fakeKubernetesScenario(
     name: string,
-    options: TestOptions & { expectedResult?: automation.UpdateResult },
-    program: (opts: ComponentResourceOptions, dns1035: () => string) => Promise<Record<string, any> | void>,
-    assertions: (context: { result?: automation.UpResult }) => void,
+    options: PulumiScenarioOptions,
+    program: (opts: ComponentResourceOptions, randomDNS1035: () => string) => Promise<Record<string, any> | void>,
+    assertions?: (context: { result?: automation.UpResult }) => void,
 ) {
     pulumiScenario(
         `${name} (on fake kubernetes)`,
@@ -71,7 +68,7 @@ export function fakeKubernetesScenario(
                         }),
                     ],
                 },
-                randomName,
+                randomDNS1035,
             );
         },
         assertions,
@@ -89,8 +86,9 @@ export function fakeKubernetesScenario(
  * @param name - The name of the test scenario.
  * @param options - The test options, including an optional expected result.
  * @param program - The Pulumi program function. It receives options for use
- *                  inside a component resource and a function that generates DNS-1035
- *                  compliant names.
+ *                  inside a component resource, the namespace where the
+ *                  resources should be created and a function that generates
+ *                  DNS-1035 compliant names
  * @param assertions - The assertions to be executed after the Pulumi stack is created.
  *                     This is a callback function that receives a context object containing
  *                     the result of the stack update operation and the kubeconfig object,
@@ -99,9 +97,13 @@ export function fakeKubernetesScenario(
  */
 export function kubernetesScenario(
     name: string,
-    options: TestOptions & { expectedResult?: automation.UpdateResult },
-    program: (opts: ComponentResourceOptions, dns1035: () => string) => Promise<Record<string, any> | void>,
-    assertions: (context: { result?: automation.UpResult; kubeconfig: KubeConfig }) => void,
+    options: PulumiScenarioOptions,
+    program: (
+        opts: ComponentResourceOptions,
+        namespace: pulumi.Output<string>,
+        randomDNS1035: () => string,
+    ) => Promise<Record<string, any> | void>,
+    assertions?: (context: { result?: automation.UpResult; kubeconfig: KubeConfig }) => void,
 ) {
     const kubeconfig = new KubeConfig();
     kubeconfig.loadFromDefault();
@@ -111,33 +113,32 @@ export function kubernetesScenario(
         `${name} (on real kubernetes${options.skip ? "" : ` - '${kubeconfig.currentContext}'`})`,
         options,
         async () => {
+            const provider = new kubernetes.Provider(randomUUID(), {
+                kubeconfig: kubeconfig.exportConfig(),
+                enableServerSideApply: true,
+            });
             const namespace = new kubernetes.core.v1.Namespace(
                 randomUUID(),
-                { metadata: { name: randomName(), annotations: { "scenario.pulumi.dev/description": name } } },
-                { provider: new kubernetes.Provider(randomUUID(), { kubeconfig: kubeconfig.exportConfig() }) },
+                { metadata: { name: randomDNS1035(), annotations: { "scenario.pulumi.dev/description": name } } },
+                { provider: provider },
             );
 
             return await program(
-                {
-                    providers: [
-                        new kubernetes.Provider(randomUUID(), {
-                            kubeconfig: kubeconfig.exportConfig(),
-                            namespace: namespace.metadata.name,
-                        }),
-                    ],
-                    dependsOn: [namespace],
-                },
-                randomName,
+                { providers: [provider], dependsOn: [namespace] },
+                namespace.metadata.name,
+                randomDNS1035,
             );
         },
-        (context) => {
-            // NOTE: we must not deference the `context` object, as it is a
-            //       reference to an object that will be updated by the
-            //       `beforeAll` function, later on.
-            const k_context = context as { result?: automation.UpResult; kubeconfig: KubeConfig };
-            k_context.kubeconfig = kubeconfig;
-            assertions(k_context);
-        },
+        assertions
+            ? (context: { result?: automation.UpResult }) => {
+                  // NOTE: we must not deference the `context` object, as it is a
+                  //       reference to an object that will be updated by the
+                  //       `beforeAll` function, later on.
+                  const k_context = context as { result?: automation.UpResult; kubeconfig: KubeConfig };
+                  k_context.kubeconfig = kubeconfig;
+                  assertions(k_context);
+              }
+            : undefined,
     );
 }
 
@@ -151,7 +152,7 @@ export function kubernetesScenario(
  *         - a 8 characters long hexadecimal number
  *         - a 2 characters long hexadecimal number
  */
-function randomName(): string {
+function randomDNS1035(): string {
     const p1 = "abcdef"[Math.floor(Math.random() * 6)];
     const p2 = Math.floor(Math.random() * 0x10000000)
         .toString(16)

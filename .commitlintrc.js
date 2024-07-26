@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 vscode (you@you.you)
+ * Copyright (C) 2024 Alexandre Nicolaie (xunleii@users.noreply.github.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -278,6 +278,10 @@ const scopes = [
     {
         name: "policy-pack     - Anything related to the policy pack (@chezmoi.io/policy-pack)",
         value: "policy-pack",
+    },
+    {
+        name: "vitest-scenario - Anything related to testing scenario package (@pulumi.chezmoi.sh/vitest-scenario)",
+        value: "vitest-scenario",
     },
     {
         name: "project:nex·rpi - Anything related to the Nex·RPI project",

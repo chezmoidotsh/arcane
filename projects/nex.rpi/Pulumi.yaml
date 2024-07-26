@@ -12,24 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ----------------------------------------------------------------------------
-source_up_if_exists
-
-# - Load the NodeJS environment
-layout node
-(
-    mkdir -p "$(direnv_layout_dir)/corepack/$(cat /etc/machine-id)"
-    corepack enable --install-directory=$(direnv_layout_dir)/corepack/$(cat /etc/machine-id)
-)
-
-# - Custom PATH entries
-PATH_add "$(direnv_layout_dir)/corepack/$(cat /etc/machine-id)"
-PATH_add "${PWD}/scripts"
-
-# - Custom MAN pages
-MANPATH_add "${PWD}/vendor/github.com/elasticdog/transcrypt/man"
-
-# - Environment variables
-export ATLAS_ROOTDIR="${PWD}"
-
-# export PULUMI_PREFER_YARN="true"
-export PULUMI_CONFIG_PASSPHRASE= # TODO: set an empty passphrase for testing purposes only
+---
+name: nex.rpi
+runtime: nodejs
+description: Raspberry Pi hosted services for all my homelab's critical services
+config:
+    pulumi:wrapper:
+        value:
+            pulumi:policy-pack:docker.security:
+                trivy-container-scan:
+                    enforcementLevel: advisory
+                    severityThreshold: high

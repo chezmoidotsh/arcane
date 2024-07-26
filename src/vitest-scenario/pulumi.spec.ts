@@ -14,15 +14,23 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-import { defineConfig } from "vitest/config";
+import { describe, expect, it } from "vitest";
 
-export default defineConfig({
-    test: {
-        coverage: {
-            provider: "v8",
-            exclude: ["**/index.ts", "vitest.config.mts"],
+import { pulumiScenario } from "./pulumi";
+
+describe("#pulumiScenario", async () => {
+    pulumiScenario(
+        "should run a pulumi program",
+        { timeout: 30 * 1000 },
+        // -- Pulumi program
+        async () => {
+            return { helloWorld: "Hello, World!" };
         },
-        exclude: ["**/node_modules/**", "vitest.config.mts"],
-        includeSource: ["**/*.ts"],
-    },
+        // -- Assertions
+        async (context) => {
+            it("should output 'Hello, World!'", async () => {
+                expect(context.result?.outputs.helloWorld.value).toEqual("Hello, World!");
+            });
+        },
+    );
 });

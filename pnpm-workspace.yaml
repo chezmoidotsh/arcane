@@ -14,11 +14,7 @@
 # ----------------------------------------------------------------------------
 ---
 packages:
-    - catalog
     - catalog/**
-    - projects/*
+    - projects/**
     - scripts/src/**
-    - src/core
-    - src/core/kubernetes/crds/**
-    - src/policy-pack
-    - src/policy-pack/**
+    - src/**

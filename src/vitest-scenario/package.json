@@ -1,0 +1,36 @@
+{
+    "name": "@pulumi.chezmoi.sh/vitest-scenario",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Vitest scenarii for Pulumi",
+    "keywords": [
+        "vitest",
+        "pulumi",
+        "test"
+    ],
+    "repository": "https://github.com/chezmoi-sh/atlas",
+    "license": "Apache-2.0",
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "scripts": {
+        "lint": "trunk fmt .",
+        "test": "vitest run",
+        "test:coverage": "vitest run --coverage",
+        "test:dev": "vitest --coverage --ui"
+    },
+    "devDependencies": {
+        "@kubernetes/client-node": "^0.21.0",
+        "@pulumi.chezmoi.sh/core": "workspace:*",
+        "@pulumi/kubernetes": "^4.15.0",
+        "@pulumi/pulumi": "^3.126.0",
+        "@types/tmp": "^0.2.6",
+        "@vitest/coverage-v8": "^2.0.4",
+        "@vitest/ui": "^2.0.4",
+        "tmp": "^0.2.3",
+        "vitest": "^2.0.4"
+    },
+    "pnpm": {
+        "overrides": {
+            "tough-cookie@<4.1.3": ">=4.1.3"
+        }
+    }
+}
