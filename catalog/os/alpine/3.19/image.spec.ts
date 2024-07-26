@@ -1,63 +1,38 @@
 import { randomUUID } from "crypto";
-import tmp from "tmp";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { automation } from "@pulumi/pulumi";
+import * as pulumi from "@pulumi/pulumi";
+
+import { pulumiScenario } from "@pulumi.chezmoi.sh/vitest-scenario/pulumi";
 
 import { AlpineImage } from "./image";
 
-const isIntegration = (process.env.VITEST_RUN_TYPE ?? "").includes("integration:docker");
-const timeout = 60 * 1000; // 1 minute
+describe("(OS) Alpine 3.19", () => {
+    const alpineTag = `oci.local.chezmoi.sh:5000/os/alpine:${randomUUID()}`;
 
-const AlpineImageTag = `${process.env.CI_OCI_REGISTRY ?? "oci.local.chezmoi.sh:5000"}/os/alpine:${randomUUID()}`;
-
-describe.runIf(isIntegration)("(OS) Alpine 3.19", () => {
-    describe("AlpineImage", () => {
-        describe("when it is built", { timeout }, () => {
-            // -- Prepare Pulumi execution --
-            const program = async () => {
-                const alpine = new AlpineImage(randomUUID(), {
-                    builder: { name: "pulumi-buildkit" },
-                    exports: [{ image: { ociMediaTypes: true, push: true } }],
-                    push: false,
-                    tags: [AlpineImageTag],
-                });
-                return { ...alpine };
-            };
-
-            let stack: automation.Stack;
-            let result: automation.UpResult;
-            beforeAll(async () => {
-                const tmpdir = tmp.dirSync();
-                stack = await automation.LocalWorkspace.createOrSelectStack(
-                    {
-                        stackName: "alpine",
-                        projectName: "alpine",
-                        program,
-                    },
-                    {
-                        secretsProvider: "passphrase",
-                        projectSettings: {
-                            name: "alpine",
-                            runtime: "nodejs",
-                            backend: {
-                                url: `file://${tmpdir.name}`,
-                            },
-                        },
-                    },
-                );
-                result = await stack.up();
-            }, timeout);
-
-            afterAll(async () => {
-                await stack.destroy();
-            }, timeout);
-
-            // -- Assertions --
-            it("should be successfully built", () => {
-                expect(result.summary.result).toBe("succeeded");
-                expect(result.outputs?.ref.value).toContain(AlpineImageTag);
+    pulumiScenario(
+        "when the image is built",
+        { timeout: 15 * 60 * 1000 },
+        // -- Pulumi program
+        async () => {
+            const alpine = new AlpineImage(randomUUID(), {
+                builder: { name: "pulumi-buildkit" },
+                exports: [{ image: { ociMediaTypes: true, push: true } }],
+                push: false,
+                tags: [alpineTag],
             });
-        });
-    });
+            return { ref: alpine.ref };
+        },
+        // -- Assertions
+        async (context) => {
+            it("should be pushed the image in the registry", async () => {
+                const ref = context.result?.outputs.ref.value as string | undefined;
+                expect(ref).toBeDefined();
+
+                const [tag, digest] = ref!.split("@");
+                expect(tag).toBe(alpineTag);
+                expect(digest).not.toBe("");
+            });
+        },
+    );
 });

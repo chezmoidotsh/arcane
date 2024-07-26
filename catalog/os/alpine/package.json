@@ -1,0 +1,16 @@
+{
+    "name": "@catalog.chezmoi.sh/os~alpine",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Alpine Linux is a security-oriented, lightweight Linux distribution based on musl libc and busybox.",
+    "license": "Apache-2.0",
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "scripts": {
+        "lint": "trunk fmt ."
+    },
+    "dependencies": {
+        "@pulumi.chezmoi.sh/core": "workspace:*",
+        "@pulumi/docker-build": "~0.0.4",
+        "@pulumi/pulumi": "^3.120.0"
+    }
+}

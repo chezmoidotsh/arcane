@@ -6,17 +6,17 @@
     "license": "Apache-2.0",
     "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
     "scripts": {
-        "dev": "VITEST_RUN_TYPE=integration:docker vitest --ui --coverage .",
-        "test": "VITEST_RUN_TYPE=integration:docker vitest run .",
-        "test:coverage": "VITEST_RUN_TYPE=integration:docker vitest run --coverage ."
+        "lint": "trunk fmt .",
+        "test": "vitest run .",
+        "test:coverage": "vitest run --coverage .",
+        "test:dev": "vitest run --coverage --ui ."
     },
     "dependencies": {
-        "@chezmoi.sh/core": "workspace:*",
-        "@pulumi/docker-build": "^0.0.4",
-        "@pulumi/pulumi": "^3.125.0"
+        "@catalog.chezmoi.sh/os~alpine": "workspace:*",
+        "@pulumi/docker-build": "~0.0.4",
+        "@pulumi/pulumi": "^3.120.0"
     },
     "devDependencies": {
-        "typescript": "^5.5.3",
-        "vitest": "^2.0.3"
+        "@pulumi.chezmoi.sh/vitest-scenario": "workspace:*"
     }
 }

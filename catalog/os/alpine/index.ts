@@ -14,32 +14,27 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-import * as path from "path";
-
 import * as buildkit from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
 
-import * as alpine from "@catalog.chezmoi.sh/os~alpine";
+import { optsWithProvider } from "@pulumi.chezmoi.sh/core/pulumi";
 
-import { Version } from "./version";
+export abstract class AlpineImage extends buildkit.Image {
+    /**
+     * Guard property to known the OS of the image.
+     */
+    public readonly os = "alpine";
 
-export { Version };
+    constructor(name: string, args: buildkit.ImageArgs, opts?: pulumi.ComponentResourceOptions) {
+        super(name, args, optsWithProvider(buildkit.Provider, opts));
+    }
+}
 
 /**
- * Alpine is a lightweight Linux distribution based on musl libc and BusyBox.
+ * Type guard to check if an image is an Alpine image.
+ * @param image image to check if it is an Alpine image.
+ * @returns true if the image is an Alpine image, false otherwise.
  */
-export class AlpineImage extends alpine.AlpineImage {
-    constructor(name: string, args: buildkit.ImageArgs, opts?: pulumi.ComponentResourceOptions) {
-        super(
-            name,
-            {
-                ...args,
-
-                // Build the image
-                context: { location: __dirname },
-                dockerfile: { location: path.join(__dirname, "Dockerfile") },
-            },
-            opts,
-        );
-    }
+export function isAlpineImage(image: buildkit.Image): image is AlpineImage {
+    return "os" in image && image.os === "alpine";
 }
