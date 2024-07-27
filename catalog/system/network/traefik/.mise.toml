@@ -1,0 +1,69 @@
+# Copyright (C) 2024 vscode (you@you.you)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ----------------------------------------------------------------------------
+
+[env]
+K3D_CLUSTER_NAME = "atlas-catalog-traefik"
+KUBECONFIG = "{{env.DIRENV_LAYOUTDIR}}/kubernetes/{{env.K3D_CLUSTER_NAME}}.kubeconfig"
+
+[tasks."utils:generate"]
+description = "Generate all Traefik resources and types"
+depends = ["utils:configuration:generate", "utils:crds:generate:*"]
+
+[tasks."utils:configuration:generate"]
+description = "Generate Traefik configurations from the JSON Schema"
+run = [
+  '''
+curl -sL https://json.schemastore.org/traefik-v2.json \
+| yq --output-format json \
+| jq 'del(..|nulls)' \
+| jq '"import { asConst } from \"json-schema-to-ts\";\n\nexport const TraefikV2JsonSchema = asConst(\(.));\n"' --raw-output \
+> json-schema.ts
+''',
+  "trunk fmt json-schema.ts",
+]
+
+[tasks."utils:crds:generate:resource"]
+description = "Import all Traefik CRDs"
+run = [
+  '''
+curl -sL https://raw.githubusercontent.com/traefik/traefik/v$(jq .version package.json --raw-output)/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml \
+| yq --output-format json \
+| jq 'del(..|nulls)' \
+| jq '"export const \(.metadata.name | gsub("[^a-zA-Z]"; "")) = \(.);\n"' --raw-output \
+> kubernetes.crds.gen.ts
+''',
+  "trunk fmt kubernetes.crds.gen.ts",
+]
+
+[tasks."utils:crds:generate:types"]
+description = "Generate all Traefik types"
+run = [
+  '''
+curl -sL https://raw.githubusercontent.com/traefik/traefik/v$(jq .version package.json --raw-output)/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml \
+| crd2pulumi --nodejs \
+    --nodejsName gateway.networking.k8s.io \
+    --nodejsPath types/ \
+    --force -
+''',
+  "rm -f types/package.json types/tsconfig.json types/README.md",
+]
+
+# Avoid installing Traefik in the kind cluster
+[tasks."k3d:prepare:traefik-ingress"]
+run = []
+
+[tools]
+k3d = "latest"
+"go:github.com/pulumi/crd2pulumi" = "latest"

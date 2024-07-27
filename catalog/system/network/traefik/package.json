@@ -1,0 +1,35 @@
+{
+    "name": "@catalog.chezmoi.sh/system.network~traefik",
+    "version": "3.1.0",
+    "private": true,
+    "description": "Traefik is a modern HTTP reverse proxy and load balancer that makes deploying microservices easy.",
+    "homepage": "https://traefik.io",
+    "repository": "https://github.com/chezmoi-sh/atlas",
+    "license": "Apache-2.0",
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "scripts": {
+        "lint": "trunk fmt .",
+        "test": "vitest run",
+        "test:coverage": "vitest run --coverage",
+        "test:dev": "vitest --coverage --ui"
+    },
+    "dependencies": {
+        "@catalog.chezmoi.sh/system.network~gateway.networking.k8s.io": "workspace:*",
+        "@pulumi.chezmoi.sh/core": "workspace:*",
+        "@pulumi/docker-build": "~0.0.4",
+        "@pulumi/kubernetes": "^4.15.0",
+        "@pulumi/pulumi": "^3.120.0",
+        "json-schema-to-ts": "^3.1.0"
+    },
+    "devDependencies": {
+        "@catalog.chezmoi.sh/os~alpine-3.19": "workspace:*",
+        "@kubernetes/client-node": "^0.21.0",
+        "@pulumi.chezmoi.sh/vitest-scenario": "workspace:*",
+        "@types/node": "^20.14.12",
+        "@types/node-fetch": "^2.6.11",
+        "@types/tmp": "^0.2.6",
+        "node-fetch": "^3.3.2",
+        "tmp": "^0.2.3",
+        "vitest": "^2.0.4"
+    }
+}
