@@ -22,4 +22,4 @@ const _module = {
         }
     },
 };
-pulumi.runtime.registerResourceModule("kubernetes-gateway.networking.k8s.io", "gateway.networking.k8s.io/v1alpha3", _module)
+pulumi.runtime.registerResourceModule("gateway.networking.k8s.io", "gateway.networking.k8s.io/v1alpha3", _module)

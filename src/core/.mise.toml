@@ -15,16 +15,3 @@
 
 [env]
 MISE_CONFIG_ROOT = "{{config_root}}"
-
-[tasks."crds:generate:gateway"]
-description = "Generate the Gateway CRDs"
-run = '''
-curl -sL https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/experimental-install.yaml \
-| crd2pulumi --nodejs \
-    --nodejsName kubernetes-gateway.networking.k8s.io \
-    --nodejsPath ${MISE_CONFIG_ROOT}/kubernetes/crds/gateway.networking.k8s.io \
-    --force -
-'''
-
-[tools]
-"go:github.com/pulumi/crd2pulumi" = "v1.4.0"

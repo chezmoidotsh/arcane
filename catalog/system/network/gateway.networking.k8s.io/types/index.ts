@@ -19,7 +19,7 @@ export {
     gateway,
     types,
 };
-pulumi.runtime.registerResourcePackage("kubernetes-gateway.networking.k8s.io", {
+pulumi.runtime.registerResourcePackage("gateway.networking.k8s.io", {
     version: utilities.getVersion(),
     constructProvider: (name: string, type: string, urn: string): pulumi.ProviderResource => {
         if (type !== "pulumi:providers:crds") {

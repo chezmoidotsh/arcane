@@ -6,7 +6,7 @@ import * as utilities from "./utilities";
 
 export class Provider extends pulumi.ProviderResource {
     /** @internal */
-    public static readonly __pulumiType = 'kubernetes-gateway.networking.k8s.io';
+    public static readonly __pulumiType = 'gateway.networking.k8s.io';
 
     /**
      * Returns true if the given object is an instance of Provider.  This is designed to work even

@@ -1,0 +1,25 @@
+{
+    "name": "@catalog.chezmoi.sh/system.network~gateway.networking.k8s.io",
+    "version": "1.1.0",
+    "private": true,
+    "description": "Gateway API is an official Kubernetes project focused on L4 and L7 routing in Kubernetes.",
+    "homepage": "https://gateway-api.sigs.k8s.io/",
+    "repository": "https://github.com/chezmoi-sh/atlas",
+    "license": "Apache-2.0",
+    "author": "Alexandre Nicolaie <xunleii@users.noreply.github.com>",
+    "scripts": {
+        "lint": "trunk fmt .",
+        "test": "vitest run",
+        "test:coverage": "vitest run --coverage",
+        "test:dev": "vitest --coverage --ui"
+    },
+    "dependencies": {
+        "@pulumi.chezmoi.sh/core": "workspace:*",
+        "@pulumi/kubernetes": "^4.15.0",
+        "@pulumi/pulumi": "^3.120.0"
+    },
+    "devDependencies": {
+        "@kubernetes/client-node": "^0.21.0",
+        "@pulumi.chezmoi.sh/vitest-scenario": "workspace:*"
+    }
+}
