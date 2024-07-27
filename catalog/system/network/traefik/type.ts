@@ -15,6 +15,11 @@
  * ----------------------------------------------------------------------------
  */
 import { FromSchema } from "json-schema-to-ts";
+import _ from "lodash";
+
+import { Input } from "@pulumi/pulumi";
+
+import { objectToArgs } from "@pulumi.chezmoi.sh/core/utils/configuration";
 
 import { TraefikV2JsonSchema } from "./json-schema";
 
@@ -22,29 +27,7 @@ import { TraefikV2JsonSchema } from "./json-schema";
  * Traefik configuration.
  */
 export type TraefikConfiguration = FromSchema<typeof TraefikV2JsonSchema>;
-
-/**
- * Generate CLI arguments from a Traefik configuration.
- * @param configuration Traefik configuration to convert to CLI arguments
- * @returns List of CLI arguments
- */
-export function TraefikConfiguration(configuration: TraefikConfiguration): string[] {
-    return objectToCLI(configuration);
-}
-
-function objectToCLI(obj: any, prefix: string = ""): string[] {
-    const args: string[] = [];
-
-    for (const [key, value] of Object.entries(obj)) {
-        const flag = prefix ? `${prefix}.${key}` : key;
-
-        if (typeof value === "object" && value !== null) {
-            args.push(...objectToCLI(value, flag));
-        } else if (typeof value === "boolean" && value === true) {
-            args.push(`--${flag}`);
-        } else {
-            args.push(`--${flag}=${value}`);
-        }
-    }
-    return args;
-}
+export const TraefikConfiguration = {
+    toCLI: (opts: Parameters<typeof objectToArgs>[1], ...configuration: TraefikConfiguration[]) =>
+        objectToArgs(_.merge({}, ...configuration), opts),
+};

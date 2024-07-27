@@ -288,44 +288,49 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
         );
 
         // -- Step 3: Generate Traefik deployment
-        const flags = TraefikConfiguration({
+        const flags = TraefikConfiguration.toCLI(
+            { transform: (s) => s.toLowerCase() },
             // Default configuration
-            ...{ log: { level: "INFO" } },
+            {
+                log: { level: "INFO" },
 
+                // if the kubernetesIngress provider is enabled, the ingressEndpoint.publishedService is set to the Traefik
+                // service by default
+                ...(args.configuration.providers?.kubernetesIngress
+                    ? {
+                          providers: {
+                              kubernetesIngress: {
+                                  ingressEndpoint: {
+                                      publishedService:
+                                          pulumi.interpolate`${this.metadata.namespace}/${this.metadata.name}` as any,
+                                  },
+                              },
+                          },
+                      }
+                    : {}),
+
+                // if the kubernetesGateway provider is enabled, the statusAddress.service is set to the Traefik service by
+                // default
+                ...(args.configuration.providers?.kubernetesGateway
+                    ? {
+                          providers: {
+                              kubernetesGateway: {
+                                  statusAddress: {
+                                      service: {
+                                          name: this.metadata.name as any,
+                                          namespace: this.metadata.namespace as any,
+                                      },
+                                  },
+                              } as any,
+                          },
+                      }
+                    : {}),
+            },
             // User configuration
-            ...args.configuration,
-
+            args.configuration,
             // Enforced configuration
-            ping: { entryPoint: "traefik" },
-        }) as (string | pulumi.Output<string>)[];
-
-        // NOTE: if the kubernetesIngress provider is enabled, the ingressEndpoint.publishedService is set to the
-        //       Traefik service by default
-        if (
-            args.configuration.providers?.kubernetesIngress &&
-            !flags.filter(
-                (f) =>
-                    typeof f === "string" &&
-                    f.startsWith("--providers.kubernetesIngress.ingressEndpoint.publishedService"),
-            ).length
-        ) {
-            flags.push(
-                pulumi.interpolate`--providers.kubernetesIngress.ingressEndpoint.publishedService=${this.metadata.namespace}/${this.metadata.name}`,
-            );
-        }
-
-        // NOTE: if the kubernetesGateway provider is enabled, the statusAddress.service is set to the Traefik service by default
-        if (
-            args.configuration.providers?.kubernetesGateway &&
-            !flags.filter(
-                (f) => typeof f === "string" && f.startsWith("--providers.kubernetesGateway.statusAddress.service"),
-            ).length
-        ) {
-            flags.push(
-                pulumi.interpolate`--providers.kubernetesGateway.statusAddress.service.name=${this.metadata.name}`,
-                pulumi.interpolate`--providers.kubernetesGateway.statusAddress.service.namespace=${this.metadata.namespace}`,
-            );
-        }
+            { ping: { entryPoint: "traefik" } },
+        );
 
         const image = new TraefikImage(name, args.spec.images.traefik, { parent: this });
         const workload = new kubernetes.apps.v1.Deployment(

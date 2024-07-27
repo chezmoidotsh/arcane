@@ -19,7 +19,9 @@
         "@pulumi/docker-build": "~0.0.4",
         "@pulumi/kubernetes": "^4.15.0",
         "@pulumi/pulumi": "^3.120.0",
-        "json-schema-to-ts": "^3.1.0"
+        "@types/lodash": "^4.17.7",
+        "json-schema-to-ts": "^3.1.0",
+        "lodash": "^4.17.21"
     },
     "devDependencies": {
         "@catalog.chezmoi.sh/os~alpine-3.19": "workspace:*",

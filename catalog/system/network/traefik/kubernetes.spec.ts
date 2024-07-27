@@ -472,11 +472,10 @@ describe("(Network) Traefik", async () => {
         { timeout },
         // -- Program definition
         async (opts, namespace, randomDNS1035) => {
-            const ingressClassName = randomDNS1035();
             const ingressClass = new kubernetes.networking.v1.IngressClass(
                 randomDNS1035(),
                 {
-                    metadata: { namespace, name: ingressClassName },
+                    metadata: { namespace },
                     spec: { controller: "traefik.io/ingress-controller" },
                 },
                 optsWithProvider(kubernetes.Provider, opts),
@@ -488,7 +487,7 @@ describe("(Network) Traefik", async () => {
                     metadata: { namespace },
                     configuration: {
                         entryPoints: { traefik: { address: ":9000" }, web: { address: ":80" } },
-                        providers: { kubernetesIngress: { ingressClass: ingressClassName } },
+                        providers: { kubernetesIngress: { ingressClass: ingressClass.metadata.name as any } },
                         log: { level: "DEBUG" },
                     },
                     spec: {
@@ -506,7 +505,7 @@ describe("(Network) Traefik", async () => {
                 {
                     metadata: { namespace },
                     spec: {
-                        ingressClassName: ingressClassName,
+                        ingressClassName: ingressClass.metadata.name,
                         rules: [
                             {
                                 http: {
@@ -586,8 +585,7 @@ describe("(Network) Traefik", async () => {
                     metadata: { namespace },
                     configuration: {
                         entryPoints: { traefik: { address: ":9000" }, web: { address: ":80" } },
-                        // TODO: handle the case where the provider is empty
-                        providers: { kubernetesGateway: { throttleDuration: "5ms" } },
+                        providers: { kubernetesGateway: {} },
                         log: { level: "DEBUG" },
                     },
                     spec: {
@@ -654,14 +652,13 @@ describe("(Network) Traefik", async () => {
         async (opts, namespace, randomDNS1035) => {
             new TraefikCRDs(opts);
 
-            const _traefik = new Traefik(
+            const traefik = new Traefik(
                 randomDNS1035(),
                 {
                     metadata: { namespace },
                     configuration: {
                         entryPoints: { traefik: { address: ":9000" }, web: { address: ":80" } },
-                        // TODO: handle the case where the provider is empty
-                        providers: { kubernetesCRD: { throttleDuration: "5ms" } },
+                        providers: { kubernetesCRD: {} },
                         log: { level: "DEBUG" },
                     },
                     spec: {
@@ -688,7 +685,7 @@ describe("(Network) Traefik", async () => {
                                 match: "HostRegexp(`^.*$`)",
                                 services: [
                                     {
-                                        name: _traefik.status.resourceRefs.service.metadata.name,
+                                        name: traefik.status.resourceRefs.service.metadata.name,
                                         port: 9000,
                                     },
                                 ],
@@ -699,7 +696,7 @@ describe("(Network) Traefik", async () => {
                 optsWithProvider(kubernetes.Provider, opts),
             );
 
-            return { traefik: _traefik };
+            return { traefik };
         },
         // -- Assertions
         async (context) => {
