@@ -14,49 +14,20 @@
 # ----------------------------------------------------------------------------
 
 [env]
-CATALOG_ROOTDIR = "{{config_root}}"
-HELM_CACHE_HOME = "{{config_root}}/../.direnv/helm/cache"
-HELM_CONFIG_HOME = "{{config_root}}/../.direnv/helm/config"
-HELM_DATA_HOME = "{{config_root}}/../.direnv/helm/data"
-KUBECONFIG = "{{config_root}}/../.direnv/kubeconfig-integ"
+K3D_CLUSTER_NAME = "atlas-catalog"
+KUBECONFIG = "{{env.DIRENV_LAYOUTDIR}}/kubernetes/{{env.K3D_CLUSTER_NAME}}.kubeconfig"
 
-
-[tasks."dev:start"]
-description = "Prepare the development environment"
-run = [
-  "mise run kind:create",
-  "mise run kind:kubeconfig",
-  "mise run kind:prepare",
-]
-
-[tasks."dev:teardown"]
-description = "Tears down the development environment"
-run = "mise run kind:delete"
-
-
-[tasks."kind:create"]
-description = "Starts a kind cluster `atlas-catalog`"
-run = "kind create cluster --name atlas-catalog --config ${CATALOG_ROOTDIR}/kind.yaml"
-
-[tasks."kind:kubeconfig"]
-description = "Gets the kubeconfig for the `atlas-catalog` cluster"
-run = "kind get kubeconfig --name atlas-catalog | sed 's/127.0.0.1:.*/atlas-catalog-control-plane:6443/g' > ${KUBECONFIG}"
-
-[tasks."kind:prepare"]
-description = "Prepares the kind cluster `atlas-catalog`"
-depends = ["kind:prepare:*"]
-
-[tasks."kind:prepare:traefik-ingress"]
-description = "Installs the traefik ingress controller in the kind cluster `atlas-catalog`"
-depends = ["kind:kubeconfig"]
+[tasks."k3d:prepare:traefik-ingress"]
+description = "Installs the traefik ingress controller in the k3d cluster `atlas-catalog`"
 run = [
   "helm repo add traefik https://helm.traefik.io/traefik --force-update",
   "helm repo update",
   '''
     helm upgrade --install traefik \
-        --kube-context kind-atlas-catalog \
+        --kube-context k3d-${K3D_CLUSTER_NAME} \
         --namespace traefik-system --create-namespace \
         --set experimental.kubernetesGateway.enabled=true \
+        --set gateway.enabled=false \
         --set ingressClass.enabled=false \
         --set ports.ldap.expose.default=true \
         --set ports.ldap.exposedPort=389 \
@@ -71,10 +42,3 @@ run = [
         traefik/traefik
     ''',
 ]
-
-[tasks."kind:delete"]
-description = "Deletes the kind cluster `atlas-catalog`"
-run = "kind delete cluster --name atlas-catalog"
-
-[tools]
-helm = "3.15.3"

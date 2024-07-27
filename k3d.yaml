@@ -13,14 +13,26 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 ---
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-containerdConfigPatches:
-    - |-
-        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."oci.local.chezmoi.sh:5000"]
-          endpoint = ["http://oci.local.chezmoi.sh:5000"]
-        [plugins."io.containerd.grpc.v1.cri".registry.configs."oci.local.chezmoi.sh:5000".tls]
-          insecure_skip_verify = true
-name: atlas
-nodes:
-    - role: control-plane
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+network: atlas.chezmoi.sh
+servers: 1
+agents: 0
+options:
+    k3s:
+        extraArgs:
+            # Disable any built-in deployment unnecessary for local development
+            - { arg: --disable=traefik, nodeFilters: ["server:*"] }
+    kubeconfig:
+        # Manage kubeconfig manually (inject the container name as server host)
+        updateDefaultKubeconfig: false
+        switchCurrentContext: false
+registries:
+    # Configure the local registry
+    config: |
+        mirrors:
+          "oci.local.chezmoi.sh:5000":
+            endpoint:
+              - "http://oci.local.chezmoi.sh:5000"
+            tls:
+              insecure_skip_verify: true

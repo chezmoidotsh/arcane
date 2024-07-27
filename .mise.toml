@@ -21,49 +21,54 @@ HELM_CACHE_HOME = "{{env.DIRENV_LAYOUTDIR}}/helm/cache"
 HELM_CONFIG_HOME = "{{env.DIRENV_LAYOUTDIR}}/helm/config"
 HELM_DATA_HOME = "{{env.DIRENV_LAYOUTDIR}}/helm/data"
 
-KIND_CONFIG = "{{config_root}}/kind.yaml"
-# NOTE: Generate dynamically the cluster name based on where the kind configuration is stored
-KIND_CLUSTER_NAME = '''
-{%- set cluster_name = env.KIND_CONFIG
-    | replace(from='/kind.yaml', to='')
-    | replace(from=env.ATLAS_ROOTDIR, to='')
-    | slugify
-    | spaceless -%}
-{%- if cluster_name == '' -%}atlas{%- else -%}atlas-{{cluster_name}}{%- endif -%}
-'''
-KUBECONFIG = "{{env.DIRENV_LAYOUTDIR}}/kubernetes/{{env.KIND_CLUSTER_NAME}}.kubeconfig"
+K3D_CONFIG = "{{config_root}}/k3d.yaml"
+K3D_CLUSTER_NAME = "atlas"
+KUBECONFIG = "{{env.DIRENV_LAYOUTDIR}}/kubernetes/{{env.K3D_CLUSTER_NAME}}.kubeconfig"
 
 # -- Global tasks definition
 # --- Development tasks
 [tasks."dev:start"]
 description = "Prepare the development environment"
-run = ["mise run kind:create", "mise run kind:prepare"]
+run = ["mise run k3d:create", "mise run k3d:prepare"]
 
 [tasks."dev:teardown"]
 description = "Tears down the development environment"
-run = "mise run kind:delete"
+run = "mise run k3d:delete"
 
-# --- Kind related tasks
-[tasks."kind:create"]
-description = "Starts a kind cluster"
-run = "kind create cluster --config ${KIND_CONFIG} --name ${KIND_CLUSTER_NAME}"
+# --- K3D related tasks
+[tasks."k3d:create"]
+description = "Starts a k3d cluster"
+run = ["k3d cluster create ${K3D_CLUSTER_NAME} --config ${K3D_CONFIG}"]
 
-[tasks."kind:prepare"]
-description = "Prepares the kind cluster"
-depends = ["kind:prepare:*"]
+[tasks."k3d:prepare"]
+description = "Prepares the k3d cluster"
+depends = ["k3d:prepare:*"]
 
-[tasks."kind:prepare:kubeconfig"]
-description = "Gets the kubeconfig for the current kind cluster"
+[tasks."k3d:prepare:kubeconfig"]
+description = "Gets the kubeconfig for the current k3s cluster"
 run = [
   "mkdir --parents $(dirname ${KUBECONFIG})",
-  "kind get kubeconfig --name ${KIND_CLUSTER_NAME} | sed \"s/127.0.0.1:.*/${KIND_CLUSTER_NAME}-control-plane:6443/g\" > ${KUBECONFIG}",
+  "k3d kubeconfig get ${K3D_CLUSTER_NAME} | sed \"s/0.0.0.0:.*/k3d-${K3D_CLUSTER_NAME}-server-0:6443/g\" > ${KUBECONFIG}",
 ]
 
-[tasks."kind:delete"]
-description = "Deletes the kind cluster"
-run = "kind delete cluster --name ${KIND_CLUSTER_NAME}"
+[tasks."k3d:delete"]
+description = "Deletes the k3s cluster"
+run = ["k3d cluster delete ${K3D_CLUSTER_NAME}", "rm --force ${KUBECONFIG}"]
 
 # --- Tools
 [tools]
+k3d = "latest"
+direnv = "latest"
 helm = "latest"
+jq = "latest"
+kubectl = "latest"
+lefthook = "latest"
+pulumi = "3.112.0"
+trivy = "latest"
 yq = "latest"
+
+"cargo:git-absorb" = "latest"
+"go:github.com/jesseduffield/lazygit" = "latest"
+"go:oss.terrastruct.com/d2" = "latest"
+"npm:@trunkio/launcher" = "1.3.1"
+"npm:tsx" = "4.16.2"
