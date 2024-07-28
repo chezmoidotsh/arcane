@@ -1,5 +1,5 @@
 {
-    "name": "@chezmoi.sh/core",
+    "name": "@pulumi.chezmoi.sh/core",
     "version": "1.0.0",
     "private": true,
     "description": "Core library for chezmoi.sh infrastructure as-code",
