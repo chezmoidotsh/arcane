@@ -25,12 +25,9 @@ import {
     KubernetesApplicationStatus,
 } from "@pulumi.chezmoi.sh/core/kubernetes/applications";
 import { optsWithProvider } from "@pulumi.chezmoi.sh/core/pulumi";
-import { ValueType } from "@pulumi.chezmoi.sh/core/utils/type";
 
 import { TraefikImage } from "./image";
-import { TraefikV2JsonSchema } from "./json-schema";
 import { TraefikConfiguration } from "./type";
-import { traefik } from "./types";
 import { splitHostPortProtocol } from "./utils";
 import { Version } from "./version";
 

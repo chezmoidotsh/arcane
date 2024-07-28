@@ -15,6 +15,6 @@
  * ----------------------------------------------------------------------------
  */
 
-// renovate: datasource=github-tags depName=chezmoi-sh/yaldap versioning=semver
+// renovate: datasource=github-tags depName=traefik/traefik versioning=semver
 export const Version = "v3.1.0";
 export const Codename = "comte";
