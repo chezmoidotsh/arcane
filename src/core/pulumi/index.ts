@@ -14,7 +14,6 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
+import { getProvider, optsWithProvider } from "./pulumi.utils";
 
-export { DirectoryAsset, SecretAsset, ReadAsset } from "./asset";
-export { InjectAssets } from "./docker";
-export { IsDefined } from "./type";
+export { getProvider, optsWithProvider };

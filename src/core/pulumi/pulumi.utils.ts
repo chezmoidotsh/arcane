@@ -33,7 +33,7 @@ type ProviderResource<T extends pulumi.ProviderResource> = {
  * @returns The provider if it exists, otherwise undefined.
  */
 export function getProvider<T extends pulumi.ProviderResource>(
-    provider: ProviderResource,
+    provider: ProviderResource<T>,
     opts: pulumi.ComponentResourceOptions | undefined,
 ): pulumi.ProviderResource | undefined {
     if (opts === undefined) {
@@ -45,7 +45,7 @@ export function getProvider<T extends pulumi.ProviderResource>(
     }
 
     if (opts?.providers === undefined) {
-        return;
+        return undefined;
     }
 
     const providers = opts.providers;
@@ -62,4 +62,26 @@ export function getProvider<T extends pulumi.ProviderResource>(
             }
         }
     }
+    return undefined;
+}
+
+/**
+ * optsWithProvider returns a new {@link pulumi.ComponentResourceOptions} object
+ * that includes the provider from the given options. If the provider is not found
+ * in the options, the function will return the original options object without
+ * the `providers` field.
+ * @param provider The provider to include in the options.
+ * @param opts The options to include the provider in.
+ * @returns The new options object with the provider included.
+ */
+export function optsWithProvider<T extends pulumi.ProviderResource>(
+    provider: ProviderResource<T>,
+    opts: pulumi.ComponentResourceOptions | undefined,
+): pulumi.ComponentResourceOptions {
+    const nopts = { ...opts, provider: getProvider(provider, opts) };
+    delete nopts.providers;
+    if (nopts.provider === undefined) {
+        delete nopts.provider;
+    }
+    return nopts;
 }
