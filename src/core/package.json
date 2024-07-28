@@ -11,19 +11,22 @@
         "test:watch": "vitest --watch"
     },
     "dependencies": {
-        "@pulumi/pulumi": "^3.125.0",
+        "@pulumi/pulumi": "^3.126.0",
         "@types/node-fetch": "^2.6.11",
-        "node-fetch": "^3.3.2"
+        "@types/tmp": "^0.2.6",
+        "node-fetch": "^3.3.2",
+        "tmp": "^0.2.3"
     },
     "devDependencies": {
         "@kubernetes/client-node": "^0.21.0",
-        "@pulumi/aws": "^6.45.0",
+        "@pulumi/aws": "^6.46.0",
         "@pulumi/docker": "^4.5.4",
         "@pulumi/docker-build": "^0.0.4",
         "@pulumi/kubernetes": "^4.15.0",
-        "@types/node": "^20.14.11",
+        "@types/node": "^20.14.12",
+        "@vitest/coverage-v8": "^2.0.4",
         "nock": "^13.5.4",
-        "typescript": "^5.5.3",
-        "vitest": "^2.0.3"
+        "typescript": "^5.5.4",
+        "vitest": "^2.0.4"
     }
 }
