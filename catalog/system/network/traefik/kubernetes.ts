@@ -14,8 +14,6 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-import { FromSchema } from "json-schema-to-ts";
-
 import * as buildkit from "@pulumi/docker-build";
 import * as kubernetes from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
@@ -32,6 +30,7 @@ import { ValueType } from "@pulumi.chezmoi.sh/core/utils/type";
 import { TraefikImage } from "./image";
 import { TraefikV2JsonSchema } from "./json-schema";
 import { TraefikConfiguration } from "./type";
+import { traefik } from "./types";
 import { splitHostPortProtocol } from "./utils";
 import { Version } from "./version";
 
@@ -85,41 +84,7 @@ export interface TraefikArgs extends KubernetesApplicationArgs<"traefik", Traefi
      * @see {@link https://doc.traefik.io/traefik/reference/static-configuration/cli/}
      *      for more information.
      */
-    configuration: FromSchema<typeof TraefikV2JsonSchema> & {
-        // NOTE: Treafik JSON schema is not complete
-        providers?: {
-            kubernetesGateway?: {
-                statusAddress?: { hostname?: string; ip?: string; service?: { name?: string; namespace?: string } };
-            };
-        };
-    } & {
-        // NOTE: traefik port is required for some internal checks (ping)
-        entryPoints: {
-            traefik: { address: string } & ValueType<FromSchema<typeof TraefikV2JsonSchema>["entryPoints"]>;
-        };
-        ping?: { entryPoint?: never };
-
-        // Disable some features
-        experimental?: { localplugins?: never; plugins?: never };
-        hub?: never;
-        providers?: {
-            consul?: never;
-            consulCatalog?: never;
-            docker?: never;
-            ecs?: never;
-            etcd?: never;
-            file?: never;
-            http?: never;
-            marathon?: never;
-            nomad?: never;
-            plugin?: never;
-            rancher?: never;
-            redis?: never;
-            rest?: never;
-            swarm?: never;
-            zooKeeper?: never;
-        };
-    };
+    configuration: TraefikConfiguration;
 }
 
 /**
@@ -164,7 +129,10 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
 
         // -- Step 1: Generate some data required by other resources
         // listeners are used required to expose the Traefik service
-        const listeners = Object.entries(args.configuration.entryPoints ?? {}).map(([name, entry]) => {
+        const listeners = Object.entries({
+            traefik: { address: ":9000" },
+            ...(args.configuration.entryPoints ?? {}),
+        }).map(([name, entry]) => {
             const [_, port, protocol] = splitHostPortProtocol(entry.address ?? "") ?? [];
             if (port === undefined || Number.isNaN(port)) {
                 throw new Error(`Invalid Traefik entrypoint '${name}' address: '${entry.address}'`);
@@ -329,7 +297,7 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
             // User configuration
             args.configuration,
             // Enforced configuration
-            { ping: { entryPoint: "traefik" } },
+            { entryPoints: { traefik: { address: ":9000" } } as any, ping: { entryPoint: "traefik" } as any },
         );
 
         const image = new TraefikImage(name, args.spec.images.traefik, { parent: this });
@@ -376,11 +344,13 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
                                     ]),
 
                                     image: image.ref,
-                                    ports: listeners.map((l) => ({
-                                        name: l.name,
-                                        containerPort: l.port,
-                                        protocol: l.protocol,
-                                    })),
+                                    ports: [
+                                        ...listeners.map((l) => ({
+                                            name: l.name,
+                                            containerPort: l.port,
+                                            protocol: l.protocol,
+                                        })),
+                                    ],
                                     livenessProbe: {
                                         failureThreshold: 3,
                                         httpGet: { path: "/ping", port: "traefik", scheme: "HTTP" },

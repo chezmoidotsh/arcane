@@ -14,19 +14,46 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-import { FromSchema } from "json-schema-to-ts";
 import _ from "lodash";
 
-import { Input } from "@pulumi/pulumi";
-
+import { InputOnPrimitive } from "@pulumi.chezmoi.sh/core/pulumi/types";
 import { objectToArgs } from "@pulumi.chezmoi.sh/core/utils/configuration";
 
-import { TraefikV2JsonSchema } from "./json-schema";
+import { HttpsJsonSchemastoreOrgTraefikV2Json } from "./type.gen";
+
+type _fixedHttpsJsonSchemastoreOrgTraefikV2Json = HttpsJsonSchemastoreOrgTraefikV2Json;
 
 /**
  * Traefik configuration.
  */
-export type TraefikConfiguration = FromSchema<typeof TraefikV2JsonSchema>;
+export type TraefikConfiguration = _fixedHttpsJsonSchemastoreOrgTraefikV2Json & {
+    // NOTE: traefik port is required for some internal checks (ping) and must not be edited
+    entryPoints?: {
+        traefik?: never;
+    };
+    ping?: { entryPoint?: never };
+
+    // Disable some features
+    experimental?: { localplugins?: never; plugins?: never };
+    hub?: never;
+    providers?: {
+        consul?: never;
+        consulCatalog?: never;
+        docker?: never;
+        ecs?: never;
+        etcd?: never;
+        file?: never;
+        http?: never;
+        marathon?: never;
+        nomad?: never;
+        plugin?: never;
+        rancher?: never;
+        redis?: never;
+        rest?: never;
+        swarm?: never;
+        zooKeeper?: never;
+    };
+};
 export const TraefikConfiguration = {
     toCLI: (opts: Parameters<typeof objectToArgs>[1], ...configuration: TraefikConfiguration[]) =>
         objectToArgs(_.merge({}, ...configuration), opts),

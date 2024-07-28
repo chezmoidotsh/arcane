@@ -22,17 +22,12 @@ description = "Generate all Traefik resources and types"
 depends = ["utils:configuration:generate", "utils:crds:generate:*"]
 
 [tasks."utils:configuration:generate"]
-description = "Generate Traefik configurations from the JSON Schema"
-run = [
-  '''
+description = "Generate the Traefik configurations schema"
+run = ['''
 curl -sL https://json.schemastore.org/traefik-v2.json \
-| yq --output-format json \
-| jq 'del(..|nulls)' \
-| jq '"import { asConst } from \"json-schema-to-ts\";\n\nexport const TraefikV2JsonSchema = asConst(\(.));\n"' --raw-output \
-> json-schema.ts
-''',
-  "trunk fmt json-schema.ts",
-]
+| json2ts --declareExternallyReferenced --unknownAny --output type.gen.ts
+''', "trunk fmt type.gen.ts"]
+
 
 [tasks."utils:crds:generate:resource"]
 description = "Import all Traefik CRDs"
@@ -67,3 +62,4 @@ run = []
 [tools]
 k3d = "latest"
 "go:github.com/pulumi/crd2pulumi" = "latest"
+"npm:json-schema-to-typescript" = "latest"

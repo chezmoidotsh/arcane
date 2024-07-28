@@ -64,7 +64,7 @@ describe("(Network) Traefik", async () => {
                     randomDNS1035(),
                     {
                         metadata: { namespace: "default" },
-                        configuration: { entryPoints: { traefik: { address: ":9000" } } },
+                        configuration: {},
                         spec: {
                             images: {
                                 traefik: { from: alpine(opts), tags: [traefikTag] },
@@ -109,7 +109,6 @@ describe("(Network) Traefik", async () => {
                         metadata: { namespace: "default" },
                         configuration: {
                             entryPoints: {
-                                traefik: { address: ":9000" },
                                 web: { address: ":80/tcp" },
                                 dns: { address: ":853/udp" },
                             },
@@ -171,7 +170,7 @@ describe("(Network) Traefik", async () => {
                     randomDNS1035(),
                     {
                         metadata: { namespace: "default" },
-                        configuration: { entryPoints: { traefik: { address: ":9000" } } },
+                        configuration: {},
                         spec: {
                             images: {
                                 traefik: { from: alpine(opts), tags: [traefikTag] },
@@ -223,7 +222,6 @@ describe("(Network) Traefik", async () => {
                     {
                         metadata: { namespace: "default" },
                         configuration: {
-                            entryPoints: { traefik: { address: ":9000" } },
                             providers: { kubernetesCRD: {} },
                         },
                         spec: {
@@ -277,7 +275,6 @@ describe("(Network) Traefik", async () => {
                     {
                         metadata: { namespace: "default" },
                         configuration: {
-                            entryPoints: { traefik: { address: ":9000" } },
                             providers: { kubernetesIngress: {} },
                         },
                         spec: {
@@ -320,7 +317,6 @@ describe("(Network) Traefik", async () => {
                     {
                         metadata: { namespace: "default" },
                         configuration: {
-                            entryPoints: { traefik: { address: ":9000" } },
                             providers: { kubernetesGateway: {} },
                         },
                         spec: {
@@ -393,7 +389,6 @@ describe("(Network) Traefik", async () => {
                     {
                         metadata: { namespace: "default" },
                         configuration: {
-                            entryPoints: { traefik: { address: ":9000" } },
                             providers: {
                                 kubernetesCRD: {},
                                 kubernetesIngress: {},
@@ -434,9 +429,7 @@ describe("(Network) Traefik", async () => {
                     randomDNS1035(),
                     {
                         metadata: { namespace: "default" },
-                        configuration: {
-                            entryPoints: { traefik: { address: ":9000" } },
-                        },
+                        configuration: {},
                         spec: {
                             images: {
                                 traefik: { from: alpine(opts), tags: [traefikTag] },
@@ -486,7 +479,7 @@ describe("(Network) Traefik", async () => {
                 {
                     metadata: { namespace },
                     configuration: {
-                        entryPoints: { traefik: { address: ":9000" }, web: { address: ":80" } },
+                        entryPoints: { web: { address: ":80" } },
                         providers: { kubernetesIngress: { ingressClass: ingressClass.metadata.name as any } },
                         log: { level: "DEBUG" },
                     },
@@ -584,7 +577,7 @@ describe("(Network) Traefik", async () => {
                 {
                     metadata: { namespace },
                     configuration: {
-                        entryPoints: { traefik: { address: ":9000" }, web: { address: ":80" } },
+                        entryPoints: { web: { address: ":80" } },
                         providers: { kubernetesGateway: {} },
                         log: { level: "DEBUG" },
                     },
@@ -657,7 +650,7 @@ describe("(Network) Traefik", async () => {
                 {
                     metadata: { namespace },
                     configuration: {
-                        entryPoints: { traefik: { address: ":9000" }, web: { address: ":80" } },
+                        entryPoints: { web: { address: ":80" } },
                         providers: { kubernetesCRD: {} },
                         log: { level: "DEBUG" },
                     },
