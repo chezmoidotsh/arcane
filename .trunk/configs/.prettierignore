@@ -16,3 +16,7 @@
 
 .devcontainer/devcontainer-lock.json
 src/core/kubernetes/crds
+
+# Ignore all generated files
+catalog/system/network/gateway.networking.k8s.io/types
+catalog/system/network/traefik/types

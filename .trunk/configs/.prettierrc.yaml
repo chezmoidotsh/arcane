@@ -16,7 +16,7 @@
 importOrder:
     - <THIRD_PARTY_MODULES>
     - ^@pulumi/(.*)$
-    - ^@(catalog\.)?chezmoi.sh/(.*)$
+    - ^@.*chezmoi.sh/(.*)$
     - ^[./]
 importOrderGroupNamespaceSpecifiers: true
 importOrderSeparation: true
