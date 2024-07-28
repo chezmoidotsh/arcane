@@ -69,7 +69,7 @@ export function pulumiScenario(
         const tmpdir = tmp.dirSync({ unsafeCleanup: true });
         const projectName = randomUUID().substring(0, 11);
         const stackName = randomUUID().substring(0, 8);
-        const stack = automation.LocalWorkspace.createOrSelectStack(
+        const promisedStack = automation.LocalWorkspace.createOrSelectStack(
             {
                 stackName: stackName,
                 projectName: projectName,
@@ -90,7 +90,8 @@ export function pulumiScenario(
         let context: { result?: automation.UpResult } = {};
 
         beforeAll(async () => {
-            const result = await stack.then((s) => s.up({ onOutput: options.onOutput, debug: options.debug }));
+            const stack = await promisedStack;
+            const result = await stack.up({ onOutput: options.onOutput, debug: options.debug });
             if (result.summary.result != "succeeded") {
                 console.info(result.stdout);
                 console.error(result.stderr);
@@ -99,12 +100,13 @@ export function pulumiScenario(
         }, options.timeout);
 
         afterAll(async () => {
+            const stack = await promisedStack;
             if (!context.result) {
                 // NOTE: if result is not defined, it means that `up` hasn't
                 //       finished yet
-                await stack.then((s) => s.cancel());
+                await stack.cancel();
             }
-            await stack.then((s) => s.destroy());
+            await stack.destroy({ onOutput: options.onOutput, debug: options.debug });
         }, options.timeout);
 
         it(`stack deployment should ${options.expectedResult ?? "succeed"}`, () => {
