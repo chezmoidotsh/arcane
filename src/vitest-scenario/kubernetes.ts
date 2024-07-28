@@ -16,6 +16,8 @@
  */
 import { KubeConfig } from "@kubernetes/client-node";
 import { randomUUID } from "crypto";
+import fs from "fs";
+import process from "process";
 import tmp from "tmp";
 
 import * as kubernetes from "@pulumi/kubernetes";
@@ -106,8 +108,12 @@ export function kubernetesScenario(
     assertions?: (context: { result?: automation.UpResult; kubeconfig: KubeConfig }) => void,
 ) {
     const kubeconfig = new KubeConfig();
-    kubeconfig.loadFromDefault();
-    options.skip = options.skip || !kubeconfig.contexts.length || kubeconfig.currentContext === "loaded-context";
+    options.skip =
+        options.skip || !process.env.KUBECONFIG || !fs.statSync(process.env.KUBECONFIG, { throwIfNoEntry: false });
+    if (!options.skip) {
+        kubeconfig.loadFromDefault();
+        options.skip = !kubeconfig.contexts.length || kubeconfig.currentContext === "loaded-context";
+    }
 
     pulumiScenario(
         `${name} (on real kubernetes${options.skip ? "" : ` - '${kubeconfig.currentContext}'`})`,
