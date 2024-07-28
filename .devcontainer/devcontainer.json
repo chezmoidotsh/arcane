@@ -93,10 +93,11 @@
                 ]
             },
             "extensions": [
+                "bierner.github-markdown-preview",
                 "bierner.markdown-preview-github-styles",
                 "esbenp.prettier-vscode",
                 "github.copilot",
-                "github.vscode-pull-request-github",
+                "GitHub.vscode-pull-request-github",
                 "golang.go",
                 "ldez.ignore-files",
                 "ms-azuretools.vscode-docker",
@@ -104,9 +105,9 @@
                 "ms-vscode.makefile-tools",
                 "psioniq.psi-header",
                 "redhat.vscode-yaml",
+                "Terrastruct.d2",
                 "visualstudioexptteam.vscodeintellicode",
-                "vitest.explorer",
-                "Terrastruct.d2"
+                "vitest.explorer"
             ]
         }
     },

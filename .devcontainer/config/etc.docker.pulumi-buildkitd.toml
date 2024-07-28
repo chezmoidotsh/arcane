@@ -17,4 +17,3 @@ insecure-entitlements = ["network.host", "security.insecure"]
 
 [registry."oci.local.chezmoi.sh:5000"]
 http = true
-insecure = true

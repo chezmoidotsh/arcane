@@ -19,20 +19,6 @@
 # trunk-ignore-all(hadolint/DL3018): Don't care about pinning the version of packages, as this is a development container and only git is installed
 # trunk-ignore-all(hadolint/DL3003): Don't care about WORKDIR instruction, as this will be set by the DevContainer
 
-# ┌───────────────────────────────────────────────────────────────────────────┐
-# │ <pulumi-docker-build>: Build a custom Pulumi Docker Build provider with   │
-# |                        support for unknwon values in inline dockerfile.   │
-# └───────────────────────────────────────────────────────────────────────────┘
-FROM docker.io/library/golang:alpine as pulumi-docker-build
-
-# Clone fixed `pulumi-resource-docker-build` provider
-RUN apk add --no-cache git \
-    && git clone --branch issue-96/allow-empty-inline-on-preview https://github.com/xunleii/pulumi-docker-build \
-    && cd pulumi-docker-build/provider/cmd/pulumi-resource-docker-build \
-    && go build -o /opt/resource-docker-build-v0.0.3 \
-      -gcflags "all=-N -l" \
-      -ldflags "-X github.com/pulumi/pulumi-docker-build/provider.Version=v0.0.3"
-
 
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ <machine-id>: Generate a machine-id for the container.                    │
@@ -60,9 +46,6 @@ COPY --from=ghcr.io/charmbracelet/gum:v0.14.1@sha256:01028e2f2c3d9c80f415f87a459
 
 # Copy generated machine-id
 COPY --from=machine-id /etc/machine-id /etc/machine-id
-
-# Copy fixed `pulumi-resource-docker-build` provider
-COPY --from=pulumi-docker-build --chown=vscode:vscode /opt/resource-docker-build-v0.0.3 /home/vscode/.pulumi/plugins/resource-docker-build-v0.0.3/pulumi-resource-docker-build
 
 COPY scripts/atlas-utils.lib.sh /usr/local/share/atlas-utils.lib.sh
 COPY --chmod=755 scripts/post-create-command.sh /usr/local/share/post-create-command.sh
