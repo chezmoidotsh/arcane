@@ -26,34 +26,36 @@ type _fixedHttpsJsonSchemastoreOrgTraefikV2Json = HttpsJsonSchemastoreOrgTraefik
 /**
  * Traefik configuration.
  */
-export type TraefikConfiguration = _fixedHttpsJsonSchemastoreOrgTraefikV2Json & {
-    // NOTE: traefik port is required for some internal checks (ping) and must not be edited
-    entryPoints?: {
-        traefik?: never;
-    };
-    ping?: { entryPoint?: never };
+export type TraefikConfiguration = InputOnPrimitive<
+    _fixedHttpsJsonSchemastoreOrgTraefikV2Json & {
+        // NOTE: traefik port is required for some internal checks (ping) and must not be edited
+        entryPoints?: {
+            traefik?: never;
+        };
+        ping?: { entryPoint?: never };
 
-    // Disable some features
-    experimental?: { localplugins?: never; plugins?: never };
-    hub?: never;
-    providers?: {
-        consul?: never;
-        consulCatalog?: never;
-        docker?: never;
-        ecs?: never;
-        etcd?: never;
-        file?: never;
-        http?: never;
-        marathon?: never;
-        nomad?: never;
-        plugin?: never;
-        rancher?: never;
-        redis?: never;
-        rest?: never;
-        swarm?: never;
-        zooKeeper?: never;
-    };
-};
+        // Disable some features
+        experimental?: { localplugins?: never; plugins?: never };
+        hub?: never;
+        providers?: {
+            consul?: never;
+            consulCatalog?: never;
+            docker?: never;
+            ecs?: never;
+            etcd?: never;
+            file?: never;
+            http?: never;
+            marathon?: never;
+            nomad?: never;
+            plugin?: never;
+            rancher?: never;
+            redis?: never;
+            rest?: never;
+            swarm?: never;
+            zooKeeper?: never;
+        };
+    }
+>;
 export const TraefikConfiguration = {
     toCLI: (opts: Parameters<typeof objectToArgs>[1], ...configuration: TraefikConfiguration[]) =>
         objectToArgs(_.merge({}, ...configuration), opts),

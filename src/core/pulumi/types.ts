@@ -14,13 +14,26 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-import { Output } from "@pulumi/pulumi";
+import { Input, Output } from "@pulumi/pulumi";
 
 /**
  * Enforce the Output type on all fields of a type, recursively.
  */
-export type OutputOnPrimitive<T> = T extends "string" | "number" | "boolean"
+export type OutputOnPrimitive<T> = T extends string | number | boolean
     ? Output<T>
-    : T extends Array<infer U>
-      ? Output<Array<OutputOnPrimitive<U>>>
-      : { [K in keyof T]: OutputOnPrimitive<T[K]> };
+    : T extends (infer U)[]
+      ? OutputOnPrimitive<U>[]
+      : T extends object
+        ? { [K in keyof T]: OutputOnPrimitive<T[K]> }
+        : T;
+
+/**
+ * Enforce the Input type on all fields of a type, recursively.
+ */
+export type InputOnPrimitive<T> = T extends string | number | boolean
+    ? Input<T>
+    : T extends (infer U)[]
+      ? InputOnPrimitive<U>[]
+      : T extends object
+        ? { [K in keyof T]: InputOnPrimitive<T[K]> }
+        : T;
