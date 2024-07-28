@@ -14,7 +14,7 @@
 # ----------------------------------------------------------------------------
 ---
 packages:
-    - catalog/**
-    - projects/**
+    - catalog/os/**
+    - catalog/system/**
     - scripts/src/**
     - src/**
