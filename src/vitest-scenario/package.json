@@ -17,13 +17,12 @@
         "test:coverage": "vitest run --coverage",
         "test:dev": "vitest --coverage --ui"
     },
-    "devDependencies": {
+    "dependencies": {
         "@kubernetes/client-node": "^0.21.0",
         "@pulumi.chezmoi.sh/core": "workspace:*",
         "@pulumi/kubernetes": "^4.15.0",
-        "@pulumi/pulumi": "^3.126.0",
+        "@pulumi/pulumi": "^3.120.0",
         "@types/tmp": "^0.2.6",
-        "tmp": "^0.2.3",
-        "vitest": "^2.0.4"
+        "tmp": "^0.2.3"
     }
 }
