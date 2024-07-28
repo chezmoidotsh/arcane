@@ -14,17 +14,13 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
+import { Output } from "@pulumi/pulumi";
 
 /**
- * Type guard to check if an object is defined.
- * @param obj Object to check if it is defined
- * @returns True if the object is defined, false otherwise
+ * Enforce the Output type on all fields of a type, recursively.
  */
-export function IsDefined<T>(obj: T | undefined): obj is T {
-    return obj !== undefined;
-}
-
-/**
- * Obtain the type of the values of an object.
- */
-export type ValueType<T> = T extends { [k: string | number]: infer V } ? V : never;
+export type OutputOnPrimitive<T> = T extends "string" | "number" | "boolean"
+    ? Output<T>
+    : T extends Array<infer U>
+      ? Output<Array<OutputOnPrimitive<U>>>
+      : { [K in keyof T]: OutputOnPrimitive<T[K]> };
