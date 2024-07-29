@@ -13,28 +13,8 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 [env]
-KUBECONFIG = "/tmp/nexrpi-kubernetes"
-
-[tasks."dev:start"]
-description = "Prepare the nex·rpi development environment"
-run = ["mise run dev:start", "mise run dev:kubeconfig"]
-
-[tasks."dev:teardown"]
-description = "Tears down the nex·rpi development environment"
-run = "mise run kind:delete"
-
-
-[tasks."kind:create"]
-description = "Starts a kind cluster for nex·rpi"
-run = "kind create cluster --name nexrpi-kubernetes --config kind.yaml"
-
-[tasks."kind:kubeconfig"]
-description = "Gets the kubeconfig for the nex·rpi cluster"
-run = "kind get kubeconfig --name nexrpi-kubernetes | sed 's/127.0.0.1:.*/nexrpi-kubernetes-control-plane:6443/g' > ${KUBECONFIG}"
-
-[tasks."kind:delete"]
-description = "Deletes the kind cluster for nex·rpi"
-run = "kind delete cluster --name nexrpi-kubernetes"
+K3D_CLUSTER_NAME = "atlas-nex.rpi"
+KUBECONFIG = "{{env.DIRENV_LAYOUTDIR}}/kubernetes/{{env.K3D_CLUSTER_NAME}}.kubeconfig"
 
 [tasks."doc:generate:diagram"]
 description = "Generates the architecture diagram for nex·rpi"

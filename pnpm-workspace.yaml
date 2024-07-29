@@ -16,5 +16,6 @@
 packages:
     - catalog/os/**
     - catalog/system/**
+    - projects/**
     - scripts/src/**
     - src/**

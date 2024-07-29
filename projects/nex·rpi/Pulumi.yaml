@@ -1,0 +1,3 @@
+name: nex.rpi
+runtime: nodejs
+description: Raspberry Pi hosted services for all my homelab's critical services
