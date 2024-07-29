@@ -27,11 +27,12 @@ import {
 import { optsWithProvider } from "@pulumi.chezmoi.sh/core/pulumi";
 
 import { TraefikImage } from "./image";
+import { TraefikCRDs } from "./kubernetes.crds";
 import { TraefikConfiguration } from "./type";
 import { splitHostPortProtocol } from "./utils";
 import { Version } from "./version";
 
-export { TraefikImage, Version };
+export { TraefikImage, Version, TraefikCRDs };
 export const Defaults = {
     resources: {
         traefik: {

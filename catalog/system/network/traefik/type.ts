@@ -14,7 +14,7 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-import _ from "lodash";
+import { merge } from "lodash";
 
 import { core } from "@pulumi/kubernetes/types/input";
 import { Output } from "@pulumi/pulumi";
@@ -66,7 +66,7 @@ export const TraefikConfiguration = {
         opts: Parameters<typeof objectToArgs>[1],
         ...configurations: TraefikConfiguration[]
     ): [core.v1.EnvVar[], Output<string>[]] => {
-        const [envs, configuration] = extractEnvVarsFromObject<TraefikConfiguration>(_.merge({}, ...configurations));
+        const [envs, configuration] = extractEnvVarsFromObject<TraefikConfiguration>(merge({}, ...configurations));
         return [envs, objectToArgs(configuration, opts)];
     },
 };

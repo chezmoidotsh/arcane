@@ -14,7 +14,7 @@
  * limitations under the License.
  * ----------------------------------------------------------------------------
  */
-import path from "path";
+import * as path from "path";
 
 import * as buildkit from "@pulumi/docker-build";
 import * as pulumi from "@pulumi/pulumi";
