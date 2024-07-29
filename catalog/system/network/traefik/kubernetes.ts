@@ -112,6 +112,7 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
 
     constructor(name: string, args: TraefikArgs, opts?: pulumi.ComponentResourceOptions) {
         super("system:network:Traefik", Version, name, args, opts);
+        opts = { ...opts, parent: this };
 
         // -- Table of content
         // 1. Generate some data required by other resources
@@ -250,7 +251,7 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
                     { kind: "ServiceAccount", name: serviceAccount.metadata.name, namespace: this.metadata.namespace },
                 ],
             },
-            optsWithProvider(kubernetes.Provider, opts),
+            { ...optsWithProvider(kubernetes.Provider, opts), parent: clusterRole },
         );
 
         // -- Step 3: Generate Traefik deployment
@@ -425,7 +426,7 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
                     type: "LoadBalancer",
                 },
             },
-            optsWithProvider(kubernetes.Provider, opts),
+            { ...optsWithProvider(kubernetes.Provider, opts), parent: workload },
         );
 
         this.status = pulumi.output({
