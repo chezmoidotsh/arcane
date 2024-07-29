@@ -253,7 +253,7 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
         );
 
         // -- Step 3: Generate Traefik deployment
-        const flags = TraefikConfiguration.toCLI(
+        const [envs, flags] = TraefikConfiguration.toCLI(
             { transform: (s) => s.toLowerCase() },
             // Default configuration
             {
@@ -338,6 +338,7 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
                                                 },
                                             },
                                         },
+                                        ...envs,
                                     ]),
 
                                     image: image.ref,

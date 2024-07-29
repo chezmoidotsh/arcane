@@ -16,8 +16,11 @@
  */
 import _ from "lodash";
 
+import { core } from "@pulumi/kubernetes/types/input";
+import { Output } from "@pulumi/pulumi";
+
 import { InputOnPrimitive } from "@pulumi.chezmoi.sh/core/pulumi/types";
-import { objectToArgs } from "@pulumi.chezmoi.sh/core/utils/configuration";
+import { WithEnvVar, extractEnvVarsFromObject, objectToArgs } from "@pulumi.chezmoi.sh/core/utils/configuration";
 
 import { HttpsJsonSchemastoreOrgTraefikV2Json } from "./type.gen";
 
@@ -26,37 +29,44 @@ type _fixedHttpsJsonSchemastoreOrgTraefikV2Json = HttpsJsonSchemastoreOrgTraefik
 /**
  * Traefik configuration.
  */
-export type TraefikConfiguration = InputOnPrimitive<
-    _fixedHttpsJsonSchemastoreOrgTraefikV2Json & {
-        // NOTE: traefik port is required for some internal checks (ping) and must not be edited
-        entryPoints?: {
-            traefik?: never;
-        };
-        ping?: { entryPoint?: never };
+export type TraefikConfiguration = WithEnvVar<
+    InputOnPrimitive<
+        _fixedHttpsJsonSchemastoreOrgTraefikV2Json & {
+            // NOTE: traefik port is required for some internal checks (ping) and must not be edited
+            entryPoints?: {
+                traefik?: never;
+            };
+            ping?: { entryPoint?: never };
 
-        // Disable some features
-        experimental?: { localplugins?: never; plugins?: never };
-        hub?: never;
-        providers?: {
-            consul?: never;
-            consulCatalog?: never;
-            docker?: never;
-            ecs?: never;
-            etcd?: never;
-            file?: never;
-            http?: never;
-            marathon?: never;
-            nomad?: never;
-            plugin?: never;
-            rancher?: never;
-            redis?: never;
-            rest?: never;
-            swarm?: never;
-            zooKeeper?: never;
-        };
-    }
+            // Disable some features
+            experimental?: { localplugins?: never; plugins?: never };
+            hub?: never;
+            providers?: {
+                consul?: never;
+                consulCatalog?: never;
+                docker?: never;
+                ecs?: never;
+                etcd?: never;
+                file?: never;
+                http?: never;
+                marathon?: never;
+                nomad?: never;
+                plugin?: never;
+                rancher?: never;
+                redis?: never;
+                rest?: never;
+                swarm?: never;
+                zooKeeper?: never;
+            };
+        }
+    >
 >;
 export const TraefikConfiguration = {
-    toCLI: (opts: Parameters<typeof objectToArgs>[1], ...configuration: TraefikConfiguration[]) =>
-        objectToArgs(_.merge({}, ...configuration), opts),
+    toCLI: (
+        opts: Parameters<typeof objectToArgs>[1],
+        ...configurations: TraefikConfiguration[]
+    ): [core.v1.EnvVar[], Output<string>[]] => {
+        const [envs, configuration] = extractEnvVarsFromObject<TraefikConfiguration>(_.merge({}, ...configurations));
+        return [envs, objectToArgs(configuration, opts)];
+    },
 };

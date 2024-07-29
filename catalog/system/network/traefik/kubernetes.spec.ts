@@ -25,6 +25,7 @@ import { AlpineImage } from "@catalog.chezmoi.sh/os~alpine-3.19";
 import { GatewayAPICRDs } from "@catalog.chezmoi.sh/system.network~gateway.networking.k8s.io/kubernetes.crds";
 import { gateway } from "@catalog.chezmoi.sh/system.network~gateway.networking.k8s.io/types/types/input";
 import { optsWithProvider } from "@pulumi.chezmoi.sh/core/pulumi";
+import { EnvVar } from "@pulumi.chezmoi.sh/core/utils/configuration";
 import { fakeKubernetesScenario, kubernetesScenario } from "@pulumi.chezmoi.sh/vitest-scenario/kubernetes";
 import { toHaveCompliantLabels, toHaveCompliantSecurity } from "@pulumi.chezmoi.sh/vitest-scenario/kubernetes.expect";
 
