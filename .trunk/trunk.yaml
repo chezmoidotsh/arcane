@@ -59,6 +59,9 @@ lint:
         - linters: [ALL]
           paths:
               - node_modules/**
+        - linters: [svgo]
+          paths:
+              - projects/**/assets/architecture.svg
 actions:
     disabled:
         - trunk-announce
