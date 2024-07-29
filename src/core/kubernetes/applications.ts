@@ -146,8 +146,8 @@ export abstract class KubernetesApplication<
      * Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
      */
     public readonly metadata: pulumi.Output<
-        Pick<kubernetes.types.output.meta.v1.ObjectMeta, "labels" | "name" | "namespace"> &
-            Partial<Pick<kubernetes.types.output.meta.v1.ObjectMeta, "annotations" | "ownerReferences">>
+        Pick<kubernetes.types.output.meta.v1.ObjectMeta, "name" | "namespace"> &
+            Partial<Pick<kubernetes.types.output.meta.v1.ObjectMeta, "annotations" | "labels" | "ownerReferences">>
     >;
 
     /**
@@ -177,15 +177,17 @@ export abstract class KubernetesApplication<
             "pulumi.com/project": pulumi.getProject(),
             "pulumi.com/stack": pulumi.getStack(),
         };
-        this.metadata = pulumi.output({
-            ...args.metadata,
-            labels: {
-                ...args.metadata?.labels,
-                ...this.labels,
-            },
-            name: name,
-            namespace: args.metadata?.namespace,
-        });
+        this.metadata = pulumi
+            .all([args.metadata?.annotations, args.metadata?.labels, args.metadata?.namespace])
+            .apply(([annotation, labels, namespace]) => ({
+                annotations: annotation,
+                labels: {
+                    ...labels,
+                    ...this.labels,
+                },
+                name: name,
+                namespace: namespace,
+            }));
         this.spec = pulumi.output(args.spec);
     }
 
