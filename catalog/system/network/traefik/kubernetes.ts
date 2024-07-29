@@ -45,6 +45,20 @@ export const Defaults = {
 type TraefikSpec = AdditionnalSpec.Autoscaling &
     AdditionnalSpec.DistruptionBudget & {
         /**
+         * The configuration for the Traefik application.
+         *
+         * Some configuration are managed by the application itself and are not exposed to the user :
+         * - `ping.entryPoint` has a `traefik` entrypoint enforced (required for internal checks)
+         * - `hub` is disabled
+         * - `plugins` are disabled
+         * - all providers but Kubernetes based ones are disabled
+         *
+         * @see {@link https://doc.traefik.io/traefik/reference/static-configuration/cli/}
+         *      for more information.
+         */
+        configuration?: TraefikConfiguration;
+
+        /**
          * List of listeners to expose and on which port. If the listener is not exposed,
          * it will not be added to the Traefik service.
          * @throws {Error} if the listener address doesn't exist
@@ -69,21 +83,7 @@ interface TraefikStatus extends KubernetesApplicationStatus<typeof Version> {
  * The set of arguments for constructing a Traefik application.
  * @see {@link Traefik}
  */
-export interface TraefikArgs extends KubernetesApplicationArgs<"traefik", TraefikSpec> {
-    /**
-     * The configuration for the Traefik application.
-     *
-     * Some configuration are managed by the application itself and are not exposed to the user :
-     * - `ping.entryPoint` has a `traefik` entrypoint enforced (required for internal checks)
-     * - `hub` is disabled
-     * - `plugins` are disabled
-     * - all providers but Kubernetes based ones are disabled
-     *
-     * @see {@link https://doc.traefik.io/traefik/reference/static-configuration/cli/}
-     *      for more information.
-     */
-    configuration: TraefikConfiguration;
-}
+export interface TraefikArgs extends KubernetesApplicationArgs<"traefik", TraefikSpec> {}
 
 /**
  * This component deploys the Traefik application through a Kubenretes workload in a opinionated way.
@@ -130,7 +130,7 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
         // listeners are used required to expose the Traefik service
         const listeners = Object.entries({
             traefik: { address: ":9000" },
-            ...(args.configuration.entryPoints ?? {}),
+            ...(args.spec.configuration?.entryPoints ?? {}),
         }).map(([name, entry]) => {
             const [_, port, protocol] = splitHostPortProtocol(entry.address ?? "") ?? [];
             if (port === undefined || Number.isNaN(port)) {
@@ -168,7 +168,7 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
                         verbs: ["list", "watch"],
                     },
 
-                    ...(args.configuration.providers?.kubernetesIngress
+                    ...(args.spec.configuration?.providers?.kubernetesIngress
                         ? [
                               {
                                   apiGroups: ["extensions", "networking.k8s.io"],
@@ -178,7 +178,7 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
                           ]
                         : []),
 
-                    ...(args.configuration.providers?.kubernetesGateway
+                    ...(args.spec.configuration?.providers?.kubernetesGateway
                         ? [
                               { apiGroups: [""], resources: ["namespaces"], verbs: ["list", "watch"] },
                               {
@@ -214,7 +214,7 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
                           ]
                         : []),
 
-                    ...(args.configuration.providers?.kubernetesCRD
+                    ...(args.spec.configuration?.providers?.kubernetesCRD
                         ? [
                               {
                                   apiGroups: ["traefik.io"],
@@ -263,7 +263,7 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
 
                 // if the kubernetesIngress provider is enabled, the ingressEndpoint.publishedService is set to the Traefik
                 // service by default
-                ...(args.configuration.providers?.kubernetesIngress
+                ...(args.spec.configuration?.providers?.kubernetesIngress
                     ? {
                           providers: {
                               kubernetesIngress: {
@@ -278,7 +278,7 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
 
                 // if the kubernetesGateway provider is enabled, the statusAddress.service is set to the Traefik service by
                 // default
-                ...(args.configuration.providers?.kubernetesGateway
+                ...(args.spec.configuration?.providers?.kubernetesGateway
                     ? {
                           providers: {
                               kubernetesGateway: {
@@ -294,7 +294,7 @@ export class Traefik extends KubernetesApplication<typeof Version, "traefik", Tr
                     : {}),
             },
             // User configuration
-            args.configuration,
+            args.spec.configuration ?? {},
             // Enforced configuration
             { entryPoints: { traefik: { address: ":9000" } } as any, ping: { entryPoint: "traefik" } as any },
         );
