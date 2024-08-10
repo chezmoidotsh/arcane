@@ -19,7 +19,7 @@
 # │ <runtime>: create the Alpine base image with all dependencies shared by   │
 # |            all other images of this project.                              │
 # └───────────────────────────────────────────────────────────────────────────┘
-FROM --platform=arm64 docker.io/library/alpine:3.19.1@sha256:c5b1261d6d3e43071626931fc004f70149baeba2c8ec672bd4f27761f8e1ad6b
+FROM --platform=arm64 docker.io/library/alpine:3.20.2@sha256:0a4eaa0eecf5f8c050e5bba433f58c052be7587ee8af3e8b3910ef9ab5fbe9f5
 
 # renovate: datasource=repology depName=alpine_3_19/bash versioning=loose
 ARG BASH_VERSION=5.2.21-r0
