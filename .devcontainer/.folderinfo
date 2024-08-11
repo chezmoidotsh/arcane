@@ -1,0 +1,5 @@
+---
+description: Development environment setup (DevContainer/Codespaces)
+files:
+  devcontainer.json: DevContainer configuration file
+  Dockerfile: Dockerfile on which the DevContainer is based
