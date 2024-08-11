@@ -1,0 +1,4 @@
+---
+# Prettier friendly markdownlint config (all formatting rules disabled)
+extends: markdownlint/style/prettier
+no-empty-links: false

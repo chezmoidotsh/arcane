@@ -1,0 +1,40 @@
+---
+yaml-files:
+    - "*.yaml" # Include all files with .yaml extension
+    - "*.yml" # Include all files with .yml extension
+    - .yamllint # Include the .yamllint configuration file itself
+
+rules:
+    anchors: enable # Enable usage of YAML anchors
+    braces: enable # Require spaces around braces
+    brackets: enable # Require spaces around brackets
+    colons: enable # Require spaces around colons
+    commas: enable # Require spaces around commas
+    comments:
+        require-starting-space: true # Require space after the # character in comments
+        ignore-shebangs: true # Ignore shebang lines (#!/bin/bash)
+        min-spaces-from-content: 1 # Require at least 2 spaces between comment and content
+    comments-indentation: enable # Ensure comments are correctly indented
+    document-end: disable # Do not require a document end marker (...)
+    document-start: enable # Require a document start marker (---)
+    empty-lines: enable # Allow empty lines in the YAML file
+    empty-values: disable # Do not allow empty values in mappings
+    float-values: disable # Disallow float values to avoid precision issues
+    hyphens: enable # Ensure proper spacing around hyphens
+    indentation:
+        spaces: consistent # Enforce consistent use of spaces for indentation
+        indent-sequences: true # Require indentation for sequence items
+    key-duplicates:
+        forbid-duplicated-merge-keys: false # Allow duplicated merge keys in mappings
+    key-ordering: disable # Do not enforce key ordering
+    line-length: disable # Do not enforce a maximum line length
+    new-line-at-end-of-file: enable # Ensure a newline at the end of the file
+    new-lines: enable # Allow new lines in the YAML file
+    octal-values:
+        forbid-implicit-octal: true # Forbid implicit octal values to avoid confusion
+    quoted-strings:
+        required: only-when-needed # Require quoted strings only when necessary
+        extra-allowed: ["{|}"] # Allow extra characters { and } in quoted strings
+    trailing-spaces: false # Do not allow trailing spaces
+    truthy:
+        level: warning # Warn on non-standard truthy values (e.g., "yes" instead of "true")
