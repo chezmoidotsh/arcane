@@ -1,0 +1,77 @@
+# Copyright (C) 2024 Alexandre Nicolaie (xunleii@users.noreply.github.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ----------------------------------------------------------------------------
+---
+- name: pr::bugfix
+  description: Something that wasn't working is now fixed
+  color: D73A4A
+- name: pr::dependencies
+  description: Dependencies upgrade
+  color: 2B098D
+- name: pr::documentation
+  description: Improvements or additions to documentation
+  color: 0075CA
+- name: pr::workflows
+  description: Changes on workflows
+  color: 6A5ACD
+- name: pr::others
+  description: Anything else
+  color: DEDB26
+
+- name: size::XS
+  color: 008000
+- name: size::S
+  color: 008000
+- name: size::M
+  color: FFFF00
+- name: size::L
+  color: FF0000
+- name: size::XL
+  color: FF0000
+
+- name: bug
+  description: Something isn't working
+  color: D73A4A
+- name: duplicate
+  description: This doesn't seem right
+  color: CFD3D7
+- name: good first issue
+  description: Good for newcomers
+  color: 7057FF
+- name: help wanted
+  description: Extra attention is needed
+  color: 008672
+- name: invalid
+  description: This doesn't seem right
+  color: E4E669
+- name: question
+  description: Further information is requested
+  color: D876E3
+- name: wontfix
+  description: This will not be worked on
+  color: FFFFFF
+- name: 💥breaking change
+  description: This PR introduces a breaking change
+  color: F0CB2C
+
+- name: 💖 sponsor
+  description: This issue comes from a sponsor
+  color: FFDBF0
+
+- name: stale
+  description: This issue has not had recent activity
+  color: 6A5ACD
+- name: no-stale
+  description: This issue cannot be marked as stale
+  color: 6A5ACD
