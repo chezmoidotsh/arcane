@@ -64,11 +64,11 @@ devcontainer exec --workspace-folder . -- zsh
 ├── .devcontainer          # Development environment setup (DevContainer/Codespaces)
 │   ├── devcontainer.json  # DevContainer configuration file
 │   └── Dockerfile         # Dockerfile on which the DevContainer is based
-├── .github
+├── .github                
 │   └── assets             # Repository assets (images, video, etc.) used in the documentation.
-├── projects
+├── projects               
 │   └── nex.rpi            # Mission-critical applications for the homelab (NEXus · Raspberry PI)
-├── scripts
+├── scripts                
 │   └── folderinfo         # Perl script to generate a tree-like structure of directories
 ├── .lefthook.yaml         # Git hooks configuration file (using lefthook)
 └── .mise.toml             # Environment (vars, tools and tasks) definition file (using mise-en-place)

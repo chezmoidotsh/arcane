@@ -1,0 +1,152 @@
+#!/usr/bin/env perl
+# Copyright (C) 2024 Alexandre Nicolaie (xunleii@users.noreply.github.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ----------------------------------------------------------------------------
+
+use strict;
+use warnings;
+
+use File::Find;
+use File::Basename;
+use Cwd;
+
+=head1 folderinfo
+
+This script creates a tree-like structure of a given directory,
+including information from .folderinfo files if present.
+
+=over 4
+=cut
+
+my %TREE_SYMBOLS = (
+    Branch     => "├── ",
+    Indent     => "    ",
+    LastBranch => "└── ",
+    Vertical   => "│   ",
+);
+
+=item folderinfo($directoryPath)
+
+Scans the specified directory and its subdirectories for .folderinfo files.
+Returns a data structure representing the directory tree.
+
+=cut
+
+sub folderinfo {
+    my ($directoryPath) = @_;
+    my @childs;
+
+    # Scan directory for files
+    opendir(my $dir, $directoryPath) or die "Cannot open directory: $directoryPath";
+    my @files = sort readdir($dir);
+    closedir($dir);
+
+    # Check if .folderinfo file exists
+    my $hasFolderInfo = grep { $_ eq '.folderinfo' } @files;
+
+    # Process child directories
+    foreach my $file (@files) {
+        next if ($file =~ /^(?:\.|\.\.|\.git|node_modules|\.direnv)$/);
+        my $childPath = "$directoryPath/$file";
+        if (-d $childPath) {
+            my $child = folderinfo($childPath);
+            push(@childs, $child) if $child;
+        }
+    }
+
+    # Return null if no .folderinfo and no child directories
+    return undef if (!@childs && !$hasFolderInfo);
+
+    my $description = "";
+    my @file_info;
+
+    # Read .folderinfo if exists
+    if ($hasFolderInfo) {
+        open(my $fh, '<', "$directoryPath/.folderinfo") or die "Cannot open .folderinfo: $!";
+        my $content = do { local $/; <$fh> };
+        close($fh);
+
+        if ($content =~ /description:\s*(.*)/) {
+            $description = $1;
+        }
+
+        if ($content =~ /files:\s*(.*?)(?:description|$)/s) {
+            my $files_section = $1;
+            while ($files_section =~ /(\S+):\s*(.+)/g) {
+                push(@file_info, { name => $1, description => $2 ? "# $2" : "" });
+            }
+        }
+    }
+
+    return {
+        name        => basename($directoryPath),
+        description => $description ? "# $description" : "",
+        childs      => [@childs, @file_info],
+    };
+}
+
+=item max_line_width($tree, $depth)
+
+Calculates the maximum width of a tree structure for formatting purposes.
+
+=cut
+
+sub max_line_width {
+    my ($tree, $depth) = @_;
+    $depth //= 0;
+    my $max_width = length($tree->{name}) + $depth * 4;
+    foreach my $child (@{$tree->{childs} // []}) {
+        my $child_width = max_line_width($child, $depth + 1);
+        $max_width = $child_width if $child_width > $max_width;
+    }
+    return $max_width;
+}
+
+=item show_tree($tree, $prefix, $depth, $maxWidth)
+
+Displays the tree structure in a formatted manner.
+
+=back
+=cut
+
+sub show_tree {
+    my ($tree, $prefix, $depth, $maxWidth) = @_;
+    $prefix //= "";
+    $depth //= 0;
+    $maxWidth //= max_line_width($tree);
+
+    if ($prefix ne "") {
+        printf "%s%s%s  %s\n", $prefix, $tree->{name}, ' ' x ($maxWidth - 4*$depth - length($tree->{name})), $tree->{description};
+    }
+
+    my $childs = $tree->{childs} // [];
+    for my $index (0 .. $#$childs) {
+        my $child = $childs->[$index];
+        my $vprefix = $prefix;
+        $vprefix =~ s/\Q$TREE_SYMBOLS{Branch}/$TREE_SYMBOLS{Vertical}/g;
+        $vprefix =~ s/\Q$TREE_SYMBOLS{LastBranch}/$TREE_SYMBOLS{Indent}/g;
+        my $child_prefix = $vprefix . ($index == $#$childs ? $TREE_SYMBOLS{LastBranch} : $TREE_SYMBOLS{Branch});
+        show_tree($child, $child_prefix, $depth+1, $maxWidth);
+    }
+}
+
+# Main execution
+my $scanDir = $ARGV[0] // getcwd();
+my $tree = folderinfo($scanDir);
+if ($tree) {
+    print STDERR "Generating tree-like for " . (Cwd::abs_path($scanDir) eq getcwd() ? "this folder" : $scanDir) . "\n";
+    show_tree($tree);
+} else {
+    print STDERR "No .folderinfo found.\n";
+}
