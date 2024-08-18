@@ -37,6 +37,7 @@ services:
             - /tmp:exec
         volumes:
             - ..:/workspaces/atlas:cached
+            - nix-store:/nix/store
         working_dir: /workspaces/atlas
 
     registry:
@@ -52,3 +53,7 @@ services:
             - /tmp
         volumes:
             - ./config/etc.zot.config.json:/etc/zot/config.json:ro
+
+volumes:
+    nix-store:
+        driver: local

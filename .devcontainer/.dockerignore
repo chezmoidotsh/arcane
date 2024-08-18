@@ -8,3 +8,4 @@
 !scripts/atlas-utils.lib.sh
 !scripts/post-create-command.sh
 !scripts/post-start-command.sh
+!installer/nix_install

@@ -82,8 +82,12 @@ devcontainer exec --workspace-folder . -- zsh
 > in the [CHANGELOG](./CHANGELOG.md).
 
 * \[X] ~~Try using `docker-compose` and scripts to manage all containers in the homelab (See [CHANGELOG](./CHANGELOG.md#stone-age-2023-2024---a0))~~
+
 * \[X] ~~Try using `Pulumi` to manage the infrastructure (See [CHANGELOG](./CHANGELOG.md#bronze-age-2024-2024---a1))~~
+
 * \[ ] Try using `Helm` to manage the Kubernetes applications and `Terraform` to manage the infrastructure (See [CHANGELOG](./CHANGELOG.md#iron-age-2024-2024---a2))
+
+* \[ ] *Improve the dev experience by improving the DevContainer and Nix environment (making it less bloated / more efficient)*
 
 ## 🛡️ License
 

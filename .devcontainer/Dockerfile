@@ -12,12 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ----------------------------------------------------------------------------
-#
 # trunk-ignore-all(trivy/DS026,checkov/CKV_DOCKER_2): This Dockerfile is used for development purposes only, so no need to add HEALTHCHECK instruction
 # trunk-ignore-all(trivy/DS002,checkov/CKV_DOCKER_3): The user will be created during the DevContainer build process
-# trunk-ignore-all(trivy/DS013): Don't care about this rule
 # trunk-ignore-all(hadolint/DL3018): Don't care about pinning the version of packages, as this is a development container and only git is installed
-# trunk-ignore-all(hadolint/DL3003): Don't care about WORKDIR instruction, as this will be set by the DevContainer
 
 
 # ┌───────────────────────────────────────────────────────────────────────────┐
@@ -37,15 +34,12 @@ RUN apk add --no-cache dbus \
 # └───────────────────────────────────────────────────────────────────────────┘
 FROM ghcr.io/pulumi/devcontainer:slim-node
 
-# Install mise package manager
-COPY --from=docker.io/jdxcode/mise:v2024.7.3@sha256:d284e59e73c14b5d06074e277f91d80da58909a614ef38f02386adf47e2483d3 /usr/local/bin/mise /usr/local/bin/mise
-RUN mise settings set experimental true
-
-# Install charmbracelet/gum
-COPY --from=ghcr.io/charmbracelet/gum:v0.14.1@sha256:01028e2f2c3d9c80f415f87a4599e539b1bee0c9efa602a225b89eb4d14c2a2a /usr/local/bin/gum /usr/local/bin/gum
-
 # Copy generated machine-id
 COPY --from=machine-id /etc/machine-id /etc/machine-id
+
+# Install mise package manager
+COPY --from=docker.io/jdxcode/mise:v2024.8.7@sha256:60cdda1f2d1034c7c3691b2c3843309895842eb4f30164685a51701762ee6574 /usr/local/bin/mise /usr/local/bin/mise
+RUN mise settings set experimental true
 
 COPY scripts/atlas-utils.lib.sh /usr/local/share/atlas-utils.lib.sh
 COPY --chmod=755 scripts/post-create-command.sh /usr/local/share/post-create-command.sh

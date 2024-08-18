@@ -5,6 +5,4 @@ the Atlas infrastructure (aka. my homelab).
 📚 No documentation has been written yet ... but it is planned
 🐳 Registry UI is available on http://oci.local.chezmoi.sh:5000/
 🚀 How to build or update the infrastructure ?
-   - `yarn`
-   - `pulumi login`
-   - `cd <project> && pulumi up`
+   - You can't.... nothing is ready yet

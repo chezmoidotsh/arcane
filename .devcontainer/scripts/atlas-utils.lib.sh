@@ -17,12 +17,11 @@
 
 # run_command - Run a command in a more visually appealing way
 function run_command() {
-	local temp_dir
-	temp_dir="$(mktemp -d)"
+	local -r temp_dir="$(mktemp -d)"
 
-	local stdout="${temp_dir}/stdout"
-	local stderr="${temp_dir}/stderr"
-	local exit_code="${temp_dir}/exit_code"
+	local -r stdout="${temp_dir}/stdout"
+	local -r stderr="${temp_dir}/stderr"
+	local -r exit_code="${temp_dir}/exit_code"
 	# trunk-ignore(shellcheck/SC2064): we want to expand the temp_dir variable now and not when the trap is executed
 	trap "rm --recursive --force ${temp_dir}" RETURN
 
@@ -30,12 +29,11 @@ function run_command() {
 ${@:3} 2> ${stderr} 1> ${stdout}; echo \$? > ${exit_code}
 EOS
 
-	local title="${1}"
+	local -r title="${1}"
 	gum spin --title "${title}" --spinner minidot --spinner.foreground "#F1C40F" -- sh "${temp_dir}/cmdline"
 
-	local exit_code
-	exit_code=$(cat "${exit_code}")
-	if [[ ${exit_code} -eq 0 ]]; then
+	status=$(cat "${exit_code}")
+	if [[ ${status} -eq 0 ]]; then
 		gum style "$(gum style --foreground '#2ECC71' '✓') ${title}"
 		if [[ -s ${stdout} ]] || [[ -s ${stderr} ]]; then
 			(
@@ -44,7 +42,7 @@ EOS
 			) | sed 's/^/\|  /g' | gum style --faint --margin "0 0 0 2"
 		fi
 	else
-		gum style "$(gum style --foreground '#E74C3C' '✗') ${title} $(gum style --faint --italic "(exit ${exit_code})" --foreground '#E74C3C')"
+		gum style "$(gum style --foreground '#E74C3C' '✗') ${title} $(gum style --faint --italic "(exit ${status})" --foreground '#E74C3C')"
 		if [[ -s ${stdout} ]] || [[ -s ${stderr} ]]; then
 			(
 				[[ -s ${stdout} ]] && cat "${stdout}"

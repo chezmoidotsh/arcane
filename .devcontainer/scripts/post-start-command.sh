@@ -13,6 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ----------------------------------------------------------------------------
+# trunk-ignore-all(shellcheck/SC2312)
+
+# NOTE: build/load the nix environment before running this script
+eval "$(direnv export bash)"
+
 source /usr/local/share/atlas-utils.lib.sh
 
+nom develop --build
 run_command "Docker logout" -- docker logout

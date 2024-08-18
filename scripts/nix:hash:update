@@ -1,0 +1,69 @@
+#!/bin/env bash
+# Copyright (C) 2024 Alexandre Nicolaie (xunleii@users.noreply.github.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ----------------------------------------------------------------------------
+# mise alias="nix:hash:update"
+# mise description="Update all hashes in the NIX file."
+set -o nounset
+set -o pipefail
+
+# Set the SED delimiter to the ASCII character 31 (Unit Separator).
+SED_DELIM=$'\037'
+
+# Trim the leading and trailing spaces from the given string.
+function trim_space() {
+	local str="${1}"
+	str="${str#"${str%%[![:space:]]*}"}"
+	str="${str%"${str##*[![:space:]]}"}"
+	echo "${str}"
+}
+
+if [[ ! -f "flake.nix" ]]; then
+	echo >&2 'The flake.nix file is required to update the hashes in this directory.'
+	exit 1
+fi
+
+# Tries to update all hashes in the given NIX file by replacing all old hashes
+# with an empty one then running the NIX build command to get the new hash.
+# NOTE: This method can be ******* slow because it requires to run the NIX build
+#       command for each hash in the file. I didn't find a better way to do this.
+function update_nix_hashes() {
+	local __stderr __stdout
+	__stderr="$(mktemp --suffix=".nix:hash.stderr")"
+	__stdout="$(mktemp --suffix=".nix:hash.stdout")"
+	trap "rm -f '${__stderr}' '${__stdout}'" EXIT # trunk-ignore(shellcheck/SC2064)
+
+	echo >&2 '> Run Nix store GC to clean up the store (required to get the correct hash).'
+	nix-store --gc
+
+	echo >&2 "> Start the NIX hashes reconcilation."
+	echo >&2 '> Run `nix build` (can be slow... be patient).' # trunk-ignore(shellcheck/SC2016)
+	until nix build 2>"${__stderr}"; do
+		local specified_hash got_hash
+		specified_hash=$(grep -A 3 "hash mismatch in fixed-output derivation" "${__stderr}" | grep "specified:" | awk '{print $2}')
+		got_hash=$(grep -A 3 "hash mismatch in fixed-output derivation" "${__stderr}" | grep "got:" | awk '{print $2}')
+
+		if [[ -z ${specified_hash} ]]; then
+			echo >&2 "> No hash mismatch found in the NIX files... failed to build the flake. Exiting."
+			exit 1
+		fi
+
+		echo >&2 "(${specified_hash})> Hash mismatch found: '${specified_hash}' specified but got '${got_hash}'."
+		echo >&2 "(${specified_hash})> Trying to find and update the hash in the NIX files in this folder."
+		find . -type f -exec sed -i "s${SED_DELIM}${specified_hash}${SED_DELIM}${got_hash}${SED_DELIM}g" {} +
+		echo >&2 "> Hash '${specified_hash}' has been updated to '${got_hash}' in all NIX files."
+		echo >&2 '> Run `nix build` (can be slow... be patient).' # trunk-ignore(shellcheck/SC2016)
+	done
+}
+update_nix_hashes
