@@ -15,6 +15,9 @@
 # ----------------------------------------------------------------------------
 # trunk-ignore-all(shellcheck/SC2312)
 
+# NOTE: load the nix environment before running this script
+eval "$(direnv export bash)"
+
 # run_command - Run a command in a more visually appealing way
 function run_command() {
 	local -r temp_dir="$(mktemp -d)"

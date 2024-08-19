@@ -41,10 +41,11 @@ COPY --from=machine-id /etc/machine-id /etc/machine-id
 COPY --from=docker.io/jdxcode/mise:v2024.8.7@sha256:60cdda1f2d1034c7c3691b2c3843309895842eb4f30164685a51701762ee6574 /usr/local/bin/mise /usr/local/bin/mise
 RUN mise settings set experimental true
 
+# Install gum CLI
+COPY --from=docker.io/charmcli/gum:v0.14.3@sha256:b681364c923a3e0e6b68301995fb00f60638bdb6c806c2f5f6cd14e625cd8cc5 /usr/local/bin/gum /usr/local/bin/gum
+
 COPY scripts/atlas-utils.lib.sh /usr/local/share/atlas-utils.lib.sh
 COPY --chmod=755 scripts/post-create-command.sh /usr/local/share/post-create-command.sh
 COPY --chmod=755 scripts/post-start-command.sh /usr/local/share/post-start-command.sh
 
-COPY --chown=vscode:vscode config/home.vscode..config.lazygit.config.yaml /home/vscode/.config/lazygit/config.yml
-COPY config/etc.docker.pulumi-buildkitd.toml /etc/docker/pulumi-buildkitd.toml
 COPY first-run-notice.txt /usr/local/etc/vscode-dev-containers/first-run-notice.txt

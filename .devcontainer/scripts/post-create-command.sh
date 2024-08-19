@@ -15,10 +15,6 @@
 # ----------------------------------------------------------------------------
 # trunk-ignore-all(shellcheck/SC2312)
 
-# NOTE: build/load the nix environment before running this script
-nix develop --build
-direnv allow && eval "$(direnv export bash)"
-
 source /usr/local/share/atlas-utils.lib.sh
 
 cat <<'EOF' | gum style --border rounded --padding "1 2" --foreground '#3498DB' --border-foreground '#3498DB'
@@ -30,18 +26,3 @@ EOF
 echo
 
 run_command "Synchronizing git submodules" -- git submodule update --init --recursive
-run_command "Logout to Docker (avoid crashing issues)" -- docker logout
-
-# Run commands freshly installed
-run_command "Configure git hooks" -- lefthook install
-
-# Check if git user and email are set
-if [[ -z "$(git config user.name)" ]] && [[ -z "$(git config user.email)" ]] && [[ -z "$(git config --global user.name)" ]] && [[ -z "$(git config --global user.email)" ]]; then
-	echo
-	cat <<EOF | gum style --border rounded --padding "1 2" --foreground '#E67E22' --border-foreground '#E67E22'
-You are missing your git user and email configuration!
-Please set your git user and email with the following commands:
-  git config --global user.name "Your Name"
-  git config --global user.email "Your Email"
-EOF
-fi
