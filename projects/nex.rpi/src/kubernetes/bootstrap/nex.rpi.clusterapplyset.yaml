@@ -1,0 +1,10 @@
+---
+apiVersion: kubernetes.chezmoi.sh/v1alpha1
+kind: ClusterApplySet
+metadata:
+  annotations:
+    applyset.kubernetes.io/tooling: kubectl/v1.31
+    applyset.kubernetes.io/contains-group-kinds: ''
+  labels:
+    applyset.kubernetes.io/id: applyset-klHty0wgbzBVIeZJD_65WqETJCZPJFNbFHuV76b5FQA-v1
+  name: nex.rpi
