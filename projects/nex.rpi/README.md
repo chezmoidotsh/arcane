@@ -104,9 +104,18 @@ In case of a disaster, the following steps should be taken:
 
 ## 🗺️ Roadmap
 
-* \[X] List all services that should be deployed on this project.
-* \[X] Create a diagram of the architecture.
-* \[ ] Wait until I found a way to manage all services deployed on my Homelab.
+* \[X] **Step 0**: Think of what this project should host.
+  * \[X] List all services that should be deployed on this project.
+  * \[X] Create a diagram of the architecture.
+* \[ ] **Step 1**: Install all services on the Raspberry Pi in a "dirty" way.
+  * \[ ] Configure the Raspberry Pi by hand (no automation).
+  * \[ ] Install and configure the k3s cluster.
+  * \[ ] Install and configure all services using only raw Kubernetes manifests.
+* \[ ] **Step 2**: Improve quality and security.
+  * \[ ] Configure k3s to use the ZOT registry as mirror/proxy for all images\[^3].
+  * \[ ] Make my own images for all services.
+  * \[ ] Develop my own Helm charts for all services.
+  * \[ ] ... probably more, but I don't know yet.
 
 ## 🛡️ License
 
@@ -123,3 +132,6 @@ optional and everything *should* work without them.
 \[^2]:
 This will force to use a local docker registry to deploy the services. **Make sure to be able to access the
 registry from the remote device.**
+
+\[^3]:
+See for more details https://docs.k3s.io/installation/private-registry.

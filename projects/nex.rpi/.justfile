@@ -13,6 +13,11 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 
-[tasks."doc:generate:diagram"]
-description = "Generates the architecture diagram for nex·rpi"
-run = "d2 --layout elk --sketch architecture.d2 assets/architecture.svg"
+[private]
+@default:
+    just --choose
+
+[doc("Generates the architecture diagram for nex·rpi")]
+[group("doc")]
+generate_diagram:
+    d2 --layout elk --sketch architecture.d2 "assets/architecture.svg"
