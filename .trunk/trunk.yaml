@@ -16,12 +16,13 @@ runtimes:
         - go@1.21.0
         - node@18.12.1
         - python@3.10.8
-# This is the section where you override some tools' configurations. (https://docs.trunk.io/check/advanced-setup/tools/configuration)
+# This is the section where you override some tools' configurations.
 tools:
     definitions:
         - name: prettier
           extra_packages:
               - "@trivago/prettier-plugin-sort-imports"
+
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
     disabled:
@@ -63,6 +64,16 @@ lint:
         - linters: [svgo]
           paths:
               - projects/**/assets/architecture.svg
+    # This is the section where you override some linters' configurations.
+    definitions:
+        - name: remark-lint
+          extra_packages:
+              - remark-preset-lint-consistent
+              - remark-preset-lint-recommended
+              - remark-lint-list-item-indent
+              - vfile-reporter-json
+              - remark-gfm
+
 actions:
     disabled:
         - trunk-announce

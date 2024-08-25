@@ -13,6 +13,8 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 
+kubernetes_api := "kubernetes.nr.chezmoi.sh"
+
 [private]
 @default:
     just --choose
@@ -21,3 +23,21 @@
 [group("doc")]
 generate_diagram:
     d2 --layout elk --sketch architecture.d2 "assets/architecture.svg"
+
+[doc("Syncronizes the kubeconfig file from the nex·rpi cluster")]
+sync_kubeconfig:
+    ssh pi@{{ kubernetes_api }} 'sudo cat /etc/rancher/k3s/k3s.yaml' | sed 's|server: https://127.0.0.1:6443|server: https://{{ kubernetes_api }}:6443|' > $KUBECONFIG
+
+[doc("Enables maintenance mode on the nex·rpi Raspberry Pi")]
+[group("maintenance")]
+maintenance_enable:
+    ssh pi@{{ kubernetes_api }} -- 'sudo overlayroot-chroot systemctl disable --now k3s'
+    ssh pi@{{ kubernetes_api }} -- 'sudo raspi-config nonint do_overlayfs 1'
+    ssh pi@{{ kubernetes_api }} -- 'sudo reboot'
+
+[doc("Disables maintenance mode on the nex·rpi Raspberry Pi")]
+[group("maintenance")]
+maintenance_disable:
+    ssh pi@{{ kubernetes_api }} -- 'sudo systemctl enable k3s'
+    ssh pi@{{ kubernetes_api }} -- 'sudo raspi-config nonint do_overlayfs 0'
+    ssh pi@{{ kubernetes_api }} -- 'sudo reboot'
