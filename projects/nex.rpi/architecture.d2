@@ -262,12 +262,12 @@ nex·rpi.Cert-Manager -> internet: HTTPS (443) {class: [connect-to-internet; und
 
 # - External-DNS
 nex·rpi.ExternalDNS: {
-  class: [application-system; undeployed]
+  class: [application-system]
   icon: assets/external-dns.png
   link: https://github.com/kubernetes-sigs/external-dns
   tooltip: ExternalDNS is a Kubernetes controller that configures DNS resources.
 }
-nex·rpi.ExternalDNS -> internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
+nex·rpi.ExternalDNS -> internet: HTTPS (443) {class: [connect-to-internet]}
 
 # - External-Secret
 nex·rpi.External-Secret: {

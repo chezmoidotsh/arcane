@@ -7,3 +7,4 @@ resources:
   - fluxcd
   - traefik
   - external-secrets
+  - external-dns
