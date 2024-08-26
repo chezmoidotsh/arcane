@@ -8,3 +8,4 @@ resources:
   - traefik
   - external-secrets
   - external-dns
+  - cert-manager

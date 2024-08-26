@@ -253,12 +253,12 @@ nex·rpi.NUT <- nex·rpi.Traefik: {
 
 # - Cert-Manager
 nex·rpi.Cert-Manager: {
-  class: [application-system; undeployed]
+  class: [application-system]
   icon: assets/cert-manager.svg
   link: https://cert-manager.io/
   tooltip: Cert-Manager is a Kubernetes controller that automates the management and issuance of TLS certificates.
 }
-nex·rpi.Cert-Manager -> internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
+nex·rpi.Cert-Manager -> internet: HTTPS (443) {class: [connect-to-internet]}
 
 # - External-DNS
 nex·rpi.ExternalDNS: {
