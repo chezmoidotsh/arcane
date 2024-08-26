@@ -280,13 +280,13 @@ nex·rpi.External-Secret -> internet: HTTPS (443) {class: [connect-to-internet; 
 
 # - Traefik
 nex·rpi.Traefik: {
-  class: [application-system; undeployed]
+  class: [application-system]
   icon: assets/traefik.svg
   link: https://traefik.io/
   tooltip: Traefik is a modern HTTP reverse proxy and load balancer.
 }
 nex·rpi.Traefik <- localnet: {
-  class: [connect-from-network; undeployed]
+  class: [connect-from-network]
   source-arrowhead: |md
     DNS (53)
     HTTP (80)
