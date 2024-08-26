@@ -6,3 +6,4 @@ metadata:
 resources:
   - fluxcd
   - traefik
+  - external-secrets

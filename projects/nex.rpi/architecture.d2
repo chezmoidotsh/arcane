@@ -271,12 +271,11 @@ nex·rpi.ExternalDNS -> internet: HTTPS (443) {class: [connect-to-internet; unde
 
 # - External-Secret
 nex·rpi.External-Secret: {
-  class: [application-system; undeployed]
+  class: [application-system]
   icon: assets/external-secret.svg
   link: https://external-secrets.io/
   tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
 }
-nex·rpi.External-Secret -> internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
 
 # - Traefik
 nex·rpi.Traefik: {
