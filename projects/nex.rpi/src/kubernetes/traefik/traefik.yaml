@@ -47,12 +47,10 @@ spec:
           default: true
         exposedPort: 80
         protocol: TCP
-        http:
-          redirections:
-            entryPoint:
-              to: websecure
-              scheme: https
-              permanent: true
+        redirectTo:
+          port: websecure
+          priority: 10
+          permanent: true
 
       # WebSecure (HTTPS)
       websecure:
@@ -91,16 +89,33 @@ spec:
           general: {defaultMode: keep}
           headers: {defaultMode: keep}
 ---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: traefik.nr.chezmoi.sh
+spec:
+  secretName: traefik.nr.chezmoi.sh-certificate
+
+  dnsNames:
+    - traefik.nr.chezmoi.sh
+  duration: 2160h # 90d
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
+  renewBefore: 360h # 15d
+---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: traefik-dashboard
 spec:
   entryPoints:
-    - web
+    - websecure
   routes:
     - match: Host(`traefik.nr.chezmoi.sh`)
       kind: Rule
       services:
         - name: api@internal
           kind: TraefikService
+  tls:
+    secretName: traefik.nr.chezmoi.sh-certificate
