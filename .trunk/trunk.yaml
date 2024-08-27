@@ -64,6 +64,9 @@ lint:
         - linters: [svgo]
           paths:
               - projects/**/assets/architecture.svg
+        - linters: [yamllint]
+          paths:
+              - catalog/**/tests/**
     # This is the section where you override some linters' configurations.
     definitions:
         - name: remark-lint

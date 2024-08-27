@@ -1,0 +1,92 @@
+dc:org: #dn: dc=org
+  objectClass: [top, domain]
+
+  dc:example: #dn: dc=example,dc=org
+    objectClass: [domain]
+
+    ou:group: #dn: ou=group,dc=example,dc=org
+      objectClass: [top]
+
+      cn:owner: &test #dn: cn=owner,ou=group,dc=example,dc=org
+        objectClass: posixGroup
+        gidNumber: 1000
+        description: Organization owners
+        memberUid: [alice]
+      cn:dev: #dn: cn=dev,ou=group,dc=example,dc=org
+        objectClass: posixGroup
+        gidNumber: 1001
+        description: Organization developers
+        memberUid: [bob, charlie]
+      cn:qa: #dn: cn=qa,ou=group,dc=example,dc=org
+        objectClass: posixGroup
+        gidNumber: 1002
+        memberUid: [charlie, eve]
+      cn:ok: #dn: cn=ok,ou=group,dc=example,dc=org
+        <<: *test
+        gidNumber: 1003
+        description: Dummy group
+        # memberUid: [alice]
+
+    c:fr: #dn: c=fr,dc=example,dc=org
+      objectClass: [top, country]
+
+      ou:people: #dn: ou=people,c=fr,dc=example,dc=org
+        objectClass: [top]
+
+        cn:alice: #dn: cn=alice,ou=people,c=fr,dc=example,dc=org
+          objectClass: posixAccount
+          .#acl:
+            - !!ldap/acl:allow-on dc=org # allow alice to request everything
+
+          description: Main organization admin
+          uid: alice
+          uidNumber: 1000
+          gidNumber: 1000
+          loginShell: /bin/bash
+          homeDirectory: /home/alice
+          userPassword: !!ldap/bind:password alice
+          usermail: alice@example.org
+
+        cn:bob: #dn: cn=bob,ou=people,c=fr,dc=example,dc=org
+          objectClass: posixAccount
+          .#acl:
+            - !!ldap/acl:allow-on ou=group,dc=example,dc=org # allow bob request only for user groups
+
+          uid: bob
+          homeDirectory: /home/bob
+          uidNumber: 1001
+          gidNumber: 1001
+          userPassword: !!ldap/bind:password bob
+
+    c:de: #dn: c=de,dc=example,dc=org
+      objectClass: [top, country]
+
+      ou:people: #dn: ou=people,c=de,dc=example,dc=org
+        objectClass: [top]
+
+        cn:charlie: #dn: cn=charlie,ou=people,c=de,dc=example,dc=org
+          objectClass: posixAccount
+          .#acl:
+            - !!ldap/acl:allow-on ou=group,dc=example,dc=org # allow charlie request for all groups...
+            - !!ldap/acl:deny-on cn=owner,ou=group,dc=example,dc=org # ...but  to owner group
+
+          uid: charlie
+          homeDirectory: /home/charlie
+          uidNumber: 1100
+          gidNumber: 1001
+          userPassword: !!ldap/bind:password charlie
+
+    c:uk: #dn: c=uk,dc=example,dc=org
+      objectClass: [top, country]
+
+      ou:people: #dn: ou=people,c=fr,dc=example,dc=org
+        objectClass: [top]
+
+        cn:eve: #dn: cn=eve,ou=people,c=uk,dc=example,dc=org
+          objectClass: posixAccount
+          #NOTE: eve can't make any LDAP request (no !!ldap/bind:password field)
+          uid: eve
+          homeDirectory: /home/eve
+          uidNumber: 1003
+          gidNumber: 1002
+          userPassword: eve
