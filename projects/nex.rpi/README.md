@@ -80,10 +80,6 @@ without\[^1] the need of third-party services.
 
 ### 📦 Others
 
-* **NUT server**: Monitors UPS status and battery level, ideal for Raspberry Pi due to its low power consumption.
-
-  **Why is it mission-critical?** It ensures that all servers can shut down gracefully in case of a power outage.
-
 * **Home dashboard based on [homepage](https://gethomepage.dev/latest/)**: Provides a page with all services and their
   status.
 
@@ -134,4 +130,4 @@ This will force to use a local docker registry to deploy the services. **Make su
 registry from the remote device.**
 
 \[^3]:
-See for more details https://docs.k3s.io/installation/private-registry.
+See for more details <https://docs.k3s.io/installation/private-registry>.

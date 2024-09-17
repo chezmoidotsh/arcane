@@ -239,18 +239,6 @@ nex·rpi.Homepage <-> nex·rpi.Traefik: {
   target-arrowhead: HTTPS (443)
 }
 
-# - NUT
-nex·rpi.NUT: {
-  class: [application; undeployed]
-  icon: assets/nut.svg
-  link: https://networkupstools.org/
-  tooltip: NUT is a network UPS tools.
-}
-nex·rpi.NUT <- nex·rpi.Traefik: {
-  class: undeployed
-  source-arrowhead: NUT protocol (3493)
-}
-
 # - Cert-Manager
 nex·rpi.Cert-Manager: {
   class: [application-system]
