@@ -62,6 +62,15 @@ spec:
         tls:
           enabled: true
 
+      # LDAP over TLS
+      ldaps:
+        port: 636
+        expose:
+          default: true
+        protocol: TCP
+        tls:
+          enabled: true
+
     # configure Traefik providers
     providers:
       kubernetesCRD: {enabled: true}

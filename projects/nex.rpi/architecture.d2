@@ -140,7 +140,7 @@ nex·rpi.network.AdGuard Home <- nex·rpi.Traefik: {
 
 # - yaLDAP
 nex·rpi.security.yaLDAP: {
-  class: [application; undeployed]
+  class: [application]
   icon: assets/yaldap.png
   link: https://yaldap.com/
   tooltip: yaLDAP is a modern LDAP server.
@@ -150,7 +150,6 @@ nex·rpi.security.yaLDAP <- nex·rpi.security.Authelia: {
   source-arrowhead: LDAP (8389)
 }
 nex·rpi.security.yaLDAP <- nex·rpi.Traefik: {
-  class: undeployed
   source-arrowhead: LDAP (8389)
 }
 
@@ -278,6 +277,7 @@ nex·rpi.Traefik <- localnet: {
     DNS (53)
     HTTP (80)
     HTTPS (443)
+    LDAPS (636)
     DNS-over-TLS (853)
   |
 }

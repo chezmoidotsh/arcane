@@ -4,8 +4,9 @@ kind: Kustomization
 metadata:
   name: fluxcd
 resources:
-  - fluxcd
-  - traefik
-  - external-secrets
-  - external-dns
   - cert-manager
+  - external-dns
+  - external-secrets
+  - fluxcd
+  - sso
+  - traefik
