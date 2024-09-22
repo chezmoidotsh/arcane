@@ -146,7 +146,6 @@ nex·rpi.security.yaLDAP: {
   tooltip: yaLDAP is a modern LDAP server.
 }
 nex·rpi.security.yaLDAP <- nex·rpi.security.Authelia: {
-  class: undeployed
   source-arrowhead: LDAP (8389)
 }
 nex·rpi.security.yaLDAP <- nex·rpi.Traefik: {
@@ -155,13 +154,12 @@ nex·rpi.security.yaLDAP <- nex·rpi.Traefik: {
 
 # - Authelia
 nex·rpi.security.Authelia: {
-  class: [application; undeployed]
+  class: [application]
   icon: assets/authelia.svg
   link: https://www.authelia.com/
   tooltip: Authelia is an open-source authentication and authorization server.
 }
 nex·rpi.security.Authelia <- nex·rpi.Traefik: {
-  class: undeployed
   source-arrowhead: HTTP (9091)
 }
 

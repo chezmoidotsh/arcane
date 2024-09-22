@@ -5,5 +5,12 @@ metadata:
   name: sso
 namespace: sso
 resources:
+  - authelia.yaml
   - namespace.yaml
   - yaldap.yaml
+
+configMapGenerator:
+  - name: authelia-configuration
+    behavior: merge
+    files:
+      - configuration.yml=configurations/authelia.yaml
