@@ -110,13 +110,13 @@ nex·rpi: {
 
 # - Tailscale
 nex·rpi.network.Tailscale: {
-  class: [application; undeployed]
+  class: [application]
   icon: assets/tailscale.svg
   link: https://tailscale.com/
   tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
 }
-nex·rpi.network.Tailscale <-> internet: VPN {class: [connect-vpn-trunk; undeployed]}
-nex·rpi.network.Tailscale -> localnet: VPN Subnet proxy {class: [connect-vpn-trunk; undeployed]}
+nex·rpi.network.Tailscale <- internet: VPN {class: [connect-vpn-trunk]}
+nex·rpi.network.Tailscale -> localnet: VPN Subnet proxy {class: [connect-vpn-trunk]}
 
 # - AdGuard Home
 nex·rpi.network.AdGuard Home: {

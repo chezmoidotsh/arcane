@@ -8,5 +8,6 @@ resources:
   - external-dns
   - external-secrets
   - fluxcd
+  - network-utils
   - sso
   - traefik
