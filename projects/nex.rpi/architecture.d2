@@ -120,22 +120,18 @@ nex·rpi.network.Tailscale -> localnet: VPN Subnet proxy {class: [connect-vpn-tr
 
 # - AdGuard Home
 nex·rpi.network.AdGuard Home: {
-  class: [application; undeployed]
+  class: [application]
   icon: assets/adguard-home.svg
   link: https://adguard.com/en/adguard-home/overview.html
   tooltip: AdGuard Home is a network-wide software for blocking ads & tracking.
 }
-nex·rpi.network.AdGuard Home -> internet: DNS / DoH {class: [connect-to-internet; undeployed]}
+nex·rpi.network.AdGuard Home -> internet: DNS / DoT / DoH / DoQ {class: [connect-to-internet]}
 nex·rpi.network.AdGuard Home <- localnet: {
-  class: [connect-to-network; undeployed]
-  source-arrowhead: |md
-    DNS (8053)
-    DoT & DoQ (8853)
-  |
+  class: [connect-to-network]
+  source-arrowhead: DNS (53)
 }
 nex·rpi.network.AdGuard Home <- nex·rpi.Traefik: {
-  class: undeployed
-  source-arrowhead: DoH & HTTP (8080)
+  source-arrowhead: DoH & HTTP (3000)
 }
 
 # - yaLDAP
@@ -272,10 +268,8 @@ nex·rpi.Traefik: {
 nex·rpi.Traefik <- localnet: {
   class: [connect-from-network]
   source-arrowhead: |md
-    DNS (53)
     HTTP (80)
     HTTPS (443)
     LDAPS (636)
-    DNS-over-TLS (853)
   |
 }
