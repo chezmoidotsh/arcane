@@ -102,6 +102,13 @@ spec:
     service:
       # NOTE: required to get the real client IP address with LoadBalancer in K3S
       externalTrafficPolicy: Local
+
+    # add addons to Traefik
+    experimental:
+      plugins:
+        souin:
+          moduleName: github.com/darkweak/souin
+          version: v1.7.2
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate

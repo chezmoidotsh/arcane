@@ -10,4 +10,5 @@ resources:
   - fluxcd
   - network-utils
   - sso
+  - start-page
   - traefik

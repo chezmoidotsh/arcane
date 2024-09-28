@@ -74,8 +74,8 @@ without[^1] the need of third-party services.
 
 ### 📦 Others
 
-* **Home dashboard** *based on [homepage](https://gethomepage.dev/)*: Provides a page with all services and their
-  status.
+* **Home dashboard** *based on [glance](https://github.com/glanceapp/glance)*: Provides a page with all services and their
+  status and, if possible, a start page for the browser.
 
   **Why is it mission-critical?** This is not mission-critical, but it covenient to have a single page with all services
   hosted on the device that must not be shut down.
