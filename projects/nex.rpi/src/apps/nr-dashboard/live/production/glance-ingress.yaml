@@ -1,0 +1,45 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  labels:
+    app.kubernetes.io/instance: glance
+    app.kubernetes.io/name: glance
+    app.kubernetes.io/part-of: start-page
+    app.kubernetes.io/version: 0.6.1
+  name: glance
+spec:
+  parentRefs:
+    - kind: Gateway
+      name: default-gateway
+      namespace: kube-system
+      sectionName: nr.chezmoi.sh-websecure
+  hostnames:
+    - home.nr.chezmoi.sh
+  rules:
+    - backendRefs:
+        - kind: Service
+          name: glance
+          port: 80
+      filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: glance-cache
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  labels:
+    app.kubernetes.io/instance: glance
+    app.kubernetes.io/name: glance
+    app.kubernetes.io/part-of: start-page
+    app.kubernetes.io/version: 0.6.1
+  name: glance-cache
+spec:
+  plugin:
+    souin:
+      default_cache:
+        ttl: 5m
+        mode: bypass

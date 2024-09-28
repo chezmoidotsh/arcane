@@ -1,0 +1,50 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels:
+    app.kubernetes.io/instance: authelia-sso
+    app.kubernetes.io/name: authelia
+    app.kubernetes.io/part-of: sso
+    app.kubernetes.io/version: 4.38.11
+  name: authelia
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: authelia-sso
+      app.kubernetes.io/name: authelia
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: traefik-kube-system
+              app.kubernetes.io/name: traefik
+      ports:
+        - port: 9091
+  egress:
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 25
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: yaldap-sso
+              app.kubernetes.io/name: yaldap
+      ports:
+        - port: 8389

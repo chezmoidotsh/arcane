@@ -1,0 +1,17 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: nr-dashboard
+
+resources:
+  - namespace.yaml
+
+  - ../../base/glance
+  - glance-ingress.yaml
+  - glance-netpolicy.yaml
+
+configMapGenerator:
+  - name: glance-configuration
+    behavior: merge
+    files:
+      - glance.yml=configurations/glance.yaml
