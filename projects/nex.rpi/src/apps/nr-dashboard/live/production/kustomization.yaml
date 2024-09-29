@@ -12,6 +12,5 @@ resources:
 
 configMapGenerator:
   - name: glance-configuration
-    behavior: merge
     files:
       - glance.yml=configurations/glance.yaml
