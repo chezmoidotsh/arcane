@@ -1,191 +1,84 @@
 ---
+server:
+  assets-path: /app/assets
+theme:
+  light: true
+  background-color: 0 0 95
+  primary-color: 0 0 10
+  negative-color: 0 90 50
 pages:
-  - name: Startpage
-    width: slim
-    hide-desktop-navigation: true
+  # Default/main home page
+  # This is the page that will be shown when you open the dashboard.
+  # It contains a simple search bar and the list of services hosted
+  # on the homelab.
+  - name: " "
     center-vertically: true
+    hide-desktop-navigation: true
+    show-mobile-header: false
+    slug: _
+    width: slim
     columns:
       - size: full
         widgets:
           - type: search
+            search-engine: https://www.google.com/search?q={QUERY}
             autofocus: true
             bangs:
               - title: Google
                 shortcut: "!g"
-                url: https://www.google.com/search?q=%s
+                url: https://www.google.com/search?q={QUERY}
+              - title: DuckDuckGo
+                shortcut: "!?"
+                url: https://duckduckgo.com/?q={QUERY}
 
+              - title: YouTube
+                shortcut: "!yt"
+                url: https://www.youtube.com/results?search_query={QUERY}
+              - title: Wikipedia
+                shortcut: "!w"
+                url: https://en.wikipedia.org/w/index.php?search={QUERY}
 
-          - type: monitor
-            cache: 1m
-            title: Services
-            sites:
-              - title: Jellyfin
-                url: https://yourdomain.com/
-                icon: si:jellyfin
-              - title: Gitea
-                url: https://yourdomain.com/
-                icon: si:gitea
-              - title: qBittorrent # only for Linux ISOs, of course
-                url: https://yourdomain.com/
-                icon: si:qbittorrent
-              - title: Immich
-                url: https://yourdomain.com/
-                icon: si:immich
-              - title: AdGuard Home
-                url: https://yourdomain.com/
-                icon: si:adguard
-              - title: Vaultwarden
-                url: https://yourdomain.com/
-                icon: si:vaultwarden
-
-          - type: bookmarks
-            groups:
-              - title: General
-                links:
-                  - title: Gmail
-                    url: https://mail.google.com/mail/u/0/
-                  - title: Amazon
-                    url: https://www.amazon.com/
-                  - title: Github
-                    url: https://github.com/
-              - title: Entertainment
-                links:
-                  - title: YouTube
-                    url: https://www.youtube.com/
-                  - title: Prime Video
-                    url: https://www.primevideo.com/
-                  - title: Disney+
-                    url: https://www.disneyplus.com/
-              - title: Social
-                links:
-                  - title: Reddit
-                    url: https://www.reddit.com/
-                  - title: Twitter
-                    url: https://twitter.com/
-                  - title: Instagram
-                    url: https://www.instagram.com/
-  - name: Markets
-    columns:
-      - size: small
-        widgets:
-          - type: markets
-            title: Indices
-            markets:
-              - symbol: SPY
-                name: S&P 500
-              - symbol: DX-Y.NYB
-                name: Dollar Index
-
-          - type: markets
-            title: Crypto
-            markets:
-              - symbol: BTC-USD
-                name: Bitcoin
-              - symbol: ETH-USD
-                name: Ethereum
-
-          - type: markets
-            title: Stocks
-            sort-by: absolute-change
-            markets:
-              - symbol: NVDA
-                name: NVIDIA
-              - symbol: AAPL
-                name: Apple
-              - symbol: MSFT
-                name: Microsoft
-              - symbol: GOOGL
-                name: Google
-              - symbol: AMD
-                name: AMD
-              - symbol: RDDT
-                name: Reddit
-              - symbol: AMZN
-                name: Amazon
-              - symbol: TSLA
-                name: Tesla
-              - symbol: INTC
-                name: Intel
-              - symbol: META
-                name: Meta
-
-      - size: full
-        widgets:
-          - type: rss
-            title: News
-            style: horizontal-cards
-            feeds:
-              - url: https://feeds.bloomberg.com/markets/news.rss
-                title: Bloomberg
-              - url: https://moxie.foxbusiness.com/google-publisher/markets.xml
-                title: Fox Business
-              - url: https://moxie.foxbusiness.com/google-publisher/technology.xml
-                title: Fox Business
+              - title: NixOS Packages
+                shortcut: "!nixpkg"
+                url: https://search.nixos.org/packages?query={QUERY}
+              - title: NixOS Options
+                shortcut: "!nixopt"
+                url: https://search.nixos.org/options?query={QUERY}
+              - title: NixPkgs Repository
+                shortcut: "!nixpkgs"
+                url: https://github.com/search?q=repo%3ANixOS%2Fnixpkgs+{QUERY}&type=code
 
           - type: group
             widgets:
-              - type: reddit
-                show-thumbnails: true
-                subreddit: technology
-              - type: reddit
-                show-thumbnails: true
-                subreddit: wallstreetbets
+              - type: monitor
+                size: small
+                cache: 1m
+                title: Pour la maison
+                sites:
+                  - title: Actual Budget
+                    url: https://budget.chezmoi.sh/
+                    icon: /assets/actual-budget.png
+                  - title: Home Assistant
+                    url: https://hass.chezmoi.sh/
+                    icon: /assets/home-assistant.png
+                  - title: Homebox
+                    url: https://inventaire.chezmoi.sh/
+                    icon: /assets/homebox.png
+                  - title: Linkding
+                    url: https://bookmarks.chezmoi.sh/
+                    icon: /assets/linkding.png
+                  - title: n8n
+                    url: https://n8n.chezmoi.sh/
+                    icon: /assets/n8n.png
 
-          - type: videos
-            style: grid-cards
-            collapse-after-rows: 3
-            channels:
-              - UCvSXMi2LebwJEM1s4bz5IBA # New Money
-              - UCV6KDgJskWaEckne5aPA0aQ # Graham Stephan
-              - UCAzhpt9DmG6PnHXjmJTvRGQ # Federal Reserve
-
-      - size: small
-        widgets:
-          - type: rss
-            title: News
-            limit: 30
-            collapse-after: 13
-            feeds:
-              - url: https://www.ft.com/technology?format=rss
-                title: Financial Times
-              - url: https://feeds.a.dj.com/rss/RSSMarketsMain.xml
-                title: Wall Street Journal
-  - name: Gaming
-    columns:
-      - size: small
-        widgets:
-          - type: twitch-top-games
-            limit: 20
-            collapse-after: 13
-            exclude:
-              - just-chatting
-              - pools-hot-tubs-and-beaches
-              - music
-              - art
-              - asmr
-
-      - size: full
-        widgets:
-          - type: group
-            widgets:
-              - type: reddit
-                show-thumbnails: true
-                subreddit: pcgaming
-              - type: reddit
-                subreddit: games
-
-          - type: videos
-            style: grid-cards
-            collapse-after-rows: 3
-            channels:
-              - UCNvzD7Z-g64bPXxGzaQaa4g # gameranx
-              - UCZ7AeeVbyslLM_8-nVy2B8Q # Skill Up
-              - UCHDxYLv8iovIbhrfl16CNyg # GameLinked
-              - UC9PBzalIcEQCsiIkq36PyUA # Digital Foundry
-
-      - size: small
-        widgets:
-          - type: reddit
-            subreddit: gamingnews
-            limit: 7
-            style: vertical-cards
+              - type: monitor
+                size: small
+                cache: 1m
+                title: Pour se divertir
+                sites:
+                  - title: Jellyfin
+                    url: https://media.chezmoi.sh/
+                    icon: /assets/jellyfin.png
+                  - title: Fileflows
+                    url: https://fileflows.chezmoi.sh/
+                    icon: /assets/fileflows.png

@@ -21,6 +21,11 @@ diff environment="production":
 apply environment="production":
     KUBECTL_APPLYSET=true kubectl apply --kustomize 'clusters/{{environment}}' --prune --server-side --applyset=clusterapplysets.kubernetes.chezmoi.sh/nex.rpi --force-conflicts
 
+# -- Vault related tasks
+[doc("Generate all secret resources that will be stored in the Vault")]
+sync_vault:
+    kubevault generate | KUBECTL_APPLYSET=true kubectl apply -f - --prune --server-side --applyset=clusterapplysets.kubernetes.chezmoi.sh/kubevault --force-conflicts
+
 # -- Local development environment
 [doc("Start the local development environment")]
 [group('development')]
