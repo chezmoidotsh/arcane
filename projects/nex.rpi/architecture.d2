@@ -271,3 +271,12 @@ nex·rpi.Traefik <- localnet: {
     LDAPS (636)
   |
 }
+
+# - Crossplane
+nex·rpi.Crossplane: {
+  class: [application-system]
+  icon: assets/crossplane.svg
+  link: https://crossplane.io/
+  tooltip: Crossplane is an open-source Kubernetes add-on that extends your cluster with managed resources from any cloud or on-prem environment.
+}
+nex·rpi.Crossplane -> internet: HTTPS (443) {class: [connect-to-internet]}

@@ -1,0 +1,41 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: crossplane
+spec:
+  interval: 44640m # 1 month
+  url: https://charts.crossplane.io/master/
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: crossplane
+spec:
+  interval: 44640m # 1 month
+  timeout: 5m
+  chart:
+    spec:
+      chart: crossplane
+      version: 1.18.0-rc.0.61.ged4e659c
+      sourceRef:
+        kind: HelmRepository
+        name: crossplane
+      interval: 44640m # 1 month
+  releaseName: crossplane
+  driftDetection:
+    mode: enabled
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-go-templating
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-go-templating:v0.6.0
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-auto-ready
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-auto-ready:v0.3.0

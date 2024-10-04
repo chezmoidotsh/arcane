@@ -2,6 +2,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  - ../../apps/crossplane-system/live/production
   - ../../apps/kube-system/live/production
   - ../../apps/nr-dashboard/live/production
   - ../../apps/nr-dns/live/production

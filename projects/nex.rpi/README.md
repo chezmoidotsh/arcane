@@ -80,6 +80,12 @@ without[^1] the need of third-party services.
   **Why is it mission-critical?** This is not mission-critical, but it covenient to have a single page with all services
   hosted on the device that must not be shut down.
 
+* **Synchronized IaC** *based on [crossplane](https://crossplane.io)*: Provides a way to manage cloud/3rd party services
+  using the same IaC tools.
+
+  **Why is it mission-critical?** It ensures that all external services are managed using the same tools and processes,
+  and can be easily audited.
+
 ## 🚀 How to use / How to develop on it
 
 > \[!WARNING]
