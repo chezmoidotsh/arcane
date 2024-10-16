@@ -1,0 +1,25 @@
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xdomainidentities.amazonses.chezmoi.sh
+spec:
+  claimNames:
+    categories:
+      - crossplane
+      - chezmoidotsh
+    kind: DomainIdentity
+    listKind: DomainIdentityList
+    plural: domainidentities
+    singular: domainidentity
+  defaultCompositeDeletePolicy: Foreground
+  group: amazonses.chezmoi.sh
+  names:
+    categories:
+      - crossplane
+      - chezmoidotsh
+    kind: XDomainIdentity
+    listKind: XDomainIdentityList
+    plural: xdomainidentities
+    singular: xdomainidentity
+  versions: []

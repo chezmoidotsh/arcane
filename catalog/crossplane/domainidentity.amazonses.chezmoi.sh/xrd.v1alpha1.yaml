@@ -1,0 +1,115 @@
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xdomainidentities.amazonses.chezmoi.sh
+spec:
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                domain:
+                  type: string
+                  description: >
+                    The domain name to use for the SES domain identity.
+                    Must be a valid domain name.
+                  example: chezmoi.sh
+                  pattern: ^[a-zA-Z0-9.-]+$
+                mailFrom:
+                  type: string
+                  description: >
+                    Subdomain to use for the MAIL FROM domain identity.
+                  example: ses
+                dnsOptions:
+                  type: object
+                  description: >
+                    Options for the DNS provider to use for managing resources. Depending on the
+                    DNS provider, this may include additional configuration options.
+                  properties:
+                    dmarcOptions:
+                      type: object
+                      description: >
+                        Options for the DMARC DNS record.
+                      properties:
+                        policy:
+                          type: string
+                          description: >
+                            The DMARC policy to use for the DMARC DNS record.
+                          enum:
+                            - none
+                            - quarantine
+                            - reject
+                          example: none
+                          default: none
+                        rua:
+                          type: string
+                          description: >
+                            The email address to send aggregate reports to for the DMARC DNS record.
+                providerConfigRefs:
+                  type: object
+                  description: >
+                    Reference to the configurations that specify the AWS and DNS providers
+                    to use for managing resources.
+                  properties:
+                    # AWS provider configuration
+                    aws:
+                      type: object
+                      description: >
+                        Reference to the configuration that specifies the AWS provider to use
+                        for managing resources.
+                      properties:
+                        name:
+                          type: string
+                          description: Name of the AWS provider configuration to use.
+                          example: default
+                        region:
+                          type: string
+                          description: >
+                            The AWS region to use for the SES domain identity.
+                            Must be a valid AWS region.
+                          example: eu-west-3
+                          pattern: ^[a-z]{2}-[a-z]+-\d+$
+                      required:
+                        - region
+
+                    # Cloudflare provider configuration
+                    cloudflare:
+                      type: object
+                      description: >
+                        Reference to the configuration that specifies the Cloudflare provider to use
+                        for managing resources.
+                      properties:
+                        name:
+                          type: string
+                          description: Name of the Cloudflare provider configuration to use.
+                          example: default
+                        zoneIdSelector:
+                          type: object
+                          description: >
+                            Selector for the Cloudflare zone to use for managing resources.
+                          properties:
+                            matchLabels:
+                              type: object
+                              description: >
+                                Labels to match on the Cloudflare zone to use for managing resources.
+                              additionalProperties:
+                                type: string
+                                description: >
+                                  Label key and value to match on the Cloudflare zone to use for managing resources.
+                          required:
+                            - matchLabels
+                      required:
+                        - zoneIdSelector
+                  oneOf:
+                    - properties:
+                      required: [aws, cloudflare]
+              required:
+                - domain
+                - providerConfigRefs
