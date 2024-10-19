@@ -268,11 +268,15 @@ const types = [
  */
 const scopes = [
 	{
-		name: "project:nex·rpi - Anything related to the Nex·RPI project",
+		name: "project:chezmoi.sh - Anything related to the chezmoi.sh project",
+		value: "project:chezmoi.sh",
+	},
+	{
+		name: "project:nex·rpi    - Anything related to the Nex·RPI project (chezmoi.sh)",
 		value: "project:nex·rpi",
 	},
 	{
-		name: "gh              - Anything else",
+		name: "gh                 - Anything else",
 		value: "gh",
 	},
 ];
