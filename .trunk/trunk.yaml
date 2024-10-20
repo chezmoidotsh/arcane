@@ -3,83 +3,94 @@
 # To learn more about the format of this file, see https://docs.trunk.io/reference/trunk-yaml
 version: 0.1
 cli:
-    version: 1.22.2
+  version: 1.22.6
 # Trunk provides extensibility via plugins. (https://docs.trunk.io/plugins)
 plugins:
-    sources:
-        - id: trunk
-          ref: v1.6.1
-          uri: https://github.com/trunk-io/plugins
+  sources:
+    - id: trunk
+      ref: v1.6.3
+      uri: https://github.com/trunk-io/plugins
 # Many linters and tools depend on runtimes - configure them here. (https://docs.trunk.io/runtimes)
 runtimes:
-    enabled:
-        - go@1.21.0
-        - node@18.12.1
-        - python@3.10.8
+  enabled:
+    - rust@1.71.1
+    - go@1.21.0
+    - node@18.12.1
+    - python@3.10.8
 # This is the section where you override some tools' configurations.
 tools:
-    definitions:
-        - name: prettier
-          extra_packages:
-              - "@trivago/prettier-plugin-sort-imports"
+  definitions:
+    - name: prettier
+      extra_packages:
+        - "@trivago/prettier-plugin-sort-imports"
 
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
-    disabled:
-        - bandit
-        - black
-        - codespell
-        - eslint
-        - isort
-        - markdown-table-prettify
-        - prettier
-        - rome
-        - terrascan
-        - trunk-toolbox
-    enabled:
-        - actionlint@1.7.1
-        - biome@1.8.3
-        - checkov@3.2.219
-        - git-diff-check
-        - hadolint@2.12.0
-        - markdown-link-check@3.12.2
-        - markdownlint@0.41.0
-        - osv-scanner@1.8.3
-        - oxipng@9.1.2
-        - remark-lint@12.0.1
-        - renovate@38.23.2
-        - ruff@0.5.7
-        - shellcheck@0.10.0
-        - shfmt@3.6.0
-        - sort-package-json@2.10.0
-        - svgo@3.3.2
-        - taplo@0.9.3
-        - trivy@0.54.1
-        - trufflehog@3.81.7
-        - yamllint@1.35.1
-    ignore:
-        - linters: [ALL]
-          paths:
-              - node_modules/**
-        - linters: [svgo]
-          paths:
-              - projects/**/assets/architecture.svg
-        - linters: [yamllint]
-          paths:
-              - catalog/**/tests/**
-    # This is the section where you override some linters' configurations.
-    definitions:
-        - name: remark-lint
-          extra_packages:
-              - remark-preset-lint-consistent
-              - remark-preset-lint-recommended
-              - remark-lint-list-item-indent
-              - vfile-reporter-json
-              - remark-gfm
+  disabled:
+    - bandit
+    - black
+    - codespell
+    - eslint
+    - isort
+    - markdown-table-prettify
+    - prettier
+    - rome
+    - terrascan
+    - trunk-toolbox
+  enabled:
+    - nixpkgs-fmt@1.3.0
+    - actionlint@1.7.3
+    - biome@1.9.3
+    - checkov@3.2.256
+    - git-diff-check
+    - hadolint@2.12.0
+    - markdown-link-check@3.12.2
+    - markdownlint@0.42.0
+    - osv-scanner@1.9.0
+    - oxipng@9.1.2
+    - remark-lint@12.0.1
+    - renovate@38.109.0
+    - ruff@0.6.8
+    - shellcheck@0.10.0
+    - shfmt@3.6.0
+    - sort-package-json@2.10.1
+    - svgo@3.3.2
+    - taplo@0.9.3
+    - trivy@0.55.2
+    - trufflehog@3.82.6
+    - yamllint@1.35.1
+  ignore:
+    - # Architecture SVG diagram cannot be linted by svgo
+      linters:
+        - svgo
+      paths:
+        - projects/nex.rpi/assets/architecture.svg
+    - # DO NOT SCAN ANY FILES IN THE UNENCRYPTED KVSTORE
+      linters: [ALL]
+      paths:
+        - projects/chezmoi.sh/src/kubevault/kvstore/*
+        - projects/chezmoi.sh/src/kubevault/kvstore/**/*
+    - # Encrypted files are cannot be linted like shell or yaml files
+      linters:
+        - shellcheck
+        - shfmt
+        - yamllint
+      paths:
+        - projects/chezmoi.sh/src/kubevault/**/*
+
+  # This is the section where you override some linters' configurations.
+  definitions:
+    - name: remark-lint
+      extra_packages:
+        - remark-preset-lint-consistent
+        - remark-preset-lint-recommended
+        - remark-lint-list-item-indent
+        - vfile-reporter-json
+        - remark-gfm
 
 actions:
-    disabled:
-        - trunk-announce
-        - trunk-check-pre-push
-        - trunk-fmt-pre-commit
-        - trunk-upgrade-available
+  disabled:
+    - trunk-announce
+    - trunk-check-pre-push
+    - trunk-fmt-pre-commit
+    - trunk-upgrade-available
