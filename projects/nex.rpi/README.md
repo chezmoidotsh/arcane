@@ -35,56 +35,51 @@ without[^1] the need of third-party services.
 ### 🌐 Networking
 
 * **DNS** *based on [AdGuard Home](https://adguard.com/en/adguard-home/overview.html)*: Serves as a local DNS cache to
-  speed up DNS resolution, block ads and trackers, and provide local services DNS records if the internet is down.
-
+  speed up DNS resolution, block ads and trackers, and provide local services DNS records if the internet is down. <\br>
   **Why is it mission-critical?** It ensures that, even if the internet is down, I can still access local services using
   their DNS names like we do normally.
 
 * **VPN** *based on [TailScale](https://tailscale.com/)*: Allows access to hosted services from anywhere and manages SSH
-  access to devices on the cloud (AWS, Hetzner, etc).
-
+  access to devices on the cloud (AWS, Hetzner, etc). <\br>
   **Why is it mission-critical?** It allows me to access my homelab services from anywhere securely and access cloud-based
   services without managing SSH keys or a PKI.
 
 ### 🔐 Authentication and Authorization
 
-* **SSO** \_based on [Authelia](https://www.authelia.com/) and [yaLDAP](https://github.com/chezmoi-sh/yaldap/tree/main)\_\_:
-  Centralized authentication with 2FA, SSO and LDAP support for all services.
-
+* **SSO** *based on [Authelia](https://www.authelia.com/) and [yaLDAP](https://github.com/chezmoi-sh/yaldap/tree/main)*:
+  Centralized authentication with 2FA, SSO and LDAP support for all services. <\br>
   **Why is it mission-critical?** It provides a centralized authentication system that can be used by other services
   in the homelab and ensures that all services are secure.
 
 ### 🗄️ Storage
 
 * **S3 compatible storage** *based on [MinIO](https://min.io/)*: Stores somes objects that should be critical like
-  backups, some OCI images, etc.
-
+  backups, some OCI images, etc. <\br>
   **Why is it mission-critical?** This is not mission-critical, but it is convenient to have a local S3-compatible
   storage for backups and other objects.
 
-* **Registry** *based on [zot registry](https://zotregistry.dev)*: Stores Docker images locally.
-
+* **Registry** *based on [zot registry](https://zotregistry.dev)*: Stores Docker images locally. <\br>
   ❗**Why is it mission-critical?** All Docker images used by other services are in this registry, and without it, no
   service can be deployed.
 
-* **Secrets vault** *based on [kubevault](https://github.com/chezmoi-sh/kubevault)*: Stores all secrets used by other services in a secure way.
-
+* **Secrets vault** *based on [kubevault](https://github.com/chezmoi-sh/kubevault)*: Stores all secrets used by other
+  services in a secure way. <\br>
   **Why is it mission-critical?** It ensures that all secrets are stored securely and can be accessed by services that
-  need them with the right ACLs.
+  need them with the right ACLs. <\br>
+  ***NOTE**: This service is hosted on this project but is managed by the [chezmoi.sh](../chezmoi.sh/README.md) project.*
 
 ### 📦 Others
 
 * **Home dashboard** *based on [glance](https://github.com/glanceapp/glance)*: Provides a page with all services and their
-  status and, if possible, a start page for the browser.
-
+  status and, if possible, a start page for the browser. <\br>
   **Why is it mission-critical?** This is not mission-critical, but it covenient to have a single page with all services
   hosted on the device that must not be shut down.
 
 * **Synchronized IaC** *based on [crossplane](https://crossplane.io)*: Provides a way to manage cloud/3rd party services
-  using the same IaC tools.
-
+  using the same IaC tools. <\br>
   **Why is it mission-critical?** It ensures that all external services are managed using the same tools and processes,
-  and can be easily audited.
+  and can be easily audited. <\br>
+  ***NOTE**: This service is hosted on this project but is managed by the [chezmoi.sh](../chezmoi.sh/README.md) project.*
 
 ## 🚀 How to use / How to develop on it
 
@@ -103,10 +98,11 @@ In case of a disaster, the following steps should be taken:
 * \[X] **Step 0**: Think of what this project should host.
   * \[X] List all services that should be deployed on this project.
   * \[X] Create a diagram of the architecture.
-* \[ ] **Step 1**: Install all services on the Raspberry Pi in a "dirty" way.
-  * \[ ] Configure the Raspberry Pi by hand (no automation).
-  * \[ ] Install and configure the k3s cluster.
-  * \[ ] Install and configure all services using only raw Kubernetes manifests.
+* \[X] **Step 1**: Install all services on the Raspberry Pi in a "dirty" way.
+  * \[X] Configure the Raspberry Pi by hand (no automation).
+  * \[X] Install and configure the k3s cluster.
+  * \[ ] ~~Install and configure all services using only raw Kubernetes manifests~~.
+  * \[ ] Install and configure all services using raw Kubernetes manifests or public Helm Charts.
 * \[ ] **Step 2**: Improve quality and security.
   * \[ ] Configure k3s to use the ZOT registry as mirror/proxy for all images[^2].
   * \[ ] Make my own images for all services.

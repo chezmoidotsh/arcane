@@ -201,23 +201,6 @@ nex·rpi.storage.zot registry -> nex·rpi.storage.MinIO: {
   source-arrowhead: HTTP (9000)
 }
 
-# - Gatus
-nex·rpi.Gatus: {
-  class: [application; undeployed]
-  icon: assets/gatus.svg
-  link: https://gatus.io/
-  tooltip: Gatus is a service health dashboard.
-}
-nex·rpi.Gatus -> internet: DNS (53)\nHTTPS (443) {class: [connect-to-internet; undeployed]}
-nex·rpi.Gatus -> nex·rpi: {
-  class: undeployed
-  target-arrowhead: HTTPS (443)
-}
-nex·rpi.Gatus <- nex·rpi.Traefik: {
-  class: undeployed
-  source-arrowhead: HTTP (8080)
-}
-
 # - Glance
 nex·rpi.Glance: {
   class: [application]
