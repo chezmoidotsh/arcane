@@ -1,43 +1,61 @@
-# Copyright (C) 2024 Alexandre Nicolaie (xunleii@users.noreply.github.com)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#         http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ----------------------------------------------------------------------------
+mod crossplane 'src/infrastructure/.justfile'
+mod kubernetes 'src/.justfile'
 
-kubernetes_api := "kubernetes.nr.chezmoi.sh"
+# -- Variables -----------------------------------------------------------------
+kubernetes_host := "kubernetes.nr.chezmoi.sh"
+dev_cluster_name := "nex-rpi"
 
 [private]
 @default:
-    just --choose
+  just --list --list-submodules
 
+
+# -- Documentation related tasks -----------------------------------------------
 [doc("Generates the architecture diagram for nex·rpi")]
-[group("doc")]
+[group("documentation")]
 generate_diagram:
-    d2 --layout elk --sketch architecture.d2 "assets/architecture.svg"
+  d2 --layout elk --sketch architecture.d2 "assets/architecture.svg"
 
-[doc("Syncronizes the kubeconfig file from the nex·rpi cluster")]
-sync_kubeconfig:
-    ssh pi@{{ kubernetes_api }} 'sudo cat /etc/rancher/k3s/k3s.yaml' | sed 's|server: https://127.0.0.1:6443|server: https://{{ kubernetes_api }}:6443|' > $KUBECONFIG
 
+# -- Development environment related tasks -------------------------------------
+[doc("Start the local development environment")]
+[group('development')]
+dev: dev_up
+    tilt up
+
+[doc("Create the local development environment")]
+[group('development')]
+@dev_up:
+    just {{ if env("DEVCONTAINER_NETWORK", "") != "" { "dev_k8s_in_devcontainer" } else { "dev_k8s_local" } }}
+
+[private]
+[doc("Create a local Kubernetes cluster accessible from the host")]
+dev_k8s_local:
+    k3d cluster create --no-lb {{dev_cluster_name}} || true
+
+[private]
+[doc("Create a local Kubernetes cluster accessible from the devcontainer")]
+dev_k8s_in_devcontainer:
+    k3d cluster create --no-lb --network {{ env("DEVCONTAINER_NETWORK") }} {{dev_cluster_name}} || true
+    @kubectl config set-cluster k3d-{{dev_cluster_name}} --server=https://k3d-{{dev_cluster_name}}-server-0:6443
+
+[doc("Delete the local Kubernetes cluster")]
+[group('development')]
+dev_teardown:
+    k3d cluster delete {{dev_cluster_name}} || true
+
+
+# -- Maintenance related tasks -------------------------------------------------
 [doc("Enables maintenance mode on the nex·rpi Raspberry Pi")]
 [group("maintenance")]
 maintenance_enable:
-    ssh pi@{{ kubernetes_api }} -- 'sudo overlayroot-chroot systemctl disable --now k3s'
-    ssh pi@{{ kubernetes_api }} -- 'sudo raspi-config nonint do_overlayfs 1'
-    ssh pi@{{ kubernetes_api }} -- 'sudo reboot'
+  ssh pi@{{ kubernetes_host }} -- 'sudo overlayroot-chroot systemctl disable --now k3s'
+  ssh pi@{{ kubernetes_host }} -- 'sudo raspi-config nonint do_overlayfs 1'
+  ssh pi@{{ kubernetes_host }} -- 'sudo reboot'
 
 [doc("Disables maintenance mode on the nex·rpi Raspberry Pi")]
 [group("maintenance")]
 maintenance_disable:
-    ssh pi@{{ kubernetes_api }} -- 'sudo systemctl enable k3s'
-    ssh pi@{{ kubernetes_api }} -- 'sudo raspi-config nonint do_overlayfs 0'
-    ssh pi@{{ kubernetes_api }} -- 'sudo reboot'
+  ssh pi@{{ kubernetes_host }} -- 'sudo systemctl enable k3s'
+  ssh pi@{{ kubernetes_host }} -- 'sudo raspi-config nonint do_overlayfs 0'
+  ssh pi@{{ kubernetes_host }} -- 'sudo reboot'
