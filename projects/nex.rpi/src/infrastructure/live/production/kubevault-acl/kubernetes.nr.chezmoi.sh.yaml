@@ -1,0 +1,30 @@
+# trunk-ignore-all(trivy/KSV113,checkov/CKV2_K8S_5): accessing to this secret is required
+# trunk-ignore-all(checkov/CKV_K8S_21): namespace is set by kustomize
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubevault:kubernetes.nr.chezmoi.sh:authelia-ses
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    resourceNames:
+      - security-sso-authelia-aws-ses
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubevault:kubernetes.nr.chezmoi.sh:authelia-ses
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kubevault:kubernetes.nr.chezmoi.sh:authelia-ses
+subjects:
+  - kind: ServiceAccount
+    name: kubernetes.nr.chezmoi.sh
