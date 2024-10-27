@@ -21,64 +21,61 @@
       in
       rec {
         packages = {
-          # bats-custom-libs is a custom set of Bats libraries that I use in my tests.
-          bats-custom-libs = pkgs.stdenv.mkDerivation {
-            name = "bats-custom-libs";
-            src = ./.;
-            installPhase = ''
-              mkdir --parent $out/share/bats
-              cp --recursive .bats/bats-* $out/share/bats
-            '';
-          };
-
-          # helm-schema is a tool to generate JSON schemas based on values.yaml files.
-          # NOTE: This uses a custom fork of the original project, as the original
-          #       project didn't allows me to manage custom `required` fields.
-          helm-schema = pkgs.buildGoModule {
-            pname = "helm-schema";
-            version = "unstable";
+          kubevault = pkgs.rustPlatform.buildRustPackage {
+            pname = "kubevault";
+            version = "1.1.0";
             src = pkgs.fetchFromGitHub {
               owner = "chezmoi-sh";
-              repo = "helm-schema";
-              rev = "main";
-              hash = "sha256-PootirY9vVR3Chy6WKTTqgqzeQvJ0xNqSfyE/DTWY9I=";
+              repo = "kubevault";
+              rev = "1.1.0";
+              hash = "sha256-PLQusY/hiqy6GsEYsV2tQjUHckV/04o5mEaw6NLrZV8=";
             };
-            vendorHash = "sha256-qKizheh9YGJFe/bNeWVG+gbmsouuNlMAaZO0DvaL1R0=";
-            subPackages = [ "cmd/helm-schema" ];
+
+            cargoHash = "sha256-N85XU02MtkCm7zbvSA1Tv5VkKciJQM1Fwwb3F0vIOiU=";
           };
         };
 
-        devShells.default =
-          with packages;
-          pkgs.mkShell {
-            packages = [
-              helm-schema
-              pkgs.bashInteractive
-              pkgs.bats
-              pkgs.commitlint
-              pkgs.d2
-              pkgs.devcontainer
-              pkgs.docker-client
-              pkgs.gum
-              pkgs.helm
-              pkgs.helm-docs
-              pkgs.just
-              pkgs.k3d
-              pkgs.kubectl
-              pkgs.lefthook
-              pkgs.nil
-              pkgs.nix-output-monitor
-              pkgs.nixfmt-rfc-style
-              pkgs.trunk-io
-            ];
+        devShells.default = pkgs.mkShell {
+          packages = [
+            packages.kubevault
+            pkgs.bashInteractive
+            pkgs.bats
+            pkgs.commitlint
+            pkgs.d2
+            pkgs.delta
+            pkgs.devcontainer
+            pkgs.dive
+            pkgs.docker-client
+            pkgs.fzf
+            pkgs.gum
+            pkgs.kubernetes-helm
+            pkgs.helm-docs
+            pkgs.just
+            pkgs.k3d
+            pkgs.k9s
+            pkgs.kubectl
+            pkgs.lefthook
+            pkgs.nil
+            pkgs.nix-output-monitor
+            pkgs.nixfmt-rfc-style
+            pkgs.tilt
+            pkgs.trunk-io
+            pkgs.localstack
+            pkgs.awscli
+            pkgs.fzf
+            pkgs.yq-go
+            pkgs.sops
+            pkgs.age
+            pkgs.lazygit
+          ];
 
-            env = {
-              BATS_ROOT = "${pkgs.bats}";
-              BATS_LIB_PATH = "${pkgs.bats.libraries.bats-assert}/share/bats:${pkgs.bats.libraries.bats-support}/share/bats:${pkgs.bats.libraries.bats-file}/share/bats:${bats-custom-libs}/share/bats";
-            };
-
-            installPhase = "";
+          env = {
+            BATS_ROOT = "${pkgs.bats}";
+            BATS_LIB_PATH = "${pkgs.bats.libraries.bats-assert}/share/bats:${pkgs.bats.libraries.bats-support}/share/bats:${pkgs.bats.libraries.bats-file}/share/bats";
           };
+
+          installPhase = "";
+        };
       }
     );
 }

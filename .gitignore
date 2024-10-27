@@ -30,5 +30,5 @@
 # End of https://www.toptal.com/developers/gitignore/api/direnv,dotenv,visualstudiocode
 
 # Ignore unencrypted kvstore
-projects/chezmoi.sh/src/kubevault/kvstore/
-projects/chezmoi.sh/src/kubevault/kvstore.enc.bak/
+projects/chezmoi.sh/src/kubevault/kvstore
+projects/chezmoi.sh/src/kubevault/kvstore.enc.bak*

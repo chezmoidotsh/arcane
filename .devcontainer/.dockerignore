@@ -1,11 +1,6 @@
 # ignore everything ...
 *
 
-# ... except what is used by the build
-!config/etc.docker.pulumi-buildkitd.toml
-!config/home.vscode..config.lazygit.config.yaml
+# ... except for what is used during the build
+!config/etc.direnv.toml
 !first-run-notice.txt
-!scripts/atlas-utils.lib.sh
-!scripts/post-create-command.sh
-!scripts/post-start-command.sh
-!installer/nix_install

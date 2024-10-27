@@ -1,0 +1,6 @@
+[global]
+warn_timeout = "30m"
+bash_path = "/bin/bash"
+
+[whitelist]
+prefix = ["/"]
