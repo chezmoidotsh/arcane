@@ -32,3 +32,6 @@
 # Ignore unencrypted kvstore
 projects/chezmoi.sh/src/kubevault/kvstore
 projects/chezmoi.sh/src/kubevault/kvstore.enc.bak*
+
+# Ignore all charts imported by kustomize
+projects/*/src/**/charts/

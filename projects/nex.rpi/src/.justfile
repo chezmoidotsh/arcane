@@ -4,7 +4,7 @@ kubernetes_context := kubernetes_host
 kubernetes_host := "kubernetes.nr.chezmoi.sh"
 kubernetes_applyset := replace_regex(blake3("kubernetes/nr.chezmoi.sh"), "[a-f0-9]{32}$", "")
 
-kubectl := "kubectl --kubeconfig " + quote(kubernetes_configuration) + " --context " + quote(kubernetes_context)
+kubectl := "KUBECTL_APPLYSET=true kubectl --kubeconfig " + quote(kubernetes_configuration) + " --context " + quote(kubernetes_context)
 
 [private]
 @default:
@@ -18,15 +18,15 @@ apply *kubectl_opts="": diff && (force-apply kubectl_opts)
 
 [doc("Applies the infrastructure changes without asking for confirmation")]
 force-apply *kubectl_opts="":
-  KUBECTL_APPLYSET=true \
-    {{ kubectl }} apply --kustomize 'clusters/production' \
+  kubectl kustomize 'clusters/production' --enable-helm \
+  | {{ kubectl }} apply --filename - \
     --prune --server-side --applyset="clusterapplysets.kubernetes.chezmoi.sh/{{ kubernetes_applyset }}" --force-conflicts \
-    {{ kubectl_opts }}
+  {{ kubectl_opts }}
 
 [doc("Shows the diff of the infrastructure changes")]
 diff:
-  KUBECTL_APPLYSET=true \
-    {{ kubectl }} diff --kustomize 'clusters/production' --server-side \
+  kubectl kustomize 'clusters/production' --enable-helm \
+  | {{ kubectl }} diff --filename - --server-side --force-conflicts \
   || true
 
 

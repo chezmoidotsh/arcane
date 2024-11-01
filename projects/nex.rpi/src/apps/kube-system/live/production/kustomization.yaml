@@ -4,9 +4,6 @@ kind: Kustomization
 namespace: kube-system
 
 resources:
-  # FluxCD controllers (only to manage HelmReleases as-code)
-  - ../../base/fluxcd
-
   # Cert-manager for valid certificates
   - ../../base/cert-manager
   - cm-issuer-letsencrypt.yaml
@@ -27,19 +24,19 @@ resources:
 patches:
   # Configure ExternalDNS to work with Cloudflare
   - patch: |-
-        apiVersion: helm.toolkit.fluxcd.io/v2
-        kind: HelmRelease
-        metadata:
-          name: external-dns
-        spec:
-          values:
-            provider:
-              name: cloudflare
-            env:
-              - name: CF_API_TOKEN
-                valueFrom:
-                  secretKeyRef:
-                    name: cloudflare-credentials
-                    key: api-token
-            extraArgs:
-              - --regex-domain-exclusion=.+\\.nr\\.chezmoi\\.sh
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --regex-domain-exclusion=.+\\.nr\\.chezmoi\\.sh
+      - op: add
+        path: "/spec/template/spec/containers/0/env"
+        value:
+          - name: CF_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: cloudflare-credentials
+                # trunk-ignore(checkov/CKV_SECRET_6)
+                key: api-token
+    target:
+      kind: Deployment
+      name: external-dns
+      namespace: kube-system

@@ -9,7 +9,7 @@ kind: Policy
 metadata:
   annotations:
     crossplane.io/external-name: AutheliaSESSender
-  name: chezmoi.sh-amazonses-authelia
+  name: nr.chezmoi.sh-amazonses-authelia
 spec:
   forProvider:
     path: /nr.chezmoi.sh/
@@ -34,7 +34,7 @@ kind: User
 metadata:
   annotations:
     crossplane.io/external-name: authelia
-  name: chezmoi.sh-amazonses-authelia
+  name: nr.chezmoi.sh-amazonses-authelia
 spec:
   forProvider:
     path: /nr.chezmoi.sh/
@@ -42,19 +42,19 @@ spec:
 apiVersion: iam.aws.upbound.io/v1beta1
 kind: UserPolicyAttachment
 metadata:
-  name: chezmoi.sh-amazonses-authelia
+  name: nr.chezmoi.sh-amazonses-authelia
 spec:
   forProvider:
     policyArnRef:
-      name: chezmoi.sh-amazonses-authelia
+      name: nr.chezmoi.sh-amazonses-authelia
     userRef:
-      name: chezmoi.sh-amazonses-authelia
+      name: nr.chezmoi.sh-amazonses-authelia
 ---
 apiVersion: iam.aws.upbound.io/v1beta1
 kind: AccessKey
 metadata:
-  name: chezmoi.sh-amazonses-authelia
+  name: nr.chezmoi.sh-amazonses-authelia
 spec:
   forProvider:
     userRef:
-      name: chezmoi.sh-amazonses-authelia
+      name: nr.chezmoi.sh-amazonses-authelia

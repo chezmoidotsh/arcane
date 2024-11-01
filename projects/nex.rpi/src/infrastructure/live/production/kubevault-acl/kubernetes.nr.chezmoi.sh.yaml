@@ -12,6 +12,8 @@ rules:
       - secrets
     resourceNames:
       - security-sso-authelia-aws-ses
+      - cloud-cloudflare-nr.chezmoi.sh-cert-manager
+      - cloud-cloudflare-nr.chezmoi.sh-external-dns
     verbs:
       - get
       - list
