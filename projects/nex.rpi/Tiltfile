@@ -1,6 +1,6 @@
-# Welcome to nr-dashboard Tilt!
+# Welcome to nx-dashboard Tilt!
 #   This Tiltfile is used to play with the Glance (the application
-#   that powers the nr-dashboard) and configure it as quickly as
+#   that powers the nx-dashboard) and configure it as quickly as
 #   possible.
 print("""
 -----------------------------------------------------------------
@@ -21,21 +21,21 @@ print("""
 #   deploy what the end-user is working on.
 load('ext://uibutton', 'cmd_button')
 
-# `nr-dashboard` namespace
-def nr_dashboard():
-    app_dir = '{tiltfile_dir}/apps/nr-dashboard'.format(tiltfile_dir=config.main_dir)
+# `nx-dashboard` namespace
+def nx_dashboard():
+    app_dir = '{tiltfile_dir}/apps/nx-dashboard'.format(tiltfile_dir=config.main_dir)
 
-    nr_dashboard_yaml = kustomize('{app_dir}/live/dev'.format(app_dir=app_dir))
-    nr_glance_configmaps = ['{}:configmap'.format(r["metadata"]["name"]) for r in decode_yaml_stream(nr_dashboard_yaml) if r["kind"] == "ConfigMap" and r["metadata"]["name"].startswith("glance-")]
-    if len(nr_glance_configmaps) == 0:
+    nx_dashboard_yaml = kustomize('{app_dir}/live/dev'.format(app_dir=app_dir))
+    nx_glance_configmaps = ['{}:configmap'.format(r["metadata"]["name"]) for r in decode_yaml_stream(nx_dashboard_yaml) if r["kind"] == "ConfigMap" and r["metadata"]["name"].startswith("glance-")]
+    if len(nx_glance_configmaps) == 0:
         fail('⚠️ No glance configuration found. Please make sure to create one in the `configurations/glance.yaml` file.')
 
     watch_file('{app_dir}/live/dev/configurations/'.format(app_dir=app_dir))
-    k8s_yaml(nr_dashboard_yaml)
+    k8s_yaml(nx_dashboard_yaml)
     k8s_resource('glance',
                 port_forwards=[8080],
                 auto_init=False,
-                objects=nr_glance_configmaps)
+                objects=nx_glance_configmaps)
 
     # Customise Tilt UI to syncronize Glance development configuration to the
     # production one
@@ -50,4 +50,4 @@ def nr_dashboard():
         resource='glance',
         text='Sync configuration to production',
     )
-nr_dashboard()
+nx_dashboard()

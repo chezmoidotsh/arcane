@@ -2,7 +2,7 @@ mod crossplane 'src/infrastructure/.justfile'
 mod kubernetes 'src/.justfile'
 
 # -- Variables -----------------------------------------------------------------
-kubernetes_host := "kubernetes.nr.chezmoi.sh"
+kubernetes_host := "kubernetes.nx.chezmoi.sh"
 dev_cluster_name := "nex-rpi"
 
 [private]

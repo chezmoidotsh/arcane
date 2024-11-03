@@ -1,0 +1,60 @@
+# AWS User for Authelia
+#
+# Description:
+#   These resources will create an AWS IAM User with the necessary permissions
+#   to send emails from the domain chezmoi.sh.
+---
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: Policy
+metadata:
+  annotations:
+    crossplane.io/external-name: AutheliaSESSender
+  name: nx.chezmoi.sh-amazonses-authelia
+spec:
+  forProvider:
+    path: /nx.chezmoi.sh/
+    policy: |
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "AllowSendingEmails",
+            "Effect": "Allow",
+            "Action": [
+              "ses:SendEmail",
+              "ses:SendRawEmail"
+            ],
+            "Resource": "arn:aws:ses:us-east-1:*:identity/*"
+          }
+        ]
+      }
+---
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: User
+metadata:
+  annotations:
+    crossplane.io/external-name: authelia
+  name: nx.chezmoi.sh-amazonses-authelia
+spec:
+  forProvider:
+    path: /nx.chezmoi.sh/
+---
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: UserPolicyAttachment
+metadata:
+  name: nx.chezmoi.sh-amazonses-authelia
+spec:
+  forProvider:
+    policyArnRef:
+      name: nx.chezmoi.sh-amazonses-authelia
+    userRef:
+      name: nx.chezmoi.sh-amazonses-authelia
+---
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: AccessKey
+metadata:
+  name: nx.chezmoi.sh-amazonses-authelia
+spec:
+  forProvider:
+    userRef:
+      name: nx.chezmoi.sh-amazonses-authelia

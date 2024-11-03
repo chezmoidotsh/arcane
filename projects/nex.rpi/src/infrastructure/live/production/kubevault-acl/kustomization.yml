@@ -4,4 +4,4 @@ kind: Kustomization
 namespace: kubevault-kvstore
 
 resources:
-  - kubernetes.nr.chezmoi.sh.yaml
+  - kubernetes.nx.chezmoi.sh.yaml

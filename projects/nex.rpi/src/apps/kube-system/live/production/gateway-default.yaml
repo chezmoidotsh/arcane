@@ -12,15 +12,15 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
-    - name: nr.chezmoi.sh-websecure
-      hostname: '*.nr.chezmoi.sh'
+    - name: nx.chezmoi.sh-websecure
+      hostname: '*.nx.chezmoi.sh'
       protocol: HTTPS
       port: 443
       tls:
         mode: Terminate
         certificateRefs:
           - kind: Secret
-            name: wildcard.nr.chezmoi.sh-certificate
+            name: wildcard.nx.chezmoi.sh-certificate
       allowedRoutes:
         namespaces:
           from: All
@@ -32,7 +32,7 @@ spec:
         mode: Terminate
         certificateRefs:
           - kind: Secret
-            name: wildcard.nr.chezmoi.sh-certificate
+            name: wildcard.nx.chezmoi.sh-certificate
       allowedRoutes:
         namespaces:
           from: All
@@ -40,12 +40,12 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: wildcard.nr.chezmoi.sh
+  name: wildcard.nx.chezmoi.sh
 spec:
-  secretName: wildcard.nr.chezmoi.sh-certificate
+  secretName: wildcard.nx.chezmoi.sh-certificate
 
   dnsNames:
-    - '*.nr.chezmoi.sh'
+    - '*.nx.chezmoi.sh'
     - '*.chezmoi.sh'
   duration: 2160h # 90d
   issuerRef:

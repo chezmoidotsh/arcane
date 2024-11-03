@@ -4,7 +4,7 @@ kind: Kustomization
 resources:
   - ../../apps/crossplane-system/live/production
   - ../../apps/kube-system/live/production
-  - ../../apps/nr-dashboard/live/production
-  - ../../apps/nr-dns/live/production
-  - ../../apps/nr-sso/live/production
-  - ../../apps/nr-vpn/live/production
+  - ../../apps/nx-dashboard/live/production
+  - ../../apps/nx-dns/live/production
+  - ../../apps/nx-sso/live/production
+  - ../../apps/nx-vpn/live/production

@@ -2,12 +2,12 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: traefik.nr.chezmoi.sh
+  name: traefik.nx.chezmoi.sh
 spec:
-  secretName: traefik.nr.chezmoi.sh-certificate
+  secretName: traefik.nx.chezmoi.sh-certificate
 
   dnsNames:
-    - traefik.nr.chezmoi.sh
+    - traefik.nx.chezmoi.sh
   duration: 2160h # 90d
   issuerRef:
     name: letsencrypt
@@ -22,10 +22,10 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`traefik.nr.chezmoi.sh`)
+    - match: Host(`traefik.nx.chezmoi.sh`)
       kind: Rule
       services:
         - name: api@internal
           kind: TraefikService
   tls:
-    secretName: traefik.nr.chezmoi.sh-certificate
+    secretName: traefik.nx.chezmoi.sh-certificate

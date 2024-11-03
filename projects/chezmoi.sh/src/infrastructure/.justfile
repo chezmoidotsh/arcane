@@ -1,7 +1,7 @@
 # -- Variables -----------------------------------------------------------------
 kubernetes_configuration := canonicalize(source_directory() / ".." / ".." / ".." / "..") / ".direnv/kubernetes/config"
 kubernetes_context := kubernetes_host
-kubernetes_host := "kubernetes.nr.chezmoi.sh"
+kubernetes_host := "kubernetes.nx.chezmoi.sh"
 kubernetes_applyset := replace_regex(blake3("crossplane/chezmoi.sh"), "[a-f0-9]{32}$", "")
 
 kubectl := "kubectl --kubeconfig " + quote(kubernetes_configuration) + " --context " + quote(kubernetes_context)

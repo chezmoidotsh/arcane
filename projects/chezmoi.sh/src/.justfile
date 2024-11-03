@@ -1,7 +1,7 @@
 # -- Variables -----------------------------------------------------------------
 kubernetes_configuration := canonicalize(source_directory() / ".." / ".." / "..") / ".direnv/kubernetes/config"
 kubernetes_context := kubernetes_host
-kubernetes_host := "kubernetes.nr.chezmoi.sh"
+kubernetes_host := "kubernetes.nx.chezmoi.sh"
 
 [private]
 @default:

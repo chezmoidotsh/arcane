@@ -1,0 +1,42 @@
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: authelia-sso
+spec:
+  forwardAuth:
+    address: http://authelia.nx-sso.svc.cluster.local/api/authz/forward-auth
+    trustForwardHeader: true
+    authResponseHeaders:
+      - Remote-User
+      - Remote-Groups
+      - Remote-Email
+      - Remote-Name
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  labels:
+    app.kubernetes.io/instance: adguardhome-server
+    app.kubernetes.io/name: adguardhome
+    app.kubernetes.io/version: v0.107.52
+  name: adguardhome
+spec:
+  parentRefs:
+    - kind: Gateway
+      name: default-gateway
+      namespace: kube-system
+      sectionName: nx.chezmoi.sh-websecure
+  hostnames:
+    - dns.nx.chezmoi.sh
+  rules:
+    - backendRefs:
+        - kind: Service
+          name: adguardhome
+          port: 80
+      filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: authelia-sso

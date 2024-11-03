@@ -17,5 +17,5 @@ spec:
           key: ca.crt
       auth:
         serviceAccount:
-          name: kubernetes.nr.chezmoi.sh
+          name: kubernetes.nx.chezmoi.sh
           namespace: kubevault-kvstore

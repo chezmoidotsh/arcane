@@ -29,7 +29,7 @@ spec:
   data:
     - secretKey: api-token # trunk-ignore(checkov/CKV_SECRET_6)
       remoteRef:
-        key: cloud-cloudflare-nr.chezmoi.sh-cert-manager
+        key: cloud-cloudflare-nx.chezmoi.sh-cert-manager
         property: attribute.value
     - secretKey: email
       remoteRef:
