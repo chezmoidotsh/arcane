@@ -53,4 +53,6 @@ generate-applyset:
         | tr -d '=' | tr '/+' '_-'
       )-v1
     name: "{{ kubernetes_applyset }}"
+  spec:
+    project: crossplane.nx.chezmoi.sh
   EOF

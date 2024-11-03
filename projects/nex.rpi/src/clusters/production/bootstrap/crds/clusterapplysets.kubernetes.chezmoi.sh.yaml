@@ -27,6 +27,14 @@ spec:
         openAPIV3Schema:
           type: object
           properties:
+            spec:
+              type: object
+              properties:
+                project:
+                  description: The project that this ClusterApplySet belongs to.
+                  type: string
+              required:
+                - project
             status:
               type: object
               properties:
@@ -46,3 +54,8 @@ spec:
                         type: string
                       message:
                         type: string
+      additionalPrinterColumns:
+        - jsonPath: .spec.project
+          name: Project
+          type: string
+          description: The project that this ClusterApplySet belongs to.
