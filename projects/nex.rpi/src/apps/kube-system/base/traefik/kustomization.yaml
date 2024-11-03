@@ -2,6 +2,13 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+  # install experimental Gateway API CRDs
+  - crds/gateway.networking.k8s.io_backendlbpolicies.yaml
+  - crds/gateway.networking.k8s.io_backendtlspolicies.yaml
+  - crds/gateway.networking.k8s.io_tcproutes.yaml
+  - crds/gateway.networking.k8s.io_tlsroutes.yaml
+  - crds/gateway.networking.k8s.io_udproutes.yaml
+
   - dashboard.yaml
 
 helmCharts:
@@ -9,7 +16,8 @@ helmCharts:
     repo: https://traefik.github.io/charts
     releaseName: traefik
     namespace: kube-system
-    version: 30.1.0
+    version: 33.0.0
+    includeCRDs: true
     valuesInline:
       # NOTE: disable check for updates and stats
       globalArguments:

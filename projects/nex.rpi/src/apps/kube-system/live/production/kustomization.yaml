@@ -17,7 +17,6 @@ resources:
   - eso-css-kubevault.yaml
 
   # Traefik for ingress routing
-  - ../../base/gateway-api
   - ../../base/traefik
   - gateway-default.yaml
 
