@@ -8,3 +8,8 @@ helmCharts:
     releaseName: external-secrets
     namespace: kube-system
     version: 0.10.0
+    valuesInline:
+      certController:
+        create: false # Disable the cert-controller because external-secret is not using webhooks
+      webhook:
+        create: false # Disable the webhook because we don't need it and may break the installation
