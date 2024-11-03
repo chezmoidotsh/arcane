@@ -96,6 +96,7 @@ This nex·pi Raspberry Pi 5 will be composed of the following components:
 
 > \[!TIPS]
 > You can see the NVMe SSD Gen 3 configuration by running the following command:
+>
 > ```bash
 > sudo lspci -vv | grep NVMe
 > ```
@@ -132,7 +133,7 @@ This nex·pi Raspberry Pi 5 will be composed of the following components:
 
     # enable quotas and configure them
     sudo btrfs quota enable /mnt # enable quotas on the BTRFS partition
-    
+
     sudo btrfs qgroup create 1/0 /mnt # create the qgroup for @system subvolumes
     sudo btrfs qgroup assign 0/257 1/0 /mnt # assign the qgroup to the @system/log subvolume
     sudo btrfs qgroup limit 16K /mnt/@system # limit the size of the @system subvolume to 16KB
@@ -300,7 +301,7 @@ This nex·pi Raspberry Pi 5 will be composed of the following components:
     kernel.panic_on_oops=1
     EOF
     ```
-  
+
   * Admission Controller configuration (PodSecurity, NodeRestriction, EventRateLimit, ...)
     ```bash
     sudo mkdir --parents /var/lib/rancher/k3s/server
@@ -381,7 +382,7 @@ This nex·pi Raspberry Pi 5 will be composed of the following components:
     - level: Metadata
     EOF
     ```
-  
+
   * Configure k3s with all the previous configurations
     ```bash
     sudo mkdir --parents /etc/rancher/k3s

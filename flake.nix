@@ -67,6 +67,7 @@
             pkgs.sops
             pkgs.age
             pkgs.lazygit
+            pkgs.runme
           ];
 
           env = {
