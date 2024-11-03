@@ -18,9 +18,10 @@ apply *kubectl_opts="": diff && (force-apply kubectl_opts)
 force-apply *kubectl_opts="":
   kubectl kustomize 'clusters/production' --enable-helm \
   | KUBECTL_APPLYSET=true \
-    kubectl --kubeconfig {{ quote(kubernetes_configuration) }} --context {{ quote(kubernetes_context) }} \
-    --prune --server-side --applyset="clusterapplysets.kubernetes.chezmoi.sh/{{ kubernetes_applyset }}" --force-conflicts \
-  {{ kubectl_opts }}
+      kubectl --kubeconfig {{ quote(kubernetes_configuration) }} --context {{ quote(kubernetes_context) }} \
+      apply --filename - \
+      --prune --server-side --applyset="clusterapplysets.kubernetes.chezmoi.sh/{{ kubernetes_applyset }}" --force-conflicts \
+    {{ kubectl_opts }}
 
 [doc("Shows the diff of the infrastructure changes")]
 diff:
@@ -30,8 +31,6 @@ diff:
     diff --filename - --server-side --force-conflicts \
   || true
 
-
-# -- Kubernetes related tasks --------------------------------------------------
 [doc("Generates the kubeconfig")]
 update-kubeconfig:
   #!/bin/env bash
@@ -50,7 +49,15 @@ update-kubeconfig:
   kubectl --kubeconfig "{{ kubernetes_configuration }}" version
 
 
-# -- Kubernetes helper tasks ---------------------------------------------------
+# -- Kubernetes cluster helper tasks ---------------------------------------------------
+[private]
+[doc("Bootstraps the Kubernetes cluster")]
+bootstrap: && generate-applyset
+  kubectl kustomize 'clusters/production/bootstrap' --enable-helm \
+  | kubectl --kubeconfig {{ quote(kubernetes_configuration) }} --context {{ quote(kubernetes_context) }} \
+    create --filename - \
+  || true
+
 [private]
 [doc("Generates the ClusterApplySet required follow which resources should be pruned")]
 generate-applyset:

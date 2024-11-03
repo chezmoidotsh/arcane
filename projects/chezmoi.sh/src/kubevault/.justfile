@@ -2,9 +2,7 @@
 kubernetes_configuration := canonicalize(source_directory() / ".." / ".." / ".." / "..") / ".direnv/kubernetes/config"
 kubernetes_context := kubernetes_host
 kubernetes_host := "kubernetes.nx.chezmoi.sh"
-kubernetes_applyset := replace_regex(blake3("kubevault/chezmoi.sh"), "[a-f0-9]{32}$", "")
-
-kubectl := "kubectl --kubeconfig " + quote(kubernetes_configuration) + " --context " + quote(kubernetes_context)
+kubernetes_applyset := replace_regex(blake3("vault/chezmoi.sh"), "[a-f0-9]{32}$", "")
 
 [private]
 @default:
@@ -41,17 +39,21 @@ decrypt:
 [doc("Synchronizes the local kvstore with the remote on Kubernetes")]
 sync *kubectl_opts="":
   @[[ -d kvstore ]] || (echo "🞪 kvstore does not exist... Run 'just decrypt' or 'just vault decrypt' first"; exit 1)
+  @kubectl --kubeconfig {{ quote(kubernetes_configuration) }} --context {{ quote(kubernetes_context) }} get namespace "kubevault-kvstore" > /dev/null 2>&1 \
+    || kubectl --kubeconfig {{ quote(kubernetes_configuration) }} --context {{ quote(kubernetes_context) }} create namespace "kubevault-kvstore"
   @echo "Syncing kvstore to Kubernetes"
   @kubevault generate --vault-dir="{{ source_directory() }}" \
     | KUBECTL_APPLYSET=true \
-      {{ kubectl }} apply --filename - \
+      kubectl --kubeconfig {{ quote(kubernetes_configuration) }} --context {{ quote(kubernetes_context) }} \
+      apply --filename - \
       --prune --server-side --applyset="clusterapplysets.kubernetes.chezmoi.sh/{{ kubernetes_applyset }}" --force-conflicts \
       {{ kubectl_opts }}
 
 [doc("Shows the diff of the kvstore changes")]
 diff: decrypt
   @kubevault generate --vault-dir="{{ source_directory() }}" \
-    | {{ kubectl }} diff --filename - --server-side \
+    | kubectl --kubeconfig {{ quote(kubernetes_configuration) }} --context {{ quote(kubernetes_context) }} \
+      diff --filename - --server-side \
   || true
 
 local-diff:
@@ -76,7 +78,8 @@ generate-applyset:
   #!/bin/env bash
   set -euo pipefail
 
-  {{ kubectl }} create --filename - <<EOF
+  kubectl --kubeconfig {{ quote(kubernetes_configuration) }} --context {{ quote(kubernetes_context) }} \
+    create --filename - <<EOF
   apiVersion: kubernetes.chezmoi.sh/v1alpha1
   kind: ClusterApplySet
   metadata:

@@ -4,8 +4,6 @@ kubernetes_context := kubernetes_host
 kubernetes_host := "kubernetes.nx.chezmoi.sh"
 kubernetes_applyset := replace_regex(blake3("crossplane/chezmoi.sh"), "[a-f0-9]{32}$", "")
 
-kubectl := "kubectl --kubeconfig " + quote(kubernetes_configuration) + " --context " + quote(kubernetes_context)
-
 [private]
 @default:
   just --list --list-submodules
@@ -18,15 +16,19 @@ apply *kubectl_opts="": diff && (force-apply kubectl_opts)
 
 [doc("Applies the infrastructure changes without asking for confirmation")]
 force-apply *kubectl_opts="":
-  KUBECTL_APPLYSET=true \
-    {{ kubectl }} apply --kustomize 'live/production' \
+  kubectl kustomize 'live/production' \
+  | KUBECTL_APPLYSET=true \
+    kubectl --kubeconfig {{ quote(kubernetes_configuration) }} --context {{ quote(kubernetes_context) }} \
+    apply --filename - \
     --prune --server-side --applyset="clusterapplysets.kubernetes.chezmoi.sh/{{ kubernetes_applyset }}" --force-conflicts \
     {{ kubectl_opts }}
 
 [doc("Shows the diff of the infrastructure changes")]
 diff:
-  KUBECTL_APPLYSET=true \
-    {{ kubectl }} diff --kustomize 'live/production' --server-side --force-conflicts \
+  kubectl kustomize 'live/production' \
+  | KUBECTL_APPLYSET=true \
+    kubectl --kubeconfig {{ quote(kubernetes_configuration) }} --context {{ quote(kubernetes_context) }} \
+    diff --filename - --server-side --force-conflicts \
   || true
 
 
@@ -37,7 +39,8 @@ generate-applyset:
   #!/bin/env bash
   set -euo pipefail
 
-  {{ kubectl }} create --filename - <<EOF
+  kubectl --kubeconfig {{ quote(kubernetes_configuration) }} --context {{ quote(kubernetes_context) }} \
+    create --filename - <<EOF
   apiVersion: kubernetes.chezmoi.sh/v1alpha1
   kind: ClusterApplySet
   metadata:
