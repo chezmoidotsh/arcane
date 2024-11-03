@@ -5,9 +5,23 @@ resources:
   - functions.yaml
   - provider.aws.yaml
   - provider.cloudflare.yaml
+  - runtimeconfigs.yaml
 
 helmCharts:
   - name: crossplane
     repo: https://charts.crossplane.io/master/
     releaseName: crossplane
     version: 1.18.0-rc.0.61.ged4e659c
+    valuesInline:
+      securityContextCrossplane:
+        capabilities:
+          drop: [ALL]
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      securityContextRBACManager:
+        capabilities:
+          drop: [ALL]
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault

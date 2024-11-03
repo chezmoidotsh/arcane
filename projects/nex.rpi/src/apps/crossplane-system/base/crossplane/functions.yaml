@@ -5,6 +5,8 @@ metadata:
   name: function-go-templating
 spec:
   package: xpkg.upbound.io/crossplane-contrib/function-go-templating:v0.6.0
+  runtimeConfigRef:
+    name: restricted
 ---
 apiVersion: pkg.crossplane.io/v1beta1
 kind: Function
@@ -12,3 +14,5 @@ metadata:
   name: function-auto-ready
 spec:
   package: xpkg.upbound.io/crossplane-contrib/function-auto-ready:v0.3.0
+  runtimeConfigRef:
+    name: restricted

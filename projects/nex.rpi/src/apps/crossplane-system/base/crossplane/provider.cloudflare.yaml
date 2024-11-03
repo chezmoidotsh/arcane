@@ -5,3 +5,5 @@ metadata:
   name: provider-cloudflare
 spec:
   package: xpkg.upbound.io/chezmoi-sh/provider-cloudflare:v0.1.0
+  runtimeConfigRef:
+    name: restricted
