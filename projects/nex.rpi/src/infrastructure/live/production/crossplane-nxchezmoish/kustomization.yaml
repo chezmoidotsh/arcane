@@ -9,6 +9,7 @@ resources:
   - aws.iam.authelia.yaml
   - cloudflare.iam.cert-manager.yaml
   - cloudflare.iam.external-dns.yaml
+  - cloudflare.dns.static-records.yaml
 
 patches:
   - patch: |-

@@ -2,7 +2,7 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: ldaps.nx.chezmoi.sh
+  name: ldaps.chezmoi.sh
 spec:
   secretName: ldaps.chezmoi.sh-certificate
 

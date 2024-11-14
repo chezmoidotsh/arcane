@@ -13,9 +13,9 @@ spec:
     - kind: Gateway
       name: default-gateway
       namespace: kube-system
-      sectionName: nx.chezmoi.sh-websecure
+      sectionName: chezmoi.sh-websecure
   hostnames:
-    - sso.nx.chezmoi.sh
+    - sso.chezmoi.sh
   rules:
     - backendRefs:
         - kind: Service
