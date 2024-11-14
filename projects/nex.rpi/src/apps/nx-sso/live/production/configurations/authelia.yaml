@@ -634,6 +634,9 @@ access_control:
     - name: internal
       networks:
         - 10.42.0.0/16 # default k3s pod CIDR
+    - name: kubernetes.nx.chezmoi.sh
+      networks:
+        - 10.0.0.30/32
     # - name: 'internal'
     #   networks:
         # - '10.10.0.0/16'
@@ -642,16 +645,26 @@ access_control:
     #   networks: '10.9.0.0/16'
 
   rules:
-    # Allow access to dns.chezmoi.sh without any authentication from the docker network.
-    # NOTE: This is required to allow the DNS server to be accessed without authentication
-    #       by homepage for example
+    # Allow access to dns.chezmoi.sh for external-dns
     - domain: dns.chezmoi.sh
       policy: bypass
-      networks: [internal]
       methods: [GET]
       resources:
-        - ^/control/stats$
         - ^/control/status$
+        - ^/control/filtering/status$
+      networks:
+        - internal
+        - kubernetes.nx.chezmoi.sh
+    - domain: dns.chezmoi.sh
+      policy: bypass
+      methods: [POST]
+      resources:
+        - ^/control/filtering/set_rules$
+      networks:
+        - internal
+        - kubernetes.nx.chezmoi.sh
+
+    # Allow access to dns.chezmoi.sh only with two-factor authentication
     - domain: dns.chezmoi.sh
       policy: two_factor
 

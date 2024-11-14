@@ -9,7 +9,8 @@ resources:
   - cm-issuer-letsencrypt.yaml
 
   # ExternalDNS for managing DNS records
-  - ../../base/external-dns
+  - ../../base/external-dns-cloudflare
+  - ../../base/external-dns-adguard
   - edo-secrets.yaml
 
   # ExternalSecrets for managing secrets
@@ -37,5 +38,5 @@ patches:
                 key: api-token
     target:
       kind: Deployment
-      name: external-dns
+      name: external-dns-cloudflare
       namespace: kube-system

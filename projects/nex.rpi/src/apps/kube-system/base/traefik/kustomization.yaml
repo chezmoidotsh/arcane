@@ -98,7 +98,8 @@ helmCharts:
       # override default Traefik service
       service:
         # NOTE: required to get the real client IP address with LoadBalancer in K3S
-        externalTrafficPolicy: Local
+        spec:
+          externalTrafficPolicy: Local
 
       # add addons to Traefik
       experimental:

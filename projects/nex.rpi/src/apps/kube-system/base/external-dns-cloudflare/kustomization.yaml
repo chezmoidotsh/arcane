@@ -5,9 +5,9 @@ kind: Kustomization
 helmCharts:
   - name: external-dns
     repo: https://kubernetes-sigs.github.io/external-dns/
-    releaseName: external-dns
+    releaseName: external-dns-cloudflare
     namespace: kube-system
-    version: 1.14.5
+    version: 1.15.0
     valuesInline:
       logLevel: debug
       sources:
@@ -20,4 +20,5 @@ helmCharts:
         - service
         # - traefik-proxy
       txtOwnerId: kubernetes.nx.chezmoi.sh
-      provider: cloudflare
+      provider:
+        name: cloudflare
