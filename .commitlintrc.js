@@ -272,6 +272,10 @@ const scopes = [
 		value: "project:chezmoi.sh",
 	},
 	{
+		name: "project:hass       - Anything related to the Home Assistant project",
+		value: "project:hass",
+	},
+	{
 		name: "project:nex·rpi    - Anything related to the Nex·RPI project (chezmoi.sh)",
 		value: "project:nex·rpi",
 	},

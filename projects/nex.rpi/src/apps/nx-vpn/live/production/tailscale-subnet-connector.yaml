@@ -7,7 +7,6 @@ spec:
   hostname: homelab-subnet-connector
   subnetRouter:
     advertiseRoutes:
-      - 10.0.0.20/32
-      - 10.0.0.30/32
-      - 10.0.0.89/32
-      - 10.0.3.240/32
+      - 10.0.0.30/32 # nex·rpi
+      - 10.0.0.31/32 # Home Assistant
+      - 10.0.0.89/32 # NAS (TrueNAS)

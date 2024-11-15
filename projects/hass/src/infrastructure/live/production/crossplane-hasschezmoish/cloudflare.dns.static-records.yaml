@@ -1,0 +1,14 @@
+---
+apiVersion: dns.cloudflare.crossplane.io/v1alpha1
+kind: Record
+metadata:
+  name: hass-chezmoi-sh
+spec:
+  forProvider:
+    zoneIdSelector:
+      matchLabels:
+        cf.chezmoi.sh/zone: chezmoi.sh
+    name: hass.chezmoi.sh
+    type: A
+    content: 10.0.0.31
+    comment: (Crossplane) Home-Assistant address for hass project
