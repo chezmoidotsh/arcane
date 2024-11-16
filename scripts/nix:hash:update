@@ -21,6 +21,8 @@ set -o pipefail
 # Set the SED delimiter to the ASCII character 31 (Unit Separator).
 SED_DELIM=$'\037'
 
+NIX_PKG="${1:-.}"
+
 # Trim the leading and trailing spaces from the given string.
 function trim_space() {
 	local str="${1}"
@@ -48,14 +50,18 @@ function update_nix_hashes() {
 	nix-store --gc
 
 	echo >&2 "> Start the NIX hashes reconcilation."
-	echo >&2 '> Run `nix build` (can be slow... be patient).' # trunk-ignore(shellcheck/SC2016)
-	until nix build 2>"${__stderr}"; do
+	echo >&2 '> Run `nix build '"${NIX_PKG}"'` (can be slow... be patient).' # trunk-ignore(shellcheck/SC2016)
+	until nix build "${NIX_PKG}" 2>"${__stderr}"; do
 		local specified_hash got_hash
 		specified_hash=$(grep -A 3 "hash mismatch in fixed-output derivation" "${__stderr}" | grep "specified:" | awk '{print $2}')
 		got_hash=$(grep -A 3 "hash mismatch in fixed-output derivation" "${__stderr}" | grep "got:" | awk '{print $2}')
 
 		if [[ -z ${specified_hash} ]]; then
 			echo >&2 "> No hash mismatch found in the NIX files... failed to build the flake. Exiting."
+			exit 1
+		fi
+		if [[ ${specified_hash} == "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" ]]; then
+			echo >&2 "> Hash '${specified_hash}' is a fake hash and cannot be replaced... failed to build the flake. Exiting."
 			exit 1
 		fi
 
@@ -65,5 +71,6 @@ function update_nix_hashes() {
 		echo >&2 "> Hash '${specified_hash}' has been updated to '${got_hash}' in all NIX files."
 		echo >&2 '> Run `nix build` (can be slow... be patient).' # trunk-ignore(shellcheck/SC2016)
 	done
+	echo >&2 '> All hashes in the NIX files have been updated successfully.'
 }
 update_nix_hashes
