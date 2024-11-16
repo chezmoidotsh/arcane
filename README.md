@@ -61,17 +61,40 @@ devcontainer exec --workspace-folder . -- zsh
 ## 📁 Project Structure
 
 ```plaintext
-├── .devcontainer          # Development environment setup (DevContainer/Codespaces)
-│   ├── devcontainer.json  # DevContainer configuration file
-│   └── Dockerfile         # Dockerfile on which the DevContainer is based
-├── .github                
-│   └── assets             # Repository assets (images, video, etc.) used in the documentation.
-├── projects               
-│   └── nex.rpi            # Mission-critical applications for the homelab (NEXus · Raspberry PI)
-├── scripts                
-│   └── folderinfo         # Perl script to generate a tree-like structure of directories
-├── .lefthook.yaml         # Git hooks configuration file (using lefthook)
-└── .mise.toml             # Environment (vars, tools and tasks) definition file (using mise-en-place)
+├── .devcontainer                   # Development environment setup (DevContainer/Codespaces)
+│   ├── devcontainer.json           # DevContainer configuration file
+│   └── Dockerfile                  # Dockerfile on which the DevContainer is based
+├── .github                         
+│   └── assets                      # Repository assets (images, video, etc.) used in the documentation.
+├── catalog                         
+│   ├── crossplane                  # Crossplane composition definitions
+│   └── flakes                      # OCI images used by the homelab and built using Nix
+├── projects                        
+│   ├── chezmoi.sh                  # Ressources that are not directly related to any other project
+│   │   └── src                     
+│   │       ├── infrastructure      
+│   │       │   └── live            
+│   │       │       └── production  # Infrastructure definitions based on Crossplane
+│   │       └── kubevault           # Vault related resources and documentation
+│   ├── hass                        # Home Assistant related resources and documentation
+│   │   └── src                     
+│   │       └── infrastructure      
+│   │           └── live            
+│   │               └── production  # Infrastructure definitions based on Crossplane
+│   └── nex.rpi                     # Mission-critical applications for the homelab (NEXus · Raspberry PI)
+│       └── src                     
+│           ├── apps                # Kubernetes resources
+│           ├── clusters            
+│           │   └── production      # Kubernetes cluster composition
+│           └── infrastructure      
+│               └── live            
+│                   └── production  # Infrastructure definitions based on Crossplane
+├── scripts                         
+│   └── folderinfo                  # Perl script to generate a tree-like structure of directories
+├── .envrc                          # Environment configuration file (using direnv)
+├── .lefthook.yaml                  # Git hooks configuration file (using lefthook)
+├── DISASTER_RECOVERY_PLAN.md       # Document describing the disaster recovery plan
+└── flake.nix                       # Nix flake configuration file containing all required dependencies
 ```
 
 ## 🗺️ Roadmap
@@ -85,7 +108,7 @@ devcontainer exec --workspace-folder . -- zsh
 
 * \[X] ~~Try using `Pulumi` to manage the infrastructure (See [CHANGELOG](./CHANGELOG.md#bronze-age-2024-2024---a1))~~
 
-* \[ ] Try using `Helm` to manage the Kubernetes applications and `Terraform` to manage the infrastructure (See [CHANGELOG](./CHANGELOG.md#iron-age-2024-2024---a2))
+* \[X] ~~Try using `Helm` to manage the Kubernetes applications and `Terraform` to manage the infrastructure (See [CHANGELOG](./CHANGELOG.md#iron-age-2024-2024---a2))~~
 
 * \[ ] *Improve the dev experience by improving the DevContainer and Nix environment (making it less bloated / more efficient)*
 
