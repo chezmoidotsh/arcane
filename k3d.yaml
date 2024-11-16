@@ -19,20 +19,20 @@ network: atlas.chezmoi.sh
 servers: 1
 agents: 0
 options:
-    k3s:
-        extraArgs:
-            # Disable any built-in deployment unnecessary for local development
-            - {arg: --disable=traefik, nodeFilters: [server:*]}
-    kubeconfig:
-        # Manage kubeconfig manually (inject the container name as server host)
-        updateDefaultKubeconfig: false
-        switchCurrentContext: false
+  k3s:
+    extraArgs:
+      # Disable any built-in deployment unnecessary for local development
+      - { arg: --disable=traefik, nodeFilters: [server:*] }
+  kubeconfig:
+    # Manage kubeconfig manually (inject the container name as server host)
+    updateDefaultKubeconfig: false
+    switchCurrentContext: false
 registries:
-    # Configure the local registry
-    config: |
-        mirrors:
-          "oci.local.chezmoi.sh:5000":
-            endpoint:
-              - http://oci.local.chezmoi.sh:5000
-            tls:
-              insecure_skip_verify: true
+  # Configure the local registry
+  config: |
+    mirrors:
+      "oci.local.chezmoi.sh:5000":
+        endpoint:
+          - http://oci.local.chezmoi.sh:5000
+        tls:
+          insecure_skip_verify: true

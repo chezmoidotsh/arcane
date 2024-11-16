@@ -66,8 +66,9 @@ helmCharts:
 
       # configure Traefik providers
       providers:
-        kubernetesCRD: {enabled: true}
-        kubernetesIngress: {enabled: false, publishedService: {enabled: true}}
+        kubernetesCRD: { enabled: true }
+        kubernetesIngress:
+          { enabled: false, publishedService: { enabled: true } }
         kubernetesGateway:
           enabled: true
           experimentalChannel: true
@@ -82,8 +83,8 @@ helmCharts:
         name: traefik-gateway
 
       # disable some default configuration
-      gateway: {enabled: false}
-      ingressClass: {enabled: false}
+      gateway: { enabled: false }
+      ingressClass: { enabled: false }
 
       # configure logs
       logs:
@@ -92,8 +93,8 @@ helmCharts:
           format: common
           addInternals: false
           fields:
-            general: {defaultMode: keep}
-            headers: {defaultMode: keep}
+            general: { defaultMode: keep }
+            headers: { defaultMode: keep }
 
       # override default Traefik service
       service:

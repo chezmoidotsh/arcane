@@ -64,32 +64,32 @@ devcontainer exec --workspace-folder . -- zsh
 ├── .devcontainer                   # Development environment setup (DevContainer/Codespaces)
 │   ├── devcontainer.json           # DevContainer configuration file
 │   └── Dockerfile                  # Dockerfile on which the DevContainer is based
-├── .github                         
+├── .github
 │   └── assets                      # Repository assets (images, video, etc.) used in the documentation.
-├── catalog                         
+├── catalog
 │   ├── crossplane                  # Crossplane composition definitions
 │   └── flakes                      # OCI images used by the homelab and built using Nix
-├── projects                        
+├── projects
 │   ├── chezmoi.sh                  # Ressources that are not directly related to any other project
-│   │   └── src                     
-│   │       ├── infrastructure      
-│   │       │   └── live            
+│   │   └── src
+│   │       ├── infrastructure
+│   │       │   └── live
 │   │       │       └── production  # Infrastructure definitions based on Crossplane
 │   │       └── kubevault           # Vault related resources and documentation
 │   ├── hass                        # Home Assistant related resources and documentation
-│   │   └── src                     
-│   │       └── infrastructure      
-│   │           └── live            
+│   │   └── src
+│   │       └── infrastructure
+│   │           └── live
 │   │               └── production  # Infrastructure definitions based on Crossplane
 │   └── nex.rpi                     # Mission-critical applications for the homelab (NEXus · Raspberry PI)
-│       └── src                     
+│       └── src
 │           ├── apps                # Kubernetes resources
-│           ├── clusters            
+│           ├── clusters
 │           │   └── production      # Kubernetes cluster composition
-│           └── infrastructure      
-│               └── live            
+│           └── infrastructure
+│               └── live
 │                   └── production  # Infrastructure definitions based on Crossplane
-├── scripts                         
+├── scripts
 │   └── folderinfo                  # Perl script to generate a tree-like structure of directories
 ├── .envrc                          # Environment configuration file (using direnv)
 ├── .lefthook.yaml                  # Git hooks configuration file (using lefthook)

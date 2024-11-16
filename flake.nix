@@ -38,36 +38,44 @@
         devShells.default = pkgs.mkShell {
           packages = [
             packages.kubevault
-            pkgs.bashInteractive
-            pkgs.bats
-            pkgs.commitlint
-            pkgs.d2
-            pkgs.delta
-            pkgs.devcontainer
+
+            # - Kubernetes and container tools
             pkgs.dive
             pkgs.docker-client
-            pkgs.fzf
-            pkgs.gum
-            pkgs.kubernetes-helm
             pkgs.helm-docs
-            pkgs.just
             pkgs.k3d
             pkgs.k9s
             pkgs.kubectl
+            pkgs.kubernetes-helm
+            pkgs.tilt
+
+            # - Development tools
+            pkgs.devcontainer
+            pkgs.just
+            pkgs.runme
+
+            # - Security and encryption tools
+            pkgs.age
+            pkgs.sops
+
+            # - Quality assurance tools
+            pkgs.bats
+            pkgs.commitlint
             pkgs.lefthook
             pkgs.nil
-            pkgs.nix-output-monitor
             pkgs.nixfmt-rfc-style
-            pkgs.tilt
             pkgs.trunk-io
-            pkgs.localstack
-            pkgs.awscli
+
+            # - Shell miscellaneous utilities
+            pkgs.bashInteractive
+            pkgs.delta
             pkgs.fzf
-            pkgs.yq-go
-            pkgs.sops
-            pkgs.age
             pkgs.lazygit
-            pkgs.runme
+            pkgs.nix-output-monitor
+            pkgs.yq-go
+
+            # Miscellaneous tools
+            pkgs.d2
           ];
 
           env = {

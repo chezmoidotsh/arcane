@@ -37,6 +37,7 @@ In case of a hardware failure, we need to recover the **nex·rpi** instance by f
 When the **nex·rpi** instance is up and running, we need to bootstrap and deploy all the **nex·rpi** services.
 
 1. Bootstrap the **nex·rpi** Kubernetes instance:
+
    ```bash {"category":"disaster-recovery-plan","name":"DRP/nex·rpi (bootstrap)"}
    pushd ${ATLAS_DIR}/projects/nex.rpi
    just kubernetes bootstrap
@@ -44,6 +45,7 @@ When the **nex·rpi** instance is up and running, we need to bootstrap and deplo
    ```
 
 2. Deploy all the **nex·rpi** services:
+
    ```bash {"category":"disaster-recovery-plan","name":"DRP/nex·rpi"}
    pushd ${ATLAS_DIR}/projects/nex.rpi
    just kubernetes force-apply
@@ -51,6 +53,7 @@ When the **nex·rpi** instance is up and running, we need to bootstrap and deplo
    ```
 
 3. Deploy all "static" secrets:
+
    ```bash {"category":"disaster-recovery-plan","name":"DRP/vault.chezmoi.sh"}
    pushd ${ATLAS_DIR}/projects/chezmoi.sh
 
@@ -62,6 +65,7 @@ When the **nex·rpi** instance is up and running, we need to bootstrap and deplo
    ```
 
 4. Deploy the **chezmoi.sh** infrastructure *(required by nex·rpi)*:
+
    ```bash {"category":"disaster-recovery-plan","name":"DRP/chezmoi.sh (crossplane)"}
    pushd ${ATLAS_DIR}/projects/chezmoi.sh
    just crossplane generate-applyset || true

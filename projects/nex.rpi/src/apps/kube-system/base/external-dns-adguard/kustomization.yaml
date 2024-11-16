@@ -34,6 +34,6 @@ helmCharts:
             - name: ADGUARD_URL
               value: https://dns.chezmoi.sh
             - name: ADGUARD_USER
-              value: '-'
+              value: "-"
             - name: ADGUARD_PASSWORD
-              value: '-'
+              value: "-"

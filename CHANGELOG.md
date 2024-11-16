@@ -91,7 +91,7 @@ This has some drawbacks as well:
 Still, I'm proud of this effort and think it's an excellent start. It was
 implemented in the live environment on **Q1 2024**, and it functions flawlessly
 and efficiently (the Raspberry Pi didn't use excessive power for inactive
-components most of the time, ~5.5Wh).
+components most of the time, \~5.5Wh).
 
 ## Bronze Age *(2024-2024 - A1)*
 
@@ -171,6 +171,7 @@ gained from the last one.
 > \[!IMPORTANT]
 >
 > * \[ ] **Everything MUST be declarative *(first GitOps rule)***
+>
 >   * I choose to use **Kubernetes as the orchestration** tool for this iteration.
 >     Because Kubernetes is a declarative system, I can specify the ideal state of
 >     the infrastructure and let it take care of the rest. Additionally, **it
@@ -236,6 +237,7 @@ probably be less consistent with my homelab management style.
 > \[!IMPORTANT]
 >
 > * \[ ] **Everything MUST be declarative *(first GitOps rule)***
+>
 >   * I continue to choose to use **Kubernetes as the orchestration** tool for
 >     this iteration.\
 >     Because Kubernetes is a declarative system, I can specify the ideal state
@@ -243,6 +245,7 @@ probably be less consistent with my homelab management style.
 >
 >     It will likely result in a higher resource use on the Raspberry Pi, but
 >     overall, I believe the advantages outweigh the drawbacks.
+>
 >   * I need to find how I will handle Helm deployments in a declarative way.
 > * \[ ] **Everything MUST be versioned and immutable *(the second GitOps rule)***
 >   * Nothing changes for the versioned portion because I continue to utilize

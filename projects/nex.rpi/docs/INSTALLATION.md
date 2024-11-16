@@ -69,6 +69,7 @@ This nex·pi Raspberry Pi 5 will be composed of the following components:
 * Wait for the Raspberry Pi to boot and connect to it using SSH.
 
 * Update the system and reboot to apply the changes (like firmware updates):
+
   ```bash
   sudo apt update && sudo apt upgrade --yes
   sudo reboot
@@ -76,11 +77,13 @@ This nex·pi Raspberry Pi 5 will be composed of the following components:
 
 * Avoid running `rpi-eeprom-update` automatically to avoid any potential
   disruption after a reboot:
+
   ```bash
   sudo systemctl mask rpi-eeprom-update
   ```
 
 * Configure the Raspberry Pi to use the NVMe SSD Gen 3[^1]:
+
   ```bash
   cat <<EOF | sudo tee --append /boot/firmware/config.txt
   # Enable NVMe SSD Gen 3
@@ -163,6 +166,7 @@ This nex·pi Raspberry Pi 5 will be composed of the following components:
 > 50G should be enough.
 
 * Mount the BTRFS partitions at boot:
+
   ```bash
   export UUID=$(sudo btrfs filesystem show /dev/nvme0n1p1 | awk 'NR==1 {print $4; exit}')
 
@@ -234,6 +238,7 @@ This nex·pi Raspberry Pi 5 will be composed of the following components:
   ```
 
 * Configure the firewall to only allow necessary ports:
+
   ```bash
   sudo apt install --yes ufw
 
@@ -280,6 +285,7 @@ This nex·pi Raspberry Pi 5 will be composed of the following components:
 ### *Step 3:* Install and configure `k3s`
 
 * Install `k3s` without `traefik` and without starting it:
+
   ```bash
   sudo grep -q "cgroup_memory=1 cgroup_enable=memory" /boot/firmware/cmdline.txt \
   || (echo -n " cgroup_memory=1 cgroup_enable=memory" | sudo tee -a /boot/firmware/cmdline.txt > /dev/null)
@@ -292,7 +298,9 @@ This nex·pi Raspberry Pi 5 will be composed of the following components:
 > Not yet implemented.
 
 * Configure `k3s` to be hardened, following the [CIS Hardening Guide](https://docs.k3s.io/security/hardening-guide):
+
   * Host-level Requirements
+
     ```bash
     cat << EOF | sudo tee /etc/sysctl.d/90-kubelet.conf
     vm.panic_on_oom=0
@@ -303,6 +311,7 @@ This nex·pi Raspberry Pi 5 will be composed of the following components:
     ```
 
   * Admission Controller configuration (PodSecurity, NodeRestriction, EventRateLimit, ...)
+
     ```bash
     sudo mkdir --parents /var/lib/rancher/k3s/server
     cat << EOF | sudo tee /var/lib/rancher/k3s/server/psa.yaml
@@ -340,6 +349,7 @@ This nex·pi Raspberry Pi 5 will be composed of the following components:
     ```
 
   * Network Policy
+
     ```bash
     sudo mkdir --parents /var/lib/rancher/k3s/server/manifests
     cat << EOF | sudo tee /var/lib/rancher/k3s/server/manifests/network-policy.default.yaml
@@ -373,6 +383,7 @@ This nex·pi Raspberry Pi 5 will be composed of the following components:
     ```
 
   * API Server audit configuration
+
     ```bash
     sudo mkdir -p -m 700 /var/lib/rancher/k3s/server/logs
     cat << EOF | sudo tee /var/lib/rancher/k3s/server/audit.yaml

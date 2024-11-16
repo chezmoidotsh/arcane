@@ -7,7 +7,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   labels:
-    applyset.kubernetes.io/is-parent-type: 'true'
+    applyset.kubernetes.io/is-parent-type: "true"
   name: clusterapplysets.kubernetes.chezmoi.sh
 spec:
   group: kubernetes.chezmoi.sh

@@ -13,7 +13,7 @@ spec:
         namespaces:
           from: All
     - name: nx.chezmoi.sh-websecure
-      hostname: '*.nx.chezmoi.sh'
+      hostname: "*.nx.chezmoi.sh"
       protocol: HTTPS
       port: 443
       tls:
@@ -25,7 +25,7 @@ spec:
         namespaces:
           from: All
     - name: chezmoi.sh-websecure
-      hostname: '*.chezmoi.sh'
+      hostname: "*.chezmoi.sh"
       protocol: HTTPS
       port: 443
       tls:
@@ -45,8 +45,8 @@ spec:
   secretName: wildcard.nx.chezmoi.sh-certificate
 
   dnsNames:
-    - '*.nx.chezmoi.sh'
-    - '*.chezmoi.sh'
+    - "*.nx.chezmoi.sh"
+    - "*.chezmoi.sh"
   duration: 2160h # 90d
   issuerRef:
     name: letsencrypt
