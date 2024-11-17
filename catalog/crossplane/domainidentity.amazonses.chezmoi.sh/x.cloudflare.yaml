@@ -136,11 +136,11 @@ spec:
             metadata:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: CloudflareMXSES
-              name: {{ $xr.spec.domain | replace "." "-" }}-mx-mailfrom # TODO: remove the replace function when the provider-cloudflare supports dots in name
+              name: {{ $xr.spec.mailFrom | replace "." "-" }}-{{ $xr.spec.domain | replace "." "-" }}-mx-mailfrom # TODO: remove the replace function when the provider-cloudflare supports dots in name
             spec:
               forProvider:
                 zoneIdSelector: {{ toYaml $xr.spec.providerConfigRefs.cloudflare.zoneIdSelector | nindent 8 }}
-                name: {{ $xr.spec.domain }}
+                name: {{ $xr.spec.mailFrom }}.{{ $xr.spec.domain }}
                 type: MX
                 content: feedback-smtp.{{ $xr.spec.providerConfigRefs.aws.region }}.amazonses.com
                 priority: 10

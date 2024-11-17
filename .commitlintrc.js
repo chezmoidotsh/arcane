@@ -268,6 +268,14 @@ const types = [
  */
 const scopes = [
 	{
+		name: "catalog:crossplane - Anything related to the Crossplane resource catalog",
+		value: "catalog:crossplane",
+	},
+	{
+		name: "catalog:flakes	- Anything related to the Nix flakes catalog",
+		value: "catalog:flakes",
+	},
+	{
 		name: "project:chezmoi.sh - Anything related to the chezmoi.sh project",
 		value: "project:chezmoi.sh",
 	},
