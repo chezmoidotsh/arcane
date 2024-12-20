@@ -66,6 +66,14 @@
             pkgs.nixfmt-rfc-style
             pkgs.trunk-io
 
+            # - Provisioning tools
+            pkgs.ansible
+            pkgs.python312Packages.jmespath
+            pkgs.python312Packages.proxmoxer
+            pkgs.python312Packages.requests
+            pkgs.python312Packages.requests-toolbelt
+            pkgs.cdrkit
+
             # - Shell miscellaneous utilities
             pkgs.bashInteractive
             pkgs.delta
@@ -81,6 +89,7 @@
           env = {
             BATS_ROOT = "${pkgs.bats}";
             BATS_LIB_PATH = "${pkgs.bats.libraries.bats-assert}/share/bats:${pkgs.bats.libraries.bats-support}/share/bats:${pkgs.bats.libraries.bats-file}/share/bats";
+            LANG = "C.UTF-8";
           };
 
           installPhase = "";

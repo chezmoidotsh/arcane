@@ -1,0 +1,45 @@
+---
+- ansible.builtin.file:
+    state: directory
+    path: "{{ playbook_dir }}/.cache"
+
+# Step 1: Fetch the Kairos OS image URL
+- name: 📝 Fetch the Kairos release information
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/kairos-io/kairos/releases/tags/{{ kairos_version }}
+    headers:
+      Accept: application/vnd.github+json
+    return_content: yes
+  register: kairos_release_info
+
+- name: 🔗 Set the Kairos OS image URL
+  ansible.builtin.set_fact:
+    kairos_os_image_url: "{{ item.browser_download_url | urldecode }}"
+  loop: "{{ kairos_release_info.json.assets | sort(attribute='browser_download_url') }}"
+  when: item.name is match('^kairos-{{ kairos_distribution }}-standard-amd64-generic-{{ kairos_version }}-k3s{{ kairos_k3s_version | default('') }}.+\.iso$')
+
+# Step 2: Download the Kairos OS image
+- name: 📥 Download the Kairos OS image
+  ansible.builtin.get_url:
+    url: "{{ kairos_os_image_url }}"
+    dest: "{{ playbook_dir }}/.cache/{{ kairos_os_image_filename }}"
+    checksum: sha256:{{ kairos_os_image_url }}.sha256
+  register: kairos_os_image_download
+
+# Step 3: Upload the Kairos OS image to the Proxmox VE cluster nodes
+- name: 📤 Upload the Kairos OS image to the Proxmox VE cluster nodes
+  community.general.proxmox_template:
+    api_host: "{{ proxmox_host }}"
+    api_user: "{{ proxmox_user }}"
+    api_password: "{{ proxmox_password | default(omit) }}"
+    api_token_id: "{{ proxmox_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_token_secret | default(omit) }}"
+
+    node: "{{ item }}"
+
+    content_type: iso
+    src: "{{ kairos_os_image_download.dest }}"
+    storage: "{{ proxmox_iso_storage }}"
+  loop: "{{ pve_nodes_requiring_kairos_os_image }}"
+  async: 1800 # 30 minutes
+  poll: 15 # poll every 15 seconds

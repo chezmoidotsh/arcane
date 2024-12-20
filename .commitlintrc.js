@@ -268,6 +268,10 @@ const types = [
  */
 const scopes = [
 	{
+		name: "catalog:ansible       - Anything related to the Ansible role catalog",
+		value: "catalog:ansible",
+	},
+	{
 		name: "catalog:crossplane    - Anything related to the Crossplane resource catalog",
 		value: "catalog:crossplane",
 	},
