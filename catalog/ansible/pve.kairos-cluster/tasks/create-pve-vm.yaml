@@ -1,0 +1,156 @@
+---
+- name: 🛠️  Create the cluster instance pool on PVE
+  community.general.proxmox_pool:
+    api_host: "{{ proxmox_host }}"
+    api_user: "{{ proxmox_user }}"
+    api_password: "{{ proxmox_password | default(omit) }}"
+    api_token_id: "{{ proxmox_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_token_secret | default(omit) }}"
+
+    poolid: "{{ kairos_cluster_name }}"
+    comment: Kairos cluster instance pool for the {{ kairos_cluster_name }} cluster
+
+- name: 🛠️  Initiate the Kairos VM on the Proxmox VE cluster
+  community.general.proxmox_kvm:
+    api_host: "{{ proxmox_host }}"
+    api_user: "{{ proxmox_user }}"
+    api_password: "{{ proxmox_password | default(omit) }}"
+    api_token_id: "{{ proxmox_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_token_secret | default(omit) }}"
+
+    node: "{{ proxmox_node | default(pve_nodes | first) }}"
+    state: present
+
+    # Static VM configuration
+    acpi: true # Enable ACPI to allow graceful shutdown from Proxmox VE
+    agent: true # Enable QEMU Guest Agent for better integration with Proxmox VE (qemu-guest-agent must be installed during the VM creation)
+    bios: seabios # Use SeaBIOS as the BIOS firmware (EFI is not required)
+    boot: order=scsi0;ide0 # Boot order of the VM (Kairos VM will boot from the first hard disk and then the first CD-ROM drive)
+
+    ostype: l26 # Operating system type (Linux 2.6+)
+    sockets: 1 # Number of CPU sockets to emulate (don't need more than 1)
+    pool: "{{ kairos_cluster_name }}"
+
+    name: "{{ kairos_cloudinit_hostname_prefix }}0.{{ kairos_cluster_name }}" # Name of the VM
+    description: |
+      <div align='center'>
+        <a href='https://kairos.io/' target='_blank' rel='noopener noreferrer'>
+          <img src='https://raw.githubusercontent.com/kairos-io/kairos-docs/f4e35110ef5b52eaf8ba0727585828f7a0aaad48/static/favicons/android-chrome-192x192.png'/>
+        </a>
+
+      # kairos {{ kairos_version }} _({{ kairos_distribution }})_
+      ### _for [{{ kairos_cluster_name }}] cluster_
+
+      </div>
+
+      ---
+      ### Enabled community bundles
+      {% for bundle in x_kairos_bundles_names %}
+      {% set bundle_info = lookup('ansible.builtin.vars', 'kairos_bundles_' + bundle) %}
+      {% if bundle_info.url is defined and bundle_info.description is defined %}
+      - **[{{ bundle }}]({{ bundle_info.url }})**: {{ bundle_info.description }}
+      {% else %}
+      - **{{ bundle }}**
+      {% endif %}
+      {% endfor %}
+    tags:
+      - kairos
+      - "{{ kairos_distribution }}"
+      - "{{ kairos_version }}"
+
+    # User-defined VM configuration
+    cpu: "{{ kairos_cpu_type }}" # CPU type to emulate (default host)
+    cores: "{{ kairos_cpu_cores }}" # Number of CPU cores to allocate to the VM (default 4)
+    vcpus: "{{ kairos_cpu_cores }}" # Number of virtual CPUs to allocate to the VM (same as cores)
+
+    memory: "{{ kairos_memory }}" # Amount of memory to allocate to the VM in MiB (default 4096)
+    balloon: "{{ kairos_memory_balloon }}" # Enable memory ballooning to allow the VM to dynamically adjust its memory usage (0 = disabled)
+    shares: "{{ kairos_memory_shares }}" # Relative priority of the VM's memory allocation compared to other VMs (The larger the number is, the more memory this VM gets.) (default 1024)
+
+    onboot: "{{ kairos_start_on_boot }}" # Automatically start the VM when the Proxmox VE node boots (default false)
+    startup: "{%- if kairos_start_on_boot_order | default(false) %}boot={{ kairos_start_on_boot_order }}{% else %}{{ omit }}{% endif %}" # Boot order on the Proxmox VE node
+    vmid: "{{ kairos_vm_id | default(omit) }}" # ID of the VM (unique per Proxmox VE node)
+  register: kairos_vm
+
+- name: 🔍 List all the ISO images on a Proxmox VE node
+  community.general.proxmox_storage_contents_info:
+    api_host: "{{ proxmox_host }}"
+    api_user: "{{ proxmox_user }}"
+    api_password: "{{ proxmox_password | default(omit) }}"
+    api_token_id: "{{ proxmox_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_token_secret | default(omit) }}"
+
+    node: "{{ pve_nodes | first }}"
+    content: iso
+    storage: "{{ proxmox_iso_storage }}"
+  register: pve_contents_info
+
+- name: 💾 Attach Kairos OS and CloudInit ISO images
+  community.general.proxmox_disk:
+    api_host: "{{ proxmox_host }}"
+    api_user: "{{ proxmox_user }}"
+    api_password: "{{ proxmox_password | default(omit) }}"
+    api_token_id: "{{ proxmox_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_token_secret | default(omit) }}"
+
+    vmid: "{{ kairos_vm.vmid }}"
+    disk: ide{{ idx }}
+    iso_image: "{{ item }}"
+    media: cdrom
+  loop:
+    - "{{ pve_contents_info.proxmox_storage_content | selectattr('volid', 'search', kairos_os_image_filename + '$') | map(attribute='volid') | first }}"
+    - "{{ pve_contents_info.proxmox_storage_content | selectattr('volid', 'search', kairos_cloudinit_iso + '$') | map(attribute='volid') | first }}"
+  loop_control:
+    index_var: idx
+
+- name: 💾 Create the primary storage for Kairos VM on Proxmox VE
+  community.general.proxmox_disk:
+    api_host: "{{ proxmox_host }}"
+    api_user: "{{ proxmox_user }}"
+    api_password: "{{ proxmox_password | default(omit) }}"
+    api_token_id: "{{ proxmox_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_token_secret | default(omit) }}"
+
+    vmid: "{{ kairos_vm.vmid }}"
+    disk: scsi0
+    name: vm-{{ kairos_vm.vmid }}-disk-0
+    state: present
+    storage: "{{ proxmox_disk_storage }}"
+
+    backup: true # Add this disk to the backup list
+    cache: none # Disable cache for the disk (safest option for data integrity)
+    detect_zeroes: true # Automatically detect and discard zeroed blocks (default on Proxmox VE)
+    discard: true # Enable discard (TRIM) support for the disk (default on Proxmox VE)
+    format: raw # Use the raw format for the disk (default on Proxmox VE, required on LVM storage)
+    media: disk
+    replicate: true # Replicate the disk to all nodes in the cluster
+    size: "{{ kairos_disk_size }}" # Size of the disk in GiB.
+    ssd: true # Mark the disk as an SSD (for better performance)
+    iothread: "{{ kairos_disk_enable_iothread }}" # Enable I/O threads for the disk (default false)
+
+- name: 📡 Attach the network interface to the Kairos VM
+  community.general.proxmox_nic:
+    api_host: "{{ proxmox_host }}"
+    api_user: "{{ proxmox_user }}"
+    api_password: "{{ proxmox_password | default(omit) }}"
+    api_token_id: "{{ proxmox_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_token_secret | default(omit) }}"
+
+    interface: net0
+    vmid: "{{ kairos_vm.vmid }}"
+    model: virtio
+
+    bridge: "{{ kairos_network_bridge }}" # Bridge to attach the network interface to
+    mtu: "{{ kairos_network_mtu | default(omit) }}" # Maximum Transmission Unit (MTU) for the network interface
+    tag: "{{ kairos_network_vlan | default(omit) }}" # VLAN tag for the network interface
+
+- name: 🚀 Start the Kairos VM
+  community.general.proxmox_kvm:
+    api_host: "{{ proxmox_host }}"
+    api_user: "{{ proxmox_user }}"
+    api_password: "{{ proxmox_password | default(omit) }}"
+    api_token_id: "{{ proxmox_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_token_secret | default(omit) }}"
+
+    vmid: "{{ kairos_vm.vmid }}"
+    state: started

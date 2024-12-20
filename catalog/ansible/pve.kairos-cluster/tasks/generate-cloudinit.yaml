@@ -1,0 +1,45 @@
+---
+- name: 🗂️  Create temporary directory for cloudinit files
+  ansible.builtin.tempfile:
+    state: directory
+    suffix: cloudinit
+  register: kairos_cloudinit_dir
+
+- name: 📄 Create empty meta-data file
+  ansible.builtin.copy:
+    dest: "{{ kairos_cloudinit_dir.path }}/meta-data"
+    content: ""
+
+- name: 📝 Generate user-data file from template
+  ansible.builtin.template:
+    src: "templates/cloudinit.yaml.j2"
+    dest: "{{ kairos_cloudinit_dir.path }}/user-data"
+  register: kairos_cloudinit_user_data
+
+- name: 🔗 Set cloudinit ISO image filename
+  ansible.builtin.set_fact:
+    kairos_cloudinit_iso: kairos-cloudinit-{{ kairos_cluster_name }}-{{ kairos_cloudinit_user_data.md5sum[:8] }}.iso
+
+- name: 💿 Create ISO image with cloudinit configuration
+  ansible.builtin.command:
+    cmd: >
+      mkisofs -output {{ kairos_cloudinit_dir.path }}/{{ kairos_cloudinit_iso }}
+        -volid cidata -joliet -rock
+        {{ kairos_cloudinit_dir.path }}/meta-data
+        {{ kairos_cloudinit_dir.path }}/user-data
+    creates: "{{ kairos_cloudinit_dir.path }}/{{ kairos_cloudinit_iso }}"
+
+- name: 📤 Upload cloudinit ISO to Proxmox VE cluster
+  community.general.proxmox_template:
+    api_host: "{{ proxmox_host }}"
+    api_user: "{{ proxmox_user }}"
+    api_password: "{{ proxmox_password | default(omit) }}"
+    api_token_id: "{{ proxmox_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_token_secret | default(omit) }}"
+
+    node: "{{ item }}"
+
+    content_type: iso
+    src: "{{ kairos_cloudinit_dir.path }}/{{ kairos_cloudinit_iso }}"
+    storage: "{{ proxmox_iso_storage }}"
+  loop: "{{ pve_nodes }}"
