@@ -76,6 +76,7 @@
 				"ms-kubernetes-tools.vscode-kubernetes-tools",
 				"ms-vscode-remote.remote-containers",
 				"nefrob.vscode-just-syntax",
+				"redhat.ansible",
 				"redhat.vscode-yaml",
 				"tamasfe.even-better-toml",
 				"terrastruct.d2",
