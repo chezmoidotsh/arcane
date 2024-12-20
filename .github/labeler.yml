@@ -22,7 +22,7 @@ pr::dependencies:
   - head-branch:
       - ^renovate\/.+$
 
-pr:documentation:
+pr::documentation:
   - changed-files:
       - any-glob-to-any-file: [README.md, LICENSE, "**/README.md"]
 
