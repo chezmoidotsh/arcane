@@ -1,0 +1,15 @@
+[Unit]
+Description=Synchronize your Kubernetes cluster state with Flux
+Documentation=https://github.com/kairos-io/community-bundles/blob/main/README.md#flux
+After=k3s.service
+
+[Service]
+Type=oneshot
+Restart=no
+ExecStart=/opt/kairos/bundles/flux-sync/flux-sync.sh
+User=root
+Group=root
+RemainAfterExit=yes
+
+[Install]
+WantedBy=k3s.service

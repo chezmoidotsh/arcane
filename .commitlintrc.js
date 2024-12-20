@@ -29,27 +29,27 @@ const types = [
 	{
 		value: ":alembic:",
 		emoji: "⚗️",
-		name: ":alembic:                   ⚗️   Perform experiments.",
+		name: ":alembic:                   ⚗️  Perform experiments.",
 	},
 	{
 		value: ":alien:",
 		emoji: "👽️",
-		name: ":alien:                     👽️  Update code due to external API changes.",
+		name: ":alien:                     👽️ Update code due to external API changes.",
 	},
 	{
 		value: ":ambulance:",
 		emoji: "🚑️",
-		name: ":ambulance:                 🚑️  Critical hotfix.",
+		name: ":ambulance:                 🚑️ Critical hotfix.",
 	},
 	{
 		value: ":arrow_down:",
 		emoji: "⬇️",
-		name: ":arrow_down:                ⬇️   Downgrade dependencies.",
+		name: ":arrow_down:                ⬇️  Downgrade dependencies.",
 	},
 	{
 		value: ":arrow_up:",
 		emoji: "⬆️",
-		name: ":arrow_up:                  ⬆️   Upgrade dependencies.",
+		name: ":arrow_up:                  ⬆️  Upgrade dependencies.",
 	},
 	{
 		value: ":art:",
@@ -84,7 +84,7 @@ const types = [
 	{
 		value: ":building_construction:",
 		emoji: "🏗️",
-		name: ":building_construction:     🏗️   Make architectural changes.",
+		name: ":building_construction:     🏗️  Make architectural changes.",
 	},
 	{
 		value: ":bulb:",
@@ -99,7 +99,7 @@ const types = [
 	{
 		value: ":coffin:",
 		emoji: "⚰️",
-		name: ":coffin:                    ⚰️   Remove dead code.",
+		name: ":coffin:                    ⚰️  Remove dead code.",
 	},
 	{
 		value: ":construction_worker:",
@@ -134,7 +134,7 @@ const types = [
 	{
 		value: ":label:",
 		emoji: "🏷️",
-		name: ":label:                     🏷️   Add or update types.",
+		name: ":label:                     🏷️  Add or update types.",
 	},
 	{
 		value: ":lipstick:",
@@ -144,7 +144,7 @@ const types = [
 	{
 		value: ":lock:",
 		emoji: "🔒️",
-		name: ":lock:                      🔒️  Fix security or privacy issues.",
+		name: ":lock:                      🔒️ Fix security or privacy issues.",
 	},
 	{
 		value: ":memo:",
@@ -154,7 +154,7 @@ const types = [
 	{
 		value: ":package:",
 		emoji: "📦️",
-		name: ":package:                   📦️  Add or update compiled files or packages.",
+		name: ":package:                   📦️ Add or update compiled files or packages.",
 	},
 	{
 		value: ":page_facing_up:",
@@ -169,7 +169,7 @@ const types = [
 	{
 		value: ":pencil2:",
 		emoji: "✏️",
-		name: ":pencil2:                   ✏️   Fix typos.",
+		name: ":pencil2:                   ✏️  Fix typos.",
 	},
 	{
 		value: ":pushpin:",
@@ -179,12 +179,12 @@ const types = [
 	{
 		value: ":recycle:",
 		emoji: "♻️",
-		name: ":recycle:                   ♻️   Refactor code.",
+		name: ":recycle:                   ♻️  Refactor code.",
 	},
 	{
 		value: ":rewind:",
 		emoji: "⏪️",
-		name: ":rewind:                    ⏪️  Revert changes.",
+		name: ":rewind:                    ⏪️ Revert changes.",
 	},
 	{
 		value: ":rocket:",
@@ -244,7 +244,7 @@ const types = [
 	{
 		value: ":wastebasket:",
 		emoji: "🗑️",
-		name: ":wastebasket:               🗑️   Deprecate code that needs to be cleaned up.",
+		name: ":wastebasket:               🗑️  Deprecate code that needs to be cleaned up.",
 	},
 	{
 		value: ":white_check_mark:",
@@ -259,7 +259,7 @@ const types = [
 	{
 		value: ":zap:",
 		emoji: "⚡️",
-		name: ":zap:                       ⚡️  Improve performance.",
+		name: ":zap:                       ⚡️ Improve performance.",
 	},
 ];
 
@@ -268,27 +268,31 @@ const types = [
  */
 const scopes = [
 	{
-		name: "catalog:crossplane - Anything related to the Crossplane resource catalog",
+		name: "catalog:crossplane    - Anything related to the Crossplane resource catalog",
 		value: "catalog:crossplane",
 	},
 	{
-		name: "catalog:flakes	- Anything related to the Nix flakes catalog",
+		name: "catalog:flakes        - Anything related to the Nix flakes catalog",
 		value: "catalog:flakes",
 	},
 	{
-		name: "project:chezmoi.sh - Anything related to the chezmoi.sh project",
+		name: "catalog:kairos-bundle - Anything related to the Kairos bundle catalog",
+		value: "catalog:kairos-bundle",
+	},
+	{
+		name: "project:chezmoi.sh    - Anything related to the chezmoi.sh project",
 		value: "project:chezmoi.sh",
 	},
 	{
-		name: "project:hass       - Anything related to the Home Assistant project",
+		name: "project:hass          - Anything related to the Home Assistant project",
 		value: "project:hass",
 	},
 	{
-		name: "project:nex·rpi    - Anything related to the Nex·RPI project (chezmoi.sh)",
+		name: "project:nex·rpi       - Anything related to the Nex·RPI project (chezmoi.sh)",
 		value: "project:nex·rpi",
 	},
 	{
-		name: "gh                 - Anything else",
+		name: "gh                    - Anything else",
 		value: "gh",
 	},
 ];
