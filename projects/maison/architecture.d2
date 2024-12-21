@@ -1,0 +1,295 @@
+# Copyright (C) 2024 vscode (you@you.you)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ----------------------------------------------------------------------------
+
+explanation: |md
+  # maison Architecture
+
+  This document describes the architecture \
+  of the `maison` platform in a visual way \
+  with all the components and how they \
+  interact with each other.
+  \
+| {
+  near: top-left
+}
+
+classes: {
+  # Object classes
+  application: {
+    shape: rectangle
+    style: {
+      fill-pattern: dots
+      multiple: true
+      shadow: false
+    }
+  }
+  application-system: {
+    shape: rectangle
+    style: {
+      fill-pattern: dots
+      multiple: true
+      stroke-dash: 3
+    }
+  }
+
+  undeployed: {
+    style: {
+      opacity: 0.3
+    }
+  }
+
+  namespace: {
+    shape: page
+    style: {
+      fill-pattern: lines
+      stroke-dash: 5
+      text-transform: lowercase
+    }
+  }
+  network: {
+    shape: cloud
+    style: {
+      fill-pattern: dots
+      text-transform: uppercase
+      font-size: 24
+      bold: true
+    }
+  }
+
+  # Connections classes
+  connect-from-network: {
+    style.stroke-width: 8
+  }
+  connect-to-internet: {
+    style: {
+      stroke-dash: 3
+    }
+  }
+  connect-to-network: {
+    style.stroke-width: 8
+  }
+  connect-vpn-trunk: {
+    style: {
+      animated: true
+      bold: true
+      font-size: 32
+      stroke-width: 8
+    }
+  }
+  connect-vpn: {
+    style.animated: true
+  }
+}
+
+internet: {class: network}
+localnet: {class: network}
+maison: {
+  label: ☸ kubernetes.maison.chezmoi.sh
+
+  system: {
+    class: namespace
+
+    # - Cert-Manager
+    Cert-Manager: {
+      class: [application-system; undeployed]
+      icon: assets/icons/system/cert-manager.svg
+      link: https://cert-manager.io/
+      tooltip: Cert-Manager is a Kubernetes controller that automates the management and issuance of TLS certificates.
+    }
+    Cert-Manager -> _._.internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
+
+    # - External-DNS
+    ExternalDNS: {
+      class: [application-system; undeployed]
+      icon: assets/icons/system/external-dns.png
+      link: https://github.com/kubernetes-sigs/external-dns
+      tooltip: ExternalDNS is a Kubernetes controller that configures DNS resources.
+    }
+    ExternalDNS -> _._.internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
+
+    # - External-Secret
+    External-Secret: {
+      class: [application-system; undeployed]
+      icon: assets/icons/system/external-secret.svg
+      link: https://external-secrets.io/
+      tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
+    }
+
+    # - FluxCD
+    FluxCD: {
+      class: [application-system; undeployed]
+      icon: assets/icons/system/flux-cd.svg
+      link: https://fluxcd.io/
+      tooltip: Open and extensible continuous delivery solution for Kubernetes
+    }
+    FluxCD -> _._.internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
+
+    # - Tailscale
+    Tailscale: {
+      class: [application; undeployed]
+      icon: assets/icons/system/tailscale.svg
+      link: https://tailscale.com/
+      tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
+    }
+    Tailscale <- _._.internet: VPN {class: [connect-vpn-trunk; undeployed]}
+
+    # - Traefik
+    Traefik: {
+      class: [application-system; undeployed]
+      icon: assets/icons/system/traefik.svg
+      link: https://traefik.io/
+      tooltip: Traefik is a modern HTTP reverse proxy and load balancer.
+    }
+    Traefik <- _._.localnet: {
+      class: [connect-from-network; undeployed]
+      source-arrowhead: |md
+        HTTP (80)
+        HTTPS (443)
+      |
+    }
+    Traefik <- TailScale: {
+      class: [connect-to-network; undeployed]
+      source-arrowhead: |md
+        HTTP (80)
+        HTTPS (443)
+      |
+    }
+  }
+
+  multimedia: {
+    class: namespace
+    style.fill-pattern: none
+
+    # - FileFlows
+    Fileflows: {
+      class: [application; undeployed]
+      icon: assets/icons/apps/fileflows.svg
+      link: https://fileflows.io/
+      tooltip: FileFlows is a file processing application that can execute actions against a file in a tree flow structure.
+    }
+    Fileflows <- _.system.Traefik: {
+      class: [undeployed]
+      source-arrowhead: HTTP (19200)
+    }
+
+    # - Jellyfin
+    Jellyfin: {
+      class: [application; undeployed]
+      icon: assets/icons/apps/jellyfin.svg
+      link: https://jellyfin.org/
+      tooltip: Jellyfin is the volunteer-built media solution that puts you in control of your media.
+    }
+    Jellyfin <- _.system.Traefik: {
+      class: [undeployed]
+      source-arrowhead: HTTP (8096)
+    }
+
+    # - Jellyseerr
+    Jellyseerr: {
+      class: [application; undeployed]
+      icon: assets/icons/apps/jellyseerr.svg
+      link: https://github.com/Fallenbagel/jellyseerr
+      tooltip: Free and open source software application for managing requests for Jellyfin libraries.
+    }
+    Jellyseerr <- _.system.Traefik: {
+      class: [undeployed]
+      source-arrowhead: HTTP (5055)
+    }
+  }
+
+  life-management: {
+    class: namespace
+
+    # - Actual Budget
+    Actual-Budget: {
+      class: [application; undeployed]
+      icon: assets/icons/apps/actual-budget.png
+      link: https://actualbudget.com/
+      tooltip: Actual Budget is a personal finance app that helps you track your spending and save money.
+    }
+    Actual-Budget <- _.system.Traefik: {
+      class: [undeployed]
+      source-arrowhead: HTTP (5006)
+    }
+
+    # - Mealie
+    Mealie: {
+      class: [application; undeployed]
+      icon: assets/icons/apps/mealie.svg
+      link: https://mealie.io/
+      tooltip: Intuitive and easy to use recipe management app.
+    }
+    Mealie <- _.system.Traefik: {
+      class: [undeployed]
+      source-arrowhead: HTTP (9925)
+    }
+
+    # - Docspell
+    Docspell: {
+      class: [application; undeployed]
+      icon: assets/icons/apps/docspell.svg
+      link: https://docspell.org/
+      tooltip: Docspell is a personal document management system.
+    }
+    Docspell <- _.system.Traefik: {
+      class: [undeployed]
+      source-arrowhead: HTTP (7880)
+    }
+  }
+
+  automation: {
+    class: namespace
+
+    # - n8n
+    n8n: {
+      class: [application; undeployed]
+      icon: assets/icons/apps/n8n.svg
+      link: https://n8n.io/
+      tooltip: Secure and AI-native workflow automation tool for technical people.
+    }
+    n8n <- _.system.Traefik: {
+      class: [undeployed]
+      source-arrowhead: HTTP (5678)
+    }
+
+    # - Budibase
+    Budibase: {
+      class: [application; undeployed]
+      icon: assets/icons/apps/budibase.svg
+      link: https://budibase.com/
+      tooltip: A modern, open source low-code platform for building modern internal applications in minutes.
+    }
+    Budibase <- _.system.Traefik: {
+      class: [undeployed]
+      source-arrowhead: HTTP (8080)
+    }
+  }
+
+  others: {
+    class: namespace
+
+    # - Linkding
+    Linkding: {
+      class: [application; undeployed]
+      icon: assets/icons/apps/linkding.svg
+      link: https://github.com/sissbruecker/linkding
+      tooltip: Linkding is a self-hosted bookmarking and link aggregation service.
+    }
+    Linkding <- _.system.Traefik: {
+      class: [undeployed]
+      source-arrowhead: HTTP (9090)
+    }
+  }
+}

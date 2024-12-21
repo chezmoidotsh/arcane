@@ -284,12 +284,16 @@ const scopes = [
 		value: "catalog:kairos-bundle",
 	},
 	{
-		name: "project:chezmoi.sh    - Anything related to the chezmoi.sh project",
+		name: "project:chezmoi.sh    - Anything related to things not related to a specific project",
 		value: "project:chezmoi.sh",
 	},
 	{
 		name: "project:hass          - Anything related to the Home Assistant project",
 		value: "project:hass",
+	},
+	{
+		name: "project:maison        - Anything related to the maison project",
+		value: "project:maison",
 	},
 	{
 		name: "project:nex·rpi       - Anything related to the Nex·RPI project (chezmoi.sh)",
