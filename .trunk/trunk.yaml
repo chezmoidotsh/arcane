@@ -63,7 +63,7 @@ lint:
     - # Architecture SVG diagram cannot be linted by svgo
       linters: [svgo]
       paths:
-        - projects/nex.rpi/assets/architecture.svg
+        - projects/*/assets/architecture.svg
     - # DO NOT SCAN ANY FILES IN THE UNENCRYPTED KVSTORE
       linters: [ALL]
       paths:
