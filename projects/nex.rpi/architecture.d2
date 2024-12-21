@@ -111,7 +111,7 @@ nex·rpi: {
 # - Tailscale
 nex·rpi.network.Tailscale: {
   class: [application]
-  icon: assets/tailscale.svg
+  icon: assets/icons/system/tailscale.svg
   link: https://tailscale.com/
   tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
 }
@@ -121,7 +121,7 @@ nex·rpi.network.Tailscale -> localnet: VPN Subnet proxy {class: [connect-vpn-tr
 # - AdGuard Home
 nex·rpi.network.AdGuard Home: {
   class: [application]
-  icon: assets/adguard-home.svg
+  icon: assets/icons/apps/adguard-home.svg
   link: https://adguard.com/en/adguard-home/overview.html
   tooltip: AdGuard Home is a network-wide software for blocking ads & tracking.
 }
@@ -137,7 +137,7 @@ nex·rpi.network.AdGuard Home <- nex·rpi.Traefik: {
 # - yaLDAP
 nex·rpi.security.yaLDAP: {
   class: [application]
-  icon: assets/yaldap.png
+  icon: assets/icons/apps/yaldap.png
   link: https://yaldap.com/
   tooltip: yaLDAP is a modern LDAP server.
 }
@@ -151,7 +151,7 @@ nex·rpi.security.yaLDAP <- nex·rpi.Traefik: {
 # - Authelia
 nex·rpi.security.Authelia: {
   class: [application]
-  icon: assets/authelia.svg
+  icon: assets/icons/apps/authelia.svg
   link: https://www.authelia.com/
   tooltip: Authelia is an open-source authentication and authorization server.
 }
@@ -162,7 +162,7 @@ nex·rpi.security.Authelia <- nex·rpi.Traefik: {
 # - SmallStep CA
 nex·rpi.security.SmallStep CA: {
   class: [application; undeployed]
-  icon: assets/smallstep.png
+  icon: assets/icons/apps/smallstep.png
   link: https://smallstep.com/
   tooltip: SmallStep CA is a zero-trust certificate authority.
 }
@@ -178,7 +178,7 @@ nex·rpi.security.SmallStep CA <- nex·rpi.Cert-Manager: {
 # - MinIO
 nex·rpi.storage.MinIO: {
   class: [application; undeployed]
-  icon: assets/minio.svg
+  icon: assets/icons/apps/minio.svg
   link: https://min.io/
   tooltip: MinIO is a high-performance, distributed object storage system.
 }
@@ -191,7 +191,7 @@ nex·rpi.storage.MinIO <- nex·rpi.Traefik: {
 # - Zot Registry
 nex·rpi.storage.zot registry: {
   class: [application; undeployed]
-  icon: assets/zot-registry.svg
+  icon: assets/icons/apps/zot-registry.svg
   link: https://zotregistry.dev/
   tooltip: Zot Registry is a self-hosted, privacy-focused, and easy-to-use image registry.
 }
@@ -204,7 +204,7 @@ nex·rpi.storage.zot registry -> nex·rpi.storage.MinIO: {
 # - Glance
 nex·rpi.Glance: {
   class: [application]
-  icon: assets/glance.png
+  icon: assets/icons/apps/glance.png
   link: https://github.com/glanceapp/glance
   tooltip: A self-hosted dashboard that puts all your feeds in one place.
 }
@@ -216,7 +216,7 @@ nex·rpi.Glance <- nex·rpi.Traefik: {
 # - Cert-Manager
 nex·rpi.Cert-Manager: {
   class: [application-system]
-  icon: assets/cert-manager.svg
+  icon: assets/icons/system/cert-manager.svg
   link: https://cert-manager.io/
   tooltip: Cert-Manager is a Kubernetes controller that automates the management and issuance of TLS certificates.
 }
@@ -225,7 +225,7 @@ nex·rpi.Cert-Manager -> internet: HTTPS (443) {class: [connect-to-internet]}
 # - External-DNS
 nex·rpi.ExternalDNS: {
   class: [application-system]
-  icon: assets/external-dns.png
+  icon: assets/icons/system/external-dns.png
   link: https://github.com/kubernetes-sigs/external-dns
   tooltip: ExternalDNS is a Kubernetes controller that configures DNS resources.
 }
@@ -234,7 +234,7 @@ nex·rpi.ExternalDNS -> internet: HTTPS (443) {class: [connect-to-internet]}
 # - External-Secret
 nex·rpi.External-Secret: {
   class: [application-system]
-  icon: assets/external-secret.svg
+  icon: assets/icons/system/external-secret.svg
   link: https://external-secrets.io/
   tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
 }
@@ -242,7 +242,7 @@ nex·rpi.External-Secret: {
 # - Traefik
 nex·rpi.Traefik: {
   class: [application-system]
-  icon: assets/traefik.svg
+  icon: assets/icons/system/traefik.svg
   link: https://traefik.io/
   tooltip: Traefik is a modern HTTP reverse proxy and load balancer.
 }
@@ -258,7 +258,7 @@ nex·rpi.Traefik <- localnet: {
 # - Crossplane
 nex·rpi.Crossplane: {
   class: [application-system]
-  icon: assets/crossplane.svg
+  icon: assets/icons/system/crossplane.svg
   link: https://crossplane.io/
   tooltip: Crossplane is an open-source Kubernetes add-on that extends your cluster with managed resources from any cloud or on-prem environment.
 }
