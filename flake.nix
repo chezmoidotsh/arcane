@@ -40,8 +40,10 @@
             packages.kubevault
 
             # - Kubernetes and container tools
+            pkgs.crane
             pkgs.dive
             pkgs.docker-client
+            pkgs.fluxcd
             pkgs.helm-docs
             pkgs.k3d
             pkgs.k9s
