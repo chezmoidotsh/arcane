@@ -59,6 +59,7 @@
             pkgs.sops
 
             # - Quality assurance tools
+            pkgs.ansible-lint
             pkgs.bats
             pkgs.commitlint
             pkgs.lefthook
@@ -69,6 +70,7 @@
             # - Provisioning tools
             pkgs.ansible
             pkgs.python312Packages.jmespath
+            pkgs.python312Packages.kubernetes
             pkgs.python312Packages.proxmoxer
             pkgs.python312Packages.requests
             pkgs.python312Packages.requests-toolbelt

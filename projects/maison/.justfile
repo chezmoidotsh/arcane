@@ -1,3 +1,4 @@
+mod ansible 'src/infrastructure/ansible/.justfile'
 # mod crossplane 'src/infrastructure/.justfile'
 # mod kubernetes 'src/.justfile'
 

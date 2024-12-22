@@ -1,0 +1,123 @@
+---
+# PVE Virtual Machine creation
+#
+# description: This playbook creates a new virtual machine on a Proxmox VE
+#              cluster. It will configure the VM using Kairos project.
+- name: 🚀 Bootstrap the Kairos cluster
+  hosts: localhost
+  vars_prompt:
+    - name: proxmox_user
+      prompt: Proxmox VE user
+      private: false
+    - name: proxmox_password
+      prompt: Proxmox VE password
+      private: true
+    - name: cloudflare_token
+      prompt: Cloudflare API token
+      private: true
+  vars:
+    cloudflare_zone: chezmoi.sh
+
+    proxmox_disk_storage: nvme-lvm
+    proxmox_host: pve-01.pve.chezmoi.sh:8006 # NOTE: DNS record already publicly available, so no issues to expose it here
+    proxmox_iso_storage: local
+
+    # kairos_bundles_flux: # Flux CD (https://fluxcd.io/)
+    #   description: Open and extensible continuous delivery solution for Kubernetes.
+    #   url: https://github.com/kairos-io/community-bundles/tree/main/flux
+    #   targets:
+    #     - run://ghcr.io/chezmoi-sh/kairos-bundles:flux-sync # sync FluxCD configuration
+    # kairos_bundles_flux_config:
+    #   git:
+    #     url: https://github.com/chezmoi-sh/atlas.git
+    #     path: project/maison/src/clusters/production/recovery # FluxCD configuration path with all recovery manifests
+    #     branch: wip/iron-age
+    kairos_cloudinit_k3s:
+      args:
+        - --disable-helm-controller # disable Helm controller by default
+        - --disable=traefik # disable Traefik by default, use FluxCD instead
+        - --secrets-encryption # enable secrets encryption
+        - --tls-san=kubernetes.{{ kairos_cluster_name }} # add the maison.chezmoi.sh as a TLS SAN
+    kairos_cloudinit_user_sshkeys: ["github:xunleii"]
+    kairos_cluster_name: maison.chezmoi.sh
+    kairos_cores: 8 # 8 cores cores should be enough for this project
+    kairos_disk_size: 64 # 64 GB should be enough for this project (media, databses, ...)
+    kairos_distribution: debian-bookworm
+    kairos_memory_balloon: 512 # 512 MB min
+    kairos_memory_shares: 1024 # 1024 shares means that this VM will have a medium priority
+    kairos_memory: 16384 # 16 GB max
+    kairos_start_on_boot: true
+    # kairos_start_on_boot_order: 10
+    kairos_version: v3.2.4
+    # ID explaination:
+    # 2......: PVE Virtual Machine
+    # .2.....: Kairos OS
+    # ..32...: Kairos major-minor version
+    # ....0..: Kairos cluster ID
+    # .....XX: Kairos Node ID
+    kairos_vm_id: 2232000
+
+  roles:
+    - role: pve.kairos-cluster
+
+  post_tasks:
+    - name: ⌛ Waiting for the VM facing IP to be available
+      community.general.proxmox_vm_info:
+        api_host: "{{ proxmox_host }}"
+        api_user: "{{ proxmox_user }}"
+        api_password: "{{ proxmox_password | default(omit) }}"
+        api_token_id: "{{ proxmox_token_id | default(omit) }}"
+        api_token_secret: "{{ proxmox_token_secret | default(omit) }}"
+
+        vmid: "{{ kairos_vm_id }}"
+        network: true
+      register: kairos_vm_info
+      # ignore_errors: true
+      until: >-
+        'proxmox_vms' in kairos_vm_info and
+        kairos_vm_info
+        | community.general.json_query('proxmox_vms[*].network[*]')
+        | flatten
+        | selectattr('name', 'match', '^(eth|ens|enp|eno|enx|en)[0-9]+$')
+        | map(attribute='ip-addresses')
+        | flatten
+        | selectattr('ip-address-type', 'equalto', 'ipv4')
+        | map(attribute='ip-address')
+        | first
+        is defined
+      retries: 20
+      delay: 15
+
+    - name: 🔗 Save the facing IP address
+      ansible.builtin.set_fact:
+        kairos_api_host: >-
+          {{
+            kairos_vm_info
+            | community.general.json_query('proxmox_vms[*].network[*]')
+            | flatten
+            | selectattr('name', 'match', '^(eth|ens|enp|eno|enx|en)[0-9]+$')
+            | map(attribute='ip-addresses')
+            | flatten
+            | selectattr('ip-address-type', 'equalto', 'ipv4')
+            | map(attribute='ip-address')
+            | first
+          }}
+    - name: 🌐 Create a DNS record for Kubernetes API
+      community.general.cloudflare_dns:
+        api_token: "{{ cloudflare_token }}"
+        zone: "{{ cloudflare_zone }}"
+        state: present
+
+        record: kubernetes.{{ kairos_cluster_name }}
+        type: A
+        value: "{{ kairos_api_host }}"
+
+        comment: "(Ansible) Kubernetes address for nex·rpi project"
+        solo: true
+
+    - name: ⌛ Wait the Kubernetes API to be available
+      ansible.builtin.wait_for:
+        host: "{{ kairos_api_host }}"
+        port: 6443
+        state: drained
+        timeout: 300
