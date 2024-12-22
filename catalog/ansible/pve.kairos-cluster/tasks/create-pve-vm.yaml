@@ -68,7 +68,7 @@
     shares: "{{ kairos_memory_shares }}" # Relative priority of the VM's memory allocation compared to other VMs (The larger the number is, the more memory this VM gets.) (default 1024)
 
     onboot: "{{ kairos_start_on_boot }}" # Automatically start the VM when the Proxmox VE node boots (default false)
-    startup: "{%- if kairos_start_on_boot_order | default(false) %}boot={{ kairos_start_on_boot_order }}{% else %}{{ omit }}{% endif %}" # Boot order on the Proxmox VE node
+    startup: "{%- if kairos_start_on_boot_order | default(false) %}order={{ kairos_start_on_boot_order }}{% else %}{{ omit }}{% endif %}" # Boot order on the Proxmox VE node
     vmid: "{{ kairos_vm_id | default(omit) }}" # ID of the VM (unique per Proxmox VE node)
   register: kairos_vm
 
