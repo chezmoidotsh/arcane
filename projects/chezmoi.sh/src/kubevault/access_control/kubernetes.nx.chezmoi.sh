@@ -3,5 +3,5 @@
 cloud/aws/**
 cloud/cloudflare/**
 cloud/letsencrypt
-cloud/tailscale
+cloud/tailscale/kubernetes.nx.chezmoi.sh
 security/sso/**

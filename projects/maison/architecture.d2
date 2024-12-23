@@ -101,6 +101,15 @@ maison: {
   system: {
     class: namespace
 
+    # - Tailscale
+    Tailscale: {
+      class: [application]
+      icon: assets/icons/system/tailscale.svg
+      link: https://tailscale.com/
+      tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
+    }
+    Tailscale <- _._.internet: VPN {class: [connect-vpn-trunk]}
+
     # - Cert-Manager
     Cert-Manager: {
       class: [application-system]
@@ -136,15 +145,6 @@ maison: {
       tooltip: Open and extensible continuous delivery solution for Kubernetes
     }
     FluxCD -> _._.internet: HTTPS (443) {class: [connect-to-internet]}
-
-    # - Tailscale
-    Tailscale: {
-      class: [application; undeployed]
-      icon: assets/icons/system/tailscale.svg
-      link: https://tailscale.com/
-      tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
-    }
-    Tailscale <- _._.internet: VPN {class: [connect-vpn-trunk; undeployed]}
 
     # - Traefik
     Traefik: {
