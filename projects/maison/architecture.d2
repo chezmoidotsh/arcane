@@ -103,12 +103,12 @@ maison: {
 
     # - Cert-Manager
     Cert-Manager: {
-      class: [application-system; undeployed]
+      class: [application-system]
       icon: assets/icons/system/cert-manager.svg
       link: https://cert-manager.io/
       tooltip: Cert-Manager is a Kubernetes controller that automates the management and issuance of TLS certificates.
     }
-    Cert-Manager -> _._.internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
+    Cert-Manager -> _._.internet: HTTPS (443) {class: [connect-to-internet]}
 
     # - External-DNS
     ExternalDNS: {
