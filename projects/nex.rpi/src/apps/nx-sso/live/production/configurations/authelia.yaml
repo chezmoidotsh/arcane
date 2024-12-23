@@ -632,6 +632,9 @@ access_control:
     - name: kubernetes.nx.chezmoi.sh
       networks:
         - 10.0.0.30/32
+    - name: kubernetes.maison.chezmoi.sh
+      networks:
+        - 10.0.3.195/32 # https://github.com/authelia/authelia/issues/1245
     # - name: 'internal'
     #   networks:
     # - '10.10.0.0/16'
@@ -649,6 +652,7 @@ access_control:
         - ^/control/filtering/status$
       networks:
         - internal
+        - kubernetes.maison.chezmoi.sh
         - kubernetes.nx.chezmoi.sh
     - domain: dns.chezmoi.sh
       policy: bypass
@@ -657,6 +661,7 @@ access_control:
         - ^/control/filtering/set_rules$
       networks:
         - internal
+        - kubernetes.maison.chezmoi.sh
         - kubernetes.nx.chezmoi.sh
 
     # Allow access to dns.chezmoi.sh only with two-factor authentication
