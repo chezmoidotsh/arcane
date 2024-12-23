@@ -1,0 +1,128 @@
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │                           Service Catalog Entry                           │
+# ├───────────────────────────────────────────────────────────────────────────┤
+# │ name: traefik                                                             │
+# │ description: |                                                            │
+# │   Traefik is a modern HTTP reverse proxy and load balancer that makes     │
+# │   deploying microservices easy.                                           │
+# │ tags:                                                                     │
+# │   - ingress                                                               │
+# │   - gateway api                                                           │
+# │ links:                                                                    │
+# │   - title: Traefik Website                                                │
+# │     url: https://traefik.io                                               │
+# │   - title: Traefik Documentation                                          │
+# │     url: https://doc.traefik.io/traefik/                                  │
+# │   - title: Traefik Helm Chart                                             │
+# │     url: https://artifacthub.io/packages/helm/traefik/traefik/            │
+# └───────────────────────────────────────────────────────────────────────────┘
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: traefik
+  namespace: traefik-system
+spec:
+  interval: 24h0m0s # NOTE: don't need to check for updates often
+  url: https://traefik.github.io/charts
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: traefik
+  namespace: traefik-system
+spec:
+  interval: 12h0m0s
+  chart:
+    spec:
+      chart: traefik
+      # renovate: datasource=github-releases depName=traefik/traefik-helm-chart versioning=semver extractVersion=^v(?<version>.*)$
+      version: 33.2.1
+      sourceRef:
+        kind: HelmRepository
+        name: traefik
+        namespace: traefik-system
+
+  # Customisation of the HelmRelease behaviour
+  driftDetection: { mode: warn }
+  test: { enable: true }
+  rollback: { cleanupOnFail: true, recreate: true }
+
+  releaseName: traefik
+  values:
+    # NOTE: All of these values are shared by all chezmoi.sh projects
+    #       and can be patched using Kustomize.
+
+    # NOTE: disable check for updates and stats
+    globalArguments:
+      - --global.checkNewVersion=false
+      - --global.sendAnonymousUsage=false
+
+    # configure Traefik entrypoints
+    ports:
+      # API / Dashboard / Ping
+      traefik:
+        port: 9000
+        expose:
+          default: false
+        protocol: TCP
+
+      # Web (HTTP)
+      web:
+        port: 80
+        expose:
+          default: true
+        exposedPort: 80
+        protocol: TCP
+        redirectTo:
+          port: websecure
+          priority: 10
+          permanent: true
+
+      # WebSecure (HTTPS)
+      websecure:
+        port: 443
+        expose:
+          default: true
+        exposedPort: 443
+        protocol: TCP
+        tls:
+          enabled: true
+
+    # configure Traefik providers
+    providers:
+      kubernetesCRD: { enabled: true }
+      kubernetesIngress: { enabled: false, publishedService: { enabled: true } } # No ingress are allowed; use Gateway API instead
+      kubernetesGateway:
+        enabled: true
+        experimentalChannel: true
+        statusAddress:
+          service:
+            name: traefik
+            namespace: traefik-system
+
+    # configure Traefik GatewayClass
+    gatewayClass:
+      enabled: true
+      name: traefik-gateway
+
+    # disable some default configuration
+    gateway: { enabled: false }
+    ingressClass: { enabled: false }
+
+    # configure logs
+    logs:
+      general:
+        format: json
+      access:
+        enabled: true
+        format: json
+        fields:
+          general: { defaultMode: keep }
+          headers: { defaultMode: keep }
+
+    # override default Traefik service
+    service:
+      # NOTE: required to get the real client IP address with LoadBalancer in K3S
+      spec:
+        externalTrafficPolicy: Local
