@@ -7,3 +7,4 @@ resources:
 
   # Cloudflare credentials
   - cloudflare.iam.external-dns.yaml
+  - cloudflare.iam.cert-manager.yaml
