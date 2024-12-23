@@ -147,20 +147,13 @@ maison: {
 
     # - Traefik
     Traefik: {
-      class: [application-system; undeployed]
+      class: [application-system]
       icon: assets/icons/system/traefik.svg
       link: https://traefik.io/
       tooltip: Traefik is a modern HTTP reverse proxy and load balancer.
     }
     Traefik <- _._.localnet: {
-      class: [connect-from-network; undeployed]
-      source-arrowhead: |md
-        HTTP (80)
-        HTTPS (443)
-      |
-    }
-    Traefik <- TailScale: {
-      class: [connect-to-network; undeployed]
+      class: [connect-from-network]
       source-arrowhead: |md
         HTTP (80)
         HTTPS (443)
