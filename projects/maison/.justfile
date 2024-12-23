@@ -1,6 +1,5 @@
 mod ansible 'src/infrastructure/ansible/.justfile'
-# mod crossplane 'src/infrastructure/.justfile'
-# mod kubernetes 'src/.justfile'
+mod crossplane 'src/infrastructure/crossplane/.justfile'
 
 # -- Variables -----------------------------------------------------------------
 kubernetes_host := "kubernetes.maison.chezmoi.sh"

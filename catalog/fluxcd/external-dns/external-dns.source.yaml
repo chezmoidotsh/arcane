@@ -1,0 +1,28 @@
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │                           Service Catalog Entry                           │
+# ├───────────────────────────────────────────────────────────────────────────┤
+# │ name: external-dns                                                        │
+# │ description: |                                                            │
+# │   external-dns is a Kubernetes addon that configures public DNS servers   │
+# │   with information about exposed Kubernetes services to make them         │
+# │   discoverable.                                                           │
+# │ tags:                                                                     │
+# │   - dns                                                                   │
+# │   - third-party                                                           │
+# │ links:                                                                    │
+# │   - title: External-DNS Website                                           │
+# │     url: https://external-dns.io/                                         │
+# │   - title: External-DNS Documentation                                     │
+# │     url: https://external-dns.io/docs/                                    │
+# │   - title: External-DNS Helm Chart                                        │
+# │     url: https://artifacthub.io/packages/helm/external-dns/external-dns   │
+# └───────────────────────────────────────────────────────────────────────────┘
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: external-dns
+  namespace: external-dns-system
+spec:
+  interval: 24h0m0s # NOTE: don't need to check for updates often
+  url: https://kubernetes-sigs.github.io/external-dns/

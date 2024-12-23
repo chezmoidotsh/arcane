@@ -1,5 +1,5 @@
 # -- Variables -----------------------------------------------------------------
-crossplane_configuration := canonicalize(source_directory() / ".." / ".." / ".." / "..") / ".direnv/kubernetes/config"
+crossplane_configuration := canonicalize(source_directory() / ".." / ".." / ".." / ".." / "..") / ".direnv/kubernetes/config"
 crossplane_context := "kubernetes.nx.chezmoi.sh"
 crossplane_applyset := replace_regex(blake3("crossplane/maison.chezmoi.sh"), "[a-f0-9]{32}$", "")
 
@@ -15,7 +15,7 @@ apply *kubectl_opts="": diff && (force-apply kubectl_opts)
 
 [doc("Applies the infrastructure changes without asking for confirmation")]
 force-apply *kubectl_opts="":
-  kubectl kustomize 'live/production' \
+  kubectl kustomize '.' \
   | KUBECTL_APPLYSET=true \
     kubectl --kubeconfig {{ quote(crossplane_configuration) }} --context {{ quote(crossplane_context) }} \
     apply --filename - \
@@ -24,7 +24,7 @@ force-apply *kubectl_opts="":
 
 [doc("Shows the diff of the infrastructure changes")]
 diff:
-  kubectl kustomize 'live/production' \
+  kubectl kustomize '.' \
   | KUBECTL_APPLYSET=true \
     kubectl --kubeconfig {{ quote(crossplane_configuration) }} --context {{ quote(crossplane_context) }} \
     diff --filename - --server-side --force-conflicts \

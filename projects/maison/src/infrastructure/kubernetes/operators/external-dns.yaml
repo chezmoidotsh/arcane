@@ -1,0 +1,88 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: external-dns
+spec:
+  interval: 12h0m0s
+  timeout: 2m0s
+  retryInterval: 1m0s
+
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  path: ./catalog/fluxcd/external-dns
+
+  # NOTE: depends on external-secrets operator to create the DNS provider
+  #       credentials secret
+  dependsOn:
+    - name: external-secrets-operator
+
+  prune: true
+  wait: true
+
+  patches:
+    # NOTE: the following patches are required to make the ExternalDNS operator
+    #       work with the Cloudflare provider
+    - patch: |-
+        - op: add
+          path: /spec/secretStoreRef
+          value:
+            kind: ClusterSecretStore
+            name: kubernetes.maison.chezmoi.sh
+        - op: replace
+          path: /spec/data/0/remoteRef
+          value:
+            key: cloud-cloudflare-maison.chezmoi.sh-external-dns
+            property: attribute.value
+      target:
+        group: external-secrets.io
+        kind: ExternalSecret
+        name: cloudflare-credentials
+        namespace: external-dns-system
+    # trunk-ignore-begin(checkov/CKV_SECRET_6)
+    - patch: |-
+        - op: add
+          path: /spec/values/env
+          value:
+            - name: CF_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflare-credentials
+                  key: api-token
+      # trunk-ignore-end(checkov/CKV_SECRET_6)
+      target:
+        group: helm.toolkit.fluxcd.io
+        kind: HelmRelease
+        name: external-dns-cloudflare
+        namespace: external-dns-system
+
+    # NOTE: the following patches are required to configure the ExternalDNS
+    #       operator to work with AdGuard
+    - patch: |-
+        - op: add
+          path: /spec/values/provider/webhook/env
+          value:
+            - name: ADGUARD_URL
+              value: https://dns.chezmoi.sh
+            - name: ADGUARD_USER
+              value: "-"
+            - name: ADGUARD_PASSWORD
+              value: "-"
+      target:
+        group: helm.toolkit.fluxcd.io
+        kind: HelmRelease
+        name: external-dns-adguard
+        namespace: external-dns-system
+
+    # NOTE: the following patches are required to configure the ExternalDNS
+    #       operator to avoid conflicts with other instances
+    - patch: |-
+        - op: add
+          path: /spec/values/txtOwnerId
+          value: kubernetes.maison.chezmoi.sh
+      target:
+        group: helm.toolkit.fluxcd.io
+        kind: HelmRelease
+        namespace: external-dns-system

@@ -121,12 +121,12 @@ maison: {
 
     # - External-DNS
     ExternalDNS: {
-      class: [application-system; undeployed]
+      class: [application-system]
       icon: assets/icons/system/external-dns.png
       link: https://github.com/kubernetes-sigs/external-dns
       tooltip: ExternalDNS is a Kubernetes controller that configures DNS resources.
     }
-    ExternalDNS -> _._.internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
+    ExternalDNS -> _._.internet: HTTPS (443) {class: [connect-to-internet]}
 
     # - External-Secret
     External-Secret: {
