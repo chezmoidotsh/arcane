@@ -121,11 +121,12 @@ maison: {
 
     # - External-Secret
     External-Secret: {
-      class: [application-system; undeployed]
+      class: [application-system]
       icon: assets/icons/system/external-secret.svg
       link: https://external-secrets.io/
       tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
     }
+    External-Secret -> _._.localnet: { class: [connect-to-network] }
 
     # - FluxCD
     FluxCD: {
