@@ -4,4 +4,5 @@ kind: Kustomization
 resources:
   - flux-system # Install the Flux system components
 
+  - catalogs/apps.yaml # Install all apps components
   - catalogs/system.yaml # Install all system components
