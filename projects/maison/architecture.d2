@@ -180,13 +180,15 @@ maison: {
 
     # - Jellyfin
     Jellyfin: {
-      class: [application; undeployed]
+      class: [application]
       icon: assets/icons/apps/jellyfin.svg
       link: https://jellyfin.org/
       tooltip: Jellyfin is the volunteer-built media solution that puts you in control of your media.
     }
     Jellyfin <- _.system.Traefik: {
-      class: [undeployed]
+      source-arrowhead: HTTP (8096)
+    }
+    Jellyfin <- _.system.Tailscale: {
       source-arrowhead: HTTP (8096)
     }
 
