@@ -6,3 +6,4 @@ resources:
   # NOTE: Applications are manually installed using this kustomization to avoid
   #       installing automatically if it is not needed.
   - jellyfin.yaml
+  - linkding.yaml

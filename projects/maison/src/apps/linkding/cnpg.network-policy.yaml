@@ -1,0 +1,57 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Default network policy for the PostgreSQL database managed by the
+      CloudNative PostgreSQL operator.
+
+      It allows the operator to connect to the database and the database to
+      connect to the Kubernetes API server, the kube-dns service, and the MinIO
+      object store to perform backups.
+  name: postgres-default-policy
+  namespace: n8n
+spec:
+  podSelector:
+    matchExpressions:
+      - key: cnpg.io/cluster
+        operator: Exists
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Rule #1: allow traffic from the operator
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cnpg-system
+      ports:
+        - port: 8000
+
+  egress:
+    # Rule #1: allow traffic to the Kubernetes API server
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.1/32
+      ports:
+        - port: 443
+
+    # Rule #2: allow traffic to the kube-dns service (required for the DNS resolution)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+
+    # Rule #3: allow traffic to the MinIO object store
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/20 # s3.chezmoi.sh
+      ports:
+        - port: 9000
