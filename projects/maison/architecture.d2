@@ -278,13 +278,15 @@ maison: {
 
     # - Linkding
     Linkding: {
-      class: [application; undeployed]
+      class: [application]
       icon: assets/icons/apps/linkding.svg
       link: https://github.com/sissbruecker/linkding
       tooltip: Linkding is a self-hosted bookmarking and link aggregation service.
     }
     Linkding <- _.system.Traefik: {
-      class: [undeployed]
+      source-arrowhead: HTTP (9090)
+    }
+    Linkding <- _.system.Tailscale: {
       source-arrowhead: HTTP (9090)
     }
   }
