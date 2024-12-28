@@ -101,15 +101,6 @@ maison: {
   system: {
     class: namespace
 
-    # - Tailscale
-    Tailscale: {
-      class: [application]
-      icon: assets/icons/system/tailscale.svg
-      link: https://tailscale.com/
-      tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
-    }
-    Tailscale <- _._.internet: VPN {class: [connect-vpn-trunk]}
-
     # - Cert-Manager
     Cert-Manager: {
       class: [application-system]
@@ -128,14 +119,14 @@ maison: {
     }
     ExternalDNS -> _._.internet: HTTPS (443) {class: [connect-to-internet]}
 
-    # - External-Secret
-    External-Secret: {
+    # - Tailscale
+    Tailscale: {
       class: [application-system]
-      icon: assets/icons/system/external-secret.svg
-      link: https://external-secrets.io/
-      tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
+      icon: assets/icons/system/tailscale.svg
+      link: https://tailscale.com/
+      tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
     }
-    External-Secret -> _._.localnet: { class: [connect-to-network] }
+    Tailscale <- _._.internet: VPN {class: [connect-vpn-trunk]}
 
     # - FluxCD
     FluxCD: {
@@ -160,6 +151,24 @@ maison: {
         HTTPS (443)
       |
     }
+
+    # - External-Secret
+    External-Secret: {
+      class: [application-system]
+      icon: assets/icons/system/external-secret.svg
+      link: https://external-secrets.io/
+      tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
+    }
+    External-Secret -> _._.localnet: { class: [connect-to-network] }
+
+    # - CloudNativePG
+    CloudNativePG: {
+      class: [application-system]
+      icon: assets/icons/system/cloudnativepg.svg
+      link: https://cloudnativepg.io/
+      tooltip: CloudNativePG is a comprehensive platform designed to seamlessly manage PostgreSQL databases within Kubernetes environments.
+    }
+
   }
 
   multimedia: {
@@ -177,6 +186,10 @@ maison: {
       class: [undeployed]
       source-arrowhead: HTTP (19200)
     }
+    Fileflows <- _.system.Tailscale: {
+      class: [connect-vpn; undeployed]
+      source-arrowhead: HTTP (19200)
+    }
 
     # - Jellyfin
     Jellyfin: {
@@ -189,6 +202,7 @@ maison: {
       source-arrowhead: HTTP (8096)
     }
     Jellyfin <- _.system.Tailscale: {
+      class: [connect-vpn]
       source-arrowhead: HTTP (8096)
     }
 
@@ -201,6 +215,10 @@ maison: {
     }
     Jellyseerr <- _.system.Traefik: {
       class: [undeployed]
+      source-arrowhead: HTTP (5055)
+    }
+    Jellyseerr <- _.system.Tailscale: {
+      class: [connect-vpn; undeployed]
       source-arrowhead: HTTP (5055)
     }
   }
@@ -219,6 +237,7 @@ maison: {
       source-arrowhead: HTTP (5006)
     }
     Actual-Budget <- _.system.Tailscale: {
+      class: [connect-vpn]
       source-arrowhead: HTTP (5006)
     }
 
@@ -233,6 +252,10 @@ maison: {
       class: [undeployed]
       source-arrowhead: HTTP (9925)
     }
+    Mealie <- _.system.Tailscale: {
+      class: [connect-vpn; undeployed]
+      source-arrowhead: HTTP (9925)
+    }
 
     # - Docspell
     Docspell: {
@@ -243,6 +266,10 @@ maison: {
     }
     Docspell <- _.system.Traefik: {
       class: [undeployed]
+      source-arrowhead: HTTP (7880)
+    }
+    Docspell <- _.system.Tailscale: {
+      class: [connect-vpn; undeployed]
       source-arrowhead: HTTP (7880)
     }
   }
@@ -261,6 +288,10 @@ maison: {
       class: [undeployed]
       source-arrowhead: HTTP (5678)
     }
+    n8n <- _.system.Tailscale: {
+      class: [connect-vpn; undeployed]
+      source-arrowhead: HTTP (5678)
+    }
 
     # - Budibase
     Budibase: {
@@ -271,6 +302,10 @@ maison: {
     }
     Budibase <- _.system.Traefik: {
       class: [undeployed]
+      source-arrowhead: HTTP (8080)
+    }
+    Budibase <- _.system.Tailscale: {
+      class: [connect-vpn; undeployed]
       source-arrowhead: HTTP (8080)
     }
   }
@@ -289,6 +324,7 @@ maison: {
       source-arrowhead: HTTP (9090)
     }
     Linkding <- _.system.Tailscale: {
+      class: [connect-vpn]
       source-arrowhead: HTTP (9090)
     }
   }
