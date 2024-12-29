@@ -7,4 +7,5 @@ resources:
   #       installing automatically if it is not needed.
   - actual-budget.yaml
   - jellyfin.yaml
+  - jellyseerr.yaml
   - linkding.yaml

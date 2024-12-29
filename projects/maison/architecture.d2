@@ -198,6 +198,9 @@ maison: {
       link: https://jellyfin.org/
       tooltip: Jellyfin is the volunteer-built media solution that puts you in control of your media.
     }
+    Jellyfin <- Jellyseerr: {
+      source-arrowhead: HTTP (8096)
+    }
     Jellyfin <- _.system.Traefik: {
       source-arrowhead: HTTP (8096)
     }
@@ -208,17 +211,16 @@ maison: {
 
     # - Jellyseerr
     Jellyseerr: {
-      class: [application; undeployed]
+      class: [application]
       icon: assets/icons/apps/jellyseerr.svg
       link: https://github.com/Fallenbagel/jellyseerr
       tooltip: Free and open source software application for managing requests for Jellyfin libraries.
     }
     Jellyseerr <- _.system.Traefik: {
-      class: [undeployed]
       source-arrowhead: HTTP (5055)
     }
     Jellyseerr <- _.system.Tailscale: {
-      class: [connect-vpn; undeployed]
+      class: [connect-vpn]
       source-arrowhead: HTTP (5055)
     }
   }

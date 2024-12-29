@@ -1,0 +1,151 @@
+---
+# trunk-ignore(checkov/CKV_K8S_11): DO NOT SET the CPU limit
+# trunk-ignore(checkov/CKV_K8S_15,checkov/CKV_K8S_43): Not aggreed with theses policies about the ImagePullPolicy=Always and digest verification.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyseerr
+  namespace: jellyseerr
+  labels:
+    app.kubernetes.io/name: jellyseerr
+    app.kubernetes.io/instance: jellyseerr
+    app.kubernetes.io/part-of: jellyseerr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jellyseerr
+      app.kubernetes.io/instance: jellyseerr
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jellyseerr
+        app.kubernetes.io/instance: jellyseerr
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        # trunk-ignore(trivy): Everything about security context cannot be configured for the official image.
+        - name: jellyseerr
+          env:
+            - name: TZ
+              value: Europe/Paris
+          image: docker.io/fallenbagel/jellyseerr:2.1.0
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          ports:
+            - name: http
+              containerPort: 5055
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 43140
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: jellyseerr-config
+              mountPath: /app/config
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 43140
+        runAsGroup: 43140
+        fsGroup: 43140
+      volumes:
+        - name: jellyseerr-config
+          persistentVolumeClaim:
+            claimName: jellyseerr-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jellyseerr
+  namespace: jellyseerr
+  labels:
+    app.kubernetes.io/name: jellyseerr
+    app.kubernetes.io/instance: jellyseerr
+    app.kubernetes.io/part-of: jellyseerr
+spec:
+  selector:
+    app.kubernetes.io/name: jellyseerr
+    app.kubernetes.io/instance: jellyseerr
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyseerr-config
+  namespace: jellyseerr
+  labels:
+    app.kubernetes.io/name: jellyseerr
+    app.kubernetes.io/instance: jellyseerr
+    app.kubernetes.io/part-of: jellyseerr
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: jellyseerr
+  namespace: jellyseerr
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: jellyseerr
+      app.kubernetes.io/instance: jellyseerr
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector: {}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik-system
+  egress:
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: jellyfin
+      ports:
+        - port: 8096
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 443
+    - to:
+        - podSelector: {}
