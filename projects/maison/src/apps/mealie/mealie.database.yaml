@@ -1,0 +1,59 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: mealie-database
+    app.kubernetes.io/name: mealie
+    app.kubernetes.io/part-of: mealie
+  name: mealie-database
+  namespace: mealie
+spec:
+  backup:
+    barmanObjectStore: &barmanObjectStore
+      data:
+        compression: bzip2
+      destinationPath: s3://cnpg-backups/maison.chezmoi.sh/mealie
+      endpointURL: https://s3.chezmoi.sh:9000
+      serverName: 01JHBNJTKKCTAE7KQ2BXXP6HTR # DRP::dst_ulid
+      s3Credentials:
+        accessKeyId:
+          name: cnpg-s3-credentials
+          key: access_key_id
+        secretAccessKey:
+          name: cnpg-s3-credentials
+          key: access_secret_key
+      wal:
+        compression: bzip2
+    retentionPolicy: 30d
+  bootstrap:
+    # initdb:
+    #   database: app
+    #   owner: app
+    recovery:
+      source: recoveryBackup
+  description: PostgreSQL database dedicated to Mealie
+  externalClusters:
+    - name: recoveryBackup
+      barmanObjectStore:
+        <<: *barmanObjectStore
+        serverName: 01JHBNJHZM22KRGBH7F54MQ00J # DRP::src_ulid
+  instances: 1
+  storage:
+    size: 5Gi
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  labels:
+    app.kubernetes.io/component: backup
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/part-of: mealie
+  name: mealie-database
+  namespace: mealie
+spec:
+  schedule: "@daily"
+  backupOwnerReference: cluster
+  cluster:
+    name: mealie-database

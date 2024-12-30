@@ -245,18 +245,17 @@ maison: {
 
     # - Mealie
     Mealie: {
-      class: [application; undeployed]
+      class: [application]
       icon: assets/icons/apps/mealie.svg
       link: https://mealie.io/
       tooltip: Intuitive and easy to use recipe management app.
     }
     Mealie <- _.system.Traefik: {
-      class: [undeployed]
-      source-arrowhead: HTTP (9925)
+      source-arrowhead: HTTP (9000)
     }
     Mealie <- _.system.Tailscale: {
-      class: [connect-vpn; undeployed]
-      source-arrowhead: HTTP (9925)
+      class: [connect-vpn]
+      source-arrowhead: HTTP (9000)
     }
 
     # - Docspell
