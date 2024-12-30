@@ -9,3 +9,4 @@ resources:
   - jellyfin.yaml
   - jellyseerr.yaml
   - linkding.yaml
+  - mealie.yaml
