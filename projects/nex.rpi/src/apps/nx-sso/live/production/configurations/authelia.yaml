@@ -70,7 +70,7 @@ server:
   # csp_template: ''
 
   ## Server Buffers configuration.
-  # buffers:
+  buffers:
 
   ## Buffers usually should be configured to be the same value.
   ## Explanation at https://www.authelia.com/c/server#buffer-sizes
@@ -78,10 +78,10 @@ server:
   ## Write buffer size does the same for outgoing responses.
 
   ## Read buffer.
-  # read: 4096
+    read: 8192
 
   ## Write buffer.
-  # write: 4096
+    write: 8192
 
   ## Server Timeouts configuration.
   # timeouts:
@@ -1316,6 +1316,7 @@ identity_providers:
 
     ## Clients is a list of known clients and their configuration.
     clients:
+      - {{ secret "/var/run/secrets/authelia.com/oidc_client_budibase" | nindent 8 }}
       - {{ secret "/var/run/secrets/authelia.com/oidc_client_linkding" | nindent 8 }}
       - {{ secret "/var/run/secrets/authelia.com/oidc_client_mealie" | nindent 8 }}
       - {{ secret "/var/run/secrets/authelia.com/oidc_client_proxmox" | nindent 8 }}
