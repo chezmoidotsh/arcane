@@ -1,0 +1,16 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: budibase-tailscale
+  namespace: budibase
+spec:
+  defaultBackend:
+    service:
+      name: proxy-service
+      port:
+        number: 10000
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - budibase
