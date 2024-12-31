@@ -1,0 +1,27 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: n8n
+    includeTemplates: true
+    includeSelectors: true
+  - pairs:
+      app.kubernetes.io/managed-by: fluxcd
+      app.kubernetes.io/part-of: workflow-automation
+    includeTemplates: true
+
+resources:
+  # Workloads
+  - workload.database.yaml
+  - workload.n8n.yaml
+
+  # Ingresses / Gateways
+  - cloudflare-tunnel.yaml
+  - httproute.yaml
+  - vpn.yaml
+
+  # Miscellaneous resources
+  - security-policies.yaml
+  - namespace.yaml

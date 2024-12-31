@@ -9,3 +9,6 @@ resources:
   - cloudflare.iam.external-dns.yaml
   - cloudflare.iam.cloudflare-ingress.yaml
   - cloudflare.iam.cert-manager.yaml
+
+  # AWS IAM roles for n8n
+  - aws.iam.n8n.yaml

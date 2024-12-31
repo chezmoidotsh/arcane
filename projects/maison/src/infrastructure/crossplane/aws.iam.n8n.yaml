@@ -1,0 +1,98 @@
+# AWS User for n8n
+#
+# Description:
+#   These resources will create an AWS IAM User with the necessary permissions
+#   to send emails from the domain chezmoi.sh.
+---
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: Policy
+metadata:
+  annotations:
+    crossplane.io/external-name: AutheliaSESSender
+  name: maison.chezmoi.sh-amazonses-n8n
+  namespace: kubevault-kvstore
+spec:
+  forProvider:
+    path: /maison.chezmoi.sh/
+    policy: |
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "AllowSendingEmails",
+            "Effect": "Allow",
+            "Action": [
+              "ses:SendEmail",
+              "ses:SendRawEmail"
+            ],
+            "Resource": "arn:aws:ses:us-east-1:*:identity/*"
+          }
+        ]
+      }
+---
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: User
+metadata:
+  annotations:
+    crossplane.io/external-name: n8n
+  name: maison.chezmoi.sh-amazonses-n8n
+  namespace: kubevault-kvstore
+spec:
+  forProvider:
+    path: /maison.chezmoi.sh/
+---
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: UserPolicyAttachment
+metadata:
+  name: maison.chezmoi.sh-amazonses-n8n
+  namespace: kubevault-kvstore
+spec:
+  forProvider:
+    policyArnRef:
+      name: maison.chezmoi.sh-amazonses-n8n
+    userRef:
+      name: maison.chezmoi.sh-amazonses-n8n
+---
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: AccessKey
+metadata:
+  name: maison.chezmoi.sh-amazonses-n8n
+  namespace: kubevault-kvstore
+spec:
+  forProvider:
+    userRef:
+      name: maison.chezmoi.sh-amazonses-n8n
+  writeConnectionSecretToRef:
+    name: apps-n8n-aws-ses
+    namespace: kubevault-kvstore
+---
+# trunk-ignore-all(trivy/KSV113,checkov/CKV2_K8S_5): accessing to this secret is required
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubevault:kubernetes.maison.chezmoi.sh:n8n-ses
+  namespace: kubevault-kvstore
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    resourceNames:
+      - apps-n8n-aws-ses
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubevault:kubernetes.maison.chezmoi.sh:n8n-ses
+  namespace: kubevault-kvstore
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kubevault:kubernetes.maison.chezmoi.sh:n8n-ses
+subjects:
+  - kind: ServiceAccount
+    name: kubernetes.maison.chezmoi.sh

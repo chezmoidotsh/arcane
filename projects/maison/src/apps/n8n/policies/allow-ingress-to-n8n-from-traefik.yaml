@@ -1,0 +1,27 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    network-policy.k8s.io/description: |
+      This policy allows the Traefik service to access the n8n application.
+
+      **Why?**
+      - Traefik is the gateway controller for the Kubernetes cluster
+        and needs to route traffic to n8n application.
+  name: allow-ingress-to-n8n-from-traefik
+  namespace: n8n
+spec:
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik-system
+      ports:
+        - port: 5678
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
+  policyTypes:
+    - Ingress
