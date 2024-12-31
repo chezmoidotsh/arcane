@@ -1,0 +1,31 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    network-policy.k8s.io/description: |
+      This policy allows egress traffic from n8n to Paperless service.
+
+      **Why?**
+      - n8n host some AI agent that needs to connect to Paperless
+        to fetch documents and process them.
+  name: allow-egress-from-n8n-to-paperless
+  namespace: n8n
+spec:
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: paperless-ngx
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: paperless-ngx-webserver
+              app.kubernetes.io/name: paperless-ngx
+      ports:
+        - port: 8000
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
+  policyTypes:
+    - Egress

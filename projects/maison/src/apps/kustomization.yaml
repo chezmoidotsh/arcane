@@ -10,3 +10,4 @@ resources:
   - jellyseerr.yaml
   - linkding.yaml
   - mealie.yaml
+  - n8n.yaml

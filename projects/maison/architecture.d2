@@ -280,17 +280,16 @@ maison: {
 
     # - n8n
     n8n: {
-      class: [application; undeployed]
+      class: [application]
       icon: assets/icons/apps/n8n.svg
       link: https://n8n.io/
       tooltip: Secure and AI-native workflow automation tool for technical people.
     }
     n8n <- _.system.Traefik: {
-      class: [undeployed]
       source-arrowhead: HTTP (5678)
     }
     n8n <- _.system.Tailscale: {
-      class: [connect-vpn; undeployed]
+      class: [connect-vpn]
       source-arrowhead: HTTP (5678)
     }
 
