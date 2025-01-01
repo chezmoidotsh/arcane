@@ -12,3 +12,4 @@ resources:
   - linkding.yaml
   - mealie.yaml
   - n8n.yaml
+  - paperless-ngx.yaml

@@ -1,0 +1,70 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    network-policy.k8s.io/description: |
+      This policy allows required ingress and egress traffic for the
+      PostgreSQL database (managed by the CloudNative PostgreSQL operator)
+      to function correctly.
+
+      **Why?**
+      - The PostgreSQL database requires access to the Kubernetes API server
+        for fetching secrets and resources.
+      - The database also needs to communicate with the kube-dns service for
+        DNS resolution.
+      - The database needs to connect to the MinIO object store for backups.
+      - The operator requires access to the database to manage it.
+
+      **Note:**
+      - The policy allows any pod in the namespace to connect to the database.
+  name: postgres-default-policy
+  namespace: paperless-ngx
+spec:
+  egress:
+    # Rule #1: allow traffic to the Kubernetes API server
+    - to:
+        - ipBlock:
+            cidr: 10.43.0.1/32 # kubernetes.default.svc
+      ports:
+        - port: 443
+
+    # Rule #2: allow traffic to the kube-dns service (required for the DNS resolution)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+
+    # Rule #3: allow traffic to the MinIO object store
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/20 # s3.chezmoi.sh
+      ports:
+        - port: 9000
+  ingress:
+    # Rule #1: allow traffic from the operator
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cnpg-system
+      ports:
+        - port: 8000
+
+    # Rule #2: allow traffic from the namespace
+    - from:
+        - podSelector: {}
+      ports:
+        - port: 5432
+  podSelector:
+    matchExpressions:
+      - key: cnpg.io/cluster
+        operator: Exists
+  policyTypes:
+    - Egress
+    - Ingress
