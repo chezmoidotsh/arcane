@@ -1,0 +1,25 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    network-policy.k8s.io/description: |
+      This policy allows egress traffic from Paperless to localnet.
+
+      **Why?**
+      - Paperless needs to connect to SSO server to authenticate users.
+  name: allow-egress-from-paperless-to-localnet
+  namespace: paperless-ngx
+spec:
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/20 # sso.chezmoi.sh
+      ports:
+        - port: 443
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: paperless-ngx-webserver
+      app.kubernetes.io/name: paperless-ngx
+  policyTypes:
+    - Egress

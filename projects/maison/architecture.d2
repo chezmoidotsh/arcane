@@ -258,20 +258,19 @@ maison: {
       source-arrowhead: HTTP (9000)
     }
 
-    # - Docspell
-    Docspell: {
-      class: [application; undeployed]
-      icon: assets/icons/apps/docspell.svg
-      link: https://docspell.org/
-      tooltip: Docspell is a personal document management system.
+    # - Paperless
+    Paperless: {
+      class: [application]
+      icon: assets/icons/apps/paperless.svg
+      link: https://paperless-ngx.com/
+      tooltip: Paperless-ngx is a community-supported open-source document management system that transforms your physical documents into a searchable online archive.
     }
-    Docspell <- _.system.Traefik: {
-      class: [undeployed]
-      source-arrowhead: HTTP (7880)
+    Paperless <- _.system.Traefik: {
+      source-arrowhead: HTTP (8000)
     }
-    Docspell <- _.system.Tailscale: {
-      class: [connect-vpn; undeployed]
-      source-arrowhead: HTTP (7880)
+    Paperless <- _.system.Tailscale: {
+      class: [connect-vpn]
+      source-arrowhead: HTTP (8000)
     }
   }
 
@@ -292,6 +291,10 @@ maison: {
       class: [connect-vpn]
       source-arrowhead: HTTP (5678)
     }
+    n8n -> _.life-management.Paperless: {
+      target-arrowhead: HTTP (8000)
+    }
+
 
     # - Budibase
     Budibase: {

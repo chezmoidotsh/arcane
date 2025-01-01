@@ -1,0 +1,29 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    network-policy.k8s.io/description: |
+      This policy allows ingress traffic from Paperless application to
+      Tailscale service.
+
+      **Why?**
+      - Tailscale is the ingress controller for the Kubernetes cluster
+        and needs to route traffic to Paperless application in order to be
+        accessible from the VPN.
+  name: allow-ingress-to-paperless-from-tailscale
+  namespace: paperless-ngx
+spec:
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: tailscale-system
+      ports:
+        - port: 8000
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: paperless-ngx-webserver
+      app.kubernetes.io/name: paperless-ngx
+  policyTypes:
+    - Ingress

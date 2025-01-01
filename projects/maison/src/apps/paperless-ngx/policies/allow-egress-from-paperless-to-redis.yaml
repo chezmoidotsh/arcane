@@ -1,0 +1,27 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    network-policy.k8s.io/description: |
+      This policy allows egress traffic from Paperless to Redis broker.
+
+      **Why?**
+      - Paperless needs to connect to the Redis database as event broker.
+  name: allow-egress-from-paperless-to-redis
+  namespace: paperless-ngx
+spec:
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: paperless-ngx-redis
+              app.kubernetes.io/name: paperless-ngx
+      ports:
+        - port: 6379
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: paperless-ngx-webserver
+      app.kubernetes.io/name: paperless-ngx
+  policyTypes:
+    - Egress
