@@ -9,6 +9,7 @@ resources:
   - cert-manager.yaml
   - cloudflare-tunnel-ingress-controller.yaml
   - cloudnative-pg.yaml
+  - csi-driver-smb.yaml
   - external-dns.yaml
   - external-secrets-operator.yaml
   - tailscale-operator.yaml
