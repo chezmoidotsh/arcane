@@ -7,6 +7,7 @@ resources:
   # NOTE: Operators are manually installed using this kustomization to avoid
   #       installing automatically if it is not needed.
   - cert-manager.yaml
+  - cloudflare-tunnel-ingress-controller.yaml
   - cloudnative-pg.yaml
   - external-dns.yaml
   - external-secrets-operator.yaml

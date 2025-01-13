@@ -1,0 +1,57 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cloudflare-tunnel-ingress-controller
+spec:
+  interval: 12h0m0s
+  timeout: 2m0s
+  retryInterval: 1m0s
+
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  path: ./catalog/fluxcd/cloudflare-tunnel-ingress-controller
+
+  # NOTE: depends on external-secrets operator to create the DNS provider
+  #       credentials secret
+  dependsOn:
+    - name: external-secrets-operator
+
+  prune: true
+  wait: true
+
+  patches:
+    # NOTE: the following patches are required to make the Cloudflare Tunnel
+    #       Ingress Controller work
+    - patch: |-
+        - op: add
+          path: /spec/secretStoreRef
+          value:
+            kind: ClusterSecretStore
+            name: kubernetes.maison.chezmoi.sh
+
+        - op: remove
+          path: /spec/data/2
+        - op: remove
+          path: /spec/data/0
+        - op: replace
+          path: /spec/data/0/remoteRef
+          value:
+            key: cloud-cloudflare-maison.chezmoi.sh-cloudflare-ingress
+            property: attribute.value
+
+        - op: add
+          path: /spec/target/template
+          value:
+            engineVersion: v2
+            data:
+              apiToken: '{{ .apiToken }}'
+              accountID: 00736631322131f61ce95f2c235143da
+              tunnelName: maison.chezmoi.sh
+      target:
+        group: external-secrets.io
+        kind: ExternalSecret
+        name: cloudflare-credentials
+        namespace: cloudflare-system
