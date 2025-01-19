@@ -15,6 +15,7 @@ labels:
 resources:
   # Workloads
   - workload.database.yaml
+  - workload.n8n-anonymizer.yaml
   - workload.n8n.yaml
 
   # Ingresses / Gateways

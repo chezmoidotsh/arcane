@@ -16,3 +16,29 @@ spec:
     - backendRefs:
         - name: n8n
           port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /presidio/analyz
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /analyz
+      backendRefs:
+        - name: n8n-analyzer
+          port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /presidio/anonymiz
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /anonymiz
+      backendRefs:
+        - name: n8n-anonymizer
+          port: 80
