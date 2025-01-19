@@ -1,0 +1,142 @@
+---
+# trunk-ignore(checkov/CKV2_K8S_6): all deployments have network ingress/egress denied by default
+# trunk-ignore(checkov/CKV_K8S_23,checkov/CKV_K8S_40): mcr.microsoft.com/presidio-* are shitty built and must be runned as root
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: anonymizer
+    app.kubernetes.io/instance: n8n-anonymizer
+  name: n8n-anonymizer
+  namespace: n8n
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: n8n-anonymizer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: anonymizer
+        app.kubernetes.io/instance: n8n-anonymizer
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        # trunk-ignore(trivy/KSV012,trivy/KSV020,trivy/KSV021): mcr.microsoft.com/presidio-* are shitty built and must be runned as root
+        - name: presidio-analyzer
+          image: mcr.microsoft.com/presidio-analyzer:latest@sha256:8e09d9f0a928e86b6c634eec9a8e668738508154cb7e683d7c7c62867ce4a514
+          ports:
+            - name: analyzer
+              containerPort: 3000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: analyzer
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: analyzer
+          resources:
+            requests:
+              cpu: 100m
+              memory: 1Gi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: false
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - mountPath: /.cache/pypoetry
+              name: tempdir
+            - mountPath: /tmp
+              name: tempdir
+              subPath: analyzer
+        # trunk-ignore(trivy/KSV012,trivy/KSV020,trivy/KSV021): mcr.microsoft.com/presidio-* are shitty built and must be runned as root
+        - name: presidio-anonymizer
+          env:
+            - name: PORT
+              value: "3001"
+          image: mcr.microsoft.com/presidio-anonymizer:latest@sha256:e39a7671f51c40aa493201f0d3f71ad74efc98bbd34ccd417a4cfd3ffaa59ae4
+          ports:
+            - name: anonymizer
+              containerPort: 3001
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: anonymizer
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: anonymizer
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: false
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - mountPath: /.cache/pypoetry
+              name: tempdir
+            - mountPath: /tmp
+              name: tempdir
+              subPath: anonymizer
+      securityContext:
+        runAsNonRoot: false
+      volumes:
+        - name: tempdir
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: anonymizer
+    app.kubernetes.io/instance: n8n-anonymizer
+  name: n8n-analyzer
+  namespace: n8n
+spec:
+  selector:
+    app.kubernetes.io/instance: n8n-anonymizer
+  ports:
+    - name: analyzer
+      port: 80
+      targetPort: analyzer
+      protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: anonymizer
+    app.kubernetes.io/instance: n8n-anonymizer
+  name: n8n-anonymizer
+  namespace: n8n
+spec:
+  selector:
+    app.kubernetes.io/instance: n8n-anonymizer
+  ports:
+    - name: anonymizer
+      port: 80
+      targetPort: anonymizer
+      protocol: TCP
+  type: ClusterIP
