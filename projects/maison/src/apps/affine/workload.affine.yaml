@@ -1,0 +1,265 @@
+---
+# trunk-ignore(checkov/CKV_K8S_11): CPU limits are not required for this workload
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: graphql
+    app.kubernetes.io/instance: affine-graphql
+  name: affine-graphql
+  namespace: affine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: affine-graphql
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: graphql
+        app.kubernetes.io/instance: affine-graphql
+        network-policy.k8s.io/allow-to-kubernetes-dns: "true"
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        # trunk-ignore(trivy/KSV011): CPU limits are not required for this workload
+        - name: affine-graphql
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: affine-database-app
+                  key: uri
+            - name: NODE_ENV
+              value: production
+          image: ghcr.io/toeverything/affine-graphql:stable@sha256:396f81415c2394c9718f25f9f39d0fdc07389cb24548a482c103017730e4d742
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          ports:
+            - name: http
+              containerPort: 3010
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: 250m
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 20431
+            runAsNonRoot: true
+            runAsUser: 20431
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 30
+            initialDelaySeconds: 0
+            periodSeconds: 2
+            successThreshold: 1
+            timeoutSeconds: 5
+          volumeMounts:
+            - mountPath: /root/.affine/config/private.key
+              name: configuration
+              subPath: private.key
+            - mountPath: /app/dist/config/affine.js
+              name: configuration
+              subPath: affine.js
+            - mountPath: /tmp
+              name: tmpdir
+              subPath: tmp
+            - mountPath: /app/node_modules/.cache
+              name: tmpdir
+              subPath: node_modules_cache
+      initContainers:
+        - args:
+            - |
+              echo "Waiting for database to be ready";
+              while ! nc -z $DATABASE_HOST $DATABASE_PORT; do echo -n "."; sleep 1; done;
+          command: ["sh", "-c"]
+          env:
+            - name: DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: affine-database-app
+                  key: host
+            - name: DATABASE_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: affine-database-app
+                  key: port
+          image: busybox:stable@sha256:71b79694b71639e633452f57fd9de40595d524de308349218d9a6a144b40be02
+          imagePullPolicy: Always
+          name: 00-wait-for-database
+          resources:
+            requests:
+              memory: 10Mi
+              cpu: 10m
+            limits:
+              memory: 10Mi
+              cpu: 10m
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 20431
+            runAsNonRoot: true
+            runAsUser: 20431
+        - command: ["/bin/bash", "-c", "yarn run predeploy"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: affine-database-app
+                  key: uri
+            - name: NODE_ENV
+              value: production
+          image: ghcr.io/toeverything/affine-graphql:stable@sha256:396f81415c2394c9718f25f9f39d0fdc07389cb24548a482c103017730e4d742
+          imagePullPolicy: Always
+          name: 01-apply-database-migrations
+          resources:
+            requests:
+              memory: 256Mi
+              cpu: 250m
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 20431
+            runAsNonRoot: true
+            runAsUser: 20431
+          volumeMounts:
+            - mountPath: /root/.affine/config/private.key
+              name: configuration
+              subPath: private.key
+            - mountPath: /app/dist/config/affine.js
+              name: configuration
+              subPath: affine.js
+            - mountPath: /tmp
+              name: tmpdir
+              subPath: tmp
+            - mountPath: /app/node_modules/.cache
+              name: tmpdir
+              subPath: node_modules_cache
+      terminationGracePeriodSeconds: 5 # AFFiNE doesn't have any signal handling and is "local-first" so we can be aggressive with the termination grace period
+      securityContext:
+        fsGroup: 20431
+        runAsGroup: 20431
+        runAsUser: 20431
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: configuration
+          secret:
+            secretName: affine-configuration
+            items:
+              - key: private.key
+                path: private.key
+              - key: affine.js
+                path: affine.js
+        - name: tmpdir
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: graphql
+    app.kubernetes.io/instance: affine-graphql
+  name: affine
+  namespace: affine
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: http
+  selector:
+    app.kubernetes.io/instance: affine-graphql
+  type: ClusterIP
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: affine-configuration
+  namespace: affine
+spec:
+  data:
+    - remoteRef:
+        key: apps-affine
+        property: private_key
+      secretKey: private_key
+    - remoteRef:
+        key: cloud-openai-affine
+        property: openai_api_key
+      secretKey: openai_api_key
+    - remoteRef:
+        key: security-sso-oidc-clients-affine
+        property: oidc_configuration
+      secretKey: oidc_configuration
+    - remoteRef:
+        key: storage-minio-affine-maison-chezmoi-sh
+        property: access_key_id
+      secretKey: minio_access_key_id
+    - remoteRef:
+        key: storage-minio-affine-maison-chezmoi-sh
+        property: access_secret_key
+      secretKey: minio_access_secret_key
+    - remoteRef:
+        key: storage-minio-affine-maison-chezmoi-sh
+        property: endpoint_url
+      secretKey: minio_endpoint_url
+    - remoteRef:
+        key: storage-minio-affine-maison-chezmoi-sh
+        property: region
+      secretKey: minio_region
+    - remoteRef:
+        key: apps-affine-aws-ses
+        property: username
+      secretKey: aws_ses_username
+    - remoteRef:
+        key: apps-affine-aws-ses
+        property: password
+      secretKey: aws_ses_password
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: kubernetes.maison.chezmoi.sh
+  target:
+    name: affine-configuration
+    template:
+      type: Opaque
+      engineVersion: v2
+      data:
+        private.key: "{{ .private_key }}"
+      templateFrom:
+        - configMap:
+            name: affine-configuration
+            items:
+              - key: affine.js
+                templateAs: Values

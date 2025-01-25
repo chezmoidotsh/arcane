@@ -1,0 +1,18 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/exclude-cloudflare: "true"
+  name: affine
+  namespace: affine
+spec:
+  parentRefs:
+    - name: default
+      namespace: default
+  hostnames:
+    - notes.chezmoi.sh
+  rules:
+    - backendRefs:
+        - name: affine
+          port: 80

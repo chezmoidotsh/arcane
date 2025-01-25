@@ -1316,6 +1316,7 @@ identity_providers:
 
     ## Clients is a list of known clients and their configuration.
     clients:
+      - {{ secret "/var/run/secrets/authelia.com/oidc_client_affine" | nindent 8 }}
       - {{ secret "/var/run/secrets/authelia.com/oidc_client_budibase" | nindent 8 }}
       - {{ secret "/var/run/secrets/authelia.com/oidc_client_linkding" | nindent 8 }}
       - {{ secret "/var/run/secrets/authelia.com/oidc_client_mealie" | nindent 8 }}

@@ -1,0 +1,118 @@
+---
+# trunk-ignore(checkov/CKV_K8S_35): AFFiNE scripts are not intended to read secrets from the filesystem
+# trunk-ignore(checkov/CKV2_K8S_6): NP will be written in the future
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    app.kubernetes.io/component: graphql
+    app.kubernetes.io/instance: affine-graphql
+  name: affine-graphql-db-migrate
+  namespace: affine
+spec:
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: graphql
+        app.kubernetes.io/instance: affine-graphql
+    spec:
+      automountServiceAccountToken: false
+      initContainers:
+        - name: wait-for-db
+          image: busybox:stable@sha256:71b79694b71639e633452f57fd9de40595d524de308349218d9a6a144b40be02
+          command:
+            [
+              "sh",
+              "-c",
+              "for i in $(seq 1 30); do nc -z $DATABASE_HOST $DATABASE_PORT && break || echo waiting for database; sleep 1; done",
+            ]
+          env:
+            - name: DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: affine-database-app
+                  key: host
+            - name: DATABASE_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: affine-database-app
+                  key: port
+          resources:
+            requests:
+              memory: 10Mi
+              cpu: 10m
+            limits:
+              memory: 10Mi
+              cpu: 10m
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 20431
+            runAsNonRoot: true
+            runAsUser: 20431
+      containers:
+        - name: affine-graphql
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: logLevel
+              value: Debug
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: affine-database-app
+                  key: uri
+          image: ghcr.io/toeverything/affine-graphql:stable@sha256:396f81415c2394c9718f25f9f39d0fdc07389cb24548a482c103017730e4d742
+          imagePullPolicy: Always
+          command: ["/bin/bash", "-c", "yarn run predeploy"]
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: 250m
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 20431
+            runAsNonRoot: true
+            runAsUser: 20431
+          volumeMounts:
+            - mountPath: /root/.affine/config/private.key
+              name: configuration
+              subPath: private.key
+            - mountPath: /app/dist/config/affine.js
+              name: configuration
+              subPath: affine.js
+            - mountPath: /tmp
+              name: tmpdir
+              subPath: tmp
+            - mountPath: /app/node_modules/.cache
+              name: tmpdir
+              subPath: node_modules_cache
+
+      restartPolicy: OnFailure
+      terminationGracePeriodSeconds: 5
+      securityContext:
+        fsGroup: 20431
+        runAsGroup: 20431
+        runAsUser: 20431
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: configuration
+          secret:
+            secretName: affine-configuration
+            items:
+              - key: private.key
+                path: private.key
+              - key: affine.js
+                path: affine.js
+        - name: tmpdir
+          emptyDir: {}

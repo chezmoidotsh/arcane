@@ -1,0 +1,55 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: affine-database
+  name: affine-database
+  namespace: affine
+spec:
+  backup:
+    barmanObjectStore: &barmanObjectStore
+      data:
+        compression: bzip2
+      destinationPath: s3://cnpg-backups/maison.chezmoi.sh/affine
+      endpointURL: https://s3.chezmoi.sh:9000
+      serverName: 01JK0W9CZY2EDZYYCB807W9ZC5 # DRP::dst_ulid
+      s3Credentials:
+        accessKeyId:
+          name: cnpg-s3-credentials
+          key: access_key_id
+        secretAccessKey:
+          name: cnpg-s3-credentials
+          key: access_secret_key
+      wal:
+        compression: bzip2
+    retentionPolicy: 30d
+  bootstrap:
+    # initdb:
+    #   database: app
+    #   owner: app
+    recovery:
+      source: recoveryBackup
+  description: PostgreSQL database dedicated to AFFiNE
+  externalClusters:
+    - name: recoveryBackup
+      barmanObjectStore:
+        <<: *barmanObjectStore
+        serverName: 01JK0W6VDJ57SE2RBFQW0RH3YX # DRP::src_ulid
+  instances: 1
+  storage:
+    size: 5Gi
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  labels:
+    app.kubernetes.io/component: database-backup
+  name: affine-database
+  namespace: affine
+spec:
+  schedule: "@daily"
+  backupOwnerReference: cluster
+  cluster:
+    name: affine-database

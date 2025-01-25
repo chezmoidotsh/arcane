@@ -38,6 +38,8 @@ patches:
                     - secret:
                         name: authelia-secrets
                     - secret:
+                        name: authelia-oidc-affine
+                    - secret:
                         name: authelia-oidc-budibase
                     - secret:
                         name: authelia-oidc-linkding

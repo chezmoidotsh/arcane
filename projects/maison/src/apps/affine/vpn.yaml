@@ -1,0 +1,14 @@
+---
+apiVersion: externaldns.k8s.io/v1alpha1
+kind: DNSEndpoint
+metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/exclude-adguard: "true"
+  name: notes.chezmoi.sh
+  namespace: affine
+spec:
+  endpoints:
+    - dnsName: notes.chezmoi.sh
+      recordType: CNAME
+      targets:
+        - ts.maison.chezmoi.sh

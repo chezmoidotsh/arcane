@@ -11,4 +11,5 @@ resources:
   - cloudflare.iam.cert-manager.yaml
 
   # AWS IAM roles for n8n
+  - aws.iam.affine.yaml
   - aws.iam.n8n.yaml
