@@ -23,6 +23,7 @@ spec:
   releaseName: external-dns-adguard
   values:
     sources:
+      - crd
       # - gateway-grpcroute
       - gateway-httproute
       # - gateway-tcproute
@@ -32,6 +33,8 @@ spec:
       - service
       # - traefik-proxy
     extraArgs:
+      - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
+      - --crd-source-kind=DNSEndpoint
       - --annotation-filter=external-dns.alpha.kubernetes.io/exclude-adguard notin (true) # NOTE: exclude resources with annotation
 
     policy: sync

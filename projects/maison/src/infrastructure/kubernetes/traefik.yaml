@@ -14,5 +14,8 @@ spec:
     namespace: flux-system
   path: ./catalog/fluxcd/traefik
 
+  dependsOn:
+    - name: tailscale-operator # NOTE: depends on tailscale-operator to create the Service used to access to resources through Tailscale
+
   prune: true
   wait: true
