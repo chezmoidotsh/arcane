@@ -35,3 +35,9 @@ projects/chezmoi.sh/src/kubevault/kvstore.enc.bak*
 
 # Ignore all charts imported by kustomize
 projects/*/src/**/charts/
+
+# Ignore all .cache directories
+.cache/
+
+# Ignore all Nix result files and directories
+catalog/**/result

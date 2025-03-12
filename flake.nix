@@ -88,6 +88,7 @@
 
             # Miscellaneous tools
             pkgs.d2
+            pkgs.difftastic
           ];
 
           env = {
