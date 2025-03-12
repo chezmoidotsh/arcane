@@ -1,0 +1,16 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: linkding-tailscale
+  namespace: linkding
+spec:
+  defaultBackend:
+    service:
+      name: linkding
+      port:
+        number: 80
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - linkding

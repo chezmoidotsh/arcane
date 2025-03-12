@@ -1,0 +1,53 @@
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │                           Service Catalog Entry                           │
+# ├───────────────────────────────────────────────────────────────────────────┤
+# │ name: cert-manager                                                        │
+# │ description: |                                                            │
+# │   cert-manager is a Kubernetes add-on to automate the management and      │
+# │   issuance of TLS certificates from various issuing sources.              │
+# │ tags:                                                                     │
+# │   - certificate                                                           │
+# │ links:                                                                    │
+# │   - title: Cert-Manager Website                                           │
+# │     url: https://cert-manager.io/                                         │
+# │   - title: Cert-Manager Documentation                                     │
+# │     url: https://cert-manager.io/docs/                                    │
+# │   - title: Cert-Manager Helm Chart                                        │
+# │     url: https://artifacthub.io/packages/helm/jetstack/cert-manager       │
+# └───────────────────────────────────────────────────────────────────────────┘
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: cert-manager
+  namespace: cert-manager-system
+spec:
+  interval: 24h0m0s # NOTE: don't need to check for updates often
+  url: https://charts.jetstack.io
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cert-manager
+  namespace: cert-manager-system
+spec:
+  interval: 12h0m0s
+  chart:
+    spec:
+      chart: cert-manager
+      version: 1.16.2
+      sourceRef:
+        kind: HelmRepository
+        name: cert-manager
+        namespace: cert-manager-system
+
+  # Customisation of the HelmRelease behaviour
+  driftDetection: { mode: warn }
+  test: { enable: true }
+  rollback: { cleanupOnFail: true, recreate: true }
+
+  releaseName: cert-manager
+  values:
+    crds:
+      enabled: true
+      keep: false

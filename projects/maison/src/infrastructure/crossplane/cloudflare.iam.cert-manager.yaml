@@ -1,0 +1,48 @@
+---
+apiVersion: account.cloudflare.crossplane.io/v1alpha1
+kind: APIToken
+metadata:
+  name: maison-chezmoi-sh-cert-manager
+  namespace: crossplane-maisonchezmoish
+spec:
+  forProvider:
+    name: (maison.chezmoi.sh) - cert-manager
+    policy:
+      - effect: allow
+        permissionGroups:
+          - c8fed203ed3043cba015a93ad1616f1f # Zone Read
+          - 4755a26eedb94da69e1066d98aa820be # DNS Write
+        resources:
+          com.cloudflare.api.account.zone.2734d7b22cf00222046320ed3187cb94: "*"
+    condition:
+      - requestIp:
+          - in: [176.145.158.72/32]
+  writeConnectionSecretToRef:
+    name: cloud-cloudflare-maison.chezmoi.sh-cert-manager
+    namespace: kubevault-kvstore
+
+# trunk-ignore-all(trivy/KSV113,checkov/CKV2_K8S_5): accessing to this secret is required
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kubevault:kubernetes.maison.chezmoi.sh:cert-manager
+  namespace: kubevault-kvstore
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["cloud-cloudflare-maison.chezmoi.sh-cert-manager"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kubevault:kubernetes.maison.chezmoi.sh:cert-manager
+  namespace: kubevault-kvstore
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kubevault:kubernetes.maison.chezmoi.sh:cert-manager
+subjects:
+  - kind: ServiceAccount
+    name: kubernetes.maison.chezmoi.sh

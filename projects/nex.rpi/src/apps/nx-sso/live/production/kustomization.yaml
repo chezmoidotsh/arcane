@@ -38,7 +38,13 @@ patches:
                     - secret:
                         name: authelia-secrets
                     - secret:
+                        name: authelia-oidc-budibase
+                    - secret:
                         name: authelia-oidc-linkding
+                    - secret:
+                        name: authelia-oidc-mealie
+                    - secret:
+                        name: authelia-oidc-paperless-ngx
                     - secret:
                         name: authelia-oidc-proxmox
                     - secret:

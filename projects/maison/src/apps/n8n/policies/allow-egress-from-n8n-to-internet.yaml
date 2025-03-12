@@ -1,0 +1,27 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    network-policy.k8s.io/description: |
+      This policy allows egress traffic from n8n to external SaaS services
+      (like OpenAI, GMail, ...).
+
+      **Why?**
+      - n8n needs to connect to the internet to interact with external
+        services.
+  name: allow-egress-from-n8n-to-internet
+  namespace: n8n
+spec:
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 443 # required for the email
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
+  policyTypes:
+    - Egress

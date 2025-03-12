@@ -1,0 +1,58 @@
+# ┌───────────────────────────────────────────────────────────────────────────────────────────────┐
+# │                                     Service Catalog Entry                                     │
+# ├───────────────────────────────────────────────────────────────────────────────────────────────┤
+# │ name: cloudflare-ingress                                                                      │
+# │ description: |                                                                                │
+# │   Cloudflare Ingress is a Kubernetes controller that configures                               │
+# │   Cloudflare's Argo Tunnel service to expose services running in a                            │
+# │   Kubernetes cluster.                                                                         │
+# │ tags:                                                                                         │
+# │   - vpn                                                                                       │
+# │   - network                                                                                   │
+# │ links:                                                                                        │
+# │   - title: Cloudflare Website                                                                 │
+# │     url: https://cloudflare.com/                                                              │
+# │   - title: Cloudflare Tunnel Documentation                                                    │
+# │     url: https://developers.cloudflare.com/cloudflare-one/connections/argo-tunnel/kubernetes/ │
+# │   - title: Cloudflare Ingress Helm Chart                                                      │
+# │     url: https://artifacthub.io/packages/helm/strrl-helm/cloudflare-tunnel-ingress-controller │
+# └───────────────────────────────────────────────────────────────────────────────────────────────┘
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: cloudflare-tunnel-ingress-controller
+  namespace: cloudflare-system
+spec:
+  interval: 24h0m0s # NOTE: don't need to check for updates often
+  url: https://helm.strrl.dev/
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cloudflare-tunnel-ingress-controller
+  namespace: cloudflare-system
+spec:
+  interval: 12h0m0s
+  chart:
+    spec:
+      chart: cloudflare-tunnel-ingress-controller
+      version: 0.0.16
+      sourceRef:
+        kind: HelmRepository
+        name: cloudflare-tunnel-ingress-controller
+        namespace: cloudflare-system
+
+  # Customisation of the HelmRelease behaviour
+  driftDetection: { mode: warn }
+  test: { enable: true }
+  rollback: { cleanupOnFail: true, recreate: true }
+
+  releaseName: cloudflare-tunnel-ingress-controller
+  values:
+    cloudflare:
+      secretRef:
+        name: cloudflare-credentials
+        accountIDKey: accountID
+        apiTokenKey: apiToken
+        tunnelNameKey: tunnelName

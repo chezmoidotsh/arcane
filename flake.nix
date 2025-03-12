@@ -40,8 +40,10 @@
             packages.kubevault
 
             # - Kubernetes and container tools
+            pkgs.crane
             pkgs.dive
             pkgs.docker-client
+            pkgs.fluxcd
             pkgs.helm-docs
             pkgs.k3d
             pkgs.k9s
@@ -59,6 +61,7 @@
             pkgs.sops
 
             # - Quality assurance tools
+            pkgs.ansible-lint
             pkgs.bats
             pkgs.commitlint
             pkgs.lefthook
@@ -69,6 +72,7 @@
             # - Provisioning tools
             pkgs.ansible
             pkgs.python312Packages.jmespath
+            pkgs.python312Packages.kubernetes
             pkgs.python312Packages.proxmoxer
             pkgs.python312Packages.requests
             pkgs.python312Packages.requests-toolbelt
@@ -84,6 +88,7 @@
 
             # Miscellaneous tools
             pkgs.d2
+            pkgs.difftastic
           ];
 
           env = {

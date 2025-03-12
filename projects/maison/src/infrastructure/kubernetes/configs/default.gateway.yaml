@@ -1,0 +1,56 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard.maison.chezmoi.sh
+  namespace: default
+spec:
+  secretName: wildcard.maison.chezmoi.sh-certificate
+
+  dnsNames:
+    - "*.maison.chezmoi.sh"
+    - "*.chezmoi.sh"
+  duration: 2160h # 90d
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
+  renewBefore: 360h # 15d
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: default
+  namespace: default
+spec:
+  gatewayClassName: traefik-gateway
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: maison.chezmoi.sh-https
+      hostname: "*.maison.chezmoi.sh"
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: wildcard.maison.chezmoi.sh-certificate
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: chezmoi.sh-https
+      hostname: "*.chezmoi.sh"
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: wildcard.maison.chezmoi.sh-certificate
+      allowedRoutes:
+        namespaces:
+          from: All

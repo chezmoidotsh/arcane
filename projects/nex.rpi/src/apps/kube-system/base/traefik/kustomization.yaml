@@ -54,6 +54,8 @@ helmCharts:
           protocol: TCP
           tls:
             enabled: true
+          forwardedHeaders:
+            insecure: true # NOTE: required to preserve all X-Forwarded-* headers for SSO
 
         # LDAP over TLS
         ldaps:

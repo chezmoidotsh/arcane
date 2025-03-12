@@ -1,0 +1,29 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/exclude-adguard: "true"
+    external-dns.alpha.kubernetes.io/exclude-cloudflare: "true"
+  name: n8n
+  namespace: traefik-system
+spec:
+  ingressClassName: cloudflare-tunnel
+  rules:
+    - host: n8n.chezmoi.sh
+      http:
+        paths:
+          - path: /webhook
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: traefik
+                port:
+                  number: 443
+          - path: /webhook-test
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: traefik
+                port:
+                  number: 443
