@@ -1,0 +1,30 @@
+# trunk-ignore-all(trivy,checkov)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tailscale:argocd-sidecar
+  namespace: argocd-system
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resourceNames: ["ts-argocd"]
+    resources: ["secrets"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tailscale:argocd-sidecar
+  namespace: argocd-system
+subjects:
+  - kind: ServiceAccount
+    name: argocd-application-controller
+roleRef:
+  kind: Role
+  name: tailscale:argocd-sidecar
+  apiGroup: rbac.authorization.k8s.io
