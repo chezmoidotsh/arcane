@@ -38,7 +38,7 @@ decrypt:
 
 [doc("Synchronizes the local kvstore with the remote on Kubernetes")]
 sync *kubectl_opts="":
-  @[[ -d kvstore ]] || (echo "🞪 kvstore does not exist... Run 'just decrypt' or 'just vault decrypt' first"; exit 1)
+  @test -d kvstore || (echo "🞪 kvstore does not exist... Run 'just decrypt' or 'just vault decrypt' first"; exit 1)
   @kubectl --kubeconfig {{ quote(kubernetes_configuration) }} --context {{ quote(kubernetes_context) }} get namespace "kubevault-kvstore" > /dev/null 2>&1 \
     || kubectl --kubeconfig {{ quote(kubernetes_configuration) }} --context {{ quote(kubernetes_context) }} create namespace "kubevault-kvstore"
   @echo "Syncing kvstore to Kubernetes"
