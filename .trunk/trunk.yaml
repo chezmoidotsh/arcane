@@ -111,7 +111,9 @@ lint:
         - remark-gfm
 
 actions:
-  disabled:
+  enabled:
+    - commitlint
+    - submodule-init-update
     - trunk-announce
     - trunk-check-pre-push
     - trunk-fmt-pre-commit

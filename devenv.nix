@@ -56,7 +56,6 @@ in
     pkgs.ansible-lint
     pkgs.bats
     pkgs.commitlint
-    pkgs.lefthook
     pkgs.nil
     pkgs.nixfmt-rfc-style
     pkgs.trunk-io
