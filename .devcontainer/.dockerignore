@@ -1,6 +1,0 @@
-# ignore everything ...
-*
-
-# ... except for what is used during the build
-!config/etc.direnv.toml
-!first-run-notice.txt
