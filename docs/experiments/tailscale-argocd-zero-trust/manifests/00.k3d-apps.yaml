@@ -1,0 +1,12 @@
+---
+apiVersion: k3d.io/v1alpha4
+kind: Simple
+metadata:
+  name: apps
+image: rancher/k3s:v1.32.2-k3s1
+servers: 1
+agents: 0
+ports:
+  - port: 6444:6443
+    nodeFilters:
+      - loadbalancer

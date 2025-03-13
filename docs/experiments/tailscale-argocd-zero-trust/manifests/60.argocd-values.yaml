@@ -1,0 +1,36 @@
+configs:
+  clusterCredentials:
+    k3d-apps:
+      server: https://k3d-apps.tail831c5d.ts.net
+      labels:
+        argocd.argoproj.io/cluster-leaf: "true"
+      config:
+        bearerToken: unused
+controller:
+  extraContainers:
+    - name: tailscale-sidecar
+      image: ghcr.io/tailscale/tailscale:latest
+      env:
+        - name: TS_KUBE_SECRET
+          value: ts-argocd
+        - name: TS_USERSPACE
+          value: "true"
+        - name: TS_AUTHKEY
+          valueFrom:
+            secretKeyRef:
+              name: tailscale-argocd-authkey
+              key: TS_AUTHKEY
+              optional: true
+        - name: TS_EXTRA_ARGS
+          value: "--advertise-tags=tag:kubernetes-argocd"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
