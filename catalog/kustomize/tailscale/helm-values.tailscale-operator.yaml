@@ -1,0 +1,44 @@
+---
+# This Helm values file contains all default values used by the Tailscale
+# Operator Helm chart.
+
+# Enable the Tailscale Operator to proxify the Kubernetes API through
+# Tailscale network
+apiServerProxyConfig:
+  mode: "true"
+
+operatorConfig:
+  # Because `chezmoi.sh` uses different tags to manage ACLs, we need to
+  # configure the Tailscale Operator to use the same tags.
+  # By default, the Tailscale Operator will be tagged with `kubernetes-operator`
+  defaultTags:
+    - tag:kubernetes-operator
+
+  # The hostname will be used to connect to the Kubernetes API and must be
+  # the cluster name.
+  hostname: <cluster-name>
+
+  podSecurityContext:
+    runAsUser: 40106
+    runAsGroup: 40106
+    runAsNonRoot: true
+    fsGroup: 40106
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: [ALL]
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: RuntimeDefault
+
+proxyConfig:
+  # The Tailscale Operator will create all Kubernetes resources using the
+  # following tag `kubernetes-apps`.
+  defaultTags: tag:kubernetes-apps
+
+oauthSecretVolume:
+  # The oauth secret will be created by ExternalSecrets and mounted as a volume
+  # in the Tailscale Operator pod.
+  secret:
+    secretName: tailscale-operator-oauth

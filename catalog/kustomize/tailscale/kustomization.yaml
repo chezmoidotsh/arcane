@@ -1,0 +1,40 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: tailscale
+      app.kubernetes.io/managed-by: kustomize
+    includeSelectors: false
+    includeTemplates: true
+
+helmCharts:
+  - name: tailscale-operator
+    repo: https://pkgs.tailscale.com/helmcharts
+    releaseName: tailscale-operator
+    # renovate: datasource=github-releases depName=tailscale/tailscale
+    version: 1.80.3
+    valuesFile: helm-values.tailscale-operator.yaml
+
+patches:
+  - patch: |-
+      - op: add
+        path: /spec/template/spec/volumes/-
+        value:
+          name: ephemeral-data
+          emptyDir: {}
+      - op: add
+        path: /spec/template/spec/containers/0/volumeMounts/-
+        value:
+          name: ephemeral-data
+          mountPath: /.config
+    target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: operator
+
+resources:
+  - proxyclass.restricted.yaml
+  - security/networkpolicy.ts-ingress.yaml

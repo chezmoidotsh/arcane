@@ -280,6 +280,10 @@ const scopes = [
 		value: "catalog:flakes",
 	},
 	{
+		name: "catalog:kustomize     - Anything related to the Kustomize component catalog",
+		value: "catalog:kustomize",
+	},
+	{
 		name: "catalog:kairos-bundle - Anything related to the Kairos bundle catalog",
 		value: "catalog:kairos-bundle",
 	},
