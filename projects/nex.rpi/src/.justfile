@@ -3,11 +3,11 @@ kubernetes_configuration := canonicalize(source_directory() / ".." / ".." / ".."
 kubernetes_context := kubernetes_host
 kubernetes_host := "kubernetes.nx.chezmoi.sh"
 kubernetes_applyset := replace_regex(blake3("kubernetes/nx.chezmoi.sh"), "[a-f0-9]{32}$", "")
+kubernetes_applyset_id := shell("echo -n $1..ClusterApplySet.kubernetes.chezmoi.sh | openssl dgst -sha256 -binary | openssl base64 -A | tr -d '=' | tr '/+' '_-'", kubernetes_applyset)
 
 [private]
 @default:
   just --list --list-submodules
-
 
 # -- Kubernetes related tasks --------------------------------------------------
 [doc("Applies the infrastructure changes")]
@@ -26,6 +26,7 @@ force-apply *kubectl_opts="":
 [doc("Shows the diff of the infrastructure changes")]
 diff:
   kubectl kustomize 'clusters/production' --enable-helm \
+  | yq '.metadata.labels."applyset.kubernetes.io/part-of" = "applyset-{{ kubernetes_applyset_id }}-v1" | select(. != null)' \
   | KUBECTL_APPLYSET=true \
     kubectl --kubeconfig {{ quote(kubernetes_configuration) }} --context {{ quote(kubernetes_context) }} \
     diff --filename - --server-side --force-conflicts \
@@ -75,12 +76,7 @@ generate-applyset:
       applyset.kubernetes.io/contains-group-kinds: ''
     labels:
       applyset.kubernetes.io/name: "{{ kubernetes_applyset }}"
-      applyset.kubernetes.io/id: applyset-$(
-        echo -n "{{ kubernetes_applyset }}..ClusterApplySet.kubernetes.chezmoi.sh" \
-        | openssl dgst -sha256 -binary \
-        | openssl base64 -A \
-        | tr -d '=' | tr '/+' '_-'
-      )-v1
+      applyset.kubernetes.io/id: applyset-{{ kubernetes_applyset_id }}-v1
     name: "{{ kubernetes_applyset }}"
   spec:
     project: kubernetes.nx.chezmoi.sh
