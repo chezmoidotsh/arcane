@@ -7,4 +7,7 @@ resources:
   - ../../apps/nx-dashboard/live/production
   - ../../apps/nx-dns/live/production
   - ../../apps/nx-sso/live/production
-  - ../../apps/nx-vpn/live/production
+
+  # NOTE: all applications bellows are migrated to the new structure
+  - ../../v2/apps/kube-system
+  - ../../v2/apps/tailscale-system

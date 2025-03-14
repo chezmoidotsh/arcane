@@ -2,9 +2,9 @@
 apiVersion: tailscale.com/v1alpha1
 kind: Connector
 metadata:
-  name: homelab-subnet
+  name: homelabnet
 spec:
-  hostname: homelab-subnet-connector
+  hostname: homelabnet
   subnetRouter:
     advertiseRoutes:
       - 10.0.0.30/32 # nex·rpi

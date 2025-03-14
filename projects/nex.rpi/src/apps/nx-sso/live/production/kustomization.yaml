@@ -8,6 +8,7 @@ resources:
 
   - ../../base/authelia
   - authelia-ingress.yaml
+  - authelia-ts-ingress.yaml
   - authelia-netpolicy.yaml
   - authelia-secrets.yaml
 

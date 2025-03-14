@@ -27,6 +27,17 @@ spec:
               app.kubernetes.io/name: traefik
       ports:
         - port: 9091
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: tailscale-system
+          podSelector:
+            matchLabels:
+              tailscale.com/parent-resource: sso
+              tailscale.com/parent-resource-ns: nx-sso
+              tailscale.com/parent-resource-type: ingress
+      ports:
+        - port: 9091
   egress:
     - to:
         - namespaceSelector: {}
