@@ -3,6 +3,7 @@ kubernetes_configuration := canonicalize(source_directory() / ".." / ".." / ".."
 kubernetes_context := kubernetes_host
 kubernetes_host := "kubernetes.nx.chezmoi.sh"
 kubernetes_applyset := replace_regex(blake3("vault/chezmoi.sh"), "[a-f0-9]{32}$", "")
+kubernetes_applyset_id := shell("echo -n $1..ClusterApplySet.kubernetes.chezmoi.sh | openssl dgst -sha256 -binary | openssl base64 -A | tr -d '=' | tr '/+' '_-'", kubernetes_applyset)
 
 [private]
 @default:
@@ -52,6 +53,7 @@ sync *kubectl_opts="":
 [doc("Shows the diff of the kvstore changes")]
 diff: decrypt
   @kubevault generate --vault-dir="{{ source_directory() }}" \
+    | yq '.metadata.labels."applyset.kubernetes.io/part-of" = "applyset-{{ kubernetes_applyset_id }}-v1" | select(. != null)' \
     | kubectl --kubeconfig {{ quote(kubernetes_configuration) }} --context {{ quote(kubernetes_context) }} \
       diff --filename - --server-side \
   || true
@@ -88,12 +90,7 @@ generate-applyset:
       applyset.kubernetes.io/contains-group-kinds: ''
     labels:
       applyset.kubernetes.io/name: "{{ kubernetes_applyset }}"
-      applyset.kubernetes.io/id: applyset-$(
-        echo -n "{{ kubernetes_applyset }}..ClusterApplySet.kubernetes.chezmoi.sh" \
-        | openssl dgst -sha256 -binary \
-        | openssl base64 -A \
-        | tr -d '=' | tr '/+' '_-'
-      )-v1
+      applyset.kubernetes.io/id: applyset-{{ kubernetes_applyset_id }}-v1
     name: "{{ kubernetes_applyset }}"
   spec:
     project: vault.chezmoi.sh

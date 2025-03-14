@@ -19,6 +19,8 @@ in
   # -- Environment variables
   env.ATLAS_DIR = "${config.env.DEVENV_ROOT}";
 
+  env.DFT_SKIP_UNCHANGED = "true";
+
   env.HELM_CACHE_HOME = "${config.env.DEVENV_ROOT}/.direnv/helm/cache";
   env.HELM_CONFIG_HOME = "${config.env.DEVENV_ROOT}/.direnv/helm/config";
   env.HELM_DATA_HOME = "${config.env.DEVENV_ROOT}/.direnv/helm/data";
