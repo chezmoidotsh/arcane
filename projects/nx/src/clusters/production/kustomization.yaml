@@ -9,6 +9,6 @@ resources:
   - ../../apps/nx-sso/live/production
 
   # NOTE: all applications bellows are migrated to the new structure
-  - ../../v2/infrastructure/kubernetes/argocd-system
-  - ../../v2/infrastructure/kubernetes/kube-system
-  - ../../v2/infrastructure/kubernetes/tailscale-system
+  - ../../infrastructure/kubernetes/argocd-system
+  - ../../infrastructure/kubernetes/kube-system
+  - ../../infrastructure/kubernetes/tailscale-system

@@ -5,4 +5,4 @@ namespace: kube-system
 
 resources:
   # This plugin is required to manage tun devices on the cluster nodes
-  - ../../../../../../../catalog/kustomize/tailscale/plugins/tun-device-plugin
+  - ../../../../../../catalog/kustomize/tailscale/plugins/tun-device-plugin
