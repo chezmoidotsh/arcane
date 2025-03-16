@@ -28,7 +28,7 @@
 and secrets.
 
 > \[!NOTE]
-> Even if this project is the "root" one, it relies on the [`nex.rpi`](../nex.rpi/README.md) project
+> Even if this project is the "root" one, it relies on the [`nex.rpi`](../nx/README.md) project
 > to provide the Kubernetes cluster used by `kubevault` and `crossplane` *(IaC)*.
 
 ## 🛡️ License
