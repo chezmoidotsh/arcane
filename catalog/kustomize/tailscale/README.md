@@ -73,12 +73,14 @@ patches:
 
 > \[!WARNING]
 > On k3s, ensure that the Kubernetes API is permitted by the Tailscale ingress Network Policy to enable communication.
+> Moreover, the "kubernetes" service endpoints target the control plane IP addresses, so make sure those IP addresses
+> are allowed in your Network Policy.
 >
 > ```yaml
 >   - target:
 >     group: networking.k8s.io
 >     kind: NetworkPolicy
->     name: tailscale-ingress-restricted
+>     name: tailscale-ingress-allow-to-cluster
 >   patch: |
 >     - op: add
 >       path: /spec/egress/-
@@ -88,6 +90,15 @@ patches:
 >               cidr: <KUBERNETES_API>/32
 >         ports:
 >           - port: 443
+>             protocol: TCP
+>     - op: add
+>       path: /spec/egress/-
+>       value:
+>         to:
+>           - ipBlock:
+>               cidr: <KUBERNETES_CONTROL_PLANE_NODE_CIDR>
+>         ports:
+>           - port: 6443
 >             protocol: TCP
 > ```
 
