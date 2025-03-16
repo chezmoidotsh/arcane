@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: argocd-system
 
 resources:
+  - cluster-configuration.applicationset.yaml
   - ../../../../../catalog/kustomize/external-secrets-operator/applicationset.argoproj.io
 
 patches:
@@ -11,6 +12,12 @@ patches:
       - op: replace
         path: /spec/template/spec/project
         value: infrastructure
+      - op: replace
+        path: /spec/template/spec/source/repoURL
+        value: https://github.com/chezmoi-sh/atlas.git
+      - op: replace
+        path: /spec/template/spec/source/targetRevision
+        value: wip/iron-age_features/eso-appset
       - op: replace
         path: /spec/template/spec/syncPolicy
         value:
