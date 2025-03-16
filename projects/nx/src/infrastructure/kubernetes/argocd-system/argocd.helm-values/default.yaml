@@ -14,7 +14,7 @@ dex:
 # Argo Configs
 configs:
   # General Argo CD configuration. Any values you put under `.configs.cm` are passed to argocd-cm ConfigMap.
-  # (ref. https://argo-cd.readthedocs.io/en/stable/operator-manual/argocd-cm/)
+  # (ref. https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml)
   cm:
     # disable `statusbadge` feature, as ArgoCD is only accessible through TailScale
     # (ref. https://argo-cd.readthedocs.io/en/stable/user-guide/status-badge/)
@@ -59,10 +59,20 @@ configs:
     # enabled.
     exec.enabled: "true"
 
+    # enable helm support in ArgoCD when using Kustomize
+    kustomize.buildOptions: --enable-helm
+
   # Additional Argo CD server configuration
   params:
     # enables use of the Progressive Syncs capability
     applicationsetcontroller.enable.progressive.syncs: false
+
+  # ArgoCD repositories configuration
+  repositories:
+    github.chezmoi-sh.atlas:
+      name: chezmoi.sh/atlas
+      url: https://github.com/chezmoi-sh/atlas.git
+      type: git
 
   # ArgoCD security configuration
   rbac:
@@ -75,136 +85,14 @@ configs:
       p, role:restricted-admin, certificates, update, *, deny
       p, role:restricted-admin, certificates, delete, *, deny
       p, role:restricted-admin, clusters, create, *, deny
-      p, role:restricted-admin, clusters, update, *, deny
       p, role:restricted-admin, clusters, delete, *, deny
       p, role:restricted-admin, accounts, update, *, deny
       p, role:restricted-admin, gpgkeys, create, *, deny
       p, role:restricted-admin, gpgkeys, delete, *, deny
 
+      # Add the ability to invoke the `metrics` extension for all users inheriting the `readonly` role
+      p, role:readonly, extensions, invoke, metrics, allow
+
       g, role:restricted-admin, role:admin
       g, role:restricted-admin, role:readonly
       g, admins, role:restricted-admin
-
-  # GnuPG public keys for commit verification
-  # (ref. https://argo-cd.readthedocs.io/en/stable/user-guide/gpg-verification/)
-  gpg:
-    keys:
-      # Github PGP keys (https://github.com/web-flow.gpg)
-      # - GitHub (web-flow commit signing) <noreply@github.com>
-      4AEE18F83AFDEB23: |
-        -----BEGIN PGP PUBLIC KEY BLOCK-----
-
-        mQENBFmUaEEBCACzXTDt6ZnyaVtueZASBzgnAmK13q9Urgch+sKYeIhdymjuMQta
-        x15OklctmrZtqre5kwPUosG3/B2/ikuPYElcHgGPL4uL5Em6S5C/oozfkYzhwRrT
-        SQzvYjsE4I34To4UdE9KA97wrQjGoz2Bx72WDLyWwctD3DKQtYeHXswXXtXwKfjQ
-        7Fy4+Bf5IPh76dA8NJ6UtjjLIDlKqdxLW4atHe6xWFaJ+XdLUtsAroZcXBeWDCPa
-        buXCDscJcLJRKZVc62gOZXXtPfoHqvUPp3nuLA4YjH9bphbrMWMf810Wxz9JTd3v
-        yWgGqNY0zbBqeZoGv+TuExlRHT8ASGFS9SVDABEBAAG0NUdpdEh1YiAod2ViLWZs
-        b3cgY29tbWl0IHNpZ25pbmcpIDxub3JlcGx5QGdpdGh1Yi5jb20+iQEoBBMBCAAc
-        BQJZlGhBCRBK7hj4Ov3rIwIbAwUJDBJ3/wIZAQAA0O4IAJd0k8M+urETyMvTqNTj
-        /U6nbqyOdKE4V93uUj5G7sNTfno7wod/Qjj6Zv5KodvA93HmEdQqsmVq5YJ5KGiw
-        cmGCpd/GqJRPaYSY0hSUSBqYHiHLusCJkPBpQTBhcEMtfVCB2J6fVeoX2DV0K1xf
-        CGblrSVB0viAxUMnmL5C55RuvbYZsTu8szXhkvIR96CtWbJ8QGaEf1/KSpWz8ept
-        Y/omf3UPfvdOjnsxc8jVEqPNaR9xC6Q6t53rBa/XgMY6IYyesnyYnc5O6JuexUFa
-        VjykRFtAiYfDaMARpXOmgMm0lhoBRKb/uMUaN3CSYTmE4pZweJcUi7eWgmoQljX2
-        ut4=
-        =7ub0
-        -----END PGP PUBLIC KEY BLOCK-----
-
-      # - GitHub <noreply@github.com>
-      B5690EEEBB952194: |
-        -----BEGIN PGP PUBLIC KEY BLOCK-----
-
-        mQINBGWmxXYBEACyN+4viFQM6QQoKr0A2W0rGdMobTJwOZso2QPpewbyBsuL3rNW
-        5OmHrWwXAhPKNqUIyOzdq8MoSxoTTuqLksoahixEL/X2nyhOBxR9GkYz/oI9R3nY
-        cLRaFQoSJoVfOt61opkLUzbWAehpbgT8EKln8JsENq0+0nDlWQi0h2Q9oGmqlgVz
-        skwmVZ8Leyv4Mg7hN6swyZ7moZfkkpD5+U7Z2XVurCzkSSfg4zb2lMRLJos2eCAc
-        749ECsX0t7OBftF+YqgjIXixXsm2RrUqvU47OkOtZeAhvAYenbC3pr9Fha5NxoBU
-        Ea+11MK9W6OcRhwvxVCUrMUR6FTSZyC//VpXTTtrRlOqpU5wGMbP3zpn9geqOXCl
-        8rF7+1gAPG/o+QFQTBsVEruwi4JWogiQuQyOwAIlFe/7dvaxWZGpv/yW2+L3guL7
-        xaHKFVGsayhlitQQ5Xa+P1iSgKSXDyReCbWotfqAempPySI25LHh3ScXI6NgdHSr
-        SBaFojwAfgxbPTEQ6adIsKHCQofrnLrNa3UOeGDGiOOK0aYV3jiEDGAouatkNf2q
-        85Eosj1f9laCqAH3YLJD7dcSne1iChK5qRTByMvIyeSD0NbNnVMFOGpXySyWtKb2
-        ldpu8AWBQJsJs9FmYBcWAGBA2pp+IxaCn6rBIHIsUVFRN8OVZKsEsBkWywARAQAB
-        tBtHaXRIdWIgPG5vcmVwbHlAZ2l0aHViLmNvbT6JAk4EEwEKADgWIQSWhHmhr/kn
-        430aVmu1aQ7uu5UhlAUCZabFdgIbAwULCQgHAgYVCgkICwIEFgIDAQIeAQIXgAAK
-        CRC1aQ7uu5UhlIMuEAClvVwC+Neoiq0AdixJZsagKHpx1QrMJWrtMRi4eXVTTaeX
-        +P1unhC/AmSO4Xxd3uRoejHvfWh4F0gitUJ8XKgiejnmuGcq7Dbt5OoO1JuXGlW2
-        BQ+MiGoYVw2B0sOhWDNrIBWOO/WL4LykcGnAtrRXwoS0Wx4MCydztXQY5lcnCWaW
-        8rvu7WmduoOikH4HI97rqN5896dc4iBKSx8LZf+46DRCCD/5SfACplBz4hs5zen8
-        TL8zd+zxjFrXbzota0jSDEGK9WGO4z55S2xScC6zv6v3Bj1OR8Bs5aodGtmamHZ7
-        sE9w0RJoCfNx+9cR/rE82SrOaBpVU7urLe4lg7zaaNhqDdNV8ymuXGmIJarDgrme
-        iB5bHS+dLFzLUkTgot4RFlPa9bFiJuJN6Tc9tMu5RJQ9l/zKmxDHIKWsAle5R65u
-        zEq04LugTQBdEorGxfQCsF2ga9ncKTDMiAThWTvZpOP3NJ/athZRmOBpG4B9iR6r
-        pRU8F/+MokG4fIMwnvtOhWQFiEzdTkJ7U5JAkPtTAmT3/mznwtPEU7DrFWSGAdqg
-        IMOlxNCBeGvjwLR0qGH7cB9qHDGNoDLkjaUFpu5tPv4/ivkQaHlHJxjT0ILM6jet
-        CAzKpKh48rm65tmrJX6KVpj0r2kKMscFf7s7XaPlCNCFds/YA+0puPbzJKWKfA==
-        =NRlX
-        -----END PGP PUBLIC KEY BLOCK-----
-
-      # xunleii@users.noreply.github.com
-      E8DC4905AFAEBC64: |
-        -----BEGIN PGP PUBLIC KEY BLOCK-----
-
-        mDMEZepDBxYJKwYBBAHaRw8BAQdA//oOmyhPNHxY0nWZvwWUCOP1wIA70UO+Z8bg
-        b4NkC9S0QEFsZXhhbmRyZSBOaWNvbGFpZSBEaXQgQ2xhaXJ2aWxsZSA8YWxleGFu
-        ZHJlLm5pY29sYWllQGdtYWlsLmNvbT6JAR4EExYIAMYCGwMFCwkIBwIGFQoJCAsC
-        BBYCAwECHgECF4ACGQEWIQQOHTPCNBwFdCFJE9To3EkFr668ZAUCZf211DAUgAAA
-        AAAQABdwcm9vZkBhcmlhZG5lLmlkZG5zOmNoZXptb2kuc2g/dHlwZT1UWFRZFIAA
-        AAAAEABAcHJvb2ZAYXJpYWRuZS5pZGh0dHBzOi8vZ2lzdC5naXRodWIuY29tL3h1
-        bmxlaWkvZTIwMmEzYjExM2MwZjhjZWVjOGQzZWQ5MDY0ZjQzNWUACgkQ6NxJBa+u
-        vGSNogD+O6Mw8NIUCzQmHQJ9TLsbZGbG4KN0uN7QJ/ZFxxYywOIBAOdP0c04J1x8
-        prx2RKUHk5klq9/jZRc+dlpRfPNA2a8OiJAEExYIADgWIQQOHTPCNBwFdCFJE9To
-        3EkFr668ZAUCZepDBwIbAwULCQgHAgYVCgkICwIEFgIDAQIeAQIXgAAKCRDo3EkF
-        r668ZCYwAQDDu+yW6kAoRDbPTpqOq4Ij6gj6WsA7vYZC6m9cUm4yqQD+MV6J8fC0
-        87Ydivb0QP4fcteVYQ5Moxsu4G8Xr8d83Q20VEFsZXhhbmRyZSBOaWNvbGFpZSBE
-        aXQgQ2xhaXJ2aWxsZSAoUmFkaW9mcmFuY2UpIDxhbGV4YW5kcmUubmljb2xhaWVA
-        cmFkaW9mcmFuY2UuY29tPojBBBMWCABpAhsDBQsJCAcCBhUKCQgLAgQWAgMBAh4B
-        AheAFiEEDh0zwjQcBXQhSRPU6NxJBa+uvGQFAmX9tdQwFIAAAAAAEAAXcHJvb2ZA
-        YXJpYWRuZS5pZGRuczpjaGV6bW9pLnNoP3R5cGU9VFhUAAoJEOjcSQWvrrxkQgcA
-        /A/CXq0nBS2QCEdoo1mJW7pLQm0nDBdm9geY5hU29Q/kAQCw/IMUmkNep9jZQKJF
-        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
-        =vozU
-        -----END PGP PUBLIC KEY BLOCK-----
-
-server:
-  extensions:
-    enabled: true
-    # list of extensions to be installed
-    extensionList:
-      - name: extension-trivy
-        env:
-          - name: EXTENSION_URL
-            value: https://github.com/mziyabo/argocd-trivy-extension/releases/download/v0.2.0/extension-trivy.tar
-          - name: EXTENSION_CHECKSUM_URL
-            value: https://github.com/mziyabo/argocd-trivy-extension/releases/download/v0.2.0/extension-trivy_checksums.txt
