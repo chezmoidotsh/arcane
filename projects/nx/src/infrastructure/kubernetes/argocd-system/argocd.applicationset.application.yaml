@@ -1,0 +1,23 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd-seed
+spec:
+  destination:
+    namespace: argocd-system
+    server: https://kubernetes.default.svc
+  project: infrastructure
+  source:
+    path: projects/nx/src/apps/argocd-system
+    repoURL: https://github.com/chezmoi-sh/atlas.git
+    targetRevision: wip/iron-age_features/eso-appset
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - Delete=confirm
+      - Prune=confirm
+      - ServerSideApply=true
