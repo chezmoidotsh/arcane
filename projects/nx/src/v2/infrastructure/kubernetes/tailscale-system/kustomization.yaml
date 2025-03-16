@@ -9,7 +9,7 @@ resources:
   - tailscale.authkey.external-secret.yaml
 
 components:
-  - ../../../../../../catalog/kustomize/tailscale
+  - ../../../../../../../catalog/kustomize/tailscale
 
 patches:
   # Update the hostname of the Tailscale Operator to match the cluster name
