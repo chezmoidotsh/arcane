@@ -1,0 +1,14 @@
+---
+# This Helm values file contains the definition of the external clusters managed by ArgoCD
+
+# (ref. https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/#clusters)
+# (ref. https://argo-cd.readthedocs.io/en/stable/operator-manual/security/#external-cluster-credentials)
+# (ref. https://argo-cd.readthedocs.io/en/stable/user-guide/projects/#project-scoped-repositories-and-clusters)
+configs:
+  clusterCredentials:
+    nx.tail831c5d.ts.net:
+      server: https://kubernetes.default.svc
+      name: nx
+      config:
+        tlsClientConfig:
+          insecure: false

@@ -30,7 +30,7 @@ services that are required for the rest of the system to function properly *(aka
 #### 1.1. **nex·rpi** hardware recovery
 
 In case of a hardware failure, we need to recover the **nex·rpi** instance by following the
-[nex·rpi installation guide](projects/nex.rpi/docs/INSTALLATION.md).
+[nex·rpi installation guide](projects/nx/docs/INSTALLATION.md).
 
 #### 1.2. **nex·rpi** services and infrastucture recovery
 
@@ -39,7 +39,7 @@ When the **nex·rpi** instance is up and running, we need to bootstrap and deplo
 1. Bootstrap the **nex·rpi** Kubernetes instance:
 
    ```bash {"category":"disaster-recovery-plan","name":"DRP/nex·rpi (bootstrap)"}
-   pushd ${ATLAS_DIR}/projects/nex.rpi
+   pushd ${ATLAS_DIR}/projects/nx
    just kubernetes bootstrap
    popd
    ```
@@ -47,7 +47,7 @@ When the **nex·rpi** instance is up and running, we need to bootstrap and deplo
 2. Deploy all the **nex·rpi** services:
 
    ```bash {"category":"disaster-recovery-plan","name":"DRP/nex·rpi"}
-   pushd ${ATLAS_DIR}/projects/nex.rpi
+   pushd ${ATLAS_DIR}/projects/nx
    just kubernetes force-apply
    popd
    ```
@@ -75,7 +75,7 @@ When the **nex·rpi** instance is up and running, we need to bootstrap and deplo
 
 5. Deploy the **nex·rpi** infrastructure\*:
    ```bash {"category":"disaster-recovery-plan","name":"DRP/nex·rpi (crossplane)"}
-   pushd ${ATLAS_DIR}/projects/nex.rpi
+   pushd ${ATLAS_DIR}/projects/nx
    just crossplane generate-applyset || true
    just crossplane force-apply
    popd

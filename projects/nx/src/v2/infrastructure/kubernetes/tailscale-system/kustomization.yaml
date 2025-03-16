@@ -4,12 +4,12 @@ kind: Kustomization
 namespace: tailscale-system
 
 resources:
-  - connector.homelabnet.yaml
-  - externalsecret.ts-authkey.yaml
+  - homelabnet.connector.yaml
   - namespace.yaml
+  - tailscale.authkey.external-secret.yaml
 
 components:
-  - ../../../../../../catalog/kustomize/tailscale
+  - ../../../../../../../catalog/kustomize/tailscale
 
 patches:
   # Update the hostname of the Tailscale Operator to match the cluster name
@@ -32,10 +32,12 @@ patches:
                     value: tag:kubernetes-seed
   # On k3s, NetworkPolicy need to allow the Kubernetes API server to in order
   # to allow the Tailscale ingress controller to connect to the API server
+  # NOTE: the node IP where the API server is running must also be allowed.
+  #       The list of IPs can be found as endpoints of the `kubernetes` service
   - target:
       group: networking.k8s.io
       kind: NetworkPolicy
-      name: tailscale-ingress-restricted
+      name: tailscale-ingress-allow-to-cluster
     patch: |
       - op: add
         path: /spec/egress/-
@@ -45,4 +47,13 @@ patches:
                 cidr: 10.43.0.1/32
           ports:
             - port: 443
+              protocol: TCP
+      - op: add
+        path: /spec/egress/-
+        value:
+          to:
+            - ipBlock:
+                cidr: 10.0.0.30/32
+          ports:
+            - port: 6443
               protocol: TCP

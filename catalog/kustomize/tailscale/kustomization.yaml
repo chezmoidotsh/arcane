@@ -15,7 +15,7 @@ helmCharts:
     releaseName: tailscale-operator
     # renovate: datasource=github-releases depName=tailscale/tailscale
     version: 1.80.3
-    valuesFile: helm-values.tailscale-operator.yaml
+    valuesFile: tailscale-operator.helm-values.yaml
 
 patches:
   - patch: |-
@@ -36,5 +36,7 @@ patches:
       name: operator
 
 resources:
-  - proxyclass.restricted.yaml
-  - security/networkpolicy.ts-ingress.yaml
+  - default.restricted.proxyclass.yaml
+  - security/tailscale-ingress.allow-in-cluster.networkpolicy.yaml
+  - security/tailscale-ingress.allow-to-internet.networkpolicy.yaml
+  - security/tailscale-ingress.deny-all.yaml
