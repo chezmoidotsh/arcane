@@ -1,0 +1,18 @@
+# trunk-ignore-all(checkov/CKV_K8S_21): This file is overrided by Kustomize
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    tailscale.com/proxy-class: restricted
+  name: argocd
+spec:
+  defaultBackend:
+    service:
+      name: argocd-server
+      port:
+        number: 443
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - argocd

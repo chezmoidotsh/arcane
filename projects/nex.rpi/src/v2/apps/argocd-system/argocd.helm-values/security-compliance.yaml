@@ -1,0 +1,72 @@
+---
+# This file defines security hardening measures for the ArgoCD deployment
+global:
+  # Apply default Kubernetes NetworkPolicy resources for ArgoCD components
+  networkPolicy:
+    create: true
+    defaultDenyIngress: true
+
+  # Pod-level security context applied globally to all ArgoCD components
+  securityContext:
+    # Specific non-root user ID to run ArgoCD containers
+    # Using a high UID (47291) to avoid conflicts with local system users
+    runAsUser: 47291
+    # Corresponding group ID for file permissions
+    runAsGroup: 47291
+    # Group ID for volume ownership
+    fsGroup: 47291
+
+# Define a reusable, restricted security context using YAML anchor (&restricted)
+# This will be referenced by all ArgoCD components
+controller:
+  containerSecurityContext:
+    &restricted # Prevent privilege escalation from child to parent processes
+    allowPrivilegeEscalation: false
+    # Make the container's root filesystem read-only for improved security
+    readOnlyRootFilesystem: true
+    # Ensure container doesn't run as root user
+    runAsNonRoot: true
+    # Linux capabilities configuration
+    capabilities:
+      drop:
+        # Remove all Linux capabilities for maximum security
+        - ALL
+    # Apply the default runtime seccomp profile to limit syscalls
+    seccompProfile:
+      type: RuntimeDefault
+
+# Apply the restricted security context to Redis and its exporter
+redis:
+  containerSecurityContext: *restricted
+  exporter:
+    containerSecurityContext: *restricted
+
+# Apply the restricted security context to the Redis secret initialization job
+redisSecretInit:
+  containerSecurityContext: *restricted
+
+# Apply the restricted security context to the server components
+server:
+  containerSecurityContext: *restricted
+  # Apply to server extension containers as well
+  extensions:
+    containerSecurityContext: *restricted
+
+# Apply the restricted security context to the repository server component
+# This container is responsible for Git operations
+repoServer:
+  containerSecurityContext: *restricted
+
+# Apply the restricted security context to the ApplicationSet controller
+# This component manages the generation of applications from templates
+applicationSet:
+  containerSecurityContext: *restricted
+
+# Apply the restricted security context to the notifications controller
+# This component handles notification delivery for ArgoCD events
+notifications:
+  containerSecurityContext: *restricted
+
+# Apply the restricted security context to the commit server component
+commitServer:
+  containerSecurityContext: *restricted
