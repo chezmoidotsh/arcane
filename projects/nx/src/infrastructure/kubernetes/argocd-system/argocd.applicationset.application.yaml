@@ -7,7 +7,7 @@ spec:
   destination:
     namespace: argocd-system
     server: https://kubernetes.default.svc
-  project: infrastructure
+  project: seed
   source:
     path: projects/nx/src/apps/argocd-system
     repoURL: https://github.com/chezmoi-sh/atlas.git
