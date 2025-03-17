@@ -13,10 +13,6 @@ resources:
   - ../../base/external-dns-adguard
   - edo-secrets.yaml
 
-  # ExternalSecrets for managing secrets
-  - ../../base/external-secrets
-  - eso-css-kubevault.yaml
-
   # Traefik for ingress routing
   - ../../base/traefik
   - gateway-default.yaml

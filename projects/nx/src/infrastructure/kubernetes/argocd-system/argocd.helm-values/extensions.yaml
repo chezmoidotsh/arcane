@@ -1,0 +1,27 @@
+---
+# This Helm values file contains the definition of all ArgoCD extensions
+
+params:
+  # Enable proxy extension feature enabled for the metrics extension to work
+  server.enable.proxy.extension: "true"
+
+server:
+  extensions:
+    enabled: true
+    extensionList:
+      []
+      # # Metrics server extension (https://github.com/argoproj-labs/argocd-extension-metrics)
+      # - name: extension-metrics-server
+      #   env:
+      #     - name: EXTENSION_URL
+      #       value: https://github.com/argoproj-labs/argocd-extension-metrics/releases/download/v1.0.0/extension.tar.gz
+      #     - name: EXTENSION_CHECKSUM_URL
+      #       value: https://github.com/argoproj-labs/argocd-extension-metrics/releases/download/v1.0.0/extension_checksums.txt
+
+      # # Trivy extension (https://github.com/mziyabo/argocd-trivy-extension)
+      # - name: extension-trivy
+      #   env:
+      #     - name: EXTENSION_URL
+      #       value: https://github.com/mziyabo/argocd-trivy-extension/releases/download/v0.2.0/extension-trivy.tar
+      #     - name: EXTENSION_CHECKSUM_URL
+      #       value: https://github.com/mziyabo/argocd-trivy-extension/releases/download/v0.2.0/extension-trivy_checksums.txt

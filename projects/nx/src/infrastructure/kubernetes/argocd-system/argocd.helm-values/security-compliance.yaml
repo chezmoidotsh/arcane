@@ -1,90 +1,22 @@
 ---
-# This Helm values file contains all default values used by the ArgoCD
-# Helm chart.
-
+# This file defines security hardening measures for the ArgoCD deployment
 global:
-  # default domain used by all ingress resources
-  # WARN: ArgoCD will be only accessible through TailScale
-  domain: argocd.tail831c5d.ts.net
+  # Apply default Kubernetes NetworkPolicy resources for ArgoCD components
+  networkPolicy:
+    create: true
+    defaultDenyIngress: true
 
-# disable DEX as we are using our own OIDC provider
-dex:
-  enabled: false
+  # Pod-level security context applied globally to all ArgoCD components
+  securityContext:
+    # Specific non-root user ID to run ArgoCD containers
+    # Using a high UID (47291) to avoid conflicts with local system users
+    runAsUser: 47291
+    # Corresponding group ID for file permissions
+    runAsGroup: 47291
+    # Group ID for volume ownership
+    fsGroup: 47291
 
-# Argo Configs
 configs:
-  # General Argo CD configuration. Any values you put under `.configs.cm` are passed to argocd-cm ConfigMap.
-  # (ref. https://argo-cd.readthedocs.io/en/stable/operator-manual/argocd-cm/)
-  cm:
-    # disable `statusbadge` feature, as ArgoCD is only accessible through TailScale
-    # (ref. https://argo-cd.readthedocs.io/en/stable/user-guide/status-badge/)
-    statusbadge.enabled: false
-
-    # disable `anonymous` user access
-    users.anonymous.enabled: "false"
-
-    # TODO: Configure this part with a local AI agent + all information needed to add/configure applications
-    # # the URL for getting chat help, this will typically be your Slack channel for support
-    # help.chatUrl: "https://mycorp.slack.com/argo-cd"
-    # # the text for getting chat help, defaults to "Chat now!"
-    # help.chatText: "Chat now!"
-    # # The URLs to download additional ArgoCD binaries (besides the Linux with current platform binary included by default)
-    # # for different OS architectures. If provided, additional download buttons will be displayed on the help page.
-    # help.download.linux-amd64: "path-or-url-to-download"
-    # help.download.linux-arm64: "path-or-url-to-download"
-    # help.download.linux-ppc64le: "path-or-url-to-download"
-    # help.download.linux-s390x: "path-or-url-to-download"
-    # help.download.darwin-amd64: "path-or-url-to-download"
-    # help.download.darwin-arm64: "path-or-url-to-download"
-    # help.download.windows-amd64: "path-or-url-to-download"
-
-    # OIDC configuration (optional), replacing Dex and leveraging local Authelia
-    oidc.config: |
-      name: Authelia
-      issuer: https://sso.chezmoi.sh
-      clientID: $argocd-oidc:oidc.authelia.clientID
-      clientSecret: $argocd-oidc:oidc.authelia.clientSecret
-      cliClientID: $argocd-oidc:oidc.authelia.cliClientID
-      requestedScopes:
-        - openid
-        - profile
-        - email
-        - groups
-
-    # the metadata.label key name where Argo CD injects the app name as a tracking label, that
-    # is used to determine which resources need to be deleted when pruning.
-    application.instanceLabelKey: argocd.argoproj.io/instance
-
-    # as only restricted users should be able to exec into pods, the UI exec feature should be
-    # enabled.
-    exec.enabled: "true"
-
-  # Additional Argo CD server configuration
-  params:
-    # enables use of the Progressive Syncs capability
-    applicationsetcontroller.enable.progressive.syncs: false
-
-  # ArgoCD security configuration
-  rbac:
-    # file containing user-defined policies and role definitions.
-    # (ref. https://argo-cd.readthedocs.io/en/stable/operator-manual/rbac/#rbac-configuration)
-    policy.csv: |
-      # The role `restricted-admin` is a custom role that allows users to be able to administer
-      # all ArgoCD resources except the ones that are security-sensitive (e.g. certificates, gpgkeys).
-      p, role:restricted-admin, certificates, create, *, deny
-      p, role:restricted-admin, certificates, update, *, deny
-      p, role:restricted-admin, certificates, delete, *, deny
-      p, role:restricted-admin, clusters, create, *, deny
-      p, role:restricted-admin, clusters, update, *, deny
-      p, role:restricted-admin, clusters, delete, *, deny
-      p, role:restricted-admin, accounts, update, *, deny
-      p, role:restricted-admin, gpgkeys, create, *, deny
-      p, role:restricted-admin, gpgkeys, delete, *, deny
-
-      g, role:restricted-admin, role:admin
-      g, role:restricted-admin, role:readonly
-      g, admins, role:restricted-admin
-
   # GnuPG public keys for commit verification
   # (ref. https://argo-cd.readthedocs.io/en/stable/user-guide/gpg-verification/)
   gpg:
@@ -197,14 +129,57 @@ configs:
         =vozU
         -----END PGP PUBLIC KEY BLOCK-----
 
+# Define a reusable, restricted security context using YAML anchor (&restricted)
+# This will be referenced by all ArgoCD components
+controller:
+  containerSecurityContext:
+    &argocd_restricted_context # Prevent privilege escalation from child to parent processes
+    allowPrivilegeEscalation: false
+    # Make the container's root filesystem read-only for improved security
+    readOnlyRootFilesystem: true
+    # Ensure container doesn't run as root user
+    runAsNonRoot: true
+    # Linux capabilities configuration
+    capabilities:
+      drop:
+        # Remove all Linux capabilities for maximum security
+        - ALL
+    # Apply the default runtime seccomp profile to limit syscalls
+    seccompProfile:
+      type: RuntimeDefault
+
+# Apply the restricted security context to Redis and its exporter
+redis:
+  containerSecurityContext: *argocd_restricted_context
+  exporter:
+    containerSecurityContext: *argocd_restricted_context
+
+# Apply the restricted security context to the Redis secret initialization job
+redisSecretInit:
+  containerSecurityContext: *argocd_restricted_context
+
+# Apply the restricted security context to the server components
 server:
+  containerSecurityContext: *argocd_restricted_context
+  # Apply to server extension containers as well
   extensions:
-    enabled: true
-    # list of extensions to be installed
-    extensionList:
-      - name: extension-trivy
-        env:
-          - name: EXTENSION_URL
-            value: https://github.com/mziyabo/argocd-trivy-extension/releases/download/v0.2.0/extension-trivy.tar
-          - name: EXTENSION_CHECKSUM_URL
-            value: https://github.com/mziyabo/argocd-trivy-extension/releases/download/v0.2.0/extension-trivy_checksums.txt
+    containerSecurityContext: *argocd_restricted_context
+
+# Apply the restricted security context to the repository server component
+# This container is responsible for Git operations
+repoServer:
+  containerSecurityContext: *argocd_restricted_context
+
+# Apply the restricted security context to the ApplicationSet controller
+# This component manages the generation of applications from templates
+applicationSet:
+  containerSecurityContext: *argocd_restricted_context
+
+# Apply the restricted security context to the notifications controller
+# This component handles notification delivery for ArgoCD events
+notifications:
+  containerSecurityContext: *argocd_restricted_context
+
+# Apply the restricted security context to the commit server component
+commitServer:
+  containerSecurityContext: *argocd_restricted_context

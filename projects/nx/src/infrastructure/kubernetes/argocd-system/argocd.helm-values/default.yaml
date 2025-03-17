@@ -1,0 +1,98 @@
+---
+# This Helm values file contains all default values used by the ArgoCD
+# Helm chart.
+
+global:
+  # default domain used by all ingress resources
+  # WARN: ArgoCD will be only accessible through TailScale
+  domain: argocd.tail831c5d.ts.net
+
+# disable DEX as we are using our own OIDC provider
+dex:
+  enabled: false
+
+# Argo Configs
+configs:
+  # General Argo CD configuration. Any values you put under `.configs.cm` are passed to argocd-cm ConfigMap.
+  # (ref. https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml)
+  cm:
+    # disable `statusbadge` feature, as ArgoCD is only accessible through TailScale
+    # (ref. https://argo-cd.readthedocs.io/en/stable/user-guide/status-badge/)
+    statusbadge.enabled: false
+
+    # disable `anonymous` user access
+    users.anonymous.enabled: "false"
+
+    # TODO: Configure this part with a local AI agent + all information needed to add/configure applications
+    # # the URL for getting chat help, this will typically be your Slack channel for support
+    # help.chatUrl: "https://mycorp.slack.com/argo-cd"
+    # # the text for getting chat help, defaults to "Chat now!"
+    # help.chatText: "Chat now!"
+    # # The URLs to download additional ArgoCD binaries (besides the Linux with current platform binary included by default)
+    # # for different OS architectures. If provided, additional download buttons will be displayed on the help page.
+    # help.download.linux-amd64: "path-or-url-to-download"
+    # help.download.linux-arm64: "path-or-url-to-download"
+    # help.download.linux-ppc64le: "path-or-url-to-download"
+    # help.download.linux-s390x: "path-or-url-to-download"
+    # help.download.darwin-amd64: "path-or-url-to-download"
+    # help.download.darwin-arm64: "path-or-url-to-download"
+    # help.download.windows-amd64: "path-or-url-to-download"
+
+    # OIDC configuration (optional), replacing Dex and leveraging local Authelia
+    oidc.config: |
+      name: Authelia
+      issuer: https://sso.chezmoi.sh
+      clientID: $argocd-oidc:oidc.authelia.clientID
+      clientSecret: $argocd-oidc:oidc.authelia.clientSecret
+      cliClientID: $argocd-oidc:oidc.authelia.cliClientID
+      requestedScopes:
+        - openid
+        - profile
+        - email
+        - groups
+
+    # the metadata.label key name where Argo CD injects the app name as a tracking label, that
+    # is used to determine which resources need to be deleted when pruning.
+    application.instanceLabelKey: argocd.argoproj.io/instance
+
+    # as only restricted users should be able to exec into pods, the UI exec feature should be
+    # enabled.
+    exec.enabled: "true"
+
+    # enable helm support in ArgoCD when using Kustomize
+    kustomize.buildOptions: --enable-helm
+
+  # Additional Argo CD server configuration
+  params:
+    # enables use of the Progressive Syncs capability
+    applicationsetcontroller.enable.progressive.syncs: false
+
+  # ArgoCD repositories configuration
+  repositories:
+    github.chezmoi-sh.atlas:
+      name: chezmoi.sh/atlas
+      url: https://github.com/chezmoi-sh/atlas.git
+      type: git
+
+  # ArgoCD security configuration
+  rbac:
+    # file containing user-defined policies and role definitions.
+    # (ref. https://argo-cd.readthedocs.io/en/stable/operator-manual/rbac/#rbac-configuration)
+    policy.csv: |
+      # The role `restricted-admin` is a custom role that allows users to be able to administer
+      # all ArgoCD resources except the ones that are security-sensitive (e.g. certificates, gpgkeys).
+      p, role:restricted-admin, certificates, create, *, deny
+      p, role:restricted-admin, certificates, update, *, deny
+      p, role:restricted-admin, certificates, delete, *, deny
+      p, role:restricted-admin, clusters, create, *, deny
+      p, role:restricted-admin, clusters, delete, *, deny
+      p, role:restricted-admin, accounts, update, *, deny
+      p, role:restricted-admin, gpgkeys, create, *, deny
+      p, role:restricted-admin, gpgkeys, delete, *, deny
+
+      # Add the ability to invoke the `metrics` extension for all users inheriting the `readonly` role
+      p, role:readonly, extensions, invoke, metrics, allow
+
+      g, role:restricted-admin, role:admin
+      g, role:restricted-admin, role:readonly
+      g, admins, role:restricted-admin

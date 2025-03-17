@@ -7,8 +7,12 @@
 configs:
   clusterCredentials:
     nx.tail831c5d.ts.net:
-      server: https://kubernetes.default.svc
-      name: nx
+      annotations:
+        argocd.argoproj.io/folder-override: projects/nx
+      labels:
+        argocd.argoproj.io/cluster-type: seed
+
       config:
         tlsClientConfig:
           insecure: false
+      server: https://kubernetes.default.svc

@@ -14,7 +14,7 @@
 
 <!-- trunk-ignore-begin(markdown-link-check/404) -->
 
-\[![View on GitHub](https://img.shields.io/badge/View_on-GitHub-lightgrey?logo=github\&logoColor=white\&logoWidth=20)]\( <a href="#-overview">Overview</a> · <a href="#-features">Features</a> · <a href="#%EF%B8%8F-prerequisites">Prerequisites</a> · <a href="#-usage">Usage</a> · <a href="#-configuration">Configuration</a> · <a href="#-security-considerations">Security</a>
+<a href="#-overview">Overview</a> · <a href="#-features">Features</a> · <a href="#%EF%B8%8F-prerequisites">Prerequisites</a> · <a href="#-usage">Usage</a> · <a href="#-configuration">Configuration</a> · <a href="#-security-considerations">Security</a>
 
 <!-- trunk-ignore-end(markdown-link-check/404) -->
 

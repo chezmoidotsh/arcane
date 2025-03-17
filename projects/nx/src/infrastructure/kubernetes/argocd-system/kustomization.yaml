@@ -8,6 +8,9 @@ resources:
   - argocd.ts-ingress.yaml
   - namespace.yaml
 
+  # Manage all ArgoCD ApplicationSets through an Application
+  - argocd.applicationset.application.yaml
+
 helmCharts:
   - name: argo-cd
     repo: https://argoproj.github.io/argo-helm
@@ -15,5 +18,6 @@ helmCharts:
     version: 7.8.11
     valuesFile: argocd.helm-values/default.yaml
     additionalValuesFiles:
-      - argocd.helm-values/security-compliance.yaml
+      - argocd.helm-values/extensions.yaml
       - argocd.helm-values/external-clusters.yaml
+      - argocd.helm-values/security-compliance.yaml
