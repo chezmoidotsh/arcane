@@ -5,6 +5,7 @@ namespace: argocd-system
 
 resources:
   - cluster-configuration.applicationset.yaml
+  - ../../../../../catalog/kustomize/cert-manager/applicationset.argoproj.io
   - ../../../../../catalog/kustomize/external-secrets-operator/applicationset.argoproj.io
 
 patches:
