@@ -5,8 +5,8 @@ namespace: argocd-system
 
 resources:
   - cluster-configuration.applicationset.yaml
-  - ../../../../../catalog/kustomize/cert-manager/applicationset.argoproj.io
-  - ../../../../../catalog/kustomize/external-secrets-operator/applicationset.argoproj.io
+  - ../../../../../catalog/argocd/cert-manager
+  - ../../../../../catalog/argocd/external-secrets-operator
 
 patches:
   - patch: |-
@@ -14,11 +14,8 @@ patches:
         path: /spec/template/spec/project
         value: infrastructure
       - op: replace
-        path: /spec/template/spec/source/repoURL
-        value: https://github.com/chezmoi-sh/atlas.git
-      - op: replace
-        path: /spec/template/spec/source/targetRevision
-        value: wip/iron-age
+        path: /spec/template/spec/sources/0/targetRevision
+        value: wip/iron-age_features/move-to-helm
       - op: replace
         path: /spec/template/spec/syncPolicy
         value:
