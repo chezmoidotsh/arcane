@@ -11,7 +11,7 @@ spec:
   source:
     path: projects/nx/src/apps/argocd-system
     repoURL: https://github.com/chezmoi-sh/atlas.git
-    targetRevision: wip/iron-age_features/eso-appset
+    targetRevision: wip/iron-age
   syncPolicy:
     automated:
       prune: true
