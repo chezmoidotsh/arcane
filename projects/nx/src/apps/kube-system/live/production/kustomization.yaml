@@ -4,10 +4,6 @@ kind: Kustomization
 namespace: kube-system
 
 resources:
-  # Cert-manager for valid certificates
-  - ../../base/cert-manager
-  - cm-issuer-letsencrypt.yaml
-
   # ExternalDNS for managing DNS records
   - ../../base/external-dns-cloudflare
   - ../../base/external-dns-adguard
