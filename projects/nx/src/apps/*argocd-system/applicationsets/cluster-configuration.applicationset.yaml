@@ -1,5 +1,5 @@
 ---
-# This ApplicationSet deploys all resources like CLusterSecretStore, ClusterIssuer, etc.
+# This ApplicationSet deploys all resources like ClusterSecretStore, ClusterIssuer, etc.
 # in order to be used by other applications.
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
@@ -16,7 +16,7 @@ spec:
     spec:
       sources:
         - repoURL: https://github.com/chezmoi-sh/atlas.git
-          path: '{{ index .metadata.annotations "argocd.argoproj.io/folder-override" | default (printf "projects/%s" .name) }}/src/infrastructure/kubernetes/default'
+          path: projects/{{ index .metadata.annotations "argocd.argoproj.io/slug-name" | default .name }}/src/infrastructure/kubernetes/default
           targetRevision: main
       destination:
         server: "{{ .server }}"

@@ -1,0 +1,29 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    network-policy.k8s.io/description: |
+      This policy allows the Tailscale service to access the application.
+
+      **Why?**
+      - Tailscale is the ingress controller for the Kubernetes cluster
+        and needs to route traffic to the application in order to be
+        accessible from the VPN.
+  name: allow-ingress-to-n8n-from-tailscale
+  namespace: n8n
+spec:
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: tailscale-system
+      ports:
+        - port: 8080
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: argocd
+      app.kubernetes.io/name: argocd-server
+  policyTypes:
+    - Ingress

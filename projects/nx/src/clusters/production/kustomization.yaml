@@ -8,7 +8,7 @@ resources:
   - ../../apps/nx-dns/live/production
   - ../../apps/nx-sso/live/production
 
-  # NOTE: all applications bellows are migrated to the new structure
-  - ../../infrastructure/kubernetes/argocd-system
+  # NOTE: all applications below are migrated to the new structure
+  - ../../apps/*argocd-system
   - ../../infrastructure/kubernetes/kube-system
   - ../../infrastructure/kubernetes/tailscale-system
