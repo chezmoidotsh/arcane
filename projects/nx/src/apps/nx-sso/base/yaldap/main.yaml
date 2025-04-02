@@ -1,0 +1,115 @@
+---
+# trunk-ignore-all(checkov/CKV_K8S_21): Namespace is managed by kustomize
+# trunk-ignore-all(checkov/CKV_K8S_43): This image is currently managed by hand and I don't care about the digest
+# trunk-ignore-all(checkov/CKV2_K8S_6): Network Policies are managed directly by the live configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: yaldap-sso
+    app.kubernetes.io/name: yaldap
+    app.kubernetes.io/part-of: sso
+    app.kubernetes.io/version: v0.2.0
+  name: yaldap
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: yaldap-sso
+      app.kubernetes.io/name: yaldap
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: yaldap-sso
+        app.kubernetes.io/name: yaldap
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - args:
+            - run
+            - --backend.name=yaml
+            - --backend.url=file:///run/secrets/yaldap/backend.yaml
+            - --listen-address=:8389
+            - --session-ttl=1h
+          image: ghcr.io/chezmoi-sh/flakes-dev/yaldap:v0.2.0-24.11-aarch64-linux
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 3
+            tcpSocket:
+              port: ldap
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+          name: yaldap
+          ports:
+            - containerPort: 8389
+              name: ldap
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 1
+            tcpSocket:
+              port: ldap
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: 200m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 23169
+            runAsGroup: 42291
+            seccompProfile:
+              type: RuntimeDefault
+          startupProbe:
+            failureThreshold: 15
+            tcpSocket:
+              port: ldap
+            periodSeconds: 1
+            successThreshold: 1
+            timeoutSeconds: 1
+          volumeMounts:
+            - mountPath: /run/secrets/yaldap
+              name: yaldap-backend
+              readOnly: true
+      enableServiceLinks: false
+      securityContext:
+        fsGroup: 42291
+        runAsUser: 23169
+        runAsNonRoot: true
+        runAsGroup: 42291
+      volumes:
+        - name: yaldap-backend
+          secret:
+            defaultMode: 420
+            secretName: yaldap-backend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/instance: yaldap-sso
+    app.kubernetes.io/name: yaldap
+    app.kubernetes.io/part-of: sso
+    app.kubernetes.io/version: v0.2.0
+  name: yaldap
+spec:
+  ports:
+    - appProtocol: ldap
+      name: ldap
+      port: 389
+      protocol: TCP
+      targetPort: 8389
+  selector:
+    app.kubernetes.io/instance: yaldap-sso
+    app.kubernetes.io/name: yaldap
+  type: ClusterIP

@@ -1,0 +1,47 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: nx-dashboard
+
+resources:
+  - namespace.yaml
+
+  - ../../base/glance
+  - glance-ingress.yaml
+  - glance-netpolicy.yaml
+
+configMapGenerator:
+  - name: glance-configuration
+    files:
+      - glance.yml=configurations/glance.yaml
+  - name: glance-assets-0
+    files:
+      - configurations/assets/actual-budget.png
+      - configurations/assets/fileflows.png
+      - configurations/assets/home-assistant.png
+      - configurations/assets/homebox.png
+      - configurations/assets/jellyfin.png
+      - configurations/assets/linkding.png
+      - configurations/assets/n8n.png
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: glance
+      spec:
+        template:
+          spec:
+            containers:
+              - name: glance
+                volumeMounts:
+                  - name: glance-assets
+                    mountPath: /app/assets
+                    readOnly: true
+            volumes:
+              - name: glance-assets
+                projected:
+                  sources:
+                    - configMap:
+                        name: glance-assets-0

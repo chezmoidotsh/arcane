@@ -1,0 +1,112 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  # install experimental Gateway API CRDs
+  - crds/gateway.networking.k8s.io_backendlbpolicies.yaml
+  - crds/gateway.networking.k8s.io_backendtlspolicies.yaml
+  - crds/gateway.networking.k8s.io_tcproutes.yaml
+  - crds/gateway.networking.k8s.io_tlsroutes.yaml
+  - crds/gateway.networking.k8s.io_udproutes.yaml
+
+  - dashboard.yaml
+
+helmCharts:
+  - name: traefik
+    repo: https://traefik.github.io/charts
+    releaseName: traefik
+    namespace: kube-system
+    version: 33.0.0
+    includeCRDs: true
+    valuesInline:
+      # NOTE: disable check for updates and stats
+      globalArguments:
+        - --global.checkNewVersion=false
+        - --global.sendAnonymousUsage=false
+
+      # configure Traefik entrypoints
+      ports:
+        # API / Dashboard / Ping
+        traefik:
+          port: 9000
+          expose:
+            default: false
+          protocol: TCP
+
+        # Web (HTTP)
+        web:
+          port: 80
+          expose:
+            default: true
+          exposedPort: 80
+          protocol: TCP
+          redirectTo:
+            port: websecure
+            priority: 10
+            permanent: true
+
+        # WebSecure (HTTPS)
+        websecure:
+          port: 443
+          expose:
+            default: true
+          exposedPort: 443
+          protocol: TCP
+          tls:
+            enabled: true
+          forwardedHeaders:
+            insecure: true # NOTE: required to preserve all X-Forwarded-* headers for SSO
+
+        # LDAP over TLS
+        ldaps:
+          port: 636
+          expose:
+            default: true
+          protocol: TCP
+          tls:
+            enabled: true
+
+      # configure Traefik providers
+      providers:
+        kubernetesCRD: { enabled: true }
+        kubernetesIngress:
+          { enabled: false, publishedService: { enabled: true } }
+        kubernetesGateway:
+          enabled: true
+          experimentalChannel: true
+          statusAddress:
+            service:
+              name: traefik
+              namespace: kube-system
+
+      # configure Traefik GatewayClass
+      gatewayClass:
+        enabled: true
+        name: traefik-gateway
+
+      # disable some default configuration
+      gateway: { enabled: false }
+      ingressClass: { enabled: false }
+
+      # configure logs
+      logs:
+        access:
+          enabled: true
+          format: common
+          addInternals: false
+          fields:
+            general: { defaultMode: keep }
+            headers: { defaultMode: keep }
+
+      # override default Traefik service
+      service:
+        # NOTE: required to get the real client IP address with LoadBalancer in K3S
+        spec:
+          externalTrafficPolicy: Local
+
+      # add addons to Traefik
+      experimental:
+        plugins:
+          souin:
+            moduleName: github.com/darkweak/souin
+            version: v1.7.2

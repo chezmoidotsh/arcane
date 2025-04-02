@@ -1,0 +1,59 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: tailscale-system
+
+components:
+  - ../../../../../../catalog/kustomize/tailscale
+
+resources:
+  - homelabnet.connector.yaml
+  - namespace.yaml
+  - tailscale.authkey.external-secret.yaml
+
+patches:
+  # Update the hostname of the Tailscale Operator to match the cluster name
+  # NOTE: because this cluster is the seed cluster, operator will be tagged
+  #       with `tag:kubernetes-seed` instead of `tag:kubernetes-operator`
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: operator
+      spec:
+        template:
+          spec:
+            containers:
+              - name: operator
+                env:
+                  - name: OPERATOR_HOSTNAME
+                    value: nx
+                  - name: OPERATOR_INITIAL_TAGS
+                    value: tag:kubernetes-seed
+  # On k3s, NetworkPolicy need to allow the Kubernetes API server to in order
+  # to allow the Tailscale ingress controller to connect to the API server
+  # NOTE: the node IP where the API server is running must also be allowed.
+  #       The list of IPs can be found as endpoints of the `kubernetes` service
+  - target:
+      group: networking.k8s.io
+      kind: NetworkPolicy
+      name: tailscale-ingress-allow-to-cluster
+    patch: |
+      - op: add
+        path: /spec/egress/-
+        value:
+          to:
+            - ipBlock:
+                cidr: 10.43.0.1/32
+          ports:
+            - port: 443
+              protocol: TCP
+      - op: add
+        path: /spec/egress/-
+        value:
+          to:
+            - ipBlock:
+                cidr: 10.0.0.30/32
+          ports:
+            - port: 6443
+              protocol: TCP

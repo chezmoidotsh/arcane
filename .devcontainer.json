@@ -1,0 +1,38 @@
+{
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bierner.github-markdown-preview",
+        "bierner.markdown-preview-github-styles",
+        "jetmartin.bats",
+        "jnoortheen.nix-ide",
+        "ldez.ignore-files",
+        "mkhl.direnv",
+        "ms-azuretools.vscode-docker",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "ms-python.python",
+        "ms-vscode-remote.remote-containers",
+        "nefrob.vscode-just-syntax",
+        "redhat.ansible",
+        "redhat.vscode-yaml",
+        "tamasfe.even-better-toml",
+        "terrastruct.d2",
+        "tilt-dev.tiltfile",
+        "trunk.io",
+        "visualstudioexptteam.vscodeintellicode"
+      ]
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2.12.1": {}
+  },
+  "image": "ghcr.io/cachix/devenv:latest",
+  "mounts": [
+    {
+      "target": "${containerWorkspaceFolder}/.devenv",
+      "type": "tmpfs"
+    }
+  ],
+  "overrideCommand": false,
+  "updateContentCommand": "\n    set -x;\n    sudo chown --recursive --no-dereference --silent vscode: /nix \"${containerWorkspaceFolder}/.devenv\";\n    devenv test;\n    /nix/store/ibpn38y8l5c592g360vshnzzyik3zkcb-direnv-2.35.0/bin/direnv allow \"${containerWorkspaceFolder}\";\n  "
+}

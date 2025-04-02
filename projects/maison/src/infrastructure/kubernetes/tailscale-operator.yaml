@@ -1,0 +1,48 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: tailscale-operator
+spec:
+  interval: 12h0m0s
+  timeout: 2m0s
+  retryInterval: 1m0s
+
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  path: ./catalog/fluxcd/tailscale-operator
+
+  # NOTE: depends on external-secrets operator to create the Tailscale secret
+  #       containing the auth key
+  dependsOn:
+    - name: external-secrets-operator
+
+  prune: true
+  wait: true
+
+  patches:
+    # NOTE: the following patches are required to make the Tailscale operator
+    #       work with the external-secrets operator
+    - patch: |-
+        - op: add
+          path: /spec/secretStoreRef
+          value:
+            kind: ClusterSecretStore
+            name: kubernetes.maison.chezmoi.sh
+        - op: replace
+          path: /spec/data/0/remoteRef
+          value:
+            key: cloud-tailscale-kubernetes-maison-chezmoi-sh
+            property: operator-oauth-client-id
+        - op: replace
+          path: /spec/data/1/remoteRef
+          value:
+            key: cloud-tailscale-kubernetes-maison-chezmoi-sh
+            property: operator-oauth-client-secret
+      target:
+        group: external-secrets.io
+        kind: ExternalSecret
+        name: tailscale-credentials
+        namespace: tailscale-system

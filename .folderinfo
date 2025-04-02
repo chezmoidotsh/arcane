@@ -1,4 +1,6 @@
 ---
 files:
+  .envrc: Environment configuration file (using direnv)
   .lefthook.yaml: Git hooks configuration file (using lefthook)
-  .mise.toml: Environment (vars, tools and tasks) definition file (using mise-en-place)
+  DISASTER_RECOVERY_PLAN.md: Document describing the disaster recovery plan
+  flake.nix: Nix flake configuration file containing all required dependencies

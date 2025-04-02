@@ -1,0 +1,48 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: external-secrets-operator
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - clusters:
+        selector:
+          matchExpressions:
+            - key: eso.appset.chezmoi.sh/enable
+              operator: NotIn
+              values: ["false"]
+  template:
+    metadata:
+      name: "{{ .name }}-external-secrets-operator"
+    spec:
+      sources:
+        - repoURL: https://github.com/chezmoi-sh/atlas.git
+          targetRevision: main
+          ref: origin
+        - chart: external-secrets
+          repoURL: https://charts.external-secrets.io/
+          targetRevision: 0.14.4
+          helm:
+            releaseName: external-secrets-operator
+            valueFiles:
+              # default configuration with all required values
+              - $origin/catalog/argocd/external-secrets-operator/helmvalues/default.helmvalues.yaml
+              # enhanced configuration to enforce security best practices
+              - $origin/catalog/argocd/external-secrets-operator/helmvalues/hardened.helmvalues.yaml
+
+              # custom configuration for a specific cluster
+              - $origin/project/{{ .name }}/src/infrastructure/kubernetes/external-secrets-operator/override.helmvalues.yaml
+              - $origin/project/{{ index .metadata.annotations "argocd.argoproj.io/slug-name" | default .name }}/src/infrastructure/kubernetes/external-secrets-operator/override.helmvalues.yaml
+            ignoreMissingValueFiles: true
+      destination:
+        server: "{{ .server }}"
+        namespace: external-secrets-system
+
+      # NOTE: by default, this ApplicationSet is configured to NOT BE UPDATED
+      #       automatically. This is to prevent unwanted changes to the cluster.
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true

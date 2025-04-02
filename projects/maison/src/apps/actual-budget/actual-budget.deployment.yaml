@@ -1,0 +1,146 @@
+---
+# trunk-ignore(checkov/CKV_K8S_11): DO NOT SET the CPU limit
+# trunk-ignore(checkov/CKV_K8S_15,checkov/CKV_K8S_43): Not aggreed with theses policies about the ImagePullPolicy=Always and digest verification.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: actual-budget
+  namespace: actual-budget
+  labels:
+    app.kubernetes.io/name: actual-budget
+    app.kubernetes.io/instance: actual-budget
+    app.kubernetes.io/part-of: actual-budget
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: actual-budget
+      app.kubernetes.io/instance: actual-budget
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: actual-budget
+        app.kubernetes.io/instance: actual-budget
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        # trunk-ignore(trivy): Everything about security context cannot be configured for the official image.
+        - name: actual-budget
+          image: ghcr.io/actualbudget/actual-server:24.12.0
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          ports:
+            - name: http
+              containerPort: 5006
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 38069
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: persistent
+              mountPath: /data
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 38069
+        runAsGroup: 38069
+        fsGroup: 38069
+      volumes:
+        - name: persistent
+          persistentVolumeClaim:
+            claimName: actual-budget-persistent
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: actual-budget
+  namespace: actual-budget
+  labels:
+    app.kubernetes.io/name: actual-budget
+    app.kubernetes.io/instance: actual-budget
+    app.kubernetes.io/part-of: actual-budget
+spec:
+  selector:
+    app.kubernetes.io/name: actual-budget
+    app.kubernetes.io/instance: actual-budget
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: actual-budget-persistent
+  namespace: actual-budget
+  labels:
+    app.kubernetes.io/name: actual-budget
+    app.kubernetes.io/instance: actual-budget
+    app.kubernetes.io/part-of: actual-budget
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: actual-budget
+  namespace: actual-budget
+  labels:
+    app.kubernetes.io/name: actual-budget
+    app.kubernetes.io/instance: actual-budget
+    app.kubernetes.io/part-of: actual-budget
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: actual-budget
+      app.kubernetes.io/instance: actual-budget
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector: {}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik-system
+  egress:
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 443
+    - to:
+        - podSelector: {}

@@ -1,0 +1,27 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: paperless-ngx
+    includeTemplates: true
+    includeSelectors: true
+  - pairs:
+      app.kubernetes.io/managed-by: fluxcd
+      app.kubernetes.io/part-of: document-management-system
+    includeTemplates: true
+
+resources:
+  # Workloads
+  - workload.database.yaml
+  - workload.paperless.yaml
+  - workload.redis.yaml
+
+  # Ingresses / Gateways
+  - httproute.yaml
+  - vpn.yaml
+
+  # Miscellaneous resources
+  - security-policies.yaml
+  - namespace.yaml

@@ -1,0 +1,61 @@
+# This CRDs defines the ClusterApplySet resource, an empty resource that is used
+# by `kubectl apply` to save the state of the cluster.
+# See https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/#alternative-kubectl-apply-f-directory-prune
+# for more information.
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    applyset.kubernetes.io/is-parent-type: "true"
+  name: clusterapplysets.kubernetes.chezmoi.sh
+spec:
+  group: kubernetes.chezmoi.sh
+  names:
+    kind: ClusterApplySet
+    listKind: ClusterApplySetList
+    plural: clusterapplysets
+    singular: clusterapplyset
+    shortNames:
+      - cas
+  scope: Cluster
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                project:
+                  description: The project that this ClusterApplySet belongs to.
+                  type: string
+              required:
+                - project
+            status:
+              type: object
+              properties:
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string
+      additionalPrinterColumns:
+        - jsonPath: .spec.project
+          name: Project
+          type: string
+          description: The project that this ClusterApplySet belongs to.

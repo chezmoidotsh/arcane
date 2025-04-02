@@ -1,0 +1,42 @@
+---
+apiVersion: dns.cloudflare.crossplane.io/v1alpha1
+kind: Record
+metadata:
+  name: hass-chezmoi-sh
+spec:
+  forProvider:
+    zoneIdSelector:
+      matchLabels:
+        cf.chezmoi.sh/zone: chezmoi.sh
+    name: hass.chezmoi.sh
+    type: A
+    content: 10.0.0.31
+    comment: (Crossplane) Home-Assistant address for hass project
+---
+apiVersion: dns.cloudflare.crossplane.io/v1alpha1
+kind: Record
+metadata:
+  name: wildcard-hass-chezmoi-sh
+spec:
+  forProvider:
+    zoneIdSelector:
+      matchLabels:
+        cf.chezmoi.sh/zone: chezmoi.sh
+    name: "*.hass.chezmoi.sh"
+    type: CNAME
+    content: hass.chezmoi.sh
+    comment: (Crossplane) Home-Assistant address for hass project (wildcard)
+---
+apiVersion: dns.cloudflare.crossplane.io/v1alpha1
+kind: Record
+metadata:
+  name: hass-ts-chezmoi-sh
+spec:
+  forProvider:
+    zoneIdSelector:
+      matchLabels:
+        cf.chezmoi.sh/zone: chezmoi.sh
+    name: hass.ts.chezmoi.sh
+    type: A
+    content: 100.77.85.7
+    comment: (Crossplane) Home-Assistant address for hass project through Tailscale VPN

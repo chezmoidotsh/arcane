@@ -1,0 +1,143 @@
+---
+# trunk-ignore-all(checkov/CKV_K8S_21): Namespace is managed by kustomize
+# trunk-ignore-all(checkov/CKV2_K8S_6): Network Policies are managed directly by the live configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: authelia-sso
+    app.kubernetes.io/name: authelia
+    app.kubernetes.io/part-of: sso
+    app.kubernetes.io/version: 4.38.11
+  name: authelia
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: authelia-sso
+      app.kubernetes.io/name: authelia
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: authelia-sso
+        app.kubernetes.io/name: authelia
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - env:
+            - name: X_AUTHELIA_CONFIG_FILTERS
+              value: template
+          image: docker.io/authelia/authelia:4.38.11@sha256:b4d09f0850f46830795d7f1f49c1afad6849cad8a589a10931d3ef45a0fb1e6b
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 30
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          name: authelia
+          ports:
+            - containerPort: 9091
+              name: http
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            limits:
+              cpu: 200m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 19937
+            runAsGroup: 36550
+            seccompProfile:
+              type: RuntimeDefault
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            periodSeconds: 2
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 15
+          volumeMounts:
+            - mountPath: /config
+              name: authelia-configuration
+            - mountPath: /var/lib/authelia
+              name: authelia-data
+            - mountPath: /var/run/secrets/authelia.com
+              name: authelia-secrets
+              readOnly: true
+      enableServiceLinks: false
+      securityContext:
+        fsGroup: 36550
+        runAsUser: 19937
+        runAsNonRoot: true
+        runAsGroup: 36550
+      volumes:
+        - name: authelia-configuration
+          configMap:
+            name: authelia-configuration
+        - name: authelia-data
+          persistentVolumeClaim:
+            claimName: authelia-data
+        - name: authelia-secrets
+          projected:
+            sources: []
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app.kubernetes.io/instance: authelia-sso
+    app.kubernetes.io/name: authelia
+    app.kubernetes.io/part-of: sso
+    app.kubernetes.io/version: 4.38.11
+  name: authelia-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/instance: authelia-sso
+    app.kubernetes.io/name: authelia
+    app.kubernetes.io/part-of: sso
+    app.kubernetes.io/version: 4.38.11
+  name: authelia
+spec:
+  ports:
+    - appProtocol: http
+      name: http
+      port: 80
+      protocol: TCP
+      targetPort: http
+  selector:
+    app.kubernetes.io/instance: authelia-sso
+    app.kubernetes.io/name: authelia

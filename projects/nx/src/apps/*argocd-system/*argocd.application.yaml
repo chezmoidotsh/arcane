@@ -1,0 +1,38 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+spec:
+  destination:
+    namespace: argocd-system
+    server: https://kubernetes.default.svc
+  project: seed
+  sources:
+    - path: projects/nx/src/apps/*argocd-system
+      repoURL: https://github.com/chezmoi-sh/atlas.git
+      targetRevision: main
+    - path: deploy/manifests/default
+      repoURL: https://github.com/chezmoi-sh/argotails.git
+      targetRevision: v0.1.4
+
+      kustomize:
+        namespace: argocd-system
+        patches:
+          - patch: |
+              - op: replace
+                path: /spec/template/spec/containers/0/args/2
+                value: --ts.device-filter=kubernetes-cluster
+              - op: replace
+                path: /spec/template/spec/containers/0/env/0/value
+                value: tail831c5d.ts.net
+            target:
+              name: argotails
+              kind: Deployment
+
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - Delete=confirm
+      - Prune=confirm
+      - ServerSideApply=true

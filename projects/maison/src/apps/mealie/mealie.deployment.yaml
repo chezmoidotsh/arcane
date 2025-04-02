@@ -1,0 +1,254 @@
+---
+# trunk-ignore(checkov/CKV_K8S_11): DO NOT SET the CPU limit
+# trunk-ignore(checkov/CKV_K8S_15,checkov/CKV_K8S_43): Not aggreed with theses policies about the ImagePullPolicy=Always and digest verification.
+# trunk-ignore(checkov/CKV_K8S_35): Mealie cannot be configured using a file.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mealie
+  namespace: mealie
+  labels:
+    app.kubernetes.io/name: mealie
+    app.kubernetes.io/instance: mealie
+    app.kubernetes.io/part-of: mealie
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mealie
+      app.kubernetes.io/instance: mealie
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mealie
+        app.kubernetes.io/instance: mealie
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        # trunk-ignore(trivy/KSV011): DO NOT SET the CPU limit
+        - name: mealie
+          env:
+            - name: ALLOW_SIGNUP
+              value: "False"
+            - name: PUID
+              value: "44808"
+            - name: PGID
+              value: "44808"
+            - name: TZ
+              value: Europe/Paris
+            - name: BASE_URL
+              value: https://mealie.chezmoi.sh
+
+            - name: OIDC_AUTH_ENABLED
+              value: "True"
+            - name: OIDC_SIGNUP_ENABLED
+              value: "True"
+            - name: OIDC_CONFIGURATION_URL
+              value: https://sso.chezmoi.sh/.well-known/openid-configuration
+            - name: OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-oidc-credentials
+                  key: oidc_client_id
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-oidc-credentials
+                  key: oidc_client_secret
+            - name: OIDC_USER_GROUP
+              value: apps/maison
+            - name: OIDC_ADMIN_GROUP
+              value: admins
+
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-openai-credentials
+                  key: openai_api_key
+            - name: OPENAI_MODEL
+              value: gpt-4o-mini
+
+            - name: DB_ENGINE
+              value: postgres
+            - name: POSTGRES_SERVER
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-database-app
+                  key: host
+            - name: POSTGRES_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-database-app
+                  key: port
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-database-app
+                  key: dbname
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-database-app
+                  key: user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mealie-database-app
+                  key: password
+
+          image: ghcr.io/mealie-recipes/mealie:v2.4.1
+          livenessProbe:
+            exec:
+              command:
+                - python
+                - /app/mealie/scripts/healthcheck.py
+          ports:
+            - name: http
+              containerPort: 9000
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - python
+                - /app/mealie/scripts/healthcheck.py
+          resources:
+            requests:
+              cpu: 100m
+              memory: 1024Mi
+            limits:
+              memory: 1024Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 44808
+            runAsGroup: 44808
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: mealie-tmpdir
+              mountPath: /app/data
+            - name: mealie-tmpdir
+              mountPath: /tmp
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 44808
+        runAsGroup: 44808
+        fsGroup: 44808
+      volumes:
+        - name: mealie-tmpdir
+          emptyDir: {}
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: mealie-oidc-credentials
+  namespace: mealie
+  labels:
+    app.kubernetes.io/name: mealie
+    app.kubernetes.io/instance: mealie
+    app.kubernetes.io/part-of: mealie
+spec:
+  data:
+    - remoteRef:
+        key: security-sso-oidc-clients-mealie
+        property: oidc_configuration
+      secretKey: oidc_configuration
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: kubernetes.maison.chezmoi.sh
+  target:
+    name: mealie-oidc-credentials
+    template:
+      type: Opaque
+      engineVersion: v2
+      data:
+        oidc_client_id: >-
+          {{ regexReplaceAll "client_id: (.+?)" (.oidc_configuration | split "\n")._1 "${1}" }}
+        oidc_client_secret: >-
+          {{ regexReplaceAll "# client_secret: (.+?)" (.oidc_configuration | split "\n")._3 "${1}" }}
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: mealie-openai-credentials
+  namespace: mealie
+  labels:
+    app.kubernetes.io/name: mealie
+    app.kubernetes.io/instance: mealie
+    app.kubernetes.io/part-of: mealie
+spec:
+  data:
+    - remoteRef:
+        key: cloud-openai-mealie
+        property: openai_api_key
+      secretKey: openai_api_key
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: kubernetes.maison.chezmoi.sh
+  target:
+    name: mealie-openai-credentials
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mealie
+  namespace: mealie
+  labels:
+    app.kubernetes.io/name: mealie
+    app.kubernetes.io/instance: mealie
+    app.kubernetes.io/part-of: mealie
+spec:
+  selector:
+    app.kubernetes.io/name: mealie
+    app.kubernetes.io/instance: mealie
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mealie
+  namespace: mealie
+  labels:
+    app.kubernetes.io/name: mealie
+    app.kubernetes.io/instance: mealie
+    app.kubernetes.io/part-of: mealie
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: mealie
+      app.kubernetes.io/instance: mealie
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector: {}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik-system
+  egress:
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 443
+    - to:
+        - podSelector: {}

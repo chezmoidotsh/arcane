@@ -31,8 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ⬇️ Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - name: ✏️ Overrides Trunk configuration for Github Action
-        run: mv .trunk/gha.yaml .trunk/user.yaml
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      # - name: ✏️ Overrides Trunk configuration for Github Action
+      #   run: mv .trunk/gha.yaml .trunk/user.yaml
       - name: ⚡️ Run `trunk check`
-        uses: trunk-io/trunk-action@86b68ffae610a05105e90b1f52ad8c549ef482c2 # v1.1.16
+        uses: trunk-io/trunk-action@4d5ecc89b2691705fd08c747c78652d2fc806a94 # v1.1.19

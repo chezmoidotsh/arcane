@@ -1,0 +1,6 @@
+# Ignore CPU limitation issues → I prefer to over use CPU than to have performance issues
+KSV011
+
+# Ignore ResourceQuota/LimitRange issues → I'm not ready to specify these kinds of quotas/limits
+KSV039
+KSV040

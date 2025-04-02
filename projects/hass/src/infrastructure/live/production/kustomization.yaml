@@ -1,0 +1,7 @@
+# trunk-ignore-all(checkov/CKV_SECRET_6): no secrets in this file
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - crossplane-hasschezmoish

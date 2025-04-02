@@ -1,0 +1,167 @@
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: cloudflare.xdomainidentities.amazonses.chezmoi.sh
+spec:
+  compositeTypeRef:
+    apiVersion: amazonses.chezmoi.sh/v1alpha1
+    kind: XDomainIdentity
+  mode: Pipeline
+  pipeline:
+    # Create generic DMARC and SFP DNS records
+    - step: create-ses-mail-records
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ $xr := getCompositeResource . }}
+            {{- if not (hasKey $xr.spec.providerConfigRefs "cloudflare") }}
+              {{- fail "Cloudflare provider configuration is required for SES domain mail from" }}
+            {{- end }}
+            ---
+            apiVersion: dns.cloudflare.crossplane.io/v1alpha1
+            kind: Record
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: CloudflareTXTDMARC
+              name: {{ $xr.spec.domain | replace "." "-" }}-txt-dmarc # TODO: remove the replace function when the provider-cloudflare supports dots in name
+            spec:
+              forProvider:
+                zoneIdSelector: {{ toYaml $xr.spec.providerConfigRefs.cloudflare.zoneIdSelector | nindent 8 }}
+                name: _dmarc.{{ $xr.spec.domain }}
+                type: TXT
+                content: '"v=DMARC1; p={{ $xr.spec.dnsOptions.dmarcOptions.policy | default "none" }}; {{- with $xr.spec.dnsOptions.dmarcOptions.rua }} rua={{ . }};{{ end }}"'
+                comment: (Crossplane) DMARC record for {{ $xr.spec.domain }}
+
+    # Create the AWS SES domain identity with DKIM records
+    - step: create-ses-domain-identity
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ $xr := getCompositeResource . }}
+            {{- if not (hasKey $xr.spec.providerConfigRefs "cloudflare") }}
+              {{- fail "Cloudflare provider configuration is required for SES domain mail from" }}
+            {{- end }}
+            ---
+            apiVersion: ses.aws.upbound.io/v1beta1
+            kind: DomainIdentity
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: AmazonSESDomainIdentity
+              name: {{ $xr.spec.domain }}
+            spec:
+              forProvider:
+                region: {{ $xr.spec.providerConfigRefs.aws.region }}
+              {{- with $xr.spec.providerConfigRefs.aws.name }}
+              providerConfigRef:
+                name: {{ $xr.spec.providerConfigRefs.aws.name }}
+              {{- end }}
+            ---
+            apiVersion: ses.aws.upbound.io/v1beta1
+            kind: DomainDKIM
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: AmazonSESDomainDKIM
+              name: {{ $xr.spec.domain }}
+            spec:
+              forProvider:
+                region: {{ $xr.spec.providerConfigRefs.aws.region }}
+              {{- with $xr.spec.providerConfigRefs.aws.name }}
+              providerConfigRef:
+                name: {{ $xr.spec.providerConfigRefs.aws.name }}
+              {{- end }}
+            ---
+            {{- $dkimTokens := (index ($.observed.resources | default dict) "AmazonSESDomainDKIM").resource.status.atProvider.dkimTokens }}
+            {{- range $i, $dkimToken := (index ($.observed.resources | default dict) "AmazonSESDomainDKIM").resource.status.atProvider.dkimTokens }}
+            ---
+            apiVersion: dns.cloudflare.crossplane.io/v1alpha1
+            kind: Record
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: CloudflareDKIMRecord{{ $i }}
+              name: cname-{{ $dkimToken }}-domainkey-{{ $xr.spec.domain | replace "." "-" }} # TODO: remove the replace function when the provider-cloudflare supports dots in name
+            spec:
+              forProvider:
+                zoneIdSelector: {{ toYaml $xr.spec.providerConfigRefs.cloudflare.zoneIdSelector | nindent 8 }}
+                name: {{ $dkimToken }}._domainkey.{{ $xr.spec.domain }}
+                type: CNAME
+                content: {{ $dkimToken }}.dkim.amazonses.com
+                comment: (Crossplane) AWS SES DKIM record for {{ $xr.spec.domain }}
+            {{- end }}
+
+    # Configure the AWS SES mail from domain
+    - step: create-ses-domain-mail-from
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ $xr := getCompositeResource . }}
+            {{- if $xr.spec.mailFrom }}
+            {{- if not (hasKey $xr.spec.providerConfigRefs "cloudflare") }}
+              {{- fail "Cloudflare provider configuration is required for SES domain mail from" }}
+            {{- end }}
+            ---
+            apiVersion: ses.aws.upbound.io/v1beta1
+            kind: DomainMailFrom
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: AmazonSESDomainMailFrom
+              name: {{ $xr.spec.domain }}-domain-mailfrom
+            spec:
+              forProvider:
+                domain: {{ $xr.spec.domain }}
+                mailFromDomain: {{ $xr.spec.mailFrom }}.{{ $xr.spec.domain }}
+                region: {{ $xr.spec.providerConfigRefs.aws.region }}
+              {{- with $xr.spec.providerConfigRefs.aws.name }}
+              providerConfigRef:
+                name: {{ $xr.spec.providerConfigRefs.aws.name }}
+              {{- end }}
+            ---
+            apiVersion: dns.cloudflare.crossplane.io/v1alpha1
+            kind: Record
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: CloudflareMXSES
+              name: {{ $xr.spec.mailFrom | replace "." "-" }}-{{ $xr.spec.domain | replace "." "-" }}-mx-mailfrom # TODO: remove the replace function when the provider-cloudflare supports dots in name
+            spec:
+              forProvider:
+                zoneIdSelector: {{ toYaml $xr.spec.providerConfigRefs.cloudflare.zoneIdSelector | nindent 8 }}
+                name: {{ $xr.spec.mailFrom }}.{{ $xr.spec.domain }}
+                type: MX
+                content: feedback-smtp.{{ $xr.spec.providerConfigRefs.aws.region }}.amazonses.com
+                priority: 10
+                comment: (Crossplane) AWS SES MX record for {{ $xr.spec.domain }}
+            {{- end }}
+            ---
+            apiVersion: dns.cloudflare.crossplane.io/v1alpha1
+            kind: Record
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: CloudflareTXTMailFromSPF
+              name: {{ $xr.spec.domain | replace "." "-" }}-txt-spf-mailfrom # TODO: remove the replace function when the provider-cloudflare supports dots in name
+            spec:
+              forProvider:
+                zoneIdSelector: {{ toYaml $xr.spec.providerConfigRefs.cloudflare.zoneIdSelector | nindent 8 }}
+                name: {{ $xr.spec.mailFrom }}.{{ $xr.spec.domain }}
+                type: TXT
+                content: '"v=spf1 include:amazonses.com ~all"'
+                comment: (Crossplane) AWS SES SPF record for {{ $xr.spec.domain }}
+
+    # Wait for all resources to be ready
+    - step: wait-for-resources
+      functionRef:
+        name: function-auto-ready

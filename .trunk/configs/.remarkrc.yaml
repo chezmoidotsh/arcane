@@ -1,5 +1,7 @@
 ---
 plugins:
-  remark-preset-lint-consistent: true
-  remark-preset-lint-recommended: true
-  remark-lint-list-item-indent: true
+  - remark-preset-lint-consistent
+  - remark-preset-lint-recommended
+
+  - remark-gfm
+  - remark-lint-list-item-indent

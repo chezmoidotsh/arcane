@@ -28,3 +28,27 @@
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/direnv,dotenv,visualstudiocode
+
+# Ignore unencrypted kvstore
+projects/chezmoi.sh/src/kubevault/kvstore
+projects/chezmoi.sh/src/kubevault/kvstore.enc.bak*
+
+# Ignore all charts imported by kustomize
+catalog/kustomize/**/charts/
+projects/*/src/**/charts/
+
+# Ignore all .cache directories
+.cache/
+
+# Ignore all Nix result files and directories
+catalog/**/result
+
+# Devenv
+.devenv*
+devenv.local.nix
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml

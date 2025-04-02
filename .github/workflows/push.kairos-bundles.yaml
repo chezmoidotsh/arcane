@@ -1,0 +1,78 @@
+---
+name: 📦 (re)Build all Kairos bundles
+
+on:
+  push:
+    branches: [wip/iron-age] # default branch
+    paths:
+      - .github/workflows/push.kairos-bundles.yaml
+      - catalog/kairos-bundles/**
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  list_all_bundles:
+    name: 📄 List all bundles
+    runs-on: ubuntu-latest
+    outputs:
+      all_bundles: ${{ steps.list_bundles.outputs.all }}
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+
+      - name: 📄 List all bundles
+        id: list_bundles
+        run: |
+          (
+            echo -n 'all='
+            # shellcheck disable=SC2012
+            ls -1 catalog/kairos-bundles/ | sort --unique \
+            | grep -v README \
+            | jq --slurp --raw-input '. | split("\n") | map(select(. != ""))' --compact-output
+          ) >> "${GITHUB_OUTPUT}"
+
+  build_bundle:
+    name: 🏗️ Build bundle (${{ matrix.bundle }})
+    needs: list_all_bundles
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        bundle: ${{ fromJson(needs.list_all_bundles.outputs.all_bundles) }}
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+
+      - name: 🛠️ Login to Github Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🛠️ Set up QEMU
+        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3.2.0
+      - name: 🛠️ Set up Docker Buildx
+        uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5 # v3.8.0
+
+      - name: 🏗️ Build bundle (${{ matrix.bundle }})
+        uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
+        with:
+          annotations: |
+            org.opencontainers.image.title="${{ matrix.bundle }} (kairos bundle)"
+            org.opencontainers.image.source="https://${{ github.repository }}/blob/${{ github.sha }}/catalog/kairos-bundles/${{ matrix.bundle }}"
+            org.opencontainers.image.description="Kairos bundle for ${{ matrix.bundle }}"
+          context: catalog/kairos-bundles/${{ matrix.bundle }}
+          file: catalog/kairos-bundles/${{ matrix.bundle }}/Dockerfile
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          provenance: mode=max
+          push: true
+          sbom: true
+          tags: ghcr.io/${{ github.repository_owner }}/kairos-bundles:${{ matrix.bundle }}
+        env:
+          SOURCE_DATE_EPOCH: 0

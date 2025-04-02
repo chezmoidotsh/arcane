@@ -1,0 +1,33 @@
+# AWS SES Domain Identity for chezmoi.sh
+#
+# Description:
+#   This Domain Identity XR will create a Domain Identity in AWS SES for the
+#   domain chezmoi.sh and configure Cloudflare to validate it.
+---
+apiVersion: amazonses.chezmoi.sh/v1alpha1
+kind: DomainIdentity
+metadata:
+  labels:
+    crossplane.chezmoi.sh/project: nex.rpi
+  name: chezmoi.sh
+spec:
+  compositionRef:
+    name: cloudflare.xdomainidentities.amazonses.chezmoi.sh
+
+  domain: chezmoi.sh
+  mailFrom: amazonses
+
+  dnsOptions:
+    dmarcOptions:
+      policy: none
+
+  providerConfigRefs:
+    aws:
+      # TODO: due to an issue with the AWS IAM provider, we can only use
+      #       the us-east-1 region in order to use the SMTP credentials.
+      #       https://github.com/crossplane-contrib/provider-upjet-aws/pull/718
+      region: us-east-1
+    cloudflare:
+      zoneIdSelector:
+        matchLabels:
+          cf.chezmoi.sh/zone: chezmoi.sh

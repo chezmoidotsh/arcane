@@ -1,0 +1,28 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: crossplane-chezmoish
+
+resources:
+  - namespace.yaml
+  - ../../base
+
+  # Crossplane provider credentials
+  - aws.credentials.yaml
+  - cloudflare.credentials.yaml
+
+patches:
+  - patch: |-
+      apiVersion: account.cloudflare.crossplane.io/v1alpha1
+      kind: Account
+      metadata:
+        annotations:
+          crossplane.io/external-name: 00736631322131f61ce95f2c235143da
+        name: chezmoi-sh
+  - patch: |-
+      apiVersion: zone.cloudflare.crossplane.io/v1alpha1
+      kind: Zone
+      metadata:
+        annotations:
+          crossplane.io/external-name: 2734d7b22cf00222046320ed3187cb94
+        name: chezmoi-sh

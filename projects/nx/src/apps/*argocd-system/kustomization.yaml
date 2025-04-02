@@ -1,0 +1,24 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: argocd-system
+
+resources:
+  - "*argocd.application.yaml"
+  - "*argocd.oidc-credentials.externalsecret.yaml"
+  - "*argocd.ingress.yaml"
+  - "*argotails.ts-secrets.externalsecret.yaml"
+  - "*namespace.yaml"
+
+  # Manage all ArgoCD ApplicationSets through an Application
+  - "*argocd.applicationset.application.yaml"
+
+helmCharts:
+  - name: argo-cd
+    repo: https://argoproj.github.io/argo-helm
+    releaseName: argocd
+    version: 7.8.13
+    valuesFile: argocd.helm-values/default.yaml
+    additionalValuesFiles:
+      - argocd.helm-values/extensions.yaml
+      - argocd.helm-values/security-compliance.yaml
