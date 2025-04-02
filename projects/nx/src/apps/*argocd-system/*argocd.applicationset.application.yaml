@@ -9,12 +9,12 @@ spec:
     server: https://kubernetes.default.svc
   project: seed
   source:
-    path: projects/nx/src/apps/argocd-system
+    path: projects/nx/src/apps/*argocd-system/applicationsets
     repoURL: https://github.com/chezmoi-sh/atlas.git
     targetRevision: wip/iron-age
   syncPolicy:
     automated:
-      prune: true
+      prune: false
       selfHeal: true
     syncOptions:
       - CreateNamespace=true

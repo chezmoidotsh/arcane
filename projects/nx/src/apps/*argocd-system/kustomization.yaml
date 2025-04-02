@@ -4,20 +4,21 @@ kind: Kustomization
 namespace: argocd-system
 
 resources:
-  - argocd.oidc-credentials.external-secret.yaml
-  - argocd.ts-ingress.yaml
-  - namespace.yaml
+  - "*argocd.application.yaml"
+  - "*argocd.oidc-credentials.externalsecret.yaml"
+  - "*argocd.ingress.yaml"
+  - "*argotails.ts-secrets.externalsecret.yaml"
+  - "*namespace.yaml"
 
   # Manage all ArgoCD ApplicationSets through an Application
-  - argocd.applicationset.application.yaml
+  - "*argocd.applicationset.application.yaml"
 
 helmCharts:
   - name: argo-cd
     repo: https://argoproj.github.io/argo-helm
     releaseName: argocd
-    version: 7.8.11
+    version: 7.8.13
     valuesFile: argocd.helm-values/default.yaml
     additionalValuesFiles:
       - argocd.helm-values/extensions.yaml
-      - argocd.helm-values/external-clusters.yaml
       - argocd.helm-values/security-compliance.yaml

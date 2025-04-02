@@ -16,21 +16,29 @@ let
   };
 in
 {
-  # -- Environment variables
-  env.ATLAS_DIR = "${config.env.DEVENV_ROOT}";
+  # ┌───────────────────────────────────────────────────────────────────────────┐
+  # │ Environment variables definitions                                         │
+  # └───────────────────────────────────────────────────────────────────────────┘
+  # NOTE: in order to speed up a bit the development experience, we will use the
+  #       `.containerdev` folder as location for all cached items
+  env.HELM_CACHE_HOME = "${config.env.DEVENV_ROOT}/.cache/helm/cache";
+  env.HELM_CONFIG_HOME = "${config.env.DEVENV_ROOT}/.cache/helm/config";
+  env.HELM_DATA_HOME = "${config.env.DEVENV_ROOT}/.cache/helm/data";
 
-  env.DFT_SKIP_UNCHANGED = "true";
+  # NOTE: I don't want to use the default `~/.kube` folder for the kubeconfig file
+  #       because it is not mounted in the container, and I don't want to pollute
+  #       the host with a lot of files
+  env.KUBECONFIG = "${config.env.DEVENV_ROOT}/.cache/kubernetes/config.yaml";
 
-  env.HELM_CACHE_HOME = "${config.env.DEVENV_ROOT}/.direnv/helm/cache";
-  env.HELM_CONFIG_HOME = "${config.env.DEVENV_ROOT}/.direnv/helm/config";
-  env.HELM_DATA_HOME = "${config.env.DEVENV_ROOT}/.direnv/helm/data";
+  env.SOPS_AGE_KEY_FILE = "${config.env.DEVENV_ROOT}/.cache/sops/age.key";
 
-  env.KUBECONFIG = "${config.env.DEVENV_ROOT}/.direnv/kubernetes/config.yaml";
-  env.KUBECTL_EXTERNAL_DIFF = "${pkgs.difftastic}/bin/difft";
+  # ┌───────────────────────────────────────────────────────────────────────────┐
+  # │ Packages & languages configuration                                        │
+  # └───────────────────────────────────────────────────────────────────────────┘
+  languages.nix.enable = true;
+  languages.python.enable = true;
+  languages.python.directory = "${config.env.DEVENV_ROOT}/.direnv/python";
 
-  env.SOPS_AGE_KEY_FILE = "${config.env.DEVENV_ROOT}/.direnv/sops/age.key";
-
-  # -- Required packages
   packages = [
     # - Kubernetes and container tools
     pkgs.argocd
@@ -83,11 +91,13 @@ in
     pkgs.d2
   ];
 
-  # -- Customizations
-  languages.nix.enable = true;
-  languages.python.enable = true;
-  languages.python.directory = "${config.env.DEVENV_ROOT}/.direnv/python";
+  env.DFT_SKIP_UNCHANGED = "true";
+  env.KUBECTL_EXTERNAL_DIFF = "${pkgs.difftastic}/bin/difft";
+  difftastic.enable = true;
 
+  # ┌───────────────────────────────────────────────────────────────────────────┐
+  # │ Devcontainer configuration                                                │
+  # └───────────────────────────────────────────────────────────────────────────┘
   devcontainer.enable = true;
   devcontainer.settings.customizations.vscode.extensions = [
     "bierner.github-markdown-preview"
@@ -109,8 +119,27 @@ in
     "trunk.io"
     "visualstudioexptteam.vscodeintellicode"
   ];
-  difftastic.enable = true;
+  devcontainer.settings.features = {
+    "ghcr.io/devcontainers/features/docker-in-docker:2.12.1" = { };
+  };
+  devcontainer.settings.mounts = [
+    # NOTE: in order to avoid conflict with old .devenv files existing on the
+    #       host, we will mount this folder into a dedicated `tmpfs` volume
+    {
+      type = "tmpfs";
+      target = "\${containerWorkspaceFolder}/.devenv";
+    }
+  ];
+  devcontainer.settings.updateContentCommand = "
+    set -x;
+    sudo chown --recursive --no-dereference --silent vscode: /nix \"\${containerWorkspaceFolder}/.devenv\";
+    devenv test;
+    ${pkgs.direnv}/bin/direnv allow \"\${containerWorkspaceFolder}\";
+  ";
 
+  # ┌───────────────────────────────────────────────────────────────────────────┐
+  # │ Scripts & tasks definitions                                               │
+  # └───────────────────────────────────────────────────────────────────────────┘
   scripts.motd.exec = ''
       cat <<EOF
     ────────────────────────────────────────────────────────────────────────────────
@@ -120,16 +149,13 @@ in
 
     📚 No documentation has been written yet ... but it is planned
     🚀 How to build or update the infrastructure ?
-    - You can't.... nothing is ready yet
+       - You can't.... nothing is ready yet -
     ────────────────────────────────────────────────────────────────────────────────
     EOF
   '';
 
   enterShell = ''
     export PATH="${config.env.DEVENV_ROOT}/scripts:$PATH";
-
-    # Show MOTD only once, when the environment is built
-    find "${config.env.DEVENV_ROOT}/.direnv/motd" -type f -mtime +0 -exec rm {} \;
-    test -f "${config.env.DEVENV_ROOT}/.direnv/motd" || motd | tee "${config.env.DEVENV_ROOT}/.direnv/motd"
+    motd;
   '';
 }

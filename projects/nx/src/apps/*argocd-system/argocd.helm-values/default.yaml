@@ -23,21 +23,6 @@ configs:
     # disable `anonymous` user access
     users.anonymous.enabled: "false"
 
-    # TODO: Configure this part with a local AI agent + all information needed to add/configure applications
-    # # the URL for getting chat help, this will typically be your Slack channel for support
-    # help.chatUrl: "https://mycorp.slack.com/argo-cd"
-    # # the text for getting chat help, defaults to "Chat now!"
-    # help.chatText: "Chat now!"
-    # # The URLs to download additional ArgoCD binaries (besides the Linux with current platform binary included by default)
-    # # for different OS architectures. If provided, additional download buttons will be displayed on the help page.
-    # help.download.linux-amd64: "path-or-url-to-download"
-    # help.download.linux-arm64: "path-or-url-to-download"
-    # help.download.linux-ppc64le: "path-or-url-to-download"
-    # help.download.linux-s390x: "path-or-url-to-download"
-    # help.download.darwin-amd64: "path-or-url-to-download"
-    # help.download.darwin-arm64: "path-or-url-to-download"
-    # help.download.windows-amd64: "path-or-url-to-download"
-
     # OIDC configuration (optional), replacing Dex and leveraging local Authelia
     oidc.config: |
       name: Authelia
@@ -68,11 +53,26 @@ configs:
     applicationsetcontroller.enable.progressive.syncs: false
 
   # ArgoCD repositories configuration
+  # Only the `atlas` repository is configured here, as the other ones are managed by
+  # ArgoCD itself.
   repositories:
     github.chezmoi-sh.atlas:
       name: chezmoi.sh/atlas
       url: https://github.com/chezmoi-sh/atlas.git
       type: git
+
+  # ArgoCD clusters configuration
+  # Only the current cluster is configured here, as the other ones are managed by
+  # Argotails automatically.
+  clusterCredentials:
+    nx.tail831c5d.ts.net:
+      annotations:
+        device.tailscale.com/hostname: nx
+      labels:
+        argocd.argoproj.io/seed: ""
+
+      config: { tlsClientConfig: { insecure: false } }
+      server: https://kubernetes.default.svc
 
   # ArgoCD security configuration
   rbac:

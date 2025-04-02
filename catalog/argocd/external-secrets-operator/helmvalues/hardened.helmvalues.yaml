@@ -1,12 +1,6 @@
 ---
-# This Helm values file contains all default values used by the ExternalSecrets
-# Operator Helm chart.
-
-# Disable the cert-controller and webhook because external-secret is not using webhooks
-certController:
-  create: false
-webhook:
-  create: false
+# This Helm values file contains all hardened values used by the
+# External-Secrets Operator Helm chart.
 
 # Enforce the security context for the operator
 podSecurityContext:
