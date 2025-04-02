@@ -11,7 +11,7 @@ spec:
   source:
     path: projects/nx/src/apps/*argocd-system/applicationsets
     repoURL: https://github.com/chezmoi-sh/atlas.git
-    targetRevision: wip/iron-age
+    targetRevision: main
   syncPolicy:
     automated:
       prune: false

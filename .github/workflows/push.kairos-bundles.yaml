@@ -3,7 +3,7 @@ name: 📦 (re)Build all Kairos bundles
 
 on:
   push:
-    branches: [wip/iron-age] # default branch
+    branches: [main]
     paths:
       - .github/workflows/push.kairos-bundles.yaml
       - catalog/kairos-bundles/**

@@ -5,7 +5,7 @@ on:
   pull_request:
     paths: ["catalog/kairos-bundles/**"]
   push:
-    branches: [wip/iron-age] # default branch
+    branches: [main]
     paths: ["catalog/kairos-bundles/**"]
 
 permissions:

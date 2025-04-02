@@ -7,8 +7,7 @@ metadata:
 spec:
   interval: 1m0s
   ref:
-    # branch: wip/iron-age
-    branch: wip/iron-age_features/project-maison
+    branch: main
   url: https://github.com/chezmoi-sh/atlas.git
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
