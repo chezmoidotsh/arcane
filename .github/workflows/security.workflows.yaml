@@ -29,7 +29,7 @@ jobs:
       contents: read
     steps:
       - name: ⬇️ Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: 📄 Lint Github Actions
         run: |
@@ -40,4 +40,4 @@ jobs:
           ./actionlint -color
 
       - name: ✅ Ensure SHA pinned actions
-        uses: zgosalvez/github-actions-ensure-sha-pinned-actions@40e45e738b3cad2729f599d8afc6ed02184e1dbd # v3.0.5
+        uses: zgosalvez/github-actions-ensure-sha-pinned-actions@4830be28ce81da52ec70d65c552a7403821d98d4 # v3.0.23
