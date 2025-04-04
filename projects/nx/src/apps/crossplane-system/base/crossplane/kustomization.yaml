@@ -11,7 +11,7 @@ helmCharts:
   - name: crossplane
     repo: https://charts.crossplane.io/master/
     releaseName: crossplane
-    version: 1.18.0-rc.0.61.ged4e659c
+    version: 1.18.0-rc.0.148.g87140422
     valuesInline:
       securityContextCrossplane:
         capabilities:
