@@ -14,7 +14,7 @@ helmCharts:
     repo: https://pkgs.tailscale.com/helmcharts
     releaseName: tailscale-operator
     # renovate: datasource=github-releases depName=tailscale/tailscale
-    version: 1.80.3
+    version: 1.82.0
     valuesFile: tailscale-operator.helm-values.yaml
 
 patches:
