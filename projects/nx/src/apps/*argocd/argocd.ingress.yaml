@@ -3,6 +3,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  annotations:
+    link.argocd.argoproj.io/external-link: https://argocd.tail831c5d.ts.net
   labels:
     tailscale.com/proxy-class: restricted
   name: argocd
