@@ -1,6 +1,0 @@
----
-# This Helm values file contains all default values used by the External-Secrets
-# Operator Helm chart.
-
-# No more configuration is needed, as the default values are enough to
-# deploy the External-Secrets Operator in the argocd-system namespace.
