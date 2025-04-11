@@ -1,0 +1,22 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: traefik-ingress-allow-to-kubernetes-api
+  annotations:
+    networkpolicy.kubernetes.io/description: >-
+      Allow egress traffic from Tailscale ingress pods to the Kubernetes API.
+spec:
+  podSelector:
+    matchLabels:
+      tailscale.com/managed: "true"
+      tailscale.com/parent-resource-type: ingress
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - port: 443
+          protocol: TCP
+      to:
+        - ipBlock:
+            cidr: 10.43.0.1/32 # NOTE: this is the CIDR for the Kubernetes API

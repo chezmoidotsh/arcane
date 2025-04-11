@@ -1,0 +1,22 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - nameserver.coredns-addon.yaml
+  - operator-oauth.externalsecret.yaml
+  - restricted.proxyclass.yaml
+
+  # (SecOps) Network Policies
+  - security/allow-to-cluster.networkpolicy.yaml
+  - security/allow-to-internet.networkpolicy.yaml
+  - security/allow-to-kubernetes-api.networkpolicy.yaml
+
+transformers:
+  - |-
+    apiVersion: builtin
+    kind: NamespaceTransformer
+    metadata:
+      name: tailscale-system
+      namespace: tailscale-system
+    unsetOnly: true
