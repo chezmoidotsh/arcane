@@ -10,6 +10,7 @@ resources:
 
   # Manage all ArgoCD ApplicationSets through an Application
   - argocd.appprojects.yaml
+  - seed.applicationset.yaml
 
   # Install Argotails that manages all Tailscale clusters
   # secrets based on Tailscale's devices
