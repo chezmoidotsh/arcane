@@ -7,7 +7,7 @@ helmCharts:
     repo: https://kubernetes-sigs.github.io/external-dns/
     releaseName: external-dns-adguard
     namespace: kube-system
-    version: 1.16.0
+    version: 1.16.1
     valuesInline:
       logLevel: debug
       sources:
