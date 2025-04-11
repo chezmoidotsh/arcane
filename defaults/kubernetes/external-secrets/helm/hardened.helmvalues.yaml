@@ -1,0 +1,19 @@
+---
+# This Helm values file contains all hardened values used by the
+# External-Secrets Operator Helm chart.
+
+# Enforce the security context for the operator
+podSecurityContext:
+  runAsUser: 23987
+  runAsGroup: 23987
+  runAsNonRoot: true
+  fsGroup: 23987
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault

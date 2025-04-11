@@ -41,6 +41,7 @@ spec:
 
   sourceRepos:
     - https://github.com/chezmoi-sh/atlas.git # NOTE: main repository
+    - https://charts.external-secrets.io/ # NOTE: external-secrets repository (required on all clusters)
     - https://charts.jetstack.io # NOTE: cert-manager repository (required on all clusters)
   destinations:
     - # NOTE: allow any cluster to install system applications
