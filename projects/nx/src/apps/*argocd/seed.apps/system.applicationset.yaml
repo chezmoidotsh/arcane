@@ -28,6 +28,8 @@ spec:
                   exclude: true
                 - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/tailscale
                   exclude: true
+                - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/traefik
+                  exclude: true
   template:
     metadata:
       annotations:

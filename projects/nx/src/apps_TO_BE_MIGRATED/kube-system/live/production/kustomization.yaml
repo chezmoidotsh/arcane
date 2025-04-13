@@ -8,10 +8,6 @@ resources:
   - ../../base/external-dns-cloudflare
   - ../../base/external-dns-adguard
 
-  # Traefik for ingress routing
-  - ../../base/traefik
-  - gateway-default.yaml
-
 patches:
   # Configure ExternalDNS to work with Cloudflare
   - patch: |-

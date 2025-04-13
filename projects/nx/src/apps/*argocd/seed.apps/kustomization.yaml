@@ -6,6 +6,7 @@ resources:
   - cert-manager.application.yaml
   - external-secrets.application.yaml
   - tailscale.application.yaml
+  - traefik.application.yaml
 
   - apps.applicationset.yaml
   - system.applicationset.yaml
