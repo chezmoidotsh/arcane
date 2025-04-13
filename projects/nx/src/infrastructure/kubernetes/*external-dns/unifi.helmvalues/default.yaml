@@ -1,0 +1,75 @@
+# ExternalDNS configuration for UniFi provider
+# This configuration sets up ExternalDNS to manage DNS records in UniFi based on Kubernetes resources
+
+---
+# Sources define which Kubernetes resources ExternalDNS should monitor for DNS record management
+sources:
+  - crd # Custom Resource Definitions
+  - gateway-grpcroute # gRPC Gateway routes
+  - gateway-httproute # HTTP Gateway routes
+  - gateway-tcproute # TCP Gateway routes
+  - gateway-tlsroute # TLS Gateway routes
+  - gateway-udproute # UDP Gateway routes
+  - ingress # Ingress resources
+  - service # Service resources
+
+# The owner of the TXT records created by ExternalDNS (unique identifier for any clusters)
+txtOwner: external-dns.nx
+
+# Create a service account for ExternalDNS dedicated to UniFi
+rbac:
+  create: true
+serviceAccount:
+  create: true
+  name: external-dns-unifi
+
+# Policy defines how ExternalDNS should manage DNS records
+policy: sync # Ensures DNS records match the desired state of Kubernetes resources
+
+# Provider configuration
+provider:
+  name: webhook
+  webhook:
+    image:
+      repository: ghcr.io/kashalls/external-dns-unifi-webhook
+      tag: v0.5.2
+    env:
+      - name: UNIFI_HOST
+        value: https://10.10.10.10
+      - name: UNIFI_EXTERNAL_CONTROLLER
+        value: "false"
+      - name: UNIFI_API_KEY
+        valueFrom:
+          secretKeyRef:
+            name: external-dns-unifi-secret
+            key: api-key
+      - name: LOG_LEVEL
+        value: debug
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: http-webhook
+      initialDelaySeconds: 10
+      timeoutSeconds: 5
+    readinessProbe:
+      httpGet:
+        path: /readyz
+        port: http-webhook
+      initialDelaySeconds: 10
+      timeoutSeconds: 5
+
+# Because DNS management is currently not "complete", we limit the record types that ExternalDNS will manage
+# to the strict minimum required.
+managedRecordTypes:
+  - A
+  - TXT
+
+# Additional command-line arguments for ExternalDNS
+extraArgs:
+  # Only use the new TXT format for records
+  - --txt-new-format-only
+  # Configure CRD source with specific API version and kind
+  - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
+  - --crd-source-kind=DNSEndpoint
+  # Exclude resources with the annotation external-dns.alpha.kubernetes.io/exclude-unifi=true
+  - --annotation-filter=external-dns.alpha.kubernetes.io/exclude-unifi notin (true)
