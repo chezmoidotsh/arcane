@@ -1,7 +1,6 @@
-# trunk-ignore-all(yamllint/comments-indentation): Want to keep comments like they are defined in the original file
-# trunk-ignore-all(yamllint/braces): This YAML contains Go template syntax
+# trunk-ignore-all(prettier): This file contains template and is difficult to format for prettier
 ---
-# yaml-language-server: $schema=https://www.authelia.com/schemas/latest/json-schema/configuration.json
+# yaml-language-server: $schema=https://www.authelia.com/schemas/v4.39/json-schema/configuration.json
 
 ###############################################################################
 ##                           Authelia Configuration                          ##
@@ -39,7 +38,7 @@ server:
   ## Formats:
   ##  - [<scheme>://]<hostname>[:<port>][/<path>]
   ##  - [<scheme>://][hostname]:<port>[/<path>]
-  ## Square brackets indicate optional portions of the format. Scheme must be 'tcp', 'tcp4', 'tcp6', or 'unix'.
+  ## Square brackets indicate optional portions of the format. Scheme must be 'tcp', 'tcp4', 'tcp6', 'unix', or 'fd'.
   ## The default scheme is 'unix' if the address is an absolute path otherwise it's 'tcp'. The default port is '9091'.
   ## If the path is specified this configures the router to handle both the `/` path and the configured path.
   address: tcp://:9091/
@@ -71,16 +70,15 @@ server:
 
   ## Server Buffers configuration.
   buffers:
+    ## Buffers usually should be configured to be the same value.
+    ## Explanation at https://www.authelia.com/c/server#buffer-sizes
+    ## Read buffer size adjusts the server's max incoming request size in bytes.
+    ## Write buffer size does the same for outgoing responses.
 
-  ## Buffers usually should be configured to be the same value.
-  ## Explanation at https://www.authelia.com/c/server#buffer-sizes
-  ## Read buffer size adjusts the server's max incoming request size in bytes.
-  ## Write buffer size does the same for outgoing responses.
-
-  ## Read buffer.
+    ## Read buffer.
     read: 8192
 
-  ## Write buffer.
+    ## Write buffer.
     write: 8192
 
   ## Server Timeouts configuration.
@@ -234,19 +232,74 @@ webauthn:
   ## Disable WebAuthn.
   disable: false
 
-  ## The interaction timeout for WebAuthn dialogues in the duration common syntax.
-  # timeout: '60 seconds'
+  ## Enables logins via a Passkey.
+  enable_passkey_login: true
 
   ## The display name the browser should show the user for when using WebAuthn to login/register.
   display_name: chezmoi.sh - Single Sign-On
 
   ## Conveyance preference controls if we collect the attestation statement including the AAGUID from the device.
   ## Options are none, indirect, direct.
-  # attestation_conveyance_preference: 'indirect'
+  attestation_conveyance_preference: direct
 
-  ## User verification controls if the user must make a gesture or action to confirm they are present.
-  ## Options are required, preferred, discouraged.
-  user_verification: required
+  ## The interaction timeout for WebAuthn dialogues in the duration common syntax.
+  # timeout: '60 seconds'
+
+  ## Authenticator Filtering.
+  filtering:
+    ## Prohibits registering Authenticators that claim they can export their credentials in some way.
+    prohibit_backup_eligibility: true
+
+    ## Permitted AAGUID's. If configured specifically only allows the listed AAGUID's.
+    # permitted_aaguids: []
+
+    ## Prohibited AAGUID's. If configured prohibits the use of specific AAGUID's.
+    # prohibited_aaguids: []
+
+  ## Selection Criteria controls the preferences for registration.
+  selection_criteria:
+    ## The attachment preference. Either 'cross-platform' for dedicated authenticators, or 'platform' for embedded
+    ## authenticators.
+    # attachment: 'cross-platform'
+
+    ## The discoverability preference. Options are 'discouraged', 'preferred', and 'required'.
+    # discoverability: 'discouraged'
+
+    ## User verification controls if the user must make a gesture or action to confirm they are present.
+    ## Options are required, preferred, discouraged.
+    user_verification: required
+
+  ## Metadata Service validation via MDS3.
+  metadata:
+    # Enable the metadata fetch behaviour.
+    enabled: false
+
+    # Enable Validation of the Trust Anchor. This generally should be enabled if you're using the metadata. It
+    # ensures the attestation certificate presented by the authenticator is valid against the MDS3 certificate that
+    # issued the attestation certificate.
+    validate_trust_anchor: true
+
+    # Enable Validation of the Entry. This ensures that the MDS3 actually contains the metadata entry. If not enabled
+    # attestation certificates which are not formally registered will be skipped. This may potentially exclude some
+    # virtual authenticators.
+    validate_entry: true
+
+    # Enabling this allows attestation certificates with a zero AAGUID to pass validation. This is important if you do
+    # use non-conformant authenticators like Apple ID.
+    validate_entry_permit_zero_aaguid: false
+
+    # Enable Validation of the Authenticator Status.
+    validate_status: true
+
+    # List of statuses which are considered permitted when validating an authenticator's metadata. Generally it is
+    # recommended that this is not configured as any other status the authenticator's metadata has will result in an
+    # error. This option is ineffectual if validate_status is false.
+    # validate_status_permitted: ~
+
+    # List of statuses that should be prohibited when validating an authenticator's metadata. Generally it is
+    # recommended that this is not configured as there are safe defaults. This option is ineffectual if validate_status
+    # is false, or validate_status_permitted has values.
+    # validate_status_prohibited: ~
 
 ##
 ## Duo Push API Configuration
@@ -465,9 +518,10 @@ authentication_backend:
     # permit_referrals: false
 
     ## The username and password of the admin user.
-    user: {{ secret "/var/run/secrets/authelia.com/authentication_backend_ldap_user" }}
+    user: "{{ secret "/var/run/secrets/authelia.com/authelia-ldap/authentication.backend.ldap.user" }}"
+
     ## Password can also be set using a secret: https://www.authelia.com/c/secrets
-    password: {{ secret "/var/run/secrets/authelia.com/authentication_backend_ldap_password" }}
+    password: "{{ secret "/var/run/secrets/authelia.com/authelia-ldap/authentication.backend.ldap.password" }}"
 
     ## The attributes for users and objects from the directory server.
     attributes:
@@ -598,8 +652,8 @@ privacy_policy:
 ##
 ## Access control is a list of rules defining the authorizations applied for one resource to users or group of users.
 ##
-## If 'access_control' is not defined, ACL rules are disabled and the 'bypass' rule is applied, i.e., access is allowed
-## to anyone. Otherwise restrictions follow the rules defined.
+## If 'access_control' is not defined, ACL rules are disabled and the 'deny' rule is applied, i.e., access is denied
+## to everyone. Otherwise restrictions follow the rules defined.
 ##
 ## Note: One can use the wildcard * to match any subdomain.
 ## It must stand at the beginning of the pattern. (example: *.example.com)
@@ -769,7 +823,8 @@ access_control:
 session:
   ## The secret to encrypt the session data. This is only used with Redis / Redis Sentinel.
   ## Secret can also be set using a secret: https://www.authelia.com/c/secrets
-  # secret: 'insecure_session_secret'
+  # NOTE: This is managed by the helm chart (environment variable)
+  # secret: {{ secret "/var/run/secrets/authelia.com/internal/session.encryption.key" | quote }}
 
   ## Cookies configures the list of allowed cookie domains for sessions to be created on.
   ## Undefined values will default to the values below.
@@ -857,6 +912,12 @@ session:
   ## Use a unix socket instead
   # host: '/var/run/redis/redis.sock'
 
+  ## The connection timeout in the duration common syntax.
+  # timeout: '5 seconds'
+
+  ## The maximum number of retries on a failed command. Set it to 0 to disable retries
+  # max_retries: 3
+
   ## Username used for redis authentication. This is optional and a new feature in redis 6.0.
   # username: 'authelia'
 
@@ -942,6 +1003,10 @@ session:
 ## This mechanism prevents attackers from brute forcing the first factor. It bans the user if too many attempts are made
 ## in a short period of time.
 regulation:
+  ## Regulation Mode.
+  # modes:
+    # - 'user'
+
   ## The number of failed login attempts before user is banned. Set it to 0 to disable regulation.
   max_retries: 3
 
@@ -960,7 +1025,8 @@ storage:
   ## The encryption key that is used to encrypt sensitive information in the database. Must be a string with a minimum
   ## length of 20. Please see the docs if you configure this with an undesirable key and need to change it, you MUST use
   ## the CLI to change this in the database if you want to change it from a previously configured value.
-  encryption_key: {{ secret "/var/run/secrets/authelia.com/storage_encryption_key" | quote }}
+  # NOTE: This is managed by the helm chart (environment variable)
+  # encryption_key: {{ secret "/var/run/secrets/authelia.com/internal/storage.encryption.key" | quote }}
 
   ##
   ## Local (Storage Provider)
@@ -1038,64 +1104,35 @@ storage:
   ## PostgreSQL (Storage Provider)
   ##
   # postgres:
-  ## The address of the PostgreSQL server to connect to in the address common syntax.
-  ## Format: [<scheme>://]<hostname>[:<port>].
-  ## Square brackets indicate optional portions of the format. Scheme must be 'tcp', 'tcp4', 'tcp6', or 'unix`.
-  ## The default scheme is 'unix' if the address is an absolute path otherwise it's 'tcp'. The default port is '5432'.
-  # address: 'tcp://127.0.0.1:5432'
+    ## The address of the PostgreSQL server to connect to in the address common syntax.
+    ## Format: [<scheme>://]<hostname>[:<port>].
+    ## Square brackets indicate optional portions of the format. Scheme must be 'tcp', 'tcp4', 'tcp6', or 'unix'.
+    ## The default scheme is 'unix' if the address is an absolute path otherwise it's 'tcp'. The default port is '5432'.
+    # address: 'tcp://127.0.0.1:5432'
 
-  ## The database name to use.
-  # database: 'authelia'
+    ## List of additional server instance configurations to fallback to when the primary instance is not available.
+    # servers:
+      # -
+        ## The Address of this individual instance.
+        # address: 'tcp://127.0.0.1:5432'
 
-  ## The schema name to use.
-  # schema: 'public'
-
-  ## The username used for SQL authentication.
-  # username: 'authelia'
-
-  ## The password used for SQL authentication.
-  ## Can also be set using a secret: https://www.authelia.com/c/secrets
-  # password: '<redacted>'
-
-  ## The connection timeout in the duration common syntax.
-  # timeout: '5 seconds'
-
-  ## PostgreSQL TLS settings. Configuring this requires TLS.
-  # tls:
-  ## The server subject name to check the servers certificate against during the validation process.
-  ## This option is not required if the certificate has a SAN which matches the address options hostname.
-  # server_name: 'postgres.example.com'
-
-  ## Skip verifying the server certificate entirely. In preference to setting this we strongly recommend you add the
-  ## certificate or the certificate of the authority signing the certificate to the certificates directory which is
-  ## defined by the `certificates_directory` option at the top of the configuration.
-  ## It's important to note the public key should be added to the directory, not the private key.
-  ## This option is strongly discouraged but may be useful in some self-signed situations where validation is not
-  ## important to the administrator.
-  # skip_verify: false
-
-  ## Minimum TLS version for the connection.
-  # minimum_version: 'TLS1.2'
-
-  ## Maximum TLS version for the connection.
-  # maximum_version: 'TLS1.3'
-
-  ## The certificate chain used with the private_key if the server requests TLS Client Authentication
-  ## i.e. Mutual TLS.
-  # certificate_chain: |
-  # -----BEGIN CERTIFICATE-----
-  # ...
-  # -----END CERTIFICATE-----
-  # -----BEGIN CERTIFICATE-----
-  # ...
-  # -----END CERTIFICATE-----
-
-  ## The private key used with the certificate_chain if the server requests TLS Client Authentication
-  ## i.e. Mutual TLS.
-  # private_key: |
-  # -----BEGIN RSA PRIVATE KEY-----
-  # ...
-  # -----END RSA PRIVATE KEY-----
+        ## The TLS configuration for this individual instance.
+        # tls:
+          # server_name: 'postgres.example.com'
+          # skip_verify: false
+          # minimum_version: 'TLS1.2'
+          # maximum_version: 'TLS1.3'
+          # certificate_chain: |
+            # -----BEGIN CERTIFICATE-----
+            # ...
+            # -----END CERTIFICATE-----
+            # -----BEGIN CERTIFICATE-----
+            # ...
+            # -----END CERTIFICATE-----
+          # private_key: |
+            # -----BEGIN RSA PRIVATE KEY-----
+            # ...
+            # -----END RSA PRIVATE KEY-----
 
 ##
 ## Notification Provider
@@ -1132,11 +1169,11 @@ notifier:
     # timeout: '5 seconds'
 
     ## The username used for SMTP authentication.
-    username: {{ secret "/var/run/secrets/authelia.com/notifier_smtp_username" }}
+    username: "{{ secret "/var/run/secrets/authelia.com/authelia-smtp/notifier.smtp.username" }}"
 
     ## The password used for SMTP authentication.
     ## Can also be set using a secret: https://www.authelia.com/c/secrets
-    password: {{ secret "/var/run/secrets/authelia.com/notifier_smtp_password" }}
+    password: "{{ secret "/var/run/secrets/authelia.com/authelia-smtp/notifier.smtp.password" }}"
 
     ## The sender is used to is used for the MAIL FROM command and the FROM header.
     ## If this is not defined and the username is an email, we use the username as this value. This can either be just
@@ -1202,12 +1239,12 @@ identity_providers:
   ##
   ## OpenID Connect (Identity Provider)
   ##
-  ## It's recommended you read the documentation before configuration of this section:
-  ## https://www.authelia.com/c/oidc
+  ## It's recommended you read the documentation before configuration of this section.
+  ## See: https://www.authelia.com/c/oidc/provider
   oidc:
     ## The hmac_secret is used to sign OAuth2 tokens (authorization code, access tokens and refresh tokens).
     ## HMAC Secret can also be set using a secret: https://www.authelia.com/c/secrets
-    hmac_secret: {{ secret "/var/run/secrets/authelia.com/identity_providers_oidc_hmac_secret" }}
+    hmac_secret: "{{ secret "/var/run/secrets/authelia.com/authelia-oidc/identity.providers.oidc.hmac.secret" }}"
 
     ## The JWK's issuer option configures multiple JSON Web Keys. It's required that at least one of the JWK's
     ## configured has the RS256 algorithm. For RSA keys (RS or PS) the minimum is a 2048 bit key.
@@ -1216,9 +1253,9 @@ identity_providers:
         algorithm: RS256
         use: sig
         key: |
-          {{ secret "/var/run/secrets/authelia.com/identity_providers_oidc_jwks_default_key" | nindent 10 }}
+          {{ secret "/var/run/secrets/authelia.com/authelia-oidc/identity.providers.oidc.jwks.default.key" | nindent 10 }}
         certificate_chain: |
-          {{ secret "/var/run/secrets/authelia.com/identity_providers_oidc_jwks_default_certificate_chain" | nindent 10 }}
+          {{ secret "/var/run/secrets/authelia.com/authelia-oidc/identity.providers.oidc.jwks.default.certificate_chain" | nindent 10 }}
       ## Key ID embedded into the JWT header for key matching. Must be an alphanumeric string with 7 or less characters.
       ## This value is automatically generated if not provided. It's recommended to not configure this.
       # key_id: 'example'
@@ -1314,182 +1351,186 @@ identity_providers:
       ## provided they have the scheme http or https and do not have the hostname of localhost.
       allowed_origins_from_client_redirect_uris: false
 
-    ## Clients is a list of known clients and their configuration.
+    ## Clients is a list of registered clients and their configuration.
+    ## It's recommended you read the documentation before configuration of a registered client.
+    ## See: https://www.authelia.com/c/oidc/registered-clients
     clients:
-      - {{ secret "/var/run/secrets/authelia.com/oidc_client_argocd" | nindent 8 }}
-      - {{ secret "/var/run/secrets/authelia.com/oidc_client_argocd_cli" | nindent 8 }}
-      - {{ secret "/var/run/secrets/authelia.com/oidc_client_budibase" | nindent 8 }}
-      - {{ secret "/var/run/secrets/authelia.com/oidc_client_linkding" | nindent 8 }}
-      - {{ secret "/var/run/secrets/authelia.com/oidc_client_mealie" | nindent 8 }}
-      - {{ secret "/var/run/secrets/authelia.com/oidc_client_paperless_ngx" | nindent 8 }}
-      - {{ secret "/var/run/secrets/authelia.com/oidc_client_proxmox" | nindent 8 }}
+      - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.argocd" | nindent 8 }}
+      - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.argocd_cli" | nindent 8 }}
+      - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.budibase" | nindent 8 }}
+      - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.linkding" | nindent 8 }}
+      - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.mealie" | nindent 8 }}
+      - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.paperless_ngx" | nindent 8 }}
+      - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.proxmox" | nindent 8 }}
+      
       # -
-      ## The Client ID is the OAuth 2.0 and OpenID Connect 1.0 Client ID which is used to link an application to a
-      ## configuration.
-      # client_id: 'myapp'
+        ## The Client ID is the OAuth 2.0 and OpenID Connect 1.0 Client ID which is used to link an application to a
+        ## configuration.
+        # client_id: 'myapp'
 
-      ## The description to show to users when they end up on the consent screen. Defaults to the ID above.
-      # client_name: 'My Application'
+        ## The description to show to users when they end up on the consent screen. Defaults to the ID above.
+        # client_name: 'My Application'
 
-      ## The client secret is a shared secret between Authelia and the consumer of this client.
-      # yamllint disable-line rule:line-length
-      # client_secret: '$pbkdf2-sha512$310000$c8p78n7pUMln0jzvd4aK4Q$JNRBzwAo0ek5qKn50cFzzvE9RXV88h1wJn5KGiHrD0YKtZaR/nCb2CJPOsKaPK0hjf.9yHxzQGZziziccp6Yng'  # The digest of 'insecure_secret'.
+        ## The client secret is a shared secret between Authelia and the consumer of this client.
+        # yamllint disable-line rule:line-length
+        # client_secret: '$pbkdf2-sha512$310000$c8p78n7pUMln0jzvd4aK4Q$JNRBzwAo0ek5qKn50cFzzvE9RXV88h1wJn5KGiHrD0YKtZaR/nCb2CJPOsKaPK0hjf.9yHxzQGZziziccp6Yng'  # The digest of 'insecure_secret'.
 
-      ## Sector Identifiers are occasionally used to generate pairwise subject identifiers. In most cases this is not
-      ## necessary. It is critical to read the documentation for more information.
-      # sector_identifier_uri: 'https://example.com/sector.json'
+        ## Sector Identifiers are occasionally used to generate pairwise subject identifiers. In most cases this is not
+        ## necessary. It is critical to read the documentation for more information.
+        # sector_identifier_uri: 'https://example.com/sector.json'
 
-      ## Sets the client to public. This should typically not be set, please see the documentation for usage.
-      # public: false
+        ## Sets the client to public. This should typically not be set, please see the documentation for usage.
+        # public: false
 
-      ## Redirect URI's specifies a list of valid case-sensitive callbacks for this client.
-      # redirect_uris:
-      # - 'https://oidc.example.com:8080/oauth2/callback'
+        ## Redirect URI's specifies a list of valid case-sensitive callbacks for this client.
+        # redirect_uris:
+          # - 'https://oidc.example.com:8080/oauth2/callback'
 
-      ## Request URI's specifies a list of valid case-sensitive TLS-secured URIs for this client for use as
-      ## URIs to fetch Request Objects.
-      # request_uris:
-      # - 'https://oidc.example.com:8080/oidc/request-object.jwk'
+        ## Request URI's specifies a list of valid case-sensitive TLS-secured URIs for this client for use as
+        ## URIs to fetch Request Objects.
+        # request_uris:
+          # - 'https://oidc.example.com:8080/oidc/request-object.jwk'
 
-      ## Audience this client is allowed to request.
-      # audience: []
+        ## Audience this client is allowed to request.
+        # audience: []
 
-      ## Scopes this client is allowed to request.
-      # scopes:
-      # - 'openid'
-      # - 'groups'
-      # - 'email'
-      # - 'profile'
+        ## Scopes this client is allowed to request.
+        # scopes:
+          # - 'openid'
+          # - 'groups'
+          # - 'email'
+          # - 'profile'
 
-      ## Grant Types configures which grants this client can obtain.
-      ## It's not recommended to define this unless you know what you're doing.
-      # grant_types:
-      # - 'authorization_code'
+        ## Grant Types configures which grants this client can obtain.
+        ## It's not recommended to define this unless you know what you're doing.
+        # grant_types:
+          # - 'authorization_code'
 
-      ## Response Types configures which responses this client can be sent.
-      ## It's not recommended to define this unless you know what you're doing.
-      # response_types:
-      # - 'code'
+        ## Response Types configures which responses this client can be sent.
+        ## It's not recommended to define this unless you know what you're doing.
+        # response_types:
+          # - 'code'
 
-      ## Response Modes configures which response modes this client supports.
-      # response_modes:
-      # - 'form_post'
-      # - 'query'
+        ## Response Modes configures which response modes this client supports.
+        # response_modes:
+          # - 'form_post'
+          # - 'query'
 
-      ## The policy to require for this client; one_factor or two_factor. Can also be the key names for the
-      ## authorization policies section.
-      # authorization_policy: 'two_factor'
+        ## The policy to require for this client; one_factor or two_factor. Can also be the key names for the
+        ## authorization policies section.
+        # authorization_policy: 'two_factor'
 
-      ## The custom lifespan name to use for this client. This must be configured independent of the client before
-      ## utilization. Custom lifespans are reusable similar to authorization policies.
-      # lifespan: ''
+        ## The custom lifespan name to use for this client. This must be configured independent of the client before
+        ## utilization. Custom lifespans are reusable similar to authorization policies.
+        # lifespan: ''
 
-      ## The consent mode controls how consent is obtained.
-      # consent_mode: 'auto'
+        ## The consent mode controls how consent is obtained.
+        # consent_mode: 'auto'
 
-      ## This value controls the duration a consent on this client remains remembered when the consent mode is
-      ## configured as 'auto' or 'pre-configured' in the duration common syntax.
-      # pre_configured_consent_duration: '1 week'
+        ## This value controls the duration a consent on this client remains remembered when the consent mode is
+        ## configured as 'auto' or 'pre-configured' in the duration common syntax.
+        # pre_configured_consent_duration: '1 week'
 
-      ## Requires the use of Pushed Authorization Requests for this client when set to true.
-      # require_pushed_authorization_requests: false
+        ## Requires the use of Pushed Authorization Requests for this client when set to true.
+        # require_pushed_authorization_requests: false
 
-      ## Enforces the use of PKCE for this client when set to true.
-      # require_pkce: false
+        ## Enforces the use of PKCE for this client when set to true.
+        # require_pkce: false
 
-      ## Enforces the use of PKCE for this client when configured, and enforces the specified challenge method.
-      ## Options are 'plain' and 'S256'.
-      # pkce_challenge_method: 'S256'
+        ## Enforces the use of PKCE for this client when configured, and enforces the specified challenge method.
+        ## Options are 'plain' and 'S256'.
+        # pkce_challenge_method: 'S256'
 
-      ## The permitted client authentication method for the Token Endpoint for this client.
-      ## For confidential client types this value defaults to 'client_secret_basic' and for the public client types it
-      ## defaults to 'none' per the specifications.
-      # token_endpoint_auth_method: 'client_secret_basic'
+        ## The permitted client authentication method for the Token Endpoint for this client.
+        ## For confidential client types this value defaults to 'client_secret_basic' and for the public client types it
+        ## defaults to 'none' per the specifications.
+        # token_endpoint_auth_method: 'client_secret_basic'
 
-      ## The permitted client authentication signing algorithm for the Token Endpoint for this client when using
-      ## the 'client_secret_jwt' or 'private_key_jwt' token_endpoint_auth_method.
-      # token_endpoint_auth_signing_alg: 'RS256'
+        ## The permitted client authentication signing algorithm for the Token Endpoint for this client when using
+        ## the 'client_secret_jwt' or 'private_key_jwt' token_endpoint_auth_method.
+        # token_endpoint_auth_signing_alg: 'RS256'
 
-      ## The signing algorithm which must be used for request objects. A client JWK with a matching algorithm must be
-      ## available if configured.
-      # request_object_signing_alg: 'RS256'
+        ## The signing algorithm which must be used for request objects. A client JWK with a matching algorithm must be
+        ## available if configured.
+        # request_object_signing_alg: 'RS256'
 
-      ## The signing algorithm used for signing the authorization response. An issuer JWK with a matching algorithm
-      ## must be available when configured. Configuring this value enables the  JWT Secured Authorization Response
-      ## Mode (JARM) for this client. JARM is not understood by a majority of clients so you should only configure
-      ## this when you know it's supported.
-      ## Has no effect if authorization_signed_response_key_id is configured.
-      # authorization_signed_response_alg: 'none'
+        ## The signing algorithm used for signing the authorization response. An issuer JWK with a matching algorithm
+        ## must be available when configured. Configuring this value enables the  JWT Secured Authorization Response
+        ## Mode (JARM) for this client. JARM is not understood by a majority of clients so you should only configure
+        ## this when you know it's supported.
+        ## Has no effect if authorization_signed_response_key_id is configured.
+        # authorization_signed_response_alg: 'none'
 
-      ## The signing key id used for signing the authorization response. An issuer JWK with a matching key id must be
-      ## available when configured. Configuring this value enables the JWT Secured Authorization Response Mode (JARM)
-      ## for this client. JARM is not understood by a majority of clients so you should only configure this when you
-      ## know it's supported.
-      # authorization_signed_response_key_id: ''
+        ## The signing key id used for signing the authorization response. An issuer JWK with a matching key id must be
+        ## available when configured. Configuring this value enables the JWT Secured Authorization Response Mode (JARM)
+        ## for this client. JARM is not understood by a majority of clients so you should only configure this when you
+        ## know it's supported.
+        # authorization_signed_response_key_id: ''
 
-      ## The signing algorithm used for ID Tokens. An issuer JWK with a matching algorithm must be available when
-      ## configured. Has no effect if id_token_signed_response_key_id is configured.
-      # id_token_signed_response_alg: 'RS256'
+        ## The signing algorithm used for ID Tokens. An issuer JWK with a matching algorithm must be available when
+        ## configured. Has no effect if id_token_signed_response_key_id is configured.
+        # id_token_signed_response_alg: 'RS256'
 
-      ## The signing key id used for ID Tokens. An issuer JWK with a matching key id must be available when
-      ## configured.
-      # id_token_signed_response_key_id: ''
+        ## The signing key id used for ID Tokens. An issuer JWK with a matching key id must be available when
+        ## configured.
+        # id_token_signed_response_key_id: ''
 
-      ## The signing algorithm used for Access Tokens. An issuer JWK with a matching algorithm must be available.
-      ## Has no effect if access_token_signed_response_key_id is configured. Values other than 'none' enable RFC9068
-      ## for this client.
-      # access_token_signed_response_alg: 'none'
+        ## The signing algorithm used for Access Tokens. An issuer JWK with a matching algorithm must be available.
+        ## Has no effect if access_token_signed_response_key_id is configured. Values other than 'none' enable RFC9068
+        ## for this client.
+        # access_token_signed_response_alg: 'none'
 
-      ## The signing key id used for Access Tokens. An issuer JWK with a matching key id must be available when
-      ## configured. Values other than a blank value enable RFC9068 for this client.
-      # access_token_signed_response_key_id: ''
+        ## The signing key id used for Access Tokens. An issuer JWK with a matching key id must be available when
+        ## configured. Values other than a blank value enable RFC9068 for this client.
+        # access_token_signed_response_key_id: ''
 
-      ## The signing algorithm used for User Info responses. An issuer JWK with a matching algorithm must be
-      ## available. Has no effect if userinfo_signing_key_id is configured.
-      # userinfo_signed_response_alg: 'none'
+        ## The signing algorithm used for User Info responses. An issuer JWK with a matching algorithm must be
+        ## available. Has no effect if userinfo_signing_key_id is configured.
+        # userinfo_signed_response_alg: 'none'
 
-      ## The signing key id used for User Info responses. An issuer JWK with a matching key id must be available when
-      ## configured.
-      # userinfo_signed_response_key_id: ''
+        ## The signing key id used for User Info responses. An issuer JWK with a matching key id must be available when
+        ## configured.
+        # userinfo_signed_response_key_id: ''
 
-      ## The signing algorithm used for Introspection responses. An issuer JWK with a matching algorithm must be
-      ## available when configured. Has no effect if introspection_signed_response_key_id is configured.
-      # introspection_signed_response_alg: 'none'
+        ## The signing algorithm used for Introspection responses. An issuer JWK with a matching algorithm must be
+        ## available when configured. Has no effect if introspection_signed_response_key_id is configured.
+        # introspection_signed_response_alg: 'none'
 
-      ## The signing key id used for Introspection responses. An issuer JWK with a matching key id must be available
-      ## when configured.
-      # introspection_signed_response_key_id: ''
+        ## The signing key id used for Introspection responses. An issuer JWK with a matching key id must be available
+        ## when configured.
+        # introspection_signed_response_key_id: ''
 
-      ## Trusted public keys configuration for request object signing for things such as 'private_key_jwt'.
-      ## URL of the HTTPS endpoint which serves the keys. Please note the 'jwks_uri' and the 'jwks' option below
-      ## are mutually exclusive.
-      # jwks_uri: 'https://app.example.com/jwks.json'
+        ## Trusted public keys configuration for request object signing for things such as 'private_key_jwt'.
+        ## URL of the HTTPS endpoint which serves the keys. Please note the 'jwks_uri' and the 'jwks' option below
+        ## are mutually exclusive.
+        # jwks_uri: 'https://app.example.com/jwks.json'
 
-      ## Trusted public keys configuration for request object signing for things such as 'private_key_jwt'.
-      ## List of JWKs known and registered with this client. It's recommended to use the 'jwks_uri' option if
-      ## available due to key rotation. Please note the 'jwks' and the 'jwks_uri' option above are mutually exclusive.
-      # jwks:
-      # -
-      ## Key ID used to match the JWT's to an individual identifier. This option is required if configured.
-      # key_id: 'example'
+        ## Trusted public keys configuration for request object signing for things such as 'private_key_jwt'.
+        ## List of JWKs known and registered with this client. It's recommended to use the 'jwks_uri' option if
+        ## available due to key rotation. Please note the 'jwks' and the 'jwks_uri' option above are mutually exclusive.
+        # jwks:
+          # -
+            ## Key ID used to match the JWT's to an individual identifier. This option is required if configured.
+            # key_id: 'example'
 
-      ## The key algorithm expected with this key.
-      # algorithm: 'RS256'
+            ## The key algorithm expected with this key.
+            # algorithm: 'RS256'
 
-      ## The key use expected with this key. Currently only 'sig' is supported.
-      # use: 'sig'
+            ## The key use expected with this key. Currently only 'sig' is supported.
+            # use: 'sig'
 
-      ## Required Public Key in PEM DER form.
-      # key: |
-      # -----BEGIN RSA PUBLIC KEY-----
-      # ...
-      # -----END RSA PUBLIC KEY-----
+            ## Required Public Key in PEM DER form.
+            # key: |
+              # -----BEGIN RSA PUBLIC KEY-----
+              # ...
+              # -----END RSA PUBLIC KEY-----
 
-      ## The matching certificate chain in PEM DER form that matches the key if available.
-      # certificate_chain: |
-      # -----BEGIN CERTIFICATE-----
-      # ...
-      # -----END CERTIFICATE-----
-      # -----BEGIN CERTIFICATE-----
-      # ...
-      # -----END CERTIFICATE-----
+            ## The matching certificate chain in PEM DER form that matches the key if available.
+            # certificate_chain: |
+              # -----BEGIN CERTIFICATE-----
+              # ...
+              # -----END CERTIFICATE-----
+              # -----BEGIN CERTIFICATE-----
+              # ...
+              # -----END CERTIFICATE-----
+...

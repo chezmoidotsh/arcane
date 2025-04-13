@@ -36,6 +36,11 @@ configs:
         - email
         - groups
 
+      # By default, Authelia will only return the `sub` claim in the ID token.
+      requestedIDTokenClaims:
+        email: {essential: true}
+        groups: {essential: true}
+
     # the metadata.label key name where Argo CD injects the app name as a tracking label, that
     # is used to determine which resources need to be deleted when pruning.
     application.instanceLabelKey: argocd.argoproj.io/instance

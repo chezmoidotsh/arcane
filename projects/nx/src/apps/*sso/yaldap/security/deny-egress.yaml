@@ -1,0 +1,16 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-yaldap-egress
+  annotations:
+    networkpolicy.kubernetes.io/description: >-
+      Deny all egress traffic from Yaldap pods.
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: yaldap
+      app.kubernetes.io/name: yaldap
+  policyTypes:
+    - Egress
+  egress: []

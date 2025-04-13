@@ -1,0 +1,23 @@
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/include-unifi: "true"
+  name: ldaps-tlsroute
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: ldaps-gateway
+      namespace: traefik-system
+      sectionName: ldaps
+  hostnames:
+    - ldaps.chezmoi.sh
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: yaldap
+          port: 389
+          weight: 1

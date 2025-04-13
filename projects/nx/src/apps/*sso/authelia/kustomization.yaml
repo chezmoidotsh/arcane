@@ -1,0 +1,40 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: sso
+
+resources:
+  - authelia.externalsecret.yaml
+  - authelia-ldap.externalsecret.yaml
+  - authelia-oidc.externalsecret.yaml
+  - authelia-smtp.externalsecret.yaml
+  - sso.httproute.yaml
+  - sso.tailscale.yaml
+
+  # SecOps (Network Policies)
+  - security/allow-from-traefik.yaml
+  - security/allow-to-aws-ses.yaml
+  - security/allow-to-tailscale.yaml
+
+helmCharts:
+  - name: authelia
+    repo: https://charts.authelia.com
+    releaseName: authelia
+    version: 0.10.4
+    valuesFile: authelia.helmvalues/default.yaml
+    additionalValuesFiles:
+      - authelia.helmvalues/hardened.yaml
+
+configMapGenerator:
+  - name: authelia-configuration
+    files:
+      - configuration.yaml=configurations/authelia.yaml
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/volumeMounts/0/mountPath
+        value: /var/lib/authelia
+    target:
+      kind: Deployment
+      name: authelia

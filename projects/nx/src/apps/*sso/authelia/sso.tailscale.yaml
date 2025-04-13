@@ -1,4 +1,4 @@
-# trunk-ignore-all(checkov/CKV_K8S_21): This file is overrided by Kustomize
+# trunk-ignore-all(checkov/CKV_K8S_21): This file is overridden by Kustomize
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress

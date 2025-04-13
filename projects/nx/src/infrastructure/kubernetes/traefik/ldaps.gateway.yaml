@@ -1,11 +1,14 @@
+# The LDAPS Gateway provides secure LDAP over TLS access to the YALDAP service.
+# This configuration enables LDAPS (LDAP over TLS) on port 636 with proper
+# certificate management for secure authentication.
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: ldaps.chezmoi.sh
+  namespace: traefik-system
 spec:
   secretName: ldaps.chezmoi.sh-certificate
-
   dnsNames:
     - ldaps.chezmoi.sh
   duration: 2160h # 90d
@@ -28,25 +31,12 @@ spec:
       tls:
         mode: Terminate
         certificateRefs:
-          - kind: Secret
+          - group: ""
+            kind: Secret
             name: ldaps.chezmoi.sh-certificate
       allowedRoutes:
         namespaces:
-          from: Same
----
-apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TLSRoute
-metadata:
-  name: ldaps-tlsroute
-spec:
-  parentRefs:
-    - kind: Gateway
-      name: ldaps-gateway
-      sectionName: ldaps
-  hostnames:
-    - ldaps.chezmoi.sh
-  rules:
-    - backendRefs:
-        - kind: Service
-          name: yaldap
-          port: 389
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: sso

@@ -1,0 +1,27 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: sso
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: yaldap
+      app.kubernetes.io/instance: yaldap-backend
+    includeSelectors: true
+    includeTemplates: true
+  - pairs:
+      app.kubernetes.io/version: v0.2.0
+    includeTemplates: true
+
+resources:
+  - ldaps.tlsroute.yaml
+  - yaldap.workload.yaml
+  - yaldap.externalsecret.yaml
+
+  # SecOps (Network Policies)
+  - security/allow-from-traefik.yaml
+  - security/deny-egress.yaml
+
+images:
+  - name: ghcr.io/chezmoi-sh/flakes-dev/yaldap
+    newTag: v0.2.0-24.11-aarch64-linux # TODO: Handle multi-arch images

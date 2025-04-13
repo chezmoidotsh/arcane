@@ -1,15 +1,14 @@
 ---
-# trunk-ignore-all(checkov/CKV_K8S_21): Namespace is managed by kustomize
-# trunk-ignore-all(checkov/CKV_K8S_43): This image is currently managed by hand and I don't care about the digest
-# trunk-ignore-all(checkov/CKV2_K8S_6): Network Policies are managed directly by the live configuration
+# trunk-ignore-all(checkov/CKV_K8S_21,trivy/KSV110): Namespace is managed by kustomize
+# trunk-ignore-all(checkov/CKV_K8S_14,checkov/CKV_K8S_43,trivy/KSV013): Image tag/digest is fixed by kustomize
+# trunk-ignore-all(trivy/KSV032,trivy/KSV033,trivy/KSV034,trivy/KSV035): Image will be built internally in the future
+# trunk-ignore-all(checkov/CKV2_K8S_6): NetworkPolicy are managed into security/ folder
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
     app.kubernetes.io/instance: yaldap-sso
     app.kubernetes.io/name: yaldap
-    app.kubernetes.io/part-of: sso
-    app.kubernetes.io/version: v0.2.0
   name: yaldap
 spec:
   replicas: 1
@@ -31,7 +30,7 @@ spec:
             - --backend.url=file:///run/secrets/yaldap/backend.yaml
             - --listen-address=:8389
             - --session-ttl=1h
-          image: ghcr.io/chezmoi-sh/flakes-dev/yaldap:v0.2.0-24.11-aarch64-linux
+          image: ghcr.io/chezmoi-sh/flakes-dev/yaldap
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3
