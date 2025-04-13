@@ -1,4 +1,3 @@
----
 server:
   assets-path: /app/assets
 theme:
@@ -30,14 +29,12 @@ pages:
               - title: DuckDuckGo
                 shortcut: "!?"
                 url: https://duckduckgo.com/?q={QUERY}
-
               - title: YouTube
                 shortcut: "!yt"
                 url: https://www.youtube.com/results?search_query={QUERY}
               - title: Wikipedia
                 shortcut: "!w"
                 url: https://en.wikipedia.org/w/index.php?search={QUERY}
-
               - title: NixOS Packages
                 shortcut: "!nixpkg"
                 url: https://search.nixos.org/packages?query={QUERY}
