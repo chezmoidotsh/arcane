@@ -2,11 +2,20 @@
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
+  name: upbound-provider-family-aws
+spec:
+  package: xpkg.upbound.io/upbound/provider-family-aws:v1.16.0
+  runtimeConfigRef:
+    name: hardened
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
   name: provider-aws-iam
 spec:
   package: xpkg.upbound.io/upbound/provider-aws-iam:v1.14.0
   runtimeConfigRef:
-    name: restricted
+    name: hardened
 ---
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
@@ -15,4 +24,4 @@ metadata:
 spec:
   package: xpkg.upbound.io/upbound/provider-aws-ses:v1.14.0
   runtimeConfigRef:
-    name: restricted
+    name: hardened

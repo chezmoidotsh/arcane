@@ -1,0 +1,31 @@
+---
+# This file defines security hardening measures for the Crossplane deployment
+podSecurityContextCrossplane:
+  fsGroup: 27491
+  runAsGroup: 27491
+  runAsNonRoot: true
+  runAsUser: 27491
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContextCrossplane:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+  privileged: false
+  readOnlyRootFilesystem: true
+
+podSecurityContextRBACManager:
+  fsGroup: 31459
+  runAsGroup: 31459
+  runAsNonRoot: true
+  runAsUser: 31459
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContextRBACManager:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+  privileged: false
+  readOnlyRootFilesystem: true
