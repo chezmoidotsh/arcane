@@ -11,7 +11,7 @@ spec:
   sources:
     - ref: origin
       repoURL: https://github.com/chezmoi-sh/atlas.git
-      targetRevision: refact/use-one-app-by-cluster
+      targetRevision: main
       path: defaults/kubernetes/traefik/kustomize
 
       kustomize:
@@ -32,7 +32,7 @@ spec:
           # - $origin/projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/traefik/override.helmvalues.yaml
       repoURL: https://traefik.github.io/charts
       targetRevision: 34.5.0
-    - chart: traefik-crds    
+    - chart: traefik-crds
       helm:
         ignoreMissingValueFiles: true
         releaseName: traefik-crds

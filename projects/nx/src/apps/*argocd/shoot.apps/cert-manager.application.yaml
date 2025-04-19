@@ -11,7 +11,7 @@ spec:
   sources:
     - ref: origin
       repoURL: https://github.com/chezmoi-sh/atlas.git
-      targetRevision: refact/use-one-app-by-cluster
+      targetRevision: main
     - chart: cert-manager
       helm:
         ignoreMissingValueFiles: true

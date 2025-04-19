@@ -17,14 +17,14 @@ spec:
           - list: { elements: [] } # NOTE: this list will be populated by the `seed` ApplicationSet with the cluster metadata
           - git:
               repoURL: https://github.com/chezmoi-sh/atlas.git
-              revision: refact/use-one-app-by-cluster
+              revision: main
               directories:
                 - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/*
 
                 # Exclude all directories that will be used by `system-critical` applications
-                - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/external-secrets
-                  exclude: true
                 - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/cert-manager
+                  exclude: true
+                - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/external-secrets
                   exclude: true
                 - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/tailscale
                   exclude: true
@@ -44,7 +44,7 @@ spec:
       sources:
         - repoURL: https://github.com/chezmoi-sh/atlas.git
           path: "{{ .path.path }}"
-          targetRevision: refact/use-one-app-by-cluster
+          targetRevision: main
       syncPolicy:
         syncOptions:
           - CreateNamespace=true

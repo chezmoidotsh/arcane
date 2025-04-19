@@ -8,7 +8,7 @@ metadata:
       configurations across all clusters configured in ArgoCD. It achieves this
       by deploying an application that, in turn, deploys two other ApplicationSets:
       one for system/cluster applications and another for applications.
-  name: seed
+  name: shoot
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
@@ -31,8 +31,8 @@ spec:
       project: seed
       sources:
         - repoURL: https://github.com/chezmoi-sh/atlas.git
-          path: projects/nx/src/apps/*argocd/seed.apps
-          targetRevision: refact/use-one-app-by-cluster
+          path: projects/nx/src/apps/*argocd/shoot.apps
+          targetRevision: main
 
           kustomize:
             patches:
