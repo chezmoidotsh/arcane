@@ -86,3 +86,25 @@ flowchart TD
 > This structure allows all resources necessary for the proper functioning of a cluster to be gathered in one place, thus facilitating management and resource cleanup.
 >
 > **Note:** Folders prefixed with '\*' are folders that should not be automated under any circumstances. They must be manually synchronized to ensure no unwanted changes are made.
+
+## 🚀 ArgoCD Bootstrap
+
+The ArgoCD bootstrap is a process that initializes the ArgoCD cluster. It is used to create the initial ArgoCD deployment that will be used to deploy the rest of the infrastructure.
+
+TODO: create a Github App to manage ArgoCD access to private repositories.
+
+```bash
+kubectl create --namespace argocd secret generic argocd-repo-creds-github.chezmoi-sh \
+  --from-literal=url=https://github.com/chezmoi-sh \
+  --from-literal=githubAppID=<app-id> \
+  --from-literal=githubAppInstallationID=<installation-id> \
+  --from-file=githubAppPrivateKey=<private-key-file>
+kubectl label --namespace argocd secret argocd-repo-creds-github.chezmoi-sh argocd.argoproj.io/secret-type=repo-creds
+```
+
+TODO: explain SOPS and KSOPS and AGE
+
+```bash
+kubectl create --namespace argocd secret generic argocd-sops-age-key \
+  --from-file=age-key=<path/to/age-key>
+```

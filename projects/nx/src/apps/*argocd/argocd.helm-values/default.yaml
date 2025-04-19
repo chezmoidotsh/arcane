@@ -49,8 +49,8 @@ configs:
     # enabled.
     exec.enabled: "true"
 
-    # enable helm support in ArgoCD when using Kustomize
-    kustomize.buildOptions: --enable-helm
+    # enable helm and plugins support in ArgoCD when using Kustomize
+    kustomize.buildOptions: --enable-helm --enable-alpha-plugins --enable-exec
 
     # ignores differences on ExternalSecret resources
     resource.customizations.ignoreDifferences.external-secrets.io_ExternalSecret: |
@@ -85,6 +85,10 @@ configs:
     github.chezmoi-sh.atlas:
       name: chezmoi.sh/atlas
       url: https://github.com/chezmoi-sh/atlas.git
+      type: git
+    github.chezmoi-sh.vault.kubernetes:
+      name: chezmoi.sh/vault.kubernetes
+      url: https://github.com/chezmoi-sh/vault.kubernetes.git
       type: git
 
   # ArgoCD clusters configuration

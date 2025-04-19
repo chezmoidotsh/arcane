@@ -166,7 +166,9 @@ configs:
 # This will be referenced by all ArgoCD components
 controller:
   containerSecurityContext:
-    &argocd_restricted_context # Prevent privilege escalation from child to parent processes
+    &argocd_restricted_context
+    
+    # Prevent privilege escalation from child to parent processes
     allowPrivilegeEscalation: false
     # Make the container's root filesystem read-only for improved security
     readOnlyRootFilesystem: true

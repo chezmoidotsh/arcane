@@ -40,9 +40,11 @@ spec:
     depending on existing templates and cluster definitions.
 
   sourceRepos:
+    - https://github.com/chezmoi-sh/atlas.git # NOTE: main repository
+    - https://github.com/chezmoi-sh/vault.kubernetes.git # NOTE: vault repository
+
     - https://charts.external-secrets.io/ # NOTE: external-secrets repository (required on all clusters)
     - https://charts.jetstack.io # NOTE: cert-manager repository (required on all clusters)
-    - https://github.com/chezmoi-sh/atlas.git # NOTE: main repository
     - https://github.com/kubernetes-sigs/gateway-api.git # NOTE: gateway-api repository (required on all clusters)
     - https://pkgs.tailscale.com/helmcharts # NOTE: tailscale repository (required on all clusters)
     - https://traefik.github.io/charts # NOTE: traefik repository (required on all clusters)
