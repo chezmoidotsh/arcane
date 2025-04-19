@@ -61,6 +61,12 @@ spec:
                       nameRFC1123: {{ regexReplaceAll "[^a-zA-Z0-9_-]" .name "-" | quote }}
                       project: {{ .project | quote }}
                       server: {{ .server | quote }}
+                  - op: add
+                    path: /spec/template/metadata/labels
+                    value: {}
+                  - op: add
+                    path: /spec/template/metadata/labels/argocd.argoproj.io~1cluster
+                    value: {{ .name | quote }}
                 target:
                   kind: ApplicationSet
 
@@ -70,6 +76,12 @@ spec:
                   - op: add
                     path: /spec/destination/server
                     value: {{ .server | quote }}
+                  - op: add
+                    path: /metadata/labels
+                    value: {}
+                  - op: add
+                    path: /metadata/labels/argocd.argoproj.io~1cluster
+                    value: {{ .name | quote }}
                 target:
                   kind: Application
 
