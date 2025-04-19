@@ -20,12 +20,12 @@ helmCharts:
     repo: https://argoproj.github.io/argo-helm
     releaseName: argocd
     version: 7.8.23
-    valuesFile: argocd.helm-values/default.yaml
+    valuesFile: argocd.helmvalues/default.yaml
     additionalValuesFiles:
-      - argocd.helm-values/hardened.yaml
-      - argocd.helm-values/extensions.yaml
-      - argocd.helm-values/ksops-addon.yaml
-      - argocd.helm-values/tailscale-addon.yaml
+      - argocd.helmvalues/hardened.yaml
+      - argocd.helmvalues/extensions.yaml
+      - argocd.helmvalues/ksops-addon.yaml
+      - argocd.helmvalues/tailscale-addon.yaml
 
 patches:
   - patch: |

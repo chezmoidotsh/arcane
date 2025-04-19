@@ -53,7 +53,8 @@ configs:
     kustomize.buildOptions: --enable-helm --enable-alpha-plugins --enable-exec
 
     # ignores differences on ExternalSecret resources
-    resource.customizations.ignoreDifferences.external-secrets.io_ExternalSecret: |
+    resource.customizations.ignoreDifferences.external-secrets.io_ExternalSecret:
+      |
       jqPathExpressions:
         - .. | .conversionStrategy? | select(. == "Default")
         - .. | .decodingStrategy? | select(. == "None")
