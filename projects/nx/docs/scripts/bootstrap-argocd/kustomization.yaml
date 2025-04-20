@@ -1,0 +1,20 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: argocd
+
+resources:
+  # Configure ArgoCD
+  - ../../../src/apps/*argocd/argocd.appprojects.yaml
+  - ../../../src/apps/*argocd/seed.application.yaml
+
+helmCharts:
+  - name: argo-cd
+    repo: https://argoproj.github.io/argo-helm
+    releaseName: argocd
+    version: 7.8.27
+    valuesFile: ../../../src/apps/*argocd/argocd.helmvalues/default.yaml
+    additionalValuesFiles:
+      - ../../../src/apps/*argocd/argocd.helmvalues/hardened.yaml
+      - ../../../src/apps/*argocd/argocd.helmvalues/extensions.yaml
+      - ../../../src/apps/*argocd/argocd.helmvalues/ksops-addon.yaml
