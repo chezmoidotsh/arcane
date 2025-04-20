@@ -16,7 +16,7 @@ helmCharts:
     repo: https://traefik.github.io/charts
     releaseName: traefik
     namespace: kube-system
-    version: 33.2.1
+    version: 35.0.1
     includeCRDs: true
     valuesInline:
       # NOTE: disable check for updates and stats
