@@ -28,7 +28,34 @@ It consists of two distinct parts:
 * The deployment of ArgoCD itself ([in this folder](.))
 * The deployment of ArgoCD `ApplicationSets`, managed by the `seed` `Application`, that will be deployed on all configured clusters. These `ApplicationSets` are located in the [`seed.applicationsets`](seed.apps) folder.
 
-Here is a brief overview of the "apps of apps" that I chose to use:
+## 🔄 Deployment Flow
+
+The deployment follows a hierarchical structure:
+
+1. **Root Application** (`seed.application.yaml`)
+   * Manages the initial deployment
+   * Deploys content from `seed.apps` folder
+   * Configured in `argocd` namespace under `seed` project
+
+2. **Main ApplicationSet** (`shoot.applicationset.yaml`)
+   * Automatically generated for each detected cluster
+   * Deploys configurations in cluster-specific namespaces
+   * Creates two additional ApplicationSets:
+     * `system.applicationset.yaml`
+     * `apps.applicationset.yaml`
+
+3. **System Applications** (in `shoot.apps/`)
+   * Core applications deployed on every cluster:
+     * `cert-manager.application.yaml`
+     * `external-secrets.application.yaml`
+     * `tailscale.application.yaml`
+     * `traefik.application.yaml`
+
+4. **Secondary ApplicationSets** (in `shoot.apps/`)
+   * `system.applicationset.yaml`: Manages system applications
+   * `apps.applicationset.yaml`: Manages business applications
+
+Here is a visual representation of the deployment hierarchy:
 
 ```mermaid
 ---
@@ -63,29 +90,20 @@ flowchart TD
     n6@{ shape: rounded}
 ```
 
-> \[!NOTE]
-> The hierarchy described in the diagram uses ArgoCD and ApplicationSets to manage the deployment of applications across multiple Kubernetes clusters.
->
-> At the top of this hierarchy is the ApplicationSet `argocd/seed`. It serves as a base template to generate an ArgoCD Application for each cluster.
->
-> Next, each cluster Application has its own ApplicationSets:
->
-> * One for all applications defined in `projects/<cluster>/src/apps` (iteration over all folders).
-> * One for applications necessary for the cluster's operation (ingress, CSI, monitoring, etc.) (iteration over all folders in `projects/<cluster>/src/infrastructure/kubernetes`).
->
-> For all *critical* applications (such as `external-secrets`, `cert-manager`, `tailscale`, and `traefik`), dedicated Applications are created automatically. This is done to ensure that
-> these applications are **ALWAYS** deployed in the cluster, regardless of the type of cluster.
->
-> The current list of critical applications includes:
->
-> * `external-secrets`: For managing secrets from external sources
-> * `cert-manager`: For managing TLS certificates
-> * `tailscale`: For network connectivity and security
-> * `traefik`: For ingress and routing
->
-> This structure allows all resources necessary for the proper functioning of a cluster to be gathered in one place, thus facilitating management and resource cleanup.
->
-> **Note:** Folders prefixed with '\*' are folders that should not be automated under any circumstances. They must be manually synchronized to ensure no unwanted changes are made.
+## 🔑 Critical Applications
+
+The following applications are considered critical and are always deployed on every cluster:
+
+* `external-secrets`: Manages secrets from external sources
+* `cert-manager`: Manages TLS certificates
+* `tailscale`: Handles network connectivity and security
+* `traefik`: Manages ingress and routing
+
+These applications are deployed with cluster-specific configurations:
+
+* Custom Helm values based on cluster name
+* Kustomize components specific to each cluster
+* Annotations and labels based on cluster metadata (especially Tailscale information)
 
 ## 🚀 ArgoCD Bootstrap
 
@@ -108,3 +126,6 @@ TODO: explain SOPS and KSOPS and AGE
 kubectl create --namespace argocd secret generic argocd-sops-age-key \
   --from-file=age-key=<path/to/age-key>
 ```
+
+> \[!WARNING]
+> Folders prefixed with '\*' are special folders that should not be automated under any circumstances. They must be manually synchronized to ensure no unwanted changes are made.
