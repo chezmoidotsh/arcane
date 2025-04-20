@@ -10,6 +10,10 @@ metadata:
       one for system/cluster applications and another for applications.
   name: shoot
 spec:
+  ignoreApplicationDifferences:
+    - jsonPointers:
+        - /spec/source/targetRevision
+        - /spec/syncPolicy/automated
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:

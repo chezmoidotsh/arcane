@@ -9,6 +9,10 @@ metadata:
       depending on existing templates and cluster definitions.
   name: system
 spec:
+  ignoreApplicationDifferences:
+    - jsonPointers:
+        - /spec/source/targetRevision
+        - /spec/syncPolicy/automated
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
