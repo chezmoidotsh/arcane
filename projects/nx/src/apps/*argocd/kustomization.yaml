@@ -5,9 +5,11 @@ namespace: argocd
 
 resources:
   # Configure ArgoCD
-  - argocd.oidc-credentials.externalsecret.yaml
-  - argocd.ingress.yaml
   - argocd.appprojects.yaml
+  - argocd.github-secrets.externalsecret.yaml
+  - argocd.ingress.yaml
+  - argocd.oidc-credentials.externalsecret.yaml
+  - argocd.sops-secrets.externalsecret.yaml
   - seed.application.yaml
 
   # Install Argotails that manages all Tailscale clusters
