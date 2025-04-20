@@ -16,11 +16,17 @@ spec:
   ingress:
     - from:
         - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: traefik-system
+            matchExpressions: # NOTE: This is a workaround to avoid Kustomization `labels` being applied to the NetworkPolicy
+              - key: kubernetes.io/metadata.name
+                operator: In
+                values:
+                  - traefik-system
         - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: traefik
+            matchExpressions: # NOTE: This is a workaround to avoid Kustomization `labels` being applied to the NetworkPolicy
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - traefik
       ports:
         - port: 9091
           protocol: TCP

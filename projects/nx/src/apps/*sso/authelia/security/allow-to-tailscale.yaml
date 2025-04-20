@@ -16,11 +16,17 @@ spec:
   egress:
     - to:
         - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: tailscale
+            matchExpressions: # NOTE: This is a workaround to avoid Kustomization `labels` being applied to the NetworkPolicy
+              - key: kubernetes.io/metadata.name
+                operator: In
+                values:
+                  - tailscale
         - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: tailscale
+            matchExpressions: # NOTE: This is a workaround to avoid Kustomization `labels` being applied to the NetworkPolicy
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - tailscale
       ports:
         - port: 41641
           protocol: UDP

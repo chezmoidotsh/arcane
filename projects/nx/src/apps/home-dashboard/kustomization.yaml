@@ -18,7 +18,7 @@ resources:
   - home-dashboard.httproute.yaml
 
   # (SecOps) Network Policies
-  - security/allow-to-cluster.networkpolicy.yaml
+  - security/allow-from-traefik.networkpolicy.yaml
   - security/allow-to-internet.networkpolicy.yaml
 
 configMapGenerator:
