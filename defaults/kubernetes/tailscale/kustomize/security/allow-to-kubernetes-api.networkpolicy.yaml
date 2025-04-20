@@ -19,8 +19,14 @@ spec:
           protocol: TCP
       to:
         - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kube-system
+            matchExpressions: # NOTE: This is a workaround to avoid Kustomization `labels` being applied to the NetworkPolicy
+              - key: kubernetes.io/metadata.name
+                operator: In
+                values:
+                  - kube-system
           podSelector:
-            matchLabels:
-              k8s-app: kube-apiserver
+            matchExpressions: # NOTE: This is a workaround to avoid Kustomization `labels` being applied to the NetworkPolicy
+              - key: k8s-app
+                operator: In
+                values:
+                  - kube-apiserver
