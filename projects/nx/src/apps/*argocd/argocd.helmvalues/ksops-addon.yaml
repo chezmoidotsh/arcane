@@ -1,0 +1,57 @@
+---
+# This file defines the KSOPS integration for the ArgoCD deployment, required
+# to deploy my "vault" repository.
+
+# ArgoCD RepoServer configuration
+repoServer:
+  env:
+    - name: SOPS_AGE_KEY_FILE
+      value: /var/run/sops/age-key
+
+  # Use init containers to configure custom tooling
+  # https://argoproj.github.io/argo-cd/operator-manual/custom_tools/
+  initContainers:
+    - name: install-ksops
+      image: viaductoss/ksops:v4.3.3@sha256:6b5ec4b6144307f78bcddffd8f09020482836eee34cf77bf4ce8614b0452a73c
+      command: ["/bin/sh", "-c"]
+      args:
+        - echo "Installing KSOPS...";
+          mv ksops /custom-tools/;
+          mv kustomize /custom-tools/;
+          echo "Done.";
+      securityContext:
+        # Prevent privilege escalation from child to parent processes
+        allowPrivilegeEscalation: false
+        # Make the container's root filesystem read-only for improved security
+        readOnlyRootFilesystem: true
+        # Ensure container doesn't run as root user
+        runAsNonRoot: true
+        # Linux capabilities configuration
+        capabilities:
+          drop:
+            # Remove all Linux capabilities for maximum security
+            - ALL
+        # Apply the default runtime seccomp profile to limit syscalls
+        seccompProfile:
+          type: RuntimeDefault
+      volumeMounts:
+        - mountPath: /custom-tools
+          name: custom-tools
+
+  volumes:
+    - name: custom-tools
+      emptyDir: {}
+    - name: sops-age-key
+      secret:
+        defaultMode: 0400
+        secretName: argocd-sops-age-key
+  volumeMounts:
+    - mountPath: /usr/local/bin/kustomize
+      name: custom-tools
+      subPath: kustomize
+    - mountPath: /usr/local/bin/ksops
+      name: custom-tools
+      subPath: ksops
+    - mountPath: /var/run/sops/age-key
+      name: sops-age-key
+      subPath: age-key

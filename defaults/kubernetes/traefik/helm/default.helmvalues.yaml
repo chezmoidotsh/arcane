@@ -1,0 +1,112 @@
+---
+# Default values for Traefik
+# This configuration provides a base setup for Traefik in a Kubernetes environment
+
+# Global arguments for Traefik
+globalArguments:
+  - --global.checkNewVersion=false
+  - --global.sendAnonymousUsage=false
+
+# Deployment configuration
+deployment:
+  replicas: 1
+
+# Service configuration
+service:
+  enabled: true
+  type: LoadBalancer
+  spec:
+    # Required to get real client IP with LoadBalancer
+    externalTrafficPolicy: Local
+
+# Configure Traefik ports and entrypoints
+ports:
+  # API and Dashboard
+  traefik:
+    port: 9000
+    expose:
+      default: false
+    protocol: TCP
+
+  # HTTP entrypoint
+  web:
+    port: 80
+    expose:
+      default: true
+    exposedPort: 80
+    protocol: TCP
+    # Redirect HTTP to HTTPS
+    redirections:
+      entryPoint:
+        to: websecure
+        scheme: https
+        permanent: true
+
+  # HTTPS entrypoint
+  websecure:
+    port: 443
+    expose:
+      default: true
+    exposedPort: 443
+    protocol: TCP
+    tls:
+      enabled: true
+    forwardedHeaders:
+      insecure: true # Required for SSO X-Forwarded-* headers
+
+# Configure Kubernetes providers
+providers:
+  # Enable CRD provider
+  kubernetesCRD:
+    enabled: true
+
+  # Configure Gateway API provider
+  kubernetesGateway:
+    enabled: true
+    experimentalChannel: true
+    statusAddress:
+      service:
+        name: traefik
+        namespace: traefik-system
+
+  # Disable classic Ingress in favor of IngressRoute
+  kubernetesIngress:
+    enabled: false
+
+# Configure Gateway API integration
+gatewayClass:
+  enabled: true
+  name: traefik-gateway
+
+# Disable default gateway and ingress class
+gateway:
+  enabled: false
+
+# NOTE: Ingress is disabled in favor of Gateway API
+ingressClass:
+  enabled: false
+
+# Metrics configuration
+metrics:
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: false
+
+# Logging configuration
+logs:
+  # General logs
+  general:
+    format: json
+    level: INFO
+
+  # Access logs
+  access:
+    enabled: true
+    format: json
+    addInternals: false
+    fields:
+      general:
+        defaultMode: keep
+      headers:
+        defaultMode: keep

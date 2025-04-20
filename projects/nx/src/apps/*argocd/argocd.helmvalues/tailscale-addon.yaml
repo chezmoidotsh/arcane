@@ -1,0 +1,93 @@
+---
+# This Helm values file contains the definition of the Tailscale
+# sidecar container used by ArgoCD to access the Tailscale network
+# and all remote Kubernetes clusters.
+
+controller:
+  env:
+    - name: ALL_PROXY
+      value: localhost:1055
+    - name: HTTP_PROXY
+      value: localhost:1055
+    - name: HTTPS_PROXY
+      value: localhost:1055
+
+  extraContainers:
+    - name: tailscale
+      image: tailscale/tailscale:v1.82.0
+      imagePullPolicy: IfNotPresent
+      env:
+        - name: TS_ENABLE_DNS
+          value: "true"
+        - name: TS_USERSPACE
+          value: "true"
+          # value: "false"
+        - name: TS_AUTHKEY
+          valueFrom:
+            secretKeyRef:
+              name: argocd-tailscale
+              key: authkey
+        - name: TS_HOSTNAME
+          value: argocd-application-controller
+        - name: TS_ENABLE_METRICS
+          value: "true"
+        - name: TS_ENABLE_HEALTHCHECK
+          value: "true"
+        - name: TS_KUBE_SECRET
+          value: argocd-tailscale
+        - name: TS_EXTRA_ARGS
+          value: --advertise-tags=tag:kubernetes-argocd
+        - name: TS_SOCKS5_SERVER
+          value: localhost:1055
+        - name: TS_OUTBOUND_HTTP_PROXY_LISTEN
+          value: localhost:1055
+
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+      resources:
+        requests:
+          cpu: 10m
+          memory: 100Mi
+          squat.ai/tun: "1"
+        limits:
+          memory: 100Mi
+          squat.ai/tun: "1"
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 29833
+        runAsGroup: 29833
+        seccompProfile:
+          type: RuntimeDefault
+      volumeMounts:
+        - name: tailscale-ephemeral
+          mountPath: /.cache/Tailscale
+          subPath: .cache/Tailscale
+        - name: tailscale-ephemeral
+          mountPath: /tmp
+          subPath: tmp
+        - name: tailscale-ephemeral
+          mountPath: /var/run/tailscale
+          subPath: var/run
+  volumes:
+    - name: tailscale-ephemeral
+      emptyDir: {}
+
+configs:
+  cm:
+    # ignores differences on ExternalName services comming from Tailscale Operator
+    resource.customizations.ignoreDifferences._Service: |
+      managedFieldsManagers:
+      - operator # Tailscale Operator
+      jsonPointers:
+      - /spec/externalName

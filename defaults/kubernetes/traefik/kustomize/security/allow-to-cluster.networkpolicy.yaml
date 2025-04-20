@@ -1,0 +1,17 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: traefik-ingress-allow-to-cluster
+  annotations:
+    networkpolicy.kubernetes.io/description: >-
+      Allow egress traffic from Traefik ingress pods to in-cluster services.
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector: {}

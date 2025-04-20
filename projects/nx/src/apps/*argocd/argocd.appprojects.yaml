@@ -1,0 +1,89 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: seed
+  # Finalizer that ensures that project is not deleted until it is not referenced by any application
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: |
+    This project is responsible for bootstrapping all clusters automatically when they are added to the ArgoCD
+    instance. It achieves this by deploying an application that, in turn, deploys two other ApplicationSets:
+    one for system/cluster applications and another for applications.
+
+  sourceRepos:
+    - https://github.com/chezmoi-sh/atlas.git # NOTE: main repository
+  destinations:
+    - # NOTE: only allow the cluster where ArgoCD is installed
+      name: "*"
+      namespace: "*"
+      server: https://kubernetes.default.svc
+
+  clusterResourceWhitelist: [{ group: "*", kind: "*" }]
+  clusterResourceBlacklist: []
+  namespaceResourceWhitelist: [{ group: "*", kind: "*" }]
+  namespaceResourceBlacklist: []
+
+  roles: []
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: system
+  # Finalizer that ensures that project is not deleted until it is not referenced by any application
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: |
+    This project is responsible for deploying all system applications and configurations inside the targeted cluster,
+    depending on existing templates and cluster definitions.
+
+  sourceRepos:
+    - https://github.com/chezmoi-sh/atlas.git # NOTE: main repository
+    - https://github.com/chezmoi-sh/vault.kubernetes.git # NOTE: vault repository
+
+    - https://charts.external-secrets.io/ # NOTE: external-secrets repository (required on all clusters)
+    - https://charts.jetstack.io # NOTE: cert-manager repository (required on all clusters)
+    - https://github.com/kubernetes-sigs/gateway-api.git # NOTE: gateway-api repository (required on all clusters)
+    - https://pkgs.tailscale.com/helmcharts # NOTE: tailscale repository (required on all clusters)
+    - https://traefik.github.io/charts # NOTE: traefik repository (required on all clusters)
+  destinations:
+    - # NOTE: allow any cluster to install system applications
+      name: "*"
+      namespace: "*"
+      server: "*"
+
+  clusterResourceWhitelist: [{ group: "*", kind: "*" }]
+  clusterResourceBlacklist: []
+  namespaceResourceWhitelist: [{ group: "*", kind: "*" }]
+  namespaceResourceBlacklist: []
+
+  roles: []
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: applications
+  # Finalizer that ensures that project is not deleted until it is not referenced by any application
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: |
+    This project is responsible for deploying all applications and configurations inside the targeted cluster,
+    depending on existing templates and cluster definitions.
+
+  sourceRepos:
+    - "*" # NOTE: allow any repository to be used as source
+  destinations:
+    - # NOTE: allow any cluster to install applications
+      name: "*"
+      namespace: "*"
+      server: "*"
+
+  clusterResourceWhitelist: [{ group: "*", kind: "*" }]
+  clusterResourceBlacklist: []
+  namespaceResourceWhitelist: [{ group: "*", kind: "*" }]
+  namespaceResourceBlacklist: []
+
+  roles: []

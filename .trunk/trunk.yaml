@@ -85,7 +85,7 @@ lint:
     - # Prettier should not lint/format templated YAML files
       linters: [prettier]
       paths:
-        - projects/nx/src/apps/nx-sso/live/production/configurations/authelia.yaml
+        - projects/nx/src/apps/*sso/authelia/configurations/authelia.yaml
     - # Ignore everything in folder managed by FluxCD
       linters: [ALL]
       paths: ["**/flux-system/*"]

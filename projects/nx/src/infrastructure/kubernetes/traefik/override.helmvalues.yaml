@@ -1,0 +1,12 @@
+---
+# Configure Traefik additional ports and entrypoints
+ports:
+  # LDAPs
+  ldaps:
+    port: 636
+    expose:
+      default: true
+      exposedPort: 636
+    protocol: TCP
+    tls:
+      enabled: true

@@ -1,0 +1,39 @@
+---
+# Security context configuration for the main pod
+# The configuration follows the principle of least privilege and defense in depth
+podSecurityContext:
+  # Run as non-root user for better security
+  runAsNonRoot: true
+  # Use a random non-root user (UID: 45678)
+  runAsUser: 45678
+  # Use the same random group (GID: 45678)
+  runAsGroup: 45678
+  # Use the same random group (GID: 45678) for file system group ownership
+  fsGroup: 45678
+  # Enable seccomp profile for additional security
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container security context
+# This configuration is critical for external-dns as it has access to DNS APIs
+securityContext:
+  # Disable privileged mode
+  privileged: false
+  # Prevent privilege escalation
+  allowPrivilegeEscalation: false
+  # Mount root filesystem as read-only
+  readOnlyRootFilesystem: true
+  # Drop all Linux capabilities
+  capabilities:
+    drop: ["ALL"]
+
+# Webhook provider security configuration
+# The same restrictions are applied to the webhook as it's a critical component
+provider:
+  webhook:
+    securityContext:
+      privileged: false
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: ["ALL"]

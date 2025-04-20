@@ -272,10 +272,6 @@ const scopes = [
 		value: "catalog:ansible",
 	},
 	{
-		name: "catalog:argocd        - Anything related to the ArgoCD application catalog",
-		value: "catalog:argocd",
-	},
-	{
 		name: "catalog:crossplane    - Anything related to the Crossplane resource catalog",
 		value: "catalog:crossplane",
 	},

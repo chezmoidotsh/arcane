@@ -1,0 +1,31 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+spec:
+  destination:
+    namespace: cert-manager-system
+    # server: {{ .server }}
+  project: system
+  sources:
+    - ref: origin
+      repoURL: https://github.com/chezmoi-sh/atlas.git
+      targetRevision: main
+    - chart: cert-manager
+      helm:
+        ignoreMissingValueFiles: true
+        releaseName: cert-manager
+        valueFiles:
+          - $origin/defaults/kubernetes/cert-manager/helm/default.helmvalues.yaml
+          - $origin/defaults/kubernetes/cert-manager/helm/hardened.helmvalues.yaml
+          # - $origin/projects/{{ .name }}/src/infrastructure/kubernetes/cert-manager/override.helmvalues.yaml
+          # - $origin/projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/cert-manager/override.helmvalues.yaml
+      repoURL: https://charts.jetstack.io
+      targetRevision: 1.17.1
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - Delete=confirm
+      - Prune=confirm
+      - ServerSideApply=true

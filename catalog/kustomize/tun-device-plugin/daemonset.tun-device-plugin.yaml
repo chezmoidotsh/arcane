@@ -1,0 +1,73 @@
+# trunk-ignore-all(trivy,checkov): This "addons" requires privileged access and capabilities to manage the /dev/net/tun device and allow Tailscale to work in a non-privileged way
+
+# To avoid the need for a privileged container on Tailscale pods, we must use this
+# DaemonSet to create the necessary device.
+# source: https://github.com/tailscale/tailscale/issues/10814#issuecomment-2479977752
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: tun-device-plugin
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: tun-device-plugin
+    app.kubernetes.io/instance: device-manager
+    app.kubernetes.io/part-of: tailscale
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tun-device-plugin
+      app.kubernetes.io/instance: device-manager
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tun-device-plugin
+        app.kubernetes.io/instance: device-manager
+        app.kubernetes.io/part-of: tailscale
+    spec:
+      # Disable service account token mounting
+      automountServiceAccountToken: false
+      containers:
+        - image: ghcr.io/squat/generic-device-plugin@sha256:d7d0951df7f11479185fd9fba1c1cb4d9c8f3232d38a5468d6fe80074f2b45d5
+          imagePullPolicy: Always
+          args:
+            - --device
+            - |
+              name: tun
+              groups:
+                - count: 1000
+                  paths:
+                    - path: /dev/net/tun
+          name: generic-device-plugin
+          resources:
+            requests:
+              cpu: 50m
+              memory: 10Mi
+            limits:
+              cpu: 50m
+              memory: 20Mi
+          ports:
+            - containerPort: 8080
+              name: http
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: device-plugin
+              mountPath: /var/lib/kubelet/device-plugins
+            - name: dev
+              mountPath: /dev
+      priorityClassName: system-node-critical
+      tolerations:
+        - operator: Exists
+          effect: NoExecute
+        - operator: Exists
+          effect: NoSchedule
+      volumes:
+        - name: device-plugin
+          hostPath:
+            path: /var/lib/kubelet/device-plugins
+        - name: dev
+          hostPath:
+            path: /dev
+  updateStrategy:
+    type: RollingUpdate

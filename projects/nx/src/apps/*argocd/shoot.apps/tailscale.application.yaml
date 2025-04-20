@@ -1,0 +1,42 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: tailscale
+spec:
+  destination:
+    namespace: tailscale-system
+    # server: {{ .server }}
+  project: system
+  sources:
+    # Install Tailscale default resources (ProxyClass, NetworkPolicy, etc.)
+    - ref: origin
+      repoURL: https://github.com/chezmoi-sh/atlas.git
+      targetRevision: main
+      path: defaults/kubernetes/tailscale/kustomize
+
+      kustomize:
+        {}
+        # components:
+        #   - projects/{{ .name }}/src/infrastructure/kubernetes/tailscale/
+        #   - projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/tailscale/
+        # ignoreMissingComponents: true
+
+    # Install Tailscale Operator to manage all Tailscale CRDs
+    - chart: tailscale-operator
+      helm:
+        ignoreMissingValueFiles: true
+        releaseName: tailscale-operator
+        valueFiles:
+          - $origin/defaults/kubernetes/tailscale/helm/default.helmvalues.yaml
+          - $origin/defaults/kubernetes/tailscale/helm/hardened.helmvalues.yaml
+          # - $origin/projects/{{ .name }}/src/infrastructure/kubernetes/tailscale/override.helmvalues.yaml
+          # - $origin/projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/tailscale/override.helmvalues.yaml
+      repoURL: https://pkgs.tailscale.com/helmcharts
+      targetRevision: 1.80.3
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - Delete=confirm
+      - Prune=confirm
+      - ServerSideApply=true

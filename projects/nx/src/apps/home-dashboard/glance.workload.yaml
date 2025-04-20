@@ -1,0 +1,89 @@
+---
+# trunk-ignore-all(checkov/CKV_K8S_21,trivy/KSV110): Namespace is managed by kustomize
+# trunk-ignore-all(checkov/CKV_K8S_14,checkov/CKV_K8S_43,trivy/KSV013): Image tag/digest is fixed by kustomize
+# trunk-ignore-all(trivy/KSV032,trivy/KSV033,trivy/KSV034,trivy/KSV035): Image will be built internally in the future
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: glance
+spec:
+  selector: {}
+  template:
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - image: docker.io/glanceapp/glance
+          imagePullPolicy: Always
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 30
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          name: glance
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 5
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            limits:
+              cpu: 200m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 21390
+            runAsGroup: 24300
+            seccompProfile:
+              type: RuntimeDefault
+          startupProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 2
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 15
+          volumeMounts:
+            - mountPath: /app/glance.yml
+              name: glance-configuration
+              subPath: glance.yml
+      enableServiceLinks: false
+      securityContext:
+        fsGroup: 24300
+        runAsUser: 21390
+        runAsNonRoot: true
+        runAsGroup: 24300
+      volumes:
+        - name: glance-configuration
+          configMap:
+            name: glance-configuration
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: glance
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: http
+  type: ClusterIP

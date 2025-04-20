@@ -1,0 +1,21 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: traefik-ingress-allow-to-kubernetes-api
+  annotations:
+    networkpolicy.kubernetes.io/description: >-
+      Allow egress traffic from Traefik ingress pods to the Kubernetes API.
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+  policyTypes:
+    - Egress
+  egress:
+    - ports:
+        - port: 443
+          protocol: TCP
+      to:
+        - ipBlock:
+            cidr: 10.43.0.1/32 # NOTE: this is the CIDR for the Kubernetes API

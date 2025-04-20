@@ -1,0 +1,51 @@
+---
+# This Helm values file contains all default values used by the Cert-Manager
+# Helm chart.
+
+# Install and updates the CRDs as part of the Helm install/upgrade process.
+crds:
+  enabled: true
+  keep: true
+
+# On all clusters, a default ClusterIssuer is created to use Let's Encrypt
+# as the certificate authority. This issuer uses the DNS-01 challenge with
+# Cloudflare as the DNS provider, explaining the need for the
+# `letsencrypt-issuer-credentials` secret.
+extraObjects:
+  # NOTE: default ClusterIssuer present on all clusters
+  - |-
+    apiVersion: cert-manager.io/v1
+    kind: ClusterIssuer
+    metadata:
+      name: letsencrypt
+    spec:
+      acme:
+        server: https://acme-v02.api.letsencrypt.org/directory
+        privateKeySecretRef:
+          name: letsencrypt-issuer-account-key
+        solvers:
+          - dns01:
+              cloudflare:
+                apiTokenSecretRef:
+                  name: letsencrypt-issuer-credentials
+                  key: api-token
+  - |-
+    apiVersion: external-secrets.io/v1beta1
+    kind: ExternalSecret
+    metadata:
+      name: letsencrypt-issuer-credentials
+    spec:
+      refreshInterval: 1h
+      secretStoreRef:
+        kind: ClusterSecretStore
+        name: kubevault
+      target:
+        name: letsencrypt-issuer-credentials
+      data:
+        - secretKey: email
+          remoteRef:
+            conversionStrategy: Default
+            decodingStrategy: None
+            key: cloud-letsencrypt
+            metadataPolicy: None
+            property: email

@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: external-dns-system
+
+helmCharts:
+  - name: external-dns
+    repo: https://kubernetes-sigs.github.io/external-dns
+    version: 1.16.1
+    releaseName: external-dns-unifi
+    includeCRDs: true
+    valuesFile: unifi.helmvalues/default.yaml
+    additionalValuesFiles:
+      - unifi.helmvalues/hardened.yaml
+      - unifi.helmvalues/adguard-migration.yaml # TODO: Remove this after migration
+
+resources:
+  - unifi.externalsecret.yaml
+  - dns.densendpoint.yaml

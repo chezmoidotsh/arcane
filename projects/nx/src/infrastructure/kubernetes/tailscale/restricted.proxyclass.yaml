@@ -1,0 +1,33 @@
+# To adhere to security best practices, most clusters are configured with Admission
+# Controllers in "restricted" mode.
+# However, the Tailscale Operator requires modifying the pods' Security Context.
+# Thus, it is essential to create a ProxyClass with the appropriate configurations to
+# allow the operator to manage these Security Contexts.
+---
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyClass
+metadata:
+  name: restricted
+spec:
+  statefulSet:
+    pod:
+      tailscaleContainer:
+        resources:
+          requests:
+            squat.ai/tun: "1"
+          limits:
+            squat.ai/tun: "1"
+---
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyClass
+metadata:
+  name: restricted-egress
+spec:
+  statefulSet:
+    pod:
+      tailscaleContainer:
+        resources:
+          requests:
+            squat.ai/tun: "1"
+          limits:
+            squat.ai/tun: "1"

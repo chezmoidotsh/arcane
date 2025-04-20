@@ -1,8 +1,0 @@
----
-# This Helm values file contains all default values used by the Cert-Manager
-# Helm chart.
-
-# Install and updates the CRDs as part of the Helm install/upgrade process.
-crds:
-  enabled: true
-  keep: true

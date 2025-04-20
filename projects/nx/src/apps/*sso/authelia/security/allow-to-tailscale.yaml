@@ -1,0 +1,26 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-authelia-to-tailscale
+  annotations:
+    networkpolicy.kubernetes.io/description: >-
+      Allow egress traffic from Authelia pods to Tailscale pods on port 41641/UDP.
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: authelia
+      app.kubernetes.io/name: authelia
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: tailscale
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: tailscale
+      ports:
+        - port: 41641
+          protocol: UDP
