@@ -68,6 +68,12 @@ configs:
         - .. | .decodingStrategy? | select(. == "None")
         - .. | .metadataPolicy? | select(. == "None")
 
+    # ignore differences on Secret resources when fields are managed by an operator (commonly
+    # used for certificates)
+    resource.customizations.ignoreDifferences._Secret: |
+      managedFieldsManagers:
+        - cilium
+
   # Additional Argo CD server configuration
   params:
     # enables `Application` in any namespace

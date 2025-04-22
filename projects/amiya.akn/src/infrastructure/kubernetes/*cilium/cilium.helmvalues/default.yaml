@@ -1,0 +1,77 @@
+---
+# Cilium Helm Values Configuration
+# This file contains the default configuration values for deploying Cilium on Talos Linux
+# Reference: https://www.talos.dev/latest/kubernetes-guides/network/deploying-cilium/#installation-using-helm
+
+# Cilium Operator Configuration
+operator:
+  # Configure only one replica as this cluster only has one node
+  replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 100%
+
+# IP Address Management (IPAM) Configuration
+# Specifies how Cilium manages IP addresses for pods
+# 'kubernetes' mode uses the Kubernetes API to manage IP addresses
+ipam:
+  mode: kubernetes
+
+# Kube-Proxy Replacement
+# When enabled, Cilium replaces kube-proxy functionality for service handling
+# This provides better performance and more features than the standard kube-proxy
+kubeProxyReplacement: true
+
+# Security Context Configuration
+# Defines the Linux capabilities required by Cilium components
+# These capabilities are necessary for Cilium to function properly
+securityContext:
+  capabilities:
+    # Capabilities for the Cilium agent
+    # Required for network management, system operations, and security features
+    ciliumAgent:
+      - CHOWN
+      - KILL
+      - NET_ADMIN
+      - NET_RAW
+      - IPC_LOCK
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    # Capabilities for cleaning up Cilium state
+    cleanCiliumState:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+
+# Cgroup Configuration
+# Controls how Cilium interacts with cgroups
+# Disabled auto-mounting as it's handled by the container runtime
+cgroup:
+  autoMount:
+    enabled: false
+  # Path to the host's cgroup filesystem
+  hostRoot: /sys/fs/cgroup
+
+# Kubernetes Service Configuration
+# Specifies how Cilium connects to the Kubernetes API server
+# Using localhost and port 7445 for Talos Linux compatibility
+k8sService:
+  host: localhost
+  port: 7445
+
+# K8s Client Rate Limit Configuration
+# Controls the rate limit for the Kubernetes client, required because
+# L2 announcements increase the number of requests to the Kubernetes API server
+k8sClientRateLimit:
+  qps: 5 # NOTE: increase this if you see the rate limit being hit
+  burst: 20 # NOTE: increase this if you see the rate limit being hit
+
+# L2 Announcements Configuration
+# Enables L2 announcements for the cluster
+l2announcements:
+  enabled: true

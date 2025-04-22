@@ -1,0 +1,17 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - default.l2announcementpolicy.yaml
+  - hubble.httproute.yaml
+  - primary.ippool.yaml
+
+helmCharts:
+  - name: cilium
+    repo: https://helm.cilium.io/
+    version: 1.17.3
+    namespace: kube-system
+    valuesFile: cilium.helmvalues/default.yaml
+    additionalValuesFiles:
+      - cilium.helmvalues/addon:hubble.yaml
