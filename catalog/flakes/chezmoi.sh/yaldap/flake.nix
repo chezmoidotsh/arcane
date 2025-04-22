@@ -2,9 +2,7 @@
   description = "yaLDAP is an easy-to-use LDAP server using YAML file as directory definition.";
 
   # Nixpkgs / NixOS version to use.
-  # inputs.nixpkgs.url = "nixpkgs/nixos-24.11";
-  # TODO: nixos-24.11 is not currently available, and required for the yarn*Hook packages.
-  inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
+  inputs.nixpkgs.url = "nixpkgs/nixos-24.11";
 
   inputs.systems.url = "github:nix-systems/default";
   inputs.flake-utils.url = "github:numtide/flake-utils";
