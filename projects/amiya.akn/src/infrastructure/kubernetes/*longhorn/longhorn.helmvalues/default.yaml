@@ -1,0 +1,54 @@
+---
+# Configuration for Longhorn pre-upgrade checker
+# Disables the pre-upgrade checker job that runs before upgrading Longhorn
+preUpgradeChecker:
+  jobEnabled: false
+
+# Network policies configuration
+# Enables network policies to control access to Longhorn pods
+networkPolicies:
+  enabled: true
+
+# Storage persistence configuration
+# Sets the default number of replicas for the default storage class
+persistence:
+  defaultClassReplicaCount: 1
+
+# CSI (Container Storage Interface) configuration
+# Configures the number of replicas for various CSI components
+csi:
+  # Number of CSI attacher replicas
+  attacherReplicaCount: 1
+  # Number of CSI provisioner replicas
+  provisionerReplicaCount: 1
+  # Number of CSI resizer replicas
+  resizerReplicaCount: 1
+  # Number of CSI snapshotter replicas
+  snapshotterReplicaCount: 1
+
+# Default settings for Longhorn volumes
+# Sets the default number of replicas for new volumes
+defaultSettings:
+  defaultReplicaCount: 1
+
+  # Storage configuration
+  # Sets the default data path for Longhorn (NOTE: UserVolume dedicated for Longhorn is mounted on /var/mnt/longhorn)
+  defaultDataPath: /var/mnt/longhorn
+  # Sets the percentage of disk space that is not allocated to the default disk on each new Longhorn node (NOTE: as we are using UserVolume, we don't need to reserve any space)
+  storageReservedPercentageForDefaultDisk: 0
+
+  # Setting that allows Longhorn to automatically mark the latest snapshot and its parent files as removed during a filesystem trim.
+  removeSnapshotsDuringFilesystemTrim: true
+
+# Default backup store configuration
+defaultBackupStore:
+  # Endpoint used to access the default backupstore.
+  backupTarget: s3://longhorn-backups@eu-west-1/amiya.akn/
+  # Name of the Kubernetes secret associated with the default backup target.
+  backupTargetCredentialSecret: longhorn-backup-credentials # NOTE: The user should be made by Crossplane but currently no provider can handle Access Keys
+
+# Longhorn UI configuration
+# Controls the number of UI replicas to deploy
+longhornUI:
+  # Number of UI replicas to run
+  replicas: 1

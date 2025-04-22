@@ -697,6 +697,11 @@ access_control:
     #   networks: '10.9.0.0/16'
 
   rules:
+    # Deny access to Longhorn UI for everyone except admins
+    - domain_regex: ^longhorn\..+\.chezmoi\.sh$
+      subject: group:admins
+      policy: two_factor
+
     # Allow access to dns.chezmoi.sh for external-dns
     - domain: dns.chezmoi.sh
       policy: bypass
