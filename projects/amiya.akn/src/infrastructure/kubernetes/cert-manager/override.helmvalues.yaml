@@ -1,0 +1,46 @@
+---
+extraObjects:
+  # NOTE: default ClusterIssuer present on all clusters
+  - |-
+    apiVersion: cert-manager.io/v1
+    kind: ClusterIssuer
+    metadata:
+      name: letsencrypt
+    spec:
+      acme:
+        server: https://acme-v02.api.letsencrypt.org/directory
+        privateKeySecretRef:
+          name: letsencrypt-issuer-account-key
+        solvers:
+          - dns01:
+              cloudflare:
+                apiTokenSecretRef:
+                  name: letsencrypt-issuer-credentials
+                  key: api-token
+  - |-
+    apiVersion: external-secrets.io/v1beta1
+    kind: ExternalSecret
+    metadata:
+      name: letsencrypt-issuer-credentials
+    spec:
+      refreshInterval: 1h
+      secretStoreRef:
+        kind: ClusterSecretStore
+        name: kubevault
+      target:
+        name: letsencrypt-issuer-credentials
+      data:
+        - secretKey: api-token # ... breaks entropy to avoid checkov error
+          remoteRef:
+            conversionStrategy: Default
+            decodingStrategy: None
+            key: cloud-cloudflare-amiyaakn-certmanager
+            metadataPolicy: None
+            property: attribute.value
+        - secretKey: email
+          remoteRef:
+            conversionStrategy: Default
+            decodingStrategy: None
+            key: cloud-letsencrypt
+            metadataPolicy: None
+            property: email

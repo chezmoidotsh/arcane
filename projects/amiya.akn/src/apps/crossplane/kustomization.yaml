@@ -1,0 +1,30 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - functions.yaml
+  - provider.aws.yaml
+  - provider.cloudflare.yaml
+  - runtimeconfigs.yaml
+
+  # SecOps (Network Policies)
+
+helmCharts:
+  - name: crossplane
+    repo: https://charts.crossplane.io/master/
+    releaseName: crossplane
+    namespace: crossplane
+    version: 1.20.0-rc.0.48.g5ce264469
+    valuesFile: crossplane.helmvalues/default.yaml
+    additionalValuesFiles:
+      - crossplane.helmvalues/hardened.yaml
+
+transformers:
+  - |
+    apiVersion: builtin
+    kind: NamespaceTransformer
+    metadata:
+      name: crossplane
+      namespace: crossplane
+    unsetOnly: true

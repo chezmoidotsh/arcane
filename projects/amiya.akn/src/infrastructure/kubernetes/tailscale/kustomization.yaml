@@ -1,0 +1,12 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - ../../../../../../catalog/kustomize/tun-device-plugin
+
+  # (SecOps) Network Policies
+  - security/allow-to-kubernetes-api.ciliumnetworkpolicy.yaml
+
+patches:
+  - path: restricted.proxyclass.yaml

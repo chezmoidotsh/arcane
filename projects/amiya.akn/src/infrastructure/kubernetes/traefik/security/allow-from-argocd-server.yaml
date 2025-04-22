@@ -1,0 +1,27 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-argocd-server
+  annotations:
+    networkpolicy.kubernetes.io/description: >-
+      Allow ArgoCD server to access Traefik pods, required to connect to the
+      SSO hosted on the same cluster.
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - port: 443
+          protocol: TCP
+      from:
+        - namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/name: argocd
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: argocd
+              app.kubernetes.io/name: argocd-server

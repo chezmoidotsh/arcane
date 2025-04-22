@@ -1,0 +1,25 @@
+---
+pod:
+  kind: Deployment
+  replicas: 1
+
+configMap:
+  existingConfigMap: authelia-configuration
+
+  # Password cannot be reset
+  identity_validation:
+    reset_password:
+      secret:
+        disabled: true
+
+secret:
+  existingSecret: authelia
+  mountPath: /var/run/secrets/authelia.com
+  additionalSecrets:
+    authelia-ldap: {}
+    authelia-oidc: {}
+    authelia-smtp: {}
+
+persistence:
+  enabled: true
+  size: 100Mi

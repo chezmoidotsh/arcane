@@ -1,0 +1,16 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-tailscale-ingress-to-kubernetes-api
+  annotations:
+    networkpolicy.kubernetes.io/description: >-
+      Allow egress traffic from Tailscale ingress pods to the Kubernetes API.
+spec:
+  endpointSelector:
+    matchLabels:
+      tailscale.com/managed: "true"
+      tailscale.com/parent-resource-type: ingress
+  egress:
+    - toEntities:
+        - kube-apiserver

@@ -288,6 +288,10 @@ const scopes = [
 		value: "catalog:kairos-bundle",
 	},
 	{
+		name: "project:amiya.akn     - Anything related to the amiya.akn project",
+		value: "project:amiya.akn",
+	},
+	{
 		name: "project:chezmoi.sh    - Anything related to things not related to a specific project",
 		value: "project:chezmoi.sh",
 	},

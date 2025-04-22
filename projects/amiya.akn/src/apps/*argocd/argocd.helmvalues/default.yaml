@@ -1,0 +1,150 @@
+---
+# This Helm values file contains all default values used by the ArgoCD
+# Helm chart.
+
+global:
+  # default domain used by all ingress resources
+  # WARN: ArgoCD will be only accessible through TailScale
+  domain: argocd.akn.chezmoi.sh
+
+# disable DEX as we are using our own OIDC provider
+dex:
+  enabled: false
+
+# Argo Configs
+configs:
+  # General Argo CD configuration. Any values you put under `.configs.cm` are passed to argocd-cm ConfigMap.
+  # (ref. https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml)
+  cm:
+    # allow ArgoCD to be accessed through Tailscale
+    additionalUrls:
+      - https://argocd.tail831c5d.ts.net
+
+    # disable `statusbadge` feature, as ArgoCD is only accessible through TailScale
+    # (ref. https://argo-cd.readthedocs.io/en/stable/user-guide/status-badge/)
+    statusbadge.enabled: false
+
+    # disable `anonymous` user access
+    users.anonymous.enabled: "false"
+
+    # OIDC configuration (optional), replacing Dex and leveraging local Authelia
+    oidc.config: |
+      name: Authelia
+      issuer: https://sso.chezmoi.sh
+      clientID: $argocd-oidc:oidc.authelia.clientID
+      clientSecret: $argocd-oidc:oidc.authelia.clientSecret
+      cliClientID: $argocd-oidc:oidc.authelia.cliClientID
+      requestedScopes:
+        - openid
+        - profile
+        - email
+        - groups
+
+      # By default, Authelia will only return the `sub` claim in the ID token.
+      requestedIDTokenClaims:
+        email: {essential: true}
+        groups: {essential: true}
+
+    # the metadata.label key name where Argo CD injects the app name as a tracking label, that
+    # is used to determine which resources need to be deleted when pruning.
+    application.instanceLabelKey: argocd.argoproj.io/instance
+
+    # force annotation tracking method, as we are using Crossplane API that can collide with
+    # the default `label` method.
+    application.resourceTrackingMethod: annotation
+
+    # as only restricted users should be able to exec into pods, the UI exec feature should be
+    # enabled.
+    exec.enabled: "true"
+
+    # enable helm and plugins support in ArgoCD when using Kustomize
+    kustomize.buildOptions: --enable-helm --enable-alpha-plugins --enable-exec
+
+    # ignores differences on ExternalSecret resources
+    resource.customizations.ignoreDifferences.external-secrets.io_ExternalSecret:
+      |
+      jqPathExpressions:
+        - .. | .conversionStrategy? | select(. == "Default")
+        - .. | .decodingStrategy? | select(. == "None")
+        - .. | .metadataPolicy? | select(. == "None")
+
+  # Additional Argo CD server configuration
+  params:
+    # enables `Application` in any namespace
+    application.namespaces: "*"
+
+    # enables use of the Progressive Syncs capability
+    applicationsetcontroller.enable.progressive.syncs: true
+
+    # disables use of the SCM providers capability in the ApplicationSet controller, as
+    # we are enabling the allowAnyNamespace feature.
+    # NOTE: if we need to use the SCM providers capability, we need to set the
+    # applicationsetcontroller.allowed.scm.providers to the list of allowed
+    # providers (e.g. github, gitlab, bitbucket, etc.)
+    applicationsetcontroller.enable.scm.providers: false
+
+    # enables `ApplicationSet` in any namespace
+    # NOTE: only allows the `argocd` namespace and the ones created for each cluster
+    applicationsetcontroller.namespaces: argocd,*-tail831c5d-ts-net
+
+    # enables insecure HTTP connections to the ArgoCD server to allow the use of
+    # HTTP routes.
+    server.insecure: "true"
+
+  # ArgoCD repositories configuration
+  # Only the `atlas` repository is configured here, as the other ones are managed by
+  # ArgoCD itself.
+  repositories:
+    github.chezmoi-sh.atlas:
+      name: chezmoi.sh/atlas
+      url: https://github.com/chezmoi-sh/atlas.git
+      type: git
+    github.chezmoi-sh.vault.kubernetes:
+      name: chezmoi.sh/vault.kubernetes
+      url: https://github.com/chezmoi-sh/vault.kubernetes.git
+      type: git
+
+  # ArgoCD clusters configuration
+  # Only the current cluster is configured here, as the other ones are managed by
+  # Argotails automatically.
+  clusterCredentials:
+    amiya.akn.tail831c5d.ts.net:
+      annotations:
+        device.tailscale.com/hostname: amiya.akn
+        device.tailscale.com/tailnet: tail831c5d.ts.net
+      labels:
+        argocd.argoproj.io/seed: ""
+        device.tailscale.com/os: linux
+        tag.device.tailscale.com/kubernetes-cluster: ""
+
+      config: { tlsClientConfig: { insecure: false } }
+      server: https://kubernetes.default.svc
+
+  # ArgoCD security configuration
+  rbac:
+    # file containing user-defined policies and role definitions.
+    # (ref. https://argo-cd.readthedocs.io/en/stable/operator-manual/rbac/#rbac-configuration)
+    policy.csv: |
+      # The role `restricted-admin` is a custom role that allows users to be able to administer
+      # all ArgoCD resources except the ones that are security-sensitive (e.g. certificates, gpgkeys).
+      p, role:restricted-admin, certificates, create, *, deny
+      p, role:restricted-admin, certificates, update, *, deny
+      p, role:restricted-admin, certificates, delete, *, deny
+      p, role:restricted-admin, clusters, create, *, deny
+      p, role:restricted-admin, clusters, delete, *, deny
+      p, role:restricted-admin, accounts, update, *, deny
+      p, role:restricted-admin, gpgkeys, create, *, deny
+      p, role:restricted-admin, gpgkeys, delete, *, deny
+
+      # Add the ability to invoke the `metrics` extension for all users inheriting the `readonly` role
+      p, role:readonly, extensions, invoke, metrics, allow
+
+      g, role:restricted-admin, role:admin
+      g, role:restricted-admin, role:readonly
+      g, admins, role:restricted-admin
+
+# ArgoCD ApplicationSet controller configuration
+applicationSet:
+  # Allow ApplicationSet to be deployed in any namespace
+  # NOTE: this is a security risk, see https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Appset-Any-Namespace/
+  allowAnyNamespace: true

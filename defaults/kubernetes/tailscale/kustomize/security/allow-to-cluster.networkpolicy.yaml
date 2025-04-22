@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: tailscale-ingress-allow-to-cluster
+  name: allow-tailscale-ingress-to-cluster
   annotations:
     networkpolicy.kubernetes.io/description: >-
       Allow egress traffic from Tailscale ingress pods to in-cluster services.

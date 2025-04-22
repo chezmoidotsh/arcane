@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: traefik-ingress-allow-to-kubernetes-api
+  name: allow-tailscale-ingress-to-kubernetes-api
   annotations:
     networkpolicy.kubernetes.io/description: >-
       Allow egress traffic from Tailscale ingress pods to the Kubernetes API.

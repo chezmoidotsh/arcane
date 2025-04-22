@@ -1,0 +1,66 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  annotations:
+    argocd.argoproj.io/description: |
+      This ApplicationSet is responsible for automatically deploying all
+      system applications and configurations inside the targeted cluster,
+      depending on existing templates and cluster definitions.
+  name: system
+spec:
+  ignoreApplicationDifferences:
+    - jsonPointers:
+        - /spec/ignoreDifferences
+        - /spec/source/targetRevision
+        - /spec/syncPolicy/automated
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - list: { elements: [] } # NOTE: this list will be populated by the `seed` ApplicationSet with the cluster metadata
+          - git:
+              repoURL: https://github.com/chezmoi-sh/atlas.git
+              revision: migration/move-nx-to-amiya.akn
+              directories:
+                - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/*
+
+                # Exclude all directories that will be used by `system-critical` applications
+                - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/cert-manager
+                  exclude: true
+                - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/external-secrets
+                  exclude: true
+                - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/tailscale
+                  exclude: true
+                - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/traefik
+                  exclude: true
+  template:
+    metadata:
+      annotations:
+        # All system applications should be deployed first before any applications
+        argocd.argoproj.io/sync-wave: "10"
+      name: '{{ .path.basename | trimPrefix "*" }}'
+    spec:
+      destination:
+        server: "{{ .server }}"
+        namespace: '{{ .path.basename | trimPrefix "*" | trimSuffix "-system" }}-system'
+      project: system
+      sources:
+        - repoURL: https://github.com/chezmoi-sh/atlas.git
+          path: "{{ .path.path }}"
+          targetRevision: migration/move-nx-to-amiya.akn
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - Delete=confirm
+          - Prune=confirm
+          - ServerSideApply=true
+  templatePatch: |
+    {{ if not (hasPrefix "*" .path.basename) }}
+    spec:
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+      {{ end }}

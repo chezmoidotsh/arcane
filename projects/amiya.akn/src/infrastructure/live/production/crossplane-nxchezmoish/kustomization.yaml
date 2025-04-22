@@ -1,0 +1,41 @@
+# trunk-ignore-all(checkov/CKV_SECRET_6): no secrets in this file
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: crossplane-nxchezmoish
+
+resources:
+  - namespace.yaml
+  - aws.iam.authelia.yaml
+  - cloudflare.iam.cert-manager.yaml
+  - cloudflare.iam.external-dns.yaml
+  - cloudflare.dns.static-records.yaml
+
+patches:
+  - patch: |-
+      apiVersion: iam.aws.upbound.io/v1beta1
+      kind: AccessKey
+      metadata:
+        name: amiya.akn.chezmoi.sh-amazonses-authelia
+      spec:
+        writeConnectionSecretToRef:
+          name: security-sso-authelia-aws-ses
+          namespace: kubevault-kvstore
+  - patch: |-
+      apiVersion: account.cloudflare.crossplane.io/v1alpha1
+      kind: APIToken
+      metadata:
+        name: nx-chezmoi-sh-cert-manager
+      spec:
+        writeConnectionSecretToRef:
+          name: cloud-cloudflare-amiya.akn.chezmoi.sh-cert-manager
+          namespace: kubevault-kvstore
+  - patch: |-
+      apiVersion: account.cloudflare.crossplane.io/v1alpha1
+      kind: APIToken
+      metadata:
+        name: nx-chezmoi-sh-external-dns
+      spec:
+        writeConnectionSecretToRef:
+          name: cloud-cloudflare-amiya.akn.chezmoi.sh-external-dns
+          namespace: kubevault-kvstore

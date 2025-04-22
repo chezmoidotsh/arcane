@@ -18,6 +18,8 @@ spec:
           protocol: TCP
         - port: 443
           protocol: TCP
+        - port: 636
+          protocol: TCP
       from:
         - ipBlock:
             cidr: 10.0.0.0/8
