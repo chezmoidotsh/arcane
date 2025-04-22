@@ -4,8 +4,3 @@ kind: Kustomization
 
 resources:
   - default.gateway.yaml
-
-  # (SecOps) Network Policies
-  - security/allow-from-internal.networkpolicy.yaml
-  - security/allow-to-cluster.networkpolicy.yaml
-  - security/allow-to-kubernetes-api.networkpolicy.yaml

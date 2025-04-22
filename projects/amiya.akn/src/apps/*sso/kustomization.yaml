@@ -11,7 +11,3 @@ labels:
 resources:
   - authelia
   - yaldap
-
-  # SecOps (Network Policies)
-  - security/allow-intra-namespace.yaml
-  - security/allow-to-kube-dns.yaml

@@ -17,10 +17,6 @@ resources:
   - glance.workload.yaml
   - home-dashboard.httproute.yaml
 
-  # (SecOps) Network Policies
-  - security/allow-from-traefik.networkpolicy.yaml
-  - security/allow-to-internet.networkpolicy.yaml
-
 configMapGenerator:
   - name: glance-configuration
     files:

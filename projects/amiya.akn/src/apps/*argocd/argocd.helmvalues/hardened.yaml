@@ -1,11 +1,6 @@
 ---
 # This file defines security hardening measures for the ArgoCD deployment
 global:
-  # Apply default Kubernetes NetworkPolicy resources for ArgoCD components
-  networkPolicy:
-    create: true
-    defaultDenyIngress: true
-
   # Pod-level security context applied globally to all ArgoCD components
   securityContext:
     # Specific non-root user ID to run ArgoCD containers

@@ -11,11 +11,6 @@ resources:
   - sso.httproute.yaml
   - sso.tailscale.yaml
 
-  # SecOps (Network Policies)
-  - security/allow-from-traefik.yaml
-  - security/allow-to-aws-ses.yaml
-  - security/allow-to-tailscale.yaml
-
 helmCharts:
   - name: authelia
     repo: https://charts.authelia.com

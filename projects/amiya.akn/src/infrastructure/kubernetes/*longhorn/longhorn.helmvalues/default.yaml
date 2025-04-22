@@ -4,11 +4,6 @@
 preUpgradeChecker:
   jobEnabled: false
 
-# Network policies configuration
-# Enables network policies to control access to Longhorn pods
-networkPolicies:
-  enabled: true
-
 # Storage persistence configuration
 # Sets the default number of replicas for the default storage class
 persistence:

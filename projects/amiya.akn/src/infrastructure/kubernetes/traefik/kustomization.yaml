@@ -5,12 +5,5 @@ kind: Component
 resources:
   - ldaps.gateway.yaml
 
-  # (SecOps) Network Policies
-  - security/allow-from-argocd-server.yaml
-  - security/allow-to-kubernetes-api.ciliumnetworkpolicy.yaml
-
 patches:
   - path: default.gateway.yaml
-
-  # SecOps (Network Policies)
-  - path: security/allow-from-internal.networkpolicy.yaml

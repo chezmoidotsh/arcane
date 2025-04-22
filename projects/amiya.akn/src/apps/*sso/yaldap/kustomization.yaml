@@ -18,10 +18,6 @@ resources:
   - yaldap.workload.yaml
   - yaldap.externalsecret.yaml
 
-  # SecOps (Network Policies)
-  - security/allow-from-traefik.yaml
-  - security/deny-egress.yaml
-
 images:
   - name: ghcr.io/chezmoi-sh/flakes-dev/yaldap
     newTag: v0.2.0-24.11-x86_64-linux # TODO: Handle multi-arch images

@@ -5,8 +5,5 @@ kind: Component
 resources:
   - ../../../../../../catalog/kustomize/tun-device-plugin
 
-  # (SecOps) Network Policies
-  - security/allow-to-kubernetes-api.ciliumnetworkpolicy.yaml
-
 patches:
   - path: restricted.proxyclass.yaml

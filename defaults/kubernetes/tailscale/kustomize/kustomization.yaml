@@ -6,11 +6,6 @@ resources:
   - operator-oauth.externalsecret.yaml
   - restricted.proxyclass.yaml
 
-  # (SecOps) Network Policies
-  - security/allow-to-cluster.networkpolicy.yaml
-  - security/allow-to-internet.networkpolicy.yaml
-  - security/allow-to-kubernetes-api.networkpolicy.yaml
-
 transformers:
   - |-
     apiVersion: builtin
