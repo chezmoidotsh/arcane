@@ -1,0 +1,81 @@
+machine:
+  # -- Node configuration
+  type: controlplane
+  network:
+    hostname: amiya-akn-01
+
+  # -- Machine installation
+  install:
+    # enabled extentions:
+    # - siderolabs/intel-ucode
+    # - siderolabs/iscsi-tools
+    # - siderolabs/tailscale
+    # - siderolabs/util-linux-tools
+    image: factory.talos.dev/installer-secureboot/012427dcde4d2c4eff11f55adf2f20679292fcdffb76b5700dd022c813908b07:v1.10.0-beta.1
+    diskSelector:
+      size: ">= 256GB"
+    wipe: true
+  systemDiskEncryption:
+    ephemeral:
+      provider: luks2
+      keys:
+        - slot: 0
+          tpm: {}
+    state:
+      provider: luks2
+      keys:
+        - slot: 0
+          tpm: {}
+
+  # -- Custom configuration (enable user namespaces)
+  kubelet:
+    clusterDNS:
+      - 10.96.0.10
+    extraArgs:
+      rotate-server-certificates: true # NOTE: This is required for Metrics Server
+    extraConfig:
+      featureGates:
+        UserNamespacesSupport: true
+        UserNamespacesPodSecurityStandards: true
+  sysctls:
+    user.max_user_namespaces: "11255"
+
+  # Features describe individual Talos features that can be switched on or off.
+  features:
+    # Configures host DNS caching resolver.
+    hostDNS:
+      enabled: true # Enable host DNS caching resolver.
+      forwardKubeDNSToHost: true # Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.
+      resolveMemberNames: true # Enable DNS resolution of member names in Kubernetes.
+    imageCache:
+      localEnabled: false # Disable local image cache.
+
+cluster:
+  allowSchedulingOnControlPlanes: true
+
+  # -- CoreDNS configuration
+  coreDNS:
+    disabled: true # TalosOS CoreDNS is disabled to allow us to use a custom CoreDNS configuration.
+
+  # -- Network configuration (disable CNI to allow Cilium to work)
+  network:
+    cni:
+      name: custom
+      urls:
+        - https://raw.githubusercontent.com/chezmoi-sh/atlas/refs/heads/migration/move-nx-to-amiya.akn/projects/amiya.akn/docs/bootstrap/talos/manifests/cilium~1.17.3.yaml
+  proxy:
+    disabled: true
+
+  # -- Custom configuration (enable user namespaces)
+  apiServer:
+    extraArgs:
+      feature-gates: UserNamespacesSupport=true,UserNamespacesPodSecurityStandards=true
+
+  # -- Install extra components
+  extraManifests:
+    # -- CoreDNS configuration override
+    - https://raw.githubusercontent.com/chezmoi-sh/atlas/refs/heads/migration/move-nx-to-amiya.akn/projects/amiya.akn/docs/bootstrap/talos/manifests/coredns~v1.12.1.yaml
+
+    # -- Metrics Server
+    - https://raw.githubusercontent.com/chezmoi-sh/atlas/refs/heads/migration/move-nx-to-amiya.akn/projects/amiya.akn/docs/bootstrap/talos/manifests/kubelet-serving-cert-approver~0.9.1.yaml
+    - https://raw.githubusercontent.com/chezmoi-sh/atlas/refs/heads/migration/move-nx-to-amiya.akn/projects/amiya.akn/docs/bootstrap/talos/manifests/metrics-server~0.7.2.yaml
