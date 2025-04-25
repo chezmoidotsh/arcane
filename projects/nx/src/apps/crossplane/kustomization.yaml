@@ -15,7 +15,7 @@ helmCharts:
   - name: crossplane
     repo: https://charts.crossplane.io/master/
     releaseName: crossplane
-    version: 1.20.0-rc.0.48.g5ce264469
+    version: 1.20.0-rc.0.52.ge7763245b
     valuesFile: crossplane.helmvalues/default.yaml
     additionalValuesFiles:
       - crossplane.helmvalues/hardened.yaml
