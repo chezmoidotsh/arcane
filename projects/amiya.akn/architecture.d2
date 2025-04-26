@@ -1,0 +1,340 @@
+# Copyright (C) 2024 vscode (you@you.you)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ----------------------------------------------------------------------------
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+explanation: |md
+  # amiya.akn Architecture
+
+  This document describes the architecture \
+  of the amiya.akn platform in a visual way \
+  with all the components and how they \
+  interact with each other.
+  \
+  _A service that is not described here is \
+  kubevault, which is a tool for managing \
+  secrets relying on Kubernetes API without any \
+  "component"._
+| {
+  near: top-left
+}
+
+classes: {
+  # Object classes
+  application: {
+    shape: rectangle
+    style: {
+      fill-pattern: dots
+      multiple: true
+      shadow: false
+    }
+  }
+  application-system: {
+    shape: rectangle
+    style: {
+      fill-pattern: dots
+      multiple: true
+      stroke-dash: 3
+      opacity: 0.7
+      font-size: 14
+    }
+  }
+
+  undeployed: {
+    style: {
+      opacity: 0.4
+    }
+  }
+
+  namespace: {
+    shape: page
+    style: {
+      fill-pattern: lines
+      stroke-dash: 5
+      text-transform: lowercase
+    }
+  }
+  network: {
+    shape: cloud
+    style: {
+      fill-pattern: dots
+      text-transform: uppercase
+      font-size: 24
+      bold: true
+    }
+  }
+  
+  hardware: {
+    shape: none
+    style: {
+      stroke-width: 3
+      bold: true
+    }
+  }
+
+  # Connections classes
+  connect-from-network: {
+    style.stroke-width: 8
+  }
+  connect-to-internet: {
+    style: {
+      stroke-dash: 3
+    }
+  }
+  connect-to-network: {
+    style.stroke-width: 8
+  }
+  connect-vpn-trunk: {
+    style: {
+      animated: true
+      bold: true
+      font-size: 32
+      stroke-width: 8
+    }
+  }
+  connect-vpn: {
+    style.animated: true
+  }
+  connect-api: {
+    style: {
+      stroke-dash: 2
+      stroke-width: 4
+    }
+  }
+}
+
+# Networks
+internet: {class: network}
+localnet: {class: network}
+tailnet: {
+  class: network
+  tooltip: Tailnet - Mesh VPN Network
+}
+
+# Hardware & Infrastructure
+UDM-Pro: {
+  class: hardware
+  icon: assets/icons/hardware/unifi.svg
+  tooltip: UniFi Dream Machine Pro - Gateway & Network Controller
+}
+
+amiya·akn: {
+  infrastructure: {class: namespace}
+  security: {class: namespace}
+  storage: {class: namespace}
+  system: {class: namespace}
+
+  style.fill-pattern: none
+  
+  # Infrastructure Components
+  infrastructure.ArgoCD: {
+    class: [application]
+    icon: assets/icons/apps/argo-cd.svg
+    link: https://argoproj.github.io/cd/
+    tooltip: ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes.
+  }
+
+  infrastructure.Crossplane: {
+    class: [application]
+    icon: assets/icons/system/crossplane.svg
+    link: https://crossplane.io/
+    tooltip: Crossplane is an open-source Kubernetes add-on that extends your cluster with managed resources from any cloud or on-prem environment.
+  }
+
+  infrastructure.Talos Omni: {
+    class: [application; undeployed]
+    icon: assets/icons/hardware/talos.svg
+    link: https://omni.siderolabs.com/
+    tooltip: Talos Omni is a platform for managing Talos Linux clusters through a simplified interface.
+  }
+
+  # Security Components
+  security.Authelia: {
+    class: [application]
+    icon: assets/icons/apps/authelia.svg
+    link: https://www.authelia.com/
+    tooltip: Authelia is an open-source authentication and authorization server.
+  }
+
+  security.SmallStep CA: {
+    class: [application; undeployed]
+    icon: assets/icons/apps/smallstep.png
+    link: https://smallstep.com/
+    tooltip: SmallStep CA is a zero-trust certificate authority.
+  }
+
+  security.yaLDAP: {
+    class: [application]
+    icon: assets/icons/apps/yaldap.png
+    link: https://yaldap.com/
+    tooltip: yaLDAP is a modern LDAP server.
+  }
+
+  # Storage Components
+  storage.MinIO: {
+    class: [application; undeployed]
+    icon: assets/icons/apps/minio.svg
+    link: https://min.io/
+    tooltip: MinIO is a high-performance, distributed object storage system.
+  }
+
+  storage.zot registry: {
+    class: [application; undeployed]
+    icon: assets/icons/apps/zot-registry.svg
+    link: https://zotregistry.dev/
+    tooltip: Zot Registry is a self-hosted, privacy-focused, and easy-to-use image registry.
+  }
+
+  # System Components
+  system.Cert-Manager: {
+    class: [application-system]
+    icon: assets/icons/system/cert-manager.svg
+    link: https://cert-manager.io/
+    tooltip: Cert-Manager is a Kubernetes controller that automates the management and issuance of TLS certificates.
+  }
+
+  system.Cilium: {
+    class: [application-system]
+    icon: assets/icons/system/cilium.svg
+    link: https://cilium.io/
+    tooltip: Cilium is a networking, observability, and security solution with an eBPF-based dataplane.
+  }
+
+  system.ExternalDNS: {
+    class: [application-system]
+    icon: assets/icons/system/external-dns.png
+    link: https://github.com/kubernetes-sigs/external-dns
+    tooltip: ExternalDNS is a Kubernetes controller that configures DNS resources.
+  }
+
+  system.External-Secret: {
+    class: [application-system]
+    icon: assets/icons/system/external-secret.svg
+    link: https://external-secrets.io/
+    tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
+  }
+
+  system.Longhorn: {
+    class: [application-system]
+    icon: assets/icons/system/longhorn.svg
+    link: https://longhorn.io/
+    tooltip: Longhorn is a distributed block storage system for Kubernetes.
+  }
+
+  system.Tailscale: {
+    class: [application-system]
+    icon: assets/icons/system/tailscale.svg
+    link: https://tailscale.com/
+    tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
+  }
+
+  system.Traefik: {
+    class: [application-system]
+    icon: assets/icons/system/traefik.svg
+    link: https://traefik.io/
+    tooltip: Traefik is a modern HTTP reverse proxy and load balancer.
+  }
+
+  # Other Components
+  Glance: {
+    class: [application]
+    icon: assets/icons/apps/glance.png
+    link: https://github.com/glanceapp/glance
+    tooltip: A self-hosted dashboard that puts all your feeds in one place.
+  }
+
+  Tailscale-Connector: {
+    icon: assets/icons/system/tailscale.svg
+    link: https://tailscale.com/kb/1441/kubernetes-operator-connector
+    tooltip: Tailscale Connector for Kubernetes - Connects local network to tailnet
+  }
+}
+
+# Connections
+# VPN Connections
+amiya·akn.system.Tailscale <- tailnet: {class: [connect-vpn-trunk]}
+amiya·akn.Tailscale-Connector -> localnet: {class: [connect-vpn-trunk]}
+amiya·akn.Tailscale-Connector <- tailnet: {class: [connect-vpn-trunk]}
+
+# Internal Connections
+amiya·akn.security.yaLDAP <- amiya·akn.security.Authelia: {
+  source-arrowhead: LDAP (8389)
+}
+amiya·akn.security.yaLDAP <- amiya·akn.system.Traefik: {
+  source-arrowhead: LDAP (8389)
+}
+amiya·akn.security.Authelia <- amiya·akn.system.Traefik: {
+  source-arrowhead: HTTP (9091)
+}
+amiya·akn.security.Authelia <- amiya·akn.system.Tailscale: {
+  class: [connect-vpn]
+  source-arrowhead: HTTP (9091)
+}
+
+amiya·akn.security.SmallStep CA <- amiya·akn.system.Traefik: {
+  class: undeployed
+  source-arrowhead: HTTP (9000)
+}
+
+amiya·akn.system.Longhorn <- amiya·akn.system.Traefik: {
+  source-arrowhead: HTTP (8000)
+}
+
+amiya·akn.storage.MinIO -> internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
+amiya·akn.storage.MinIO <- amiya·akn.system.Traefik: {
+  class: undeployed
+  source-arrowhead: HTTP (9000)
+}
+
+amiya·akn.storage.zot registry -> internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
+amiya·akn.storage.zot registry -> amiya·akn.storage.MinIO: {
+  class: undeployed
+  source-arrowhead: HTTP (5000)
+}
+
+amiya·akn.Glance -> internet: HTTPS (443) {class: [connect-to-internet]}
+amiya·akn.Glance <- amiya·akn.system.Traefik: {
+  source-arrowhead: HTTP (8080)
+}
+
+amiya·akn.infrastructure.Talos Omni <- amiya·akn.system.Traefik: {
+  source-arrowhead: HTTP (443)
+}
+
+amiya·akn.system.Traefik <- localnet: {
+  source-arrowhead: |md
+    HTTP (80)
+    HTTPS (443)
+    LDAPS (636)
+  |
+}
+
+amiya·akn.infrastructure.ArgoCD <- amiya·akn.system.Tailscale: {
+  class: [connect-vpn]
+  source-arrowhead: HTTP (8080)
+}
+
+amiya·akn.infrastructure.ArgoCD <- amiya·akn.system.Traefik: {
+  source-arrowhead: HTTP (8080)
+}
+
+amiya·akn.infrastructure.Crossplane -> internet: HTTPS (443) {class: [connect-to-internet]}
+amiya·akn.system.Cert-Manager -> internet: HTTPS (443) {class: [connect-to-internet]}
+amiya·akn.system.ExternalDNS -> UDM-Pro: DNS updates

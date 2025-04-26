@@ -1,0 +1,29 @@
+# trunk-ignore-all(trivy/KSV037): cilium (and hubble) are deployed into kube-system namespace
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/include-unifi: "true"
+  name: hubble
+  namespace: kube-system
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: default-gateway
+      namespace: traefik-system
+      sectionName: chezmoi.sh-websecure
+  hostnames:
+    - hubble.amiya.akn.chezmoi.sh
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: hubble-ui
+          port: 80
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /

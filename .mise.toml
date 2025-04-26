@@ -1,0 +1,15 @@
+[env]
+KREW_ROOT = "{{ config_root }}/.mise/krew"
+HELM_CACHE_HOME = "{{ config_root }}/.mise/helm/cache"
+HELM_CONFIG_HOME = "{{ config_root }}/.mise/helm/config"
+HELM_DATA_HOME = "{{ config_root }}/.mise/helm/data"
+TALOSCONFIG = "{{ config_root }}/.mise/talos/config"
+
+[tools]
+"aqua:terrastruct/d2" = "latest"
+argocd = "latest"
+helm = "latest"
+krew = "latest"
+kubectl = "latest"
+talosctl = "latest"
+"ubi:runmedev/runme" = "latest"

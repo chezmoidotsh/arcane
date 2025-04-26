@@ -1,0 +1,104 @@
+# Cilium is a CNI (Container Network Interface) that provides networking for the Kubernetes cluster.
+# It replaces flannel/kube-proxy and provides a more efficient and secure networking solution (Network
+# Policies, Service Mesh, Kubernetes Gateway, etc.)
+# trunk-ignore-all(checkov,trivy)
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/part-of: cilium
+  name: cilium-installer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: cilium-installer
+    namespace: kube-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/part-of: cilium
+  name: cilium-installer
+  namespace: kube-system
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    app.kubernetes.io/part-of: cilium
+  name: cilium-installer
+  namespace: kube-system
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cilium-installer
+        app.kubernetes.io/part-of: cilium
+        app.kubernetes.io/component: installer
+    spec:
+      restartPolicy: OnFailure
+      tolerations:
+        - operator: Exists
+        - effect: NoSchedule
+          operator: Exists
+        - effect: NoExecute
+          operator: Exists
+        - effect: PreferNoSchedule
+          operator: Exists
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoExecute
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: PreferNoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: Exists
+      serviceAccount: cilium-installer
+      serviceAccountName: cilium-installer
+      hostNetwork: true
+      containers:
+        - name: cilium-installer
+          image: quay.io/cilium/cilium-cli:v0.18.3@sha256:937e3f7720d5c91b65eef53ee306a58f2ebf0d4dcf68e97238c4b6922a7c398c
+          env:
+            - name: KUBERNETES_SERVICE_HOST
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: KUBERNETES_SERVICE_PORT
+              value: "6443"
+          command:
+            - cilium
+            - install
+            - --version
+            - 1.17.3
+            - --set
+            - ipam.mode=kubernetes
+            - --set
+            - kubeProxyReplacement=true
+            - --set
+            - securityContext.capabilities.ciliumAgent={CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}
+            - --set
+            - securityContext.capabilities.cleanCiliumState={NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}
+            - --set
+            - cgroup.autoMount.enabled=false
+            - --set
+            - cgroup.hostRoot=/sys/fs/cgroup
+            - --set
+            - k8sServiceHost=localhost
+            - --set
+            - k8sServicePort=7445

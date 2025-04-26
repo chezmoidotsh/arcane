@@ -1,0 +1,24 @@
+---
+extraObjects:
+  # NOTE: kubevault is the default secret store for External Secrets Operator.
+  #       Because this cluster is the same as the one where the secrets are
+  #       stored, we don't need any trickery to access the secrets.
+  - apiVersion: external-secrets.io/v1beta1
+    kind: ClusterSecretStore
+    metadata:
+      name: kubevault
+    spec:
+      provider:
+        kubernetes:
+          remoteNamespace: kubevault-kvstore
+          server:
+            url: kubernetes.default
+            caProvider:
+              type: ConfigMap
+              name: kube-root-ca.crt
+              namespace: default
+              key: ca.crt
+          auth:
+            serviceAccount:
+              name: kubernetes.amiya.akn.chezmoi.sh
+              namespace: kubevault-kvstore

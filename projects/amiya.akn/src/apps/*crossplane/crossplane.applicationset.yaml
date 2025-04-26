@@ -1,0 +1,47 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  annotations:
+    argocd.argoproj.io/description: |
+      This ApplicationSet is responsible for automatically deploying all
+      Crossplane resources inside the current cluster.
+  name: crossplane
+  namespace: argocd
+spec:
+  ignoreApplicationDifferences:
+    - jsonPointers:
+        - /spec/source/targetRevision
+        - /spec/syncPolicy/automated
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/chezmoi-sh/atlas.git
+        revision: migration/move-nx-to-amiya.akn
+        directories:
+          - path: projects/*/src/infrastructure/crossplane
+  template:
+    metadata:
+      annotations:
+        # All Crossplane resources should be deployed with other applications
+        argocd.argoproj.io/sync-wave: "100"
+      name: crossplane-{{ index .path.segments 1 }}
+    spec:
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: crossplane
+      project: crossplane
+      sources:
+        - repoURL: https://github.com/chezmoi-sh/atlas.git
+          path: "{{ .path.path }}"
+          targetRevision: migration/move-nx-to-amiya.akn
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - Delete=confirm
+          - Prune=confirm
+          - ServerSideApply=true

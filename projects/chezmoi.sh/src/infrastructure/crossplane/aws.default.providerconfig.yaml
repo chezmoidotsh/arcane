@@ -1,0 +1,42 @@
+---
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane
+      name: aws-credentials
+      key: aws-credentials.txt
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: aws-credentials
+spec:
+  refreshInterval: 720h # 30 days
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: kubevault
+  target:
+    name: aws-credentials
+    template:
+      type: Opaque
+      engineVersion: v2
+      data:
+        aws-credentials.txt: |
+          [default]
+          aws_access_key_id = "{{ .access_key_id }}"
+          aws_secret_access_key = "{{ .secret_access_key }}"
+          region = eu-west-3
+  data:
+    - secretKey: access_key_id
+      remoteRef:
+        key: cloud-aws-chezmoish-crossplane
+        property: access_key_id
+    - secretKey: secret_access_key
+      remoteRef:
+        key: cloud-aws-chezmoish-crossplane
+        property: secret_access_key

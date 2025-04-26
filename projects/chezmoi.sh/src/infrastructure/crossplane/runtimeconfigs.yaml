@@ -1,0 +1,32 @@
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: hardened
+spec:
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        spec:
+          securityContext:
+            fsGroup: 48291
+            runAsNonRoot: true
+            runAsUser: 48291
+            runAsGroup: 48291
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: package-runtime
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+                privileged: false
+                readOnlyRootFilesystem: true
+              volumeMounts:
+                - name: tmpdir
+                  mountPath: /tmp
+          volumes:
+            - name: tmpdir
+              emptyDir: {}

@@ -24,11 +24,10 @@
 
 ## ℹ️ About
 
-`chezmoi.sh` is a project that aims to manage all resources used by other projects, like minimal IaC configuration
-and secrets.
+`chezmoi.sh` is a project that aims to manage all resources used by other projects, like shared IaC configuration.
 
 > \[!NOTE]
-> Even if this project is the "root" one, it relies on the [`nex.rpi`](../nx/README.md) project
+> Even if this project is the "root" one, it relies on the [`amiya.akn`](../amiya.akn/README.md) project
 > to provide the Kubernetes cluster used by `kubevault` and `crossplane` *(IaC)*.
 
 ## 🛡️ License

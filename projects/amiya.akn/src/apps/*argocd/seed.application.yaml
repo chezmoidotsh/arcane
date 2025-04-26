@@ -1,0 +1,21 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: seed
+spec:
+  destination:
+    namespace: argocd
+    server: https://kubernetes.default.svc
+  project: seed
+  sources:
+    - ref: origin
+      repoURL: https://github.com/chezmoi-sh/atlas.git
+      targetRevision: migration/move-nx-to-amiya.akn
+      path: projects/amiya.akn/src/apps/*argocd/seed.apps
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - Delete=confirm
+      - Prune=confirm
+      - ServerSideApply=true

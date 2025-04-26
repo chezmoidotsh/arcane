@@ -1,0 +1,38 @@
+---
+apiVersion: cloudflare.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane
+      name: cloudflare-credentials
+      key: credentials
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: cloudflare-credentials
+spec:
+  refreshInterval: 720h # 30 days
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: kubevault
+  target:
+    name: cloudflare-credentials
+    template:
+      type: Opaque
+      engineVersion: v2
+      data:
+        credentials: '{"email":"{{ .email }}","api_key":"{{ .api_key }}"}'
+  data:
+    - secretKey: email
+      remoteRef:
+        key: cloud-cloudflare-chezmoish-crossplane
+        property: email
+    - secretKey: api_key
+      remoteRef:
+        key: cloud-cloudflare-chezmoish-crossplane
+        property: api_key
