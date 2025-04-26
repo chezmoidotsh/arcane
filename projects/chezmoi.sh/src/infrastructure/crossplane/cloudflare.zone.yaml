@@ -1,0 +1,63 @@
+# Cloudflare datasource for chezmoi.sh (Zome and Account)
+#
+# Description:
+#   These resources will add the chezmoi.sh zone and account to Cloudflare in
+#   order to use them lately with other Cloudflare resources.
+apiVersion: account.cloudflare.crossplane.io/v1alpha1
+kind: Account
+metadata:
+  annotations:
+    crossplane.io/external-name: ENC[AES256_GCM,data:qUjnktsEH+WbCBAgxKe38Kc8fIeErQ84cYYparH2qKk=,iv:5YMKQccLOxKOasQSnkodNF6Iag0GKZwkPwpq8DJ0K78=,tag:6ANZ9VCBJ8hJolyOs3TEuQ==,type:str]
+  labels:
+    cf.chezmoi.sh/account: main
+  name: chezmoi-sh
+spec:
+  managementPolicies:
+    - Observe
+  forProvider: {}
+sops:
+  age:
+    - recipient: age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
+      enc: |
+        -----BEGIN AGE ENCRYPTED FILE-----
+        YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSAwTTZObVdlUy9QNUJDOUhD
+        WTAwaFg5S2MrcFRUTnlZQytrREZIaWVLajFrClNoSmZTOFlWTEo3dVltMDhqKzEw
+        NFEwdktQN3dpMllXWGY5Ykt3aXNZWVEKLS0tIEpJUUJna1htajZaeDhDV0ZKWnVy
+        TStGcUkrRWMycDRDSUowS3hOdWx2dG8KXWrx4Zf5vFV9ZY3WkzY+R/65n4Th0Pq0
+        zkN8aA6a+QPM5NRGyxXzaHRPQIB1cVecUXPWdoEJLpi4y4/YCnhVkQ==
+        -----END AGE ENCRYPTED FILE-----
+  lastmodified: "2025-04-23T17:59:25Z"
+  mac: ENC[AES256_GCM,data:CpN4i20CRKwb9Phha1gOZuQ0cMNNLhGYZ153igX4qUzi296dmxpIlExbm6wzzu1hEhK3Z7Ah5rAbrqrqDWpuSDD2mmsRzbDvSt+z/41uX51Hh3Ai000kQmivZJjOcXLvGm2RteDT5SioQ5dW5dwKor0fmy2L7oDgKBdwvhU1duc=,iv:/qcacsTeSMqIqQ7wJw1a3JX0wmDvA7IV4jF6iWuqfd4=,tag:ABocpdxuxtZdlNyPYnZxAw==,type:str]
+  encrypted_regex: crossplane.io/external-name
+  version: 3.10.2
+---
+apiVersion: zone.cloudflare.crossplane.io/v1alpha1
+kind: Zone
+metadata:
+  annotations:
+    crossplane.io/external-name: ENC[AES256_GCM,data:0h8myJQnV71kQ5Rlm0kcRxunaB7DTQADCdcHEoAlvAA=,iv:tkJdjF9VPuVdVy4iVG4HKNfN1A/QtIVdKCMayzGam1Y=,tag:YqtkAHYM9Mf9UELCNF53CA==,type:str]
+  labels:
+    cf.chezmoi.sh/zone: chezmoi.sh
+  name: chezmoi-sh
+spec:
+  managementPolicies:
+    - Observe
+  forProvider:
+    accountIdSelector:
+      matchLabels:
+        cf.chezmoi.sh/account: main
+sops:
+  age:
+    - recipient: age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
+      enc: |
+        -----BEGIN AGE ENCRYPTED FILE-----
+        YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSAwTTZObVdlUy9QNUJDOUhD
+        WTAwaFg5S2MrcFRUTnlZQytrREZIaWVLajFrClNoSmZTOFlWTEo3dVltMDhqKzEw
+        NFEwdktQN3dpMllXWGY5Ykt3aXNZWVEKLS0tIEpJUUJna1htajZaeDhDV0ZKWnVy
+        TStGcUkrRWMycDRDSUowS3hOdWx2dG8KXWrx4Zf5vFV9ZY3WkzY+R/65n4Th0Pq0
+        zkN8aA6a+QPM5NRGyxXzaHRPQIB1cVecUXPWdoEJLpi4y4/YCnhVkQ==
+        -----END AGE ENCRYPTED FILE-----
+  lastmodified: "2025-04-23T17:59:25Z"
+  mac: ENC[AES256_GCM,data:CpN4i20CRKwb9Phha1gOZuQ0cMNNLhGYZ153igX4qUzi296dmxpIlExbm6wzzu1hEhK3Z7Ah5rAbrqrqDWpuSDD2mmsRzbDvSt+z/41uX51Hh3Ai000kQmivZJjOcXLvGm2RteDT5SioQ5dW5dwKor0fmy2L7oDgKBdwvhU1duc=,iv:/qcacsTeSMqIqQ7wJw1a3JX0wmDvA7IV4jF6iWuqfd4=,tag:ABocpdxuxtZdlNyPYnZxAw==,type:str]
+  encrypted_regex: crossplane.io/external-name
+  version: 3.10.2

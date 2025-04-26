@@ -28,6 +28,7 @@ helmCharts:
     additionalValuesFiles:
       - argocd.helmvalues/hardened.yaml
       - argocd.helmvalues/extensions.yaml
+      - argocd.helmvalues/addon:crossplane.yaml
       - argocd.helmvalues/addon:ksops.yaml
       - argocd.helmvalues/addon:tailscale.yaml
 

@@ -3,12 +3,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - functions.yaml
-  - provider.aws.yaml
-  - provider.cloudflare.yaml
-  - runtimeconfigs.yaml
-
-  # SecOps (Network Policies)
+  # Crossplane x ArgoCD
+  - crossplane.applicationset.yaml
 
 helmCharts:
   - name: crossplane

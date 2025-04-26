@@ -42,7 +42,7 @@ spec:
     depending on existing templates and cluster definitions.
 
   sourceNamespaces:
-    - '*' # NOTE: allow application inside any namespace to be installed
+    - "*" # NOTE: allow application inside any namespace to be installed
   sourceRepos:
     - https://github.com/chezmoi-sh/atlas.git # NOTE: main repository
     - https://github.com/chezmoi-sh/vault.kubernetes.git # NOTE: vault repository
@@ -78,7 +78,7 @@ spec:
     depending on existing templates and cluster definitions.
 
   sourceNamespaces:
-    - '*' # NOTE: allow application inside any namespace to be installed
+    - "*" # NOTE: allow application inside any namespace to be installed
   sourceRepos:
     - "*" # NOTE: allow any repository to be used as source
   destinations:
@@ -89,6 +89,42 @@ spec:
 
   clusterResourceWhitelist: [{ group: "*", kind: "*" }]
   clusterResourceBlacklist: []
+  namespaceResourceWhitelist: [{ group: "*", kind: "*" }]
+  namespaceResourceBlacklist: []
+
+  roles: []
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: crossplane
+  # Finalizer that ensures that project is not deleted until it is not referenced by any application
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: |
+    This project is responsible for deploying all Crossplane resources inside current cluster.
+
+  sourceNamespaces:
+    - crossplane # NOTE: only allow crossplane resources to be installed in the crossplane namespace
+  sourceRepos:
+    - https://github.com/chezmoi-sh/atlas.git # NOTE: main repository
+  destinations:
+    - # NOTE: crossplane resources should only be installed in the crossplane namespace
+      namespace: crossplane
+      server: https://kubernetes.default.svc
+    - # NOTE: in order to configure RBAC on the "vault", this namespace should be allowed too
+      namespace: kubevault-kvstore
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist: [{ group: "*", kind: "*" }]
+  clusterResourceBlacklist:
+    - group: ""
+      kind: Namespace
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+  
   namespaceResourceWhitelist: [{ group: "*", kind: "*" }]
   namespaceResourceBlacklist: []
 

@@ -1,7 +1,15 @@
-# AWS credentials for chezmoi.sh
-#
-# Description:
-#   This ExternalSecret creates a secret that will be used by the AWS provider.
+---
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane
+      name: aws-credentials
+      key: aws-credentials.txt
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
@@ -26,9 +34,9 @@ spec:
   data:
     - secretKey: access_key_id
       remoteRef:
-        key: cloud-aws-crossplane-chezmoi-sh
+        key: cloud-aws-chezmoish-crossplane
         property: access_key_id
     - secretKey: secret_access_key
       remoteRef:
-        key: cloud-aws-crossplane-chezmoi-sh
+        key: cloud-aws-chezmoish-crossplane
         property: secret_access_key

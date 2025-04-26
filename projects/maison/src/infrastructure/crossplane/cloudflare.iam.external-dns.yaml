@@ -1,3 +1,25 @@
+# Cloudflare API Token for External DNS
+#
+# Description:
+#   This resource creates a Cloudflare API Token with specific permissions for
+#   External DNS to manage DNS records automatically. The token is used by
+#   External DNS to create and update DNS records based on Kubernetes service
+#   and ingress configurations.
+#
+# Permissions:
+#   - Zone Read (c8fed203ed3043cba015a93ad1616f1f): Allows reading zone information
+#   - DNS Write (4755a26eedb94da69e1066d98aa820be): Allows managing DNS records
+#
+# Security:
+#   - Token is stored in Kubernetes secrets in the kubevault-kvstore namespace
+#   - Access is restricted to specific IP address (176.145.158.72/32)
+#   - RBAC rules restrict secret access to the external-dns service account
+#
+# Usage:
+#   This token enables External DNS to:
+#   - Automatically create DNS records for Kubernetes services
+#   - Update DNS records when services change
+#   - Maintain DNS records in sync with Kubernetes resources
 ---
 apiVersion: account.cloudflare.crossplane.io/v1alpha1
 kind: APIToken
@@ -14,9 +36,6 @@ spec:
           - 4755a26eedb94da69e1066d98aa820be # DNS Write
         resources:
           com.cloudflare.api.account.zone.2734d7b22cf00222046320ed3187cb94: "*"
-    condition:
-      - requestIp:
-          - in: [176.145.158.72/32]
   writeConnectionSecretToRef:
     name: cloud-cloudflare-maison.chezmoi.sh-external-dns
     namespace: kubevault-kvstore

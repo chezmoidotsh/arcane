@@ -1,8 +1,15 @@
-# Cloudflare credentials for chezmoi.sh
-#
-# Description:
-#   This ExternalSecret creates a secret that will be used by the Cloudflare
-#   provider.
+---
+apiVersion: cloudflare.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane
+      name: cloudflare-credentials
+      key: credentials
 ---
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
@@ -23,9 +30,9 @@ spec:
   data:
     - secretKey: email
       remoteRef:
-        key: cloud-cloudflare-crossplane-chezmoi-sh
+        key: cloud-cloudflare-chezmoish-crossplane
         property: email
     - secretKey: api_key
       remoteRef:
-        key: cloud-cloudflare-crossplane-chezmoi-sh
+        key: cloud-cloudflare-chezmoish-crossplane
         property: api_key

@@ -1,3 +1,6 @@
 creation_rules:
-  - age: >-
+  # Crossplane - Encrypt some external-name used to import data
+  - path_regex: projects/[^/]+/src/infrastructure/crossplane/.+\.yaml$
+    encrypted_regex: crossplane.io/external-name
+    age: >-
       age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9

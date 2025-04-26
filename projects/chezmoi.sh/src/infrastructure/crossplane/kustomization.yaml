@@ -1,0 +1,44 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # Required modules
+  - ../../../../../catalog/crossplane/domainidentity.amazonses.chezmoi.sh
+
+  # Crossplane global configuration
+  - functions.yaml
+  - runtimeconfigs.yaml
+
+  # Crossplane provider configuration
+  - aws.provider.yaml
+  - aws.default.providerconfig.yaml
+  - cloudflare.provider.yaml
+  - cloudflare.default.providerconfig.yaml
+
+  # AWS resources
+  - aws.domainidentity.yaml
+
+patches:
+  - # NOTE: Crossplane API extensions must be applied before applying the resources
+    patch: |
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "-1"
+    target:
+      group: apiextensions.crossplane.io
+
+generators:
+  - # Cloudflare resources need to provide the external-name annotation,
+    # which is encrypted.
+    |-
+    apiVersion: viaduct.ai/v1
+    kind: ksops
+    metadata:
+      name: crossplane-external-name
+      annotations:
+        config.kubernetes.io/function: |
+          exec:
+            path: ksops
+    files:
+      - cloudflare.zone.yaml

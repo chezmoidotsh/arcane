@@ -1,14 +1,32 @@
-# AWS User for Authelia
+# AWS IAM Resources for n8n
 #
 # Description:
-#   These resources will create an AWS IAM User with the necessary permissions
-#   to send emails from the domain chezmoi.sh.
+#   These resources create an AWS IAM User with the necessary permissions for n8n
+#   to send emails using Amazon SES. The configuration includes:
+#   - IAM Policy with SES permissions
+#   - IAM User
+#   - Policy attachment
+#   - Access Key
+#   - RBAC permissions for Kubernetes
+#
+# Permissions:
+#   - SES:SendEmail: Allows sending emails through Amazon SES
+#   - SES:SendRawEmail: Allows sending raw emails with custom headers
+#
+# Security:
+#   - Access keys are stored in Kubernetes secrets in the kubevault-kvstore namespace
+#   - RBAC rules restrict access to the secret to the n8n service account
+#   - The IAM user is scoped to a specific path (/maison.chezmoi.sh/)
+#
+# Usage:
+#   This configuration enables n8n to send emails through Amazon SES for
+#   workflow automation and notifications.
 ---
 apiVersion: iam.aws.upbound.io/v1beta1
 kind: Policy
 metadata:
   annotations:
-    crossplane.io/external-name: AutheliaSESSender
+    crossplane.io/external-name: N8NSESSender
   name: maison.chezmoi.sh-amazonses-n8n
   namespace: kubevault-kvstore
 spec:
