@@ -40,7 +40,7 @@ patches:
         path: /metadata/labels/recurring-job.longhorn.io~1source
         value: enabled
       - op: add
-        path: /metadata/labels/recurring-job-group.longhorn.io~1hourly
+        path: /metadata/labels/recurring-job-group.longhorn.io~1auto-snapshots
         value: enabled
       - op: add
         path: /metadata/labels/recurring-job-group.longhorn.io~1daily

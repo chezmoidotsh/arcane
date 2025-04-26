@@ -2,17 +2,18 @@
 apiVersion: longhorn.io/v1beta2
 kind: RecurringJob
 metadata:
-  name: hourly-snapshot
+  name: 6h-snapshots
 spec:
   concurrency: 1
-  cron: 0 * * * *
+  cron: 0 */6 * * *
   groups:
     - default
-    - hourly
+    - auto-snapshots
   labels:
-    snapshot.longhorn.io/type: hourly
-  name: hourly-snapshot
-  retain: 24
+    snapshot.longhorn.io/type: auto
+    snapshot.longhorn.io/interval: 6h
+  name: 6h-snapshots
+  retain: 4
   task: snapshot
 ---
 apiVersion: longhorn.io/v1beta2
