@@ -22,7 +22,7 @@ spec:
           - list: { elements: [] } # NOTE: this list will be populated by the `seed` ApplicationSet with the cluster metadata
           - git:
               repoURL: https://github.com/chezmoi-sh/atlas.git
-              revision: migration/move-nx-to-amiya.akn
+              revision: main
               directories:
                 - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/apps/*
   template:
@@ -39,7 +39,7 @@ spec:
       sources:
         - repoURL: https://github.com/chezmoi-sh/atlas.git
           path: "{{ .path.path }}"
-          targetRevision: migration/move-nx-to-amiya.akn
+          targetRevision: main
   templatePatch: |
     spec:
       syncPolicy:

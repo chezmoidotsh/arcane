@@ -12,7 +12,7 @@ spec:
     # Install Tailscale default resources (ProxyClass, NetworkPolicy, etc.)
     - ref: origin
       repoURL: https://github.com/chezmoi-sh/atlas.git
-      targetRevision: migration/move-nx-to-amiya.akn
+      targetRevision: main
       path: defaults/kubernetes/tailscale/kustomize
 
       kustomize:

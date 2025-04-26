@@ -304,10 +304,6 @@ const scopes = [
 		value: "project:maison",
 	},
 	{
-		name: "project:nex·rpi       - Anything related to the Nex·RPI project (chezmoi.sh)",
-		value: "project:nex·rpi",
-	},
-	{
 		name: "gh                    - Anything else",
 		value: "gh",
 	},
