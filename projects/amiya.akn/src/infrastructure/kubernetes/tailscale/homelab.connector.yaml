@@ -3,7 +3,6 @@ kind: Connector
 metadata:
   name: homelab
 spec:
-  proxyClass: restricted
   hostname: homelab
   subnetRouter:
     advertiseRoutes:
@@ -24,7 +23,7 @@ sops:
         c05HNUlWZUVrdWsvVWJwZkhKbFdqUFUK7GJWVNF0L1wgKVVwM8tdxBSkjDOeNT6J
         fLf3lVPx6pv6vJtH9kyEntYNNeFCUz25oeTWYXyZlxVXdgSUrgYyUw==
         -----END AGE ENCRYPTED FILE-----
-  lastmodified: "2025-04-26T07:19:03Z"
-  mac: ENC[AES256_GCM,data:i77RJpzk5FI+9YGak8IIWaitrztqA4u2vdPNii00oSZsN7W74SIQhru8e+RjuTEBXRz9DquJlsQQI+fyD3qiGCVXOZDdcnGlF9csN8bezNdoq0dm+nzvVlWQwAKCDa5YARiZRaCaFCkNiMzRv1jnfP5h3KKrAK9iqF6JFfUkXnE=,iv:aefAlKFsCljEhdEMbk1769kMhyOAHyVbrBiAIm4xvNU=,tag:a1+DLBdUxBgLZFoLMTv87Q==,type:str]
+  lastmodified: "2025-04-26T07:56:31Z"
+  mac: ENC[AES256_GCM,data:/S/9XowjQKKg+zKm5U4thaC+wqJuu71Rq++juDoQ7SIHQzmRwrZexx3sTfJSG8XEm2WHMo2sIXEPM8yTnzK2fS2nabSUiMxf5Es/aX9givClfpS5af5OfL5av28T7UMem04HmSwCdBoSoivQe7haqJVOuD1bFmetpkkWswpQaZ4=,iv:geEHJwtLPM25C1Ufanqb2xWSt2ba67r1s80yE5LNncI=,tag:BqNV3b8NE9Dc/a39VS8GqQ==,type:str]
   encrypted_regex: advertiseRoutes
   version: 3.10.2
