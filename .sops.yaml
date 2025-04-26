@@ -4,3 +4,9 @@ creation_rules:
     encrypted_regex: crossplane.io/external-name
     age: >-
       age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
+
+  # Tailscale - Protect some "private" infrastructure information like internal IP addresses.
+  - path_regex: projects/[^/]+/src/infrastructure/kubernetes/tailscale/.+\.yaml$
+    encrypted_regex: advertiseRoutes
+    age: >-
+      age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9

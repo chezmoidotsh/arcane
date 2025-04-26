@@ -7,3 +7,17 @@ resources:
 
 patches:
   - path: restricted.proxyclass.yaml
+
+generators:
+  - # Protect some "private" information like internal IPs addresses.
+    |-
+    apiVersion: viaduct.ai/v1
+    kind: ksops
+    metadata:
+      name: ksops
+      annotations:
+        config.kubernetes.io/function: |
+          exec:
+            path: ksops
+    files:
+      - homelab.connector.yaml
