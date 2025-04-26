@@ -10,10 +10,11 @@ metadata:
   name: system
 spec:
   ignoreApplicationDifferences:
-    - jsonPointers:
-        - /spec/ignoreDifferences
-        - /spec/source/targetRevision
-        - /spec/syncPolicy/automated
+    - jqPathExpressions:
+        - .spec.ignoreDifferences
+        - .spec.source.targetRevision
+        - .spec.sources[].targetRevision
+        - .spec.syncPolicy.automated
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
