@@ -18,7 +18,7 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/chezmoi-sh/atlas.git
-        revision: migration/move-nx-to-amiya.akn
+        revision: main
         directories:
           - path: projects/*/src/infrastructure/crossplane
   template:
@@ -35,7 +35,7 @@ spec:
       sources:
         - repoURL: https://github.com/chezmoi-sh/atlas.git
           path: "{{ .path.path }}"
-          targetRevision: migration/move-nx-to-amiya.akn
+          targetRevision: main
       syncPolicy:
         automated:
           prune: true

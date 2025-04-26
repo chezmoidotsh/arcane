@@ -36,7 +36,7 @@ spec:
       sources:
         - repoURL: https://github.com/chezmoi-sh/atlas.git
           path: projects/amiya.akn/src/apps/*argocd/shoot.apps
-          targetRevision: migration/move-nx-to-amiya.akn
+          targetRevision: main
 
           kustomize:
             patches:
