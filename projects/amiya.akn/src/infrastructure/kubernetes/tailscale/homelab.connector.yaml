@@ -1,0 +1,30 @@
+apiVersion: tailscale.com/v1alpha1
+kind: Connector
+metadata:
+  name: homelab
+spec:
+  proxyClass: restricted
+  hostname: homelab
+  subnetRouter:
+    advertiseRoutes:
+      - ENC[AES256_GCM,data:k6L0lFrjLpF0tgMF0g2xF2cuYISD3/K8dFR51yfhhXRA3zexepSoCfR9QnvUaNjW2suc,iv:hLdk21D/ydETeK6yP5SmG3B4bTQ8GJZ32j4+wmkL5Bo=,tag:+brtQjCdyy5fqMDo2eaAsQ==,type:comment]
+      - ENC[AES256_GCM,data:gv+fqtDvbK//gjJqb2ZpZNmfyEAfaVBF38FVCjvOw8rudX8FAcJAoZib2QemC7DsZ60JSvCDf15fFPblPQ==,iv:HfDNe+KtJcG6yx4mWVjtd/c/BzdtibWUWUrknKen+Q0=,tag:3RtxOS39sh9wu/vFbeVxLA==,type:comment]
+      - ENC[AES256_GCM,data:6a6lyRk0GM+oAH3l,iv:ZfKi5+hLdd9fqUa7a432Lw5s4v/k4sUNpd4XzXhnZVA=,tag:fBMnqS3yRDH4n/4sw7k+Pg==,type:str]
+      - ENC[AES256_GCM,data:cMfpsfQUAqz78S0mc2mcsKMCuP7ru/BWQT5K6/VGu0oDmG5h8iOoQ+lZe3s8pQPCjGrYt4G1D2KVLkcvN8WjwP7Cz7qy6z3mq4iI70J/KswIpGM=,iv:XthjkY+WzyK71smNt5eHPWy9V3ABG2puC0l7TgNgiLE=,tag:GNahbRyRwwMB5gBhG0FdVw==,type:comment]
+      - ENC[AES256_GCM,data:8AXBpE3x0fI6+Mj4keid2l+EMTgEIkx8vkT73ylgTr79jxpP677h,iv:P2PTX9DizEcNP8tRBBdy/vHevg81skiUTBjg70pxH+g=,tag:pCcbIvFB8B3ZkJfW0nx5og==,type:comment]
+      - ENC[AES256_GCM,data:oO9zTVtuHJsB55c=,iv:GCUOFunjClrKr3bFP7Ylt5q/uwucoxvMmWHjZiXqda8=,tag:ZzDJyu7/JvSTGChrqwZymw==,type:str]
+sops:
+  age:
+    - recipient: age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
+      enc: |
+        -----BEGIN AGE ENCRYPTED FILE-----
+        YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSB4cHY0bTlqVDhCK1J6TmVM
+        UW5oQXJZdlowYVhLTEY3MzRvZHRSeHJPVEhVClBlYWEwNnhjSVNhWmo2c0lCRFAz
+        Si9YdXhrVDBENGNxNE14Mm9UalBndmcKLS0tIGUrOGhoY3ZhdVQrZVpIQURGNnE1
+        c05HNUlWZUVrdWsvVWJwZkhKbFdqUFUK7GJWVNF0L1wgKVVwM8tdxBSkjDOeNT6J
+        fLf3lVPx6pv6vJtH9kyEntYNNeFCUz25oeTWYXyZlxVXdgSUrgYyUw==
+        -----END AGE ENCRYPTED FILE-----
+  lastmodified: "2025-04-26T07:19:03Z"
+  mac: ENC[AES256_GCM,data:i77RJpzk5FI+9YGak8IIWaitrztqA4u2vdPNii00oSZsN7W74SIQhru8e+RjuTEBXRz9DquJlsQQI+fyD3qiGCVXOZDdcnGlF9csN8bezNdoq0dm+nzvVlWQwAKCDa5YARiZRaCaFCkNiMzRv1jnfP5h3KKrAK9iqF6JFfUkXnE=,iv:aefAlKFsCljEhdEMbk1769kMhyOAHyVbrBiAIm4xvNU=,tag:a1+DLBdUxBgLZFoLMTv87Q==,type:str]
+  encrypted_regex: advertiseRoutes
+  version: 3.10.2
