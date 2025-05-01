@@ -12,7 +12,6 @@ resources:
   - argocd.oidc-credentials.externalsecret.yaml
   - argocd.sops-secrets.externalsecret.yaml
   - argocd.ts-secrets.externalsecret.yaml
-  - seed.application.yaml
 
   # Install Argotails that manages all Tailscale clusters
   # secrets based on Tailscale's devices

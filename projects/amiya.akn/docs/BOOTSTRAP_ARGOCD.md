@@ -96,6 +96,7 @@ Apply the bootstrap kustomization:
 
 ```bash
 kubectl kustomize --enable-helm --load-restrictor LoadRestrictionsNone bootstrap/kustomize | kubectl apply --namespace argocd --server-side -f -
+kubectl apply -f ../src/seed.application.yaml
 ```
 
 ### 3. Access ArgoCD
