@@ -8,7 +8,6 @@ spec:
   gatewayClassName: traefik-gateway
   listeners:
     - name: ldap
-      hostname: ldap.chezmoi.sh
       protocol: TCP
       port: 389
       allowedRoutes:
