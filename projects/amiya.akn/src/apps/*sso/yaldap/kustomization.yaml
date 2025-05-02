@@ -14,7 +14,7 @@ labels:
     includeTemplates: true
 
 resources:
-  - ldaps.tlsroute.yaml
+  - ldap.tcproute.yaml
   - yaldap.workload.yaml
   - yaldap.externalsecret.yaml
 

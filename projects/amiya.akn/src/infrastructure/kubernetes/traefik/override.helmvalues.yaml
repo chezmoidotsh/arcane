@@ -3,10 +3,10 @@
 ports:
   # LDAPs
   ldaps:
-    port: 636
+    port: 389
     expose:
       default: true
-      exposedPort: 636
+      exposedPort: 389
     protocol: TCP
     tls:
-      enabled: true
+      enabled: false
