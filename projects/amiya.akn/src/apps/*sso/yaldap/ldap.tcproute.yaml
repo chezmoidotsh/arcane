@@ -1,19 +1,19 @@
 ---
 apiVersion: gateway.networking.k8s.io/v1alpha2
-kind: TLSRoute
+kind: TCPRoute
 metadata:
   annotations:
     external-dns.alpha.kubernetes.io/include-unifi: "true"
-  name: ldaps-tlsroute
+  name: ldap-tcproute
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway
-      name: ldaps-gateway
+      name: ldap-gateway
       namespace: traefik-system
-      sectionName: ldaps
+      sectionName: ldap
   hostnames:
-    - ldaps.chezmoi.sh
+    - ldap.chezmoi.sh
   rules:
     - backendRefs:
         - group: ""

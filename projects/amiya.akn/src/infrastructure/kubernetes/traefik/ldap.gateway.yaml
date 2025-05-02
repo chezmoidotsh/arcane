@@ -1,0 +1,19 @@
+# The LDAP Gateway provides secure LDAP access to the YALDAP service.
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: ldap-gateway
+spec:
+  gatewayClassName: traefik-gateway
+  listeners:
+    - name: ldap
+      hostname: ldap.chezmoi.sh
+      protocol: TCP
+      port: 389
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: sso
