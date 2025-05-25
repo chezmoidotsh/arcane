@@ -60,6 +60,12 @@ configs:
     # enable helm and plugins support in ArgoCD when using Kustomize
     kustomize.buildOptions: --enable-helm --enable-alpha-plugins --enable-exec
 
+    # ignore differences on CRDs resources
+    resource.customizations.ignoreDifferences.apiextensions.k8s.io_CustomResourceDefinition:
+      |
+      jsonPointers:
+        - /spec/preserveUnknownFields
+
     # ignores differences on ExternalSecret resources
     resource.customizations.ignoreDifferences.external-secrets.io_ExternalSecret:
       |
