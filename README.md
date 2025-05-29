@@ -1,12 +1,14 @@
 <!-- markdownlint-disable MD033 -->
 
 <h1 align="center">
-  chezmoi.sh · Atlas
+  chezmoi.sh · Arcane
   <br/>
-  <img src=".github/assets/atlas-logo.png" alt="Bernese Mountain Dog as logo" height="250">
+
+  <img src=".github/assets/arcane-logo.light.png#gh-light-mode-only" alt="Arcane Logo" height="250" />
+  <img src=".github/assets/arcane-logo.dark.png#gh-dark-mode-only" alt="Arcane Logo" height="250" />
 </h1>
 
-<h4 align="center">Atlas - My homelab infrastructure as-code</h4>
+<h4 align="center">Arcane - My homelab infrastructure as-code</h4>
 
 <div align="center">
 
@@ -32,7 +34,14 @@ my homelab, including various services and tools.
 *This repository will probably never be finished, as I'll always be adding new services or tools to my homelab, where I'd like to make
 improvements on them.*
 
-> \[!WARNING]
+> \[!NOTE]
+> Why the name Arcane? For two reasons:
+>
+> 1. Because of the very definition of "arcane": "a mysterious operation whose secrets should only be known to the initiated".
+>    I find this definition perfectly represents this project and its content, as nobody really understands it 😅.
+> 2. As a tribute to the [Arcane](https://www.arcane.com/) animated series, which left a lasting impression on me.
+
+> \[!CAUTION]
 > This repository is a work in progress and currently in a proof of concept phase to find the way I want to manage this homelab.
 > It is not yet ready to be reused or forked.
 
