@@ -1,11 +1,11 @@
 <!-- markdownlint-disable MD033 -->
 
 <h1 align="center">
-  chezmoi.sh · Arcane
-  <br/>
+  <img src=".github/assets/arcane-logo.light.png#gh-light-mode-only" alt="Arcane Logo" height="75" />
+  <img src=".github/assets/arcane-logo.dark.png#gh-dark-mode-only" alt="Arcane Logo" height="75" />
 
-  <img src=".github/assets/arcane-logo.light.png#gh-light-mode-only" alt="Arcane Logo" height="250" />
-  <img src=".github/assets/arcane-logo.dark.png#gh-dark-mode-only" alt="Arcane Logo" height="250" />
+「 Arcane 」 <br/>
+
 </h1>
 
 <h4 align="center">Arcane - My homelab infrastructure as-code</h4>
