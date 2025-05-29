@@ -35,7 +35,7 @@ spec:
             application and configurations for the cluster {{ .name }}.
       project: seed
       sources:
-        - repoURL: https://github.com/chezmoi-sh/atlas.git
+        - repoURL: https://github.com/chezmoi-sh/arcane.git
           path: projects/amiya.akn/src/apps/*argocd/shoot.apps
           targetRevision: main
 

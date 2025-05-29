@@ -18,7 +18,7 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   generators:
     - git:
-        repoURL: https://github.com/chezmoi-sh/atlas.git
+        repoURL: https://github.com/chezmoi-sh/arcane.git
         revision: main
         directories:
           - path: projects/*/src/infrastructure/crossplane
@@ -34,7 +34,7 @@ spec:
         namespace: crossplane
       project: crossplane
       sources:
-        - repoURL: https://github.com/chezmoi-sh/atlas.git
+        - repoURL: https://github.com/chezmoi-sh/arcane.git
           path: "{{ .path.path }}"
           targetRevision: main
       syncPolicy:

@@ -104,12 +104,12 @@ configs:
     server.insecure: "true"
 
   # ArgoCD repositories configuration
-  # Only the `atlas` repository is configured here, as the other ones are managed by
+  # Only the `arcane` repository is configured here, as the other ones are managed by
   # ArgoCD itself.
   repositories:
-    github.chezmoi-sh.atlas:
-      name: chezmoi.sh/atlas
-      url: https://github.com/chezmoi-sh/atlas.git
+    github.chezmoi-sh.arcane:
+      name: chezmoi.sh/arcane
+      url: https://github.com/chezmoi-sh/arcane.git
       type: git
     github.chezmoi-sh.vault.kubernetes:
       name: chezmoi.sh/vault.kubernetes

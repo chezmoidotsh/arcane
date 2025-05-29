@@ -39,7 +39,7 @@ When the **nex·rpi** instance is up and running, we need to bootstrap and deplo
 1. Bootstrap the **nex·rpi** Kubernetes instance:
 
    ```bash {"category":"disaster-recovery-plan","name":"DRP/nex·rpi (bootstrap)"}
-   pushd ${ATLAS_DIR}/projects/nx
+   pushd ${ARCANE_DIR}/projects/nx
    just kubernetes bootstrap
    popd
    ```
@@ -47,7 +47,7 @@ When the **nex·rpi** instance is up and running, we need to bootstrap and deplo
 2. Deploy all the **nex·rpi** services:
 
    ```bash {"category":"disaster-recovery-plan","name":"DRP/nex·rpi"}
-   pushd ${ATLAS_DIR}/projects/nx
+   pushd ${ARCANE_DIR}/projects/nx
    just kubernetes force-apply
    popd
    ```
@@ -55,7 +55,7 @@ When the **nex·rpi** instance is up and running, we need to bootstrap and deplo
 3. Deploy all "static" secrets:
 
    ```bash {"category":"disaster-recovery-plan","name":"DRP/vault.chezmoi.sh"}
-   pushd ${ATLAS_DIR}/projects/chezmoi.sh
+   pushd ${ARCANE_DIR}/projects/chezmoi.sh
 
    just vault generate-applyset || true
 
@@ -67,7 +67,7 @@ When the **nex·rpi** instance is up and running, we need to bootstrap and deplo
 4. Deploy the **chezmoi.sh** infrastructure *(required by nex·rpi)*:
 
    ```bash {"category":"disaster-recovery-plan","name":"DRP/chezmoi.sh (crossplane)"}
-   pushd ${ATLAS_DIR}/projects/chezmoi.sh
+   pushd ${ARCANE_DIR}/projects/chezmoi.sh
    just crossplane generate-applyset || true
    just crossplane force-apply
    popd
@@ -75,7 +75,7 @@ When the **nex·rpi** instance is up and running, we need to bootstrap and deplo
 
 5. Deploy the **nex·rpi** infrastructure\*:
    ```bash {"category":"disaster-recovery-plan","name":"DRP/nex·rpi (crossplane)"}
-   pushd ${ATLAS_DIR}/projects/nx
+   pushd ${ARCANE_DIR}/projects/nx
    just crossplane generate-applyset || true
    just crossplane force-apply
    popd
