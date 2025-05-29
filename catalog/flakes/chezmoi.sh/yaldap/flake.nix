@@ -48,9 +48,9 @@
               "org.opencontainers.image.documentation" = "https://github.com/chezmoi-sh/yaldap";
               "org.opencontainers.image.licenses" = "Apache-2.0";
               "org.opencontainers.image.revision" = version;
-              "org.opencontainers.image.source" = "https://github.com/chezmoi-sh/atlas/blob/main/catalog/flakes/chezmoi-sh/yaldap/flake.nix";
+              "org.opencontainers.image.source" = "https://github.com/chezmoi-sh/arcane/blob/main/catalog/flakes/chezmoi-sh/yaldap/flake.nix";
               "org.opencontainers.image.title" = "ydalp";
-              "org.opencontainers.image.url" = "https://github.com/chezmoi-sh/atlas";
+              "org.opencontainers.image.url" = "https://github.com/chezmoi-sh/arcane";
               "org.opencontainers.image.version" = version;
 
               "sh.chezmoi.catalog.build.engine.type" = "nix";

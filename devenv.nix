@@ -143,9 +143,9 @@ in
   scripts.motd.exec = ''
       cat <<EOF
     ────────────────────────────────────────────────────────────────────────────────
-    👋 Welcome to the Atlas Dev Container / Codespace!
+    👋 Welcome to the Arcane Dev Container / Codespace!
     This space contains everything required to use, build, update and edit
-    the Atlas infrastructure (aka. my homelab).
+    the Arcane infrastructure (aka. my homelab).
 
     📚 No documentation has been written yet ... but it is planned
     🚀 How to build or update the infrastructure ?

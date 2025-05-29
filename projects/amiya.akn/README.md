@@ -73,8 +73,8 @@ This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based depl
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/chezmoi-sh/atlas.git
-   cd atlas/projects/amiya.akn
+   git clone https://github.com/chezmoi-sh/arcane.git
+   cd arcane/projects/amiya.akn
    ```
 
 2. **Make changes to application configurations**:
@@ -124,7 +124,7 @@ This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based depl
    spec:
      project: default
      source:
-       repoURL: https://github.com/chezmoi-sh/atlas.git
+       repoURL: https://github.com/chezmoi-sh/arcane.git
        targetRevision: HEAD
        path: projects/amiya.akn/src/apps/new-app/overlays/prod
      destination:

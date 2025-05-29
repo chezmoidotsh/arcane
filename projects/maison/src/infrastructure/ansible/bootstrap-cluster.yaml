@@ -29,7 +29,7 @@
     #     - run://ghcr.io/chezmoi-sh/kairos-bundles:flux-sync # sync FluxCD configuration
     # kairos_bundles_flux_config:
     #   git:
-    #     url: https://github.com/chezmoi-sh/atlas.git
+    #     url: https://github.com/chezmoi-sh/arcane.git
     #     path: project/maison/src/clusters/production/recovery # FluxCD configuration path with all recovery manifests
     #     branch: main
     kairos_cloudinit_k3s:
