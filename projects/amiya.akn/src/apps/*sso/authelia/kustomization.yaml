@@ -15,7 +15,7 @@ helmCharts:
   - name: authelia
     repo: https://charts.authelia.com
     releaseName: authelia
-    version: 0.10.10
+    version: 0.10.11
     valuesFile: authelia.helmvalues/default.yaml
     additionalValuesFiles:
       - authelia.helmvalues/hardened.yaml
