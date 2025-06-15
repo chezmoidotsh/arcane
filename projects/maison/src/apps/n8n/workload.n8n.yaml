@@ -82,7 +82,7 @@ spec:
               value: "false"
             - name: N8N_TEMPLATES_ENABLED
               value: "true"
-          image: docker.n8n.io/n8nio/n8n:1.73.1@sha256:9caf109e2293557568ab687b9d6c82646250c8ab7dcb20479c8bef9956811b7a
+          image: docker.n8n.io/n8nio/n8n:1.98.1@sha256:1d35d503d0ec6586d55ab7d0eb34d9bafdf9a908e3c5127020ad851ad3b0e629
           livenessProbe:
             httpGet:
               path: /
