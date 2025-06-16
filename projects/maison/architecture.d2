@@ -13,6 +13,8 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 
+...@../../docs/assets/d2/architecture-styles.d2
+
 explanation: |md
   # maison Architecture
 
@@ -23,74 +25,6 @@ explanation: |md
   \
 | {
   near: top-left
-}
-
-classes: {
-  # Object classes
-  application: {
-    shape: rectangle
-    style: {
-      fill-pattern: dots
-      multiple: true
-      shadow: false
-    }
-  }
-  application-system: {
-    shape: rectangle
-    style: {
-      fill-pattern: dots
-      multiple: true
-      stroke-dash: 3
-    }
-  }
-
-  undeployed: {
-    style: {
-      opacity: 0.3
-    }
-  }
-
-  namespace: {
-    shape: page
-    style: {
-      fill-pattern: lines
-      stroke-dash: 5
-      text-transform: lowercase
-    }
-  }
-  network: {
-    shape: cloud
-    style: {
-      fill-pattern: dots
-      text-transform: uppercase
-      font-size: 24
-      bold: true
-    }
-  }
-
-  # Connections classes
-  connect-from-network: {
-    style.stroke-width: 8
-  }
-  connect-to-internet: {
-    style: {
-      stroke-dash: 3
-    }
-  }
-  connect-to-network: {
-    style.stroke-width: 8
-  }
-  connect-vpn-trunk: {
-    style: {
-      animated: true
-      bold: true
-      font-size: 32
-      stroke-width: 8
-    }
-  }
-  connect-vpn: {
-    style.animated: true
-  }
 }
 
 internet: {class: network}

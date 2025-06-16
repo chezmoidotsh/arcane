@@ -4,12 +4,10 @@ HELM_CACHE_HOME = "{{ config_root }}/.mise/helm/cache"
 HELM_CONFIG_HOME = "{{ config_root }}/.mise/helm/config"
 HELM_DATA_HOME = "{{ config_root }}/.mise/helm/data"
 TALOSCONFIG = "{{ config_root }}/.mise/talos/config"
-GITHUB_TOKEN = { value = "{{ exec(command='gh auth token') }}", tools = true }
 
 [tools]
 "aqua:terrastruct/d2" = "latest"
 argocd = "latest"
-gh = "latest"
 helm = "latest"
 krew = "latest"
 kubectl = "latest"

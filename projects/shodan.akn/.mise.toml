@@ -1,0 +1,5 @@
+[tasks."diagram:generate"]
+tools."go:oss.terrastruct.com/d2" = "latest"
+description = "Generate the architecture diagram"
+run = "d2 architecture.d2 assets/architecture.svg"
+dir = "{{ config_root }}"

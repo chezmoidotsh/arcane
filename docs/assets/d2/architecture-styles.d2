@@ -1,0 +1,155 @@
+# Architecture Diagram Styles
+#
+# This file contains common styles and classes used across all architecture diagrams
+# in the project. It defines the visual appearance of different components and their
+# relationships in the D2 diagrams.
+#
+# Usage:
+# 1. Import this file in your architecture diagram using:
+#    @../../docs/assets/d2/architecture-styles.d2
+#
+# 2. Apply classes to your components using the class property:
+#    my-component: {
+#      class: [application]  # For regular applications
+#      class: [application-system]  # For system-level applications
+#      class: [namespace]  # For grouping components
+#      class: [network]  # For network elements
+#      class: [hardware]  # For physical hardware
+#    }
+#
+# Available component styles:
+# - namespace: Grouping container for related components (page shape with lined fill, dashed border, lowercase text)
+# - application: Regular applications (e.g., Jellyfin, n8n, Paperless) (rectangle with dotted fill, no shadow)
+# - application-system: System-level applications (e.g., Traefik, Cert-Manager) (rectangle with dotted fill, dashed border, slightly transparent)
+# - network: Network elements (e.g., internet, localnet, tailnet) (cloud shape with dotted fill, uppercase text, bold)
+# - hardware: Physical hardware components (e.g., UDM-Pro) (no shape, bold stroke)
+# - undeployed: For components that are not yet deployed (reduced opacity)
+#
+# 3. Apply connection styles using the class property:
+#    component1 -> component2: {class: [connect-to-internet]}
+#
+# Available connection styles:
+# - connect-from-network: For incoming network connections (thick line)
+# - connect-to-network: For outgoing network connections (thick line)
+# - connect-from-internet: For incoming internet connections (dashed line)
+# - connect-to-internet: For outgoing internet connections (dashed line)
+# - connect-from-vpn-backbone: For incoming VPN backbone connections (animated, bold)
+# - connect-to-vpn-backbone: For outgoing VPN backbone connections (animated, bold)
+# - connect-from-vpn: For incoming VPN connections (animated)
+# - connect-to-vpn: For outgoing VPN connections (animated)
+# - connect-from-api: For incoming API connections (dashed, medium width)
+# - connect-to-api: For outgoing API connections (dashed, medium width)
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+classes: {
+  # Object classes
+  application: {
+    shape: rectangle
+    style: {
+      fill-pattern: dots
+      multiple: true
+      shadow: false
+    }
+  }
+  application-system: {
+    shape: rectangle
+    style: {
+      fill-pattern: dots
+      multiple: true
+      stroke-dash: 3
+      opacity: 0.7
+      font-size: 14
+    }
+  }
+
+  undeployed: {
+    style: {
+      opacity: 0.4
+    }
+  }
+
+  namespace: {
+    shape: page
+    style: {
+      fill-pattern: lines
+      stroke-dash: 5
+      text-transform: lowercase
+    }
+  }
+  network: {
+    shape: cloud
+    style: {
+      fill-pattern: dots
+      text-transform: uppercase
+      font-size: 24
+      bold: true
+    }
+  }
+
+  # Connections classes
+  connect-from-network: {
+    style.stroke-width: 8
+  }
+  connect-to-network: {
+    style.stroke-width: 8
+  }
+  connect-from-internet: {
+    style: {
+      stroke-dash: 3
+    }
+  }
+  connect-to-internet: {
+    style: {
+      stroke-dash: 3
+    }
+  }
+  connect-from-vpn-backbone: {
+    style: {
+      animated: true
+      bold: true
+      font-size: 32
+      stroke-width: 8
+    }
+  }
+  connect-to-vpn-backbone: {
+    style: {
+      animated: true
+      bold: true
+      font-size: 32
+      stroke-width: 8
+    }
+  }
+  connect-from-vpn: {
+    style.animated: true
+  }
+  connect-to-vpn: {
+    style.animated: true
+  }
+  connect-from-api: {
+    style: {
+      stroke-dash: 2
+      stroke-width: 4
+    }
+  }
+  connect-to-api: {
+    style: {
+      stroke-dash: 2
+      stroke-width: 4
+    }
+  }
+  
+  # Miscellaneous classes
+  hardware: {
+    shape: none
+    style: {
+      stroke-width: 3
+      bold: true
+    }
+  }
+} 

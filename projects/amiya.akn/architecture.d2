@@ -20,6 +20,8 @@ vars: {
   }
 }
 
+...@../../docs/assets/d2/architecture-styles.d2
+
 explanation: |md
   # amiya.akn Architecture
 
@@ -34,90 +36,6 @@ explanation: |md
   "component"._
 | {
   near: top-left
-}
-
-classes: {
-  # Object classes
-  application: {
-    shape: rectangle
-    style: {
-      fill-pattern: dots
-      multiple: true
-      shadow: false
-    }
-  }
-  application-system: {
-    shape: rectangle
-    style: {
-      fill-pattern: dots
-      multiple: true
-      stroke-dash: 3
-      opacity: 0.7
-      font-size: 14
-    }
-  }
-
-  undeployed: {
-    style: {
-      opacity: 0.4
-    }
-  }
-
-  namespace: {
-    shape: page
-    style: {
-      fill-pattern: lines
-      stroke-dash: 5
-      text-transform: lowercase
-    }
-  }
-  network: {
-    shape: cloud
-    style: {
-      fill-pattern: dots
-      text-transform: uppercase
-      font-size: 24
-      bold: true
-    }
-  }
-  
-  hardware: {
-    shape: none
-    style: {
-      stroke-width: 3
-      bold: true
-    }
-  }
-
-  # Connections classes
-  connect-from-network: {
-    style.stroke-width: 8
-  }
-  connect-to-internet: {
-    style: {
-      stroke-dash: 3
-    }
-  }
-  connect-to-network: {
-    style.stroke-width: 8
-  }
-  connect-vpn-trunk: {
-    style: {
-      animated: true
-      bold: true
-      font-size: 32
-      stroke-width: 8
-    }
-  }
-  connect-vpn: {
-    style.animated: true
-  }
-  connect-api: {
-    style: {
-      stroke-dash: 2
-      stroke-width: 4
-    }
-  }
 }
 
 # Networks

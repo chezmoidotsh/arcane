@@ -304,6 +304,10 @@ const scopes = [
 		value: "project:maison",
 	},
 	{
+		name: "project:shodan.akn    - Anything related to the shodan project",
+		value: "project:shodan.akn",
+	},
+	{
 		name: "gh                    - Anything else",
 		value: "gh",
 	},
