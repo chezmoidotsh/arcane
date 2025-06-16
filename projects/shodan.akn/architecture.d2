@@ -1,0 +1,173 @@
+# ------------------------------------------------------------------------------------------------
+# 🔧 D2 Configuration
+# ------------------------------------------------------------------------------------------------
+
+explanation: |md
+  # SHODAN Architecture
+
+  This document describes the architecture \
+  of the SHODAN platform in a visual way \
+  with all the components and how they \
+  interact with each other.
+| {
+  near: top-left
+}
+
+...@../../docs/assets/d2/architecture-styles.d2
+
+
+# ------------------------------------------------------------------------------------------------
+# 🌐 Networks definition
+# ------------------------------------------------------------------------------------------------
+
+internet: {class: [network]}
+localnet: {class: [network]}
+tailnet: {
+  class: [network]
+  tooltip: Tailnet - Mesh VPN Network
+}
+
+
+# ------------------------------------------------------------------------------------------------
+# 🖥️ Hardware & Infrastructure definition
+# ------------------------------------------------------------------------------------------------
+
+UDM-Pro: {
+  class: [hardware]
+  icon: assets/icons/hardware/unifi.svg
+  tooltip: UniFi Dream Machine Pro - Gateway & Network Controller
+}
+
+
+# ------------------------------------------------------------------------------------------------
+# 📦 Components definition
+# ------------------------------------------------------------------------------------------------
+
+shodan: {
+  label: ☸ shodan.akn.chezmoi.sh
+  style.fill-pattern: none
+
+  ai: {class: [namespace]}
+  system: {class: [namespace]}
+
+  # 📦 AI Components
+  ai.MCP-Servers: {
+    class: [application; undeployed]
+    icon: assets/icons/apps/mcp.svg
+    link: https://glama.ai/mcp/servers
+    tooltip: Various AI tools and integrations for specific AI tasks and external service integrations.
+  }
+
+  ai.OpenWebUI: {
+    class: [application; undeployed]
+    icon: assets/icons/apps/open-webui.svg
+    link: https://github.com/open-webui/open-webui
+    tooltip: Extensible, feature-rich, and user-friendly self-hosted WebUI designed to operate entirely offline.
+  }
+
+  ai.AgentGateway: {
+    class: [application; undeployed]
+    icon: assets/icons/apps/agentgateway.svg
+    link: https://github.com/agentgateway/agentgateway
+    tooltip: Unified gateway for routing requests to Model Control Protocol (MCP) servers.
+  }
+
+  ai.n8n: {
+    class: [application; undeployed]
+    icon: assets/icons/apps/n8n.svg
+    link: https://n8n.io/
+    tooltip: Fair-code licensed workflow automation tool for connecting AI services and external APIs.
+  }
+
+  ai.PostgreSQL: {
+    class: [application; undeployed]
+    icon: assets/icons/apps/postgresql.svg
+    link: https://www.postgresql.org/
+    tooltip: PostgreSQL with pgvector extension for vector similarity search and storing AI embeddings.
+  }
+
+  # ⚙️ System Components
+  system.Cilium: {
+    class: [application-system; undeployed]
+    icon: assets/icons/system/cilium.svg
+    link: https://cilium.io/
+    tooltip: Advanced networking, security policies, and observability for Kubernetes clusters.
+  }
+
+  system.cert-manager: {
+    class: [application-system; undeployed]
+    icon: assets/icons/system/cert-manager.svg
+    link: https://cert-manager.io/
+    tooltip: Automatic provisioning and management of TLS certificates in Kubernetes.
+  }
+
+  system.External-DNS: {
+    class: [application-system; undeployed]
+    icon: assets/icons/system/external-dns.png
+    link: https://github.com/kubernetes-sigs/external-dns
+    tooltip: Automatically configures DNS records for Kubernetes services.
+  }
+
+  system.External-Secrets: {
+    class: [application-system; undeployed]
+    icon: assets/icons/system/external-secret.svg
+    link: https://external-secrets.io/
+    tooltip: Kubernetes operator that integrates external secret management systems.
+  }
+
+  system.kgateway: {
+    class: [application-system; undeployed]
+    icon: assets/icons/system/kgateway.svg
+    link: https://github.com/kgateway-dev/kgateway
+    tooltip: Cloud-native API Gateway and AI Gateway with Kubernetes Gateway API support, optimized for AI workloads and LLM routing.
+  }
+
+  system.Tailscale: {
+    class: [application-system; undeployed]
+    icon: assets/icons/system/tailscale.svg
+    link: https://tailscale.com/
+    tooltip: Zero-config VPN mesh for secure remote access to the entire platform.
+  }
+
+  system.Longhorn: {
+    class: [application-system; undeployed]
+    icon: assets/icons/system/longhorn.svg
+    link: https://longhorn.io/
+    tooltip: Lightweight, reliable, and powerful distributed block storage system for Kubernetes.
+  }
+
+  system.CloudNativePG: {
+    class: [application-system; undeployed]
+    icon: assets/icons/system/cloudnativepg.svg
+    link: https://cloudnativepg.io/
+    tooltip: Comprehensive platform designed to seamlessly manage PostgreSQL databases within Kubernetes environments.
+  }
+}
+
+
+# ------------------------------------------------------------------------------------------------
+# 🔗 Connections
+# ------------------------------------------------------------------------------------------------
+
+shodan.system.Tailscale <- tailnet: {class: [connect-vpn-trunk; undeployed]}
+shodan.ai.MCP-Servers <- shodan.ai.AgentGateway: { source-arrowhead: MCP (8000); class: undeployed }
+
+shodan.ai.AgentGateway <- shodan.system.kgateway: { source-arrowhead: HTTP (8080); class: undeployed }
+shodan.ai.OpenWebUI <- shodan.system.kgateway: { source-arrowhead: HTTP (3000); class: undeployed }
+
+shodan.ai.n8n <- shodan.system.kgateway: { source-arrowhead: HTTP (5678); class: undeployed }
+shodan.ai.PostgreSQL <- shodan.ai.OpenWebUI: { source-arrowhead: PostgreSQL (5432); class: undeployed }
+
+shodan.ai.PostgreSQL <- shodan.ai.n8n: { source-arrowhead: PostgreSQL (5432); class: undeployed }
+shodan.ai.AgentGateway <- shodan.ai.OpenWebUI: { source-arrowhead: HTTP (8080); class: undeployed }
+
+shodan.system.kgateway <- localnet: {
+  source-arrowhead: |md
+    HTTP (80)
+    HTTPS (443)
+  |
+  class: undeployed
+}
+
+shodan.system.cert-manager -> internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
+shodan.system.External-DNS -> UDM-Pro: DNS updates {class: undeployed} 
