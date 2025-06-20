@@ -18,6 +18,7 @@ secret:
   additionalSecrets:
     authelia-ldap: {}
     authelia-oidc: {}
+    authelia-oidc-jwt-default: {}
     authelia-smtp: {}
 
 persistence:
