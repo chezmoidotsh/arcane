@@ -1258,9 +1258,9 @@ identity_providers:
         algorithm: RS256
         use: sig
         key: |
-          {{ secret "/var/run/secrets/authelia.com/authelia-oidc/identity.providers.oidc.jwks.default.key" | nindent 10 }}
+          {{ secret "/var/run/secrets/authelia.com/authelia-oidc-jwt-default/tls.key" | nindent 10 }}
         certificate_chain: |
-          {{ secret "/var/run/secrets/authelia.com/authelia-oidc/identity.providers.oidc.jwks.default.certificate_chain" | nindent 10 }}
+          {{ secret "/var/run/secrets/authelia.com/authelia-oidc-jwt-default/tls.crt" | nindent 10 }}
       ## Key ID embedded into the JWT header for key matching. Must be an alphanumeric string with 7 or less characters.
       ## This value is automatically generated if not provided. It's recommended to not configure this.
       # key_id: 'example'
