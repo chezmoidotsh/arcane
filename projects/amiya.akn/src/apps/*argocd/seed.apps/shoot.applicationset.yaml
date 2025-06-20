@@ -21,8 +21,10 @@ spec:
     - clusters: {}
   template:
     metadata:
+      {{ if index .metadata.annotations "device.tailscale.com/address" }}
       annotations:
         link.argocd.argoproj.io/external-link: https://login.tailscale.com/admin/machines/{{ index .metadata.annotations "device.tailscale.com/address" }}
+      {{ end }}
       name: "{{ .name }}"
     spec:
       destination:
@@ -35,7 +37,7 @@ spec:
             application and configurations for the cluster {{ .name }}.
       project: seed
       sources:
-        - repoURL: https://github.com/chezmoi-sh/arcane.git
+        - repoURL: https://github.com/chezmoidotsh/arcane.git
           path: projects/amiya.akn/src/apps/*argocd/shoot.apps
           targetRevision: main
 

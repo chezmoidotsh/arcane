@@ -22,7 +22,7 @@ Throughout this document, different ages (A0, A1, A2, A3) represent development 
 
 > \[!NOTE]
 > Everything about this age can be found on the
-> [`archive/stone-age`](https://github.com/chezmoi-sh/arcane/tree/archive/stone-age) branch.
+> [`archive/stone-age`](https://github.com/chezmoidotsh/arcane/tree/archive/stone-age) branch.
 
 The project began as a straightforward repository that I would use to keep track
 of the services that my Raspberry Pi 4 was hosting. The name of this was `Nex.RPi`
@@ -110,7 +110,7 @@ components most of the time, \~5.5Wh).
 
 > \[!NOTE]
 > Everything about this age can be found on the
-> [`archive/bronze-age`](https://github.com/chezmoi-sh/arcane/tree/archive/bronze-age)
+> [`archive/bronze-age`](https://github.com/chezmoidotsh/arcane/tree/archive/bronze-age)
 > branch.
 
 ### Age 1.0 *(Q1-Q3 2024 - A1.0)*

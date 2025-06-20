@@ -2,7 +2,7 @@ galaxy_info:
   author: Alexandre Nicolaie <xunleii@users.noreply.github.com>
   description: Ansible role to deploy a Kairos cluster on Proxmox VE
 
-  issue_tracker_url: https://github.com/chezmoi-sh/arcane/issues
+  issue_tracker_url: https://github.com/chezmoidotsh/arcane/issues
   license: Apache-2.0
 
   min_ansible_version: 2.1

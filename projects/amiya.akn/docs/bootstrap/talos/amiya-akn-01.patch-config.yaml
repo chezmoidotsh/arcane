@@ -62,7 +62,7 @@ cluster:
     cni:
       name: custom
       urls:
-        - https://raw.githubusercontent.com/chezmoi-sh/arcane/refs/heads/main/projects/amiya.akn/docs/bootstrap/talos/manifests/cilium~1.17.3.yaml
+        - https://raw.githubusercontent.com/chezmoidotsh/arcane/refs/heads/main/projects/amiya.akn/docs/bootstrap/talos/manifests/cilium~1.17.3.yaml
   proxy:
     disabled: true
 
@@ -74,8 +74,8 @@ cluster:
   # -- Install extra components
   extraManifests:
     # -- CoreDNS configuration override
-    - https://raw.githubusercontent.com/chezmoi-sh/arcane/refs/heads/main/projects/amiya.akn/docs/bootstrap/talos/manifests/coredns~v1.12.1.yaml
+    - https://raw.githubusercontent.com/chezmoidotsh/arcane/refs/heads/main/projects/amiya.akn/docs/bootstrap/talos/manifests/coredns~v1.12.1.yaml
 
     # -- Metrics Server
-    - https://raw.githubusercontent.com/chezmoi-sh/arcane/refs/heads/main/projects/amiya.akn/docs/bootstrap/talos/manifests/kubelet-serving-cert-approver~0.9.1.yaml
-    - https://raw.githubusercontent.com/chezmoi-sh/arcane/refs/heads/main/projects/amiya.akn/docs/bootstrap/talos/manifests/metrics-server~0.7.2.yaml
+    - https://raw.githubusercontent.com/chezmoidotsh/arcane/refs/heads/main/projects/amiya.akn/docs/bootstrap/talos/manifests/kubelet-serving-cert-approver~0.9.1.yaml
+    - https://raw.githubusercontent.com/chezmoidotsh/arcane/refs/heads/main/projects/amiya.akn/docs/bootstrap/talos/manifests/metrics-server~0.7.2.yaml

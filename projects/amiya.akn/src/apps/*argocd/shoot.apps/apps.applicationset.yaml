@@ -22,7 +22,7 @@ spec:
         generators:
           - list: { elements: [] } # NOTE: this list will be populated by the `seed` ApplicationSet with the cluster metadata
           - git:
-              repoURL: https://github.com/chezmoi-sh/arcane.git
+              repoURL: https://github.com/chezmoidotsh/arcane.git
               revision: main
               directories:
                 - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/apps/*
@@ -38,7 +38,7 @@ spec:
         namespace: '{{ .path.basename | trimPrefix "*" }}'
       project: applications
       sources:
-        - repoURL: https://github.com/chezmoi-sh/arcane.git
+        - repoURL: https://github.com/chezmoidotsh/arcane.git
           path: "{{ .path.path }}"
           targetRevision: main
   templatePatch: |

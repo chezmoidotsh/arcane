@@ -26,10 +26,10 @@
     #   description: Open and extensible continuous delivery solution for Kubernetes.
     #   url: https://github.com/kairos-io/community-bundles/tree/main/flux
     #   targets:
-    #     - run://ghcr.io/chezmoi-sh/kairos-bundles:flux-sync # sync FluxCD configuration
+    #     - run://ghcr.io/chezmoidotsh/kairos-bundles:flux-sync # sync FluxCD configuration
     # kairos_bundles_flux_config:
     #   git:
-    #     url: https://github.com/chezmoi-sh/arcane.git
+    #     url: https://github.com/chezmoidotsh/arcane.git
     #     path: project/maison/src/clusters/production/recovery # FluxCD configuration path with all recovery manifests
     #     branch: main
     kairos_cloudinit_k3s:

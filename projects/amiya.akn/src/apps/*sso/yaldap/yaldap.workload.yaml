@@ -30,7 +30,7 @@ spec:
             - --backend.url=file:///run/secrets/yaldap/backend.yaml
             - --listen-address=:8389
             - --session-ttl=1h
-          image: ghcr.io/chezmoi-sh/flakes-dev/yaldap
+          image: ghcr.io/chezmoidotsh/flakes-dev/yaldap
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3

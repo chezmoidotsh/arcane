@@ -41,7 +41,7 @@ kairos_bundles_suc: # System-Upgrade-Controller (https://github.com/rancher/syst
 #   url: https://github.com/kairos-io/community-bundles/tree/main/flux
 #   targets:
 #     - run://quay.io/kairos/community-bundles:flux_latest # bootstrap FluxCD
-#     - run://ghcr.io/chezmoi-sh/kairos-bundles-dev/flux-sync:latest # sync FluxCD configuration
+#     - run://ghcr.io/chezmoidotsh/kairos-bundles-dev/flux-sync:latest # sync FluxCD configuration
 # kairos_bundles_flux_config: # Flux CD (https://fluxcd.io/)
 #   git:
 #     url: ...

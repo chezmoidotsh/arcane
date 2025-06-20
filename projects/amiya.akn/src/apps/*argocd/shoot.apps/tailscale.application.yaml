@@ -11,7 +11,7 @@ spec:
   sources:
     # Install Tailscale default resources (ProxyClass, NetworkPolicy, etc.)
     - ref: origin
-      repoURL: https://github.com/chezmoi-sh/arcane.git
+      repoURL: https://github.com/chezmoidotsh/arcane.git
       targetRevision: main
       path: defaults/kubernetes/tailscale/kustomize
 

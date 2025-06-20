@@ -1,8 +1,8 @@
 {
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"extends": [
-		"github>chezmoi-sh/renovate-config",
-		"github>chezmoi-sh/renovate-config:github-actions(monthly)",
-		"github>chezmoi-sh/renovate-config:gitmoji"
+		"github>chezmoidotsh/renovate-config",
+		"github>chezmoidotsh/renovate-config:github-actions(monthly)",
+		"github>chezmoidotsh/renovate-config:gitmoji"
 	]
 }

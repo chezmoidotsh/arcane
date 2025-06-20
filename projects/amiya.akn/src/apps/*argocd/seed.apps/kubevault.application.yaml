@@ -9,7 +9,7 @@ spec:
     server: https://kubernetes.default.svc
   project: system
   sources:
-    - repoURL: https://github.com/chezmoi-sh/vault.kubernetes.git
+    - repoURL: https://github.com/chezmoidotsh/vault.kubernetes.git
       targetRevision: main
       path: .
   syncPolicy:

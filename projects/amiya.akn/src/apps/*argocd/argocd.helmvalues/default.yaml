@@ -107,13 +107,13 @@ configs:
   # Only the `arcane` repository is configured here, as the other ones are managed by
   # ArgoCD itself.
   repositories:
-    github.chezmoi-sh.arcane:
+    github.chezmoidotsh.arcane:
       name: chezmoi.sh/arcane
-      url: https://github.com/chezmoi-sh/arcane.git
+      url: https://github.com/chezmoidotsh/arcane.git
       type: git
-    github.chezmoi-sh.vault.kubernetes:
+    github.chezmoidotsh.vault.kubernetes:
       name: chezmoi.sh/vault.kubernetes
-      url: https://github.com/chezmoi-sh/vault.kubernetes.git
+      url: https://github.com/chezmoidotsh/vault.kubernetes.git
       type: git
 
   # ArgoCD clusters configuration
@@ -142,8 +142,6 @@ configs:
       p, role:restricted-admin, certificates, create, *, deny
       p, role:restricted-admin, certificates, update, *, deny
       p, role:restricted-admin, certificates, delete, *, deny
-      p, role:restricted-admin, clusters, create, *, deny
-      p, role:restricted-admin, clusters, delete, *, deny
       p, role:restricted-admin, accounts, update, *, deny
       p, role:restricted-admin, gpgkeys, create, *, deny
       p, role:restricted-admin, gpgkeys, delete, *, deny

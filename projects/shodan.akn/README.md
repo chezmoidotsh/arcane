@@ -88,7 +88,7 @@ This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based depl
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/chezmoi-sh/arcane.git
+   git clone https://github.com/chezmoidotsh/arcane.git
    cd arcane/projects/shodan.akn
    ```
 

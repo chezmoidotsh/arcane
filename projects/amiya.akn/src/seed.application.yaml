@@ -10,7 +10,7 @@ spec:
   project: seed
   sources:
     - ref: origin
-      repoURL: https://github.com/chezmoi-sh/arcane.git
+      repoURL: https://github.com/chezmoidotsh/arcane.git
       targetRevision: main
       path: projects/amiya.akn/src/apps/*argocd/seed.apps
   syncPolicy:
