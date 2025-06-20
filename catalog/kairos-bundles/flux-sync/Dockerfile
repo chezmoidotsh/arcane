@@ -8,6 +8,6 @@ COPY flux-sync.service .
 COPY flux-sync.sh .
 COPY run.sh .
 
-LABEL org.opencontainers.image.source="https://github.com/chezmoi-sh/arcane/tree/main/catalog/kairos-bundles/flux-sync"
+LABEL org.opencontainers.image.source="https://github.com/chezmoidotsh/arcane/tree/main/catalog/kairos-bundles/flux-sync"
 LABEL org.opencontainers.image.description="Kairos Bundles to synchronize your Kubernetes cluster with your Git repository"
 LABEL org.opencontainers.image.licenses="Apache-2.0"

@@ -76,7 +76,7 @@ Generate a private key:
 ```bash
 kubectl create namespace argocd # if not already created
 kubectl create --namespace argocd secret generic argocd-repo-creds-github.chezmoi-sh \
-  --from-literal=url=https://github.com/chezmoi-sh \
+  --from-literal=url=https://github.com/chezmoidotsh \
   --from-literal=githubAppID=$GITHUB_APP_ID \
   --from-literal=githubAppInstallationID=$GITHUB_INSTALLATION_ID \
   --from-file=githubAppPrivateKey=$GITHUB_PRIVATE_KEY_PATH

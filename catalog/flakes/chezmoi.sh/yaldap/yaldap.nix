@@ -1,11 +1,11 @@
 { self, pkgs, ... }:
 
 let
-  # renovate: datasource=github-tags depName=chezmoi-sh/yaldap
+  # renovate: datasource=github-tags depName=chezmoidotsh/yaldap
   version = "v0.2.0";
 
   src = pkgs.fetchFromGitHub {
-    owner = "chezmoi-sh";
+    owner = "chezmoidotsh";
     repo = "yaldap";
     rev = version;
     hash = "sha256-rch6HFdpoFjdBjp/GAY9kSreVKg+ZrPTKBzJImlAPEQ=";
@@ -42,7 +42,7 @@ rec {
 
     meta = with pkgs.lib; {
       description = "yaLDAP is an easy-to-use LDAP server using YAML file as directory definition.";
-      homepage = "https://github.com/chezmoi-sh/yaldap";
+      homepage = "https://github.com/chezmoidotsh/yaldap";
       license = licenses.agpl3Only;
       # maintainers = with pkgs.maintainers; [ xunleii ]; # Not currently a maintainer.
       maintainers = [

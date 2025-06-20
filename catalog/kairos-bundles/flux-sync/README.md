@@ -26,7 +26,7 @@ To use this bundle, you need to specify the following parameters:
 ```yaml
 bundles:
   - targets:
-    - run://ghcr.io/chezmoi-sh/kairos-bundles:flux-sync
+    - run://ghcr.io/chezmoidotsh/kairos-bundles:flux-sync
 
 flux:
   git:

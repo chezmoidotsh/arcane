@@ -15,7 +15,7 @@ spec:
   sourceNamespaces:
     - argocd # NOTE: only allow SEED applications to be installed in the argocd namespace
   sourceRepos:
-    - https://github.com/chezmoi-sh/arcane.git # NOTE: main repository
+    - https://github.com/chezmoidotsh/arcane.git # NOTE: main repository
   destinations:
     - # NOTE: only allow the cluster where ArgoCD is installed
       name: "*"
@@ -44,8 +44,8 @@ spec:
   sourceNamespaces:
     - "*" # NOTE: allow application inside any namespace to be installed
   sourceRepos:
-    - https://github.com/chezmoi-sh/arcane.git # NOTE: main repository
-    - https://github.com/chezmoi-sh/vault.kubernetes.git # NOTE: vault repository
+    - https://github.com/chezmoidotsh/arcane.git # NOTE: main repository
+    - https://github.com/chezmoidotsh/vault.kubernetes.git # NOTE: vault repository
 
     - https://charts.external-secrets.io/ # NOTE: external-secrets repository (required on all clusters)
     - https://charts.jetstack.io # NOTE: cert-manager repository (required on all clusters)
@@ -108,7 +108,7 @@ spec:
   sourceNamespaces:
     - crossplane # NOTE: only allow crossplane resources to be installed in the crossplane namespace
   sourceRepos:
-    - https://github.com/chezmoi-sh/arcane.git # NOTE: main repository
+    - https://github.com/chezmoidotsh/arcane.git # NOTE: main repository
   destinations:
     - # NOTE: crossplane resources should only be installed in the crossplane namespace
       namespace: crossplane

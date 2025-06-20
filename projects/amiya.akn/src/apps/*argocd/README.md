@@ -113,7 +113,7 @@ TODO: create a Github App to manage ArgoCD access to private repositories.
 
 ```bash
 kubectl create --namespace argocd secret generic argocd-repo-creds-github.chezmoi-sh \
-  --from-literal=url=https://github.com/chezmoi-sh \
+  --from-literal=url=https://github.com/chezmoidotsh \
   --from-literal=githubAppID=<app-id> \
   --from-literal=githubAppInstallationID=<installation-id> \
   --from-file=githubAppPrivateKey=<private-key-file>

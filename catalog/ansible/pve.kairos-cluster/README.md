@@ -67,7 +67,7 @@ kairos_bundles_flux:
   description: Open and extensible continuous delivery solution for Kubernetes.
   url: https://github.com/kairos-io/community-bundles/tree/main/flux
   targets:
-    - run://ghcr.io/chezmoi-sh/kairos-bundles:flux-sync # sync FluxCD configuration
+    - run://ghcr.io/chezmoidotsh/kairos-bundles:flux-sync # sync FluxCD configuration
 kairos_bundles_flux_config:
   git:
     url: https://github.com/fluxcd/flux2-monitoring-example.git
@@ -80,7 +80,7 @@ kairos_bundles_flux_config:
 ```yaml
 bundles:
   - targets:
-      - run://ghcr.io/chezmoi-sh/kairos-bundles:flux-sync
+      - run://ghcr.io/chezmoidotsh/kairos-bundles:flux-sync
 
 flux:
   git:

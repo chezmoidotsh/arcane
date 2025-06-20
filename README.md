@@ -60,7 +60,7 @@ improvements on them.*
 ```bash
 
 # Clone the repository
-git clone https://github.com/chezmoi-sh/arcane.git
+git clone https://github.com/chezmoidotsh/arcane.git
 
 # Run the development environment
 devcontainer up --workspace-folder .

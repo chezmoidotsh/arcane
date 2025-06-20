@@ -11,7 +11,7 @@ To use this XRD, you must have a Crossplane installation running with the
 [AWS provider](https://marketplace.upbound.io/providers/upbound/provider-aws-iam/latest),
 [Go templating function](https://marketplace.upbound.io/functions/crossplane-contrib/function-go-templating/latest),
 [Auto ready function](https://marketplace.upbound.io/functions/crossplane-contrib/function-auto-ready/latest) and
-[Cloudflare provider](https://github.com/chezmoi-sh/provider-cloudflare) *(if you use the cloudflare one)*
+[Cloudflare provider](https://github.com/chezmoidotsh/provider-cloudflare) *(if you use the cloudflare one)*
 installed and configured.
 
 ### Install the XRD

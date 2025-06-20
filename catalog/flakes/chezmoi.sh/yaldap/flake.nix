@@ -45,20 +45,20 @@
             config.Labels = {
               "org.opencontainers.image.authors" = "chezmoi.sh Lab <xunleii@users.noreply.github.com>";
               "org.opencontainers.image.description" = "yaLDAP is an easy-to-use LDAP server using YAML file as directory definition.";
-              "org.opencontainers.image.documentation" = "https://github.com/chezmoi-sh/yaldap";
+              "org.opencontainers.image.documentation" = "https://github.com/chezmoidotsh/yaldap";
               "org.opencontainers.image.licenses" = "Apache-2.0";
               "org.opencontainers.image.revision" = version;
-              "org.opencontainers.image.source" = "https://github.com/chezmoi-sh/arcane/blob/main/catalog/flakes/chezmoi-sh/yaldap/flake.nix";
+              "org.opencontainers.image.source" = "https://github.com/chezmoidotsh/arcane/blob/main/catalog/flakes/chezmoidotsh/yaldap/flake.nix";
               "org.opencontainers.image.title" = "ydalp";
-              "org.opencontainers.image.url" = "https://github.com/chezmoi-sh/arcane";
+              "org.opencontainers.image.url" = "https://github.com/chezmoidotsh/arcane";
               "org.opencontainers.image.version" = version;
 
               "sh.chezmoi.catalog.build.engine.type" = "nix";
               "sh.chezmoi.catalog.build.engine.version" = "${pkgs.lib.version}";
               "sh.chezmoi.catalog.category" = "system/network";
-              "sh.chezmoi.catalog.origin.author" = "Chezmoi.sh Lab <https://github.com/chezmoi-sh>";
+              "sh.chezmoi.catalog.origin.author" = "Chezmoi.sh Lab <https://github.com/chezmoidotsh>";
               "sh.chezmoi.catalog.origin.license" = "MIT";
-              "sh.chezmoi.catalog.origin.repository" = "github.com/chezmoi-sh/yaldap";
+              "sh.chezmoi.catalog.origin.repository" = "github.com/chezmoidotsh/yaldap";
             };
             config.User = "23169:42291"; # NOTE: random UID/GID
           };

@@ -10,7 +10,7 @@ spec:
   project: system
   sources:
     - ref: origin
-      repoURL: https://github.com/chezmoi-sh/arcane.git
+      repoURL: https://github.com/chezmoidotsh/arcane.git
       targetRevision: main
     - chart: cert-manager
       helm:

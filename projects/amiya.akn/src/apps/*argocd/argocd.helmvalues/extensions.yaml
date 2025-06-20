@@ -12,9 +12,9 @@ server:
       - name: extension-application-map
         env:
           - name: EXTENSION_URL
-            value: https://github.com/chezmoi-sh/argocd-extension-application-map/releases/download/v1.0.0/extension-application-map.tar
+            value: https://github.com/chezmoidotsh/argocd-extension-application-map/releases/download/v1.0.0/extension-application-map.tar
           - name: EXTENSION_CHECKSUM_URL
-            value: https://github.com/chezmoi-sh/argocd-extension-application-map/releases/download/v1.0.0/extension-application-map_checksums.txt
+            value: https://github.com/chezmoidotsh/argocd-extension-application-map/releases/download/v1.0.0/extension-application-map_checksums.txt
 
       # # Metrics server extension (https://github.com/argoproj-labs/argocd-extension-metrics)
       # - name: extension-metrics-server
