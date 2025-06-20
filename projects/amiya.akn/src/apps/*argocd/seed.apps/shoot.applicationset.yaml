@@ -194,3 +194,9 @@ spec:
           - Delete=confirm
           - Prune=confirm
           - ServerSideApply=true
+  templatePatch: |
+    metadata:
+      {{ if index .metadata.annotations "device.tailscale.com/address" }}
+      annotations:
+        link.argocd.argoproj.io/external-link: https://login.tailscale.com/admin/machines/{{ index .metadata.annotations "device.tailscale.com/address" }}
+      {{ end }}
