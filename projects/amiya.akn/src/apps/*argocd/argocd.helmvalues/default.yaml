@@ -142,8 +142,6 @@ configs:
       p, role:restricted-admin, certificates, create, *, deny
       p, role:restricted-admin, certificates, update, *, deny
       p, role:restricted-admin, certificates, delete, *, deny
-      p, role:restricted-admin, clusters, create, *, deny
-      p, role:restricted-admin, clusters, delete, *, deny
       p, role:restricted-admin, accounts, update, *, deny
       p, role:restricted-admin, gpgkeys, create, *, deny
       p, role:restricted-admin, gpgkeys, delete, *, deny
