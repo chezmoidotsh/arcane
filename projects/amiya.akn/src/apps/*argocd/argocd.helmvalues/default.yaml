@@ -120,14 +120,13 @@ configs:
   # Only the current cluster is configured here, as the other ones are managed by
   # Argotails automatically.
   clusterCredentials:
-    amiya.akn.tail831c5d.ts.net:
+    amiya.akn:
       annotations:
         device.tailscale.com/hostname: amiya.akn
         device.tailscale.com/tailnet: tail831c5d.ts.net
       labels:
         argocd.argoproj.io/seed: ""
         device.tailscale.com/os: linux
-        tag.device.tailscale.com/kubernetes-cluster: ""
 
       config: { tlsClientConfig: { insecure: false } }
       server: https://kubernetes.default.svc

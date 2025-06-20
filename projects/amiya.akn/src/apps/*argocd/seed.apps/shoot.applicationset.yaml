@@ -21,10 +21,6 @@ spec:
     - clusters: {}
   template:
     metadata:
-      {{ if index .metadata.annotations "device.tailscale.com/address" }}
-      annotations:
-        link.argocd.argoproj.io/external-link: https://login.tailscale.com/admin/machines/{{ index .metadata.annotations "device.tailscale.com/address" }}
-      {{ end }}
       name: "{{ .name }}"
     spec:
       destination:
@@ -195,8 +191,8 @@ spec:
           - Prune=confirm
           - ServerSideApply=true
   templatePatch: |
+    {{ if index .metadata.annotations "device.tailscale.com/address" }}
     metadata:
-      {{ if index .metadata.annotations "device.tailscale.com/address" }}
       annotations:
         link.argocd.argoproj.io/external-link: https://login.tailscale.com/admin/machines/{{ index .metadata.annotations "device.tailscale.com/address" }}
-      {{ end }}
+    {{ end }}
