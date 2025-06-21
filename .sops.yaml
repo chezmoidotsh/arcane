@@ -1,4 +1,10 @@
 creation_rules:
+  # Generic - Encrypt all .decrypted~ files
+  - path_regex: projects/.*/\.decrypted~.+\.yaml$
+    unencrypted_regex: "^(apiVersion|kind|metadata|name|namespace)$"
+    age: >-
+      age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
+
   # Crossplane - Encrypt some external-name used to import data
   - path_regex: projects/[^/]+/src/infrastructure/crossplane/.+\.yaml$
     encrypted_regex: crossplane.io/external-name
