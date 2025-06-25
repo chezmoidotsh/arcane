@@ -97,7 +97,7 @@ configs:
 
     # enables `ApplicationSet` in any namespace
     # NOTE: only allows the `argocd` namespace and the ones created for each cluster
-    applicationsetcontroller.namespaces: argocd,*-tail831c5d-ts-net
+    applicationsetcontroller.namespaces: argocd,*-akn,*-tail831c5d-ts-net
 
     # enables insecure HTTP connections to the ArgoCD server to allow the use of
     # HTTP routes.
