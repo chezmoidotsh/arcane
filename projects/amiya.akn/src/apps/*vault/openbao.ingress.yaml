@@ -1,0 +1,20 @@
+# trunk-ignore-all(checkov/CKV_K8S_21): This file is overrided by Kustomize
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    link.argocd.argoproj.io/external-link: https://vault.tail831c5d.ts.net
+  labels:
+    tailscale.com/proxy-class: restricted
+  name: openbao
+spec:
+  defaultBackend:
+    service:
+      name: openbao-ui
+      port:
+        number: 8200
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - vault

@@ -1,0 +1,97 @@
+# Available parameters and their default values for the OpenBao chart.
+# Ref: https://github.com/openbao/openbao-helm/blob/main/charts/openbao/values.yaml
+
+global:
+  # -- enabled is the master enabled switch. Setting this to true or false
+  # will enable or disable all the components within this chart by default.
+  enabled: false
+
+server:
+  enabled: true
+
+  # Resource requests, limits, etc. for the server cluster placement. This
+  # should map directly to the value of the resources field for a PodSpec.
+  # By default no direct resource request is made.
+
+  image:
+    # As with the previous Vault setup, this image must contain the SoftHSM
+    # PKCS#11 library for the auto-unseal mechanism to work.
+    # You may need to build a custom image based on OpenBao.
+    # For example: ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm:2.2.2-25.05-x86_64-linux
+    registry: ghcr.io
+    repository: chezmoidotsh/flakes/openbao/openbao-softhsm
+    tag: 2.2.2-25.05-x86_64-linux
+
+  # Configure the Update Strategy Type for the StatefulSet
+  # See https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+  updateStrategyType: OnDelete
+
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+    limits:
+      memory: 256Mi
+      cpu: 250m
+
+  # Ingress allows ingress services to be created to allow external access
+  # from Kubernetes to access OpenBao pods.
+  ingress:
+    enabled: false
+
+  # authDelegator enables a cluster role binding to be attached to the service
+  # account. This cluster role binding can be used to setup Kubernetes auth
+  # method. https://www.openbao.org/docs/auth/kubernetes
+  authDelegator:
+    enabled: true
+
+  # This configures the OpenBao Statefulset to create a PVC for data
+  # storage when using the file backend.
+  # See https://www.openbao.org/docs/configuration/storage/index.html to know more
+  # NOTE: as we use Postgres for storage, we don't need a PVC
+  dataStorage:
+    enabled: false
+
+  # This configures the OpenBao Statefulset to create a PVC for audit
+  # logs. Once OpenBao is deployed, initialized and unsealed, OpenBao must
+  # be configured to use this for audit logs. This will be mounted to
+  # /openbao/audit
+  # See https://www.openbao.org/docs/audit/index.html to know more
+  # NOTE: audit will be configured to use Syslog
+  auditStorage:
+    enabled: false
+
+  # Run OpenBao in "standalone" mode. This is the default mode that will deploy if
+  # no arguments are given to helm. This mode is not highly available and should not be scaled
+  # past a single replica.
+  standalone:
+    enabled: true
+
+    # config is a raw string of default configuration when using a Stateful
+    # deployment.
+    # NOTE: this is not used as we use the External Secrets Operator to inject
+    # the configuration.
+    config: ""
+
+  # Run OpenBao in "HA" mode.
+  ha:
+    enabled: false
+
+# OpenBao UI
+ui:
+  # True if you want to create a Service entry for the OpenBao UI.
+  enabled: true
+  serviceType: ClusterIP
+  # Port used by the service to expose the UI.
+  service:
+    port: 8200
+
+# The injector component is responsible for injecting the OpenBao agent into pods.
+# We disable it as we use the External Secrets Operator.
+injector:
+  enabled: false
+
+# The CSI provider allows pods to consume secrets via CSI volumes.
+# We disable it as we use the External Secrets Operator.
+csi:
+  enabled: false
