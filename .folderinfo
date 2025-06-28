@@ -1,6 +1,9 @@
 ---
 files:
-  .envrc: Environment configuration file (using direnv)
-  .lefthook.yaml: Git hooks configuration file (using lefthook)
+  .commitlintrc.js: Configuration file for commit message linting (using commitlint)
+  .mise.toml: Development environment configuration file (using mise)
+  .sops.yaml: SOPS configuration file for secrets encryption
+  CHANGELOG.md: Project changelog documenting notable changes
   DISASTER_RECOVERY_PLAN.md: Document describing the disaster recovery plan
-  flake.nix: Nix flake configuration file containing all required dependencies
+  README.md: Main project documentation and setup instructions
+  renovate.json: Renovate bot configuration for dependency updates
