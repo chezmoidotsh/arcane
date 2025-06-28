@@ -1,0 +1,86 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+<rule>
+  <meta>
+    <title>AI Agent Interactive CLI Limitations</title>
+    <description>Defines how AI agents should handle interactive CLI tools and avoid pagers by using pipe to cat</description>
+    <applies-to>
+      <file-matcher glob="*">All files and command execution contexts</file-matcher>
+      <action-matcher action="terminal-command">Triggered when executing terminal commands</action-matcher>
+      <action-matcher action="git-command">Triggered when using git commands</action-matcher>
+    </applies-to>
+  </meta>
+  <requirements>
+    <non-negotiable priority="critical">
+      <description>Always acknowledge that you are an AI agent and cannot handle interactive CLI tools or pagers.</description>
+      <examples>
+        <example title="Git Command Pager Handling">
+          <correct-example title="Using cat to avoid pager" conditions="Running git log command" expected-result="Non-interactive output" correctness-criteria="Appends | cat to avoid pager"><![CDATA[git log --oneline | cat]]></correct-example>
+          <incorrect-example title="Using default pager" conditions="Running git log command" expected-result="Non-interactive output" incorrectness-criteria="Will trigger interactive pager that AI cannot handle"><![CDATA[git log --oneline]]></incorrect-example>
+        </example>
+      </examples>
+    </non-negotiable>
+    <non-negotiable priority="critical">
+      <description>Append | cat to commands that typically use pagers (git log, git diff, git show, less, more, man pages, etc.).</description>
+      <examples>
+        <example title="Pager Command Handling">
+          <correct-example title="Git diff with cat" conditions="Viewing git differences" expected-result="Complete output without pager" correctness-criteria="Uses | cat to display full content"><![CDATA[git diff HEAD~1 | cat]]></correct-example>
+          <incorrect-example title="Git diff without cat" conditions="Viewing git differences" expected-result="Complete output without pager" incorrectness-criteria="Will trigger pager that requires interactive navigation"><![CDATA[git diff HEAD~1]]></incorrect-example>
+        </example>
+      </examples>
+    </non-negotiable>
+    <requirement priority="critical">
+      <description>Use non-interactive flags when available instead of or in addition to | cat for better compatibility.</description>
+      <examples>
+        <example title="Non-interactive Git Configuration">
+          <correct-example title="Git with no-pager flag" conditions="Running git commands" expected-result="Direct output without pager" correctness-criteria="Uses --no-pager flag"><![CDATA[git --no-pager log --oneline]]></correct-example>
+          <incorrect-example title="Missing non-interactive flags" conditions="Running git commands" expected-result="Direct output without pager" incorrectness-criteria="Relies only on default behavior"><![CDATA[git log --oneline]]></incorrect-example>
+        </example>
+      </examples>
+    </requirement>
+    <requirement priority="high">
+      <description>Explicitly inform users when a command would normally require interactive input and suggest alternatives.</description>
+      <examples>
+        <example title="Interactive Command Warning">
+          <correct-example title="Warning about interactive command" conditions="User requests interactive git rebase" expected-result="Clear explanation and alternative" correctness-criteria="Explains limitation and provides non-interactive alternative"><![CDATA[I cannot perform interactive git rebase as I'm an AI agent. Instead, I can help you with:
+- git rebase --continue (if rebase is in progress)
+- git rebase --abort (to cancel rebase)
+- Specific git rebase commands with known commit hashes]]></correct-example>
+          <incorrect-example title="Attempting interactive command" conditions="User requests interactive git rebase" expected-result="Clear explanation and alternative" incorrectness-criteria="Tries to run interactive command without explanation"><![CDATA[git rebase -i HEAD~3]]></incorrect-example>
+        </example>
+      </examples>
+    </requirement>
+    <requirement priority="medium">
+      <description>Prefer batch operations and scripted approaches over interactive workflows when possible.</description>
+      <examples>
+        <example title="Batch vs Interactive Operations">
+          <correct-example title="Batch git operations" conditions="Staging multiple files" expected-result="Non-interactive file staging" correctness-criteria="Uses specific file patterns or batch commands"><![CDATA[git add *.js *.ts
+git add src/components/]]></correct-example>
+          <incorrect-example title="Interactive staging" conditions="Staging multiple files" expected-result="Non-interactive file staging" incorrectness-criteria="Uses interactive commands that require user input"><![CDATA[git add -i
+git add -p]]></incorrect-example>
+        </example>
+      </examples>
+    </requirement>
+  </requirements>
+  <grammar>
+    <grammar-entry title="Pager-Safe Command Pattern">
+      <pattern description="Commands that should always include | cat">(git (log|diff|show)|less|more|man) .* \| cat$</pattern>
+      <example description="Git log with cat">git log --oneline --graph | cat</example>
+      <example description="Git diff with cat">git diff main..feature | cat</example>
+    </grammar-entry>
+    <grammar-entry title="Non-Interactive Flag Pattern">
+      <pattern description="Commands using non-interactive flags">git --no-pager (log|diff|show)</pattern>
+      <example description="Git with no-pager flag">git --no-pager log --stat</example>
+    </grammar-entry>
+  </grammar>
+  <context description="AI agent operational context">
+    As an AI agent, I cannot handle interactive CLI tools that require real-time user input, navigation through pagers, or step-by-step interactive workflows. This includes but is not limited to: git interactive rebase, git add -p, less/more pagers, interactive shells, and any command that pauses for user input. Always design command sequences to be fully automated and non-interactive.
+  </context>
+  <references>
+    <reference as="dependency" href=".cursor/rules/rules.mdc" reason="Follows standard rule format">Base rule format definition</reference>
+  </references>
+</rule>
