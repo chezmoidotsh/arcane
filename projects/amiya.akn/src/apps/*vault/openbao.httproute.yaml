@@ -1,0 +1,28 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/include-unifi: "true"
+    link.argocd.argoproj.io/external-link: https://vault.chezmoi.sh
+  name: openbao
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: default-gateway
+      namespace: traefik-system
+      sectionName: chezmoi.sh-websecure
+  hostnames:
+    - vault.chezmoi.sh
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: openbao-ui
+          port: 8200
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /

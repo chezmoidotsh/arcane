@@ -1,0 +1,281 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# trunk-ignore-all(shellcheck/SC2312): don't care about masking return value
+
+# This script builds a Nix flake that produces a Docker image.
+# It uses a Docker container with Nix installed to perform the build,
+# avoiding the need to install Nix on the host machine.
+
+# ===== COLORS =====
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly NC='\033[0m'
+
+# ===== LOGGING FUNCTIONS =====
+log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+# Calculate relative path using shell only
+calculate_relative_path() {
+	local target_path="$1"
+	local base_path="$2"
+
+	# Get absolute paths
+	target_path=$(cd "$(dirname "${target_path}")" && pwd)/$(basename "${target_path}")
+	base_path=$(cd "${base_path}" && pwd)
+
+	# Remove trailing slashes
+	target_path=${target_path%/}
+	base_path=${base_path%/}
+
+	# If paths are the same, return "."
+	if [[ ${target_path} == "${base_path}" ]]; then
+		echo "."
+		return
+	fi
+
+	# Find common prefix
+	local target_parts=()
+	local base_parts=()
+
+	# Split paths into arrays
+	IFS='/' read -ra target_parts <<<"${target_path#/}"
+	IFS='/' read -ra base_parts <<<"${base_path#/}"
+
+	# Find common prefix length
+	local common_length=0
+	local min_length=$((${#target_parts[@]} < ${#base_parts[@]} ? ${#target_parts[@]} : ${#base_parts[@]}))
+
+	for ((i = 0; i < min_length; i++)); do
+		if [[ ${target_parts[i]} == "${base_parts[i]}" ]]; then
+			((common_length++))
+		else
+			break
+		fi
+	done
+
+	# Build relative path
+	local relative_path=""
+
+	# Add ".." for each remaining base part
+	for ((i = common_length; i < ${#base_parts[@]}; i++)); do
+		if [[ -n ${relative_path} ]]; then
+			relative_path="../${relative_path}"
+		else
+			relative_path=".."
+		fi
+	done
+
+	# Add remaining target parts
+	for ((i = common_length; i < ${#target_parts[@]}; i++)); do
+		if [[ -n ${relative_path} ]]; then
+			relative_path="${relative_path}/${target_parts[i]}"
+		else
+			relative_path="${target_parts[i]}"
+		fi
+	done
+
+	# Return relative path or "." if empty
+	echo "${relative_path:-.}"
+}
+
+# Show usage information
+show_usage() {
+	echo "Usage: $(basename "$0") [--load] [--system <platform>] [--platforms] <path-to-flake-dir>"
+	echo ""
+	echo "Options:"
+	echo "  --load              Automatically load the built image into Docker"
+	echo "  --system <platform> Force a specific platform (e.g., x86_64-linux, aarch64-linux)"
+	echo "  --platforms         Show available platforms for the flake and exit"
+	echo ""
+	echo "Examples:"
+	echo "  $(basename "$0") catalog/flakes/hashicorp/vault"
+	echo "  $(basename "$0") --load catalog/flakes/openbao/openbao"
+	echo "  $(basename "$0") --system aarch64-linux catalog/flakes/openbao/openbao"
+	echo "  $(basename "$0") --load --system x86_64-linux catalog/flakes/hashicorp/vault"
+	echo "  $(basename "$0") --platforms catalog/flakes/hashicorp/vault"
+}
+
+# Parse arguments
+LOAD_IMAGE=false
+FLAKE_DIR=""
+TARGET_SYSTEM=""
+SHOW_PLATFORMS=false
+
+while [[ $# -gt 0 ]]; do
+	case $1 in
+	--load)
+		LOAD_IMAGE=true
+		shift
+		;;
+	--system)
+		if [[ -n $2 && $2 != -* ]]; then
+			TARGET_SYSTEM="$2"
+			shift 2
+		else
+			log_error "Option --system requires a platform argument."
+			show_usage
+			exit 1
+		fi
+		;;
+	--platforms)
+		SHOW_PLATFORMS=true
+		shift
+		;;
+	-*)
+		log_error "Unknown option: $1"
+		show_usage
+		exit 1
+		;;
+	*)
+		if [[ -z ${FLAKE_DIR} ]]; then
+			FLAKE_DIR="$1"
+		else
+			log_error "Multiple flake directories specified."
+			show_usage
+			exit 1
+		fi
+		shift
+		;;
+	esac
+done
+
+# Check for required arguments
+if [[ -z ${FLAKE_DIR} ]]; then
+	show_usage
+	exit 1
+fi
+OUTPUT_TAR="${FLAKE_DIR}/result"
+
+# Validate that the flake directory and flake.nix exist
+if [[ ! -d ${FLAKE_DIR} || ! -f "${FLAKE_DIR}/flake.nix" ]]; then
+	log_error "Flake directory '${FLAKE_DIR}' or '${FLAKE_DIR}/flake.nix' not found."
+	exit 1
+fi
+
+# Handle --platforms option
+if [[ ${SHOW_PLATFORMS} == true ]]; then
+	log_info "Inspecting flake at '${FLAKE_DIR}' to find available platforms..."
+
+	# Get repository root and relative path (same logic as build)
+	REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+	RELATIVE_FLAKE_PATH=$(calculate_relative_path "${FLAKE_DIR}" "${REPO_ROOT}")
+
+	# Show available platforms using the same mounting strategy as build
+	docker run \
+		--rm \
+		-v "${REPO_ROOT}:/src" \
+		-w "/src/${RELATIVE_FLAKE_PATH}" \
+		nixos/nix sh -c "
+            rm -rf /homeless-shelter
+            nix --extra-experimental-features \"nix-command flakes\" --option build-users-group '' flake show --all-systems 2> /dev/null
+        "
+	exit 0
+fi
+
+# Use named Docker volumes to cache the Nix store and profile for faster subsequent builds
+NIX_CACHE_VOLUME="nix-store-cache"
+NIX_TOOLS_VOLUME="nix-tools-cache"
+
+# Create Nix store cache volume
+if [[ -z $(docker volume ls -q -f name="^${NIX_CACHE_VOLUME}$") ]]; then
+	log_info "Creating Docker volume '${NIX_CACHE_VOLUME}' for Nix store cache."
+	docker volume create "${NIX_CACHE_VOLUME}" >/dev/null
+else
+	log_info "Using existing Docker volume '${NIX_CACHE_VOLUME}'."
+fi
+
+# Create Nix tools cache volume for nom
+if [[ -z $(docker volume ls -q -f name="^${NIX_TOOLS_VOLUME}$") ]]; then
+	log_info "Creating Docker volume '${NIX_TOOLS_VOLUME}' for Nix tools cache."
+	docker volume create "${NIX_TOOLS_VOLUME}" >/dev/null
+	NEED_NOM_INSTALL=true
+else
+	log_info "Using existing Docker volume '${NIX_TOOLS_VOLUME}'."
+	NEED_NOM_INSTALL=false
+fi
+
+# Install nom in tools cache if needed (only on first run)
+if [[ ${NEED_NOM_INSTALL} == true ]]; then
+	log_info "Installing nix-output-monitor in tools cache (first time only)..."
+	docker run \
+		--rm \
+		-v "${NIX_CACHE_VOLUME}:/nix" \
+		-v "${NIX_TOOLS_VOLUME}:/tools" \
+		nixos/nix sh -c "
+            # Build and copy nom to tools cache
+            nix --extra-experimental-features 'nix-command flakes' build nixpkgs#nix-output-monitor --out-link /tmp/nom-build
+            mkdir -p /tools/bin
+            cp -L /tmp/nom-build/bin/nom /tools/bin/
+            chmod +x /tools/bin/nom
+        "
+fi
+
+log_info "Remove last build result..."
+[[ -f ${OUTPUT_TAR} ]] && rm -f "${OUTPUT_TAR}"
+
+log_info "Building flake from '${FLAKE_DIR}'..."
+if [[ -n ${TARGET_SYSTEM} ]]; then
+	log_info "Target platform: ${TARGET_SYSTEM}"
+fi
+
+# Prepare the build command with optional system specification
+SYSTEM_ARG=""
+if [[ -n ${TARGET_SYSTEM} ]]; then
+	SYSTEM_ARG="--system ${TARGET_SYSTEM}"
+fi
+
+# Get the root directory of the git repository
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+RELATIVE_FLAKE_PATH=$(calculate_relative_path "${FLAKE_DIR}" "${REPO_ROOT}")
+
+# We mount the entire repository into the container at /src.
+# The working directory is set to the specific flake's location within /src.
+# This allows Nix to access git context and use self.lastModifiedDate.
+# We use nix-output-monitor from the cached profile for a better build experience.
+docker run \
+	--rm \
+	-v "${NIX_CACHE_VOLUME}:/nix" \
+	-v "${NIX_TOOLS_VOLUME}:/tools" \
+	-v "${REPO_ROOT}:/src" \
+	-w "/src/${RELATIVE_FLAKE_PATH}" \
+	-it \
+	nixos/nix sh -c "
+        set -euo pipefail
+    
+        # Remove homeless shelter issue
+        rm -rf /homeless-shelter
+        
+        # Try to use nom from tools cache, fallback to nix shell if not found
+        if [[ -x /tools/bin/nom ]]; then
+            /tools/bin/nom build --extra-experimental-features \"nix-command flakes\" --option build-users-group '' --show-trace ${SYSTEM_ARG} .#default --out-link result
+        else
+            nix --extra-experimental-features \"nix-command flakes\" shell nixpkgs#nix-output-monitor --command nom build --extra-experimental-features \"nix-command flakes\" --option build-users-group '' --show-trace ${SYSTEM_ARG} .#default --out-link result
+        fi
+        
+        # Copy result to the output location
+        mv result symlink_result
+        cp -L symlink_result result
+        rm symlink_result
+    "
+
+log_success "Image tarball is ready at '${OUTPUT_TAR}'."
+
+if [[ ${LOAD_IMAGE} == true ]]; then
+	log_info "Loading image into Docker..."
+	if docker load <"${OUTPUT_TAR}"; then
+		log_success "Image successfully loaded into Docker!"
+		log_info "Available images:"
+		docker images --filter "reference=*$(basename "${FLAKE_DIR}")*" --format "table {{.Repository}}:{{.Tag}}\t{{.Size}}\t{{.CreatedAt}}" | tail -n +2
+	else
+		log_error "Failed to load image into Docker."
+		exit 1
+	fi
+else
+	log_info "To load into Docker, run: docker load < ${OUTPUT_TAR}"
+	log_info "Or use the --load flag: $(basename "$0") --load ${FLAKE_DIR}"
+fi

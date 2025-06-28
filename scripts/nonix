@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# trunk-ignore-all(shellcheck/SC2312): don't care about masking return value
+
+# This script runs Nix commands in a Docker container with Nix installed,
+# avoiding the need to install Nix on the host machine.
+# It uses the same caching system as nix:build:image for optimal performance.
+
+# ===== COLORS =====
+readonly RED='\033[0;31m'
+readonly NC='\033[0m'
+
+# ===== LOGGING FUNCTIONS =====
+log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
+
+# Calculate relative path using shell only (no external tools)
+calculate_relative_path() {
+	local target_path="$1"
+	local base_path="$2"
+
+	# Normalize paths - handle both Unix and Windows paths
+	# Convert to absolute paths using only shell builtins
+	if [[ ${target_path} != /* ]]; then
+		target_path="$(cd "$(dirname "${target_path}")" 2>/dev/null && pwd)/$(basename "${target_path}")" || return 1
+	fi
+	if [[ ${base_path} != /* ]]; then
+		base_path="$(cd "${base_path}" 2>/dev/null && pwd)" || return 1
+	fi
+
+	# Remove trailing slashes
+	target_path=${target_path%/}
+	base_path=${base_path%/}
+
+	# If paths are the same, return "."
+	if [[ ${target_path} == "${base_path}" ]]; then
+		echo "."
+		return 0
+	fi
+
+	# Simple case: if target is under base, just remove base prefix
+	if [[ ${target_path} == "${base_path}"/* ]]; then
+		echo "${target_path#"${base_path}"/}"
+		return 0
+	fi
+
+	# For more complex cases, use a simpler approach
+	# Count path components to go up
+	local base_parts=0
+	local temp_base="${base_path}"
+	while [[ ${temp_base} != "/" && -n ${temp_base} ]]; do
+		temp_base="$(dirname "${temp_base}")"
+		((base_parts++))
+	done
+
+	# Find common ancestor by going up until we find a match
+	local common_base="${base_path}"
+	local up_count=0
+	while [[ -n ${common_base} && ${common_base} != "/" ]]; do
+		if [[ ${target_path} == "${common_base}"/* ]]; then
+			# Found common base
+			local relative_target="${target_path#"${common_base}"/}"
+			local up_path=""
+			for ((i = 0; i < up_count; i++)); do
+				up_path="${up_path}../"
+			done
+			echo "${up_path}${relative_target}"
+			return 0
+		fi
+		common_base="$(dirname "${common_base}")"
+		((up_count++))
+	done
+
+	# Fallback: return absolute path if we can't compute relative
+	echo "${target_path}"
+}
+
+# Show usage information
+show_usage() {
+	echo "Usage: $(basename "$0") [nix-command] [nix-args...]"
+	echo ""
+	echo "This script runs Nix commands in a Docker container, making Nix available"
+	echo "without installing it on the host machine."
+	echo ""
+	echo "Examples:"
+	echo "  $(basename "$0") --version"
+	echo "  $(basename "$0") flake show"
+	echo "  $(basename "$0") build .#default"
+	echo "  $(basename "$0") develop"
+	echo "  $(basename "$0") shell nixpkgs#hello --command hello"
+	echo "  $(basename "$0") run nixpkgs#cowsay -- Hello World"
+	echo ""
+	echo "The script automatically:"
+	echo "  - Mounts the current directory (or git root if available)"
+	echo "  - Uses cached Nix store for faster subsequent runs"
+	echo "  - Preserves file permissions and ownership where possible"
+	echo "  - Copies result content directly as local files after build commands"
+	echo ""
+	echo "Note: Interactive commands like 'nix develop' work seamlessly."
+}
+
+# Check if help was requested
+if [[ $# -eq 0 ]] || [[ $1 == "--help" ]] || [[ $1 == "-h" ]]; then
+	show_usage
+	exit 0
+fi
+
+# Basic validation - ensure Docker is available
+if ! command -v docker >/dev/null 2>&1; then
+	log_error "Docker is not installed or not in PATH"
+	exit 1
+fi
+
+if ! docker info >/dev/null 2>&1; then
+	log_error "Docker is not running or not accessible"
+	exit 1
+fi
+
+# Use named Docker volumes to cache the Nix store and profile for faster subsequent builds
+NIX_CACHE_VOLUME="nix-store-cache"
+NIX_TOOLS_VOLUME="nix-tools-cache"
+
+# Create volumes if they don't exist (docker volume create is idempotent)
+docker volume create "${NIX_CACHE_VOLUME}" >/dev/null 2>&1 || true
+
+# Get the root directory of the git repository, fallback to current directory
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+CURRENT_DIR=$(pwd)
+RELATIVE_CURRENT_PATH=$(calculate_relative_path "${CURRENT_DIR}" "${REPO_ROOT}")
+
+# Prepare the Nix command
+NIX_COMMAND="$*"
+
+# Basic argument validation
+if [[ -z ${NIX_COMMAND} ]]; then
+	log_error "No Nix command provided"
+	show_usage
+	exit 1
+fi
+
+# Remove any existing result links before running the command
+rm -rf result
+
+# Build the Docker command arguments
+DOCKER_ARGS=(
+	--rm
+	--interactive --tty
+	--volume "${NIX_CACHE_VOLUME}:/nix"
+	--volume "${NIX_TOOLS_VOLUME}:/tools"
+	--volume "${REPO_ROOT}:/src"
+	--workdir "/src/${RELATIVE_CURRENT_PATH}"
+)
+
+# If we're in a different directory than repo root, also mount current directory
+# This ensures file operations work correctly in both contexts
+if [[ ${CURRENT_DIR} != "${REPO_ROOT}" ]]; then
+	DOCKER_ARGS+=(--volume "${CURRENT_DIR}:/current")
+fi
+
+# Add environment variables that might be useful
+DOCKER_ARGS+=(--env "TERM=${TERM:-xterm}")
+
+# Execute the Nix command in the container
+EXIT_CODE=0
+docker run "${DOCKER_ARGS[@]}" nixos/nix sh -c "
+    set -euo pipefail
+    
+    # Remove homeless shelter issue
+    rm -rf /homeless-shelter
+    
+    # Add tools to PATH if available
+    export PATH=\"/tools/bin:\$PATH\"
+    
+    # Set proper experimental features and options
+    export NIX_CONFIG='
+        experimental-features = nix-command flakes
+        build-users-group = 
+    '
+    
+    # Execute the Nix command
+    nix ${NIX_COMMAND}
+    
+    # After execution, copy any result links to host
+    if ls result 1> /dev/null 2>&1; then
+        echo ''
+        echo '=== Copying result links to host ==='
+        if [[ -L result ]]; then
+            target=\$(readlink result)
+            echo \"Copying result -> \$target\"
+            
+            # Remove the symlink first, then copy the content
+            rm -f ./result
+            cp -rL \$target ./result
+            chmod -R +w ./result
+        fi
+    fi
+" || EXIT_CODE=$?
+
+exit "${EXIT_CODE}"

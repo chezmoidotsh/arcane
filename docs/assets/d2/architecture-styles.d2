@@ -21,6 +21,7 @@
 # - namespace: Grouping container for related components (page shape with lined fill, dashed border, lowercase text)
 # - application: Regular applications (e.g., Jellyfin, n8n, Paperless) (rectangle with dotted fill, no shadow)
 # - application-system: System-level applications (e.g., Traefik, Cert-Manager) (rectangle with dotted fill, dashed border, slightly transparent)
+# - application-datastore: Datastore applications (e.g., PostgreSQL, Redis) (cylinder with dotted fill, no shadow)
 # - network: Network elements (e.g., internet, localnet, tailnet) (cloud shape with dotted fill, uppercase text, bold)
 # - hardware: Physical hardware components (e.g., UDM-Pro) (no shape, bold stroke)
 # - undeployed: For components that are not yet deployed (reduced opacity)
@@ -39,6 +40,7 @@
 # - connect-to-vpn: For outgoing VPN connections (animated)
 # - connect-from-api: For incoming API connections (dashed, medium width)
 # - connect-to-api: For outgoing API connections (dashed, medium width)
+# - connect-management: For management connections (dashed, medium width)
 
 vars: {
   d2-config: {
@@ -65,6 +67,13 @@ classes: {
       stroke-dash: 3
       opacity: 0.7
       font-size: 14
+    }
+  }
+  application-datastore: {
+    shape: cylinder
+    style: {
+      fill-pattern: dots
+      shadow: false
     }
   }
 
@@ -141,6 +150,18 @@ classes: {
     style: {
       stroke-dash: 2
       stroke-width: 4
+    }
+  }
+  connect-management: {
+    label: Manages
+    style: {
+      stroke-dash: 4
+      stroke-width: 2
+      stroke: "#FF4500" # OrangeRed
+    }
+    target-arrowhead: {
+      shape: circle
+      style.filled: false
     }
   }
   

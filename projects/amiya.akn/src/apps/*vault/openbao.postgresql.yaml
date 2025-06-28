@@ -1,0 +1,54 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: openbao-database
+  name: openbao-database
+spec:
+  backup:
+    barmanObjectStore: &barmanObjectStore
+      data:
+        compression: bzip2
+      destinationPath: s3://cnpg-backups/amiya.akn/openbao
+      endpointURL: https://s3.chezmoi.sh:9000
+      serverName: 01JYTT7NAGP6BSY7RWC5DSVCJV # DRP::dst_ulid
+      s3Credentials:
+        accessKeyId:
+          name: cnpg-s3-credentials
+          key: access_key_id
+        secretAccessKey:
+          name: cnpg-s3-credentials
+          key: access_secret_key
+      wal:
+        compression: bzip2
+    retentionPolicy: 30d
+  bootstrap:
+    initdb:
+      database: openbao
+      owner: openbao
+    # recovery:
+    #   source: recoveryBackup
+  description: PostgreSQL database dedicated to OpenBao
+  # externalClusters:
+  #   - name: recoveryBackup
+  #     barmanObjectStore:
+  #       <<: *barmanObjectStore
+  #       serverName: 01JHBK4N869T0T3Q1BBX673GQ9 # DRP::src_ulid
+  instances: 1
+  storage:
+    size: 10Gi
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  labels:
+    app.kubernetes.io/component: backup
+    app.kubernetes.io/part-of: openbao
+  name: openbao-database
+spec:
+  schedule: "@daily"
+  backupOwnerReference: cluster
+  cluster:
+    name: openbao-database
