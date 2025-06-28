@@ -27,7 +27,7 @@ spec:
       namespace: traefik-system
       sectionName: chezmoi.sh-websecure
   hostnames:
-    - longhorn.akn.chezmoi.sh
+    - longhorn.amiya.akn.chezmoi.sh
   rules:
     - backendRefs:
         - group: ""
