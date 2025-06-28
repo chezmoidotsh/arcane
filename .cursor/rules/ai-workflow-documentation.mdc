@@ -1,0 +1,383 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+<rule>
+  <meta>
+    <title>AI Collaborative Workflow Documentation</title>
+    <description>Comprehensive guidelines for maintaining session documentation during collaborative work between user and AI, enabling context preservation and project tracking</description>
+    <applies-to>
+      <file-matcher glob="*">All files in collaborative sessions</file-matcher>
+      <action-matcher action="collaborative-work">Triggered during any collaborative work session</action-matcher>
+      <action-matcher action="project-start">Triggered when starting a new project or significant task</action-matcher>
+    </applies-to>
+  </meta>
+  <requirements>
+    <non-negotiable priority="critical">
+      <description>Always create and maintain session documentation in .cursor/sessions/ with date-prefixed naming (YYYYMMDD-description.md) for any significant collaborative work</description>
+      <examples>
+        <example title="Session Document Creation">
+          <correct-example title="Proper session document naming" conditions="Starting work on adding monitoring dashboard" expected-result="Session document created" correctness-criteria="Uses date prefix and concise description">20250128-add-monitoring-dashboard.md</correct-example>
+          <incorrect-example title="Wrong naming format" conditions="Starting collaborative work" expected-result="Proper session document" incorrectness-criteria="Missing date prefix or too verbose">add-prometheus-monitoring-dashboard-with-grafana-integration.md</incorrect-example>
+        </example>
+      </examples>
+    </non-negotiable>
+    <non-negotiable priority="critical">
+      <description>Always ask user permission before creating a new session document and explain why it's needed</description>
+      <examples>
+        <example title="Permission Request">
+          <correct-example title="Proper permission request" conditions="Starting significant new work" expected-result="User authorization obtained" correctness-criteria="Clearly explains rationale and asks permission">Je pense qu'on commence un nouveau projet significatif (ajout du monitoring). Puis-je créer un document de session `20250128-add-monitoring-dashboard.md` pour tracker notre travail et maintenir le contexte ?</correct-example>
+          <incorrect-example title="Creating without permission" conditions="Starting new work" expected-result="User authorization" incorrectness-criteria="Creates document without asking">I'll create a session document to track our work.</incorrect-example>
+        </example>
+      </examples>
+    </non-negotiable>
+    <requirement priority="critical">
+      <description>Use the standardized markdown structure optimized for AI context understanding and project management</description>
+      <examples>
+        <example title="Document Structure">
+          <correct-example title="Standard session document structure" conditions="Creating session documentation" expected-result="Well-structured document" correctness-criteria="Uses the defined template with all sections"><![CDATA[# Add Monitoring Dashboard
+
+## 🎯 Objectif
+Implémenter un dashboard de monitoring Prometheus/Grafana pour le cluster amiya.akn
+
+## 🧠 Contexte & Réflexions
+- Le cluster manque de visibilité sur les métriques applicatives
+- Question : intégrer dans l'ArgoCD existant ou déploiement séparé ?
+- Réflexion : privilégier Grafana ou explorer alternatives plus légères ?
+
+## 📝 Historique des changements
+- [14:30] Analyse de l'architecture existante
+- [14:45] Création des manifests Prometheus dans src/infrastructure/
+
+## ⚠️ Points d'attention
+- Conflit potentiel avec le monitoring TrueNAS existant
+- Droits RBAC à valider pour Prometheus
+
+## 🔄 Prochaines étapes
+- [ ] Créer les ServiceMonitor pour les applications
+- [ ] Configurer les alerting rules
+- [ ] Tester l'intégration avec Slack]]></correct-example>
+          <incorrect-example title="Unstructured documentation" conditions="Creating session documentation" expected-result="Structured document" incorrectness-criteria="Lacks proper sections and organization"><![CDATA[# Monitoring work
+
+Working on adding monitoring. Made some changes to prometheus config.
+Need to check grafana integration.]]></incorrect-example>
+        </example>
+      </examples>
+    </requirement>
+    <requirement priority="critical">
+      <description>Document internal thoughts, questions, hesitations, and decision-making processes to enable better AI context understanding</description>
+      <examples>
+        <example title="Internal Reflection Documentation">
+          <correct-example title="Comprehensive reflection documentation" conditions="Making technical decisions" expected-result="Clear thought process recorded" correctness-criteria="Includes uncertainties, alternatives, and reasoning"><![CDATA[## 🧠 Contexte & Réflexions
+- Hésitation entre Helm chart officiel vs manifests custom
+  - Helm : plus facile à maintenir, mais moins de contrôle
+  - Manifests : contrôle total, mais maintenance plus lourde
+- Question non résolue : faut-il exposer Grafana publiquement ?
+- Observation : l'architecture actuelle privilégie les services internes
+- Décision en attente : stratégie de backup des métriques historiques]]></correct-example>
+          <incorrect-example title="Surface-level documentation" conditions="Making technical decisions" expected-result="Deep thought process" incorrectness-criteria="Lacks internal reasoning and alternatives">Added monitoring. Using Prometheus.</incorrect-example>
+        </example>
+      </examples>
+    </requirement>
+    <requirement priority="critical">
+      <description>Automatically update session document when significant context changes, technical decisions are made, or important information emerges</description>
+      <examples>
+        <example title="Automatic Updates">
+          <correct-example title="Context-triggered update" conditions="Discovering architectural constraint" expected-result="Document updated with new context" correctness-criteria="Immediately documents new critical information">Mise à jour automatique après découverte que le cluster utilise déjà un Prometheus operator - ajout dans "Points d'attention"</correct-example>
+          <incorrect-example title="Missing context updates" conditions="Important discovery made" expected-result="Updated documentation" incorrectness-criteria="Fails to document significant context changes">Continue working without updating the session document</incorrect-example>
+        </example>
+      </examples>
+    </requirement>
+    <requirement priority="critical">
+      <description>Periodically re-read session document to maintain context continuity - when losing track of the project state or approximately every 15±5 exchanges depending on exchange complexity</description>
+      <examples>
+        <example title="Context Reinjection">
+          <correct-example title="Proactive context refresh" conditions="Feeling disconnected from project context" expected-result="Current context reloaded" correctness-criteria="Reads session document to refresh context">Je vais relire notre document de session pour me remettre dans le contexte du projet avant de continuer.</correct-example>
+          <correct-example title="Periodic context maintenance" conditions="After 15-20 exchanges in active session" expected-result="Context continuity maintained" correctness-criteria="Systematically re-reads session document">Point de contexte : je relis notre document de session pour maintenir la continuité.</correct-example>
+          <incorrect-example title="Context drift" conditions="Losing track of project state" expected-result="Context refresh" incorrectness-criteria="Continues without refreshing context">Continue working without re-reading session context</incorrect-example>
+        </example>
+      </examples>
+    </requirement>
+    <requirement priority="high">
+      <description>Ask user permission before attempting to resolve unclear thoughts or questions, and request time allocation for investigation</description>
+      <examples>
+        <example title="Investigation Permission">
+          <correct-example title="Requesting investigation time" conditions="Unclear technical decision" expected-result="User authorization for investigation" correctness-criteria="Asks specific permission and explains scope">J'ai documenté une question sur la stratégie de backup des métriques. Puis-je prendre quelques minutes pour investiguer les options (retention policies, external storage) avant de continuer ?</correct-example>
+          <incorrect-example title="Investigating without permission" conditions="Unclear technical decision" expected-result="User authorization" incorrectness-criteria="Starts investigation without asking">I'll research the backup strategies for Prometheus metrics.</incorrect-example>
+        </example>
+      </examples>
+    </requirement>
+    <requirement priority="high">
+      <description>Propose GitHub issue creation when discovering bugs or features unrelated to current project, or when project becomes too large for single scope</description>
+      <examples>
+        <example title="Issue Creation Proposal">
+          <correct-example title="Suggesting issue for scope creep" conditions="Discovering unrelated bug" expected-result="User-approved issue creation" correctness-criteria="Clearly explains rationale and asks permission">En travaillant sur le monitoring, j'ai découvert un bug dans la configuration cert-manager qui n'a rien à voir avec notre projet actuel. Puis-je créer une issue GitHub pour tracker ce problème séparément ?</correct-example>
+          <correct-example title="Suggesting project split" conditions="Project becoming too large" expected-result="Logical project decomposition" correctness-criteria="Identifies clear separation boundaries">Ce projet monitoring devient complexe avec Prometheus + Grafana + Alertmanager + exporters. Devrions-nous le découper en plusieurs phases ? Je peux créer des issues pour chaque composant.</correct-example>
+          <incorrect-example title="Auto-creating issues" conditions="Finding unrelated work" expected-result="User permission" incorrectness-criteria="Creates issues without asking">I'll create an issue for the cert-manager bug I found.</incorrect-example>
+        </example>
+      </examples>
+    </requirement>
+    <requirement priority="high">
+      <description>Provide regular project status updates and alert when work deviates from stated objective</description>
+      <examples>
+        <example title="Project Management">
+          <correct-example title="Status update and focus alert" conditions="Work session progress" expected-result="Clear status communication" correctness-criteria="Identifies progress and potential deviations">Point d'étape : nous avons completé 60% de l'objectif monitoring (Prometheus configuré). Attention : nous commençons à dériver vers la configuration des alertes Slack, qui n'était pas dans l'objectif initial. Devons-nous l'inclure ou rester focalisés sur le dashboard ?</correct-example>
+          <incorrect-example title="Silent scope creep" conditions="Work deviating from objective" expected-result="Focus alert" incorrectness-criteria="Continues without alerting to deviation">Continue adding Slack alerts without mentioning scope change</incorrect-example>
+        </example>
+      </examples>
+    </requirement>
+    <requirement priority="medium">
+      <description>Clean up session documents after PR merge, asking user confirmation before deletion</description>
+      <examples>
+        <example title="Document Cleanup">
+          <correct-example title="Post-merge cleanup request" conditions="PR successfully merged" expected-result="User-approved cleanup" correctness-criteria="Asks permission before deletion">Le PR pour le monitoring dashboard a été mergé avec succès. Puis-je supprimer le document de session `20250128-add-monitoring-dashboard.md` maintenant que le travail est terminé ?</correct-example>
+          <incorrect-example title="Auto-deletion" conditions="PR merged" expected-result="User permission" incorrectness-criteria="Deletes without asking">I'll clean up the session document since the work is complete.</incorrect-example>
+        </example>
+      </examples>
+    </requirement>
+    <non-negotiable priority="critical">
+      <description>Never create GitHub issues, PRs, or delete session documents without explicit user authorization</description>
+      <examples>
+        <example title="Authorization Requirement">
+          <correct-example title="Requesting GitHub action authorization" conditions="Need to create issue" expected-result="User permission obtained" correctness-criteria="Explicitly asks for authorization">Puis-je créer une issue GitHub pour tracker le bug cert-manager que nous avons découvert ? Cela nous permettrait de le traiter séparément de notre projet monitoring.</correct-example>
+          <incorrect-example title="Unauthorized GitHub action" conditions="Need to create issue" expected-result="User authorization" incorrectness-criteria="Takes action without permission">I'll create a GitHub issue for this cert-manager bug.</incorrect-example>
+        </example>
+      </examples>
+    </non-negotiable>
+  </requirements>
+  <grammar>
+    <grammar-entry title="Session Document Naming Pattern">
+      <pattern description="Date-prefixed session document format">^2[0-9]{7}-[a-z0-9-]{1,40}\.md$</pattern>
+      <example description="Valid session document name">20250128-add-monitoring-dashboard.md</example>
+      <example description="Valid session document name">20250128-fix-cert-manager-config.md</example>
+      <incorrect-example description="Missing date prefix">add-monitoring-dashboard.md</incorrect-example>
+      <incorrect-example description="Too long description">20250128-add-comprehensive-monitoring-dashboard-with-prometheus-grafana-alertmanager-and-slack-integration.md</incorrect-example>
+    </grammar-entry>
+    <schema title="Session Document Template" description="Standard structure for AI collaborative session documentation">
+<![CDATA[Session Document Structure:
+
+# [Project Title - Clear, concise objective]
+
+## 🎯 Objectif
+[Concise description of the project goal - what we're trying to achieve]
+
+## 🧠 Contexte & Réflexions
+[AI internal thoughts, questions, hesitations, observations]
+[Decision-making process and reasoning]
+[Alternative approaches considered]
+[Unclear points that need investigation]
+
+## 📝 Historique des changements
+[Chronological log of significant actions]
+[Format: - [TIME] Action description]
+[Technical changes, decisions made, discoveries]
+
+## ⚠️ Points d'attention
+[Issues, risks, blockers identified]
+[Decisions pending user input]
+[Potential conflicts or problems]
+
+## 🔄 Prochaines étapes
+[TODO items with checkbox format]
+[- [ ] Action description]
+[Prioritized next actions]
+
+Optional sections based on context:
+## 🔗 Références
+[Links to relevant documentation, issues, external resources]
+
+## 📊 Avancement
+[Progress tracking for larger projects]
+[Milestones and completion status]
+
+Document Lifecycle:
+1. Created with user permission when starting significant work
+2. Updated automatically on context changes
+3. Used for project management and focus maintenance
+4. Cleaned up after PR merge with user approval]]>
+    </schema>
+  </grammar>
+  <context description="This rule enables effective collaborative work between user and AI by maintaining comprehensive context documentation, facilitating project management, and ensuring focus on objectives while preserving all decision-making rationale for future reference.">
+    The session documentation serves as both a working memory for the AI and a project management tool for the user. It captures not just what was done, but why decisions were made, what alternatives were considered, and what questions arose during the work. This enables better continuity across sessions and more informed decision-making.
+  </context>
+  <references>
+    <reference as="dependency" href=".cursor/rules/rules.mdc" reason="Follows standard rule format">Base rule format definition</reference>
+  </references>
+  <examples>
+    <example title="Complete Real-World Session Example">
+      <correct-example title="Full monitoring dashboard project" conditions="Adding monitoring to cluster" expected-result="Comprehensive session documentation" correctness-criteria="Demonstrates all aspects of the rule"><![CDATA[# Add Monitoring Dashboard
+
+## 🎯 Objectif
+Implémenter un stack de monitoring complet (Prometheus + Grafana) pour améliorer l'observabilité du cluster amiya.akn
+
+## 🧠 Contexte & Réflexions
+- Analyse initiale : le cluster manque de visibilité sur les métriques applicatives
+- Hésitation architecturale : 
+  * Option 1 : Helm charts officiels (kube-prometheus-stack)
+  * Option 2 : Manifests custom avec plus de contrôle
+  * Décision : Option 1 pour commencer, migration possible plus tard
+- Question non résolue : exposition publique de Grafana ?
+  * Sécurité vs accessibilité
+  * AuthZ via Authelia possible
+- Observation : l'architecture privilégie les services internes via Tailscale
+
+## 📝 Historique des changements
+- [14:30] Analyse de l'architecture existante dans src/infrastructure/
+- [14:45] Création du namespace monitoring 
+- [15:00] Configuration kube-prometheus-stack Helm values
+- [15:15] Découverte : Prometheus operator déjà présent (conflict potentiel)
+- [15:30] Reconfiguration pour cohabiter avec l'opérateur existant
+- [15:45] Ajout des ServiceMonitor pour ArgoCD et Traefik
+
+## ⚠️ Points d'attention
+- Conflit résolu avec Prometheus operator existant
+- Storage PVC : vérifier la capacité sur Longhorn
+- RBAC : permissions Prometheus pour scraping cross-namespace
+- Décision pendante : stratégie de rétention des métriques (7j vs 30j)
+
+## 🔄 Prochaines étapes
+- [x] Configurer le stack de base
+- [x] Résoudre les conflits d'opérateurs
+- [ ] Créer les ServiceMonitor applications métier
+- [ ] Configurer les alerting rules critiques
+- [ ] Tester l'accès Grafana via Tailscale
+- [ ] Valider les métriques de performance cluster
+
+## 📊 Avancement
+- Infrastructure : 80% ✅
+- Configuration : 60% 🔄  
+- Applications monitoring : 20% ⏳
+- Documentation : 0% ⏳]]></correct-example>
+      <incorrect-example title="Incomplete session documentation" conditions="Working on monitoring" expected-result="Comprehensive documentation" incorrectness-criteria="Lacks context, reflections, and proper structure"><![CDATA[# Monitoring work
+
+Added prometheus and grafana to the cluster.
+Made some changes to helm values.
+Still need to configure dashboards.]]></incorrect-example>
+    </example>
+    <example title="Session Lifecycle Management">
+      <correct-example title="Project initiation and completion" conditions="Full project lifecycle" expected-result="Proper session management" correctness-criteria="Shows permission requests and cleanup"><![CDATA[## Project Start
+AI: "Je vois qu'on va travailler sur l'ajout du monitoring. C'est un projet significatif qui va impacter plusieurs composants. Puis-je créer un document de session `20250128-add-monitoring-dashboard.md` pour tracker notre travail ?"
+User: "Oui, vas-y"
+
+[... work session ...]
+
+## Project Completion  
+AI: "Le PR #123 pour le monitoring dashboard a été mergé avec succès ! Le projet est maintenant terminé. Puis-je supprimer le document de session `20250128-add-monitoring-dashboard.md` pour nettoyer ?"
+User: "Ok, supprime-le"]]></correct-example>
+      <incorrect-example title="Unmanaged session lifecycle" conditions="Project work" expected-result="Proper lifecycle management" incorrectness-criteria="No permission requests or cleanup">Starts working without creating session document, or deletes without asking</incorrect-example>
+    </example>
+    <example title="Issue Creation Integration">
+      <correct-example title="Scope management with issues" conditions="Discovering unrelated work" expected-result="Proper scope separation" correctness-criteria="Uses GitHub issues for scope management"><![CDATA[AI: "En configurant le monitoring, j'ai remarqué que cert-manager a une configuration incorrecte pour les certificats wildcard (utilise HTTP01 au lieu de DNS01). C'est un bug qui n'a rien à voir avec notre projet monitoring. Puis-je créer une issue GitHub pour tracker ce problème séparément ?"
+
+User: "Oui, crée l'issue"
+
+AI: "Issue #124 créée : 'Fix cert-manager wildcard certificate configuration'. Je continue sur le monitoring en restant focalisé sur l'objectif initial."]]></correct-example>
+      <incorrect-example title="Scope creep without management" conditions="Finding additional work" expected-result="Proper issue creation" incorrectness-criteria="Starts working on unrelated issues without separation">Starts fixing cert-manager while working on monitoring without creating separate tracking</incorrect-example>
+    </example>
+  </examples>
+  <utilities>
+    <section title="Session Management Checklist">
+      <checklist>
+        <item priority="critical">Ask permission before creating new session document</item>
+        <item priority="critical">Use YYYYMMDD-description.md naming format</item>
+        <item priority="critical">Include all required sections in document structure</item>
+        <item priority="critical">Document internal thoughts and decision processes</item>
+        <item priority="critical">Update document on significant context changes</item>
+        <item priority="high">Ask permission before investigating unclear points</item>
+        <item priority="high">Propose issue creation for out-of-scope work</item>
+        <item priority="high">Provide regular status updates and focus alerts</item>
+        <item priority="medium">Request permission before cleaning up completed sessions</item>
+        <item priority="critical">Never create issues or PRs without user authorization</item>
+      </checklist>
+    </section>
+    <section title="Quick Reference Commands">
+      <command-group>
+        <command title="Create Session Document">
+          <syntax>Puis-je créer un document de session `YYYYMMDD-description.md` pour tracker notre travail sur [project] ?</syntax>
+          <description>Request permission to create new session documentation</description>
+        </command>
+        <command title="Context Update Alert">
+          <syntax>Mise à jour du contexte : [significant discovery/change]</syntax>
+          <description>Alert when updating session document with new context</description>
+        </command>
+        <command title="Status Update">
+          <syntax>Point d'étape : [progress summary]. [focus alert if needed]</syntax>
+          <description>Provide regular project status and focus maintenance</description>
+        </command>
+        <command title="Issue Creation Request">
+          <syntax>Puis-je créer une issue GitHub pour [unrelated work] afin de garder le focus sur notre projet actuel ?</syntax>
+          <description>Request permission to create GitHub issue for scope management</description>
+        </command>
+        <command title="Investigation Permission">
+          <syntax>Puis-je prendre [time] pour investiguer [unclear point] avant de continuer ?</syntax>
+          <description>Request permission to investigate unclear technical points</description>
+        </command>
+        <command title="Session Cleanup">
+          <syntax>Le projet est terminé. Puis-je supprimer le document de session `file.md` ?</syntax>
+          <description>Request permission to clean up completed session documents</description>
+        </command>
+      </command-group>
+    </section>
+  </utilities>
+  <workflow>
+    <section title="Complete Session Workflow">
+      <step number="1" priority="critical">
+        <title>Project Recognition and Session Initiation</title>
+        <description>Identify when significant collaborative work begins</description>
+        <actions>
+          <action>Recognize project-level work vs simple questions/fixes</action>
+          <action>Request user permission to create session document</action>
+          <action>Create document with YYYYMMDD-description.md format</action>
+          <action>Initialize with standard template structure</action>
+        </actions>
+        <validation>Session document created with user approval and proper structure</validation>
+      </step>
+      <step number="2" priority="critical">
+        <title>Continuous Documentation and Context Maintenance</title>
+        <description>Maintain live documentation throughout work session</description>
+        <workflow>
+          <action>Document all technical decisions and reasoning</action>
+          <action>Update automatically on significant context changes</action>
+          <action>Record internal thoughts, questions, and hesitations</action>
+          <action>Maintain chronological history of important actions</action>
+          <action>Track blockers, risks, and points of attention</action>
+        </workflow>
+        <validation>Document reflects current state and complete decision context</validation>
+      </step>
+      <step number="3" priority="high">
+        <title>Scope and Focus Management</title>
+        <description>Maintain project focus and manage scope changes</description>
+        <actions>
+          <action>Provide regular status updates on objective progress</action>
+          <action>Alert when work deviates from stated objective</action>
+          <action>Propose GitHub issues for unrelated work discovered</action>
+          <action>Request permission for investigations of unclear points</action>
+        </actions>
+        <validation>Project stays focused on objective with proper scope management</validation>
+      </step>
+      <step number="4" priority="high">
+        <title>Integration with External Tools</title>
+        <description>Coordinate with GitHub and other tools when appropriate</description>
+        <workflow>
+          <action>Identify opportunities for GitHub issue creation</action>
+          <action>Request user permission before any GitHub actions</action>
+          <action>Link relevant external resources in documentation</action>
+          <action>Coordinate with existing project management tools</action>
+        </workflow>
+        <validation>External tool integration happens with proper authorization</validation>
+      </step>
+      <step number="5" priority="medium">
+        <title>Session Completion and Cleanup</title>
+        <description>Properly close completed sessions</description>
+        <actions>
+          <action>Recognize when project objective is achieved</action>
+          <action>Confirm PR merge or equivalent completion marker</action>
+          <action>Request permission to clean up session document</action>
+          <action>Archive or delete completed session documentation</action>
+        </actions>
+        <validation>Session properly closed with user approval for cleanup</validation>
+      </step>
+    </section>
+  </workflow>
+</rule>
