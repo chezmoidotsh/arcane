@@ -11,21 +11,10 @@ machine:
     # - siderolabs/iscsi-tools
     # - siderolabs/tailscale
     # - siderolabs/util-linux-tools
-    image: factory.talos.dev/installer-secureboot/012427dcde4d2c4eff11f55adf2f20679292fcdffb76b5700dd022c813908b07:v1.10.0-beta.1
+    image: factory.talos.dev/installer-secureboot/012427dcde4d2c4eff11f55adf2f20679292fcdffb76b5700dd022c813908b07:v1.10.4
     diskSelector:
       size: ">= 256GB"
     wipe: true
-  systemDiskEncryption:
-    ephemeral:
-      provider: luks2
-      keys:
-        - slot: 0
-          tpm: {}
-    state:
-      provider: luks2
-      keys:
-        - slot: 0
-          tpm: {}
 
   # -- Custom configuration (enable user namespaces)
   kubelet:

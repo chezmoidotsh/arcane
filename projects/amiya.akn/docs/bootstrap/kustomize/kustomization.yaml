@@ -6,7 +6,7 @@ namespace: argocd
 resources:
   # Configure ArgoCD
   - ../../../src/apps/*argocd/argocd.appprojects.yaml
-  - ../../../src/apps/*argocd/seed.application.yaml
+  - ../../../src/seed.application.yaml
 
 helmCharts:
   - name: argo-cd

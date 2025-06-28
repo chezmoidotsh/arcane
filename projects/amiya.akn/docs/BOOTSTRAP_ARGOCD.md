@@ -75,12 +75,12 @@ Generate a private key:
 
 ```bash
 kubectl create namespace argocd # if not already created
-kubectl create --namespace argocd secret generic argocd-repo-creds-github.chezmoi-sh \
+kubectl create --namespace argocd secret generic argocd-repo-creds-github.chezmoidotsh \
   --from-literal=url=https://github.com/chezmoidotsh \
   --from-literal=githubAppID=$GITHUB_APP_ID \
   --from-literal=githubAppInstallationID=$GITHUB_INSTALLATION_ID \
   --from-file=githubAppPrivateKey=$GITHUB_PRIVATE_KEY_PATH
-kubectl label --namespace argocd secret argocd-repo-creds-github.chezmoi-sh argocd.argoproj.io/secret-type=repo-creds
+kubectl label --namespace argocd secret argocd-repo-creds-github.chezmoidotsh argocd.argoproj.io/secret-type=repo-creds
 ```
 
 #### SOPS Secrets for Encryption
@@ -95,8 +95,7 @@ kubectl create --namespace argocd secret generic argocd-sops-age-key \
 Apply the bootstrap kustomization:
 
 ```bash
-kubectl kustomize --enable-helm --load-restrictor LoadRestrictionsNone bootstrap/kustomize | kubectl apply --namespace argocd --server-side -f -
-kubectl apply -f ../src/seed.application.yaml
+kubectl kustomize --enable-helm --load-restrictor LoadRestrictionsNone bootstrap/kustomize | kubectl create --namespace argocd -f -
 ```
 
 ### 3. Access ArgoCD

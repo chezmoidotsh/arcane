@@ -23,10 +23,16 @@ This document describes the process of bootstrapping a Talos Linux cluster. It c
 ## Cluster Initialization
 
 > \[!WARNING]
-> Before proceeding, ensure you have exported the following variables:
+> Before proceeding, ensure you have exported the following variable
 >
 > ```sh
 > export TALOS_NODE_IP=<node-ip-address>
+> ```
+>
+> and decrypt the `amiya-akn-01.tailscale.extensionserviceconfig.yaml` file with SOPS
+>
+> ```sh
+> sops -d bootstrap/talos/amiya-akn-01.tailscale.extensionserviceconfig.yaml > bootstrap/talos/amiya-akn-01.tailscale.extensionserviceconfig.UNSAFE.yaml
 > ```
 
 ### 1. Secrets Generation (Optional)
@@ -45,7 +51,7 @@ Generate the initial cluster configuration:
 talosctl gen config amiya.akn https://kubernetes.amiya.akn.chezmoi.sh:6443 \
   --with-secrets secrets.yaml \
   --config-patch @bootstrap/talos/amiya-akn-01.patch-config.yaml \
-  --config-patch @bootstrap/talos/amiya-akn-01.tailscale.extensionserviceconfig.yaml \
+  --config-patch @bootstrap/talos/amiya-akn-01.tailscale.extensionserviceconfig.UNSAFE.yaml \
   --config-patch @bootstrap/talos/amiya-akn-01.volumes.yaml
 ```
 
