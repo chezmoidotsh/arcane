@@ -308,6 +308,10 @@ const scopes = [
 		value: "project:shodan.akn",
 	},
 	{
+		name: "deps                  - Dependency updates (automated or manual)",
+		value: "deps",
+	},
+	{
 		name: "gh                    - Anything else",
 		value: "gh",
 	},
@@ -355,9 +359,9 @@ module.exports = {
 	parserPreset: {
 		parserOpts: {
 			headerPattern:
-				"^(?<type>.+?)\\((?<scope>.+?)\\)!?\\:\\s(?<subject>(?:(?!#).)*(?:(?!\\s).))(?:\\s\\(?(?<references>#\\d*)\\)?)?$",
+				"^(?<type>.+?)\\s?\\((?<scope>.+?)\\)!?\\:\\s(?<subject>(?:(?!#).)*(?:(?!\\s).))(?:\\s\\(?(?<references>#\\d*)\\)?)?$",
 			breakingHeaderPattern:
-				"^(?<type>.+?)\\((?<scope>.+?)\\)!\\:\\s(?<subject>(?:(?!#).)*(?:(?!\\s).))(?:\\s\\(?(?<references>#\\d*)\\)?)?$",
+				"^(?<type>.+?)\\s?\\((?<scope>.+?)\\)!\\:\\s(?<subject>(?:(?!#).)*(?:(?!\\s).))(?:\\s\\(?(?<references>#\\d*)\\)?)?$",
 			headerCorrespondence: ["type", "scope", "subject", "references"],
 		},
 	},
