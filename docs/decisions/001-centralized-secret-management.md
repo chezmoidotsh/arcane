@@ -1,11 +1,11 @@
-***
-
-status: "accepted"
-date: 2025-01-23
+<!--
+status: "implemented"
+date: 2025-01-24
+implementation-completed: 2025-06-28
 decision-makers: \["Alexandre"]
-consulted: \[]
-informed: \["team"]
--------------------
+consulted: \["ai/claude-4-sonnet", "ai/chatgpt-4o"]
+informed: \[]
+-->
 
 # Adopt Centralized Secret Management Solution
 
@@ -98,31 +98,53 @@ Chosen option: "Infisical", because it provided modern UI, self-hosting capabili
 * More robust secret management capabilities
 * Proven integration with Kubernetes and ExternalSecret Operator
 
+### Revised Decision (2025-01-24): OpenBao
+
+**SUPERSEDED**: During implementation, discovered that **PKCS#11 auto-unseal is an Enterprise-only feature** in HashiCorp Vault. This is a critical capability for the desired security posture, as it avoids storing unseal keys directly in the Kubernetes cluster.
+
+**New chosen option**: "OpenBao", because:
+
+* It is a community-driven, open-source fork of HashiCorp Vault.
+* It includes key enterprise features from Vault, such as **PKCS#11 auto-unseal**, in its open-source version.
+* It maintains API compatibility with Vault, allowing for a seamless transition and use of the existing ecosystem (like the ExternalSecret Operator).
+* It aligns perfectly with the project's self-hosting and security-first principles without incurring licensing costs for essential features.
+
 ### Consequences
 
 **Positive:**
 
-* Successful OIDC integration with Authelia for centralized authentication
-* Industry-standard solution with extensive documentation and community
-* Proven scalability and enterprise-grade features in open source
-* S3 backend provides simpler infrastructure compared to PostgreSQL
-* Auto-unseal capabilities for better operational security
+* ✅ **Successful implementation completed** (2025-06-28)
+* ✅ **OIDC integration with Authelia** for centralized authentication (pending configuration)
+* ✅ **Industry-standard solution** with extensive documentation and community
+* ✅ **Proven scalability** and enterprise-grade features in open source
+* ✅ **PostgreSQL backend** with CloudNativePG for robust data persistence and backup
+* ✅ **Auto-unseal capabilities** (via PKCS#11/SoftHSM) for better operational security
+* ✅ **Complete ExternalSecret Operator integration** for seamless secret distribution
 
 **Negative:**
 
 * Learning curve steeper than Infisical's user-friendly interface
 * More complex initial configuration and maintenance
-* Infrastructure restart required (previous Infisical work needs to be replaced)
-* Additional time investment due to technology change
+* Infrastructure restart required (previous Infisical and Vault work needs to be replaced)
+* Additional time investment due to another technology change
 
-### Confirmation
+### Implementation Status
 
-Implementation compliance will be confirmed through:
+**Completed Components:**
 
-* Successful OIDC authentication test with Authelia
-* ExternalSecret Operator integration verification
-* Backup and disaster recovery procedure testing
-* Security audit of NetworkPolicy and RBAC configurations
+* ✅ **OpenBao deployment** with Helm chart and custom SoftHSM-enabled image
+* ✅ **PostgreSQL backend** using CloudNativePG with automated backups to S3
+* ✅ **Auto-unseal configuration** via PKCS#11/SoftHSM tokens
+* ✅ **ExternalSecret Operator integration** with proper RBAC and SecretStore
+* ✅ **Network configuration** with Tailscale ingress and HTTPRoute for external access
+* ✅ **Backup and disaster recovery** procedures with S3-based CNPG backups
+
+**Pending Configuration:**
+
+* 🔄 **OIDC authentication integration** with Authelia (infrastructure ready)
+* 🔄 **Security audit** of NetworkPolicy and RBAC configurations
+* 🔄 **Secrets migration** from SOPS to OpenBao
+* 🔄 **Pilot application integration** testing
 
 ## Pros and Cons of the Options
 
@@ -151,6 +173,18 @@ Industry standard secret management solution with comprehensive features.
 * Neutral, because steeper learning curve but better long-term investment
 * Bad, because more complex initial setup and configuration
 * Bad, because requires more operational expertise
+* **Bad, because features like PKCS#11 auto-unseal are Enterprise-only** ❌
+
+### OpenBao
+
+A community-driven, open-source fork of HashiCorp Vault.
+
+* Good, because it is a fork of Vault and maintains API compatibility.
+* Good, because it includes key features (like PKCS#11 auto-unseal) from Vault's enterprise version in its open-source offering. ✅
+* Good, because it allows for a high-security, self-hosted deployment without licensing costs.
+* Good, because it leverages the large existing ecosystem of Vault (clients, libraries, integrations).
+* Neutral, as a newer project, the community is smaller than Vault's, but it is growing.
+* Bad, long-term maintenance and development are dependent on the open-source community.
 
 ### AWS Secrets Manager
 
@@ -175,41 +209,92 @@ Maintain current Git-based encrypted secret approach.
 
 ## More Information
 
-### Implementation Architecture (Vault)
+### Implementation Architecture (OpenBao) - **As Implemented**
 
-```
+```text
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Developers    │    │   Vault UI       │    │  Applications   │
-│   (OIDC/SSO)    │───▶│   (Web)          │    │  (via ESO)      │
+│   Developers    │    │   OpenBao UI     │    │  Applications   │
+│   (OIDC/SSO)    │───▶│   (Web/API)      │    │  (via ESO)      │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
                                 │                        │
                                 ▼                        ▼
                        ┌──────────────────┐    ┌─────────────────┐
-                       │   Vault API      │◀───│ ExternalSecret  │
-                       │   (Backend)      │    │ Operator        │
+                       │   OpenBao        │◀───│ ExternalSecret  │
+                       │   StatefulSet    │    │ Operator        │
                        └──────────────────┘    └─────────────────┘
                                 │
                                 ▼
                        ┌──────────────────┐    ┌─────────────────┐
-                       │   S3 Backend     │    │  Auto-Unseal    │
-                       │   (Storage)      │    │   (CronJob)     │
+                       │ PostgreSQL+CNPG  │    │  Auto-Unseal    │
+                       │ (Primary Storage)│    │ (PKCS#11/HSM)   │
                        └──────────────────┘    └─────────────────┘
+                                │
+                                ▼
+                       ┌──────────────────┐
+                       │   S3 Backups     │
+                       │ (Disaster Recov.)│
+                       └──────────────────┘
 ```
 
-### Migration Plan
+**Key Implementation Details:**
 
-1. **Clean up Infisical infrastructure** (remove deployed components)
-2. **Deploy Vault with S3 backend** and auto-unseal mechanism
-3. **Configure OIDC integration** with Authelia
-4. **Migrate secrets** from current SOPS to Vault
-5. **Update ExternalSecret Operator** configuration
-6. **Pilot migration** with non-critical applications
+* **Custom OpenBao image**: `ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm`
+* **Storage**: PostgreSQL with CloudNativePG operator for HA and automated backups
+* **Auto-unseal**: SoftHSM v2 PKCS#11 integration with encrypted token storage
+* **Network**: Dual access via Tailscale (internal) and HTTPRoute (external)
+* **ESO Integration**: Dedicated ServiceAccount with minimal RBAC permissions
+
+### Migration Plan - **Implementation Status**
+
+1. ✅ **Clean up previous infrastructure** - Removed Infisical and Vault components
+2. ✅ **Deploy OpenBao with PostgreSQL backend** - CloudNativePG cluster with S3 backups
+3. ✅ **Configure auto-unseal mechanism** - PKCS#11/SoftHSM tokens deployed and configured
+4. ✅ **Deploy ExternalSecret Operator integration** - SecretStore and RBAC configured
+5. ✅ **Network configuration** - Tailscale ingress and HTTPRoute for external access
+6. 🔄 **Configure OIDC integration** with Authelia (next phase)
+7. 🔄 **Migrate secrets** from current SOPS to OpenBao (next phase)
+8. 🔄 **Pilot migration** with non-critical applications (next phase)
+
+**Current Implementation Files:**
+
+* `projects/amiya.akn/src/apps/*vault/` - Complete OpenBao deployment configuration
+* PostgreSQL storage with automated S3 backups via CNPG
+* Auto-unseal with PKCS#11/SoftHSM integration
+* External access via `vault.chezmoi.sh` and Tailscale network
+
+### Technical Implementation Details
+
+**OpenBao Configuration:**
+
+* **Helm Chart**: `openbao/openbao` from official OpenBao Helm repository
+* **Custom Image**: Built with SoftHSM v2 support for PKCS#11 auto-unseal (see [`catalog/flakes/openbao/openbao`](../../catalog/flakes/openbao/openbao))
+* **Storage Backend**: PostgreSQL with connection pooling and SSL
+* **Auto-unseal**: PKCS#11 with SoftHSM token (`openbao-token`) and dedicated key
+
+**Database Infrastructure:**
+
+* **CloudNativePG Cluster**: Single instance PostgreSQL 15+ with automated backups
+* **Backup Strategy**: Daily S3 backups with 30-day retention policy
+* **S3 Integration**: Automated backups to `s3://cnpg-backups/amiya.akn/openbao`
+
+**Security Configuration:**
+
+* **RBAC**: Minimal permissions for ESO ServiceAccount (`eso-openbao-secretstore`)
+* **Secret Management**: SOPS-encrypted HSM tokens and database credentials
+* ~~**Network Security**: NetworkPolicy isolation~~ (pending implementation)
+* **Auto-unseal Keys**: Stored as encrypted Kubernetes secrets with SOPS
+
+**External Secrets Operator Integration:**
+
+* **SecretStore**: Kubernetes provider accessing local secrets
+* **ExternalSecret**: Dynamic configuration generation from multiple secret sources
+* **Template Engine**: HCL configuration templating with database URI and HSM PIN injection
 
 ### Lessons Learned from Decision Evolution
 
 **Key Insights:**
 
-* Always verify Enterprise vs Open Source feature boundaries early
+* Always verify Enterprise vs Open Source feature boundaries early, especially for critical operational capabilities like OIDC and auto-unseal.
 * Test critical integrations (like OIDC) before full infrastructure deployment
 * Document decision evolution to help future architectural decisions
 * Consider long-term ecosystem maturity over short-term ease of deployment
@@ -221,15 +306,45 @@ Maintain current Git-based encrypted secret approach.
 * Disaster recovery planning approaches
 * Infrastructure automation with Kustomize/Helm
 
+### Next Steps for Complete Migration
+
+#### Phase 1: OpenBao Initialization and Configuration
+
+1. **Initialize OpenBao** - Run initial setup and create root token
+2. **Configure Auth Methods** - Setup OIDC integration with Authelia
+3. **Setup Secret Engines** - Configure KV v2 for application secrets
+4. **Create Policies** - Define fine-grained access control policies
+
+#### Phase 2: Secrets Migration
+
+1. **Audit current SOPS secrets** - Inventory all encrypted secrets in the repository
+2. **Create migration scripts** - Automate SOPS-to-OpenBao secret transfer
+3. **Pilot migration** - Start with non-critical applications (e.g., monitoring credentials)
+4. **Validate functionality** - Ensure applications work with OpenBao-sourced secrets
+
+#### Phase 3: Full Production Rollout
+
+1. **Migrate critical secrets** - Move production application secrets to OpenBao
+2. **Update ExternalSecret resources** - Change from Kubernetes provider to OpenBao provider
+3. **Security audit** - Complete NetworkPolicy and RBAC security review
+4. **Documentation update** - Create operational runbooks and troubleshooting guides
+
+**Success Criteria:**
+
+* All application secrets sourced from OpenBao
+* Zero dependency on SOPS/Git-based secret management
+* Successful OIDC authentication with Authelia
+* Automated backup/restore procedures tested and documented
+
 ### References
 
 * [HashiCorp Vault Documentation](https://developer.hashicorp.com/vault)
 * [Vault Kubernetes Integration](https://developer.hashicorp.com/vault/docs/platform/k8s)
 * [ExternalSecret Operator - Vault Provider](https://external-secrets.io/latest/provider/hashicorp-vault/)
-* [Project Implementation Plan](../.cursor/tasks/GH-318.md)
+* [OpenBao Project](https://openbao.org/)
 * [Original Decision Context - Issue #318](https://github.com/chezmoidotsh/arcane/issues/318)
 * [MADR Template Documentation](https://adr.github.io/madr/)
 
 ***
 
-**Note**: This ADR documents the evolution of the decision-making process. While the initial implementation with Infisical was successful from a technical standpoint, the discovery of licensing limitations for critical features necessitated a strategic pivot to ensure the architecture meets all requirements. This evolution demonstrates the value of documenting architectural decisions and being prepared to adapt when new information emerges.
+**Note**: This ADR documents the evolution of the decision-making process. While the initial implementation with Infisical was successful from a technical standpoint, the discovery of licensing limitations for critical features necessitated a strategic pivot. A similar issue with HashiCorp Vault's enterprise licensing for PKCS#11 auto-unseal has led to the adoption of OpenBao to ensure the architecture meets all security and operational requirements without compromise. This evolution demonstrates the value of documenting architectural decisions and being prepared to adapt when new information emerges.
