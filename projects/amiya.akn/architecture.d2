@@ -29,11 +29,6 @@ explanation: |md
   of the amiya.akn platform in a visual way \
   with all the components and how they \
   interact with each other.
-  \
-  _A service that is not described here is \
-  kubevault, which is a tool for managing \
-  secrets relying on Kubernetes API without any \
-  "component"._
 | {
   near: top-left
 }
@@ -47,10 +42,26 @@ tailnet: {
 }
 
 # Hardware & Infrastructure
-UDM-Pro: {
+udm-pro: {
   class: hardware
+  label: UDM-Pro
   icon: assets/icons/hardware/unifi.svg
   tooltip: UniFi Dream Machine Pro - Gateway & Network Controller
+}
+
+nas: {
+  class: namespace
+  label: TrueNAS Scale
+  icon: assets/icons/hardware/truenas-scale.svg
+  tooltip: Home Network Attached Storage (NAS)
+
+  minio: {
+    class: [application]
+    label: MinIO
+    icon: assets/icons/apps/minio.svg
+    link: https://min.io/
+    tooltip: MinIO is a high-performance, distributed object storage system.
+  }
 }
 
 amiya·akn: {
@@ -62,123 +73,162 @@ amiya·akn: {
   style.fill-pattern: none
   
   # Infrastructure Components
-  infrastructure.ArgoCD: {
+  infrastructure.argocd: {
     class: [application]
+    label: ArgoCD
     icon: assets/icons/apps/argo-cd.svg
     link: https://argoproj.github.io/cd/
     tooltip: ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes.
   }
 
-  infrastructure.Crossplane: {
+  infrastructure.crossplane: {
     class: [application]
+    label: Crossplane
     icon: assets/icons/system/crossplane.svg
     link: https://crossplane.io/
     tooltip: Crossplane is an open-source Kubernetes add-on that extends your cluster with managed resources from any cloud or on-prem environment.
   }
 
-  infrastructure.Talos Omni: {
+  infrastructure.talos-omni: {
     class: [application; undeployed]
+    label: Talos Omni
     icon: assets/icons/hardware/talos.svg
     link: https://omni.siderolabs.com/
     tooltip: Talos Omni is a platform for managing Talos Linux clusters through a simplified interface.
   }
 
   # Security Components
-  security.Authelia: {
+  security.authelia: {
     class: [application]
+    label: Authelia
     icon: assets/icons/apps/authelia.svg
     link: https://www.authelia.com/
     tooltip: Authelia is an open-source authentication and authorization server.
   }
 
-  security.SmallStep CA: {
-    class: [application; undeployed]
-    icon: assets/icons/apps/smallstep.png
-    link: https://smallstep.com/
-    tooltip: SmallStep CA is a zero-trust certificate authority.
+  security.openbao-stack: {
+    class: [namespace]
+    label: OpenBao Stack
+    tooltip: OpenBao secret management stack with PostgreSQL backend
+
+    openbao: {
+      class: [application]
+      label: OpenBao
+      icon: assets/icons/apps/openbao.svg
+      link: https://openbao.org/
+      tooltip: OpenBao is an open-source, community-driven fork of Vault managed by the Linux Foundation. Uses multi-mount topology with dedicated project mounts and shared/ mount.
+    }
+
+    postgresql: {
+      class: [application-datastore]
+      label: PostgreSQL
+      icon: assets/icons/system/cloudnativepg.svg
+      link: https://postgresql.org/
+      tooltip: PostgreSQL database backend for OpenBao, managed by CloudNative-PG operator with automated backups to S3.
+    }
   }
 
-  security.yaLDAP: {
+  security.yaldap: {
     class: [application]
+    label: yaLDAP
     icon: assets/icons/apps/yaldap.png
     link: https://yaldap.com/
     tooltip: yaLDAP is a modern LDAP server.
   }
 
   # Storage Components
-  storage.MinIO: {
+  storage.minio: {
     class: [application; undeployed]
+    label: MinIO
     icon: assets/icons/apps/minio.svg
     link: https://min.io/
     tooltip: MinIO is a high-performance, distributed object storage system.
   }
 
-  storage.zot registry: {
+  storage.zot-registry: {
     class: [application; undeployed]
+    label: zot registry
     icon: assets/icons/apps/zot-registry.svg
     link: https://zotregistry.dev/
     tooltip: Zot Registry is a self-hosted, privacy-focused, and easy-to-use image registry.
   }
 
   # System Components
-  system.Cert-Manager: {
+  system.cert-manager: {
     class: [application-system]
+    label: Cert-Manager
     icon: assets/icons/system/cert-manager.svg
     link: https://cert-manager.io/
     tooltip: Cert-Manager is a Kubernetes controller that automates the management and issuance of TLS certificates.
   }
 
-  system.Cilium: {
+  system.cilium: {
     class: [application-system]
+    label: Cilium
     icon: assets/icons/system/cilium.svg
     link: https://cilium.io/
     tooltip: Cilium is a networking, observability, and security solution with an eBPF-based dataplane.
   }
 
-  system.ExternalDNS: {
+  system.externaldns: {
     class: [application-system]
+    label: ExternalDNS
     icon: assets/icons/system/external-dns.png
     link: https://github.com/kubernetes-sigs/external-dns
     tooltip: ExternalDNS is a Kubernetes controller that configures DNS resources.
   }
 
-  system.External-Secret: {
+  system.external-secret: {
     class: [application-system]
+    label: External-Secret
     icon: assets/icons/system/external-secret.svg
     link: https://external-secrets.io/
     tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
   }
 
-  system.Longhorn: {
+  system.longhorn: {
     class: [application-system]
+    label: Longhorn
     icon: assets/icons/system/longhorn.svg
     link: https://longhorn.io/
     tooltip: Longhorn is a distributed block storage system for Kubernetes.
   }
 
-  system.Tailscale: {
+  system.tailscale: {
     class: [application-system]
+    label: Tailscale
     icon: assets/icons/system/tailscale.svg
     link: https://tailscale.com/
     tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
   }
 
-  system.Traefik: {
+  system.traefik: {
     class: [application-system]
+    label: Traefik
     icon: assets/icons/system/traefik.svg
     link: https://traefik.io/
     tooltip: Traefik is a modern HTTP reverse proxy and load balancer.
   }
 
+  system.cloudnative-pg: {
+    class: [application-system]
+    label: CloudNative-PG
+    icon: assets/icons/system/cloudnativepg.svg
+    link: https://cloudnative-pg.io/
+    tooltip: CloudNative-PG is a Kubernetes operator for PostgreSQL management with advanced features like automated backups and high availability.
+  }
+
   # Other Components
-  Glance: {
+  glance: {
     class: [application]
+    label: Glance
     icon: assets/icons/apps/glance.png
     link: https://github.com/glanceapp/glance
     tooltip: A self-hosted dashboard that puts all your feeds in one place.
   }
 
-  Tailscale-Connector: {
+  tailscale-connector: {
+    label: Tailscale-Connector
     icon: assets/icons/system/tailscale.svg
     link: https://tailscale.com/kb/1441/kubernetes-operator-connector
     tooltip: Tailscale Connector for Kubernetes - Connects local network to tailnet
@@ -187,56 +237,77 @@ amiya·akn: {
 
 # Connections
 # VPN Connections
-amiya·akn.system.Tailscale <- tailnet: {class: [connect-vpn-trunk]}
-amiya·akn.Tailscale-Connector -> localnet: {class: [connect-vpn-trunk]}
-amiya·akn.Tailscale-Connector <- tailnet: {class: [connect-vpn-trunk]}
+amiya·akn.system.tailscale <- tailnet: {class: [connect-from-vpn-backbone]}
+amiya·akn.tailscale-connector -> localnet: {class: [connect-to-vpn-backbone]}
+amiya·akn.tailscale-connector <- tailnet: {class: [connect-from-vpn-backbone]}
 
 # Internal Connections
-amiya·akn.security.yaLDAP <- amiya·akn.security.Authelia: {
+amiya·akn.system.external-secret -> amiya·akn.security.openbao-stack.openbao: {
+  source-arrowhead: HTTP (8200)
+  tooltip: External Secrets Operator pulls secrets from OpenBao KV mounts (projects-amiya-akn/, shared/)
+}
+
+amiya·akn.security.yaldap <- amiya·akn.security.authelia: {
   source-arrowhead: LDAP (8389)
 }
-amiya·akn.security.yaLDAP <- amiya·akn.system.Traefik: {
+amiya·akn.security.yaldap <- amiya·akn.system.traefik: {
   source-arrowhead: LDAP (8389)
 }
-amiya·akn.security.Authelia <- amiya·akn.system.Traefik: {
-  source-arrowhead: HTTP (9091)
-}
-amiya·akn.security.Authelia <- amiya·akn.system.Tailscale: {
-  class: [connect-vpn]
+amiya·akn.security.authelia <- amiya·akn.system.traefik: {
   source-arrowhead: HTTP (9091)
 }
 
-amiya·akn.security.SmallStep CA <- amiya·akn.system.Traefik: {
-  class: undeployed
-  source-arrowhead: HTTP (9000)
+# OpenBao Stack connections
+amiya·akn.security.openbao-stack.openbao -> amiya·akn.security.openbao-stack.postgresql: {
+  source-arrowhead: PostgreSQL (5432)
+  tooltip: OpenBao stores secrets and metadata in PostgreSQL database
 }
 
-amiya·akn.system.Longhorn <- amiya·akn.system.Traefik: {
+amiya·akn.system.cloudnative-pg -> amiya·akn.security.openbao-stack.postgresql: {
+  class: [connect-management]
+  tooltip: CloudNative-PG operator manages PostgreSQL lifecycle, backups, and high availability
+}
+
+amiya·akn.security.openbao-stack.postgresql -> nas.minio: {
+  source-arrowhead: HTTPS (9200)
+  tooltip: PostgreSQL automated backups to S3-compatible storage via CloudNative-PG
+}
+
+amiya·akn.security.openbao-stack.openbao <- amiya·akn.system.tailscale: {
+  class: [connect-from-vpn]
+  source-arrowhead: HTTP (8200)
+}
+amiya·akn.security.openbao-stack.openbao <- amiya·akn.system.traefik: {
+  source-arrowhead: HTTP (8200)
+}
+
+amiya·akn.system.longhorn <- amiya·akn.system.traefik: {
   source-arrowhead: HTTP (8000)
 }
 
-amiya·akn.storage.MinIO -> internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
-amiya·akn.storage.MinIO <- amiya·akn.system.Traefik: {
+amiya·akn.storage.minio -> internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
+amiya·akn.storage.minio <- amiya·akn.system.traefik: {
   class: undeployed
   source-arrowhead: HTTP (9000)
 }
 
-amiya·akn.storage.zot registry -> internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
-amiya·akn.storage.zot registry -> amiya·akn.storage.MinIO: {
+amiya·akn.storage.zot-registry -> internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
+amiya·akn.storage.zot-registry -> amiya·akn.storage.minio: {
   class: undeployed
   source-arrowhead: HTTP (5000)
 }
 
-amiya·akn.Glance -> internet: HTTPS (443) {class: [connect-to-internet]}
-amiya·akn.Glance <- amiya·akn.system.Traefik: {
+amiya·akn.glance -> internet: HTTPS (443) {class: [connect-to-internet]}
+amiya·akn.glance <- amiya·akn.system.traefik: {
   source-arrowhead: HTTP (8080)
 }
 
-amiya·akn.infrastructure.Talos Omni <- amiya·akn.system.Traefik: {
+amiya·akn.infrastructure.talos-omni <- amiya·akn.system.traefik: {
+  class: [undeployed]
   source-arrowhead: HTTP (443)
 }
 
-amiya·akn.system.Traefik <- localnet: {
+amiya·akn.system.traefik <- localnet: {
   source-arrowhead: |md
     HTTP (80)
     HTTPS (443)
@@ -244,15 +315,15 @@ amiya·akn.system.Traefik <- localnet: {
   |
 }
 
-amiya·akn.infrastructure.ArgoCD <- amiya·akn.system.Tailscale: {
-  class: [connect-vpn]
+amiya·akn.infrastructure.argocd <- amiya·akn.system.tailscale: {
+  class: [connect-from-vpn]
   source-arrowhead: HTTP (8080)
 }
 
-amiya·akn.infrastructure.ArgoCD <- amiya·akn.system.Traefik: {
+amiya·akn.infrastructure.argocd <- amiya·akn.system.traefik: {
   source-arrowhead: HTTP (8080)
 }
 
-amiya·akn.infrastructure.Crossplane -> internet: HTTPS (443) {class: [connect-to-internet]}
-amiya·akn.system.Cert-Manager -> internet: HTTPS (443) {class: [connect-to-internet]}
-amiya·akn.system.ExternalDNS -> UDM-Pro: DNS updates
+amiya·akn.infrastructure.crossplane -> internet: HTTPS (443) {class: [connect-to-internet]}
+amiya·akn.system.cert-manager -> internet: HTTPS (443) {class: [connect-to-internet]}
+amiya·akn.system.externaldns -> udm-pro: DNS updates
