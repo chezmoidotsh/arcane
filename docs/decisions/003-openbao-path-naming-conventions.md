@@ -1,6 +1,6 @@
 <!--
 status: "proposed"
-date: 2025-01-29
+date: 2025-06-29
 decision-makers: ["Alexandre"]
 consulted: ["ai/claude-4-sonnet"]
 informed: []
@@ -24,9 +24,8 @@ The challenge is defining conventions that are:
 ### Functional Requirements
 
 * **Intuitive Navigation**: Paths should be self-explanatory and logically organized
-* **Cross-Application Dependencies**: Handle shared secrets (SSO, certificates) without breaking isolation
+* **Cross-Application Dependencies**: Handle shared secrets (SSO, certificates, 3rd parties credentials, ...) without breaking isolation
 * **Metadata Standardization**: Consistent secret documentation and ownership tracking
-* **Cloud Provider Integration**: Clear organization for AWS, Cloudflare, and other external services
 
 ### Non-Functional Requirements
 
@@ -38,39 +37,40 @@ The challenge is defining conventions that are:
 ### Constraints
 
 * **Homelab Context**: Single operator, no multi-team collaboration requirements
-* **OpenBao Limitations**: No ACME proxy capability (unlike Vault Enterprise)
+* **OpenBao Limitations**: No ACME proxy capability
 * **Existing Architecture**: Must align with established mount topology per ADR-002
+* **Allowed Characters**: Only alphanumeric characters, hyphens, dots and underscores are allowed
 
 ## Considered Options
 
-### Option 1: Flat Structure
+### Option 1.1: Flat Structure ❌
 
 * **Path Pattern**: `/{mount}/{secret-name}`
 * **Pros**: Simple, minimal hierarchy
 * **Cons**: Poor organization, difficult discovery at scale, no logical grouping
 
-### Option 2: Service-First Organization
+### Option 1.2: Service-First Organization ❌
 
 * **Path Pattern**: `/{mount}/{service-type}/{app}/{secret}`
-* **Example**: `/amiya-akn/database/argocd/postgres-admin`
+* **Example**: `/amiya.akn/database/argocd/postgres-admin`
 * **Pros**: Clear service categorization
 * **Cons**: Artificial grouping, doesn't reflect actual dependencies
 
-### Option 3: Application-First Organization ✅
+### Option 1.3: Application-First Organization ✅
 
 * **Path Pattern**: `/{mount}/{app}/{category}/{secret}`
-* **Example**: `/amiya-akn/argocd/database/postgres-admin`
+* **Example**: `/amiya.akn/argocd/database/postgres-admin`
 * **Pros**: Natural ownership model, clear responsibility boundaries
 * **Cons**: Shared dependencies require special handling
 
-### Option 4: Owner-Based Shared Secrets
+### Option 2.1: Owner-Based Shared Secrets ❌
 
 * **Path Pattern**: `/shared/{owner}/{service}/{secret}`
 * **Example**: `/shared/authelia/oidc-clients/argocd`
 * **Pros**: Clear ownership
 * **Cons**: Breaks mount isolation, creates cross-mount access requirements
 
-### Option 5: Function-Based Shared Secrets ✅
+### Option 2.2: Function-Based Shared Secrets ✅
 
 * **Path Pattern**: `/shared/{function}/{category}/{secret}`
 * **Example**: `/shared/sso/oidc-client/argocd`
@@ -84,27 +84,76 @@ The challenge is defining conventions that are:
 ### Per-Cluster Mount Structure
 
 ```text
-/{cluster-name}/{app-name}/{category}/{secret-name}
+/{cluster-name}/{application-name}/{category}/{secret-name}
 ```
 
-**Categories**:
+A **category** in the context of this OpenBao secrets architecture represents a logical grouping of secrets sharing common characteristics or serving a similar purpose within an application.
 
-* `database/` - Database credentials and connection strings
-* `auth/` - Authentication secrets (JWT keys, session secrets, local OAuth)
+**Category characteristics:**
+
+* **Functional grouping**: Secrets in the same category have a similar role (e.g., all database secrets, all TLS certificates)
+* **Operational consistency**: Same lifecycle, same rotation processes, same security requirements
+* **Facilitates discovery**: Allows quick location of all secrets of a given type
+* **Simplifies management**: RBAC and policies can be applied by category
+
+**Category examples:**
+
+* `database/` - All database-related secrets (credentials, connection strings)
+* `auth/` - Authentication secrets (JWT, OAuth, sessions)
 * `api-keys/` - Third-party API tokens specific to the application
 * `certificates/` - Application-specific TLS certificates
+
+**Why use categories?**
+
+* **Organization**: Allows logical grouping of similar secrets
+* **Discovery**: Facilitates search and discovery of secrets
+* **Management**: Simplifies secret management (RBAC, policies)
+* **Documentation**: Improves understanding of secrets
 
 ### Shared Mount Structure
 
 ```text
-/shared/{function}/{category}/{secret-name}
+/shared/{category}/*
 ```
 
-**Functions**:
+Like per-cluster mounts, **categories** are used to group secrets by their purpose or type. Currently, we have the following categories:
 
 * `sso/` - Cross-application authentication (OIDC clients, SAML, shared JWT keys)
 * `certificates/` - Shared certificates (wildcards, CA certificates, service mesh)
-* `third-parties/` - External service credentials (AWS, Cloudflare, GitHub, Crossplane)
+* `third-parties/` - External service credentials (AWS, Cloudflare, GitHub, ...), managed by Crossplane preferably
+
+#### `sso` category
+
+This category is used to store secrets used by multiple applications for authentication (mainly OIDC clients).
+
+**Recommended structure**:
+
+***OIDC clients***: `/shared/sso/oidc-clients/{application-name}` - *For example, the ArgoCD OIDC client is stored in: `/shared/sso/oidc-clients/argocd`*
+
+#### `certificates` category
+
+This category contains shared certificates (wildcards for example) that will be distributed to several applications/clusters.
+
+**Recommended structure**:
+
+> \[!CAUTION]
+> When possible, we **MUST** use the integrated PKI capabilities of OpenBao to generate certificates.
+
+***Wildcard certificates***: `/shared/certificates/{provider}/{certificate-name}` - *For example, the \*.chezmoi.sh certificate is stored in: `/shared/certificates/letsencrypt/wildcard-chezmoi-sh`*
+
+#### `third-parties` category
+
+This category contains shared credentials for third-party services (AWS, Cloudflare, GitHub, ...) that are, generally, managed by Crossplane.
+
+**Recommended structure**:
+
+***AWS credentials***: `/shared/third-parties/aws/{service}/{app-or-purpose}` - *For example, the AWS credentials used by `amiya.akn/cnpg` to access to the `important-backup` bucket are stored in: `/shared/third-parties/aws/iam/amiya.akn/cnpg-important-backup-rw`*\
+***Cloudflare credentials***: `/shared/third-parties/cloudflare/{service}/{app-or-purpose}` - *For example, the Cloudflare credentials used by `amiya.akn/cert-manager` to access to all DNS zones are stored in: `/shared/third-parties/cloudflare/iam/amiya.akn/cert-manager-rw`*\
+***Other providers***: `/shared/third-parties/{provider}/{service}/{project-name}/{app-or-purpose}`
+
+> \[!NOTE]
+> This path structure is more complex than others, requiring specification of the cloud provider, service, and project name. This complexity is necessary because these secrets often relate to external services that could create billing issues if leaked.\
+> To minimize the blast radius, we use the project name to isolate each project from others.
 
 ### Metadata Schema
 
@@ -114,7 +163,7 @@ The challenge is defining conventions that are:
 {
   "origin": "Creation origin (examples: manual, crossplane, cert-manager, app-generated, terraform)",
   "description": "Human readable description of the secret purpose",
-  "owner": "Entity responsible for the secret (examples: amiya.akn/argocd, crossplane, authelia)"
+  "owner": "Entity responsible for the secret (examples: amiya.akn/argocd, maison/crossplane, amiya.akn/authelia)"
 }
 ```
 
@@ -165,7 +214,7 @@ The challenge is defining conventions that are:
 
 ### Negative
 
-* ⚠️ **Learning Curve**: Team must learn and follow conventions
+* ⚠️ **Learning Curve**: Operator must learn and follow conventions
 * ⚠️ **Metadata Discipline**: Requires consistent metadata population
 * ⚠️ **Cross-Dependency Complexity**: Shared secrets require coordination
 
@@ -196,7 +245,7 @@ For services requiring shared configuration (e.g., ArgoCD OIDC client in Autheli
 
 Cloud provider credentials follow service-based organization:
 
-* **Pattern**: `/shared/third-parties/{provider}/{service}/{app-or-purpose}`
+* **Pattern**: `/shared/third-parties/{provider}/{service}/{project-name}/{app-or-purpose}`
 * **IAM Strategy**: One IAM user per application with service-specific permissions
 * **Metadata Usage**: `x-aws-services` field documents accessible services
 
@@ -207,12 +256,6 @@ Cloud provider credentials follow service-based organization:
 * **Mount Isolation**: Preserved from ADR-002 topology
 * **Least Privilege**: Application-specific paths enable granular RBAC
 * **Audit Trail**: Metadata provides ownership and creation tracking
-
-### Operational Monitoring
-
-* **Path Validation**: Automated checks for convention compliance
-* **Metadata Completeness**: Required fields validation
-* **Access Patterns**: Monitor for unexpected cross-mount access attempts
 
 ## References
 
@@ -232,4 +275,8 @@ Cloud provider credentials follow service-based organization:
 
 * [External Secrets Operator Documentation](https://external-secrets.io/) - Kubernetes secrets synchronization
 * [Cert-Manager Documentation](https://cert-manager.io/) - Certificate lifecycle management
-* [Crossplane Provider Documentation](https://docs.crossplane.io/) - Cloud resource management patterns
+* [Crossplane Vault Injection Guide](https://docs.crossplane.io/latest/guides/vault-injection/#store-credentials-in-vault) - Guide to know how to store credentials in Vault with Crossplane
+
+## Changelog
+
+* **2025-06-30**: Update path naming conventions to match the new policy naming conventions.
