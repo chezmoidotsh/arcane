@@ -83,18 +83,22 @@ The challenge is defining policy conventions that are:
 
 ### Policy Family Matrix
 
-| Policy family         | Name format                          | Typical path scope                                                 | Capabilities                           | Example                         |
-| --------------------- | ------------------------------------ | ------------------------------------------------------------------ | -------------------------------------- | ------------------------------- |
-| **ESO – shared**      | `global-eso-policy`                  | `/shared/certificates/*`                                           | `read`                                 | `global-eso-policy`             |
-| **ESO – cluster**     | `{project-name}-eso-policy`          | `/${project-name}/*`, `/shared/third-parties/+/+/{project-name}/*` | `read`                                 | `amiya.akn-eso-policy`          |
-| **Crossplane**        | `{project-name}-crossplane-policy`   | `/shared/third-parties/{provider}/*`                               | `read,write`                           | `amiya.akn-crossplane-policy`   |
-| **Cert-Renewal**      | `{project-name}-cert-renewal-policy` | `/shared/certificates/letsencrypt/*`                               | `read,write`                           | `amiya.akn-cert-renewal-policy` |
-| **Admin – ephemeral** | `{project-name}-admin-ephemeral`     | `sys/*`, `/{project-name}/*`, `/shared/*`                          | `sudo` (max TTL 15 min, non-renewable) | `amiya.akn-admin-ephemeral`     |
-| **ESO – Authelia**    | `amiya.akn-authelia-policy`          | `/+/+/auth/*` (cross-mount SSO access)                             | `read`                                 | `amiya.akn-authelia-policy`     |
+| Policy family          | Name format                        | Typical path scope                                                 | Capabilities                           | Example                         |
+| ---------------------- | ---------------------------------- | ------------------------------------------------------------------ | -------------------------------------- | ------------------------------- |
+| **ESO – shared**       | `global-eso-policy`                | `/shared/certificates/*`                                           | `read`                                 | `global-eso-policy`             |
+| **ESO – cluster**      | `{project-name}-eso-policy`        | `/${project-name}/*`, `/shared/third-parties/+/+/{project-name}/*` | `read`                                 | `amiya.akn-eso-policy`          |
+| **Crossplane**         | `{project-name}-crossplane-policy` | `/shared/third-parties/{provider}/*`                               | `read,write`                           | `amiya.akn-crossplane-policy`   |
+| **Admin – ephemeral**  | `{project-name}-admin-ephemeral`   | `sys/*`, `/{project-name}/*`, `/shared/*`                          | `sudo` (max TTL 15 min, non-renewable) | `amiya.akn-admin-ephemeral`     |
+| **ESO – authelia**     | `amiya.akn-authelia-policy`        | `/+/+/auth/*` (cross-mount SSO access)                             | `read`                                 | `amiya.akn-authelia-policy`     |
+| **ESO - cert renewal** | `amiya.akn-cert-renewal-policy`    | `/shared/certificates/letsencrypt/*`                               | `read,write`                           | `amiya.akn-cert-renewal-policy` |
 
 > \[!NOTE]
-> The `global-eso-policy` remains for legitimate shared resources (certificates, ...) but EXCLUDES `/shared/sso/*` access.
-> The `{project-name}-authelia-policy` is a special cross-mount policy that allows Authelia to read SSO credentials from all project mounts.
+> There are 6 policy types in total, but only 3 are instantiated per cluster:
+>
+> * `{project-name}-eso-policy`
+> * `{project-name}-crossplane-policy`
+> * `{project-name}-admin-ephemeral`
+>   The `global-eso-policy` is shared across all clusters, `amiya.akn-authelia-policy` and `amiya.akn-cert-renewal-policy` are specific to the `amiya.akn` project.
 
 ### Policy Design Principles
 
@@ -166,7 +170,7 @@ The challenge is defining policy conventions that are:
 
 * **Coverage**: Handles all current use cases (ESO shared/cluster, SSO/Authelia, Crossplane, cert renewal, admin)
 * **Consistency**: Similar patterns across all clusters
-* **Simplicity**: Only 6 policy types to manage per cluster
+* **Simplicity**: Only 6 policy types to manage (3 per cluster)
 * **Security**: SSO secrets isolated per-project while maintaining shared resource access
 * **Flexibility**: Easy to extend for new functions or requirements
 
@@ -235,5 +239,7 @@ The challenge is defining policy conventions that are:
 
 ## Changelog
 
-* **2025-07-01**: **CLARIFICATION**: Third-party secrets remain in shared mount with project-scoped access (`/shared/third-parties/+/+/{project-name}/*`) because multiple apps within same project legitimately share cloud credentials, and the risk profile differs from SSO identity impersonation.
+* **2025-07-01**: **CLARIFICATION**: Only 3 of the 6 policy types are instantiated per cluster.
+* **2025-07-01**: **CLARIFICATION**: `global-eso-policy` is shared across all clusters.
+* **2025-07-01**: **CLARIFICATION**: `amiya.akn-authelia-policy` and `amiya.akn-cert-renewal-policy` are project-specific.
 * **2025-07-01**: **SECURITY**: Restrict `global-eso-policy` scope to exclude `/shared/sso/*` and migrate SSO secrets to per-project isolation. Add `amiya.akn-authelia-policy` for legitimate cross-mount SSO access. This change addresses security vulnerability where any cluster could access OIDC `client_secret` credentials from other clusters, enabling potential identity spoofing attacks, while maintaining shared access to legitimate shared resources (certificates, third-parties).
