@@ -85,14 +85,16 @@ The challenge is defining policy conventions that are:
 
 | Policy family         | Name format                          | Typical path scope                                                 | Capabilities                           | Example                         |
 | --------------------- | ------------------------------------ | ------------------------------------------------------------------ | -------------------------------------- | ------------------------------- |
-| **ESO – shared**      | `global-eso-policy`                  | `/shared/sso/*`, `/shared/certificates/*`,                         | `read`                                 | `global-eso-policy`             |
+| **ESO – shared**      | `global-eso-policy`                  | `/shared/certificates/*`                                           | `read`                                 | `global-eso-policy`             |
 | **ESO – cluster**     | `{project-name}-eso-policy`          | `/${project-name}/*`, `/shared/third-parties/+/+/{project-name}/*` | `read`                                 | `amiya.akn-eso-policy`          |
-| **Crossplane**        | `{project-name}-crossplane-policy`   | `/shared/third-parties/{provider}/*` (or other managed providers)  | `read,write`                           | `amiya.akn-crossplane-policy`   |
+| **Crossplane**        | `{project-name}-crossplane-policy`   | `/shared/third-parties/{provider}/*`                               | `read,write`                           | `amiya.akn-crossplane-policy`   |
 | **Cert-Renewal**      | `{project-name}-cert-renewal-policy` | `/shared/certificates/letsencrypt/*`                               | `read,write`                           | `amiya.akn-cert-renewal-policy` |
 | **Admin – ephemeral** | `{project-name}-admin-ephemeral`     | `sys/*`, `/{project-name}/*`, `/shared/*`                          | `sudo` (max TTL 15 min, non-renewable) | `amiya.akn-admin-ephemeral`     |
+| **ESO – Authelia**    | `amiya.akn-authelia-policy`          | `/+/+/auth/*` (cross-mount SSO access)                             | `read`                                 | `amiya.akn-authelia-policy`     |
 
 > \[!NOTE]
-> The `global-eso-policy` is a special policy that is used to grant access to all secrets in the `shared` mount and shared by all clusters.
+> The `global-eso-policy` remains for legitimate shared resources (certificates, ...) but EXCLUDES `/shared/sso/*` access.
+> The `{project-name}-authelia-policy` is a special cross-mount policy that allows Authelia to read SSO credentials from all project mounts.
 
 ### Policy Design Principles
 
@@ -119,6 +121,10 @@ The challenge is defining policy conventions that are:
 * All policies follow `{project-name}-{function}-policy` pattern
 * Admin tokens use `{project-name}-admin-ephemeral` pattern
 * Names clearly indicate purpose and scope
+
+#### 5. **Exceptions policies**
+
+* `amiya.akn-authelia-policy` is a special cross-mount policy that allows Authelia to read SSO credentials from all project mounts.
 
 ### Capability Definitions
 
@@ -158,9 +164,10 @@ The challenge is defining policy conventions that are:
 
 ### Why This Policy Matrix
 
-* **Coverage**: Handles all current use cases (ESO, Crossplane, cert renewal, admin)
+* **Coverage**: Handles all current use cases (ESO shared/cluster, SSO/Authelia, Crossplane, cert renewal, admin)
 * **Consistency**: Similar patterns across all clusters
-* **Simplicity**: Only 4 policy types to manage per cluster
+* **Simplicity**: Only 6 policy types to manage per cluster
+* **Security**: SSO secrets isolated per-project while maintaining shared resource access
 * **Flexibility**: Easy to extend for new functions or requirements
 
 ## Consequences
@@ -172,27 +179,36 @@ The challenge is defining policy conventions that are:
 * ✅ **Audit Trail**: Policy names clearly indicate access patterns
 * ✅ **Scalability**: Easy to add new clusters or functions
 * ✅ **Least Privilege**: Each policy grants only necessary access
+* ✅ **SSO Security**: Eliminates security vulnerability from shared SSO mount
 
 ### Negative
 
 * ⚠️ **Learning Curve**: The operator must understand policy purposes and scopes
 * ⚠️ **Token Management**: Ephemeral admin tokens require more operational overhead
 * ⚠️ **Policy Count**: More policies to manage than single-policy approach
+* ⚠️ **Cross-Mount Complexity**: Authelia policy breaks normal mount isolation principles
 
 ## Implementation Considerations
 
 ### Policy Creation Strategy
 
 1. **Cluster-Specific Policies**: Create policies for each cluster following the matrix
-2. **Shared Resource Policies**: Create shared policies for cross-cluster resources
-3. **Admin Token Workflow**: Establish process for ephemeral admin token generation
-4. **Policy Validation**: Automated checks for policy compliance and scope validation
+2. **SSO Migration**: Migrate existing `/shared/sso/*` secrets to per-project mounts
+3. **Authelia Cross-Mount Policy**: Create dedicated cross-mount policy for Authelia SSO access
+4. **Admin Token Workflow**: Establish process for ephemeral admin token generation
+5. **Policy Validation**: Automated checks for policy compliance and scope validation
 
 ### Cross-Cluster Considerations
 
-* **Shared Secrets**: Policies for shared mounts must consider multi-cluster access
+* **SSO vs Third-Party Secrets Architecture**: Different isolation models for different risk profiles
+  * **SSO Secrets**: Moved to per-project mounts due to identity spoofing risks (`client_secret` enables impersonation)
+  * **Third-Party Secrets**: Remain in shared mount but scoped to project (`/shared/third-parties/+/+/{project-name}/*`) because:
+    * Multiple apps within same project legitimately share cloud credentials (e.g., S3 information)
+    * Risk profile differs: billing/resource access vs identity impersonation
+    * Project-scoped access pattern maintains isolation between projects while enabling intra-project sharing
 * **Consistency**: Similar services across clusters should have similar policy structures
 * **Isolation**: Ensure cluster-specific policies don't accidentally grant cross-cluster access
+* **Security Trade-offs**: Accept controlled cross-mount access for Authelia to maintain centralized SSO
 
 ### Monitoring and Compliance
 
@@ -216,3 +232,8 @@ The challenge is defining policy conventions that are:
 * [Principle of Least Privilege](https://csrc.nist.gov/glossary/term/least_privilege) - Security access control principles
 * [Scaling HashiCorp Vault - Policy Sprawl Part 1](https://sunil-tailor.medium.com/scaling-hashicorp-vault-policy-sprawl-part-1-1b0f599b6eae) - Policy organization and naming conventions
 * [Secret Management Best Practices](https://kubernetes.io/docs/concepts/configuration/secret/) - Kubernetes-native patterns
+
+## Changelog
+
+* **2025-07-01**: **CLARIFICATION**: Third-party secrets remain in shared mount with project-scoped access (`/shared/third-parties/+/+/{project-name}/*`) because multiple apps within same project legitimately share cloud credentials, and the risk profile differs from SSO identity impersonation.
+* **2025-07-01**: **SECURITY**: Restrict `global-eso-policy` scope to exclude `/shared/sso/*` and migrate SSO secrets to per-project isolation. Add `amiya.akn-authelia-policy` for legitimate cross-mount SSO access. This change addresses security vulnerability where any cluster could access OIDC `client_secret` credentials from other clusters, enabling potential identity spoofing attacks, while maintaining shared access to legitimate shared resources (certificates, third-parties).
