@@ -124,11 +124,18 @@ Like per-cluster mounts, **categories** are used to group secrets by their purpo
 
 #### `sso` category
 
-This category is used to store secrets used by multiple applications for authentication (mainly OIDC clients).
+~~This category is used to store secrets used by multiple applications for authentication (mainly OIDC clients).~~
 
-**Recommended structure**:
+> \[!IMPORTANT]
+> **DEPRECATED**: Following security analysis, SSO secrets have been moved to per-project mounts to implement proper isolation. See changelog entry 2025-07-01 for migration details.
 
-***OIDC clients***: `/shared/sso/oidc-clients/{application-name}` - *For example, the ArgoCD OIDC client is stored in: `/shared/sso/oidc-clients/argocd`*
+**Legacy structure** (deprecated):
+***OIDC clients***: `/shared/sso/oidc-clients/{application-name}` - *Example: ArgoCD OIDC client was stored in: `/shared/sso/oidc-clients/argocd`*
+
+**New structure** (since 2025-07-01):
+***OIDC clients***: `/{cluster-name}/{application-name}/auth/oidc-client` - *Example: ArgoCD OIDC client is now stored in: `/amiya.akn/argocd/auth/oidc-client`*
+
+**Migration rationale**: The shared SSO approach created security risks where any cluster could access OIDC `client_secret` credentials from other clusters, enabling identity spoofing attacks. Moving to per-project mounts ensures proper isolation while maintaining necessary access patterns for Authelia.
 
 #### `certificates` category
 
@@ -237,9 +244,9 @@ Since OpenBao lacks ACME proxy capabilities, wildcard certificates will be:
 
 For services requiring shared configuration (e.g., ArgoCD OIDC client in Authelia):
 
-* **Secret Storage**: `/shared/sso/oidc-client/argocd`
+* **Secret Storage**: `/amiya.akn/argocd/auth/oidc-client`
 * **Ownership Tracking**: `metadata.owner = "amiya.akn/authelia"`
-* **Access Pattern**: ArgoCD reads from shared mount, Authelia manages lifecycle
+* **Access Pattern**: ArgoCD reads from own mount, Authelia reads cross-mount via dedicated policy
 
 ### AWS/Cloud Provider Organization
 
@@ -279,4 +286,5 @@ Cloud provider credentials follow service-based organization:
 
 ## Changelog
 
+* **2025-07-01**: **SECURITY**: Migrate SSO secrets from `/shared/sso/*` to per-project mounts following `/{cluster}/{app}/auth/{secret}` pattern. This change addresses security vulnerability where `global-eso-policy` allowed any cluster to access OIDC `client_secret` credentials from other clusters, enabling potential identity spoofing attacks. The new structure maintains proper isolation while allowing Authelia legitimate cross-mount access via dedicated policies.
 * **2025-06-30**: Update path naming conventions to match the new policy naming conventions.
