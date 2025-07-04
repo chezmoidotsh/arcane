@@ -59,6 +59,27 @@ Enable OpenBao to authenticate Kubernetes service accounts from the amiya.akn cl
 > * This configuration only needs to be done once for the amiya.akn cluster.
 > * After this step, you can proceed to policy creation and automation.
 
+3. **Create the Crossplane provisioning policy and role**
+
+   * Create a policy that allows Crossplane to manage OpenBao configuration (policies, auth methods, mounts, etc.), but not application secrets (see [resources/kubernetes-crossplane-provisioning-policy.hcl](./resources/kubernetes-crossplane-provisioning-policy.hcl) for the policy).
+
+     ```bash
+     bao policy write kubernetes-crossplane-provisioning-policy ./resources/kubernetes-crossplane-provisioning-policy.hcl
+     ```
+
+   * Create a role for Crossplane, binding it to the policy and the appropriate Kubernetes service account:
+
+     ```bash
+     bao write auth/kubernetes/role/crossplane-provisioning \
+       bound_service_account_names='*' \
+       bound_service_account_namespaces=crossplane \
+       policies=default,kubernetes-crossplane-provisioning-policy \
+       ttl=15m
+     ```
+
+> \[!NOTE]
+> Adjust the service account name and namespace as needed for your environment.
+
 ## ⚙️ Phase 2: Automated Synchronization Workflow
 
 1. **Crossplane configures OpenBao globally**

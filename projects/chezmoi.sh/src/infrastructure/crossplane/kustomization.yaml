@@ -16,6 +16,10 @@ resources:
   - cloudflare.provider.yaml
   - cloudflare.default.providerconfig.yaml
 
+  # Vault provider configuration
+  - vault.provider.yaml
+  - vault.providerconfig.yaml
+
   # AWS resources
   - aws.domainidentity.yaml
 
