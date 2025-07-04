@@ -1,0 +1,20 @@
+---
+apiVersion: kubernetes.vault.upbound.io/v1alpha1
+kind: AuthBackendRole
+metadata:
+  name: amiya.akn-eso
+spec:
+  forProvider:
+    backendRef:
+      name: amiya.akn
+    boundServiceAccountNames:
+      - external-secrets
+    boundServiceAccountNamespaces:
+      - external-secrets-system
+    roleName: amiya.akn-eso
+    tokenPolicies:
+      - global-eso-policy
+      - amiya.akn-eso-policy
+    tokenTtl: 900
+  providerConfigRef:
+    name: default

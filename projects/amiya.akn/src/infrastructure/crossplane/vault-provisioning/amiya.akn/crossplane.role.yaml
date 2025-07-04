@@ -1,0 +1,19 @@
+---
+apiVersion: kubernetes.vault.upbound.io/v1alpha1
+kind: AuthBackendRole
+metadata:
+  name: amiya.akn-crossplane
+spec:
+  forProvider:
+    backendRef:
+      name: amiya.akn
+    boundServiceAccountNames:
+      - crossplane
+    boundServiceAccountNamespaces:
+      - crossplane-system
+    roleName: amiya.akn-crossplane
+    tokenPolicies:
+      - amiya.akn-crossplane-policy
+    tokenTtl: 900
+  providerConfigRef:
+    name: default

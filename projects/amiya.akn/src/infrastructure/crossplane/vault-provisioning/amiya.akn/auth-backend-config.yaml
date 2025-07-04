@@ -1,0 +1,12 @@
+---
+apiVersion: kubernetes.vault.upbound.io/v1alpha1
+kind: AuthBackendConfig
+metadata:
+  name: amiya.akn
+spec:
+  forProvider:
+    backendRef:
+      name: amiya.akn
+    kubernetesHost: https://kubernetes.default.svc.cluster.local
+  providerConfigRef:
+    name: default
