@@ -1,0 +1,25 @@
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xlocalclustervaults.vault.chezmoi.sh
+spec:
+  claimNames:
+    categories:
+      - crossplane
+      - chezmoidotsh
+    kind: LocalClusterVault
+    listKind: LocalClusterVaultList
+    plural: localclustervaults
+    singular: localclustervault
+  defaultCompositeDeletePolicy: Foreground
+  group: vault.chezmoi.sh
+  names:
+    categories:
+      - crossplane
+      - chezmoidotsh
+    kind: XLocalClusterVault
+    listKind: XLocalClusterVaultList
+    plural: xlocalclustervaults
+    singular: xlocalclustervault
+  versions: []

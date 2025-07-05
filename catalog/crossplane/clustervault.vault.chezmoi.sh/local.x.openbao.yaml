@@ -1,0 +1,180 @@
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: openbao.xlocalclustervaults.vault.chezmoi.sh
+spec:
+  compositeTypeRef:
+    apiVersion: vault.chezmoi.sh/v1alpha1
+    kind: XLocalClusterVault
+  mode: Pipeline
+  pipeline:
+    # Create KV v2 mount for the cluster
+    - step: create-vault-mount
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ $xr := getCompositeResource . }}
+            ---
+            apiVersion: vault.vault.upbound.io/v1alpha1
+            kind: Mount
+            metadata:
+              annotations:
+                crossplane.io/external-name: {{ $xr.spec.name }}
+                gotemplating.fn.crossplane.io/composition-resource-name: VaultMount
+              name: {{ $xr.spec.name }}
+            spec:
+              deletionPolicy: Orphan
+              forProvider:
+                description: "KV v2 mount for local cluster {{ $xr.spec.name }}"
+                options:
+                  version: "2"
+                path: {{ $xr.spec.name }}
+                type: kv
+              providerConfigRef:
+                name: {{ $xr.spec.providerConfigRef.name | default "default" }}
+
+    # Create Kubernetes auth backend
+    - step: create-auth-backend
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ $xr := getCompositeResource . }}
+            ---
+            apiVersion: auth.vault.upbound.io/v1alpha1
+            kind: Backend
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: AuthBackend
+              name: {{ $xr.spec.name }}
+            spec:
+              deletionPolicy: Delete
+              forProvider:
+                path: {{ $xr.spec.name }}
+                type: kubernetes
+                description: "Kubernetes auth backend for cluster {{ $xr.spec.name }}"
+              providerConfigRef:
+                name: {{ $xr.spec.providerConfigRef.name | default "default" }}
+
+    # Wait for backend to be ready
+    - step: wait-for-backend
+      functionRef:
+        name: function-auto-ready
+
+    # Configure auth backend
+    - step: configure-auth-backend
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ $xr := getCompositeResource . }}
+            ---
+            apiVersion: kubernetes.vault.upbound.io/v1alpha1
+            kind: AuthBackendConfig
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: AuthBackendConfig
+              name: {{ $xr.spec.name }}-config
+            spec:
+              deletionPolicy: Delete
+              forProvider:
+                backendRef:
+                  name: {{ $xr.spec.name }}
+                kubernetesHost: https://kubernetes.default.svc.cluster.local
+              providerConfigRef:
+                name: {{ $xr.spec.providerConfigRef.name | default "default" }}
+
+    # Create policies
+    - step: create-policies
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ $xr := getCompositeResource . }}
+            {{ $clusterName := $xr.spec.name }}
+            ---
+            # ESO Policy
+            apiVersion: vault.vault.upbound.io/v1alpha1
+            kind: Policy
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: ESOPolicy
+              name: {{ $clusterName }}-eso-policy
+            spec:
+              deletionPolicy: Delete
+              forProvider:
+                name: {{ $clusterName }}-eso-policy
+                policy: |
+                  # Allow ESO to read all secrets in the project path
+                  path "{{ $clusterName }}/*" { capabilities = ["read"] }
+
+                  # Allow ESO to read all secrets in the shared/third-parties path
+                  path "shared/third-parties/+/+/{{ $clusterName }}/*" { capabilities = ["read"] }
+
+                  # Allow ESO to read all secrets in the shared/certificates path
+                  path "shared/certificates/*" { capabilities = ["read"] }
+              providerConfigRef:
+                name: {{ $xr.spec.providerConfigRef.name | default "default" }}
+
+    # Create auth roles
+    - step: create-auth-roles
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{ $xr := getCompositeResource . }}
+            {{ $clusterName := $xr.spec.name }}
+            {{ $additionalPolicies := $xr.spec.additionalPolicies | default (list) }}
+            ---
+            # ESO Role
+            apiVersion: kubernetes.vault.upbound.io/v1alpha1
+            kind: AuthBackendRole
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: ESORole
+              name: {{ $clusterName }}-eso-role
+            spec:
+              deletionPolicy: Delete
+              forProvider:
+                backend: {{ $clusterName }}
+                roleName: {{ $clusterName }}-eso-role
+                boundServiceAccountNames:
+                  - external-secrets-operator
+                boundServiceAccountNamespaces:
+                  - external-secrets-system
+                tokenPolicies:
+                  - {{ $clusterName }}-eso-policy
+                {{- range $policy := $additionalPolicies }}
+                  - {{ $policy }}
+                {{- end }}
+                tokenTtl: 900
+                tokenMaxTtl: 1800
+              providerConfigRef:
+                name: {{ $xr.spec.providerConfigRef.name | default "default" }}
+
+    # Wait for all resources to be ready
+    - step: wait-for-resources
+      functionRef:
+        name: function-auto-ready

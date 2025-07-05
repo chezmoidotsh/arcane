@@ -5,3 +5,5 @@ kind: Kustomization
 resources:
   - aws.iam.authelia.yaml
   - cloudflare.iam.cert-manager.yaml
+
+  - vault/

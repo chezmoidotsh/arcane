@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   # Required modules
   - ../../../../../catalog/crossplane/domainidentity.amazonses.chezmoi.sh
+  - ../../../../../catalog/crossplane/clustervault.vault.chezmoi.sh
 
   # Crossplane global configuration
   - functions.yaml
@@ -15,6 +16,10 @@ resources:
   - aws.default.providerconfig.yaml
   - cloudflare.provider.yaml
   - cloudflare.default.providerconfig.yaml
+
+  # Vault provider configuration
+  - vault.provider.yaml
+  - vault.providerconfig.yaml
 
   # AWS resources
   - aws.domainidentity.yaml
