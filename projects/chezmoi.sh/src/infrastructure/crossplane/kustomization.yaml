@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   # Required modules
   - ../../../../../catalog/crossplane/domainidentity.amazonses.chezmoi.sh
+  - ../../../../../catalog/crossplane/clustervault.vault.chezmoi.sh
 
   # Crossplane global configuration
   - functions.yaml
