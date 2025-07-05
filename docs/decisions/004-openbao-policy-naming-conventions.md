@@ -83,22 +83,12 @@ The challenge is defining policy conventions that are:
 
 ### Policy Family Matrix
 
-| Policy family          | Name format                        | Typical path scope                                                 | Capabilities                           | Example                         |
-| ---------------------- | ---------------------------------- | ------------------------------------------------------------------ | -------------------------------------- | ------------------------------- |
-| **ESO – shared**       | `global-eso-policy`                | `/shared/certificates/*`                                           | `read`                                 | `global-eso-policy`             |
-| **ESO – cluster**      | `{project-name}-eso-policy`        | `/${project-name}/*`, `/shared/third-parties/+/+/{project-name}/*` | `read`                                 | `amiya.akn-eso-policy`          |
-| **Crossplane**         | `{project-name}-crossplane-policy` | `/shared/third-parties/{provider}/*`                               | `read,write`                           | `amiya.akn-crossplane-policy`   |
-| **Admin – ephemeral**  | `{project-name}-admin-ephemeral`   | `sys/*`, `/{project-name}/*`, `/shared/*`                          | `sudo` (max TTL 15 min, non-renewable) | `amiya.akn-admin-ephemeral`     |
-| **ESO – authelia**     | `amiya.akn-authelia-policy`        | `/+/+/auth/*` (cross-mount SSO access)                             | `read`                                 | `amiya.akn-authelia-policy`     |
-| **ESO - cert renewal** | `amiya.akn-cert-renewal-policy`    | `/shared/certificates/letsencrypt/*`                               | `read,write`                           | `amiya.akn-cert-renewal-policy` |
-
-> \[!NOTE]
-> There are 6 policy types in total, but only 3 are instantiated per cluster:
->
-> * `{project-name}-eso-policy`
-> * `{project-name}-crossplane-policy`
-> * `{project-name}-admin-ephemeral`
->   The `global-eso-policy` is shared across all clusters, `amiya.akn-authelia-policy` and `amiya.akn-cert-renewal-policy` are specific to the `amiya.akn` project.
+| Policy family          | Name format                     | Typical path scope                                                                           | Capabilities | Example                         |
+| ---------------------- | ------------------------------- | -------------------------------------------------------------------------------------------- | ------------ | ------------------------------- |
+| **ESO – cluster**      | `{project-name}-eso-policy`     | `/${project-name}/*`, `/shared/third-parties/+/+/{project-name}/*`, `/shared/certificates/*` | `read`       | `amiya.akn-eso-policy`          |
+| **ESO - crossplane**   | `amiya.akn-crossplane-policy`   | `/shared/third-parties/*`                                                                    | `read,write` | `amiya.akn-crossplane-policy`   |
+| **ESO – authelia**     | `amiya.akn-authelia-policy`     | `/+/+/auth/*` (cross-mount SSO access)                                                       | `read`       | `amiya.akn-authelia-policy`     |
+| **ESO - cert renewal** | `amiya.akn-cert-renewal-policy` | `/shared/certificates/letsencrypt/*`                                                         | `read,write` | `amiya.akn-cert-renewal-policy` |
 
 ### Policy Design Principles
 
@@ -239,6 +229,8 @@ The challenge is defining policy conventions that are:
 
 ## Changelog
 
+* **2025-07-05**: **DEPRECATION**: `*-crossplane-policy` is replaced by `amiya.akn-crossplane-policy` as Crossplane is only running in the `amiya.akn` cluster.
+* **2025-07-05**: **DEPRECATION**: Integrate `global-eso-policy` into `{project-name}-eso-policy` as it is way easier to manage it like this.
 * **2025-07-01**: **CLARIFICATION**: Only 3 of the 6 policy types are instantiated per cluster.
 * **2025-07-01**: **CLARIFICATION**: `global-eso-policy` is shared across all clusters.
 * **2025-07-01**: **CLARIFICATION**: `amiya.akn-authelia-policy` and `amiya.akn-cert-renewal-policy` are project-specific.
