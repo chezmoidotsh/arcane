@@ -8,9 +8,4 @@ spec:
     name: amiya.akn-crossplane-policy
     policy: |
       # Allow Crossplane to manage all third-parties secrets on the shared mount
-      path "shared/+/third-parties/*" {
-        capabilities = ["create", "read", "update", "delete", "list"]
-      }
-
-  providerConfigRef:
-    name: default
+      path "shared/+/third-parties/*" { capabilities = ["create", "read", "update", "delete", "list"] }

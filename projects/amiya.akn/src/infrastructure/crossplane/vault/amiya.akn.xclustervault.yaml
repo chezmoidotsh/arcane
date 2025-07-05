@@ -1,0 +1,9 @@
+---
+apiVersion: vault.chezmoi.sh/v1alpha1
+kind: LocalClusterVault
+metadata:
+  name: amiya.akn
+spec:
+  name: amiya.akn
+  additionalPolicies:
+    - amiya.akn-crossplane-policy
