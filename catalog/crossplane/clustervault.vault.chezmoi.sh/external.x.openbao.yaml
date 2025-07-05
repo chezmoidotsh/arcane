@@ -188,7 +188,7 @@ spec:
                 backend: {{ $clusterName }}
                 roleName: {{ $clusterName }}-eso-role
                 boundServiceAccountNames:
-                  - external-secrets-operator
+                  - external-secrets
                 boundServiceAccountNamespaces:
                   - external-secrets-system
                 tokenPolicies:
