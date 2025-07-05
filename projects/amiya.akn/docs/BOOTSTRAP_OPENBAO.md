@@ -2,9 +2,9 @@
 
 > **This document describes the complete OpenBao bootstrap process for a Kubernetes cluster, following the architecture and conventions defined in:**
 >
-> * [ADR-002: Secrets Mount Topology](../../../../docs/decisions/002-openbao-secrets-topology.md)
-> * [ADR-003: Path and Naming Conventions](../../../../docs/decisions/003-openbao-path-naming-conventions.md)
-> * [ADR-004: Policy Naming and Scope](../../../../docs/decisions/004-openbao-policy-naming-conventions.md)
+> * [ADR-002: Secrets Mount Topology](../../../docs/decisions/002-openbao-secrets-topology.md)
+> * [ADR-003: Path and Naming Conventions](../../../docs/decisions/003-openbao-path-naming-conventions.md)
+> * [ADR-004: Policy Naming and Scope](../../../docs/decisions/004-openbao-policy-naming-conventions.md)
 
 ## 📋 Table of Contents
 
@@ -61,10 +61,10 @@ Enable OpenBao to authenticate Kubernetes service accounts from the amiya.akn cl
 
 3. **Create the Crossplane provisioning policy and role**
 
-   * Create a policy that allows Crossplane to manage OpenBao configuration (policies, auth methods, mounts, etc.), but not application secrets (see [resources/kubernetes-crossplane-provisioning-policy.hcl](./resources/kubernetes-crossplane-provisioning-policy.hcl) for the policy).
+   * Create a policy that allows Crossplane to manage OpenBao configuration (policies, auth methods, mounts, etc.), but not application secrets (see [openbao/policies/kubernetes-crossplane-provisioning-policy.hcl](./openbao/policies/kubernetes-crossplane-provisioning-policy.hcl) for the policy).
 
      ```bash
-     bao policy write kubernetes-crossplane-provisioning-policy ./resources/kubernetes-crossplane-provisioning-policy.hcl
+     bao policy write kubernetes-crossplane-provisioning-policy ./openbao/policies/kubernetes-crossplane-provisioning-policy.hcl
      ```
 
    * Create a role for Crossplane, binding it to the policy and the appropriate Kubernetes service account:
