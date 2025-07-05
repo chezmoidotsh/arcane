@@ -5,7 +5,7 @@ extraObjects:
   # NOTE: kubevault is the default secret store for External Secrets Operator.
   #       Because this cluster is the same as the one where the secrets are
   #       stored, we don't need any trickery to access the secrets.
-  - apiVersion: external-secrets.io/v1beta1
+  - apiVersion: external-secrets.io/v1
     kind: ClusterSecretStore
     metadata:
       name: kubevault
