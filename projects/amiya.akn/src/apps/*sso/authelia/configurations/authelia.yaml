@@ -1365,9 +1365,10 @@ identity_providers:
       - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.budibase" | nindent 8 }}
       - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.linkding" | nindent 8 }}
       - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.mealie" | nindent 8 }}
+      - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.openbao" | nindent 8 }}
       - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.paperless_ngx" | nindent 8 }}
       - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.proxmox" | nindent 8 }}
-      
+
       # -
         ## The Client ID is the OAuth 2.0 and OpenID Connect 1.0 Client ID which is used to link an application to a
         ## configuration.
