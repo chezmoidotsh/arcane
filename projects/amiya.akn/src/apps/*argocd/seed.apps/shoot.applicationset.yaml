@@ -133,6 +133,9 @@ spec:
                         target:
                           kind: ClusterSecretStore
                           name: vault.chezmoi.sh
+                target:
+                  kind: Application
+                  name: external-secrets
 
               # - Tailscale
               - patch: |
