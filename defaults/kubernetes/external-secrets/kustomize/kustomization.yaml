@@ -1,0 +1,16 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - kubevault.clustersecretstore.yaml
+  - vault.clustersecretstore.yaml
+
+transformers:
+  - |-
+    apiVersion: builtin
+    kind: NamespaceTransformer
+    metadata:
+      name: external-secrets-system
+      namespace: external-secrets-system
+    unsetOnly: true

@@ -4,3 +4,18 @@
 
 # No more configuration is needed, as the default values are enough to
 # deploy the External-Secrets Operator in the argocd-system namespace.
+extraObjects:
+  # system:auth-delegator is required for the External-Secrets Operator to
+  # authenticate with the Kubernetes API on OpenBao.
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: external-secrets-operator:system:auth-delegator
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: system:auth-delegator
+    subjects:
+      - kind: ServiceAccount
+        name: external-secrets
+        namespace: external-secrets-system

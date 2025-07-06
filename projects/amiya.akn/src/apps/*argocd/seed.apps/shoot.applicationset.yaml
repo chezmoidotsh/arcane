@@ -116,6 +116,24 @@ spec:
                   kind: Application
                   name: external-secrets
 
+              - patch: |
+                  - op: add
+                    path: /spec/sources/0/kustomize/patches
+                    value:
+                      - patch: |-
+                          - op: add
+                            path: /spec/provider/vault/path
+                            value: secret/data/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}
+                          - op: add
+                            path: /spec/provider/vault/auth/kubernetes/mountPath
+                            value: {{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}
+                          - op: add
+                            path: /spec/provider/vault/auth/kubernetes/role
+                            value: {{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}-eso-role
+                        target:
+                          kind: ClusterSecretStore
+                          name: vault.chezmoi.sh
+
               # - Tailscale
               - patch: |
                   - op: add
