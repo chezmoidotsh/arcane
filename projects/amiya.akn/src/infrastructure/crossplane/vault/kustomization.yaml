@@ -6,6 +6,7 @@ resources:
   - shared.mount.yaml
 
   # Additional policies
+  - amiya.akn-authelia-policy.yaml
   - amiya.akn-crossplane-policy.yaml
 
   # Configure Vault for all clusters
