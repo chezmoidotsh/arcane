@@ -1,0 +1,18 @@
+---
+apiVersion: vault.vault.upbound.io/v1alpha1
+kind: Policy
+metadata:
+  name: sso-default-policy
+spec:
+  forProvider:
+    name: sso-default-policy
+    policy: |
+      # This policy allows users to access only their own personal secrets
+      # under the `personal/<email>` path. The `email` value is expected
+      # to be set as a metadata field on the associated Vault identity entity.
+
+      # KV v2 secrets access - personal/<email>/data/*
+      path "personal/data/{{identity.entity.metadata.email}}/*" { capabilities = ["create", "read", "update", "delete", "list"] }
+      path "personal/metadata/{{identity.entity.metadata.email}}/*" { capabilities = ["create", "read", "update", "delete", "list"] }
+      path "personal/*" { capabilities = ["create", "read", "update", "delete", "list"] }
+

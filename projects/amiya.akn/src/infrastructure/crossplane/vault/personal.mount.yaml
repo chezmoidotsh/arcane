@@ -1,0 +1,15 @@
+---
+apiVersion: vault.vault.upbound.io/v1alpha1
+kind: Mount
+metadata:
+  name: personal
+spec:
+  deletionPolicy: Orphan
+  forProvider:
+    description: KV v2 mount for user secrets
+    options:
+      version: "2"
+    path: personal
+    type: kv
+  providerConfigRef:
+    name: default
