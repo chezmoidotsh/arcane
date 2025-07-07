@@ -1,0 +1,12 @@
+---
+apiVersion: vault.vault.upbound.io/v1alpha1
+kind: Policy
+metadata:
+  name: amiya.akn-authelia-policy
+spec:
+  forProvider:
+    name: amiya.akn-authelia-policy
+    policy: |
+      # Allow ESO to read SSO credentials on all mounts (cross-mount SSO access)
+      # See ADR-004
+      path "/+/+/auth/*" { capabilities = ["read"] }

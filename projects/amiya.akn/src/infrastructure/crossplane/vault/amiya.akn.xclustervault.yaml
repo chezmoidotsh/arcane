@@ -7,3 +7,4 @@ spec:
   name: amiya.akn
   additionalPolicies:
     - amiya.akn-crossplane-policy
+    - amiya.akn-authelia-policy

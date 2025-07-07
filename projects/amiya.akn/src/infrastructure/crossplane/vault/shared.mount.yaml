@@ -6,7 +6,7 @@ metadata:
 spec:
   deletionPolicy: Orphan
   forProvider:
-    description: KV v2 mount for shared secrets
+    description: kv v2 mount for shared secrets
     options:
       version: "2"
     path: shared
