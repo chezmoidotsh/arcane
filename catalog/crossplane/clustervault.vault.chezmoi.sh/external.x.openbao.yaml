@@ -53,7 +53,7 @@ spec:
             spec:
               deletionPolicy: Orphan
               forProvider:
-                description: "KV v2 mount for cluster {{ $xr.spec.name }}"
+                description: kv v2 mount for cluster {{ $xr.spec.name }}
                 options:
                   version: "2"
                 path: {{ $xr.spec.name }}
@@ -84,7 +84,7 @@ spec:
               forProvider:
                 path: {{ $xr.spec.name }}
                 type: kubernetes
-                description: "Kubernetes auth backend for cluster {{ $xr.spec.name }}"
+                description: kubernetes auth backend for cluster {{ $xr.spec.name }}
               providerConfigRef:
                 name: {{ $xr.spec.providerConfigRef.name | default "default" }}
 

@@ -19,7 +19,7 @@ metadata:
   name: authelia
 spec:
   forProvider:
-    description: Authelia SSO auth backend for UI/CLI user authentication
+    description: authelia sso auth backend for UI/CLI user authentication
     type: oidc
     path: authelia
 
