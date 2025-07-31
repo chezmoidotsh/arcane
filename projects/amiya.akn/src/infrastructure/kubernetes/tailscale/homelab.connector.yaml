@@ -6,10 +6,12 @@ spec:
   hostname: homelab
   subnetRouter:
     advertiseRoutes:
-      - ENC[AES256_GCM,data:k6L0lFrjLpF0tgMF0g2xF2cuYISD3/K8dFR51yfhhXRA3zexepSoCfR9QnvUaNjW2suc,iv:hLdk21D/ydETeK6yP5SmG3B4bTQ8GJZ32j4+wmkL5Bo=,tag:+brtQjCdyy5fqMDo2eaAsQ==,type:comment]
+      - ENC[AES256_GCM,data:/BxQ9jRhj7R8l9A7KXZY5BHG7d0mixejEiZfGAENkWnDjKgkTsLQNUC4ohdE,iv:/Q+BC50uq2cew0nBttKtsPgg+VQa76BjDKAN+W4r+7U=,tag:mHOJqOI56EG/1dgFTcQZgQ==,type:comment]
       - ENC[AES256_GCM,data:gv+fqtDvbK//gjJqb2ZpZNmfyEAfaVBF38FVCjvOw8rudX8FAcJAoZib2QemC7DsZ60JSvCDf15fFPblPQ==,iv:HfDNe+KtJcG6yx4mWVjtd/c/BzdtibWUWUrknKen+Q0=,tag:3RtxOS39sh9wu/vFbeVxLA==,type:comment]
       - ENC[AES256_GCM,data:6a6lyRk0GM+oAH3l,iv:ZfKi5+hLdd9fqUa7a432Lw5s4v/k4sUNpd4XzXhnZVA=,tag:fBMnqS3yRDH4n/4sw7k+Pg==,type:str]
-      - ENC[AES256_GCM,data:cMfpsfQUAqz78S0mc2mcsKMCuP7ru/BWQT5K6/VGu0oDmG5h8iOoQ+lZe3s8pQPCjGrYt4G1D2KVLkcvN8WjwP7Cz7qy6z3mq4iI70J/KswIpGM=,iv:XthjkY+WzyK71smNt5eHPWy9V3ABG2puC0l7TgNgiLE=,tag:GNahbRyRwwMB5gBhG0FdVw==,type:comment]
+      - ENC[AES256_GCM,data:NmNX2kYxkJpLQcHJD9cuO0yPX3tzBfTjLsgi35inKLfRnn/m5djttR4cGB7gtrtAZYWRUw==,iv:vJP77z7nLGViC2R5vreZnjCS4pd0gBGDV1FpNX2bPCQ=,tag:MckoJeSUk513Vbtpq38v7A==,type:comment]
+      - ENC[AES256_GCM,data:zEoeCQA7pfmyhMGj,iv:2F6jRvlB1ERfWmBLO2MbpfGm3TwyCWLr6KyM4Y26OpI=,tag:4L5Jmlm7KTB8YVdMwae34g==,type:str]
+      - ENC[AES256_GCM,data:dXDl9rJC2D8n5/B2QIu9RNKDJszTtF1DR+UCBhmAjxhHmrLceOPkSUlGiQI7yiyX3OaDBdFuRKdKNyXfavw6uUMgkktGhlAOs24AfIg=,iv:ueAYp4mbN7LIHLVYXg24LdQqCxO1+94MHpZciFRBZ/4=,tag:cDLwvXYAl3guM5yrmLXK/A==,type:comment]
       - ENC[AES256_GCM,data:8AXBpE3x0fI6+Mj4keid2l+EMTgEIkx8vkT73ylgTr79jxpP677h,iv:P2PTX9DizEcNP8tRBBdy/vHevg81skiUTBjg70pxH+g=,tag:pCcbIvFB8B3ZkJfW0nx5og==,type:comment]
       - ENC[AES256_GCM,data:oO9zTVtuHJsB55c=,iv:GCUOFunjClrKr3bFP7Ylt5q/uwucoxvMmWHjZiXqda8=,tag:ZzDJyu7/JvSTGChrqwZymw==,type:str]
 sops:
@@ -23,7 +25,7 @@ sops:
         c05HNUlWZUVrdWsvVWJwZkhKbFdqUFUK7GJWVNF0L1wgKVVwM8tdxBSkjDOeNT6J
         fLf3lVPx6pv6vJtH9kyEntYNNeFCUz25oeTWYXyZlxVXdgSUrgYyUw==
         -----END AGE ENCRYPTED FILE-----
-  lastmodified: "2025-04-26T07:56:31Z"
-  mac: ENC[AES256_GCM,data:/S/9XowjQKKg+zKm5U4thaC+wqJuu71Rq++juDoQ7SIHQzmRwrZexx3sTfJSG8XEm2WHMo2sIXEPM8yTnzK2fS2nabSUiMxf5Es/aX9givClfpS5af5OfL5av28T7UMem04HmSwCdBoSoivQe7haqJVOuD1bFmetpkkWswpQaZ4=,iv:geEHJwtLPM25C1Ufanqb2xWSt2ba67r1s80yE5LNncI=,tag:BqNV3b8NE9Dc/a39VS8GqQ==,type:str]
+  lastmodified: "2025-07-31T19:10:17Z"
+  mac: ENC[AES256_GCM,data:Wu3m01B3kFt+P9qX+r8UuL+HbSbA2bRsuXn/VXi9tXjnsAu4z263cVvdSnZl2ZZd7LOBIhCrIY+wxANJz8nPUNb+uxIfRI8k/MO5pajQZvgX9JnudqPCJnHWJCPgu7Xll5dS+D+efe1OZM8Iu8nOCguu0NXfNfRWR2Vr2Z/4W0s=,iv:GS/4TnkMORJ9HhOWfl2fjhZiddwUTzcja3NgnQd44y4=,tag:3lbNi1bFNo9ilP5DRe25wQ==,type:str]
   encrypted_regex: advertiseRoutes
   version: 3.10.2
