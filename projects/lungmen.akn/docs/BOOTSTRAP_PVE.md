@@ -240,3 +240,9 @@ For next steps, refer to [BOOTSTRAP\_TALOS.md](./BOOTSTRAP_TALOS.md).
 * [Talos Linux Documentation](https://www.talos.dev/latest/introduction/getting-started/)
 * [Proxmox VE Documentation](https://pve.proxmox.com/wiki/Main_Page)
 * [QEMU Guest Agent Documentation](https://wiki.qemu.org/Features/GuestAgent)
+
+***
+
+<div align="right">
+  <a href="./BOOTSTRAP_TALOS.md">Next: BOOTSTRAP_TALOS.md</a>
+</div>

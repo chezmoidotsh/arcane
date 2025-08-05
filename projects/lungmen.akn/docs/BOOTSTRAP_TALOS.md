@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD033 -->
+
 # Talos Cluster Bootstrap
 
 ## Table of Contents
@@ -117,3 +119,12 @@ talosctl reset \
 
 > \[!NOTE]
 > This will completely wipe the node and requires reinstallation of Talos Linux.
+
+***
+
+<div align="left">
+  <a href="./BOOTSTRAP_PVE.md">Previous: BOOTSTRAP_PVE.md</a>
+</div>
+<div align="right">
+  <a href="./BOOTSTRAP_KUBERNETES.md">Next: BOOTSTRAP_KUBERNETES.md</a>
+</div>
