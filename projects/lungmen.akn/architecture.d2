@@ -32,7 +32,13 @@ tailnet: {
 # 🖥️ Hardware & Infrastructure definition
 # ------------------------------------------------------------------------------------------------
 
-UDM-Pro: {
+cloudflare: {
+  class: [platform]
+  icon: assets/icons/platform/cloudflare.svg
+  tooltip: Cloudflare - CDN and Security Platform
+}
+
+udm-pro: {
   class: [hardware]
   icon: assets/icons/hardware/unifi.svg
   tooltip: UniFi Dream Machine Pro - Gateway & Network Controller
@@ -53,6 +59,34 @@ lungmen: {
   others: {class: [namespace]}
 
   # ⚙️ System Components
+  system.cert-manager: {
+    class: [application-system; undeployed]
+    icon: assets/icons/system/cert-manager.svg
+    link: https://cert-manager.io/
+    tooltip: Automatic provisioning and management of TLS certificates in Kubernetes.
+  }
+
+  system.cloudflare-operator: {
+    class: [application-system; undeployed]
+    icon: assets/icons/platform/cloudflare.svg
+    link: https://github.com/adyanth/cloudflare-operator
+    tooltip: Kubernetes operator for managing Cloudflare tunnels, providing secure external access without VPN.
+  }
+
+  system.cloudflared: {
+    class: [application-system; undeployed]
+    icon: assets/icons/platform/cloudflare.svg
+    link: https://github.com/cloudflare/cloudflared
+    tooltip: Cloudflare Tunnel client (formerly Argo Tunnel) for secure access to services.
+  }
+
+  system.cloudnativepg: {
+    class: [application-system; undeployed]
+    icon: assets/icons/system/cloudnativepg.svg
+    link: https://cloudnativepg.io/
+    tooltip: Comprehensive platform designed to seamlessly manage PostgreSQL databases within Kubernetes environments.
+  }
+  
   system.cilium: {
     class: [application-system; undeployed]
     icon: assets/icons/system/cilium.svg
@@ -60,11 +94,11 @@ lungmen: {
     tooltip: Advanced networking, security policies, and observability for Kubernetes clusters.
   }
 
-  system.cert-manager: {
+  system.envoy-gateway: {
     class: [application-system; undeployed]
-    icon: assets/icons/system/cert-manager.svg
-    link: https://cert-manager.io/
-    tooltip: Automatic provisioning and management of TLS certificates in Kubernetes.
+    icon: assets/icons/system/envoy-gateway.svg
+    link: https://gateway.envoyproxy.io/
+    tooltip: Kubernetes-native API Gateway powered by Envoy Proxy with support for Gateway API.
   }
 
   system.external-dns: {
@@ -81,11 +115,11 @@ lungmen: {
     tooltip: Kubernetes operator that integrates external secret management systems.
   }
 
-  system.envoy-gateway: {
+  system.longhorn: {
     class: [application-system; undeployed]
-    icon: assets/icons/system/envoy-gateway.svg
-    link: https://gateway.envoyproxy.io/
-    tooltip: Kubernetes-native API Gateway powered by Envoy Proxy with support for Gateway API.
+    icon: assets/icons/system/longhorn.svg
+    link: https://longhorn.io/
+    tooltip: Lightweight, reliable, and powerful distributed block storage system for Kubernetes.
   }
 
   system.tailscale: {
@@ -95,21 +129,14 @@ lungmen: {
     tooltip: Zero-config VPN mesh for secure remote access to the entire platform.
   }
 
-  system.longhorn: {
-    class: [application-system; undeployed]
-    icon: assets/icons/system/longhorn.svg
-    link: https://longhorn.io/
-    tooltip: Lightweight, reliable, and powerful distributed block storage system for Kubernetes.
-  }
-
-  system.cloudnativepg: {
-    class: [application-system; undeployed]
-    icon: assets/icons/system/cloudnativepg.svg
-    link: https://cloudnativepg.io/
-    tooltip: Comprehensive platform designed to seamlessly manage PostgreSQL databases within Kubernetes environments.
-  }
-
   # 📺 Media Components
+  media.immich: {
+    class: [application; undeployed]
+    icon: assets/icons/apps/immich.svg
+    link: https://immich.app/
+    tooltip: High-performance self-hosted photo and video management solution with mobile app support.
+  }
+
   media.jellyfin: {
     class: [application; undeployed]
     icon: assets/icons/apps/jellyfin.svg
@@ -140,18 +167,18 @@ lungmen: {
   }
 
   # 📦 Other Components
-  others.linkding: {
-    class: [application; undeployed]
-    icon: assets/icons/apps/linkding.svg
-    link: https://github.com/sissbruecker/linkding
-    tooltip: Self-hosted bookmarking and link aggregation service.
-  }
-
   others.atuin: {
     class: [application; undeployed]
     icon: assets/icons/apps/atuin.svg
     link: https://docs.atuin.sh/
     tooltip: Encrypted shell history sync, storing all your shell commands in one place.
+  }
+
+  others.linkding: {
+    class: [application; undeployed]
+    icon: assets/icons/apps/linkding.svg
+    link: https://github.com/sissbruecker/linkding
+    tooltip: Self-hosted bookmarking and link aggregation service.
   }
 
   others.taskchampion: {
@@ -168,7 +195,7 @@ lungmen: {
 # ------------------------------------------------------------------------------------------------
 
 # System connections
-lungmen.system.Tailscale <- tailnet: {class: [connect-from-vpn-backbone; undeployed]}
+lungmen.system.tailscale <- tailnet: {class: [connect-from-vpn-backbone; undeployed]}
 lungmen.system.envoy-gateway <- localnet: {
   source-arrowhead: |md
     HTTP (80)
@@ -177,20 +204,33 @@ lungmen.system.envoy-gateway <- localnet: {
   class: undeployed
 }
 lungmen.system.cert-manager -> internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
-lungmen.system.External-DNS -> UDM-Pro: DNS updates {class: undeployed}
+lungmen.system.external-dns -> udm-pro: DNS updates {class: undeployed}
+lungmen.system.external-dns -> cloudflare: DNS updates {class: undeployed}
+
+internet -> cloudflare: {class: [connect-to-internet; undeployed]}
+cloudflare -> lungmen.system.cloudflared {class: [connect-from-vpn-backbone; undeployed]}
+lungmen.system.cloudflare-operator -> lungmen.system.cloudflared {class: [connect-management; undeployed]}
+
 
 # Media services connections
 lungmen.media.jellyfin <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (8096); class: undeployed }
 lungmen.media.jellyfin <- lungmen.system.tailscale: { source-arrowhead: HTTP (8096); class: [connect-from-vpn; undeployed] }
 lungmen.media.jellyfin <- lungmen.media.jellyseerr: { source-arrowhead: HTTP (8096); class: undeployed }
+
 lungmen.media.jellyseerr <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (5055); class: undeployed }
 lungmen.media.jellyseerr <- lungmen.system.tailscale: { source-arrowhead: HTTP (5055); class: [connect-from-vpn; undeployed] }
+
+lungmen.media.immich <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (3000); class: undeployed }
+lungmen.media.immich <- lungmen.system.cloudflared: { source-arrowhead: HTTP (3000); class: [connect-from-vpn; undeployed] }
+
 
 # Life management connections
 lungmen.life.actual-budget <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (5006); class: undeployed }
 lungmen.life.actual-budget <- lungmen.system.tailscale: { source-arrowhead: HTTP (5006); class: [connect-from-vpn; undeployed] }
+
 lungmen.life.paperless <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (8000); class: undeployed }
 lungmen.life.paperless <- lungmen.system.tailscale: { source-arrowhead: HTTP (8000); class: [connect-from-vpn; undeployed] }
+
 
 # Other services connections
 lungmen.others.linkding <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (9090); class: undeployed }

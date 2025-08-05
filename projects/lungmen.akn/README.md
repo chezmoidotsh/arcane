@@ -34,6 +34,9 @@ Lungmen is a personal self-hosted platform for home services, designed to provid
 * **[CloudNativePG](https://cloudnativepg.io/)**: PostgreSQL operator. <br/>
   Comprehensive platform designed to seamlessly manage PostgreSQL databases within Kubernetes environments.
 
+* **[Cloudflare Operator](https://github.com/adyanth/cloudflare-operator)**: Cloudflare tunnel operator. <br/>
+  Kubernetes operator for managing Cloudflare tunnels, providing secure external access without VPN.
+
 * **[Envoy Gateway](https://gateway.envoyproxy.io/)**: Cloud-native API Gateway. <br/>
   Envoy-based gateway with Kubernetes Gateway API support, optimized for service routing.
 
@@ -56,6 +59,9 @@ Lungmen is a personal self-hosted platform for home services, designed to provid
 
 * **[Jellyseerr](https://github.com/Fallenbagel/jellyseerr)**: Media requests. <br/>
   Free and open source software application for managing requests for media libraries.
+
+* **[Immich](https://immich.app/)**: Photo and video management. <br/>
+  High-performance self-hosted photo and video management solution with mobile app support. Accessible via Cloudflare Tunnel for secure external access.
 
 ### 🏠 Life Management
 
@@ -136,6 +142,7 @@ The recovery process is largely automated through the `amiya.akn` project, which
   * [ ] Deploy PostgreSQL for application data
 * [ ] **Step 3**: Services Deployment
   * [ ] Deploy media services (Jellyfin, Jellyseerr)
+  * [ ] Deploy Immich with Cloudflare Tunnel for external access
   * [ ] Deploy life management services (Actual Budget, Paperless-ngx)
   * [ ] Configure n8n for automation
   * [ ] Deploy Linkding for bookmarks
