@@ -60,7 +60,7 @@ maison: {
       link: https://tailscale.com/
       tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
     }
-    Tailscale <- _._.internet: VPN {class: [connect-vpn-trunk]}
+    Tailscale <- _._.internet: VPN {class: [connect-from-vpn-backbone]}
 
     # - FluxCD
     FluxCD: {
@@ -121,7 +121,7 @@ maison: {
       source-arrowhead: HTTP (19200)
     }
     Fileflows <- _.system.Tailscale: {
-      class: [connect-vpn; undeployed]
+      class: [connect-from-vpn; undeployed]
       source-arrowhead: HTTP (19200)
     }
 
@@ -139,7 +139,7 @@ maison: {
       source-arrowhead: HTTP (8096)
     }
     Jellyfin <- _.system.Tailscale: {
-      class: [connect-vpn]
+      class: [connect-from-vpn]
       source-arrowhead: HTTP (8096)
     }
 
@@ -154,7 +154,7 @@ maison: {
       source-arrowhead: HTTP (5055)
     }
     Jellyseerr <- _.system.Tailscale: {
-      class: [connect-vpn]
+      class: [connect-from-vpn]
       source-arrowhead: HTTP (5055)
     }
   }
@@ -173,7 +173,7 @@ maison: {
       source-arrowhead: HTTP (5006)
     }
     Actual-Budget <- _.system.Tailscale: {
-      class: [connect-vpn]
+      class: [connect-from-vpn]
       source-arrowhead: HTTP (5006)
     }
 
@@ -188,7 +188,7 @@ maison: {
       source-arrowhead: HTTP (9000)
     }
     Mealie <- _.system.Tailscale: {
-      class: [connect-vpn]
+      class: [connect-from-vpn]
       source-arrowhead: HTTP (9000)
     }
 
@@ -203,7 +203,7 @@ maison: {
       source-arrowhead: HTTP (8000)
     }
     Paperless <- _.system.Tailscale: {
-      class: [connect-vpn]
+      class: [connect-from-vpn]
       source-arrowhead: HTTP (8000)
     }
   }
@@ -222,7 +222,7 @@ maison: {
       source-arrowhead: HTTP (5678)
     }
     n8n <- _.system.Tailscale: {
-      class: [connect-vpn]
+      class: [connect-from-vpn]
       source-arrowhead: HTTP (5678)
     }
     n8n -> _.life-management.Paperless: {
@@ -241,7 +241,7 @@ maison: {
       source-arrowhead: HTTP (8080)
     }
     Budibase <- _.system.Tailscale: {
-      class: [connect-vpn]
+      class: [connect-from-vpn]
       source-arrowhead: HTTP (8080)
     }
   }
@@ -260,7 +260,7 @@ maison: {
       source-arrowhead: HTTP (9090)
     }
     Linkding <- _.system.Tailscale: {
-      class: [connect-vpn]
+      class: [connect-from-vpn]
       source-arrowhead: HTTP (9090)
     }
   }

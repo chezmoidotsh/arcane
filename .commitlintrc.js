@@ -300,6 +300,10 @@ const scopes = [
 		value: "project:hass",
 	},
 	{
+		name: "project:lungmen.akn    - Anything related to the lungmen.akn project",
+		value: "project:lungmen.akn",
+	},
+	{
 		name: "project:maison        - Anything related to the maison project",
 		value: "project:maison",
 	},

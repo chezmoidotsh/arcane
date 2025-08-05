@@ -36,8 +36,8 @@
 # - connect-to-internet: For outgoing internet connections (dashed line)
 # - connect-from-vpn-backbone: For incoming VPN backbone connections (animated, bold)
 # - connect-to-vpn-backbone: For outgoing VPN backbone connections (animated, bold)
-# - connect-from-vpn: For incoming VPN connections (animated)
-# - connect-to-vpn: For outgoing VPN connections (animated)
+# - connect-from-vpn: For incoming VPN connections (animated, dashed line)
+# - connect-to-vpn: For outgoing VPN connections (animated, dashed line)
 # - connect-from-api: For incoming API connections (dashed, medium width)
 # - connect-to-api: For outgoing API connections (dashed, medium width)
 # - connect-management: For management connections (dashed, medium width)
@@ -135,10 +135,16 @@ classes: {
     }
   }
   connect-from-vpn: {
-    style.animated: true
+    style: {
+      animated: true
+      stroke-dash: 3
+    }
   }
   connect-to-vpn: {
-    style.animated: true
+    style: {
+      animated: true
+      stroke-dash: 3
+    }
   }
   connect-from-api: {
     style: {
