@@ -53,7 +53,7 @@ lungmen: {
   others: {class: [namespace]}
 
   # ⚙️ System Components
-  system.Cilium: {
+  system.cilium: {
     class: [application-system; undeployed]
     icon: assets/icons/system/cilium.svg
     link: https://cilium.io/
@@ -67,14 +67,14 @@ lungmen: {
     tooltip: Automatic provisioning and management of TLS certificates in Kubernetes.
   }
 
-  system.External-DNS: {
+  system.external-dns: {
     class: [application-system; undeployed]
     icon: assets/icons/system/external-dns.png
     link: https://github.com/kubernetes-sigs/external-dns
     tooltip: Automatically configures DNS records for Kubernetes services.
   }
 
-  system.External-Secrets: {
+  system.external-secrets: {
     class: [application-system; undeployed]
     icon: assets/icons/system/external-secret.svg
     link: https://external-secrets.io/
@@ -88,21 +88,21 @@ lungmen: {
     tooltip: Kubernetes-native API Gateway powered by Envoy Proxy with support for Gateway API.
   }
 
-  system.Tailscale: {
+  system.tailscale: {
     class: [application-system; undeployed]
     icon: assets/icons/system/tailscale.svg
     link: https://tailscale.com/
     tooltip: Zero-config VPN mesh for secure remote access to the entire platform.
   }
 
-  system.Longhorn: {
+  system.longhorn: {
     class: [application-system; undeployed]
     icon: assets/icons/system/longhorn.svg
     link: https://longhorn.io/
     tooltip: Lightweight, reliable, and powerful distributed block storage system for Kubernetes.
   }
 
-  system.CloudNativePG: {
+  system.cloudnativepg: {
     class: [application-system; undeployed]
     icon: assets/icons/system/cloudnativepg.svg
     link: https://cloudnativepg.io/
@@ -110,14 +110,14 @@ lungmen: {
   }
 
   # 📺 Media Components
-  media.Jellyfin: {
+  media.jellyfin: {
     class: [application; undeployed]
     icon: assets/icons/apps/jellyfin.svg
     link: https://jellyfin.org/
     tooltip: Volunteer-built media solution that puts you in control of your media.
   }
 
-  media.Jellyseerr: {
+  media.jellyseerr: {
     class: [application; undeployed]
     icon: assets/icons/apps/jellyseerr.svg
     link: https://github.com/Fallenbagel/jellyseerr
@@ -125,14 +125,14 @@ lungmen: {
   }
 
   # 🏠 Life Management Components
-  life.Actual-Budget: {
+  life.actual-budget: {
     class: [application; undeployed]
     icon: assets/icons/apps/actual-budget.png
     link: https://actualbudget.com/
     tooltip: Personal finance app that helps you track your spending and save money.
   }
 
-  life.Paperless: {
+  life.paperless: {
     class: [application; undeployed]
     icon: assets/icons/apps/paperless.svg
     link: https://docs.paperless-ngx.com/
@@ -140,21 +140,21 @@ lungmen: {
   }
 
   # 📦 Other Components
-  others.Linkding: {
+  others.linkding: {
     class: [application; undeployed]
     icon: assets/icons/apps/linkding.svg
     link: https://github.com/sissbruecker/linkding
     tooltip: Self-hosted bookmarking and link aggregation service.
   }
 
-  others.Atuin: {
+  others.atuin: {
     class: [application; undeployed]
     icon: assets/icons/apps/atuin.svg
     link: https://docs.atuin.sh/
     tooltip: Encrypted shell history sync, storing all your shell commands in one place.
   }
 
-  others.TaskChampion: {
+  others.taskchampion: {
     class: [application; undeployed]
     icon: assets/icons/apps/taskwarrior.png
     link: https://github.com/GothenburgBitFactory/taskchampion-sync-server
@@ -180,24 +180,24 @@ lungmen.system.cert-manager -> internet: HTTPS (443) {class: [connect-to-interne
 lungmen.system.External-DNS -> UDM-Pro: DNS updates {class: undeployed}
 
 # Media services connections
-lungmen.media.Jellyfin <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (8096); class: undeployed }
-lungmen.media.Jellyfin <- lungmen.system.Tailscale: { source-arrowhead: HTTP (8096); class: [connect-from-vpn; undeployed] }
-lungmen.media.Jellyfin <- lungmen.media.Jellyseerr: { source-arrowhead: HTTP (8096); class: undeployed }
-lungmen.media.Jellyseerr <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (5055); class: undeployed }
-lungmen.media.Jellyseerr <- lungmen.system.Tailscale: { source-arrowhead: HTTP (5055); class: [connect-from-vpn; undeployed] }
+lungmen.media.jellyfin <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (8096); class: undeployed }
+lungmen.media.jellyfin <- lungmen.system.tailscale: { source-arrowhead: HTTP (8096); class: [connect-from-vpn; undeployed] }
+lungmen.media.jellyfin <- lungmen.media.jellyseerr: { source-arrowhead: HTTP (8096); class: undeployed }
+lungmen.media.jellyseerr <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (5055); class: undeployed }
+lungmen.media.jellyseerr <- lungmen.system.tailscale: { source-arrowhead: HTTP (5055); class: [connect-from-vpn; undeployed] }
 
 # Life management connections
-lungmen.life.Actual-Budget <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (5006); class: undeployed }
-lungmen.life.Actual-Budget <- lungmen.system.Tailscale: { source-arrowhead: HTTP (5006); class: [connect-from-vpn; undeployed] }
-lungmen.life.Paperless <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (8000); class: undeployed }
-lungmen.life.Paperless <- lungmen.system.Tailscale: { source-arrowhead: HTTP (8000); class: [connect-from-vpn; undeployed] }
+lungmen.life.actual-budget <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (5006); class: undeployed }
+lungmen.life.actual-budget <- lungmen.system.tailscale: { source-arrowhead: HTTP (5006); class: [connect-from-vpn; undeployed] }
+lungmen.life.paperless <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (8000); class: undeployed }
+lungmen.life.paperless <- lungmen.system.tailscale: { source-arrowhead: HTTP (8000); class: [connect-from-vpn; undeployed] }
 
 # Other services connections
-lungmen.others.Linkding <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (9090); class: undeployed }
-lungmen.others.Linkding <- lungmen.system.Tailscale: { source-arrowhead: HTTP (9090); class: [connect-from-vpn; undeployed] }
+lungmen.others.linkding <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (9090); class: undeployed }
+lungmen.others.linkding <- lungmen.system.tailscale: { source-arrowhead: HTTP (9090); class: [connect-from-vpn; undeployed] }
 
-lungmen.others.Atuin <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (8888); class: undeployed }
-lungmen.others.Atuin <- lungmen.system.Tailscale: { source-arrowhead: HTTP (8888); class: [connect-from-vpn; undeployed] }
+lungmen.others.atuin <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (8888); class: undeployed }
+lungmen.others.atuin <- lungmen.system.tailscale: { source-arrowhead: HTTP (8888); class: [connect-from-vpn; undeployed] }
 
-lungmen.others.TaskChampion <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (8080); class: undeployed }
-lungmen.others.TaskChampion <- lungmen.system.Tailscale: { source-arrowhead: HTTP (8080); class: [connect-from-vpn; undeployed] } 
+lungmen.others.taskchampion <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (8080); class: undeployed }
+lungmen.others.taskchampion <- lungmen.system.tailscale: { source-arrowhead: HTTP (8080); class: [connect-from-vpn; undeployed] }
