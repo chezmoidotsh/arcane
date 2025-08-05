@@ -1,0 +1,6 @@
+[env]
+TALOSCONFIG = "{{ config_root }}/talosconfig"
+KUBECONFIG = "{{ config_root }}/kubeconfig"
+
+[tools]
+talosctl = "1.10.4"
