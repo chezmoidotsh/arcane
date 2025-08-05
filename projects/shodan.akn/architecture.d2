@@ -149,7 +149,7 @@ shodan: {
 # 🔗 Connections
 # ------------------------------------------------------------------------------------------------
 
-shodan.system.Tailscale <- tailnet: {class: [connect-vpn-trunk; undeployed]}
+shodan.system.Tailscale <- tailnet: {class: [connect-from-vpn-backbone; undeployed]}
 shodan.ai.MCP-Servers <- shodan.ai.AgentGateway: { source-arrowhead: MCP (8000); class: undeployed }
 
 shodan.ai.AgentGateway <- shodan.system.kgateway: { source-arrowhead: HTTP (8080); class: undeployed }

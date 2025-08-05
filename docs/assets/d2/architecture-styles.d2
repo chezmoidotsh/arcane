@@ -18,29 +18,30 @@
 #    }
 #
 # Available component styles:
-# - namespace: Grouping container for related components (page shape with lined fill, dashed border, lowercase text)
-# - application: Regular applications (e.g., Jellyfin, n8n, Paperless) (rectangle with dotted fill, no shadow)
-# - application-system: System-level applications (e.g., Traefik, Cert-Manager) (rectangle with dotted fill, dashed border, slightly transparent)
 # - application-datastore: Datastore applications (e.g., PostgreSQL, Redis) (cylinder with dotted fill, no shadow)
-# - network: Network elements (e.g., internet, localnet, tailnet) (cloud shape with dotted fill, uppercase text, bold)
+# - application-system: System-level applications (e.g., Traefik, Cert-Manager) (rectangle with dotted fill, dashed border, slightly transparent)
+# - application: Regular applications (e.g., Jellyfin, n8n, Paperless) (rectangle with dotted fill, no shadow)
 # - hardware: Physical hardware components (e.g., UDM-Pro) (no shape, bold stroke)
+# - namespace: Grouping container for related components (page shape with lined fill, dashed border, lowercase text)
+# - network: Network elements (e.g., internet, localnet, tailnet) (cloud shape with dotted fill, uppercase text, bold)
+# - platform: Platform services (e.g., Cloudflare, AWS, ...) (no shape, bold stroke)
 # - undeployed: For components that are not yet deployed (reduced opacity)
 #
 # 3. Apply connection styles using the class property:
 #    component1 -> component2: {class: [connect-to-internet]}
 #
 # Available connection styles:
-# - connect-from-network: For incoming network connections (thick line)
-# - connect-to-network: For outgoing network connections (thick line)
-# - connect-from-internet: For incoming internet connections (dashed line)
-# - connect-to-internet: For outgoing internet connections (dashed line)
-# - connect-from-vpn-backbone: For incoming VPN backbone connections (animated, bold)
-# - connect-to-vpn-backbone: For outgoing VPN backbone connections (animated, bold)
-# - connect-from-vpn: For incoming VPN connections (animated)
-# - connect-to-vpn: For outgoing VPN connections (animated)
 # - connect-from-api: For incoming API connections (dashed, medium width)
-# - connect-to-api: For outgoing API connections (dashed, medium width)
+# - connect-from-internet: For incoming internet connections (dashed line)
+# - connect-from-network: For incoming network connections (thick line)
+# - connect-from-vpn-backbone: For incoming VPN backbone connections (animated, bold)
+# - connect-from-vpn: For incoming VPN connections (animated, dashed line)
 # - connect-management: For management connections (dashed, medium width)
+# - connect-to-api: For outgoing API connections (dashed, medium width)
+# - connect-to-internet: For outgoing internet connections (dashed line)
+# - connect-to-network: For outgoing network connections (thick line)
+# - connect-to-vpn-backbone: For outgoing VPN backbone connections (animated, bold)
+# - connect-to-vpn: For outgoing VPN connections (animated, dashed line)
 
 vars: {
   d2-config: {
@@ -135,10 +136,16 @@ classes: {
     }
   }
   connect-from-vpn: {
-    style.animated: true
+    style: {
+      animated: true
+      stroke-dash: 3
+    }
   }
   connect-to-vpn: {
-    style.animated: true
+    style: {
+      animated: true
+      stroke-dash: 3
+    }
   }
   connect-from-api: {
     style: {
@@ -167,6 +174,13 @@ classes: {
   
   # Miscellaneous classes
   hardware: {
+    shape: none
+    style: {
+      stroke-width: 3
+      bold: true
+    }
+  }
+  platform: {
     shape: none
     style: {
       stroke-width: 3

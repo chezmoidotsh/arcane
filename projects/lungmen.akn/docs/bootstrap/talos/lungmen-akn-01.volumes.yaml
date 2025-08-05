@@ -1,0 +1,27 @@
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+provisioning:
+  diskSelector:
+    match: system_disk
+  maxSize: 12GiB
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: IMAGECACHE
+provisioning:
+  diskSelector:
+    match: system_disk
+  maxSize: 12GiB
+---
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: longhorn
+provisioning:
+  diskSelector:
+    match: disk.transport == "virtio" && !system_disk
+  minSize: 16GiB
+  grow: true
+filesystem:
+  type: xfs

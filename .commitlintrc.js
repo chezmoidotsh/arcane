@@ -288,6 +288,10 @@ const scopes = [
 		value: "catalog:kairos-bundle",
 	},
 	{
+		name: "catalog:talos		 - Anything related to the Talos manifests catalog",
+		value: "catalog:talos",
+	},
+	{
 		name: "project:amiya.akn     - Anything related to the amiya.akn project",
 		value: "project:amiya.akn",
 	},
@@ -298,6 +302,10 @@ const scopes = [
 	{
 		name: "project:hass          - Anything related to the Home Assistant project",
 		value: "project:hass",
+	},
+	{
+		name: "project:lungmen.akn    - Anything related to the lungmen.akn project",
+		value: "project:lungmen.akn",
 	},
 	{
 		name: "project:maison        - Anything related to the maison project",
