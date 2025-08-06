@@ -11,7 +11,7 @@ machine:
     # - siderolabs/iscsi-tools
     # - siderolabs/tailscale
     # - siderolabs/util-linux-tools
-    image: factory.talos.dev/nocloud-installer-secureboot/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53fa0df4336a56040b:v1.10.4
+    image: factory.talos.dev/nocloud-installer-secureboot/077514df2c1b6436460bc60faabc976687b16193b8a1290fda4366c69024fec2:v1.10.6
     diskSelector:
       type: hdd
       model: QEMU HARDDISK
@@ -67,5 +67,5 @@ cluster:
     - https://raw.githubusercontent.com/chezmoi-sh/arcane/refs/heads/main/catalog/talos/manifests/coredns+tailscale/1.12.1.yaml
 
     # -- Metrics Server
-    - https://raw.githubusercontent.com/chezmoi-sh/arcane/refs/heads/main/catalog/talos/manifests/kubelet-serving-cert-approver~0.9.1.yaml
+    - https://raw.githubusercontent.com/chezmoi-sh/arcane/refs/heads/main/catalog/talos/manifests/kubelet-serving-cert-approver/0.9.1.yaml
     - https://raw.githubusercontent.com/chezmoi-sh/arcane/refs/heads/main/catalog/talos/manifests/metric-server/0.7.2.yaml

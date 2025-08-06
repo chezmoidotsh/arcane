@@ -29,10 +29,10 @@ Ensure you have the following before starting:
 ### 1. Generate Custom Image
 
 > \[!NOTE]
-> The current configuration uses Talos Linux version 1.10.4. You can modify the version in the URL to use a different release.
+> The current configuration uses Talos Linux version 1.10.6. You can modify the version in the URL to use a different release.
 
 Access the Talos Linux factory with these parameters:
-<https://factory.talos.dev/?arch=amd64&cmdline-set=true&extensions=-&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Fqemu-guest-agent&extensions=siderolabs%2Futil-linux-tools&platform=nocloud&secureboot=true&target=cloud&version=1.10.4>
+<https://factory.talos.dev/?arch=amd64&cmdline-set=true&extensions=-&extensions=siderolabs%2Fiscsi-tools&extensions=siderolabs%2Fqemu-guest-agent&extensions=siderolabs%2Futil-linux-tools&platform=nocloud&secureboot=true&target=cloud&version=1.10.6>
 
 <details>
 <summary>Image Configuration Details</summary>
@@ -56,16 +56,16 @@ customization:
 
 #### Available Images
 
-* **SecureBoot Disk Image**: <https://factory.talos.dev/image/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53fa0df4336a56040b/v1.10.4/nocloud-amd64-secureboot.raw.xz>
-* **SecureBoot ISO**: <https://factory.talos.dev/image/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53fa0df4336a56040b/v1.10.4/nocloud-amd64-secureboot.iso>
-* **SecureBoot PXE**: <https://pxe.factory.talos.dev/pxe/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53fa0df4336a56040b/v1.10.4/nocloud-amd64-secureboot>
+* **SecureBoot Disk Image**: <https://factory.talos.dev/image/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53fa0df4336a56040b/v1.10.6/nocloud-amd64-secureboot.raw.xz>
+* **SecureBoot ISO**: <https://factory.talos.dev/image/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53fa0df4336a56040b/v1.10.6/nocloud-amd64-secureboot.iso>
+* **SecureBoot PXE**: <https://pxe.factory.talos.dev/pxe/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53fa0df4336a56040b/v1.10.6/nocloud-amd64-secureboot>
 
 #### Installer Image
 
 For installation or upgrades:
 
 ```text
-factory.talos.dev/nocloud-installer-secureboot/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53fa0df4336a56040b:v1.10.4
+factory.talos.dev/nocloud-installer-secureboot/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53fa0df4336a56040b:v1.10.6
 ```
 
 </details>
@@ -79,14 +79,14 @@ The generated image includes these essential extensions:
 ### 2. Download and Prepare Image
 
 1. Download the SecureBoot ISO image:
-   <https://factory.talos.dev/image/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53fa0df4336a56040b/v1.10.4/nocloud-amd64-secureboot.iso>
+   <https://factory.talos.dev/image/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53fa0df4336a56040b/v1.10.6/nocloud-amd64-secureboot.iso>
 
 2. Upload to Proxmox VE:
    * Access the Proxmox VE web interface
    * Navigate to local storage (or your preferred storage location)
    * Select "Content" → "Upload"
    * Choose the downloaded ISO
-   * Rename to `linux.1.10.4-amd64.iso` for consistency
+   * Rename to `linux.1.10.6-amd64.iso` for consistency
 
 ## VM Configuration
 
@@ -124,7 +124,7 @@ Next, create a VM with the following configuration:
 | -------------------------- | ---------------------- |
 | Use CD/DVD disc image file | ✔️                     |
 | Storage                    | local                  |
-| ISO image                  | linux.1.10.4-amd64.iso |
+| ISO image                  | linux.1.10.6-amd64.iso |
 | Guest OS Type              | Linux                  |
 | Guest OS Version           | 6.x - 2.6 Kernel       |
 
@@ -210,6 +210,7 @@ Before starting, some post-installation steps are required (for metadata purpose
 
 ```html
 <div align='center'>
+
 # 「 龙门 」- Lungmen
 
 <br/>
