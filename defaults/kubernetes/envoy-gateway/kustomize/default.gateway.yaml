@@ -1,0 +1,42 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: envoy-default
+spec:
+  gatewayClassName: envoy-gateway
+  listeners:
+    - name: web
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: chezmoi.sh-websecure
+      port: 443
+      protocol: HTTPS
+      hostname: "*.chezmoi.sh"
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: wildcard.chezmoi.sh-certificate
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard.chezmoi.sh
+spec:
+  dnsNames:
+    - "*.chezmoi.sh"
+    - "*.akn.chezmoi.sh"
+  duration: 2160h0m0s # 90 days
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt
+  renewBefore: 360h0m0s # 15 days
+  secretName: wildcard.chezmoi.sh-certificate

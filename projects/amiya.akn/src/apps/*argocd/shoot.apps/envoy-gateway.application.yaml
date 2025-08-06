@@ -1,0 +1,38 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: envoy-gateway
+spec:
+  destination:
+    namespace: envoy-gateway-system
+    # server: {{ .server }}
+  project: system
+  sources:
+    - ref: origin
+      repoURL: https://github.com/chezmoidotsh/arcane.git
+      targetRevision: main
+      path: defaults/kubernetes/envoy-gateway/kustomize
+
+      kustomize:
+        ignoreMissingComponents: true
+        # components:
+        #   - projects/{{ .name }}/src/infrastructure/kubernetes/envoy-gateway/
+        #   - projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/envoy-gateway/
+    - chart: gateway-helm
+      helm:
+        ignoreMissingValueFiles: true
+        releaseName: envoy-gateway
+        valueFiles:
+          - $origin/defaults/kubernetes/envoy-gateway/helm/default.helmvalues.yaml
+          - $origin/defaults/kubernetes/envoy-gateway/helm/hardened.helmvalues.yaml
+          # - $origin/projects/{{ .name }}/src/infrastructure/kubernetes/envoy-gateway/override.helmvalues.yaml
+          # - $origin/projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/envoy-gateway/override.helmvalues.yaml
+      repoURL: docker.io/envoyproxy
+      targetRevision: 1.4.2
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - Delete=confirm
+      - Prune=confirm
+      - ServerSideApply=true

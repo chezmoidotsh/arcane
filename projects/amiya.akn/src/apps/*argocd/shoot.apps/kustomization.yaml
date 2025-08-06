@@ -7,6 +7,7 @@ resources:
   - external-secrets.application.yaml
   - tailscale.application.yaml
   - traefik.application.yaml
+  - envoy-gateway.application.yaml
 
   - apps.applicationset.yaml
   - system.applicationset.yaml

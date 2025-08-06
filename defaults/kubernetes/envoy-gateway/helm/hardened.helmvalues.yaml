@@ -1,0 +1,18 @@
+---
+# Hardened values for Envoy Gateway
+# This configuration provides a hardened setup for Envoy Gateway
+
+deployment:
+  envoyGateway:
+    # SecurityContext for Envoy Gateway
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      privileged: false
+      runAsNonRoot: true
+      runAsGroup: 65532
+      runAsUser: 65532
+      seccompProfile:
+        type: RuntimeDefault
