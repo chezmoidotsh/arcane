@@ -4,7 +4,6 @@ kind: Kustomization
 
 resources:
   - default.l2announcementpolicy.yaml
-  - hubble.httproute.yaml
   - primary.ippool.yaml
 
 helmCharts:
@@ -13,5 +12,3 @@ helmCharts:
     version: 1.18.0
     namespace: kube-system
     valuesFile: cilium.helmvalues/default.yaml
-    additionalValuesFiles:
-      - cilium.helmvalues/addon:hubble.yaml

@@ -1,7 +1,0 @@
----
-# Cilium Hubble related configuration
-hubble:
-  relay:
-    enabled: true
-  ui:
-    enabled: true
