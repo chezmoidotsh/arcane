@@ -8,6 +8,7 @@ resources:
   - longhorn.externalsecret.yaml
   - longhorn.httproute.yaml
   - namespace.yaml
+  - security/longhorn.securitypolicy.yaml
 
 helmCharts:
   - name: longhorn
