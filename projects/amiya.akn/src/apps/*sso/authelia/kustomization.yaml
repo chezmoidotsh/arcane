@@ -7,6 +7,7 @@ resources:
   - authelia.externalsecret.yaml
   - authelia-ldap.externalsecret.yaml
   - authelia-oidc.externalsecret.yaml
+  - authelia-oidc-legacy.externalsecret.yaml
   - authelia-oidc-jwt.issuer.yaml
   - authelia-smtp.externalsecret.yaml
   - sso.httproute.yaml
@@ -31,6 +32,22 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/volumeMounts/0/mountPath
         value: /var/lib/authelia
+    target:
+      kind: Deployment
+      name: authelia
+
+  # Merge legacy OIDC secrets with new OIDC secrets (on Vault)
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/volumes/4
+        value:
+          name: secret-authelia-oidc # trunk-ignore(checkov/CKV_SECRET_6)
+          projected:
+            sources:
+              - secret:
+                  name: authelia-oidc-legacy
+              - secret:
+                  name: authelia-oidc
     target:
       kind: Deployment
       name: authelia

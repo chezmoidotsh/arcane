@@ -108,14 +108,14 @@ server:
         implementation: ForwardAuth
         # authn_strategies: []
       # ext-authz:
-      # implementation: 'ExtAuthz'
-      # authn_strategies: []
+        # implementation: 'ExtAuthz'
+        # authn_strategies: []
       # auth-request:
-      # implementation: 'AuthRequest'
-      # authn_strategies: []
+        # implementation: 'AuthRequest'
+        # authn_strategies: []
       # legacy:
-      # implementation: 'Legacy'
-      # authn_strategies: []
+        # implementation: 'Legacy'
+        # authn_strategies: []
 
 ##
 ## Log Configuration
