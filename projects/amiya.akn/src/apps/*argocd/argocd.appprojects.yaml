@@ -52,6 +52,8 @@ spec:
     - https://github.com/kubernetes-sigs/gateway-api.git # NOTE: gateway-api repository (required on all clusters)
     - https://pkgs.tailscale.com/helmcharts # NOTE: tailscale repository (required on all clusters)
     - https://traefik.github.io/charts # NOTE: traefik repository (required on all clusters)
+
+    - docker.io/envoyproxy # NOTE: envoy-gateway repository (required on all clusters)
   destinations:
     - # NOTE: allow any cluster to install system applications
       name: "*"

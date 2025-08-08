@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD033 -->
-
 <h1 align="center">
   Amiya · Arknights <sub>(Amiya · AKN)</sub>
 </h1>

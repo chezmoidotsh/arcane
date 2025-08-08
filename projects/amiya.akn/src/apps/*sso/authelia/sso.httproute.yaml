@@ -4,13 +4,14 @@ kind: HTTPRoute
 metadata:
   annotations:
     external-dns.alpha.kubernetes.io/include-unifi: "true"
+    link.argocd.argoproj.io/external-link: https://sso.chezmoi.sh
   name: authelia
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway
-      name: default-gateway
-      namespace: traefik-system
+      name: default
+      namespace: envoy-gateway-system
       sectionName: chezmoi.sh-websecure
   hostnames:
     - sso.chezmoi.sh
@@ -25,3 +26,17 @@ spec:
         - path:
             type: PathPrefix
             value: /
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: envoy-gateway-system-to-authelia
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: envoy-gateway-system
+  to:
+    - group: ""
+      kind: Service
+      name: authelia

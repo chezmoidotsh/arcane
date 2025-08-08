@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD033 -->
-
 # Talos Cluster Bootstrap
 
 ## Table of Contents

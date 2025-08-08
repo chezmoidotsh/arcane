@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD033 -->
-
 <h1 align="center">
   Root <sub>(chezmoi.sh)</sub>
 </h1>
@@ -19,8 +17,6 @@
 </div>
 
 ***
-
-<!-- markdownlint-enable MD033 -->
 
 ## ℹ️ About
 

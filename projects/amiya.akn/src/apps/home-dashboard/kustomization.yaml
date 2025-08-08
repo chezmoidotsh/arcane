@@ -16,6 +16,7 @@ labels:
 resources:
   - glance.workload.yaml
   - home-dashboard.httproute.yaml
+  - security/home-dashboard.securitypolicy.yaml
 
 configMapGenerator:
   - name: glance-configuration

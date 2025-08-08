@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD033 -->
-
 # Bootstrap on Proxmox VE
 
 ## Table of Contents

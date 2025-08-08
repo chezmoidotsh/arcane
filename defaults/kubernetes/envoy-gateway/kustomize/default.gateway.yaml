@@ -2,9 +2,9 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: default-gateway
+  name: default
 spec:
-  gatewayClassName: traefik-gateway
+  gatewayClassName: envoy-gateway
   listeners:
     - name: web
       port: 80
@@ -15,6 +15,7 @@ spec:
     - name: chezmoi.sh-websecure
       port: 443
       protocol: HTTPS
+      hostname: "*.chezmoi.sh"
       allowedRoutes:
         namespaces:
           from: All
@@ -32,6 +33,7 @@ metadata:
 spec:
   dnsNames:
     - "*.chezmoi.sh"
+    - "*.akn.chezmoi.sh"
   duration: 2160h0m0s # 90 days
   issuerRef:
     kind: ClusterIssuer

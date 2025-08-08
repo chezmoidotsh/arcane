@@ -1,0 +1,110 @@
+# Custom certificates for Envoy Gateway
+#
+# This file provides custom TLS certificates for Envoy Gateway components to replace the default
+# self-signed certificates. Using custom certificates improves security and allows proper certificate
+# management in production environments.
+#
+# The setup creates:
+# 1. A self-signed CA issuer and certificate for the root of trust
+# 2. An intermediate CA issuer that uses the self-signed CA
+# 3. Service certificates for envoy-gateway, envoy, and envoy-rate-limit components
+#
+# Based on: https://gateway.envoyproxy.io/docs/install/custom-cert/
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  labels:
+    app.kubernetes.io/name: envoy-gateway
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: envoy-gateway-ca
+spec:
+  isCA: true
+  commonName: envoy-gateway
+  secretName: envoy-gateway-ca
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  issuerRef:
+    name: selfsigned-issuer
+    kind: Issuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  labels:
+    app.kubernetes.io/name: envoy-gateway
+  name: eg-issuer
+spec:
+  ca:
+    secretName: envoy-gateway-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  labels:
+    app.kubernetes.io/name: envoy-gateway
+  name: envoy-gateway
+spec:
+  commonName: envoy-gateway
+  dnsNames:
+    - "envoy-gateway"
+    - "envoy-gateway.envoy-gateway-system"
+    - "envoy-gateway.envoy-gateway-system.svc"
+    - "envoy-gateway.envoy-gateway-system.svc.cluster.local"
+  issuerRef:
+    kind: Issuer
+    name: eg-issuer
+  usages:
+    - "digital signature"
+    - "data encipherment"
+    - "key encipherment"
+    - "content commitment"
+  secretName: envoy-gateway
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  labels:
+    app.kubernetes.io/name: envoy-gateway
+  name: envoy
+spec:
+  commonName: "*"
+  dnsNames:
+    - "*.envoy-gateway-system"
+  issuerRef:
+    kind: Issuer
+    name: eg-issuer
+  usages:
+    - "digital signature"
+    - "data encipherment"
+    - "key encipherment"
+    - "content commitment"
+  secretName: envoy
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  labels:
+    app.kubernetes.io/name: envoy-gateway
+  name: envoy-rate-limit
+spec:
+  commonName: "*"
+  dnsNames:
+    - "*.envoy-gateway-system"
+  issuerRef:
+    kind: Issuer
+    name: eg-issuer
+  usages:
+    - "digital signature"
+    - "data encipherment"
+    - "key encipherment"
+    - "content commitment"
+  secretName: envoy-rate-limit

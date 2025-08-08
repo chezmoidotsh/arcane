@@ -1,0 +1,20 @@
+---
+# Default values for Envoy Gateway
+# This configuration provides a base setup for Envoy Gateway in a Kubernetes environment
+
+# Deployment configuration
+deployment:
+  envoyGateway:
+    resources:
+      limits:
+        memory: 1024Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+
+# Gateway configuration
+config:
+  envoyGateway:
+    logging:
+      level:
+        default: debug

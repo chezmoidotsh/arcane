@@ -1,30 +1,17 @@
 ---
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: authelia-sso
-spec:
-  forwardAuth:
-    address: http://authelia.sso.svc.cluster.local/api/authz/forward-auth
-    trustForwardHeader: true
-    authResponseHeaders:
-      - Remote-User
-      - Remote-Groups
-      - Remote-Email
-      - Remote-Name
----
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   annotations:
     external-dns.alpha.kubernetes.io/include-unifi: "true"
+    link.argocd.argoproj.io/external-link: https://home.chezmoi.sh
   name: home-dashboard
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway
-      name: default-gateway
-      namespace: kube-system
+      name: default
+      namespace: envoy-gateway-system
       sectionName: chezmoi.sh-websecure
   hostnames:
     - home.chezmoi.sh
@@ -35,13 +22,21 @@ spec:
           name: glance
           port: 80
           weight: 1
-      filters:
-        - type: ExtensionRef
-          extensionRef:
-            group: traefik.io
-            kind: Middleware
-            name: authelia-sso
       matches:
         - path:
             type: PathPrefix
             value: /
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: envoy-gateway-system-to-glance
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: envoy-gateway-system
+  to:
+    - group: ""
+      kind: Service
+      name: glance

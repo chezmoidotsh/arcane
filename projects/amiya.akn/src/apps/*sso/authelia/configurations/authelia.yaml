@@ -108,14 +108,14 @@ server:
         implementation: ForwardAuth
         # authn_strategies: []
       # ext-authz:
-      # implementation: 'ExtAuthz'
-      # authn_strategies: []
+        # implementation: 'ExtAuthz'
+        # authn_strategies: []
       # auth-request:
-      # implementation: 'AuthRequest'
-      # authn_strategies: []
+        # implementation: 'AuthRequest'
+        # authn_strategies: []
       # legacy:
-      # implementation: 'Legacy'
-      # authn_strategies: []
+        # implementation: 'Legacy'
+        # authn_strategies: []
 
 ##
 ## Log Configuration
@@ -1364,6 +1364,7 @@ identity_providers:
       - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.argocd_cli" | nindent 8 }}
       - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.budibase" | nindent 8 }}
       - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.linkding" | nindent 8 }}
+      - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.longhorn-amiya.akn" | nindent 8 }}
       - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.mealie" | nindent 8 }}
       - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.openbao" | nindent 8 }}
       - {{ secret "/var/run/secrets/authelia.com/authelia-oidc/oidc.client.paperless_ngx" | nindent 8 }}
