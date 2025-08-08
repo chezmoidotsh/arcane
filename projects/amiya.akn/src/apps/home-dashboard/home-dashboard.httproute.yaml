@@ -10,7 +10,7 @@ spec:
   parentRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway
-      name: envoy-default
+      name: default
       namespace: envoy-gateway-system
       sectionName: chezmoi.sh-websecure
   hostnames:
