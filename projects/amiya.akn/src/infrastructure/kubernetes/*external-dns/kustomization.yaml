@@ -11,8 +11,6 @@ helmCharts:
     valuesFile: unifi.helmvalues/default.yaml
     additionalValuesFiles:
       - unifi.helmvalues/hardened.yaml
-      - unifi.helmvalues/adguard-migration.yaml # TODO: Remove this after migration
 
 resources:
   - unifi.externalsecret.yaml
-  - dns.densendpoint.yaml

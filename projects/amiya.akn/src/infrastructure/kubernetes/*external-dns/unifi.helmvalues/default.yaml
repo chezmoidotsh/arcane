@@ -66,10 +66,8 @@ managedRecordTypes:
 
 # Additional command-line arguments for ExternalDNS
 extraArgs:
-  # Only use the new TXT format for records
-  - --txt-new-format-only
   # Configure CRD source with specific API version and kind
   - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
   - --crd-source-kind=DNSEndpoint
   # Exclude resources with the annotation external-dns.alpha.kubernetes.io/exclude-unifi=true
-  - --annotation-filter=external-dns.alpha.kubernetes.io/exclude-unifi notin (true)
+  - --annotation-filter=external-dns.alpha.kubernetes.io/include-unifi in (true)
