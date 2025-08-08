@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD033 -->
-
 <h1 align="center">
   <img src=".github/assets/arcane-logo.light.png#gh-light-mode-only" alt="Arcane Logo" height="75" />
   <img src=".github/assets/arcane-logo.dark.png#gh-dark-mode-only" alt="Arcane Logo" height="75" />
@@ -24,8 +22,6 @@
 </div>
 
 ***
-
-<!-- markdownlint-enable MD033 -->
 
 ## ℹ️ About
 

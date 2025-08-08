@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD033 -->
-
 # Kubernetes Cluster Bootstrap
 
 ## Table of Contents

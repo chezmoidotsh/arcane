@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD033 -->
-
 <h1 align="center">
   「 龙门 」 <sub>(Lungmen)</sub>
 </h1>

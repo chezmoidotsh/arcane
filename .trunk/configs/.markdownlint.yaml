@@ -2,4 +2,6 @@
 # Prettier friendly markdownlint config (all formatting rules disabled)
 extends: markdownlint/style/prettier
 no-empty-links: false
+
+MD033: false # Inline HTML is allowed
 MD041: false # First line a generaly a custom HTML title

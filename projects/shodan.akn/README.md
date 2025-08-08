@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD033 -->
-
 <h1 align="center">
 「 Shodan 」<sub>(Sentient Hyper-Optimized Data Access Network)</sub>
 </h1>

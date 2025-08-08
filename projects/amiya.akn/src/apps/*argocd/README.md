@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD033 -->
-
 <div align="center">
   <img src="../../../../../docs/assets/icons/apps/argo-cd.svg" alt="ArgoCD" width="100" height="100">
 </div>
