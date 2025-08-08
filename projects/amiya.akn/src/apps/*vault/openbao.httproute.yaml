@@ -10,8 +10,8 @@ spec:
   parentRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway
-      name: default-gateway
-      namespace: traefik-system
+      name: envoy-default
+      namespace: envoy-gateway-system
       sectionName: chezmoi.sh-websecure
   hostnames:
     - vault.chezmoi.sh
@@ -26,3 +26,17 @@ spec:
         - path:
             type: PathPrefix
             value: /
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: envoy-gateway-system-to-openbao-ui
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: envoy-gateway-system
+  to:
+    - group: ""
+      kind: Service
+      name: openbao-ui
