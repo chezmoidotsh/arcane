@@ -288,7 +288,7 @@ const scopes = [
 		value: "catalog:kairos-bundle",
 	},
 	{
-		name: "catalog:talos		 - Anything related to the Talos manifests catalog",
+		name: "catalog:talos         - Anything related to the Talos manifests catalog",
 		value: "catalog:talos",
 	},
 	{
