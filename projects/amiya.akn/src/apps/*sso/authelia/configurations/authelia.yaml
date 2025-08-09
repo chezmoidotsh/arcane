@@ -183,7 +183,7 @@ totp:
   disable: false
 
   ## The issuer name displayed in the Authenticator application of your choice.
-  issuer: sso.chezmoi.sh
+  issuer: auth.chezmoi.sh
 
   ## The TOTP algorithm to use.
   ## It is CRITICAL you read the documentation before changing this option:
@@ -836,7 +836,7 @@ session:
   cookies:
     - name: chezmoi_session
       domain: chezmoi.sh
-      authelia_url: https://sso.chezmoi.sh
+      authelia_url: https://auth.chezmoi.sh
       default_redirection_url: https://home.chezmoi.sh
 
   #   -

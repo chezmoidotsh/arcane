@@ -56,13 +56,13 @@ spec:
             - name: LD_ENABLE_OIDC
               value: "True"
             - name: OIDC_OP_AUTHORIZATION_ENDPOINT
-              value: https://sso.chezmoi.sh/api/oidc/authorization
+              value: https://auth.chezmoi.sh/api/oidc/authorization
             - name: OIDC_OP_TOKEN_ENDPOINT
-              value: https://sso.chezmoi.sh/api/oidc/token
+              value: https://auth.chezmoi.sh/api/oidc/token
             - name: OIDC_OP_USER_ENDPOINT
-              value: https://sso.chezmoi.sh/api/oidc/userinfo
+              value: https://auth.chezmoi.sh/api/oidc/userinfo
             - name: OIDC_OP_JWKS_ENDPOINT
-              value: https://sso.chezmoi.sh/jwks.json
+              value: https://auth.chezmoi.sh/jwks.json
             - name: OIDC_RP_CLIENT_ID
               valueFrom:
                 secretKeyRef:

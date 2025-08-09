@@ -24,14 +24,14 @@ spec:
     path: authelia
 
     # OIDC configuration
-    boundIssuer: https://sso.chezmoi.sh
+    boundIssuer: https://auth.chezmoi.sh
     defaultRole: admin
     oidcClientId: xjhFR2JM0d3CsvaNU5_YchVi
     oidcClientSecretSecretRef:
       name: authelia-client-secret
       namespace: crossplane
       key: client_secret
-    oidcDiscoveryUrl: https://sso.chezmoi.sh
+    oidcDiscoveryUrl: https://auth.chezmoi.sh
 
     # Tune configuration
     tune:

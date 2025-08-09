@@ -12,7 +12,7 @@ metadata:
   name: authelia-oidc-jwt-default
 spec:
   isCA: false
-  commonName: sso.chezmoi.sh
+  commonName: auth.chezmoi.sh
   secretName: authelia-oidc-jwt-default
   privateKey:
     algorithm: RSA

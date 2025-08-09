@@ -30,7 +30,7 @@ configs:
     # OIDC configuration (optional), replacing Dex and leveraging local Authelia
     oidc.config: |
       name: Authelia
-      issuer: https://sso.chezmoi.sh
+      issuer: https://auth.chezmoi.sh
       clientID: $argocd-oidc:oidc.authelia.clientID
       clientSecret: $argocd-oidc:oidc.authelia.clientSecret
       cliClientID: $argocd-oidc:oidc.authelia.cliClientID

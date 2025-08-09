@@ -14,7 +14,7 @@ spec:
   egress:
     - to:
         - ipBlock:
-            cidr: 10.0.0.0/20 # sso.chezmoi.sh
+            cidr: 10.0.0.0/20 # auth.chezmoi.sh
       ports:
         - port: 443
   podSelector:

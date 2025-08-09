@@ -44,7 +44,7 @@ spec:
             - name: OIDC_SIGNUP_ENABLED
               value: "True"
             - name: OIDC_CONFIGURATION_URL
-              value: https://sso.chezmoi.sh/.well-known/openid-configuration
+              value: https://auth.chezmoi.sh/.well-known/openid-configuration
             - name: OIDC_CLIENT_ID
               valueFrom:
                 secretKeyRef:

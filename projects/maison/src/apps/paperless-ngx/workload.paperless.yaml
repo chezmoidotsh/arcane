@@ -214,7 +214,7 @@ spec:
                   "client_id": "{{ regexReplaceAll "client_id: (.+?)" (.oidc_configuration | split "\n")._1 "${1}" }}",
                   "secret": "{{ regexReplaceAll "# client_secret: (.+?)" (.oidc_configuration | split "\n")._3 "${1}" }}",
                   "settings": {
-                    "server_url": "https://sso.chezmoi.sh/.well-known/openid-configuration"
+                    "server_url": "https://auth.chezmoi.sh/.well-known/openid-configuration"
                   }
                 }
               ],
