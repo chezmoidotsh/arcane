@@ -1,6 +1,16 @@
-[env]
-TALOSCONFIG = "{{ config_root }}/talosconfig"
-KUBECONFIG = "{{ config_root }}/kubeconfig"
+# =============================================================================
+# Lungmen.akn Documentation - Talos Configuration
+# =============================================================================
+# Documentation-specific mise configuration for the lungmen.akn cluster.
+# Sets up the Talos Linux configuration file path for cluster operations
+# within the documentation/bootstrap context.
+#
+# Usage Context: Bootstrap procedures and operational documentation  
+# Target Cluster: lungmen.akn (Home Applications Migration Target)
+# =============================================================================
 
-[tools]
-talosctl = "1.10.4"
+[env]
+# Talos Linux client configuration file for lungmen.akn cluster
+# Contains cluster endpoints, certificates, and authentication credentials
+# Used by talosctl for cluster management operations during bootstrap and maintenance
+TALOSCONFIG = "{{ config_root }}/talosconfig"

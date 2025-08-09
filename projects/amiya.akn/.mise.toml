@@ -1,5 +1,18 @@
+# =============================================================================
+# Amiya.akn Cluster - Mise Configuration
+# =============================================================================
+# Project-specific mise configuration for the amiya.akn cluster.
+# This cluster serves as the mission-critical infrastructure running on
+# Talos Linux with ArgoCD for GitOps deployment.
+#
+# Services: OpenBao, Authelia, Core Infrastructure
+# Architecture: Talos Linux + ArgoCD
+# =============================================================================
+
 [tasks."diagram:generate"]
-tools."go:oss.terrastruct.com/d2" = "latest"
-description = "Generate the architecture diagram"
+description = "Generate the architecture diagram for amiya.akn cluster"
+# Converts the D2 diagram source to SVG format for documentation
+# Input: architecture.d2 (diagram-as-code source)
+# Output: assets/architecture.svg (embedded in cluster documentation)
 run = "d2 architecture.d2 assets/architecture.svg"
 dir = "{{ config_root }}"

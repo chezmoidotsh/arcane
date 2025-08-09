@@ -1,24 +1,103 @@
+# =============================================================================
+# Arcane Infrastructure Development Environment Configuration
+# =============================================================================
+# This mise configuration provides a complete development environment for
+# managing the Arcane homelab infrastructure. It installs all necessary tools
+# and configures environment variables for GitOps operations across multiple
+# Kubernetes clusters.
+#
+# Usage:
+#   mise install    # Install all tools and apply environment
+#   mise trust      # Trust this configuration (if prompted)
+#
+# For project-specific configurations, see:
+#   projects/{cluster}/.mise.toml         # Cluster-specific tasks
+#   projects/{cluster}/docs/.mise.toml    # Talos configuration paths
+# =============================================================================
+
 [env]
+# -----------------------------------------------------------------------------
+# Kubernetes Configuration
+# -----------------------------------------------------------------------------
+# Kubernetes client configuration file containing cluster access credentials
+# Supports multiple cluster contexts for the Arcane infrastructure
+KUBECONFIG = "{{ config_root }}/.mise/kubeconfig"
+
+# Krew plugin manager root directory for kubectl plugins
+# Extends kubectl functionality with community and vendor plugins
 KREW_ROOT = "{{ config_root }}/.mise/krew"
+
+# -----------------------------------------------------------------------------
+# Helm Package Manager Configuration  
+# -----------------------------------------------------------------------------
+# Helm is used for deploying and managing Kubernetes applications via charts
+# These paths isolate Helm data from system-wide installations
+
 HELM_CACHE_HOME = "{{ config_root }}/.mise/helm/cache"
 HELM_CONFIG_HOME = "{{ config_root }}/.mise/helm/config"
 HELM_DATA_HOME = "{{ config_root }}/.mise/helm/data"
-TALOSCONFIG = "{{ config_root }}/.mise/talos/config"
+
+# -----------------------------------------------------------------------------
+# Security and Secret Management
+# -----------------------------------------------------------------------------
+# SOPS (Secrets OPerationS) Age encryption key file
+# Used for encrypting sensitive data in Git repositories
 SOPS_AGE_KEY_FILE = "{{ config_root }}/.mise/age/key.txt"
-KUBECONFIG = "{{ config_root }}/.mise/kubeconfig"
-_.path = ["{{ config_root }}/scripts"]
+
+# OpenBao (Vault fork) server address for secret management
+# Centralized secret storage for the Arcane infrastructure
+VAULT_ADDR = "https://vault.chezmoi.sh"
+
+# -----------------------------------------------------------------------------
+# Path Extensions
+# -----------------------------------------------------------------------------
+# Additional directories added to PATH for tool accessibility
+_.path = [
+  "{{ config_root }}/scripts",        # Arcane operational scripts
+  "{{ config_root }}/.mise/krew/bin", # Kubectl plugins installed via Krew
+]
+
+# =============================================================================
+# Tool Installation Matrix
+# =============================================================================
+# Tools are organized by functional category for infrastructure management
+# All tools default to "latest" version unless stability requires pinning
 
 [tools]
-"aqua:terrastruct/d2" = "latest"
-argocd = "latest"
-helm = "latest"
-krew = "latest"
-kubectl = "latest"
-talosctl = "latest"
-"ubi:runmedev/runme" = "latest"
-"go:github.com/oklog/ulid/v2/cmd/ulid" = "latest"
-gum = "latest"
-ksops = "latest"
-dive = "latest"
-ansible = "8.7"
-yq = "latest"
+# -----------------------------------------------------------------------------
+# Kubernetes Core Tools
+# -----------------------------------------------------------------------------
+# Essential tools for Kubernetes cluster management and operations
+
+kubectl = "latest" # Kubernetes CLI for managing clusters and resources
+helm = "latest"    # Kubernetes package manager for deploying applications via charts
+krew = "latest"    # Kubectl plugin manager for extending functionality
+ksops = "latest"   # KSOPS plugin for Kustomize to handle SOPS-encrypted secrets
+
+# -----------------------------------------------------------------------------
+# Infrastructure Management Tools
+# -----------------------------------------------------------------------------
+# Platform-specific tools for managing infrastructure components
+
+talosctl = "latest" # Talos Linux cluster management tool for bare-metal Kubernetes
+argocd = "latest"   # ArgoCD CLI for GitOps application deployment and management
+openbao = "latest"  # OpenBao CLI for secret management (HashiCorp Vault fork)
+ansible = "8.7"     # Configuration management and automation platform, pinned for stability with existing playbooks
+
+# -----------------------------------------------------------------------------
+# Security and Data Tools
+# -----------------------------------------------------------------------------
+# Tools for handling secrets, data processing, and security operations
+
+yq = "latest"   # YAML/JSON processor for configuration file manipulation
+dive = "latest" # Container image analysis tool for security scanning
+
+# -----------------------------------------------------------------------------
+# Development and Documentation Tools
+# -----------------------------------------------------------------------------
+# Tools supporting development workflows and documentation generation
+
+gum = "latest"                                    # Terminal UI framework for interactive scripts and prompts
+"aqua:terrastruct/d2" = "latest"                  # Diagram-as-code tool for generating architecture visualizations
+"ubi:runmedev/runme" = "latest"                   # Interactive markdown execution tool for runbooks and documentation
+"go:github.com/oklog/ulid/v2/cmd/ulid" = "latest" # ULID generator for unique identifiers in distributed systems

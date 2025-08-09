@@ -1,6 +1,16 @@
-[env]
-TALOSCONFIG = "{{ config_root }}/talosconfig"
-KUBECONFIG = "{{ config_root }}/kubeconfig"
+# =============================================================================
+# Amiya.akn Documentation - Talos Configuration
+# =============================================================================
+# Documentation-specific mise configuration for the amiya.akn cluster.
+# Sets up the Talos Linux configuration file path for cluster operations
+# within the documentation/bootstrap context.
+#
+# Usage Context: Bootstrap procedures and operational documentation
+# Target Cluster: amiya.akn (Mission-Critical Infrastructure)
+# =============================================================================
 
-[tools]
-talosctl = "1.10.6"
+[env]
+# Talos Linux client configuration file for amiya.akn cluster
+# Contains cluster endpoints, certificates, and authentication credentials
+# Used by talosctl for cluster management operations during bootstrap and maintenance
+TALOSCONFIG = "{{ config_root }}/talosconfig"
