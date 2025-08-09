@@ -235,6 +235,4 @@ This decision will move from "proposed" to "accepted" when the following are met
 
 ## Changelog
 
-### Version 1.0
-
 * **2025-07-05**: **INITIALISATION**: Creation of the ADR document for OIDC authentication implementation.
