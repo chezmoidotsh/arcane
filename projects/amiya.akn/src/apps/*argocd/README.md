@@ -47,7 +47,7 @@ The deployment follows a hierarchical structure:
      * `cert-manager.application.yaml`
      * `external-secrets.application.yaml`
      * `tailscale.application.yaml`
-     * `traefik.application.yaml`
+     * `envoy-gateway.application.yaml`
 
 4. **Secondary ApplicationSets** (in `shoot.apps/`)
    * `system.applicationset.yaml`: Manages system applications
@@ -73,8 +73,8 @@ flowchart TD
     AS20 --> A203["..."]
     AS22 --- S201("fa:fa-file &lt;cluster B&gt;/system-app1")
     AS22 --> S203["..."]
-    A1 --> R10("fa:fa-file &lt;cluster A&gt/external-secrets") & n1["fa:fa-file &lt;cluster A&gt;/cert-manager"] & n3["fa:fa-file &lt;cluster A&gt;/tailscale"] & n5["fa:fa-file &lt;cluster A&gt;/traefik"]
-    A2 --> R20("fa:fa-file &lt;cluster B&gt/external-secrets") & n2["fa:fa-file &lt;cluster B&gt;/cert-manager"] & n4["fa:fa-file &lt;cluster B&gt;/tailscale"] & n6["fa:fa-file &lt;cluster B&gt;/traefik"]
+    A1 --> R10("fa:fa-file &lt;cluster A&gt/external-secrets") & n1["fa:fa-file &lt;cluster A&gt;/cert-manager"] & n3["fa:fa-file &lt;cluster A&gt;/tailscale"] & n5["fa:fa-file &lt;cluster A&gt;/envoy-gateway"]
+    A2 --> R20("fa:fa-file &lt;cluster B&gt/external-secrets") & n2["fa:fa-file &lt;cluster B&gt;/cert-manager"] & n4["fa:fa-file &lt;cluster B&gt;/tailscale"] & n6["fa:fa-file &lt;cluster B&gt;/envoy-gateway"]
     AS12@{ shape: terminal}
     A103@{ shape: text}
     S103@{ shape: text}
@@ -95,7 +95,7 @@ The following applications are considered critical and are always deployed on ev
 * `external-secrets`: Manages secrets from external sources
 * `cert-manager`: Manages TLS certificates
 * `tailscale`: Handles network connectivity and security
-* `traefik`: Manages ingress and routing
+* `envoy-gateway`: Manages ingress and routing
 
 These applications are deployed with cluster-specific configurations:
 

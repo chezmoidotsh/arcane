@@ -123,7 +123,7 @@ Deploy applications in this specific order:
 1. `kubevault` and `shoot`
 2. `external-secret`
 3. `cert-manager` (requires Crossplane for Let's Encrypt secrets)
-4. `cilium`, `traefik`, and `external-dns`
+4. `cilium`, `envoy-gateway`, and `external-dns`
 5. `tailscale`
 6. `argocd` (in this order: ExternalSecret, all components except controller, then controller)
 7. `longhorn` and `crossplane`
