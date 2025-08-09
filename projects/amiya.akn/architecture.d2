@@ -1,18 +1,3 @@
-# Copyright (C) 2024 vscode (you@you.you)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#         http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ----------------------------------------------------------------------------
-
 vars: {
   d2-config: {
     layout-engine: elk
@@ -33,7 +18,20 @@ explanation: |md
   near: top-left
 }
 
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   These objects represent resources external to the amiya.akn platform     │
+# │   but which interact with or are used by it.                               │
+# │   They include networks, hardware, or third-party services                 │
+# │   essential for the proper functioning, connectivity, security,            │
+# │   or management of the platform.                                           │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Networks
+
 internet: {class: network}
 localnet: {class: network}
 tailnet: {
@@ -41,7 +39,10 @@ tailnet: {
   tooltip: Tailnet - Mesh VPN Network
 }
 
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Hardware & Infrastructure
+
 udm-pro: {
   class: hardware
   label: UDM-Pro
@@ -64,6 +65,16 @@ nas: {
   }
 }
 
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                             amiya.akn Platform                             │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   This namespace contains all the components of the amiya.akn platform,    │
+# │   including applications, system components, security, storage, and        │
+# │   infrastructure. Each component is categorized and described with its     │
+# │   purpose, functionality, and interactions with other components.          │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
 amiya·akn: {
   infrastructure: {class: namespace}
   security: {class: namespace}
@@ -71,8 +82,10 @@ amiya·akn: {
   system: {class: namespace}
 
   style.fill-pattern: none
-  
+
+  # ────────────────────────────────────────────────────────────────────────────
   # Infrastructure Components
+
   infrastructure.argocd: {
     class: [application]
     label: ArgoCD
@@ -97,7 +110,9 @@ amiya·akn: {
     tooltip: Talos Omni is a platform for managing Talos Linux clusters through a simplified interface.
   }
 
+  # ────────────────────────────────────────────────────────────────────────────
   # Security Components
+  
   security.authelia: {
     class: [application]
     label: Authelia
@@ -136,7 +151,9 @@ amiya·akn: {
     tooltip: yaLDAP is a modern LDAP server.
   }
 
+  # ────────────────────────────────────────────────────────────────────────────
   # Storage Components
+
   storage.minio: {
     class: [application; undeployed]
     label: MinIO
@@ -153,7 +170,9 @@ amiya·akn: {
     tooltip: Zot Registry is a self-hosted, privacy-focused, and easy-to-use image registry.
   }
 
+  # ────────────────────────────────────────────────────────────────────────────
   # System Components
+
   system.cert-manager: {
     class: [application-system]
     label: Cert-Manager
@@ -168,6 +187,30 @@ amiya·akn: {
     icon: assets/icons/system/cilium.svg
     link: https://cilium.io/
     tooltip: Cilium is a networking, observability, and security solution with an eBPF-based dataplane.
+  }
+
+  system.envoy-gateway: {
+    class: [application-system]
+    label: Envoy Gateway
+    icon: assets/icons/system/envoy-gateway.svg
+    link: https://gateway.envoyproxy.io/
+    tooltip: Envoy Gateway is a modern, open-source Kubernetes-native API gateway built on Envoy Proxy.
+  }
+
+  system.envoy-default-gateway: {
+    class: [application-system]
+    label: Envoy Default Gateway
+    icon: assets/icons/system/envoy.svg
+    link: https://gateway.envoyproxy.io/
+    tooltip: Envoy to proxy all HTTP/HTTPS traffic in the cluster.
+  }
+
+  system.envoy-ldap-gateway: {
+    class: [application-system]
+    label: Envoy LDAP Gateway
+    icon: assets/icons/system/envoy.svg
+    link: https://gateway.envoyproxy.io/
+    tooltip: Envoy to proxy all LDAP/LDAPS traffic in the cluster.
   }
 
   system.externaldns: {
@@ -202,14 +245,6 @@ amiya·akn: {
     tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
   }
 
-  system.traefik: {
-    class: [application-system]
-    label: Traefik
-    icon: assets/icons/system/traefik.svg
-    link: https://traefik.io/
-    tooltip: Traefik is a modern HTTP reverse proxy and load balancer.
-  }
-
   system.cloudnative-pg: {
     class: [application-system]
     label: CloudNative-PG
@@ -235,95 +270,74 @@ amiya·akn: {
   }
 }
 
-# Connections
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   This section describes the various connections within the amiya.akn      │
+# │   platform, including VPN, internal and external connections.              │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# ──────────────────────────────────────────────────────────────────────────────
 # VPN Connections
+
 amiya·akn.system.tailscale <- tailnet: {class: [connect-from-vpn-backbone]}
 amiya·akn.tailscale-connector -> localnet: {class: [connect-to-vpn-backbone]}
 amiya·akn.tailscale-connector <- tailnet: {class: [connect-from-vpn-backbone]}
 
+# ──────────────────────────────────────────────────────────────────────────────
 # Internal Connections
-amiya·akn.system.external-secret -> amiya·akn.security.openbao-stack.openbao: {
-  source-arrowhead: HTTP (8200)
-  tooltip: External Secrets Operator pulls secrets from OpenBao KV mounts (projects-amiya-akn/, shared/)
-}
 
-amiya·akn.security.yaldap <- amiya·akn.security.authelia: {
-  source-arrowhead: LDAP (8389)
-}
-amiya·akn.security.yaldap <- amiya·akn.system.traefik: {
-  source-arrowhead: LDAP (8389)
-}
-amiya·akn.security.authelia <- amiya·akn.system.traefik: {
-  source-arrowhead: HTTP (9091)
-}
+amiya·akn.glance <- amiya·akn.system.envoy-default-gateway: { source-arrowhead: HTTP (8080) }
 
-# OpenBao Stack connections
-amiya·akn.security.openbao-stack.openbao -> amiya·akn.security.openbao-stack.postgresql: {
-  source-arrowhead: PostgreSQL (5432)
-  tooltip: OpenBao stores secrets and metadata in PostgreSQL database
-}
+amiya·akn.infrastructure.argocd <- amiya·akn.system.envoy-default-gateway: { source-arrowhead: HTTP (8080) }
+amiya·akn.infrastructure.argocd <- amiya·akn.system.tailscale: { class: [connect-from-vpn]; source-arrowhead: HTTP (8080) }
 
-amiya·akn.system.cloudnative-pg -> amiya·akn.security.openbao-stack.postgresql: {
-  class: [connect-management]
-  tooltip: CloudNative-PG operator manages PostgreSQL lifecycle, backups, and high availability
-}
+amiya·akn.infrastructure.talos-omni <- amiya·akn.system.envoy-default-gateway: { class: [undeployed]; source-arrowhead: HTTP (443) }
 
-amiya·akn.security.openbao-stack.postgresql -> nas.minio: {
-  source-arrowhead: HTTPS (9200)
-  tooltip: PostgreSQL automated backups to S3-compatible storage via CloudNative-PG
-}
+amiya·akn.security.authelia <- amiya·akn.system.envoy-default-gateway: { source-arrowhead: HTTP (9091) }
 
-amiya·akn.security.openbao-stack.openbao <- amiya·akn.system.tailscale: {
-  class: [connect-from-vpn]
-  source-arrowhead: HTTP (8200)
-}
-amiya·akn.security.openbao-stack.openbao <- amiya·akn.system.traefik: {
-  source-arrowhead: HTTP (8200)
-}
+amiya·akn.security.openbao-stack.openbao -> amiya·akn.security.openbao-stack.postgresql: { source-arrowhead: PostgreSQL (5432) }
+amiya·akn.security.openbao-stack.openbao <- amiya·akn.system.envoy-default-gateway: { source-arrowhead: HTTP (8200) }
+amiya·akn.security.openbao-stack.openbao <- amiya·akn.system.tailscale: { class: [connect-from-vpn]; source-arrowhead: HTTP (8200) }
+amiya·akn.security.openbao-stack.postgresql -> nas.minio: { source-arrowhead: HTTPS (9200) }
 
-amiya·akn.system.longhorn <- amiya·akn.system.traefik: {
-  source-arrowhead: HTTP (8000)
-}
+amiya·akn.security.yaldap <- amiya·akn.security.authelia: { source-arrowhead: LDAP (8389) }
+amiya·akn.security.yaldap <- amiya·akn.system.envoy-ldap-gateway: { source-arrowhead: LDAP (8389) }
 
-amiya·akn.storage.minio -> internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
-amiya·akn.storage.minio <- amiya·akn.system.traefik: {
-  class: undeployed
-  source-arrowhead: HTTP (9000)
-}
+amiya·akn.storage.minio <- amiya·akn.system.envoy-default-gateway: { class: [undeployed]; source-arrowhead: HTTP (9000) }
 
-amiya·akn.storage.zot-registry -> internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
-amiya·akn.storage.zot-registry -> amiya·akn.storage.minio: {
-  class: undeployed
-  source-arrowhead: HTTP (5000)
-}
+amiya·akn.storage.zot-registry -> amiya·akn.storage.minio: { class: [undeployed]; source-arrowhead: HTTP (5000) }
+amiya·akn.storage.zot-registry <- amiya·akn.system.envoy-default-gateway: { class: [undeployed]; source-arrowhead: HTTP (5000) }
 
-amiya·akn.glance -> internet: HTTPS (443) {class: [connect-to-internet]}
-amiya·akn.glance <- amiya·akn.system.traefik: {
-  source-arrowhead: HTTP (8080)
-}
+amiya·akn.system.cloudnative-pg -> amiya·akn.security.openbao-stack.postgresql: { class: [connect-management] }
 
-amiya·akn.infrastructure.talos-omni <- amiya·akn.system.traefik: {
-  class: [undeployed]
-  source-arrowhead: HTTP (443)
-}
+amiya·akn.system.envoy-gateway -> amiya·akn.system.envoy-default-gateway: { class: [connect-management] }
+amiya·akn.system.envoy-gateway -> amiya·akn.system.envoy-ldap-gateway: { class: [connect-management] }
 
-amiya·akn.system.traefik <- localnet: {
+amiya·akn.system.envoy-default-gateway <- localnet: {
   source-arrowhead: |md
     HTTP (80)
     HTTPS (443)
-    LDAPS (636)
   |
 }
+amiya·akn.system.envoy-ldap-gateway <- localnet: { source-arrowhead: LDAP (389) }
 
-amiya·akn.infrastructure.argocd <- amiya·akn.system.tailscale: {
-  class: [connect-from-vpn]
-  source-arrowhead: HTTP (8080)
-}
+amiya·akn.system.external-secret -> amiya·akn.security.openbao-stack.openbao: { source-arrowhead: HTTP (8200) }
 
-amiya·akn.infrastructure.argocd <- amiya·akn.system.traefik: {
-  source-arrowhead: HTTP (8080)
-}
+amiya·akn.system.longhorn <- amiya·akn.system.envoy-default-gateway: { source-arrowhead: HTTP (8000) }
+
+# ──────────────────────────────────────────────────────────────────────────────
+# External Connections
+
+amiya·akn.glance -> internet: HTTPS (443) { class: [connect-to-internet] }
+
+amiya·akn.infrastructure.argocd  -> internet: HTTPS (443) / SSH (22) { class: [connect-to-internet] }
 
 amiya·akn.infrastructure.crossplane -> internet: HTTPS (443) {class: [connect-to-internet]}
+
+amiya·akn.storage.zot-registry -> internet: HTTPS (443) { class: [connect-to-internet; undeployed] }
+
 amiya·akn.system.cert-manager -> internet: HTTPS (443) {class: [connect-to-internet]}
+
 amiya·akn.system.externaldns -> udm-pro: DNS updates
