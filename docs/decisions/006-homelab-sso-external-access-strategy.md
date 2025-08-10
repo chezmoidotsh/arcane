@@ -66,62 +66,72 @@ Different service types require different exposure patterns and security conside
 
 ## Considered Options
 
-* Cloudflare Tunnel (+ WAF/Access)
-* Tailscale Funnel (+ gateway/app-side protections)
-* Dedicated edge proxy (cloud VM + Envoy Gateway/Traefik + optional WAF)
+1. **Cloudflare Tunnel (+ WAF/Access)**: Original Cloudflare Tunnel option with WAF capabilities
+2. **Tailscale Funnel (+ gateway/app-side protections)**: Zero-trust approach with Tailscale
+3. **Dedicated edge proxy**: Self-hosted cloud VM with Traefik/Envoy Gateway + optional WAF
+4. **Cloudflare Tunnel (Proxy L4) + GW with CrowdSec**: Cloudflare L4 proxy with Traefik/Envoy Gateway and CrowdSec
+5. **Cloudflare Tunnel (Proxy L4) with CrowdSec Worker + GW**: Cloudflare L4 proxy with CrowdSec worker and Envoy Gateway, most promising option eliminating Traefik dependency
+
+## Decision History
+
+**Original Decision (2025-08-09)**: "Tailscale Funnel + Hybrid Gateway Strategy (Traefik + CrowdSec → Envoy Gateway)" providing immediate mature anti-bot protection with planned migration to unified Envoy Gateway architecture for all external homelab service exposure.
+
+**First Update (2025-08-10)**: After discovering Tailscale Funnel's limitation to HTTP/HTTPS traffic and challenges with WAF integration, consideration shifted to "Cloudflare Tunnel Proxy L4 + GW protection" for comprehensive protocol support.
+
+**Current Status (2025-08-10)**: The fifth option "Cloudflare Tunnel (Proxy L4) with CrowdSec Worker + GW" has emerged as most promising due to eliminating Traefik dependency, but requires further proof-of-concept testing before final decision.
 
 ## Decision Outcome
 
-**Chosen option**: "Tailscale Funnel + Hybrid Gateway Strategy (Traefik + CrowdSec → Envoy Gateway)" providing immediate mature anti-bot protection with planned migration to unified Envoy Gateway architecture for all external homelab service exposure.
+**Status**: Proof of concept in progress for Option 5 (Cloudflare Tunnel with CrowdSec Worker + GW)
 
-### Phased Implementation Strategy
+**No final decision has been made.** Currently evaluating the most promising approach that would eliminate Traefik dependency while providing comprehensive protocol support and robust security capabilities.
 
-**Phase 1 (Immediate)**: Tailscale Funnel + Traefik Gateway API + CrowdSec + Service-Specific Protection\
-**Phase 2 (Future)**: Migration to Tailscale Funnel + Envoy Gateway + cs-envoy-bouncer when mature
+The final architecture will be selected based on POC results.
 
 ### Architectural Solution
 
-**Phase 1 Architecture (Current Implementation):**
+#### Option 2: Tailscale Funnel + Traefik Gateway (Original Plan)
 
-```text
-┌─────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ External    │───▶│ Tailscale       │───▶│ Traefik Gateway │
-│ Users/Apps  │    │ Funnel          │    │ API + CrowdSec  │
-└─────────────┘    │ (IP Masking)    │    │ Plugin          │
-                   └─────────────────┘    └─────────────────┘
-                                                   │
-                                                   ▼
-                                          ┌─────────────────┐
-                                          │ Homelab         │
-                                          │ Services        │
-                                          │ (Auth/Admin/App)│
-                                          └─────────────────┘
+```mermaid
+graph TD
+    A[External Users/Apps] -->|HTTP/HTTPS| B[Tailscale Funnel];
+    B[Tailscale Funnel] -->|HTTP/HTTPS| C[Traefik Gateway];
+    C -->|HTTP/HTTPS| D[Homelab Services];
+    E[CrowdSec] -->|Protection| C;
 ```
 
-**Phase 2 Architecture (Target Implementation):**
+#### Option 4: Cloudflare Tunnel + Traefik Gateway
 
-```text
-┌─────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ External    │───▶│ Tailscale       │───▶│ Envoy Gateway   │
-│ Users/Apps  │    │ Funnel          │    │ + cs-envoy-     │
-└─────────────┘    │ (IP Masking)    │    │ bouncer         │
-                   └─────────────────┘    └─────────────────┘
-                                                   │
-                                                   ▼
-                                          ┌─────────────────┐
-                                          │ Homelab         │
-                                          │ Services        │
-                                          │ (Auth/Admin/App)│
-                                          └─────────────────┘
+```mermaid
+graph TD
+    A[External Users/Apps] -->|HTTP/HTTPS/TCP| B[cloudflared daemon];
+    B[cloudflared] -->|HTTP/HTTPS/TCP| C[Traefik Gateway];
+    C -->|HTTP/HTTPS| D[Homelab Services];
+    E[CrowdSec] -->|Protection| C;
+    F[Client-side cloudflared] -.->|Required for TCP| B;
+```
+
+#### Option 5: Cloudflare Tunnel with CrowdSec Worker (Promising Approach)
+
+```mermaid
+graph TD
+    A[External Users/Apps] -->|HTTP/HTTPS/TCP| B[cloudflared daemon];
+    B[cloudflared] -->|HTTP/HTTPS/TCP| C[Kubernetes Services];
+    C -->|Logs| D[CrowdSec Agent];
+    D -->|Decisions| E[CrowdSec LAPI];
+    E -->|Synchronization| F[CrowdSec Cloudflare Worker];
+    F -->|Updates| G[Cloudflare Gateway];
+    G -->|Protection| B;
+    H[Client-side cloudflared] -.->|Required for TCP| B;
 ```
 
 ### Key Implementation Components
 
-**Phase 1 Components**:
+**Current Implementation Components**:
 
-* **Tailscale Funnel**: Provides secure tunnel with IP masking and managed TLS termination
-* **Traefik Gateway API**: Gateway API compliant proxy with mature CrowdSec plugin integration
-* **CrowdSec Plugin**: Production-ready anti-bot protection with community threat intelligence
+* **Cloudflare Tunnel**: Provides secure L4 proxying for both HTTP and TCP traffic (without WAF capabilities)
+* **CrowdSec Cloudflare Integration**: Potential integration via Cloudflare Bouncer or Cloudflare Worker Bouncer to add security capabilities
+* **Client-side cloudflared**: Required for accessing TCP services through the tunnel
 * **DNS-01 Certificates**: Automated certificate management without domain validation exposure
 
 **Service-Specific Protection Patterns**:
@@ -131,60 +141,56 @@ Different service types require different exposure patterns and security conside
 * **Application Services**: Balanced protection suitable for user-facing applications with reasonable rate limits
 * **Integration Services**: API-focused protection with token-based authentication and endpoint-specific policies
 
-**Migration Criteria for Phase 2**:
+**Original Migration Plan (Historical)**:
 
-* cs-envoy-bouncer reaches production maturity (documentation, stable releases)
-* Community adoption and validation
-* Feature parity with Traefik CrowdSec plugin
+* ~~cs-envoy-bouncer reaches production maturity (documentation, stable releases)~~
+* ~~Community adoption and validation~~
+* ~~Feature parity with Traefik CrowdSec plugin~~
 
 This hybrid approach enables immediate deployment with mature anti-bot protection while preserving the path to unified Envoy Gateway architecture when the ecosystem matures.
 
-## Consequences
+## Potential Consequences
 
-### Positive
+**NOTE: Full impact assessment pending proof of concept results**
 
-**Phase 1 Benefits**:
+The following are anticipated benefits and limitations that will be validated through the proof of concept evaluation:
 
-* ✅ **Mature Anti-Bot Protection**: CrowdSec plugin with community threat intelligence and production-proven capabilities
-* ✅ **End-to-End Security**: No decryption by third parties, preserving homelab privacy principles
-* ✅ **IP Privacy Protection**: Home public IP address remains hidden from external exposure
-* ✅ **Service-Agnostic Design**: Framework supports any homelab service with appropriate protection patterns
-* ✅ **Gateway API Compliance**: Future-proof with standard Gateway API implementation
-* ✅ **Immediate Deployment**: Production-ready protection without waiting for ecosystem maturity
-* ✅ **Architecture Alignment**: Integration with existing Envoy Gateway, cert-manager, and authentication infrastructure
-* ✅ **Cost Effectiveness**: No additional cloud services or infrastructure costs
-* ✅ **Scalable Protection**: Handles multiple services with varying security requirements
+### Potential Benefits
 
-**Migration Benefits**:
+* **Enhanced Protocol Support**: Ability to handle both HTTP/HTTPS and TCP protocols
+* **Privacy Protection**: Hiding origin IP address from external exposure
+* **Service-Agnostic Design**: Supporting various homelab services with appropriate protection patterns
+* **Community Threat Intelligence**: Leveraging CrowdSec's security capabilities
+* **Cost-Effective Security**: Minimizing additional infrastructure costs
+* **Scalability**: Supporting multiple services with different security requirements
 
-* ✅ **Unified Architecture**: Future consolidation on single Envoy Gateway stack for all services
-* ✅ **Risk Mitigation**: Dual-stack approach reduces migration risks
-* ✅ **Ecosystem Evolution**: Flexible adaptation to Envoy Gateway CrowdSec maturation
+### Potential Limitations
 
-### Negative
+* **Client Software Requirements**: Need for client-side cloudflared for TCP access
+* **Integration Complexity**: Ensuring proper integration between security components
+* **Service Dependencies**: Reliance on third-party service availability
+* **Configuration Tuning**: Need for careful threshold configuration to avoid legitimate user impact
 
-**Phase 1 Limitations**:
+A comprehensive assessment of benefits and limitations will be conducted after the proof of concept for Option 5 is completed.
 
-* ⚠️ **Dual Gateway Complexity**: Temporary operational overhead managing both Traefik and Envoy Gateway
-* ⚠️ **Migration Dependency**: Future migration dependent on cs-envoy-bouncer ecosystem maturation
-* ⚠️ **IP Propagation Dependency**: Rate limiting effectiveness depends on proper client IP forwarding through Tailscale Funnel
-* ⚠️ **Threshold Tuning**: Requires ongoing monitoring and adjustment to prevent legitimate user impact
-* ⚠️ **Single Point of Failure**: Tailscale service availability impacts external access (internal access via Tailscale mesh remains available)
+### Validation Plan
 
-### Confirmation
+**NOTE: Detailed validation criteria to be defined after POC**
 
-**Service-Specific Validation Patterns**:
+**Proof of Concept Validation Focus**:
 
-* **Authentication Services** (Initial implementation: Authelia via `https://auth.chezmoi.sh`): OIDC E2E tests (302 to provider, consent, tokens), 429 on IP threshold exceeded for login/OIDC endpoints
-* **Application Services**: HTTP/HTTPS response validation, rate limiting effectiveness on service endpoints
-* **Integration Services**: API endpoint availability, webhook delivery success, token-based authentication validation
+* Effectiveness of CrowdSec integration with Cloudflare
+* TCP protocol support and client experience
+* Security boundary integrity and protection capabilities
+* Operational complexity and maintenance requirements
 
-**Universal Validation Requirements**:
+**Planned Validation Patterns**:
 
-* No exposure of the origin IP (DNS/header/edge logs scan)
-* Valid certificates (DNS-01) with proper TLS configuration
-* Rate limiting and protection active at gateway level with correlated logs
-* Application-level protections configured appropriately for service type
+* **Authentication Services**: OIDC flows, rate limiting, and protection effectiveness
+* **Application Services**: Protocol support, response validation, and security controls
+* **Integration Services**: API accessibility, webhook delivery, and authentication mechanisms
+
+Detailed validation criteria will be established after the proof of concept implementation.
 
 ## Pros and Cons of the Options
 
@@ -196,7 +202,9 @@ This hybrid approach enables immediate deployment with mature anti-bot protectio
   * Integrates well in homelab contexts; straightforward rollout
   * Low recurring cost; minimal operational overhead
 * Disadvantages:
+  * Limited to HTTP/HTTPS traffic only; does not support proxying raw TCP traffic
   * No managed WAF/DDoS; protections must be implemented at the gateway/app layer
+  * WAF Kubernetes integration complexity due to HTTP-only traffic support (not supported on Kubernetes Services)
   * Fewer anti-bot features than large cloud edges; rate limiting and app hardening are essential
   * Ensure client IP propagation to avoid ineffective IP-based limits
 
@@ -220,66 +228,96 @@ This hybrid approach enables immediate deployment with mature anti-bot protectio
   * Not necessarily more secure than managed/peer approaches; DIY DDoS/WAF is non-trivial
   * Higher operational complexity and time to implement
 
+### Option 4: Cloudflare Tunnel (Proxy L4) + GW with CrowdSec
+
+* Advantages:
+  * Supports TCP proxying at L4 for non-HTTP protocols in Kubernetes environments
+  * Basic DDoS protection at network level (not WAF capabilities)
+  * No router port forwarding; origin IP is hidden with strong operational security
+  * Extensive Kubernetes integration via `cloudflared` daemon
+  * CrowdSec integration via Traefik plugin providing threat intelligence
+* Disadvantages:
+  * Clients must run `cloudflared` locally to access non-HTTP services (SSH, RDP, etc.)
+  * No native WAF capabilities (L7 inspection) for TCP traffic
+  * Requires Traefik installation and maintenance until cs-envoy-bouncer reaches production maturity
+  * Vendor lock-in; DNS delegation to Cloudflare typically required
+
+### Option 5: Cloudflare Tunnel (Proxy L4) with CrowdSec Worker + GW
+
+* Advantages:
+  * Eliminates Traefik dependency - direct integration with Kubernetes services
+  * CrowdSec Worker provides protection at the Cloudflare edge
+  * Supports TCP proxying at L4 for non-HTTP protocols in Kubernetes environments
+  * Simpler architecture with fewer components to maintain
+  * No router port forwarding; origin IP is hidden with strong operational security
+* Disadvantages:
+  * Clients must run `cloudflared` locally to access non-HTTP services (SSH, RDP, etc.)
+  * Requires Cloudflare Workers subscription (not available on free plan)
+  * Less mature integration - requires proof of concept testing
+  * TLS is still terminated at Cloudflare for HTTP/HTTPS traffic (conflicts with no-MITM requirement)
+  * Vendor lock-in; DNS delegation to Cloudflare typically required
+
 ## Implementation Strategy
 
-The implementation follows a defense-in-depth approach with multiple security layers applicable to all homelab services requiring external exposure:
+**NOTE: Implementation strategy pending proof of concept results for Option 5**
 
-### Phase 1 Implementation Components
+The specific implementation strategy will be defined after the proof of concept for Option 5 (Cloudflare Tunnel with CrowdSec Worker + GW) is completed and evaluated.
 
-* **Tailscale Funnel Configuration**: Enable secure external access while maintaining IP privacy
-* **Traefik Gateway API Deployment**: Deploy Traefik with Gateway API support for external traffic
-* **CrowdSec Integration**: Configure CrowdSec plugin with community threat intelligence feeds
-* **Service-Specific Protection Layers**: Configure appropriate protection based on service type and criticality
-* **Certificate Management**: Leverage existing cert-manager DNS-01 automation for TLS certificates
-* **Dual-Stack Routing**: Configure external traffic routing through Traefik, internal through Envoy Gateway
+### Potential Implementation Components
 
-### Security Architecture (Phase 1)
+Depending on the selected approach, implementation may include some of the following components:
 
-The solution implements multiple protection layers for external traffic across all service types:
+* **Cloudflare Tunnel Deployment**: cloudflared daemon in Kubernetes for secure L4 proxying
+* **CrowdSec Integration**: Either via Cloudflare Worker/Bouncer or Gateway plugin
+* **Client Access Configuration**: For TCP services requiring client-side cloudflared
+* **Certificate Management**: Using existing cert-manager DNS-01 automation
+* **Protection Layer Configuration**: Based on service type and criticality
 
-1. **Network Layer**: Tailscale Funnel provides secure tunneling and IP masking
-2. **Edge Protection**: CrowdSec plugin provides community threat intelligence and automated blocking
-3. **Application Gateway**: Traefik Gateway API enforces traffic policies and routing
-4. **Service Protection Layer**: Service-specific protection (authentication regulation, API rate limiting, etc.)
-5. **Internal Gateway**: Envoy Gateway continues handling internal cluster traffic
+### Security Architecture Considerations
 
-### Migration Strategy (Phase 2)
+**NOTE: Final security architecture pending proof of concept results**
 
-**Migration Triggers**:
+The envisioned security architecture will include multiple protection layers, but specific implementation details will be determined after POC evaluation. Key security components under consideration:
 
-* cs-envoy-bouncer repository shows stable releases and comprehensive documentation
-* Community adoption demonstrates production readiness
-* Feature parity achieved with current Traefik CrowdSec plugin capabilities
+1. **Network Layer**: L4 proxying and IP masking mechanisms
+2. **Edge Protection**: Integration options between CrowdSec and selected proxy solution
+3. **Gateway Protection**: Community threat intelligence capabilities
+4. **Protocol Support**: Both HTTP/HTTPS and TCP protocol handling
+5. **Service-Specific Protection**: Authentication regulation and rate limiting
+6. **Internal Traffic Handling**: Maintaining separation between external and internal traffic
 
-**Migration Process**:
+### Transition Considerations
 
-1. Deploy cs-envoy-bouncer in parallel configuration
-2. Gradual traffic migration with canary rollout approach
-3. Validation of protection effectiveness and performance metrics
-4. Full migration and Traefik Gateway API deprecation for external traffic
+**NOTE: Transition strategy to be determined after proof of concept**
 
-This phased approach ensures immediate deployment with mature protection while maintaining architectural flexibility for future consolidation.
+**Transition Rationale (from Tailscale to Cloudflare)**:
 
-## Risks and Mitigations
+* Tailscale Funnel's limitation to HTTP/HTTPS traffic only (no raw TCP support)
+* WAF integration complexity with Tailscale Funnel
+* Need for comprehensive protocol support beyond HTTP/HTTPS
+* Edge security requirements and integration options
 
-### Security Risks
+The specific implementation phases, migration criteria, and migration process will be defined after evaluating the proof of concept for Option 5, determining its viability, and comparing it with other options.
 
-* **Client IP Propagation Failure**: Rate limiting ineffective if client IPs aren't properly forwarded through Tailscale Funnel
-  * *Mitigation*: Configure PROXY protocol support and validate IP forwarding in pre-production testing
+## Risk Considerations
 
-* **Authentication Bypass**: Potential vulnerabilities in the authentication flow or configuration errors
-  * *Mitigation*: Regular security audits, E2E testing of authentication flows, and monitoring for anomalous access patterns
+**NOTE: Comprehensive risk assessment pending proof of concept results**
 
-### Operational Risks
+### Security Risk Factors
 
-* **False Positive Rate Limiting**: Legitimate users blocked by overly aggressive rate limiting
-  * *Mitigation*: Conservative threshold configuration, comprehensive monitoring, and emergency bypass procedures
+* **Client IP Propagation**: Impact on rate limiting and attack detection effectiveness
+* **Authentication Security**: Potential vulnerabilities in authentication flows
+* **Protocol Security**: Differences in security posture between HTTP/HTTPS and TCP traffic
+* **Edge Protection Effectiveness**: Real-world effectiveness of selected protection mechanisms
 
-* **External Service Dependencies**: Dependency on Tailscale service availability for external access
-  * *Mitigation*: Maintain internal Tailscale mesh access as fallback; monitor Tailscale service status
+### Operational Risk Factors
 
-* **Certificate Management**: DNS-01 challenge failures could disrupt TLS certificate renewal
-  * *Mitigation*: Robust monitoring of cert-manager processes and automated alerting for certificate expiration
+* **False Positive Management**: Balancing security with legitimate access
+* **Service Dependencies**: External service reliability and availability
+* **Certificate Management**: Certificate lifecycle and renewal processes
+* **Integration Complexity**: Long-term maintenance considerations
+
+Detailed risk assessment and specific mitigation strategies will be developed following proof of concept evaluation.
 
 ## References
 
@@ -287,9 +325,18 @@ This phased approach ensures immediate deployment with mature protection while m
 * [Authelia – Regulation](https://www.authelia.com/configuration/security/regulation/)
 * [CrowdSec – Envoy Bouncer](https://github.com/crowdsecurity/cs-envoy-bouncer) *(Note: Repository in early development stage - no releases or comprehensive documentation as of 2025-08-09)*
 * [CrowdSec – Traefik Plugin](https://plugins.traefik.io/plugins/6335346ca4caa9ddeffda116/crowdsec-bouncer-traefik-plugin)
+* [CrowdSec – Cloudflare Bouncer](https://doc.crowdsec.net/u/bouncers/cloudflare/)
+* [CrowdSec – Cloudflare Worker Bouncer](https://docs.crowdsec.net/u/bouncers/cloudflare-workers/)
 
 ## Changelog
 
+* **2025-08-10**: **MAJOR REVISION**:
+  * Switched from Tailscale Funnel to Cloudflare Tunnel due to Tailscale's HTTP-only limitation
+  * Added two new L4 proxy options: Cloudflare Tunnel + Gateway with CrowdSec (Option 4) and Cloudflare Tunnel with CrowdSec Worker (Option 5)
+  * Identified Option 5 as most promising but requiring proof of concept
+  * Changed decision status to "pending POC results"
+  * Updated diagrams to Mermaid format with proper cloudflared proxy flow representation
+  * Revised implementation sections to indicate dependency on POC results
 * **2025-08-09**: **SCOPE CLARIFICATION**: This ADR defines the generic external access strategy for ALL homelab services requiring public exposure, with Authelia (SSO) as the primary implementation example. The architectural patterns and security decisions apply to any service needing external access (monitoring, administration interfaces, applications, etc.).
 * **2025-08-09**: **UPDATED**: Revised to hybrid approach (Traefik Gateway API + CrowdSec → Envoy Gateway) based on cs-envoy-bouncer immaturity analysis
 * **2025-08-09**: **ENHANCED**: Improved document structure and repositioned as homelab-wide architectural decision
