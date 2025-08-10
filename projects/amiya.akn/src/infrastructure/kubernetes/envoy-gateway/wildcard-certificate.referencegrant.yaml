@@ -1,0 +1,18 @@
+---
+# Allow Traefik to use the wildcard certificate from envoy-gateway-system
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: wildcard-certificate-access
+  namespace: envoy-gateway-system
+  annotations:
+    security.chezmoi.sh/description: "Transitional ReferenceGrant for Phase 1 ADR-006 - allows Traefik external gateway to access Envoy Gateway's wildcard certificate during dual-gateway architecture"
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: traefik-system
+  to:
+    - group: ""
+      kind: Secret
+      name: wildcard.chezmoi.sh-certificate

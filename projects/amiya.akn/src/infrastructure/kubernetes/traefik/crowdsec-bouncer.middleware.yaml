@@ -1,0 +1,42 @@
+---
+# CrowdSec Bouncer Middleware for Traefik Gateway API
+# Provides automatic threat protection based on CrowdSec LAPI decisions
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: crowdsec-crowdsec-bouncer-traefik-plugin
+  namespace: traefik-system
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/part-of: traefik
+spec:
+  plugin:
+    crowdsec-bouncer-traefik-plugin:
+      enabled: true
+      # CrowdSec LAPI endpoint for decision checking
+      crowdsecMode: "live"
+      crowdsecLapiHost: "crowdsec-service.crowdsec.svc.cluster.local:8080"
+      crowdsecLapiScheme: "http"
+      # Authentication with CrowdSec LAPI (API key from secret)
+      crowdsecLapiKeyFile: "/etc/traefik/crowdsec/api-key"
+      # Bouncing configuration
+      crowdsecLapiTLSInsecureVerify: false
+      crowdsecCapiMachineId: "traefik-bouncer"
+      crowdsecCapiScenarios:
+        - "crowdsecurity/http-crawl-non_statics"
+        - "crowdsecurity/http-sensitive-files"
+        - "crowdsecurity/http-bad-user-agent"
+        - "crowdsecurity/http-backdoors-attempts"
+        - "crowdsecurity/http-generic-bf"
+      # Custom ban page
+      forwardedHeadersCustomName: "X-Forwarded-For"
+      clientTrustedIPs:
+        - "127.0.0.1/32"
+        - "10.0.0.0/8"
+        - "172.16.0.0/12"
+        - "192.168.0.0/16"
+        - "100.64.0.0/10" # Tailscale CGNAT range
+      # Logging and monitoring
+      logLevel: "INFO"
+      updateIntervalSeconds: 60
+      defaultDecisionSeconds: 60

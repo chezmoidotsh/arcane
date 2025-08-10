@@ -1,0 +1,144 @@
+---
+# Traefik Gateway API configuration for external traffic with CrowdSec integration
+# Based on https://blog.mossroy.fr/2024/02/16/crowdsec-sur-k3s/
+
+# Enable Gateway API provider for modern routing
+providers:
+  kubernetesGateway:
+    enabled: true
+    namespace: traefik-system
+  kubernetesIngress:
+    enabled: false # Disable legacy Ingress support, use Gateway API only
+
+# Enable CrowdSec bouncer plugin for threat protection
+experimental:
+  kubernetesGateway:
+    enabled: true
+  plugins:
+    crowdsec-bouncer-traefik-plugin:
+      moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+      version: v1.4.4
+
+# Gateway API configuration
+gateway:
+  enabled: true
+  name: external
+  gatewayClass:
+    name: traefik-external
+  listeners:
+    web:
+      hostname: "*.chezmoi.sh"
+      namespacePolicy:
+        from: All
+      port: 8000
+      protocol: HTTP
+    websecure:
+      certificateRefs:
+        - group: ""
+          kind: Secret
+          name: wildcard.chezmoi.sh-certificate
+          namespace: envoy-gateway-system
+      hostname: "*.chezmoi.sh"
+      namespacePolicy:
+        from: All
+      port: 8443
+      protocol: HTTPS
+
+# Service configuration for external access
+service:
+  enabled: true
+  type: LoadBalancer
+
+# Enable access logs for CrowdSec analysis
+logs:
+  general:
+    level: INFO
+  access:
+    enabled: true
+    format: json
+    fields:
+      general:
+        defaultMode: keep
+        names:
+          ClientAddr: keep
+          ClientHost: keep
+          ClientPort: keep
+          ClientUsername: keep
+          DownstreamStatus: keep
+          DownstreamContentSize: keep
+          OriginContentSize: keep
+          OriginDuration: keep
+          OriginStatus: keep
+          RequestAddr: keep
+          RequestHost: keep
+          RequestMethod: keep
+          RequestPath: keep
+          RequestProtocol: keep
+          RequestScheme: keep
+          RequestContentSize: keep
+          RetryAttempts: keep
+          RouterName: keep
+          ServiceAddr: keep
+          ServiceName: keep
+          ServiceURL: keep
+
+# Enable PROXY protocol support for real IP propagation from Tailscale Funnel
+ports:
+  web:
+    port: 8000
+    expose:
+      default: true
+    exposedPort: 80
+    protocol: TCP
+    proxyProtocol:
+      trustedIPs:
+        - 127.0.0.1/32
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+        - 100.64.0.0/10 # Tailscale CGNAT range
+    redirections:
+      # Automatic HTTPS redirect
+      entryPoint:
+        to: websecure
+        scheme: https
+        permanent: true
+
+  websecure:
+    port: 8443
+    expose:
+      default: true
+    exposedPort: 443
+    protocol: TCP
+    redirections:
+      entryPoint:
+        to: websecure
+        scheme: https
+        permanent: true
+    proxyProtocol:
+      trustedIPs:
+        - 127.0.0.1/32
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+        - 100.64.0.0/10 # Tailscale CGNAT range
+
+# CrowdSec middleware configuration
+globalArguments:
+  - "--entrypoints.web.http.middlewares=crowdsec-crowdsec-bouncer-traefik-plugin@kubernetescrd"
+  - "--entrypoints.websecure.http.middlewares=crowdsec-crowdsec-bouncer-traefik-plugin@kubernetescrd"
+
+# CrowdSec API key volume mount
+volumes:
+  - name: crowdsec-bouncer-api-key
+    mountPath: /etc/traefik/crowdsec
+    type: secret
+
+# Resource limits
+resources:
+  requests:
+    cpu: 100m
+    memory: 50Mi
+  limits:
+    cpu: 300m
+    memory: 150Mi
