@@ -58,7 +58,8 @@ scripts/          # Operational scripts
 
 ### Essential Scripts
 
-* `./scripts/argocd:app:sync <app-path>` - Sync ArgoCD applications from project structure
+* `./scripts/argocd:app:sync <app-path>` - Create or sync ArgoCD applications from project structure
+  * Example: `./scripts/argocd:app:sync projects/amiya.akn/src/infrastructure/kubernetes/traefik`
 * `./scripts/cnpg:backup:create.sh <yaml-file>` - Create CloudNative-PG backups
 * `./scripts/folderinfo` - Generate repository structure overview
 * `./scripts/nix:build:image` - Build Nix-based container images
@@ -77,6 +78,39 @@ Uses `mise` for tool version management (.mise.toml):
 * **DevContainer support** with comprehensive tooling
 * **Nix flakes** for reproducible development environments
 * **VSCode/Cursor integration** with Go toolchain and SOPS support
+
+## GitOps Architecture Patterns
+
+### ArgoCD ApplicationSet Auto-Discovery
+
+**Applications Auto-Discovery** (`apps.applicationset.yaml`):
+
+* **Source Path**: `projects/{cluster}/src/apps/*` directories
+* **Application Generation**: `trimPrefix "*"` from directory basename → application name
+* **Target Namespace**: Same as application name (after `trimPrefix "*"`)
+* **ArgoCD Project**: `applications`
+* **Sync Policy**:
+  * Manual sync if directory starts with `*` (Delete=confirm, Prune=confirm)
+  * Automated sync (prune=true, selfHeal=true) for directories without `*`
+* **Sync Wave**: `100` (deployed after system applications)
+
+**System Infrastructure Auto-Discovery** (`system.applicationset.yaml`):
+
+* **Source Path**: `projects/{cluster}/src/infrastructure/kubernetes/*` directories
+* **Application Generation**: `trimPrefix "*"` from directory basename → application name
+* **Target Namespace**: `trimSuffix "-system"` then add `-system` (e.g., `traefik` → `traefik-system`)
+* **ArgoCD Project**: `system`
+* **Sync Policy**:
+  * Manual sync if directory starts with `*` (Delete=confirm, Prune=confirm)
+  * Automated sync (prune=true, selfHeal=true) for directories without `*`
+* **Sync Wave**: `10` (deployed before applications)
+* **Exclusions**: cert-manager, envoy-gateway, external-secrets, tailscale (managed via shoot.apps)
+
+**Directory Naming Convention**:
+
+* **Prefix `*`**: Manual sync required, used for critical/sensitive components
+* **No prefix**: Automated sync with prune/selfHeal enabled
+* **Suffix `-system`**: Automatically removed when calculating namespace for infrastructure
 
 ## GitOps Architecture Patterns
 

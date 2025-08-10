@@ -10,6 +10,7 @@ Comprehensive guidelines for creating standardized Git commits in the Arcane mul
 * **ALWAYS** use signoff (-s) and GPG signature (-S) flags for security and authenticity
 * **NEVER** auto-update GitHub issues - always ask for user confirmation first
 * **NEVER** make assumptions - ask for missing information rather than guessing
+* **NEVER** add "Generated with Claude Code" or similar AI generation disclaimers in commit messages - use Co-authored-by trailer instead
 
 **Valid examples:**
 
@@ -104,7 +105,7 @@ Use Gitmoji semantic emojis synchronized with `.commitlintrc.js`:
 
 **Advanced & Experimental:**
 
-* `:alembic:` - Perform experiments
+* `:alembic:` - Perform experiments (POCs, architecture testing, validation)
 * `:alien:` - Update code due to external API changes
 * `:twisted_rightwards_arrows:` - Merge branches
 
@@ -203,12 +204,16 @@ Use exact scope format based on `.commitlintrc.js`. When scope is ambiguous, ana
 * **Include context** - what problem this solves, what impact it has
 * **Mention affected systems** - which services, users, or processes are impacted
 * **Reference external resources** when relevant (docs, GitHub issues, PRs)
+* **NEVER use subjective judgments** - avoid "comprehensive", "complete", "enhanced", "improved", "better", "great", etc.
+* **Use objective facts only** - state requirements, limitations, technical reasons
 
 ### AI Co-Author Attribution (Mandatory)
 
 * **Always include Co-authored-by trailer** for all commits when using AI assistance
 * **Use standardized AI attribution format** for consistency and traceability
 * **Essential for transparency** and proper attribution of AI contributions
+* **NEVER use alternative AI attribution** - avoid "Generated with Claude Code", "AI-generated", or similar disclaimers in commit message body
+* **Co-authored-by is the ONLY acceptable AI attribution method** - it's standard, clean, and properly tracks AI contribution
 
 **Standard AI Co-author format:**
 
@@ -220,6 +225,21 @@ Co-authored-by: Claude <claude@anthropic.com>
 
 ```
 Co-authored-by: Claude (Sonnet-3.5) <claude@anthropic.com>
+```
+
+**Invalid AI attribution examples:**
+
+```
+❌ "Generated with Claude Code assistance"
+❌ "AI-generated commit with Claude"
+❌ "Created with AI assistance"
+❌ "Note: This commit was generated with AI help"
+```
+
+**Valid AI attribution (only method):**
+
+```
+✅ Co-authored-by: Claude <claude@anthropic.com>
 ```
 
 **Body format example with AI Co-author:**
@@ -238,22 +258,30 @@ git commit -S -s -m ":wrench:(k8s:cert-manager): Increase renewal threshold to 1
 
 **Body content examples:**
 
-**Good body content:**
+**Good body content (explains WHY):**
 
 ```
-✅ "Enables monitoring of API response times and error rates through
-the existing Prometheus stack. ServiceMonitor targets the API
-service on port 8080/metrics endpoint.
+✅ "ADR-006 requires validation of Option 5 architecture before
+final decision on homelab external access strategy.
+Current Tailscale Funnel approach has HTTP/HTTPS-only
+limitations that prevent TCP service exposure.
 
-This provides visibility into API performance and supports
-the alerting rules defined in the monitoring stack."
+This POC enables testing of edge-based security enforcement
+with Cloudflare Workers while maintaining IP privacy and
+zero-trust principles."
 ```
 
-**Bad body content:**
+**Bad body content (explains WHAT or uses judgments):**
 
 ```
-❌ "adds prometheus servicemonitor for api metrics endpoint"
-(lowercase start, explains WHAT not WHY, no context)
+❌ "adds comprehensive prometheus servicemonitor for api metrics endpoint"
+(lowercase start, explains WHAT not WHY, uses subjective judgment "comprehensive")
+
+❌ "Creates a complete implementation guide with enhanced testing framework"
+(subjective judgments: "complete", "enhanced")
+
+❌ "Implements proof of concept with comprehensive documentation and improved architecture"
+(multiple subjective judgments, focuses on WHAT instead of WHY)
 ```
 
 ### Consistency and workflow (Critical)
@@ -521,6 +549,9 @@ git push origin [branch-name]
 * [ ] **Critical**: Check recent commits for consistency
 * [ ] **Critical**: Never auto-update GitHub issues without confirmation
 * [ ] **Critical**: Always include AI Co-authored-by trailer for traceability
+* [ ] **Critical**: Never add "Generated with Claude Code" or similar disclaimers - Co-authored-by is sufficient
+* [ ] **Critical**: Body explains WHY (problem, requirement, limitation) not WHAT (implementation details)
+* [ ] **Critical**: Never use subjective judgments - avoid "comprehensive", "complete", "enhanced", "improved", etc.
 * [ ] **Recommended**: Use integrated commit tools over raw git commands when available
 
 ## Quick Reference Commands
