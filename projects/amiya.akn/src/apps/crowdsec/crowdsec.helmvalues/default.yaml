@@ -1,0 +1,88 @@
+---
+# CrowdSec LAPI configuration for amiya.akn cluster
+# Based on https://blog.mossroy.fr/2024/02/16/crowdsec-sur-k3s/
+
+lapi:
+  # Disable dashboard for security and resource efficiency
+  dashboard:
+    enabled: false
+
+  # Environment variables for CrowdSec Central API enrollment
+  env:
+    - name: ENROLL_KEY
+      valueFrom:
+        secretKeyRef:
+          name: crowdsec-secrets
+          key: enroll_key
+    - name: ENROLL_INSTANCE_NAME
+      value: amiya.akn.chezmoi.sh
+    - name: ENROLL_TAGS
+      value: k8s linux homelab
+
+  # Resource limits for LAPI pod
+  resources:
+    requests:
+      memory: 100Mi
+      cpu: 50m
+    limits:
+      memory: 200Mi
+      cpu: 200m
+
+  # Service configuration for internal access
+  service:
+    type: ClusterIP
+    port: 8080
+
+  # PVC for data persistence
+  persistentVolume:
+    enabled: true
+    size: 1Gi
+    storageClass: "" # Use default storage class
+
+# Agent configuration for log parsing and decision making
+agent:
+  # Acquisition configuration for log sources
+  acquisition:
+    # Monitor Traefik access logs via Kubernetes pod logs
+    - namespace: traefik-system
+      podName: traefik-.*
+      program: traefik
+    # Monitor Authelia logs for authentication events
+    - namespace: sso
+      podName: authelia-.*
+      program: authelia
+
+  # Enable CrowdSec collections and scenarios for web attack detection
+  env:
+    - name: COLLECTIONS
+      value: crowdsecurity/traefik crowdsecurity/base-http-scenarios
+    - name: SCENARIOS
+      value: crowdsecurity/http-crawl-non_statics crowdsecurity/http-probing crowdsecurity/http-path-traversal-probing crowdsecurity/http-xss-probing crowdsecurity/http-generic-bf crowdsecurity/http-admin-interface-probing crowdsecurity/http-sqli-probing crowdsecurity/http-backdoors-attempts
+
+  # Resource limits for agent pods
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 50m
+    limits:
+      memory: 256Mi
+      cpu: 200m
+
+  # Service account for Kubernetes API access
+  serviceAccount:
+    create: true
+    annotations: {}
+
+  # RBAC for reading pod logs
+  rbac:
+    create: true
+
+# Metrics configuration
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false # Enable if Prometheus operator is available
+
+# Network policies for security
+networkPolicy:
+  enabled: true

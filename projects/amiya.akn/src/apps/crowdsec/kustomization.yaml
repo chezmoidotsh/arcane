@@ -1,0 +1,23 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: crowdsec
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: crowdsec
+      app.kubernetes.io/part-of: crowdsec
+
+resources:
+  - namespace.yaml
+  - crowdsec.externalsecret.yaml
+
+helmCharts:
+  - name: crowdsec
+    repo: https://crowdsecurity.github.io/helm-charts
+    version: 0.19.5
+    releaseName: crowdsec
+    namespace: crowdsec
+    valuesFile: crowdsec.helmvalues/default.yaml
+    additionalValuesFiles:
+      - crowdsec.helmvalues/hardened.yaml
