@@ -1,0 +1,62 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: crowdsec
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: cloudflare-tunnel-poc
+
+resources:
+  - namespace.yaml
+
+helmCharts:
+  - name: crowdsec
+    repo: https://crowdsecurity.github.io/helm-charts
+    version: 0.19.5
+    releaseName: crowdsec
+    namespace: crowdsec
+    valuesInline:
+      # Configuration de base CrowdSec pour POC
+      # Runtime de containers pour K3s/K3d
+      container_runtime: containerd
+
+      lapi:
+        # Configuration de l'API locale
+        enabled: true
+        replicas: 1
+
+        # Configuration de l'environnement
+        env:
+          - name: ENROLL_KEY
+            valueFrom:
+              secretKeyRef:
+                name: crowdsec-secrets
+                key: enroll_key
+          - name: ENROLL_INSTANCE_NAME
+            value: poc-crowdsec-cloudflare-tunnel
+          - name: ENROLL_TAGS
+            value: k8s linux test
+
+        # Stockage des décisions (SQLite pour POC)
+        persistentVolume:
+          enabled: true
+
+      agent:
+        # Agent CrowdSec pour parsing des logs
+        enabled: true
+
+        # Acquisition des logs Kubernetes
+        acquisition:
+          # Traefik
+          - namespace: kube-system
+            podName: traefik-*
+            program: traefik
+
+        # Collections CrowdSec à installer (HTTP générique pour Envoy)
+        env:
+          - name: COLLECTIONS
+            value: "crowdsecurity/base-http-scenarios crowdsecurity/http-cve"
+          - name: PARSERS
+            value: "crowdsecurity/cri-logs crowdsecurity/traefik-logs"
+          - name: POSTOVERFLOWS
+            value: "crowdsecurity/cdn-whitelist"

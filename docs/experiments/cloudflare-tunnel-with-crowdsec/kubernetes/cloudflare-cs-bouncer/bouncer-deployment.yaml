@@ -1,0 +1,72 @@
+---
+# Service for bouncer metrics
+apiVersion: v1
+kind: Service
+metadata:
+  name: crowdsec-bouncer-metrics
+  namespace: crowdsec
+  labels:
+    app.kubernetes.io/name: crowdsec-bouncer
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: cloudflare-tunnel-poc
+spec:
+  selector:
+    app: crowdsec-bouncer
+  ports:
+    - name: metrics
+      port: 2112
+      targetPort: 2112
+      protocol: TCP
+  type: ClusterIP
+---
+# Deployment for the bouncer
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crowdsec-bouncer
+  namespace: crowdsec
+  labels:
+    app: crowdsec-bouncer
+    app.kubernetes.io/name: crowdsec-bouncer
+    app.kubernetes.io/component: bouncer
+    app.kubernetes.io/part-of: cloudflare-tunnel-poc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crowdsec-bouncer
+  template:
+    metadata:
+      labels:
+        app: crowdsec-bouncer
+        app.kubernetes.io/name: crowdsec-bouncer
+        app.kubernetes.io/component: bouncer
+    spec:
+      containers:
+        - name: crowdsec-bouncer
+          image: ghcr.io/crowdsecurity/cloudflare-worker-bouncer:v0.0.14
+          args:
+            - -c
+            - /etc/bouncer/config.yaml
+          ports:
+            - containerPort: 2112
+              name: metrics
+          volumeMounts:
+            - name: config
+              mountPath: /etc/bouncer
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 2112
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 2112
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: config
+          secret:
+            secretName: crowdsec-bouncer-config

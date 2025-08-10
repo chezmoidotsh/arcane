@@ -1,0 +1,11 @@
+[env]
+KUBECONFIG = "{{ config_root }}/.mise/kube/config"
+
+# Use private env file with all credentials
+_.file = { path = "{{ config_root }}/.env" }
+
+[tools]
+helm = "latest"
+k3d = "latest"
+kubectl = "latest"
+terraform = "latest"
