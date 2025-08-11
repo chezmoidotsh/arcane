@@ -66,95 +66,107 @@ Different service types require different exposure patterns and security conside
 
 ## Considered Options
 
-1. **Cloudflare Tunnel (+ WAF/Access)**: Original Cloudflare Tunnel option with WAF capabilities
-2. **Tailscale Funnel (+ gateway/app-side protections)**: Zero-trust approach with Tailscale
-3. **Dedicated edge proxy**: Self-hosted cloud VM with Traefik/Envoy Gateway + optional WAF
-4. **Cloudflare Tunnel (Proxy L4) + GW with CrowdSec**: Cloudflare L4 proxy with Traefik/Envoy Gateway and CrowdSec
-5. **~~Cloudflare Tunnel (Proxy L4) with CrowdSec Worker + GW~~**: ~~Cloudflare L4 proxy with CrowdSec worker and Envoy Gateway~~ **REJECTED - No Proxy Protocol support**
+1. **Cloudflare Tunnel (+ WAF/Access)**: Managed tunnel with Cloudflare edge protection - ❌ **REJECTED**
+2. **Tailscale Funnel (+ gateway/app-side protections)**: Zero-trust mesh network approach - ❌ **REJECTED**
+3. **Dedicated edge proxy**: Self-hosted cloud VM with reverse proxy + security stack - ✅ **VIABLE**
+4. **Cloudflare Tunnel (Proxy L4) + Traefik/CrowdSec**: L4 tunnel with local gateway protection - ❌ **REJECTED**
+5. **Cloudflare Tunnel (Proxy L4) + CrowdSec Worker**: L4 tunnel with edge worker protection - ❌ **REJECTED**
 
 ## Decision History
 
-**Original Decision (2025-08-09)**: "Tailscale Funnel + Hybrid Gateway Strategy (Traefik + CrowdSec → Envoy Gateway)" providing immediate mature anti-bot protection with planned migration to unified Envoy Gateway architecture for all external homelab service exposure.
+**2025-08-09**: Initial decision for Option 2 "Tailscale Funnel + Hybrid Gateway Strategy (Traefik + CrowdSec → Envoy Gateway)" providing immediate mature anti-bot protection with planned migration to unified Envoy Gateway architecture.
 
-**First Update (2025-08-10)**: After discovering Tailscale Funnel's limitation to HTTP/HTTPS traffic and challenges with WAF integration, consideration shifted to "Cloudflare Tunnel Proxy L4 + GW protection" for comprehensive protocol support.
+**2025-08-10**: Option 2 limitations discovered (HTTP/HTTPS only, WAF integration complexity). Shifted focus to Cloudflare Tunnel variants (Options 4 & 5) for comprehensive protocol support. Identified Option 5 as most promising, initiated POC development.
 
-**Current Status (2025-08-11)**: Option 5 "Cloudflare Tunnel (Proxy L4) with CrowdSec Worker + GW" has been **REJECTED** after proof-of-concept testing revealed that Cloudflare Tunnel does not support Proxy Protocol, preventing client IP preservation essential for CrowdSec functionality.
+**2025-08-10 (evening)**: Completed comprehensive POC implementation with full technical documentation, Kubernetes manifests, and testing framework for Option 5 validation.
+
+**2025-08-11**: POC execution revealed critical limitation - Cloudflare Tunnel lacks Proxy Protocol support, preventing client IP preservation essential for CrowdSec functionality.
+
+**2025-08-11 (analysis)**: Extended architectural analysis led to systematic rejection of all cloud-based tunnel solutions:
+
+* Option 1: TLS termination at Cloudflare violates "Security First" requirement
+* Option 2: Protocol limitations and DNS restrictions
+* Option 4 & 5: No Proxy Protocol support breaks security model
+
+**Current Status**: Only Option 3 (Dedicated edge proxy) remains architecturally viable
 
 ## Decision Outcome
 
-**Status**: Option 5 REJECTED - Cloudflare Tunnel architectural limitation identified
+**Status**: Pending final evaluation of Option 3 (Dedicated edge proxy)
 
-**Decision**: Option 5 (Cloudflare Tunnel with CrowdSec Worker + GW) is **NOT VIABLE** due to lack of Proxy Protocol support, which prevents client IP preservation required for CrowdSec security functionality.
+**Decision**: All cloud-based tunnel solutions have been systematically eliminated due to fundamental architectural incompatibilities with homelab security requirements. The comprehensive evaluation process revealed that external tunnel providers cannot satisfy the combination of:
 
-**Impact**: Without client IP visibility, CrowdSec cannot:
+* End-to-end TLS without third-party termination
+* Client IP preservation for security controls
+* Custom domain support without vendor lock-in
+* Comprehensive protocol support (HTTP/HTTPS + TCP)
 
-* Identify attack sources (all traffic appears from Cloudflare IPs)
-* Apply rate limiting effectively
-* Make IP-based security decisions
-* Support geographic restrictions or IP banning
+**Remaining Path**: Option 3 (Dedicated edge proxy) represents the only approach that maintains full control over security boundaries while meeting all functional requirements. This requires:
 
-A new decision must be made from the remaining viable options.
+* Self-hosted cloud VM (\~€8/month operational cost)
+* Custom security stack implementation and maintenance
+* Enhanced operational complexity for DIY edge protection
 
-### Architectural Solution
+**Next Phase**: Detailed evaluation of Option 3 implementation strategies, cost-benefit analysis, and potential hybrid approaches to minimize operational overhead while preserving security requirements.
 
-#### Option 2: Tailscale Funnel + Traefik Gateway (Original Plan)
-
-```mermaid
-graph TD
-    A[External Users/Apps] -->|HTTP/HTTPS| B[Tailscale Funnel];
-    B[Tailscale Funnel] -->|HTTP/HTTPS| C[Traefik Gateway];
-    C -->|HTTP/HTTPS| D[Homelab Services];
-    E[CrowdSec] -->|Protection| C;
-```
-
-#### Option 4: Cloudflare Tunnel + Traefik Gateway
+### Target Architecture (Option 3: Dedicated Edge Proxy)
 
 ```mermaid
 graph TD
-    A[External Users/Apps] -->|HTTP/HTTPS/TCP| B[cloudflared daemon];
-    B[cloudflared] -->|HTTP/HTTPS/TCP| C[Traefik Gateway];
-    C -->|HTTP/HTTPS| D[Homelab Services];
-    E[CrowdSec] -->|Protection| C;
-    F[Client-side cloudflared] -.->|Required for TCP| B;
+    A[External Users/Apps] -->|HTTP/HTTPS/TCP| B[Cloud VM - Edge Proxy]
+    B -->|Proxy Protocol| C[VPN/Tunnel to Homelab]
+    C -->|Client IP Preserved| D[Envoy Gateway]
+    D -->|HTTP/HTTPS| E[Homelab Services]
+    F[CrowdSec Agent] -->|Logs Analysis| G[CrowdSec LAPI]
+    G -->|Security Decisions| H[CrowdSec Bouncer]
+    H -->|Protection| D
+    B -.->|WAF/DDoS Protection| B
+    
+    subgraph "Cloud Provider (AWS/GCP/OVH)"
+        B
+    end
+    
+    subgraph "Homelab Network"
+        C
+        D
+        E
+        F
+        G
+        H
+    end
 ```
 
-#### Option 5: Cloudflare Tunnel with CrowdSec Worker (Promising Approach)
+**Key Components**:
 
-```mermaid
-graph TD
-    A[External Users/Apps] -->|HTTP/HTTPS/TCP| B[cloudflared daemon];
-    B[cloudflared] -->|HTTP/HTTPS/TCP| C[Kubernetes Services];
-    C -->|Logs| D[CrowdSec Agent];
-    D -->|Decisions| E[CrowdSec LAPI];
-    E -->|Synchronization| F[CrowdSec Cloudflare Worker];
-    F -->|Updates| G[Cloudflare Gateway];
-    G -->|Protection| B;
-    H[Client-side cloudflared] -.->|Required for TCP| B;
-```
+* **Edge Proxy**: Self-hosted reverse proxy with full TLS control
+* **Proxy Protocol**: Preserves client IPs for security enforcement
+* **Secure Tunnel**: WireGuard/IPSec connection to homelab
+* **Local Security**: CrowdSec with full client visibility
+* **Protocol Support**: Complete HTTP/HTTPS/TCP coverage
 
 ### Key Implementation Components
 
-**Current Implementation Components**:
+**Implementation Components (Option 3)**:
 
-* **Cloudflare Tunnel**: Provides secure L4 proxying for both HTTP and TCP traffic (without WAF capabilities)
-* **CrowdSec Cloudflare Integration**: Potential integration via Cloudflare Bouncer or Cloudflare Worker Bouncer to add security capabilities
-* **Client-side cloudflared**: Required for accessing TCP services through the tunnel
-* **DNS-01 Certificates**: Automated certificate management without domain validation exposure
+* **Edge Proxy VM**: Self-hosted cloud instance with Traefik/Envoy + CrowdSec
+* **Secure Connectivity**: WireGuard tunnel or IPSec VPN to homelab
+* **Certificate Management**: Let's Encrypt with DNS-01 validation
+* **Client IP Preservation**: Proxy Protocol v2 for full security visibility
+* **Custom Domain Support**: Full DNS control without vendor restrictions
 
 **Service-Specific Protection Patterns**:
 
-* **Authentication Services** (Initial use case: Authelia): Enhanced regulation with strict rate limiting and multi-layer abuse protection
-* **Administrative Services**: No external exposure; internal access via Tailscale mesh
-* **Application Services**: Balanced protection suitable for user-facing applications with reasonable rate limits
-* **Integration Services**: API-focused protection with token-based authentication and endpoint-specific policies
+* **Authentication Services** (Authelia): Enhanced regulation with strict rate limiting and geographic restrictions
+* **Administrative Services**: VPN-only access via Tailscale mesh (no external exposure)
+* **Application Services**: Balanced protection with CrowdSec community intelligence
+* **Integration Services**: API-focused protection with token validation and endpoint-specific policies
 
-**Original Migration Plan (Historical)**:
+**Operational Considerations**:
 
-* ~~cs-envoy-bouncer reaches production maturity (documentation, stable releases)~~
-* ~~Community adoption and validation~~
-* ~~Feature parity with Traefik CrowdSec plugin~~
-
-This hybrid approach enables immediate deployment with mature anti-bot protection while preserving the path to unified Envoy Gateway architecture when the ecosystem matures.
+* **Monthly Cost**: €8-15/month for cloud VM (varies by provider/region)
+* **Maintenance**: Security updates, monitoring, backup management
+* **Scalability**: Manual scaling vs managed services trade-off
+* **Reliability**: Single point of failure requires monitoring and failover planning
 
 ## Potential Consequences
 
@@ -199,77 +211,61 @@ A comprehensive assessment of benefits and limitations will be conducted after t
 
 Detailed validation criteria will be established after the proof of concept implementation.
 
-## Pros and Cons of the Options
+## Options Analysis Summary
 
-### Tailscale Funnel (+ gateway/app-side protections)
+| Option                                            | Status     | Primary Limitation            | Impact                                                 |
+| ------------------------------------------------- | ---------- | ----------------------------- | ------------------------------------------------------ |
+| **Option 1: Cloudflare Tunnel + WAF**             | ❌ Rejected | Mandatory TLS termination     | MITM by provider violates security requirements        |
+| **Option 2: Tailscale Funnel + Gateway**          | ❌ Rejected | HTTP/HTTPS only + DNS lock-in | Cannot support TCP services or custom domains          |
+| **Option 3: Dedicated Edge Proxy**                | ✅ Viable   | Operational cost/complexity   | €8-15/month + maintenance overhead                     |
+| **Option 4: Cloudflare Tunnel + Traefik**         | ❌ Rejected | No Proxy Protocol support     | CrowdSec cannot identify client IPs                    |
+| **Option 5: Cloudflare Tunnel + CrowdSec Worker** | ❌ Rejected | No Proxy Protocol support     | Security controls impossible without client visibility |
 
-* Advantages:
-  * End-to-end encryption without third-party TLS termination (no MITM by provider)
-  * No router port forwarding; origin IP is not publicly disclosed
-  * Integrates well in homelab contexts; straightforward rollout
-  * Low recurring cost; minimal operational overhead
-* Disadvantages:
-  * Limited to HTTP/HTTPS traffic only; does not support proxying raw TCP traffic
-  * No managed WAF/DDoS; protections must be implemented at the gateway/app layer
-  * WAF Kubernetes integration complexity due to HTTP-only traffic support (not supported on Kubernetes Services)
-  * Fewer anti-bot features than large cloud edges; rate limiting and app hardening are essential
-  * Ensure client IP propagation to avoid ineffective IP-based limits
+## Detailed Analysis of Remaining Option
 
-### Cloudflare Tunnel (+ WAF/Access)
+### Option 3: Dedicated Edge Proxy (Only Viable Solution)
 
-* Advantages:
-  * Powerful edge protections: DDoS/WAF/rate limiting/bot management
-  * No router port forwarding; origin IP is hidden; strong operational maturity
-  * Extensive ecosystem and Kubernetes integration
-* Disadvantages:
-  * TLS is terminated at Cloudflare (trust in provider; not compatible with the strict no-MITM constraint)
-  * Vendor lock-in; DNS delegation to Cloudflare often required
+**Architecture**: Self-hosted cloud VM running reverse proxy (Traefik/Envoy) with security stack (CrowdSec, WAF) connected to homelab via secure tunnel (WireGuard/IPSec).
 
-### Dedicated edge proxy (cloud VM + Envoy/Traefik + optional WAF)
+**Advantages**:
 
-* Advantages:
-  * Full control of the edge; can preserve strict end-to-end TLS
-  * Flexible architecture; can layer custom protections and policies
-* Disadvantages:
-  * Monthly cost (≈ €8/month minimum) and ongoing maintenance burden
-  * Not necessarily more secure than managed/peer approaches; DIY DDoS/WAF is non-trivial
-  * Higher operational complexity and time to implement
+* Full control over TLS termination and certificate management
+* Complete protocol support (HTTP/HTTPS/TCP/UDP)
+* Client IP preservation via Proxy Protocol for security enforcement
+* Custom domain support without vendor restrictions
+* Flexible security stack (CrowdSec, WAF, DDoS protection)
+* No third-party traffic inspection or vendor lock-in
 
-### Option 4: Cloudflare Tunnel (Proxy L4) + GW with CrowdSec
+**Disadvantages**:
 
-* Advantages:
-  * Supports TCP proxying at L4 for non-HTTP protocols in Kubernetes environments
-  * Basic DDoS protection at network level (not WAF capabilities)
-  * No router port forwarding; origin IP is hidden with strong operational security
-  * Extensive Kubernetes integration via `cloudflared` daemon
-  * CrowdSec integration via Traefik plugin providing threat intelligence
-* Disadvantages:
-  * Clients must run `cloudflared` locally to access non-HTTP services (SSH, RDP, etc.)
-  * No native WAF capabilities (L7 inspection) for TCP traffic
-  * Requires Traefik installation and maintenance until cs-envoy-bouncer reaches production maturity
-  * Vendor lock-in; DNS delegation to Cloudflare typically required
+* Monthly operational cost (€8-15/month depending on provider/region)
+* Manual security management and maintenance responsibility
+* Single point of failure requiring monitoring and backup strategies
+* Higher implementation complexity compared to managed solutions
+* DIY DDoS/WAF protection less sophisticated than cloud providers
 
-### Option 5: ~~Cloudflare Tunnel (Proxy L4) with CrowdSec Worker + GW~~ **REJECTED**
+**Cost-Benefit Analysis**:
 
-**Critical Limitation Identified**: Cloudflare Tunnel does not support Proxy Protocol, preventing preservation of client IP addresses required for CrowdSec functionality.
+* **Annual Cost**: €96-180/year operational expense
+* **Value**: Complete architectural control meeting all security requirements
+* **Alternative**: Compromising security requirements (unacceptable)
+* **Mitigation**: Automated deployment, monitoring, and failover procedures
 
-* ~~Advantages~~: **INVALIDATED**
-  * ~~Eliminates Traefik dependency - direct integration with Kubernetes services~~
-  * ~~CrowdSec Worker provides protection at the Cloudflare edge~~ **BROKEN: Cannot identify client IPs**
-  * ~~Supports TCP proxying at L4 for non-HTTP protocols in Kubernetes environments~~
-  * ~~Simpler architecture with fewer components to maintain~~
-  * ~~No router port forwarding; origin IP is hidden with strong operational security~~
-* **Fatal Disadvantages**:
-  * **NO PROXY PROTOCOL SUPPORT**: Cannot preserve client IP addresses
-  * **CrowdSec integration fails**: All traffic appears to originate from Cloudflare IPs
-  * **Security controls broken**: Rate limiting, IP banning, geographic restrictions impossible
-  * **Zero-trust model compromised**: Loss of client context breaks security model
-  * Clients must run `cloudflared` locally to access non-HTTP services (SSH, RDP, etc.)
-  * Requires Cloudflare Workers subscription (not available on free plan)
-  * TLS is still terminated at Cloudflare for HTTP/HTTPS traffic (conflicts with no-MITM requirement)
-  * Vendor lock-in; DNS delegation to Cloudflare typically required
+### Rejected Options Summary
 
-**Proof of Concept Result**: [Failed POC documented in experiments/cloudflare-tunnel-with-crowdsec](../experiments/cloudflare-tunnel-with-crowdsec/README.md)
+**All cloud-based tunnel solutions eliminated due to fundamental incompatibilities**:
+
+* **Options 1, 4 & 5 (Cloudflare variants)**: Either mandatory TLS termination (Option 1) or no Proxy Protocol support (Options 4 & 5), both breaking security requirements
+* **Option 2 (Tailscale Funnel)**: HTTP/HTTPS protocol limitation and DNS vendor lock-in preventing comprehensive service exposure
+
+**Key Finding**: No external tunnel provider can simultaneously satisfy:
+
+* End-to-end TLS without third-party termination
+* Client IP preservation for security controls
+* Custom domain support without vendor lock-in
+* Comprehensive protocol support (HTTP/HTTPS + TCP)
+
+**Failed POC**: Comprehensive implementation documented in [experiments/cloudflare-tunnel-with-crowdsec](../experiments/cloudflare-tunnel-with-crowdsec/README.md) confirming architectural limitations.
 
 ## Implementation Strategy
 
@@ -344,12 +340,14 @@ Detailed risk assessment and specific mitigation strategies will be developed fo
 
 ## Changelog
 
-* **2025-08-11**: **OPTION 5 REJECTION**:
-  * Completed proof of concept for Option 5 (Cloudflare Tunnel with CrowdSec Worker)
-  * **REJECTED** Option 5 due to critical limitation: Cloudflare Tunnel does not support Proxy Protocol
-  * Without client IP preservation, CrowdSec cannot function effectively for security enforcement
-  * Updated decision status to "Option 5 rejected - new decision required"
+* **2025-08-11**: **MULTIPLE OPTION REJECTIONS**:
+  * **REJECTED** Option 1: TLS termination at Cloudflare violates "Security First" requirement
+  * **REJECTED** Option 2: HTTP/HTTPS only limitation and forced Tailscale DNS usage
+  * **REJECTED** Option 4: No Proxy Protocol support prevents CrowdSec functionality
+  * **REJECTED** Option 5: No Proxy Protocol support prevents CrowdSec functionality (POC confirmed)
+  * Updated decision status to "Only Option 3 (Dedicated edge proxy) remains viable"
   * Documented failed POC in experiments/cloudflare-tunnel-with-crowdsec/README.md
+  * Comprehensive architectural analysis eliminates all cloud-based tunnel solutions
 * **2025-08-10**: **MAJOR REVISION**:
   * Switched from Tailscale Funnel to Cloudflare Tunnel due to Tailscale's HTTP-only limitation
   * Added two new L4 proxy options: Cloudflare Tunnel + Gateway with CrowdSec (Option 4) and Cloudflare Tunnel with CrowdSec Worker (Option 5)
