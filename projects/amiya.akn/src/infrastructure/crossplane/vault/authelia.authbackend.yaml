@@ -25,7 +25,7 @@ spec:
 
     # OIDC configuration
     boundIssuer: https://auth.chezmoi.sh
-    defaultRole: admin
+    defaultRole: default
     oidcClientId: xjhFR2JM0d3CsvaNU5_YchVi
     oidcClientSecretSecretRef:
       name: authelia-client-secret
@@ -39,6 +39,31 @@ spec:
         listingVisibility: unauth
         maxLeaseTtl: 2h
         tokenType: default-service # no secret here
+---
+apiVersion: jwt.vault.upbound.io/v1alpha1
+kind: AuthBackendRole
+metadata:
+  name: authelia-default
+spec:
+  forProvider:
+    allowedRedirectUris:
+      - http://localhost:8250/oidc/callback
+      - https://vault.chezmoi.sh/ui/vault/auth/authelia/oidc/callback
+    backendRef:
+      name: authelia
+    roleName: default
+
+    # OIDC & claims configuration
+    oidcScopes: [openid, email, groups]
+    groupsClaim: groups
+    userClaim: sub
+    claimMappings:
+      email: email
+
+    # Policies configuration
+    tokenPolicies:
+      - default
+      - personal-user-access
 ---
 apiVersion: jwt.vault.upbound.io/v1alpha1
 kind: AuthBackendRole
@@ -67,3 +92,4 @@ spec:
     tokenPolicies:
       - default
       - sso-admin-policy
+      - personal-admin-access

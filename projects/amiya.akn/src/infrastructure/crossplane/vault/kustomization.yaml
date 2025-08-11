@@ -9,6 +9,8 @@ resources:
   # Additional policies
   - policies/amiya.akn-authelia-policy.yaml
   - policies/amiya.akn-crossplane-policy.yaml
+  - policies/personal-admin-access.yaml
+  - policies/personal-user-access.yaml
   - policies/sso-admin-policy.yaml
 
   # Configure Vault for all clusters

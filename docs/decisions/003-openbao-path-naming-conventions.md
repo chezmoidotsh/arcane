@@ -79,7 +79,7 @@ The challenge is defining conventions that are:
 
 ## Decision Outcome
 
-**Chosen Option**: **Application-First Organization** for per-cluster mounts + **Function-Based Shared Secrets**
+**Chosen Option**: **Application-First Organization** for per-cluster mounts + **Function-Based Shared Secrets** + **User-Isolated Personal Mount**
 
 ### Per-Cluster Mount Structure
 
@@ -121,6 +121,39 @@ Like per-cluster mounts, **categories** are used to group secrets by their purpo
 * `sso/` - Cross-application authentication (OIDC clients, SAML, shared JWT keys)
 * `certificates/` - Shared certificates (wildcards, CA certificates, service mesh)
 * `third-parties/` - External service credentials (AWS, Cloudflare, GitHub, ...), managed by Crossplane preferably
+
+### Personal Mount Structure
+
+```text
+/personal/{user-email}/{category}/*
+```
+
+The **personal** mount provides user-specific secret storage with automatic isolation based on user identity. Access is controlled through templated policies with two distinct permission levels.
+
+**Personal mount characteristics:**
+
+* **User Isolation**: Each user identified by email can access `/personal/{their-email}/*`
+* **Self-Service**: Users can create, read, update, and delete their own secrets
+* **Category Organization**: Same category structure as other mounts for consistency
+* **Zero-Trust**: Templated policies ensure proper access control based on user identity
+
+**Access Levels:**
+
+* **User Level** (`personal-user-access` policy): Full access to own namespace only
+* **Admin Level** (`personal-admin-access` policy): Full access to own namespace + list-only access to other users' namespaces for supervision and audit purposes
+
+**Category examples for personal use:**
+
+* `tools/` - Personal development and operational tools (contexts, configurations)
+* `credentials/` - Personal service accounts and API keys
+* `certificates/` - User-specific certificates and keys
+* `bookmarks/` - Personal service endpoints and connection strings
+
+**Example paths:**
+
+* `/personal/alexandre@chezmoi.sh/tools/talos/amiya.akn/admin-context` - Talos cluster context
+* `/personal/alexandre@chezmoi.sh/credentials/github/personal-token` - Personal GitHub token
+* `/personal/user@domain.com/tools/kubectl/staging-config` - Kubectl configuration
 
 #### `sso` category
 
@@ -201,6 +234,14 @@ This category contains shared credentials for third-party services (AWS, Cloudfl
 * **Intuitive Navigation**: Easier to find shared authentication vs shared certificates
 * **Metadata Ownership**: Use metadata to track actual ownership without polluting paths
 * **Zero Trust Compliance**: Maintains mount-level isolation while enabling necessary sharing
+
+### Why User-Isolated Personal Mount
+
+* **Self-Service**: Users can manage their own tools and personal secrets independently
+* **Zero Trust**: Templated policies automatically enforce user isolation based on OIDC identity
+* **Operational Efficiency**: Reduces admin overhead for personal development tools
+* **Administrative Oversight**: Admins can audit personal namespaces while maintaining user privacy
+* **Category Consistency**: Follows same organizational patterns as other mounts
 
 ### Why This Metadata Schema
 
@@ -286,5 +327,6 @@ Cloud provider credentials follow service-based organization:
 
 ## Changelog
 
+* **2025-08-11**: **FEATURE**: Add personal mount structure with user-isolated namespaces. Implemented two-tier templated policies (`personal-user-access` for standard users, `personal-admin-access` for administrators) using OIDC alias metadata templating. This enables self-service secret management for personal tools (Talos contexts, kubectl configs, personal API tokens) while maintaining zero-trust principles and administrative oversight capabilities.
 * **2025-07-01**: **SECURITY**: Migrate SSO secrets from `/shared/sso/*` to per-project mounts following `/{cluster}/{app}/auth/{secret}` pattern. This change addresses security vulnerability where `global-eso-policy` allowed any cluster to access OIDC `client_secret` credentials from other clusters, enabling potential identity spoofing attacks. The new structure maintains proper isolation while allowing Authelia legitimate cross-mount access via dedicated policies.
 * **2025-06-30**: Update path naming conventions to match the new policy naming conventions.

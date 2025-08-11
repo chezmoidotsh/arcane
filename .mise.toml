@@ -101,3 +101,18 @@ gum = "latest"                                    # Terminal UI framework for in
 "aqua:terrastruct/d2" = "latest"                  # Diagram-as-code tool for generating architecture visualizations
 "ubi:runmedev/runme" = "latest"                   # Interactive markdown execution tool for runbooks and documentation
 "go:github.com/oklog/ulid/v2/cmd/ulid" = "latest" # ULID generator for unique identifiers in distributed systems
+
+
+# -----------------------------------------------------------------------------
+# Vault (OpenBao) Authentication Tasks
+# -----------------------------------------------------------------------------
+# Tasks for logging into the OpenBao (Vault) secrets manager using OIDC authentication.
+# The 'bao:login' task performs a standard user login, while 'bao:login:admin' uses the admin role.
+
+[tasks."bao:login"]
+description = "Log in to Vault with the CLI"
+run = "bao login -method=oidc -path=authelia"
+
+[tasks."bao:login:admin"]
+description = "Log in to Vault with the CLI using administrative privileges"
+run = "bao login -method=oidc -path=authelia role=admin"
