@@ -263,10 +263,11 @@ kubectl kustomize --enable-helm ./kubernetes/crowdsec | kubectl apply -f -
 
 This deploys the complete CrowdSec stack including the Local API (LAPI) for decision processing, agents for log analysis, and PostgreSQL for decision storage. The LAPI will serve as the central decision engine that communicates with both local agents and the Cloudflare Worker.
 
-> [!NOTE]
+> \[!NOTE]
 > The CrowdSec configuration is specifically set for `containerd` runtime (K3s/K3d) and includes the necessary parsers:
-> - `crowdsecurity/cri-logs`: Parses Kubernetes container log format (CRI)
-> - `crowdsecurity/traefik-logs`: Extracts Traefik access logs from the parsed container logs
+>
+> * `crowdsecurity/cri-logs`: Parses Kubernetes container log format (CRI)
+> * `crowdsecurity/traefik-logs`: Extracts Traefik access logs from the parsed container logs
 >
 > This parsing chain: **Container JSON logs** → **CRI Parser** → **Traefik Parser** → **Security Analysis**
 
@@ -598,17 +599,30 @@ done
 
 ### POC Validation Summary
 
-This proof of concept demonstrates the **Cloudflare Tunnel with CrowdSec Worker** architecture implementation and validates the approach against the original requirements from ADR-006.
+This proof of concept **FAILED** to meet the core security requirements due to a critical limitation in Cloudflare Tunnel's architecture.
+
+#### Critical Limitation Identified
+
+**Proxy Protocol Support**: Cloudflare Tunnel does not support Proxy Protocol, preventing the preservation of client IP addresses when forwarding traffic to backend services. This limitation breaks the entire CrowdSec integration model.
+
+#### Impact Analysis
+
+Without client IP preservation:
+
+* **CrowdSec cannot identify attack sources**: All traffic appears to originate from Cloudflare IPs
+* **Rate limiting becomes ineffective**: Cannot distinguish between legitimate users and attackers
+* **Threat intelligence is compromised**: IP-based security decisions cannot be made
+* **Security policies fail**: Geographic restrictions, IP banning, and user tracking are impossible
 
 #### Requirements Assessment
 
-| Requirement               | Status          | Validation Evidence                                                                            |
+| Requirement               | Status          | Failure Reason                                                                                 |
 | ------------------------- | --------------- | ---------------------------------------------------------------------------------------------- |
-| **Security First**        | ✅ **VALIDATED** | TLS certificates properly managed, no third-party MITM for HTTP/HTTPS traffic                  |
+| **Security First**        | ❌ **FAILED**    | Cannot identify client IPs, making IP-based security controls impossible                       |
 | **Privacy Protection**    | ✅ **VALIDATED** | Origin IP successfully masked, DNS resolves to Cloudflare infrastructure                       |
-| **Abuse Mitigation**      | ✅ **VALIDATED** | CrowdSec decisions enforced at edge, malicious traffic blocked before reaching homelab         |
+| **Abuse Mitigation**      | ❌ **FAILED**    | CrowdSec cannot apply IP-based protection without client IP visibility                         |
 | **Protocol Support**      | ✅ **VALIDATED** | HTTP/HTTPS traffic successfully proxied, TCP support available through client-side cloudflared |
-| **Zero-Trust Principles** | ✅ **VALIDATED** | Multi-layer security with edge filtering, tunnel encryption, and local monitoring              |
+| **Zero-Trust Principles** | ❌ **FAILED**    | Loss of client context breaks zero-trust security model                                        |
 
 #### Architecture Benefits Confirmed
 

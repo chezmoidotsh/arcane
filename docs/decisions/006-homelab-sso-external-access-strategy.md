@@ -70,7 +70,7 @@ Different service types require different exposure patterns and security conside
 2. **Tailscale Funnel (+ gateway/app-side protections)**: Zero-trust approach with Tailscale
 3. **Dedicated edge proxy**: Self-hosted cloud VM with Traefik/Envoy Gateway + optional WAF
 4. **Cloudflare Tunnel (Proxy L4) + GW with CrowdSec**: Cloudflare L4 proxy with Traefik/Envoy Gateway and CrowdSec
-5. **Cloudflare Tunnel (Proxy L4) with CrowdSec Worker + GW**: Cloudflare L4 proxy with CrowdSec worker and Envoy Gateway, most promising option eliminating Traefik dependency
+5. **~~Cloudflare Tunnel (Proxy L4) with CrowdSec Worker + GW~~**: ~~Cloudflare L4 proxy with CrowdSec worker and Envoy Gateway~~ **REJECTED - No Proxy Protocol support**
 
 ## Decision History
 
@@ -78,15 +78,22 @@ Different service types require different exposure patterns and security conside
 
 **First Update (2025-08-10)**: After discovering Tailscale Funnel's limitation to HTTP/HTTPS traffic and challenges with WAF integration, consideration shifted to "Cloudflare Tunnel Proxy L4 + GW protection" for comprehensive protocol support.
 
-**Current Status (2025-08-10)**: The fifth option "Cloudflare Tunnel (Proxy L4) with CrowdSec Worker + GW" has emerged as most promising due to eliminating Traefik dependency, but requires further proof-of-concept testing before final decision.
+**Current Status (2025-08-11)**: Option 5 "Cloudflare Tunnel (Proxy L4) with CrowdSec Worker + GW" has been **REJECTED** after proof-of-concept testing revealed that Cloudflare Tunnel does not support Proxy Protocol, preventing client IP preservation essential for CrowdSec functionality.
 
 ## Decision Outcome
 
-**Status**: Proof of concept in progress for Option 5 (Cloudflare Tunnel with CrowdSec Worker + GW)
+**Status**: Option 5 REJECTED - Cloudflare Tunnel architectural limitation identified
 
-**No final decision has been made.** Currently evaluating the most promising approach that would eliminate Traefik dependency while providing comprehensive protocol support and robust security capabilities.
+**Decision**: Option 5 (Cloudflare Tunnel with CrowdSec Worker + GW) is **NOT VIABLE** due to lack of Proxy Protocol support, which prevents client IP preservation required for CrowdSec security functionality.
 
-The final architecture will be selected based on POC results.
+**Impact**: Without client IP visibility, CrowdSec cannot:
+
+* Identify attack sources (all traffic appears from Cloudflare IPs)
+* Apply rate limiting effectively
+* Make IP-based security decisions
+* Support geographic restrictions or IP banning
+
+A new decision must be made from the remaining viable options.
 
 ### Architectural Solution
 
@@ -242,20 +249,27 @@ Detailed validation criteria will be established after the proof of concept impl
   * Requires Traefik installation and maintenance until cs-envoy-bouncer reaches production maturity
   * Vendor lock-in; DNS delegation to Cloudflare typically required
 
-### Option 5: Cloudflare Tunnel (Proxy L4) with CrowdSec Worker + GW
+### Option 5: ~~Cloudflare Tunnel (Proxy L4) with CrowdSec Worker + GW~~ **REJECTED**
 
-* Advantages:
-  * Eliminates Traefik dependency - direct integration with Kubernetes services
-  * CrowdSec Worker provides protection at the Cloudflare edge
-  * Supports TCP proxying at L4 for non-HTTP protocols in Kubernetes environments
-  * Simpler architecture with fewer components to maintain
-  * No router port forwarding; origin IP is hidden with strong operational security
-* Disadvantages:
+**Critical Limitation Identified**: Cloudflare Tunnel does not support Proxy Protocol, preventing preservation of client IP addresses required for CrowdSec functionality.
+
+* ~~Advantages~~: **INVALIDATED**
+  * ~~Eliminates Traefik dependency - direct integration with Kubernetes services~~
+  * ~~CrowdSec Worker provides protection at the Cloudflare edge~~ **BROKEN: Cannot identify client IPs**
+  * ~~Supports TCP proxying at L4 for non-HTTP protocols in Kubernetes environments~~
+  * ~~Simpler architecture with fewer components to maintain~~
+  * ~~No router port forwarding; origin IP is hidden with strong operational security~~
+* **Fatal Disadvantages**:
+  * **NO PROXY PROTOCOL SUPPORT**: Cannot preserve client IP addresses
+  * **CrowdSec integration fails**: All traffic appears to originate from Cloudflare IPs
+  * **Security controls broken**: Rate limiting, IP banning, geographic restrictions impossible
+  * **Zero-trust model compromised**: Loss of client context breaks security model
   * Clients must run `cloudflared` locally to access non-HTTP services (SSH, RDP, etc.)
   * Requires Cloudflare Workers subscription (not available on free plan)
-  * Less mature integration - requires proof of concept testing
   * TLS is still terminated at Cloudflare for HTTP/HTTPS traffic (conflicts with no-MITM requirement)
   * Vendor lock-in; DNS delegation to Cloudflare typically required
+
+**Proof of Concept Result**: [Failed POC documented in experiments/cloudflare-tunnel-with-crowdsec](../experiments/cloudflare-tunnel-with-crowdsec/README.md)
 
 ## Implementation Strategy
 
@@ -330,6 +344,12 @@ Detailed risk assessment and specific mitigation strategies will be developed fo
 
 ## Changelog
 
+* **2025-08-11**: **OPTION 5 REJECTION**:
+  * Completed proof of concept for Option 5 (Cloudflare Tunnel with CrowdSec Worker)
+  * **REJECTED** Option 5 due to critical limitation: Cloudflare Tunnel does not support Proxy Protocol
+  * Without client IP preservation, CrowdSec cannot function effectively for security enforcement
+  * Updated decision status to "Option 5 rejected - new decision required"
+  * Documented failed POC in experiments/cloudflare-tunnel-with-crowdsec/README.md
 * **2025-08-10**: **MAJOR REVISION**:
   * Switched from Tailscale Funnel to Cloudflare Tunnel due to Tailscale's HTTP-only limitation
   * Added two new L4 proxy options: Cloudflare Tunnel + Gateway with CrowdSec (Option 4) and Cloudflare Tunnel with CrowdSec Worker (Option 5)
