@@ -1,0 +1,412 @@
+#!/usr/bin/env bash
+# talos:ctx - Talos context manager with OpenBao backend
+#
+# This script provides centralized management of Talos cluster contexts using OpenBao
+# for secure storage. Each user's contexts are stored in their personal namespace with
+# proper isolation and metadata tracking.
+
+# shellcheck disable=SC2310,SC2312  # Functions in conditions are acceptable for this use case
+set -euo pipefail
+
+# Configuration
+TALOS_CONFIG_DIR="${TALOS_CONFIG_DIR:-${HOME}/.talos}"
+CONTEXT_FILE="${TALOS_CONFIG_DIR}/config"
+
+# Get current user email from OpenBao token for personal namespace path
+get_user_email() {
+	bao token lookup -format json | jq -r '.data.meta.email // empty' 2>/dev/null || {
+		echo "Error: Unable to retrieve user email from OpenBao token" >&2
+		echo "Please login first with: mise run bao:login" >&2
+		exit 1
+	}
+}
+
+# Build vault path for current user's Talos contexts
+get_vault_path() {
+	local user_email
+	user_email=$(get_user_email)
+	[[ -n ${user_email} ]] || exit 1
+	echo "personal/${user_email}/talos"
+}
+
+# Check if yq is available
+check_yq() {
+	if ! command -v yq >/dev/null 2>&1; then
+		echo "Error: yq is required for YAML/JSON conversion" >&2
+		echo "Install with: mise install yq" >&2
+		return 1
+	fi
+}
+
+# Get list of available contexts
+get_contexts_list() {
+	local vault_path exit_code bao_output
+	vault_path=$(get_vault_path)
+
+	# Capture bao command output and exit code
+	if ! bao_output=$(bao kv list -format=json "${vault_path}" 2>&1); then
+		exit_code=$?
+		echo "Error: Failed to list contexts from OpenBao at path '${vault_path}'" >&2
+		if [[ -n ${bao_output} ]]; then
+			echo "${bao_output}" >&2
+		fi
+		return "${exit_code}"
+	fi
+
+	# Process the JSON output
+	echo "${bao_output}" | jq -r '.[]?' 2>/dev/null | sed 's|/$||' 2>/dev/null
+}
+
+# List available Talos contexts from OpenBao
+list_contexts() {
+	echo "Available Talos contexts:"
+	if ! get_contexts_list; then
+		echo "No contexts found or unable to access vault path: $(get_vault_path)"
+		echo "Make sure you have the proper permissions and contexts saved."
+		return 1
+	fi
+}
+
+# Get and apply a specific Talos context
+get_context() {
+	local cluster_name="$1"
+	local vault_path
+	vault_path=$(get_vault_path)
+
+	check_yq || return 1
+
+	echo "Retrieving context for cluster: ${cluster_name}"
+	mkdir -p "${TALOS_CONFIG_DIR}"
+
+	# Retrieve context from vault and extract the YAML data from JSON to a temp file
+	local tmp_config
+	tmp_config=$(mktemp)
+	if bao kv get -format=json "${vault_path}/${cluster_name}/talosconfig" | yq '.data.data' --output-format=yaml --prettyPrint >"${tmp_config}"; then
+		if validate_talosconfig "${tmp_config}"; then
+			mv "${tmp_config}" "${CONTEXT_FILE}"
+			echo "Successfully switched to context: ${cluster_name}"
+		else
+			echo "Error: Retrieved config is invalid or missing required fields." >&2
+			rm -f "${tmp_config}"
+			return 1
+		fi
+	else
+		echo "Error: Failed to retrieve context '${cluster_name}'" >&2
+		echo "Available contexts:" >&2
+		list_contexts >&2
+		rm -f "${tmp_config}"
+		return 1
+	fi
+}
+
+# Validate talosconfig structure
+validate_talosconfig() {
+	local config_file="$1"
+
+	if [[ ! -f ${config_file} ]]; then
+		echo "Error: Config file not found: ${config_file}" >&2
+		return 1
+	fi
+
+	# Check for required fields using yq
+	if ! yq '.context' "${config_file}" >/dev/null 2>&1; then
+		echo "Error: Invalid talosconfig - missing 'context' field" >&2
+		return 1
+	fi
+
+	if ! yq '.contexts' "${config_file}" >/dev/null 2>&1; then
+		echo "Error: Invalid talosconfig - missing 'contexts' field" >&2
+		return 1
+	fi
+
+	local context_name
+	context_name=$(yq '.context' "${config_file}" 2>/dev/null)
+	if [[ -z ${context_name} || ${context_name} == "null" ]]; then
+		echo "Error: Invalid talosconfig - empty or null context" >&2
+		return 1
+	fi
+
+	if ! yq ".contexts[\"${context_name}\"]" "${config_file}" >/dev/null 2>&1; then
+		echo "Error: Invalid talosconfig - context '${context_name}' not found in contexts" >&2
+		return 1
+	fi
+
+	return 0
+}
+
+# Validate TALOSCONFIG exists
+check_talosconfig() {
+	if [[ -z ${TALOSCONFIG} ]]; then
+		echo "Error: TALOSCONFIG environment variable is not set" >&2
+		echo "Please configure talosctl first with your cluster" >&2
+		return 1
+	fi
+	if [[ ! -f ${TALOSCONFIG} ]]; then
+		echo "Error: Talos config file not found at ${TALOSCONFIG}" >&2
+		echo "Please configure talosctl first with your cluster" >&2
+		return 1
+	fi
+}
+
+# Store current Talos context in OpenBao
+store_context() {
+	local cluster_name="$1"
+	local vault_path
+	vault_path=$(get_vault_path)
+
+	check_yq || return 1
+	check_talosconfig || return 1
+
+	# Validate that endpoints exist in the config
+	local first_endpoint
+	first_endpoint=$(get_first_endpoint "${TALOSCONFIG}")
+	if [[ -z ${first_endpoint} || ${first_endpoint} == "null" ]]; then
+		echo "Error: No endpoints found in Talos configuration at ${TALOSCONFIG}" >&2
+		echo "Make sure the configuration contains valid endpoints before storing" >&2
+		return 1
+	fi
+
+	echo "Storing context for cluster: ${cluster_name}"
+	echo "Validated endpoints: ${first_endpoint}"
+
+	# Store context with metadata
+	if yq "${TALOSCONFIG}" --output-format=json | bao kv put "${vault_path}/${cluster_name}/talosconfig" @/dev/stdin; then
+		echo "Successfully stored context: ${cluster_name}"
+	else
+		echo "Error: Failed to store context '${cluster_name}'" >&2
+		return 1
+	fi
+
+	if bao kv metadata put \
+		-custom-metadata=owner="$(get_user_email)" \
+		-custom-metadata=created_by="talos:ctx-wrapper" \
+		-custom-metadata=created_at="$(date -Iseconds)" \
+		-custom-metadata=x-cluster="${cluster_name}" \
+		"${vault_path}/${cluster_name}/talosconfig"; then
+		echo "Successfully annotated context: ${cluster_name}"
+	else
+		echo "Error: Failed to annotate context '${cluster_name}'" >&2
+		return 1
+	fi
+}
+
+# Get current Talos context name
+get_current_context() {
+	if [[ -f ${CONTEXT_FILE} ]]; then
+		yq '.context' "${CONTEXT_FILE}" 2>/dev/null
+	fi
+}
+
+# Get first endpoint from talosconfig
+get_first_endpoint() {
+	local config_file="${1:-${CONTEXT_FILE}}"
+	if [[ -f ${config_file} ]]; then
+		yq '.contexts[.context].endpoints[0]' "${config_file}" 2>/dev/null
+	fi
+}
+
+# Get cluster nodes list for --nodes parameter (comma-separated)
+get_cluster_nodes() {
+	local first_endpoint
+	first_endpoint=$(get_first_endpoint)
+
+	if [[ -z ${first_endpoint} || ${first_endpoint} == "null" ]]; then
+		echo "Error: No endpoints found in Talos configuration" >&2
+		return 1
+	fi
+
+	if ! talosctl get members --nodes "${first_endpoint}" --output json | jq --slurp 'map(.node) | join(",")' --raw-output 2>/dev/null; then
+		echo "Error: Failed to get cluster members from ${first_endpoint}" >&2
+		return 1
+	fi
+}
+
+# List all cluster nodes with nice output
+list_cluster_nodes() {
+	local first_endpoint
+	first_endpoint=$(get_first_endpoint)
+
+	if [[ -z ${first_endpoint} || ${first_endpoint} == "null" ]]; then
+		echo "Error: No endpoints found in Talos configuration" >&2
+		return 1
+	fi
+
+	echo "Cluster nodes (via endpoint: ${first_endpoint}):"
+	talosctl get members --nodes "${first_endpoint}"
+}
+
+# Launch dashboard for a specific context or current context
+launch_dashboard() {
+	local cluster_name="${1-}"
+	if [[ -n ${cluster_name} ]]; then
+		shift # Remove cluster name from arguments
+	fi
+
+	# If no cluster specified, try to use current context
+	if [[ -z ${cluster_name} ]]; then
+		cluster_name=$(get_current_context)
+		if [[ -z ${cluster_name} ]]; then
+			echo "Error: No cluster specified and no current context found" >&2
+			echo "Usage: $0 dashboard [cluster-name]" >&2
+			echo "Available contexts:" >&2
+			list_contexts >&2
+			return 1
+		fi
+		echo "Using current context: ${cluster_name}"
+	else
+		echo "Launching dashboard for cluster: ${cluster_name}"
+		# First retrieve and switch to the context
+		if ! get_context "${cluster_name}"; then
+			echo "Error: Failed to retrieve context for dashboard launch" >&2
+			return 1
+		fi
+	fi
+
+	# Get cluster nodes for dashboard
+	local nodes
+	if ! nodes=$(get_cluster_nodes); then
+		echo "Error: Unable to get cluster nodes" >&2
+		return 1
+	fi
+
+	echo "Launching dashboard with nodes: ${nodes}"
+	# Launch dashboard with cluster nodes
+	exec talosctl dashboard --nodes "${nodes}" "$@"
+}
+
+# Interactive context selection using gum (if available)
+interactive_select() {
+	local contexts
+	if ! contexts=$(get_contexts_list); then
+		echo "Error: No contexts available or access denied" >&2
+		return 1
+	fi
+
+	if [[ -z ${contexts} ]]; then
+		echo "No contexts available" >&2
+		return 1
+	fi
+
+	# Use gum if available, otherwise simple select
+	if command -v gum >/dev/null 2>&1; then
+		local selected
+		selected=$(echo "${contexts}" | gum choose --header "Select Talos context:")
+		[[ -n ${selected} ]] && get_context "${selected}"
+	else
+		echo "Available contexts:"
+		echo "${contexts}" | nl -w2 -s') '
+		echo -n "Select context (number): "
+		read -r selection
+		local context
+		context=$(echo "${contexts}" | sed -n "${selection}p")
+		[[ -n ${context} ]] && get_context "${context}"
+	fi
+}
+
+# Show usage information
+show_help() {
+	cat <<'EOF'
+talos:ctx - Talos context manager with OpenBao backend
+
+USAGE:
+    talos:ctx <command> [arguments]
+
+CONTEXT COMMANDS:
+    list                        List available Talos contexts
+    get <cluster-name>          Retrieve and switch to context
+    store <cluster-name>        Store current context in OpenBao
+    dashboard [cluster-name]    Launch dashboard for context (current if no cluster)
+    nodes [cluster-name]        List cluster nodes (current context if no cluster)
+    select                      Interactive context selection
+    help                        Show this help message
+
+EXAMPLES:
+    # Context management
+    talos:ctx list                              # List all stored contexts
+    talos:ctx get amiya.akn                     # Switch to amiya.akn context  
+    talos:ctx store lungmen.akn                 # Store current context as lungmen.akn
+    talos:ctx dashboard amiya.akn               # Launch dashboard for amiya.akn
+    talos:ctx dashboard                         # Launch dashboard for current context
+    talos:ctx nodes amiya.akn                   # List nodes for amiya.akn
+    talos:ctx nodes                             # List nodes for current context
+    talos:ctx select                            # Interactive context selection
+
+MISE INTEGRATION EXAMPLES:
+    # Context management
+    mise run talos:list                         # List contexts
+    mise run talos:use -- amiya.akn             # Switch to context (preferred)
+    mise run talos:store -- amiya.akn           # Store current context
+    mise run talos:dashboard -- amiya.akn       # Launch dashboard
+    mise run talos:dashboard                    # Launch dashboard for current context
+    mise run talos:nodes -- amiya.akn          # List cluster nodes
+    mise run talos:nodes                        # List nodes for current context
+    mise run talos:select                       # Interactive selection
+
+PREREQUISITES:
+    - OpenBao authentication: mise run bao:login
+    - Talos configuration in ~/.talos/config
+    - Access to personal OpenBao namespace
+
+STORAGE PATHS:
+    Contexts: personal/{your-email}/talos/{cluster-name}/talosconfig
+    
+STORAGE FORMAT:
+    - Contexts stored as JSON containing talosconfig YAML
+    - Metadata preserved in vault secret metadata
+EOF
+}
+
+# Main command dispatch
+main() {
+	case "${1:-help}" in
+	# Context commands
+	"list" | "ls")
+		list_contexts
+		;;
+	"get")
+		[[ $# -eq 2 ]] || {
+			echo "Usage: $0 get <cluster-name>" >&2
+			exit 1
+		}
+		get_context "$2"
+		;;
+	"store" | "save")
+		[[ $# -eq 2 ]] || {
+			echo "Usage: $0 store <cluster-name>" >&2
+			exit 1
+		}
+		store_context "$2"
+		;;
+	"dashboard" | "dash")
+		if [[ $# -ge 2 ]]; then
+			launch_dashboard "$2" "${@:3}"
+		else
+			launch_dashboard
+		fi
+		;;
+	"nodes")
+		if [[ $# -ge 2 ]]; then
+			# Get context first, then list nodes
+			if get_context "$2"; then
+				list_cluster_nodes
+			fi
+		else
+			# Use current context
+			list_cluster_nodes
+		fi
+		;;
+	"select" | "choose")
+		interactive_select
+		;;
+	"help" | "-h" | "--help")
+		show_help
+		;;
+	*)
+		echo "Error: Unknown command: $1" >&2
+		echo "Run '$0 help' for usage information" >&2
+		exit 1
+		;;
+	esac
+}
+
+main "$@"
