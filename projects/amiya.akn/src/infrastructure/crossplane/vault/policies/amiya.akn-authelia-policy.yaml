@@ -9,4 +9,4 @@ spec:
     policy: |
       # Allow ESO to read SSO credentials on all mounts (cross-mount SSO access)
       # See ADR-004
-      path "/+/+/auth/*" { capabilities = ["read"] }
+      path "+/+/auth/*" { capabilities = ["read"] }

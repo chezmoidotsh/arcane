@@ -49,6 +49,14 @@ SOPS_AGE_KEY_FILE = "{{ config_root }}/.mise/age/key.txt"
 VAULT_ADDR = "https://vault.chezmoi.sh"
 
 # -----------------------------------------------------------------------------
+# Talos Configuration
+# -----------------------------------------------------------------------------
+# Talos configuration file managed by the talos:ctx script
+# Points to the shared configuration file used by all Talos operations
+TALOS_CONFIG_DIR = "{{ config_root }}/.mise/talos"
+TALOSCONFIG = "{{ env.TALOS_CONFIG_DIR }}/config"
+
+# -----------------------------------------------------------------------------
 # Path Extensions
 # -----------------------------------------------------------------------------
 # Additional directories added to PATH for tool accessibility
@@ -101,3 +109,48 @@ gum = "latest"                                    # Terminal UI framework for in
 "aqua:terrastruct/d2" = "latest"                  # Diagram-as-code tool for generating architecture visualizations
 "ubi:runmedev/runme" = "latest"                   # Interactive markdown execution tool for runbooks and documentation
 "go:github.com/oklog/ulid/v2/cmd/ulid" = "latest" # ULID generator for unique identifiers in distributed systems
+
+
+# -----------------------------------------------------------------------------
+# Vault (OpenBao) Authentication Tasks
+# -----------------------------------------------------------------------------
+# Tasks for logging into the OpenBao (Vault) secrets manager using OIDC authentication.
+# The 'bao:login' task performs a standard user login, while 'bao:login:admin' uses the admin role.
+
+[tasks."bao:login"]
+description = "Log in to Vault with the CLI"
+run = "bao login -method=oidc -path=authelia"
+
+[tasks."bao:login:admin"]
+description = "Log in to Vault with the CLI using administrative privileges"
+run = "bao login -method=oidc -path=authelia role=admin"
+
+# -----------------------------------------------------------------------------
+# Talos Context Management Tasks
+# -----------------------------------------------------------------------------
+# Tasks for managing Talos cluster contexts using OpenBao secure storage.
+# Contexts are stored in personal namespace with proper isolation and metadata.
+
+[tasks."talos:list"]
+description = "List available Talos contexts from OpenBao"
+run = "scripts/talos:ctx list"
+
+[tasks."talos:use"]
+description = "Switch to Talos context: mise run talos:use -- <cluster>"
+run = "scripts/talos:ctx get $@"
+
+[tasks."talos:store"]
+description = "Store current Talos context in OpenBao: mise run talos:store -- <cluster>"
+run = "scripts/talos:ctx store $@"
+
+[tasks."talos:select"]
+description = "Interactive Talos context selection"
+run = "scripts/talos:ctx select"
+
+[tasks."talos:dashboard"]
+description = "Launch dashboard for context: mise run talos:dashboard -- <cluster>"
+run = "scripts/talos:ctx dashboard $@"
+
+[tasks."talos:nodes"]
+description = "List cluster nodes: mise run talos:nodes -- [cluster]"
+run = "scripts/talos:ctx nodes $@"

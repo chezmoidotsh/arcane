@@ -17,6 +17,10 @@ spec:
       # Allow sudo access to all paths (except the ones explicitly denied)
       path "*" { capabilities = ["create", "read", "update", "delete", "list"] }
 
+      # EXPLICITLY LIST ONLY: Personal user secrets (for the authenticated user)
+      path "personal/data/*" { capabilities = ["list"] }
+      path "personal/metadata/*" { capabilities = ["list"] }
+
       # EXPLICITLY READ ONLY: Plugin catalog (view available plugins)
       path "sys/plugins/catalog/*" { capabilities = ["read", "list"] }
 

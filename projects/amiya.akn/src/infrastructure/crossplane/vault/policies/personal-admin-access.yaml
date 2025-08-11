@@ -1,0 +1,32 @@
+---
+apiVersion: vault.vault.upbound.io/v1alpha1
+kind: Policy
+metadata:
+  name: personal-admin-access
+spec:
+  forProvider:
+    name: personal-admin-access
+    policy: |
+      # Personal Admin Access Policy
+      #
+      # This templated policy allows administrators to access their own personal namespace within the 'personal' mount,
+      # while also granting them the ability to list all personal namespaces.
+      # User isolation is achieved through templating based on the user's email metadata from OIDC authentication.
+      #
+      # NOTE: The alias ID 'auth_oidc_bac48a4e' is environment-specific and must match personal-user-access.yaml.
+      # To find the correct alias ID for your environment, run:
+      #   vault auth -method=oidc
+      #   vault read -field=id identity/oidc/role/default  # or check entity aliases
+      #
+      # Templated paths use {{identity.entity.aliases.ALIAS_ID.metadata.email}} to ensure each user can only access their own
+      # personal space, maintaining zero-trust principles while enabling self-service secret management.
+
+      # Allow user to access their personal secrets (data and metadata)
+      path "personal/data/{{identity.entity.aliases.auth_oidc_bac48a4e.metadata.email}}/" { capabilities = ["list"] }
+      path "personal/data/{{identity.entity.aliases.auth_oidc_bac48a4e.metadata.email}}/*" { capabilities = ["create", "read", "update", "delete", "list"] }
+      path "personal/metadata/{{identity.entity.aliases.auth_oidc_bac48a4e.metadata.email}}/*" { capabilities = ["create", "read", "update", "delete", "list"] }
+
+      # Allow user to list personal root to discover all personal namespaces
+      path "personal/data/" { capabilities = ["list"] }
+      path "personal/data/*" { capabilities = ["list"] }
+      path "personal/metadata/*" { capabilities = ["read", "list"] }
