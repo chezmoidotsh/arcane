@@ -1,0 +1,14 @@
+# =============================================================================
+# Kazimierz.akn Cluster - Mise Configuration
+# =============================================================================
+
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram for kazimierz.akn cluster"
+# Converts the D2 diagram source to SVG format for documentation
+# Input: architecture.d2 (diagram-as-code source)
+# Output: assets/architecture.svg (embedded in cluster documentation)
+run = [
+  "d2 --theme 0 architecture.d2 assets/architecture-light.svg",
+  "d2 --theme 200 architecture.d2 assets/architecture-dark.svg",
+]
+dir = "{{ config_root }}"
