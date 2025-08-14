@@ -25,6 +25,7 @@
 # - namespace: Grouping container for related components (page shape with lined fill, dashed border, lowercase text)
 # - network: Network elements (e.g., internet, localnet, tailnet) (cloud shape with dotted fill, uppercase text, bold)
 # - platform: Platform services (e.g., Cloudflare, AWS, ...) (no shape, bold stroke)
+# - tailscale-proxy: Tailscale proxy nodes (e.g., ts-proxy-traefik, ts-proxy-eso) (image shape with specified icon)
 # - undeployed: For components that are not yet deployed (reduced opacity)
 #
 # 3. Apply connection styles using the class property:
@@ -84,6 +85,13 @@ classes: {
     }
   }
 
+  tailscaled: {
+    shape: image
+    icon: ../icons/system/tailscale.svg
+    width: 48
+    height: 48
+  }
+
   namespace: {
     shape: page
     style: {
@@ -104,14 +112,22 @@ classes: {
 
   # Connections classes
   connect-from-network: {
-    style.stroke-width: 8
+    style {
+      stroke-width: 8
+    }
   }
   connect-to-network: {
-    style.stroke-width: 8
+    style {
+      stroke-width: 8
+    }
   }
   connect-from-internet: {
     style: {
+      bold: true
+      font-color: "#D7263D"
       stroke-dash: 3
+      stroke-width: 4
+      stroke: "#D7263D"
     }
   }
   connect-to-internet: {

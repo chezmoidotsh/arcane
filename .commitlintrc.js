@@ -304,7 +304,11 @@ const scopes = [
 		value: "project:hass",
 	},
 	{
-		name: "project:lungmen.akn    - Anything related to the lungmen.akn project",
+		name: "project:kazimierz.akn - Anything related to the kazimierz.akn project",
+		value: "project:kazimierz.akn",
+	},
+	{
+		name: "project:lungmen.akn   - Anything related to the lungmen.akn project",
 		value: "project:lungmen.akn",
 	},
 	{
