@@ -37,11 +37,13 @@ spec:
           # - $origin/projects/{{ .name }}/src/infrastructure/kubernetes/tailscale/override.helmvalues.yaml
           # - $origin/projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/tailscale/override.helmvalues.yaml
       repoURL: https://pkgs.tailscale.com/helmcharts
-      targetRevision: 1.80.3
+      targetRevision: 1.86.2
   syncPolicy:
     managedNamespaceMetadata:
       labels:
+        pod-security.kubernetes.io/audit: privileged # required for the some tailscale pods
         pod-security.kubernetes.io/enforce: privileged # required for the some tailscale pods
+        pod-security.kubernetes.io/warn: privileged # required for the some tailscale pods
     syncOptions:
       - CreateNamespace=true
       - Delete=confirm
