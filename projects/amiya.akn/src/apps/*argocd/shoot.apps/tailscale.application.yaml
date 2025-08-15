@@ -23,8 +23,8 @@ spec:
       kustomize:
         ignoreMissingComponents: true
         # components:
-        #   - projects/{{ .name }}/src/infrastructure/kubernetes/tailscale/
-        #   - projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/tailscale/
+        #   - projects/{{ .name }}/src/infrastructure/kubernetes/tailscale
+        #   - projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/tailscale
 
     # Install Tailscale Operator to manage all Tailscale CRDs
     - chart: tailscale-operator

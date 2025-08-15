@@ -16,6 +16,14 @@ spec:
     - ref: origin
       repoURL: https://github.com/chezmoidotsh/arcane.git
       targetRevision: main
+      path: defaults/kubernetes/cert-manager/kustomize
+
+      kustomize:
+        ignoreMissingComponents: true
+        # components:
+        #   - projects/{{ .name }}/src/infrastructure/kubernetes/cert-manager
+        #   - projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/cert-manager
+
     - chart: cert-manager
       helm:
         ignoreMissingValueFiles: true

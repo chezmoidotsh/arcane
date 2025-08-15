@@ -109,6 +109,16 @@ spec:
                   kind: Application
                   name: cert-manager
 
+              - patch: |
+                  - op: add
+                    path: /spec/sources/0/kustomize/components
+                    value:
+                      - ../../../../projects/{{ .name }}/src/infrastructure/kubernetes/cert-manager
+                      - ../../../../projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/cert-manager
+                target:
+                  kind: Application
+                  name: cert-manager
+
               # - External-Secrets
               - patch: |
                   - op: add
@@ -122,6 +132,13 @@ spec:
                   name: external-secrets
 
               - patch: |
+                  - op: add
+                    path: /spec/sources/0/kustomize/components
+                    value:
+                      - ../../../../projects/{{ .name }}/src/infrastructure/kubernetes/external-secrets
+                      - ../../../../projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/external-secrets
+
+
                   - op: add
                     path: /spec/sources/0/kustomize/patches
                     value:

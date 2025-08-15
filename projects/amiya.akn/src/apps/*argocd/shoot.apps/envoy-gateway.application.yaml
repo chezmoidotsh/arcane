@@ -24,6 +24,7 @@ spec:
         # components:
         #   - projects/{{ .name }}/src/infrastructure/kubernetes/envoy-gateway/
         #   - projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/envoy-gateway/
+
     - chart: gateway-helm
       helm:
         ignoreMissingValueFiles: true
