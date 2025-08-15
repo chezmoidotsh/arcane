@@ -20,11 +20,11 @@ spec:
       targetRevision: main
       path: defaults/kubernetes/tailscale/kustomize
 
-      kustomize: {}
+      kustomize:
+        ignoreMissingComponents: true
         # components:
         #   - projects/{{ .name }}/src/infrastructure/kubernetes/tailscale/
         #   - projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/tailscale/
-        # ignoreMissingComponents: true
 
     # Install Tailscale Operator to manage all Tailscale CRDs
     - chart: tailscale-operator

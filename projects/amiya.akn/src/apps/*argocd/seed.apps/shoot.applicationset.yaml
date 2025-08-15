@@ -144,8 +144,7 @@ spec:
                   - op: add
                     path: /spec/sources/0/kustomize/components
                     value:
-                      # TODO: ignoreMissingComponents not released yet... required to ignore components that are not available
-                      # - ../../../../projects/{{ .name }}/src/infrastructure/kubernetes/tailscale
+                      - ../../../../projects/{{ .name }}/src/infrastructure/kubernetes/tailscale
                       - ../../../../projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/tailscale
 
 
