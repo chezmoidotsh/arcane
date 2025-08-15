@@ -1,48 +1,52 @@
-# Architecture Diagram Styles
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                        Architecture Diagram Styles                         │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   This file contains common styles and classes used across all             │
+# │   architecture diagrams in the project. It defines the visual appearance   │
+# │   of different components and their relationships in D2 diagrams.          │
+# ╰────────────────────────────────────────────────────────────────────────────╯
 #
-# This file contains common styles and classes used across all architecture diagrams
-# in the project. It defines the visual appearance of different components and their
-# relationships in the D2 diagrams.
+# ──────────────────────────────────────────────────────────────────────────────
+# Usage Instructions
 #
-# Usage:
-# 1. Import this file in your architecture diagram using:
-#    @../../docs/assets/d2/architecture-styles.d2
+# 1. Import this file in your architecture diagram:
+#    ...@../../docs/assets/d2/architecture-styles.d2
 #
-# 2. Apply classes to your components using the class property:
+# 2. Apply component classes:
 #    my-component: {
-#      class: [application]  # For regular applications
-#      class: [application-system]  # For system-level applications
-#      class: [namespace]  # For grouping components
-#      class: [network]  # For network elements
-#      class: [hardware]  # For physical hardware
+#      class: [application]          # Regular applications
+#      class: [application-system]   # System-level applications
+#      class: [namespace]            # Grouping components
+#      class: [network]              # Network elements
+#      class: [hardware]             # Physical hardware
 #    }
 #
-# Available component styles:
-# - application-datastore: Datastore applications (e.g., PostgreSQL, Redis) (cylinder with dotted fill, no shadow)
-# - application-system: System-level applications (e.g., Traefik, Cert-Manager) (rectangle with dotted fill, dashed border, slightly transparent)
-# - application: Regular applications (e.g., Jellyfin, n8n, Paperless) (rectangle with dotted fill, no shadow)
-# - hardware: Physical hardware components (e.g., UDM-Pro) (no shape, bold stroke)
-# - namespace: Grouping container for related components (page shape with lined fill, dashed border, lowercase text)
-# - network: Network elements (e.g., internet, localnet, tailnet) (cloud shape with dotted fill, uppercase text, bold)
-# - platform: Platform services (e.g., Cloudflare, AWS, ...) (no shape, bold stroke)
-# - tailscale-proxy: Tailscale proxy nodes (e.g., ts-proxy-traefik, ts-proxy-eso) (image shape with specified icon)
-# - undeployed: For components that are not yet deployed (reduced opacity)
-#
-# 3. Apply connection styles using the class property:
+# 3. Apply connection classes:
 #    component1 -> component2: {class: [connect-to-internet]}
 #
-# Available connection styles:
-# - connect-from-api: For incoming API connections (dashed, medium width)
-# - connect-from-internet: For incoming internet connections (dashed line)
-# - connect-from-network: For incoming network connections (thick line)
-# - connect-from-vpn-backbone: For incoming VPN backbone connections (animated, bold)
-# - connect-from-vpn: For incoming VPN connections (animated, dashed line)
-# - connect-management: For management connections (dashed, medium width)
-# - connect-to-api: For outgoing API connections (dashed, medium width)
-# - connect-to-internet: For outgoing internet connections (dashed line)
-# - connect-to-network: For outgoing network connections (thick line)
-# - connect-to-vpn-backbone: For outgoing VPN backbone connections (animated, bold)
-# - connect-to-vpn: For outgoing VPN connections (animated, dashed line)
+# ──────────────────────────────────────────────────────────────────────────────
+# Available Component Styles
+#
+# - application: Regular applications (e.g., Jellyfin, n8n, Paperless)
+# - application-system: System-level applications (e.g., Traefik, Cert-Manager)
+# - application-datastore: Datastore applications (e.g., PostgreSQL, Redis)
+# - namespace: Grouping container for related components
+# - network: Network elements (e.g., internet, localnet, tailnet)
+# - hardware: Physical hardware components (e.g., UDM-Pro)
+# - platform: Platform services (e.g., Cloudflare, AWS)
+# - tailscaled: Tailscale proxy nodes
+# - undeployed: Components not yet deployed (reduced opacity)
+#
+# ──────────────────────────────────────────────────────────────────────────────
+# Available Connection Styles
+#
+# - connect-from-network / connect-to-network: Network connections (thick)
+# - connect-from-internet / connect-to-internet: Internet connections (dashed)
+# - connect-from-vpn-backbone / connect-to-vpn-backbone: VPN backbone (animated, bold)
+# - connect-from-vpn / connect-to-vpn: VPN connections (animated, dashed)
+# - connect-from-api / connect-to-api: API connections (dashed, medium width)
+# - connect-management: Management connections (dashed, medium width)
 
 vars: {
   d2-config: {
@@ -51,8 +55,19 @@ vars: {
   }
 }
 
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                            Component Classes                               │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   Visual style definitions for different types of components in the        │
+# │   architecture diagrams. Each class defines shape, fill patterns, colors,  │
+# │   and other visual properties.                                             │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
 classes: {
-  # Object classes
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Application Components
+  
   application: {
     shape: rectangle
     style: {
@@ -61,6 +76,7 @@ classes: {
       shadow: false
     }
   }
+  
   application-system: {
     shape: rectangle
     style: {
@@ -71,6 +87,7 @@ classes: {
       font-size: 14
     }
   }
+  
   application-datastore: {
     shape: cylinder
     style: {
@@ -79,27 +96,9 @@ classes: {
     }
   }
 
-  undeployed: {
-    style: {
-      opacity: 0.4
-    }
-  }
-
-  tailscaled: {
-    shape: image
-    icon: ../icons/system/tailscale.svg
-    width: 48
-    height: 48
-  }
-
-  namespace: {
-    shape: page
-    style: {
-      fill-pattern: lines
-      stroke-dash: 5
-      text-transform: lowercase
-    }
-  }
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Network & Infrastructure Components
+  
   network: {
     shape: cloud
     style: {
@@ -109,18 +108,65 @@ classes: {
       bold: true
     }
   }
+  
+  hardware: {
+    shape: none
+    style: {
+      stroke-width: 3
+      bold: true
+    }
+  }
+  
+  platform: {
+    shape: none
+    style: {
+      stroke-width: 3
+      bold: true
+    }
+  }
+  
+  tailscaled: {
+    shape: image
+    icon: ../icons/system/tailscale.svg
+    width: 48
+    height: 48
+  }
 
-  # Connections classes
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Organizational & State Components
+  
+  namespace: {
+    shape: page
+    style: {
+      fill-pattern: lines
+      stroke-dash: 5
+      text-transform: lowercase
+    }
+  }
+  
+  undeployed: {
+    style: {
+      opacity: 0.4
+    }
+  }
+
+
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Network Connection Styles
+  
   connect-from-network: {
     style {
       stroke-width: 8
     }
   }
+  
   connect-to-network: {
     style {
       stroke-width: 8
     }
   }
+  
   connect-from-internet: {
     style: {
       bold: true
@@ -130,11 +176,16 @@ classes: {
       stroke: "#D7263D"
     }
   }
+  
   connect-to-internet: {
     style: {
       stroke-dash: 3
     }
   }
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # VPN Connection Styles
+  
   connect-from-vpn-backbone: {
     style: {
       animated: true
@@ -143,6 +194,7 @@ classes: {
       stroke-width: 8
     }
   }
+  
   connect-to-vpn-backbone: {
     style: {
       animated: true
@@ -151,30 +203,38 @@ classes: {
       stroke-width: 8
     }
   }
+  
   connect-from-vpn: {
     style: {
       animated: true
       stroke-dash: 3
     }
   }
+  
   connect-to-vpn: {
     style: {
       animated: true
       stroke-dash: 3
     }
   }
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # API & Management Connection Styles
+  
   connect-from-api: {
     style: {
       stroke-dash: 2
       stroke-width: 4
     }
   }
+  
   connect-to-api: {
     style: {
       stroke-dash: 2
       stroke-width: 4
     }
   }
+  
   connect-management: {
     label: Manages
     style: {
@@ -185,22 +245,6 @@ classes: {
     target-arrowhead: {
       shape: circle
       style.filled: false
-    }
-  }
-  
-  # Miscellaneous classes
-  hardware: {
-    shape: none
-    style: {
-      stroke-width: 3
-      bold: true
-    }
-  }
-  platform: {
-    shape: none
-    style: {
-      stroke-width: 3
-      bold: true
     }
   }
 } 
