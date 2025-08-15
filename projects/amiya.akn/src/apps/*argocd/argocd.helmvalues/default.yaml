@@ -152,6 +152,16 @@ configs:
       g, role:restricted-admin, role:readonly
       g, admins, role:restricted-admin
 
+# ArgoCD controller configuration
+controller:
+  env:
+    # Fix TLS handshake timeout when connecting to remote Kubernetes clusters via Tailscale
+    # ArgoCD/Go seems to have a default RSA key size limit lower than 8192 bits despite Go 1.25
+    # docs stating 8192 as default. This causes "TLS handshake timeout" errors when connecting
+    # to clusters served through Tailscale that use certificates with larger RSA keys.
+    - name: GODEBUG
+      value: tlsmaxrsasize=8192
+
 # ArgoCD ApplicationSet controller configuration
 applicationSet:
   # Allow ApplicationSet to be deployed in any namespace
