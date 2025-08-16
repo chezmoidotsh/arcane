@@ -1,0 +1,30 @@
+---
+# NetworkPolicy to restrict access to remote cluster proxy pods
+# Only ArgoCD application controller is allowed to communicate with these pods
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    security.chezmoi.sh/description: |
+      Allow ArgoCD application controller to connect to remote cluster proxies
+      (Tailscale-based connectivity).
+  name: allow-argocd-to-remote-cluster-proxy
+spec:
+  podSelector:
+    matchLabels:
+      security.chezmoi.sh/allow-argocd-to-remote-cluster-proxy: "true"
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow ArgoCD application controller to connect to remote cluster proxies
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: argocd
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/component: application-controller
+              app.kubernetes.io/part-of: argocd
+      ports:
+        - protocol: TCP
+          port: 443 # Kubernetes API server port

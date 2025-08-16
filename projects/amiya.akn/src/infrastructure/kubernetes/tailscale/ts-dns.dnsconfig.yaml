@@ -1,0 +1,33 @@
+# Tailscale DNS Configuration for Magic DNS integration
+# This configuration deploys a Tailscale nameserver within the Kubernetes cluster
+# to enable seamless DNS resolution for Tailnet devices and services.
+---
+apiVersion: tailscale.com/v1alpha1
+kind: DNSConfig
+metadata:
+  name: ts-dns
+spec:
+  nameserver:
+    image:
+      repo: tailscale/k8s-nameserver
+      tag: unstable
+---
+# Service to expose the Tailscale nameserver within the cluster
+# This service provides a stable endpoint for DNS queries from CoreDNS
+apiVersion: v1
+kind: Service
+metadata:
+  name: ts-dns
+spec:
+  clusterIP: 10.96.10.96 # Fixed IP for consistent CoreDNS forwarding configuration
+  selector:
+    app: nameserver # Selects pods created by the DNSConfig above
+  ports:
+    - name: dns-tcp
+      protocol: TCP
+      port: 53 # Standard DNS port
+      targetPort: 1053 # Tailscale nameserver listens on 1053
+    - name: dns-udp
+      protocol: UDP
+      port: 53 # Standard DNS port
+      targetPort: 1053 # Tailscale nameserver listens on 1053
