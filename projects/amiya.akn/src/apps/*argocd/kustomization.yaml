@@ -34,14 +34,24 @@ helmCharts:
 patches:
   - patch: |
       - op: replace
-        path: /spec/template/spec/containers/0/image
-        value: ghcr.io/chezmoidotsh/argotails:v0.1.5@sha256:e9a0e7fa9717667601bdcb7ee3bf67767653afdc4e0090d2eb96c18eeb28fbcc
-      - op: replace
         path: /spec/template/spec/containers/0/args/2
         value: --ts.device-filter=kubernetes-remote-cluster
       - op: replace
         path: /spec/template/spec/containers/0/env/0/value
         value: tail831c5d.ts.net
+    target:
+      name: argotails
+      kind: Deployment
+
+  - # Configure Argotails to create a Tailscale service for
+    # each remote cluster
+    patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --service.create
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --service.proxy-class=remote-cluster
     target:
       name: argotails
       kind: Deployment
