@@ -1,0 +1,24 @@
+---
+# CiliumNetworkPolicy to restrict access to remote cluster proxy pods
+# Only ArgoCD application controller is allowed to communicate with these pods
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    security.chezmoi.sh/description: |
+      Allow ArgoCD application controller to connect to remote cluster proxies
+      (Tailscale-based connectivity).
+  name: allow-argocd-to-remote-cluster-proxy
+spec:
+  endpointSelector:
+    matchLabels:
+      security.chezmoi.sh/allow-argocd-to-remote-cluster-proxy: "true"
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/part-of: argocd
+            app.kubernetes.io/component: application-controller
+            io.kubernetes.pod.namespace: argocd
+      toPorts:
+        - ports:
+            - port: "443"

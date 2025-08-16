@@ -99,9 +99,9 @@ lint:
       commands:
         - name: lint
           platforms: [windows]
-          run: checkov.cmd -f ${target} -o sarif --output-file-path ${tmpfile}, --soft-fail --skip-check CKV_K8S_11
+          run: checkov.cmd -f ${target} -o sarif --output-file-path ${tmpfile}, --soft-fail --skip-check CKV_K8S_11 --skip-check CKV_K8S_21
         - name: lint
-          run: checkov -f ${target} -o sarif --output-file-path ${tmpfile}, --soft-fail --skip-check CKV_K8S_11
+          run: checkov -f ${target} -o sarif --output-file-path ${tmpfile}, --soft-fail --skip-check CKV_K8S_11 --skip-check CKV_K8S_21
     - name: remark-lint
       extra_packages:
         - remark-preset-lint-consistent

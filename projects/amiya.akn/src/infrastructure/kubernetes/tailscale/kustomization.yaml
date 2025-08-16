@@ -5,6 +5,11 @@ kind: Component
 resources:
   - ../../../../../../catalog/kustomize/tun-device-plugin
 
+  - remote-cluster.proxyclass.yaml
+  - ts-dns.dnsconfig.yaml
+
+  - security/
+
 patches:
   - path: restricted.proxyclass.yaml
 
