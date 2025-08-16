@@ -15,7 +15,7 @@ resources:
 
   # Install Argotails that manages all Tailscale clusters
   # secrets based on Tailscale's devices
-  - https://github.com/chezmoidotsh/argotails.git//deploy/manifests/default?ref=v0.1.5
+  - https://github.com/chezmoidotsh/argotails.git//deploy/manifests/default?ref=v0.1.8
   - argotails.ts-secrets.externalsecret.yaml
 
 helmCharts:
