@@ -9,9 +9,9 @@ machine:
     # enabled extentions:
     # - siderolabs/intel-ucode
     # - siderolabs/iscsi-tools
-    # - siderolabs/tailscale
+    # - siderolabs/thunderbolt
     # - siderolabs/util-linux-tools
-    image: factory.talos.dev/installer-secureboot/012427dcde4d2c4eff11f55adf2f20679292fcdffb76b5700dd022c813908b07:v1.10.4
+    image: factory.talos.dev/installer-secureboot/09618ac37329fe4ba876873eaa598360a73d105a207021c4b50a1c444a033e0d:v1.10.6
     diskSelector:
       size: ">= 256GB"
     wipe: true
@@ -63,8 +63,8 @@ cluster:
   # -- Install extra components
   extraManifests:
     # -- CoreDNS configuration override
-    - https://raw.githubusercontent.com/chezmoidotsh/arcane/refs/heads/main/projects/amiya.akn/docs/bootstrap/talos/manifests/coredns~v1.12.1.yaml
+    - https://raw.githubusercontent.com/chezmoidotsh/arcane/refs/heads/main/catalog/talos/manifests/coredns+tailscale/1.12.3.yaml
 
     # -- Metrics Server
-    - https://raw.githubusercontent.com/chezmoidotsh/arcane/refs/heads/main/projects/amiya.akn/docs/bootstrap/talos/manifests/kubelet-serving-cert-approver~0.9.1.yaml
-    - https://raw.githubusercontent.com/chezmoidotsh/arcane/refs/heads/main/projects/amiya.akn/docs/bootstrap/talos/manifests/metrics-server~0.7.2.yaml
+    - https://raw.githubusercontent.com/chezmoidotsh/arcane/refs/heads/main/catalog/talos/manifests/kubelet-serving-cert-approver/0.9.1.yaml
+    - https://raw.githubusercontent.com/chezmoidotsh/arcane/refs/heads/main/catalog/talos/manifests/metrics-server/0.7.2.yaml
