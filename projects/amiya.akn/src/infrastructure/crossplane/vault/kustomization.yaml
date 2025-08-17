@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
   - authelia.authbackend.yaml
+  - personal.mount.yaml
   - shared.mount.yaml
 
   # Additional policies

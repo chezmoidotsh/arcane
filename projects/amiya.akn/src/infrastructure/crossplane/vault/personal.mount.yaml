@@ -2,14 +2,14 @@
 apiVersion: vault.vault.upbound.io/v1alpha1
 kind: Mount
 metadata:
-  name: shared
+  name: personal
 spec:
   deletionPolicy: Orphan
   forProvider:
-    description: Shared secrets storage - KV v2 mount for application secrets and cross-service configuration accessible by authorized roles
+    description: Personal secrets namespace - user-isolated KV v2 storage for individual secret management with email-based access control
     options:
       version: "2"
-    path: shared
+    path: personal
     type: kv
   providerConfigRef:
     name: default
