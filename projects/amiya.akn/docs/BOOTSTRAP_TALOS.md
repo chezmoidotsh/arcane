@@ -51,7 +51,6 @@ Generate the initial cluster configuration:
 talosctl gen config amiya.akn https://kubernetes.amiya.akn.chezmoi.sh:6443 \
   --with-secrets secrets.yaml \
   --config-patch @bootstrap/talos/amiya-akn-01.patch-config.yaml \
-  --config-patch @bootstrap/talos/amiya-akn-01.tailscale.extensionserviceconfig.UNSAFE.yaml \
   --config-patch @bootstrap/talos/amiya-akn-01.volumes.yaml
 ```
 
