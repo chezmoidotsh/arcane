@@ -114,7 +114,11 @@ spec:
     - # NOTE: crossplane resources should only be installed in the crossplane namespace
       namespace: crossplane
       server: https://kubernetes.default.svc
+    - # NOTE: crossplane-secrets are used to store all secrets
+      namespace: crossplane-secrets
+      server: https://kubernetes.default.svc
     - # NOTE: in order to configure RBAC on the "vault", this namespace should be allowed too
+      # TODO: when all crossplane secret will be migrated to Vault, remove this namespace
       namespace: kubevault-kvstore
       server: https://kubernetes.default.svc
   clusterResourceWhitelist: [{ group: "*", kind: "*" }]
