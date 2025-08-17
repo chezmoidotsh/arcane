@@ -2,14 +2,14 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
-  name: openbao.xclustervaults.vault.chezmoi.sh
+  name: openbao.xremoteclustervaults.vault.chezmoi.sh
 spec:
   compositeTypeRef:
     apiVersion: vault.chezmoi.sh/v1alpha1
-    kind: XClusterVault
+    kind: XRemoteClusterVault
   mode: Pipeline
   pipeline:
-    # Fetch CA certificate from secret if specified
+    # Fetch CA certificate and token reviewer JWT from secret if specified
     - step: fetch-ca-cert-secret
       functionRef:
         name: function-extra-resources
@@ -20,18 +20,17 @@ spec:
           extraResources:
             - kind: Secret
               apiVersion: v1
-              into: ca-cert-secret
+              into: kubernetes-reviewer-secrets
               type: Selector
               selector:
                 maxMatch: 1
                 matchLabels:
-                  - key: vault.crossplane.chezmoi.sh/ca-cert-name
+                  - key: vault.crossplane.chezmoi.sh/cluster-name
                     type: FromCompositeFieldPath
-                    valueFromFieldPath: spec.caCert.secretRef.certName
-                    required: true
+                    valueFromFieldPath: spec.name
                 minMatch: 1
 
-    # Create KV v2 mount for the cluster
+    # Create KV v2 mount for the remote cluster
     - step: create-vault-mount
       functionRef:
         name: function-go-templating
@@ -53,7 +52,7 @@ spec:
             spec:
               deletionPolicy: Orphan
               forProvider:
-                description: kv v2 mount for cluster {{ $xr.spec.name }}
+                description: kv v2 mount for remote cluster {{ $xr.spec.name }}
                 options:
                   version: "2"
                 path: {{ $xr.spec.name }}
@@ -61,7 +60,7 @@ spec:
               providerConfigRef:
                 name: {{ $xr.spec.providerConfigRef.name | default "default" }}
 
-    # Create Kubernetes auth backend
+    # Create Kubernetes auth backend for remote cluster
     - step: create-auth-backend
       functionRef:
         name: function-go-templating
@@ -93,7 +92,7 @@ spec:
       functionRef:
         name: function-auto-ready
 
-    # Configure auth backend
+    # Configure auth backend for remote cluster
     - step: configure-auth-backend
       functionRef:
         name: function-go-templating
@@ -110,6 +109,7 @@ spec:
             metadata:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: AuthBackendConfig
+
               name: {{ $xr.spec.name }}-config
             spec:
               deletionPolicy: Delete
@@ -118,15 +118,18 @@ spec:
                   name: {{ $xr.spec.name }}
                 kubernetesHost: {{ $xr.spec.host }}
                 disableLocalCaJwt: true
-                {{- $caCertSecrets := index (index .extraResources "ca-cert-secret") "items" }}
-                {{- $secret := index $caCertSecrets 0 }}
-                {{- $caCertKey := $xr.spec.caCert.secretRef.key | default "ca.crt" }}
-                kubernetesCaCert: {{ index $secret.data $caCertKey | b64dec }}
+                {{- $kubernetesReviewerSecrets := index (index .context "apiextensions.crossplane.io/extra-resources") "kubernetes-reviewer-secrets" }}
+                {{- $secret := index $kubernetesReviewerSecrets 0 }}
+                kubernetesCaCert: |- {{ index $secret.data "ca.crt" | b64dec | nindent 6 }}
+                tokenReviewerJwtSecretRef:
+                  key: token
+                  name: {{ $secret.metadata.name }}
+                  namespace: {{ $secret.metadata.namespace }}
               providerConfigRef:
                 name: {{ $xr.spec.providerConfigRef.name | default "default" }}
 
-    # Create policies
-    - step: create-policies
+    # Create ESO policy for remote cluster
+    - step: create-eso-policy
       functionRef:
         name: function-go-templating
       input:
@@ -137,8 +140,8 @@ spec:
           template: |
             {{ $xr := getCompositeResource . }}
             {{ $clusterName := $xr.spec.name }}
+            {{ $enableSharedAccess := $xr.spec.enableSharedAccess | default true }}
             ---
-            # ESO Policy
             apiVersion: vault.vault.upbound.io/v1alpha1
             kind: Policy
             metadata:
@@ -152,17 +155,19 @@ spec:
                 policy: |
                   # Allow ESO to read all secrets in the project path
                   path "{{ $clusterName }}/*" { capabilities = ["read"] }
+                  {{- if $enableSharedAccess }}
 
-                  # Allow ESO to read all secrets in the shared/third-parties path
+                  # Allow ESO to read all secrets in the shared/third-parties path scoped to this cluster
                   path "shared/third-parties/+/+/{{ $clusterName }}/*" { capabilities = ["read"] }
 
                   # Allow ESO to read all secrets in the shared/certificates path
                   path "shared/certificates/*" { capabilities = ["read"] }
+                  {{- end }}
               providerConfigRef:
                 name: {{ $xr.spec.providerConfigRef.name | default "default" }}
 
-    # Create auth roles
-    - step: create-auth-roles
+    # Create ESO role for remote cluster
+    - step: create-eso-role
       functionRef:
         name: function-go-templating
       input:
@@ -175,7 +180,6 @@ spec:
             {{ $clusterName := $xr.spec.name }}
             {{ $additionalPolicies := $xr.spec.additionalPolicies | default (list) }}
             ---
-            # ESO Role
             apiVersion: kubernetes.vault.upbound.io/v1alpha1
             kind: AuthBackendRole
             metadata:

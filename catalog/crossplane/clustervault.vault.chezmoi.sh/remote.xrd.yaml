@@ -2,24 +2,24 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xclustervaults.vault.chezmoi.sh
+  name: xremoteclustervaults.vault.chezmoi.sh
 spec:
   claimNames:
     categories:
       - crossplane
       - chezmoidotsh
-    kind: ClusterVault
-    listKind: ClusterVaultList
-    plural: clustervaults
-    singular: clustervault
+    kind: RemoteClusterVault
+    listKind: RemoteClusterVaultList
+    plural: remoteclustervaults
+    singular: remoteclustervault
   defaultCompositeDeletePolicy: Foreground
   group: vault.chezmoi.sh
   names:
     categories:
       - crossplane
       - chezmoidotsh
-    kind: XClusterVault
-    listKind: XClusterVaultList
-    plural: xclustervaults
-    singular: xclustervault
+    kind: XRemoteClusterVault
+    listKind: XRemoteClusterVaultList
+    plural: xremoteclustervaults
+    singular: xremoteclustervault
   versions: []

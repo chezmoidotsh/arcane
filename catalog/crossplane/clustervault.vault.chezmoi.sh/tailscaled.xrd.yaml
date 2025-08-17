@@ -1,0 +1,25 @@
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xtailscaledclustervaults.vault.chezmoi.sh
+spec:
+  claimNames:
+    categories:
+      - crossplane
+      - chezmoidotsh
+    kind: TailscaledClusterVault
+    listKind: TailscaledClusterVaultList
+    plural: tailscaledclustervaults
+    singular: tailscaledclustervault
+  defaultCompositeDeletePolicy: Foreground
+  group: vault.chezmoi.sh
+  names:
+    categories:
+      - crossplane
+      - chezmoidotsh
+    kind: XTailscaledClusterVault
+    listKind: XTailscaledClusterVaultList
+    plural: xtailscaledclustervaults
+    singular: xtailscaledclustervault
+  versions: []

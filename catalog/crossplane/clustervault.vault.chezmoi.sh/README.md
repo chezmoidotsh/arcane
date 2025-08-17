@@ -1,158 +1,37 @@
 # Crossplane - Cluster Vault Integration
 
-These Crossplane Composite Resource Definitions (XRD) allow you to automatically configure OpenBao (Vault) for Kubernetes cluster integration. They will create all necessary OpenBao resources including authentication backends, policies, roles, and mounts for seamless secret management integration with your Kubernetes clusters.
-
-## Features
-
-* **Automatic OpenBao Configuration**: Creates KV v2 mounts, Kubernetes auth backends, policies, and roles
-* **Dual Resource Types**: Separate resources for external clusters (`ClusterVault`) and local clusters (`LocalClusterVault`)
-* **Secure CA Certificate Integration**: Supports CA certificates stored in Kubernetes secrets
-* **ESO Integration**: Pre-configured External Secrets Operator policies and roles following this repo convention
-* **Additional Policies Support**: Extensible policy system for custom integrations
-* **Provider Configuration**: Configurable OpenBao provider references
-
-## Usage
+These Crossplane Composite Resource Definitions (XRD) provide automated OpenBao (Vault) configuration for Kubernetes cluster integration. They create all necessary OpenBao resources including authentication backends, policies, roles, and mounts for seamless secret management integration with your Kubernetes clusters. These XRDs implement secure least-privilege access patterns and follow established project conventions for consistent secret management across clusters.
 
 > \[!WARNING]
-> For external clusters, the CA certificate **must** be stored in a Kubernetes Secret labeled with:
->
-> ```yaml
-> vault.crossplane.chezmoi.sh/ca-cert-name: <cert-name>
-> ```
->
-> The value of this label (`<cert-name>`) must be referenced in your `ClusterVault` resource under `spec.caCert.secretRef.certName`.
->
-> **Example Secret:**
->
-> ```yaml
-> apiVersion: v1
-> kind: Secret
-> metadata:
->   name: production-cluster-ca-cert
->   namespace: kube-system
->   labels:
->     vault.crossplane.chezmoi.sh/ca-cert-name: production-cluster-ca-cert
-> stringData:
->   ca.crt: |
->     -----BEGIN CERTIFICATE-----
->     ...
->     -----END CERTIFICATE-----
-> ```
+> These XRDs follow the logic defined in the project's ADRs, particularly for centralized secret management and naming conventions. Consult the corresponding ADRs before use.
 
-To use these XRDs, you must have a Crossplane installation running with the following components:
+## Resource Types Overview
 
-* [OpenBao/Vault provider](https://marketplace.upbound.io/providers/upbound/provider-vault/latest)
-* [Go templating function](https://marketplace.upbound.io/functions/crossplane-contrib/function-go-templating/latest)
-* [Extra resources function](https://marketplace.upbound.io/functions/crossplane-contrib/function-extra-resources/latest)
-* [Auto ready function](https://marketplace.upbound.io/functions/crossplane-contrib/function-auto-ready/latest)
+| Type                       | Use Case                      | Configuration | Authentication       | Network Requirements        |
+| -------------------------- | ----------------------------- | ------------- | -------------------- | --------------------------- |
+| **LocalClusterVault**      | Cluster hosting OpenBao       | Minimal       | Automatic            | Local cluster network       |
+| **RemoteClusterVault**     | External clusters (direct)    | Complete      | Manual (CA + JWT)    | Direct network connectivity |
+| **TailscaledClusterVault** | External clusters (Tailscale) | Simplified    | Standard + Tailscale | Tailscale mesh network      |
 
-### Install the XRDs
+## LocalClusterVault - Local Cluster Integration
 
-To install the XRDs, run the following command:
+**Usage**: Cluster hosting OpenBao itself, uses internal cluster connectivity.
 
-```shell
-kubectl apply --kustomize .
-```
+**When to use**:
 
-### Examples
+* The cluster where OpenBao is deployed
+* Zero configuration, automatic authentication
+* Direct access via internal cluster network
 
-#### External Cluster Integration
-
-Create an integration for an external Kubernetes cluster:
-
-```yaml
-apiVersion: vault.chezmoi.sh/v1alpha1
-kind: ClusterVault
-metadata:
-  name: production-cluster
-spec:
-  name: production
-  host: https://kubernetes.production:6443
-  caCert:
-    secretRef:
-      certName: production-cluster-ca-cert
-  providerConfigRef:
-    name: vault-prod
-```
-
-#### Local Cluster Integration
-
-Configure OpenBao for the cluster where it's running:
+**Usage example**:
 
 ```yaml
 apiVersion: vault.chezmoi.sh/v1alpha1
 kind: LocalClusterVault
 metadata:
-  name: local-cluster
+  name: amiya-cluster
 spec:
-  name: local
-  providerConfigRef:
-    name: vault-default
-```
-
-#### Advanced External Cluster Configuration
-
-Configure an external cluster with additional policies:
-
-```yaml
-apiVersion: vault.chezmoi.sh/v1alpha1
-kind: ClusterVault
-metadata:
-  name: staging-cluster
-spec:
-  name: staging
-  host: https://kubernetes.staging:6443
-  caCert:
-    secretRef:
-      certName: staging-cluster-ca-cert
-      key: ca.crt
-  providerConfigRef:
-    name: vault-staging
-  additionalPolicies:
-    - monitoring-policy
-    - logging-policy
-    - backup-policy
-```
-
-#### Complete Production Setup
-
-A comprehensive example for production use:
-
-```yaml
-apiVersion: vault.chezmoi.sh/v1alpha1
-kind: ClusterVault
-metadata:
-  name: prod-cluster
-  labels:
-    environment: production
-    cluster: prod
-spec:
-  name: prod
-  host: https://kubernetes.production:6443
-  caCert:
-    secretRef:
-      certName: prod-cluster-ca-cert
-      key: ca.crt
-  providerConfigRef:
-    name: vault-production
-  additionalPolicies:
-    - prometheus-policy
-    - grafana-policy
-    - loki-policy
-    - alertmanager-policy
-```
-
-#### Local Cluster with Additional Policies
-
-Configure the local cluster with additional policies:
-
-```yaml
-apiVersion: vault.chezmoi.sh/v1alpha1
-kind: LocalClusterVault
-metadata:
-  name: local-cluster-advanced
-spec:
-  name: local
+  name: amiya.akn
   providerConfigRef:
     name: vault-default
   additionalPolicies:
@@ -160,95 +39,175 @@ spec:
     - monitoring-policy
 ```
 
+## RemoteClusterVault - Direct Remote Access
+
+**Usage**: External clusters accessible via direct network connectivity.
+
+**When to use**:
+
+* Clusters accessible via direct network (VPN, dedicated networks, public endpoints)
+* Full control over authentication and network configuration
+* Environments requiring complete certificate verification
+
+> \[!WARNING]
+> **Secret required**: A Kubernetes secret must be created with the following labels and fields:
+>
+> * Required label: `vault.crossplane.chezmoi.sh/cluster-name: <cluster-name>`
+> * Required fields: `ca.crt` (CA certificate) and `token` (JWT token)
+>
+> **Value generation**:
+>
+> 1. Create necessary RBAC (ServiceAccount, ClusterRoleBinding with `system:auth-delegator`)
+> 2. Create a Secret of type `kubernetes.io/service-account-token`
+> 3. Retrieve the cluster CA certificate and ServiceAccount token
+
+**Required RBAC example**:
+
+```yaml
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: openbao:auth-delegator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: openbao-auth-delegator
+    namespace: external-secrets-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openbao-auth-delegator
+  namespace: external-secrets-system
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    kubernetes.io/service-account.name: openbao-auth-delegator
+  name: openbao-auth-delegator-token
+  namespace: external-secrets-system
+type: kubernetes.io/service-account-token
+```
+
+**Complete usage example**:
+
+```yaml
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: lungmen-akn-eso-credentials
+spec:
+  dataFrom:
+    - extract:
+        key: amiya.akn/external-secrets/remote-jwt/lungmen.akn
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    name: lungmen-akn-eso-credentials
+    template:
+      type: Opaque
+      metadata:
+        labels:
+          vault.crossplane.chezmoi.sh/cluster-name: lungmen.akn
+---
+apiVersion: vault.chezmoi.sh/v1alpha1
+kind: RemoteClusterVault
+metadata:
+  name: lungmen.akn
+spec:
+  name: lungmen.akn
+  host: https://kubernetes.lungmen.akn.chezmoi.sh:6443
+  enableSharedAccess: false  # Optional
+```
+
+## TailscaledClusterVault - Tailscale Network Access
+
+**Usage**: External clusters accessible via Tailscale network.
+
+**When to use**:
+
+* Clusters connected via Tailscale network
+* Simplified configuration with network management by Tailscale
+* Distributed environments requiring secure mesh connectivity
+
+> \[!IMPORTANT]
+> **Network prerequisites**:
+>
+> * A Tailscale proxy (Tailscale Funnel, TS ingress, or other) must be deployed for OpenBao to access the cluster
+> * Tailscale handles **both network connectivity and Kubernetes authentication**
+> * No additional RBAC setup required beyond standard Tailscale configuration
+
+**Usage example**:
+
+```yaml
+apiVersion: vault.chezmoi.sh/v1alpha1
+kind: TailscaledClusterVault
+metadata:
+  name: kazimierz-cluster
+spec:
+  name: kazimierz.akn
+  host: https://kubernetes.kazimierz.akn.ts.net:6443
+  providerConfigRef:
+    name: vault-production
+  additionalPolicies:
+    - monitoring-policy
+    - backup-policy
+```
+
+## Prerequisites
+
+To use these XRDs, you must have a Crossplane installation running with the following components:
+
+* [OpenBao/Vault provider](https://marketplace.upbound.io/providers/upbound/provider-vault/latest)
+* [Go templating function](https://marketplace.upbound.io/functions/crossplane-contrib/function-go-templating/latest)
+* [Extra resources function](https://marketplace.upbound.io/functions/crossplane-contrib/function-extra-resources/latest) (RemoteClusterVault only)
+* [Auto ready function](https://marketplace.upbound.io/functions/crossplane-contrib/function-auto-ready/latest)
+
+## Installation
+
+To install all three XRDs, run the following command:
+
+```shell
+kubectl apply --kustomize .
+```
+
 ## Created Resources
 
-When you create a `ClusterVault` or `LocalClusterVault` resource, the following OpenBao resources are automatically created:
+All cluster vault types create the following OpenBao resources:
 
 ### Core Resources
 
 * **KV v2 Mount**: `{cluster-name}/` - Secure storage for cluster secrets
 * **Kubernetes Auth Backend**: `{cluster-name}` - Authentication method for the cluster
-* **Auth Backend Config**: Configured with cluster endpoint and CA certificate (for external clusters) or local endpoint (for local clusters)
+* **Auth Backend Config**: Configured appropriately for each cluster type
 
 ### Policies
 
 * **ESO Policy**: `{cluster-name}-eso-policy` - Allows External Secrets Operator to read secrets
+  * Cluster-scoped access: `/{cluster-name}/*`
+  * Shared third-parties: `/shared/third-parties/+/+/{cluster-name}/*`
+  * Shared certificates: `/shared/certificates/*`
 
 ### Roles
 
 * **ESO Role**: `{cluster-name}-eso-role` - Role for External Secrets Operator service account
 
-## Schema
+For detailed API information, see [API Reference](./API_REFERENCE.md).
 
-### ClusterVault (External Clusters)
+## References
 
-This XRD defines a custom Cluster Vault integration resource (`XClusterVault` and `ClusterVault`) for external Kubernetes clusters:
-
-| Field                            | Description                                                                 | Required | Default   |
-| -------------------------------- | --------------------------------------------------------------------------- | -------- | --------- |
-| `spec.name`                      | The name of the Kubernetes cluster                                          | Yes      | -         |
-| `spec.host`                      | The address of the Kubernetes cluster (API server endpoint)                 | Yes      | -         |
-| `spec.caCert`                    | CA certificate configuration                                                | Yes      | -         |
-| `spec.caCert.secretRef`          | Reference to secret containing CA certificate                               | Yes      | -         |
-| `spec.caCert.secretRef.certName` | Value of the label `vault.crossplane.chezmoi.sh/ca-cert-name` on the secret | Yes      | -         |
-| `spec.caCert.secretRef.key`      | Key in the secret containing the CA certificate                             | No       | `ca.crt`  |
-| `spec.providerConfigRef`         | Reference to the ProviderConfig for OpenBao resources                       | No       | -         |
-| `spec.providerConfigRef.name`    | Name of the ProviderConfig                                                  | No       | `default` |
-| `spec.additionalPolicies`        | List of additional policies to create and add to ESO tokenPolicies          | No       | `[]`      |
-
-### LocalClusterVault (Local Cluster)
-
-This XRD defines a custom Local Cluster Vault integration resource (`XLocalClusterVault` and `LocalClusterVault`) for the local cluster:
-
-| Field                         | Description                                                        | Required | Default   |
-| ----------------------------- | ------------------------------------------------------------------ | -------- | --------- |
-| `spec.name`                   | The name of the local Kubernetes cluster                           | Yes      | -         |
-| `spec.providerConfigRef`      | Reference to the ProviderConfig for OpenBao resources              | No       | -         |
-| `spec.providerConfigRef.name` | Name of the ProviderConfig                                         | No       | `default` |
-| `spec.additionalPolicies`     | List of additional policies to create and add to ESO tokenPolicies | No       | `[]`      |
-
-## Security Considerations
-
-* **Least Privilege**: Each role is configured with minimal required permissions
-* **Namespace Isolation**: ESO role is restricted to `external-secrets-system` namespace
-* **Token TTL**: Authentication tokens have limited lifetime (1 hour)
-* **CA Verification**: Supports custom CA certificate validation for secure cluster communication (external clusters only)
-* **Automatic Local Configuration**: Local clusters use built-in Kubernetes service account JWT validation
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Authentication Failures**: Ensure the Kubernetes API endpoint is accessible from OpenBao (external clusters)
-2. **CA Certificate Issues**: Verify the CA certificate secret exists, is labeled correctly, and contains valid data (external clusters)
-3. **Permission Denied**: Check that the OpenBao provider has sufficient permissions
-4. **Resource Not Ready**: Use `kubectl describe` to check resource conditions
-
-### Verification
-
-Check the status of your integration:
-
-```bash
-# Check the ClusterVault resource (external)
-kubectl get clustervault prod-cluster -o yaml
-
-# Check the LocalClusterVault resource (local)
-kubectl get localclustervault local-cluster -o yaml
-
-# Check created OpenBao resources
-kubectl get vault,policy,authbackend -l crossplane.io/composite=prod-cluster
-
-# Test authentication (from within the cluster)
-vault write auth/prod/login role=prod-eso-role jwt=$SERVICE_ACCOUNT_TOKEN
-```
-
-## Architecture
-
-These XRDs follow the ADR (Architecture Decision Records) established for OpenBao integration:
-
-* **ADR-001**: Centralized secret management using OpenBao
-* **ADR-002**: Topology with separate mounts per cluster + shared mount
-* **ADR-003**: Application-first naming conventions for cluster mounts
+* [Project ADRs](../../../docs/decisions/) - Architecture Decision Records
+* [Upbound Marketplace - Vault Provider](https://marketplace.upbound.io/providers/upbound/provider-vault)
+* [Upbound Marketplace - Go Templating Function](https://marketplace.upbound.io/functions/crossplane-contrib/function-go-templating)
+* [Upbound Marketplace - Extra Resources Function](https://marketplace.upbound.io/functions/crossplane-contrib/function-extra-resources)
+* [Upbound Marketplace - Auto Ready Function](https://marketplace.upbound.io/functions/crossplane-contrib/function-auto-ready)
 
 ## License
 
