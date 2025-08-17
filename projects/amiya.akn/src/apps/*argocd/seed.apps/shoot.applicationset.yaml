@@ -8,11 +8,6 @@ metadata:
       configurations across all clusters configured in ArgoCD. It achieves this
       by deploying an application that, in turn, deploys two other ApplicationSets:
       one for system/cluster applications and another for applications.
-
-    # Source reference for argocd-extension-application-map
-    source-ref.argocd.argoproj.io/0.path: projects/amiya.akn/src/apps/*argocd/shoot.apps
-    source-ref.argocd.argoproj.io/0.repository-url: https://github.com/chezmoidotsh/arcane.git
-    source-ref.argocd.argoproj.io/0.target-revision: main
   name: shoot
 spec:
   ignoreApplicationDifferences:
@@ -26,6 +21,12 @@ spec:
     - clusters: {}
   template:
     metadata:
+      annotations:
+        # Source reference for argocd-extension-application-map
+        source-ref.argocd.argoproj.io/0.path: projects/amiya.akn/src/apps/*argocd/shoot.apps
+        source-ref.argocd.argoproj.io/0.repository-url: https://github.com/chezmoidotsh/arcane.git
+        source-ref.argocd.argoproj.io/0.target-revision: main
+
       name: "{{ .name }}"
     spec:
       destination:
