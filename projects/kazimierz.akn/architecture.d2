@@ -1,0 +1,190 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@../../docs/assets/d2/architecture-styles.d2
+
+explanation: |md
+  # kazimierz.akn Architecture
+
+  This document describes the architecture \
+  of the kazimierz.akn platform in a visual way \
+  with all the components and how they \
+  interact with each other.
+
+  kazimierz.akn serves as a **sacrificial bastion proxy** \
+  that acts as a reverse proxy and security gateway \
+  between the internet and other homelab clusters. \
+  It is designed to be compromisable without impacting \
+  other critical infrastructure.
+| {
+  near: top-left
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   These objects represent resources external to the kazimierz.akn platform │
+# │   but which interact with or are used by it.                               │
+# │   They include networks, hardware, or third-party services                 │
+# │   essential for the proper functioning, connectivity, security,            │
+# │   or management of the platform.                                           │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Networks
+
+internet: {class: network}
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# External Clusters
+
+amiya·akn: {
+  class: [application]
+  label: amiya·akn
+  icon: assets/icons/hardware/talos.svg
+  tooltip: Mission-critical services cluster (SSO, Secrets, etc.)
+}
+
+
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                           kazimierz.akn Platform                           │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   This namespace contains all the components of the kazimierz.akn platform,│
+# │   serving as a sacrificial bastion proxy for secure internet access to    │
+# │   other homelab clusters. The platform is designed to be compromisable     │
+# │   without affecting critical infrastructure.                               │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+kazimierz·akn: {
+  security: {class: namespace}
+  system: {class: namespace}
+
+  style.fill-pattern: none
+
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Security Components
+  
+  security.crowdsec: {
+    class: [application; undeployed]
+    label: CrowdSec
+    icon: assets/icons/apps/crowdsec.svg
+    link: https://crowdsec.net/
+    tooltip: Collaborative IPS/IDS with behavioral detection and community threat intelligence
+  }
+
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # System Components
+
+  system.cert-manager: {
+    class: [application-system; undeployed]
+    label: Cert-Manager
+    icon: assets/icons/system/cert-manager.svg
+    link: https://cert-manager.io/
+    tooltip: Cert-Manager is a Kubernetes controller that automates the management and issuance of TLS certificates.
+  }
+
+  system.cilium: {
+    class: [application-system; undeployed]
+    label: Cilium
+    icon: assets/icons/system/cilium.svg
+    link: https://cilium.io/
+    tooltip: Cilium is a networking, observability, and security solution with an eBPF-based dataplane.
+  }
+
+  system.external-dns: {
+    class: [application-system; undeployed]
+    label: ExternalDNS
+    icon: assets/icons/system/external-dns.png
+    link: https://github.com/kubernetes-sigs/external-dns
+    tooltip: ExternalDNS configures DNS records automatically for exposed services
+  }
+
+  system.external-secret: {
+    class: [application-system; undeployed]
+    label: External-Secret
+    icon: assets/icons/system/external-secret.svg
+    link: https://external-secrets.io/
+    tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
+  }
+
+  system.tailscale: {
+    class: [application-system; undeployed]
+    label: Tailscale
+    icon: assets/icons/system/tailscale.svg
+    link: https://tailscale.com/
+    tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
+  }
+
+  system.traefik: {
+    class: [application-system; undeployed]
+    label: Traefik
+    icon: assets/icons/system/traefik.svg
+    link: https://traefik.io/
+    tooltip: Reverse proxy and load balancer with automatic service discovery and SSL termination
+  }
+
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Tailscale Components
+
+  ts-amiyaakn-envoy: "" { 
+    class: [tailscaled; undeployed]
+    tooltip: Tailscaled for the Envoy Gateway on amiya·akn
+  }
+}
+
+
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   This section describes the various connections within the kazimierz.akn  │
+# │   platform and its interactions with external systems.                     │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Internet to Proxy Flow
+
+internet -> kazimierz·akn.system.traefik: |md
+    HTTP (80)
+    HTTPS (443)
+  | { class: [connect-from-internet; undeployed] }
+kazimierz·akn.system.traefik -> kazimierz·akn.ts-amiyaakn-envoy: "Proxify HTTPS (443)" {class: [undeployed]}
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# System Connections
+
+kazimierz·akn.system.cert-manager -> internet: "acme-v02.api.letsencrypt.org:443" {class: [connect-to-internet; undeployed]}
+
+kazimierz·akn.system.external-dns -> internet: "api.cloudflare.com:443" {class: [connect-to-internet; undeployed]}
+
+kazimierz·akn.system.external-secret -> kazimierz·akn.ts-amiyaakn-envoy: "Secrets Synchronization (443)" {class: [undeployed]}
+
+kazimierz·akn.system.tailscale -> internet: "api.tailscale.com:443" { class: [connect-to-internet; undeployed] }
+kazimierz·akn.system.tailscale -> kazimierz·akn.ts-amiyaakn-envoy: { class: [connect-management; undeployed] }
+
+kazimierz·akn.system.traefik -> kazimierz·akn.security.crowdsec: "Gather IP Blocklist (??)" {class: [undeployed]}
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Security Analysis Flow
+
+kazimierz·akn.security.crowdsec -> internet: "CrowdSec API (??)" { class: [connect-to-internet; undeployed] }
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Inter-cluster Connections
+
+kazimierz·akn.ts-amiyaakn-envoy -> amiya·akn: { class: [connect-from-vpn-backbone; undeployed] }

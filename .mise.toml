@@ -77,38 +77,39 @@ _.path = [
 # -----------------------------------------------------------------------------
 # Essential tools for Kubernetes cluster management and operations
 
-kubectl = "latest" # Kubernetes CLI for managing clusters and resources
 helm = "latest"    # Kubernetes package manager for deploying applications via charts
 krew = "latest"    # Kubectl plugin manager for extending functionality
 ksops = "latest"   # KSOPS plugin for Kustomize to handle SOPS-encrypted secrets
+kubectl = "latest" # Kubernetes CLI for managing clusters and resources
 
 # -----------------------------------------------------------------------------
 # Infrastructure Management Tools
 # -----------------------------------------------------------------------------
 # Platform-specific tools for managing infrastructure components
 
-talosctl = "latest" # Talos Linux cluster management tool for bare-metal Kubernetes
-argocd = "latest"   # ArgoCD CLI for GitOps application deployment and management
-openbao = "latest"  # OpenBao CLI for secret management (HashiCorp Vault fork)
 ansible = "8.7"     # Configuration management and automation platform, pinned for stability with existing playbooks
+argocd = "latest"   # ArgoCD CLI for GitOps application deployment and management
+hcloud = "latest"   # Hetzner Cloud CLI for managing cloud resources
+openbao = "latest"  # OpenBao CLI for secret management (HashiCorp Vault fork)
+talosctl = "latest" # Talos Linux cluster management tool for bare-metal Kubernetes
 
 # -----------------------------------------------------------------------------
 # Security and Data Tools
 # -----------------------------------------------------------------------------
 # Tools for handling secrets, data processing, and security operations
 
-yq = "latest"   # YAML/JSON processor for configuration file manipulation
 dive = "latest" # Container image analysis tool for security scanning
+yq = "latest"   # YAML/JSON processor for configuration file manipulation
 
 # -----------------------------------------------------------------------------
 # Development and Documentation Tools
 # -----------------------------------------------------------------------------
 # Tools supporting development workflows and documentation generation
 
-gum = "latest"                                    # Terminal UI framework for interactive scripts and prompts
 "aqua:terrastruct/d2" = "latest"                  # Diagram-as-code tool for generating architecture visualizations
-"ubi:runmedev/runme" = "latest"                   # Interactive markdown execution tool for runbooks and documentation
 "go:github.com/oklog/ulid/v2/cmd/ulid" = "latest" # ULID generator for unique identifiers in distributed systems
+"ubi:runmedev/runme" = "latest"                   # Interactive markdown execution tool for runbooks and documentation
+gum = "latest"                                    # Terminal UI framework for interactive scripts and prompts
 
 
 # -----------------------------------------------------------------------------

@@ -1,10 +1,8 @@
 ---
 # This YAML file defines the default Helm values for configuring Tailscale Operator
 operatorConfig:
-  # For my own use, I use the tag `tag:kubernetes-cluster` to identify the device
-  # that is running the Tailscale operator.
-  defaultTags:
-    - tag:kubernetes-cluster
+  # By default, the operator will not add any tags to the Tailscale nodes.
+  defaultTags: []
 
 proxyConfig:
   # Like the operator, I use the tag `tag:kubernetes-apps` to identify the
@@ -12,7 +10,5 @@ proxyConfig:
   defaultTags: tag:kubernetes-apps
 
 apiServerProxyConfig:
-  # By default, the API server proxy mode is enabled. This allows Tailscale to
-  # act as a proxy for the Kubernetes API server, which is the default behavior
-  # for all of my clusters.
-  mode: "true"
+  # By default, the API server proxy mode is disabled on all clusters.
+  mode: "false"

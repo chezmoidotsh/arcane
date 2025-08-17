@@ -1,0 +1,4 @@
+# This .gitignore file excludes the "generated/" folder, which contains YAML files automatically created by Talos.
+# These files are generated during the cluster bootstrap process and should not be tracked by Git.
+# This prevents temporary or environment-specific files from being committed to the repository.
+generated/
