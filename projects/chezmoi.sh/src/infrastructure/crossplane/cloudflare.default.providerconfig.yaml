@@ -19,7 +19,7 @@ spec:
   refreshInterval: 720h # 30 days
   secretStoreRef:
     kind: ClusterSecretStore
-    name: kubevault
+    name: vault.chezmoi.sh
   target:
     name: cloudflare-credentials
     template:
@@ -30,9 +30,9 @@ spec:
   data:
     - secretKey: email
       remoteRef:
-        key: cloud-cloudflare-chezmoish-crossplane
+        key: shared/third-parties/cloudflare/iam/chezmoi.sh/crossplane-rw
         property: email
     - secretKey: api_key
       remoteRef:
-        key: cloud-cloudflare-chezmoish-crossplane
+        key: shared/third-parties/cloudflare/iam/chezmoi.sh/crossplane-rw
         property: api_key
