@@ -1,5 +1,8 @@
 <h1 align="center">
-  Amiya · Arknights <sub>(Amiya · AKN)</sub>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/logo.dark.svg">
+      <img alt="Stylized letter 'A' with a futuristic font and a subscript 8, representing Amiya·AKN branding" src="./assets/logo.light.svg" width="201">
+  </picture>
 </h1>
 
 <h4 align="center">Amiya·AKN - Mission-critical services</h4>
