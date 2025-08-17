@@ -27,6 +27,12 @@ spec:
       annotations:
         # All Crossplane resources should be deployed with other applications
         argocd.argoproj.io/sync-wave: "100"
+
+        # Source reference for argocd-extension-application-map
+        source-ref.argocd.argoproj.io/0.path: "{{ .path.path }}"
+        source-ref.argocd.argoproj.io/0.repository-url: https://github.com/chezmoidotsh/arcane.git
+        source-ref.argocd.argoproj.io/0.target-revision: main
+
       name: crossplane-{{ index .path.segments 1 }}
     spec:
       destination:

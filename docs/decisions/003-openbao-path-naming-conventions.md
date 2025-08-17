@@ -189,6 +189,7 @@ This category contains shared credentials for third-party services (AWS, Cloudfl
 
 ***AWS credentials***: `/shared/third-parties/aws/{service}/{app-or-purpose}` - *For example, the AWS credentials used by `amiya.akn/cnpg` to access to the `important-backup` bucket are stored in: `/shared/third-parties/aws/iam/amiya.akn/cnpg-important-backup-rw`*\
 ***Cloudflare credentials***: `/shared/third-parties/cloudflare/{service}/{app-or-purpose}` - *For example, the Cloudflare credentials used by `amiya.akn/cert-manager` to access to all DNS zones are stored in: `/shared/third-parties/cloudflare/iam/amiya.akn/cert-manager-rw`*\
+***Let's Encrypt account***: `/shared/third-parties/letsencrypt/certificate-authority/account` - *For example, the Let's Encrypt account credentials used by cert-manager are stored in: `/shared/third-parties/letsencrypt/certificate-authority/account`*\
 ***Other providers***: `/shared/third-parties/{provider}/{service}/{project-name}/{app-or-purpose}`
 
 > \[!NOTE]
@@ -327,6 +328,7 @@ Cloud provider credentials follow service-based organization:
 
 ## Changelog
 
+* **2025-08-17**: **FEATURE**: Add example for Let's Encrypt account path convention `/shared/third-parties/letsencrypt/certificate-authority/account` for ACME account credentials used by cert-manager
 * **2025-08-11**: **FEATURE**: Add personal mount structure with user-isolated namespaces. Implemented two-tier templated policies (`personal-user-access` for standard users, `personal-admin-access` for administrators) using OIDC alias metadata templating. This enables self-service secret management for personal tools (Talos contexts, kubectl configs, personal API tokens) while maintaining zero-trust principles and administrative oversight capabilities.
 * **2025-07-01**: **SECURITY**: Migrate SSO secrets from `/shared/sso/*` to per-project mounts following `/{cluster}/{app}/auth/{secret}` pattern. This change addresses security vulnerability where `global-eso-policy` allowed any cluster to access OIDC `client_secret` credentials from other clusters, enabling potential identity spoofing attacks. The new structure maintains proper isolation while allowing Authelia legitimate cross-mount access via dedicated policies.
 * **2025-06-30**: Update path naming conventions to match the new policy naming conventions.

@@ -19,7 +19,7 @@ spec:
   refreshInterval: 720h # 30 days
   secretStoreRef:
     kind: ClusterSecretStore
-    name: kubevault
+    name: vault.chezmoi.sh
   target:
     name: aws-credentials
     template:
@@ -34,9 +34,9 @@ spec:
   data:
     - secretKey: access_key_id
       remoteRef:
-        key: cloud-aws-chezmoish-crossplane
+        key: shared/third-parties/aws/iam/chezmoi.sh/crossplane-rw
         property: access_key_id
     - secretKey: secret_access_key
       remoteRef:
-        key: cloud-aws-chezmoish-crossplane
+        key: shared/third-parties/aws/iam/chezmoi.sh/crossplane-rw
         property: secret_access_key
