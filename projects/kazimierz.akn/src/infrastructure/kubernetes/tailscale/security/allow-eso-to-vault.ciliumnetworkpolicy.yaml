@@ -1,0 +1,22 @@
+---
+# CiliumNetworkPolicy to restrict access to remote cluster proxy pods
+# Only ArgoCD application controller is allowed to communicate with these pods
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    security.chezmoi.sh/description: |
+      Allow External Secrets Operator (ESO) to connect to the Vault through Tailscale.
+  name: allow-eso-to-vault
+spec:
+  endpointSelector:
+    matchLabels:
+      security.chezmoi.sh/allow-eso-to-vault: "true"
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/instance: external-secrets
+            io.kubernetes.pod.namespace: external-secrets-system
+      toPorts:
+        - ports:
+            - port: "443"

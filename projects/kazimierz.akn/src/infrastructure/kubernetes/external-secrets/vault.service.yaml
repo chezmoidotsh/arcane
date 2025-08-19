@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   annotations:
-    # tailscale.com/proxy-class: remote-cluster
+    tailscale.com/proxy-class: vault
     tailscale.com/tailnet-fqdn: vault.tail831c5d.ts.net
   name: vault-chezmoi-sh
 spec:

@@ -1,0 +1,33 @@
+# ProxyClass designed for remote cluster connectivity with ArgoCD integration.
+# This ProxyClass provides secure connectivity for ArgoCD to manage remote clusters
+# while maintaining strict network segmentation and security controls.
+---
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyClass
+metadata:
+  name: vault
+spec:
+  statefulSet:
+    # Custom labels to identify pods that ArgoCD can connect to for remote cluster management
+    pod:
+      labels:
+        security.chezmoi.sh/allow-eso-to-vault: "true"
+      tailscaleContainer:
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+            squat.ai/tun: "1"
+          limits:
+            memory: 128Mi
+            squat.ai/tun: "1"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false # NOTE: required for the Tailscale container to create sockets
+          capabilities:
+            add:
+              - NET_ADMIN
+            drop:
+              - ALL
+          seccompProfile:
+            type: RuntimeDefault
