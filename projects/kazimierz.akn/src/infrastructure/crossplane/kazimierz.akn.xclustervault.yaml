@@ -1,0 +1,8 @@
+---
+apiVersion: vault.chezmoi.sh/v1alpha1
+kind: TailscaledClusterVault
+metadata:
+  name: kazimierz.akn
+spec:
+  name: kazimierz.akn
+  host: https://kazimierz-akn.tail831c5d.ts.net
