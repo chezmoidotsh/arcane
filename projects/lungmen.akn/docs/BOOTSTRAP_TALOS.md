@@ -43,9 +43,8 @@ Generate the initial cluster configuration:
 ```bash
 talosctl gen config lungmen.akn https://kubernetes.lungmen.akn.chezmoi.sh:6443 \
   --with-secrets secrets.yaml \
-  --config-patch @bootstrap/talos/lungmen-akn-01.patch-config.yaml \
-  --config-patch @bootstrap/talos/lungmen-akn-01.volumes.yaml \
-  --config-patch @../../../defaults/talos/manifests/.decrypted~tailscale.extensionserviceconfig.enc.yaml
+  --config-patch @../src/infrastructure/talos/lungmen-akn-01.patch-config.yaml \
+  --config-patch @../src/infrastructure/talos/lungmen-akn-01.volumes.yaml \
 ```
 
 This will generate the following files:

@@ -84,7 +84,7 @@ The generated image includes these essential extensions:
    * Navigate to local storage (or your preferred storage location)
    * Select "Content" → "Upload"
    * Choose the downloaded ISO
-   * Rename to `linux.1.10.4-amd64.iso` for consistency
+   * Rename to `talos-linux.v1.10.6-amd64.iso` for consistency
 
 ## VM Configuration
 
@@ -118,13 +118,13 @@ Next, create a VM with the following configuration:
 
 ### 2. OS Configuration
 
-| Field                      | Value                  |
-| -------------------------- | ---------------------- |
-| Use CD/DVD disc image file | ✔️                     |
-| Storage                    | local                  |
-| ISO image                  | linux.1.10.4-amd64.iso |
-| Guest OS Type              | Linux                  |
-| Guest OS Version           | 6.x - 2.6 Kernel       |
+| Field                      | Value                         |
+| -------------------------- | ----------------------------- |
+| Use CD/DVD disc image file | ✔️                            |
+| Storage                    | local                         |
+| ISO image                  | talos-linux.v1.10.6-amd64.iso |
+| Guest OS Type              | Linux                         |
+| Guest OS Version           | 6.x - 2.6 Kernel              |
 
 ### 3. System Configuration
 
