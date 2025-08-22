@@ -65,6 +65,12 @@ _.path = [
   "{{ config_root }}/.mise/krew/bin", # Kubectl plugins installed via Krew
 ]
 
+# -----------------------------------------------------------------------------
+# Python Virtual Environment
+# -----------------------------------------------------------------------------
+# Isolated Python environment for any Python-based tools or scripts
+_.python.venv = { path = ".venv", create = true, uv_create_args = ['--seed'] }
+
 # =============================================================================
 # Tool Installation Matrix
 # =============================================================================
@@ -110,7 +116,7 @@ yq = "latest"   # YAML/JSON processor for configuration file manipulation
 "go:github.com/oklog/ulid/v2/cmd/ulid" = "latest" # ULID generator for unique identifiers in distributed systems
 "ubi:runmedev/runme" = "latest"                   # Interactive markdown execution tool for runbooks and documentation
 gum = "latest"                                    # Terminal UI framework for interactive scripts and prompts
-
+uv = "latest"
 
 # -----------------------------------------------------------------------------
 # Vault (OpenBao) Authentication Tasks

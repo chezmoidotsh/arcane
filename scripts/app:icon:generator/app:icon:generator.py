@@ -17,11 +17,14 @@ Usage:
 """
 
 import sys
+import os
 import freetype
 import random
 
 # Configuration
-FONT_PATH = "./nasalization-rg.ttf"
+# Get the directory where this script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+FONT_PATH = os.path.join(SCRIPT_DIR, "nasalization-rg.ttf")
 MAIN_SIZE = 120           # Base font size for main letter
 SUBSCRIPT_RATIO = 0.3     # Subscript size as ratio of main size
 SUBSCRIPT_Y_FACTOR = 10   # How far down to position subscripts
