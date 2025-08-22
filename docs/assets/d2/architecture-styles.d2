@@ -60,8 +60,8 @@ vars: {
 # ├────────────────────────────────────────────────────────────────────────────┤
 # │ Desc:                                                                      │
 # │   Visual style definitions for different types of components in the        │
-# │   architecture diagrams. Each class defines shape, fill patterns, colors,  │
-# │   and other visual properties.                                             │
+# │   architecture diagrams. Each class defines shape, colors, and other       │
+# │   visual properties.                                                       │
 # ╰────────────────────────────────────────────────────────────────────────────╯
 
 classes: {
@@ -71,7 +71,6 @@ classes: {
   application: {
     shape: rectangle
     style: {
-      fill-pattern: dots
       multiple: true
       shadow: false
     }
@@ -80,7 +79,6 @@ classes: {
   application-system: {
     shape: rectangle
     style: {
-      fill-pattern: dots
       multiple: true
       stroke-dash: 3
       opacity: 0.7
@@ -91,7 +89,6 @@ classes: {
   application-datastore: {
     shape: cylinder
     style: {
-      fill-pattern: dots
       shadow: false
     }
   }
@@ -102,7 +99,6 @@ classes: {
   network: {
     shape: cloud
     style: {
-      fill-pattern: dots
       text-transform: uppercase
       font-size: 24
       bold: true
@@ -138,7 +134,6 @@ classes: {
   namespace: {
     shape: page
     style: {
-      fill-pattern: lines
       stroke-dash: 5
       text-transform: lowercase
     }

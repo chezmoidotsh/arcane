@@ -1,137 +1,162 @@
-# ------------------------------------------------------------------------------------------------
-# 🔧 D2 Configuration
-# ------------------------------------------------------------------------------------------------
-
-explanation: |md
-  # Lungmen Architecture
-
-  This document describes the architecture \
-  of the Lungmen platform in a visual way \
-  with all the components and how they \
-  interact with each other.
-| {
-  near: top-left
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
 }
 
 ...@../../docs/assets/d2/architecture-styles.d2
 
+explanation: |md
+  # lungmen.akn Architecture
 
-# ------------------------------------------------------------------------------------------------
-# 🌐 Networks definition
-# ------------------------------------------------------------------------------------------------
+  This document describes the architecture \
+  of the lungmen.akn platform in a visual way \
+  with all the components and how they \
+  interact with each other.
 
-internet: {class: [network]}
-localnet: {class: [network]}
+  lungmen.akn serves as the home applications \
+  cluster, providing media, life management, \
+  and personal productivity services for \
+  the homelab infrastructure.
+| {
+  near: top-left
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   These objects represent resources external to the lungmen.akn platform   │
+# │   but which interact with or are used by it.                               │
+# │   They include networks, hardware, or third-party services                 │
+# │   essential for the proper functioning, connectivity, security,            │
+# │   or management of the platform.                                           │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Networks
+
+internet: {class: network}
+localnet: {class: network}
 tailnet: {
-  class: [network]
+  class: network
   tooltip: Tailnet - Mesh VPN Network
 }
 
 
-# ------------------------------------------------------------------------------------------------
-# 🖥️ Hardware & Infrastructure definition
-# ------------------------------------------------------------------------------------------------
-
-cloudflare: {
-  class: [platform]
-  icon: assets/icons/platform/cloudflare.svg
-  tooltip: Cloudflare - CDN and Security Platform
-}
+# ──────────────────────────────────────────────────────────────────────────────
+# Hardware & Infrastructure
 
 udm-pro: {
-  class: [hardware]
+  class: hardware
   icon: assets/icons/hardware/unifi.svg
   tooltip: UniFi Dream Machine Pro - Gateway & Network Controller
 }
 
 
-# ------------------------------------------------------------------------------------------------
-# 📦 Components definition
-# ------------------------------------------------------------------------------------------------
+# ──────────────────────────────────────────────────────────────────────────────
+# External Clusters
 
-lungmen: {
-  label: ☸ lungmen.akn.chezmoi.sh
+amiya·akn: {
+  class: [application]
+  label: amiya·akn
+  icon: assets/icons/hardware/talos.svg
+  tooltip: Mission-critical services cluster (SSO, Secrets, etc.)
+}
+
+
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                            lungmen.akn Platform                           │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   This namespace contains all the components of the lungmen.akn platform,  │
+# │   serving as the home applications cluster providing media, life           │
+# │   management, and personal productivity services for the homelab.          │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+lungmen·akn: {
+  system: {class: namespace}
+  media: {class: namespace}
+  life: {class: namespace}
+  others: {class: namespace}
+
   style.fill-pattern: none
 
-  system: {class: [namespace]}
-  media: {class: [namespace]}
-  life: {class: [namespace]}
-  others: {class: [namespace]}
+  # ────────────────────────────────────────────────────────────────────────────
+  # System Components
 
-  # ⚙️ System Components
   system.cert-manager: {
     class: [application-system; undeployed]
+    label: Cert-Manager
     icon: assets/icons/system/cert-manager.svg
     link: https://cert-manager.io/
-    tooltip: Automatic provisioning and management of TLS certificates in Kubernetes.
+    tooltip: Cert-Manager is a Kubernetes controller that automates the management and issuance of TLS certificates.
   }
 
-  system.cloudflare-operator: {
+  system.cilium: {
     class: [application-system; undeployed]
-    icon: assets/icons/platform/cloudflare.svg
-    link: https://github.com/adyanth/cloudflare-operator
-    tooltip: Kubernetes operator for managing Cloudflare tunnels, providing secure external access without VPN.
-  }
-
-  system.cloudflared: {
-    class: [application-system; undeployed]
-    icon: assets/icons/platform/cloudflare.svg
-    link: https://github.com/cloudflare/cloudflared
-    tooltip: Cloudflare Tunnel client (formerly Argo Tunnel) for secure access to services.
+    label: Cilium
+    icon: assets/icons/system/cilium.svg
+    link: https://cilium.io/
+    tooltip: Cilium is a networking, observability, and security solution with an eBPF-based dataplane.
   }
 
   system.cloudnativepg: {
     class: [application-system; undeployed]
+    label: CloudNativePG
     icon: assets/icons/system/cloudnativepg.svg
     link: https://cloudnativepg.io/
-    tooltip: Comprehensive platform designed to seamlessly manage PostgreSQL databases within Kubernetes environments.
-  }
-  
-  system.cilium: {
-    class: [application-system; undeployed]
-    icon: assets/icons/system/cilium.svg
-    link: https://cilium.io/
-    tooltip: Advanced networking, security policies, and observability for Kubernetes clusters.
+    tooltip: CloudNativePG is a comprehensive platform designed to seamlessly manage PostgreSQL databases within Kubernetes environments.
   }
 
   system.envoy-gateway: {
     class: [application-system; undeployed]
+    label: Envoy Gateway
     icon: assets/icons/system/envoy-gateway.svg
     link: https://gateway.envoyproxy.io/
-    tooltip: Kubernetes-native API Gateway powered by Envoy Proxy with support for Gateway API.
+    tooltip: Envoy Gateway is a Kubernetes-native API Gateway powered by Envoy Proxy with support for Gateway API.
   }
 
   system.external-dns: {
     class: [application-system; undeployed]
+    label: ExternalDNS
     icon: assets/icons/system/external-dns.png
     link: https://github.com/kubernetes-sigs/external-dns
-    tooltip: Automatically configures DNS records for Kubernetes services.
+    tooltip: ExternalDNS configures DNS records automatically for exposed services.
   }
 
   system.external-secrets: {
     class: [application-system; undeployed]
+    label: External-Secret
     icon: assets/icons/system/external-secret.svg
     link: https://external-secrets.io/
-    tooltip: Kubernetes operator that integrates external secret management systems.
+    tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
   }
 
   system.longhorn: {
     class: [application-system; undeployed]
+    label: Longhorn
     icon: assets/icons/system/longhorn.svg
     link: https://longhorn.io/
-    tooltip: Lightweight, reliable, and powerful distributed block storage system for Kubernetes.
+    tooltip: Longhorn is a lightweight, reliable, and powerful distributed block storage system for Kubernetes.
   }
 
   system.tailscale: {
     class: [application-system; undeployed]
+    label: Tailscale
     icon: assets/icons/system/tailscale.svg
     link: https://tailscale.com/
-    tooltip: Zero-config VPN mesh for secure remote access to the entire platform.
+    tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
   }
 
-  # 📺 Media Components
+  # ────────────────────────────────────────────────────────────────────────────
+  # Media Components
+  
   media.immich: {
     class: [application; undeployed]
+    label: Immich
     icon: assets/icons/apps/immich.svg
     link: https://immich.app/
     tooltip: High-performance self-hosted photo and video management solution with mobile app support.
@@ -139,6 +164,7 @@ lungmen: {
 
   media.jellyfin: {
     class: [application; undeployed]
+    label: Jellyfin
     icon: assets/icons/apps/jellyfin.svg
     link: https://jellyfin.org/
     tooltip: Volunteer-built media solution that puts you in control of your media.
@@ -146,14 +172,18 @@ lungmen: {
 
   media.jellyseerr: {
     class: [application; undeployed]
+    label: Jellyseerr
     icon: assets/icons/apps/jellyseerr.svg
     link: https://github.com/Fallenbagel/jellyseerr
     tooltip: Free and open source software application for managing requests for media libraries.
   }
 
-  # 🏠 Life Management Components
+  # ────────────────────────────────────────────────────────────────────────────
+  # Life Management Components
+  
   life.actual-budget: {
     class: [application; undeployed]
+    label: Actual Budget
     icon: assets/icons/apps/actual-budget.png
     link: https://actualbudget.com/
     tooltip: Personal finance app that helps you track your spending and save money.
@@ -161,14 +191,18 @@ lungmen: {
 
   life.paperless: {
     class: [application; undeployed]
+    label: Paperless-ngx
     icon: assets/icons/apps/paperless.svg
     link: https://docs.paperless-ngx.com/
     tooltip: Document management system to store, search and share documents.
   }
 
-  # 📦 Other Components
+  # ────────────────────────────────────────────────────────────────────────────
+  # Other Components
+  
   others.atuin: {
     class: [application; undeployed]
+    label: Atuin
     icon: assets/icons/apps/atuin.svg
     link: https://docs.atuin.sh/
     tooltip: Encrypted shell history sync, storing all your shell commands in one place.
@@ -176,6 +210,7 @@ lungmen: {
 
   others.linkding: {
     class: [application; undeployed]
+    label: Linkding
     icon: assets/icons/apps/linkding.svg
     link: https://github.com/sissbruecker/linkding
     tooltip: Self-hosted bookmarking and link aggregation service.
@@ -183,6 +218,7 @@ lungmen: {
 
   others.taskchampion: {
     class: [application; undeployed]
+    label: TaskChampion
     icon: assets/icons/apps/taskwarrior.png
     link: https://github.com/GothenburgBitFactory/taskchampion-sync-server
     tooltip: Sync server for TaskWarrior, a modern task management system.
@@ -190,54 +226,62 @@ lungmen: {
 }
 
 
-# ------------------------------------------------------------------------------------------------
-# 🔗 Connections
-# ------------------------------------------------------------------------------------------------
 
-# System connections
-lungmen.system.tailscale <- tailnet: {class: [connect-from-vpn-backbone; undeployed]}
-lungmen.system.envoy-gateway <- localnet: {
-  source-arrowhead: |md
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   This section describes the various connections within the lungmen.akn    │
+# │   platform and its interactions with external systems.                     │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Network to Platform Flow
+
+localnet -> lungmen·akn.system.envoy-gateway: |md
     HTTP (80)
     HTTPS (443)
-  |
-  class: undeployed
-}
-lungmen.system.cert-manager -> internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
-lungmen.system.external-dns -> udm-pro: DNS updates {class: undeployed}
-lungmen.system.external-dns -> cloudflare: DNS updates {class: undeployed}
+  | {class: undeployed}
 
-internet -> cloudflare: {class: [connect-to-internet; undeployed]}
-cloudflare -> lungmen.system.cloudflared {class: [connect-from-vpn-backbone; undeployed]}
-lungmen.system.cloudflare-operator -> lungmen.system.cloudflared {class: [connect-management; undeployed]}
+tailnet -> lungmen·akn.system.tailscale: {class: [connect-from-vpn-backbone; undeployed]}
 
 
-# Media services connections
-lungmen.media.jellyfin <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (8096); class: undeployed }
-lungmen.media.jellyfin <- lungmen.system.tailscale: { source-arrowhead: HTTP (8096); class: [connect-from-vpn; undeployed] }
-lungmen.media.jellyfin <- lungmen.media.jellyseerr: { source-arrowhead: HTTP (8096); class: undeployed }
+# ──────────────────────────────────────────────────────────────────────────────
+# System Connections
 
-lungmen.media.jellyseerr <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (5055); class: undeployed }
-lungmen.media.jellyseerr <- lungmen.system.tailscale: { source-arrowhead: HTTP (5055); class: [connect-from-vpn; undeployed] }
+lungmen·akn.system.cert-manager -> internet: "acme-v02.api.letsencrypt.org:443" {class: [connect-to-internet; undeployed]}
 
-lungmen.media.immich <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (3000); class: undeployed }
-lungmen.media.immich <- lungmen.system.cloudflared: { source-arrowhead: HTTP (3000); class: [connect-from-vpn; undeployed] }
+lungmen·akn.system.external-dns -> udm-pro: "DNS updates" {class: undeployed}
 
+lungmen·akn.system.external-secrets -> amiya·akn: "Secrets Synchronization (443)" {class: undeployed}
 
-# Life management connections
-lungmen.life.actual-budget <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (5006); class: undeployed }
-lungmen.life.actual-budget <- lungmen.system.tailscale: { source-arrowhead: HTTP (5006); class: [connect-from-vpn; undeployed] }
-
-lungmen.life.paperless <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (8000); class: undeployed }
-lungmen.life.paperless <- lungmen.system.tailscale: { source-arrowhead: HTTP (8000); class: [connect-from-vpn; undeployed] }
+lungmen·akn.system.tailscale -> internet: "api.tailscale.com:443" {class: [connect-to-internet; undeployed]}
 
 
-# Other services connections
-lungmen.others.linkding <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (9090); class: undeployed }
-lungmen.others.linkding <- lungmen.system.tailscale: { source-arrowhead: HTTP (9090); class: [connect-from-vpn; undeployed] }
+# ──────────────────────────────────────────────────────────────────────────────
+# Media Services Flow
 
-lungmen.others.atuin <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (8888); class: undeployed }
-lungmen.others.atuin <- lungmen.system.tailscale: { source-arrowhead: HTTP (8888); class: [connect-from-vpn; undeployed] }
+lungmen·akn.media.immich <- lungmen·akn.system.envoy-gateway: "HTTP (3000)" {class: undeployed}
 
-lungmen.others.taskchampion <- lungmen.system.envoy-gateway: { source-arrowhead: HTTP (8080); class: undeployed }
-lungmen.others.taskchampion <- lungmen.system.tailscale: { source-arrowhead: HTTP (8080); class: [connect-from-vpn; undeployed] }
+lungmen·akn.media.jellyfin <- lungmen·akn.system.envoy-gateway: "HTTP (8096)" {class: undeployed}
+lungmen·akn.media.jellyfin <- lungmen·akn.media.jellyseerr: "HTTP (8096)" {class: undeployed}
+
+lungmen·akn.media.jellyseerr <- lungmen·akn.system.envoy-gateway: "HTTP (5055)" {class: undeployed}
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Life Management Flow
+
+lungmen·akn.life.actual-budget <- lungmen·akn.system.envoy-gateway: "HTTP (5006)" {class: undeployed}
+
+lungmen·akn.life.paperless <- lungmen·akn.system.envoy-gateway: "HTTP (8000)" {class: undeployed}
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Other Services Flow
+
+lungmen·akn.others.atuin <- lungmen·akn.system.envoy-gateway: "HTTP (8888)" {class: undeployed}
+
+lungmen·akn.others.linkding <- lungmen·akn.system.envoy-gateway: "HTTP (9090)" {class: undeployed}
+
+lungmen·akn.others.taskchampion <- lungmen·akn.system.envoy-gateway: "HTTP (8080)" {class: undeployed}
