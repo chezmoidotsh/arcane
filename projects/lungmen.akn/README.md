@@ -155,7 +155,7 @@ The recovery process is largely automated through the `amiya.akn` project, which
 
 1. **Reset/Reinstall Talos OS**:
 
-   See [Talos Recovery](https://www.talos.dev/v1.10/advanced/disaster-recovery/) for more information about recovering from a Talos cluster and the [Talos Bootstrap documentation](docs/BOOTSTRAP_TALOS.md) for more information about bootstrapping the cluster.
+   See [Talos Recovery](https://www.talos.dev/v1.10/advanced/disaster-recovery/) for more information about recovering from a Talos cluster and the [Bootstrap documentation](docs/HOW_TO_BOOTSTRAP.md) for more information about bootstrapping the cluster.
 
 2. **Link to ArgoCD**:
 
