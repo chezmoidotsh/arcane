@@ -1,0 +1,365 @@
+#!/usr/bin/env bash
+# Talosctl Wrapper
+#
+# A transparent wrapper around talosctl that preserves all native functionality
+# while adding config persistence to OpenBao vault via new save/restore commands.
+
+# shellcheck disable=SC2310  # Functions in conditional contexts are intentional
+#
+# New commands:
+#   talosctl config save       - Save entire talosconfig to OpenBao vault
+#   talosctl config restore    - Restore complete talosconfig from vault
+#   talosctl config restore --rollback - Restore from local backup
+
+set -euo pipefail
+
+# Detect real talosctl binary path
+detect_real_talosctl() {
+	local wrapper_path real_path
+	wrapper_path=$(realpath "$0")
+
+	# Iterate through PATH to find talosctl binaries, excluding our wrapper
+	IFS=':' read -ra path_dirs <<<"${PATH}"
+	for dir in "${path_dirs[@]}"; do
+		local candidate="${dir}/talosctl"
+		if [[ -x ${candidate} ]]; then
+			local candidate_real
+			candidate_real=$(realpath "${candidate}" 2>/dev/null || echo "${candidate}")
+			# Skip if it's our wrapper or a symlink to our wrapper
+			if [[ ${candidate_real} != "${wrapper_path}" ]]; then
+				real_path="${candidate}"
+				break
+			fi
+		fi
+	done
+
+	if [[ -z ${real_path} ]]; then
+		echo "Error: Could not find real talosctl binary in PATH" >&2
+		echo "Available PATH: ${PATH}" >&2
+		exit 1
+	fi
+
+	echo "${real_path}"
+}
+
+# Get current user email from OpenBao token for personal namespace path
+get_user_email() {
+	bao token lookup -format json | jq -r '.data.meta.email' 2>/dev/null || {
+		echo "Error: Unable to retrieve user email from OpenBao token" >&2
+		echo "Please login first with: bao login -method=oidc -path=authelia" >&2
+		exit 1
+	}
+}
+
+# Build vault path for current user's Talos contexts
+get_vault_path() {
+	local user_email
+	user_email=$(get_user_email)
+	[[ -n ${user_email} ]] || exit 1
+	echo "personal/${user_email}/talos"
+}
+
+# Check if yq is available
+check_yq() {
+	if ! command -v yq >/dev/null 2>&1; then
+		echo "Error: yq is required for YAML/JSON conversion" >&2
+		echo "Install with: mise install yq" >&2
+		return 1
+	fi
+}
+
+# Check if bao is available and authenticated
+check_bao() {
+	if ! command -v bao >/dev/null 2>&1; then
+		echo "Error: bao (OpenBao CLI) is required" >&2
+		echo "Please install OpenBao CLI" >&2
+		return 1
+	fi
+
+	# Test authentication by trying to lookup token
+	if ! bao token lookup >/dev/null 2>&1; then
+		echo "Error: Not authenticated with OpenBao" >&2
+		echo "Please login first with: bao login -method=oidc -path=authelia" >&2
+		return 1
+	fi
+}
+
+# Create timestamped backup of current config
+create_local_backup() {
+	local backup_path
+
+	if [[ ! -f ${TALOSCONFIG} ]]; then
+		echo "Warning: No talosconfig file found at ${TALOSCONFIG}" >&2
+		return 0
+	fi
+
+	backup_path="${TALOSCONFIG}.backup.$(date +%s)"
+
+	if cp "${TALOSCONFIG}" "${backup_path}"; then
+		echo "Created local backup: ${backup_path}"
+		echo "${backup_path}"
+	else
+		echo "Error: Failed to create local backup" >&2
+		return 1
+	fi
+}
+
+# Find most recent local backup
+find_latest_backup() {
+	local latest_backup
+
+	# Find the most recent backup file based on timestamp in filename
+	latest_backup=$(find . -maxdepth 1 -name "${TALOSCONFIG}.backup.*" -type f -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -n1 | cut -d' ' -f2- || true)
+
+	if [[ -n ${latest_backup} && -f ${latest_backup} ]]; then
+		echo "${latest_backup}"
+	else
+		echo "Error: No local backup found" >&2
+		return 1
+	fi
+}
+
+# Validate talosconfig structure
+validate_talosconfig() {
+	local config_file="$1"
+
+	check_yq || return 1
+
+	if [[ ! -f ${config_file} ]]; then
+		echo "Error: Config file not found: ${config_file}" >&2
+		return 1
+	fi
+
+	# Basic YAML validation
+	if ! yq eval '.' "${config_file}" >/dev/null 2>&1; then
+		echo "Error: Invalid YAML structure in ${config_file}" >&2
+		return 1
+	fi
+
+	# Check that .context exists and is a key in .contexts
+	local current_context
+	current_context=$(yq eval '.context' "${config_file}" 2>/dev/null)
+	if [[ -z ${current_context} || ${current_context} == "null" ]]; then
+		echo "Error: No current context defined in ${config_file}" >&2
+		return 1
+	fi
+
+	if ! yq eval ".contexts | has(\"${current_context}\")" "${config_file}" 2>/dev/null | grep -q "true"; then
+		echo "Error: Current context '${current_context}' not found in contexts" >&2
+		return 1
+	fi
+
+	# Validate all contexts have endpoints and nodes configured
+	local contexts
+	contexts=$(yq eval '.contexts | keys | .[]' "${config_file}" 2>/dev/null)
+
+	while IFS= read -r context_name; do
+		[[ -n ${context_name} ]] || continue
+
+		# Check endpoints exist and are non-empty
+		local endpoints_count
+		endpoints_count=$(yq eval ".contexts[\"${context_name}\"].endpoints | length" "${config_file}" 2>/dev/null || echo "0")
+		if [[ ${endpoints_count} -eq 0 ]]; then
+			echo "Error: Context '${context_name}' has no endpoints configured" >&2
+			return 1
+		fi
+
+		# Check nodes exist and are non-empty
+		local nodes_count
+		nodes_count=$(yq eval ".contexts[\"${context_name}\"].nodes | length" "${config_file}" 2>/dev/null || echo "0")
+		if [[ ${nodes_count} -eq 0 ]]; then
+			echo "Error: Context '${context_name}' has no nodes configured" >&2
+			return 1
+		fi
+
+		# Verify len(nodes) >= len(endpoints)
+		if [[ ${nodes_count} -lt ${endpoints_count} ]]; then
+			echo "Error: Context '${context_name}' has fewer nodes (${nodes_count}) than endpoints (${endpoints_count})" >&2
+			return 1
+		fi
+
+		echo "✓ Context '${context_name}' validated (endpoints: ${endpoints_count}, nodes: ${nodes_count})"
+	done <<<"${contexts}"
+
+	return 0
+}
+
+# Save entire talosconfig to OpenBao vault
+config_save() {
+	local vault_path backup_path
+
+	echo "Saving talosconfig to OpenBao vault..."
+
+	check_bao || return 1
+	check_yq || return 1
+
+	vault_path=$(get_vault_path)
+
+	# Check if config file exists and is valid
+	if [[ ! -f ${TALOSCONFIG} ]]; then
+		echo "Error: No talosconfig file found at ${TALOSCONFIG}" >&2
+		echo "Run 'talosctl config new' to create a new configuration" >&2
+		return 1
+	fi
+
+	if ! validate_talosconfig "${TALOSCONFIG}"; then
+		return 1
+	fi
+
+	# Always backup existing vault entry before overwriting
+	echo "Creating vault backup before save..."
+	if bao kv get -format=json "${vault_path}/talosconfig" >/dev/null 2>&1; then
+		if bao kv get -format=json "${vault_path}/talosconfig" |
+			bao kv put "${vault_path}/talosconfig.backup" @/dev/stdin; then
+			echo "Created vault backup: ${vault_path}/talosconfig.backup"
+		else
+			echo "Warning: Failed to create vault backup" >&2
+		fi
+	fi
+
+	# Save entire talosconfig to vault
+	if yq "${TALOSCONFIG}" --output-format=json | bao kv put "${vault_path}/talosconfig" @/dev/stdin; then
+		echo "Successfully saved talosconfig to vault: ${vault_path}/talosconfig"
+
+		# Always set all metadata according to ADR-003
+		echo "Setting metadata..."
+		bao kv metadata put \
+			-custom-metadata=origin="manual" \
+			-custom-metadata=description="Complete talosconfig with all contexts for $(get_user_email)" \
+			-custom-metadata=owner="$(get_user_email)" \
+			-custom-metadata=created-by="arcane/talosctl" \
+			"${vault_path}/talosconfig" 2>/dev/null || true
+
+		return 0
+	else
+		echo "Error: Failed to save talosconfig to vault" >&2
+		return 1
+	fi
+}
+
+# Restore complete talosconfig from OpenBao vault
+config_restore() {
+	local vault_path rollback=false
+
+	# Parse arguments
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+		--rollback)
+			rollback=true
+			shift
+			;;
+		*)
+			echo "Error: Unknown option $1" >&2
+			echo "Usage: talosctl config restore [--rollback]" >&2
+			return 1
+			;;
+		esac
+	done
+
+	if [[ ${rollback} == "true" ]]; then
+		echo "Rolling back from local backup..."
+
+		local latest_backup
+		if ! latest_backup=$(find_latest_backup); then
+			return 1
+		fi
+
+		if mv "${latest_backup}" "${TALOSCONFIG}"; then
+			echo "Successfully restored from local backup: ${latest_backup}"
+			return 0
+		else
+			echo "Error: Failed to restore from local backup" >&2
+			return 1
+		fi
+	else
+		echo "Restoring talosconfig from OpenBao vault..."
+
+		check_bao || return 1
+		check_yq || return 1
+
+		vault_path=$(get_vault_path)
+
+		# Always backup current local config before restoration
+		echo "Creating local backup before restore..."
+		if ! create_local_backup >/dev/null; then
+			echo "Error: Failed to create local backup" >&2
+			return 1
+		fi
+
+		# Restore from vault
+		if bao kv get -format=json "${vault_path}/talosconfig" |
+			yq '.data.data' --output-format=yaml --prettyPrint >"${TALOSCONFIG}" 2>/dev/null; then
+
+			if validate_talosconfig "${TALOSCONFIG}"; then
+				echo "Successfully restored talosconfig from vault"
+				echo "Previous config backed up. Use 'talosctl config restore --rollback' to undo."
+				return 0
+			else
+				echo "Error: Restored config is invalid, rolling back..." >&2
+				config_restore --rollback
+				return 1
+			fi
+		else
+			echo "Error: Failed to restore talosconfig from vault" >&2
+			echo "No config found at: ${vault_path}/talosconfig" >&2
+			return 1
+		fi
+	fi
+}
+
+# Handle config save/restore commands
+handle_config_persistence() {
+	if [[ $1 != "config" ]]; then
+		echo "Error: Expected 'config' as first argument" >&2
+		return 1
+	fi
+
+	case "$2" in
+	save)
+		shift 2 # Remove 'config save'
+		config_save "$@"
+		;;
+	restore)
+		shift 2 # Remove 'config restore'
+		config_restore "$@"
+		;;
+	*)
+		echo "Error: Unknown config persistence command: $2" >&2
+		echo "Available commands: save, restore" >&2
+		return 1
+		;;
+	esac
+}
+
+# Inject custom commands into help output
+inject_help() {
+	local real_talosctl
+	real_talosctl=$(detect_real_talosctl)
+
+	# Run original help and modify output
+	"${real_talosctl}" "$@" | sed '/^Available Commands:/,/^$/ {
+        /^  remove/ a\
+  restore     Restore talosconfig from OpenBao vault\
+  save        Save talosconfig to OpenBao vault
+    }'
+}
+
+# Main execution logic
+main() {
+	# Check if this is a config save/restore command
+	if [[ $# -ge 2 && $1 == "config" && ($2 == "save" || $2 == "restore") ]]; then
+		# Handle our custom commands
+		handle_config_persistence "$@"
+	elif [[ $# -ge 1 && $1 == "config" ]] ||
+		[[ $# -ge 2 && $1 == "config" && $2 == "--help" ]]; then
+		# Inject our commands into config help
+		inject_help "$@"
+	else
+		# Pass through to real talosctl
+		real_talosctl=$(detect_real_talosctl)
+		exec "${real_talosctl}" "$@"
+	fi
+}
+
+# Execute main function with all arguments
+main "$@"
