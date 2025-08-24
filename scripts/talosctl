@@ -138,19 +138,6 @@ validate_talosconfig() {
 		return 1
 	fi
 
-	# Check that .context exists and is a key in .contexts
-	local current_context
-	current_context=$(yq eval '.context' "${config_file}" 2>/dev/null)
-	if [[ -z ${current_context} || ${current_context} == "null" ]]; then
-		echo "Error: No current context defined in ${config_file}" >&2
-		return 1
-	fi
-
-	if ! yq eval ".contexts | has(\"${current_context}\")" "${config_file}" 2>/dev/null | grep -q "true"; then
-		echo "Error: Current context '${current_context}' not found in contexts" >&2
-		return 1
-	fi
-
 	# Validate all contexts have endpoints and nodes configured
 	local contexts
 	contexts=$(yq eval '.contexts | keys | .[]' "${config_file}" 2>/dev/null)
@@ -208,19 +195,8 @@ config_save() {
 		return 1
 	fi
 
-	# Always backup existing vault entry before overwriting
-	echo "Creating vault backup before save..."
-	if bao kv get -format=json "${vault_path}/talosconfig" >/dev/null 2>&1; then
-		if bao kv get -format=json "${vault_path}/talosconfig" |
-			bao kv put "${vault_path}/talosconfig.backup" @/dev/stdin; then
-			echo "Created vault backup: ${vault_path}/talosconfig.backup"
-		else
-			echo "Warning: Failed to create vault backup" >&2
-		fi
-	fi
-
 	# Save entire talosconfig to vault
-	if yq "${TALOSCONFIG}" --output-format=json | bao kv put "${vault_path}/talosconfig" @/dev/stdin; then
+	if yq "${TALOSCONFIG}" --output-format=json | jq '.context = ""' | bao kv put "${vault_path}/talosconfig" @/dev/stdin; then
 		echo "Successfully saved talosconfig to vault: ${vault_path}/talosconfig"
 
 		# Always set all metadata according to ADR-003
