@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# script UUID: 7f2a8c4e-9b1d-4e5f-a3c7-6d8e9f0a1b2c
+#
 # Talosctl Wrapper
 #
 # A transparent wrapper around talosctl that preserves all native functionality
@@ -15,21 +17,21 @@ set -euo pipefail
 
 # Detect real talosctl binary path
 detect_real_talosctl() {
-	local wrapper_path real_path
-	wrapper_path=$(realpath "$0")
+	local real_path
+	local wrapper_uuid="7f2a8c4e-9b1d-4e5f-a3c7-6d8e9f0a1b2c"
 
 	# Iterate through PATH to find talosctl binaries, excluding our wrapper
 	IFS=':' read -ra path_dirs <<<"${PATH}"
 	for dir in "${path_dirs[@]}"; do
 		local candidate="${dir}/talosctl"
 		if [[ -x ${candidate} ]]; then
-			local candidate_real
-			candidate_real=$(realpath "${candidate}" 2>/dev/null || echo "${candidate}")
-			# Skip if it's our wrapper or a symlink to our wrapper
-			if [[ ${candidate_real} != "${wrapper_path}" ]]; then
-				real_path="${candidate}"
-				break
+			# Check if this candidate is our wrapper by looking for the UUID
+			if [[ -f ${candidate} ]] && head -n 10 "${candidate}" 2>/dev/null | grep -q "${wrapper_uuid}"; then
+				# Skip our wrapper scripts
+				continue
 			fi
+			real_path="${candidate}"
+			break
 		fi
 	done
 
