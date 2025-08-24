@@ -1,11 +1,18 @@
 <h1 align="center">
-  「 龙门 」 <sub>(Lungmen)</sub>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/logo.dark.svg">
+      <img alt="Stylized logo with traditional Chinese characters 龙门 (Lungmen) and subtitle, representing Lungmen·AKN branding" src="./assets/logo.light.svg" width="200">
+  </picture>
 </h1>
 
-<h4 align="center">Lungmen - Home Services Platform</h4>
+<h4 align="center">Lungmen·AKN - Home Services Platform</h4>
 
-<div align='center'>
-  <a href="#about">About</a> · <a href="#architecture">Architecture</a> · <a href="#how-to-use--how-to-develop-on-it">How to use</a> · <a href="#disaster-recovery-plan-drp">Recovery</a> · <a href="#roadmap">Roadmap</a> · <a href="#license">License</a>
+<div align="center">
+
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git\&logoColor=white\&logoWidth=20)](../../LICENSE)
+
+<a href="#about">About</a> · <a href="#services-overview">Services Overview</a> · <a href="#how-to-use--how-to-develop-on-it">How to use</a> · <a href="#disaster-recovery-plan-drp">Recovery</a> · <a href="#roadmap">Roadmap</a> · <a href="#license">License</a>
+
 </div>
 
 ***
@@ -17,72 +24,121 @@
 
 Lungmen is a personal self-hosted platform for home services, designed to provide a complete ecosystem for media management, life organization, and automation. The platform runs on a Kubernetes cluster and is accessible through both local network and VPN, allowing secure access to services from anywhere while maintaining control over data and infrastructure.
 
-## Architecture
+## Services Overview
 
-![Architecture diagram](./assets/architecture.svg)
+![Architecture diagram](./assets/architecture-dark.svg#gh-dark-mode-only)
+![Architecture diagram](./assets/architecture-light.svg#gh-light-mode-only)
 
-### 🏗️ Platform-required Services
+***
 
-* **[cert-manager](https://cert-manager.io/)**: Certificate automation. <br/>
-  Automatic provisioning and management of TLS certificates in Kubernetes.
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/jellyfin.svg" alt="Jellyfin Logo" width="120" align="right" style="margin-left: 16px;">
 
-* **[Cilium](https://cilium.io/)**: Container Network Interface (CNI). <br/>
-  Advanced networking, security policies, and observability for Kubernetes clusters.
+### [Jellyfin](https://jellyfin.org/)
 
-* **[CloudNativePG](https://cloudnativepg.io/)**: PostgreSQL operator. <br/>
-  Comprehensive platform designed to seamlessly manage PostgreSQL databases within Kubernetes environments.
+Volunteer-built media solution that puts you in control of your media streaming experience.
 
-* **[Cloudflare Operator](https://github.com/adyanth/cloudflare-operator)**: Cloudflare tunnel operator. <br/>
-  Kubernetes operator for managing Cloudflare tunnels, providing secure external access without VPN.
+***Why this choice**: Open-source alternative to Plex with no premium features locked behind paywalls and complete control over media libraries.*
 
-* **[Envoy Gateway](https://gateway.envoyproxy.io/)**: Cloud-native API Gateway. <br/>
-  Envoy-based gateway with Kubernetes Gateway API support, optimized for service routing.
+</div>
+</div>
 
-* **[External DNS](https://github.com/kubernetes-sigs/external-dns)**: DNS automation. <br/>
-  Automatically configures DNS records for Kubernetes services.
+<br/><br/>
 
-* **[External Secrets](https://external-secrets.io/)**: Secrets management operator. <br/>
-  Kubernetes operator that integrates external secret management systems.
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/jellyseerr.svg" alt="Jellyseerr Logo" width="120" align="left" style="margin-right: 16px;">
 
-* **[Longhorn](https://longhorn.io/)**: Distributed block storage. <br/>
-  Lightweight, reliable, and powerful distributed block storage system for Kubernetes.
+### [Jellyseerr](https://github.com/Fallenbagel/jellyseerr)
 
-* **[Tailscale](https://tailscale.com/)**: Mesh VPN network. <br/>
-  Zero-config VPN mesh for secure remote access to the entire platform.
+Free and open source software application for managing requests for media libraries.
 
-### 📺 Media Services
+***Why this choice**: Seamless integration with Jellyfin for automated media acquisition workflows with user-friendly request interface.*
 
-* **[Jellyfin](https://jellyfin.org/)**: Media server. <br/>
-  Volunteer-built media solution that puts you in control of your media.
+</div>
+</div>
 
-* **[Jellyseerr](https://github.com/Fallenbagel/jellyseerr)**: Media requests. <br/>
-  Free and open source software application for managing requests for media libraries.
+<br/><br/>
 
-* **[Immich](https://immich.app/)**: Photo and video management. <br/>
-  High-performance self-hosted photo and video management solution with mobile app support. Accessible via Cloudflare Tunnel for secure external access.
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/immich.svg" alt="Immich Logo" width="120" align="right" style="margin-left: 16px;">
 
-### 🏠 Life Management
+### [Immich](https://immich.app/)
 
-* **[Actual Budget](https://actualbudget.com/)**: Budget management. <br/>
-  Personal finance app that helps you track your spending and save money.
+High-performance self-hosted photo and video management solution with mobile app support.
+
+***Why this choice**: Modern Google Photos alternative with AI-powered features, mobile sync, and Cloudflare Tunnel integration for secure external access.*
+
+</div>
+</div>
+
+***
+
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/actual-budget.png" alt="Actual Budget Logo" width="120" align="left" style="margin-right: 16px;">
+
+### [Actual Budget](https://actualbudget.com/)
+
+Personal finance app that helps you track your spending and save money with privacy-first approach.
+
+***Why this choice**: Open-source budgeting tool with local-first data storage, end-to-end encryption, and intuitive envelope budgeting methodology.*
+
+</div>
+</div>
+
+<br/><br/>
 
 <!-- trunk-ignore-begin(markdown-link-check/403): Paperless documentation is behind Cloudflare -->
 
-* **[Paperless-ngx](https://docs.paperless-ngx.com/)**: Document management. <br/>
-  Document management system to store, search and share documents.
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/paperless.svg" alt="Paperless-ngx Logo" width="120" align="right" style="margin-left: 16px;">
+
+### [Paperless-ngx](https://docs.paperless-ngx.com/)
+
+Document management system to store, search and share documents with OCR and machine learning capabilities.
+
+***Why this choice**: Advanced document digitization with automatic tagging, full-text search, and comprehensive workflow automation for paperless office.*
+
+</div>
+</div>
 
 <!-- trunk-ignore-end(markdown-link-check/403) -->
 
-### 📦 Others
+***
 
-* **[Linkding](https://github.com/sissbruecker/linkding)**: Bookmarking service. <br/>
-  Self-hosted bookmarking and link aggregation service.
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/linkding.svg" alt="Linkding Logo" width="120" align="left" style="margin-right: 16px;">
 
-* **[Atuin](https://docs.atuin.sh/)**: Shell history sync. <br/>
-  Encrypted shell history sync, storing all your shell commands in one place.
+### [Linkding](https://github.com/sissbruecker/linkding)
 
-* **[TaskChampion](https://github.com/GothenburgBitFactory/taskchampion-sync-server)**: Task management sync. <br/>
-  Sync server for TaskWarrior, a modern task management system.
+Self-hosted bookmarking and link aggregation service with tagging and search capabilities.
+
+***Why this choice**: Minimalist bookmark manager with full-text search, archive integration, and browser extension for seamless link collection.*
+
+</div>
+</div>
+
+<br/><br/>
+
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/atuin.svg" alt="Atuin Logo" width="120" align="right" style="margin-left: 16px;">
+
+### [Atuin](https://docs.atuin.sh/)
+
+Encrypted shell history sync, storing all your shell commands in one place with powerful search.
+
+***Why this choice**: Enhanced shell history with encryption, synchronization across devices, and intelligent command search with context preservation.*
+
+</div>
+</div>
+
+***
 
 ## How to use / How to develop on it
 
@@ -99,7 +155,7 @@ The recovery process is largely automated through the `amiya.akn` project, which
 
 1. **Reset/Reinstall Talos OS**:
 
-   See [Talos Recovery](https://www.talos.dev/v1.10/advanced/disaster-recovery/) for more information about recovering from a Talos cluster and the [Talos Bootstrap documentation](docs/BOOTSTRAP_TALOS.md) for more information about bootstrapping the cluster.
+   See [Talos Recovery](https://www.talos.dev/v1.10/advanced/disaster-recovery/) for more information about recovering from a Talos cluster and the [Bootstrap documentation](docs/HOW_TO_BOOTSTRAP.md) for more information about bootstrapping the cluster.
 
 2. **Link to ArgoCD**:
 

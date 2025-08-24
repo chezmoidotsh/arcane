@@ -9,9 +9,8 @@ machine:
     # enabled extentions:
     # - siderolabs/intel-ucode
     # - siderolabs/iscsi-tools
-    # - siderolabs/tailscale
     # - siderolabs/util-linux-tools
-    image: factory.talos.dev/nocloud-installer-secureboot/88d1f7a5c4f1d3aba7df787c448c1d3d008ed29cfb34af53fa0df4336a56040b:v1.10.4
+    image: factory.talos.dev/nocloud-installer-secureboot/36cd6536eaec8ba802be2d38974108359069cedba8857302f69792b26b87c010:v1.10.6
     diskSelector:
       type: hdd
       model: QEMU HARDDISK
@@ -52,7 +51,7 @@ cluster:
     cni:
       name: custom
       urls:
-        - https://raw.githubusercontent.com/chezmoi-sh/arcane/refs/heads/main/catalog/talos/manifests/cilium/1.17.3.yaml
+        - https://raw.githubusercontent.com/chezmoi-sh/arcane/refs/heads/main/catalog/talos/manifests/cilium/1.18.1.yaml
   proxy:
     disabled: true
 
@@ -63,9 +62,6 @@ cluster:
 
   # -- Install extra components
   extraManifests:
-    # -- CoreDNS configuration override
-    - https://raw.githubusercontent.com/chezmoi-sh/arcane/refs/heads/main/catalog/talos/manifests/coredns+tailscale/1.12.1.yaml
-
     # -- Metrics Server
-    - https://raw.githubusercontent.com/chezmoi-sh/arcane/refs/heads/main/catalog/talos/manifests/kubelet-serving-cert-approver~0.9.1.yaml
+    - https://raw.githubusercontent.com/chezmoi-sh/arcane/refs/heads/main/catalog/talos/manifests/kubelet-serving-cert-approver/0.9.1.yaml
     - https://raw.githubusercontent.com/chezmoi-sh/arcane/refs/heads/main/catalog/talos/manifests/metric-server/0.7.2.yaml
