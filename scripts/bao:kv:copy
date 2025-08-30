@@ -1,0 +1,267 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Script to copy a KV v2 secret from one path to another with OpenBao/Vault
+# Usage: bao:kv:copy <source-path> <dest-path> [options]
+
+SCRIPT_NAME="$(basename "$0")"
+
+usage() {
+	cat <<EOF
+Usage: $SCRIPT_NAME <source-path> <dest-path> [options]
+
+Copy a KV v2 secret with its metadata from one path to another.
+
+Arguments:
+    source-path    Source secret path (format: mount/path/to/secret)
+    dest-path      Destination secret path (format: mount/path/to/secret)
+
+Options:
+    -v, --version         Specific version to copy (default: latest version)
+    -f, --force           Overwrite destination if it exists
+    --preserve-versions   Copy all versions (requires --force)
+    -h, --help           Show this help
+
+Examples:
+    $SCRIPT_NAME secret/app/config secret/app/config-backup
+    $SCRIPT_NAME secret/prod/db secret/staging/db --version=3
+    $SCRIPT_NAME secret/old/app secret/new/app --preserve-versions --force
+
+Notes:
+    - Paths must include the mount name (e.g. secret/path)
+    - Metadata (max-versions, delete-version-after, etc.) is copied
+    - In preserve-versions mode, all versions are copied in order
+EOF
+}
+
+error() {
+	echo "Error: $1" >&2
+	exit 1
+}
+
+info() {
+	echo "Info: $1" >&2
+}
+
+warn() {
+	echo "Warning: $1" >&2
+}
+
+# Parse command line arguments
+SOURCE_PATH=""
+DEST_PATH=""
+VERSION=""
+FORCE=false
+PRESERVE_VERSIONS=false
+
+while [[ $# -gt 0 ]]; do
+	case $1 in
+	-h | --help)
+		usage
+		exit 0
+		;;
+	-v | --version)
+		VERSION="$2"
+		shift 2
+		;;
+	-f | --force)
+		FORCE=true
+		shift
+		;;
+	--preserve-versions)
+		PRESERVE_VERSIONS=true
+		shift
+		;;
+	-*)
+		error "Unknown option: $1"
+		;;
+	*)
+		if [[ -z $SOURCE_PATH ]]; then
+			SOURCE_PATH="$1"
+		elif [[ -z $DEST_PATH ]]; then
+			DEST_PATH="$1"
+		else
+			error "Too many positional arguments"
+		fi
+		shift
+		;;
+	esac
+done
+
+# Validate required arguments
+if [[ -z $SOURCE_PATH ]] || [[ -z $DEST_PATH ]]; then
+	error "Source and destination paths are required"
+fi
+
+# Extract mount and path components
+extract_mount_path() {
+	local full_path="$1"
+	if [[ $full_path =~ ^([^/]+)/(.+)$ ]]; then
+		echo "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+	else
+		error "Invalid path format: $full_path (expected: mount/path/to/secret)"
+	fi
+}
+
+read -r SOURCE_MOUNT SOURCE_KEY <<<"$(extract_mount_path "$SOURCE_PATH")"
+read -r DEST_MOUNT DEST_KEY <<<"$(extract_mount_path "$DEST_PATH")"
+
+info "Source: mount=$SOURCE_MOUNT, key=$SOURCE_KEY"
+info "Destination: mount=$DEST_MOUNT, key=$DEST_KEY"
+
+# Check if source exists
+if ! bao kv get -mount="$SOURCE_MOUNT" "$SOURCE_KEY" >/dev/null 2>&1; then
+	error "Source secret does not exist: $SOURCE_PATH"
+fi
+
+# Check if destination exists (unless force mode)
+if ! $FORCE && bao kv get -mount="$DEST_MOUNT" "$DEST_KEY" >/dev/null 2>&1; then
+	error "Destination secret already exists: $DEST_PATH (use --force to overwrite)"
+fi
+
+# Get source metadata
+info "Retrieving source metadata..."
+SOURCE_METADATA=$(bao kv metadata get -mount="$SOURCE_MOUNT" -format=json "$SOURCE_KEY" 2>/dev/null || echo "{}")
+
+if [[ $SOURCE_METADATA == "{}" ]]; then
+	error "Unable to retrieve source secret metadata"
+fi
+
+# Extract metadata settings
+MAX_VERSIONS=$(echo "$SOURCE_METADATA" | jq -r '.data.max_versions // 0')
+DELETE_VERSION_AFTER=$(echo "$SOURCE_METADATA" | jq -r '.data.delete_version_after // "0s"')
+CAS_REQUIRED=$(echo "$SOURCE_METADATA" | jq -r '.data.cas_required // false')
+CUSTOM_METADATA=$(echo "$SOURCE_METADATA" | jq -r '.data.custom_metadata // {}')
+
+info "Source metadata: max_versions=$MAX_VERSIONS, delete_version_after=$DELETE_VERSION_AFTER, cas_required=$CAS_REQUIRED"
+
+# Function to copy a single version
+copy_version() {
+	local version="$1"
+	local version_flag=""
+
+	if [[ -n $version ]]; then
+		version_flag="-version=$version"
+		info "Copying version $version..."
+	else
+		info "Copying latest version..."
+	fi
+
+	# Get source data
+	local source_data
+	source_data=$(bao kv get -mount="$SOURCE_MOUNT" $version_flag -format=json "$SOURCE_KEY" 2>/dev/null)
+
+	if [[ -z $source_data ]] || [[ $source_data == "null" ]]; then
+		error "Unable to retrieve data for version $version"
+	fi
+
+	# Extract the actual secret data
+	local secret_data
+	secret_data=$(echo "$source_data" | jq -r '.data.data')
+
+	if [[ $secret_data == "null" ]]; then
+		error "No data found in version $version"
+	fi
+
+	# Convert JSON data to key=value pairs for bao kv put
+	local put_args=()
+	while IFS= read -r key; do
+		local value
+		value=$(echo "$secret_data" | jq -r --arg k "$key" '.[$k]')
+		put_args+=("$key=$value")
+	done < <(echo "$secret_data" | jq -r 'keys[]')
+
+	# Put the secret data
+	if [[ ${#put_args[@]} -gt 0 ]]; then
+		bao kv put -mount="$DEST_MOUNT" "$DEST_KEY" "${put_args[@]}"
+	else
+		warn "No data to copy for version $version"
+	fi
+}
+
+# Function to set metadata
+set_metadata() {
+	local metadata_args=()
+
+	if [[ $MAX_VERSIONS != "0" ]] && [[ $MAX_VERSIONS != "null" ]]; then
+		metadata_args+=("-max-versions=$MAX_VERSIONS")
+	fi
+
+	if [[ $DELETE_VERSION_AFTER != "0s" ]] && [[ $DELETE_VERSION_AFTER != "null" ]]; then
+		metadata_args+=("-delete-version-after=$DELETE_VERSION_AFTER")
+	fi
+
+	if [[ $CAS_REQUIRED == "true" ]]; then
+		metadata_args+=("-cas-required=true")
+	fi
+
+	# Add custom metadata if present
+	if [[ $CUSTOM_METADATA != "{}" ]] && [[ $CUSTOM_METADATA != "null" ]]; then
+		while IFS= read -r key; do
+			local value
+			value=$(echo "$CUSTOM_METADATA" | jq -r --arg k "$key" '.[$k]')
+			metadata_args+=("-custom-metadata=$key=$value")
+		done < <(echo "$CUSTOM_METADATA" | jq -r 'keys[]')
+	fi
+
+	if [[ ${#metadata_args[@]} -gt 0 ]]; then
+		info "Applying metadata: ${metadata_args[*]}"
+		bao kv metadata put -mount="$DEST_MOUNT" "${metadata_args[@]}" "$DEST_KEY"
+	fi
+}
+
+# Main copy logic
+if $PRESERVE_VERSIONS; then
+	if ! $FORCE; then
+		error "--preserve-versions requires --force"
+	fi
+
+	info "Version preservation mode enabled"
+
+	# Get all versions
+	VERSIONS=$(echo "$SOURCE_METADATA" | jq -r '.data.versions | keys[] | select(. != "null")' | sort -n)
+
+	if [[ -z $VERSIONS ]]; then
+		error "No versions found in source secret"
+	fi
+
+	# Copy each version in order
+	for version in $VERSIONS; do
+		# Check if version is not destroyed
+		local version_info
+		version_info=$(echo "$SOURCE_METADATA" | jq -r --arg v "$version" '.data.versions[$v]')
+		local destroyed
+		destroyed=$(echo "$version_info" | jq -r '.destroyed_time // false')
+
+		if [[ $destroyed != "false" ]] && [[ $destroyed != "null" ]]; then
+			warn "Version $version is destroyed, skipping"
+			continue
+		fi
+
+		copy_version "$version"
+	done
+
+else
+	# Copy single version (latest or specified)
+	copy_version "$VERSION"
+fi
+
+# Set metadata after copying data
+info "Applying metadata..."
+set_metadata
+
+info "Copy completed successfully: $SOURCE_PATH -> $DEST_PATH"
+
+# Verification
+info "Verification..."
+if bao kv get -mount="$DEST_MOUNT" "$DEST_KEY" >/dev/null 2>&1; then
+	info "✓ Destination secret accessible"
+else
+	error "✗ Problem with destination secret"
+fi
+
+if bao kv metadata get -mount="$DEST_MOUNT" "$DEST_KEY" >/dev/null 2>&1; then
+	info "✓ Destination metadata accessible"
+else
+	warn "✗ Problem with destination metadata"
+fi
