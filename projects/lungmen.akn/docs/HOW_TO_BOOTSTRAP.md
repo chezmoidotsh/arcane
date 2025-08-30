@@ -10,7 +10,7 @@ set -e
 
 # === Core Configuration Variables ===
 export TALOS_NODE_IP="10.0.2.10"  # Replace with your VM IP
-export TALOS_VERSION="1.10.4"
+export TALOS_VERSION="1.10.7"
 export SCHEMATIC_ID="36cd6536eaec8ba802be2d38974108359069cedba8857302f69792b26b87c010"
 
 # Create working directory

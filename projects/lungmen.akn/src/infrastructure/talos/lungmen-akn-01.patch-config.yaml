@@ -10,7 +10,7 @@ machine:
     # - siderolabs/intel-ucode
     # - siderolabs/iscsi-tools
     # - siderolabs/util-linux-tools
-    image: factory.talos.dev/nocloud-installer-secureboot/36cd6536eaec8ba802be2d38974108359069cedba8857302f69792b26b87c010:v1.10.6
+    image: factory.talos.dev/nocloud-installer-secureboot/36cd6536eaec8ba802be2d38974108359069cedba8857302f69792b26b87c010:v1.10.7
     diskSelector:
       type: hdd
       model: QEMU HARDDISK
@@ -41,10 +41,6 @@ machine:
 
 cluster:
   allowSchedulingOnControlPlanes: true
-
-  # -- CoreDNS configuration
-  coreDNS:
-    disabled: true # TalosOS CoreDNS is disabled to allow us to use a custom CoreDNS configuration.
 
   # -- Network configuration (disable CNI to allow Cilium to work)
   network:
