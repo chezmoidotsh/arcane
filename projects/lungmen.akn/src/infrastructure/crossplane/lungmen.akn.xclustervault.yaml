@@ -1,0 +1,27 @@
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: lungmen-akn-eso-credentials
+spec:
+  dataFrom:
+    - extract:
+        key: amiya.akn/external-secrets/remote-jwt/lungmen.akn
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    name: lungmen-akn-eso-credentials
+    template:
+      type: Opaque
+      metadata:
+        labels:
+          vault.crossplane.chezmoi.sh/cluster-name: lungmen.akn
+---
+apiVersion: vault.chezmoi.sh/v1alpha1
+kind: RemoteClusterVault
+metadata:
+  name: lungmen.akn
+spec:
+  name: lungmen.akn
+  host: https://kubernetes.lungmen.akn.chezmoi.sh:6443
