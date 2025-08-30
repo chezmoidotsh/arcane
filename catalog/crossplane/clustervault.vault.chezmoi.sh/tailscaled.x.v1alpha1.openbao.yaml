@@ -126,10 +126,10 @@ spec:
                   path "{{ $clusterName }}/*" { capabilities = ["read"] }
 
                   # Allow ESO to read all secrets in the shared/third-parties path scoped to this cluster
-                  path "shared/third-parties/+/+/{{ $clusterName }}/*" { capabilities = ["read"] }
+                  path "shared/+/third-parties/+/+/{{ $clusterName }}/*" { capabilities = ["read"] }
 
                   # Allow ESO to read all secrets in the shared/certificates path
-                  path "shared/certificates/*" { capabilities = ["read"] }
+                  path "shared/+/certificates/*" { capabilities = ["read"] }
               providerConfigRef:
                 name: {{ $xr.spec.providerConfigRef.name | default "default" }}
 
