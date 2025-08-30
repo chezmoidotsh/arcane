@@ -4,14 +4,10 @@ kind: Kustomization
 
 resources:
   - authelia.authbackend.yaml
+  - personal.mount.yaml
   - shared.mount.yaml
 
   # Additional policies
-  - policies/amiya.akn-authelia-policy.yaml
-  - policies/amiya.akn-crossplane-policy.yaml
   - policies/personal-admin-access.yaml
   - policies/personal-user-access.yaml
   - policies/sso-admin-policy.yaml
-
-  # Configure Vault for all clusters
-  - amiya.akn.xclustervault.yaml

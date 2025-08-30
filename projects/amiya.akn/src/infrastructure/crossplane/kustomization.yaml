@@ -6,4 +6,8 @@ resources:
   - aws.iam.authelia.yaml
   - cloudflare.iam.cert-manager.yaml
 
+  # Configure a Vault KV store for this cluster
+  - amiya.akn.xclustervault.yaml
+
+  # Configure OpenBao
   - vault/

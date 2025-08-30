@@ -1,0 +1,33 @@
+---
+apiVersion: vault.vault.upbound.io/v1alpha1
+kind: Policy
+metadata:
+  name: amiya.akn-authelia-policy
+spec:
+  forProvider:
+    name: amiya.akn-authelia-policy
+    policy: |
+      # Allow ESO to read SSO credentials on all mounts (cross-mount SSO access)
+      # See ADR-004
+      path "+/+/auth/*" { capabilities = ["read"] }
+---
+apiVersion: vault.vault.upbound.io/v1alpha1
+kind: Policy
+metadata:
+  name: amiya.akn-crossplane-policy
+spec:
+  forProvider:
+    name: amiya.akn-crossplane-policy
+    policy: |
+      # Allow Crossplane to manage all third-parties secrets on the shared mount
+      path "shared/+/third-parties/*" { capabilities = ["create", "read", "update", "delete", "list"] }
+---
+apiVersion: vault.chezmoi.sh/v1alpha1
+kind: LocalClusterVault
+metadata:
+  name: amiya.akn
+spec:
+  name: amiya.akn
+  additionalPolicies:
+    - amiya.akn-authelia-policy
+    - amiya.akn-crossplane-policy
