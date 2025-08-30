@@ -69,7 +69,7 @@ _.path = [
 # Python Virtual Environment
 # -----------------------------------------------------------------------------
 # Isolated Python environment for any Python-based tools or scripts
-_.python.venv = { path = ".venv", create = true, uv_create_args = ['--seed'] }
+_.python.venv = { path = ".mise/python", create = true, uv_create_args = ['--seed'] }
 
 # =============================================================================
 # Tool Installation Matrix
