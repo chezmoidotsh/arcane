@@ -1,0 +1,62 @@
+# Cloudflare API Token for cert-manager
+#
+# Description:
+#   This resource creates a Cloudflare API Token with specific permissions for cert-manager
+#   to manage DNS records and zones. The token is used by cert-manager to automatically
+#   create and manage DNS-01 challenges for Let's Encrypt certificates.
+#
+# Permissions:
+#   - Zone Read (c8fed203ed3043cba015a93ad1616f1f): Allows reading zone information
+#   - DNS Write (4755a26eedb94da69e1066d98aa820be): Allows creating and managing DNS records
+#
+# Security:
+#   The secret is synchronized to Vault (vault.chezmoi.sh) using External Secrets Operator.
+#
+# trunk-ignore-all(checkov/CKV2_K8S_5,trivy/KSV113): this is a policy to allow a specific user to use a specific secrets... so it's fine
+---
+apiVersion: account.cloudflare.crossplane.io/v1alpha1
+kind: APIToken
+metadata:
+  name: lungmenakn-chezmoi-sh-cert-manager
+spec:
+  forProvider:
+    name: (lungmen.akn.chezmoi.sh) - cert-manager
+    policy:
+      - effect: allow
+        permissionGroups:
+          - c8fed203ed3043cba015a93ad1616f1f # Zone Read
+          - 4755a26eedb94da69e1066d98aa820be # DNS Write
+        resources:
+          com.cloudflare.api.account.zone.2734d7b22cf00222046320ed3187cb94: "*"
+  writeConnectionSecretToRef:
+    name: lungmen.akn-cloudflare-token-certmanager
+    namespace: crossplane-secrets
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: lungmen.akn-cloudflare-token-certmanager
+  namespace: crossplane-secrets
+spec:
+  refreshInterval: 1h
+  secretStoreRefs:
+    - kind: ClusterSecretStore
+      name: vault.chezmoi.sh
+  selector:
+    secret:
+      name: lungmen.akn-cloudflare-token-certmanager
+  template:
+    metadata:
+      annotations:
+        description: Cloudflare API Token for cert-manager
+        origin: crossplane
+        owner: lungmen.akn
+        renewal-process: |
+          Remove the lungmenakn-chezmoi-sh-cert-manager APIToken then wait ArgoCD to create a new one.
+  data:
+    - conversionStrategy: None
+      match:
+        secretKey: attribute.value
+        remoteRef:
+          remoteKey: shared/data/third-parties/cloudflare/iam/lungmen.akn/cert-manager-rw
+          property: api_token

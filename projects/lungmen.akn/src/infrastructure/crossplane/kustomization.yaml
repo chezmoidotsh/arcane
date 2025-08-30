@@ -3,4 +3,5 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+  - cloudflare.iam.cert-manager.yaml
   - lungmen.akn.xclustervault.yaml
