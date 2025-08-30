@@ -1,0 +1,10 @@
+# Disable Envoy Gateway for kazimierz.akn cluster
+# This cluster uses Traefik as the primary gateway instead
+
+deployment:
+  replicas: 0
+
+config:
+  envoyGateway:
+    gateway:
+      controllerName: "" # Disable gateway controller
