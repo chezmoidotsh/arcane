@@ -1,0 +1,28 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: openbao:auth-delegator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: openbao-auth-delegator
+    namespace: external-secrets-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openbao-auth-delegator
+  namespace: external-secrets-system
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    kubernetes.io/service-account.name: openbao-auth-delegator
+  name: openbao-auth-delegator-token
+  namespace: external-secrets-system
+type: kubernetes.io/service-account-token
