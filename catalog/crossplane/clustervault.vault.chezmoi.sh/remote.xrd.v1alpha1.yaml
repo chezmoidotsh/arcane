@@ -2,7 +2,7 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xlocalclustervaults.vault.chezmoi.sh
+  name: xremoteclustervaults.vault.chezmoi.sh
 spec:
   versions:
     - name: v1alpha1
@@ -18,8 +18,13 @@ spec:
                 name:
                   type: string
                   description: >
-                    The name of the local Kubernetes cluster to integrate with OpenBao.
-                  example: local
+                    The name of the Kubernetes cluster to integrate with OpenBao.
+                  example: amiya.akn
+                host:
+                  type: string
+                  description: >
+                    The address of the Kubernetes cluster (API server endpoint).
+                  example: https://kubernetes:6443
                 additionalPolicies:
                   type: array
                   description: >
@@ -39,6 +44,7 @@ spec:
                       default: default
               required:
                 - name
+                - host
             status:
               type: object
               properties:

@@ -2,7 +2,7 @@
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
-  name: xlocalclustervaults.vault.chezmoi.sh
+  name: xtailscaledclustervaults.vault.chezmoi.sh
 spec:
   versions:
     - name: v1alpha1
@@ -17,28 +17,27 @@ spec:
               properties:
                 name:
                   type: string
-                  description: >
-                    The name of the local Kubernetes cluster to integrate with OpenBao.
-                  example: local
+                  description: "The name of the Tailscaled Kubernetes cluster"
+                host:
+                  type: string
+                  description: "The Tailscale address of the Kubernetes cluster (API server endpoint)"
                 additionalPolicies:
                   type: array
-                  description: >
-                    List of additional policies to create and add to ESO tokenPolicies.
+                  description: "List of additional policies to assign to the ESO role"
                   items:
                     type: string
                   default: []
                 providerConfigRef:
                   type: object
-                  description: >
-                    Reference to the ProviderConfig to use for OpenBao resources.
+                  description: "Reference to the ProviderConfig for OpenBao resources"
                   properties:
                     name:
                       type: string
-                      description: >
-                        Name of the ProviderConfig.
-                      default: default
+                      description: "Name of the ProviderConfig"
+                      default: "default"
               required:
                 - name
+                - host
             status:
               type: object
               properties:
