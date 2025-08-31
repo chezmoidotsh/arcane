@@ -1,0 +1,9 @@
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-terraform
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/provider-terraform:v1.0.0
+  runtimeConfigRef:
+    name: hardened-for-terraform

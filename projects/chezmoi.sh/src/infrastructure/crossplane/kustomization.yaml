@@ -16,6 +16,8 @@ resources:
   - aws.default.providerconfig.yaml
   - cloudflare.provider.yaml
   - cloudflare.default.providerconfig.yaml
+  - terraform.provider.yaml
+  - terraform.default.providerconfig.yaml
 
   # Vault provider configuration
   - vault.provider.yaml
