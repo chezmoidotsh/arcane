@@ -1,0 +1,42 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/include-unifi: "true"
+    link.argocd.argoproj.io/external-link: https://longhorn.lungmen.akn.chezmoi.sh
+  name: longhorn
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: default
+      namespace: envoy-gateway-system
+      sectionName: chezmoi.sh-websecure
+  hostnames:
+    - longhorn.lungmen.akn.chezmoi.sh
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: longhorn-frontend
+          port: 80
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: envoy-gateway-to-longhorn-frontend
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: envoy-gateway-system
+  to:
+    - group: ""
+      kind: Service
+      name: longhorn-frontend
