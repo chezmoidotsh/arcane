@@ -3,15 +3,19 @@ apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: Component
 
 resources:
+  # Plugin required for Tailscale to access TUN/TAP interfaces
   - ../../../../../../catalog/kustomize/tun-device-plugin
 
+  # Additional configuration for remote cluster resource access
   - remote-cluster.proxyclass.yaml
   - ts-dns.dnsconfig.yaml
 
+  # Security policies (NetworkPolicies, PodSecurityStandards, etc.)
   - security/
 
 patches:
   - path: restricted.proxyclass.yaml
+  - path: operator-oauth.externalsecret.yaml
 
 generators:
   - # Protect some "private" information like internal IPs addresses.

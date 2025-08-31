@@ -1,0 +1,66 @@
+apiVersion: tf.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: argotails-tailscale-oauth-client
+spec:
+  forProvider:
+    module: |
+      resource "tailscale_oauth_client" "self" {
+        description = "OAuth client for Argotails on amiya-akn"
+        scopes      = ["devices:core:read"]
+        tags        = []
+      }
+
+      output "client_id" {
+        description = "OAuth Client ID"
+        value       = tailscale_oauth_client.self.id
+      }
+
+      output "client_secret" {
+        sensitive = true
+        description = "OAuth Client Secret"
+        value       = tailscale_oauth_client.self.key
+      }
+
+    source: Inline
+  providerConfigRef:
+    name: tailscale
+  writeConnectionSecretToRef:
+    name: argotails-tailscale-oauth-client
+    namespace: crossplane-secrets
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: argotails-tailscale-oauth-client
+  namespace: crossplane-secrets
+spec:
+  refreshInterval: 1h
+  secretStoreRefs:
+    - kind: ClusterSecretStore
+      name: vault.chezmoi.sh
+  selector:
+    secret:
+      name: argotails-tailscale-oauth-client
+  template:
+    metadata:
+      annotations:
+        description: Tailscale OAuth Client for Argotails on amiya.akn
+        origin: crossplane
+        owner: amiya.akn/argotails
+        renewal-process: |
+          Remove the argotails-tailscale-oauth-client Workspace then wait ArgoCD to create a new one.
+        x-apps: argotails
+  data:
+    - conversionStrategy: None
+      match:
+        secretKey: client_id
+        remoteRef:
+          remoteKey: amiya.akn/data/argocd/network/argotails-auth
+          property: client_id
+    - conversionStrategy: None
+      match:
+        secretKey: client_secret
+        remoteRef:
+          remoteKey: amiya.akn/data/argocd/network/argotails-auth
+          property: client_secret

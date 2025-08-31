@@ -1,0 +1,63 @@
+---
+apiVersion: tf.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: tailscale
+spec:
+  configuration: |
+    // Modules _must_ use remote state. The provider does not persist state.
+    terraform {
+      backend "kubernetes" {
+        secret_suffix     = "providerconfig-tailscale"
+        namespace         = "crossplane"
+        in_cluster_config = true
+      }
+    }
+
+    // Install Tailscale provider
+    variable "oauth_client_id" { type = string }
+    variable "oauth_client_secret" { type = string }
+
+    terraform {
+      required_providers {
+        tailscale = {
+          source  = "tailscale/tailscale"
+          version = "0.21.1"
+        }
+      }
+    }
+
+    provider "tailscale" {
+      oauth_client_id = var.oauth_client_id
+      oauth_client_secret = var.oauth_client_secret
+    }
+  credentials:
+    - filename: terraform.tfvars.json
+      secretRef:
+        name: tailscale-credentials
+        key: terraform.tfvars.json
+        namespace: crossplane
+      source: Secret
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: tailscale-credentials
+spec:
+  refreshInterval: 720h # 30 days
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  dataFrom:
+    - extract:
+        key: amiya.akn/crossplane/providers/tailscale
+  target:
+    template:
+      type: Opaque
+      engineVersion: v2
+      data:
+        terraform.tfvars.json: |
+          {
+            "oauth_client_id": "{{ .oauth_client_id }}",
+            "oauth_client_secret": "{{ .oauth_client_secret }}"
+          }

@@ -4,4 +4,5 @@ kind: Kustomization
 
 resources:
   - cloudflare.iam.cert-manager.yaml
+  - lungmen.akn.tailscale-oauth.yaml
   - lungmen.akn.xclustervault.yaml

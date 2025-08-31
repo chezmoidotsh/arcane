@@ -1,4 +1,0 @@
----
-operatorConfig:
-  defaultTags:
-    - tag:kubernetes-seed
