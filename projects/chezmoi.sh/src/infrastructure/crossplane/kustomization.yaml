@@ -18,6 +18,7 @@ resources:
   - cloudflare.default.providerconfig.yaml
   - terraform.provider.yaml
   - terraform.default.providerconfig.yaml
+  - terraform.tailscale.providerconfig.yaml
 
   # Vault provider configuration
   - vault.provider.yaml
