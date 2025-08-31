@@ -158,6 +158,7 @@ spec:
                   {{- if $enableSharedAccess }}
 
                   # Allow ESO to read all secrets in the shared/third-parties path scoped to this cluster
+                  path "shared/+/third-parties/+/+/{{ $clusterName }}" { capabilities = ["read"] }
                   path "shared/+/third-parties/+/+/{{ $clusterName }}/*" { capabilities = ["read"] }
 
                   # Allow ESO to read all secrets in the shared/certificates path
