@@ -1,12 +1,6 @@
 ---
 # This YAML file defines the default Helm values for configuring Tailscale Operator
 # on remote clusters (clusters that are hosted outside of the home network)
-operatorConfig:
-  # On remote clusters, I use the tag `tag:kubernetes-remote-cluster` to identify the device
-  # that is running the Tailscale operator.
-  defaultTags:
-    - tag:kubernetes-remote-cluster
-
 apiServerProxyConfig:
   # On remote clusters, the API server proxy mode is enabled. This allows Tailscale to
   # act as a proxy for the Kubernetes API server, which is the required for ArgoCD to

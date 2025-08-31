@@ -1,8 +1,10 @@
 ---
 # This YAML file defines the default Helm values for configuring Tailscale Operator
 operatorConfig:
-  # By default, the operator will not add any tags to the Tailscale nodes.
-  defaultTags: []
+  # By default, the operator use the tag `tag:kubernetes-cluster` to identify the
+  # Tailscale nodes.
+  defaultTags:
+    - tag:kubernetes-cluster
 
 proxyConfig:
   # Like the operator, I use the tag `tag:kubernetes-apps` to identify the
