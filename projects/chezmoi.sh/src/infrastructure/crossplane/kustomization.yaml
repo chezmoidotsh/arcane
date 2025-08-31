@@ -12,17 +12,15 @@ resources:
   - runtimeconfigs.yaml
 
   # Crossplane provider configuration
-  - aws.provider.yaml
-  - aws.default.providerconfig.yaml
-  - cloudflare.provider.yaml
-  - cloudflare.default.providerconfig.yaml
-  - terraform.provider.yaml
-  - terraform.default.providerconfig.yaml
-  - terraform.tailscale.providerconfig.yaml
-
-  # Vault provider configuration
-  - vault.provider.yaml
-  - vault.providerconfig.yaml
+  - providers/aws/default.providerconfig.yaml
+  - providers/aws/provider.yaml
+  - providers/cloudflare/default.providerconfig.yaml
+  - providers/cloudflare/provider.yaml
+  - providers/terraform/default.providerconfig.yaml
+  - providers/terraform/provider.yaml
+  - providers/terraform/tailscale.providerconfig.yaml
+  - providers/vault/default.providerconfig.yaml
+  - providers/vault/provider.yaml
 
   # AWS resources
   - aws.domainidentity.yaml
