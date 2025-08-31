@@ -1,0 +1,18 @@
+---
+# The wildcard certificate needs to be updated to include the amiya.akn.chezmoi.sh domain
+# to ensure proper TLS termination for all amiya.akn services.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard.chezmoi.sh
+spec:
+  secretName: wildcard.chezmoi.sh-certificate
+  dnsNames:
+    - "*.chezmoi.sh"
+    - "*.akn.chezmoi.sh"
+    - "*.lungmen.akn.chezmoi.sh"
+  duration: 2160h # 90d
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
+  renewBefore: 360h # 15d
