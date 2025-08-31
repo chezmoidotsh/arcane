@@ -8,4 +8,3 @@ resources:
 
 patches:
   - path: restricted.proxyclass.yaml
-  - path: operator-oauth.externalsecret.yaml

@@ -15,7 +15,6 @@ resources:
 
 patches:
   - path: restricted.proxyclass.yaml
-  - path: operator-oauth.externalsecret.yaml
 
 generators:
   - # Protect some "private" information like internal IPs addresses.
