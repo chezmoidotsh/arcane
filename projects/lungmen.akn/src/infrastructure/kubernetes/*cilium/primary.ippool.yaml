@@ -1,0 +1,7 @@
+apiVersion: cilium.io/v2alpha1
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: primary
+spec:
+  blocks:
+    - cidr: 192.168.10.64/28 # 16 allowed IPs (192.168.10.64 - 192.168.10.79)
