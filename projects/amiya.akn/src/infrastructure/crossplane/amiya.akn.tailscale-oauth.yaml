@@ -1,0 +1,66 @@
+apiVersion: tf.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: amiya.akn-tailscale-oauth-client
+spec:
+  forProvider:
+    module: |
+      resource "tailscale_oauth_client" "self" {
+        description = "OAuth client for TS Operator on amiya-akn"
+        scopes      = ["auth_keys", "devices:core"]
+        tags        = ["tag:kubernetes-cluster"]
+      }
+
+      output "client_id" {
+        description = "OAuth Client ID"
+        value       = tailscale_oauth_client.self.id
+      }
+
+      output "client_secret" {
+        sensitive = true
+        description = "OAuth Client Secret"
+        value       = tailscale_oauth_client.self.key
+      }
+
+    source: Inline
+  providerConfigRef:
+    name: tailscale
+  writeConnectionSecretToRef:
+    name: amiya.akn-tailscale-oauth-client
+    namespace: crossplane-secrets
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: amiya.akn-tailscale-oauth-client
+  namespace: crossplane-secrets
+spec:
+  refreshInterval: 1h
+  secretStoreRefs:
+    - kind: ClusterSecretStore
+      name: vault.chezmoi.sh
+  selector:
+    secret:
+      name: amiya.akn-tailscale-oauth-client
+  template:
+    metadata:
+      annotations:
+        description: Tailscale OAuth Client for Tailscale Operator amiya.akn
+        origin: crossplane
+        owner: amiya.akn
+        renewal-process: |
+          Remove the amiya.akn-tailscale-oauth-client Workspace then wait ArgoCD to create a new one.
+        x-apps: tailscale-operator
+  data:
+    - conversionStrategy: None
+      match:
+        secretKey: client_id
+        remoteRef:
+          remoteKey: shared/data/third-parties/tailscale/oauth/amiya.akn
+          property: client_id
+    - conversionStrategy: None
+      match:
+        secretKey: client_secret
+        remoteRef:
+          remoteKey: shared/data/third-parties/tailscale/oauth/amiya.akn
+          property: client_secret
