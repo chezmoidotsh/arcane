@@ -53,18 +53,8 @@ spec:
                     path: /spec/generators/0/matrix/generators/0/list/elements/-
                     value:
                       metadata:
-                        annotations:
-                          {{- range $key, $value := .metadata.annotations }}
-                          {{- if hasPrefix "device.tailscale.com" $key }}
-                          {{ $key }}: {{ $value | quote }}
-                          {{- end }}
-                          {{- end }}
-                        labels:
-                          {{- range $key, $value := .metadata.labels }}
-                          {{- if or (hasPrefix "device.tailscale.com" $key) (hasPrefix "tag.device.tailscale.com" $key) }}
-                          {{ $key }}: {{ $value | quote }}
-                          {{- end }}
-                          {{- end }}
+                        annotations: {{ omit (.metadata.annotations | toYaml | fromYaml) "argocd.argoproj.io/tracking-id" | toYaml | nindent 8 }}
+                        labels: {{ .metadata.labels | toYaml | nindent 8 }}
                       name: {{ .name | quote }}
                       nameNormalized: {{ .nameNormalized | quote }}
                       nameRFC1123: {{ regexReplaceAll "[^a-zA-Z0-9_-]" .name "-" | quote }}
