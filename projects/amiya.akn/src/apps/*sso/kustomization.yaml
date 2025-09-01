@@ -10,4 +10,5 @@ labels:
 
 resources:
   - authelia
+  - pocket-id
   - yaldap

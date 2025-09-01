@@ -1,0 +1,67 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: pocket-id-database
+  name: pocket-id
+spec:
+  backup:
+    barmanObjectStore: &barmanObjectStore
+      data:
+        compression: bzip2
+      destinationPath: s3://cnpg-backups/amiya.akn/pocket-id
+      endpointURL: https://s3.chezmoi.sh:9000
+      serverName: 01K425MNC1RRVPENV6ZFPB15MQ # DRP::dst_ulid
+      s3Credentials:
+        accessKeyId:
+          name: pocket-id-database-backup-credentials
+          key: access_key_id
+        secretAccessKey:
+          name: pocket-id-database-backup-credentials
+          key: access_secret_key
+      wal:
+        compression: bzip2
+    retentionPolicy: 30d
+  bootstrap:
+    initdb:
+      database: pocket_id
+      owner: pocket_id
+    # recovery:
+    #   source: recoveryBackup
+  description: PostgreSQL database dedicated to pocket-id
+  # externalClusters:
+  #   - name: recoveryBackup
+  #     barmanObjectStore:
+  #       <<: *barmanObjectStore
+  #       serverName: 01K425MNC1RRVPENV6ZFPB15MQ # DRP::src_ulid
+  instances: 1
+  storage:
+    size: 2Gi
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  labels:
+    app.kubernetes.io/component: backup
+    app.kubernetes.io/part-of: pocket-id
+  name: pocket-id
+spec:
+  schedule: "@daily"
+  backupOwnerReference: cluster
+  cluster:
+    name: pocket-id
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: pocket-id-database-backup-credentials
+spec:
+  dataFrom:
+    - extract:
+        key: shared/third-parties/chezmoi.sh/s3/amiya.akn/cnpg-backup
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh

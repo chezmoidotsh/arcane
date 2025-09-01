@@ -1,0 +1,228 @@
+---
+# trunk-ignore-all(trivy/KSV110): Namespace is managed by kustomize
+# trunk-ignore-all(checkov/CKV_K8S_35): SMTP_USER cannot be exposed as a file like other secrets
+# trunk-ignore-all(checkov/CKV2_K8S_6): NetworkPolicy are managed into security/ folder
+# trunk-ignore-all(trivy/KSV0125): The image comes from a Github registry so ... I trust it for now
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app.kubernetes.io/component: application
+    app.kubernetes.io/instance: pocket-id-server
+  name: pocket-id-server
+spec:
+  serviceName: pocket-id
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: application
+      app.kubernetes.io/instance: pocket-id-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: application
+        app.kubernetes.io/instance: pocket-id-server
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: pocket-id
+          image: ghcr.io/pocket-id/pocket-id:v1.10.0-distroless@sha256:53aaee4ded66e2e163cd74b4bcfcf748c912672501346b08fa1bd8f21d295b81
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          ports:
+            - containerPort: 1411
+              name: http
+              protocol: TCP
+            - containerPort: 9464
+              name: metrics
+              protocol: TCP
+          env:
+            - name: APP_URL
+              value: https://sso.chezmoi.sh
+            - name: TRUST_PROXY
+              value: "true"
+            - name: MAXMIND_LICENSE_KEY_FILE
+              value: /var/run/secrets/pocket-id.org/maxmind_license_key
+            - name: PUID
+              value: "45706"
+            - name: PGID
+              value: "45706"
+            # Database configuration
+            - name: DB_PROVIDER
+              value: postgres
+            - name: DB_CONNECTION_STRING_FILE
+              value: /var/run/secrets/pocket-id.org/postgres_connection_string
+            # Security and encryption
+            - name: KEYS_STORAGE
+              value: database
+            - name: ENCRYPTION_KEY_FILE
+              value: /var/run/secrets/pocket-id.org/encryption_key
+            # Storage paths
+            - name: UPLOAD_PATH
+              value: /data/uploads
+            - name: GEOLITE_DB_PATH
+              value: /data/GeoLite2-City.mmdb
+
+            # UI Configuration overrides
+            - # NOTE: avoid any changes from the Web UI
+              name: UI_CONFIG_DISABLED
+              value: "true"
+
+            - # The name of the app.
+              name: APP_NAME
+              value: chezmoi.sh
+            - # The duration of a session in minutes before the user has to sign in again.
+              name: SESSION_DURATION
+              value: "120" # 2 hours
+            - # Whether the user's email should be marked as verified for the OIDC clients.
+              name: EMAILS_VERIFIED
+              value: "true"
+            - # Whether the users should be able to edit their own account details.
+              name: ALLOW_OWN_ACCOUNT_EDIT
+              value: "true"
+            - # Weather the User signup functionality is enabled. Valid Values: disabled, withToken, open
+              name: ALLOW_USER_SIGNUPS
+              value: withToken
+            - # A custom accent color for the UI. Accepts any valid CSS color value such as hex, RGB or HSL.
+              name: UI_ACCENT_COLOR
+              value: default
+            - # SMTP server hostname.
+              name: SMTP_HOST
+              value: email-smtp.us-east-1.amazonaws.com.
+            - # SMTP server port.
+              name: SMTP_PORT
+              value: "465"
+            - # Sender email address for outgoing emails. Format: user@example.com
+              name: SMTP_FROM
+              value: no-reply@chezmoi.sh
+            - # SMTP username for authentication.
+              name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: pocket-id-secrets
+                  key: smtp_username
+            - # Alternative to SMTP_PASSWORD_FILE variable, set to the path of a file containing the SMTP password.
+              name: SMTP_PASSWORD_FILE
+              value: /var/run/secrets/pocket-id.org/smtp_password
+            - # Which TLS Option to use. Valid values are: none, starttls and tls.
+              name: SMTP_TLS
+              value: tls
+
+            - # Send an email to the user when they log in from a new device.
+              name: EMAIL_LOGIN_NOTIFICATION_ENABLED
+              value: "true"
+            - # Allows an admin to send a login code to the user via email.
+              name: EMAIL_ONE_TIME_ACCESS_AS_ADMIN_ENABLED
+              value: "true"
+            - # Send an email to the user when their API key is about to expire.
+              name: EMAIL_API_KEY_EXPIRATION_ENABLED
+              value: "true"
+            - # Allows users to bypass passkeys by requesting a login code sent to their email. This reduces the security
+              # significantly as anyone with access to the user's email can gain entry.
+              name: EMAIL_ONE_TIME_ACCESS_AS_UNAUTHENTICATED_ENABLED
+              value: "true"
+
+            - # If true, emit logs formatted as JSON.
+              name: LOG_JSON
+              value: "true"
+            - # Enables metrics support
+              name: METRICS_ENABLED
+              value: "true"
+            - # Enable metrics Prometheus endpoint
+              name: OTEL_METRICS_EXPORTER
+              value: prometheus
+            - name: OTEL_EXPORTER_PROMETHEUS_HOST
+              value: 0.0.0.0
+            - name: OTEL_EXPORTER_PROMETHEUS_PORT
+              value: "9464"
+
+          livenessProbe:
+            exec:
+              command:
+                - /app/pocket-id
+                - healthcheck
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 2
+          readinessProbe:
+            exec:
+              command:
+                - /app/pocket-id
+                - healthcheck
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 2
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: pocket-id-secrets
+              mountPath: /var/run/secrets/pocket-id.org
+              readOnly: true
+      volumes:
+        - name: pocket-id-secrets
+          projected:
+            sources:
+              - secret:
+                  name: pocket-id-secrets
+                  items:
+                    - key: maxmind_license_key
+                      path: maxmind_license_key
+                    - key: encryption_key
+                      path: encryption_key
+                    - key: smtp_password
+                      path: smtp_password
+              - secret:
+                  name: pocket-id-app
+                  items:
+                    - key: uri
+                      path: postgres_connection_string
+      securityContext:
+        fsGroup: 45706
+        runAsGroup: 45706
+        runAsNonRoot: true
+        runAsUser: 45706
+        seccompProfile:
+          type: RuntimeDefault
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: data
+        labels:
+          app.kubernetes.io/component: storage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: application
+  name: pocket-id
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: http
+  selector:
+    app.kubernetes.io/component: application
+    app.kubernetes.io/instance: pocket-id-server
