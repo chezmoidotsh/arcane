@@ -1,0 +1,98 @@
+# AWS User for Pocket-ID
+#
+# Description:
+#   These resources will create an AWS IAM User with the necessary permissions
+#   to send emails from the domain chezmoi.sh for Pocket-ID.
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: Policy
+metadata:
+  annotations:
+    crossplane.io/external-name: PocketIdSESSender
+  name: amiya.akn.chezmoi.sh-amazonses-pocket-id
+spec:
+  forProvider:
+    path: /amiya.akn.chezmoi.sh/
+    policy: |
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "AllowSendingEmails",
+            "Effect": "Allow",
+            "Action": [
+              "ses:SendEmail",
+              "ses:SendRawEmail"
+            ],
+            "Resource": "arn:aws:ses:us-east-1:*:identity/*"
+          }
+        ]
+      }
+---
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: User
+metadata:
+  annotations:
+    crossplane.io/external-name: pocket-id
+  name: amiya.akn.chezmoi.sh-amazonses-pocket-id
+spec:
+  forProvider:
+    path: /amiya.akn.chezmoi.sh/
+---
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: UserPolicyAttachment
+metadata:
+  name: amiya.akn.chezmoi.sh-amazonses-pocket-id
+spec:
+  forProvider:
+    policyArnRef:
+      name: amiya.akn.chezmoi.sh-amazonses-pocket-id
+    userRef:
+      name: amiya.akn.chezmoi.sh-amazonses-pocket-id
+---
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: AccessKey
+metadata:
+  name: amiya.akn.chezmoi.sh-amazonses-pocket-id
+spec:
+  forProvider:
+    userRef:
+      name: amiya.akn.chezmoi.sh-amazonses-pocket-id
+  writeConnectionSecretToRef:
+    name: pocket-id-amazonses-credentials
+    namespace: crossplane-secrets
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: pocket-id-amazonses-credentials
+  namespace: crossplane-secrets
+spec:
+  refreshInterval: 1h
+  secretStoreRefs:
+    - kind: ClusterSecretStore
+      name: vault.chezmoi.sh
+  selector:
+    secret:
+      name: pocket-id-amazonses-credentials
+  template:
+    metadata:
+      annotations:
+        description: AWS SES credentials for Pocket-ID
+        origin: crossplane
+        owner: amiya.akn/pocket-id
+        renewal-process: |
+          Remove the amiya.akn.chezmoi.sh-amazonses-pocket-id AccessKey then wait ArgoCD to create a new one.
+        x-apps: pocket-id
+  data:
+    - conversionStrategy: None
+      match:
+        secretKey: username
+        remoteRef:
+          remoteKey: shared/data/third-parties/aws/ses/amiya.akn/pocket-id
+          property: username
+    - conversionStrategy: None
+      match:
+        secretKey: attribute.ses_smtp_password_v4
+        remoteRef:
+          remoteKey: shared/data/third-parties/aws/ses/amiya.akn/pocket-id
+          property: password

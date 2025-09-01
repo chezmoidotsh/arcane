@@ -53,6 +53,9 @@ without[^1] the need of third-party services.
 * **Authelia**: Centralized authentication with 2FA and SSO support. <br/>
   **Why is it mission-critical?** It provides a centralized authentication system that can be used by other services in the homelab and ensures that all services are secure.
 
+* **Pocket-Id**: Centralized identity management service with passkey support only. <br/>
+  **Why is it mission-critical?** It provides a centralized authentication system that can be used by other services in the homelab and ensures that all services are secure *(will replace Authelia + yaLDAP)*.
+
 * **yaLDAP**: Modern LDAP server. <br/>
   **Why is it mission-critical?** It provides a centralized directory service for user management and authentication.
 

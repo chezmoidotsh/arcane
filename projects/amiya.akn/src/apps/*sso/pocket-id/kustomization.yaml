@@ -1,0 +1,21 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: sso
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: pocket-id
+    includeSelectors: true
+    includeTemplates: true
+  - pairs:
+      # renovate: datasource=github-release depName=pocket-id/pocket-id
+      app.kubernetes.io/version: v0.2.0
+    includeTemplates: true
+
+resources:
+  - pocket-id.externalsecret.yaml
+  - pocket-id.httproute.yaml
+  - pocket-id.postgresql.yaml
+  - pocket-id.statefulset.yaml
+  - security/

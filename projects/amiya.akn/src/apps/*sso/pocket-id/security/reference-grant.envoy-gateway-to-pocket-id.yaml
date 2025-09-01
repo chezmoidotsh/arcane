@@ -1,0 +1,16 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Envoy Gateway from the envoy-gateway-system namespace to access the pocket-id service for authentication and authorization purposes.
+  name: envoy-gateway-system-to-pocket-id
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: envoy-gateway-system
+  to:
+    - group: ""
+      kind: Service
+      name: pocket-id
