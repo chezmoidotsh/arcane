@@ -1,0 +1,32 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Pocket ID PostgreSQL database to perform backup operations to S3 storage.
+      Enables scheduled backups and WAL archiving to the configured S3 endpoint.
+  name: allow-postgres-to-s3-backup
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: pocket-id
+  egress:
+    # Allow backup operations to S3 storage
+    - toFQDNs:
+        - matchName: s3.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
+    # Allow DNS resolution for backup operations
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+          rules:
+            dns:
+              - matchPattern: "*"

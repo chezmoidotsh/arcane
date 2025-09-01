@@ -18,6 +18,4 @@ resources:
   - pocket-id.httproute.yaml
   - pocket-id.postgresql.yaml
   - pocket-id.statefulset.yaml
-
-  # - pocket-id.networkpolicy.yaml
-  # - pocket-id-smtp.externalsecret.yaml
+  - security/

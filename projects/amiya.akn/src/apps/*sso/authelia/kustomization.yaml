@@ -10,6 +10,7 @@ resources:
   - authelia-oidc-legacy.externalsecret.yaml
   - authelia-oidc-jwt.issuer.yaml
   - authelia-smtp.externalsecret.yaml
+  - security/
   - sso.httproute.yaml
   - sso.tailscale.yaml
 

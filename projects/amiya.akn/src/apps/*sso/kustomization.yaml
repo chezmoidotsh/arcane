@@ -9,6 +9,7 @@ labels:
     includeTemplates: true
 
 resources:
-  - authelia
-  - pocket-id
-  - yaldap
+  - authelia/
+  - pocket-id/
+  - security/
+  - yaldap/

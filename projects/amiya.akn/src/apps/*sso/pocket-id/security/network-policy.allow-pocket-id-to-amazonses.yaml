@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Pocket ID to send authentication codes and notifications
+      through Amazon SES SMTP service on port 465 (SMTPS).
+  name: allow-pocket-id-to-amazonses
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: pocket-id
+  egress:
+    - toFQDNs:
+        - matchName: email-smtp.us-east-1.amazonaws.com
+      toPorts:
+        - ports:
+            - port: "465"
+              protocol: TCP
