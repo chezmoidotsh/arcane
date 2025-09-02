@@ -1,0 +1,63 @@
+---
+apiVersion: tf.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: pocket-id
+spec:
+  configuration: |
+    // Modules _must_ use remote state. The provider does not persist state.
+    terraform {
+      backend "kubernetes" {
+        secret_suffix     = "providerconfig-pocket-id" //:ignore(checkov/CKV_SECRET_6)
+        namespace         = "crossplane"
+        in_cluster_config = true
+      }
+    }
+
+    // Install Pocket ID provider
+    variable "api_token" { type = string }
+    variable "base_url" { type = string }
+
+    terraform {
+      required_providers {
+        pocketid = {
+          source  = "Trozz/pocketid"
+          version = "~> 0.1"
+        }
+      }
+    }
+
+    provider "pocketid" {
+      api_token  = var.api_token
+      base_url = var.base_url
+    }
+  credentials:
+    - filename: terraform.tfvars.json
+      secretRef:
+        name: pocket-id-credentials
+        key: terraform.tfvars.json
+        namespace: crossplane
+      source: Secret
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: pocket-id-credentials
+spec:
+  refreshInterval: 720h # 30 days
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  dataFrom:
+    - extract:
+        key: amiya.akn/crossplane/providers/pocket-id
+  target:
+    template:
+      type: Opaque
+      engineVersion: v2
+      data:
+        terraform.tfvars.json: |
+          {
+            "api_token": "{{ index . "api-key" }}",
+            "base_url": "https://sso.chezmoi.sh"
+          }

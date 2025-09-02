@@ -4,3 +4,6 @@ KSV011
 # Ignore ResourceQuota/LimitRange issues → I'm not ready to specify these kinds of quotas/limits
 KSV039
 KSV040
+
+# Ignore 'should set metadata.namespace to non-default namespace' as all namespace are managed by kustomize
+KSV110

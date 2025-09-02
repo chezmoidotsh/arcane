@@ -1,0 +1,22 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: >
+      Allows Actual Budget to access SSO for authentication.
+      Permits outbound HTTPS connections to sso.chezmoi.sh on port 443.
+  name: allow-actual-budget-to-sso
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: actual-budget
+  egress:
+    - toFQDNs:
+        - matchName: sso.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+          serverNames:
+            - sso.chezmoi.sh
