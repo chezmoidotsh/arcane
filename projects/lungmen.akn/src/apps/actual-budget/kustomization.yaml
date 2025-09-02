@@ -16,4 +16,5 @@ labels:
 resources:
   - actual-budget.configuration.externalsecret.yaml
   - actual-budget.httproute.yaml
+  - actual-budget.statefulset.yaml
   - security/

@@ -13,6 +13,13 @@ spec:
       containers:
         # trunk-ignore(trivy): Everything about security context cannot be configured for the official image.
         - name: actual-budget
+          env:
+            - name: ACTUAL_CONFIG_PATH
+              value: /app/config.json
+            - name: ACTUAL_OPENID_ENFORCE
+              value: "true"
+            - name: ACTUAL_TOKEN_EXPIRATION
+              value: openid-provider
           image: ghcr.io/actualbudget/actual-server:25.8.0
           livenessProbe:
             httpGet:
@@ -39,13 +46,20 @@ spec:
                 - ALL
             privileged: false
             readOnlyRootFilesystem: true
-            runAsNonRoot: true
-            runAsUser: 38069
             seccompProfile:
               type: RuntimeDefault
           volumeMounts:
             - name: persistent
               mountPath: /data
+            - name: config
+              mountPath: /app/config.json
+              subPath: config.json
+              readOnly: true
+      volumes:
+        - name: config
+          secret:
+            secretName: actual-budget-configuration
+            defaultMode: 0600
       securityContext:
         runAsNonRoot: true
         runAsUser: 38069
