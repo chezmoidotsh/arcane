@@ -11,8 +11,6 @@ spec:
         callback_urls = [
           "https://budget.chezmoi.sh/openid/callback"
         ]
-
-        has_logo = true
       }
 
       output "client_id" {
