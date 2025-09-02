@@ -21,7 +21,6 @@ spec:
         description = "OAuth Client Secret"
         value       = tailscale_oauth_client.self.key
       }
-
     source: Inline
   providerConfigRef:
     name: tailscale
