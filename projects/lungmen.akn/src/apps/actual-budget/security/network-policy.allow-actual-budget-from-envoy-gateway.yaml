@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Envoy Gateway to route traffic to Actual Budget application.
+  name: allow-actual-budget-from-envoy-gateway
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: actual-budget
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: envoy-gateway-system
+      toPorts:
+        - ports:
+            - port: "5006"
+              protocol: TCP

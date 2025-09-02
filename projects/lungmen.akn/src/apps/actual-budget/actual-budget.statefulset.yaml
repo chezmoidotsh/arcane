@@ -1,0 +1,81 @@
+---
+# trunk-ignore(checkov/CKV_K8S_15,checkov/CKV_K8S_43): Not agreed with these policies about the ImagePullPolicy=Always and digest verification.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: actual-budget
+spec:
+  serviceName: actual-budget
+  replicas: 1
+  template:
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        # trunk-ignore(trivy): Everything about security context cannot be configured for the official image.
+        - name: actual-budget
+          image: ghcr.io/actualbudget/actual-server:25.8.0
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          ports:
+            - name: http
+              containerPort: 5006
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 38069
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: persistent
+              mountPath: /data
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 38069
+        runAsGroup: 38069
+        fsGroup: 38069
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        labels:
+          recurring-job-group.longhorn.io/auto-snapshots: enabled
+          recurring-job-group.longhorn.io/daily: enabled
+        name: persistent
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: actual-budget
+spec:
+  selector:
+    app.kubernetes.io/name: actual-budget
+    app.kubernetes.io/instance: actual-budget
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
