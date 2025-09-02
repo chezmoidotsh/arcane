@@ -61,8 +61,16 @@ udm-pro: {
 amiya·akn: {
   class: [application]
   label: amiya·akn
-  icon: assets/icons/hardware/talos.svg
+  icon: ../amiya.akn/assets/logo.light.svg
   tooltip: Mission-critical services cluster (SSO, Secrets, etc.)
+
+  pocket-id {
+    class: [application]
+    icon: assets/icons/apps/pocket-id.svg
+    label: sso.chezmoi.sh
+    link: https://pocket-id.org/
+    tooltip: Pocket-ID is an open-source identity and access management solution based only on passkeys.
+  }
 }
 
 
@@ -182,7 +190,7 @@ lungmen·akn: {
   # Life Management Components
   
   life.actual-budget: {
-    class: [application; undeployed]
+    class: [application]
     label: Actual Budget
     icon: assets/icons/apps/actual-budget.png
     link: https://actualbudget.com/
@@ -272,7 +280,8 @@ lungmen·akn.media.jellyseerr <- lungmen·akn.system.envoy-gateway: "HTTP (5055)
 # ──────────────────────────────────────────────────────────────────────────────
 # Life Management Flow
 
-lungmen·akn.life.actual-budget <- lungmen·akn.system.envoy-gateway: "HTTP (5006)" {class: undeployed}
+lungmen·akn.life.actual-budget <- lungmen·akn.system.envoy-gateway: "http (5006)" {}
+lungmen·akn.life.actual-budget -> amiya·akn.pocket-id: "https (443)" {}
 
 lungmen·akn.life.paperless <- lungmen·akn.system.envoy-gateway: "HTTP (8000)" {class: undeployed}
 
