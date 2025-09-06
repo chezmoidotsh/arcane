@@ -1,0 +1,9 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - network-policy.allow-jellyfin-from-envoy-gateway.yaml
+  - network-policy.allow-jellyfin-to-internet.yaml
+  - network-policy.allow-jellyfin-to-sso.yaml
+  - network-policy.default-hardened.yaml

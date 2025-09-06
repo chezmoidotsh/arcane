@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Jellyfin to access the internet on some addresses.
+  name: allow-jellyfin-to-internet
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: jellyfin
+  ingress:
+    - toFQDNs:
+        - matchName: repo.jellyfin.org
+        - matchName: image.tmdb.org
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
