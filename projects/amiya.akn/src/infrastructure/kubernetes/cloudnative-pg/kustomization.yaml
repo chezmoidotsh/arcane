@@ -8,5 +8,6 @@ resources:
 
 helmCharts:
   - name: cloudnative-pg
+    releaseName: cloudnative-pg
     repo: https://cloudnative-pg.github.io/charts
     version: 0.26.0
