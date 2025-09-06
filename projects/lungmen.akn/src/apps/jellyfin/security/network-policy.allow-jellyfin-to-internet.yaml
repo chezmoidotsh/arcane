@@ -12,7 +12,7 @@ spec:
   egress:
     - toFQDNs:
         - matchName: repo.jellyfin.org
-        - matchName: '*.mirror.jellyfin.org'
+        - matchPattern: '*.mirror.jellyfin.org'
         - matchName: image.tmdb.org
       toPorts:
         - ports:
