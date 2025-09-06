@@ -9,7 +9,7 @@ spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: jellyfin
-  ingress:
+  egress:
     - toFQDNs:
         - matchName: repo.jellyfin.org
         - matchName: image.tmdb.org
