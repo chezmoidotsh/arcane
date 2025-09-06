@@ -1,0 +1,134 @@
+---
+# trunk-ignore(checkov/CKV_K8S_15,checkov/CKV_K8S_43): Not agreed with these policies about the ImagePullPolicy=Always and digest verification.
+# trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_12,checkov/CKV_K8S_13,trivy/KSV015,trivy/KSV016,trivy/KSV018): We will address these issues when we will have enough data about Jellyfin consumption
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: jellyfin
+spec:
+  # trunk-ignore(trivy/KSV028): all volumes are allowed
+  serviceName: jellyfin
+  replicas: 1
+  template:
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        # trunk-ignore(trivy/KSV0125): ghcr.io/jellyfin is trusted
+        - name: jellyfin
+          image: ghcr.io/jellyfin/jellyfin:10.10.7
+          ports:
+            - name: http
+              containerPort: 8096
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          # TODO: wait ±1 month before considering resource requests and limits
+          # resources:
+          #   requests:
+          #     cpu: 500m
+          #     memory: 2Gi
+          #   limits:
+          #     cpu: 2000m
+          #     memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 64710
+            runAsNonRoot: true
+            runAsUser: 64710
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: persistent
+              mountPath: /config
+            - name: cache
+              mountPath: /cache
+            - name: tmpdir
+              mountPath: /tmp
+            - name: movies
+              mountPath: /media/movies
+              readOnly: true
+            - name: tvshows
+              mountPath: /media/tvshows
+              readOnly: true
+            - name: musics
+              mountPath: /media/musics
+              readOnly: true
+            - name: animes
+              mountPath: /media/animes
+              readOnly: true
+      securityContext:
+        runAsGroup: 64710
+        runAsNonRoot: true
+        runAsUser: 64710
+        fsGroup: 64710
+        seccompProfile:
+          type: RuntimeDefault
+        # 65534 is the group ID for 'nobody' (or 'nfsnobody'), required for access to NFS-mounted media directories exported with this group.
+        supplementalGroups: [65534]
+      volumes:
+        - name: cache
+          emptyDir: {}
+        - name: tmpdir
+          emptyDir: {}
+        - name: movies
+          nfs:
+            server: nas.chezmoi.sh
+            path: /mnt/zp1cs01/media/movies
+            readOnly: true
+        - name: tvshows
+          nfs:
+            server: nas.chezmoi.sh
+            path: /mnt/zp1cs01/media/tvshows
+            readOnly: true
+        - name: musics
+          nfs:
+            server: nas.chezmoi.sh
+            path: /mnt/zp1cs01/media/musics
+            readOnly: true
+        - name: animes
+          nfs:
+            server: nas.chezmoi.sh
+            path: /mnt/zp1cs01/media/animes
+            readOnly: true
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        labels:
+          recurring-job-group.longhorn.io/default: disabled
+          recurring-job-group.longhorn.io/daily: enabled
+        name: persistent
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jellyfin
+spec:
+  selector:
+    app.kubernetes.io/name: jellyfin
+    app.kubernetes.io/instance: jellyfin
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

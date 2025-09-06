@@ -186,14 +186,14 @@ The recovery process is largely automated through the `amiya.akn` project, which
 * [x] **Step 0**: Define project scope and architecture
   * [x] List all services to be deployed
   * [x] Create architecture diagram
-* [ ] **Step 1**: Initial deployment
-  * [ ] Deploy base infrastructure (Talos, Cilium)
-  * [ ] Configure core services (External Secrets, DNS, cert-manager)
-  * [ ] Deploy Longhorn for distributed storage
-  * [ ] Deploy Envoy Gateway as API Gateway
-* [ ] **Step 2**: Data Layer
-  * [ ] Deploy CloudNativePG operator
-  * [ ] Deploy PostgreSQL for application data
+* [x] **Step 1**: Initial deployment
+  * [x] Deploy base infrastructure (Talos, Cilium)
+  * [x] Configure core services (External Secrets, DNS, cert-manager)
+  * [x] Deploy Longhorn for distributed storage
+  * [x] Deploy Envoy Gateway as API Gateway
+* [x] **Step 2**: Data Layer
+  * [x] Deploy CloudNativePG operator
+  * [x] Deploy PostgreSQL for application data
 * [ ] **Step 3**: Services Deployment
   * [ ] Deploy media services (Jellyfin, Jellyseerr)
   * [ ] Deploy Immich with Cloudflare Tunnel for external access
