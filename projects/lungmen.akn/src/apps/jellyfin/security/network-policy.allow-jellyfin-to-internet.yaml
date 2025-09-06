@@ -14,6 +14,7 @@ spec:
         - matchName: repo.jellyfin.org
         - matchPattern: '*.mirror.jellyfin.org'
         - matchName: image.tmdb.org
+        - matchName: raw.githubusercontent.com
       toPorts:
         - ports:
             - port: "443"
