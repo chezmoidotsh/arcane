@@ -10,7 +10,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      cnpg.io/cluster: pocket-id
+      cnpg.io/cluster: pocket-id-database
   ingress:
     - fromEndpoints:
         - matchLabels:

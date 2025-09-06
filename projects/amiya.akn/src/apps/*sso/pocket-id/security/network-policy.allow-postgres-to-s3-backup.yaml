@@ -9,7 +9,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      cnpg.io/cluster: pocket-id
+      cnpg.io/cluster: pocket-id-database
   egress:
     # Allow backup operations to S3 storage
     - toFQDNs:

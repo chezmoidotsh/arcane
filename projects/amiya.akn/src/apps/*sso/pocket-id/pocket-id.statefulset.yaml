@@ -186,7 +186,7 @@ spec:
                     - key: smtp_password
                       path: smtp_password
               - secret:
-                  name: pocket-id-app
+                  name: pocket-id-database-pocket-id
                   items:
                     - key: uri
                       path: postgres_connection_string
