@@ -18,7 +18,6 @@ resources:
   - providers/cloudflare/provider.yaml
   - providers/terraform/default.providerconfig.yaml
   - providers/terraform/provider.yaml
-  - providers/terraform/pocket-id.providerconfig.yaml
   - providers/terraform/tailscale.providerconfig.yaml
   - providers/vault/default.providerconfig.yaml
   - providers/vault/provider.yaml
