@@ -15,5 +15,7 @@ spec:
         - matchName: email-smtp.us-east-1.amazonaws.com
       toPorts:
         - ports:
+            - port: "25"
+              protocol: TCP
             - port: "465"
               protocol: TCP
