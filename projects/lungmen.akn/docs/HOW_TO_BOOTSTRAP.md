@@ -254,7 +254,7 @@ Create a VM with the following specifications through the Proxmox VE web interfa
 | --------------- | -------------------- |
 | Bus/Device      | SCSI 0               |
 | Storage         | nvme-lvm             |
-| Disk size (GiB) | 32                   |
+| Disk size (GiB) | 48                   |
 | Format          | Raw disk image (raw) |
 | Cache           | Default (No cache)   |
 | IO thread       | ✔️                   |
@@ -274,7 +274,7 @@ Create a VM with the following specifications through the Proxmox VE web interfa
 
 > \[!INFO] **Disk Purpose**
 >
-> * **Root Disk (32GB)**: Contains Talos system, ephemeral storage, and container images
+> * **Root Disk (48GB)**: Contains Talos system, ephemeral storage, and container images
 > * **Data Disk (64GB)**: Used for persistent storage, including Longhorn volumes and application data
 
 #### CPU Configuration
