@@ -1,0 +1,33 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Jellyfin to access specific internet resources for core functionality:
+      - Jellyfin repositories (repo.jellyfin.org, *.mirror.jellyfin.org) for updates and packages
+      - Plugin sources (github.com, raw.githubusercontent.com, www.iamparadox.dev) for plugin downloads
+      - Metadata providers (artworks.thetvdb.com, image.tmdb.org) for movie/TV show artwork and information
+      All connections are restricted to HTTPS (port 443) only.
+  name: allow-jellyfin-to-internet
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: jellyfin
+  egress:
+    - toFQDNs:
+        # Allow access to Jellyfin repositories
+        - matchName: repo.jellyfin.org
+        - matchPattern: "*.mirror.jellyfin.org"
+
+        # Allow access to plugins
+        - matchName: github.com
+        - matchName: raw.githubusercontent.com
+        - matchName: www.iamparadox.dev
+
+        # Allow access to some metadata databases
+        - matchName: artworks.thetvdb.com
+        - matchName: image.tmdb.org
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

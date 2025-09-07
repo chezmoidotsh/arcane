@@ -1,0 +1,19 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: jellyfin
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: jellyfin
+      app.kubernetes.io/part-of: jellyfin
+    includeTemplates: true
+  - pairs:
+      app.kubernetes.io/instance: jellyfin
+    includeTemplates: true
+    includeSelectors: true
+
+resources:
+  - jellyfin.httproute.yaml
+  - jellyfin.statefulset.yaml
+  - security/
