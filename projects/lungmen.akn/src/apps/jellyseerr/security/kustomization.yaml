@@ -6,7 +6,7 @@ resources:
   - network-policy.allow-jellyseerr-from-envoy-gateway.yaml
   - network-policy.allow-jellyseerr-to-internet.yaml
   - network-policy.allow-jellyseerr-to-jellyfin.yaml
-  - network-policy.allow-jellyseerr-to-postgres.yaml
+  - network-policy.allow-postgres-from-cnpg.yaml
   - network-policy.allow-postgres-to-kubernetes-api.yaml
   - network-policy.allow-postgres-to-s3-backup.yaml
   - network-policy.default-hardened.yaml
