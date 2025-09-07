@@ -1,0 +1,24 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Jellyseerr to access specific internet resources for core functionality:
+      - TMDB API (api.themoviedb.org) for movie and TV show metadata, artwork, and information
+      - Image assets from TMDB (image.tmdb.org) for posters and backdrops
+      All connections are restricted to HTTPS (port 443) only.
+  name: allow-jellyseerr-to-internet
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: jellyseerr
+  egress:
+    - toFQDNs:
+        # Allow access to TMDB API for metadata
+        - matchName: api.themoviedb.org
+        - matchName: image.tmdb.org
+        - matchName: www.themoviedb.org
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

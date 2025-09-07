@@ -1,0 +1,32 @@
+---
+# This Helm values file contains all default values used by the Jellyseerr
+# Helm chart.
+
+# Environment variables configuration
+extraEnv:
+  - name: LOG_LEVEL
+    value: info
+  - name: DB_TYPE
+    value: postgres
+  - name: DB_HOST
+    value: jellyseerr-database-rw
+  - name: DB_PORT
+    value: "5432"
+  - name: DB_NAME
+    value: jellyseerr
+  - name: DB_USER
+    valueFrom:
+      secretKeyRef:
+        name: jellyseerr-database-jellyseerr
+        key: username
+  - name: DB_PASS
+    valueFrom:
+      secretKeyRef:
+        name: jellyseerr-database-jellyseerr
+        key: password
+
+# Ingress disabled (using HTTPRoute)
+ingress:
+  enabled: false
+
+nameOverride: jellyseerr

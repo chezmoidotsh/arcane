@@ -1,6 +1,17 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: jellyseerr
+
+helmCharts:
+  - name: jellyseerr-chart
+    releaseName: jellyseerr
+    repo: oci://ghcr.io/fallenbagel/jellyseerr
+    version: 2.6.2
+    valuesFile: jellyseerr.helmvalues/default.yaml
+    additionalValuesFiles:
+      - jellyseerr.helmvalues/hardened.yaml
+
 labels:
   - pairs:
       app.kubernetes.io/name: jellyseerr
@@ -12,6 +23,9 @@ labels:
     includeSelectors: true
 
 resources:
+  - security/
+
+  - jellyseerr.httproute.yaml
   - jellyseerr.postgresql-backup.yaml
   - jellyseerr.postgresql-objectstore.yaml
   - jellyseerr.postgresql.yaml
