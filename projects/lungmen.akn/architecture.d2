@@ -179,7 +179,7 @@ lungmen·akn: {
   }
 
   media.jellyseerr: {
-    class: [application; undeployed]
+    class: [application]
     label: Jellyseerr
     icon: assets/icons/apps/jellyseerr.svg
     link: https://github.com/Fallenbagel/jellyseerr
@@ -272,10 +272,11 @@ lungmen·akn.system.tailscale -> internet: "api.tailscale.com:443" {class: [conn
 lungmen·akn.media.immich <- lungmen·akn.system.envoy-gateway: "HTTP (3000)" {class: undeployed}
 
 lungmen·akn.media.jellyfin <- lungmen·akn.system.envoy-gateway: "HTTP (8096)" {}
-lungmen·akn.media.jellyfin <- lungmen·akn.media.jellyseerr: "HTTP (8096)" {class: undeployed}
+lungmen·akn.media.jellyfin <- lungmen·akn.media.jellyseerr: "HTTP (8096)" {}
 lungmen·akn.media.jellyfin -> internet: "https (443)" {class: [connect-to-internet]}
 
-lungmen·akn.media.jellyseerr <- lungmen·akn.system.envoy-gateway: "HTTP (5055)" {class: undeployed}
+lungmen·akn.media.jellyseerr <- lungmen·akn.system.envoy-gateway: "HTTP (5055)" {}
+lungmen·akn.media.jellyseerr -> internet: "https (443)" {class: [connect-to-internet]}
 
 
 # ──────────────────────────────────────────────────────────────────────────────

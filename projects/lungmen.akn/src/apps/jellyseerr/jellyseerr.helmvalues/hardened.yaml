@@ -1,0 +1,31 @@
+---
+# This file defines security hardening measures for the Jellyseerr deployment
+
+# Pod-level security context
+podSecurityContext:
+  runAsUser: 18394
+  runAsGroup: 18394
+  runAsNonRoot: true
+  fsGroup: 18394
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
+
+# Additional volume mounts for read-only root filesystem
+volumeMounts:
+  - name: tmpdir
+    mountPath: /tmp
+
+# Additional volumes
+volumes:
+  - name: tmpdir
+    emptyDir: {}

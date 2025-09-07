@@ -1,0 +1,61 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: jellyseerr-database
+  name: jellyseerr-database
+spec:
+  bootstrap:
+    initdb:
+      database: jellyseerr
+      owner: jellyseerr
+  description: PostgreSQL database dedicated to jellyseerr
+  enablePDB: false
+  instances: 1
+  managed:
+    roles:
+      - name: jellyseerr
+        connectionLimit: -1
+        comment: PostgreSQL role for jellyseerr
+        ensure: present
+        inherit: true
+        login: true
+        passwordSecret:
+          name: jellyseerr-database-jellyseerr
+  plugins:
+    - enabled: true
+      isWALArchiver: true
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: selfhosted
+        serverName: 01K4J7B9B4ZCECN0AM14VF0F55 # DRP::src_ulid
+  storage:
+    size: 1Gi
+  walStorage:
+    size: 1Gi
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: jellyseerr-database-jellyseerr
+spec:
+  data:
+    - secretKey: postgresql_username
+      remoteRef:
+        key: lungmen.akn/jellyseerr/database/postgresql
+        property: username
+    - secretKey: postgresql_password
+      remoteRef:
+        key: lungmen.akn/jellyseerr/database/postgresql
+        property: password
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    template:
+      data:
+        username: jellyseerr
+        password: "{{ .postgresql_password }}"

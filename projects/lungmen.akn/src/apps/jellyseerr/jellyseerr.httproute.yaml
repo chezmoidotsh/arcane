@@ -1,0 +1,27 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/include-unifi: "true"
+    link.argocd.argoproj.io/external-link: https://jellyseerr.chezmoi.sh
+  name: jellyseerr-websecure
+spec:
+  hostnames:
+    - jellyseerr.chezmoi.sh
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: default
+      namespace: envoy-gateway-system
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: jellyseerr
+          port: 80
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
