@@ -1,0 +1,119 @@
+---
+# trunk-ignore(checkov/CKV2_K8S_6): checkov don't manage properly Network Policies
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app.kubernetes.io/component: tasks-broker
+    app.kubernetes.io/instance: paperless-ngx-redis
+  name: paperless-ngx-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: tasks-broker
+  serviceName: paperless-ngx-redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: tasks-broker
+        app.kubernetes.io/instance: paperless-ngx-redis
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        # trunk-ignore(trivy/KSV0125): docker.io/library/redis is trusted
+        - name: redis
+          args:
+            - redis-server
+            - --save
+            - "300" # save every 5 minutes ...
+            - "1" # ... if at least 1 key changed
+          image: docker.io/library/redis:7.4.2-alpine@sha256:1bf97f21f01b0e7bd4b7b34a26d3b9d8086e41e70c10f262e8a9e0b49b5116a0
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            requests:
+              memory: 64Mi
+              cpu: 100m
+            limits:
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 52678
+            runAsNonRoot: true
+            runAsUser: 52678
+          startupProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            failureThreshold: 30
+            initialDelaySeconds: 0
+            periodSeconds: 2
+            successThreshold: 1
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      securityContext:
+        fsGroup: 52678
+        runAsGroup: 52678
+        runAsUser: 52678
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: tasks-broker
+    app.kubernetes.io/instance: paperless-ngx-redis
+  name: paperless-ngx-redis
+spec:
+  ports:
+    - name: redis
+      port: 6379
+      protocol: TCP
+      targetPort: 6379
+  selector:
+    app.kubernetes.io/component: tasks-broker
+  type: ClusterIP

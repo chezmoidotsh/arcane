@@ -1,0 +1,180 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    checkov.io/skip1: CKV2_K8S_6=Checkov don't manage properly Network Policies
+    checkov.io/skip2: CKV_K8S_25=CHOWN seems to be required by S6 runtime... it works but with some error logs
+    checkov.io/skip3: CKV_K8S_35=Paperless don't handle secret value through files
+  labels:
+    app.kubernetes.io/component: webserver
+    app.kubernetes.io/instance: paperless-ngx-webserver
+  name: paperless-ngx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: webserver
+  serviceName: paperless-ngx
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: webserver
+        app.kubernetes.io/instance: paperless-ngx-webserver
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        # trunk-ignore(trivy/KSV0125): ghcr.io/paperless-ngx/paperless-ngx is trusted
+        # trunk-ignore(trivy/KSV022): CHOWN seems to be required by S6 runtime... it works but with some error logs
+        - name: paperless-ngx
+          env:
+            - name: PAPERLESS_APPS
+              value: allauth.socialaccount.providers.openid_connect
+            - name: PAPERLESS_CONSUMER_POLLING
+              value: "60"
+            - name: PAPERLESS_CORS_ALLOWED_HOSTS
+              value: https://paperless.chezmoi.sh
+            - name: PAPERLESS_CSRF_TRUSTED_ORIGINS
+              value: https://paperless.chezmoi.sh
+            - name: PAPERLESS_DBENGINE
+              value: postgresql
+            - name: PAPERLESS_DBHOST
+              value: paperless-ngx-database-rw
+            - name: PAPERLESS_DBNAME
+              value: paperless
+            - name: PAPERLESS_DBPORT
+              value: "5432"
+            - name: PAPERLESS_DBUSER
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-database-paperless
+                  key: username
+            - name: PAPERLESS_DBPASS
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-database-paperless
+                  key: password
+            - name: PAPERLESS_REDIS
+              value: redis://paperless-ngx-redis:6379
+            - name: PAPERLESS_SOCIALACCOUNT_PROVIDERS
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-configuration
+                  key: socialaccount_providers
+            - name: S6_YES_I_WANT_A_WORLD_WRITABLE_RUN_BECAUSE_KUBERNETES
+              value: "1"
+            - name: S6_READ_ONLY_ROOT
+              value: "1"
+          image: ghcr.io/paperless-ngx/paperless-ngx:2.18.4@sha256:3421ebe06ed27662d014046cf5089e612de853aae0c676a2bc72f73b38080e57
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            requests:
+              memory: 2Gi
+              cpu: 250m
+            limits:
+              memory: 4Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              # trunk-ignore(trivy/KSV106): CHOWN seems to be required by S6 runtime... it works but with some error logs
+              add:
+                - CHOWN # required by the official image
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 21473
+            runAsNonRoot: true
+            runAsUser: 21473
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            failureThreshold: 30
+            initialDelaySeconds: 0
+            periodSeconds: 2
+            successThreshold: 1
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: persistent-storage
+              mountPath: /usr/src/paperless/media
+              subPath: media
+            - name: persistent-storage
+              mountPath: /usr/src/paperless/data
+              subPath: data
+            - name: temp
+              mountPath: /run
+              subPath: run
+            - name: temp
+              mountPath: /tmp
+              subPath: tmp
+            - name: temp
+              mountPath: /usr/src/paperless/consume
+              subPath: consume
+            - name: smb-storage
+              mountPath: /mnt/nas.chezmoi.sh/Public
+              subPath: Documents
+      securityContext:
+        fsGroup: 21473
+        runAsGroup: 21473
+        runAsUser: 21473
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: temp
+          emptyDir: {}
+        - name: smb-storage
+          persistentVolumeClaim:
+            claimName: paperless-ngx-smb-storage
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        labels:
+          app.kubernetes.io/component: webserver
+          app.kubernetes.io/instance: paperless-ngx-webserver
+          recurring-job-group.longhorn.io/default: disabled
+          recurring-job-group.longhorn.io/daily: enabled
+        name: persistent-storage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: webserver
+    app.kubernetes.io/instance: paperless-ngx-webserver
+  name: paperless-ngx
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8000
+  selector:
+    app.kubernetes.io/component: webserver
+  type: ClusterIP

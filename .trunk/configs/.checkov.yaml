@@ -1,0 +1,2 @@
+skip-check:
+  - CKV2_K8S_6 # Checkov don't manage properly Network Policies

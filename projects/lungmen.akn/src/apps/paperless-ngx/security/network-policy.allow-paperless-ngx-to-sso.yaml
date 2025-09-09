@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows paperless-ngx to connect to Authelia SSO for OIDC authentication.
+  name: allow-paperless-ngx-to-sso
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: webserver
+  egress:
+    - toFQDNs:
+        - matchName: auth.chezmoi.sh
+        - matchName: sso.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
