@@ -61,7 +61,7 @@ udm-pro: {
 amiya·akn: {
   class: [application]
   label: amiya·akn
-  icon: ../amiya.akn/assets/logo.light.svg
+  icon: ../amiya.akn/assets/logo.svg
   tooltip: Mission-critical services cluster (SSO, Secrets, etc.)
 
   pocket-id {
@@ -71,12 +71,38 @@ amiya·akn: {
     link: https://pocket-id.org/
     tooltip: Pocket-ID is an open-source identity and access management solution based only on passkeys.
   }
+
+  openbao {
+    class: [application]
+    icon: assets/icons/apps/openbao.svg
+    label: vault.chezmoi.sh
+    link: https://openbao.org/
+    tooltip: OpenBao is an open-source, community-driven fork of Vault managed by the Linux Foundation.
+  }
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Hardware & Infrastructure
+
+nas: {
+  class: namespace
+  label: TrueNAS Scale
+  icon: assets/icons/hardware/truenas-scale.svg
+  tooltip: Home Network Attached Storage (NAS)
+
+  minio: {
+    class: [application]
+    label: MinIO
+    icon: assets/icons/apps/minio.svg
+    link: https://min.io/
+    tooltip: MinIO is a high-performance, distributed object storage system.
+  }
 }
 
 
 
 # ╭────────────────────────────────────────────────────────────────────────────╮
-# │                            lungmen.akn Platform                           │
+# │                            lungmen.akn Platform                            │
 # ├────────────────────────────────────────────────────────────────────────────┤
 # │ Desc:                                                                      │
 # │   This namespace contains all the components of the lungmen.akn platform,  │
@@ -85,18 +111,19 @@ amiya·akn: {
 # ╰────────────────────────────────────────────────────────────────────────────╯
 
 lungmen·akn: {
+  icon: assets/logo.svg
+  style.fill-pattern: none
+
   system: {class: namespace}
   media: {class: namespace}
   life: {class: namespace}
   others: {class: namespace}
 
-  style.fill-pattern: none
-
   # ────────────────────────────────────────────────────────────────────────────
   # System Components
 
   system.cert-manager: {
-    class: [application-system; undeployed]
+    class: [application-system]
     label: Cert-Manager
     icon: assets/icons/system/cert-manager.svg
     link: https://cert-manager.io/
@@ -104,7 +131,7 @@ lungmen·akn: {
   }
 
   system.cilium: {
-    class: [application-system; undeployed]
+    class: [application-system]
     label: Cilium
     icon: assets/icons/system/cilium.svg
     link: https://cilium.io/
@@ -112,7 +139,7 @@ lungmen·akn: {
   }
 
   system.cloudnativepg: {
-    class: [application-system; undeployed]
+    class: [application-system]
     label: CloudNativePG
     icon: assets/icons/system/cloudnativepg.svg
     link: https://cloudnativepg.io/
@@ -120,7 +147,7 @@ lungmen·akn: {
   }
 
   system.envoy-gateway: {
-    class: [application-system; undeployed]
+    class: [application-system]
     label: Envoy Gateway
     icon: assets/icons/system/envoy-gateway.svg
     link: https://gateway.envoyproxy.io/
@@ -128,7 +155,7 @@ lungmen·akn: {
   }
 
   system.external-dns: {
-    class: [application-system; undeployed]
+    class: [application-system]
     label: ExternalDNS
     icon: assets/icons/system/external-dns.png
     link: https://github.com/kubernetes-sigs/external-dns
@@ -136,15 +163,23 @@ lungmen·akn: {
   }
 
   system.external-secrets: {
-    class: [application-system; undeployed]
+    class: [application-system]
     label: External-Secret
     icon: assets/icons/system/external-secret.svg
     link: https://external-secrets.io/
     tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
   }
 
+  system.cloudnativepg: {
+    class: [application-system]
+    label: CloudNativePG
+    icon: assets/icons/system/cloudnativepg.svg
+    link: https://cloudnativepg.io/
+    tooltip: CloudNativePG is a comprehensive platform designed to seamlessly manage PostgreSQL databases within Kubernetes environments.
+  }
+
   system.longhorn: {
-    class: [application-system; undeployed]
+    class: [application-system]
     label: Longhorn
     icon: assets/icons/system/longhorn.svg
     link: https://longhorn.io/
@@ -152,7 +187,7 @@ lungmen·akn: {
   }
 
   system.tailscale: {
-    class: [application-system; undeployed]
+    class: [application-system]
     label: Tailscale
     icon: assets/icons/system/tailscale.svg
     link: https://tailscale.com/
@@ -178,12 +213,26 @@ lungmen·akn: {
     tooltip: Volunteer-built media solution that puts you in control of your media.
   }
 
-  media.jellyseerr: {
-    class: [application]
-    label: Jellyseerr
-    icon: assets/icons/apps/jellyseerr.svg
-    link: https://github.com/Fallenbagel/jellyseerr
-    tooltip: Free and open source software application for managing requests for media libraries.
+  media.jellyseerr-stack: {
+    class: [namespace]
+    label: Jellyseerr Stack
+    tooltip: Jellyseerr media request management stack with PostgreSQL backend
+
+    jellyseerr: {
+      class: [application]
+      label: Jellyseerr
+      icon: assets/icons/apps/jellyseerr.svg
+      link: https://github.com/Fallenbagel/jellyseerr
+      tooltip: Free and open source software application for managing requests for media libraries.
+    }
+
+    postgresql: {
+      class: [application-datastore]
+      label: PostgreSQL
+      icon: assets/icons/system/cloudnativepg.svg
+      link: https://postgresql.org/
+      tooltip: PostgreSQL database backend for Jellyseerr, managed by CloudNative-PG operator with automated backups to S3.
+    }
   }
 
   # ────────────────────────────────────────────────────────────────────────────
@@ -197,39 +246,73 @@ lungmen·akn: {
     tooltip: Personal finance app that helps you track your spending and save money.
   }
 
-  life.paperless: {
-    class: [application; undeployed]
-    label: Paperless-ngx
-    icon: assets/icons/apps/paperless.svg
-    link: https://docs.paperless-ngx.com/
-    tooltip: Document management system to store, search and share documents.
+  life.paperless-stack: {
+    class: [namespace; undeployed]
+    label: Paperless Stack
+    tooltip: Paperless document management stack with PostgreSQL backend
+
+    paperless: {
+      class: [application; undeployed]
+      label: Paperless-ngx
+      icon: assets/icons/apps/paperless.svg
+      link: https://docs.paperless-ngx.com/
+      tooltip: Document management system to store, search and share documents.
+    }
+
+    postgresql: {
+      class: [application-datastore; undeployed]
+      label: PostgreSQL
+      icon: assets/icons/system/cloudnativepg.svg
+      link: https://postgresql.org/
+      tooltip: PostgreSQL database backend for Paperless, managed by CloudNative-PG operator with automated backups to S3.
+    }
   }
 
   # ────────────────────────────────────────────────────────────────────────────
   # Other Components
   
-  others.atuin: {
-    class: [application; undeployed]
-    label: Atuin
-    icon: assets/icons/apps/atuin.svg
-    link: https://docs.atuin.sh/
-    tooltip: Encrypted shell history sync, storing all your shell commands in one place.
+  others.atuin-stack: {
+    class: [namespace; undeployed]
+    label: Atuin Stack
+    tooltip: Atuin shell history sync stack with PostgreSQL backend
+
+    atuin: {
+      class: [application; undeployed]
+      label: Atuin
+      icon: assets/icons/apps/atuin.svg
+      link: https://docs.atuin.sh/
+      tooltip: Encrypted shell history sync, storing all your shell commands in one place.
+    }
+
+    postgresql: {
+      class: [application-datastore; undeployed]
+      label: PostgreSQL
+      icon: assets/icons/system/cloudnativepg.svg
+      link: https://postgresql.org/
+      tooltip: PostgreSQL database backend for Atuin, managed by CloudNative-PG operator with automated backups to S3.
+    }
   }
 
-  others.linkding: {
-    class: [application; undeployed]
-    label: Linkding
-    icon: assets/icons/apps/linkding.svg
-    link: https://github.com/sissbruecker/linkding
-    tooltip: Self-hosted bookmarking and link aggregation service.
-  }
+  others.linkding-stack: {
+    class: [namespace; undeployed]
+    label: Linkding Stack
+    tooltip: Linkding bookmarking stack with PostgreSQL backend
 
-  others.taskchampion: {
-    class: [application; undeployed]
-    label: TaskChampion
-    icon: assets/icons/apps/taskwarrior.png
-    link: https://github.com/GothenburgBitFactory/taskchampion-sync-server
-    tooltip: Sync server for TaskWarrior, a modern task management system.
+    linkding: {
+      class: [application; undeployed]
+      label: Linkding
+      icon: assets/icons/apps/linkding.svg
+      link: https://github.com/sissbruecker/linkding
+      tooltip: Self-hosted bookmarking and link aggregation service.
+    }
+
+    postgresql: {
+      class: [application-datastore; undeployed]
+      label: PostgreSQL
+      icon: assets/icons/system/cloudnativepg.svg
+      link: https://postgresql.org/
+      tooltip: PostgreSQL database backend for Linkding, managed by CloudNative-PG operator with automated backups to S3.
+    }
   }
 }
 
@@ -249,50 +332,71 @@ lungmen·akn: {
 localnet -> lungmen·akn.system.envoy-gateway: |md
     HTTP (80)
     HTTPS (443)
-  | {class: undeployed}
+  |
 
-tailnet -> lungmen·akn.system.tailscale: {class: [connect-from-vpn-backbone; undeployed]}
+tailnet -> lungmen·akn.system.tailscale: {class: [connect-from-vpn-backbone]}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # System Connections
 
-lungmen·akn.system.cert-manager -> internet: "acme-v02.api.letsencrypt.org:443" {class: [connect-to-internet; undeployed]}
+lungmen·akn.system.cert-manager -> internet: "ACME certificate validation (443)" {class: [connect-to-internet;]}
 
-lungmen·akn.system.external-dns -> udm-pro: "DNS updates" {class: undeployed}
+lungmen·akn.system.external-dns -> udm-pro: "Automated DNS record management (443)" {}
 
-lungmen·akn.system.external-secrets -> amiya·akn: "Secrets Synchronization (443)" {class: undeployed}
+lungmen·akn.system.external-secrets -> amiya·akn.openbao: "Secure secrets retrieval from vault (443)" {}
 
-lungmen·akn.system.tailscale -> internet: "api.tailscale.com:443" {class: [connect-to-internet; undeployed]}
+lungmen·akn.system.tailscale -> internet: "VPN tunnel establishment (443)" {class: [connect-to-internet;]}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Media Services Flow
 
-lungmen·akn.media.immich <- lungmen·akn.system.envoy-gateway: "HTTP (3000)" {class: undeployed}
+lungmen·akn.media.immich <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (3000)" {class: undeployed}
 
-lungmen·akn.media.jellyfin <- lungmen·akn.system.envoy-gateway: "HTTP (8096)" {}
-lungmen·akn.media.jellyfin <- lungmen·akn.media.jellyseerr: "HTTP (8096)" {}
-lungmen·akn.media.jellyfin -> internet: "https (443)" {class: [connect-to-internet]}
+lungmen·akn.media.jellyfin -> amiya·akn.pocket-id: "SSO authentication (443)" {}
+lungmen·akn.media.jellyfin -> internet: "Metadata and external content fetching (443)" {class: [connect-to-internet]}
+lungmen·akn.media.jellyfin <- lungmen·akn.media.jellyseerr-stack.jellyseerr: "Media library API access (8096)" {}
+lungmen·akn.media.jellyfin <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8096)" {}
 
-lungmen·akn.media.jellyseerr <- lungmen·akn.system.envoy-gateway: "HTTP (5055)" {}
-lungmen·akn.media.jellyseerr -> internet: "https (443)" {class: [connect-to-internet]}
+lungmen·akn.media.jellyseerr-stack.jellyseerr -> lungmen·akn.media.jellyseerr-stack.postgresql: "Database operations (5432)" {}
+lungmen·akn.media.jellyseerr-stack.jellyseerr -> internet: "External media database queries (443)" {class: [connect-to-internet]}
+lungmen·akn.media.jellyseerr-stack.jellyseerr <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (5055)" {}
+
+lungmen·akn.media.jellyseerr-stack.postgresql -> nas.minio: "Database backups (S3)" {}
+lungmen·akn.media.jellyseerr-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Life Management Flow
 
-lungmen·akn.life.actual-budget <- lungmen·akn.system.envoy-gateway: "http (5006)" {}
-lungmen·akn.life.actual-budget -> amiya·akn.pocket-id: "https (443)" {}
+lungmen·akn.life.actual-budget -> amiya·akn.pocket-id: "SSO authentication (443)" {}
+lungmen·akn.life.actual-budget <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (5006)" {}
 
-lungmen·akn.life.paperless <- lungmen·akn.system.envoy-gateway: "HTTP (8000)" {class: undeployed}
+lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.life.paperless-stack.postgresql: "Database operations (5432)" {class: undeployed}
+lungmen·akn.life.paperless-stack.paperless <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8000)" {class: undeployed}
+
+lungmen·akn.life.paperless-stack.postgresql -> nas.minio: "Database backups (S3)" {class: undeployed}
+lungmen·akn.life.paperless-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management; undeployed]}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Other Services Flow
 
-lungmen·akn.others.atuin <- lungmen·akn.system.envoy-gateway: "HTTP (8888)" {class: undeployed}
+lungmen·akn.others.atuin-stack.atuin -> lungmen·akn.others.atuin-stack.postgresql: "Database operations (5432)" {class: undeployed}
+lungmen·akn.others.atuin-stack.atuin <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8888)" {class: undeployed}
 
-lungmen·akn.others.linkding <- lungmen·akn.system.envoy-gateway: "HTTP (9090)" {class: undeployed}
+lungmen·akn.others.atuin-stack.postgresql -> nas.minio: "Database backups (S3)" {class: undeployed}
+lungmen·akn.others.atuin-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management; undeployed]}
 
-lungmen·akn.others.taskchampion <- lungmen·akn.system.envoy-gateway: "HTTP (8080)" {class: undeployed}
+lungmen·akn.others.linkding-stack.linkding -> lungmen·akn.others.linkding-stack.postgresql: "Database operations (5432)" {class: undeployed}
+lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (9090)" {class: undeployed}
+
+lungmen·akn.others.linkding-stack.postgresql -> nas.minio: "Database backups (S3)" {class: undeployed}
+lungmen·akn.others.linkding-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management; undeployed]}
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Storage and Backup Connections
+
+lungmen·akn.system.longhorn -> nas.minio: "Volume backups (S3)" {}

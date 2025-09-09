@@ -41,11 +41,10 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # Available Connection Styles
 #
-# - connect-from-network / connect-to-network: Network connections (thick)
+# - connect-network: Network connections (thick)
 # - connect-from-internet / connect-to-internet: Internet connections (dashed)
-# - connect-from-vpn-backbone / connect-to-vpn-backbone: VPN backbone (animated, bold)
-# - connect-from-vpn / connect-to-vpn: VPN connections (animated, dashed)
-# - connect-from-api / connect-to-api: API connections (dashed, medium width)
+# - connect-vpn-backbone: VPN backbone (bold)
+# - connect-vpn: VPN connections (dashed)
 # - connect-management: Management connections (dashed, medium width)
 
 vars: {
@@ -91,6 +90,8 @@ classes: {
     style: {
       shadow: false
     }
+    height: 160
+    width: 180
   }
 
   # ──────────────────────────────────────────────────────────────────────────────
@@ -150,13 +151,7 @@ classes: {
   # ──────────────────────────────────────────────────────────────────────────────
   # Network Connection Styles
   
-  connect-from-network: {
-    style {
-      stroke-width: 8
-    }
-  }
-  
-  connect-to-network: {
+  connect-network: {
     style {
       stroke-width: 8
     }
@@ -175,67 +170,38 @@ classes: {
   connect-to-internet: {
     style: {
       stroke-dash: 3
+      stroke-width: 3
+      stroke: "#FF6B35"
+      font-color: "#FF6B35"
     }
   }
 
   # ──────────────────────────────────────────────────────────────────────────────
   # VPN Connection Styles
   
-  connect-from-vpn-backbone: {
+  connect-vpn-backbone: {
     style: {
-      animated: true
       bold: true
       font-size: 32
       stroke-width: 8
     }
   }
   
-  connect-to-vpn-backbone: {
+  connect-vpn: {
     style: {
-      animated: true
-      bold: true
-      font-size: 32
-      stroke-width: 8
-    }
-  }
-  
-  connect-from-vpn: {
-    style: {
-      animated: true
-      stroke-dash: 3
-    }
-  }
-  
-  connect-to-vpn: {
-    style: {
-      animated: true
       stroke-dash: 3
     }
   }
 
   # ──────────────────────────────────────────────────────────────────────────────
-  # API & Management Connection Styles
-  
-  connect-from-api: {
-    style: {
-      stroke-dash: 2
-      stroke-width: 4
-    }
-  }
-  
-  connect-to-api: {
-    style: {
-      stroke-dash: 2
-      stroke-width: 4
-    }
-  }
+  # Management Connection Styles
   
   connect-management: {
     label: Manages
     style: {
       stroke-dash: 4
       stroke-width: 2
-      stroke: "#FF4500" # OrangeRed
+      stroke: "#9932CC" # DarkOrchid
     }
     target-arrowhead: {
       shape: circle

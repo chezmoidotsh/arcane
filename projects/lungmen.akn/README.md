@@ -26,8 +26,7 @@ Lungmen is a personal self-hosted platform for home services, designed to provid
 
 ## Services Overview
 
-![Architecture diagram](./assets/architecture-dark.svg#gh-dark-mode-only)
-![Architecture diagram](./assets/architecture-light.svg#gh-light-mode-only)
+![Architecture diagram](./assets/architecture.svg)
 
 ***
 
@@ -194,14 +193,15 @@ The recovery process is largely automated through the `amiya.akn` project, which
 * [x] **Step 2**: Data Layer
   * [x] Deploy CloudNativePG operator
   * [x] Deploy PostgreSQL for application data
-* [ ] **Step 3**: Services Deployment
-  * [ ] Deploy media services (Jellyfin, Jellyseerr)
+* [x] **Step 3**: Services Deployment (Partial)
+  * [x] Deploy media services (Jellyfin, Jellyseerr)
   * [ ] Deploy Immich with Cloudflare Tunnel for external access
-  * [ ] Deploy life management services (Actual Budget, Paperless-ngx)
-  * [ ] Configure n8n for automation
+  * [x] Deploy life management services (Actual Budget)
+  * [ ] Deploy Paperless-ngx for document management
   * [ ] Deploy Linkding for bookmarks
+  * [ ] Deploy Atuin for shell history sync
 * [ ] **Step 4**: Security and Optimization
-  * [ ] Implement network policies
+  * [x] Implement network policies
   * [ ] Configure backup solutions
   * [ ] Optimize resource usage
 
