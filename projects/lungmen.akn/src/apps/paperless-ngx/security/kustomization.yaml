@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - network-policy.allow-paperless-ngx-from-envoy-gateway.yaml
   - network-policy.allow-paperless-ngx-to-sso.yaml
+  - network-policy.allow-paperless-to-internet.yaml
   - network-policy.allow-postgres-from-cnpg.yaml
   - network-policy.allow-postgres-to-kubernetes-api.yaml
   - network-policy.allow-postgres-to-s3-backup.yaml

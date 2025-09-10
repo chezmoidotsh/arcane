@@ -342,7 +342,7 @@ localnet -> lungmen·akn.system.envoy-gateway: |md
     HTTPS (443)
   |
 
-tailnet -> lungmen·akn.system.tailscale: {class: [connect-from-vpn-backbone]}
+tailnet -> lungmen·akn.system.tailscale: {class: [connect-vpn-backbone]}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -384,6 +384,7 @@ lungmen·akn.life.paperless-stack.paperless -> amiya·akn.pocket-id: "SSO authen
 lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.life.paperless-stack.postgresql: "Database operations (5432)" {}
 lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.life.paperless-stack.redis: "Cache operations (6379)" {}
 lungmen·akn.life.paperless-stack.paperless <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8000)" {}
+lungmen·akn.life.paperless-stack.paperless -> internet: "IMAP email access (993)" {class: [connect-to-internet]}
 lungmen·akn.life.paperless-stack.postgresql -> nas.minio: "Database backups (S3)" {}
 lungmen·akn.life.paperless-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
