@@ -61,6 +61,9 @@ spec:
                 secretKeyRef:
                   name: paperless-ngx-configuration
                   key: socialaccount_providers
+            - # In order to avoid 'Invalid cross-device link' errors
+              name: PAPERLESS_SCRATCH_DIR
+              value: /usr/src/paperless/media/.paperlessscratch
             - name: S6_YES_I_WANT_A_WORLD_WRITABLE_RUN_BECAUSE_KUBERNETES
               value: "1"
             - name: S6_READ_ONLY_ROOT
