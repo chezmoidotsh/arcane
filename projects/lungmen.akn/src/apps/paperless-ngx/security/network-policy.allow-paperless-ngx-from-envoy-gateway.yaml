@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Envoy Gateway to route traffic to paperless-ngx application.
+  name: allow-paperless-ngx-from-envoy-gateway
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: paperless-ngx
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: envoy-gateway-system
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP

@@ -1,0 +1,55 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: paperless-ngx-database
+  name: paperless-ngx-database
+spec:
+  bootstrap:
+    initdb:
+      database: paperless
+      owner: paperless
+  description: PostgreSQL database dedicated to paperless-ngx
+  enablePDB: false
+  instances: 1
+  managed:
+    roles:
+      - name: paperless
+        connectionLimit: -1
+        comment: PostgreSQL role for paperless-ngx
+        ensure: present
+        inherit: true
+        login: true
+        passwordSecret:
+          name: paperless-ngx-database-paperless
+  plugins:
+    - enabled: true
+      isWALArchiver: true
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: selfhosted
+        serverName: 01K4QM5VSHX9YAAQ46W814EVVM # DRP::src_ulid
+  storage:
+    size: 5Gi
+  walStorage:
+    size: 5Gi
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: paperless-ngx-database-paperless
+spec:
+  dataFrom:
+    - extract:
+        key: lungmen.akn/paperless-ngx/database/postgresql
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    template:
+      data:
+        username: paperless
+        password: "{{ .password }}"

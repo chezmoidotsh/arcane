@@ -247,12 +247,12 @@ lungmen·akn: {
   }
 
   life.paperless-stack: {
-    class: [namespace; undeployed]
+    class: [namespace]
     label: Paperless Stack
-    tooltip: Paperless document management stack with PostgreSQL backend
+    tooltip: Paperless document management stack with PostgreSQL backend and Redis cache
 
     paperless: {
-      class: [application; undeployed]
+      class: [application]
       label: Paperless-ngx
       icon: assets/icons/apps/paperless.svg
       link: https://docs.paperless-ngx.com/
@@ -260,11 +260,19 @@ lungmen·akn: {
     }
 
     postgresql: {
-      class: [application-datastore; undeployed]
+      class: [application-datastore]
       label: PostgreSQL
       icon: assets/icons/system/cloudnativepg.svg
       link: https://postgresql.org/
       tooltip: PostgreSQL database backend for Paperless, managed by CloudNative-PG operator with automated backups to S3.
+    }
+
+    redis: {
+      class: [application-datastore]
+      label: Redis
+      icon: assets/icons/apps/redis.svg
+      link: https://redis.io/
+      tooltip: Redis cache for improved Paperless performance and background task processing.
     }
   }
 
@@ -362,7 +370,6 @@ lungmen·akn.media.jellyfin <- lungmen·akn.system.envoy-gateway: "HTTP traffic 
 lungmen·akn.media.jellyseerr-stack.jellyseerr -> lungmen·akn.media.jellyseerr-stack.postgresql: "Database operations (5432)" {}
 lungmen·akn.media.jellyseerr-stack.jellyseerr -> internet: "External media database queries (443)" {class: [connect-to-internet]}
 lungmen·akn.media.jellyseerr-stack.jellyseerr <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (5055)" {}
-
 lungmen·akn.media.jellyseerr-stack.postgresql -> nas.minio: "Database backups (S3)" {}
 lungmen·akn.media.jellyseerr-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
@@ -373,11 +380,12 @@ lungmen·akn.media.jellyseerr-stack.postgresql <- lungmen·akn.system.cloudnativ
 lungmen·akn.life.actual-budget -> amiya·akn.pocket-id: "SSO authentication (443)" {}
 lungmen·akn.life.actual-budget <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (5006)" {}
 
-lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.life.paperless-stack.postgresql: "Database operations (5432)" {class: undeployed}
-lungmen·akn.life.paperless-stack.paperless <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8000)" {class: undeployed}
-
-lungmen·akn.life.paperless-stack.postgresql -> nas.minio: "Database backups (S3)" {class: undeployed}
-lungmen·akn.life.paperless-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management; undeployed]}
+lungmen·akn.life.paperless-stack.paperless -> amiya·akn.pocket-id: "SSO authentication (443)" {}
+lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.life.paperless-stack.postgresql: "Database operations (5432)" {}
+lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.life.paperless-stack.redis: "Cache operations (6379)" {}
+lungmen·akn.life.paperless-stack.paperless <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8000)" {}
+lungmen·akn.life.paperless-stack.postgresql -> nas.minio: "Database backups (S3)" {}
+lungmen·akn.life.paperless-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -385,13 +393,11 @@ lungmen·akn.life.paperless-stack.postgresql <- lungmen·akn.system.cloudnativep
 
 lungmen·akn.others.atuin-stack.atuin -> lungmen·akn.others.atuin-stack.postgresql: "Database operations (5432)" {class: undeployed}
 lungmen·akn.others.atuin-stack.atuin <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8888)" {class: undeployed}
-
 lungmen·akn.others.atuin-stack.postgresql -> nas.minio: "Database backups (S3)" {class: undeployed}
 lungmen·akn.others.atuin-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management; undeployed]}
 
 lungmen·akn.others.linkding-stack.linkding -> lungmen·akn.others.linkding-stack.postgresql: "Database operations (5432)" {class: undeployed}
 lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (9090)" {class: undeployed}
-
 lungmen·akn.others.linkding-stack.postgresql -> nas.minio: "Database backups (S3)" {class: undeployed}
 lungmen·akn.others.linkding-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management; undeployed]}
 
