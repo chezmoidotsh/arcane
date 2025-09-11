@@ -11,7 +11,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git\&logoColor=white\&logoWidth=20)](../../LICENSE)
 
-<a href="#about">About</a> · <a href="#services-overview">Services Overview</a> · <a href="#how-to-use--how-to-develop-on-it">How to use</a> · <a href="#disaster-recovery-plan-drp">Recovery</a> · <a href="#roadmap">Roadmap</a> · <a href="#license">License</a>
+<a href="#about">About</a> · <a href="#services-overview">Services</a> · <a href="#usage-and-development">Usage</a> · <a href="#disaster-recovery">Recovery</a> · <a href="#roadmap">Roadmap</a> · <a href="#license">License</a>
 
 </div>
 
@@ -137,35 +137,35 @@ Encrypted shell history sync, storing all your shell commands in one place with 
 </div>
 </div>
 
-***
+## Usage and Development
 
-## How to use / How to develop on it
+This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based deployment and [Kustomize](https://kustomize.io/) for configuration management.
 
-This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based deployment and [Kustomize](https://kustomize.io/) for configuration management. Here's how to work with it:
+All configurations are located in the `catalog` directory and organized by service. To add or modify a service, update the corresponding Kustomize files. ArgoCD will automatically sync the changes to the cluster.
 
-## Disaster Recovery Plan (DRP)
+## Disaster Recovery
 
 The recovery process is largely automated through the `amiya.akn` project, which hosts ArgoCD and automatically bootstraps any Kubernetes clusters it detects.
 
-### Recovering process
+### Recovery Process
 
 > \[!NOTE]
 > If the system cannot be managed using Talosctl, reboot on a live CD
 
 1. **Reset/Reinstall Talos OS**:
 
-   See [Talos Recovery](https://www.talos.dev/v1.10/advanced/disaster-recovery/) for more information about recovering from a Talos cluster and the [Bootstrap documentation](docs/HOW_TO_BOOTSTRAP.md) for more information about bootstrapping the cluster.
+   See [Talos Recovery](https://www.talos.dev/v1.10/advanced/disaster-recovery/) for more information about recovering from a Talos cluster and the [Bootstrap documentation](./docs/HOW_TO_BOOTSTRAP.md) for more information about bootstrapping the cluster.
 
 2. **Link to ArgoCD**:
 
    > \[!NOTE]
-   > This is only required if the cluster is not already linked to ArgoCD or if the cluster has been reset.\
+   > This is only required if the cluster is not already linked to ArgoCD or if the cluster has been reset.
    > You also need to have the context `admin@amiya.akn` in your kubeconfig.
 
-   Because this project is designed to be runned in the same "network" as the `amiya.akn` project, we must link the cluster manually to ArgoCD.
+   Because this project is designed to be run in the same "network" as the `amiya.akn` project, we must link the cluster manually to ArgoCD.
 
    ```bash
-   argocd --kube-context admin@akiya.akn cluster add admin@lungmen.akn --name lungmen.akn --label device.tailscale.com/os=linux
+   argocd --kube-context admin@amiya.akn cluster add admin@lungmen.akn --name lungmen.akn --label device.tailscale.com/os=linux
    ```
 
 3. **Automatic Detection** - Once the cluster joins the Tailscale mesh, `amiya.akn` detects it automatically
