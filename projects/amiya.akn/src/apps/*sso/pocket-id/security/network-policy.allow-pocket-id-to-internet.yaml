@@ -4,15 +4,15 @@ metadata:
   annotations:
     policy.networking.k8s.io/description: |
       Allows Pocket ID to send authentication codes and notifications
-      through Amazon SES SMTP service on port 465 (SMTPS).
-  name: allow-pocket-id-to-amazonses
+      through Mailjet SMTP service on port 587 (SMTP with STARTTLS).
+  name: allow-pocket-id-to-internet
 spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: pocket-id
   egress:
     - toFQDNs:
-        - matchName: email-smtp.us-east-1.amazonaws.com
+        - matchName: in-v3.mailjet.com
       toPorts:
         - ports:
             - port: "465"

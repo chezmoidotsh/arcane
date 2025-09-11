@@ -3,8 +3,8 @@ kind: Kustomization
 
 resources:
   - network-policy.allow-pocket-id-from-envoy-gateway.yaml
-  - network-policy.allow-pocket-id-to-amazonses.yaml
   - network-policy.allow-pocket-id-to-analytics.yaml
+  - network-policy.allow-pocket-id-to-internet.yaml
   - network-policy.allow-postgres-from-cnpg.yaml
   - network-policy.allow-postgres-to-kubernetes-api.yaml
   - network-policy.allow-postgres-to-s3-backup.yaml

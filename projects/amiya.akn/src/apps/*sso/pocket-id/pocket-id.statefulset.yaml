@@ -93,7 +93,7 @@ spec:
               value: default
             - # SMTP server hostname.
               name: SMTP_HOST
-              value: email-smtp.us-east-1.amazonaws.com.
+              value: in-v3.mailjet.com.
             - # SMTP server port.
               name: SMTP_PORT
               value: "465"
