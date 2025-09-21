@@ -1,0 +1,72 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: pocket-id-database
+  name: pocket-id-database
+spec:
+  bootstrap:
+    recovery:
+      source: legacy-database
+  description: PostgreSQL database dedicated to pocket-id
+  enablePDB: false
+  instances: 1
+  managed:
+    roles:
+      - name: pocket_id
+        connectionLimit: -1
+        comment: PostgreSQL role for pocket_id
+        ensure: present
+        inherit: true
+        login: true
+        passwordSecret:
+          name: pocket-id-database-pocket-id
+  plugins:
+    - enabled: true
+      isWALArchiver: true
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: selfhosted
+        serverName: 01K5NK753HYPCVQ3PRRR2N9BZ9
+  storage:
+    size: 1Gi
+  walStorage:
+    size: 5Gi
+
+  # Restore all data from legacy cluster present in the sso namespace
+  externalClusters:
+    - name: legacy-database
+      plugin:
+        enabled: true
+        isWALArchiver: false
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: selfhosted
+          serverName: 01K4FKNS9PCXF59H3VC3FTVGJQ
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: pocket-id-database-pocket-id
+spec:
+  data:
+    - secretKey: postgresql_username
+      remoteRef:
+        key: amiya.akn/pocket-id/database/postgresql
+        property: username
+    - secretKey: postgresql_password
+      remoteRef:
+        key: amiya.akn/pocket-id/database/postgresql
+        property: password
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    template:
+      data:
+        username: pocket_id
+        password: "{{ .postgresql_password }}"
+        uri: postgresql://pocket_id:{{ .postgresql_password }}@pocket-id-database-rw:5432/pocket_id

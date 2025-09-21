@@ -1,7 +1,7 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: sso
+namespace: pocket-id
 
 labels:
   - pairs:
@@ -17,5 +17,7 @@ resources:
   - pocket-id.externalsecret.yaml
   - pocket-id.httproute.yaml
   - pocket-id.postgresql.yaml
+  - pocket-id.postgresql-backup.yaml
+  - pocket-id.postgresql-objectstore.yaml
   - pocket-id.statefulset.yaml
   - security/

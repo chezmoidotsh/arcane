@@ -1,0 +1,10 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: pocket-id-database
+spec:
+  backupOwnerReference: cluster
+  cluster:
+    name: pocket-id-database
+  schedule: "@daily"

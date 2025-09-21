@@ -4,7 +4,8 @@ metadata:
   annotations:
     policy.networking.k8s.io/description: |
       Allows Pocket ID to send authentication codes and notifications
-      through Mailjet SMTP service on port 587 (SMTP with STARTTLS).
+      through Mailjet SMTP service on port 465 (SMTPS) and access
+      MaxMind GeoIP service to download GeoIP databases.
   name: allow-pocket-id-to-internet
 spec:
   endpointSelector:
@@ -16,4 +17,12 @@ spec:
       toPorts:
         - ports:
             - port: "465"
+              protocol: TCP
+    - toFQDNs:
+        # Allow access to MaxMind GeoIP service for IP geolocation
+        - matchName: download.maxmind.com
+        - matchName: mm-prod-geoip-databases.a2649acb697e2c09b632799562c076f2.r2.cloudflarestorage.com
+      toPorts:
+        - ports:
+            - port: "443"
               protocol: TCP
