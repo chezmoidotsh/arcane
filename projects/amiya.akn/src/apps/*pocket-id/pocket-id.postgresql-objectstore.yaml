@@ -1,0 +1,37 @@
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: selfhosted
+spec:
+  configuration:
+    data:
+      compression: bzip2
+    destinationPath: s3://cnpg-backups/amiya.akn/pocket-id
+    endpointURL: https://s3.chezmoi.sh:9000
+    s3Credentials:
+      accessKeyId:
+        name: cnpg-backup-credentials
+        key: access_key_id
+      secretAccessKey:
+        name: cnpg-backup-credentials
+        key: access_secret_key
+      region:
+        name: cnpg-backup-credentials
+        key: region
+    wal:
+      compression: bzip2
+  retentionPolicy: 7d
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: cnpg-backup-credentials
+spec:
+  dataFrom:
+    - extract:
+        key: shared/data/third-parties/chezmoi.sh/s3/amiya.akn/cnpg-backup
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
