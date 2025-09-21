@@ -38,9 +38,9 @@ spec:
   #       serverName: 01JHBK4N869T0T3Q1BBX673GQ9 # DRP::src_ulid
   instances: 1
   storage:
-    size: 15Gi
+    size: 2Gi
   walStorage:
-    size: 15Gi
+    size: 5Gi
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
