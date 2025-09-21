@@ -8,4 +8,5 @@ resources:
   - network-policy.allow-postgres-from-cnpg.yaml
   - network-policy.allow-postgres-to-kubernetes-api.yaml
   - network-policy.allow-postgres-to-s3-backup.yaml
+  - network-policy.default-hardened.yaml
   - reference-grant.envoy-gateway-to-pocket-id.yaml

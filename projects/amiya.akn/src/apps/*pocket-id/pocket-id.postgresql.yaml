@@ -51,6 +51,15 @@ spec:
     size: 1Gi
   walStorage:
     size: 5Gi
+
+  # Restore all data from legacy cluster present in the sso namespace
+  externalClusters:
+  - name: legacy-database
+    plugin:
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: selfhosted
+        serverName: 01K4FKNS9PCXF59H3VC3FTVGJQ
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
