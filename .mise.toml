@@ -12,7 +12,6 @@
 #
 # For project-specific configurations, see:
 #   projects/{cluster}/.mise.toml         # Cluster-specific tasks
-#   projects/{cluster}/docs/.mise.toml    # Talos configuration paths
 # =============================================================================
 
 [env]
@@ -69,7 +68,9 @@ _.path = [
 # Python Virtual Environment
 # -----------------------------------------------------------------------------
 # Isolated Python environment for any Python-based tools or scripts
-_.python.venv = { path = ".mise/python", create = true, uv_create_args = ['--seed'] }
+_.python.venv = { path = ".mise/python", create = true, uv_create_args = [
+  '--seed',
+] }
 
 # =============================================================================
 # Tool Installation Matrix
@@ -93,7 +94,7 @@ kubectl = "latest" # Kubernetes CLI for managing clusters and resources
 # -----------------------------------------------------------------------------
 # Platform-specific tools for managing infrastructure components
 
-ansible = "8.7"     # Configuration management and automation platform, pinned for stability with existing playbooks
+# ansible = "8.7"     # Configuration management and automation platform, pinned for stability with existing playbooks
 argocd = "latest"   # ArgoCD CLI for GitOps application deployment and management
 hcloud = "latest"   # Hetzner Cloud CLI for managing cloud resources
 openbao = "latest"  # OpenBao CLI for secret management (HashiCorp Vault fork)
@@ -112,11 +113,11 @@ yq = "latest"   # YAML/JSON processor for configuration file manipulation
 # -----------------------------------------------------------------------------
 # Tools supporting development workflows and documentation generation
 
-"aqua:terrastruct/d2" = "latest"                  # Diagram-as-code tool for generating architecture visualizations
-"go:github.com/oklog/ulid/v2/cmd/ulid" = "latest" # ULID generator for unique identifiers in distributed systems
-"ubi:runmedev/runme" = "latest"                   # Interactive markdown execution tool for runbooks and documentation
-gum = "latest"                                    # Terminal UI framework for interactive scripts and prompts
-uv = "latest"
+"aqua:terrastruct/d2" = "latest" # Diagram-as-code tool for generating architecture visualizations
+"npm:ulid-cli" = "latest"        # ULID generator for unique identifiers in distributed systems
+"ubi:runmedev/runme" = "latest"  # Interactive markdown execution tool for runbooks and documentation
+gum = "latest"                   # Terminal UI framework for interactive scripts and prompts
+uv = "latest"                    # Extremely fast Python package and project manager
 
 # -----------------------------------------------------------------------------
 # Vault (OpenBao) Authentication Tasks
