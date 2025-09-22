@@ -9,3 +9,4 @@ metadata:
 files:
   - cnpg-s3-credentials.secret.yaml
   - openbao-softhsm-tokens.secret.yaml
+  - openbao-database-credentials.secret.yaml
