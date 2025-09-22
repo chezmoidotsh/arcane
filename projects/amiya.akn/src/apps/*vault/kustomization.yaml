@@ -13,6 +13,8 @@ resources:
   - openbao-config.externalsecret.yaml
   - openbao.httproute.yaml
   - openbao.ingress.yaml
+  - openbao.postgresql-backup.yaml
+  - openbao.postgresql-objectstore.yaml
   - openbao.postgresql.yaml
   - openbao.secretstore.yaml
 
