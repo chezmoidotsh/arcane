@@ -1,0 +1,104 @@
+---
+# trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_12,checkov/CKV_K8S_13,trivy/KSV015,trivy/KSV016,trivy/KSV018): We will address resource limits when we have consumption data for Redis
+# trunk-ignore(checkov/CKV2_K8S_6): Network policy will be handled separately
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-redis
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: immich
+      app.kubernetes.io/instance: immich
+      app.kubernetes.io/component: redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: immich
+        app.kubernetes.io/instance: immich
+        app.kubernetes.io/part-of: immich
+        app.kubernetes.io/component: redis
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        # trunk-ignore(trivy/KSV0125): docker.io registry is acceptable for Redis official image
+        - name: redis
+          image: docker.io/library/redis:7.4.2-alpine@sha256:1bf97f21f01b0e7bd4b7b34a26d3b9d8086e41e70c10f262e8a9e0b49b5116a0
+          imagePullPolicy: IfNotPresent
+          args:
+            - redis-server
+            - --save
+            - "300"
+            - "1"
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          startupProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            failureThreshold: 30
+            initialDelaySeconds: 0
+            periodSeconds: 2
+            successThreshold: 1
+            timeoutSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 52678
+            runAsNonRoot: true
+            runAsUser: 52678
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      securityContext:
+        fsGroup: 52678
+        runAsGroup: 52678
+        runAsUser: 52678
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-redis
+spec:
+  type: ClusterIP
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: immich
+    app.kubernetes.io/instance: immich
+    app.kubernetes.io/component: redis

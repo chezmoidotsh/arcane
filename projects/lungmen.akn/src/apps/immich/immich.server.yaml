@@ -1,0 +1,129 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-server
+spec:
+  type: ClusterIP
+  ports:
+    - port: 2283
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: immich
+    app.kubernetes.io/instance: immich
+    app.kubernetes.io/component: server
+---
+# trunk-ignore(checkov/CKV_K8S_15,checkov/CKV_K8S_43): Not agreed with these policies about ImagePullPolicy=Always and digest verification for third-party apps
+# trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_12,checkov/CKV_K8S_13,trivy/KSV015,trivy/KSV016,trivy/KSV018): We will address resource limits when we have consumption data for Immich Server
+# trunk-ignore(checkov/CKV2_K8S_6): Network policy will be handled separately
+# trunk-ignore(checkov/CKV_K8S_35): Secrets in env vars are acceptable for this specific use case
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-server
+spec:
+  revisionHistoryLimit: 3
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: immich
+      app.kubernetes.io/instance: immich
+      app.kubernetes.io/component: server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: immich
+        app.kubernetes.io/instance: immich
+        app.kubernetes.io/part-of: immich
+        app.kubernetes.io/component: server
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 31847
+        runAsGroup: 31847
+        runAsUser: 31847
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        # trunk-ignore(trivy/KSV0125): ghcr.io/immich-app is trusted registry for Immich official images
+        - name: immich-server
+          image: ghcr.io/immich-app/immich-server:v1.143.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DB_HOSTNAME
+              value: immich-database-rw
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_DATABASE_NAME
+              value: immich
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: immich-database-immich
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: immich-database-immich
+                  key: password
+            - name: REDIS_HOSTNAME
+              value: immich-redis
+            - name: REDIS_PORT
+              value: "6379"
+            - name: IMMICH_CONFIG_FILE
+              value: /config/immich-config.yaml
+            - name: IMMICH_MACHINE_LEARNING_URL
+              value: http://immich-machine-learning:3003
+          ports:
+            - name: http
+              containerPort: 2283
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: library
+              mountPath: /usr/src/app/upload
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /api/server/ping
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /api/server/ping
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+          startupProbe:
+            failureThreshold: 30
+            httpGet:
+              path: /api/server/ping
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 31847
+            runAsNonRoot: true
+            runAsUser: 31847
+      volumes:
+        - name: config
+          secret:
+            secretName: immich-configuration
+        - name: library
+          persistentVolumeClaim:
+            claimName: immich-smb-storage

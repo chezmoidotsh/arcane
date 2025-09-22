@@ -1,0 +1,40 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Immich to access specific internet resources for core functionality:
+      - SSO authentication via Pocket-ID service
+      - Map tiles from Immich cloud services for geographic features
+      - OpenID Connect endpoints for authentication
+      All connections are restricted to HTTPS (port 443) only.
+  name: allow-immich-to-internet
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: immich
+  egress:
+    - toFQDNs:
+        # Allow access to SSO service
+        - matchName: sso.chezmoi.sh
+
+        # Allow access to map tiles from Immich cloud
+        - matchName: tiles.immich.cloud
+
+        # Allow access to huggingface.co for ML models
+        - matchName: huggingface.co
+        - matchName: cas-server.xethub.hf.co
+        - matchName: transfer.xethub.hf.co
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    # Allow access to MailJet SMTP service for email notifications
+    - toFQDNs:
+        - matchName: in-v3.mailjet.com
+      toCIDRSet:
+        - cidr: 34.22.188.249/32
+      toPorts:
+        - ports:
+            - port: "465"
+              protocol: TCP
