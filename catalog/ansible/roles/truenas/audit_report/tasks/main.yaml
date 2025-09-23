@@ -1,0 +1,11 @@
+---
+# Main tasks for truenas_audit role
+
+- name: Setup output directory
+  include_tasks: setup.yml
+
+- name: Extract TrueNAS data
+  include_tasks: extract.yml
+
+- name: Process data and generate report
+  include_tasks: process.yml

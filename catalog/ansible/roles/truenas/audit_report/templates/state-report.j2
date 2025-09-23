@@ -1,0 +1,115 @@
+---
+# TrueNAS State Report
+# Generated on: {{ extracted_state.timestamp }}
+# Hostname: {{ extracted_state.hostname }}
+
+system:
+  hostname: {{ extracted_state.system.hostname }}
+  version: {{ extracted_state.system.version }}
+  uptime: {{ extracted_state.system.uptime }}
+  datetime: {{ extracted_state.system.datetime }}
+  timezone: {{ extracted_state.system.timezone }}
+
+disks:
+{% for disk in extracted_state.disks %}
+  - name: {{ disk.name }}
+{% if disk.serial is defined %}
+    serial: {{ disk.serial }}
+{% endif %}
+{% if disk.size_formatted is defined %}
+    size: {{ disk.size_formatted }}
+{% else %}
+    size: {{ disk.size }}
+{% endif %}
+{% if disk.type is defined %}
+    type: {{ disk.type }}
+{% endif %}
+{% if disk.model is defined %}
+    model: {{ disk.model }}
+{% endif %}
+{% if disk.temperature is defined %}
+    temperature: {{ disk.temperature }}
+{% endif %}
+{% if disk.smart_enabled is defined %}
+    smart_enabled: {{ disk.smart_enabled }}
+{% endif %}
+{% if disk.pools is defined and disk.pools %}
+    pools: {{ disk.pools | to_json }}
+{% endif %}
+{% endfor %}
+
+zpools:
+{% for pool_name, pool_info in extracted_state.zpools.items() %}
+  {{ pool_name }}:
+{{ pool_info | to_nice_yaml(indent=2) | indent(4, True) }}
+{% endfor %}
+
+datasets:
+{% for pool_name, dataset_tree in extracted_state.datasets.items() %}
+  {{ pool_name }}:
+{{ dataset_tree | to_nice_yaml(indent=2) | indent(4, True) }}
+{% endfor %}
+
+backup_configuration:
+  snapshot_tasks:
+{% for task in extracted_state.backup_config.snapshot_tasks %}
+    - dataset: {{ task.dataset }}
+      schedule: {{ task.schedule.minute }} {{ task.schedule.hour }} {{ task.schedule.dom }} {{ task.schedule.month }} {{ task.schedule.dow }}
+      lifetime_value: {{ task.lifetime_value }}
+      lifetime_unit: {{ task.lifetime_unit }}
+      enabled: {{ task.enabled }}
+      recursive: {{ task.recursive }}
+{% endfor %}
+
+  replication_tasks:
+{% for task in extracted_state.backup_config.replication_tasks %}
+    - name: {{ task.name }}
+      direction: {{ task.direction }}
+      source_datasets: {{ task.source_datasets | to_json }}
+      target_dataset: {{ task.target_dataset | default('') }}
+      transport: {{ task.transport }}
+      enabled: {{ task.enabled }}
+      auto: {{ task.auto }}
+{% endfor %}
+
+  cloudsync_tasks:
+{% for task in extracted_state.backup_config.cloudsync_tasks %}
+    - description: {{ task.description }}
+      direction: {{ task.direction }}
+      path: {{ task.path }}
+      enabled: {{ task.enabled }}
+      schedule: {{ task.schedule.minute }} {{ task.schedule.hour }} {{ task.schedule.dom }} {{ task.schedule.month }} {{ task.schedule.dow }}
+{% endfor %}
+
+  rsync_tasks:
+{% for task in extracted_state.backup_config.rsync_tasks %}
+    - path: {{ task.path }}
+      user: {{ task.user }}
+      remotehost: {{ task.remotehost | default('') }}
+      remotemodule: {{ task.remotemodule | default('') }}
+    {% if task.remotepath is defined %}
+      remotepath: {{ task.remotepath }}
+    {% endif %}
+      direction: {{ task.direction }}
+      enabled: {{ task.enabled }}
+{% endfor %}
+
+smb_shares:
+{% for share in extracted_state.smb_shares %}
+  - name: {{ share.name }}
+    path: {{ share.path }}
+    enabled: {{ share.enabled }}
+{% endfor %}
+
+nfs_shares:
+{% for share in extracted_state.nfs_shares %}
+  - path: {{ share.path }}
+    enabled: {{ share.enabled }}
+{% endfor %}
+
+services:
+{% for service in extracted_state.services %}
+  - service: {{ service.service }}
+    enabled: {{ service.enable }}
+    running: {{ service.state == "RUNNING" }}
+{% endfor %}
