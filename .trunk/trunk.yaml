@@ -92,6 +92,10 @@ lint:
     - # Ignore everything in folder managed by Cursor
       linters: [ALL]
       paths: ["**/.cursor/**/*"]
+    - # Ansible modules commonly have imports not at the top due to the way they handle module metadata
+      linters: [ruff]
+      paths:
+        - catalog/ansible/collections/**/*.py
 
   # This is the section where you override some linters' configurations.
   definitions:
