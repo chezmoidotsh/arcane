@@ -1,0 +1,19 @@
+---
+galaxy_info:
+  role_name: application_datasets
+  author: Alexandre Nicolaie
+  description: Configure ZFS datasets for homelab applications on TrueNAS
+  company: chezmoi.sh
+  license: Apache-2.0
+  min_ansible_version: "2.1"
+  platforms:
+    - name: TrueNAS Scale
+      versions:
+        - all
+  galaxy_tags:
+    - truenas
+    - zfs
+    - datasets
+    - applications
+
+dependencies: []

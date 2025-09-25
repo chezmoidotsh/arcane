@@ -1,0 +1,16 @@
+---
+# TrueNAS State Extraction Playbook
+#
+# This playbook extracts the current configuration state from TrueNAS
+# without making any modifications (READ-ONLY operation).
+#
+# Usage:
+#   ansible-playbook -i inventory/production.yml audit.yml
+
+- name: Extract TrueNAS Current State
+  hosts: truenas
+  gather_facts: true
+  become: false
+
+  roles:
+    - role: ../../../../../catalog/ansible/roles/truenas/audit_report

@@ -20,11 +20,47 @@
 
 ## ℹ️ About
 
-`chezmoi.sh` is a project that aims to manage all resources used by other projects, like shared IaC configuration.
+`chezmoi.sh` is the root infrastructure project that manages all shared resources and infrastructure-as-code configuration used across the homelab, including:
+
+* **Crossplane providers** for cloud infrastructure (AWS, Cloudflare, Vault)
+* **TrueNAS management** for network-attached storage infrastructure
+* **Shared IaC compositions** and resources
 
 > \[!NOTE]
 > Even if this project is the "root" one, it relies on the [`amiya.akn`](../amiya.akn/README.md) project
 > to provide the Kubernetes cluster used by `kubevault` and `crossplane` *(IaC)*.
+
+### TrueNAS Scale Infrastructure
+
+This project includes Ansible automation for TrueNAS Scale infrastructure management using a custom-built collection. The TrueNAS system provides centralized storage for the entire homelab and is configured using Infrastructure as Code principles.
+
+**Collection Details:**
+
+* **Custom Collection**: `chezmoidotsh.truenas.scale` (local fork adapted for Scale)
+* **TrueNAS Scale Only**: Requires TrueNAS Scale 22.02+ (fails fast on other systems)
+* **midclt Communication**: Uses native TrueNAS Scale middleware interface exclusively
+* **Critical Infrastructure Focus**: Essential operations only (datasets, users, shares, ACLs)
+
+**Key Features:**
+
+* Automated ZFS dataset configuration with optimized properties
+* Service account management with dedicated users/groups per application
+* Fine-grained ACL permissions using NFSv4 ACLs
+* Secure SMB network shares with authentication
+* Comprehensive system facts gathering and audit capabilities
+
+**Available Operations:**
+
+```bash
+# Extract current TrueNAS state (read-only)
+mise run ansible:truenas:audit
+
+# Configure TrueNAS system
+mise run ansible:truenas
+
+# Preview configuration changes
+mise run ansible:truenas:dry-run
+```
 
 ## 🛡️ License
 

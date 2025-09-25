@@ -48,3 +48,6 @@ catalog/**/result
 # Ignore all unencrypted files
 **/.decrypted~*.yaml
 **/*.UNSAFE.yaml
+
+# Ignore ansible outputs
+projects/chezmoi.sh/src/infrastructure/ansible/output/

@@ -1,0 +1,115 @@
+---
+# =============================================================================
+# Application Datasets Role - Default Variables
+# =============================================================================
+# Simplified configuration focused on essential settings with sensible defaults.
+# Only the application name and optional dataset properties need to be specified.
+# All other configurations (users, ACLs, SMB shares) are automatically generated
+# based on the application name with consistent, secure defaults.
+#
+# Design Philosophy:
+# - Convention over configuration: Minimize required variables
+# - Consistent patterns: All applications follow the same structure
+# - Security by default: Standard permissions applied to all applications
+# - Zero-configuration users: UIDs auto-assigned starting from 2000
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Parent Dataset Path Configuration
+# -----------------------------------------------------------------------------
+# Full path to parent dataset (must already exist)
+application_root_dataset: "{{ application_root_dataset | mandatory('The application_root_dataset variable must be set in the playbook or inventory.') }}"
+
+# -----------------------------------------------------------------------------
+# Application Configuration
+# -----------------------------------------------------------------------------
+# Simple application configuration
+application_name: "" # Application name (required)
+application_uid: 2000 # User UID/GID
+application_dataset_defaults:
+  comments: Dataset TrueNAS réservé pour {{ application_name }} # Default comment template
+application_dataset_overrides: {} # Optional dataset property overrides
+
+state: present # Dataset state (present/absent)
+
+# Available dataset_overrides properties:
+# =============================================================================
+#
+# ┌─────────────────────────┬──────────────┬──────────────────────────────────┐
+# │ Property                │ Example      │ Description                      │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ STORAGE & PERFORMANCE                                                     │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ quota                   │ "50G"        │ Maximum space this dataset uses  │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ refquota                │ "40G"        │ Quota excluding snapshots/clones │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ reservation             │ "10G"        │ Minimum guaranteed space         │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ refreservation          │ "5G"         │ Guaranteed space (no snapshots)  │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ recordsize              │ "1M"         │ Block size (128K default)        │
+# │                         │              │ • 1M: Large files (photos/video) │
+# │                         │              │ • 16K: Databases                 │
+# │                         │              │ • 128K: General files            │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ COMPRESSION & EFFICIENCY                                                  │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ compression             │ "ZSTD-3"     │ Compression algorithm            │
+# │                         │              │ • LZ4: Fast, low CPU (default)   │
+# │                         │              │ • ZSTD-3: Better ratio, more CPU │
+# │                         │              │ • GZIP-6: High ratio, high CPU   │
+# │                         │              │ • off: Disable compression       │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ deduplication           │ on           │ Remove duplicate blocks (CPU++)  │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ copies                  │ 2            │ Number of copies (1-3, def: 1)   │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ ACCESS & SECURITY                                                         │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ atime                   │ off          │ Track access times (off = perf)  │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ exec                    │ off          │ Allow binary execution (security)│
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ readonly                │ on           │ Make dataset read-only           │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ aclmode                 │ "DISCARD"    │ ACL behavior on chmod            │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ acltype                 │ "POSIX1E"    │ ACL type (NFSv4 default)         │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ SNAPSHOTS & VISIBILITY                                                    │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ snapdir                 │ on           │ Show .zfs/snapshot directory     │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ snapdev                 │ "VISIBLE"    │ Snapshot device visibility       │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ SYNC & DATA INTEGRITY                                                     │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ sync                    │ "ALWAYS"     │ Write sync behavior              │
+# │                         │              │ • STANDARD: Balanced (default)   │
+# │                         │              │ • ALWAYS: Maximum integrity      │
+# │                         │              │ • DISABLED: Maximum performance  │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ checksum                │ "SHA256"     │ Checksum algorithm               │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ ADVANCED PROPERTIES                                                       │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ sparse                  │ on           │ Enable sparse volumes            │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ volblocksize            │ "16K"        │ Volume block size (ZVOL only)    │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ volsize                 │ "10G"        │ Volume size (ZVOL only)          │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ special_small_block_size│ "32K"        │ Small block threshold            │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ xattr                   │ "SA"         │ Extended attribute storage       │
+# ├─────────────────────────┼──────────────┼──────────────────────────────────┤
+# │ managedby               │ "app-name"   │ Management service identifier    │
+# └─────────────────────────┴──────────────┴──────────────────────────────────┘
+# =============================================================================
+
