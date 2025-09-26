@@ -84,3 +84,14 @@
         application_dataset_overrides:
           quota: 53687091200 # 50 GiB
           recordsize: 1M # optimized for large media files
+
+    # Configure datasets for Paperless
+    - name: Configure application datasets for Paperless
+      ansible.builtin.import_role:
+        name: application_datasets
+      vars:
+        application_name: Paperless
+        application_uid: 30002
+        application_dataset_overrides:
+          quota: 10737418240 # 10 GiB
+          recordsize: 128K # optimized for document storage
