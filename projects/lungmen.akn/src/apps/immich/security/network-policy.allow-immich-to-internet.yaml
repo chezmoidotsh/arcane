@@ -20,11 +20,6 @@ spec:
 
         # Allow access to map tiles from Immich cloud
         - matchName: tiles.immich.cloud
-
-        # Allow access to huggingface.co for ML models
-        - matchName: huggingface.co
-        - matchName: cas-server.xethub.hf.co
-        - matchName: transfer.xethub.hf.co
       toPorts:
         - ports:
             - port: "443"

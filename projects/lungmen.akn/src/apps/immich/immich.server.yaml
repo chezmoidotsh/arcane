@@ -76,8 +76,6 @@ spec:
               value: "6379"
             - name: IMMICH_CONFIG_FILE
               value: /config/immich-config.yaml
-            - name: IMMICH_MACHINE_LEARNING_URL
-              value: http://immich-machine-learning:3003
           ports:
             - name: http
               containerPort: 2283
