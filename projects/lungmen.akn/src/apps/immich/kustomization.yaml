@@ -1,0 +1,22 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: immich
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: immich
+      app.kubernetes.io/part-of: immich
+    includeTemplates: true
+
+resources:
+  - immich.configuration.externalsecret.yaml
+  - immich.httproute.yaml
+  - immich.postgresql-backup.yaml
+  - immich.postgresql-objectstore.yaml
+  - immich.postgresql.yaml
+  - immich.redis.yaml
+  - immich.server.yaml
+  - immich.smb-storage.yaml
+
+  - security/

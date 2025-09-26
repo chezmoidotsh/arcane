@@ -1,0 +1,13 @@
+---
+# TrueNAS Production Inventory
+#
+
+all:
+  children:
+    truenas:
+      hosts:
+        nas.chezmoi.sh:
+          ansible_host: nas.chezmoi.sh
+          ansible_user: root
+          ansible_connection: ssh
+          ansible_ssh_common_args: "-o StrictHostKeyChecking=no"

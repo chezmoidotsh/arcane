@@ -1,0 +1,79 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: immich-database
+  name: immich-database
+spec:
+  bootstrap:
+    initdb:
+      database: immich
+      owner: immich
+      postInitSQL:
+        - CREATE EXTENSION IF NOT EXISTS vectors;
+        - CREATE EXTENSION IF NOT EXISTS cube;
+        - CREATE EXTENSION IF NOT EXISTS earthdistance;
+  description: PostgreSQL database dedicated to immich with vector extensions
+  enablePDB: false
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ImageCatalog
+    name: postgresql-vectors
+    major: 14
+  postgresUID: 999
+  postgresGID: 999
+  instances: 1
+  managed:
+    roles:
+      - name: immich
+        connectionLimit: -1
+        comment: PostgreSQL role for immich
+        ensure: present
+        inherit: true
+        login: true
+        superuser: true
+        passwordSecret:
+          name: immich-database-immich
+  plugins:
+    - enabled: true
+      isWALArchiver: true
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: immich
+        serverName: 01K5S5AXX4NGRXGQW7ASZBVZES # 2025-09-22T16:50:59.053Z
+  postgresql:
+    shared_preload_libraries:
+      - vectors.so
+  storage:
+    size: 5Gi
+  walStorage:
+    size: 5Gi
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ImageCatalog
+metadata:
+  name: postgresql-vectors
+spec:
+  images:
+    - major: 14
+      image: ghcr.io/tensorchord/pgvecto-rs:pg14-v0.3.0-rootless@sha256:23ac462edc9eba6df7df92d447780950aa20a34ba4a9c11c0f4ddab3a30a64b1
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: immich-database-immich
+spec:
+  dataFrom:
+    - extract:
+        key: lungmen.akn/immich/database/postgresql
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    template:
+      data:
+        username: immich
+        password: "{{ .password }}"

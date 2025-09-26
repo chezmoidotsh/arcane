@@ -1,0 +1,116 @@
+---
+# Process data and generate report
+
+- name: Set output filename with timestamp
+  set_fact:
+    output_filename: "truenas-state-{{ ansible_date_time.iso8601_basic_short }}.yml"
+
+- name: Build disk information
+  shell: |
+    python3 {{ role_path }}/files/build_disk_info.py '{{ disks_info.stdout }}' '{{ pools_info.stdout }}'
+  register: disks_result
+  delegate_to: localhost
+
+- name: Build pool information
+  shell: |
+    python3 {{ role_path }}/files/build_pool_info.py '{{ pools_info.stdout }}' '{{ disks_info.stdout }}'
+  register: pools_result
+  delegate_to: localhost
+
+- name: Build hierarchical dataset trees for each pool
+  shell: |
+    python3 {{ role_path }}/files/build_dataset_tree.py '{{ enriched_datasets | to_json }}' '{{ item.name }}'
+  register: dataset_tree_result
+  loop: "{{ pools_info.stdout | from_json }}"
+  delegate_to: localhost
+
+- name: Parse disk information
+  set_fact:
+    disks_data: "{{ disks_result.stdout | from_json }}"
+
+- name: Parse pool information
+  set_fact:
+    pools_data: "{{ pools_result.stdout | from_json }}"
+
+- name: Parse dataset trees
+  set_fact:
+    datasets_data: "{{ datasets_data | default({}) | combine({item.item.name: item.stdout | from_json}) }}"
+  loop: "{{ dataset_tree_result.results }}"
+
+- name: Extract ACLs from extraction results
+  set_fact:
+    raw_acls_data: "{{ raw_acls_data | default([]) + [acl_entry] }}"
+  vars:
+    acl_entry:
+      dataset: "{{ item.item.name }}"
+      mountpoint: "{{ item.item.mountpoint }}"
+      acltype: "{{ (item.stdout | from_json).acltype | default('posix') }}"
+      trivial: "{{ (item.stdout | from_json).trivial | default(true) }}"
+      entries: "{{ (item.stdout | from_json).acl | default([]) }}"
+  loop: "{{ dataset_acls_result.results }}"
+  when:
+    - item.rc == 0
+    - item.stdout | length > 0
+    - (item.stdout | from_json).acl is defined
+
+- name: Simplify ACLs for readability
+  shell: |
+    python3 {{ role_path }}/files/simplify_acls.py '{{ raw_acls_data | default([]) | to_json }}' '{{ users_info.stdout }}' '{{ groups_info.stdout }}'
+  register: simplified_acls_result
+  delegate_to: localhost
+
+- name: Parse simplified ACLs
+  set_fact:
+    acls_data: "{{ simplified_acls_result.stdout | from_json }}"
+
+- name: Build ACLs mapping by dataset path
+  set_fact:
+    acls_by_dataset: "{{ acls_by_dataset | default({}) | combine({item.dataset: item}) }}"
+  loop: "{{ acls_data }}"
+
+- name: Merge ACLs into datasets tree
+  shell: |
+    python3 {{ role_path }}/files/merge_acls_datasets.py '{{ datasets_data | to_json }}' '{{ acls_by_dataset | default({}) | to_json }}'
+  register: merged_datasets_result
+  delegate_to: localhost
+
+- name: Update datasets with merged ACLs
+  set_fact:
+    datasets_data: "{{ merged_datasets_result.stdout | from_json }}"
+
+- name: Generate state report
+  template:
+    src: state-report.j2
+    dest: "{{ output_dir }}/{{ output_filename }}"
+  vars:
+    extracted_state:
+      timestamp: "{{ ansible_date_time.iso8601 }}"
+      hostname: "{{ ansible_host }}"
+      system: "{{ system_info.stdout | from_json }}"
+      disks: "{{ disks_data }}"
+      zpools: "{{ pools_data }}"
+      datasets: "{{ datasets_data }}"
+      smb_shares: "{{ smb_shares_info.stdout | from_json }}"
+      nfs_shares: "{{ nfs_shares_info.stdout | from_json }}"
+      users: "{{ users_info.stdout | from_json }}"
+      groups: "{{ groups_info.stdout | from_json }}"
+      network: "{{ network_info.stdout | from_json }}"
+      services: "{{ services_info.stdout | from_json }}"
+      backup_config:
+        snapshot_tasks: "{{ snapshot_tasks_info.stdout | from_json }}"
+        replication_tasks: "{{ replication_tasks_info.stdout | from_json }}"
+        cloudsync_tasks: "{{ cloudsync_tasks_info.stdout | from_json }}"
+        rsync_tasks: "{{ rsync_tasks_info.stdout | from_json }}"
+  delegate_to: localhost
+
+- name: Display extraction summary
+  debug:
+    msg: |
+      TrueNAS State Extraction Complete:
+      - Hostname: {{ ansible_host }}
+      - Disks: {{ disks_data | length }}
+      - Pools: {{ pools_data.keys() | length }}
+      - Datasets: {{ datasets_data.keys() | length }}
+      - SMB Shares: {{ (smb_shares_info.stdout | from_json) | length }}
+      - NFS Shares: {{ (nfs_shares_info.stdout | from_json) | length }}
+      - Report saved to: {{ output_dir }}/{{ output_filename }}

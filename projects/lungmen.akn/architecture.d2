@@ -197,12 +197,34 @@ lungmen·akn: {
   # ────────────────────────────────────────────────────────────────────────────
   # Media Components
   
-  media.immich: {
-    class: [application; undeployed]
-    label: Immich
-    icon: assets/icons/apps/immich.svg
-    link: https://immich.app/
-    tooltip: High-performance self-hosted photo and video management solution with mobile app support.
+  media.immich-stack: {
+    class: [namespace]
+    label: Immich Stack
+    tooltip: Immich photo and video management stack with PostgreSQL backend and Redis cache
+
+    immich: {
+      class: [application]
+      label: Immich
+      icon: assets/icons/apps/immich.svg
+      link: https://immich.app/
+      tooltip: High-performance self-hosted photo and video management solution with mobile app support.
+    }
+
+    postgresql: {
+      class: [application-datastore]
+      label: PostgreSQL
+      icon: assets/icons/system/cloudnativepg.svg
+      link: https://postgresql.org/
+      tooltip: PostgreSQL database backend for Immich with VectorChord extension, managed by CloudNative-PG operator with automated backups to S3.
+    }
+
+    redis: {
+      class: [application-datastore]
+      label: Redis
+      icon: assets/icons/apps/redis.svg
+      link: https://redis.io/
+      tooltip: Redis cache for improved Immich performance and background task processing.
+    }
   }
 
   media.jellyfin: {
@@ -360,7 +382,12 @@ lungmen·akn.system.tailscale -> internet: "VPN tunnel establishment (443)" {cla
 # ──────────────────────────────────────────────────────────────────────────────
 # Media Services Flow
 
-lungmen·akn.media.immich <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (3000)" {class: undeployed}
+lungmen·akn.media.immich-stack.immich -> amiya·akn.pocket-id: "SSO authentication (443)" {}
+lungmen·akn.media.immich-stack.immich -> lungmen·akn.media.immich-stack.postgresql: "Database operations (5432)" {}
+lungmen·akn.media.immich-stack.immich -> lungmen·akn.media.immich-stack.redis: "Cache operations (6379)" {}
+lungmen·akn.media.immich-stack.immich <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (2283)" {}
+lungmen·akn.media.immich-stack.postgresql -> nas.minio: "Database backups (S3)" {}
+lungmen·akn.media.immich-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
 lungmen·akn.media.jellyfin -> amiya·akn.pocket-id: "SSO authentication (443)" {}
 lungmen·akn.media.jellyfin -> internet: "Metadata and external content fetching (443)" {class: [connect-to-internet]}

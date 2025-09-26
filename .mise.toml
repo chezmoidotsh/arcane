@@ -94,7 +94,8 @@ kubectl = "latest" # Kubernetes CLI for managing clusters and resources
 # -----------------------------------------------------------------------------
 # Platform-specific tools for managing infrastructure components
 
-# ansible = "8.7"     # Configuration management and automation platform, pinned for stability with existing playbooks
+"pipx:ansible-core" = { version = "latest", uvx_args = "--with ansible" } # Core Ansible package required by ansible
+
 argocd = "latest"   # ArgoCD CLI for GitOps application deployment and management
 hcloud = "latest"   # Hetzner Cloud CLI for managing cloud resources
 openbao = "latest"  # OpenBao CLI for secret management (HashiCorp Vault fork)

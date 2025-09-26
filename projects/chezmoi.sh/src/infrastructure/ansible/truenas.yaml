@@ -1,0 +1,86 @@
+---
+# =============================================================================
+# TrueNAS Configuration Playbook
+# =============================================================================
+#
+# This playbook configures TrueNAS system for homelab application infrastructure.
+# It sets up the complete infrastructure including datasets, users, permissions,
+# and network shares required for application deployment.
+#
+# Components configured:
+#   - System hostname
+#   - Application datasets (via application_datasets role)
+#     * ZFS datasets with optimized settings
+#     * User and group management
+#     * ACL permissions for secure access
+#     * SMB shares for network access
+#
+# Prerequisites:
+#   - TrueNAS Scale system with SSH root access (22.02+)
+#   - chezmoidotsh.truenas_scale collection (local module in catalog/)
+#   - Target system accessible via nas.chezmoi.sh
+#
+# Usage:
+#   Full configuration:  ansible-playbook -i inventory/production.yaml truenas.yaml
+#   Preview changes:     ansible-playbook -i inventory/production.yaml truenas.yaml --check --diff
+#   Specific section:    ansible-playbook -i inventory/production.yaml truenas.yaml --tags=datasets
+#
+# Available tags:
+#   - system: System configuration (hostname)
+#   - applications: All application infrastructure (datasets, users, permissions, shares)
+#   - datasets: ZFS dataset creation and configuration
+#   - users: User and group management
+#   - permissions: ACL and filesystem permissions
+#   - shares: SMB network shares
+#
+# =============================================================================
+
+- name: Configure TrueNAS System
+  hosts: truenas
+  become: false
+
+  collections:
+    - chezmoidotsh.truenas_scale
+
+  gather_facts: true
+  vars:
+    application_root_dataset: zp1hs01/applications
+
+  tasks:
+    # =========================================================================
+    # Application Dataset Configuration
+    # -------------------------------------------------------------------------
+    # Configure all resources required to share a dataset through SMB for a
+    # specific application hosted on one of the homelab clusters.
+    # =========================================================================
+    - name: Configure the main application datasets
+      chezmoidotsh.truenas_scale.dataset:
+        name: "{{ application_root_dataset }}"
+        comments: Dataset TrueNAS réservé pour les applications hébergées
+
+        # NOTE: The following properties are carefully chosen for a balance of
+        # performance, storage efficiency, and security for general application use.
+        # Adjust these settings based on specific application requirements if needed.
+        # See: https://www.truenas.com/docs/scale/25.04/scaleuireference/datasets/
+        acltype: nfsv4 # Use NFSv4 ACLs for fine-grained permissions
+        aclmode: restricted # ACL mode must not be RESTRICTED when using NFSv4
+        atime: "off" # Disable access time updates for performance
+        compression: lz4 # Optimized compression for general use
+        copies: 1 # Single copy for storage efficiency
+        deduplication: "off" # Deduplication is resource-intensive; disable unless needed
+        exec: "off" # Disable execution of binaries for security
+        recordsize: 128K # Optimized for general file storage
+        snapdir: hidden # Disable snapshot directory visibility
+        sync: standard # Standard sync
+      tags: [applications, datasets]
+
+    # Configure datasets for Immich
+    - name: Configure application datasets for Immich
+      ansible.builtin.import_role:
+        name: application_datasets
+      vars:
+        application_name: Immich
+        application_uid: 30001
+        application_dataset_overrides:
+          quota: 53687091200 # 50 GiB
+          recordsize: 1M # optimized for large media files

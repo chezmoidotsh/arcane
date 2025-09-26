@@ -1,0 +1,78 @@
+---
+# =============================================================================
+# Application Datasets Role - TrueNAS SCALE Application Storage Setup
+# =============================================================================
+# Creates complete storage infrastructure for applications:
+# 1. ZFS Dataset with optimized properties
+# 2. Dedicated user/group (service account)
+# 3. SMB share with authentication
+# 4. TODO: ACL management
+#
+# Required Variables:
+# - application_root_dataset: Parent dataset path (must exist)
+# - application_name: Application identifier
+# - application_uid: UID/GID for service account
+#
+# Optional Variables:
+# - application_dataset_overrides: Custom ZFS properties
+# - state: present|absent (default: present)
+# =============================================================================
+
+# {{ state == 'absent' and 'Remove' or 'Create' }} ZFS dataset with custom properties
+# Uses defaults from role vars, customizable via application_dataset_overrides
+- name: "{{ application_name }} → {{ state == 'absent' and 'Delete' or 'Create' }} ZFS dataset"
+  chezmoidotsh.truenas_scale.dataset:
+    name: "{{ application_root_dataset }}/{{ application_name | lower }}"
+    state: "{{ state }}"
+  args: "{{ application_dataset_defaults | combine(application_dataset_overrides) }}"
+  tags: [datasets, applications]
+
+# {{ state == 'absent' and 'Remove' or 'Create' }} dedicated group for the application
+# Uses same ID as user account for consistency (UID/GID 2000+ avoids system conflicts)
+- name: "{{ application_name }} → {{ state == 'absent' and 'Delete' or 'Create' }} application group"
+  chezmoidotsh.truenas_scale.group:
+    name: "{{ application_name | lower }}"
+    state: "{{ state }}"
+    gid: "{{ application_uid }}"
+  tags: [users, applications]
+
+# {{ state == 'absent' and 'Remove' or 'Create' }} service account with security hardening
+# Security: nologin shell, /nonexistent home, explicit group management
+- name: "{{ application_name }} → {{ state == 'absent' and 'Delete' or 'Create' }} service account"
+  chezmoidotsh.truenas_scale.user:
+    name: "{{ application_name | lower }}"
+    comment: "Service account for {{ application_name }} application"
+    state: "{{ state }}"
+    append: false # Replace group memberships (no accumulation)
+    create_group: false # Use explicit group created above
+    delete_group: false # Preserve group when user is removed
+    group: "{{ application_name | lower }}"
+    home: /nonexistent # Security: prevent home directory attacks
+    password: CHANGEME # Must be changed during app setup
+    shell: /usr/sbin/nologin # Security: prevent interactive login
+    smb: true # Enable SMB/CIFS authentication
+    uid: "{{ application_uid }}"
+  tags: [users, applications]
+
+# TODO: Implement ACL management for fine-grained permissions
+# Will provide NFSv4 ACLs with inheritance control and audit support
+# - name: "{{ application_name }} → {{ state == 'absent' and 'Delete' or 'Configure' }} ACLs"
+#   chezmoidotsh.truenas_scale.acl:
+#     path: "/mnt/{{ application_root_dataset }}/{{ application_name | lower }}"
+#     entries: "{{ application_acl_entries | default([]) }}"
+#     recursive: true
+#     state: "{{ state }}"
+#   tags: [acls, applications]
+
+# {{ state == 'absent' and 'Remove' or 'Create' }} secure SMB share with authentication required
+# Security: not browsable (stealth), no guest access, user authentication required
+- name: "{{ application_name }} → {{ state == 'absent' and 'Delete' or 'Create' }} SMB share"
+  chezmoidotsh.truenas_scale.sharing_smb:
+    name: "application-{{ application_name | lower }}"
+    comment: "{{ application_name }} application storage"
+    state: "{{ state }}"
+    browsable: false # Security: hide from network discovery
+    guestok: false # Security: require authentication
+    path: "/mnt/{{ application_root_dataset }}/{{ application_name | lower }}"
+    purpose: NO_PRESET # Disable any preset to allow custom settings
+  tags: [shares, smb, applications]

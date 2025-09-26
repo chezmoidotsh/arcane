@@ -1,0 +1,24 @@
+---
+# Ansible requirements for TrueNAS Scale management
+#
+# Local Collection Configuration:
+#   The chezmoidotsh.truenas_scale collection is located locally in:
+#   catalog/ansible/collections/ansible_collections/chezmoidotsh/truenas_scale/
+#
+# To use the collection, ensure ansible.cfg contains:
+#   [defaults]
+#   collections_paths = ./catalog/ansible/collections
+#
+# No external collection installation required - everything is self-contained.
+
+collections:
+  # Local TrueNAS Scale collection for managing TrueNAS Scale systems
+  # Fork adapted specifically for TrueNAS Scale with midclt-only communication
+  # Location: catalog/ansible/collections/ansible_collections/chezmoidotsh/truenas_scale/
+  # Namespace: chezmoidotsh.truenas_scale
+  #
+  # Note: This replaces the external arensb.truenas collection with a
+  # focused, Scale-compatible fork that provides better control and reliability
+  # for critical infrastructure management.
+  #
+  # No installation command needed - collection is part of the repository.

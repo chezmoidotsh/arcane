@@ -1,0 +1,94 @@
+---
+# Extract data from TrueNAS (full audit mode)
+
+- name: Test connection to TrueNAS
+  ping:
+
+- name: Extract system information
+  shell: midclt call system.info
+  register: system_info
+
+- name: Extract ZFS pools information
+  shell: midclt call pool.query
+  register: pools_info
+
+- name: Extract datasets information
+  shell: midclt call pool.dataset.query
+  register: datasets_info
+
+- name: Extract dataset properties for each dataset
+  shell: |
+    midclt call pool.dataset.query '[["id", "=", "{{ item.id }}"]]' '{"extra": {"properties": ["description", "recordsize", "atime", "readonly", "deduplication", "sync", "snapdir", "copies", "refquota", "refreservation"]}}'
+  register: dataset_properties_result
+  loop: "{{ datasets_info.stdout | from_json }}"
+
+- name: Extract filesystem ACLs for each dataset
+  shell: |
+    midclt call filesystem.getacl "{{ item.mountpoint }}"
+  register: dataset_acls_result
+  loop: "{{ datasets_info.stdout | from_json }}"
+  when:
+    - item.mountpoint is defined
+    - item.mountpoint != "none"
+    - item.mountpoint != "legacy"
+    - item.type == "FILESYSTEM"
+    - item.mountpoint is match('^/mnt/')
+  failed_when: false
+
+- name: Extract SMB shares information
+  shell: midclt call sharing.smb.query
+  register: smb_shares_info
+
+- name: Extract NFS shares information
+  shell: midclt call sharing.nfs.query
+  register: nfs_shares_info
+
+- name: Extract users information
+  shell: midclt call user.query
+  register: users_info
+
+- name: Extract groups information
+  shell: midclt call group.query
+  register: groups_info
+
+- name: Extract network configuration
+  shell: midclt call interface.query
+  register: network_info
+
+- name: Extract services status
+  shell: midclt call service.query
+  register: services_info
+
+- name: Extract disk information
+  shell: midclt call disk.query
+  register: disks_info
+
+- name: Extract backup/snapshot tasks
+  shell: midclt call pool.snapshottask.query
+  register: snapshot_tasks_info
+
+- name: Extract replication tasks
+  shell: midclt call replication.query
+  register: replication_tasks_info
+
+- name: Extract backup tasks (cloud sync)
+  shell: midclt call cloudsync.query
+  register: cloudsync_tasks_info
+  failed_when: false
+
+- name: Extract rsync tasks
+  shell: midclt call rsynctask.query
+  register: rsync_tasks_info
+  failed_when: false
+
+- name: Merge dataset properties and ACLs
+  set_fact:
+    enriched_datasets: "{{ enriched_datasets | default([]) + [enhanced_dataset] }}"
+  vars:
+    dataset: "{{ item }}"
+    properties_result: "{{ dataset_properties_result.results | selectattr('item.id', 'equalto', dataset.id) | list }}"
+    properties: "{{ (properties_result[0].stdout | from_json | first) if properties_result else {} }}"
+    acl_result: "{{ dataset_acls_result.results | selectattr('item.id', 'equalto', dataset.id) | list }}"
+    acl_data: "{{ acl_result[0].stdout | from_json if acl_result and acl_result[0].rc == 0 else {} }}"
+    enhanced_dataset: "{{ dataset | combine({'properties': properties.get('properties', {}), 'acl': acl_data}) }}"
+  loop: "{{ datasets_info.stdout | from_json }}"

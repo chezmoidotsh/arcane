@@ -1,0 +1,46 @@
+# =============================================================================
+# chezmoi.sh Project Development Environment Configuration
+# =============================================================================
+# This mise configuration provides task automation for shared infrastructure
+# management including TrueNAS automation and Crossplane IaC operations.
+#
+# Usage:
+#   mise run truenas:audit           # Extract current TrueNAS state (READ-ONLY)
+#   mise run truenas:configure       # Configure TrueNAS system
+#   mise run truenas:configure:dry-run  # Preview configuration changes
+#   mise run ansible:install         # Install Ansible dependencies
+#
+# Prerequisites:
+#   - SSH key-based access to nas.chezmoi.sh as root user
+#   - Ansible installed (configured in root .mise.toml)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Ansible Task Automation
+# -----------------------------------------------------------------------------
+# Tasks for TrueNAS infrastructure management using Ansible playbooks
+# All operations are performed via SSH connection to nas.chezmoi.sh
+
+[tasks."ansible:install"]
+description = "Install Ansible requirements and collections"
+run = "ansible-galaxy install -r {{ config_root }}/src/infrastructure/ansible/requirements.yaml"
+
+# -----------------------------------------------------------------------------
+# TrueNAS Management Tasks
+# -----------------------------------------------------------------------------
+
+[tasks."ansible:truenas"]
+description = "Configure TrueNAS system settings, datasets, users, and shares"
+dir = "{{ config_root }}/src/infrastructure/ansible"
+run = "ansible-playbook -i inventory/production.yaml truenas.yaml"
+
+[tasks."ansible:truenas:dry-run"]
+description = "Perform a dry run of TrueNAS configuration (shows changes without applying)"
+dir = "{{ config_root }}/src/infrastructure/ansible"
+run = "ansible-playbook -i inventory/production.yaml truenas.yaml --check --diff --verbose"
+env = { ANSIBLE_CONFIG = "{{ config_root }}/src/infrastructure/ansible/ansible.cfg" }
+
+[tasks."ansible:truenas:audit"]
+description = "Extract current TrueNAS configuration state (READ-ONLY operation)"
+dir = "{{ config_root }}/src/infrastructure/ansible"
+run = "ansible-playbook -i inventory/production.yaml truenas-audit.yaml"
