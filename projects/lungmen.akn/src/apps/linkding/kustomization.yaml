@@ -1,0 +1,24 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: linkding
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: linkding
+      app.kubernetes.io/part-of: linkding
+    includeTemplates: true
+  - pairs:
+      app.kubernetes.io/instance: linkding
+    includeTemplates: true
+    includeSelectors: true
+
+resources:
+  - linkding.configuration.externalsecret.yaml
+  - linkding.httproute.yaml
+  - linkding.postgresql-backup.yaml
+  - linkding.postgresql-objectstore.yaml
+  - linkding.postgresql.yaml
+  - linkding.deployment.yaml
+
+  - security/

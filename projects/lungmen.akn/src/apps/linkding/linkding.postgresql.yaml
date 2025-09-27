@@ -1,0 +1,55 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: linkding-database
+  name: linkding-database
+spec:
+  bootstrap:
+    initdb:
+      database: linkding
+      owner: linkding
+  description: PostgreSQL database dedicated to linkding
+  enablePDB: false
+  instances: 1
+  managed:
+    roles:
+      - name: linkding
+        connectionLimit: -1
+        comment: PostgreSQL role for linkding
+        ensure: present
+        inherit: true
+        login: true
+        passwordSecret:
+          name: linkding-database-linkding
+  plugins:
+    - enabled: true
+      isWALArchiver: true
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: selfhosted
+        serverName: 01K4QM5VSHX9YAAQ46W814EVVM # DRP::src_ulid
+  storage:
+    size: 5Gi
+  walStorage:
+    size: 5Gi
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: linkding-database-linkding
+spec:
+  dataFrom:
+    - extract:
+        key: lungmen.akn/linkding/database/postgresql
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    template:
+      data:
+        username: linkding
+        password: "{{ .password }}"

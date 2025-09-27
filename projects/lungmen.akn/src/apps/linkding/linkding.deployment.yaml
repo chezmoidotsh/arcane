@@ -1,0 +1,122 @@
+---
+# trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_12,checkov/CKV_K8S_13): We will address resource limits when we have consumption data for Immich Server
+# trunk-ignore(checkov/CKV_K8S_15,checkov/CKV_K8S_43): Not aggreed with theses policies about the ImagePullPolicy=Always and digest verification.
+# trunk-ignore(checkov/CKV_K8S_35): Linkding cannot be configured using a file.
+# trunk-ignore(checkov/CKV2_K8S_6): Network policy will be handled separately
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkding
+  namespace: linkding
+  labels:
+    app.kubernetes.io/name: linkding
+    app.kubernetes.io/instance: linkding
+    app.kubernetes.io/part-of: linkding
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: linkding
+      app.kubernetes.io/instance: linkding
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: linkding
+        app.kubernetes.io/instance: linkding
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        # trunk-ignore(trivy): Everything about security context cannot be configured for the official image.
+        - name: linkding
+          env:
+            - name: LD_DB_ENGINE
+              value: postgres
+            - name: LD_DB_DATABASE
+              value: linkding
+            - name: LD_DB_HOST
+              value: linkding-database-rw
+            - name: LD_DB_PORT
+              value: "5432"
+            - name: LD_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: linkding-database-linkding
+                  key: password
+            - name: LD_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: linkding-database-linkding
+                  key: username
+
+            - name: LD_ENABLE_OIDC
+              value: "True"
+            - name: OIDC_OP_AUTHORIZATION_ENDPOINT
+              value: https://sso.chezmoi.sh/authorize
+            - name: OIDC_OP_TOKEN_ENDPOINT
+              value: https://sso.chezmoi.sh/api/oidc/token
+            - name: OIDC_OP_USER_ENDPOINT
+              value: https://sso.chezmoi.sh/api/oidc/userinfo
+            - name: OIDC_OP_JWKS_ENDPOINT
+              value: https://sso.chezmoi.sh/.well-known/jwks.json
+            - name: OIDC_USE_PKCE
+              value: "True"
+            - name: OIDC_RP_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: linkding-oidc-credentials
+                  key: oidc_client_id
+            - name: OIDC_RP_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: linkding-oidc-credentials
+                  key: oidc_client_secret
+
+            - name: LD_FAVICON_PROVIDER
+              value: https://icons.duckduckgo.com/ip3/{domain}.ico
+          image: docker.io/sissbruecker/linkding:1.36.0-alpine
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          ports:
+            - name: http
+              containerPort: 9090
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 23281
+            runAsNonRoot: true
+            runAsUser: 23281
+      securityContext:
+        fsGroup: 23281
+        runAsGroup: 23281
+        runAsUser: 23281
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: linkding
+  namespace: linkding
+  labels:
+    app.kubernetes.io/name: linkding
+    app.kubernetes.io/instance: linkding
+    app.kubernetes.io/part-of: linkding
+spec:
+  selector:
+    app.kubernetes.io/name: linkding
+    app.kubernetes.io/instance: linkding
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
