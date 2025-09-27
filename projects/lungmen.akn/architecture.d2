@@ -324,20 +324,20 @@ lungmen·akn: {
   }
 
   others.linkding-stack: {
-    class: [namespace; undeployed]
+    class: [namespace]
     label: Linkding Stack
     tooltip: Linkding bookmarking stack with PostgreSQL backend
 
     linkding: {
-      class: [application; undeployed]
+      class: [application]
       label: Linkding
       icon: assets/icons/apps/linkding.svg
       link: https://github.com/sissbruecker/linkding
-      tooltip: Self-hosted bookmarking and link aggregation service.
+      tooltip: Self-hosted bookmarking and link aggregation service with OIDC authentication.
     }
 
     postgresql: {
-      class: [application-datastore; undeployed]
+      class: [application-datastore]
       label: PostgreSQL
       icon: assets/icons/system/cloudnativepg.svg
       link: https://postgresql.org/
@@ -424,10 +424,12 @@ lungmen·akn.others.atuin-stack.atuin <- lungmen·akn.system.envoy-gateway: "HTT
 lungmen·akn.others.atuin-stack.postgresql -> nas.minio: "Database backups (S3)" {class: undeployed}
 lungmen·akn.others.atuin-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management; undeployed]}
 
-lungmen·akn.others.linkding-stack.linkding -> lungmen·akn.others.linkding-stack.postgresql: "Database operations (5432)" {class: undeployed}
-lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (9090)" {class: undeployed}
-lungmen·akn.others.linkding-stack.postgresql -> nas.minio: "Database backups (S3)" {class: undeployed}
-lungmen·akn.others.linkding-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management; undeployed]}
+lungmen·akn.others.linkding-stack.linkding -> amiya·akn.pocket-id: "SSO authentication (443)" {}
+lungmen·akn.others.linkding-stack.linkding -> lungmen·akn.others.linkding-stack.postgresql: "Database operations (5432)" {}
+lungmen·akn.others.linkding-stack.linkding -> internet: "Website information fetching (443)" {class: [connect-to-internet]}
+lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (9090)" {}
+lungmen·akn.others.linkding-stack.postgresql -> nas.minio: "Database backups (S3)" {}
+lungmen·akn.others.linkding-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
 
 # ──────────────────────────────────────────────────────────────────────────────

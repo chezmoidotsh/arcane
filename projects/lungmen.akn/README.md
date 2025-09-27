@@ -195,10 +195,10 @@ The recovery process is largely automated through the `amiya.akn` project, which
   * [x] Deploy PostgreSQL for application data
 * [x] **Step 3**: Services Deployment (Partial)
   * [x] Deploy media services (Jellyfin, Jellyseerr)
-  * [ ] Deploy Immich with Cloudflare Tunnel for external access
+  * [x] Deploy Immich ~~with Cloudflare Tunnel for external access~~
   * [x] Deploy life management services (Actual Budget)
-  * [ ] Deploy Paperless-ngx for document management
-  * [ ] Deploy Linkding for bookmarks
+  * [x] Deploy Paperless-ngx for document management
+  * [x] Deploy Linkding for bookmarks
   * [ ] Deploy Atuin for shell history sync
 * [ ] **Step 4**: Security and Optimization
   * [x] Implement network policies
