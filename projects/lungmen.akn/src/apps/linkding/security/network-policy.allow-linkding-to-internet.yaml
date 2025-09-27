@@ -1,0 +1,29 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows linkding to access internet resources for:
+      - Fetching website favicons from DuckDuckGo icons service
+      - Creating bookmarks from external websites
+      All connections are restricted to secure protocols only.
+  name: allow-linkding-to-internet
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: linkding
+  egress:
+    - toFQDNs:
+        # Allow access to DuckDuckGo icons for favicons
+        - matchName: icons.duckduckgo.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    - toCIDR:
+        # Allow HTTPS to any address for fetching website content/favicons
+        - 0.0.0.0/0
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
