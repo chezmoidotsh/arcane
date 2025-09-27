@@ -135,7 +135,6 @@ spec:
               subPath: consume
             - name: smb-storage
               mountPath: /usr/src/paperless/media/documents/archive/nas.chezmoi.sh
-              subPath: Documents
       securityContext:
         fsGroup: 21473
         runAsGroup: 21473
