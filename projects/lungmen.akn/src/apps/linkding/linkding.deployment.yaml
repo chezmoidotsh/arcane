@@ -95,12 +95,22 @@ spec:
             runAsGroup: 23281
             runAsNonRoot: true
             runAsUser: 23281
+          volumeMounts:
+            - name: linkding-data
+              mountPath: /etc/linkding/data
+            - name: tmp
+              mountPath: /tmp
       securityContext:
         fsGroup: 23281
         runAsGroup: 23281
         runAsUser: 23281
         seccompProfile:
           type: RuntimeDefault
+      volumes:
+        - name: linkding-data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
