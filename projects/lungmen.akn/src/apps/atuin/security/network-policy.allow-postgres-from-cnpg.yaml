@@ -1,0 +1,24 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows CloudNative-PG operator to manage the atuin PostgreSQL database.
+      Based on CloudNative-PG networking requirements: operator needs access to
+      port 5432 (PostgreSQL) and port 8000 (metrics/management).
+  name: allow-postgres-from-cnpg
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: atuin-database
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: cloudnative-pg-system
+            app.kubernetes.io/name: cloudnative-pg
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "8000"
+              protocol: TCP

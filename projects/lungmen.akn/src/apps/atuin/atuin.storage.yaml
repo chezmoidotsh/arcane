@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: atuin-data
+  namespace: atuin
+  labels:
+    app.kubernetes.io/name: atuin
+    app.kubernetes.io/instance: atuin
+    app.kubernetes.io/part-of: atuin
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 250Mi
+  storageClassName: longhorn
