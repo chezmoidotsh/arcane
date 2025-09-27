@@ -199,7 +199,7 @@ The recovery process is largely automated through the `amiya.akn` project, which
   * [x] Deploy life management services (Actual Budget)
   * [x] Deploy Paperless-ngx for document management
   * [x] Deploy Linkding for bookmarks
-  * [ ] Deploy Atuin for shell history sync
+  * [x] Deploy Atuin for shell history sync
 * [ ] **Step 4**: Security and Optimization
   * [x] Implement network policies
   * [ ] Configure backup solutions

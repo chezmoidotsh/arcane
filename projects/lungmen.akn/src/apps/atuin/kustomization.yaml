@@ -1,0 +1,25 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: atuin
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: atuin
+      app.kubernetes.io/part-of: atuin
+    includeTemplates: true
+  - pairs:
+      app.kubernetes.io/instance: atuin
+    includeTemplates: true
+    includeSelectors: true
+
+resources:
+  - atuin.deployment.yaml
+  - atuin.httproute.yaml
+  - atuin.ingress.yaml
+  - atuin.postgresql-backup.yaml
+  - atuin.postgresql-objectstore.yaml
+  - atuin.postgresql.yaml
+  - atuin.storage.yaml
+
+  - security/

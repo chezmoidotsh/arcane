@@ -1,0 +1,19 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    link.argocd.argoproj.io/external-link: https://atuin.tail831c5d.ts.net
+  labels:
+    tailscale.com/proxy-class: restricted
+  name: atuin
+spec:
+  defaultBackend:
+    service:
+      name: atuin
+      port:
+        number: 80
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - atuin

@@ -1,0 +1,56 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: atuin-database
+  name: atuin-database
+spec:
+  bootstrap:
+    initdb:
+      database: atuin
+      owner: atuin
+  description: PostgreSQL database dedicated to atuin
+  enablePDB: false
+  instances: 1
+  managed:
+    roles:
+      - name: atuin
+        connectionLimit: -1
+        comment: PostgreSQL role for atuin
+        ensure: present
+        inherit: true
+        login: true
+        passwordSecret:
+          name: atuin-database-atuin
+  plugins:
+    - enabled: true
+      isWALArchiver: true
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: selfhosted
+        serverName: 01K4QM5VSHX9YAAQ46W814EVVN # DRP::src_ulid
+  storage:
+    size: 1Gi
+  walStorage:
+    size: 1Gi
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: atuin-database-atuin
+spec:
+  dataFrom:
+    - extract:
+        key: lungmen.akn/atuin/database/postgresql
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    template:
+      data:
+        username: atuin
+        password: "{{ .password }}"
+        uri: "postgres://atuin:{{ .password }}@atuin-database-rw:5432/atuin"

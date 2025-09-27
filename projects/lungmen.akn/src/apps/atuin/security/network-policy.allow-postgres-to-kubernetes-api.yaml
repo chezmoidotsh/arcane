@@ -1,0 +1,15 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows atuin PostgreSQL database to connect to Kubernetes API server.
+      Required for CloudNative-PG operator integration.
+  name: allow-postgres-to-kubernetes-api
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: atuin-database
+  egress:
+    - toEntities:
+        - kube-apiserver
