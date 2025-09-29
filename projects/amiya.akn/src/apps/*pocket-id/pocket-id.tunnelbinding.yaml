@@ -1,0 +1,11 @@
+---
+apiVersion: networking.cfargotunnel.com/v1alpha1
+kind: TunnelBinding
+metadata:
+  name: pocket-id-tun
+subjects:
+  - kind: Service
+    name: pocket-id
+tunnelRef:
+  kind: ClusterTunnel
+  name: amiya.akn

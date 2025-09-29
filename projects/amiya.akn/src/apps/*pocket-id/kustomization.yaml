@@ -20,4 +20,5 @@ resources:
   - pocket-id.postgresql-backup.yaml
   - pocket-id.postgresql-objectstore.yaml
   - pocket-id.statefulset.yaml
+  - pocket-id.tunnelbinding.yaml
   - security/
