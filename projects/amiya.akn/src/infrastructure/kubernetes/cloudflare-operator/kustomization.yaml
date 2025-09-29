@@ -1,0 +1,21 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # Install Cloudflare operator from GitHub
+  - https://github.com/adyanth/cloudflare-operator.git/config/default?ref=v0.13.1
+
+patches:
+  # Add pod-security labels to allow sysctls for UDP buffer tuning in cloudflared tunnels
+  # Required for QUIC protocol optimization (net.core.rmem_* sysctls)
+  - target:
+      kind: Namespace
+      name: cloudflare-operator-system
+    patch: |-
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1enforce
+        value: privileged
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1enforce-version
+        value: v1.33

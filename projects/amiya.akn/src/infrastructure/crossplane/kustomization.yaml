@@ -7,6 +7,7 @@ resources:
   - aws.iam.authelia.yaml
   - aws.iam.pocket-id.yaml
   - cloudflare.iam.cert-manager.yaml
+  - cloudflare.iam.cloudflare-operator.yaml
 
   # Configure a Vault KV store for this cluster
   - amiya.akn.xclustervault.yaml
