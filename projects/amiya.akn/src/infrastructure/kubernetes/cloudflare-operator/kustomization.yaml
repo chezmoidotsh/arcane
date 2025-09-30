@@ -6,6 +6,3 @@ resources:
   # Install Cloudflare operator from GitHub
   - https://github.com/adyanth/cloudflare-operator.git/config/default?ref=v0.13.1
   - cloudflare-credentials.externalsecret.yaml
-
-generators:
-  - ksops.generator.yaml

@@ -1,0 +1,22 @@
+---
+apiVersion: networking.cfargotunnel.com/v1alpha1
+kind: TunnelBinding
+metadata:
+  name: pocket-id-public
+  annotations:
+    argocd.argoproj.io/description: |
+      TunnelBinding connecting Cloudflare tunnel to the public Gateway.
+      Enables secure internet access through Cloudflare's edge network.
+subjects:
+  - kind: Service
+    name: public
+    spec:
+      fqdn: auth.chezmoi.sh # NOTE: This is the actual target hostname for the tunnel binding and a CNAME auth.chezmoi.sh will be created to point to the Cloudflare tunnel
+      http2Origin: true
+      noTlsVerify: true
+      proxyAddress: 127.0.0.1
+      proxyPort: 0
+      proxyType: ""
+tunnelRef:
+  kind: ClusterTunnel
+  name: amiya.akn-public-gateway

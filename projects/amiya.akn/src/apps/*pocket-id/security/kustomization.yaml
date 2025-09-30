@@ -2,12 +2,13 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - network-policy.allow-pocket-id-from-cloudflare-operator.yaml
   - network-policy.allow-pocket-id-from-envoy-gateway.yaml
+  - network-policy.allow-pocket-id-from-envoy-public-gateway.yaml
   - network-policy.allow-pocket-id-to-analytics.yaml
   - network-policy.allow-pocket-id-to-internet.yaml
   - network-policy.allow-postgres-from-cnpg.yaml
   - network-policy.allow-postgres-to-kubernetes-api.yaml
   - network-policy.allow-postgres-to-s3-backup.yaml
   - network-policy.default-hardened.yaml
+  - reference-grant.cloudflare-gateway-to-pocket-id.yaml
   - reference-grant.envoy-gateway-to-pocket-id.yaml

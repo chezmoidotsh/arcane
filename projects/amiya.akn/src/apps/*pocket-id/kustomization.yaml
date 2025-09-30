@@ -14,11 +14,11 @@ labels:
     includeTemplates: true
 
 resources:
+  - pocket-id-public.httproute.yaml
   - pocket-id.externalsecret.yaml
   - pocket-id.httproute.yaml
   - pocket-id.postgresql.yaml
   - pocket-id.postgresql-backup.yaml
   - pocket-id.postgresql-objectstore.yaml
   - pocket-id.statefulset.yaml
-  - pocket-id.tunnelbinding.yaml
   - security/

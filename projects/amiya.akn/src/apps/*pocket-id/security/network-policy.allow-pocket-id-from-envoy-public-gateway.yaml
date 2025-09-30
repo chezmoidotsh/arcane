@@ -3,8 +3,8 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows Cloudflare Operator tunnels to route traffic to Pocket ID application.
-  name: allow-pocket-id-from-cloudflare-operator
+      Allows public Envoy Gateway to route traffic to Pocket ID application.
+  name: allow-pocket-id-from-cloudflare-public-gateway
 spec:
   endpointSelector:
     matchLabels:
@@ -12,8 +12,8 @@ spec:
   ingress:
     - fromEndpoints:
         - matchLabels:
-            io.kubernetes.pod.namespace: cloudflare-operator-system
-            cfargotunnel.com/tunnel: amiya.akn
+            io.kubernetes.pod.namespace: cloudflare-public-gateway-system
+            gateway.envoyproxy.io/owning-gateway-name: public
       toPorts:
         - ports:
             - port: "1411"

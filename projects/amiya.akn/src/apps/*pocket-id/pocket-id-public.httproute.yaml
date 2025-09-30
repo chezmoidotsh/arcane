@@ -1,0 +1,29 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  annotations:
+    argocd.argoproj.io/description: |
+      HTTPRoute for Cloudflare tunnel to Pocket-ID via infrastructure Gateway.
+      Routes secure internet traffic through the dedicated tunnel infrastructure.
+  name: pocket-id-public
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: public
+      namespace: cloudflare-public-gateway-system
+      sectionName: public
+  hostnames:
+    - auth.chezmoi.sh
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: pocket-id
+          port: 80
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
