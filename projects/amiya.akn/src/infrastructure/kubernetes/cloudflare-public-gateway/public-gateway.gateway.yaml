@@ -10,6 +10,11 @@ metadata:
       providing secure isolation from direct internet access.
 spec:
   gatewayClassName: envoy-gateway
+  infrastructure:
+    parametersRef:
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: public-gateway-proxy
   listeners:
     - allowedRoutes:
         namespaces:
