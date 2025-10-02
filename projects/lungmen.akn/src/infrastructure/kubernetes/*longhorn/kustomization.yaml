@@ -4,12 +4,11 @@ kind: Kustomization
 namespace: longhorn-system
 
 resources:
-  - security/longhorn.securitypolicy.yaml
-
   - default.recurringjobs.yaml
   - longhorn.externalsecret.yaml
   - longhorn.httproute.yaml
   - namespace.yaml
+  - security
 
 helmCharts:
   - name: longhorn

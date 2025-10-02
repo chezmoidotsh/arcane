@@ -16,11 +16,11 @@ spec:
     name: longhorn
   oidc:
     provider:
-      issuer: https://auth.chezmoi.sh
-    clientID: rDLJdE5Qb~VcVKc4QJlZvDcig
+      issuer: https://sso.chezmoi.sh
+    clientID: 0241ea96-f4d8-4c83-a29c-a912fca6319c
     clientSecret:
       name: longhorn-oidc-secret
-    redirectURL: https://longhorn.lungmen.akn.chezmoi.sh/oauth2/callback
+    redirectURL: https://longhorn.amiya.akn.chezmoi.sh/oauth2/callback
     logoutPath: /logout
     forwardAccessToken: true
     scopes: [openid]
@@ -38,9 +38,9 @@ spec:
     creationPolicy: Owner
     template:
       data:
-        client-secret: "{{ .client_password }}"
+        client-secret: "{{ .client_secret }}"
   data:
-    - secretKey: client_password
+    - secretKey: client_secret
       remoteRef:
-        key: lungmen.akn/longhorn/auth/oidc-client
-        property: client_password
+        key: amiya.akn/longhorn/auth/oidc-client
+        property: client_secret

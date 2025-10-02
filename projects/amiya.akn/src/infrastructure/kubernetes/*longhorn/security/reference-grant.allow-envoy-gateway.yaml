@@ -1,0 +1,17 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Envoy Gateway from the envoy-gateway-system namespace to access the longhorn-frontend service.
+      Longhorn is a critical storage management interface that requires secure cross-namespace access.
+  name: envoy-gateway-system-to-longhorn-frontend
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: envoy-gateway-system
+  to:
+    - group: ""
+      kind: Service
+      name: longhorn-frontend
