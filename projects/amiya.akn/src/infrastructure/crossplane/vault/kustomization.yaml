@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
   - authelia.authbackend.yaml
+  - pocket-id.authbackend.yaml
   - personal.mount.yaml
   - shared.mount.yaml
 
