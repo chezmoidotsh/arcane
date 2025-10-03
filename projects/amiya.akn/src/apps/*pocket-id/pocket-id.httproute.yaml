@@ -4,7 +4,7 @@ kind: HTTPRoute
 metadata:
   annotations:
     external-dns.alpha.kubernetes.io/include-unifi: "true"
-    link.argocd.argoproj.io/external-link: https://sso.chezmoi.sh
+    link.argocd.argoproj.io/external-link: https://auth.chezmoi.sh
   name: pocket-id
 spec:
   parentRefs:
@@ -14,7 +14,7 @@ spec:
       namespace: envoy-gateway-system
       sectionName: chezmoi.sh-websecure
   hostnames:
-    - sso.chezmoi.sh
+    - auth.chezmoi.sh
   rules:
     - backendRefs:
         - group: ""

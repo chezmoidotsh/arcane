@@ -335,8 +335,6 @@ amiya·akn.infrastructure.argocd <- amiya·akn.system.tailscale: { class: [conne
 
 amiya·akn.infrastructure.talos-omni <- amiya·akn.system.envoy-default-gateway: { class: [undeployed]; source-arrowhead: HTTP (443) }
 
-amiya·akn.security.authelia <- amiya·akn.system.envoy-default-gateway: { source-arrowhead: HTTP (9091) }
-
 amiya·akn.security.openbao-stack.openbao -> amiya·akn.security.openbao-stack.postgresql: { source-arrowhead: PostgreSQL (5432) }
 amiya·akn.security.openbao-stack.openbao <- amiya·akn.system.envoy-default-gateway: { source-arrowhead: HTTP (8200) }
 amiya·akn.security.openbao-stack.openbao <- amiya·akn.system.tailscale: { class: [connect-from-vpn]; source-arrowhead: HTTP (8200) }

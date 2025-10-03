@@ -16,7 +16,7 @@ spec:
     name: longhorn
   oidc:
     provider:
-      issuer: https://sso.chezmoi.sh
+      issuer: https://auth.chezmoi.sh
     clientID: 0241ea96-f4d8-4c83-a29c-a912fca6319c
     clientSecret:
       name: longhorn-oidc-secret

@@ -26,14 +26,14 @@ spec:
     path: pocket-id
 
     # OIDC configuration
-    boundIssuer: https://sso.chezmoi.sh
+    boundIssuer: https://auth.chezmoi.sh
     defaultRole: default
     oidcClientId: 8efdd355-7697-4748-83ba-79889cc01d5f
     oidcClientSecretSecretRef:
       name: pocket-id-client-secret
       namespace: crossplane
       key: client_secret
-    oidcDiscoveryUrl: https://sso.chezmoi.sh
+    oidcDiscoveryUrl: https://auth.chezmoi.sh
 
     # Tune configuration
     tune:

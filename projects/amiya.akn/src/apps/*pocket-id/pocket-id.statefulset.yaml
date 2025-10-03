@@ -43,7 +43,7 @@ spec:
               protocol: TCP
           env:
             - name: APP_URL
-              value: https://sso.chezmoi.sh
+              value: https://auth.chezmoi.sh
             - name: TRUST_PROXY
               value: "true"
             - name: MAXMIND_LICENSE_KEY_FILE

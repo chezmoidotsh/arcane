@@ -6,6 +6,7 @@ resources:
   - network-policy.default-hardened.yaml
   - network-policy.allow-immich-from-envoy-gateway.yaml
   - network-policy.allow-immich-to-internet.yaml
+  - network-policy.allow-immich-to-sso.yaml
   - network-policy.allow-postgres-from-cnpg.yaml
   - network-policy.allow-postgres-to-kubernetes-api.yaml
   - network-policy.allow-postgres-to-s3-backup.yaml

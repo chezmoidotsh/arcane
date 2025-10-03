@@ -12,7 +12,7 @@ spec:
   egress:
     - toFQDNs:
         - matchName: auth.chezmoi.sh
-        - matchName: sso.chezmoi.sh
+        - matchName: auth.chezmoi.sh
       toPorts:
         - ports:
             - port: "443"

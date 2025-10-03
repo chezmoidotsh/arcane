@@ -15,9 +15,6 @@ spec:
       app.kubernetes.io/name: immich
   egress:
     - toFQDNs:
-        # Allow access to SSO service
-        - matchName: sso.chezmoi.sh
-
         # Allow access to map tiles from Immich cloud
         - matchName: tiles.immich.cloud
       toPorts:

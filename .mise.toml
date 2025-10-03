@@ -128,11 +128,11 @@ uv = "latest"                    # Extremely fast Python package and project man
 
 [tasks."bao:login"]
 description = "Log in to Vault with the CLI"
-run = "bao login -method=oidc -path=authelia"
+run = "bao login -method=oidc -path=pocket-id"
 
 [tasks."bao:login:admin"]
 description = "Log in to Vault with the CLI using administrative privileges"
-run = "bao login -method=oidc -path=authelia role=admin"
+run = "bao login -method=oidc -path=pocket-id role=admin"
 
 # -----------------------------------------------------------------------------
 # Talos Context Management Tasks

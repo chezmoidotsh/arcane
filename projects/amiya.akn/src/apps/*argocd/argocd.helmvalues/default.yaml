@@ -30,7 +30,7 @@ configs:
     # OIDC configuration (optional), replacing Dex and leveraging Pocket ID
     oidc.config: |
       name: Pocket ID
-      issuer: https://sso.chezmoi.sh
+      issuer: https://auth.chezmoi.sh
       clientID: $argocd-oidc:oidc.pocket-id.clientID
       clientSecret: $argocd-oidc:oidc.pocket-id.clientSecret
       cliClientID: $argocd-oidc:oidc.pocket-id.cliClientID

@@ -4,13 +4,13 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: >
-      Allows Jellyfin to access SSO for authentication.
+      Allows Immich to access SSO for authentication.
       Permits outbound HTTPS connections to auth.chezmoi.sh on port 443.
-  name: allow-jellyfin-to-sso
+  name: allow-immich-to-sso
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: jellyfin
+      app.kubernetes.io/name: immich
   egress:
     - toFQDNs:
         - matchName: auth.chezmoi.sh
