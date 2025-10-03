@@ -24,13 +24,13 @@ csi:
 # Default settings for Longhorn volumes
 # Sets the default number of replicas for new volumes
 defaultSettings:
-  defaultReplicaCount: 1
+  defaultReplicaCount: "1"
 
   # Storage configuration
   # Sets the default data path for Longhorn (NOTE: UserVolume dedicated for Longhorn is mounted on /var/mnt/longhorn)
   defaultDataPath: /var/mnt/longhorn
   # Sets the percentage of disk space that is not allocated to the default disk on each new Longhorn node (NOTE: as we are using UserVolume, we don't need to reserve any space)
-  storageReservedPercentageForDefaultDisk: 0
+  storageReservedPercentageForDefaultDisk: "0"
 
   # Setting that allows Longhorn to automatically mark the latest snapshot and its parent files as removed during a filesystem trim.
   removeSnapshotsDuringFilesystemTrim: true
