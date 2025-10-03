@@ -130,14 +130,6 @@ amiya·akn: {
 
   # ────────────────────────────────────────────────────────────────────────────
   # Security Components
-  
-  security.authelia: {
-    class: [application]
-    label: Authelia
-    icon: assets/icons/apps/authelia.svg
-    link: https://www.authelia.com/
-    tooltip: Authelia is an open-source authentication and authorization server.
-  }
 
   security.openbao-stack: {
     class: [namespace]
@@ -181,14 +173,6 @@ amiya·akn: {
       link: https://postgresql.org/
       tooltip: PostgreSQL database backend for Pocket-ID, managed by CloudNative-PG operator with automated backups to S3.
     }
-  }
-
-  security.yaldap: {
-    class: [application]
-    label: yaLDAP
-    icon: assets/icons/apps/yaldap.png
-    link: https://yaldap.com/
-    tooltip: yaLDAP is a modern LDAP server.
   }
 
   # ────────────────────────────────────────────────────────────────────────────
@@ -343,9 +327,6 @@ amiya·akn.security.openbao-stack.postgresql -> nas.minio: { source-arrowhead: H
 amiya·akn.security.pocket-id-stack.pocket-id -> amiya·akn.security.pocket-id-stack.postgresql: "psql (5432)" { }
 amiya·akn.security.pocket-id-stack.pocket-id <- amiya·akn.system.envoy-default-gateway: "http (1411)" { }
 amiya·akn.security.pocket-id-stack.postgresql -> nas.minio: "s3://s3.chezmoi.sh:9200" { }
-
-amiya·akn.security.yaldap <- amiya·akn.security.authelia: { source-arrowhead: LDAP (8389) }
-amiya·akn.security.yaldap <- amiya·akn.system.envoy-ldap-gateway: { source-arrowhead: LDAP (8389) }
 
 amiya·akn.storage.minio <- amiya·akn.system.envoy-default-gateway: { class: [undeployed]; source-arrowhead: HTTP (9000) }
 
