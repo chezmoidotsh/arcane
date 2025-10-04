@@ -8,6 +8,7 @@ resources:
   - aws.iam.pocket-id.yaml
   - cloudflare.iam.cert-manager.yaml
   - cloudflare.iam.cloudflare-operator.yaml
+  - cloudflare.security.auth-chezmoi-sh.yaml
 
   # Configure a Vault KV store for this cluster
   - amiya.akn.xclustervault.yaml
