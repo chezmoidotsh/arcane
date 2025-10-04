@@ -1,0 +1,181 @@
+name: ":bug: Bug Report"
+description: Report a bug or issue in the infrastructure
+title: ":bug:(scope): Brief description of the issue"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please provide detailed information to help us resolve the issue quickly.
+
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: One-sentence summary of the bug and its impact
+      placeholder: Brief description of what's broken and how it affects the system
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      description: Which component is affected?
+      options:
+        - project:amiya.akn
+        - project:lungmen.akn
+        - project:kazimierz.akn
+        - project:chezmoi.sh
+        - catalog:crossplane
+        - catalog:flakes
+        - catalog:kustomize
+        - catalog:talos
+        - other
+    validations:
+      required: true
+
+  - type: input
+    id: cluster
+    attributes:
+      label: Cluster
+      description: Which cluster is affected?
+      placeholder: "e.g., amiya.akn, lungmen.akn"
+    validations:
+      required: false
+
+  - type: input
+    id: namespace
+    attributes:
+      label: Namespace
+      description: Kubernetes namespace if applicable
+      placeholder: "e.g., default, kube-system"
+    validations:
+      required: false
+
+  - type: input
+    id: application
+    attributes:
+      label: Application/Service
+      description: Name and version if known
+      placeholder: "e.g., argocd v2.10.0"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: gitops-tool
+    attributes:
+      label: GitOps Tool
+      description: Which GitOps tool is being used?
+      options:
+        - ArgoCD
+        - N/A
+    validations:
+      required: false
+
+  - type: textarea
+    id: observable-behavior
+    attributes:
+      label: Observable Behavior
+      description: What is currently happening? Be specific and factual.
+      placeholder: Describe what you're observing...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: What should happen instead?
+      placeholder: Describe the expected behavior...
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: Impact Assessment
+      description: How does this affect the system?
+      options:
+        - label: Service unavailable/degraded
+        - label: Data integrity issue
+        - label: Security concern
+        - label: Performance degradation
+        - label: Deployment blocked
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Reproduction Steps
+      description: Provide clear, step-by-step instructions to reproduce the issue
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: reproduction-frequency
+    attributes:
+      label: Reproduction Frequency
+      description: How often does this occur?
+      options:
+        - Always
+        - Intermittent
+        - Once
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Paste relevant logs (include timestamps if available)
+      placeholder: |
+        kubectl logs, argocd app logs, or other relevant output
+      render: shell
+
+  - type: textarea
+    id: resource-status
+    attributes:
+      label: Resource Status
+      description: Output of kubectl describe, argocd app get, etc.
+      placeholder: |
+        kubectl get pods -n <namespace>
+        kubectl describe <resource-type> <resource-name> -n <namespace>
+      render: shell
+
+  - type: textarea
+    id: configuration
+    attributes:
+      label: Configuration
+      description: Relevant configuration snippets (redact secrets!)
+      render: yaml
+
+  - type: checkboxes
+    id: already-tried
+    attributes:
+      label: Troubleshooting Already Attempted
+      description: What steps have you already taken?
+      options:
+        - label: Checked application logs
+        - label: Verified resource status (pods, deployments, etc.)
+        - label: Checked ArgoCD sync status
+        - label: Reviewed recent commits/changes
+        - label: Verified secrets synchronization (External Secrets Operator)
+        - label: Checked network connectivity (Cilium, Envoy Gateway)
+
+  - type: textarea
+    id: findings
+    attributes:
+      label: Investigation Findings
+      description: What did you discover during investigation?
+      placeholder: Document any findings from troubleshooting...
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information, screenshots, or references
+      placeholder: Related issues, external references, etc.
