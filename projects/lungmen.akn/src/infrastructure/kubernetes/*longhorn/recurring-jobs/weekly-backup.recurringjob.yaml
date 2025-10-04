@@ -1,0 +1,17 @@
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: weekly-backup
+spec:
+  concurrency: 1
+  cron: 0 3 * * 0
+  groups:
+    - weekly
+  labels:
+    backup.longhorn.io/type: weekly
+  name: weekly-backup
+  retain: 4
+  task: backup-force-create
+  parameters:
+    full-backup-interval: "4"

@@ -1,0 +1,17 @@
+---
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: monthly-backup
+spec:
+  concurrency: 1
+  cron: 0 4 1 * *
+  groups:
+    - monthly
+  labels:
+    backup.longhorn.io/type: monthly
+  name: monthly-backup
+  retain: 6
+  task: backup-force-create
+  parameters:
+    full-backup-interval: "3"

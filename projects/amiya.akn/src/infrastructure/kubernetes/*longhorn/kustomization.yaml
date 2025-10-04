@@ -4,10 +4,14 @@ kind: Kustomization
 namespace: longhorn-system
 
 resources:
-  - default.recurringjobs.yaml
   - longhorn.externalsecret.yaml
   - longhorn.httproute.yaml
   - namespace.yaml
+  - recurring-jobs/6h-snapshots.recurringjob.yaml
+  - recurring-jobs/daily-backup.recurringjob.yaml
+  - recurring-jobs/monthly-backup.recurringjob.yaml
+  - recurring-jobs/monthly-fs-trim.recurringjob.yaml
+  - recurring-jobs/weekly-backup.recurringjob.yaml
   - security
 
 helmCharts:

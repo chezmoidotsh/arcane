@@ -72,6 +72,7 @@ spec:
         labels:
           recurring-job-group.longhorn.io/auto-snapshots: enabled
           recurring-job-group.longhorn.io/daily: enabled
+          recurring-job-group.longhorn.io/weekly: enabled
         name: persistent
       spec:
         accessModes:

@@ -204,6 +204,8 @@ spec:
         name: data
         labels:
           app.kubernetes.io/component: storage
+          recurring-job-group.longhorn.io/daily: enabled
+          recurring-job-group.longhorn.io/weekly: enabled
       spec:
         accessModes:
           - ReadWriteOnce
