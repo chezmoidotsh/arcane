@@ -1,0 +1,88 @@
+# Cloudflare Security Configuration for auth.chezmoi.sh
+#
+# Description:
+#   This Terraform Workspace configures Cloudflare security rules for the Pocket-ID
+#   instance exposed at auth.chezmoi.sh via Cloudflare Tunnel.
+#
+# Security Rules:
+#   - Rate limiting: max 100 requests per 10 seconds per IP (10 req/s average), ban 10s
+#
+# Architecture:
+#   Uses Crossplane Terraform provider with inline Terraform configuration.
+#   References the chezmoi.sh zone via data source.
+#
+# Note:
+#   API access is fully allowed as authenticated users need it for profile management
+#   and viewing their OIDC applications. Rate limiting provides protection against abuse.
+---
+apiVersion: tf.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: cloudflare-security-auth-chezmoi-sh
+  annotations:
+    argocd.argoproj.io/description: |
+      Cloudflare security configuration for auth.chezmoi.sh (Pocket-ID).
+      Implements rate limiting protection against abuse.
+spec:
+  providerConfigRef:
+    name: cloudflare
+  forProvider:
+    source: Inline
+    module: |
+      # Variables for zone configuration
+      variable "zone_name" {
+        type        = string
+        default     = "chezmoi.sh"
+        description = "Cloudflare zone name"
+      }
+
+      variable "hostname" {
+        type        = string
+        default     = "auth.chezmoi.sh"
+        description = "Hostname to protect"
+      }
+
+      # Data source to get zone information
+      data "cloudflare_zone" "main" {
+        filter = {
+          name = var.zone_name
+        }
+      }
+
+      # Rate limiting ruleset
+      # Note: period must be >= 10s, so 100 requests/10s = 10 req/s average  
+      resource "cloudflare_ruleset" "rate_limiting" {
+        kind        = "zone"
+        name        = "Rate limiting for auth.chezmoi.sh"
+        phase       = "http_ratelimit"
+        zone_id     = data.cloudflare_zone.main.zone_id
+
+        description = "Limit to 100 requests per 10 seconds per endpoint, ban for 10s"
+
+        rules = [{
+          action      = "block"
+          expression  = "(http.host eq \"${var.hostname}\")"
+          description = "Rate limit all auth.chezmoi.sh endpoints"
+
+          ratelimit = {
+            characteristics = [
+              "cf.colo.id",
+              "ip.src",
+            ]
+            period              = 10  # 10 seconds (minimum allowed)
+            requests_per_period = 100  # 100 requests max (= 10 req/s average)
+            mitigation_timeout  = 10  # Ban for 10 seconds
+          }
+        }]
+      }
+
+      # Outputs for verification
+      output "zone_id" {
+        value       = data.cloudflare_zone.main.zone_id
+        description = "Cloudflare zone ID"
+      }
+
+      output "rate_limiting_ruleset_id" {
+        value       = cloudflare_ruleset.rate_limiting.id
+        description = "Rate limiting ruleset ID"
+      }

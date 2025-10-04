@@ -14,6 +14,7 @@ labels:
     includeTemplates: true
 
 resources:
+  - pocket-id-public.httproute.yaml
   - pocket-id.externalsecret.yaml
   - pocket-id.httproute.yaml
   - pocket-id.postgresql.yaml

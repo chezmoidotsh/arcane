@@ -50,12 +50,12 @@ aws.ses {
   tooltip: Amazon Simple Email Service (SES).
 }
 
-pocket-id: {
+cloudflare: {
   class: [application]
-  label: Pocket ID
-  icon: assets/icons/apps/pocket-id.svg
-  link: https://pocket-id.org/
-  tooltip: Pocket ID is a secure identity management service.
+  label: Cloudflare
+  icon: assets/icons/platform/cloudflare.svg
+  link: https://cloudflare.com/
+  tooltip: Cloudflare edge network providing tunneling and security services for public SSO access.
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -98,6 +98,11 @@ amiya·akn: {
   security: {class: namespace}
   storage: {class: namespace}
   system: {class: namespace}
+  public-gateway: {
+    class: namespace
+    label: Public Gateway
+    tooltip: Dedicated infrastructure for secure internet-facing access via Cloudflare tunnel
+  }
 
   style.fill-pattern: none
 
@@ -229,14 +234,6 @@ amiya·akn: {
     tooltip: Envoy to proxy all HTTP/HTTPS traffic in the cluster.
   }
 
-  system.envoy-ldap-gateway: {
-    class: [application-system]
-    label: Envoy LDAP Gateway
-    icon: assets/icons/system/envoy.svg
-    link: https://gateway.envoyproxy.io/
-    tooltip: Envoy to proxy all LDAP/LDAPS traffic in the cluster.
-  }
-
   system.externaldns: {
     class: [application-system]
     label: ExternalDNS
@@ -275,6 +272,34 @@ amiya·akn: {
     icon: assets/icons/system/cloudnativepg.svg
     link: https://cloudnative-pg.io/
     tooltip: CloudNative-PG is a Kubernetes operator for PostgreSQL management with advanced features like automated backups and high availability.
+  }
+
+  system.cloudflare-operator: {
+    class: [application-system]
+    label: Cloudflare Operator
+    icon: assets/icons/platform/cloudflare.svg
+    link: https://github.com/cloudflare/cloudflare-operator
+    tooltip: Kubernetes operator for managing Cloudflare tunnels and DNS records declaratively.
+  }
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Public Gateway Components
+
+
+  public-gateway.envoy-public-gateway: {
+    class: [application-system]
+    label: Envoy Public Gateway
+    icon: assets/icons/system/envoy.svg
+    link: https://gateway.envoyproxy.io/
+    tooltip: Dedicated Envoy gateway for public internet access via Cloudflare tunnel with ClusterIP-only service type for security isolation.
+  }
+
+  public-gateway.cloudflared: {
+    class: [application-system]
+    label: cloudflared
+    icon: assets/icons/platform/cloudflare.svg
+    link: https://github.com/cloudflare/cloudflared
+    tooltip: Cloudflare tunnel daemon establishing secure connection to Cloudflare's edge network, managed by cloudflare-operator.
   }
 
   # Other Components
@@ -337,7 +362,10 @@ amiya·akn.system.cloudnative-pg -> amiya·akn.security.openbao-stack.postgresql
 amiya·akn.system.cloudnative-pg -> amiya·akn.security.pocket-id-stack.postgresql: { class: [connect-management] }
 
 amiya·akn.system.envoy-gateway -> amiya·akn.system.envoy-default-gateway: { class: [connect-management] }
-amiya·akn.system.envoy-gateway -> amiya·akn.system.envoy-ldap-gateway: { class: [connect-management] }
+amiya·akn.system.envoy-gateway -> amiya·akn.public-gateway.envoy-public-gateway: { class: [connect-management] }
+
+amiya·akn.system.cloudflare-operator -> cloudflare: "HTTPS API (443)" { class: [connect-to-internet] }
+amiya·akn.system.cloudflare-operator -> amiya·akn.public-gateway.cloudflared: { class: [connect-management] }
 
 amiya·akn.system.envoy-default-gateway <- localnet: {
   source-arrowhead: |md
@@ -345,7 +373,6 @@ amiya·akn.system.envoy-default-gateway <- localnet: {
     HTTPS (443)
   |
 }
-amiya·akn.system.envoy-ldap-gateway <- localnet: { source-arrowhead: LDAP (389) }
 
 amiya·akn.system.external-secret -> amiya·akn.security.openbao-stack.openbao: { source-arrowhead: HTTP (8200) }
 
@@ -361,10 +388,22 @@ amiya·akn.infrastructure.argocd  -> internet: HTTPS (443) / SSH (22) { class: [
 amiya·akn.infrastructure.crossplane -> internet: HTTPS (443) {class: [connect-to-internet]}
 
 amiya·akn.security.pocket-id-stack.pocket-id -> aws.ses: "smtps://email-smtp.us-east-1.amazonaws.com:465" { }
-amiya·akn.security.pocket-id-stack.pocket-id -> pocket-id: "https://analytics.pocket-id.org:443" { }
+amiya·akn.security.pocket-id-stack.pocket-id -> internet: "https://analytics.pocket-id.org:443" { }
 
 amiya·akn.storage.zot-registry -> internet: HTTPS (443) { class: [connect-to-internet; undeployed] }
 
 amiya·akn.system.cert-manager -> internet: HTTPS (443) {class: [connect-to-internet]}
+
+amiya·akn.public-gateway.cloudflared <- cloudflare: |md
+  Tunnel Connection
+  auth.chezmoi.sh
+| { class: [connect-from-internet] }
+
+amiya·akn.public-gateway.envoy-public-gateway <- amiya·akn.public-gateway.cloudflared: |md
+  HTTP Traffic
+  ClusterIP Only
+| { class: [connect-from-internet] }
+
+amiya·akn.security.pocket-id-stack.pocket-id <- amiya·akn.public-gateway.envoy-public-gateway: "http (1411)" { class: [connect-from-internet] }
 
 amiya·akn.system.externaldns -> udm-pro: DNS updates

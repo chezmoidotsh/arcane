@@ -1,0 +1,63 @@
+---
+apiVersion: tf.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: cloudflare
+spec:
+  configuration: |
+    // Modules _must_ use remote state. The provider does not persist state.
+    terraform {
+      backend "kubernetes" {
+        secret_suffix     = "providerconfig-cloudflare"
+        namespace         = "crossplane"
+        in_cluster_config = true
+      }
+    }
+
+    // Install Cloudflare provider
+    variable "api_token" { type = string }
+
+    terraform {
+      required_providers {
+        cloudflare = {
+          source  = "cloudflare/cloudflare"
+          version = "~> 5.0"
+        }
+      }
+    }
+
+    provider "cloudflare" {
+      api_token = var.api_token
+    }
+  credentials:
+    - filename: terraform.tfvars.json
+      secretRef:
+        name: cloudflare-terraform-credentials
+        key: terraform.tfvars.json
+        namespace: crossplane
+      source: Secret
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: cloudflare-terraform-credentials
+spec:
+  refreshInterval: 720h # 30 days
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    name: cloudflare-terraform-credentials
+    template:
+      type: Opaque
+      engineVersion: v2
+      data:
+        terraform.tfvars.json: |
+          {
+            "api_token": "{{ .api_token }}"
+          }
+  data:
+    - secretKey: api_token
+      remoteRef:
+        key: shared/third-parties/cloudflare/iam/chezmoi.sh/terraform-provider
+        property: api_token

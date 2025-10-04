@@ -1,0 +1,64 @@
+# Cloudflare API Token for tunnel operator
+#
+# Description:
+#   This resource creates a Cloudflare API Token with specific permissions for the
+#   cloudflare-operator to manage tunnels and DNS records. The token is used by
+#   the operator to automatically create and manage Cloudflare tunnels.
+#
+# Permissions:
+#   - Zone Read (c8fed203ed3043cba015a93ad1616f1f): Allows reading zone information
+#   - DNS Write (4755a26eedb94da69e1066d98aa820be): Allows creating and managing DNS records
+#   - Account Cloudflare Tunnel Write (ea25bc5bb7fb440fb5dacdb5ab5c6b0b): Allows creating/managing tunnels
+#
+# Security:
+#   The secret is synchronized to Vault (vault.chezmoi.sh) using External Secrets Operator.
+---
+apiVersion: account.cloudflare.crossplane.io/v1alpha1
+kind: APIToken
+metadata:
+  name: amiyaakn-chezmoi-sh-cloudflare-operator
+spec:
+  forProvider:
+    name: (amiya.akn.chezmoi.sh) - cloudflare-operator
+    policy:
+      - effect: allow
+        permissionGroups:
+          - c1fde68c7bcc44588cbb6ddbc16d6480 # Account Settings Read (Account)
+          - c07321b023e944ff818fec44d8203567 # Argo Tunnel Write (Account)
+
+          - 4755a26eedb94da69e1066d98aa820be # DNS Write (Zone)
+        resources:
+          com.cloudflare.api.account.zone.2734d7b22cf00222046320ed3187cb94: "*"
+          com.cloudflare.api.account.*: "*"
+  writeConnectionSecretToRef:
+    name: amiya.akn-cloudflare-token-cloudflare-operator
+    namespace: crossplane-secrets
+---
+apiVersion: external-secrets.io/v1alpha1
+kind: PushSecret
+metadata:
+  name: amiya.akn-cloudflare-token-cloudflare-operator
+  namespace: crossplane-secrets
+spec:
+  refreshInterval: 1h
+  secretStoreRefs:
+    - kind: ClusterSecretStore
+      name: vault.chezmoi.sh
+  selector:
+    secret:
+      name: amiya.akn-cloudflare-token-cloudflare-operator
+  template:
+    metadata:
+      annotations:
+        description: Cloudflare API Token for tunnel operator
+        origin: crossplane
+        owner: amiya.akn
+        renewal-process: |
+          Remove the amiyaakn-chezmoi-sh-cloudflare-operator APIToken then wait ArgoCD to create a new one.
+  data:
+    - conversionStrategy: None
+      match:
+        secretKey: attribute.value
+        remoteRef:
+          remoteKey: shared/data/third-parties/cloudflare/iam/amiya.akn/cloudflare-operator
+          property: api_token

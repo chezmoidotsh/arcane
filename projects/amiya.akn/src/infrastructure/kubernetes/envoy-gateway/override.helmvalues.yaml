@@ -1,0 +1,26 @@
+---
+# Envoy Gateway Configuration Overrides
+#
+# Enable Gateway Namespace Mode to deploy Envoy Proxy data plane resources
+# (Deployments, Services, ServiceAccounts) in each Gateway's namespace instead
+# of the controller namespace.
+#
+# This provides:
+# - Stronger isolation and multi-tenancy across different gateway namespaces
+# - More granular resource management and security boundaries
+# - Enhanced security through JWT token authentication between infrastructure
+#   and control plane
+#
+# This is particularly important for our architecture where we have separate
+# gateways in different namespaces (default gateway in envoy-gateway-system,
+# public gateway in cloudflare-public-gateway-system) with different security
+# profiles and access patterns.
+#
+# Reference: https://gateway.envoyproxy.io/docs/tasks/operations/gateway-namespace-mode/
+config:
+  envoyGateway:
+    provider:
+      type: Kubernetes
+      kubernetes:
+        deploy:
+          type: GatewayNamespace

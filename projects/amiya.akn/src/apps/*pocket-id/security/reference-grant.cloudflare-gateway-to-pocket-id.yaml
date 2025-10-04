@@ -3,14 +3,14 @@ kind: ReferenceGrant
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows Envoy Gateway from the envoy-gateway-system namespace to access the pocket-id service
-      to enable SSO access from the local network.
-  name: envoy-gateway-system-to-pocket-id
+      Allows Cloudflare Gateway from the cloudflare-public-gateway-system namespace to access the pocket-id service
+      to enable SSO access from the internet.
+  name: cloudflare-public-gateway-system-to-pocket-id
 spec:
   from:
     - group: gateway.networking.k8s.io
       kind: Gateway
-      namespace: envoy-gateway-system
+      namespace: cloudflare-public-gateway-system
   to:
     - group: ""
       kind: Service

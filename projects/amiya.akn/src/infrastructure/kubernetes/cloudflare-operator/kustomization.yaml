@@ -1,0 +1,8 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # Install Cloudflare operator from GitHub
+  - https://github.com/adyanth/cloudflare-operator.git/config/default?ref=v0.13.1
+  - cloudflare-credentials.externalsecret.yaml

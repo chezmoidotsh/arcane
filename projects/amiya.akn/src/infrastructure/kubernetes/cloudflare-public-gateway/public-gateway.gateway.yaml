@@ -1,0 +1,25 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: public
+  annotations:
+    argocd.argoproj.io/description: |
+      Dedicated Gateway for Cloudflare tunnel internet exposure.
+      Uses ClusterIP service to ensure traffic only comes from the tunnel,
+      providing secure isolation from direct internet access.
+spec:
+  gatewayClassName: envoy-gateway
+  infrastructure:
+    parametersRef:
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: public-gateway-proxy
+  listeners:
+    - allowedRoutes:
+        namespaces:
+          from: All # Allow routes from any namespace for flexibility
+      hostname: "*.chezmoi.sh"
+      name: public
+      port: 80
+      protocol: HTTP

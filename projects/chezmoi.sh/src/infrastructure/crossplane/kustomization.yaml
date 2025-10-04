@@ -16,11 +16,15 @@ resources:
   - providers/aws/provider.yaml
   - providers/cloudflare/default.providerconfig.yaml
   - providers/cloudflare/provider.yaml
+  - providers/terraform/cloudflare.providerconfig.yaml
   - providers/terraform/default.providerconfig.yaml
   - providers/terraform/provider.yaml
   - providers/terraform/tailscale.providerconfig.yaml
   - providers/vault/default.providerconfig.yaml
   - providers/vault/provider.yaml
+
+  # Cloudflare resources
+  - cloudflare.iam.terraform-provider.yaml
 
   # AWS resources
   - aws.domainidentity.yaml
