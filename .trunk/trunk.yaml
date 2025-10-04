@@ -96,6 +96,10 @@ lint:
       linters: [ruff]
       paths:
         - catalog/ansible/collections/**/*.py
+    - # AI agent templates use headings which conflicts with remark-lint expectations
+      linters: [remark-lint]
+      paths:
+        - "**/*.AGENT.md"
 
   # This is the section where you override some linters' configurations.
   definitions:

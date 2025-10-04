@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://github.com/chezmoidotsh/arcane/tree/main/docs
+    about: Check existing documentation for guides and procedures

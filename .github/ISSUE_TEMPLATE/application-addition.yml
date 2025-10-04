@@ -1,0 +1,122 @@
+name: ":heavy_plus_sign: Application Addition"
+description: Request to add a new application to the infrastructure
+title: ":heavy_plus_sign:(project:<cluster>): Add <application-name>"
+labels: ["enhancement", "application"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for requesting a new application! Please provide detailed information to help streamline the deployment process.
+
+  - type: input
+    id: app-name
+    attributes:
+      label: Application Name
+      description: The name of the application to add
+      placeholder: "e.g., Immich, Paperless-ngx, Grafana"
+    validations:
+      required: true
+
+  - type: input
+    id: app-url
+    attributes:
+      label: Application URL
+      description: Official website or repository URL
+      placeholder: "https://github.com/..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Brief description of what this application does and why it's needed
+      placeholder: Tell us what this application does and how it will be used
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target-cluster
+    attributes:
+      label: Target Cluster
+      description: Which cluster/project should host this application?
+      options:
+        - project:amiya.akn (Mission-critical services)
+        - project:lungmen.akn (Home applications)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: app-type
+    attributes:
+      label: Application Type
+      description: What category does this application fall into?
+      options:
+        - Media (Streaming, Photos, Music)
+        - Productivity (Documents, Notes, Tasks)
+        - Infrastructure (Monitoring, Logging, Networking)
+        - Security (Authentication, Authorization, Secrets)
+        - Storage (Backup, File sharing)
+        - Automation (CI/CD, Home automation)
+        - Communication (Chat, Email, Calendar)
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: integration-requirements
+    attributes:
+      label: Integration Requirements
+      description: Select all integration needs for this application
+      options:
+        - label: Requires SSO/OIDC authentication (Pocket-Id)
+        - label: Requires internet access (public exposure)
+        - label: Requires VPN access (Tailscale exposure)
+        - label: Requires persistent storage (PVC)
+        - label: Requires database (PostgreSQL via CloudNative-PG)
+        - label: Requires S3-compatible storage
+        - label: Requires custom DNS records (Cloudflare)
+        - label: Requires TLS certificates (cert-manager)
+
+  - type: checkboxes
+    id: security-requirements
+    attributes:
+      label: Security Requirements
+      description: Security-related considerations for this application
+      options:
+        - label: Handles sensitive data (requires encryption at rest)
+        - label: Requires network isolation (microsegmentation)
+        - label: Needs secrets from OpenBao
+        - label: External exposure acceptable (internet-facing)
+        - label: Tailscale-only access required
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: List any dependencies or prerequisites (other applications, services, specific infrastructure)
+      placeholder: |
+        - Requires PostgreSQL database
+        - Depends on Redis for caching
+        - Needs MinIO for S3 storage
+
+  - type: textarea
+    id: configuration-notes
+    attributes:
+      label: Configuration Notes
+      description: Any specific configuration requirements, environment variables, resource limits, or deployment considerations
+      placeholder: |
+        Resource Requirements:
+        - CPU: 500m-1000m
+        - Memory: 512Mi-1Gi
+        - Storage: 10Gi
+
+        Special Configurations:
+        - Custom Helm values needed
+        - Special network policies required
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information, screenshots, or references
