@@ -12,7 +12,7 @@ spec:
   target:
     name: letsencrypt-issuer-credentials
   data:
-    - secretKey: api-token # trunk-ignore(checkov/CKV_SECRET_6)
+    - secretKey: api-token
       remoteRef:
         key: cloud-cloudflare-maison.chezmoi.sh-cert-manager
         property: attribute.value

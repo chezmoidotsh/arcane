@@ -41,7 +41,6 @@ spec:
         kind: ExternalSecret
         name: cloudflare-credentials
         namespace: external-dns-system
-    # trunk-ignore-begin(checkov/CKV_SECRET_6)
     - patch: |-
         - op: add
           path: /spec/values/env
@@ -51,7 +50,6 @@ spec:
                 secretKeyRef:
                   name: cloudflare-credentials
                   key: api-token
-      # trunk-ignore-end(checkov/CKV_SECRET_6)
       target:
         group: helm.toolkit.fluxcd.io
         kind: HelmRelease
