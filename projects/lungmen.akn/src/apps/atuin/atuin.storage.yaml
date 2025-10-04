@@ -8,6 +8,9 @@ metadata:
     app.kubernetes.io/name: atuin
     app.kubernetes.io/instance: atuin
     app.kubernetes.io/part-of: atuin
+    recurring-job-group.longhorn.io/auto-snapshots: enabled
+    recurring-job-group.longhorn.io/daily: enabled
+    recurring-job-group.longhorn.io/monthly: enabled
 spec:
   accessModes:
     - ReadWriteOnce
