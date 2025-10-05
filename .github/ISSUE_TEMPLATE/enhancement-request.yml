@@ -1,4 +1,4 @@
-name: ":wrench: Enhancement Request"
+name: "Enhancement Request"
 description: Propose improvements to existing systems or workflows
 title: ":wrench:(scope): Brief description of the enhancement"
 labels: ["enhancement"]

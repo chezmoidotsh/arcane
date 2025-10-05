@@ -1,5 +1,5 @@
 ---
-name: ":wrench: Enhancement Request (AI Agent)"
+name: "Enhancement Request (AI Agent)"
 about: Propose improvements to existing systems or workflows (AI agent version)
 title: ":wrench:(scope): Brief description of the enhancement"
 labels: enhancement

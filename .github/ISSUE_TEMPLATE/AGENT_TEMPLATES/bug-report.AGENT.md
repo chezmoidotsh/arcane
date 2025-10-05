@@ -1,5 +1,5 @@
 ---
-name: ":bug: Bug Report (AI Agent)"
+name: "Bug Report (AI Agent)"
 about: Report a bug or issue in the infrastructure (AI agent version)
 title: ":bug:(scope): Brief description of the issue"
 labels: bug

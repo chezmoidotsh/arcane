@@ -1,5 +1,5 @@
 ---
-name: ":heavy_plus_sign: Application Addition (AI Agent)"
+name: "Application Addition (AI Agent)"
 about: Request to add a new application to the infrastructure (AI agent version)
 title: ":sparkles:(project:<cluster>): Add <application-name>"
 labels: enhancement, application

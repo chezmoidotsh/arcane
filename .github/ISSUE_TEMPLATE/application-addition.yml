@@ -1,6 +1,6 @@
-name: ":heavy_plus_sign: Application Addition"
+name: "Application Addition"
 description: Request to add a new application to the infrastructure
-title: ":heavy_plus_sign:(project:<cluster>): Add <application-name>"
+title: ":sparkles:(project:<cluster>): Add <application-name>"
 labels: ["enhancement", "application"]
 body:
   - type: markdown
