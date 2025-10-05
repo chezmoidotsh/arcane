@@ -40,16 +40,22 @@ This represents a shift toward **practicality over perfectionism**, emphasizing 
 
 ```
 catalog/          # Reusable components and compositions
+├── ansible/      # Ansible roles for infrastructure provisioning
 ├── crossplane/   # XRDs and compositions for infrastructure
-├── flakes/       # Nix-built OCI images  
+├── flakes/       # Nix-built OCI images
+├── fluxcd/       # FluxCD Kustomize components
+├── kairos-bundles/ # Kairos OS bundle configurations
 ├── kustomize/    # Reusable Kustomize bases
 └── talos/        # Talos Linux manifests
 
-projects/         # Individual cluster/project definitions  
-├── amiya.akn/    # Mission-critical services (Talos Linux + ArgoCD, OpenBao, Authelia)
-├── maison/       # Home applications (K3s + FluxCD, legacy cluster)
-├── lungmen.akn/  # Home applications migration (Talos Linux + ArgoCD)
-└── chezmoi.sh/   # Shared infrastructure resources
+projects/         # Individual cluster/project definitions
+├── amiya.akn/    # Core platform cluster - Mission-critical services required for all other clusters (Talos Linux + ArgoCD, OpenBao, Authelia) - Production
+├── chezmoi.sh/   # Shared infrastructure resources (Crossplane providers)
+├── hass/         # Home Assistant application project (not a cluster)
+├── kazimierz.akn/ # Proxy/firewall/WAF cluster (Talos Linux + ArgoCD) - Planning
+├── lungmen.akn/  # Home applications cluster (Talos Linux + ArgoCD) - Active development
+├── maison/       # Home applications cluster (K3s + FluxCD) - Legacy, being replaced by lungmen.akn
+└── shodan.akn/   # Future cluster project - Planning
 
 scripts/          # Operational scripts
 ```
@@ -84,19 +90,32 @@ Uses `mise` for tool version management (.mise.toml):
 
 **Target Architecture**: All clusters will use ArgoCD for GitOps deployment
 
-**Current Implementation (amiya.akn)**:
+**Core Platform Cluster (amiya.akn)**:
 
+* **Role**: Mission-critical services required for all other clusters to function (authentication, secrets management, monitoring platform)
 * **App-of-Apps pattern** via ApplicationSets
 * **Seed application** bootstraps the entire cluster (seed.application.yaml)
 * **Project structure**: `projects/<cluster>/src/apps/*<name>/` (asterisk indicates ArgoCD-managed)
 * **Multi-source applications** for complex deployments
 * **OIDC integration** with Authelia for authentication
 * **Talos Linux** as the Kubernetes distribution
+* **Status**: Production - must remain operational for infrastructure to function
 
-**Migration Target (lungmen.akn)**:
+**Active Development (lungmen.akn)**:
 
-* **Talos Linux + ArgoCD** replacing the current maison (K3s + FluxCD) setup
+* **Talos Linux + ArgoCD** replacing maison (K3s + FluxCD)
 * **Same ArgoCD patterns** as amiya.akn for consistency
+* **Currently deployed apps**: actual-budget, atuin
+* **Migration from maison** in progress
+
+**Planned Clusters**:
+
+* **kazimierz.akn**: Proxy/firewall/WAF cluster (infrastructure defined, apps pending)
+* **shodan.akn**: Future cluster (architecture planned)
+
+**Application Projects** (not clusters):
+
+* **hass**: Home Assistant application project with infrastructure definitions
 
 ### FluxCD (Legacy - maison cluster)
 
@@ -244,32 +263,71 @@ When working with this codebase, understand that **architectural decisions prior
 
 ## CLAUDE Code Rules and Guidelines
 
-This project includes specific rules for CLAUDE Code interactions. These rules are loaded conditionally based on the task type to avoid context overload.
+This project includes specific rules for CLAUDE Code interactions in `.claude/rules/`. Reference these files for detailed guidance.
 
-### Git Operations
+### GitHub Templates
 
-For all Git operations and commit creation, refer to `.claude/rules/git-commits.md`:
+This repository includes comprehensive GitHub templates for streamlined issue and pull request creation:
 
-* Use gitmoji semantic commits synchronized with `.commitlintrc.js`
-* Follow exact scope format: `project:*`, `catalog:*`, `gh`, `deps`
-* Always include AI co-author attribution for traceability
-* Atomic commits with proper signoff (-s) and GPG signature (-S)
-* Comprehensive body explanations for non-trivial changes
+#### Pull Request Templates (`.github/PULL_REQUEST_TEMPLATE/`)
 
-### Collaborative Workflow Documentation
+* **Default template**: `.github/pull_request_template.md` - Standard PR format
+* **Feature**: `feature.md` - New feature implementation PRs
+* **Bugfix**: `bugfix.md` - Bug fix PRs
+* **Refactoring**: `refactoring.md` - Code refactoring PRs
 
-For complex multi-step tasks requiring context preservation, refer to `.claude/rules/workflow-documentation.md`:
+#### Issue Templates (`.github/ISSUE_TEMPLATE/`)
 
-* Create session documents only for significant collaborative work (3+ steps)
-* Use standardized template with chronological bullet points for change history
-* Always request user permission before creating/deleting session documents
-* Maintain focus alerts and scope management throughout work sessions
+* **Application Addition**: `application-addition.yml` - Request new application deployment
+* **Bug Report**: `bug-report.yml` - Report infrastructure or application bugs
+* **Enhancement Request**: `enhancement-request.yml` - Suggest improvements
 
-### CLI and Terminal Operations
+#### AI Agent Templates (`.github/ISSUE_TEMPLATE/AGENT_TEMPLATES/`)
 
-When executing terminal commands, follow `.claude/rules/cli-limitations.md`:
+Specialized templates for AI-assisted issue creation:
 
-* Always avoid interactive tools and pagers (use `--no-pager` or `| cat`)
-* Prefer batch operations over interactive workflows
-* Explain limitations clearly when declining interactive commands
-* Propose non-interactive alternatives when available
+* `application-addition.AGENT.md` - AI-generated application requests
+* `bug-report.AGENT.md` - AI-generated bug reports
+* `enhancement-request.AGENT.md` - AI-generated enhancement requests
+
+**Note**: AI agents should use these AGENT templates when creating issues to ensure proper formatting and required information.
+
+### Available Rules
+
+#### Git Operations (`.claude/rules/git-commits.md`)
+
+Comprehensive commit guidelines for Arcane infrastructure:
+
+* **Mandatory format**: `:emoji:(scope): Description` with signoff (-s) and GPG signature (-S)
+* **Gitmoji semantic emojis**: Synchronized with `.commitlintrc.js` (`:sparkles:`, `:bug:`, `:memo:`, `:wrench:`, etc.)
+* **Exact scopes**:
+  * Catalog: `catalog:ansible`, `catalog:crossplane`, `catalog:flakes`, `catalog:kustomize`, `catalog:kairos-bundle`, `catalog:talos`
+  * Project: `project:amiya.akn`, `project:chezmoi.sh`, `project:hass`, `project:kazimierz.akn`, `project:lungmen.akn`, `project:maison`, `project:shodan.akn`
+  * Repository: `gh` (GitHub/CI), `deps` (dependencies)
+  * Note: `catalog:fluxcd` exists in catalog/ but not in `.commitlintrc.js` (legacy catalog being phased out)
+* **AI Co-author attribution**: Mandatory `Co-authored-by: Claude <claude@anthropic.com>` trailer
+* **Atomic commits**: One logical change per commit, multiple scopes allowed when atomic (format: `scope1,scope2`)
+* **Body requirements**: Explain WHY not WHAT, UPPERCASE start for sentences, max 80 chars/line
+* **Never** auto-update GitHub issues without user confirmation
+
+#### Collaborative Workflow Documentation (`.claude/rules/workflow-documentation.md`)
+
+Session management for complex multi-step work:
+
+* **Session documents**: Create in `.claude/sessions/` with `YYYYMMDD-description.md` format
+* **Always create for**: Multi-step implementations (3+ steps), architecture decisions, complex debugging, feature development
+* **Skip for**: Simple questions, single file edits, trivial changes
+* **Permission management**: Always request user permission before creating/deleting sessions or GitHub actions
+* **Standard template**: Includes 🎯 Objective, 🧠 Context & Reflections, 📝 Change History, ⚠️ Attention Points, 🔄 Next Steps
+* **Context maintenance**: Document AI thoughts/decisions, auto-update on significant changes, re-read every 15±5 exchanges
+* **Scope management**: Provide status updates, alert on deviations, propose GitHub issues for unrelated discoveries
+
+#### CLI and Terminal Operations (`.claude/rules/cli-limitations.md`)
+
+AI agent limitations for interactive tools:
+
+* **Never use**: Interactive commands (`git rebase -i`, `git add -p`, `less`, `more`, `man`)
+* **Always use**: Non-interactive flags (`git --no-pager log`, `| cat`)
+* **Pager avoidance**: Append `| cat` or use `--no-pager` for git commands
+* **Preferred approaches**: Batch operations, specific file patterns, automated sequences
+* **Communication**: Clearly explain limitations and propose non-interactive alternatives
