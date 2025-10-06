@@ -1,0 +1,141 @@
+---
+# Pangolin Docker Compose role default variables
+# For more information, visit: https://docs.digpangolin.com/
+
+# =============================================================================
+# Installation paths
+# =============================================================================
+
+# Base directory for Pangolin installation
+pangolin_install_dir: /opt/pangolin
+
+# Configuration directory (relative to install_dir)
+pangolin_config_dir: "{{ pangolin_install_dir }}/config"
+
+# =============================================================================
+# Docker images and versions
+# =============================================================================
+
+# Pangolin application image and tag
+pangolin_image: fosrl/pangolin
+pangolin_version: latest
+
+# Gerbil networking service image and tag
+pangolin_gerbil_image: fosrl/gerbil
+pangolin_gerbil_version: latest
+
+# Traefik reverse proxy image and tag
+pangolin_traefik_image: traefik
+pangolin_traefik_version: v3.5
+
+# =============================================================================
+# Domain and SSL configuration
+# =============================================================================
+
+# Domain name for Pangolin dashboard
+pangolin_domain: pangolin.example.com
+
+# Email address for Let's Encrypt SSL certificates
+pangolin_letsencrypt_email: admin@example.com
+
+# Let's Encrypt ACME server URL
+# Production: https://acme-v02.api.letsencrypt.org/directory
+# Staging: https://acme-staging-v02.api.letsencrypt.org/directory
+pangolin_letsencrypt_server: https://acme-v02.api.letsencrypt.org/directory
+
+# =============================================================================
+# Pangolin application configuration (config.yml)
+# Reference: https://docs.digpangolin.com/self-host/advanced/config-file
+# =============================================================================
+
+# Application settings
+pangolin_config_app:
+  dashboard_url: "https://{{ pangolin_domain }}"
+  log_level: info  # Options: debug, info, warn, error
+
+# Domain configuration
+pangolin_config_domains:
+  domain1:
+    base_domain: "{{ pangolin_domain }}"
+
+# Server configuration
+pangolin_config_server:
+  # Secret key for session encryption (minimum 8 characters)
+  # WARNING: Change this to a random string in production!
+  secret: changeme_random_secret_key_min_8_chars
+
+# Gerbil tunnel controller configuration
+pangolin_config_gerbil:
+  base_endpoint: "{{ pangolin_domain }}"
+
+# Organization network configuration
+pangolin_config_orgs:
+  block_size: 24
+  subnet_group: 100.90.137.0/20
+
+# Feature flags
+pangolin_config_flags:
+  require_email_verification: false
+  disable_signup_without_invite: true
+  disable_user_create_org: true
+  allow_raw_resources: true
+  enable_integration_api: true
+  enable_clients: true
+
+# =============================================================================
+# Traefik configuration
+# =============================================================================
+
+# Traefik log level (DEBUG, INFO, WARN, ERROR)
+pangolin_traefik_log_level: INFO
+
+# Traefik API dashboard settings
+pangolin_traefik_api_insecure: true
+pangolin_traefik_api_dashboard: true
+
+# Traefik HTTP entry point (port 80)
+pangolin_traefik_http_port: 80
+
+# Traefik HTTPS entry point (port 443)
+pangolin_traefik_https_port: 443
+
+# Traefik read timeout for websockets and long-running requests
+pangolin_traefik_read_timeout: 30m
+
+# Badger plugin version (Pangolin's auth middleware)
+pangolin_traefik_badger_version: v1.2.0
+
+# =============================================================================
+# Gerbil WireGuard configuration
+# =============================================================================
+
+# WireGuard VPN port (UDP)
+pangolin_gerbil_wireguard_port: 51820
+
+# Gerbil management port (UDP)
+pangolin_gerbil_management_port: 21820
+
+# =============================================================================
+# Docker Compose configuration
+# =============================================================================
+
+# Docker network name
+pangolin_network_name: pangolin
+
+# Container restart policy
+pangolin_restart_policy: unless-stopped
+
+# Health check configuration
+pangolin_healthcheck_interval: 3s
+pangolin_healthcheck_timeout: 3s
+pangolin_healthcheck_retries: 15
+
+# =============================================================================
+# Additional configuration
+# =============================================================================
+
+# Create config directories with these permissions
+pangolin_config_dir_mode: '0755'
+
+# Docker Compose project name
+pangolin_compose_project_name: pangolin

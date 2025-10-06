@@ -1,0 +1,34 @@
+---
+galaxy_info:
+  role_name: pangolin
+  author: Alexandre Nicolaie Dit Clairville
+  description: Deploy and configure Pangolin WireGuard VPN management platform using Docker Compose
+  license: MIT
+  min_ansible_version: '2.15'
+
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - bullseye
+    - name: Ubuntu
+      versions:
+        - jammy
+        - focal
+    - name: EL
+      versions:
+        - '8'
+        - '9'
+
+  galaxy_tags:
+    - docker
+    - wireguard
+    - vpn
+    - networking
+    - traefik
+    - security
+
+dependencies: []
+
+collections:
+  - community.docker

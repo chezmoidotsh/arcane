@@ -1,0 +1,60 @@
+# Pangolin Docker Compose configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+# Role: pangolin
+
+name: {{ pangolin_compose_project_name }}
+
+services:
+  pangolin:
+    image: {{ pangolin_image }}:{{ pangolin_version }}
+    container_name: pangolin
+    restart: {{ pangolin_restart_policy }}
+    volumes:
+      - {{ pangolin_config_dir }}:/app/config
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/"]
+      interval: {{ pangolin_healthcheck_interval }}
+      timeout: {{ pangolin_healthcheck_timeout }}
+      retries: {{ pangolin_healthcheck_retries }}
+
+  gerbil:
+    image: {{ pangolin_gerbil_image }}:{{ pangolin_gerbil_version }}
+    container_name: gerbil
+    restart: {{ pangolin_restart_policy }}
+    depends_on:
+      pangolin:
+        condition: service_healthy
+    command:
+      - --reachableAt=http://gerbil:3003
+      - --generateAndSaveKeyTo=/var/config/key
+      - --remoteConfig=http://pangolin:3001/api/v1/
+    volumes:
+      - {{ pangolin_config_dir }}:/var/config
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    ports:
+      - {{ pangolin_gerbil_wireguard_port }}:51820/udp
+      - {{ pangolin_gerbil_management_port }}:21820/udp
+      - {{ pangolin_traefik_https_port }}:443
+      - {{ pangolin_traefik_http_port }}:80
+
+  traefik:
+    image: {{ pangolin_traefik_image }}:{{ pangolin_traefik_version }}
+    container_name: traefik
+    restart: {{ pangolin_restart_policy }}
+    network_mode: service:gerbil
+    depends_on:
+      pangolin:
+        condition: service_healthy
+    command:
+      - --configFile=/etc/traefik/traefik_config.yml
+    volumes:
+      - {{ pangolin_config_dir }}/traefik:/etc/traefik:ro
+      - {{ pangolin_config_dir }}/letsencrypt:/letsencrypt
+
+networks:
+  default:
+    driver: bridge
+    name: {{ pangolin_network_name }}
+    enable_ipv6: false

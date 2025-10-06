@@ -1,0 +1,22 @@
+---
+# Kazimierz.akn Production Inventory
+# Proxy/Firewall/WAF Cluster
+
+all:
+  children:
+    kazimierz:
+      hosts:
+        kazimierz.akn:
+          ansible_host: kazimierz.akn.chezmoi.sh
+          ansible_user: root
+          ansible_connection: ssh
+          ansible_python_interpreter: /usr/bin/python3
+
+  vars:
+    # Project identification
+    project_name: kazimierz.akn
+    cluster_role: proxy-firewall-waf
+
+    # OpenBao vault configuration
+    vault_addr: https://vault.chezmoi.sh
+    vault_namespace: ""

@@ -1,0 +1,51 @@
+# Traefik static configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+# Role: pangolin
+
+api:
+  insecure: {{ pangolin_traefik_api_insecure | lower }}
+  dashboard: {{ pangolin_traefik_api_dashboard | lower }}
+
+providers:
+  http:
+    endpoint: "http://pangolin:3001/api/v1/traefik-config"
+    pollInterval: "5s"
+  file:
+    filename: "/etc/traefik/dynamic_config.yml"
+
+experimental:
+  plugins:
+    badger:
+      moduleName: "github.com/fosrl/badger"
+      version: "{{ pangolin_traefik_badger_version }}"
+
+log:
+  level: "{{ pangolin_traefik_log_level }}"
+  format: "common"
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      httpChallenge:
+        entryPoint: web
+      email: {{ pangolin_letsencrypt_email }}
+      storage: "/letsencrypt/acme.json"
+      caServer: "{{ pangolin_letsencrypt_server }}"
+
+entryPoints:
+  web:
+    address: ":{{ pangolin_traefik_http_port }}"
+  websecure:
+    address: ":{{ pangolin_traefik_https_port }}"
+    transport:
+      respondingTimeouts:
+        readTimeout: "{{ pangolin_traefik_read_timeout }}"
+    http:
+      tls:
+        certResolver: "letsencrypt"
+
+serversTransport:
+  insecureSkipVerify: true
+
+ping:
+  entryPoint: "web"

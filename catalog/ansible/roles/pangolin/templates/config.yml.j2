@@ -1,0 +1,32 @@
+# Pangolin application configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+# Role: pangolin
+# Documentation: https://docs.digpangolin.com/self-host/advanced/config-file
+
+app:
+  dashboard_url: {{ pangolin_config_app.dashboard_url }}
+  log_level: {{ pangolin_config_app.log_level }}
+
+domains:
+{% for domain_name, domain_config in pangolin_config_domains.items() %}
+  {{ domain_name }}:
+    base_domain: {{ domain_config.base_domain }}
+{% endfor %}
+
+server:
+  secret: {{ pangolin_config_server.secret }}
+
+gerbil:
+  base_endpoint: {{ pangolin_config_gerbil.base_endpoint }}
+
+orgs:
+  block_size: {{ pangolin_config_orgs.block_size }}
+  subnet_group: {{ pangolin_config_orgs.subnet_group }}
+
+flags:
+  require_email_verification: {{ pangolin_config_flags.require_email_verification | lower }}
+  disable_signup_without_invite: {{ pangolin_config_flags.disable_signup_without_invite | lower }}
+  disable_user_create_org: {{ pangolin_config_flags.disable_user_create_org | lower }}
+  allow_raw_resources: {{ pangolin_config_flags.allow_raw_resources | lower }}
+  enable_integration_api: {{ pangolin_config_flags.enable_integration_api | lower }}
+  enable_clients: {{ pangolin_config_flags.enable_clients | lower }}

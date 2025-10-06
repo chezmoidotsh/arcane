@@ -1,0 +1,162 @@
+---
+# =============================================================================
+# Kazimierz Infrastructure Deployment Playbook
+# =============================================================================
+#
+# This playbook deploys the complete infrastructure stack for Kazimierz:
+#   - Docker and Docker Compose
+#   - Pangolin WireGuard VPN management platform
+#   - Tailscale for secure cluster connectivity
+#   - Firewall configuration (UFW)
+#
+# Prerequisites:
+#   1. Target host accessible via SSH as root
+#   2. OpenBao vault accessible at https://vault.chezmoi.sh
+#   3. VAULT_TOKEN environment variable set with valid token
+#
+# Required Environment Variables:
+#   VAULT_TOKEN - Valid OpenBao authentication token
+#
+# Authenticate with OpenBao before running:
+#   export VAULT_ADDR=https://vault.chezmoi.sh
+#   bao login -method=oidc
+#   export VAULT_TOKEN=$(bao token lookup -format=json | jq -r .data.id)
+#
+# Usage:
+#   ansible-playbook -i inventory/production.yml deploy.yml
+#
+# Available tags:
+#   - docker: Docker installation
+#   - pangolin: Pangolin VPN platform
+#   - tailscale: Tailscale mesh networking
+#   - firewall: UFW firewall configuration
+#
+# =============================================================================
+
+- name: Deploy Kazimierz Infrastructure
+  hosts: kazimierz
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    # =========================================================================
+    # Pre-flight Checks
+    # =========================================================================
+    - name: Verify VAULT_TOKEN environment variable is set
+      ansible.builtin.assert:
+        that:
+          - lookup('env', 'VAULT_TOKEN') | length > 0
+        fail_msg: |
+          VAULT_TOKEN environment variable not set. Please authenticate:
+
+          export VAULT_ADDR=https://vault.chezmoi.sh
+          bao login -method=oidc
+          export VAULT_TOKEN=$(bao token lookup -format=json | jq -r .data.id)
+        success_msg: "VAULT_TOKEN validated successfully"
+      tags: always
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      tags: always
+
+  tasks:
+    # =========================================================================
+    # Docker Installation
+    # =========================================================================
+    - name: Install Docker
+      ansible.builtin.include_role:
+        name: geerlingguy.docker
+      tags: docker
+
+    # =========================================================================
+    # Pangolin VPN Platform Deployment
+    # =========================================================================
+    - name: Deploy Pangolin WireGuard VPN Management Platform
+      ansible.builtin.include_role:
+        name: pangolin
+      tags: pangolin
+
+    # =========================================================================
+    # Tailscale Mesh Networking
+    # =========================================================================
+    - name: Install and configure Tailscale with SSH
+      ansible.builtin.include_role:
+        name: artis3n.tailscale
+      tags: tailscale
+
+    # =========================================================================
+    # Firewall Configuration
+    # =========================================================================
+    - name: Configure UFW firewall rules
+      block:
+        - name: Install UFW
+          ansible.builtin.apt:
+            name: ufw
+            state: present
+
+        - name: Configure UFW defaults
+          community.general.ufw:
+            direction: "{{ item.direction }}"
+            policy: "{{ item.policy }}"
+          loop:
+            - { direction: 'incoming', policy: 'deny' }
+            - { direction: 'outgoing', policy: 'allow' }
+
+        - name: Configure UFW rules
+          community.general.ufw:
+            rule: "{{ item.rule }}"
+            port: "{{ item.port | default(omit) }}"
+            proto: "{{ item.proto | default(omit) }}"
+            comment: "{{ item.comment | default(omit) }}"
+          loop: "{{ ufw_rules }}"
+
+        - name: Enable UFW
+          community.general.ufw:
+            state: enabled
+
+        - name: Disable SSH port 22 from public internet
+          community.general.ufw:
+            rule: deny
+            port: 22
+            proto: tcp
+            comment: "SSH - Deny public access (use Tailscale SSH instead)"
+      tags: firewall
+
+  post_tasks:
+    # =========================================================================
+    # Post-deployment Information
+    # =========================================================================
+    - name: Display deployment summary
+      ansible.builtin.debug:
+        msg:
+          - "=============================================================="
+          - "Kazimierz Infrastructure Deployment Complete!"
+          - "=============================================================="
+          - ""
+          - "Services deployed:"
+          - "  ✓ Docker {{ docker_version | default('latest') }}"
+          - "  ✓ Pangolin VPN Platform"
+          - "  ✓ Tailscale (with SSH enabled)"
+          - "  ✓ UFW Firewall"
+          - ""
+          - "Pangolin Dashboard: https://{{ pangolin_domain }}"
+          - "Initial Setup: https://{{ pangolin_domain }}/auth/initial-setup"
+          - ""
+          - "Firewall Configuration:"
+          - "  ✓ HTTP (80) - OPEN"
+          - "  ✓ HTTPS (443) - OPEN"
+          - "  ✓ WireGuard (51820/udp) - OPEN"
+          - "  ✓ SSH (22) - CLOSED (use Tailscale SSH instead)"
+          - "  ✓ Tailscale (41641/udp) - OPEN"
+          - ""
+          - "Access the server via Tailscale SSH:"
+          - "  tailscale ssh {{ ansible_host }}"
+          - ""
+          - "Manage Pangolin:"
+          - "  cd {{ pangolin_install_dir }}"
+          - "  docker compose ps"
+          - "  docker compose logs -f"
+          - "=============================================================="
+      tags: always

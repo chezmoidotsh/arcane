@@ -1,0 +1,106 @@
+---
+# =============================================================================
+# Global variables for Kazimierz infrastructure
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# OpenBao Vault Configuration
+# -----------------------------------------------------------------------------
+# Secrets are retrieved from OpenBao using community.hashi_vault lookups
+# Ensure VAULT_ADDR and VAULT_TOKEN environment variables are set before running
+
+vault_addr: https://vault.chezmoi.sh
+vault_token: "{{ lookup('env', 'VAULT_TOKEN') }}"
+
+# -----------------------------------------------------------------------------
+# Pangolin Configuration
+# -----------------------------------------------------------------------------
+
+# Domain configuration
+pangolin_domain: chezmoi.sh
+pangolin_letsencrypt_email: "{{ lookup('community.hashi_vault.hashi_vault', 'secret=shared/data/pangolin/letsencrypt:email auth_method=token url=' + vault_addr + ' token=' + vault_token) }}"
+
+# Pangolin secrets retrieved from OpenBao
+pangolin_config_server:
+  secret: "{{ lookup('community.hashi_vault.hashi_vault', 'secret=shared/data/pangolin/config:secret auth_method=token url=' + vault_addr + ' token=' + vault_token) }}"
+
+# Pangolin application configuration
+pangolin_config_app:
+  dashboard_url: "https://{{ pangolin_domain }}"
+  log_level: info
+
+pangolin_config_domains:
+  domain1:
+    base_domain: "{{ pangolin_domain }}"
+
+pangolin_config_gerbil:
+  base_endpoint: "{{ pangolin_domain }}"
+
+pangolin_config_orgs:
+  block_size: 24
+  subnet_group: 100.64.0.0/20
+
+# Feature flags - restrictive security settings
+pangolin_config_flags:
+  require_email_verification: true
+  disable_signup_without_invite: true
+  disable_user_create_org: true
+  allow_raw_resources: false
+  enable_integration_api: true
+  enable_clients: true
+
+# -----------------------------------------------------------------------------
+# Tailscale Configuration
+# -----------------------------------------------------------------------------
+
+# Tailscale auth key (retrieved from OpenBao)
+tailscale_authkey: "{{ lookup('community.hashi_vault.hashi_vault', 'secret=shared/data/third-parties/tailscale/authkeys/kazimierz:authkey auth_method=token url=' + vault_addr + ' token=' + vault_token) }}"
+
+# Tailscale SSH configuration
+tailscale_args: "--ssh --accept-routes --advertise-tags=tag:infra,tag:kazimierz"
+
+# -----------------------------------------------------------------------------
+# Firewall Configuration
+# -----------------------------------------------------------------------------
+
+# UFW firewall rules
+ufw_default_incoming_policy: deny
+ufw_default_outgoing_policy: allow
+
+ufw_rules:
+  # Allow HTTP/HTTPS for Pangolin
+  - rule: allow
+    port: 80
+    proto: tcp
+    comment: "HTTP - Pangolin"
+
+  - rule: allow
+    port: 443
+    proto: tcp
+    comment: "HTTPS - Pangolin"
+
+  # Allow WireGuard for Pangolin
+  - rule: allow
+    port: 51820
+    proto: udp
+    comment: "WireGuard - Pangolin VPN"
+
+  # Allow Tailscale
+  - rule: allow
+    port: 41641
+    proto: udp
+    comment: "Tailscale"
+
+# -----------------------------------------------------------------------------
+# Docker Configuration
+# -----------------------------------------------------------------------------
+
+docker_install_compose_plugin: true
+docker_users:
+  - "{{ ansible_user }}"
+
+docker_daemon_options:
+  log-driver: json-file
+  log-opts:
+    max-size: "10m"
+    max-file: "3"

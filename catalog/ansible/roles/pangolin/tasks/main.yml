@@ -1,0 +1,95 @@
+---
+# Pangolin installation and configuration tasks
+
+- name: Ensure installation directory exists
+  ansible.builtin.file:
+    path: "{{ pangolin_install_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Ensure config directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "{{ pangolin_config_dir_mode }}"
+  loop:
+    - "{{ pangolin_config_dir }}"
+    - "{{ pangolin_config_dir }}/db"
+    - "{{ pangolin_config_dir }}/logs"
+    - "{{ pangolin_config_dir }}/traefik"
+    - "{{ pangolin_config_dir }}/letsencrypt"
+
+- name: Deploy docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ pangolin_install_dir }}/docker-compose.yml"
+    mode: '0644'
+  notify: Restart Pangolin
+
+- name: Deploy Pangolin config.yml
+  ansible.builtin.template:
+    src: config.yml.j2
+    dest: "{{ pangolin_config_dir }}/config.yml"
+    mode: '0644'
+  notify: Restart Pangolin
+
+- name: Deploy Traefik static configuration
+  ansible.builtin.template:
+    src: traefik_config.yml.j2
+    dest: "{{ pangolin_config_dir }}/traefik/traefik_config.yml"
+    mode: '0644'
+  notify: Restart Pangolin
+
+- name: Deploy Traefik dynamic configuration
+  ansible.builtin.template:
+    src: dynamic_config.yml.j2
+    dest: "{{ pangolin_config_dir }}/traefik/dynamic_config.yml"
+    mode: '0644'
+  notify: Restart Pangolin
+
+- name: Check if Docker Compose plugin is available
+  ansible.builtin.command: docker compose version
+  register: docker_compose_version
+  changed_when: false
+  failed_when: false
+
+- name: Fail if Docker is not installed
+  ansible.builtin.fail:
+    msg: "Docker and Docker Compose are required but not found. Please install Docker first (e.g., using geerlingguy.docker role)."
+  when: docker_compose_version.rc != 0
+
+- name: Pull Pangolin Docker images
+  community.docker.docker_compose_v2:
+    project_src: "{{ pangolin_install_dir }}"
+    state: present
+    pull: always
+  register: pangolin_pull
+
+- name: Start Pangolin services
+  community.docker.docker_compose_v2:
+    project_src: "{{ pangolin_install_dir }}"
+    state: present
+  register: pangolin_start
+
+- name: Wait for Pangolin to be healthy
+  ansible.builtin.uri:
+    url: "http://localhost:3001/api/v1/"
+    status_code: 200
+  register: result
+  until: result.status == 200
+  retries: 30
+  delay: 5
+  when: pangolin_start is changed
+
+- name: Display post-installation information
+  ansible.builtin.debug:
+    msg:
+      - "Pangolin has been installed successfully!"
+      - "Dashboard URL: https://{{ pangolin_domain }}"
+      - "Initial setup: https://{{ pangolin_domain }}/auth/initial-setup"
+      - ""
+      - "To manage the services:"
+      - "  Start:   docker compose -f {{ pangolin_install_dir }}/docker-compose.yml up -d"
+      - "  Stop:    docker compose -f {{ pangolin_install_dir }}/docker-compose.yml down"
+      - "  Logs:    docker compose -f {{ pangolin_install_dir }}/docker-compose.yml logs -f"
+      - "  Status:  docker compose -f {{ pangolin_install_dir }}/docker-compose.yml ps"

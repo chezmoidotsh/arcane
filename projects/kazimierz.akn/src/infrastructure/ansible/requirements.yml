@@ -1,0 +1,28 @@
+---
+# Ansible Galaxy requirements for Kazimierz infrastructure deployment
+#
+# Install with: ansible-galaxy install -r requirements.yml
+
+roles:
+  # Docker installation and configuration
+  # https://github.com/geerlingguy/ansible-role-docker
+  - name: geerlingguy.docker
+    version: 7.6.1
+
+  # Tailscale VPN installation with SSH support
+  # https://github.com/artis3n/ansible-role-tailscale
+  - name: artis3n.tailscale
+    version: v5.3.2
+
+collections:
+  # Community Docker collection for docker_compose_v2 module
+  - name: community.docker
+    version: ">=4.0.0"
+
+  # Community General collection for ufw and other modules
+  - name: community.general
+    version: ">=9.0.0"
+
+  # HashiCorp Vault collection for secret lookups
+  - name: community.hashi_vault
+    version: ">=6.0.0"
