@@ -20,7 +20,7 @@ spec:
               value: "true"
             - name: ACTUAL_TOKEN_EXPIRATION
               value: openid-provider
-          image: ghcr.io/actualbudget/actual-server:25.8.0
+          image: ghcr.io/actualbudget/actual-server:25.10.0
           livenessProbe:
             httpGet:
               path: /
