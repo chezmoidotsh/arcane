@@ -1,0 +1,32 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Silverbullet to access internet resources for:
+      - Downloading plugs from GitHub via "Plugs: Update" command
+      - Fetching plug resources from raw.githubusercontent.com
+      All connections are restricted to secure protocols only.
+  name: allow-silverbullet-to-internet
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: silverbullet
+  egress:
+    - toFQDNs:
+        # Allow access to GitHub for plug downloads
+        - matchName: github.com
+        - matchPattern: "*.github.com"
+        - matchName: raw.githubusercontent.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    - toCIDR:
+        # Allow HTTPS to any address for plug downloads and resources
+        - 0.0.0.0/0
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

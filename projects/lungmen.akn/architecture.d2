@@ -440,6 +440,7 @@ lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.envoy-gateway
 lungmen·akn.others.linkding-stack.postgresql -> nas.minio: "Database backups (S3)" {}
 lungmen·akn.others.linkding-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
+lungmen·akn.others.silverbullet -> internet: "Plug downloads (443)" {class: [connect-to-internet]}
 lungmen·akn.others.silverbullet <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (3000)" {}
 lungmen·akn.others.silverbullet <- lungmen·akn.system.tailscale: "VPN access (3000)" {class: [connect-vpn-backbone]}
 
