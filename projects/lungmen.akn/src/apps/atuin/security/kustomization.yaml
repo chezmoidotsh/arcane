@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - network-policy.default-hardened.yaml
   - network-policy.allow-atuin-from-envoy-gateway.yaml
+  - network-policy.allow-atuin-from-tailscale.yaml
   - network-policy.allow-postgres-from-cnpg.yaml
   - network-policy.allow-postgres-to-kubernetes-api.yaml
   - network-policy.allow-postgres-to-s3-backup.yaml

@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Tailscale Ingress to route traffic to Atuin application
+      for secure VPN-only access via MagicDNS endpoint.
+  name: allow-atuin-from-tailscale
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: atuin
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: tailscale-system
+      toPorts:
+        - ports:
+            - port: "8888"
+              protocol: TCP
