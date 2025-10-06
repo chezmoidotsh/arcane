@@ -5,3 +5,4 @@ kind: Kustomization
 resources:
   - network-policy.default-hardened.yaml
   - network-policy.allow-silverbullet-from-envoy-gateway.yaml
+  - network-policy.allow-silverbullet-from-tailscale.yaml

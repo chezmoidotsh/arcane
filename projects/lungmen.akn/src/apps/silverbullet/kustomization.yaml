@@ -15,5 +15,6 @@ labels:
 
 resources:
   - silverbullet.httproute.yaml
+  - silverbullet.ingress.yaml
   - silverbullet.statefulset.yaml
   - security/
