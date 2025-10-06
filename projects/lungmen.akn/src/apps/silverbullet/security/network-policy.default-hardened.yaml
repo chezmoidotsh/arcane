@@ -29,3 +29,11 @@ spec:
     - toEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: silverbullet
+
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: envoy-gateway-system
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
