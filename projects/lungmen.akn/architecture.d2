@@ -344,6 +344,14 @@ lungmen·akn: {
       tooltip: PostgreSQL database backend for Linkding, managed by CloudNative-PG operator with automated backups to S3.
     }
   }
+
+  others.silverbullet: {
+    class: [application]
+    label: Silverbullet
+    icon: assets/icons/apps/silverbullet.png
+    link: https://silverbullet.md/
+    tooltip: Personal productivity platform and wiki built on Markdown with Lua scripting capabilities.
+  }
 }
 
 
@@ -431,6 +439,9 @@ lungmen·akn.others.linkding-stack.linkding -> internet: "Website information fe
 lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (9090)" {}
 lungmen·akn.others.linkding-stack.postgresql -> nas.minio: "Database backups (S3)" {}
 lungmen·akn.others.linkding-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
+
+lungmen·akn.others.silverbullet <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (3000)" {}
+lungmen·akn.others.silverbullet <- lungmen·akn.system.tailscale: "VPN access (3000)" {class: [connect-vpn-backbone]}
 
 
 # ──────────────────────────────────────────────────────────────────────────────

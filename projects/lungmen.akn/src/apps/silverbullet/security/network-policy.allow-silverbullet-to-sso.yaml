@@ -1,0 +1,23 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: >
+      Allows Silverbullet to access SSO for authentication.
+      Permits outbound HTTPS connections to auth.chezmoi.sh on port 443
+      for OIDC authentication flow via Envoy Gateway SecurityPolicy.
+  name: allow-silverbullet-to-sso
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: silverbullet
+  egress:
+    - toFQDNs:
+        - matchName: auth.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+          serverNames:
+            - auth.chezmoi.sh

@@ -1,0 +1,46 @@
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  annotations:
+    security.chezmoi.sh/description: |
+      OIDC authentication policy for silverbullet HTTPRoute.
+      Uses one_factor authentication for personal knowledge management interface.
+      Only requires openid scope for simple authentication without user information leakage.
+      Silverbullet contains personal notes and documentation requiring authentication but not complex authorization.
+  name: silverbullet-oidc
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: silverbullet-websecure
+  oidc:
+    provider:
+      issuer: https://auth.chezmoi.sh
+    clientID: ef543cb2-f64c-41e6-9b4b-0b41c087972a
+    clientSecret:
+      name: silverbullet-oidc-secret
+    redirectURL: https://notes.chezmoi.sh/oauth2/callback
+    logoutPath: /logout
+    forwardAccessToken: true
+    scopes: [openid]
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: silverbullet-oidc-secret
+spec:
+  secretStoreRef:
+    name: vault.chezmoi.sh
+    kind: ClusterSecretStore
+  target:
+    name: silverbullet-oidc-secret
+    creationPolicy: Owner
+    template:
+      data:
+        client-secret: "{{ .client_secret }}"
+  data:
+    - secretKey: client_secret
+      remoteRef:
+        key: lungmen.akn/silverbullet/auth/oidc-client
+        property: client_secret
