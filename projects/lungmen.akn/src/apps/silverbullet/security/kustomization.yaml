@@ -6,6 +6,4 @@ resources:
   - network-policy.allow-silverbullet-from-envoy-gateway.yaml
   - network-policy.allow-silverbullet-from-tailscale.yaml
   - network-policy.allow-silverbullet-to-internet.yaml
-  - network-policy.allow-silverbullet-to-sso.yaml
   - network-policy.default-hardened.yaml
-  - security-policy.silverbullet-oidc.yaml
