@@ -50,6 +50,9 @@ spec:
             - name: tmp
               mountPath: /tmp
       volumes:
+        - name: persistent
+          persistentVolumeClaim:
+            claimName: silverbullet-smb-storage
         - name: tmp
           emptyDir: {}
       securityContext:
@@ -57,21 +60,6 @@ spec:
         runAsUser: 25705
         runAsGroup: 25705
         fsGroup: 25705
-  volumeClaimTemplates:
-    - apiVersion: v1
-      kind: PersistentVolumeClaim
-      metadata:
-        labels:
-          recurring-job-group.longhorn.io/auto-snapshots: enabled
-          recurring-job-group.longhorn.io/daily: enabled
-          recurring-job-group.longhorn.io/weekly: enabled
-        name: persistent
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 5Gi
 ---
 apiVersion: v1
 kind: Service
