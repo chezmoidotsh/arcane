@@ -14,7 +14,7 @@ labels:
     includeSelectors: true
   - pairs:
       # renovate: datasource=docker depName=jellyfin/jellyfin
-      app.kubernetes.io/version: 10.10.7
+      app.kubernetes.io/version: 10.11.1
     includeTemplates: true
 
 resources:
