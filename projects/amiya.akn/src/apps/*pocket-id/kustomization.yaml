@@ -6,8 +6,12 @@ namespace: pocket-id
 labels:
   - pairs:
       app.kubernetes.io/name: pocket-id
-    includeSelectors: true
+      app.kubernetes.io/component: authentication
     includeTemplates: true
+  - pairs:
+      app.kubernetes.io/instance: pocket-id
+    includeTemplates: true
+    includeSelectors: true
   - pairs:
       # renovate: datasource=github-release depName=pocket-id/pocket-id
       app.kubernetes.io/version: v0.2.0

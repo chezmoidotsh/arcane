@@ -39,7 +39,7 @@ spec:
               value: "8888"
             - name: ATUIN_OPEN_REGISTRATION
               value: "true"
-          image: ghcr.io/atuinsh/atuin:v18.0.0@sha256:8a8a8ef4eb5865656072bace5cc49390b56caa81360f9f0869054777155b6ef1
+          image: ghcr.io/atuinsh/atuin
           command: ["atuin", "server", "start"]
           livenessProbe:
             httpGet:

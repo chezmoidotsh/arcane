@@ -5,13 +5,17 @@ namespace: home-dashboard
 
 labels:
   - pairs:
-      app.kubernetes.io/name: glance
-      app.kubernetes.io/part-of: home-dashboard
+      app.kubernetes.io/name: home-dashboard
+      app.kubernetes.io/component: application
     includeTemplates: true
   - pairs:
-      app.kubernetes.io/instance: glance
+      app.kubernetes.io/instance: home-dashboard
     includeTemplates: true
     includeSelectors: true
+  - pairs:
+      # renovate: datasource=docker depName=glanceapp/glance
+      app.kubernetes.io/version: v0.6.1
+    includeTemplates: true
 
 resources:
   - glance.workload.yaml

@@ -15,12 +15,16 @@ helmCharts:
 labels:
   - pairs:
       app.kubernetes.io/name: jellyseerr
-      app.kubernetes.io/part-of: jellyseerr
+      app.kubernetes.io/component: application
     includeTemplates: true
   - pairs:
       app.kubernetes.io/instance: jellyseerr
     includeTemplates: true
     includeSelectors: true
+  - pairs:
+      # renovate: datasource=helm depName=jellyseerr-chart registryUrl=oci://ghcr.io/fallenbagel/jellyseerr
+      app.kubernetes.io/version: 2.7.0
+    includeTemplates: true
 
 resources:
   - security/

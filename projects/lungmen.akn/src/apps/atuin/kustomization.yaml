@@ -6,12 +6,16 @@ namespace: atuin
 labels:
   - pairs:
       app.kubernetes.io/name: atuin
-      app.kubernetes.io/part-of: atuin
+      app.kubernetes.io/component: application
     includeTemplates: true
   - pairs:
       app.kubernetes.io/instance: atuin
     includeTemplates: true
     includeSelectors: true
+  - pairs:
+      # renovate: datasource=docker depName=atuinsh/atuin
+      app.kubernetes.io/version: v18.0.0
+    includeTemplates: true
 
 resources:
   - atuin.deployment.yaml
@@ -23,3 +27,9 @@ resources:
   - atuin.storage.yaml
 
   - security/
+
+images:
+  # renovate: datasource=docker depName=atuinsh/atuin
+  - name: ghcr.io/atuinsh/atuin
+    newTag: v18.0.0
+    digest: sha256:8a8a8ef4eb5865656072bace5cc49390b56caa81360f9f0869054777155b6ef1

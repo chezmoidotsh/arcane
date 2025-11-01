@@ -6,7 +6,16 @@ namespace: vault
 labels:
   - pairs:
       app.kubernetes.io/name: vault
-      app.kubernetes.io/part-of: vault
+      app.kubernetes.io/component: secrets-management
+    includeTemplates: true
+  - pairs:
+      app.kubernetes.io/instance: vault
+    includeTemplates: true
+    includeSelectors: true
+  - pairs:
+      # renovate: datasource=helm depName=openbao registryUrl=https://openbao.github.io/openbao-helm
+      app.kubernetes.io/version: 0.19.1
+    includeTemplates: true
 
 resources:
   - namespace.yaml

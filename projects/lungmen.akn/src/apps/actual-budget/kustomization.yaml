@@ -6,15 +6,24 @@ namespace: actual-budget
 labels:
   - pairs:
       app.kubernetes.io/name: actual-budget
-      app.kubernetes.io/part-of: actual-budget
+      app.kubernetes.io/component: application
     includeTemplates: true
   - pairs:
       app.kubernetes.io/instance: actual-budget
     includeTemplates: true
     includeSelectors: true
+  - pairs:
+      # renovate: datasource=docker depName=actualbudget/actual-server
+      app.kubernetes.io/version: 25.10.0
+    includeTemplates: true
 
 resources:
   - actual-budget.configuration.externalsecret.yaml
   - actual-budget.httproute.yaml
   - actual-budget.statefulset.yaml
   - security/
+
+images:
+  # renovate: datasource=docker depName=actualbudget/actual-server
+  - name: ghcr.io/actualbudget/actual-server
+    newTag: "25.10.0"

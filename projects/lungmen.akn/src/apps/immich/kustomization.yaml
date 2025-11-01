@@ -6,7 +6,15 @@ namespace: immich
 labels:
   - pairs:
       app.kubernetes.io/name: immich
-      app.kubernetes.io/part-of: immich
+      app.kubernetes.io/component: application
+    includeTemplates: true
+  - pairs:
+      app.kubernetes.io/instance: immich
+    includeTemplates: true
+    includeSelectors: true
+  - pairs:
+      # renovate: datasource=helm depName=immich registryUrl=https://immich-app.github.io/immich-charts
+      app.kubernetes.io/version: latest
     includeTemplates: true
 
 resources:

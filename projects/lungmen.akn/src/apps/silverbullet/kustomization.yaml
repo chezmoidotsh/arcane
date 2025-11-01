@@ -6,12 +6,16 @@ namespace: silverbullet
 labels:
   - pairs:
       app.kubernetes.io/name: silverbullet
-      app.kubernetes.io/part-of: silverbullet
+      app.kubernetes.io/component: application
     includeTemplates: true
   - pairs:
       app.kubernetes.io/instance: silverbullet
     includeTemplates: true
     includeSelectors: true
+  - pairs:
+      # renovate: datasource=docker depName=zefhemel/silverbullet
+      app.kubernetes.io/version: 2.1.7
+    includeTemplates: true
 
 resources:
   - silverbullet.httproute.yaml
