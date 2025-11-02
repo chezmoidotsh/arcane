@@ -84,6 +84,13 @@
       "matchDatasources": ["docker", "helm"],
       "matchFileNames": ["projects/**/kustomization.yaml"],
       "groupName": "{{depName}}"
+    },
+    {
+      // This rule enables digest updates on Kustomization files.
+      "description": "Enable digest updates for Kustomization files",
+      "matchDatasources": ["docker"],
+      "matchFileNames": ["/(^|/)kustomization\\.ya?ml$/"],
+      "pinDigest": true
     }
   ]
 }

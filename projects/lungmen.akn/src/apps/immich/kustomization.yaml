@@ -34,9 +34,7 @@ images:
     newTag: "v2.2.1"
   # renovate: datasource=docker depName=docker.io/library/redis
   - name: docker.io/library/redis
-    newTag: "7.4.2-alpine"
-    digest: sha256:1bf97f21f01b0e7bd4b7b34a26d3b9d8086e41e70c10f262e8a9e0b49b5116a0
+    newTag: 7.4.2-alpine@sha256:1bf97f21f01b0e7bd4b7b34a26d3b9d8086e41e70c10f262e8a9e0b49b5116a0
   # renovate: datasource=docker depName=ghcr.io/tensorchord/pgvecto-rs
   - name: ghcr.io/tensorchord/pgvecto-rs
-    newTag: "pg14-v0.3.0-rootless"
-    digest: sha256:23ac462edc9eba6df7df92d447780950aa20a34ba4a9c11c0f4ddab3a30a64b1
+    newTag: pg14-v0.3.0-rootless@sha256:23ac462edc9eba6df7df92d447780950aa20a34ba4a9c11c0f4ddab3a30a64b1

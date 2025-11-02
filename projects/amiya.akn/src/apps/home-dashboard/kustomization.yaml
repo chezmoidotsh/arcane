@@ -38,5 +38,4 @@ configMapGenerator:
 images:
   # renovate: datasource=docker depName=docker.io/glanceapp/glance
   - name: docker.io/glanceapp/glance
-    newTag: "v0.6.1"
-    digest: sha256:46b779b96786ad3ea53569532cb9ddb90a0b257063475f43e9d2bdbddd0e096c
+    newTag: v0.6.1@sha256:46b779b96786ad3ea53569532cb9ddb90a0b257063475f43e9d2bdbddd0e096c

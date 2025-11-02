@@ -30,5 +30,4 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
   - name: ghcr.io/pocket-id/pocket-id
-    newTag: "v1.10.0-distroless"
-    digest: sha256:53aaee4ded66e2e163cd74b4bcfcf748c912672501346b08fa1bd8f21d295b81
+    newTag: v1.10.0-distroless@sha256:53aaee4ded66e2e163cd74b4bcfcf748c912672501346b08fa1bd8f21d295b81
