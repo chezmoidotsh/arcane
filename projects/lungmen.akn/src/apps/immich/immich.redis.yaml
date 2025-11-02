@@ -11,15 +11,12 @@ spec:
     type: RollingUpdate
   selector:
     matchLabels:
-      app.kubernetes.io/name: immich
-      app.kubernetes.io/instance: immich
+      app.kubernetes.io/instance: immich-redis
       app.kubernetes.io/component: redis
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: immich
-        app.kubernetes.io/instance: immich
-        app.kubernetes.io/part-of: immich
+        app.kubernetes.io/instance: immich-redis
         app.kubernetes.io/component: redis
     spec:
       automountServiceAccountToken: false
