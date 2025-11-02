@@ -22,7 +22,7 @@ labels:
     includeTemplates: true
     includeSelectors: true
   - pairs:
-      # renovate: datasource=helm depName=jellyseerr-chart registryUrl=oci://ghcr.io/fallenbagel/jellyseerr
+      # renovate: datasource=docker depName=ghcr.io/fallenbagel/jellyseerr
       app.kubernetes.io/version: 2.7.0
     includeTemplates: true
 
@@ -33,3 +33,9 @@ resources:
   - jellyseerr.postgresql-backup.yaml
   - jellyseerr.postgresql-objectstore.yaml
   - jellyseerr.postgresql.yaml
+
+images:
+  # renovate: datasource=docker depName=ghcr.io/fallenbagel/jellyseerr
+  - name: ghcr.io/fallenbagel/jellyseerr
+    newTag: "2.7.3"
+    digest: sha256:0000000000000000000000000000000000000000000000000000000000000000

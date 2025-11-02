@@ -13,7 +13,7 @@ labels:
     includeTemplates: true
     includeSelectors: true
   - pairs:
-      # renovate: datasource=docker depName=atuinsh/atuin
+      # renovate: datasource=docker depName=ghcr.io/atuinsh/atuin
       app.kubernetes.io/version: v18.0.0
     includeTemplates: true
 
@@ -29,7 +29,7 @@ resources:
   - security/
 
 images:
-  # renovate: datasource=docker depName=atuinsh/atuin
+  # renovate: datasource=docker depName=ghcr.io/atuinsh/atuin
   - name: ghcr.io/atuinsh/atuin
     newTag: v18.0.0
     digest: sha256:8a8a8ef4eb5865656072bace5cc49390b56caa81360f9f0869054777155b6ef1
