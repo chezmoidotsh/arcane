@@ -28,7 +28,7 @@ spec:
             - --save
             - "300" # save every 5 minutes ...
             - "1" # ... if at least 1 key changed
-          image: docker.io/library/redis:7.4.2-alpine@sha256:1bf97f21f01b0e7bd4b7b34a26d3b9d8086e41e70c10f262e8a9e0b49b5116a0
+          image: docker.io/library/redis
           livenessProbe:
             exec:
               command:
