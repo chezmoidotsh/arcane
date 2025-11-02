@@ -31,44 +31,44 @@
         "#\\s*renovate:\\s*datasource=(?P<datasource>\\S+)\\s+depName=(?P<depName>\\S+)(?:\\s+registryUrl=(?P<registryUrl>\\S+))?\\s+app\\.kubernetes\\.io/version:\\s*['\"]?(?P<currentValue>[^'\"\\s]+)"
       ],
       "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
-    },
+    }
 
     // ---
     // Group: Ad-hoc Inline Image Updates (All other .yaml files)
     // ---
     // These managers target generic .yaml files for inline 'image:' definitions.
 
-    {
-      "description": "Update ad-hoc inline image tags (e.g., image: name:tag)",
-      // This targets all .yaml files BUT explicitly excludes kustomization.yaml
-      // to prevent conflicts with the managers above.
-      "fileMatch": ["\\.ya?ml$", "(^|/)kustomization\\.yaml$!"],
-      // (?m) = Multi-line flag (so ^ and $ match start/end of lines).
-      // 1. Finds the '# renovate: ...' comment line.
-      // 2. Finds the 'image: ...' line immediately following it.
-      // 3. Uses {{depName}} from the comment to ensure it matches the correct image.
-      // 4. Captures the tag (:<currentValue>)
-      // 5. Optionally matches and preserves a digest (@sha256:...) if it exists.
-      "matchStrings": [
-        "(?P<header>#\\s*renovate:\\s*datasource=(?P<datasource>\\S+)\\s+depName=(?P<depName>\\S+)(?:\\s+registryUrl=(?P<registryUrl>\\S+))?\\s*)\\n(?P<indent>\\s*)image:\\s*['\"]?{{depName}}:(?P<currentValue>[^'\"\\s@]+)(?P<suffix>['\"]?(?:@sha256:[A-Fa-f0-9]+)?['\"]?)"
-      ],
-      "autoReplaceStringTemplate": "{{{header}}}\n{{{indent}}}image:{{{depName}}}:{{newValue}}{{{suffix}}}",
-      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
-    },
-    {
-      "description": "Update ad-hoc inline image digests (e.g., image: name@digest)",
-      "fileMatch": ["\\.ya?ml$", "(^|/)kustomization\\.yaml$!"], // Also excludes kustomization.yaml
-      // This is the companion to the tag manager above, but targets the digest.
-      // 1. Finds the '# renovate: ...' comment and 'image: ...{{depName}}'
-      // 2. Optionally matches and preserves a tag ((?::[^'\"\\s@]+)?) if it exists.
-      // 3. Captures the digest (@<currentValue>).
-      "matchStrings": [
-        "(?P<header>#\\s*renovate:\\s*datasource=(?P<datasource>\\S+)\\s+depName=(?P<depName>\\S+)(?:\\s+registryUrl=(?P<registryUrl>\\S+))?\\s*)\\n(?P<indent>\\s*)image:\\s*['\"]?{{depName}}(?P<tag>:[^'\"\\s@]+)?@['\"]?(?P<currentValue>sha256:[A-Fa-f0-9]+)(?P<suffix>['\"]?)"
-      ],
-	"autoReplaceStringTemplate": "{{{header}}}\n{{{indent}}}image:{{{depName}}}{{#if tag}}{{{tag}}}{{/if}}@{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}{{{suffix}}}",
-	"datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}",
-	"extractVersionTemplate": "{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}"
-    }
+    // {
+    //   "description": "Update ad-hoc inline image tags (e.g., image: name:tag)",
+    //   // This targets all .yaml files BUT explicitly excludes kustomization.yaml
+    //   // to prevent conflicts with the managers above.
+    //   "fileMatch": ["\\.ya?ml$", "(^|/)kustomization\\.yaml$!"],
+    //   // (?m) = Multi-line flag (so ^ and $ match start/end of lines).
+    //   // 1. Finds the '# renovate: ...' comment line.
+    //   // 2. Finds the 'image: ...' line immediately following it.
+    //   // 3. Uses {{depName}} from the comment to ensure it matches the correct image.
+    //   // 4. Captures the tag (:<currentValue>)
+    //   // 5. Optionally matches and preserves a digest (@sha256:...) if it exists.
+    //   "matchStrings": [
+    //     "(?P<header>#\\s*renovate:\\s*datasource=(?P<datasource>\\S+)\\s+depName=(?P<depName>\\S+)(?:\\s+registryUrl=(?P<registryUrl>\\S+))?\\s*)\\n(?P<indent>\\s*)image:\\s*['\"]?{{depName}}:(?P<currentValue>[^'\"\\s@]+)(?P<suffix>['\"]?(?:@sha256:[A-Fa-f0-9]+)?['\"]?)"
+    //   ],
+    //   "autoReplaceStringTemplate": "{{{header}}}\n{{{indent}}}image:{{{depName}}}:{{newValue}}{{{suffix}}}",
+    //   "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
+    // },
+    // {
+    //   "description": "Update ad-hoc inline image digests (e.g., image: name@digest)",
+    //   "fileMatch": ["\\.ya?ml$", "(^|/)kustomization\\.yaml$!"], // Also excludes kustomization.yaml
+    //   // This is the companion to the tag manager above, but targets the digest.
+    //   // 1. Finds the '# renovate: ...' comment and 'image: ...{{depName}}'
+    //   // 2. Optionally matches and preserves a tag ((?::[^'\"\\s@]+)?) if it exists.
+    //   // 3. Captures the digest (@<currentValue>).
+    //   "matchStrings": [
+    //     "(?P<header>#\\s*renovate:\\s*datasource=(?P<datasource>\\S+)\\s+depName=(?P<depName>\\S+)(?:\\s+registryUrl=(?P<registryUrl>\\S+))?\\s*)\\n(?P<indent>\\s*)image:\\s*['\"]?{{depName}}(?P<tag>:[^'\"\\s@]+)?@['\"]?(?P<currentValue>sha256:[A-Fa-f0-9]+)(?P<suffix>['\"]?)"
+    //   ],
+	//   "autoReplaceStringTemplate": "{{{header}}}\n{{{indent}}}image:{{{depName}}}{{#if tag}}{{{tag}}}{{/if}}@{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}{{{suffix}}}",
+	//   "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}",
+	//   "extractVersionTemplate": "{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}"
+    // }
   ],
 
   // ---
