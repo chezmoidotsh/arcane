@@ -28,7 +28,7 @@
       // # renovate: datasource=... depName=...
       // app.kubernetes.io/version: <currentValue>
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s+app\\.kubernetes\\.io/version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)"
+        "#\\s*renovate:\\s*datasource=(\\S+)\\s+depName=(\\S+)\\s*(registryUrl=(\\S+))?\\s+app\\.kubernetes\\.io/version:\\s*['\"]?([^'\"\\s]+)"
       ],
       "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
     },
@@ -50,10 +50,9 @@
       // 4. Captures the tag (:<currentValue>)
       // 5. Optionally matches and preserves a digest (@sha256:...) if it exists.
       "matchStrings": [
-        "(#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s*)\\n(?<indent>\\s*)image:\\s*['\"]?{{depName}}):(?<currentValue>[^'\"\\s@]+)(['\"]?(?:@sha256:[A-Fa-f0-9]+)?['\"]?)"
+        "(#\\s*renovate:\\s*datasource=(\\S+)\\s+depName=(\\S+)\\s*(registryUrl=(\\S+))?\\s*)\\n(\\s*)image:\\s*['\"]?{{depName}}:(\\S+)(['\"]?(@sha256:[A-Fa-f0-9]+)?['\"]?)"
       ],
-      // Rebuilds the string: $1 is (comment + image name), {{newValue}} is the new tag, $2 is the (optional digest + quotes).
-      "autoReplaceStringTemplate": "$1\n$2:{{newValue}}$3",
+      "autoReplaceStringTemplate": "$1\n$6image:{{depName}}:{{newValue}}$8",
       "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
     },
     {
@@ -64,10 +63,9 @@
       // 2. Optionally matches and preserves a tag ((?::[^'\"\\s@]+)?) if it exists.
       // 3. Captures the digest (@<currentValue>).
       "matchStrings": [
-        "(#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s*)\\n(?<indent>\\s*)image:\\s*['\"]?{{depName}})((?::[^'\"\\s@]+)?)@['\"]?(?<currentValue>sha256:[a-fA-F0-9]+)(['\"]?)"
+        "(#\\s*renovate:\\s*datasource=(\\S+)\\s+depName=(\\S+)\\s*(registryUrl=(\\S+))?\\s*)\\n(\\s*)image:\\s*['\"]?{{depName}}((:[^'\"\\s@]+)?)@['\"]?(sha256:[A-Fa-f0-9]+)['\"]?"
       ],
-      // Rebuilds the string: $1 is (comment + image name), $2 is (optional tag), new digest, $3 is (quotes).
-      "autoReplaceStringTemplate": "$1\n$2$3@{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}$4",
+      "autoReplaceStringTemplate": "$1\n$6image:{{depName}}$7@sha256:{{newDigest}}$9",
       "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}",
       "extractVersionTemplate": "{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}"
     }
