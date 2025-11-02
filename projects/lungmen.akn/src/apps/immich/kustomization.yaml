@@ -13,7 +13,7 @@ labels:
     includeSelectors: true
   - pairs:
       # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server
-      app.kubernetes.io/version: v1.144.1
+      app.kubernetes.io/version: v2.2.1
     includeTemplates: true
 
 resources:
