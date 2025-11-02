@@ -42,10 +42,10 @@
       //    skipping over any other fields (like 'newImage' or 'digest') in between.
       // 3. It finally finds and captures the 'newTag' value within that block.
       "matchStrings": [
-        "(?ms)(#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s*$(?:\\n(?!#\\s*renovate:).)*?-\\s+name:\\s+\\S+.*?)(?<tagIndent>\\s*)newTag:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
+        "(#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s*)\\n[\\s\\S]*?-\\s+name:\\s+\\S+[\\s\\S]*?(?<tagIndent>\\s*)newTag:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
       ],
       // Rebuilds the string, preserving the entire prefix ($1) and only replacing the tag value.
-      "autoReplaceStringTemplate": "$1{{tagIndent}}newTag: '{{newValue}}'",
+      "autoReplaceStringTemplate": "$1\n$2{{tagIndent}}newTag: '{{newValue}}'",
       "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
     },
     {
@@ -56,10 +56,10 @@
       // Having two separate managers allows Renovate to update both tag and digest
       // independently, regardless of their order in the file.
       "matchStrings": [
-        "(?ms)(#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s*$(?:\\n(?!#\\s*renovate:).)*?-\\s+name:\\s+\\S+.*?)(?<digestIndent>\\s*)digest:\\s*[\"']?(?<currentValue>sha256:[a-fA-F0-9]+)[\"']?"
+        "(#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s*)\\n[\\s\\S]*?-\\s+name:\\s+\\S+[\\s\\S]*?(?<digestIndent>\\s*)digest:\\s*[\"']?(?<currentValue>sha256:[a-fA-F0-9]+)[\"']?"
       ],
       // Rebuilds the string, replacing only the digest value.
-      "autoReplaceStringTemplate": "$1{{digestIndent}}digest: '{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}'",
+      "autoReplaceStringTemplate": "$1\n$2{{digestIndent}}digest: '{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}'",
       "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}",
       // Ensures we extract and compare the digest value correctly.
       "extractVersionTemplate": "{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}"
@@ -82,10 +82,10 @@
       // 4. Captures the tag (:<currentValue>)
       // 5. Optionally matches and preserves a digest (@sha256:...) if it exists.
       "matchStrings": [
-        "(?m)(#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s*$\\n(?<indent>\\s*)image:\\s*['\"]?{{depName}}):(?<currentValue>[^'\"\\s@]+)(['\"]?(?:@sha256:[A-Fa-f0-9]+)?['\"]?)"
+        "(#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s*)\\n(?<indent>\\s*)image:\\s*['\"]?{{depName}}):(?<currentValue>[^'\"\\s@]+)(['\"]?(?:@sha256:[A-Fa-f0-9]+)?['\"]?)"
       ],
       // Rebuilds the string: $1 is (comment + image name), {{newValue}} is the new tag, $2 is the (optional digest + quotes).
-      "autoReplaceStringTemplate": "$1:{{newValue}}$2",
+      "autoReplaceStringTemplate": "$1\n$2:{{newValue}}$3",
       "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
     },
     {
@@ -96,10 +96,10 @@
       // 2. Optionally matches and preserves a tag ((?::[^'\"\\s@]+)?) if it exists.
       // 3. Captures the digest (@<currentValue>).
       "matchStrings": [
-        "(?m)(#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s*$\\n(?<indent>\\s*)image:\\s*['\"]?{{depName}})((?::[^'\"\\s@]+)?)@['\"]?(?<currentValue>sha256:[A-Fa-f0-9]+)(['\"]?)"
+        "(#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s*)\\n(?<indent>\\s*)image:\\s*['\"]?{{depName}})((?::[^'\"\\s@]+)?)@['\"]?(?<currentValue>sha256:[a-fA-F0-9]+)(['\"]?)"
       ],
       // Rebuilds the string: $1 is (comment + image name), $2 is (optional tag), new digest, $3 is (quotes).
-      "autoReplaceStringTemplate": "$1$2@{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}$3",
+      "autoReplaceStringTemplate": "$1\n$2$3@{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}$4",
       "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}",
       "extractVersionTemplate": "{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}"
     }
