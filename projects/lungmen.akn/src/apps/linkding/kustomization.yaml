@@ -30,4 +30,4 @@ resources:
 images:
   # renovate: datasource=docker depName=docker.io/sissbruecker/linkding
   - name: docker.io/sissbruecker/linkding
-    newTag: "1.36.0-alpine"
+    newTag: "1.44.1-alpine"
