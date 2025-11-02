@@ -28,7 +28,7 @@
       // # renovate: datasource=... depName=...
       // app.kubernetes.io/version: <currentValue>
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(\\S+)\\s+depName=(\\S+)\\s*(registryUrl=(\\S+))?\\s+app\\.kubernetes\\.io/version:\\s*['\"]?([^'\"\\s]+)"
+        "#\\s*renovate:\\s*datasource=(?P<datasource>\\S+)\\s+depName=(?P<depName>\\S+)(?:\\s+registryUrl=(?P<registryUrl>\\S+))?\\s+app\\.kubernetes\\.io/version:\\s*['\"]?(?P<currentValue>[^'\"\\s]+)"
       ],
       "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
     },
@@ -50,9 +50,9 @@
       // 4. Captures the tag (:<currentValue>)
       // 5. Optionally matches and preserves a digest (@sha256:...) if it exists.
       "matchStrings": [
-        "(#\\s*renovate:\\s*datasource=(\\S+)\\s+depName=(\\S+)\\s*(registryUrl=(\\S+))?\\s*)\\n(\\s*)image:\\s*['\"]?{{depName}}:(\\S+)(['\"]?(@sha256:[A-Fa-f0-9]+)?['\"]?)"
+        "(?P<header>#\\s*renovate:\\s*datasource=(?P<datasource>\\S+)\\s+depName=(?P<depName>\\S+)(?:\\s+registryUrl=(?P<registryUrl>\\S+))?\\s*)\\n(?P<indent>\\s*)image:\\s*['\"]?{{depName}}:(?P<currentValue>[^'\"\\s@]+)(?P<suffix>['\"]?(?:@sha256:[A-Fa-f0-9]+)?['\"]?)"
       ],
-      "autoReplaceStringTemplate": "$1\n$6image:{{depName}}:{{newValue}}$8",
+      "autoReplaceStringTemplate": "{{{header}}}\n{{{indent}}}image:{{{depName}}}:{{newValue}}{{{suffix}}}",
       "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
     },
     {
@@ -63,11 +63,11 @@
       // 2. Optionally matches and preserves a tag ((?::[^'\"\\s@]+)?) if it exists.
       // 3. Captures the digest (@<currentValue>).
       "matchStrings": [
-        "(#\\s*renovate:\\s*datasource=(\\S+)\\s+depName=(\\S+)\\s*(registryUrl=(\\S+))?\\s*)\\n(\\s*)image:\\s*['\"]?{{depName}}((:[^'\"\\s@]+)?)@['\"]?(sha256:[A-Fa-f0-9]+)['\"]?"
+        "(?P<header>#\\s*renovate:\\s*datasource=(?P<datasource>\\S+)\\s+depName=(?P<depName>\\S+)(?:\\s+registryUrl=(?P<registryUrl>\\S+))?\\s*)\\n(?P<indent>\\s*)image:\\s*['\"]?{{depName}}(?P<tag>:[^'\"\\s@]+)?@['\"]?(?P<currentValue>sha256:[A-Fa-f0-9]+)(?P<suffix>['\"]?)"
       ],
-      "autoReplaceStringTemplate": "$1\n$6image:{{depName}}$7@sha256:{{newDigest}}$9",
-      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}",
-      "extractVersionTemplate": "{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}"
+	"autoReplaceStringTemplate": "{{{header}}}\n{{{indent}}}image:{{{depName}}}{{#if tag}}{{{tag}}}{{/if}}@{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}{{{suffix}}}",
+	"datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}",
+	"extractVersionTemplate": "{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}"
     }
   ],
 
