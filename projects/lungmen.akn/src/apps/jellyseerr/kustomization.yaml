@@ -23,7 +23,7 @@ labels:
     includeSelectors: true
   - pairs:
       # renovate: datasource=docker depName=ghcr.io/fallenbagel/jellyseerr
-      app.kubernetes.io/version: 2.7.0
+      app.kubernetes.io/version: 2.7.3
     includeTemplates: true
 
 resources:
