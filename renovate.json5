@@ -21,17 +21,17 @@
     // ---
     // These managers exclusively target 'kustomization.yaml' files.
 
-    // {
-    //   "description": "Update app.kubernetes.io/version labels in Kustomize files",
-    //   "fileMatch": ["(^|/)kustomization\\.yaml$"],
-    //   // This looks for a very specific pattern:
-    //   // # renovate: datasource=... depName=...
-    //   // app.kubernetes.io/version: <currentValue>
-    //   "matchStrings": [
-    //     "#\\s*renovate:\\s*datasource=(?P<datasource>\\S+)\\s+depName=(?P<depName>\\S+)(?:\\s+registryUrl=(?P<registryUrl>\\S+))?\\s+app\\.kubernetes\\.io/version:\\s*['\"]?(?P<currentValue>[^'\"\\s]+)"
-    //   ],
-    //   "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
-    // }
+    {
+      "description": "Update app.kubernetes.io/version labels in Kustomize files",
+      "fileMatch": ["(^|/)kustomization\\.yaml$"],
+      // This looks for a very specific pattern:
+      // # renovate: datasource=... depName=...
+      // app.kubernetes.io/version: <currentValue>
+      "matchStrings": [
+		"#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s+app\\.kubernetes\\.io/version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)"
+      ],
+      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
+    }
 
     // ---
     // Group: Ad-hoc Inline Image Updates (All other .yaml files)
