@@ -14,7 +14,7 @@ labels:
     includeSelectors: true
   - pairs:
       # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
-      app.kubernetes.io/version: v1.10.0-distroless
+      app.kubernetes.io/version: v1.14.2-distroless
     includeTemplates: true
 
 resources:
