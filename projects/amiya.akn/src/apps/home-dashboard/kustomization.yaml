@@ -6,8 +6,8 @@ namespace: home-dashboard
 labels:
   - pairs:
       app.kubernetes.io/name: home-dashboard
-      app.kubernetes.io/component: application
     includeTemplates: true
+    includeSelectors: true
   - pairs:
       app.kubernetes.io/instance: home-dashboard
     includeTemplates: true

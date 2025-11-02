@@ -194,30 +194,30 @@ labels:
 * **Pros**: More complete label set
 * **Cons**: No version tracking, redundant `part-of` (same as name)
 
-**Option 2.3: Comprehensive Standard Labels** (Recommended)
+**Option 2.3: Minimal Standard Labels** (Recommended)
 
 ```yaml
 labels:
   - pairs:
       app.kubernetes.io/name: application-name
-      app.kubernetes.io/instance: application-name
-      app.kubernetes.io/component: application
-    includeSelectors: true
     includeTemplates: true
+    includeSelectors: true
   - pairs:
       # renovate: datasource=helm depName=repo/chart
       app.kubernetes.io/version: v1.0.0
     includeTemplates: true
 ```
 
-* **Pros**: Kubernetes recommended labels, Renovate support, clear component typing
-* **Cons**: Slightly more verbose
+* **Pros**: Clean, focused on application-level metadata, Renovate support, avoids selector conflicts
+* **Cons**: Instance/component labels must be managed per-workload
 
-**Chosen Option**: **Option 2.3 - Comprehensive Standard Labels** ✅
+**Chosen Option**: **Option 2.3 - Minimal Standard Labels** ✅
 
 **Rationale**:
 
-* Kubernetes recommended practice
+* Application-level labels (name, version) belong in kustomization.yaml
+* Workload-level labels (instance, component) belong in individual manifests
+* Avoids selector/label conflicts with Helm charts and workload-specific configurations
 * Enables better resource filtering and organization
 * Supports Renovate automated updates
 * Clear component classification (application, database, storage)
@@ -460,27 +460,31 @@ helmCharts:
 
 #### 3.1 Standard Labels (Application Level)
 
-**Required Labels** (apply to all resources):
+**Required Labels in kustomization.yaml** (apply to all resources):
 
 ```yaml
 labels:
   - pairs:
       app.kubernetes.io/name: {application-name}
-      app.kubernetes.io/instance: {application-name}
-      app.kubernetes.io/component: application
-    includeSelectors: true
     includeTemplates: true
-```
-
-**Version Labels** (for Renovate tracking):
-
-```yaml
-labels:
+    includeSelectors: true
   - pairs:
       # renovate: datasource={source} depName={package}
       app.kubernetes.io/version: {version}
     includeTemplates: true
 ```
+
+> \[!WARNING]
+> **Do NOT include `app.kubernetes.io/instance` or `app.kubernetes.io/component` in kustomization.yaml labels**
+>
+> These labels are workload-specific and cause conflicts when applied globally via Kustomize:
+>
+> * `instance`: Different workloads (deployment, database, redis) have different instance names
+> * `component`: Each workload has its own component type (application, database, cache, etc.)
+> * Kustomize's `includeSelectors: true` adds these to Deployment selectors, causing mismatches
+> * Helm charts and existing manifests define their own instance/component labels
+>
+> Instead, define these labels directly in individual resource manifests for each workload.
 
 **Renovate Sources**:
 
@@ -488,9 +492,35 @@ labels:
 * `datasource=github-release depName=owner/repo` - GitHub releases
 * `datasource=docker depName=registry/image` - Container images
 
-#### 3.2 Component-Specific Labels
+#### 3.2 Workload-Specific Labels
 
-**Database Resources**:
+**Per-Workload Labels** (in individual resource manifests):
+
+Each Deployment, StatefulSet, Service, or other workload should define its own complete label set:
+
+```yaml
+# Example: main application deployment
+metadata:
+  name: {application-name}
+  labels:
+    app.kubernetes.io/name: {application-name}
+    app.kubernetes.io/instance: {application-name}
+    app.kubernetes.io/component: application
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {application-name}
+      app.kubernetes.io/instance: {application-name}
+      app.kubernetes.io/component: application
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {application-name}
+        app.kubernetes.io/instance: {application-name}
+        app.kubernetes.io/component: application
+```
+
+**Database Resources** (in resource manifest):
 
 ```yaml
 metadata:
@@ -501,7 +531,30 @@ metadata:
   name: {application-name}-database
 ```
 
-**Storage Resources**:
+**Redis/Cache Resources** (in resource manifest):
+
+```yaml
+metadata:
+  labels:
+    app.kubernetes.io/name: {application-name}
+    app.kubernetes.io/component: redis
+    app.kubernetes.io/instance: {application-name}-redis
+  name: {application-name}-redis
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {application-name}
+      app.kubernetes.io/instance: {application-name}-redis
+      app.kubernetes.io/component: redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {application-name}
+        app.kubernetes.io/instance: {application-name}-redis
+        app.kubernetes.io/component: redis
+```
+
+**Storage Resources** (in resource manifest):
 
 ```yaml
 metadata:
@@ -513,14 +566,22 @@ metadata:
 
 #### 3.3 Label Guidelines
 
+**In kustomization.yaml** (application-wide):
+
 * **app.kubernetes.io/name**: Application identifier (REQUIRED)
-* **app.kubernetes.io/instance**: Resource instance name (REQUIRED)
-* **app.kubernetes.io/component**: Resource type - `application`, `database`, `storage` (REQUIRED)
-* **app.kubernetes.io/version**: Version for dependency tracking (RECOMMENDED)
+* **app.kubernetes.io/version**: Version for dependency tracking (REQUIRED for Renovate)
+
+**In individual workload manifests** (per-resource):
+
+* **app.kubernetes.io/name**: Same application identifier (REQUIRED)
+* **app.kubernetes.io/instance**: Unique workload instance name (REQUIRED)
+* **app.kubernetes.io/component**: Workload type - `application`, `database`, `redis`, `storage`, etc. (REQUIRED)
 * **app.kubernetes.io/part-of**: Multi-app grouping (OPTIONAL - only when truly part of larger system)
 
 **Do NOT use**:
 
+* `app.kubernetes.io/instance` in kustomization.yaml (workload-specific)
+* `app.kubernetes.io/component` in kustomization.yaml (workload-specific)
 * `app.kubernetes.io/part-of: {application-name}` when `part-of` equals `name` (redundant)
 
 ### 4. Container Image Management
@@ -854,10 +915,8 @@ namespace: {namespace-name}
 labels:
   - pairs:
       app.kubernetes.io/name: {application-name}
-      app.kubernetes.io/instance: {application-name}
-      app.kubernetes.io/component: application
-    includeSelectors: true
     includeTemplates: true
+    includeSelectors: true
   - pairs:
       # renovate: datasource={source} depName={package}
       app.kubernetes.io/version: {version}
@@ -1333,15 +1392,15 @@ git commit -m ":wrench:(project:lungmen.akn): Enable auto-sync for stable-app pe
    - pairs:
        app.kubernetes.io/name: atuin
 -      app.kubernetes.io/part-of: atuin
-+      app.kubernetes.io/instance: atuin
-+      app.kubernetes.io/component: application
      includeTemplates: true
 +    includeSelectors: true
-+  - pairs:
-+      # renovate: datasource=docker depName=ghcr.io/atuinsh/atuin
-+      app.kubernetes.io/version: v18.0.0
-+    includeTemplates: true
+   - pairs:
+       # renovate: datasource=docker depName=ghcr.io/atuinsh/atuin
+       app.kubernetes.io/version: v18.0.0
+     includeTemplates: true
 ```
+
+**Note**: Instance and component labels should be managed in individual workload manifests.
 
 ### HTTPRoute Naming
 
@@ -1487,5 +1546,6 @@ For each new application:
 
 ## Changelog
 
+* **2025-11-02**: Corrected label placement to address selector/template conflicts - removed `app.kubernetes.io/instance` and `app.kubernetes.io/component` from kustomization.yaml (workload-specific), keeping only `app.kubernetes.io/name` (with `includeSelectors: true`) and `app.kubernetes.io/version` at application level
 * **2025-11-01**: Added Renovate configuration for automated label and image override tracking, including regex managers for `app.kubernetes.io/version` labels and Kustomize `images` field updates
 * **2025-10-31**: Initial ADR creation establishing comprehensive project structure and naming standards across all Arcane infrastructure projects, including asterisk prefix convention for ArgoCD sync control

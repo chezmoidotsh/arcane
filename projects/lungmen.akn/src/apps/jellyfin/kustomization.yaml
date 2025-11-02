@@ -6,8 +6,8 @@ namespace: jellyfin
 labels:
   - pairs:
       app.kubernetes.io/name: jellyfin
-      app.kubernetes.io/component: application
     includeTemplates: true
+    includeSelectors: true
   - pairs:
       app.kubernetes.io/instance: jellyfin
     includeTemplates: true

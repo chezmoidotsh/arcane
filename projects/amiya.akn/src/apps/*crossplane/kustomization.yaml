@@ -5,8 +5,8 @@ kind: Kustomization
 labels:
   - pairs:
       app.kubernetes.io/name: crossplane
-      app.kubernetes.io/component: infrastructure-provisioning
     includeTemplates: true
+    includeSelectors: true
   - pairs:
       app.kubernetes.io/instance: crossplane
     includeTemplates: true

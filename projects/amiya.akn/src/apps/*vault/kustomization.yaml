@@ -6,8 +6,8 @@ namespace: vault
 labels:
   - pairs:
       app.kubernetes.io/name: vault
-      app.kubernetes.io/component: secrets-management
     includeTemplates: true
+    includeSelectors: true
   - pairs:
       app.kubernetes.io/instance: vault
     includeTemplates: true

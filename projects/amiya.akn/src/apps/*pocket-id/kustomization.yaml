@@ -6,8 +6,8 @@ namespace: pocket-id
 labels:
   - pairs:
       app.kubernetes.io/name: pocket-id
-      app.kubernetes.io/component: authentication
     includeTemplates: true
+    includeSelectors: true
   - pairs:
       app.kubernetes.io/instance: pocket-id
     includeTemplates: true

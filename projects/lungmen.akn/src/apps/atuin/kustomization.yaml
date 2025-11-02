@@ -6,8 +6,8 @@ namespace: atuin
 labels:
   - pairs:
       app.kubernetes.io/name: atuin
-      app.kubernetes.io/component: application
     includeTemplates: true
+    includeSelectors: true
   - pairs:
       app.kubernetes.io/instance: atuin
     includeTemplates: true
