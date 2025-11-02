@@ -35,4 +35,4 @@ images:
     newTag: 2.19.3@sha256:321ca858e4b6ce9dc416dbcb7c0691d545e3e9b0f44cf420f75c22098854ca25
   # renovate: datasource=docker depName=docker.io/library/redis
   - name: docker.io/library/redis
-    newTag: 7.4.6-alpine@sha256:3b73847e72874be07e6657b129a94761662b79bc0f679273757d4218573b2a98
+    newTag: 8.2.2-alpine@sha256:59b6e694653476de2c992937ebe1c64182af4728e54bb49e9b7a6c26614d8933
