@@ -32,38 +32,6 @@
       ],
       "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
     },
-    {
-      "description": "Update Kustomize image 'newTag' (handles any field order)",
-      "fileMatch": ["(^|/)kustomization\\.yaml$"],
-      // This regex is designed to be robust against field ordering in Kustomize 'images' blocks.
-      // (?ms) = Multi-line and Dot-all flags.
-      // 1. It finds the '# renovate: ...' comment.
-      // 2. It then searches *downward* for the *next* '- name: ...' entry,
-      //    skipping over any other fields (like 'newImage' or 'digest') in between.
-      // 3. It finally finds and captures the 'newTag' value within that block.
-      "matchStrings": [
-        "(#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s*)\\n[\\s\\S]*?-\\s+name:\\s+\\S+[\\s\\S]*?(?<tagIndent>\\s*)newTag:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
-      ],
-      // Rebuilds the string, preserving the entire prefix ($1) and only replacing the tag value.
-      "autoReplaceStringTemplate": "$1\n$2{{tagIndent}}newTag: '{{newValue}}'",
-      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
-    },
-    {
-      "description": "Update Kustomize image 'digest' (handles any field order)",
-      "fileMatch": ["(^|/)kustomization\\.yaml$"],
-      // This is the companion to the 'newTag' manager above. It works identically
-      // but targets the 'digest:' field instead.
-      // Having two separate managers allows Renovate to update both tag and digest
-      // independently, regardless of their order in the file.
-      "matchStrings": [
-        "(#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s*)\\n[\\s\\S]*?-\\s+name:\\s+\\S+[\\s\\S]*?(?<digestIndent>\\s*)digest:\\s*[\"']?(?<currentValue>sha256:[a-fA-F0-9]+)[\"']?"
-      ],
-      // Rebuilds the string, replacing only the digest value.
-      "autoReplaceStringTemplate": "$1\n$2{{digestIndent}}digest: '{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}'",
-      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}",
-      // Ensures we extract and compare the digest value correctly.
-      "extractVersionTemplate": "{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}"
-    },
 
     // ---
     // Group: Ad-hoc Inline Image Updates (All other .yaml files)
@@ -118,16 +86,6 @@
       "matchDatasources": ["docker", "helm"],
       "matchFileNames": ["projects/**/kustomization.yaml"],
       "groupName": "{{depName}}"
-    },
-    {
-      // This is a helper rule to add identifying labels to PRs based on
-      // the file path, which can be used for CI triggers or manual filtering.
-      "description": "Label manual-sync applications (asterisk prefix) for identification",
-      "matchFileNames": [
-        "projects/**/src/apps/\\**/kustomization.yaml",
-        "projects/**/src/infrastructure/kubernetes/\\**/kustomization.yaml"
-      ],
-      "labels": ["type: dependencies", "sync: manual"]
     }
   ]
 }
