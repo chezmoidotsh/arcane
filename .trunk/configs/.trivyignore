@@ -1,6 +1,9 @@
 # Ignore CPU limitation issues → I prefer to over use CPU than to have performance issues
 KSV011
 
+# Ignore 'should specify an image tag' as all image tags are managed by Kustomize
+KSV013
+
 # Ignore ResourceQuota/LimitRange issues → I'm not ready to specify these kinds of quotas/limits
 KSV039
 KSV040

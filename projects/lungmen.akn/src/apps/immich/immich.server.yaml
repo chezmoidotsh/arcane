@@ -51,7 +51,7 @@ spec:
       containers:
         # trunk-ignore(trivy/KSV0125): ghcr.io/immich-app is trusted registry for Immich official images
         - name: immich-server
-          image: ghcr.io/immich-app/immich-server:v1.143.0
+          image: ghcr.io/immich-app/immich-server
           imagePullPolicy: IfNotPresent
           env:
             - name: DB_HOSTNAME

@@ -1,6 +1,5 @@
 ---
 # trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_12,checkov/CKV_K8S_13): We will address resource limits when we have consumption data for Immich Server
-# trunk-ignore(checkov/CKV_K8S_15,checkov/CKV_K8S_43): Not aggreed with theses policies about the ImagePullPolicy=Always and digest verification.
 # trunk-ignore(checkov/CKV_K8S_35): Linkding cannot be configured using a file.
 # trunk-ignore(checkov/CKV2_K8S_6): Network policy will be handled separately
 apiVersion: apps/v1
@@ -73,7 +72,7 @@ spec:
 
             - name: LD_FAVICON_PROVIDER
               value: https://icons.duckduckgo.com/ip3/{domain}.ico
-          image: docker.io/sissbruecker/linkding:1.36.0-alpine
+          image: docker.io/sissbruecker/linkding
           livenessProbe:
             httpGet:
               path: /

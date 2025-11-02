@@ -1,5 +1,4 @@
 ---
-# trunk-ignore(checkov/CKV_K8S_15,checkov/CKV_K8S_43): Not agreed with these policies about the ImagePullPolicy=Always and digest verification.
 # trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_12,checkov/CKV_K8S_13,trivy/KSV015,trivy/KSV016,trivy/KSV018): We will address these issues when we will have enough data about Jellyfin consumption
 apiVersion: apps/v1
 kind: StatefulSet
@@ -15,7 +14,7 @@ spec:
       containers:
         # trunk-ignore(trivy/KSV0125): ghcr.io/jellyfin is trusted
         - name: jellyfin
-          image: ghcr.io/jellyfin/jellyfin:10.10.7
+          image: ghcr.io/jellyfin/jellyfin
           ports:
             - name: http
               containerPort: 8096

@@ -13,8 +13,8 @@ labels:
     includeTemplates: true
     includeSelectors: true
   - pairs:
-      # renovate: datasource=docker depName=sissbruecker/linkding
-      app.kubernetes.io/version: 1.44.1-alpine
+      # renovate: datasource=docker depName=docker.io/sissbruecker/linkding
+      app.kubernetes.io/version: 1.36.0-alpine
     includeTemplates: true
 
 resources:
@@ -26,3 +26,8 @@ resources:
   - linkding.deployment.yaml
 
   - security/
+
+images:
+  # renovate: datasource=docker depName=docker.io/sissbruecker/linkding
+  - name: docker.io/sissbruecker/linkding
+    newTag: "1.36.0-alpine"

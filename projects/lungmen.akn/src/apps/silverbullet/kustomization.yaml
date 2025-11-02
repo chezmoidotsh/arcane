@@ -13,8 +13,8 @@ labels:
     includeTemplates: true
     includeSelectors: true
   - pairs:
-      # renovate: datasource=docker depName=zefhemel/silverbullet
-      app.kubernetes.io/version: 2.1.9
+      # renovate: datasource=docker depName=docker.io/zefhemel/silverbullet
+      app.kubernetes.io/version: 2.1.7
     includeTemplates: true
 
 resources:
@@ -23,3 +23,8 @@ resources:
   - silverbullet.smb-storage.yaml
   - silverbullet.statefulset.yaml
   - security/
+
+images:
+  # renovate: datasource=docker depName=docker.io/zefhemel/silverbullet
+  - name: docker.io/zefhemel/silverbullet
+    newTag: "2.1.7"

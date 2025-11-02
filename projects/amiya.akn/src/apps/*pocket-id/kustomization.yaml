@@ -13,8 +13,8 @@ labels:
     includeTemplates: true
     includeSelectors: true
   - pairs:
-      # renovate: datasource=github-release depName=pocket-id/pocket-id
-      app.kubernetes.io/version: v0.2.0
+      # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
+      app.kubernetes.io/version: v1.10.0-distroless
     includeTemplates: true
 
 resources:
@@ -26,3 +26,9 @@ resources:
   - pocket-id.postgresql-objectstore.yaml
   - pocket-id.statefulset.yaml
   - security/
+
+images:
+  # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
+  - name: ghcr.io/pocket-id/pocket-id
+    newTag: "v1.10.0-distroless"
+    digest: sha256:53aaee4ded66e2e163cd74b4bcfcf748c912672501346b08fa1bd8f21d295b81
