@@ -14,7 +14,7 @@ labels:
     includeSelectors: true
   - pairs:
       # renovate: datasource=docker depName=docker.io/zefhemel/silverbullet
-      app.kubernetes.io/version: 2.1.9
+      app.kubernetes.io/version: 2.2.1
     includeTemplates: true
 
 resources:
@@ -27,4 +27,4 @@ resources:
 images:
   # renovate: datasource=docker depName=docker.io/zefhemel/silverbullet
   - name: docker.io/zefhemel/silverbullet
-    newTag: "2.1.9"
+    newTag: "2.2.1"
