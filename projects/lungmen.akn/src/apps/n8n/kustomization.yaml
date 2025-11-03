@@ -6,7 +6,7 @@ namespace: n8n
 labels:
   - pairs:
       # renovate: datasource=docker depName=ghcr.io/n8n-io/n8n
-      app.kubernetes.io/version: 1.72.0
+      app.kubernetes.io/version: 1.118.1
     includeTemplates: true
 
 resources:
@@ -37,7 +37,7 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/n8n-io/n8n
   - name: ghcr.io/n8n-io/n8n
-    newTag: 1.72.0
+    newTag: 1.118.1
   # renovate: datasource=docker depName=docker.io/library/redis
   - name: docker.io/library/redis
     newTag: 7.4.2-alpine
