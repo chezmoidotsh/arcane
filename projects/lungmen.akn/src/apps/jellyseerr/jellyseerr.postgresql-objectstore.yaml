@@ -21,6 +21,7 @@ spec:
         key: region
     wal:
       compression: bzip2
+  retentionPolicy: 7d
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
