@@ -1,0 +1,16 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows PostgreSQL pods to communicate with Kubernetes API for cluster management.
+  name: allow-postgres-to-kubernetes-api
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: database
+      cnpg.io/cluster: n8n-database
+  egress:
+    - toEntities:
+        - kube-apiserver

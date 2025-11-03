@@ -1,0 +1,62 @@
+---
+# Shared configuration for all n8n instances
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: n8n-common
+data:
+  # Home directory
+  HOME: /home/node
+
+  # Database configuration
+  DB_TYPE: postgresdb
+  DB_POSTGRESDB_HOST: n8n-database-rw
+  DB_POSTGRESDB_PORT: "5432"
+  DB_POSTGRESDB_DATABASE: n8n
+
+  # Security configuration
+  N8N_BLOCK_ENV_ACCESS_IN_NODE: "true"
+  N8N_GIT_NODE_DISABLE_BARE_REPOS: "false"
+
+  # Telemetry and diagnostics (disabled)
+  N8N_DIAGNOSTICS_ENABLED: "false"
+  N8N_HIDE_USAGE_PAGE: "true"
+  N8N_HIRING_BANNER_ENABLED: "false"
+  N8N_PERSONALIZATION_ENABLED: "false"
+
+  # Logging and monitoring
+  N8N_LOG_LEVEL: info
+  N8N_LOG_OUTPUT: console
+  N8N_LOG_FORMAT: json
+  N8N_METRICS: "true"
+
+  # Queue mode configuration
+  EXECUTIONS_MODE: queue
+  QUEUE_BULL_REDIS_HOST: n8n-redis
+  QUEUE_BULL_REDIS_PORT: "6379"
+  QUEUE_HEALTH_CHECK_ACTIVE: "true"
+
+  # Task runners configuration
+  N8N_RUNNERS_ENABLED: "true"
+
+  # Timezone
+  GENERIC_TIMEZONE: Europe/Paris
+---
+# Main instance specific configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: n8n-main
+data:
+  # Editor configuration
+  N8N_EDITOR_BASE_URL: https://n8n.chezmoi.sh
+  N8N_HOST: n8n.chezmoi.sh
+  N8N_PORT: "5678"
+  N8N_PROTOCOL: https
+  WEBHOOK_URL: https://n8n.chezmoi.sh
+
+  # Task runners configuration
+  N8N_RUNNERS_TASK_BROKER_URI: http://n8n-worker:5678
+
+  # Manual executions offloading
+  OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"

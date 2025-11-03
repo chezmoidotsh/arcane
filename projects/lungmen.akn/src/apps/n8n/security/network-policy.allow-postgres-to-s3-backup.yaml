@@ -1,0 +1,20 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows PostgreSQL pods to backup data to S3-compatible storage.
+  name: allow-postgres-to-s3-backup
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: database
+      cnpg.io/cluster: n8n-database
+  egress:
+    - toFQDNs:
+        - matchPattern: "*.blob.core.windows.net"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

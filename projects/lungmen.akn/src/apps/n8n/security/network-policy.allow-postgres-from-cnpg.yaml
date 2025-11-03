@@ -1,0 +1,23 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows CNPG operator to manage PostgreSQL cluster.
+  name: allow-postgres-from-cnpg
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: database
+      cnpg.io/cluster: n8n-database
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: cnpg-system
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "8000"
+              protocol: TCP

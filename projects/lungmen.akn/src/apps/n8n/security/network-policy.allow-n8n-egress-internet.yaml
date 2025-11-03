@@ -1,0 +1,22 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows n8n to access external APIs and services for workflow integrations.
+      This is required for n8n to function properly as it needs to connect to various external services.
+  name: allow-n8n-egress-internet
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: n8n
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP

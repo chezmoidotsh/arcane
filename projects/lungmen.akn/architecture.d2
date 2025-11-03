@@ -345,6 +345,36 @@ lungmen·akn: {
     }
   }
 
+  others.n8n-stack: {
+    class: [namespace]
+    label: n8n Stack
+    tooltip: n8n workflow automation stack with PostgreSQL backend and Redis queue
+
+    n8n: {
+      class: [application]
+      label: n8n
+      icon: assets/icons/apps/n8n.svg
+      link: https://n8n.io/
+      tooltip: Workflow automation platform with visual editor and extensive integrations.
+    }
+
+    postgresql: {
+      class: [application-datastore]
+      label: PostgreSQL
+      icon: assets/icons/system/cloudnativepg.svg
+      link: https://postgresql.org/
+      tooltip: PostgreSQL database backend for n8n, managed by CloudNative-PG operator with automated backups to S3.
+    }
+
+    redis: {
+      class: [application-datastore]
+      label: Redis
+      icon: assets/icons/apps/redis.svg
+      link: https://redis.io/
+      tooltip: Redis queue for n8n workflow execution in queue mode with workers.
+    }
+  }
+
   others.silverbullet: {
     class: [application]
     label: Silverbullet
@@ -439,6 +469,13 @@ lungmen·akn.others.linkding-stack.linkding -> internet: "Website information fe
 lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (9090)" {}
 lungmen·akn.others.linkding-stack.postgresql -> nas.minio: "Database backups (S3)" {}
 lungmen·akn.others.linkding-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
+
+lungmen·akn.others.n8n-stack.n8n -> lungmen·akn.others.n8n-stack.postgresql: "Database operations (5432)" {}
+lungmen·akn.others.n8n-stack.n8n -> lungmen·akn.others.n8n-stack.redis: "Queue operations (6379)" {}
+lungmen·akn.others.n8n-stack.n8n -> internet: "Workflow integrations and external APIs (443)" {class: [connect-to-internet]}
+lungmen·akn.others.n8n-stack.n8n <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (5678)" {}
+lungmen·akn.others.n8n-stack.postgresql -> nas.minio: "Database backups (S3)" {}
+lungmen·akn.others.n8n-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
 lungmen·akn.others.silverbullet -> internet: "Plug downloads (443)" {class: [connect-to-internet]}
 lungmen·akn.others.silverbullet <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (3000)" {}
