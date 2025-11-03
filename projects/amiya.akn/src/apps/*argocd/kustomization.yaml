@@ -5,14 +5,6 @@ namespace: argocd
 
 labels:
   - pairs:
-      app.kubernetes.io/name: argocd
-    includeTemplates: true
-    includeSelectors: true
-  - pairs:
-      app.kubernetes.io/instance: argocd
-    includeTemplates: true
-    includeSelectors: true
-  - pairs:
       # renovate: datasource=helm depName=argo-cd registryUrl=https://argoproj.github.io/argo-helm
       app.kubernetes.io/version: 9.0.5
     includeTemplates: true

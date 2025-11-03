@@ -9,10 +9,6 @@ labels:
     includeTemplates: true
     includeSelectors: true
   - pairs:
-      app.kubernetes.io/instance: vault
-    includeTemplates: true
-    includeSelectors: true
-  - pairs:
       # renovate: datasource=helm depName=openbao registryUrl=https://openbao.github.io/openbao-helm
       app.kubernetes.io/version: 0.19.1
     includeTemplates: true
