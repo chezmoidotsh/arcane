@@ -1,0 +1,21 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows n8n to access local LLMs (e.g., Ollama) for workflow integrations.
+      This is required to use locally hosted language models for automation and
+      workflow tasks, following the standard Netpol documentation format.
+  name: allow-n8n-egress-local-llm
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: n8n
+  egress:
+    - toCIDRSet:
+        - cidr: 192.168.10.30/32
+      toPorts:
+        - ports:
+            - port: "11434"
+              protocol: TCP

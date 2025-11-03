@@ -1,0 +1,56 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: n8n-database
+  name: n8n-database
+spec:
+  bootstrap:
+    initdb:
+      database: n8n
+      owner: n8n
+  description: PostgreSQL database dedicated to n8n
+  enablePDB: false
+  instances: 1
+  managed:
+    roles:
+      - name: n8n
+        connectionLimit: -1
+        comment: PostgreSQL role for n8n
+        ensure: present
+        inherit: true
+        login: true
+        passwordSecret:
+          name: n8n-database-n8n
+  plugins:
+    - enabled: true
+      isWALArchiver: true
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: selfhosted
+        serverName: 01K4QN8XVJHP2ZBRK5W9M7TYQE # DRP::src_ulid
+  storage:
+    size: 5Gi
+  walStorage:
+    size: 2Gi
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: n8n-database-n8n
+spec:
+  dataFrom:
+    - extract:
+        key: lungmen.akn/n8n/database/postgresql
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    template:
+      data:
+        username: n8n
+        password: "{{ .password }}"
+        uri: "postgres://n8n:{{ .password }}@n8n-database-rw:5432/n8n"

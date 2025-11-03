@@ -1,0 +1,10 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: n8n-database
+spec:
+  backupOwnerReference: cluster
+  cluster:
+    name: n8n-database
+  schedule: "0 2 * * *" # Daily at 2 AM

@@ -1,0 +1,132 @@
+---
+# n8n Main Instance - Workflow Editor and Coordinator
+# Stateless deployment that stores all data in PostgreSQL
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n-main
+  labels:
+    app.kubernetes.io/name: n8n
+    app.kubernetes.io/instance: n8n-main
+    app.kubernetes.io/component: main
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: n8n
+      app.kubernetes.io/instance: n8n-main
+      app.kubernetes.io/component: main
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: n8n
+        app.kubernetes.io/instance: n8n-main
+        app.kubernetes.io/component: main
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 25678
+        runAsGroup: 25678
+        fsGroup: 25678
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: n8n
+          image: ghcr.io/n8n-io/n8n:1.72.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5678
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: n8n-common
+            - configMapRef:
+                name: n8n-main
+          env:
+            # Database credentials from secret
+            - name: DB_POSTGRESDB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-database-n8n
+                  key: username
+            - name: DB_POSTGRESDB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-database-n8n
+                  key: password
+            # Encryption key from secret
+            - name: N8N_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-encryption-key
+                  key: encryption-key
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 25678
+            runAsGroup: 25678
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: cache
+              mountPath: /home/node/.cache
+            - name: tmp
+              mountPath: /tmp
+            - name: n8n-data
+              mountPath: /home/node/.n8n
+      volumes:
+        - name: cache
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        - name: n8n-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: n8n
+  labels:
+    app.kubernetes.io/name: n8n
+    app.kubernetes.io/instance: n8n-main
+    app.kubernetes.io/component: main
+  annotations:
+    link.argocd.argoproj.io/external-link: https://n8n.chezmoi.sh
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 5678
+      targetPort: http
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: n8n
+    app.kubernetes.io/instance: n8n-main
+    app.kubernetes.io/component: main
