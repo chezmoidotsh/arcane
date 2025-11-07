@@ -14,7 +14,7 @@ labels:
     includeSelectors: true
   - pairs:
       # renovate: datasource=docker depName=ghcr.io/paperless-ngx/paperless-ngx
-      app.kubernetes.io/version: 2.19.4
+      app.kubernetes.io/version: 2.19.5
     includeTemplates: true
 
 resources:
@@ -32,7 +32,7 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/paperless-ngx/paperless-ngx
   - name: ghcr.io/paperless-ngx/paperless-ngx
-    newTag: 2.19.4@sha256:7ec0797af256194f6e117d1b7ed3ef91ad31b4a14bf3092abdee6bb74f6b3656
+    newTag: 2.19.5@sha256:5f2a72fd7be42c6b1d8fa1751606a140452d4c3e6e829ae6b1b15e3c95129481
   # renovate: datasource=docker depName=docker.io/library/redis
   - name: docker.io/library/redis
     newTag: 8.2.3-alpine@sha256:28c9c4d7596949a24b183eaaab6455f8e5d55ecbf72d02ff5e2c17fe72671d31
