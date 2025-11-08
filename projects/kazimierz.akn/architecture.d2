@@ -15,11 +15,11 @@ explanation: |md
   with all the components and how they \
   interact with each other.
 
-  kazimierz.akn serves as a **sacrificial bastion proxy** \
-  that acts as a reverse proxy and security gateway \
-  between the internet and other homelab clusters. \
-  It is designed to be compromisable without impacting \
-  other critical infrastructure.
+  kazimierz.akn is a **VPS-based public access gateway** \
+  powered by Pangolin that provides secure, easy-to-use \
+  access to selected homelab services. It is designed as a \
+  sacrificial edge layer that can be compromised without \
+  impacting internal infrastructure.
 | {
   near: top-left
 }
@@ -28,11 +28,11 @@ explanation: |md
 # │                              External Objects                              │
 # ├────────────────────────────────────────────────────────────────────────────┤
 # │ Desc:                                                                      │
-# │   These objects represent resources external to the kazimierz.akn platform │
+# │   These objects represent resources external to the kazimierz.akn VPS     │
 # │   but which interact with or are used by it.                               │
-# │   They include networks, hardware, or third-party services                 │
+# │   They include networks, backend clusters, and third-party services        │
 # │   essential for the proper functioning, connectivity, security,            │
-# │   or management of the platform.                                           │
+# │   or management of the gateway.                                            │
 # ╰────────────────────────────────────────────────────────────────────────────╯
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -42,104 +42,94 @@ internet: {class: network}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# External Clusters
+# External Services
 
-amiya·akn: {
+pocket-id: {
   class: [application]
-  label: amiya·akn
-  icon: assets/icons/hardware/talos.svg
-  tooltip: Mission-critical services cluster (SSO, Secrets, etc.)
+  label: Pocket-ID\n(auth.chezmoi.sh)
+  icon: assets/icons/apps/pocket-id.svg
+  link: https://pocket-id.org/
+  tooltip: OIDC/OAuth2 SSO provider for authentication
+}
+
+mailjet: {
+  class: [application]
+  label: Mailjet
+  icon: assets/icons/platform/mailjet.svg
+  link: https://www.mailjet.com/
+  tooltip: Transactional email service for notifications
+}
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Backend Clusters
+
+lungmen·akn: {
+  class: namespace
+  label: lungmen·akn
+
+  style.fill-pattern: none
+
+  newt: {
+    class: [application]
+    label: Newt
+    icon: assets/icons/system/pangolin.svg
+    link: https://pangolin.net/
+    tooltip: Pangolin service node providing secure tunnel to backend services
+  }
+
+  services: {
+    class: [application]
+    label: Backend Services\n(Jellyfin, Immich, etc.)
+    icon: assets/icons/platform/kubernetes.svg
+    tooltip: Home applications exposed through Newt
+  }
 }
 
 
 
 # ╭────────────────────────────────────────────────────────────────────────────╮
-# │                           kazimierz.akn Platform                           │
+# │                           kazimierz.akn VPS                                │
 # ├────────────────────────────────────────────────────────────────────────────┤
 # │ Desc:                                                                      │
-# │   This namespace contains all the components of the kazimierz.akn platform,│
-# │   serving as a sacrificial bastion proxy for secure internet access to    │
-# │   other homelab clusters. The platform is designed to be compromisable     │
-# │   without affecting critical infrastructure.                               │
+# │   This section describes the VPS-based gateway running Pangolin,           │
+# │   serving as a sacrificial edge layer for secure internet access to        │
+# │   homelab services. The VPS is designed to be compromisable without        │
+# │   affecting critical infrastructure.                                       │
 # ╰────────────────────────────────────────────────────────────────────────────╯
 
-kazimierz·akn: {
-  security: {class: namespace}
-  system: {class: namespace}
+vps: {
+  label: kazimierz.akn
+  class: namespace
 
   style.fill-pattern: none
 
 
   # ────────────────────────────────────────────────────────────────────────────
-  # Security Components
-  
-  security.crowdsec: {
-    class: [application; undeployed]
+  # VPS Components
+
+  pangolin: {
+    class: [application]
+    label: Pangolin
+    icon: assets/icons/system/pangolin.svg
+    link: https://pangolin.net/
+    tooltip: Edge node - Identity-aware reverse proxy with WAF and access control
+  }
+
+  crowdsec: {
+    class: [application]
     label: CrowdSec
     icon: assets/icons/apps/crowdsec.svg
     link: https://crowdsec.net/
     tooltip: Collaborative IPS/IDS with behavioral detection and community threat intelligence
   }
 
-
-  # ────────────────────────────────────────────────────────────────────────────
-  # System Components
-
-  system.cert-manager: {
-    class: [application-system; undeployed]
-    label: Cert-Manager
-    icon: assets/icons/system/cert-manager.svg
-    link: https://cert-manager.io/
-    tooltip: Cert-Manager is a Kubernetes controller that automates the management and issuance of TLS certificates.
-  }
-
-  system.cilium: {
-    class: [application-system; undeployed]
-    label: Cilium
-    icon: assets/icons/system/cilium.svg
-    link: https://cilium.io/
-    tooltip: Cilium is a networking, observability, and security solution with an eBPF-based dataplane.
-  }
-
-  system.external-dns: {
-    class: [application-system; undeployed]
-    label: ExternalDNS
-    icon: assets/icons/system/external-dns.png
-    link: https://github.com/kubernetes-sigs/external-dns
-    tooltip: ExternalDNS configures DNS records automatically for exposed services
-  }
-
-  system.external-secret: {
-    class: [application-system; undeployed]
-    label: External-Secret
-    icon: assets/icons/system/external-secret.svg
-    link: https://external-secrets.io/
-    tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
-  }
-
-  system.tailscale: {
-    class: [application-system; undeployed]
+  tailscale: {
+    class: [application-system]
     label: Tailscale
-    icon: assets/icons/system/tailscale.svg
+    icon: assets/icons/platform/tailscale.svg
     link: https://tailscale.com/
-    tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
-  }
-
-  system.traefik: {
-    class: [application-system; undeployed]
-    label: Traefik
-    icon: assets/icons/system/traefik.svg
-    link: https://traefik.io/
-    tooltip: Reverse proxy and load balancer with automatic service discovery and SSL termination
-  }
-
-
-  # ────────────────────────────────────────────────────────────────────────────
-  # Tailscale Components
-
-  ts-amiyaakn-envoy: "" { 
-    class: [tailscaled; undeployed]
-    tooltip: Tailscaled for the Envoy Gateway on amiya·akn
+    tooltip: Mesh VPN for secure SSH access and VPS administration
   }
 }
 
@@ -149,42 +139,45 @@ kazimierz·akn: {
 # │                                Connections                                 │
 # ├────────────────────────────────────────────────────────────────────────────┤
 # │ Desc:                                                                      │
-# │   This section describes the various connections within the kazimierz.akn  │
-# │   platform and its interactions with external systems.                     │
+# │   This section describes the various connections between the VPS           │
+# │   and external systems (internet, backend cluster, external services).     │
 # ╰────────────────────────────────────────────────────────────────────────────╯
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Internet to Proxy Flow
+# Internet to VPS Flow
 
-internet -> kazimierz·akn.system.traefik: |md
+internet -> vps.pangolin: |md
     HTTP (80)
     HTTPS (443)
-  | { class: [connect-from-internet; undeployed] }
-kazimierz·akn.system.traefik -> kazimierz·akn.ts-amiyaakn-envoy: "Proxify HTTPS (443)" {class: [undeployed]}
+  | { class: [connect-from-internet] }
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# System Connections
+# VPS to External Services
 
-kazimierz·akn.system.cert-manager -> internet: "acme-v02.api.letsencrypt.org:443" {class: [connect-to-internet; undeployed]}
+vps.pangolin -> pocket-id: "OIDC Authentication\n(auth.chezmoi.sh:443)" {class: [connect-to-internet]}
 
-kazimierz·akn.system.external-dns -> internet: "api.cloudflare.com:443" {class: [connect-to-internet; undeployed]}
+vps.pangolin -> mailjet: "SMTP\n(in-v3.mailjet.com:587)" {class: [connect-to-internet]}
 
-kazimierz·akn.system.external-secret -> kazimierz·akn.ts-amiyaakn-envoy: "Secrets Synchronization (443)" {class: [undeployed]}
+vps.pangolin -> internet: |md
+    Let's Encrypt
+    (acme-v02.api.letsencrypt.org:443)
+  | {class: [connect-to-internet]}
 
-kazimierz·akn.system.tailscale -> internet: "api.tailscale.com:443" { class: [connect-to-internet; undeployed] }
-kazimierz·akn.system.tailscale -> kazimierz·akn.ts-amiyaakn-envoy: { class: [connect-management; undeployed] }
-
-kazimierz·akn.system.traefik -> kazimierz·akn.security.crowdsec: "Gather IP Blocklist (??)" {class: [undeployed]}
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Security Analysis Flow
-
-kazimierz·akn.security.crowdsec -> internet: "CrowdSec API (??)" { class: [connect-to-internet; undeployed] }
+vps.tailscale -> internet: "Tailscale API\n(api.tailscale.com:443)" {class: [connect-to-internet]}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Inter-cluster Connections
+# Security Flow
 
-kazimierz·akn.ts-amiyaakn-envoy -> amiya·akn: { class: [connect-from-vpn-backbone; undeployed] }
+vps.pangolin -> vps.crowdsec: "IP Blocklist\nThreat Intelligence"
+
+vps.crowdsec -> internet: "CrowdSec API\n(api.crowdsec.net:443)" { class: [connect-to-internet] }
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Pangolin to Backend Cluster (WireGuard Tunnel)
+
+vps.pangolin -> lungmen·akn.newt: { class: [connect-from-vpn-backbone] }
+
+lungmen·akn.newt -> lungmen·akn.services: "Proxied Requests"

@@ -1,500 +1,1056 @@
-# Bootstrap Talos cluster on Hetzner Cloud
+## Bootstrap VPS with Pangolin and CrowdSec
 
-<details>
-<summary><strong>TL;DR</strong></summary>
+This procedure details the complete bootstrap process for deploying a VPS with Pangolin (Wireguard VPN solution) and CrowdSec (security monitoring) using Tailscale for secure remote access. This setup provides a secure foundation for hosting services with VPN access, automated security monitoring, and proper firewall configuration.
 
-Deploy a complete Talos Kubernetes cluster on cost-optimized CAX11 ARM instances (€3.29/month) using Hetzner Cloud. From instance creation to running cluster in one workflow.
+### TLDR - Quick Command Reference
 
-```bash {"name":"Create the cloud instance","interpreter":"bash","ignore":true}
-set -e
+```bash
+# 1. Update system and install basics
+apt update && apt upgrade -y
+apt install -y curl wget git htop nano ufw
 
-# === Core Configuration Variables ===
-export HCLOUD_TOKEN="your-token-here"
+# 2. Install and configure Tailscale
+curl -fsSL https://tailscale.com/install.sh | sh
+tailscale up --auth-key=tskey-auth-xxxxx-CNTRL-xxxxx --ssh
 
-# Auto-discover latest Talos ARM64 ISO
-TALOS_ISO=$(hcloud iso list -o noheader -o columns=name | grep -E "talos.*arm64" | head -1)
+# 3. Configure firewall
+ufw default deny incoming
+ufw default allow outgoing
+ufw allow from 100.64.0.0/10
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw allow 51820/udp
+ufw allow 21820/udp
+ufw enable
 
-# Deploy CAX11 instance with ISO boot
-hcloud server create --name "kazimierz.akn-cp01" --image debian-11 --type cax11 \
-  --location fsn1 \
-  --label "talos.io/cluster=kazimierz.akn" \
-  --label "talos.io/role=controlplane" \
-  --start-after-create=false
-hcloud server attach-iso "kazimierz.akn-cp01" ${TALOS_ISO}
-hcloud server poweron "kazimierz.akn-cp01"
+# 6. Install Pangolin (includes Docker, CrowdSec, and Traefik bouncer)
+curl -fsSL https://pangolin.net/get-installer.sh | bash
+./installer
+docker logs pangolin | grep -A3 "SETUP TOKEN"
 
-# Create firewall (but don't apply yet - need ports 6443/50000 for bootstrap)
-hcloud firewall create --name "kazimierz:web-only" \
-  --label "talos.io/cluster=kazimierz.akn"
-hcloud firewall add-rule --direction in --source-ips 0.0.0.0/0 --port 80 --protocol tcp "kazimierz:web-only"
-hcloud firewall add-rule --direction in --source-ips ::/0 --port 80 --protocol tcp "kazimierz:web-only"
-hcloud firewall add-rule --direction in --source-ips 0.0.0.0/0 --port 443 --protocol tcp "kazimierz:web-only"
-hcloud firewall add-rule --direction in --source-ips ::/0 --port 443 --protocol tcp "kazimierz:web-only"
+# 7. Configure CrowdSec collections
+docker exec crowdsec cscli collections install crowdsecurity/traefik
+docker exec crowdsec cscli collections install crowdsecurity/appsec-virtual-patching
+docker exec crowdsec cscli collections install crowdsecurity/appsec-generic-rules
+docker exec crowdsec cscli collections install crowdsecurity/appsec-crs-inband
+docker restart crowdsec
 
-# Wait for Talos to boot, then bootstrap cluster
-TALOS_IPV4=$(hcloud server ip kazimierz.akn-cp01)
-mkdir generated
-
-# Generate secrets and configuration
-talosctl gen secrets --output-file generated/secrets.yaml
-talosctl gen config kazimierz.akn https://kubernetes.kazimierz.akn.chezmoi.sh:6443 \
-  --output generated \
-  --output-types controlplane,talosconfig \
-  --with-secrets generated/secrets.yaml \
-  --config-patch @../src/infrastructure/talos/kazimierz-akn-01.config-patch.yaml
-yq '.contexts."'kazimierz.akn'".endpoints = ["'kubernetes.kazimierz.akn.chezmoi.sh'"]' generated/talosconfig --inplace
-
-# Apply configuration and bootstrap
-export TALOSCONFIG="generated/talosconfig"
-talosctl apply-config --insecure --nodes kubernetes.kazimierz.akn.chezmoi.sh --file generated/controlplane.yaml
-talosctl bootstrap --nodes kubernetes.kazimierz.akn.chezmoi.sh
-talosctl kubeconfig --nodes kubernetes.kazimierz.akn.chezmoi.sh --force --merge=false generated/kubeconfig
-export KUBECONFIG="generated/kubeconfig"
-
-# Install Tailscale before applying firewall
-kubectl create namespace tailscale-system
-# Create OAuth secret using OpenBao or environment variables
-kubectl create secret generic operator-oauth -n tailscale-system \
-  --from-literal=client_id="$(bao kv get -field=client_id shared/third-parties/tailscale/oauth/operator-bootstrap)" \
-  --from-literal=client_secret="$(bao kv get -field=client_secret shared/third-parties/tailscale/oauth/operator-bootstrap)"
-helm repo add tailscale https://pkgs.tailscale.com/helmcharts
-helm install tailscale-operator tailscale/tailscale-operator \
-  --namespace tailscale-system \
-  --values @defaults/kubernetes/tailscale/helm/default.helmvalues.yaml \
-  --set operatorConfig.hostname=kazimierz-akn
-
-# Apply firewall after cluster and Tailscale are ready
-hcloud firewall apply-to-resource "kazimierz:web-only" --type server --server "kazimierz.akn-cp01"
+# 8. Enroll CrowdSec with Console
+docker exec -it crowdsec cscli console enroll xxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-</details>
+### Technical framework and conventions
 
-## Table of Contents
+This procedure is a one-shot bootstrap process. All credentials are generated and used immediately during setup - no need for centralized secret management.
 
-* [Introduction](#introduction)
-* [Prerequisites](#prerequisites)
+Key conventions applied:
 
-### Part 1: Hetzner Cloud Instance
+* **Tailscale Authentication**: Uses reusable auth keys with infinite retention
+* **Security First**: CrowdSec and Traefik bouncer are included with Pangolin for real-time security monitoring
+* **All-in-One**: Pangolin installer handles Docker, CrowdSec, and Traefik bouncer installation
 
-* [Step 1: Environment Setup](#step-1-environment-setup)
-* [Step 2: Deploy CAX11 Instance](#step-2-deploy-cax11-instance)
-* [Step 3: Attach ISO, Create Firewall and Power On](#step-3-attach-iso-create-firewall-and-power-on)
-* [Step 4: Verify Instance Deployment](#step-4-verify-instance-deployment)
+### Prerequisites
 
-### Part 2: Talos Cluster Bootstrap
+Before starting this procedure, ensure you have:
 
-* [Step 5: Generate Talos Configuration](#step-5-generate-talos-configuration)
-* [Step 6: Apply Configuration](#step-6-apply-configuration)
-* [Step 7: Bootstrap Cluster](#step-7-bootstrap-cluster)
-* [Step 8: Retrieve Kubeconfig](#step-8-retrieve-kubeconfig)
-* [Step 9: Verify Cluster](#step-9-verify-cluster)
-* [Step 10: Install Tailscale](#step-10-install-tailscale)
-* [Step 11: Apply Security Firewall](#step-11-apply-security-firewall)
+**Cloud Provider Access:**
 
-## Introduction
+* Access to a cloud provider account (Hetzner Cloud, DigitalOcean, etc.)
+* Sufficient credits/balance to create a VPS instance
+* Ability to create and manage SSH keys
 
-This document describes the complete process of deploying a Talos Kubernetes cluster on Hetzner Cloud using CAX11 ARM servers. The guide covers both instance creation with ISO boot and Talos cluster bootstrapping in a single workflow. The CAX11 provides optimal cost-efficiency at €3.29/month with 2 vCPUs, 4GB RAM, and 40GB NVMe storage.
+**Local Tools:**
 
-## Prerequisites
+* `ssh` - For remote server access
 
-### Dependencies
+**Required Accounts and Services:**
 
-Ensure you have the following CLI tools installed:
+* **Tailscale account** with admin access ([Sign up](https://login.tailscale.com/start))
+* **CrowdSec account** with enrollment key generation capability ([Sign up](https://app.crowdsec.net/signup))
+* **Pangolin account** (if using hosted version) or self-hosted instance
 
-| Tool       | Version | Purpose                    | Installation                                                           |
-| ---------- | ------- | -------------------------- | ---------------------------------------------------------------------- |
-| `hcloud`   | latest  | Hetzner Cloud API client   | [Download](https://github.com/hetznercloud/cli)                        |
-| `talosctl` | latest  | Talos Linux management     | [Download](https://www.talos.dev/v1.10/talos-guides/install/talosctl/) |
-| `kubectl`  | latest  | Kubernetes client          | [Download](https://kubernetes.io/docs/tasks/tools/)                    |
-| `helm`     | latest  | Kubernetes package manager | [Download](https://helm.sh/docs/intro/install/)                        |
-| `yq`       | latest  | YAML processor             | [Download](https://github.com/mikefarah/yq)                            |
-| `bao`      | latest  | OpenBao CLI (optional)     | [Download](https://github.com/openbao/openbao)                         |
+**Permissions:**
 
-> \[!TIP]
-> If you're using the `mise` tool manager (recommended for this project), run `mise install` in the project root to automatically install all required dependencies.
+* `sudo` access on the target VPS
 
-### Hetzner Cloud API Token
+### Required inputs
 
-1. **Create Hetzner Cloud Account**: Sign up at [console.hetzner.cloud](https://console.hetzner.cloud)
-2. **Generate API Token**:
-   * Go to **Security** → **API Tokens** in the Hetzner Cloud Console
-   * Click **Generate API Token**
-   * Name: `kazimierz-deployment` (or any descriptive name)
-   * Permissions: **Read & Write**
-   * Copy the token immediately (it won't be shown again)
+To execute this procedure, you will need:
 
-## Step 1: Environment Setup
-
-Before creating the instance, set up your environment variables for consistent deployment.
-
-### Centralized Variables
-
-```bash {"ignore":true}
-# === Core Configuration Variables ===
-export HCLOUD_TOKEN="your-token-here"
-
-# === Tailscale OAuth Credentials ===
-# Option 1: Using OpenBao (recommended)
-TAILSCALE_CLIENT_ID="$(bao kv get -field=client_id shared/third-parties/tailscale/oauth/operator-bootstrap)"
-TAILSCALE_CLIENT_SECRET="$(bao kv get -field=client_secret shared/third-parties/tailscale/oauth/operator-bootstrap)"
-
-# Option 2: Direct environment variables (for manual setup)
-# export TAILSCALE_CLIENT_ID="your-oauth-client-id"
-# export TAILSCALE_CLIENT_SECRET="your-oauth-client-secret"
-```
-
-> \[!WARNING]
-> Replace `your-token-here` with your actual Hetzner Cloud API token. The token must have **Read & Write** permissions.
-
-## Step 2: Deploy CAX11 Instance
-
-Create the Hetzner Cloud server instance with specific configuration for the kazimierz.akn cluster.
-
-```bash {"ignore":true}
-# Auto-discover latest Talos ARM64 ISO
-TALOS_ISO=$(hcloud iso list -o noheader -o columns=name | grep -E "talos.*arm64" | head -1)
-
-# Deploy CAX11 instance
-hcloud server create --name "kazimierz.akn-cp01" --image debian-11 --type cax11 \
-  --location fsn1 \
-  --label "talos.io/cluster=kazimierz.akn" \
-  --label "talos.io/role=controlplane" \
-  --start-after-create=false
-```
-
-> \[!INFO] **Instance Configuration**
->
-> * **Auto-discovery**: Finds the latest Talos ARM64 ISO automatically
-> * **Server Type**: CAX11 ARM64 (2 vCPUs, 4GB RAM, 40GB NVMe) - €3.29/month
-> * **Location**: Falkenstein datacenter (Germany) for optimal EU connectivity
-> * **Labels**: Cluster identification and role assignment for resource management
-> * **Boot Strategy**: Server stays powered off until Talos ISO is attached
-
-## Step 3: Attach ISO, Create Firewall and Power On
-
-Mount the Talos ISO to the server, create firewall rules, and start the instance.
-
-```bash {"ignore":true}
-hcloud server attach-iso "kazimierz.akn-cp01" ${TALOS_ISO}
-hcloud server poweron "kazimierz.akn-cp01"
-
-# Create firewall (but don't apply yet - need ports 6443/50000 for bootstrap)
-hcloud firewall create --name "kazimierz:web-only" \
-  --label "talos.io/cluster=kazimierz.akn"
-hcloud firewall add-rule --direction in --source-ips 0.0.0.0/0 --port 80 --protocol tcp "kazimierz:web-only"
-hcloud firewall add-rule --direction in --source-ips ::/0 --port 80 --protocol tcp "kazimierz:web-only"
-hcloud firewall add-rule --direction in --source-ips 0.0.0.0/0 --port 443 --protocol tcp "kazimierz:web-only"
-hcloud firewall add-rule --direction in --source-ips ::/0 --port 443 --protocol tcp "kazimierz:web-only"
-```
-
-> \[!INFO] **What this does**
->
-> * `attach-iso`: Mounts the discovered Talos ISO to the server's virtual CD/DVD drive
-> * `poweron`: Starts the server, which will boot from the attached ISO
-> * `firewall create`: Creates a restrictive firewall allowing only HTTP (80) and HTTPS (443) traffic
-> * **Firewall NOT applied yet**: Talos bootstrap needs ports 6443 (Kubernetes API) and 50000 (Talos API)
-> * The server will boot directly into Talos Linux instead of the base Debian image
->
-> **Boot process:**
->
-> 1. Server powers on and detects the attached ISO
-> 2. BIOS/UEFI boots from the ISO (higher priority than disk)
-> 3. Talos Linux kernel loads and initializes the system
-> 4. Talos API becomes available on port 50000 (after 2-3 minutes)
-
-## Step 4: Verify Instance Deployment
-
-```bash {"ignore":true}
-# Check server status
-hcloud server list --selector talos.io/cluster=kazimierz.akn
-
-# Verify server specifications
-hcloud server describe kazimierz.akn-cp01 -o table
-
-# Check IP addresses
-echo "IPv4: $(hcloud server ip kazimierz.akn-cp01)"
-echo "IPv6: $(hcloud server ip --ipv6 kazimierz.akn-cp01)"
-```
-
-### Test Network Connectivity
-
-```bash {"ignore":true}
-# Get IP for testing
-TALOS_IPV4=$(hcloud server ip kazimierz.akn-cp01)
-
-# Test IPv4 connectivity
-ping -c 3 ${TALOS_IPV4}
-```
-
-### Verify Talos Boot
-
-```bash {"ignore":true}
-# Wait for Talos to boot (may take 2-3 minutes)
-# Check if Talos API is responding
-TALOS_IPV4=$(hcloud server ip kazimierz.akn-cp01)
-curl -k https://${TALOS_IPV4}:50000/api/v1alpha1/version || echo "Talos still booting..."
-```
-
-> \[!TIP]
-> Create a record in your DNS provider for the Talos API endpoint:
->
-> ```txt
-> kubernetes.kazimierz.akn.chezmoi.sh -> ${TALOS_IPV4}
-> ```
+* `VPS_HOSTNAME`: The hostname for your VPS (e.g., `pangolin-1.kazimierz.akn`)
+* `VPS_IP`: The public IP address of your VPS
+* `TAILSCALE_AUTH_KEY`: Tailscale authentication key (generated in Part 1)
+* `CROWDSEC_ENROLL_KEY`: CrowdSec enrollment key (generated in Part 1)
+* `PANGOLIN_TOKEN`: The setup token from Pangolin (generated during installation)
+* `BACKUP_RETENTION_DAYS`: Number of days to keep backups (default: 7)
 
 ***
 
-## Step 5: Generate Talos Configuration
+## Part 1 — Prepare credentials
 
-Generate the machine configuration files required for the Talos cluster.
+### Step 1.1 — Generate Tailscale auth key
 
-> \[!CAUTION]
-> Ensure you save the generated secrets.yaml file securely, as it contains sensitive information and is required to generate a new compatible configuration.
+Generate a Tailscale auth key with infinite retention. This key should NOT be created from your personal account.
 
-```bash {"ignore":true}
-mkdir generated
+> **\[!IMPORTANT]**
+> **Tailscale Auth Key Configuration**
+>
+> * Use a **reusable** auth key to avoid generating a new one for each server
+> * Set **no expiration** (infinite retention) for infrastructure servers
+> * Use **tags** to automatically apply ACL rules (e.g., `tag:server`, `tag:vps`)
+> * Enable **pre-authorized** to skip manual approval in the admin console
+>
+> Documentation: [Tailscale Auth Keys](https://tailscale.com/kb/1085/auth-keys/)
 
-# Generate secret file if you haven't already
-talosctl gen secrets --output-file generated/secrets.yaml
+1. Navigate to the Tailscale admin console: <https://login.tailscale.com/admin/settings/keys>
+2. Click "Generate auth key"
+3. Configure the auth key:
+   * **Description**: `VPS Infrastructure - Pangolin Servers`
+   * **Reusable**: ✅ Enabled
+   * **Ephemeral**: ❌ Disabled (we want persistent nodes)
+   * **Pre-authorized**: ✅ Enabled
+   * **Tags**: Add tags that match your ACL policy (e.g., `tag:server`, `tag:vps`, `tag:pangolin`)
+   * **Expiration**: Set to infinite/no expiration
+4. Copy the generated auth key (it will look like `tskey-auth-xxxxx-CNTRL-xxxxx`)
+5. Save it temporarily - you'll need it in Part 3
 
-# Generate configuration files
-talosctl gen config kazimierz.akn https://kubernetes.kazimierz.akn.chezmoi.sh:6443 \
-  --output generated \
-  --output-types controlplane,talosconfig \
-  --with-secrets generated/secrets.yaml \
-  --config-patch @../src/infrastructure/talos/kazimierz-akn-01.config-patch.yaml
+### Step 1.2 — Generate CrowdSec enrollment key
 
-# Add current node to endpoint list
-yq '.contexts."'kazimierz.akn'".endpoints = ["'kubernetes.kazimierz.akn.chezmoi.sh'"]' generated/talosconfig --inplace
+Generate a CrowdSec enrollment key for registering the VPS security monitoring.
+
+> **\[!NOTE]**
+> CrowdSec enrollment keys allow your local CrowdSec agent to communicate with the CrowdSec Console for centralized monitoring and threat intelligence sharing.
+>
+> Documentation: [CrowdSec Console](https://docs.crowdsec.net/docs/console/enrollment)
+
+1. Navigate to CrowdSec Console: <https://app.crowdsec.net/>
+2. Go to "Engines" → "Add Security Engine"
+3. Copy the enrollment key (format: `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6` or similar)
+4. Save it temporarily - you'll need it in Part 6
+
+***
+
+## Part 2 — Create and prepare the VPS instance
+
+### Step 2.1 — Create the VPS instance
+
+Create a new VPS instance with your preferred cloud provider. This example uses Hetzner Cloud, but the process is similar for other providers.
+
+> **\[!TIP]**
+> **Recommended VPS Specifications**
+>
+> * **CPU**: 1-2 vCPU (sufficient for Pangolin + CrowdSec)
+> * **RAM**: 2-4 GB (minimum 2 GB for Docker containers)
+> * **Storage**: 20-40 GB SSD
+> * **OS**: Ubuntu 24.04 LTS or Debian 12
+> * **Network**: Public IPv4 address
+>
+> For Hetzner Cloud, the CPX11 (2 vCPU, 2 GB RAM, 40 GB SSD) instance is recommended.
+
+**Hetzner Cloud Instructions:**
+
+1. Navigate to [Hetzner Cloud Console](https://console.hetzner.cloud/)
+2. Select your project or create a new one
+3. Click "Add Server"
+4. Configure the server:
+   * **Location**: Choose the closest to your users (e.g., `nbg1` for Nuremberg)
+   * **Image**: Ubuntu 24.04 LTS
+   * **Type**: Shared vCPU → CPX11 or similar
+   * **SSH Key**: Add your SSH public key
+   * **Name**: Use your chosen hostname (e.g., `pangolin-1`)
+5. Click "Create & Buy now"
+6. Note the public IP address assigned
+
+### Step 2.2 — Initial system update
+
+Connect to your VPS and perform initial system updates.
+
+```bash
+# Connect to the VPS
+ssh root@<VPS_IP>
+
+# Update system packages
+apt update && apt upgrade -y
+
+# Install basic utilities
+apt install -y curl wget git htop nano ufw
+
+# Optional: Set the hostname
+hostnamectl set-hostname <VPS_HOSTNAME>
+
+# Optional: Configure timezone
+timedatectl set-timezone Europe/Paris
 ```
 
-> \[!INFO] **What this does**
->
-> * Creates the secrets file in `generated/` directory:
->   * `secrets.yaml` - Contains sensitive information for the cluster
-> * Creates three configuration files in `generated/` directory:
->   * `controlplane.yaml` - Control plane node configuration
->   * `talosconfig` - Client configuration for talosctl
-> * Configures the Kubernetes API endpoint using the instance IP
-> * Applies custom configuration patches from `kazimierz-akn-01.config-patch.yaml`
->
-> **Configuration Patch Details:**
->
-> The `kazimierz-akn-01.config-patch.yaml` file contains cluster-specific customizations:
->
-> * **Machine Configuration**: Sets hostname, certificate SANs, and Hetzner Cloud installer image
-> * **Kubernetes Features**: Enables user namespaces support for enhanced security
-> * **CNI Configuration**: Disables default CNI to allow Cilium installation
-> * **DNS Resolver**: Enables host DNS caching with CoreDNS forwarding
-> * **Extra Manifests**: Installs kubelet-serving-cert-approver and metrics-server
-> * **Control Plane Scheduling**: Allows workloads on control plane nodes (single-node cluster)
->
-> This approach ensures the cluster is optimized for the kazimierz.akn environment with proper security hardening.
+***
 
-**Generated files structure:**
+## Part 3 — Install and configure Tailscale
 
-```txt
-generated/
-├── controlplane.yaml    # Control plane configuration
-├── worker.yaml          # Worker node template
-└── talosconfig          # Client configuration
+This section configures Tailscale for secure remote access to the VPS. After this step, you'll be able to access the VPS via its Tailscale IP instead of the public IP, which is more secure.
+
+> **\[!IMPORTANT]**
+> Tailscale provides zero-trust network access to your VPS. Once configured, you should only access the VPS via Tailscale and block SSH access from the public internet using the firewall rules in Part 3.
+>
+> Documentation: [Tailscale Installation](https://tailscale.com/kb/1031/install-linux/)
+
+### Step 3.1 — Install Tailscale
+
+```bash
+# Install Tailscale using the official script
+curl -fsSL https://tailscale.com/install.sh | sh
 ```
 
-## Step 6: Apply Configuration
+### Step 3.2 — Authenticate Tailscale
 
-Apply the generated configuration to the Talos instance.
+Authenticate Tailscale using the auth key generated in Part 1:
 
-```bash {"ignore":true}
-# Set the talosconfig
-export TALOSCONFIG="generated/talosconfig"
-
-# Apply control plane configuration
-talosctl apply-config --insecure \
-  --nodes kubernetes.kazimierz.akn.chezmoi.sh \
-  --file generated/controlplane.yaml
+```bash
+# Authenticate with Tailscale (replace with your actual key from Step 1.1)
+tailscale up --auth-key=tskey-auth-xxxxx-CNTRL-xxxxx --accept-routes --ssh
 ```
 
-> \[!INFO] **What this does**
+**Parameters explained:**
+
+* `--auth-key`: The Tailscale authentication key
+* `--accept-routes`: Accept subnet routes advertised by other nodes
+* `--ssh`: Enable Tailscale SSH for secure remote access ([Tailscale SSH docs](https://tailscale.com/kb/1193/tailscale-ssh/))
+
+### Step 3.3 — Verify Tailscale connection
+
+```bash
+# Check Tailscale status
+tailscale status
+
+# Get the Tailscale IP address
+tailscale ip -4
+
+# Test connectivity from your local machine
+# From your local machine (with Tailscale connected):
+ping <tailscale-ip-from-above>
+ssh root@<tailscale-ip-from-above>
+```
+
+***
+
+## Part 4 — Configure firewall rules
+
+Configure UFW (Uncomplicated Firewall) to allow only necessary traffic. This follows a zero-trust approach where we deny all incoming traffic except from Tailscale and essential public services.
+
+> **\[!WARNING]**
+> **Firewall Configuration Order Matters**
 >
-> * `--insecure` flag bypasses certificate validation (needed for initial bootstrap)
-> * Applies the control plane configuration to the instance
-> * Triggers Talos to reconfigure the system according to the provided config
-> * The instance will reboot and start configuring itself as a Kubernetes control plane
-
-## Step 7: Bootstrap Cluster
-
-Initialize the Kubernetes cluster on the control plane node.
-
-```bash {"ignore":true}
-# Wait for instance to be ready (may take 3-5 minutes after apply-config)
-talosctl bootstrap --nodes kubernetes.kazimierz.akn.chezmoi.sh
-```
-
-This initializes the Kubernetes cluster by starting etcd and all control plane components (kube-apiserver, kube-controller-manager, kube-scheduler).
-
-> \[!WARNING]
-> The bootstrap command should only be run once per cluster. Running it multiple times can cause cluster state issues.
-
-## Step 8: Retrieve Kubeconfig
-
-Get the Kubernetes configuration file to interact with the cluster.
-
-```bash {"ignore":true}
-# Retrieve kubeconfig
-talosctl kubeconfig --nodes kubernetes.kazimierz.akn.chezmoi.sh \
-  --force \
-  --merge=false \
-  generated/kubeconfig
-
-# Set KUBECONFIG environment variable
-export KUBECONFIG="generated/kubeconfig"
-```
-
-> \[!INFO] **What this does**
+> 1. Set default policies FIRST
+> 2. Add allow rules BEFORE enabling UFW
+> 3. Test SSH access via Tailscale BEFORE enabling the firewall
+> 4. Keep a backup connection open when enabling UFW for the first time
 >
-> * Downloads the cluster's kubeconfig from the control plane
-> * `--force` overwrites existing kubeconfig file
-> * `--merge=false` creates a standalone kubeconfig (doesn't merge with existing)
-> * Saves the configuration to `generated/kubeconfig`
+> If you get locked out, use your cloud provider's console/VNC access to disable UFW.
 
-**Kubeconfig contents:**
+```bash
+# Set default policies
+ufw default deny incoming
+ufw default allow outgoing
 
-## Step 9: Verify Cluster
+# Allow Tailscale subnet (100.64.0.0/10 is the CGNAT range used by Tailscale)
+ufw allow from 100.64.0.0/10
+ufw comment "Allow all traffic from Tailscale network" last
 
-Verify that the Kubernetes cluster is running and accessible.
+# Allow HTTP and HTTPS (for Pangolin and public services)
+ufw allow 80/tcp comment "HTTP"
+ufw allow 443/tcp comment "HTTPS"
 
-```bash {"ignore":true}
-# Check cluster info
-kubectl cluster-info
+# Allow Pangolin VPN ports (Wireguard)
+ufw allow 51820/udp comment "Pangolin primary VPN"
+ufw allow 21820/udp comment "Pangolin secondary VPN"
 
-# Check node status
-kubectl get nodes -o wide
+# Enable the firewall
+ufw enable
 
-# Check system pods
-kubectl get pods -A
-
-# Verify cluster health
-kubectl get componentstatuses
+# Verify the configuration
+ufw status verbose
 ```
 
-**Expected output:**
+Expected output:
 
-```txt
-# kubectl get nodes
-NAME               STATUS   ROLES           AGE   VERSION
-kazimierz-akn-cp01   Ready    control-plane   5m    v1.30.x
+```
+Status: active
 
-# kubectl get pods -A
-NAMESPACE     NAME                                  READY   STATUS    RESTARTS
-kube-system   coredns-xxx                           1/1     Running   0
-kube-system   kube-apiserver-xxx                    1/1     Running   0
-kube-system   kube-controller-manager-xxx           1/1     Running   0
-kube-system   kube-proxy-xxx                        1/1     Running   0
-kube-system   kube-scheduler-xxx                    1/1     Running   0
+To                         Action      From
+--                         ------      ----
+Anywhere                   ALLOW       100.64.0.0/10    # Allow all traffic from Tailscale network
+80/tcp                     ALLOW       Anywhere         # HTTP
+443/tcp                    ALLOW       Anywhere         # HTTPS
+51820/udp                  ALLOW       Anywhere         # Pangolin primary VPN
+21820/udp                  ALLOW       Anywhere         # Pangolin secondary VPN
 ```
 
-### Cluster Validation Checklist
+***
 
-* [ ] Node shows as `Ready` status
-* [ ] All system pods are `Running`
-* [ ] kubectl commands respond without errors
-* [ ] CoreDNS is operational
-* [ ] Kubernetes API is accessible
+## Part 5 — Install and configure Docker
 
-## Step 10: Install Tailscale
+Docker Engine and related components are automatically installed by the Pangolin installer. This section is for reference only.
 
-Install Tailscale on the cluster to enable secure mesh networking before applying the restrictive firewall.
-
-### Deploy Tailscale Operator
-
-```bash {"ignore":true}
-# Create tailscale-system namespace
-kubectl create namespace tailscale-system
-kubectl label namespace tailscale-system \
-  pod-security.kubernetes.io/audit=privileged \
-  pod-security.kubernetes.io/enforce=privileged \
-  pod-security.kubernetes.io/warn=privileged
-
-# Create the OAuth secret temporarily (will be managed by External Secrets later)
-# Option 1: Using OpenBao (recommended)
-kubectl create secret generic operator-oauth -n tailscale-system \
-  --from-literal=client_id="${TAILSCALE_CLIENT_ID}" \
-  --from-literal=client_secret="${TAILSCALE_CLIENT_SECRET}"
-
-# Option 2: Manual environment variables (if OpenBao not available)
-# kubectl create secret generic operator-oauth -n tailscale-system \
-#   --from-literal=client_id="your-oauth-client-id" \
-#   --from-literal=client_secret="your-oauth-client-secret"
-
-# Add Tailscale Helm repository
-helm repo add tailscale https://pkgs.tailscale.com/helmcharts
-helm repo update
-
-# Install Tailscale operator with custom values
-helm template tailscale-operator tailscale/tailscale-operator \
-  --namespace tailscale-system \
-  --values ../../../defaults/kubernetes/tailscale/helm/default.helmvalues.yaml \
-  --values ../../../defaults/kubernetes/tailscale/helm/hardened.helmvalues.yaml \
-  --values ../../../defaults/kubernetes/tailscale/helm/remote-cluster.helmvalues.yaml \
-  --set operatorConfig.hostname=kazimierz-akn \
-| kubectl create -f -
-```
-
-> \[!INFO] **Cluster Connectivity Setup**
+> **\[!NOTE]**
+> **Docker is installed automatically by Pangolin**
 >
-> This installs the Tailscale operator to establish secure mesh networking for cluster access. Once deployed:
+> The Pangolin installer checks for Docker and installs it if not present. You typically don't need to manually install Docker. This section is included for:
 >
-> * **Remote Management**: Enables secure `kubectl` and `talosctl` access from anywhere in your tailnet
-> * **ArgoCD Integration**: This cluster will be managed by ArgoCD running on other clusters in your infrastructure
-> * **Zero-Trust Access**: Provides encrypted connectivity even after applying restrictive firewall rules
+> * Understanding what Pangolin installs
+> * Troubleshooting Docker issues
+> * Manual Docker configuration (advanced users)
 >
-> The cluster appears as `kazimierz-akn` in your Tailscale admin console.
+> **Skip to Part 6** if you're following the standard installation.
 
-### Verify Tailscale Installation
+### Step 5.1 — Verify Docker installation (after Pangolin install)
 
-```bash {"ignore":true}
-# Check Tailscale operator status
-kubectl get pods -n tailscale-system
+After installing Pangolin (Part 6), verify Docker is properly configured:
 
-# Verify Tailscale node appears in your tailnet
-kubectl logs -n tailscale-system deployment/operator -f
+```bash
+# Check Docker version
+docker --version
+docker compose version
 
-# Check if cluster appears in Tailscale admin console
-echo "Check https://login.tailscale.com/admin/machines for kazimierz-akn node"
+# Verify Docker daemon is running
+systemctl status docker
+
+# Check Docker daemon configuration
+cat /etc/docker/daemon.json
 ```
 
-> \[!TIP]
-> The cluster will appear as `kazimierz-akn` in your Tailscale admin console. You can now manage the cluster through the Tailscale network even after applying the restrictive firewall.
+Expected daemon.json (configured by Pangolin):
 
-## Step 11: Apply Security Firewall
-
-Now that the cluster is fully operational, apply the restrictive firewall to secure the instance.
-
-```bash {"ignore":true}
-# Apply the firewall created earlier to restrict access
-hcloud firewall apply-to-resource "kazimierz:web-only" --type server --server "kazimierz.akn-cp01"
-
-# Verify firewall is applied
-hcloud firewall describe "kazimierz:web-only"
+```json
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  },
+  "live-restore": true
+}
 ```
 
-> \[!INFO] **What this does**
+### Step 5.2 — Manual Docker installation (only if needed)
+
+If you need to install Docker manually before Pangolin:
+
+```bash
+# Remove any old Docker packages
+for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do
+  apt remove -y $pkg
+done
+
+# Install Docker using the official convenience script
+curl -fsSL https://get.docker.com | sh
+
+# Enable Docker to start on boot
+systemctl enable docker
+
+# Verify installation
+docker run hello-world
+```
+
+***
+
+## Part 6 — Install Pangolin
+
+Pangolin is a Wireguard VPN solution that provides secure remote access. The installer is an all-in-one solution that automatically handles the installation of Docker, CrowdSec, and Traefik bouncer.
+
+> **\[!IMPORTANT]**
+> **Pangolin Installer includes:**
 >
-> * Applies the previously created firewall to the instance
->   * Talos API (50000) and Kubernetes API (6443) are no longer accessible from internet
->   * Only HTTP/HTTPS traffic can reach the instance
+> * **Docker Engine**: Automatically installed if not present
+> * **Pangolin Server**: The main VPN server (Wireguard-based)
+> * **Pangolin Web UI**: Web interface for management
+> * **CrowdSec**: Security monitoring and IP blocking
+> * **Traefik Bouncer**: CrowdSec integration with Traefik
+>
+> Documentation: [Pangolin Documentation](https://docs.pangolin.net/)
 
-> \[!WARNING]
-> After applying this firewall, you'll need VPN access to manage the cluster via `talosctl` or `kubectl` from external networks.
+### Step 6.1 — Install Pangolin via official installer
 
-### Verification
-
-```bash {"ignore":true}
-# Test that web ports are still accessible
-curl -I $(hcloud server ip kazimierz.akn-cp01):80
-curl -I $(hcloud server ip kazimierz.akn-cp01):443
-
-# Verify that management ports are blocked (should timeout)
-curl --connect-timeout 5 $(hcloud server ip kazimierz.akn-cp01):6443 || echo "✅ Kubernetes API blocked"
-curl --connect-timeout 5 $(hcloud server ip kazimierz.akn-cp01):50000 || echo "✅ Talos API blocked"
+```bash
+# Download and run the Pangolin installer
+curl -fsSL https://pangolin.net/get-installer.sh | bash
+./installer
 ```
+
+The installer will:
+
+1. Check for Docker and install it if missing
+2. Download required Docker images (Pangolin, CrowdSec, Traefik)
+3. Create necessary Docker networks and volumes
+4. Start all containers via docker-compose
+5. Generate a setup token for web configuration
+
+> **\[!NOTE]**
+> The Pangolin installer creates a `docker-compose.yml` file (typically in `/opt/pangolin` or the installation directory) that includes all services.
+
+### Step 6.2 — Retrieve Pangolin setup token
+
+```bash
+# Get the setup token from Pangolin logs
+docker logs pangolin | grep -A3 "SETUP TOKEN"
+
+# Or search for the token pattern
+docker logs pangolin 2>&1 | grep -E "token|TOKEN|setup"
+```
+
+The output will look like:
+
+```
+SETUP TOKEN EXISTS: abc123def456ghi789
+Please visit https://<VPS_IP> to complete setup
+```
+
+### Step 6.3 — Complete Pangolin web setup
+
+1. Navigate to `https://<VPS_IP>` or `https://<TAILSCALE_IP>` in your browser
+2. Enter the setup token from the previous step
+3. Create an admin account
+4. Configure basic settings:
+   * **Organization Name**: Your organization name
+   * **Domain**: Your Pangolin domain (e.g., `pangolin.chezmoi.sh`)
+   * **Network Settings**: Configure VPN subnet (default: `10.10.0.0/24`)
+
+### Step 6.4 — Configure SSO with PocketID (optional)
+
+If you have PocketID or another OIDC provider, you can configure SSO:
+
+1. Navigate to **Settings** → **Identity Providers** → **Add Provider**
+2. Select **PocketID** or **Generic OIDC**
+3. Configure the provider settings:
+   * **Issuer URL**: Your OIDC issuer (e.g., `https://auth.chezmoi.sh`)
+   * **Client ID**: From your OIDC provider
+   * **Client Secret**: From your OIDC provider
+4. Configure organization rules:
+   * **Role Mapping**: `contains(groups, 'admin') && 'Admin' || 'Member'`
+   * **Organization Mapping**: `true == true`
+
+> **\[!NOTE]**
+> For detailed SSO configuration, refer to: [Pangolin Identity Providers](https://docs.pangolin.net/manage/identity-providers/pocket-id)
+
+***
+
+## Part 7 — Configure CrowdSec
+
+CrowdSec is automatically installed by Pangolin, but we need to enroll it with the CrowdSec Console and install additional security collections.
+
+> **\[!IMPORTANT]**
+> **CrowdSec Components installed by Pangolin:**
+>
+> * **Local Agent**: Analyzes logs and detects threats
+> * **Traefik Bouncer**: Enforces decisions (blocks IPs in Traefik)
+> * **Base Collections**: Basic parsers and scenarios
+>
+> We need to add specialized collections for enhanced security.
+>
+> Documentation: [CrowdSec Documentation](https://docs.crowdsec.net/)
+
+### Step 7.1 — Verify CrowdSec installation
+
+```bash
+# Check if CrowdSec is running
+docker ps | grep crowdsec
+
+# Expected output:
+# - crowdsec container (main agent)
+# - traefik-bouncer container (integration with Traefik)
+```
+
+### Step 7.2 — Enroll CrowdSec with Console
+
+Enroll the CrowdSec agent using the enrollment key generated in Part 1:
+
+```bash
+# Enroll CrowdSec with the console (replace with your actual key from Step 1.2)
+docker exec -it crowdsec cscli console enroll a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+
+# Verify enrollment
+docker exec -it crowdsec cscli console status
+```
+
+Expected output:
+
+```
+Option                        Value
+Enabled                       true
+API URL                       https://api.crowdsec.net/v1
+Organization ID               <your-org-id>
+```
+
+> **\[!NOTE]**
+> CrowdSec Console enrollment enables:
+>
+> * Centralized security monitoring across multiple servers
+> * Threat intelligence sharing with the CrowdSec community
+> * Advanced analytics and reporting
+>
+> Documentation: [CrowdSec Console](https://docs.crowdsec.net/docs/console/enrollment)
+
+### Step 7.3 — Install additional CrowdSec collections
+
+Install specialized security collections for enhanced protection:
+
+```bash
+# Install Traefik parser and scenarios
+docker exec crowdsec cscli collections install crowdsecurity/traefik
+
+# Install virtual patching for known CVEs
+docker exec crowdsec cscli collections install crowdsecurity/appsec-virtual-patching
+
+# Install generic WAF rules
+docker exec crowdsec cscli collections install crowdsecurity/appsec-generic-rules
+
+# Install OWASP Core Rule Set for in-band protection
+docker exec crowdsec cscli collections install crowdsecurity/appsec-crs-inband
+
+# Restart CrowdSec to apply changes
+docker restart crowdsec
+```
+
+**Collections explained:**
+
+| Collection                              | Purpose                                                                            | Protection Level |
+| --------------------------------------- | ---------------------------------------------------------------------------------- | ---------------- |
+| `crowdsecurity/traefik`                 | Parses Traefik access logs and detects HTTP-based attacks                          | ⭐⭐⭐ Essential    |
+| `crowdsecurity/appsec-virtual-patching` | Blocks exploitation attempts for known CVEs (Common Vulnerabilities and Exposures) | ⭐⭐⭐ Critical     |
+| `crowdsecurity/appsec-generic-rules`    | Generic Web Application Firewall rules for common attack patterns                  | ⭐⭐⭐ High         |
+| `crowdsecurity/appsec-crs-inband`       | OWASP Core Rule Set for comprehensive in-band attack protection                    | ⭐⭐⭐ High         |
+
+**Additional recommended collections (optional):**
+
+```bash
+# HTTP protocol violations
+docker exec crowdsec cscli collections install crowdsecurity/http-cve
+
+# Bot detection
+docker exec crowdsec cscli collections install crowdsecurity/http-bad-user-agent
+
+# IP reputation
+docker exec crowdsec cscli collections install crowdsecurity/sshd  # If SSH is exposed
+
+# Restart after adding optional collections
+docker restart crowdsec
+```
+
+> **\[!TIP]**
+> Browse all available collections: [CrowdSec Hub](https://hub.crowdsec.net/browse/#collections)
+>
+> To list installed collections:
+>
+> ```bash
+> docker exec crowdsec cscli collections list
+> ```
+
+### Step 7.4 — Verify Traefik bouncer configuration
+
+The Traefik bouncer is automatically configured by Pangolin. Verify it's working:
+
+```bash
+# Check bouncer connection
+docker exec crowdsec cscli bouncers list
+
+# Expected output:
+# NAME             IP ADDRESS  VALID  LAST API PULL
+# traefik-bouncer  172.x.x.x   ✓      2025-11-08 10:00:00
+
+# View bouncer logs
+docker logs traefik-bouncer
+
+# Test that bouncer is actively blocking
+docker exec crowdsec cscli decisions list
+```
+
+> **\[!NOTE]**
+> The Traefik bouncer automatically blocks IPs that CrowdSec identifies as malicious. No manual configuration is needed as Pangolin handles the integration.
+
+***
+
+## Part 8 — Setup automated backups
+
+Create a robust backup system for Pangolin configuration and data.
+
+### Step 8.1 — Create backup script
+
+Create a comprehensive backup script:
+
+```bash
+cat > /usr/local/bin/backup-pangolin.sh <<'EOF'
+#!/bin/bash
+#
+# Pangolin Backup Script
+# Description: Automated backup of Pangolin, CrowdSec, and related configurations
+# Usage: Run manually or via cron
+#
+
+set -euo pipefail
+
+# Configuration
+BACKUP_ROOT="/var/backups/pangolin"
+RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-7}"
+DATE=$(date +%Y%m%d-%H%M%S)
+BACKUP_DIR="${BACKUP_ROOT}/${DATE}"
+LOG_FILE="${BACKUP_ROOT}/backup.log"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Logging function
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+error() {
+    echo -e "${RED}[ERROR]${NC} $1" | tee -a "$LOG_FILE"
+    exit 1
+}
+
+success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1" | tee -a "$LOG_FILE"
+}
+
+warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1" | tee -a "$LOG_FILE"
+}
+
+# Create backup directory
+mkdir -p "$BACKUP_DIR"
+mkdir -p "${BACKUP_ROOT}/logs"
+
+log "Starting Pangolin backup to ${BACKUP_DIR}"
+
+# Backup Pangolin configuration and data
+if [ -d "/opt/pangolin" ]; then
+    log "Backing up Pangolin configuration..."
+    tar czf "${BACKUP_DIR}/pangolin-config.tar.gz" \
+        -C /opt/pangolin \
+        --exclude='*.log' \
+        --exclude='*.sock' \
+        . 2>/dev/null || warning "Some Pangolin files could not be backed up"
+    success "Pangolin configuration backed up"
+else
+    warning "Pangolin directory not found at /opt/pangolin"
+fi
+
+# Backup CrowdSec configuration and data
+if [ -d "/opt/pangolin/crowdsec" ]; then
+    log "Backing up CrowdSec configuration..."
+    tar czf "${BACKUP_DIR}/crowdsec-config.tar.gz" \
+        -C /opt/pangolin/crowdsec \
+        config 2>/dev/null || warning "CrowdSec config could not be backed up"
+    
+    log "Backing up CrowdSec data..."
+    tar czf "${BACKUP_DIR}/crowdsec-data.tar.gz" \
+        -C /opt/pangolin/crowdsec \
+        data 2>/dev/null || warning "CrowdSec data could not be backed up"
+    success "CrowdSec backed up"
+fi
+
+# Backup docker-compose file
+if [ -f "/opt/pangolin/docker-compose.yml" ]; then
+    log "Backing up docker-compose configuration..."
+    cp /opt/pangolin/docker-compose.yml "${BACKUP_DIR}/docker-compose.yml"
+    success "docker-compose.yml backed up"
+fi
+
+# Export Docker volumes (if any custom volumes exist)
+log "Exporting Docker volumes..."
+docker volume ls --format '{{.Name}}' | grep pangolin | while read -r volume; do
+    log "Backing up volume: $volume"
+    docker run --rm \
+        -v "$volume":/volume \
+        -v "$BACKUP_DIR":/backup \
+        alpine \
+        tar czf "/backup/volume-${volume}.tar.gz" -C /volume . 2>/dev/null || warning "Volume $volume could not be backed up"
+done
+
+# Export CrowdSec decisions and metrics (optional)
+if docker ps | grep -q crowdsec; then
+    log "Exporting CrowdSec decisions..."
+    docker exec crowdsec cscli decisions list -o json > "${BACKUP_DIR}/crowdsec-decisions.json" 2>/dev/null || warning "Could not export decisions"
+    
+    log "Exporting CrowdSec metrics..."
+    docker exec crowdsec cscli metrics > "${BACKUP_DIR}/crowdsec-metrics.txt" 2>/dev/null || warning "Could not export metrics"
+fi
+
+# Create backup manifest
+cat > "${BACKUP_DIR}/MANIFEST.txt" <<MANIFEST
+Pangolin Backup Manifest
+========================
+Backup Date: $(date)
+Hostname: $(hostname)
+VPS IP: $(hostname -I | awk '{print $1}')
+Tailscale IP: $(tailscale ip -4 2>/dev/null || echo "N/A")
+
+Backup Contents:
+$(ls -lh "$BACKUP_DIR")
+
+Docker Containers:
+$(docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}')
+
+CrowdSec Collections:
+$(docker exec crowdsec cscli collections list 2>/dev/null || echo "N/A")
+
+Disk Usage:
+$(df -h /)
+MANIFEST
+
+success "Backup manifest created"
+
+# Calculate backup size
+BACKUP_SIZE=$(du -sh "$BACKUP_DIR" | awk '{print $1}')
+log "Backup completed. Size: ${BACKUP_SIZE}"
+
+# Cleanup old backups
+log "Cleaning up backups older than ${RETENTION_DAYS} days..."
+find "$BACKUP_ROOT" -maxdepth 1 -type d -name "20*" -mtime +${RETENTION_DAYS} -exec rm -rf {} \; 2>/dev/null || true
+
+# Log cleanup
+find "${BACKUP_ROOT}/logs" -name "*.log" -mtime +30 -delete 2>/dev/null || true
+
+# Summary
+BACKUP_COUNT=$(find "$BACKUP_ROOT" -maxdepth 1 -type d -name "20*" | wc -l)
+success "Backup completed successfully. Total backups: ${BACKUP_COUNT}"
+
+# Send notification (optional - uncomment if you have ntfy or similar)
+# curl -d "Pangolin backup completed: ${BACKUP_SIZE}" https://ntfy.sh/pangolin-backups
+
+exit 0
+EOF
+
+chmod +x /usr/local/bin/backup-pangolin.sh
+```
+
+### Step 8.2 — Test backup script
+
+Run the backup script manually to verify it works:
+
+```bash
+# Run backup manually
+/usr/local/bin/backup-pangolin.sh
+
+# Check backup was created
+ls -lh /var/backups/pangolin/
+
+# View backup manifest
+cat /var/backups/pangolin/*/MANIFEST.txt
+```
+
+### Step 8.3 — Schedule automated backups
+
+Configure cron to run daily backups:
+
+```bash
+# Edit crontab
+crontab -e
+
+# Add the following line (runs daily at 2 AM):
+0 2 * * * /usr/local/bin/backup-pangolin.sh >> /var/backups/pangolin/logs/cron.log 2>&1
+
+# Alternative: Use crontab -l to append without editing
+(crontab -l 2>/dev/null; echo "0 2 * * * /usr/local/bin/backup-pangolin.sh >> /var/backups/pangolin/logs/cron.log 2>&1") | crontab -
+
+# Verify cron job is scheduled
+crontab -l
+```
+
+**Alternative backup schedules:**
+
+```bash
+# Every 6 hours
+0 */6 * * * /usr/local/bin/backup-pangolin.sh >> /var/backups/pangolin/logs/cron.log 2>&1
+
+# Every day at 3 AM
+0 3 * * * /usr/local/bin/backup-pangolin.sh >> /var/backups/pangolin/logs/cron.log 2>&1
+
+# Every Sunday at 1 AM (weekly)
+0 1 * * 0 /usr/local/bin/backup-pangolin.sh >> /var/backups/pangolin/logs/cron.log 2>&1
+```
+
+### Step 8.4 — Configure backup retention
+
+Adjust backup retention by setting the environment variable:
+
+```bash
+# Create systemd environment file for backup configuration
+cat > /etc/default/pangolin-backup <<EOF
+# Pangolin Backup Configuration
+BACKUP_RETENTION_DAYS=7
+EOF
+
+# Update the cron job to use the environment file
+crontab -l | grep -v backup-pangolin.sh | crontab -
+(crontab -l 2>/dev/null; echo "0 2 * * * source /etc/default/pangolin-backup; /usr/local/bin/backup-pangolin.sh >> /var/backups/pangolin/logs/cron.log 2>&1") | crontab -
+```
+
+### Step 8.5 — Restore from backup (procedure)
+
+To restore from a backup:
+
+```bash
+# Stop all containers
+cd /opt/pangolin
+docker compose down
+
+# List available backups
+ls -lh /var/backups/pangolin/
+
+# Extract backup (replace DATE with actual backup date)
+BACKUP_DATE="20251108-020000"
+cd /opt/pangolin
+tar xzf "/var/backups/pangolin/${BACKUP_DATE}/pangolin-config.tar.gz"
+tar xzf "/var/backups/pangolin/${BACKUP_DATE}/crowdsec-config.tar.gz" -C crowdsec/
+tar xzf "/var/backups/pangolin/${BACKUP_DATE}/crowdsec-data.tar.gz" -C crowdsec/
+
+# Restore docker-compose.yml
+cp "/var/backups/pangolin/${BACKUP_DATE}/docker-compose.yml" /opt/pangolin/
+
+# Restore Docker volumes (if any)
+for volume_backup in /var/backups/pangolin/${BACKUP_DATE}/volume-*.tar.gz; do
+    volume_name=$(basename "$volume_backup" .tar.gz | sed 's/volume-//')
+    docker volume create "$volume_name"
+    docker run --rm \
+        -v "$volume_name":/volume \
+        -v /var/backups/pangolin/${BACKUP_DATE}:/backup \
+        alpine \
+        sh -c "cd /volume && tar xzf /backup/$(basename $volume_backup)"
+done
+
+# Start containers
+docker compose up -d
+
+# Verify services are running
+docker ps
+docker logs pangolin
+docker logs crowdsec
+```
+
+***
+
+## Part 9 — Verification and testing
+
+### Step 9.1 — Verify all services are running
+
+```bash
+# Check all containers
+docker ps
+
+# Expected containers:
+# - pangolin (VPN server)
+# - pangolin-web (Web UI)
+# - traefik (Reverse proxy)
+# - crowdsec (Security engine)
+# - traefik-bouncer (CrowdSec bouncer)
+```
+
+### Step 9.2 — Test Pangolin VPN connectivity
+
+1. Download the Pangolin client from your Pangolin web UI
+2. Configure a new VPN connection
+3. Connect to the VPN
+4. Test connectivity:
+
+```bash
+# From your client machine
+ping <VPN_SERVER_INTERNAL_IP>
+curl https://pangolin.chezmoi.sh
+```
+
+### Step 9.3 — Test CrowdSec blocking
+
+Test that CrowdSec is actively blocking malicious traffic:
+
+```bash
+# Generate a test attack (safe, won't harm the system)
+docker exec crowdsec cscli decisions add --ip 1.2.3.4 --duration 4h --reason "test"
+
+# Verify the decision
+docker exec crowdsec cscli decisions list
+
+# Try to access from a different machine (optional)
+# The IP 1.2.3.4 should now be blocked
+
+# Remove the test decision
+docker exec crowdsec cscli decisions delete --ip 1.2.3.4
+```
+
+### Step 9.4 — Monitor logs
+
+```bash
+# Pangolin logs
+docker logs -f pangolin
+
+# CrowdSec logs
+docker logs -f crowdsec
+
+# Traefik logs
+docker logs -f traefik
+```
+
+***
+
+## Troubleshooting
+
+### Tailscale not connecting
+
+```bash
+# Check Tailscale status
+tailscale status
+
+# View detailed logs
+journalctl -u tailscaled -f
+
+# Restart Tailscale
+systemctl restart tailscaled
+```
+
+### Pangolin web UI not accessible
+
+```bash
+# Check if containers are running
+docker ps
+
+# Check Pangolin logs
+docker logs pangolin
+
+# Verify firewall rules
+ufw status
+
+# Test local access
+curl -k https://localhost
+```
+
+### CrowdSec not enrolling
+
+```bash
+# Check CrowdSec logs
+docker logs crowdsec
+
+# Verify enrollment key
+docker exec crowdsec cscli console status
+
+# Re-enroll if needed
+docker exec crowdsec cscli console enroll <enrollment-key>
+```
+
+### Docker containers not starting
+
+```bash
+# Check Docker daemon status
+systemctl status docker
+
+# View Docker logs
+journalctl -u docker -f
+
+# Check disk space
+df -h
+
+# Restart Docker
+systemctl restart docker
+```
+
+***
+
+## Post-installation recommendations
+
+### Security hardening
+
+1. **Disable root SSH access** (after confirming Tailscale SSH works):
+
+```bash
+sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+systemctl restart sshd
+```
+
+2. **Enable automatic security updates**:
+
+```bash
+apt install -y unattended-upgrades
+dpkg-reconfigure -plow unattended-upgrades
+```
+
+### Monitoring and maintenance
+
+1. **Set up log rotation** for Docker:
+
+```bash
+# Already configured in Step 5.2, but verify:
+cat /etc/docker/daemon.json
+```
+
+2. **Monitor backup success**:
+
+```bash
+# View recent backups
+ls -lh /var/backups/pangolin/
+
+# Check backup logs
+tail -f /var/backups/pangolin/logs/cron.log
+
+# View last backup manifest
+cat $(ls -td /var/backups/pangolin/20* | head -1)/MANIFEST.txt
+```
+
+3. **Update your infrastructure documentation**:
+   * Document the VPS in your inventory
+   * Update network diagrams
+   * Keep firewall rules documented
+
+***
+
+## Future Improvements: Update Management
+
+The current configuration, following the removal of Watchtower, does not have an automated mechanism for updating applications (Pangolin, Traefik, etc.). The process is currently manual.
+
+The future goal is to adopt a declarative approach where application versions are tracked in Git and applied automatically.
+
+### Path 1: `ansible-pull` model (preferred)
+
+This approach aims to use Ansible to manage the application lifecycle without requiring a central Ansible server.
+
+**Components:**
+
+* **Ansible:** To manage the `docker-compose.yml` via templates and variables. Docker image versions would be stored in Ansible variable files.
+* **Git Repository:** Acts as the source of truth for the configuration.
+* **Renovate/Dependabot:** A tool to detect new image versions and propose Pull Requests to update the version variables in the Git repository.
+* **Cronjob on the VPS:** A scheduled task that periodically runs the `ansible-pull` command.
+
+**Envisioned Workflow:**
+
+1. **Auto-update:** Renovate detects a new version of the `fossorial/pangolin:latest` image and opens a PR to update the corresponding variable in the configuration repository.
+2. **Validation:** The PR is reviewed and merged into the main branch.
+3. **Deployment:** On the VPS, a cronjob runs `ansible-pull` at regular intervals. This command fetches the latest version of the configuration from the Git repository.
+4. **Application:** Ansible generates the new `docker-compose.yml` and redeploys the relevant services, thus applying the update.
+
+### Path 2: Lightweight Kubernetes (k3s) with GitOps
+
+Alternatively, if managing the configuration with Ansible proves to be complex, a Kubernetes-based approach could be considered.
+
+* **k3s:** A lightweight Kubernetes distribution, ideal for a single VPS.
+* **FluxCD or ArgoCD:** A GitOps controller that synchronizes the cluster's state with a Git repository.
+
+This model is conceptually similar (Git as the source of truth) but relies on the Kubernetes ecosystem. It could be simpler in the long run if configuration complexity increases, but it represents a more significant architectural change.
+
+***
+
+## References
+
+* [Pangolin Documentation](https://docs.pangolin.net/)
+* [Tailscale Documentation](https://tailscale.com/kb/)
+* [CrowdSec Documentation](https://docs.crowdsec.net/)
+* [Docker Documentation](https://docs.docker.com/)
+* [UFW Documentation](https://help.ubuntu.com/community/UFW)
+
+***
+
+## Changelog
+
+| Date       | Version | Description                                                                                                                  |
+| ---------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 2025-11-08 | 1.0.0   | Initial procedure created                                                                                                    |
+| 2025-11-08 | 1.0.1   | Simplified filename from `INF-20251108-00.bootstrap-vps-pangolin-crowdsec.md` to `HOW_TO_BOOTSTRAP.md`                       |
+| 2025-11-08 | 1.2.0   | Refactored procedure: removed Watchtower and fail2ban, corrected numbering, and added a section on future update management. |

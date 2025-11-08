@@ -9,3 +9,9 @@ Each procedure is designed to be a clear and actionable guide for a specific tec
 ### Security
 
 * **[SEC-20250808-00: Add OIDC SecurityPolicy to an HTTPRoute](./security/SEC-20250808-00.add-securitypolicy-on-httproute.md)**: Details how to secure an application exposed via a Kubernetes `HTTPRoute` with OIDC authentication using Envoy Gateway, Authelia, and Vault.
+
+### Infrastructure
+
+* **[Bootstrap VPS with Pangolin and CrowdSec](../../projects/kazimierz.akn/docs/bootstrap-vps.md)**: Complete bootstrap process for deploying a VPS with Pangolin VPN and CrowdSec security monitoring using Tailscale for secure remote access.
+* **[Add Site to Pangolin VPN](../../projects/kazimierz.akn/docs/add-site-to-pangolin.md)**: Expose applications and services through Pangolin VPN using Helm or Kustomize deployments.
+* **[Configure Watchtower for Automatic Updates](../../projects/kazimierz.akn/docs/configure-watchtower.md)**: Add and configure Watchtower for automatic Docker container updates with docker-compose compatibility.

@@ -5,7 +5,7 @@
   </picture>
 </h1>
 
-<h4 align="center">Kazimierz·AKN - Sacrificial Bastion Proxy</h4>
+<h4 align="center">Kazimierz·AKN - Public Access Gateway with Pangolin</h4>
 
 <div align="center">
 
@@ -19,9 +19,38 @@
 
 ## About
 
-Kazimierz·AKN is a **sacrificial bastion proxy** designed to act as a secure gateway between the internet and other homelab clusters. Named after the knight nation of Kazimierz from Arknights, this cluster serves as the first line of defense and reverse proxy for exposing selected services to the internet.
+Kazimierz·AKN is a **public access gateway** powered by [Pangolin](https://digpangolin.com/) and designed to provide secure, easy-to-use access to selected homelab services for family and friends. Named after the knight nation of Kazimierz from Arknights, this project documents the setup and configuration of a VPS-based security gateway that serves as the first line of defense for exposing services to the internet.
 
-The cluster is intentionally designed to be **compromisable without impacting critical infrastructure**. It acts as a security buffer, ensuring that even if this cluster is breached, other clusters containing sensitive data and critical services remain protected.
+### Architecture Overview
+
+The solution is a **single VPS** (no Kubernetes) running Pangolin with integrated security:
+
+**VPS Layer (Hetzner Cloud - Europe)**:
+
+* **Pangolin**: Edge node - Identity-aware reverse proxy with WAF and access control
+* **CrowdSec**: Collaborative threat intelligence and intrusion prevention
+* **Tailscale**: Mesh VPN for secure SSH access and VPS administration
+
+> **Note**: Initially deployed on Hetzner Cloud for flexibility. After 6 months of validation, potential migration to HostUp for cost optimization (annual commitment).
+
+**Backend Cluster Connection**:
+
+* **Newt**: Pangolin service node running on lungmen.akn cluster
+* **WireGuard Tunnel**: Secure, encrypted connection between Pangolin (VPS) and Newt (cluster)
+* **Backend Services**: Applications (Jellyfin, Immich, etc.) proxied through Newt
+
+**External Integrations**:
+
+* **auth.chezmoi.sh**: Pocket-ID SSO for authentication
+* **Mailjet**: SMTP for notifications and user communications
+
+This architecture provides:
+
+* **Simple access** for non-technical users (browser-only, no client installation required)
+* **Strong security** with WAF, rate limiting, and threat intelligence (CrowdSec)
+* **Self-hosted control** with no third-party MITM risks (unlike Cloudflare)
+* **Isolation** with the VPS as a sacrificial layer that can be compromised without impacting internal infrastructure
+* **Simple management** with no Kubernetes overhead on the edge
 
 ## Services Overview
 
@@ -30,15 +59,17 @@ The cluster is intentionally designed to be **compromisable without impacting cr
 
 ***
 
+### VPS Components
+
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
-<img src="../../docs/assets/icons/system/cilium.svg" alt="Cilium Logo" width="120" align="left" style="margin-right: 16px;">
+<img src="../../docs/assets/icons/system/pangolin.svg" alt="Pangolin Logo" width="120" align="left" style="margin-right: 16px;">
 
-### [Cilium](https://cilium.io/)
+### [Pangolin](https://pangolin.net/)
 
-eBPF-based networking, observability, and security solution for Kubernetes.
+Identity-aware reverse proxy with WAF and access control running on a European VPS (Hetzner Cloud). Uses WireGuard tunnels to connect to Newt service nodes in the homelab.
 
-***Why this choice**: Advanced networking capabilities with eBPF provide superior performance and security compared to traditional CNI solutions.*
+***Why this choice**: Distributed architecture (edge node on VPS + service node in cluster) provides secure connectivity without exposing backend infrastructure. Enterprise-grade security with OIDC integration and Let's Encrypt support.*
 
 </div>
 </div>
@@ -47,58 +78,13 @@ eBPF-based networking, observability, and security solution for Kubernetes.
 
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
-<img src="../../docs/assets/icons/system/tailscale.svg" alt="Tailscale Logo" width="120" align="right" style="margin-left: 16px;">
+<img src="../../docs/assets/icons/system/pangolin.svg" alt="Newt Logo" width="120" align="right" style="margin-left: 16px;">
 
-### [Tailscale Operator](https://tailscale.com/)
+### Newt (Pangolin Service Node)
 
-Mesh VPN solution providing secure connectivity between homelab clusters.
+Pangolin service node deployed on lungmen.akn cluster, providing secure tunnel endpoint for backend services.
 
-***Why this choice**: Already in use across the homelab as the de-facto method for secure inter-cluster connectivity with ACL rules.*
-
-</div>
-</div>
-
-<br/><br/>
-
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../docs/assets/icons/system/external-secret.svg" alt="External Secrets Operator Logo" width="120" align="left" style="margin-right: 16px;">
-
-### [External Secrets Operator](https://external-secrets.io/)
-
-Integrates external secret management systems with Kubernetes.
-
-***Why this choice**: Industry standard with excellent Kubernetes integration and secure secret management capabilities.*
-
-</div>
-</div>
-
-<br/><br/>
-
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../docs/assets/icons/system/cert-manager.svg" alt="Cert-Manager Logo" width="120" align="right" style="margin-left: 16px;">
-
-### [Cert-Manager](https://cert-manager.io/)
-
-Kubernetes controller that automates TLS certificate management and renewal.
-
-***Why this choice**: Industry standard for Kubernetes certificate management with robust Let's Encrypt integration and DNS-01 challenge support.*
-
-</div>
-</div>
-
-<br/><br/>
-
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../docs/assets/icons/system/external-dns.png" alt="ExternalDNS Logo" width="120" align="left" style="margin-right: 16px;">
-
-### [ExternalDNS](https://github.com/kubernetes-sigs/external-dns)
-
-Automatically configures DNS records for services exposed through ingress controllers.
-
-***Why this choice**: Industry standard for automated DNS management with excellent Kubernetes integration.*
+***Why this choice**: Native Pangolin component that establishes WireGuard tunnel to the edge node, enabling secure application delivery without public IP exposure.*
 
 </div>
 </div>
@@ -113,7 +99,7 @@ Automatically configures DNS records for services exposed through ingress contro
 
 Collaborative intrusion prevention system with behavioral detection and community threat intelligence.
 
-***Why this choice**: Community-driven threat intelligence provides better protection than traditional rule-based systems, with seamless Traefik integration.*
+***Why this choice**: Community-driven threat intelligence provides better protection than traditional rule-based systems, with native Pangolin integration.*
 
 </div>
 </div>
@@ -122,60 +108,103 @@ Collaborative intrusion prevention system with behavioral detection and communit
 
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
-<img src="../../docs/assets/icons/system/traefik.svg" alt="Traefik Logo" width="120" align="left" style="margin-right: 16px;">
+<img src="../../docs/assets/icons/platform/tailscale.svg" alt="Tailscale Logo" width="120" align="left" style="margin-right: 16px;">
 
-### [Traefik](https://traefik.io/)
+### [Tailscale](https://tailscale.com/)
 
-Modern reverse proxy and load balancer serving as the main entry point from the internet.
+Mesh VPN providing secure SSH access for VPS administration and configuration.
 
-***Why this choice**: Gateway-capable proxy with excellent Kubernetes integration, middleware support for CrowdSec and Coraza WAF.*
+***Why this choice**: Already used across the homelab infrastructure. Provides secure, zero-trust access for VPS management without exposing SSH to the public internet.*
 
 </div>
 </div>
+
+<br/><br/>
+
+***
+
+### External Services
+
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/pocket-id.svg" alt="Pocket-ID Logo" width="120" align="left" style="margin-right: 16px;">
+
+### [Pocket-ID](https://pocket-id.org/) (auth.chezmoi.sh)
+
+OIDC/OAuth2 authentication provider serving as the SSO solution for all publicly exposed services.
+
+***Why this choice**: This is the primary authentication method for all users accessing the gateway.*
+
+</div>
+</div>
+
+<br/><br/>
+
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/platform/mailjet.svg" alt="Mailjet Logo" width="120" align="right" style="margin-left: 16px;">
+
+### [Mailjet](https://www.mailjet.com/)
+
+Transactional email service used by Pangolin for notifications and user communications.
+
+***Why this choice**: Reliable, cost-effective email delivery with excellent deliverability rates and EU data centers.*
+
+</div>
+</div>
+
+<br/><br/>
 
 ***
 
 ## Current Project Structure
 
-The project is currently in its initial phase with the following structure:
+This project contains documentation and configuration for the Pangolin VPS gateway:
 
 ```txt
 kazimierz.akn/
 ├── README.md                           # This documentation
-├── architecture.d2                     # Architecture diagram source
-├── assets/                             # Generated assets (will be created)
-├── src/
-│   ├── seed.application.yaml          # ArgoCD seed application
-│   └── infrastructure/
-│       └── kubernetes/
-│           └── envoy-gateway/
-│               └── override.helmvalues.yaml  # Disables Envoy Gateway
+├── architecture.d2                     # Architecture diagram source (D2 format)
+├── assets/                             # Generated diagrams and assets
+│   ├── architecture-dark.svg          # Dark theme architecture diagram
+│   └── architecture-light.svg         # Light theme architecture diagram
+└── docs/
+    └── BOOTSTRAP.md                   # Complete VPS bootstrap procedure
 ```
 
-## Integration with ArgoCD
+## Installation and Setup
 
-This cluster will be automatically discovered and managed by the ArgoCD instance running on `amiya.akn` through cluster-based ApplicationSets. The system components will be deployed automatically, with custom overrides applied where needed (such as disabling Envoy Gateway in favor of Traefik).
+The VPS is provisioned and configured using Pangolin's official installer. See [docs/BOOTSTRAP.md](./docs/BOOTSTRAP.md) for the complete bootstrap procedure.
 
 ## Security Considerations
 
 > \[!WARNING]
-> This cluster is designed to be **sacrificial** and potentially compromisable.
+> The VPS is designed to be **sacrificial** and potentially compromisable. It acts as a security buffer to protect internal infrastructure.
 
-### Isolation & Segmentation
+### Authentication & Access Control
 
-* **Network policies**: All services protected with Cilium NetworkPolicies for microsegmentation
-* **Network segmentation**: Cluster has no direct access to internal networks
-* **Tailscale mesh**: All backend services accessed via encrypted VPN, never directly
+* **SSO Integration**: All public services authenticate via Pocket-ID (auth.chezmoi.sh)
+* **Passkey-first**: Modern, phishing-resistant authentication for users
+* **Zero Trust**: Every request validated, no implicit trust
+* **Read-only modes**: Where applicable, services exposed with limited permissions
+* **SSH Access**: VPS management via Tailscale only, SSH never exposed to public internet
 
 ### Data & Secrets Protection
 
-* **No critical data storage**: No persistent volumes containing sensitive information
-* **Secrets isolation**: All secrets retrieved from external systems (amiya.akn/OpenBao), not stored locally
-* **Minimal attack surface**: Only essential services for proxying and security
+* **No critical data on VPS**: VPS only stores proxy configuration, no application data
+* **Stateless proxy**: All requests proxied in real-time, no caching of sensitive data
+* **No secrets managed**: No secrets or credentials must be stored on the VPS *(or at least nothing too sensitive)*
+* **End-to-end encryption**: TLS from internet → VPS, encrypted VPN → backend
 
 ### Sacrificial Design Philosophy
 
-* The cluster acts as a **security buffer** - designed to absorb and contain potential attacks without compromising critical homelab infrastructure. Even if fully breached, sensitive systems **should** remain protected.
+The VPS acts as a **security buffer** - designed to absorb and contain potential attacks without compromising critical homelab infrastructure. Even if fully breached:
+
+* Backend cluster (lungmen.akn, ...) remains protected behind WireGuard tunnel (Pangolin ↔ Newt)
+* No sensitive data is exposed (everything proxied in real-time through Newt)
+* VPS can be destroyed and recreated quickly from bootstrap documentation
+* No Kubernetes complexity means smaller attack surface and easier rebuilds
+* Newt provides additional isolation layer between internet and backend services
 
 ## License
 
@@ -185,6 +214,6 @@ This repository is licensed under the [Apache-2.0](../../LICENSE).
 > This is a personal project intended for my own use. Feel free to explore and use the code,
 > but please note that it comes with no warranties or guarantees. Use it at your own risk.
 >
-> This cluster is specifically designed as a **sacrificial bastion** - it may be compromised
+> This VPS is specifically designed as a **sacrificial bastion** - it may be compromised
 > as part of its security design and should never contain critical data or direct access to
 > sensitive systems.
