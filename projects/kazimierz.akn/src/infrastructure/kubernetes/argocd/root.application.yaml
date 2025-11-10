@@ -1,0 +1,24 @@
+---
+# Root Application - App-of-Apps pattern
+# Deploys all sub-applications
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd-system
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  sources:
+    - repoURL: https://github.com/chezmoidotsh/arcane.git
+      path: projects/kazimierz.akn/src/infrastructure/kubernetes/argocd
+      targetRevision: issue-458/prepare-kazimierz-pangolin

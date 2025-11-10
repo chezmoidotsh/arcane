@@ -1,0 +1,24 @@
+---
+# Kustomization for ArgoCD (headless mode)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: argocd-system
+
+labels:
+  - pairs:
+      # renovate: datasource=helm depName=argo-cd registryUrl=https://argoproj.github.io/argo-helm
+      app.kubernetes.io/version: 9.1.0
+    includeTemplates: true
+
+resources:
+  # Install ArgoCD applications
+  - ./apps
+  - root.application.yaml
+
+helmCharts:
+  - name: argo-cd
+    repo: https://argoproj.github.io/argo-helm
+    releaseName: argocd
+    version: 9.1.0
+    valuesFile: argocd.helmvalues/default.yaml
+    includeCRDs: true

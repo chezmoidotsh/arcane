@@ -1,0 +1,42 @@
+---
+# ArgoCD Helm values for Kazimierz.AKN
+# Minimal configuration
+
+global:
+  domain: argocd.kazimierz.akn.local
+
+# Argo CD configuration
+configs:
+  cm:
+    # Kustomize configuration
+    kustomize.buildOptions: --enable-helm --load-restrictor=LoadRestrictionsNone
+
+    # Repository configuration
+    repositories: |
+      - url: https://github.com/chezmoidotsh/arcane
+        name: arcane
+        type: git
+
+# Disable ApplicationSet controller (not used)
+applicationSet:
+  replicas: 0
+
+# Disable Dex (no OIDC provider configured)
+dex:
+  enabled: false
+
+# Disable ArgoCD notifications (not used)
+notifications:
+  enabled: false
+
+# ArgoCD Extensions configuration
+server:
+  extensions:
+    enabled: true
+    extensionList:
+      - name: extension-application-map
+        env:
+          - name: EXTENSION_URL
+            value: https://github.com/chezmoidotsh/argocd-extension-application-map/releases/download/v1.1.0/extension-application-map.tar
+          - name: EXTENSION_CHECKSUM_URL
+            value: https://github.com/chezmoidotsh/argocd-extension-application-map/releases/download/v1.1.0/extension-application-map_checksums.txt
