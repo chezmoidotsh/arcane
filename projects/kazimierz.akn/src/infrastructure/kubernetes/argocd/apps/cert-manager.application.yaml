@@ -1,0 +1,42 @@
+---
+# Cert-Manager Application
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - Delete=confirm
+      - Prune=confirm
+      - ServerSideApply=true
+  sources:
+    - repoURL: https://github.com/chezmoidotsh/arcane.git
+      path: defaults/kubernetes/cert-manager/kustomize
+      targetRevision: issue-458/prepare-kazimierz-pangolin
+      kustomize:
+        components:
+          - >-
+            ../../../../projects/kazimierz.akn/src/infrastructure/kubernetes/cert-manager
+        ignoreMissingComponents: true
+      ref: origin
+    - repoURL: https://charts.jetstack.io
+      targetRevision: 1.18.2
+      helm:
+        valueFiles:
+          - $origin/defaults/kubernetes/cert-manager/helm/default.helmvalues.yaml
+          - $origin/defaults/kubernetes/cert-manager/helm/hardened.helmvalues.yaml
+          - >-
+            $origin/projects/kazimierz.akn/src/infrastructure/kubernetes/cert-manager/override.helmvalues.yaml
+        releaseName: cert-manager
+        ignoreMissingValueFiles: true
+      chart: cert-manager

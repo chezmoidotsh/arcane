@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+patches:
+  # Remove ExternalSecret for Let's Encrypt issuer credentials
+  - path: letsencrypt-issuer-credentials.externalsecret.yaml
+
+  # Replace DNS-01 challenge solver with HTTP-01 challenge solver
+  - path: letsencrypt.clusterissuer.yaml
+  - patch: |-
+      - op: remove
+        path: /spec/acme/solvers/0
+    target:
+      kind: ClusterIssuer
+      name: letsencrypt

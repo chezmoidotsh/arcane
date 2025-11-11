@@ -7,4 +7,5 @@ resources:
   # Project definition for ArgoCD applications
   - default.project.yaml
 
-  # - argocd.application.yaml
+  # Application definitions
+  - cert-manager.application.yaml

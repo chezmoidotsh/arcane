@@ -1,0 +1,18 @@
+# Default Let's Encrypt ClusterIssuer for all clusters overrided
+# Uses HTTP-01 challenge with Traefik ingress for automatic certificate issuance,
+# suitable for clusters with public ingress access.
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    # Email for certificate expiration notifications
+    email: noreply@chezmoi.sh
+
+    # HTTP-01 challenge solver
+    solvers:
+      - http01:
+          ingress:
+            class: traefik
