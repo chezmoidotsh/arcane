@@ -1,0 +1,25 @@
+---
+# CNPG Application
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cloudnative-pg
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cloudnative-pg-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - Delete=confirm
+      - Prune=confirm
+      - ServerSideApply=true
+  sources:
+    - repoURL: https://github.com/chezmoidotsh/arcane.git
+      path: projects/kazimierz.akn/src/infrastructure/kubernetes/cloudnative-pg
+      targetRevision: issue-458/prepare-kazimierz-pangolin
