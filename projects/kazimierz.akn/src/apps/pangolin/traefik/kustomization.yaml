@@ -1,0 +1,29 @@
+---
+# Kustomization for Traefik ingress controller
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: traefik
+      app.kubernetes.io/component: proxy
+    includeTemplates: true
+    includeSelectors: true
+
+helmCharts:
+  - name: traefik
+    releaseName: traefik
+    namespace: pangolin
+    repo: https://traefik.github.io/charts
+    version: 37.3.0
+    valuesFile: traefik.helmvalues/default.yaml
+    additionalValuesFiles:
+      - traefik.helmvalues/crowdsec.yaml
+      - traefik.helmvalues/pangolin.yaml
+
+resources:
+  # Install Gateway API
+  - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/experimental-install.yaml
+
+  - traefik-logs.volume.yaml
+  - letsencrypt-acme.volume.yaml

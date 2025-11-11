@@ -1,0 +1,26 @@
+---
+# ClusterIP Service for CrowdSec LAPI
+# Used by Traefik bouncer to query decisions
+apiVersion: v1
+kind: Service
+metadata:
+  name: crowdsec-lapi
+  namespace: pangolin
+  labels:
+    app.kubernetes.io/name: crowdsec
+    app.kubernetes.io/instance: crowdsec
+    app.kubernetes.io/component: application
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: crowdsec
+    app.kubernetes.io/instance: crowdsec
+  ports:
+    - name: lapi
+      port: 8080
+      targetPort: lapi
+      protocol: TCP
+    - name: metrics
+      port: 6060
+      targetPort: metrics
+      protocol: TCP

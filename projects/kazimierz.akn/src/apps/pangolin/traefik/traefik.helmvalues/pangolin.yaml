@@ -1,0 +1,70 @@
+---
+# =============================================================================
+# Traefik Pangolin Integration - Dynamic Configuration Provider
+# =============================================================================
+#
+# This file configures Traefik integration with Pangolin for dynamic HTTP
+# route configuration and Pangolin-specific plugins.
+#
+# Advantages of this approach:
+#   1. Centralized configuration: Single source of truth (Pangolin API)
+#   2. Automatic discovery: New services are automatically routed
+#   3. Flexibility: Routes can be modified without redeploying Traefik
+#   4. Abstraction: Services don't need to know about Traefik
+#
+# Provides HTTP provider configuration to fetch dynamic routing rules from
+# Pangolin API endpoint.
+# =============================================================================
+
+# =============================================================================
+# Pangolin Badger Plugin
+# =============================================================================
+# Badger is Pangolin's custom plugin for advanced routing and authentication
+experimental:
+  plugins:
+    badger:
+      # Pangolin Badger plugin for advanced features
+      # Source: https://github.com/fosrl/badger
+      # Rationale: Provides Pangolin-specific routing and authentication logic
+      moduleName: github.com/fosrl/badger
+
+      # renovate: datasource=github-release depName=fosrl/badger
+      version: v1.2.1
+
+# =============================================================================
+# Additional Arguments - HTTP Provider Configuration
+# =============================================================================
+# Additional CLI arguments to configure Traefik's HTTP provider
+additionalArguments:
+  # ==========================================================================
+  # Pangolin HTTP Provider Endpoint
+  # ==========================================================================
+  # URL of the Pangolin API that exposes the dynamic Traefik configuration
+  #
+  # The expected response format is the same as Traefik's dynamic
+  # configuration file format (http/tcp routers, services, middlewares, etc.)
+  # See: https://doc.traefik.io/traefik/providers/http/
+  - "--providers.http.endpoint=http://pangolin.pangolin.svc.cluster.local:3001/api/v1/traefik-config"
+
+  # ==========================================================================
+  # Poll Interval Configuration
+  # ==========================================================================
+  # Polling frequency of the Pangolin API endpoint
+  #
+  # Value: 5s (5 seconds)
+  # Rationale: Balance between:
+  #   - Responsiveness: Changes detected quickly (5s max latency)
+  #   - Performance: Not too much load on Pangolin and Traefik
+  #   - Network: Avoids flooding unnecessary HTTP requests
+  #
+  # Considerations:
+  #   - 5s is sufficient for most use cases (deployment, scaling)
+  #   - For critical changes, we can manually restart Traefik
+  #   - Pangolin can implement caching to optimize requests
+  - "--providers.http.pollInterval=5s"
+
+  # ==========================================================================
+  # HTTP Provider Timeout
+  # ==========================================================================
+  # Timeout for HTTP requests to Pangolin API
+  - "--providers.http.pollTimeout=5s"

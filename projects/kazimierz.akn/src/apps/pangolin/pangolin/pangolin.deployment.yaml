@@ -1,0 +1,99 @@
+---
+# Pangolin deployment - Main application pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pangolin
+  namespace: pangolin
+  labels:
+    app.kubernetes.io/name: pangolin
+    app.kubernetes.io/instance: pangolin
+    app.kubernetes.io/component: application
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pangolin
+      app.kubernetes.io/instance: pangolin
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pangolin
+        app.kubernetes.io/instance: pangolin
+        app.kubernetes.io/component: application
+    spec:
+      containers:
+        - name: pangolin
+          image: ghcr.io/fosrl/pangolin:postgresql-1.12.1
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: api-internal
+              containerPort: 3000
+              protocol: TCP
+            - name: api
+              containerPort: 3001
+              protocol: TCP
+            - name: ui
+              containerPort: 3002
+              protocol: TCP
+
+          env:
+            # Server secret key (for session management)
+            - name: SERVER_SECRET
+              value: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+            # PostgreSQL connection string (full connection URL)
+            - name: POSTGRES_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: pangolin-database-app
+                  key: uri
+
+          volumeMounts:
+            # Configuration file (non-sensitive)
+            - name: config
+              mountPath: /app/config/config.yml
+              subPath: config.yml
+
+            # Dynamic configuration storage
+            - name: pangolin-data
+              mountPath: /var/dynamic
+              subPath: dynamic
+
+          livenessProbe:
+            httpGet:
+              path: /api/v1/
+              port: 3001
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /api/v1/
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 15
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+      volumes:
+        # Configuration file from ConfigMap
+        - name: config
+          configMap:
+            name: pangolin-config
+
+        # Dynamic data volume
+        - name: pangolin-data
+          persistentVolumeClaim:
+            claimName: pangolin-data

@@ -1,0 +1,29 @@
+---
+# Pangolin ClusterIP service for internal communication
+apiVersion: v1
+kind: Service
+metadata:
+  name: pangolin
+  namespace: pangolin
+  labels:
+    app.kubernetes.io/name: pangolin
+    app.kubernetes.io/instance: pangolin
+    app.kubernetes.io/component: application
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: pangolin
+    app.kubernetes.io/instance: pangolin
+  ports:
+    - name: api-internal
+      port: 3000
+      targetPort: api-internal
+      protocol: TCP
+    - name: api
+      port: 3001
+      targetPort: api
+      protocol: TCP
+    - name: ui
+      port: 3002
+      targetPort: ui
+      protocol: TCP

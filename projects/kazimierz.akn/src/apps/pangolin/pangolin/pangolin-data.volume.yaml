@@ -1,0 +1,19 @@
+---
+# PersistentVolumeClaim for Pangolin data
+# Shared between Pangolin, Gerbil, and Traefik
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pangolin-data
+  namespace: pangolin
+  labels:
+    app.kubernetes.io/name: pangolin
+    app.kubernetes.io/instance: pangolin
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path # K3s default
+  resources:
+    requests:
+      storage: 5Gi

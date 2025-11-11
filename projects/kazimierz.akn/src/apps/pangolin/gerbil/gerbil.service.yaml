@@ -1,0 +1,35 @@
+---
+# LoadBalancer Service for Gerbil WireGuard tunnels
+# Exposes WireGuard ports for backend cluster connectivity
+apiVersion: v1
+kind: Service
+metadata:
+  name: gerbil
+  namespace: pangolin
+  labels:
+    app.kubernetes.io/name: gerbil
+    app.kubernetes.io/instance: gerbil
+    app.kubernetes.io/component: application
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: gerbil
+    app.kubernetes.io/instance: gerbil
+  ports:
+    # WireGuard primary port (must be publicly accessible)
+    - name: wireguard
+      port: 51820
+      targetPort: wireguard
+      protocol: UDP
+
+    # WireGuard alternative port (for networks blocking 51820)
+    - name: wireguard-alt
+      port: 21820
+      targetPort: wireguard-alt
+      protocol: UDP
+
+    # Gerbil API (ClusterIP only, not exposed externally)
+    - name: api
+      port: 3004
+      targetPort: api
+      protocol: TCP

@@ -1,0 +1,127 @@
+---
+# CrowdSec Security Engine deployment
+# Parses Traefik logs and provides threat intelligence
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crowdsec
+  namespace: pangolin
+  labels:
+    app.kubernetes.io/name: crowdsec
+    app.kubernetes.io/instance: crowdsec
+    app.kubernetes.io/component: application
+    # renovate: datasource=docker depName=crowdsecurity/crowdsec
+    app.kubernetes.io/version: v1.6.4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: crowdsec
+      app.kubernetes.io/instance: crowdsec
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: crowdsec
+        app.kubernetes.io/instance: crowdsec
+        app.kubernetes.io/component: application
+        app.kubernetes.io/version: v1.6.4
+    spec:
+      containers:
+        - name: crowdsec
+          image: crowdsecurity/crowdsec:v1.6.4
+          imagePullPolicy: IfNotPresent
+          env:
+            # LAPI configuration
+            - name: COLLECTIONS
+              value: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/whitelist-good-actors"
+            - name: PARSERS
+              value: "crowdsecurity/traefik-logs"
+            - name: SCENARIOS
+              value: "crowdsecurity/http-sensitive-files crowdsecurity/http-bad-user-agent crowdsecurity/http-path-traversal-probing"
+
+            # Bouncer API key (for Traefik bouncer)
+            - name: BOUNCER_KEY_TRAEFIK
+              valueFrom:
+                secretKeyRef:
+                  name: crowdsec-bouncer-key
+                  key: BOUNCER_KEY
+
+            # Console enrollment (optional)
+            - name: ENROLL_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: crowdsec-console
+                  key: ENROLL_KEY
+                  optional: true
+            - name: ENROLL_INSTANCE_NAME
+              value: "kazimierz-pangolin"
+            - name: ENROLL_TAGS
+              value: "kubernetes vps pangolin kazimierz"
+
+          ports:
+            - name: lapi
+              containerPort: 8080
+              protocol: TCP
+            - name: metrics
+              containerPort: 6060
+              protocol: TCP
+
+          volumeMounts:
+            # Traefik logs (read-only)
+            - name: traefik-logs
+              mountPath: /var/log/traefik
+              readOnly: true
+
+            # CrowdSec data persistence
+            - name: crowdsec-data
+              mountPath: /var/lib/crowdsec/data
+            - name: crowdsec-config
+              mountPath: /etc/crowdsec
+
+            # Acquisition configuration
+            - name: acquisition-config
+              mountPath: /etc/crowdsec/acquis.d
+              readOnly: true
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: lapi
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: lapi
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+
+      volumes:
+        # Traefik logs from shared PVC
+        - name: traefik-logs
+          persistentVolumeClaim:
+            claimName: traefik-logs
+
+        # CrowdSec persistent data
+        - name: crowdsec-data
+          persistentVolumeClaim:
+            claimName: crowdsec-data
+        - name: crowdsec-config
+          persistentVolumeClaim:
+            claimName: crowdsec-config
+
+        # Acquisition configuration from ConfigMap
+        - name: acquisition-config
+          configMap:
+            name: crowdsec-acquisition

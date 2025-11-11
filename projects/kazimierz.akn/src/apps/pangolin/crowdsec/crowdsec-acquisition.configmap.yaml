@@ -1,0 +1,21 @@
+---
+# CrowdSec acquisition configuration
+# Defines how to read and parse Traefik logs
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crowdsec-acquisition
+  namespace: pangolin
+  labels:
+    app.kubernetes.io/name: crowdsec
+    app.kubernetes.io/instance: crowdsec
+    app.kubernetes.io/component: application
+data:
+  traefik.yaml: |
+    # Traefik access logs acquisition
+    filenames:
+      - /var/log/traefik/access.log
+    labels:
+      type: traefik
+    # Force log format to JSON (matching Traefik config)
+    force_inotify: true

@@ -1,0 +1,21 @@
+---
+# Kustomization for Gerbil WireGuard tunnel manager
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: pangolin
+
+resources:
+  - gerbil.deployment.yaml
+  - gerbil.service.yaml
+
+commonLabels:
+  app.kubernetes.io/name: gerbil
+  app.kubernetes.io/instance: gerbil
+  app.kubernetes.io/component: application
+
+labels:
+  - pairs:
+      # renovate: datasource=docker depName=fosrl/gerbil
+      app.kubernetes.io/version: v1.2.2
+    includeTemplates: true

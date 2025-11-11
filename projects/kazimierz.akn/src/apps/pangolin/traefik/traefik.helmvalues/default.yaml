@@ -1,0 +1,132 @@
+---
+# =============================================================================
+# Traefik Helm Values - Base Configuration for Pangolin Gateway
+# =============================================================================
+#
+# This file contains the core Traefik configuration for the Pangolin gateway
+# on the Kazimierz cluster. Additional configurations are loaded via overlays:
+# - crowdsec.yaml: CrowdSec integration (access logs, bouncer plugin)
+# - pangolin.yaml: Pangolin HTTP provider (dynamic configuration)
+# - gerbil.yaml: Gerbil sidecar (WireGuard tunnel management)
+#
+# Architecture:
+#   [Internet] → [Traefik + Gerbil] → [Pangolin] → [CNPG PostgreSQL]
+#                      ↑
+#                 [CrowdSec] (log analysis)
+# =============================================================================
+
+global:
+  # Disable version checks and anonymous telemetry
+  # Rationale: Privacy compliance and reduced outbound network traffic
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+# =============================================================================
+# Deployment Configuration
+# =============================================================================
+deployment:
+  replicas: 1
+
+# =============================================================================
+# Entry Points Configuration
+# =============================================================================
+ports:
+  web:
+    port: 80
+    exposedPort: 80
+    protocol: TCP
+
+  websecure:
+    port: 443
+    exposedPort: 443
+    protocol: TCP
+    http:
+      tls:
+        certResolver: letsencrypt
+
+# =============================================================================
+# Service Configuration
+# =============================================================================
+service:
+  type: LoadBalancer
+  annotations: {}
+  spec:
+    externalTrafficPolicy: Local # Preserve source IP for CrowdSec
+
+# =============================================================================
+# TLS / ACME Configuration
+# =============================================================================
+# Let's Encrypt automatic certificate management via HTTP-01 challenge
+certmanager:
+  enabled: false # We use Traefik ACME directly
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: noreply@chezmoi.sh
+      storage: /letsencrypt/acme.json
+      caServer: https://acme-v02.api.letsencrypt.org/directory
+      # HTTP-01 challenge (port 80 must be accessible from Internet)
+      httpChallenge:
+        entryPoint: web
+
+# =============================================================================
+# Providers Configuration
+# =============================================================================
+providers:
+  # Kubernetes CRDs for advanced Traefik features (Middleware, IngressRoute)
+  kubernetesCRD:
+    enabled: true
+    allowCrossNamespace: false
+    allowExternalNameServices: false
+
+  # Kubernetes Ingress for compatibility (used by ACME HTTP-01 challenges)
+  kubernetesIngress:
+    enabled: true
+    allowExternalNameServices: false
+    publishedService:
+      enabled: true
+
+# =============================================================================
+# Logging Configuration
+# =============================================================================
+logs:
+  general:
+    level: INFO
+    format: json
+
+# =============================================================================
+# Volume Configuration
+# =============================================================================
+# ACME certificate storage
+volumes:
+  - name: letsencrypt
+    mountPath: /letsencrypt
+    type: persistentVolumeClaim
+
+# =============================================================================
+# API and Observability
+# =============================================================================
+# API and Dashboard
+api:
+  dashboard: true
+  insecure: false # Secure via Ingress/HTTPRoute
+
+# Metrics
+metrics:
+  prometheus:
+    enabled: true
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServicesLabels: true
+
+# Health checks
+ping:
+  enabled: true
+  entryPoint: web
+
+# =============================================================================
+# Security Configuration
+# =============================================================================
+additionalArguments:
+  - "--serverstransport.insecureskipverify=true" # For internal services

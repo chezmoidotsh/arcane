@@ -10,3 +10,4 @@ resources:
   # Application definitions
   - cert-manager.application.yaml
   - cloudnative-pg.application.yaml
+  - pangolin.application.yaml

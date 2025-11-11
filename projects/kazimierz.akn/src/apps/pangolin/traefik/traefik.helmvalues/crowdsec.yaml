@@ -1,0 +1,103 @@
+---
+# =============================================================================
+# Traefik CrowdSec Integration - Overlay Configuration
+# =============================================================================
+#
+# This file configures CrowdSec integration with Traefik to protect the
+# Pangolin gateway against threats and automated attacks.
+#
+# CrowdSec Architecture:
+#   1. CrowdSec Agent: Analyzes Traefik logs (access.log)
+#   2. CrowdSec LAPI: Ban/allow decisions based on analysis
+#   3. Traefik Bouncer Plugin: Validates each request against decisions
+#
+# Provides bouncer plugin configuration along with logging and persistent
+# volume wiring required for CrowdSec observability.
+# =============================================================================
+
+# =============================================================================
+# CrowdSec Bouncer Plugin
+# =============================================================================
+# Traefik plugin that acts as a "bouncer" - request validator based on
+# CrowdSec decisions. Automatically blocks malicious IPs.
+experimental:
+  plugins:
+    crowdsec:
+      # Official CrowdSec plugin for Traefik
+      # Source: https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+      # Rationale: Native integration with CrowdSec API to block threats in
+      # real-time before they reach services
+      moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+
+      # renovate: datasource=github-release depName=maxlerebourg/crowdsec-bouncer-traefik-plugin
+      version: v1.4.4
+
+# =============================================================================
+# Logging Configuration
+# =============================================================================
+# Logging configuration necessary for CrowdSec analysis and debugging
+logs:
+  access:
+    # Enable access logs (CRITICAL for CrowdSec)
+    # Rationale: Without access logs, CrowdSec cannot analyze traffic and
+    # detect threats. This is the primary data source.
+    enabled: true
+
+    # Access log file path
+    # Rationale: Volume shared with CrowdSec Agent for real-time analysis.
+    # The traefik-logs PVC is mounted to allow CrowdSec to read logs
+    filePath: /var/log/traefik/access.log
+
+    # JSON format for easier parsing by CrowdSec
+    # Rationale: JSON is easier to parse and avoids complex regex issues.
+    # CrowdSec natively supports this format.
+    format: json
+
+    # Buffering for performance
+    bufferingSize: 100
+
+    # Field configuration for privacy and CrowdSec requirements
+    fields:
+      defaultMode: drop
+      names:
+        ClientAddr: keep
+        ClientHost: keep
+        RequestMethod: keep
+        RequestPath: keep
+        RequestProtocol: keep
+        DownstreamStatus: keep
+        DownstreamContentSize: keep
+        Duration: keep
+        RetryAttempts: keep
+        ServiceName: keep
+        StartUTC: keep
+      headers:
+        defaultMode: drop
+        names:
+          User-Agent: keep
+          X-Forwarded-For: keep
+          X-Forwarded-Proto: keep
+          X-Real-Ip: keep
+          Content-Type: keep
+
+# =============================================================================
+# Security Context
+# =============================================================================
+# Security configuration for file permissions
+podSecurityContext:
+  # FSGroup 65532 (nobody) for file permissions
+  # Rationale: Allows Traefik (non-root) to write to /var/log/traefik and
+  # CrowdSec to read these files. The group is shared between both.
+  # 65532 is the standard UID/GID for the "nobody" user in distroless
+  # containers
+  fsGroup: 65532
+
+# =============================================================================
+# Persistent Volumes
+# =============================================================================
+# Persistent volumes for logs
+volumes:
+  # Shared volume for Traefik logs accessible by CrowdSec Agent
+  - name: traefik-logs
+    mountPath: /var/log/traefik
+    type: persistentVolumeClaim

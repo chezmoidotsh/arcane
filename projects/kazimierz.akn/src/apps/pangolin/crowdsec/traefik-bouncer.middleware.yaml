@@ -1,0 +1,31 @@
+---
+# Traefik ForwardAuth middleware for CrowdSec bouncer
+# Intercepts requests and checks against CrowdSec decisions
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: crowdsec-bouncer
+  namespace: pangolin
+  labels:
+    app.kubernetes.io/name: crowdsec
+    app.kubernetes.io/component: application
+spec:
+  plugin:
+    bouncer:
+      enabled: true
+      logLevel: INFO
+      crowdsecMode: live
+      crowdsecLapiScheme: http
+      crowdsecLapiHost: crowdsec-lapi.pangolin.svc.cluster.local:8080
+      crowdsecLapiKey:
+        secretKeyRef:
+          name: crowdsec-bouncer-key
+          key: BOUNCER_KEY
+      forwardedHeadersTrustedIPs:
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+      clientTrustedIPs:
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16

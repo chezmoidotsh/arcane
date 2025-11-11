@@ -1,0 +1,19 @@
+---
+# PersistentVolumeClaim for Let's Encrypt ACME certificates
+# Stores acme.json file for Traefik certificate management
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: letsencrypt-acme
+  namespace: pangolin
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: traefik
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 128Mi

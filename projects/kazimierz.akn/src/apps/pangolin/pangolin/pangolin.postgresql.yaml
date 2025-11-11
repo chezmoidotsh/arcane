@@ -1,0 +1,35 @@
+---
+# CloudNative-PG Cluster for Pangolin database
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pangolin-database
+  namespace: pangolin
+  labels:
+    app.kubernetes.io/name: pangolin-database
+    app.kubernetes.io/instance: pangolin-database
+    app.kubernetes.io/component: database
+spec:
+  instances: 1 # Single instance for VPS minimalisme
+
+  bootstrap:
+    initdb:
+      database: pangolin
+      owner: pangolin
+
+  storage:
+    size: 10Gi
+    storageClass: local-path # K3s default storage class
+
+  # Scheduled backup quotidien à 2h du matin
+  # Note: Les backups sont aussi déclenchés automatiquement à chaque WAL switch
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+  monitoring:
+    enablePodMonitor: false # Pas de Prometheus sur kazimierz.akn

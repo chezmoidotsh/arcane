@@ -1,0 +1,18 @@
+---
+# PersistentVolumeClaim for CrowdSec configuration
+# Stores CrowdSec config files and collections
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: crowdsec-config
+  namespace: pangolin
+  labels:
+    app.kubernetes.io/name: crowdsec
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 100Mi

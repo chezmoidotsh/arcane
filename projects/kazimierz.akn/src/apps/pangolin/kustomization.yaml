@@ -1,0 +1,19 @@
+---
+# Main kustomization for Pangolin infrastructure
+# Orchestrates: namespace, database, app, Traefik, Gerbil, CrowdSec
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: pangolin
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: pangolin
+      # renovate: datasource=github-release depName=fosrl/pangolin
+      app.kubernetes.io/version: 1.12.2
+    includeTemplates: true
+
+resources:
+  - traefik
+  - pangolin
+  - gerbil
+  - crowdsec

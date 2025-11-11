@@ -1,0 +1,113 @@
+---
+# Gerbil WireGuard tunnel manager for Pangolin
+# Manages WireGuard interfaces and peers via HTTP API
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gerbil
+  namespace: pangolin
+  labels:
+    app.kubernetes.io/name: gerbil
+    app.kubernetes.io/instance: gerbil
+    app.kubernetes.io/component: application
+    # renovate: datasource=docker depName=fosrl/gerbil
+    app.kubernetes.io/version: v1.2.2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gerbil
+      app.kubernetes.io/instance: gerbil
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gerbil
+        app.kubernetes.io/instance: gerbil
+        app.kubernetes.io/component: application
+        app.kubernetes.io/version: v1.2.2
+    spec:
+      containers:
+        - name: gerbil
+          image: ghcr.io/fosrl/gerbil:1.2.2
+          imagePullPolicy: IfNotPresent
+
+          # Gerbil configuration arguments
+          args:
+            # Pangolin API endpoint for dynamic configuration
+            - "--remoteConfig=http://pangolin.pangolin.svc.cluster.local:3001/api/v1/"
+
+            # WireGuard private key storage location
+            - "--generateAndSaveKeyTo=/var/config/key"
+
+            # Gerbil API endpoint reachable by Pangolin
+            # Uses Service DNS name (not localhost since separate pod)
+            - "--reachableAt=http://gerbil.pangolin.svc.cluster.local:3004"
+
+          # Security context: NET_ADMIN capability for WireGuard management
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+
+          # Ports exposed by Gerbil
+          ports:
+            # WireGuard primary port
+            - name: wireguard
+              containerPort: 51820
+              protocol: UDP
+
+            # WireGuard alternative port (for networks blocking 51820)
+            - name: wireguard-alt
+              containerPort: 21820
+              protocol: UDP
+
+            # Gerbil HTTP API (for Pangolin communication)
+            - name: api
+              containerPort: 3004
+              protocol: TCP
+
+            # SNI Proxy port (NOT USED in single-node deployment)
+            # Kept for future multi-node support
+            # - name: sni-proxy
+            #   containerPort: 8443
+            #   protocol: TCP
+
+          # Volume mounts for configuration and keys
+          volumeMounts:
+            - name: gerbil-config
+              mountPath: /var/config
+              subPath: gerbil
+
+          # Resource limits
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+
+          # Readiness probe
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3004
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          # Liveness probe
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3004
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+      volumes:
+        - name: gerbil-config
+          persistentVolumeClaim:
+            claimName: pangolin-data

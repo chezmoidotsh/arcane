@@ -1,0 +1,18 @@
+---
+# PersistentVolumeClaim for Traefik access logs
+# Shared with CrowdSec for log parsing
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: traefik-logs
+  namespace: pangolin
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/component: logs
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi

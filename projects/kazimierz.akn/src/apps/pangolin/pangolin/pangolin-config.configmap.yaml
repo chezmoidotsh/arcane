@@ -1,0 +1,119 @@
+---
+# Pangolin configuration file
+# Non-sensitive configuration options
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pangolin-config
+  namespace: pangolin
+  labels:
+    app.kubernetes.io/name: pangolin
+    app.kubernetes.io/instance: pangolin
+    app.kubernetes.io/component: configuration
+data:
+  config.yml: |
+    # =============================================================================
+    # Pangolin Configuration File
+    # =============================================================================
+    # This file contains all non-sensitive configuration for Pangolin.
+    # Sensitive values (server.secret, postgres connection) are provided via
+    # environment variables from Kubernetes secrets.
+    # =============================================================================
+
+    # Gerbil WireGuard tunnel configuration
+    gerbil:
+      # Starting port for WireGuard interfaces
+      start_port: 51820
+
+      # Base endpoint for WireGuard connections (public IP/domain)
+      # This should be the publicly accessible address of the Gerbil service
+      base_endpoint: "pangolin.chezmoi.sh"
+
+    # Application settings
+    app:
+      # Dashboard URL (must match Traefik routing)
+      dashboard_url: "https://pangolin.chezmoi.sh"
+
+      # Log level: debug, info, warn, error
+      log_level: "info"
+
+      # Anonymous usage telemetry
+      telemetry:
+        anonymous_usage: false
+
+    # Domain configuration
+    # Each domain can have SSL certificates and specific routing
+    domains:
+      chezmoi:
+        base_domain: "chezmoi.sh"
+        # SSL certificate configuration (handled by Traefik ACME)
+        # ssl:
+        #   cert_path: "/path/to/cert.pem"
+        #   key_path: "/path/to/key.pem"
+
+    # Server configuration
+    server:
+      # Secret key for session management
+      # NOTE: This is provided via SERVER_SECRET environment variable
+      # secret: "provided-via-env-var"
+
+      # CORS configuration for API access
+      cors:
+        origins:
+          - "https://pangolin.chezmoi.sh"
+        methods:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "DELETE"
+          - "PATCH"
+        allowed_headers:
+          - "X-CSRF-Token"
+          - "Content-Type"
+          - "Authorization"
+        credentials: true
+
+      # MaxMind GeoIP database path (optional, for geolocation)
+      # If not provided, geolocation features will be disabled
+      # maxmind_db_path: "/var/config/GeoLite2-Country.mmdb"
+
+    # Feature flags
+    flags:
+      # Require email verification for new users
+      require_email_verification: false
+
+      # Disable signup without invite code
+      disable_signup_without_invite: true
+
+      # Disable users from creating organizations
+      disable_user_create_org: true
+
+      # Allow raw resource creation (TCP/UDP passthrough)
+      allow_raw_resources: true
+
+    # Rate limiting configuration
+    # rate_limit:
+    #   enabled: true
+    #   requests_per_minute: 60
+    #   burst: 10
+
+    # Email configuration (optional, for notifications)
+    # email:
+    #   from: "noreply@chezmoi.sh"
+    #   smtp_host: "smtp.example.com"
+    #   smtp_port: 587
+    #   smtp_user: "pangolin"
+    #   smtp_pass: "provided-via-env-var"  # Use EMAIL_SMTP_PASS env var
+    #   smtp_tls: true
+
+    # Organization settings
+    # organizations:
+    #   default_network_cidr: "10.100.0.0/16"
+
+    # Database configuration
+    # NOTE: PostgreSQL connection string is provided via POSTGRES_CONNECTION_STRING
+    # environment variable from CNPG secrets
+    # postgres:
+    #   connection_string: "provided-via-env-var"
+    #   max_connections: 20
+    #   min_connections: 2

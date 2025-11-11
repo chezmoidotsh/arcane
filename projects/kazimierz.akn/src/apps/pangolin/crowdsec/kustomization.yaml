@@ -1,0 +1,24 @@
+---
+# Kustomization for CrowdSec security engine
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: pangolin
+
+resources:
+  - crowdsec.deployment.yaml
+  - crowdsec.service.yaml
+  - crowdsec-acquisition.configmap.yaml
+  - crowdsec-data.pvc.yaml
+  - crowdsec-config.pvc.yaml
+
+commonLabels:
+  app.kubernetes.io/name: crowdsec
+  app.kubernetes.io/instance: crowdsec
+  app.kubernetes.io/component: application
+
+labels:
+  - pairs:
+      # renovate: datasource=docker depName=crowdsecurity/crowdsec
+      app.kubernetes.io/version: v1.6.4
+    includeTemplates: true
