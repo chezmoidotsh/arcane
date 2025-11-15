@@ -1,0 +1,42 @@
+---
+# Pangolin Configuration File
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+app:
+  dashboard_url: "{{ pangolin_dashboard_url }}"
+  log_level: "{{ pangolin_log_level }}"
+  telemetry:
+    enabled: {{ pangolin_telemetry_enabled | lower }}
+    notifications: {{ pangolin_telemetry_notifications | lower }}
+
+domains:
+{% for domain_name, domain_config in pangolin_domains.items() %}
+  {{ domain_name }}:
+    base_domain: "{{ domain_config.base_domain }}"
+    cert_resolver: "{{ domain_config.cert_resolver }}"
+{% endfor %}
+
+server:
+  secret: "{{ pangolin_server_secret }}"
+
+gerbil:
+  base_endpoint: "{{ pangolin_gerbil_base_endpoint }}"
+
+flags:
+  require_email_verification: {{ pangolin_require_email_verification | lower }}
+  disable_signup_without_invite: {{ pangolin_disable_signup_without_invite | lower }}
+  disable_user_create_org: {{ pangolin_disable_user_create_org | lower }}
+
+{% if pangolin_postgres_connection_string %}
+postgres:
+  connection_string: "{{ pangolin_postgres_connection_string }}"
+{% endif %}
+
+{% if pangolin_smtp_host %}
+email:
+  smtp_host: "{{ pangolin_smtp_host }}"
+  smtp_port: {{ pangolin_smtp_port }}
+  smtp_user: "{{ pangolin_smtp_user }}"
+  smtp_pass: "{{ pangolin_smtp_pass }}"
+  smtp_from: "{{ pangolin_smtp_from }}"
+{% endif %}

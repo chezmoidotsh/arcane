@@ -1,0 +1,63 @@
+---
+# ==============================================================================
+# Site Playbook: Kazimierz.AKN VPS Infrastructure Orchestrator
+# ==============================================================================
+# Purpose:
+#   Main orchestrator playbook for complete Kazimierz.AKN VPS infrastructure.
+#   Configures proxy/firewall/WAF cluster with GitOps automation.
+#
+# Execution Order:
+#   1. System Installation (system_setup role)
+#      - Base system configuration
+#      - Docker and Docker Compose v2
+#      - Tailscale VPN with SSH
+#      - UFW firewall
+#      - Unattended security upgrades
+#
+#   2. GitOps Automation (gitops_automation role)
+#      - Ansible from official PPA
+#      - ansible-pull systemd service and timer
+#      - Ansible Vault configuration
+#      - Galaxy collections installation
+#
+#   3. ARA Records Ansible (ara_server role)
+#      - ARA API server in Docker
+#      - Ansible callback plugin
+#      - Tailscale Serve HTTPS access
+#
+#   4. Pangolin Application Stack (pangolin role)
+#      - Pangolin reverse proxy
+#      - Gerbil WireGuard manager
+#      - Traefik with Let's Encrypt
+#
+# Usage via ansible-pull (Manual):
+#   export ANSIBLE_VAULT_PASSWORD="your-vault-password-here" # Set vault password checkov:skip=CKV_SECRET_6:Documentation example
+#   ansible-pull \
+#     --url https://github.com/chezmoidotsh/arcane \
+#     --checkout main \
+#     --directory /opt/chezmoidotsh/arcane \
+#     --inventory projects/kazimierz.akn/src/infrastructure/ansible/inventory/local.yml \
+#     --vault-password-file <(echo "$ANSIBLE_VAULT_PASSWORD") \
+#     --only-if-changed \
+#     projects/kazimierz.akn/src/infrastructure/ansible/site.yml
+#
+# Automated Execution:
+#   After initial setup, ansible-pull runs automatically every 15 minutes
+#   via systemd timer configured in gitops_automation role.
+#
+# Monitoring:
+#   systemctl status ansible-pull.timer
+#   journalctl -u ansible-pull.service -f
+# ==============================================================================
+
+- name: "[Step 1] Install and configure system components"
+  ansible.builtin.import_playbook: playbooks/01-system.yml
+
+- name: "[Step 2] Setup GitOps automation"
+  ansible.builtin.import_playbook: playbooks/02-gitops.yml
+
+- name: "[Step 3] Deploy ARA Records Ansible"
+  ansible.builtin.import_playbook: playbooks/03-ara.yml
+
+- name: "[Step 4] Deploy Pangolin Application Stack"
+  ansible.builtin.import_playbook: playbooks/04-pangolin.yml

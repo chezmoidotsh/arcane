@@ -68,8 +68,9 @@ _.path = [
 # Python Virtual Environment
 # -----------------------------------------------------------------------------
 # Isolated Python environment for any Python-based tools or scripts
-_.python.venv = { path = ".mise/python", create = true, uv_create_args = [
+_.python.venv = { path = "{{ config_root }}/.mise/python", create = true, uv_create_args = [
   '--seed',
+  '--link-mode=copy',
 ] }
 
 # =============================================================================
@@ -94,8 +95,6 @@ kubectl = "latest" # Kubernetes CLI for managing clusters and resources
 # -----------------------------------------------------------------------------
 # Platform-specific tools for managing infrastructure components
 
-"pipx:ansible-core" = { version = "latest", uvx_args = "--with ansible" } # Core Ansible package required by ansible
-
 argocd = "latest"   # ArgoCD CLI for GitOps application deployment and management
 hcloud = "latest"   # Hetzner Cloud CLI for managing cloud resources
 openbao = "latest"  # OpenBao CLI for secret management (HashiCorp Vault fork)
@@ -119,6 +118,11 @@ yq = "latest"   # YAML/JSON processor for configuration file manipulation
 "ubi:runmedev/runme" = "latest"  # Interactive markdown execution tool for runbooks and documentation
 gum = "latest"                   # Terminal UI framework for interactive scripts and prompts
 uv = "latest"                    # Extremely fast Python package and project manager
+
+[tasks."ansible:install"]
+description = "Install Ansible and dependencies"
+run = "uv sync --active"
+dir = "{{ config_root }}"
 
 # -----------------------------------------------------------------------------
 # Vault (OpenBao) Authentication Tasks

@@ -1,0 +1,72 @@
+---
+# Pangolin Docker Compose Stack
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+services:
+  pangolin:
+    image: {{ pangolin_docker_image }}
+    container_name: {{ pangolin_container_name }}
+    restart: {{ pangolin_docker_restart_policy }}
+    volumes:
+      - ./config:/app/config
+      - pangolin-data:/var/certificates
+      - pangolin-data:/var/dynamic
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/"]
+      interval: "3s"
+      timeout: "3s"
+      retries: 15
+
+  gerbil:
+    image: {{ pangolin_gerbil_docker_image }}
+    container_name: {{ pangolin_gerbil_container_name }}
+    restart: {{ pangolin_docker_restart_policy }}
+    depends_on:
+      pangolin:
+        condition: service_healthy
+    command:
+      - --reachableAt=http://gerbil:3004
+      - --generateAndSaveKeyTo=/var/config/key
+      - --remoteConfig=http://pangolin:3001/api/v1/
+    volumes:
+      - ./config/:/var/config
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    ports:
+      - {{ pangolin_wireguard_site_port }}:51820/udp
+      - {{ pangolin_wireguard_client_port }}:21820/udp
+{% if pangolin_bind_ip %}
+      - {{ pangolin_bind_ip }}:{{ pangolin_https_port }}:443 # Port for traefik - public IP
+      - {{ pangolin_bind_ip }}:{{ pangolin_http_port }}:80 # Port for traefik - public IP
+      - 127.0.0.1:{{ pangolin_https_port }}:443 # Port for traefik - localhost for health checks
+      - 127.0.0.1:{{ pangolin_http_port }}:80 # Port for traefik - localhost for health checks
+{% else %}
+      - {{ pangolin_https_port }}:443 # Port for traefik because of the network_mode
+      - {{ pangolin_http_port }}:80 # Port for traefik because of the network_mode
+{% endif %}
+
+  traefik:
+    image: {{ pangolin_traefik_docker_image }}
+    container_name: {{ pangolin_traefik_container_name }}
+    restart: {{ pangolin_docker_restart_policy }}
+    network_mode: service:gerbil # Ports appear on the gerbil service
+    depends_on:
+      pangolin:
+        condition: service_healthy
+    command:
+      - --configFile=/etc/traefik/traefik_config.yml
+    volumes:
+      - ./config/traefik:/etc/traefik:ro # Volume to store the Traefik configuration
+      - ./config/letsencrypt:/letsencrypt # Volume to store the Let's Encrypt certificates
+      # Shared volume for certificates and dynamic config in file mode
+      - pangolin-data:/var/certificates:ro
+      - pangolin-data:/var/dynamic:ro
+
+networks:
+  default:
+    driver: bridge
+    name: {{ pangolin_network_name }}
+
+volumes:
+  pangolin-data:

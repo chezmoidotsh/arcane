@@ -1,0 +1,138 @@
+---
+# ==============================================================================
+# Playbook: Pangolin Tunneled Reverse Proxy Deployment
+# ==============================================================================
+# Purpose:
+#   Deploy Pangolin tunneled reverse proxy stack using Docker Compose.
+#   Provides self-hosted alternative to Cloudflare Tunnels with WireGuard.
+#
+# Components Configured:
+#   - Pangolin: Identity-aware tunneled reverse proxy server
+#   - Gerbil: WireGuard interface management server
+#   - Traefik: Reverse proxy with automatic Let's Encrypt SSL certificates
+#
+# Network Architecture:
+#   - Pangolin API/Dashboard: HTTPS on port 443 (via Traefik)
+#   - Newt Site Tunnels: WireGuard on UDP port 51820
+#   - Newt Client Tunnels: WireGuard on UDP port 21820
+#   - HTTP redirect to HTTPS: Port 80 → 443
+#
+# Security Considerations:
+#   - Let's Encrypt automatic SSL certificate generation
+#   - Server secret must be 32+ characters (stored in Ansible Vault)
+#   - ACME certificate storage at /opt/pangolin/config/letsencrypt/acme.json (mode 0600)
+#   - WireGuard keys auto-generated and stored securely
+#   - Public IP binding prevents conflicts with Tailscale
+#
+# Dependencies:
+#   - Docker Engine with Docker Compose v2
+#   - community.docker collection (v4.0.0+ for docker_compose_v2 module)
+#   - Domain name with DNS pointing to server public IP
+#   - UFW firewall rules for ports 80, 443, 51820/udp, 21820/udp
+#
+# Post-Deployment:
+#   1. Access initial setup: https://pangolin.example.com/auth/initial-setup
+#   2. Use setup token from Docker logs (displayed by playbook)
+#   3. Create admin account and configure organizations
+#   4. Install Newt client on devices: https://github.com/fosrl/newt
+#
+# Tags:
+#   - pangolin: All Pangolin deployment tasks
+#   - application: Application-level configuration
+#   - network: Network configuration tasks
+# ==============================================================================
+
+- name: Deploy Pangolin tunneled reverse proxy stack
+  hosts: kazimierz
+  become: true
+
+  pre_tasks:
+    - name: Detect public IP address of default route interface
+      ansible.builtin.shell: |
+        ip -4 route get 8.8.8.8 | head -n1 | awk '{print $7}'
+      register: public_ip_result
+      changed_when: false
+      tags:
+        - pangolin
+        - network
+
+    - name: Set public IP fact
+      ansible.builtin.set_fact:
+        pangolin_public_ip: "{{ public_ip_result.stdout }}"
+      tags:
+        - pangolin
+        - network
+
+    - name: Display detected public IP
+      ansible.builtin.debug:
+        msg: "Detected public IP for Pangolin: {{ pangolin_public_ip }}"
+      tags:
+        - pangolin
+        - network
+
+  vars:
+    # -------------------------------------------------------------------------
+    # Pangolin Configuration
+    # -------------------------------------------------------------------------
+    # NOTE: Update these variables with your actual domain and configuration
+
+    # Dashboard URL - REQUIRED: Replace with your actual domain
+    pangolin_dashboard_url: "https://pangolin.chezmoi.sh"
+
+    # Server secret - REQUIRED: Minimum 8 characters, recommend 32+ with mixed types
+    # Store this securely in Ansible Vault
+    pangolin_server_secret: !vault |
+      $ANSIBLE_VAULT;1.1;AES256
+      31336238653064613633393061353762326239313065643465323935646330616435353363306364
+      6665643834323665616239646661353935326166376162330a633733373430303764623166313331
+      31623666383239663732303763313966643436346435636635353539353662383062643662336334
+      3165613237323736340a323331393333373461613435363731373561653661306530633731363837
+      30323165306133333937616234383166396531383632343565346663316165316235323531343065
+      3464643639643737376631663062333963623333313865323664
+
+    # ACME email for Let's Encrypt certificates
+    pangolin_acme_email: "noreply@chezmoi.sh"
+
+    # Domain configuration
+    pangolin_domains:
+      domain1:
+        base_domain: "pangolin.chezmoi.sh"
+        cert_resolver: "letsencrypt"
+
+    # Gerbil tunnel base endpoint
+    pangolin_gerbil_base_endpoint: "pangolin.chezmoi.sh"
+
+    # -------------------------------------------------------------------------
+    # Network Configuration
+    # -------------------------------------------------------------------------
+    # Bind HTTP/HTTPS to public IP only to avoid conflict with Tailscale
+    pangolin_bind_ip: "{{ pangolin_public_ip }}"
+
+    # -------------------------------------------------------------------------
+    # Feature Flags
+    # -------------------------------------------------------------------------
+    pangolin_require_email_verification: false
+    pangolin_disable_signup_without_invite: true
+    pangolin_disable_user_create_org: true
+
+    # -------------------------------------------------------------------------
+    # Directory Configuration
+    # -------------------------------------------------------------------------
+    pangolin_compose_dir: "/opt/pangolin"
+    pangolin_data_dir: "/var/lib/pangolin"
+
+    # -------------------------------------------------------------------------
+    # Docker Image Versions
+    # -------------------------------------------------------------------------
+    # renovate: datasource=github-releases depName=fosrl/pangolin
+    pangolin_image_version: "latest"
+    # renovate: datasource=github-releases depName=fosrl/gerbil
+    pangolin_gerbil_image_version: "latest"
+    # renovate: datasource=docker depName=traefik versioning=docker
+    pangolin_traefik_image_version: "v3.4.0"
+
+  roles:
+    - role: "{{ playbook_dir | dirname }}/roles/pangolin"
+      tags:
+        - pangolin
+        - application

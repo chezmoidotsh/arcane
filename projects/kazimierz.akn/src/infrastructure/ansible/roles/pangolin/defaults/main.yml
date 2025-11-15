@@ -1,0 +1,135 @@
+---
+# ==============================================================================
+# Default Variables: pangolin
+# ==============================================================================
+# Purpose:
+#   Role-level default configuration for Pangolin reverse proxy deployment.
+#   These are sensible defaults that apply to any Pangolin installation.
+#   Override in host_vars for host-specific configuration.
+# ==============================================================================
+
+# -------------------------------------------------------------------------
+# Pangolin Deployment Directories
+# -------------------------------------------------------------------------
+# Base directory for Pangolin data
+pangolin_data_dir: "/var/lib/pangolin"
+
+# Docker Compose project directory
+pangolin_compose_dir: "/opt/pangolin"
+
+# -------------------------------------------------------------------------
+# Pangolin Application Configuration
+# -------------------------------------------------------------------------
+# Dashboard URL - REQUIRED: Must be overridden in host_vars
+pangolin_dashboard_url: "https://pangolin.example.com"
+
+# Domain configuration - REQUIRED: Must be overridden in host_vars
+pangolin_domains:
+  domain1:
+    base_domain: "pangolin.example.com"
+    cert_resolver: "letsencrypt"
+
+# Server secret - REQUIRED: Must be overridden in host_vars
+# Minimum 8 characters, recommend 32+ with mixed types
+pangolin_server_secret: ""
+
+# Gerbil tunnel base endpoint - REQUIRED: Must be overridden in host_vars
+pangolin_gerbil_base_endpoint: "pangolin.example.com"
+
+# Public IP for binding - REQUIRED: Must be overridden in host_vars
+# Can be auto-detected: "{{ ansible_default_ipv4.address }}"
+pangolin_public_ip: ""
+
+# -------------------------------------------------------------------------
+# Pangolin Feature Flags
+# -------------------------------------------------------------------------
+# Require email verification for new accounts
+pangolin_require_email_verification: false
+
+# Disable signup without invitation
+pangolin_disable_signup_without_invite: true
+
+# Disable user organization creation
+pangolin_disable_user_create_org: true
+
+# Log level: debug, info, warn, error
+pangolin_log_level: "info"
+
+# -------------------------------------------------------------------------
+# Docker Image Versions
+# -------------------------------------------------------------------------
+# Pangolin image configuration
+pangolin_docker_image_name: docker.io/fosrl/pangolin
+# renovate: datasource=docker depName=fosrl/pangolin versioning=docker
+pangolin_docker_image_tag: latest
+pangolin_docker_image: "{{ pangolin_docker_image_name }}:{{ pangolin_docker_image_tag }}"
+
+# Gerbil image configuration
+pangolin_gerbil_docker_image_name: docker.io/fosrl/gerbil
+# renovate: datasource=docker depName=fosrl/gerbil versioning=docker
+pangolin_gerbil_docker_image_tag: latest
+pangolin_gerbil_docker_image: "{{ pangolin_gerbil_docker_image_name }}:{{ pangolin_gerbil_docker_image_tag }}"
+
+# Traefik image configuration
+pangolin_traefik_docker_image_name: docker.io/library/traefik
+# renovate: datasource=docker depName=traefik versioning=docker
+pangolin_traefik_docker_image_tag: v3.4.0
+pangolin_traefik_docker_image: "{{ pangolin_traefik_docker_image_name }}:{{ pangolin_traefik_docker_image_tag }}"
+
+# -------------------------------------------------------------------------
+# Traefik Configuration
+# -------------------------------------------------------------------------
+# ACME email for Let's Encrypt - REQUIRED: Must be overridden in host_vars
+pangolin_acme_email: "admin@example.com"
+
+# Let's Encrypt server (set to staging for testing)
+pangolin_acme_ca_server: "https://acme-v02.api.letsencrypt.org/directory"
+
+# -------------------------------------------------------------------------
+# Advanced Configuration
+# -------------------------------------------------------------------------
+# PostgreSQL connection string (optional, defaults to SQLite)
+pangolin_postgres_connection_string: ""
+
+# SMTP configuration (optional)
+pangolin_smtp_host: ""
+pangolin_smtp_port: 587
+pangolin_smtp_user: ""
+pangolin_smtp_pass: ""
+pangolin_smtp_from: ""
+
+# Telemetry settings
+pangolin_telemetry_enabled: true
+pangolin_telemetry_notifications: true
+
+# -------------------------------------------------------------------------
+# Network Ports
+# -------------------------------------------------------------------------
+# Bind IP address for HTTP/HTTPS (empty = all interfaces, or specify public IP)
+# Set to public IP to avoid conflicts with Tailscale
+pangolin_bind_ip: ""
+
+# WireGuard tunnel ports
+pangolin_wireguard_site_port: 51820
+pangolin_wireguard_client_port: 21820
+
+# HTTP/HTTPS ports
+pangolin_http_port: 80
+pangolin_https_port: 443
+
+# -------------------------------------------------------------------------
+# Docker Compose Configuration
+# -------------------------------------------------------------------------
+# Pull images before deploying
+pangolin_docker_pull: true
+
+# Restart policy
+pangolin_docker_restart_policy: "unless-stopped"
+
+# Container names
+pangolin_container_name: "pangolin"
+pangolin_gerbil_container_name: "gerbil"
+pangolin_traefik_container_name: "traefik"
+
+# Network name
+pangolin_network_name: "pangolin"
