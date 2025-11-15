@@ -1,0 +1,17 @@
+[project]
+name = "chezmoidotsh.arcane"
+version = "1.0.0"
+description = "Arcane Infrastructure Development Environment"
+requires-python = ">=3.12"
+
+dependencies = [
+  # Ansible and related packages for infrastructure management
+  "ansible",
+  "ansible-core",
+  "ansible-navigator",
+  "ansible-vault",
+
+  # Molecule for testing Ansible roles with Docker support
+  "molecule",
+  "molecule-plugins[docker]",
+]

@@ -1,0 +1,8 @@
+---
+# Handlers for pangolin role
+
+- name: Restart Pangolin stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ pangolin_compose_dir }}"
+    state: restarted
+  listen: Restart Pangolin stack

@@ -1,0 +1,10 @@
+---
+# Ansible inventory for Kazimierz.AKN VPS
+# Host: kazimierz (Hetzner Cloud - Helsinki)
+
+all:
+  hosts:
+    kazimierz:
+      ansible_host: kazimierz.akn.chezmoi.sh
+      ansible_user: root
+      ansible_ssh_common_args: "-o StrictHostKeyChecking=no"

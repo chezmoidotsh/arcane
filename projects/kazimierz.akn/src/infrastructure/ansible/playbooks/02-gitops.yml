@@ -1,0 +1,246 @@
+---
+# ==============================================================================
+# Playbook: GitOps Automation Setup
+# ==============================================================================
+# Purpose:
+#   Configure ansible-pull systemd timer for automated GitOps-based
+#   infrastructure updates on Kazimierz.AKN VPS.
+#
+# Components Configured:
+#   - Ansible Core from official PPA (latest stable version)
+#   - ansible-pull systemd service and timer (15-minute interval)
+#   - Ansible Vault password file for encrypted variables
+#   - Required Ansible Galaxy collections and roles
+#
+# GitOps Workflow:
+#   1. ansible-pull timer triggers every 15 minutes
+#   2. Repository cloned/updated to /opt/chezmoidotsh/arcane
+#   3. Site playbook executed with --only-if-changed flag
+#   4. Changes applied automatically if Git repository updated
+#
+# Security Considerations:
+#   - Vault password stored at /root/.local/ansible/vault-secret (mode 0600)
+#   - Repository accessed via HTTPS (read-only, no credentials needed)
+#   - Systemd service runs with PrivateTmp and NoNewPrivileges hardening
+#
+# Dependencies:
+#   - community.general collection (v8.0.0+)
+#   - Git version control system
+#   - Python 3 with docker module
+#
+# Tags:
+#   - gitops: All GitOps automation tasks
+#   - ansible: Ansible installation and configuration
+#   - ansible-pull: ansible-pull service configuration
+#   - systemd: Systemd unit configuration
+# ==============================================================================
+
+- name: Setup ansible-pull GitOps automation
+  hosts: kazimierz
+  become: true
+
+  vars:
+    # -------------------------------------------------------------------------
+    # ansible-pull Repository Configuration
+    # -------------------------------------------------------------------------
+    ansible_pull_repo: https://github.com/chezmoidotsh/arcane
+    ansible_pull_branch: "{{ lookup('env', 'ANSIBLE_PULL_BRANCH') | default('main', true) }}"
+    ansible_pull_interval_minutes: 15
+
+    # -------------------------------------------------------------------------
+    # ansible-pull File Paths
+    # -------------------------------------------------------------------------
+    ansible_pull_directory: /opt/chezmoidotsh/arcane
+    ansible_pull_inventory: projects/kazimierz.akn/src/infrastructure/ansible/inventory/local.yml
+    ansible_pull_requirements: projects/kazimierz.akn/src/infrastructure/ansible/requirements.yml
+    ansible_pull_playbook: projects/kazimierz.akn/src/infrastructure/ansible/site.yml
+
+  handlers:
+    - name: Reload systemd daemon configuration
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Enable and start ansible-pull systemd timer
+      ansible.builtin.systemd:
+        name: ansible-pull.timer
+        enabled: true
+        state: started
+
+  pre_tasks:
+    # ==========================================================================
+    # Ansible Vault Secret Configuration
+    # ==========================================================================
+    - name: Configure Ansible vault secret for ansible-pull authentication
+      block:
+        - name: Check if vault secret file exists at /root/.local/ansible/vault-secret
+          ansible.builtin.stat:
+            path: /root/.local/ansible/vault-secret
+          register: vault_secret_file
+
+        - name: Cache ANSIBLE_VAULT_PASSWORD environment variable value
+          ansible.builtin.set_fact:
+            vault_password_env: "{{ lookup('env', 'ANSIBLE_VAULT_PASSWORD') | default('', true) }}"
+
+        - name: Fail if vault secret file is missing and ANSIBLE_VAULT_PASSWORD not set
+          ansible.builtin.fail:
+            msg: Vault secret file missing and ANSIBLE_VAULT_PASSWORD environment variable not set
+          when: not vault_secret_file.stat.exists and (vault_password_env | length == 0)
+
+        - name: Ensure vault secret file is present and synchronized with environment variable
+          block:
+            - name: Create /root/.local/ansible directory if it doesn't exist
+              ansible.builtin.file:
+                path: /root/.local/ansible
+                state: directory
+                mode: "0700"
+                owner: root
+                group: root
+
+            - name: Write vault secret to file from ANSIBLE_VAULT_PASSWORD environment variable
+              ansible.builtin.copy:
+                dest: /root/.local/ansible/vault-secret
+                content: "{{ vault_password_env }}\n"
+                mode: "0600"
+                owner: root
+                group: root
+          when: vault_password_env | length > 0
+          no_log: true
+
+  tasks:
+    # ==========================================================================
+    # Ansible Installation
+    # ==========================================================================
+    - name: Ensure Ansible official PPA repository is configured (Debian/Ubuntu only)
+      block:
+        - name: Ensure software-properties-common package is installed for PPA management
+          ansible.builtin.apt:
+            name: software-properties-common
+            state: present
+            update_cache: true
+
+        - name: Add Ansible official PPA repository
+          ansible.builtin.apt_repository:
+            repo: "ppa:ansible/ansible"
+            state: present
+      when:
+        - ansible_facts['os_family'] == 'Debian'
+        - ansible_facts['distribution'] in ['Ubuntu', 'Debian']
+      tags:
+        - gitops
+        - ansible
+
+    - name: Ensure Ansible and required dependencies are installed for ansible-pull
+      ansible.builtin.apt:
+        name:
+          - ansible
+          - ansible-core
+          - git
+          - python3-docker
+          - python3-pip
+        state: present
+        update_cache: true
+      tags:
+        - gitops
+        - ansible
+
+    # ==========================================================================
+    # ansible-pull Repository Setup
+    # ==========================================================================
+    - name: Ensure parent directory exists for ansible-pull repository
+      ansible.builtin.file:
+        path: "{{ ansible_pull_directory | dirname }}"
+        state: directory
+        mode: "0755"
+      register: ansible_pull_dir_result
+      tags:
+        - gitops
+        - ansible-pull
+
+    - name: Ensure ansible-pull repository is cloned from GitHub (initial setup only)
+      ansible.builtin.git:
+        repo: "{{ ansible_pull_repo }}"
+        dest: "{{ ansible_pull_directory }}"
+        version: "{{ ansible_pull_branch }}"
+        force: true
+      when: ansible_pull_dir_result.changed
+      tags:
+        - gitops
+        - ansible-pull
+
+    - name: Ensure required Ansible Galaxy collections and roles are installed
+      community.general.ansible_galaxy_install:
+        type: both
+        requirements_file: "{{ ansible_pull_directory }}/{{ ansible_pull_requirements }}"
+      tags:
+        - gitops
+        - ansible-pull
+
+    # ==========================================================================
+    # ansible-pull Systemd Service Configuration
+    # ==========================================================================
+    - name: Ensure ansible-pull systemd service unit is configured for GitOps automation
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/ansible-pull.service
+        content: |
+          [Unit]
+          Description=Ansible Pull - GitOps deployment for Kazimierz.AKN
+          Documentation=https://docs.ansible.com/ansible/latest/cli/ansible-pull.html
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=oneshot
+          WorkingDirectory={{ ansible_pull_directory }}
+          Environment=ANSIBLE_PULL_BRANCH={{ ansible_pull_branch }}
+          Environment=HOME=/root
+          ExecStart=/usr/bin/ansible-pull \
+            --url {{ ansible_pull_repo }} \
+            --checkout {{ ansible_pull_branch }} \
+            --directory {{ ansible_pull_directory }} \
+            --inventory {{ ansible_pull_inventory }} \
+            --vault-password-file /root/.local/ansible/vault-secret \
+            --only-if-changed \
+            {{ ansible_pull_playbook }}
+
+          # Logging configuration
+          StandardOutput=journal
+          StandardError=journal
+          SyslogIdentifier=ansible-pull
+
+          # Security hardening
+          PrivateTmp=yes
+          NoNewPrivileges=yes
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: "0644"
+      notify:
+        - Reload systemd daemon configuration
+      tags:
+        - gitops
+        - ansible-pull
+        - systemd
+
+    - name: Ensure ansible-pull systemd timer is configured for periodic execution
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/ansible-pull.timer
+        content: |
+          [Unit]
+          Description=Periodic ansible-pull execution every {{ ansible_pull_interval_minutes }} minutes
+          Requires=ansible-pull.service
+
+          [Timer]
+          OnBootSec=5min
+          OnUnitActiveSec={{ ansible_pull_interval_minutes }}min
+          RandomizedDelaySec=2min
+
+          [Install]
+          WantedBy=timers.target
+        mode: "0644"
+      notify:
+        - Reload systemd daemon configuration
+        - Enable and start ansible-pull systemd timer
+      tags:
+        - gitops
+        - ansible-pull
+        - systemd

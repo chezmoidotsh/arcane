@@ -1,0 +1,28 @@
+---
+# Metadata for pangolin role
+galaxy_info:
+  role_name: pangolin
+  namespace: chezmoidotsh
+  description: Deploys Pangolin tunneled reverse proxy with Gerbil and Traefik
+  author: Alexandre Dulaunoy
+  license: MIT
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+    - name: Debian
+      versions:
+        - bookworm
+
+  galaxy_tags:
+    - docker
+    - reverse-proxy
+    - wireguard
+    - tunnel
+    - traefik
+    - vpn
+
+dependencies: []
