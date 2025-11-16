@@ -6,6 +6,7 @@
 #
 # Permissions:
 #   - Zone Read: Read zone information
+#   - Zone DNS Edit: Manage DNS records within the zone
 #   - Zone WAF Edit: Manage WAF rules and configurations
 #   - Zone Settings Edit: Manage zone settings (SSL/TLS, security headers, etc.)
 #   - Account Rulesets Edit: Manage rulesets at account level
@@ -24,6 +25,7 @@ spec:
       - effect: allow
         permissionGroups:
           - c8fed203ed3043cba015a93ad1616f1f # Zone Read (Zone)
+          - 4755a26eedb94da69e1066d98aa820be # Zone DNS Edit (Zone)
           - 3030687196b94b638145a3953da2b699 # Zone Settings Edit (Zone)
           - c1fde68c7bcc44588cbb6ddbc16d6480 # Account Settings Read (Account)
           - 56907406c3d548ed902070ec4df0e328 # Account Rulesets Write (Account)
