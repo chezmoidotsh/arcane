@@ -18,6 +18,7 @@ resources:
   - providers/cloudflare/provider.yaml
   - providers/terraform/cloudflare.providerconfig.yaml
   - providers/terraform/default.providerconfig.yaml
+  - providers/terraform/kazimierz.providerconfig.yaml
   - providers/terraform/provider.yaml
   - providers/terraform/tailscale.providerconfig.yaml
   - providers/vault/default.providerconfig.yaml

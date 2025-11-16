@@ -1,0 +1,142 @@
+apiVersion: tf.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: kazimierz.akn-pangolin
+spec:
+  forProvider:
+    module: |
+      # Data sources
+      data "hcloud_ssh_keys" "default" {}
+
+      data "cloudflare_zone" "chezmoi_sh" {
+        filter = {
+          name = "chezmoi.sh"
+        }
+      }
+
+      # Hetzner Cloud Firewall
+      resource "hcloud_firewall" "kazimierz_pangolin" {
+        name = "kazimierz-pangolin"
+
+        # SSH
+        rule {
+          direction  = "in"
+          protocol   = "tcp"
+          port       = "22"
+          source_ips = [
+            "0.0.0.0/0",
+            "::/0"
+          ]
+        }
+
+        # HTTP
+        rule {
+          direction  = "in"
+          protocol   = "tcp"
+          port       = "80"
+          source_ips = [
+            "0.0.0.0/0",
+            "::/0"
+          ]
+        }
+
+        # HTTPS
+        rule {
+          direction  = "in"
+          protocol   = "tcp"
+          port       = "443"
+          source_ips = [
+            "0.0.0.0/0",
+            "::/0"
+          ]
+        }
+
+        # WireGuard (Newt Site Tunnels)
+        rule {
+          direction  = "in"
+          protocol   = "udp"
+          port       = "51820"
+          source_ips = [
+            "0.0.0.0/0",
+            "::/0"
+          ]
+        }
+
+        # WireGuard (Newt Client Tunnels)
+        rule {
+          direction  = "in"
+          protocol   = "udp"
+          port       = "21820"
+          source_ips = [
+            "0.0.0.0/0",
+            "::/0"
+          ]
+        }
+      }
+
+      # Hetzner Cloud Server
+      resource "hcloud_server" "kazimierz_pangolin" {
+        name        = "kazimierz-pangolin"
+        server_type = "cx23"
+        location    = "nbg1"
+        image       = "ubuntu-24.04"
+
+        ssh_keys    = data.hcloud_ssh_keys.default.ssh_keys[*].id
+
+        firewall_ids = [hcloud_firewall.kazimierz_pangolin.id]
+
+        public_net {
+          ipv4_enabled = true
+          ipv6_enabled = true
+        }
+
+        backups = false
+
+        labels = {
+          project   = "kazimierz.akn"
+          role      = "gateway"
+          managed_by = "crossplane"
+        }
+      }
+
+      # Cloudflare DNS Records - IPv4
+      resource "cloudflare_dns_record" "kazimierz_pangolin_ipv4" {
+        zone_id = data.cloudflare_zone.chezmoi_sh.zone_id
+        name    = "kazimierz.akn"
+        content = hcloud_server.kazimierz_pangolin.ipv4_address
+        type    = "A"
+        ttl     = 300
+        proxied = false
+      }
+
+      resource "cloudflare_dns_record" "kazimierz_wildcard_ipv4" {
+        zone_id = data.cloudflare_zone.chezmoi_sh.zone_id
+        name    = "*"
+        content = hcloud_server.kazimierz_pangolin.ipv4_address
+        type    = "A"
+        ttl     = 300
+        proxied = false
+      }
+
+      # Cloudflare DNS Records - IPv6
+      resource "cloudflare_dns_record" "kazimierz_pangolin_ipv6" {
+        zone_id = data.cloudflare_zone.chezmoi_sh.zone_id
+        name    = "kazimierz.akn"
+        content = hcloud_server.kazimierz_pangolin.ipv6_address
+        type    = "AAAA"
+        ttl     = 300
+        proxied = false
+      }
+
+      resource "cloudflare_dns_record" "kazimierz_wildcard_ipv6" {
+        zone_id = data.cloudflare_zone.chezmoi_sh.zone_id
+        name    = "*"
+        content = hcloud_server.kazimierz_pangolin.ipv6_address
+        type    = "AAAA"
+        ttl     = 300
+        proxied = false
+      }
+
+    source: Inline
+  providerConfigRef:
+    name: kazimierz
