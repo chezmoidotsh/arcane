@@ -1,0 +1,19 @@
+---
+# ==============================================================================
+# Default Variables: gitops_automation
+# ==============================================================================
+
+# -------------------------------------------------------------------------
+# ansible-pull Repository Configuration
+# -------------------------------------------------------------------------
+ansible_pull_repo: https://github.com/chezmoidotsh/arcane
+ansible_pull_branch: "{{ lookup('env', 'ANSIBLE_PULL_BRANCH') | default('main', true) }}"
+ansible_pull_interval_minutes: 15
+
+# -------------------------------------------------------------------------
+# ansible-pull File Paths
+# -------------------------------------------------------------------------
+ansible_pull_directory: /opt/chezmoidotsh/arcane
+ansible_pull_inventory: projects/kazimierz.akn/src/infrastructure/ansible/inventory/local.yml
+ansible_pull_requirements: projects/kazimierz.akn/src/infrastructure/ansible/requirements.yml
+ansible_pull_playbook: projects/kazimierz.akn/src/infrastructure/ansible/site.yml

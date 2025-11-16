@@ -1,0 +1,136 @@
+---
+# ==============================================================================
+# Role: gitops_automation
+# ==============================================================================
+# Purpose:
+#   Configure ansible-pull systemd timer for automated GitOps-based
+#   infrastructure updates on Kazimierz.AKN VPS.
+#
+# Components Configured:
+#   - Ansible Core from official PPA (latest stable version)
+#   - ansible-pull systemd service and timer (15-minute interval)
+#   - Ansible Vault password file for encrypted variables
+#   - Required Ansible Galaxy collections and roles
+#
+# GitOps Workflow:
+#   1. ansible-pull timer triggers every 15 minutes
+#   2. Repository cloned/updated to /opt/chezmoidotsh/arcane
+#   3. Site playbook executed with --only-if-changed flag
+#   4. Changes applied automatically if Git repository updated
+#
+# Security Considerations:
+#   - Vault password stored at /root/.local/ansible/vault-secret (mode 0600)
+#   - Repository accessed via HTTPS (read-only, no credentials needed)
+#   - Systemd service runs with PrivateTmp and NoNewPrivileges hardening
+#
+# Dependencies:
+#   - community.general collection (v8.0.0+)
+#   - Git version control system
+#   - Python 3 with docker module
+#
+# Tags:
+#   - gitops: All GitOps automation tasks
+#   - ansible: Ansible installation and configuration
+#   - ansible-pull: ansible-pull service configuration
+#   - systemd: Systemd unit configuration
+# ==============================================================================
+
+# ==========================================================================
+# Ansible Installation
+# ==========================================================================
+- name: Ensure Ansible official PPA repository is configured (Debian/Ubuntu only)
+  block:
+    - name: Ensure software-properties-common package is installed for PPA management
+      ansible.builtin.apt:
+        name: software-properties-common
+        state: present
+        update_cache: true
+
+    - name: Add Ansible official PPA repository
+      ansible.builtin.apt_repository:
+        repo: "ppa:ansible/ansible"
+        state: present
+  rescue:
+    - name: Fail if Ansible PPA configuration fails
+      ansible.builtin.fail:
+        msg: "Failed to configure Ansible PPA repository. Please check network connectivity and PPA availability."
+  when:
+    - ansible_facts['os_family'] == 'Debian'
+    - ansible_facts['distribution'] in ['Ubuntu', 'Debian']
+  tags:
+    - gitops
+    - ansible
+
+- name: Ensure Ansible and required dependencies are installed for ansible-pull
+  ansible.builtin.apt:
+    name:
+      - ansible
+      - ansible-core
+      - git
+      - python3-docker
+      - python3-pip
+    state: present
+    update_cache: true
+  tags:
+    - gitops
+    - ansible
+
+# ==========================================================================
+# ansible-pull Repository Setup
+# ==========================================================================
+- name: Ensure parent directory exists for ansible-pull repository
+  ansible.builtin.file:
+    path: "{{ ansible_pull_directory | dirname }}"
+    state: directory
+    mode: "0755"
+  register: ansible_pull_dir_result
+  tags:
+    - gitops
+    - ansible-pull
+
+- name: Ensure ansible-pull repository is cloned from GitHub (initial setup only)
+  ansible.builtin.git:
+    repo: "{{ ansible_pull_repo }}"
+    dest: "{{ ansible_pull_directory }}"
+    version: "{{ ansible_pull_branch }}"
+    force: true
+  when: ansible_pull_dir_result.changed
+  tags:
+    - gitops
+    - ansible-pull
+
+- name: Ensure required Ansible Galaxy collections and roles are installed
+  community.general.ansible_galaxy_install:
+    type: both
+    requirements_file: "{{ ansible_pull_directory }}/{{ ansible_pull_requirements }}"
+  tags:
+    - gitops
+    - ansible-pull
+
+# ==========================================================================
+# ansible-pull Systemd Service Configuration
+# ==========================================================================
+- name: Ensure ansible-pull systemd service unit is configured for GitOps automation
+  ansible.builtin.template:
+    src: ansible-pull.service.j2
+    dest: /etc/systemd/system/ansible-pull.service
+    mode: "0644"
+  notify:
+    - Reload systemd daemon configuration
+  tags:
+    - gitops
+    - ansible-pull
+    - systemd
+
+- name: Ensure ansible-pull systemd timer is configured for periodic execution
+  ansible.builtin.template:
+    src: ansible-pull.timer.j2
+    dest: /etc/systemd/system/ansible-pull.timer
+    mode: "0644"
+  notify:
+    - Reload systemd daemon configuration
+    - Enable and start ansible-pull systemd timer
+  tags:
+    - gitops
+    - ansible-pull
+    - systemd

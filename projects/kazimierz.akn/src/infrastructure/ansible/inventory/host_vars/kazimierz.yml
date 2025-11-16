@@ -1,0 +1,73 @@
+---
+# ==============================================================================
+# Host Variables: kazimierz
+# ==============================================================================
+# Purpose:
+#   Host-specific configuration for the kazimierz.akn VPS infrastructure.
+#   These variables are specific to this deployment instance and should not
+#   be shared across different hosts.
+# ==============================================================================
+
+# -------------------------------------------------------------------------
+# System Setup Configuration
+# -------------------------------------------------------------------------
+# Tailscale authentication key (ephemeral, one-time use)
+tailscale_auth_key: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  36366335616364373432646531633861613233366432313037666465376662363731373034336165
+  3335303232393439393837343263383530383939313037320a393035333462383739633634633964
+  32363731306233346431393434663333306664343234353836383533623636616366313438313739
+  6363343666626161310a326439626332613663656238633034353164333461353230623133643835
+  65336632313633336461393139656331656561616137393635383365316562626330316333376637
+  63336438613761366563343235643833396534393466323137333536616438653134396162313830
+  316461393563653164613139366539663334
+
+# -------------------------------------------------------------------------
+# Tailscale Configuration
+# -------------------------------------------------------------------------
+tailscale_hostname: kazimierz-akn
+
+# -------------------------------------------------------------------------
+# UFW Firewall Configuration
+# -------------------------------------------------------------------------
+# Note: SSH port 22 enabled for initial setup - Tailscale SSH recommended
+ufw_allowed_ports:
+  - { port: 22, proto: tcp, comment: "SSH" }
+  - { port: 80, proto: tcp, comment: "HTTP" }
+  - { port: 443, proto: tcp, comment: "HTTPS" }
+  - { port: 51820, proto: udp, comment: "Newt (Site Tunnels)" }
+  - { port: 21820, proto: udp, comment: "Newt (Client Tunnels)" }
+
+# -------------------------------------------------------------------------
+# Pangolin Application Configuration
+# -------------------------------------------------------------------------
+# Auto-detect public IP for Pangolin (uses ansible facts)
+pangolin_public_ip: "{{ ansible_default_ipv4.address }}"
+
+# Bind IP for HTTP/HTTPS ports (avoid conflict with Tailscale on port 443)
+pangolin_bind_ip: "{{ ansible_default_ipv4.address }}"
+
+# Dashboard URL - the main Pangolin web interface
+pangolin_dashboard_url: "https://pangolin.chezmoi.sh"
+
+# Server secret for Pangolin authentication (minimum 32 characters recommended)
+pangolin_server_secret: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  31336238653064613633393061353762326239313065643465323935646330616435353363306364
+  6665643834323665616239646661353935326166376162330a633733373430303764623166313331
+  31623666383239663732303763313966643436346435636635353539353662383062643662336334
+  3165613237323736340a323331393333373461613435363731373561653661306530633731363837
+  30323165306133333937616234383166396531383632343565346663316165316235323531343065
+  3464643639643737376631663062333963623333313865323664
+
+# ACME email for Let's Encrypt certificates
+pangolin_acme_email: "noreply@chezmoi.sh"
+
+# Domain configuration for Pangolin
+pangolin_domains:
+  domain1:
+    base_domain: "pangolin.chezmoi.sh"
+    cert_resolver: "letsencrypt"
+
+# Gerbil WireGuard tunnel base endpoint
+pangolin_gerbil_base_endpoint: "pangolin.chezmoi.sh"

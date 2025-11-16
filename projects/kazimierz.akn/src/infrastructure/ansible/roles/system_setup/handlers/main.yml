@@ -1,0 +1,9 @@
+---
+# ==============================================================================
+# Handlers: system_setup
+# ==============================================================================
+
+- name: Enable and start UFW firewall
+  community.general.ufw:
+    state: enabled
+    logging: "on"

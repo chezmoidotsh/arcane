@@ -1,0 +1,12 @@
+[defaults]
+# ARA plugin paths (callback, action, lookup)
+callback_plugins=/usr/lib/python3/dist-packages/ara/plugins/callback
+action_plugins=/usr/lib/python3/dist-packages/ara/plugins/action
+lookup_plugins=/usr/lib/python3/dist-packages/ara/plugins/lookup
+
+[ara]
+# ARA API configuration
+api_client=http
+api_server=http://127.0.0.1:{{ ara_port }}
+localhost_as_hostname=true
+localhost_as_hostname_format=fqdn

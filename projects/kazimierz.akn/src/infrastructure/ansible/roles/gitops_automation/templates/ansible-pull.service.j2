@@ -1,0 +1,31 @@
+[Unit]
+Description=Ansible Pull - GitOps deployment for Kazimierz.AKN
+Documentation=https://docs.ansible.com/ansible/latest/cli/ansible-pull.html
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory={{ ansible_pull_directory }}
+Environment=ANSIBLE_PULL_BRANCH={{ ansible_pull_branch }}
+Environment=HOME=/root
+ExecStart=/usr/bin/ansible-pull \
+  --url {{ ansible_pull_repo }} \
+  --checkout {{ ansible_pull_branch }} \
+  --directory {{ ansible_pull_directory }} \
+  --inventory {{ ansible_pull_inventory }} \
+  --vault-password-file /root/.local/ansible/vault-secret \
+  --only-if-changed \
+  {{ ansible_pull_playbook }}
+
+# Logging configuration
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ansible-pull
+
+# Security hardening
+PrivateTmp=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

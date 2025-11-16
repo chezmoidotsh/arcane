@@ -1,0 +1,22 @@
+---
+# ==============================================================================
+# Default Variables: ara_server
+# ==============================================================================
+
+# -------------------------------------------------------------------------
+# ARA Docker Configuration
+# -------------------------------------------------------------------------
+ara_data_dir: /opt/ara
+
+# ARA Docker image configuration
+ara_docker_image_name: docker.io/recordsansible/ara-api
+# renovate: datasource=docker depName=recordsansible/ara-api versioning=docker
+ara_docker_image_tag: latest@sha256:435dbcc0154b0494f245d79ec1c20af3b8f0d31bccf010522dc6125e08e7691d
+ara_docker_image: "{{ ara_docker_image_name }}:{{ ara_docker_image_tag }}"
+
+ara_port: 8000
+
+# -------------------------------------------------------------------------
+# Tailscale Serve Configuration
+# -------------------------------------------------------------------------
+ara_tailscale_serve_enabled: true

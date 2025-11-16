@@ -1,0 +1,102 @@
+---
+# ==============================================================================
+# Tasks: Ansible Vault Secret Configuration
+# ==============================================================================
+# Purpose:
+#   Configure Ansible vault secret for ansible-pull authentication with
+#   encrypted vault files. This enables automated playbook execution with
+#   access to sensitive variables.
+#
+# Workflow:
+#   1. Check if vault secret file already exists
+#   2. Read ANSIBLE_VAULT_PASSWORD from environment variable
+#   3. Fail if neither exists (prevents unencrypted execution)
+#   4. Create vault secret file from environment variable if needed
+#
+# Security Considerations:
+#   - Vault password file stored at /root/.local/ansible/vault-secret
+#   - File permissions: 0600 (owner read/write only)
+#   - Directory permissions: 0700 (owner access only)
+#   - Environment variable ANSIBLE_VAULT_PASSWORD used as source
+#   - no_log enabled to prevent password exposure in logs
+#
+# Usage:
+#   Export ANSIBLE_VAULT_PASSWORD before running playbook:
+#     export ANSIBLE_VAULT_PASSWORD="your-vault-password"
+#     ansible-playbook site.yml
+# ==============================================================================
+
+# ==========================================================================
+# Vault Secret File Detection
+# ==========================================================================
+# Check if vault secret file already exists to avoid overwriting
+- name: Check if vault secret file exists at /root/.local/ansible/vault-secret
+  ansible.builtin.stat:
+    path: /root/.local/ansible/vault-secret
+  register: vault_secret_file # Store result for conditional logic
+
+# ==========================================================================
+# Environment Variable Extraction
+# ==========================================================================
+# Read vault password from ANSIBLE_VAULT_PASSWORD environment variable
+# Using lookup('env') to access environment from control node
+- name: Cache ANSIBLE_VAULT_PASSWORD environment variable value
+  ansible.builtin.set_fact:
+    vault_password_env: "{{ lookup('env', 'ANSIBLE_VAULT_PASSWORD') | default('', true) }}"
+  # Cache in fact to avoid multiple environment lookups
+
+# ==========================================================================
+# Validation and Fail-Fast
+# ==========================================================================
+# Prevent execution if no vault password available from either source
+# This ensures ansible-pull won't fail silently when accessing encrypted vars
+- name: Fail if vault secret file is missing and ANSIBLE_VAULT_PASSWORD not set
+  ansible.builtin.fail:
+    msg: Vault secret file missing and ANSIBLE_VAULT_PASSWORD environment variable not set
+  when: not vault_secret_file.stat.exists and (vault_password_env | length == 0)
+  # Condition: File doesn't exist AND environment variable is empty
+
+# ==========================================================================
+# Vault Secret File Creation
+# ==========================================================================
+# Create vault secret file from environment variable if available
+# This enables ansible-pull to decrypt vault-encrypted variables
+#
+# Block executes only when:
+#   - ANSIBLE_VAULT_PASSWORD environment variable is set
+#   - Non-empty password value provided
+#
+# Security measures:
+#   - Parent directory with 0700 permissions (root-only access)
+#   - Secret file with 0600 permissions (root read/write only)
+#   - no_log prevents password from appearing in logs
+# ==========================================================================
+- name: Ensure vault secret file is present and synchronized with environment variable
+  block:
+    # Create parent directory with restrictive permissions
+    - name: Create /root/.local/ansible directory if it doesn't exist
+      ansible.builtin.file:
+        path: /root/.local/ansible
+        state: directory
+        mode: "0700" # Owner-only access (rwx------)
+        owner: root
+        group: root
+
+    # Write password to file with newline (required by ansible-vault)
+    - name: Write vault secret to file from ANSIBLE_VAULT_PASSWORD environment variable
+      ansible.builtin.copy:
+        dest: /root/.local/ansible/vault-secret
+        content: "{{ vault_password_env }}\n" # Newline required by ansible-vault
+        mode: "0600" # Owner read/write only (rw-------)
+        owner: root
+        group: root
+  rescue:
+    - name: Fail if vault secret file creation fails
+      ansible.builtin.fail:
+        msg: "Failed to create vault secret file. Check permissions and disk space."
+  when: vault_password_env | length > 0 # Only write if password available
+  no_log: true # SECURITY: Prevent password exposure in Ansible logs
+
+# ==========================================================================
+# END OF VAULT SECRET CONFIGURATION
+# ==========================================================================

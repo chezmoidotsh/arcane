@@ -1,0 +1,14 @@
+---
+# ==============================================================================
+# Handlers: gitops_automation
+# ==============================================================================
+
+- name: Reload systemd daemon configuration
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Enable and start ansible-pull systemd timer
+  ansible.builtin.systemd:
+    name: ansible-pull.timer
+    enabled: true
+    state: started
