@@ -1,0 +1,83 @@
+---
+# ==============================================================================
+# Ansible Run Notification - Start Handler
+# ==============================================================================
+# Sends initial notification to Slack when playbook execution begins.
+# Captures start timestamp and message context for later update.
+# ==============================================================================
+
+- name: Record playbook start timing metadata
+  ansible.builtin.set_fact:
+    "{{ arnos_start_epoch_fact }}": "{{ lookup('pipe', 'date +%s') | int }}"
+    "{{ arnos_start_iso_fact }}": "{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%SZ') }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Build hostname link with ARA URL if available
+  ansible.builtin.set_fact:
+    _hostname_display: "{{ '<' ~ arnos_ara_public_url ~ '|' ~ ansible_hostname ~ '>' if (arnos_ara_public_url | default('') | length > 0) else ansible_hostname | default('n/a') }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Build Slack block message for run start
+  ansible.builtin.set_fact:
+    _slack_start_text: "{{ arnos_running_emoji }} Ansible started at {{ lookup('vars', arnos_start_iso_fact) }} UTC"
+    _slack_start_blocks:
+      - type: header
+        text:
+          type: plain_text
+          text: "{{ arnos_running_emoji }} Ansible Starting"
+          emoji: true
+      - type: section
+        fields:
+          - type: mrkdwn
+            text: |
+              *Status:* In progress
+          - type: mrkdwn
+            text: |
+              *Started:* {{ lookup('vars', arnos_start_iso_fact) }} UTC
+      - type: context
+        elements:
+          - type: mrkdwn
+            text: "*Host*: {{ _hostname_display }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Notify Slack about Ansible run start
+  community.general.slack:
+    token: "{{ arnos_slack_token }}"
+    channel: "{{ arnos_slack_channel }}"
+    msg: "{{ _slack_start_text }}"
+    blocks: "{{ _slack_start_blocks }}"
+    username: "{{ arnos_slack_username }}"
+  register: _slack_start_result
+  delegate_to: localhost
+  run_once: true
+  when:
+    - arnos_enabled
+    - arnos_send_start
+    - arnos_slack_token | length > 0
+  ignore_errors: "{{ arnos_ignore_errors }}"
+
+- name: Remember Slack context for completion update
+  ansible.builtin.set_fact:
+    "{{ arnos_enabled_fact }}": true
+    "{{ arnos_message_ts_fact }}": "{{ _slack_start_result.response.ts | default(_slack_start_result.ts | default('')) }}"
+    "{{ arnos_message_channel_fact }}": "{{ _slack_start_result.response.channel | default(_slack_start_result.channel | default(arnos_slack_channel)) }}"
+  delegate_to: localhost
+  run_once: true
+  when:
+    - arnos_enabled
+    - arnos_slack_token | length > 0
+    - _slack_start_result is defined
+    - not (_slack_start_result.failed | default(false))
+
+- name: Initialize Slack context facts when notification disabled or failed
+  ansible.builtin.set_fact:
+    "{{ arnos_enabled_fact }}": "{{ arnos_enabled and (arnos_slack_token | length > 0) }}"
+    "{{ arnos_message_ts_fact }}": ""
+    "{{ arnos_message_channel_fact }}": "{{ arnos_slack_channel }}"
+  delegate_to: localhost
+  run_once: true
+  when:
+    - (_slack_start_result is not defined) or (_slack_start_result.failed | default(false))

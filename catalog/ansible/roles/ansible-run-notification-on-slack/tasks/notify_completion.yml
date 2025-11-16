@@ -1,0 +1,138 @@
+---
+# ==============================================================================
+# Ansible Run Notification - Completion Handler
+# ==============================================================================
+# Sends completion notification to Slack when playbook execution finishes.
+# Updates original start message or sends new message based on configuration.
+# Optionally links hostname to ARA web interface if configured.
+# ==============================================================================
+
+- name: Record playbook end timestamp
+  ansible.builtin.set_fact:
+    _playbook_end_epoch: "{{ lookup('pipe', 'date +%s') | int }}"
+    _playbook_end_iso: "{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%SZ') }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Compute playbook duration
+  ansible.builtin.set_fact:
+    _playbook_duration_seconds: "{{ _playbook_end_epoch | int - (lookup('vars', arnos_start_epoch_fact, default=_playbook_end_epoch) | int) }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Format playbook duration for Slack message
+  ansible.builtin.set_fact:
+    _playbook_duration_human: "{{ '%02d:%02d:%02d' | format(_playbook_duration_seconds | int // 3600, (_playbook_duration_seconds | int % 3600) // 60, _playbook_duration_seconds | int % 60) }}"
+  delegate_to: localhost
+  run_once: true
+
+# ------------------------------------------------------------------------------
+# Build Slack Message
+# ------------------------------------------------------------------------------
+
+- name: Check if playbook failed (from rescue phase)
+  ansible.builtin.set_fact:
+    _execution_failed: "{{ playbook_execution_failed | default(false) }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Determine Slack completion status metadata
+  ansible.builtin.set_fact:
+    _slack_final_icon: "{{ arnos_failure_emoji if _execution_failed else arnos_success_emoji }}"
+    _slack_status_label: "{{ 'Failed' if _execution_failed else 'Success' }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Build hostname link with ARA URL if available
+  ansible.builtin.set_fact:
+    _hostname_display: "{{ '<' ~ arnos_ara_public_url ~ '|' ~ ansible_hostname ~ '>' if (arnos_ara_public_url | default('') | length > 0) else ansible_hostname | default('n/a') }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Initialize Slack summary payload components
+  ansible.builtin.set_fact:
+    _slack_final_text: "{{ _slack_final_icon }} Ansible {{ _slack_status_label }} — finished at {{ _playbook_end_iso }} UTC ({{ _playbook_duration_human }})"
+    _slack_section_fields:
+      - type: mrkdwn
+        text: |
+          *Status:* {{ _slack_status_label }}
+      - type: mrkdwn
+        text: |
+          *Duration:* {{ _playbook_duration_human }}
+    _slack_context_elements:
+      - type: mrkdwn
+        text: "*Host*: {{ _hostname_display }}"
+      - type: mrkdwn
+        text: "*Started:* {{ lookup('vars', arnos_start_iso_fact, default='n/a') }} UTC"
+      - type: mrkdwn
+        text: "*Finished:* {{ _playbook_end_iso }} UTC"
+  delegate_to: localhost
+  run_once: true
+
+- name: Add failure context to Slack summary fields
+  ansible.builtin.set_fact:
+    _slack_section_fields: "{{ _slack_section_fields + [
+      {'type': 'mrkdwn', 'text': '*Failed Task:*\n```\n' ~ playbook_failure_task ~ '\n```'},
+      {'type': 'mrkdwn', 'text': '*Error:*\n```\n' ~ (playbook_failure_message | truncate(300, true, '...')) ~ '\n```'}
+      ] }}"
+  delegate_to: localhost
+  run_once: true
+  when:
+    - _execution_failed
+    - playbook_failure_task is defined
+
+- name: Assemble Slack block kit payload
+  ansible.builtin.set_fact:
+    _slack_final_blocks:
+      - type: header
+        text:
+          type: plain_text
+          text: "{{ _slack_final_icon }} Ansible {{ _slack_status_label }}"
+          emoji: true
+      - type: section
+        fields: "{{ _slack_section_fields }}"
+      - type: context
+        elements: "{{ _slack_context_elements }}"
+  delegate_to: localhost
+  run_once: true
+
+# ------------------------------------------------------------------------------
+# Send Slack Notification
+# ------------------------------------------------------------------------------
+
+- name: Update Slack start message with completion summary
+  community.general.slack:
+    token: "{{ arnos_slack_token }}"
+    channel: "{{ lookup('vars', arnos_message_channel_fact) }}"
+    message_id: "{{ lookup('vars', arnos_message_ts_fact) }}"
+    msg: "{{ _slack_final_text }}"
+    blocks: "{{ _slack_final_blocks }}"
+    username: "{{ arnos_slack_username }}"
+    icon_emoji: "{{ _slack_final_icon }}"
+  delegate_to: localhost
+  run_once: true
+  when:
+    - arnos_enabled
+    - arnos_send_completion
+    - arnos_update_start_message
+    - lookup('vars', arnos_enabled_fact, default=false)
+    - lookup('vars', arnos_message_ts_fact, default='') | length > 0
+    - lookup('vars', arnos_message_channel_fact, default='') | length > 0
+  ignore_errors: "{{ arnos_ignore_errors }}"
+
+- name: Send Slack completion message (fallback or new message)
+  community.general.slack:
+    token: "{{ arnos_slack_token }}"
+    channel: "{{ arnos_slack_channel }}"
+    msg: "{{ _slack_final_text }}"
+    blocks: "{{ _slack_final_blocks }}"
+    username: "{{ arnos_slack_username }}"
+    icon_emoji: "{{ _slack_final_icon }}"
+  delegate_to: localhost
+  run_once: true
+  when:
+    - arnos_enabled
+    - arnos_send_completion
+    - arnos_slack_token | length > 0
+    - (not arnos_update_start_message) or (lookup('vars', arnos_message_ts_fact, default='') | length == 0)
+  ignore_errors: "{{ arnos_ignore_errors }}"

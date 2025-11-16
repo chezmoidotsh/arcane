@@ -50,14 +50,92 @@
 #   journalctl -u ansible-pull.service -f
 # ==============================================================================
 
-- name: "[Step 1] Install and configure system components"
-  ansible.builtin.import_playbook: playbooks/01-system.yml
+- name: Kazimierz.AKN VPS Infrastructure Deployment
+  hosts: kazimierz
+  gather_facts: true
 
-- name: "[Step 2] Setup GitOps automation"
-  ansible.builtin.import_playbook: playbooks/02-gitops.yml
+  vars:
+    # -------------------------------------------------------------------------
+    # Slack Notification Configuration (ARNOS)
+    # -------------------------------------------------------------------------
+    arnos_slack_token: !vault |
+      $ANSIBLE_VAULT;1.1;AES256
+      33316231303561333631343930643665353039363765363564653039663762613831353562346538
+      3565313238393232643937393030336630353136373432620a343531346561363164383032666162
+      39336264663161636463306562653131313430363764336335313364313330336338323134333630
+      3331656332613233640a373633623238633463356265316661346532373930353363626164623631
+      37626662383136643832653835633739633830363066356135383566643033346535646232633337
+      61333530346632613762623264366336636365323736313835653531633962346162386431356231
+      306236623632646266396664656130643362
 
-- name: "[Step 3] Deploy ARA Records Ansible"
-  ansible.builtin.import_playbook: playbooks/03-ara.yml
+    arnos_slack_channel: "#notifications"
+    arnos_slack_username: Ansible (kazimierz.akn)
 
-- name: "[Step 4] Deploy Pangolin Application Stack"
-  ansible.builtin.import_playbook: playbooks/04-pangolin.yml
+    # -------------------------------------------------------------------------
+    # ARA Records Ansible Configuration
+    # -------------------------------------------------------------------------
+    # API server URL (uses environment variable if set, otherwise public URL)
+    arnos_ara_api_server: "{{ lookup('env', 'ARA_API_SERVER') | default(arnos_ara_public_url) }}"
+    # Public URL accessible via Tailscale
+    arnos_ara_public_url: https://kazimierz-akn.tail831c5d.ts.net
+
+  pre_tasks:
+    - name: "[Notification] Send Slack notification about playbook start"
+      block:
+        - name: Include notification role for start phase
+          ansible.builtin.include_role:
+            name: ../../../../../catalog/ansible/roles/ansible-run-notification-on-slack
+          vars:
+            notification_phase: start
+      delegate_to: localhost
+      run_once: true
+
+    # Vault secret setup for gitops_automation role
+    - name: "[Setup] Configure Ansible vault secret"
+      ansible.builtin.include_role:
+        name: gitops_automation
+        tasks_from: vault_setup
+
+  tasks:
+    - block:
+        - name: "[Step 1] Install and configure system components"
+          ansible.builtin.include_role:
+            name: system_setup
+          tags: [system]
+
+        - name: "[Step 2] Setup GitOps automation"
+          ansible.builtin.include_role:
+            name: gitops_automation
+          tags: [gitops]
+
+        - name: "[Step 3] Deploy and configure ARA Records Ansible"
+          ansible.builtin.include_role:
+            name: ara_server
+          tags: [ara]
+
+        - name: "[Step 4] Deploy Pangolin application stack"
+          ansible.builtin.include_role:
+            name: pangolin
+          tags: [pangolin]
+
+      rescue:
+        - name: "[Notification] Send Slack notification about playbook failure"
+          block:
+            - name: Include notification role for rescue phase
+              ansible.builtin.include_role:
+                name: ../../../../../catalog/ansible/roles/ansible-run-notification-on-slack
+              vars:
+                notification_phase: rescue
+          delegate_to: localhost
+          run_once: true
+
+      always:
+        - name: "[Notification] Send Slack notification about playbook completion"
+          block:
+            - name: Include notification role for completion phase
+              ansible.builtin.include_role:
+                name: ../../../../../catalog/ansible/roles/ansible-run-notification-on-slack
+              vars:
+                notification_phase: completion
+          delegate_to: localhost
+          run_once: true

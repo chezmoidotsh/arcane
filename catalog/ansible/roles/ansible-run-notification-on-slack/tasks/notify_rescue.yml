@@ -1,0 +1,87 @@
+---
+# ==============================================================================
+# Ansible Run Notification - Rescue Handler
+# ==============================================================================
+# Sends failure notification to Slack when playbook execution fails.
+# Automatically captures error context from ansible_failed_task and
+# ansible_failed_result variables.
+#
+# This handler is designed to be called from rescue blocks:
+#
+# Example usage:
+#   - block:
+#       # ... your playbook tasks ...
+#     rescue:
+#       - name: Send failure notification
+#         include_role:
+#           name: ansible-run-notification-on-slack
+#         vars:
+#           notification_phase: rescue
+#     always:
+#       - name: Send completion notification
+#         include_role:
+#           name: ansible-run-notification-on-slack
+#         vars:
+#           notification_phase: completion
+# ==============================================================================
+
+- name: Record playbook failure timestamp
+  ansible.builtin.set_fact:
+    _playbook_failure_epoch: "{{ lookup('pipe', 'date +%s') | int }}"
+    _playbook_failure_iso: "{{ lookup('pipe', 'date -u +%Y-%m-%dT%H:%M:%SZ') }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Compute playbook duration until failure
+  ansible.builtin.set_fact:
+    _playbook_duration_seconds: "{{ _playbook_failure_epoch | int - (lookup('vars', arnos_start_epoch_fact, default=_playbook_failure_epoch) | int) }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Format playbook duration for Slack message
+  ansible.builtin.set_fact:
+    _playbook_duration_human: "{{ '%02d:%02d:%02d' | format(_playbook_duration_seconds | int // 3600, (_playbook_duration_seconds | int % 3600) // 60, _playbook_duration_seconds | int % 60) }}"
+  delegate_to: localhost
+  run_once: true
+
+# ------------------------------------------------------------------------------
+# Capture Failure Context
+# ------------------------------------------------------------------------------
+
+- name: Extract failure information from ansible_failed_task
+  ansible.builtin.set_fact:
+    _failure_task_name: "{{ ansible_failed_task.name | default('Unknown task') }}"
+    _failure_task_action: "{{ ansible_failed_task.action | default('unknown') }}"
+  delegate_to: localhost
+  run_once: true
+  when:
+    - ansible_failed_task is defined
+
+- name: Extract failure details from ansible_failed_result
+  ansible.builtin.set_fact:
+    _failure_message: "{{ ansible_failed_result.msg | default(ansible_failed_result.stderr | default('Unknown error')) }}"
+    _failure_rc: "{{ ansible_failed_result.rc | default('n/a') }}"
+  delegate_to: localhost
+  run_once: true
+  when:
+    - ansible_failed_result is defined
+
+- name: Set default failure information if not captured
+  ansible.builtin.set_fact:
+    _failure_task_name: "{{ _failure_task_name | default('Unknown task') }}"
+    _failure_task_action: "{{ _failure_task_action | default('unknown') }}"
+    _failure_message: "{{ _failure_message | default('Playbook execution failed') }}"
+    _failure_rc: "{{ _failure_rc | default('n/a') }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Store failure context in facts for always block
+  ansible.builtin.set_fact:
+    playbook_execution_failed: true
+    playbook_failure_task: "{{ _failure_task_name }}"
+    playbook_failure_action: "{{ _failure_task_action }}"
+    playbook_failure_message: "{{ _failure_message }}"
+    playbook_failure_rc: "{{ _failure_rc }}"
+    playbook_failure_timestamp: "{{ _playbook_failure_iso }}"
+  delegate_to: localhost
+  run_once: true
