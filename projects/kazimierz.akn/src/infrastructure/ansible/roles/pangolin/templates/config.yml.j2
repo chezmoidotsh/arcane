@@ -17,7 +17,7 @@ domains:
 {% endfor %}
 
 server:
-  secret: "{{ pangolin_server_secret }}"
+  secret: "{{ pangolin_server_secret | trim }}"
 
 gerbil:
   base_endpoint: "{{ pangolin_gerbil_base_endpoint }}"

@@ -1,0 +1,8 @@
+---
+# CrowdSec Traefik Log Acquisition Configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+poll_without_inotify: false
+filenames:
+  - /var/log/traefik/*.log
+labels:
+  type: traefik

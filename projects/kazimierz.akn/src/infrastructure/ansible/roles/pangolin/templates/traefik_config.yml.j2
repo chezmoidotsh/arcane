@@ -2,6 +2,44 @@
 # Traefik Static Configuration
 # Managed by Ansible - DO NOT EDIT MANUALLY
 
+accessLog:
+  filePath: "/var/log/traefik/access.log"
+  format: "json"
+  bufferingSize: 100
+  filters:
+    statusCodes:
+      - "200-299"
+      - "400-499"
+      - "500-599"
+    retryAttempts: true
+    minDuration: "100ms"
+  fields:
+    defaultMode: "drop"
+    names:
+      ClientAddr: "keep"
+      ClientHost: "keep"
+      DownstreamContentSize: "keep"
+      DownstreamStatus: "keep"
+      Duration: "keep"
+      RequestMethod: "keep"
+      RequestPath: "keep"
+      RequestProtocol: "keep"
+      RetryAttempts: "keep"
+      ServiceName: "keep"
+      StartUTC: "keep"
+      TLSCipher: "keep"
+      TLSVersion: "keep"
+    headers:
+      defaultMode: "drop"
+      names:
+        Authorization: "redact"
+        Content-Type: "keep"
+        Cookie: "redact"
+        User-Agent: "keep"
+        X-Forwarded-For: "keep"
+        X-Forwarded-Proto: "keep"
+        X-Real-Ip: "keep"
+
 api:
   insecure: true
   dashboard: true
@@ -18,6 +56,9 @@ experimental:
     badger:
       moduleName: "github.com/fosrl/badger"
       version: "v1.2.0"
+    crowdsec:
+      moduleName: "github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
+      version: "v1.4.4"
 
 log:
   level: "{{ pangolin_log_level | upper }}"
@@ -41,6 +82,8 @@ entryPoints:
       respondingTimeouts:
         readTimeout: "30m"
     http:
+      middlewares:
+        - crowdsec@file
       tls:
         certResolver: "letsencrypt"
 

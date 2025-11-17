@@ -77,6 +77,39 @@ pangolin_traefik_docker_image_tag: v3.4.0
 pangolin_traefik_docker_image: "{{ pangolin_traefik_docker_image_name }}:{{ pangolin_traefik_docker_image_tag }}"
 
 # -------------------------------------------------------------------------
+# CrowdSec Configuration
+# -------------------------------------------------------------------------
+# CrowdSec image configuration
+pangolin_crowdsec_docker_image_name: docker.io/crowdsecurity/crowdsec
+# renovate: datasource=docker depName=crowdsecurity/crowdsec versioning=docker
+pangolin_crowdsec_docker_image_tag: latest
+pangolin_crowdsec_docker_image: "{{ pangolin_crowdsec_docker_image_name }}:{{ pangolin_crowdsec_docker_image_tag }}"
+
+# CrowdSec collections to install
+pangolin_crowdsec_collections:
+  - crowdsecurity/traefik
+  - crowdsecurity/appsec-virtual-patching
+  - crowdsecurity/appsec-generic-rules
+  - crowdsecurity/appsec-crs-inband
+
+# CrowdSec parsers to install
+pangolin_crowdsec_parsers:
+  - crowdsecurity/whitelists
+
+# CrowdSec enrollment settings
+pangolin_crowdsec_enroll_instance_name: "pangolin-crowdsec"
+pangolin_crowdsec_enroll_tags: "docker"
+
+# CrowdSec GID
+pangolin_crowdsec_gid: "1000"
+
+# CrowdSec bouncer API key file path
+# This file stores the Traefik bouncer API key persistently
+# Location: /opt/pangolin/config/crowdsec/bouncer_key
+# Permissions: 0600 (root read/write only)
+pangolin_crowdsec_bouncer_key_file: "{{ pangolin_compose_dir }}/config/crowdsec/bouncer_key"
+
+# -------------------------------------------------------------------------
 # Traefik Configuration
 # -------------------------------------------------------------------------
 # ACME email for Let's Encrypt - REQUIRED: Must be overridden in host_vars
