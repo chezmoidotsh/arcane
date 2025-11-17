@@ -106,23 +106,49 @@ vps: {
 
 
   # ────────────────────────────────────────────────────────────────────────────
-  # VPS Components
+  # Proxy Stack Components
 
-  pangolin: {
-    class: [application]
-    label: Pangolin
-    icon: assets/icons/system/pangolin.svg
-    link: https://pangolin.net/
-    tooltip: Edge node - Identity-aware reverse proxy with WAF and access control
+  proxy-stack: {
+    label: Proxy Stack
+    class: namespace
+    style.fill-pattern: none
+
+    pangolin: {
+      class: [application]
+      label: Pangolin
+      icon: assets/icons/system/pangolin.svg
+      link: https://pangolin.net/
+      tooltip: Tunneled reverse proxy controller with web dashboard
+    }
+
+    gerbil: {
+      class: [application]
+      label: Gerbil
+      icon: assets/icons/system/pangolin.svg
+      link: https://pangolin.net/
+      tooltip: WireGuard tunnel manager (site/client tunnels)
+    }
+
+    traefik: {
+      class: [application]
+      label: Traefik
+      icon: assets/icons/system/traefik.svg
+      link: https://traefik.io/
+      tooltip: HTTP reverse proxy with automatic Let's Encrypt SSL
+    }
+
+    crowdsec: {
+      class: [application]
+      label: CrowdSec
+      icon: assets/icons/apps/crowdsec.svg
+      link: https://crowdsec.net/
+      tooltip: Collaborative IPS/IDS with WAF and threat intelligence
+    }
   }
 
-  crowdsec: {
-    class: [application]
-    label: CrowdSec
-    icon: assets/icons/apps/crowdsec.svg
-    link: https://crowdsec.net/
-    tooltip: Collaborative IPS/IDS with behavioral detection and community threat intelligence
-  }
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Infrastructure Components
 
   tailscale: {
     class: [application-system]
@@ -130,6 +156,22 @@ vps: {
     icon: assets/icons/platform/tailscale.svg
     link: https://tailscale.com/
     tooltip: Mesh VPN for secure SSH access and VPS administration
+  }
+
+  ansible: {
+    class: [application-system]
+    label: Ansible
+    icon: assets/icons/apps/ansible.svg
+    link: https://www.ansible.com/
+    tooltip: GitOps automation via ansible-pull (15-minute sync)
+  }
+
+  ara: {
+    class: [application-system]
+    label: ARA
+    icon: assets/icons/apps/ara-records-ansible.svg
+    link: https://ara.recordsansible.org/
+    tooltip: Playbook execution monitoring and auditing
   }
 }
 
@@ -146,7 +188,7 @@ vps: {
 # ──────────────────────────────────────────────────────────────────────────────
 # Internet to VPS Flow
 
-internet -> vps.pangolin: |md
+internet -> vps.proxy-stack.traefik: |md
     HTTP (80)
     HTTPS (443)
   | { class: [connect-from-internet] }
@@ -155,29 +197,48 @@ internet -> vps.pangolin: |md
 # ──────────────────────────────────────────────────────────────────────────────
 # VPS to External Services
 
-vps.pangolin -> pocket-id: "OIDC Authentication\n(auth.chezmoi.sh:443)" {class: [connect-to-internet]}
+vps.proxy-stack.pangolin -> pocket-id: "OIDC Authentication\n(auth.chezmoi.sh:443)" {class: [connect-to-internet]}
 
-vps.pangolin -> mailjet: "SMTP\n(in-v3.mailjet.com:587)" {class: [connect-to-internet]}
+vps.proxy-stack.pangolin -> mailjet: "SMTP\n(in-v3.mailjet.com:587)" {class: [connect-to-internet]}
 
-vps.pangolin -> internet: |md
+vps.proxy-stack.traefik -> internet: |md
     Let's Encrypt
     (acme-v02.api.letsencrypt.org:443)
   | {class: [connect-to-internet]}
 
 vps.tailscale -> internet: "Tailscale API\n(api.tailscale.com:443)" {class: [connect-to-internet]}
 
+vps.ansible -> internet: "Git Pull\n(github.com:443)" {class: [connect-to-internet]}
+
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Security Flow
+# Proxy Stack Internal Connections
 
-vps.pangolin -> vps.crowdsec: "IP Blocklist\nThreat Intelligence"
+vps.proxy-stack.traefik -> vps.proxy-stack.crowdsec: "Bouncer API\nIP Blocklist"
 
-vps.crowdsec -> internet: "CrowdSec API\n(api.crowdsec.net:443)" { class: [connect-to-internet] }
+vps.proxy-stack.traefik -> vps.proxy-stack.gerbil: "Proxied Traffic"
+
+vps.proxy-stack.crowdsec -> vps.proxy-stack.traefik: "Log Analysis"
+
+vps.proxy-stack.gerbil -> vps.proxy-stack.pangolin: "Configuration Sync\n(API)"
+
+vps.proxy-stack.crowdsec -> internet: "CrowdSec API\n(api.crowdsec.net:443)" { class: [connect-to-internet] }
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Infrastructure Connections
+
+vps.ansible -> vps.ara: "Callback Plugin\nPlaybook Recording"
+
+vps.tailscale -> vps.ara: "Tailscale Serve\n(HTTPS Access)"
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Pangolin to Backend Cluster (WireGuard Tunnel)
 
-vps.pangolin -> lungmen·akn.newt: { class: [connect-from-vpn-backbone] }
+vps.proxy-stack.gerbil -> lungmen·akn.newt: |md
+    WireGuard Site Tunnel
+    (UDP 51820)
+  | { class: [connect-from-vpn-backbone] }
 
 lungmen·akn.newt -> lungmen·akn.services: "Proxied Requests"

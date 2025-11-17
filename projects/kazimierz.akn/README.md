@@ -27,17 +27,22 @@ The solution is a **single VPS** (no Kubernetes) running Pangolin with integrate
 
 **VPS Layer (Hetzner Cloud - Europe)**:
 
-* **Pangolin**: Edge node - Identity-aware reverse proxy with WAF and access control
-* **CrowdSec**: Collaborative threat intelligence and intrusion prevention
-* **Tailscale**: Mesh VPN for secure SSH access and VPS administration
+* **Pangolin**: Tunneled reverse proxy controller with web dashboard
+* **Gerbil**: WireGuard tunnel manager (site/client tunnels)
+* **Traefik**: HTTP reverse proxy with automatic Let's Encrypt SSL
+* **CrowdSec**: Collaborative IPS/IDS with WAF and threat intelligence
+* **Tailscale**: Mesh VPN for secure SSH access and monitoring
+* **Ansible**: GitOps automation via ansible-pull (15-minute sync)
+* **ARA**: Playbook execution monitoring and auditing
 
 > **Note**: Initially deployed on Hetzner Cloud for flexibility. After 6 months of validation, potential migration to HostUp for cost optimization (annual commitment).
 
 **Backend Cluster Connection**:
 
 * **Newt**: Pangolin service node running on lungmen.akn cluster
-* **WireGuard Tunnel**: Secure, encrypted connection between Pangolin (VPS) and Newt (cluster)
+* **WireGuard Site Tunnel**: Secure, encrypted connection between Gerbil (VPS) and Newt (cluster) via UDP 51820
 * **Backend Services**: Applications (Jellyfin, Immich, etc.) proxied through Newt
+* **Client Tunnels**: Optional WireGuard client connections via UDP 21820 for direct access
 
 **External Integrations**:
 
@@ -47,10 +52,12 @@ The solution is a **single VPS** (no Kubernetes) running Pangolin with integrate
 This architecture provides:
 
 * **Simple access** for non-technical users (browser-only, no client installation required)
-* **Strong security** with WAF, rate limiting, and threat intelligence (CrowdSec)
+* **Strong security** with WAF, IPS/IDS, threat intelligence (CrowdSec), and automated SSL
 * **Self-hosted control** with no third-party MITM risks (unlike Cloudflare)
 * **Isolation** with the VPS as a sacrificial layer that can be compromised without impacting internal infrastructure
 * **Simple management** with no Kubernetes overhead on the edge
+* **GitOps automation** via ansible-pull for infrastructure-as-code drift prevention
+* **Execution monitoring** with ARA for tracking configuration changes and debugging
 
 ## Services Overview
 
@@ -67,9 +74,9 @@ This architecture provides:
 
 ### [Pangolin](https://pangolin.net/)
 
-Identity-aware reverse proxy with WAF and access control running on a European VPS (Hetzner Cloud). Uses WireGuard tunnels to connect to Newt service nodes in the homelab.
+Self-hosted tunneled reverse proxy controller with web dashboard for account and tunnel management. Provides identity-aware access control and integrates with Gerbil for WireGuard tunnel orchestration.
 
-***Why this choice**: Distributed architecture (edge node on VPS + service node in cluster) provides secure connectivity without exposing backend infrastructure. Enterprise-grade security with OIDC integration and Let's Encrypt support.*
+***Why this choice**: Distributed architecture (edge node on VPS + service node in cluster) provides secure connectivity without exposing backend infrastructure. Enterprise-grade security with OIDC integration and organization management.*
 
 </div>
 </div>
@@ -78,13 +85,28 @@ Identity-aware reverse proxy with WAF and access control running on a European V
 
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
-<img src="../../docs/assets/icons/system/pangolin.svg" alt="Newt Logo" width="120" align="right" style="margin-left: 16px;">
+<img src="../../docs/assets/icons/system/pangolin.svg" alt="Gerbil Logo" width="120" align="right" style="margin-left: 16px;">
 
-### Newt (Pangolin Service Node)
+### Gerbil (WireGuard Manager)
 
-Pangolin service node deployed on lungmen.akn cluster, providing secure tunnel endpoint for backend services.
+WireGuard tunnel manager that establishes secure site tunnels (UDP 51820) and client tunnels (UDP 21820). Auto-generates and manages WireGuard keys, syncing configuration with the Pangolin controller.
 
-***Why this choice**: Native Pangolin component that establishes WireGuard tunnel to the edge node, enabling secure application delivery without public IP exposure.*
+***Why this choice**: Native Pangolin component that handles all WireGuard complexity, enabling secure encrypted tunnels to backend services without manual key management.*
+
+</div>
+</div>
+
+<br/><br/>
+
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/system/traefik.svg" alt="Traefik Logo" width="120" align="left" style="margin-right: 16px;">
+
+### [Traefik](https://traefik.io/)
+
+Modern HTTP reverse proxy and load balancer with automatic Let's Encrypt SSL certificate management. Provides dynamic routing configuration and integrates with CrowdSec for threat prevention.
+
+***Why this choice**: Dynamic configuration updates without restarts, native Let's Encrypt integration, and excellent CrowdSec bouncer support. Well-suited for managing multiple domains with automated SSL.*
 
 </div>
 </div>
@@ -97,9 +119,9 @@ Pangolin service node deployed on lungmen.akn cluster, providing secure tunnel e
 
 ### [CrowdSec](https://crowdsec.net/)
 
-Collaborative intrusion prevention system with behavioral detection and community threat intelligence.
+Collaborative intrusion prevention system (IPS/IDS) with Web Application Firewall (WAF) capabilities. Analyzes Traefik logs for behavioral threat detection and blocks malicious IPs using community threat intelligence.
 
-***Why this choice**: Community-driven threat intelligence provides better protection than traditional rule-based systems, with native Pangolin integration.*
+***Why this choice**: Community-driven threat intelligence provides better protection than traditional rule-based systems, with native Traefik integration via bouncer plugin. Includes OWASP CRS and virtual patching.*
 
 </div>
 </div>
@@ -112,9 +134,39 @@ Collaborative intrusion prevention system with behavioral detection and communit
 
 ### [Tailscale](https://tailscale.com/)
 
-Mesh VPN providing secure SSH access for VPS administration and configuration.
+Mesh VPN providing secure SSH access for VPS administration and configuration. Also serves ARA monitoring interface via Tailscale Serve for encrypted playbook execution tracking.
 
-***Why this choice**: Already used across the homelab infrastructure. Provides secure, zero-trust access for VPS management without exposing SSH to the public internet.*
+***Why this choice**: Already used across the homelab infrastructure. Provides secure, zero-trust access for VPS management without exposing SSH to the public internet. Tailscale Serve eliminates need for public monitoring dashboard.*
+
+</div>
+</div>
+
+<br/><br/>
+
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/ansible.svg" alt="Ansible Logo" width="120" align="right" style="margin-left: 16px;">
+
+### [Ansible](https://www.ansible.com/)
+
+Configuration management and GitOps automation via `ansible-pull` systemd timer (15-minute interval). Pulls latest configurations from Git repository and applies changes idempotently.
+
+***Why this choice**: Self-pulling GitOps model eliminates need for external CI/CD infrastructure. Systemd timer ensures VPS stays in sync with repository state. Integrates with ARA for execution monitoring.*
+
+</div>
+</div>
+
+<br/><br/>
+
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/ara-records-ansible.svg" alt="ARA Logo" width="120" align="left" style="margin-right: 16px;">
+
+### [ARA Records Ansible](https://ara.recordsansible.org/)
+
+Ansible playbook execution recorder providing web UI for tracking changes, debugging failures, and auditing configuration drift. Accessible via Tailscale Serve HTTPS endpoint.
+
+***Why this choice**: Provides visibility into ansible-pull executions without additional monitoring infrastructure. SQLite backend keeps it lightweight. Tailscale Serve provides secure access without public exposure.*
 
 </div>
 </div>
@@ -159,22 +211,50 @@ Transactional email service used by Pangolin for notifications and user communic
 
 ## Current Project Structure
 
-This project contains documentation and configuration for the Pangolin VPS gateway:
+This project contains documentation, infrastructure-as-code (Ansible), and configuration for the Pangolin VPS gateway:
 
 ```txt
 kazimierz.akn/
-├── README.md                           # This documentation
-├── architecture.d2                     # Architecture diagram source (D2 format)
-├── assets/                             # Generated diagrams and assets
-│   ├── architecture-dark.svg          # Dark theme architecture diagram
-│   └── architecture-light.svg         # Light theme architecture diagram
-└── docs/
-    └── BOOTSTRAP.md                   # Complete VPS bootstrap procedure
+├── README.md                                   # This documentation
+├── architecture.d2                             # Architecture diagram source (D2 format)
+├── assets/                                     # Generated diagrams and assets
+│   ├── architecture-dark.svg                   # Dark theme architecture diagram
+│   └── architecture-light.svg                  # Light theme architecture diagram
+├── docs/
+│   ├── BOOTSTRAP.md                            # Complete VPS bootstrap procedure
+│   ├── CROWDSEC-INTEGRATION.md                 # CrowdSec integration details
+│   └── archives/                               # Historical documents
+│       └── REFLEXION-KUBERNETES-DEPLOYMENT.md  # Initial architecture decisions
+└── src/
+    └── infrastructure/
+        └── ansible/                            # Ansible infrastructure-as-code
+            ├── site.yml                        # Main playbook (4 phases)
+            ├── requirements.yml                # External roles and collections
+            ├── inventory/
+            │   ├── local.yml                   # Local inventory (ansible-pull)
+            │   ├── remote.yml                  # Remote inventory (manual deployment)
+            │   └── host_vars/
+            │       └── kazimierz.yml           # Host-specific variables (vault-encrypted)
+            └── roles/
+                ├── system_setup/               # Base system (Docker, Tailscale, UFW, etc.)
+                ├── gitops_automation/          # ansible-pull systemd timer setup
+                ├── ara_server/                 # ARA playbook monitoring
+                ├── pangolin/                   # Pangolin stack (Pangolin, Gerbil, Traefik, CrowdSec)
+                └── ansible-run-notification-on-slack/ # Slack notifications
 ```
 
 ## Installation and Setup
 
-The VPS is provisioned and configured using Pangolin's official installer. See [docs/BOOTSTRAP.md](./docs/BOOTSTRAP.md) for the complete bootstrap procedure.
+```bash
+sops decrypt .vault-password.sops | \
+  ANSIBLE_PULL_BRANCH=issue-458/prepare-kazimierz-pangolin-ansible \
+  ansible-playbook site.yml \
+    --inventory inventory/remote.yml \
+    --diff \
+    --vault-id kazimierz@/dev/stdin
+```
+
+The VPS is provisioned and configured using Ansible. See [docs/BOOTSTRAP.md](./docs/BOOTSTRAP.md) for the complete bootstrap procedure.
 
 ## Security Considerations
 
