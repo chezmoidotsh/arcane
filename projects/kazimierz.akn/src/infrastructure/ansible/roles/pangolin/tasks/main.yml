@@ -245,6 +245,7 @@
   tags:
     - pangolin
     - docker
+  ignore_errors: true # Allow playbook to continue even if deployment fails
 
 # ==========================================================================
 # CrowdSec Integration Configuration

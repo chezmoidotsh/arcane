@@ -59,6 +59,7 @@
   loop:
     - "{{ pangolin_compose_dir }}/config/crowdsec"
     - "{{ pangolin_compose_dir }}/config/crowdsec/acquis.d"
+    - "{{ pangolin_compose_dir }}/config/crowdsec/appsec-configs"
   tags:
     - pangolin
     - crowdsec
@@ -81,6 +82,34 @@
   loop:
     - traefik.yaml
     - appsec.yaml
+  tags:
+    - pangolin
+    - crowdsec
+    - configuration
+
+# ==========================================================================
+# CrowdSec AppSec Custom Configurations Deployment
+# ==========================================================================
+# Deploy custom AppSec configurations to modify default CrowdSec behavior:
+#   - disable-rule-920420.yaml: Disable OWASP CRS rule 920420 that validates
+#                               Content-Type headers against allowed policy
+#
+# These configurations are templated to use dynamic Pangolin domain from
+# pangolin_domains.domain1.base_domain variable, ensuring the rule is only
+# disabled for the specific Pangolin host.
+#
+# These configurations are loaded after default configs and can disable
+# specific rules that may cause false positives for Pangolin's use case.
+# ==========================================================================
+- name: Deploy CrowdSec AppSec custom configurations
+  ansible.builtin.template:
+    src: "crowdsec/appsec-configs/{{ item }}.j2"
+    dest: "{{ pangolin_compose_dir }}/config/crowdsec/appsec-configs/{{ item }}"
+    mode: "0644"
+    owner: root
+    group: root
+  loop:
+    - disable-rule-920420.yaml
   tags:
     - pangolin
     - crowdsec

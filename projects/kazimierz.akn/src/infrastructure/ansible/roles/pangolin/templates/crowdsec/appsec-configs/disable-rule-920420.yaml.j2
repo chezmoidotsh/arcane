@@ -1,0 +1,60 @@
+---
+# CrowdSec AppSec Configuration - Disable Rule 920420 for Pangolin Host
+# Managed by Ansible - DO NOT EDIT MANUALLY
+#
+# Purpose:
+#   Disable CrowdSec OWASP CRS native rule 920420 specifically for requests
+#   to the Pangolin host ({{ pangolin_domains.domain1.base_domain }}) to allow
+#   request content types that may not be in the default policy.
+#
+# Rule 920420 Description:
+#   Part of REQUEST-920-PROTOCOL-ENFORCEMENT.conf from OWASP ModSecurity CRS
+#
+#   This rule validates that the Content-Type header of incoming requests
+#   matches the allowed content types defined in the tx.allowed_request_content_type
+#   variable. It works in two stages:
+#
+#   1. Extracts the mime-type portion from Content-Type header (before semicolon)
+#      Example: "application/json; charset=utf-8" -> "application/json"
+#
+#   2. Checks if the extracted mime-type is within the allowed list
+#      If not allowed, triggers CRITICAL severity alert and blocks the request
+#
+#   Default allowed types are defined in crs-setup.conf (rule 900220)
+#
+#   This protection helps prevent vulnerabilities like Apache Struts
+#   Content-Type arbitrary command execution (CVE-2017-5638).
+#
+# Why Disable for Pangolin:
+#   The rule may cause false positives when legitimate applications send
+#   non-standard or custom Content-Type headers that are not in the default
+#   allowed list, preventing normal operations of the Pangolin dashboard.
+#
+# Scope:
+#   This rule is ONLY disabled for requests to {{ pangolin_domains.domain1.base_domain }}.
+#   All other hosts behind CrowdSec will continue to have this protection active.
+#
+# Security Consideration:
+#   Disabling this rule for {{ pangolin_domains.domain1.base_domain }} reduces
+#   protection against Content-Type based attacks on that specific host. Ensure that:
+#   - Application-level validation of Content-Type is implemented in Pangolin
+#   - Only trusted sources can send requests to Pangolin
+#   - Other hosts remain protected by this rule
+#
+# Implementation:
+#   Uses the pre_eval hook with a host-based filter (req.Host) to selectively
+#   disable the rule only for requests targeting {{ pangolin_domains.domain1.base_domain }}
+#   during in-band processing. The rule remains active for all other hosts.
+#
+# References:
+#   - OWASP CRS Rule 920420
+#   - CrowdSec AppSec Hooks: https://docs.crowdsec.net/docs/appsec/hooks/
+#   - RemoveInBandRuleByID: https://docs.crowdsec.net/docs/appsec/helpers/
+#   - Go http.Request.Host: https://pkg.go.dev/net/http#Request
+#
+name: custom/disable-rule-920420
+default_remediation: ban
+pre_eval:
+  - filter: IsInBand == true && req.Host == "{{ pangolin_domains.domain1.base_domain }}"
+    apply:
+      - RemoveInBandRuleByID(920420)
