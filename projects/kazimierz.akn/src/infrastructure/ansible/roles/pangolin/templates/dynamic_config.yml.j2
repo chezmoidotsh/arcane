@@ -13,6 +13,13 @@ http:
         - "10.0.0.0/8"  # Internal IP addresses
         - "192.168.0.0/16" # Internal IP addresses
         - "172.16.0.0/12" # Internal IP addresses
+    # Error pages middleware
+    error-pages:
+      errors:
+        status:
+          - "400-599"
+        service: error-pages-service
+        query: "/{status}.html"
     # Basic security headers
     security-headers:
       headers:
@@ -74,6 +81,8 @@ http:
       service: next-service
       entryPoints:
         - websecure
+      middlewares:
+        - error-pages
       tls:
         certResolver: letsencrypt
 
@@ -83,6 +92,8 @@ http:
       service: api-service
       entryPoints:
         - websecure
+      middlewares:
+        - error-pages
       tls:
         certResolver: letsencrypt
 
@@ -92,6 +103,8 @@ http:
       service: api-service
       entryPoints:
         - websecure
+      middlewares:
+        - error-pages
       tls:
         certResolver: letsencrypt
 
@@ -105,3 +118,8 @@ http:
       loadBalancer:
         servers:
           - url: "http://pangolin:3000" # API/WebSocket server
+
+    error-pages-service:
+      loadBalancer:
+        servers:
+          - url: "http://error-pages:8080" # Error pages server

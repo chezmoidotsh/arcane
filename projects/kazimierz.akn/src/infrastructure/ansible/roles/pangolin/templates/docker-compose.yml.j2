@@ -72,6 +72,23 @@ services:
       - {{ pangolin_http_port }}:80 # Port for traefik because of the network_mode
 {% endif %}
 
+  error-pages:
+    image: {{ pangolin_errorpages_docker_image }}
+    container_name: error-pages
+    restart: {{ pangolin_docker_restart_policy }}
+    environment:
+      TEMPLATE_NAME: "{{ pangolin_errorpages_template }}"
+{% if pangolin_errorpages_rotation_mode %}
+      TEMPLATES_ROTATION_MODE: "{{ pangolin_errorpages_rotation_mode }}"
+{% endif %}
+    command:
+      - serve
+{% if pangolin_errorpages_show_details %}
+      - --show-details
+{% endif %}
+    labels:
+      - traefik.enable=false
+
   traefik:
     image: {{ pangolin_traefik_docker_image }}
     container_name: {{ pangolin_traefik_container_name }}
@@ -81,6 +98,8 @@ services:
       crowdsec:
         condition: service_healthy
       pangolin:
+        condition: service_healthy
+      error-pages:
         condition: service_healthy
     command:
       - --configFile=/etc/traefik/traefik_config.yml
