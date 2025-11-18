@@ -41,6 +41,9 @@ ufw_allowed_ports:
 # -------------------------------------------------------------------------
 # Pangolin Application Configuration
 # -------------------------------------------------------------------------
+# Enable Pangolin Enterprise Edition
+pangolin_enterprise_edition: true
+
 # Auto-detect public IP for Pangolin (uses ansible facts)
 pangolin_public_ip: "{{ ansible_default_ipv4.address }}"
 

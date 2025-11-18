@@ -58,9 +58,11 @@ pangolin_log_level: "info"
 # Docker Image Versions
 # -------------------------------------------------------------------------
 # Pangolin image configuration
+# Enterprise Edition flag - set to true to use pangolin-ee image
+pangolin_enterprise_edition: false
 pangolin_docker_image_name: docker.io/fosrl/pangolin
 # renovate: datasource=docker depName=fosrl/pangolin versioning=docker
-pangolin_docker_image_tag: latest
+pangolin_docker_image_tag: "{% if pangolin_enterprise_edition %}ee-{% endif %}latest"
 pangolin_docker_image: "{{ pangolin_docker_image_name }}:{{ pangolin_docker_image_tag }}"
 
 # Gerbil image configuration
