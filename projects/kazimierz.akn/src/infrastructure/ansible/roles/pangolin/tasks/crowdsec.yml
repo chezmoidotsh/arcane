@@ -70,7 +70,8 @@
 # ==========================================================================
 # Deploy acquis configurations that define log sources for CrowdSec:
 #   - traefik.yaml: Configure Traefik access log parsing
-#   - appsec.yaml: Configure Application Security (WAF) log parsing
+#   - appsec.yaml: Configure Application Security (WAF) log parsing with
+#                  custom rule disabling configurations
 # ==========================================================================
 - name: Deploy CrowdSec acquis configurations
   ansible.builtin.copy:
@@ -91,15 +92,13 @@
 # CrowdSec AppSec Custom Configurations Deployment
 # ==========================================================================
 # Deploy custom AppSec configurations to modify default CrowdSec behavior:
-#   - disable-rule-920420.yaml: Disable OWASP CRS rule 920420 that validates
-#                               Content-Type headers against allowed policy
+#   - disable-rule-911100.yaml: Disable OWASP CRS rule 911100 globally to
+#                               allow REST API methods (PUT, DELETE, PATCH)
+#   - disable-rule-920420.yaml: Disable OWASP CRS rule 920420 for Pangolin
+#                               hosts to allow non-standard Content-Type headers
 #
-# These configurations are templated to use dynamic Pangolin domains from
-# pangolin_domains list variable, ensuring the rule is only disabled for
-# configured Pangolin hosts (supports multiple domains).
-#
-# These configurations are loaded after default configs and can disable
-# specific rules that may cause false positives for Pangolin's use case.
+# All configurations are templated to allow for future variable overrides,
+# even if they don't currently use template variables.
 # ==========================================================================
 - name: Deploy CrowdSec AppSec custom configurations
   ansible.builtin.template:
@@ -109,6 +108,7 @@
     owner: root
     group: root
   loop:
+    - disable-rule-911100.yaml
     - disable-rule-920420.yaml
   tags:
     - pangolin
