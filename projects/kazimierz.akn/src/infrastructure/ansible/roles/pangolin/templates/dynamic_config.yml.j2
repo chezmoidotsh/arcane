@@ -61,7 +61,7 @@ http:
   routers:
     # HTTP to HTTPS redirect router
     main-app-router-redirect:
-      rule: "Host(`{{ pangolin_domains.domain1.base_domain }}`)"
+      rule: "{% for domain in pangolin_domains %}Host(`{{ domain }}`){% if not loop.last %} || {% endif %}{% endfor %}"
       service: next-service
       entryPoints:
         - web
@@ -70,7 +70,7 @@ http:
 
     # Next.js router (handles everything except API and WebSocket paths)
     next-router:
-      rule: "Host(`{{ pangolin_domains.domain1.base_domain }}`) && !PathPrefix(`/api/v1`)"
+      rule: "({% for domain in pangolin_domains %}Host(`{{ domain }}`){% if not loop.last %} || {% endif %}{% endfor %}) && !PathPrefix(`/api/v1`)"
       service: next-service
       entryPoints:
         - websecure
@@ -79,7 +79,7 @@ http:
 
     # API router (handles /api/v1 paths)
     api-router:
-      rule: "Host(`{{ pangolin_domains.domain1.base_domain }}`) && PathPrefix(`/api/v1`)"
+      rule: "({% for domain in pangolin_domains %}Host(`{{ domain }}`){% if not loop.last %} || {% endif %}{% endfor %}) && PathPrefix(`/api/v1`)"
       service: api-service
       entryPoints:
         - websecure
@@ -88,7 +88,7 @@ http:
 
     # WebSocket router
     ws-router:
-      rule: "Host(`{{ pangolin_domains.domain1.base_domain }}`)"
+      rule: "{% for domain in pangolin_domains %}Host(`{{ domain }}`){% if not loop.last %} || {% endif %}{% endfor %}"
       service: api-service
       entryPoints:
         - websecure

@@ -1,11 +1,11 @@
 ---
-# CrowdSec AppSec Configuration - Disable Rule 920420 for Pangolin Host
+# CrowdSec AppSec Configuration - Disable Rule 920420 for Pangolin Hosts
 # Managed by Ansible - DO NOT EDIT MANUALLY
 #
 # Purpose:
 #   Disable CrowdSec OWASP CRS native rule 920420 specifically for requests
-#   to the Pangolin host ({{ pangolin_domains.domain1.base_domain }}) to allow
-#   request content types that may not be in the default policy.
+#   to Pangolin hosts to allow request content types that may not be in the
+#   default policy.
 #
 # Rule 920420 Description:
 #   Part of REQUEST-920-PROTOCOL-ENFORCEMENT.conf from OWASP ModSecurity CRS
@@ -31,19 +31,22 @@
 #   allowed list, preventing normal operations of the Pangolin dashboard.
 #
 # Scope:
-#   This rule is ONLY disabled for requests to {{ pangolin_domains.domain1.base_domain }}.
+#   This rule is ONLY disabled for requests to the following Pangolin hosts:
+{% for domain in pangolin_domains %}
+#     - {{ domain }}
+{% endfor %}
 #   All other hosts behind CrowdSec will continue to have this protection active.
 #
 # Security Consideration:
-#   Disabling this rule for {{ pangolin_domains.domain1.base_domain }} reduces
-#   protection against Content-Type based attacks on that specific host. Ensure that:
+#   Disabling this rule for Pangolin hosts reduces protection against
+#   Content-Type based attacks on those specific hosts. Ensure that:
 #   - Application-level validation of Content-Type is implemented in Pangolin
 #   - Only trusted sources can send requests to Pangolin
 #   - Other hosts remain protected by this rule
 #
 # Implementation:
-#   Uses the pre_eval hook with a host-based filter (req.Host) to selectively
-#   disable the rule only for requests targeting {{ pangolin_domains.domain1.base_domain }}
+#   Uses the pre_eval hook with host-based filters (req.Host) to selectively
+#   disable the rule only for requests targeting configured Pangolin domains
 #   during in-band processing. The rule remains active for all other hosts.
 #
 # References:
@@ -55,6 +58,6 @@
 name: custom/disable-rule-920420
 default_remediation: ban
 pre_eval:
-  - filter: IsInBand == true && req.Host == "{{ pangolin_domains.domain1.base_domain }}"
+  - filter: IsInBand == true && ({% for domain in pangolin_domains %}req.Host == "{{ domain }}"{% if not loop.last %} || {% endif %}{% endfor %})
     apply:
       - RemoveInBandRuleByID(920420)

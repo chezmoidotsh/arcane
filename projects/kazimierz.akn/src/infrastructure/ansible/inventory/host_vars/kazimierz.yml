@@ -65,9 +65,7 @@ pangolin_acme_email: "noreply@chezmoi.sh"
 
 # Domain configuration for Pangolin
 pangolin_domains:
-  domain1:
-    base_domain: "pangolin.chezmoi.sh"
-    cert_resolver: "letsencrypt"
+  - "pangolin.chezmoi.sh"
 
 # Gerbil WireGuard tunnel base endpoint
 pangolin_gerbil_base_endpoint: "pangolin.chezmoi.sh"

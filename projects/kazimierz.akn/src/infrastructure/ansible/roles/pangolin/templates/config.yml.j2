@@ -10,10 +10,10 @@ app:
     notifications: {{ pangolin_telemetry_notifications | lower }}
 
 domains:
-{% for domain_name, domain_config in pangolin_domains.items() %}
-  {{ domain_name }}:
-    base_domain: "{{ domain_config.base_domain }}"
-    cert_resolver: "{{ domain_config.cert_resolver }}"
+{% for domain in pangolin_domains %}
+  domain{{ loop.index }}:
+    base_domain: "{{ domain }}"
+    cert_resolver: "letsencrypt"
 {% endfor %}
 
 server:

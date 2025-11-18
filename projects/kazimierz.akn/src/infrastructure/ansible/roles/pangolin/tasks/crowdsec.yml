@@ -94,9 +94,9 @@
 #   - disable-rule-920420.yaml: Disable OWASP CRS rule 920420 that validates
 #                               Content-Type headers against allowed policy
 #
-# These configurations are templated to use dynamic Pangolin domain from
-# pangolin_domains.domain1.base_domain variable, ensuring the rule is only
-# disabled for the specific Pangolin host.
+# These configurations are templated to use dynamic Pangolin domains from
+# pangolin_domains list variable, ensuring the rule is only disabled for
+# configured Pangolin hosts (supports multiple domains).
 #
 # These configurations are loaded after default configs and can disable
 # specific rules that may cause false positives for Pangolin's use case.

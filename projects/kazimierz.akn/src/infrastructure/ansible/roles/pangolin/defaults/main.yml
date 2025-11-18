@@ -24,10 +24,9 @@ pangolin_compose_dir: "/opt/pangolin"
 pangolin_dashboard_url: "https://pangolin.example.com"
 
 # Domain configuration - REQUIRED: Must be overridden in host_vars
+# List of domains for Pangolin (cert_resolver always letsencrypt)
 pangolin_domains:
-  domain1:
-    base_domain: "pangolin.example.com"
-    cert_resolver: "letsencrypt"
+  - "pangolin.example.com"
 
 # Server secret - REQUIRED: Must be overridden in host_vars
 # Minimum 8 characters, recommend 32+ with mixed types
