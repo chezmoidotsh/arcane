@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
   - network-policy.allow-jellyseerr-from-envoy-gateway.yaml
+  - network-policy.allow-jellyseerr-from-newt.yaml
   - network-policy.allow-jellyseerr-to-internet.yaml
   - network-policy.allow-jellyseerr-to-jellyfin.yaml
   - network-policy.allow-postgres-from-cnpg.yaml

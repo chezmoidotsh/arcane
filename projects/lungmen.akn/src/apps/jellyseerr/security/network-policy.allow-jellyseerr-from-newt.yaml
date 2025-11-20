@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Newt to route traffic to Jellyseerr application.
+  name: allow-jellyseerr-from-newt
+  namespace: jellyseerr
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: jellyseerr
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: newt-system
+            app.kubernetes.io/name: newt
+      toPorts:
+        - ports:
+            - port: "5055"
+              protocol: TCP

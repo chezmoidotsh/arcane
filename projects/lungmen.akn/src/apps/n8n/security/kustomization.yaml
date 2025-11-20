@@ -6,6 +6,7 @@ resources:
   - network-policy.allow-n8n-egress-internet.yaml
   - network-policy.allow-n8n-egress-local-llm.yaml
   - network-policy.allow-n8n-from-envoy-gateway.yaml
+  - network-policy.allow-n8n-from-newt.yaml
   - network-policy.allow-postgres-from-cnpg.yaml
   - network-policy.allow-postgres-to-kubernetes-api.yaml
   - network-policy.allow-postgres-to-s3-backup.yaml

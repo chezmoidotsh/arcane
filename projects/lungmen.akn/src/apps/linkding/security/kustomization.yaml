@@ -4,6 +4,7 @@ kind: Kustomization
 
 resources:
   - network-policy.allow-linkding-from-envoy-gateway.yaml
+  - network-policy.allow-linkding-from-newt.yaml
   - network-policy.allow-linkding-to-sso.yaml
   - network-policy.allow-linkding-to-internet.yaml
   - network-policy.allow-postgres-from-cnpg.yaml
