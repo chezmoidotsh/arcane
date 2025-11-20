@@ -1,6 +1,6 @@
 <h1 align="center">
-  <img src=".github/assets/arcane-logo.light.png#gh-light-mode-only" alt="Arcane Logo" height="75" />
-  <img src=".github/assets/arcane-logo.dark.png#gh-dark-mode-only" alt="Arcane Logo" height="75" />
+  <img src=".github/assets/arcane-logo.light.svg#gh-light-mode-only" alt="Arcane Logo" height="250" />
+  <img src=".github/assets/arcane-logo.dark.svg#gh-dark-mode-only" alt="Arcane Logo" height="250" />
 
 「 Arcane 」 <br/>
 
@@ -45,61 +45,54 @@ improvements on them.*
 
 ### Prerequisites
 
-* [devcontainer](https://github.com/devcontainers/cli)
+* [mise](https://mise.jdx.dev/)
 
 ### Installation
 
 > \[!NOTE]
-> This repository has been designed to be used inside a DevContainer, so any other
-> way to interact with it will not be documented.
+> This repository uses `mise` to manage the development environment.
 
 ```bash
-
 # Clone the repository
 git clone https://github.com/chezmoidotsh/arcane.git
 
-# Run the development environment
-devcontainer up --workspace-folder .
-devcontainer exec --workspace-folder . -- zsh
+# Install the development environment
+mise install
 ```
 
 ## 📁 Project Structure
 
 ```plaintext
-├── .devcontainer                   # Development environment setup (DevContainer/Codespaces)
-│   ├── devcontainer.json           # DevContainer configuration file
-│   └── Dockerfile                  # Dockerfile on which the DevContainer is based
 ├── .github
 │   └── assets                      # Repository assets (images, video, etc.) used in the documentation.
-├── catalog
+├── catalog                         # Catalog of reusable components
+│   ├── ansible                     # Ansible roles and collections
 │   ├── crossplane                  # Crossplane composition definitions
-│   └── flakes                      # OCI images used by the homelab and built using Nix
-├── projects
-│   ├── chezmoi.sh                  # Ressources that are not directly related to any other project
-│   │   └── src
-│   │       ├── infrastructure
-│   │       │   └── live
-│   │       │       └── production  # Infrastructure definitions based on Crossplane
-│   │       └── kubevault           # Vault related resources and documentation
-│   ├── hass                        # Home Assistant related resources and documentation
-│   │   └── src
-│   │       └── infrastructure
-│   │           └── live
-│   │               └── production  # Infrastructure definitions based on Crossplane
-│   └── nex.rpi                     # Mission-critical applications for the homelab (NEXus · Raspberry PI)
-│       └── src
-│           ├── apps                # Kubernetes resources
-│           ├── clusters
-│           │   └── production      # Kubernetes cluster composition
-│           └── infrastructure
-│               └── live
-│                   └── production  # Infrastructure definitions based on Crossplane
-├── scripts
-│   └── folderinfo                  # Perl script to generate a tree-like structure of directories
-├── .envrc                          # Environment configuration file (using direnv)
-├── .lefthook.yaml                  # Git hooks configuration file (using lefthook)
-├── DISASTER_RECOVERY_PLAN.md       # Document describing the disaster recovery plan
-└── flake.nix                       # Nix flake configuration file containing all required dependencies
+│   ├── flakes                      # Nix flakes for OCI images
+│   ├── fluxcd                      # FluxCD definitions
+│   ├── kairos-bundles              # Kairos bundles
+│   ├── kustomize                   # Kustomize bases
+│   └── talos                       # Talos configuration patches
+├── defaults                        # Default configurations
+│   ├── kubernetes                  # Default Kubernetes resources
+│   └── talos                       # Default Talos configurations
+├── docs                            # Documentation
+│   ├── decisions                   # Architecture Decision Records (ADR)
+│   ├── experiments                 # Experimental projects
+│   ├── procedures                  # Operational procedures
+│   └── reports                     # Automated reports
+├── projects                        # Infrastructure projects
+│   ├── amiya.akn                   # Amiya cluster configuration
+│   ├── chezmoi.sh                  # Shared resources
+│   ├── hass                        # Home Assistant configuration
+│   ├── kazimierz.akn               # Kazimierz cluster configuration
+│   ├── lungmen.akn                 # Lungmen cluster configuration
+│   └── shodan.akn                  # Shodan cluster configuration
+├── scripts                         # Utility scripts
+├── .mise.toml                      # Development environment configuration
+├── CHANGELOG.md                    # Project history and evolution
+├── DISASTER_RECOVERY_PLAN.md       # Disaster recovery plan
+└── README.md                       # Project documentation
 ```
 
 ## 🗺️ Roadmap
@@ -113,9 +106,15 @@ devcontainer exec --workspace-folder . -- zsh
 
 * \[X] ~~Try using `Pulumi` to manage the infrastructure (See [CHANGELOG](./CHANGELOG.md#bronze-age-2024-2024---a1))~~
 
-* \[X] ~~Try using `Helm` to manage the Kubernetes applications and `Terraform` to manage the infrastructure (See [CHANGELOG](./CHANGELOG.md#iron-age-2024-2024---a2))~~
+* [x] ~~Try using `Helm` to manage the Kubernetes applications and `Terraform` to manage the infrastructure (See [CHANGELOG](./CHANGELOG.md#iron-age-2024-2024---a2))~~
 
-* \[ ] *Improve the dev experience by improving the DevContainer and Nix environment (making it less bloated / more efficient)*
+* [ ] **Secure Internet Access**: Ensure the homelab is accessible from the internet securely.
+
+* [ ] **Project Shodan**: Implement the AI stack.
+
+* [ ] **Energy Efficiency**: Reduce energy consumption (KEDA -> scaling to 0, start/stop servers at night).
+
+* [ ] **Resilience & DRP**: Rework resilience and Disaster Recovery Plan (especially recovery of critical elements like personal documents).
 
 ## 🛡️ License
 
