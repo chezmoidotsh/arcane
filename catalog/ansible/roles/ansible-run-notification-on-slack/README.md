@@ -362,6 +362,6 @@ MIT
 
 ## Author Information
 
-Created by Alexandre Nicolaie Dit Clairville for the Arcane homelab infrastructure project.
+Created by Alexandre Nicolaie for the Arcane homelab infrastructure project.
 
 For issues, questions, or contributions, visit: <https://github.com/chezmoidotsh/arcane>

@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   role_name: ansible_run_notification_on_slack
-  author: Alexandre Nicolaie Dit Clairville
+  author: Alexandre Nicolaie
   description: Ansible role for sending Slack notifications at playbook start and completion with ARA integration
   company: chezmoi.sh
   license: MIT
