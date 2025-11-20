@@ -1,0 +1,12 @@
+---
+# CrowdSec AppSec Acquisition Configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+listen_addr: 0.0.0.0:7422
+appsec_configs:
+  - crowdsecurity/appsec-default
+  - crowdsecurity/crs-inband
+  - custom/disable-rule-911100
+  - custom/disable-rule-920420
+source: appsec
+labels:
+  type: appsec

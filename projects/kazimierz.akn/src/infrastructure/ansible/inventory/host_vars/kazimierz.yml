@@ -1,0 +1,99 @@
+---
+# ==============================================================================
+# Host Variables: kazimierz
+# ==============================================================================
+# Purpose:
+#   Host-specific configuration for the kazimierz.akn VPS infrastructure.
+#   These variables are specific to this deployment instance and should not
+#   be shared across different hosts.
+# ==============================================================================
+
+# -------------------------------------------------------------------------
+# System Setup Configuration
+# -------------------------------------------------------------------------
+# Tailscale authentication key (ephemeral, one-time use)
+tailscale_auth_key: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  36366335616364373432646531633861613233366432313037666465376662363731373034336165
+  3335303232393439393837343263383530383939313037320a393035333462383739633634633964
+  32363731306233346431393434663333306664343234353836383533623636616366313438313739
+  6363343666626161310a326439626332613663656238633034353164333461353230623133643835
+  65336632313633336461393139656331656561616137393635383365316562626330316333376637
+  63336438613761366563343235643833396534393466323137333536616438653134396162313830
+  316461393563653164613139366539663334
+
+# -------------------------------------------------------------------------
+# Tailscale Configuration
+# -------------------------------------------------------------------------
+tailscale_hostname: kazimierz-akn
+
+# -------------------------------------------------------------------------
+# UFW Firewall Configuration
+# -------------------------------------------------------------------------
+# Note: SSH port 22 enabled for initial setup - Tailscale SSH recommended
+ufw_allowed_ports:
+  - { port: 22, proto: tcp, comment: "SSH" }
+  - { port: 80, proto: tcp, comment: "HTTP" }
+  - { port: 443, proto: tcp, comment: "HTTPS" }
+  - { port: 51820, proto: udp, comment: "Newt (Site Tunnels)" }
+  - { port: 21820, proto: udp, comment: "Newt (Client Tunnels)" }
+
+# -------------------------------------------------------------------------
+# Pangolin Application Configuration
+# -------------------------------------------------------------------------
+# Enable Pangolin Enterprise Edition
+pangolin_enterprise_edition: true
+
+# Auto-detect public IP for Pangolin (uses ansible facts)
+pangolin_public_ip: "{{ ansible_default_ipv4.address }}"
+
+# Bind IP for HTTP/HTTPS ports (avoid conflict with Tailscale on port 443)
+pangolin_bind_ip: "{{ ansible_default_ipv4.address }}"
+
+# Dashboard URL - the main Pangolin web interface
+pangolin_dashboard_url: "https://pangolin.chezmoi.sh"
+
+# Server secret for Pangolin authentication (minimum 32 characters recommended)
+pangolin_server_secret: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  31336238653064613633393061353762326239313065643465323935646330616435353363306364
+  6665643834323665616239646661353935326166376162330a633733373430303764623166313331
+  31623666383239663732303763313966643436346435636635353539353662383062643662336334
+  3165613237323736340a323331393333373461613435363731373561653661306530633731363837
+  30323165306133333937616234383166396531383632343565346663316165316235323531343065
+  3464643639643737376631663062333963623333313865323664
+
+# ACME email for Let's Encrypt certificates
+pangolin_acme_email: "noreply@chezmoi.sh"
+
+# Domain configuration for Pangolin
+pangolin_domains:
+  - "pangolin.chezmoi.sh"
+
+# Gerbil WireGuard tunnel base endpoint
+pangolin_gerbil_base_endpoint: "pangolin.chezmoi.sh"
+
+# SMTP configuration
+pangolin_smtp_host: in-v3.mailjet.com
+pangolin_smtp_port: 465
+pangolin_smtp_user: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  30613365623865633864616466643737663435666537353135356336303539653733623931646138
+  3463623535313734623565336364633837653931363039650a346231366534303534643166333935
+  37643465386362343834353865666365616165666137383737636464383565376162623734613763
+  6465623865643635610a383465656661383466313463646233623861316661343265303831643131
+  66303366636265363635656237323437323264363362666664303932393435326335613730633336
+  6561653234616637366231356632333334373463306433333339
+pangolin_smtp_pass: !vault |
+  $ANSIBLE_VAULT;1.1;AES256
+  62636533646337656539396561313431613165663161313833313465383430353466306161386431
+  3539353539626532663234313965303466663163336131380a666163656339373761316663363933
+  39643166326337353530386630363230326431393034656163333761396536373335356536643661
+  3632346465636362610a396662333061643336313761376266313631653762636331623161383034
+  36353666313438366635616534363864316264616331373465663938616565323637616438396432
+  6530666663646438363665646435663337643531643763633632
+pangolin_smtp_from: Pangolin <no-reply@chezmoi.sh>
+# -------------------------------------------------------------------------
+# Error Pages Configuration
+# -------------------------------------------------------------------------
+pangolin_errorpages_template: l7

@@ -1,0 +1,8 @@
+---
+# ==============================================================================
+# Handlers: ara_server
+# ==============================================================================
+
+- name: Reload systemd daemon configuration
+  ansible.builtin.systemd:
+    daemon_reload: true

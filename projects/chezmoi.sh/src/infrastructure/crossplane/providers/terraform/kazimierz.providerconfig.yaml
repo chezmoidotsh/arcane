@@ -1,0 +1,77 @@
+---
+apiVersion: tf.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: kazimierz
+spec:
+  configuration: |
+    // Modules _must_ use remote state. The provider does not persist state.
+    terraform {
+      backend "kubernetes" {
+        secret_suffix     = "providerconfig-kazimierz" // checkov:skip=CKV_SECRET_6:This is not a secret
+        namespace         = "crossplane"
+        in_cluster_config = true
+      }
+    }
+
+    // Install required providers for kazimierz
+    variable "cloudflare_api_token" { type = string }
+    variable "hcloud_api_token" { type = string }
+
+    terraform {
+      required_providers {
+        cloudflare = {
+          source  = "cloudflare/cloudflare"
+          version = "~> 5.0"
+        }
+        hcloud = {
+          source  = "hetznercloud/hcloud"
+          version = "~> 1.0"
+        }
+      }
+    }
+
+    provider "cloudflare" {
+      api_token = var.cloudflare_api_token
+    }
+
+    provider "hcloud" {
+      token = var.hcloud_api_token
+    }
+  credentials:
+    - filename: terraform.tfvars.json
+      secretRef:
+        name: kazimierz-terraform-credentials
+        key: terraform.tfvars.json
+        namespace: crossplane
+      source: Secret
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: kazimierz-terraform-credentials
+spec:
+  refreshInterval: 720h # 30 days
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    name: kazimierz-terraform-credentials
+    template:
+      type: Opaque
+      engineVersion: v2
+      data:
+        terraform.tfvars.json: |
+          {
+            "cloudflare_api_token": "{{ .cloudflare_api_token }}",
+            "hcloud_api_token": "{{ .hcloud_api_token }}"
+          }
+  data:
+    - secretKey: cloudflare_api_token
+      remoteRef:
+        key: shared/third-parties/cloudflare/iam/chezmoi.sh/terraform-provider
+        property: api_token
+    - secretKey: hcloud_api_token
+      remoteRef:
+        key: shared/third-parties/hetznercloud/iam/arcane/terraform-provider
+        property: api_token

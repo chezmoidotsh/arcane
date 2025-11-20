@@ -1,0 +1,52 @@
+[Unit]
+Description=ARA Records Ansible - API Server with Tailscale Serve
+Documentation=https://ara.recordsansible.org/
+Requires=docker.service tailscaled.service
+After=docker.service tailscaled.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+
+# Pull latest ARA Docker image
+ExecStartPre=/usr/bin/docker pull {{ ara_docker_image }}
+
+# Start ARA API server container
+ExecStart=/usr/bin/docker run -d \
+  --name ara-api \
+  --restart unless-stopped \
+  -p 127.0.0.1:{{ ara_port }}:8000 \
+  -v ara-data:/opt/ara \
+  -e ARA_ALLOWED_HOSTS="['*']" \
+  -e ARA_CORS_ORIGIN_ALLOW_ALL=true \
+  -e ARA_DATABASE_ENGINE=django.db.backends.sqlite3 \
+  -e ARA_DATABASE_NAME=/opt/ara/ansible.sqlite \
+  -e ARA_LOG_LEVEL=INFO \
+  {{ ara_docker_image }}
+
+# Wait for ARA API to initialize
+ExecStartPost=/bin/sleep 5
+
+{% if ara_tailscale_serve_enabled %}
+# Configure Tailscale Serve to expose ARA web interface
+ExecStartPost=/usr/bin/tailscale serve --bg http://127.0.0.1:{{ ara_port }}
+{% endif %}
+
+# Graceful shutdown: stop and remove container
+ExecStop=/usr/bin/docker stop ara-api
+ExecStopPost=/usr/bin/docker rm -f ara-api
+{% if ara_tailscale_serve_enabled %}
+ExecStopPost=/usr/bin/tailscale serve reset
+{% endif %}
+
+# Restart policy configuration
+Restart=on-failure
+RestartSec=10s
+
+# Security hardening
+PrivateTmp=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

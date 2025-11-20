@@ -1,0 +1,125 @@
+---
+# Traefik Dynamic Configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+http:
+  middlewares:
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+    default-whitelist: # Whitelist middleware for internal IPs
+      ipWhiteList:  # Internal IP addresses
+        sourceRange:  # Internal IP addresses
+        - "10.0.0.0/8"  # Internal IP addresses
+        - "192.168.0.0/16" # Internal IP addresses
+        - "172.16.0.0/12" # Internal IP addresses
+    # Error pages middleware
+    error-pages:
+      errors:
+        status:
+          - "400-599"
+        service: error-pages-service
+        query: "/{status}.html"
+    # Basic security headers
+    security-headers:
+      headers:
+        customResponseHeaders:  # Custom response headers
+          Server: "" # Remove server header
+          X-Powered-By: "" # Remove powered by header
+          X-Forwarded-Proto: "https"  # Set forwarded proto to https
+        sslProxyHeaders: # SSL proxy headers
+          X-Forwarded-Proto: "https" # Set forwarded proto to https
+        hostsProxyHeaders: # Hosts proxy headers
+          - "X-Forwarded-Host" # Set forwarded host
+        contentTypeNosniff: true # Prevent MIME sniffing
+        customFrameOptionsValue: "SAMEORIGIN" # Set frame options
+        referrerPolicy: "strict-origin-when-cross-origin" # Set referrer policy
+        forceSTSHeader: true # Force STS header
+        stsIncludeSubdomains: true # Include subdomains
+        stsSeconds: 63072000 # STS seconds
+        stsPreload: true # Preload STS
+    # CrowdSec configuration with proper IP forwarding
+    crowdsec:
+      plugin:
+        crowdsec:
+          clientTrustedIPs: # Client trusted IPs (CHANGE MADE HERE)
+            - "10.0.0.0/8" # Internal LAN IP addresses
+            - "172.16.0.0/12" # Internal LAN IP addresses
+            - "192.168.0.0/16" # Internal LAN IP addresses
+            - "100.89.137.0/20" # Internal LAN IP addresses
+          crowdsecAppsecBodyLimit: 10485760
+          crowdsecAppsecEnabled: true # Enable AppSec
+          crowdsecAppsecFailureBlock: true # Block on failure
+          crowdsecAppsecHost: crowdsec:7422 # CrowdSec IP address which you noted down later
+          crowdsecAppsecUnreachableBlock: true # Block on unreachable
+          crowdsecLapiHost: crowdsec:8080 # CrowdSec
+          crowdsecLapiKey: "{{ pangolin_crowdsec_bouncer_key | default('PUT_YOUR_BOUNCER_KEY_HERE_OR_IT_WILL_NOT_WORK') }}" # CrowdSec API key (dynamically generated)
+          crowdsecLapiScheme: http # CrowdSec API scheme
+          crowdsecMode: live # CrowdSec mode
+          defaultDecisionSeconds: 15 # Default decision seconds
+          enabled: true # Enable CrowdSec plugin
+          forwardedHeadersTrustedIPs: # Forwarded headers trusted IPs
+            - "0.0.0.0/0" # All IP addresses are trusted for forwarded headers (CHANGE MADE HERE)
+          httpTimeoutSeconds: 10 # HTTP timeout
+          logLevel: DEBUG # Log level
+          updateIntervalSeconds: 15 # Update interval
+          updateMaxFailure: 0 # Update max failure
+
+  routers:
+    # HTTP to HTTPS redirect router
+    main-app-router-redirect:
+      rule: "{% for domain in pangolin_domains %}Host(`{{ domain }}`){% if not loop.last %} || {% endif %}{% endfor %}"
+      service: next-service
+      entryPoints:
+        - web
+      middlewares:
+        - redirect-to-https
+
+    # Next.js router (handles everything except API and WebSocket paths)
+    next-router:
+      rule: "({% for domain in pangolin_domains %}Host(`{{ domain }}`){% if not loop.last %} || {% endif %}{% endfor %}) && !PathPrefix(`/api/v1`)"
+      service: next-service
+      entryPoints:
+        - websecure
+      middlewares:
+        - error-pages
+      tls:
+        certResolver: letsencrypt
+
+    # API router (handles /api/v1 paths)
+    api-router:
+      rule: "({% for domain in pangolin_domains %}Host(`{{ domain }}`){% if not loop.last %} || {% endif %}{% endfor %}) && PathPrefix(`/api/v1`)"
+      service: api-service
+      entryPoints:
+        - websecure
+      middlewares:
+        - error-pages
+      tls:
+        certResolver: letsencrypt
+
+    # WebSocket router
+    ws-router:
+      rule: "{% for domain in pangolin_domains %}Host(`{{ domain }}`){% if not loop.last %} || {% endif %}{% endfor %}"
+      service: api-service
+      entryPoints:
+        - websecure
+      middlewares:
+        - error-pages
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    next-service:
+      loadBalancer:
+        servers:
+          - url: "http://pangolin:3002" # Next.js server
+
+    api-service:
+      loadBalancer:
+        servers:
+          - url: "http://pangolin:3000" # API/WebSocket server
+
+    error-pages-service:
+      loadBalancer:
+        servers:
+          - url: "http://error-pages:8080" # Error pages server

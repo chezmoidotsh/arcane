@@ -1,0 +1,104 @@
+---
+# ==============================================================================
+# Role: ara_server
+# ==============================================================================
+# Purpose:
+#   Deploy ARA (Ansible Run Analysis) for playbook execution tracking and
+#   visualization, accessible via Tailscale Serve.
+#
+# Components Configured:
+#   - ARA API Server running in Docker container (SQLite backend)
+#   - ARA Ansible callback plugin for automatic run recording
+#   - Tailscale Serve for secure HTTPS access to web interface
+#   - Systemd service for ARA lifecycle management
+#
+# Access:
+#   - ARA web interface: https://<tailscale-hostname>.ts.net
+#   - API endpoint: http://127.0.0.1:8000
+#
+# Data Storage:
+#   - SQLite database: Docker volume 'ara-data' at /opt/ara/ansible.sqlite
+#   - Persistent across container restarts
+#
+# Security Considerations:
+#   - ARA API exposed only to localhost (127.0.0.1:8000)
+#   - Web interface accessible only via Tailscale network
+#   - HTTPS automatically configured via Tailscale Serve
+#   - Systemd service hardened with PrivateTmp and NoNewPrivileges
+#
+# Dependencies:
+#   - Docker Engine and docker CLI
+#   - Tailscale daemon (tailscaled.service)
+#   - python3-ara package for callback plugin
+#
+# Tags:
+#   - ara: All ARA-related tasks
+#   - systemd: Systemd unit configuration
+#   - ansible: Ansible callback configuration
+# ==============================================================================
+
+# ==========================================================================
+# ARA Systemd Service Configuration
+# ==========================================================================
+- name: Ensure ARA systemd service is configured with Docker and Tailscale Serve integration
+  ansible.builtin.template:
+    src: ara.service.j2
+    dest: /etc/systemd/system/ara.service
+    mode: "0644"
+  notify:
+    - Reload systemd daemon configuration
+  tags:
+    - ara
+    - systemd
+
+- name: Flush handlers to reload systemd daemon
+  ansible.builtin.meta: flush_handlers
+  tags:
+    - ara
+
+- name: Enable and start ARA systemd service
+  ansible.builtin.systemd:
+    name: ara
+    enabled: true
+    state: started
+  tags:
+    - ara
+
+- name: Wait for ARA API server to be ready and accepting connections
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ ara_port }}"
+    timeout: 60
+  tags:
+    - ara
+
+# ==========================================================================
+# ARA Callback Plugin Installation
+# ==========================================================================
+- name: Ensure python3-ara package is installed for Ansible callback plugin
+  ansible.builtin.apt:
+    name:
+      - python3-ara
+    state: present
+    update_cache: true
+  tags:
+    - ara
+    - ansible
+
+- name: Ensure /etc/ansible directory exists for global Ansible configuration
+  ansible.builtin.file:
+    path: /etc/ansible
+    state: directory
+    mode: "0755"
+  tags:
+    - ara
+    - ansible
+
+- name: Configure Ansible to use ARA callback plugin with HTTP API client
+  ansible.builtin.template:
+    src: ansible.cfg.j2
+    dest: /etc/ansible/ansible.cfg
+    mode: "0644"
+  tags:
+    - ara
+    - ansible

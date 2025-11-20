@@ -1,0 +1,114 @@
+---
+# Pangolin Docker Compose Stack
+# Managed by Ansible - DO NOT EDIT MANUALLY
+
+services:
+  crowdsec:
+    image: {{ pangolin_crowdsec_docker_image }}
+    container_name: crowdsec
+    restart: {{ pangolin_docker_restart_policy }}
+    command: -t
+    environment:
+      COLLECTIONS: "{{ pangolin_crowdsec_collections | join(' ') }}"
+      ENROLL_INSTANCE_NAME: "{{ pangolin_crowdsec_enroll_instance_name }}"
+      ENROLL_TAGS: "{{ pangolin_crowdsec_enroll_tags }}"
+      GID: "{{ pangolin_crowdsec_gid }}"
+      PARSERS: "{{ pangolin_crowdsec_parsers | join(' ') }}"
+    volumes:
+      # crowdsec container data
+      - ./config/crowdsec:/etc/crowdsec # crowdsec config
+      - ./config/crowdsec/db:/var/lib/crowdsec/data # crowdsec db
+      - ./config/crowdsec/acquis.d:/etc/crowdsec/acquis.d:ro
+      # log bind mounts into crowdsec
+      - ./config/traefik/logs:/var/log/traefik # traefik logs
+    ports:
+      - 6060:6060
+    labels:
+      - traefik.enable=false
+    healthcheck:
+      test: ["CMD", "cscli", "capi", "status"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+
+  pangolin:
+    image: {{ pangolin_docker_image }}
+    container_name: {{ pangolin_container_name }}
+    restart: {{ pangolin_docker_restart_policy }}
+    volumes:
+      - ./config:/app/config
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/"]
+      interval: "3s"
+      timeout: "3s"
+      retries: 15
+
+  gerbil:
+    image: {{ pangolin_gerbil_docker_image }}
+    container_name: {{ pangolin_gerbil_container_name }}
+    restart: {{ pangolin_docker_restart_policy }}
+    depends_on:
+      pangolin:
+        condition: service_healthy
+    command:
+      - --reachableAt=http://gerbil:3004
+      - --generateAndSaveKeyTo=/var/config/key
+      - --remoteConfig=http://pangolin:3001/api/v1/
+    volumes:
+      - ./config/:/var/config
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    ports:
+      - {{ pangolin_wireguard_site_port }}:51820/udp
+      - {{ pangolin_wireguard_client_port }}:21820/udp
+{% if pangolin_bind_ip %}
+      - {{ pangolin_bind_ip }}:{{ pangolin_https_port }}:443 # Port for traefik - public IP
+      - {{ pangolin_bind_ip }}:{{ pangolin_http_port }}:80 # Port for traefik - public IP
+      - 127.0.0.1:{{ pangolin_https_port }}:443 # Port for traefik - localhost for health checks
+      - 127.0.0.1:{{ pangolin_http_port }}:80 # Port for traefik - localhost for health checks
+{% else %}
+      - {{ pangolin_https_port }}:443 # Port for traefik because of the network_mode
+      - {{ pangolin_http_port }}:80 # Port for traefik because of the network_mode
+{% endif %}
+
+  error-pages:
+    image: {{ pangolin_errorpages_docker_image }}
+    container_name: error-pages
+    restart: {{ pangolin_docker_restart_policy }}
+    environment:
+      TEMPLATE_NAME: "{{ pangolin_errorpages_template }}"
+{% if pangolin_errorpages_rotation_mode %}
+      TEMPLATES_ROTATION_MODE: "{{ pangolin_errorpages_rotation_mode }}"
+{% endif %}
+    command:
+      - serve
+{% if pangolin_errorpages_show_details %}
+      - --show-details
+{% endif %}
+    labels:
+      - traefik.enable=false
+
+  traefik:
+    image: {{ pangolin_traefik_docker_image }}
+    container_name: {{ pangolin_traefik_container_name }}
+    restart: {{ pangolin_docker_restart_policy }}
+    network_mode: service:gerbil # Ports appear on the gerbil service
+    depends_on:
+      crowdsec:
+        condition: service_healthy
+      pangolin:
+        condition: service_healthy
+      error-pages:
+        condition: service_healthy
+    command:
+      - --configFile=/etc/traefik/traefik_config.yml
+    volumes:
+      - ./config/traefik:/etc/traefik:ro # Volume to store the Traefik configuration
+      - ./config/letsencrypt:/letsencrypt # Volume to store the Let's Encrypt certificates
+      - ./config/traefik/logs:/var/log/traefik # Volume to store the Traefik logs for CrowdSec
+
+networks:
+  default:
+    driver: bridge
+    name: {{ pangolin_network_name }}

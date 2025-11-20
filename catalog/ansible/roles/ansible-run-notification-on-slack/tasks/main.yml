@@ -1,0 +1,52 @@
+---
+# ==============================================================================
+# Ansible Run Notification - Main Tasks
+# ==============================================================================
+# Entry point for the ansible-run-notification-on-slack role.
+#
+# This role should typically be invoked in three scenarios:
+# 1. At the beginning (notification_phase: start)
+# 2. On failure in rescue block (notification_phase: rescue)
+# 3. At the end in always block (notification_phase: completion)
+#
+# Example usage:
+#   - name: Send start notification
+#     include_role:
+#       name: ansible-run-notification-on-slack
+#     vars:
+#       notification_phase: start
+#
+#   - block:
+#       # ... your playbook tasks ...
+#     rescue:
+#       - name: Send failure notification
+#         include_role:
+#           name: ansible-run-notification-on-slack
+#         vars:
+#           notification_phase: rescue
+#     always:
+#       - name: Send completion notification
+#         include_role:
+#           name: ansible-run-notification-on-slack
+#         vars:
+#           notification_phase: completion
+# ==============================================================================
+
+- name: Validate notification phase parameter
+  ansible.builtin.fail:
+    msg: "notification_phase must be either 'start', 'rescue', or 'completion'"
+  when:
+    - notification_phase is not defined or notification_phase not in ['start', 'rescue', 'completion']
+  run_once: true
+
+- name: Execute start notification
+  ansible.builtin.include_tasks: notify_start.yml
+  when: notification_phase == 'start'
+
+- name: Execute rescue notification
+  ansible.builtin.include_tasks: notify_rescue.yml
+  when: notification_phase == 'rescue'
+
+- name: Execute completion notification
+  ansible.builtin.include_tasks: notify_completion.yml
+  when: notification_phase == 'completion'

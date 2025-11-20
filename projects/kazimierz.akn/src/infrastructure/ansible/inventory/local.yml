@@ -1,0 +1,12 @@
+---
+# Ansible inventory for Kazimierz.AKN VPS
+# Host: ubuntu-4gb-hel1-2 (Hetzner Cloud - Helsinki)
+
+all:
+  hosts:
+    kazimierz:
+      ansible_host: localhost
+      ansible_connection: local
+      ansible_user: root
+      ansible_python_interpreter: /usr/bin/python3
+      ara_api_server: http://localhost:8000

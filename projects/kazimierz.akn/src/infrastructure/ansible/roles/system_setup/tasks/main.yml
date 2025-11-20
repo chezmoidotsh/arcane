@@ -1,0 +1,195 @@
+---
+# ==============================================================================
+# Role: system_setup
+# ==============================================================================
+# Purpose:
+#   Install and configure base system components for Kazimierz.AKN VPS.
+#
+# Components Configured:
+#   - Docker Engine with Docker Compose v2 plugin
+#   - Tailscale VPN mesh networking with SSH enabled
+#   - UFW firewall with secure default-deny policy
+#   - Unattended security upgrades with automatic reboot
+#
+# Security Considerations:
+#   - SSH port 22 enabled initially (switch to Tailscale SSH after bootstrap)
+#   - UFW default-deny incoming, allow outgoing
+#   - Docker daemon logs limited to 3x10MB files
+#   - Automatic security updates with 03:00 reboot window
+#
+# Dependencies:
+#   - geerlingguy.docker role (v7.6.1+)
+#   - artis3n.tailscale.machine role (v4.2.1+)
+#   - community.general collection (v8.0.0+)
+#
+# Tags:
+#   - system: All system configuration tasks
+#   - docker: Docker installation and configuration
+#   - tailscale: Tailscale VPN setup
+#   - ufw: Firewall configuration
+#   - security: Security-related tasks
+# ==============================================================================
+
+# ==========================================================================
+# Base System Configuration
+# ==========================================================================
+- name: Ensure system hostname is set to kazimierz.akn.chezmoi.sh
+  ansible.builtin.hostname:
+    name: kazimierz.akn.chezmoi.sh
+  tags:
+    - system
+    - base
+
+- name: Ensure APT package cache is updated
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  tags:
+    - system
+    - base
+
+- name: Ensure base system packages are installed
+  ansible.builtin.apt:
+    name:
+      - git
+      - curl
+      - gnupg
+      - software-properties-common
+    state: present
+  tags:
+    - system
+    - base
+
+# ==========================================================================
+# Docker Installation
+# ==========================================================================
+- name: Ensure Docker and Compose plugin are installed and configured
+  ansible.builtin.include_role:
+    name: geerlingguy.docker
+  vars:
+    # Systemd service configuration
+    docker_service_manage: true
+    docker_service_state: started
+    docker_service_enabled: true
+
+    # Docker Compose plugin installation
+    docker_install_compose_plugin: true
+    docker_compose_package: docker-compose-plugin
+    docker_compose_package_state: present
+    # renovate: datasource=github-releases depName=docker/compose
+    docker_compose_version: v2.32.1
+
+    # Docker daemon configuration
+    docker_users:
+      - root
+    docker_daemon_options:
+      log-driver: json-file
+      log-opts:
+        max-size: 10m
+        max-file: "3"
+  tags:
+    - system
+    - docker
+
+# ==========================================================================
+# Tailscale VPN Installation
+# ==========================================================================
+- name: Ensure Tailscale VPN is installed and configured
+  ansible.builtin.include_role:
+    name: artis3n.tailscale.machine
+  vars:
+    tailscale_args: --ssh --hostname {{ tailscale_hostname }}
+    tailscale_authkey: "{{ tailscale_auth_key }}"
+    tailscale_oauth_ephemeral: true
+    tailscale_oauth_preauthorized: true
+    tailscale_tags:
+      - svc-pangolin
+  tags:
+    - system
+    - tailscale
+    - networking
+
+# ==========================================================================
+# UFW Firewall Configuration
+# ==========================================================================
+- name: Ensure UFW firewall package is installed
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+  tags:
+    - system
+    - ufw
+    - networking
+    - security
+
+- name: Configure UFW default policies (deny incoming, allow outgoing)
+  community.general.ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: incoming, policy: deny }
+    - { direction: outgoing, policy: allow }
+  notify: Enable and start UFW firewall
+  tags:
+    - system
+    - ufw
+    - networking
+    - security
+
+- name: Configure UFW allowed ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+    comment: "{{ item.comment }}"
+  loop: "{{ ufw_allowed_ports }}"
+  notify: Enable and start UFW firewall
+  tags:
+    - system
+    - ufw
+    - networking
+    - security
+
+# ==========================================================================
+# Unattended Upgrades Configuration
+# ==========================================================================
+- name: Ensure unattended-upgrades and apt-listchanges packages are installed
+  ansible.builtin.apt:
+    name:
+      - unattended-upgrades
+      - apt-listchanges
+    state: present
+  tags:
+    - system
+    - unattended-upgrades
+    - security
+
+- name: Configure unattended-upgrades with security and auto-reboot settings
+  ansible.builtin.template:
+    src: 50unattended-upgrades.j2
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    mode: "0644"
+  tags:
+    - system
+    - unattended-upgrades
+    - security
+
+- name: Configure APT automatic update schedule (daily)
+  ansible.builtin.template:
+    src: 20auto-upgrades.j2
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    mode: "0644"
+  tags:
+    - system
+    - unattended-upgrades
+    - security
+
+- name: Ensure unattended-upgrades systemd service is enabled and started
+  ansible.builtin.systemd:
+    name: unattended-upgrades
+    enabled: true
+    state: started
+  tags:
+    - system
+    - unattended-upgrades
+    - security

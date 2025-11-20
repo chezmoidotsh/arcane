@@ -1,0 +1,95 @@
+---
+# ==============================================================================
+# Default variables for ansible-run-notification-on-slack role
+# ==============================================================================
+# This role manages Slack notifications for Ansible playbook runs, providing
+# start and completion notifications with execution summary.
+#
+# Optional integration with ARA (Ansible Records Ansible) provides a clickable
+# hostname link to the ARA web interface for detailed run reports.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Slack Configuration
+# ------------------------------------------------------------------------------
+
+# Slack bot token for API authentication
+# Required for sending notifications to Slack
+# Should be stored in Ansible Vault for security
+arnos_slack_token: ""
+
+# Target Slack channel for notifications
+# Format: "#channel-name" or "@username"
+arnos_slack_channel: "#notifications"
+
+# Bot username displayed in Slack
+# Customize per environment or playbook
+arnos_slack_username: "Ansible"
+
+# Enable/disable Slack notifications
+# Set to false to disable without removing role
+arnos_enabled: true
+
+# ------------------------------------------------------------------------------
+# ARA Integration Configuration
+# ------------------------------------------------------------------------------
+
+# Public URL for ARA web interface (used as link on hostname)
+# Example: "https://ara.example.com"
+arnos_ara_public_url: ""
+
+# ------------------------------------------------------------------------------
+# Notification Behavior Configuration
+# ------------------------------------------------------------------------------
+
+# Send start notification (beginning of playbook)
+arnos_send_start: true
+
+# Send rescue notification (on playbook failure)
+arnos_send_rescue: true
+
+# Send completion notification (end of playbook)
+arnos_send_completion: true
+
+# Update start message with completion/failure status (requires message_ts from start)
+# If false, sends new completion/failure message instead
+arnos_update_start_message: true
+
+# Ignore errors when sending notifications
+# Prevents notification failures from failing the playbook
+arnos_ignore_errors: true
+
+# ------------------------------------------------------------------------------
+# Message Customization
+# ------------------------------------------------------------------------------
+
+# Custom emoji for success status
+arnos_success_emoji: ":white_check_mark:"
+
+# Custom emoji for failure status
+arnos_failure_emoji: ":x:"
+
+# Custom emoji for in-progress status
+arnos_running_emoji: ":rocket:"
+
+# ------------------------------------------------------------------------------
+# Internal Variables (do not modify)
+# ------------------------------------------------------------------------------
+
+# These variables are managed by the role internally
+# Override only if you understand the implications
+
+# Fact name for storing start timestamp (epoch)
+arnos_start_epoch_fact: "playbook_start_epoch"
+
+# Fact name for storing start timestamp (ISO)
+arnos_start_iso_fact: "playbook_start_iso"
+
+# Fact name for storing Slack message timestamp
+arnos_message_ts_fact: "slack_message_ts"
+
+# Fact name for storing Slack channel ID
+arnos_message_channel_fact: "slack_message_channel"
+
+# Fact name for notification enabled status
+arnos_enabled_fact: "slack_notifications_enabled"

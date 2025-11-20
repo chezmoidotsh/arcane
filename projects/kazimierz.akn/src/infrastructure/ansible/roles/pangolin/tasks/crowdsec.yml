@@ -1,0 +1,272 @@
+---
+# ==============================================================================
+# CrowdSec Integration Tasks for Pangolin Role
+# ==============================================================================
+# Purpose:
+#   Configure CrowdSec integration with Traefik for WAF/IPS capabilities.
+#   Implements persistent API key storage in a dedicated file for simplicity
+#   and reliability.
+#
+# Components Configured:
+#   - CrowdSec acquis configurations for Traefik log parsing
+#   - CrowdSec AppSec (Application Security) configuration
+#   - Traefik bouncer API key (persisted in file)
+#   - Dynamic Traefik configuration with CrowdSec plugin
+#
+# Idempotency Strategy:
+#   1. Check if bouncer API key file exists on disk
+#   2. If missing: Generate new key and save to file
+#   3. If exists: Read key from file
+#   4. Use key from file for all configuration templating
+#
+# This approach provides:
+#   - Single source of truth (key file)
+#   - Simple idempotency (file exists = skip generation)
+#   - Easy recovery (backup/restore key file)
+#   - No complex hash-based logic
+#
+# Security Considerations:
+#   - Bouncer API key file has mode 0600 (root read/write only)
+#   - Key logged with no_log to prevent exposure in Ansible output
+#   - Key persisted for disaster recovery and reproducibility
+#
+# Manual Key Rotation:
+#   To rotate the bouncer API key:
+#   1. Delete key file: rm /opt/pangolin/config/crowdsec/bouncer_key
+#   2. Re-run playbook: Key will be regenerated automatically
+#
+# Dependencies:
+#   - CrowdSec container must be running and healthy
+#   - community.docker collection for container_info module
+#
+# Tags:
+#   - pangolin: All Pangolin role tasks
+#   - crowdsec: CrowdSec-specific tasks
+#   - directories: Directory creation tasks
+#   - configuration: Configuration file deployment
+# ==============================================================================
+
+# ==========================================================================
+# Directory Structure Setup
+# ==========================================================================
+- name: Ensure CrowdSec directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  loop:
+    - "{{ pangolin_compose_dir }}/config/crowdsec"
+    - "{{ pangolin_compose_dir }}/config/crowdsec/acquis.d"
+    - "{{ pangolin_compose_dir }}/config/crowdsec/appsec-configs"
+  tags:
+    - pangolin
+    - crowdsec
+    - directories
+
+# ==========================================================================
+# CrowdSec Configuration Files Deployment
+# ==========================================================================
+# Deploy acquis configurations that define log sources for CrowdSec:
+#   - traefik.yaml: Configure Traefik access log parsing
+#   - appsec.yaml: Configure Application Security (WAF) log parsing with
+#                  custom rule disabling configurations
+# ==========================================================================
+- name: Deploy CrowdSec acquis configurations
+  ansible.builtin.copy:
+    src: "crowdsec/acquis.d/{{ item }}"
+    dest: "{{ pangolin_compose_dir }}/config/crowdsec/acquis.d/{{ item }}"
+    mode: "0644"
+    owner: root
+    group: root
+  loop:
+    - traefik.yaml
+    - appsec.yaml
+  tags:
+    - pangolin
+    - crowdsec
+    - configuration
+
+# ==========================================================================
+# CrowdSec AppSec Custom Configurations Deployment
+# ==========================================================================
+# Deploy custom AppSec configurations to modify default CrowdSec behavior:
+#   - disable-rule-911100.yaml: Disable OWASP CRS rule 911100 globally to
+#                               allow REST API methods (PUT, DELETE, PATCH)
+#   - disable-rule-920420.yaml: Disable OWASP CRS rule 920420 for Pangolin
+#                               hosts to allow non-standard Content-Type headers
+#
+# All configurations are templated to allow for future variable overrides,
+# even if they don't currently use template variables.
+# ==========================================================================
+- name: Deploy CrowdSec AppSec custom configurations
+  ansible.builtin.template:
+    src: "crowdsec/appsec-configs/{{ item }}.j2"
+    dest: "{{ pangolin_compose_dir }}/config/crowdsec/appsec-configs/{{ item }}"
+    mode: "0644"
+    owner: root
+    group: root
+  loop:
+    - disable-rule-911100.yaml
+    - disable-rule-920420.yaml
+  tags:
+    - pangolin
+    - crowdsec
+    - configuration
+
+# ==========================================================================
+# CrowdSec Container Health Verification
+# ==========================================================================
+# Verify CrowdSec container exists and is healthy before attempting
+# bouncer API key operations. This prevents failures if container is
+# not yet started or is in unhealthy state.
+# ==========================================================================
+- name: Check if CrowdSec container is running
+  community.docker.docker_container_info:
+    name: crowdsec
+  register: crowdsec_container_info
+  failed_when: false # Don't fail if container doesn't exist yet
+  tags:
+    - pangolin
+    - crowdsec
+
+# Wait up to 5 minutes (30 retries × 10s) for CrowdSec CAPI to be ready
+# CAPI status indicates CrowdSec is fully initialized and ready for bouncer operations
+- name: Wait for CrowdSec to be healthy
+  ansible.builtin.command:
+    cmd: docker exec crowdsec cscli capi status
+  register: crowdsec_health
+  retries: 30
+  delay: 10
+  until: crowdsec_health.rc == 0
+  when:
+    - crowdsec_container_info.exists
+    - crowdsec_container_info.container.State.Running
+  changed_when: false # Health check doesn't modify system state
+  tags:
+    - pangolin
+    - crowdsec
+
+# ==========================================================================
+# Persistent Bouncer API Key Management
+# ==========================================================================
+# Simplified idempotent workflow using file-based key storage:
+#   1. Check if bouncer key file exists
+#   2. If missing: Generate new key and save to file
+#   3. If exists: Read key from file
+#   4. Use key for configuration templating
+#
+# Key file location: /opt/pangolin/config/crowdsec/bouncer_key
+# Permissions: 0600 (root read/write only)
+# ==========================================================================
+
+# Check if bouncer API key file already exists
+- name: Check if bouncer key file exists
+  ansible.builtin.stat:
+    path: "{{ pangolin_crowdsec_bouncer_key_file }}"
+  register: bouncer_key_file_stat
+  tags:
+    - pangolin
+    - crowdsec
+
+# Query existing bouncers to check if we need to clean up before generation
+- name: Check if Traefik bouncer already exists in CrowdSec
+  ansible.builtin.command:
+    cmd: docker exec crowdsec cscli bouncers list -o json
+  register: crowdsec_bouncers_list
+  changed_when: false
+  failed_when: false
+  when:
+    - crowdsec_container_info.exists
+    - crowdsec_container_info.container.State.Running
+    - not bouncer_key_file_stat.stat.exists # Only check if we need to generate
+  tags:
+    - pangolin
+    - crowdsec
+
+# Delete existing bouncer to prevent conflicts during key generation
+- name: Delete existing Traefik bouncer if present
+  ansible.builtin.command:
+    cmd: docker exec crowdsec cscli bouncers delete traefik-bouncer
+  when:
+    - crowdsec_container_info.exists
+    - crowdsec_container_info.container.State.Running
+    - not bouncer_key_file_stat.stat.exists
+    - crowdsec_bouncers_list.stdout is defined
+    - "'traefik-bouncer' in crowdsec_bouncers_list.stdout"
+  changed_when: true
+  tags:
+    - pangolin
+    - crowdsec
+
+# Generate new bouncer API key (only if key file doesn't exist)
+- name: Generate new Traefik bouncer API key
+  ansible.builtin.command:
+    cmd: docker exec crowdsec cscli bouncers add traefik-bouncer -o raw
+  register: crowdsec_bouncer_key_raw
+  when:
+    - crowdsec_container_info.exists
+    - crowdsec_container_info.container.State.Running
+    - not bouncer_key_file_stat.stat.exists # Only generate if key file missing
+  changed_when: true
+  tags:
+    - pangolin
+    - crowdsec
+
+# Save generated key to persistent file for future runs
+- name: Save bouncer API key to file
+  ansible.builtin.copy:
+    content: "{{ crowdsec_bouncer_key_raw.stdout | trim }}"
+    dest: "{{ pangolin_crowdsec_bouncer_key_file }}"
+    mode: "0600" # Root read/write only for security
+    owner: root
+    group: root
+  when:
+    - not bouncer_key_file_stat.stat.exists
+    - crowdsec_bouncer_key_raw is defined
+    - crowdsec_bouncer_key_raw.stdout is defined
+  tags:
+    - pangolin
+    - crowdsec
+  no_log: true # SECURITY: Prevent key exposure in logs
+
+# Read bouncer key from file (works for both new and existing keys)
+- name: Read bouncer API key from file
+  ansible.builtin.slurp:
+    path: "{{ pangolin_crowdsec_bouncer_key_file }}"
+  register: bouncer_key_file_content
+  when: bouncer_key_file_stat.stat.exists or crowdsec_bouncer_key_raw is defined
+  tags:
+    - pangolin
+    - crowdsec
+
+# Store key in Ansible fact for template usage
+- name: Set bouncer API key fact
+  ansible.builtin.set_fact:
+    pangolin_crowdsec_bouncer_key: "{{ bouncer_key_file_content.content | b64decode | trim }}"
+  when: bouncer_key_file_content is defined
+  tags:
+    - pangolin
+    - crowdsec
+
+# ==========================================================================
+# Deploy Dynamic Configuration with Bouncer API Key
+# ==========================================================================
+# Deploy Traefik dynamic configuration with the bouncer API key from file.
+# This task runs once with the correct key (no double templating needed).
+# ==========================================================================
+- name: Deploy dynamic configuration with bouncer API key
+  ansible.builtin.template:
+    src: dynamic_config.yml.j2
+    dest: "{{ pangolin_compose_dir }}/config/traefik/dynamic_config.yml"
+    mode: "0644"
+    owner: root
+    group: root
+  when: pangolin_crowdsec_bouncer_key is defined
+  notify: Restart Pangolin stack
+  tags:
+    - pangolin
+    - crowdsec
+    - configuration
+  no_log: true # SECURITY: Suppress API key from appearing in Ansible logs

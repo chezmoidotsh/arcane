@@ -1,0 +1,329 @@
+---
+# ==============================================================================
+# Role: pangolin
+# ==============================================================================
+# Purpose:
+#   Deploy Pangolin tunneled reverse proxy stack with Traefik and CrowdSec
+#   integration. Pangolin provides a self-hosted, identity-aware alternative
+#   to Cloudflare Tunnels and Tailscale Funnel using WireGuard for secure
+#   tunneling.
+#
+# Components Deployed:
+#   - Pangolin: Main reverse proxy controller with web dashboard
+#   - Gerbil: WireGuard tunnel manager for site and client connections
+#   - Traefik: Reverse proxy with automatic Let's Encrypt certificates
+#   - CrowdSec: Intrusion prevention and web application firewall
+#
+# Deployment Workflow:
+#   1. Validate required variables (fail-fast approach)
+#   2. Create directory structure with secure permissions
+#   3. Deploy configuration files from templates
+#   4. Deploy Docker Compose stack
+#   5. Configure CrowdSec integration (include_tasks: crowdsec.yml)
+#   6. Extract and display initial setup token
+#
+# Security Considerations:
+#   - ACME certificate storage with 0600 permissions
+#   - Server secret minimum 8 characters (32+ recommended)
+#   - Configuration files readable only by root
+#   - Let's Encrypt validation via HTTP-01 challenge
+#
+# Dependencies:
+#   - Docker Engine with Compose v2 plugin
+#   - community.docker Ansible collection >= 4.0.0
+#   - DNS A records pointing to server public IP
+#   - Firewall rules: TCP 80/443, UDP 51820/21820
+#
+# Tags:
+#   - pangolin: All Pangolin role tasks
+#   - directories: Directory creation tasks
+#   - security: Security-related tasks (permissions, certificates)
+#   - configuration: Configuration file deployment
+#   - traefik: Traefik-specific configuration
+#   - docker: Docker Compose deployment tasks
+#   - crowdsec: CrowdSec integration tasks
+#   - setup: Initial setup token extraction
+# ==============================================================================
+
+# ==========================================================================
+# Pre-deployment Validation
+# ==========================================================================
+# Validate all required variables before deployment to fail fast if
+# configuration is incomplete or invalid. This prevents partial deployments
+# with missing credentials or configuration.
+#
+# Required variables:
+#   - pangolin_dashboard_url: Public HTTPS URL for Pangolin dashboard
+#   - pangolin_server_secret: Secret key (min 8 chars, 32+ recommended)
+#   - pangolin_acme_email: Email for Let's Encrypt notifications
+#   - pangolin_domains: Domain configuration dictionary
+#
+# Validation checks:
+#   - Variables are defined (not None/undefined)
+#   - Non-empty strings for URLs and email
+#   - Server secret meets minimum length requirement
+#   - ACME email is not placeholder value
+# ==========================================================================
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - pangolin_dashboard_url is defined
+      - pangolin_dashboard_url | length > 0
+      - pangolin_server_secret is defined
+      - pangolin_server_secret | length >= 8
+      - pangolin_acme_email is defined
+      - pangolin_acme_email != "admin@example.com"
+      - pangolin_domains is defined
+      - pangolin_domains | length > 0
+    fail_msg: |
+      Required variables are missing or invalid:
+      - pangolin_dashboard_url must be set to your actual domain URL
+      - pangolin_server_secret must be at least 8 characters (32+ recommended)
+      - pangolin_acme_email must be set to your actual email address
+      - pangolin_domains must contain at least one domain configuration
+    quiet: true # Suppress detailed assertion output for cleaner logs
+
+# ==========================================================================
+# Directory Structure Creation
+# ==========================================================================
+# Create directory structure for Pangolin deployment with appropriate
+# permissions. Most directories use 0755 (world-readable) while sensitive
+# directories like letsencrypt use 0700 (root-only).
+#
+# Directory structure:
+#   /opt/pangolin/              - Docker Compose project directory
+#   ├── config/                 - Configuration files
+#   │   ├── traefik/            - Traefik static and dynamic configs
+#   │   ├── db/                 - SQLite database (if not using PostgreSQL)
+#   │   ├── logs/               - Application logs
+#   │   └── letsencrypt/        - ACME certificates (0700 permissions)
+#   └── docker-compose.yml      - Compose file
+#
+#   /var/lib/pangolin/          - Persistent data directory
+# ==========================================================================
+- name: Ensure Pangolin directory structure exists
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  loop:
+    - "{{ pangolin_compose_dir }}"
+    - "{{ pangolin_compose_dir }}/config"
+    - "{{ pangolin_compose_dir }}/config/traefik"
+    - "{{ pangolin_compose_dir }}/config/db"
+    - "{{ pangolin_compose_dir }}/config/logs"
+    - "{{ pangolin_data_dir }}"
+  tags:
+    - pangolin
+    - directories
+
+# Let's Encrypt certificate directory requires 0700 permissions
+# Traefik fails to start if acme.json permissions are too permissive
+- name: Ensure letsencrypt directory has secure permissions
+  ansible.builtin.file:
+    path: "{{ pangolin_compose_dir }}/config/letsencrypt"
+    state: directory
+    mode: "0700"
+    owner: root
+    group: root
+  tags:
+    - pangolin
+    - directories
+    - security
+
+# ACME certificate storage file MUST have 0600 permissions
+# Traefik enforces this security requirement and will fail to start otherwise
+# Using 'touch' ensures file exists without overwriting existing certificates
+- name: Ensure ACME storage file exists with secure permissions
+  ansible.builtin.file:
+    path: "{{ pangolin_compose_dir }}/config/letsencrypt/acme.json"
+    state: touch
+    mode: "0600"
+    owner: root
+    group: root
+    modification_time: preserve # Don't update mtime if file already exists
+    access_time: preserve # Don't update atime if file already exists
+  tags:
+    - pangolin
+    - security
+
+# ==========================================================================
+# Configuration Files Deployment
+# ==========================================================================
+# Deploy all configuration files from Jinja2 templates. Configuration changes
+# trigger the "Restart Pangolin stack" handler to apply updates.
+#
+# Files deployed:
+#   - config.yml: Pangolin main configuration (dashboard, features, secrets)
+#   - traefik_config.yml: Traefik static configuration (entrypoints, ACME)
+#   - dynamic_config.yml: Traefik dynamic configuration (routers, middleware, CrowdSec)
+#   - docker-compose.yml: Docker Compose stack definition
+#
+# Note: CrowdSec bouncer API key is injected later by crowdsec.yml tasks
+# ==========================================================================
+- name: Deploy Pangolin configuration file
+  ansible.builtin.template:
+    src: config.yml.j2
+    dest: "{{ pangolin_compose_dir }}/config/config.yml"
+    mode: "0640" # Readable by root and group only (contains server secret)
+    owner: root
+    group: root
+  notify: Restart Pangolin stack # Handler restarts entire Docker Compose stack
+  tags:
+    - pangolin
+    - configuration
+
+# Traefik static configuration: entrypoints, ACME, API, metrics
+# Changes require Traefik container restart to take effect
+- name: Deploy Traefik static configuration
+  ansible.builtin.template:
+    src: traefik_config.yml.j2
+    dest: "{{ pangolin_compose_dir }}/config/traefik/traefik_config.yml"
+    mode: "0644"
+    owner: root
+    group: root
+  notify: Restart Pangolin stack
+  tags:
+    - pangolin
+    - configuration
+    - traefik
+
+# NOTE: Traefik dynamic configuration is deployed in crowdsec.yml
+# This ensures the CrowdSec bouncer API key is available before templating.
+# The dynamic configuration includes CrowdSec plugin configuration which
+# requires the bouncer key to be read from the persistent key file.
+
+# ==========================================================================
+# Docker Compose Stack Deployment
+# ==========================================================================
+# Deploy Docker Compose file and manage stack lifecycle.
+#
+# Deployment strategy:
+#   1. Deploy docker-compose.yml template
+#   2. Stop existing stack if compose file changed (prevents stale containers)
+#   3. Start/update stack with new configuration
+#
+# The stop-then-start approach ensures clean deployment when:
+#   - Container images are updated
+#   - Volume mounts are modified
+#   - Network configuration changes
+#   - Environment variables are updated
+# ==========================================================================
+- name: Ensure Docker Compose file is deployed
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ pangolin_compose_dir }}/docker-compose.yml"
+    mode: "0644"
+    owner: root
+    group: root
+  register: pangolin_compose_file # Check if compose file changed
+  tags:
+    - pangolin
+    - docker
+
+# Stop existing containers if compose file changed
+# This prevents issues with stale container configurations
+- name: Stop existing Pangolin stack if configuration changed
+  community.docker.docker_compose_v2:
+    project_src: "{{ pangolin_compose_dir }}"
+    state: absent
+  when: pangolin_compose_file.changed # Only stop if compose file was modified
+  tags:
+    - pangolin
+    - docker
+
+# Start or update Docker Compose stack
+# Uses docker_compose_v2 module (Compose v2 plugin required)
+# Stack includes: pangolin, gerbil, traefik, crowdsec containers
+- name: Ensure Pangolin stack is deployed with Docker Compose
+  community.docker.docker_compose_v2:
+    project_src: "{{ pangolin_compose_dir }}"
+    state: present
+  register: pangolin_deployment # Store deployment result
+  tags:
+    - pangolin
+    - docker
+  ignore_errors: true # Allow playbook to continue even if deployment fails
+
+# ==========================================================================
+# CrowdSec Integration Configuration
+# ==========================================================================
+# Include CrowdSec integration tasks from separate file (crowdsec.yml).
+# This configures:
+#   - CrowdSec acquis (log sources)
+#   - Traefik bouncer API key (with idempotent hash-based regeneration)
+#   - Dynamic configuration injection
+#
+# See crowdsec.yml for detailed implementation and idempotency mechanism.
+# ==========================================================================
+- name: Configure CrowdSec integration
+  ansible.builtin.include_tasks:
+    file: crowdsec.yml
+  tags:
+    - pangolin
+    - crowdsec
+
+# ==========================================================================
+# Initial Setup Token Extraction
+# ==========================================================================
+# On first deployment, Pangolin generates a one-time setup token that
+# appears in container logs. This section extracts and displays the token
+# for user convenience during initial setup.
+#
+# Setup workflow:
+#   1. Read Pangolin container logs
+#   2. Extract token using regex pattern: "Token: ([a-z0-9]+)"
+#   3. Display token with setup URL if found
+#
+# Token format: lowercase alphanumeric string (e.g., "abc123def456")
+# Setup URL: https://<dashboard_url>/auth/initial-setup
+#
+# Note: Token only appears once on first deployment. Subsequent runs
+# will not display a token unless the database is reset.
+# ==========================================================================
+- name: Check for setup token in Pangolin logs
+  ansible.builtin.command:
+    cmd: docker logs pangolin
+  register: pangolin_logs
+  changed_when: false # Reading logs doesn't change system state
+  failed_when: false # Don't fail if container doesn't exist yet
+  tags:
+    - pangolin
+    - setup
+
+# Extract token using regex: "Token: ([a-z0-9]+)"
+# Capture group 1 contains the actual token value
+- name: Extract setup token from logs
+  ansible.builtin.set_fact:
+    pangolin_setup_token: "{{ (pangolin_logs.stdout | regex_search('Token: ([a-z0-9]+)', '\\1') | default([], true))[0] | default('') }}"
+  when: pangolin_logs.stdout is defined
+  tags:
+    - pangolin
+    - setup
+
+# Display formatted setup instructions if token was found
+# Output includes:
+#   - Extracted token value
+#   - Full setup URL with dashboard domain
+#   - Clear instructions for initial account creation
+- name: Display setup token if found
+  ansible.builtin.debug:
+    msg:
+      - "==================================="
+      - "SETUP TOKEN FOUND"
+      - "==================================="
+      - ""
+      - "Token: {{ pangolin_setup_token }}"
+      - ""
+      - "Use this token on the initial setup page:"
+      - "{{ pangolin_dashboard_url }}/auth/initial-setup"
+      - ""
+      - "==================================="
+  when:
+    - pangolin_setup_token is defined
+    - pangolin_setup_token | length > 0 # Only display if token extracted successfully
+  tags:
+    - pangolin
+    - setup

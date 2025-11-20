@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodic ansible-pull execution every {{ ansible_pull_interval_minutes }} minutes
+Requires=ansible-pull.service
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec={{ ansible_pull_interval_minutes }}min
+RandomizedDelaySec=2min
+
+[Install]
+WantedBy=timers.target

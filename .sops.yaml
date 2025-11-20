@@ -16,3 +16,8 @@ creation_rules:
     encrypted_regex: advertiseRoutes
     age: >-
       age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
+
+  # Ansible Vault password file
+  - path_regex: projects/[^/]+/src/infrastructure/ansible/\.vault-password\.sops$
+    age: >-
+      age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
