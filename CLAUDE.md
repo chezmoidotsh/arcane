@@ -54,7 +54,6 @@ projects/         # Individual cluster/project definitions
 ├── hass/         # Home Assistant application project (not a cluster)
 ├── kazimierz.akn/ # Proxy/firewall/WAF cluster (Talos Linux + ArgoCD) - Planning
 ├── lungmen.akn/  # Home applications cluster (Talos Linux + ArgoCD) - Active development
-├── maison/       # Home applications cluster (K3s + FluxCD) - Legacy, being replaced by lungmen.akn
 └── shodan.akn/   # Future cluster project - Planning
 
 scripts/          # Operational scripts

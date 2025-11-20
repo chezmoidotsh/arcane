@@ -312,10 +312,6 @@ const scopes = [
 		value: "project:lungmen.akn",
 	},
 	{
-		name: "project:maison        - Anything related to the maison project",
-		value: "project:maison",
-	},
-	{
 		name: "project:shodan.akn    - Anything related to the shodan project",
 		value: "project:shodan.akn",
 	},
