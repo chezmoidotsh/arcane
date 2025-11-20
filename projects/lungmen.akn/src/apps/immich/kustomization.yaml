@@ -13,7 +13,7 @@ labels:
     includeSelectors: true
   - pairs:
       # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server
-      app.kubernetes.io/version: v2.3.0
+      app.kubernetes.io/version: v2.3.1
     includeTemplates: true
 
 resources:
@@ -31,7 +31,7 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server
   - name: ghcr.io/immich-app/immich-server
-    newTag: "v2.3.0"
+    newTag: "v2.3.1"
   # renovate: datasource=docker depName=docker.io/library/redis
   - name: docker.io/library/redis
     newTag: 8.4.0-alpine@sha256:8371f214b1c2792f9d9ef1077fe2ea37632c8ba087c962b7bc5d8d623aed686a
