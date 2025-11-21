@@ -1,0 +1,120 @@
+---
+# ==============================================================================
+# Task: geoip
+# ==============================================================================
+# Purpose:
+#   Manage the MaxMind GeoLite2 database required by Pangolin's geoblocking
+#   middleware. Ensures the database is seeded, kept up to date, and refreshed
+#   automatically without manual intervention.
+#
+# Components Managed:
+#   - GeoIP configuration directory under the Pangolin compose tree
+#   - update-pangolin-geoip helper script (wraps MaxMind download workflow)
+#   - systemd oneshot service and timer to execute nightly refreshes
+#
+# Idempotency Strategy:
+#   1. Directory creation uses ansible.builtin.file with state=directory.
+#   2. Update script template overwrites only when content changes.
+#   3. Initial download leverages args.creates to prevent re-downloading when
+#      GeoLite2-Country.mmdb already exists.
+#   4. systemd unit deployment notifies a handler to reload systemd only when
+#      templates change.
+#
+# Operational Schedule:
+#   - update-pangolin-geoip handles license key retrieval and checksum
+#     verification.
+#   - pangolin-geoip-update.timer triggers the service nightly (default 02:15)
+#     to keep IP metadata fresh for blocking decisions.
+#
+# Dependencies:
+#   - pangolin_compose_dir variable must point to Pangolin's config root.
+#   - MaxMind license key must be provided via environment or config consumed by
+#     update-pangolin-geoip.
+#   - systemd is assumed to be the init system for timers/services.
+# ==============================================================================
+
+# ==========================================================================
+# Directory Setup
+# ==========================================================================
+# Ensure the GeoIP working directory exists before attempting downloads so
+# later tasks (script + database fetch) have a stable destination.
+- name: Ensure GeoIP directory exists
+  ansible.builtin.file:
+    path: "{{ pangolin_compose_dir }}/config/geoip"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  tags:
+    - pangolin
+    - directories
+
+# ==========================================================================
+# Update Script Deployment
+# ==========================================================================
+# Provide a dedicated helper that encapsulates download URL construction, curl
+# invocation, and atomic replacement of the mmdb file. This keeps playbooks
+# simple and centralises retry/backoff logic inside the script template.
+- name: Deploy GeoIP update script
+  ansible.builtin.template:
+    src: update-geoip.sh.j2
+    dest: /usr/local/bin/update-pangolin-geoip
+    mode: "0755"
+    owner: root
+    group: root
+  tags:
+    - pangolin
+    - scripts
+
+# ==========================================================================
+# Initial Execution & Scheduling
+# ==========================================================================
+# Seed the database immediately when provisioning the host so Pangolin can use
+# GeoIP data without waiting for the first timer execution.
+- name: Run GeoIP update script (initial run)
+  ansible.builtin.command: /usr/local/bin/update-pangolin-geoip
+  args:
+    creates: "{{ pangolin_compose_dir }}/config/geoip/GeoLite2-Country.mmdb"
+  tags:
+    - pangolin
+    - scripts
+
+# Deploy systemd units responsible for recurring refreshes. Templates allow us
+# to tweak schedule/command without editing hosts directly; handler ensures we
+# only call daemon-reload when unit files change.
+# --------------------------------------------------------------------------
+- name: Deploy GeoIP update systemd service
+  ansible.builtin.template:
+    src: geoip-update.service.j2
+    dest: /etc/systemd/system/pangolin-geoip-update.service
+    mode: "0644"
+    owner: root
+    group: root
+  notify: Reload systemd
+  tags:
+    - pangolin
+    - systemd
+
+# Timer + enablement: the timer ensures periodic execution while enabling the
+# unit makes sure the schedule survives reboots.
+# --------------------------------------------------------------------------
+- name: Deploy GeoIP update systemd timer
+  ansible.builtin.template:
+    src: geoip-update.timer.j2
+    dest: /etc/systemd/system/pangolin-geoip-update.timer
+    mode: "0644"
+    owner: root
+    group: root
+  notify: Reload systemd
+  tags:
+    - pangolin
+    - systemd
+
+- name: Enable and start GeoIP update timer
+  ansible.builtin.systemd:
+    name: pangolin-geoip-update.timer
+    state: started
+    enabled: true
+  tags:
+    - pangolin
+    - systemd

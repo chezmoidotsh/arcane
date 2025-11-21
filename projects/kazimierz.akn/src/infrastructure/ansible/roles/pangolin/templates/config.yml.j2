@@ -18,6 +18,7 @@ domains:
 
 server:
   secret: "{{ pangolin_server_secret | trim }}"
+  maxmind_db_path: "./config/geoip/GeoLite2-Country.mmdb"
 
 gerbil:
   base_endpoint: "{{ pangolin_gerbil_base_endpoint }}"

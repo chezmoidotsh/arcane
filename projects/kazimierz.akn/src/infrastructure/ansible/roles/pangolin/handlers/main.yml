@@ -6,3 +6,7 @@
     project_src: "{{ pangolin_compose_dir }}"
     state: restarted
   listen: Restart Pangolin stack
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true

@@ -114,6 +114,7 @@
     - "{{ pangolin_compose_dir }}/config/traefik"
     - "{{ pangolin_compose_dir }}/config/db"
     - "{{ pangolin_compose_dir }}/config/logs"
+    - "{{ pangolin_compose_dir }}/config/geoip"
     - "{{ pangolin_data_dir }}"
   tags:
     - pangolin
@@ -148,6 +149,13 @@
   tags:
     - pangolin
     - security
+
+# GeoIP database management lives in a dedicated task file to keep the main
+# role concise. It provisions the download script, seeds the MaxMind database,
+# and wires up the systemd timer so Pangolin's geoblocking middleware always
+# has fresh country metadata.
+- name: Configure GeoIP database and updates
+  ansible.builtin.include_tasks: geoip.yml
 
 # ==========================================================================
 # Configuration Files Deployment
@@ -223,8 +231,9 @@
     - pangolin
     - docker
 
-# Stop existing containers if compose file changed
-# This prevents issues with stale container configurations
+# Stop existing containers if compose file changed. This mirrors
+# "docker compose down" when the manifest changes and prevents stale
+# containers, networks, or volumes from lingering after refactors.
 - name: Stop existing Pangolin stack if configuration changed
   community.docker.docker_compose_v2:
     project_src: "{{ pangolin_compose_dir }}"
@@ -234,9 +243,9 @@
     - pangolin
     - docker
 
-# Start or update Docker Compose stack
-# Uses docker_compose_v2 module (Compose v2 plugin required)
-# Stack includes: pangolin, gerbil, traefik, crowdsec containers
+# Start or update the stack after templates settle. docker_compose_v2 talks to
+# the Compose v2 plugin directly and converges the pangolin / gerbil / traefik /
+# crowdsec containers in one shot.
 - name: Ensure Pangolin stack is deployed with Docker Compose
   community.docker.docker_compose_v2:
     project_src: "{{ pangolin_compose_dir }}"
@@ -245,7 +254,7 @@
   tags:
     - pangolin
     - docker
-  ignore_errors: true # Allow playbook to continue even if deployment fails
+  ignore_errors: true # Allow follow-up diagnostics even if first converge fails
 
 # ==========================================================================
 # CrowdSec Integration Configuration

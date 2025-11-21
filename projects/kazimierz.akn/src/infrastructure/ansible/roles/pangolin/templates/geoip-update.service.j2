@@ -1,0 +1,8 @@
+[Unit]
+Description=Update Pangolin GeoIP database
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/update-pangolin-geoip
+User=root

@@ -1,0 +1,46 @@
+#!/bin/bash
+set -e
+
+# Directory where the GeoIP database should be stored
+DEST_DIR="{{ pangolin_compose_dir }}/config/geoip"
+# URL to download the GeoIP database from
+URL="https://github.com/GitSquared/node-geolite2-redist/raw/refs/heads/master/redist/GeoLite2-Country.tar.gz"
+
+# Create destination directory if it doesn't exist
+mkdir -p "$DEST_DIR"
+
+# Create a temporary directory for download and extraction
+TEMP_DIR=$(mktemp -d)
+
+echo "Downloading GeoIP database..."
+if curl -L -o "$TEMP_DIR/GeoLite2-Country.tar.gz" "$URL"; then
+    echo "Download successful."
+else
+    echo "Download failed."
+    rm -rf "$TEMP_DIR"
+    exit 1
+fi
+
+echo "Extracting..."
+if tar -xzf "$TEMP_DIR/GeoLite2-Country.tar.gz" -C "$TEMP_DIR"; then
+    echo "Extraction successful."
+else
+    echo "Extraction failed."
+    rm -rf "$TEMP_DIR"
+    exit 1
+fi
+
+echo "Installing..."
+# Find the .mmdb file and move it to the destination
+if find "$TEMP_DIR" -name "GeoLite2-Country.mmdb" -exec mv {} "$DEST_DIR/GeoLite2-Country.mmdb" \;; then
+    echo "Database installed to $DEST_DIR/GeoLite2-Country.mmdb"
+else
+    echo "Failed to install database."
+    rm -rf "$TEMP_DIR"
+    exit 1
+fi
+
+echo "Cleaning up..."
+rm -rf "$TEMP_DIR"
+
+echo "GeoIP database update completed successfully."
