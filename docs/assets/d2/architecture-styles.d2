@@ -43,6 +43,7 @@
 #
 # - connect-network: Network connections (thick)
 # - connect-from-internet / connect-to-internet: Internet connections (dashed, weighted)
+# - secured-connect-from-internet: Secured internet connections via Pangolin/Newt
 # - connect-vpn-backbone: VPN backbone (bold)
 # - connect-vpn: VPN connections (dashed)
 # - connect-management: Management connections (dashed, medium width)
@@ -173,6 +174,15 @@ classes: {
       stroke-width: 3
       stroke: "#FF6B35"
       font-color: "#FF6B35"
+    }
+  }
+
+  secured-connect-from-internet: {
+    style: {
+      bold: true
+      font-color: "#F59E0B"
+      stroke-width: 8
+      stroke: "#F59E0B"
     }
   }
 
