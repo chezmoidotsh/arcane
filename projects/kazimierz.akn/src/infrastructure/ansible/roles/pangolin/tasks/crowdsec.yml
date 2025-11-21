@@ -110,6 +110,7 @@
   loop:
     - disable-rule-911100.yaml
     - disable-rule-920420.yaml
+    - disable-rule-930120.yaml
   tags:
     - pangolin
     - crowdsec
