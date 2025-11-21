@@ -1,0 +1,13 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: newt-system
+
+resources:
+  - network-policy.default-hardened.yaml
+  - network-policy.allow-newt-to-pangolin.yaml
+  - network-policy.allow-newt-to-immich.yaml
+  - network-policy.allow-newt-to-jellyfin.yaml
+  - network-policy.allow-newt-to-jellyseerr.yaml
+  - network-policy.allow-newt-to-linkding.yaml
+  - network-policy.allow-newt-to-n8n.yaml

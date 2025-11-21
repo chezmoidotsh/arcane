@@ -5,7 +5,7 @@ vars: {
   }
 }
 
-...@../../docs/assets/d2/architecture-styles.d2
+...@../../docs/assets/d2/architecture-styles
 
 explanation: |md
   # lungmen.akn Architecture
@@ -44,7 +44,6 @@ tailnet: {
   tooltip: Tailnet - Mesh VPN Network
 }
 
-
 # ──────────────────────────────────────────────────────────────────────────────
 # Hardware & Infrastructure
 
@@ -53,7 +52,6 @@ udm-pro: {
   icon: assets/icons/hardware/unifi.svg
   tooltip: UniFi Dream Machine Pro - Gateway & Network Controller
 }
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # External Clusters
@@ -64,7 +62,7 @@ amiya·akn: {
   icon: ../amiya.akn/assets/logo.svg
   tooltip: Mission-critical services cluster (SSO, Secrets, etc.)
 
-  pocket-id {
+  pocket-id: {
     class: [application]
     icon: assets/icons/apps/pocket-id.svg
     label: auth.chezmoi.sh
@@ -72,12 +70,27 @@ amiya·akn: {
     tooltip: Pocket-ID is an open-source identity and access management solution based only on passkeys.
   }
 
-  openbao {
+  openbao: {
     class: [application]
     icon: assets/icons/apps/openbao.svg
     label: vault.chezmoi.sh
     link: https://openbao.org/
     tooltip: OpenBao is an open-source, community-driven fork of Vault managed by the Linux Foundation.
+  }
+}
+
+kazimierz·akn: {
+  class: [application]
+  label: kazimierz·akn
+  icon: ../kazimierz.akn/assets/logo.light.svg
+  tooltip: Public gateway cluster (Pangolin, WAF, etc.)
+
+  pangolin: {
+    class: [application]
+    icon: assets/icons/system/pangolin.svg
+    label: pangolin.chezmoi.sh
+    link: https://github.com/fosrl/pangolin
+    tooltip: Pangolin is a reverse proxy and WAF that provides secure access to homelab services.
   }
 }
 
@@ -98,8 +111,6 @@ nas: {
     tooltip: MinIO is a high-performance, distributed object storage system.
   }
 }
-
-
 
 # ╭────────────────────────────────────────────────────────────────────────────╮
 # │                            lungmen.akn Platform                            │
@@ -194,9 +205,17 @@ lungmen·akn: {
     tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
   }
 
+  system.newt: {
+    class: [application-system]
+    label: Newt
+    icon: assets/icons/system/pangolin.svg
+    link: https://github.com/fosrl/newt
+    tooltip: Newt is a client for Pangolin that establishes a secure tunnel to the public gateway.
+  }
+
   # ────────────────────────────────────────────────────────────────────────────
   # Media Components
-  
+
   media.immich-stack: {
     class: [namespace]
     label: Immich Stack
@@ -259,7 +278,7 @@ lungmen·akn: {
 
   # ────────────────────────────────────────────────────────────────────────────
   # Life Management Components
-  
+
   life.actual-budget: {
     class: [application]
     label: Actual Budget
@@ -300,7 +319,7 @@ lungmen·akn: {
 
   # ────────────────────────────────────────────────────────────────────────────
   # Other Components
-  
+
   others.atuin-stack: {
     class: [namespace]
     label: Atuin Stack
@@ -384,8 +403,6 @@ lungmen·akn: {
   }
 }
 
-
-
 # ╭────────────────────────────────────────────────────────────────────────────╮
 # │                                Connections                                 │
 # ├────────────────────────────────────────────────────────────────────────────┤
@@ -398,91 +415,93 @@ lungmen·akn: {
 # Network to Platform Flow
 
 localnet -> lungmen·akn.system.envoy-gateway: |md
-    HTTP (80)
-    HTTPS (443)
-  |
+  HTTP (80)
+  HTTPS (443)
+|
 
 tailnet -> lungmen·akn.system.tailscale: {class: [connect-vpn-backbone]}
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # System Connections
 
-lungmen·akn.system.cert-manager -> internet: "ACME certificate validation (443)" {class: [connect-to-internet;]}
+lungmen·akn.system.cert-manager -> internet: "ACME certificate validation (443)" {class: [connect-to-internet]}
 
-lungmen·akn.system.external-dns -> udm-pro: "Automated DNS record management (443)" {}
+lungmen·akn.system.external-dns -> udm-pro: "Automated DNS record management (443)"
 
-lungmen·akn.system.external-secrets -> amiya·akn.openbao: "Secure secrets retrieval from vault (443)" {}
+lungmen·akn.system.external-secrets -> amiya·akn.openbao: "Secure secrets retrieval from vault (443)"
 
-lungmen·akn.system.tailscale -> internet: "VPN tunnel establishment (443)" {class: [connect-to-internet;]}
+lungmen·akn.system.tailscale -> internet: "VPN tunnel establishment (443)" {class: [connect-to-internet]}
 
+lungmen·akn.system.newt -> kazimierz·akn.pangolin: "Secure tunnel establishment (443)" {class: [connect-to-internet]}
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Media Services Flow
 
-lungmen·akn.media.immich-stack.immich -> amiya·akn.pocket-id: "SSO authentication (443)" {}
-lungmen·akn.media.immich-stack.immich -> lungmen·akn.media.immich-stack.postgresql: "Database operations (5432)" {}
-lungmen·akn.media.immich-stack.immich -> lungmen·akn.media.immich-stack.redis: "Cache operations (6379)" {}
+lungmen·akn.media.immich-stack.immich -> amiya·akn.pocket-id: "SSO authentication (443)"
+lungmen·akn.media.immich-stack.immich -> lungmen·akn.media.immich-stack.postgresql: "Database operations (5432)"
+lungmen·akn.media.immich-stack.immich -> lungmen·akn.media.immich-stack.redis: "Cache operations (6379)"
 lungmen·akn.media.immich-stack.immich <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (2283)" {}
-lungmen·akn.media.immich-stack.postgresql -> nas.minio: "Database backups (S3)" {}
+lungmen·akn.media.immich-stack.immich <- lungmen·akn.system.newt: "Tunnel traffic proxy (2283)" {class: [secured-connect-from-internet]}
+lungmen·akn.media.immich-stack.postgresql -> nas.minio: "Database backups (S3)"
 lungmen·akn.media.immich-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
-lungmen·akn.media.jellyfin -> amiya·akn.pocket-id: "SSO authentication (443)" {}
+lungmen·akn.media.jellyfin -> amiya·akn.pocket-id: "SSO authentication (443)"
 lungmen·akn.media.jellyfin -> internet: "Metadata and external content fetching (443)" {class: [connect-to-internet]}
-lungmen·akn.media.jellyfin <- lungmen·akn.media.jellyseerr-stack.jellyseerr: "Media library API access (8096)" {}
-lungmen·akn.media.jellyfin <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8096)" {}
+lungmen·akn.media.jellyfin <- lungmen·akn.media.jellyseerr-stack.jellyseerr: "Media library API access (8096)"
+lungmen·akn.media.jellyfin <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8096)"
+lungmen·akn.media.jellyfin <- lungmen·akn.system.newt: "Tunnel traffic proxy (8096)" {class: [secured-connect-from-internet]}
 
-lungmen·akn.media.jellyseerr-stack.jellyseerr -> lungmen·akn.media.jellyseerr-stack.postgresql: "Database operations (5432)" {}
+lungmen·akn.media.jellyseerr-stack.jellyseerr -> lungmen·akn.media.jellyseerr-stack.postgresql: "Database operations (5432)"
 lungmen·akn.media.jellyseerr-stack.jellyseerr -> internet: "External media database queries (443)" {class: [connect-to-internet]}
-lungmen·akn.media.jellyseerr-stack.jellyseerr <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (5055)" {}
-lungmen·akn.media.jellyseerr-stack.postgresql -> nas.minio: "Database backups (S3)" {}
+lungmen·akn.media.jellyseerr-stack.jellyseerr <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (5055)"
+lungmen·akn.media.jellyseerr-stack.jellyseerr <- lungmen·akn.system.newt: "Tunnel traffic proxy (5055)" {class: [secured-connect-from-internet]}
+lungmen·akn.media.jellyseerr-stack.postgresql -> nas.minio: "Database backups (S3)"
 lungmen·akn.media.jellyseerr-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Life Management Flow
 
-lungmen·akn.life.actual-budget -> amiya·akn.pocket-id: "SSO authentication (443)" {}
-lungmen·akn.life.actual-budget <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (5006)" {}
+lungmen·akn.life.actual-budget -> amiya·akn.pocket-id: "SSO authentication (443)"
+lungmen·akn.life.actual-budget <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (5006)"
 
-lungmen·akn.life.paperless-stack.paperless -> amiya·akn.pocket-id: "SSO authentication (443)" {}
-lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.life.paperless-stack.postgresql: "Database operations (5432)" {}
-lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.life.paperless-stack.redis: "Cache operations (6379)" {}
-lungmen·akn.life.paperless-stack.paperless <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8000)" {}
+lungmen·akn.life.paperless-stack.paperless -> amiya·akn.pocket-id: "SSO authentication (443)"
+lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.life.paperless-stack.postgresql: "Database operations (5432)"
+lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.life.paperless-stack.redis: "Cache operations (6379)"
+lungmen·akn.life.paperless-stack.paperless <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8000)"
 lungmen·akn.life.paperless-stack.paperless -> internet: "IMAP email access (993)" {class: [connect-to-internet]}
-lungmen·akn.life.paperless-stack.postgresql -> nas.minio: "Database backups (S3)" {}
+lungmen·akn.life.paperless-stack.postgresql -> nas.minio: "Database backups (S3)"
 lungmen·akn.life.paperless-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Other Services Flow
 
-lungmen·akn.others.atuin-stack.atuin -> lungmen·akn.others.atuin-stack.postgresql: "Database operations (5432)" {}
-lungmen·akn.others.atuin-stack.atuin <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8888)" {}
+lungmen·akn.others.atuin-stack.atuin -> lungmen·akn.others.atuin-stack.postgresql: "Database operations (5432)"
+lungmen·akn.others.atuin-stack.atuin <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8888)"
 lungmen·akn.others.atuin-stack.atuin <- lungmen·akn.system.tailscale: "VPN access (8888)" {class: [connect-vpn-backbone]}
-lungmen·akn.others.atuin-stack.postgresql -> nas.minio: "Database backups (S3)" {}
+lungmen·akn.others.atuin-stack.postgresql -> nas.minio: "Database backups (S3)"
 lungmen·akn.others.atuin-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
-lungmen·akn.others.linkding-stack.linkding -> amiya·akn.pocket-id: "SSO authentication (443)" {}
-lungmen·akn.others.linkding-stack.linkding -> lungmen·akn.others.linkding-stack.postgresql: "Database operations (5432)" {}
+lungmen·akn.others.linkding-stack.linkding -> amiya·akn.pocket-id: "SSO authentication (443)"
+lungmen·akn.others.linkding-stack.linkding -> lungmen·akn.others.linkding-stack.postgresql: "Database operations (5432)"
 lungmen·akn.others.linkding-stack.linkding -> internet: "Website information fetching (443)" {class: [connect-to-internet]}
-lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (9090)" {}
-lungmen·akn.others.linkding-stack.postgresql -> nas.minio: "Database backups (S3)" {}
+lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (9090)"
+lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.newt: "Tunnel traffic proxy (9090)" {class: [secured-connect-from-internet]}
+lungmen·akn.others.linkding-stack.postgresql -> nas.minio: "Database backups (S3)"
 lungmen·akn.others.linkding-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
-lungmen·akn.others.n8n-stack.n8n -> lungmen·akn.others.n8n-stack.postgresql: "Database operations (5432)" {}
-lungmen·akn.others.n8n-stack.n8n -> lungmen·akn.others.n8n-stack.redis: "Queue operations (6379)" {}
+lungmen·akn.others.n8n-stack.n8n -> lungmen·akn.others.n8n-stack.postgresql: "Database operations (5432)"
+lungmen·akn.others.n8n-stack.n8n -> lungmen·akn.others.n8n-stack.redis: "Queue operations (6379)"
 lungmen·akn.others.n8n-stack.n8n -> internet: "Workflow integrations and external APIs (443)" {class: [connect-to-internet]}
-lungmen·akn.others.n8n-stack.n8n <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (5678)" {}
-lungmen·akn.others.n8n-stack.postgresql -> nas.minio: "Database backups (S3)" {}
+lungmen·akn.others.n8n-stack.n8n <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (5678)"
+lungmen·akn.others.n8n-stack.n8n <- lungmen·akn.system.newt: "Tunnel traffic proxy (5678)" {class: [secured-connect-from-internet]}
+lungmen·akn.others.n8n-stack.postgresql -> nas.minio: "Database backups (S3)"
 lungmen·akn.others.n8n-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
 lungmen·akn.others.silverbullet -> internet: "Plug downloads (443)" {class: [connect-to-internet]}
-lungmen·akn.others.silverbullet <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (3000)" {}
+lungmen·akn.others.silverbullet <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (3000)"
 lungmen·akn.others.silverbullet <- lungmen·akn.system.tailscale: "VPN access (3000)" {class: [connect-vpn-backbone]}
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Storage and Backup Connections
 
-lungmen·akn.system.longhorn -> nas.minio: "Volume backups (S3)" {}
+lungmen·akn.system.longhorn -> nas.minio: "Volume backups (S3)"

@@ -1,0 +1,42 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: newt-system
+
+resources:
+  - newt.externalsecret.yaml
+
+  # Include security policies
+  - security/
+
+helmCharts:
+  - name: newt
+    repo: https://charts.fossorial.io
+    version: 1.1.0
+    releaseName: newt
+    namespace: newt-system
+    valuesInline:
+      newtInstances:
+        - name: "main-tunnel"
+          auth:
+            existingSecretName: "newt-credentials"
+            keys:
+              endpointKey: "PANGOLIN_ENDPOINT"
+              idKey: "NEWT_ID"
+              secretKey: "NEWT_SECRET"
+          enabled: true
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: newt
+    includeTemplates: true
+    includeSelectors: true
+  - pairs:
+      # renovate: datasource=docker depName=docker.io/fosrl/newt
+      app.kubernetes.io/version: 1.5.0
+    includeTemplates: true
+
+images:
+  # renovate: datasource=docker depName=docker.io/fosrl/newt
+  - name: docker.io/fosrl/newt
+    newTag: 1.5.0@sha256:ab182f1808467f87ee8129157aa64c4e627931c6b1f40015dcaa3db7b6161d54

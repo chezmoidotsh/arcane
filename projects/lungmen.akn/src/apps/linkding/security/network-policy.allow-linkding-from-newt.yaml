@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Newt to route traffic to Linkding application.
+  name: allow-linkding-from-newt
+  namespace: linkding
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: linkding
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: newt-system
+            app.kubernetes.io/name: newt
+      toPorts:
+        - ports:
+            - port: "9090"
+              protocol: TCP
