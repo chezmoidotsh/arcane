@@ -119,23 +119,25 @@ spec:
       }
 
       # Cloudflare DNS Records - IPv6
-      resource "cloudflare_dns_record" "kazimierz_pangolin_ipv6" {
-        zone_id = data.cloudflare_zone.chezmoi_sh.zone_id
-        name    = "kazimierz.akn"
-        content = hcloud_server.kazimierz_pangolin.ipv6_address
-        type    = "AAAA"
-        ttl     = 300
-        proxied = false
-      }
+      # NOTE: Disabled for now as IPv6 seems not yet fully supported in the current infrastructure setup.
 
-      resource "cloudflare_dns_record" "kazimierz_wildcard_ipv6" {
-        zone_id = data.cloudflare_zone.chezmoi_sh.zone_id
-        name    = "*"
-        content = hcloud_server.kazimierz_pangolin.ipv6_address
-        type    = "AAAA"
-        ttl     = 300
-        proxied = false
-      }
+      # resource "cloudflare_dns_record" "kazimierz_pangolin_ipv6" {
+      #   zone_id = data.cloudflare_zone.chezmoi_sh.zone_id
+      #   name    = "kazimierz.akn"
+      #   content = hcloud_server.kazimierz_pangolin.ipv6_address
+      #   type    = "AAAA"
+      #   ttl     = 300
+      #   proxied = false
+      # }
+
+      # resource "cloudflare_dns_record" "kazimierz_wildcard_ipv6" {
+      #   zone_id = data.cloudflare_zone.chezmoi_sh.zone_id
+      #   name    = "*"
+      #   content = hcloud_server.kazimierz_pangolin.ipv6_address
+      #   type    = "AAAA"
+      #   ttl     = 300
+      #   proxied = false
+      # }
 
     source: Inline
   providerConfigRef:
