@@ -78,7 +78,7 @@ spec:
               value: chezmoi.sh
             - # The duration of a session in minutes before the user has to sign in again.
               name: SESSION_DURATION
-              value: "120" # 2 hours
+              value: "1440" # 24 hours
             - # Whether the user's email should be marked as verified for the OIDC clients.
               name: EMAILS_VERIFIED
               value: "true"
