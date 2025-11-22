@@ -1,0 +1,68 @@
+---
+# CrowdSec AppSec Configuration - Pangolin Dashboard Application Profile
+# Managed by Ansible - DO NOT EDIT MANUALLY
+#
+# Purpose:
+#   Application-specific profile for Pangolin reverse proxy dashboard to prevent
+#   false positives from legitimate administrative operations while maintaining
+#   security protections for other services.
+#
+# Application: Pangolin Dashboard
+#   A web-based management interface for Pangolin reverse proxy that provides
+#   administrative capabilities including Docker socket management and site
+#   configuration. These administrative features trigger WAF rules designed to
+#   prevent attacks, but are legitimate functionality in this context.
+#
+# Scope:
+#   Applied to requests matching:
+#     - Host: {{ pangolin_dashboard_url | regex_replace('https?://', '') }}
+#
+# Disabled Rules for Pangolin Dashboard:
+#   - 911100: HTTP Method Not Allowed
+#             Reason: Pangolin dashboard uses REST API patterns with PUT, DELETE,
+#                     and PATCH methods for resource management. These are standard
+#                     REST operations but are blocked by default CRS configuration
+#                     which only allows GET, HEAD, POST, and OPTIONS.
+#
+#   - 920420: Request content type not allowed by policy
+#             Reason: Pangolin API may send custom or non-standard Content-Type
+#                     headers that are not in the default CRS allowed list but
+#                     are required for dashboard API operations
+#
+#   - 930120: OS File Access Attempt (LFI detection)
+#             Reason: The site configuration endpoint /api/v1/site/1 includes
+#                     the 'dockerSocketEnabled' field which resembles file paths
+#                     (e.g., docker.sock) and triggers LFI detection. This is
+#                     legitimate configuration data, not a file access attack.
+#
+# Security Considerations:
+#   - These rules are ONLY disabled for requests to Pangolin dashboard domains
+#   - All other OWASP CRS protections remain active (SQL injection, XSS, RCE)
+#   - Pangolin dashboard should be properly authenticated via Authelia/OIDC
+#   - Access should be restricted to trusted administrators only
+#   - Monitor CrowdSec alerts for unusual patterns on Pangolin endpoints
+#
+# Known Legitimate Patterns:
+#   - Endpoints: /api/v1/site/*, /api/v1/config/*, /api/v1/docker/*
+#   - Methods: GET, POST, PUT, DELETE (standard REST operations)
+#   - Content: Configuration payloads with field names resembling file paths
+#
+# References:
+#   - Pangolin Documentation: https://docs.digpangolin.com/
+#   - OWASP CRS Rules: 911100, 920420, 930120
+#   - CrowdSec AppSec Hooks: https://docs.crowdsec.net/docs/appsec/hooks/
+#
+name: custom/allow-pangolin
+default_remediation: ban
+
+# Disable rules for Pangolin dashboard domains during in-band processing
+pre_eval:
+  - filter: |
+      IsInBand == true && (req.Host == "{{ pangolin_dashboard_url | regex_replace('https?://', '') }}")
+    apply:
+      # Allow REST API methods (PUT, DELETE, PATCH) for resource management
+      - RemoveInBandRuleByID(911100)
+      # Allow non-standard Content-Type headers for dashboard API
+      - RemoveInBandRuleByID(920420)
+      # Allow Docker socket configuration without triggering LFI detection
+      - RemoveInBandRuleByID(930120)

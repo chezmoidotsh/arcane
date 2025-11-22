@@ -94,6 +94,15 @@ pangolin_smtp_pass: !vault |
   6530666663646438363665646435663337643531643763633632
 pangolin_smtp_from: Pangolin <no-reply@chezmoi.sh>
 # -------------------------------------------------------------------------
+# CrowdSec Configuration
+# -------------------------------------------------------------------------
+crowdsec_appsec_domains:
+  jellyfin:
+    - streaming.chezmoi.sh
+  immich:
+    - photos.chezmoi.sh
+
+# -------------------------------------------------------------------------
 # Error Pages Configuration
 # -------------------------------------------------------------------------
 pangolin_errorpages_template: l7

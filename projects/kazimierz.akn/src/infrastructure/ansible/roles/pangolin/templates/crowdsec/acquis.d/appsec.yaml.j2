@@ -1,0 +1,44 @@
+---
+# CrowdSec AppSec Acquisition Configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+#
+# Purpose:
+#   Configure CrowdSec AppSec (Application Security / WAF) to listen for HTTP
+#   requests and apply security rules. This file dynamically includes all
+#   application-specific security profiles based on the deployment configuration.
+#
+# Configuration:
+#   - listen_addr: AppSec HTTP endpoint for Traefik plugin
+#   - appsec_configs: List of security rule collections to apply
+#
+# Application Profiles:
+#   Profiles are automatically included based on configured domains:
+#   - custom/allow-pangolin: Always included (dashboard functionality)
+#   - custom/allow-jellyfin: Included if crowdsec_appsec_domains.jellyfin is configured
+#   - custom/allow-immich: Included if crowdsec_appsec_domains.immich is configured
+#
+# Adding New Applications:
+#   1. Create allow-{app}.yaml.j2 in appsec-configs/
+#   2. Add to crowdsec_appsec_domains in defaults/main.yml
+#   3. This file will automatically include it when domains are configured
+#
+listen_addr: 0.0.0.0:7422
+appsec_configs:
+  # Default CrowdSec AppSec configurations
+  - crowdsecurity/appsec-default
+  - crowdsecurity/crs-inband
+
+  # Core infrastructure profile (always included)
+  - custom/allow-pangolin
+
+  # Application-specific profiles (conditionally included)
+{% if crowdsec_appsec_domains.jellyfin | default([]) | length > 0 %}
+  - custom/allow-jellyfin
+{% endif %}
+{% if crowdsec_appsec_domains.immich | default([]) | length > 0 %}
+  - custom/allow-immich
+{% endif %}
+
+source: appsec
+labels:
+  type: appsec

@@ -110,6 +110,24 @@ pangolin_crowdsec_gid: "1000"
 # Permissions: 0600 (root read/write only)
 pangolin_crowdsec_bouncer_key_file: "{{ pangolin_compose_dir }}/config/crowdsec/bouncer_key"
 
+# CrowdSec AppSec application-specific domain configurations
+# Configure which applications should have custom WAF profiles applied.
+# Each application profile disables specific OWASP CRS rules that cause
+# false positives for that application's legitimate traffic.
+#
+# Override in host_vars to enable application profiles:
+# crowdsec_appsec_domains:
+#   jellyfin:
+#     - "jellyfin.example.com"
+#     - "watch.example.com"
+#   immich:
+#     - "photos.example.com"
+#
+# If an application list is empty or undefined, its profile won't be deployed.
+crowdsec_appsec_domains:
+  jellyfin: []
+  immich: []
+
 # -------------------------------------------------------------------------
 # Traefik Configuration
 # -------------------------------------------------------------------------

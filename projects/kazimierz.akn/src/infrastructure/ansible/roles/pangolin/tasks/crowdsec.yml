@@ -69,20 +69,29 @@
 # CrowdSec Configuration Files Deployment
 # ==========================================================================
 # Deploy acquis configurations that define log sources for CrowdSec:
-#   - traefik.yaml: Configure Traefik access log parsing
-#   - appsec.yaml: Configure Application Security (WAF) log parsing with
-#                  custom rule disabling configurations
+#   - traefik.yaml: Configure Traefik access log parsing (static file)
+#   - appsec.yaml: Configure Application Security (WAF) with dynamic profile
+#                  inclusion based on configured application domains
 # ==========================================================================
-- name: Deploy CrowdSec acquis configurations
+- name: Deploy CrowdSec static acquis configuration (Traefik)
   ansible.builtin.copy:
-    src: "crowdsec/acquis.d/{{ item }}"
-    dest: "{{ pangolin_compose_dir }}/config/crowdsec/acquis.d/{{ item }}"
+    src: "crowdsec/acquis.d/traefik.yaml"
+    dest: "{{ pangolin_compose_dir }}/config/crowdsec/acquis.d/traefik.yaml"
     mode: "0644"
     owner: root
     group: root
-  loop:
-    - traefik.yaml
-    - appsec.yaml
+  tags:
+    - pangolin
+    - crowdsec
+    - configuration
+
+- name: Deploy CrowdSec dynamic acquis configuration (AppSec)
+  ansible.builtin.template:
+    src: "crowdsec/acquis.d/appsec.yaml.j2"
+    dest: "{{ pangolin_compose_dir }}/config/crowdsec/acquis.d/appsec.yaml"
+    mode: "0644"
+    owner: root
+    group: root
   tags:
     - pangolin
     - crowdsec
@@ -91,26 +100,59 @@
 # ==========================================================================
 # CrowdSec AppSec Custom Configurations Deployment
 # ==========================================================================
-# Deploy custom AppSec configurations to modify default CrowdSec behavior:
-#   - disable-rule-911100.yaml: Disable OWASP CRS rule 911100 globally to
-#                               allow REST API methods (PUT, DELETE, PATCH)
-#   - disable-rule-920420.yaml: Disable OWASP CRS rule 920420 for Pangolin
-#                               hosts to allow non-standard Content-Type headers
+# Deploy custom AppSec configurations using application-based profiles:
 #
-# All configurations are templated to allow for future variable overrides,
-# even if they don't currently use template variables.
+# Application Profiles (applied to specific application domains):
+#   - allow-pangolin.yaml: Pangolin dashboard profile
+#                          Allows: REST methods (PUT/DELETE/PATCH), non-standard
+#                                  Content-Type, Docker socket config
+#                          Domains: Configured via pangolin_domains (always deployed)
+#
+#   - allow-jellyfin.yaml: Jellyfin media server profile
+#                          Allows: POST w/o Content-Length, Accept-Charset header
+#                          Domains: Configured via crowdsec_appsec_domains.jellyfin
+#
+#   - allow-immich.yaml: Immich photo management profile
+#                        Allows: POST w/o Content-Length for token validation
+#                        Domains: Configured via crowdsec_appsec_domains.immich
+#
+# Configuration Strategy:
+#   - Pangolin profile: Always deployed (required for dashboard functionality)
+#   - Application profiles: Only deployed if domain list is configured and non-empty
+#
+# Variables:
+#   - pangolin_domains: List of Pangolin dashboard domains (required)
+#   - crowdsec_appsec_domains.jellyfin: List of Jellyfin domains (optional)
+#   - crowdsec_appsec_domains.immich: List of Immich domains (optional)
 # ==========================================================================
-- name: Deploy CrowdSec AppSec custom configurations
+
+# Deploy Pangolin-specific profile (always deployed)
+- name: Deploy CrowdSec AppSec Pangolin dashboard profile
   ansible.builtin.template:
-    src: "crowdsec/appsec-configs/{{ item }}.j2"
-    dest: "{{ pangolin_compose_dir }}/config/crowdsec/appsec-configs/{{ item }}"
+    src: "crowdsec/appsec-configs/allow-pangolin.yaml.j2"
+    dest: "{{ pangolin_compose_dir }}/config/crowdsec/appsec-configs/allow-pangolin.yaml"
+    mode: "0644"
+    owner: root
+    group: root
+  tags:
+    - pangolin
+    - crowdsec
+    - configuration
+
+# Deploy application-specific profiles (only if domains configured)
+- name: Deploy CrowdSec AppSec application profiles
+  ansible.builtin.template:
+    src: "crowdsec/appsec-configs/{{ item.config }}.j2"
+    dest: "{{ pangolin_compose_dir }}/config/crowdsec/appsec-configs/{{ item.config }}"
     mode: "0644"
     owner: root
     group: root
   loop:
-    - disable-rule-911100.yaml
-    - disable-rule-920420.yaml
-    - disable-rule-930120.yaml
+    - config: allow-jellyfin.yaml
+      domains: "{{ crowdsec_appsec_domains.jellyfin | default([]) }}"
+    - config: allow-immich.yaml
+      domains: "{{ crowdsec_appsec_domains.immich | default([]) }}"
+  when: item.domains | length > 0
   tags:
     - pangolin
     - crowdsec

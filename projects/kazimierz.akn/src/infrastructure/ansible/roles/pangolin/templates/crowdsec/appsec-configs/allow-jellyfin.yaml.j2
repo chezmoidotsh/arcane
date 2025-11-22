@@ -1,0 +1,70 @@
+---
+# CrowdSec AppSec Configuration - Jellyfin Application Profile
+# Managed by Ansible - DO NOT EDIT MANUALLY
+#
+# Purpose:
+#   Application-specific profile for Jellyfin media server to prevent false
+#   positives from legitimate mobile/web client traffic while maintaining
+#   security protections.
+#
+# Application: Jellyfin Media Server
+#   A self-hosted media streaming platform supporting web, mobile, and TV clients.
+#   Jellyfin uses REST API patterns with various HTTP methods and standard headers
+#   that may trigger WAF false positives under strict OWASP CRS rules.
+#
+# Scope:
+#   Applied to requests matching:
+{% for domain in crowdsec_appsec_domains.jellyfin | default([]) %}
+#     - Host: {{ domain }}
+{% endfor %}
+#
+# Disabled Rules for Jellyfin:
+#   - 920180: POST without Content-Length or Transfer-Encoding headers
+#             Reason: Jellyfin /Sessions/Capabilities endpoint sends POST with
+#                     empty body during client registration, which is valid HTTP
+#
+#   - 920420: Request content type not allowed by policy
+#             Reason: Jellyfin may send custom or non-standard Content-Type headers
+#                     that are not in the default CRS allowed list
+#
+#   - 920450: HTTP header is restricted by policy (Accept-Charset)
+#             Reason: Jellyfin mobile clients (Ktor HTTP library) send Accept-Charset
+#                     header which is blocked by paranoid CRS settings but is a
+#                     standard HTTP header (RFC 7231)
+#
+# Security Considerations:
+#   - These rules are ONLY disabled for requests to Jellyfin domains
+#   - All other OWASP CRS protections remain active (SQL injection, XSS, etc.)
+#   - Ensure Jellyfin is kept up-to-date and properly authenticated
+#   - Monitor CrowdSec alerts for unusual patterns on Jellyfin endpoints
+#
+# Known Legitimate Patterns:
+#   - User-Agent: "Ktor client" (Jellyfin Android app)
+#   - Endpoints: /Sessions/Capabilities, /UserItems/Resume, /UserPlayedItems/*
+#   - Methods: GET, POST, DELETE (standard REST operations)
+#
+# References:
+#   - Jellyfin API Documentation: https://api.jellyfin.org/
+#   - OWASP CRS Rules: 920180, 920420, 920450
+#   - CrowdSec AppSec Hooks: https://docs.crowdsec.net/docs/appsec/hooks/
+#   - RFC 7231 (HTTP Accept-Charset): https://tools.ietf.org/html/rfc7231#section-5.3.3
+#
+name: custom/allow-jellyfin
+default_remediation: ban
+
+# Disable rules for Jellyfin domains during in-band processing
+pre_eval:
+  - filter: |
+      IsInBand == true && (
+        {%- for domain in crowdsec_appsec_domains.jellyfin | default([]) -%}
+        req.Host == "{{ domain }}"
+        {%- if not loop.last %} || {% endif -%}
+        {%- endfor -%}
+      )
+    apply:
+      # Allow POST without Content-Length for capability registration
+      - RemoveInBandRuleByID(920180)
+      # Allow non-standard Content-Type headers
+      - RemoveInBandRuleByID(920420)
+      # Allow Accept-Charset header (standard HTTP header)
+      - RemoveInBandRuleByID(920450)
