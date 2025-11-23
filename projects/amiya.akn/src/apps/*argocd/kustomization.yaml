@@ -6,7 +6,7 @@ namespace: argocd
 labels:
   - pairs:
       # renovate: datasource=helm depName=argo-cd registryUrl=https://argoproj.github.io/argo-helm
-      app.kubernetes.io/version: 9.1.3
+      app.kubernetes.io/version: 9.1.4
     includeTemplates: true
 
 resources:
@@ -28,7 +28,7 @@ helmCharts:
   - name: argo-cd
     repo: https://argoproj.github.io/argo-helm
     releaseName: argocd
-    version: 9.1.3
+    version: 9.1.4
     valuesFile: argocd.helmvalues/default.yaml
     additionalValuesFiles:
       - argocd.helmvalues/hardened.yaml
