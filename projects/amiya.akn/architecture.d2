@@ -125,14 +125,6 @@ amiya·akn: {
     tooltip: Crossplane is an open-source Kubernetes add-on that extends your cluster with managed resources from any cloud or on-prem environment.
   }
 
-  infrastructure.talos-omni: {
-    class: [application; undeployed]
-    label: Talos Omni
-    icon: assets/icons/hardware/talos.svg
-    link: https://omni.siderolabs.com/
-    tooltip: Talos Omni is a platform for managing Talos Linux clusters through a simplified interface.
-  }
-
   # ────────────────────────────────────────────────────────────────────────────
   # Security Components
 
@@ -341,8 +333,6 @@ amiya·akn.glance <- amiya·akn.system.envoy-default-gateway: { source-arrowhead
 
 amiya·akn.infrastructure.argocd <- amiya·akn.system.envoy-default-gateway: { source-arrowhead: HTTP (8080) }
 amiya·akn.infrastructure.argocd <- amiya·akn.system.tailscale: { class: [connect-from-vpn]; source-arrowhead: HTTP (8080) }
-
-amiya·akn.infrastructure.talos-omni <- amiya·akn.system.envoy-default-gateway: { class: [undeployed]; source-arrowhead: HTTP (443) }
 
 amiya·akn.security.openbao-stack.openbao -> amiya·akn.security.openbao-stack.postgresql: { source-arrowhead: PostgreSQL (5432) }
 amiya·akn.security.openbao-stack.openbao <- amiya·akn.system.envoy-default-gateway: { source-arrowhead: HTTP (8200) }

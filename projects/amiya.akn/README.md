@@ -13,7 +13,7 @@
 
 <!-- trunk-ignore-begin(markdown-link-check/404) -->
 
-<a href="#ℹ%EF%B8%8F-about">About</a> · <a href="#%EF%B8%8F-mission-critical-services">Services</a> · <a href="#-how-to-use--how-to-develop-on-it">How to use</a> · <a href="#-disaster-recovery-plan-drp">Disaster Recovery Plan (DRP)</a> · <a href="#%EF%B8%8F-roadmap">Roadmap</a> · <a href="#%EF%B8%8F-license">License</a>
+<a href="#about">About</a> · <a href="#services-overview">Services</a> · <a href="#usage-and-development">Usage</a> · <a href="#disaster-recovery">Recovery</a> · <a href="#roadmap">Roadmap</a> · <a href="#license">License</a>
 
 <!-- trunk-ignore-end(markdown-link-check/404) -->
 
@@ -21,58 +21,161 @@
 
 ***
 
-## ℹ️ About
+> \[!NOTE]
+> **Why Amiya?** In Arknights lore, Amiya is the leader of Rhodes Island, a pharmaceutical company fighting for the infected. She is the core of the operation, just as this project is the core of the homelab, providing mission-critical services that other projects depend on.
 
-Amiya·AKN is a project that aims to transform a mini PC into the most critical component of my homelab.
-This project integrates several essential components to allow other projects to be deployed and managed securely,
-without[^1] the need of third-party services.
+## About
 
-## 🛠️ Mission-Critical services
+Amiya·AKN is a project that aims to transform a mini PC into the most critical component of my homelab. This project integrates several essential components to allow other projects to be deployed and managed securely, without[^1] the need of third-party services.
+
+## Services Overview
 
 ![Architecture diagram](./assets/architecture.svg)
 
-### 🌐 Infrastructure
+***
 
-* **ArgoCD**: GitOps-based deployment tool for Kubernetes. <br/>
-  **Why is it mission-critical?** It ensures that all services are deployed and managed in a declarative way, making it easier to maintain and recover from failures.
+### Infrastructure
 
-* **Crossplane**: Infrastructure as Code (IaC) tool for Kubernetes. <br/>
-  **Why is it mission-critical?** It provides a way to manage cloud/3rd party services using the same IaC tools, ensuring consistency and auditability.
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/argo-cd.svg" alt="ArgoCD Logo" width="120" align="left" style="margin-right: 16px;">
 
-* **OpenBao**: Centralized secret management platform. <br/>
-  **Why is it mission-critical?** It acts as the single source of truth for all secrets, eliminating dependencies on external services and improving security and resilience. Uses a multi-mount topology with dedicated KV mounts per project (`projects-amiya-akn/`, `projects-*-akn/`, `shared/`) for optimal isolation and access control. Backed by PostgreSQL database managed by CloudNative-PG (with automated S3 backups) and auto-unsealed using PKCS#11 and SoftHSM2.
+### [ArgoCD](https://argoproj.github.io/cd/)
 
-* **CloudNative-PG**: PostgreSQL operator for Kubernetes. <br/>
-  **Why is it mission-critical?** It manages the PostgreSQL database that stores OpenBao's secrets and metadata, providing automated backups to S3, high availability, and lifecycle management of the database infrastructure.
+GitOps-based deployment tool for Kubernetes.
 
-* **Talos Omni** *(not deployed)*: Platform for managing Talos Linux clusters. <br/>
-  **Why is it mission-critical?** It provides a simplified interface for managing the underlying Talos Linux cluster, ensuring proper cluster operations and maintenance.
+***Why this choice**: It ensures that all services are deployed and managed in a declarative way, making it easier to maintain and recover from failures.*
 
-### 🔐 Authentication and Authorization
+</div>
+</div>
 
-* **Authelia**: Centralized authentication with 2FA and SSO support. <br/>
-  **Why is it mission-critical?** It provides a centralized authentication system that can be used by other services in the homelab and ensures that all services are secure.
+<br/><br/>
 
-* **Pocket-Id**: Centralized identity management service with passkey support only. <br/>
-  **Why is it mission-critical?** It provides a centralized authentication system that can be used by other services in the homelab and ensures that all services are secure *(will replace Authelia + yaLDAP)*.
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/system/crossplane.svg" alt="Crossplane Logo" width="120" align="right" style="margin-left: 16px;">
 
-* **yaLDAP**: Modern LDAP server. <br/>
-  **Why is it mission-critical?** It provides a centralized directory service for user management and authentication.
+### [Crossplane](https://crossplane.io/)
 
-### 🗄️ Storage
+Infrastructure as Code (IaC) tool for Kubernetes.
 
-* **MinIO** *(not deployed)*: S3-compatible object storage. <br/>
-  **Why is it mission-critical?** It provides a local S3-compatible storage for backups and other objects, ensuring data availability even when external services are down.
+***Why this choice**: It provides a way to manage cloud/3rd party services using the same IaC tools, ensuring consistency and auditability.*
 
-* **zot registry** *(not deployed)*: Docker image registry. <br/>
-  **Why is it mission-critical?** It stores all Docker images used by other services locally, ensuring that services can be deployed even when external registries are unavailable.
+</div>
+</div>
 
-### 📦 Others
+<br/><br/>
 
-* **Glance**: Home dashboard. <br/>
-  **Why is it mission-critical?** It provides a single page with all services and their status, making it easier to monitor and manage the homelab.
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/openbao.svg" alt="OpenBao Logo" width="120" align="left" style="margin-right: 16px;">
 
-## 🚀 How to use / How to develop on it
+### [OpenBao](https://openbao.org/)
+
+Centralized secret management platform.
+
+***Why this choice**: It acts as the single source of truth for all secrets, eliminating dependencies on external services and improving security and resilience. Uses a multi-mount topology with dedicated KV mounts per project (`projects-amiya-akn/`, `projects-*-akn/`, `shared/`) for optimal isolation and access control. Backed by PostgreSQL database managed by CloudNative-PG (with automated S3 backups) and auto-unsealed using PKCS#11 and SoftHSM2.*
+
+</div>
+</div>
+
+<br/><br/>
+
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/system/cloudnativepg.svg" alt="CloudNative-PG Logo" width="120" align="right" style="margin-left: 16px;">
+
+### [CloudNative-PG](https://cloudnative-pg.io/)
+
+PostgreSQL operator for Kubernetes.
+
+***Why this choice**: It manages the PostgreSQL database that stores OpenBao's secrets and metadata, providing automated backups to S3, high availability, and lifecycle management of the database infrastructure.*
+
+</div>
+</div>
+
+***
+
+### Authentication and Authorization
+
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/authelia.svg" alt="Authelia Logo" width="120" align="right" style="margin-left: 16px;">
+
+### [Authelia](https://www.authelia.com/)
+
+Centralized authentication with 2FA and SSO support.
+
+***Why this choice**: It provides a centralized authentication system that can be used by other services in the homelab and ensures that all services are secure.*
+
+</div>
+</div>
+
+<br/><br/>
+
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/pocket-id.svg" alt="Pocket-Id Logo" width="120" align="left" style="margin-right: 16px;">
+
+### [Pocket-Id](https://github.com/pocket-id/pocket-id)
+
+Centralized identity management service with passkey support only.
+
+***Why this choice**: It provides a centralized authentication system that can be used by other services in the homelab and ensures that all services are secure *(will replace Authelia)*.*
+
+</div>
+</div>
+
+***
+
+### Storage
+
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/minio.svg" alt="MinIO Logo" width="120" align="left" style="margin-right: 16px;">
+
+### [MinIO](https://min.io/) *(not deployed)*
+
+S3-compatible object storage.
+
+***Why this choice**: It provides a local S3-compatible storage for backups and other objects, ensuring data availability even when external services are down.*
+
+</div>
+</div>
+
+<br/><br/>
+
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/zot-registry.svg" alt="zot registry Logo" width="120" align="right" style="margin-left: 16px;">
+
+### [zot registry](https://zotregistry.io/) *(not deployed)*
+
+Docker image registry.
+
+***Why this choice**: It stores all Docker images used by other services locally, ensuring that services can be deployed even when external registries are unavailable.*
+
+</div>
+</div>
+
+***
+
+### Others
+
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/glance.png" alt="Glance Logo" width="120" align="left" style="margin-right: 16px;">
+
+### [Glance](https://github.com/glanceapp/glance)
+
+Home dashboard.
+
+***Why this choice**: It provides a single page with all services and their status, making it easier to monitor and manage the homelab.*
+
+</div>
+</div>
+
+## 🚀 Usage and Development
 
 This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based deployment and [Kustomize](https://kustomize.io/) for configuration management. Here's how to work with it:
 
@@ -86,15 +189,15 @@ This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based depl
 
 2. **Make changes to application configurations**:
    * All applications are defined in the `src/apps/` directory
-   * Each application has its own Kustomize base and overlays
+   * Each application is a self-contained Kustomize package
 
 3. **Test your changes locally**:
    ```bash
    # Validate Kustomize build
-   kubectl kustomize src/apps/your-app/overlays/dev --enable-helm
+   kubectl kustomize src/apps/your-app --enable-helm
 
    # Validate against the live cluster (if you have access)
-   kubectl kustomize src/apps/your-app/overlays/dev --enable-helm | kubectl apply --dry-run=server -f -
+   kubectl kustomize src/apps/your-app --enable-helm | kubectl apply --dry-run=server -f -
    ```
 
 4. **Commit and push your changes**:
@@ -111,14 +214,8 @@ This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based depl
 1. Create a new directory in `src/apps/` with the following structure:
    ```text
    src/apps/new-app/
-   ├── base/
-   │   ├── kustomization.yaml
-   │   └── [app manifests]
-   └── overlays/
-       ├── dev/
-       │   └── kustomization.yaml
-       └── prod/
-           └── kustomization.yaml
+   ├── kustomization.yaml
+   └── [app manifests]
    ```
 
 2. Create an ArgoCD Application manifest in `src/apps/argocd/applications/`:
@@ -133,7 +230,7 @@ This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based depl
      source:
        repoURL: https://github.com/chezmoidotsh/arcane.git
        targetRevision: HEAD
-       path: projects/amiya.akn/src/apps/new-app/overlays/prod
+       path: projects/amiya.akn/src/apps/new-app
      destination:
        server: https://kubernetes.default.svc
        namespace: new-app
@@ -145,7 +242,7 @@ This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based depl
 
 For more detailed information about the setup, refer to the [bootstrap documentation](./docs/BOOTSTRAP_ARGOCD.md).
 
-## 💀 Disaster Recovery Plan (DRP)
+## 💀 Disaster Recovery
 
 In case of a disaster requiring complete system recovery, follow these steps:
 
@@ -203,7 +300,7 @@ Once the base cluster is running, restore core infrastructure:
    kubectl get secretstores --all-namespaces
    ```
 5. Verify networking components (AdGuard Home, Tailscale) are operational
-6. Test authentication services (Authelia, yaLDAP)
+6. Test authentication services (Authelia)
 7. Confirm storage services are available and populated
 
 For detailed step-by-step recovery procedures, refer to the bootstrap documentation in the `docs/` directory.
