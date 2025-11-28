@@ -136,7 +136,6 @@ Use exact scope format based on `.commitlintrc.js`. When scope is ambiguous, ana
 * `project:chezmoi.sh` - Chezmoi.sh project (for `projects/chezmoi.sh/`)
 * `project:hass` - Home Assistant project (for `projects/hass/`)
 * `project:lungmen.akn` - Lungmen.akn project (for `projects/lungmen.akn/`)
-* `project:maison` - Maison project (for `projects/maison/`)
 * `project:shodan.akn` - Shodan.akn project (for `projects/shodan.akn/`)
 
 **Project scope examples:**
