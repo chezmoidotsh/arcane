@@ -1,0 +1,29 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: zot
+  namespace: zot-registry
+  annotations:
+    external-dns.alpha.kubernetes.io/include-unifi: "true"
+    link.argocd.argoproj.io/external-link: https://registry.chezmoi.sh
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: default
+      namespace: envoy-gateway-system
+      sectionName: chezmoi.sh-websecure
+  hostnames:
+    - registry.chezmoi.sh
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: zot
+          port: 5000
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /

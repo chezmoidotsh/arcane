@@ -1,0 +1,69 @@
+---
+# ZOT Registry Helm Chart Values
+# Registry for OCI artifacts and container images
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/project-zot/zot-linux-amd64
+  tag: v2.1.0
+  pullPolicy: IfNotPresent
+
+# Use our own PVC instead of chart-managed one
+persistence: true
+pvc:
+  create: false
+  name: zot-storage
+
+# Use Recreate strategy for local PVC storage
+updateStrategy:
+  type: Recreate
+
+service:
+  type: ClusterIP
+  port: 5000
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+
+# ZOT configuration
+# We'll use a minimal config for now, can extend with authentication later
+mountConfig: true
+configFiles:
+  config.json: |
+    {
+      "storage": {
+        "rootDirectory": "/var/lib/registry",
+        "dedupe": true,
+        "gc": true,
+        "gcDelay": "1h",
+        "gcInterval": "24h"
+      },
+      "http": {
+        "address": "0.0.0.0",
+        "port": "5000"
+      },
+      "log": {
+        "level": "info"
+      }
+    }
+
+# Security context
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsNonRoot: true
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
