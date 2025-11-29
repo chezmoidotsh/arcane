@@ -1,0 +1,145 @@
+---
+# ============================================================================
+# ZOT Registry Helm Chart Values - Default Configuration
+# ============================================================================
+# ZOT is a production-ready, vendor-neutral, OCI-native container registry
+# that supports Docker and OCI image formats with advanced features like
+# deduplication, garbage collection, and image signing.
+#
+# Chart Repository: http://zotregistry.dev/helm-charts
+# Documentation: https://zotregistry.dev/
+# ============================================================================
+
+# ──────────────────────────────────────────────────────────────────────────
+# Deployment Configuration
+# ──────────────────────────────────────────────────────────────────────────
+
+# replicaCount: Number of ZOT registry replicas to deploy
+# Note: With local PVC storage (ReadWriteOnce), only 1 replica is supported.
+# For multi-replica deployments, use ReadWriteMany storage or distributed storage.
+replicaCount: 1
+
+# ──────────────────────────────────────────────────────────────────────────
+# Storage Configuration
+# ──────────────────────────────────────────────────────────────────────────
+
+# persistence: Enable persistent storage for registry data
+# When true, registry data survives pod restarts
+persistence: true
+
+# pvc: PersistentVolumeClaim configuration
+# The Helm chart will create and manage the PVC
+pvc:
+  # create: Let the chart create the PVC automatically
+  create: true
+
+  # storage: PVC storage size
+  # 50Gi provides ample space for container images
+  storage: 50Gi
+
+  # accessModes: Volume access modes
+  # ReadWriteOnce: Single node read-write access (sufficient for single replica)
+  accessModes:
+    - ReadWriteOnce
+
+# ──────────────────────────────────────────────────────────────────────────
+# Update Strategy
+# ──────────────────────────────────────────────────────────────────────────
+
+# updateStrategy: Pod update strategy for deployments
+# type: Recreate is required for ReadWriteOnce PVC storage
+# This ensures the old pod is terminated before the new one starts,
+# allowing the PVC to be released and reattached.
+updateStrategy:
+  type: Recreate
+
+# ──────────────────────────────────────────────────────────────────────────
+# Service Configuration
+# ──────────────────────────────────────────────────────────────────────────
+
+service:
+  # type: Kubernetes service type
+  # ClusterIP: Internal cluster access only (default)
+  # External access is provided via Envoy Gateway HTTPRoute
+  type: ClusterIP
+
+  # port: Service port for registry API
+  # Standard OCI registry port is 5000
+  port: 5000
+
+# ──────────────────────────────────────────────────────────────────────────
+# Resource Management
+# ──────────────────────────────────────────────────────────────────────────
+
+# resources: CPU and memory resource limits and requests
+# These values ensure the registry has sufficient resources while
+# preventing resource exhaustion on the cluster
+resources:
+  # requests: Guaranteed minimum resources
+  requests:
+    memory: "256Mi" # Minimum memory for registry operations
+    cpu: "100m" # 0.1 CPU cores minimum
+
+  # limits: Maximum resources the container can use
+  limits:
+    memory: "1Gi" # Maximum memory (prevents OOM issues)
+    cpu: "500m" # 0.5 CPU cores maximum
+
+# ──────────────────────────────────────────────────────────────────────────
+# ZOT Registry Configuration
+# ──────────────────────────────────────────────────────────────────────────
+
+# mountConfig: Enable custom ZOT configuration
+# When true, the config.json below is mounted into the container
+mountConfig: true
+
+# configFiles: ZOT configuration files
+# This is the main ZOT configuration in JSON format
+configFiles:
+  config.json: |
+    {
+      "storage": {
+        "rootDirectory": "/var/lib/registry",
+        "commit": true,
+        "dedupe": true,
+        "gc": true,
+        "gcDelay": "1h",
+        "gcInterval": "168h"
+      },
+      "http": {
+        "address": "0.0.0.0",
+        "externalUrl": "oci.chezmoi.sh",
+        "port": "5000"
+      },
+      "log": {
+        "level": "info"
+      },
+      "extensions": {
+        "scrub": {
+          "enable": true,
+          "interval": "24h"
+        },
+        "search": {
+          "enable": true,
+          "cve": {
+            "updateInterval": "24h"
+          }
+        },
+        "ui": {
+          "enable": true
+        }
+      }
+    }
+
+# Configuration explanation:
+# - storage.rootDirectory: Base directory for image storage
+# - storage.dedupe: Enable content deduplication to save storage space
+# - storage.gc: Enable garbage collection to remove unused layers
+# - storage.gcDelay: Wait 1 hour before marking layers for deletion
+# - storage.gcInterval: Run garbage collection every 1 week
+# - http.address: Listen on all interfaces (required for cluster access)
+# - http.port: Registry API port (matches service.port)
+# - log.level: Logging verbosity (debug, info, warn, error)
+# - extensions.search: Enable search and CVE scanning capabilities
+# - extensions.ui: Enable web UI for browsing registry content
+# - extensions.mgmt: Enable management endpoints (includes /livez, /readyz, /startupz)

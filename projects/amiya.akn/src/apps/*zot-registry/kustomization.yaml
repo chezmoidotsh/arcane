@@ -1,0 +1,46 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: zot-registry
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: zot
+    includeSelectors: true
+    includeTemplates: true
+  - pairs:
+      # renovate: datasource=helm depName=zot registryUrl=http://zotregistry.dev/helm-charts
+      app.kubernetes.io/version: 0.1.91
+    includeTemplates: true
+
+resources:
+  - zot.httproute.yaml
+  - security/
+
+helmCharts:
+  - name: zot
+    repo: http://zotregistry.dev/helm-charts
+    releaseName: zot
+    version: 0.1.91
+    valuesFile: zot.helmvalues/default.yaml
+    additionalValuesFiles:
+      - zot.helmvalues/hardened.yaml
+
+patches:
+  - patch: |
+      # Fix eternal diff on PVC definition
+      - op: add
+        path: /spec/volumeClaimTemplates/0/apiVersion
+        value: v1
+      - op: add
+        path: /spec/volumeClaimTemplates/0/kind
+        value: PersistentVolumeClaim
+    target:
+      kind: StatefulSet
+      labelSelector: app.kubernetes.io/name=zot
+
+images:
+  # renovate: datasource=github-tags depName=ghcr.io/project-zot/zot-linux-amd64
+  - name: ghcr.io/project-zot/zot-linux-amd64
+    newName: ghcr.io/project-zot/zot
+    newTag: v2.1.11

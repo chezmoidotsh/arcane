@@ -1,0 +1,120 @@
+---
+# ============================================================================
+# ZOT Registry Helm Chart Values - Hardened Security Configuration
+# ============================================================================
+# This file contains security-hardened configurations for the ZOT registry
+# following Kubernetes Pod Security Standards (PSS) and security best practices.
+#
+# These settings enforce:
+# - Non-root user execution
+# - Minimal Linux capabilities
+# - Read-only root filesystem where possible
+# - Restricted privilege escalation
+#
+# Reference: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+# ============================================================================
+
+# ──────────────────────────────────────────────────────────────────────────
+# Pod-level Security Context
+# ──────────────────────────────────────────────────────────────────────────
+
+# podSecurityContext: Security settings applied at the pod level
+# These settings affect all containers in the pod
+podSecurityContext:
+  # fsGroup: Group ID for mounted volumes
+  # All files created in volumes will be owned by this group
+  # ZOT runs as UID/GID 32460 by default
+  fsGroup: 32460
+
+  # runAsUser: User ID to run the container process
+  # Running as non-root user (UID 32460) is a security best practice
+  runAsUser: 32460
+
+  # runAsNonRoot: Enforce that the container must run as non-root
+  # Kubernetes will refuse to start the container if it tries to run as root
+  runAsNonRoot: true
+
+  # runAsGroup: Primary group ID for the container process
+  # Ensures consistent group ownership
+  runAsGroup: 32460
+
+  # fsGroupChangePolicy: How volume ownership is changed
+  # Options:
+  #   - OnRootMismatch: Only change if root user owns the volume (default)
+  #   - Always: Always change ownership (slower but more secure)
+  fsGroupChangePolicy: OnRootMismatch
+
+  # seccompProfile: Seccomp (Secure Computing Mode) profile
+  # Restricts system calls the container can make to the kernel
+  seccompProfile:
+    type: RuntimeDefault # Use the container runtime's default seccomp profile
+
+# ──────────────────────────────────────────────────────────────────────────
+# Container-level Security Context
+# ──────────────────────────────────────────────────────────────────────────
+
+# securityContext: Security settings applied to individual containers
+# These settings provide defense-in-depth security controls
+securityContext:
+  # allowPrivilegeEscalation: Prevent processes from gaining more privileges
+  # Set to false to block setuid binaries and similar privilege escalation
+  allowPrivilegeEscalation: false
+
+  # capabilities: Linux kernel capabilities to add or drop
+  # Capabilities provide fine-grained control over privileged operations
+  capabilities:
+    # drop: Remove all default capabilities
+    # This follows the principle of least privilege
+    # Common capabilities being dropped:
+    #   - CHOWN, DAC_OVERRIDE, FOWNER, FSETID, KILL
+    #   - SETGID, SETUID, SETPCAP, NET_BIND_SERVICE, etc.
+    drop:
+      - ALL
+
+    # add: Add specific capabilities if needed
+    # Uncomment and add only the capabilities required by ZOT
+    # Examples:
+    # - CHOWN           # Change file ownership
+    # - NET_BIND_SERVICE # Bind to ports < 1024
+    # add: []
+
+  # readOnlyRootFilesystem: Make the root filesystem read-only
+  # Note: Set to false for ZOT as it needs to write to /var/lib/registry
+  # In production, consider using a read-only root with specific writable mounts
+  readOnlyRootFilesystem: false
+
+  # runAsNonRoot: Container-level enforcement of non-root user
+  # Redundant with podSecurityContext but provides defense-in-depth
+  runAsNonRoot: true
+
+  # runAsUser: User ID for the container process
+  # Must match podSecurityContext.runAsUser for consistency
+  runAsUser: 32460
+
+  # runAsGroup: Group ID for the container process
+  # Ensures consistent group ownership for created files
+  runAsGroup: 32460
+
+  # privileged: Run container in privileged mode
+  # Always set to false unless absolutely necessary
+  privileged: false
+# ──────────────────────────────────────────────────────────────────────────
+# Additional Security Notes
+# ──────────────────────────────────────────────────────────────────────────
+
+# Network Security:
+# - Network policies are defined in security/network-policy.*.yaml
+# - Default deny-all with explicit allow rules
+# - Ingress restricted to Envoy Gateway
+# - Egress restricted to DNS and Internet (for image pulls)
+
+# Storage Security:
+# - Uses dedicated PVC with no shared storage
+# - VolumeSnapshots configured for backup/recovery
+# - No S3 backend to reduce attack surface
+
+# Future Enhancements:
+# - Enable authentication/authorization in ZOT config.json
+# - Implement image signing and verification
+# - Add RBAC policies for registry access
+# - Enable audit logging for compliance
