@@ -118,18 +118,14 @@ configFiles:
   config.json: |
     {
       "storage": {
-        "rootDirectory": "/var/lib/registry",
-        "dedupe": true,
-        "gc": true,
-        "gcDelay": "1h",
-        "gcInterval": "24h"
+        "rootDirectory": "/var/lib/registry"
       },
       "http": {
         "address": "0.0.0.0",
         "port": "5000"
       },
       "log": {
-        "level": "info"
+        "level": "debug"
       }
     }
 
@@ -142,31 +138,3 @@ configFiles:
 # - http.address: Listen on all interfaces (required for cluster access)
 # - http.port: Registry API port (matches service.port)
 # - log.level: Logging verbosity (debug, info, warn, error)
-
-# ──────────────────────────────────────────────────────────────────────────
-# Security Configuration
-# ──────────────────────────────────────────────────────────────────────────
-# Following Kubernetes Pod Security Standards (PSS) and security best practices
-# See hardened.yaml for detailed security documentation and explanations
-
-# podSecurityContext: Pod-level security settings
-podSecurityContext:
-  fsGroup: 1000 # Group ID for mounted volumes
-  runAsUser: 1000 # Run as non-root user
-  runAsNonRoot: true # Enforce non-root execution
-  runAsGroup: 1000 # Primary group ID
-  fsGroupChangePolicy: OnRootMismatch # Volume ownership management
-  seccompProfile:
-    type: RuntimeDefault # Restrict system calls
-
-# securityContext: Container-level security settings
-securityContext:
-  allowPrivilegeEscalation: false # Prevent privilege escalation
-  capabilities:
-    drop:
-      - ALL # Drop all Linux capabilities
-  readOnlyRootFilesystem: false # ZOT needs write access to /var/lib/registry
-  runAsNonRoot: true # Enforce non-root at container level
-  runAsUser: 1000 # Container user ID
-  runAsGroup: 1000 # Container group ID
-  privileged: false # Never run privileged
