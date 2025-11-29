@@ -3,7 +3,6 @@ apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
   name: envoy-gateway-system-to-zot
-  namespace: zot-registry
 spec:
   from:
     - group: gateway.networking.k8s.io

@@ -3,7 +3,6 @@ apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: default-hardened
-  namespace: zot-registry
   annotations:
     policy.networking.k8s.io/description: |
       Default hardened network policy for the zot-registry namespace that implements a secure baseline

@@ -6,8 +6,6 @@ namespace: zot-registry
 labels:
   - pairs:
       app.kubernetes.io/name: zot
-      app.kubernetes.io/instance: zot
-      app.kubernetes.io/component: application
     includeSelectors: true
     includeTemplates: true
   - pairs:
@@ -16,9 +14,6 @@ labels:
     includeTemplates: true
 
 resources:
-  - namespace.yaml
-  - zot.pvc.yaml
-  - zot.volumesnapshot.yaml
   - zot.httproute.yaml
   - security/
 

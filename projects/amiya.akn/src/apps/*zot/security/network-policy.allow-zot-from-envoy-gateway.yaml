@@ -2,7 +2,6 @@ apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: allow-zot-from-envoy-gateway
-  namespace: zot-registry
   annotations:
     policy.networking.k8s.io/description: |
       Allows Envoy Gateway to route traffic to ZOT registry application.

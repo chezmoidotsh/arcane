@@ -138,7 +138,7 @@ Centralized identity management service with passkey support only.
 
 Production-ready, vendor-neutral OCI-native container image registry.
 
-***Why this choice**: It provides a local container registry for caching and mirroring upstream images, ensuring that services can be deployed even when external registries are unavailable. Uses local PVC storage (50Gi) with VolumeSnapshots for backups instead of S3 backend.*
+***Why this choice**: It provides a local container registry for caching and mirroring upstream images, ensuring that services can be deployed even when external registries are unavailable. Uses local PVC storage (50Gi openebs-zfspv) managed by the Helm chart.*
 
 </div>
 </div>

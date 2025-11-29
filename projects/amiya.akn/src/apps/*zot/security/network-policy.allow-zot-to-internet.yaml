@@ -2,7 +2,6 @@ apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: allow-zot-to-internet
-  namespace: zot-registry
   annotations:
     policy.networking.k8s.io/description: |
       Allows ZOT registry to access the internet for pulling upstream container images
