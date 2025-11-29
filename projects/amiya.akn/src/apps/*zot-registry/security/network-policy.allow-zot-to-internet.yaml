@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-zot-to-internet
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows ZOT registry to access the internet for pulling upstream container images
+      when acting as a caching proxy or mirror.
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: zot
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "80"
+              protocol: TCP
