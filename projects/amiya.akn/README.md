@@ -132,28 +132,13 @@ Centralized identity management service with passkey support only.
 
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
-<img src="../../docs/assets/icons/apps/minio.svg" alt="MinIO Logo" width="120" align="left" style="margin-right: 16px;">
+<img src="../../docs/assets/icons/apps/zot-registry.svg" alt="zot registry Logo" width="120" align="left" style="margin-right: 16px;">
 
-### [MinIO](https://min.io/) *(not deployed)*
+### [zot registry](https://zotregistry.dev/)
 
-S3-compatible object storage.
+Production-ready, vendor-neutral OCI-native container image registry.
 
-***Why this choice**: It provides a local S3-compatible storage for backups and other objects, ensuring data availability even when external services are down.*
-
-</div>
-</div>
-
-<br/><br/>
-
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../docs/assets/icons/apps/zot-registry.svg" alt="zot registry Logo" width="120" align="right" style="margin-left: 16px;">
-
-### [zot registry](https://zotregistry.io/) *(not deployed)*
-
-Docker image registry.
-
-***Why this choice**: It stores all Docker images used by other services locally, ensuring that services can be deployed even when external registries are unavailable.*
+***Why this choice**: It provides a local container registry for caching and mirroring upstream images, ensuring that services can be deployed even when external registries are unavailable. Uses local PVC storage (50Gi openebs-zfspv) managed by the Helm chart.*
 
 </div>
 </div>
