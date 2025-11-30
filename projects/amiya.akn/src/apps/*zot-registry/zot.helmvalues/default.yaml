@@ -152,7 +152,10 @@ configFiles:
 # - storage.dedupe: Enable content deduplication to save storage space
 # - storage.gc: Enable garbage collection to remove unused layers
 # - storage.gcDelay: Wait 1 hour before marking layers for deletion
-# - storage.gcInterval: Run garbage collection every 24 hours
+# - storage.gcInterval: Run garbage collection every 1 hour
 # - http.address: Listen on all interfaces (required for cluster access)
 # - http.port: Registry API port (matches service.port)
 # - log.level: Logging verbosity (debug, info, warn, error)
+# - extensions.search: Enable search and CVE scanning capabilities
+# - extensions.ui: Enable web UI for browsing registry content
+# - extensions.mgmt: Enable management endpoints (includes /livez, /readyz, /startupz)
