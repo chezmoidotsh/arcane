@@ -118,7 +118,11 @@ configFiles:
   config.json: |
     {
       "storage": {
-        "rootDirectory": "/var/lib/registry"
+        "rootDirectory": "/var/lib/registry",
+        "dedupe": true,
+        "gc": true,
+        "gcDelay": "1h",
+        "gcInterval": "1h"
       },
       "http": {
         "address": "0.0.0.0",
@@ -126,6 +130,20 @@ configFiles:
       },
       "log": {
         "level": "debug"
+      },
+      "extensions": {
+        "search": {
+          "enable": true,
+          "cve": {
+            "updateInterval": "2h"
+          }
+        },
+        "ui": {
+          "enable": true
+        },
+        "mgmt": {
+          "enable": true
+        }
       }
     }
 
