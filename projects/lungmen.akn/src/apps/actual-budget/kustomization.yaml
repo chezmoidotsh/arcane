@@ -26,4 +26,5 @@ resources:
 images:
   # renovate: datasource=docker depName=actualbudget/actual-server
   - name: ghcr.io/actualbudget/actual-server
+    newName: oci.chezmoi.sh/ghcr.io/actualbudget/actual-server
     newTag: "25.12.0"
