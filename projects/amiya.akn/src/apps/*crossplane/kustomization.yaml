@@ -37,3 +37,8 @@ transformers:
       name: crossplane
       namespace: crossplane
     unsetOnly: true
+
+images:
+  - name: xpkg.crossplane.io/crossplane/crossplane
+    newName: oci.chezmoi.sh/xpkg.crossplane.io/crossplane/crossplane
+    # newTag is omitted to always use the image defined by the Helm chart

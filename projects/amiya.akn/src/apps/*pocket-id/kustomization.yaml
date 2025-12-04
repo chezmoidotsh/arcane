@@ -30,4 +30,5 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
   - name: ghcr.io/pocket-id/pocket-id
+    newName: oci.chezmoi.sh/ghcr.io/pocket-id/pocket-id
     newTag: v1.16.0-distroless@sha256:db061d34e1f6ff4aeb9b8a4a654fc95b820ad8be282c8bcf298eba8d8f0f0ecb

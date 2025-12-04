@@ -195,6 +195,13 @@ configFiles:
               "onDemand": true,
               "preserveDigest": true,
               "tlsVerify": true
+            },
+            {
+              "urls": ["https://xpkg.crossplane.io/"],
+              "content": [{"destination": "/xpkg.crossplane.io", "prefix": "**"}],
+              "onDemand": true,
+              "preserveDigest": true,
+              "tlsVerify": true
             }
           ]
         },
