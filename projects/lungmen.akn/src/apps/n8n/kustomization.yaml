@@ -37,7 +37,9 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/n8n-io/n8n
   - name: ghcr.io/n8n-io/n8n
+    newName: oci.chezmoi.sh/ghcr.io/n8n-io/n8n
     newTag: 1.123.5@sha256:c8ea89d97e420858c61d39ead4f310284dba3a4462521ec169e54a0254f213c2
   # renovate: datasource=docker depName=docker.io/library/redis
   - name: docker.io/library/redis
+    newName: oci.chezmoi.sh/docker.io/library/redis
     newTag: 8.4.0-alpine
