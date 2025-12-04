@@ -156,10 +156,7 @@ configFiles:
           "registries": [
             {
               "urls": ["https://docker.io"],
-              "content": [
-                {"destination": "/docker.io", "prefix": "**"},
-                {"destination": "/v2/docker.io", "prefix": "**"}
-              ],
+              "content": [{"destination": "/docker.io", "prefix": "**"}],
               "onDemand": true,
               "preserveDigest": true,
               "tlsVerify": true
