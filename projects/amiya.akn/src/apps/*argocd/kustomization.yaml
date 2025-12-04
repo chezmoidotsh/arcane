@@ -61,3 +61,8 @@ patches:
     target:
       name: argotails
       kind: Deployment
+
+images:
+  - name: quay.io/argoproj/argocd
+    newName: oci.chezmoi.sh/quay.io/argoproj/argocd
+    # newTag is omitted to always use the image defined by the Helm chart
