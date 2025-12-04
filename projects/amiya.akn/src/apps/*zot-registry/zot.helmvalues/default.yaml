@@ -104,7 +104,23 @@ configFiles:
         "dedupe": true,
         "gc": true,
         "gcDelay": "1h",
-        "gcInterval": "168h"
+        "gcInterval": "168h",
+        "retention": {
+          "dryRun": false,
+          "delay": "24h",
+          "policies": [{
+            "repositories": [ "**" ],
+            "deleteReferrers": false,
+            "deleteUntagged": true,
+            "keepTags": [{
+              "patterns": [".*"],
+              "mostRecentlyPushedCount": 3,
+              "mostRecentlyPulledCount": 2,
+              "pulledWithin": "24h",
+              "pushedWithin": "24h"
+            }]
+          }]
+        }
       },
       "http": {
         "address": "0.0.0.0",
