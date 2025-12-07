@@ -16,7 +16,7 @@ collections:
 
   # Docker management
   - name: community.docker
-    version: 5.0.3
+    version: 5.0.4
 
   # Tailscale VPN management
   - name: artis3n.tailscale
