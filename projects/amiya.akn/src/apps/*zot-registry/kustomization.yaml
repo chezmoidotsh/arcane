@@ -42,4 +42,5 @@ patches:
 images:
   # renovate: datasource=github-tags depName=ghcr.io/project-zot/zot-linux-amd64
   - name: ghcr.io/project-zot/zot-linux-amd64
+    newName: ghcr.io/project-zot/zot
     newTag: v2.1.11
