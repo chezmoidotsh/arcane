@@ -1,0 +1,137 @@
+---
+# trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_11,checkov/CKV_K8S_12,checkov/CKV_K8S_13,trivy/KSV015,trivy/KSV016,trivy/KSV018): We will address resource limits when we have consumption data for Spoolman
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spoolman
+  namespace: spoolman
+  labels:
+    app.kubernetes.io/name: spoolman
+    app.kubernetes.io/instance: spoolman
+    app.kubernetes.io/part-of: spoolman
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: spoolman
+      app.kubernetes.io/instance: spoolman
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: spoolman
+        app.kubernetes.io/instance: spoolman
+    spec:
+      automountServiceAccountToken: false
+      initContainers:
+        - name: init-xdg-dirs
+          image: busybox:1.36.1
+          imagePullPolicy: Always
+          command:
+            - /bin/sh
+            - -c
+            - mkdir -p /tmp/.local/share/spoolman /tmp/.cache /tmp/.config
+          volumeMounts:
+            - name: spoolman-tmp
+              mountPath: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+      containers:
+        # trunk-ignore(trivy/KSV0125): ghcr.io/donkie/spoolman is trusted registry for Spoolman official images
+        - name: spoolman
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              exec uvicorn spoolman.main:app --host 0.0.0.0 --port 8000
+          env:
+            - name: SPOOLMAN_DB_TYPE
+              value: postgres
+            - name: SPOOLMAN_DB_HOST
+              value: spoolman-database-rw
+            - name: SPOOLMAN_DB_PORT
+              value: "5432"
+            - name: SPOOLMAN_DB_NAME
+              value: spoolman
+            - name: SPOOLMAN_DB_USERNAME
+              value: spoolman
+            - name: SPOOLMAN_DB_PASSWORD_FILE
+              value: /var/secrets/spoolman/pg-credentials/password
+            - name: SPOOLMAN_AUTOMATIC_BACKUP
+              value: "false" # We use CNPG backups instead
+            - name: HOME
+              value: /tmp
+            - name: XDG_CACHE_HOME
+              value: /tmp/.cache
+            - name: XDG_CONFIG_HOME
+              value: /tmp/.config
+            - name: XDG_DATA_HOME
+              value: /tmp/.local/share
+            - name: TZ
+              value: "Europe/Paris"
+          image: ghcr.io/donkie/spoolman
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: spoolman-tmp
+              mountPath: /tmp
+            - name: spoolman-database-credentials
+              mountPath: /var/secrets/spoolman/pg-credentials
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+      volumes:
+        - name: spoolman-tmp
+          emptyDir: {}
+        - name: spoolman-database-credentials
+          secret:
+            secretName: spoolman-database-spoolman
+      securityContext:
+        fsGroup: 49264
+        runAsGroup: 49264
+        runAsUser: 49264
+        seccompProfile:
+          type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spoolman
+  namespace: spoolman
+  labels:
+    app.kubernetes.io/name: spoolman
+    app.kubernetes.io/instance: spoolman
+    app.kubernetes.io/part-of: spoolman
+spec:
+  selector:
+    app.kubernetes.io/name: spoolman
+    app.kubernetes.io/instance: spoolman
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

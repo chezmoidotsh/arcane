@@ -1,0 +1,32 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: spoolman
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: spoolman
+    includeTemplates: true
+    includeSelectors: true
+  - pairs:
+      app.kubernetes.io/instance: spoolman
+    includeTemplates: true
+    includeSelectors: true
+  - pairs:
+      # renovate: datasource=docker depName=ghcr.io/donkie/spoolman
+      app.kubernetes.io/version: 0.22.1
+    includeTemplates: true
+
+resources:
+  - spoolman.deployment.yaml
+  - spoolman.httproute.yaml
+  - spoolman.postgresql-backup.yaml
+  - spoolman.postgresql-objectstore.yaml
+  - spoolman.postgresql.yaml
+
+  - security/
+
+images:
+  # renovate: datasource=docker depName=ghcr.io/donkie/spoolman
+  - name: ghcr.io/donkie/spoolman
+    newTag: 0.22.1

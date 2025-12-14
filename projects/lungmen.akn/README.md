@@ -137,6 +137,23 @@ Encrypted shell history sync, storing all your shell commands in one place with 
 </div>
 </div>
 
+<br/><br/>
+
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/spoolman.svg" alt="Spoolman Logo" width="120" align="left" style="margin-right: 16px;">
+
+### [Spoolman](https://github.com/Donkie/Spoolman)
+
+Self-hosted web service for managing 3D printer filament spools and tracking filament usage.
+
+***Why this choice**: Comprehensive filament inventory management with API integration for OctoPrint/Klipper, enabling automated filament tracking and cost analysis for 3D printing workflows.*
+
+</div>
+</div>
+
+***
+
 ## Usage and Development
 
 This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based deployment and [Kustomize](https://kustomize.io/) for configuration management.
@@ -200,6 +217,7 @@ The recovery process is largely automated through the `amiya.akn` project, which
   * [x] Deploy Paperless-ngx for document management
   * [x] Deploy Linkding for bookmarks
   * [x] Deploy Atuin for shell history sync
+  * [x] Deploy Spoolman for 3D printer filament management
 * [ ] **Step 4**: Security and Optimization
   * [x] Implement network policies
   * [ ] Configure backup solutions

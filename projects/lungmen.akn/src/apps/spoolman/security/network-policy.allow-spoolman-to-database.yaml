@@ -1,0 +1,22 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allow egress traffic from Spoolman application to its PostgreSQL database.
+      This enables Spoolman to connect to the spoolman-database-rw service for data persistence.
+  name: allow-spoolman-to-database
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: spoolman
+      app.kubernetes.io/instance: spoolman
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: spoolman
+            cnpg.io/cluster: spoolman-database
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
