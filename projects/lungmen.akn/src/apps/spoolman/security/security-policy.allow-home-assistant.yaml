@@ -1,0 +1,20 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: authorization-client-ip
+  annotations:
+    policy.networking.k8s.io/description: |
+      Restricts access to the Spoolman Home Assistant integration API to Home Assistant server's IP address.
+      This enhances security by ensuring that only requests originating from the trusted Home Assistant server are allowed.
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: spoolman-hass
+  authorization:
+    defaultAction: Deny
+    rules:
+      - action: Allow
+        principal:
+          clientCIDRs:
+            - 10.0.0.30/32
