@@ -1,0 +1,18 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allow ingress traffic to PostgreSQL database from CNPG operator.
+      This enables CloudNativePG operator to manage the database cluster lifecycle,
+      including health checks, backups, and replication management.
+  name: allow-postgres-from-cnpg
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: spoolman-database
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: cnpg-system
+            app.kubernetes.io/name: cloudnative-pg

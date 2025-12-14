@@ -1,0 +1,10 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: spoolman-database
+spec:
+  backupOwnerReference: cluster
+  cluster:
+    name: spoolman-database
+  schedule: "0 2 * * *" # Daily at 2 AM
