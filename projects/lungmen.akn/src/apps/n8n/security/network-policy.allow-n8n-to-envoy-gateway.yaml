@@ -1,0 +1,24 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows n8n to access Envoy Gateway for routing traffic when using domain handled by Envoy.
+      This is required for n8n to communicate through services like Spoolman that are exposed via Envoy Gateway
+      in the same cluster.
+  name: allow-n8n-to-envoy-gateway
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: n8n
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: envoy-gateway-system
+      toPorts:
+        - ports:
+            - port: "10080"
+              protocol: TCP
+            - port: "10443"
+              protocol: TCP

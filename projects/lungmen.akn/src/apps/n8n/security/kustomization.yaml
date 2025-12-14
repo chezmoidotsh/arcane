@@ -3,10 +3,11 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - network-policy.allow-n8n-egress-internet.yaml
-  - network-policy.allow-n8n-egress-local-llm.yaml
   - network-policy.allow-n8n-from-envoy-gateway.yaml
   - network-policy.allow-n8n-from-newt.yaml
+  - network-policy.allow-n8n-to-envoy-gateway.yaml
+  - network-policy.allow-n8n-to-internet.yaml
+  - network-policy.allow-n8n-to-local-llm.yaml
   - network-policy.allow-postgres-from-cnpg.yaml
   - network-policy.allow-postgres-to-kubernetes-api.yaml
   - network-policy.allow-postgres-to-s3-backup.yaml

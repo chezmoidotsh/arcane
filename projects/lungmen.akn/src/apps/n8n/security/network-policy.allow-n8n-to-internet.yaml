@@ -6,7 +6,7 @@ metadata:
     policy.networking.k8s.io/description: |
       Allows n8n to access external APIs and services for workflow integrations.
       This is required for n8n to function properly as it needs to connect to various external services.
-  name: allow-n8n-egress-internet
+  name: allow-n8n-to-internet
 spec:
   endpointSelector:
     matchLabels:

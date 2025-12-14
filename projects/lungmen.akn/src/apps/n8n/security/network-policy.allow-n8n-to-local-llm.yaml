@@ -7,7 +7,7 @@ metadata:
       Allows n8n to access local LLMs (e.g., Ollama) for workflow integrations.
       This is required to use locally hosted language models for automation and
       workflow tasks, following the standard Netpol documentation format.
-  name: allow-n8n-egress-local-llm
+  name: allow-n8n-to-local-llm
 spec:
   endpointSelector:
     matchLabels:
