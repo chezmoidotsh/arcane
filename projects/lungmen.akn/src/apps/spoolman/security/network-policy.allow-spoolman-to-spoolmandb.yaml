@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allow egress traffic from Spoolman application to the public Spoolman filament database.
+      This is necessary for Spoolman to fetch filament data and updates from the central database.
+  name: allow-spoolman-to-spoolmandb
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: spoolman
+      app.kubernetes.io/instance: spoolman
+  egress:
+    - toFQDNs:
+        - matchName: donkie.github.io
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

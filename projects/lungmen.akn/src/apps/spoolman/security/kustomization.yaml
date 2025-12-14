@@ -5,11 +5,12 @@ kind: Kustomization
 resources:
   # Network Policies
   - network-policy.default-hardened.yaml
-  - network-policy.allow-spoolman-from-envoy-gateway.yaml
-  - network-policy.allow-spoolman-to-database.yaml
   - network-policy.allow-postgres-from-cnpg.yaml
   - network-policy.allow-postgres-to-kubernetes-api.yaml
   - network-policy.allow-postgres-to-s3-backup.yaml
+  - network-policy.allow-spoolman-from-envoy-gateway.yaml
+  - network-policy.allow-spoolman-to-database.yaml
+  - network-policy.allow-spoolman-to-spoolmandb.yaml
 
   # Security Policies
   - security-policy.spoolman-web-oidc.yaml
