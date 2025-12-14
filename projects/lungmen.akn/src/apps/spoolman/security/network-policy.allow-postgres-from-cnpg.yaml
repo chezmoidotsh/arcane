@@ -3,9 +3,9 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allow ingress traffic to PostgreSQL database from CNPG operator.
-      This enables CloudNativePG operator to manage the database cluster lifecycle,
-      including health checks, backups, and replication management.
+      Allows CloudNative-PG operator to manage the spoolman PostgreSQL database.
+      Based on CloudNative-PG networking requirements: operator needs access to
+      port 5432 (PostgreSQL) and port 8000 (metrics/management).
   name: allow-postgres-from-cnpg
 spec:
   endpointSelector:
@@ -14,5 +14,11 @@ spec:
   ingress:
     - fromEndpoints:
         - matchLabels:
-            io.kubernetes.pod.namespace: cnpg-system
+            io.kubernetes.pod.namespace: cloudnative-pg-system
             app.kubernetes.io/name: cloudnative-pg
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "8000"
+              protocol: TCP
