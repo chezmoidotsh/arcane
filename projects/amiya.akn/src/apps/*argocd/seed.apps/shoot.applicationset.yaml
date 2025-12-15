@@ -110,6 +110,24 @@ spec:
                   kind: Application
                   name: cert-manager
 
+              # - Envoy Gateway
+              - patch: |
+                  - op: add
+                    path: /spec/sources/0/kustomize/components
+                    value:
+                      - ../../../../projects/{{ .name }}/src/infrastructure/kubernetes/envoy-gateway
+                      - ../../../../projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/envoy-gateway
+
+                  - op: add
+                    path: /spec/sources/1/helm/valueFiles/-
+                    value: $origin/projects/{{ .name }}/src/infrastructure/kubernetes/envoy-gateway/override.helmvalues.yaml
+                  - op: add
+                    path: /spec/sources/1/helm/valueFiles/-
+                    value: $origin/projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/envoy-gateway/override.helmvalues.yaml
+                target:
+                  kind: Application
+                  name: envoy-gateway
+
               # - External-Secrets
               - patch: |
                   - op: add
@@ -146,6 +164,24 @@ spec:
                 target:
                   kind: Application
                   name: external-secrets
+
+              # - Kyverno
+              - patch: |
+                  - op: add
+                    path: /spec/sources/0/kustomize/components
+                    value:
+                      - ../../../../projects/{{ .name }}/src/infrastructure/kubernetes/kyverno
+                      - ../../../../projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/kyverno
+
+                  - op: add
+                    path: /spec/sources/1/helm/valueFiles/-
+                    value: $origin/projects/{{ .name }}/src/infrastructure/kubernetes/kyverno/override.helmvalues.yaml
+                  - op: add
+                    path: /spec/sources/1/helm/valueFiles/-
+                    value: $origin/projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/kyverno/override.helmvalues.yaml
+                target:
+                  kind: Application
+                  name: kyverno
 
               # - Tailscale
               - patch: |
@@ -192,24 +228,6 @@ spec:
                 target:
                   kind: Application
                   name: tailscale
-
-              # - Envoy Gateway
-              - patch: |
-                  - op: add
-                    path: /spec/sources/0/kustomize/components
-                    value:
-                      - ../../../../projects/{{ .name }}/src/infrastructure/kubernetes/envoy-gateway
-                      - ../../../../projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/envoy-gateway
-
-                  - op: add
-                    path: /spec/sources/1/helm/valueFiles/-
-                    value: $origin/projects/{{ .name }}/src/infrastructure/kubernetes/envoy-gateway/override.helmvalues.yaml
-                  - op: add
-                    path: /spec/sources/1/helm/valueFiles/-
-                    value: $origin/projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/envoy-gateway/override.helmvalues.yaml
-                target:
-                  kind: Application
-                  name: envoy-gateway
 
       syncPolicy:
         automated:
