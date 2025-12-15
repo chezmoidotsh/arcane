@@ -14,7 +14,7 @@ labels:
     includeSelectors: true
   - pairs:
       # renovate: datasource=docker depName=ghcr.io/jellyfin/jellyfin
-      app.kubernetes.io/version: 10.11.4
+      app.kubernetes.io/version: 10.11.5
     includeTemplates: true
 
 resources:
@@ -25,4 +25,4 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/jellyfin/jellyfin
   - name: ghcr.io/jellyfin/jellyfin
-    newTag: "10.11.4"
+    newTag: "10.11.5"
