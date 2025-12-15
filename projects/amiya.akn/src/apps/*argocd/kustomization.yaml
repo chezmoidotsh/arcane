@@ -64,18 +64,10 @@ patches:
 
 images:
   - name: quay.io/argoproj/argocd
-    newName: oci.chezmoi.sh/quay.io/argoproj/argocd
     # newTag is omitted to always use the image defined by the Helm chart
-    # pullPolicy is kept at Always in Helm values to trust the registry mirror over node cache
   - name: public.ecr.aws/docker/library/redis
-    newName: oci.chezmoi.sh/docker.io/library/redis
     # newTag is omitted to always use the image defined by the Helm chart
-    # Redis image is mirrored; pullPolicy enforced via chart values to avoid stale local layers
   - name: ghcr.io/oliver006/redis_exporter
-    newName: oci.chezmoi.sh/ghcr.io/oliver006/redis_exporter
     # newTag is omitted to always use the image defined by the Helm chart
-    # Exporter also mirrored; Always pull to ensure fresh binaries
   - name: quay.io/argoprojlabs/argocd-extension-installer
-    newName: oci.chezmoi.sh/quay.io/argoprojlabs/argocd-extension-installer
     # newTag is omitted to always use the image defined by the Helm chart
-    # Extension installer mirrored; Always pull via Helm to avoid cached artifacts

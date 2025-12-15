@@ -76,8 +76,3 @@ patches:
     target:
       kind: StatefulSet
       name: openbao
-
-images:
-  - name: quay.io/openbao/openbao
-    newName: oci.chezmoi.sh/quay.io/openbao/openbao
-    # newTag is omitted to always use the image defined by the Helm chart

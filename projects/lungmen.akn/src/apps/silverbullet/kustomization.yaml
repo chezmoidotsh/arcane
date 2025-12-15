@@ -27,5 +27,4 @@ resources:
 images:
   # renovate: datasource=docker depName=docker.io/zefhemel/silverbullet
   - name: docker.io/zefhemel/silverbullet
-    newName: oci.chezmoi.sh/docker.io/zefhemel/silverbullet
     newTag: "2.3.0"

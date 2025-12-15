@@ -32,9 +32,7 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/paperless-ngx/paperless-ngx
   - name: ghcr.io/paperless-ngx/paperless-ngx
-    newName: oci.chezmoi.sh/ghcr.io/paperless-ngx/paperless-ngx
     newTag: 2.20.2@sha256:8cbd8ce3ef1857bd144026a7e7192d0889188352b5271631e42ff069ccceeb74
   # renovate: datasource=docker depName=docker.io/library/redis
   - name: docker.io/library/redis
-    newName: oci.chezmoi.sh/docker.io/library/redis
     newTag: 8.4.0-alpine@sha256:6cbef353e480a8a6e7f10ec545f13d7d3fa85a212cdcc5ffaf5a1c818b9d3798

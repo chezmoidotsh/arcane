@@ -30,5 +30,4 @@ resources:
 images:
   # renovate: datasource=docker depName=docker.io/sissbruecker/linkding
   - name: docker.io/sissbruecker/linkding
-    newName: oci.chezmoi.sh/docker.io/sissbruecker/linkding
     newTag: "1.44.2-alpine"
