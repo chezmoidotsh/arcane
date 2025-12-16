@@ -42,14 +42,14 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: immich
-        serverName: 01K5S5AXX4NGRXGQW7ASZBVZES # 2025-09-22T16:50:59.053Z
+        serverName: 01KCM38CGFWZ5ZP0TD2ZX2C26Y # 2025-12-16T17:27:47.983Z
   postgresql:
     shared_preload_libraries:
       - vectors.so
   storage:
     size: 5Gi
   walStorage:
-    size: 5Gi
+    size: 6Gi
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: ImageCatalog
