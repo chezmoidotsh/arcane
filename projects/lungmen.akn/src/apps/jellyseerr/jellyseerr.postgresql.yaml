@@ -37,9 +37,9 @@ spec:
         barmanObjectName: selfhosted
         serverName: 01K4J7B9B4ZCECN0AM14VF0F55 # DRP::src_ulid
   storage:
-    size: 1Gi
+    size: 2Gi
   walStorage:
-    size: 1Gi
+    size: 2Gi
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
