@@ -21,6 +21,12 @@ spec:
         key: region
     wal:
       compression: bzip2
+  instanceSidecarConfiguration:
+    env:
+      - name: AWS_REQUEST_CHECKSUM_CALCULATION
+        value: when_required
+      - name: AWS_RESPONSE_CHECKSUM_VALIDATION
+        value: when_required
   retentionPolicy: 7d
 ---
 apiVersion: external-secrets.io/v1
