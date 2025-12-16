@@ -58,7 +58,7 @@ metadata:
 spec:
   images:
     - major: 14
-      image: ghcr.io/tensorchord/pgvecto-rs:pg14-v0.3.0-rootless@sha256:23ac462edc9eba6df7df92d447780950aa20a34ba4a9c11c0f4ddab3a30a64b1
+      image: oci.chezmoi.sh/ghcr.io/tensorchord/pgvecto-rs:pg14-v0.3.0-rootless@sha256:23ac462edc9eba6df7df92d447780950aa20a34ba4a9c11c0f4ddab3a30a64b1
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret

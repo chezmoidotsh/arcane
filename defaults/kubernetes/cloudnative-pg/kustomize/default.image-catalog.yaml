@@ -1,0 +1,17 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ClusterImageCatalog
+metadata:
+  name: default
+spec:
+  images:
+    - major: 14
+      image: oci.chezmoi.sh/ghcr.io/cloudnative-pg/postgresql:14.20-minimal-trixie
+    - major: 15
+      image: oci.chezmoi.sh/ghcr.io/cloudnative-pg/postgresql:15.15-minimal-trixie
+    - major: 16
+      image: oci.chezmoi.sh/ghcr.io/cloudnative-pg/postgresql:16.11-minimal-trixie
+    - major: 17
+      image: oci.chezmoi.sh/ghcr.io/cloudnative-pg/postgresql:17.7-minimal-trixie
+    - major: 18
+      image: oci.chezmoi.sh/ghcr.io/cloudnative-pg/postgresql:18.1-minimal-trixie

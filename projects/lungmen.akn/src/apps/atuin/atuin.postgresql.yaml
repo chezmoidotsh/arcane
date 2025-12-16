@@ -13,6 +13,11 @@ spec:
       owner: atuin
   description: PostgreSQL database dedicated to atuin
   enablePDB: false
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: default
+    major: 17
   instances: 1
   managed:
     roles:

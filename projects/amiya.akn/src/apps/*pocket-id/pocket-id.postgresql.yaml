@@ -12,6 +12,11 @@ spec:
       source: legacy-database
   description: PostgreSQL database dedicated to pocket-id
   enablePDB: false
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: default
+    major: 17
   instances: 1
   managed:
     roles:
