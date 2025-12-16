@@ -11,7 +11,7 @@ machine:
     # - siderolabs/iscsi-tools
     # - siderolabs/thunderbolt
     # - siderolabs/util-linux-tools
-    image: factory.talos.dev/installer-secureboot/09618ac37329fe4ba876873eaa598360a73d105a207021c4b50a1c444a033e0d:v1.10.6
+    image: factory.talos.dev/metal-installer-secureboot/09618ac37329fe4ba876873eaa598360a73d105a207021c4b50a1c444a033e0d:v1.11.5
     diskSelector:
       size: ">= 256GB"
     wipe: true
