@@ -1,0 +1,31 @@
+---
+# This config is read by the CloudNative-PG operator at startup to override default
+# image names for PostgreSQL clusters, PgBouncer poolers, and instance manager components.
+# See: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/operator_conf.md
+#
+# All images are overridden to use the local ZOT registry mirror (oci.chezmoi.sh) instead
+# of pulling directly from upstream registries, reducing external bandwidth usage and
+# improving deployment reliability through local caching.
+config:
+  data:
+    # CloudNative-PG operator image override
+    # Overrides the default operator image to use the local ZOT registry mirror.
+    # The operator uses this image for instance manager pods and maintenance operations.
+    # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/cloudnative-pg
+    OPERATOR_IMAGE_NAME: oci.chezmoi.sh/ghcr.io/cloudnative-pg/cloudnative-pg:1.28.0-ubi9@sha256:0869f9b996923aaf3eb761abe032b10ef482eaaef32fc6c604605a7223c13c1b
+
+    # PgBouncer connection pooler image override
+    # Overrides the default PgBouncer image to use the local ZOT registry mirror.
+    # PgBouncer is used as a PostgreSQL connection pooler to reduce connection overhead
+    # and improve database performance under high concurrent connection loads.
+    # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/pgbouncer
+    PGBOUNCER_IMAGE_NAME: oci.chezmoi.sh/ghcr.io/cloudnative-pg/pgbouncer:1.25.1-trixie@sha256:ea65b515dafc6a86cd70005ab21c16671f2e2c1d618210a5d6b4b90637c89c27
+
+    # PostgreSQL default image override
+    # Overrides the default PostgreSQL image to use the local ZOT registry mirror.
+    # This is the fallback PostgreSQL image used when no imageCatalogRef is specified
+    # in the Cluster resource. The "standard-trixie" variant includes all locales
+    # (en_US.UTF-8, fr_FR.UTF-8, etc.) required for international database configurations.
+    # The minimal variant lacks locale data, causing "invalid value for parameter lc_time" errors.
+    # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+    POSTGRES_IMAGE_NAME: oci.chezmoi.sh/ghcr.io/cloudnative-pg/postgresql:17.7-202512150807-standard-trixie@sha256:30e7d6712f7c530dd6eed5d2604947472c84677754e0edda87a09dd329d5f33f

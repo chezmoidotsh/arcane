@@ -7,7 +7,8 @@ helmCharts:
   - name: cloudnative-pg
     releaseName: cloudnative-pg
     repo: https://cloudnative-pg.github.io/charts
-    version: 0.26.0
+    version: 0.27.0
+    valuesFile: default.helmvalues.yaml
 
 resources:
   - # Install Barman Cloud CNPG-I plugin (v0.6.0)
