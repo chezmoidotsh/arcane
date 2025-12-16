@@ -30,7 +30,7 @@ spec:
           name: pocket-id-database-pocket-id
   plugins:
     - enabled: true
-      isWALArchiver: false
+      isWALArchiver: true
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
