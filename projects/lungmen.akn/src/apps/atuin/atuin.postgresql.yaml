@@ -26,7 +26,7 @@ spec:
           name: atuin-database-atuin
   plugins:
     - enabled: true
-      isWALArchiver: true
+      isWALArchiver: false
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
