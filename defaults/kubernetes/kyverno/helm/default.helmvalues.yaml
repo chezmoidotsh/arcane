@@ -1,0 +1,6 @@
+# Minimal Kyverno defaults
+installCRDs: true
+replicaCount: 2
+# Keep upstream registry for Kyverno itself; policy will mutate workloads, not control plane
+webhooksCleanup:
+  enabled: true

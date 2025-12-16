@@ -13,6 +13,11 @@ spec:
       owner: n8n
   description: PostgreSQL database dedicated to n8n
   enablePDB: false
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: default
+    major: 18
   instances: 1
   managed:
     roles:

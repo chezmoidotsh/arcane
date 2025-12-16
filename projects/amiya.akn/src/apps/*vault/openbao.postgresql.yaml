@@ -13,6 +13,11 @@ spec:
       # Update this value if a different recovery point is required.
       source: 2025-06-28T08:25:02.544Z
   description: PostgreSQL database dedicated to OpenBao
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: default
+    major: 17
   instances: 1
   managed:
     roles:

@@ -50,6 +50,7 @@ spec:
     - https://charts.external-secrets.io/ # NOTE: external-secrets repository (required on all clusters)
     - https://charts.jetstack.io # NOTE: cert-manager repository (required on all clusters)
     - https://github.com/kubernetes-sigs/gateway-api.git # NOTE: gateway-api repository (required on all clusters)
+    - https://kyverno.github.io/kyverno/ # NOTE: kyverno repository (required on all clusters)
     - https://pkgs.tailscale.com/helmcharts # NOTE: tailscale repository (required on all clusters)
 
     - docker.io/envoyproxy # NOTE: envoy-gateway repository (required on all clusters)

@@ -175,20 +175,12 @@ amiya·akn: {
   # ────────────────────────────────────────────────────────────────────────────
   # Storage Components
 
-  storage.minio: {
-    class: [application; undeployed]
-    label: MinIO
-    icon: assets/icons/apps/minio.svg
-    link: https://min.io/
-    tooltip: MinIO is a high-performance, distributed object storage system.
-  }
-
   storage.zot-registry: {
-    class: [application; undeployed]
+    class: [application]
     label: zot registry
     icon: assets/icons/apps/zot-registry.svg
     link: https://zotregistry.dev/
-    tooltip: Zot Registry is a self-hosted, privacy-focused, and easy-to-use image registry.
+    tooltip: Zot is a production-ready, vendor-neutral OCI-native container image registry with local PVC storage (50Gi openebs-zfspv).
   }
 
   # ────────────────────────────────────────────────────────────────────────────
@@ -343,10 +335,7 @@ amiya·akn.security.pocket-id-stack.pocket-id -> amiya·akn.security.pocket-id-s
 amiya·akn.security.pocket-id-stack.pocket-id <- amiya·akn.system.envoy-default-gateway: "http (1411)" { }
 amiya·akn.security.pocket-id-stack.postgresql -> nas.minio: "s3://s3.chezmoi.sh:9200" { }
 
-amiya·akn.storage.minio <- amiya·akn.system.envoy-default-gateway: { class: [undeployed]; source-arrowhead: HTTP (9000) }
-
-amiya·akn.storage.zot-registry -> amiya·akn.storage.minio: { class: [undeployed]; source-arrowhead: HTTP (5000) }
-amiya·akn.storage.zot-registry <- amiya·akn.system.envoy-default-gateway: { class: [undeployed]; source-arrowhead: HTTP (5000) }
+amiya·akn.storage.zot-registry <- amiya·akn.system.envoy-default-gateway: { source-arrowhead: HTTP (5000) }
 
 amiya·akn.system.cloudnative-pg -> amiya·akn.security.openbao-stack.postgresql: { class: [connect-management] }
 amiya·akn.system.cloudnative-pg -> amiya·akn.security.pocket-id-stack.postgresql: { class: [connect-management] }
@@ -380,7 +369,7 @@ amiya·akn.infrastructure.crossplane -> internet: HTTPS (443) {class: [connect-t
 amiya·akn.security.pocket-id-stack.pocket-id -> aws.ses: "smtps://email-smtp.us-east-1.amazonaws.com:465" { }
 amiya·akn.security.pocket-id-stack.pocket-id -> internet: "https://analytics.pocket-id.org:443" { }
 
-amiya·akn.storage.zot-registry -> internet: HTTPS (443) { class: [connect-to-internet; undeployed] }
+amiya·akn.storage.zot-registry -> internet: HTTPS (443) { class: [connect-to-internet] }
 
 amiya·akn.system.cert-manager -> internet: HTTPS (443) {class: [connect-to-internet]}
 

@@ -61,3 +61,13 @@ patches:
     target:
       name: argotails
       kind: Deployment
+
+images:
+  - name: quay.io/argoproj/argocd
+    # newTag is omitted to always use the image defined by the Helm chart
+  - name: public.ecr.aws/docker/library/redis
+    # newTag is omitted to always use the image defined by the Helm chart
+  - name: ghcr.io/oliver006/redis_exporter
+    # newTag is omitted to always use the image defined by the Helm chart
+  - name: quay.io/argoprojlabs/argocd-extension-installer
+    # newTag is omitted to always use the image defined by the Helm chart
