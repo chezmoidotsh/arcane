@@ -37,7 +37,11 @@ spec:
                   name: c.name,
                   image: c.image.startsWith('oci.chezmoi.sh/') || c.image.startsWith('ghcr.io/project-zot/') ?
                     c.image :
-                    'oci.chezmoi.sh/' + c.image,
+                    c.image.split('/').size() == 1 ?
+                      'oci.chezmoi.sh/docker.io/library/' + c.image :
+                      c.image.split('/').size() == 2 ?
+                        'oci.chezmoi.sh/docker.io/' + c.image :
+                        'oci.chezmoi.sh/' + c.image,
                   imagePullPolicy: 'Always'
                 }
               ),
@@ -47,7 +51,11 @@ spec:
                     name: c.name,
                     image: c.image.startsWith('oci.chezmoi.sh/') || c.image.startsWith('ghcr.io/project-zot/') ?
                       c.image :
-                      'oci.chezmoi.sh/' + c.image,
+                      c.image.split('/').size() == 1 ?
+                        'oci.chezmoi.sh/docker.io/library/' + c.image :
+                        c.image.split('/').size() == 2 ?
+                          'oci.chezmoi.sh/docker.io/' + c.image :
+                          'oci.chezmoi.sh/' + c.image,
                     imagePullPolicy: 'Always'
                   }
                 ) : []
@@ -56,6 +64,8 @@ spec:
 
   evaluation:
     admission:
+      enabled: true
+    mutateExisting:
       enabled: true
 
   webhookConfiguration:
