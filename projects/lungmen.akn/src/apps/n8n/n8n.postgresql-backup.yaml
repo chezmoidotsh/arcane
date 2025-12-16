@@ -4,7 +4,10 @@ kind: ScheduledBackup
 metadata:
   name: n8n-database
 spec:
-  backupOwnerReference: cluster
+  backupOwnerReference: self
   cluster:
     name: n8n-database
-  schedule: "0 2 * * *" # Daily at 2 AM
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+  schedule: "@daily"
