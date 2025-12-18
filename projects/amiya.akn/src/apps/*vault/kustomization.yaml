@@ -10,7 +10,7 @@ labels:
     includeSelectors: true
   - pairs:
       # renovate: datasource=helm depName=openbao registryUrl=https://openbao.github.io/openbao-helm
-      app.kubernetes.io/version: 0.21.2
+      app.kubernetes.io/version: 0.22.0
     includeTemplates: true
 
 resources:
@@ -30,7 +30,7 @@ helmCharts:
   - name: openbao
     repo: https://openbao.github.io/openbao-helm
     releaseName: openbao
-    version: 0.21.2
+    version: 0.22.0
     valuesFile: openbao.helmvalues/default.yaml
 
 patches:
