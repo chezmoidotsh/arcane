@@ -10,7 +10,7 @@ labels:
     includeTemplates: true
   - pairs:
       # renovate: datasource=helm depName=zot registryUrl=http://zotregistry.dev/helm-charts
-      app.kubernetes.io/version: 0.1.91
+      app.kubernetes.io/version: 0.1.93
     includeTemplates: true
 
 resources:
@@ -21,7 +21,7 @@ helmCharts:
   - name: zot
     repo: http://zotregistry.dev/helm-charts
     releaseName: zot
-    version: 0.1.91
+    version: 0.1.93
     valuesFile: zot.helmvalues/default.yaml
     additionalValuesFiles:
       - zot.helmvalues/hardened.yaml
