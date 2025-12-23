@@ -33,10 +33,10 @@ labels:
     includeSelectors: true
   - pairs:
       # renovate: datasource=docker depName=docker.io/fosrl/newt
-      app.kubernetes.io/version: 1.7.0
+      app.kubernetes.io/version: 1.8.0
     includeTemplates: true
 
 images:
   # renovate: datasource=docker depName=docker.io/fosrl/newt
   - name: docker.io/fosrl/newt
-    newTag: 1.7.0@sha256:044248ba66a65cee5d161da7763d89e208c7dc9658e8a7d935708d2cf5763c8c
+    newTag: 1.8.0@sha256:05bf7bd4a7bcadf7b09f94078e2c37ca17c4baa068cda83fa679008f90a87757
