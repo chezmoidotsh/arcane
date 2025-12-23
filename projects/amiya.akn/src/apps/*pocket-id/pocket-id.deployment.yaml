@@ -1,17 +1,15 @@
 ---
-# trunk-ignore-all(trivy/KSV110): Namespace is managed by kustomize
+# trunk-ignore-all(checkov/CKV_K8S_21): Namespace is managed by kustomize
 # trunk-ignore-all(checkov/CKV_K8S_35): SMTP_USER cannot be exposed as a file like other secrets
-# trunk-ignore-all(checkov/CKV2_K8S_6): NetworkPolicy are managed into security/ folder
 # trunk-ignore-all(trivy/KSV0125): The image comes from a Github registry so ... I trust it for now
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   labels:
     app.kubernetes.io/component: application
     app.kubernetes.io/instance: pocket-id-server
   name: pocket-id-server
 spec:
-  serviceName: pocket-id
   replicas: 1
   selector:
     matchLabels:
@@ -57,14 +55,14 @@ spec:
               value: postgres
             - name: DB_CONNECTION_STRING_FILE
               value: /var/run/secrets/pocket-id.org/postgres_connection_string
+            - name: FILE_BACKEND
+              value: database
             # Security and encryption
             - name: KEYS_STORAGE
               value: database
             - name: ENCRYPTION_KEY_FILE
               value: /var/run/secrets/pocket-id.org/encryption_key
             # Storage paths
-            - name: UPLOAD_PATH
-              value: /data/uploads
             - name: GEOLITE_DB_PATH
               value: /data/GeoLite2-City.mmdb
 
@@ -173,6 +171,8 @@ spec:
               mountPath: /var/run/secrets/pocket-id.org
               readOnly: true
       volumes:
+        - name: data
+          emptyDir: {}
         - name: pocket-id-secrets
           projected:
             sources:
@@ -197,21 +197,6 @@ spec:
         runAsUser: 45706
         seccompProfile:
           type: RuntimeDefault
-  volumeClaimTemplates:
-    - apiVersion: v1
-      kind: PersistentVolumeClaim
-      metadata:
-        name: data
-        labels:
-          app.kubernetes.io/component: storage
-          recurring-job-group.longhorn.io/daily: enabled
-          recurring-job-group.longhorn.io/weekly: enabled
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 1Gi
 ---
 apiVersion: v1
 kind: Service
