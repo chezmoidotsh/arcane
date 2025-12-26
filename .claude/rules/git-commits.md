@@ -224,15 +224,19 @@ Co-authored-by: Claude (Sonnet-3.5) <claude@anthropic.com>
 **Body format example with AI Co-author:**
 
 ```bash
-git commit -S -s -m ":wrench:(k8s:cert-manager): Increase renewal threshold to 15 days" \
--m "Previous threshold of 7 days was causing unnecessary certificate" \
--m "renewals and putting load on Let's Encrypt rate limits." \
--m "This change reduces renewal frequency while maintaining security." \
--m "" \
--m "Impact: Reduces API calls to Let's Encrypt by ~60% while keeping" \
--m "certificates renewed well before expiration." \
--m "" \
--m "Co-authored-by: Claude <claude@anthropic.com>"
+git commit -S -s -m "$(cat <<'EOF'
+:wrench:(k8s:cert-manager): Increase renewal threshold to 15 days
+
+Previous threshold of 7 days was causing unnecessary certificate
+renewals and putting load on Let's Encrypt rate limits.
+This change reduces renewal frequency while maintaining security.
+
+Impact: Reduces API calls to Let's Encrypt by ~60% while keeping
+certificates renewed well before expiration.
+
+Co-authored-by: Claude <claude@anthropic.com>
+EOF
+)"
 ```
 
 **Body content examples:**
@@ -280,39 +284,51 @@ the alerting rules defined in the monitoring stack."
 ### Adding new Kubernetes resource (AI-assisted)
 
 ```bash
-git commit -S -s -m ":sparkles:(project:amiya.akn): Add prometheus servicemonitor for api metrics" \
--m "Enables monitoring of API response times and error rates through" \
--m "the existing Prometheus stack. ServiceMonitor targets the API" \
--m "service on port 8080/metrics endpoint." \
--m "" \
--m "This provides visibility into API performance and supports" \
--m "the alerting rules defined in the monitoring stack." \
--m "" \
--m "Co-authored-by: Claude <claude@anthropic.com>"
+git commit -S -s -m "$(cat <<'EOF'
+:sparkles:(project:amiya.akn): Add prometheus servicemonitor for api metrics
+
+Enables monitoring of API response times and error rates through
+the existing Prometheus stack. ServiceMonitor targets the API
+service on port 8080/metrics endpoint.
+
+This provides visibility into API performance and supports
+the alerting rules defined in the monitoring stack.
+
+Co-authored-by: Claude <claude@anthropic.com>
+EOF
+)"
 ```
 
 ### Infrastructure bug fix
 
 ```bash
-git commit -S -s -m ":bug:(k8s:cert-manager): Fix wildcard certificate renewal issue" \
--m "ClusterIssuer was incorrectly configured with HTTP01 challenge" \
--m "for wildcard certificates, which is not supported by Let's Encrypt." \
--m "Changed to DNS01 challenge using Cloudflare DNS provider." \
--m "" \
--m "This resolves the certificate renewal failures that were causing" \
--m "HTTPS outages for *.amiya.akn services."
+git commit -S -s -m "$(cat <<'EOF'
+:bug:(k8s:cert-manager): Fix wildcard certificate renewal issue
+
+ClusterIssuer was incorrectly configured with HTTP01 challenge
+for wildcard certificates, which is not supported by Let's Encrypt.
+Changed to DNS01 challenge using Cloudflare DNS provider.
+
+This resolves the certificate renewal failures that were causing
+HTTPS outages for *.amiya.akn services.
+EOF
+)"
 ```
 
 ### Dependency update
 
 ```bash
-git commit -S -s -m ":arrow_up:(deps): Update helm release argo-cd to v8.1.0" \
--m "Automated update from Renovate bot." \
--m "" \
--m "Changes include:" \
--m "- Improved RBAC management" \
--m "- Enhanced security policies" \
--m "- Bug fixes for ApplicationSet controller"
+git commit -S -s -m "$(cat <<'EOF'
+:arrow_up:(deps): Update helm release argo-cd to v8.1.0
+
+Automated update from Renovate bot.
+
+Changes include:
+- Improved RBAC management
+- Enhanced security policies
+- Bug fixes for ApplicationSet controller
+EOF
+)"
 ```
 
 ## Scope Decision Tree
@@ -418,12 +434,16 @@ Body Structure:
 - References if applicable (docs, GitHub issues, PRs)
 
 Command format:
-git commit -S -s -m ":emoji:(scope): Description" \
--m "body line 1" \
--m "body line 2" \
--m "body line 3" \
--m "" \
--m "Co-authored-by: Claude <claude@anthropic.com>"
+git commit -S -s -m "$(cat <<'EOF'
+:emoji:(scope): Description
+
+body line 1
+body line 2
+body line 3
+
+Co-authored-by: Claude <claude@anthropic.com>
+EOF
+)"
 ```
 
 ## Commit Tool Preference
@@ -493,8 +513,15 @@ git add [specific files]
 **Fallback: Direct git commands**
 
 ```bash
-git commit -S -s -m "emoji(scope): Description" -m "body line 1" -m "body line 2" \
--m "" -m "Co-authored-by: Claude <claude@anthropic.com>"
+git commit -S -s -m "$(cat <<'EOF'
+:emoji:(scope): Description
+
+body line 1
+body line 2
+
+Co-authored-by: Claude <claude@anthropic.com>
+EOF
+)"
 ```
 
 **Validation**: Commit properly signed and formatted with mandatory AI Co-author attribution
@@ -524,10 +551,10 @@ git push origin [branch-name]
 
 ## Quick Reference Commands
 
-| Action                      | Command                                                                                                                                                                                                                                                                                          | Description                                                                    |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| **Check recent commits**    | `git log --oneline --no-merges -10`                                                                                                                                                                                                                                                              | Review recent commit patterns for consistency                                  |
-| **Signed commit with body** | `git commit -S -s -m ":sparkles:(project:amiya.akn): Add monitoring dashboard" \`<br/>`-m "Provides real-time metrics for cluster health and application" \`<br/>`-m "performance. Integrates with existing Prometheus stack." \`<br/>`-m "" -m "Co-authored-by: Claude <claude@anthropic.com>"` | Create properly signed commit with explanatory body and mandatory AI co-author |
-| **Analyze staged files**    | `git diff --cached --name-only`                                                                                                                                                                                                                                                                  | Review staged files to determine appropriate scope                             |
-| **Atomic staging**          | `git add path/to/specific/files`                                                                                                                                                                                                                                                                 | Stage only files related to single logical change                              |
-| **Commit verification**     | `git show --show-signature`                                                                                                                                                                                                                                                                      | Verify last commit has proper signatures                                       |
+| Action                      | Command                                                                                                                                                                                                                                                                                                               | Description                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Check recent commits**    | `git log --oneline --no-merges -10`                                                                                                                                                                                                                                                                                   | Review recent commit patterns for consistency                                  |
+| **Signed commit with body** | `git commit -S -s -m "$(cat <<'EOF'`<br/>`:sparkles:(project:amiya.akn): Add monitoring dashboard`<br/><br/>`Provides real-time metrics for cluster health and application`<br/>`performance. Integrates with existing Prometheus stack.`<br/><br/>`Co-authored-by: Claude <claude@anthropic.com>`<br/>`EOF`<br/>`)"` | Create properly signed commit with explanatory body and mandatory AI co-author |
+| **Analyze staged files**    | `git diff --cached --name-only`                                                                                                                                                                                                                                                                                       | Review staged files to determine appropriate scope                             |
+| **Atomic staging**          | `git add path/to/specific/files`                                                                                                                                                                                                                                                                                      | Stage only files related to single logical change                              |
+| **Commit verification**     | `git show --show-signature`                                                                                                                                                                                                                                                                                           | Verify last commit has proper signatures                                       |
