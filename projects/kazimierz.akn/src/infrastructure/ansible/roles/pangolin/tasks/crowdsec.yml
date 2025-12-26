@@ -100,7 +100,13 @@
 # ==========================================================================
 # CrowdSec AppSec Custom Configurations Deployment
 # ==========================================================================
-# Deploy custom AppSec configurations using application-based profiles:
+# Deploy custom AppSec configurations using global and application-based profiles:
+#
+# Global Profiles (applied to all domains):
+#   - allow-global-rules.yaml: Global OWASP CRS rule exclusions
+#                              Disables: Rule 911100 (HTTP Method Not Allowed)
+#                              Reason: REST API compatibility (PUT/DELETE/PATCH)
+#                              Domains: All domains (always deployed)
 #
 # Application Profiles (applied to specific application domains):
 #   - allow-pangolin.yaml: Pangolin dashboard profile
@@ -117,6 +123,7 @@
 #                        Domains: Configured via crowdsec_appsec_domains.immich
 #
 # Configuration Strategy:
+#   - Global profile: Always deployed (applies to all domains)
 #   - Pangolin profile: Always deployed (required for dashboard functionality)
 #   - Application profiles: Only deployed if domain list is configured and non-empty
 #
@@ -125,6 +132,19 @@
 #   - crowdsec_appsec_domains.jellyfin: List of Jellyfin domains (optional)
 #   - crowdsec_appsec_domains.immich: List of Immich domains (optional)
 # ==========================================================================
+
+# Deploy global profile (always deployed)
+- name: Deploy CrowdSec AppSec global rules profile
+  ansible.builtin.template:
+    src: "crowdsec/appsec-configs/allow-global-rules.yaml.j2"
+    dest: "{{ pangolin_compose_dir }}/config/crowdsec/appsec-configs/allow-global-rules.yaml"
+    mode: "0644"
+    owner: root
+    group: root
+  tags:
+    - pangolin
+    - crowdsec
+    - configuration
 
 # Deploy Pangolin-specific profile (always deployed)
 - name: Deploy CrowdSec AppSec Pangolin dashboard profile

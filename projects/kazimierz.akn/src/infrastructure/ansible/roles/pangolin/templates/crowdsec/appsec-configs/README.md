@@ -4,7 +4,18 @@ This directory contains CrowdSec Application Security (WAF) custom configuration
 
 ## Configuration Strategy
 
-Configurations are organized by **application** rather than by individual rules:
+Configurations are organized by **application** rather than by individual rules, with a global profile for rules that generate excessive false positives across all applications:
+
+### Global Profile
+
+**File**: `allow-global-rules.yaml`
+**Applied to**: ALL requests regardless of domain
+**Purpose**: Disable specific OWASP CRS rules that generate excessive false positives across all applications
+
+* **`allow-global-rules.yaml`**: Global rule exclusions (always deployed)
+  * Rules: 911100 (HTTP Method Not Allowed - blocks REST APIs using PUT/DELETE/PATCH)
+  * Scope: All domains
+  * Rationale: Modern web applications and REST APIs require PUT, DELETE, and PATCH methods which are blocked by default CRS configuration
 
 ### Application-Specific Profiles
 
@@ -15,8 +26,9 @@ Configurations are organized by **application** rather than by individual rules:
 #### Core Infrastructure
 
 * **`allow-pangolin.yaml`**: Pangolin dashboard profile (always deployed)
-  * Rules: 911100 (REST methods), 920420 (Content-Type), 930120 (LFI/Docker socket)
+  * Rules: 920420 (Content-Type), 930120 (LFI/Docker socket)
   * Domains: Configured via `pangolin_domains`
+  * Note: Rule 911100 is now globally disabled via `allow-global-rules.yaml`
 
 #### User Applications
 
@@ -124,13 +136,13 @@ cscli alerts list --limit 10
 
 ### Frequently Disabled Rules
 
-| Rule ID | Description                 | Common False Positive                        |
-| ------- | --------------------------- | -------------------------------------------- |
-| 911100  | HTTP Method Not Allowed     | REST APIs using PUT/DELETE/PATCH             |
-| 920180  | POST without Content-Length | Empty POST bodies (valid HTTP)               |
-| 920420  | Content-Type Not Allowed    | Custom or missing Content-Type headers       |
-| 920450  | Restricted HTTP Header      | Accept-Charset and other standard headers    |
-| 930120  | OS File Access Attempt      | Legitimate paths like /docker.sock in config |
+| Rule ID | Description                 | Common False Positive                        | Scope                |
+| ------- | --------------------------- | -------------------------------------------- | -------------------- |
+| 911100  | HTTP Method Not Allowed     | REST APIs using PUT/DELETE/PATCH             | **Global** (all)     |
+| 920180  | POST without Content-Length | Empty POST bodies (valid HTTP)               | Application-specific |
+| 920420  | Content-Type Not Allowed    | Custom or missing Content-Type headers       | Application-specific |
+| 920450  | Restricted HTTP Header      | Accept-Charset and other standard headers    | Application-specific |
+| 930120  | OS File Access Attempt      | Legitimate paths like /docker.sock in config | Application-specific |
 
 ### Rule Categories
 
@@ -146,11 +158,13 @@ cscli alerts list --limit 10
 ## Security Best Practices
 
 1. **Scope Minimization**: Only disable rules for specific domains that need them
+   * **Exception**: Global rule exclusions (`allow-global-rules.yaml`) apply to all domains but should be used sparingly and only for rules that generate pervasive false positives across the entire infrastructure
 2. **Document Everything**: Always explain WHY a rule is disabled in comments
 3. **Monitor Continuously**: Review CrowdSec alerts regularly for new patterns
 4. **Test Thoroughly**: Verify application functionality after deploying profiles
 5. **Version Control**: All configurations are in Git - review changes carefully
 6. **Least Privilege**: Prefer disabling specific rules over reducing anomaly thresholds
+7. **Global vs Application-Specific**: Consider whether a rule generates false positives universally (use global profile) or only for specific applications (use application-specific profile)
 
 ## Debugging Tips
 

@@ -18,12 +18,6 @@
 #     - Host: {{ pangolin_dashboard_url | regex_replace('https?://', '') }}
 #
 # Disabled Rules for Pangolin Dashboard:
-#   - 911100: HTTP Method Not Allowed
-#             Reason: Pangolin dashboard uses REST API patterns with PUT, DELETE,
-#                     and PATCH methods for resource management. These are standard
-#                     REST operations but are blocked by default CRS configuration
-#                     which only allows GET, HEAD, POST, and OPTIONS.
-#
 #   - 920420: Request content type not allowed by policy
 #             Reason: Pangolin API may send custom or non-standard Content-Type
 #                     headers that are not in the default CRS allowed list but
@@ -47,9 +41,13 @@
 #   - Methods: GET, POST, PUT, DELETE (standard REST operations)
 #   - Content: Configuration payloads with field names resembling file paths
 #
+# Note:
+#   - Rule 911100 (HTTP Method Not Allowed) is now globally disabled via
+#     custom/allow-global-rules profile and no longer needs to be disabled here
+#
 # References:
 #   - Pangolin Documentation: https://docs.digpangolin.com/
-#   - OWASP CRS Rules: 911100, 920420, 930120
+#   - OWASP CRS Rules: 920420, 930120
 #   - CrowdSec AppSec Hooks: https://docs.crowdsec.net/docs/appsec/hooks/
 #
 name: custom/allow-pangolin
@@ -60,8 +58,6 @@ pre_eval:
   - filter: |
       IsInBand == true && (req.Host == "{{ pangolin_dashboard_url | regex_replace('https?://', '') }}")
     apply:
-      # Allow REST API methods (PUT, DELETE, PATCH) for resource management
-      - RemoveInBandRuleByID(911100)
       # Allow non-standard Content-Type headers for dashboard API
       - RemoveInBandRuleByID(920420)
       # Allow Docker socket configuration without triggering LFI detection

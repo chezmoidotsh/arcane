@@ -13,6 +13,7 @@
 #
 # Application Profiles:
 #   Profiles are automatically included based on configured domains:
+#   - custom/allow-global-rules: Always included (global rule exclusions for all domains)
 #   - custom/allow-pangolin: Always included (dashboard functionality)
 #   - custom/allow-jellyfin: Included if crowdsec_appsec_domains.jellyfin is configured
 #   - custom/allow-immich: Included if crowdsec_appsec_domains.immich is configured
@@ -27,6 +28,9 @@ appsec_configs:
   # Default CrowdSec AppSec configurations
   - crowdsecurity/appsec-default
   - crowdsecurity/crs-inband
+
+  # Global rule exclusions (always included)
+  - custom/allow-global-rules
 
   # Core infrastructure profile (always included)
   - custom/allow-pangolin
