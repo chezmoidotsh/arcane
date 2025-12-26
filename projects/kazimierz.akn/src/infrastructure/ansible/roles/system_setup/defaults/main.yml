@@ -4,6 +4,23 @@
 # ==============================================================================
 
 # -------------------------------------------------------------------------
+# DNS Configuration (/etc/resolv.conf)
+# -------------------------------------------------------------------------
+# Primary DNS servers - Quad9 DNS by default for security and privacy
+dns_servers:
+  - 9.9.9.9 # Quad9 Primary
+  - 149.112.112.112 # Quad9 Secondary
+
+# Fallback DNS servers if primary unavailable
+dns_fallback_servers:
+  - 208.67.222.222 # OpenDNS Primary
+  - 208.67.220.220 # OpenDNS Secondary
+  - 1.1.1.1 # Cloudflare Primary
+  - 1.0.0.1 # Cloudflare Secondary
+  - 8.8.8.8 # Google Primary
+  - 8.8.4.4 # Google Secondary
+
+# -------------------------------------------------------------------------
 # Tailscale Configuration
 # -------------------------------------------------------------------------
 tailscale_hostname: "{{ tailscale_hostname | mandatory }}"

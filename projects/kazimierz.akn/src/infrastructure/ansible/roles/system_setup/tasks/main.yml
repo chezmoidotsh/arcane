@@ -6,16 +6,25 @@
 #   Install and configure base system components for Kazimierz.AKN VPS.
 #
 # Components Configured:
+#   - DNS resolution via direct /etc/resolv.conf (systemd-resolved disabled)
 #   - Docker Engine with Docker Compose v2 plugin
 #   - Tailscale VPN mesh networking with SSH enabled
 #   - UFW firewall with secure default-deny policy
 #   - Unattended security upgrades with automatic reboot
 #
 # Security Considerations:
+#   - Direct DNS configuration with immutable /etc/resolv.conf
+#   - systemd-resolved disabled to prevent DNS interference
 #   - SSH port 22 enabled initially (switch to Tailscale SSH after bootstrap)
 #   - UFW default-deny incoming, allow outgoing
 #   - Docker daemon logs limited to 3x10MB files
 #   - Automatic security updates with 03:00 reboot window
+#
+# DNS Configuration:
+#   - Primary DNS: Quad9 (9.9.9.9, 149.112.112.112)
+#   - Fallback DNS: OpenDNS, Cloudflare, Google DNS
+#   - Fixes Hetzner DNS blocking api.tailscale.com with invalid responses
+#   - /etc/resolv.conf set immutable (chattr +i) to prevent modifications
 #
 # Dependencies:
 #   - geerlingguy.docker role (v7.6.1+)
@@ -24,9 +33,11 @@
 #
 # Tags:
 #   - system: All system configuration tasks
+#   - dns: DNS configuration tasks
 #   - docker: Docker installation and configuration
 #   - tailscale: Tailscale VPN setup
 #   - ufw: Firewall configuration
+#   - networking: Network-related tasks
 #   - security: Security-related tasks
 # ==============================================================================
 
@@ -59,6 +70,65 @@
   tags:
     - system
     - base
+
+# ==========================================================================
+# DNS Configuration (Direct /etc/resolv.conf)
+# ==========================================================================
+# Fix for Hetzner DNS blocking api.tailscale.com with invalid responses
+# (AAAA -> ::, A -> 0.0.0.0). Use Quad9 DNS (primary) with OpenDNS,
+# Cloudflare, and Google DNS as fallbacks to ensure Tailscale
+# authentication and API connectivity function properly.
+#
+# NOTE: systemd-resolved is unreliable and causes issues. We disable it
+# and configure DNS directly via /etc/resolv.conf with immutable flag.
+- name: Ensure systemd-resolved is stopped and disabled
+  ansible.builtin.systemd:
+    name: systemd-resolved
+    enabled: false
+    state: stopped
+  failed_when: false
+  tags:
+    - system
+    - dns
+    - networking
+
+- name: Remove immutable attribute from /etc/resolv.conf if present
+  ansible.builtin.file:
+    path: /etc/resolv.conf
+    attributes: -i
+  failed_when: false
+  tags:
+    - system
+    - dns
+    - networking
+
+- name: Remove systemd-resolved stub resolver symlink
+  ansible.builtin.file:
+    path: /etc/resolv.conf
+    state: absent
+  tags:
+    - system
+    - dns
+    - networking
+
+- name: Configure DNS servers directly in /etc/resolv.conf
+  ansible.builtin.template:
+    src: resolv.conf.j2
+    dest: /etc/resolv.conf
+    mode: "0644"
+  tags:
+    - system
+    - dns
+    - networking
+
+- name: Make /etc/resolv.conf immutable to prevent systemd-resolved interference
+  ansible.builtin.file:
+    path: /etc/resolv.conf
+    attributes: +i
+  tags:
+    - system
+    - dns
+    - networking
 
 # ==========================================================================
 # Docker Installation

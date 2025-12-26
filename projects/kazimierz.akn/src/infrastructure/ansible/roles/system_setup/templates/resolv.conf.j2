@@ -1,0 +1,36 @@
+# ==============================================================================
+# /etc/resolv.conf - DNS Resolver Configuration
+# ==============================================================================
+# Managed by Ansible - DO NOT EDIT MANUALLY
+# File is set immutable (chattr +i) to prevent systemd-resolved interference
+#
+# Purpose:
+#   Configure DNS resolution to use reliable public DNS servers instead of
+#   Hetzner's default DNS which blocks api.tailscale.com with invalid responses.
+#
+# DNS Servers Priority:
+#   1. Quad9 DNS (9.9.9.9, 149.112.112.112)
+#   2. OpenDNS (208.67.222.222, 208.67.220.220)
+#   3. Cloudflare DNS (1.1.1.1, 1.0.0.1)
+#   4. Google DNS (8.8.8.8, 8.8.4.4)
+# ==============================================================================
+
+# Primary DNS - Quad9 (security and privacy focused)
+nameserver {{ dns_servers[0] | default('9.9.9.9') }}
+{% if dns_servers | length > 1 %}
+nameserver {{ dns_servers[1] | default('149.112.112.112') }}
+{% endif %}
+
+# Fallback DNS servers
+{% for server in dns_fallback_servers | default(['208.67.222.222', '208.67.220.220', '1.1.1.1', '1.0.0.1', '8.8.8.8', '8.8.4.4']) %}
+nameserver {{ server }}
+{% endfor %}
+
+# Search domain
+search chezmoi.sh
+
+# Options
+options timeout:2
+options attempts:3
+options rotate
+options edns0
