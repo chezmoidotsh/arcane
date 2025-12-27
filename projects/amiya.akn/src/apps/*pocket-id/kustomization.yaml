@@ -5,24 +5,25 @@ namespace: pocket-id
 
 labels:
   - pairs:
+      app.kubernetes.io/instance: pocket-id
       app.kubernetes.io/name: pocket-id
     includeTemplates: true
     includeSelectors: true
   - pairs:
-      app.kubernetes.io/instance: pocket-id
-    includeTemplates: true
-    includeSelectors: true
-  - pairs:
       # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
-      app.kubernetes.io/version: v1.16.0-distroless
-    includeTemplates: true
+      app.kubernetes.io/version: v1.16.0
 
 resources:
   - pocket-id-public.httproute.yaml
+  - pocket-id.deployment.yaml
   - pocket-id.externalsecret.yaml
   - pocket-id.httproute.yaml
-  - pocket-id.postgresql.yaml
   - pocket-id.postgresql-backup.yaml
   - pocket-id.postgresql-objectstore.yaml
-  - pocket-id.statefulset.yaml
+  - pocket-id.postgresql.yaml
   - security/
+
+images:
+  # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
+  - name: ghcr.io/pocket-id/pocket-id
+    newTag: v1.16.0
