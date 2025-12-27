@@ -11,37 +11,30 @@
 #   - listen_addr: AppSec HTTP endpoint for Traefik plugin
 #   - appsec_configs: List of security rule collections to apply
 #
-# Application Profiles:
-#   Profiles are automatically included based on configured domains:
-#   - custom/allow-global-rules: Always included (global rule exclusions for all domains)
-#   - custom/allow-pangolin: Always included (dashboard functionality)
-#   - custom/allow-jellyfin: Included if crowdsec_appsec_domains.jellyfin is configured
-#   - custom/allow-immich: Included if crowdsec_appsec_domains.immich is configured
+# CrowdSec Rule Collections:
+#   - crowdsecurity/appsec-default: Virtual patching rules (in-band, blocking)
+#   - crowdsecurity/crs: OWASP CRS rules (out-of-band, detection only)
+#
+# Note: CRS is configured in out-of-band mode to reduce false positives.
+#       It detects attack patterns without blocking, allowing monitoring
+#       without disrupting legitimate REST API traffic (PUT, DELETE, PATCH).
+#
+# Application-Specific Profiles:
+#   Custom profiles are automatically included based on configured domains:
+#   - custom/allow-pangolin: Pangolin dashboard (always deployed)
+#   - custom/allow-jellyfin: Jellyfin media server (if domains configured)
+#   - custom/allow-immich: Immich photo management (if domains configured)
 #
 # Adding New Applications:
 #   1. Create allow-{app}.yaml.j2 in appsec-configs/
 #   2. Add to crowdsec_appsec_domains in defaults/main.yml
-#   3. This file will automatically include it when domains are configured
+#   3. Add deployment task in tasks/crowdsec.yml
 #
 listen_addr: 0.0.0.0:7422
 appsec_configs:
   # Default CrowdSec AppSec configurations
   - crowdsecurity/appsec-default
-  - crowdsecurity/crs-inband
-
-  # Global rule exclusions (always included)
-  - custom/allow-global-rules
-
-  # Core infrastructure profile (always included)
-  - custom/allow-pangolin
-
-  # Application-specific profiles (conditionally included)
-{% if crowdsec_appsec_domains.jellyfin | default([]) | length > 0 %}
-  - custom/allow-jellyfin
-{% endif %}
-{% if crowdsec_appsec_domains.immich | default([]) | length > 0 %}
-  - custom/allow-immich
-{% endif %}
+  - crowdsecurity/crs
 
 source: appsec
 labels:

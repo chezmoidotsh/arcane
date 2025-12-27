@@ -91,7 +91,7 @@ pangolin_crowdsec_collections:
   - crowdsecurity/traefik
   - crowdsecurity/appsec-virtual-patching
   - crowdsecurity/appsec-generic-rules
-  - crowdsecurity/appsec-crs-inband
+  - crowdsecurity/appsec-crs
 
 # CrowdSec parsers to install
 pangolin_crowdsec_parsers:
