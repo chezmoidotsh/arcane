@@ -17,7 +17,7 @@ spec:
     kind: ClusterImageCatalog
     name: default
     major: 17
-  instances: 1
+  instances: 2
   managed:
     roles:
       - name: pocket_id
