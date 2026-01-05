@@ -1,4 +1,8 @@
 ---
+# Enforces the use of the cluster local image registry for Longhorn images
+global:
+  imageRegistry: oci.chezmoi.sh/docker.io
+
 # Configuration for Longhorn pre-upgrade checker
 # Disables the pre-upgrade checker job that runs before upgrading Longhorn
 preUpgradeChecker:
