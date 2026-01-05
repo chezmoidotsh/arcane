@@ -1,12 +1,11 @@
 ---
 # trunk-ignore(checkov/CKV_K8S_15,checkov/CKV_K8S_43): Not agreed with these policies about ImagePullPolicy=Always and digest verification for third-party apps
-# trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_12,checkov/CKV_K8S_13,trivy/KSV015,trivy/KSV016,trivy/KSV018): We will address resource limits when we have consumption data for Immich Server
+# trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_12,checkov/CKV_K8S_13,trivy/KSV015,trivy/KSV016,trivy/KSV018): We will address resource limits when we have consumption data for Immich ML
 # trunk-ignore(checkov/CKV2_K8S_6): Network policy will be handled separately
-# trunk-ignore(checkov/CKV_K8S_35): Secrets in env vars are acceptable for this specific use case
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: immich-server
+  name: immich-machine-learning
 spec:
   revisionHistoryLimit: 3
   replicas: 1
@@ -14,13 +13,13 @@ spec:
     type: RollingUpdate
   selector:
     matchLabels:
-      app.kubernetes.io/instance: immich-server
-      app.kubernetes.io/component: server
+      app.kubernetes.io/instance: immich-machine-learning
+      app.kubernetes.io/component: machine-learning
   template:
     metadata:
       labels:
-        app.kubernetes.io/instance: immich-server
-        app.kubernetes.io/component: server
+        app.kubernetes.io/instance: immich-machine-learning
+        app.kubernetes.io/component: machine-learning
     spec:
       automountServiceAccountToken: false
       securityContext:
@@ -31,45 +30,26 @@ spec:
           type: RuntimeDefault
       containers:
         # trunk-ignore(trivy/KSV0125): ghcr.io/immich-app is trusted registry for Immich official images
-        - name: immich-server
-          image: ghcr.io/immich-app/immich-server
+        - name: immich-machine-learning
+          image: ghcr.io/immich-app/immich-machine-learning
           imagePullPolicy: IfNotPresent
-          env:
-            - name: DB_HOSTNAME
-              value: immich-database-rw
-            - name: DB_PORT
-              value: "5432"
-            - name: DB_DATABASE_NAME
-              value: immich
-            - name: DB_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: immich-database-immich
-                  key: username
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: immich-database-immich
-                  key: password
-            - name: REDIS_HOSTNAME
-              value: immich-redis
-            - name: REDIS_PORT
-              value: "6379"
-            - name: IMMICH_CONFIG_FILE
-              value: /config/immich-config.yaml
           ports:
             - name: http
-              containerPort: 2283
+              containerPort: 3003
               protocol: TCP
           volumeMounts:
-            - name: config
-              mountPath: /config
-            - name: library
-              mountPath: /usr/src/app/upload
+            - name: model-cache
+              mountPath: /.config
+            - name: model-cache
+              mountPath: /.cache
+            - name: model-cache
+              mountPath: /cache
+            - name: temp
+              mountPath: /tmp
           livenessProbe:
             failureThreshold: 3
             httpGet:
-              path: /api/server/ping
+              path: /ping
               port: http
             initialDelaySeconds: 0
             periodSeconds: 10
@@ -77,7 +57,7 @@ spec:
           readinessProbe:
             failureThreshold: 3
             httpGet:
-              path: /api/server/ping
+              path: /ping
               port: http
             initialDelaySeconds: 0
             periodSeconds: 10
@@ -85,7 +65,7 @@ spec:
           startupProbe:
             failureThreshold: 30
             httpGet:
-              path: /api/server/ping
+              path: /ping
               port: http
             initialDelaySeconds: 0
             periodSeconds: 10
@@ -100,25 +80,35 @@ spec:
             runAsNonRoot: true
             runAsUser: 31847
       volumes:
-        - name: config
-          secret:
-            secretName: immich-configuration
-        - name: library
+        - name: temp
+          emptyDir: {}
+        - name: model-cache
           persistentVolumeClaim:
-            claimName: immich-smb-storage
+            claimName: immich-ml-cache
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-ml-cache
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: immich-server
+  name: immich-machine-learning
 spec:
   type: ClusterIP
   ports:
-    - port: 2283
+    - port: 3003
       targetPort: http
       protocol: TCP
       name: http
   selector:
     app.kubernetes.io/name: immich
     app.kubernetes.io/instance: immich
-    app.kubernetes.io/component: server
+    app.kubernetes.io/component: machine-learning

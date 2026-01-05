@@ -1,0 +1,19 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-machine-learning-to-internet
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: immich
+      app.kubernetes.io/component: machine-learning
+  egress:
+    - toEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "80"
+              protocol: TCP
