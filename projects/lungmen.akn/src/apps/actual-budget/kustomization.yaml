@@ -30,4 +30,4 @@ images:
     newTag: "25.12.0"
   # renovate: datasource=docker depName=docker.io/jhonderson/actual-http-api
   - name: docker.io/jhonderson/actual-http-api
-    newTag: "25.12.0"
+    newTag: "26.1.0"
