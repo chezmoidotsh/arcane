@@ -11,7 +11,7 @@ labels:
     includeSelectors: true
   - pairs:
       # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
-      app.kubernetes.io/version: v1.16.0
+      app.kubernetes.io/version: v2.1.0
 
 resources:
   - pocket-id-public.httproute.yaml
@@ -26,4 +26,4 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
   - name: ghcr.io/pocket-id/pocket-id
-    newTag: v1.16.0
+    newTag: v2.1.0
