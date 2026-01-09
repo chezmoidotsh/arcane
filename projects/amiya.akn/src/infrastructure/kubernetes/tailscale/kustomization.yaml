@@ -7,9 +7,6 @@ namespace: tailscale-system
 resources:
   - ../../../../../../defaults/kubernetes/tailscale/kustomize
 
-  # Plugin required for Tailscale to access TUN/TAP interfaces
-  - ../../../../../../catalog/kustomize/tun-device-plugin
-
   # Additional configuration for remote cluster resource access
   - remote-cluster.proxyclass.yaml
   - ts-dns.dnsconfig.yaml
