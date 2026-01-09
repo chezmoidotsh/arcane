@@ -1,4 +1,5 @@
 skip-check:
-  - CKV2_K8S_6 # Checkov don't manage properly Network Policies
   - CKV_K8S_14 # Image tags and digests are managed per project using Kustomize
+  - CKV_K8S_21 # Checkov reports issues with default namespace, but all namespaces are managed via Kustomize
   - CKV_K8S_43 # Image tags and digests are managed per project using Kustomize
+  - CKV2_K8S_6 # Checkov don't manage properly Network Policies

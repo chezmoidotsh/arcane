@@ -19,6 +19,7 @@ labels:
 resources:
   - immich.configuration.externalsecret.yaml
   - immich.httproute.yaml
+  - immich.machine-learning.yaml
   - immich.postgresql-backup.yaml
   - immich.postgresql-objectstore.yaml
   - immich.postgresql.yaml
@@ -31,6 +32,9 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server
   - name: ghcr.io/immich-app/immich-server
+    newTag: v2.4.1
+  # renovate: datasource=docker depName=ghcr.io/immich-app/immich-machine-learning
+  - name: ghcr.io/immich-app/immich-machine-learning
     newTag: v2.4.1
   # renovate: datasource=docker depName=docker.io/library/redis
   - name: docker.io/library/redis
