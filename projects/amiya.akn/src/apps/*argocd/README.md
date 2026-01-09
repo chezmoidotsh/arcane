@@ -46,7 +46,6 @@ The deployment follows a hierarchical structure:
    * Core applications deployed on every cluster:
      * `cert-manager.application.yaml`
      * `external-secrets.application.yaml`
-     * `tailscale.application.yaml`
      * `envoy-gateway.application.yaml`
 
 4. **Secondary ApplicationSets** (in `shoot.apps/`)

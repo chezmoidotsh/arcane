@@ -7,7 +7,6 @@ resources:
   - envoy-gateway.application.yaml
   - external-secrets.application.yaml
   - kyverno.application.yaml
-  - tailscale.application.yaml
 
   - apps.applicationset.yaml
   - system.applicationset.yaml
