@@ -1,7 +1,7 @@
 ---
-# trunk-ignore(checkov/CKV_K8S_15,checkov/CKV_K8S_43): Not agreed with these policies about ImagePullPolicy=Always and digest verification for third-party apps
+# trunk-ignore(checkov/CKV_K8S_15): Not agreed with these policies about ImagePullPolicy=Always and digest verification for third-party apps
 # trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_12,checkov/CKV_K8S_13,trivy/KSV015,trivy/KSV016,trivy/KSV018): We will address resource limits when we have consumption data for Immich ML
-# trunk-ignore(checkov/CKV2_K8S_6): Network policy will be handled separately
+# trunk-ignore(checkov/CKV_K8S_11): TODO - Setup resource limits when we have consumption data for Immich ML
 apiVersion: apps/v1
 kind: Deployment
 metadata:
