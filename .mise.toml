@@ -85,7 +85,7 @@ _.python.venv = { path = "{{ config_root }}/.mise/python", create = true, uv_cre
 # -----------------------------------------------------------------------------
 # Essential tools for Kubernetes cluster management and operations
 
-helm = "3" # Kubernetes package manager for deploying applications via charts
+helm = "4.0.4" # Kubernetes package manager for deploying applications via charts
 # NOTE: kustomize requires helm 3.x, so we pin to major version 3
 krew = "latest"    # Kubectl plugin manager for extending functionality
 ksops = "latest"   # KSOPS plugin for Kustomize to handle SOPS-encrypted secrets
