@@ -1,8 +1,0 @@
----
-# This YAML file defines the default Helm values for configuring Tailscale Operator
-# on remote clusters (clusters that are hosted outside of the home network)
-apiServerProxyConfig:
-  # On remote clusters, the API server proxy mode is enabled. This allows Tailscale to
-  # act as a proxy for the Kubernetes API server, which is the required for ArgoCD to
-  # connect to the API server of the remote cluster.
-  mode: "true"

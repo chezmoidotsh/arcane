@@ -5,7 +5,9 @@ kind: Kustomization
 namespace: tailscale-system
 
 resources:
-  - ../../../../../../defaults/kubernetes/tailscale/kustomize
+  # Required secrets and ProxyClass for Tailscale Operator
+  - restricted.proxyclass.yaml
+  - operator-oauth.externalsecret.yaml
 
   # Additional configuration for remote cluster resource access
   - remote-cluster.proxyclass.yaml
@@ -20,26 +22,13 @@ helmCharts:
     version: 1.92.5
     releaseName: tailscale-operator
     namespace: tailscale-system
-    valuesFile: ../../../../../../defaults/kubernetes/tailscale/helm/default.helmvalues.yaml
+    valuesFile: tailscale.helmvalues/default.yaml
     additionalValuesFiles:
-      - ../../../../../../defaults/kubernetes/tailscale/helm/hardened.helmvalues.yaml
+      - tailscale.helmvalues/hardened.yaml
     valuesInline:
       operatorConfig:
         hostname: amiya-akn
     includeCRDs: true
-
-patches:
-  - path: restricted.proxyclass.yaml
-  - target:
-      kind: ExternalSecret
-      name: operator-oauth
-    patch: |-
-      - op: add
-        path: /spec/data/0/remoteRef/key
-        value: shared/data/third-parties/tailscale/oauth/amiya.akn
-      - op: add
-        path: /spec/data/1/remoteRef/key
-        value: shared/data/third-parties/tailscale/oauth/amiya.akn
 
 generators:
   - # Protect some "private" information like internal IPs addresses.
