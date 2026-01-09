@@ -183,52 +183,6 @@ spec:
                   kind: Application
                   name: kyverno
 
-              # - Tailscale
-              - patch: |
-                  - op: add
-                    path: /spec/sources/0/kustomize/components
-                    value:
-                      - ../../../../projects/{{ .name }}/src/infrastructure/kubernetes/tailscale
-                      - ../../../../projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/tailscale
-
-
-                  - op: add
-                    path: /spec/sources/0/kustomize/patches
-                    value:
-                      - patch: |-
-                          - op: add
-                            path: /spec/data/0/remoteRef/key
-                            value: shared/data/third-parties/tailscale/oauth/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}
-                          - op: add
-                            path: /spec/data/1/remoteRef/key
-                            value: shared/data/third-parties/tailscale/oauth/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}
-                        target:
-                          kind: ExternalSecret
-                          name: operator-oauth
-                      - patch: |-
-                          - op: add
-                            path: /metadata/annotations/tailscale.com~1hostname
-                            value: nameserver-{{ regexReplaceAll "[^a-zA-Z0-9]" (index .metadata.annotations "device.tailscale.com/hostname" | default .name) "-" }}
-                        target:
-                          kind: Service
-                          name: nameserver
-
-                  - op: add
-                    path: /spec/sources/1/helm/valueFiles/-
-                    value: $origin/projects/{{ .name }}/src/infrastructure/kubernetes/tailscale/override.helmvalues.yaml
-                  - op: add
-                    path: /spec/sources/1/helm/valueFiles/-
-                    value: $origin/projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/tailscale/override.helmvalues.yaml
-
-                  - op: add
-                    path: /spec/sources/1/helm/valuesObject
-                    value:
-                      operatorConfig:
-                        hostname: {{ regexReplaceAll "[^a-zA-Z0-9]" (index .metadata.annotations "device.tailscale.com/hostname" | default .name) "-" | quote }}
-                target:
-                  kind: Application
-                  name: tailscale
-
       syncPolicy:
         automated:
           prune: false
@@ -238,9 +192,3 @@ spec:
           - Delete=confirm
           - Prune=confirm
           - ServerSideApply=true
-  templatePatch: |
-    {{ if index .metadata.annotations "device.tailscale.com/address" }}
-    metadata:
-      annotations:
-        link.argocd.argoproj.io/external-link: https://login.tailscale.com/admin/machines/{{ index .metadata.annotations "device.tailscale.com/address" }}
-    {{ end }}

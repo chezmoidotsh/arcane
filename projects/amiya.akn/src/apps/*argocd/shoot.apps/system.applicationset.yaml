@@ -34,8 +34,6 @@ spec:
                   exclude: true
                 - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/external-secrets
                   exclude: true
-                - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/tailscale
-                  exclude: true
   template:
     metadata:
       annotations:

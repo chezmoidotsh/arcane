@@ -1,8 +1,12 @@
 ---
-apiVersion: kustomize.config.k8s.io/v1alpha1
-kind: Component
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: tailscale-system
 
 resources:
+  - ../../../../../../defaults/kubernetes/tailscale/kustomize
+
   # Plugin required for Tailscale to access TUN/TAP interfaces
   - ../../../../../../catalog/kustomize/tun-device-plugin
 
@@ -13,8 +17,32 @@ resources:
   # Security policies (NetworkPolicies, PodSecurityStandards, etc.)
   - security/
 
+helmCharts:
+  - name: tailscale-operator
+    repo: https://pkgs.tailscale.com/helmcharts
+    version: 1.86.2
+    releaseName: tailscale-operator
+    namespace: tailscale-system
+    valuesFile: ../../../../../../defaults/kubernetes/tailscale/helm/default.helmvalues.yaml
+    additionalValuesFiles:
+      - ../../../../../../defaults/kubernetes/tailscale/helm/hardened.helmvalues.yaml
+    valuesInline:
+      operatorConfig:
+        hostname: amiya-akn
+    includeCRDs: true
+
 patches:
   - path: restricted.proxyclass.yaml
+  - target:
+      kind: ExternalSecret
+      name: operator-oauth
+    patch: |-
+      - op: add
+        path: /spec/data/0/remoteRef/key
+        value: shared/data/third-parties/tailscale/oauth/amiya.akn
+      - op: add
+        path: /spec/data/1/remoteRef/key
+        value: shared/data/third-parties/tailscale/oauth/amiya.akn
 
 generators:
   - # Protect some "private" information like internal IPs addresses.
