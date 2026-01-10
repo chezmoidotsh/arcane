@@ -1,0 +1,177 @@
+# =============================================================================
+# ArgoCD Application Properties Experiment - Development Environment
+# =============================================================================
+# This mise configuration provides an isolated development environment for
+# testing the ArgoCD ApplicationSet with .argocd-properties.yaml support.
+#
+# The environment is completely isolated from production to prevent accidental
+# modifications to live clusters.
+#
+# Usage:
+#   cd docs/experiments/argocd-application-properties
+#   mise install    # Install all tools
+#   mise trust      # Trust this configuration (if prompted)
+#   mise run setup  # Create k3d cluster and install ArgoCD
+#   mise run test   # Run validation tests
+#   mise run clean  # Cleanup test environment
+#
+# For more details, see README.md
+# =============================================================================
+
+[env]
+# -----------------------------------------------------------------------------
+# Isolated Kubernetes Configuration
+# -----------------------------------------------------------------------------
+# All Kubernetes and Helm configurations are isolated to this experiment
+# directory to prevent interference with production clusters.
+
+# Kubernetes client configuration - isolated from production
+KUBECONFIG = "{{ config_root }}/.kube/config"
+
+# -----------------------------------------------------------------------------
+# Isolated Helm Configuration
+# -----------------------------------------------------------------------------
+# Helm cache and data directories are local to this experiment
+
+HELM_CACHE_HOME = "{{ config_root }}/.helm/cache"
+HELM_CONFIG_HOME = "{{ config_root }}/.helm/config"
+HELM_DATA_HOME = "{{ config_root }}/.helm/data"
+
+# -----------------------------------------------------------------------------
+# k3d Configuration
+# -----------------------------------------------------------------------------
+# k3d cluster name for this experiment
+K3D_CLUSTER_NAME = "argocd-properties-test"
+
+# -----------------------------------------------------------------------------
+# Path Extensions
+# -----------------------------------------------------------------------------
+# Add experiment scripts to PATH
+_.path = ["{{ config_root }}/scripts"]
+
+# =============================================================================
+# Tool Installation
+# =============================================================================
+# Minimal toolset required for running the experiment
+
+[tools]
+# -----------------------------------------------------------------------------
+# Kubernetes Tools
+# -----------------------------------------------------------------------------
+# Core tools for cluster management and testing
+
+k3d = "latest"     # Lightweight Kubernetes in Docker for local testing
+kubectl = "latest" # Kubernetes CLI for cluster operations
+helm = "3"         # Helm package manager (required for ArgoCD installation)
+argocd = "latest"  # ArgoCD CLI for application management and debugging
+
+# -----------------------------------------------------------------------------
+# Utility Tools
+# -----------------------------------------------------------------------------
+# Additional tools for validation and debugging
+
+jq = "latest" # JSON processor for parsing kubectl output in validation scripts
+yq = "latest" # YAML processor for configuration manipulation
+
+# =============================================================================
+# Experiment Tasks
+# =============================================================================
+# Tasks for managing the experiment lifecycle
+
+# -----------------------------------------------------------------------------
+# Setup Task
+# -----------------------------------------------------------------------------
+# Creates the k3d cluster and installs ArgoCD with test projects
+
+[tasks.setup]
+description = "Create k3d cluster and install ArgoCD for testing"
+run = "./scripts/setup.sh"
+
+# -----------------------------------------------------------------------------
+# Test Task
+# -----------------------------------------------------------------------------
+# Runs the validation suite against the deployed ApplicationSet
+
+[tasks.test]
+alias = "validate"
+description = "Run validation tests against deployed applications"
+run = "./scripts/validate.sh"
+
+# -----------------------------------------------------------------------------
+# Cleanup Task
+# -----------------------------------------------------------------------------
+# Removes the k3d cluster and all associated resources
+
+[tasks.clean]
+alias = "cleanup"
+description = "Delete k3d cluster and cleanup resources"
+run = "./scripts/cleanup.sh"
+
+# -----------------------------------------------------------------------------
+# Deploy Task
+# -----------------------------------------------------------------------------
+# Deploys the ApplicationSet to the test cluster
+
+[tasks.deploy]
+description = "Deploy the ApplicationSet to the test cluster"
+run = "kubectl apply -f manifests/argocd-projects.yaml && kubectl apply -f manifests/apps.applicationset.yaml"
+
+# -----------------------------------------------------------------------------
+# Status Task
+# -----------------------------------------------------------------------------
+# Shows the current status of all generated applications
+
+[tasks.status]
+description = "Show status of all ArgoCD applications"
+run = "argocd app list -o wide 2>/dev/null || kubectl get applications -n argocd"
+
+# -----------------------------------------------------------------------------
+# UI Task
+# -----------------------------------------------------------------------------
+# Port-forward to access ArgoCD UI
+
+[tasks.ui]
+description = "Port-forward to ArgoCD UI (https://localhost:8080)"
+run = """
+echo "ArgoCD UI will be available at: https://localhost:8080"
+echo "Username: admin"
+echo "Password: $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)"
+echo ""
+echo "Press Ctrl+C to stop port-forward"
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+"""
+
+# -----------------------------------------------------------------------------
+# Password Task
+# -----------------------------------------------------------------------------
+# Retrieve ArgoCD admin password
+
+[tasks.password]
+description = "Get ArgoCD admin password"
+run = "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d && echo"
+
+# -----------------------------------------------------------------------------
+# Logs Task
+# -----------------------------------------------------------------------------
+# Show ApplicationSet controller logs for debugging
+
+[tasks.logs]
+description = "Show ArgoCD ApplicationSet controller logs"
+run = "kubectl logs -n argocd -l app.kubernetes.io/name=argocd-applicationset-controller --tail=100 -f"
+
+# -----------------------------------------------------------------------------
+# Full Test Workflow
+# -----------------------------------------------------------------------------
+# Complete test cycle: setup -> deploy -> test -> cleanup
+
+[tasks.full-test]
+description = "Run complete test cycle (setup -> deploy -> test)"
+depends = ["setup"]
+run = """
+echo "Waiting for ArgoCD to be fully ready..."
+sleep 10
+mise run deploy
+echo "Waiting for ApplicationSet to generate applications..."
+sleep 15
+mise run test
+"""

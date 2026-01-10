@@ -1,0 +1,14 @@
+# Test Case TC-03: Critical infrastructure with manual sync
+# Expected: No automated sync, confirmation required for prune/delete
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+spec:
+  info:
+    - name: Description
+      value: "Critical infrastructure - manual sync only"
+    - name: Version
+      value: "2.0.0"
+    - name: Criticality
+      value: "High"
+
+  syncPolicy: null # Disable automated sync

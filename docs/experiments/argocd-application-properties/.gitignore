@@ -1,0 +1,13 @@
+# =============================================================================
+# ArgoCD Application Properties Experiment - Git Ignore
+# =============================================================================
+# Excludes local environment files created during testing
+
+# Isolated Kubernetes configuration
+.kube/
+
+# Isolated Helm configuration
+.helm/
+
+# mise local state (if any)
+.mise/
