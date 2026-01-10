@@ -4,7 +4,6 @@ kind: Kustomization
 
 resources:
   - amiya.akn.tailscale-oauth.yaml
-  - aws.iam.authelia.yaml
   - aws.iam.pocket-id.yaml
   - cloudflare.iam.cert-manager.yaml
   - cloudflare.iam.cloudflare-operator.yaml
