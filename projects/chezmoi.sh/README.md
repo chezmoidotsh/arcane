@@ -28,7 +28,7 @@
 
 > \[!NOTE]
 > Even if this project is the "root" one, it relies on the [`amiya.akn`](../amiya.akn/README.md) project
-> to provide the Kubernetes cluster used by `kubevault` and `crossplane` *(IaC)*.
+> to provide the Kubernetes cluster used by `OpenBao` and `Crossplane` *(IaC)*.
 
 ### TrueNAS Scale Infrastructure
 

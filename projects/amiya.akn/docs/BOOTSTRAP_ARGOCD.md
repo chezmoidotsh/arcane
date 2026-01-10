@@ -1,5 +1,8 @@
 # Cluster Bootstrap with ArgoCD
 
+> \[!CAUTION]
+> This document is no longer relevant due to recent changes in core infrastructure management. The described bootstrap process MUST be superseded and MUST not be used.
+
 ## Table of Contents
 
 * [Introduction](#introduction)

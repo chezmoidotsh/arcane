@@ -12,17 +12,32 @@ labels:
 resources:
   # Configure ArgoCD
   - argocd.appprojects.yaml
-  - argocd.github-secrets.externalsecret.yaml
   - argocd.httproute.yaml
   - argocd.ingress.yaml
   - argocd.oidc-credentials.externalsecret.yaml
-  - argocd.sops-secrets.externalsecret.yaml
   - argocd.ts-secrets.externalsecret.yaml
 
   # Install Argotails that manages all Tailscale clusters
   # secrets based on Tailscale's devices
   - https://github.com/chezmoidotsh/argotails.git//deploy/manifests/default?ref=v0.1.12
   - argotails.ts-secrets.externalsecret.yaml
+
+generators:
+  - # Because ArgoCD needs to be independent from Vault in order to bootstrap
+    # the rest of the cluster, we store some secrets directly in SOPS-encrypted
+    # Secrets (SOPS age encryption and Github Application secrets).
+    |-
+    apiVersion: viaduct.ai/v1
+    kind: ksops
+    metadata:
+      name: ksops
+      annotations:
+        config.kubernetes.io/function: |
+          exec:
+            path: ksops
+    files:
+      - argocd.github.secrets.yaml
+      - argocd.sops.secrets.yaml
 
 helmCharts:
   - name: argo-cd
