@@ -1,0 +1,13 @@
+# Test Case TC-04: Application with custom namespace
+# Expected: Deployed to 'monitoring' namespace instead of folder name
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+spec:
+  info:
+    - name: Description
+      value: "Application deployed to custom namespace"
+    - name: Version
+      value: "1.5.0"
+
+  destination:
+    namespace: monitoring

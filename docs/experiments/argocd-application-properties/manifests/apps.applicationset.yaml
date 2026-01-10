@@ -1,0 +1,134 @@
+---
+# ApplicationSet with .argocd-properties.yaml support
+#
+# This ApplicationSet demonstrates per-application customization using
+# optional .argocd-properties.yaml files while maintaining folder-based
+# discovery.
+#
+# Key features:
+# - Folder = Application convention preserved
+# - Optional properties file for customization
+# - Backward compatible (apps without properties work as before)
+#
+# USAGE: This manifest points to the Arcane repository.
+#        Ensure the experiment is pushed to the branch before testing.
+#
+# BRANCH: poc/configurable-applications
+#
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: applications
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/description: |
+      Discovers applications from docs/experiments/argocd-application-properties/test-apps/*
+      Each application can optionally include .argocd-properties.yaml
+      for metadata and behavior customization.
+spec:
+  # Ignore differences that are expected to drift
+  ignoreApplicationDifferences:
+    - jqPathExpressions:
+        - .spec.ignoreDifferences
+        - .spec.source.targetRevision
+        - .spec.sources[].targetRevision
+        - .spec.syncPolicy.automated
+
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+
+  generators:
+    - merge:
+        mergeKeys:
+          - app_name
+          - app_path
+        generators:
+          # NOTE: using `matrix` generator to combine the git generator and a list
+          #       of values is a workaround for the lack of support for nested keys
+          #       in merge generator when goTemplate is enabled.
+          #       See https://github.com/argoproj/argo-cd/issues/12836#issuecomment-3322812487
+          #       for more details.
+          - matrix:
+              generators:
+                # Git Directory Generator: discover application folders
+                - git:
+                    repoURL: https://github.com/chezmoidotsh/arcane.git
+                    revision: poc/configurable-applications
+                    directories:
+                      - path: "docs/experiments/argocd-application-properties/test-apps/*"
+                - list:
+                    elements:
+                      - app_name: "{{ .path.basename }}"
+                        app_path: "{{ .path.path }}"
+          - matrix:
+              generators:
+                # Git Files Generator: read optional properties files
+                # Uses pathParamPrefix to namespace parameters as props.*
+                - git:
+                    repoURL: https://github.com/chezmoidotsh/arcane.git
+                    revision: poc/configurable-applications
+                    files:
+                      - path: "docs/experiments/argocd-application-properties/test-apps/*/.application.patch"
+                - list:
+                    elements:
+                      - app_name: "{{ .path.basename }}"
+                        app_path: "{{ .path.path }}"
+
+  template:
+    metadata:
+      name: "{{ .app_name }}" # Unique name based on values hash
+      namespace: argocd
+      annotations:
+        # Sync wave for ordering
+        argocd.argoproj.io/sync-wave: "100"
+        info: |
+          {{ toYaml . }}
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+
+    spec:
+      # Destination: namespace is the application name
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .app_name }}"
+
+      # Project: default AND CANNOT BE OVERRIDDEN via patchTemplate
+      project: default
+
+      # Source: application directory
+      sources:
+        - repoURL: https://github.com/chezmoidotsh/arcane.git
+          path: "{{ .app_path }}"
+          targetRevision: poc/configurable-applications
+
+      # Sync Policy: automated sync by default
+      syncPolicy:
+        automated: # automated sync by default retries failed attempts 5 times with following delays between attempts ( 5s, 10s, 20s, 40s, 80s ); retry controlled using `retry` field.
+          enabled: true # Enables automated syncing of the application ( true by default ).
+          prune: true # Specifies if resources should be pruned during auto-syncing ( false by default ).
+          selfHeal: true # Specifies if partial app sync should be executed when resources are changed only in target Kubernetes cluster and no git change detected ( false by default ).
+          allowEmpty: false # Allows deleting all application resources during automatic syncing ( false by default ).
+
+        syncOptions: # Sync options which modifies sync behavior
+          - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
+          - PrunePropagationPolicy=foreground # Supported policies are background, foreground and orphan.
+          - PruneLast=true # Allow the ability for resource pruning to happen as a final, implicit wave of a sync operation
+          - ApplyOutOfSyncOnly=true # Only sync out-of-sync resources, rather than applying every object in the application
+          - SkipDryRunOnMissingResource=true # Allow skip dry run on missing resource
+          - Replace=true # Argo CD will use kubectl replace or kubectl create command to apply changes.
+
+  # Template patch all customizable fields (conditional based on properties)
+  templatePatch: |
+    {{- $sanitizedMetadata := pick (dig "metadata" dict .) "annotations" "labels" -}}
+    {{- if ne (len $sanitizedMetadata) 0 }}
+    metadata: {{ toYaml $sanitizedMetadata | nindent 2 }}
+    {{- end }}
+
+    {{-
+      $sanitizedSpec := merge
+        (pick (dig "spec" dict .) "info" "syncPolicy")
+        (dict "destination" (pick (dig "spec" "destination" dict .) "namespace"))
+    -}}
+    {{- if ne (len $sanitizedSpec) 0 }}
+    spec: {{ toYaml $sanitizedSpec | nindent 2 }}
+    {{- end }}

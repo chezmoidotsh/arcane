@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-with-info
+  labels:
+    app.kubernetes.io/name: app-with-info
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: app-with-info
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: app-with-info
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80

@@ -1,0 +1,21 @@
+# Test Case TC-02: Application with info metadata
+# Expected: Info visible in ArgoCD UI, other defaults applied
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata:
+  labels:
+    env: test
+    owner: devops
+  annotations:
+    argocd.argoproj.io/manifest-generate-paths: "."
+
+spec:
+  info:
+    - name: Description
+      value: "Test application demonstrating info metadata"
+    - name: Version
+      value: "1.0.0"
+    - name: Documentation
+      value: "https://example.com/docs"
+    - name: Maintainer
+      value: "platform-team@example.com"

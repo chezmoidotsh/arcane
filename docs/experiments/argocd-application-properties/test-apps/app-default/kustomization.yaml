@@ -1,0 +1,7 @@
+# Test Case TC-01: Application without properties file
+# Expected: All defaults applied, automated sync
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yaml
