@@ -23,7 +23,7 @@ spec:
     metadata:
       annotations:
         # Source reference for argocd-extension-application-map
-        source-ref.argocd.argoproj.io/0.path: projects/amiya.akn/src/apps/*argocd/shoot.apps
+        source-ref.argocd.argoproj.io/0.path: projects/amiya.akn/src/argocd/shoot.apps
         source-ref.argocd.argoproj.io/0.repository-url: https://github.com/chezmoidotsh/arcane.git
         source-ref.argocd.argoproj.io/0.target-revision: main
 
@@ -40,7 +40,7 @@ spec:
       project: seed
       sources:
         - repoURL: https://github.com/chezmoidotsh/arcane.git
-          path: projects/amiya.akn/src/apps/*argocd/shoot.apps
+          path: projects/amiya.akn/src/argocd/shoot.apps
           targetRevision: main
 
           kustomize:
@@ -58,7 +58,6 @@ spec:
                       name: {{ .name | quote }}
                       nameNormalized: {{ .nameNormalized | quote }}
                       nameRFC1123: {{ regexReplaceAll "[^a-zA-Z0-9_-]" .name "-" | quote }}
-                      project: {{ .project | quote }}
                       server: {{ .server | quote }}
                   - op: add
                     path: /spec/template/metadata/labels
@@ -68,6 +67,68 @@ spec:
                     value: {{ .name | quote }}
                 target:
                   kind: ApplicationSet
+                  name: system
+              - patch: |
+                  - op: add
+                    path: /spec/generators/0/matrix/generators/0/list/elements/-
+                    value:
+                      metadata:
+                        annotations: {{ omit (.metadata.annotations | toYaml | fromYaml) "argocd.argoproj.io/tracking-id" | toYaml | nindent 8 }}
+                        labels: {{ .metadata.labels | toYaml | nindent 8 }}
+                      name: {{ .name | quote }}
+                      nameNormalized: {{ .nameNormalized | quote }}
+                      nameRFC1123: {{ regexReplaceAll "[^a-zA-Z0-9_-]" .name "-" | quote }}
+                      server: {{ .server | quote }}
+                  - op: add
+                    path: /spec/template/metadata/labels
+                    value: {}
+                  - op: add
+                    path: /spec/template/metadata/labels/argocd.argoproj.io~1cluster
+                    value: {{ .name | quote }}
+                target:
+                  kind: ApplicationSet
+                  name: applications
+
+              - patch: |
+                  - op: add
+                    path: /spec/generators/0/merge/generators/0/matrix/generators/1/list/elements/-
+                    value:
+                      metadata:
+                        annotations: {{ omit (.metadata.annotations | toYaml | fromYaml) "argocd.argoproj.io/tracking-id" | toYaml | nindent 8 }}
+                        labels: {{ .metadata.labels | toYaml | nindent 8 }}
+                      name: {{ .name | quote }}
+                      nameNormalized: {{ .nameNormalized | quote }}
+                      nameRFC1123: {{ regexReplaceAll "[^a-zA-Z0-9_-]" .name "-" | quote }}
+                      server: {{ .server | quote }}
+                  - op: add
+                    path: /spec/template/metadata/labels
+                    value: {}
+                  - op: add
+                    path: /spec/template/metadata/labels/argocd.argoproj.io~1cluster
+                    value: {{ .name | quote }}
+                target:
+                  kind: ApplicationSet
+                  name: system-new
+              - patch: |
+                  - op: add
+                    path: /spec/generators/0/merge/generators/0/matrix/generators/1/list/elements/-
+                    value:
+                      metadata:
+                        annotations: {{ omit (.metadata.annotations | toYaml | fromYaml) "argocd.argoproj.io/tracking-id" | toYaml | nindent 8 }}
+                        labels: {{ .metadata.labels | toYaml | nindent 8 }}
+                      name: {{ .name | quote }}
+                      nameNormalized: {{ .nameNormalized | quote }}
+                      nameRFC1123: {{ regexReplaceAll "[^a-zA-Z0-9_-]" .name "-" | quote }}
+                      server: {{ .server | quote }}
+                  - op: add
+                    path: /spec/template/metadata/labels
+                    value: {}
+                  - op: add
+                    path: /spec/template/metadata/labels/argocd.argoproj.io~1cluster
+                    value: {{ .name | quote }}
+                target:
+                  kind: ApplicationSet
+                  name: applications-new
 
               # This configuration ensures that the server field is set with the
               # cluster server URL for all applications.

@@ -3,8 +3,50 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   annotations:
+    argocd.argoproj.io/description: |
+      This Application deploys and manages the ArgoCD instance within the
+      'argocd' namespace of the cluster. It serves as the central control plane
+      for continuous deployment and GitOps workflows across the cluster.
+
+      It is decorated to other Application in order to avoid any accidental
+      deletion when an issue on ApplicationSet occurs.
+
     # Source reference for argocd-extension-application-map
-    source-ref.argocd.argoproj.io/0.path: projects/amiya.akn/src/apps/*argocd/seed.apps
+    source-ref.argocd.argoproj.io/0.path: projects/amiya.akn/src/argocd
+    source-ref.argocd.argoproj.io/0.repository-url: https://github.com/chezmoidotsh/arcane.git
+    source-ref.argocd.argoproj.io/0.target-revision: main
+  name: argocd
+spec:
+  destination:
+    namespace: argocd
+    server: https://kubernetes.default.svc
+  project: seed
+  sources:
+    - ref: origin
+      repoURL: https://github.com/chezmoidotsh/arcane.git
+      targetRevision: main
+      path: projects/amiya.akn/src/argocd
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - Delete=confirm
+      - Prune=confirm
+      - ServerSideApply=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd.argoproj.io/description: |
+      This Application deploys and manages the seed Application within the
+      'argocd' namespace of the cluster. It serves as the foundational setup
+      for bootstrapping other ApplicationSets in the cluster.
+
+      It is decorated to other Application in order to avoid any accidental
+      deletion when an issue on ApplicationSet occurs.
+
+    # Source reference for argocd-extension-application-map
+    source-ref.argocd.argoproj.io/0.path: projects/amiya.akn/src/argocd/seed.apps
     source-ref.argocd.argoproj.io/0.repository-url: https://github.com/chezmoidotsh/arcane.git
     source-ref.argocd.argoproj.io/0.target-revision: main
   name: seed
@@ -17,10 +59,9 @@ spec:
     - ref: origin
       repoURL: https://github.com/chezmoidotsh/arcane.git
       targetRevision: main
-      path: projects/amiya.akn/src/apps/*argocd/seed.apps
+      path: projects/amiya.akn/src/argocd/seed.apps
   syncPolicy:
     syncOptions:
-      - CreateNamespace=true
       - Delete=confirm
       - Prune=confirm
       - ServerSideApply=true

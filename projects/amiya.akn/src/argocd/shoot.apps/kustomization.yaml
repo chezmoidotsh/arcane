@@ -8,5 +8,7 @@ resources:
   - external-secrets.application.yaml
   - kyverno.application.yaml
 
-  - apps.applicationset.yaml
+  - applications-new.applicationset.yaml
+  - applications.applicationset.yaml
+  - system-new.applicationset.yaml
   - system.applicationset.yaml

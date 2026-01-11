@@ -1,0 +1,99 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  annotations:
+    argocd.argoproj.io/description: |
+      This ApplicationSet is responsible for automatically deploying all
+      applications and configurations inside the targeted cluster,
+      depending on existing cluster definitions.
+  name: applications-new
+spec:
+  # Always preserve Applications on deletion of ApplicationSet
+  preserveResourcesOnDeletion: true
+
+  ignoreApplicationDifferences:
+    - jqPathExpressions:
+        - .spec.ignoreDifferences
+        - .spec.source.targetRevision
+        - .spec.sources[].targetRevision
+        - .spec.syncPolicy.automated
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - merge:
+        mergeKeys:
+          - .key
+        generators:
+          # Directories
+          - matrix:
+              generators:
+                - git:
+                    repoURL: https://github.com/chezmoidotsh/arcane.git
+                    revision: main
+                    directories:
+                      - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/apps/*
+                - list:
+                    elements:
+                      - .key: "{{ .path.basename }}"
+          # Files
+          - matrix:
+              generators:
+                - git:
+                    repoURL: https://github.com/chezmoidotsh/arcane.git
+                    revision: main
+                    files:
+                      - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/apps/*/.application.patch
+                - list:
+                    elements:
+                      - .key: "{{ .path.basename }}"
+  template:
+    metadata:
+      annotations:
+        # All applications should be deployed after system applications
+        argocd.argoproj.io/sync-wave: "100"
+
+        # Source reference for argocd-extension-application-map
+        source-ref.argocd.argoproj.io/0.path: "{{ .path.path }}"
+        source-ref.argocd.argoproj.io/0.repository-url: https://github.com/chezmoidotsh/arcane.git
+        source-ref.argocd.argoproj.io/0.target-revision: main
+      name: "{{ .path.basename }}"
+    spec:
+      # Destination: namespace is the application name
+      destination:
+        server: "{{ .server }}"
+        namespace: "{{ .path.basename }}"
+
+      # Project: applications AND CANNOT BE OVERRIDDEN via patchTemplate
+      project: applications
+
+      # Source: application directory
+      sources:
+        - repoURL: https://github.com/chezmoidotsh/arcane.git
+          path: "{{ .path.path }}"
+          targetRevision: main
+
+      # Synchronization policy: automatic synchronization is disabled by default
+      syncPolicy:
+        automated:
+          enabled: true # Enables automated syncing of the application ( true by default ).
+          prune: true # Specifies if resources should be pruned during auto-syncing ( false by default ).
+          selfHeal: true # Specifies if partial app sync should be executed when resources are changed only in target Kubernetes cluster and no git change detected ( false by default ).
+          allowEmpty: false # Allows deleting all application resources during automatic syncing ( false by default ).
+
+        syncOptions:
+          - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
+          - PrunePropagationPolicy=foreground # Supported policies are background, foreground and orphan.
+          - PruneLast=true # Allow the ability for resource pruning to happen as a final, implicit wave of a sync operation
+          - ApplyOutOfSyncOnly=true # Only sync out-of-sync resources, rather than applying every object in the application
+          - SkipDryRunOnMissingResource=true # Allow skip dry run on missing resource
+          - Replace=true # Argo CD will use kubectl replace or kubectl create command to apply changes.
+  templatePatch: |
+    {{- if .spec }}
+    spec:
+    {{ .spec | toYaml | indent 6 }}
+    {{- end }}
+    {{- if .metadata }}
+    metadata:
+    {{ .metadata | toYaml | indent 6 }}
+    {{- end }}

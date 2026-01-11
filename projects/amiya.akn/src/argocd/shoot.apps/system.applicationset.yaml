@@ -5,10 +5,13 @@ metadata:
   annotations:
     argocd.argoproj.io/description: |
       This ApplicationSet is responsible for automatically deploying all
-      applications and configurations inside the targeted cluster,
-      depending on existing cluster definitions.
-  name: applications
+      system applications and configurations inside the targeted cluster,
+      depending on existing templates and cluster definitions.
+  name: system
 spec:
+  # Always preserve Applications on deletion of ApplicationSet
+  preserveResourcesOnDeletion: true
+
   ignoreApplicationDifferences:
     - jqPathExpressions:
         - .spec.ignoreDifferences
@@ -25,12 +28,20 @@ spec:
               repoURL: https://github.com/chezmoidotsh/arcane.git
               revision: main
               directories:
-                - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/apps/*
+                - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/*
+
+                # Exclude all directories that will be used by `system-critical` applications
+                - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/cert-manager
+                  exclude: true
+                - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/envoy-gateway
+                  exclude: true
+                - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/external-secrets
+                  exclude: true
   template:
     metadata:
       annotations:
-        # All applications should be deployed after system applications
-        argocd.argoproj.io/sync-wave: "100"
+        # All system applications should be deployed first before any applications
+        argocd.argoproj.io/sync-wave: "10"
 
         # Source reference for argocd-extension-application-map
         source-ref.argocd.argoproj.io/0.path: "{{ .path.path }}"
@@ -40,26 +51,23 @@ spec:
     spec:
       destination:
         server: "{{ .server }}"
-        namespace: '{{ .path.basename | trimPrefix "*" }}'
-      project: applications
+        namespace: '{{ .path.basename | trimPrefix "*" | trimSuffix "-system" }}-system'
+      project: system
       sources:
         - repoURL: https://github.com/chezmoidotsh/arcane.git
           path: "{{ .path.path }}"
           targetRevision: main
-  templatePatch: |
-    spec:
       syncPolicy:
-        {{ if hasPrefix "*" .path.basename }}
         syncOptions:
           - CreateNamespace=true
           - Delete=confirm
           - Prune=confirm
           - ServerSideApply=true
-        {{ else }}
+  templatePatch: |
+    {{ if not (hasPrefix "*" .path.basename) }}
+    spec:
+      syncPolicy:
         automated:
           prune: true
           selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
-          - ServerSideApply=true
-        {{ end }}
+      {{ end }}

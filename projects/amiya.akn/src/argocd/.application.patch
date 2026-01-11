@@ -1,0 +1,17 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+spec:
+  syncPolicy:
+    automated:
+      enable: false
+    syncOptions:
+      - CreateNamespace=true
+      - Delete=confirm
+      - Prune=confirm
+      - ServerSideApply=true
+  info:
+    - name: Version
+      # renovate: datasource=helm depName=argo-cd registryUrl=https://argoproj.github.io/argo-helm
+      value: "9.2.4"
+    - name: Documentation URL
+      value: "https://argo-cd.readthedocs.io/"

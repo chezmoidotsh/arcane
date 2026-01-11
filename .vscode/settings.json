@@ -1,0 +1,8 @@
+{
+	"files.associations": {
+		"*.application.patch": "yaml"
+	},
+	"yaml.schemas": {
+		"./.vscode/application-patch.schema.json": "*.application.patch"
+	}
+}
