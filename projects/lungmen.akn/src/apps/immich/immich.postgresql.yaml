@@ -8,15 +8,26 @@ metadata:
   name: immich-database
 spec:
   bootstrap:
-    initdb:
-      database: immich
-      owner: immich
-      postInitSQL:
-        - CREATE EXTENSION IF NOT EXISTS vectors;
-        - CREATE EXTENSION IF NOT EXISTS cube;
-        - CREATE EXTENSION IF NOT EXISTS earthdistance;
+    # initdb:
+    #   database: immich
+    #   owner: immich
+    #   postInitSQL:
+    #     - CREATE EXTENSION IF NOT EXISTS vectors;
+    #     - CREATE EXTENSION IF NOT EXISTS cube;
+    #     - CREATE EXTENSION IF NOT EXISTS earthdistance;
+    recovery:
+      source: 2025-12-16T17:27:47.983Z
   description: PostgreSQL database dedicated to immich with vector extensions
   enablePDB: false
+  externalClusters:
+    - name: 2025-12-16T17:27:47.983Z
+      plugin:
+        enabled: true
+        isWALArchiver: false
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: selfhosted
+          serverName: 01KCM38CGFWZ5ZP0TD2ZX2C26Y
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ImageCatalog
@@ -41,15 +52,20 @@ spec:
       isWALArchiver: true
       name: barman-cloud.cloudnative-pg.io
       parameters:
-        barmanObjectName: immich
-        serverName: 01KCM38CGFWZ5ZP0TD2ZX2C26Y # 2025-12-16T17:27:47.983Z
+        barmanObjectName: selfhosted
+        serverName: 01KEQ26GDC3JSSP1RMD07GJ9PA # 2026-01-11T17:38:24.812Z
   postgresql:
+    parameters:
+      # Limit WAL retention to avoid DB crash due to storage bloat
+      max_slot_wal_keep_size: 900MB
+      max_wal_size: 100MB
     shared_preload_libraries:
+      # Load required extensions for Immich
       - vectors.so
   storage:
-    size: 5Gi
+    size: 1Gi
   walStorage:
-    size: 6Gi
+    size: 1Gi
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: ImageCatalog
