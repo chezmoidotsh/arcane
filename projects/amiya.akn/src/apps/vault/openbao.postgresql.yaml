@@ -11,7 +11,7 @@ spec:
     recovery:
       # The following timestamp is used for point-in-time recovery to a known good state.
       # Update this value if a different recovery point is required.
-      source: 2025-06-28T08:25:02.544Z
+      source: 2026-01-11T08:07:53.126Z
   description: PostgreSQL database dedicated to OpenBao
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
@@ -35,18 +35,23 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01KEP1HV1693BFHSVVNCTQWZ7A # 2026-01-11T08:07:53.126Z
+        serverName: 01KEPSN912SSFFARX3YYZNA22Q # 2026-01-11T15:09:11.586Z
+  postgresql:
+    parameters:
+      # Limit WAL retention to avoid DB crash due to storage bloat
+      max_slot_wal_keep_size: 900MB
+      max_wal_size: 100MB
   storage:
     size: 100Mi
   walStorage:
-    size: 10Gi
+    size: 1Gi
 
   externalClusters:
-    - name: 2025-06-28T08:25:02.544Z
+    - name: 2026-01-11T08:07:53.126Z
       plugin:
         enabled: true
         isWALArchiver: false
         name: barman-cloud.cloudnative-pg.io
         parameters:
           barmanObjectName: selfhosted
-          serverName: 01JYTT7NAGP6BSY7RWC5DSVCJV
+          serverName: 01KEP1HV1693BFHSVVNCTQWZ7A
