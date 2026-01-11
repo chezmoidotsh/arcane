@@ -8,8 +8,13 @@ metadata:
   name: pocket-id-database
 spec:
   bootstrap:
-    recovery:
-      source: 2026-01-11T09:29:14.013Z
+    initdb:
+      database: pocket_id
+      owner: pocket_id
+      secret:
+        name: pocket-id-database-pocket-id
+    # recovery:
+    #   source: 0001-01-01T00:00:00.000Z
   description: PostgreSQL database dedicated to pocket-id
   enablePDB: false
   imageCatalogRef:
@@ -34,19 +39,20 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01KEP8NH66XNZ7XR0Q3XGVJW4E # 2026-01-11T09:29:14.013Z
+        serverName: 01KEPA38352GYQHNKTFYPA4HE1 # 2026-01-11T10:37:12.165Z
   storage:
     size: 250Mi
   walStorage:
-    size: 250Mi
+    size: 1Gi
 
   # Restore all data from legacy cluster present in the sso namespace
-  externalClusters:
-    - name: 2026-01-11T09:29:14.013Z
-      plugin:
-        enabled: true
-        isWALArchiver: false
-        name: barman-cloud.cloudnative-pg.io
-        parameters:
-          barmanObjectName: selfhosted
-          serverName: 01KEP66SGX46SF7MX5MJW5DD9M
+  # externalClusters:
+  #   NOTE: Uncomment and adjust the following to restore from a specific backup
+  #   - name: 0001-01-01T00:00:00.000Z
+  #     plugin:
+  #       enabled: true
+  #       isWALArchiver: false
+  #       name: barman-cloud.cloudnative-pg.io
+  #       parameters:
+  #         barmanObjectName: selfhosted
+  #         serverName: ??? # Fill in appropriate server name
