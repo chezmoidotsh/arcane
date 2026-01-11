@@ -9,7 +9,7 @@ metadata:
 spec:
   bootstrap:
     recovery:
-      source: legacy-database
+      source: 2025-09-06T13:32:57.526Z
   description: PostgreSQL database dedicated to pocket-id
   enablePDB: false
   imageCatalogRef:
@@ -34,15 +34,15 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01K5NK753HYPCVQ3PRRR2N9BZ9
+        serverName: 01KEP66SGX46SF7MX5MJW5DD9M # 2026-01-11T09:29:14.013Z
   storage:
-    size: 1Gi
+    size: 250Mi
   walStorage:
     size: 5Gi
 
   # Restore all data from legacy cluster present in the sso namespace
   externalClusters:
-    - name: legacy-database
+    - name: 2025-09-06T13:32:57.526Z
       plugin:
         enabled: true
         isWALArchiver: false
@@ -50,28 +50,3 @@ spec:
         parameters:
           barmanObjectName: selfhosted
           serverName: 01K4FKNS9PCXF59H3VC3FTVGJQ
----
-apiVersion: external-secrets.io/v1
-kind: ExternalSecret
-metadata:
-  name: pocket-id-database-pocket-id
-spec:
-  data:
-    - secretKey: postgresql_username
-      remoteRef:
-        key: amiya.akn/pocket-id/database/postgresql
-        property: username
-    - secretKey: postgresql_password
-      remoteRef:
-        key: amiya.akn/pocket-id/database/postgresql
-        property: password
-  refreshInterval: 5m
-  secretStoreRef:
-    kind: ClusterSecretStore
-    name: vault.chezmoi.sh
-  target:
-    template:
-      data:
-        username: pocket_id
-        password: "{{ .postgresql_password }}"
-        uri: postgresql://pocket_id:{{ .postgresql_password }}@pocket-id-database-rw:5432/pocket_id

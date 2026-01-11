@@ -9,19 +9,33 @@ labels:
       app.kubernetes.io/name: pocket-id
     includeTemplates: true
     includeSelectors: true
-  - pairs:
-      # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
-      app.kubernetes.io/version: v2.1.0
+  # - pairs:
+  # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
+  # app.kubernetes.io/version: v2.1.0
 
 resources:
   - pocket-id-public.httproute.yaml
   - pocket-id.deployment.yaml
-  - pocket-id.externalsecret.yaml
   - pocket-id.httproute.yaml
   - pocket-id.postgresql-backup.yaml
   - pocket-id.postgresql-objectstore.yaml
   - pocket-id.postgresql.yaml
   - security/
+
+generators:
+  - |-
+    apiVersion: viaduct.ai/v1
+    kind: ksops
+    metadata:
+      name: sopsed-secrets-generator
+      annotations:
+        config.kubernetes.io/function: |
+          exec:
+            path: ksops
+    files:
+      - cnpg.backup-credentials.secret.yaml
+      - pocket-id.postgresql.secret.yaml
+      - pocket-id.secret.yaml
 
 images:
   # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
