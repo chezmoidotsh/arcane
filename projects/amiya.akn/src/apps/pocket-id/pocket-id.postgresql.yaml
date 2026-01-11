@@ -40,6 +40,11 @@ spec:
       parameters:
         barmanObjectName: selfhosted
         serverName: 01KEPA38352GYQHNKTFYPA4HE1 # 2026-01-11T10:37:12.165Z
+  postgresql:
+    parameters:
+      # Limit WAL retention to avoid DB crash due to storage bloat
+      max_slot_wal_keep_size: 900MB
+      max_wal_size: 100MB
   storage:
     size: 250Mi
   walStorage:
