@@ -15,6 +15,8 @@ spec:
     matchLabels:
       app.kubernetes.io/component: application
       app.kubernetes.io/instance: pocket-id-server
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -170,6 +172,13 @@ spec:
             - name: pocket-id-secrets
               mountPath: /var/run/secrets/pocket-id.org
               readOnly: true
+      securityContext:
+        fsGroup: 45706
+        runAsGroup: 45706
+        runAsNonRoot: true
+        runAsUser: 45706
+        seccompProfile:
+          type: RuntimeDefault
       volumes:
         - name: data
           emptyDir: {}
@@ -190,13 +199,6 @@ spec:
                   items:
                     - key: uri
                       path: postgres_connection_string
-      securityContext:
-        fsGroup: 45706
-        runAsGroup: 45706
-        runAsNonRoot: true
-        runAsUser: 45706
-        seccompProfile:
-          type: RuntimeDefault
 ---
 apiVersion: v1
 kind: Service
