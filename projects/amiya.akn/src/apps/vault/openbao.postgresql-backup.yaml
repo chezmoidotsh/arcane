@@ -7,4 +7,4 @@ spec:
   backupOwnerReference: cluster
   cluster:
     name: openbao-database
-  schedule: "@daily"
+  schedule: "@weekly"

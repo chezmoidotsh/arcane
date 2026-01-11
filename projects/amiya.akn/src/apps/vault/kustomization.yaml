@@ -10,11 +10,10 @@ labels:
     includeSelectors: true
   - pairs:
       # renovate: datasource=helm depName=openbao registryUrl=https://openbao.github.io/openbao-helm
-      app.kubernetes.io/version: 0.23.3
+      # app.kubernetes.io/version: 0.23.3
     includeTemplates: true
 
 resources:
-  - namespace.yaml
   - openbao-config.externalsecret.yaml
   - openbao.httproute.yaml
   - openbao.ingress.yaml
@@ -24,7 +23,19 @@ resources:
   - openbao.secretstore.yaml
 
 generators:
-  - ksops.generator.yaml
+  - |-
+    apiVersion: viaduct.ai/v1
+    kind: ksops
+    metadata:
+      name: sopsed-secrets-generator
+      annotations:
+        config.kubernetes.io/function: |
+          exec:
+            path: ksops
+    files:
+      - cnpg.backup-credentials.secret.yaml
+      - openbao-softhsm-tokens.secret.yaml
+      - openbao-database-credentials.secret.yaml
 
 helmCharts:
   - name: openbao
@@ -72,7 +83,6 @@ patches:
         value:
           name: hsm-writable
           mountPath: /run/secrets/openbao/pkcs11
-
     target:
       kind: StatefulSet
       name: openbao

@@ -35,11 +35,11 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01K5NN97TEMTKSHGGG3B2PSQ3S # 2025-09-21T08:12:11.982Z
+        serverName: 01KEP1HV1693BFHSVVNCTQWZ7A # 2026-01-11T08:07:53.126Z
   storage:
-    size: 2Gi
+    size: 100Mi
   walStorage:
-    size: 5Gi
+    size: 10Gi
 
   externalClusters:
     - name: 2025-06-28T08:25:02.544Z

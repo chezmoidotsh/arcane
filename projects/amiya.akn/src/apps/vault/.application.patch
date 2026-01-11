@@ -1,0 +1,19 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  syncPolicy:
+    automated: null
+    syncOptions:
+      - CreateNamespace=true
+      - Delete=confirm
+      - Prune=confirm
+      - ServerSideApply=true
+  info:
+    - name: Version
+      # renovate: datasource=helm depName=openbao registryUrl=https://openbao.github.io/openbao-helm
+      value: "0.23.3"
+    - name: Documentation URL
+      value: "https://openbao.org/"
+    - name: Helm Chart
+      value: "openbao"

@@ -28,16 +28,3 @@ spec:
       - name: AWS_RESPONSE_CHECKSUM_VALIDATION
         value: when_required
   retentionPolicy: 7d
----
-apiVersion: external-secrets.io/v1
-kind: ExternalSecret
-metadata:
-  name: cnpg-backup-credentials
-spec:
-  dataFrom:
-    - extract:
-        key: shared/data/third-parties/chezmoi.sh/s3/amiya.akn/cnpg-backup
-  refreshInterval: 5m
-  secretStoreRef:
-    kind: ClusterSecretStore
-    name: vault.chezmoi.sh

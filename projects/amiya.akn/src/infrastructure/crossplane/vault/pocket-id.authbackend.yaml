@@ -28,7 +28,7 @@ spec:
     # OIDC configuration
     boundIssuer: https://auth.chezmoi.sh
     defaultRole: default
-    oidcClientId: 8efdd355-7697-4748-83ba-79889cc01d5f
+    oidcClientId: 762ac35a-f6ea-4831-ab61-a7e923e4b5cf
     oidcClientSecretSecretRef:
       name: pocket-id-client-secret
       namespace: crossplane
@@ -37,7 +37,7 @@ spec:
 
     # Tune configuration
     tune:
-      - defaultLeaseTtl: 15m
+      - defaultLeaseTtl: 30m
         listingVisibility: unauth
         maxLeaseTtl: 2h
         tokenType: default-service # no secret here
