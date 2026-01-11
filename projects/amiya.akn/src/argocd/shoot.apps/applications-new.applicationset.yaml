@@ -9,9 +9,6 @@ metadata:
       depending on existing cluster definitions.
   name: applications-new
 spec:
-  # Always preserve Applications on deletion of ApplicationSet
-  preserveResourcesOnDeletion: true
-
   ignoreApplicationDifferences:
     - jqPathExpressions:
         - .spec.ignoreDifferences
@@ -47,6 +44,9 @@ spec:
                 - list:
                     elements:
                       - .key: "{{ .path.basename }}"
+  syncPolicy:
+    # Always preserve Applications on deletion of ApplicationSet
+    preserveResourcesOnDeletion: true
   template:
     metadata:
       annotations:

@@ -9,9 +9,6 @@ metadata:
       depending on existing cluster definitions.
   name: applications
 spec:
-  # Always preserve Applications on deletion of ApplicationSet
-  preserveResourcesOnDeletion: true
-
   ignoreApplicationDifferences:
     - jqPathExpressions:
         - .spec.ignoreDifferences
@@ -29,6 +26,9 @@ spec:
               revision: main
               directories:
                 - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/apps/*
+  syncPolicy:
+    # Always preserve Applications on deletion of ApplicationSet
+    preserveResourcesOnDeletion: true
   template:
     metadata:
       annotations:

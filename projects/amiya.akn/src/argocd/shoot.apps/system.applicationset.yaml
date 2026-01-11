@@ -9,9 +9,6 @@ metadata:
       depending on existing templates and cluster definitions.
   name: system
 spec:
-  # Always preserve Applications on deletion of ApplicationSet
-  preserveResourcesOnDeletion: true
-
   ignoreApplicationDifferences:
     - jqPathExpressions:
         - .spec.ignoreDifferences
@@ -37,6 +34,9 @@ spec:
                   exclude: true
                 - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/external-secrets
                   exclude: true
+  syncPolicy:
+    # Always preserve Applications on deletion of ApplicationSet
+    preserveResourcesOnDeletion: true
   template:
     metadata:
       annotations:
