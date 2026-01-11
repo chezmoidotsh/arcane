@@ -119,6 +119,7 @@ yq = "latest"   # YAML/JSON processor for configuration file manipulation
 "ubi:runmedev/runme" = "latest"  # Interactive markdown execution tool for runbooks and documentation
 gum = "latest"                   # Terminal UI framework for interactive scripts and prompts
 uv = "latest"                    # Extremely fast Python package and project manager
+kustomize = "latest"
 
 [tasks."ansible:install"]
 description = "Install Ansible and dependencies"
