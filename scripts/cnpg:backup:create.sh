@@ -331,6 +331,9 @@ metadata:
 spec:
   cluster:
     name: ${cluster_name}
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
 "
 
 	# Confirm backup creation

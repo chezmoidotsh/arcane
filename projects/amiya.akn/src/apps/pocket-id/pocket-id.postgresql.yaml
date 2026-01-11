@@ -9,7 +9,7 @@ metadata:
 spec:
   bootstrap:
     recovery:
-      source: 2025-09-06T13:32:57.526Z
+      source: 2026-01-11T09:29:14.013Z
   description: PostgreSQL database dedicated to pocket-id
   enablePDB: false
   imageCatalogRef:
@@ -34,19 +34,19 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01KEP66SGX46SF7MX5MJW5DD9M # 2026-01-11T09:29:14.013Z
+        serverName: 01KEP8NH66XNZ7XR0Q3XGVJW4E # 2026-01-11T09:29:14.013Z
   storage:
     size: 250Mi
   walStorage:
-    size: 5Gi
+    size: 250Mi
 
   # Restore all data from legacy cluster present in the sso namespace
   externalClusters:
-    - name: 2025-09-06T13:32:57.526Z
+    - name: 2026-01-11T09:29:14.013Z
       plugin:
         enabled: true
         isWALArchiver: false
         name: barman-cloud.cloudnative-pg.io
         parameters:
           barmanObjectName: selfhosted
-          serverName: 01K4FKNS9PCXF59H3VC3FTVGJQ
+          serverName: 01KEP66SGX46SF7MX5MJW5DD9M
