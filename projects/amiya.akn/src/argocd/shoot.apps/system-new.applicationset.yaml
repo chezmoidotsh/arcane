@@ -88,12 +88,14 @@ spec:
           - ApplyOutOfSyncOnly=false # Only sync out-of-sync resources, rather than applying every object in the application
           - SkipDryRunOnMissingResource=true # Allow skip dry run on missing resource
           - Replace=false # Argo CD will use kubectl replace or kubectl create command to apply changes.
+
   templatePatch: |
-    {{- if .spec }}
-    spec:
-    {{ .spec | toYaml | indent 6 }}
-    {{- end }}
-    {{- if .metadata }}
+    {{- if hasKey . "metadata" }}
     metadata:
     {{ .metadata | toYaml | indent 6 }}
+    {{- end }}
+
+    {{- if hasKey . "spec" }}
+    spec:
+    {{ .spec | toYaml | indent 6 }}
     {{- end }}

@@ -89,11 +89,12 @@ spec:
           - SkipDryRunOnMissingResource=true # Allow skip dry run on missing resource
           - Replace=true # Argo CD will use kubectl replace or kubectl create command to apply changes.
   templatePatch: |
-    {{- if .spec }}
-    spec:
-    {{ .spec | toYaml | indent 6 }}
-    {{- end }}
-    {{- if .metadata }}
+    {{- with .metadata }}
     metadata:
-    {{ .metadata | toYaml | indent 6 }}
+    {{ . | toYaml | indent 6 }}
+    {{- end }}
+
+    {{- with .spec }}
+    spec:
+    {{ . | toYaml | indent 6 }}
     {{- end }}
