@@ -1,0 +1,18 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: Newt agent for Pangolin tunnel connectivity
+    - name: Category
+      value: Networking / Tunnel
+    - name: Version
+      # renovate: datasource=helm depName=newt registryUrl=https://charts.fossorial.io
+      value: "1.1.0"
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://docs.fossorial.io/
+    - name: GitHub Repository
+      value: https://github.com/fossorial/newt

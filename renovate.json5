@@ -31,6 +31,15 @@
 		"#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s+app\\.kubernetes\\.io/version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)"
       ],
       "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
+    },
+
+    {
+      "description": "Update value in .application.patch files",
+      "fileMatch": ["\\.application\\.patch$"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s+(?:\\w+:\\s*.*\\s+)?value:\\s*[\"']?(?<currentValue>[^\"'\\s]+)"
+      ],
+      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
     }
 
     // ---
@@ -77,13 +86,9 @@
   // These rules control how Renovate groups and labels the Pull Requests.
   "packageRules": [
     {
-      // This rule is essential. It groups all updates for the same dependency
-      // (e.g., 'newTag' + 'digest' + 'app.kubernetes.io/version' for 'my-app')
-      // into a single, combined Pull Request.
-      "description": "Group Kubernetes label and image updates together for same application",
+      "description": "Group all updates for the same package name into a single PR",
       "matchDatasources": ["docker", "helm"],
-      "matchFileNames": ["projects/**/kustomization.yaml"],
-      "groupName": "{{depName}}"
+      "groupName": "{{{depName}}}"
     },
     {
       // This rule enables digest updates on Kustomization files.

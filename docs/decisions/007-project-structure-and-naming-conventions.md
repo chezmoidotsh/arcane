@@ -1,8 +1,8 @@
 <!--
-status: "proposed"
+status: "accepted"
 date: 2025-10-31
 decision-makers: ["Alexandre"]
-consulted: ["ai/claude-4-sonnet"]
+consulted: ["ai/claude-4-sonnet", "ai/claude-opus-4.5"]
 informed: []
 -->
 
@@ -56,7 +56,11 @@ Without standardized conventions, each new application or cluster deployment bec
 
 ### Application Directory Naming
 
-**Option 1.1: Asterisk Prefix for Manual-Sync Apps** (Current amiya.akn pattern)
+**Option 1.1: Asterisk Prefix for Manual-Sync Apps** ~~(Current amiya.akn pattern)~~ (DEPRECATED)
+
+> \[!CAUTION]
+> **DEPRECATED**: This option has been superseded by Option 1.4 (`.application.patch` files).
+> The asterisk prefix approach is no longer recommended and should be migrated to the new pattern.
 
 ```
 projects/amiya.akn/src/apps/
@@ -64,61 +68,14 @@ projects/amiya.akn/src/apps/
 ├── *vault/        # Manual sync - secrets management
 ├── *pocket-id/    # Manual sync - authentication
 └── home-dashboard/  # Auto sync - user application
-
-projects/amiya.akn/src/infrastructure/kubernetes/
-├── *cilium/           # Manual sync - network infrastructure
-├── *longhorn/         # Manual sync - storage infrastructure
-├── *external-dns/     # Manual sync - DNS management
-├── *kube/             # Manual sync - Kubernetes core
-├── cert-manager/      # Excluded from system ApplicationSet (deployed in critical wave)
-├── envoy-gateway/     # Excluded from system ApplicationSet (deployed in critical wave)
-├── external-secrets/  # Excluded from system ApplicationSet (deployed in critical wave)
-├── tailscale/         # Excluded from system ApplicationSet (deployed in critical wave)
-└── cloudnative-pg/    # Auto sync - database operator
 ```
 
-**Mechanism**: ArgoCD ApplicationSet template patch uses `hasPrefix "*"` to determine sync policy:
+**Mechanism**: ArgoCD ApplicationSet template patch uses `hasPrefix "*"` to determine sync policy.
 
-* **With asterisk**: Manual sync only (`prune: false`, `selfHeal: false`)
-* **Without asterisk**: Automated sync (`prune: true`, `selfHeal: true`)
-* **Applies to**: Both `src/apps/` and `src/infrastructure/kubernetes/` directories
+* **Pros**: Clear visual indicator, functional mechanism
+* **Cons**: Non-standard filesystem naming, limited extensibility, binary control only
 
-**Implementation** (from `system.applicationset.yaml`):
-
-```yaml
-# Generator selects all directories with * prefix
-generators:
-  - matrix:
-      generators:
-        - list: { elements: [] }
-        - git:
-            directories:
-              - path: projects/{cluster}/src/infrastructure/kubernetes/*
-              # Exclude directories managed by critical sync wave
-              - path: projects/{cluster}/src/infrastructure/kubernetes/cert-manager
-                exclude: true
-              - path: projects/{cluster}/src/infrastructure/kubernetes/envoy-gateway
-                exclude: true
-              - path: projects/{cluster}/src/infrastructure/kubernetes/external-secrets
-                exclude: true
-              - path: projects/{cluster}/src/infrastructure/kubernetes/tailscale
-                exclude: true
-
-# Conditional sync policy based on asterisk prefix
-templatePatch: |
-  {{ if not (hasPrefix "*" .path.basename) }}
-  spec:
-    syncPolicy:
-      automated:
-        prune: true
-        selfHeal: true
-  {{ end }}
-```
-
-* **Pros**: Clear visual indicator, functional mechanism, safety for critical infrastructure, applies consistently across apps and system components
-* **Cons**: Non-standard filesystem naming, requires careful management, exclusion list maintenance for critical components
-
-**Option 1.2: No Prefix with Metadata Labels** (lungmen.akn pattern)
+**Option 1.2: No Prefix with Metadata Labels**
 
 ```
 projects/lungmen.akn/src/apps/
@@ -148,15 +105,73 @@ projects/cluster/src/
 * **Pros**: Complete separation, very explicit
 * **Cons**: Breaks single `apps/` pattern, harder to reorganize, duplicate ApplicationSet logic
 
-**Chosen Option**: **Option 1.1 - Asterisk Prefix** ✅
+**Option 1.4: ApplicationPatch Files** (NEW - Recommended)
+
+```
+projects/lungmen.akn/src/infrastructure/kubernetes/
+├── cilium/
+│   ├── .application.patch      # Sync policy and metadata
+│   ├── kustomization.yaml
+│   └── ...
+├── longhorn/
+│   ├── .application.patch      # Manual sync for storage
+│   └── ...
+└── cloudnative-pg/
+    ├── .application.patch      # Auto sync for DB operator
+    └── ...
+```
+
+**Mechanism**: Each application directory contains an optional `.application.patch` file that defines sync policy and application metadata using a custom CRD:
+
+```yaml
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata for ArgoCD UI
+    - name: Description
+      value: Tailscale Kubernetes operator for secure mesh networking
+    - name: Category
+      value: Networking / VPN
+    - name: Version
+      # renovate: datasource=helm depName=tailscale-operator registryUrl=https://pkgs.tailscale.com/helmcharts
+      value: "1.92.5"
+    - name: Documentation
+      value: https://tailscale.com/kb/1236/kubernetes-operator
+
+  syncPolicy:
+    automated:
+      enabled: true      # true = auto sync, false = manual sync
+      prune: true        # Optional, defaults based on enabled
+      selfHeal: true     # Optional, defaults based on enabled
+```
+
+**ArgoCD ApplicationSet Integration**:
+
+The ApplicationSet reads `.application.patch` files and merges their configuration into the generated Application resources, allowing granular per-application control.
+
+* **Pros**:
+  * Standard filesystem naming (no special characters)
+  * Granular sync control (not just binary on/off)
+  * Rich metadata support (descriptions, categories, versions)
+  * Renovate integration for version tracking
+  * Extensible for future requirements
+  * Clear separation of concerns
+* **Cons**:
+  * Requires additional file per application
+  * Slightly more complex than asterisk prefix
+
+**Chosen Option**: **Option 1.4 - ApplicationPatch Files** ✅
 
 **Rationale**:
 
-* Functional mechanism already implemented and working
-* Clear visual indicator of sync behavior
-* Safety protection for critical infrastructure
-* Simple to implement in ApplicationSet templates
-* Used consistently in production (amiya.akn)
+* Clean, standard filesystem naming without special characters
+* Granular control over sync policies beyond binary manual/auto
+* Rich metadata support improves ArgoCD UI experience
+* Native Renovate integration for version tracking
+* Extensible architecture for future requirements
+* Clear separation between application code and ArgoCD configuration
 
 ### Label Schema
 
@@ -269,7 +284,7 @@ metadata:
 This decision establishes a complete, consistent structure across all Arcane projects, prioritizing:
 
 1. **Kubernetes standard compliance** over custom conventions
-2. **Safety-first sync control** using asterisk prefix mechanism
+2. **Safety-first sync control** using `.application.patch` files
 3. **Comprehensive labeling** for proper resource management
 4. **Consistent organization** across all project types
 
@@ -279,48 +294,69 @@ This decision establishes a complete, consistent structure across all Arcane pro
 
 #### 1.1 Application Directory Naming
 
-**Standard**: Lowercase with hyphens, asterisk prefix for manual-sync applications
+**Standard**: Lowercase with hyphens, sync policy controlled via `.application.patch` files
 
 ```
 projects/{cluster-name}/src/apps/{application-name}/
 projects/{cluster-name}/src/infrastructure/kubernetes/{component-name}/
 ```
 
-**Asterisk Prefix Convention**:
+**ApplicationPatch Convention**:
 
-* **With asterisk (`*`)**: Manual sync only - for critical infrastructure
-* **Without asterisk**: Automated sync with prune and selfHeal
+Each application directory may contain an optional `.application.patch` file that defines:
+
+* **Sync policy**: Manual vs automated sync, prune, selfHeal settings
+* **Application metadata**: Description, category, version, documentation links
 * **Applies to**: Both user applications (`src/apps/`) and cluster infrastructure (`src/infrastructure/kubernetes/`)
 
-**Examples - User Applications**:
+**Directory Structure**:
 
-* `projects/amiya.akn/src/apps/*argocd/` - Manual sync (GitOps platform)
-* `projects/amiya.akn/src/apps/*vault/` - Manual sync (Secrets management)
-* `projects/amiya.akn/src/apps/*pocket-id/` - Manual sync (Authentication)
-* `projects/lungmen.akn/src/apps/actual-budget/` - Auto sync (User application)
+```
+{application-name}/
+├── .application.patch          # Sync policy and metadata (optional)
+├── kustomization.yaml          # Main Kustomize configuration
+├── {app}.{resource}.yaml       # Resource files
+└── ...
+```
+
+**ApplicationPatch File Format**:
+
+```yaml
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    - name: Description
+      value: Application description for ArgoCD UI
+    - name: Category
+      value: Category / Subcategory
+    - name: Version
+      # renovate: datasource=helm depName=chart registryUrl=https://charts.example.com
+      value: "1.0.0"
+    - name: Documentation
+      value: https://docs.example.com
+
+  syncPolicy:
+    automated:
+      enabled: true      # true = auto sync, false = manual sync
+      prune: true        # Optional, enable resource pruning
+      selfHeal: true     # Optional, enable drift correction
+```
 
 **Examples - Infrastructure Components**:
 
-* `projects/amiya.akn/src/infrastructure/kubernetes/*cilium/` - Manual sync (Network CNI)
-* `projects/amiya.akn/src/infrastructure/kubernetes/*longhorn/` - Manual sync (Storage CSI)
-* `projects/amiya.akn/src/infrastructure/kubernetes/*external-dns/` - Manual sync (DNS automation)
-* `projects/lungmen.akn/src/infrastructure/kubernetes/cloudnative-pg/` - Auto sync (Database operator)
+* `projects/lungmen.akn/src/infrastructure/kubernetes/cilium/` with `.application.patch` (manual sync for CNI)
+* `projects/lungmen.akn/src/infrastructure/kubernetes/longhorn/` with `.application.patch` (manual sync for storage)
+* `projects/lungmen.akn/src/infrastructure/kubernetes/cloudnative-pg/` with `.application.patch` (auto sync for DB operator)
 
-**Special Case - Critical Components**:
-
-Some infrastructure components are excluded from the `system` ApplicationSet entirely and deployed in a dedicated critical sync wave (wave `-10` or `0`):
-
-* `cert-manager/` - Certificate management (no asterisk, excluded from system ApplicationSet)
-* `envoy-gateway/` - Ingress gateway (no asterisk, excluded from system ApplicationSet)
-* `external-secrets/` - Secret synchronization (no asterisk, excluded from system ApplicationSet)
-* `tailscale/` - VPN connectivity (no asterisk, excluded from system ApplicationSet)
-
-**When to Use Asterisk**:
+**Sync Policy Guidelines**:
 
 > \[!WARNING]
-> Folders prefixed with '\*' are special folders that should not be automated under any circumstances. They must be manually synchronized to ensure no unwanted changes are made.
+> Applications with `syncPolicy.automated.enabled: false` require manual synchronization.
+> Use this for critical infrastructure where automated changes could cause outages.
 
-**Criteria for Manual Sync** (`*` prefix):
+**Criteria for Manual Sync** (`enabled: false`):
 
 * **Critical user-facing infrastructure**: ArgoCD, Vault, Crossplane, authentication systems
 * **Cluster networking**: CNI (Cilium), DNS automation, service mesh
@@ -328,26 +364,26 @@ Some infrastructure components are excluded from the `system` ApplicationSet ent
 * **Kubernetes core**: Control plane components, kube-system modifications
 * **High-impact changes**: Services where automation could cause cluster-wide outages
 
-**Criteria for Automated Sync** (no prefix):
+**Criteria for Automated Sync** (`enabled: true`):
 
 * **User applications**: Productivity tools, media servers, home automation
 * **Isolated services**: Applications with limited cluster dependencies
 * **Database operators**: CloudNative-PG, Redis operator (if properly configured)
 * **Development workloads**: Non-production testing applications
 
-**Criteria for Exclusion from ApplicationSet** (deployed in critical sync wave):
+**Default Behavior** (no `.application.patch` file):
 
-* **Prerequisite infrastructure**: Services required before other services can function
-* **Security foundations**: Certificate management, secret operators
-* **Network foundations**: Ingress controllers, VPN connectivity
+* Applications without a `.application.patch` file use the ApplicationSet default sync policy
+* Defaults can be configured at the ApplicationSet level
 
 **Rationale**:
 
-* Standard Kubernetes naming with functional safety layer
-* Clear visual indication of sync behavior across all infrastructure types
-* Protects critical infrastructure from accidental automation
-* Consistent convention between apps and system components
-* Filesystem-friendly, tooling-compatible
+* Standard filesystem naming without special characters
+* Granular sync control beyond binary manual/auto
+* Rich metadata improves ArgoCD UI experience
+* Native Renovate integration for version tracking
+* Extensible for future requirements
+* Clear separation between application code and ArgoCD configuration
 
 #### 1.2 Application Structure
 
@@ -1201,22 +1237,36 @@ projects/amiya.akn/
 ├── architecture.d2
 ├── src/
 │   ├── apps/
-│   │   ├── *argocd/             # Manual sync - Core GitOps
-│   │   ├── *vault/              # Manual sync - Secret management
-│   │   ├── *pocket-id/          # Manual sync - Authentication
-│   │   ├── *crossplane/         # Manual sync - Infrastructure provisioning
-│   │   └── home-dashboard/      # Auto sync - User application
+│   │   ├── argocd/              # Manual sync (.application.patch) - Core GitOps
+│   │   │   └── .application.patch
+│   │   ├── vault/               # Manual sync (.application.patch) - Secret management
+│   │   │   └── .application.patch
+│   │   ├── pocket-id/           # Manual sync (.application.patch) - Authentication
+│   │   │   └── .application.patch
+│   │   ├── crossplane/          # Manual sync (.application.patch) - Infrastructure provisioning
+│   │   │   └── .application.patch
+│   │   └── home-dashboard/      # Auto sync (.application.patch) - User application
+│   │       └── .application.patch
 │   └── infrastructure/
 │       ├── kubernetes/          # Cluster infrastructure components
-│       │   ├── *cilium/         # Manual sync - Network CNI
-│       │   ├── *longhorn/       # Manual sync - Storage CSI
-│       │   ├── *external-dns/   # Manual sync - DNS automation
-│       │   ├── *kube/           # Manual sync - Kubernetes core
-│       │   ├── cert-manager/    # Critical wave - Certificates (excluded from system ApplicationSet)
-│       │   ├── envoy-gateway/   # Critical wave - Ingress (excluded from system ApplicationSet)
-│       │   ├── external-secrets/# Critical wave - Secrets (excluded from system ApplicationSet)
-│       │   ├── tailscale/       # Critical wave - VPN (excluded from system ApplicationSet)
+│       │   ├── cilium/          # Manual sync - Network CNI
+│       │   │   └── .application.patch
+│       │   ├── longhorn/        # Manual sync - Storage CSI
+│       │   │   └── .application.patch
+│       │   ├── external-dns/    # Manual sync - DNS automation
+│       │   │   └── .application.patch
+│       │   ├── kube/            # Manual sync - Kubernetes core
+│       │   │   └── .application.patch
+│       │   ├── cert-manager/    # Auto sync - Certificates
+│       │   │   └── .application.patch
+│       │   ├── envoy-gateway/   # Auto sync - Ingress
+│       │   │   └── .application.patch
+│       │   ├── external-secrets/# Auto sync - Secrets
+│       │   │   └── .application.patch
+│       │   ├── tailscale/       # Auto sync - VPN
+│       │   │   └── .application.patch
 │       │   └── cloudnative-pg/  # Auto sync - Database operator
+│       │       └── .application.patch
 │       └── crossplane/          # Infrastructure as Code definitions
 ├── docs/
 │   ├── BOOTSTRAP_TALOS.md
@@ -1235,22 +1285,37 @@ projects/lungmen.akn/
 ├── src/
 │   ├── apps/
 │   │   ├── actual-budget/       # Auto sync - User applications
+│   │   │   └── .application.patch
 │   │   ├── atuin/
+│   │   │   └── .application.patch
 │   │   ├── immich/
+│   │   │   └── .application.patch
 │   │   ├── jellyfin/
+│   │   │   └── .application.patch
 │   │   ├── paperless-ngx/
+│   │   │   └── .application.patch
 │   │   └── silverbullet/
+│   │       └── .application.patch
 │   └── infrastructure/
 │       ├── kubernetes/          # Cluster infrastructure components
-│       │   ├── *cilium/         # Manual sync - Network CNI
-│       │   ├── *longhorn/       # Manual sync - Storage CSI
-│       │   ├── *external-dns/   # Manual sync - DNS automation
-│       │   ├── cert-manager/    # Critical wave - Certificates
-│       │   ├── envoy-gateway/   # Critical wave - Ingress
-│       │   ├── external-secrets/# Critical wave - Secrets
-│       │   ├── tailscale/       # Critical wave - VPN
+│       │   ├── cilium/          # Manual sync - Network CNI
+│       │   │   └── .application.patch
+│       │   ├── longhorn/        # Manual sync - Storage CSI
+│       │   │   └── .application.patch
+│       │   ├── external-dns/    # Manual sync - DNS automation
+│       │   │   └── .application.patch
+│       │   ├── cert-manager/    # Auto sync - Certificates
+│       │   │   └── .application.patch
+│       │   ├── envoy-gateway/   # Auto sync - Ingress
+│       │   │   └── .application.patch
+│       │   ├── external-secrets/# Auto sync - Secrets
+│       │   │   └── .application.patch
+│       │   ├── tailscale/       # Auto sync - VPN
+│       │   │   └── .application.patch
 │       │   ├── cloudnative-pg/  # Auto sync - Database operator
+│       │   │   └── .application.patch
 │       │   └── smb-csi-driver/  # Auto sync - SMB storage driver
+│       │       └── .application.patch
 │       ├── crossplane/          # Infrastructure as Code definitions
 │       └── talos/               # Talos configuration files
 ├── docs/
@@ -1345,34 +1410,77 @@ projects/chezmoi.sh/
 4. **Apply to amiya.akn** with careful validation
 5. **Monitor ArgoCD sync** for issues
 
-### Asterisk Prefix Management
+### ApplicationPatch Management
 
-**Adding Asterisk** (to existing auto-sync app):
+**Creating ApplicationPatch** (for new application):
+
+```yaml
+# {application-name}/.application.patch
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    - name: Description
+      value: Brief description of the application
+    - name: Category
+      value: Category / Subcategory
+    - name: Version
+      # renovate: datasource=helm depName=chart registryUrl=https://charts.example.com
+      value: "1.0.0"
+
+  syncPolicy:
+    automated:
+      enabled: true  # or false for manual sync
+```
+
+**Changing Sync Policy** (auto to manual):
 
 > \[!CAUTION]
 > This changes sync behavior. Application will stop auto-syncing and require manual sync.
 
-```bash
-# Rename directory
-git mv projects/amiya.akn/src/apps/critical-app \
-       projects/amiya.akn/src/apps/*critical-app
-
-# Commit with clear message
-git commit -m ":wrench:(project:amiya.akn): Convert critical-app to manual sync per ADR-008"
+```yaml
+# Edit .application.patch
+spec:
+  syncPolicy:
+    automated:
+      enabled: false  # Changed from true
 ```
 
-**Removing Asterisk** (to enable auto-sync):
+```bash
+# Commit with clear message
+git commit -m ":wrench:(project:amiya.akn): Disable auto-sync for critical-app per ADR-007"
+```
 
-> \[!CAUTION]
-> This enables automated prune and selfHeal. Ensure application is stable.
+**Migrating from Asterisk Prefix** (legacy pattern):
+
+> \[!NOTE]
+> This migration removes the asterisk prefix and adds an `.application.patch` file.
 
 ```bash
-# Rename directory
-git mv projects/lungmen.akn/src/apps/*stable-app \
-       projects/lungmen.akn/src/apps/stable-app
+# 1. Rename directory to remove asterisk
+git mv projects/amiya.akn/src/apps/*critical-app \
+       projects/amiya.akn/src/apps/critical-app
 
-# Commit with clear message
-git commit -m ":wrench:(project:lungmen.akn): Enable auto-sync for stable-app per ADR-008"
+# 2. Create .application.patch with manual sync policy
+cat > projects/amiya.akn/src/apps/critical-app/.application.patch << 'EOF'
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    - name: Description
+      value: Critical application description
+    - name: Category
+      value: Infrastructure / Critical
+
+  syncPolicy:
+    automated:
+      enabled: false  # Manual sync for critical infrastructure
+EOF
+
+# 3. Commit with clear message
+git commit -m ":truck:(project:amiya.akn): Migrate critical-app to .application.patch per ADR-007"
 ```
 
 ### Label Standardization
@@ -1435,7 +1543,7 @@ kubectl delete httproute atuin-websecure -n atuin
 ### Positive
 
 * ✅ **Consistency**: Single source of truth for all project structures
-* ✅ **Safety**: Asterisk prefix protects critical infrastructure from automation
+* ✅ **Safety**: `.application.patch` files provide explicit sync control for critical infrastructure
 * ✅ **Reduced Cognitive Load**: No context switching between different patterns
 * ✅ **Better Tooling**: Automation can rely on predictable structures
 * ✅ **Easier Onboarding**: Clear standards for new applications
@@ -1447,23 +1555,17 @@ kubectl delete httproute atuin-websecure -n atuin
 ### Negative
 
 * ⚠️ **Migration Effort**: Existing projects require refactoring
-* ⚠️ **Learning Curve**: Operators must learn comprehensive standards including asterisk convention
+* ⚠️ **Learning Curve**: Operators must learn comprehensive standards including `.application.patch` convention
 * ⚠️ **Breaking Changes**: Some migrations (HTTPRoute renaming) may cause brief disruptions
 * ⚠️ **Documentation Overhead**: Standards require ongoing maintenance as ecosystem evolves
-* ⚠️ **Asterisk Mechanism Limitations**: While the asterisk prefix approach is practical and elegant for basic use cases, it has significant extensibility and customization limitations:
-  * **Binary Control**: Only supports two states (manual vs auto-sync) with no granular control
-  * **No Partial Automation**: Cannot enable selective automation (e.g., auto-sync but no prune, or selfHeal without auto-sync)
-  * **Limited Flexibility**: ApplicationSet template patches cannot accommodate complex per-app sync policies
-  * **Filesystem Coupling**: Sync behavior tied to directory naming creates coupling between filesystem structure and runtime behavior
-  * **No Runtime Overrides**: Changing sync policy requires filesystem rename and Git commit, preventing temporary policy adjustments
-  * **Future Refactoring Required**: This mechanism will need rework when more granular sync control becomes necessary (e.g., staged rollouts, partial automation, application-specific sync windows)
+* ⚠️ **Additional File Overhead**: Each application requires an `.application.patch` file for explicit sync control
 
 ### Neutral
 
 * 📝 **Template Maintenance**: Application templates need updates to match standards
 * 📝 **CI/CD Updates**: Validation pipelines should enforce new standards
 * 📝 **Documentation Updates**: All project READMEs need standard structure references
-* 📝 **Decision Matrix**: Need clear criteria for when to use asterisk prefix
+* 📝 **Decision Matrix**: Need clear criteria for when to use manual vs automated sync
 
 ## Validation and Compliance
 
@@ -1471,12 +1573,12 @@ kubectl delete httproute atuin-websecure -n atuin
 
 **Validation Checks**:
 
-1. **Directory Naming**: Lowercase with hyphens, optional asterisk prefix
+1. **Directory Naming**: Lowercase with hyphens (no special characters)
 2. **Label Presence**: Required labels on all resources
 3. **File Naming**: Consistent patterns across projects
 4. **Security Directory**: Presence and structure
 5. **Kustomization Structure**: Namespace, labels, resources fields
-6. **Asterisk Usage**: Verify sync policy matches prefix
+6. **ApplicationPatch Validation**: Verify `.application.patch` files are valid YAML with correct schema
 
 **Implementation**:
 
@@ -1488,8 +1590,8 @@ kubectl delete httproute atuin-websecure -n atuin
 
 For each new application:
 
-* [ ] Directory name follows lowercase-hyphen pattern
-* [ ] Asterisk prefix decision documented (manual vs auto-sync)
+* [ ] Directory name follows lowercase-hyphen pattern (no special characters)
+* [ ] `.application.patch` file present with sync policy defined
 * [ ] kustomization.yaml includes namespace, standard labels
 * [ ] Version label includes Renovate comment
 * [ ] Files follow `{app}.{resource}.yaml` pattern
@@ -1499,9 +1601,9 @@ For each new application:
 * [ ] ExternalSecrets reference correct OpenBao paths
 * [ ] Helmvalues directory (if Helm) follows structure
 
-### Asterisk Prefix Decision Matrix
+### Sync Policy Decision Matrix
 
-**Use `*` prefix when**:
+**Use manual sync (`enabled: false`) when**:
 
 * [ ] Application is critical infrastructure (ArgoCD, Vault, Crossplane)
 * [ ] Automated changes could cause cluster-wide outages
@@ -1509,7 +1611,7 @@ For each new application:
 * [ ] Manual review required for all changes
 * [ ] Application is in early deployment/testing phase
 
-**Omit `*` prefix when**:
+**Use automated sync (`enabled: true`) when**:
 
 * [ ] Application is isolated user-facing service
 * [ ] Automated sync/prune is safe
@@ -1523,7 +1625,7 @@ For each new application:
 * [ADR-003: OpenBao Path Naming Conventions](./003-openbao-path-naming-conventions.md) - Secret path structure
 * [ADR-004: OpenBao Policy Naming Conventions](./004-openbao-policy-naming-conventions.md) - Policy standards
 * [CLAUDE.md](../../CLAUDE.md) - Repository structure overview
-* [ArgoCD README](../../projects/amiya.akn/src/apps/*argocd/README.md) - ArgoCD app structure and asterisk convention
+* [ArgoCD README](../../projects/amiya.akn/src/apps/argocd/README.md) - ArgoCD app structure and sync conventions
 * [Renovate Configuration Guide](../RENOVATE.md) - Automated dependency management with label and image tracking
 
 ### Kubernetes Standards
@@ -1546,6 +1648,7 @@ For each new application:
 
 ## Changelog
 
+* **2026-01-13**: Replaced asterisk prefix mechanism with `.application.patch` files for ArgoCD sync control. This provides granular sync policies, rich metadata support, and standard filesystem naming. Deprecated Option 1.1 in favor of new Option 1.4. Status changed from "proposed" to "accepted".
 * **2025-11-02**: Corrected label placement to address selector/template conflicts - removed `app.kubernetes.io/instance` and `app.kubernetes.io/component` from kustomization.yaml (workload-specific), keeping only `app.kubernetes.io/name` (with `includeSelectors: true`) and `app.kubernetes.io/version` at application level
 * **2025-11-01**: Added Renovate configuration for automated label and image override tracking, including regex managers for `app.kubernetes.io/version` labels and Kustomize `images` field updates
 * **2025-10-31**: Initial ADR creation establishing comprehensive project structure and naming standards across all Arcane infrastructure projects, including asterisk prefix convention for ArgoCD sync control

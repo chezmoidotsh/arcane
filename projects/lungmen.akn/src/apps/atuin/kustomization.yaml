@@ -6,16 +6,9 @@ namespace: atuin
 labels:
   - pairs:
       app.kubernetes.io/name: atuin
-    includeTemplates: true
-    includeSelectors: true
-  - pairs:
       app.kubernetes.io/instance: atuin
     includeTemplates: true
     includeSelectors: true
-  - pairs:
-      # renovate: datasource=docker depName=ghcr.io/atuinsh/atuin
-      app.kubernetes.io/version: v18.11.0
-    includeTemplates: true
 
 resources:
   - atuin.deployment.yaml

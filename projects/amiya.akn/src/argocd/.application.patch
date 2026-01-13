@@ -1,17 +1,31 @@
 apiVersion: arcane.chezmoi.sh/v1alpha1
 kind: ApplicationPatch
+metadata: {}
 spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: Declarative GitOps Continuous Delivery for Kubernetes
+    - name: Category
+      value: CI/CD / GitOps
+    - name: Version
+      # renovate: datasource=helm depName=argo-cd registryUrl=https://argoproj.github.io/argo-helm
+      value: "9.2.4"
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://argo-cd.readthedocs.io/
+    - name: Troubleshooting
+      value: https://argo-cd.readthedocs.io/en/stable/operator-manual/troubleshooting/
+    - name: GitHub Repository
+      value: https://github.com/argoproj/argo-cd
+    - name: Helm Chart
+      value: https://github.com/argoproj/argo-helm/tree/main/charts/argo-cd
+
   syncPolicy:
     automated:
-      enable: false
+      enabled: false
     syncOptions:
       - CreateNamespace=true
       - Delete=confirm
       - Prune=confirm
       - ServerSideApply=true
-  info:
-    - name: Version
-      # renovate: datasource=helm depName=argo-cd registryUrl=https://argoproj.github.io/argo-helm
-      value: "9.2.4"
-    - name: Documentation URL
-      value: "https://argo-cd.readthedocs.io/"

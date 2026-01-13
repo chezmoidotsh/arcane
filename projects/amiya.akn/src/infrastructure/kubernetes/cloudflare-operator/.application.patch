@@ -5,17 +5,16 @@ spec:
   info:
     # -- Application metadata
     - name: Description
-      value: Simple and secure OIDC provider for your personal infrastructure
+      value: Kubernetes operator for managing Cloudflare resources
     - name: Category
-      value: Security / Identity
+      value: Networking / DNS & CDN
     - name: Version
-      # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
-      value: "v2.1.0"
+      value: "v0.13.1"
     # -- Documentation & Resources
     - name: Documentation
-      value: https://github.com/pocket-id/pocket-id
+      value: https://github.com/adyanth/cloudflare-operator
     - name: GitHub Repository
-      value: https://github.com/pocket-id/pocket-id
+      value: https://github.com/adyanth/cloudflare-operator
 
   syncPolicy:
     automated:

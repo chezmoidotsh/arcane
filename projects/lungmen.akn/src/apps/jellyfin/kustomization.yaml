@@ -6,16 +6,9 @@ namespace: jellyfin
 labels:
   - pairs:
       app.kubernetes.io/name: jellyfin
-    includeTemplates: true
-    includeSelectors: true
-  - pairs:
       app.kubernetes.io/instance: jellyfin
     includeTemplates: true
     includeSelectors: true
-  - pairs:
-      # renovate: datasource=docker depName=ghcr.io/jellyfin/jellyfin
-      app.kubernetes.io/version: 10.11.5
-    includeTemplates: true
 
 resources:
   - jellyfin.httproute.yaml

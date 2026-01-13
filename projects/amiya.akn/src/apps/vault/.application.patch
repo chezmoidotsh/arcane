@@ -2,18 +2,23 @@ apiVersion: arcane.chezmoi.sh/v1alpha1
 kind: ApplicationPatch
 metadata: {}
 spec:
-  syncPolicy:
-    automated: null
-    syncOptions:
-      - CreateNamespace=true
-      - Delete=confirm
-      - Prune=confirm
-      - ServerSideApply=true
   info:
+    # -- Application metadata
+    - name: Description
+      value: OpenBao (Vault fork) - Secret Management
+    - name: Category
+      value: Security / Secrets Management
     - name: Version
       # renovate: datasource=helm depName=openbao registryUrl=https://openbao.github.io/openbao-helm
       value: "0.23.3"
-    - name: Documentation URL
-      value: "https://openbao.org/"
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://openbao.org/
+    - name: GitHub Repository
+      value: https://github.com/openbao/openbao
     - name: Helm Chart
-      value: "openbao"
+      value: https://github.com/openbao/openbao-helm
+
+  syncPolicy:
+    automated:
+      enabled: false # Core security component

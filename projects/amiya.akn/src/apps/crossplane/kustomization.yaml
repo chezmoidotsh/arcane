@@ -1,6 +1,7 @@
 ---
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+# namespace: crossplane # This must be commented out to prevent Kustomize from overriding the namespace in the ApplicationSet, ensuring it remains 'argocd'.
 
 labels:
   - pairs:
@@ -8,10 +9,6 @@ labels:
       app.kubernetes.io/instance: crossplane
     includeTemplates: true
     includeSelectors: true
-  - pairs:
-      # renovate: datasource=helm depName=crossplane registryUrl=https://charts.crossplane.io/master/
-      app.kubernetes.io/version: 1.20.0-rc.0.140.g629ca2e2f
-    includeTemplates: true
 
 resources:
   - crossplane-secrets.namespace.yaml

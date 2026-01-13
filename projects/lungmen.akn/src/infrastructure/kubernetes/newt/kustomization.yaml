@@ -31,10 +31,6 @@ labels:
       app.kubernetes.io/name: newt
     includeTemplates: true
     includeSelectors: true
-  - pairs:
-      # renovate: datasource=docker depName=docker.io/fosrl/newt
-      app.kubernetes.io/version: 1.8.1
-    includeTemplates: true
 
 images:
   # renovate: datasource=docker depName=docker.io/fosrl/newt

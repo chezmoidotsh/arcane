@@ -3,11 +3,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: n8n
 
-labels:
-  - pairs:
-      # renovate: datasource=docker depName=ghcr.io/n8n-io/n8n
-      app.kubernetes.io/version: 2.4.0
-
 resources:
   # Configuration
   - n8n.configmap.yaml

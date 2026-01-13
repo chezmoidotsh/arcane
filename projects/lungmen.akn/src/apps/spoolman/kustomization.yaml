@@ -6,16 +6,9 @@ namespace: spoolman
 labels:
   - pairs:
       app.kubernetes.io/name: spoolman
-    includeTemplates: true
-    includeSelectors: true
-  - pairs:
       app.kubernetes.io/instance: spoolman
     includeTemplates: true
     includeSelectors: true
-  - pairs:
-      # renovate: datasource=docker depName=ghcr.io/donkie/spoolman
-      app.kubernetes.io/version: 0.22.1
-    includeTemplates: true
 
 resources:
   - spoolman.deployment.yaml

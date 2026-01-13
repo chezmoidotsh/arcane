@@ -8,10 +8,6 @@ labels:
       app.kubernetes.io/name: vault
     includeTemplates: true
     includeSelectors: true
-  - pairs:
-      # renovate: datasource=helm depName=openbao registryUrl=https://openbao.github.io/openbao-helm
-      # app.kubernetes.io/version: 0.23.3
-    includeTemplates: true
 
 resources:
   - openbao-config.externalsecret.yaml

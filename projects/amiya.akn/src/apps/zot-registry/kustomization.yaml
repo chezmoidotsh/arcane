@@ -8,10 +8,6 @@ labels:
       app.kubernetes.io/name: zot
     includeSelectors: true
     includeTemplates: true
-  - pairs:
-      # renovate: datasource=helm depName=zot registryUrl=http://zotregistry.dev/helm-charts
-      app.kubernetes.io/version: 0.1.95
-    includeTemplates: true
 
 resources:
   - zot.httproute.yaml

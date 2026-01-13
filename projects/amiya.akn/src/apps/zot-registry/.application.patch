@@ -1,0 +1,24 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: OCI-native container registry
+    - name: Category
+      value: Infrastructure / Registry
+    - name: Version
+      # renovate: datasource=helm depName=zot registryUrl=http://zotregistry.dev/helm-charts
+      value: "0.1.95"
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://zotregistry.dev/
+    - name: GitHub Repository
+      value: https://github.com/project-zot/zot
+    - name: Helm Chart
+      value: https://github.com/project-zot/helm-charts
+
+  syncPolicy:
+    automated:
+      enabled: true

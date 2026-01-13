@@ -1,0 +1,24 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: Synchronizes exposed Kubernetes Services and Ingresses with DNS providers
+    - name: Category
+      value: Networking / DNS
+    - name: Version
+      # renovate: datasource=helm depName=external-dns registryUrl=https://kubernetes-sigs.github.io/external-dns
+      value: "1.20.0"
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://kubernetes-sigs.github.io/external-dns/latest/
+    - name: GitHub Repository
+      value: https://github.com/kubernetes-sigs/external-dns
+    - name: Helm Chart
+      value: https://artifacthub.io/packages/helm/external-dns/external-dns
+
+  syncPolicy:
+    automated:
+      enabled: true

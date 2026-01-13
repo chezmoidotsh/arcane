@@ -1,0 +1,19 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: Public Gateway configuration for Cloudflare Tunnel integration
+    - name: Category
+      value: Networking / Gateway
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/
+    - name: Troubleshooting
+      value: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/troubleshooting/
+
+  syncPolicy:
+    automated:
+      enabled: true

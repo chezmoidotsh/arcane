@@ -1,0 +1,26 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: eBPF-based CNI providing networking, security and observability for Kubernetes
+    - name: Category
+      value: Networking / CNI
+    - name: Version
+      # renovate: datasource=helm depName=cilium registryUrl=https://helm.cilium.io/
+      value: "1.18.5"
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://docs.cilium.io/
+    - name: Troubleshooting
+      value: https://docs.cilium.io/en/stable/operations/troubleshooting/
+    - name: GitHub Repository
+      value: https://github.com/cilium/cilium
+    - name: Helm Chart
+      value: https://github.com/cilium/cilium/tree/main/install/kubernetes/cilium
+
+  syncPolicy:
+    automated:
+      enabled: false # Avoid automatic updates due to potential network disruptions

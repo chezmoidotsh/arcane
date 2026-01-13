@@ -6,16 +6,9 @@ namespace: actual-budget
 labels:
   - pairs:
       app.kubernetes.io/name: actual-budget
-    includeTemplates: true
-    includeSelectors: true
-  - pairs:
       app.kubernetes.io/instance: actual-budget
     includeTemplates: true
     includeSelectors: true
-  - pairs:
-      # renovate: datasource=docker depName=actualbudget/actual-server
-      app.kubernetes.io/version: 26.1.0
-    includeTemplates: true
 
 resources:
   - actual-budget.configuration.externalsecret.yaml

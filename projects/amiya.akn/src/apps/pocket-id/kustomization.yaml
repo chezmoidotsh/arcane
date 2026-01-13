@@ -9,9 +9,6 @@ labels:
       app.kubernetes.io/name: pocket-id
     includeTemplates: true
     includeSelectors: true
-  # - pairs:
-  # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
-  # app.kubernetes.io/version: v2.1.0
 
 resources:
   - pocket-id-public.httproute.yaml

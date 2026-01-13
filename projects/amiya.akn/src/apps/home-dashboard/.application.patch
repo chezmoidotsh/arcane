@@ -5,17 +5,17 @@ spec:
   info:
     # -- Application metadata
     - name: Description
-      value: Simple and secure OIDC provider for your personal infrastructure
+      value: A self-hosted dashboard that puts all your feeds in one place
     - name: Category
-      value: Security / Identity
+      value: Productivity / Dashboard
     - name: Version
-      # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
-      value: "v2.1.0"
+      # renovate: datasource=docker depName=docker.io/glanceapp/glance
+      value: "v0.8.4"
     # -- Documentation & Resources
     - name: Documentation
-      value: https://github.com/pocket-id/pocket-id
+      value: https://github.com/glanceapp/glance
     - name: GitHub Repository
-      value: https://github.com/pocket-id/pocket-id
+      value: https://github.com/glanceapp/glance
 
   syncPolicy:
     automated:

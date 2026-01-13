@@ -22,6 +22,9 @@ spec:
         revision: main
         directories:
           - path: projects/*/src/infrastructure/crossplane
+  syncPolicy:
+    # Always preserve Applications on deletion of ApplicationSet
+    preserveResourcesOnDeletion: true
   template:
     metadata:
       annotations:
