@@ -10,11 +10,6 @@ metadata:
       one for system/cluster applications and another for applications.
   name: shoot
 spec:
-  ignoreApplicationDifferences:
-    - jqPathExpressions:
-        - .spec.source.targetRevision
-        - .spec.sources[].targetRevision
-        - .spec.syncPolicy.automated
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
@@ -91,11 +86,18 @@ spec:
 
               - patch: |
                   - op: add
-                    path: /spec/generators/0/merge/generators/0/matrix/generators/1/list/elements/-
+                    path: /spec/generators/0/merge/generators/0/matrix/generators/0/git/directories/0/path
+                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/*
+                  - op: add
+                    path: /spec/generators/0/merge/generators/1/matrix/generators/0/git/files/0/path
+                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/*/.application.patch
+                  - op: replace
+                    path: /spec/generators/0/merge/generators/0/matrix/generators/1/list/elements/0
                     value:
+                      .key: '{{ "{{ .path.basename }}" }}'
                       metadata:
                         annotations: {{ omit (.metadata.annotations | toYaml | fromYaml) "argocd.argoproj.io/tracking-id" | toYaml | nindent 8 }}
-                        labels: {{ .metadata.labels | toYaml | nindent 8 }}
+                        labels: {{ omit (.metadata.labels | toYaml | fromYaml) "app.kubernetes.io/instance" "app.kubernetes.io/managed-by" "app.kubernetes.io/part-of" "app.kubernetes.io/version" | toYaml | nindent 8 }}
                       name: {{ .name | quote }}
                       nameNormalized: {{ .nameNormalized | quote }}
                       nameRFC1123: {{ regexReplaceAll "[^a-zA-Z0-9_-]" .name "-" | quote }}
@@ -111,11 +113,18 @@ spec:
                   name: system-new
               - patch: |
                   - op: add
-                    path: /spec/generators/0/merge/generators/0/matrix/generators/1/list/elements/-
+                    path: /spec/generators/0/merge/generators/0/matrix/generators/0/git/directories/0/path
+                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/apps/*
+                  - op: add
+                    path: /spec/generators/0/merge/generators/1/matrix/generators/0/git/files/0/path
+                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/apps/*/.application.patch
+                  - op: replace
+                    path: /spec/generators/0/merge/generators/0/matrix/generators/1/list/elements/0
                     value:
+                      .key: '{{ "{{ .path.basename }}" }}'
                       metadata:
                         annotations: {{ omit (.metadata.annotations | toYaml | fromYaml) "argocd.argoproj.io/tracking-id" | toYaml | nindent 8 }}
-                        labels: {{ .metadata.labels | toYaml | nindent 8 }}
+                        labels: {{ omit (.metadata.labels | toYaml | fromYaml) "app.kubernetes.io/instance" "app.kubernetes.io/managed-by" "app.kubernetes.io/part-of" "app.kubernetes.io/version" | toYaml | nindent 8 }}
                       name: {{ .name | quote }}
                       nameNormalized: {{ .nameNormalized | quote }}
                       nameRFC1123: {{ regexReplaceAll "[^a-zA-Z0-9_-]" .name "-" | quote }}

@@ -82,18 +82,24 @@ spec:
           allowEmpty: false # Allows deleting all application resources during automatic syncing ( false by default ).
 
         syncOptions:
+          - ApplyOutOfSyncOnly=false # Only sync out-of-sync resources, rather than applying every object in the application
           - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
-          - PrunePropagationPolicy=foreground # Supported policies are background, foreground and orphan.
+          - Delete=confirm # Confirm before deleting resources
+          - Prune=confirm # Confirm before pruning resources
           - PruneLast=true # Allow the ability for resource pruning to happen as a final, implicit wave of a sync operation
-          - ApplyOutOfSyncOnly=true # Only sync out-of-sync resources, rather than applying every object in the application
+          - PrunePropagationPolicy=foreground # Supported policies are background, foreground and orphan.
+          - Replace=false # Argo CD will use kubectl replace or kubectl create command to apply changes.
+          - ServerSideApply=true # Enable server-side apply for resource reconciliation
           - SkipDryRunOnMissingResource=true # Allow skip dry run on missing resource
-          - Replace=true # Argo CD will use kubectl replace or kubectl create command to apply changes.
+          - Validate=true # Enable server-side validation during sync
+
   templatePatch: |
-    {{- if .spec }}
-    spec:
-    {{ .spec | toYaml | indent 6 }}
-    {{- end }}
-    {{- if .metadata }}
+    {{- if hasKey . "metadata" }}
     metadata:
     {{ .metadata | toYaml | indent 6 }}
+    {{- end }}
+
+    {{- if hasKey . "spec" }}
+    spec:
+    {{ .spec | toYaml | indent 6 }}
     {{- end }}

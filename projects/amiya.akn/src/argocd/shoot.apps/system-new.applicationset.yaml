@@ -30,6 +30,16 @@ spec:
                     revision: main
                     directories:
                       - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/*
+
+                      # Exclude all directories that will are automatically managed by the cluster Application
+                      - path: projects/*/src/infrastructure/kubernetes/cert-manager
+                        exclude: true
+                      - path: projects/*/src/infrastructure/kubernetes/envoy-gateway
+                        exclude: true
+                      - path: projects/*/src/infrastructure/kubernetes/external-secrets
+                        exclude: true
+                      - path: projects/*/src/infrastructure/kubernetes/kyverno
+                        exclude: true
                 - list:
                     elements:
                       - .key: "{{ .path.basename }}"
@@ -41,6 +51,16 @@ spec:
                     revision: main
                     files:
                       - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/*/.application.patch
+
+                      # Exclude all files that will are automatically managed by the cluster Application
+                      - path: projects/*/src/infrastructure/kubernetes/cert-manager/.application.patch
+                        exclude: true
+                      - path: projects/*/src/infrastructure/kubernetes/envoy-gateway/.application.patch
+                        exclude: true
+                      - path: projects/*/src/infrastructure/kubernetes/external-secrets/.application.patch
+                        exclude: true
+                      - path: projects/*/src/infrastructure/kubernetes/kyverno/.application.patch
+                        exclude: true
                 - list:
                     elements:
                       - .key: "{{ .path.basename }}"
@@ -62,7 +82,7 @@ spec:
       # Destination: namespace is the application name
       destination:
         server: "{{ .server }}"
-        namespace: "{{ .path.basename }}"
+        namespace: '{{ .path.basename | trimSuffix "-system" }}-system'
 
       # Project: system AND CANNOT BE OVERRIDDEN via patchTemplate
       project: system
@@ -82,18 +102,24 @@ spec:
           allowEmpty: false # Allows deleting all application resources during automatic syncing ( false by default ).
 
         syncOptions:
-          - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
-          - PrunePropagationPolicy=foreground # Supported policies are background, foreground and orphan.
-          - PruneLast=false # Allow the ability for resource pruning to happen as a final, implicit wave of a sync operation
           - ApplyOutOfSyncOnly=false # Only sync out-of-sync resources, rather than applying every object in the application
-          - SkipDryRunOnMissingResource=true # Allow skip dry run on missing resource
+          - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
+          - Delete=confirm # Confirm before deleting resources
+          - Prune=confirm # Confirm before pruning resources
+          - PruneLast=true # Allow the ability for resource pruning to happen as a final, implicit wave of a sync operation
+          - PrunePropagationPolicy=foreground # Supported policies are background, foreground and orphan.
           - Replace=false # Argo CD will use kubectl replace or kubectl create command to apply changes.
+          - ServerSideApply=true # Enable server-side apply for resource reconciliation
+          - SkipDryRunOnMissingResource=true # Allow skip dry run on missing resource
+          - Validate=true # Enable server-side validation during sync
+
   templatePatch: |
-    {{- if .spec }}
-    spec:
-    {{ .spec | toYaml | indent 6 }}
-    {{- end }}
-    {{- if .metadata }}
+    {{- if hasKey . "metadata" }}
     metadata:
     {{ .metadata | toYaml | indent 6 }}
+    {{- end }}
+
+    {{- if hasKey . "spec" }}
+    spec:
+    {{ .spec | toYaml | indent 6 }}
     {{- end }}
