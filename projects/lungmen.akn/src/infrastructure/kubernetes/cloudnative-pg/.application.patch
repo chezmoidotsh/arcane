@@ -1,0 +1,24 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: CloudNativePG operator for managing PostgreSQL clusters on Kubernetes
+    - name: Category
+      value: Database / Operator
+    - name: Version
+      # renovate: datasource=helm depName=cloudnative-pg registryUrl=https://cloudnative-pg.github.io/charts
+      value: "0.27.0"
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://cloudnative-pg.io/documentation/
+    - name: GitHub Repository
+      value: https://github.com/cloudnative-pg/cloudnative-pg
+    - name: Helm Chart
+      value: https://github.com/cloudnative-pg/charts
+
+  syncPolicy:
+    automated:
+      enabled: false # Avoid automatic updates due to potential database disruptions

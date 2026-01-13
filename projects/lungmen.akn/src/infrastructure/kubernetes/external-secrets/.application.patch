@@ -1,0 +1,19 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: Kubernetes operator to synchronize secrets from external secret stores
+    - name: Category
+      value: Security / Secrets Management
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://external-secrets.io/
+    - name: GitHub Repository
+      value: https://github.com/external-secrets/external-secrets
+
+  syncPolicy:
+    automated:
+      enabled: true
