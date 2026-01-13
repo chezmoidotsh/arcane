@@ -8,9 +8,10 @@ metadata:
   name: atuin-database
 spec:
   bootstrap:
-    initdb:
-      database: atuin
-      owner: atuin
+    recovery:
+      # The following timestamp is used for point-in-time recovery to a known good state.
+      # Update this value if a different recovery point is required.
+      source: 2025-09-09T16:15:39.825Z
   description: PostgreSQL database dedicated to atuin
   enablePDB: false
   imageCatalogRef:
@@ -35,11 +36,26 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01K4QM5VSHX9YAAQ46W814EVVN # DRP::src_ulid
+        serverName: 01KEWKD9NQGZ280WQ70XBZSWZ4 # 2026-01-13T21:15:25.239Z
+  postgresql:
+    parameters:
+      # Limit WAL retention to avoid DB crash due to storage bloat
+      max_slot_wal_keep_size: 900MB
+      max_wal_size: 100MB
   storage:
     size: 1Gi
   walStorage:
     size: 1Gi
+
+  externalClusters:
+    - name: 2025-09-09T16:15:39.825Z
+      plugin:
+        enabled: true
+        isWALArchiver: false
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: selfhosted
+          serverName: 01K4QM5VSHX9YAAQ46W814EVVN
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
