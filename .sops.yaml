@@ -1,7 +1,13 @@
 creation_rules:
   # Generic - Encrypt all .decrypted~ files
   - path_regex: projects/.*/\.decrypted~.+\.yaml$
-    unencrypted_regex: "^(apiVersion|kind|metadata|name|namespace)$"
+    encrypted_regex: "^(stringData|data)$"
+    age: >-
+      age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
+
+  # Generic - Encrypt all .secret.yaml files' data and stringData fields
+  - path_regex: projects/[^/]+/src/(apps|infrastructure/kubernetes)/.*/.+\.secret\.yaml$
+    encrypted_regex: "^(stringData|data)$"
     age: >-
       age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
 
