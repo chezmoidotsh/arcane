@@ -44,12 +44,13 @@ spec:
               # By doing so, it enables the dynamic templating of all related applications
               # using the associated cluster metadata, improving scalability and maintainability.
               - patch: |
-                  - op: add
-                    path: /spec/generators/0/matrix/generators/0/list/elements/-
+                  - op: replace
+                    path: /spec/generators/0/merge/generators/0/matrix/generators/1/list/elements/0
                     value:
+                      .key: '{{ "{{ .path.basename }}" }}'
                       metadata:
                         annotations: {{ omit (.metadata.annotations | toYaml | fromYaml) "argocd.argoproj.io/tracking-id" | toYaml | nindent 8 }}
-                        labels: {{ .metadata.labels | toYaml | nindent 8 }}
+                        labels: {{ omit (.metadata.labels | toYaml | fromYaml) "app.kubernetes.io/instance" "app.kubernetes.io/managed-by" "app.kubernetes.io/part-of" "app.kubernetes.io/version" | toYaml | nindent 8 }}
                       name: {{ .name | quote }}
                       nameNormalized: {{ .nameNormalized | quote }}
                       nameRFC1123: {{ regexReplaceAll "[^a-zA-Z0-9_-]" .name "-" | quote }}
@@ -62,28 +63,6 @@ spec:
                     value: {{ .name | quote }}
                 target:
                   kind: ApplicationSet
-                  name: system
-              - patch: |
-                  - op: add
-                    path: /spec/generators/0/matrix/generators/0/list/elements/-
-                    value:
-                      metadata:
-                        annotations: {{ omit (.metadata.annotations | toYaml | fromYaml) "argocd.argoproj.io/tracking-id" | toYaml | nindent 8 }}
-                        labels: {{ .metadata.labels | toYaml | nindent 8 }}
-                      name: {{ .name | quote }}
-                      nameNormalized: {{ .nameNormalized | quote }}
-                      nameRFC1123: {{ regexReplaceAll "[^a-zA-Z0-9_-]" .name "-" | quote }}
-                      server: {{ .server | quote }}
-                  - op: add
-                    path: /spec/template/metadata/labels
-                    value: {}
-                  - op: add
-                    path: /spec/template/metadata/labels/argocd.argoproj.io~1cluster
-                    value: {{ .name | quote }}
-                target:
-                  kind: ApplicationSet
-                  name: applications
-
               - patch: |
                   - op: add
                     path: /spec/generators/0/merge/generators/0/matrix/generators/0/git/directories/0/path
@@ -91,26 +70,9 @@ spec:
                   - op: add
                     path: /spec/generators/0/merge/generators/1/matrix/generators/0/git/files/0/path
                     value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/*/.application.patch
-                  - op: replace
-                    path: /spec/generators/0/merge/generators/0/matrix/generators/1/list/elements/0
-                    value:
-                      .key: '{{ "{{ .path.basename }}" }}'
-                      metadata:
-                        annotations: {{ omit (.metadata.annotations | toYaml | fromYaml) "argocd.argoproj.io/tracking-id" | toYaml | nindent 8 }}
-                        labels: {{ omit (.metadata.labels | toYaml | fromYaml) "app.kubernetes.io/instance" "app.kubernetes.io/managed-by" "app.kubernetes.io/part-of" "app.kubernetes.io/version" | toYaml | nindent 8 }}
-                      name: {{ .name | quote }}
-                      nameNormalized: {{ .nameNormalized | quote }}
-                      nameRFC1123: {{ regexReplaceAll "[^a-zA-Z0-9_-]" .name "-" | quote }}
-                      server: {{ .server | quote }}
-                  - op: add
-                    path: /spec/template/metadata/labels
-                    value: {}
-                  - op: add
-                    path: /spec/template/metadata/labels/argocd.argoproj.io~1cluster
-                    value: {{ .name | quote }}
                 target:
                   kind: ApplicationSet
-                  name: system-new
+                  name: system
               - patch: |
                   - op: add
                     path: /spec/generators/0/merge/generators/0/matrix/generators/0/git/directories/0/path
@@ -118,26 +80,9 @@ spec:
                   - op: add
                     path: /spec/generators/0/merge/generators/1/matrix/generators/0/git/files/0/path
                     value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/apps/*/.application.patch
-                  - op: replace
-                    path: /spec/generators/0/merge/generators/0/matrix/generators/1/list/elements/0
-                    value:
-                      .key: '{{ "{{ .path.basename }}" }}'
-                      metadata:
-                        annotations: {{ omit (.metadata.annotations | toYaml | fromYaml) "argocd.argoproj.io/tracking-id" | toYaml | nindent 8 }}
-                        labels: {{ omit (.metadata.labels | toYaml | fromYaml) "app.kubernetes.io/instance" "app.kubernetes.io/managed-by" "app.kubernetes.io/part-of" "app.kubernetes.io/version" | toYaml | nindent 8 }}
-                      name: {{ .name | quote }}
-                      nameNormalized: {{ .nameNormalized | quote }}
-                      nameRFC1123: {{ regexReplaceAll "[^a-zA-Z0-9_-]" .name "-" | quote }}
-                      server: {{ .server | quote }}
-                  - op: add
-                    path: /spec/template/metadata/labels
-                    value: {}
-                  - op: add
-                    path: /spec/template/metadata/labels/argocd.argoproj.io~1cluster
-                    value: {{ .name | quote }}
                 target:
                   kind: ApplicationSet
-                  name: applications-new
+                  name: applications
 
               # This configuration ensures that the server field is set with the
               # cluster server URL for all applications.
