@@ -55,64 +55,11 @@ spec:
               mountPath: /app/config.json
               subPath: config.json
               readOnly: true
-        # trunk-ignore(trivy/KSV0125): Using official actual-http-api image from Docker Hub
-        - name: actual-http-api
-          image: jhonderson/actual-http-api:25.12.0
-          env:
-            - name: ACTUAL_DATA_DIR
-              value: /data
-            - name: ACTUAL_SERVER_URL
-              value: http://localhost:5006
-            - name: ACTUAL_SERVER_PASSWORD_PATH
-              value: /run/secrets/actual.io/password
-            - name: API_KEY
-              value: UUjGNNntAGEx83kDRNfP5yO1dRPq+KtUgL6+NxwR6
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: http-api
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: http-api
-            initialDelaySeconds: 5
-            periodSeconds: 5
-          ports:
-            - containerPort: 5007
-              name: http-api
-          resources:
-            requests:
-              cpu: 10m
-              memory: 64Mi
-            limits:
-              memory: 128Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            privileged: false
-            readOnlyRootFilesystem: true
-            seccompProfile:
-              type: RuntimeDefault
-          volumeMounts:
-            - name: transient-storage
-              mountPath: /data
-            - name: admin-password
-              mountPath: /run/secrets/actual.io
-              readOnly: true
+
       volumes:
         - name: config
           secret:
             secretName: actual-budget-configuration
-            defaultMode: 0600
-        - name: transient-storage
-          emptyDir: {}
-        - name: admin-password
-          secret:
-            secretName: actual-budget-admin-password
             defaultMode: 0600
       securityContext:
         runAsNonRoot: true
@@ -147,8 +94,4 @@ spec:
     - name: http
       port: 80
       targetPort: http
-      protocol: TCP
-    - name: http-api
-      port: 5007
-      targetPort: http-api
       protocol: TCP

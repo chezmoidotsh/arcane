@@ -6,5 +6,3 @@ resources:
   - network-policy.default-hardened.yaml
   - network-policy.allow-actual-budget-from-envoy-gateway.yaml
   - network-policy.allow-actual-budget-to-sso.yaml
-  - network-policy.allow-actual-http-api-from-envoy-gateway.yaml
-  - security-policy.actual-http-api.yaml
