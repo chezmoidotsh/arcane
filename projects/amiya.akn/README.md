@@ -147,19 +147,6 @@ Production-ready, vendor-neutral OCI-native container image registry.
 
 ### Others
 
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../docs/assets/icons/apps/glance.png" alt="Glance Logo" width="120" align="left" style="margin-right: 16px;">
-
-### [Glance](https://github.com/glanceapp/glance)
-
-Home dashboard.
-
-***Why this choice**: It provides a single page with all services and their status, making it easier to monitor and manage the homelab.*
-
-</div>
-</div>
-
 ## 🚀 Usage and Development
 
 This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based deployment and [Kustomize](https://kustomize.io/) for configuration management. Here's how to work with it:

@@ -286,14 +286,7 @@ amiya·akn: {
     tooltip: Cloudflare tunnel daemon establishing secure connection to Cloudflare's edge network, managed by cloudflare-operator.
   }
 
-  # Other Components
-  glance: {
-    class: [application]
-    label: Glance
-    icon: assets/icons/apps/glance.png
-    link: https://github.com/glanceapp/glance
-    tooltip: A self-hosted dashboard that puts all your feeds in one place.
-  }
+
 
   tailscale-connector: {
     label: Tailscale-Connector
@@ -321,7 +314,7 @@ amiya·akn.tailscale-connector <- tailnet: {class: [connect-from-vpn-backbone]}
 # ──────────────────────────────────────────────────────────────────────────────
 # Internal Connections
 
-amiya·akn.glance <- amiya·akn.system.envoy-default-gateway: { source-arrowhead: HTTP (8080) }
+
 
 amiya·akn.infrastructure.argocd <- amiya·akn.system.envoy-default-gateway: { source-arrowhead: HTTP (8080) }
 amiya·akn.infrastructure.argocd <- amiya·akn.system.tailscale: { class: [connect-from-vpn]; source-arrowhead: HTTP (8080) }
@@ -360,7 +353,7 @@ amiya·akn.system.longhorn <- amiya·akn.system.envoy-default-gateway: { source-
 # ──────────────────────────────────────────────────────────────────────────────
 # External Connections
 
-amiya·akn.glance -> internet: HTTPS (443) { class: [connect-to-internet] }
+
 
 amiya·akn.infrastructure.argocd  -> internet: HTTPS (443) / SSH (22) { class: [connect-to-internet] }
 
