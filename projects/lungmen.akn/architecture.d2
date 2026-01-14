@@ -402,27 +402,7 @@ lungmen·akn: {
     tooltip: Personal productivity platform and wiki built on Markdown with Lua scripting capabilities.
   }
 
-  others.spoolman-stack: {
-    class: [namespace]
-    label: Spoolman Stack
-    tooltip: Spoolman 3D printer filament management stack with PostgreSQL backend
 
-    spoolman: {
-      class: [application]
-      label: Spoolman
-      icon: assets/icons/apps/spoolman.svg
-      link: https://github.com/Donkie/Spoolman
-      tooltip: Self-hosted web service for managing 3D printer filament spools and tracking filament usage with API integration.
-    }
-
-    postgresql: {
-      class: [application-datastore]
-      label: PostgreSQL
-      icon: assets/icons/system/cloudnativepg.svg
-      link: https://postgresql.org/
-      tooltip: PostgreSQL database backend for Spoolman, managed by CloudNative-PG operator with automated backups to S3.
-    }
-  }
 }
 
 # ╭────────────────────────────────────────────────────────────────────────────╮
@@ -523,12 +503,7 @@ lungmen·akn.others.silverbullet -> internet: "Plug downloads (443)" {class: [co
 lungmen·akn.others.silverbullet <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (3000)"
 lungmen·akn.others.silverbullet <- lungmen·akn.system.tailscale: "VPN access (3000)" {class: [connect-vpn-backbone]}
 
-lungmen·akn.others.spoolman-stack.spoolman -> amiya·akn.pocket-id: "SSO authentication (Web UI) (443)"
-lungmen·akn.others.spoolman-stack.spoolman -> lungmen·akn.others.spoolman-stack.postgresql: "Database operations (5432)"
-lungmen·akn.others.spoolman-stack.spoolman <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8000) - Web UI with OIDC"
-lungmen·akn.others.spoolman-stack.spoolman <- lungmen·akn.system.envoy-gateway: "HTTP API access (8000) - API with key auth"
-lungmen·akn.others.spoolman-stack.postgresql -> nas.minio: "Database backups (S3)"
-lungmen·akn.others.spoolman-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
+
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Storage and Backup Connections

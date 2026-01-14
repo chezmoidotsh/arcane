@@ -137,21 +137,6 @@ Encrypted shell history sync, storing all your shell commands in one place with 
 </div>
 </div>
 
-<br/><br/>
-
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../docs/assets/icons/apps/spoolman.svg" alt="Spoolman Logo" width="120" align="left" style="margin-right: 16px;">
-
-### [Spoolman](https://github.com/Donkie/Spoolman)
-
-Self-hosted web service for managing 3D printer filament spools and tracking filament usage.
-
-***Why this choice**: Comprehensive filament inventory management with API integration for OctoPrint/Klipper, enabling automated filament tracking and cost analysis for 3D printing workflows.*
-
-</div>
-</div>
-
 ***
 
 ## Usage and Development
@@ -202,14 +187,17 @@ The recovery process is largely automated through the `amiya.akn` project, which
 * [x] **Step 0**: Define project scope and architecture
   * [x] List all services to be deployed
   * [x] Create architecture diagram
+
 * [x] **Step 1**: Initial deployment
   * [x] Deploy base infrastructure (Talos, Cilium)
   * [x] Configure core services (External Secrets, DNS, cert-manager)
   * [x] Deploy Longhorn for distributed storage
   * [x] Deploy Envoy Gateway as API Gateway
+
 * [x] **Step 2**: Data Layer
   * [x] Deploy CloudNativePG operator
   * [x] Deploy PostgreSQL for application data
+
 * [x] **Step 3**: Services Deployment (Partial)
   * [x] Deploy media services (Jellyfin, Jellyseerr)
   * [x] Deploy Immich ~~with Cloudflare Tunnel for external access~~
@@ -217,7 +205,7 @@ The recovery process is largely automated through the `amiya.akn` project, which
   * [x] Deploy Paperless-ngx for document management
   * [x] Deploy Linkding for bookmarks
   * [x] Deploy Atuin for shell history sync
-  * [x] Deploy Spoolman for 3D printer filament management
+
 * [ ] **Step 4**: Security and Optimization
   * [x] Implement network policies
   * [ ] Configure backup solutions
