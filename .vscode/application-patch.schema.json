@@ -46,6 +46,18 @@
             }
           }
         },
+        "ignoreDifferences": {
+          "type": "array",
+          "items": {
+            "$ref": "https://raw.githubusercontent.com/argoproj/argo-schema-generator/main/schema/argo_cd_kustomize_schema.json#/definitions/io.argoproj.argocd.v1alpha1.ResourceIgnoreDifferences"
+          }
+        },
+        "info": {
+          "type": "array",
+          "items": {
+            "$ref": "https://raw.githubusercontent.com/argoproj/argo-schema-generator/main/schema/argo_cd_kustomize_schema.json#/definitions/io.argoproj.argocd.v1alpha1.Info"
+          }
+        },
         "syncPolicy": {
           "oneOf": [
             {
@@ -55,12 +67,6 @@
               "type": "null"
             }
           ]
-        },
-        "info": {
-          "type": "array",
-          "items": {
-            "$ref": "https://raw.githubusercontent.com/argoproj/argo-schema-generator/main/schema/argo_cd_kustomize_schema.json#/definitions/io.argoproj.argocd.v1alpha1.Info"
-          }
         }
       }
     }
