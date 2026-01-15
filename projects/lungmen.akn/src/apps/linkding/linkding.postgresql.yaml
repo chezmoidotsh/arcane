@@ -8,9 +8,8 @@ metadata:
   name: linkding-database
 spec:
   bootstrap:
-    initdb:
-      database: linkding
-      owner: linkding
+    recovery:
+      source: 2025-09-09T16:15:39.825Z
   description: PostgreSQL database dedicated to linkding
   enablePDB: false
   imageCatalogRef:
@@ -35,11 +34,26 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01K4QM5VSHX9YAAQ46W814EVVM # DRP::src_ulid
+        serverName: 01KF0AXDJ40TJYCPFH0Y1M3331 # 2026-01-15T08:03:54.052Z
+  postgresql:
+    parameters:
+      # Limit WAL retention to avoid DB crash due to storage bloat
+      max_slot_wal_keep_size: 900MB
+      max_wal_size: 100MB
   storage:
-    size: 5Gi
+    size: 1Gi
   walStorage:
-    size: 5Gi
+    size: 1Gi
+
+  externalClusters:
+    - name: 2025-09-09T16:15:39.825Z
+      plugin:
+        enabled: true
+        isWALArchiver: false
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: selfhosted
+          serverName: 01K4QM5VSHX9YAAQ46W814EVVM
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
