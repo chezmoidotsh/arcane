@@ -35,11 +35,16 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01K4QN8XVJHP2ZBRK5W9M7TYQE # DRP::src_ulid
+        serverName: 01KF0BFJ8E817KVKXB34G81G2H # 2026-01-15T08:13:48.686Z
+  postgresql:
+    parameters:
+      # Limit WAL retention to avoid DB crash due to storage bloat
+      max_slot_wal_keep_size: 900MB
+      max_wal_size: 100MB
   storage:
-    size: 5Gi
+    size: 1Gi
   walStorage:
-    size: 2Gi
+    size: 1Gi
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
