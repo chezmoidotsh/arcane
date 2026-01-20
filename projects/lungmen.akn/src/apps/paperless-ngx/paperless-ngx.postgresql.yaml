@@ -8,9 +8,8 @@ metadata:
   name: paperless-ngx-database
 spec:
   bootstrap:
-    initdb:
-      database: paperless
-      owner: paperless
+    recovery:
+      source: 2025-09-09T16:15:39.825Z
   description: PostgreSQL database dedicated to paperless-ngx
   enablePDB: false
   imageCatalogRef:
@@ -35,11 +34,26 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01K4QM5VSHX9YAAQ46W814EVVM # DRP::src_ulid
+        serverName: 01KFDRRBWFFDV5S5K8HHRMBK0N # 2026-01-20T13:15:56.175Z
+  postgresql:
+    parameters:
+      # Limit WAL retention to avoid DB crash due to storage bloat
+      max_slot_wal_keep_size: 900MB
+      max_wal_size: 100MB
   storage:
     size: 5Gi
   walStorage:
     size: 5Gi
+
+  externalClusters:
+    - name: 2025-09-09T16:15:39.825Z
+      plugin:
+        enabled: true
+        isWALArchiver: false
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: selfhosted
+          serverName: 01K4QM5VSHX9YAAQ46W814EVVM
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
