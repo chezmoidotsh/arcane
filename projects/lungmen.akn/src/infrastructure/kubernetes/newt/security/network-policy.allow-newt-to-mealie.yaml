@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Newt to access Mealie service.
+  name: allow-newt-to-mealie
+  namespace: newt-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: newt
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: mealie
+            app.kubernetes.io/name: mealie
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP

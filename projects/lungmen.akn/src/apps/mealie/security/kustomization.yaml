@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: mealie
+
+resources:
+  - network-policy.allow-databases.yaml
+  - network-policy.allow-newt.yaml
+  - network-policy.allow-internet.yaml

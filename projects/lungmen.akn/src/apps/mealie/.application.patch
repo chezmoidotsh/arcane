@@ -1,0 +1,18 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: Mealie is a self hosted recipe manager and meal planner.
+    - name: Category
+      value: Life Management
+    - name: Version
+      # renovate: datasource=docker depName=ghcr.io/mealie-recipes/mealie
+      value: "v2.6.0"
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://docs.mealie.io/
+    - name: GitHub Repository
+      value: https://github.com/mealie-recipes/mealie

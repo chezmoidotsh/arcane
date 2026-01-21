@@ -11,3 +11,4 @@ resources:
   - network-policy.allow-newt-to-jellyseerr.yaml
   - network-policy.allow-newt-to-linkding.yaml
   - network-policy.allow-newt-to-n8n.yaml
+  - network-policy.allow-newt-to-mealie.yaml
