@@ -10,7 +10,7 @@ spec:
       value: Life Management
     - name: Version
       # renovate: datasource=docker depName=ghcr.io/mealie-recipes/mealie
-      value: "v2.6.0"
+      value: "v3.9.2"
     # -- Documentation & Resources
     - name: Documentation
       value: https://docs.mealie.io/

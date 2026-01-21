@@ -20,4 +20,4 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/mealie-recipes/mealie
   - name: ghcr.io/mealie-recipes/mealie
-    newTag: "v2.6.0"
+    newTag: "v3.9.2"
