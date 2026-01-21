@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Newt (Pangolin Tunnel) to access Mealie.
+  name: allow-newt
+  namespace: mealie
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mealie
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: newt-system
+            app.kubernetes.io/name: newt
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
