@@ -18,80 +18,96 @@ spec:
         app.kubernetes.io/name: mealie
         app.kubernetes.io/instance: mealie
     spec:
+      securityContext:
+        runAsUser: 29521
+        runAsGroup: 29521
+        fsGroup: 29521
       containers:
         - name: mealie
           image: ghcr.io/mealie-recipes/mealie:v2.6.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
           env:
             - name: ALLOW_SIGNUP
               value: "false"
             - name: PUID
-              value: "1000"
+              value: "29521"
             - name: PGID
-              value: "1000"
+              value: "29521"
             - name: TZ
               value: Europe/Paris
             - name: BASE_URL
               value: https://miam.chezmoi.sh
             
             # Database Configuration
+            # Database Configuration
             - name: DB_ENGINE
               value: postgres
-            - name: POSTGRES_USER
-              value: mealie
-            - name: POSTGRES_DB
-              value: mealie
-            - name: POSTGRES_SERVER
-              value: shared-rw.databases.svc
-            - name: POSTGRES_PORT
-              value: "5432"
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mealie-credentials
-                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_URL_OVERRIDE_FILE
+              value: /app/data/secrets/postgresql.url
 
             # OIDC Configuration
             - name: OIDC_AUTH_ENABLED
               value: "true"
             - name: OIDC_CONFIGURATION_URL
               value: https://auth.chezmoi.sh/.well-known/openid-configuration
-            - name: OIDC_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: mealie-credentials
-                  key: OIDC_CLIENT_ID
-            - name: OIDC_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: mealie-credentials
-                  key: OIDC_CLIENT_SECRET
+            - name: OIDC_CLIENT_ID_FILE
+              value: /app/data/secrets/oidc.client_id
+            - name: OIDC_CLIENT_SECRET_FILE
+              value: /app/data/secrets/oidc.client_secret
             - name: OIDC_SHOW_LOGIN_FORM
               value: "false"
             - name: OIDC_REMEMBER_ME
               value: "true"
             - name: OIDC_SignUp
               value: "true"
-            - name: OIDC_USER_GROUP
-              value: "user"
             - name: OIDC_ADMIN_GROUP
               value: "admin"
 
             # Ollama Configuration
-            - name: OLLAMA_BASE_URL
+            # Ollama Configuration
+            - name: OPENAI_BASE_URL
               value: http://192.168.10.30:11434
+            - name: OPENAI_API_KEY
+              value: "none"
+            
+            # SMTP Configuration
+            - name: SMTP_HOST_FILE
+              value: /app/data/secrets/smtp.host
+            - name: SMTP_PORT_FILE
+              value: /app/data/secrets/smtp.port
+            - name: SMTP_USER_FILE
+              value: /app/data/secrets/smtp.user
+            - name: SMTP_PASSWORD_FILE
+              value: /app/data/secrets/smtp.password
+            - name: SMTP_FROM_NAME
+              value: Mealie
+            - name: SMTP_FROM_EMAIL
+              value: mealie@chezmoi.sh
+            - name: SMTP_AUTH_STRATEGY
+              value: TLS
+          
+          volumeMounts:
+            - name: mealie-data
+              mountPath: /app/data/
+            - name: mealie-secrets
+              mountPath: /app/data/secrets
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
           
           ports:
             - name: http
               containerPort: 9000
               protocol: TCP
-          
-          resources:
-            requests:
-              cpu: 10m
-              memory: 256Mi
-            limits:
-              memory: 1Gi
           
           readinessProbe:
             httpGet:
@@ -106,3 +122,12 @@ spec:
               port: http
             initialDelaySeconds: 30
             periodSeconds: 30
+      volumes:
+        - name: mealie-data
+          persistentVolumeClaim:
+            claimName: mealie-data
+        - name: mealie-secrets
+          secret:
+            secretName: mealie-credentials
+        - name: tmp
+          emptyDir: {}
