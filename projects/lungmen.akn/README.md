@@ -90,6 +90,21 @@ Personal finance app that helps you track your spending and save money with priv
 
 <br/><br/>
 
+<div align="center" style="max-width: 1000px; margin: 0 auto;">
+<div align="left">
+<img src="../../docs/assets/icons/apps/mealie.svg" alt="Mealie Logo" width="120" align="right" style="margin-left: 16px;">
+
+### [Mealie](https://mealie.io/)
+
+Self-hosted recipe manager and meal planner with AI-powered import and meal planning capabilities.
+
+***Why this choice**: Feature-rich recipe manager with intelligent importing from websites, shopping list generation, and seamless family meal planning.*
+
+</div>
+</div>
+
+<br/><br/>
+
 <!-- trunk-ignore-begin(markdown-link-check/403): Paperless documentation is behind Cloudflare -->
 
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
@@ -203,12 +218,13 @@ The recovery process is largely automated through the `amiya.akn` project, which
   * [x] Deploy Immich ~~with Cloudflare Tunnel for external access~~
   * [x] Deploy life management services (Actual Budget)
   * [x] Deploy Paperless-ngx for document management
+  * [x] Deploy Mealie for recipe management
   * [x] Deploy Linkding for bookmarks
   * [x] Deploy Atuin for shell history sync
 
 * [ ] **Step 4**: Security and Optimization
-  * [x] Implement network policies
-  * [ ] Configure backup solutions
+  * [ ] Implement network policies
+  * [x] Configure backup solutions
   * [ ] Optimize resource usage
 
 <!-- trunk-ignore-end(remark-lint/list-item-content-indent) -->
