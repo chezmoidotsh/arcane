@@ -129,6 +129,19 @@ lungmen·akn: {
   media: {class: namespace}
   life: {class: namespace}
   others: {class: namespace}
+  databases: {class: namespace}
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Shared Databases
+
+  databases.shared: {
+    class: [application-datastore]
+    shared: "Shared PostgreSQL Cluster" {
+      icon: simple-icons/postgresql
+    }
+    link: https://postgresql.org/
+    tooltip: Shared PostgreSQL database cluster for multiple applications, managed by CloudNative-PG operator with automated backups to S3.
+  }
 
   # ────────────────────────────────────────────────────────────────────────────
   # System Components
@@ -317,6 +330,20 @@ lungmen·akn: {
     }
   }
 
+  life.mealie-stack: {
+    class: [namespace]
+    label: Mealie Stack
+    tooltip: Mealie recipe management stack
+
+    mealie: {
+      class: [application]
+      label: Mealie
+      icon: assets/icons/apps/mealie.svg
+      link: https://mealie.io/
+      tooltip: Self-hosted recipe manager and meal planner.
+    }
+  }
+
   # ────────────────────────────────────────────────────────────────────────────
   # Other Components
 
@@ -482,6 +509,16 @@ lungmen·akn.others.atuin-stack.atuin <- lungmen·akn.system.envoy-gateway: "HTT
 lungmen·akn.others.atuin-stack.atuin <- lungmen·akn.system.tailscale: "VPN access (8888)" {class: [connect-vpn-backbone]}
 lungmen·akn.others.atuin-stack.postgresql -> nas.minio: "Database backups (S3)"
 lungmen·akn.others.atuin-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
+
+lungmen·akn.life.mealie-stack.mealie -> amiya·akn.pocket-id: "SSO authentication (443)"
+lungmen·akn.life.mealie-stack.mealie -> lungmen·akn.databases.shared: "Database operations (5432)"
+lungmen·akn.life.mealie-stack.mealie -> internet: "Recipe imports (443)" {class: [connect-to-internet]}
+lungmen·akn.life.mealie-stack.mealie -> localnet: "Ollama AI (11434)"
+lungmen·akn.life.mealie-stack.mealie.container_main <-> lungmen·akn.life.mealie-stack.mealie.container_sidecar: "MCP Protocol"
+lungmen·akn.life.mealie-stack.mealie <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (9000)"
+lungmen·akn.life.mealie-stack.mealie <- lungmen·akn.system.newt: "Tunnel traffic proxy (9000)" {class: [secured-connect-from-internet]}
+lungmen·akn.databases.shared -> nas.minio: "Database backups (S3)"
+lungmen·akn.databases.shared <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
 lungmen·akn.others.linkding-stack.linkding -> amiya·akn.pocket-id: "SSO authentication (443)"
 lungmen·akn.others.linkding-stack.linkding -> lungmen·akn.others.linkding-stack.postgresql: "Database operations (5432)"
