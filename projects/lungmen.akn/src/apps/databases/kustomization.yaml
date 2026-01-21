@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: databases
 
 resources:
+  - apps.databases.yaml
   - apps.objectstore.yaml
   - apps.postgresql.yaml
   - apps.roles.externalsecret.yaml
