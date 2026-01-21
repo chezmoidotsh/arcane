@@ -1,0 +1,47 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: shared
+  name: shared
+spec:
+  bootstrap:
+    initdb:
+      database: mealie
+      owner: mealie
+  description: Shared PostgreSQL database cluster
+  enablePDB: false
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: default
+    major: 17
+  instances: 1
+  managed:
+    roles:
+      - name: mealie
+        connectionLimit: -1
+        comment: PostgreSQL role for mealie
+        ensure: present
+        inherit: true
+        login: true
+        passwordSecret:
+          name: mealie-database-credentials
+  plugins:
+    - enabled: true
+      isWALArchiver: true
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: selfhosted
+        serverName: shared
+  postgresql:
+    parameters:
+      # Limit WAL retention to avoid DB crash due to storage bloat
+      max_slot_wal_keep_size: 900MB
+      max_wal_size: 100MB
+  storage:
+    size: 2Gi
+  walStorage:
+    size: 2Gi

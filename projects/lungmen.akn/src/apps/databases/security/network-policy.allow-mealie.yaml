@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Mealie to access PostgreSQL.
+  name: allow-mealie-access
+  namespace: databases
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: shared
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: mealie
+            app.kubernetes.io/name: mealie
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
