@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: mealie
+
+resources:
+  - network-policy.allow-mealie-from-envoy-gateway.yaml
+  - network-policy.allow-mealie-from-newt.yaml
+  - network-policy.allow-mealie-to-databases.yaml
+  - network-policy.allow-mealie-to-internet.yaml
+  - network-policy.allow-mealie-to-ollama.yaml
+  - network-policy.default-hardened.yaml

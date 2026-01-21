@@ -1,0 +1,134 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mealie
+spec:
+  revisionHistoryLimit: 3
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mealie
+      app.kubernetes.io/instance: mealie
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mealie
+        app.kubernetes.io/instance: mealie
+    spec:
+      securityContext:
+        runAsUser: 29521
+        runAsGroup: 29521
+        fsGroup: 29521
+      containers:
+        - name: mealie
+          image: ghcr.io/mealie-recipes/mealie
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: ALLOW_PASSWORD_LOGIN
+              value: "false"
+            - name: ALLOW_SIGNUP
+              value: "false"
+            - name: PUID
+              value: "29521"
+            - name: PGID
+              value: "29521"
+            - name: TZ
+              value: Europe/Paris
+            - name: BASE_URL
+              value: https://miam.chezmoi.sh
+            
+            # Database Configuration
+            - name: DB_ENGINE
+              value: postgres
+            - name: POSTGRES_URL_OVERRIDE_FILE
+              value: /var/run/secrets/mealie/postgresql.url
+
+            # OIDC Configuration
+            - name: OIDC_AUTH_ENABLED
+              value: "true"
+            - name: OIDC_CONFIGURATION_URL
+              value: https://auth.chezmoi.sh/.well-known/openid-configuration
+            - name: OIDC_CLIENT_ID_FILE
+              value: /var/run/secrets/mealie/oidc.client_id
+            - name: OIDC_CLIENT_SECRET_FILE
+              value: /var/run/secrets/mealie/oidc.client_secret
+            - name: OIDC_SHOW_LOGIN_FORM
+              value: "false"
+            - name: OIDC_REMEMBER_ME
+              value: "true"
+            - name: OIDC_SignUp
+              value: "true"
+            - name: OIDC_ADMIN_GROUP
+              value: "admin"
+
+            # Ollama Configuration
+            - name: OPENAI_BASE_URL
+              value: http://192.168.10.30:11434
+            - name: OPENAI_API_KEY
+              value: "none"
+            
+            # SMTP Configuration
+            - name: SMTP_HOST_FILE
+              value: /var/run/secrets/mealie/smtp.host
+            - name: SMTP_PORT_FILE
+              value: /var/run/secrets/mealie/smtp.port
+            - name: SMTP_USER_FILE
+              value: /var/run/secrets/mealie/smtp.user
+            - name: SMTP_PASSWORD_FILE
+              value: /var/run/secrets/mealie/smtp.password
+            - name: SMTP_FROM_NAME
+              value: Mealie
+            - name: SMTP_FROM_EMAIL
+              value: mealie@chezmoi.sh
+            - name: SMTP_AUTH_STRATEGY
+              value: TLS
+          
+          volumeMounts:
+            - name: mealie-secrets
+              mountPath: /var/run/secrets/mealie
+              readOnly: true
+            - name: persistent-storage
+              mountPath: /app/data
+            - name: ephemeral-storage
+              mountPath: /tmp
+          
+          ports:
+            - name: http
+              containerPort: 9000
+              protocol: TCP
+          
+          readinessProbe:
+            httpGet: &http-probe
+              path: /
+              port: http
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet: *http-probe
+            periodSeconds: 30
+          startupProbe:
+            httpGet: *http-probe
+            failureThreshold: 50 # Wait for 500 failed probes before giving up - Mealie is sooo slow to start
+            periodSeconds: 10
+          
+      volumes:
+        - name: mealie-secrets
+          secret:
+            secretName: mealie-credentials
+        - name: persistent-storage
+          persistentVolumeClaim:
+            claimName: mealie
+        - name: ephemeral-storage
+          emptyDir: {}

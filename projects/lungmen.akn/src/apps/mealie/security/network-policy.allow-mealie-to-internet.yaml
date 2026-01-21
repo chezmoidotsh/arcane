@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Mealie to access to all internet resources in order to fetch recipe information
+      from external websites.
+  name: allow-mealie-to-internet
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mealie
+  egress:
+    - toCIDRSet:
+        - cidr: 0.0.0.0/0
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP

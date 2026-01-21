@@ -1,0 +1,18 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-mealie-to-ollama
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allow Mealie to connect to Ollama service (external).
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mealie
+  egress:
+    - toCIDR:
+        - "192.168.10.30/32"
+      toPorts:
+        - ports:
+            - port: "11434"
+              protocol: TCP

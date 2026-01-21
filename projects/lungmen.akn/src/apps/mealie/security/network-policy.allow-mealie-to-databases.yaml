@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Mealie to access the mutualized PostgreSQL database.
+  name: allow-mealie-to-databases
+  namespace: mealie
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: mealie
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: databases
+            app.kubernetes.io/instance: postgres-apps
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
