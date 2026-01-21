@@ -16,3 +16,7 @@ description = "Generate the architecture diagram for lungmen.akn cluster"
 # Output: assets/architecture.<theme>.svg (embedded in cluster documentation)
 run = "d2 --theme 0 architecture.d2 assets/architecture.svg"
 dir = "{{ config_root }}"
+
+[tasks."app:build"]
+description = "Build all apps manifests to verify Kustomize configuration"
+run = "kustomize build --enable-helm"
