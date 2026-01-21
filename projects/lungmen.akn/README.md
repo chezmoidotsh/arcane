@@ -223,8 +223,8 @@ The recovery process is largely automated through the `amiya.akn` project, which
   * [x] Deploy Atuin for shell history sync
 
 * [ ] **Step 4**: Security and Optimization
-  * [x] Implement network policies
-  * [ ] Configure backup solutions
+  * [ ] Implement network policies
+  * [x] Configure backup solutions
   * [ ] Optimize resource usage
 
 <!-- trunk-ignore-end(remark-lint/list-item-content-indent) -->
