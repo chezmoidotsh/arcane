@@ -10,7 +10,7 @@ spec:
       value: Storage / Block Storage
     - name: Version
       # renovate: datasource=helm depName=longhorn registryUrl=https://charts.longhorn.io/
-      value: "1.10.1"
+      value: "1.10.2"
     # -- Documentation & Resources
     - name: Documentation
       value: https://longhorn.io/docs/
