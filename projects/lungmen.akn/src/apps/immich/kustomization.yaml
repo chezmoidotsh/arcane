@@ -29,7 +29,7 @@ images:
     newTag: v2.5.0
   # renovate: datasource=docker depName=ghcr.io/immich-app/immich-machine-learning
   - name: ghcr.io/immich-app/immich-machine-learning
-    newTag: v2.5.0
+    newTag: v2.5.2
   # renovate: datasource=docker depName=docker.io/library/redis
   - name: docker.io/library/redis
     newTag: 8.4.0-alpine@sha256:0804c395e634e624243387d3c3a9c45fcaca876d313c2c8b52c3fdf9a912dded
