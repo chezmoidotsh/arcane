@@ -25,7 +25,7 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/paperless-ngx/paperless-ngx
   - name: ghcr.io/paperless-ngx/paperless-ngx
-    newTag: 2.20.4@sha256:06ca6a6c2a21cfebcc7c5f2e0d38f892dba4bcb090b8781a55d003c63cce386a
+    newTag: 2.20.5@sha256:665f2f5cc5482ea2e44f90a7fa170908aaeb95d8d3c70e17f746de8fcb81f644
   # renovate: datasource=docker depName=docker.io/library/redis
   - name: docker.io/library/redis
     newTag: 8.4.0-alpine@sha256:4eec4565e45aa0b3966554c866bc73211e281b0b3d89fe9a33c982e6faca809d
