@@ -19,4 +19,4 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/actualbudget/actual-server
   - name: ghcr.io/actualbudget/actual-server
-    newTag: "26.1.0"
+    newTag: "26.2.0"
