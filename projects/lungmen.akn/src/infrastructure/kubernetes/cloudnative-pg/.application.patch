@@ -10,7 +10,7 @@ spec:
       value: Database / Operator
     - name: Version
       # renovate: datasource=helm depName=cloudnative-pg registryUrl=https://cloudnative-pg.github.io/charts
-      value: "0.27.0"
+      value: "0.27.1"
     # -- Documentation & Resources
     - name: Documentation
       value: https://cloudnative-pg.io/documentation/
