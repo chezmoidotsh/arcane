@@ -10,7 +10,7 @@ spec:
       value: Networking / VPN
     - name: Version
       # renovate: datasource=helm depName=tailscale-operator registryUrl=https://pkgs.tailscale.com/helmcharts
-      value: "1.92.5"
+      value: "1.94.1"
     # -- Documentation & Resources
     - name: Documentation
       value: https://tailscale.com/kb/1236/kubernetes-operator
