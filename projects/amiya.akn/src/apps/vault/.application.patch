@@ -10,7 +10,7 @@ spec:
       value: Security / Secrets Management
     - name: Version
       # renovate: datasource=helm depName=openbao registryUrl=https://openbao.github.io/openbao-helm
-      value: "0.25.0"
+      value: "0.25.2"
     # -- Documentation & Resources
     - name: Documentation
       value: https://openbao.org/
