@@ -18,3 +18,5 @@ config:
     logging:
       level:
         default: debug
+    extensionApis:
+      enableBackend: true

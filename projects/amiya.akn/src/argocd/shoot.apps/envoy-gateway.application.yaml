@@ -35,7 +35,7 @@ spec:
           # - $origin/projects/{{ .name }}/src/infrastructure/kubernetes/envoy-gateway/override.helmvalues.yaml
           # - $origin/projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/envoy-gateway/override.helmvalues.yaml
       repoURL: docker.io/envoyproxy
-      targetRevision: 1.5.0
+      targetRevision: 1.7.0
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
