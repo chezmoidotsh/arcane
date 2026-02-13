@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hass-external
+  labels:
+    app.kubernetes.io/name: hass-external
+    app.kubernetes.io/part-of: n8n
+spec:
+  type: ClusterIP
+  ports:
+    - name: https
+      port: 443
+      targetPort: 443
+      protocol: TCP

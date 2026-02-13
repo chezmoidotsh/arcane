@@ -1,0 +1,12 @@
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: BackendTLSPolicy
+metadata:
+  name: hass-external-insecure-tls
+spec:
+  targetRef:
+    group: ""
+    kind: Service
+    name: hass-external
+  tls:
+    insecureSkipVerify: true
