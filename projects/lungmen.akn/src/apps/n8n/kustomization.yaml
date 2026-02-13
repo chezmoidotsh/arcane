@@ -4,35 +4,38 @@ kind: Kustomization
 namespace: n8n
 
 resources:
-  # Configuration
-  - n8n.configmap.yaml
+    # Configuration
+    - n8n.configmap.yaml
 
-  # n8n application
-  - n8n-main.deployment.yaml
-  - n8n-worker.deployment.yaml
+    # n8n application
+    - n8n-main.deployment.yaml
+    - n8n-worker.deployment.yaml
 
-  # Database
-  - n8n.postgresql.yaml
-  - n8n.postgresql-backup.yaml
-  - n8n.postgresql-objectstore.yaml
+    # Database
+    - n8n.postgresql.yaml
+    - n8n.postgresql-backup.yaml
+    - n8n.postgresql-objectstore.yaml
 
-  # Redis queue
-  - n8n.redis-statefulset.yaml
-  - n8n.redis-service.yaml
+    # Redis queue
+    - n8n.redis-statefulset.yaml
+    - n8n.redis-service.yaml
 
-  # External secrets
-  - n8n.externalsecret-encryption-key.yaml
+    # External secrets
+    - n8n.externalsecret-encryption-key.yaml
 
-  # HTTPRoute for ingress
-  - n8n.httproute.yaml
+    # HTTPRoute for ingress
+    - n8n.httproute.yaml
 
-  # Security policies
-  - security/
+    # Home Assistant external route
+    - hass-external-gateway.yaml
+
+    # Security policies
+    - security/
 
 images:
-  # renovate: datasource=docker depName=ghcr.io/n8n-io/n8n
-  - name: ghcr.io/n8n-io/n8n
-    newTag: 2.8.2@sha256:565e7df2b15c18f469f8b2d43e0349eaf6a500a0066e5adcce98e441cebfe6f8
-  # renovate: datasource=docker depName=docker.io/library/redis
-  - name: docker.io/library/redis
-    newTag: 8.6.0-alpine
+    # renovate: datasource=docker depName=ghcr.io/n8n-io/n8n
+    - name: ghcr.io/n8n-io/n8n
+      newTag: 2.8.2@sha256:565e7df2b15c18f469f8b2d43e0349eaf6a500a0066e5adcce98e441cebfe6f8
+    # renovate: datasource=docker depName=docker.io/library/redis
+    - name: docker.io/library/redis
+      newTag: 8.6.0-alpine
