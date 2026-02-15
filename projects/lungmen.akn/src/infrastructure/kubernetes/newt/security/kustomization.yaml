@@ -5,10 +5,11 @@ namespace: newt-system
 
 resources:
   - network-policy.default-hardened.yaml
-  - network-policy.allow-newt-to-pangolin.yaml
   - network-policy.allow-newt-to-immich.yaml
   - network-policy.allow-newt-to-jellyfin.yaml
   - network-policy.allow-newt-to-jellyseerr.yaml
   - network-policy.allow-newt-to-linkding.yaml
-  - network-policy.allow-newt-to-n8n.yaml
   - network-policy.allow-newt-to-mealie.yaml
+  - network-policy.allow-newt-to-n8n.yaml
+  - network-policy.allow-newt-to-open-webui.yaml
+  - network-policy.allow-newt-to-pangolin.yaml
