@@ -1,0 +1,30 @@
+---
+# This file defines security hardening measures for the Open WebUI deployment
+
+# Pod-level security context
+podSecurityContext:
+  runAsUser: 29741
+  runAsGroup: 29741
+  runAsNonRoot: true
+  fsGroup: 29741
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container security context
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false  # Open WebUI needs write access to its data dir
+  runAsNonRoot: true
+  runAsUser: 29741
+  runAsGroup: 29741
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
+
+# Service account hardening
+serviceAccount:
+  enable: true
+  create: true
+  automountServiceAccountToken: false
