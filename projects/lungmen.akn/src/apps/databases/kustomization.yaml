@@ -4,8 +4,16 @@ kind: Kustomization
 namespace: databases
 
 resources:
+  # postgres-apps cluster
   - apps.databases.yaml
   - apps.objectstore.yaml
   - apps.postgresql.yaml
   - apps.roles.externalsecret.yaml
-  - security/
+
+  # postgres-apps-secured cluster
+  - apps-secured.databases.yaml
+  - apps-secured.objectstore.yaml
+  - apps-secured.postgresql.yaml
+  - apps-secured.roles.externalsecret.yaml
+
+  # - security/
