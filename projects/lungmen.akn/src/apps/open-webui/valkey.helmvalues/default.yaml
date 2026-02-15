@@ -1,27 +1,13 @@
 ---
-# CloudPirates Valkey Helm chart values for HA deployment with Sentinel
-# Used as Redis-compatible cache/session store for Open WebUI
+# Standalone architecture for now (HA disabled)
+architecture: standalone
 
-# HA architecture: master-replica setup with Sentinel for automatic failover
-architecture: replication
+# Single instance
+replicaCount: 1
 
-# 1 master + 2 replicas
-replicaCount: 3
-
-# Sentinel for automatic failover
+# Disable Sentinel for now
 sentinel:
-  enabled: true
-  masterName: open-webui-valkey
-  quorum: 2
-  downAfterMilliseconds: 5000
-  failoverTimeout: 30000
-  parallelSyncs: 1
-  resources:
-    limits:
-      memory: 128Mi
-    requests:
-      cpu: 25m
-      memory: 64Mi
+  enabled: false
 
 # Disable authentication (internal cluster network, secured by network policies)
 auth:
