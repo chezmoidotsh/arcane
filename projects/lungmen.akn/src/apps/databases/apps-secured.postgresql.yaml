@@ -1,0 +1,51 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: postgres-apps-secured
+  name: postgres-apps-secured
+spec:
+  description: Shared PostgreSQL database cluster for applications with sensitive data (pgvector enabled)
+  enablePDB: false
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: default
+    major: 17
+  # HA: 1 primary + 1 replica per issue #661
+  instances: 2
+  managed:
+    roles:
+      - name: open-webui
+        connectionLimit: -1
+        comment: PostgreSQL role for open-webui
+        ensure: present
+        inherit: true
+        login: true
+        passwordSecret:
+          name: open-webui-database-credentials
+  plugins:
+    - enabled: true
+      isWALArchiver: true
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: apps-secured
+        serverName: 01KHGEYF8PRP7QW8FXDSVAP16D # 2026-02-15T10:53:37.430Z
+  postgresql:
+    parameters:
+      # Limit WAL retention to avoid DB crash due to storage bloat
+      max_slot_wal_keep_size: 900MB
+      max_wal_size: 100MB
+    shared_preload_libraries:
+      # Load pgvector extension for vector similarity search (used by Open WebUI RAG)
+      - vector
+  bootstrap:
+    initdb:
+      postInitSQL:
+        - CREATE EXTENSION IF NOT EXISTS vector;
+  storage:
+    size: 5Gi
+  walStorage:
+    size: 2Gi

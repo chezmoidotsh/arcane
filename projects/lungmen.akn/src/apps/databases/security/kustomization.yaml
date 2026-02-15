@@ -5,4 +5,6 @@ namespace: databases
 
 resources:
   - network-policy.allow-mealie.yaml
+  - network-policy.allow-open-webui.yaml
   - network-policy.allow-postgres-to-s3-backup.yaml
+  - network-policy.allow-postgres-apps-secured-to-s3-backup.yaml
