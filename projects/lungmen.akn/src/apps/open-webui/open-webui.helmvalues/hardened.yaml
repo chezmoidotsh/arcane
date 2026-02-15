@@ -1,0 +1,33 @@
+---
+# This file defines security hardening measures for the Open WebUI deployment
+
+# -- Configure pod security context
+# ref: <https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container>
+podSecurityContext:
+  runAsUser: 29741
+  runAsGroup: 29741
+  runAsNonRoot: true
+  fsGroup: 29741
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Configure container security context
+# ref: <https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-containe>
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false  # Open WebUI needs write access to its data dir
+  runAsNonRoot: true
+  runAsUser: 29741
+  runAsGroup: 29741
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Enable service account creation
+serviceAccount:
+  enable: true
+  create: true
+  # -- Disable automounting of service account token
+  automountServiceAccountToken: false
