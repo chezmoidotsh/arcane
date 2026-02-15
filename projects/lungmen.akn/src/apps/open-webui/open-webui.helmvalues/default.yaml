@@ -14,8 +14,8 @@ pipelines:
 tika:
   enabled: false
 
-# HA: Multiple replicas for high availability
-replicaCount: 2
+# Single replica for now (HA disabled)
+replicaCount: 1
 
 # Use Deployment workload kind (StatefulSet not needed with external PG + shared storage)
 workload:
@@ -68,9 +68,9 @@ extraEnvVars:
   # Redis URL for session/state management in HA
   - name: REDIS_URL
     value: "redis://open-webui-valkey:6379/0"
-  # Multiple workers for HA
+  # Single worker for now (HA disabled)
   - name: UVICORN_WORKERS
-    value: "2"
+    value: "1"
   # Enable session sharing for PostgreSQL (required for HA)
   - name: DATABASE_ENABLE_SESSION_SHARING
     value: "True"
