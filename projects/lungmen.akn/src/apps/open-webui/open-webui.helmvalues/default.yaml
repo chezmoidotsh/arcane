@@ -1,0 +1,217 @@
+ollama:
+  # -- Automatically install Ollama Helm chart from https://otwld.github.io/ollama-helm/. Use [Helm Values](https://github.com/otwld/ollama-helm/#helm-values) to configure
+  enabled: false
+
+pipelines:
+  # -- Automatically install Pipelines chart to extend Open WebUI functionality using Pipelines: https://github.com/open-webui/pipelines
+  enabled: true
+
+tika:
+  # -- Automatically install Apache Tika to extend Open WebUI
+  enabled: true
+
+websocket:
+  # -- Enables websocket support in Open WebUI with env `ENABLE_WEBSOCKET_SUPPORT`
+  enabled: true
+  # -- Specifies the websocket manager to use with env `WEBSOCKET_MANAGER`: redis (default)
+  manager: redis
+  # -- Override the Redis URL for websocket communication. If empty, automatically generates URL based on release name. Template: `redis://[:<password>@]<hostname>:<port>/<db>`
+  # url: redis://open-webui-valkey:6379/0
+  redis:
+    # -- Enable redis installation
+    enabled: true
+
+workload:
+  # -- Workload kind to use. Options are "Deployment", "StatefulSet".
+  # If not set, the chart will determine the kind based on persistence settings.
+  # NOTE: When using Deployment with local persistence and replicaCount > 1,
+  # ensure persistence.accessModes includes ReadWriteMany (RWX).
+  kind: Deployment
+
+# -- Number of Open WebUI replicas
+replicaCount: 1
+
+# -- Probe for liveness of the Open WebUI container
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  failureThreshold: 1
+  periodSeconds: 10
+
+# -- Probe for readiness of the Open WebUI container
+readinessProbe:
+  httpGet:
+    path: /health/db
+    port: http
+  failureThreshold: 1
+
+# -- Probe for startup of the Open WebUI container
+startupProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 5
+  failureThreshold: 20
+
+# -- Resource requests and limits for the Open WebUI container
+resources: {}
+
+
+route:
+  # -- Enables or disables the route
+  enabled: false
+
+persistence:
+  # -- Enable persistence using PVC for Open WebUI data
+  enabled: false
+
+  # -- Sets the storage provider, availables values are `local`, `s3`, `gcs` or `azure`
+  provider: local # TODO: enable s3
+  s3:
+    # -- Set the secret access key for S3 storage from existing k8s secret
+    accessKeyExistingSecret: open-webui-s3-credentials
+    # -- Set the secret access key for S3 storage from existing k8s secret key
+    accessKeyExistingAccessKey: access-key-id
+    # -- Set the secret key for S3 storage from existing k8s secret
+    secretKeyExistingSecret: open-webui-s3-credentials
+    # -- Set the secret key for S3 storage from existing k8s secret key
+    secretKeyExistingSecretKey: secret-access-key
+    # -- Sets the endpoint url for S3 storage
+    endpointUrl: ""
+    # -- Sets the region name for S3 storage
+    region: ""
+    # -- Sets the bucket name for S3 storage
+    bucket: ""
+    # -- Sets the key prefix for a S3 object
+    keyPrefix: ""
+
+# -- Enables the use of OpenAI APIs
+# @section -- OpenAI API configuration
+enableOpenaiApi: true
+
+# -- OpenAI base API URL to use. Defaults to the Pipelines service endpoint when Pipelines are enabled, and "https://api.openai.com/v1" if Pipelines are not enabled and this value is blank
+# @section -- OpenAI API configuration
+openaiBaseApiUrl: "http://192.168.10.30:1234"
+
+# -- Env vars added to the Open WebUI deployment. Most up-to-date environment variables can be found here: https://docs.openwebui.com/getting-started/env-configuration. Variables can be defined as list or map style.
+extraEnvVars:
+  DATABASE_URL:
+    valueFrom:
+      secretKeyRef:
+        name: open-webui-credentials
+        key: database_url
+  WEBUI_SECRET_KEY:
+    valueFrom:
+      secretKeyRef:
+        name: open-webui-credentials
+        key: secret_key
+  ENABLE_LOGIN_FORM:
+    value: "false"
+  # - name: OPENAI_API_KEY
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: pipelines-api-key
+  #       key: api-key
+  # - name: OPENAI_API_KEY
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: openai-api-key
+  #       key: api-key
+  # - name: OLLAMA_DEBUG
+  #   value: "1"
+  #
+  # OPENAI_API_KEY:
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: pipelines-api-key
+  #       key: api-key
+  # OPENAI_API_KEY:
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: openai-api-key
+  #       key: api-key
+  # OLLAMA_DEBUG: "1"
+
+# -- Env vars added to the Open WebUI deployment, common across environments. Most up-to-date environment variables can be found here: https://docs.openwebui.com/getting-started/env-configuration/ (caution: environment variables defined in both `extraEnvVars` and `commonEnvVars` will result in a conflict. Avoid duplicates)
+commonEnvVars: []
+  # - name: RAG_EMBEDDING_ENGINE
+  #   value: "openai"
+
+# -- Env vars added from configmap or secret to the Open WebUI deployment. Most up-to-date environment variables can be found here: https://docs.openwebui.com/getting-started/env-configuration/ (caution: `extraEnvVars` will take precedence over the value from `extraEnvFrom`)
+extraEnvFrom: []
+  # - configMapRef:
+  #     name: my-config
+  # - secretRef:
+  #     name: my-secret
+
+# -- Configure container volume mounts
+# ref: <https://kubernetes.io/docs/tasks/configure-pod-container/configure-volume-storage/>
+volumeMounts:
+  initContainer: []
+  # - name: ""
+  #   mountPath: ""
+  container: []
+  # - name: ""
+  #   mountPath: ""
+
+# -- Configure pod volumes
+# ref: <https://kubernetes.io/docs/tasks/configure-pod-container/configure-volume-storage/>
+volumes: []
+# - name: ""
+#   configMap:
+#     name: ""
+# - name: ""
+#   emptyDir: {}
+
+
+sso:
+  # -- **Enable SSO authentication globally** must enable to use SSO authentication
+  # @section -- SSO Configuration
+  enabled: true
+  # -- Enable account creation when logging in with OAuth (distinct from regular signup)
+  # @section -- SSO Configuration
+  enableSignup: true
+  # -- Allow logging into accounts that match email from OAuth provider (considered insecure)
+  # @section -- SSO Configuration
+  mergeAccountsByEmail: true
+  # -- Enable OAuth role management through access token roles claim
+  # @section -- SSO Configuration
+  enableRoleManagement: true
+  # -- Enable OAuth group management through access token groups claim
+  # @section -- SSO Configuration
+  enableGroupManagement: true
+
+  oidc:
+    # -- Enable OIDC authentication
+    # @section -- OIDC configuration
+    enabled: true
+    # -- OIDC client ID
+    clientId: 2fb91b56-0335-4b13-83bf-3ef6db424d59
+    # -- OICD client secret from existing secret
+    clientExistingSecret: open-webui-credentials
+    # -- OIDC client secret key from existing secret
+    clientExistingSecretKey: sso_client_secret
+    # -- OIDC provider well known URL
+    providerUrl: https://auth.chezmoi.sh/.well-known/openid-configuration
+    # -- Name of the provider to show on the UI
+    providerName: auth.chezmoi.sh
+    # -- Scopes to request (space-separated).
+    scopes: "openid email profile groups"
+  roleManagement:
+    # -- The claim that contains the roles (can be nested, e.g., user.roles)
+    rolesClaim: groups
+    # -- Comma-separated list of roles allowed to log in (receive open webui role user)
+    allowedRoles: ""
+    # -- Comma-separated list of roles allowed to log in as admin (receive open webui role admin)
+    adminRoles: admin
+  groupManagement:
+    # -- The claim that contains the groups (can be nested, e.g., user.memberOf)
+    groupsClaim: groups
+
+# Configure Application logging levels (see. https://docs.openwebui.com/getting-started/advanced-topics/logging#-logging-levels-explained)
+logging:
+  # -- Set the global log level ["notset", "debug", "info" (default), "warning", "error", "critical"]
+  # @section -- Logging configuration
+  level: info

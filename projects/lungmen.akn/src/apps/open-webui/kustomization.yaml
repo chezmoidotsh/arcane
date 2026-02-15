@@ -1,0 +1,41 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: open-webui
+
+helmCharts:
+  # OpenWebUI official Helm chart
+  - name: open-webui
+    releaseName: open-webui
+    repo: https://helm.openwebui.com
+    version: 12.0.1
+    valuesFile: open-webui.helmvalues/default.yaml
+    # additionalValuesFiles:
+    #   - open-webui.helmvalues/hardened.yaml
+
+  # # Valkey (Redis-compatible) for websocket and session management in HA mode
+  # - name: valkey
+  #   releaseName: open-webui-valkey
+  #   repo: oci://registry-1.docker.io/cloudpirates
+  #   version: 0.15.4
+  #   valuesFile: valkey.helmvalues/default.yaml
+  #   # additionalValuesFiles:
+  #   #   - valkey.helmvalues/hardened.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: open-webui
+      app.kubernetes.io/instance: open-webui
+    includeTemplates: true
+    includeSelectors: true
+
+resources:
+  - open-webui.configuration.externalsecret.yaml
+  - open-webui.httproute.yaml
+
+  # - security/
+
+images:
+  # renovate: datasource=docker depName=ghcr.io/open-webui/open-webui
+  - name: ghcr.io/open-webui/open-webui
+    newTag: v0.8.0
