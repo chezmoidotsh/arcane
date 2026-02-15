@@ -1,0 +1,24 @@
+---
+# Security hardening for CloudPirates Valkey deployment
+# Note: The CloudPirates chart already ships with sensible security defaults
+# (runAsUser: 999, readOnlyRootFilesystem: true, drop ALL capabilities)
+
+# Override pod security context
+podSecurityContext:
+  fsGroup: 1000
+
+# Override container security context
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 999
+  runAsGroup: 1000
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# Disable service account token mounting
+serviceAccount:
+  create: true
+  automountToken: false
