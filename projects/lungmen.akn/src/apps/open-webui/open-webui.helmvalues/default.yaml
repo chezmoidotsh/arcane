@@ -17,7 +17,7 @@ websocket:
   manager: redis
   # -- Override the Redis URL for websocket communication. If empty, automatically generates URL based on release name. Template: `redis://[:<password>@]<hostname>:<port>/<db>`
   # url: redis://open-webui-valkey:6379/0
-  url: edis://open-webui-redis.open-webui.svc.cluster.local:6379/0
+  url: redis://open-webui-redis.open-webui.svc.cluster.local:6379/0
   redis:
     # -- Enable redis installation
     enabled: true
