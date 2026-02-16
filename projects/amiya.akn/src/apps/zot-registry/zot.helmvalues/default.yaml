@@ -216,6 +216,13 @@ configFiles:
               "onDemand": true,
               "preserveDigest": true,
               "tlsVerify": true
+            },
+            {
+              "urls": ["https://oci.external-secrets.io"],
+              "content": [{"destination": "/oci.external-secrets.io", "prefix": "**"}],
+              "onDemand": true,
+              "preserveDigest": true,
+              "tlsVerify": true
             }
           ]
         },
