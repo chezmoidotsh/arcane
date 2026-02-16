@@ -209,6 +209,13 @@ configFiles:
               "onDemand": true,
               "preserveDigest": true,
               "tlsVerify": true
+            },
+            {
+              "urls": ["https://mcr.microsoft.com"],
+              "content": [{"destination": "/mcr.microsoft.com", "prefix": "**"}],
+              "onDemand": true,
+              "preserveDigest": true,
+              "tlsVerify": true
             }
           ]
         },
