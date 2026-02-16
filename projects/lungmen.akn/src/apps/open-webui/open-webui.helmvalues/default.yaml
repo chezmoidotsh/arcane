@@ -1,6 +1,3 @@
-# -- Provide a namespace in place of the default release namespace
-namespaceOverride: open-webui
-
 ollama:
   # -- Automatically install Ollama Helm chart from https://otwld.github.io/ollama-helm/. Use [Helm Values](https://github.com/otwld/ollama-helm/#helm-values) to configure
   enabled: false
