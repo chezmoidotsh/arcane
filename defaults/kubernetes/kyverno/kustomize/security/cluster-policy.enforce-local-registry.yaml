@@ -11,6 +11,8 @@ metadata:
       Prefix every workload image with the local registry mirror oci.chezmoi.sh and
       force imagePullPolicy to Always so nodes never trust cached layers. ZOT images
       are excluded to keep them sourced from the upstream registry.
+      System-critical pods (marked via priorityClassName or annotation) are also
+      excluded to ensure cluster stability.
       WARNING: This policy may interfere with pod managed by operators or controllers
       that expect specific image names, like Cloud Native Postgres operator.
 spec:
@@ -25,6 +27,12 @@ spec:
         - key: kubernetes.io/metadata.name
           operator: NotIn
           values: [kyverno-system, kube-system, kube-public, kube-node-lease]
+
+  matchConditions:
+    - name: exclude-critical-pods
+      expression: |
+        !(has(object.metadata.annotations) && 'scheduler.alpha.kubernetes.io/critical-pod' in object.metadata.annotations) &&
+        !(has(object.spec.priorityClassName) && (object.spec.priorityClassName == 'system-cluster-critical' || object.spec.priorityClassName == 'system-node-critical'))
 
   mutations:
     - patchType: ApplyConfiguration
