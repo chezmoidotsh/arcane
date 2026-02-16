@@ -26,6 +26,14 @@ spec:
         login: true
         passwordSecret:
           name: open-webui-database-credentials
+      - name: firecrawl
+        connectionLimit: -1
+        comment: PostgreSQL role for firecrawl
+        ensure: present
+        inherit: true
+        login: true
+        passwordSecret:
+          name: firecrawl-database-credentials
   plugins:
     - enabled: true
       isWALArchiver: true

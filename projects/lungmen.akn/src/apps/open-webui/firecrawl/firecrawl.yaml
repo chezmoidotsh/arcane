@@ -20,6 +20,11 @@ spec:
           env:
             - name: REDIS_URL
               value: redis://redis:6379
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: firecrawl-credentials
+                  key: database_url
             - name: PLAYWRIGHT_MICROSERVICE_URL
               value: http://playwright:3000
             - name: SEARXNG_ENDPOINT
@@ -78,6 +83,11 @@ spec:
           env:
             - name: REDIS_URL
               value: redis://redis:6379
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: firecrawl-credentials
+                  key: database_url
             - name: PLAYWRIGHT_MICROSERVICE_URL
               value: http://playwright:3000
             - name: SEARXNG_ENDPOINT
