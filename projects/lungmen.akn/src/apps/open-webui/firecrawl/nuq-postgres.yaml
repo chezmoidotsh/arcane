@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nuq-postgres
+spec:
+  serviceName: nuq-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nuq-postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nuq-postgres
+    spec:
+      containers:
+        - name: nuq-postgres
+          image: ghcr.io/firecrawl/nuq-postgres:latest
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "postgres"
+          ports:
+            - containerPort: 5432
+              name: postgresql
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+              subPath: postgres
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nuq-postgres
+spec:
+  selector:
+    app.kubernetes.io/name: nuq-postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432

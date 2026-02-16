@@ -18,26 +18,35 @@ spec:
         - name: firecrawl-api
           image: ghcr.io/firecrawl/firecrawl:latest
           env:
-            - name: REDIS_URL
-              value: redis://redis:6379
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: firecrawl-credentials
-                  key: database_url
-            - name: PLAYWRIGHT_MICROSERVICE_URL
-              value: http://playwright:3000
+            - name: OPENAI_BASE_URL
+              value: http://192.168.10.30:1234/v1
+            - name: MODEL_NAME
+              value: qwen3-vl-8b-instruct
+            - name: MODEL_EMBEDDING_NAME
+              value: text-embedding-qwen3-embedding-0.6b
             - name: SEARXNG_ENDPOINT
               value: http://searxng:8080
+            - name: PLAYWRIGHT_MICROSERVICE_URL
+              value: http://playwright-service:3000/scrape
+            - name: REDIS_URL
+              value: redis://redis:6379
+            - name: REDIS_RATE_LIMIT_URL
+              value: redis://redis:6379
             - name: SEARXNG_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: open-webui-credentials
                   key: searxng_secret_key
-            - name: PORT
-              value: "3002"
-            - name: SELF_HOSTED
-              value: "true"
+            - name: POSTGRES_HOST
+              value: "nuq-postgres"
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "postgres"
           ports:
             - containerPort: 3002
           resources:
@@ -79,23 +88,34 @@ spec:
       containers:
         - name: firecrawl-worker
           image: ghcr.io/firecrawl/firecrawl:latest
-          command: ["node", "dist/src/services/queue-worker.js"]
+          command: ["node", "dist/apps/api/src/worker.js"]
           env:
-            - name: REDIS_URL
-              value: redis://redis:6379
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: firecrawl-credentials
-                  key: database_url
-            - name: PLAYWRIGHT_MICROSERVICE_URL
-              value: http://playwright:3000
+            - name: OPENAI_BASE_URL
+              value: http://192.168.10.30:1234/v1
+            - name: MODEL_NAME
+              value: qwen3-vl-8b-instruct
+            - name: MODEL_EMBEDDING_NAME
+              value: text-embedding-qwen3-embedding-0.6b
             - name: SEARXNG_ENDPOINT
               value: http://searxng:8080
+            - name: PLAYWRIGHT_MICROSERVICE_URL
+              value: http://playwright-service:3000/scrape
+            - name: REDIS_URL
+              value: redis://redis:6379
+            - name: REDIS_RATE_LIMIT_URL
+              value: redis://redis:6379
             - name: SEARXNG_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: open-webui-credentials
                   key: searxng_secret_key
-            - name: SELF_HOSTED
-              value: "true"
+            - name: POSTGRES_HOST
+              value: "nuq-postgres"
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "postgres"
