@@ -13,15 +13,6 @@ helmCharts:
     # additionalValuesFiles:
     #   - open-webui.helmvalues/hardened.yaml
 
-  # # Valkey (Redis-compatible) for websocket and session management in HA mode
-  # - name: valkey
-  #   releaseName: open-webui-valkey
-  #   repo: oci://registry-1.docker.io/cloudpirates
-  #   version: 0.15.4
-  #   valuesFile: valkey.helmvalues/default.yaml
-  #   # additionalValuesFiles:
-  #   #   - valkey.helmvalues/hardened.yaml
-
 labels:
   - pairs:
       app.kubernetes.io/name: open-webui
@@ -32,6 +23,10 @@ labels:
 resources:
   - open-webui.configuration.externalsecret.yaml
   - open-webui.httproute.yaml
+  - firecrawl/redis.yaml
+  - firecrawl/playwright.yaml
+  - firecrawl/searxng.yaml
+  - firecrawl/firecrawl.yaml
 
   # - security/
 

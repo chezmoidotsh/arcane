@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firecrawl-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: firecrawl
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: firecrawl
+        app.kubernetes.io/component: api
+    spec:
+      containers:
+        - name: firecrawl-api
+          image: ghcr.io/firecrawl/firecrawl:latest
+          env:
+            - name: REDIS_URL
+              value: redis://redis:6379
+            - name: PLAYWRIGHT_MICROSERVICE_URL
+              value: http://playwright:3000
+            - name: SEARXNG_ENDPOINT
+              value: http://searxng:8080
+            - name: SEARXNG_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: open-webui-credentials
+                  key: searxng_secret_key
+            - name: PORT
+              value: "3002"
+            - name: SELF_HOSTED
+              value: "true"
+          ports:
+            - containerPort: 3002
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              cpu: 200m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: firecrawl
+spec:
+  selector:
+    app.kubernetes.io/name: firecrawl
+    app.kubernetes.io/component: api
+  ports:
+    - protocol: TCP
+      port: 3002
+      targetPort: 3002
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firecrawl-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: firecrawl
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: firecrawl
+        app.kubernetes.io/component: worker
+    spec:
+      containers:
+        - name: firecrawl-worker
+          image: ghcr.io/firecrawl/firecrawl:latest
+          command: ["node", "dist/src/services/queue-worker.js"]
+          env:
+            - name: REDIS_URL
+              value: redis://redis:6379
+            - name: PLAYWRIGHT_MICROSERVICE_URL
+              value: http://playwright:3000
+            - name: SEARXNG_ENDPOINT
+              value: http://searxng:8080
+            - name: SEARXNG_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: open-webui-credentials
+                  key: searxng_secret_key
+            - name: SELF_HOSTED
+              value: "true"
