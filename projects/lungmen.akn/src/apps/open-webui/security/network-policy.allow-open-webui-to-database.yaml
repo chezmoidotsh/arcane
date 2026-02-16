@@ -8,8 +8,12 @@ metadata:
   name: allow-open-webui-to-database
 spec:
   endpointSelector:
-    matchLabels:
-      app.kubernetes.io/name: open-webui
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - open-webui
+          - firecrawl
   egress:
     - toEndpoints:
         - matchLabels:

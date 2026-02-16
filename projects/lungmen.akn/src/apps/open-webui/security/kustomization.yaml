@@ -7,3 +7,4 @@ resources:
   - network-policy.allow-open-webui-from-envoy-gateway.yaml
   - network-policy.allow-open-webui-to-database.yaml
   - network-policy.allow-open-webui-to-internet.yaml
+  - network-policy.allow-firecrawl-to-internet.yaml
