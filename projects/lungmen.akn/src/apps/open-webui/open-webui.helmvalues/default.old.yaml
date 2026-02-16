@@ -1,0 +1,82 @@
+---
+# This Helm values file contains all default values used by the Open WebUI
+# Helm chart for the lungmen.akn deployment.
+
+# Disable bundled Ollama (we connect to an external LLM provider)
+ollama:
+  enabled: false
+
+# Disable bundled Pipelines (not needed initially)
+pipelines:
+  enabled: false
+
+# Disable bundled Tika
+tika:
+  enabled: false
+
+# Single replica for now (HA disabled)
+replicaCount: 1
+
+# Use Deployment workload kind (StatefulSet not needed with external PG + shared storage)
+workload:
+  kind: Deployment
+
+# Persistence: Shared storage for multi-replica HA
+persistence:
+  enabled: true
+  size: 5Gi
+  accessModes:
+    - ReadWriteMany
+  provider: local
+
+# Disable built-in Redis (we use Valkey chart separately)
+websocket:
+  enabled: true
+  manager: redis
+  url: "redis://open-webui-valkey:6379/0"
+  redis:
+    enabled: false
+
+# Disable built-in ingress (we use HTTPRoute via Envoy Gateway)
+ingress:
+  enabled: false
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  containerPort: 8080
+
+# Database configuration: Use shared CNPG apps-secured cluster with pgvector
+extraEnvVars:
+  # PostgreSQL connection
+  - name: DATABASE_URL
+    valueFrom:
+      secretKeyRef:
+        name: open-webui-database-url
+        key: database_url
+  # Enable pgvector as vector database
+  - name: VECTOR_DB
+    value: "pgvector"
+  # pgvector uses the same DATABASE_URL by default (same PG instance)
+  # Enable websocket support for HA
+  - name: ENABLE_WEBSOCKET_SUPPORT
+    value: "true"
+  # Websocket Redis URL (same Valkey instance)
+  - name: WEBSOCKET_REDIS_URL
+    value: "redis://open-webui-valkey:6379/1"
+  # Redis URL for session/state management in HA
+  - name: REDIS_URL
+    value: "redis://open-webui-valkey:6379/0"
+  # Single worker for now (HA disabled)
+  - name: UVICORN_WORKERS
+    value: "1"
+  # Enable session sharing for PostgreSQL (required for HA)
+  - name: DATABASE_ENABLE_SESSION_SHARING
+    value: "True"
+
+# Disable OpenAI API key (will be configured via OIDC/admin UI)
+openaiApiKey: ""
+enableOpenaiApi: false
+
+nameOverride: open-webui
