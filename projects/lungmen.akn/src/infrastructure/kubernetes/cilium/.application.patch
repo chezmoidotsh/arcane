@@ -10,7 +10,7 @@ spec:
       value: Networking / CNI
     - name: Version
       # renovate: datasource=helm depName=cilium registryUrl=https://helm.cilium.io/
-      value: "1.19.0"
+      value: "1.19.1"
     # -- Documentation & Resources
     - name: Documentation
       value: https://docs.cilium.io/
