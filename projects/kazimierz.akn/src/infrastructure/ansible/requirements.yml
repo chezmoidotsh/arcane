@@ -20,4 +20,4 @@ collections:
 
   # Tailscale VPN management
   - name: artis3n.tailscale
-    version: 1.2.0
+    version: 1.2.1
