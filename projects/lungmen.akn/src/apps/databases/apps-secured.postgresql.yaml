@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/instance: postgres-apps-secured
   name: postgres-apps-secured
 spec:
-  description: Shared PostgreSQL database cluster for applications with sensitive data (pgvector enabled)
+  description: Shared PostgreSQL database cluster for applications with sensitive data
   enablePDB: false
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
@@ -26,20 +26,12 @@ spec:
         login: true
         passwordSecret:
           name: open-webui-database-credentials
-      - name: firecrawl
-        connectionLimit: -1
-        comment: PostgreSQL role for firecrawl
-        ensure: present
-        inherit: true
-        login: true
-        passwordSecret:
-          name: firecrawl-database-credentials
   plugins:
     - enabled: true
       isWALArchiver: true
       name: barman-cloud.cloudnative-pg.io
       parameters:
-        barmanObjectName: apps-secured
+        barmanObjectName: apps-secured-selfhosted
         serverName: 01KHGEYF8PRP7QW8FXDSVAP16D # 2026-02-15T10:53:37.430Z
   postgresql:
     parameters:

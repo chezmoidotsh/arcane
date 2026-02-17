@@ -2,7 +2,7 @@
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
-  name: apps-secured
+  name: apps-secured-selfhosted
 spec:
   configuration:
     data:
