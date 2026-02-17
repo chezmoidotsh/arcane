@@ -16,4 +16,4 @@ resources:
   - apps-secured.postgresql.yaml
   - apps-secured.roles.externalsecret.yaml
 
-  # - security/
+  - security/

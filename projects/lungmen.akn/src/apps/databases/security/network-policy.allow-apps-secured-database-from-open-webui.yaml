@@ -1,0 +1,22 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Open WebUI to access the secured PostgreSQL cluster (postgres-apps-secured)
+      in the databases namespace. Required for application data and vector storage.
+  name: allow-apps-secured-database-from-open-webui
+  namespace: databases
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: postgres-apps-secured
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: open-webui
+            app.kubernetes.io/name: open-webui
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
