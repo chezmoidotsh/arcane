@@ -83,6 +83,7 @@ entryPoints:
         readTimeout: "30m"
     http:
       middlewares:
+        - error-pages@file
         - crowdsec@file
       tls:
         certResolver: "letsencrypt"
