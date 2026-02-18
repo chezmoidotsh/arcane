@@ -25,10 +25,10 @@ resources:
   - firecrawl/firecrawl.configuration.externalsecret.yaml
   - open-webui.httproute.yaml
   - firecrawl/redis.yaml
-  # - firecrawl/playwright.yaml
-  # - firecrawl/searxng.yaml
-  # - firecrawl/firecrawl.yaml
-  # - firecrawl/nuq-postgres.yaml
+  - firecrawl/playwright.yaml
+  - firecrawl/searxng.yaml
+  - firecrawl/firecrawl.yaml
+  - firecrawl/nuq-postgres.yaml
 
   # - security/
 

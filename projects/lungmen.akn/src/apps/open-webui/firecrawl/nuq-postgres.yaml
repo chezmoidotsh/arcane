@@ -12,6 +12,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: nuq-postgres
+        app.kubernetes.io/component: database
     spec:
       containers:
         - name: nuq-postgres
@@ -26,6 +27,13 @@ spec:
           ports:
             - containerPort: 5432
               name: postgresql
+          resources:
+            limits:
+              memory: 1Gi
+              cpu: 500m
+            requests:
+              memory: 512Mi
+              cpu: 250m
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
