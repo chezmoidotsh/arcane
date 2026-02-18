@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: playwright
+  name: playwright-service
   labels:
-    app.kubernetes.io/name: playwright
+    app.kubernetes.io/name: playwright-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: playwright
+      app.kubernetes.io/name: playwright-service
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: playwright
+        app.kubernetes.io/name: playwright-service
     spec:
       containers:
         - name: playwright
@@ -30,10 +30,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: playwright
+  name: playwright-service
 spec:
   selector:
-    app.kubernetes.io/name: playwright
+    app.kubernetes.io/name: playwright-service
   ports:
     - protocol: TCP
       port: 3000
