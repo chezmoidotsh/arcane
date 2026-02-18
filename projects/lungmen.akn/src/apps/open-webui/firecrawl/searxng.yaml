@@ -1,18 +1,3 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: searxng-config
-data:
-  settings.yml: |
-    use_default_settings: true
-    server:
-      base_url: http://searxng:8080
-      secret_key: "aSSdAYHUXl23GsUYF34dQXVsabGkQ5lU"
-    search:
-      formats:
-        - html
-        - json
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,31 +6,20 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: searxng
+      app: searxng
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: searxng
+        app: searxng
     spec:
       containers:
         - name: searxng
-          image: searxng/searxng:2026.2.16-8e824017d
+          image: searxng/searxng:latest
           ports:
             - containerPort: 8080
           env:
-            - name: SEARXNG_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: open-webui-credentials
-                  key: searxng_secret_key
-          volumeMounts:
-            - name: config
-              mountPath: /etc/searxng/settings.yml
-              subPath: settings.yml
-      volumes:
-        - name: config
-          configMap:
-            name: searxng-config
+            - name: SEARXNG_BASE_URL
+              value: "http://searxng:8080"
 ---
 apiVersion: v1
 kind: Service
@@ -53,7 +27,7 @@ metadata:
   name: searxng
 spec:
   selector:
-    app.kubernetes.io/name: searxng
+    app: searxng
   ports:
     - protocol: TCP
       port: 8080

@@ -22,7 +22,8 @@ labels:
 
 resources:
   - open-webui.configuration.externalsecret.yaml
-  - firecrawl/firecrawl.configuration.externalsecret.yaml
+  - firecrawl/secret.yaml
+  - firecrawl/configmap.yaml
   - open-webui.httproute.yaml
   - firecrawl/redis.yaml
   - firecrawl/playwright.yaml
