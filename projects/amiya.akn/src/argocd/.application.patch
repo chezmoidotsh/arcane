@@ -10,7 +10,7 @@ spec:
       value: CI/CD / GitOps
     - name: Version
       # renovate: datasource=helm depName=argo-cd registryUrl=https://argoproj.github.io/argo-helm
-      value: "9.4.2"
+      value: "9.4.3"
     # -- Documentation & Resources
     - name: Documentation
       value: https://argo-cd.readthedocs.io/
