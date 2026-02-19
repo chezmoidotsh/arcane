@@ -13,7 +13,7 @@ name: IMAGECACHE
 provisioning:
   diskSelector:
     match: system_disk
-  maxSize: 16GiB
+  maxSize: 32GiB
 ---
 apiVersion: v1alpha1
 kind: UserVolumeConfig

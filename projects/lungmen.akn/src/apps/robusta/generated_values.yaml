@@ -1,0 +1,37 @@
+# This file contains API keys. To load them from secrets, refer to https://docs.robusta.dev/master/setup-robusta/configuration-secrets.html
+
+clusterName: lungmen.akn # NOTE - adjust the clusterName when adding additional clusters
+globalConfig:
+  signing_key: 4f7f9a47-7b9d-42fe-9a73-ae26e1a815ad
+  account_id: e9effcc6-b921-48f2-ac6c-2b7acc09a7cf
+sinksConfig:
+  - robusta_sink:
+      name: robusta_ui_sink
+      token: eyJhY2NvdW50X2lkIjogImU5ZWZmY2M2LWI5MjEtNDhmMi1hYzZjLTJiN2FjYzA5YTdjZiIsICJhcGlfa2V5IjogImV5SmhiR2NpT2lKSVV6STFOaUlzSW5SNWNDSTZJa3BYVkNKOS5leUpwYzNNaU9pSnpkWEJoWW1GelpTSXNJbkpsWmlJNkltWmtaV0Y2Y1dKaFozQjRlbXhoZFcxaVlXaDNJaXdpY205c1pTSTZJbUZ1YjI0aUxDSnBZWFFpT2pFM05qYzFNekUwTWpFc0ltVjRjQ0k2TWpBNE16RXdOelF5TVgwLjRrcWZlbGU4cHhKQUZLZlZOMkN1azRvcEx5NDZxN01fTUFpRFpwcjFSSGsiLCAic3RvcmVfdXJsIjogImh0dHBzOi8vc3AuZXUucm9idXN0YS5kZXYiLCAiZW1haWwiOiAiYXBpdXNlci1jaGV6bW9pLXNoLTk1MDBAcm9idXN0YS5kZXYiLCAicGFzc3dvcmQiOiAiYjYyZmE0OTEtYWE0OC00ZTMyLTkwNWMtYTBmYzg0ZWVjZmI2In0=
+enablePrometheusStack: true
+enablePlatformPlaybooks: true
+runner:
+  sendAdditionalTelemetry: true
+  additional_env_vars:
+    - name: RELAY_EXTERNAL_ACTIONS_URL
+      value: https://api.eu.robusta.dev/integrations/generic/actions
+    - name: WEBSOCKET_RELAY_ADDRESS
+      value: wss://relay.eu.robusta.dev
+    - name: ROBUSTA_UI_DOMAIN
+      value: https://platform.eu.robusta.dev
+    - name: ROBUSTA_TELEMETRY_ENDPOINT
+      value: https://api.eu.robusta.dev/telemetry
+enableHolmesGPT: true
+enabledManagedConfiguration: true
+holmes:
+  additionalEnvVars:
+    - name: ROBUSTA_AI
+      value: "true"
+    - name: ROBUSTA_API_ENDPOINT
+      value: https://api.eu.robusta.dev
+    - name: ROBUSTA_UI_DOMAIN
+      value: https://platform.eu.robusta.dev
+  resources:
+    requests:
+      memory: 512Mi
+isSmallCluster: true
