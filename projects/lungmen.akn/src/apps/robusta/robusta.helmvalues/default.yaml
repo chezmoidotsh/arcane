@@ -1,6 +1,9 @@
 # This file contains API keys. To load them from secrets, refer to https://docs.robusta.dev/master/setup-robusta/configuration-secrets.html
 
 clusterName: lungmen.akn # NOTE - adjust the clusterName when adding additional clusters
+globalConfig:
+  signing_key: 4f7f9a47-7b9d-42fe-9a73-ae26e1a815ad
+  account_id: e9effcc6-b921-48f2-ac6c-2b7acc09a7cf
 sinksConfig:
   - robusta_sink:
       name: robusta_ui_sink
