@@ -1,0 +1,15 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: robusta
+
+resources:
+  - robusta.secrets.externalsecret.yaml
+
+helmCharts:
+  - name: robusta
+    repo: https://robusta-charts.storage.googleapis.com
+    releaseName: robusta
+    version: 0.32.x
+    includeCRDs: true
+    valuesFile: robusta.helmvalues/default.yaml
