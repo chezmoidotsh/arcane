@@ -10,6 +10,7 @@ helmCharts:
   - name: robusta
     repo: https://robusta-charts.storage.googleapis.com
     releaseName: robusta
+    namespace: robusta
     version: 0.32.x
     includeCRDs: true
     valuesFile: robusta.helmvalues/default.yaml
