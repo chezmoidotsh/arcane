@@ -233,6 +233,9 @@ fi
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 RELATIVE_FLAKE_PATH=$(calculate_relative_path "${FLAKE_DIR}" "${REPO_ROOT}")
 
+DOCKER_TTY_FLAGS=""
+USE_NOM=1
+
 # We mount the entire repository into the container at /src.
 # The working directory is set to the specific flake's location within /src.
 # This allows Nix to access git context and use self.lastModifiedDate.
@@ -243,20 +246,24 @@ docker run \
 	-v "${NIX_TOOLS_VOLUME}:/tools" \
 	-v "${REPO_ROOT}:/src" \
 	-w "/src/${RELATIVE_FLAKE_PATH}" \
-	-it \
+	${DOCKER_TTY_FLAGS} \
+	-e USE_NOM=${USE_NOM} \
 	nixos/nix sh -c "
         set -euo pipefail
-    
+
         # Remove homeless shelter issue
         rm -rf /homeless-shelter
-        
-        # Try to use nom from tools cache, fallback to nix shell if not found
-        if [[ -x /tools/bin/nom ]]; then
-            /tools/bin/nom build --extra-experimental-features \"nix-command flakes\" --option build-users-group '' --show-trace ${SYSTEM_ARG} .#default --out-link result
+
+        # Try to use nom from tools cache when tty, otherwise fallback to nix build
+        # --option sandbox false is required to avoid homeless-shelter issues in docker
+        if [[ \"${USE_NOM:-0}\" = \"1\" && -x /tools/bin/nom ]]; then
+            /tools/bin/nom build --extra-experimental-features \"nix-command flakes\" --option build-users-group '' --option sandbox false --show-trace ${SYSTEM_ARG} .#default --out-link result
+        elif [[ \"${USE_NOM:-0}\" = \"1\" ]]; then
+            nix --extra-experimental-features \"nix-command flakes\" shell nixpkgs#nix-output-monitor --command nom build --extra-experimental-features \"nix-command flakes\" --option build-users-group '' --option sandbox false --show-trace ${SYSTEM_ARG} .#default --out-link result
         else
-            nix --extra-experimental-features \"nix-command flakes\" shell nixpkgs#nix-output-monitor --command nom build --extra-experimental-features \"nix-command flakes\" --option build-users-group '' --show-trace ${SYSTEM_ARG} .#default --out-link result
+            nix --extra-experimental-features \"nix-command flakes\" build --option build-users-group '' --option sandbox false --show-trace ${SYSTEM_ARG} .#default --out-link result
         fi
-        
+
         # Copy result to the output location
         mv result symlink_result
         cp -L symlink_result result

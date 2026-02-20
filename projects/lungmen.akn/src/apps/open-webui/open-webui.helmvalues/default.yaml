@@ -117,7 +117,7 @@ extraEnvVars:
   RAG_WEB_SEARCH_ENGINE:
     value: "firecrawl"
   FIRECRAWL_API_BASE_URL:
-    value: "http://firecrawl:3002"
+    value: "http://firecrawl-api:3002"
   FIRECRAWL_API_KEY:
     value: "self-hosted"
   # - name: OPENAI_API_KEY

@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "cz-git": "^1.12.0"
+  }
+}

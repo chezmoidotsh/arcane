@@ -22,14 +22,9 @@ labels:
 
 resources:
   - open-webui.configuration.externalsecret.yaml
-  - firecrawl/secret.yaml
-  - firecrawl/configmap.yaml
   - open-webui.httproute.yaml
-  - firecrawl/redis.yaml
-  - firecrawl/playwright.yaml
-  - firecrawl/searxng.yaml
-  - firecrawl/firecrawl.yaml
-  - firecrawl/nuq-postgres.yaml
+  # Firecrawl configuration (now managed via kustomization)
+  - firecrawl/
 
   # - security/
 
