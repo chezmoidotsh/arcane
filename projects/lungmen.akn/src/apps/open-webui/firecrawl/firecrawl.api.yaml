@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: firecrawl-api
+  labels:
+    app.kubernetes.io/component: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: api
+    spec:
+      terminationGracePeriodSeconds: 180
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: api
+          image: ghcr.io/firecrawl/firecrawl:latest
+          imagePullPolicy: Always
+          command: [ "node" ]
+          args: [ "--max-old-space-size=6144", "dist/src/index.js" ]
+          ports:
+            - name: http
+              containerPort: 3002
+          env:
+            - name: PORT
+              value: "3002"
+          envFrom:
+            - configMapRef:
+                name: firecrawl-config
+          resources:
+            requests:
+              memory: "4G"
+              cpu: "2000m"
+            limits:
+              memory: "6G"
+              cpu: "2000m"
+          livenessProbe:
+            httpGet:
+              path: /v0/health/liveness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /v0/health/readiness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: firecrawl-api
+  labels:
+    app.kubernetes.io/component: api
+  annotations:
+    link.argocd.argoproj.io/external-link: ""
+spec:
+  selector:
+    app.kubernetes.io/component: api
+  ports:
+    - protocol: TCP
+      port: 3002
+      targetPort: http

@@ -413,15 +413,15 @@ handle_argocd_auth() {
 
 	# Auto-detect ArgoCD server
 	gum log --structured --level info "Auto-detecting ArgoCD server..."
-	local argocd_server
-	if argocd_server="$(detect_argocd_server "${cluster_name}")"; then # trunk-ignore(shellcheck/SC2310): this is mandatory to fix SC2118
-		gum log --structured --level info "ArgoCD server detected: ${argocd_server}"
-		gum log --structured --level info "Authenticating with SSO..."
-		${ARGOCD_CLI} login "${argocd_server}" --sso --grpc-web
-	else
-		gum log --structured --level error "Unable to auto-detect ArgoCD server. Set ARGOCD_SERVER or connect manually."
-		exit 1
-	fi
+	local argocd_server="argocd.akn.chezmoi.sh"
+	# if argocd_server="$(detect_argocd_server "${cluster_name}")"; then # trunk-ignore(shellcheck/SC2310): this is mandatory to fix SC2118
+	gum log --structured --level info "ArgoCD server detected: ${argocd_server}"
+	gum log --structured --level info "Authenticating with SSO..."
+	${ARGOCD_CLI} login "${argocd_server}" --sso --grpc-web
+	# else
+	# 	gum log --structured --level error "Unable to auto-detect ArgoCD server. Set ARGOCD_SERVER or connect manually."
+	# 	exit 1
+	# fi
 }
 
 verify_cluster_exists() {

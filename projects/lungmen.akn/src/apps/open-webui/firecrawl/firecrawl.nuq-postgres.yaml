@@ -1,16 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nuq-postgres
+  name: firecrawl-nuq-postgres
+  labels:
+    app.kubernetes.io/component: nuq-postgres
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nuq-postgres
+      app.kubernetes.io/component: nuq-postgres
   template:
     metadata:
       labels:
-        app: nuq-postgres
+        app.kubernetes.io/component: nuq-postgres
     spec:
       containers:
         - name: nuq-postgres
@@ -24,7 +26,8 @@ spec:
             - name: POSTGRES_DB
               value: "postgres"
           ports:
-            - containerPort: 5432
+            - name: postgres
+              containerPort: 5432
           volumeMounts:
             - name: postgres-storage
               mountPath: /var/lib/postgresql/data
@@ -35,6 +38,16 @@ spec:
             limits:
               memory: "1Gi"
               cpu: "500m"
+          livenessProbe:
+            tcpSocket:
+              port: postgres
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: postgres
+            initialDelaySeconds: 5
+            periodSeconds: 10
       volumes:
         - name: postgres-storage
           emptyDir: {}
@@ -42,12 +55,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: nuq-postgres
+  name: firecrawl-nuq-postgres
+  labels:
+    app.kubernetes.io/component: nuq-postgres
 spec:
   selector:
-    app: nuq-postgres
+    app.kubernetes.io/component: nuq-postgres
   ports:
     - protocol: TCP
       port: 5432
-      targetPort: 5432
+      targetPort: postgres
   type: ClusterIP
