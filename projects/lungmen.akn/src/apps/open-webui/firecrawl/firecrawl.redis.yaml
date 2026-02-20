@@ -16,17 +16,17 @@ spec:
     spec:
       containers:
       - name: redis
-        image: redis:alpine
+        image: docker.io/library/redis
         ports:
           - name: redis
             containerPort: 6379
         resources:
           requests:
-            memory: "128Mi"
-            cpu: "100m"
+            memory: "32Mi"
+            cpu: "5m"
           limits:
-            memory: "256Mi"
-            cpu: "500m"
+            memory: "32Mi"
+            cpu: "25m"
         livenessProbe:
           tcpSocket:
             port: redis

@@ -17,7 +17,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
         - name: playwright
-          image: ghcr.io/firecrawl/playwright-service:latest
+          image: ghcr.io/firecrawl/playwright-service
           imagePullPolicy: Always
           ports:
             - name: http
@@ -27,11 +27,11 @@ spec:
                 name: playwright-service-config
           resources:
             requests:
-              memory: "1Gi"
-              cpu: "500m"
+              memory: "384Mi"
+              cpu: "10m"
             limits:
-              memory: "2Gi"
-              cpu: "1000m"
+              memory: "384Mi"
+              cpu: "50m"
           livenessProbe:
             httpGet:
               path: /health

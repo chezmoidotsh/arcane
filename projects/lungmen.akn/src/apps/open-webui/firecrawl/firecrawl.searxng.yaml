@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: searxng
-          image: searxng/searxng:latest
+          image: docker.io/searxng/searxng
           ports:
             - name: http
               containerPort: 8080
@@ -26,10 +26,10 @@ spec:
           resources:
             requests:
               memory: "256Mi"
-              cpu: "250m"
+              cpu: "5m"
             limits:
-              memory: "512Mi"
-              cpu: "500m"
+              memory: "256Mi"
+              cpu: "25m"
           livenessProbe:
             tcpSocket:
               port: http

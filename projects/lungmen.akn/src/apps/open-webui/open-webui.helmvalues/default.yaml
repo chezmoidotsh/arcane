@@ -5,10 +5,24 @@ ollama:
 pipelines:
   # -- Automatically install Pipelines chart to extend Open WebUI functionality using Pipelines: https://github.com/open-webui/pipelines
   enabled: true
+  resources:
+    requests:
+      cpu: 5m
+      memory: 192Mi
+    limits:
+      cpu: 25m
+      memory: 192Mi
 
 tika:
   # -- Automatically install Apache Tika to extend Open WebUI
   enabled: true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 512Mi
+    limits:
+      cpu: 50m
+      memory: 512Mi
 
 websocket:
   # -- Enables websocket support in Open WebUI with env `ENABLE_WEBSOCKET_SUPPORT`
@@ -57,7 +71,13 @@ startupProbe:
   failureThreshold: 20
 
 # -- Resource requests and limits for the Open WebUI container
-resources: {}
+resources:
+  requests:
+    cpu: 10m
+    memory: "1.5Gi"
+  limits:
+    cpu: 50m
+    memory: "1.5Gi"
 
 
 route:

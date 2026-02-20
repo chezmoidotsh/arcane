@@ -17,3 +17,20 @@ labels:
       app.kubernetes.io/instance: firecrawl
     includeTemplates: true
     includeSelectors: true
+
+images:
+  # renovate: datasource=docker depName=ghcr.io/firecrawl/firecrawl
+  - name: ghcr.io/firecrawl/firecrawl
+    newTag: latest@sha256:ca7d475be92985c421eb59b2827cd9987c3e51b1394271a64ab08579e29d946b
+  # renovate: datasource=docker depName=ghcr.io/firecrawl/nuq-postgres
+  - name: ghcr.io/firecrawl/nuq-postgres
+    newTag: latest@sha256:4e29acde1469b8366a411301044c0739d6732f650ec8f43e81ee5d57ed0f1e56
+  # renovate: datasource=docker depName=ghcr.io/firecrawl/playwright-service
+  - name: ghcr.io/firecrawl/playwright-service
+    newTag: latest@sha256:5ac4f1e77dac2a8cc7742d822ce9d644e05166df41ae02ada1ed53d4d8cf3cd7
+  # renovate: datasource=docker depName=docker.io/searxng/searxng
+  - name: docker.io/searxng/searxng
+    newTag: 2026.2.20-93ac6ceb3@sha256:8d1655e92c354814bab388f7fa0b69bfa101e29b9e3579e79500cda78315d2f2
+  # renovate: datasource=docker depName=docker.io/library/redis
+  - name: docker.io/library/redis
+    newTag: 8.6.0-alpine3.23@sha256:fd83658b0e40e2164617d262f13c02ca9ee9e1e6b276fd2fa06617e09bd5c780
