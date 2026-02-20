@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/component: nuq-worker
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/component: nuq-worker
@@ -22,10 +22,10 @@ spec:
         fsGroup: 1000
       containers:
         - name: nuq-worker
-          image: ghcr.io/firecrawl/firecrawl:latest
+          image: ghcr.io/firecrawl/firecrawl
           imagePullPolicy: Always
           command: [ "node" ]
-          args: [ "--max-old-space-size=3072", "dist/src/services/worker/nuq-worker.js" ]
+          args: [ "--max-old-space-size=192", "dist/src/services/worker/nuq-worker.js" ]
           ports:
             - name: http
               containerPort: 3006
@@ -39,11 +39,11 @@ spec:
                 name: firecrawl-secret
           resources:
             requests:
-              memory: "3G"
-              cpu: "1000m"
+              memory: "256Mi"
+              cpu: "5m"
             limits:
-              memory: "4G"
-              cpu: "1000m"
+              memory: "256Mi"
+              cpu: "25m"
           livenessProbe:
             httpGet:
               path: /health

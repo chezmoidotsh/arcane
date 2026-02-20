@@ -22,10 +22,10 @@ spec:
         fsGroup: 1000
       containers:
         - name: api
-          image: ghcr.io/firecrawl/firecrawl:latest
+          image: ghcr.io/firecrawl/firecrawl
           imagePullPolicy: Always
           command: [ "node" ]
-          args: [ "--max-old-space-size=6144", "dist/src/index.js" ]
+          args: [ "--max-old-space-size=256", "dist/src/index.js" ]
           ports:
             - name: http
               containerPort: 3002
@@ -37,11 +37,11 @@ spec:
                 name: firecrawl-config
           resources:
             requests:
-              memory: "4G"
-              cpu: "2000m"
+              memory: "384Mi"
+              cpu: "10m"
             limits:
-              memory: "6G"
-              cpu: "2000m"
+              memory: "384Mi"
+              cpu: "50m"
           livenessProbe:
             httpGet:
               path: /v0/health/liveness
