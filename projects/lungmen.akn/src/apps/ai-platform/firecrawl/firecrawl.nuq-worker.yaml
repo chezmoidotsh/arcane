@@ -35,15 +35,12 @@ spec:
           envFrom:
             - configMapRef:
                 name: firecrawl-config
-            - secretRef:
-                name: firecrawl-secret
           resources:
             requests:
               memory: "256Mi"
               cpu: "5m"
             limits:
               memory: "256Mi"
-              cpu: "25m"
           livenessProbe:
             httpGet:
               path: /health

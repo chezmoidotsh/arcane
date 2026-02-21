@@ -10,7 +10,6 @@ pipelines:
       cpu: 5m
       memory: 192Mi
     limits:
-      cpu: 25m
       memory: 192Mi
 
 tika:
@@ -21,7 +20,6 @@ tika:
       cpu: 10m
       memory: 512Mi
     limits:
-      cpu: 50m
       memory: 512Mi
 
 websocket:
@@ -76,7 +74,6 @@ resources:
     cpu: 10m
     memory: "1.5Gi"
   limits:
-    cpu: 50m
     memory: "1.5Gi"
 
 
@@ -137,7 +134,7 @@ extraEnvVars:
   RAG_WEB_SEARCH_ENGINE:
     value: "firecrawl"
   FIRECRAWL_API_BASE_URL:
-    value: "http://firecrawl-api:3002"
+    value: "http://firecrawl-api.open-webui.svc.cluster.local:3002"
   FIRECRAWL_API_KEY:
     value: "self-hosted"
   # - name: OPENAI_API_KEY
