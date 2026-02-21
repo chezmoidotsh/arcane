@@ -1,0 +1,18 @@
+# -- ToolHive Operator Configuration
+# Deployed in namespace mode to restrict management to the open-webui namespace only.
+# https://docs.stacklok.com/toolhive/guides-k8s/deploy-operator
+
+operator:
+  # -- Restrict operator scope to specific namespaces (principle of least privilege)
+  rbac:
+    scope: "namespace"
+    allowedNamespaces:
+      - "open-webui"
+
+  # -- Conservative resource allocation for the operator pod
+  resources:
+    requests:
+      cpu: 5m
+      memory: "64Mi"
+    limits:
+      memory: "128Mi"

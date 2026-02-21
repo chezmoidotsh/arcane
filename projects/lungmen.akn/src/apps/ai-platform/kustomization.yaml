@@ -18,3 +18,5 @@ resources:
   - open-webui/
   # Firecrawl configuration
   - firecrawl/
+  # ToolHive Operator — MCP server management via CRDs
+  - toolhive/
