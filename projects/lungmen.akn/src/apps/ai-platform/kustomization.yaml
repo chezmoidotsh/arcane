@@ -20,3 +20,5 @@ resources:
   - firecrawl/
   # ToolHive Operator — MCP server management via CRDs
   - toolhive/
+  # MCP Servers instances
+  - mcp-servers/
