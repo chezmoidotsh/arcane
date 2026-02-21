@@ -41,9 +41,9 @@ data:
   # Postgres database URL for the primary application features (like jobs and queues)
   NUQ_DATABASE_URL: "postgresql://postgres:password@firecrawl-nuq-postgres.open-webui.svc.cluster.local:5432/postgres"
   # URL for Redis instance specifically used for rate limiting
-  REDIS_RATE_LIMIT_URL: "redis://:redis@firecrawl-redis:6379"
+  REDIS_RATE_LIMIT_URL: "redis://valkey.open-webui.svc.cluster.local:6379/2"
   # URL for the main Redis instance (used for BullMQ, background jobs, etc.)
-  REDIS_URL: "redis://:redis@firecrawl-redis:6379"
+  REDIS_URL: "redis://valkey.open-webui.svc.cluster.local:6379/3"
   
   # ==========================================
   # Security and Authentication
