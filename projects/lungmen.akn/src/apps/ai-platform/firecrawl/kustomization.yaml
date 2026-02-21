@@ -7,7 +7,6 @@ resources:
   - firecrawl.worker.yaml
   - firecrawl.nuq-worker.yaml
   - firecrawl.playwright.yaml
-  - firecrawl.redis.yaml
   - firecrawl.searxng.yaml
   - firecrawl.nuq-postgres.yaml
 
@@ -31,6 +30,3 @@ images:
   # renovate: datasource=docker depName=docker.io/searxng/searxng
   - name: docker.io/searxng/searxng
     newTag: 2026.2.20-93ac6ceb3@sha256:8d1655e92c354814bab388f7fa0b69bfa101e29b9e3579e79500cda78315d2f2
-  # renovate: datasource=docker depName=docker.io/library/redis
-  - name: docker.io/library/redis
-    newTag: 8.6.0-alpine3.23@sha256:fd83658b0e40e2164617d262f13c02ca9ee9e1e6b276fd2fa06617e09bd5c780

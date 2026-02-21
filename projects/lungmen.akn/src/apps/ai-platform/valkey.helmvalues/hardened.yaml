@@ -1,0 +1,29 @@
+---
+# This file defines security hardening measures for the Valkey deployment
+
+# -- Pod-level security context enforcing random non-root UID/GID > 20000
+podSecurityContext:
+  fsGroup: 21250
+  runAsUser: 21250
+  runAsGroup: 21250
+
+# -- Container-level security overrides to align with podSecurityContext
+securityContext:
+  runAsUser: 21250
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+metrics:
+  exporter:
+    # -- Enforce strict security settings on the exporter container as well
+    securityContext:
+      runAsUser: 21250
+      runAsGroup: 21250
+      runAsNonRoot: true
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL

@@ -1,0 +1,40 @@
+# -- Valkey Configuration for AI Platform Services
+# Configured for high availability, security, and observability.
+
+image:
+  # -- Use locally-hosted mirror to bypass rate limits and enforce caching
+  registry: "oci.chezmoi.sh/docker.io"
+
+# -- Apply identical resource allocations as the legacy Firecrawl Redis instance
+resources:
+  requests:
+    cpu: 5m
+    memory: "32Mi"
+  limits:
+    memory: "32Mi"
+
+# -- Enables verbose debug logs for easier troubleshooting
+valkeyLogLevel: "debug"
+
+auth:
+  enabled: false
+
+replica:
+  # -- Enables High Availability (HA) replication
+  enabled: true
+  replicas: 1
+  # -- Guarantees write safety: at least 1 replica must acknowledge the write
+  minReplicasToWrite: 1
+  persistence:
+    size: 250Mi
+
+metrics:
+  # -- Extracts native Valkey metrics via redis_exporter sidecar
+  enabled: true
+  exporter:
+    image:
+      # -- Mirror registry for the ghcr.io images
+      registry: "oci.chezmoi.sh/ghcr.io"
+  serviceMonitor:
+    # -- Automatically creates the ServiceMonitor resource for Prometheus Operator
+    enabled: true
