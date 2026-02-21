@@ -1,7 +1,5 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: open-webui
 
 helmCharts:
   # OpenWebUI official Helm chart
@@ -10,8 +8,10 @@ helmCharts:
     repo: https://helm.openwebui.com
     version: 12.0.1
     valuesFile: open-webui.helmvalues/default.yaml
-    # additionalValuesFiles:
-    #   - open-webui.helmvalues/hardened.yaml
+
+resources:
+  - open-webui.configuration.externalsecret.yaml
+  - open-webui.httproute.yaml
 
 labels:
   - pairs:
@@ -20,15 +20,7 @@ labels:
     includeTemplates: true
     includeSelectors: true
 
-resources:
-  - open-webui.configuration.externalsecret.yaml
-  - open-webui.httproute.yaml
-  # Firecrawl configuration (now managed via kustomization)
-  - firecrawl/
-
-  # - security/
-
 images:
   # renovate: datasource=docker depName=ghcr.io/open-webui/open-webui
   - name: ghcr.io/open-webui/open-webui
-    newTag: v0.8.0
+    newTag: v0.8.0@sha256:205e9cf23b66553643b065afcdeffb7f86b35bf36e0ce643dc56946a911954b7

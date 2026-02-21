@@ -21,17 +21,13 @@ spec:
           imagePullPolicy: Always
           ports:
             - name: http
-              containerPort: 3000
-          envFrom:
-            - configMapRef:
-                name: playwright-service-config
+              containerPort: 3003
           resources:
             requests:
               memory: "384Mi"
               cpu: "10m"
             limits:
               memory: "384Mi"
-              cpu: "50m"
           livenessProbe:
             httpGet:
               path: /health
