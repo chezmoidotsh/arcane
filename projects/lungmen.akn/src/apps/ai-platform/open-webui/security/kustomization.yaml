@@ -1,7 +1,0 @@
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-
-resources:
-  - network-policy.allow-open-webui-from-envoy-gateway.yaml
-  - network-policy.allow-open-webui-to-database.yaml
-  - network-policy.allow-open-webui-to-internet.yaml
