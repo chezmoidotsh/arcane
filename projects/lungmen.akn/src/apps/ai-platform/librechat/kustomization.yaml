@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - librechat.configuration.yaml
+  - librechat.configyaml.yaml
+  - librechat.credentials.externalsecret.yaml
+  - librechat.database.externalsecret.yaml
+  - librechat.deployment.yaml
+  - librechat.ferretdb.yaml
+  - librechat.meilisearch.yaml
+  - librechat.rag-api.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: librechat
+      app.kubernetes.io/instance: librechat
+    includeTemplates: true
+    includeSelectors: true
+
+images:
+  # renovate: datasource=docker depName=ghcr.io/danny-avila/librechat
+  - name: ghcr.io/danny-avila/librechat
+    newTag: v0.8.3-rc1
+  # renovate: datasource=docker depName=ghcr.io/ferretdb/ferretdb
+  - name: ghcr.io/ferretdb/ferretdb
+    newTag: 1.24.1
+  # renovate: datasource=docker depName=docker.io/getmeili/meilisearch
+  - name: docker.io/getmeili/meilisearch
+    newTag: v1.7.3
+  # renovate: datasource=docker depName=ghcr.io/danny-avila/librechat-rag-api-dev-lite
+  - name: ghcr.io/danny-avila/librechat-rag-api-dev-lite
+    newTag: latest

@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: librechat
+  labels:
+    app.kubernetes.io/component: server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: server
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: server
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 2000
+      containers:
+        - name: librechat
+          image: ghcr.io/danny-avila/librechat
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3080
+          envFrom:
+            - configMapRef:
+                name: librechat-config
+            - secretRef:
+                name: librechat-credentials
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: librechat-database-credentials
+                  key: MONGO_URI
+          volumeMounts:
+            - name: config-yaml
+              mountPath: /app/librechat.yaml
+              subPath: librechat.yaml
+              readOnly: true
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "10m"
+            limits:
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+      volumes:
+        - name: config-yaml
+          configMap:
+            name: librechat-configyaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: librechat
+  labels:
+    app.kubernetes.io/component: server
+  annotations:
+    link.argocd.argoproj.io/external-link: "https://librechat.chezmoi.sh"
+spec:
+  selector:
+    app.kubernetes.io/component: server
+  ports:
+    - protocol: TCP
+      port: 3080
+      targetPort: http

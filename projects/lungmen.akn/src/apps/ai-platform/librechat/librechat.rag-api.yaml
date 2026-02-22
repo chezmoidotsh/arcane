@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: librechat-rag-api
+  labels:
+    app.kubernetes.io/component: rag-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: rag-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: rag-api
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: rag-api
+          image: ghcr.io/danny-avila/librechat-rag-api-dev-lite
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: DB_HOST
+              value: "postgres-apps-secured-rw.databases.svc.cluster.local"
+            - name: DB_PORT
+              value: "5432"
+            - name: POSTGRES_DB
+              value: "librechat-rag"
+            - name: POSTGRES_USER
+              value: "librechat"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: librechat-database-credentials
+                  key: password
+            - name: EMBEDDINGS_PROVIDER
+              value: "openai"
+            - name: RAG_OPENAI_BASEURL
+              value: "http://192.168.10.30:1234/v1"
+            - name: RAG_OPENAI_API_KEY
+              value: "dummy"
+            - name: EMBEDDINGS_MODEL
+              value: "text-embedding-multilingual-e5-large-instruct"
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "10m"
+            limits:
+              memory: "256Mi"
+      volumes:
+        - name: uploads
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: librechat-rag-api
+  labels:
+    app.kubernetes.io/component: rag-api
+spec:
+  selector:
+    app.kubernetes.io/component: rag-api
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: http
