@@ -22,7 +22,7 @@
       packages =
         let
           pkgs = import nixpkgs { inherit system; };
-          postgresql = pkgs.postgresql_17;
+          postgresql = pkgs.postgresql_18;
           nixversion = "${pkgs.lib.versions.major pkgs.lib.version}.${pkgs.lib.versions.minor pkgs.lib.version}";
 
           documentdb = import ./documentdb-ext.nix {
@@ -33,15 +33,15 @@
           inherit documentdb;
 
           # ┌───────────────────────────────────────────────────────────────────────────┐
-          # │ <default>: Build the DocumentDB extension image for CNPG.                │
-          # │            Follows CNPG image volume extension layout.                   │
+          # │ <default>: Build the DocumentDB extension image for CNPG.                 │
+          # │            Follows CNPG image volume extension layout.                    │
           # │                                                                           │
-          # | @sh.chezmoi.app.image: postgres-documentdb-extension                     │
-          # | @sh.chezmoi.app.type: extension                                          │
+          # | @sh.chezmoi.app.image: postgres-documentdb-extension                      │
+          # | @sh.chezmoi.app.type: extension                                           │
           # └───────────────────────────────────────────────────────────────────────────┘
           default = pkgs.dockerTools.buildLayeredImage {
             name = "postgres-documentdb-extension";
-            tag = "${documentdb.version}-pg17-${nixversion}-${system}";
+            tag = "${documentdb.version}-pg18-${nixversion}-${system}";
 
             contents = [ documentdb ];
 
@@ -50,7 +50,7 @@
               "org.opencontainers.image.authors" = "chezmoi.sh Lab <xunleii@users.noreply.github.com>";
               "org.opencontainers.image.description" = "DocumentDB PostgreSQL extension for CloudNativePG image volume extensions";
               "org.opencontainers.image.documentation" = "https://github.com/documentdb/documentdb";
-              "org.opencontainers.image.licenses" = "MIT";
+              "org.opencontainers.image.licenses" = "Apache-2.0";
               "org.opencontainers.image.revision" = documentdb.version;
               "org.opencontainers.image.source" = "https://github.com/chezmoidotsh/arcane/blob/main/catalog/flakes/chezmoi.sh/postgres-documentdb-extension/flake.nix";
               "org.opencontainers.image.title" = "postgres-documentdb-extension";
@@ -61,7 +61,7 @@
               "sh.chezmoi.catalog.build.engine.version" = "${pkgs.lib.version}";
               "sh.chezmoi.catalog.category" = "database/extension";
               "sh.chezmoi.catalog.origin.author" = "DocumentDB <https://github.com/documentdb>";
-              "sh.chezmoi.catalog.origin.license" = "MIT";
+              "sh.chezmoi.catalog.origin.license" = "Apache-2.0";
               "sh.chezmoi.catalog.origin.repository" = "github.com/documentdb/documentdb";
             };
           };
