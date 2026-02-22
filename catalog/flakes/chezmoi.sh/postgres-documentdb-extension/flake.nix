@@ -41,7 +41,7 @@
           # └───────────────────────────────────────────────────────────────────────────┘
           default = pkgs.dockerTools.buildLayeredImage {
             name = "postgres-documentdb-extension";
-            tag = "${documentdb.version}-pg18-${nixversion}-${system}";
+            tag = "${documentdb.version}-pg${postgresql.version}-${nixversion}-${system}";
 
             contents = [ documentdb ];
 
