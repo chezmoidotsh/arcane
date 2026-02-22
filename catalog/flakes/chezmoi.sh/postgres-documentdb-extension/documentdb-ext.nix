@@ -78,16 +78,16 @@ PKGEOF
   });
 
   # ───────────────────────────────────────────────────────────────────────────
-  # libbson (from mongo-c-driver 1.28.0)
+  # libbson (from mongo-c-driver 1.30.6)
   # DocumentDB requires libbson-static-1.0 to be available via pkg-config.
   # We build mongo-c-driver with static libbson enabled.
   # ───────────────────────────────────────────────────────────────────────────
   mongo-c-driver-static = pkgs.mongoc.overrideAttrs (old: {
-    version = "1.28.0";
+    version = "1.30.6";
 
     src = pkgs.fetchurl {
-      url = "https://github.com/mongodb/mongo-c-driver/releases/download/1.28.0/mongo-c-driver-1.28.0.tar.gz";
-      hash = "sha256-vskMhTYbSp+J2AJDRA1T85uecGsf5L+QHE0//W9Q+9s=";
+      url = "https://github.com/mongodb/mongo-c-driver/releases/download/1.30.6/mongo-c-driver-1.30.6.tar.gz";
+      hash = "sha256-gx3bVNHNKuCAVI/z/r28Wmikk475MuRCJpv2sRr4cbg=";
     };
 
     cmakeFlags = (old.cmakeFlags or []) ++ [
@@ -105,105 +105,120 @@ pkgs.stdenv.mkDerivation {
 
   src = documentdb-src;
 
-  nativeBuildInputs = [
-    pkgs.pkg-config
-    pkgs.gnumake
-    pkgs.gcc
-    pkgs.git          # needed by generate_extension_version.sh (git rev-parse)
-    pkgs.clang
+nativeBuildInputs = with pkgs; [
+    # Build tools
+    clang      # Compiler required by PostgreSQL 17 standards in Nixpkgs
+    gnumake
+    pkg-config
+    git        # Required by scripts/generate_extension_version.sh
+    
+    # PostgreSQL build infrastructure (PGXS)
     postgresql
-    postgresql.pg_config
     postgresql.dev
   ];
 
-  buildInputs = [
+  buildInputs = with pkgs; [
+    # Extension core dependencies
+    mongo-c-driver-static  # Provides libbson-static-1.0
+    intelrdfpmathlib       # Provides intelmathlib (bid_conf.h, libbid)
+    pcre2-static           # Provides libpcre2-8
+    
+    # Cryptographic and system headers required by PostgreSQL
+    openssl.dev
+    libkrb5.dev
+    
+    # Standard utilities
+    icu
+    readline
+    zlib
     postgresql
-    mongo-c-driver-static  # provides libbson-static-1.0
-    intelrdfpmathlib       # provides intelmathlib (bid_conf.h, libbid)
-    pcre2-static           # provides libpcre2-8
-    pkgs.openssl
-    pkgs.libkrb5
-    pkgs.readline
-    pkgs.zlib
-    pkgs.icu
-    postgresql
+    postgresql.pg_config
   ];
 
-  # Make pkg-config find our custom intelmathlib.pc
-  PKG_CONFIG_PATH = pkgs.lib.concatStringsSep ":" [
-    "${intelrdfpmathlib}/lib/pkgconfig"
-    "${pcre2-static}/lib/pkgconfig"
-    "${mongo-c-driver-static}/lib/pkgconfig"
+  # Idiomatic construction of PKG_CONFIG_PATH using native Nix functions
+  PKG_CONFIG_PATH = pkgs.lib.makeSearchPath "lib/pkgconfig" [
+    intelrdfpmathlib
+    pcre2-static
+    mongo-c-driver-static
   ];
 
-  # Build: pg_documentdb_core → pg_documentdb → pg_documentdb_extended_rum
-  # (mirrors `make install-no-distributed` from root Makefile)
-buildPhase = ''
+  buildPhase = ''
     export HOME=$TMPDIR
     patchShebangs scripts/
 
-    # 1. Patch de l'API MongoDB
-    echo "Patching legacy BSON functions..."
-    substituteInPlace pg_documentdb_core/src/io/pgbson.c \
-      --replace-fail "bson_as_legacy_extended_json" "bson_as_relaxed_extended_json"
+    # -----------------------------------------------------------------------------
+    # 1. Global Includes & LTO Disabling
+    # -----------------------------------------------------------------------------
+    # NIX_CFLAGS_COMPILE applies to both the C compiler (Clang) AND the SQL preprocessor (GCC cpp).
+    # We only put library includes and the '-fno-lto' flag here to avoid breaking the SQL generation.
+    # LTO is disabled because Clang generates LLVM bitcode (.bc) which the GNU linker (ld) 
+    # used by PGXS does not recognize (causes "file format not recognized" errors).
+    export NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE \
+      -I${postgresql.dev}/include/server \
+      -I${pkgs.openssl.dev}/include \
+      -I${pkgs.libkrb5.dev}/include \
+      -fno-lto"
 
-    # 2. Inclusions globales + Désactivation de LTO au niveau global
-    export NIX_CFLAGS_COMPILE="-I${postgresql.dev}/include/server -I${pkgs.openssl.dev}/include -I${pkgs.libkrb5.dev}/include -fno-lto"
-
-    # 3. Le bouclier Clang + Désactivation de LTO injectée dans PGXS
-    local pgCflags="-Wno-error=typedef-redefinition -Wno-error=unused-function -Wno-error=deprecated-non-prototype -Wno-error=default-const-init-field-unsafe -Wno-declaration-after-statement -Wno-error=declaration-after-statement -fno-lto"
+    # -----------------------------------------------------------------------------
+    # 2. Clang Shield (PG_CFLAGS)
+    # -----------------------------------------------------------------------------
+    # The extension's Makefiles inject '-Werror', making Clang 19 too strict 
+    # against legacy code. We use PG_CFLAGS to inject our tolerances at the very 
+    # end of the C compilation command, effectively overriding -Werror.
+    # These flags are placed in an array to maintain readability.
+    local pgCflags=(
+      "-Wno-error=typedef-redefinition"
+      "-Wno-error=unused-function"
+      "-Wno-error=deprecated-non-prototype"
+      "-Wno-error=default-const-init-field-unsafe"
+      "-Wno-declaration-after-statement"
+      "-Wno-error=declaration-after-statement"
+      "-fno-lto"
+    )
 
     local makeArgs=(
       "PG_CONFIG=pg_config"
-      "PG_CFLAGS=''${pgCflags}"
+      "PG_CFLAGS=''${pgCflags[*]}" # [*] merges the array into a single space-separated string
       "-j$NIX_BUILD_CORES"
     )
 
-    echo "--- Building Core ---"
     make -C pg_documentdb_core "''${makeArgs[@]}"
-    
-    echo "--- Building Main Extension ---"
     make -C pg_documentdb "''${makeArgs[@]}"
-    
-    echo "--- Building Extended Rum ---"
     make -C pg_documentdb_extended_rum "''${makeArgs[@]}"
   '';
 
   installPhase = ''
-    # Install into a temporary DESTDIR
     export DESTDIR="$TMPDIR/install"
-    make -C pg_documentdb_core install
-    make -C pg_documentdb install
-    make -C pg_documentdb_extended_rum install
+    
+    # The installation also needs PG_CONFIG to properly resolve PGXS paths
+    local installArgs=("PG_CONFIG=pg_config")
 
-    # Copy files to output following CNPG image volume extension layout:
-    #   /share/extension/ → *.control + *.sql files
-    #   /lib/             → *.so files
+    make -C pg_documentdb_core install "''${installArgs[@]}"
+    make -C pg_documentdb install "''${installArgs[@]}"
+    make -C pg_documentdb_extended_rum install "''${installArgs[@]}"
+
+    # -----------------------------------------------------------------------------
+    # Extension Packaging
+    # -----------------------------------------------------------------------------
+    # We extract the compiled artifacts from DESTDIR to build the standard tree
+    # expected by Nix ($out) and CloudNativePG.
+    
     local pgShareDir=$(pg_config --sharedir)
     local pgPkgLibDir=$(pg_config --pkglibdir)
 
-    mkdir -p $out/share/extension
-    mkdir -p $out/lib
+    mkdir -p $out/share/extension $out/lib
 
-    # Copy control and SQL files
-    cp -v $DESTDIR$pgShareDir/extension/documentdb_core* $out/share/extension/ || true
-    cp -v $DESTDIR$pgShareDir/extension/documentdb--* $out/share/extension/ || true
-    cp -v $DESTDIR$pgShareDir/extension/documentdb.control $out/share/extension/ || true
-    cp -v $DESTDIR$pgShareDir/extension/documentdb_extended_rum* $out/share/extension/ || true
+    # Copy control files and SQL schemas
+    cp -v $DESTDIR$pgShareDir/extension/documentdb*.control $out/share/extension/
+    cp -v $DESTDIR$pgShareDir/extension/documentdb*.sql $out/share/extension/
 
-    # Copy shared libraries
-    cp -v $DESTDIR$pgPkgLibDir/pg_documentdb_core.so $out/lib/ || true
-    cp -v $DESTDIR$pgPkgLibDir/pg_documentdb.so $out/lib/ || true
-    cp -v $DESTDIR$pgPkgLibDir/pg_documentdb_extended_rum.so $out/lib/ || true
-    cp -v $DESTDIR$pgPkgLibDir/pg_documentdb_extended_rum_core.so $out/lib/ || true
-
-    # Also copy the libbid.a that might be needed at runtime
-    # (DocumentDB links it statically, so this is just for completeness)
+    # Copy dynamic libraries
+    cp -v $DESTDIR$pgPkgLibDir/pg_documentdb*.so $out/lib/
   '';
 
   meta = {
     description = "DocumentDB PostgreSQL extension (MongoDB-compatible document store)";
     homepage = "https://github.com/documentdb/documentdb";
-    license = pkgs.lib.licenses.mit;
+    license = pkgs.lib.licenses.asl20;
   };
 }
