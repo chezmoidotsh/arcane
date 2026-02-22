@@ -234,10 +234,10 @@ nativeBuildInputs = with pkgs; [
   #    to safely overwrite these Nix store paths with invalid hashes, breaking the 
   #    dependency graph without corrupting the ELF binary.
   postFixup = ''
-    echo "Clearing RPATH to ensure CloudNativePG runtime compatibility..."
-    find $out/lib -type f -name "*.so" -exec patchelf --remove-rpath {} \;
+    echo 'Fixing RPATH to $ORIGIN for proximity loading...'
+    find $out/lib -type f -name "*.so" -exec patchelf --set-rpath '$ORIGIN' {} \;
 
-    echo "Scrubbing build tools and PostgreSQL server from binaries to shrink closure..."
+    echo 'Scrubbing build tools and PostgreSQL server from binaries to shrink closure...'
     find $out/lib -type f -name "*.so" -exec remove-references-to -t ${pkgs.clang} {} \;
     find $out/lib -type f -name "*.so" -exec remove-references-to -t ${postgresql.dev} {} \;
     find $out/lib -type f -name "*.so" -exec remove-references-to -t ${postgresql} {} \;
