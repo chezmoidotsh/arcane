@@ -107,14 +107,18 @@ pkgs.stdenv.mkDerivation {
 
 nativeBuildInputs = with pkgs; [
     # Build tools
-    clang      # Compiler required by PostgreSQL 17 standards in Nixpkgs
+    clang              # Compiler required by PostgreSQL 17 standards in Nixpkgs
     gnumake
     pkg-config
-    git        # Required by scripts/generate_extension_version.sh
+    git                # Required by scripts/generate_extension_version.sh
     
     # PostgreSQL build infrastructure (PGXS)
     postgresql
     postgresql.dev
+
+    # Closure shrinking tools
+    patchelf
+    removeReferencesTo
   ];
 
   buildInputs = with pkgs; [
@@ -214,6 +218,29 @@ nativeBuildInputs = with pkgs; [
 
     # Copy dynamic libraries
     cp -v $DESTDIR$pgPkgLibDir/pg_documentdb*.so $out/lib/
+  '';
+
+  # -----------------------------------------------------------------------------
+  # Closure Shrinking
+  # -----------------------------------------------------------------------------
+  # 1. RPATH Clearing: Nix embeds absolute paths to dynamic libraries (/nix/store/...)
+  #    in the ELF's RPATH. CloudNativePG pods do not have a Nix store, meaning the
+  #    extension would fail to load at runtime. We clear the RPATH so the extension 
+  #    relies on the base OS libraries of the CNPG container.
+  #
+  # 2. String Scrubbing: PGXS embeds build paths (compiler, postgresql server, 
+  #    dev headers) as hardcoded strings inside the .so files. Nix detects these 
+  #    and forcefully pulls a massive runtime closure. We use 'remove-references-to' 
+  #    to safely overwrite these Nix store paths with invalid hashes, breaking the 
+  #    dependency graph without corrupting the ELF binary.
+  postFixup = ''
+    echo "Clearing RPATH to ensure CloudNativePG runtime compatibility..."
+    find $out/lib -type f -name "*.so" -exec patchelf --remove-rpath {} \;
+
+    echo "Scrubbing build tools and PostgreSQL server from binaries to shrink closure..."
+    find $out/lib -type f -name "*.so" -exec remove-references-to -t ${pkgs.clang} {} \;
+    find $out/lib -type f -name "*.so" -exec remove-references-to -t ${postgresql.dev} {} \;
+    find $out/lib -type f -name "*.so" -exec remove-references-to -t ${postgresql} {} \;
   '';
 
   meta = {
