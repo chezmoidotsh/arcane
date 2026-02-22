@@ -9,9 +9,7 @@ metadata:
 spec:
   bootstrap:
     recovery:
-      # The following timestamp is used for point-in-time recovery to a known good state.
-      # Update this value if a different recovery point is required.
-      source: 2025-09-09T16:15:39.825Z
+      source: 2026-01-13T21:15:25.239Z
   description: PostgreSQL database dedicated to atuin
   enablePDB: false
   imageCatalogRef:
@@ -36,7 +34,7 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01KEWKD9NQGZ280WQ70XBZSWZ4 # 2026-01-13T21:15:25.239Z
+        serverName: 01KJ3V8C9VB3D1W5VE4142WT4W # 2026-02-22T23:34:19.199Z
   postgresql:
     parameters:
       # Limit WAL retention to avoid DB crash due to storage bloat
@@ -48,14 +46,15 @@ spec:
     size: 1Gi
 
   externalClusters:
-    - name: 2025-09-09T16:15:39.825Z
+    - name: 2026-01-13T21:15:25.239Z
       plugin:
         enabled: true
         isWALArchiver: false
         name: barman-cloud.cloudnative-pg.io
         parameters:
           barmanObjectName: selfhosted
-          serverName: 01K4QM5VSHX9YAAQ46W814EVVN
+          serverName: 01KEWKD9NQGZ280WQ70XBZSWZ4
+
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret

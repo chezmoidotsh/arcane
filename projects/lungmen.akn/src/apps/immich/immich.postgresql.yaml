@@ -8,26 +8,10 @@ metadata:
   name: immich-database
 spec:
   bootstrap:
-    # initdb:
-    #   database: immich
-    #   owner: immich
-    #   postInitSQL:
-    #     - CREATE EXTENSION IF NOT EXISTS vectors;
-    #     - CREATE EXTENSION IF NOT EXISTS cube;
-    #     - CREATE EXTENSION IF NOT EXISTS earthdistance;
     recovery:
-      source: 2025-12-16T17:27:47.983Z
+      source: 2026-01-11T17:38:24.812Z
   description: PostgreSQL database dedicated to immich with vector extensions
   enablePDB: false
-  externalClusters:
-    - name: 2025-12-16T17:27:47.983Z
-      plugin:
-        enabled: true
-        isWALArchiver: false
-        name: barman-cloud.cloudnative-pg.io
-        parameters:
-          barmanObjectName: selfhosted
-          serverName: 01KCM38CGFWZ5ZP0TD2ZX2C26Y
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ImageCatalog
@@ -53,7 +37,7 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01KEQ26GDC3JSSP1RMD07GJ9PA # 2026-01-11T17:38:24.812Z
+        serverName: 01KJ3V8C7MH6VGJHTH5DJ6W60C # 2026-02-22T23:34:19.128Z
   postgresql:
     parameters:
       # Limit WAL retention to avoid DB crash due to storage bloat
@@ -66,6 +50,17 @@ spec:
     size: 1Gi
   walStorage:
     size: 1Gi
+
+  externalClusters:
+    - name: 2026-01-11T17:38:24.812Z
+      plugin:
+        enabled: true
+        isWALArchiver: false
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: selfhosted
+          serverName: 01KEQ26GDC3JSSP1RMD07GJ9PA
+
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: ImageCatalog

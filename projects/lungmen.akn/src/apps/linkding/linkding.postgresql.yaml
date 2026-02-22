@@ -9,7 +9,7 @@ metadata:
 spec:
   bootstrap:
     recovery:
-      source: 2025-09-09T16:15:39.825Z
+      source: 2026-01-15T08:03:54.052Z
   description: PostgreSQL database dedicated to linkding
   enablePDB: false
   imageCatalogRef:
@@ -34,7 +34,7 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01KF0AXDJ40TJYCPFH0Y1M3331 # 2026-01-15T08:03:54.052Z
+        serverName: 01KJ3V8CCZ2VGDS5XS8NHMJ392 # 2026-02-22T23:34:19.299Z
   postgresql:
     parameters:
       # Limit WAL retention to avoid DB crash due to storage bloat
@@ -46,14 +46,15 @@ spec:
     size: 1Gi
 
   externalClusters:
-    - name: 2025-09-09T16:15:39.825Z
+    - name: 2026-01-15T08:03:54.052Z
       plugin:
         enabled: true
         isWALArchiver: false
         name: barman-cloud.cloudnative-pg.io
         parameters:
           barmanObjectName: selfhosted
-          serverName: 01K4QM5VSHX9YAAQ46W814EVVM
+          serverName: 01KF0AXDJ40TJYCPFH0Y1M3331
+
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret

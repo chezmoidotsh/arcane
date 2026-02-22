@@ -9,7 +9,7 @@ metadata:
 spec:
   bootstrap:
     recovery:
-      source: 2025-09-09T16:15:39.825Z
+      source: 2026-01-20T13:15:56.175Z
   description: PostgreSQL database dedicated to paperless-ngx
   enablePDB: false
   imageCatalogRef:
@@ -34,7 +34,7 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01KFDRRBWFFDV5S5K8HHRMBK0N # 2026-01-20T13:15:56.175Z
+        serverName: 01KJ3V8CATGPKK7YDRRKP1SYBZ # 2026-02-22T23:34:19.230Z
   postgresql:
     parameters:
       # Limit WAL retention to avoid DB crash due to storage bloat
@@ -46,14 +46,15 @@ spec:
     size: 5Gi
 
   externalClusters:
-    - name: 2025-09-09T16:15:39.825Z
+    - name: 2026-01-20T13:15:56.175Z
       plugin:
         enabled: true
         isWALArchiver: false
         name: barman-cloud.cloudnative-pg.io
         parameters:
           barmanObjectName: selfhosted
-          serverName: 01K4QM5VSHX9YAAQ46W814EVVM
+          serverName: 01KFDRRBWFFDV5S5K8HHRMBK0N
+
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret

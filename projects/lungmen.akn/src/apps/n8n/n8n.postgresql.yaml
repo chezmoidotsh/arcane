@@ -8,9 +8,8 @@ metadata:
   name: n8n-database
 spec:
   bootstrap:
-    initdb:
-      database: n8n
-      owner: n8n
+    recovery:
+      source: 2026-01-15T08:13:48.686Z
   description: PostgreSQL database dedicated to n8n
   enablePDB: false
   imageCatalogRef:
@@ -35,7 +34,7 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01KF0BFJ8E817KVKXB34G81G2H # 2026-01-15T08:13:48.686Z
+        serverName: 01KJ3V8C8SVZMKMHFRJ8W2FR2D # 2026-02-22T23:34:19.166Z
   postgresql:
     parameters:
       # Limit WAL retention to avoid DB crash due to storage bloat
@@ -45,6 +44,17 @@ spec:
     size: 1Gi
   walStorage:
     size: 1Gi
+
+  externalClusters:
+    - name: 2026-01-15T08:13:48.686Z
+      plugin:
+        enabled: true
+        isWALArchiver: false
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: selfhosted
+          serverName: 01KF0BFJ8E817KVKXB34G81G2H
+
 ---
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
