@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: librechat-meilisearch
+  labels:
+    app.kubernetes.io/component: meilisearch
+spec:
+  replicas: 1
+  serviceName: librechat-meilisearch
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: meilisearch
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: meilisearch
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: meilisearch
+          image: docker.io/getmeili/meilisearch:v1.7.3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 7700
+          env:
+            - name: MEILI_NO_ANALYTICS
+              value: "true"
+            - name: MEILI_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: librechat-credentials
+                  key: MEILI_MASTER_KEY
+          volumeMounts:
+            - name: data
+              mountPath: /meili_data
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "10m"
+            limits:
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: librechat-meilisearch
+  labels:
+    app.kubernetes.io/component: meilisearch
+spec:
+  selector:
+    app.kubernetes.io/component: meilisearch
+  ports:
+    - protocol: TCP
+      port: 7700
+      targetPort: http

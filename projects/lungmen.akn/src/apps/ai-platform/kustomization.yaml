@@ -18,6 +18,8 @@ resources:
   - open-webui/
   # Firecrawl configuration
   - firecrawl/
+  # LibreChat — benchmarking alternative to Open-WebUI
+  - librechat/
   # ToolHive Operator — MCP server management via CRDs
   - toolhive/
   # MCP Servers instances

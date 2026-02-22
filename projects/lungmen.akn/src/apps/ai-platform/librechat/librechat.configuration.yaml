@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: librechat-config
+data:
+  # ==========================================
+  # General application
+  # ==========================================
+
+  HOST: "0.0.0.0"
+  PORT: "3080"
+  NO_INDEX: "true"
+  NODE_ENV: "production"
+  TRUST_PROXY: "1"
+
+  # ==========================================
+  # Domains
+  # ==========================================
+
+  DOMAIN_CLIENT: "https://librechat.chezmoi.sh"
+  DOMAIN_SERVER: "https://librechat.chezmoi.sh"
+
+  # ==========================================
+  # Database (FerretDB → MongoDB protocol)
+  # ==========================================
+
+  # ==========================================
+  # Search (Meilisearch)
+  # ==========================================
+
+  SEARCH: "true"
+  MEILI_NO_ANALYTICS: "true"
+  MEILI_HOST: "http://librechat-meilisearch.open-webui.svc.cluster.local:7700"
+
+  # ==========================================
+  # RAG API
+  # ==========================================
+
+  RAG_API_URL: "http://librechat-rag-api.open-webui.svc.cluster.local:8000"
+
+  # ==========================================
+  # Authentication
+  # ==========================================
+
+  ALLOW_EMAIL_LOGIN: "true"
+  ALLOW_REGISTRATION: "true"
+  ALLOW_SOCIAL_LOGIN: "false"
+  ALLOW_UNVERIFIED_EMAIL_LOGIN: "true"
+
+
+  DEBUG_LOGGING: "true"
+  DEBUG_CONSOLE: "true"

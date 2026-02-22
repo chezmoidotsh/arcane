@@ -2,6 +2,29 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
+  name: apps-secured-librechat
+spec:
+  cluster:
+    name: postgres-apps-secured
+  name: librechat
+  owner: librechat
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: apps-secured-librechat-rag
+spec:
+  cluster:
+    name: postgres-apps-secured
+  name: librechat-rag
+  owner: librechat
+  extensions:
+    - name: vector
+      ensure: present
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
   name: apps-secured-open-webui
 spec:
   cluster:
