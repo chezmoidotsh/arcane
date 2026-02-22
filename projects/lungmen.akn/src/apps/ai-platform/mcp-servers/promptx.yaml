@@ -56,11 +56,12 @@ spec:
   # the directory must be writable. We add an emptyDir and an initContainer that
   # creates the directory and chowns it to UID 1000 (node).
   podTemplateSpec:
-    contaners:
-      - name: mcp
-        volumeMounts:
-          - name: promptx-data
-            mountPath: /home/node/.promptx
-    volumes:
-      - name: promptx-data
-        emptyDir: {}
+    spec:
+      containers:
+        - name: mcp
+          volumeMounts:
+            - name: promptx-data
+              mountPath: /home/node/.promptx
+      volumes:
+        - name: promptx-data
+          emptyDir: {}
