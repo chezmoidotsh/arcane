@@ -1,0 +1,48 @@
+---
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: firecrawl
+  namespace: open-webui
+  labels:
+    app.kubernetes.io/name: firecrawl-mcp
+    app.kubernetes.io/managed-by: toolhive-operator
+spec:
+  image: ghcr.io/firecrawl/firecrawl-mcp-server:latest
+  transport: streamable-http
+  proxyPort: 8080
+  mcpPort: 3000
+  
+  env:
+    - name: HOST
+      value: 0.0.0.0
+    - name: HTTP_STREAMABLE_SERVER
+      value: "true"
+    - name: FIRECRAWL_API_URL
+      value: "http://firecrawl-api.open-webui.svc.cluster.local:3002"
+    - name: FIRECRAWL_API_KEY
+      value: "fc-local"
+      
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "128Mi"
+    limits:
+      cpu: "300m"
+      memory: "512Mi"
+
+  podTemplateSpec:
+    spec:
+      containers:
+        - name: mcp
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            fsGroup: 0
+            readOnlyRootFilesystem: false
+            runAsNonRoot: false
+      securityContext:
+        readOnlyRootFilesystem: false
+        runAsUser: 0
+        runAsGroup: 0
+        runAsNonRoot: false

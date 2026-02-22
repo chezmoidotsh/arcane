@@ -5,3 +5,4 @@ kind: Kustomization
 resources:
   - fetch.yaml
   - promptx.yaml
+  - firecrawl.yaml
