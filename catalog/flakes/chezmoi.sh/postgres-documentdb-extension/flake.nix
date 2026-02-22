@@ -1,7 +1,7 @@
 {
   description = "DocumentDB PostgreSQL extension for CloudNativePG (image volume extension).";
 
-  inputs.nixpkgs.url = "nixpkgs/nixos-24.11";
+  inputs.nixpkgs.url = "nixpkgs/nixos-25.11";
   inputs.systems.url = "github:nix-systems/default";
   inputs.flake-utils.url = "github:numtide/flake-utils";
   inputs.flake-utils.inputs.systems.follows = "systems";

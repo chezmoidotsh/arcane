@@ -110,7 +110,10 @@ pkgs.stdenv.mkDerivation {
     pkgs.gnumake
     pkgs.gcc
     pkgs.git          # needed by generate_extension_version.sh (git rev-parse)
+    pkgs.clang
     postgresql
+    postgresql.pg_config
+    postgresql.dev
   ];
 
   buildInputs = [
@@ -123,6 +126,7 @@ pkgs.stdenv.mkDerivation {
     pkgs.readline
     pkgs.zlib
     pkgs.icu
+    postgresql
   ];
 
   # Make pkg-config find our custom intelmathlib.pc
@@ -134,21 +138,38 @@ pkgs.stdenv.mkDerivation {
 
   # Build: pg_documentdb_core → pg_documentdb → pg_documentdb_extended_rum
   # (mirrors `make install-no-distributed` from root Makefile)
-  buildPhase = ''
-    export PG_CONFIG="${postgresql}/bin/pg_config"
+buildPhase = ''
     export HOME=$TMPDIR
-
-    # Patch scripts to work outside a git repo (disable git commands)
     patchShebangs scripts/
 
-    make -C pg_documentdb_core -j$NIX_BUILD_CORES
-    make -C pg_documentdb -j$NIX_BUILD_CORES
-    make -C pg_documentdb_extended_rum -j$NIX_BUILD_CORES
+    # 1. Patch de l'API MongoDB
+    echo "Patching legacy BSON functions..."
+    substituteInPlace pg_documentdb_core/src/io/pgbson.c \
+      --replace-fail "bson_as_legacy_extended_json" "bson_as_relaxed_extended_json"
+
+    # 2. Inclusions globales + Désactivation de LTO au niveau global
+    export NIX_CFLAGS_COMPILE="-I${postgresql.dev}/include/server -I${pkgs.openssl.dev}/include -I${pkgs.libkrb5.dev}/include -fno-lto"
+
+    # 3. Le bouclier Clang + Désactivation de LTO injectée dans PGXS
+    local pgCflags="-Wno-error=typedef-redefinition -Wno-error=unused-function -Wno-error=deprecated-non-prototype -Wno-error=default-const-init-field-unsafe -Wno-declaration-after-statement -Wno-error=declaration-after-statement -fno-lto"
+
+    local makeArgs=(
+      "PG_CONFIG=pg_config"
+      "PG_CFLAGS=''${pgCflags}"
+      "-j$NIX_BUILD_CORES"
+    )
+
+    echo "--- Building Core ---"
+    make -C pg_documentdb_core "''${makeArgs[@]}"
+    
+    echo "--- Building Main Extension ---"
+    make -C pg_documentdb "''${makeArgs[@]}"
+    
+    echo "--- Building Extended Rum ---"
+    make -C pg_documentdb_extended_rum "''${makeArgs[@]}"
   '';
 
   installPhase = ''
-    export PG_CONFIG="${postgresql}/bin/pg_config"
-
     # Install into a temporary DESTDIR
     export DESTDIR="$TMPDIR/install"
     make -C pg_documentdb_core install
@@ -158,8 +179,8 @@ pkgs.stdenv.mkDerivation {
     # Copy files to output following CNPG image volume extension layout:
     #   /share/extension/ → *.control + *.sql files
     #   /lib/             → *.so files
-    local pgShareDir=$(${postgresql}/bin/pg_config --sharedir)
-    local pgPkgLibDir=$(${postgresql}/bin/pg_config --pkglibdir)
+    local pgShareDir=$(pg_config --sharedir)
+    local pgPkgLibDir=$(pg_config --pkglibdir)
 
     mkdir -p $out/share/extension
     mkdir -p $out/lib
