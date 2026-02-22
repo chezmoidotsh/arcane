@@ -55,14 +55,12 @@ spec:
   # images expect to write to /home/node/.promptx; if the image runs as non-root
   # the directory must be writable. We add an emptyDir and an initContainer that
   # creates the directory and chowns it to UID 1000 (node).
-  podTemplate:
-    spec:
-      contaners:
-        - name: mcp
-          volumeMounts:
-            - name: promptx-data
-              mountPath: /home/node/.promptx
-      containers: []
-      volumes:
-        - name: promptx-data
-          emptyDir: {}
+  podTemplateSpec:
+    contaners:
+      - name: mcp
+        volumeMounts:
+          - name: promptx-data
+            mountPath: /home/node/.promptx
+    volumes:
+      - name: promptx-data
+        emptyDir: {}
