@@ -51,10 +51,18 @@ spec:
       cpu: "300m"
       memory: "512Mi"
 
-  # Optional: pod template overrides or node selectors can be added under `podTemplate`
-  # if you need to pin this workload to specific nodes (e.g. ARM vs x86).
-  #
-  # podTemplate:
-  #   spec:
-  #     nodeSelector:
-  #       kubernetes.io/arch: "amd64"
+  # Ensure the runtime directory exists and has correct ownership. Some PromptX
+  # images expect to write to /home/node/.promptx; if the image runs as non-root
+  # the directory must be writable. We add an emptyDir and an initContainer that
+  # creates the directory and chowns it to UID 1000 (node).
+  podTemplate:
+    spec:
+      contaners:
+        - name: mcp
+          volumeMounts:
+            - name: promptx-data
+              mountPath: /home/node/.promptx
+      containers: []
+      volumes:
+        - name: promptx-data
+          emptyDir: {}
