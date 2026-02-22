@@ -9,6 +9,7 @@ resources:
   - librechat.deployment.yaml
   - librechat.ferretdb.yaml
   - librechat.httproute.yaml
+  - librechat-pg18.yaml
   - librechat.meilisearch.yaml
   - librechat.rag-api.yaml
 
@@ -25,7 +26,7 @@ images:
     newTag: v0.8.3-rc1
   # renovate: datasource=docker depName=ghcr.io/ferretdb/ferretdb
   - name: ghcr.io/ferretdb/ferretdb
-    newTag: 1.24.1
+    newTag: 2.1.0
   # renovate: datasource=docker depName=docker.io/getmeili/meilisearch
   - name: docker.io/getmeili/meilisearch
     newTag: v1.7.3

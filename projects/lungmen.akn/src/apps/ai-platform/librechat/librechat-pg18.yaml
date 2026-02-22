@@ -1,0 +1,51 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: librechat-pg18-test
+spec:
+  instances: 1
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: default
+    major: 18
+  postgresql:
+    extensions:
+      - name: documentdb
+        image:
+          reference: ghcr.io/chezmoidotsh/flakes/postgres-extensions/documentdb:0.109.0-pg18.2-25.11-x86_64-linux@sha256:878a91189e6032e1031741975407b8e30636d09b82ab38c621f137b524ff1c6f
+    parameters:
+      max_slot_wal_keep_size: 900MB
+      max_wal_size: 100MB
+    shared_preload_libraries:
+      - vector
+      - pg_documentdb_core
+      - pg_documentdb
+  storage:
+    size: 5Gi
+  bootstrap:
+    initdb:
+      database: librechat
+      owner: librechat
+      secret:
+        name: librechat-database-credentials
+      postInitSQL:
+        - CREATE EXTENSION IF NOT EXISTS vector;
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: librechat-pg18-test-db
+spec:
+  cluster:
+    name: librechat-pg18-test
+  name: librechat
+  owner: librechat
+  extensions:
+    - name: vector
+      ensure: present
+    - name: documentdb_core
+      ensure: present
+    - name: documentdb
+      ensure: present
