@@ -8,6 +8,7 @@ resources:
   - librechat.database.externalsecret.yaml
   - librechat.deployment.yaml
   - librechat.ferretdb.yaml
+  - librechat.httproute.yaml
   - librechat.meilisearch.yaml
   - librechat.rag-api.yaml
 
