@@ -37,4 +37,4 @@ generators:
 images:
   # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
   - name: ghcr.io/pocket-id/pocket-id
-    newTag: v2.2.0
+    newTag: v2.3.0
