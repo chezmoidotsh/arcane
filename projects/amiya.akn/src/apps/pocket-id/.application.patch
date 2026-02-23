@@ -10,7 +10,7 @@ spec:
       value: Security / Identity
     - name: Version
       # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
-      value: "v2.1.0"
+      value: "v2.3.0"
     # -- Documentation & Resources
     - name: Documentation
       value: https://github.com/pocket-id/pocket-id
