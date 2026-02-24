@@ -29,7 +29,7 @@ spec:
               containerPort: 8000
           env:
             - name: DB_HOST
-              value: "librechat-pg18-test-rw"
+              value: "postgres-apps-secured-rw.databases.svc.cluster.local"
             - name: DB_PORT
               value: "5432"
             - name: POSTGRES_DB
