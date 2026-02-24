@@ -37,11 +37,6 @@ spec:
             requests:
               storage: 5Gi
 
-      # Arbiter disabled to use PSS (3 nodes) which is easier to reconfigure
-      arbiter:
-        enabled: false
-        size: 0
-
   # -- Users
   users:
     - name: librechat
