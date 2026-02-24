@@ -20,7 +20,7 @@ spec:
     roles:
       - name: librechat
         connectionLimit: -1
-        comment: PostgreSQL role for LibreChat (FerretDB + RAG vectordb)
+        comment: PostgreSQL role for LibreChat RAG API (pgvector)
         ensure: present
         inherit: true
         login: true

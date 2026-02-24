@@ -1,0 +1,60 @@
+---
+apiVersion: psmdb.percona.com/v1
+kind: PerconaServerMongoDB
+metadata:
+  name: librechat-mongodb
+spec:
+  crVersion: 1.21.2
+  image: percona/percona-server-mongodb:8.0
+  imagePullPolicy: IfNotPresent
+
+  # -- Unsafe flags
+  # Allow 2-node replica set (requires arbiter for quorum)
+  unsafeFlags:
+    replsetSize: true
+
+  # -- No sharding needed for LibreChat
+  sharding:
+    enabled: false
+
+  # -- Replica set: 2 data nodes + 1 arbiter
+  replsets:
+    - name: rs0
+      size: 2
+      resources:
+        requests:
+          memory: 128Mi
+          cpu: 10m
+        limits:
+          memory: 256Mi
+      volumeSpec:
+        persistentVolumeClaim:
+          resources:
+            requests:
+              storage: 5Gi
+
+      # Arbiter — lightweight tie-breaker, no data storage
+      arbiter:
+        enabled: true
+        size: 1
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 10m
+          limits:
+            memory: 64Mi
+
+  # -- Users
+  users:
+    - name: librechat
+      db: admin
+      passwordSecretRef:
+        name: librechat-database-credentials
+        key: mongo_password
+      roles:
+        - name: readWrite
+          db: LibreChat
+
+  # -- Backup (disabled for now)
+  backup:
+    enabled: false

@@ -3,7 +3,7 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows LibreChat (FerretDB + RAG API) to access the secured PostgreSQL
+      Allows LibreChat RAG API (pgvector) to access the secured PostgreSQL
       cluster (postgres-apps-secured) in the databases namespace.
   name: allow-apps-secured-database-from-librechat
   namespace: databases

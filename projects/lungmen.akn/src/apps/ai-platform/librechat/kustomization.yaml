@@ -7,10 +7,9 @@ resources:
   - librechat.credentials.externalsecret.yaml
   - librechat.database.externalsecret.yaml
   - librechat.deployment.yaml
-  - librechat.ferretdb.yaml
   - librechat.httproute.yaml
-  - librechat-pg17.yaml
   - librechat.meilisearch.yaml
+  - librechat.mongodb.yaml
   - librechat.rag-api.yaml
 
 labels:
@@ -24,9 +23,7 @@ images:
   # renovate: datasource=docker depName=ghcr.io/danny-avila/librechat
   - name: ghcr.io/danny-avila/librechat
     newTag: v0.8.3-rc1
-  # renovate: datasource=docker depName=ghcr.io/ferretdb/ferretdb
-  - name: ghcr.io/ferretdb/ferretdb
-    newTag: 2.1.0
+
   # renovate: datasource=docker depName=docker.io/getmeili/meilisearch
   - name: docker.io/getmeili/meilisearch
     newTag: v1.7.3
