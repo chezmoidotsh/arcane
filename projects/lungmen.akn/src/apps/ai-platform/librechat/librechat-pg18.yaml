@@ -35,8 +35,6 @@ spec:
       owner: librechat
       secret:
         name: librechat-database-credentials
-      postInitSQL:
-        - CREATE EXTENSION IF NOT EXISTS documentdb CASCADE;
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
