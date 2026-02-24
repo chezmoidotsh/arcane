@@ -12,6 +12,7 @@ spec:
   # Allow 2-node replica set (requires arbiter for quorum)
   unsafeFlags:
     replsetSize: true
+    tls: true
 
   # -- No sharding needed for LibreChat
   sharding:
@@ -36,7 +37,7 @@ spec:
             requests:
               storage: 5Gi
 
-      # Arbiter — lightweight tie-breaker, no data storage
+      # Arbiter disabled to use PSS (3 nodes) which is easier to reconfigure
       arbiter:
         enabled: false
 
