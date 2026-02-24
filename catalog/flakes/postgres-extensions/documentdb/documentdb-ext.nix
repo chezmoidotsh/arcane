@@ -64,7 +64,7 @@ PKGEOF
   # ───────────────────────────────────────────────────────────────────────────
   # PCRE2 (static, with JIT)
   # DocumentDB links against libpcre2-8 statically via pkg-config.
-  # We enforce static linking by removing the dynamic libs.
+  # NOTE: static linking is enforced by removing the dynamic libs.
   # ───────────────────────────────────────────────────────────────────────────
   pcre2-static = pkgs.pcre2.overrideAttrs (old: {
     configureFlags = (old.configureFlags or []) ++ [
@@ -86,7 +86,8 @@ PKGEOF
   # ───────────────────────────────────────────────────────────────────────────
   # libbson (from mongo-c-driver 1.30.6)
   # DocumentDB requires libbson-static-1.0 to be available via pkg-config.
-  # We build mongo-c-driver with static libbson enabled and enforce static linking.
+  # NOTE: mongo-c-driver is built with static libbson enabled
+  # NOTE2: static linking is enforced by removing the dynamic libs
   # ───────────────────────────────────────────────────────────────────────────
   mongo-c-driver-static = pkgs.mongoc.overrideAttrs (old: {
     version = "1.30.6";
