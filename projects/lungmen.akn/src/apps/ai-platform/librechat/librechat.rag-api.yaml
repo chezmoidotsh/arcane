@@ -33,7 +33,7 @@ spec:
             - name: DB_PORT
               value: "5432"
             - name: POSTGRES_DB
-              value: "librechat"
+              value: "librechat-rag"
             - name: POSTGRES_USER
               value: "librechat"
             - name: POSTGRES_PASSWORD
