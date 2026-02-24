@@ -13,7 +13,7 @@ spec:
     parameters:
       max_slot_wal_keep_size: 900MB
       max_wal_size: 100MB
-      cron.database_name: "librechat"
+      cron.database_name: postgres
     shared_preload_libraries:
       - pg_cron
       - pg_documentdb_core
@@ -26,6 +26,8 @@ spec:
       owner: librechat
       secret:
         name: librechat-database-credentials
+      postInitSQL:
+        - 'CREATE EXTENSION IF NOT EXISTS documentdb CASCADE;'
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
