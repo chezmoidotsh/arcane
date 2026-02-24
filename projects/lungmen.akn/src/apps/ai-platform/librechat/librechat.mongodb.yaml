@@ -58,3 +58,4 @@ spec:
   # -- Backup (disabled for now)
   backup:
     enabled: false
+    image: percona/percona-backup-mongodb:2.8.0
