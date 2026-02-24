@@ -20,7 +20,7 @@ spec:
   # -- Replica set: 2 data nodes + 1 arbiter
   replsets:
     - name: rs0
-      size: 2
+      size: 3
       # Allow multiple pods on the same node for 1-node clusters
       affinity:
         antiAffinityTopologyKey: "none"
