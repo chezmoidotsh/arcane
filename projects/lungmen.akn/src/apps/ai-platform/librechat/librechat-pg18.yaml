@@ -35,6 +35,9 @@ spec:
       owner: librechat
       secret:
         name: librechat-database-credentials
+      postInitScripts:
+        - CREATE EXTENSION IF NOT EXISTS pg_cron CASCADE;
+        - CREATE EXTENSION IF NOT EXISTS vector CASCADE;
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
