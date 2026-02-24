@@ -20,6 +20,7 @@ spec:
       max_wal_size: 100MB
     shared_preload_libraries:
       - vector
+      - pg_cron
       - pg_documentdb_core
       - pg_documentdb
   storage:
@@ -32,6 +33,7 @@ spec:
         name: librechat-database-credentials
       postInitSQL:
         - CREATE EXTENSION IF NOT EXISTS vector;
+        - CREATE EXTENSION IF NOT EXISTS pg_cron;
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
