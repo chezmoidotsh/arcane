@@ -8,4 +8,5 @@ helmCharts:
     releaseName: psmdb-operator
     repo: https://percona.github.io/percona-helm-charts/
     version: 1.21.2
+    installCRDs: true
     valuesFile: default.helmvalues.yaml
