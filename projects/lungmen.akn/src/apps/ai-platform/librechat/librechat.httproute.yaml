@@ -8,7 +8,7 @@ metadata:
   name: librechat-websecure
 spec:
   hostnames:
-    - librechat.chezmoi.sh
+    - ai.chezmoi.sh
   parentRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway

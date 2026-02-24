@@ -8,7 +8,7 @@ metadata:
   name: open-webui-websecure
 spec:
   hostnames:
-    - ai.chezmoi.sh
+    - owu.chezmoi.sh
   parentRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway
