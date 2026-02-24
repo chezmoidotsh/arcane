@@ -4,7 +4,7 @@ kind: HTTPRoute
 metadata:
   annotations:
     external-dns.alpha.kubernetes.io/include-unifi: "true"
-    link.argocd.argoproj.io/external-link: https://librechat.chezmoi.sh
+    link.argocd.argoproj.io/external-link: https://ai.chezmoi.sh
   name: librechat-websecure
 spec:
   hostnames:
