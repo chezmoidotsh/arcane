@@ -21,6 +21,7 @@ spec:
     parameters:
       max_slot_wal_keep_size: 900MB
       max_wal_size: 100MB
+      cron.database_name: "librechat"
     shared_preload_libraries:
       - vector
       - pg_cron
