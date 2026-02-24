@@ -24,12 +24,12 @@ spec:
       # Allow multiple pods on the same node for 1-node clusters
       affinity:
         antiAffinityTopologyKey: "none"
-      resources:
-        requests:
-          memory: 128Mi
-          cpu: 10m
-        limits:
-          memory: 256Mi
+      # resources:
+      #   requests:
+      #     memory: 512Mi
+      #     cpu: 50m
+      #   limits:
+      #     memory: 1Gi
       volumeSpec:
         persistentVolumeClaim:
           resources:
@@ -42,12 +42,12 @@ spec:
         size: 1
         affinity:
           antiAffinityTopologyKey: "none"
-        resources:
-          requests:
-            memory: 64Mi
-            cpu: 10m
-          limits:
-            memory: 64Mi
+        # resources:
+        #   requests:
+        #     memory: 128Mi
+        #     cpu: 10m
+        #   limits:
+        #     memory: 256Mi
 
   # -- Users
   users:
