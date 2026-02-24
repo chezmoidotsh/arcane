@@ -45,6 +45,14 @@ spec:
   name: librechat
   owner: librechat
   extensions:
+    - name: pg_cron
+      ensure: present
+    - name: tsm_system_rows
+      ensure: present
+    - name: postgis
+      ensure: present
+    - name: vector
+      ensure: present
     - name: documentdb_core
       ensure: present
     - name: documentdb
