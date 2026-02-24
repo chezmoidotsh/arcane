@@ -1,0 +1,55 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: librechat-pg17-test
+spec:
+  instances: 1
+  imageName: ghcr.io/ferretdb/postgres-documentdb:17-0.106.0-ferretdb-2.5.0
+  postgresql:
+    parameters:
+      max_slot_wal_keep_size: 900MB
+      max_wal_size: 100MB
+      cron.database_name: "librechat"
+    shared_preload_libraries:
+      - pg_cron
+      - pg_documentdb_core
+      - pg_documentdb
+  storage:
+    size: 5Gi
+  bootstrap:
+    initdb:
+      database: librechat
+      owner: librechat
+      secret:
+        name: librechat-database-credentials
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: librechat-pg17-test-db
+spec:
+  cluster:
+    name: librechat-pg17-test
+  name: librechat
+  owner: librechat
+  extensions:
+    - name: pg_cron
+      ensure: present
+    - name: documentdb_core
+      ensure: present
+    - name: documentdb
+      ensure: present
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: librechat-pg17-test-rag-db
+spec:
+  cluster:
+    name: librechat-pg17-test
+  name: librechat-rag
+  owner: librechat
+  extensions:
+    - name: vector
+      ensure: present

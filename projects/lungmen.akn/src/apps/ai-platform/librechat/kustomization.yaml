@@ -9,7 +9,7 @@ resources:
   - librechat.deployment.yaml
   - librechat.ferretdb.yaml
   - librechat.httproute.yaml
-  - librechat-pg18.yaml
+  - librechat-pg17.yaml
   - librechat.meilisearch.yaml
   - librechat.rag-api.yaml
 
