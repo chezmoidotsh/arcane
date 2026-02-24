@@ -46,7 +46,7 @@ spec:
         key: mongo_password
       roles:
         - name: readWrite
-          db: librechat
+          db: LibreChat
 
   # -- TLS (disabled for troubleshooting)
   tls:
