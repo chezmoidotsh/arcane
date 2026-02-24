@@ -1,5 +1,5 @@
 # trunk-ignore-all(trivy/DS026,checkov/CKV_DOCKER_2,checkov/CKV_DOCKER_3,trivy/DS002)
-FROM docker.io/fluxcd/flux-cli:v2.7.5 AS flux-cli
+FROM docker.io/fluxcd/flux-cli:v2.8.0 AS flux-cli
 FROM scratch
 
 WORKDIR /
