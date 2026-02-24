@@ -21,7 +21,7 @@ data:
   DOMAIN_SERVER: "https://librechat.chezmoi.sh"
 
   # ==========================================
-  # Database (FerretDB → MongoDB protocol)
+  # Database (Percona MongoDB)
   # ==========================================
 
   # ==========================================
