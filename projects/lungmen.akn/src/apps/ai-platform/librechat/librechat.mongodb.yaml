@@ -38,16 +38,7 @@ spec:
 
       # Arbiter — lightweight tie-breaker, no data storage
       arbiter:
-        enabled: true
-        size: 1
-        affinity:
-          antiAffinityTopologyKey: "none"
-        # resources:
-        #   requests:
-        #     memory: 128Mi
-        #     cpu: 10m
-        #   limits:
-        #     memory: 256Mi
+        enabled: false
 
   # -- Users
   users:
