@@ -24,6 +24,8 @@ spec:
       cron.database_name: "librechat"
     shared_preload_libraries:
       - vector
+      - tsm_system_rows
+      - postgis
       - pg_cron
       - pg_documentdb_core
       - pg_documentdb
