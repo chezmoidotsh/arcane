@@ -66,7 +66,7 @@ data:
 
     endpoints:
       custom:
-        - name: "Mistral"
+        - name: Mistral OSS
           apiKey: "dummy"
           baseURL: "http://192.168.10.30:1234/v1"
           models:
@@ -88,7 +88,7 @@ data:
           modelDisplayLabel: Mistral
           iconURL: https://mistral.ai/static/branding/m/m-rainbow.png
 
-        - name: "Google"
+        - name: Google OSS
           apiKey: "dummy"
           baseURL: "http://192.168.10.30:1234/v1"
           models:
@@ -111,7 +111,7 @@ data:
           modelDisplayLabel: Google
           iconURL: https://www.gstatic.com/marketing-cms/assets/images/d5/dc/cfe9ce8b4425b410b49b7f2dd3f3/g.webp=s48-fcrop64=1,00000000ffffffff-rw
 
-        - name: OpenAI
+        - name: OpenAI OSS
           apiKey: "dummy"
           baseURL: "http://192.168.10.30:1234/v1"
           models:
