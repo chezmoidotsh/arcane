@@ -77,7 +77,7 @@ resources:
   - fetch.yaml
   - github.yaml
 ```
-Commit and sync. The ToolHive operator will start the proxy pod. The internal DNS for the proxy becomes `mcp-github-proxy.open-webui.svc.cluster.local:8080`.
+Commit and sync. The ToolHive operator will start the proxy pod. The internal DNS for the proxy becomes `mcp-github-proxy.ai-platform.svc.cluster.local:8080`.
 
 ---
 

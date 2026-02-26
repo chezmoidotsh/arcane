@@ -29,7 +29,7 @@ websocket:
   manager: redis
   # -- Override the Redis URL for websocket communication. If empty, automatically generates URL based on release name. Template: `redis://[:<password>@]<hostname>:<port>/<db>`
   # -- Override the Redis URL for websocket communication. If empty, automatically generates URL based on release name. Template: `redis://[:<password>@]<hostname>:<port>/<db>`
-  url: redis://valkey.open-webui.svc.cluster.local:6379/1
+  url: redis://valkey.ai-platform.svc.cluster.local:6379/1
   redis:
     # -- Enable redis installation
     enabled: false
@@ -134,7 +134,7 @@ extraEnvVars:
   RAG_WEB_SEARCH_ENGINE:
     value: "firecrawl"
   FIRECRAWL_API_BASE_URL:
-    value: "http://firecrawl-api.open-webui.svc.cluster.local:3002"
+    value: "http://firecrawl-api.ai-platform.svc.cluster.local:3002"
   FIRECRAWL_API_KEY:
     value: "self-hosted"
   # - name: OPENAI_API_KEY
