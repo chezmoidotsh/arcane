@@ -13,12 +13,12 @@
     mode: "0755"
 
 - name: Create LiteLLM virtual environment
-  ansible.builtin.command: uv venv {{ litellm_venv_dir }} --python 3.12
+  ansible.builtin.command: uv venv "{{ litellm_venv_dir }}" --python 3.12
   args:
     creates: "{{ litellm_venv_dir }}/bin/python"
 
 - name: Install LiteLLM via UV
-  ansible.builtin.command: uv pip install --python {{ litellm_venv_dir }} "litellm[proxy]{{ litellm_version_spec }}"
+  ansible.builtin.command: uv pip install --python "{{ litellm_venv_dir }}" "litellm[proxy]{{ litellm_version_spec }}"
   register: _litellm_install
   changed_when: "'Installed' in _litellm_install.stdout or 'Updated' in _litellm_install.stdout"
 
