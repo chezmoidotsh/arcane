@@ -38,7 +38,7 @@
 
 - name: Ensure User LaunchAgents directory exists
   ansible.builtin.file:
-    path: "{{ lookup('env', 'HOME') }}/Library/LaunchAgents"
+    path: "{{ ansible_env.HOME }}/Library/LaunchAgents"
     state: directory
     mode: "0755"
 
