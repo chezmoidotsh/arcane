@@ -649,6 +649,7 @@ main() {
 	if check_app_exists "${app_full_name}"; then # trunk-ignore(shellcheck/SC2310): this is mandatory to fix SC2118
 		update_application "${app_full_name}" "${branch}"
 	else
+		kubectl --context "${context}" create namespace "${dest_namespace}"
 		create_application "${app_name}" "${app_full_name}" "${app_project}" "${app_path}" "${branch}" "${cluster_server:-${DEFAULT_DEST_SERVER}}" "${dest_namespace}"
 	fi
 
