@@ -13,8 +13,8 @@ all:
       # ---------------------------------------------------------------------------
       # Caddy — REQUIRED, no defaults for these
       # ---------------------------------------------------------------------------
-      caddy_hostname:   "shodan.example.com"    # FQDN served by Caddy
-      caddy_acme_email: "you@example.com"        # ACME registration email
+      caddy_hostname:   "llm.akn.chezmoi.sh"    # FQDN served by Caddy
+      caddy_acme_email: "[EMAIL_ADDRESS]"        # ACME registration email
       caddy_dns_plugin: "cloudflare"             # caddy-dns plugin name
       # caddy_dns_api_token is read from env at runtime; set it via:
       #   export CADDY_DNS_API_TOKEN="<your-token>"
