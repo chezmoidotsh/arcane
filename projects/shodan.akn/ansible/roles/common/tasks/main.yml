@@ -3,23 +3,10 @@
 # Role: common — Prerequisites
 # =============================================================================
 # Ensures:
-#   - /Volumes/AI Storage is mounted
 #   - Homebrew is installed
 #   - UV and espeak-ng are available via Homebrew
 #   - Service directories exist under {{ ai_storage_prefix }}/services/
 # =============================================================================
-
-- name: Assert AI Storage volume is mounted
-  ansible.builtin.stat:
-    path: "{{ ai_storage_prefix }}"
-  register: _storage_stat
-
-- name: Fail if AI Storage volume is not mounted
-  ansible.builtin.fail:
-    msg: >
-      The volume '{{ ai_storage_prefix }}' is not mounted or does not exist.
-      Please mount the volume before running this playbook.
-  when: not _storage_stat.stat.exists or not _storage_stat.stat.isdir
 
 # ---------------------------------------------------------------------------
 # Homebrew
