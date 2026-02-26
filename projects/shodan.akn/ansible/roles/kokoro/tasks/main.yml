@@ -7,11 +7,14 @@
 # and configures a LaunchAgent to run Uvicorn.
 # =============================================================================
 
-- name: Ensure Kokoro base directory exists
+- name: Ensure Kokoro directories exist
   ansible.builtin.file:
-    path: "{{ ai_storage_prefix }}/services/kokoro"
+    path: "{{ item }}"
     state: directory
     mode: "0755"
+  loop:
+    - "{{ kokoro_install_dir }}"
+    - "{{ kokoro_log_dir }}"
 
 - name: Clone Kokoro-FastAPI repository
   ansible.builtin.git:
