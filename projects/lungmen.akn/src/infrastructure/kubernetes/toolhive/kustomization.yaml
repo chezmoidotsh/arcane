@@ -7,12 +7,14 @@ helmCharts:
   # https://docs.stacklok.com/toolhive/guides-k8s/deploy-operator
   - name: toolhive-operator-crds
     releaseName: toolhive-operator-crds
+    namespace: toolhive-system
     repo: oci://ghcr.io/stacklok/toolhive
     version: 0.8.3
 
   # ToolHive Operator — manages MCPServer / MCPRemoteProxy / VirtualMCPServer CRs
   - name: toolhive-operator
     releaseName: toolhive-operator
+    namespace: toolhive-system
     repo: oci://ghcr.io/stacklok/toolhive
     version: 0.8.3
     valuesFile: toolhive-operator.helmvalues/default.yaml
