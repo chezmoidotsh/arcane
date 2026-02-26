@@ -42,21 +42,4 @@
     state: present
     update_homebrew: false
 
-# ---------------------------------------------------------------------------
-# Service directories
-# ---------------------------------------------------------------------------
-- name: Create service base directories
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: directory
-    mode: "0755"
-  loop:
-    - "{{ ai_storage_prefix }}/services/litellm"
-    - "{{ ai_storage_prefix }}/services/litellm/config"
-    - "{{ ai_storage_prefix }}/services/litellm/logs"
-    - "{{ ai_storage_prefix }}/services/kokoro"
-    - "{{ ai_storage_prefix }}/services/kokoro/logs"
-    - "{{ ai_storage_prefix }}/services/caddy"
-    - "{{ ai_storage_prefix }}/services/caddy/config"
-    - "{{ ai_storage_prefix }}/services/caddy/data"
-    - "{{ ai_storage_prefix }}/services/caddy/logs"
+

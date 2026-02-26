@@ -6,11 +6,15 @@
 # Sets up a macOS LaunchAgent to keep it running.
 # =============================================================================
 
-- name: Ensure LiteLLM installation directory exists
+- name: Ensure LiteLLM directories exist
   ansible.builtin.file:
-    path: "{{ litellm_install_dir }}"
+    path: "{{ item }}"
     state: directory
     mode: "0755"
+  loop:
+    - "{{ litellm_install_dir }}"
+    - "{{ litellm_config_dir }}"
+    - "{{ litellm_log_dir }}"
 
 - name: Create LiteLLM virtual environment
   ansible.builtin.command: uv venv "{{ litellm_venv_dir }}" --python 3.12
