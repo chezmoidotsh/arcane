@@ -45,7 +45,7 @@
 - name: Template LiteLLM LaunchAgent
   ansible.builtin.template:
     src: litellm.plist.j2
-    dest: "{{ lookup('env', 'HOME') }}/Library/LaunchAgents/sh.chezmoi.shodan.litellm.plist"
+    dest: "{{ ansible_env.HOME }}/Library/LaunchAgents/sh.chezmoi.shodan.litellm.plist"
     mode: "0644"
   notify: Restart LiteLLM
 
