@@ -4,5 +4,4 @@
 # =============================================================================
 
 - name: Restart Kokoro
-  become: true
-  ansible.builtin.command: launchctl kickstart -k system/sh.chezmoi.shodan.kokoro
+  ansible.builtin.command: launchctl kickstart -k gui/{{ lookup('pipe', 'id -u') }}/sh.chezmoi.shodan.kokoro

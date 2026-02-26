@@ -33,10 +33,8 @@ Caddy needs an API token from your DNS provider to obtain the Let's Encrypt cert
 ansible-playbook site.yml -i inventory/localhost.yml --check
 
 # Apply
-ansible-playbook site.yml -i inventory/localhost.yml -K
+ansible-playbook site.yml -i inventory/localhost.yml
 ```
-
-*(Note: `-K` prompts for the sudo password, which is required only for Caddy installation in `/usr/local/bin` and loading LaunchDaemons into `/Library/LaunchDaemons`).*
 
 ## Troubleshooting / Logs
 
@@ -47,7 +45,7 @@ Logs for all services are written to dedicated folders on the AI Storage volume:
 
 To restart a service manually:
 ```bash
-sudo launchctl kickstart -k system/sh.chezmoi.shodan.litellm
-sudo launchctl kickstart -k system/sh.chezmoi.shodan.kokoro
-sudo launchctl kickstart -k system/sh.chezmoi.shodan.caddy
+launchctl kickstart -k gui/$(id -u)/sh.chezmoi.shodan.litellm
+launchctl kickstart -k gui/$(id -u)/sh.chezmoi.shodan.kokoro
+launchctl kickstart -k gui/$(id -u)/sh.chezmoi.shodan.caddy
 ```

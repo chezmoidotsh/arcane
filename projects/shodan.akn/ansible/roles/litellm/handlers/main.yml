@@ -4,5 +4,4 @@
 # =============================================================================
 
 - name: Restart LiteLLM
-  become: true
-  ansible.builtin.command: launchctl kickstart -k system/sh.chezmoi.shodan.litellm
+  ansible.builtin.command: launchctl kickstart -k gui/{{ lookup('pipe', 'id -u') }}/sh.chezmoi.shodan.litellm
