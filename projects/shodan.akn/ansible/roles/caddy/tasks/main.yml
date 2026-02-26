@@ -35,7 +35,7 @@
 - name: Template Caddy LaunchAgent
   ansible.builtin.template:
     src: caddy.plist.j2
-    dest: "{{ lookup('env', 'HOME') }}/Library/LaunchAgents/sh.chezmoi.shodan.caddy.plist"
+    dest: "{{ ansible_env.HOME }}/Library/LaunchAgents/sh.chezmoi.shodan.caddy.plist"
     mode: "0644"
   notify: Restart Caddy
 
