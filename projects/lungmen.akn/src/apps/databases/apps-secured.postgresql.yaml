@@ -18,14 +18,7 @@ spec:
   instances: 2
   managed:
     roles:
-      - name: librechat
-        connectionLimit: -1
-        comment: PostgreSQL role for LibreChat RAG API (pgvector)
-        ensure: present
-        inherit: true
-        login: true
-        passwordSecret:
-          name: librechat-database-credentials
+
       - name: open-webui
         connectionLimit: -1
         comment: PostgreSQL role for open-webui

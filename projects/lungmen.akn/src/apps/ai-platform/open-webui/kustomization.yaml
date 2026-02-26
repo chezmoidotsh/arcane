@@ -16,7 +16,6 @@ resources:
 labels:
   - pairs:
       app.kubernetes.io/name: open-webui
-      app.kubernetes.io/instance: open-webui
     includeTemplates: true
     includeSelectors: true
 

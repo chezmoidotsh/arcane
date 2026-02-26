@@ -3,24 +3,10 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: open-webui
 
-helmCharts:
-  - name: valkey
-    releaseName: valkey
-    namespace: open-webui
-    repo: https://valkey-io.github.io/valkey-helm/
-    version: 0.9.3
-    valuesFile: valkey.helmvalues/default.yaml
-    additionalValuesFiles:
-      - valkey.helmvalues/hardened.yaml
-
 resources:
+  # Shared Valkey cluster for AI services
+  - valkey/
   # Open-WebUI specific resources
   - open-webui/
   # Firecrawl configuration
   - firecrawl/
-  # LibreChat — benchmarking alternative to Open-WebUI
-  - librechat/
-  # ToolHive Operator — MCP server management via CRDs
-  - toolhive/
-  # MCP Servers instances
-  - mcp-servers/

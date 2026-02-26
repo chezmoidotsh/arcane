@@ -4,15 +4,18 @@ metadata:
   name: firecrawl-searxng
   labels:
     app.kubernetes.io/component: searxng
+    app.kubernetes.io/instance: firecrawl-searxng
 spec:
   replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/component: searxng
+      app.kubernetes.io/instance: firecrawl-searxng
   template:
     metadata:
       labels:
         app.kubernetes.io/component: searxng
+        app.kubernetes.io/instance: firecrawl-searxng
     spec:
       containers:
         - name: searxng
@@ -46,9 +49,11 @@ metadata:
   name: firecrawl-searxng
   labels:
     app.kubernetes.io/component: searxng
+    app.kubernetes.io/instance: firecrawl-searxng
 spec:
   selector:
     app.kubernetes.io/component: searxng
+    app.kubernetes.io/instance: firecrawl-searxng
   ports:
     - protocol: TCP
       port: 8080
