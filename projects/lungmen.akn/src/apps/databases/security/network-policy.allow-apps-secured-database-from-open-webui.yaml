@@ -14,7 +14,7 @@ spec:
   ingress:
     - fromEndpoints:
         - matchLabels:
-            io.kubernetes.pod.namespace: open-webui
+            io.kubernetes.pod.namespace: ai-platform
             app.kubernetes.io/name: open-webui
       toPorts:
         - ports:
