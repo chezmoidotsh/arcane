@@ -50,9 +50,6 @@
   notify: Restart LiteLLM
 
 - name: Ensure LiteLLM is loaded and started
-  ansible.builtin.command: launchctl bootstrap gui/{{ ansible_user_uid }} "{{ ansible_env.HOME }}/Library/LaunchAgents/sh.chezmoi.shodan.litellm.plist"
-  register: _launchctl_load
-  failed_when:
-    - _launchctl_load.rc != 0
-    - "'already bootstrapped' not in _launchctl_load.stderr"
-  changed_when: false
+  community.general.launchd:
+    name: sh.chezmoi.shodan.litellm
+    state: started

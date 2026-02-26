@@ -4,4 +4,6 @@
 # =============================================================================
 
 - name: Restart Kokoro
-  ansible.builtin.command: launchctl kickstart -k gui/{{ ansible_user_uid }}/sh.chezmoi.shodan.kokoro
+  community.general.launchd:
+    name: sh.chezmoi.shodan.kokoro
+    state: restarted
