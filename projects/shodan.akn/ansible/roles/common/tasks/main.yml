@@ -1,0 +1,70 @@
+---
+# =============================================================================
+# Role: common — Prerequisites
+# =============================================================================
+# Ensures:
+#   - /Volumes/AI Storage is mounted
+#   - Homebrew is installed
+#   - UV and espeak-ng are available via Homebrew
+#   - Service directories exist under {{ ai_storage_prefix }}/services/
+# =============================================================================
+
+- name: Assert AI Storage volume is mounted
+  ansible.builtin.stat:
+    path: "{{ ai_storage_prefix }}"
+  register: _storage_stat
+
+- name: Fail if AI Storage volume is not mounted
+  ansible.builtin.fail:
+    msg: >
+      The volume '{{ ai_storage_prefix }}' is not mounted or does not exist.
+      Please mount the volume before running this playbook.
+  when: not _storage_stat.stat.exists or not _storage_stat.stat.isdir
+
+# ---------------------------------------------------------------------------
+# Homebrew
+# ---------------------------------------------------------------------------
+- name: Check if Homebrew is installed
+  ansible.builtin.stat:
+    path: "{{ _brew_prefix }}/bin/brew"
+  register: _brew_stat
+  vars:
+    _brew_prefix: "{{ '/opt/homebrew' if ansible_machine == 'arm64' else '/usr/local' }}"
+
+- name: Install Homebrew
+  ansible.builtin.shell: |
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  environment:
+    NONINTERACTIVE: "1"
+  when: not _brew_stat.stat.exists
+  changed_when: true
+
+# ---------------------------------------------------------------------------
+# System packages
+# ---------------------------------------------------------------------------
+- name: Install UV and espeak-ng via Homebrew
+  community.general.homebrew:
+    name:
+      - uv
+      - espeak-ng
+    state: present
+    update_homebrew: false
+
+# ---------------------------------------------------------------------------
+# Service directories
+# ---------------------------------------------------------------------------
+- name: Create service base directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ ai_storage_prefix }}/services/litellm"
+    - "{{ ai_storage_prefix }}/services/litellm/config"
+    - "{{ ai_storage_prefix }}/services/litellm/logs"
+    - "{{ ai_storage_prefix }}/services/kokoro"
+    - "{{ ai_storage_prefix }}/services/kokoro/logs"
+    - "{{ ai_storage_prefix }}/services/caddy"
+    - "{{ ai_storage_prefix }}/services/caddy/config"
+    - "{{ ai_storage_prefix }}/services/caddy/data"
+    - "{{ ai_storage_prefix }}/services/caddy/logs"

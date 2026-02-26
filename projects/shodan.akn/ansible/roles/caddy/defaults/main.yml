@@ -1,0 +1,12 @@
+---
+ai_storage_prefix: "/Volumes/AI Storage"
+
+caddy_bin_path:    "{{ '/opt/homebrew/bin/caddy' if ansible_machine == 'arm64' else '/usr/local/bin/caddy' }}"
+caddy_dns_plugin:  "cloudflare"     # Required: override in inventory
+caddy_acme_email:  ""               # Required: override in inventory
+caddy_hostname:    "shodan.local"   # Required: override in inventory
+caddy_https_port:  1234             # Custom HTTPS port (no root required)
+
+caddy_config_dir:  "{{ ai_storage_prefix }}/services/caddy/config"
+caddy_data_dir:    "{{ ai_storage_prefix }}/services/caddy/data"
+caddy_log_dir:     "{{ ai_storage_prefix }}/services/caddy/logs"

@@ -1,0 +1,22 @@
+model_list:
+{{ litellm_model_list | to_nice_yaml | indent(2, true) }}
+
+{% if litellm_router_settings %}
+router_settings:
+{{ litellm_router_settings | to_nice_yaml | indent(2, true) }}
+{% endif %}
+
+{% if litellm_general_settings %}
+general_settings:
+{{ litellm_general_settings | to_nice_yaml | indent(2, true) }}
+{% endif %}
+
+{% if litellm_settings %}
+litellm_settings:
+{{ litellm_settings | to_nice_yaml | indent(2, true) }}
+{% endif %}
+
+{% if litellm_environment_variables %}
+environment_variables:
+{{ litellm_environment_variables | to_nice_yaml | indent(2, true) }}
+{% endif %}

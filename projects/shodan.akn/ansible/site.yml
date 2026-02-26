@@ -1,0 +1,26 @@
+---
+# =============================================================================
+# Shodan.akn — AI Stack (macOS)
+# =============================================================================
+# Installs LiteLLM, Kokoro-FastAPI, and Caddy on macOS.
+# All services run natively (no containers) via UV + venv, started at boot
+# through macOS LaunchDaemons.
+#
+# Prerequisites (handled by the `common` role):
+#   - /Volumes/AI Storage mounted
+#   - Homebrew, UV, espeak-ng
+#
+# Usage:
+#   ansible-playbook site.yml -i inventory/localhost.yml
+#   ansible-playbook site.yml -i inventory/localhost.yml --tags caddy
+#   ansible-playbook site.yml -i inventory/localhost.yml --check
+# =============================================================================
+
+- name: Shodan AI Stack
+  hosts: all
+  become: false   # Individual tasks use `become: true` where required (plist, caddy binary)
+  roles:
+    - common
+    - litellm
+    - kokoro
+    - caddy

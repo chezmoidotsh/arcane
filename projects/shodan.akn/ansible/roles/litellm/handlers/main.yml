@@ -1,0 +1,8 @@
+---
+# =============================================================================
+# Role: litellm — Handlers
+# =============================================================================
+
+- name: Restart LiteLLM
+  become: true
+  ansible.builtin.command: launchctl kickstart -k system/sh.chezmoi.shodan.litellm

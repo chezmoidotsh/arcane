@@ -1,0 +1,18 @@
+---
+ai_storage_prefix: "/Volumes/AI Storage"
+
+litellm_version_spec: ""           # "" = latest
+litellm_port: 4000
+litellm_host: "127.0.0.1"
+
+litellm_install_dir: "{{ ai_storage_prefix }}/services/litellm"
+litellm_venv_dir:    "{{ litellm_install_dir }}/venv"
+litellm_config_dir:  "{{ litellm_install_dir }}/config"
+litellm_log_dir:     "{{ litellm_install_dir }}/logs"
+
+# Fully overridable in inventory:
+litellm_model_list: []
+litellm_router_settings: {}
+litellm_general_settings: {}
+litellm_settings: {}
+litellm_environment_variables: {}

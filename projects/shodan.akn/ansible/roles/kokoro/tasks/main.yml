@@ -1,0 +1,56 @@
+---
+# =============================================================================
+# Role: kokoro — Kokoro-FastAPI TTS
+# =============================================================================
+# Installs and configures Kokoro-FastAPI for macOS (CPU mode).
+# Clones the repo, uses UV to install deps and download the model,
+# and configures a LaunchDaemon to run Uvicorn.
+# =============================================================================
+
+- name: Ensure Kokoro base directory exists
+  ansible.builtin.file:
+    path: "{{ ai_storage_prefix }}/services/kokoro"
+    state: directory
+    mode: "0755"
+
+- name: Clone Kokoro-FastAPI repository
+  ansible.builtin.git:
+    repo: "{{ kokoro_repo_url }}"
+    dest: "{{ kokoro_install_dir }}"
+    version: "{{ kokoro_repo_ref }}"
+    update: true
+  notify: Restart Kokoro
+
+- name: Sync UV dependencies (CPU extra)
+  ansible.builtin.command: uv sync --extra cpu
+  args:
+    chdir: "{{ kokoro_install_dir }}"
+  register: _kokoro_sync
+  changed_when: "'Audited' not in _kokoro_sync.stdout"
+  notify: Restart Kokoro
+
+- name: Download Kokoro model files
+  ansible.builtin.command: uv run python docker/scripts/download_model.py --output api/src/models/v1_0
+  args:
+    chdir: "{{ kokoro_install_dir }}"
+    creates: "{{ kokoro_install_dir }}/api/src/models/v1_0/kokoro-v1_0.pth"
+  # Note: The download script itself is idempotent, but `creates` saves a run entirely.
+
+- name: Template Kokoro LaunchDaemon
+  become: true
+  ansible.builtin.template:
+    src: kokoro.plist.j2
+    dest: /Library/LaunchDaemons/sh.chezmoi.shodan.kokoro.plist
+    mode: "0644"
+    owner: root
+    group: wheel
+  notify: Restart Kokoro
+
+- name: Ensure Kokoro is loaded and started
+  become: true
+  ansible.builtin.command: launchctl bootstrap system /Library/LaunchDaemons/sh.chezmoi.shodan.kokoro.plist
+  register: _launchctl_load
+  failed_when:
+    - _launchctl_load.rc != 0
+    - "'already bootstrapped' not in _launchctl_load.stderr"
+  changed_when: false

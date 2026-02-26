@@ -1,0 +1,8 @@
+---
+# =============================================================================
+# Role: kokoro — Handlers
+# =============================================================================
+
+- name: Restart Kokoro
+  become: true
+  ansible.builtin.command: launchctl kickstart -k system/sh.chezmoi.shodan.kokoro
