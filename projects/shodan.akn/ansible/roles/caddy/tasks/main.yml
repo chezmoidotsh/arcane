@@ -40,7 +40,7 @@
   notify: Restart Caddy
 
 - name: Ensure Caddy is loaded and started
-  ansible.builtin.command: launchctl bootstrap gui/{{ lookup('pipe', 'id -u') }} "{{ lookup('env', 'HOME') }}/Library/LaunchAgents/sh.chezmoi.shodan.caddy.plist"
+  ansible.builtin.command: launchctl bootstrap gui/{{ ansible_user_uid }} "{{ ansible_env.HOME }}/Library/LaunchAgents/sh.chezmoi.shodan.caddy.plist"
   register: _launchctl_load
   failed_when:
     - _launchctl_load.rc != 0
