@@ -33,7 +33,16 @@
 - name: Fail if Homebrew is not installed
   ansible.builtin.fail:
     msg: "Homebrew is missing. Please install it first from https://brew.sh/"
-  when: not _brew_stat.stat.exists
+  when: _brew_check.rc != 0
+
+- name: Get Homebrew prefix
+  ansible.builtin.command: brew --prefix
+  register: _brew_prefix_cmd
+  changed_when: false
+
+- name: Set brew_prefix fact
+  ansible.builtin.set_fact:
+    brew_prefix: "{{ _brew_prefix_cmd.stdout }}"
 
 # ---------------------------------------------------------------------------
 # System packages
