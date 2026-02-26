@@ -218,7 +218,7 @@ generate_dest_namespace() {
 	if [[ ${app_type} == "infrastructure/kubernetes" ]]; then
 		echo "${app_name}-system"
 	else
-		echo "${cluster_name//\./-}"
+		echo "${app_name}"
 	fi
 }
 
