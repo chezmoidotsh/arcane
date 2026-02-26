@@ -4,7 +4,7 @@ ai_storage_prefix: "{{ ansible_env.HOME }}/.local/state/shodan.akn"
 caddy_bin_path:    "{{ brew_prefix }}/bin/caddy"
 caddy_dns_plugin:  "cloudflare"           # Required: override in inventory
 caddy_acme_email:  ""                     # Required: override in inventory
-caddy_hostname:    "llm.akn.chezmoi.sh"   # Required: override in inventory
+caddy_hostname:    "shodan.local"         # Required: override in inventory
 caddy_https_port:  1234                   # Custom HTTPS port (no root required)
 
 caddy_config_dir:  "{{ ai_storage_prefix }}/services/caddy/config"
