@@ -41,9 +41,7 @@ kokoro_log_dir:     "{{ ai_storage_prefix }}/services/kokoro/logs"
 # ---------------------------------------------------------------------------
 # Caddy
 # ---------------------------------------------------------------------------
-caddy_arch:       "arm64"           # arm64 = Apple Silicon; amd64 = Intel
-caddy_bin_path:   "/usr/local/bin/caddy"
-caddy_dns_plugin: "cloudflare"      # caddy-dns/* plugin name on caddyserver.com
+caddy_dns_plugin: "cloudflare"      # caddy-dns plugin name
 caddy_acme_email: ""                # Required: set in inventory
 caddy_hostname:   "shodan.local"    # Required: set in inventory
 
