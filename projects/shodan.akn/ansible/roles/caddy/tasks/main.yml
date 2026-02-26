@@ -3,7 +3,7 @@
 # Role: caddy — Reverse Proxy
 # =============================================================================
 # Installs Caddy via Homebrew, adds the requested DNS plugin,
-# and configures a LaunchDaemon to run it on boot.
+# and configures a LaunchAgent to run it on boot.
 # =============================================================================
 
 - name: Install Caddy via Homebrew
@@ -26,19 +26,21 @@
     mode: "0644"
   notify: Reload Caddy
 
-- name: Template Caddy LaunchDaemon
-  become: true
+- name: Ensure User LaunchAgents directory exists
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME') }}/Library/LaunchAgents"
+    state: directory
+    mode: "0755"
+
+- name: Template Caddy LaunchAgent
   ansible.builtin.template:
     src: caddy.plist.j2
-    dest: /Library/LaunchDaemons/sh.chezmoi.shodan.caddy.plist
+    dest: "{{ lookup('env', 'HOME') }}/Library/LaunchAgents/sh.chezmoi.shodan.caddy.plist"
     mode: "0644"
-    owner: root
-    group: wheel
   notify: Restart Caddy
 
 - name: Ensure Caddy is loaded and started
-  become: true
-  ansible.builtin.command: launchctl bootstrap system /Library/LaunchDaemons/sh.chezmoi.shodan.caddy.plist
+  ansible.builtin.command: launchctl bootstrap gui/{{ lookup('pipe', 'id -u') }} "{{ lookup('env', 'HOME') }}/Library/LaunchAgents/sh.chezmoi.shodan.caddy.plist"
   register: _launchctl_load
   failed_when:
     - _launchctl_load.rc != 0

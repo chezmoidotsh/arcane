@@ -5,9 +5,6 @@
     <key>Label</key>
     <string>sh.chezmoi.shodan.kokoro</string>
 
-    <key>UserName</key>
-    <string>{{ lookup('env', 'USER') }}</string>
-
     <key>ProgramArguments</key>
     <array>
         <string>{{ kokoro_install_dir }}/.venv/bin/uvicorn</string>

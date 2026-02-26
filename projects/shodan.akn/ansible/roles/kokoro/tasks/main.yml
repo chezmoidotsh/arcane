@@ -4,7 +4,7 @@
 # =============================================================================
 # Installs and configures Kokoro-FastAPI for macOS (CPU mode).
 # Clones the repo, uses UV to install deps and download the model,
-# and configures a LaunchDaemon to run Uvicorn.
+# and configures a LaunchAgent to run Uvicorn.
 # =============================================================================
 
 - name: Ensure Kokoro base directory exists
@@ -36,19 +36,21 @@
     creates: "{{ kokoro_install_dir }}/api/src/models/v1_0/kokoro-v1_0.pth"
   # Note: The download script itself is idempotent, but `creates` saves a run entirely.
 
-- name: Template Kokoro LaunchDaemon
-  become: true
+- name: Ensure User LaunchAgents directory exists
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME') }}/Library/LaunchAgents"
+    state: directory
+    mode: "0755"
+
+- name: Template Kokoro LaunchAgent
   ansible.builtin.template:
     src: kokoro.plist.j2
-    dest: /Library/LaunchDaemons/sh.chezmoi.shodan.kokoro.plist
+    dest: "{{ lookup('env', 'HOME') }}/Library/LaunchAgents/sh.chezmoi.shodan.kokoro.plist"
     mode: "0644"
-    owner: root
-    group: wheel
   notify: Restart Kokoro
 
 - name: Ensure Kokoro is loaded and started
-  become: true
-  ansible.builtin.command: launchctl bootstrap system /Library/LaunchDaemons/sh.chezmoi.shodan.kokoro.plist
+  ansible.builtin.command: launchctl bootstrap gui/{{ lookup('pipe', 'id -u') }} "{{ lookup('env', 'HOME') }}/Library/LaunchAgents/sh.chezmoi.shodan.kokoro.plist"
   register: _launchctl_load
   failed_when:
     - _launchctl_load.rc != 0

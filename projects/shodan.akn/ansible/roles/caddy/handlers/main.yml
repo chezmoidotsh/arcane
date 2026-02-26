@@ -4,12 +4,10 @@
 # =============================================================================
 
 - name: Reload Caddy
-  become: true
-  ansible.builtin.command: launchctl kickstart -p system/sh.chezmoi.shodan.caddy
+  ansible.builtin.command: launchctl kickstart -p gui/{{ lookup('pipe', 'id -u') }}/sh.chezmoi.shodan.caddy
   # -p is used here if supported, otherwise kickstart restarts it
   ignore_errors: true
   notify: Restart Caddy
 
 - name: Restart Caddy
-  become: true
-  ansible.builtin.command: launchctl kickstart -k system/sh.chezmoi.shodan.caddy
+  ansible.builtin.command: launchctl kickstart -k gui/{{ lookup('pipe', 'id -u') }}/sh.chezmoi.shodan.caddy

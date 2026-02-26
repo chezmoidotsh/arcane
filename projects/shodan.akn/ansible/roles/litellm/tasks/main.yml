@@ -3,7 +3,7 @@
 # Role: litellm — LiteLLM Proxy setup
 # =============================================================================
 # Installs and configures LiteLLM inside an isolated UV virtual environment.
-# Sets up a macOS LaunchDaemon to keep it running.
+# Sets up a macOS LaunchAgent to keep it running.
 # =============================================================================
 
 - name: Ensure LiteLLM installation directory exists
@@ -36,19 +36,21 @@
     mode: "0600"
   notify: Restart LiteLLM
 
-- name: Template LiteLLM LaunchDaemon
-  become: true
+- name: Ensure User LaunchAgents directory exists
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME') }}/Library/LaunchAgents"
+    state: directory
+    mode: "0755"
+
+- name: Template LiteLLM LaunchAgent
   ansible.builtin.template:
     src: litellm.plist.j2
-    dest: /Library/LaunchDaemons/sh.chezmoi.shodan.litellm.plist
+    dest: "{{ lookup('env', 'HOME') }}/Library/LaunchAgents/sh.chezmoi.shodan.litellm.plist"
     mode: "0644"
-    owner: root
-    group: wheel
   notify: Restart LiteLLM
 
 - name: Ensure LiteLLM is loaded and started
-  become: true
-  ansible.builtin.command: launchctl bootstrap system /Library/LaunchDaemons/sh.chezmoi.shodan.litellm.plist
+  ansible.builtin.command: launchctl bootstrap gui/{{ lookup('pipe', 'id -u') }} "{{ lookup('env', 'HOME') }}/Library/LaunchAgents/sh.chezmoi.shodan.litellm.plist"
   register: _launchctl_load
   failed_when:
     - _launchctl_load.rc != 0
