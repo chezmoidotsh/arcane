@@ -4,10 +4,13 @@
 # =============================================================================
 
 - name: Reload Caddy
-  ansible.builtin.command: launchctl kickstart -p gui/{{ ansible_user_uid }}/sh.chezmoi.shodan.caddy
-  # -p is used here if supported, otherwise kickstart restarts it
+  community.general.launchd:
+    name: sh.chezmoi.shodan.caddy
+    state: reloaded
   ignore_errors: true
   notify: Restart Caddy
 
 - name: Restart Caddy
-  ansible.builtin.command: launchctl kickstart -k gui/{{ ansible_user_uid }}/sh.chezmoi.shodan.caddy
+  community.general.launchd:
+    name: sh.chezmoi.shodan.caddy
+    state: restarted
