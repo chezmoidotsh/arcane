@@ -32,18 +32,18 @@ data:
   # ==========================================
   
   # URL of the Playwright microservice endpoint
-  PLAYWRIGHT_MICROSERVICE_URL: "http://firecrawl-playwright.open-webui.svc.cluster.local:3002"
+  PLAYWRIGHT_MICROSERVICE_URL: "http://firecrawl-playwright.ai-platform.svc.cluster.local:3002"
   
   # ==========================================
   # Databases and Storage
   # ==========================================
   
   # Postgres database URL for the primary application features (like jobs and queues)
-  NUQ_DATABASE_URL: "postgresql://postgres:password@firecrawl-nuq-postgres.open-webui.svc.cluster.local:5432/postgres"
+  NUQ_DATABASE_URL: "postgresql://postgres:password@firecrawl-nuq-postgres.ai-platform.svc.cluster.local:5432/postgres"
   # URL for Redis instance specifically used for rate limiting
-  REDIS_RATE_LIMIT_URL: "redis://valkey.open-webui.svc.cluster.local:6379/2"
+  REDIS_RATE_LIMIT_URL: "redis://valkey.ai-platform.svc.cluster.local:6379/2"
   # URL for the main Redis instance (used for BullMQ, background jobs, etc.)
-  REDIS_URL: "redis://valkey.open-webui.svc.cluster.local:6379/3"
+  REDIS_URL: "redis://valkey.ai-platform.svc.cluster.local:6379/3"
   
   # ==========================================
   # Security and Authentication
