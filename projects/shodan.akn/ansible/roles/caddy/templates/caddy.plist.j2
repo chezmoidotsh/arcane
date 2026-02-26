@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>sh.chezmoi.shodan.caddy</string>
+
+    <key>UserName</key>
+    <string>{{ lookup('env', 'USER') }}</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>{{ caddy_bin_path }}</string>
+        <string>run</string>
+        <string>--config</string>
+        <string>{{ caddy_config_dir }}/Caddyfile</string>
+        <string>--adapter</string>
+        <string>caddyfile</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>CADDY_DNS_API_TOKEN</key>
+        <string>{{ lookup('env', 'CADDY_DNS_API_TOKEN') | default('MISSING_TOKEN', true) }}</string>
+        <key>XDG_DATA_HOME</key>
+        <string>{{ caddy_data_dir }}</string>
+        <key>XDG_CONFIG_HOME</key>
+        <string>{{ caddy_config_dir }}</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardErrorPath</key>
+    <string>{{ caddy_log_dir }}/caddy.err.log</string>
+
+    <key>StandardOutPath</key>
+    <string>{{ caddy_log_dir }}/caddy.out.log</string>
+</dict>
+</plist>

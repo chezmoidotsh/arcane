@@ -1,0 +1,56 @@
+---
+# =============================================================================
+# Role: litellm — LiteLLM Proxy setup
+# =============================================================================
+# Installs and configures LiteLLM inside an isolated UV virtual environment.
+# Sets up a macOS LaunchDaemon to keep it running.
+# =============================================================================
+
+- name: Ensure LiteLLM installation directory exists
+  ansible.builtin.file:
+    path: "{{ litellm_install_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Create LiteLLM virtual environment
+  ansible.builtin.command: uv venv {{ litellm_venv_dir }} --python 3.12
+  args:
+    creates: "{{ litellm_venv_dir }}/bin/python"
+
+- name: Install LiteLLM via UV
+  ansible.builtin.command: uv pip install --python {{ litellm_venv_dir }} "litellm[proxy]{{ litellm_version_spec }}"
+  register: _litellm_install
+  changed_when: "'Installed' in _litellm_install.stdout or 'Updated' in _litellm_install.stdout"
+
+- name: Template LiteLLM configuration
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "{{ litellm_config_dir }}/config.yaml"
+    mode: "0644"
+  notify: Restart LiteLLM
+
+- name: Template LiteLLM environment file
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ litellm_install_dir }}/.env"
+    mode: "0600"
+  notify: Restart LiteLLM
+
+- name: Template LiteLLM LaunchDaemon
+  become: true
+  ansible.builtin.template:
+    src: litellm.plist.j2
+    dest: /Library/LaunchDaemons/sh.chezmoi.shodan.litellm.plist
+    mode: "0644"
+    owner: root
+    group: wheel
+  notify: Restart LiteLLM
+
+- name: Ensure LiteLLM is loaded and started
+  become: true
+  ansible.builtin.command: launchctl bootstrap system /Library/LaunchDaemons/sh.chezmoi.shodan.litellm.plist
+  register: _launchctl_load
+  failed_when:
+    - _launchctl_load.rc != 0
+    - "'already bootstrapped' not in _launchctl_load.stderr"
+  changed_when: false

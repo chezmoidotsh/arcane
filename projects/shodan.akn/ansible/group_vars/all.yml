@@ -1,0 +1,52 @@
+# =============================================================================
+# Shodan.akn — Group Vars: all
+# =============================================================================
+# Shared defaults for all hosts. Override in inventory/localhost.yml.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Storage
+# ---------------------------------------------------------------------------
+ai_storage_prefix: "/Volumes/AI Storage"
+
+# ---------------------------------------------------------------------------
+# LiteLLM
+# ---------------------------------------------------------------------------
+litellm_version_spec: ""       # "" = latest; "==1.60.0" to pin a version
+litellm_port: 4000
+litellm_host: "127.0.0.1"     # Bind to loopback — Caddy is the public face
+
+litellm_install_dir: "{{ ai_storage_prefix }}/services/litellm"
+litellm_venv_dir:    "{{ litellm_install_dir }}/venv"
+litellm_config_dir:  "{{ litellm_install_dir }}/config"
+litellm_log_dir:     "{{ litellm_install_dir }}/logs"
+
+# --- LiteLLM config.yaml sections (fully overridable) ---
+litellm_model_list: []
+litellm_router_settings: {}
+litellm_general_settings: {}
+litellm_settings: {}
+litellm_environment_variables: {}
+
+# ---------------------------------------------------------------------------
+# Kokoro-FastAPI
+# ---------------------------------------------------------------------------
+kokoro_repo_url: "https://github.com/remsky/Kokoro-FastAPI.git"
+kokoro_repo_ref:  "master"
+kokoro_port:      8880
+
+kokoro_install_dir: "{{ ai_storage_prefix }}/services/kokoro/app"
+kokoro_log_dir:     "{{ ai_storage_prefix }}/services/kokoro/logs"
+
+# ---------------------------------------------------------------------------
+# Caddy
+# ---------------------------------------------------------------------------
+caddy_arch:       "arm64"           # arm64 = Apple Silicon; amd64 = Intel
+caddy_bin_path:   "/usr/local/bin/caddy"
+caddy_dns_plugin: "cloudflare"      # caddy-dns/* plugin name on caddyserver.com
+caddy_acme_email: ""                # Required: set in inventory
+caddy_hostname:   "shodan.local"    # Required: set in inventory
+
+caddy_config_dir: "{{ ai_storage_prefix }}/services/caddy/config"
+caddy_data_dir:   "{{ ai_storage_prefix }}/services/caddy/data"
+caddy_log_dir:    "{{ ai_storage_prefix }}/services/caddy/logs"

@@ -1,0 +1,13 @@
+{
+    email {{ caddy_acme_email }}
+    http_port 8080
+    https_port {{ caddy_https_port }}
+}
+
+{{ caddy_hostname }}:{{ caddy_https_port }} {
+    tls {
+        dns {{ caddy_dns_plugin }} {env.CADDY_DNS_API_TOKEN}
+    }
+
+    reverse_proxy localhost:{{ litellm_port }}
+}
