@@ -25,11 +25,10 @@
 # Homebrew
 # ---------------------------------------------------------------------------
 - name: Check if Homebrew is installed
-  ansible.builtin.stat:
-    path: "{{ _brew_prefix }}/bin/brew"
-  register: _brew_stat
-  vars:
-    _brew_prefix: "{{ '/opt/homebrew' if ansible_machine == 'arm64' else '/usr/local' }}"
+  ansible.builtin.command: command -v brew
+  register: _brew_check
+  changed_when: false
+  ignore_errors: true
 
 - name: Fail if Homebrew is not installed
   ansible.builtin.fail:
