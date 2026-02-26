@@ -8,7 +8,7 @@ Ansible playbooks to provision the macOS AI stack for Shodan natively, bypassing
 - **Caddy**: Reverse proxy that acts as the only public entry point, providing automatic HTTPS via DNS-01 ACME challenge. Routes all traffic to LiteLLM. Listens on `https://shodan.local:1234`.
 
 ## Prerequisites
-1. Dedicated storage volume mounted at `/Volumes/AI Storage`.
+1. Base installation directory at `~/.local/state/shodan.akn` (automatically created).
 2. A valid domain name and DNS provider supported by `caddy-dns`.
 
 ## DNS Challenge Configuration
@@ -38,10 +38,10 @@ ansible-playbook site.yml -i inventory/localhost.yml
 
 ## Troubleshooting / Logs
 
-Logs for all services are written to dedicated folders on the AI Storage volume:
-- `cat "/Volumes/AI Storage/services/litellm/logs/litellm.out.log"`
-- `cat "/Volumes/AI Storage/services/kokoro/logs/kokoro.out.log"`
-- `cat "/Volumes/AI Storage/services/caddy/logs/caddy.err.log"`
+Logs for all services are written to dedicated folders within the state directory:
+- `cat ~/.local/state/shodan.akn/services/litellm/logs/litellm.out.log`
+- `cat ~/.local/state/shodan.akn/services/kokoro/logs/kokoro.out.log`
+- `cat ~/.local/state/shodan.akn/services/caddy/logs/caddy.err.log`
 
 To restart a service manually:
 ```bash
