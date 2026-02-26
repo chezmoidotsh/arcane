@@ -25,6 +25,9 @@
 - name: Add Caddy DNS plugin
   ansible.builtin.command: "{{ caddy_bin_path }} add-package github.com/caddy-dns/{{ caddy_dns_plugin }}"
   register: _caddy_plugin
+  failed_when: 
+    - _caddy_plugin.rc != 0
+    - "'package is already added' not in _caddy_plugin.stderr | lower"
   changed_when: "'upgrade successful' in _caddy_plugin.stderr | lower or 'download successful' in _caddy_plugin.stderr | lower"
   notify: Restart Caddy
 
