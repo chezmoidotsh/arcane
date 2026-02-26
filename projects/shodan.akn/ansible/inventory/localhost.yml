@@ -11,12 +11,6 @@ all:
       ansible_connection: local
 
       # ---------------------------------------------------------------------------
-      # Storage — base path for all services
-      # The volume must be mounted before running the playbook.
-      # ---------------------------------------------------------------------------
-      ai_storage_prefix: "/Volumes/AI Storage"
-
-      # ---------------------------------------------------------------------------
       # Caddy — REQUIRED, no defaults for these
       # ---------------------------------------------------------------------------
       caddy_hostname:   "shodan.example.com"    # FQDN served by Caddy
