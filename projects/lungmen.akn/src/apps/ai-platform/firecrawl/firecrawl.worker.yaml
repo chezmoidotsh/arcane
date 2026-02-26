@@ -28,7 +28,7 @@ spec:
           image: ghcr.io/firecrawl/firecrawl
           imagePullPolicy: Always
           command: [ "node" ]
-          args: [ "--max-old-space-size=192", "dist/src/services/queue-worker.js" ]
+          args: [ "--max-old-space-size=768", "dist/src/services/queue-worker.js" ]
           ports:
             - name: http
               containerPort: 3005
@@ -40,10 +40,10 @@ spec:
                 name: firecrawl-config
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "5m"
+              memory: "512Mi"
+              cpu: "10m"
             limits:
-              memory: "256Mi"
+              memory: "1Gi"
           livenessProbe:
             httpGet:
               path: /liveness
