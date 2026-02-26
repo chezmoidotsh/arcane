@@ -1,0 +1,20 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    - name: Description
+      value: ToolHive Operator for managing MCP servers in Kubernetes.
+    - name: Category
+      value: AI / Tools
+    - name: Version
+      # renovate: datasource=helm depName=toolhive registryUrl=oci://ghcr.io/stacklok/toolhive
+      value: "0.8.3"
+    - name: Documentation
+      value: https://docs.stacklok.com/toolhive/
+  
+  syncPolicy:
+    automated:
+      enabled: false  # Manual sync for critical infrastructure operator
+      prune: true
+      selfHeal: true

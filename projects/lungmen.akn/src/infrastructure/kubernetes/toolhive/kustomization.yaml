@@ -16,3 +16,13 @@ helmCharts:
     repo: oci://ghcr.io/stacklok/toolhive
     version: 0.8.3
     valuesFile: toolhive-operator.helmvalues/default.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: toolhive
+    includeTemplates: true
+    includeSelectors: true
+  - pairs:
+      # renovate: datasource=helm depName=toolhive registryUrl=oci://ghcr.io/stacklok/toolhive
+      app.kubernetes.io/version: 0.8.3
+    includeTemplates: true

@@ -4,11 +4,11 @@ kind: HTTPRoute
 metadata:
   annotations:
     external-dns.alpha.kubernetes.io/include-unifi: "true"
-    link.argocd.argoproj.io/external-link: https://owu.chezmoi.sh
+    link.argocd.argoproj.io/external-link: https://ai.chezmoi.sh
   name: open-webui-websecure
 spec:
   hostnames:
-    - owu.chezmoi.sh
+    - ai.chezmoi.sh
   parentRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway

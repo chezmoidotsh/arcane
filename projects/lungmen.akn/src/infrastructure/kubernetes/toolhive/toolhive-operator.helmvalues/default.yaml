@@ -1,0 +1,12 @@
+operator:
+  # -- Deployed in cluster mode to manage MCPs across all namespaces.
+  rbac:
+    scope: "cluster"
+
+  # -- Conservative resource allocation for the operator pod
+  resources:
+    requests:
+      cpu: 5m
+      memory: "64Mi"
+    limits:
+      memory: "128Mi"

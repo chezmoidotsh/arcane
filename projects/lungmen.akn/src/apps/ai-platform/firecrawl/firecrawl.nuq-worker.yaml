@@ -4,15 +4,18 @@ metadata:
   name: firecrawl-nuq-worker
   labels:
     app.kubernetes.io/component: nuq-worker
+    app.kubernetes.io/instance: firecrawl-nuq-worker
 spec:
   replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/component: nuq-worker
+      app.kubernetes.io/instance: firecrawl-nuq-worker
   template:
     metadata:
       labels:
         app.kubernetes.io/component: nuq-worker
+        app.kubernetes.io/instance: firecrawl-nuq-worker
     spec:
       terminationGracePeriodSeconds: 60
       securityContext:

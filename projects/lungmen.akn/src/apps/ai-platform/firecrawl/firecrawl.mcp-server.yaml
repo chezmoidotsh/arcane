@@ -5,8 +5,8 @@ metadata:
   name: firecrawl
   namespace: open-webui
   labels:
-    app.kubernetes.io/name: firecrawl-mcp
-    app.kubernetes.io/managed-by: toolhive-operator
+    app.kubernetes.io/component: mcp-server
+    app.kubernetes.io/instance: firecrawl-mcp
 spec:
   image: ghcr.io/firecrawl/firecrawl-mcp-server:latest
   transport: streamable-http

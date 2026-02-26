@@ -4,15 +4,18 @@ metadata:
   name: firecrawl-nuq-postgres
   labels:
     app.kubernetes.io/component: nuq-postgres
+    app.kubernetes.io/instance: firecrawl-nuq-postgres
 spec:
   replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/component: nuq-postgres
+      app.kubernetes.io/instance: firecrawl-nuq-postgres
   template:
     metadata:
       labels:
         app.kubernetes.io/component: nuq-postgres
+        app.kubernetes.io/instance: firecrawl-nuq-postgres
     spec:
       containers:
         - name: nuq-postgres
@@ -57,9 +60,11 @@ metadata:
   name: firecrawl-nuq-postgres
   labels:
     app.kubernetes.io/component: nuq-postgres
+    app.kubernetes.io/instance: firecrawl-nuq-postgres
 spec:
   selector:
     app.kubernetes.io/component: nuq-postgres
+    app.kubernetes.io/instance: firecrawl-nuq-postgres
   ports:
     - protocol: TCP
       port: 5432
