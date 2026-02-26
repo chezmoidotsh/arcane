@@ -2,7 +2,7 @@
 apiVersion: toolhive.stacklok.dev/v1alpha1
 kind: MCPServer
 metadata:
-  name: firecrawl
+  name: firecrawl-mcp
   namespace: open-webui
   labels:
     app.kubernetes.io/component: mcp-server
