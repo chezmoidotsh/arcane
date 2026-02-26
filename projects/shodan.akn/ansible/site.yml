@@ -7,7 +7,7 @@
 # through macOS LaunchDaemons.
 #
 # Prerequisites (handled by the `common` role):
-#   - /Volumes/AI Storage mounted
+#   - Homebrew validation
 #   - Homebrew, UV, espeak-ng
 #
 # Usage:
