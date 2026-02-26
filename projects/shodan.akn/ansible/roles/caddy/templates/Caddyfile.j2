@@ -4,5 +4,12 @@
 }
 
 {{ caddy_hostname }}:{{ caddy_https_port }} {
+    log {
+        output file {{ caddy_log_dir }}/access.log {
+            roll_size 10MB
+            roll_keep 5
+        }
+    }
+
     reverse_proxy localhost:{{ litellm_port }}
 }
