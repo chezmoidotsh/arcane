@@ -31,7 +31,7 @@
           default = let 
             flattenedPgCron = pkgs.runCommand "pg_cron-flat" {} ''
               mkdir -p $out/lib $out/share/extension
-              cp -rL ${pg_cron}/lib/pg_cron.so $out/lib/
+              cp -rL ${pg_cron}/lib/*.so $out/lib/
               cp -rL ${pg_cron}/share/postgresql/extension/* $out/share/extension/
             '';
 
