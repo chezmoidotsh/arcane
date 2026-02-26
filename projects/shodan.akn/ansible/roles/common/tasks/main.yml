@@ -31,13 +31,10 @@
   vars:
     _brew_prefix: "{{ '/opt/homebrew' if ansible_machine == 'arm64' else '/usr/local' }}"
 
-- name: Install Homebrew
-  ansible.builtin.shell: |
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  environment:
-    NONINTERACTIVE: "1"
+- name: Fail if Homebrew is not installed
+  ansible.builtin.fail:
+    msg: "Homebrew is missing. Please install it first from https://brew.sh/"
   when: not _brew_stat.stat.exists
-  changed_when: true
 
 # ---------------------------------------------------------------------------
 # System packages
