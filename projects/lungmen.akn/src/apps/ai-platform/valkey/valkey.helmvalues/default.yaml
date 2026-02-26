@@ -5,13 +5,13 @@ image:
   # -- Use locally-hosted mirror to bypass rate limits and enforce caching
   registry: "oci.chezmoi.sh/docker.io"
 
-# -- Apply identical resource allocations as the legacy Firecrawl Redis instance
+# -- Apply resource allocations for Valkey
 resources:
   requests:
-    cpu: 5m
-    memory: "32Mi"
+    cpu: 10m
+    memory: "256Mi"
   limits:
-    memory: "32Mi"
+    memory: "512Mi"
 
 # -- Enables verbose debug logs for easier troubleshooting
 valkeyLogLevel: "debug"
@@ -23,8 +23,8 @@ replica:
   # -- Enables High Availability (HA) replication
   enabled: true
   replicas: 1
-  # -- Guarantees write safety: at least 1 replica must acknowledge the write
-  minReplicasToWrite: 1
+  # -- Safe write safety for single-replica setup
+  minReplicasToWrite: 0
   persistence:
     size: 250Mi
 
