@@ -35,4 +35,4 @@ labels:
 images:
   # renovate: datasource=docker depName=docker.io/fosrl/newt
   - name: docker.io/fosrl/newt
-    newTag: 1.10.0@sha256:9797e83e4261248fc84c56f7df519541a6d9caa7284c109c7b8036d8b7c4ab80
+    newTag: 1.10.1@sha256:dc3a6ce4c290d36393a9db6662afd826260e3c8552b19359193a6b311988d3d2
