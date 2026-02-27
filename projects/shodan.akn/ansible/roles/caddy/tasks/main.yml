@@ -2,8 +2,8 @@
 # =============================================================================
 # Role: caddy — Reverse Proxy
 # =============================================================================
-# Installs Caddy via Homebrew, adds the requested DNS plugin,
-# and configures a LaunchAgent to run it on boot.
+# Installs Caddy via Homebrew and manages its configuration.
+# Uses the official Homebrew LaunchAgent.
 # =============================================================================
 
 - name: Install Caddy via Homebrew
@@ -22,25 +22,18 @@
   changed_when: "'upgrade successful' in _caddy_plugin.stderr | lower or 'download successful' in _caddy_plugin.stderr | lower"
   notify: Restart Caddy
 
+- name: Ensure Homebrew etc directory exists
+  ansible.builtin.file:
+    path: "{{ caddy_config_dir }}"
+    state: directory
+    mode: "0755"
+
 - name: Template Caddyfile
   ansible.builtin.template:
     src: Caddyfile.j2
     dest: "{{ caddy_config_dir }}/Caddyfile"
     mode: "0644"
   notify: Reload Caddy
-
-- name: Ensure User LaunchAgents directory exists
-  ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/Library/LaunchAgents"
-    state: directory
-    mode: "0755"
-
-- name: Template Caddy LaunchAgent
-  ansible.builtin.template:
-    src: Caddyfile.j2
-    dest: "{{ caddy_config_dir }}/Caddyfile"
-    mode: "0644"
-  notify: Restart Caddy
 
 - name: Ensure Caddy is loaded and started
   community.general.launchd:
