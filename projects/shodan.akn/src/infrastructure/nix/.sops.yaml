@@ -1,0 +1,6 @@
+creation_rules:
+  - path_regex: secrets/.*\.yaml$
+    key_groups:
+      - age:
+        # Remplace par ta clé publique 'age' (générée par ssh-to-age ou age-keygen)
+        - age1qyv93kh85e9ay4w8nd7p2a7p2a7p2a7p2a7p2a7p2a7p2a7p2a7sqqqqqq
