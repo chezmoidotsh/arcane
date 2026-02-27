@@ -37,8 +37,8 @@
 
 - name: Template Caddy LaunchAgent
   ansible.builtin.template:
-    src: caddy.plist.j2
-    dest: "{{ ansible_env.HOME }}/Library/LaunchAgents/homebrew.mxcl.caddy.plist"
+    src: Caddyfile.j2
+    dest: "{{ caddy_config_dir }}/Caddyfile"
     mode: "0644"
   notify: Restart Caddy
 
