@@ -47,11 +47,11 @@
 - name: Template Caddy LaunchAgent
   ansible.builtin.template:
     src: caddy.plist.j2
-    dest: "{{ ansible_env.HOME }}/Library/LaunchAgents/sh.chezmoi.shodan.caddy.plist"
+    dest: "{{ ansible_env.HOME }}/Library/LaunchAgents/homebrew.mxcl.caddy.plist"
     mode: "0644"
   notify: Restart Caddy
 
 - name: Ensure Caddy is loaded and started
   community.general.launchd:
-    name: sh.chezmoi.shodan.caddy
+    name: homebrew.mxcl.caddy
     state: started

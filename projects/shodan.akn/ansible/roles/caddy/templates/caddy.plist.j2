@@ -3,7 +3,29 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>sh.chezmoi.shodan.caddy</string>
+    <string>homebrew.mxcl.caddy</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>{{ caddy_data_dir }}</string>
+        <key>XDG_DATA_HOME</key>
+        <string>{{ caddy_data_dir }}</string>
+        <key>CADDY_DNS_API_TOKEN</key>
+        <string>{{ lookup('env', 'CADDY_DNS_API_TOKEN') | default('MISSING_TOKEN', true) }}</string>
+    </dict>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>LimitLoadToSessionType</key>
+    <array>
+        <string>Aqua</string>
+        <string>Background</string>
+        <string>LoginWindow</string>
+        <string>StandardIO</string>
+        <string>System</string>
+    </array>
 
     <key>ProgramArguments</key>
     <array>
@@ -11,30 +33,15 @@
         <string>run</string>
         <string>--config</string>
         <string>{{ caddy_config_dir }}/Caddyfile</string>
-        <string>--adapter</string>
-        <string>caddyfile</string>
     </array>
-
-    <key>EnvironmentVariables</key>
-    <dict>
-        <key>CADDY_DNS_API_TOKEN</key>
-        <string>{{ lookup('env', 'CADDY_DNS_API_TOKEN') | default('MISSING_TOKEN', true) }}</string>
-        <key>XDG_DATA_HOME</key>
-        <string>{{ caddy_data_dir }}</string>
-        <key>XDG_CONFIG_HOME</key>
-        <string>{{ caddy_config_dir }}</string>
-    </dict>
 
     <key>RunAtLoad</key>
     <true/>
 
-    <key>KeepAlive</key>
-    <true/>
-
     <key>StandardErrorPath</key>
-    <string>{{ caddy_log_dir }}/caddy.err.log</string>
+    <string>{{ caddy_log_dir }}/caddy.log</string>
 
     <key>StandardOutPath</key>
-    <string>{{ caddy_log_dir }}/caddy.out.log</string>
+    <string>{{ caddy_log_dir }}/caddy.log</string>
 </dict>
 </plist>

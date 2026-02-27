@@ -5,12 +5,12 @@
 
 - name: Reload Caddy
   community.general.launchd:
-    name: sh.chezmoi.shodan.caddy
+    name: homebrew.mxcl.caddy
     state: reloaded
   ignore_errors: true
   notify: Restart Caddy
 
 - name: Restart Caddy
   community.general.launchd:
-    name: sh.chezmoi.shodan.caddy
+    name: homebrew.mxcl.caddy
     state: restarted

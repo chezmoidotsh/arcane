@@ -12,8 +12,8 @@
     state: directory
     mode: "0755"
   loop:
-    - "{{ litellm_install_dir }}"
     - "{{ litellm_config_dir }}"
+    - "{{ litellm_data_dir }}"
     - "{{ litellm_log_dir }}"
 
 - name: Create LiteLLM virtual environment
@@ -36,7 +36,7 @@
 - name: Template LiteLLM environment file
   ansible.builtin.template:
     src: env.j2
-    dest: "{{ litellm_install_dir }}/.env"
+    dest: "{{ litellm_config_dir }}/.env"
     mode: "0600"
   notify: Restart LiteLLM
 
