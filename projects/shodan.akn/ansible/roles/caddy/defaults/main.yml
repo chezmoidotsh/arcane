@@ -1,13 +1,4 @@
 ---
-ai_storage_prefix: "{{ ansible_env.HOME }}/.local"
+brew_prefix: "{{ ansible_env.HOME }}/.local/Cellar"
 
-caddy_brew_prefix: "{{ ansible_env.HOME }}/.local"
-caddy_bin_path:    "{{ caddy_brew_prefix }}/opt/caddy/bin/caddy"
-caddy_dns_plugin:  "cloudflare"           # Required: override in inventory
-caddy_acme_email:  ""                     # Required: override in inventory
-caddy_hostname:    "shodan.local"         # Required: override in inventory
-caddy_https_port:  1234                   # Custom HTTPS port (no root required)
-
-caddy_config_dir:  "{{ caddy_brew_prefix }}/etc"
-caddy_data_dir:    "{{ caddy_brew_prefix }}/var/lib"
-caddy_log_dir:     "{{ caddy_brew_prefix }}/var/log"
+caddy_bin_path:    "{{ brew_prefix }}/caddy/bin/caddy"
