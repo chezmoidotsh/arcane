@@ -13,13 +13,14 @@
     state: directory
     mode: "0755"
   loop:
-    - "{{ kokoro_install_dir }}"
+    - "{{ kokoro_config_dir }}"
+    - "{{ kokoro_data_dir }}"
     - "{{ kokoro_log_dir }}"
 
 - name: Clone Kokoro-FastAPI repository
   ansible.builtin.git:
     repo: "{{ kokoro_repo_url }}"
-    dest: "{{ kokoro_install_dir }}"
+    dest: "{{ kokoro_data_dir }}"
     version: "{{ kokoro_repo_ref }}"
     update: true
   notify: Restart Kokoro
@@ -35,8 +36,8 @@
 - name: Download Kokoro model files
   ansible.builtin.command: uv run python docker/scripts/download_model.py --output api/src/models/v1_0
   args:
-    chdir: "{{ kokoro_install_dir }}"
-    creates: "{{ kokoro_install_dir }}/api/src/models/v1_0/kokoro-v1_0.pth"
+    chdir: "{{ kokoro_data_dir }}"
+    creates: "{{ kokoro_data_dir }}/api/src/models/v1_0/kokoro-v1_0.pth"
   # Note: The download script itself is idempotent, but `creates` saves a run entirely.
 
 - name: Ensure User LaunchAgents directory exists

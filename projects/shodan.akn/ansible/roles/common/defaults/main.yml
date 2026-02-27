@@ -1,2 +1,2 @@
 ---
-ai_storage_prefix: "{{ ansible_env.HOME }}/.local/state/shodan.akn"
+ai_storage_prefix: "{{ ansible_env.HOME }}/.local"

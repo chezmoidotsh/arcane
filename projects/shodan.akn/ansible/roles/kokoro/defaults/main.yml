@@ -1,9 +1,10 @@
 ---
-ai_storage_prefix: "{{ ansible_env.HOME }}/.local/state/shodan.akn"
+ai_storage_prefix: "{{ ansible_env.HOME }}/.local"
 
 kokoro_repo_url:    "https://github.com/remsky/Kokoro-FastAPI.git"
 kokoro_repo_ref:    "master"
 kokoro_port:        8880
 
-kokoro_install_dir: "{{ ai_storage_prefix }}/services/kokoro/app"
-kokoro_log_dir:     "{{ ai_storage_prefix }}/services/kokoro/logs"
+kokoro_config_dir:  "{{ ai_storage_prefix }}/etc/kokoro"
+kokoro_data_dir:    "{{ ai_storage_prefix }}/var/lib/kokoro"
+kokoro_log_dir:     "{{ ai_storage_prefix }}/var/log/kokoro"

@@ -1,14 +1,14 @@
 ---
-ai_storage_prefix: "{{ ansible_env.HOME }}/.local/state/shodan.akn"
+ai_storage_prefix: "{{ ansible_env.HOME }}/.local"
 
 litellm_version_spec: ""           # "" = latest
 litellm_port: 4000
 litellm_host: "127.0.0.1"
 
-litellm_install_dir: "{{ ai_storage_prefix }}/services/litellm"
-litellm_venv_dir:    "{{ litellm_install_dir }}/venv"
-litellm_config_dir:  "{{ litellm_install_dir }}/config"
-litellm_log_dir:     "{{ litellm_install_dir }}/logs"
+litellm_config_dir:  "{{ ai_storage_prefix }}/etc/litellm"
+litellm_data_dir:    "{{ ai_storage_prefix }}/var/lib/litellm"
+litellm_log_dir:     "{{ ai_storage_prefix }}/var/log/litellm"
+litellm_venv_dir:    "{{ litellm_data_dir }}/venv"
 
 # Fully overridable in inventory:
 litellm_model_list: []

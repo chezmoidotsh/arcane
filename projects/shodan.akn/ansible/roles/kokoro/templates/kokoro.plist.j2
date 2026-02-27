@@ -7,7 +7,7 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>{{ kokoro_install_dir }}/.venv/bin/uvicorn</string>
+        <string>{{ kokoro_data_dir }}/.venv/bin/uvicorn</string>
         <string>api.src.main:app</string>
         <string>--host</string>
         <string>127.0.0.1</string>
@@ -18,9 +18,9 @@
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>{{ kokoro_install_dir }}/.venv/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <string>{{ kokoro_data_dir }}/.venv/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
         <key>PYTHONPATH</key>
-        <string>{{ kokoro_install_dir }}:{{ kokoro_install_dir }}/api</string>
+        <string>{{ kokoro_data_dir }}:{{ kokoro_data_dir }}/api</string>
         <key>USE_GPU</key>
         <string>false</string>
         <key>USE_ONNX</key>
@@ -40,12 +40,12 @@
     <true/>
 
     <key>StandardErrorPath</key>
-    <string>{{ kokoro_log_dir }}/kokoro.err.log</string>
+    <string>{{ kokoro_log_dir }}/kokoro.log</string>
 
     <key>StandardOutPath</key>
-    <string>{{ kokoro_log_dir }}/kokoro.out.log</string>
+    <string>{{ kokoro_log_dir }}/kokoro.log</string>
 
     <key>WorkingDirectory</key>
-    <string>{{ kokoro_install_dir }}</string>
+    <string>{{ kokoro_data_dir }}</string>
 </dict>
 </plist>
