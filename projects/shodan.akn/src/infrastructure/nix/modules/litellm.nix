@@ -46,6 +46,7 @@ in {
       };
       RunAtLoad = true;
       ThrottleInterval = 10;
+      UserName = username;
       StandardOutPath = "${xdg.log}/litellm.stdout.log";
       StandardErrorPath = "${xdg.log}/litellm.stderr.log";
     };
