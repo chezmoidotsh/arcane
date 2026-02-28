@@ -53,7 +53,8 @@ in {
         "exec ${caddy}/bin/caddy run --config ${xdg.config}/caddy/Caddyfile --watch"
       ];
       EnvironmentVariables = {
-        # Ensure the running Caddy process knows where to find the bundled error pages or snippets.
+        HOME = "/Users/${username}";
+        # Ensure the running Caddy process knows where to find the bundled snippets.
         CADDY_CONFIG_DIR = "${xdg.config}/caddy";
       };
       KeepAlive = {
