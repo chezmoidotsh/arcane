@@ -18,12 +18,7 @@
     }
   '';
 
-  # Build Caddy with Cloudflare DNS plugin
-  # Note: pkgs.caddy.withPlugins is available in recent nixpkgs-unstable
-  caddyCustom = pkgs.caddy.withPlugins {
-    plugins = ["github.com/caddy-dns/cloudflare@v0.2.3"];
-    hash = "sha256-mmkziFzEMBcdnCWCRiT3UyWPNbINbpd3KUJ0NMW632w="; # Update this hash if the plugin version changes
-  };
+  caddy_cloudflaredns = import ../packages/caddy_cloudflaredns { inherit pkgs; };
 in {
   # Ensure user config directory exists and install the generated Caddyfile.
   system.activationScripts.extraActivation.text = lib.mkAfter ''
@@ -45,7 +40,7 @@ in {
       ProgramArguments = [
         "/bin/sh"
         "-c"
-        "exec ${caddyCustom}/bin/caddy run --config /Users/${username}/.config/caddy/Caddyfile --watch"
+        "exec ${caddy_cloudflaredns}/bin/caddy run --config /Users/${username}/.config/caddy/Caddyfile --watch"
       ];
       KeepAlive = {
         SuccessfulExit = false;
