@@ -1,31 +1,7 @@
 # errors.inc
 #
 # Pure-Caddy inline error responder (single-include).
-#
-# Usage:
-#   import errors.inc
-#
-# Behaviour:
-#   - Matches any 4xx/5xx error and responds with an inline HTML page.
-#   - Attempts to preserve the original HTTP status by using the placeholder
-#     {http.error.status_code} as the status argument to `respond`.
-#   - IMPORTANT: Some Caddy builds may not accept placeholders in the numeric
-#     status position during validation. If your `caddy validate` fails,
-#     fallback to the commented section below (class-based statuses) or upgrade
-#     Caddy to a build that supports placeholder expansion in respond status.
-#
-# Notes:
-#   - This include is self-contained (CSS + JS inline) and therefore portable.
-#   - The page reads the status code from the placeholder and picks an
-#     appropriate message (4xx vs 5xx). It presents a tiled "Error!!" background
-#     and a centered bracketed message with subtle jitter / flicker.
-#
-# Example:
-#   site.example.com {
-#     import errors.inc
-#     reverse_proxy 127.0.0.1:4000
-#   }
-#
+# Based on tarampampam/error-pages "l7" theme.
 
 handle_errors {
     # Force HTML content type for the error page
@@ -33,129 +9,127 @@ handle_errors {
 
     # Respond inline with the original status code.
     respond `
-<!doctype html>
-<html lang="fr" data-status="{http.error.status_code}" data-text="{http.error.status_text}">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>SYSTEM FAILURE — {http.error.status_code}</title>
-<style>
-  @font-face {
-    font-family: 'Bmf-10 Regular';
-    src: url('data:font/ttf;base64,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AAMgAwADAAMwAgAGIAeQAgAG4AaQBjAG8AIABoAGUAbgBzAGUAIAAvAC8AfAAgAGYAbwBuAHQAawBpAHQAYwBoAGUAbgAuAGMAbwBtACAALwAvACAAbABpAGMAaAB0AHAAdQBuAGsAdAAuAGIAaQB6AEIAbQBmAC0AMQAwAFIAZQBnAHUAbABhAHIAQQBsAHQAcwB5AHMAIABNAGUAdABhAG0AbwByAHAAaABvAHMAaQBzADoAQgBtAGYALQAxADAAQgBtAGYALQAxADAAQQBsAHQAcwB5AHMAIABNAGUAdABhAG0AbwByAHAAaABvAHMAaQBzADoAMQA4AC4AMAA5AC4AMgAwADAAMwBCAG0AZgAtADEAMAAAAAIAAAAAAAD/jwAZAAAAAAAAAAAAAAAAAAAAAAAAAAAApQAAAQIAAgADAAQABQAGAAcACAAJAAoACwAMAA0ADgAPABAAEQASABMAFAAVABYAFwAYABkAGgAbABwAHQAeAB8AIAAhACIAIwAkACUAJgAnACgAKQAqACsALAAtAC4ALwAwADEAMgAzADQANQA2ADcAOAA5ADoAOwA8AD0APgA/AEAAQQBCAEMARABFAEYARwBIAEkASgBLAEwATQBOAE8AUABRAFIAUwBUAFUAVgBXAFgAWQBaAFsAXABdAF4AXwBgAGEAYgBjAGQAZQBmAGcAaABpAGoAawBsAG0AbgBvAHAAcQByAHMAdAB1AHYAdwB4AHkAegB7AHwAfQB+AH8AgACBAIMAhQCGAIcAiACJAIoAiwCiAKMAqQCqAKwArQCuAK8AvQDGAMcAyADJAMoAywDMAM0AzgDPANAA0QDTANQA1QDWAAAAAAUubnVsbAAAAAAAAQABAQEBAQAMAPgI/wAIAAj//gAJAAn//QAKAAr//QALAAv//QAMAAz//QANAA3//AAOAA7//AAPAA///AAQABD//AARABH/+wASABL/+wATABP/+wAUABT/+wAVABX/+gAWABb/+gAXABf/+gAYABj/+gAZABn/+QAaABr/+QAbABv/+QAcABz/+QAdAB3/+AAeAB7/+AAfAB//+AAgACD/+AAhACH/9wAiACL/9wAjACP/9wAkACT/9wAlACX/9gAmACb/9gAnACf/9gAoACj/9gApACn/9QAqACr/9QArACv/9QAsACz/9QAtAC3/9AAuAC7/9AAvAC//9AAwADD/9AAxADH/8wAyADL/8wAzADP/8wA0ADT/8wA1ADX/8gA2ADb/8gA3ADf/8gA4ADj/8gA5ADn/8QA6ADr/8QA7ADv/8QA8ADz/8QA9AD3/8AA+AD7/8AA/AD//8ABAAED/8ABBAEH/7wBCAEL/7wBDAEP/7wBEAET/7wBFAEX/7gBGAEb/7gBHAEf/7gBIAEj/7gBJAEn/7QBKAEr/7QBLAEv/7QBMAEz/7QBNAE3/7ABOAE7/7ABPAE//7ABQAFD/7ABRAFH/6wBSAFL/6wBTAFP/6wBUAFT/6wBVAFX/6gBWAFb/6gBXAFf/6gBYAFj/6gBZAFn/6QBaAFr/6QBbAFv/6QBcAFz/6QBdAF3/6ABeAF7/6ABfAF//6ABgAGD/6ABhAGH/5wBiAGL/5wBjAGP/5wBkAGT/5wBlAGX/5gBmAGb/5gBnAGf/5gBoAGj/5gBpAGn/5QBqAGr/5QBrAGv/5QBsAGz/5QBtAG3/5ABuAG7/5ABvAG//5ABwAHD/5ABxAHH/4wByAHL/4wBzAHP/4wB0AHT/4wB1AHX/4gB2AHb/4gB3AHf/4gB4AHj/4gB5AHn/4QB6AHr/4QB7AHv/4QB8AHz/4QB9AH3/4AB+AH7/4AB/AH//4ACAAID/4ACBAIH/3wCCAIL/3wCDAIP/3wCEAIT/3wCFAIX/3gCGAIb/3gCHAIf/3gCIAIj/3gCJAIn/3QCKAIr/3QCLAIv/3QCMAIz/3QCNAI3/3ACOAI7/3ACPAI//3ACQAJD/3ACRAJH/2wCSAJL/2wCTAJP/2wCUAJT/2wCVAJX/2gCWAJb/2gCXAJf/2gCYAJj/2gCZAJn/2QCaAJr/2QCbAJv/2QCcAJz/2QCdAJ3/2ACeAJ7/2ACfAJ//2ACgAKD/2AChAKH/1wCiAKL/1wCjAKP/1wCkAKT/1wClAKX/1gCmAKb/1gCnAKf/1gCoAKj/1gCpAKn/1QCqAKr/1QCrAKv/1QCsAKz/1QCtAK3/1ACuAK7/1ACvAK//1ACwALD/1ACxALH/0wCyALL/0wCzALP/0wC0ALT/0wC1ALX/0gC2ALb/0gC3ALf/0gC4ALj/0gC5ALn/0QC6ALr/0QC7ALv/0QC8ALz/0QC9AL3/0AC+AL7/0AC/AL//0ADAAMD/0ADBAMH/zwDCAML/zwDDAMP/zwDEAMT/zwDFAMX/zgDGAMb/zgDHAMf/zgDIAMj/zgDJAMn/zQDKAMr/zQDLAMv/zQDMAMz/zQDNAM3/zADOAM7/zADPAM//zADQAND/zADRANH/ywDSANL/ywDTANP/ywDUANT/ywDVANX/ygDWANb/ygDXANf/ygDYANj/ygDZANn/yQDaANr/yQDbANv/yQDcANz/yQDdAN3/yADeAN7/yADfAN//yADgAOD/yADhAOH/xwDiAOL/xwDjAOP/xwDkAOT/xwDlAOX/xgDmAOb/xgDnAOf/xgDoAOj/xgDpAOn/xQDqAOr/xQDrAOv/xQDsAOz/xQDtAO3/xADuAO7/xADvAO//xADwAPD/xADxAPH/wwDyAPL/wwDzAPP/wwD0APT/wwD1APX/wgD2APb/wgD3APf/wgD4APj/wgD5APn/wQD6APr/wQD7APv/wQD8APz/wQD9AP3/wAD+AP7/wAD/AP//wA==');
-  }
-  :root {
-    --bg: #000;
-    --red: #d22b2b;
-    --white: #ffffff;
-    --font: 'Bmf-10 Regular', monospace;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: var(--bg);
-    color: var(--red);
-    font-family: var(--font);
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+    <meta charset="utf-8">
+    <title>{http.error.status_code} — {http.error.status_text}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --color-primary: #f7fafc;
+            --color-inverted: #a0aec0;
+        }
 
-  /* Dense Static Grid - No Spacing */
-  #grid {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-wrap: wrap;
-    align-content: flex-start;
-    overflow: hidden;
-    user-select: none;
-    pointer-events: none;
-    line-height: .92;
-  }
-  #grid span {
-    font-size: 24px;
-    padding: 0;
-    margin: 0;
-    white-space: nowrap;
-    letter-spacing: 0;
-  }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-primary: #222526;
+                --color-inverted: #fff;
+            }
+        }
 
-  /* The integrated white message */
-  #grid span.error-msg {
-    color: var(--white);
-    background: var(--bg);
-    z-index: 10;
-  }
+        html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+            height: 100%;
+            width: 100%;
+            background-color: var(--color-primary);
+            color: var(--color-inverted);
+            font-family: sans-serif;
+            font-size: 16px;
+            word-break: keep-all;
+        }
 
-  /* Scanlines Overlay */
-  .scanlines {
-    position: fixed;
-    inset: 0;
-    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
-    background-size: 100% 2px;
-    z-index: 200;
-    pointer-events: none;
-  }
-</style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        article {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        article .code h1,
+        article .desc p {
+            font-size: 1.7em;
+            margin: 0;
+            padding: 0;
+        }
+
+        article .code {
+            border-right: 2px solid;
+            padding: 0.12em 0.7em;
+            margin: 0;
+            text-align: right;
+        }
+
+        article .code h1 {
+            font-weight: normal;
+        }
+
+        article .desc {
+            text-align: left;
+            padding: 0.7em;
+        }
+
+        article .desc p {
+            font-weight: lighter;
+            text-transform: uppercase;
+        }
+
+        ul.details {
+            list-style: none;
+            margin: 1.25em 0 0 0;
+            padding: 0;
+            font-size: 0.75em;
+            opacity: 0.6;
+        }
+
+        ul.details li {
+            height: 1.5em; /* Ensure alignment */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        ul.details .name {
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+
+        ul.details li.value {
+            font-family: monospace;
+        }
+    </style>
 </head>
 <body>
-  <div id="grid"></div>
-  <div class="scanlines"></div>
-
-  <script>
-    (function() {
-      const grid = document.getElementById('grid');
-      const status = document.documentElement.dataset.status || '502';
-      const statusText = (document.documentElement.dataset.text || 'SERVER ERROR').toUpperCase();
-      
-      const fullMessage = " [ " + status + " " + statusText + " ] ";
-
-      function fillGrid() {
-        grid.innerHTML = '';
-        const rowHeight = 22;
-        const colWidth = 84;
-        const rows = Math.ceil(window.innerHeight / rowHeight) + 1;
-        const cols = Math.ceil(window.innerWidth / colWidth) + 1;
-        const total = rows * cols;
-        
-        const centerRow = Math.floor(rows / 2);
-        const centerIdx = centerRow * cols + Math.floor(cols / 2);
-        
-        const fragment = document.createDocumentFragment();
-        for(let i=0; i<total; i++) {
-          const s = document.createElement('span');
-          if (i === centerIdx) {
-            s.textContent = fullMessage;
-            s.className = 'error-msg';
-          } else {
-            s.textContent = 'Error!!';
-          }
-          fragment.appendChild(s);
-        }
-        grid.appendChild(fragment);
-      }
-
-      fillGrid();
-      window.addEventListener('resize', fillGrid);
-    })();
-  </script>
+    <article>
+        <div class="code">
+            <h1>{http.error.status_code}</h1>
+            <ul class="details">
+                <li class="name">Host</li>
+                <li class="name">Original URI</li>
+                <li class="name">Forwarded for</li>
+                <li class="name">Request ID</li>
+                <li class="name">Timestamp</li>
+            </ul>
+        </div>
+        <div class="desc">
+            <p>{http.error.status_text}</p>
+            <ul class="details">
+                <li class="value">{host}</li>
+                <li class="value">{uri}</li>
+                <li class="value">{header.X-Forwarded-For}</li>
+                <li class="value">{http.vars.request_id}</li>
+                <li class="value">{time.now.common_log}</li>
+            </ul>
+        </div>
+    </article>
 </body>
 </html>
 ` {http.error.status_code}
-}
-
-    # If your Caddy build does NOT accept placeholders as the numeric status
-    # in the `respond` directive (validation error), uncomment the fallback
-    # blocks below to use class-preserving statuses (400 for 4xx, 500 for 5xx).
-    #
-    # The fallback returns a visually identical page but uses the class code
-    # instead of the exact original code.
-    #
-    # @client status 400..499
-    # respond `<!doctype html>...` 400
-    #
-    # @server status 500..599
-    # respond `<!doctype html>...` 500
 }
