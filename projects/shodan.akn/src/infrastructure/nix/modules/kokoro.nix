@@ -40,6 +40,7 @@ in {
   # User-level service (launchd agent) for Kokoro server.
   launchd.agents.kokoro = {
     serviceConfig = {
+      Label = "sh.chezmoi.shodan.kokoro";
       ProgramArguments = [
         "${kokoro.bin}"
         "api.src.main:app"
@@ -48,6 +49,7 @@ in {
         "--port"
         "8880"
       ];
+      UserName = username;
       KeepAlive = { SuccessfulExit = false; };
       RunAtLoad = true;
       ThrottleInterval = 10;
@@ -70,6 +72,7 @@ in {
 
   launchd.agents.kokoro-janitor = {
     serviceConfig = {
+      Label = "sh.chezmoi.shodan.janitor";
       ProgramArguments = [
         "${kokoro.janitor}"
         "${xdg.state}/tmp/kokoro"

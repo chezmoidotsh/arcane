@@ -32,6 +32,7 @@ in {
   # User-level launchd agent (starts at login, uses user HOME/XDG paths).
   launchd.agents.litellm = {
     serviceConfig = {
+      Label = "sh.chezmoi.shodan.litellm";
       ProgramArguments = [
         "${litellm.bin}"
         "--config"
