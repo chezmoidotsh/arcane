@@ -29,5 +29,6 @@
     fastapi
     uvicorn
     python-multipart
+    backoff
   ]);
 }
