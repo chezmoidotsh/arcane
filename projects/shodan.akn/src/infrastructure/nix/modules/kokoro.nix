@@ -1,5 +1,5 @@
 # Kokoro user-level service module (XDG paths + launchd agent).
-# This module provisions a venv, configures log rotation, and runs the server.
+# This module uses a Nix Python env, configures log rotation, and runs the server.
 {
   lib,
   pkgs,
@@ -11,6 +11,7 @@
   xdgShare = "${homeDir}/.local/share";
   xdgState = "${homeDir}/.local/state";
   logDir = "${xdgState}/log";
+
   releaseTag = "v0.2.4-master";
   src = pkgs.fetchFromGitHub {
     owner = "remsky";
@@ -18,7 +19,166 @@
     rev = releaseTag;
     hash = "sha256-dAC0Jq7vhKPzt7n09cO4okn8C/AqG294Ds/BJLlWPbk=";
   };
+
+  python = pkgs.python312.override {
+    packageOverrides = final: prev: let
+      phonemizerForkPkg = prev.buildPythonPackage rec {
+        pname = "phonemizer-fork";
+        version = "3.3.2";
+        format = "wheel";
+        src = pkgs.fetchurl {
+          url = "https://files.pythonhosted.org/packages/64/f1/0dcce21b0ae16a82df4b6583f8f3ad8e55b35f7e98b6bf536a4dd225fa08/phonemizer_fork-3.3.2-py3-none-any.whl";
+          sha256 = "sha256-lzBcdvQYOzgl2uj0wDImX+eMmUbOWMR9S2IWE0kmS3Q=";
+        };
+        dontWrapPythonPrograms = true;
+        propagatedBuildInputs = with final; [
+          attrs
+          dlinfo
+          joblib
+          segments
+          final."typing-extensions"
+        ];
+        postInstall = ''
+          rm -f $out/bin/.phonemize-wrapped
+        '';
+        doCheck = false;
+      };
+    in {
+      dlinfo = prev.dlinfo.overridePythonAttrs (old: {
+        meta = old.meta // { broken = false; };
+        doCheck = false;
+      });
+      plotly = prev.plotly.overridePythonAttrs (old: {
+        doCheck = false;
+      });
+      wandb = prev.wandb.overridePythonAttrs (old: {
+        doCheck = false;
+      });
+      spacy = prev.spacy.overridePythonAttrs (old: {
+        doCheck = false;
+      });
+      phonemizer = phonemizerForkPkg;
+      "phonemizer-fork" = phonemizerForkPkg;
+    };
+  };
+  pythonPkgs = python.pkgs;
+
+  espeakngLoader = pythonPkgs.buildPythonPackage rec {
+    pname = "espeakng-loader";
+    version = "0.2.4";
+    format = "wheel";
+    src = pkgs.fetchurl {
+      url = "https://files.pythonhosted.org/packages/a8/26/258c0cd43b9bc1043301c5f61767d6a6c3b679df82790c9cb43a3277b865/espeakng_loader-0.2.4-py3-none-macosx_11_0_arm64.whl";
+      sha256 = "sha256-0nzcoxESIm5ymdhWLoidPjih5IBVye44G0XWaQcu5Z8=";
+    };
+    doCheck = false;
+  };
+
+  spacyModelEnCoreWebSm = pythonPkgs.buildPythonPackage rec {
+    pname = "en-core-web-sm";
+    version = "3.8.0";
+    format = "wheel";
+    src = pkgs.fetchurl {
+      url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl";
+      sha256 = "sha256-GTJCnbcn1L/z3u1rNM/AXfF3lPSlLusmz4ko98Gg+4U=";
+    };
+    doCheck = false;
+  };
+
+  phonemizerFork = pythonPkgs.buildPythonPackage rec {
+    pname = "phonemizer-fork";
+    version = "3.3.2";
+    format = "wheel";
+    src = pkgs.fetchurl {
+      url = "https://files.pythonhosted.org/packages/64/f1/0dcce21b0ae16a82df4b6583f8f3ad8e55b35f7e98b6bf536a4dd225fa08/phonemizer_fork-3.3.2-py3-none-any.whl";
+      sha256 = "sha256-lzBcdvQYOzgl2uj0wDImX+eMmUbOWMR9S2IWE0kmS3Q=";
+    };
+    dontWrapPythonPrograms = true;
+    propagatedBuildInputs = with pythonPkgs; [
+      attrs
+      dlinfo
+      joblib
+      segments
+      pythonPkgs."typing-extensions"
+    ];
+    postInstall = ''
+      rm -f $out/bin/.phonemize-wrapped
+    '';
+    doCheck = false;
+  };
+
+  text2numPkg = pythonPkgs.buildPythonPackage rec {
+    pname = "text2num";
+    version = "2.5.1";
+    pyproject = true;
+    src = pkgs.fetchPypi {
+      inherit pname version;
+      sha256 = "sha256-wGAgH6JLe5fzGQBF6V5vKyg656wXLL5IKjpO8G6yCMQ=";
+    };
+    build-system = with pythonPkgs; [ setuptools wheel ];
+    doCheck = false;
+  };
+
+  # Nix-provided Python env for Kokoro app (no venv/uv at activation).
+  pythonEnv = python.withPackages (ps: with ps; [
+    fastapi
+    uvicorn
+    click
+    pydantic
+    ps."pydantic-settings"
+    ps."python-dotenv"
+    sqlalchemy
+    numpy
+    scipy
+    soundfile
+    regex
+    aiofiles
+    tqdm
+    requests
+    munch
+    tiktoken
+    loguru
+    openai
+    pydub
+    matplotlib
+    mutagen
+    psutil
+    espeakngLoader
+    kokoro
+    misaki
+    spacy
+    spacyModelEnCoreWebSm
+    inflect
+    phonemizer
+    av
+    text2numPkg
+    torch
+  ]);
+  kokoroUvicorn = "${pythonEnv}/bin/uvicorn";
+
+  # Nix model bundle (models copied to XDG data dir at activation).
+  modelFile = pkgs.fetchurl {
+    url = "https://github.com/remsky/Kokoro-FastAPI/releases/download/v0.1.4/kokoro-v1_0.pth";
+    sha256 = "496dba118d1a58f5f3db2efc88dbdc216e0483fc89fe6e47ee1f2c53f18ad1e4";
+  };
+  configFile = pkgs.fetchurl {
+    url = "https://github.com/remsky/Kokoro-FastAPI/releases/download/v0.1.4/config.json";
+    sha256 = "5abb01e2403b072bf03d04fde160443e209d7a0dad49a423be15196b9b43c17f";
+  };
+  modelBundle = pkgs.stdenvNoCC.mkDerivation {
+    pname = "kokoro-models";
+    version = "v1_0";
+    dontUnpack = true;
+    installPhase = ''
+      mkdir -p $out
+      install -m 0644 ${modelFile} $out/kokoro-v1_0.pth
+      install -m 0644 ${configFile} $out/config.json
+    '';
+  };
+
   modelsDir = "${xdgShare}/kokoro/models";
+
+
 in {
   # Log rotation for Kokoro user-level logs (newsyslog is system-level).
   environment.etc."newsyslog.d/shodan.akn-kokoro.conf".text = ''
@@ -26,52 +186,73 @@ in {
     ${logDir}/kokoro.stderr.log 644 7 10000 * J
   '';
 
-  # Provision venv and dependencies under XDG data, and ensure log directory exists.
+  # Ensure XDG data/log directories exist and materialize model files from Nix bundle.
   system.activationScripts.extraActivation.text = lib.mkAfter ''
     install -d -m 0755 -o ${username} -g staff ${xdgShare}/kokoro
-    install -d -m 0755 -o ${username} -g staff ${modelsDir}
+    install -d -m 0755 -o ${username} -g staff ${modelsDir}/v1_0
     install -d -m 0755 -o ${username} -g staff ${logDir}
-    venvPython=${xdgShare}/kokoro/venv/bin/python
-    if [ -d ${xdgShare}/kokoro/venv ]; then
-      if ! "$venvPython" - <<'PY'
-import sys
-raise SystemExit(0 if sys.version_info >= (3,10) else 1)
-PY
-      then
-        rm -rf ${xdgShare}/kokoro/venv
-      fi
-    fi
-    if [ ! -d ${xdgShare}/kokoro/venv ]; then
-      ${pkgs.uv}/bin/uv venv --python ${pkgs.python311}/bin/python ${xdgShare}/kokoro/venv
-    fi
+    install -d -m 0755 -o ${username} -g staff ${xdgState}/tmp/kokoro
     chown -R ${username}:staff ${xdgShare}/kokoro
     chown -R ${username}:staff ${logDir}
-    ${pkgs.uv}/bin/uv pip install --python ${xdgShare}/kokoro/venv/bin/python --upgrade --quiet "${src}[cpu]"
-    ${xdgShare}/kokoro/venv/bin/python ${src}/docker/scripts/download_model.py --output ${modelsDir}/v1_0
+
+    if [ ! -f ${modelsDir}/v1_0/kokoro-v1_0.pth ]; then
+      install -m 0644 ${modelBundle}/kokoro-v1_0.pth ${modelsDir}/v1_0/kokoro-v1_0.pth
+    fi
+    if [ ! -f ${modelsDir}/v1_0/config.json ]; then
+      install -m 0644 ${modelBundle}/config.json ${modelsDir}/v1_0/config.json
+    fi
+    chown -R ${username}:staff ${modelsDir}
   '';
 
   # User-level service (launchd agent) for Kokoro server.
   launchd.agents.kokoro = {
     serviceConfig = {
       ProgramArguments = [
-        "/bin/sh"
-        "-c"
-        "exec ${xdgShare}/kokoro/venv/bin/uvicorn api.src.main:app --host 0.0.0.0 --port 8888"
+        "${kokoroUvicorn}"
+        "api.src.main:app"
+        "--host"
+        "0.0.0.0"
+        "--port"
+        "8888"
       ];
       KeepAlive = { SuccessfulExit = false; };
       RunAtLoad = true;
       ThrottleInterval = 10;
+      WorkingDirectory = "${xdgState}/tmp/kokoro";
       # MPS fallback improves compatibility on Apple Silicon.
       EnvironmentVariables = {
         USE_GPU = "false";
         USE_ONNX = "false";
+        PATH = "${pkgs.ffmpeg}/bin:/usr/bin:/bin:/usr/sbin:/sbin";
         PYTHONPATH = "${src}:${src}/api";
         MODEL_DIR = "${modelsDir}";
         VOICES_DIR = "${src}/api/src/voices/v1_0";
         WEB_PLAYER_PATH = "${src}/web";
+        TMPDIR = "${xdgState}/tmp/kokoro";
       };
       StandardOutPath = "${logDir}/kokoro.stdout.log";
       StandardErrorPath = "${logDir}/kokoro.stderr.log";
+    };
+  };
+
+  launchd.agents.kokoro-janitor = {
+    serviceConfig = {
+      ProgramArguments = [
+        "${pkgs.findutils}/bin/find"
+        "${xdgState}/tmp/kokoro"
+        "-type"
+        "f"
+        "-mmin"
+        "+60"
+        "-delete"
+      ];
+      # Run every hour (3600s) to sweep files older than 60 minutes
+      StartInterval = 3600;
+      RunAtLoad = true;
+      ThrottleInterval = 10;
+      WorkingDirectory = "${xdgState}/tmp/kokoro";
+      StandardOutPath = "${logDir}/kokoro-janitor.stdout.log";
+      StandardErrorPath = "${logDir}/kokoro-janitor.stderr.log";
     };
   };
 }
