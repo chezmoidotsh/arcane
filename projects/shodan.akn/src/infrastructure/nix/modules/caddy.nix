@@ -52,6 +52,7 @@ in {
         "-c"
         "exec ${caddy}/bin/caddy run --config ${xdg.config}/caddy/Caddyfile --watch"
       ];
+      UserName = username;
       EnvironmentVariables = {
         HOME = "/Users/${username}";
         # Ensure the running Caddy process knows where to find the bundled snippets.
