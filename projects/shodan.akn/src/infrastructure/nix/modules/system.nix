@@ -22,7 +22,7 @@ in {
   system.primaryUser = username;
 
   # System-wide packages required by the user-level services.
-  environment.systemPackages = with pkgs; [uv python311];
+  environment.systemPackages = with pkgs; [];
 
   # Ensure XDG base directories exist with correct ownership.
   # Also apply power settings during activation.
