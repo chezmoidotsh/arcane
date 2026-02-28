@@ -2,13 +2,14 @@
 # This module renders a user-scoped Caddyfile, configures log rotation,
 # and runs Caddy without requiring system-level privileges.
 {
+  lib,
   pkgs,
   username,
   ...
 }: let
   caddyFile = pkgs.writeText "Caddyfile" ''
-    llm.chezmoi.sh:1234 {
-      # HTTP only (TLS temporarily disabled)
+    http://:1234 {
+      # HTTP only (TLS disabled)
       reverse_proxy localhost:4000
 
       log {
@@ -25,9 +26,10 @@
   };
 in {
   # Ensure user config directory exists and install the generated Caddyfile.
-  system.activationScripts.caddyConfig.text = ''
+  system.activationScripts.extraActivation.text = lib.mkAfter ''
     install -d -m 0755 -o ${username} -g staff /Users/${username}/.config/caddy
     install -m 0644 -o ${username} -g staff ${caddyFile} /Users/${username}/.config/caddy/Caddyfile
+    chown -R ${username}:staff /Users/${username}/.config/caddy
   '';
 
   # Rotate Caddy access/stdout/stderr logs via newsyslog (system-level rotation).
@@ -43,10 +45,13 @@ in {
       ProgramArguments = [
         "/bin/sh"
         "-c"
-        "exec ${caddyCustom}/bin/caddy run --config /Users/${username}/.config/caddy/Caddyfile"
+        "exec ${caddyCustom}/bin/caddy run --config /Users/${username}/.config/caddy/Caddyfile --watch"
       ];
-      KeepAlive = true;
+      KeepAlive = {
+        SuccessfulExit = false;
+      };
       RunAtLoad = true;
+      ThrottleInterval = 10;
       StandardOutPath = "/Users/${username}/.local/state/log/caddy.stdout.log";
       StandardErrorPath = "/Users/${username}/.local/state/log/caddy.stderr.log";
     };
