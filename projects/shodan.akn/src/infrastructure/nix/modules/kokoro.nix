@@ -63,7 +63,6 @@ in {
         WEB_PLAYER_PATH = "${kokoro.src}/web";
         TMPDIR = "${xdg.state}/tmp/kokoro";
       };
-      UserName = username;
       StandardOutPath = "${xdg.log}/kokoro.stdout.log";
       StandardErrorPath = "${xdg.log}/kokoro.stderr.log";
     };
