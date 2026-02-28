@@ -47,6 +47,7 @@ in {
   # User-level launchd agent (starts at login, uses user HOME/XDG paths).
   launchd.agents.caddy = {
     serviceConfig = {
+      Label = "sh.chezmoi.shodan.caddy";
       ProgramArguments = [
         "/bin/sh"
         "-c"
