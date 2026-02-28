@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Erreur</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <style>
+    /* Shared styles for a single bundled error page */
+    :root{
+      --bg-dark: #140000;
+      --bg-mid: #220606;
+      --tile-color: #d22b2b;
+      --tile-color-muted: #b23a3a;
+      --flash-bg: rgba(0,0,0,0.85);
+      --flash-color: #ffffff;
+      --tile-font-size: 20px;
+      --tile-w: 120px;
+      --tile-h: 40px;
+    }
+    html,body{
+      height:100%;
+      margin:0;
+      background: linear-gradient(180deg, #0b0000 0%, var(--bg-dark) 100%);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
+      color:var(--tile-color);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    .error-page{
+      position:relative;
+      min-height:100vh;
+      overflow:hidden;
+      background:radial-gradient(1200px 600px at 10% 10%, rgba(255,0,0,0.02), transparent 10%), var(--bg-mid);
+    }
+
+    /* tile grid */
+    #tile{
+      position:absolute;
+      inset:0;
+      display:grid;
+      grid-template-columns: repeat(auto-fill, var(--tile-w));
+      grid-auto-rows: var(--tile-h);
+      align-items:center;
+      justify-items:center;
+      gap:12px;
+      pointer-events:none;
+      transform:translateZ(0);
+    }
+    #tile span{
+      color:var(--tile-color);
+      font-size:var(--tile-font-size);
+      line-height:1;
+      letter-spacing:0.02em;
+      white-space:nowrap;
+      opacity:0.95;
+      transform-origin:center;
+      transition: transform 600ms cubic-bezier(.2,.9,.2,1), opacity 400ms ease;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.25);
+    }
+
+    /* center bracketed message */
+    .flash{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      background:var(--flash-bg);
+      color:var(--flash-color);
+      padding:12px 20px;
+      border-radius:6px;
+      border:3px solid rgba(255,255,255,0.06);
+      z-index:10;
+      font-weight:800;
+      letter-spacing:1px;
+      font-size:18px;
+      text-align:center;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.6), inset 0 -4px 12px rgba(255,255,255,0.02);
+      will-change:transform,opacity;
+    }
+
+    /* stronger visuals for fatal pages */
+    .fatal #tile span { color: #ff4b4b; }
+    .fatal { --bg-mid: #1a0000; --tile-color: #ff4b4b; }
+    .fatal .flash { padding:14px 24px; font-size:20px; border-color: rgba(255,255,255,0.12); }
+
+    /* subtle scanlines */
+    .error-page::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background-image: linear-gradient(rgba(255,255,255,0.01) 0.5px, transparent 0.5px);
+      background-size:100% 4px;
+      pointer-events:none;
+      mix-blend-mode:overlay;
+      opacity:0.28;
+      z-index:2;
+    }
+
+    @keyframes flashPulse {
+      0% { transform: translate(-50%,-50%) scale(1); opacity:1; }
+      50% { transform: translate(-50%,-50%) scale(1.02); opacity:0.98; }
+      100% { transform: translate(-50%,-50%) scale(1); opacity:1; }
+    }
+    .flash { animation: flashPulse 3s ease-in-out infinite; }
+
+    @media (max-width:700px){
+      :root{ --tile-w: 80px; --tile-h: 28px; --tile-font-size:14px }
+      .flash{ font-size:14px; padding:8px 12px }
+    }
+
+    /* reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      .flash, #tile span, .error-page::before { animation:none !important; transition:none !important; }
+    }
+
+    /* fallback styles for no-js: show a centered simple message */
+    .no-js-fallback{
+      display:none;
+      position:fixed;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(180deg,#2a0000,#120000);
+      color:#fff;
+      font-family:monospace;
+      z-index:20;
+    }
+    noscript .no-js-fallback{ display:flex; }
+  </style>
+</head>
+<body class="error-page">
+  <div id="tile" aria-hidden="true"></div>
+
+  <!-- The central bracketed message; JS will set content and class on <body> -->
+  <div id="flash" class="flash" role="status" aria-live="polite">[ ERROR ]</div>
+
+  <noscript>
+    <div class="no-js-fallback">
+      <div>
+        <h1 style="margin:0 0 8px;font-size:20px">Erreur</h1>
+        <p style="margin:0;color:#ffd1d1">JavaScript est requis pour afficher la page d'erreur stylisée.</p>
+      </div>
+    </div>
+  </noscript>
+
+  <script>
+  (function(){
+    'use strict';
+
+    // Utility
+    function qs() { return new URLSearchParams(location.search); }
+    function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+    // Determine status from query param 'status' or 's' or 'type'
+    const params = qs();
+    let rawStatus = params.get('status') || params.get('s') || '';
+    let typeHint = (params.get('type') || '').toLowerCase(); // e.g. '4xx' or '5xx' or 'client'/'server'
+
+    // If status is absent but Caddy may have appended a placeholder like '4xx', accept that
+    let statusNum = null;
+    if (/^\d{3}$/.test(rawStatus)) {
+      statusNum = parseInt(rawStatus,10);
+    } else if (/^[45]xx$/.test(rawStatus.toLowerCase())) {
+      statusNum = rawStatus[0] === '4' ? 400 : 500;
+    }
+
+    // Fallback: if typeHint present, map it
+    if (statusNum === null) {
+      if (typeHint === '4xx' || typeHint === 'client' || typeHint === '4') statusNum = 400;
+      if (typeHint === '5xx' || typeHint === 'server' || typeHint === '5') statusNum = 500;
+    }
+
+    // If still null, attempt to detect HTTP code from path (not reliable) - leave null
+    // Decide severity
+    const severity = (statusNum !== null && statusNum >= 500) ? '5xx' : '4xx';
+
+    // Messages for each severity (primary message displayed in bracket)
+    const MSGS = {
+      '4xx': [
+        '[ NOT FOUND ]',
+        '[ BAD REQUEST ]',
+        '[ UNAUTHORIZED ]',
+        '[ FORBIDDEN ]',
+        '[ GONE ]',
+        '[ INVALID ]',
+        '[ TIMED OUT ]'
+      ],
+      '5xx': [
+        '[ FATAL ]',
+        '[ CRITICAL ]',
+        '[ SERVER ERROR ]',
+        '[ PANIC ]',
+        '[ KERNEL PANIC ]',
+        '[ DISK FULL ]',
+        '[ OUT OF MEMORY ]'
+      ],
+      'default': ['[ ERROR ]']
+    };
+
+    // Tile pool
+    function tilePool(){ return ['Error!!','Error!!','Error!!','Error!','!!Error!!','ERR!','!!!ERR!!!','E R R O R']; }
+
+    // Build grid of tiles
+    function buildGrid(tileEl){
+      if(!tileEl) return;
+      while(tileEl.firstChild) tileEl.removeChild(tileEl.firstChild);
+      const cellW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile-w')) || 120;
+      const cellH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--tile-h')) || 40;
+      const cols = Math.ceil(window.innerWidth / cellW) + 2;
+      const rows = Math.ceil(window.innerHeight / cellH) + 2;
+      const total = Math.max(24, cols * rows);
+      const pool = tilePool();
+      const frag = document.createDocumentFragment();
+      for(let i=0;i<total;i++){
+        const s = document.createElement('span');
+        s.textContent = pool[Math.floor(Math.random()*pool.length)];
+        const r = (Math.random()*8 - 4);
+        const scale = 0.9 + Math.random()*0.35;
+        s.style.transform = `skew(-5deg) rotate(${r}deg) scale(${scale})`;
+        s.style.opacity = (0.6 + Math.random()*0.4).toFixed(2);
+        frag.appendChild(s);
+      }
+      tileEl.appendChild(frag);
+    }
+
+    // Randomize flash position & occasional message change
+    function randomizeFlash(flashEl, messages){
+      if(!flashEl) return;
+      if(messages && messages.length && Math.random() < 0.33){
+        flashEl.textContent = messages[Math.floor(Math.random()*messages.length)];
+      }
+      const maxOffsetX = Math.min(window.innerWidth*0.22, 260);
+      const maxOffsetY = Math.min(window.innerHeight*0.22, 180);
+      const offsetX = Math.round((Math.random()*2 -1) * maxOffsetX);
+      const offsetY = Math.round((Math.random()*2 -1) * maxOffsetY);
+      flashEl.style.transform = `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`;
+    }
+
+    // Initialize page
+    function init(){
+      const tile = document.getElementById('tile');
+      const flash = document.getElementById('flash');
+
+      // Apply fatal class if severity server-side
+      if (severity === '5xx') document.body.classList.add('fatal');
+
+      // Choose messages array: allow override by query param 'msg' (comma-separated)
+      let messages = MSGS[severity] || MSGS['default'];
+      const explicitMsg = params.get('msg');
+      if(explicitMsg){
+        // allow multiple messages comma-separated
+        messages = explicitMsg.split(',').map(s=>s.trim()).filter(Boolean);
+        if(messages.length === 0) messages = MSGS[severity];
+      }
+
+      // If status provided, show it in the bracket occasionally
+      if (statusNum !== null && Math.random() < 0.35 && flash) {
+        flash.textContent = `[ ${statusNum} ]`;
+      } else if (flash) {
+        flash.textContent = messages[Math.floor(Math.random()*messages.length)];
+      }
+
+      buildGrid(tile);
+      randomizeFlash(flash, messages);
+
+      // Periodic jitter
+      const jitter = setInterval(()=> randomizeFlash(flash, messages), 2200 + Math.random()*1600);
+
+      // Flicker / occasional tile changes
+      const flicker = setInterval(()=>{
+        if(!tile) return;
+        const spans = tile.children;
+        if(!spans || spans.length === 0) return;
+        for(let i=0;i<6;i++){
+          const idx = Math.floor(Math.random()*spans.length);
+          const sp = spans[idx];
+          if(sp){
+            sp.textContent = tilePool()[Math.floor(Math.random()*5)];
+            sp.style.opacity = (0.6 + Math.random()*0.4).toFixed(2);
+            sp.style.transform = `skew(-5deg) rotate(${(Math.random()*8-4).toFixed(2)}deg) scale(${(0.9 + Math.random()*0.35).toFixed(2)})`;
+          }
+        }
+      }, 1200 + Math.random()*1600);
+
+      // Rebuild on resize (debounced)
+      let rt = null;
+      window.addEventListener('resize', ()=>{
+        clearTimeout(rt);
+        rt = setTimeout(()=> buildGrid(tile), 200);
+      });
+
+      // Pause intervals when hidden
+      document.addEventListener('visibilitychange', ()=>{
+        if(document.hidden){
+          clearInterval(jitter);
+          clearInterval(flicker);
+        } else {
+          // reload page quickly for stable timing, or rebuild
+          try{ buildGrid(tile); randomizeFlash(flash, messages); }catch(e){}
+        }
+      });
+    }
+
+    // Run when DOM ready
+    if (document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      setTimeout(init, 10);
+    }
+  })();
+  </script>
+</body>
+</html>

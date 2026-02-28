@@ -1,8 +1,46 @@
-http://:1234 {
-  # HTTP only (TLS disabled)
-  reverse_proxy localhost:4000
+llm.ai.chezmoi.sh:1234 {
+  # Proxy to local LiteLLM
+  reverse_proxy 127.0.0.1:4000
 
   log {
-    output file /Users/shodan/.local/state/log/caddy.access.log
+    output file /Users/shodan/.local/state/log/caddy.llm.access.log
+    level INFO
+  }
+
+  # Custom error handling - global for this endpoint
+  handle_errors {
+    root * /Users/shodan/.local/state/shodan/github.com/chezmoidotsh/arcane/projects/shodan.akn/src/infrastructure/nix/config/errors
+
+    @client_err status 400..499
+    rewrite @client_err /4xx.html
+
+    @server_err status 500..599
+    rewrite @server_err /5xx.html
+
+    file_server
+  }
+}
+
+# Kokoro TTS vhost (HTTP)
+kokoro.ai.chezmoi.sh:80 {
+  # Proxy to local Kokoro FastAPI
+  reverse_proxy 127.0.0.1:8880
+
+  log {
+    output file /Users/shodan/.local/state/log/caddy.kokoro.access.log
+    level ERROR
+  }
+
+  # Custom error handling - global for this endpoint
+  handle_errors {
+    root * /Users/shodan/.local/state/shodan/github.com/chezmoidotsh/arcane/projects/shodan.akn/src/infrastructure/nix/config/errors
+
+    @client_err status 400..499
+    rewrite @client_err /4xx.html
+
+    @server_err status 500..599
+    rewrite @server_err /5xx.html
+
+    file_server
   }
 }

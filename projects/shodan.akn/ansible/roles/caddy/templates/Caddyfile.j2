@@ -3,6 +3,13 @@
     http_port {{ caddy_https_port }}
 }
 
+# Simple port listener that redirects any request on :1234 to the llm host
+:1234 {
+    # Redirect all requests to the canonical LLM host, preserving the path/query
+    redir https://llm.ai.chezmoi.sh{uri} 301
+}
+
+# Primary site serving the litellm reverse proxy (existing site)
 {{ caddy_hostname }}:{{ caddy_https_port }} {
     log {
         output file {{ caddy_log_dir }}/caddy.access.log {
@@ -12,4 +19,36 @@
     }
 
     reverse_proxy localhost:{{ litellm_port }}
+}
+
+# Kokoro service vhost with custom error pages
+kokoro.ai.chezmoi.sh:{{ caddy_https_port }} {
+    # Serve custom error assets from the caddy config directory (template files)
+    # Expected files (place them under {{ caddy_config_dir }}/errors/):
+    # - 4xx.html
+    # - 5xx.html
+    # - common.css
+    # - common.js
+    root * {{ caddy_config_dir }}/errors
+
+    log {
+        output file {{ caddy_log_dir }}/kokoro.access.log {
+            roll_size 10MB
+            roll_keep 5
+        }
+    }
+
+    # Proxy traffic to local Kokoro FastAPI
+    reverse_proxy localhost:{{ kokoro_port }}
+
+    # Custom error handling: rewrite client (4xx) and server (5xx) errors to custom pages
+    handle_errors {
+        @client_err status 400..499
+        rewrite @client_err /4xx.html
+
+        @server_err status 500..599
+        rewrite @server_err /5xx.html
+
+        file_server
+    }
 }

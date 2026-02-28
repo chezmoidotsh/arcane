@@ -1,0 +1,153 @@
+/* common.css — Shared styles for custom error pages
+ *
+ * Visual: dense tiled "Error!!" background in red tones with a centered
+ * bracketed message in white-on-dark. Small random jitter & occasional
+ * flicker to give a retro/urgent vibe.
+ *
+ * Used by: 4xx.html and 5xx.html in the same directory.
+ */
+
+:root {
+  --bg-very-dark: #120606;
+  --bg-dark: #1a0000;
+  --tile-color: #d22b2b;
+  --tile-color-muted: #b12222;
+  --flash-bg: rgba(0, 0, 0, 0.85);
+  --flash-color: #ffffff;
+  --flash-accent: rgba(255,255,255,0.08);
+  --tile-font-size: 22px;
+  --tile-gap: 12px;
+}
+
+/* Reset */
+html, body {
+  height: 100%;
+  margin: 0;
+  background: var(--bg-dark);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Page container */
+.error-page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--bg-very-dark) 0%, var(--bg-dark) 100%);
+  color: var(--tile-color);
+}
+
+/* Tile grid that the JS populates with <span> elements */
+#tile {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 120px);
+  grid-auto-rows: 40px;
+  place-items: center;
+  align-content: start;
+  gap: var(--tile-gap);
+  pointer-events: none; /* decorative only */
+}
+
+/* Individual tile text */
+#tile span {
+  color: var(--tile-color);
+  font-size: var(--tile-font-size);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  opacity: 0.95;
+  transform-origin: center;
+  text-shadow:
+    0 0 0 rgba(0,0,0,0.0),
+    0 1px 0 rgba(0,0,0,0.25);
+  white-space: nowrap;
+  will-change: transform, opacity;
+  transition: opacity 400ms ease, transform 600ms cubic-bezier(.2,.9,.2,1);
+}
+
+/* Muted variation for less intense pages */
+.error-page.muted #tile span { color: var(--tile-color-muted); }
+
+/* Centered flash message (the bracketed white message) */
+.flash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--flash-bg);
+  color: var(--flash-color);
+  padding: 12px 20px;
+  border-radius: 6px;
+  border: 3px solid var(--flash-accent);
+  font-family: inherit;
+  font-weight: 800;
+  letter-spacing: 1px;
+  font-size: 18px;
+  text-align: center;
+  z-index: 10;
+  box-shadow:
+    0 6px 30px rgba(0,0,0,0.6),
+    inset 0 -4px 12px rgba(255,255,255,0.02);
+  mix-blend-mode: normal;
+  will-change: transform, opacity;
+}
+
+/* Slight pulse/flicker to make the message feel alive */
+@keyframes flash-pulse {
+  0%   { transform: translate(-50%, -50%) scale(1); opacity: 1; filter: none; }
+  50%  { transform: translate(-50%, -50%) scale(1.02); opacity: 0.98; filter: drop-shadow(0 1px 0 rgba(255,255,255,0.02)); }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; filter: none; }
+}
+.flash { animation: flash-pulse 3s ease-in-out infinite; }
+
+/* Fatal pages (5xx) — stronger colors and slightly larger flash */
+.error-page.fatal {
+  --bg-dark: #140000;
+  --bg-very-dark: #090000;
+  --tile-color: #ff4949;
+}
+.error-page.fatal .flash {
+  padding: 14px 24px;
+  font-size: 20px;
+  border-color: rgba(255,255,255,0.12);
+  animation-duration: 2.4s;
+}
+
+/* Layered faint scanlines to add retro CRT feeling */
+.error-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.01) 0.5px, transparent 0.5px);
+  background-size: 100% 4px;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: 0.35;
+  z-index: 5;
+}
+
+/* Tiny random jitter on tiles for subtle motion */
+@keyframes tile-jitter {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 0.9; }
+  50%  { transform: translateY(-1px) rotate(0.4deg); opacity: 1; }
+  100% { transform: translateY(0) rotate(-0.3deg); opacity: 0.92; }
+}
+#tile span { animation: tile-jitter 6s infinite ease-in-out; animation-delay: calc(-1s * var(--i, 0)); }
+
+/* Accessibility: respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .flash, #tile span, .error-page::before { animation: none !important; transition: none !important; }
+}
+
+/* Responsive: smaller tiles & font on narrow viewports */
+@media (max-width: 700px) {
+  #tile { grid-template-columns: repeat(auto-fill, 80px); grid-auto-rows: 28px; gap: 8px; }
+  #tile span { font-size: 14px; }
+  .flash { font-size: 14px; padding: 8px 12px; }
+}
+
+/* Helper to visually center long messages kept inside brackets */
+.flash br { display: none; }

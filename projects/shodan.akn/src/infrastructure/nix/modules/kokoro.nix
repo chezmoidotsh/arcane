@@ -44,7 +44,7 @@ in {
         "${kokoro.bin}"
         "api.src.main:app"
         "--host"
-        "0.0.0.0"
+        "127.0.0.1"
         "--port"
         "8888"
       ];

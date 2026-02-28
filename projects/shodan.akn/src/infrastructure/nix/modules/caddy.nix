@@ -16,9 +16,21 @@
   };
 in {
   # Ensure user config directory exists and install the generated Caddyfile.
+  # Also copy any bundled `config/errors` into the user's caddy config so
+  # custom error pages are available at runtime.
   system.activationScripts.extraActivation.text = lib.mkAfter ''
     install -d -m 0755 -o ${username} -g staff ${xdg.config}/caddy
     install -m 0644 -o ${username} -g staff ${../config/Caddyfile} ${xdg.config}/caddy/Caddyfile
+
+    # If repository contains a `config/errors` directory, copy it into the
+    # user's caddy config directory so `handle_errors` can serve the pages.
+    if [ -d ${../config}/errors ]; then
+      install -d -m 0755 -o ${username} -g staff ${xdg.config}/caddy/errors
+      # Use POSIX-friendly copy; copy contents if any
+      cp -R ${../config}/errors/. ${xdg.config}/caddy/errors/ || true
+      chown -R ${username}:staff ${xdg.config}/caddy/errors
+    fi
+
     chown -R ${username}:staff ${xdg.config}/caddy
   '';
 
@@ -37,6 +49,11 @@ in {
         "-c"
         "exec ${caddy}/bin/caddy run --config ${xdg.config}/caddy/Caddyfile --watch"
       ];
+      EnvironmentVariables = {
+        # Ensure the running Caddy process knows where to find the bundled error pages.
+        # This points to the errors directory copied into the user's XDG caddy config.
+        CADDY_ERRORS_DIR = "${xdg.config}/caddy/errors";
+      };
       KeepAlive = {
         SuccessfulExit = false;
       };

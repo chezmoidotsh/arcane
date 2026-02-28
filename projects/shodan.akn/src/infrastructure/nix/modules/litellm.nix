@@ -36,6 +36,8 @@ in {
         "${litellm.bin}"
         "--config"
         "${xdg.config}/litellm/config.yaml"
+        "--host"
+        "127.0.0.1"
         "--port"
         "4000"
       ];
