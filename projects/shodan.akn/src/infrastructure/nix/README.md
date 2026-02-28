@@ -17,6 +17,16 @@ Chemins XDG :
 - Données : `~/.local/share`
 - Logs : `~/.local/state/log`
 
+## Build & Apply (nix-darwin)
+
+Run these commands from the repo root:
+
+- Build only (no system changes):
+  - `nix build ./projects/shodan.akn/src/infrastructure/nix#darwinConfigurations.shodan.system`
+
+- Apply to the system:
+  - `nix run nix-darwin -- switch --flake ./projects/shodan.akn/src/infrastructure/nix#shodan`
+
 ## Lint (Nix)
 
 Run these commands from the repo root:
