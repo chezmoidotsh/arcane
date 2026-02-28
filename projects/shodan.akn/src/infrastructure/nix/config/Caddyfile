@@ -2,13 +2,18 @@
 # │ Caddyfile for Shodan AI Stack                                             │
 # └───────────────────────────────────────────────────────────────────────────┘
 
+{
+  # Disable automatic HTTPS globally
+  auto_https off
+}
+
 # 1234 HTTP Redirect to FQDN
 http://:1234 {
   redir http://llm.ai.chezmoi.sh:1234{uri}
 }
 
 # LiteLLM vhost
-llm.ai.chezmoi.sh:1234 {
+http://llm.ai.chezmoi.sh:1234 {
   # Proxy to local LiteLLM
   reverse_proxy 127.0.0.1:4000
 
@@ -22,7 +27,7 @@ llm.ai.chezmoi.sh:1234 {
 }
 
 # Kokoro TTS vhost
-kokoro.ai.chezmoi.sh:1234 {
+http://kokoro.ai.chezmoi.sh:1234 {
   # Proxy to local Kokoro FastAPI
   reverse_proxy 127.0.0.1:8880
 
