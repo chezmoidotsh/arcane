@@ -129,6 +129,19 @@ handle_errors {
             </ul>
         </div>
     </article>
+    <script>
+        (function() {
+            const values = document.querySelectorAll('.desc .details li');
+            const labels = document.querySelectorAll('.code .details li');
+            values.forEach((v, i) => {
+                const text = v.textContent.trim();
+                if (!text || (text.startsWith('{') && text.endsWith('}'))) {
+                    v.style.display = 'none';
+                    if (labels[i]) labels[i].style.display = 'none';
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
 ` {http.error.status_code}
