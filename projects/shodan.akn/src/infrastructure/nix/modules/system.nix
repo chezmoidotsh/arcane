@@ -1,8 +1,12 @@
-# System module: shared macOS settings, XDG directory setup, and power management.
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ System module: shared macOS settings, XDG directory setup, and power      │
+# │ management.                                                               │
+# └───────────────────────────────────────────────────────────────────────────┘
 {
   lib,
   pkgs,
   username,
+  xdg,
   ...
 }: let
   # Explicit user home path derived from the flake-level username.
@@ -25,15 +29,21 @@ in {
   environment.systemPackages = with pkgs; [];
 
   # Ensure XDG base directories exist with correct ownership.
-  # Also apply power settings during activation.
+  # Also apply power settings during activation:
+  #   sleep 0          : system sleep timer in minutes (0 = never sleep)
+  #   displaysleep 10  : display sleep timer in minutes (0 = never sleep)
+  #   powernap 1       : enable Power Nap (1 = on, 0 = off)
+  #   lowpowermode 0   : low power mode (1 = on, 0 = off)
+  #   autorestart 1    : auto restart after power loss (1 = on, 0 = off)
   system.activationScripts.extraActivation.text = lib.mkBefore ''
-    install -d -m 0755 -o ${username} -g staff ${userHome}/.config
-    install -d -m 0755 -o ${username} -g staff ${userHome}/.local
-    install -d -m 0755 -o ${username} -g staff ${userHome}/.local/share
-    install -d -m 0755 -o ${username} -g staff ${userHome}/.local/state
-    install -d -m 0755 -o ${username} -g staff ${userHome}/.local/state/log
-    chown -R ${username}:staff ${userHome}/.config
-    chown -R ${username}:staff ${userHome}/.local
+    install -d -m 0755 -o ${username} -g staff ${xdg.config}
+    install -d -m 0755 -o ${username} -g staff ${xdg.share}
+    install -d -m 0755 -o ${username} -g staff ${xdg.state}
+    install -d -m 0755 -o ${username} -g staff ${xdg.log}
+    chown -R ${username}:staff ${xdg.config}
+    chown -R ${username}:staff ${xdg.share}
+    chown -R ${username}:staff ${xdg.state}
+    chown -R ${username}:staff ${xdg.log}
 
     /usr/bin/pmset -a sleep 0
     /usr/bin/pmset -a displaysleep 10

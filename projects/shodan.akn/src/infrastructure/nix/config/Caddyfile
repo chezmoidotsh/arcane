@@ -1,0 +1,8 @@
+http://:1234 {
+  # HTTP only (TLS disabled)
+  reverse_proxy localhost:4000
+
+  log {
+    output file /Users/shodan/.local/state/log/caddy.access.log
+  }
+}
