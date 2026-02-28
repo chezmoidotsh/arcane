@@ -11,26 +11,8 @@
   xdgShare = "${homeDir}/.local/share";
   xdgState = "${homeDir}/.local/state";
   logDir = "${xdgState}/log";
-  python = pkgs.python312.override {
-    packageOverrides = final: prev: {
-      dlinfo = prev.dlinfo.overridePythonAttrs (old: {
-        meta = old.meta // { broken = false; };
-        doCheck = false;
-      });
-      plotly = prev.plotly.overridePythonAttrs (old: {
-        doCheck = false;
-      });
-      wandb = prev.wandb.overridePythonAttrs (old: {
-        doCheck = false;
-      });
-    };
-  };
-  pythonEnv = python.withPackages (ps: with ps; [
-    litellm
-    fastapi
-    uvicorn
-    python-multipart
-  ]);
+
+  pythonEnv = import ../packages/litellm { inherit pkgs; };
   litellmBin = "${pythonEnv}/bin/litellm";
 in {
   # Log rotation for LiteLLM logs (newsyslog is system-level).
