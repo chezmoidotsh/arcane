@@ -28,8 +28,6 @@
 #
 
 handle_errors {
-    @err status 400..599
-
     # Respond inline with the original status code.
     # The body is a raw string literal (backticks) so newlines are preserved.
     # We use placeholder {http.error.status_code} both in the HTML (for JS)
