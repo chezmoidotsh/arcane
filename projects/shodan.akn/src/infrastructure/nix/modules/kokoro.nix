@@ -75,6 +75,7 @@ in {
         "${kokoro.janitor}"
         "${xdg.state}/tmp/kokoro"
       ];
+      UserName = username;
       # Run every hour (3600s) to sweep files older than 60 minutes
       StartInterval = 3600;
       RunAtLoad = true;
