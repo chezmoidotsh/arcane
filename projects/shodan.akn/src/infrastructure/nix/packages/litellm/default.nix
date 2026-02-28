@@ -24,11 +24,5 @@
       };
     };
   in
-  python.withPackages (ps: with ps; [
-    litellm
-    fastapi
-    uvicorn
-    python-multipart
-    backoff
-  ]);
+    "${env}/bin/litellm";
 }
