@@ -1,5 +1,6 @@
 # System module: shared macOS settings, XDG directory setup, and power management.
 {
+  lib,
   pkgs,
   username,
   ...
@@ -24,21 +25,16 @@ in {
   environment.systemPackages = with pkgs; [uv python311];
 
   # Ensure XDG base directories exist with correct ownership.
-  system.activationScripts.shodanPaths.text = ''
+  # Also apply power settings during activation.
+  system.activationScripts.extraActivation.text = lib.mkBefore ''
     install -d -m 0755 -o ${username} -g staff ${userHome}/.config
     install -d -m 0755 -o ${username} -g staff ${userHome}/.local
     install -d -m 0755 -o ${username} -g staff ${userHome}/.local/share
     install -d -m 0755 -o ${username} -g staff ${userHome}/.local/state
     install -d -m 0755 -o ${username} -g staff ${userHome}/.local/state/log
-  '';
+    chown -R ${username}:staff ${userHome}/.config
+    chown -R ${username}:staff ${userHome}/.local
 
-  # Power settings.
-  # sleep: system sleep timer (0 = never, >0 = minutes)
-  # displaysleep: display sleep timer (0 = never, >0 = minutes)
-  # powernap: background tasks during sleep (1 = enabled, 0 = disabled)
-  # lowpowermode: reduce performance to save energy (1 = enabled, 0 = disabled)
-  # autorestart: restart after power loss (1 = enabled, 0 = disabled)
-  system.activationScripts.powerSettings.text = ''
     /usr/bin/pmset -a sleep 0
     /usr/bin/pmset -a displaysleep 10
     /usr/bin/pmset -a powernap 1
