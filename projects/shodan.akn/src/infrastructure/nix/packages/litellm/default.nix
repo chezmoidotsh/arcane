@@ -12,12 +12,7 @@ let
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/litellm \
-        --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nodejs ]} \
-        --set PRISMA_CLIENT_ENGINE_TYPE "binary" \
-        --set PRISMA_CLI_QUERY_ENGINE_TYPE "binary" \
-        --set PRISMA_FMT_BINARY "${pkgs.prisma-engines}/bin/prisma-fmt" \
-        --set PRISMA_QUERY_ENGINE_BINARY "${pkgs.prisma-engines}/bin/query-engine" \
-        --set PRISMA_SCHEMA_ENGINE_BINARY "${pkgs.prisma-engines}/bin/schema-engine"
+        --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nodejs ]}
     '';
   };
 
