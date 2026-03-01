@@ -45,7 +45,13 @@ http://:1234 {
 # started manually from the app). The downstream consumer is LiteLLM on the
 # rhinelab.akn Kubernetes cluster.
 http://studio.llm.chezmoi.sh:1234 {
-  reverse_proxy 127.0.0.1:8234
+  reverse_proxy 127.0.0.1:8234 {
+    transport http {
+      response_header_timeout 15m
+      read_timeout 15m
+      write_timeout 15m
+    }
+  }
 
   import errors.inc
 }
@@ -57,7 +63,13 @@ http://studio.llm.chezmoi.sh:1234 {
 # agent sh.chezmoi.shodan.kokoro). Provides offline TTS synthesis as a REST
 # API compatible with OpenAI /audio/speech.
 http://kokoro.llm.chezmoi.sh:1234 {
-  reverse_proxy 127.0.0.1:8880
+  reverse_proxy 127.0.0.1:8880 {
+    transport http {
+      response_header_timeout 15m
+      read_timeout 15m
+      write_timeout 15m
+    }
+  }
 
   import errors.inc
 }
