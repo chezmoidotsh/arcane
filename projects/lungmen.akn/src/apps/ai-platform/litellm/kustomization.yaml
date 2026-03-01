@@ -15,10 +15,10 @@ labels:
     includeSelectors: true
   - pairs:
       # renovate: datasource=docker depName=ghcr.io/berriai/litellm-database
-      app.kubernetes.io/version: v1.81.16-stable
+      app.kubernetes.io/version: main-v1.81.12-stable.2
     includeTemplates: true
 
 images:
   # renovate: datasource=docker depName=ghcr.io/berriai/litellm-database
   - name: ghcr.io/berriai/litellm-database
-    newTag: v1.81.16-stable
+    newTag: main-v1.81.12-stable.2@sha256:dabbc5368dccc272d8d5e3744fc58e696f58a072917ef8884a4d3a49fea5a33c
