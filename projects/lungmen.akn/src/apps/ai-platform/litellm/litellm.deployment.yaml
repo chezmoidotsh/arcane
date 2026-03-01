@@ -25,12 +25,14 @@ spec:
         runAsGroup: 1000
         fsGroup: 1000
       containers:
-        - name: proxy
+        - name: litellm
           image: ghcr.io/berriai/litellm-database
           imagePullPolicy: IfNotPresent
-          ports:
-            - name: http
-              containerPort: 4000
+          env:
+            - name: HOST
+              value: "0.0.0.0"
+            - name: PORT
+              value: "4000"
           envFrom:
             - configMapRef:
                 name: litellm-config
