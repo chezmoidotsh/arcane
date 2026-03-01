@@ -8,11 +8,17 @@ data:
   # General
   # ==========================================
 
-  # Log level for the LiteLLM proxy
-  LITELLM_LOG: "DEBUG"
+  # Log level for the LiteLLM proxy (keep output visible)
+  LITELLM_LOG: "INFO"
+
+  # Disable load_dotenv() in production
+  LITELLM_MODE: "PRODUCTION"
 
   # Base URL of the LiteLLM proxy (used for SSO callbacks)
   PROXY_BASE_URL: "https://llm.chezmoi.sh"
+
+  # Use prisma migrate deploy for DB migrations
+  USE_PRISMA_MIGRATE: "True"
 
   # ==========================================
   # SSO / OIDC (Pocket ID)
