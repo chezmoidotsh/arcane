@@ -95,8 +95,12 @@ spec:
         - name: litellm-config
           configMap:
             name: litellm-proxy-config
-        - name: ui-assets
-          emptyDir: {}
+            items:
+              - key: config.yaml
+                path: config.yaml
+        - name: ephemeral
+          emptyDir:
+            sizeLimit: 500Mi
 ---
 apiVersion: v1
 kind: Service
