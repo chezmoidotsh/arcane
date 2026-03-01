@@ -69,8 +69,6 @@ spec:
             requests:
               memory: "512Mi"
               cpu: "10m"
-            limits:
-              memory: "512Mi"
           livenessProbe:
             httpGet:
               path: /health/liveliness
