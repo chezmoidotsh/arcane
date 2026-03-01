@@ -7,18 +7,18 @@
   auto_https off
 }
 
-# 1234 HTTP Redirect to FQDN
+# HTTP Redirect bare IP/hostname to FQDN
 http://:1234 {
-  redir http://llm.ai.chezmoi.sh:1234{uri}
+  redir http://studio.llm.chezmoi.sh:1234{uri}
 }
 
-# LiteLLM vhost
-http://llm.ai.chezmoi.sh:1234 {
-  # Proxy to local LiteLLM
-  reverse_proxy 127.0.0.1:4000
+# LM Studio vhost
+http://studio.llm.chezmoi.sh:1234 {
+  # Proxy to local LM Studio
+  reverse_proxy 127.0.0.1:8234
 
   log {
-    output file /Users/shodan/.local/state/log/caddy.llm.access.log
+    output file /Users/shodan/.local/state/log/caddy.studio.access.log
     level INFO
   }
 
@@ -27,7 +27,7 @@ http://llm.ai.chezmoi.sh:1234 {
 }
 
 # Kokoro TTS vhost
-http://kokoro.ai.chezmoi.sh:1234 {
+http://kokoro.llm.chezmoi.sh:1234 {
   # Proxy to local Kokoro FastAPI
   reverse_proxy 127.0.0.1:8880
 

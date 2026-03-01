@@ -50,7 +50,7 @@
   in {
     # ┌───────────────────────────────────────────────────────────────────────────┐
     # │ <darwinConfigurations."shodan">: AI Stack macOS configuration             │
-    # │ Builds user-level launchd agents (Caddy, Kokoro, LiteLLM) and sets up     │
+    # │ Builds user-level launchd agents (Caddy, Kokoro) and sets up             │
     # │ XDG base directories.                                                     │
     # │                                                                           │
     # │ @sh.chezmoi.app.type: config                                              │
@@ -63,9 +63,7 @@
       modules = [
         ./modules/system.nix
         ./modules/caddy.nix
-        ./modules/postgres.nix
         ./modules/kokoro.nix
-        ./modules/litellm.nix
       ];
     };
   };
