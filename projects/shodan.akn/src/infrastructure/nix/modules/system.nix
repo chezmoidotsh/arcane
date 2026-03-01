@@ -16,9 +16,11 @@ in {
   homebrew = {
     enable = true;
     onActivation.upgrade = true;
-    packages = with pkgs; [
-      caffeine
-      lmstudio
+
+    brews = [];
+    casks = [
+      "caffeine"
+      "lmstudio"
     ];
   };
 
