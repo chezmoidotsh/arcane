@@ -36,6 +36,11 @@ data:
   # Auto redirect UI login to SSO
   AUTO_REDIRECT_UI_LOGIN_TO_SSO: "true"
 
+  # OIDC Admin Role mapping
+  # Pocket ID sends groups in the `groups` scope
+  GENERIC_USER_ROLE_ATTRIBUTE: "groups"
+  GENERIC_SSO_ADMIN_ROLE: "admin"
+
   # ==========================================
   # Cache (Valkey / Redis)
   # ==========================================
