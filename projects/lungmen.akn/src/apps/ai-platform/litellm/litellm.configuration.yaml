@@ -15,7 +15,7 @@ data:
   LITELLM_MODE: "PRODUCTION"
 
   # Base URL of the LiteLLM proxy (used for SSO callbacks)
-  PROXY_BASE_URL: "https://llm.chezmoi.sh"
+  PROXY_BASE_URL: https://llm.chezmoi.sh
 
   # Use prisma migrate deploy for DB migrations
   USE_PRISMA_MIGRATE: "True"
@@ -25,16 +25,16 @@ data:
   # ==========================================
 
   # Generic OIDC endpoints for Pocket ID at auth.chezmoi.sh
-  GENERIC_AUTHORIZATION_ENDPOINT: "https://auth.chezmoi.sh/authorize"
-  GENERIC_TOKEN_ENDPOINT: "https://auth.chezmoi.sh/api/oidc/token"
-  GENERIC_USERINFO_ENDPOINT: "https://auth.chezmoi.sh/api/oidc/userinfo"
-  GENERIC_SCOPE: "openid email profile"
+  GENERIC_AUTHORIZATION_ENDPOINT: https://auth.chezmoi.sh/authorize
+  GENERIC_TOKEN_ENDPOINT: https://auth.chezmoi.sh/api/oidc/token
+  GENERIC_USERINFO_ENDPOINT: https://auth.chezmoi.sh/api/oidc/userinfo
+  GENERIC_SCOPE: openid email profile groups
 
   # ==========================================
   # Cache (Valkey / Redis)
   # ==========================================
 
   # Valkey connection for LiteLLM caching (db index 4)
-  REDIS_HOST: "valkey.ai-platform.svc.cluster.local"
+  REDIS_HOST: valkey.ai-platform.svc.cluster.local
   REDIS_PORT: "6379"
   REDIS_DB: "4"
