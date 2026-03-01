@@ -41,6 +41,8 @@ spec:
               mountPath: /app/config.yaml
               subPath: config.yaml
               readOnly: true
+            - name: ui-assets
+              mountPath: /usr/lib/python3.13/site-packages/litellm/proxy/_experimental/out
           args:
             - "--config"
             - "/app/config.yaml"
@@ -79,6 +81,8 @@ spec:
         - name: proxy-config
           configMap:
             name: litellm-proxy-config
+        - name: ui-assets
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
