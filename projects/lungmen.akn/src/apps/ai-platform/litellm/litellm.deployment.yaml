@@ -119,6 +119,9 @@ spec:
         - name: ephemeral
           emptyDir:
             sizeLimit: 500Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 100Mi
 ---
 apiVersion: v1
 kind: Service
