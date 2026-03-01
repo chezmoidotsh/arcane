@@ -93,11 +93,11 @@ spec:
             httpGet:
               path: /health/readiness
               port: http
-            initialDelaySeconds: 0
+            initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 1
             successThreshold: 1
-            failureThreshold: 30
+            failureThreshold: 60
           volumeMounts:
             - name: litellm-config
               mountPath: /etc/litellm/config.yaml
