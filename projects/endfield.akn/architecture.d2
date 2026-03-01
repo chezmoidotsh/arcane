@@ -17,7 +17,7 @@ explanation: |md
 
   Endfield Industries focuses purely on raw \
   local AI inference (LLMs, TTS, STT) hosted \
-  bare-metal on Yvonne (Mac Studio), delegating \
+  bare-metal like Yvonne (Mac Studio), delegating \
   higher-level AI Platform abstractions to \
   the lungmen.akn Kubernetes cluster.
 | {
@@ -40,10 +40,6 @@ explanation: |md
 
 internet: {class: network}
 localnet: {class: network}
-tailnet: {
-  class: network
-  tooltip: Tailnet - Mesh VPN Network
-}
 
 # ──────────────────────────────────────────────────────────────────────────────
 # External Clusters
@@ -120,7 +116,7 @@ endfield·akn: {
   style.fill-pattern: none
 
   yvonne: {
-    label: 💻 yvonne (Mac Studio M1 Max — 64 GB)
+    label: 💻 Yvonne (Mac Studio M1 Max — 32 GB)
     style.fill-pattern: none
 
     engines: {class: [namespace]}
