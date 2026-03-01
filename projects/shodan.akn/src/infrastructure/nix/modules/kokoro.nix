@@ -13,7 +13,7 @@
   kokoro = import ../packages/kokoro { inherit pkgs; };
 
   # User-level model directory (XDG-compliant).
-  modelsDir = "${xdg.share}/kokoro/models";
+  modelsDir = "${xdg.data}/kokoro/models";
 in {
   # Log rotation for Kokoro user-level logs (newsyslog is system-level).
   environment.etc."newsyslog.d/shodan.akn-kokoro.conf".text = ''
@@ -23,11 +23,11 @@ in {
 
   # Ensure XDG data/log directories exist and materialize model files from Nix bundle.
   system.activationScripts.extraActivation.text = lib.mkAfter ''
-    install -d -m 0755 -o ${username} -g staff ${xdg.share}/kokoro
+    install -d -m 0755 -o ${username} -g staff ${xdg.data}/kokoro
     install -d -m 0755 -o ${username} -g staff ${modelsDir}/v1_0
     install -d -m 0755 -o ${username} -g staff ${xdg.log}
     install -d -m 0755 -o ${username} -g staff ${xdg.state}/tmp/kokoro
-    chown -R ${username}:staff ${xdg.share}/kokoro
+    chown -R ${username}:staff ${xdg.data}/kokoro
     chown -R ${username}:staff ${xdg.log}
 
     # NOTE: To avoid the heavy copy of the model at every rebuild if it hasn't changed,

@@ -3,7 +3,7 @@ model_list:
   - model_name: gpt-3.5-turbo # On fait croire à LiteLLM que c'est GPT pour la compatibilité
     litellm_params:
       model: openai/local
-      api_base: http://localhost:8123/v1 # Port modifié pour correspondre au daemon
+      api_base: http://localhost:1234/v1 # Port modifié pour correspondre au daemon
       api_key: "lm-studio"
 
   # Ton serveur Kokoro-Fast pour le TTS

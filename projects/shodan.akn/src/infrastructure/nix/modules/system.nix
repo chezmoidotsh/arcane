@@ -43,11 +43,11 @@ in {
   #   autorestart 1    : auto restart after power loss (1 = on, 0 = off)
   system.activationScripts.extraActivation.text = lib.mkBefore ''
     install -d -m 0755 -o ${username} -g staff ${xdg.config}
-    install -d -m 0755 -o ${username} -g staff ${xdg.share}
+    install -d -m 0755 -o ${username} -g staff ${xdg.data}
     install -d -m 0755 -o ${username} -g staff ${xdg.state}
     install -d -m 0755 -o ${username} -g staff ${xdg.log}
     chown -R ${username}:staff ${xdg.config}
-    chown -R ${username}:staff ${xdg.share}
+    chown -R ${username}:staff ${xdg.data}
     chown -R ${username}:staff ${xdg.state}
     chown -R ${username}:staff ${xdg.log}
 
