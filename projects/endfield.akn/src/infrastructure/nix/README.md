@@ -124,14 +124,7 @@ DNS to resolve them on the LAN (replace `<yvonne-ip>` with the machine's IP addr
 4. **Apply the configuration** (first run installs nix-darwin if absent):
 
    ```bash
-   nix run nix-darwin -- switch --flake ./projects/rhinelab.akn/src/infrastructure/nix#yvonne
-   ```
-
-   On subsequent changes:
-
-   ```bash
-   cd projects/rhinelab.akn/src/infrastructure/nix
-   nix run nix-darwin -- switch --flake .#yvonne
+   sudo nix --extra-experimental-features "nix-command flakes" run nix-darwin -- switch --flake ./projects/endfield.akn/src/infrastructure/nix#yvonne
    ```
 
 5. **Reconnect** (open a new shell or log out/in) to pick up the new environment and
