@@ -20,7 +20,7 @@ in {
     brews = [];
     casks = [
       "caffeine"
-      "lmstudio"
+      "lm-studio"
     ];
   };
 
