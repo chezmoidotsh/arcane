@@ -1,2 +1,0 @@
----
-ai_storage_prefix: "{{ ansible_env.HOME }}/.local"

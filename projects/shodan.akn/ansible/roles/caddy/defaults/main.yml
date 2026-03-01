@@ -1,4 +1,0 @@
----
-brew_prefix: "{{ ansible_env.HOME }}/.local/Cellar"
-
-caddy_bin_path:    "{{ brew_prefix }}/caddy/bin/caddy"

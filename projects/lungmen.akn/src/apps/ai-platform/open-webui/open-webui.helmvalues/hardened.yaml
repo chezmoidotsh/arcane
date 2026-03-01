@@ -15,7 +15,7 @@ podSecurityContext:
 # ref: <https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-containe>
 containerSecurityContext:
   allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: false  # Open WebUI needs write access to its data dir
+  readOnlyRootFilesystem: false # Open WebUI needs write access to its data dir
   runAsNonRoot: true
   runAsUser: 29741
   runAsGroup: 29741

@@ -27,8 +27,12 @@ spec:
         - name: nuq-worker
           image: ghcr.io/firecrawl/firecrawl
           imagePullPolicy: Always
-          command: [ "node" ]
-          args: [ "--max-old-space-size=192", "dist/src/services/worker/nuq-worker.js" ]
+          command: ["node"]
+          args:
+            [
+              "--max-old-space-size=192",
+              "dist/src/services/worker/nuq-worker.js",
+            ]
           ports:
             - name: http
               containerPort: 3006

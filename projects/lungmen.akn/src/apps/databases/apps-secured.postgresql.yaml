@@ -18,7 +18,6 @@ spec:
   instances: 2
   managed:
     roles:
-
       - name: open-webui
         connectionLimit: -1
         comment: PostgreSQL role for open-webui

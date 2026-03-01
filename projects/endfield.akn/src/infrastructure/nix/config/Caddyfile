@@ -1,0 +1,63 @@
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │ Caddyfile — Endfield Industries / yvonne (Mac Studio M1 Max)              │
+# │                                                                           │
+# │ Reverse proxy for the two local AI inference services exposed on          │
+# │ port 1234. TLS is intentionally disabled: both endpoints are LAN-only     │
+# │ and accessed over Tailscale (already encrypted at the network layer).     │
+# │                                                                           │
+# │ Vhosts:                                                                   │
+# │   studio.llm.chezmoi.sh:1234  →  LM Studio OpenAI API  (127.0.0.1:8234) │
+# │   kokoro.llm.chezmoi.sh:1234  →  Kokoro TTS REST API   (127.0.0.1:8880) │
+# │                                                                           │
+# │ Logs:  all access logs are written to a single structured JSON file       │
+# │        at $XDG_STATE_HOME/log/caddy.access.log and rotated by newsyslog. │
+# └───────────────────────────────────────────────────────────────────────────┘
+
+# ---------------------------------------------------------------------------
+# Global options
+# ---------------------------------------------------------------------------
+{
+  # TLS is handled by Tailscale at the network layer; no certs needed here.
+  auto_https off
+
+  # Global access log: one structured JSON file for all vhosts.
+  # newsyslog handles rotation (see caddy.nix → environment.etc.newsyslog.d).
+  log {
+    output file {$XDG_STATE_HOME}/log/caddy.access.log
+    format json
+    level  INFO
+  }
+}
+
+# ---------------------------------------------------------------------------
+# Bare IP / port redirect
+# ---------------------------------------------------------------------------
+# Catches requests to the raw IP or unqualified hostname on port 1234 and
+# forwards them to the LM Studio FQDN (avoids broken API clients that skip DNS).
+http://:1234 {
+  redir http://studio.llm.chezmoi.sh:1234{uri}
+}
+
+# ---------------------------------------------------------------------------
+# LM Studio — OpenAI-compatible inference API
+# ---------------------------------------------------------------------------
+# Upstream: LM Studio running locally on port 8234 (managed by Homebrew cask,
+# started manually from the app). The downstream consumer is LiteLLM on the
+# rhinelab.akn Kubernetes cluster.
+http://studio.llm.chezmoi.sh:1234 {
+  reverse_proxy 127.0.0.1:8234
+
+  import errors.inc
+}
+
+# ---------------------------------------------------------------------------
+# Kokoro FastAPI — local text-to-speech
+# ---------------------------------------------------------------------------
+# Upstream: Kokoro FastAPI server on port 8880 (managed by nix-darwin launchd
+# agent sh.chezmoi.shodan.kokoro). Provides offline TTS synthesis as a REST
+# API compatible with OpenAI /audio/speech.
+http://kokoro.llm.chezmoi.sh:1234 {
+  reverse_proxy 127.0.0.1:8880
+
+  import errors.inc
+}

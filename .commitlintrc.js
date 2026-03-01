@@ -312,8 +312,8 @@ const scopes = [
 		value: "project:lungmen.akn",
 	},
 	{
-		name: "project:shodan.akn    - Anything related to the shodan project",
-		value: "project:shodan.akn",
+		name: "project:endfield.akn  - Anything related to the endfield.akn project",
+		value: "project:endfield.akn",
 	},
 	{
 		name: "deps                  - Dependency updates (automated or manual)",
