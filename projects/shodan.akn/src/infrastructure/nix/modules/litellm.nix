@@ -46,6 +46,8 @@ in {
         "127.0.0.1"
         "--port"
         "4000"
+        # Since Prisma client is pre-generated properly locally, migrations work natively just by adding this arg.
+        "--use_prisma_migrate"
       ];
       KeepAlive = {
         SuccessfulExit = false;
