@@ -16,11 +16,20 @@ let
     '';
   };
 
+  # Extrait schema.prisma depuis le tarball source upstream de litellm.
+  # Le fichier se trouve à la racine du repo BerriAI/litellm.
+  prismaSchema = pkgs.runCommand "litellm-schema-prisma" {} ''
+    cp ${rawLitellm.src}/schema.prisma $out
+  '';
+
 in
 {
   # Only export the necessary wrapped execution path! No more scripts.
   bin = "${litellmWrapped}/bin/litellm";
-  
+
+  # Le schema.prisma extrait du source upstream, prêt à être copié au runtime.
+  schema = prismaSchema;
+
   meta = with pkgs.lib; {
     description = "LiteLLM pre-configured with NodeJS and Prisma Engines safely for Nix closures";
     maintainers = with maintainers; [ chezmoi ];
