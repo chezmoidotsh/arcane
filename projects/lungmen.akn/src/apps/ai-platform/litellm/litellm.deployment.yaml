@@ -115,6 +115,9 @@ spec:
             - name: ephemeral
               mountPath: /app/var/litellm/migrations
               subPath: migrations
+            - name: ephemeral
+              mountPath: /tmp
+              subPath: tmp
 
       volumes:
         - name: litellm-config
