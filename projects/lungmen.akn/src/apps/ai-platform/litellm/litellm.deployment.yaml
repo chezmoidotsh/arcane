@@ -27,7 +27,7 @@ spec:
 
       containers:
         - name: litellm
-          image: ghcr.io/berriai/litellm-database
+          image: ghcr.io/berriai/litellm-non_root
           imagePullPolicy: IfNotPresent
           securityContext:
             readOnlyRootFilesystem: true

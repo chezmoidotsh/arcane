@@ -19,6 +19,6 @@ labels:
     includeTemplates: true
 
 images:
-  # renovate: datasource=docker depName=ghcr.io/berriai/litellm-database
-  - name: ghcr.io/berriai/litellm-database
-    newTag: main-v1.81.12-stable.2@sha256:dabbc5368dccc272d8d5e3744fc58e696f58a072917ef8884a4d3a49fea5a33c
+  # renovate: datasource=docker depName=ghcr.io/berriai/litellm-non_root
+  - name: ghcr.io/berriai/litellm-non_root
+    newTag: main-v1.81.12-stable.1@sha256:14a5421e1dd929bcc5952800b79e0d79633240fd166d01e775bdb44d9559c0cd
