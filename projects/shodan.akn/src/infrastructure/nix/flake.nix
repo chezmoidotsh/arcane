@@ -63,6 +63,7 @@
       modules = [
         ./modules/system.nix
         ./modules/caddy.nix
+        ./modules/postgres.nix
         ./modules/kokoro.nix
         ./modules/litellm.nix
       ];

@@ -16,8 +16,8 @@
 in {
   # Log rotation for LiteLLM logs (newsyslog is system-level).
   environment.etc."newsyslog.d/shodan.akn-litellm.conf".text = ''
-    /Users/${username}/.local/state/log/litellm.stdout.log 644 7 10000 * J
-    /Users/${username}/.local/state/log/litellm.stderr.log 644 7 10000 * J
+    ${xdg.log}/litellm.stdout.log 644 7 10000 * J
+    ${xdg.log}/litellm.stderr.log 644 7 10000 * J
   '';
 
   # Activation script: install config and ensure XDG data dir exists
@@ -61,7 +61,7 @@ in {
         # TODO: LiteLLM secrets (consider moving these to a secret store instead of embedding).
         LITELLM_MASTER_KEY = "admin";
         LITELLM_SALT_KEY = "admin";
-        DATABASE_URL = "file:${xdg.data}/litellm/litellm.db";
+        DATABASE_URL = "postgresql://${username}@127.0.0.1:5432/litellm";
       };
     };
   };
