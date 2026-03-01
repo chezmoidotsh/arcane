@@ -40,6 +40,9 @@ spec:
               value: "0.0.0.0"
             - name: PORT
               value: "4000"
+            # Set HOME to writable volume (npm, prisma, etc. use $HOME)
+            - name: HOME
+              value: "/app/var/litellm"
             # Read-only filesystem support
             - name: LITELLM_NON_ROOT
               value: "true"
