@@ -16,6 +16,10 @@ in {
   homebrew = {
     enable = true;
     onActivation.upgrade = true;
+    packages = with pkgs; [
+      caffeine
+      lmstudio
+    ];
   };
 
   # Required by nix-darwin to handle backward-incompatible defaults.
