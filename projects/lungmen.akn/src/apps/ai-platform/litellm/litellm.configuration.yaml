@@ -20,6 +20,9 @@ data:
   # Use prisma migrate deploy for DB migrations
   USE_PRISMA_MIGRATE: "True"
 
+  # Store models in database to allow UI management
+  STORE_MODEL_IN_DB: "True"
+
   # ==========================================
   # SSO / OIDC (Pocket ID)
   # ==========================================
