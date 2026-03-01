@@ -37,15 +37,7 @@
         ./modules/caddy.nix
         ./modules/kokoro.nix
         ./modules/litellm.nix
-        ./modules/lmstudio.nix
       ];
-    };
-
-    # Exportation des packages construits (pour nix run .#llmster ou nix env install)
-    packages.${system} = let
-      pkgs = import inputs.nixpkgs { inherit system; };
-    in {
-      lmstudio = (import ./packages/lmstudio { inherit pkgs; }).llmster;
     };
   };
 }
