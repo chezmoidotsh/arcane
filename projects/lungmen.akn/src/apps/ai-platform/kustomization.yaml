@@ -6,6 +6,8 @@ namespace: ai-platform
 resources:
   # Shared Valkey cluster for AI services
   - valkey/
+  # LiteLLM Proxy
+  - litellm/
   # Open-WebUI specific resources
   - open-webui/
   # Firecrawl configuration

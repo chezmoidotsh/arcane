@@ -1,0 +1,22 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows LiteLLM to access the secured PostgreSQL cluster (postgres-apps-secured)
+      in the databases namespace. Required for application data storage.
+  name: allow-apps-secured-database-from-litellm
+  namespace: databases
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: postgres-apps-secured
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: ai-platform
+            app.kubernetes.io/name: litellm
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP

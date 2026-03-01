@@ -26,6 +26,14 @@ spec:
         login: true
         passwordSecret:
           name: open-webui-database-credentials
+      - name: litellm
+        connectionLimit: -1
+        comment: PostgreSQL role for litellm
+        ensure: present
+        inherit: true
+        login: true
+        passwordSecret:
+          name: litellm-database-credentials
   plugins:
     - enabled: true
       isWALArchiver: true

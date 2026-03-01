@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - litellm.deployment.yaml
+  - litellm.configuration.yaml
+  - litellm.proxy-config.yaml
+  - litellm.configuration.externalsecret.yaml
+  - litellm.httproute.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: litellm
+    includeTemplates: true
+    includeSelectors: true
+  - pairs:
+      # renovate: datasource=docker depName=ghcr.io/berriai/litellm-database
+      app.kubernetes.io/version: v1.81.16-stable
+    includeTemplates: true
+
+images:
+  # renovate: datasource=docker depName=ghcr.io/berriai/litellm-database
+  - name: ghcr.io/berriai/litellm-database
+    newTag: v1.81.16-stable
