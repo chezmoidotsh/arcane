@@ -47,7 +47,7 @@ localnet: {class: network}
 lungmen·akn: {
   class: [application]
   label: lungmen.akn
-  icon: ../lungmen.akn/assets/logo.svg
+  icon: ../lungmen.akn/assets/logo.light.svg
   tooltip: Home applications cluster hosting the higher-level AI Platform
 
   ai-platform: {
@@ -68,18 +68,32 @@ lungmen·akn: {
       tooltip: Extensible, feature-rich, and user-friendly self-hosted WebUI for LLMs.
     }
 
-    n8n: {
+    MCPs: {
+      class: [applications]
+      label: MCP Servers
+      icon: assets/icons/apps/mcp.svg
+      tooltip: MCP servers — virtual MCPs running on Kubernetes.
+    }
+
+    Firecrawl: {
       class: [application]
-      icon: assets/icons/apps/n8n.svg
-      link: https://n8n.io/
-      tooltip: Fair-code licensed workflow automation tool for connecting AI services and external APIs.
+      icon: assets/icons/apps/firecrawl.svg
+      link: https://github.com/mendableai/firecrawl
+      tooltip: Web scraping and crawling API optimized for LLMs.
+    }
+
+    Valkey: {
+      class: [application-datastore]
+      icon: assets/icons/apps/valkey.svg
+      link: https://valkey.io/
+      tooltip: Valkey cache (drop-in Redis) for messaging queues and rapid data access.
     }
 
     ToolHive: {
       class: [application]
-      icon: assets/icons/apps/agentgateway.svg
-      link: https://github.com/agentgateway/agentgateway
-      tooltip: Unified gateway for routing requests to Model Context Protocol (MCP) servers.
+      icon: assets/icons/apps/toolhive.svg
+      link: https://github.com/stacklok/toolhive
+      tooltip: Kubernetes operator for managing AI capabilities, tools and Virtual MCP servers.
     }
   }
 
@@ -93,13 +107,6 @@ lungmen·akn: {
       link: https://www.postgresql.org/
       tooltip: PostgreSQL with pgvector extension for vector similarity search and storing AI embeddings.
     }
-
-    Redis: {
-      class: [application-datastore]
-      icon: assets/icons/apps/redis.svg
-      link: https://redis.io/
-      tooltip: Redis cache for messaging queues and rapid data access.
-    }
   }
 }
 
@@ -112,7 +119,7 @@ lungmen·akn: {
 # ╰────────────────────────────────────────────────────────────────────────────╯
 
 endfield·akn: {
-  icon: assets/logo.svg
+  icon: assets/logo.light.svg
   style.fill-pattern: none
 
   yvonne: {
@@ -124,7 +131,7 @@ endfield·akn: {
     # 🤖 Local Inference Engines
     engines.LMStudio: {
       class: [application]
-      icon: assets/icons/apps/lmstudio.svg
+      icon: assets/icons/apps/lmstudio.png
       link: https://lmstudio.ai/
       tooltip: LM Studio — local LLM inference server running on Apple Silicon's GPU and Neural Engine.
     }
@@ -169,31 +176,13 @@ localnet -> lungmen·akn.ai-platform.OpenWebUI: {
   |
 }
 
-lungmen·akn.ai-platform.OpenWebUI -> lungmen·akn.ai-platform.LiteLLM: {source-arrowhead: OpenAI API}
-lungmen·akn.ai-platform.LiteLLM -> endfield·akn.yvonne.engines.Caddy: {
-  source-arrowhead: |md
-    studio.llm.chezmoi.sh
-    (OpenAI API)
-  |
-  class: [connect-vpn-backbone]
-}
-
-lungmen·akn.ai-platform.n8n -> endfield·akn.yvonne.engines.Caddy: {
-  source-arrowhead: |md
-    studio.llm.chezmoi.sh
-  |
-  class: [connect-vpn-backbone]
-}
-
-lungmen·akn.ai-platform.LiteLLM -> internet: {
-  source-arrowhead: |md
-    OpenAI, Anthropic
-    Google APIs
-  |
-  class: [connect-to-internet]
-}
-
-lungmen·akn.ai-platform.OpenWebUI -> lungmen·akn.databases.PostgreSQL: {source-arrowhead: PostgreSQL (5432)}
-lungmen·akn.ai-platform.n8n -> lungmen·akn.databases.PostgreSQL: {source-arrowhead: PostgreSQL (5432)}
-lungmen·akn.ai-platform.n8n -> lungmen·akn.databases.Redis: {source-arrowhead: Redis (6379)}
-lungmen·akn.ai-platform.ToolHive -> lungmen·akn.databases.Redis: {source-arrowhead: Redis (6379)}
+lungmen·akn.ai-platform.Firecrawl -> lungmen·akn.ai-platform.Valkey: "Queue operations (6379)"
+lungmen·akn.ai-platform.Firecrawl -> internet: "Web scraping (443)"
+lungmen·akn.ai-platform.LiteLLM -> endfield·akn.yvonne.engines.Caddy: "OpenAI API interface (8234)"
+lungmen·akn.ai-platform.LiteLLM -> internet: "External LLM API (443)"
+lungmen·akn.ai-platform.OpenWebUI -> lungmen·akn.ai-platform.Firecrawl: "Requires Web searching/scraping (???)"
+lungmen·akn.ai-platform.OpenWebUI -> lungmen·akn.ai-platform.LiteLLM: "OpenAI API interface (???)"
+lungmen·akn.ai-platform.OpenWebUI -> lungmen·akn.ai-platform.MCPs: "MCP interfaction"
+lungmen·akn.ai-platform.OpenWebUI -> lungmen·akn.ai-platform.Valkey: "Queue operations (6379)"
+lungmen·akn.ai-platform.OpenWebUI -> lungmen·akn.databases.PostgreSQL: "Database operations (5432)"
+lungmen·akn.ai-platform.ToolHive -> lungmen·akn.ai-platform.MCPs: "manages"
