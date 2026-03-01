@@ -1,0 +1,21 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-proxy-config
+data:
+  config.yaml: |
+    # LiteLLM Proxy Configuration
+    # Models are managed from the UI — no model_list needed here.
+
+    general_settings:
+      master_key: os.environ/LITELLM_MASTER_KEY
+      database_url: os.environ/DATABASE_URL
+
+    litellm_settings:
+      cache: true
+      cache_params:
+        type: redis
+        host: os.environ/REDIS_HOST
+        port: os.environ/REDIS_PORT
+        db: os.environ/REDIS_DB
