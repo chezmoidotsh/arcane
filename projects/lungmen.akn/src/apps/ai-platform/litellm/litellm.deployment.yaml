@@ -25,24 +25,6 @@ spec:
         runAsGroup: 48372
         fsGroup: 48372
 
-      initContainers:
-        # Copy pre-built UI and assets from the image to writable volumes
-        - name: setup-ui
-          image: ghcr.io/berriai/litellm-database
-          command:
-            - sh
-            - -c
-            - |
-              cp -r /var/lib/litellm/ui/* /app/var/litellm/ui/ &&
-              cp -r /var/lib/litellm/assets/* /app/var/litellm/assets/
-          volumeMounts:
-            - name: ephemeral
-              mountPath: /app/var/litellm/ui
-              subPath: ui
-            - name: ephemeral
-              mountPath: /app/var/litellm/assets
-              subPath: assets
-
       containers:
         - name: litellm
           image: ghcr.io/berriai/litellm-database
