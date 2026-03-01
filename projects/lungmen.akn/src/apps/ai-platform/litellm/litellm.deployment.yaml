@@ -61,6 +61,8 @@ spec:
           args:
             - "--config"
             - "/etc/litellm/config.yaml"
+            - "--num_workers"
+            - "$(nproc)"
           ports:
             - name: http
               containerPort: 4000
