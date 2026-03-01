@@ -35,8 +35,8 @@ spec:
         passwordSecret:
           name: litellm-database-credentials
   plugins:
-    - enabled: true
-      isWALArchiver: true
+    - enabled: false
+      isWALArchiver: false
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: apps-secured-selfhosted
@@ -56,4 +56,4 @@ spec:
   storage:
     size: 5Gi
   walStorage:
-    size: 2Gi
+    size: 5Gi
