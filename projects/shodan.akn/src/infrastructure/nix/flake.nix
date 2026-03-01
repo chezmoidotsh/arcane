@@ -1,5 +1,5 @@
 {
-  description = "AI Stack: Caddy, LiteLLM, Kokoro (user-level)";
+  description = "Shodan: MacOS based AI Platform";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
