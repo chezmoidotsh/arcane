@@ -105,20 +105,9 @@ spec:
               subPath: config.yaml
               readOnly: true
             - name: ephemeral
-              mountPath: /app/var/litellm/ui
-              subPath: ui
-            - name: ephemeral
-              mountPath: /app/var/litellm/assets
-              subPath: assets
-            - name: ephemeral
-              mountPath: /app/var/litellm/cache
-              subPath: cache
-            - name: ephemeral
-              mountPath: /app/var/litellm/migrations
-              subPath: migrations
-            - name: ephemeral
+              mountPath: /app/var/litellm
+            - name: tmp
               mountPath: /tmp
-              subPath: tmp
 
       volumes:
         - name: litellm-config
