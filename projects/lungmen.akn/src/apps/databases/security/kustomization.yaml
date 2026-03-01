@@ -13,3 +13,4 @@ resources:
   - network-policy.allow-apps-secured-database-to-kubernetes-api.yaml
   - network-policy.allow-apps-database-from-cnpg.yaml
   - network-policy.allow-apps-secured-database-from-cnpg.yaml
+  - network-policy.allow-apps-secured-database-from-litellm.yaml
