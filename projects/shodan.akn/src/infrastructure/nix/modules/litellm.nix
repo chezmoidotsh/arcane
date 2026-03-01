@@ -13,6 +13,20 @@
   # Import the heavily modernized native package!
   litellmPkg = import ../packages/litellm/default.nix { inherit pkgs; };
   litellmBin = litellmPkg.bin;
+  # schema.prisma extrait du tarball source upstream (BerriAI/litellm, racine du repo)
+  schemaSrc = litellmPkg.schema;
+
+  # Launch script for LiteLLM that exactly follows upstream
+  litellmLaunchScript = pkgs.writeShellScript "litellm-launch.sh" ''
+    export DATABASE_URL="postgresql://${username}@127.0.0.1:5432/litellm"
+
+    echo "Running prisma generate to build the python client..."
+    ${pkgs.prisma_7}/bin/prisma generate --schema=${xdg.data}/litellm/schema.prisma
+
+    echo "Starting litellm proxy with db migrations enabled..."
+    exec ${litellmBin} --config ${xdg.config}/litellm/config.yaml --host 127.0.0.1 --port 4000 --use_prisma_migrate
+  '';
+
 in {
   # Log rotation for LiteLLM logs (newsyslog is system-level).
   environment.etc."newsyslog.d/shodan.akn-litellm.conf".text = ''
@@ -32,6 +46,10 @@ in {
     chown -R ${username}:staff ${xdg.log}
     
     install -m 0644 -o ${username} -g staff ${../config/litellm_config.yaml} ${xdg.config}/litellm/config.yaml
+
+    # Sync prisma schema directly from the package source
+    cp ${schemaSrc} ${xdg.data}/litellm/schema.prisma
+    chown ${username}:staff ${xdg.data}/litellm/schema.prisma
   '';
 
   # User-level launchd agent (starts at login, uses user HOME/XDG paths).
@@ -39,15 +57,7 @@ in {
     serviceConfig = {
       Label = "sh.chezmoi.shodan.litellm";
       ProgramArguments = [
-        "${litellmBin}"
-        "--config"
-        "${xdg.config}/litellm/config.yaml"
-        "--host"
-        "127.0.0.1"
-        "--port"
-        "4000"
-        # Since Prisma client is pre-generated properly locally, migrations work natively just by adding this arg.
-        "--use_prisma_db_push"
+        "${litellmLaunchScript}"
       ];
       KeepAlive = {
         SuccessfulExit = false;
