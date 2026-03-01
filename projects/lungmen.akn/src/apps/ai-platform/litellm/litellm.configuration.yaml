@@ -29,6 +29,9 @@ data:
   GENERIC_TOKEN_ENDPOINT: https://auth.chezmoi.sh/api/oidc/token
   GENERIC_USERINFO_ENDPOINT: https://auth.chezmoi.sh/api/oidc/userinfo
   GENERIC_SCOPE: openid email profile groups
+  
+  # Pocket ID enforces PKCE
+  GENERIC_SSO_PKCE_ENABLED: "true"
 
   # ==========================================
   # Cache (Valkey / Redis)
