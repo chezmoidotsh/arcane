@@ -47,11 +47,30 @@ spec:
         - name: litellm
           image: ghcr.io/berriai/litellm-database
           imagePullPolicy: IfNotPresent
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           env:
             - name: HOST
               value: "0.0.0.0"
             - name: PORT
               value: "4000"
+            # Read-only filesystem support
+            - name: LITELLM_NON_ROOT
+              value: "true"
+            - name: LITELLM_UI_PATH
+              value: "/app/var/litellm/ui"
+            - name: LITELLM_ASSETS_PATH
+              value: "/app/var/litellm/assets"
+            - name: LITELLM_MIGRATION_DIR
+              value: "/app/var/litellm/migrations"
+            - name: PRISMA_BINARY_CACHE_DIR
+              value: "/app/var/litellm/cache/prisma-python/binaries"
+            - name: XDG_CACHE_HOME
+              value: "/app/var/litellm/cache"
           envFrom:
             - configMapRef:
                 name: litellm-config
