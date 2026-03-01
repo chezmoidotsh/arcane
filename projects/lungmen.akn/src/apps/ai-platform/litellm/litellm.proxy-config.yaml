@@ -12,6 +12,12 @@ data:
       master_key: os.environ/LITELLM_MASTER_KEY
       database_url: os.environ/DATABASE_URL
 
+      # Production best practices
+      proxy_batch_write_at: 60              # Batch write spend updates every 60s
+      database_connection_pool_limit: 10    # Connection pool limit per worker
+      disable_error_logs: true              # Don't write LLM exceptions to DB
+      allow_requests_on_db_unavailable: true # Continue processing if DB is temporarily down
+
     litellm_settings:
       cache: true
       cache_params:
@@ -19,3 +25,8 @@ data:
         host: os.environ/REDIS_HOST
         port: os.environ/REDIS_PORT
         db: os.environ/REDIS_DB
+
+      # Production settings
+      request_timeout: 600
+      set_verbose: false
+      json_logs: true
