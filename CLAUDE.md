@@ -54,7 +54,7 @@ projects/         # Individual cluster/project definitions
 ├── hass/         # Home Assistant application project (not a cluster)
 ├── kazimierz.akn/ # Proxy/firewall/WAF cluster (Talos Linux + ArgoCD) - Planning
 ├── lungmen.akn/  # Home applications cluster (Talos Linux + ArgoCD) - Active development
-└── shodan.akn/   # Future cluster project - Planning
+└── endfield.akn/ # Endfield Industries — AI engines (Mac Studio local inference)
 
 scripts/          # Operational scripts
 ```
@@ -110,7 +110,7 @@ Uses `mise` for tool version management (.mise.toml):
 **Planned Clusters**:
 
 * **kazimierz.akn**: Proxy/firewall/WAF cluster (infrastructure defined, apps pending)
-* **shodan.akn**: Future cluster (architecture planned)
+* **endfield.akn**: Endfield Industries — Mac Studio local AI inference (nix-darwin)
 
 **Application Projects** (not clusters):
 
@@ -301,7 +301,7 @@ Comprehensive commit guidelines for Arcane infrastructure:
 * **Gitmoji semantic emojis**: Synchronized with `.commitlintrc.js` (`:sparkles:`, `:bug:`, `:memo:`, `:wrench:`, etc.)
 * **Exact scopes**:
   * Catalog: `catalog:ansible`, `catalog:crossplane`, `catalog:flakes`, `catalog:kustomize`, `catalog:kairos-bundle`, `catalog:talos`
-  * Project: `project:amiya.akn`, `project:chezmoi.sh`, `project:hass`, `project:kazimierz.akn`, `project:lungmen.akn`, `project:maison`, `project:shodan.akn`
+  * Project: `project:amiya.akn`, `project:chezmoi.sh`, `project:hass`, `project:kazimierz.akn`, `project:lungmen.akn`, `project:maison`, `project:endfield.akn`
   * Repository: `gh` (GitHub/CI), `deps` (dependencies)
   * Note: `catalog:fluxcd` exists in catalog/ but not in `.commitlintrc.js` (legacy catalog being phased out)
 * **AI Co-author attribution**: Mandatory `Co-authored-by: Claude <claude@anthropic.com>` trailer

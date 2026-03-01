@@ -27,8 +27,9 @@ spec:
         - name: worker
           image: ghcr.io/firecrawl/firecrawl
           imagePullPolicy: Always
-          command: [ "node" ]
-          args: [ "--max-old-space-size=768", "dist/src/services/queue-worker.js" ]
+          command: ["node"]
+          args:
+            ["--max-old-space-size=768", "dist/src/services/queue-worker.js"]
           ports:
             - name: http
               containerPort: 3005

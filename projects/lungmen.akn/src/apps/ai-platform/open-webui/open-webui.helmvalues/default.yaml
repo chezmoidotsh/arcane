@@ -76,7 +76,6 @@ resources:
   limits:
     memory: "1.5Gi"
 
-
 route:
   # -- Enables or disables the route
   enabled: false
@@ -192,7 +191,6 @@ volumes: []
 #     name: ""
 # - name: ""
 #   emptyDir: {}
-
 
 sso:
   # -- **Enable SSO authentication globally** must enable to use SSO authentication

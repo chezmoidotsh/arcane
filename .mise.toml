@@ -118,8 +118,9 @@ yq = "latest"   # YAML/JSON processor for configuration file manipulation
 "npm:ulid-cli" = "latest"        # ULID generator for unique identifiers in distributed systems
 "ubi:runmedev/runme" = "latest"  # Interactive markdown execution tool for runbooks and documentation
 gum = "latest"                   # Terminal UI framework for interactive scripts and prompts
-uv = "latest"                    # Extremely fast Python package and project manager
 kustomize = "latest"
+node = "24.14.0"
+uv = "latest"                    # Extremely fast Python package and project manager
 
 [tasks."ansible:install"]
 description = "Install Ansible and dependencies"

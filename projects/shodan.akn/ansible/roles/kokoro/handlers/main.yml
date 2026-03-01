@@ -1,9 +1,0 @@
----
-# =============================================================================
-# Role: kokoro — Handlers
-# =============================================================================
-
-- name: Restart Kokoro
-  community.general.launchd:
-    name: sh.chezmoi.shodan.kokoro
-    state: restarted

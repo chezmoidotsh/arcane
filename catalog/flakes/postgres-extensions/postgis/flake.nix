@@ -20,9 +20,10 @@
           postgis = pkgs.postgresql18Packages.postgis;
           nixversion = "${pkgs.lib.versions.major pkgs.lib.version}.${pkgs.lib.versions.minor pkgs.lib.version}";
 
-          bundledPostgis = pkgs.runCommand "postgis-bundled" {
-            nativeBuildInputs = [ pkgs.patchelf pkgs.glibc.bin ];
-          } ''
+          bundledPostgis = pkgs.runCommand "postgis-bundled"
+            {
+              nativeBuildInputs = [ pkgs.patchelf pkgs.glibc.bin ];
+            } ''
             mkdir -p $out/lib $out/share/extension $out/xml2
 
             # -- Copy PostGIS extension files

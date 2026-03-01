@@ -1,28 +1,32 @@
 # Procedure: Deploying and Managing MCP Servers (ToolHive)
 
 ## 📌 Context
-The **Model Context Protocol (MCP)** connects AI applications to external tools and data sources. In Arcane, the **ToolHive Operator** manages MCP servers. 
+
+The **Model Context Protocol (MCP)** connects AI applications to external tools and data sources. In Arcane, the **ToolHive Operator** manages MCP servers.
 
 ToolHive abstracts Kubernetes complexities (Deployments, Services, RBAC) into Custom Resources (`MCPServer` and `VirtualMCPServer`). This procedure explains how to create, secure, and expose new MCP servers so AI interfaces like Open-WebUI or n8n can reach them at `ai.chezmoi.sh/mcp/*`.
 
----
+***
 
 ## 🏗 Requirements
-- Access to the Arcane repository.
-- A running ToolHive Operator in the cluster.
-- Valid API Keys/Secrets (if the MCP server requires them) stored as Kubernetes Secrets or via External-Secrets.
+
+* Access to the Arcane repository.
+* A running ToolHive Operator in the cluster.
+* Valid API Keys/Secrets (if the MCP server requires them) stored as Kubernetes Secrets or via External-Secrets.
 
 Add all new MCP server manifests to:
 `projects/lungmen.akn/src/apps/ai-platform/mcp-servers/`
 
----
+***
 
 ## 🛠 Procedure: Deploying a Basic MCP Server
 
 ### Step 1: Provide Secrets (If Required)
+
 If your MCP server requires API keys (e.g., a GitHub Token), pass them via a Secret. Create a native secret temporarily, or wait for your external secret to sync before deploying the MCPServer.
 
 **Example Secret** (Native Kubernetes):
+
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -34,6 +38,7 @@ stringData:
 ```
 
 ### Step 2: Create the `MCPServer` Resource
+
 Create a YAML file (e.g., `mcp-servers/github.yaml`) to configure your MCP server.
 
 ```yaml
@@ -71,15 +76,18 @@ spec:
 ```
 
 ### Step 3: Register in Kustomization
+
 Add the new file to `mcp-servers/kustomization.yaml`:
+
 ```yaml
 resources:
   - fetch.yaml
   - github.yaml
 ```
+
 Commit and sync. The ToolHive operator will start the proxy pod. The internal DNS for the proxy becomes `mcp-github-proxy.ai-platform.svc.cluster.local:8080`.
 
----
+***
 
 ## 🌐 Procedure: Expose MCP Servers Externally
 
@@ -137,15 +145,16 @@ spec:
 
 Add `mcp-httproute.yaml` to your Kustomization. Open-WebUI now connects to your cluster MCPs at `https://ai.chezmoi.sh/mcp/github`.
 
----
+***
 
 ## 🎯 Procedure: Aggregating via Virtual MCPs (vMCP)
 
-A **Virtual MCP Server (vMCP)** bundles multiple backend MCP servers into a single endpoint. 
+A **Virtual MCP Server (vMCP)** bundles multiple backend MCP servers into a single endpoint.
 
 **Why use a vMCP?**
-- It provides a single URL (`/mcp/all`) instead of multiple.
-- It filters dangerous tools (e.g., exposing only `read_repository` from GitHub while hiding `write_issue`).
+
+* It provides a single URL (`/mcp/all`) instead of multiple.
+* It filters dangerous tools (e.g., exposing only `read_repository` from GitHub while hiding `write_issue`).
 
 ### Deploy a vMCP
 
@@ -170,9 +179,10 @@ spec:
           - "search_repositories"
           - "get_file_contents"
 ```
+
 The Virtual Server launches a proxy named `mcp-hub-proxy`. Add this proxy to your HTTPRoute under `/mcp/hub`. AI agents then access your curated hub instead of the raw backend MCPs.
 
----
+***
 
 ## 🛡️ Security: Enforce Network Policies
 
@@ -181,14 +191,16 @@ MCP servers execute tools that make network connections (HTTP requests, SSH, Dat
 **Apply these Network Policies:**
 
 1. **Ingress (Incoming)**
-   - Allow only your **Ingress Controller** (Envoy/Traefik) or internal AI services (Open-WebUI) to reach `port: 8080` on pods labeled `app.kubernetes.io/managed-by: toolhive-operator`.
-   
+   * Allow only your **Ingress Controller** (Envoy/Traefik) or internal AI services (Open-WebUI) to reach `port: 8080` on pods labeled `app.kubernetes.io/managed-by: toolhive-operator`.
+
 2. **Egress (Outgoing)**
-   - **BLOCK ALL intra-cluster Egress** (e.g., block access to `10.96.0.0/16` and internal DB namespaces).
-   - **ALLOW DNS:** Open `TCP/UDP 53` to CoreDNS.
-   - **ALLOW Internet:** Open outbound connections to external public IPs (`0.0.0.0/0` excluding private IP ranges `10.0.0.0/8`, `192.168.0.0/16`) for MCPs like `fetch` or `github`.
+   * **BLOCK ALL intra-cluster Egress** (e.g., block access to `10.96.0.0/16` and internal DB namespaces).
+   * **ALLOW DNS:** Open `TCP/UDP 53` to CoreDNS.
+   * **ALLOW Internet:** Open outbound connections to external public IPs (`0.0.0.0/0` excluding private IP ranges `10.0.0.0/8`, `192.168.0.0/16`) for MCPs like `fetch` or `github`.
 
 ### Identifying Target Pods
+
 Toolhive labels the proxy and MCP pods with:
-- `app.kubernetes.io/managed-by: toolhive-operator`
-- `toolhive.stacklok.dev/mcpserver: <mcp-name>`
+
+* `app.kubernetes.io/managed-by: toolhive-operator`
+* `toolhive.stacklok.dev/mcpserver: <mcp-name>`

@@ -12,7 +12,7 @@ spec:
   transport: streamable-http
   proxyPort: 8080
   mcpPort: 3000
-  
+
   env:
     - name: HOST
       value: 0.0.0.0
@@ -22,7 +22,7 @@ spec:
       value: "http://firecrawl-api.ai-platform.svc.cluster.local:3002"
     - name: FIRECRAWL_API_KEY
       value: "fc-local"
-      
+
   resources:
     requests:
       cpu: "50m"

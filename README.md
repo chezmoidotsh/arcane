@@ -87,7 +87,7 @@ mise install
 │   ├── hass                        # Home Assistant configuration
 │   ├── kazimierz.akn               # Kazimierz cluster configuration
 │   ├── lungmen.akn                 # Lungmen cluster configuration
-│   └── shodan.akn                  # Shodan cluster configuration
+│   └── endfield.akn                # Endfield Industries — AI engines
 ├── scripts                         # Utility scripts
 ├── .mise.toml                      # Development environment configuration
 ├── CHANGELOG.md                    # Project history and evolution
@@ -110,7 +110,7 @@ mise install
 
 * [ ] **Secure Internet Access**: Ensure the homelab is accessible from the internet securely.
 
-* [ ] **Project Shodan**: Implement the AI stack.
+* [ ] **Project Endfield**: Implement the AI stack.
 
 * [ ] **Energy Efficiency**: Reduce energy consumption (KEDA -> scaling to 0, start/stop servers at night).
 

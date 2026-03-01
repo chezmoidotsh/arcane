@@ -33,26 +33,26 @@ let
     '';
 
     installPhase = ''
-      cd ..
+            cd ..
 
-      # Install headers and library
-      mkdir -p $out/lib $out/include $out/lib/pkgconfig
+            # Install headers and library
+            mkdir -p $out/lib $out/include $out/lib/pkgconfig
 
-      cp LIBRARY/libbid.a $out/lib/
-      cp LIBRARY/src/*.h $out/include/
+            cp LIBRARY/libbid.a $out/lib/
+            cp LIBRARY/src/*.h $out/include/
 
-      # Create pkg-config file matching what DocumentDB expects (intelmathlib)
-      cat > $out/lib/pkgconfig/intelmathlib.pc <<PKGEOF
-prefix=$out
-libdir=\''${prefix}/lib
-includedir=\''${prefix}/include
+            # Create pkg-config file matching what DocumentDB expects (intelmathlib)
+            cat > $out/lib/pkgconfig/intelmathlib.pc <<PKGEOF
+      prefix=$out
+      libdir=\''${prefix}/lib
+      includedir=\''${prefix}/include
 
-Name: intelmathlib
-Description: Intel Decimal Floating-Point Math Library
-Version: 2.0 Update 2
-Cflags: -I\''${includedir}
-Libs: -L\''${libdir} -lbid
-PKGEOF
+      Name: intelmathlib
+      Description: Intel Decimal Floating-Point Math Library
+      Version: 2.0 Update 2
+      Cflags: -I\''${includedir}
+      Libs: -L\''${libdir} -lbid
+      PKGEOF
     '';
 
     meta = {
@@ -67,13 +67,13 @@ PKGEOF
   # NOTE: static linking is enforced by removing the dynamic libs.
   # ───────────────────────────────────────────────────────────────────────────
   pcre2-static = pkgs.pcre2.overrideAttrs (old: {
-    configureFlags = (old.configureFlags or []) ++ [
+    configureFlags = (old.configureFlags or [ ]) ++ [
       "--enable-static"
       "--enable-jit"
     ];
 
     # Ensure -fPIC for all compiled objects
-    env = (old.env or {}) // {
+    env = (old.env or { }) // {
       NIX_CFLAGS_COMPILE = "${old.env.NIX_CFLAGS_COMPILE or ""} -fPIC";
     };
 
@@ -97,7 +97,7 @@ PKGEOF
       hash = "sha256-gx3bVNHNKuCAVI/z/r28Wmikk475MuRCJpv2sRr4cbg=";
     };
 
-    cmakeFlags = (old.cmakeFlags or []) ++ [
+    cmakeFlags = (old.cmakeFlags or [ ]) ++ [
       "-DENABLE_MONGOC=ON"
       "-DMONGOC_ENABLE_ICU=OFF"
       "-DENABLE_ICU=OFF"
@@ -117,13 +117,13 @@ pkgs.stdenv.mkDerivation {
 
   src = documentdb-src;
 
-nativeBuildInputs = with pkgs; [
+  nativeBuildInputs = with pkgs; [
     # Build tools
-    clang              # Compiler required by PostgreSQL 17 standards in Nixpkgs
+    clang # Compiler required by PostgreSQL 17 standards in Nixpkgs
     gnumake
     pkg-config
-    git                # Required by scripts/generate_extension_version.sh
-    
+    git # Required by scripts/generate_extension_version.sh
+
     # PostgreSQL build infrastructure (PGXS)
     postgresql
     postgresql.dev
@@ -135,14 +135,14 @@ nativeBuildInputs = with pkgs; [
 
   buildInputs = with pkgs; [
     # Extension core dependencies
-    mongo-c-driver-static  # Provides libbson-static-1.0
-    intelrdfpmathlib       # Provides intelmathlib (bid_conf.h, libbid)
-    pcre2-static           # Provides libpcre2-8
-    
+    mongo-c-driver-static # Provides libbson-static-1.0
+    intelrdfpmathlib # Provides intelmathlib (bid_conf.h, libbid)
+    pcre2-static # Provides libpcre2-8
+
     # Cryptographic and system headers required by PostgreSQL
     openssl.dev
     libkrb5.dev
-    
+
     # Standard utilities
     icu
     readline

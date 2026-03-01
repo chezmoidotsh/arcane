@@ -6,7 +6,7 @@ data:
   # ==========================================
   # General application
   # ==========================================
-  
+
   # Application environment (development/production)
   ENV: "production"
   # Host to bind the API to
@@ -15,46 +15,46 @@ data:
   IS_KUBERNETES: "true"
   # Logging level (e.g., DEBUG, INFO, WARN, ERROR)
   LOGGING_LEVEL: "DEBUG"
-  
+
   # ==========================================
   # AI and LLM Services
   # ==========================================
-  
+
   # Base URL for the OpenAI compatible API (can be used with Ollama, vLLM, Azure, etc.)
   OPENAI_BASE_URL: "http://192.168.10.30:1234/v1"
   # The model used for generating embeddings
   MODEL_EMBEDDING_NAME: "text-embedding-multilingual-e5-large-instruct"
   # The model used for LLM operations like extraction and chunking (e.g., gpt-4o, gemma-3-4b-it)
   MODEL_NAME: "gemma-3-4b-it"
-  
+
   # ==========================================
   # External Microservices
   # ==========================================
-  
+
   # URL of the Playwright microservice endpoint
   PLAYWRIGHT_MICROSERVICE_URL: "http://firecrawl-playwright.ai-platform.svc.cluster.local:3002"
-  
+
   # ==========================================
   # Databases and Storage
   # ==========================================
-  
+
   # Postgres database URL for the primary application features (like jobs and queues)
   NUQ_DATABASE_URL: "postgresql://postgres:password@firecrawl-nuq-postgres.ai-platform.svc.cluster.local:5432/postgres"
   # URL for Redis instance specifically used for rate limiting
   REDIS_RATE_LIMIT_URL: "redis://valkey.ai-platform.svc.cluster.local:6379/2"
   # URL for the main Redis instance (used for BullMQ, background jobs, etc.)
   REDIS_URL: "redis://valkey.ai-platform.svc.cluster.local:6379/3"
-  
+
   # ==========================================
   # Security and Authentication
   # ==========================================
-  
+
   # Whether to use PostgreSQL auth (if false, it allows local permissive usage without DB accounts)
   USE_DB_AUTHENTICATION: "false"
 
   # ==========================================
   # Monitoring and Observability
   # ==========================================
-  
+
   # Set to false to disable Sentry telemetry
   SENTRY_DSN: "false"

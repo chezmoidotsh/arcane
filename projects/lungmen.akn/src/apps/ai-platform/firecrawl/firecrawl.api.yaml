@@ -27,8 +27,8 @@ spec:
         - name: api
           image: ghcr.io/firecrawl/firecrawl
           imagePullPolicy: Always
-          command: [ "node" ]
-          args: [ "--max-old-space-size=512", "dist/src/index.js" ]
+          command: ["node"]
+          args: ["--max-old-space-size=512", "dist/src/index.js"]
           ports:
             - name: http
               containerPort: 3002
