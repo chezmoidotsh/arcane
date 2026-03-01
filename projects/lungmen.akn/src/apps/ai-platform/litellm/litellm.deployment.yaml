@@ -120,15 +120,20 @@ spec:
             - name: litellm-config
               mountPath: /etc/litellm/config.yaml
               subPath: config.yaml
+              readOnly: true
             - name: ephemeral
-              mountPath: /tmp
-              subPath: tmp
+              mountPath: /app/var/litellm/ui
+              subPath: ui
             - name: ephemeral
-              mountPath: /.cache
+              mountPath: /app/var/litellm/assets
+              subPath: assets
+            - name: ephemeral
+              mountPath: /app/var/litellm/cache
               subPath: cache
             - name: ephemeral
-              mountPath: /.npm
-              subPath: npm
+              mountPath: /app/var/litellm/migrations
+              subPath: migrations
+
       volumes:
         - name: litellm-config
           configMap:
