@@ -12,6 +12,7 @@ helmCharts:
 resources:
   - open-webui.configuration.externalsecret.yaml
   - open-webui.httproute.yaml
+  - open-webui.ingress.yaml
 
 labels:
   - pairs:

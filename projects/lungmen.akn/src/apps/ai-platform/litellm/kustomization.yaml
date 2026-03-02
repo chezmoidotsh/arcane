@@ -7,6 +7,7 @@ resources:
   - litellm.proxy-config.yaml
   - litellm.configuration.externalsecret.yaml
   - litellm.httproute.yaml
+  - litellm.ingress.yaml
 
 labels:
   - pairs:
