@@ -12,7 +12,7 @@ resources:
 helmCharts:
   - name: newt
     repo: https://charts.fossorial.io
-    version: 1.1.0
+    version: 1.2.0
     releaseName: newt
     namespace: newt-system
     valuesInline:
