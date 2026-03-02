@@ -21,4 +21,4 @@ labels:
 images:
   # renovate: datasource=docker depName=ghcr.io/berriai/litellm-non_root
   - name: ghcr.io/berriai/litellm-non_root
-    newTag: main-v1.81.14.rc.2@sha256:bfdbbd3eecc6b4344de9dced03cb9342cb8517fa6dd44273a3ef45160e3aa5ec
+    newTag: main-dev
