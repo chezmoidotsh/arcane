@@ -70,6 +70,8 @@
           ./modules/common.nix # Shared: stateVersion, primaryUser, XDG dirs, power mgmt
           ./modules/caddy.nix # Service: reverse proxy
           ./modules/kokoro.nix # Service: TTS API
+          # ./modules/presidio.nix # Service: Presidio PII Detection API
+          ./modules/whisper.nix # Service: Whisper-cpp Audio Transcription API
 
           # Machine-specific inline config: Homebrew casks specific to yvonne's
           # workload. Kept here because they are a single self-contained block

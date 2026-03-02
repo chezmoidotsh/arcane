@@ -8,6 +8,8 @@
 # │ Vhosts:                                                                   │
 # │   studio.llm.chezmoi.sh:1234  →  LM Studio OpenAI API  (127.0.0.1:8234) │
 # │   kokoro.llm.chezmoi.sh:1234  →  Kokoro TTS REST API   (127.0.0.1:8880) │
+# │   presidio.llm.chezmoi.sh:1234 →  Presidio PII REST API (127.0.0.1:8881) │
+# │   whisper.llm.chezmoi.sh:1234  →  Whisper Transcription API (127.0.0.1:8882) │
 # │                                                                           │
 # │ Logs:  all access logs are written to a single structured JSON file       │
 # │        at $XDG_STATE_HOME/log/caddy.access.log and rotated by newsyslog. │
@@ -64,6 +66,42 @@ http://studio.llm.chezmoi.sh:1234 {
 # API compatible with OpenAI /audio/speech.
 http://kokoro.llm.chezmoi.sh:1234 {
   reverse_proxy 127.0.0.1:8880 {
+    transport http {
+      response_header_timeout 15m
+      read_timeout 15m
+      write_timeout 15m
+    }
+  }
+
+  import errors.inc
+}
+
+# ---------------------------------------------------------------------------
+# Presidio FastAPI — local PII detection and anonymization
+# ---------------------------------------------------------------------------
+# Upstream: Presidio FastAPI server on port 8881 (managed by nix-darwin launchd
+# agent sh.chezmoi.shodan.presidio). Provides offline PII detection and anonymization
+# API compatible with LiteLLM.
+http://presidio.llm.chezmoi.sh:1234 {
+  reverse_proxy 127.0.0.1:8881 {
+    transport http {
+      response_header_timeout 15m
+      read_timeout 15m
+      write_timeout 15m
+    }
+  }
+
+  import errors.inc
+}
+
+# ---------------------------------------------------------------------------
+# Whisper.cpp — local audio transcription
+# ---------------------------------------------------------------------------
+# Upstream: Whisper-cpp server on port 8882 (managed by nix-darwin launchd
+# agent sh.chezmoi.shodan.whisper). Provides offline /audio/transcriptions API
+# compatible with OpenAI.
+http://whisper.llm.chezmoi.sh:1234 {
+  reverse_proxy 127.0.0.1:8882 {
     transport http {
       response_header_timeout 15m
       read_timeout 15m
