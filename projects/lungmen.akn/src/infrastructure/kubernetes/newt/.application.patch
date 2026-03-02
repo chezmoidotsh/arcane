@@ -10,7 +10,7 @@ spec:
       value: Networking / Tunnel
     - name: Version
       # renovate: datasource=helm depName=newt registryUrl=https://charts.fossorial.io
-      value: "1.1.0"
+      value: "1.2.0"
     # -- Documentation & Resources
     - name: Documentation
       value: https://docs.fossorial.io/
