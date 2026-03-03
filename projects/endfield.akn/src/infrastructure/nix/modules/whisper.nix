@@ -48,7 +48,7 @@ in
       ThrottleInterval = 10;
       # Environment
       EnvironmentVariables = {
-        PATH = "/usr/bin:/bin:/usr/sbin:/sbin";
+        PATH = "${pkgs.ffmpeg}/bin:/usr/bin:/bin:/usr/sbin:/sbin";
       };
       # Logging
       StandardOutPath = "${xdg.log}/whisper.stdout.log";
