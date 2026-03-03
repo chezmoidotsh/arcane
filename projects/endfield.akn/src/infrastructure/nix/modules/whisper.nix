@@ -45,8 +45,6 @@ in
         "8882"
         "-m"
         "${whisper.models}/ggml-model.bin"
-        "--inference-path"
-        "/audio/transcriptions"
       ];
       WorkingDirectory = "${xdg.tmp}/whisper";
       # User
