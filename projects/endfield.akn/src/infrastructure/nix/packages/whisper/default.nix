@@ -3,13 +3,17 @@
 let
   models = pkgs.stdenvNoCC.mkDerivation {
     pname = "whisper-models";
-    version = "1.0";
+    version = "large-v3-turbo";
     dontUnpack = true;
     installPhase = ''
       mkdir -p $out
       install -m 0644 ${pkgs.fetchurl {
-        url = "https://huggingface.co/bofenghuang/whisper-large-v3-french/resolve/main/ggml-model-q5_0.bin";
-        sha256 = "d8da7cb6cdadfac47829abf46fe8cd36fcfef06db5601bfd8acbcd40579010a5";
+        # OpenAI official large-v3-turbo (converted to GGML for whisper.cpp).
+        # Optimization: whisper.cpp on aarch64-darwin utilizes the Metal GPU and 
+        # CoreML backend, providing inference speeds equivalent to MLX-native 
+        # implementations on Apple Silicon.
+        url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo.bin";
+        sha256 = "sha256-H8cPd0046xaZk6w5Huo1fvR8iHV+9y7llDh5t+jivGk=";
       }} $out/ggml-model.bin
     '';
   };
