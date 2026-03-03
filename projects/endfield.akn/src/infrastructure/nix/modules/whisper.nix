@@ -39,15 +39,21 @@ in
       # Execution
       ProgramArguments = [
         "${whisper.bin}"
-        "--host"
-        "127.0.0.1"
-        "--port"
-        "8882"
-        "--inference-path"
-        "/audio/transcriptions"
-        "--model"
-        "${whisper.models}/ggml-model.bin"
-        "--convert"        
+
+        # 1. Network / Server configuration
+        "--host"           "127.0.0.1"
+        "--port"           "8882"
+        "--inference-path" "/audio/transcriptions"
+
+        # 2. Model / Inference engine
+        "--model"          "${whisper.models}/ggml-model.bin"
+        "--convert"        # Enable on-the-fly audio conversion via FFmpeg
+
+        # 3. Decoding & Transcription parameters
+        "--max-len"        "48"   # Max segment length in characters
+        "--entropy-thold"  "2.2"  # Logic threshold for better quality
+        
+        # 4. Debug & Visualization (logs)
         "--print-special"
         "--print-colors"
         "--print-realtime"
