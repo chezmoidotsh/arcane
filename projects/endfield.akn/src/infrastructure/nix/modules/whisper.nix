@@ -19,6 +19,12 @@ let
   whisper = import ../packages/whisper { inherit pkgs; };
 in
 {
+  # Ensure XDG tmp directories exist.
+  system.activationScripts.extraActivation.text = lib.mkAfter ''
+    install -d -m 0755 -o ${username} -g staff ${xdg.tmp}/whisper
+    chown -R ${username}:staff ${xdg.tmp}/whisper
+  '';
+
   # Log rotation for Whisper user-level logs (newsyslog is system-level).
   environment.etc."newsyslog.d/endfield.akn-whisper.conf".text = ''
     ${xdg.log}/whisper.stdout.log 644 7 10000 * J
@@ -43,6 +49,7 @@ in
         "/audio/transcriptions"
         "--convert"
       ];
+      WorkingDirectory = "${xdg.tmp}/whisper";
       # User
       UserName = username;
       # Lifecycle
