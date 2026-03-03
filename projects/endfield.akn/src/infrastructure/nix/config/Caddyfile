@@ -101,10 +101,10 @@ http://presidio.llm.chezmoi.sh:1234 {
 # agent sh.chezmoi.shodan.whisper). Provides offline /audio/transcriptions API
 # compatible with OpenAI.
 http://whisper.llm.chezmoi.sh:1234 {
-  # Authorise uniquement les routes OpenAI standard
-  @allowed path /audio/transcriptions
-  
+  # Compatibilité avec les chemins OpenAI (/audio/transcriptions)
   uri strip_prefix /audio
+
+  # Proxy vers le backend local (sert le / pour l'UI et les routes nettoyées)
   reverse_proxy 127.0.0.1:8882 {
     transport http {
       response_header_timeout 15m
