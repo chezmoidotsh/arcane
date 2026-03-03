@@ -80,10 +80,9 @@ resources:
     memory: "256Mi" # Minimum memory for registry operations
     cpu: "100m" # 0.1 CPU cores minimum
 
-  # limits: Maximum resources the container can use
+  # limits: Maximum resources the container can use (no CPU limit)
   limits:
     memory: "1Gi" # Maximum memory (prevents OOM issues)
-    cpu: "500m" # 0.5 CPU cores maximum
 
 # ──────────────────────────────────────────────────────────────────────────
 # ZOT Registry Configuration
