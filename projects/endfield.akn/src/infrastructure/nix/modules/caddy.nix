@@ -28,14 +28,6 @@
     # Install the global error handler snippet
     install -m 0644 -o ${username} -g staff ${../config/errors.inc} ${xdg.config}/caddy/errors.inc
 
-    # If repository contains a `config/errors` directory, copy it into the
-    # user's caddy config directory (legacy support for static error pages).
-    if [ -d ${../config}/errors ]; then
-      install -d -m 0755 -o ${username} -g staff ${xdg.config}/caddy/errors
-      cp -R ${../config}/errors/. ${xdg.config}/caddy/errors/ || true
-      chown -R ${username}:staff ${xdg.config}/caddy/errors
-    fi
-
     chown -R ${username}:staff ${xdg.config}/caddy
   '';
 
