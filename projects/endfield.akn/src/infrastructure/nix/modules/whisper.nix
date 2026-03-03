@@ -45,8 +45,11 @@ in
         "8882"
         "-m"
         "${whisper.models}/ggml-model.bin"
-        "--convert"
-        "--diarize"
+        "--convert"        
+        "--print-special"
+        "--print-colors"
+        "--print-realtime"
+        "--print-progress"
       ];
       WorkingDirectory = "${xdg.tmp}/whisper";
       # User
