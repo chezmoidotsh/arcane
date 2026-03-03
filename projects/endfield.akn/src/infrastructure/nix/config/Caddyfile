@@ -115,5 +115,10 @@ http://whisper.llm.chezmoi.sh:1234 {
     }
   }
 
+  # Rejette tout le reste
+  handle {
+    abort
+  }
+
   import errors.inc
 }
