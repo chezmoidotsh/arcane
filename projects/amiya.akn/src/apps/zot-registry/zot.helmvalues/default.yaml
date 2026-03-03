@@ -144,12 +144,6 @@ configFiles:
           "enable": true,
           "interval": "24h"
         },
-        "search": {
-          "enable": true,
-          "cve": {
-            "updateInterval": "24h"
-          }
-        },
         "sync": {
           "enable": true,
           "registries": [
@@ -224,9 +218,6 @@ configFiles:
               "tlsVerify": true
             }
           ]
-        },
-        "ui": {
-          "enable": true
         }
       }
     }
