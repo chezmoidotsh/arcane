@@ -4,10 +4,14 @@ kind: Kustomization
 resources:
   - litellm.deployment.yaml
   - litellm.configuration.yaml
-  - litellm.proxy-config.yaml
   - litellm.configuration.externalsecret.yaml
   - litellm.httproute.yaml
   - litellm.ingress.yaml
+
+configMapGenerator:
+  - name: litellm-proxy-config
+    files:
+      - config.yaml=config/proxy-config.yaml
 
 labels:
   - pairs:
