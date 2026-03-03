@@ -46,14 +46,26 @@ model_list:
   #     output_cost_per_token: 0.000002
   #     # tags: ["production", "critical"]           # Arbitrary tags for filtering/logging
 
-  - model_name: Kokoro TTS
+  - model_name: hexgrad/kokoro
+    model_info:
+      author: Hexgrad
+      version: v0.2.4
+      mode: audio_speech
+      input_cost_per_token: 0 # 0$/Mtokens
+      output_cost_per_token: 0 # 0$/Mtokens
     litellm_params:
       model: hexgrad/kokoro
       api_base: http://kokoro.llm.chezmoi.sh:1234/v1
       api_key: _
       custom_llm_provider: "openai"
 
-  - model_name: Whisper STT
+  - model_name: openai-oss/whisper-large-v3-turbo
+    model_info:
+      author: OpenAI
+      version: v3-turbo
+      mode: audio_transcription
+      input_cost_per_token: 0 # 0$/Mtokens
+      output_cost_per_token: 0 # 0$/Mtokens
     litellm_params:
       model: openai/whisper-large-v3-turbo
       api_base: http://whisper.llm.chezmoi.sh:1234/
