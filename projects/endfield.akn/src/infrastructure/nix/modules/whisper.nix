@@ -59,6 +59,7 @@ in
       # Environment
       EnvironmentVariables = {
         PATH = "${pkgs.ffmpeg}/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+        TMPDIR = "${xdg.tmp}/whisper";
       };
       # Logging
       StandardOutPath = "${xdg.log}/whisper.stdout.log";
