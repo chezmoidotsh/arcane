@@ -119,10 +119,5 @@ http://whisper.llm.chezmoi.sh:1234 {
     respond `{"status": "ok"}` 200
   }
 
-  # Rejette tout le reste
-  handle {
-    abort
-  }
-
   import errors.inc
 }
