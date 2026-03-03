@@ -104,14 +104,12 @@ http://whisper.llm.chezmoi.sh:1234 {
   # Authorise uniquement les routes OpenAI standard
   @allowed path /audio/transcriptions
   
-  handle @allowed {
-    uri strip_prefix /audio
-    reverse_proxy 127.0.0.1:8882 {
-      transport http {
-        response_header_timeout 15m
-        read_timeout 15m
-        write_timeout 15m
-      }
+  uri strip_prefix /audio
+  reverse_proxy 127.0.0.1:8882 {
+    transport http {
+      response_header_timeout 15m
+      read_timeout 15m
+      write_timeout 15m
     }
   }
 
