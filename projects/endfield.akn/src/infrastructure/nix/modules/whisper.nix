@@ -39,6 +39,9 @@ in
         "8882"
         "-m"
         "${whisper.models}/ggml-model.bin"
+        "--inference-path"
+        "/audio/transcriptions"
+        "--convert"
       ];
       # User
       UserName = username;
