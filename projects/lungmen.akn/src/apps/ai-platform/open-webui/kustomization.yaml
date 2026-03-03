@@ -23,4 +23,4 @@ labels:
 images:
   # renovate: datasource=docker depName=ghcr.io/open-webui/open-webui
   - name: ghcr.io/open-webui/open-webui
-    newTag: v0.8.5@sha256:2deb90b0423473d8f97febced2e62b8fd898aa3eb61877bb3aa336370214c258
+    newTag: v0.8.8-slim@sha256:a655a1ce6f34760f7edb7cafcbd82cf4f622569710abd5fcaaf7a8e731501da5
