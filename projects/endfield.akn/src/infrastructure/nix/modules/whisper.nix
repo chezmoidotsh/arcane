@@ -66,4 +66,28 @@ in
       StandardErrorPath = "${xdg.log}/whisper.stderr.log";
     };
   };
+
+  # Janitor agent: sweeps short-lived working files from xdg.tmp/whisper every hour.
+  launchd.agents.whisper-janitor = {
+    serviceConfig = {
+      # Identity
+      Label = "sh.chezmoi.endfield.whisper-janitor";
+      # Execution
+      ProgramArguments = [
+        "/bin/sh"
+        "-c"
+        "${pkgs.findutils}/bin/find ${xdg.tmp}/whisper -type f -mmin +60 -print -delete"
+      ];
+      WorkingDirectory = "${xdg.tmp}/whisper";
+      # User
+      UserName = username;
+      # Lifecycle — runs every hour (3600s)
+      RunAtLoad = true;
+      StartInterval = 3600;
+      ThrottleInterval = 10;
+      # Logging
+      StandardOutPath = "${xdg.log}/whisper-janitor.stdout.log";
+      StandardErrorPath = "${xdg.log}/whisper-janitor.stderr.log";
+    };
+  };
 }
