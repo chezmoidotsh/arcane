@@ -46,6 +46,10 @@ in
         "-m"
         "${whisper.models}/ggml-model.bin"
         "--convert"
+        "--diarize"
+        "--language"
+        "auto"
+        "--detect-language"        
       ];
       WorkingDirectory = "${xdg.tmp}/whisper";
       # User
