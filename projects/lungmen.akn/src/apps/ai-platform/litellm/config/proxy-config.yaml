@@ -70,7 +70,7 @@ model_list:
       model: openai/whisper-large-v3-turbo
       api_base: http://whisper.llm.chezmoi.sh:1234/
       api_key: _
-      custom_llm_provider: "openai"
+      custom_llm_provider: openai
 
 general_settings:
   # --- Administrative & Security ---
