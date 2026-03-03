@@ -148,7 +148,7 @@ configFiles:
           "enable": true,
           "registries": [
             {
-              "urls": ["https://docker.io"],
+              "urls": ["https://docker.io", "https://registry-1.docker.io"],
               "content": [{"destination": "/docker.io", "prefix": "**"}],
               "onDemand": true,
               "preserveDigest": true,
@@ -169,7 +169,7 @@ configFiles:
               "tlsVerify": true
             },
             {
-              "urls": ["https://ecr-public.aws.com"],
+              "urls": ["https://ecr-public.aws.com", "https://public.ecr.aws"],
               "content": [{"destination": "/ecr-public.aws.com", "prefix": "**"}],
               "onDemand": true,
               "preserveDigest": true,
@@ -197,7 +197,7 @@ configFiles:
               "tlsVerify": true
             },
             {
-              "urls": ["https://xpkg.crossplane.io/"],
+              "urls": ["https://xpkg.crossplane.io"],
               "content": [{"destination": "/xpkg.crossplane.io", "prefix": "**"}],
               "onDemand": true,
               "preserveDigest": true,
