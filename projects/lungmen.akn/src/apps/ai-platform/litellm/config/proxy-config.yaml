@@ -46,6 +46,7 @@ model_list:
   #     output_cost_per_token: 0.000002
   #     # tags: ["production", "critical"]           # Arbitrary tags for filtering/logging
 
+  # --- Audio Models ---
   - model_name: hexgrad/kokoro
     model_info:
       author: Hexgrad
