@@ -14,12 +14,6 @@ resources:
   - open-webui.httproute.yaml
   - open-webui.ingress.yaml
 
-labels:
-  - pairs:
-      app.kubernetes.io/name: open-webui
-    includeTemplates: true
-    includeSelectors: true
-
 images:
   # renovate: datasource=docker depName=ghcr.io/open-webui/open-webui
   - name: ghcr.io/open-webui/open-webui
