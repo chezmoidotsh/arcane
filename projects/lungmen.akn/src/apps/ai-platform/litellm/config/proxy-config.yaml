@@ -73,6 +73,202 @@ model_list:
       api_key: _
       custom_llm_provider: openai
 
+  # --- Chat Models ---
+
+  # Mistral AI
+  - model_name: mistral/mistral-small-24b
+    model_info:
+      publisher: Mistral AI
+      architecture: llama
+      base_model: mistral-small
+      params: 24B
+      quantization: Q4_K_S
+      mode: chat
+      input_cost_per_token: 0 # 0$/Mtokens
+      output_cost_per_token: 0 # 0$/Mtokens
+    litellm_params:
+      model: mistral-small-3.2-24b-instruct-2506
+      api_base: http://studio.llm.chezmoi.sh:1234/v1
+      api_key: _
+      custom_llm_provider: openai
+
+  - model_name: mistral/ministral-3-14b
+    model_info:
+      publisher: Mistral AI
+      architecture: mistral3
+      base_model: ministral-3
+      params: 14B
+      quantization: Q4_K_M
+      mode: chat
+      input_cost_per_token: 0 # 0$/Mtokens
+      output_cost_per_token: 0 # 0$/Mtokens
+    litellm_params:
+      model: ministral-3-14b-instruct-2512
+      api_base: http://studio.llm.chezmoi.sh:1234/v1
+      api_key: _
+      custom_llm_provider: openai
+
+  - model_name: mistral/ministral-3-14b-mlx
+    model_info:
+      publisher: mlx-community
+      architecture: mistral3
+      base_model: ministral-3
+      params: 14B
+      quantization: MXFP4
+      mode: chat
+      input_cost_per_token: 0 # 0$/Mtokens
+      output_cost_per_token: 0 # 0$/Mtokens
+    litellm_params:
+      model: mistralai_ministral-3-14b-instruct-2512-mlx
+      api_base: http://studio.llm.chezmoi.sh:1234/v1
+      api_key: _
+      custom_llm_provider: openai
+
+  - model_name: mistral/ministral-3-3b-instruct
+    model_info:
+      publisher: Mistral AI
+      architecture: mistral3
+      base_model: ministral-3
+      params: 3B
+      quantization: Q4_K_M
+      mode: chat
+      input_cost_per_token: 0 # 0$/Mtokens
+      output_cost_per_token: 0 # 0$/Mtokens
+    litellm_params:
+      model: mistralai/ministral-3-3b-instruct-2512
+      api_base: http://studio.llm.chezmoi.sh:1234/v1
+      api_key: _
+      custom_llm_provider: openai
+
+  - model_name: mistral/ministral-3-3b
+    model_info:
+      publisher: Mistral AI
+      architecture: mistral3
+      base_model: ministral-3
+      params: 3B
+      quantization: Q4_K_M
+      mode: chat
+      input_cost_per_token: 0 # 0$/Mtokens
+      output_cost_per_token: 0 # 0$/Mtokens
+    litellm_params:
+      model: mistralai/ministral-3-3b
+      api_base: http://studio.llm.chezmoi.sh:1234/v1
+      api_key: _
+      custom_llm_provider: openai
+
+  # Google
+  - model_name: google/gemma-3-27b
+    model_info:
+      publisher: Google
+      architecture: gemma3
+      base_model: gemma-3
+      params: 27B
+      quantization: 4bit
+      mode: chat
+      input_cost_per_token: 0 # 0$/Mtokens
+      output_cost_per_token: 0 # 0$/Mtokens
+    litellm_params:
+      model: google/gemma-3-27b
+      api_base: http://studio.llm.chezmoi.sh:1234/v1
+      api_key: _
+      custom_llm_provider: openai
+
+  - model_name: google/gemma-3-12b
+    model_info:
+      publisher: Google
+      architecture: gemma3
+      base_model: gemma-3
+      params: 12B
+      quantization: 4bit
+      mode: chat
+      input_cost_per_token: 0 # 0$/Mtokens
+      output_cost_per_token: 0 # 0$/Mtokens
+    litellm_params:
+      model: google/gemma-3-12b
+      api_base: http://studio.llm.chezmoi.sh:1234/v1
+      api_key: _
+      custom_llm_provider: openai
+
+  - model_name: google/gemma-3-4b
+    model_info:
+      publisher: Google
+      architecture: gemma3
+      base_model: gemma-3
+      params: 4B
+      quantization: 4bit
+      mode: chat
+      input_cost_per_token: 0 # 0$/Mtokens
+      output_cost_per_token: 0 # 0$/Mtokens
+    litellm_params:
+      model: google/gemma-3-4b
+      api_base: http://studio.llm.chezmoi.sh:1234/v1
+      api_key: _
+      custom_llm_provider: openai
+
+  # - Meta
+  - model_name: meta/llama-guard-3-1b
+    model_info:
+      publisher: Meta
+      architecture: llama
+      base_model: llama-guard-3
+      params: 1B
+      quantization: 4bit
+      mode: chat
+      input_cost_per_token: 0 # 0$/Mtokens
+      output_cost_per_token: 0 # 0$/Mtokens
+    litellm_params:
+      model: llama-guard-3-1b
+      api_base: http://studio.llm.chezmoi.sh:1234/v1
+      api_key: _
+      custom_llm_provider: openai
+
+  # - OpenAI
+  - model_name: openai/gpt-oss-20b
+    model_info:
+      publisher: OpenAI
+      architecture: gpt_oss
+      base_model: gpt-oss
+      params: 20B
+      quantization: MXFP4
+      mode: chat
+      input_cost_per_token: 0 # 0$/Mtokens
+      output_cost_per_token: 0 # 0$/Mtokens
+    litellm_params:
+      model: openai/gpt-oss-20b
+      api_base: http://studio.llm.chezmoi.sh:1234/v1
+      api_key: _
+      custom_llm_provider: openai
+
+  # --- Embedding Models ---
+  - model_name: baai/bge-m3
+    model_info:
+      publisher: Beijing Academy of Artificial Intelligence
+      base_model: bge-m3
+      params: 567M
+      quantization: Q8_0
+      mode: embedding
+      input_cost_per_token: 0 # 0$/Mtokens
+      output_cost_per_token: 0 # 0$/Mtokens
+    litellm_params:
+      model: text-embedding-bge-m3
+      api_base: http://studio.llm.chezmoi.sh:1234/v1
+      api_key: _
+      custom_llm_provider: openai
+
+  - model_name: nomic-ai/nomic-embed-text-v1.5
+    model_info:
+      publisher: Nomic AI
+      base_model: nomic-embed-text-v1.5
+      quantization: Q4_K_M
+      mode: embedding
+      input_cost_per_token: 0 # 0$/Mtokens
+      output_cost_per_token: 0 # 0$/Mtokens
+    litellm_params:
+      model: text-embedding-nomic-embed-text-v1.5
+      api_base: http://studio.llm.chezmoi.sh:1234/v1
+      api_key: _
+      custom_llm_provider: openai
+
 general_settings:
   # --- Administrative & Security ---
   master_key: os.environ/LITELLM_MASTER_KEY  # Admin key (must start with sk-). Enforces auth on all endpoints.
