@@ -55,12 +55,12 @@ model_list:
       input_cost_per_token: 0 # 0$/Mtokens
       output_cost_per_token: 0 # 0$/Mtokens
     litellm_params:
-      model: hexgrad/kokoro
+      model: openai/kokoro
       api_base: http://kokoro.llm.chezmoi.sh:1234/v1
       api_key: _
-      custom_llm_provider: "openai"
+      custom_llm_provider: openai
 
-  - model_name: openai-oss/whisper-large-v3-turbo
+  - model_name: openai/whisper-large-v3-turbo
     model_info:
       author: OpenAI
       version: v3-turbo
@@ -271,23 +271,23 @@ model_list:
 
 general_settings:
   # --- Administrative & Security ---
-  master_key: os.environ/LITELLM_MASTER_KEY  # Admin key (must start with sk-). Enforces auth on all endpoints.
-  database_url: os.environ/DATABASE_URL      # PostgreSQL connection string for virtual keys, teams, and usage tracking.
+  master_key: os.environ/LITELLM_MASTER_KEY # Admin key (must start with sk-). Enforces auth on all endpoints.
+  database_url: os.environ/DATABASE_URL # PostgreSQL connection string for virtual keys, teams, and usage tracking.
   # master_key_hash: "..."                     # Hashed master key for increased security.
   # master_key_hash_type: "pbkdf2_sha256"      # Algorithm used for hashing the master key.
 
   # --- Database & Performance ---
-  store_model_in_db: true                       # Enables managing models/credentials via the UI/API (stored in DB).
-  supported_db_objects: [models, mcp]           # Fine-grained control over which objects to load from DB.
-  proxy_batch_write_at: 60                      # Batch write spend updates to DB every N seconds.
-  database_connection_pool_limit: 10            # Max DB connections per worker.
+  store_model_in_db: true # Enables managing models/credentials via the UI/API (stored in DB).
+  supported_db_objects: [models, mcp] # Fine-grained control over which objects to load from DB.
+  proxy_batch_write_at: 60 # Batch write spend updates to DB every N seconds.
+  database_connection_pool_limit: 10 # Max DB connections per worker.
   # use_redis_transaction_buffer: false         # Use Redis as a buffer for high-traffic spend updates (1000+ RPS).
   # proxy_budget_rescheduler_min_time: 60       # Min time (s) between budget refreshes.
   # proxy_budget_rescheduler_max_time: 64       # Max time (s) between budget refreshes.
 
   # --- Error Handling & Reliability ---
-  disable_error_logs: true                      # Don't write LLM exception stack traces to the database.
-  allow_requests_on_db_unavailable: true        # Continue processing requests if the database is temporarily down.
+  disable_error_logs: true # Don't write LLM exception stack traces to the database.
+  allow_requests_on_db_unavailable: true # Continue processing requests if the database is temporarily down.
 
   # --- Logging & Spend Management ---
   # disable_spend_logs: false                   # Disable all budget and usage tracking.
@@ -312,7 +312,7 @@ litellm_settings:
   # --- Core SDK Behavior ---
   # drop_params: true                           # Drop non-OpenAI params before sending the request to the provider.
   # num_retries: 2                              # Global default for retrying failed LLM calls.
-  request_timeout: 900                          # Global timeout (s) for LLM requests (15 minutes).
+  request_timeout: 900 # Global timeout (s) for LLM requests (15 minutes).
   # stream_timeout: 60                          # Timeout (s) for streaming chunks.
 
   # --- Caching (Redis/Valkey) ---
@@ -326,8 +326,8 @@ litellm_settings:
     # ttl: 3600                                 # Global cache TTL in seconds.
 
   # --- Logging & Observability ---
-  set_verbose: false                            # Enable debug logging (extremely noisy).
-  json_logs: true                               # Use JSON format for all proxy logs.
+  set_verbose: false # Enable debug logging (extremely noisy).
+  json_logs: true # Use JSON format for all proxy logs.
   # success_callback: ["langfuse", "prometheus"] # Integrations to call on successful requests.
   # failure_callback: ["sentry", "slack"]       # Integrations to call on failed requests.
   # service_callbacks: ["datadog"]               # Callbacks specifically for proxy/DB health issues.
@@ -336,7 +336,7 @@ litellm_settings:
 
   # --- Advanced Features ---
   # force_ipv4: false                           # Force the proxy to use IPv4 for outgoing LLM requests.
-  telemetry: false                              # Enable/disable LiteLLM anonymous usage telemetry.
+  telemetry: false # Enable/disable LiteLLM anonymous usage telemetry.
   # enable_azure_openai_oai_preview: false      # Enable Azure OpenAI preview features (like streaming).
   # max_request_size_mb: 20                     # Restrict larger payloads.
   # max_response_size_mb: 20                    # Restrict larger response payloads.

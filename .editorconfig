@@ -1,0 +1,113 @@
+# .editorconfig - Configuration globale pour le dépôt "arcane"
+# Conventions par défaut : espaces pour l'indentation, taille = 2
+# Meilleures pratiques : UTF-8, LF, newline final, suppression des trailing spaces (sauf pour MD)
+# https://editorconfig.org
+
+root = true
+
+# Règles par défaut pour tous les fichiers
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+insert_final_newline = true
+# Valeur conventionnelle (éditeur peut l'ignorer) — utile pour linters/IDE
+max_line_length = 120
+
+# Fichiers Markdown / texte : ne pas supprimer les espaces finales (utilisées pour les sauts de ligne)
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+[*.markdown]
+trim_trailing_whitespace = false
+max_line_length = off
+
+[README]
+trim_trailing_whitespace = false
+
+# Shell scripts
+[*.sh]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# YAML (sensibles à l'indent) — garder 2 espaces
+[*.yml]
+indent_style = space
+indent_size = 2
+
+[*.yaml]
+indent_style = space
+indent_size = 2
+
+# JSON — 2 espaces (la plupart des outils JS l'attendent)
+[*.json]
+indent_style = space
+indent_size = 2
+insert_final_newline = false
+
+# JavaScript / TypeScript / frontend
+[*.{js,jsx,ts,tsx}]
+indent_style = space
+indent_size = 2
+charset = utf-8
+
+# CSS / SCSS / HTML / XML
+[*.{css,scss,less,html,xml}]
+indent_style = space
+indent_size = 2
+charset = utf-8
+
+# Python — suivre PEP8 : 4 espaces
+[*.py]
+indent_style = space
+indent_size = 4
+charset = utf-8
+max_line_length = 88
+
+# Go — gofmt utilise des tabs
+[*.go]
+indent_style = tab
+trim_trailing_whitespace = true
+insert_final_newline = true
+charset = utf-8
+
+# Makefiles exigent des tabs pour les recettes
+[Makefile]
+indent_style = tab
+trim_trailing_whitespace = false
+
+# Dockerfiles (généralement pas d'indentation stricte, mais LF/UTF-8)
+[Dockerfile]
+end_of_line = lf
+charset = utf-8
+
+# Shell / executable files without extension (heuristique) — si pris en charge par l'éditeur
+[*.env]
+indent_style = space
+indent_size = 2
+charset = utf-8
+
+# Scripts binaires/auto-generated : ne pas forcer les modifications
+[*.min.js]
+trim_trailing_whitespace = false
+insert_final_newline = false
+
+# Overrides pour fichiers de configuration divers
+[*.{toml,ini,conf,cnf}]
+indent_style = space
+indent_size = 2
+charset = utf-8
+
+# Notes / docs texte
+[*.{txt,adoc,asciidoc}]
+trim_trailing_whitespace = false
+insert_final_newline = true
+
+# Fin du fichier .editorconfig
