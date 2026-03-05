@@ -26,7 +26,7 @@ images:
 
   # renovate: datasource=docker depName=mcr.microsoft.com/playwright
   - name: mcr.microsoft.com/playwright
-    newTag: v1.49.1-noble
+    newTag: v1.58.2-noble@sha256:6446946a1d9fd62d9ae501312a2d76a43ee688542b21622056a372959b65d63d
   # renovate: datasource=docker depName=ghcr.io/open-webui/open-terminal
   - name: ghcr.io/open-webui/open-terminal
     newTag: latest
