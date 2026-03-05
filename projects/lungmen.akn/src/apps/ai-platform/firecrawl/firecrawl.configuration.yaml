@@ -21,11 +21,11 @@ data:
   # ==========================================
 
   # Base URL for the OpenAI compatible API (can be used with Ollama, vLLM, Azure, etc.)
-  OPENAI_BASE_URL: "http://192.168.10.30:1234/v1"
+  OPENAI_BASE_URL: "http://llm.chezmoi.sh:1234/v1"
   # The model used for generating embeddings
-  MODEL_EMBEDDING_NAME: "text-embedding-multilingual-e5-large-instruct"
+  MODEL_EMBEDDING_NAME: "text-embedding-bge-m3"
   # The model used for LLM operations like extraction and chunking (e.g., gpt-4o, gemma-3-4b-it)
-  MODEL_NAME: "gemma-3-4b-it"
+  MODEL_NAME: "mistralai/ministral-3-3b"
 
   # ==========================================
   # External Microservices
