@@ -846,6 +846,8 @@ engines:
     url: https://thepiratebay.org/
     timeout: 3.0
     categories: files
+    disabled: true
+    hidden: true # Hidden due to frequent downtime and legal issues
 
   - name: solidtorrents
     engine: solidtorrents
@@ -855,11 +857,15 @@ engines:
       - https://solidtorrents.to
       - https://bitsearch.to
     categories: files
+    disabled: true
+    hidden: true # Hidden due to frequent downtime and legal issues
 
   - name: bt4g
     engine: bt4g
     shortcut: bt4g
     categories: files
+    disabled: true
+    hidden: true # Hidden due to frequent downtime and legal issues
 
   - name: kickass
     engine: kickass
@@ -869,6 +875,8 @@ engines:
     shortcut: kc
     timeout: 4.0
     categories: files
+    disabled: true
+    hidden: true # Hidden due to frequent downtime and legal issues
 
   - name: nyaa
     engine: nyaa
@@ -881,6 +889,7 @@ engines:
     shortcut: 1337x
     categories: files
     disabled: true
+    hidden: true # Hidden due to frequent downtime and legal issues
 
   - name: annas archive
     engine: annas_archive
