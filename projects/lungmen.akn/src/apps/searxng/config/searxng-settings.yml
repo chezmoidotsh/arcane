@@ -878,7 +878,6 @@ engines:
     engine: nyaa
     shortcut: nt
     categories: files
-    disabled: true
 
   - name: 1337x
     engine: 1337x
