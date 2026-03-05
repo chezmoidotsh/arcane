@@ -308,7 +308,7 @@ data:
 
   # SearXNG query URL
   # URL of your SearXNG instance search endpoint
-  SEARXNG_QUERY_URL: "http://searxng.ai-platform.svc.cluster.local:8080/search"
+  SEARXNG_QUERY_URL: "http://searxng.searxng.svc.cluster.local:8080/search"
 
   # SearXNG language
   # Language code for search results

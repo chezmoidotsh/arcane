@@ -8,17 +8,10 @@ resources:
   - open-webui.deployment.yaml
   - open-webui.httproute.yaml
   - open-webui.ingress.yaml
-  - open-webui.searxng-secret.generator.yaml
   - open-webui.storage.yaml
   - pipelines.deployment.yaml
   - playwright.deployment.yaml
-  - searxng.deployment.yaml
   - tika.deployment.yaml
-
-configMapGenerator:
-  - name: searxng-config
-    files:
-      - settings.yml=config/searxng-settings.yml
 
 images:
   # renovate: datasource=docker depName=ghcr.io/open-webui/open-webui
@@ -30,9 +23,7 @@ images:
   # renovate: datasource=docker depName=apache/tika
   - name: apache/tika
     newTag: 3.2.3.0-full@sha256:21d8052de04e491ccf66e8680ade4da6f3d453a56d59f740b4167e54167219b7
-  # renovate: datasource=docker depName=docker.io/searxng/searxng
-  - name: docker.io/searxng/searxng
-    newTag: 2026.3.5-380f1c4a4@sha256:d91401eb215c32b2df887ac24a0457119c2e49ca21518a07faca17e52871a348
+
   # renovate: datasource=docker depName=mcr.microsoft.com/playwright
   - name: mcr.microsoft.com/playwright
     newTag: v1.49.1-noble

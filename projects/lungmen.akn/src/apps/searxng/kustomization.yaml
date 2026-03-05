@@ -1,0 +1,37 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: searxng
+
+resources:
+  - namespace.yaml
+  - searxng-secret.generator.yaml
+  - searxng.externalsecret.yaml
+  - searxng.deployment.yaml
+  - searxng.httproute.yaml
+
+helmCharts:
+  - name: valkey
+    releaseName: valkey-searxng
+    repo: https://valkey-io.github.io/valkey-helm/
+    version: 0.9.3
+    namespace: searxng
+    valuesFile: valkey.helmvalues/default.yaml
+    additionalValuesFiles:
+      - valkey.helmvalues/hardened.yaml
+
+configMapGenerator:
+  - name: searxng-config
+    files:
+      - settings.yml=config/searxng-settings.yml
+
+images:
+  # renovate: datasource=docker depName=docker.io/searxng/searxng
+  - name: docker.io/searxng/searxng
+    newTag: 2026.3.5-380f1c4a4@sha256:d91401eb215c32b2df887ac24a0457119c2e49ca21518a07faca17e52871a348
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: searxng
+      app.kubernetes.io/component: search-engine
+      app.kubernetes.io/part-of: ai-platform

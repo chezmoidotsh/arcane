@@ -1,0 +1,35 @@
+# -- Valkey Configuration for SearXNG
+# Configured for rate limiting and caching with single-node deployment
+
+# -- Apply resource allocations for Valkey
+resources:
+  requests:
+    cpu: 5m
+    memory: "128Mi"
+  limits:
+    memory: "256Mi"
+
+# -- Enables verbose debug logs for easier troubleshooting
+valkeyLogLevel: "notice"
+
+auth:
+  # -- Disable authentication for simplicity (SearXNG connection is internal only)
+  enabled: false
+
+replica:
+  # -- Single node deployment (SearXNG doesn't require HA for cache/limiter)
+  enabled: false
+
+master:
+  persistence:
+    # -- Enable persistence for rate limiting data
+    enabled: true
+    size: 1Gi
+    storageClass: ""
+
+metrics:
+  # -- Extracts native Valkey metrics via redis_exporter sidecar
+  enabled: true
+  serviceMonitor:
+    # -- Automatically creates the ServiceMonitor resource for Prometheus Operator
+    enabled: true
