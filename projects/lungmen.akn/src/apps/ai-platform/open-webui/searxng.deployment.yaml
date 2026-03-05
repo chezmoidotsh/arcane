@@ -25,26 +25,6 @@ spec:
         runAsUser: 977
         runAsGroup: 977
         fsGroup: 977
-      initContainers:
-        - name: fix-config-permissions
-          image: docker.io/searxng/searxng
-          imagePullPolicy: IfNotPresent
-          command:
-            - sh
-            - -c
-            - |
-              # Copy config and set permissions
-              cp /etc/searxng-ro/settings.yml /etc/searxng/settings.yml
-              chown 977:977 /etc/searxng/settings.yml
-              chmod 644 /etc/searxng/settings.yml
-          volumeMounts:
-            - name: config-ro
-              mountPath: /etc/searxng-ro
-            - name: config-rw
-              mountPath: /etc/searxng
-          securityContext:
-            runAsUser: 0
-            runAsGroup: 0
       containers:
         - name: searxng
           image: docker.io/searxng/searxng
@@ -61,8 +41,19 @@ spec:
                   name: open-webui-secrets
                   key: SEARXNG_SECRET
           volumeMounts:
-            - name: config-rw
-              mountPath: /etc/searxng
+            - name: config
+              mountPath: /etc/searxng/settings.yml
+              subPath: settings.yml
+              readOnly: true
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 977
+            runAsGroup: 977
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: false
           resources:
             requests:
               cpu: 10m
@@ -84,11 +75,10 @@ spec:
             periodSeconds: 10
             failureThreshold: 3
       volumes:
-        - name: config-ro
+        - name: config
           configMap:
             name: searxng-config
-        - name: config-rw
-          emptyDir: {}
+            defaultMode: 0644
 ---
 apiVersion: v1
 kind: Service
