@@ -10,7 +10,6 @@ resources:
   - open-webui.ingress.yaml
   - open-webui.storage.yaml
   - pipelines.deployment.yaml
-  - playwright.deployment.yaml
   - tika.deployment.yaml
 
 images:

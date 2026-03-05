@@ -341,17 +341,7 @@ data:
   # Web loader engine
   # Options: "", "playwright", "firecrawl", "jina", "external"
   # Default: "" (uses simple HTTP requests)
-  WEB_LOADER_ENGINE: "playwright"
-
-  # Playwright WebSocket URL
-  # URL of Playwright server for advanced web scraping
-  # Format: ws://host:port
-  PLAYWRIGHT_WS_URL: "ws://playwright.ai-platform.svc.cluster.local:3000"
-
-  # Playwright timeout (milliseconds)
-  # Max time to wait for page load
-  # Default: 10000
-  PLAYWRIGHT_TIMEOUT: "30000"
+  WEB_LOADER_ENGINE: ""
 
   # Concurrent web loader requests
   # Number of parallel page loading requests
@@ -361,7 +351,7 @@ data:
   # Web loader timeout (milliseconds)
   # Max time for loading a web page
   # Default: "" (no timeout)
-  WEB_LOADER_TIMEOUT: "30000"
+  WEB_LOADER_TIMEOUT: "10000"
 
   # Enable SSL verification for web requests
   # Verify SSL certificates when loading web pages
