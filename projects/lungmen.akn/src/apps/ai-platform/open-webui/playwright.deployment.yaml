@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/component: playwright
     app.kubernetes.io/instance: playwright
     app.kubernetes.io/name: playwright
-    app.kubernetes.io/version: "1.49"
+    app.kubernetes.io/version: "1.58.2"
 spec:
   replicas: 1
   revisionHistoryLimit: 10
@@ -20,7 +20,7 @@ spec:
         app.kubernetes.io/component: playwright
         app.kubernetes.io/instance: playwright
         app.kubernetes.io/name: playwright
-        app.kubernetes.io/version: "1.49"
+        app.kubernetes.io/version: "1.58.2"
     spec:
       automountServiceAccountToken: false
       enableServiceLinks: false
@@ -32,8 +32,8 @@ spec:
             - /bin/sh
             - -c
             - |
-              npx -y playwright@1.49.1 install chromium && \
-              npx -y playwright@1.49.1 run-server --port 3000 --host 0.0.0.0
+              npx -y playwright@1.58.2 install chromium && \
+              npx -y playwright@1.58.2 run-server --port 3000 --host 0.0.0.0
           ports:
             - containerPort: 3000
               name: ws
