@@ -883,8 +883,7 @@ engines:
     engine: 1337x
     shortcut: 1337x
     categories: files
-    disabled: true
-    hidden: true # Hidden due to frequent downtime and legal issues
+    inactive: true # Hidden due to frequent downtime and legal issues
 
   - name: annas archive
     engine: annas_archive
