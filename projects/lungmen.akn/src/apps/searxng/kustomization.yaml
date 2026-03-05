@@ -4,7 +4,6 @@ kind: Kustomization
 namespace: searxng
 
 resources:
-  - namespace.yaml
   - searxng-secret.generator.yaml
   - searxng.externalsecret.yaml
   - searxng.deployment.yaml
