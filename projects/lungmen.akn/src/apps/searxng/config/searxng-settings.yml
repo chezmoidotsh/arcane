@@ -47,7 +47,7 @@ server:
 
 valkey:
   # Connect to Valkey instance deployed via Helm chart
-  url: "valkey://valkey-searxng-master.searxng.svc.cluster.local:6379/0"
+  url: "valkey://valkey-searxng.searxng.svc.cluster.local:6379/0"
 
 ui:
   static_path: ""
