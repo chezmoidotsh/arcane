@@ -135,7 +135,7 @@ extraEnvVars:
   FIRECRAWL_API_BASE_URL:
     value: "http://firecrawl-api.ai-platform.svc.cluster.local:3002"
   FIRECRAWL_API_KEY:
-    value: "self-hosted"
+    value: "local-fc"
   # - name: OPENAI_API_KEY
   #   valueFrom:
   #     secretKeyRef:
