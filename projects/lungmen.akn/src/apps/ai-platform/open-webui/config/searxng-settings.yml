@@ -11,7 +11,7 @@ general:
 
 server:
   # The base URL is set via SEARXNG_BASE_URL env var
-  secret_key: ${SEARXNG_SECRET}
+  # secret_key is set via SEARXNG_SECRET env var
   limiter: false
   image_proxy: false
   method: "GET"

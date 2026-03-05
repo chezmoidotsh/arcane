@@ -19,10 +19,32 @@ spec:
         app.kubernetes.io/component: web-search
         app.kubernetes.io/instance: open-webui
     spec:
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 977
         runAsGroup: 977
+        fsGroup: 977
+      initContainers:
+        - name: fix-config-permissions
+          image: docker.io/searxng/searxng
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              # Copy config and set permissions
+              cp /etc/searxng-ro/settings.yml /etc/searxng/settings.yml
+              chown 977:977 /etc/searxng/settings.yml
+              chmod 644 /etc/searxng/settings.yml
+          volumeMounts:
+            - name: config-ro
+              mountPath: /etc/searxng-ro
+            - name: config-rw
+              mountPath: /etc/searxng
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
       containers:
         - name: searxng
           image: docker.io/searxng/searxng
@@ -33,11 +55,14 @@ spec:
           env:
             - name: SEARXNG_BASE_URL
               value: "http://searxng.ai-platform.svc.cluster.local:8080"
+            - name: SEARXNG_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: open-webui-secrets
+                  key: SEARXNG_SECRET
           volumeMounts:
-            - name: config
-              mountPath: /etc/searxng/settings.yml
-              subPath: settings.yml
-              readOnly: true
+            - name: config-rw
+              mountPath: /etc/searxng
           resources:
             requests:
               cpu: 10m
@@ -59,9 +84,11 @@ spec:
             periodSeconds: 10
             failureThreshold: 3
       volumes:
-        - name: config
+        - name: config-ro
           configMap:
             name: searxng-config
+        - name: config-rw
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service

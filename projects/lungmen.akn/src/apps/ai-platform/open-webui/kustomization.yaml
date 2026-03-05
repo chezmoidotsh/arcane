@@ -8,6 +8,7 @@ resources:
   - open-webui.deployment.yaml
   - open-webui.httproute.yaml
   - open-webui.ingress.yaml
+  - open-webui.searxng-secret.generator.yaml
   - open-webui.storage.yaml
   - pipelines.deployment.yaml
   - playwright.deployment.yaml
