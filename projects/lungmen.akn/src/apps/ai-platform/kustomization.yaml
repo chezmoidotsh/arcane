@@ -8,7 +8,5 @@ resources:
   - valkey/
   # LiteLLM Proxy
   - litellm/
-  # Open-WebUI specific resources
+  # Open-WebUI specific resources (includes SearXNG)
   - open-webui/
-  # Firecrawl configuration
-  - firecrawl/

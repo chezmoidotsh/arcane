@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: playwright
+  labels:
+    app.kubernetes.io/component: playwright
+    app.kubernetes.io/instance: playwright
+    app.kubernetes.io/name: playwright
+    app.kubernetes.io/version: "1.49"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: playwright
+      app.kubernetes.io/instance: playwright
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: playwright
+        app.kubernetes.io/instance: playwright
+        app.kubernetes.io/name: playwright
+        app.kubernetes.io/version: "1.49"
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      containers:
+        - name: playwright
+          image: mcr.microsoft.com/playwright
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              npx -y playwright@1.49.1 install chromium && \
+              npx -y playwright@1.49.1 run-server --port 3000 --host 0.0.0.0
+          ports:
+            - containerPort: 3000
+              name: ws
+          env:
+            - name: PLAYWRIGHT_BROWSERS_PATH
+              value: /tmp/playwright
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+          livenessProbe:
+            tcpSocket:
+              port: ws
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: ws
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          volumeMounts:
+            - name: playwright-cache
+              mountPath: /tmp/playwright
+      volumes:
+        - name: playwright-cache
+          emptyDir:
+            sizeLimit: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: playwright
+  labels:
+    app.kubernetes.io/name: playwright
+    app.kubernetes.io/component: playwright
+    app.kubernetes.io/instance: playwright
+    app.kubernetes.io/version: "1.49"
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: playwright
+    app.kubernetes.io/component: playwright
+    app.kubernetes.io/instance: playwright
+    app.kubernetes.io/version: "1.49"
+  ports:
+    - name: ws
+      port: 3000
+      targetPort: ws
+      protocol: TCP
