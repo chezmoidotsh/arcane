@@ -52,7 +52,8 @@ in
         # 3. Decoding & Transcription parameters
         "--max-len"        "48"   # Max segment length in characters
         "--entropy-thold"  "2.2"  # Logic threshold for better quality
-        
+        "--language"       "auto" # Auto-detect language for better accuracy (overrides default English)
+
         # 4. Debug & Visualization (logs)
         "--print-special"
         "--print-colors"
