@@ -1,0 +1,584 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open-webui-config
+  labels:
+    app.kubernetes.io/name: open-webui
+    app.kubernetes.io/component: open-webui
+data:
+  # ====================================
+  # CORE CONFIGURATION
+  # ====================================
+
+  # Enable persistent configuration stored in database
+  # When enabled, configuration changes via UI are saved to PostgreSQL
+  # Default: True
+  ENABLE_PERSISTENT_CONFIG: "True"
+
+  # Log level for the application
+  # Options: debug, info, warning, error, critical
+  # Default: info
+  GLOBAL_LOG_LEVEL: "debug"
+
+  # ====================================
+  # NETWORK CONFIGURATION
+  # ====================================
+
+  # WebUI base URL
+  # The public URL where Open WebUI is accessible
+  # Used for generating links, OAuth callbacks, etc.
+  # Default: http://localhost:8080
+  WEBUI_URL: "https://ai.chezmoi.sh"
+
+  # CORS allowed origins
+  # Semicolon-separated list of allowed origins for CORS
+  # For production with same host/port, use the WEBUI_URL
+  # For development with separate frontend, add both URLs
+  # Default: * (allow all - not recommended for production)
+  CORS_ALLOW_ORIGIN: "https://ai.chezmoi.sh"
+
+  # CORS allowed custom schemes
+  # Semicolon-separated list of custom URL schemes allowed for CORS
+  # Useful for desktop clients with custom protocols (e.g., app://)
+  # Default: "" (no custom schemes)
+  CORS_ALLOW_CUSTOM_SCHEME: ""
+
+  # ====================================
+  # AUTHENTICATION
+  # ====================================
+
+  # JWT token expiration time
+  # Format: <number><unit> where unit can be: s (seconds), m (minutes), h (hours), d (days), w (weeks)
+  # Default: 4w
+  # Warning: Setting to "-1" disables expiration (security risk)
+  JWT_EXPIRES_IN: "4w"
+
+  # Enable login form
+  # When disabled with OIDC enabled, forces SSO-only authentication
+  # Default: True
+  ENABLE_LOGIN_FORM: "false"
+
+  # Enable user registration
+  # When disabled, only admins can create accounts
+  # Default: True
+  ENABLE_SIGNUP: "True"
+
+  # ====================================
+  # OAUTH / OIDC CONFIGURATION
+  # ====================================
+
+  # Enable OAuth signup
+  # Allow new users to register via OAuth/OIDC
+  # Default: False
+  ENABLE_OAUTH_SIGNUP: "True"
+
+  # Merge OAuth accounts by email
+  # If a local account exists with same email, merge with OAuth account
+  # Default: False
+  OAUTH_MERGE_ACCOUNTS_BY_EMAIL: "True"
+
+  # OAuth Client ID
+  # The client ID registered with your OIDC provider
+  OAUTH_CLIENT_ID: "2fb91b56-0335-4b13-83bf-3ef6db424d59"
+
+  # OpenID Provider URL
+  # The discovery endpoint URL for your OIDC provider
+  OPENID_PROVIDER_URL: "https://auth.chezmoi.sh/.well-known/openid-configuration"
+
+  # OAuth Provider Name
+  # Display name shown on login button
+  # Default: SSO
+  OAUTH_PROVIDER_NAME: "auth.chezmoi.sh"
+
+  # OAuth Scopes
+  # Space-separated list of OAuth scopes to request
+  # Default: openid email profile
+  OAUTH_SCOPES: "openid email profile groups"
+
+  # Enable OAuth Role Management
+  # Map OAuth claims to user roles (user/admin)
+  # Default: False
+  ENABLE_OAUTH_ROLE_MANAGEMENT: "True"
+
+  # OAuth Roles Claim
+  # JWT claim containing user roles
+  # Default: roles
+  OAUTH_ROLES_CLAIM: "groups"
+
+  # OAuth Admin Roles
+  # Comma-separated list of role values that grant admin access
+  # Default: admin
+  OAUTH_ADMIN_ROLES: "admin"
+
+  # Enable OAuth Group Management
+  # Sync OAuth groups to Open WebUI groups
+  # Default: False
+  ENABLE_OAUTH_GROUP_MANAGEMENT: "True"
+
+  # OAuth Group Claim
+  # JWT claim containing user groups
+  # Default: groups
+  OAUTH_GROUP_CLAIM: "groups"
+
+  # ====================================
+  # WEBSOCKET SUPPORT
+  # ====================================
+
+  # Enable WebSocket support for real-time features
+  # Default: False
+  ENABLE_WEBSOCKET_SUPPORT: "True"
+
+  # WebSocket manager type
+  # Options: redis, memory
+  # Use redis for multi-instance deployments
+  # Default: memory
+  WEBSOCKET_MANAGER: "redis"
+
+  # Redis URL for WebSocket coordination
+  # Format: redis://host:port/db
+  REDIS_URL: "redis://valkey.ai-platform.svc.cluster.local:6379/1"
+
+  # WebSocket Redis URL (can be same as REDIS_URL)
+  WEBSOCKET_REDIS_URL: "redis://valkey.ai-platform.svc.cluster.local:6379/1"
+
+  # ====================================
+  # LLM PROVIDERS - OLLAMA
+  # ====================================
+
+  # Enable Ollama API integration
+  # Default: True
+  ENABLE_OLLAMA_API: "False"
+
+  # ====================================
+  # LLM PROVIDERS - OPENAI
+  # ====================================
+
+  # Enable OpenAI API integration
+  # Works with OpenAI-compatible APIs (LiteLLM, LocalAI, etc.)
+  # Default: True
+  ENABLE_OPENAI_API: "True"
+
+  # OpenAI API Base URLs
+  # Semicolon-separated list of OpenAI-compatible API endpoints
+  # Default: https://api.openai.com/v1
+  OPENAI_API_BASE_URLS: "http://open-webui-pipelines.default.svc.cluster.local:9099;http://litellm.ai-platform.svc.cluster.local:4000/v1"
+
+  # ====================================
+  # RAG - CONTENT EXTRACTION
+  # ====================================
+
+  # Content extraction engine for document processing
+  # Options: "", "tika", "datalab_marker", "mineru", "docling", "document_intelligence", "mistral_ocr", "external"
+  # Default: "" (uses built-in extraction)
+  CONTENT_EXTRACTION_ENGINE: "tika"
+
+  # Apache Tika server URL
+  # Used when CONTENT_EXTRACTION_ENGINE=tika
+  # Default: http://tika:9998
+  TIKA_SERVER_URL: "http://open-webui-tika.ai-platform.svc.cluster.local:9998"
+
+  # ====================================
+  # RAG - EMBEDDINGS
+  # ====================================
+
+  # Embedding engine
+  # Options: "", "openai", "ollama", "azure_openai"
+  # Default: "" (uses sentence-transformers locally)
+  RAG_EMBEDDING_ENGINE: "openai"
+
+  # Embedding model
+  # For local: HuggingFace model name
+  # For OpenAI: model name like "text-embedding-3-small"
+  # Default: sentence-transformers/all-MiniLM-L6-v2
+  RAG_EMBEDDING_MODEL: "baai/bge-m3"
+
+  # Embedding batch size
+  # Number of texts to embed in a single request
+  # Default: 1
+  RAG_EMBEDDING_BATCH_SIZE: "1"
+
+  # Enable async embedding
+  # Process embeddings asynchronously for better performance
+  # Default: True
+  ENABLE_ASYNC_EMBEDDING: "True"
+
+  # Concurrent embedding requests
+  # Number of parallel embedding requests (0 = unlimited)
+  # Default: 0
+  RAG_EMBEDDING_CONCURRENT_REQUESTS: "0"
+
+  # ====================================
+  # RAG - RERANKING
+  # ====================================
+
+  # Reranking engine
+  # Options: "", "cohere", "jina", "external"
+  # Default: "" (no reranking)
+  RAG_RERANKING_ENGINE: ""
+
+  # Reranking model
+  # Model to use for reranking search results
+  # Default: ""
+  RAG_RERANKING_MODEL: ""
+
+  # ====================================
+  # RAG - RETRIEVAL PARAMETERS
+  # ====================================
+
+  # Number of top results to retrieve
+  # Default: 3
+  RAG_TOP_K: "3"
+
+  # Number of top results after reranking
+  # Default: 3
+  RAG_TOP_K_RERANKER: "3"
+
+  # Relevance threshold for filtering results
+  # Results below this score are filtered out
+  # Default: 0.0
+  RAG_RELEVANCE_THRESHOLD: "0.0"
+
+  # Enable hybrid search (combine vector + keyword search)
+  # Default: False
+  ENABLE_RAG_HYBRID_SEARCH: "False"
+
+  # BM25 weight for hybrid search
+  # Balance between vector (0.0) and keyword (1.0) search
+  # Default: 0.5
+  RAG_HYBRID_BM25_WEIGHT: "0.5"
+
+  # ====================================
+  # RAG - CHUNKING
+  # ====================================
+
+  # Chunk size for document splitting
+  # Number of characters per chunk
+  # Default: 1000
+  CHUNK_SIZE: "6144"
+
+  # Chunk overlap
+  # Number of overlapping characters between chunks
+  # Default: 100
+  CHUNK_OVERLAP: "256"
+
+  # Minimum chunk size target
+  # Merge small chunks until reaching this size
+  # Default: 0 (disabled)
+  CHUNK_MIN_SIZE_TARGET: "0"
+
+  # Text splitter
+  # Options: "", "tiktoken", "markdown"
+  # Default: "" (uses default splitter)
+  RAG_TEXT_SPLITTER: "tiktoken"
+
+  # Enable markdown header text splitter
+  # Split documents based on markdown headers
+  # Default: True
+  ENABLE_MARKDOWN_HEADER_TEXT_SPLITTER: "True"
+
+  # ====================================
+  # RAG - PDF PROCESSING
+  # ====================================
+
+  # Extract images from PDFs
+  # Enable OCR and image analysis in PDFs
+  # Default: False
+  PDF_EXTRACT_IMAGES: "False"
+
+  # PDF loader mode
+  # Options: "page" (one chunk per page), "document" (whole document)
+  # Default: page
+  PDF_LOADER_MODE: "page"
+
+  # ====================================
+  # WEB SEARCH
+  # ====================================
+
+  # Enable web search integration
+  # Allows AI to search the web for information
+  # Default: False
+  ENABLE_WEB_SEARCH: "True"
+
+  # Web search engine
+  # Options: "searxng", "google_pse", "brave", "kagi", "mojeek", "serpstack",
+  #          "serper", "serply", "duckduckgo", "tavily", "searchapi", "serpapi",
+  #          "bing", "azure_ai", "exa", "perplexity", "yandex", "you"
+  # Default: ""
+  WEB_SEARCH_ENGINE: "searxng"
+
+  # SearXNG query URL
+  # URL of your SearXNG instance search endpoint
+  SEARXNG_QUERY_URL: "http://searxng.ai-platform.svc.cluster.local:8080/search"
+
+  # SearXNG language
+  # Language code for search results
+  # Default: all
+  SEARXNG_LANGUAGE: "all"
+
+  # Number of web search results to retrieve
+  # Default: 3
+  WEB_SEARCH_RESULT_COUNT: "3"
+
+  # Concurrent web search requests
+  # Number of parallel search requests (0 = unlimited)
+  # Default: 0
+  WEB_SEARCH_CONCURRENT_REQUESTS: "0"
+
+  # Bypass embedding and retrieval for web search
+  # Return raw search results without RAG processing
+  # Default: False
+  BYPASS_WEB_SEARCH_EMBEDDING_AND_RETRIEVAL: "False"
+
+  # Bypass web loader
+  # Skip loading full page content, use search snippets only
+  # Default: False
+  BYPASS_WEB_SEARCH_WEB_LOADER: "False"
+
+  # ====================================
+  # WEB LOADER
+  # ====================================
+
+  # Web loader engine
+  # Options: "", "playwright", "firecrawl", "jina", "external"
+  # Default: "" (uses simple HTTP requests)
+  WEB_LOADER_ENGINE: "playwright"
+
+  # Playwright WebSocket URL
+  # URL of Playwright server for advanced web scraping
+  # Format: ws://host:port
+  PLAYWRIGHT_WS_URL: "ws://playwright.ai-platform.svc.cluster.local:3000"
+
+  # Playwright timeout (milliseconds)
+  # Max time to wait for page load
+  # Default: 10000
+  PLAYWRIGHT_TIMEOUT: "30000"
+
+  # Concurrent web loader requests
+  # Number of parallel page loading requests
+  # Default: 10
+  WEB_LOADER_CONCURRENT_REQUESTS: "10"
+
+  # Web loader timeout (milliseconds)
+  # Max time for loading a web page
+  # Default: "" (no timeout)
+  WEB_LOADER_TIMEOUT: "30000"
+
+  # Enable SSL verification for web requests
+  # Verify SSL certificates when loading web pages
+  # Default: True
+  ENABLE_WEB_LOADER_SSL_VERIFICATION: "True"
+
+  # ====================================
+  # AUDIO - SPEECH-TO-TEXT (STT)
+  # ====================================
+
+  # STT engine
+  # Options: "", "openai", "deepgram", "azure", "mistral"
+  # Default: "" (uses local Whisper)
+  AUDIO_STT_ENGINE: "openai"
+
+  # STT model
+  # Model name for speech recognition
+  # OpenAI: "whisper-1", "openai/whisper-large-v3-turbo"
+  # Local: "base", "small", "medium", "large"
+  AUDIO_STT_MODEL: "openai/whisper-large-v3-turbo"
+
+  # STT API base URL (for OpenAI-compatible APIs)
+  # Default: https://api.openai.com/v1
+  AUDIO_STT_OPENAI_API_BASE_URL: "http://litellm.ai-platform.svc:4000/v1"
+
+  # ====================================
+  # AUDIO - TEXT-TO-SPEECH (TTS)
+  # ====================================
+
+  # TTS engine
+  # Options: "", "openai", "elevenlabs", "azure"
+  # Default: "" (no TTS)
+  AUDIO_TTS_ENGINE: "openai"
+
+  # TTS model
+  # Model name for text-to-speech
+  # OpenAI: "tts-1", "tts-1-hd"
+  AUDIO_TTS_MODEL: "hexgrad/kokoro"
+
+  # TTS voice
+  # Voice name for text-to-speech
+  # OpenAI voices: alloy, echo, fable, onyx, nova, shimmer
+  AUDIO_TTS_VOICE: "ff_siwis"
+
+  # TTS split on
+  # How to split text for TTS
+  # Options: "punctuation", "paragraphs", "none"
+  # Default: punctuation
+  AUDIO_TTS_SPLIT_ON: "punctuation"
+
+  # TTS API base URL (for OpenAI-compatible APIs)
+  # Default: https://api.openai.com/v1
+  AUDIO_TTS_OPENAI_API_BASE_URL: "http://litellm.ai-platform.svc:4000/v1"
+
+  # ====================================
+  # IMAGE GENERATION
+  # ====================================
+
+  # Enable image generation
+  # Allow AI to generate images
+  # Default: False
+  ENABLE_IMAGE_GENERATION: "False"
+
+  # Image generation engine
+  # Options: "openai", "automatic1111", "comfyui"
+  # Default: openai
+  IMAGE_GENERATION_ENGINE: "openai"
+
+  # Image generation model
+  # Model name for image generation
+  # OpenAI: "dall-e-2", "dall-e-3"
+  IMAGE_GENERATION_MODEL: ""
+
+  # Image size
+  # Default image dimensions
+  # Options: "256x256", "512x512", "1024x1024", "1792x1024", "1024x1792", "auto"
+  # Default: 512x512
+  IMAGE_SIZE: "512x512"
+
+  # Enable image prompt generation
+  # Let AI enhance user's image prompts
+  # Default: True
+  ENABLE_IMAGE_PROMPT_GENERATION: "False"
+
+  # ====================================
+  # CODE EXECUTION
+  # ====================================
+
+  # Enable code execution
+  # Allow running code in chat
+  # Default: True
+  ENABLE_CODE_EXECUTION: "True"
+
+  # Code execution engine
+  # Options: "pyodide" (browser-based), "jupyter" (server-based)
+  # Default: pyodide
+  CODE_EXECUTION_ENGINE: "pyodide"
+
+  # ====================================
+  # CODE INTERPRETER
+  # ====================================
+
+  # Enable code interpreter
+  # Allow AI to write and execute code
+  # Default: True
+  ENABLE_CODE_INTERPRETER: "True"
+
+  # Code interpreter engine
+  # Options: "pyodide" (browser-based), "jupyter" (server-based)
+  # Default: pyodide
+  CODE_INTERPRETER_ENGINE: "pyodide"
+
+  # ====================================
+  # FEATURES
+  # ====================================
+
+  # Enable memories
+  # Allow storing and recalling conversation context
+  # Default: True
+  ENABLE_MEMORIES: "True"
+
+  # Enable folders
+  # Allow organizing chats in folders
+  # Default: True
+  ENABLE_FOLDERS: "True"
+
+  # Enable channels
+  # Allow creating shared conversation channels
+  # Default: False
+  ENABLE_CHANNELS: "False"
+
+  # Enable notes
+  # Allow creating personal notes
+  # Default: True
+  ENABLE_NOTES: "True"
+
+  # Enable community sharing
+  # Allow sharing prompts/models with community
+  # Default: True
+  ENABLE_COMMUNITY_SHARING: "True"
+
+  # Enable message rating
+  # Allow users to rate AI responses
+  # Default: True
+  ENABLE_MESSAGE_RATING: "True"
+
+  # ====================================
+  # TASKS / AUTOMATIC FEATURES
+  # ====================================
+
+  # Enable automatic title generation
+  # Generate chat titles automatically
+  # Default: True
+  ENABLE_TITLE_GENERATION: "True"
+
+  # Enable automatic tags generation
+  # Generate tags for chats automatically
+  # Default: True
+  ENABLE_TAGS_GENERATION: "True"
+
+  # Enable follow-up suggestions
+  # Suggest follow-up questions after responses
+  # Default: True
+  ENABLE_FOLLOW_UP_GENERATION: "True"
+
+  # Enable search query generation
+  # Generate search queries for web search
+  # Default: True
+  ENABLE_SEARCH_QUERY_GENERATION: "True"
+
+  # Enable retrieval query generation
+  # Generate queries for RAG retrieval
+  # Default: True
+  ENABLE_RETRIEVAL_QUERY_GENERATION: "True"
+
+  # Enable autocomplete
+  # Suggest text completions while typing
+  # Default: False
+  ENABLE_AUTOCOMPLETE_GENERATION: "False"
+
+  # ====================================
+  # USER PERMISSIONS
+  # ====================================
+
+  # Default user role for new signups
+  # Options: "pending", "user", "admin"
+  # Default: pending
+  DEFAULT_USER_ROLE: "user"
+
+  # Enable user status
+  # Show online/offline status
+  # Default: True
+  ENABLE_USER_STATUS: "True"
+
+  # Workspace permissions - Allow users to access workspace features
+  USER_PERMISSIONS_WORKSPACE_MODELS_ACCESS: "True"
+  USER_PERMISSIONS_WORKSPACE_KNOWLEDGE_ACCESS: "True"
+  USER_PERMISSIONS_WORKSPACE_PROMPTS_ACCESS: "True"
+  USER_PERMISSIONS_WORKSPACE_TOOLS_ACCESS: "True"
+  USER_PERMISSIONS_WORKSPACE_SKILLS_ACCESS: "True"
+
+  # Chat permissions
+  USER_PERMISSIONS_CHAT_FILE_UPLOAD: "True"
+  USER_PERMISSIONS_CHAT_DELETE: "True"
+  USER_PERMISSIONS_CHAT_EDIT: "True"
+  USER_PERMISSIONS_CHAT_TEMPORARY: "True"
+
+  # Feature permissions
+  USER_PERMISSIONS_FEATURES_WEB_SEARCH: "True"
+  USER_PERMISSIONS_FEATURES_IMAGE_GENERATION: "True"
+  USER_PERMISSIONS_FEATURES_CODE_INTERPRETER: "True"
+
+  # ====================================
+  # TERMINAL / TOOLS
+  # ====================================
+
+  # Terminal server connections
+  # JSON array of terminal server definitions
+  # Format: [{"name": "Terminal Name", "url": "http://terminal-server:port"}]
+  TERMINAL_SERVER_CONNECTIONS: '[{"name": "Open Terminal", "url": "http://open-terminal.ai-platform.svc.cluster.local:8080"}]'

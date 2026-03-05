@@ -18,7 +18,7 @@ spec:
         app.kubernetes.io/instance: open-webui
         app.kubernetes.io/name: tika
     spec:
-      serviceAccountName: open-webui-tika
+      automountServiceAccountToken: false
       containers:
         - name: tika
           image: apache/tika

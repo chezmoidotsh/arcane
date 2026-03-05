@@ -2,25 +2,22 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - open-webui.serviceaccounts.yaml
-  - open-webui.storage.yaml
-  - open-webui.deployment.yaml
-  - pipelines.deployment.yaml
-  - tika.deployment.yaml
-  - searxng.deployment.yaml
-  - playwright.deployment.yaml
   - open-terminal.deployment.yaml
+  - open-webui.configuration.configmap.yaml
   - open-webui.configuration.externalsecret.yaml
+  - open-webui.deployment.yaml
   - open-webui.httproute.yaml
   - open-webui.ingress.yaml
+  - open-webui.storage.yaml
+  - pipelines.deployment.yaml
+  - playwright.deployment.yaml
+  - searxng.deployment.yaml
+  - tika.deployment.yaml
 
 configMapGenerator:
   - name: searxng-config
     files:
       - settings.yml=config/searxng-settings.yml
-  - name: open-webui-config
-    files:
-      - config.json=config/config.json
 
 images:
   # renovate: datasource=docker depName=ghcr.io/open-webui/open-webui
