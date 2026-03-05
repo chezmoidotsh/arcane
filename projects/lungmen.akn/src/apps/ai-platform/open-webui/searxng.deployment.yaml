@@ -33,11 +33,6 @@ spec:
           env:
             - name: SEARXNG_BASE_URL
               value: "http://searxng.ai-platform.svc.cluster.local:8080"
-            - name: SEARXNG_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: open-webui-credentials
-                  key: searxng_secret_key
           volumeMounts:
             - name: config
               mountPath: /etc/searxng/settings.yml
