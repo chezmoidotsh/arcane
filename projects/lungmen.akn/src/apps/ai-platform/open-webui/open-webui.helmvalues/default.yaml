@@ -73,8 +73,8 @@ resources:
   requests:
     cpu: 10m
     memory: "1.5Gi"
-  limits:
-    memory: "1.5Gi"
+  # limits:
+  #   memory: "1.5Gi"
 
 route:
   # -- Enables or disables the route
