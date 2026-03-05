@@ -136,8 +136,6 @@ extraEnvVars:
     value: "http://firecrawl-api.ai-platform.svc.cluster.local:3002"
   FIRECRAWL_API_KEY:
     value: "self-hosted"
-  GLOBAL_LOG_LEVEL:
-    value: "DEBUG"
   # - name: OPENAI_API_KEY
   #   valueFrom:
   #     secretKeyRef:
@@ -242,4 +240,4 @@ sso:
 logging:
   # -- Set the global log level ["notset", "debug", "info" (default), "warning", "error", "critical"]
   # @section -- Logging configuration
-  level: info
+  level: debug
