@@ -530,7 +530,226 @@ data:
   # Enable autocomplete
   # Suggest text completions while typing
   # Default: False
-  ENABLE_AUTOCOMPLETE_GENERATION: "False"
+  ENABLE_AUTOCOMPLETE_GENERATION: "True"
+
+  # Task model for autocomplete and other tasks
+  # Using a small, fast model for task generation
+  TASK_MODEL: "mistralai/ministral-3b-instruct-2503"
+
+  # ====================================
+  # TASK PROMPT TEMPLATES
+  # ====================================
+
+  # Title generation prompt template (optimized for 3B models)
+  # Generates concise chat titles in conversation language (default: FR)
+  # CRITICAL: No markdown, only raw text
+  TITLE_GENERATION_PROMPT_TEMPLATE: |
+    Generate a short chat title.
+
+    STRICT RULES:
+    - 3-6 words with a relevant emoji
+    - Use conversation language. If undetectable, use French
+    - FORBIDDEN: markdown, quotes, asterisks, any formatting
+    - Return ONLY raw JSON
+
+    OUTPUT FORMAT:
+    {"title": "🎯 Your title here"}
+
+    GOOD EXAMPLES:
+    {"title": "📊 Analyse des ventes trimestrielles"}
+    {"title": "🐍 Python debugging async functions"}
+    {"title": "🍝 Recette carbonara authentique"}
+    {"title": "✈️ Planning trip to Japan"}
+    {"title": "🔧 Kubernetes pod troubleshooting"}
+    {"title": "📚 Résumé livre philosophie"}
+
+    BAD EXAMPLES (NEVER DO THIS):
+    {"title": "**Sales analysis**"} ← no markdown
+    {"title": "# Main title"} ← no headers
+    {"title": "`code` Python"} ← no backticks
+    {"title": "_italic text_"} ← no formatting
+    {"title": "***Important topic***"} ← no bold/italic
+
+    CHAT:
+    <chat_history>
+    {{MESSAGES:END:2}}
+    </chat_history>
+
+  # Tags generation prompt template (optimized for 3B models)
+  # Generates categorization tags in conversation language (default: FR)
+  TAGS_GENERATION_PROMPT_TEMPLATE: |
+    Generate tags to categorize a conversation.
+
+    RULES:
+    - Generate 1-3 thematic tags
+    - Use conversation language, default to French
+    - Short tags (1-2 words each)
+    - No markdown or formatting
+
+    OUTPUT (JSON only):
+    {"tags": ["tag1", "tag2"]}
+
+    EXAMPLES:
+    {"tags": ["Programmation", "Python"]}
+    {"tags": ["Cuisine", "Recette"]}
+    {"tags": ["DevOps", "Kubernetes"]}
+    {"tags": ["Voyage", "Japon"]}
+    {"tags": ["Finance", "Investissement"]}
+    {"tags": ["Santé"]}
+    {"tags": ["Général"]}
+
+    CHAT:
+    <chat_history>
+    {{MESSAGES:END:6}}
+    </chat_history>
+
+  # Follow-up generation prompt template (optimized for 3B models)
+  # Suggests follow-up questions in conversation language (default: FR)
+  FOLLOW_UP_GENERATION_PROMPT_TEMPLATE: |
+    Suggest follow-up questions the USER might ask.
+
+    RULES:
+    - Generate 2-4 relevant questions
+    - Questions from USER perspective to assistant
+    - Use conversation language, default to French
+    - Concise and direct
+    - No markdown
+
+    OUTPUT (JSON only):
+    {"follow_ups": ["Question 1?", "Question 2?"]}
+
+    EXAMPLES:
+    {"follow_ups": ["Peux-tu détailler ce point?", "Quelles sont les alternatives?", "Comment l'implémenter?"]}
+    {"follow_ups": ["What are the pros and cons?", "Can you give an example?", "How does it compare to X?"]}
+    {"follow_ups": ["Quel est le coût estimé?", "Y a-t-il des risques?", "Par où commencer?"]}
+    {"follow_ups": ["Can you explain step by step?", "What tools do I need?"]}
+
+    CHAT:
+    <chat_history>
+    {{MESSAGES:END:6}}
+    </chat_history>
+
+  # Query generation prompt template (optimized for 3B models)
+  # Generates search queries for web search / RAG retrieval
+  QUERY_GENERATION_PROMPT_TEMPLATE: |
+    Generate web search queries based on conversation.
+
+    RULES:
+    - If search useful: generate 1-3 queries
+    - If no search needed: return empty array
+    - Concise, search-engine optimized queries
+    - Use conversation language, default to French
+    - Today: {{CURRENT_DATE}}
+
+    OUTPUT (JSON only):
+    {"queries": ["query 1", "query 2"]}
+
+    OR if no search needed:
+    {"queries": []}
+
+    EXAMPLES:
+    {"queries": ["météo Paris demain", "prévisions week-end Paris"]}
+    {"queries": ["Python asyncio tutorial 2024"]}
+    {"queries": ["Kubernetes ingress nginx configuration"]}
+    {"queries": ["meilleur restaurant italien Lyon avis"]}
+    {"queries": ["latest news AI regulation EU 2024"]}
+    {"queries": []}
+
+    CHAT:
+    <chat_history>
+    {{MESSAGES:END:6}}
+    </chat_history>
+
+  # Autocomplete generation prompt template (optimized for 3B models)
+  # Suggests text completions while user is typing
+  AUTOCOMPLETE_GENERATION_PROMPT_TEMPLATE: |
+    You are an autocompletion system. Continue the text based on type and context.
+
+    INSTRUCTIONS:
+    1. Analyze <text> for context and meaning
+    2. Use <type> to guide completion:
+       - General: Natural, concise continuation
+       - Search Query: Complete as a realistic search query
+    3. Continue directly from <text>. Do NOT repeat or paraphrase
+    4. Keep it natural, avoid repetition or unrelated ideas
+    5. If unsure, return: {"text": ""}
+
+    OUTPUT: JSON only → {"text": "your_completion"}
+
+    EXAMPLES:
+
+    <type>General</type>
+    <text>The sun was setting over the horizon, painting the sky</text>
+    {"text": "with vibrant shades of orange and pink."}
+
+    <type>Search Query</type>
+    <text>Top-rated restaurants in</text>
+    {"text": "New York City for Italian cuisine."}
+
+    <type>General</type>
+    <text>Comment puis-je configurer</text>
+    {"text": "mon environnement de développement?"}
+
+    <type>Search Query</type>
+    <text>meilleurs outils pour</text>
+    {"text": "automatisation DevOps 2024"}
+
+    <chat_history>
+    {{MESSAGES:END:6}}
+    </chat_history>
+
+    <type>{{TYPE}}</type>
+    <text>{{PROMPT}}</text>
+
+  # Voice mode prompt template (optimized for 3B models)
+  # System prompt for voice conversations
+  VOICE_MODE_PROMPT_TEMPLATE: |
+    You are a friendly, concise voice assistant.
+
+    STYLE:
+    - Short, natural responses
+    - Simple sentences, easy to listen to
+    - Warm, conversational tone
+    - Avoid long lists and jargon
+    - No markdown, no special formatting
+
+    BEHAVIOR:
+    - Answer directly
+    - Ask for clarification if needed
+    - If unsure, say so simply
+    - Default to French unless user speaks another language
+
+    GOOD RESPONSE EXAMPLES:
+    - "Bien sûr, je peux t'aider avec ça. Voici ce que je te propose..."
+    - "That's a great question. The short answer is..."
+    - "Je comprends. Pour résumer, il y a trois points importants."
+
+    BAD RESPONSE EXAMPLES (AVOID):
+    - "Here are the steps: 1. First... 2. Second... 3. Third..." (too listy)
+    - "According to documentation section 4.2.1..." (too formal)
+
+    IMPORTANT: Everything you say will be read aloud. Adapt your style accordingly.
+
+  # Tools function calling prompt template (used by all models)
+  # Guides the model to select and call appropriate tools
+  TOOLS_FUNCTION_CALLING_PROMPT_TEMPLATE: |
+    Available tools: {{TOOLS}}
+
+    TASK: Select appropriate tools to answer the query.
+
+    RULES:
+    - Return ONLY a JSON object
+    - If no tool matches: {"tool_calls": []}
+    - If tools match: list them with parameters
+
+    FORMAT:
+    {"tool_calls": [{"name": "tool_name", "parameters": {"param1": "value1"}}]}
+
+    EXAMPLES:
+    {"tool_calls": []}
+    {"tool_calls": [{"name": "search_web", "parameters": {"query": "weather Paris"}}]}
+    {"tool_calls": [{"name": "get_time", "parameters": {"timezone": "Europe/Paris"}}]}
+    {"tool_calls": [{"name": "calculate", "parameters": {"expression": "15 * 24"}}, {"name": "search_web", "parameters": {"query": "unit conversion hours"}}]}
 
   # ====================================
   # USER PERMISSIONS
