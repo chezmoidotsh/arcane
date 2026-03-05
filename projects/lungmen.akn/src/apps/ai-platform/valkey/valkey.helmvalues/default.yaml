@@ -1,10 +1,6 @@
 # -- Valkey Configuration for AI Platform Services
 # Configured for high availability, security, and observability.
 
-image:
-  # -- Use locally-hosted mirror to bypass rate limits and enforce caching
-  registry: "oci.chezmoi.sh/docker.io"
-
 # -- Apply resource allocations for Valkey
 resources:
   requests:
@@ -31,10 +27,6 @@ replica:
 metrics:
   # -- Extracts native Valkey metrics via redis_exporter sidecar
   enabled: true
-  exporter:
-    image:
-      # -- Mirror registry for the ghcr.io images
-      registry: "oci.chezmoi.sh/ghcr.io"
   serviceMonitor:
     # -- Automatically creates the ServiceMonitor resource for Prometheus Operator
     enabled: true

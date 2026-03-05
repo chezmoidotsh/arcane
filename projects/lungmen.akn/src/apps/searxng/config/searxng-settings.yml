@@ -4,7 +4,7 @@
 
 general:
   debug: false
-  instance_name: "SearXNG"
+  instance_name: SearXNG - chezmoi.sh
   privacypolicy_url: false
   donation_url: false
   contact_url: false
@@ -19,15 +19,16 @@ brand:
 
 search:
   safe_search: 0
-  autocomplete: ""
+  autocomplete: duckduckgo
   autocomplete_min: 4
-  favicon_resolver: ""
+  favicon_resolver: duckduckgo
   default_lang: "auto"
   ban_time_on_fail: 5
   max_ban_time_on_fail: 120
   formats:
     - html
     - json
+    - rss
 
 server:
   # base_url is set via SEARXNG_BASE_URL env var
@@ -343,7 +344,6 @@ engines:
     categories: videos
     piped_filter: videos
     timeout: 3.0
-    inactive: true
 
   - name: rumble
     engine: rumble
@@ -878,6 +878,7 @@ engines:
     engine: nyaa
     shortcut: nt
     categories: files
+    disabled: true # Disabled: mirrors potentially infringing content; keep disabled for safety
 
   - name: 1337x
     engine: 1337x
@@ -890,7 +891,7 @@ engines:
     base_url:
       - https://annas-archive.gl
       - https://annas-archive.vg
-    disabled: true
+    disabled: true # Disabled: contains copyrighted / archival content not suitable for this instance
     shortcut: aa
     timeout: 5
     categories: files
@@ -903,7 +904,7 @@ engines:
     content_xpath: //td/a[1][contains(@href,"=author")]/text()
     categories: files
     timeout: 7.0
-    disabled: true
+    disabled: true # Disabled: mirrors potentially infringing content; keep disabled for safety
     shortcut: lg
 
   # ============================================================================
@@ -915,7 +916,6 @@ engines:
     shortcut: re
     page_size: 25
     categories: [social media]
-    disabled: true
 
   - name: lemmy communities
     engine: lemmy
@@ -953,7 +953,8 @@ engines:
     engine: hackernews
     shortcut: hn
     categories: [social media]
-    disabled: true
+    # Re-enabled per user request — social media source (tech-focused)
+    # Re-enabled per user request — social media source
 
   # ============================================================================
   # ENTERTAINMENT
