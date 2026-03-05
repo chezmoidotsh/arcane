@@ -71,14 +71,14 @@ metadata:
     app.kubernetes.io/name: playwright
     app.kubernetes.io/component: playwright
     app.kubernetes.io/instance: playwright
-    app.kubernetes.io/version: "1.49"
+    app.kubernetes.io/version: "1.58.2"
 spec:
   type: ClusterIP
   selector:
     app.kubernetes.io/name: playwright
     app.kubernetes.io/component: playwright
     app.kubernetes.io/instance: playwright
-    app.kubernetes.io/version: "1.49"
+    app.kubernetes.io/version: "1.58.2"
   ports:
     - name: ws
       port: 3000
