@@ -660,9 +660,6 @@ data:
     {{MESSAGES:END:6}}
     </chat_history>
 
-  # Enable autocomplete generation
-  ENABLE_AUTOCOMPLETE_GENERATION: "True"
-
   # Autocomplete generation prompt template (optimized for 3B models)
   # Suggests text completions while user is typing
   AUTOCOMPLETE_GENERATION_PROMPT_TEMPLATE: |
