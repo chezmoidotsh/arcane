@@ -790,4 +790,4 @@ data:
   # Terminal server connections
   # JSON array of terminal server definitions
   # Format: [{"name": "Terminal Name", "url": "http://terminal-server:port"}]
-  TERMINAL_SERVER_CONNECTIONS: '[{"name": "Open Terminal", "url": "http://open-terminal.ai-platform.svc.cluster.local:8080"}]'
+  TERMINAL_SERVER_CONNECTIONS: '[{"name": "Open Terminal", "url": "http://open-terminal.ai-platform.svc.cluster.local:8000"}]'

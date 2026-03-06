@@ -29,11 +29,11 @@ spec:
           image: ghcr.io/open-webui/open-terminal
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8080
+            - containerPort: 8000
               name: http
           env:
             - name: PORT
-              value: "8080"
+              value: "8000"
             - name: TERMINAL_MAX_IDLE_TIME
               value: "3600"
             - name: TERMINAL_MAX_SESSIONS
@@ -77,6 +77,6 @@ spec:
     app.kubernetes.io/version: latest
   ports:
     - name: http
-      port: 8080
+      port: 8000
       targetPort: http
       protocol: TCP
