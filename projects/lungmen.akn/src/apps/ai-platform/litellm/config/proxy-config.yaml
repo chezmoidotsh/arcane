@@ -293,7 +293,7 @@ model_list:
     model_info:
       publisher: Alibaba
       architecture: transformer
-      base_model: qwen3
+      base_model: qwen3-moe
       params: 30B
       quantization: Q4_K_M
       mode: chat
