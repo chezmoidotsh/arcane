@@ -241,6 +241,22 @@ model_list:
       custom_llm_provider: openai
 
   # - Alibaba
+  - model_name: alibaba/qwen3.5-0.8b
+    model_info:
+      publisher: Alibaba
+      architecture: transformer
+      base_model: qwen3.5
+      params: 0.8B
+      quantization: Q4_K_S
+      mode: chat
+      input_cost_per_token: 0 # 0$/Mtokens
+      output_cost_per_token: 0 # 0$/Mtokens
+    litellm_params:
+      model: qwen3.5-0.8b
+      api_base: http://studio.llm.chezmoi.sh:1234/v1
+      api_key: _
+      custom_llm_provider: openai
+
   - model_name: alibaba/qwen3.5-4b
     model_info:
       publisher: Alibaba
