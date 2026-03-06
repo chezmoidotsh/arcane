@@ -768,6 +768,24 @@ data:
     {"tool_calls": [{"name": "get_time", "parameters": {"timezone": "Europe/Paris"}}]}
     {"tool_calls": [{"name": "calculate", "parameters": {"expression": "15 * 24"}}, {"name": "search_web", "parameters": {"query": "unit conversion hours"}}]}
 
+  # Default prompt suggestions for users
+  # Shown as example prompts to get started
+  DEFAULT_PROMPT_SUGGESTIONS: |
+    [
+        {
+            "title": ["Idées de repas", "Donne-moi 3 idées de recettes rapides et équilibrées pour un soir de semaine."],
+        },
+        {
+            "title": ["Rédaction de mail", "Aide-moi à rédiger un mail poli pour demander un devis à un artisan."],
+        },
+        {
+            "title": ["Culture générale", "Explique-moi simplement comment fonctionne le cycle de la lune."],
+        },
+        {
+            "title": ["Planification", "Quels sont les objets indispensables à ne pas oublier pour une randonnée en montagne ?"],
+        },
+    ]
+
   # ====================================
   # USER PERMISSIONS
   # ====================================
