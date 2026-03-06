@@ -770,16 +770,16 @@ data:
   DEFAULT_PROMPT_SUGGESTIONS: |
     [
         {
-            "title": ["Idées de repas", "Donne-moi 3 idées de recettes rapides et équilibrées pour un soir de semaine."],
+            "title": ["Donne-moi 3 idées de recettes", "rapides et équilibrées pour un soir de semaine."],
         },
         {
-            "title": ["Rédaction de mail", "Aide-moi à rédiger un mail poli pour demander un devis à un artisan."],
+            "title": ["Aide-moi à rédiger un mail", "poli pour demander un devis à un artisan."],
         },
         {
-            "title": ["Culture générale", "Explique-moi simplement comment fonctionne le cycle de la lune."],
+            "title": ["Explique-moi simplement", "comment fonctionne le cycle de la lune."],
         },
         {
-            "title": ["Planification", "Quels sont les objets indispensables à ne pas oublier pour une randonnée en montagne ?"],
+            "title": ["Quels sont les objets indispensables", "à ne pas oublier pour une randonnée en montagne ?"],
         },
     ]
 
