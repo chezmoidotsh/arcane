@@ -534,7 +534,7 @@ data:
 
   # Task model for autocomplete and other tasks
   # Using a small, fast model for task generation
-  TASK_MODEL: "mistralai/ministral-3b-instruct-2503"
+  TASK_MODEL: alibaba/qwen3.5-2b
 
   # ====================================
   # TASK PROMPT TEMPLATES
