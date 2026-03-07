@@ -45,8 +45,10 @@ let
     propagatedBuildInputs = [ pkgs.python312Packages.setuptools ];
   };
 
-  # Helper to aggressively disable tests on overridden packages
-  noCheck = pkg: pkg.overridePythonAttrs (old: { 
+  # Helper to aggressively disable tests on overridden packages.
+  # Use overrideAttrs (not overridePythonAttrs) so the derivation hash actually changes
+  # and Nix doesn't use a broken cached version from the store.
+  noCheck = pkg: pkg.overrideAttrs (old: { 
     doCheck = false; 
     doInstallCheck = false;
     checkPhase = "true";
