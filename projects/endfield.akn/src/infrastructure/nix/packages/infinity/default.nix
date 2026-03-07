@@ -97,10 +97,12 @@ let
       accelerate = pkgs.python312Packages.accelerate;
       peft = pkgs.python312Packages.peft;
       scikit-learn = pkgs.python312Packages.scikit-learn;
+      safetensors = pkgs.python312Packages.safetensors;
+      timm = pkgs.python312Packages.timm;
+      maturin = pkgs.python312Packages.maturin;
+      pip = pkgs.python312Packages.pip;
     });
   };
 
 in
-{
-  bin = "${infinityApp}/bin/infinity_emb";
-}
+infinityApp

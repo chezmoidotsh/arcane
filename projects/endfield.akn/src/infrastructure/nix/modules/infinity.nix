@@ -51,7 +51,7 @@ in
       Label = "sh.chezmoi.endfield.infinity";
       # Execution
       ProgramArguments = [
-        "${infinity.bin}"
+        "${infinity}/bin/infinity_emb"
         "v2"
 
         # 1. Models

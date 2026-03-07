@@ -11,7 +11,7 @@
     };
   };
 
-  outputs = { darwin, poetry2nix, ... }:
+  outputs = { self, nixpkgs, darwin, poetry2nix, ... }:
     let
       # Target platform (Apple Silicon).
       system = "aarch64-darwin";
@@ -58,6 +58,23 @@
     in
     {
       # ┌───────────────────────────────────────────────────────────────────────────┐
+      # │ Packages: Individual components that can be built and tested.            │
+      # └───────────────────────────────────────────────────────────────────────────┘
+      packages = let
+        # For development/debugging on both Darwin and Linux (via nonix).
+        getPackages = sys: let 
+          pkgs = import nixpkgs { system = sys; };
+          p2n = poetry2nix;
+        in {
+          infinity = import ./packages/infinity/default.nix { inherit pkgs; poetry2nix = p2n; };
+          default = self.packages.${sys}.infinity;
+        };
+      in {
+        "aarch64-darwin" = getPackages "aarch64-darwin";
+        "aarch64-linux"  = getPackages "aarch64-linux";
+      };
+
+      # ┌───────────────────────────────────────────────────────────────────────────┐
       # │ <darwinConfigurations."yvonne">: Mac Studio M1 Max — AI local stack       │
       # │ Named after Yvonne, the flamboyant scientist from Arknights: Endfield.   │
       # │ Builds user-level launchd agents (Caddy, Kokoro) and sets up             │
@@ -77,7 +94,8 @@
           # ./modules/presidio.nix # Service: Presidio PII Detection API
           ./modules/whisper.nix # Service: Whisper-cpp Audio Transcription API
           ./modules/infinity.nix # Service: Infinity Embedding & Reranking API
-
+          # Optional: point to the package explicitly if needed, but it's handled in modules/infinity.nix
+          
           # Machine-specific inline config: Homebrew casks specific to yvonne's
           # workload. Kept here because they are a single self-contained block
           # that does not warrant its own file.
