@@ -23,9 +23,11 @@ pkgs.stdenv.mkDerivation {
     
     ${pkgs.uv}/bin/uv venv $out --python ${pkgs.python312}/bin/python3
     
+    # 1. Install without extras to bypass optimum conflict.
+    # We manually list everything previously in [all] but with compatible versions.
     ${pkgs.uv}/bin/uv pip install \
       --python "$out/bin/python" \
-      "infinity-emb[all]==0.0.77" \
+      "infinity-emb==0.0.77" \
       "transformers==4.48.0" \
       "optimum==1.17.0" \
       "typer==0.12.5" \
