@@ -8,5 +8,6 @@ resources:
   - network-policy.allow-n8n-to-envoy-gateway.yaml
   - network-policy.allow-n8n-to-internet.yaml
   - network-policy.allow-n8n-to-local-llm.yaml
+  - network-policy.allow-mcp-to-kube-api.yaml
   - network-policy.allow-n8n-to-databases.yaml
   - network-policy.default-hardened.yaml
