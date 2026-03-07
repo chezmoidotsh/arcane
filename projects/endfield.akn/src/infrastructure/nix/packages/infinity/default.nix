@@ -48,8 +48,11 @@ let
   # Helper to aggressively disable tests on overridden packages
   noCheck = pkg: pkg.overridePythonAttrs (old: { 
     doCheck = false; 
-    catchConflicts = false; # Also disable conflict checking to speed up
-    pythonImportsCheck = []; # Disable import checks which can fail if MPS is not active during build
+    doInstallCheck = false;
+    checkPhase = "true";
+    installCheckPhase = "true";
+    catchConflicts = false; 
+    pythonImportsCheck = []; 
   });
 
   infinityApp = p2n.mkPoetryApplication {
