@@ -97,24 +97,19 @@ def patch_acceleration():
 patch_acceleration()
 
 # 2. Patch utils_optimum.py and others (transformers.utils)
-# Instead of fixing the import path, we just stub the flags as we don't need TF/Flax on macOS.
-# We use regex to find any import of these flags and stub them at the top of the file.
 def stub_transformers_utils(rel_path):
     f = site_packages / rel_path
     if not f.exists(): return
     src = f.read_text()
     
-    # Check if file imports is_tf_available or is_flax_available
-    if re.search(r'from transformers\.utils import .*is_(tf|flax)_available', src):
-        # Insert stubs at the top
+    if re.search(r"from transformers\.utils import .*is_(tf|flax)_available", src):
         stubs = "is_tf_available = lambda: False\nis_flax_available = lambda: False\n"
         if stubs not in src:
             src = stubs + src
-            # Remove them from the actual import line to avoid conflicts
-            src = re.sub(r',\s*is_tf_available', '', src)
-            src = re.sub(r'is_tf_available\s*,', '', src)
-            src = re.sub(r',\s*is_flax_available', '', src)
-            src = re.sub(r'is_flax_available\s*,', '', src)
+            src = re.sub(r",\s*is_tf_available", "", src)
+            src = re.sub(r"is_tf_available\s*,", "", src)
+            src = re.sub(r",\s*is_flax_available", "", src)
+            src = re.sub(r"is_flax_available\s*,", "", src)
             f.write_text(src)
             print(f"  → {rel_path} (transformers.utils) stubbed OK")
 
