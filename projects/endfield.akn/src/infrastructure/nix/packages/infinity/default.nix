@@ -38,14 +38,16 @@ pkgs.writeShellApplication {
     uv pip install \
       --python "$VENV/bin/python" \
       --quiet \
-      "infinity-emb[${infinityExtras}]==${infinityVersion}"
+      "infinity-emb==${infinityVersion}" \
+      "optimum<1.24.0" \
+      "onnxruntime" \
+      "tokenizers" \
+      "huggingface-hub" \
+      "safetensors" \
+      "sentence-transformers" \
+      "hf-transfer"
 
     # ── Post-install compatibility patch ───────────────────────────────────
-    # infinity-emb 0.0.77 imports optimum.bettertransformer unconditionally.
-    # This module was removed in optimum >= 1.24, which is exactly what
-    # infinity-emb[optimum] requires — an irresolvable conflict.
-    # We drop the `optimum` extra (see infinityExtras above) and instead patch
-    # acceleration.py to guard the import. The patch is idempotent.
     ACCEL="$VENV/lib/python3.12/site-packages/infinity_emb/transformer/acceleration.py"
     if [ -f "$ACCEL" ]; then
       echo "[infinity-launcher] Applying acceleration.py compatibility patch..."
@@ -53,14 +55,12 @@ pkgs.writeShellApplication {
 import sys, pathlib, re
 f = pathlib.Path(sys.argv[1])
 src = f.read_text()
-# Guard the import — wrap in try/except if not already patched
-if "from optimum.bettertransformer import" in src and "try:" not in src.split("from optimum.bettertransformer")[0][-10:]:
+if "from optimum.bettertransformer import" in src and "try:" not in src:
     src = re.sub(
         r'(from optimum\.bettertransformer import \([^)]+\))',
         r'try:\n    \1\nexcept (ImportError, ModuleNotFoundError):\n    BetterTransformerManager = None',
         src, count=1,
     )
-# Guard MODEL_MAPPING access to handle None case
 src = src.replace(
     "return config.model_type in BetterTransformerManager.MODEL_MAPPING",
     "return BetterTransformerManager is not None and config.model_type in BetterTransformerManager.MODEL_MAPPING",
