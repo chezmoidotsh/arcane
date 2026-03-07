@@ -18,6 +18,9 @@ pkgs.stdenv.mkDerivation rec {
     pkgs.uv
     pkgs.python312
     pkgs.makeWrapper
+    pkgs.rustc
+    pkgs.cargo
+    pkgs.pkg-config
   ];
 
   # we build the venv and install wheels at build time
