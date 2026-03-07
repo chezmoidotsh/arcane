@@ -48,10 +48,12 @@ pkgs.writeShellApplication {
       "hf-transfer"
 
     # ── Post-install compatibility patch ───────────────────────────────────
-    ACCEL="$VENV/lib/python3.12/site-packages/infinity_emb/transformer/acceleration.py"
-    if [ -f "$ACCEL" ]; then
-      echo "[infinity-launcher] Applying acceleration.py compatibility patch..."
-      "$VENV/bin/python" - "$ACCEL" <<'PATCH'
+    # infinity-emb 0.0.77 has several incompatibilities with recent ML libs:
+    # 1. acceleration.py imports the removed optimum.bettertransformer
+    # 2. utils_optimum.py imports moved symbols from transformers.utils
+    
+    echo "[infinity-launcher] Applying compatibility patches..."
+    "$VENV/bin/python" - "$VENV" <<'PATCH'
 import sys, pathlib, re
 f = pathlib.Path(sys.argv[1])
 src = f.read_text()
