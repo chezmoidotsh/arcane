@@ -23,7 +23,8 @@ pkgs.stdenv.mkDerivation {
     
     ${pkgs.uv}/bin/uv venv $out --python ${pkgs.python312}/bin/python3
     
-    $out/bin/python -m uv pip install \
+    ${pkgs.uv}/bin/uv pip install \
+      --python "$out/bin/python" \
       "infinity-emb[all]==0.0.77" \
       "transformers==4.48.0" \
       "optimum==1.17.0" \
