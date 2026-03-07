@@ -85,14 +85,23 @@ patch_file("infinity_emb/transformer/acceleration.py", [
     )
 ])
 
-# Guard MODEL_MAPPING access
-src = src.replace(
-    "return config.model_type in BetterTransformerManager.MODEL_MAPPING",
-    "return BetterTransformerManager is not None and config.model_type in BetterTransformerManager.MODEL_MAPPING",
-)
-f.write_text(src)
+# 2. Patch utils_optimum.py (transformers.utils)
+# Instead of fixing the import path, we just stub the flags as we don't need TF/Flax on macOS.
+patch_file("infinity_emb/transformer/utils_optimum.py", [
+    (
+        "from transformers.utils import is_onnx_available, is_tf_available",
+        "is_tf_available = lambda: False\nfrom transformers.utils import is_onnx_available"
+    ),
+    (
+        "from huggingface_hub import HfApi, HfFolder",
+        "from huggingface_hub import HfApi"
+    ),
+    (
+        "HfFolder().get_token()",
+        "None"
+    )
+])
 PATCH
-      echo "  → acceleration.py patched OK"
     fi
 
     # ── Launch ─────────────────────────────────────────────────────────────
