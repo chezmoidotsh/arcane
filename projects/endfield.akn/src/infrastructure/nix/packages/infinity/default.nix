@@ -79,6 +79,9 @@ let
       uvicorn = pkgs.python312Packages.uvicorn;
       uvloop = pkgs.python312Packages.uvloop;
       httptools = pkgs.python312Packages.httptools;
+      flatbuffers = pkgs.python312Packages.flatbuffers;
+      onnxruntime = pkgs.python312Packages.onnxruntime;
+      optimum = pkgs.python312Packages.optimum;
 
       # Additionally, sentence-transformers uses poetry-core, which sometimes needs to be explicit
       sentence-transformers = super.sentence-transformers.overridePythonAttrs (old: {
