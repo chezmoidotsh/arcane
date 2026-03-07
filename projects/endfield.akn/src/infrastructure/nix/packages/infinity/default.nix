@@ -21,6 +21,7 @@ pkgs.stdenv.mkDerivation rec {
     pkgs.rustc
     pkgs.cargo
     pkgs.pkg-config
+    pkgs.cacert
   ];
 
   # we build the venv and install wheels at build time
