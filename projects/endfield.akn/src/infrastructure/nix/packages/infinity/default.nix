@@ -23,6 +23,8 @@ pkgs.writeShellApplication {
     uv pip install \
       --python "$VENV/bin/python" \
       --quiet \
+      "typer==0.12.5" \
+      "click==8.1.7" \
       "transformers==4.48.0" \
       "optimum==1.17.0" \
       "typer<0.10.0" \
