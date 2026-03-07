@@ -2,9 +2,9 @@
 # │ common.nix — shared baseline for all machines                             │
 # │                                                                           │
 # │ Responsibilities:                                                         │
-# │   · system.stateVersion / system.primaryUser                             │
-# │   · XDG base directories (created + chowned on each activation)          │
-# │   · Power management (pmset: no sleep, autorestart, Power Nap)           │
+# │   · system.stateVersion / system.primaryUser                              │
+# │   · XDG base directories (created + chowned on each activation)           │
+# │   · Power management (pmset: no sleep, autorestart, Power Nap)            │
 # │                                                                           │
 # │ Produces no launchd agents and no user-visible endpoints.                 │
 # └───────────────────────────────────────────────────────────────────────────┘

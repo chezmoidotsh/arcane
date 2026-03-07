@@ -2,13 +2,13 @@
 # │ caddy.nix — reverse proxy (user-level launchd agent)                      │
 # │                                                                           │
 # │ Responsibilities:                                                         │
-# │   · Installs Caddyfile + snippets into XDG_CONFIG_HOME/caddy/            │
-# │   · Configures newsyslog rotation for Caddy logs                         │
-# │   · Starts Caddy as a user launchd agent                                 │
+# │   · Installs Caddyfile + snippets into XDG_CONFIG_HOME/caddy/             │
+# │   · Configures newsyslog rotation for Caddy logs                          │
+# │   · Starts Caddy as a user launchd agent                                  │
 # │                                                                           │
 # │ Outputs:                                                                  │
-# │   · launchd agent  sh.chezmoi.shodan.caddy                               │
-# │   · logs           $XDG_STATE_HOME/log/caddy.{access,stdout,stderr}.log  │
+# │   · launchd agent  sh.chezmoi.shodan.caddy                                │
+# │   · logs           $XDG_STATE_HOME/log/caddy.{access,stdout,stderr}.log   │
 # └───────────────────────────────────────────────────────────────────────────┘
 { lib
 , pkgs

@@ -6,7 +6,7 @@
 # │   · Starts Presidio server as a user launchd agent                        │
 # │                                                                           │
 # │ Outputs:                                                                  │
-# │   · launchd agent  sh.chezmoi.shodan.presidio  → 127.0.0.1:8881          │
+# │   · launchd agent  sh.chezmoi.shodan.presidio  → 127.0.0.1:8881           │
 # │   · logs           $XDG_STATE_HOME/log/presidio.{stdout,stderr}.log       │
 # └───────────────────────────────────────────────────────────────────────────┘
 { lib

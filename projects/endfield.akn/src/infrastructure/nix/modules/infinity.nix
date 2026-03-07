@@ -2,18 +2,18 @@
 # │ infinity.nix — local embedding & reranking API (user-level launchd agent) │
 # │                                                                           │
 # │ Responsibilities:                                                         │
-# │   · Creates model cache and tmp dirs under XDG paths                     │
-# │   · Configures newsyslog rotation for Infinity logs                      │
-# │   · Starts Infinity embedding server as a user launchd agent             │
+# │   · Creates model cache and tmp dirs under XDG paths                      │
+# │   · Configures newsyslog rotation for Infinity logs                       │
+# │   · Starts Infinity embedding server as a user launchd agent              │
 # │                                                                           │
 # │ Models served:                                                            │
-# │   · BAAI/bge-m3           — multilingual embedding model                 │
-# │   · BAAI/bge-reranker-v2-m3 — multilingual reranker model               │
+# │   · BAAI/bge-m3           — multilingual embedding model                  │
+# │   · BAAI/bge-reranker-v2-m3 — multilingual reranker model                 │
 # │                                                                           │
 # │ Outputs:                                                                  │
-# │   · launchd agent  sh.chezmoi.endfield.infinity   → 127.0.0.1:7997       │
-# │   · logs           $XDG_STATE_HOME/log/infinity.{stdout,stderr}.log      │
-# │   · model cache    $XDG_DATA_HOME/infinity/models/                       │
+# │   · launchd agent  sh.chezmoi.endfield.infinity   → 127.0.0.1:7997        │
+# │   · logs           $XDG_STATE_HOME/log/infinity.{stdout,stderr}.log       │
+# │   · model cache    $XDG_DATA_HOME/infinity/models/                        │
 # └───────────────────────────────────────────────────────────────────────────┘
 { lib
 , pkgs

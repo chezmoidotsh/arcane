@@ -32,8 +32,8 @@ let
     version = "7.0.2";
     format = "wheel";
     src = pkgs.fetchurl {
-      url = "https://files.pythonhosted.org/packages/39/44/e2dd7e6a9e29c9e8e4f6acc468f93478ead4519e7d3a2e644a0e0e99bd42/prometheus_fastapi_instrumentator-7.0.2-py3-none-any.whl";
-      sha256 = "sha256-1DJWV3LGD5EYmxr/xZyMU3NfHC58+KGQ6DCtPgFY6HU=";
+      url = "https://files.pythonhosted.org/packages/f1/f7/a67e804853d05b3f1f5def0ebd662b9f48dbcfe0b452f0aa5d4c183a6f86/prometheus_fastapi_instrumentator-7.0.2-py3-none-any.whl";
+      sha256 = "975e39992acb7a112758ff13ba95317e6c54d1bbf605f9156f31ac9f2800c32d";
     };
     doCheck = false;
     propagatedBuildInputs = with pythonPkgs; [

@@ -2,17 +2,17 @@
 # │ kokoro.nix — local TTS API (user-level launchd agents)                    │
 # │                                                                           │
 # │ Responsibilities:                                                         │
-# │   · Creates model/log/tmp dirs under XDG paths                           │
-# │   · Symlinks Kokoro model files from the Nix store (avoids copy)         │
-# │   · Configures newsyslog rotation for Kokoro logs                        │
-# │   · Starts Kokoro server and a janitor sweep agent                       │
+# │   · Creates model/log/tmp dirs under XDG paths                            │
+# │   · Symlinks Kokoro model files from the Nix store (avoids copy)          │
+# │   · Configures newsyslog rotation for Kokoro logs                         │
+# │   · Starts Kokoro server and a janitor sweep agent                        │
 # │                                                                           │
 # │ Outputs:                                                                  │
-# │   · launchd agent  sh.chezmoi.shodan.kokoro    → 127.0.0.1:8880          │
-# │   · launchd agent  sh.chezmoi.shodan.janitor   (hourly tmp sweep)        │
-# │   · logs           $XDG_STATE_HOME/log/kokoro.{stdout,stderr}.log        │
-# │   · models         $XDG_DATA_HOME/kokoro/models/v1_0/                    │
-# │   · tmp            $XDG_STATE_HOME/tmp/kokoro/                           │
+# │   · launchd agent  sh.chezmoi.shodan.kokoro    → 127.0.0.1:8880           │
+# │   · launchd agent  sh.chezmoi.shodan.janitor   (hourly tmp sweep)         │
+# │   · logs           $XDG_STATE_HOME/log/kokoro.{stdout,stderr}.log         │
+# │   · models         $XDG_DATA_HOME/kokoro/models/v1_0/                     │
+# │   · tmp            $XDG_STATE_HOME/tmp/kokoro/                            │
 # └───────────────────────────────────────────────────────────────────────────┘
 { lib
 , pkgs
