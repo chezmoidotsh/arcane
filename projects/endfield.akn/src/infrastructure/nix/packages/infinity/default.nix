@@ -76,6 +76,9 @@ let
       pyarrow = pkgs.python312Packages.pyarrow;
       psutil = pkgs.python312Packages.psutil;
       orjson = pkgs.python312Packages.orjson;
+      uvicorn = pkgs.python312Packages.uvicorn;
+      uvloop = pkgs.python312Packages.uvloop;
+      httptools = pkgs.python312Packages.httptools;
 
       # Additionally, sentence-transformers uses poetry-core, which sometimes needs to be explicit
       sentence-transformers = super.sentence-transformers.overridePythonAttrs (old: {
