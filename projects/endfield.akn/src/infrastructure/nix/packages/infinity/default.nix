@@ -96,7 +96,6 @@ def patch_acceleration():
 patch_acceleration()
 
 # 2. Patch utils_optimum.py (transformers.utils)
-# Instead of fixing the import path, we just stub the flags as we don't need TF/Flax on macOS.
 patch_file("infinity_emb/transformer/utils_optimum.py", [
     (
         "from transformers.utils import is_onnx_available, is_tf_available",
