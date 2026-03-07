@@ -101,6 +101,8 @@ let
       rich
       typer
       uvicorn
+      httptools
+      uvloop
 
       # Torch / ML extras
       torch
@@ -133,6 +135,8 @@ let
     # Server
     fastapi
     uvicorn
+    httptools
+    uvloop
     orjson
     pydantic
     rich
