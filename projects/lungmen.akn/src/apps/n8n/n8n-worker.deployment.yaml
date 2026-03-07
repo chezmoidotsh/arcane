@@ -26,9 +26,9 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        runAsUser: 25678
-        runAsGroup: 25678
-        fsGroup: 25678
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -91,8 +91,8 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
-            runAsUser: 25678
-            runAsGroup: 25678
+            runAsUser: 1000
+            runAsGroup: 1000
             readOnlyRootFilesystem: true
             capabilities:
               drop:
