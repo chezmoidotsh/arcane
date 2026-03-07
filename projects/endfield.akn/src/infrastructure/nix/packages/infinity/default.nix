@@ -36,8 +36,9 @@ pkgs.stdenv.mkDerivation rec {
       "optimum==1.27.0"
 
     # Install other pinned runtime deps
+    # Install other pinned dependencies
     uv pip install --python "$out/bin/python" \
-      "transformers==4.53.1" \
+      "transformers==4.48.1" \
       "typer==0.12.5" \
       "click==8.1.7"
 
