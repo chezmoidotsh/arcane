@@ -77,7 +77,35 @@ pkgs.writeShellApplication {
     uv pip install \
       --python "$VENV/bin/python" \
       --quiet \
-      "infinity-emb[${infinityExtras}]==${infinityVersion}"
+      "infinity-emb[${infinityExtras}]==${infinityVersion}" \
+      "optimum>=1.14.0,<1.24.0"  # pin: optimum.bettertransformer removed in >= 1.24
+
+    # ── Post-install compatibility patch ───────────────────────────────────
+    # infinity-emb 0.0.77 unconditionally imports optimum.bettertransformer,
+    # which was removed in optimum >= 1.24. We guard the import with try/except
+    # so the server starts even when that submodule is absent.
+    ACCEL="$VENV/lib/python3.12/site-packages/infinity_emb/transformer/acceleration.py"
+    if [ -f "$ACCEL" ] && grep -q "^from optimum.bettertransformer import" "$ACCEL"; then
+      echo "[infinity-launcher] Patching acceleration.py (optimum.bettertransformer compat)..."
+      "$VENV/bin/python" - "$ACCEL" <<'PATCH'
+import sys, pathlib, re
+f = pathlib.Path(sys.argv[1])
+src = f.read_text()
+# Wrap the top-level import in try/except so missing bettertransformer is non-fatal
+src = re.sub(
+    r'(from optimum\.bettertransformer import \([^)]+\))',
+    r'try:\n    \1\nexcept (ImportError, ModuleNotFoundError):\n    BetterTransformerManager = None',
+    src, count=1,
+)
+# Guard the .MODEL_MAPPING reference to handle the None case
+src = src.replace(
+    "return config.model_type in BetterTransformerManager.MODEL_MAPPING",
+    "return BetterTransformerManager is not None and config.model_type in BetterTransformerManager.MODEL_MAPPING",
+)
+f.write_text(src)
+print("  → acceleration.py patched OK")
+PATCH
+    fi
 
     # ── Launch ─────────────────────────────────────────────────────────────
     echo "[infinity-launcher] starting infinity_emb $*"
