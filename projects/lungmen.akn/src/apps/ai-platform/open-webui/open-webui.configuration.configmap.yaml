@@ -572,7 +572,7 @@ data:
     ### Task: Generate 1-4 tags categorizing the chat.
     ### Rules:
     - Format: Return ONLY {"tags": ["tag1", "tag2"]}.
-    - Language: Use French by default.
+    - Language: Use the same language as the user. If unsure, use French.
     - Style: Use broad, common themes (e.g., Cuisine, Informatique, Santé, Loisirs, Travail).
 
     ### Bad-shot (DO NOT DO):
@@ -603,7 +603,7 @@ data:
     ### Task: Suggest 3 short follow-up questions from the USER'S perspective.
     ### Rules:
     - Format: Return ONLY a valid JSON array of strings: ["...", "...", "..."].
-    - Language: Always in French.
+    - Language: Use the same language as the user. If unsure, use French.
     - No Emojis.
     - Perspective: Write exactly what the user would type next.
 
@@ -649,7 +649,7 @@ data:
     - Today's date is: {{CURRENT_DATE}}.
     - Always prioritize providing actionable and broad queries that maximize informational coverage.
 
-    ### Output:
+    ### Output Format:
     Strictly return in JSON format:
     {
       "queries": ["query1", "query2"]
@@ -659,6 +659,8 @@ data:
     <chat_history>
     {{MESSAGES:END:6}}
     </chat_history>
+
+    ### Output (JSON only):
 
   # Autocomplete generation prompt template (optimized for 3B models)
   # Suggests text completions while user is typing
