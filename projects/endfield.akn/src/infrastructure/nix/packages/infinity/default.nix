@@ -55,12 +55,19 @@ pkgs.writeShellApplication {
 import sys, pathlib, re
 f = pathlib.Path(sys.argv[1])
 src = f.read_text()
-if "from optimum.bettertransformer import" in src and "try:" not in src:
-    src = re.sub(
-        r'(from optimum\.bettertransformer import \([^)]+\))',
-        r'try:\n    \1\nexcept (ImportError, ModuleNotFoundError):\n    BetterTransformerManager = None',
-        src, count=1,
-    )
+
+# Find the multi-line import block
+pattern = r'from optimum\.bettertransformer import \([^)]+\)'
+match = re.search(pattern, src)
+
+if match and "try:" not in src:
+    original = match.group(0)
+    # Indent EVERY line of the original block
+    indented = "\n".join("    " + line for line in original.splitlines())
+    replacement = f"try:\n{indented}\nexcept (ImportError, ModuleNotFoundError):\n    BetterTransformerManager = None"
+    src = src.replace(original, replacement)
+
+# Guard MODEL_MAPPING access
 src = src.replace(
     "return config.model_type in BetterTransformerManager.MODEL_MAPPING",
     "return BetterTransformerManager is not None and config.model_type in BetterTransformerManager.MODEL_MAPPING",
