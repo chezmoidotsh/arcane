@@ -8,38 +8,15 @@
 # │ ──────────────────────────────────────────────────────────────────────── │
 # │ WHY NOT A PURE NIX DERIVATION?                                             │
 # │ ──────────────────────────────────────────────────────────────────────── │
+# │ See previous versions for the long list of poetry2nix/nixpkgs conflicts.   │
+# │ The current blocker: infinity-emb[optimum]==0.0.77 has a broken metadata   │
+# │ pin requiring optimum>=1.24, which removed the submodule it needs.         │
 # │                                                                            │
-# │ Infinity-emb has a large, complex dependency graph that includes:          │
-# │   · Rust-based wheels (safetensors, tokenizers) requiring maturin          │
-# │   · ML packages with version conflicts between nixpkgs-unstable and        │
-# │     the exact pins in infinity's poetry.lock                               │
-# │   · PyPI-only packages with no nixpkgs equivalent at the required version  │
-# │   · C-extension packages whose build patches in nixpkgs are incompatible   │
-# │     with the exact version required (e.g. pillow 10.4.0 AVIF patch)       │
-# │   · Test suites that fail due to cross-package API breakage between        │
-# │     the nixpkgs-bundled versions of accelerate and transformers            │
-# │                                                                            │
-# │ poetry2nix was attempted and abandoned after extensive troubleshooting:    │
-# │   · The override system doesn't reliably invalidate cached derivations,    │
-# │     making doCheck = false ineffective for already-cached packages         │
-# │   · Transitive dependency conflicts (urllib3, charset-normalizer) between  │
-# │     poetry-resolved deps and nixpkgs-pulled ML libs are very hard to fix   │
-# │   · Each fix revealed a new broken package in the chain                    │
-# │                                                                            │
-# │ The uv-venv approach trades Nix purity for operational pragmatism:         │
-# │   TRADE-OFF   │ Nix purity  │ We lose full reproducibility in /nix/store   │
-# │   BENEFIT     │ Reliability │ pip/uv resolves the ML stack natively,       │
-# │               │             │   exactly as upstream intends                 │
-# │   BENEFIT     │ Speed       │ uv is a near-instant no-op if venv is fresh  │
-# │   BENEFIT     │ Upgrades    │ bump `infinityVersion` and redeploy           │
-# │                                                                            │
-# │ The Nix store still provides: uv, python3.12, and all system-level libs.  │
-# │ The mutable venv lives in $XDG_DATA_HOME/infinity/venv (user-owned).      │
+# │ SOLUTION: We install infinity-emb WITHOUT the broken [optimum] extra,      │
+# │ and manually install its dependencies to bypass the version conflict.      │
 # └───────────────────────────────────────────────────────────────────────────┘
 
 let
-  # The version of infinity-emb to install.
-  # Bump this to upgrade the server — the launcher will reinstall on next start.
   infinityVersion = "0.0.77";
 
   # The extras to install.
