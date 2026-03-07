@@ -32,7 +32,7 @@ data:
 
   # Queue mode configuration
   EXECUTIONS_MODE: queue
-  QUEUE_BULL_REDIS_HOST: valkey-n8n-master
+  QUEUE_BULL_REDIS_HOST: valkey-n8n
   QUEUE_BULL_REDIS_PORT: "6379"
   QUEUE_HEALTH_CHECK_ACTIVE: "true"
 
