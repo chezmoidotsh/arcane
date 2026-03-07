@@ -1,37 +1,39 @@
 { pkgs ? import <nixpkgs> { } }:
 
-# ┌───────────────────────────────────────────────────────────────────────────┐
-# │ Package     : infinity                                                     │
-# │ Description : Simple bootstrap launcher for infinity-emb using uv.          │
-# └───────────────────────────────────────────────────────────────────────────┘
+pkgs.stdenv.mkDerivation {
+  pname = "infinity";
+  version = "0.0.77";
 
-pkgs.writeShellApplication {
-  name = "infinity-launcher";
-  runtimeInputs = [ pkgs.uv pkgs.python312 ];
+  nativeBuildInputs = [
+    pkgs.uv
+    pkgs.python312
+    pkgs.makeWrapper
+  ];
 
-  text = ''
-    set -euo pipefail
+  # Fixed-Output Derivation (FOD): allows network access during build.
+  outputHashMode = "recursive";
+  outputHashAlgo = "sha256";
+  outputHash = "sha256-R4r97X0FpxT3zIu1Z4r87Yv+9qf9Yq9Yq9Yq9Yq9Yq9="; # REMPLACE-MOI après le premier échec
 
-    VENV="''${INFINITY_VENV:?INFINITY_VENV must be set}"
-    INFINITY_BIN="$VENV/bin/infinity_emb"
+  unpackPhase = "true";
 
-    # ── Bootstrap ──────────────────────────────────────────────────────────
-    echo "[infinity-launcher] ensuring venv at $VENV"
-    uv venv --python python3.12 "$VENV" 2>/dev/null || true
+  buildPhase = ''
+    export UV_CACHE_DIR=$TMPDIR/uv-cache
+    export HOME=$TMPDIR
     
-    echo "[infinity-launcher] installing infinity-emb[all]..."
-    uv pip install \
-      --python "$VENV/bin/python" \
-      --quiet \
-      "typer==0.12.5" \
-      "click==8.1.7" \
+    uv venv $out --python ${pkgs.python312}/bin/python3
+    
+    $out/bin/python -m uv pip install \
+      "infinity-emb[all]==0.0.77" \
       "transformers==4.48.0" \
       "optimum==1.17.0" \
-      "typer<0.10.0" \
-      "infinity-emb[all]"
+      "typer==0.12.5" \
+      "click==8.1.7"
+  '';
 
-    # ── Launch ─────────────────────────────────────────────────────────────
-    echo "[infinity-launcher] starting infinity_emb $*"
-    exec "$INFINITY_BIN" "$@"
+  installPhase = ''
+    # Wrap pour s'assurer qu'il ignore les packages Python de l'utilisateur (~/.local)
+    wrapProgram $out/bin/infinity_emb \
+      --set PYTHONNOUSERSITE 1
   '';
 }
