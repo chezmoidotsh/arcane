@@ -41,6 +41,8 @@ let
     '';
     format = "setuptools";
     doCheck = false;
+    nativeBuildInputs = [ pkgs.python312Packages.setuptools ];
+    propagatedBuildInputs = [ pkgs.python312Packages.setuptools ];
   };
 
   infinityApp = p2n.mkPoetryApplication {
