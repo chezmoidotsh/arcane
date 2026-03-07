@@ -61,9 +61,9 @@ in
     serviceConfig = {
       # Identity
       Label = "sh.chezmoi.endfield.infinity";
-      # Execution — Call the pre-built package directly from the Nix store.
+      # Execution — the launcher bootstraps the venv (uv) then exec's infinity_emb
       ProgramArguments = [
-        "${infinity}/bin/infinity_emb"
+        "${infinity}/bin/infinity-launcher"
         "v2"
 
         # 1. Models
@@ -86,13 +86,15 @@ in
       # Environment
       EnvironmentVariables = {
         HOME = "/Users/${username}";
+        # Tell the launcher where to create/find the venv.
+        INFINITY_VENV = "${venvDir}";
         # HuggingFace model cache: stored under XDG_DATA_HOME for persistence.
         HF_HOME = "${modelsDir}";
         TMPDIR = "${xdg.tmp}/infinity";
-        # Path: Standard system paths are enough here as the venv is self-contained.
-        PATH = "/usr/bin:/bin:/usr/sbin:/sbin";
-        # Ensure no interference from local user-level python packages.
-        PYTHONNOUSERSITE = "1";
+        # uv cache: kept in XDG_CACHE_HOME to avoid polluting HOME.
+        UV_CACHE_DIR = "${xdg.cache}/uv";
+        # PATH: uv and python3.12 from Nix store, then standard system paths.
+        PATH = "${pkgs.uv}/bin:${pkgs.python312}/bin:/usr/bin:/bin:/usr/sbin:/sbin";
       };
       # Logging
       StandardOutPath = "${xdg.log}/infinity.stdout.log";
