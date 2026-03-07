@@ -113,14 +113,20 @@ let
       timm = pkgs.python312Packages.timm;
       maturin = pkgs.python312Packages.maturin;
       pip = pkgs.python312Packages.pip;
-      prometheus-fastapi-instrumentator = noCheck pkgs.python312Packages.prometheus-fastapi-instrumentator;
-      
-      # Additional dependencies often needing source build fixes
-      pydantic = noCheck pkgs.python312Packages.pydantic;
-      pydantic-core = noCheck pkgs.python312Packages.pydantic-core;
-      anyio = noCheck pkgs.python312Packages.anyio;
-      starlette = noCheck pkgs.python312Packages.starlette;
-      fastapi = noCheck pkgs.python312Packages.fastapi;
+      scikit-learn = pkgs.python312Packages.scikit-learn;
+      pydantic = pkgs.python312Packages.pydantic;
+      pydantic-core = pkgs.python312Packages.pydantic-core;
+      anyio = pkgs.python312Packages.anyio;
+      starlette = pkgs.python312Packages.starlette;
+      fastapi = pkgs.python312Packages.fastapi;
+      prometheus-fastapi-instrumentator = pkgs.python312Packages.prometheus-fastapi-instrumentator;
+
+      # Use the PATCHED package set (py.*) for packages whose test failures propagate
+      # through the dependency graph. This ensures accelerate is test-disabled everywhere.
+      transformers = py.transformers;
+      sentence-transformers = py.sentence-transformers;
+      accelerate = py.accelerate;
+      peft = py.peft;
     });
   };
 
