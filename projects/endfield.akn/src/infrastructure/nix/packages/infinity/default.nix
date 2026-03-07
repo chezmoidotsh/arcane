@@ -53,7 +53,7 @@ let
     doInstallCheck = false;
     checkPhase = "true";
     installCheckPhase = "true";
-    catchConflicts = false; 
+    pytestFlagsArray = [];
     pythonImportsCheck = []; 
   });
 
