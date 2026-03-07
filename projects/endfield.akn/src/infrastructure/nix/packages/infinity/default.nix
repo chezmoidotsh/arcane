@@ -100,17 +100,6 @@ let
       openvino = dummyPkg "openvino";
       onnxruntime-openvino = dummyPkg "onnxruntime-openvino";
       openvino-tokenizers = dummyPkg "openvino-tokenizers";
-
-      # Redirect all heavy ML and networking libs to nixpkgs versions + disable checks
-      pyarrow = noCheck pkgs.python312Packages.pyarrow;
-      psutil = noCheck pkgs.python312Packages.psutil;
-      orjson = noCheck pkgs.python312Packages.orjson;
-      uvicorn = noCheck pkgs.python312Packages.uvicorn;
-      uvloop = noCheck pkgs.python312Packages.uvloop;
-      httptools = noCheck pkgs.python312Packages.httptools;
-      flatbuffers = noCheck pkgs.python312Packages.flatbuffers;
-      onnxruntime = noCheck pkgs.python312Packages.onnxruntime;
-      optimum = noCheck pkgs.python312Packages.optimum;
       gputil = dummyPkg "gputil";
       setuptools = pkgs.python312Packages.setuptools;
       huggingface-hub = noCheck pkgs.python312Packages.huggingface-hub;
