@@ -24,6 +24,12 @@ let
         sentence-transformers = prev.sentence-transformers.overridePythonAttrs (old: {
           doCheck = false;
         });
+        jupyter = prev.jupyter.overridePythonAttrs (old: {
+          doCheck = false;
+        });
+        notebook = prev.notebook.overridePythonAttrs (old: {
+          doCheck = false;
+        });
       };
   };
   pythonPkgs = python.pkgs;
