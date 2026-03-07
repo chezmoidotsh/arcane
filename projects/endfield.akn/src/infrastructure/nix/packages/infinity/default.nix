@@ -21,7 +21,7 @@ let
   src = pkgs.fetchFromGitHub {
     owner = "michaelfeil";
     repo = "infinity";
-    rev = "v0.0.77";
+    rev = "0.0.77";
     # NOTE: Set to empty initially to let Nix fail and give us the exact hash.
     # Once we run it, we'll get an error with the correct SRI hash to put here.
     hash = ""; 
