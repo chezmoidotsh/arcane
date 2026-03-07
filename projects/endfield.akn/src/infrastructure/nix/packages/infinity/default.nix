@@ -102,7 +102,6 @@ patch_file("infinity_emb/transformer/utils_optimum.py", [
     )
 ])
 PATCH
-    fi
 
     # ── Launch ─────────────────────────────────────────────────────────────
     echo "[infinity-launcher] starting infinity_emb $*"
