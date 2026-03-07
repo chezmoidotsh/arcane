@@ -139,6 +139,11 @@ let
       sentence-transformers = py.sentence-transformers;
       accelerate = py.accelerate;
       peft = py.peft;
+      # colpali-engine uses hatchling as build backend — must be injected explicitly
+      colpali-engine = super.colpali-engine.overridePythonAttrs (old: {
+        nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ self.hatchling ];
+        doCheck = false;
+      });
     });
   };
 
