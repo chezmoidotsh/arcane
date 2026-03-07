@@ -2,23 +2,9 @@
 
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ Package     : infinity                                                     │
-# │ Description : Bootstrap launcher for infinity-emb embedding/reranking      │
-# │               server, using a uv-managed Python venv.                      │
-# │                                                                            │
-# │ ──────────────────────────────────────────────────────────────────────── │
-# │ WHY NOT A PURE NIX DERIVATION?                                             │
-# │ ──────────────────────────────────────────────────────────────────────── │
-# │ See previous versions for the long list of poetry2nix/nixpkgs conflicts.   │
-# │ The current blocker: infinity-emb[optimum]==0.0.77 has a broken metadata   │
-# │ pin requiring optimum>=1.24, which removed the submodule it needs.         │
-# │                                                                            │
-# │ SOLUTION: We install infinity-emb WITHOUT the broken [optimum] extra,      │
-# │ and manually install its dependencies to bypass the version conflict.      │
+# │ Description : Simple bootstrap launcher for infinity-emb using uv.          │
 # └───────────────────────────────────────────────────────────────────────────┘
 
-let
-  infinityVersion = "0.0.77";
-in
 pkgs.writeShellApplication {
   name = "infinity-launcher";
   runtimeInputs = [ pkgs.uv pkgs.python312 ];
@@ -30,11 +16,10 @@ pkgs.writeShellApplication {
     INFINITY_BIN="$VENV/bin/infinity_emb"
 
     # ── Bootstrap ──────────────────────────────────────────────────────────
-    echo "[infinity-launcher] ensuring venv at $VENV (infinity-emb==${infinityVersion})"
+    echo "[infinity-launcher] ensuring venv at $VENV"
     uv venv --python python3.12 "$VENV" 2>/dev/null || true
     
-    # We install infinity-emb WITHOUT extras to avoid the [optimum] conflict.
-    # Then we manually pull in the needed dependencies.
+    echo "[infinity-launcher] installing infinity-emb[all]..."
     uv pip install \
       --python "$VENV/bin/python" \
       --quiet \
