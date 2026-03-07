@@ -58,19 +58,7 @@ import sys, pathlib, re
 venv = pathlib.Path(sys.argv[1])
 site_packages = venv / "lib" / "python3.12" / "site-packages"
 
-def patch_file(rel_path, patterns):
-    f = site_packages / rel_path
-    if not f.exists(): return
-    src = f.read_text()
-    original_src = src
-    for old, new in patterns:
-        src = src.replace(old, new)
-    if src != original_src:
-        f.write_text(src)
-        print(f"  → {rel_path} patched OK")
-
-# 1. Patch acceleration.py (bettertransformer)
-# We use a line-by-line approach to ensure correct indentation of the entire block.
+# We use double quotes for Python strings to avoid Nix syntax conflicts with ''
 def patch_acceleration():
     f = site_packages / "infinity_emb/transformer/acceleration.py"
     if not f.exists(): return
