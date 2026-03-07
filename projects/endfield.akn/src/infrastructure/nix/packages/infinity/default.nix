@@ -21,31 +21,20 @@ let
 in
 pkgs.writeShellApplication {
   name = "infinity-launcher";
+  runtimeInputs = [ pkgs.uv pkgs.python312 ];
 
-  # Nix-managed runtime dependencies: uv and python3.12.
-  # Everything else (infinity-emb and its deps) is managed by uv at runtime.
-  runtimeInputs = [
-    pkgs.uv
-    pkgs.python312
-  ];
-
-  # The launcher script:
-  #   1. Creates or reuses the venv at $INFINITY_VENV (set by the caller/launchd env)
-  #   2. Ensures infinity-emb is installed at the pinned version (uv is idempotent)
-  #   3. Execs the server with all remaining arguments forwarded
   text = ''
     set -euo pipefail
 
-    # Venv path — set by the launchd EnvironmentVariables or can be overridden.
     VENV="''${INFINITY_VENV:?INFINITY_VENV must be set}"
     INFINITY_BIN="$VENV/bin/infinity_emb"
 
     # ── Bootstrap ──────────────────────────────────────────────────────────
-    # uv creates the venv if it doesn't exist, or validates it if it does.
-    # uv pip install is a no-op if the package is already at the right version.
-    # This makes cold starts ~2s and warm starts <100ms.
     echo "[infinity-launcher] ensuring venv at $VENV (infinity-emb==${infinityVersion})"
     uv venv --python python3.12 "$VENV" 2>/dev/null || true
+    
+    # We install infinity-emb WITHOUT extras to avoid the [optimum] conflict.
+    # Then we manually pull in the needed dependencies.
     uv pip install \
       --python "$VENV/bin/python" \
       --quiet \
