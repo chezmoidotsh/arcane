@@ -81,7 +81,7 @@ let
   infinityApp = p2n.mkPoetryApplication {
     inherit projectDir;
     python = pkgs.python312;
-    doCheck = false;    # Disable tests for the main app
+    doCheck = false;
     checkGroups = [];   
     preferWheel = true; 
 
