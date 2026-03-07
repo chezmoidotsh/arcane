@@ -21,6 +21,13 @@ pkgs.stdenv.mkDerivation rec {
     pkgs.rustc
     pkgs.cargo
     pkgs.pkg-config
+    pkgs.zlib
+    pkgs.bzip2
+    pkgs.zstd
+    pkgs.oniguruma
+    pkgs.cmake
+    pkgs.openssl
+    pkgs.libffi
     pkgs.cacert
   ];
 
