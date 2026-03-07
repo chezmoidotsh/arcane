@@ -82,6 +82,12 @@ let
     # The tests require a running backend or more complex setup, so we disable them
     doCheck = false;
 
+    postPatch = ''
+      substituteInPlace infinity_emb/transformer/utils_optimum.py \
+        --replace-fail "from huggingface_hub import HfApi, HfFolder" "from huggingface_hub import HfApi" \
+        --replace-fail "HfFolder().get_token()" "None"
+    '';
+
     propagatedBuildInputs = with pythonPkgs; [
       # Core
       numpy
