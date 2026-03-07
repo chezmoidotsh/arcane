@@ -62,15 +62,15 @@ let
 
     # Some dependencies in poetry might fail C extensions build in Darwin
     # or don't have macOS wheels/sources (like onnxruntime-gpu). Since we don't
-    # enable these optional features anyway, we can just stub out their src to
-    # prevent poetry2nix from dying during evaluation.
+    # enable these optional features anyway, we can just stub them entirely
+    # to prevent poetry2nix from dying during evaluation.
     overrides = p2n.defaultPoetryOverrides.extend (self: super: {
-      onnxruntime-gpu = super.onnxruntime-gpu.overridePythonAttrs (old: {
-        src = pkgs.emptyFile;
-      });
-      tensorrt = super.tensorrt.overridePythonAttrs (old: {
-        src = pkgs.emptyFile;
-      });
+      onnxruntime-gpu = dummyPkg "onnxruntime-gpu";
+      tensorrt = dummyPkg "tensorrt";
+      openvino = dummyPkg "openvino";
+      onnxruntime-openvino = dummyPkg "onnxruntime-openvino";
+      openvino-tokenizers = dummyPkg "openvino-tokenizers";
+
       # Additionally, sentence-transformers uses poetry-core, which sometimes needs to be explicit
       sentence-transformers = super.sentence-transformers.overridePythonAttrs (old: {
         nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ self.poetry-core ];
