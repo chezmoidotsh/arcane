@@ -85,9 +85,9 @@ let
       sha256 = "5dbab49d13f212179c0c2b5aa8d1230c610f051a78f56ec7e9ac37b83938ec65";
     };
     dontBuild = true;
-    nativeBuildInputs = with pythonPkgs; [ 
-      pkgs.ninja 
-      pythonRelaxDepsHook 
+    nativeBuildInputs = with pythonPkgs; [
+      pkgs.ninja
+      pythonRelaxDepsHook
     ];
     pythonRelaxDeps = [ "numpy" ];
     doCheck = false;
