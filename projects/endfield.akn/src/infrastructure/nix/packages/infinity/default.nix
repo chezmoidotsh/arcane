@@ -45,17 +45,38 @@ let
     propagatedBuildInputs = [ pkgs.python312Packages.setuptools ];
   };
 
-  # Helper to aggressively disable tests on overridden packages.
-  # Use overrideAttrs (not overridePythonAttrs) so the derivation hash actually changes
-  # and Nix doesn't use a broken cached version from the store.
-  noCheck = pkg: pkg.overrideAttrs (old: { 
-    doCheck = false; 
-    doInstallCheck = false;
-    checkPhase = "true";
-    installCheckPhase = "true";
-    pytestFlagsArray = [];
-    pythonImportsCheck = []; 
-  });
+  # Create a patched Python 3.12 package set where `accelerate` has its tests disabled.
+  # This is the ONLY reliable way to disable transitive test dependencies — a package-level
+  # overlay propagates the test-disabled derivation to all consumers (peft, sentence-transformers, etc.)
+  # without them rebuilding themselves with the broken nixpkgs-cached doCheck=true version.
+  py = pkgs.python312Packages.override {
+    overrides = pySelf: pySuper: {
+      accelerate = pySuper.accelerate.overrideAttrs (_: {
+        doCheck = false;
+        doInstallCheck = false;
+        pytestFlagsArray = [];
+        pythonImportsCheck = [];
+      });
+      peft = pySuper.peft.overrideAttrs (_: {
+        doCheck = false;
+        doInstallCheck = false;
+        pytestFlagsArray = [];
+        pythonImportsCheck = [];
+      });
+      transformers = pySuper.transformers.overrideAttrs (_: {
+        doCheck = false;
+        doInstallCheck = false;
+        pytestFlagsArray = [];
+        pythonImportsCheck = [];
+      });
+      sentence-transformers = pySuper.sentence-transformers.overrideAttrs (_: {
+        doCheck = false;
+        doInstallCheck = false;
+        pytestFlagsArray = [];
+        pythonImportsCheck = [];
+      });
+    };
+  };
 
   infinityApp = p2n.mkPoetryApplication {
     inherit projectDir;
