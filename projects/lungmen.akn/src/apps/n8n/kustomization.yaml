@@ -12,8 +12,12 @@ resources:
   - n8n-worker.deployment.yaml
 
   # External secrets
-  - n8n.externalsecret-encryption-key.yaml
-  - n8n.externalsecret-database.yaml
+  - n8n.encryption-key.externalsecret.yaml
+  - n8n.database.externalsecret.yaml
+  - n8n.mcp.externalsecret.yaml
+
+  # Toolhive MCP
+  - n8n.mcp.yaml
 
   # HTTPRoute for ingress
   - n8n.httproute.yaml

@@ -1,0 +1,20 @@
+---
+apiVersion: toolhive.stacklok.dev/v1alpha1
+kind: MCPRemoteProxy
+metadata:
+  name: n8n-mcp
+  namespace: n8n
+  labels:
+    app.kubernetes.io/name: n8n-mcp
+spec:
+  remoteURL: "http://n8n.n8n.svc.cluster.local:5678/mcp-server/http"
+  transport: "streamable-http"
+  port: 8080
+  headerForward:
+    addHeadersFromSecret:
+      - headerName: Authorization
+        valueSecretRef:
+          name: n8n-mcp-auth
+          key: token
+  oidcConfig:
+    type: kubernetes
