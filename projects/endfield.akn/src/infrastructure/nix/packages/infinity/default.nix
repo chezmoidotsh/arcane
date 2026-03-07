@@ -55,19 +55,35 @@ pkgs.writeShellApplication {
     echo "[infinity-launcher] Applying compatibility patches..."
     "$VENV/bin/python" - "$VENV" <<'PATCH'
 import sys, pathlib, re
-f = pathlib.Path(sys.argv[1])
-src = f.read_text()
+venv = pathlib.Path(sys.argv[1])
+site_packages = venv / "lib" / "python3.12" / "site-packages"
 
-# Find the multi-line import block
-pattern = r'from optimum\.bettertransformer import \([^)]+\)'
-match = re.search(pattern, src)
+def patch_file(rel_path, patterns):
+    f = site_packages / rel_path
+    if not f.exists(): return
+    src = f.read_text()
+    original_src = src
+    for old, new in patterns:
+        src = src.replace(old, new)
+    if src != original_src:
+        f.write_text(src)
+        print(f"  → {rel_path} patched OK")
 
-if match and "try:" not in src:
-    original = match.group(0)
-    # Indent EVERY line of the original block
-    indented = "\n".join("    " + line for line in original.splitlines())
-    replacement = f"try:\n{indented}\nexcept (ImportError, ModuleNotFoundError):\n    BetterTransformerManager = None"
-    src = src.replace(original, replacement)
+# 1. Patch acceleration.py (bettertransformer)
+patch_file("infinity_emb/transformer/acceleration.py", [
+    (
+        "from optimum.bettertransformer import (",
+        "try:\n    from optimum.bettertransformer import ("
+    ),
+    (
+        "type: ignore[import-untyped]\n)",
+        "type: ignore[import-untyped]\n    )\nexcept (ImportError, ModuleNotFoundError):\n    BetterTransformerManager = None"
+    ),
+    (
+        "return config.model_type in BetterTransformerManager.MODEL_MAPPING",
+        "return BetterTransformerManager is not None and config.model_type in BetterTransformerManager.MODEL_MAPPING"
+    )
+])
 
 # Guard MODEL_MAPPING access
 src = src.replace(
