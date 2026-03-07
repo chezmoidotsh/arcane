@@ -30,6 +30,19 @@ let
   # Infinity-emb's poetry files are located in a subdirectory of the repo.
   projectDir = "${src}/libs/infinity_emb";
 
+  # A builder for dummy Python packages to safely stub out Linux/Windows-only
+  # dependencies without triggering Nix's lazy `throw` if we try to override them.
+  dummyPkg = pname: pkgs.python312Packages.buildPythonPackage {
+    inherit pname;
+    version = "0.0.0-dummy";
+    src = pkgs.writeTextDir "setup.py" ''
+      from setuptools import setup
+      setup(name="${pname}", version="0.0.0")
+    '';
+    format = "setuptools";
+    doCheck = false;
+  };
+
   # Build the application exactly as requested by the poetry lock 
   infinityApp = p2n.mkPoetryApplication {
     inherit projectDir;
