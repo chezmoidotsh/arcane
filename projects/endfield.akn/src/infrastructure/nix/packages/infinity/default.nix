@@ -58,17 +58,17 @@ let
 
   # ───────────────────────────────────────────────────────────────────────────
   # infinity-emb
-  # The core embedding/reranking server, installed from the PyPI wheel.
-  # Extras: [all] pulls torch, sentence-transformers, server deps, etc.
-  # We declare explicit propagatedBuildInputs to control the dependency tree.
+  # The core embedding/reranking server, built from PyPI source (tar.gz).
+  # We build from source instead of a wheel so that pythonRelaxDepsHook
+  # can natively patch the pyproject.toml requirements before packaging.
   # ───────────────────────────────────────────────────────────────────────────
   infinityEmb = pythonPkgs.buildPythonPackage rec {
     pname = "infinity-emb";
     version = "0.0.77";
-    format = "wheel";
+    format = "pyproject";
     src = pkgs.fetchurl {
-      url = "https://files.pythonhosted.org/packages/2c/cc/74d39970d8ffa992b06d7324360b62b2cf288930d5d0d6a9c5952420bd5d/infinity_emb-0.0.77-py3-none-any.whl";
-      sha256 = "5dbab49d13f212179c0c2b5aa8d1230c610f051a78f56ec7e9ac37b83938ec65";
+      url = "https://files.pythonhosted.org/packages/5c/78/41733353cee591332a528971c4e81816af389ae6b669dc43893f68805073/infinity_emb-0.0.77.tar.gz";
+      sha256 = "f7143b162530c5431f4439d1836e4d807daf16ad7819c9da5885e9d43b9d9c82";
     };
 
     nativeBuildInputs = with pythonPkgs; [
@@ -81,6 +81,7 @@ let
 
     # The tests require a running backend or more complex setup, so we disable them
     doCheck = false;
+
     propagatedBuildInputs = with pythonPkgs; [
       # Core
       numpy
