@@ -75,7 +75,11 @@ let
       poetry-core
       pythonRelaxDepsHook
     ];
+
+    # Relax strict requirement on numpy < 2 
     pythonRelaxDeps = [ "numpy" ];
+
+    # The tests require a running backend or more complex setup, so we disable them
     doCheck = false;
     propagatedBuildInputs = with pythonPkgs; [
       # Core
