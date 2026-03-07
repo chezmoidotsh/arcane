@@ -73,17 +73,16 @@ let
       onnxruntime-openvino = dummyPkg "onnxruntime-openvino";
       openvino-tokenizers = dummyPkg "openvino-tokenizers";
 
-      # Use nixpkgs versions for packages that have complex system dependencies 
-      # (like C extensions linking to macOS SDKs or specific C++ libraries).
-      pyarrow = pkgs.python312Packages.pyarrow;
-      psutil = pkgs.python312Packages.psutil;
-      orjson = pkgs.python312Packages.orjson;
-      uvicorn = pkgs.python312Packages.uvicorn;
-      uvloop = pkgs.python312Packages.uvloop;
-      httptools = pkgs.python312Packages.httptools;
-      flatbuffers = pkgs.python312Packages.flatbuffers;
-      onnxruntime = pkgs.python312Packages.onnxruntime;
-      optimum = pkgs.python312Packages.optimum;
+      # Redirect all heavy ML and networking libs to nixpkgs versions + disable checks
+      pyarrow = noCheck pkgs.python312Packages.pyarrow;
+      psutil = noCheck pkgs.python312Packages.psutil;
+      orjson = noCheck pkgs.python312Packages.orjson;
+      uvicorn = noCheck pkgs.python312Packages.uvicorn;
+      uvloop = noCheck pkgs.python312Packages.uvloop;
+      httptools = noCheck pkgs.python312Packages.httptools;
+      flatbuffers = noCheck pkgs.python312Packages.flatbuffers;
+      onnxruntime = noCheck pkgs.python312Packages.onnxruntime;
+      optimum = noCheck pkgs.python312Packages.optimum;
       gputil = dummyPkg "gputil";
       setuptools = pkgs.python312Packages.setuptools;
       huggingface-hub = pkgs.python312Packages.huggingface-hub;
