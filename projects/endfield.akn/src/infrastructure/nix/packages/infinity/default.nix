@@ -47,10 +47,21 @@ let
         --replace-fail "return config.model_type in BetterTransformerManager.MODEL_MAPPING" "return ('BetterTransformerManager' in globals()) and (config.model_type in BetterTransformerManager.MODEL_MAPPING)" || true
     '';
 
-    # Some of the dependencies in poetry might fail C extensions build in Darwin
-    # or require `preferWheel = true;` We supply an override here:
+    # Some dependencies in poetry might fail C extensions build in Darwin
+    # or don't have macOS wheels/sources (like onnxruntime-gpu). Since we don't
+    # enable these optional features anyway, we can just stub out their src to
+    # prevent poetry2nix from dying during evaluation.
     overrides = p2n.defaultPoetryOverrides.extend (self: super: {
-      # poetry2nix default overrides should handle most things, but we can augment here if needed.
+      onnxruntime-gpu = super.onnxruntime-gpu.overridePythonAttrs (old: {
+        src = pkgs.emptyFile;
+      });
+      tensorrt = super.tensorrt.overridePythonAttrs (old: {
+        src = pkgs.emptyFile;
+      });
+      # Additionally, sentence-transformers uses poetry-core, which sometimes needs to be explicit
+      sentence-transformers = super.sentence-transformers.overridePythonAttrs (old: {
+        nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ self.poetry-core ];
+      });
     });
   };
 
