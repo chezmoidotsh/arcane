@@ -14,3 +14,4 @@ resources:
   - network-policy.allow-apps-database-from-cnpg.yaml
   - network-policy.allow-apps-secured-database-from-cnpg.yaml
   - network-policy.allow-apps-secured-database-from-litellm.yaml
+  - network-policy.allow-qdrant-from-n8n.yaml
