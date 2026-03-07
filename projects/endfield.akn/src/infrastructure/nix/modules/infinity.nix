@@ -1,6 +1,11 @@
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ infinity.nix — local embedding & reranking API (user-level launchd agent) │
 # │                                                                           │
+# │ Strategy: uv-managed venv (see packages/infinity/default.nix for details) │
+# │   Nix provides : uv, python3.12, the launcher script                     │
+# │   uv manages   : infinity-emb and all its Python dependencies             │
+# │   Venv lives at: $XDG_DATA_HOME/infinity/venv  (persistent, mutable)     │
+# │                                                                           │
 # │ Responsibilities:                                                         │
 # │   · Creates model cache and tmp dirs under XDG paths                      │
 # │   · Configures newsyslog rotation for Infinity logs                       │
@@ -14,25 +19,32 @@
 # │   · launchd agent  sh.chezmoi.endfield.infinity   → 127.0.0.1:7997        │
 # │   · logs           $XDG_STATE_HOME/log/infinity.{stdout,stderr}.log       │
 # │   · model cache    $XDG_DATA_HOME/infinity/models/                        │
+# │   · venv           $XDG_DATA_HOME/infinity/venv/                          │
 # └───────────────────────────────────────────────────────────────────────────┘
 { lib
 , pkgs
 , username
 , xdg
-, poetry2nix
 , ...
 }:
 let
-  infinity = import ../packages/infinity { inherit pkgs poetry2nix; };
+  # The launcher package: bootstraps the uv venv and execs infinity_emb.
+  # See packages/infinity/default.nix for the full rationale on why we use
+  # a uv venv instead of a pure Nix derivation.
+  infinity = import ../packages/infinity { inherit pkgs; };
 
   # HuggingFace model cache directory (XDG-compliant).
   modelsDir = "${xdg.data}/infinity/models";
+
+  # Persistent Python venv managed by uv (not in /nix/store — intentionally mutable).
+  venvDir = "${xdg.data}/infinity/venv";
 in
 {
   # Ensure XDG data/tmp directories exist.
   system.activationScripts.extraActivation.text = lib.mkAfter ''
     install -d -m 0755 -o ${username} -g staff ${xdg.data}/infinity
     install -d -m 0755 -o ${username} -g staff ${modelsDir}
+    install -d -m 0755 -o ${username} -g staff ${venvDir}
     install -d -m 0755 -o ${username} -g staff ${xdg.tmp}/infinity
     chown -R ${username}:staff ${xdg.data}/infinity
     chown -R ${username}:staff ${xdg.tmp}/infinity
@@ -49,9 +61,9 @@ in
     serviceConfig = {
       # Identity
       Label = "sh.chezmoi.endfield.infinity";
-      # Execution
+      # Execution — the launcher bootstraps the venv (uv) then exec's infinity_emb
       ProgramArguments = [
-        "${infinity}/bin/infinity_emb"
+        "${infinity}/bin/infinity-launcher"
         "v2"
 
         # 1. Models
@@ -74,10 +86,15 @@ in
       # Environment
       EnvironmentVariables = {
         HOME = "/Users/${username}";
+        # Tell the launcher where to create/find the venv.
+        INFINITY_VENV = "${venvDir}";
         # HuggingFace model cache: stored under XDG_DATA_HOME for persistence.
         HF_HOME = "${modelsDir}";
         TMPDIR = "${xdg.tmp}/infinity";
-        PATH = "/usr/bin:/bin:/usr/sbin:/sbin";
+        # uv cache: kept in XDG_CACHE_HOME to avoid polluting HOME.
+        UV_CACHE_DIR = "${xdg.cache}/uv";
+        # PATH: uv and python3.12 from Nix store, then standard system paths.
+        PATH = "${pkgs.uv}/bin:${pkgs.python312}/bin:/usr/bin:/bin:/usr/sbin:/sbin";
       };
       # Logging
       StandardOutPath = "${xdg.log}/infinity.stdout.log";

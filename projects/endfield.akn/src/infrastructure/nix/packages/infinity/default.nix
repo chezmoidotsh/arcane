@@ -1,154 +1,86 @@
-{ pkgs ? import <nixpkgs> { }
-, poetry2nix ? null
-}:
+{ pkgs ? import <nixpkgs> { } }:
 
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ Package     : infinity                                                     │
-# │ Description : Python environment for infinity-emb embedding/reranking      │
-# │               server with MPS (Metal) acceleration.                        │
-# │ Why         : infinity-emb is not packaged in nixpkgs; we use poetry2nix   │
-# │               so Nix respects the exact versions from the source lockfile. │
+# │ Description : Bootstrap launcher for infinity-emb embedding/reranking      │
+# │               server, using a uv-managed Python venv.                      │
+# │                                                                            │
+# │ ──────────────────────────────────────────────────────────────────────── │
+# │ WHY NOT A PURE NIX DERIVATION?                                             │
+# │ ──────────────────────────────────────────────────────────────────────── │
+# │                                                                            │
+# │ Infinity-emb has a large, complex dependency graph that includes:          │
+# │   · Rust-based wheels (safetensors, tokenizers) requiring maturin          │
+# │   · ML packages with version conflicts between nixpkgs-unstable and        │
+# │     the exact pins in infinity's poetry.lock                               │
+# │   · PyPI-only packages with no nixpkgs equivalent at the required version  │
+# │   · C-extension packages whose build patches in nixpkgs are incompatible   │
+# │     with the exact version required (e.g. pillow 10.4.0 AVIF patch)       │
+# │   · Test suites that fail due to cross-package API breakage between        │
+# │     the nixpkgs-bundled versions of accelerate and transformers            │
+# │                                                                            │
+# │ poetry2nix was attempted and abandoned after extensive troubleshooting:    │
+# │   · The override system doesn't reliably invalidate cached derivations,    │
+# │     making doCheck = false ineffective for already-cached packages         │
+# │   · Transitive dependency conflicts (urllib3, charset-normalizer) between  │
+# │     poetry-resolved deps and nixpkgs-pulled ML libs are very hard to fix   │
+# │   · Each fix revealed a new broken package in the chain                    │
+# │                                                                            │
+# │ The uv-venv approach trades Nix purity for operational pragmatism:         │
+# │   TRADE-OFF   │ Nix purity  │ We lose full reproducibility in /nix/store   │
+# │   BENEFIT     │ Reliability │ pip/uv resolves the ML stack natively,       │
+# │               │             │   exactly as upstream intends                 │
+# │   BENEFIT     │ Speed       │ uv is a near-instant no-op if venv is fresh  │
+# │   BENEFIT     │ Upgrades    │ bump `infinityVersion` and redeploy           │
+# │                                                                            │
+# │ The Nix store still provides: uv, python3.12, and all system-level libs.  │
+# │ The mutable venv lives in $XDG_DATA_HOME/infinity/venv (user-owned).      │
 # └───────────────────────────────────────────────────────────────────────────┘
 
 let
-  # Initialize poetry2nix (either from the flake input or fallback to tarball)
-  p2n = if poetry2nix != null
-        then poetry2nix.lib.mkPoetry2Nix { inherit pkgs; }
-        else (import (builtins.fetchTarball "https://github.com/nix-community/poetry2nix/archive/master.tar.gz") { inherit pkgs; });
+  # The version of infinity-emb to install.
+  # Bump this to upgrade the server — the launcher will reinstall on next start.
+  infinityVersion = "0.0.77";
 
-  # Fetch the specific version we want from GitHub. We use this because 
-  # PyPI source distributions do not always include 'poetry.lock'.
-  src = pkgs.fetchFromGitHub {
-    owner = "michaelfeil";
-    repo = "infinity";
-    rev = "0.0.77";
-    hash = "sha256-78u6aTRJ9ypJ4HWZkYWELA2PRdMKtwZAxQTzbcqx1Wo="; 
-  };
-
-  # Infinity-emb's poetry files are located in a subdirectory of the repo.
-  projectDir = "${src}/libs/infinity_emb";
-
-  # A builder for dummy Python packages to safely stub out Linux/Windows-only
-  # dependencies without triggering Nix's lazy `throw` if we try to override them.
-  dummyPkg = pname: pkgs.python312Packages.buildPythonPackage {
-    inherit pname;
-    version = "0.0.0-dummy";
-    src = pkgs.writeTextDir "setup.py" ''
-      from setuptools import setup
-      setup(name="${pname}", version="0.0.0")
-    '';
-    format = "setuptools";
-    doCheck = false;
-    nativeBuildInputs = [ pkgs.python312Packages.setuptools ];
-    propagatedBuildInputs = [ pkgs.python312Packages.setuptools ];
-  };
-
-  # Create a patched Python 3.12 package set where `accelerate` has its tests disabled.
-  # This is the ONLY reliable way to disable transitive test dependencies — a package-level
-  # overlay propagates the test-disabled derivation to all consumers (peft, sentence-transformers, etc.)
-  # without them rebuilding themselves with the broken nixpkgs-cached doCheck=true version.
-  py = pkgs.python312Packages.override {
-    overrides = pySelf: pySuper: {
-      accelerate = pySuper.accelerate.overrideAttrs (_: {
-        doCheck = false;
-        doInstallCheck = false;
-        pytestFlagsArray = [];
-        pythonImportsCheck = [];
-      });
-      peft = pySuper.peft.overrideAttrs (_: {
-        doCheck = false;
-        doInstallCheck = false;
-        pytestFlagsArray = [];
-        pythonImportsCheck = [];
-      });
-      transformers = pySuper.transformers.overrideAttrs (_: {
-        doCheck = false;
-        doInstallCheck = false;
-        pytestFlagsArray = [];
-        pythonImportsCheck = [];
-      });
-      sentence-transformers = pySuper.sentence-transformers.overrideAttrs (_: {
-        doCheck = false;
-        doInstallCheck = false;
-        pytestFlagsArray = [];
-        pythonImportsCheck = [];
-      });
-    };
-  };
-
-  infinityApp = p2n.mkPoetryApplication {
-    inherit projectDir;
-    python = pkgs.python312;
-    doCheck = false;
-    checkGroups = [];   
-    preferWheel = true; 
-
-    postPatch = ''
-      substituteInPlace infinity_emb/transformer/utils_optimum.py \
-        --replace-fail "from huggingface_hub import HfApi, HfFolder" "from huggingface_hub import HfApi" \
-        --replace-fail "HfFolder().get_token()" "None" || true
-
-      substituteInPlace infinity_emb/transformer/acceleration.py \
-        --replace-fail "return config.model_type in BetterTransformerManager.MODEL_MAPPING" "return ('BetterTransformerManager' in globals()) and (config.model_type in BetterTransformerManager.MODEL_MAPPING)" || true
-    '';
-
-    overrides = p2n.defaultPoetryOverrides.extend (self: super: {
-      # Stub out Linux/GPU-only deps
-      onnxruntime-gpu = dummyPkg "onnxruntime-gpu";
-      tensorrt = dummyPkg "tensorrt";
-      openvino = dummyPkg "openvino";
-      onnxruntime-openvino = dummyPkg "onnxruntime-openvino";
-      openvino-tokenizers = dummyPkg "openvino-tokenizers";
-      gputil = dummyPkg "gputil";
-
-      # Use nixpkgs versions for all packages with complex system dependencies.
-      # Using py.* (the patched package set) ensures cascading doCheck=false for
-      # accelerate and its dependents.
-      pyarrow = pkgs.python312Packages.pyarrow;
-      psutil = pkgs.python312Packages.psutil;
-      orjson = pkgs.python312Packages.orjson;
-      uvicorn = pkgs.python312Packages.uvicorn;
-      uvloop = pkgs.python312Packages.uvloop;
-      httptools = pkgs.python312Packages.httptools;
-      flatbuffers = pkgs.python312Packages.flatbuffers;
-      onnxruntime = pkgs.python312Packages.onnxruntime;
-      optimum = pkgs.python312Packages.optimum;
-      setuptools = pkgs.python312Packages.setuptools;
-      huggingface-hub = pkgs.python312Packages.huggingface-hub;
-      tokenizers = pkgs.python312Packages.tokenizers;
-      numpy = pkgs.python312Packages.numpy;
-      scipy = pkgs.python312Packages.scipy;
-      torch = pkgs.python312Packages.torch;
-      torchvision = pkgs.python312Packages.torchvision;
-      safetensors = pkgs.python312Packages.safetensors;
-      pillow = pkgs.python312Packages.pillow;
-      timm = pkgs.python312Packages.timm;
-      maturin = pkgs.python312Packages.maturin;
-      pip = pkgs.python312Packages.pip;
-      scikit-learn = pkgs.python312Packages.scikit-learn;
-      pydantic = pkgs.python312Packages.pydantic;
-      pydantic-core = pkgs.python312Packages.pydantic-core;
-      anyio = pkgs.python312Packages.anyio;
-      starlette = pkgs.python312Packages.starlette;
-      fastapi = pkgs.python312Packages.fastapi;
-      prometheus-fastapi-instrumentator = pkgs.python312Packages.prometheus-fastapi-instrumentator;
-
-      # Use the PATCHED package set (py.*) for packages whose test failures propagate
-      # through the dependency graph. This ensures accelerate is test-disabled everywhere.
-      transformers = py.transformers;
-      sentence-transformers = py.sentence-transformers;
-      accelerate = py.accelerate;
-      peft = py.peft;
-      # colpali-engine uses hatchling as build backend — must be injected explicitly.
-      # catchConflicts = false: avoids spurious "duplicate package" errors caused by
-      #   version mismatches between poetry2nix and nixpkgs transitive deps (urllib3, charset-normalizer).
-      colpali-engine = super.colpali-engine.overridePythonAttrs (old: {
-        nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ self.hatchling ];
-        doCheck = false;
-        catchConflicts = false;
-      });
-    });
-  };
-
+  # The extras to install.
+  # · optimum: enables ONNX-based model optimization on CPU/MPS
+  # · vision:  enables the ColPali multi-modal (image + text) pipeline
+  infinityExtras = "optimum,vision";
 in
-infinityApp
+pkgs.writeShellApplication {
+  name = "infinity-launcher";
+
+  # Nix-managed runtime dependencies: uv and python3.12.
+  # Everything else (infinity-emb and its deps) is managed by uv at runtime.
+  runtimeInputs = [
+    pkgs.uv
+    pkgs.python312
+  ];
+
+  # The launcher script:
+  #   1. Creates or reuses the venv at $INFINITY_VENV (set by the caller/launchd env)
+  #   2. Ensures infinity-emb is installed at the pinned version (uv is idempotent)
+  #   3. Execs the server with all remaining arguments forwarded
+  text = ''
+    set -euo pipefail
+
+    # Venv path — set by the launchd EnvironmentVariables or can be overridden.
+    VENV="''${INFINITY_VENV:?INFINITY_VENV must be set}"
+    INFINITY_BIN="$VENV/bin/infinity_emb"
+
+    # ── Bootstrap ──────────────────────────────────────────────────────────
+    # uv creates the venv if it doesn't exist, or validates it if it does.
+    # uv pip install is a no-op if the package is already at the right version.
+    # This makes cold starts ~2s and warm starts <100ms.
+    echo "[infinity-launcher] ensuring venv at $VENV (infinity-emb==${infinityVersion})"
+    uv venv --python python3.12 "$VENV" 2>/dev/null || true
+    uv pip install \
+      --python "$VENV/bin/python" \
+      --quiet \
+      "infinity-emb[${infinityExtras}]==${infinityVersion}"
+
+    # ── Launch ─────────────────────────────────────────────────────────────
+    echo "[infinity-launcher] starting infinity_emb $*"
+    exec "$INFINITY_BIN" "$@"
+  '';
+}

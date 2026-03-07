@@ -85,7 +85,7 @@
       darwinConfigurations."yvonne" = darwin.lib.darwinSystem {
         inherit system;
         # Pass the username, XDG paths, and poetry2nix into modules for user-level path configuration.
-        specialArgs = { inherit username xdg poetry2nix; };
+        specialArgs = { inherit username xdg; };
         # Service modules are separated for clarity and maintainability.
         modules = [
           ./modules/common.nix # Shared: stateVersion, primaryUser, XDG dirs, power mgmt
