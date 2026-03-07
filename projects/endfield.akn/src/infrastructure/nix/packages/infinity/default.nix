@@ -71,11 +71,9 @@ let
       onnxruntime-openvino = dummyPkg "onnxruntime-openvino";
       openvino-tokenizers = dummyPkg "openvino-tokenizers";
 
-      # Force PyArrow to use pre-compiled PyPI wheels. 
-      # Compiling it from source fails because it strictly expects its C++ 
-      # library (arrow-cpp) to match its exact version (e.g. 17.0 = 17.0), but 
-      # nix-community currently ships arrow-cpp 23.0.
-      pyarrow = super.pyarrow.override { preferWheel = true; };
+      # Use the pyarrow version from nixpkgs as it is already configured 
+      # and linked against the correct arrow-cpp library in this system.
+      pyarrow = pkgs.python312Packages.pyarrow;
 
       # Additionally, sentence-transformers uses poetry-core, which sometimes needs to be explicit
       sentence-transformers = super.sentence-transformers.overridePythonAttrs (old: {
