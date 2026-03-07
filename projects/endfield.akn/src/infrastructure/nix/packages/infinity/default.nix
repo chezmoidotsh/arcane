@@ -22,8 +22,6 @@ let
     owner = "michaelfeil";
     repo = "infinity";
     rev = "0.0.77";
-    # NOTE: Set to empty initially to let Nix fail and give us the exact hash.
-    # Once we run it, we'll get an error with the correct SRI hash to put here.
     hash = "sha256-78u6aTRJ9ypJ4HWZkYWELA2PRdMKtwZAxQTzbcqx1Wo="; 
   };
 
@@ -95,12 +93,26 @@ let
     '';
 
     overrides = p2n.defaultPoetryOverrides.extend (self: super: {
+      # Stub out Linux/GPU-only deps
       onnxruntime-gpu = dummyPkg "onnxruntime-gpu";
       tensorrt = dummyPkg "tensorrt";
       openvino = dummyPkg "openvino";
       onnxruntime-openvino = dummyPkg "onnxruntime-openvino";
       openvino-tokenizers = dummyPkg "openvino-tokenizers";
       gputil = dummyPkg "gputil";
+
+      # Use nixpkgs versions for all packages with complex system dependencies.
+      # Using py.* (the patched package set) ensures cascading doCheck=false for
+      # accelerate and its dependents.
+      pyarrow = pkgs.python312Packages.pyarrow;
+      psutil = pkgs.python312Packages.psutil;
+      orjson = pkgs.python312Packages.orjson;
+      uvicorn = pkgs.python312Packages.uvicorn;
+      uvloop = pkgs.python312Packages.uvloop;
+      httptools = pkgs.python312Packages.httptools;
+      flatbuffers = pkgs.python312Packages.flatbuffers;
+      onnxruntime = pkgs.python312Packages.onnxruntime;
+      optimum = pkgs.python312Packages.optimum;
       setuptools = pkgs.python312Packages.setuptools;
       huggingface-hub = pkgs.python312Packages.huggingface-hub;
       tokenizers = pkgs.python312Packages.tokenizers;
