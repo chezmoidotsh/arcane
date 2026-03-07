@@ -24,7 +24,7 @@ let
     rev = "0.0.77";
     # NOTE: Set to empty initially to let Nix fail and give us the exact hash.
     # Once we run it, we'll get an error with the correct SRI hash to put here.
-    hash = ""; 
+    hash = "sha256-78u6aTRJ9ypJ4HWZkYWELA2PRdMKtwZAxQTzbcqx1Wo="; 
   };
 
   # Infinity-emb's poetry files are located in a subdirectory of the repo.
