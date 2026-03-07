@@ -70,20 +70,30 @@ def patch_file(rel_path, patterns):
         print(f"  → {rel_path} patched OK")
 
 # 1. Patch acceleration.py (bettertransformer)
-patch_file("infinity_emb/transformer/acceleration.py", [
-    (
-        "from optimum.bettertransformer import (",
-        "try:\n    from optimum.bettertransformer import ("
-    ),
-    (
-        "type: ignore[import-untyped]\n)",
-        "type: ignore[import-untyped]\n    )\nexcept (ImportError, ModuleNotFoundError):\n    BetterTransformerManager = None"
-    ),
-    (
+# We use regex to find the multi-line import block and indent it correctly.
+def patch_acceleration():
+    f = site_packages / "infinity_emb/transformer/acceleration.py"
+    if not f.exists(): return
+    src = f.read_text()
+    if "from optimum.bettertransformer" in src and "try:" not in src:
+        # Match multi-line import: from... import (...) # type: ignore[...]
+        # Capturing the block and the ignore comment separately if needed.
+        pattern = r'(from optimum\.bettertransformer import \([^)]+\)(?: # type: ignore\[[^\]]+\])?)'
+        match = re.search(pattern, src)
+        if match:
+            original = match.group(0)
+            indented = "\n".join("    " + line for line in original.splitlines())
+            src = src.replace(original, f"try:\n{indented}\nexcept (ImportError, ModuleNotFoundError):\n    BetterTransformerManager = None")
+
+    # Guard usage
+    src = src.replace(
         "return config.model_type in BetterTransformerManager.MODEL_MAPPING",
         "return BetterTransformerManager is not None and config.model_type in BetterTransformerManager.MODEL_MAPPING"
     )
-])
+    f.write_text(src)
+    print("  → acceleration.py patched OK")
+
+patch_acceleration()
 
 # 2. Patch utils_optimum.py (transformers.utils)
 # Instead of fixing the import path, we just stub the flags as we don't need TF/Flax on macOS.
