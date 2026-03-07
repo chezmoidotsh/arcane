@@ -70,28 +70,41 @@ def patch_file(rel_path, patterns):
         print(f"  → {rel_path} patched OK")
 
 # 1. Patch acceleration.py (bettertransformer)
-# We use regex to find the multi-line import block and indent it correctly.
+# We use a line-by-line approach to ensure correct indentation of the entire block.
 def patch_acceleration():
     f = site_packages / "infinity_emb/transformer/acceleration.py"
     if not f.exists(): return
-    src = f.read_text()
-    if "from optimum.bettertransformer" in src and "try:" not in src:
-        # Match multi-line import: from... import (...) # type: ignore[...]
-        # Capturing the block and the ignore comment separately if needed.
-        pattern = r'(from optimum\.bettertransformer import \([^)]+\)(?: # type: ignore\[[^\]]+\])?)'
-        match = re.search(pattern, src)
-        if match:
-            original = match.group(0)
-            indented = "\n".join("    " + line for line in original.splitlines())
-            src = src.replace(original, f"try:\n{indented}\nexcept (ImportError, ModuleNotFoundError):\n    BetterTransformerManager = None")
-
-    # Guard usage
-    src = src.replace(
-        "return config.model_type in BetterTransformerManager.MODEL_MAPPING",
-        "return BetterTransformerManager is not None and config.model_type in BetterTransformerManager.MODEL_MAPPING"
-    )
-    f.write_text(src)
-    print("  → acceleration.py patched OK")
+    lines = f.read_text().splitlines()
+    
+    if any("from optimum.bettertransformer" in l for l in lines) and not any("try:" in l for l in lines):
+        new_lines = []
+        in_block = False
+        for line in lines:
+            if "from optimum.bettertransformer import (" in line:
+                new_lines.append("try:")
+                new_lines.append("    " + line)
+                in_block = True
+                if ")" in line: # single line case
+                    in_block = False
+                    new_lines.append("except (ImportError, ModuleNotFoundError):")
+                    new_lines.append("    BetterTransformerManager = None")
+            elif in_block:
+                new_lines.append("    " + line)
+                if ")" in line:
+                    in_block = False
+                    new_lines.append("except (ImportError, ModuleNotFoundError):")
+                    new_lines.append("    BetterTransformerManager = None")
+            else:
+                new_lines.append(line)
+        src = "\n".join(new_lines)
+        
+        # Guard usage
+        src = src.replace(
+            "return config.model_type in BetterTransformerManager.MODEL_MAPPING",
+            "return BetterTransformerManager is not None and config.model_type in BetterTransformerManager.MODEL_MAPPING"
+        )
+        f.write_text(src)
+        print("  → acceleration.py patched OK")
 
 patch_acceleration()
 
