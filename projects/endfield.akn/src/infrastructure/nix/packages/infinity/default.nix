@@ -18,6 +18,12 @@ let
         spacy = prev.spacy.overridePythonAttrs (old: {
           doCheck = false;
         });
+        accelerate = prev.accelerate.overridePythonAttrs (old: {
+          doCheck = false;
+        });
+        sentence-transformers = prev.sentence-transformers.overridePythonAttrs (old: {
+          doCheck = false;
+        });
       };
   };
   pythonPkgs = python.pkgs;
