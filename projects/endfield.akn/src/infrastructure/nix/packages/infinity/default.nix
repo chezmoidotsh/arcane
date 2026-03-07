@@ -23,7 +23,7 @@ pkgs.writeShellApplication {
     uv pip install \
       --python "$VENV/bin/python" \
       --quiet \
-      transformers==4.48.0 optimum==1.17.0
+      transformers==4.48.0 optimum==1.17.0 \
       "infinity-emb[all]"
 
     # ── Launch ─────────────────────────────────────────────────────────────
