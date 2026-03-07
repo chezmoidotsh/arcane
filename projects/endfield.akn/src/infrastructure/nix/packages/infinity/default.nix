@@ -101,12 +101,14 @@ let
       pillow = noCheck pkgs.python312Packages.pillow;
       maturin = pkgs.python312Packages.maturin;
       pip = pkgs.python312Packages.pip;
-      prometheus-fastapi-instrumentator = pkgs.python312Packages.prometheus-fastapi-instrumentator;
-
-      # Force nixpkgs for these specifically broken source builds
-      safetensors = pkgs.python312Packages.safetensors;
-      timm = pkgs.python312Packages.timm;
-      pillow = pkgs.python312Packages.pillow;
+      prometheus-fastapi-instrumentator = noCheck pkgs.python312Packages.prometheus-fastapi-instrumentator;
+      
+      # Additional dependencies often needing source build fixes
+      pydantic = noCheck pkgs.python312Packages.pydantic;
+      pydantic-core = noCheck pkgs.python312Packages.pydantic-core;
+      anyio = noCheck pkgs.python312Packages.anyio;
+      starlette = noCheck pkgs.python312Packages.starlette;
+      fastapi = noCheck pkgs.python312Packages.fastapi;
     });
   };
 
