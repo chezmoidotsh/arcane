@@ -11,17 +11,9 @@ resources:
   - n8n-main.deployment.yaml
   - n8n-worker.deployment.yaml
 
-  # Database
-  - n8n.postgresql.yaml
-  - n8n.postgresql-backup.yaml
-  - n8n.postgresql-objectstore.yaml
-
-  # Redis queue
-  - n8n.redis-statefulset.yaml
-  - n8n.redis-service.yaml
-
   # External secrets
   - n8n.externalsecret-encryption-key.yaml
+  - n8n.externalsecret-database.yaml
 
   # HTTPRoute for ingress
   - n8n.httproute.yaml
@@ -29,10 +21,17 @@ resources:
   # Security policies
   - security/
 
+helmCharts:
+  - name: valkey
+    releaseName: valkey-n8n
+    repo: https://valkey-io.github.io/valkey-helm/
+    version: 0.9.3
+    namespace: n8n
+    valuesFile: valkey.helmvalues/default.yaml
+    additionalValuesFiles:
+      - valkey.helmvalues/hardened.yaml
+
 images:
   # renovate: datasource=docker depName=ghcr.io/n8n-io/n8n
   - name: ghcr.io/n8n-io/n8n
     newTag: 2.11.0@sha256:303f1a1e41e2d58b7bd56a919cac743039e41b644771ee7af63b4e8dc78a2af3
-  # renovate: datasource=docker depName=docker.io/library/redis
-  - name: docker.io/library/redis
-    newTag: 8.6.1-alpine

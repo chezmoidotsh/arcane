@@ -1,0 +1,35 @@
+# -- Valkey Configuration for n8n
+# Configured for queue management with single-node deployment
+
+# -- Apply resource allocations for Valkey
+resources:
+  requests:
+    cpu: 10m
+    memory: "128Mi"
+  limits:
+    memory: "512Mi"
+
+# -- Enables verbose debug logs for easier troubleshooting
+valkeyLogLevel: "notice"
+
+auth:
+  # -- Disable authentication for simplicity (n8n connection is internal only)
+  enabled: false
+
+replica:
+  # -- Single node deployment
+  enabled: false
+
+master:
+  persistence:
+    # -- Enable persistence for queue data
+    enabled: true
+    size: 1Gi
+    storageClass: ""
+
+metrics:
+  # -- Extracts native Valkey metrics via redis_exporter sidecar
+  enabled: true
+  serviceMonitor:
+    # -- Automatically creates the ServiceMonitor resource for Prometheus Operator
+    enabled: true

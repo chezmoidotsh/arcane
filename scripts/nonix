@@ -164,8 +164,9 @@ EXIT_CODE=0
 docker run "${DOCKER_ARGS[@]}" nixos/nix sh -c "
     set -euo pipefail
     
-    # Remove homeless shelter issue
-    rm -rf /homeless-shelter
+    # Remove homeless shelter issue to ensure build purity in non-sandboxed Docker
+    rm -rf /homeless-shelter || true
+    export HOME=/tmp
     
     # Add tools to PATH if available
     export PATH=\"/tools/bin:\$PATH\"

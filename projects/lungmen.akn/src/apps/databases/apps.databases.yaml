@@ -8,3 +8,13 @@ spec:
     name: postgres-apps
   name: mealie
   owner: mealie
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: apps-n8n
+spec:
+  cluster:
+    name: postgres-apps
+  name: n8n
+  owner: n8n

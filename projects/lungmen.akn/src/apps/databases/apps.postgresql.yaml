@@ -25,6 +25,14 @@ spec:
         login: true
         passwordSecret:
           name: mealie-database-credentials
+      - name: n8n
+        connectionLimit: -1
+        comment: PostgreSQL role for n8n
+        ensure: present
+        inherit: true
+        login: true
+        passwordSecret:
+          name: n8n-database-credentials
   plugins:
     - enabled: true
       isWALArchiver: true
