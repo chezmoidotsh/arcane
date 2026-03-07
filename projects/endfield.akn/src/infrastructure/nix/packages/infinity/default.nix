@@ -84,6 +84,8 @@ let
       flatbuffers = pkgs.python312Packages.flatbuffers;
       onnxruntime = pkgs.python312Packages.onnxruntime;
       optimum = pkgs.python312Packages.optimum;
+      gputil = dummyPkg "gputil";
+      setuptools = pkgs.python312Packages.setuptools;
 
       # Additionally, sentence-transformers uses poetry-core, which sometimes needs to be explicit
       sentence-transformers = super.sentence-transformers.overridePythonAttrs (old: {
