@@ -19,10 +19,11 @@
 , pkgs
 , username
 , xdg
+, poetry2nix
 , ...
 }:
 let
-  infinity = import ../packages/infinity { inherit pkgs; };
+  infinity = import ../packages/infinity { inherit pkgs poetry2nix; };
 
   # HuggingFace model cache directory (XDG-compliant).
   modelsDir = "${xdg.data}/infinity/models";

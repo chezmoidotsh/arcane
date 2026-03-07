@@ -5,9 +5,13 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     darwin.url = "github:lnl7/nix-darwin";
     darwin.inputs.nixpkgs.follows = "nixpkgs";
+    poetry2nix = {
+      url = "github:nix-community/poetry2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { darwin, ... }:
+  outputs = { darwin, poetry2nix, ... }:
     let
       # Target platform (Apple Silicon).
       system = "aarch64-darwin";
@@ -63,8 +67,8 @@
       # └───────────────────────────────────────────────────────────────────────────┘
       darwinConfigurations."yvonne" = darwin.lib.darwinSystem {
         inherit system;
-        # Pass the username and XDG paths into modules for user-level path configuration.
-        specialArgs = { inherit username xdg; };
+        # Pass the username, XDG paths, and poetry2nix into modules for user-level path configuration.
+        specialArgs = { inherit username xdg poetry2nix; };
         # Service modules are separated for clarity and maintainability.
         modules = [
           ./modules/common.nix # Shared: stateVersion, primaryUser, XDG dirs, power mgmt
