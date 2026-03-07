@@ -88,6 +88,7 @@ let
       setuptools = pkgs.python312Packages.setuptools;
       huggingface-hub = pkgs.python312Packages.huggingface-hub;
       tokenizers = pkgs.python312Packages.tokenizers;
+      numpy = pkgs.python312Packages.numpy;
 
       # Additionally, sentence-transformers uses poetry-core, which sometimes needs to be explicit
       sentence-transformers = super.sentence-transformers.overridePythonAttrs (old: {
