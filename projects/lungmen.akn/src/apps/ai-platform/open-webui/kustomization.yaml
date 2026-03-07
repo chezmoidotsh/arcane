@@ -2,7 +2,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - open-terminal.deployment.yaml
   - open-webui.configuration.configmap.yaml
   - open-webui.configuration.externalsecret.yaml
   - open-webui.deployment.yaml
