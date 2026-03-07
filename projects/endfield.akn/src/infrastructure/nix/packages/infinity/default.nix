@@ -21,7 +21,7 @@ pkgs.stdenv.mkDerivation {
     export UV_CACHE_DIR=$TMPDIR/uv-cache
     export HOME=$TMPDIR
     
-    uv venv $out --python ${pkgs.python312}/bin/python3
+    ${pkgs.uv}/bin/uv venv $out --python ${pkgs.python312}/bin/python3
     
     $out/bin/python -m uv pip install \
       "infinity-emb[all]==0.0.77" \
