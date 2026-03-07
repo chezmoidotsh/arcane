@@ -13,7 +13,7 @@ pkgs.stdenv.mkDerivation {
   # Fixed-Output Derivation (FOD): allows network access during build.
   outputHashMode = "recursive";
   outputHashAlgo = "sha256";
-  outputHash = "sha256-R4r97X0FpxT3zIu1Z4r87Yv+9qf9Yq9Yq9Yq9Yq9Yq9="; # REMPLACE-MOI après le premier échec
+  outputHash = "sha256-R4r97X0FpxT3zIu1Z4r87Yv+9qf9Yq9Yq9Yq9Yq9Yq9=";
 
   unpackPhase = "true";
 
