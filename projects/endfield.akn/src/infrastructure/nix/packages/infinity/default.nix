@@ -48,6 +48,7 @@ let
     python = pkgs.python312;
     doCheck = false;    # Disable tests (we just want the backend wrapper)
     checkGroups = [];   
+    preferWheel = true; # Use binary wheels on Darwin to avoid SDK/compilation issues
 
     # We must patch the same two files since the source code still has these logic errors
     postPatch = ''
