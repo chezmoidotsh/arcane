@@ -18,15 +18,6 @@
 
 let
   infinityVersion = "0.0.77";
-
-  # The extras to install.
-  # NOTE: we intentionally omit `optimum` here.
-  #   · infinity-emb[optimum] requires optimum>=1.24.0
-  #   · But optimum 1.24 removed optimum.bettertransformer which acceleration.py imports
-  #   · This creates an irresolvable conflict: we can't satisfy both constraints
-  #   · The `optimum` code path is patched out at runtime (see post-install patch below)
-  #   · vision: enables the ColPali multi-modal (image + text) pipeline
-  infinityExtras = "vision";
 in
 pkgs.writeShellApplication {
   name = "infinity-launcher";
