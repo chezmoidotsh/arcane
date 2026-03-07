@@ -89,11 +89,14 @@ let
       huggingface-hub = pkgs.python312Packages.huggingface-hub;
       tokenizers = pkgs.python312Packages.tokenizers;
       numpy = pkgs.python312Packages.numpy;
-
-      # Additionally, sentence-transformers uses poetry-core, which sometimes needs to be explicit
-      sentence-transformers = super.sentence-transformers.overridePythonAttrs (old: {
-        nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ self.poetry-core ];
-      });
+      scipy = pkgs.python312Packages.scipy;
+      torch = pkgs.python312Packages.torch;
+      torchvision = pkgs.python312Packages.torchvision;
+      transformers = pkgs.python312Packages.transformers;
+      sentence-transformers = pkgs.python312Packages.sentence-transformers;
+      accelerate = pkgs.python312Packages.accelerate;
+      peft = pkgs.python312Packages.peft;
+      scikit-learn = pkgs.python312Packages.scikit-learn;
     });
   };
 
