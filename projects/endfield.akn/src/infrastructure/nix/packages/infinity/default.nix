@@ -71,9 +71,10 @@ let
       onnxruntime-openvino = dummyPkg "onnxruntime-openvino";
       openvino-tokenizers = dummyPkg "openvino-tokenizers";
 
-      # Use the pyarrow version from nixpkgs as it is already configured 
-      # and linked against the correct arrow-cpp library in this system.
+      # Use nixpkgs versions for packages that have complex system dependencies 
+      # (like C extensions linking to macOS SDKs or specific C++ libraries).
       pyarrow = pkgs.python312Packages.pyarrow;
+      psutil = pkgs.python312Packages.psutil;
 
       # Additionally, sentence-transformers uses poetry-core, which sometimes needs to be explicit
       sentence-transformers = super.sentence-transformers.overridePythonAttrs (old: {
