@@ -86,6 +86,9 @@ let
       substituteInPlace infinity_emb/transformer/utils_optimum.py \
         --replace-fail "from huggingface_hub import HfApi, HfFolder" "from huggingface_hub import HfApi" \
         --replace-fail "HfFolder().get_token()" "None"
+
+      substituteInPlace infinity_emb/transformer/acceleration.py \
+        --replace-fail "return config.model_type in BetterTransformerManager.MODEL_MAPPING" "return ('BetterTransformerManager' in globals()) and (config.model_type in BetterTransformerManager.MODEL_MAPPING)"
     '';
 
     propagatedBuildInputs = with pythonPkgs; [
