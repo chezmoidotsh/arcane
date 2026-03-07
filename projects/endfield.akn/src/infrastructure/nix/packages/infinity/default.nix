@@ -45,14 +45,20 @@ let
     propagatedBuildInputs = [ pkgs.python312Packages.setuptools ];
   };
 
+  # Helper to aggressively disable tests on overridden packages
+  noCheck = pkg: pkg.overridePythonAttrs (old: { 
+    doCheck = false; 
+    catchConflicts = false; # Also disable conflict checking to speed up
+    pythonImportsCheck = []; # Disable import checks which can fail if MPS is not active during build
+  });
+
   infinityApp = p2n.mkPoetryApplication {
     inherit projectDir;
     python = pkgs.python312;
-    doCheck = false;    # Disable tests (we just want the backend wrapper)
+    doCheck = false;    # Disable tests for the main app
     checkGroups = [];   
-    preferWheel = true; # Use binary wheels on Darwin to avoid SDK/compilation issues
+    preferWheel = true; 
 
-    # We must patch the same two files since the source code still has these logic errors
     postPatch = ''
       substituteInPlace infinity_emb/transformer/utils_optimum.py \
         --replace-fail "from huggingface_hub import HfApi, HfFolder" "from huggingface_hub import HfApi" \
@@ -62,10 +68,6 @@ let
         --replace-fail "return config.model_type in BetterTransformerManager.MODEL_MAPPING" "return ('BetterTransformerManager' in globals()) and (config.model_type in BetterTransformerManager.MODEL_MAPPING)" || true
     '';
 
-    # Some dependencies in poetry might fail C extensions build in Darwin
-    # or don't have macOS wheels/sources (like onnxruntime-gpu). Since we don't
-    # enable these optional features anyway, we can just stub them entirely
-    # to prevent poetry2nix from dying during evaluation.
     overrides = p2n.defaultPoetryOverrides.extend (self: super: {
       onnxruntime-gpu = dummyPkg "onnxruntime-gpu";
       tensorrt = dummyPkg "tensorrt";
