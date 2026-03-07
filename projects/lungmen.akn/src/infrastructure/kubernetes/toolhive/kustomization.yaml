@@ -9,14 +9,14 @@ helmCharts:
     releaseName: toolhive-operator-crds
     namespace: toolhive-system
     repo: oci://ghcr.io/stacklok/toolhive
-    version: 0.8.3
+    version: 0.11.1
 
   # ToolHive Operator — manages MCPServer / MCPRemoteProxy / VirtualMCPServer CRs
   - name: toolhive-operator
     releaseName: toolhive-operator
     namespace: toolhive-system
     repo: oci://ghcr.io/stacklok/toolhive
-    version: 0.8.3
+    version: 0.11.1
     valuesFile: toolhive-operator.helmvalues/default.yaml
 
 labels:
@@ -26,5 +26,5 @@ labels:
     includeSelectors: true
   - pairs:
       # renovate: datasource=helm depName=toolhive registryUrl=oci://ghcr.io/stacklok/toolhive
-      app.kubernetes.io/version: 0.8.3
+      app.kubernetes.io/version: 0.11.1
     includeTemplates: true
