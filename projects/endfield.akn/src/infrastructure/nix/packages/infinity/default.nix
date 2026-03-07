@@ -75,6 +75,7 @@ let
       # (like C extensions linking to macOS SDKs or specific C++ libraries).
       pyarrow = pkgs.python312Packages.pyarrow;
       psutil = pkgs.python312Packages.psutil;
+      orjson = pkgs.python312Packages.orjson;
 
       # Additionally, sentence-transformers uses poetry-core, which sometimes needs to be explicit
       sentence-transformers = super.sentence-transformers.overridePythonAttrs (old: {
