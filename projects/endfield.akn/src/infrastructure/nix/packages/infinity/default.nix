@@ -104,6 +104,7 @@ let
       # Force nixpkgs for these specifically broken source builds
       safetensors = pkgs.python312Packages.safetensors;
       timm = pkgs.python312Packages.timm;
+      pillow = pkgs.python312Packages.pillow;
     });
   };
 
