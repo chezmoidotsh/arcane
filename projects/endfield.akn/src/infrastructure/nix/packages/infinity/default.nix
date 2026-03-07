@@ -69,6 +69,8 @@ let
       url = "https://files.pythonhosted.org/packages/2c/cc/74d39970d8ffa992b06d7324360b62b2cf288930d5d0d6a9c5952420bd5d/infinity_emb-0.0.77-py3-none-any.whl";
       sha256 = "5dbab49d13f212179c0c2b5aa8d1230c610f051a78f56ec7e9ac37b83938ec65";
     };
+    dontBuild = true;
+    nativeBuildInputs = [ pkgs.ninja ];
     doCheck = false;
     propagatedBuildInputs = with pythonPkgs; [
       # Core
