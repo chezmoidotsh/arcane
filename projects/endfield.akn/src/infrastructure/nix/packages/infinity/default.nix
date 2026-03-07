@@ -43,7 +43,6 @@ let
     doCheck = false;
   };
 
-  # Build the application exactly as requested by the poetry lock 
   infinityApp = p2n.mkPoetryApplication {
     inherit projectDir;
     python = pkgs.python312;
