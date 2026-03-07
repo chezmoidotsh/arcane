@@ -93,7 +93,7 @@
           ./modules/kokoro.nix # Service: TTS API
           # ./modules/presidio.nix # Service: Presidio PII Detection API
           ./modules/whisper.nix # Service: Whisper-cpp Audio Transcription API
-          ./modules/infinity.nix # Service: Infinity Embedding & Reranking API
+          # ./modules/infinity.nix # Service: Infinity Embedding & Reranking API
           # Optional: point to the package explicitly if needed, but it's handled in modules/infinity.nix
           
           # Machine-specific inline config: Homebrew casks specific to yvonne's
