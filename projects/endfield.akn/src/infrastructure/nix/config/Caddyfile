@@ -1,18 +1,19 @@
 # ┌───────────────────────────────────────────────────────────────────────────┐
 # │ Caddyfile — Endfield Industries / yvonne (Mac Studio M1 Max)              │
 # │                                                                           │
-# │ Reverse proxy for the two local AI inference services exposed on          │
+# │ Reverse proxy for the local AI inference services exposed on              │
 # │ port 1234. TLS is intentionally disabled: both endpoints are LAN-only     │
 # │ and accessed over Tailscale (already encrypted at the network layer).     │
 # │                                                                           │
 # │ Vhosts:                                                                   │
-# │   studio.llm.chezmoi.sh:1234  →  LM Studio OpenAI API  (127.0.0.1:8234) │
-# │   kokoro.llm.chezmoi.sh:1234  →  Kokoro TTS REST API   (127.0.0.1:8880) │
-# │   presidio.llm.chezmoi.sh:1234 →  Presidio PII REST API (127.0.0.1:8881) │
-# │   whisper.llm.chezmoi.sh:1234  →  Whisper Transcription API (127.0.0.1:8882) │
+# │   studio.llm.chezmoi.sh:1234   →  LM Studio OpenAI API  (127.0.0.1:8234)  │
+# │   kokoro.llm.chezmoi.sh:1234   →  Kokoro TTS REST API   (127.0.0.1:8880)  │
+# │   presidio.llm.chezmoi.sh:1234 →  Presidio PII REST API (127.0.0.1:8881)  │
+# │   whisper.llm.chezmoi.sh:1234  →  Whisper Transcription (127.0.0.1:8882)  │
+# │   infinity.llm.chezmoi.sh:1234 →  Infinity Embed/Rerank (127.0.0.1:7997)  │
 # │                                                                           │
 # │ Logs:  all access logs are written to a single structured JSON file       │
-# │        at $XDG_STATE_HOME/log/caddy.access.log and rotated by newsyslog. │
+# │        at $XDG_STATE_HOME/log/caddy.access.log and rotated by newsyslog.  │
 # └───────────────────────────────────────────────────────────────────────────┘
 
 # ---------------------------------------------------------------------------
@@ -102,6 +103,24 @@ http://presidio.llm.chezmoi.sh:1234 {
 # compatible with OpenAI.
 http://whisper.llm.chezmoi.sh:1234 {
   reverse_proxy 127.0.0.1:8882 {
+    transport http {
+      response_header_timeout 15m
+      read_timeout 15m
+      write_timeout 15m
+    }
+  }
+
+  import errors.inc
+}
+
+# ---------------------------------------------------------------------------
+# Infinity — local embedding & reranking API
+# ---------------------------------------------------------------------------
+# Upstream: infinity-emb server on port 7997 (managed by nix-darwin launchd
+# agent sh.chezmoi.endfield.infinity). Serves BAAI/bge-m3 embeddings and
+# BAAI/bge-reranker-v2-m3 reranking via an OpenAI-compatible API.
+http://infinity.llm.chezmoi.sh:1234 {
+  reverse_proxy 127.0.0.1:7997 {
     transport http {
       response_header_timeout 15m
       read_timeout 15m
