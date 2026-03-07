@@ -8,27 +8,13 @@
 # │               the PyPI wheel and pull core ML deps from nixpkgs.           │
 # └───────────────────────────────────────────────────────────────────────────┘
 let
-  # Pin a stable nixpkgs (nixos-23.05) to provide a numpy 1.x implementation
-  # that satisfies the wheel's requirement `numpy<2,>=1.20.0`.
-  pinnedNixpkgs = import (builtins.fetchTarball {
-    url = "https://github.com/NixOS/nixpkgs/archive/nixos-23.05.tar.gz";
-    # Note: adjust the tarball URL if you prefer a specific commit / tag.
-  }) { system = builtins.currentSystem; };
-
   # ───────────────────────────────────────────────────────────────────────────
   # Python Environment Override
-  # Overrides default Python packages to skip broken tests on darwin and
-  # pins numpy to the version from the stable pinnedNixpkgs above.
+  # Overrides default Python packages to skip broken tests on darwin.
   # ───────────────────────────────────────────────────────────────────────────
   python = pkgs.python312.override {
     packageOverrides = final: prev:
-      let
-        # numpy pinned from the stable pinnedNixpkgs (ensures numpy<2)
-        pinned_numpy = pinnedNixpkgs.python312Packages.numpy;
-      in
       {
-        # Pin numpy to the older 1.x series provided by pinnedNixpkgs
-        numpy = pinned_numpy;
 
         spacy = prev.spacy.overridePythonAttrs (old: {
           doCheck = false;
