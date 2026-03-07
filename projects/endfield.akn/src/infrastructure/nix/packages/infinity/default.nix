@@ -53,10 +53,12 @@ pkgs.stdenv.mkDerivation rec {
     uv pip install --python "$out/bin/python" \
       "transformers==4.48.1"
 
-    # smaller runtime utilities
+    # smaller runtime utilities — pin huggingface-hub to a version that still exposes
+    # `cached_download` before installing sentence-transformers which expects it.
     uv pip install --python "$out/bin/python" \
       "typer==0.12.5" \
       "click==8.1.7" \
+      "huggingface-hub==0.13.4" \
       "sentence-transformers==2.2.2" \
       "accelerate==0.22.0"
 
