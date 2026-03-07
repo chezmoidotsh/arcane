@@ -139,10 +139,13 @@ let
       sentence-transformers = py.sentence-transformers;
       accelerate = py.accelerate;
       peft = py.peft;
-      # colpali-engine uses hatchling as build backend — must be injected explicitly
+      # colpali-engine uses hatchling as build backend — must be injected explicitly.
+      # catchConflicts = false: avoids spurious "duplicate package" errors caused by
+      #   version mismatches between poetry2nix and nixpkgs transitive deps (urllib3, charset-normalizer).
       colpali-engine = super.colpali-engine.overridePythonAttrs (old: {
         nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ self.hatchling ];
         doCheck = false;
+        catchConflicts = false;
       });
     });
   };
