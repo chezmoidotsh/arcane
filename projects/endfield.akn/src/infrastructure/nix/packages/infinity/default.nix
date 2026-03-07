@@ -73,8 +73,8 @@ src = src.replace(
     "return BetterTransformerManager is not None and config.model_type in BetterTransformerManager.MODEL_MAPPING",
 )
 f.write_text(src)
-print("  → acceleration.py patched OK")
 PATCH
+      echo "  → acceleration.py patched OK"
     fi
 
     # ── Launch ─────────────────────────────────────────────────────────────
