@@ -97,10 +97,17 @@ let
       accelerate = pkgs.python312Packages.accelerate;
       peft = pkgs.python312Packages.peft;
       scikit-learn = pkgs.python312Packages.scikit-learn;
-      safetensors = pkgs.python312Packages.safetensors;
-      timm = pkgs.python312Packages.timm;
-      maturin = pkgs.python312Packages.maturin;
-      pip = pkgs.python312Packages.pip;
+      prometheus-fastapi-instrumentator = pkgs.python312Packages.prometheus-fastapi-instrumentator;
+
+      # Fixes for source builds that poetry2nix can't handle automatically on Darwin
+      safetensors = super.safetensors.overridePythonAttrs (old: {
+        nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ self.maturin ];
+        doCheck = false;
+      });
+      timm = super.timm.overridePythonAttrs (old: {
+        nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ self.setuptools ];
+        doCheck = false;
+      });
     });
   };
 
