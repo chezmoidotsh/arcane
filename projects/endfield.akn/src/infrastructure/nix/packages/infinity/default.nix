@@ -58,7 +58,7 @@ import sys, pathlib, re
 venv = pathlib.Path(sys.argv[1])
 site_packages = venv / "lib" / "python3.12" / "site-packages"
 
-# We use double quotes for Python strings to avoid Nix syntax conflicts with ''
+# We use double quotes for Python strings to avoid Nix syntax conflicts
 def patch_acceleration():
     f = site_packages / "infinity_emb/transformer/acceleration.py"
     if not f.exists(): return
