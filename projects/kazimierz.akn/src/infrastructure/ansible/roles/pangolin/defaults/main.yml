@@ -26,7 +26,7 @@ pangolin_dashboard_url: "https://pangolin.example.com"
 # Domain configuration - REQUIRED: Must be overridden in host_vars
 # List of domains for Pangolin (cert_resolver always letsencrypt)
 pangolin_domains:
-  - "pangolin.example.com"
+    - "pangolin.example.com"
 
 # Server secret - REQUIRED: Must be overridden in host_vars
 # Minimum 8 characters, recommend 32+ with mixed types
@@ -38,6 +38,10 @@ pangolin_gerbil_base_endpoint: "pangolin.example.com"
 # Public IP for binding - REQUIRED: Must be overridden in host_vars
 # Can be auto-detected: "{{ ansible_default_ipv4.address }}"
 pangolin_public_ip: ""
+
+# CORS allowed origins - default to dashboard URL
+pangolin_cors_allowed_origins:
+    - "https://{{ pangolin_dashboard_url | regex_replace('^https?://', '') }}"
 
 # -------------------------------------------------------------------------
 # Pangolin Feature Flags
@@ -88,14 +92,14 @@ pangolin_crowdsec_docker_image: "{{ pangolin_crowdsec_docker_image_name }}:{{ pa
 
 # CrowdSec collections to install
 pangolin_crowdsec_collections:
-  - crowdsecurity/traefik
-  - crowdsecurity/appsec-virtual-patching
-  - crowdsecurity/appsec-generic-rules
-  - crowdsecurity/appsec-crs
+    - crowdsecurity/traefik
+    - crowdsecurity/appsec-virtual-patching
+    - crowdsecurity/appsec-generic-rules
+    - crowdsecurity/appsec-crs
 
 # CrowdSec parsers to install
 pangolin_crowdsec_parsers:
-  - crowdsecurity/whitelists
+    - crowdsecurity/whitelists
 
 # CrowdSec enrollment settings
 pangolin_crowdsec_enroll_instance_name: "pangolin-crowdsec"
@@ -125,8 +129,8 @@ pangolin_crowdsec_bouncer_key_file: "{{ pangolin_compose_dir }}/config/crowdsec/
 #
 # If an application list is empty or undefined, its profile won't be deployed.
 crowdsec_appsec_domains:
-  jellyfin: []
-  immich: []
+    jellyfin: []
+    immich: []
 
 # -------------------------------------------------------------------------
 # Traefik Configuration
