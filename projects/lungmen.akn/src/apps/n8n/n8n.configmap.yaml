@@ -17,6 +17,7 @@ data:
   # Security configuration
   N8N_BLOCK_ENV_ACCESS_IN_NODE: "true"
   N8N_GIT_NODE_DISABLE_BARE_REPOS: "false"
+  N8N_CORS_ALLOW_ORIGIN: https://ai.chezmoi.sh
 
   # Telemetry and diagnostics (disabled)
   N8N_DIAGNOSTICS_ENABLED: "false"
