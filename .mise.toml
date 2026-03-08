@@ -27,7 +27,7 @@ KUBECONFIG = "{{ config_root }}/.mise/kubeconfig"
 KREW_ROOT = "{{ config_root }}/.mise/krew"
 
 # -----------------------------------------------------------------------------
-# Helm Package Manager Configuration  
+# Helm Package Manager Configuration
 # -----------------------------------------------------------------------------
 # Helm is used for deploying and managing Kubernetes applications via charts
 # These paths isolate Helm data from system-wide installations
@@ -87,9 +87,10 @@ _.python.venv = { path = "{{ config_root }}/.mise/python", create = true, uv_cre
 
 helm = "3" # Kubernetes package manager for deploying applications via charts
 # NOTE: kustomize requires helm 3.x, so we pin to major version 3
-krew = "latest"    # Kubectl plugin manager for extending functionality
-ksops = "latest"   # KSOPS plugin for Kustomize to handle SOPS-encrypted secrets
-kubectl = "latest" # Kubernetes CLI for managing clusters and resources
+krew = "latest"      # Kubectl plugin manager for extending functionality
+ksops = "latest"     # KSOPS plugin for Kustomize to handle SOPS-encrypted secrets
+kubectl = "latest"   # Kubernetes CLI for managing clusters and resources
+kustomize = "latest" # Kubernetes configuration management tool for customizing manifests
 
 # -----------------------------------------------------------------------------
 # Infrastructure Management Tools
@@ -118,8 +119,8 @@ yq = "latest"   # YAML/JSON processor for configuration file manipulation
 "npm:ulid-cli" = "latest"        # ULID generator for unique identifiers in distributed systems
 "ubi:runmedev/runme" = "latest"  # Interactive markdown execution tool for runbooks and documentation
 gum = "latest"                   # Terminal UI framework for interactive scripts and prompts
+trunk = "latest"                 # Metalinter and formatter for all
 uv = "latest"                    # Extremely fast Python package and project manager
-kustomize = "latest"
 
 [tasks."ansible:install"]
 description = "Install Ansible and dependencies"
