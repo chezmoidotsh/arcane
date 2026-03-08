@@ -1,0 +1,172 @@
+# .editorconfig — Best-practice defaults for the Arcane repository
+# Conventions and rationale (short):
+# - Use UTF-8 for portability across tools and platforms.
+# - Use LF line endings in the repository (consistent on macOS, Linux, CI).
+# - Use spaces for indentation with an indent size of 2 (requested).
+# - Use real tabs only where required (Makefile recipe lines).
+# - Ensure a final newline and trim trailing whitespace by default
+#   (disabled for filetypes where trailing whitespace is meaningful, e.g. Markdown).
+# - Some editors support extra properties (e.g. "max_line_length"); these are
+#   non-standard hints that can help IDEs/formatters.
+# Notes on EditorConfig behavior:
+# - Editors that implement the EditorConfig spec will honor these rules.
+# - Comments start with '#' or ';'. Settings follow INI-like sections.
+# - "tab_width" controls tab visual width in many editors.
+# For editor-specific overrides, add additional .editorconfig files in
+# subdirectories or configure your editor/IDE settings separately.
+root = true
+
+# -----------------------------------------------------------------------------
+# Default for all text files
+# -----------------------------------------------------------------------------
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+tab_width = 2
+# Non-standard hint used by some editors and linters
+max_line_length = 100
+
+# -----------------------------------------------------------------------------
+# Markdown / plain text
+# - Preserve trailing whitespace in Markdown (used for hard line breaks)
+# - Use 2-space indentation for code blocks and lists
+# -----------------------------------------------------------------------------
+[*.md]
+trim_trailing_whitespace = false
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+max_line_length = 80
+
+[*.txt]
+trim_trailing_whitespace = false
+insert_final_newline = true
+
+# -----------------------------------------------------------------------------
+# YAML (CI, k8s manifests, GitHub workflows) — be careful with indentation
+# Explanation: this repository prefers readable YAML with optional blank lines
+# immediately above comment lines to separate logical blocks. EditorConfig cannot
+# directly mandate blank-line preservation, but we avoid trimming trailing
+# whitespace for YAML files so editors do not remove blank lines or comment
+# separators. If a YAML formatter collapses blank lines, configure that formatter
+# (e.g. yamllint, prettier) to preserve blank lines before comments.
+# -----------------------------------------------------------------------------
+[*.yml]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = false
+insert_final_newline = true
+
+[*.yaml]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = false
+insert_final_newline = true
+
+# -----------------------------------------------------------------------------
+# JSON — common convention: 2-space indentation
+# -----------------------------------------------------------------------------
+[*.json]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = false
+insert_final_newline = true
+
+# -----------------------------------------------------------------------------
+# JavaScript / TypeScript / JSX / TSX
+# Use spaces (2) — aligns with many Prettier configurations
+# -----------------------------------------------------------------------------
+[*.{js,jsx,ts,tsx}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# -----------------------------------------------------------------------------
+# Shell scripts
+# -----------------------------------------------------------------------------
+[*.sh]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# -----------------------------------------------------------------------------
+# Makefiles require real TAB characters for recipe lines.
+# Editors should still visually render tabs with a width of 2.
+# -----------------------------------------------------------------------------
+[Makefile]
+indent_style = tab
+tab_width = 2
+trim_trailing_whitespace = false
+insert_final_newline = true
+
+# -----------------------------------------------------------------------------
+# Dockerfiles
+# -----------------------------------------------------------------------------
+[Dockerfile]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[Dockerfile.*]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# -----------------------------------------------------------------------------
+# Go: gofmt will normalize formatting, but provide editor hints
+# -----------------------------------------------------------------------------
+[*.go]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# -----------------------------------------------------------------------------
+# Python: many projects prefer 4 spaces; this repo uses 2 by request.
+# If you need Python-specific 4-space rules, override this section.
+# -----------------------------------------------------------------------------
+[*.py]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# -----------------------------------------------------------------------------
+# HTML / XML / CSS / SCSS — 2-space indentation
+# -----------------------------------------------------------------------------
+[*.{html,xml,css,scss}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# -----------------------------------------------------------------------------
+# SQL — 2-space soft tabs
+# -----------------------------------------------------------------------------
+[*.sql]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# -----------------------------------------------------------------------------
+# Lockfiles, binaries, images, compressed files: do not trim trailing whitespace
+# and avoid enforcing final newline for binary content
+# -----------------------------------------------------------------------------
+[*.lock]
+trim_trailing_whitespace = false
+
+[*.sqlite]
+trim_trailing_whitespace = false
+
+[*.{png,jpg,jpeg,gif,webp,ico,zip,tar.gz,exe,dll}]
+trim_trailing_whitespace = false
+insert_final_newline = false
