@@ -57,7 +57,7 @@ http:
           crowdsecLapiScheme: http # CrowdSec API scheme
           crowdsecMode: live # CrowdSec mode
           defaultDecisionSeconds: 15 # Default decision seconds
-          enabled: true # Enable CrowdSec plugin
+          enabled: false # Enable CrowdSec plugin - DISABLED FOR NOW, NEED MORE FINE-TUNING TO AVOID FALSE POSITIVES
           forwardedHeadersTrustedIPs: # Forwarded headers trusted IPs
             - "0.0.0.0/0" # All IP addresses are trusted for forwarded headers (CHANGE MADE HERE)
           httpTimeoutSeconds: 10 # HTTP timeout
