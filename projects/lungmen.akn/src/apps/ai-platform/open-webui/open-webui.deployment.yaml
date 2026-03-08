@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/component: open-webui
     app.kubernetes.io/instance: open-webui
     app.kubernetes.io/name: open-webui
-    app.kubernetes.io/version: 0.8.8
+    app.kubernetes.io/version: 0.8.9
 spec:
   replicas: 1
   revisionHistoryLimit: 10
@@ -20,7 +20,7 @@ spec:
         app.kubernetes.io/component: open-webui
         app.kubernetes.io/instance: open-webui
         app.kubernetes.io/name: open-webui
-        app.kubernetes.io/version: 0.8.8
+        app.kubernetes.io/version: 0.8.9
     spec:
       automountServiceAccountToken: false
       enableServiceLinks: false
@@ -87,14 +87,14 @@ metadata:
     app.kubernetes.io/name: open-webui
     app.kubernetes.io/component: open-webui
     app.kubernetes.io/instance: open-webui
-    app.kubernetes.io/version: 0.8.8
+    app.kubernetes.io/version: 0.8.9
 spec:
   type: ClusterIP
   selector:
     app.kubernetes.io/name: open-webui
     app.kubernetes.io/component: open-webui
     app.kubernetes.io/instance: open-webui
-    app.kubernetes.io/version: 0.8.8
+    app.kubernetes.io/version: 0.8.9
   ports:
     - name: http
       port: 80
