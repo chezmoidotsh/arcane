@@ -10,7 +10,7 @@ spec:
       value: Infrastructure / Registry
     - name: Version
       # renovate: datasource=helm depName=zot registryUrl=http://zotregistry.dev/helm-charts
-      value: "0.1.98"
+      value: "0.1.100"
     # -- Documentation & Resources
     - name: Documentation
       value: https://zotregistry.dev/
