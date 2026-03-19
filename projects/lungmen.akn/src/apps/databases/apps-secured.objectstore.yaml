@@ -2,12 +2,12 @@
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
-  name: apps-selfhosted
+  name: apps-secured-selfhosted
 spec:
   configuration:
     data:
       compression: bzip2
-    destinationPath: s3://cnpg-backups/lungmen.akn/postgres-apps
+    destinationPath: s3://cnpg-backups/lungmen.akn/postgres-apps-secured
     endpointURL: https://s3.chezmoi.sh:9000
     s3Credentials:
       accessKeyId:
@@ -27,17 +27,4 @@ spec:
         value: when_required
       - name: AWS_RESPONSE_CHECKSUM_VALIDATION
         value: when_required
-  retentionPolicy: 7d
----
-apiVersion: external-secrets.io/v1
-kind: ExternalSecret
-metadata:
-  name: cnpg-backup-credentials
-spec:
-  dataFrom:
-    - extract:
-        key: lungmen.akn/cloudnative-pg/backup/s3-credentials
-  refreshInterval: 5m
-  secretStoreRef:
-    kind: ClusterSecretStore
-    name: vault.chezmoi.sh
+  retentionPolicy: 30d

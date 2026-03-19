@@ -1,0 +1,17 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: databases
+
+helmCharts:
+  - name: qdrant
+    releaseName: qdrant
+    repo: https://qdrant.to/helm
+    version: 1.17.0
+    valuesFile: qdrant.helmvalues.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: qdrant
+    includeTemplates: true
+    includeSelectors: true

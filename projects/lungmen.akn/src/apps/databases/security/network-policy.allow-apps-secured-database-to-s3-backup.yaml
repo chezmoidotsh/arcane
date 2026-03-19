@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the secured PostgreSQL cluster (postgres-apps-secured) to connect to
+      S3-compatible storage for backups via CloudNative-PG.
+  name: allow-apps-secured-database-to-s3-backup
+  namespace: databases
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: postgres-apps-secured
+  egress:
+    - toFQDNs:
+        - matchName: s3.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP

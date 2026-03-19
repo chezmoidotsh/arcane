@@ -4,5 +4,15 @@ kind: Kustomization
 namespace: databases
 
 resources:
-  - network-policy.allow-mealie.yaml
-  - network-policy.allow-postgres-to-s3-backup.yaml
+  - network-policy.default-hardened.yaml
+  - network-policy.allow-apps-database-from-mealie.yaml
+  - network-policy.allow-apps-secured-database-from-open-webui.yaml
+  - network-policy.allow-apps-database-to-s3-backup.yaml
+  - network-policy.allow-apps-secured-database-to-s3-backup.yaml
+  - network-policy.allow-apps-database-to-kubernetes-api.yaml
+  - network-policy.allow-apps-secured-database-to-kubernetes-api.yaml
+  - network-policy.allow-apps-database-from-cnpg.yaml
+  - network-policy.allow-apps-secured-database-from-cnpg.yaml
+  - network-policy.allow-apps-secured-database-from-litellm.yaml
+  - network-policy.allow-apps-database-from-n8n.yaml
+  - network-policy.allow-qdrant-from-n8n.yaml

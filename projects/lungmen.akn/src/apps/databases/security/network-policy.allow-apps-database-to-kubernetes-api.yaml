@@ -1,0 +1,16 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the mutualized PostgreSQL cluster (postgres-apps) to connect to
+      the Kubernetes API server. Required for CloudNative-PG operator integration.
+  name: allow-apps-database-to-kubernetes-api
+  namespace: databases
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: postgres-apps
+  egress:
+    - toEntities:
+        - kube-apiserver
