@@ -106,6 +106,7 @@ lint:
       extra_packages:
         - remark-preset-lint-consistent
         - remark-preset-lint-recommended
+        - remark-frontmatter
         - remark-lint-list-item-indent
         - vfile-reporter-json
         - remark-gfm
