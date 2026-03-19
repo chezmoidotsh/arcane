@@ -1,0 +1,13 @@
+---
+# Default values for Qdrant Helm Chart integration
+# See the full list of values at https://github.com/qdrant/qdrant-helm/blob/main/charts/qdrant/values.yaml
+
+replicaCount: 1
+
+persistence:
+  size: 10Gi
+  accessModes: ["ReadWriteOnce"]
+
+config:
+  cluster:
+    enabled: false

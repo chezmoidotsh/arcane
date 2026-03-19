@@ -25,12 +25,20 @@ spec:
         login: true
         passwordSecret:
           name: mealie-database-credentials
+      - name: n8n
+        connectionLimit: -1
+        comment: PostgreSQL role for n8n
+        ensure: present
+        inherit: true
+        login: true
+        passwordSecret:
+          name: n8n-database-credentials
   plugins:
     - enabled: true
       isWALArchiver: true
       name: barman-cloud.cloudnative-pg.io
       parameters:
-        barmanObjectName: selfhosted
+        barmanObjectName: apps-selfhosted
         serverName: 01KFGCWDPHB0NSBSVZSPJH43XC # 2026-01-21T13:46:09.489Z
   postgresql:
     parameters:
