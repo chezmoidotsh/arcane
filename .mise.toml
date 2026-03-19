@@ -119,6 +119,7 @@ yq = "latest"   # YAML/JSON processor for configuration file manipulation
 "npm:ulid-cli" = "latest"        # ULID generator for unique identifiers in distributed systems
 "ubi:runmedev/runme" = "latest"  # Interactive markdown execution tool for runbooks and documentation
 gum = "latest"                   # Terminal UI framework for interactive scripts and prompts
+node = "24.14.0"                 # JavaScript runtime for running Node-based tools and scripts
 trunk = "latest"                 # Metalinter and formatter for all
 uv = "latest"                    # Extremely fast Python package and project manager
 
