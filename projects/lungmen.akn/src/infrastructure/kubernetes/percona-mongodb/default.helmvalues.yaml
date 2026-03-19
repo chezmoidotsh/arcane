@@ -1,0 +1,7 @@
+---
+# Percona Operator for MongoDB configuration
+# See: https://github.com/percona/percona-helm-charts/tree/main/charts/psmdb-operator
+
+# Allow the operator to watch and manage PerconaServerMongoDB clusters
+# in all namespaces (e.g., open-webui) rather than only its own namespace.
+watchAllNamespaces: true
