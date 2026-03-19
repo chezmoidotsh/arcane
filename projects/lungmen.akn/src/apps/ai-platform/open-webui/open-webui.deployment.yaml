@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open-webui
+  labels:
+    app.kubernetes.io/component: open-webui
+    app.kubernetes.io/instance: open-webui
+    app.kubernetes.io/name: open-webui
+    app.kubernetes.io/version: 0.8.9
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: open-webui
+      app.kubernetes.io/instance: open-webui
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: open-webui
+        app.kubernetes.io/instance: open-webui
+        app.kubernetes.io/name: open-webui
+        app.kubernetes.io/version: 0.8.9
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      initContainers:
+        - name: copy-app-data
+          image: ghcr.io/open-webui/open-webui
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - cp -R -n /app/backend/data/* /tmp/app-data/
+          volumeMounts:
+            - name: data
+              mountPath: /tmp/app-data
+      containers:
+        - name: open-webui
+          image: ghcr.io/open-webui/open-webui
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          tty: true
+          envFrom:
+            # Load all configuration from ConfigMap
+            - configMapRef:
+                name: open-webui-config
+            # Load all secrets from consolidated ExternalSecret
+            - secretRef:
+                name: open-webui-secrets
+          resources:
+            requests:
+              cpu: 10m
+              memory: 1.5Gi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 1
+          readinessProbe:
+            httpGet:
+              path: /health/db
+              port: http
+            failureThreshold: 1
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            failureThreshold: 20
+          volumeMounts:
+            - name: data
+              mountPath: /app/backend/data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open-webui
+  labels:
+    app.kubernetes.io/name: open-webui
+    app.kubernetes.io/component: open-webui
+    app.kubernetes.io/instance: open-webui
+    app.kubernetes.io/version: 0.8.9
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: open-webui
+    app.kubernetes.io/component: open-webui
+    app.kubernetes.io/instance: open-webui
+    app.kubernetes.io/version: 0.8.9
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

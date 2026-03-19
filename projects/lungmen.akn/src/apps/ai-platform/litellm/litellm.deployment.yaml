@@ -1,0 +1,142 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  labels:
+    app.kubernetes.io/component: proxy
+    app.kubernetes.io/instance: litellm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: proxy
+      app.kubernetes.io/instance: litellm
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: proxy
+        app.kubernetes.io/instance: litellm
+    spec:
+      terminationGracePeriodSeconds: 90
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 48372
+        runAsGroup: 48372
+        fsGroup: 48372
+
+      containers:
+        - name: litellm
+          image: ghcr.io/berriai/litellm-non_root
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: HOST
+              value: "0.0.0.0"
+            - name: PORT
+              value: "4000"
+            # Set HOME to writable volume (npm, prisma, etc. use $HOME)
+            - name: HOME
+              value: "/app/var/litellm"
+            # Read-only filesystem support
+            - name: LITELLM_NON_ROOT
+              value: "true"
+            - name: LITELLM_UI_PATH
+              value: "/app/var/litellm/ui"
+            - name: LITELLM_ASSETS_PATH
+              value: "/app/var/litellm/assets"
+            - name: LITELLM_MIGRATION_DIR
+              value: "/app/var/litellm/migrations"
+            - name: PRISMA_BINARY_CACHE_DIR
+              value: "/app/var/litellm/cache/prisma-python/binaries"
+            - name: XDG_CACHE_HOME
+              value: "/app/var/litellm/cache"
+          envFrom:
+            - configMapRef:
+                name: litellm-config
+            - secretRef:
+                name: litellm-credentials
+          args:
+            - "--config"
+            - "/etc/litellm/config.yaml"
+          ports:
+            - name: http
+              containerPort: 4000
+              protocol: TCP
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "10m"
+          livenessProbe:
+            httpGet:
+              path: /health/liveliness
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health/readiness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 60
+          volumeMounts:
+            - name: litellm-config
+              mountPath: /etc/litellm/config.yaml
+              subPath: config.yaml
+              readOnly: true
+            - name: ephemeral
+              mountPath: /app/var/litellm
+            - name: tmp
+              mountPath: /tmp
+
+      volumes:
+        - name: litellm-config
+          configMap:
+            name: litellm-proxy-config
+            items:
+              - key: config.yaml
+                path: config.yaml
+        - name: ephemeral
+          emptyDir:
+            sizeLimit: 500Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 100Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm
+  labels:
+    app.kubernetes.io/component: proxy
+    app.kubernetes.io/instance: litellm
+  annotations:
+    link.argocd.argoproj.io/external-link: https://llm.chezmoi.sh
+spec:
+  selector:
+    app.kubernetes.io/component: proxy
+    app.kubernetes.io/instance: litellm
+  ports:
+    - protocol: TCP
+      port: 4000
+      targetPort: http

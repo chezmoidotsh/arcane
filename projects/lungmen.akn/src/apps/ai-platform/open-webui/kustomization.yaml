@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - open-webui.configuration.configmap.yaml
+  - open-webui.configuration.externalsecret.yaml
+  - open-webui.deployment.yaml
+  - open-webui.httproute.yaml
+  - open-webui.ingress.yaml
+  - open-webui.storage.yaml
+  - pipelines.deployment.yaml
+  - tika.deployment.yaml
+
+images:
+  # renovate: datasource=docker depName=ghcr.io/open-webui/open-webui
+  - name: ghcr.io/open-webui/open-webui
+    newTag: v0.8.9@sha256:4320d38874dd6f43fc865209b1d5b1fae903055a7fa56de8c2493bf836f7920a
+  # renovate: datasource=docker depName=ghcr.io/open-webui/pipelines
+  - name: ghcr.io/open-webui/pipelines
+    newTag: main@sha256:b48e9bc338ce2be0acfbeff01810db72408a12f07739f9e3879c1f2b00952d6e
+  # renovate: datasource=docker depName=apache/tika
+  - name: apache/tika
+    newTag: 3.2.3.0-full@sha256:21d8052de04e491ccf66e8680ade4da6f3d453a56d59f740b4167e54167219b7
+
+  # renovate: datasource=docker depName=ghcr.io/open-webui/open-terminal
+  - name: ghcr.io/open-webui/open-terminal
+    newTag: latest

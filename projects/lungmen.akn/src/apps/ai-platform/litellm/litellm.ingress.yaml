@@ -1,0 +1,17 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    tailscale.com/proxy-class: restricted
+  name: llm
+spec:
+  defaultBackend:
+    service:
+      name: litellm
+      port:
+        number: 4000
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - llm

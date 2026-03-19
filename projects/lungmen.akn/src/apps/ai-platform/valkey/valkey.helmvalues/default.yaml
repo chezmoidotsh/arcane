@@ -1,0 +1,32 @@
+# -- Valkey Configuration for AI Platform Services
+# Configured for high availability, security, and observability.
+
+# -- Apply resource allocations for Valkey
+resources:
+  requests:
+    cpu: 10m
+    memory: "256Mi"
+  limits:
+    memory: "512Mi"
+
+# -- Enables verbose debug logs for easier troubleshooting
+valkeyLogLevel: "debug"
+
+auth:
+  enabled: false
+
+replica:
+  # -- Enables High Availability (HA) replication
+  enabled: true
+  replicas: 1
+  # -- Safe write safety for single-replica setup
+  minReplicasToWrite: 0
+  persistence:
+    size: 250Mi
+
+metrics:
+  # -- Extracts native Valkey metrics via redis_exporter sidecar
+  enabled: true
+  serviceMonitor:
+    # -- Automatically creates the ServiceMonitor resource for Prometheus Operator
+    enabled: true
