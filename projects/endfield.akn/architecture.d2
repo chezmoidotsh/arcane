@@ -1,0 +1,188 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@../../docs/assets/d2/architecture-styles.d2
+
+explanation: |md
+  # Endfield Industries Architecture
+
+  This document describes the architecture \
+  of the Endfield Industries platform in a visual way \
+  with all the components and how they \
+  interact with each other.
+
+  Endfield Industries focuses purely on raw \
+  local AI inference (LLMs, TTS, STT) hosted \
+  bare-metal like Yvonne (Mac Studio), delegating \
+  higher-level AI Platform abstractions to \
+  the lungmen.akn Kubernetes cluster.
+| {
+  near: top-left
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   These objects represent resources external to the endfield.akn platform  │
+# │   but which interact with or are used by it.                               │
+# │   They include networks, hardware, or third-party services                 │
+# │   essential for the proper functioning, connectivity, security,            │
+# │   or management of the platform.                                           │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Networks
+
+internet: {class: network}
+localnet: {class: network}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# External Clusters
+
+lungmen·akn: {
+  class: [application]
+  label: lungmen.akn
+  icon: ../lungmen.akn/assets/logo.light.svg
+  tooltip: Home applications cluster hosting the higher-level AI Platform
+
+  ai-platform: {
+    class: [namespace]
+    label: AI Platform Stack
+
+    LiteLLM: {
+      class: [application]
+      icon: assets/icons/apps/litellm.svg
+      link: https://github.com/BerriAI/litellm
+      tooltip: LiteLLM proxy — aggregates local and remote LLM providers behind a single OpenAI-compatible API.
+    }
+
+    OpenWebUI: {
+      class: [application]
+      icon: assets/icons/apps/open-webui.svg
+      link: https://github.com/open-webui/open-webui
+      tooltip: Extensible, feature-rich, and user-friendly self-hosted WebUI for LLMs.
+    }
+
+    MCPs: {
+      class: [applications]
+      label: MCP Servers
+      icon: assets/icons/apps/mcp.svg
+      tooltip: MCP servers — virtual MCPs running on Kubernetes.
+    }
+
+    Firecrawl: {
+      class: [application]
+      icon: assets/icons/apps/firecrawl.svg
+      link: https://github.com/mendableai/firecrawl
+      tooltip: Web scraping and crawling API optimized for LLMs.
+    }
+
+    Valkey: {
+      class: [application-datastore]
+      icon: assets/icons/apps/valkey.svg
+      link: https://valkey.io/
+      tooltip: Valkey cache (drop-in Redis) for messaging queues and rapid data access.
+    }
+
+    ToolHive: {
+      class: [application]
+      icon: assets/icons/apps/toolhive.svg
+      link: https://github.com/stacklok/toolhive
+      tooltip: Kubernetes operator for managing AI capabilities, tools and Virtual MCP servers.
+    }
+  }
+
+  databases: {
+    class: [namespace]
+    label: Shared Databases
+
+    PostgreSQL: {
+      class: [application-datastore]
+      icon: assets/icons/system/cloudnativepg.svg
+      link: https://www.postgresql.org/
+      tooltip: PostgreSQL with pgvector extension for vector similarity search and storing AI embeddings.
+    }
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                         Endfield Industries Platform                       │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   This namespace contains the core inference engines running bare-metal    │
+# │   on Yvonne, the Mac Studio dedicated to AI tasks.                         │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+endfield·akn: {
+  icon: assets/logo.light.svg
+  style.fill-pattern: none
+
+  yvonne: {
+    label: 💻 Yvonne (Mac Studio M1 Max — 32 GB)
+    style.fill-pattern: none
+
+    engines: {class: [namespace]}
+
+    # 🤖 Local Inference Engines
+    engines.LMStudio: {
+      class: [application]
+      icon: assets/icons/apps/lmstudio.png
+      link: https://lmstudio.ai/
+      tooltip: LM Studio — local LLM inference server running on Apple Silicon's GPU and Neural Engine.
+    }
+
+    engines.Kokoro: {
+      class: [application]
+      icon: assets/icons/apps/kokoro.svg
+      link: https://github.com/remsky/Kokoro-FastAPI
+      tooltip: Kokoro FastAPI — fast, local text-to-speech synthesis API.
+    }
+
+    engines.Caddy: {
+      class: [application]
+      icon: assets/icons/apps/caddy.svg
+      link: https://caddyserver.com/
+      tooltip: Caddy — reverse proxy exposing LM Studio and Kokoro securely on the network.
+    }
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   This section describes the connections between the AI engines on Yvonne  │
+# │   and the AI Platform residing on lungmen.akn.                             │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Intra-Platform Connections (Yvonne)
+
+endfield·akn.yvonne.engines.Caddy -> endfield·akn.yvonne.engines.LMStudio: {source-arrowhead: HTTP (8234)}
+endfield·akn.yvonne.engines.Caddy -> endfield·akn.yvonne.engines.Kokoro: {source-arrowhead: HTTP (8880)}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# External Connections
+
+localnet -> lungmen·akn.ai-platform.OpenWebUI: {
+  source-arrowhead: |md
+    HTTP (80)
+    HTTPS (443)
+  |
+}
+
+lungmen·akn.ai-platform.Firecrawl -> lungmen·akn.ai-platform.Valkey: "Queue operations (6379)"
+lungmen·akn.ai-platform.Firecrawl -> internet: "Web scraping (443)"
+lungmen·akn.ai-platform.LiteLLM -> endfield·akn.yvonne.engines.Caddy: "OpenAI API interface (8234)"
+lungmen·akn.ai-platform.LiteLLM -> internet: "External LLM API (443)"
+lungmen·akn.ai-platform.OpenWebUI -> lungmen·akn.ai-platform.Firecrawl: "Requires Web searching/scraping (???)"
+lungmen·akn.ai-platform.OpenWebUI -> lungmen·akn.ai-platform.LiteLLM: "OpenAI API interface (???)"
+lungmen·akn.ai-platform.OpenWebUI -> lungmen·akn.ai-platform.MCPs: "MCP interfaction"
+lungmen·akn.ai-platform.OpenWebUI -> lungmen·akn.ai-platform.Valkey: "Queue operations (6379)"
+lungmen·akn.ai-platform.OpenWebUI -> lungmen·akn.databases.PostgreSQL: "Database operations (5432)"
+lungmen·akn.ai-platform.ToolHive -> lungmen·akn.ai-platform.MCPs: "manages"

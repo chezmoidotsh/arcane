@@ -1,0 +1,17 @@
+# =============================================================================
+# endfield.akn — Mise Configuration
+# =============================================================================
+# Project-specific mise configuration for the endfield.akn AI platform.
+# Combines nix-darwin local inference (yvonne) and a Kubernetes AI stack.
+#
+# Services: LM Studio, Kokoro, Caddy (nix-darwin) + OpenWebUI, LiteLLM (k8s)
+# Architecture: nix-darwin (yvonne) + Talos Linux + ArgoCD
+# =============================================================================
+
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram for endfield.akn"
+# Converts the D2 diagram source to SVG format for documentation
+# Input: architecture.d2 (diagram-as-code source)
+# Output: assets/architecture.svg (embedded in cluster documentation)
+run = "d2 architecture.d2 assets/architecture.svg"
+dir = "{{ config_root }}"
