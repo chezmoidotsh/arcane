@@ -26,6 +26,7 @@ machine:
       featureGates:
         UserNamespacesSupport: true
         UserNamespacesPodSecurityStandards: true
+        ImageVolume: true
   sysctls:
     user.max_user_namespaces: "11255"
 
@@ -54,7 +55,7 @@ cluster:
   # -- Custom configuration (enable user namespaces)
   apiServer:
     extraArgs:
-      feature-gates: UserNamespacesSupport=true,UserNamespacesPodSecurityStandards=true
+      feature-gates: UserNamespacesSupport=true,UserNamespacesPodSecurityStandards=true,ImageVolume=true
 
   # -- Install extra components
   extraManifests:
