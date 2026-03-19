@@ -26,9 +26,9 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        runAsUser: 25678
-        runAsGroup: 25678
-        fsGroup: 25678
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -52,12 +52,12 @@ spec:
             - name: DB_POSTGRESDB_USER
               valueFrom:
                 secretKeyRef:
-                  name: n8n-database-n8n
+                  name: n8n-database-credentials
                   key: username
             - name: DB_POSTGRESDB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: n8n-database-n8n
+                  name: n8n-database-credentials
                   key: password
             # Encryption key from secret
             - name: N8N_ENCRYPTION_KEY
@@ -91,8 +91,8 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
-            runAsUser: 25678
-            runAsGroup: 25678
+            runAsUser: 1000
+            runAsGroup: 1000
             readOnlyRootFilesystem: true
             capabilities:
               drop:
