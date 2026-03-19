@@ -1,13 +1,49 @@
-<!--
+---
 status: "implemented"
-date: 2025-01-13
-implemented: 2025-11-15
+date: 2025-10-31
+implementation-completed: 2025-11-15
 decision-makers: ["Alexandre"]
 consulted: ["ai/claude-4.5-sonnet"]
 informed: []
--->
+---
 
 # `kazimierz`.AKN: Ansible + Docker Compose over Kubernetes
+
+## Table of Contents
+
+* [Context and Problem Statement](#context-and-problem-statement)
+* [Decision Drivers](#decision-drivers)
+  * [Functional Requirements](#functional-requirements)
+  * [Non-Functional Requirements](#non-functional-requirements)
+  * [Constraints](#constraints)
+* [Considered Options](#considered-options)
+  * [Option 1: Full Kubernetes Stack (Initial Attempts)](#option-1-full-kubernetes-stack-initial-attempts)
+    * [Technology Stack](#technology-stack)
+  * [Option 2: Ansible + Docker Compose](#option-2-ansible--docker-compose)
+    * [Technology Stack (Ansible)](#technology-stack-ansible)
+* [Decision Outcome](#decision-outcome)
+  * [Rationale](#rationale)
+    * [1. Pangolin Architecture Alignment](#1-pangolin-architecture-alignment)
+    * [2. Gerbil Network Requirements](#2-gerbil-network-requirements)
+    * [3. No Component Reusability](#3-no-component-reusability)
+    * [4. Standalone ArgoCD Resource Waste](#4-standalone-argocd-resource-waste)
+    * [5. Operational Context Mismatch](#5-operational-context-mismatch)
+* [Consequences \[Optional\]](#consequences-optional)
+  * [Positive](#positive)
+  * [Negative](#negative)
+  * [Neutral](#neutral)
+* [Implementation Details / Status \[Optional\]](#implementation-details--status-optional)
+  * [Configuration Management Tool Selection](#configuration-management-tool-selection)
+  * [GitOps Automation Model](#gitops-automation-model)
+  * [Deployment Components](#deployment-components)
+  * [Risks and Mitigations](#risks-and-mitigations)
+* [Decision Evolution \[Optional\]](#decision-evolution-optional)
+  * [Implementation Challenges Encountered (8 major iterations)](#implementation-challenges-encountered-8-major-iterations)
+  * [Lessons Learned](#lessons-learned)
+    * [When Kubernetes Makes Sense](#when-kubernetes-makes-sense)
+    * [When Docker Compose + Ansible Makes Sense](#when-docker-compose--ansible-makes-sense)
+* [References and Related Decisions \[Optional\]](#references-and-related-decisions-optional)
+* [Changelog](#changelog)
 
 ## Context and Problem Statement
 
@@ -55,104 +91,88 @@ Deploy Pangolin on Kubernetes using industry-standard orchestration patterns con
 #### Technology Stack
 
 * **Kubernetes Distribution**: K3s (lightweight) or Talos Linux (immutable OS)
+
 * **GitOps Controller**: FluxCD or ArgoCD for declarative deployments
+
 * **Database**: CloudNative-PG (CNPG) operator for PostgreSQL
+
 * **Certificate Management**: cert-manager with Let's Encrypt integration
+
 * **Networking**: Kubernetes Services with hostNetwork privileges for Gerbil
+
 * **Application Deployment**: Custom Kubernetes manifests or Helm charts for Pangolin
 
-#### Implementation Approach (Kubernetes)
+* `+` **Architectural Consistency**: Same deployment patterns as `amiya` and `lungmen` clusters
 
-* Convert Pangolin's Docker Compose configuration to Kubernetes manifests
-* Deploy standalone ArgoCD or FluxCD for GitOps automation
-* Configure Gerbil with `hostNetwork: true` and privileged container privileges
-* Implement Kubernetes network policies for security isolation
+* `+` **Kubernetes Tooling**: Native kubectl, Helm, Kustomize workflow
 
-#### Pros
+* `+` **Resource Management**: Kubernetes scheduler for resource allocation and limits
 
-* ✅ **Architectural Consistency**: Same deployment patterns as `amiya` and `lungmen` clusters
-* ✅ **Kubernetes Tooling**: Native kubectl, Helm, Kustomize workflow
-* ✅ **Resource Management**: Kubernetes scheduler for resource allocation and limits
-* ✅ **Health Monitoring**: Built-in liveness and readiness probes
-* ✅ **GitOps Native**: ArgoCD or FluxCD for declarative infrastructure
-* ✅ **Standardized Debugging**: Kubernetes-native troubleshooting tools
+* `+` **Health Monitoring**: Built-in liveness and readiness probes
 
-#### Cons
+* `+` **GitOps Native**: ArgoCD or FluxCD for declarative infrastructure
 
-* ❌ **Resource Overhead**: Kubernetes control plane consumes \~1GB RAM (25% of VPS capacity) and \~700MB RAM for ArgoCD managing single application
-* ❌ **Upstream Deviation**: Pangolin lacks official Kubernetes deployment (no Helm chart)
-* ❌ **Network Abstraction Bypass**: Gerbil requires `hostNetwork: true`, defeating Kubernetes networking benefits
-* ❌ **OS Inconsistency**: Ubuntu on `kazimierz` vs Talos Linux on other clusters
-* ❌ **Zero Component Reuse**: No shared infrastructure components with other clusters
-* ❌ **Maintenance Burden**: Custom manifests diverge from upstream Pangolin updates
-* ❌ **Complexity Overhead**: Multiple layers (K8s + Docker + Compose) for single-app deployment
+* `+` **Standardized Debugging**: Kubernetes-native troubleshooting tools
 
-#### Implementation Challenges Encountered (8 major iterations)
+* `-` **Resource Overhead**: Kubernetes control plane consumes \~1GB RAM (25% of VPS capacity) and \~700MB RAM for ArgoCD managing single application
 
-1. Project restructure: Pangolin from docker-compose to Kubernetes manifests
-2. Traefik migration: Raw manifests to Helm chart deployment
-3. Gerbil separation: From bundled Traefik pod to standalone deployment
-4. CNPG migration: OCIRepository to official Helm chart
-5. Backup modernization: In-tree barmanObjectStore to Barman Cloud plugin
-6. CrowdSec addition: Full security engine with Traefik bouncer integration
-7. Cert-manager addition: TLS certificate automation with Let's Encrypt
-8. Final pivot: Complete abandonment of Kubernetes approach
+* `-` **Upstream Deviation**: Pangolin lacks official Kubernetes deployment (no Helm chart)
 
-#### Recurring Technical Issues
+* `-` **Network Abstraction Bypass**: Gerbil requires `hostNetwork: true`, defeating Kubernetes networking benefits
 
-* Secret management complexity across multiple operators
-* Network policy conflicts with Gerbil's IPTables requirements
-* Resource overhead: kubernetes + ArgoCD/FluxCD + operators (>25% of VPS capacity)
-* Difficulty maintaining alignment with upstream Pangolin releases
-* Custom manifests diverged significantly from official docker-compose deployment
+* `-` **OS Inconsistency**: Ubuntu on `kazimierz` vs Talos Linux on other clusters
 
-### Option 2: Ansible + Docker Compose ✅
+* `-` **Zero Component Reuse**: No shared infrastructure components with other clusters
+
+* `-` **Maintenance Burden**: Custom manifests diverge from upstream Pangolin updates
+
+* `-` **Complexity Overhead**: Multiple layers (K8s + Docker + Compose) for single-app deployment
+
+### Option 2: Ansible + Docker Compose
+
+> ✔️ **Status**: Accepted
 
 Use Ansible for configuration management with official Pangolin Docker Compose deployment.
 
 #### Technology Stack (Ansible)
 
 * **Configuration Management**: Ansible for system provisioning and application deployment
+
 * **GitOps Automation**: `ansible-pull` via systemd timer (15-minute intervals)
+
 * **Application Deployment**: Official Pangolin `docker-compose.yml` from upstream
+
 * **Networking**: Direct Docker networking with native iptables manipulation
+
 * **Database**: Standard PostgreSQL container from Docker Hub
+
 * **Secret Management**: Ansible variables with encrypted vault files
 
-#### Implementation Approach (Ansible)
+* `+` **Upstream Alignment**: Uses official Pangolin `docker-compose.yml` maintained by upstream
 
-* Bootstrap system with Ansible playbook (`bootstrap.yml`)
-* Configure systemd timer for `ansible-pull` GitOps automation
-* Deploy Pangolin using official Docker Compose file
-* Manage Gerbil with direct iptables access (no Kubernetes networking layer)
+* `+` **Resource Efficiency**: Docker daemon <256MB RAM vs Kubernetes control plane \~1GB
 
-#### Pros (Ansible)
+* `+` **Native IPTables Access**: Gerbil manipulates routing without Kubernetes abstractions
 
-* ✅ **Upstream Alignment**: Uses official Pangolin `docker-compose.yml` maintained by upstream
-* ✅ **Resource Efficiency**: Docker daemon <256MB RAM vs Kubernetes control plane \~1GB
-* ✅ **Native IPTables Access**: Gerbil manipulates routing without Kubernetes abstractions
-* ✅ **Debugging Simplicity**: Standard Docker commands (`docker-compose logs`, `docker ps`)
-* ✅ **GitOps Maintained**: `ansible-pull` provides declarative infrastructure from Git
-* ✅ **Rapid Rebuild**: Single Ansible playbook vs multi-step Kubernetes bootstrap
-* ✅ **Faster Iteration**: Direct deployment without Kubernetes reconciliation loops
-* ✅ **Minimal Complexity**: Fewer abstraction layers (no K8s scheduler, no operators)
+* `+` **Debugging Simplicity**: Standard Docker commands (`docker-compose logs`, `docker ps`)
 
-#### Cons (Ansible)
+* `+` **GitOps Maintained**: `ansible-pull` provides declarative infrastructure from Git
 
-* ⚠️ **Tooling Inconsistency**: Different deployment workflow from other Arcane clusters
-* ⚠️ **No Native Health Checks**: Relies on Docker Compose restart policies instead of Kubernetes probes
-* ⚠️ **Manual Secret Management**: No External Secrets Operator integration with OpenBao
-* ⚠️ **No Centralized Dashboard**: No ArgoCD UI (logs available via `journalctl`)
-* ⚠️ **Docker Compose Limitations**: Less sophisticated orchestration than Kubernetes
+* `+` **Rapid Rebuild**: Single Ansible playbook vs multi-step Kubernetes bootstrap
 
-#### Rationale for Selection
+* `+` **Faster Iteration**: Direct deployment without Kubernetes reconciliation loops
 
-This option provides the optimal balance for `kazimierz`'s specific constraints:
+* `+` **Minimal Complexity**: Fewer abstraction layers (no K8s scheduler, no operators)
 
-* Saves resources compared to Kubernetes
-* Follows official Pangolin deployment method (reduced maintenance burden)
-* Enables direct iptables manipulation required by Gerbil
-* Supports rapid rebuild aligned with sacrificial VPS philosophy
+* `-` **Tooling Inconsistency**: Different deployment workflow from other Arcane clusters
+
+* `-` **No Native Health Checks**: Relies on Docker Compose restart policies instead of Kubernetes probes
+
+* `-` **Manual Secret Management**: No External Secrets Operator integration with OpenBao
+
+* `-` **No Centralized Dashboard**: No ArgoCD UI (logs available via `journalctl`)
+
+* `-` **Docker Compose Limitations**: Less sophisticated orchestration than Kubernetes
 
 ## Decision Outcome
 
@@ -250,9 +270,11 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 
 **Impact**: Forcing Kubernetes deployment contradicts cluster's design constraints and operational requirements.
 
-### Consequences
+***
 
-#### Positive Consequences
+## Consequences \[Optional]
+
+### Positive
 
 * ✅ **Resource Efficiency**: Saves \~750MB RAM (Docker daemon <256MB vs Kubernetes control plane \~1GB)
 * ✅ **Operational Simplicity**: Standard Docker Compose commands for debugging and management
@@ -265,7 +287,7 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 * ✅ **Reduced Attack Surface**: Minimal system components compared to full Kubernetes stack
 * ✅ **Lower Maintenance Burden**: Fewer moving parts and abstraction layers to maintain
 
-#### Negative Consequences
+### Negative
 
 * ⚠️ **Tooling Inconsistency**: Different deployment workflow from other Arcane clusters (docker-compose vs kubectl)
 * ⚠️ **Manual Secret Management**: No External Secrets Operator integration with OpenBao (relies on Ansible variables)
@@ -274,29 +296,20 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 * ⚠️ **Limited Observability**: No native Kubernetes metrics and monitoring integration
 * ⚠️ **Knowledge Fragmentation**: Operators must maintain expertise in both Kubernetes and Ansible/Docker Compose
 
-#### Neutral Consequences
+### Neutral
 
 * ⚖️ **Docker Restart Policies**: Acceptable replacement for Kubernetes liveness/readiness probes for single-application deployment
 * ⚖️ **ansible-pull Logging**: Sufficient replacement for ArgoCD dashboard for single-app deployment (available via `journalctl`)
 * ⚖️ **iptables + Docker Networks**: Acceptable replacement for Kubernetes network policies given VPS isolation
 * ⚖️ **Ansible Variables for Secrets**: Acceptable for single-node deployment without distributed secret management requirements
 
-### Implementation Details
+***
 
-#### Configuration Management Tool Selection
+## Implementation Details / Status \[Optional]
+
+### Configuration Management Tool Selection
 
 **Decision**: Ansible chosen over alternatives (pyinfra, SaltStack, Chef/Puppet)
-
-#### Comparison: Ansible vs pyinfra
-
-| Criteria                 | Ansible                        | pyinfra                  |
-| ------------------------ | ------------------------------ | ------------------------ |
-| **Language**             | YAML (declarative)             | Python (imperative)      |
-| **Performance**          | Adequate for single VPS        | 10x faster (unnecessary) |
-| **Target Requirements**  | Python + dependencies          | POSIX shell only         |
-| **Ecosystem**            | Massive (thousands of modules) | Smaller, growing         |
-| **GitOps Support**       | `ansible-pull` native          | Custom cron + git.repo   |
-| **Community & Maturity** | 10+ years, battle-tested       | Newer, evolving          |
 
 **Why Ansible**:
 
@@ -305,14 +318,7 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 * Consistency with other Arcane clusters (unified tooling)
 * Battle-tested production stability and extensive documentation
 
-**Why NOT pyinfra**:
-
-* Performance advantage (10x speed) irrelevant for single VPS
-* Smaller ecosystem requires custom module development
-* Manual GitOps implementation (cron + git pull logic)
-* Less mature tool with potential breaking changes
-
-#### GitOps Automation Model
+### GitOps Automation Model
 
 **Tool**: `ansible-pull` with systemd timer (15-minute interval)
 
@@ -323,14 +329,7 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 3. Playbook execution applies desired state if Git changed
 4. Logs available via journalctl for auditing
 
-**Security Benefits**:
-
-* No SSH keys on developer machines (VPS pulls from public Git)
-* Idempotent execution (safe to run repeatedly)
-* Git as single source of truth with audit trail
-* Secrets encrypted via Ansible Vault (SOPS-compatible)
-
-#### Deployment Components
+### Deployment Components
 
 **4-Phase Bootstrap**:
 
@@ -339,17 +338,27 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 3. **Observability**: ARA Records Ansible for playbook execution tracking (Tailscale Serve HTTPS)
 4. **Application Stack**: Pangolin + Gerbil + Traefik via custom Ansible role
 
-**Key Architectural Elements**:
+### Risks and Mitigations
 
-* **Ansible Roles**: Leverages `geerlingguy.docker` and `artis3n.tailscale` community roles
-* **Custom Role**: `roles/pangolin/` with Jinja2 templates for configuration
-* **Secret Management**: Ansible Vault with encrypted variables
-* **Network Isolation**: UFW default-deny + Tailscale-only SSH access
-* **Observability**: ARA web interface accessible only via Tailscale network
+* **ansible-pull Failure**: Systemd timer configured with retry logic; manual playbook execution procedure documented.
+* **Docker Daemon Failure**: Systemd service configuration with automatic restart; health monitoring via systemd watchdog.
+* **Upstream Pangolin Changes**: Pin Pangolin container image; subscribe to release notifications; test upstream changes in dev.
+* **VPS Compromise**: Sacrificial infrastructure philosophy; rapid rebuild enabled by single Ansible playbook.
 
-**Implementation Location**: `projects/kazimierz.akn/src/infrastructure/ansible/`
+***
 
-See [`kazimierz` Ansible README](../../projects/kazimierz.akn/src/infrastructure/ansible/README.md) for complete deployment documentation.
+## Decision Evolution \[Optional]
+
+### Implementation Challenges Encountered (8 major iterations)
+
+1. Project restructure: Pangolin from docker-compose to Kubernetes manifests
+2. Traefik migration: Raw manifests to Helm chart deployment
+3. Gerbil separation: From bundled Traefik pod to standalone deployment
+4. CNPG migration: OCIRepository to official Helm chart
+5. Backup modernization: In-tree barmanObjectStore to Barman Cloud plugin
+6. CrowdSec addition: Full security engine with Traefik bouncer integration
+7. Cert-manager addition: TLS certificate automation with Let's Encrypt
+8. Final pivot: Complete abandonment of Kubernetes approach
 
 ### Lessons Learned
 
@@ -362,8 +371,6 @@ See [`kazimierz` Ansible README](../../projects/kazimierz.akn/src/infrastructure
 * **High availability requirements**: Multi-node clusters with automatic failover
 * **Complex networking requirements**: Service mesh, network policies, advanced routing
 
-**Example**: `amiya` and `lungmen` clusters with 10+ applications and shared infrastructure.
-
 #### When Docker Compose + Ansible Makes Sense
 
 * **Single-stack deployments**: Primary application with minimal dependencies (like `kazimierz` + Pangolin)
@@ -372,98 +379,18 @@ See [`kazimierz` Ansible README](../../projects/kazimierz.akn/src/infrastructure
 * **Host networking requirements**: Direct IPTables or system-level network manipulation (like Gerbil)
 * **Isolated infrastructure**: No cross-cluster dependencies or shared components
 
-**Example**: `kazimierz` VPS gateway with single Pangolin application.
+***
 
-#### Key Principle
+## References and Related Decisions \[Optional]
 
-**Choose the right tool for the job, not the most sophisticated tool available.**
+* **Technical Documentation**: [Pangolin Official Documentation](https://github.com/fosrl/pangolin), [Ansible Documentation](https://docs.ansible.com/), [ansible-pull Documentation](https://docs.ansible.com/ansible/latest/cli/ansible-pull.html), [ARA Records Ansible](https://ara.recordsansible.org/)
+* **Ansible Roles and Collections**: [geerlingguy.docker](https://github.com/geerlingguy/ansible-role-docker), [artis3n.tailscale](https://github.com/artis3n/ansible-role-tailscale), [community.general](https://docs.ansible.com/ansible/latest/collections/community/general/), [community.docker](https://docs.ansible.com/ansible/latest/collections/community/docker/)
+* **Architecture References**: [`kazimierz` Ansible README](../../projects/kazimierz.akn/src/infrastructure/ansible/README.md)
 
-Technology selection should be driven by functional requirements, operational constraints, and resource limitations—not by architectural consistency for its own sake. Kubernetes provides immense value for complex orchestration scenarios, but introduces unnecessary overhead for simple single-application deployments.
-
-## Risks and Mitigations
-
-### Risk: ansible-pull Failure
-
-**Impact**: GitOps automation stops, manual intervention required for configuration updates
-
-**Mitigation**:
-
-* Systemd timer configured with retry logic and backoff
-* Email alerts configured for failed `ansible-pull` executions
-* Manual playbook execution procedure documented for emergency updates
-* Monitoring of systemd timer status via Tailscale-accessible dashboard
-
-### Risk: Docker Daemon Failure
-
-**Impact**: Complete service outage, Pangolin and Gerbil unavailable
-
-**Mitigation**:
-
-* Systemd service configuration with automatic restart on failure
-* Docker daemon health monitoring via systemd watchdog
-* Alert configuration for Docker daemon failures
-* Documented recovery procedure for daemon corruption
-
-### Risk: Upstream Pangolin Changes
-
-**Impact**: Official `docker-compose.yml` changes may require configuration adaptation
-
-**Mitigation**:
-
-* Pin Pangolin container image to specific version tags
-* Subscribe to Pangolin release notifications via GitHub
-* Test upstream changes in local development environment before production deployment
-* Maintain forked `docker-compose.yml` with `kazimierz`-specific modifications
-
-### Risk: VPS Compromise
-
-**Impact**: Public-facing VPS may be compromised requiring rapid rebuild
-
-**Mitigation**:
-
-* **Sacrificial infrastructure philosophy**: Designed for quick destruction and rebuild
-* **Rapid rebuild**: Single Ansible playbook enables \~10-minute recovery time
-* **Minimal state**: No persistent data stored on VPS (all configuration in Git)
-* **Security hardening**: crowdsec, Tailscale-only SSH authentication, automatic security updates
-* **Incident response**: Documented forensic analysis and rebuild procedures
-
-## References
-
-### Technical Documentation
-
-* [Pangolin Official Documentation](https://github.com/fosrl/pangolin) - Official deployment guides
-* [Ansible Documentation](https://docs.ansible.com/) - Ansible playbook development
-* [ansible-pull Documentation](https://docs.ansible.com/ansible/latest/cli/ansible-pull.html) - GitOps automation
-* [ARA Records Ansible](https://ara.recordsansible.org/) - Playbook execution tracking
-
-### Ansible Roles and Collections
-
-* [geerlingguy.docker](https://github.com/geerlingguy/ansible-role-docker) - Docker installation role
-* [artis3n.tailscale](https://github.com/artis3n/ansible-role-tailscale) - Tailscale VPN role
-* [community.general](https://docs.ansible.com/ansible/latest/collections/community/general/) - General Ansible modules
-* [community.docker](https://docs.ansible.com/ansible/latest/collections/community/docker/) - Docker management
-
-### Architecture References
-
-* [`kazimierz` Ansible README](../../projects/kazimierz.akn/src/infrastructure/ansible/README.md) - Complete deployment documentation
+***
 
 ## Changelog
 
-### Version 1.1
-
+* **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.
 * **2025-11-16**: **VALIDATED** - Architecture decision validated through implementation
-  * All design choices confirmed through Ansible infrastructure implementation
-  * ansible-pull GitOps automation working as designed
-  * Resource efficiency targets met (Docker daemon <256MB vs Kubernetes \~1GB overhead)
-  * Upstream alignment achieved using official Pangolin docker-compose.yml
-  * Community roles integration successful: geerlingguy.docker v7.6.1, artis3n.tailscale v4.2.1
-  * ARA Records Ansible providing adequate observability without ArgoCD overhead
-  * All functional requirements satisfied for single-application VPS deployment
-
-### Version 1.0
-
 * **2025-01-13**: **ACCEPTED** - Decision accepted after multiple Kubernetes deployment attempts
-  * Multiple approaches evaluated: FluxCD and ArgoCD deployments
-  * Architectural analysis documented in "Considered Options" section
-  * Final decision to adopt Ansible + Docker Compose approach
-  * Rationale: Resource efficiency, upstream alignment, operational simplicity for single-application VPS deployment

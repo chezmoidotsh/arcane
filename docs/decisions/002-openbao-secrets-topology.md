@@ -1,12 +1,51 @@
-<!--
-status: "proposed"
+---
+status: "implemented"
 date: 2025-01-28
+implementation-completed: 2026-03-19
 decision-makers: ["Alexandre"]
 consulted: ["ai/claude-4-sonnet", "ai/chatgpt-4o"]
 informed: []
--->
+---
 
 # OpenBao Secrets Mount Topology and Organizational Structure
+
+## Table of Contents
+
+* [Context and Problem Statement](#context-and-problem-statement)
+  * [Current Infrastructure Context](#current-infrastructure-context)
+  * [The Strategic Challenge](#the-strategic-challenge)
+* [Decision Drivers](#decision-drivers)
+* [Considered Options](#considered-options)
+  * [Option 1: Single KV Mount with Path-Based Organization (Monolithic)](#option-1-single-kv-mount-with-path-based-organization-monolithic)
+  * [Option 2: Multiple KV Mounts per Project + Shared Mount (Mount Isolation)](#option-2-multiple-kv-mounts-per-project--shared-mount-mount-isolation)
+  * [Option 3: OpenBao Namespaces with Mount Isolation](#option-3-openbao-namespaces-with-mount-isolation)
+  * [Option 4: Federated OpenBao Instances (Instance Per Project)](#option-4-federated-openbao-instances-instance-per-project)
+* [Decision Outcome](#decision-outcome)
+  * [Implementation Architecture](#implementation-architecture)
+  * [Key Design Principles](#key-design-principles)
+  * [Access Control Architecture](#access-control-architecture)
+* [Consequences \[Optional\]](#consequences-optional)
+  * [Positive](#positive)
+  * [Negative](#negative)
+  * [Neutral](#neutral)
+* [Pros and Cons of the Options](#pros-and-cons-of-the-options)
+  * [Multiple KV Mounts per Project + Shared Mount](#multiple-kv-mounts-per-project--shared-mount)
+  * [Single KV Mount (Monolithic)](#single-kv-mount-monolithic)
+  * [OpenBao Namespaces](#openbao-namespaces)
+  * [Multiple OpenBao Instances](#multiple-openbao-instances)
+* [Alternatives Considered and Rejected](#alternatives-considered-and-rejected)
+  * [Why Not OpenBao Namespaces?](#why-not-openbao-namespaces)
+  * [Why Not Single KV Mount?](#why-not-single-kv-mount)
+  * [Why Not Multiple OpenBao Instances?](#why-not-multiple-openbao-instances)
+* [Future Considerations](#future-considerations)
+  * [Namespace Evolution Path](#namespace-evolution-path)
+  * [Advanced Secret Engine Integration](#advanced-secret-engine-integration)
+* [References and Related Decisions \[Optional\]](#references-and-related-decisions-optional)
+  * [Architecture and Best Practices](#architecture-and-best-practices)
+  * [Integration Documentation](#integration-documentation)
+  * [OpenBao Community Resources](#openbao-community-resources)
+  * [Security and Compliance](#security-and-compliance)
+* [Changelog](#changelog)
 
 ## Context and Problem Statement
 
@@ -159,9 +198,9 @@ Centralized administration for shared secrets with read-only project access, imp
 2. **OIDC Auth**: Human access via Authelia with group-based role mapping
 3. **Token Auth**: Service accounts and automation with time-limited tokens
 
-## Consequences
+## Consequences \[Optional]
 
-### Positive Consequences
+### Positive
 
 * ✅ **Security Isolation**: Complete policy separation prevents accidental cross-project access and contains security incidents ([Defense in Depth](https://csrc.nist.gov/glossary/term/defense_in_depth))
 * ✅ **Access Control Clarity**: Mount-level boundaries make RBAC intuitive and auditable
@@ -172,83 +211,92 @@ Centralized administration for shared secrets with read-only project access, imp
 * ✅ **Architecture Evolution**: Compatible with future namespace adoption for delegation scenarios
 * ✅ **Compliance Readiness**: Clear audit boundaries support regulatory requirements
 
-### Negative Consequences
+### Negative
 
-* **Infrastructure Complexity**: Additional automation required for mount lifecycle management
-* **Coordination Overhead**: Shared secret changes require cross-team communication
-* **Initial Setup Cost**: Higher complexity compared to single-mount approach
-* **Mount Limits**: Potential scaling constraints at very large scale ([>4500 mounts per instance](https://developer.hashicorp.com/vault/docs/internals/limits))
+* ⚠️ **Infrastructure Complexity**: Additional automation required for mount lifecycle management
+* ⚠️ **Coordination Overhead**: Shared secret changes require cross-team communication
+* ⚠️ **Initial Setup Cost**: Higher complexity compared to single-mount approach
+* ⚠️ **Mount Limits**: Potential scaling constraints at very large scale ([>4500 mounts per instance](https://developer.hashicorp.com/vault/docs/internals/limits))
 
-### Risk Mitigation
+### Neutral
 
-* **Automation Framework**: Comprehensive Infrastructure-as-Code for consistent management
-* **Documentation Standards**: Clear operational procedures for shared resources
-* **Monitoring Infrastructure**: Proactive alerting for mount health and access patterns
+* ⚖️ **Automation Framework**: Comprehensive Infrastructure-as-Code for consistent management
+* ⚖️ **Documentation Standards**: Clear operational procedures for shared resources
+* ⚖️ **Monitoring Infrastructure**: Proactive alerting for mount health and access patterns
 
 ## Pros and Cons of the Options
 
-### Multiple KV Mounts per Project + Shared Mount ✅ (Selected)
+### Multiple KV Mounts per Project + Shared Mount
 
-**Pros:**
+> ✔️ **Status**: Accepted
 
-* **Security**: Complete policy isolation prevents unauthorized cross-project access
-* **Operational Clarity**: Mount-level boundaries provide intuitive access control and audit trails
-* **ESO Integration**: Optimal compatibility with [ExternalSecret Operator SecretStore patterns](https://external-secrets.io/latest/provider/hashicorp-vault/#secretstore)
-* **Scalability**: Linear growth model with standardized mount creation automation
-* **Future-Proof**: Evolution path to OpenBao namespaces for delegation scenarios
-* **Compliance**: Clear audit boundaries support regulatory requirements
+* `+` **Security**: Complete policy isolation prevents unauthorized cross-project access
 
-**Cons:**
+* `+` **Operational Clarity**: Mount-level boundaries provide intuitive access control and audit trails
 
-* **Automation Dependency**: Requires Infrastructure-as-Code for mount lifecycle management
-* **Initial Complexity**: Higher setup complexity compared to single-mount approach
+* `+` **ESO Integration**: Optimal compatibility with [ExternalSecret Operator SecretStore patterns](https://external-secrets.io/latest/provider/hashicorp-vault/#secretstore)
+
+* `+` **Scalability**: Linear growth model with standardized mount creation automation
+
+* `+` **Future-Proof**: Evolution path to OpenBao namespaces for delegation scenarios
+
+* `+` **Compliance**: Clear audit boundaries support regulatory requirements
+
+* `-` **Automation Dependency**: Requires Infrastructure-as-Code for mount lifecycle management
+
+* `-` **Initial Complexity**: Higher setup complexity compared to single-mount approach
 
 ### Single KV Mount (Monolithic)
 
-**Pros:**
+* `+` Simplest initial setup and configuration
 
-* Simplest initial setup and configuration
-* Single point of management for all secrets
-* No mount count concerns
-* Unified secret organization
+* `+` Single point of management for all secrets
 
-**Cons:**
+* `+` No mount count concerns
 
-* **High blast radius**: Single error can impact all projects
-* **Complex ACL management**: Path-based permissions difficult to audit and maintain
-* **Poor isolation**: Security incidents affect all projects
-* **Integration challenges**: [ESO patterns less efficient](https://external-secrets.io/latest/provider/hashicorp-vault/#performance-considerations) with path-based access
+* `+` Unified secret organization
+
+* `-` **High blast radius**: Single error can impact all projects
+
+* `-` **Complex ACL management**: Path-based permissions difficult to audit and maintain
+
+* `-` **Poor isolation**: Security incidents affect all projects
+
+* `-` **Integration challenges**: [ESO patterns less efficient](https://external-secrets.io/latest/provider/hashicorp-vault/#performance-considerations) with path-based access
 
 ### OpenBao Namespaces
 
-**Pros:**
+* `+` Maximum isolation with complete separation
 
-* Maximum isolation with complete separation
-* Delegated administration capabilities
-* Built-in audit trail separation
-* Excellent for multi-tenant scenarios
+* `+` Delegated administration capabilities
 
-**Cons:**
+* `+` Built-in audit trail separation
 
-* **Significant operational complexity** overhead for current scale
-* **Higher resource usage**: [Memory usage and unseal time impact](https://developer.hashicorp.com/vault/docs/enterprise/namespaces#performance-standby-nodes)
-* **Over-engineering**: Complex for current 6-project scale
-* **Cross-namespace complexity**: [Sharing secrets requires complex patterns](https://developer.hashicorp.com/vault/docs/enterprise/namespaces#cross-namespace-secret-access)
+* `+` Excellent for multi-tenant scenarios
+
+* `-` **Significant operational complexity** overhead for current scale
+
+* `-` **Higher resource usage**: [Memory usage and unseal time impact](https://developer.hashicorp.com/vault/docs/enterprise/namespaces#performance-standby-nodes)
+
+* `-` **Over-engineering**: Complex for current 6-project scale
+
+* `-` **Cross-namespace complexity**: [Sharing secrets requires complex patterns](https://developer.hashicorp.com/vault/docs/enterprise/namespaces#cross-namespace-secret-access)
 
 ### Multiple OpenBao Instances
 
-**Pros:**
+* `+` Complete operational independence
 
-* Complete operational independence
-* Maximum security isolation
-* Independent upgrade and maintenance cycles
+* `+` Maximum security isolation
 
-**Cons:**
+* `+` Independent upgrade and maintenance cycles
 
-* **Operational fragmentation**: Multiple systems to secure, backup, and maintain
-* **Complex synchronization**: [Cross-instance secret sharing challenges](https://developer.hashicorp.com/vault/docs/enterprise/replication)
-* **Infrastructure overhead**: Resource multiplication without proportional value
-* **Audit consolidation**: Fragmented security and compliance monitoring
+* `-` **Operational fragmentation**: Multiple systems to secure, backup, and maintain
+
+* `-` **Complex synchronization**: [Cross-instance secret sharing challenges](https://developer.hashicorp.com/vault/docs/enterprise/replication)
+
+* `-` **Infrastructure overhead**: Resource multiplication without proportional value
+
+* `-` **Audit consolidation**: Fragmented security and compliance monitoring
 
 ## Alternatives Considered and Rejected
 
@@ -295,11 +343,9 @@ Future architectural expansion may include:
 * **Database engine**: For dynamic credential management
 * **Transit engine**: For encryption-as-a-service capabilities
 
-## Related Decisions
+## References and Related Decisions \[Optional]
 
 * [ADR-001: Centralized Secret Management](./001-centralized-secret-management.md) - Establishes OpenBao as the chosen secret management solution
-
-## References and Further Reading
 
 ### Architecture and Best Practices
 
@@ -328,3 +374,9 @@ Future architectural expansion may include:
 ***
 
 **Note**: This ADR builds upon the infrastructure established in ADR-001 and focuses specifically on the organizational structure of secrets within the operational OpenBao instance. The chosen approach balances immediate operational needs with future scalability while leveraging proven patterns from the HashiCorp Vault ecosystem.
+
+***
+
+## Changelog
+
+* **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.

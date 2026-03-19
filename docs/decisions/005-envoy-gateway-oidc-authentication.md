@@ -1,12 +1,42 @@
-<!--
-status: "proposed"
+---
+status: "implemented"
 date: 2025-01-28
+implementation-completed: 2026-03-19
 decision-makers: ["Alexandre"]
 consulted: ["ai/claude-4-sonnet", "ai/gpt-5"]
 informed: []
--->
+---
 
 # Envoy Gateway Authentication Strategy: OIDC over External Authorization
+
+## Table of Contents
+
+* [Context and Problem Statement](#context-and-problem-statement)
+  * [Current Infrastructure Context](#current-infrastructure-context)
+  * [The Integration Challenge](#the-integration-challenge)
+* [Decision Drivers](#decision-drivers)
+  * [Technical Requirements](#technical-requirements)
+  * [Operational Requirements](#operational-requirements)
+  * [Constraints](#constraints)
+* [Considered Options](#considered-options)
+  * [Option 1: External Authorization (ext-authz) Pattern](#option-1-external-authorization-ext-authz-pattern)
+  * [Option 2: OIDC Authentication with Envoy Gateway per route](#option-2-oidc-authentication-with-envoy-gateway-per-route)
+  * [Option 3: OIDC Authentication with Envoy Gateway on the gateway level](#option-3-oidc-authentication-with-envoy-gateway-on-the-gateway-level)
+* [Decision Outcome](#decision-outcome)
+  * [Implementation Architecture](#implementation-architecture)
+* [Consequences \[Optional\]](#consequences-optional)
+  * [Positive](#positive)
+  * [Negative](#negative)
+  * [Neutral](#neutral)
+* [Implementation Details / Status \[Optional\]](#implementation-details--status-optional)
+  * [Implementation Strategy](#implementation-strategy)
+    * [Phase 1: OIDC Infrastructure Foundation](#phase-1-oidc-infrastructure-foundation)
+    * [Phase 2: Application Integration](#phase-2-application-integration)
+    * [Phase 3: Automation and Scaling](#phase-3-automation-and-scaling)
+  * [Risks and Mitigations](#risks-and-mitigations)
+* [Decision Evolution \[Optional\]](#decision-evolution-optional)
+* [References and Related Decisions \[Optional\]](#references-and-related-decisions-optional)
+* [Changelog](#changelog)
 
 ## Context and Problem Statement
 
@@ -59,74 +89,33 @@ Forward authentication decisions to Authelia via Envoy's external authorization 
 > \[!NOTE]
 > This approach closely resembles Traefik's ForwardAuth mechanism and could be a relevant choice.
 
-**Implementation Pattern:**
+* `+` **Built-in Envoy Support**: Native Envoy feature with broad ecosystem support and proven stability
+* `+` **Centralized Authentication Logic**: All authentication decisions handled by Authelia with consistent policy enforcement
+* `+` **Configuration Simplicity**: Minimal setup required with straightforward YAML configuration and documentation on Authelia website
+* `-` **Debugging Challenges**: Limited visibility into authentication flow failures
+* `-` **Implementation Issues**: Failed to achieve reliable operation despite extensive configuration attempts
 
-```yaml
-# SecurityPolicy with ext-authz
-spec:
-  extAuth:
-    http:
-      service:
-        name: authelia
-        port: 9091
-      path: /api/authz/forward-auth
-```
+### Option 2: OIDC Authentication with Envoy Gateway per route
 
-**Pros:**
-
-* **Built-in Envoy Support**: Native Envoy feature with broad ecosystem support and proven stability
-* **Centralized Authentication Logic**: All authentication decisions handled by Authelia with consistent policy enforcement
-* **Configuration Simplicity**: Minimal setup required with straightforward YAML configuration and documentation on Authelia website
-
-**Cons:**
-
-* ❌ **Debugging Challenges**: Limited visibility into authentication flow failures
-* ❌ **Implementation Issues**: Failed to achieve reliable operation despite extensive configuration attempts
-
-### Option 2: OIDC Authentication with Envoy Gateway per route ✅
+> ✔️ **Status**: Accepted
 
 Leverage Envoy Gateway's native OIDC authentication capabilities with Authelia as the OIDC provider per route.
 
-**Implementation Pattern:**
-
-```yaml
-# SecurityPolicy with OIDC
-spec:
-  oidc:
-    provider:
-      issuer: "https://auth.chezmoi.sh"
-    clientID: "application-name"
-    clientSecret:
-      name: "app-oidc-secret"
-      key: "client-secret"
-    redirectURL: "https://app.example.com/oauth2/callback"
-```
-
-**Pros:**
-
-* **Standards Compliance**: RFC-compliant OIDC/OAuth2 implementation
-* **Debugging**: Clear OIDC flow with standard error responses
-* **Per-Route Configuration**: Way easier to debug
-* **Already Tested**: Already tested and successfully working in the `amiya.akn` cluster
-
-**Cons:**
-
-* ❌ **Client Management Complexity**: Requires OIDC client registration for each route
+* `+` **Standards Compliance**: RFC-compliant OIDC/OAuth2 implementation
+* `+` **Debugging**: Clear OIDC flow with standard error responses
+* `+` **Per-Route Configuration**: Way easier to debug
+* `+` **Already Tested**: Already tested and successfully working in the `amiya.akn` cluster
+* `-` **Client Management Complexity**: Requires OIDC client registration for each route
 
 ### Option 3: OIDC Authentication with Envoy Gateway on the gateway level
 
 Implement authentication at the gateway level with session sharing across applications.
 
-**Pros:**
-
-* **Standards Compliance**: RFC-compliant OIDC/OAuth2 implementation
-* **Debugging**: Clear OIDC flow with standard error responses
-* **Simplicity**: All OIDC benefits without the complexity of per-route configuration
-
-**Cons:**
-
-* ❌ **Shared Client Limitation**: All applications must be protected by the same OIDC client (no selective protection)
-* ❌ **No Selective Protection**: Impossible to disable OIDC authentication for a specific application
+* `+` **Standards Compliance**: RFC-compliant OIDC/OAuth2 implementation
+* `+` **Debugging**: Clear OIDC flow with standard error responses
+* `+` **Simplicity**: All OIDC benefits without the complexity of per-route configuration
+* `-` **Shared Client Limitation**: All applications must be protected by the same OIDC client (no selective protection)
+* `-` **No Selective Protection**: Impossible to disable OIDC authentication for a specific application
 
 ## Decision Outcome
 
@@ -155,9 +144,11 @@ Implement authentication at the gateway level with session sharing across applic
 * **Secret Distribution**: ExternalSecret Operator retrieves client secrets for SecurityPolicy configuration
 * **Authelia Configuration**: Client definitions imported from OpenBao via templated configuration
 
-### Consequences
+***
 
-**Positive:**
+## Consequences \[Optional]
+
+### Positive
 
 * ✅ **Reliability**: Standards-compliant OIDC implementation with predictable behavior
 * ✅ **Security**: JWT-based authentication with configurable validation and scoping
@@ -166,44 +157,41 @@ Implement authentication at the gateway level with session sharing across applic
 * ✅ **Scalability**: Easy to add new applications following established patterns
 * ✅ **CLI Automation**: Configuration complexity abstracted behind tooling
 
-**Negative:**
+### Negative
 
-* **Client Proliferation**: Each application requires dedicated OIDC client registration
-* **Secret Complexity**: More secrets to manage compared to shared session approach
-* **Callback Management**: Redirect URI configuration required per application
+* ⚠️ **Client Proliferation**: Each application requires dedicated OIDC client registration
+* ⚠️ **Secret Complexity**: More secrets to manage compared to shared session approach
+* ⚠️ **Callback Management**: Redirect URI configuration required per application
 
-**Risk Mitigation:**
+### Neutral
 
-* **Secret Management**: Leveraging existing OpenBao infrastructure for secure client secret handling
-* **Documentation**: Comprehensive procedures for OIDC endpoint creation and troubleshooting
+* ⚖️ **Risk Mitigation**: Leveraging existing OpenBao infrastructure for secure client secret handling
+* ⚖️ **Documentation**: Comprehensive procedures for OIDC endpoint creation and troubleshooting
+* ⚖️ **Confirmation**: This decision has moved from "proposed" to "accepted" and is now marked "implemented" after meeting specific functional, operability, and observability criteria.
 
-### Confirmation
+***
 
-This decision will move from "proposed" to "accepted" when the following are met in the target cluster:
+## Implementation Details / Status \[Optional]
 
-* Functional: protected route redirects to Authelia, authenticates, and returns HTTP 200 on callback without loops
-* Operability: onboarding a new application via CLI (client creation, ESO, SecurityPolicy, Authelia update) takes ≤ 10 minutes end-to-end
-* Observability: error signals for OIDC flows are visible in logs/dashboards; misconfigurations are diagnosable
+### Implementation Strategy
 
-## Implementation Strategy
-
-### Phase 1: OIDC Infrastructure Foundation
+#### Phase 1: OIDC Infrastructure Foundation
 
 1. **Authelia OIDC Configuration**: Enable and configure OIDC provider capabilities
 2. **OpenBao Secret Structure**: Implement OIDC client secret organization per ADR-003
 3. **ExternalSecret Templates**: Configure secret distribution patterns for SecurityPolicy
 
-### Phase 2: Application Integration
+#### Phase 2: Application Integration
 
 1. **Pilot Application**: Implement OIDC for Longhorn as proof of concept
 2. **SecurityPolicy Templates**: Create reusable SecurityPolicy configurations
 3. **Validation Procedures**: Test authentication flow and error handling
 
-### Phase 3: Automation and Scaling
+#### Phase 3: Automation and Scaling
 
 1. **Bulk Migration**: Convert existing applications using old Traefik `ForwardAuth` mechanism to the new OIDC
 
-## Risks and Mitigations
+### Risks and Mitigations
 
 * **IdP unavailability (Authelia down)**: Serve a friendly maintenance page for protected routes; keep public routes separate from OIDC policies
 * **Misconfigured redirect URIs**: Enforce strict redirect URI validation via proper documentation
@@ -212,29 +200,23 @@ This decision will move from "proposed" to "accepted" when the following are met
 * **Public clients (SPAs)**: Use PKCE and avoid storing secrets client-side; mark clients as `public: true` in Authelia when applicable
 * **Cross-project secret leakage**: Store client credentials per `/{cluster}/{app}/auth/oidc-client` and apply policies per ADR-004
 
-## References
+***
 
-### Technical Documentation
+## Decision Evolution \[Optional]
 
-* [Envoy Gateway Security Policy](https://gateway.envoyproxy.io/latest/api/extension_types/#securitypolicy) - Official SecurityPolicy configuration guide
-* [Authelia OIDC Provider](https://www.authelia.com/configuration/identity-providers/openid-connect/) - OIDC provider configuration
-* [RFC 6749: OAuth 2.0](https://tools.ietf.org/html/rfc6749) - OAuth2 specification
-* [RFC 6750: Bearer Token Usage](https://tools.ietf.org/html/rfc6750) - JWT bearer token specification
+* **2025-07-05**: Initial Decision - OIDC Authentication with Envoy Gateway per route (Proposed) because it promises a more straightforward, standards-compliant mechanism while aligning with operational capabilities and security requirements.
 
-### Architecture References
+***
 
-* [ADR-001: Centralized Secret Management](./001-centralized-secret-management.md) - OpenBao infrastructure foundation
-* [ADR-003: OpenBao Path and Naming Conventions](./003-openbao-path-naming-conventions.md) - Secret organization patterns
-* [ADR-004: OpenBao Policy Naming Conventions](./004-openbao-policy-naming-conventions.md) - Access control policies
+## References and Related Decisions \[Optional]
 
-### Security Guidelines
+* **Related ADRs**: [ADR-001: Centralized Secret Management](./001-centralized-secret-management.md), [ADR-003: OpenBao Path and Naming Conventions](./003-openbao-path-naming-conventions.md), [ADR-004: OpenBao Policy Naming Conventions](./004-openbao-policy-naming-conventions.md)
+* **Technical Documentation**: [Envoy Gateway Security Policy](https://gateway.envoyproxy.io/latest/api/extension_types/#securitypolicy), [Authelia OIDC Provider](https://www.authelia.com/configuration/identity-providers/openid-connect/), [RFC 6749: OAuth 2.0](https://tools.ietf.org/html/rfc6749), [RFC 6750: Bearer Token Usage](https://tools.ietf.org/html/rfc6750)
+* **Security Guidelines**: [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework), [OWASP Authentication Guidelines](https://owasp.org/www-project-cheat-sheets/cheatsheets/Authentication_Cheat_Sheet.html), [OAuth2 Security Best Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics)
 
-* [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework) - Zero Trust security principles
-* [OWASP Authentication Guidelines](https://owasp.org/www-project-cheat-sheets/cheatsheets/Authentication_Cheat_Sheet.html) - Authentication security best practices
-* [OAuth2 Security Best Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics) - OAuth2 security considerations
+***
 
 ## Changelog
 
-### Version 1.0
-
+* **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.
 * **2025-07-05**: **INITIALISATION**: Creation of the ADR document for OIDC authentication implementation.

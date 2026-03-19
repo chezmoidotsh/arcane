@@ -1,12 +1,52 @@
-<!--
-status: "proposed"
+---
+status: "implemented"
 date: 2025-06-29
+implementation-completed: 2026-03-19
 decision-makers: ["Alexandre"]
 consulted: ["ai/claude-4-sonnet"]
 informed: []
--->
+---
 
 # OpenBao Path and Naming Conventions
+
+## Table of Contents
+
+* [Context and Problem Statement](#context-and-problem-statement)
+* [Decision Drivers](#decision-drivers)
+  * [Functional Requirements](#functional-requirements)
+  * [Non-Functional Requirements](#non-functional-requirements)
+  * [Constraints](#constraints)
+* [Considered Options](#considered-options)
+  * [Option 1.1: Flat Structure](#option-11-flat-structure)
+  * [Option 1.2: Service-First Organization](#option-12-service-first-organization)
+  * [Option 1.3: Application-First Organization](#option-13-application-first-organization)
+  * [Option 2.1: Owner-Based Shared Secrets](#option-21-owner-based-shared-secrets)
+  * [Option 2.2: Function-Based Shared Secrets](#option-22-function-based-shared-secrets)
+* [Decision Outcome](#decision-outcome)
+  * [Per-Cluster Mount Structure](#per-cluster-mount-structure)
+  * [Shared Mount Structure](#shared-mount-structure)
+  * [Personal Mount Structure](#personal-mount-structure)
+    * [`sso` category](#sso-category)
+    * [`certificates` category](#certificates-category)
+    * [`third-parties` category](#third-parties-category)
+  * [Metadata Schema](#metadata-schema)
+* [Consequences \[Optional\]](#consequences-optional)
+  * [Positive](#positive)
+  * [Negative](#negative)
+  * [Neutral](#neutral)
+* [Implementation Details / Status \[Optional\]](#implementation-details--status-optional)
+  * [Certificate Management Strategy](#certificate-management-strategy)
+  * [Cross-Application Dependencies](#cross-application-dependencies)
+  * [AWS/Cloud Provider Organization](#awscloud-provider-organization)
+  * [Compliance and Monitoring](#compliance-and-monitoring)
+* [Decision Evolution \[Optional\]](#decision-evolution-optional)
+  * [Rationale](#rationale)
+    * [Why Application-First for Per-Cluster Mounts](#why-application-first-for-per-cluster-mounts)
+    * [Why Function-Based for Shared Mount](#why-function-based-for-shared-mount)
+    * [Why User-Isolated Personal Mount](#why-user-isolated-personal-mount)
+    * [Why This Metadata Schema](#why-this-metadata-schema)
+* [References and Related Decisions \[Optional\]](#references-and-related-decisions-optional)
+* [Changelog](#changelog)
 
 ## Context and Problem Statement
 
@@ -43,39 +83,40 @@ The challenge is defining conventions that are:
 
 ## Considered Options
 
-### Option 1.1: Flat Structure ❌
+### Option 1.1: Flat Structure
 
-* **Path Pattern**: `/{mount}/{secret-name}`
-* **Pros**: Simple, minimal hierarchy
-* **Cons**: Poor organization, difficult discovery at scale, no logical grouping
+> ✖️ **Status**: Rejected
 
-### Option 1.2: Service-First Organization ❌
+* `+` Simple, minimal hierarchy
+* `-` Poor organization, difficult discovery at scale, no logical grouping
 
-* **Path Pattern**: `/{mount}/{service-type}/{app}/{secret}`
-* **Example**: `/amiya.akn/database/argocd/postgres-admin`
-* **Pros**: Clear service categorization
-* **Cons**: Artificial grouping, doesn't reflect actual dependencies
+### Option 1.2: Service-First Organization
 
-### Option 1.3: Application-First Organization ✅
+> ✖️ **Status**: Rejected
 
-* **Path Pattern**: `/{mount}/{app}/{category}/{secret}`
-* **Example**: `/amiya.akn/argocd/database/postgres-admin`
-* **Pros**: Natural ownership model, clear responsibility boundaries
-* **Cons**: Shared dependencies require special handling
+* `+` Clear service categorization
+* `-` Artificial grouping, doesn't reflect actual dependencies
 
-### Option 2.1: Owner-Based Shared Secrets ❌
+### Option 1.3: Application-First Organization
 
-* **Path Pattern**: `/shared/{owner}/{service}/{secret}`
-* **Example**: `/shared/authelia/oidc-clients/argocd`
-* **Pros**: Clear ownership
-* **Cons**: Breaks mount isolation, creates cross-mount access requirements
+> ✔️ **Status**: Accepted
 
-### Option 2.2: Function-Based Shared Secrets ✅
+* `+` Natural ownership model, clear responsibility boundaries
+* `-` Shared dependencies require special handling
 
-* **Path Pattern**: `/shared/{function}/{category}/{secret}`
-* **Example**: `/shared/sso/oidc-client/argocd`
-* **Pros**: Logical grouping, maintains isolation
-* **Cons**: Requires metadata for ownership tracking
+### Option 2.1: Owner-Based Shared Secrets
+
+> ✖️ **Status**: Rejected
+
+* `+` Clear ownership
+* `-` Breaks mount isolation, creates cross-mount access requirements
+
+### Option 2.2: Function-Based Shared Secrets
+
+> ✔️ **Status**: Accepted
+
+* `+` Logical grouping, maintains isolation
+* `-` Requires metadata for ownership tracking
 
 ## Decision Outcome
 
@@ -220,38 +261,9 @@ This category contains shared credentials for third-party services (AWS, Cloudfl
 }
 ```
 
-## Rationale
+***
 
-### Why Application-First for Per-Cluster Mounts
-
-* **Natural Ownership**: Applications naturally own their secrets
-* **Clear Boundaries**: Easy to understand what belongs to which application
-* **RBAC Alignment**: Matches Kubernetes service account and RBAC patterns
-* **Operational Clarity**: Troubleshooting and maintenance follow application boundaries
-
-### Why Function-Based for Shared Mount
-
-* **Logical Grouping**: SSO, certificates, and third-party services are distinct functions
-* **Intuitive Navigation**: Easier to find shared authentication vs shared certificates
-* **Metadata Ownership**: Use metadata to track actual ownership without polluting paths
-* **Zero Trust Compliance**: Maintains mount-level isolation while enabling necessary sharing
-
-### Why User-Isolated Personal Mount
-
-* **Self-Service**: Users can manage their own tools and personal secrets independently
-* **Zero Trust**: Templated policies automatically enforce user isolation based on OIDC identity
-* **Operational Efficiency**: Reduces admin overhead for personal development tools
-* **Administrative Oversight**: Admins can audit personal namespaces while maintaining user privacy
-* **Category Consistency**: Follows same organizational patterns as other mounts
-
-### Why This Metadata Schema
-
-* **Minimal Overhead**: Only essential information required
-* **Pragmatic Extensions**: Optional fields provide value without complexity
-* **Homelab Appropriate**: Avoids enterprise-focused fields (criticality, rotation schedules)
-* **Discovery Support**: `x-apps` enables impact analysis for changes
-
-## Consequences
+## Consequences \[Optional]
 
 ### Positive
 
@@ -269,10 +281,12 @@ This category contains shared credentials for third-party services (AWS, Cloudfl
 
 ### Neutral
 
-* 📝 **Migration Required**: Existing secrets must be reorganized to follow conventions
-* 📝 **Tooling Updates**: Scripts and automation must adapt to new paths
+* ⚖️ **Migration Required**: Existing secrets must be reorganized to follow conventions
+* ⚖️ **Tooling Updates**: Scripts and automation must adapt to new paths
 
-## Implementation Considerations
+***
+
+## Implementation Details / Status \[Optional]
 
 ### Certificate Management Strategy
 
@@ -298,36 +312,61 @@ Cloud provider credentials follow service-based organization:
 * **IAM Strategy**: One IAM user per application with service-specific permissions
 * **Metadata Usage**: `x-aws-services` field documents accessible services
 
-## Compliance and Monitoring
+### Compliance and Monitoring
 
-### Security Compliance
-
-* **Mount Isolation**: Preserved from ADR-002 topology
+* **Security Compliance**: Preserved from ADR-002 topology
 * **Least Privilege**: Application-specific paths enable granular RBAC
 * **Audit Trail**: Metadata provides ownership and creation tracking
 
-## References
+***
 
-### Architecture Documentation
+## Decision Evolution \[Optional]
 
-* [ADR-002: OpenBao Secrets Mount Topology](./002-openbao-secrets-topology.md) - Foundational mount structure decisions
-* [HashiCorp Vault Path Structure Best Practices](https://developer.hashicorp.com/vault/tutorials/enterprise/namespace-structure) - Industry patterns and conventions
-* [OpenBao KV Secrets Engine Documentation](https://openbao.org/docs/secrets/kv/) - Technical capabilities and limitations
+### Rationale
 
-### Security Guidelines
+#### Why Application-First for Per-Cluster Mounts
 
-* [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework) - Zero Trust principles
-* [Secret Management Best Practices](https://kubernetes.io/docs/concepts/configuration/secret/) - Kubernetes-native patterns
-* [HashiCorp Vault Security Model](https://developer.hashicorp.com/vault/docs/internals/security) - Security architecture principles
+* **Natural Ownership**: Applications naturally own their secrets
+* **Clear Boundaries**: Easy to understand what belongs to which application
+* **RBAC Alignment**: Matches Kubernetes service account and RBAC patterns
+* **Operational Clarity**: Troubleshooting and maintenance follow application boundaries
 
-### Implementation References
+#### Why Function-Based for Shared Mount
 
-* [External Secrets Operator Documentation](https://external-secrets.io/) - Kubernetes secrets synchronization
-* [Cert-Manager Documentation](https://cert-manager.io/) - Certificate lifecycle management
-* [Crossplane Vault Injection Guide](https://docs.crossplane.io/latest/guides/vault-injection/#store-credentials-in-vault) - Guide to know how to store credentials in Vault with Crossplane
+* **Logical Grouping**: SSO, certificates, and third-party services are distinct functions
+* **Intuitive Navigation**: Easier to find shared authentication vs shared certificates
+* **Metadata Ownership**: Use metadata to track actual ownership without polluting paths
+* **Zero Trust Compliance**: Maintains mount-level isolation while enabling necessary sharing
+
+#### Why User-Isolated Personal Mount
+
+* **Self-Service**: Users can manage their own tools and personal secrets independently
+* **Zero Trust**: Templated policies automatically enforce user isolation based on OIDC identity
+* **Operational Efficiency**: Reduces admin overhead for personal development tools
+* **Administrative Oversight**: Admins can audit personal namespaces while maintaining user privacy
+* **Category Consistency**: Follows same organizational patterns as other mounts
+
+#### Why This Metadata Schema
+
+* **Minimal Overhead**: Only essential information required
+* **Pragmatic Extensions**: Optional fields provide value without complexity
+* **Homelab Appropriate**: Avoids enterprise-focused fields (criticality, rotation schedules)
+* **Discovery Support**: `x-apps` enables impact analysis for changes
+
+***
+
+## References and Related Decisions \[Optional]
+
+* **Related ADRs**: [ADR-002: OpenBao Secrets Mount Topology](./002-openbao-secrets-topology.md)
+* **Architecture Documentation**: [HashiCorp Vault Path Structure Best Practices](https://developer.hashicorp.com/vault/tutorials/enterprise/namespace-structure), [OpenBao KV Secrets Engine Documentation](https://openbao.org/docs/secrets/kv/)
+* **Security Guidelines**: [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework), [Secret Management Best Practices](https://kubernetes.io/docs/concepts/configuration/secret/), [HashiCorp Vault Security Model](https://developer.hashicorp.com/vault/docs/internals/security)
+* **Implementation References**: [External Secrets Operator Documentation](https://external-secrets.io/), [Cert-Manager Documentation](https://cert-manager.io/), [Crossplane Vault Injection Guide](https://docs.crossplane.io/latest/guides/vault-injection/#store-credentials-in-vault)
+
+***
 
 ## Changelog
 
+* **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.
 * **2025-08-30**: **FIX**: Replace example for Let's Encrypt account path convention (`/shared/third-parties/letsencrypt/certificate-authority/account`) with `/shared/certificates/certificate-authorities/letsencrypt/account`. The first example is invalid following the default policy defined into [ADR 004](004-openbao-policy-naming-conventions.md)
 * **2025-08-17**: **FEATURE**: Add example for Let's Encrypt account path convention `/shared/third-parties/letsencrypt/certificate-authority/account` for ACME account credentials used by cert-manager
 * **2025-08-11**: **FEATURE**: Add personal mount structure with user-isolated namespaces. Implemented two-tier templated policies (`personal-user-access` for standard users, `personal-admin-access` for administrators) using OIDC alias metadata templating. This enables self-service secret management for personal tools (Talos contexts, kubectl configs, personal API tokens) while maintaining zero-trust principles and administrative oversight capabilities.
