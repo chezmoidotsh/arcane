@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# =============================================================================
+# app:icon:generator
+# =============================================================================
+# Generate a stylized, optionally animated SVG icon from input words.
+# This wrapper delegates the heavy lifting to a Python script that uses `uv`
+# for seamless dependency management and execution.
+#
+# Usage:
+#   app:icon:generator [OPTIONS] <words>...
+#
+# Options:
+#   --dark        Use dark mode (black text)
+#   --animated    Include a CSS glitch animation effect
+#   --width       Target width in pixels
+#   --duration    Animation duration loop in seconds
+#   --font        Font file name or absolute path
+#   -h, --help    Show help message
+# =============================================================================
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TARGET_DIR="${SCRIPT_DIR}/app:icon:generator.d"
+
+# Verify that uv is installed and accessible
+if ! command -v uv >/dev/null 2>&1; then
+  echo "❌ Error: 'uv' is required but could not be found in your PATH."
+  echo ""
+  echo "This script relies on 'uv' to manage Python dependencies seamlessly."
+  echo "Please choose one of the following options:"
+  echo "  1. Use mise: Run 'mise install' at the root of the repository to get the full environment."
+  echo "  2. Install manually: Follow instructions at https://docs.astral.sh/uv/getting-started/installation/"
+  exit 1
+fi
+
+# Ensure we have the python environment when running the script
+cd "${TARGET_DIR}" && exec uv run main.py "$@"
