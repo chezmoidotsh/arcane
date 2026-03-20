@@ -1,12 +1,88 @@
-<!--
-status: "accepted"
+---
+status: "implemented"
 date: 2025-10-31
+implementation-completed: 2026-03-19
 decision-makers: ["Alexandre"]
 consulted: ["ai/claude-4-sonnet", "ai/claude-opus-4.5"]
 informed: []
--->
+---
 
 # Project Structure and Naming Conventions
+
+## Table of Contents
+
+* [Context and Problem Statement](#context-and-problem-statement)
+* [Decision Drivers](#decision-drivers)
+  * [Functional Requirements](#functional-requirements)
+  * [Non-Functional Requirements](#non-functional-requirements)
+  * [Constraints](#constraints)
+* [Considered Options](#considered-options)
+  * [Application Directory Naming](#application-directory-naming)
+  * [Label Schema](#label-schema)
+  * [HTTPRoute Naming](#httproute-naming)
+* [Decision Outcome](#decision-outcome)
+* [Implementation Details / Status \[Optional\]](#implementation-details--status-optional)
+  * [Standards Specification](#standards-specification)
+  * [1. Directory Structure](#1-directory-structure)
+    * [1.1 Application Directory Naming](#11-application-directory-naming)
+    * [1.2 Application Structure](#12-application-structure)
+  * [2. File Naming Conventions](#2-file-naming-conventions)
+    * [2.1 Resource Files](#21-resource-files)
+    * [2.2 Helmvalues Directory](#22-helmvalues-directory)
+    * [2.3 Network Policies](#23-network-policies)
+    * [2.4 Reference Grants](#24-reference-grants)
+  * [3. Kubernetes Labels](#3-kubernetes-labels)
+    * [3.1 Standard Labels (Application Level)](#31-standard-labels-application-level)
+    * [3.2 Workload-Specific Labels](#32-workload-specific-labels)
+    * [3.3 Label Guidelines](#33-label-guidelines)
+  * [4. Container Image Management](#4-container-image-management)
+    * [4.1 Centralized Image Configuration](#41-centralized-image-configuration)
+    * [4.2 Image Reference Pattern](#42-image-reference-pattern)
+    * [4.3 Image Configuration Examples](#43-image-configuration-examples)
+    * [4.4 Image Update Workflow](#44-image-update-workflow)
+    * [4.5 Registry Migration](#45-registry-migration)
+    * [4.6 Security Best Practices](#46-security-best-practices)
+    * [4.7 Helm Chart Image Override](#47-helm-chart-image-override)
+    * [4.8 Exception Cases](#48-exception-cases)
+  * [5. Kubernetes Annotations](#5-kubernetes-annotations)
+    * [5.1 HTTPRoute Annotations](#51-httproute-annotations)
+    * [5.2 Other Standard Annotations](#52-other-standard-annotations)
+  * [6. Resource Naming Standards](#6-resource-naming-standards)
+    * [6.1 HTTPRoute Naming](#61-httproute-naming)
+    * [6.2 PostgreSQL Database Naming](#62-postgresql-database-naming)
+    * [6.3 Secret Naming](#63-secret-naming)
+    * [6.4 Service Naming](#64-service-naming)
+  * [7. Kustomization Structure](#7-kustomization-structure)
+    * [7.1 Standard Kustomization](#71-standard-kustomization)
+    * [7.2 Helm-Based Kustomization](#72-helm-based-kustomization)
+    * [7.3 Component-Based Kustomization](#73-component-based-kustomization)
+  * [8. Security Directory Structure](#8-security-directory-structure)
+    * [8.1 Standard Structure](#81-standard-structure)
+    * [8.2 Security Kustomization](#82-security-kustomization)
+  * [9. Secret Management](#9-secret-management)
+    * [9.1 OpenBao Path Structure](#91-openbao-path-structure)
+    * [9.2 ExternalSecret Configuration](#92-externalsecret-configuration)
+    * [9.3 Database Secret Pattern](#93-database-secret-pattern)
+  * [10. Database Management](#10-database-management)
+    * [10.1 CloudNative-PG Cluster](#101-cloudnative-pg-cluster)
+    * [10.2 Database Backup Configuration](#102-database-backup-configuration)
+    * [10.3 Object Storage Configuration](#103-object-storage-configuration)
+  * [11. Namespace Management](#11-namespace-management)
+    * [11.1 Namespace Creation](#111-namespace-creation)
+  * [12. Project Structure Patterns](#12-project-structure-patterns)
+    * [12.1 Core Platform Cluster (amiya.akn pattern)](#121-core-platform-cluster-amiyaakn-pattern)
+    * [12.2 Application Cluster (lungmen.akn pattern)](#122-application-cluster-lungmenakn-pattern)
+    * [12.3 Shared Infrastructure (chezmoi.sh pattern)](#123-shared-infrastructure-chezmoish-pattern)
+  * [Validation and Compliance](#validation-and-compliance)
+  * [Automated Validation (Future)](#automated-validation-future)
+  * [Manual Review Checklist](#manual-review-checklist)
+  * [Sync Policy Decision Matrix](#sync-policy-decision-matrix)
+* [References and Related Decisions \[Optional\]](#references-and-related-decisions-optional)
+  * [Internal Documentation](#internal-documentation)
+  * [Kubernetes Standards](#kubernetes-standards)
+  * [ArgoCD Integration](#argocd-integration)
+  * [Dependency Management](#dependency-management)
+* [Changelog](#changelog)
 
 ## Context and Problem Statement
 
@@ -288,7 +364,9 @@ This decision establishes a complete, consistent structure across all Arcane pro
 3. **Comprehensive labeling** for proper resource management
 4. **Consistent organization** across all project types
 
-## Standards Specification
+## Implementation Details / Status \[Optional]
+
+### Standards Specification
 
 ### 1. Directory Structure
 
@@ -854,7 +932,7 @@ metadata:
 * `external-dns.alpha.kubernetes.io/include-unifi`: Enable UniFi DNS integration
 * `link.argocd.argoproj.io/external-link`: Provide direct access link in ArgoCD UI
 
-#### 4.2 Other Standard Annotations
+#### 5.2 Other Standard Annotations
 
 **Sync Waves** (ArgoCD):
 
@@ -874,7 +952,7 @@ metadata:
 
 ### 6. Resource Naming Standards
 
-#### 5.1 HTTPRoute Naming
+#### 6.1 HTTPRoute Naming
 
 **Single Route**:
 
@@ -896,7 +974,7 @@ metadata:
 * `pocket-id-public` - Public route variant
 * `atuin-websecure` - HTTPS route (when distinguishing from HTTP)
 
-#### 5.2 PostgreSQL Database Naming
+#### 6.2 PostgreSQL Database Naming
 
 **Cluster Name**: `{application-name}-database`
 
@@ -912,7 +990,7 @@ metadata:
   name: pocket-id-database
 ```
 
-#### 5.3 Secret Naming
+#### 6.3 Secret Naming
 
 **Database Secrets**: `{application-name}-database-{role}`
 
@@ -928,7 +1006,7 @@ metadata:
   name: pocket-id-database-pocket-id  # Matches generated secret
 ```
 
-#### 5.4 Service Naming
+#### 6.4 Service Naming
 
 **Standard**: `{application-name}`
 
@@ -940,7 +1018,7 @@ metadata:
 
 ### 7. Kustomization Structure
 
-#### 6.1 Standard Kustomization
+#### 7.1 Standard Kustomization
 
 ```yaml
 ---
@@ -968,7 +1046,7 @@ resources:
   - security/
 ```
 
-#### 6.2 Helm-Based Kustomization
+#### 7.2 Helm-Based Kustomization
 
 ```yaml
 ---
@@ -994,7 +1072,7 @@ helmCharts:
 
 **Note**: Labels are typically applied through Helm values rather than Kustomization when using helmCharts.
 
-#### 6.3 Component-Based Kustomization
+#### 7.3 Component-Based Kustomization
 
 **Usage**: Infrastructure components that are reusable
 
@@ -1017,7 +1095,7 @@ kind: Component
 
 ### 8. Security Directory Structure
 
-#### 7.1 Standard Structure
+#### 8.1 Standard Structure
 
 ```
 security/
@@ -1029,7 +1107,7 @@ security/
 └── reference-grant.*.yaml
 ```
 
-#### 7.2 Security Kustomization
+#### 8.2 Security Kustomization
 
 ```yaml
 ---
@@ -1047,7 +1125,7 @@ resources:
 
 ### 9. Secret Management
 
-#### 8.1 OpenBao Path Structure
+#### 9.1 OpenBao Path Structure
 
 **Per-Application Secrets**:
 
@@ -1070,7 +1148,7 @@ resources:
 
 **Reference**: See [ADR-003: OpenBao Path Naming Conventions](./003-openbao-path-naming-conventions.md)
 
-#### 8.2 ExternalSecret Configuration
+#### 9.2 ExternalSecret Configuration
 
 **Standard Pattern**:
 
@@ -1101,7 +1179,7 @@ spec:
 * Standard applications: `1h`
 * Non-critical: `6h`
 
-#### 8.3 Database Secret Pattern
+#### 9.3 Database Secret Pattern
 
 ```yaml
 ---
@@ -1127,7 +1205,7 @@ spec:
 
 ### 10. Database Management
 
-#### 9.1 CloudNative-PG Cluster
+#### 10.1 CloudNative-PG Cluster
 
 **Standard Configuration**:
 
@@ -1167,7 +1245,7 @@ spec:
     size: 1Gi
 ```
 
-#### 9.2 Database Backup Configuration
+#### 10.2 Database Backup Configuration
 
 **File**: `{application-name}.postgresql-backup.yaml`
 
@@ -1184,7 +1262,7 @@ spec:
     name: {application-name}-database
 ```
 
-#### 9.3 Object Storage Configuration
+#### 10.3 Object Storage Configuration
 
 **File**: `{application-name}.postgresql-objectstore.yaml`
 
@@ -1192,7 +1270,7 @@ spec:
 
 ### 11. Namespace Management
 
-#### 10.1 Namespace Creation
+#### 11.1 Namespace Creation
 
 **ArgoCD-Managed Applications**:
 
@@ -1229,7 +1307,7 @@ metadata:
 
 ### 12. Project Structure Patterns
 
-#### 11.1 Core Platform Cluster (amiya.akn pattern)
+#### 12.1 Core Platform Cluster (amiya.akn pattern)
 
 ```
 projects/amiya.akn/
@@ -1276,7 +1354,7 @@ projects/amiya.akn/
     └── architecture.svg
 ```
 
-#### 11.2 Application Cluster (lungmen.akn pattern)
+#### 12.2 Application Cluster (lungmen.akn pattern)
 
 ```
 projects/lungmen.akn/
@@ -1325,7 +1403,7 @@ projects/lungmen.akn/
     └── architecture.svg
 ```
 
-#### 11.3 Shared Infrastructure (chezmoi.sh pattern)
+#### 12.3 Shared Infrastructure (chezmoi.sh pattern)
 
 ```
 projects/chezmoi.sh/
@@ -1340,234 +1418,7 @@ projects/chezmoi.sh/
             └── roles/
 ```
 
-## Implementation Strategy
-
-### Phase 1: Documentation and Validation
-
-**Actions**:
-
-1. **Publish ADR** as canonical reference
-2. **Create migration guide** with before/after examples
-3. **Update project READMEs** to reference this ADR
-4. **Document asterisk convention** in ArgoCD README
-
-**Timeline**: Immediate
-
-### Phase 2: New Application Compliance
-
-**Actions**:
-
-1. **All new applications** MUST follow these standards
-2. **Application templates** created for quick bootstrapping
-3. **CI/CD validation** to check compliance (future)
-4. **Decision matrix** for asterisk prefix usage
-
-**Timeline**: Immediate for new apps
-
-### Phase 3: Gradual Migration
-
-**Priority Order**:
-
-1. **lungmen.akn** (Active development, smaller scope)
-   * Standardize labels across all apps
-   * Align HTTPRoute naming
-   * Update security directory structure
-   * Add Renovate version labels
-
-2. **amiya.akn** (Production, higher impact)
-   * Standardize labels (add component, instance)
-   * Add version labels for Renovate where missing
-   * Standardize ExternalSecret refresh intervals
-   * Verify asterisk prefix usage aligns with criteria
-
-3. **chezmoi.sh** (Infrastructure, minimal changes)
-   * Ensure Crossplane resource naming consistency
-
-**Timeline**: Incremental, non-breaking changes prioritized
-
-### Phase 4: Tooling and Automation
-
-**Actions**:
-
-1. **Validation scripts** to check compliance
-2. **Application generator** (cookiecutter/template)
-3. **Documentation generator** for standard structures
-4. **Renovate configuration** optimized for label-based tracking
-
-**Timeline**: After Phase 2 completion
-
-## Migration Guidelines
-
-### Safe Migration Approach
-
-**Principle**: Maintain backward compatibility during migration
-
-**Steps**:
-
-1. **Audit current state** of each project
-2. **Plan changes** in isolated branches
-3. **Test in lungmen.akn** (non-production) first
-4. **Apply to amiya.akn** with careful validation
-5. **Monitor ArgoCD sync** for issues
-
-### ApplicationPatch Management
-
-**Creating ApplicationPatch** (for new application):
-
-```yaml
-# {application-name}/.application.patch
-apiVersion: arcane.chezmoi.sh/v1alpha1
-kind: ApplicationPatch
-metadata: {}
-spec:
-  info:
-    - name: Description
-      value: Brief description of the application
-    - name: Category
-      value: Category / Subcategory
-    - name: Version
-      # renovate: datasource=helm depName=chart registryUrl=https://charts.example.com
-      value: "1.0.0"
-
-  syncPolicy:
-    automated:
-      enabled: true  # or false for manual sync
-```
-
-**Changing Sync Policy** (auto to manual):
-
-> \[!CAUTION]
-> This changes sync behavior. Application will stop auto-syncing and require manual sync.
-
-```yaml
-# Edit .application.patch
-spec:
-  syncPolicy:
-    automated:
-      enabled: false  # Changed from true
-```
-
-```bash
-# Commit with clear message
-git commit -m ":wrench:(project:amiya.akn): Disable auto-sync for critical-app per ADR-007"
-```
-
-**Migrating from Asterisk Prefix** (legacy pattern):
-
-> \[!NOTE]
-> This migration removes the asterisk prefix and adds an `.application.patch` file.
-
-```bash
-# 1. Rename directory to remove asterisk
-git mv projects/amiya.akn/src/apps/*critical-app \
-       projects/amiya.akn/src/apps/critical-app
-
-# 2. Create .application.patch with manual sync policy
-cat > projects/amiya.akn/src/apps/critical-app/.application.patch << 'EOF'
-apiVersion: arcane.chezmoi.sh/v1alpha1
-kind: ApplicationPatch
-metadata: {}
-spec:
-  info:
-    - name: Description
-      value: Critical application description
-    - name: Category
-      value: Infrastructure / Critical
-
-  syncPolicy:
-    automated:
-      enabled: false  # Manual sync for critical infrastructure
-EOF
-
-# 3. Commit with clear message
-git commit -m ":truck:(project:amiya.akn): Migrate critical-app to .application.patch per ADR-007"
-```
-
-### Label Standardization
-
-**Non-Breaking Change**: Labels can be added without disruption
-
-**Approach**:
-
-1. Add missing standard labels to kustomization.yaml
-2. ArgoCD will update resources on next sync
-3. Verify label propagation with `kubectl get {resource} --show-labels`
-
-**Example Diff**:
-
-```diff
- labels:
-   - pairs:
-       app.kubernetes.io/name: atuin
--      app.kubernetes.io/part-of: atuin
-     includeTemplates: true
-+    includeSelectors: true
-   - pairs:
-       # renovate: datasource=docker depName=ghcr.io/atuinsh/atuin
-       app.kubernetes.io/version: v18.0.0
-     includeTemplates: true
-```
-
-**Note**: Instance and component labels should be managed in individual workload manifests.
-
-### HTTPRoute Naming
-
-**Breaking Change**: Renaming HTTPRoutes requires coordination
-
-**Approach**:
-
-1. **Assess impact**: Check Gateway API references
-2. **Create new route**: Add route with new name
-3. **Test access**: Verify routing works
-4. **Remove old route**: Delete old HTTPRoute
-5. **Update ArgoCD**: Update Application sync status
-
-**Example**:
-
-```bash
-# Before: atuin-websecure
-# After: atuin (single route, no suffix needed)
-
-# Apply new route
-kubectl apply -f atuin.httproute.yaml
-
-# Test access
-curl -I https://atuin.chezmoi.sh
-
-# Remove old route (after validation)
-kubectl delete httproute atuin-websecure -n atuin
-```
-
-## Consequences
-
-### Positive
-
-* ✅ **Consistency**: Single source of truth for all project structures
-* ✅ **Safety**: `.application.patch` files provide explicit sync control for critical infrastructure
-* ✅ **Reduced Cognitive Load**: No context switching between different patterns
-* ✅ **Better Tooling**: Automation can rely on predictable structures
-* ✅ **Easier Onboarding**: Clear standards for new applications
-* ✅ **Improved Discoverability**: Predictable resource locations
-* ✅ **Renovate Integration**: Standardized version tracking across all projects
-* ✅ **ArgoCD Efficiency**: Predictable application structures improve GitOps workflows
-* ✅ **Migration Path**: Clear guidelines for standardizing existing projects
-
-### Negative
-
-* ⚠️ **Migration Effort**: Existing projects require refactoring
-* ⚠️ **Learning Curve**: Operators must learn comprehensive standards including `.application.patch` convention
-* ⚠️ **Breaking Changes**: Some migrations (HTTPRoute renaming) may cause brief disruptions
-* ⚠️ **Documentation Overhead**: Standards require ongoing maintenance as ecosystem evolves
-* ⚠️ **Additional File Overhead**: Each application requires an `.application.patch` file for explicit sync control
-
-### Neutral
-
-* 📝 **Template Maintenance**: Application templates need updates to match standards
-* 📝 **CI/CD Updates**: Validation pipelines should enforce new standards
-* 📝 **Documentation Updates**: All project READMEs need standard structure references
-* 📝 **Decision Matrix**: Need clear criteria for when to use manual vs automated sync
-
-## Validation and Compliance
+### Validation and Compliance
 
 ### Automated Validation (Future)
 
@@ -1618,7 +1469,7 @@ For each new application:
 * [ ] Application has minimal cluster dependencies
 * [ ] Rapid iteration and updates desired
 
-## References
+## References and Related Decisions \[Optional]
 
 ### Internal Documentation
 
@@ -1648,6 +1499,7 @@ For each new application:
 
 ## Changelog
 
+* **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.
 * **2026-01-13**: Replaced asterisk prefix mechanism with `.application.patch` files for ArgoCD sync control. This provides granular sync policies, rich metadata support, and standard filesystem naming. Deprecated Option 1.1 in favor of new Option 1.4. Status changed from "proposed" to "accepted".
 * **2025-11-02**: Corrected label placement to address selector/template conflicts - removed `app.kubernetes.io/instance` and `app.kubernetes.io/component` from kustomization.yaml (workload-specific), keeping only `app.kubernetes.io/name` (with `includeSelectors: true`) and `app.kubernetes.io/version` at application level
 * **2025-11-01**: Added Renovate configuration for automated label and image override tracking, including regex managers for `app.kubernetes.io/version` labels and Kustomize `images` field updates
