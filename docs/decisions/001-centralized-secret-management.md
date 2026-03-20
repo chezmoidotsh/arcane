@@ -30,15 +30,15 @@ informed: []
     * [Initial Decision (2025-01-20): Infisical](#initial-decision-2025-01-20-infisical)
     * [Revised Decision (2025-01-23): HashiCorp Vault](#revised-decision-2025-01-23-hashicorp-vault)
     * [Revised Decision (2025-01-24): OpenBao](#revised-decision-2025-01-24-openbao)
-* [Consequences \[Optional\]](#consequences-optional)
+* [Consequences](#consequences)
   * [Positive](#positive)
   * [Negative](#negative)
-* [Implementation Details / Status \[Optional\]](#implementation-details--status-optional)
+* [Implementation Details / Status](#implementation-details--status)
   * [Implementation Status](#implementation-status)
   * [More Information](#more-information)
     * [Implementation Architecture (OpenBao) - **As Implemented**](#implementation-architecture-openbao---as-implemented)
     * [Lessons Learned from Decision Evolution](#lessons-learned-from-decision-evolution)
-* [References and Related Decisions \[Optional\]](#references-and-related-decisions-optional)
+* [References and Related Decisions](#references-and-related-decisions)
 * [Changelog](#changelog)
 
 ## Context and Problem Statement
@@ -199,7 +199,7 @@ Chosen option: "Infisical", because it provided modern UI, self-hosting capabili
 
 ***
 
-## Consequences \[Optional]
+## Consequences
 
 ### Positive
 
@@ -220,7 +220,7 @@ Chosen option: "Infisical", because it provided modern UI, self-hosting capabili
 
 ***
 
-## Implementation Details / Status \[Optional]
+## Implementation Details / Status
 
 ### Implementation Status
 
@@ -295,7 +295,7 @@ Chosen option: "Infisical", because it provided modern UI, self-hosting capabili
 
 ***
 
-## References and Related Decisions \[Optional]
+## References and Related Decisions
 
 * [HashiCorp Vault Documentation](https://developer.hashicorp.com/vault)
 * [Vault Kubernetes Integration](https://developer.hashicorp.com/vault/docs/platform/k8s)

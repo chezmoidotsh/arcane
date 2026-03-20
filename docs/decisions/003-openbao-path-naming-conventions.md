@@ -30,22 +30,22 @@ informed: []
     * [`certificates` category](#certificates-category)
     * [`third-parties` category](#third-parties-category)
   * [Metadata Schema](#metadata-schema)
-* [Consequences \[Optional\]](#consequences-optional)
+* [Consequences](#consequences)
   * [Positive](#positive)
   * [Negative](#negative)
   * [Neutral](#neutral)
-* [Implementation Details / Status \[Optional\]](#implementation-details--status-optional)
+* [Implementation Details / Status](#implementation-details--status)
   * [Certificate Management Strategy](#certificate-management-strategy)
   * [Cross-Application Dependencies](#cross-application-dependencies)
   * [AWS/Cloud Provider Organization](#awscloud-provider-organization)
   * [Compliance and Monitoring](#compliance-and-monitoring)
-* [Decision Evolution \[Optional\]](#decision-evolution-optional)
+* [Decision Evolution](#decision-evolution)
   * [Rationale](#rationale)
     * [Why Application-First for Per-Cluster Mounts](#why-application-first-for-per-cluster-mounts)
     * [Why Function-Based for Shared Mount](#why-function-based-for-shared-mount)
     * [Why User-Isolated Personal Mount](#why-user-isolated-personal-mount)
     * [Why This Metadata Schema](#why-this-metadata-schema)
-* [References and Related Decisions \[Optional\]](#references-and-related-decisions-optional)
+* [References and Related Decisions](#references-and-related-decisions)
 * [Changelog](#changelog)
 
 ## Context and Problem Statement
@@ -263,7 +263,7 @@ This category contains shared credentials for third-party services (AWS, Cloudfl
 
 ***
 
-## Consequences \[Optional]
+## Consequences
 
 ### Positive
 
@@ -286,7 +286,7 @@ This category contains shared credentials for third-party services (AWS, Cloudfl
 
 ***
 
-## Implementation Details / Status \[Optional]
+## Implementation Details / Status
 
 ### Certificate Management Strategy
 
@@ -320,7 +320,7 @@ Cloud provider credentials follow service-based organization:
 
 ***
 
-## Decision Evolution \[Optional]
+## Decision Evolution
 
 ### Rationale
 
@@ -355,7 +355,7 @@ Cloud provider credentials follow service-based organization:
 
 ***
 
-## References and Related Decisions \[Optional]
+## References and Related Decisions
 
 * **Related ADRs**: [ADR-002: OpenBao Secrets Mount Topology](./002-openbao-secrets-topology.md)
 * **Architecture Documentation**: [HashiCorp Vault Path Structure Best Practices](https://developer.hashicorp.com/vault/tutorials/enterprise/namespace-structure), [OpenBao KV Secrets Engine Documentation](https://openbao.org/docs/secrets/kv/)
