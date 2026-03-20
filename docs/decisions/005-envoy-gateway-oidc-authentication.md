@@ -24,18 +24,18 @@ informed: []
   * [Option 3: OIDC Authentication with Envoy Gateway on the gateway level](#option-3-oidc-authentication-with-envoy-gateway-on-the-gateway-level)
 * [Decision Outcome](#decision-outcome)
   * [Implementation Architecture](#implementation-architecture)
-* [Consequences \[Optional\]](#consequences-optional)
+* [Consequences](#consequences)
   * [Positive](#positive)
   * [Negative](#negative)
   * [Neutral](#neutral)
-* [Implementation Details / Status \[Optional\]](#implementation-details--status-optional)
+* [Implementation Details / Status](#implementation-details--status)
   * [Implementation Strategy](#implementation-strategy)
     * [Phase 1: OIDC Infrastructure Foundation](#phase-1-oidc-infrastructure-foundation)
     * [Phase 2: Application Integration](#phase-2-application-integration)
     * [Phase 3: Automation and Scaling](#phase-3-automation-and-scaling)
   * [Risks and Mitigations](#risks-and-mitigations)
-* [Decision Evolution \[Optional\]](#decision-evolution-optional)
-* [References and Related Decisions \[Optional\]](#references-and-related-decisions-optional)
+* [Decision Evolution](#decision-evolution)
+* [References and Related Decisions](#references-and-related-decisions)
 * [Changelog](#changelog)
 
 ## Context and Problem Statement
@@ -146,7 +146,7 @@ Implement authentication at the gateway level with session sharing across applic
 
 ***
 
-## Consequences \[Optional]
+## Consequences
 
 ### Positive
 
@@ -171,7 +171,7 @@ Implement authentication at the gateway level with session sharing across applic
 
 ***
 
-## Implementation Details / Status \[Optional]
+## Implementation Details / Status
 
 ### Implementation Strategy
 
@@ -202,13 +202,13 @@ Implement authentication at the gateway level with session sharing across applic
 
 ***
 
-## Decision Evolution \[Optional]
+## Decision Evolution
 
 * **2025-07-05**: Initial Decision - OIDC Authentication with Envoy Gateway per route (Proposed) because it promises a more straightforward, standards-compliant mechanism while aligning with operational capabilities and security requirements.
 
 ***
 
-## References and Related Decisions \[Optional]
+## References and Related Decisions
 
 * **Related ADRs**: [ADR-001: Centralized Secret Management](./001-centralized-secret-management.md), [ADR-003: OpenBao Path and Naming Conventions](./003-openbao-path-naming-conventions.md), [ADR-004: OpenBao Policy Naming Conventions](./004-openbao-policy-naming-conventions.md)
 * **Technical Documentation**: [Envoy Gateway Security Policy](https://gateway.envoyproxy.io/latest/api/extension_types/#securitypolicy), [Authelia OIDC Provider](https://www.authelia.com/configuration/identity-providers/openid-connect/), [RFC 6749: OAuth 2.0](https://tools.ietf.org/html/rfc6749), [RFC 6750: Bearer Token Usage](https://tools.ietf.org/html/rfc6750)

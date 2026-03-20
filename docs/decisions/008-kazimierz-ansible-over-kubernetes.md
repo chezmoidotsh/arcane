@@ -28,21 +28,21 @@ informed: []
     * [3. No Component Reusability](#3-no-component-reusability)
     * [4. Standalone ArgoCD Resource Waste](#4-standalone-argocd-resource-waste)
     * [5. Operational Context Mismatch](#5-operational-context-mismatch)
-* [Consequences \[Optional\]](#consequences-optional)
+* [Consequences](#consequences)
   * [Positive](#positive)
   * [Negative](#negative)
   * [Neutral](#neutral)
-* [Implementation Details / Status \[Optional\]](#implementation-details--status-optional)
+* [Implementation Details / Status](#implementation-details--status)
   * [Configuration Management Tool Selection](#configuration-management-tool-selection)
   * [GitOps Automation Model](#gitops-automation-model)
   * [Deployment Components](#deployment-components)
   * [Risks and Mitigations](#risks-and-mitigations)
-* [Decision Evolution \[Optional\]](#decision-evolution-optional)
+* [Decision Evolution](#decision-evolution)
   * [Implementation Challenges Encountered (8 major iterations)](#implementation-challenges-encountered-8-major-iterations)
   * [Lessons Learned](#lessons-learned)
     * [When Kubernetes Makes Sense](#when-kubernetes-makes-sense)
     * [When Docker Compose + Ansible Makes Sense](#when-docker-compose--ansible-makes-sense)
-* [References and Related Decisions \[Optional\]](#references-and-related-decisions-optional)
+* [References and Related Decisions](#references-and-related-decisions)
 * [Changelog](#changelog)
 
 ## Context and Problem Statement
@@ -272,7 +272,7 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 
 ***
 
-## Consequences \[Optional]
+## Consequences
 
 ### Positive
 
@@ -305,7 +305,7 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 
 ***
 
-## Implementation Details / Status \[Optional]
+## Implementation Details / Status
 
 ### Configuration Management Tool Selection
 
@@ -347,7 +347,7 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 
 ***
 
-## Decision Evolution \[Optional]
+## Decision Evolution
 
 ### Implementation Challenges Encountered (8 major iterations)
 
@@ -381,7 +381,7 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 
 ***
 
-## References and Related Decisions \[Optional]
+## References and Related Decisions
 
 * **Technical Documentation**: [Pangolin Official Documentation](https://github.com/fosrl/pangolin), [Ansible Documentation](https://docs.ansible.com/), [ansible-pull Documentation](https://docs.ansible.com/ansible/latest/cli/ansible-pull.html), [ARA Records Ansible](https://ara.recordsansible.org/)
 * **Ansible Roles and Collections**: [geerlingguy.docker](https://github.com/geerlingguy/ansible-role-docker), [artis3n.tailscale](https://github.com/artis3n/ansible-role-tailscale), [community.general](https://docs.ansible.com/ansible/latest/collections/community/general/), [community.docker](https://docs.ansible.com/ansible/latest/collections/community/docker/)
