@@ -11,11 +11,6 @@ resources:
   - n8n-main.deployment.yaml
   - n8n-worker.deployment.yaml
 
-  # Database
-  - n8n.postgresql.yaml
-  - n8n.postgresql-backup.yaml
-  - n8n.postgresql-objectstore.yaml
-
   # Redis queue
   - n8n.redis-statefulset.yaml
   - n8n.redis-service.yaml
