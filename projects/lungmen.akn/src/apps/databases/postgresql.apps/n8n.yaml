@@ -1,0 +1,28 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: apps-n8n
+spec:
+  cluster:
+    name: postgres-apps
+  name: n8n
+  owner: n8n
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: n8n-database-credentials
+spec:
+  dataFrom:
+    - extract:
+        key: lungmen.akn/n8n/database/postgresql
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    template:
+      data:
+        username: n8n
+        password: "{{ .password }}"
