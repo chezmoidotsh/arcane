@@ -14,9 +14,6 @@ resources:
   - atuin.deployment.yaml
   - atuin.httproute.yaml
   - atuin.ingress.yaml
-  - atuin.postgresql-backup.yaml
-  - atuin.postgresql-objectstore.yaml
-  - atuin.postgresql.yaml
   - atuin.storage.yaml
   - atuin.externalsecret-database.yaml
 

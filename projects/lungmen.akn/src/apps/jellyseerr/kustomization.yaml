@@ -23,9 +23,6 @@ resources:
   - security/
 
   - jellyseerr.httproute.yaml
-  - jellyseerr.postgresql-backup.yaml
-  - jellyseerr.postgresql-objectstore.yaml
-  - jellyseerr.postgresql.yaml
   - jellyseerr.externalsecret-database.yaml
 
 images:

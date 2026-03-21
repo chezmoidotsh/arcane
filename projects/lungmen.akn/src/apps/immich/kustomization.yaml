@@ -14,9 +14,6 @@ resources:
   - immich.configuration.externalsecret.yaml
   - immich.httproute.yaml
   - immich.machine-learning.yaml
-  - immich.postgresql-backup.yaml
-  - immich.postgresql-objectstore.yaml
-  - immich.postgresql.yaml
   - immich.redis.yaml
   - immich.server.yaml
   - immich.smb-storage.yaml

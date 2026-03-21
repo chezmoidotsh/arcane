@@ -13,9 +13,6 @@ labels:
 resources:
   - paperless-ngx.configuration.externalsecret.yaml
   - paperless-ngx.httproute.yaml
-  - paperless-ngx.postgresql-backup.yaml
-  - paperless-ngx.postgresql-objectstore.yaml
-  - paperless-ngx.postgresql.yaml
   - paperless-ngx.redis.yaml
   - paperless-ngx.smb-storage.yaml
   - paperless-ngx.statefulset.yaml
