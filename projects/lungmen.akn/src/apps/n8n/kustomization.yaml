@@ -22,6 +22,7 @@ resources:
 
   # External secrets
   - n8n.externalsecret-encryption-key.yaml
+  - n8n.externalsecret-database.yaml
 
   # HTTPRoute for ingress
   - n8n.httproute.yaml

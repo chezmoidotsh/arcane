@@ -19,6 +19,7 @@ resources:
   - paperless-ngx.redis.yaml
   - paperless-ngx.smb-storage.yaml
   - paperless-ngx.statefulset.yaml
+  - paperless-ngx.externalsecret-database.yaml
 
   - security/
 

@@ -18,6 +18,7 @@ resources:
   - atuin.postgresql-objectstore.yaml
   - atuin.postgresql.yaml
   - atuin.storage.yaml
+  - atuin.externalsecret-database.yaml
 
   - security/
 

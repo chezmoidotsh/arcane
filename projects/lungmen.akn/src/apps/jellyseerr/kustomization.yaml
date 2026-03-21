@@ -26,6 +26,7 @@ resources:
   - jellyseerr.postgresql-backup.yaml
   - jellyseerr.postgresql-objectstore.yaml
   - jellyseerr.postgresql.yaml
+  - jellyseerr.externalsecret-database.yaml
 
 images:
   # renovate: datasource=docker depName=ghcr.io/fallenbagel/jellyseerr

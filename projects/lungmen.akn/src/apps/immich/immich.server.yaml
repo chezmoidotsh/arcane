@@ -36,7 +36,7 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: DB_HOSTNAME
-              value: immich-database-rw
+              value: postgres-apps-secured-rw.databases.svc.cluster.local
             - name: DB_PORT
               value: "5432"
             - name: DB_DATABASE_NAME

@@ -17,6 +17,7 @@ resources:
   - linkding.postgresql-objectstore.yaml
   - linkding.postgresql.yaml
   - linkding.deployment.yaml
+  - linkding.externalsecret-database.yaml
 
   - security/
 

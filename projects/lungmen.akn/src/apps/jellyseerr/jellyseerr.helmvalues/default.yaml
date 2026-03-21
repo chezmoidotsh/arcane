@@ -9,7 +9,7 @@ extraEnv:
   - name: DB_TYPE
     value: postgres
   - name: DB_HOST
-    value: jellyseerr-database-rw
+    value: postgres-apps-rw.databases.svc.cluster.local
   - name: DB_PORT
     value: "5432"
   - name: DB_NAME

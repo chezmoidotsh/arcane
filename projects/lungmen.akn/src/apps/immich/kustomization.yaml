@@ -20,6 +20,7 @@ resources:
   - immich.redis.yaml
   - immich.server.yaml
   - immich.smb-storage.yaml
+  - immich.externalsecret-database.yaml
 
   - security/
 

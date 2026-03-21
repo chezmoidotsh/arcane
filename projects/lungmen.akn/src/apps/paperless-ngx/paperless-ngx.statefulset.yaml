@@ -39,7 +39,7 @@ spec:
             - name: PAPERLESS_DBENGINE
               value: postgresql
             - name: PAPERLESS_DBHOST
-              value: paperless-ngx-database-rw
+              value: postgres-apps-secured-rw.databases.svc.cluster.local
             - name: PAPERLESS_DBNAME
               value: paperless
             - name: PAPERLESS_DBPORT

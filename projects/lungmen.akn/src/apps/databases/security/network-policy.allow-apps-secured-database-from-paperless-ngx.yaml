@@ -1,0 +1,22 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Paperless-ngx to access the secured PostgreSQL cluster (postgres-apps-secured)
+      in the databases namespace.
+  name: allow-apps-secured-database-from-paperless-ngx
+  namespace: databases
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: postgres-apps-secured
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: paperless-ngx
+            app.kubernetes.io/component: webserver
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP

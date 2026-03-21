@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Paperless-ngx to access the secured mutualized PostgreSQL database.
+  name: allow-paperless-ngx-to-databases
+  namespace: paperless-ngx
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: webserver
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: databases
+            app.kubernetes.io/instance: postgres-apps-secured
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
