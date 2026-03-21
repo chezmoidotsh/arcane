@@ -3,14 +3,15 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows shared PostgreSQL database to connect to S3-compatible storage for backups.
-      Required for CloudNative-PG backup functionality.
-  name: allow-postgres-to-s3-backup
+      Allows all mutualized PostgreSQL clusters to connect to
+      S3-compatible storage for backups via CloudNative-PG.
+  name: allow-cnpg-databases-to-s3-backup
   namespace: databases
 spec:
   endpointSelector:
-    matchLabels:
-      cnpg.io/cluster: shared
+    - matchExpressions:
+        - key: cnpg.io/cluster
+          operator: Exists
   egress:
     - toFQDNs:
         - matchName: s3.chezmoi.sh

@@ -1,0 +1,35 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: apps-secured-immich
+spec:
+  cluster:
+    name: postgres-apps-secured
+  name: immich
+  owner: immich
+  extensions:
+    - name: cube
+      ensure: present
+    - name: earthdistance
+      ensure: present
+    - name: vector
+      ensure: present
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: immich-database-credentials
+spec:
+  dataFrom:
+    - extract:
+        key: lungmen.akn/immich/database/postgresql
+  refreshInterval: 5m
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    template:
+      data:
+        username: immich
+        password: "{{ .password }}"
