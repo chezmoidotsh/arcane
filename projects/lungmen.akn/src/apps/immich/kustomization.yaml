@@ -12,6 +12,7 @@ labels:
 
 resources:
   - immich.configuration.externalsecret.yaml
+  - immich.database.externalsecret.yaml
   - immich.httproute.yaml
   - immich.machine-learning.yaml
   - immich.postgresql-backup.yaml

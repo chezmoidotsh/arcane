@@ -10,9 +10,6 @@ data:
 
   # Database configuration
   DB_TYPE: postgresdb
-  DB_POSTGRESDB_HOST: n8n-database-rw
-  DB_POSTGRESDB_PORT: "5432"
-  DB_POSTGRESDB_DATABASE: n8n
 
   # Security configuration
   N8N_BLOCK_ENV_ACCESS_IN_NODE: "true"

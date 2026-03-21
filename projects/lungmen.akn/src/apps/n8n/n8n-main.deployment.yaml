@@ -46,22 +46,19 @@ spec:
                 name: n8n-main
           env:
             # Database credentials from secret
-            - name: DB_POSTGRESDB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: n8n-database-n8n
-                  key: username
-            - name: DB_POSTGRESDB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: n8n-database-n8n
-                  key: password
+            - name: DB_POSTGRESDB_HOST_FILE
+              value: /run/secrets/n8n.io/database/host
+            - name: DB_POSTGRESDB_PORT_FILE
+              value: /run/secrets/n8n.io/database/port
+            - name: DB_POSTGRESDB_DATABASE_FILE
+              value: /run/secrets/n8n.io/database/database
+            - name: DB_POSTGRESDB_USERNAME_FILE
+              value: /run/secrets/n8n.io/database/username
+            - name: DB_POSTGRESDB_PASSWORD_FILE
+              value: /run/secrets/n8n.io/database/password
             # Encryption key from secret
-            - name: N8N_ENCRYPTION_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: n8n-encryption-key
-                  key: encryption-key
+            - name: N8N_ENCRYPTION_KEY_FILE
+              value: /run/secrets/n8n.io/security/encryption-key
           resources:
             requests:
               cpu: 250m
@@ -101,6 +98,8 @@ spec:
               mountPath: /tmp
             - name: n8n-data
               mountPath: /home/node/.n8n
+            - name: secrets
+              mountPath: /run/secrets/n8n.io
       volumes:
         - name: cache
           emptyDir: {}
@@ -108,6 +107,27 @@ spec:
           emptyDir: {}
         - name: n8n-data
           emptyDir: {}
+        - name: secrets
+          projected:
+            sources:
+              - secret:
+                  name: n8n-database-n8n
+                  items:
+                    - key: host
+                      path: database/host
+                    - key: port
+                      path: database/port
+                    - key: dbname
+                      path: database/database
+                    - key: username
+                      path: database/username
+                    - key: password
+                      path: database/password
+              - secret:
+                  name: n8n-encryption-key
+                  items:
+                    - key: encryption-key
+                      path: security/encryption-key
 ---
 apiVersion: v1
 kind: Service

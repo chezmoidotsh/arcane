@@ -11,6 +11,7 @@ labels:
     includeSelectors: true
 
 resources:
+  - atuin.database.externalsecret.yaml
   - atuin.deployment.yaml
   - atuin.httproute.yaml
   - atuin.ingress.yaml
