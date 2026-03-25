@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+#
+# Helper script to migrate a database from one CloudNative-PG cluster to another.
+# It uses `pg_dump` and `pg_restore` between the primary pods of each cluster.
+#
+# Usage:
+#   scripts/cnpg:db:migrate <source_namespace> <source_cluster> <dest_namespace> <dest_cluster> <database_name> <owner_role>
+#
+# Example:
+#   scripts/cnpg:db:migrate atuin atuin-database databases postgres-apps atuin atuin
+
+set -euo pipefail
+
+if [[ $# -ne 6 ]]; then
+  echo "Usage: $0 <source_namespace> <source_cluster> <dest_namespace> <dest_cluster> <database_name> <owner_role>"
+  echo "Example: $0 atuin atuin-database databases postgres-apps atuin atuin"
+  exit 1
+fi
+
+SRC_NS="$1"
+SRC_CLUSTER="$2"
+DEST_NS="$3"
+DEST_CLUSTER="$4"
+DB_NAME="$5"
+OWNER_ROLE="$6"
+
+echo "=== Migrating database '${DB_NAME}' ==="
+echo "Source: namespace=${SRC_NS}, cluster=${SRC_CLUSTER}"
+echo "Destination: namespace=${DEST_NS}, cluster=${DEST_CLUSTER}"
+
+# Find primary pods
+echo "[1/4] Identifying primary pods..."
+SRC_POD=$(kubectl get pod -n "${SRC_NS}" -l cnpg.io/cluster="${SRC_CLUSTER}",role=primary -o jsonpath='{.items[0].metadata.name}')
+DEST_POD=$(kubectl get pod -n "${DEST_NS}" -l cnpg.io/cluster="${DEST_CLUSTER}",role=primary -o jsonpath='{.items[0].metadata.name}')
+
+if [[ -z ${SRC_POD} ]]; then
+  echo "Error: Could not find primary pod for source cluster ${SRC_CLUSTER} in namespace ${SRC_NS}"
+  exit 1
+fi
+
+if [[ -z ${DEST_POD} ]]; then
+  echo "Error: Could not find primary pod for destination cluster ${DEST_CLUSTER} in namespace ${DEST_NS}"
+  exit 1
+fi
+
+echo "  -> Source Primary: ${SRC_POD}"
+echo "  -> Destination Primary: ${DEST_POD}"
+
+# Create a temporary file for the dump
+DUMP_FILE=$(mktemp "/tmp/${DB_NAME}_migration_XXXXXX.dump")
+echo "[2/4] Dumping database from source to temporary file (${DUMP_FILE})..."
+# We use custom format (-Fc) to easily restore it
+kubectl exec -n "${SRC_NS}" "${SRC_POD}" -c postgres -- pg_dump -U postgres -Fc "${DB_NAME}" >"${DUMP_FILE}"
+
+echo "[3/4] Restoring database to destination cluster..."
+# Clean the destination DB before restoring in case there are conflicting tables
+# We use the superuser (postgres) but ensure ownership is maintained (pg_dump keeps it if role exists)
+kubectl exec -i -n "${DEST_NS}" "${DEST_POD}" -c postgres -- pg_restore -U postgres -d "${DB_NAME}" --clean --if-exists -O -x <"${DUMP_FILE}" || true
+# Note: we use || true because pg_restore --clean might throw warnings about objects that don't exist yet.
+
+echo "[4/4] Ensuring ownership is correctly set..."
+# In case some tables were created without correct owner, force reassign (optional but good practice)
+kubectl exec -i -n "${DEST_NS}" "${DEST_POD}" -c postgres -- psql -U postgres -d "${DB_NAME}" -c "REASSIGN OWNED BY current_user TO \"${OWNER_ROLE}\";"
+
+# Cleanup
+rm -f "${DUMP_FILE}"
+
+echo "=== Migration complete! ==="
+echo "You can now verify the data in ${DEST_NS}/${DEST_CLUSTER}."

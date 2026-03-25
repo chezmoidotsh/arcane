@@ -1,0 +1,30 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+helmCharts:
+  # ToolHive Operator CRDs — installed separately per upstream guidance
+  # https://docs.stacklok.com/toolhive/guides-k8s/deploy-operator
+  - name: toolhive-operator-crds
+    releaseName: toolhive-operator-crds
+    namespace: toolhive-system
+    repo: oci://ghcr.io/stacklok/toolhive
+    version: 0.11.1
+
+  # ToolHive Operator — manages MCPServer / MCPRemoteProxy / VirtualMCPServer CRs
+  - name: toolhive-operator
+    releaseName: toolhive-operator
+    namespace: toolhive-system
+    repo: oci://ghcr.io/stacklok/toolhive
+    version: 0.11.1
+    valuesFile: toolhive-operator.helmvalues/default.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: toolhive
+    includeTemplates: true
+    includeSelectors: true
+  - pairs:
+      # renovate: datasource=helm depName=toolhive registryUrl=oci://ghcr.io/stacklok/toolhive
+      app.kubernetes.io/version: 0.11.1
+    includeTemplates: true

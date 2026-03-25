@@ -72,6 +72,10 @@ resources:
   - apps-secured.objectstore.yaml
   - cnpg-backup-credentials.externalsecret.yaml
 
+  # Qdrant vector database — used by n8n for AI workflow embeddings.
+  # Independent of CNPG; not managed by mutualized-cnpg-databases.
+  - qdrant/
+
   # Namespace security baseline: default-hardened policy + Qdrant-specific rules.
   # CNPG cluster and per-database policies are rendered by the chart above.
   - security/
