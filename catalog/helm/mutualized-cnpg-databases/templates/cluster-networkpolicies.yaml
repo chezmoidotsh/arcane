@@ -1,0 +1,72 @@
+{{- /*
+cluster-networkpolicies.yaml
+Renders cluster-wide network policies for management and internal traffic.
+Includes:
+  1. Ingress from the CNPG Operator (required for lifecycle management).
+  2. Egress to the Kubernetes API server (required for cluster coordination).
+*/ -}}
+
+{{- if .Values.spec.behavior.networkPolicies.enabled -}}
+{{- $root := . -}}
+{{- $clusterName := include "mutualized-cnpg-databases.clusterName" . -}}
+
+{{- if .Values.spec.behavior.networkPolicies.fromOperator.enabled }}
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ printf "allow-%s-from-cnpg-operator" $clusterName | trunc 63 | trimSuffix "-" }}
+  {{- $labels := include "mutualized-cnpg-databases.defaultLabels" (dict "root" $root "instance" $clusterName) | fromYaml }}
+  labels:
+    {{- toYaml $labels | nindent 4 }}
+  {{- $annotations := include "mutualized-cnpg-databases.defaultAnnotations" (dict "root" $root) | fromYaml }}
+  annotations:
+    {{- with $annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    policy.networking.k8s.io/description: >-
+      Allows the CloudNativePG operator ({{ include "mutualized-cnpg-databases.operatorName" . }}/{{ include "mutualized-cnpg-databases.operatorNamespace" . }})
+      and applications matching the specified selectors to manage cluster '{{ $clusterName }}'. Required for cluster management, metrics, and webhooks.
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: {{ $clusterName }}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: {{ include "mutualized-cnpg-databases.operatorNamespace" . }}
+            app.kubernetes.io/name: {{ include "mutualized-cnpg-databases.operatorName" . }}
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "8000"
+              protocol: TCP
+{{- end }}
+
+{{- if .Values.spec.behavior.networkPolicies.toKubeApiserver.enabled }}
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ printf "allow-%s-to-kube-apiserver" $clusterName | trunc 63 | trimSuffix "-" }}
+  {{- $labels := include "mutualized-cnpg-databases.defaultLabels" (dict "root" $root "instance" $clusterName) | fromYaml }}
+  labels:
+    {{- toYaml $labels | nindent 4 }}
+  {{- $annotations := include "mutualized-cnpg-databases.defaultAnnotations" (dict "root" $root) | fromYaml }}
+  annotations:
+    {{- with $annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    policy.networking.k8s.io/description: >-
+      Allows CNPG cluster '{{ $clusterName }}' pods to reach the Kubernetes API server. Required for operator integration, status reporting, and lease management.
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: {{ $clusterName }}
+  egress:
+    - toEntities:
+        - kube-apiserver
+{{- end }}
+
+{{- end }}

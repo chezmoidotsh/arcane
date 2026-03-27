@@ -1,0 +1,44 @@
+{{- /*
+db-networkpolicy.yaml
+Renders one CiliumNetworkPolicy per database to allow application ingress.
+Specifically allows traffic on port 5432 from applications defined in 
+'allowedApplicationSelector'.
+*/ -}}
+
+{{- $root := . -}}
+{{- $clusterName := include "mutualized-cnpg-databases.clusterName" . -}}
+{{- $prefix := include "mutualized-cnpg-databases.resourcePrefix" . -}}
+
+{{- range .Values.spec.databases -}}
+  {{- if .allowedApplicationSelector -}}
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ printf "allow-%s-from-%s" $prefix .name | trunc 63 | trimSuffix "-" }}
+  {{- $labels := include "mutualized-cnpg-databases.defaultLabels" (dict "root" $root "instance" $clusterName) | fromYaml }}
+  labels:
+    {{- toYaml $labels | nindent 4 }}
+    mutualized.cloudnative-pg.io/database: {{ .name }}
+  {{- $annotations := include "mutualized-cnpg-databases.defaultAnnotations" (dict "root" $root) | fromYaml }}
+  annotations:
+    {{- with $annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    policy.networking.k8s.io/description: >-
+      Allow declared application endpoints to connect to CNPG cluster '{{ $clusterName }}' for database '{{ .name }}'.
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: {{ .cluster | default $clusterName }}
+  ingress:
+    - fromEndpoints:
+        {{- range .allowedApplicationSelector }}
+        {{- toYaml .endpointSelector | nindent 10 }}
+        {{- end }}
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+  {{- end }}
+{{ end -}}

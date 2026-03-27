@@ -1,8 +1,26 @@
 ---
+# apps-secured.objectstore.yaml
+#
+# ObjectStore resource for the postgres-apps-secured CNPG cluster.
+# Manages WAL archiving and base backups to S3-compatible storage (s3.chezmoi.sh).
+#
+# Resources:
+#   - barmancloud.cnpg.io/v1 ObjectStore  (apps-secured-selfhosted)
+#       Referenced by the barman-cloud plugin in postgres-apps-secured.helmvalues.yaml via
+#       spec.objectStoreSpec.name + parameters.inheritedBarmanObjectName: true.
+#
+#   - external-secrets.io/v1 ExternalSecret  (cnpg-backup-credentials)
+#       Shared S3 credentials consumed by both apps-selfhosted and apps-secured-selfhosted
+#       ObjectStores. Defined once here; both clusters reference the same Secret.
+#
+#   - cilium.io/v2 CiliumNetworkPolicy  (postgres-apps-secured-allow-to-s3-backup)
+#       → managed in security/network-policy.allow-to-s3-backup.yaml
+
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
   name: apps-secured-selfhosted
+  namespace: databases
 spec:
   configuration:
     data:

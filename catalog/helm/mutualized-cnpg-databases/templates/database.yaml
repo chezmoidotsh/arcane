@@ -1,0 +1,40 @@
+{{- /*
+database.yaml
+Renders one postgresql.cnpg.io/v1 Database resource for each entry in 'spec.databases'.
+Links the logical database to the target CNPG Cluster.
+*/ -}}
+
+{{- $root := . -}}
+{{- $clusterName := include "mutualized-cnpg-databases.clusterName" . -}}
+{{- $prefix := include "mutualized-cnpg-databases.resourcePrefix" . -}}
+
+{{- range .Values.spec.databases -}}
+{{- $db := . -}}
+{{- $owner := .owner | default (first .users).name -}}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: {{ printf "%s-%s" $prefix .name | trunc 63 | trimSuffix "-" }}
+  {{- $labels := include "mutualized-cnpg-databases.defaultLabels" (dict "root" $root "instance" $clusterName) | fromYaml }}
+  labels:
+    {{- toYaml $labels | nindent 4 }}
+    mutualized.cloudnative-pg.io/database: {{ .name }}
+  {{- $annotations := include "mutualized-cnpg-databases.defaultAnnotations" (dict "root" $root) | fromYaml }}
+  {{- with $annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  cluster:
+    name: {{ .cluster | default $clusterName }}
+  name: {{ .name }}
+  owner: {{ $owner }}
+{{- if .extensions }}
+  extensions:
+{{- range .extensions }}
+    - name: {{ if kindIs "string" . }}{{ . }}{{ else }}{{ .name }}{{ end }}
+      ensure: present
+{{- end }}
+{{- end }}
+{{ end -}}

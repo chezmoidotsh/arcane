@@ -1,0 +1,42 @@
+---
+# network-policy.allow-to-s3-backup.yaml
+#
+# S3 backup egress policy for all CNPG clusters in the databases namespace.
+# Allows cluster pods to reach the S3-compatible backup endpoint (s3.chezmoi.sh:9000)
+# for WAL archiving and base backups via the barman-cloud plugin.
+#
+# This policy uses a single resource with matchExpressions operator: Exists on the
+# cnpg.io/cluster label — it covers any CNPG cluster pod in the namespace regardless
+# of cluster name, so it does not need to be updated when clusters are renamed.
+#
+# Clusters covered:
+#   - apps         (postgres-apps Helm release)
+#   - apps-secured (postgres-apps-secured Helm release)
+#
+# Related resources:
+#   - apps.objectstore.yaml          : ObjectStore CR for the apps cluster
+#   - apps-secured.objectstore.yaml  : ObjectStore CR for the apps-secured cluster
+
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-cnpg-to-s3-backup
+  namespace: databases
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows all CNPG cluster pods in the databases namespace to reach the
+      S3-compatible backup endpoint (s3.chezmoi.sh:9000) for WAL archiving and
+      base backups via the barman-cloud plugin. Covers all clusters regardless
+      of name via cnpg.io/cluster label existence check.
+spec:
+  endpointSelector:
+    matchExpressions:
+      - key: cnpg.io/cluster
+        operator: Exists
+  egress:
+    - toFQDNs:
+        - matchName: s3.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP

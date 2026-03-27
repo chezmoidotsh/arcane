@@ -18,6 +18,23 @@ spec:
         labels:
           vault.crossplane.chezmoi.sh/cluster-name: lungmen.akn
 ---
+apiVersion: vault.vault.upbound.io/v1alpha1
+kind: Policy
+metadata:
+  name: lungmen.akn-mutualized-cnpg-databases
+spec:
+  forProvider:
+    name: lungmen.akn-mutualized-cnpg-databases
+    policy: |
+      # Lungmen Mutualized CNPG Databases ESO Policy
+      # 
+      # This policy grants permissions for the External Secrets Operator (ESO) to manage secrets related to shared databases,
+      # required to allow ESO to push secrets generated from the Helm Chart `mutualized-cnpg-databases` to Vault.
+
+      # Allows ESO to update databases secrets using PushSecrets.
+      path "lungmen.akn/data/+/database/*" { capabilities = ["create", "read", "update", "delete"] }      
+      path "lungmen.akn/metadata/+/database/*" { capabilities = ["create", "read", "update", "delete"] }
+---
 apiVersion: vault.chezmoi.sh/v1alpha1
 kind: RemoteClusterVault
 metadata:
@@ -25,3 +42,5 @@ metadata:
 spec:
   name: lungmen.akn
   host: https://kubernetes.lungmen.akn.chezmoi.sh:6443
+  additionalPolicies:
+    - lungmen.akn-mutualized-cnpg-databases
