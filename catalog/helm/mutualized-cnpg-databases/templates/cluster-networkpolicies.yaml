@@ -1,0 +1,53 @@
+{{- /*
+cluster-networkpolicies.yaml
+Renders cluster-wide network policies for management and internal traffic.
+Includes:
+  1. Ingress from the CNPG Operator (required for lifecycle management).
+  2. Egress to the Kubernetes API server (required for cluster coordination).
+*/ -}}
+
+{{- if .Values.spec.behavior.networkPolicies.enabled -}}
+{{- $root := . -}}
+{{- $clusterName := include "mutualized-cnpg-databases.clusterName" . -}}
+
+{{- if .Values.spec.behavior.networkPolicies.fromOperator.enabled }}
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ printf "%s-allow-from-operator" $clusterName | trunc 63 | trimSuffix "-" }}
+  {{- include "mutualized-cnpg-databases.resourceMetadata" (dict "root" . "instance" $clusterName) | nindent 2 }}
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: {{ $clusterName }}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: {{ include "mutualized-cnpg-databases.operatorNamespace" . }}
+            app.kubernetes.io/name: {{ include "mutualized-cnpg-databases.operatorName" . }}
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "8000"
+              protocol: TCP
+{{- end }}
+
+{{- if .Values.spec.behavior.networkPolicies.toKubeApiserver.enabled }}
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ printf "%s-allow-to-kube-apiserver" $clusterName | trunc 63 | trimSuffix "-" }}
+  {{- include "mutualized-cnpg-databases.resourceMetadata" (dict "root" . "instance" $clusterName) | nindent 2 }}
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: {{ $clusterName }}
+  egress:
+    - toEntities:
+        - kube-apiserver
+{{- end }}
+
+{{- end }}

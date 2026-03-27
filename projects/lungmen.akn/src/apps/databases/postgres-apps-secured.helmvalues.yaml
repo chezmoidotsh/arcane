@@ -1,0 +1,124 @@
+# ➤ Usage
+#   Configures the "apps-secured" mutualized PostgreSQL cluster.
+#   Optimized for critical applications handling sensitive data and
+#   requiring high availability.
+#
+# ◆ Created Resources
+#   ✓ Cluster (postgresql.cnpg.io/v1): "apps-secured-20260329" with HA and PDB.
+#   ✓ Databases (postgresql.cnpg.io/v1): 4 logical databases.
+#   ✓ ExternalSecrets: 4 credential resources.
+#   ✓ Password Generators: 4 secure rotation resources.
+#   ✓ PushSecrets: 8 resources (4 RW + 4 RO) for Vault synchronization.
+#   ✓ NetworkPolicies: Granular ingress/egress isolation.
+
+apiVersion: helm.sh/v1alpha1
+kind: CNPGMutualizedCluster
+
+metadata:
+  # -- Identifies the secure tier; drives naming for all high-value database resources.
+  name: apps-secured
+
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+
+  behavior:
+    passwords:
+      pushInterval: "5m"
+    networkPolicies:
+      enabled: true
+      fromOperator:
+        enabled: true
+        operator:
+          namespace: cloudnative-pg-system
+      toKubeApiserver:
+        enabled: true
+
+  cluster:
+    name: "20260329"
+    description: "Shared PostgreSQL database cluster for applications with sensitive data"
+    # -- Mandatory for sensitive workloads to prevent unplanned downtime during node drains.
+    enablePDB: true
+    imageCatalogRef:
+      apiGroup: postgresql.cnpg.io
+      kind: ClusterImageCatalog
+      name: default
+      major: 17
+    # -- High-Availability configuration (1 Primary + 1 Replica).
+    instances: 2
+    storage:
+      size: 5Gi
+    walStorage:
+      size: 5Gi
+    postgresql:
+      parameters:
+        max_slot_wal_keep_size: 900MB
+        max_wal_size: 100MB
+      # -- Enables 'pgvector' globally for high-performance AI/Search workloads.
+      shared_preload_libraries:
+        - vector
+    bootstrap:
+      initdb:
+        postInitSQL:
+          # -- Ensures the extension is ready for use immediately after provisioning.
+          - CREATE EXTENSION IF NOT EXISTS vector;
+    plugins:
+      - enabled: true
+        isWALArchiver: true
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: apps-secured-selfhosted
+          serverName: 01KMWETKMBK0MYNB3X7RH6BT0X
+
+  databases:
+    - name: open-webui
+      extensions:
+        - name: vector
+      users:
+        - name: open-webui
+          vault:
+            path: lungmen.akn/open-webui/database/postgresql
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                io.kubernetes.pod.namespace: ai-platform
+                app.kubernetes.io/name: open-webui
+
+    - name: litellm
+      users:
+        - name: litellm
+          vault:
+            path: lungmen.akn/litellm/database/postgresql
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                io.kubernetes.pod.namespace: ai-platform
+                app.kubernetes.io/name: litellm
+
+    - name: immich
+      extensions:
+        # -- Specific extensions required for Immich's photo/spatial metadata features.
+        - name: cube
+        - name: earthdistance
+        - name: vector
+      users:
+        - name: immich
+          vault:
+            path: lungmen.akn/immich/database/postgresql
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                io.kubernetes.pod.namespace: immich
+                app.kubernetes.io/name: immich
+
+    - name: paperless
+      users:
+        - name: paperless
+          vault:
+            path: lungmen.akn/paperless-ngx/database/postgresql
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                io.kubernetes.pod.namespace: paperless-ngx
+                app.kubernetes.io/component: webserver

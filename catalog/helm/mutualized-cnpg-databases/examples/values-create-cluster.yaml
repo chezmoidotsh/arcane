@@ -1,0 +1,48 @@
+# values-create-cluster.yaml
+# Example: Creating a new CNPG Cluster + 2 Databases.
+
+metadata:
+  name: apps-secured
+
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+
+  behavior:
+    networkPolicies:
+      enabled: true
+
+  cluster:
+    name: "20260329"
+    instances: 3
+    storage:
+      size: 10Gi
+    imageCatalogRef:
+      apiGroup: postgresql.cnpg.io
+      kind: ClusterImageCatalog
+      name: default
+      major: 17
+
+  databases:
+    - name: open-webui
+      extensions:
+        - name: vector
+      users:
+        - name: open-webui
+          vault:
+            path: projects/ai/open-webui/db
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                app: open-webui
+
+    - name: litellm
+      users:
+        - name: litellm
+          vault:
+            path: projects/ai/litellm/db
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                app: litellm

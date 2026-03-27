@@ -1,0 +1,22 @@
+# values-db-only.yaml
+# Example: Creating Databases in a pre-existing CNPG Cluster.
+
+metadata:
+  name: paperless-apps
+
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+
+  databases:
+    - name: paperless
+      cluster: apps-secured-20260329  # Target pre-existing cluster
+      users:
+        - name: paperless
+          vault:
+            path: projects/paperless/db
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                app: paperless

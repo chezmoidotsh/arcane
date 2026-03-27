@@ -1,0 +1,122 @@
+# ➤ Usage
+#   Configures the "apps" mutualized PostgreSQL cluster for general-purpose, 
+#   non-critical applications in the lungmen.akn environment.
+#
+# ◆ Created Resources
+#   ✓ Cluster (postgresql.cnpg.io/v1): "apps-20260329" with auto-injected roles.
+#   ✓ Databases (postgresql.cnpg.io/v1): 5 logical databases.
+#   ✓ ExternalSecrets (external-secrets.io/v1beta1): 5 credential resources.
+#   ✓ Password Generators (generators.external-secrets.io/v1alpha1): 5 resources.
+#   ✓ PushSecrets (external-secrets.io/v1alpha1): 10 resources (5 RW + 5 RO).
+#   ✓ NetworkPolicies (cilium.io/v2): Ingress/Egress isolation policies.
+
+apiVersion: helm.sh/v1alpha1
+kind: CNPGMutualizedCluster
+
+metadata:
+  # -- Stable prefix for isolation; ensures unique names for all generated resources.
+  name: apps
+
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+
+  behavior:
+    passwords:
+      # -- Ensures Vault remains a near-real-time source of truth for app credentials.
+      pushInterval: "5m"
+    networkPolicies:
+      # -- Enforces Zero-Trust isolation for both management and application traffic.
+      enabled: true
+      fromOperator:
+        enabled: true
+        operator:
+          namespace: cloudnative-pg-system
+      toKubeApiserver:
+        enabled: true
+
+  cluster:
+    # -- Unique generation ID; allows for side-by-side cluster deployments during upgrades.
+    name: "20260329"
+    description: "Shared PostgreSQL database cluster for common applications"
+    # -- Disabled to minimize overhead on non-critical workloads.
+    enablePDB: false
+    imageCatalogRef:
+      apiGroup: postgresql.cnpg.io
+      kind: ClusterImageCatalog
+      name: default
+      major: 17
+    # -- Optimized for resource efficiency; non-HA is acceptable for this tier.
+    instances: 1
+    storage:
+      size: 2Gi
+    walStorage:
+      size: 2Gi
+    postgresql:
+      parameters:
+        max_slot_wal_keep_size: 900MB
+        max_wal_size: 100MB
+    plugins:
+      - enabled: true
+        isWALArchiver: true
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: apps-selfhosted
+          serverName: 01KMWETKMBK0MYNB3X7RH6BT0X
+
+  databases:
+    - name: mealie
+      users:
+        - name: mealie
+          vault:
+            path: lungmen.akn/mealie/database/postgresql
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                io.kubernetes.pod.namespace: mealie
+                app.kubernetes.io/name: mealie
+
+    - name: n8n
+      users:
+        - name: n8n
+          vault:
+            path: lungmen.akn/n8n/database/postgresql
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                io.kubernetes.pod.namespace: n8n
+                app.kubernetes.io/name: n8n
+
+    - name: atuin
+      users:
+        - name: atuin
+          vault:
+            path: lungmen.akn/atuin/database/postgresql
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                io.kubernetes.pod.namespace: atuin
+                app.kubernetes.io/name: atuin
+
+    - name: jellyseerr
+      users:
+        - name: jellyseerr
+          vault:
+            path: lungmen.akn/jellyseerr/database/postgresql
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                io.kubernetes.pod.namespace: jellyseerr
+                app.kubernetes.io/name: jellyseerr
+
+    - name: linkding
+      users:
+        - name: linkding
+          vault:
+            path: lungmen.akn/linkding/database/postgresql
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                io.kubernetes.pod.namespace: linkding
+                app.kubernetes.io/name: linkding

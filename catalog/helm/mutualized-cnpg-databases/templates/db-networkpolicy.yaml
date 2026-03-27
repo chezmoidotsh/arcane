@@ -1,0 +1,34 @@
+{{- /*
+db-networkpolicy.yaml
+Renders one CiliumNetworkPolicy per database to allow application ingress.
+Specifically allows traffic on port 5432 from applications defined in 
+'allowedApplicationSelector'.
+*/ -}}
+
+{{- $root := . -}}
+{{- $clusterName := include "mutualized-cnpg-databases.clusterName" . -}}
+{{- $prefix := include "mutualized-cnpg-databases.resourcePrefix" . -}}
+
+{{- range .Values.spec.databases -}}
+{{- if .allowedApplicationSelector -}}
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ printf "allow-%s-%s-from-apps" $prefix .name | trunc 63 | trimSuffix "-" }}
+  {{- include "mutualized-cnpg-databases.resourceMetadata" (dict "root" $root "instance" $prefix "extraLabels" (dict "mutualized-cnpg-databases/database" .name) ) | nindent 2 }}
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: {{ .cluster | default $clusterName }}
+  ingress:
+    - fromEndpoints:
+        {{- range .allowedApplicationSelector }}
+        {{- toYaml .endpointSelector | nindent 8 }}
+        {{- end }}
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+{{ end -}}
+{{ end -}}

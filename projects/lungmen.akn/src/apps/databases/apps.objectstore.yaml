@@ -1,8 +1,27 @@
 ---
+# apps.objectstore.yaml
+#
+# ObjectStore resource for the postgres-apps CNPG cluster.
+# Manages WAL archiving and base backups to S3-compatible storage (s3.chezmoi.sh).
+#
+# Resources:
+#   - barmancloud.cnpg.io/v1 ObjectStore  (apps-selfhosted)
+#       Referenced by the barman-cloud plugin in postgres-apps.helmvalues.yaml via
+#       spec.objectStoreSpec.name + parameters.inheritedBarmanObjectName: true.
+#
+# Credentials:
+#   cnpg-backup-credentials Secret is provided by apps-secured.objectstore.yaml
+#   (shared ExternalSecret — defined once, consumed by both clusters).
+#
+# Network policy:
+#   postgres-apps-allow-to-s3-backup is managed in security/network-policy.allow-to-s3-backup.yaml
+#   alongside all other non-chart-managed policies for this namespace.
+
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
   name: apps-selfhosted
+  namespace: databases
 spec:
   configuration:
     data:
@@ -28,16 +47,3 @@ spec:
       - name: AWS_RESPONSE_CHECKSUM_VALIDATION
         value: when_required
   retentionPolicy: 7d
----
-apiVersion: external-secrets.io/v1
-kind: ExternalSecret
-metadata:
-  name: cnpg-backup-credentials
-spec:
-  dataFrom:
-    - extract:
-        key: lungmen.akn/cloudnative-pg/backup/s3-credentials
-  refreshInterval: 5m
-  secretStoreRef:
-    kind: ClusterSecretStore
-    name: vault.chezmoi.sh

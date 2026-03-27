@@ -1,0 +1,41 @@
+{{- /*
+cluster.yaml
+Renders the postgresql.cnpg.io/v1 Cluster resource.
+Managed roles (managed.roles) are dynamically built from the combined 
+'spec.databases[].users' list to simplify management.
+*/ -}}
+
+{{- if .Values.spec.cluster -}}
+{{- $clusterName  := include "mutualized-cnpg-databases.clusterName" . -}}
+{{- $resourcePrefix := include "mutualized-cnpg-databases.resourcePrefix" . -}}
+
+{{- /* Build managed.roles from spec.databases[].users */ -}}
+{{- $roles := list -}}
+{{- range .Values.spec.databases -}}
+  {{- $db := . -}}
+  {{- range .users -}}
+    {{- $user := . -}}
+    {{- $secretName := include "mutualized-cnpg-databases.userSecretName" (dict "prefix" $resourcePrefix "db" $db "user" $user) -}}
+    {{- $role := omit $user "vault" "comment" -}}
+    {{- $_ := set $role "name" $user.name -}}
+    {{- $_  = set $role "ensure" "present" -}}
+    {{- $_  = set $role "passwordSecret" (dict "name" $secretName) -}}
+    {{- $_  = set $role "comment" ($user.comment | default (printf "Managed role for %s/%s" $db.name $user.name)) -}}
+    {{- $roles = append $roles $role -}}
+  {{- end -}}
+{{- end -}}
+
+{{- /* Prepare the final spec by merging user cluster spec with generated roles */ -}}
+{{- $clusterSpec := omit .Values.spec.cluster "name" -}}
+{{- $managed := $clusterSpec.managed | default dict -}}
+{{- $_ := set $managed "roles" $roles -}}
+{{- $_  = set $clusterSpec "managed" $managed -}}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ $clusterName }}
+  {{- include "mutualized-cnpg-databases.resourceMetadata" (dict "root" . "instance" $clusterName) | nindent 2 }}
+spec:
+  {{- toYaml $clusterSpec | nindent 2 }}
+{{- end -}}

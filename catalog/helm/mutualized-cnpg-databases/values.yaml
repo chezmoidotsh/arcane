@@ -1,0 +1,109 @@
+# values.yaml — mutualized-cnpg-databases
+#
+# This chart manages a CloudNativePG (CNPG) cluster and its per-application databases.
+# The structure intentionally mirrors a Kubernetes Custom Resource (metadata/spec)
+# to provide a self-describing, declarative interface.
+
+# -- apiVersion & kind: Informational fields to complete the CRD appearance.
+apiVersion: helm.sh/v1alpha1
+kind: CNPGMutualizedCluster
+
+# ── Global Metadata ───────────────────────────────────────────────────────────
+metadata:
+  # -- Stable prefix for ALL generated resources (Required).
+  # Impact: This name is used to prefix Secrets, Database CRs, and Policies.
+  # Why: It ensures that multiple clusters deployed in the same namespace 
+  #      (e.g., 'apps' and 'apps-secured') never have resource name collisions.
+  name: ""
+
+  # -- Global Labels (propagated to all resources).
+  # Use for: environment tagging, ownership (team), or cost center tracking.
+  labels: {}
+
+  # -- Global Annotations (propagated to all resources).
+  # Impact: These are also injected into ExternalSecret target templates.
+  # Use for: GitOps tracking (ArgoCD), automated documentation, or security notes.
+  annotations: {}
+
+# ── Specification ─────────────────────────────────────────────────────────────
+spec:
+  # -- External Secrets Operator (ESO) Global Configuration.
+  # Defines the default Vault connection for all credential management.
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: ""
+
+  # -- Operational Behavior Tuning.
+  # Controls how the chart manages the lifecycle of credentials and network security.
+  behavior:
+    passwords:
+      # -- Complexity of generated passwords (default: 32).
+      # Why: High entropy is preferred for database credentials.
+      length: 32
+      # -- Frequency of pushing frozen credentials back to Vault.
+      # Why: Ensures Vault stays in sync with the actual cluster secrets.
+      pushInterval: "5m"
+
+    networkPolicies:
+      # -- Master toggle for cluster-level CiliumNetworkPolicies.
+      # Impact: Controls Operator ingress and API server egress.
+      enabled: false
+      fromOperator:
+        # -- Allows CNPG Operator to connect to pods (ports 5432, 8000).
+        # Why: Required for backups, health checks, and role management.
+        enabled: true
+        operator:
+          namespace: cnpg-system
+          name: cloudnative-pg-operator
+      toKubeApiserver:
+        # -- Allows pods to connect to the Kubernetes API.
+        # Why: Required for CNPG instances to coordinate and report status.
+        enabled: true
+
+  # -- CloudNativePG Cluster Specification.
+  # This block is passed VERBATIM to the postgresql.cnpg.io/v1 Cluster resource.
+  # ⚠️ DO NOT include 'managed.roles': they are auto-generated from spec.databases.
+  cluster:
+    # -- Optional suffix for the Cluster resource name.
+    # Impact: Cluster will be named '<metadata.name>-<spec.cluster.name>'.
+    # Why: Useful for Blue/Green upgrades or parallel restore operations.
+    name: ""
+    # instances: 3
+    # storage: { size: "10Gi" }
+
+  # -- Logical Databases & Access Control.
+  # Each entry represents a logical database and its set of users/roles.
+  databases: []
+  # - name: app-db
+  #   # -- Explicit owner of the database.
+  #   # Defaults to the first user in the 'users' list if omitted.
+  #   owner: app-user
+  #
+  #   # -- Target Cluster override.
+  #   # Defaults to the computed cluster name from above.
+  #   cluster: cluster-name
+  #
+  #   # -- PostgreSQL Extensions to enable.
+  #   # Requirement: Must be a list of objects with a 'name' field.
+  #   extensions:
+  #     - name: pgvector
+  #
+  #   # -- User Roles & Credential Provisioning.
+  #   # Impact: Each user gets a Managed Role, a Password Generator, 
+  #   #         an ExternalSecret, and two PushSecrets (RW and RO).
+  #   users:
+  #     - name: app-user
+  #       # -- Required: Vault path where credentials will be pushed/stored.
+  #       vault:
+  #         path: "projects/my-app/database/postgresql"
+  #       # -- Optional CNPG Role fields:
+  #       # connectionLimit: 100
+  #       # login: true
+  #
+  #   # -- Application Access Policies (Cilium).
+  #   # If provided, creates a CiliumNetworkPolicy allowing port 5432 ingress.
+  #   allowedApplicationSelector:
+  #     - endpointSelector:
+  #         # -- List of pod selectors allowed to connect to this DB.
+  #         matchLabels:
+  #           app.kubernetes.io/name: my-app

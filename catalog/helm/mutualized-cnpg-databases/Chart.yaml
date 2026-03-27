@@ -1,0 +1,33 @@
+apiVersion: v2
+name: mutualized-cnpg-databases
+description: >-
+  Helm chart to manage a mutualized CloudNativePG (CNPG) PostgreSQL cluster and
+  its per-application databases. The chart focuses on creating the Cluster
+  (optional, opt-in), Database CRs, ExternalSecrets that wrap the DB-generated
+  credentials, and PushSecret/Password generator primitives used to reconcile
+  secrets back into Vault. This chart intentionally does NOT install CNPG
+  operator CRDs; the operator and its CRDs must exist in the cluster before
+  deploying this chart.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: "https://github.com/chezmoidotsh/arcane"
+sources:
+  - "https://github.com/chezmoidotsh/arcane"
+keywords:
+  - postgres
+  - postgresql
+  - cnpg
+  - cloudnative-pg
+  - database
+  - helm
+  - vault
+  - external-secrets
+maintainers:
+  - name: chezmoidotsh
+    url: "https://github.com/chezmoidotsh"
+kubeVersion: ">=1.22.0-0"
+annotations:
+  category: "databases"
+  repository: "catalog/helm"
+dependencies: []
