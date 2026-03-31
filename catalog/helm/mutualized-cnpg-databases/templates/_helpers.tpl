@@ -38,14 +38,6 @@ Driven exclusively by .Values.metadata.name to ensure stable references.
 {{- end -}}
 {{- end -}}
 
-{{- define "mutualized-cnpg-databases.userVaultKeyReadonly" -}}
-{{- if and .user.vault .user.vault.pathReadonly -}}
-  {{- .user.vault.pathReadonly -}}
-{{- else -}}
-  {{- printf "%s-readonly" (include "mutualized-cnpg-databases.userVaultKey" .) -}}
-{{- end -}}
-{{- end -}}
-
 {{/* SecretStore resolution: checks for per-user overrides before using global default. */}}
 {{- define "mutualized-cnpg-databases.userSecretStoreKind" -}}
 {{- if and .user.vault .user.vault.secretStoreRef .user.vault.secretStoreRef.kind -}}

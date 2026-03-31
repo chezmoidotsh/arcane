@@ -17,11 +17,12 @@ Managed roles (managed.roles) are dynamically built from the combined
   {{- range .users -}}
     {{- $user := . -}}
     {{- $secretName := include "mutualized-cnpg-databases.userCredentialsName" (dict "prefix" $resourcePrefix "db" $db "user" $user) -}}
-    {{- $role := omit $user "vault" "comment" -}}
-    {{- $_ := set $role "name" $user.name -}}
+    {{- $role := omit $user "vault" "ensure" "passwordSecret" "comment" "connectionLimit" "inherit" -}}
     {{- $_  = set $role "ensure" "present" -}}
     {{- $_  = set $role "passwordSecret" (dict "name" $secretName) -}}
     {{- $_  = set $role "comment" ($user.comment | default (printf "Managed role for %s/%s" $db.name $user.name)) -}}
+    {{- $_  = set $role "connectionLimit" ($user.connectionLimit | default -1) -}}
+    {{- $_  = set $role "inherit" ($user.inherit | default true) -}}
     {{- $roles = append $roles $role -}}
   {{- end -}}
 {{- end -}}
