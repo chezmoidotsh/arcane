@@ -16,7 +16,14 @@ apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: {{ printf "%s-allow-from-operator" $clusterName | trunc 63 | trimSuffix "-" }}
-  {{- include "mutualized-cnpg-databases.resourceMetadata" (dict "root" . "instance" $clusterName) | nindent 2 }}
+  {{- $labels := include "mutualized-cnpg-databases.defaultLabels" (dict "root" $root "instance" $clusterName) | fromYaml }}
+  labels:
+    {{- toYaml $labels | nindent 4 }}
+  {{- $annotations := include "mutualized-cnpg-databases.defaultAnnotations" (dict "root" $root) | fromYaml -}}
+  {{- with $annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   endpointSelector:
     matchLabels:
@@ -40,7 +47,22 @@ apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: {{ printf "%s-allow-to-kube-apiserver" $clusterName | trunc 63 | trimSuffix "-" }}
-  {{- include "mutualized-cnpg-databases.resourceMetadata" (dict "root" . "instance" $clusterName) | nindent 2 }}
+  {{- /* Build labels: start from defaults, then merge global metadata.labels so user values override defaults */ -}}
+  {{- $labels := include "mutualized-cnpg-databases.defaultLabels" (dict "root" $root "instance" $clusterName) | fromYaml }}
+  {{- with $root.Values.metadata.labels -}}
+    {{- $labels = merge $labels . -}}
+  {{- end -}}
+  labels:
+{{- toYaml $labels | nindent 4 }}
+  {{- /* Build annotations: start from defaults, then merge global metadata.annotations */ -}}
+  {{- $annotations := include "mutualized-cnpg-databases.defaultAnnotations" (dict "root" $root) | fromYaml -}}
+  {{- with $root.Values.metadata.annotations -}}
+    {{- $annotations = merge $annotations . -}}
+  {{- end -}}
+  {{- if $annotations }}
+  annotations:
+{{- toYaml $annotations | nindent 4 }}
+  {{- end }}
 spec:
   endpointSelector:
     matchLabels:

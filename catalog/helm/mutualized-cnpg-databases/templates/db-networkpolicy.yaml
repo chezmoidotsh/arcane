@@ -10,13 +10,21 @@ Specifically allows traffic on port 5432 from applications defined in
 {{- $prefix := include "mutualized-cnpg-databases.resourcePrefix" . -}}
 
 {{- range .Values.spec.databases -}}
-{{- if .allowedApplicationSelector -}}
+  {{- if .allowedApplicationSelector -}}
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: {{ printf "allow-%s-%s-from-apps" $prefix .name | trunc 63 | trimSuffix "-" }}
-  {{- include "mutualized-cnpg-databases.resourceMetadata" (dict "root" $root "instance" $prefix "extraLabels" (dict "mutualized-cnpg-databases/database" .name) ) | nindent 2 }}
+  {{- $labels := include "mutualized-cnpg-databases.defaultLabels" (dict "root" $root "instance" $clusterName) | fromYaml }}
+  labels:
+    {{- toYaml $labels | nindent 4 }}
+    mutualized.cloudnative-pg.io/database: {{ .name }}
+  {{- $annotations := include "mutualized-cnpg-databases.defaultAnnotations" (dict "root" $root) | fromYaml -}}
+  {{- with $annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   endpointSelector:
     matchLabels:
@@ -24,11 +32,11 @@ spec:
   ingress:
     - fromEndpoints:
         {{- range .allowedApplicationSelector }}
-        {{- toYaml .endpointSelector | nindent 8 }}
+        {{- toYaml .endpointSelector | nindent 10 }}
         {{- end }}
       toPorts:
         - ports:
             - port: "5432"
               protocol: TCP
-{{ end -}}
-{{ end -}}
+  {{- end -}}
+{{- end -}}

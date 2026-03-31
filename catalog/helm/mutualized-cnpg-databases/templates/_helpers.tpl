@@ -25,20 +25,8 @@ Driven exclusively by .Values.metadata.name to ensure stable references.
 {{- end -}}
 
 {{/* ESO Resource Naming (Secrets, Generators, PushSecrets) */}}
-{{- define "mutualized-cnpg-databases.userSecretName" -}}
+{{- define "mutualized-cnpg-databases.userCredentialsName" -}}
 {{- printf "cnpg.%s-%s-%s-credentials" .prefix .db.name .user.name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
-{{- define "mutualized-cnpg-databases.userGeneratorName" -}}
-{{- printf "cnpg.%s-%s-%s-credentials-gen" .prefix .db.name .user.name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
-{{- define "mutualized-cnpg-databases.userPushSecretName" -}}
-{{- printf "cnpg.%s-%s-%s-credentials-push" .prefix .db.name .user.name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
-{{- define "mutualized-cnpg-databases.userPushSecretNameReadonly" -}}
-{{- printf "cnpg.%s-%s-%s-credentials-readonly-push" .prefix .db.name .user.name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/* Vault Key Resolution: RW and RO paths */}}
@@ -77,37 +65,53 @@ Driven exclusively by .Values.metadata.name to ensure stable references.
 
 {{/* Network Policy Operator Resolution */}}
 {{- define "mutualized-cnpg-databases.operatorNamespace" -}}
-{{- $np := .Values.spec.behavior.networkPolicies.fromOperator -}}
-{{- if and $np $np.operator -}}{{ $np.operator.namespace | default "cloudnative-pg-system" }}{{- else -}}cloudnative-pg-system{{- end -}}
+{{- .Values.spec.behavior.networkPolicies.fromOperator | dig "operator" "namespace" "cnpg-system" -}}
 {{- end -}}
 
 {{- define "mutualized-cnpg-databases.operatorName" -}}
-{{- $np := .Values.spec.behavior.networkPolicies.fromOperator -}}
-{{- if and $np $np.operator -}}{{ $np.operator.name | default "cloudnative-pg" }}{{- else -}}cloudnative-pg{{- end -}}
+{{- .Values.spec.behavior.networkPolicies.fromOperator | dig "operator" "name" "cloudnative-pg" -}}
 {{- end -}}
 
-{{/* 
-Metadata Block Generator:
-Merges recommended labels, global labels/annotations from .Values.metadata, 
-and resource-specific labels/annotations passed by the template.
+{{/*
+Default Labels helper:
+Builds the canonical set of labels used across resources.
+This helper outputs YAML mapping (without a top-level `labels:` key).
+Call with a context containing:
+- .root     : chart root context
+- .instance : optional instance override
 */}}
-{{- define "mutualized-cnpg-databases.resourceMetadata" -}}
-{{- $instance := .instance | default (include "mutualized-cnpg-databases.resourcePrefix" .root) -}}
+{{- define "mutualized-cnpg-databases.defaultLabels" -}}
+{{- $root := .root -}}
+{{- $instance := .instance | default (include "mutualized-cnpg-databases.resourcePrefix" $root) -}}
 {{- $labels := dict
-    "app.kubernetes.io/name"       .root.Chart.Name
-    "app.kubernetes.io/instance"   $instance
-    "app.kubernetes.io/managed-by" "Helm"
-    "helm.sh/chart"                (printf "%s-%s" .root.Chart.Name .root.Chart.Version)
+    "app.kubernetes.io/name"                $root.Chart.Name
+    "app.kubernetes.io/instance"            $instance
+    "app.kubernetes.io/managed-by"          "Helm"
+    "mutualized.cloudnative-pg.io/group"    (include "mutualized-cnpg-databases.resourcePrefix" $root)
+    "mutualized.cloudnative-pg.io/cluster"  (include "mutualized-cnpg-databases.clusterName" $root)
+    "helm.sh/chart"                         (printf "%s-%s" $root.Chart.Name $root.Chart.Version)
 -}}
-{{- with .root.Values.metadata.labels -}}{{ $labels = merge $labels . }}{{- end -}}
-{{- with .extraLabels -}}{{ $labels = merge $labels . }}{{- end -}}
-labels:
-  {{- toYaml $labels | nindent 2 }}
-{{- $annotations := dict -}}
-{{- with .root.Values.metadata.annotations -}}{{ $annotations = merge $annotations . }}{{- end -}}
-{{- with .extraAnnotations -}}{{ $annotations = merge $annotations . }}{{- end -}}
-{{- if $annotations }}
-annotations:
-  {{- toYaml $annotations | nindent 2 }}
+{{- with $root.Values.metadata.labels }}
+{{- toYaml . | trimSuffix "\n" -}}
+{{- end -}}
+{{- dict
+    "app.kubernetes.io/name"                $root.Chart.Name
+    "app.kubernetes.io/instance"            $instance
+    "app.kubernetes.io/managed-by"          "Helm"
+    "mutualized.cloudnative-pg.io/group"    (include "mutualized-cnpg-databases.resourcePrefix" $root)
+    "mutualized.cloudnative-pg.io/cluster"  (include "mutualized-cnpg-databases.clusterName" $root)
+    "helm.sh/chart"                         (printf "%s-%s" $root.Chart.Name $root.Chart.Version)
+    | toYaml | trimSuffix "\n" -}}
+{{- end -}}
+
+{{/*
+Default Annotations helper:
+Outputs base annotations as YAML mapping (currently empty, kept for symmetry).
+Call with a context containing:
+- .root : chart root context
+*/}}
+{{- define "mutualized-cnpg-databases.defaultAnnotations" -}}
+{{- with .root.Values.metadata.annotations }}
+{{- toYaml . | trimSuffix "\n" -}}
 {{- end -}}
 {{- end -}}

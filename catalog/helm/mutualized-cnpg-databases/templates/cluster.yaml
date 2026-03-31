@@ -6,6 +6,7 @@ Managed roles (managed.roles) are dynamically built from the combined
 */ -}}
 
 {{- if .Values.spec.cluster -}}
+{{- $root := . -}}
 {{- $clusterName  := include "mutualized-cnpg-databases.clusterName" . -}}
 {{- $resourcePrefix := include "mutualized-cnpg-databases.resourcePrefix" . -}}
 
@@ -15,7 +16,7 @@ Managed roles (managed.roles) are dynamically built from the combined
   {{- $db := . -}}
   {{- range .users -}}
     {{- $user := . -}}
-    {{- $secretName := include "mutualized-cnpg-databases.userSecretName" (dict "prefix" $resourcePrefix "db" $db "user" $user) -}}
+    {{- $secretName := include "mutualized-cnpg-databases.userCredentialsName" (dict "prefix" $resourcePrefix "db" $db "user" $user) -}}
     {{- $role := omit $user "vault" "comment" -}}
     {{- $_ := set $role "name" $user.name -}}
     {{- $_  = set $role "ensure" "present" -}}
@@ -35,7 +36,14 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   name: {{ $clusterName }}
-  {{- include "mutualized-cnpg-databases.resourceMetadata" (dict "root" . "instance" $clusterName) | nindent 2 }}
+  {{- $labels := include "mutualized-cnpg-databases.defaultLabels" (dict "root" $root "instance" $clusterName) | fromYaml }}
+  labels:
+    {{- toYaml $labels | nindent 4 }}
+  {{- $annotations := include "mutualized-cnpg-databases.defaultAnnotations" (dict "root" $root) | fromYaml -}}
+  {{- with $annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   {{- toYaml $clusterSpec | nindent 2 }}
 {{- end -}}

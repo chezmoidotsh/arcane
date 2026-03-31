@@ -16,7 +16,15 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
   name: {{ printf "%s-%s" $prefix .name | trunc 63 | trimSuffix "-" }}
-  {{- include "mutualized-cnpg-databases.resourceMetadata" (dict "root" $root "instance" $prefix "extraLabels" (dict "mutualized-cnpg-databases/database" .name)) | nindent 2 }}
+  {{- $labels := include "mutualized-cnpg-databases.defaultLabels" (dict "root" $root "instance" $clusterName) | fromYaml }}
+  labels:
+    {{- toYaml $labels | nindent 4 }}
+    mutualized.cloudnative-pg.io/database: {{ .name }}
+  {{- $annotations := include "mutualized-cnpg-databases.defaultAnnotations" (dict "root" $root) | fromYaml -}}
+  {{- with $annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   cluster:
     name: {{ .cluster | default $clusterName }}
