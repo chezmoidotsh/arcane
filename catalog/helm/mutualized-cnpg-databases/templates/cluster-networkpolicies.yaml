@@ -19,11 +19,14 @@ metadata:
   {{- $labels := include "mutualized-cnpg-databases.defaultLabels" (dict "root" $root "instance" $clusterName) | fromYaml }}
   labels:
     {{- toYaml $labels | nindent 4 }}
-  {{- $annotations := include "mutualized-cnpg-databases.defaultAnnotations" (dict "root" $root) | fromYaml -}}
-  {{- with $annotations }}
+  {{- $annotations := include "mutualized-cnpg-databases.defaultAnnotations" (dict "root" $root) | fromYaml }}
   annotations:
+    {{- with $annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
+    policy.networking.k8s.io/description: >-
+      Allows the CloudNativePG operator ({{ include "mutualized-cnpg-databases.operatorName" . }}/{{ include "mutualized-cnpg-databases.operatorNamespace" . }})
+      and applications matching the specified selectors to manage cluster '{{ $clusterName }}'. Required for cluster management, metrics, and webhooks.
 spec:
   endpointSelector:
     matchLabels:
@@ -47,22 +50,16 @@ apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: {{ printf "%s-allow-to-kube-apiserver" $clusterName | trunc 63 | trimSuffix "-" }}
-  {{- /* Build labels: start from defaults, then merge global metadata.labels so user values override defaults */ -}}
   {{- $labels := include "mutualized-cnpg-databases.defaultLabels" (dict "root" $root "instance" $clusterName) | fromYaml }}
-  {{- with $root.Values.metadata.labels -}}
-    {{- $labels = merge $labels . -}}
-  {{- end -}}
   labels:
-{{- toYaml $labels | nindent 4 }}
-  {{- /* Build annotations: start from defaults, then merge global metadata.annotations */ -}}
-  {{- $annotations := include "mutualized-cnpg-databases.defaultAnnotations" (dict "root" $root) | fromYaml -}}
-  {{- with $root.Values.metadata.annotations -}}
-    {{- $annotations = merge $annotations . -}}
-  {{- end -}}
-  {{- if $annotations }}
+    {{- toYaml $labels | nindent 4 }}
+  {{- $annotations := include "mutualized-cnpg-databases.defaultAnnotations" (dict "root" $root) | fromYaml }}
   annotations:
-{{- toYaml $annotations | nindent 4 }}
-  {{- end }}
+    {{- with $annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    policy.networking.k8s.io/description: >-
+      Allows CNPG cluster '{{ $clusterName }}' pods to reach the Kubernetes API server. Required for operator integration, status reporting, and lease management.
 spec:
   endpointSelector:
     matchLabels:

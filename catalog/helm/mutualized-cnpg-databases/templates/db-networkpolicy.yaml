@@ -20,12 +20,13 @@ metadata:
   labels:
     {{- toYaml $labels | nindent 4 }}
     mutualized.cloudnative-pg.io/database: {{ .name }}
-  {{- $annotations := include "mutualized-cnpg-databases.defaultAnnotations" (dict "root" $root) | fromYaml -}}
-  {{- with $annotations }}
+  {{- $annotations := include "mutualized-cnpg-databases.defaultAnnotations" (dict "root" $root) | fromYaml }}
   annotations:
+    {{- with $annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
-spec:
+    {{- end }}
+    policy.networking.k8s.io/description: >-
+      Allow declared application endpoints to connect to CNPG cluster '{{ $clusterName }}' for database '{{ .name }}'.
   endpointSelector:
     matchLabels:
       cnpg.io/cluster: {{ .cluster | default $clusterName }}
@@ -38,5 +39,5 @@ spec:
         - ports:
             - port: "5432"
               protocol: TCP
-  {{- end -}}
-{{- end -}}
+  {{- end }}
+{{ end -}}
