@@ -27,6 +27,7 @@ metadata:
     {{- end }}
     policy.networking.k8s.io/description: >-
       Allow declared application endpoints to connect to CNPG cluster '{{ $clusterName }}' for database '{{ .name }}'.
+spec:
   endpointSelector:
     matchLabels:
       cnpg.io/cluster: {{ .cluster | default $clusterName }}
