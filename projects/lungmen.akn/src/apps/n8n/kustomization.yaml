@@ -32,7 +32,7 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/n8n-io/n8n
   - name: ghcr.io/n8n-io/n8n
-    newTag: 2.18.1@sha256:9bcc33ef68699d730f7a51d3f3f1c6b5d91d9ca90c3be46c365a3ffae572f15c
+    newTag: 2.18.2@sha256:e402c9efcadcab279d6f1ed7c42d9eb72109e7a22e90e555504f5c0525cf62e3
   # renovate: datasource=docker depName=docker.io/library/redis
   - name: docker.io/library/redis
     newTag: 8.6.2-alpine
