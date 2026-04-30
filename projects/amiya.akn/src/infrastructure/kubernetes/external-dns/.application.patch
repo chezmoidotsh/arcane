@@ -10,7 +10,7 @@ spec:
       value: Networking / DNS
     - name: Version
       # renovate: datasource=helm depName=external-dns registryUrl=https://kubernetes-sigs.github.io/external-dns
-      value: "1.20.0"
+      value: "1.21.1"
     # -- Documentation & Resources
     - name: Documentation
       value: https://kubernetes-sigs.github.io/external-dns/latest/
