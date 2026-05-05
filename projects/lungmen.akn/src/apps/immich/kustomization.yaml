@@ -32,7 +32,7 @@ images:
     newTag: v2.7.5
   # renovate: datasource=docker depName=docker.io/library/redis
   - name: docker.io/library/redis
-    newTag: 8.6.3-alpine@sha256:eb37f58646a901dc7727cf448cae36daaefaba79de33b5058dab79aa4c04aefb
+    newTag: 8.6.3-alpine@sha256:69f2c586c8a7e9cce4ae1ee9bbaf60bc4bb5f4bb3880e4ed022b1fd758a7cab9
   # renovate: datasource=docker depName=ghcr.io/tensorchord/pgvecto-rs
   - name: ghcr.io/tensorchord/pgvecto-rs
     newTag: pg14-v0.3.0-rootless@sha256:23ac462edc9eba6df7df92d447780950aa20a34ba4a9c11c0f4ddab3a30a64b1
