@@ -36,14 +36,24 @@ spec:
               value: https://paperless.chezmoi.sh
             - name: PAPERLESS_CSRF_TRUSTED_ORIGINS
               value: https://paperless.chezmoi.sh
+
             - name: PAPERLESS_DBENGINE
               value: postgresql
             - name: PAPERLESS_DBHOST
-              value: paperless-ngx-database-rw
-            - name: PAPERLESS_DBNAME
-              value: paperless
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-database-paperless
+                  key: host
             - name: PAPERLESS_DBPORT
-              value: "5432"
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-database-paperless
+                  key: port
+            - name: PAPERLESS_DBNAME
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-database-paperless
+                  key: dbname
             - name: PAPERLESS_DBUSER
               valueFrom:
                 secretKeyRef:
@@ -54,6 +64,7 @@ spec:
                 secretKeyRef:
                   name: paperless-ngx-database-paperless
                   key: password
+
             - name: PAPERLESS_REDIS
               value: redis://paperless-ngx-redis:6379
             - name: PAPERLESS_SOCIALACCOUNT_PROVIDERS

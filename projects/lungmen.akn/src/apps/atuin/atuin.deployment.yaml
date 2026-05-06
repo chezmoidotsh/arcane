@@ -40,7 +40,7 @@ spec:
             - name: ATUIN_OPEN_REGISTRATION
               value: "true"
           image: ghcr.io/atuinsh/atuin
-          command: ["atuin", "server", "start"]
+          args: ["start"]
           livenessProbe:
             httpGet:
               path: /

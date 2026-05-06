@@ -24,7 +24,7 @@ informed: []
   * [Implementation Architecture](#implementation-architecture)
   * [Key Design Principles](#key-design-principles)
   * [Access Control Architecture](#access-control-architecture)
-* [Consequences \[Optional\]](#consequences-optional)
+* [Consequences](#consequences)
   * [Positive](#positive)
   * [Negative](#negative)
   * [Neutral](#neutral)
@@ -40,7 +40,7 @@ informed: []
 * [Future Considerations](#future-considerations)
   * [Namespace Evolution Path](#namespace-evolution-path)
   * [Advanced Secret Engine Integration](#advanced-secret-engine-integration)
-* [References and Related Decisions \[Optional\]](#references-and-related-decisions-optional)
+* [References and Related Decisions](#references-and-related-decisions)
   * [Architecture and Best Practices](#architecture-and-best-practices)
   * [Integration Documentation](#integration-documentation)
   * [OpenBao Community Resources](#openbao-community-resources)
@@ -198,7 +198,7 @@ Centralized administration for shared secrets with read-only project access, imp
 2. **OIDC Auth**: Human access via Authelia with group-based role mapping
 3. **Token Auth**: Service accounts and automation with time-limited tokens
 
-## Consequences \[Optional]
+## Consequences
 
 ### Positive
 
@@ -343,7 +343,7 @@ Future architectural expansion may include:
 * **Database engine**: For dynamic credential management
 * **Transit engine**: For encryption-as-a-service capabilities
 
-## References and Related Decisions \[Optional]
+## References and Related Decisions
 
 * [ADR-001: Centralized Secret Management](./001-centralized-secret-management.md) - Establishes OpenBao as the chosen secret management solution
 

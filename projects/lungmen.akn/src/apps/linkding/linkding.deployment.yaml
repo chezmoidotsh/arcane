@@ -31,11 +31,20 @@ spec:
             - name: LD_DB_ENGINE
               value: postgres
             - name: LD_DB_DATABASE
-              value: linkding
+              valueFrom:
+                secretKeyRef:
+                  name: linkding-database-linkding
+                  key: dbname
             - name: LD_DB_HOST
-              value: linkding-database-rw
+              valueFrom:
+                secretKeyRef:
+                  name: linkding-database-linkding
+                  key: host
             - name: LD_DB_PORT
-              value: "5432"
+              valueFrom:
+                secretKeyRef:
+                  name: linkding-database-linkding
+                  key: port
             - name: LD_DB_PASSWORD
               valueFrom:
                 secretKeyRef:

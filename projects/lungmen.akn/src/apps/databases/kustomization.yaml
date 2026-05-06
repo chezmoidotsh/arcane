@@ -1,11 +1,76 @@
 ---
+# databases/kustomization.yaml
+#
+# Manages all database infrastructure for lungmen.akn:
+#   - Two CNPG clusters via the mutualized-cnpg-databases Helm chart
+#   - ObjectStore resources for S3 backup
+#   - Qdrant vector database (independent of CNPG)
+#   - Namespace-level security baseline (incl. S3 backup egress policies)
+#
+# Chart: catalog/helm/mutualized-cnpg-databases (referenced via helmGlobals.chartHome)
+#
+# Helm releases:
+#   postgres-apps         → postgres-apps.helmvalues.yaml
+#     CNPG Cluster name: "apps-20260329"   (metadata.name + spec.cluster.name date suffix)
+#   postgres-apps-secured → postgres-apps-secured.helmvalues.yaml
+#     CNPG Cluster name: "apps-secured-20260329"   (metadata.name + spec.cluster.name date suffix)
+#
+# Resources NOT managed by the chart (kept as standalone manifests):
+#   - ObjectStore CRs (barmancloud.cnpg.io/v1) — one per cluster, in *.objectstore.yaml
+#   - cnpg-backup-credentials ExternalSecret — shared S3 credentials for both clusters
+#   - Qdrant (vector database, unrelated to CNPG PostgreSQL)
+#   - default-hardened CiliumNetworkPolicy (namespace-wide baseline, not cluster-specific)
+#   - allow-qdrant-from-n8n CiliumNetworkPolicy (Qdrant-specific, not CNPG)
+#   - allow-cnpg-to-s3-backup CiliumNetworkPolicy (S3 backup egress, uses operator:Exists — cluster-name-agnostic)
+#
+# Resources managed by the chart (DO NOT duplicate here):
+#   - postgresql.cnpg.io/v1 Cluster             (controller.createCluster: true in both values)
+#   - postgresql.cnpg.io/v1 Database             (one per database entry)
+#   - external-secrets.io/v1beta1 ExternalSecret (one per user per database)
+#   - generators.external-secrets.io/v1alpha1 Password (one per user, behavior.passwords.generate: true)
+#   - external-secrets.io/v1alpha1 PushSecret   (one per user, behavior.passwords.generate: true)
+#   - cilium.io/v2 CiliumNetworkPolicy:
+#       cluster-level: operator ingress (apps-20260329-allow-from-cnpg-operator, apps-secured-20260329-allow-from-cnpg-operator)
+#                      kube-apiserver egress (apps-20260329-allow-to-kube-apiserver, apps-secured-20260329-allow-to-kube-apiserver)
+#       per-database:  application ingress (allow-apps-20260329-database-from-*, allow-apps-secured-20260329-database-from-*)
+
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: databases
 
+# ── Helm chart configuration ───────────────────────────────────────────────────
+# Local chart copy — avoids kustomize load-restrictor issues with cross-directory
+# references. Sync with catalog/helm/mutualized-cnpg-databases when the chart
+# is updated.
+helmGlobals:
+  chartHome: ../../../../../catalog/helm
+
+helmCharts:
+  # postgres-apps: common applications cluster
+  - name: mutualized-cnpg-databases
+    releaseName: postgres-apps
+    namespace: databases
+    valuesFile: postgres-apps.helmvalues.yaml
+
+  # postgres-apps-secured: sensitive data cluster (HA, pgvector)
+  - name: mutualized-cnpg-databases
+    releaseName: postgres-apps-secured
+    namespace: databases
+    valuesFile: postgres-apps-secured.helmvalues.yaml
+
+# ── Standalone resources ───────────────────────────────────────────────────────
 resources:
-  - apps.databases.yaml
+  # S3-compatible ObjectStore resources for CNPG WAL archiving and backups.
+  # apps-secured.objectstore.yaml also holds the cnpg-backup-credentials ExternalSecret
+  # (shared S3 credentials consumed by both clusters).
+  # S3 egress network policy (allow-cnpg-to-s3-backup) is in security/.
   - apps.objectstore.yaml
-  - apps.postgresql.yaml
-  - apps.roles.externalsecret.yaml
+  - apps-secured.objectstore.yaml
+  - cnpg-backup-credentials.externalsecret.yaml
+
+  # Custom PG images using vchord to handle vectors
+  - postgresql-vchord.imagecatalog.yaml
+
+  # Namespace security baseline: default-hardened policy + Qdrant-specific rules.
+  # CNPG cluster and per-database policies are rendered by the chart above.
   - security/

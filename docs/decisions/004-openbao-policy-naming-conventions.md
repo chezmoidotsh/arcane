@@ -33,19 +33,19 @@ informed: []
     * [Read-Only Access (`read`)](#read-only-access-read)
     * [Read-Write Access (`read,write`)](#read-write-access-readwrite)
     * [Administrative Access (`sudo`)](#administrative-access-sudo)
-* [Consequences \[Optional\]](#consequences-optional)
+* [Consequences](#consequences)
   * [Positive](#positive)
   * [Negative](#negative)
-* [Implementation Details / Status \[Optional\]](#implementation-details--status-optional)
+* [Implementation Details / Status](#implementation-details--status)
   * [Policy Creation Strategy](#policy-creation-strategy)
   * [Cross-Cluster Considerations](#cross-cluster-considerations)
   * [Monitoring and Compliance](#monitoring-and-compliance)
-* [Decision Evolution \[Optional\]](#decision-evolution-optional)
+* [Decision Evolution](#decision-evolution)
   * [Rationale](#rationale)
     * [Why Function-Based Policy Design](#why-function-based-policy-design)
     * [Why Ephemeral Admin Tokens](#why-ephemeral-admin-tokens)
     * [Why This Policy Matrix](#why-this-policy-matrix)
-* [References and Related Decisions \[Optional\]](#references-and-related-decisions-optional)
+* [References and Related Decisions](#references-and-related-decisions)
 * [Changelog](#changelog)
 
 ## Context and Problem Statement
@@ -181,7 +181,7 @@ The challenge is defining policy conventions that are:
 
 ***
 
-## Consequences \[Optional]
+## Consequences
 
 ### Positive
 
@@ -201,7 +201,7 @@ The challenge is defining policy conventions that are:
 
 ***
 
-## Implementation Details / Status \[Optional]
+## Implementation Details / Status
 
 ### Policy Creation Strategy
 
@@ -231,7 +231,7 @@ The challenge is defining policy conventions that are:
 
 ***
 
-## Decision Evolution \[Optional]
+## Decision Evolution
 
 ### Rationale
 
@@ -259,11 +259,16 @@ The challenge is defining policy conventions that are:
 
 ***
 
-## References and Related Decisions \[Optional]
+## References and Related Decisions
 
 * **Related ADRs**: [ADR-002: OpenBao Secrets Mount Topology](./002-openbao-secrets-topology.md), [ADR-003: OpenBao Path and Naming Conventions](./003-openbao-path-naming-conventions.md)
 * **Architecture Documentation**: [OpenBao Policy Documentation](https://openbao.org/docs/concepts/policies/)
+
+<!-- trunk-ignore-begin(markdown-link-check/403): some link can be behind a paywall -->
+
 * **Security Guidelines**: [HashiCorp Vault Policy Best Practices](https://developer.hashicorp.com/vault/docs/concepts/policies), [HashiCorp Vault Security Model](https://developer.hashicorp.com/vault/docs/internals/security), [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework), [Principle of Least Privilege](https://csrc.nist.gov/glossary/term/least_privilege), [Scaling HashiCorp Vault - Policy Sprawl Part 1](https://sunil-tailor.medium.com/scaling-hashicorp-vault-policy-sprawl-part-1-1b0f599b6eae), [Secret Management Best Practices](https://kubernetes.io/docs/concepts/configuration/secret/)
+
+<!-- trunk-ignore-end(markdown-link-check/403) -->
 
 ***
 

@@ -123,6 +123,18 @@ node = "24.15.0"                 # JavaScript runtime for running Node-based too
 trunk = "latest"                 # Metalinter and formatter for all
 uv = "latest"                    # Extremely fast Python package and project manager
 
+# -----------------------------------------------------------------------------
+# kubectl plugins
+# -----------------------------------------------------------------------------
+# Additional extensions for kubectl, managed by mise instead of krew
+
+"go:github.com/cloudnative-pg/cloudnative-pg/cmd/kubectl-cnpg" = "latest"
+
+# =============================================================================
+# Tasks definition
+# =============================================================================
+
+
 [tasks."ansible:install"]
 description = "Install Ansible and dependencies"
 run = "uv sync --active"

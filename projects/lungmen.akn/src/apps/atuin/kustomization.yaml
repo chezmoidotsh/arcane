@@ -11,12 +11,10 @@ labels:
     includeSelectors: true
 
 resources:
+  - atuin.database.externalsecret.yaml
   - atuin.deployment.yaml
   - atuin.httproute.yaml
   - atuin.ingress.yaml
-  - atuin.postgresql-backup.yaml
-  - atuin.postgresql-objectstore.yaml
-  - atuin.postgresql.yaml
   - atuin.storage.yaml
 
   - security/

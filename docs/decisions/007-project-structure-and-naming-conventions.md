@@ -21,7 +21,7 @@ informed: []
   * [Label Schema](#label-schema)
   * [HTTPRoute Naming](#httproute-naming)
 * [Decision Outcome](#decision-outcome)
-* [Implementation Details / Status \[Optional\]](#implementation-details--status-optional)
+* [Implementation Details / Status](#implementation-details--status)
   * [Standards Specification](#standards-specification)
   * [1. Directory Structure](#1-directory-structure)
     * [1.1 Application Directory Naming](#11-application-directory-naming)
@@ -77,7 +77,7 @@ informed: []
   * [Automated Validation (Future)](#automated-validation-future)
   * [Manual Review Checklist](#manual-review-checklist)
   * [Sync Policy Decision Matrix](#sync-policy-decision-matrix)
-* [References and Related Decisions \[Optional\]](#references-and-related-decisions-optional)
+* [References and Related Decisions](#references-and-related-decisions)
   * [Internal Documentation](#internal-documentation)
   * [Kubernetes Standards](#kubernetes-standards)
   * [ArgoCD Integration](#argocd-integration)
@@ -364,7 +364,7 @@ This decision establishes a complete, consistent structure across all Arcane pro
 3. **Comprehensive labeling** for proper resource management
 4. **Consistent organization** across all project types
 
-## Implementation Details / Status \[Optional]
+## Implementation Details / Status
 
 ### Standards Specification
 
@@ -1469,7 +1469,7 @@ For each new application:
 * [ ] Application has minimal cluster dependencies
 * [ ] Rapid iteration and updates desired
 
-## References and Related Decisions \[Optional]
+## References and Related Decisions
 
 ### Internal Documentation
 

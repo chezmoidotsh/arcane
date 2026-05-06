@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+#
+# Helper script to migrate a database from one CloudNative-PG cluster to another.
+# It uses `pg_dump` and `pg_restore` between the primary pods of each cluster.
+#
+# Usage:
+#   scripts/cnpg:db:migrate <source_namespace> <source_cluster> <dest_namespace> <dest_cluster> <database_name> <owner_role>
+#
+# Example:
+#   scripts/cnpg:db:migrate atuin atuin-database databases postgres-apps atuin atuin
+
+set -euo pipefail
+
+# Optional flags
+DRY_RUN=false
+if [[ ${1-} == "--dry-run" ]]; then
+  DRY_RUN=true
+  shift
+fi
+
+if [[ $# -ne 6 ]]; then
+  echo "Usage: $0 [--dry-run] <source_namespace> <source_cluster> <dest_namespace> <dest_cluster> <database_name> <owner_role>"
+  echo "Example: $0 --dry-run atuin atuin-database databases postgres-apps atuin atuin"
+  exit 1
+fi
+
+SRC_NS="$1"
+SRC_CLUSTER="$2"
+DEST_NS="$3"
+DEST_CLUSTER="$4"
+DB_NAME="$5"
+OWNER_ROLE="$6"
+
+# Helper to print and optionally execute commands. Commands should be passed as a single
+# string so redirections are preserved.
+run_cmd() {
+  local cmd="$1"
+  echo "+ ${cmd}"
+  if [[ ${DRY_RUN} == "false" ]]; then
+    eval "${cmd}"
+    return $?
+  fi
+  return 0
+}
+
+echo "=== Migrating database '${DB_NAME}' ==="
+echo "Source: namespace=${SRC_NS}, cluster=${SRC_CLUSTER}"
+echo "Destination: namespace=${DEST_NS}, cluster=${DEST_CLUSTER}"
+
+if [[ ${DRY_RUN} == "true" ]]; then
+  echo "*** DRY-RUN mode: commands will be printed but not executed ***"
+fi
+
+# Find primary pods
+echo "[1/4] Identifying primary pods..."
+
+# Helper to get the primary pod name in a resilient way. This avoids jsonpath
+# errors when no items are present and will retry for a short period to handle
+# transient states (pod starting, scheduling, etc.).
+get_primary_pod() {
+  local ns="$1"
+  local cluster="$2"
+  if [[ ${DRY_RUN} == "true" ]]; then
+    # In dry-run we don't query the cluster; print what we'd run to stderr and return a placeholder
+    local jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
+    echo "+ kubectl get pod -n \"${ns}\" -l cnpg.io/cluster=\"${cluster}\",role=primary -o jsonpath='${jsonpath}'" >&2
+    echo "${cluster}-primary-pod"
+    return 0
+  fi
+
+  local attempts=6
+  local sleep_sec=5
+  local i
+  for ((i = 1; i <= attempts; i++)); do
+    pod=$(kubectl get pod -n "${ns}" -l cnpg.io/cluster="${cluster}",role=primary -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null | head -n1 || true)
+    if [[ -n ${pod} ]]; then
+      echo "${pod}"
+      return 0
+    fi
+    echo "  - primary not found yet for ${cluster} in ${ns}, retrying (${i}/${attempts})..." >&2
+    sleep "${sleep_sec}"
+  done
+  echo "Error: Could not find primary pod for cluster ${cluster} in namespace ${ns}" >&2
+  return 1
+}
+
+SRC_POD=$(get_primary_pod "${SRC_NS}" "${SRC_CLUSTER}")
+DEST_POD=$(get_primary_pod "${DEST_NS}" "${DEST_CLUSTER}")
+
+echo "  -> Source Primary: ${SRC_POD}"
+echo "  -> Destination Primary: ${DEST_POD}"
+
+# Create a temporary file for the dump
+if [[ ${DRY_RUN} == "true" ]]; then
+  DUMP_FILE="/tmp/${DB_NAME}_migration_dryrun.dump"
+  echo "+ mktemp \"/tmp/${DB_NAME}_migration_XXXXXX.dump\" -> ${DUMP_FILE}"
+else
+  DUMP_FILE=$(mktemp "/tmp/${DB_NAME}_migration_XXXXXX.dump")
+fi
+
+echo "[2/4] Dumping database from source to temporary file (${DUMP_FILE})..."
+# We use custom format (-Fc) to easily restore it
+run_cmd "kubectl exec -n \"${SRC_NS}\" \"${SRC_POD}\" -c postgres -- pg_dump -U postgres -Fc \"${DB_NAME}\" >\"${DUMP_FILE}\""
+
+echo "[3/4] Restoring database to destination cluster..."
+# Before restoring, ensure that destination database exists. We should not attempt to restore
+# into a non-existent database.
+echo "[3.1] Verifying destination database exists..."
+if [[ ${DRY_RUN} == "true" ]]; then
+  echo "+ kubectl exec -i -n \"${DEST_NS}\" \"${DEST_POD}\" -c postgres -- psql -U postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'\""
+else
+  exists=$(kubectl exec -i -n "${DEST_NS}" "${DEST_POD}" -c postgres -- psql -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" 2>/dev/null || true)
+  exists=$(echo "${exists}" | tr -d '[:space:]')
+  if [[ ${exists} != "1" ]]; then
+    echo "Error: Destination database '${DB_NAME}' does not exist in ${DEST_NS}/${DEST_CLUSTER}. Create it first and re-run the migration."
+    # Cleanup dump file before exiting
+    run_cmd "rm -f \"${DUMP_FILE}\""
+    exit 1
+  fi
+fi
+
+# Clean the destination DB before restoring in case there are conflicting tables
+# We use the superuser (postgres) but ensure ownership is maintained (pg_dump keeps it if role exists)
+run_cmd "kubectl exec -i -n \"${DEST_NS}\" \"${DEST_POD}\" -c postgres -- pg_restore -U postgres -d \"${DB_NAME}\" --clean --if-exists -O -x <\"${DUMP_FILE}\""
+
+echo "[4/4] Ensuring ownership is correctly set (explicit owner fixes)..."
+# Instead of a broad REASSIGN, run a DO block to ALTER TABLE owners for objects in public schema.
+# This is more surgical and avoids reassigning system-owned objects.
+read -r -d '' sql_do_block <<EOS || true
+DO \$\$
+DECLARE
+  r RECORD;
+  BEGIN
+    FOR r IN (
+      SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+    ) LOOP
+      BEGIN
+        EXECUTE format('ALTER TABLE %I.%I OWNER TO %I', 'public', r.tablename, '${OWNER_ROLE}');
+      EXCEPTION WHEN OTHERS THEN
+        NULL;
+      END;
+    END LOOP;
+END\$\$;
+EOS
+
+if [[ ${DRY_RUN} == "true" ]]; then
+  echo "+ kubectl exec -i -n \"${DEST_NS}\" \"${DEST_POD}\" -c postgres -- psql -U postgres -d \"${DB_NAME}\" -c \"${sql_do_block}\""
+else
+  # Execute the DO block with per-statement exception handling inside the block
+  kubectl exec -i -n "${DEST_NS}" "${DEST_POD}" -c postgres -- psql -U postgres -d "${DB_NAME}" -c "${sql_do_block}"
+fi
+
+# Cleanup
+run_cmd "rm -f \"${DUMP_FILE}\""
+
+echo "=== Migration complete! ==="
+echo "You can now verify the data in ${DEST_NS}/${DEST_CLUSTER}."

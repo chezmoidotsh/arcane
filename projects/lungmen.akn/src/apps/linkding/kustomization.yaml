@@ -12,11 +12,9 @@ labels:
 
 resources:
   - linkding.configuration.externalsecret.yaml
-  - linkding.httproute.yaml
-  - linkding.postgresql-backup.yaml
-  - linkding.postgresql-objectstore.yaml
-  - linkding.postgresql.yaml
+  - linkding.database.externalsecret.yaml
   - linkding.deployment.yaml
+  - linkding.httproute.yaml
 
   - security/
 
