@@ -4,7 +4,6 @@ kind: Kustomization
 
 resources:
   - network-policy.allow-jellyfin-from-envoy-gateway.yaml
-  - network-policy.allow-jellyfin-from-jellyseerr.yaml
   - network-policy.allow-jellyfin-from-newt.yaml
   - network-policy.allow-jellyfin-to-internet.yaml
   - network-policy.allow-jellyfin-to-sso.yaml

@@ -159,7 +159,7 @@ Multiple candidates:
 ```text
 I found these CNPG clusters:
 
-1. apps-20260329          namespace=databases   context=admin@lungmen.akn   databases=atuin,n8n,linkding,mealie,jellyseerr
+1. apps-20260329          namespace=databases   context=admin@lungmen.akn   databases=atuin,n8n,linkding
 2. apps-secured-20260329  namespace=databases   context=admin@lungmen.akn   databases=immich,litellm,open-webui,paperless
 3. jellyseerr-database    namespace=jellyseerr  context=admin@lungmen.akn   source=direct
 

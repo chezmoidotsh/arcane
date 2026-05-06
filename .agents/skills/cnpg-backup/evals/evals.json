@@ -29,7 +29,7 @@
 			"expected_output": "The run limits discovery to lungmen.akn, surfaces the three current CNPG targets there, asks the user to confirm the full set, and then creates and verifies one plugin backup per confirmed cluster.",
 			"files": [],
 			"expectations": [
-				"The candidate list stays scoped to lungmen.akn and includes apps-20260329, apps-secured-20260329, and jellyseerr-database.",
+				"The candidate list stays scoped to lungmen.akn and includes apps-20260329 and apps-secured-20260329.",
 				"The confirmation prompt clearly enumerates the matched targets before any backup is created.",
 				"The result reporting is per target, including backup name and status rather than a single vague success message."
 			]

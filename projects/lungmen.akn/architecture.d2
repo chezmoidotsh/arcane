@@ -267,28 +267,6 @@ lungmen·akn: {
     tooltip: Volunteer-built media solution that puts you in control of your media.
   }
 
-  media.jellyseerr-stack: {
-    class: [namespace]
-    label: Jellyseerr Stack
-    tooltip: Jellyseerr media request management stack with PostgreSQL backend
-
-    jellyseerr: {
-      class: [application]
-      label: Jellyseerr
-      icon: assets/icons/apps/jellyseerr.svg
-      link: https://github.com/Fallenbagel/jellyseerr
-      tooltip: Free and open source software application for managing requests for media libraries.
-    }
-
-    postgresql: {
-      class: [application-datastore]
-      label: PostgreSQL
-      icon: assets/icons/system/cloudnativepg.svg
-      link: https://postgresql.org/
-      tooltip: PostgreSQL database backend for Jellyseerr, managed by CloudNative-PG operator with automated backups to S3.
-    }
-  }
-
   # ────────────────────────────────────────────────────────────────────────────
   # Life Management Components
 
@@ -327,20 +305,6 @@ lungmen·akn: {
       icon: assets/icons/apps/redis.svg
       link: https://redis.io/
       tooltip: Redis cache for improved Paperless performance and background task processing.
-    }
-  }
-
-  life.mealie-stack: {
-    class: [namespace]
-    label: Mealie Stack
-    tooltip: Mealie recipe management stack
-
-    mealie: {
-      class: [application]
-      label: Mealie
-      icon: assets/icons/apps/mealie.svg
-      link: https://mealie.io/
-      tooltip: Self-hosted recipe manager and meal planner.
     }
   }
 
@@ -476,16 +440,8 @@ lungmen·akn.media.immich-stack.postgresql <- lungmen·akn.system.cloudnativepg:
 
 lungmen·akn.media.jellyfin -> amiya·akn.pocket-id: "SSO authentication (443)"
 lungmen·akn.media.jellyfin -> internet: "Metadata and external content fetching (443)" {class: [connect-to-internet]}
-lungmen·akn.media.jellyfin <- lungmen·akn.media.jellyseerr-stack.jellyseerr: "Media library API access (8096)"
 lungmen·akn.media.jellyfin <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8096)"
 lungmen·akn.media.jellyfin <- lungmen·akn.system.newt: "Tunnel traffic proxy (8096)" {class: [secured-connect-from-internet]}
-
-lungmen·akn.media.jellyseerr-stack.jellyseerr -> lungmen·akn.media.jellyseerr-stack.postgresql: "Database operations (5432)"
-lungmen·akn.media.jellyseerr-stack.jellyseerr -> internet: "External media database queries (443)" {class: [connect-to-internet]}
-lungmen·akn.media.jellyseerr-stack.jellyseerr <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (5055)"
-lungmen·akn.media.jellyseerr-stack.jellyseerr <- lungmen·akn.system.newt: "Tunnel traffic proxy (5055)" {class: [secured-connect-from-internet]}
-lungmen·akn.media.jellyseerr-stack.postgresql -> nas.minio: "Database backups (S3)"
-lungmen·akn.media.jellyseerr-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Life Management Flow
@@ -510,13 +466,6 @@ lungmen·akn.others.atuin-stack.atuin <- lungmen·akn.system.tailscale: "VPN acc
 lungmen·akn.others.atuin-stack.postgresql -> nas.minio: "Database backups (S3)"
 lungmen·akn.others.atuin-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
-lungmen·akn.life.mealie-stack.mealie -> amiya·akn.pocket-id: "SSO authentication (443)"
-lungmen·akn.life.mealie-stack.mealie -> lungmen·akn.databases.shared: "Database operations (5432)"
-lungmen·akn.life.mealie-stack.mealie -> internet: "Recipe imports (443)" {class: [connect-to-internet]}
-lungmen·akn.life.mealie-stack.mealie -> localnet: "Ollama AI (11434)"
-lungmen·akn.life.mealie-stack.mealie.container_main <-> lungmen·akn.life.mealie-stack.mealie.container_sidecar: "MCP Protocol"
-lungmen·akn.life.mealie-stack.mealie <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (9000)"
-lungmen·akn.life.mealie-stack.mealie <- lungmen·akn.system.newt: "Tunnel traffic proxy (9000)" {class: [secured-connect-from-internet]}
 lungmen·akn.databases.shared -> nas.minio: "Database backups (S3)"
 lungmen·akn.databases.shared <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 

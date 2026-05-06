@@ -8,8 +8,8 @@ spec:
       value: >-
         Mutualized PostgreSQL clusters for lungmen.akn applications.
         Managed by the mutualized-cnpg-databases Helm chart.
-        Two clusters: postgres-apps (mealie, n8n, atuin, jellyseerr, linkding)
-        and postgres-apps-secured (open-webui, litellm, immich, paperless).
+        Two clusters: postgres-apps (for common applications)
+        and postgres-apps-secured (for application requiring HA).
     - name: Category
       value: Database / Infrastructure
     # -- Documentation & Resources
