@@ -1,0 +1,38 @@
+{
+	"skill_name": "cnpg-backup",
+	"evals": [
+		{
+			"id": 1,
+			"prompt": "Back up pocket-id in amiya.akn. Find the right CNPG cluster, confirm the target before doing anything destructive, and use the plugin backup flow.",
+			"expected_output": "The run identifies the dedicated CNPG cluster pocket-id-database from the pocket-id app, maps it to namespace pocket-id and an amiya context, asks for explicit confirmation, validates plugin readiness, and creates or prepares a plugin backup with a follow-up status command.",
+			"files": [],
+			"expectations": [
+				"The candidate resolution identifies pocket-id-database as a direct CNPG cluster in project amiya.akn and namespace pocket-id.",
+				"The workflow requires explicit user confirmation before any backup creation command is executed.",
+				"The backup creation step uses the plugin method, either through kubectl cnpg backup --method plugin or a Backup manifest with spec.method set to plugin and pluginConfiguration.name set to barman-cloud.cloudnative-pg.io."
+			]
+		},
+		{
+			"id": 2,
+			"prompt": "Backup atuin in lungmen.akn. I do not know the cluster name, only the app name.",
+			"expected_output": "The run resolves the app name atuin through the mutualized databases chart, maps it to cluster apps-20260329 in namespace databases on lungmen.akn, asks for confirmation, validates the cluster, and uses the plugin backup flow.",
+			"files": [],
+			"expectations": [
+				"The discovery step maps the logical database atuin to the mutualized cluster apps-20260329 rather than inventing a dedicated cluster.",
+				"The candidate list includes namespace databases and a lungmen.akn context for the selected target.",
+				"The run validates backup capability before creation instead of jumping directly to kubectl apply."
+			]
+		},
+		{
+			"id": 3,
+			"prompt": "Back up all CNPG databases in lungmen.akn and show me exactly what you are about to touch before you do it.",
+			"expected_output": "The run limits discovery to lungmen.akn, surfaces the three current CNPG targets there, asks the user to confirm the full set, and then creates and verifies one plugin backup per confirmed cluster.",
+			"files": [],
+			"expectations": [
+				"The candidate list stays scoped to lungmen.akn and includes apps-20260329, apps-secured-20260329, and jellyseerr-database.",
+				"The confirmation prompt clearly enumerates the matched targets before any backup is created.",
+				"The result reporting is per target, including backup name and status rather than a single vague success message."
+			]
+		}
+	]
+}
