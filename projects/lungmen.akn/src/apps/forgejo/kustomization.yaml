@@ -22,4 +22,4 @@ resources:
 images:
   # renovate: datasource=docker depName=codeberg.org/forgejo/forgejo
   - name: codeberg.org/forgejo/forgejo
-    newTag: "10.0"
+    newTag: "14.0"
