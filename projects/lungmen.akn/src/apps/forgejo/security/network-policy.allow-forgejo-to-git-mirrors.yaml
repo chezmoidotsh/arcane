@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Forgejo egress to public git hosting providers for repository mirroring over HTTPS.
+  name: allow-forgejo-to-git-mirrors
+  namespace: forgejo
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: forgejo
+  egress:
+    - toFQDNs:
+        - matchName: api.github.com # GitHub — Largest git hosting platform, primary source for most open-source mirrors
+        - matchName: github.com # GitHub — Largest git hosting platform, primary source for most open-source mirrors
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

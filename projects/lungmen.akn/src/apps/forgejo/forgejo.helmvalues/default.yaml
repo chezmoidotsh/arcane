@@ -1,0 +1,114 @@
+# Forgejo Helm chart values - functional configuration
+# Ref: https://code.forgejo.org/forgejo-helm/forgejo-helm/src/branch/main/charts/forgejo/values.yaml
+
+strategy:
+  # -- Recreate required; Forgejo is not HA-ready with shared storage.
+  type: Recreate
+
+image:
+  # -- Use the rootless image variant for reduced attack surface.
+  rootless: true
+
+service:
+  http:
+    type: ClusterIP
+    port: 3000
+  ssh:
+    # -- LoadBalancer exposes SSH for git clone/push over SSH.
+    type: LoadBalancer
+    port: 22
+
+persistence:
+  enabled: true
+  size: 10Gi
+
+serviceAccount:
+  create: false
+
+deployment:
+  env:
+    # -- External PostgreSQL via CNPG; credentials injected from Vault by External Secrets Operator.
+    - name: FORGEJO__database__DB_TYPE
+      value: postgres
+    - name: FORGEJO__database__HOST
+      valueFrom:
+        secretKeyRef:
+          name: forgejo-database-forgejo
+          key: host
+    - name: FORGEJO__database__NAME
+      valueFrom:
+        secretKeyRef:
+          name: forgejo-database-forgejo
+          key: dbname
+    - name: FORGEJO__database__USER
+      valueFrom:
+        secretKeyRef:
+          name: forgejo-database-forgejo
+          key: username
+    - name: FORGEJO__database__PASSWD
+      valueFrom:
+        secretKeyRef:
+          name: forgejo-database-forgejo
+          key: password
+
+gitea:
+  admin:
+    # -- Admin credentials managed in Vault, synced by External Secrets Operator.
+    existingSecret: forgejo-admin-credentials # trunk-ignore(checkov/CKV_SECRET_6): false positive; this is a reference to an existing secret, not a secret value.
+
+  oauth:
+    - name: auth.chezmoi.sh
+      provider: openidConnect
+      existingSecret: forgejo-oidc-credentials # trunk-ignore(checkov/CKV_SECRET_6): false positive; this is a reference to an existing secret, not a secret value.
+      autoDiscoverUrl: https://auth.chezmoi.sh/.well-known/openid-configuration
+      iconUrl: https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/pocket-id-light.svg
+      scopes: openid email profile groups
+      groupClaimName: groups
+      adminGroup: admin
+
+  config:
+    server:
+      DOMAIN: git.chezmoi.sh
+      ROOT_URL: https://git.chezmoi.sh
+      SSH_DOMAIN: git.chezmoi.sh
+      SSH_PORT: 22
+    security:
+      INSTALL_LOCK: "true"
+    service:
+      # -- Disable self-registration; accounts are provisioned via OIDC only.
+      DISABLE_REGISTRATION: "true"
+    # -- External Valkey instance (deployed alongside in the same namespace).
+    queue:
+      TYPE: redis
+      CONN_STR: redis://forgejo-valkey:6379/0
+    cache:
+      ADAPTER: redis
+      HOST: redis://forgejo-valkey:6379/1
+    session:
+      PROVIDER: redis
+      PROVIDER_CONFIG: redis://forgejo-valkey:6379/2
+    log:
+      LEVEL: Info
+    openid:
+      ENABLE_OPENID_SIGNIN: "false"
+      ENABLE_OPENID_SIGNUP: "false"
+    oauth2_client:
+      # -- Automatically link OIDC accounts to existing users by email.
+      OPENID_CONNECT_SCOPES: "openid email profile groups"
+      ENABLE_AUTO_REGISTRATION: "true"
+      UPDATE_AVATAR: "true"
+      ACCOUNT_LINKING: "login"
+
+httpRoute:
+  enabled: true
+  annotations:
+    external-dns.alpha.kubernetes.io/include-unifi: "true"
+    link.argocd.argoproj.io/external-link: https://git.chezmoi.sh
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: default
+      namespace: envoy-gateway-system
+  hostnames:
+    - git.chezmoi.sh
+  port: 3000

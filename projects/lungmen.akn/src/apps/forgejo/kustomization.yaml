@@ -1,0 +1,28 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: forgejo
+
+helmCharts:
+  - name: forgejo
+    repo: oci://code.forgejo.org/forgejo-helm
+    version: 17.1.0
+    releaseName: forgejo
+    namespace: forgejo
+    valuesFile: forgejo.helmvalues/default.yaml
+    additionalValuesFiles:
+      - forgejo.helmvalues/hardened.yaml
+  - name: valkey
+    repo: https://valkey-io.github.io/valkey-helm/
+    version: 0.9.3
+    releaseName: forgejo-valkey
+    namespace: forgejo
+    valuesFile: valkey.helmvalues/default.yaml
+
+resources:
+  - forgejo.database.externalsecret.yaml
+  - forgejo.admin.externalsecret.yaml
+  - forgejo.oidc.externalsecret.yaml
+  - forgejo.tailscale.yaml
+
+  - security/
