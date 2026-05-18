@@ -1,0 +1,234 @@
+---
+# trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_12,checkov/CKV_K8S_13): We will address resource limits when we have consumption data for Forgejo
+# trunk-ignore(checkov/CKV2_K8S_6): Network policy will be handled separately
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forgejo
+  namespace: forgejo
+  labels:
+    app.kubernetes.io/name: forgejo
+    app.kubernetes.io/instance: forgejo
+    app.kubernetes.io/part-of: forgejo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: forgejo
+      app.kubernetes.io/instance: forgejo
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: forgejo
+        app.kubernetes.io/instance: forgejo
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: forgejo
+          env:
+            - name: GITEA__database__DB_TYPE
+              value: postgres
+            - name: GITEA__database__HOST
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-database-forgejo
+                  key: host
+            - name: GITEA__database__NAME
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-database-forgejo
+                  key: dbname
+            - name: GITEA__database__USER
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-database-forgejo
+                  key: username
+            - name: GITEA__database__PASSWD
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-database-forgejo
+                  key: password
+            - name: GITEA__server__DOMAIN
+              value: forgejo.chezmoi.sh
+            - name: GITEA__server__ROOT_URL
+              value: https://forgejo.chezmoi.sh
+            - name: GITEA__server__SSH_DOMAIN
+              value: forgejo.chezmoi.sh
+            - name: GITEA__server__HTTP_PORT
+              value: "3000"
+            - name: GITEA__server__SSH_PORT
+              value: "22"
+            - name: GITEA__security__INSTALL_LOCK
+              value: "true"
+            - name: GITEA__log__LEVEL
+              value: Info
+            - name: FORGEJO__database__DB_TYPE
+              value: postgres
+            - name: FORGEJO__database__HOST
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-database-forgejo
+                  key: host
+            - name: FORGEJO__database__NAME
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-database-forgejo
+                  key: dbname
+            - name: FORGEJO__database__USER
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-database-forgejo
+                  key: username
+            - name: FORGEJO__database__PASSWD
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-database-forgejo
+                  key: password
+            - name: FORGEJO__server__DOMAIN
+              value: forgejo.chezmoi.sh
+            - name: FORGEJO__server__ROOT_URL
+              value: https://forgejo.chezmoi.sh
+            - name: FORGEJO__server__SSH_DOMAIN
+              value: forgejo.chezmoi.sh
+            - name: FORGEJO__server__HTTP_PORT
+              value: "3000"
+            - name: FORGEJO__server__SSH_PORT
+              value: "22"
+            - name: FORGEJO__security__INSTALL_LOCK
+              value: "true"
+            - name: FORGEJO__log__LEVEL
+              value: Info
+          image: codeberg.org/forgejo/forgejo:10.0
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+            - name: ssh
+              containerPort: 22
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: false
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+          volumeMounts:
+            - name: forgejo-data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: forgejo-data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forgejo
+  namespace: forgejo
+  labels:
+    app.kubernetes.io/name: forgejo
+    app.kubernetes.io/instance: forgejo
+    app.kubernetes.io/part-of: forgejo
+spec:
+  selector:
+    app.kubernetes.io/name: forgejo
+    app.kubernetes.io/instance: forgejo
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+    - name: ssh
+      port: 22
+      targetPort: ssh
+      protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: Service
+metadata:
+  name: forgejo-ssh
+  namespace: forgejo
+  labels:
+    app.kubernetes.io/name: forgejo
+    app.kubernetes.io/instance: forgejo
+    app.kubernetes.io/part-of: forgejo
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: forgejo
+    app.kubernetes.io/instance: forgejo
+  ports:
+    - name: ssh
+      port: 22
+      targetPort: ssh
+      protocol: TCP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: forgejo-data
+  namespace: forgejo
+  labels:
+    app.kubernetes.io/name: forgejo
+    app.kubernetes.io/instance: forgejo
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: csi-driver-smb-fs
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: forgejo-app-ini
+  namespace: forgejo
+data:
+  app.ini: |
+    [database]
+    DB_TYPE = postgres
+    HOST = $(GITEA__database__HOST):$(GITEA__database__PORT)
+    NAME = $(GITEA__database__NAME)
+    USER = $(GITEA__database__USER)
+    PASSWD = $(GITEA__database__PASSWD)
+
+    [server]
+    DOMAIN = forgejo.chezmoi.sh
+    ROOT_URL = https://forgejo.chezmoi.sh
+    HTTP_PORT = 3000
+    SSH_DOMAIN = forgejo.chezmoi.sh
+    SSH_PORT = 22
+    START_SSH_SERVER = true
+
+    [security]
+    INSTALL_LOCK = true
+    INTERNAL_TOKEN = /data/gitea/internal/token
+    SECRET_KEY = /data/gitea/internal/secret
+
+    [log]
+    LEVEL = Info
+
+    [openid]
+    ENABLE_OPENID_SIGNIN = true
+    ENABLE_OPENID_SIGNUP = false

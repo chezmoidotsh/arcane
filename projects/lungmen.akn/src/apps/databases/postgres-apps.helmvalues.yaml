@@ -87,3 +87,14 @@ spec:
             - matchLabels:
                 io.kubernetes.pod.namespace: linkding
                 app.kubernetes.io/name: linkding
+
+    - name: forgejo
+      users:
+        - name: forgejo
+          vault:
+            path: lungmen.akn/data/forgejo/database/postgresql
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                io.kubernetes.pod.namespace: forgejo
+                app.kubernetes.io/name: forgejo
