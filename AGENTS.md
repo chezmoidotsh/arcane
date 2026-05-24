@@ -178,8 +178,13 @@ phased out in favor of `lungmen.akn`. Don't add new dependencies on FluxCD.
 
 ## Commits and pull requests
 
-This repository uses **Gitmoji** with mandatory scopes, validated by `commitlint`
-(`.commitlintrc.js` is the authoritative source for allowed emojis and scopes).
+This repository uses a **symbol-based commit type convention** with mandatory
+square-bracket scopes, validated by `commitlint`
+(`.commitlintrc.js` is the authoritative source for allowed types and scopes).
+
+Format: `type[scope]: Subject` — e.g. `+[project:lungmen.akn]: Add Forgejo`,
+`^[deps]: cert-manager to v1.16.0`, `![project:amiya.akn]: Fix OIDC redirect loop`.
+Breaking changes use `+!`, `~!`, or `-!` as the type.
 
 Detailed conventions, formats, and validation tooling live in skill definitions:
 

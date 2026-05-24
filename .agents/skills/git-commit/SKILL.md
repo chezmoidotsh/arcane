@@ -6,8 +6,9 @@ description: >
   write a commit message, or finalize work — including phrases like "commit this",
   "commit everything", "make a commit", "stage and commit", or "create a commit message".
   Also triggers when the user finishes a coding task and the next logical step is
-  to persist the changes to git. Enforces Gitmoji format with mandatory scope,
-  structured body, and Assisted-by transparency trailer per emerging open-source standards.
+  to persist the changes to git. Enforces symbol-based type format with mandatory
+  square-bracket scope, structured body, and Assisted-by transparency trailer per
+  emerging open-source standards.
 compatibility: Requires git
 ---
 
@@ -32,41 +33,71 @@ everything into a single merge commit.
 ## Commit format
 
 ```text
-:emoji:(scope[,scope2]): Subject starting with uppercase
+type[scope]: Subject starting with uppercase
 
 Body providing context and intent, max 80 chars/line
 
 Assisted-by: <provider>:<model-id>
 ```
 
-### Emoji (type)
+For breaking changes:
 
-The emoji prefix is a Gitmoji code (`:emoji_name:`) that encodes the change type in a
-single token. A reviewer scanning `git log --oneline` can immediately see whether a commit
-is a feature, a fix, a refactor, or a dependency bump.
+```text
+type![scope]: Subject starting with uppercase
 
-The full list of allowed emojis is defined in `.commitlintrc.js` under the `types` array.
-The most common ones:
+Body providing context and intent.
 
-| Emoji        | Use case                          |
-| ------------ | --------------------------------- |
-| `:sparkles:` | Introduce new features            |
-| `:bug:`      | Fix a bug                         |
-| `:memo:`     | Add or update documentation       |
-| `:wrench:`   | Add or update configuration files |
-| `:bricks:`   | Infrastructure related changes    |
-| `:recycle:`  | Refactor code                     |
-| `:arrow_up:` | Upgrade dependencies              |
-| `:lock:`     | Fix security or privacy issues    |
-| `:fire:`     | Remove code or files              |
-| `:truck:`    | Move or rename resources          |
+BREAKING CHANGE: What breaks and how to migrate.
 
-> Full list: `.commitlintrc.js` → `types` array
+Assisted-by: <provider>:<model-id>
+```
+
+### Type
+
+The type is a single ASCII symbol (two characters for breaking changes) that encodes the
+nature of the change. It appears at the very start of the commit subject and is readable
+in any terminal or rendering environment without emoji support.
+
+| Type | Meaning                                                         |
+| ---- | --------------------------------------------------------------- |
+| `+`  | Add — new feature, service, resource, initial deploy            |
+| `-`  | Remove — delete service, file, dead code                        |
+| `~`  | Improve — perf, config update, behavioral improvement (non-bug) |
+| `!`  | Fix — repair a bug or broken behavior                           |
+| `=`  | Refactor — no behavior change (style, tests, DX, CI)            |
+| `^`  | Bump — dependency version upgrade or downgrade                  |
+| `>`  | Move — rename or relocate resources                             |
+| `<`  | Revert — undo a previous commit                                 |
+| `#`  | Docs — ADRs, README, procedures, comments                       |
+| `$`  | Security — fix, policy, secret management                       |
+| `?`  | Experiment — POC, investigation, research                       |
+| `*`  | Wildcard — does not fit any other type                          |
+
+**Breaking change types** (append `!` to the base type, before `[`):
+
+| Type | Meaning                                                                   |
+| ---- | ------------------------------------------------------------------------- |
+| `+!` | Add (breaking) — addition that breaks backward compatibility              |
+| `~!` | Improve (breaking) — behavioral change that breaks backward compatibility |
+| `-!` | Remove (breaking) — removal that breaks backward compatibility            |
+
+> The full authoritative list lives in `.commitlintrc.js` → `types` array.
+
+**Type selection rules:**
+
+* `~` vs `!` — if it repaired a broken behavior: `!`. If it changed correct behavior: `~`.
+* `=` vs `~` — if the change is observable by users or dependent systems: `~`. If
+  the behavior is identical from the outside: `=`.
+* `^` — always use for dependency bumps, even manual ones; reserve `~` for configuration
+  changes that affect behavior.
+* `CI/CD` is not a type — use the type that describes what changed (`+` for a new
+  pipeline, `~` for a modified one, `=` for a refactored one) and put `gh` or the
+  relevant project as the scope.
 
 ### Scope
 
-The scope identifies which part of the repository the commit touches. It must be an exact
-value from `.commitlintrc.js` under the `scopes` array.
+The scope is enclosed in square brackets and identifies which part of the repository
+the commit touches. It must be an exact value from `.commitlintrc.js` → `scopes` array.
 
 | Scope                   | Path                          |
 | ----------------------- | ----------------------------- |
@@ -85,8 +116,8 @@ value from `.commitlintrc.js` under the `scopes` array.
 | `gh`                    | `.github/`, root config files |
 | `deps`                  | Dependency updates            |
 
-**Multiple scopes:** `scope1,scope2` (comma-separated, no spaces, max 3) — only when one
-logical change atomically touches multiple components.
+**Multiple scopes:** `[scope1,scope2]` (comma-separated inside brackets, no spaces, max 3)
+— only when one logical change atomically touches multiple components.
 
 #### Scope decision tree
 
@@ -129,6 +160,9 @@ context that the subject alone cannot convey.
 * Sentence-case (start each sentence with UPPERCASE)
 * Complete sentences with proper grammar
 
+**Breaking changes** require a mandatory `BREAKING CHANGE:` paragraph in the body
+explaining what breaks and how to migrate.
+
 ### Assisted-by trailer
 
 This project uses the `Assisted-by:` git trailer to disclose AI assistance. This is
@@ -137,7 +171,7 @@ Rocky Linux) and is semantically more accurate than `Co-authored-by:` — the hu
 sole author, the AI is acknowledged as an assistant, not a co-author with legal personhood.
 
 Format: `Assisted-by: <provider>:<model-id>` — use the identifier of the model powering
-the current session (e.g. `Assisted-by: Z.ai:GLM-5`).
+the current session (e.g. `Assisted-by: github-copilot:claude-sonnet-4.6`).
 
 ### Signing and DCO — the AI must stay out of this
 
@@ -163,7 +197,7 @@ git commit -S -m "..."
 git status
 git diff --cached --name-only
 git diff --name-only
-git log --oneline --no-merges -10
+git --no-pager log --oneline --no-merges -10
 ```
 
 * Staged files (`--cached`) determine what goes into the commit
@@ -176,12 +210,12 @@ git log --oneline --no-merges -10
 If staged changes span multiple scopes and are not a single atomic change, suggest
 splitting into separate commits. For example, files from both `projects/lungmen.akn/`
 and `catalog/ansible/` staged together should usually become two commits with different
-scopes and emojis. Ask the user if unsure.
+scopes and types. Ask the user if unsure.
 
-### 3. Select the emoji
+### 3. Select the type
 
-Match the change type (see emoji table above). Use the full Gitmoji code including
-colons: `:sparkles:`, not `✨`.
+Match the change type using the table above. When in doubt between two types, use the
+type selection rules. Never guess on ambiguous cases — ask the user.
 
 ### 4. Determine the scope
 
@@ -235,7 +269,7 @@ one targeted follow-up question to fill the gap — don't pad with generalities.
 ```bash
 git add <files>
 git commit -S -m "$(cat <<'EOF'
-:emoji:(scope): Subject
+type[scope]: Subject
 
 Body providing context and intent.
 
@@ -248,37 +282,62 @@ Do NOT add `-s` or `--signoff` flags (see "Signing and DCO" above).
 
 ## Examples
 
-### Good — proper format, clear body, correct trailer
+### Good — simple addition, clear subject
 
 ```bash
 git commit -S -m "$(cat <<'EOF'
-:sparkles:(project:lungmen.akn): Add Forgejo Git hosting service
++[project:lungmen.akn]: Add Forgejo Git hosting service
 
 Forgejo is a lightweight self-hosted forge with GitHub-compatible
 APIs, enabling version-controlled infrastructure repositories
 without relying on external SaaS providers.
 
-Assisted-by: Z.ai:GLM-5
+Assisted-by: github-copilot:claude-sonnet-4.6
 EOF
 )"
+```
+
+### Good — dependency bump (automated)
+
+```bash
+git commit -S -m "^[deps]: cert-manager to v1.16.0"
 ```
 
 ### Good — multi-scope atomic change
 
 ```bash
 git commit -S -m "$(cat <<'EOF'
-:arrow_up:(catalog:kustomize,catalog:crossplane): Update cert-manager to v1.16.0
+^[catalog:kustomize,catalog:crossplane]: Update cert-manager to v1.16.0
 
 Both the Kustomize base and Crossplane composition depend on the
 cert-manager API version. Bumping them atomically prevents version
 skew between the two catalogs.
 
-Assisted-by: Z.ai:GLM-5
+Assisted-by: github-copilot:claude-sonnet-4.6
 EOF
 )"
 ```
 
-### Bad — no emoji, no scope, body restates the diff
+### Good — breaking change with mandatory body paragraph
+
+```bash
+git commit -S -m "$(cat <<'EOF'
+~![project:amiya.akn]: Drop Authelia in favor of Pocket-Id native OIDC
+
+Authelia introduced operational overhead with its LDAP dependency.
+Pocket-Id covers the same OIDC use cases natively.
+
+BREAKING CHANGE: All services relying on Authelia OIDC endpoints must
+update their client_id and redirect URIs before this commit is deployed.
+Authelia's Kubernetes resources are fully removed; rollback requires
+restoring from the previous tag.
+
+Assisted-by: github-copilot:claude-sonnet-4.6
+EOF
+)"
+```
+
+### Bad — no type, no scope, body restates the diff
 
 ```bash
 git commit -S -m "add forgejo - creates deployment, httproute and secrets"
@@ -288,7 +347,7 @@ git commit -S -m "add forgejo - creates deployment, httproute and secrets"
 
 ```bash
 git commit -s -m "$(cat <<'EOF'
-:sparkles:(project:lungmen.akn): Add forgejo
++[project:lungmen.akn]: Add forgejo
 
 added kustomization.yaml, deployment.yaml, httproute.yaml,
 externalsecret.yaml and network policies
@@ -298,9 +357,17 @@ EOF
 )"
 ```
 
+### Bad — breaking type applied where it cannot break
+
+```bash
+# !! is not a valid type; fix commits cannot be breaking by nature
+git commit -S -m "!![project:amiya.akn]: Fix OIDC redirect loop"
+```
+
 ## References
 
 * Commit config: `.commitlintrc.js`
+* ADR-010: `docs/decisions/010-replace-gitmoji-with-symbol-commit-types.md`
 * <https://allthingsopen.org/articles/open-source-ai-contributions-assisted-by-git-trailer-standard>
 * <https://github.com/rust-lang/rust-forge/blob/8a1ce25d78f9d20a85201bf8808f1c8081be41cf/src/policies/llm-usage.md>
 * <https://docs.kernel.org/process/coding-assistants.html>
