@@ -1,0 +1,33 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: OpenBao (Vault fork) - Secret Management
+    - name: Category
+      value: Security / Secrets Management
+    - name: Version
+      # renovate: datasource=helm depName=openbao registryUrl=https://openbao.github.io/openbao-helm
+      value: "0.28.3"
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://openbao.org/
+    - name: GitHub Repository
+      value: https://github.com/openbao/openbao
+    - name: Helm Chart
+      value: https://github.com/openbao/openbao-helm
+
+  syncPolicy:
+    automated:
+      enabled: false # Core security component
+
+  # SOPS split: primary source is pre-rendered dist/, secrets come from src/sops/
+  sources:
+    - repoURL: https://github.com/chezmoidotsh/arcane.git
+      path: "projects/amiya.akn/dist/apps/vault"
+      targetRevision: main
+    - repoURL: https://github.com/chezmoidotsh/arcane.git
+      path: "projects/amiya.akn/src/apps/vault/sops"
+      targetRevision: main

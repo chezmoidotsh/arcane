@@ -1,0 +1,31 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: Simple and secure OIDC provider for your personal infrastructure
+    - name: Category
+      value: Security / Identity
+    - name: Version
+      # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
+      value: "v2.7.0"
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://github.com/pocket-id/pocket-id
+    - name: GitHub Repository
+      value: https://github.com/pocket-id/pocket-id
+
+  syncPolicy:
+    automated:
+      enabled: true
+
+  # SOPS split: primary source is pre-rendered dist/, secrets come from src/sops/
+  sources:
+    - repoURL: https://github.com/chezmoidotsh/arcane.git
+      path: "projects/amiya.akn/dist/apps/pocket-id"
+      targetRevision: main
+    - repoURL: https://github.com/chezmoidotsh/arcane.git
+      path: "projects/amiya.akn/src/apps/pocket-id/sops"
+      targetRevision: main

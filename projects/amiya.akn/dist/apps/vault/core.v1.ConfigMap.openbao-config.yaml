@@ -1,0 +1,12 @@
+apiVersion: v1
+data:
+  extraconfig-from-values.hcl: ""
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/instance: openbao
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: vault
+    helm.sh/chart: openbao-0.28.3
+  name: openbao-config
+  namespace: vault

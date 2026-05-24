@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app.kubernetes.io/instance: zot
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: zot
+    app.kubernetes.io/version: v2.1.17
+    helm.sh/chart: zot-0.1.116
+  name: zot
+  namespace: zot-registry
+spec:
+  minReadySeconds: 10
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: zot
+      app.kubernetes.io/name: zot
+  template:
+    metadata:
+      annotations:
+        checksum/config: 30c904ba17e375eccb88d77c64e6d99f72c06e13a23449f56f19933a830ceb15
+      labels:
+        app.kubernetes.io/instance: zot
+        app.kubernetes.io/name: zot
+    spec:
+      containers:
+        - env: null
+          image: ghcr.io/project-zot/zot:v2.1.17
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: 5000
+              scheme: HTTP
+            initialDelaySeconds: 5
+          name: zot
+          ports:
+            - containerPort: 5000
+              name: zot
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 5000
+              scheme: HTTP
+            initialDelaySeconds: 5
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: false
+            runAsGroup: 32460
+            runAsNonRoot: true
+            runAsUser: 32460
+          startupProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /startupz
+              port: 5000
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - mountPath: /var/lib/registry
+              name: zot-pvc
+            - mountPath: /etc/zot
+              name: zot-config
+      dnsPolicy: ClusterFirst
+      securityContext:
+        fsGroup: 32460
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 32460
+        runAsNonRoot: true
+        runAsUser: 32460
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: zot
+      volumes:
+        - configMap:
+            name: zot-config
+          name: zot-config
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        labels:
+          app.kubernetes.io/name: zot
+        name: zot-pvc
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi

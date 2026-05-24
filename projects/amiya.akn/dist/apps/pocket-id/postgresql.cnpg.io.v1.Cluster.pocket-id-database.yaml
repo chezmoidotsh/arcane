@@ -1,0 +1,49 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: pocket-id
+    app.kubernetes.io/name: pocket-id
+  name: pocket-id-database
+  namespace: pocket-id
+spec:
+  bootstrap:
+    initdb:
+      database: pocket_id
+      owner: pocket_id
+      secret:
+        name: pocket-id-database-pocket-id
+  description: PostgreSQL database dedicated to pocket-id
+  enablePDB: false
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    major: 17
+    name: default
+  instances: 2
+  managed:
+    roles:
+      - comment: PostgreSQL role for pocket_id
+        connectionLimit: -1
+        ensure: present
+        inherit: true
+        login: true
+        name: pocket_id
+        passwordSecret:
+          name: pocket-id-database-pocket-id
+  plugins:
+    - enabled: true
+      isWALArchiver: true
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: selfhosted
+        serverName: 01KEPA38352GYQHNKTFYPA4HE1
+  postgresql:
+    parameters:
+      max_slot_wal_keep_size: 900MB
+      max_wal_size: 100MB
+  storage:
+    size: 250Mi
+  walStorage:
+    size: 1Gi

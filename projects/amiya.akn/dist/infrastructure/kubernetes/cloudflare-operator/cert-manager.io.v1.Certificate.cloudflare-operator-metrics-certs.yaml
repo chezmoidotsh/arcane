@@ -1,0 +1,16 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cloudflare-operator
+  name: cloudflare-operator-metrics-certs
+  namespace: cloudflare-operator-system
+spec:
+  dnsNames:
+    - cloudflare-operator-webhook-service.cloudflare-operator-system.svc
+    - cloudflare-operator-webhook-service.cloudflare-operator-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: cloudflare-operator-selfsigned-issuer
+  secretName: metrics-server-cert
