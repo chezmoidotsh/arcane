@@ -1,0 +1,15 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: default
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        annotations:
+          # Share the LB IP with other services using the same key (e.g. Forgejo SSH).
+          # Cilium LB IPAM allocates one IP for all services with the same sharing key,
+          # as long as their port/protocol combinations don't overlap.
+          lbipam.cilium.io/sharing-key: lungmen-gateway
+          lbipam.cilium.io/sharing-cross-namespace: "*"

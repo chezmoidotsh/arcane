@@ -17,6 +17,11 @@ service:
     # -- LoadBalancer exposes SSH for git clone/push over SSH.
     type: LoadBalancer
     port: 22
+    annotations:
+      # Share the LB IP with the Envoy Gateway service (same key → same Cilium-assigned IP).
+      # Ports don't overlap (22 vs 80/443) so Cilium allows the share.
+      lbipam.cilium.io/sharing-key: lungmen-gateway
+      lbipam.cilium.io/sharing-cross-namespace: "*"
 
 persistence:
   enabled: true
