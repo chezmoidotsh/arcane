@@ -1,9 +1,9 @@
 ---
 status: "implemented"
-date: 2025-01-28
+date: 2026-05-24
 implementation-completed: 2026-03-19
 decision-makers: ["Alexandre"]
-consulted: ["ai/claude-4-sonnet", "ai/gpt-5"]
+assisted-by: ["claude-4-sonnet", "gpt-5"]
 informed: []
 ---
 
@@ -218,5 +218,6 @@ Implement authentication at the gateway level with session sharing across applic
 
 ## Changelog
 
+* **2026-05-24**: **CHORE**: Renamed `consulted` to `assisted-by` in frontmatter; removed `ai/` prefix from model identifiers.
 * **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.
 * **2025-07-05**: **INITIALISATION**: Creation of the ADR document for OIDC authentication implementation.

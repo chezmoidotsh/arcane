@@ -1,8 +1,8 @@
 ---
 status: "proposed"
-date: 2026-03-20
-decision-makers: ["Gemini CLI", "User"]
-consulted: ["ai/gemini"]
+date: 2026-05-24
+decision-makers: ["Alexandre"]
+assisted-by: ["gemini"]
 informed: []
 ---
 
@@ -149,4 +149,5 @@ This alternative suggests migrating all PostgreSQL databases to an external, man
 
 ## Changelog
 
+* **2026-05-24**: **CHORE**: Renamed `consulted` to `assisted-by`; removed `ai/` prefix from model identifiers; corrected `decision-makers` to `["Alexandre"]`.
 * **2026-03-20**: **FEATURE**: Initial creation of ADR documenting the decision to consolidate PostgreSQL databases into shared CloudNative-PG clusters.

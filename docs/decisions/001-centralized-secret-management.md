@@ -1,9 +1,9 @@
 ---
 status: "implemented"
-date: 2025-01-24
+date: 2026-05-24
 implementation-completed: 2025-06-28
 decision-makers: ["Alexandre"]
-consulted: ["ai/claude-4-sonnet", "ai/chatgpt-4o"]
+assisted-by: ["claude-4-sonnet", "chatgpt-4o"]
 informed: []
 ---
 
@@ -310,6 +310,7 @@ Chosen option: "Infisical", because it provided modern UI, self-hosting capabili
 
 ## Changelog
 
+* **2026-05-24**: **CHORE**: Renamed `consulted` to `assisted-by` in frontmatter; removed `ai/` prefix from model identifiers.
 * **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.
 * **2025-06-28**: **IMPLEMENTATION**: Successful implementation completed.
 * **2025-01-24**: Initial decision finalized with OpenBao.

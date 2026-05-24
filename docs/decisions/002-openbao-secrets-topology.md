@@ -1,9 +1,9 @@
 ---
 status: "implemented"
-date: 2025-01-28
+date: 2026-05-24
 implementation-completed: 2026-03-19
 decision-makers: ["Alexandre"]
-consulted: ["ai/claude-4-sonnet", "ai/chatgpt-4o"]
+assisted-by: ["claude-4-sonnet", "chatgpt-4o"]
 informed: []
 ---
 
@@ -379,4 +379,5 @@ Future architectural expansion may include:
 
 ## Changelog
 
+* **2026-05-24**: **CHORE**: Renamed `consulted` to `assisted-by` in frontmatter; removed `ai/` prefix from model identifiers.
 * **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.

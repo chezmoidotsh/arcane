@@ -16,250 +16,74 @@
  */
 
 /**
- * List of allowed commit type, based on the Gitmoji convention.
+ * List of allowed commit types, based on the symbol-based convention.
  *
- * @see {@link https://gitmoji.dev/}
+ * Format: type[scope]: Subject
+ * Breaking change format: type![scope]: Subject (only +!, ~!, -! are valid)
+ *
+ * @see docs/decisions/010-replace-gitmoji-with-symbol-commit-types.md
  */
 const types = [
 	{
-		value: ":adhesive_bandage:",
-		emoji: "🩹",
-		name: ":adhesive_bandage:          🩹  Simple fix for a non-critical issue.",
+		value: "+",
+		name: "+    Add    — new feature, service, resource, initial deploy",
 	},
 	{
-		value: ":alembic:",
-		emoji: "⚗️",
-		name: ":alembic:                   ⚗️  Perform experiments.",
+		value: "-",
+		name: "-    Remove — delete service, file, dead code",
 	},
 	{
-		value: ":alien:",
-		emoji: "👽️",
-		name: ":alien:                     👽️ Update code due to external API changes.",
+		value: "~",
+		name: "~    Improve — perf, config update, behavioral improvement (non-bug)",
 	},
 	{
-		value: ":ambulance:",
-		emoji: "🚑️",
-		name: ":ambulance:                 🚑️ Critical hotfix.",
+		value: "!",
+		name: "!    Fix    — repair a bug or broken behavior",
 	},
 	{
-		value: ":arrow_down:",
-		emoji: "⬇️",
-		name: ":arrow_down:                ⬇️  Downgrade dependencies.",
+		value: "=",
+		name: "=    Refactor — no behavior change (style, tests, DX, CI)",
 	},
 	{
-		value: ":arrow_up:",
-		emoji: "⬆️",
-		name: ":arrow_up:                  ⬆️  Upgrade dependencies.",
+		value: "^",
+		name: "^    Bump   — dependency version upgrade or downgrade",
 	},
 	{
-		value: ":art:",
-		emoji: "🎨",
-		name: ":art:                       🎨  Improve structure / format of the code.",
+		value: ">",
+		name: ">    Move   — rename or relocate resources",
 	},
 	{
-		value: ":bento:",
-		emoji: "🍱",
-		name: ":bento:                     🍱  Add or update assets.",
+		value: "<",
+		name: "<    Revert — undo a previous commit",
 	},
 	{
-		value: ":bookmark:",
-		emoji: "🔖",
-		name: ":bookmark:                  🔖  Release / Version tags.",
+		value: "@",
+		name: "@    Docs   — ADRs, README, procedures, comments",
 	},
 	{
-		value: ":boom:",
-		emoji: "💥",
-		name: ":boom:                      💥  Introduce breaking changes.",
+		value: "$",
+		name: "$    Security — fix, policy, secret management",
 	},
 	{
-		value: ":bricks:",
-		emoji: "🧱",
-		name: ":bricks:                    🧱  Infrastructure related changes.",
+		value: "?",
+		name: "?    Experiment — POC, investigation, research",
 	},
 	{
-		value: ":bug:",
-		emoji: "🐛",
-		name: ":bug:                       🐛  Fix a bug.",
+		value: "*",
+		name: "*    Wildcard — does not fit any other type",
+	},
+	// Breaking change variants — only addition, improvement, and removal can break
+	{
+		value: "+!",
+		name: "+!   Add (breaking) — addition that breaks backward compatibility",
 	},
 	{
-		value: ":building_construction:",
-		emoji: "🏗️",
-		name: ":building_construction:     🏗️  Make architectural changes.",
+		value: "~!",
+		name: "~!   Improve (breaking) — behavioral change that breaks backward compatibility",
 	},
 	{
-		value: ":bulb:",
-		emoji: "💡",
-		name: ":bulb:                      💡  Add or update comments in source code.",
-	},
-	{
-		value: ":closed_lock_with_key:",
-		emoji: "🔐",
-		name: ":closed_lock_with_key:      🔐  Add or update secrets.",
-	},
-	{
-		value: ":coffin:",
-		emoji: "⚰️",
-		name: ":coffin:                    ⚰️  Remove dead code.",
-	},
-	{
-		value: ":construction_worker:",
-		emoji: "👷",
-		name: ":construction_worker:       👷  Add or update CI build system.",
-	},
-	{
-		value: ":fire:",
-		emoji: "🔥",
-		name: ":fire:                      🔥  Remove code or files.",
-	},
-	{
-		value: ":green_heart:",
-		emoji: "💚",
-		name: ":green_heart:               💚  Fix CI Build.",
-	},
-	{
-		value: ":hammer:",
-		emoji: "🔨",
-		name: ":hammer:                    🔨  Add or update development scripts.",
-	},
-	{
-		value: ":heavy_minus_sign:",
-		emoji: "➖",
-		name: ":heavy_minus_sign:          ➖  Remove a dependency.",
-	},
-	{
-		value: ":heavy_plus_sign:",
-		emoji: "➕",
-		name: ":heavy_plus_sign:           ➕  Add a dependency.",
-	},
-	{
-		value: ":label:",
-		emoji: "🏷️",
-		name: ":label:                     🏷️  Add or update types.",
-	},
-	{
-		value: ":lipstick:",
-		emoji: "💄",
-		name: ":lipstick:                  💄  Add or update the UI and style files.",
-	},
-	{
-		value: ":lock:",
-		emoji: "🔒️",
-		name: ":lock:                      🔒️ Fix security or privacy issues.",
-	},
-	{
-		value: ":memo:",
-		emoji: "📝",
-		name: ":memo:                      📝  Add or update documentation.",
-	},
-	{
-		value: ":package:",
-		emoji: "📦️",
-		name: ":package:                   📦️ Add or update compiled files or packages.",
-	},
-	{
-		value: ":page_facing_up:",
-		emoji: "📄",
-		name: ":page_facing_up:            📄  Add or update license.",
-	},
-	{
-		value: ":passport_control:",
-		emoji: "🛂",
-		name: ":passport_control:          🛂  Work on code related to authorization roles and permissions.",
-	},
-	{
-		value: ":pencil2:",
-		emoji: "✏️",
-		name: ":pencil2:                   ✏️  Fix typos.",
-	},
-	{
-		value: ":pushpin:",
-		emoji: "📌",
-		name: ":pushpin:                   📌  Pin dependencies to specific versions.",
-	},
-	{
-		value: ":recycle:",
-		emoji: "♻️",
-		name: ":recycle:                   ♻️  Refactor code.",
-	},
-	{
-		value: ":rewind:",
-		emoji: "⏪️",
-		name: ":rewind:                    ⏪️ Revert changes.",
-	},
-	{
-		value: ":rocket:",
-		emoji: "🚀",
-		name: ":rocket:                    🚀  Deploy stuff.",
-	},
-	{
-		value: ":rotating_light:",
-		emoji: "🚨",
-		name: ":rotating_light:            🚨  Fix compiler / linter warnings.",
-	},
-	{
-		value: ":safety_vest:",
-		emoji: "🦺",
-		name: ":safety_vest:               🦺  Add or update code related to validation.",
-	},
-	{
-		value: ":see_no_evil:",
-		emoji: "🙈",
-		name: ":see_no_evil:               🙈  Add or update a .gitignore file.",
-	},
-	{
-		value: ":sparkles:",
-		emoji: "✨",
-		name: ":sparkles:                  ✨  Introduce new features.",
-	},
-	{
-		value: ":stethoscope:",
-		emoji: "🩺",
-		name: ":stethoscope:               🩺  Add or update healthcheck.",
-	},
-	{
-		value: ":tada:",
-		emoji: "🎉",
-		name: ":tada:                      🎉  Begin a project.",
-	},
-	{
-		value: ":technologist:",
-		emoji: "💻",
-		name: ":technologist:              💻  Improve developer experience.",
-	},
-	{
-		value: ":test_tube:",
-		emoji: "🧪",
-		name: ":test_tube:                 🧪  Add a failing test.",
-	},
-	{
-		value: ":truck:",
-		emoji: "🚚",
-		name: ":truck:                     🚚  Move or rename resources (e.g.: files paths routes).",
-	},
-	{
-		value: ":twisted_rightwards_arrows:",
-		emoji: "🔀",
-		name: ":twisted_rightwards_arrows: 🔀  Merge branches.",
-	},
-	{
-		value: ":wastebasket:",
-		emoji: "🗑️",
-		name: ":wastebasket:               🗑️  Deprecate code that needs to be cleaned up.",
-	},
-	{
-		value: ":white_check_mark:",
-		emoji: "✅",
-		name: ":white_check_mark:          ✅  Add update or pass tests.",
-	},
-	{
-		value: ":wrench:",
-		emoji: "🔧",
-		name: ":wrench:                    🔧  Add or update configuration files.",
-	},
-	{
-		value: ":zap:",
-		emoji: "⚡️",
-		name: ":zap:                       ⚡️ Improve performance.",
+		value: "-!",
+		name: "-!   Remove (breaking) — removal that breaks backward compatibility",
 	},
 ];
 
@@ -320,7 +144,7 @@ const scopes = [
 		value: "deps",
 	},
 	{
-		name: "gh                    - Anything else",
+		name: "gh                    - GitHub workflows, issue templates, root config files",
 		value: "gh",
 	},
 ];
@@ -340,13 +164,16 @@ module.exports = {
 		"footer-max-length": [2, "always", "Infinity"],
 		"footer-max-line-length": [2, "always", 80],
 		"footer-min-length": [2, "always", 0],
-		"header-case": [2, "always", "sentence-case"],
+		// header-case disabled: symbol prefixes (+, ~, !, …) have no case
+		"header-case": [0, "always", "sentence-case"],
 		"header-full-stop": [2, "never", "."],
 		"header-max-length": [2, "always", 100],
 		"header-min-length": [2, "always", 0],
 		"header-trim": [2, "always"],
 		"references-empty": [0, "never"],
-		"scope-enum": [2, "always", scopes.map((scope) => scope.value)],
+		// scope-enum set to warning: multi-scope commits (scope1,scope2) won't match
+		// single enum entries; validation is enforced by the cz-git prompt instead
+		"scope-enum": [1, "always", scopes.map((scope) => scope.value)],
 		"scope-case": [2, "always", "lower-case"],
 		"scope-empty": [2, "never"],
 		"scope-max-length": [2, "always", "Infinity"],
@@ -358,29 +185,27 @@ module.exports = {
 		"subject-min-length": [2, "always", 0],
 		"subject-exclamation-mark": [0, "never"],
 		"type-enum": [2, "always", types.map((type) => type.value)],
-		"type-case": [2, "always", "lower-case"],
+		// type-case disabled: symbol types have no case transformation
+		"type-case": [0, "always", "lower-case"],
 		"type-empty": [2, "never"],
 		"type-max-length": [2, "always", "Infinity"],
 		"type-min-length": [2, "always", 0],
-		"signed-off-by": [2, "always", "Signed-off-by: "],
+		"signed-off-by": [0, "always", "Signed-off-by: "],
 	},
 	parserPreset: {
 		parserOpts: {
-			headerPattern:
-				"^(?<type>.+?)\\s?\\((?<scope>.+?)\\)!?\\:\\s(?<subject>(?:(?!#).)*(?:(?!\\s).))(?:\\s\\(?(?<references>#\\d*)\\)?)?$",
+			// Format: type[scope]: Subject
+			// type  = one or two non-whitespace chars before '['
+			// scope = content inside '[' ... ']' (may contain commas for multi-scope)
+			headerPattern: /^(?<type>\S+?)\[(?<scope>[^\]]+)\]:\s(?<subject>.+)$/,
+			// Breaking change: only +!, ~!, -! are valid breaking types
 			breakingHeaderPattern:
-				"^(?<type>.+?)\\s?\\((?<scope>.+?)\\)!\\:\\s(?<subject>(?:(?!#).)*(?:(?!\\s).))(?:\\s\\(?(?<references>#\\d*)\\)?)?$",
-			headerCorrespondence: ["type", "scope", "subject", "references"],
+				/^(?<type>[+~-]!)\[(?<scope>[^\]]+)\]:\s(?<subject>.+)$/,
+			headerCorrespondence: ["type", "scope", "subject"],
 		},
 	},
 	prompt: {
-		allowBreakingChanges: [
-			":boom:",
-			":fire:",
-			":coffin:",
-			":building_construction:",
-			":alien:",
-		],
+		allowBreakingChanges: ["+!", "~!", "-!"],
 		allowCustomScopes: false,
 		allowEmptyScopes: false,
 		enableMultipleScopes: true,

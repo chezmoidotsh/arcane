@@ -1,9 +1,9 @@
 ---
 status: "implemented"
-date: 2025-06-30
+date: 2026-05-24
 implementation-completed: 2026-03-19
 decision-makers: ["Alexandre"]
-consulted: ["ai/cursor-auto", "ai/openai-gpt-4o-mini"]
+assisted-by: ["cursor-auto", "openai-gpt-4o-mini"]
 informed: []
 ---
 
@@ -274,6 +274,7 @@ The challenge is defining policy conventions that are:
 
 ## Changelog
 
+* **2026-05-24**: **CHORE**: Renamed `consulted` to `assisted-by` in frontmatter; removed `ai/` prefix from model identifiers.
 * **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.
 * **2025-07-05**: **DEPRECATION**: `*-crossplane-policy` is replaced by `amiya.akn-crossplane-policy` as Crossplane is only running in the `amiya.akn` cluster.
 * **2025-07-05**: **DEPRECATION**: Integrate `global-eso-policy` into `{project-name}-eso-policy` as it is way easier to manage it like this.
