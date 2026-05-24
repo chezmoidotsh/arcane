@@ -14,7 +14,7 @@ helmCharts:
       - forgejo.helmvalues/hardened.yaml
   - name: valkey
     repo: https://valkey-io.github.io/valkey-helm/
-    version: 0.9.3
+    version: 0.9.4
     releaseName: forgejo-valkey
     namespace: forgejo
     valuesFile: valkey.helmvalues/default.yaml
