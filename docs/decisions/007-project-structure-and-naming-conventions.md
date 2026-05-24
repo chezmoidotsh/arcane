@@ -1,9 +1,9 @@
 ---
 status: "implemented"
-date: 2025-10-31
+date: 2026-05-24
 implementation-completed: 2026-03-19
 decision-makers: ["Alexandre"]
-consulted: ["ai/claude-4-sonnet", "ai/claude-opus-4.5"]
+assisted-by: ["claude-4-sonnet", "claude-opus-4.5"]
 informed: []
 ---
 
@@ -1499,6 +1499,7 @@ For each new application:
 
 ## Changelog
 
+* **2026-05-24**: **CHORE**: Renamed `consulted` to `assisted-by` in frontmatter; removed `ai/` prefix from model identifiers.
 * **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.
 * **2026-01-13**: Replaced asterisk prefix mechanism with `.application.patch` files for ArgoCD sync control. This provides granular sync policies, rich metadata support, and standard filesystem naming. Deprecated Option 1.1 in favor of new Option 1.4. Status changed from "proposed" to "accepted".
 * **2025-11-02**: Corrected label placement to address selector/template conflicts - removed `app.kubernetes.io/instance` and `app.kubernetes.io/component` from kustomization.yaml (workload-specific), keeping only `app.kubernetes.io/name` (with `includeSelectors: true`) and `app.kubernetes.io/version` at application level

@@ -1,9 +1,9 @@
 ---
 status: "implemented"
-date: 2025-06-29
+date: 2026-05-24
 implementation-completed: 2026-03-19
 decision-makers: ["Alexandre"]
-consulted: ["ai/claude-4-sonnet"]
+assisted-by: ["claude-4-sonnet"]
 informed: []
 ---
 
@@ -366,6 +366,7 @@ Cloud provider credentials follow service-based organization:
 
 ## Changelog
 
+* **2026-05-24**: **CHORE**: Renamed `consulted` to `assisted-by` in frontmatter; removed `ai/` prefix from model identifiers.
 * **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.
 * **2025-08-30**: **FIX**: Replace example for Let's Encrypt account path convention (`/shared/third-parties/letsencrypt/certificate-authority/account`) with `/shared/certificates/certificate-authorities/letsencrypt/account`. The first example is invalid following the default policy defined into [ADR 004](004-openbao-policy-naming-conventions.md)
 * **2025-08-17**: **FEATURE**: Add example for Let's Encrypt account path convention `/shared/third-parties/letsencrypt/certificate-authority/account` for ACME account credentials used by cert-manager

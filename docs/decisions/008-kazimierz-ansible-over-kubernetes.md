@@ -1,9 +1,9 @@
 ---
 status: "implemented"
-date: 2025-10-31
+date: 2026-05-24
 implementation-completed: 2025-11-15
 decision-makers: ["Alexandre"]
-consulted: ["ai/claude-4.5-sonnet"]
+assisted-by: ["claude-4.5-sonnet"]
 informed: []
 ---
 
@@ -391,6 +391,7 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 
 ## Changelog
 
+* **2026-05-24**: **CHORE**: Renamed `consulted` to `assisted-by` in frontmatter; removed `ai/` prefix from model identifiers.
 * **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.
 * **2025-11-16**: **VALIDATED** - Architecture decision validated through implementation
 * **2025-01-13**: **ACCEPTED** - Decision accepted after multiple Kubernetes deployment attempts
