@@ -9,7 +9,14 @@ spec:
       envoyService:
         annotations:
           # Share the LB IP with other services using the same key (e.g. Forgejo SSH).
-          # Cilium LB IPAM allocates one IP for all services with the same sharing key,
-          # as long as their port/protocol combinations don't overlap.
+          # Ports don't overlap (80/443 vs 22) so Cilium allows the share.
           lbipam.cilium.io/sharing-key: lungmen-gateway
           lbipam.cilium.io/sharing-cross-namespace: "*"
+        # -- Cluster (not Local) is required for Cilium LB IPAM IP sharing. Cilium's
+        # isCompatible() rejects sharing between services with Local policy and different
+        # pod selectors, which is always the case across different apps. Source-IP
+        # preservation is sacrificed; Envoy still functions correctly in Cluster mode.
+        # See: https://docs.cilium.io/en/stable/network/lb-ipam/#sharing-keys
+        #      https://github.com/cilium/cilium/blob/v1.19.3/operator/pkg/lbipam/service_store.go
+        externalTrafficPolicy: Cluster
+        type: LoadBalancer

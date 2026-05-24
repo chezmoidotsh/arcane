@@ -17,6 +17,12 @@ service:
     # -- LoadBalancer exposes SSH for git clone/push over SSH.
     type: LoadBalancer
     port: 22
+    # -- Cluster (not Local) is required for Cilium LB IPAM IP sharing. Cilium's isCompatible()
+    # rejects sharing between services with Local policy and different pod selectors, which is
+    # always the case across different apps. Source-IP preservation is acceptable to lose for SSH.
+    # See: https://docs.cilium.io/en/stable/network/lb-ipam/#sharing-keys
+    #      https://github.com/cilium/cilium/blob/v1.19.3/operator/pkg/lbipam/service_store.go
+    externalTrafficPolicy: Cluster
     annotations:
       # Share the LB IP with the Envoy Gateway service (same key → same Cilium-assigned IP).
       # Ports don't overlap (22 vs 80/443) so Cilium allows the share.
