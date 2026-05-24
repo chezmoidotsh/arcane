@@ -1,0 +1,19 @@
+# Security hardening overrides for the Forgejo deployment
+# Applied on top of default.yaml via additionalValuesFiles.
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+
+podSecurityContext:
+  fsGroup: 1000
+  runAsGroup: 1000
+  runAsUser: 1000
+  seccompProfile:
+    type: RuntimeDefault
