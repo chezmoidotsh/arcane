@@ -4,34 +4,77 @@
 		{
 			"id": 1,
 			"prompt": "Back up pocket-id in amiya.akn. Find the right CNPG cluster, confirm the target before doing anything destructive, and use the plugin backup flow.",
-			"expected_output": "The run identifies the dedicated CNPG cluster pocket-id-database from the pocket-id app, maps it to namespace pocket-id and an amiya context, asks for explicit confirmation, validates plugin readiness, and creates or prepares a plugin backup with a follow-up status command.",
+			"expected_output": "The run uses the bundled discovery script (or equivalent) to find the dedicated pocket-id CNPG cluster in project amiya.akn, maps it to namespace pocket-id and an amiya kubectl context, asks for explicit confirmation via ask_user, validates plugin readiness on the live cluster, and creates a plugin backup with a follow-up status command.",
 			"files": [],
 			"expectations": [
-				"The candidate resolution identifies pocket-id-database as a direct CNPG cluster in project amiya.akn and namespace pocket-id.",
-				"The workflow requires explicit user confirmation before any backup creation command is executed.",
-				"The backup creation step uses the plugin method, either through kubectl cnpg backup --method plugin or a Backup manifest with spec.method set to plugin and pluginConfiguration.name set to barman-cloud.cloudnative-pg.io."
+				"The discovery step targets the pocket-id app in project amiya.akn and identifies it as a direct (non-mutualized) CNPG cluster in namespace pocket-id.",
+				"The workflow uses the ask_user tool (not just plain text) to obtain explicit confirmation before any kubectl write command is executed.",
+				"The backup creation uses the plugin method — either `kubectl cnpg backup ... --method plugin` or a Backup manifest with spec.method=plugin and pluginConfiguration.name=barman-cloud.cloudnative-pg.io.",
+				"The run never falls back to barmanObjectStore and never modifies a ScheduledBackup resource."
 			]
 		},
 		{
 			"id": 2,
 			"prompt": "Backup atuin in lungmen.akn. I do not know the cluster name, only the app name.",
-			"expected_output": "The run resolves the app name atuin through the mutualized databases chart, maps it to cluster apps-20260329 in namespace databases on lungmen.akn, asks for confirmation, validates the cluster, and uses the plugin backup flow.",
+			"expected_output": "The run resolves the logical database name 'atuin' through the mutualized-cnpg-databases chart, identifies the correct mutualized cluster in namespace databases on a lungmen.akn context, asks for confirmation, validates plugin readiness, and creates a plugin backup. The exact cluster name suffix is read from the repo, not assumed.",
 			"files": [],
 			"expectations": [
-				"The discovery step maps the logical database atuin to the mutualized cluster apps-20260329 rather than inventing a dedicated cluster.",
-				"The candidate list includes namespace databases and a lungmen.akn context for the selected target.",
-				"The run validates backup capability before creation instead of jumping directly to kubectl apply."
+				"The discovery step recognizes 'atuin' as a logical database hosted in a mutualized CNPG cluster (source='mutualized') rather than inventing a dedicated cluster like 'atuin-database'.",
+				"The candidate that is acted on has namespace=databases and a lungmen.akn-flavored kubectl context.",
+				"The cluster name used in commands is read from the repo (helmvalues or discovery output) and not hardcoded or guessed.",
+				"Plugin capability is validated on the live cluster before any Backup is created.",
+				"The backup creation uses method=plugin with the barman-cloud.cloudnative-pg.io plugin.",
+				"The confirmation step surfaces that a CNPG backup is whole-cluster (covers every logical database in the mutualized cluster), not just atuin."
 			]
 		},
 		{
 			"id": 3,
 			"prompt": "Back up all CNPG databases in lungmen.akn and show me exactly what you are about to touch before you do it.",
-			"expected_output": "The run limits discovery to lungmen.akn, surfaces the three current CNPG targets there, asks the user to confirm the full set, and then creates and verifies one plugin backup per confirmed cluster.",
+			"expected_output": "The run scopes discovery to lungmen.akn, enumerates every CNPG cluster found there (each with cluster name, namespace, context, and logical databases when mutualized), asks the user to confirm the full set via ask_user, then creates and verifies one plugin backup per confirmed cluster with per-target status reporting.",
 			"files": [],
 			"expectations": [
-				"The candidate list stays scoped to lungmen.akn and includes apps-20260329 and apps-secured-20260329.",
-				"The confirmation prompt clearly enumerates the matched targets before any backup is created.",
-				"The result reporting is per target, including backup name and status rather than a single vague success message."
+				"Discovery is scoped to project lungmen.akn (e.g. via the script's project filter argument) rather than searching the whole repo.",
+				"The confirmation prompt enumerates every matched target with at minimum cluster name, namespace, and kubectl context — and lists logical databases for mutualized clusters.",
+				"At least one mutualized cluster (namespace=databases, source='mutualized') appears among the candidates, and its logical database list is read from the values file rather than hardcoded.",
+				"The result reporting is per target — each cluster gets its own status line (backup name + state) — not a single blanket success message.",
+				"If any target fails, the failure is surfaced explicitly instead of being absorbed into a generic 'done' message."
+			]
+		},
+		{
+			"id": 4,
+			"prompt": "Backup paperless. The team is about to run a big OCR rework and I want a safety net.",
+			"expected_output": "Discriminant eval: paperless is hosted in the apps-secured-* mutualized cluster (since it holds sensitive document data), NOT in the apps-* cluster. This eval catches data-rot: an agent relying on outdated SKILL.md examples would map paperless to apps-*. The agent must read the live helmvalues files to find the correct cluster and confirm with the user, who only mentioned the app name.",
+			"files": [],
+			"expectations": [
+				"Discovery resolves 'paperless' against the live mutualized helmvalues files, not from any hardcoded list in the skill.",
+				"The selected cluster is the apps-secured-* one (whose .spec.databases contains paperless), not the apps-* cluster.",
+				"The confirmation prompt names the correct cluster explicitly and lists the other logical databases on the same physical cluster so the user knows the backup scope.",
+				"The backup creation uses method=plugin against the correct cluster.",
+				"The agent does not invent a standalone 'paperless-database' cluster."
+			]
+		},
+		{
+			"id": 5,
+			"prompt": "I need to back up the MongoDB instance used by immich before I run a migration. Can you do that?",
+			"expected_output": "Non-trigger eval: immich uses MongoDB via the Percona Operator for some metadata, not CNPG. The skill should recognize this is NOT its scope and decline. A correct response either (a) declines and points the user toward Percona's backup workflow, or (b) clarifies that this skill only handles CNPG (PostgreSQL) and offers to back up immich's PostgreSQL instead if the user actually meant that. Wrong behavior: trying to create a CNPG Backup against a non-existent CNPG cluster for MongoDB.",
+			"files": [],
+			"expectations": [
+				"The agent identifies that MongoDB is out of scope for this CNPG-focused skill.",
+				"The agent does not attempt to create any postgresql.cnpg.io Backup resource for the MongoDB workload.",
+				"The agent either declines clearly or asks a clarifying question (e.g. 'did you mean immich's PostgreSQL?') rather than silently proceeding with the wrong backend.",
+				"If the agent mentions an alternative, it correctly references the Percona Operator (or a manual mongodump) rather than CNPG tooling."
+			]
+		},
+		{
+			"id": 6,
+			"prompt": "Restore pocket-id from its latest backup — something went wrong with the last migration and I need to roll back to this morning's snapshot.",
+			"expected_output": "Non-trigger eval: restore is out of scope for this skill (which is backup-only). The skill should explicitly decline, explain that restore is a distinct workflow (bootstrapping a new CNPG cluster from an ObjectStore), and refuse to improvise. Wrong behavior: confidently inventing a restore procedure, or trying to repurpose the backup commands.",
+			"files": [],
+			"expectations": [
+				"The agent recognizes restore is out of scope for the cnpg-backup skill and says so.",
+				"The agent does not invent or execute restore commands (e.g. it does not create a new Cluster with bootstrap.recovery just to fulfill the request).",
+				"The agent points the user toward the correct conceptual approach (bootstrap a new cluster from the ObjectStore, or use cnpg restore tooling) without pretending to know all the details.",
+				"The agent does not create a Backup resource as a misguided substitute for restoration."
 			]
 		}
 	]
