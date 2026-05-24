@@ -1,9 +1,10 @@
+---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
     app: longhorn-ui
-    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/instance: longhorn
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: longhorn
     app.kubernetes.io/version: v1.11.2
@@ -12,10 +13,10 @@ metadata:
   namespace: longhorn-system
 spec:
   ports:
-  - name: http
-    nodePort: null
-    port: 80
-    targetPort: http
+    - name: http
+      nodePort: null
+      port: 80
+      targetPort: http
   selector:
     app: longhorn-ui
   type: ClusterIP

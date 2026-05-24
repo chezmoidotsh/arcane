@@ -1,0 +1,20 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  labels:
+    app.kubernetes.io/name: cert-manager
+    app.kubernetes.io/part-of: cert-manager
+  name: letsencrypt
+  namespace: cert-manager-system
+spec:
+  acme:
+    privateKeySecretRef:
+      name: letsencrypt-issuer-account-key
+    server: https://acme-v02.api.letsencrypt.org/directory
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              key: api-token
+              name: letsencrypt-issuer-credentials

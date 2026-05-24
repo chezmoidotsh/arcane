@@ -1,0 +1,18 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- app metadata
+    - name: desc
+      val: Kubernetes native policy management engine
+    - name: Category
+      val: Security / Policy
+    # -- Documentation & Resources
+    - name: Documentation
+      val: https://kyverno.io/docs/
+    - name: GitHub repo
+      val: https://github.com/kyverno/kyverno
+  syncPolicy:
+    automated:
+      enabled: true

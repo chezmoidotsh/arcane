@@ -1,0 +1,20 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  labels:
+    app.kubernetes.io/name: envoy-gateway
+    app.kubernetes.io/part-of: envoy-gateway
+  name: envoy-gateway-ca
+  namespace: envoy-gateway-system
+spec:
+  commonName: envoy-gateway
+  isCA: true
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: selfsigned-issuer
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  secretName: envoy-gateway-ca
