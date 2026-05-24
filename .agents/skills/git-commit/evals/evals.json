@@ -1,0 +1,39 @@
+{
+	"skill_name": "git-commit",
+	"evals": [
+		{
+			"id": 1,
+			"prompt": "commit the changes to the git-commit skill",
+			"expected_output": "The agent surveys the git state, identifies that the only staged/modified file is .agents/skills/git-commit/SKILL.md, and — finding no explicit motivation in the user's message — asks the user WHY before drafting any commit body. It must not infer or fabricate a reason from the diff content.",
+			"files": [],
+			"assertions": [
+				"The agent does not write a commit body without first asking the user for the motivation.",
+				"The agent correctly identifies the changed file (git-commit SKILL.md) and the appropriate scope (gh).",
+				"The agent does not produce a complete commit command with a fabricated body."
+			]
+		},
+		{
+			"id": 2,
+			"prompt": "commit the git-commit skill update — it improves the commit practices",
+			"expected_output": "The agent recognises that 'it improves the commit practices' is a vague conclusion, not a specific motivation. It asks at least one targeted follow-up question to extract specifics (which practices? what was wrong before? what does this fix?) before writing the body. It must not pad the body with generalities.",
+			"files": [],
+			"assertions": [
+				"The agent identifies 'it improves the commit practices' as insufficiently specific and asks a clarifying question.",
+				"The agent does not write a body using the vague phrase as-is or rephrase it without adding substance.",
+				"The clarifying question targets specifics: which practices, what problem, or what would break without the change."
+			]
+		},
+		{
+			"id": 3,
+			"prompt": "commit the git-commit skill update. Context: earlier in this session the user explained that the skill was letting agents infer the commit body motivation from the diff rather than asking the user — which risks polluting the git history with plausible-sounding but factually wrong reasons. The fix adds a rule requiring the agent to ask for the WHY if it is not explicitly stated.",
+			"expected_output": "The agent uses the motivation provided in the prompt context without asking again, writes a body that captures the actual reason (history pollution risk, ask-vs-infer rule), selects the correct emoji and scope, and produces a ready-to-run commit command.",
+			"files": [],
+			"assertions": [
+				"The agent uses the provided motivation (history pollution, ask-vs-infer) in the commit body without asking for clarification.",
+				"The body explains the WHY (risk of wrong motivations in history) rather than restating the WHAT (what lines changed in SKILL.md).",
+				"The commit uses scope 'gh' and an appropriate emoji (e.g. :wrench: or :recycle:).",
+				"The commit command uses -S flag and Assisted-by trailer, without -s/--signoff."
+			]
+		}
+	]
+}

@@ -157,6 +157,20 @@ git commit -S -m "..."
 
 ## Workflow
 
+### Asking questions — always use the interactive tool
+
+Whenever you need input from the user (missing WHY, ambiguous scope, commit splitting
+decision), use the platform's interactive question tool rather than embedding the question
+in plain text output:
+
+* **OpenCode** → `question` tool
+* **Claude Code / other agents** → equivalent ask/prompt tool if available; fall back to
+  plain text only when no interactive tool exists in the current runtime
+
+Using the interactive tool lets the user answer without consuming a full premium response
+turn. Plain-text questions buried in a long response are easy to miss and expensive to
+answer.
+
 ### 1. Survey the workspace
 
 ```bash
@@ -176,7 +190,7 @@ git log --oneline --no-merges -10
 If staged changes span multiple scopes and are not a single atomic change, suggest
 splitting into separate commits. For example, files from both `projects/lungmen.akn/`
 and `catalog/ansible/` staged together should usually become two commits with different
-scopes and emojis. Ask the user if unsure.
+scopes and emojis. Use the interactive question tool to ask the user if unsure.
 
 ### 3. Select the emoji
 
@@ -186,7 +200,7 @@ colons: `:sparkles:`, not `✨`.
 ### 4. Determine the scope
 
 Use the scope decision tree. Validate against `.commitlintrc.js` if unsure.
-Never guess on ambiguous cases — ask the user.
+Never guess on ambiguous cases — use the interactive question tool to ask the user.
 
 ### 5. Draft the subject
 
@@ -196,6 +210,40 @@ Imperative mood, UPPERCASE start, no period, max 100 chars.
 
 For non-trivial changes, explain the WHY — motivation, impact, trade-offs — not the
 WHAT (the diff already shows that). Max 80 chars per line, sentence-case.
+
+**The WHY must come from the user, not from the diff.**
+
+The diff shows what changed. The body captures why the human decided to make that
+change — and only the human knows that. An AI-inferred motivation may sound plausible
+but can actively mislead future readers of the history. A missing body is recoverable;
+a wrong body is not.
+
+Acceptable sources for the WHY:
+
+* The user's own words anywhere in the conversation — including context set earlier
+  (e.g. "I want to improve this skill because it doesn't follow the new practices"
+  is a valid motivation even if said several exchanges before the commit request)
+* A linked issue or PR description the user pointed to
+
+Not acceptable:
+
+* Your interpretation of the diff
+* Motivations you reconstructed from code or config changes
+* What you think the reason probably was
+
+Before writing the body, ask yourself two questions:
+
+**1. Is there a WHY at all?**
+A conclusion is not a reason. "It doesn't make sense anymore", "vire ça", "fix this"
+all express a decision — not the motivation behind it. If the user hasn't said why,
+use the interactive question tool to ask before writing anything.
+
+**2. Is the WHY specific enough to be useful in 6 months?**
+A vague reason ("to follow new practices", "for better maintainability") tells a
+future reader nothing. Push for the specifics: which practices? what problem does
+this solve? what would break if we didn't do it? If the body would be vague, use
+the interactive question tool to ask one targeted follow-up question to fill the gap —
+don't pad with generalities.
 
 ### 7. Stage and commit
 
