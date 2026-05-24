@@ -204,6 +204,20 @@ In short:
 
 ## Operating constraints for AI agents
 
+### Asking questions — always use the interactive tool
+
+When you need input from the user, use the platform's interactive question tool rather
+than embedding the question in plain text output:
+
+* **OpenCode** → `question` tool
+* **Claude Code / other agents** → equivalent ask/prompt tool if available; fall back to
+  plain text only when no interactive tool exists in the current runtime
+
+Using the interactive tool lets the user answer without consuming a full premium response
+turn. Plain-text questions buried in a response are easy to miss and expensive to answer.
+This applies everywhere: missing context, ambiguous decisions, confirmation before
+destructive actions, clarification on scope.
+
 ### CLI: no interactive commands, no pagers
 
 Agents cannot drive interactive tools or scroll through pagers. Always:
