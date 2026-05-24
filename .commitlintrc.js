@@ -57,8 +57,8 @@ const types = [
 		name: "<    Revert — undo a previous commit",
 	},
 	{
-		value: "#",
-		name: "#    Docs   — ADRs, README, procedures, comments",
+		value: "@",
+		name: "@    Docs   — ADRs, README, procedures, comments",
 	},
 	{
 		value: "$",

@@ -68,7 +68,7 @@ in any terminal or rendering environment without emoji support.
 | `^`  | Bump — dependency version upgrade or downgrade                  |
 | `>`  | Move — rename or relocate resources                             |
 | `<`  | Revert — undo a previous commit                                 |
-| `#`  | Docs — ADRs, README, procedures, comments                       |
+| `@`  | Docs — ADRs, README, procedures, comments                       |
 | `$`  | Security — fix, policy, secret management                       |
 | `?`  | Experiment — POC, investigation, research                       |
 | `*`  | Wildcard — does not fit any other type                          |

@@ -134,7 +134,8 @@ Each type is a single character (or two for breaking changes — see below). The
 valid types is chosen to cover the 12 real usage patterns extracted from the git history,
 with a wildcard (`*`) for anything that does not fit. Breaking changes append `!` to the
 type (`+!`, `~!`, `-!`), which is readable as "plus-bang" or "change-bang" and visually
-signals urgency without requiring a separate token.
+signals urgency without requiring a separate token. `#` was deliberately avoided as a type
+because git treats lines starting with `#` as comments in commit messages.
 
 * `+` Single-character types — maximum information density in `git log --oneline`
 * `+` Square brackets visually distinguish the scope from surrounding text, even when the
@@ -180,7 +181,7 @@ regardless — the inline marker is a scanning aid, not a substitute for explana
 | `^`  | Bump — dependency version upgrade                               | `:arrow_up:` `:arrow_down:` `:pushpin:`                       |
 | `>`  | Move — rename or relocate resources                             | `:truck:`                                                     |
 | `<`  | Revert — undo a previous commit                                 | `:rewind:`                                                    |
-| `#`  | Docs — ADRs, README, procedures, comments                       | `:memo:` `:bulb:`                                             |
+| `@`  | Docs — ADRs, README, procedures, comments                       | `:memo:` `:bulb:`                                             |
 | `$`  | Security — fix, policy, secret management                       | `:lock:` `:closed_lock_with_key:` `:passport_control:`        |
 | `?`  | Experiment — POC, investigation, research                       | `:alembic:` `:test_tube:`                                     |
 | `*`  | Wildcard — does not fit any other type                          | —                                                             |
@@ -204,7 +205,7 @@ Examples:
 ![project:amiya.akn]: Fix OIDC redirect loop after Pocket-Id migration
 ~[project:amiya.akn,catalog:kustomize]: Tune cert-manager renewal window
 =[gh]: Extract base overlays from catalog kustomize
-#[gh]: Add ADR-010 documenting commit type convention
+@[gh]: Add ADR-010 documenting commit type convention
 ```
 
 ### Breaking changes
@@ -212,9 +213,9 @@ Examples:
 Only addition, improvement, and removal can introduce breaking changes. A bug fix that
 breaks something is by definition a structural change, not a fix.
 
-| Valid          | Invalid                                      | Rationale                                                                                            |
-| -------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `+!` `~!` `-!` | `!!` `=!` `#!` `?!` `$!` `*!` `^!` `>!` `<!` | Fix, docs, no-behavior-change, experiment, security, bump, move, revert cannot be breaking by nature |
+| Valid          | Invalid                            | Rationale                                                                                            |
+| -------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `+!` `~!` `-!` | `!!` `=!` `@!` `?!` `*!` `^!` `>!` | Fix, docs, no-behavior-change, experiment, security, bump, move, revert cannot be breaking by nature |
 
 Breaking change commits **must** include a `BREAKING CHANGE:` paragraph in the body
 explaining what breaks and how to migrate.
