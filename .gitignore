@@ -51,3 +51,11 @@ catalog/**/result
 
 # Ignore ansible outputs
 projects/chezmoi.sh/src/infrastructure/ansible/output/
+
+# Ignore custom AI tools configurations
+opencode.json
+.chunkhound.json
+
+# Un-ignore pre-rendered manifests — overrides the global gitignore 'dist' pattern
+!projects/*/dist/
+!projects/*/dist/**

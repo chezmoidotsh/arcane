@@ -1,0 +1,265 @@
+#!/usr/bin/env bash
+# Pre-render Kustomize/Helm sources into static YAML committed under dist/.
+# Each non-SOPS app in src/ gets a mirrored dist/ directory with one file per
+# Kubernetes resource named <group>.<version>.<Kind>.<name>.yaml.
+# See docs/decisions/011-rendered-manifests-pattern.md
+set -euo pipefail
+
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+REPO_ROOT="$PWD"
+
+# ── temp-file registry & cleanup ─────────────────────────────────────────────
+
+_TMPFILES=()
+_cleanup() { for f in "${_TMPFILES[@]:-}"; do rm -rf "$f" 2>/dev/null || true; done; }
+trap _cleanup EXIT
+
+_mktemp()    { local p; p="$(mktemp)";   _TMPFILES+=("$p"); echo "$p"; }
+_mktempdir() { local p; p="$(mktemp -d)"; _TMPFILES+=("$p"); echo "$p"; }
+
+# ── Python YAML splitter (no PyYAML dependency) ───────────────────────────────
+# Written once to a temp file and reused across all render_one() calls.
+# Reads multi-document YAML from stdin, writes one *.yaml file per resource
+# to the output directory given as argv[1].
+
+_PY_SPLIT="$(_mktemp)"
+cat > "$_PY_SPLIT" << 'PYTHON'
+import sys, re, os
+
+output_dir = sys.argv[1]
+content    = sys.stdin.read()
+written    = {}
+
+for idx, seg in enumerate(re.split(r'(?m)^---\s*$', content)):
+    seg = seg.strip()
+    if not seg:
+        continue
+
+    # Extract top-level fields with regex (safe for well-formed kustomize output)
+    av = re.search(r'^apiVersion:\s*(\S+)', seg, re.M)
+    ki = re.search(r'^kind:\s*(\S+)',       seg, re.M)
+    # metadata.name may be at 2-space or 4-space indent depending on block style
+    nm = re.search(r'^metadata:\s*\n(?:(?:  [^\n]*\n)*)  name:\s*(\S+)', seg, re.M)
+    if not nm:
+        nm = re.search(r'^\s{2,4}name:\s*(\S+)', seg, re.M)
+
+    if not (av and ki):
+        print(f"WARNING: skipping doc {idx} — missing apiVersion/kind", file=sys.stderr)
+        continue
+
+    api_version = av.group(1)
+    kind        = ki.group(1)
+    name        = nm.group(1) if nm else f"resource-{idx}"
+
+    # Derive group and version from apiVersion
+    if '/' in api_version:
+        group, version = api_version.rsplit('/', 1)
+    else:
+        group, version = 'core', api_version
+
+    # Sanitise path separators and special chars
+    group = group.replace('/', '.')
+    name  = re.sub(r'[/\\:@]', '-', name)
+
+    filename = f"{group}.{version}.{kind}.{name}.yaml"
+    if filename in written:
+        filename = f"{group}.{version}.{kind}.{name}.{idx}.yaml"
+    written[filename] = True
+
+    with open(os.path.join(output_dir, filename), 'w') as fh:
+        fh.write(seg + '\n')
+
+if not written:
+    print("WARNING: kustomize build produced no renderable resources", file=sys.stderr)
+PYTHON
+
+# ── helpers ───────────────────────────────────────────────────────────────────
+
+_relpath() { echo "${1#"$REPO_ROOT/"}"; }
+
+_src_to_dist() { echo "${1/\/src\//\/dist\/}"; }
+
+# Returns 0 if the kustomization at $1 contains a KSOPS generator
+_has_ksops() {
+  local kust="$1/kustomization.yaml"
+  [[ -f "$kust" ]] && \
+    grep -qE '(kind:[[:space:]]*ksops|path:[[:space:]]*ksops|ksops\.generator\.yaml)' "$kust"
+}
+
+# Returns 0 if the kustomization at $1 is a Component (cannot be built standalone)
+_is_component() {
+  local kust="$1/kustomization.yaml"
+  [[ -f "$kust" ]] && grep -q '^kind:[[:space:]]*Component' "$kust"
+}
+
+# Print all top-level renderable app directories across all projects
+# Matches:  projects/*/src/apps/<app>/
+#           projects/*/src/infrastructure/kubernetes/<name>/
+# Excludes: deeper subdirectories (security/, sops/, etc.)
+_find_app_dirs() {
+  find "$REPO_ROOT/projects" -name "kustomization.yaml" \
+    \( \
+      \( -path "*/src/apps/*/kustomization.yaml" \
+         ! -path "*/src/apps/*/*/kustomization.yaml" \) \
+      -o \
+      \( -path "*/src/infrastructure/kubernetes/*/kustomization.yaml" \
+         ! -path "*/src/infrastructure/kubernetes/*/*/kustomization.yaml" \) \
+    \) \
+    -print0 2>/dev/null \
+  | xargs -0 -I{} dirname {} \
+  | sort
+}
+
+# Print src app directories with staged changes
+_find_staged_dirs() {
+  git -C "$REPO_ROOT" diff --cached --name-only 2>/dev/null \
+    | grep -E '^projects/[^/]+/src/(apps/[^/]+|infrastructure/kubernetes/[^/]+)/' \
+    | sed -E 's|^(projects/[^/]+/src/(apps|infrastructure/kubernetes)/[^/]+)/.*|\1|' \
+    | sort -u \
+    | while IFS= read -r rel; do
+        dir="$REPO_ROOT/$rel"
+        [[ -d "$dir" ]] && echo "$dir"
+      done
+}
+
+# ── core render function ──────────────────────────────────────────────────────
+
+_STALE=0
+
+render_one() {
+  local src_path="${1%/}"
+  [[ "$src_path" = /* ]] || src_path="$REPO_ROOT/$src_path"
+
+  local rel; rel="$(_relpath "$src_path")"
+
+  if [[ ! -f "$src_path/kustomization.yaml" ]]; then
+    echo "ERROR: no kustomization.yaml in $src_path" >&2; return 1
+  fi
+
+  if _has_ksops "$src_path"; then
+    printf 'SKIP  %s  (KSOPS generator — use src/<app>/sops/ overlay)\n' "$rel"
+    return 0
+  fi
+
+  if _is_component "$src_path"; then
+    printf 'SKIP  %s  (kind: Component — cannot be built standalone)\n' "$rel"
+    return 0
+  fi
+
+  local dist_path; dist_path="$(_src_to_dist "$src_path")"
+  local tmp_dir;   tmp_dir="$(_mktempdir)"
+
+  printf 'RENDER %s\n' "$rel"
+
+  if ! kustomize build --enable-helm "$src_path" \
+       | python3 "$_PY_SPLIT" "$tmp_dir"; then
+    echo "ERROR: render failed for $src_path" >&2; return 1
+  fi
+
+  # Copy .application.patch so dist/ is self-contained for discovery
+  if [[ -f "$src_path/.application.patch" ]]; then
+    cp "$src_path/.application.patch" "$tmp_dir/.application.patch"
+  fi
+
+  if [[ "${_CHECK:-false}" == "true" ]]; then
+    if [[ ! -d "$dist_path" ]]; then
+      printf 'STALE %s  (dist/ directory does not exist)\n' "$rel"
+      _STALE=$((_STALE + 1))
+      return 0
+    fi
+    if ! diff -rq "$tmp_dir" "$dist_path" >/dev/null 2>&1; then
+      printf 'STALE %s\n' "$rel"
+      diff -ru "$dist_path" "$tmp_dir" || true
+      _STALE=$((_STALE + 1))
+      return 0
+    fi
+    printf 'OK    %s\n' "$rel"
+  else
+    mkdir -p "$dist_path"
+    # Remove previously rendered YAML (keep .application.patch; it's managed by this script)
+    find "$dist_path" -maxdepth 1 -name "*.yaml" -delete
+    # Write freshly rendered files + patch
+    find "$tmp_dir" -maxdepth 1 \( -name "*.yaml" -o -name ".application.patch" \) -exec cp {} "$dist_path/" \;
+    # Stage dist/ automatically when called from pre-commit
+    if [[ "${_STAGE:-false}" == "true" ]]; then
+      git -C "$REPO_ROOT" add "$dist_path" 2>/dev/null || true
+    fi
+    printf 'DONE  %s  →  %s\n' "$rel" "$(_relpath "$dist_path")"
+  fi
+}
+
+# ── CLI parsing ───────────────────────────────────────────────────────────────
+
+_CHECK=false
+_STAGE=false
+_MODE=""
+_SRC_PATH=""
+
+_usage() {
+  cat >&2 << EOF
+Usage: dist:render [--check] { --all | --staged-only | <src-path> }
+
+  --all           Render all non-SOPS app directories across all projects
+  --staged-only   Re-render only projects with staged src/ changes (pre-commit)
+  --check         Report stale dist/ dirs without writing (exit 1 if any stale)
+  <src-path>      Render a single directory (relative to repo root or absolute)
+
+Examples:
+  dist:render --all
+  dist:render --check --all
+  dist:render --staged-only
+  dist:render projects/lungmen.akn/src/apps/forgejo
+EOF
+  exit 1
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --check)        _CHECK=true ;;
+    --all)          _MODE=all ;;
+    --staged-only)  _MODE=staged; _STAGE=true ;;
+    --help|-h)      _usage ;;
+    -*)             echo "ERROR: unknown flag: $1" >&2; _usage ;;
+    *)
+      [[ -z "$_SRC_PATH" ]] || { echo "ERROR: unexpected argument: $1" >&2; _usage; }
+      _SRC_PATH="$1"
+      _MODE=single
+      ;;
+  esac
+  shift
+done
+
+[[ -n "$_MODE" ]] || _usage
+
+export _CHECK _STAGE
+
+# ── dispatch ──────────────────────────────────────────────────────────────────
+
+case "$_MODE" in
+  single)
+    render_one "$_SRC_PATH"
+    ;;
+
+  all)
+    while IFS= read -r dir; do
+      render_one "$dir"
+    done < <(_find_app_dirs)
+    ;;
+
+  staged)
+    _found=false
+    while IFS= read -r dir; do
+      _found=true
+      render_one "$dir"
+    done < <(_find_staged_dirs)
+    if [[ "$_found" == "false" ]]; then
+      echo "INFO: no src/ changes staged — nothing to re-render"
+    fi
+    ;;
+esac
+
+if [[ "$_CHECK" == "true" && "$_STALE" -gt 0 ]]; then
+  printf '\nERROR: %d dist/ director(ies) are stale.\n' "$_STALE" >&2
+  echo  "       Run:  scripts/dist:render --all" >&2
+  exit 1
+fi

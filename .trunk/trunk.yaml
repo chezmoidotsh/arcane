@@ -113,6 +113,17 @@ lint:
         - remark-gfm
 
 actions:
+  definitions:
+    # Re-render dist/ for any project whose src/ was touched in this commit.
+    # Stages the updated dist/ files automatically so the commit is self-consistent.
+    - id: dist-render-pre-commit
+      description: Re-render dist/ for projects with staged src/ changes
+      run: scripts/dist:render --staged-only
+      triggers:
+        - files:
+            - projects/*/src/apps/**
+            - projects/*/src/infrastructure/kubernetes/**
+            - catalog/helm/**
   enabled:
     - commitlint
     - submodule-init-update
@@ -120,3 +131,5 @@ actions:
     - trunk-check-pre-push
     - trunk-fmt-pre-commit
     - trunk-upgrade-available
+    - dist-render-pre-commit
+    - dist-check-pre-push
