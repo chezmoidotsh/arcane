@@ -22,3 +22,12 @@ spec:
   syncPolicy:
     automated:
       enabled: true
+
+  # SOPS split: primary source is pre-rendered dist/, connector secret comes from src/sops/
+  sources:
+    - repoURL: https://github.com/chezmoidotsh/arcane.git
+      path: "projects/amiya.akn/dist/infrastructure/kubernetes/tailscale"
+      targetRevision: main
+    - repoURL: https://github.com/chezmoidotsh/arcane.git
+      path: "projects/amiya.akn/src/infrastructure/kubernetes/tailscale/sops"
+      targetRevision: main

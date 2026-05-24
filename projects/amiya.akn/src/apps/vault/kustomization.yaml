@@ -18,21 +18,6 @@ resources:
   - openbao.postgresql.yaml
   - openbao.secretstore.yaml
 
-generators:
-  - |-
-    apiVersion: viaduct.ai/v1
-    kind: ksops
-    metadata:
-      name: sopsed-secrets-generator
-      annotations:
-        config.kubernetes.io/function: |
-          exec:
-            path: ksops
-    files:
-      - cnpg.backup-credentials.secret.yaml
-      - openbao-softhsm-tokens.secret.yaml
-      - openbao-database-credentials.secret.yaml
-
 helmCharts:
   - repo: https://openbao.github.io/openbao-helm
     name: openbao

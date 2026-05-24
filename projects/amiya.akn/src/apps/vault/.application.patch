@@ -22,3 +22,12 @@ spec:
   syncPolicy:
     automated:
       enabled: false # Core security component
+
+  # SOPS split: primary source is pre-rendered dist/, secrets come from src/sops/
+  sources:
+    - repoURL: https://github.com/chezmoidotsh/arcane.git
+      path: "projects/amiya.akn/dist/apps/vault"
+      targetRevision: main
+    - repoURL: https://github.com/chezmoidotsh/arcane.git
+      path: "projects/amiya.akn/src/apps/vault/sops"
+      targetRevision: main

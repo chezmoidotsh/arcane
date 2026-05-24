@@ -20,3 +20,12 @@ spec:
   syncPolicy:
     automated:
       enabled: true
+
+  # SOPS split: primary source is pre-rendered dist/, secrets come from src/sops/
+  sources:
+    - repoURL: https://github.com/chezmoidotsh/arcane.git
+      path: "projects/amiya.akn/dist/apps/pocket-id"
+      targetRevision: main
+    - repoURL: https://github.com/chezmoidotsh/arcane.git
+      path: "projects/amiya.akn/src/apps/pocket-id/sops"
+      targetRevision: main
