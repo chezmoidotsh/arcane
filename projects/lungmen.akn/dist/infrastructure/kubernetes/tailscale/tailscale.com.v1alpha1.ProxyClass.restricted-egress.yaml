@@ -1,0 +1,27 @@
+apiVersion: tailscale.com/v1alpha1
+kind: ProxyClass
+metadata:
+  name: restricted-egress
+  namespace: tailscale-system
+spec:
+  statefulSet:
+    pod:
+      tailscaleContainer:
+        resources:
+          limits:
+            memory: 128Mi
+            squat.ai/tun: "1"
+          requests:
+            cpu: 10m
+            memory: 32Mi
+            squat.ai/tun: "1"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            add:
+              - NET_ADMIN
+            drop:
+              - ALL
+          readOnlyRootFilesystem: false
+          seccompProfile:
+            type: RuntimeDefault

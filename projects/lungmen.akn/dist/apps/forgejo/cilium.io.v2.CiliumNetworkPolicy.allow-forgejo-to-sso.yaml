@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Forgejo to connect to Pocket-ID SSO for OIDC authentication.
+  name: allow-forgejo-to-sso
+  namespace: forgejo
+spec:
+  egress:
+    - toFQDNs:
+        - matchName: auth.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: forgejo

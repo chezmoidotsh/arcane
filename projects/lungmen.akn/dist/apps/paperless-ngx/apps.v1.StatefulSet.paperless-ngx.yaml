@@ -1,0 +1,177 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  annotations:
+    checkov.io/skip1: CKV2_K8S_6=Checkov don't manage properly Network Policies
+    checkov.io/skip2: CKV_K8S_25=CHOWN seems to be required by S6 runtime... it works
+      but with some error logs
+    checkov.io/skip3: CKV_K8S_35=Paperless don't handle secret value through files
+  labels:
+    app.kubernetes.io/component: webserver
+    app.kubernetes.io/instance: paperless-ngx
+    app.kubernetes.io/name: paperless-ngx
+  name: paperless-ngx
+  namespace: paperless-ngx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: webserver
+      app.kubernetes.io/instance: paperless-ngx
+      app.kubernetes.io/name: paperless-ngx
+  serviceName: paperless-ngx
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: webserver
+        app.kubernetes.io/instance: paperless-ngx
+        app.kubernetes.io/name: paperless-ngx
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - env:
+            - name: PAPERLESS_APPS
+              value: allauth.socialaccount.providers.openid_connect
+            - name: PAPERLESS_CONSUMER_POLLING
+              value: "60"
+            - name: PAPERLESS_CORS_ALLOWED_HOSTS
+              value: https://paperless.chezmoi.sh
+            - name: PAPERLESS_CSRF_TRUSTED_ORIGINS
+              value: https://paperless.chezmoi.sh
+            - name: PAPERLESS_DBENGINE
+              value: postgresql
+            - name: PAPERLESS_DBHOST
+              valueFrom:
+                secretKeyRef:
+                  key: host
+                  name: paperless-ngx-database-paperless
+            - name: PAPERLESS_DBPORT
+              valueFrom:
+                secretKeyRef:
+                  key: port
+                  name: paperless-ngx-database-paperless
+            - name: PAPERLESS_DBNAME
+              valueFrom:
+                secretKeyRef:
+                  key: dbname
+                  name: paperless-ngx-database-paperless
+            - name: PAPERLESS_DBUSER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: paperless-ngx-database-paperless
+            - name: PAPERLESS_DBPASS
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: paperless-ngx-database-paperless
+            - name: PAPERLESS_REDIS
+              value: redis://paperless-ngx-redis:6379
+            - name: PAPERLESS_SOCIALACCOUNT_PROVIDERS
+              valueFrom:
+                secretKeyRef:
+                  key: socialaccount_providers
+                  name: paperless-ngx-configuration
+            - name: PAPERLESS_SCRATCH_DIR
+              value: /usr/src/paperless/media/.paperlessscratch
+            - name: S6_YES_I_WANT_A_WORLD_WRITABLE_RUN_BECAUSE_KUBERNETES
+              value: "1"
+            - name: S6_READ_ONLY_ROOT
+              value: "1"
+          image: ghcr.io/paperless-ngx/paperless-ngx:2.20.15@sha256:6c86cad803970ea782683a8e80e7403444c5bf3cf70de63b4d3c8e87500db92f
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: paperless-ngx
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              memory: 4Gi
+            requests:
+              cpu: 250m
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              add:
+                - CHOWN
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 21473
+            runAsNonRoot: true
+            runAsUser: 21473
+          startupProbe:
+            failureThreshold: 30
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 2
+            successThreshold: 1
+            timeoutSeconds: 5
+          volumeMounts:
+            - mountPath: /usr/src/paperless/media
+              name: persistent-storage
+              subPath: media
+            - mountPath: /usr/src/paperless/data
+              name: persistent-storage
+              subPath: data
+            - mountPath: /run
+              name: temp
+              subPath: run
+            - mountPath: /tmp
+              name: temp
+              subPath: tmp
+            - mountPath: /usr/src/paperless/consume
+              name: temp
+              subPath: consume
+            - mountPath: /usr/src/paperless/media/documents/archive/nas.chezmoi.sh
+              name: smb-storage
+      securityContext:
+        fsGroup: 21473
+        runAsGroup: 21473
+        runAsUser: 21473
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - emptyDir: {}
+          name: temp
+        - name: smb-storage
+          persistentVolumeClaim:
+            claimName: paperless-ngx-smb-storage
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        labels:
+          app.kubernetes.io/component: webserver
+          app.kubernetes.io/instance: paperless-ngx
+          app.kubernetes.io/name: paperless-ngx
+          recurring-job-group.longhorn.io/daily: enabled
+          recurring-job-group.longhorn.io/monthly: enabled
+          recurring-job-group.longhorn.io/weekly: enabled
+        name: persistent-storage
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi

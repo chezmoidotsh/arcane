@@ -1,0 +1,13 @@
+apiVersion: v1
+data:
+  N8N_EDITOR_BASE_URL: https://n8n.chezmoi.sh
+  N8N_HOST: n8n.chezmoi.sh
+  N8N_PORT: "5678"
+  N8N_PROTOCOL: https
+  N8N_RUNNERS_TASK_BROKER_URI: http://n8n-worker:5678
+  OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
+  WEBHOOK_URL: https://n8n.chezmoi.sh
+kind: ConfigMap
+metadata:
+  name: n8n-main
+  namespace: n8n

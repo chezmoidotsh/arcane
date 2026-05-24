@@ -1,0 +1,22 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: Allows CNPG cluster 'apps-secured-20260329'
+      pods to reach the Kubernetes API server. Required for operator integration,
+      status reporting, and lease management.
+  labels:
+    app.kubernetes.io/instance: apps-secured-20260329
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mutualized-cnpg-databases
+    helm.sh/chart: mutualized-cnpg-databases-0.1.0
+    mutualized.cloudnative-pg.io/cluster: apps-secured-20260329
+    mutualized.cloudnative-pg.io/group: apps-secured
+  name: allow-apps-secured-20260329-to-kube-apiserver
+spec:
+  egress:
+    - toEntities:
+        - kube-apiserver
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: apps-secured-20260329

@@ -1,0 +1,24 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Jellyfin to access SSO for authentication. Permits outbound HTTPS connections to auth.chezmoi.sh on port 443.
+  labels:
+    app.kubernetes.io/instance: jellyfin
+    app.kubernetes.io/name: jellyfin
+  name: allow-jellyfin-to-sso
+  namespace: jellyfin
+spec:
+  egress:
+    - toFQDNs:
+        - matchName: auth.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+          serverNames:
+            - auth.chezmoi.sh
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: jellyfin

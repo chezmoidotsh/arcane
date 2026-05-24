@@ -1,0 +1,23 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows linkding to connect to Authelia SSO for OIDC authentication.
+  labels:
+    app.kubernetes.io/instance: linkding
+    app.kubernetes.io/name: linkding
+  name: allow-linkding-to-sso
+  namespace: linkding
+spec:
+  egress:
+    - toFQDNs:
+        - matchName: auth.chezmoi.sh
+        - matchName: auth.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: linkding

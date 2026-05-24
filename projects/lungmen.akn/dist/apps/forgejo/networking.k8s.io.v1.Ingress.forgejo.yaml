@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    link.argocd.argoproj.io/external-link: https://git.tail831c5d.ts.net
+  labels:
+    tailscale.com/proxy-class: restricted
+  name: forgejo
+  namespace: forgejo
+spec:
+  defaultBackend:
+    service:
+      name: forgejo-http
+      port:
+        number: 3000
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - git

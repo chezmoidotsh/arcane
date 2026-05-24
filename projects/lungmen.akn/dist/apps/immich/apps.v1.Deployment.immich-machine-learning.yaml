@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: immich
+    app.kubernetes.io/name: immich
+  name: immich-machine-learning
+  namespace: immich
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: machine-learning
+      app.kubernetes.io/instance: immich
+      app.kubernetes.io/name: immich
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: machine-learning
+        app.kubernetes.io/instance: immich
+        app.kubernetes.io/name: immich
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - image: ghcr.io/immich-app/immich-machine-learning:v2.7.5
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ping
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+          name: immich-machine-learning
+          ports:
+            - containerPort: 3003
+              name: http
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ping
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 31847
+            runAsNonRoot: true
+            runAsUser: 31847
+          startupProbe:
+            failureThreshold: 30
+            httpGet:
+              path: /ping
+              port: http
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 1
+          volumeMounts:
+            - mountPath: /.config
+              name: model-cache
+            - mountPath: /.cache
+              name: model-cache
+            - mountPath: /cache
+              name: model-cache
+            - mountPath: /tmp
+              name: temp
+      securityContext:
+        fsGroup: 31847
+        runAsGroup: 31847
+        runAsUser: 31847
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - emptyDir: {}
+          name: temp
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: immich-ml-cache

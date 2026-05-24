@@ -1,0 +1,30 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: Allows the CloudNativePG operator (cloudnative-pg/cloudnative-pg-system)
+      and applications matching the specified selectors to manage cluster 'apps-secured-20260329'.
+      Required for cluster management, metrics, and webhooks.
+  labels:
+    app.kubernetes.io/instance: apps-secured-20260329
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mutualized-cnpg-databases
+    helm.sh/chart: mutualized-cnpg-databases-0.1.0
+    mutualized.cloudnative-pg.io/cluster: apps-secured-20260329
+    mutualized.cloudnative-pg.io/group: apps-secured
+  name: allow-apps-secured-20260329-from-cnpg-operator
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: apps-secured-20260329
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: cloudnative-pg
+            io.kubernetes.pod.namespace: cloudnative-pg-system
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+            - port: "8000"
+              protocol: TCP

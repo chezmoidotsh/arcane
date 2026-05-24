@@ -1,0 +1,15 @@
+apiVersion: v1
+data:
+  default-resource.yaml: |-
+    backup-target: s3://longhorn-backups@eu-west-1/lungmen.akn/
+    backup-target-credential-secret: longhorn-backup-credentials
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: longhorn
+    app.kubernetes.io/version: v1.11.2
+    helm.sh/chart: longhorn-1.11.2
+  name: longhorn-default-resource
+  namespace: longhorn-system

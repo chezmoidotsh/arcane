@@ -1,0 +1,15 @@
+apiVersion: v1
+data:
+  OPERATOR_IMAGE_NAME: oci.chezmoi.sh/ghcr.io/cloudnative-pg/cloudnative-pg:1.28.0-ubi9@sha256:0869f9b996923aaf3eb761abe032b10ef482eaaef32fc6c604605a7223c13c1b
+  PGBOUNCER_IMAGE_NAME: oci.chezmoi.sh/ghcr.io/cloudnative-pg/pgbouncer:1.25.1-trixie@sha256:ea65b515dafc6a86cd70005ab21c16671f2e2c1d618210a5d6b4b90637c89c27
+  POSTGRES_IMAGE_NAME: oci.chezmoi.sh/ghcr.io/cloudnative-pg/postgresql:17.7-202512150807-standard-trixie@sha256:30e7d6712f7c530dd6eed5d2604947472c84677754e0edda87a09dd329d5f33f
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/instance: cloudnative-pg
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: cloudnative-pg
+    app.kubernetes.io/version: 1.29.1
+    helm.sh/chart: cloudnative-pg-0.28.2
+  name: cnpg-controller-manager-config
+  namespace: cloudnative-pg-system

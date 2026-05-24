@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/instance: newt
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: newt
+    app.kubernetes.io/version: 1.12.5
+    helm.sh/chart: newt-1.5.0
+    newt.instance: main-tunnel
+  name: newt-newt-main-tunnel
+  namespace: newt-system
+spec:
+  ports:
+    - name: wg
+      port: 51820
+      protocol: UDP
+      targetPort: 51820
+  selector:
+    app.kubernetes.io/instance: newt
+    app.kubernetes.io/name: newt
+    newt.instance: main-tunnel
+  type: ClusterIP

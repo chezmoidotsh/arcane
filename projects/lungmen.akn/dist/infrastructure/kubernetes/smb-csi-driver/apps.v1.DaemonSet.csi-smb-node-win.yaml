@@ -1,0 +1,120 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: csi-driver-smb
+    app.kubernetes.io/version: 1.20.1
+    helm.sh/chart: csi-driver-smb-1.20.1
+  name: csi-smb-node-win
+  namespace: smb-csi-driver-system
+spec:
+  selector:
+    matchLabels:
+      app: csi-smb-node-win
+  template:
+    metadata:
+      labels:
+        app: csi-smb-node-win
+        app.kubernetes.io/instance: release-name
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: csi-driver-smb
+        app.kubernetes.io/version: 1.20.1
+        helm.sh/chart: csi-driver-smb-1.20.1
+    spec:
+      containers:
+      - args:
+        - --csi-address=$(CSI_ENDPOINT)
+        - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
+        - --plugin-registration-path=$(PLUGIN_REG_DIR)
+        - --v=2
+        command:
+        - csi-node-driver-registrar.exe
+        env:
+        - name: CSI_ENDPOINT
+          value: unix://C:\var\lib\kubelet\plugins\smb.csi.k8s.io\csi.sock
+        - name: DRIVER_REG_SOCK_PATH
+          value: C:\\var\\lib\\kubelet\\plugins\\smb.csi.k8s.io\\csi.sock
+        - name: PLUGIN_REG_DIR
+          value: C:\\var\\lib\\kubelet\\plugins_registry\\
+        - name: KUBE_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
+        imagePullPolicy: IfNotPresent
+        name: node-driver-registrar
+        resources:
+          limits:
+            memory: 150Mi
+          requests:
+            cpu: 10m
+            memory: 40Mi
+        securityContext:
+          capabilities:
+            drop:
+            - ALL
+      - args:
+        - --v=5
+        - --drivername=smb.csi.k8s.io
+        - --endpoint=$(CSI_ENDPOINT)
+        - --nodeid=$(KUBE_NODE_NAME)
+        - --enable-get-volume-stats=true
+        - --remove-smb-mapping-during-unmount=true
+        - --enable-windows-host-process=true
+        command:
+        - smbplugin.exe
+        env:
+        - name: CSI_ENDPOINT
+          value: unix://C:\var\lib\kubelet\plugins\smb.csi.k8s.io\csi.sock
+        - name: KUBE_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        image: registry.k8s.io/sig-storage/smbplugin:v1.20.1-windows-hp
+        imagePullPolicy: IfNotPresent
+        name: smb
+        resources:
+          limits:
+            memory: 600Mi
+          requests:
+            cpu: 10m
+            memory: 40Mi
+        securityContext:
+          capabilities:
+            drop:
+            - ALL
+      hostNetwork: true
+      initContainers:
+      - command:
+        - powershell.exe
+        - -c
+        - New-Item -ItemType Directory -Path C:\var\lib\kubelet\plugins\smb.csi.k8s.io\
+          -Force
+        image: registry.k8s.io/sig-storage/smbplugin:v1.20.1-windows-hp
+        imagePullPolicy: IfNotPresent
+        name: init
+        securityContext:
+          capabilities:
+            drop:
+            - ALL
+      nodeSelector:
+        kubernetes.io/os: windows
+      priorityClassName: system-cluster-critical
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+        windowsOptions:
+          hostProcess: true
+          runAsUserName: NT AUTHORITY\SYSTEM
+      serviceAccountName: csi-smb-node-sa
+      tolerations:
+      - effect: NoSchedule
+        key: node.kubernetes.io/os
+        operator: Exists
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate

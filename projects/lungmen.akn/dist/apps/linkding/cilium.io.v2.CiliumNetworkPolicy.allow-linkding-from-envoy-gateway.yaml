@@ -1,0 +1,23 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Envoy Gateway to route traffic to linkding application.
+  labels:
+    app.kubernetes.io/instance: linkding
+    app.kubernetes.io/name: linkding
+  name: allow-linkding-from-envoy-gateway
+  namespace: linkding
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: linkding
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: envoy-gateway-system
+      toPorts:
+        - ports:
+            - port: "9090"
+              protocol: TCP

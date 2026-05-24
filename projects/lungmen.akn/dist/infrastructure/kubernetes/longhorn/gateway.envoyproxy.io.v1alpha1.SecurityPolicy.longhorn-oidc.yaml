@@ -1,0 +1,27 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  annotations:
+    security.chezmoi.sh/description: |
+      OIDC authentication policy for longhorn HTTPRoute.
+      Uses one_factor authentication as this is an infrastructure management interface with controlled access.
+      Only requires openid scope for simple authentication without user information leakage.
+      Longhorn is a critical storage management interface that requires authentication but not complex authorization.
+  name: longhorn-oidc
+  namespace: longhorn-system
+spec:
+  oidc:
+    clientID: 605a465f-7fe2-467a-b712-763a5b7fbb49
+    clientSecret:
+      name: longhorn-oidc-secret
+    forwardAccessToken: true
+    logoutPath: /logout
+    provider:
+      issuer: https://auth.chezmoi.sh
+    redirectURL: https://longhorn.lungmen.akn.chezmoi.sh/oauth2/callback
+    scopes:
+      - openid
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: longhorn
