@@ -1,140 +1,68 @@
+<!-- Use this template for significant new features or infrastructure additions -->
+
 ## Summary
 
-<!-- Provide a concise description of what this PR accomplishes and why it's needed -->
+<!-- 2-4 sentences: what this feature adds, why now, and strategic context
+     (e.g. phase in a larger plan, motivating issue). -->
 
-**Related Issue:** <!-- URL to issue (https://github.com/chezmoidotsh/arcane/issues/123) or #123 -->
+**Related Issue:** <!-- #123 -->
 
-## Changes Overview
+## Changes Made
 
-<!-- Provide a detailed description of the changes. For infrastructure changes, describe the components affected and the technical approach. -->
+### <Component or subsystem name>
 
-**Affected Components:**
+<!-- Optional 1-line intro describing the component, then file list. -->
 
-<!-- List the clusters, applications, or infrastructure components modified -->
+* **`path/to/file.yaml`** — what it does and why it exists
 
-* Cluster(s):
-* Application(s):
-* Infrastructure:
+<!-- markdownlint-disable MD024 -->
 
-**Key Changes:**
+### <Second component if applicable>
 
-<!-- Describe the main changes in 2-4 concise points. Be specific about what was actually changed, not just categories.
-     Example: "Migrated Longhorn recurring jobs from monolithic config to individual manifests"
-     Not: "Updated Longhorn configuration"
--->
+<!-- markdownlint-enable MD024 -->
 
-*
-*
+* ...
 
-## Implementation Details
+## Technical Impact
 
-<!-- Provide technical details about the implementation. Include architecture decisions, patterns used, and rationale. -->
+### Infrastructure Components
 
-**Technical Approach:**
+<!-- New services, charts, operators introduced and their role. -->
 
-<!-- How was this implemented? What patterns or tools were used? -->
+### Security Implementation
 
-**Architecture Impact:**
+<!-- Network policies (Cilium), OpenBao paths, ExternalSecrets, OIDC,
+     attack surface analysis. -->
 
-<!-- Select all that apply -->
+### External Access Points
 
-* [ ] Infrastructure changes (Crossplane, Kubernetes manifests)
-* [ ] GitOps configuration (ArgoCD)
-* [ ] Network changes (Cilium, Envoy Gateway)
-* [ ] Security updates (Pocket-Id, OpenBao, network policies)
-* [ ] Storage changes (PVCs, CloudNative-PG, S3)
-* [ ] No architectural changes
+<!-- HTTPRoute / TCPRoute hostnames, LoadBalancer services, OIDC integration. -->
 
-## Testing & Validation
+### Integration Points
 
-**Testing Performed:**
+<!-- How this connects to existing systems (databases, registry, gateways). -->
 
-<!-- Describe how these changes were tested -->
+## Testing Validation
 
-* [ ] Local testing/validation
-* [ ] Cluster deployment verification
-* [ ] Application functionality testing
-* [ ] Integration testing
-* [ ] Security validation
+<!-- Specific checks to run after deployment. -->
 
-**Validation Steps:**
+* [ ] Pods reach `Running` status in the target namespace
+* [ ] ExternalSecrets sync successfully
+* [ ] HTTPRoute / TCPRoute reports `Accepted` status
+* [ ] Cilium network policies enforce expected traffic isolation
+* [ ] <!-- functional check, e.g. login works, database connection succeeds -->
 
-<!-- Provide step-by-step instructions for reviewers to validate the changes -->
+## Future Enhancements
 
-1.
-2.
-3.
+<!-- Optional — list follow-ups intentionally out of scope. Remove the section
+     if not applicable. -->
 
-**Expected Behavior:**
+* ...
 
-<!-- What should happen after these changes are deployed? -->
+## Related Issues
 
-## Deployment Strategy
-
-**Deployment Method:**
-
-<!-- How will this be deployed? -->
-
-* [ ] ArgoCD auto-sync
-* [ ] Manual apply
-* [ ] Requires specific order (describe below)
-
-**Rollout Plan:**
-
-<!-- Describe the deployment approach, especially for breaking changes -->
-
-**Rollback Strategy:**
-
-<!-- How can these changes be rolled back if needed? -->
-
-## Impact Assessment
-
-**Performance Impact:**
-
-<!-- Any performance implications? Resource usage changes? -->
-
-**Breaking Changes:**
-
-<!-- Does this introduce breaking changes? Migration required? -->
-
-* [ ] Yes (describe below)
-* [ ] No
-
-**Security Considerations:**
-
-<!-- Any security implications or improvements? -->
-
-**Dependencies:**
-
-<!-- Are there external dependencies or prerequisites? -->
-
-## Documentation
-
-**Documentation Updates:**
-
-<!-- Check all that apply -->
-
-* [ ] Architecture Decision Record (ADR) created/updated
-* [ ] Bootstrap procedures updated
-* [ ] README files updated
-* [ ] Architecture diagrams (D2) updated
-* [ ] Operational procedures documented
-* [ ] No documentation changes needed
-
-**Additional Notes:**
-
-<!-- Any other context, screenshots, or references -->
+Closes #<!-- number — use "Addresses #X (Phase N)" for multi-phase work -->
 
 ***
 
-## Reviewer Checklist
-
-<!-- For reviewers: verify these before approving -->
-
-* [ ] Code/configuration follows project standards and conventions
-* [ ] Changes align with architectural principles
-* [ ] Security implications have been considered
-* [ ] Documentation is adequate
-* [ ] Testing coverage is sufficient
-* [ ] Deployment strategy is clear and safe
-* [ ] Breaking changes are properly documented
+<sub>AI-assisted with <!-- provider:model --> under human supervision</sub>
