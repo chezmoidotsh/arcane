@@ -362,7 +362,7 @@ module.exports = {
 		"type-empty": [2, "never"],
 		"type-max-length": [2, "always", "Infinity"],
 		"type-min-length": [2, "always", 0],
-		"signed-off-by": [2, "always", "Signed-off-by: "],
+		"signed-off-by": [0, "always", "Signed-off-by: "],
 	},
 	parserPreset: {
 		parserOpts: {
