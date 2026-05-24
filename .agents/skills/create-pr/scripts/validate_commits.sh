@@ -24,9 +24,10 @@ while IFS= read -r sha; do
   subject=$(git log -1 --no-show-signature --format="%s" "${sha}")
   body=$(git log -1 --no-show-signature --format="%b" "${sha}")
 
-  # 1. Gitmoji format: :emoji:(scope): Subject
-  if ! echo "${subject}" | grep -qE '^:[a-z_]+:\([a-z:,._-]+\): .+'; then
-    echo "FAIL [${short}] subject — expected ':emoji:(scope): Subject'"
+  # 1. Symbol format: type[scope]: Subject  (ADR-010, replaces Gitmoji)
+  # Valid types: + - ~ ! = ^ > < @ $ ? * and breaking variants +! ~! -!
+  if ! echo "${subject}" | grep -qE '^([+\-~!=^><@$?*]|[+~-]!)\[[a-z:,._-]+(,[a-z:,._-]+)*\]: [A-Z].+'; then
+    echo "FAIL [${short}] subject — expected 'type[scope]: Subject' (symbol format)"
     echo "     got: ${subject}"
     FAILED=1
   else
