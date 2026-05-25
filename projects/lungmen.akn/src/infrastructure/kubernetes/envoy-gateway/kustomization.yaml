@@ -6,7 +6,7 @@ namespace: envoy-gateway-system
 helmCharts:
   - name: gateway-helm
     releaseName: envoy-gateway
-    repo: docker.io/envoyproxy
+    repo: oci://docker.io/envoyproxy
     # renovate: datasource=helm depName=gateway-helm registryUrl=docker.io/envoyproxy
     version: 1.7.0
     valuesFile: helmvalues/default.yaml
