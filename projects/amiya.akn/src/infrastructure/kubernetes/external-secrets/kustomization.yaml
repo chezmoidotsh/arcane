@@ -13,3 +13,15 @@ helmCharts:
 
 resources:
   - ../../../../../../catalog/kubernetes/external-secrets/kustomize
+
+patches:
+  - patch: |-
+      - op: add
+        path: /spec/provider/vault/auth/kubernetes/mountPath
+        value: amiya.akn
+      - op: add
+        path: /spec/provider/vault/auth/kubernetes/role
+        value: amiya.akn-eso-role
+    target:
+      kind: ClusterSecretStore
+      name: vault.chezmoi.sh
