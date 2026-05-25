@@ -1,8 +1,18 @@
 ---
-apiVersion: kustomize.config.k8s.io/v1alpha1
-kind: Component
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: envoy-gateway-system
+
+helmCharts:
+  - name: gateway-helm
+    releaseName: envoy-gateway
+    repo: docker.io/envoyproxy
+    # renovate: datasource=helm depName=gateway-helm registryUrl=docker.io/envoyproxy
+    version: 1.7.0
+    valuesFile: helmvalues/default.yaml
 
 resources:
+  - ../../../../../../catalog/kubernetes/envoy-gateway/kustomize
   - security/
 
 patches:

@@ -13,16 +13,15 @@ helmCharts:
 
 resources:
   - ../../../../../../catalog/kubernetes/external-secrets/kustomize
-  - openbao.rbac.yaml
 
 patches:
   - patch: |-
       - op: add
         path: /spec/provider/vault/auth/kubernetes/mountPath
-        value: lungmen.akn
+        value: amiya.akn
       - op: add
         path: /spec/provider/vault/auth/kubernetes/role
-        value: lungmen.akn-eso-role
+        value: amiya.akn-eso-role
     target:
       kind: ClusterSecretStore
       name: vault.chezmoi.sh

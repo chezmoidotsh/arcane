@@ -1,6 +1,18 @@
 ---
-apiVersion: kustomize.config.k8s.io/v1alpha1
-kind: Component
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: cert-manager-system
+
+helmCharts:
+  - name: cert-manager
+    releaseName: cert-manager
+    repo: https://charts.jetstack.io
+    # renovate: datasource=helm depName=cert-manager registryUrl=https://charts.jetstack.io
+    version: 1.18.2
+    valuesFile: helmvalues/default.yaml
+
+resources:
+  - ../../../../../../catalog/kubernetes/cert-manager/kustomize
 
 patches:
   - path: letsencrypt-issuer-credentials.externalsecret.yaml
