@@ -8,7 +8,7 @@ helmCharts:
     releaseName: envoy-gateway
     repo: oci://docker.io/envoyproxy
     # renovate: datasource=helm depName=gateway-helm registryUrl=docker.io/envoyproxy
-    version: 1.7.0
+    version: 1.8.0
     valuesFile: helmvalues/default.yaml
 
 resources:
