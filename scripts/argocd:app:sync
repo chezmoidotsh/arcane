@@ -37,4 +37,4 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 
 # Ensure we have the python environment when running the script
-cd "${TARGET_DIR}" && exec uv run main.py "$@"
+exec uv run "${TARGET_DIR}/main.py" "$@"
