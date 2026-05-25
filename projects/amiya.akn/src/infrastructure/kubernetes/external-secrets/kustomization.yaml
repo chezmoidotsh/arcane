@@ -9,7 +9,9 @@ helmCharts:
     repo: https://charts.external-secrets.io/
     # renovate: datasource=helm depName=external-secrets registryUrl=https://charts.external-secrets.io
     version: 0.20.4
-    valuesFile: helmvalues/default.yaml
+    valuesFile: ../../../../../../catalog/kubernetes/external-secrets/helm/default.helmvalues.yaml
+    additionalValuesFiles:
+      - ../../../../../../catalog/kubernetes/external-secrets/helm/hardened.helmvalues.yaml
 
 resources:
   - ../../../../../../catalog/kubernetes/external-secrets/kustomize

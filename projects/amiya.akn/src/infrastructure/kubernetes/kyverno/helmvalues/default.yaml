@@ -1,5 +1,0 @@
-# Kyverno Helm values — default
-installCRDs: true
-replicaCount: 2
-webhooksCleanup:
-  enabled: true

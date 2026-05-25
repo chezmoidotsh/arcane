@@ -9,7 +9,9 @@ helmCharts:
     repo: oci://docker.io/envoyproxy
     # renovate: datasource=helm depName=gateway-helm registryUrl=docker.io/envoyproxy
     version: 1.8.0
-    valuesFile: helmvalues/default.yaml
+    valuesFile: ../../../../../../catalog/kubernetes/envoy-gateway/helm/default.helmvalues.yaml
+    additionalValuesFiles:
+      - ../../../../../../catalog/kubernetes/envoy-gateway/helm/hardened.helmvalues.yaml
 
 resources:
   - ../../../../../../catalog/kubernetes/envoy-gateway/kustomize

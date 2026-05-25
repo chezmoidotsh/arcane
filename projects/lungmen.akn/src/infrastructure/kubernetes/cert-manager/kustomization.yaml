@@ -9,7 +9,9 @@ helmCharts:
     repo: https://charts.jetstack.io
     # renovate: datasource=helm depName=cert-manager registryUrl=https://charts.jetstack.io
     version: v1.20.2
-    valuesFile: helmvalues/default.yaml
+    valuesFile: ../../../../../../catalog/kubernetes/cert-manager/helm/default.helmvalues.yaml
+    additionalValuesFiles:
+      - ../../../../../../catalog/kubernetes/cert-manager/helm/hardened.helmvalues.yaml
 
 resources:
   - ../../../../../../catalog/kubernetes/cert-manager/kustomize
