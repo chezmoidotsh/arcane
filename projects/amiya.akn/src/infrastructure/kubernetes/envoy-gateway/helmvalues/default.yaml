@@ -1,0 +1,37 @@
+# Envoy Gateway Helm values — default + hardened + amiya.akn override
+deployment:
+  envoyGateway:
+    resources:
+      limits:
+        memory: 1024Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    # Security context
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      privileged: false
+      runAsNonRoot: true
+      runAsGroup: 65532
+      runAsUser: 65532
+      seccompProfile:
+        type: RuntimeDefault
+
+config:
+  envoyGateway:
+    logging:
+      level:
+        default: debug
+    extensionApis:
+      enableBackend: true
+    # Deploy Envoy Proxy data plane resources in each Gateway's namespace for
+    # stronger isolation between gateways (default gateway vs public-gateway).
+    # ref: https://gateway.envoyproxy.io/docs/tasks/operations/gateway-namespace-mode/
+    provider:
+      type: Kubernetes
+      kubernetes:
+        deploy:
+          type: GatewayNamespace

@@ -1,0 +1,29 @@
+# Envoy Gateway Helm values — default + hardened
+deployment:
+  envoyGateway:
+    resources:
+      limits:
+        memory: 1024Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    # Security context
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      privileged: false
+      runAsNonRoot: true
+      runAsGroup: 65532
+      runAsUser: 65532
+      seccompProfile:
+        type: RuntimeDefault
+
+config:
+  envoyGateway:
+    logging:
+      level:
+        default: debug
+    extensionApis:
+      enableBackend: true

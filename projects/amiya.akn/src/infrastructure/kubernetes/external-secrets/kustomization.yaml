@@ -13,4 +13,3 @@ helmCharts:
 
 resources:
   - ../../../../../../catalog/kubernetes/external-secrets/kustomize
-  - openbao.rbac.yaml
