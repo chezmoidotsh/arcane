@@ -9,8 +9,7 @@ metadata:
 spec:
   description: |
     This project is responsible for bootstrapping all clusters automatically when they are added to the ArgoCD
-    instance. It achieves this by deploying an application that, in turn, deploys two other ApplicationSets:
-    one for system/cluster applications and another for applications.
+    instance with 2 ApplicationSet, one for system applications and one for regular applications.
 
   sourceNamespaces:
     - argocd # NOTE: only allow SEED applications to be installed in the argocd namespace
