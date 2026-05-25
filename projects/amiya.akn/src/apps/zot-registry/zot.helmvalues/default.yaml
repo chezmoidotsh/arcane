@@ -34,8 +34,8 @@ pvc:
   create: true
 
   # storage: PVC storage size
-  # 50Gi provides ample space for container images
-  storage: 50Gi
+  # 100Gi provides ample space for container images
+  storage: 100Gi
 
   # accessModes: Volume access modes
   # ReadWriteOnce: Single node read-write access (sufficient for single replica)
