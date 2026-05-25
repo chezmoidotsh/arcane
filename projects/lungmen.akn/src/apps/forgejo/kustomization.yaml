@@ -4,19 +4,23 @@ kind: Kustomization
 namespace: forgejo
 
 helmCharts:
-  - name: forgejo
-    repo: oci://code.forgejo.org/forgejo-helm
+  - repo: oci://code.forgejo.org/forgejo-helm
+    name: forgejo
     version: 17.1.0
+
     releaseName: forgejo
     namespace: forgejo
+
     valuesFile: forgejo.helmvalues/default.yaml
     additionalValuesFiles:
       - forgejo.helmvalues/hardened.yaml
-  - name: valkey
-    repo: https://valkey-io.github.io/valkey-helm/
+  - repo: https://valkey-io.github.io/valkey-helm/
+    name: valkey
     version: 0.9.4
+
     releaseName: forgejo-valkey
     namespace: forgejo
+
     valuesFile: valkey.helmvalues/default.yaml
 
 resources:

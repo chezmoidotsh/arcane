@@ -4,11 +4,14 @@ kind: Kustomization
 namespace: cert-manager-system
 
 helmCharts:
-  - name: cert-manager
-    releaseName: cert-manager
-    repo: https://charts.jetstack.io
+  - repo: https://charts.jetstack.io
+    name: cert-manager
     # renovate: datasource=helm depName=cert-manager registryUrl=https://charts.jetstack.io
     version: v1.20.2
+
+    releaseName: cert-manager
+    namespace: cert-manager-system
+
     valuesFile: ../../../../../../catalog/kubernetes/cert-manager/helm/default.helmvalues.yaml
     additionalValuesFiles:
       - ../../../../../../catalog/kubernetes/cert-manager/helm/hardened.helmvalues.yaml

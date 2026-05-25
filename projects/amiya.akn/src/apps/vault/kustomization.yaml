@@ -34,10 +34,13 @@ generators:
       - openbao-database-credentials.secret.yaml
 
 helmCharts:
-  - name: openbao
-    repo: https://openbao.github.io/openbao-helm
-    releaseName: openbao
+  - repo: https://openbao.github.io/openbao-helm
+    name: openbao
     version: 0.28.3
+
+    releaseName: openbao
+    namespace: vault
+
     valuesFile: openbao.helmvalues/default.yaml
 
 patches:

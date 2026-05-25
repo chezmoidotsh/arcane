@@ -14,10 +14,13 @@ resources:
   - security/
 
 helmCharts:
-  - name: zot
-    repo: http://zotregistry.dev/helm-charts
-    releaseName: zot
+  - repo: http://zotregistry.dev/helm-charts
+    name: zot
     version: 0.1.116
+
+    releaseName: zot
+    namespace: zot-registry
+
     valuesFile: zot.helmvalues/default.yaml
     additionalValuesFiles:
       - zot.helmvalues/hardened.yaml

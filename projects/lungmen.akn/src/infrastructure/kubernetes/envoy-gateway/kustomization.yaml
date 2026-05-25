@@ -4,11 +4,14 @@ kind: Kustomization
 namespace: envoy-gateway-system
 
 helmCharts:
-  - name: gateway-helm
-    releaseName: envoy-gateway
-    repo: oci://docker.io/envoyproxy
+  - repo: oci://docker.io/envoyproxy
+    name: gateway-helm
     # renovate: datasource=helm depName=gateway-helm registryUrl=docker.io/envoyproxy
     version: 1.8.0
+
+    releaseName: envoy-gateway
+    namespace: envoy-gateway-system
+
     valuesFile: ../../../../../../catalog/kubernetes/envoy-gateway/helm/default.helmvalues.yaml
     additionalValuesFiles:
       - ../../../../../../catalog/kubernetes/envoy-gateway/helm/hardened.helmvalues.yaml

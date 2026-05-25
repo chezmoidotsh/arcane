@@ -10,11 +10,13 @@ resources:
   - security/
 
 helmCharts:
-  - name: newt
-    repo: https://charts.fossorial.io
+  - repo: https://charts.fossorial.io
+    name: newt
     version: 1.5.0
+
     releaseName: newt
     namespace: newt-system
+
     valuesInline:
       newtInstances:
         - name: "main-tunnel"

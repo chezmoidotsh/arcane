@@ -4,10 +4,13 @@ kind: Kustomization
 namespace: cloudnative-pg-system
 
 helmCharts:
-  - name: cloudnative-pg
-    releaseName: cloudnative-pg
-    repo: https://cloudnative-pg.github.io/charts
+  - repo: https://cloudnative-pg.github.io/charts
+    name: cloudnative-pg
     version: 0.28.2
+
+    releaseName: cloudnative-pg
+    namespace: cloudnative-pg-system
+
     valuesFile: default.helmvalues.yaml
 
 resources:

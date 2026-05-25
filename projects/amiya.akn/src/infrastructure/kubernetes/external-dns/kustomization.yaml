@@ -3,14 +3,17 @@ kind: Kustomization
 namespace: external-dns-system
 
 helmCharts:
-  - name: external-dns
-    repo: https://kubernetes-sigs.github.io/external-dns
+  - repo: https://kubernetes-sigs.github.io/external-dns
+    name: external-dns
     version: 1.21.1
+
     releaseName: external-dns-unifi
-    includeCRDs: true
+    namespace: external-dns-system
+
     valuesFile: unifi.helmvalues/default.yaml
     additionalValuesFiles:
       - unifi.helmvalues/hardened.yaml
+    includeCRDs: true
 
 resources:
   - unifi.externalsecret.yaml

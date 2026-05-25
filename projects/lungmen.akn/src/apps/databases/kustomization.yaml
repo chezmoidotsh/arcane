@@ -48,14 +48,18 @@ helmGlobals:
 helmCharts:
   # postgres-apps: common applications cluster
   - name: mutualized-cnpg-databases
+
     releaseName: postgres-apps
     namespace: databases
+
     valuesFile: postgres-apps.helmvalues.yaml
 
   # postgres-apps-secured: sensitive data cluster (HA, pgvector)
   - name: mutualized-cnpg-databases
+
     releaseName: postgres-apps-secured
     namespace: databases
+
     valuesFile: postgres-apps-secured.helmvalues.yaml
 
 # ── Standalone resources ───────────────────────────────────────────────────────

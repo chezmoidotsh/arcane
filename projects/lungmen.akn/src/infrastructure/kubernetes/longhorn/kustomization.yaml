@@ -15,7 +15,11 @@ resources:
   - security
 
 helmCharts:
-  - name: longhorn
-    repo: https://charts.longhorn.io/
+  - repo: https://charts.longhorn.io/
+    name: longhorn
     version: 1.11.2
+
+    releaseName: longhorn
+    namespace: longhorn-system
+
     valuesFile: longhorn.helmvalues/default.yaml

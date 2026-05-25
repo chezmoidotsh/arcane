@@ -9,10 +9,13 @@ resources:
   - ../../../src/seed.application.yaml
 
 helmCharts:
-  - name: argo-cd
-    repo: https://argoproj.github.io/argo-helm
-    releaseName: argocd
+  - repo: https://argoproj.github.io/argo-helm
+    name: argo-cd
     version: 9.5.15
+
+    releaseName: argocd
+    namespace: argocd
+
     valuesFile: ../../../src/apps/*argocd/argocd.helmvalues/default.yaml
     additionalValuesFiles:
       - ../../../src/apps/*argocd/argocd.helmvalues/hardened.yaml

@@ -4,11 +4,14 @@ kind: Kustomization
 namespace: kyverno-system
 
 helmCharts:
-  - name: kyverno
-    releaseName: kyverno
-    repo: https://kyverno.github.io/kyverno/
+  - repo: https://kyverno.github.io/kyverno/
+    name: kyverno
     # renovate: datasource=helm depName=kyverno registryUrl=https://kyverno.github.io/kyverno
     version: 3.8.1
+
+    releaseName: kyverno
+    namespace: kyverno-system
+
     valuesFile: ../../../../../../catalog/kubernetes/kyverno/helm/default.helmvalues.yaml
 
 resources:

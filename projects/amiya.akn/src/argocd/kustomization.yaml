@@ -34,10 +34,13 @@ generators:
       - argocd.sops.secrets.yaml
 
 helmCharts:
-  - name: argo-cd
-    repo: https://argoproj.github.io/argo-helm
-    releaseName: argocd
+  - repo: https://argoproj.github.io/argo-helm
+    name: argo-cd
     version: 9.5.15
+
+    releaseName: argocd
+    namespace: argocd
+
     valuesFile: argocd.helmvalues/default.yaml
     additionalValuesFiles:
       - argocd.helmvalues/hardened.yaml

@@ -7,8 +7,11 @@ resources:
   - primary.ippool.yaml
 
 helmCharts:
-  - name: cilium
-    repo: https://helm.cilium.io/
+  - repo: https://helm.cilium.io/
+    name: cilium
     version: 1.19.4
+
+    releaseName: cilium
     namespace: kube-system
+
     valuesFile: cilium.helmvalues/default.yaml

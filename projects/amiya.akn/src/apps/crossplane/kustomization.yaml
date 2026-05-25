@@ -17,11 +17,13 @@ resources:
   - crossplane.applicationset.yaml
 
 helmCharts:
-  - name: crossplane
-    repo: https://charts.crossplane.io/master/
+  - repo: https://charts.crossplane.io/master/
+    name: crossplane
+    version: 1.20.0-rc.0.140.g629ca2e2f
+
     releaseName: crossplane
     namespace: crossplane
-    version: 1.20.0-rc.0.140.g629ca2e2f
+
     valuesFile: crossplane.helmvalues/default.yaml
     additionalValuesFiles:
       - crossplane.helmvalues/hardened.yaml
