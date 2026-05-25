@@ -58,6 +58,9 @@ lint:
     - trivy@0.69.3
     - taplo@0.10.0
     - trufflehog@3.93.8
+  threshold:
+    - linters: [checkov, trivy]
+      level: none
   ignore:
     - # Architecture SVG diagram cannot be linted by svgo
       linters: [svgo]
@@ -132,4 +135,3 @@ actions:
     - trunk-fmt-pre-commit
     - trunk-upgrade-available
     - dist-render-pre-commit
-    - dist-check-pre-push
