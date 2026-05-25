@@ -8,8 +8,8 @@ participants:
 severity: "High"
 status: "Final"
 detection-method: "Manual discovery"
-mttd: "~2h (disk full since ~18:28 UTC; reported ~20:30 UTC)"
-mttr: "~3h30m (from first report to actual-budget fully Running at ~23:50 UTC)"
+mttd: "~2h (disk full since ~16:28 UTC; reported ~18:30 UTC)"
+mttr: "~3h20m (from first report to actual-budget fully Running at ~21:50 UTC)"
 services-affected:
   - "zot-registry (amiya.akn) — OCI mirror/proxy for all clusters"
   - "all workloads on lungmen.akn — ImagePullBackOff cluster-wide"
@@ -50,11 +50,11 @@ whose `index.json` was corrupted by an incomplete write at disk saturation.
 uncached images blocked. `actual-budget` remained down for an additional \~2 hours after the
 general fix.
 
-**Duration:** Disk saturation confirmed in Zot logs at `2026-05-25T18:28 UTC`; fully resolved
-at `~2026-05-25T23:50 UTC` (total incident window ≥ 5h30m).
+**Duration:** Disk saturation confirmed in Zot logs at `2026-05-25T16:28 UTC`; fully resolved
+at `~2026-05-25T21:50 UTC` (total incident window ≥ 5h20m).
 
-**First signal:** Zot log entry: `"no space left on device"` at `2026-05-25T18:28:24 UTC`
-(discovered retrospectively). User-reported detection: `~2026-05-25T20:30 UTC`.
+**First signal:** Zot log entry: `"no space left on device"` at `2026-05-25T16:28:24 UTC`
+(discovered retrospectively). User-reported detection: `~2026-05-25T18:30 UTC`.
 
 ***
 
@@ -62,26 +62,26 @@ at `~2026-05-25T23:50 UTC` (total incident window ≥ 5h30m).
 
 | Time (UTC)         | Actor                          | Event or Decision                                                                                                                 |
 | ------------------ | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-05-25T18:28   | \[system:zot]                  | First `no space left on device` error logged during `csi-resizer` layer sync                                                      |
-| 2026-05-25T21:37   | \[system:zot]                  | `actual-server:26.5.0` sync starts; write interrupted by full disk; `index.json` partially overwritten with null bytes            |
-| 2026-05-25T21:37   | \[system:zot]                  | Subsequent manifest requests for `actual-server` return 500 (`invalid JSON` / `unsupported repository layout version`)            |
-| \~2026-05-25T22:18 | \[system:kubernetes]           | `actual-budget-0` enters `ImagePullBackOff`                                                                                       |
-| \~2026-05-25T20:30 | Alexandre                      | Cluster-wide `ImagePullBackOff` on `lungmen.akn` discovered; investigation started                                                |
-| \~2026-05-25T20:37 | \[anthropic:claude-sonnet-4-6] | Zot logs checked; `no space left on device` identified as root cause                                                              |
-| \~2026-05-25T20:38 | \[anthropic:claude-sonnet-4-6] | `talosctl mounts` confirms PVC at 99.6% (0.21 Gi free)                                                                            |
-| \~2026-05-25T20:39 | \[anthropic:claude-sonnet-4-6] | PVC patched live: 50 Gi → 100 Gi (`kubectl patch pvc`)                                                                            |
-| \~2026-05-25T20:40 | \[system:longhorn]             | Volume resized and filesystem expanded; free space 0.21 Gi → 53 Gi (49.65% used)                                                  |
-| \~2026-05-25T20:40 | Alexandre                      | Decision: also update PVC size in code (`zot.helmvalues/default.yaml`)                                                            |
-| \~2026-05-25T21:39 | Alexandre                      | `actual-budget` still in `ImagePullBackOff`; second investigation started                                                         |
-| \~2026-05-25T21:40 | \[anthropic:claude-sonnet-4-6] | 500 error on `actual-server` manifest identified; Zot logs show corrupted `index.json` (null bytes)                               |
-| \~2026-05-25T23:22 | \[anthropic:claude-sonnet-4-6] | First scale-down attempt; ArgoCD (selfHeal=true) immediately restores Zot pod                                                     |
-| \~2026-05-25T23:24 | \[anthropic:claude-sonnet-4-6] | ArgoCD `selfHeal` disabled on `zot-registry` app                                                                                  |
-| \~2026-05-25T23:41 | \[anthropic:claude-sonnet-4-6] | Zot scaled to 0, pod confirmed deleted; cleanup pod created with `system-cluster-critical` to bypass Kyverno image rewrite policy |
-| \~2026-05-25T23:43 | \[anthropic:claude-sonnet-4-6] | Cleanup pod completes: `ghcr.io/actualbudget/actual-server` directory deleted from PVC                                            |
-| \~2026-05-25T23:44 | \[anthropic:claude-sonnet-4-6] | Zot scaled back to 1; pod Ready                                                                                                   |
-| \~2026-05-25T23:44 | \[anthropic:claude-sonnet-4-6] | ArgoCD `selfHeal` re-enabled                                                                                                      |
-| \~2026-05-25T23:45 | \[anthropic:claude-sonnet-4-6] | `HEAD /v2/ghcr.io/actualbudget/actual-server/manifests/26.5.0` returns 200; Zot re-synced from ghcr.io                            |
-| \~2026-05-25T23:50 | \[system:kubernetes]           | `actual-budget-0` Running 1/1                                                                                                     |
+| 2026-05-25T16:28   | \[system:zot]                  | First `no space left on device` error logged during `csi-resizer` layer sync                                                      |
+| \~2026-05-25T18:30 | Alexandre                      | Cluster-wide `ImagePullBackOff` on `lungmen.akn` discovered; investigation started                                                |
+| \~2026-05-25T18:37 | \[anthropic:claude-sonnet-4-6] | Zot logs checked; `no space left on device` identified as root cause                                                              |
+| \~2026-05-25T18:38 | \[anthropic:claude-sonnet-4-6] | `talosctl mounts` confirms PVC at 99.6% (0.21 Gi free)                                                                            |
+| \~2026-05-25T18:39 | \[anthropic:claude-sonnet-4-6] | PVC patched live: 50 Gi → 100 Gi (`kubectl patch pvc`)                                                                            |
+| \~2026-05-25T18:40 | \[system:longhorn]             | Volume resized and filesystem expanded; free space 0.21 Gi → 53 Gi (49.65% used)                                                  |
+| \~2026-05-25T18:40 | Alexandre                      | Decision: also update PVC size in code (`zot.helmvalues/default.yaml`)                                                            |
+| 2026-05-25T19:37   | \[system:zot]                  | `actual-server:26.5.0` sync starts; write interrupted by full disk; `index.json` partially overwritten with null bytes            |
+| 2026-05-25T19:37   | \[system:zot]                  | Subsequent manifest requests for `actual-server` return 500 (`invalid JSON` / `unsupported repository layout version`)            |
+| \~2026-05-25T20:18 | \[system:kubernetes]           | `actual-budget-0` pod restarted and enters `ImagePullBackOff` (estimate from pod age at time of check)                            |
+| \~2026-05-25T21:20 | Alexandre                      | `actual-budget` still in `ImagePullBackOff`; second investigation started                                                         |
+| \~2026-05-25T21:21 | \[anthropic:claude-sonnet-4-6] | 500 error on `actual-server` manifest identified; Zot logs show corrupted `index.json` (null bytes)                               |
+| \~2026-05-25T21:22 | \[anthropic:claude-sonnet-4-6] | First scale-down attempt; ArgoCD (selfHeal=true) immediately restores Zot pod                                                     |
+| \~2026-05-25T21:24 | \[anthropic:claude-sonnet-4-6] | ArgoCD `selfHeal` disabled on `zot-registry` app                                                                                  |
+| \~2026-05-25T21:41 | \[anthropic:claude-sonnet-4-6] | Zot scaled to 0, pod confirmed deleted; cleanup pod created with `system-cluster-critical` to bypass Kyverno image rewrite policy |
+| \~2026-05-25T21:43 | \[anthropic:claude-sonnet-4-6] | Cleanup pod completes: `ghcr.io/actualbudget/actual-server` directory deleted from PVC                                            |
+| \~2026-05-25T21:44 | \[anthropic:claude-sonnet-4-6] | Zot scaled back to 1; pod Ready                                                                                                   |
+| \~2026-05-25T21:44 | \[anthropic:claude-sonnet-4-6] | ArgoCD `selfHeal` re-enabled                                                                                                      |
+| \~2026-05-25T21:45 | \[anthropic:claude-sonnet-4-6] | `HEAD /v2/ghcr.io/actualbudget/actual-server/manifests/26.5.0` returns 200; Zot re-synced from ghcr.io                            |
+| \~2026-05-25T21:50 | \[system:kubernetes]           | `actual-budget-0` Running 1/1                                                                                                     |
 
 ***
 
@@ -154,7 +154,7 @@ at `~2026-05-25T23:50 UTC` (total incident window ≥ 5h30m).
 | Signal                                              | When visible                              | Why it wasn't acted on                                   |
 | --------------------------------------------------- | ----------------------------------------- | -------------------------------------------------------- |
 | PVC at 99.6% (52.31 Gi / 52.52 Gi)                  | Continuously, day prior                   | No alert; no one checking PVC utilization                |
-| `no space left on device` in Zot logs               | 2026-05-25T18:28 UTC (\~2h before report) | No log-based alert; logs only checked on incident        |
+| `no space left on device` in Zot logs               | 2026-05-25T16:28 UTC (\~2h before report) | No log-based alert; logs only checked on incident        |
 | Zot log: `Copy layer` operations running constantly | Days prior                                | Normal-looking sync traffic; no throughput/size alerting |
 
 ***
@@ -204,9 +204,7 @@ at `~2026-05-25T23:50 UTC` (total incident window ≥ 5h30m).
 
 | # | Priority | Action                                                                                           | Owner     | Due Date   | Verification                                                                                  |
 | - | -------- | ------------------------------------------------------------------------------------------------ | --------- | ---------- | --------------------------------------------------------------------------------------------- |
-| 1 | P1       | Add Prometheus alert rule: Longhorn PVC usage > 80% for `zot-pvc-zot-0`                          | Alexandre | 2026-06-01 | Alert fires in test by setting threshold to current usage; visible in Alertmanager            |
-| 2 | P1       | Reduce Zot `gcInterval` from 168 h to 24 h in `zot.helmvalues/default.yaml`                      | Alexandre | 2026-06-01 | Config present in Helm values; ArgoCD synced; Zot logs show GC run within 24 h of change      |
-| 3 | P1       | Add general Longhorn PVC usage alert covering all PVCs > 85% across all clusters                 | Alexandre | 2026-06-08 | Alert rule deployed; fires on synthetic test volume                                           |
+| 1 | P1       | Reduce Zot `gcInterval` from 168 h to 24 h in `zot.helmvalues/default.yaml`                      | Alexandre | 2026-06-01 | Config present in Helm values; ArgoCD synced; Zot logs show GC run within 24 h of change      |
 | 4 | P2       | Add a size-based retention policy in Zot config (`storage.retention` max total size or per-repo) | Alexandre | 2026-06-15 | Policy visible in configmap; `zot-0` logs confirm retention runs after GC                     |
 | 5 | P2       | Write emergency maintenance runbook for Zot: scale down, ArgoCD suspend, cleanup, scale up       | Alexandre | 2026-06-15 | Runbook exists in `docs/procedures/`; covers the Kyverno bypass via `system-cluster-critical` |
 
@@ -214,8 +212,8 @@ at `~2026-05-25T23:50 UTC` (total incident window ≥ 5h30m).
 
 ## Verification Schedule
 
-| Checkpoint     | Date       | What we'll check                                                                     | Forum       |
-| -------------- | ---------- | ------------------------------------------------------------------------------------ | ----------- |
-| 1-week review  | 2026-06-01 | P1 items complete; Zot PVC alert firing correctly; gcInterval updated and GC running | Solo review |
-| 1-month review | 2026-06-25 | P2 items complete; Zot PVC usage stable below 70% with daily GC; no recurrence       | Solo review |
-| 3-month review | 2026-08-25 | No disk-saturation incident on any shared infrastructure PVC; alert coverage audit   | Solo review |
+| Checkpoint     | Date       | What we'll check                                                                   | Forum       |
+| -------------- | ---------- | ---------------------------------------------------------------------------------- | ----------- |
+| 1-week review  | 2026-06-01 | P1 items complete; gcInterval updated and GC running                               | Solo review |
+| 1-month review | 2026-06-25 | P1 items complete; Zot PVC usage stable below 70% with daily GC; no recurrence     | Solo review |
+| 3-month review | 2026-08-25 | No disk-saturation incident on any shared infrastructure PVC; alert coverage audit | Solo review |
