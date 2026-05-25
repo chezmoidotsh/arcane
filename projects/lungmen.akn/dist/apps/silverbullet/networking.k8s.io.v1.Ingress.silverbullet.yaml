@@ -1,0 +1,22 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    link.argocd.argoproj.io/external-link: https://silverbullet.tail831c5d.ts.net
+  labels:
+    app.kubernetes.io/instance: silverbullet
+    app.kubernetes.io/name: silverbullet
+    tailscale.com/proxy-class: restricted
+  name: silverbullet
+  namespace: silverbullet
+spec:
+  defaultBackend:
+    service:
+      name: silverbullet
+      port:
+        number: 80
+  ingressClassName: tailscale
+  tls:
+    - hosts:
+        - silverbullet

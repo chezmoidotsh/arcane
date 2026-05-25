@@ -1,0 +1,25 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Atuin to access the mutualized PostgreSQL database.
+  labels:
+    app.kubernetes.io/instance: atuin
+    app.kubernetes.io/name: atuin
+  name: allow-atuin-to-databases
+  namespace: atuin
+spec:
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: apps-20260329
+            io.kubernetes.pod.namespace: databases
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: atuin

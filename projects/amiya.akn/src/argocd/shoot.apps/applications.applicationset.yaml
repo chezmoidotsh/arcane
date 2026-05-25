@@ -29,7 +29,7 @@ spec:
                     repoURL: https://github.com/chezmoidotsh/arcane.git
                     revision: main
                     directories:
-                      - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/apps/*
+                      - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/dist/apps/*
                 - list:
                     elements:
                       - .key: "{{ .path.basename }}"
@@ -40,7 +40,7 @@ spec:
                     repoURL: https://github.com/chezmoidotsh/arcane.git
                     revision: main
                     files:
-                      - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/apps/*/.application.patch
+                      - path: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/dist/apps/*/.application.patch
                 - list:
                     elements:
                       - .key: "{{ .path.basename }}"
@@ -54,7 +54,7 @@ spec:
         argocd.argoproj.io/sync-wave: "100"
 
         # Source reference for argocd-extension-application-map
-        source-ref.argocd.argoproj.io/0.path: "{{ .path.path }}"
+        source-ref.argocd.argoproj.io/0.path: '{{ .path.path | replace "/dist/" "/src/" }}'
         source-ref.argocd.argoproj.io/0.repository-url: https://github.com/chezmoidotsh/arcane.git
         source-ref.argocd.argoproj.io/0.target-revision: main
       name: "{{ .path.basename }}"

@@ -1,0 +1,19 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  annotations:
+    networkpolicy.kubernetes.io/description: Restricts all network traffic for the
+      tun-device-plugin pods by denying all incoming and outgoing connections.
+  name: tailscale-tun-device-plugin
+  namespace: kube-system
+spec:
+  egress: []
+  ingress: []
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: device-manager
+      app.kubernetes.io/name: tun-device-plugin
+  policyTypes:
+    - Ingress
+    - Egress

@@ -1,0 +1,135 @@
+---
+apiVersion: v1
+data:
+  config.json: |
+    {
+      "storage": {
+        "rootDirectory": "/var/lib/registry",
+        "commit": true,
+        "dedupe": true,
+        "gc": true,
+        "gcDelay": "1h",
+        "gcInterval": "168h",
+        "retention": {
+          "dryRun": false,
+          "delay": "24h",
+          "policies": [{
+            "repositories": [ "**" ],
+            "deleteReferrers": false,
+            "deleteUntagged": true,
+            "keepTags": [{
+              "patterns": [".*"],
+              "mostRecentlyPushedCount": 3,
+              "mostRecentlyPulledCount": 2,
+              "pulledWithin": "24h",
+              "pushedWithin": "24h"
+            }]
+          }]
+        }
+      },
+      "http": {
+        "address": "0.0.0.0",
+        "accessControl": {
+          "repositories": {
+            "**": {
+              "anonymousPolicy": [
+                "read"
+              ]
+            }
+          }
+        },
+        "compat": ["docker2s2"],
+        "externalUrl": "oci.chezmoi.sh",
+        "port": "5000"
+      },
+      "log": {
+        "level": "info"
+      },
+      "extensions": {
+        "scrub": {
+          "enable": true,
+          "interval": "24h"
+        },
+        "sync": {
+          "enable": true,
+          "registries": [
+            {
+              "urls": ["https://docker.io", "https://registry-1.docker.io"],
+              "content": [{"destination": "/docker.io", "prefix": "**"}],
+              "onDemand": true,
+              "preserveDigest": true,
+              "tlsVerify": true
+            },
+            {
+              "urls": ["https://gcr.io"],
+              "content": [{"destination": "/gcr.io", "prefix": "**"}],
+              "onDemand": true,
+              "preserveDigest": true,
+              "tlsVerify": true
+            },
+            {
+              "urls": ["https://ghcr.io"],
+              "content": [{"destination": "/ghcr.io", "prefix": "**"}],
+              "onDemand": true,
+              "preserveDigest": true,
+              "tlsVerify": true
+            },
+            {
+              "urls": ["https://ecr-public.aws.com", "https://public.ecr.aws"],
+              "content": [{"destination": "/ecr-public.aws.com", "prefix": "**"}],
+              "onDemand": true,
+              "preserveDigest": true,
+              "tlsVerify": true
+            },
+            {
+              "urls": ["https://quay.io"],
+              "content": [{"destination": "/quay.io", "prefix": "**"}],
+              "onDemand": true,
+              "preserveDigest": true,
+              "tlsVerify": true
+            },
+            {
+              "urls": ["https://registry.gitlab.com"],
+              "content": [{"destination": "/registry.gitlab.com", "prefix": "**"}],
+              "onDemand": true,
+              "preserveDigest": true,
+              "tlsVerify": true
+            },
+            {
+              "urls": ["https://registry.k8s.io"],
+              "content": [{"destination": "/registry.k8s.io", "prefix": "**"}],
+              "onDemand": true,
+              "preserveDigest": true,
+              "tlsVerify": true
+            },
+            {
+              "urls": ["https://xpkg.crossplane.io"],
+              "content": [{"destination": "/xpkg.crossplane.io", "prefix": "**"}],
+              "onDemand": true,
+              "preserveDigest": true,
+              "tlsVerify": true
+            },
+            {
+              "urls": ["https://mcr.microsoft.com"],
+              "content": [{"destination": "/mcr.microsoft.com", "prefix": "**"}],
+              "onDemand": true,
+              "preserveDigest": true,
+              "tlsVerify": true
+            },
+            {
+              "urls": ["https://oci.external-secrets.io"],
+              "content": [{"destination": "/oci.external-secrets.io", "prefix": "**"}],
+              "onDemand": true,
+              "preserveDigest": true,
+              "tlsVerify": true
+            }
+          ]
+        }
+      }
+    }
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: zot
+  name: zot-config
+  namespace: zot-registry

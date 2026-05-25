@@ -1,0 +1,148 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/instance: csi-driver-smb
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: csi-driver-smb
+    app.kubernetes.io/version: 1.20.1
+    helm.sh/chart: csi-driver-smb-1.20.1
+  name: csi-smb-node
+  namespace: smb-csi-driver-system
+spec:
+  selector:
+    matchLabels:
+      app: csi-smb-node
+  template:
+    metadata:
+      labels:
+        app: csi-smb-node
+        app.kubernetes.io/instance: csi-driver-smb
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: csi-driver-smb
+        app.kubernetes.io/version: 1.20.1
+        helm.sh/chart: csi-driver-smb-1.20.1
+    spec:
+      containers:
+        - args:
+            - --csi-address=/csi/csi.sock
+            - --probe-timeout=3s
+            - --http-endpoint=localhost:29643
+            - --v=2
+          image: registry.k8s.io/sig-storage/livenessprobe:v2.18.0
+          imagePullPolicy: IfNotPresent
+          name: liveness-probe
+          resources:
+            limits:
+              memory: 100Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+        - args:
+            - --csi-address=$(ADDRESS)
+            - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
+            - --v=2
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+            - name: DRIVER_REG_SOCK_PATH
+              value: /var/lib/kubelet/plugins/smb.csi.k8s.io/csi.sock
+          image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
+          imagePullPolicy: IfNotPresent
+          name: node-driver-registrar
+          resources:
+            limits:
+              memory: 100Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+            - mountPath: /registration
+              name: registration-dir
+        - args:
+            - --v=5
+            - --drivername=smb.csi.k8s.io
+            - --endpoint=$(CSI_ENDPOINT)
+            - --nodeid=$(KUBE_NODE_NAME)
+            - --enable-get-volume-stats=true
+            - --krb5-prefix=
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///csi/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          image: registry.k8s.io/sig-storage/smbplugin:v1.20.1
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 5
+            httpGet:
+              host: localhost
+              path: /healthz
+              port: 29643
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+          name: smb
+          resources:
+            limits:
+              memory: 200Mi
+            requests:
+              cpu: 10m
+              memory: 20Mi
+          securityContext:
+            capabilities:
+              drop:
+                - ALL
+            privileged: true
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+            - mountPath: /var/lib/kubelet
+              mountPropagation: Bidirectional
+              name: mountpoint-dir
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      nodeSelector:
+        kubernetes.io/os: linux
+      priorityClassName: system-cluster-critical
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: csi-smb-node-sa
+      tolerations:
+        - operator: Exists
+      volumes:
+        - hostPath:
+            path: /var/lib/kubelet/plugins/smb.csi.k8s.io
+            type: DirectoryOrCreate
+          name: socket-dir
+        - hostPath:
+            path: /var/lib/kubelet/
+            type: DirectoryOrCreate
+          name: mountpoint-dir
+        - hostPath:
+            path: /var/lib/kubelet/plugins_registry/
+            type: DirectoryOrCreate
+          name: registration-dir
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate

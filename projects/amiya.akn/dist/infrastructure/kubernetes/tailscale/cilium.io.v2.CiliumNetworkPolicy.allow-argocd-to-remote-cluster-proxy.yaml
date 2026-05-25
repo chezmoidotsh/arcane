@@ -1,0 +1,27 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    security.chezmoi.sh/description: |
+      Allow ArgoCD application controller and argocd server to connect to remote
+      cluster proxies (Tailscale-based connectivity).
+  name: allow-argocd-to-remote-cluster-proxy
+  namespace: tailscale-system
+spec:
+  endpointSelector:
+    matchLabels:
+      security.chezmoi.sh/allow-argocd-to-remote-cluster-proxy: "true"
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/component: application-controller
+            app.kubernetes.io/part-of: argocd
+            io.kubernetes.pod.namespace: argocd
+        - matchLabels:
+            app.kubernetes.io/component: server
+            app.kubernetes.io/part-of: argocd
+            io.kubernetes.pod.namespace: argocd
+      toPorts:
+        - ports:
+            - port: "443"

@@ -1,0 +1,27 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded,hook-failed
+  labels:
+    app.kubernetes.io/instance: zot
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: zot
+    app.kubernetes.io/version: v2.1.17
+    helm.sh/chart: zot-0.1.116
+  name: zot-test-connection-fails
+  namespace: zot-registry
+spec:
+  containers:
+    - command:
+        - sh
+        - -c
+        - |
+          scheme="http"
+          echo "$scheme"
+            wget --no-check-certificate $scheme://zot:5000/v2/_catalog
+      image: alpine:3.18
+      name: wget
+  restartPolicy: Never

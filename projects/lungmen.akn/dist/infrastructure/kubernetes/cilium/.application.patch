@@ -1,0 +1,53 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: eBPF-based CNI providing networking, security and observability for Kubernetes
+    - name: Category
+      value: Networking / CNI
+    - name: Version
+      # renovate: datasource=helm depName=cilium registryUrl=https://helm.cilium.io/
+      value: "1.19.4"
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://docs.cilium.io/
+    - name: GitHub Repository
+      value: https://github.com/cilium/cilium
+    - name: Helm Chart
+      value: https://github.com/cilium/cilium/tree/main/install/kubernetes/cilium
+
+  syncPolicy:
+    automated:
+      enabled: false # Avoid automatic updates due to potential network disruptions
+
+  # Ignore non-idempotent resources to prevent Argo CD sync loops
+  # Ref: https://docs.cilium.io/en/latest/configuration/argocd-issues/#argo-cd-show-resources-permanently-out-of-sync
+  ignoreDifferences:
+    - group: ""
+      kind: ConfigMap
+      name: hubble-ca-cert
+      jsonPointers:
+        - /data/ca.crt
+    - group: ""
+      kind: Secret
+      name: hubble-relay-client-certs
+      jsonPointers:
+        - /data/ca.crt
+        - /data/tls.crt
+        - /data/tls.key
+    - group: ""
+      kind: Secret
+      name: hubble-server-certs
+      jsonPointers:
+        - /data/ca.crt
+        - /data/tls.crt
+        - /data/tls.key
+    - group: ""
+      kind: Secret
+      name: cilium-ca
+      jsonPointers:
+        - /data/ca.crt
+        - /data/ca.key

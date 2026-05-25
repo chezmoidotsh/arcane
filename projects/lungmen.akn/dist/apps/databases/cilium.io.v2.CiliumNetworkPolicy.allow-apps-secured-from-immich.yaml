@@ -1,0 +1,29 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: Allow declared application endpoints to
+      connect to CNPG cluster 'apps-secured-20260329' for database 'immich'.
+  labels:
+    app.kubernetes.io/instance: apps-secured-20260329
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mutualized-cnpg-databases
+    helm.sh/chart: mutualized-cnpg-databases-0.1.0
+    mutualized.cloudnative-pg.io/cluster: apps-secured-20260329
+    mutualized.cloudnative-pg.io/database: immich
+    mutualized.cloudnative-pg.io/group: apps-secured
+  name: allow-apps-secured-from-immich
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: apps-secured-20260329
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: immich
+            io.kubernetes.pod.namespace: immich
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP

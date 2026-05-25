@@ -1,0 +1,22 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app: crossplane
+    app.kubernetes.io/component: cloud-infrastructure-controller
+    app.kubernetes.io/instance: crossplane
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: crossplane
+    app.kubernetes.io/part-of: crossplane
+    app.kubernetes.io/version: 1.20.0-rc.0.140.g629ca2e2f
+    helm.sh/chart: crossplane-1.20.0-rc.0.140.g629ca2e2f
+  name: crossplane-rbac-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: crossplane-rbac-manager
+subjects:
+  - kind: ServiceAccount
+    name: rbac-manager
+    namespace: crossplane

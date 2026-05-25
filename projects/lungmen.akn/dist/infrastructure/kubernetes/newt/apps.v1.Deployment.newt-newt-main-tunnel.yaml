@@ -1,0 +1,77 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: newt
+    app.kubernetes.io/instance: newt
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: newt
+    app.kubernetes.io/version: 1.12.5
+    helm.sh/chart: newt-1.5.0
+    newt.instance: main-tunnel
+  name: newt-newt-main-tunnel
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: newt
+      app.kubernetes.io/name: newt
+      newt.instance: main-tunnel
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: newt
+        app.kubernetes.io/instance: newt
+        app.kubernetes.io/name: newt
+        newt.instance: main-tunnel
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - env:
+            - name: PANGOLIN_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  key: PANGOLIN_ENDPOINT
+                  name: newt-credentials
+            - name: NEWT_ID
+              valueFrom:
+                secretKeyRef:
+                  key: NEWT_ID
+                  name: newt-credentials
+            - name: NEWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: NEWT_SECRET
+                  name: newt-credentials
+            - name: LOG_LEVEL
+              value: INFO
+          image: docker.io/fosrl/newt:1.12.5@sha256:3c009663332145cae39b940b07857469038d5e9d71aacb1497e78795ba4e3b9b
+          imagePullPolicy: IfNotPresent
+          name: newt
+          ports:
+            - containerPort: 51820
+              name: wg
+              protocol: UDP
+            - containerPort: 51821
+              name: tester
+              protocol: UDP
+          resources:
+            limits:
+              cpu: 200m
+              ephemeral-storage: 256Mi
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              ephemeral-storage: 128Mi
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65534
+      serviceAccountName: newt-newt-sa

@@ -1,0 +1,106 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: forgejo-valkey
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: valkey
+    app.kubernetes.io/version: 9.0.2
+    helm.sh/chart: valkey-0.9.4
+  name: forgejo-valkey
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: forgejo-valkey
+      app.kubernetes.io/name: valkey
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/initconfig: 34c8d7c11804bbbb5c0b112b1b223f91
+      labels:
+        app.kubernetes.io/instance: forgejo-valkey
+        app.kubernetes.io/name: valkey
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - args:
+            - /data/conf/valkey.conf
+          command:
+            - valkey-server
+          env:
+            - name: VALKEY_LOGLEVEL
+              value: notice
+          image: docker.io/valkey/valkey:9.0.2
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - valkey-cli ping
+          name: forgejo-valkey
+          ports:
+            - containerPort: 6379
+              name: tcp
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 200m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - valkey-cli ping
+          volumeMounts:
+            - mountPath: /data
+              name: valkey-data
+      initContainers:
+        - command:
+            - /scripts/init.sh
+          image: docker.io/valkey/valkey:9.0.2
+          imagePullPolicy: IfNotPresent
+          name: forgejo-valkey-init
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+          volumeMounts:
+            - mountPath: /data
+              name: valkey-data
+            - mountPath: /scripts
+              name: scripts
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: forgejo-valkey
+      volumes:
+        - configMap:
+            defaultMode: 365
+            name: forgejo-valkey-init-scripts
+          name: scripts
+        - emptyDir: {}
+          name: valkey-data

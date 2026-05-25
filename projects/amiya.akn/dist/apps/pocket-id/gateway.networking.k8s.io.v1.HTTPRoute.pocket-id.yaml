@@ -1,0 +1,32 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/include-unifi: "true"
+    link.argocd.argoproj.io/external-link: https://auth.chezmoi.sh
+  labels:
+    app.kubernetes.io/instance: pocket-id
+    app.kubernetes.io/name: pocket-id
+  name: pocket-id
+  namespace: pocket-id
+spec:
+  hostnames:
+    - auth.chezmoi.sh
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: default
+      namespace: envoy-gateway-system
+      sectionName: chezmoi.sh-websecure
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: pocket-id
+          port: 80
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /

@@ -1,0 +1,31 @@
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: apps-selfhosted
+  namespace: databases
+spec:
+  configuration:
+    data:
+      compression: bzip2
+    destinationPath: s3://cnpg-backups/lungmen.akn/apps
+    endpointURL: https://s3.chezmoi.sh:9000
+    s3Credentials:
+      accessKeyId:
+        key: access_key_id
+        name: cnpg-backup-credentials
+      region:
+        key: region
+        name: cnpg-backup-credentials
+      secretAccessKey:
+        key: access_secret_key
+        name: cnpg-backup-credentials
+    wal:
+      compression: bzip2
+  instanceSidecarConfiguration:
+    env:
+      - name: AWS_REQUEST_CHECKSUM_CALCULATION
+        value: when_required
+      - name: AWS_RESPONSE_CHECKSUM_VALIDATION
+        value: when_required
+  retentionPolicy: 7d

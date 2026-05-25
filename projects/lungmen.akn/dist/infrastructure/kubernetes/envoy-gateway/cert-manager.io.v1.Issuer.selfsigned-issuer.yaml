@@ -1,0 +1,11 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  labels:
+    app.kubernetes.io/name: envoy-gateway
+    app.kubernetes.io/part-of: envoy-gateway
+  name: selfsigned-issuer
+  namespace: envoy-gateway-system
+spec:
+  selfSigned: {}

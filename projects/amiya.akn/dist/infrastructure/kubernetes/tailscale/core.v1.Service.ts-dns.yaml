@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ts-dns
+  namespace: tailscale-system
+spec:
+  clusterIP: 10.96.10.96
+  ports:
+    - name: dns-tcp
+      port: 53
+      protocol: TCP
+      targetPort: 1053
+    - name: dns-udp
+      port: 53
+      protocol: UDP
+      targetPort: 1053
+  selector:
+    app: nameserver

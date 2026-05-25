@@ -1,0 +1,338 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: forgejo
+    app.kubernetes.io/instance: forgejo
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: forgejo
+    app.kubernetes.io/version: 15.0.2
+    helm.sh/chart: forgejo-17.1.0
+    version: 15.0.2
+  name: forgejo
+  namespace: forgejo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: forgejo
+      app.kubernetes.io/name: forgejo
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        checksum/config: fd7ca38e810abfd7a528582753e8266b507060458692c4e55edab187a36e0c8b
+        checksum/oauth_0: cde032b8219e880c7f17143fa391c80eb661f78f27075e108bb91b1e3f6e0cb0
+      labels:
+        app: forgejo
+        app.kubernetes.io/instance: forgejo
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: forgejo
+        app.kubernetes.io/version: 15.0.2
+        helm.sh/chart: forgejo-17.1.0
+        version: 15.0.2
+    spec:
+      containers:
+        - env:
+            - name: SSH_LISTEN_PORT
+              value: "2222"
+            - name: SSH_PORT
+              value: "22"
+            - name: GITEA_APP_INI
+              value: /data/gitea/conf/app.ini
+            - name: GITEA_CUSTOM
+              value: /data/gitea
+            - name: GITEA_WORK_DIR
+              value: /data
+            - name: GITEA_TEMP
+              value: /tmp/gitea
+            - name: TMPDIR
+              value: /tmp/gitea
+            - name: HOME
+              value: /data/gitea/git
+            - name: FORGEJO__database__DB_TYPE
+              value: postgres
+            - name: FORGEJO__database__HOST
+              valueFrom:
+                secretKeyRef:
+                  key: host
+                  name: forgejo-database-forgejo
+            - name: FORGEJO__database__NAME
+              valueFrom:
+                secretKeyRef:
+                  key: dbname
+                  name: forgejo-database-forgejo
+            - name: FORGEJO__database__USER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: forgejo-database-forgejo
+            - name: FORGEJO__database__PASSWD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: forgejo-database-forgejo
+          image: code.forgejo.org/forgejo/forgejo:15.0.2-rootless
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 10
+            initialDelaySeconds: 200
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: http
+            timeoutSeconds: 1
+          name: forgejo
+          ports:
+            - containerPort: 2222
+              name: ssh
+            - containerPort: 3000
+              name: http
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /api/healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources: {}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+          volumeMounts:
+            - mountPath: /tmp
+              name: temp
+            - mountPath: /data
+              name: data
+      initContainers:
+        - command:
+            - /usr/sbin/init_directory_structure.sh
+          env:
+            - name: GITEA_APP_INI
+              value: /data/gitea/conf/app.ini
+            - name: GITEA_CUSTOM
+              value: /data/gitea
+            - name: GITEA_WORK_DIR
+              value: /data
+            - name: GITEA_TEMP
+              value: /tmp/gitea
+            - name: FORGEJO__database__DB_TYPE
+              value: postgres
+            - name: FORGEJO__database__HOST
+              valueFrom:
+                secretKeyRef:
+                  key: host
+                  name: forgejo-database-forgejo
+            - name: FORGEJO__database__NAME
+              valueFrom:
+                secretKeyRef:
+                  key: dbname
+                  name: forgejo-database-forgejo
+            - name: FORGEJO__database__USER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: forgejo-database-forgejo
+            - name: FORGEJO__database__PASSWD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: forgejo-database-forgejo
+          image: code.forgejo.org/forgejo/forgejo:15.0.2-rootless
+          imagePullPolicy: IfNotPresent
+          name: init-directories
+          resources:
+            limits: {}
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+          volumeMounts:
+            - mountPath: /usr/sbin
+              name: init
+            - mountPath: /tmp
+              name: temp
+            - mountPath: /data
+              name: data
+        - command:
+            - /usr/sbin/config_environment.sh
+          env:
+            - name: GITEA_APP_INI
+              value: /data/gitea/conf/app.ini
+            - name: GITEA_CUSTOM
+              value: /data/gitea
+            - name: GITEA_WORK_DIR
+              value: /data
+            - name: GITEA_TEMP
+              value: /tmp/gitea
+            - name: FORGEJO__database__DB_TYPE
+              value: postgres
+            - name: FORGEJO__database__HOST
+              valueFrom:
+                secretKeyRef:
+                  key: host
+                  name: forgejo-database-forgejo
+            - name: FORGEJO__database__NAME
+              valueFrom:
+                secretKeyRef:
+                  key: dbname
+                  name: forgejo-database-forgejo
+            - name: FORGEJO__database__USER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: forgejo-database-forgejo
+            - name: FORGEJO__database__PASSWD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: forgejo-database-forgejo
+          image: code.forgejo.org/forgejo/forgejo:15.0.2-rootless
+          imagePullPolicy: IfNotPresent
+          name: init-app-ini
+          resources:
+            limits: {}
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+          volumeMounts:
+            - mountPath: /usr/sbin
+              name: config
+            - mountPath: /tmp
+              name: temp
+            - mountPath: /data
+              name: data
+            - mountPath: /env-to-ini-mounts/inlines/
+              name: inline-config-sources
+        - command:
+            - /usr/sbin/configure_gitea.sh
+          env:
+            - name: GITEA_APP_INI
+              value: /data/gitea/conf/app.ini
+            - name: GITEA_CUSTOM
+              value: /data/gitea
+            - name: GITEA_WORK_DIR
+              value: /data
+            - name: GITEA_TEMP
+              value: /tmp/gitea
+            - name: HOME
+              value: /data/gitea/git
+            - name: GITEA_OAUTH_KEY_0
+              valueFrom:
+                secretKeyRef:
+                  key: key
+                  name: forgejo-oidc-credentials
+            - name: GITEA_OAUTH_SECRET_0
+              valueFrom:
+                secretKeyRef:
+                  key: secret
+                  name: forgejo-oidc-credentials
+            - name: GITEA_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: forgejo-admin-credentials
+            - name: GITEA_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: forgejo-admin-credentials
+            - name: GITEA_ADMIN_PASSWORD_MODE
+              value: keepUpdated
+            - name: FORGEJO__database__DB_TYPE
+              value: postgres
+            - name: FORGEJO__database__HOST
+              valueFrom:
+                secretKeyRef:
+                  key: host
+                  name: forgejo-database-forgejo
+            - name: FORGEJO__database__NAME
+              valueFrom:
+                secretKeyRef:
+                  key: dbname
+                  name: forgejo-database-forgejo
+            - name: FORGEJO__database__USER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: forgejo-database-forgejo
+            - name: FORGEJO__database__PASSWD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: forgejo-database-forgejo
+          image: code.forgejo.org/forgejo/forgejo:15.0.2-rootless
+          imagePullPolicy: IfNotPresent
+          name: configure-gitea
+          resources:
+            limits: {}
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+          volumeMounts:
+            - mountPath: /usr/sbin
+              name: init
+            - mountPath: /tmp
+              name: temp
+            - mountPath: /data
+              name: data
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 60
+      volumes:
+        - name: init
+          secret:
+            defaultMode: 110
+            secretName: forgejo-init
+        - name: config
+          secret:
+            defaultMode: 110
+            secretName: forgejo
+        - name: inline-config-sources
+          secret:
+            secretName: forgejo-inline-config
+        - emptyDir: {}
+          name: temp
+        - name: data
+          persistentVolumeClaim:
+            claimName: gitea-shared-storage

@@ -1,0 +1,18 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  labels:
+    app.kubernetes.io/instance: apps-20260329
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mutualized-cnpg-databases
+    helm.sh/chart: mutualized-cnpg-databases-0.1.0
+    mutualized.cloudnative-pg.io/cluster: apps-20260329
+    mutualized.cloudnative-pg.io/database: forgejo
+    mutualized.cloudnative-pg.io/group: apps
+  name: apps-forgejo
+spec:
+  cluster:
+    name: apps-20260329
+  name: forgejo
+  owner: forgejo

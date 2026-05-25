@@ -1,0 +1,618 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#   "pyyaml>=6",
+#   "rich>=13",
+# ]
+# ///
+"""Pre-render Kustomize/Helm sources into static YAML committed under dist/.
+
+Each non-SOPS, non-Component kustomization in src/ gets a mirrored dist/
+directory with one file per Kubernetes resource named:
+  <group>.<version>.<Kind>.<name>.yaml
+
+See docs/decisions/011-rendered-manifests-pattern.md
+"""
+
+from __future__ import annotations
+
+import argparse
+import filecmp
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
+from enum import Enum
+from pathlib import Path
+from typing import Iterator
+
+import yaml
+from rich.console import Group
+from rich.live import Live
+from rich.text import Text
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+IS_TTY = sys.stdout.isatty() and not os.environ.get("NO_COLOR")
+
+
+# ── Build model ──────────────────────────────────────────────────────────────
+
+
+class BuildStatus(Enum):
+    PENDING = "pending"
+    BUILDING = "building"
+    DONE = "done"
+    FAILED = "failed"
+    SKIPPED = "skipped"
+    STALE = "stale"
+
+
+@dataclass
+class BuildItem:
+    src: Path
+    rel: str
+    status: BuildStatus = BuildStatus.PENDING
+    duration: float = 0.0
+    error: str = ""
+
+    @property
+    def project(self) -> str:
+        parts = self.rel.split("/")
+        return parts[1] if len(parts) > 1 else ""
+
+    @property
+    def src_path(self) -> str:
+        idx = self.rel.find("/src/")
+        if idx >= 0:
+            return self.rel[idx + 5:]
+        return self.src.name
+
+
+# ── helpers ───────────────────────────────────────────────────────────────────
+
+
+def _relpath(p: Path) -> str:
+    return str(p.relative_to(REPO_ROOT))
+
+
+def _src_to_dist(src: Path) -> Path:
+    return Path(str(src).replace("/src/", "/dist/"))
+
+
+def _has_ksops(src: Path) -> bool:
+    kust = src / "kustomization.yaml"
+    return kust.exists() and bool(
+        re.search(
+            r"(kind:\s*ksops|path:\s*ksops|ksops\.generator\.yaml)", kust.read_text()
+        )
+    )
+
+
+def _is_component(src: Path) -> bool:
+    kust = src / "kustomization.yaml"
+    return kust.exists() and bool(
+        re.search(r"^kind:\s*Component", kust.read_text(), re.MULTILINE)
+    )
+
+
+_SOPS_PATTERNS = re.compile(
+    r"\.(enc\.yaml|enc\.yml|sops\.yaml|sops\.yml)$|"
+    r"^\.enc\.|^sops-secrets\.|^secret.*\.enc\."
+)
+
+
+def _has_sops_files(src: Path) -> str | None:
+    for f in src.iterdir():
+        if f.is_file() and _SOPS_PATTERNS.search(f.name):
+            return f.name
+    return None
+
+
+def _resource_filename(doc: dict, idx: int, used: set[str]) -> str:
+    api_version = str(doc.get("apiVersion", ""))
+    kind = str(doc.get("kind", "Unknown"))
+    name = str((doc.get("metadata") or {}).get("name") or f"resource-{idx}")
+
+    group, version = (
+        api_version.rsplit("/", 1) if "/" in api_version else ("core", api_version)
+    )
+    group = group.replace("/", ".")
+    name = re.sub(r"[/\\:@]", "-", name)
+
+    fname = f"{group}.{version}.{kind}.{name}.yaml"
+    if fname in used:
+        fname = f"{group}.{version}.{kind}.{name}.{idx}.yaml"
+    used.add(fname)
+    return fname
+
+
+# ── discovery ─────────────────────────────────────────────────────────────────
+
+
+def find_app_dirs() -> list[Path]:
+    """All top-level renderable src/ app directories across all projects."""
+    dirs: list[Path] = []
+    for kust in REPO_ROOT.glob("projects/*/src/apps/*/kustomization.yaml"):
+        if kust.parent.parent.name == "apps":
+            dirs.append(kust.parent)
+    for kust in REPO_ROOT.glob(
+        "projects/*/src/infrastructure/kubernetes/*/kustomization.yaml"
+    ):
+        if kust.parent.parent.name == "kubernetes":
+            dirs.append(kust.parent)
+    return sorted(dirs)
+
+
+def find_staged_dirs() -> list[Path]:
+    """src/ app dirs that have staged git changes."""
+    proc = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "diff", "--cached", "--name-only"],
+        capture_output=True,
+        text=True,
+    )
+    pattern = re.compile(
+        r"^(projects/[^/]+/src/(?:apps|infrastructure/kubernetes)/[^/]+)/"
+    )
+    seen: set[str] = set()
+    dirs: list[Path] = []
+    for line in proc.stdout.splitlines():
+        m = pattern.match(line)
+        if m and m.group(1) not in seen:
+            seen.add(m.group(1))
+            d = REPO_ROOT / m.group(1)
+            if d.is_dir():
+                dirs.append(d)
+    return dirs
+
+
+# ── YAML splitting ────────────────────────────────────────────────────────────
+
+
+def split_yaml_docs(content: str) -> Iterator[tuple[dict, str]]:
+    for seg in re.split(r"(?m)^---[ \t]*\n", content):
+        raw = seg.strip()
+        if not raw:
+            continue
+        try:
+            doc = yaml.safe_load(raw)
+        except yaml.YAMLError:
+            continue
+        if isinstance(doc, dict) and "apiVersion" in doc and "kind" in doc:
+            yield doc, raw
+
+
+# ── render ────────────────────────────────────────────────────────────────────
+
+
+def render_one(src: Path, *, check: bool, stage: bool) -> tuple[BuildStatus, str, float]:
+    """Render src/ -> dist/. Returns (status, error_msg, duration)."""
+    src = src.resolve()
+    rel = _relpath(src)
+
+    if not (src / "kustomization.yaml").exists():
+        return BuildStatus.FAILED, f"no kustomization.yaml in {rel}", 0.0
+
+    sops_file = _has_sops_files(src)
+    if sops_file:
+        return BuildStatus.FAILED, f"plaintext SOPS file found: {sops_file}", 0.0
+
+    if _has_ksops(src):
+        return BuildStatus.SKIPPED, "KSOPS generator", 0.0
+
+    if _is_component(src):
+        return BuildStatus.SKIPPED, "kind: Component", 0.0
+
+    dist = _src_to_dist(src)
+    t0 = time.monotonic()
+
+    proc = subprocess.run(
+        [
+            "kustomize",
+            "build",
+            "--enable-helm",
+            "--load-restrictor",
+            "LoadRestrictionsNone",
+            str(src),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    duration = time.monotonic() - t0
+
+    if proc.returncode != 0:
+        return BuildStatus.FAILED, proc.stderr.strip(), duration
+
+    with tempfile.TemporaryDirectory() as tmp_str:
+        tmp = Path(tmp_str)
+        used: set[str] = set()
+
+        for idx, (doc, raw) in enumerate(split_yaml_docs(proc.stdout)):
+            (tmp / _resource_filename(doc, idx, used)).write_text("---\n" + raw + "\n")
+
+        if not used:
+            return BuildStatus.FAILED, "kustomize produced no renderable resources", duration
+
+        patch_src = src / ".application.patch"
+        if patch_src.exists():
+            shutil.copy2(patch_src, tmp / ".application.patch")
+
+        if check:
+            ok, diff = _check_dist(dist, tmp)
+            return (BuildStatus.DONE if ok else BuildStatus.STALE), diff, duration
+
+        _write_dist(dist, tmp, stage=stage)
+        return BuildStatus.DONE, "", duration
+
+
+def _check_dist(dist: Path, tmp: Path) -> tuple[bool, str]:
+    if not dist.exists():
+        return False, "dist/ does not exist"
+    cmp = filecmp.dircmp(str(dist), str(tmp))
+    changed = sorted(
+        [f"~ {f}" for f in cmp.diff_files]
+        + [f"- {f}" for f in cmp.left_only]
+        + [f"+ {f}" for f in cmp.right_only]
+    )
+    if changed:
+        return False, "\n".join(changed)
+    return True, ""
+
+
+def _write_dist(dist: Path, tmp: Path, *, stage: bool) -> None:
+    dist.mkdir(parents=True, exist_ok=True)
+    for f in dist.glob("*.yaml"):
+        f.unlink()
+    app_patch = dist / ".application.patch"
+    if app_patch.exists():
+        app_patch.unlink()
+    for f in tmp.iterdir():
+        shutil.copy2(f, dist / f.name)
+    if stage:
+        subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "add", str(dist)],
+            capture_output=True,
+        )
+
+
+# ── Display ──────────────────────────────────────────────────────────────────
+
+
+_CHECK = "\u2714"
+_CROSS = "\u2718"
+_DASH = "\u2500"
+_SEP = "\u2502"
+
+
+def _col_widths(items: list[BuildItem]) -> tuple[int, int]:
+    w_proj = max((len(i.project) for i in items), default=0)
+    w_path = max((len(i.src_path) for i in items), default=0)
+    return w_proj, w_path
+
+
+def _render_row(item: BuildItem, w_proj: int, w_path: int) -> Text:
+    t = Text()
+    proj = item.project.ljust(w_proj)
+    path = item.src_path.ljust(w_path)
+
+    t.append(f" {proj} {_SEP} {path} {_SEP}", style="dim")
+
+    if item.status in (BuildStatus.FAILED, BuildStatus.STALE):
+        dur = f" ({item.duration:.1f}s)" if item.duration > 0 else ""
+        t.append(f" {_CROSS}", style="red bold")
+        t.append(dur, style="dim")
+    elif item.status == BuildStatus.SKIPPED:
+        t.append(f" {_DASH}", style="blue")
+        t.append(f" ({item.error})", style="dim")
+    elif item.status == BuildStatus.BUILDING:
+        t.append(" building", style="yellow")
+    elif item.status == BuildStatus.DONE:
+        dur = f" ({item.duration:.1f}s)" if item.duration > 0 else ""
+        t.append(f" {_CHECK}", style="green bold")
+        t.append(dur, style="dim")
+    else:
+        t.append(" ...", style="dim")
+
+    return t
+
+
+def _render_row_plain(item: BuildItem) -> str:
+    proj = item.project
+    path = item.src_path
+    dur = f" ({item.duration:.1f}s)" if item.duration > 0 else ""
+
+    if item.status == BuildStatus.DONE:
+        return f"  {proj} | {path} | {_CHECK}{dur}"
+    elif item.status in (BuildStatus.FAILED, BuildStatus.STALE):
+        return f"  {proj} | {path} | {_CROSS}{dur}"
+    elif item.status == BuildStatus.SKIPPED:
+        return f"  {proj} | {path} | {_DASH} ({item.error})"
+    elif item.status == BuildStatus.BUILDING:
+        return f"  {proj} | {path} | building"
+    else:
+        return f"  {proj} | {path} | ..."
+
+
+class _LiveRenderable:
+    def __init__(self, items: list[BuildItem], *, jobs: int):
+        self.items = items
+        self.jobs = jobs
+        self._t0 = time.monotonic()
+        self._w_proj, self._w_path = _col_widths(items)
+
+    def __rich__(self) -> Group:
+        total = len(self.items)
+        completed = sum(
+            1 for i in self.items
+            if i.status not in (BuildStatus.PENDING, BuildStatus.BUILDING)
+        )
+        failed = sum(
+            1 for i in self.items
+            if i.status in (BuildStatus.FAILED, BuildStatus.STALE)
+        )
+        elapsed = time.monotonic() - self._t0
+        wp, wpa = self._w_proj, self._w_path
+
+        lines: list = []
+        for item in self.items:
+            lines.append(_render_row(item, wp, wpa))
+
+        lines.append(Text(""))
+
+        pct = int(100 * completed / total) if total else 100
+        filled = int(30 * completed / total) if total else 30
+        bar = Text()
+        bar.append(" dist:render ", style="bold")
+        bar.append("\u2588" * filled, style="cyan")
+        bar.append("\u2591" * (30 - filled), style="dim")
+        bar.append(f" {completed}/{total}", style="bold")
+        bar.append(f" ({pct}%)", style="dim")
+        if failed:
+            bar.append(f" {failed} failed", style="red bold")
+        bar.append(f" [{elapsed:.1f}s]", style="dim")
+        lines.append(bar)
+
+        return Group(*lines)
+
+
+class RichDisplay:
+    def __init__(self, items: list[BuildItem], *, jobs: int):
+        self._renderable = _LiveRenderable(items, jobs=jobs)
+        self._live = Live(self._renderable, refresh_per_second=10, transient=True)
+        self._items = items
+
+    def start(self) -> None:
+        self._live.start()
+
+    def mark_building(self, item: BuildItem) -> None:
+        item.status = BuildStatus.BUILDING
+
+    def mark_done(self, item: BuildItem) -> None:
+        pass
+
+    def finish(self) -> None:
+        self._live.stop()
+        console = self._live.console
+        wp, wpa = self._renderable._w_proj, self._renderable._w_path
+        elapsed = time.monotonic() - self._renderable._t0
+
+        ok = sum(1 for i in self._items if i.status == BuildStatus.DONE)
+        failed = sum(1 for i in self._items if i.status == BuildStatus.FAILED)
+        skipped = sum(1 for i in self._items if i.status == BuildStatus.SKIPPED)
+        stale = sum(1 for i in self._items if i.status == BuildStatus.STALE)
+
+        lines: list = []
+        for item in self._items:
+            lines.append(_render_row(item, wp, wpa))
+            if item.status == BuildStatus.FAILED and item.error:
+                for err_line in item.error.split("\n")[:3]:
+                    t = Text()
+                    t.append(f" {' ' * wp}   {' ' * wpa}   ", style="dim")
+                    t.append(err_line, style="red dim")
+                    lines.append(t)
+
+        summary = Text()
+        summary.append(" dist:render ", style="bold")
+        if ok:
+            summary.append(f"{_CHECK} {ok} ok ", style="green")
+        if failed:
+            summary.append(f"{_CROSS} {failed} failed ", style="red")
+        if skipped:
+            summary.append(f"{_DASH} {skipped} skipped ", style="blue")
+        if stale:
+            summary.append(f"! {stale} stale ", style="yellow")
+        summary.append(f"[{elapsed:.1f}s]", style="dim")
+
+        lines.append(Text(""))
+        lines.append(summary)
+        console.print(Group(*lines))
+
+
+class PlainDisplay:
+    def __init__(self, items: list[BuildItem], *, jobs: int):
+        self.items = items
+        self._t0 = time.monotonic()
+        self._w_proj, self._w_path = _col_widths(items)
+
+    def start(self) -> None:
+        for item in self.items:
+            print(_render_row_plain(item))
+
+    def touch(self) -> None:
+        pass
+
+    def finish(self) -> None:
+        ok = sum(1 for i in self.items if i.status == BuildStatus.DONE)
+        failed = sum(1 for i in self.items if i.status == BuildStatus.FAILED)
+        skipped = sum(1 for i in self.items if i.status == BuildStatus.SKIPPED)
+        stale = sum(1 for i in self.items if i.status == BuildStatus.STALE)
+        elapsed = time.monotonic() - self._t0
+        parts: list[str] = []
+        if ok:
+            parts.append(f"{ok} ok")
+        if failed:
+            parts.append(f"{failed} failed")
+        if skipped:
+            parts.append(f"{skipped} skipped")
+        if stale:
+            parts.append(f"{stale} stale")
+        wp, wpa = self._w_proj, self._w_path
+        for item in self.items:
+            print(_render_row_plain(item))
+            if item.status in (BuildStatus.FAILED, BuildStatus.STALE) and item.error:
+                for line in item.error.split("\n")[:5]:
+                    print(f"  {' ' * wp}   {' ' * wpa}   {line}")
+        print(f"  {', '.join(parts)} | {elapsed:.1f}s")
+
+
+# ── Runner ───────────────────────────────────────────────────────────────────
+
+
+def run_builds(
+    items: list[BuildItem], *, check: bool, stage: bool, jobs: int
+) -> int:
+    if IS_TTY:
+        return _run_tty(items, check=check, stage=stage, jobs=jobs)
+    return _run_plain(items, check=check, stage=stage, jobs=jobs)
+
+
+def _run_tty(
+    items: list[BuildItem], *, check: bool, stage: bool, jobs: int
+) -> int:
+    display = RichDisplay(items, jobs=jobs)
+    display.start()
+    failures = 0
+
+    def _work(item: BuildItem) -> None:
+        display.mark_building(item)
+        status, error, duration = render_one(item.src, check=check, stage=stage)
+        item.status = status
+        item.error = error
+        item.duration = duration
+        if status in (BuildStatus.FAILED, BuildStatus.STALE):
+            nonlocal failures
+            failures += 1
+
+    with ThreadPoolExecutor(max_workers=jobs) as pool:
+        futures = [pool.submit(_work, item) for item in items]
+        for future in as_completed(futures):
+            future.result()
+
+    display.finish()
+    return failures
+
+
+def _run_plain(
+    items: list[BuildItem], *, check: bool, stage: bool, jobs: int
+) -> int:
+    failures = 0
+
+    def _work(item: BuildItem) -> None:
+        nonlocal failures
+        status, error, duration = render_one(item.src, check=check, stage=stage)
+        item.status = status
+        item.error = error
+        item.duration = duration
+        if status in (BuildStatus.FAILED, BuildStatus.STALE):
+            failures += 1
+
+    with ThreadPoolExecutor(max_workers=max(jobs, 1)) as pool:
+        futures = [pool.submit(_work, item) for item in items]
+        for future in as_completed(futures):
+            future.result()
+
+    display = PlainDisplay(items, jobs=jobs)
+    display.finish()
+    return failures
+
+
+# ── CLI ───────────────────────────────────────────────────────────────────────
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        prog="dist:render",
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Examples:\n"
+            "  dist:render --check --all\n"
+            "  dist:render --staged-only\n"
+            "  dist:render -j4 --all\n"
+            "  dist:render projects/lungmen.akn/src/apps/forgejo\n"
+        ),
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Report stale dist/ dirs without writing (exit 1 if any stale)",
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Render all non-SOPS app directories across all projects",
+    )
+    parser.add_argument(
+        "--staged-only",
+        dest="staged",
+        action="store_true",
+        help="Re-render only projects with staged src/ changes (pre-commit)",
+    )
+    parser.add_argument(
+        "-j",
+        "--jobs",
+        type=int,
+        default=os.cpu_count() or 4,
+        help="Number of parallel build jobs (default: CPU count)",
+    )
+    parser.add_argument(
+        "src_path",
+        nargs="?",
+        default=None,
+        metavar="src-path",
+        help="Render a single directory (relative or absolute)",
+    )
+    args = parser.parse_args()
+
+    modes = [args.all, args.staged, args.src_path is not None]
+    if sum(modes) != 1:
+        parser.error("specify exactly one of: --all, --staged-only, <src-path>")
+
+    stage = args.staged and not args.check
+
+    if args.src_path:
+        p = Path(args.src_path)
+        dirs = [p if p.is_absolute() else REPO_ROOT / p]
+    elif args.all:
+        dirs = find_app_dirs()
+    else:
+        dirs = find_staged_dirs()
+        if not dirs:
+            print("INFO: no src/ changes staged -- nothing to re-render")
+            return
+
+    items = [BuildItem(src=d, rel=_relpath(d)) for d in dirs]
+    items.sort(key=lambda i: (i.project, i.src_path))
+    failures = run_builds(items, check=args.check, stage=stage, jobs=args.jobs)
+
+    if failures > 0:
+        if args.check:
+            print(
+                f"\nERROR: {failures} dist/ director(ies) are stale.", file=sys.stderr
+            )
+            print("       Run:  scripts/dist:render --all", file=sys.stderr)
+        else:
+            print(
+                f"\nERROR: {failures} build(s) failed.", file=sys.stderr
+            )
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

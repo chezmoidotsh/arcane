@@ -1,0 +1,115 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: linkding
+    app.kubernetes.io/name: linkding
+    app.kubernetes.io/part-of: linkding
+  name: linkding
+  namespace: linkding
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: linkding
+      app.kubernetes.io/name: linkding
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: linkding
+        app.kubernetes.io/name: linkding
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - env:
+            - name: LD_DB_ENGINE
+              value: postgres
+            - name: LD_DB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  key: dbname
+                  name: linkding-database-linkding
+            - name: LD_DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  key: host
+                  name: linkding-database-linkding
+            - name: LD_DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  key: port
+                  name: linkding-database-linkding
+            - name: LD_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: linkding-database-linkding
+            - name: LD_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: linkding-database-linkding
+            - name: LD_ENABLE_OIDC
+              value: "True"
+            - name: OIDC_OP_AUTHORIZATION_ENDPOINT
+              value: https://auth.chezmoi.sh/authorize
+            - name: OIDC_OP_TOKEN_ENDPOINT
+              value: https://auth.chezmoi.sh/api/oidc/token
+            - name: OIDC_OP_USER_ENDPOINT
+              value: https://auth.chezmoi.sh/api/oidc/userinfo
+            - name: OIDC_OP_JWKS_ENDPOINT
+              value: https://auth.chezmoi.sh/.well-known/jwks.json
+            - name: OIDC_USE_PKCE
+              value: "True"
+            - name: OIDC_RP_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  key: oidc_client_id
+                  name: linkding-oidc-credentials
+            - name: OIDC_RP_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: oidc_client_secret
+                  name: linkding-oidc-credentials
+            - name: LD_FAVICON_PROVIDER
+              value: https://icons.duckduckgo.com/ip3/{domain}.ico
+          image: docker.io/sissbruecker/linkding:1.45.0-alpine
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          name: linkding
+          ports:
+            - containerPort: 9090
+              name: http
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 23281
+            runAsNonRoot: true
+            runAsUser: 23281
+          volumeMounts:
+            - mountPath: /etc/linkding/data
+              name: linkding-data
+            - mountPath: /tmp
+              name: tmp
+      securityContext:
+        fsGroup: 23281
+        runAsGroup: 23281
+        runAsUser: 23281
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - emptyDir: {}
+          name: linkding-data
+        - emptyDir: {}
+          name: tmp

@@ -1,0 +1,82 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: atuin
+    app.kubernetes.io/name: atuin
+    app.kubernetes.io/part-of: atuin
+  name: atuin
+  namespace: atuin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: atuin
+      app.kubernetes.io/name: atuin
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: atuin
+        app.kubernetes.io/name: atuin
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - args:
+            - start
+          env:
+            - name: ATUIN_DB_URI
+              valueFrom:
+                secretKeyRef:
+                  key: uri
+                  name: atuin-database-atuin
+            - name: ATUIN_HOST
+              value: 0.0.0.0
+            - name: ATUIN_PORT
+              value: "8888"
+            - name: ATUIN_OPEN_REGISTRATION
+              value: "true"
+          image: ghcr.io/atuinsh/atuin:18.16.1@sha256:9d4d79507b51be6d292b218f5cc791d79ca0a72f51ab48f786b091bd6eafb39f
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          name: atuin
+          ports:
+            - containerPort: 8888
+              name: http
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 30219
+            runAsNonRoot: true
+            runAsUser: 30219
+          volumeMounts:
+            - mountPath: /config
+              name: atuin-data
+            - mountPath: /tmp
+              name: atuin-tmp
+      securityContext:
+        fsGroup: 30219
+        runAsGroup: 30219
+        runAsUser: 30219
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: atuin-data
+          persistentVolumeClaim:
+            claimName: atuin-data
+        - emptyDir: {}
+          name: atuin-tmp

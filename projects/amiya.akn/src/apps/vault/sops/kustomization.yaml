@@ -1,0 +1,19 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: vault
+
+generators:
+  - |-
+    apiVersion: viaduct.ai/v1
+    kind: ksops
+    metadata:
+      name: sopsed-secrets-generator
+      annotations:
+        config.kubernetes.io/function: |
+          exec:
+            path: ksops
+    files:
+      - ../cnpg.backup-credentials.secret.yaml
+      - ../openbao-softhsm-tokens.secret.yaml
+      - ../openbao-database-credentials.secret.yaml

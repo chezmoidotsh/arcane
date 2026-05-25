@@ -1,0 +1,20 @@
+# https://github.com/gitleaks/gitleaks
+title = "chezmoidotsh/arcane"
+
+[extend]
+# Extend the default gitleaks ruleset rather than replacing it.
+useDefault = true
+
+[[allowlists]]
+description = "KV store — plaintext secrets managed offline, excluded from all scanning"
+paths = [
+    '''projects/chezmoi\.sh/src/kubevault/kvstore''',
+]
+
+[[allowlists]]
+description = "SOPS-encrypted files — all values are ENC[AES256_GCM,...] ciphertext blobs"
+regexes = [
+    # Match the ENC[...] sentinel that appears in every SOPS-encrypted value;
+    # any finding co-located with this pattern is inside an encrypted block.
+    '''ENC\[AES256_GCM''',
+]

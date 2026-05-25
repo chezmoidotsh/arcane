@@ -1,0 +1,19 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: Core Kubernetes cluster resources and configurations
+    - name: Category
+      value: Core / Cluster Configuration
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://kubernetes.io/docs/home/
+    - name: Troubleshooting
+      value: https://kubernetes.io/docs/tasks/debug/
+
+  syncPolicy:
+    automated:
+      enabled: false # Avoid automated syncs for core cluster configurations

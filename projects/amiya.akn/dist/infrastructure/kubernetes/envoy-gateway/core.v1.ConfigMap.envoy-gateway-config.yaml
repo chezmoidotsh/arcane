@@ -1,0 +1,42 @@
+---
+apiVersion: v1
+data:
+  envoy-gateway.yaml: |
+    apiVersion: gateway.envoyproxy.io/v1alpha1
+    kind: EnvoyGateway
+    extensionApis:
+      enableBackend: true
+    gateway:
+      controllerName: gateway.envoyproxy.io/gatewayclass-controller
+    logging:
+      level:
+        default: debug
+    provider:
+      kubernetes:
+        deploy:
+          type: GatewayNamespace
+        rateLimitDeployment:
+          container:
+            image: docker.io/envoyproxy/ratelimit:ff287602
+          patch:
+            type: StrategicMerge
+            value:
+              spec:
+                template:
+                  spec:
+                    containers:
+                    - imagePullPolicy: IfNotPresent
+                      name: envoy-ratelimit
+        shutdownManager:
+          image: docker.io/envoyproxy/gateway:v1.8.0
+      type: Kubernetes
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/instance: envoy-gateway
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: gateway-helm
+    app.kubernetes.io/version: v1.8.0
+    helm.sh/chart: gateway-helm-1.8.0
+  name: envoy-gateway-config
+  namespace: envoy-gateway-system

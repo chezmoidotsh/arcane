@@ -1,0 +1,26 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: Public Gateway configuration for Cloudflare Tunnel integration
+    - name: Category
+      value: Networking / Gateway
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/
+    - name: Troubleshooting
+      value: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/troubleshooting/
+
+  syncPolicy:
+    automated:
+      enabled: true
+
+  # Component+KSOPS exception: kind: Component cannot be built standalone; KSOPS
+  # generators require ksops at sync time. ArgoCD renders from src/ as before.
+  sources:
+    - repoURL: https://github.com/chezmoidotsh/arcane.git
+      path: "projects/amiya.akn/src/infrastructure/kubernetes/cloudflare-public-gateway"
+      targetRevision: main

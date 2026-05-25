@@ -1,0 +1,172 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: application
+    app.kubernetes.io/instance: pocket-id
+    app.kubernetes.io/name: pocket-id
+  name: pocket-id-server
+  namespace: pocket-id
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: application
+      app.kubernetes.io/instance: pocket-id
+      app.kubernetes.io/name: pocket-id
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: application
+        app.kubernetes.io/instance: pocket-id
+        app.kubernetes.io/name: pocket-id
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - env:
+            - name: APP_URL
+              value: https://auth.chezmoi.sh
+            - name: TRUST_PROXY
+              value: "true"
+            - name: MAXMIND_LICENSE_KEY_FILE
+              value: /var/run/secrets/pocket-id.org/maxmind_license_key
+            - name: PUID
+              value: "45706"
+            - name: PGID
+              value: "45706"
+            - name: DB_PROVIDER
+              value: postgres
+            - name: DB_CONNECTION_STRING_FILE
+              value: /var/run/secrets/pocket-id.org/postgres_connection_string
+            - name: KEYS_STORAGE
+              value: database
+            - name: ENCRYPTION_KEY_FILE
+              value: /var/run/secrets/pocket-id.org/encryption_key
+            - name: FILE_BACKEND
+              value: database
+            - name: GEOLITE_DB_PATH
+              value: /data/GeoLite2-City.mmdb
+            - name: UI_CONFIG_DISABLED
+              value: "true"
+            - name: APP_NAME
+              value: chezmoi.sh
+            - name: SESSION_DURATION
+              value: "1440"
+            - name: EMAILS_VERIFIED
+              value: "true"
+            - name: ALLOW_OWN_ACCOUNT_EDIT
+              value: "true"
+            - name: ALLOW_USER_SIGNUPS
+              value: withToken
+            - name: UI_ACCENT_COLOR
+              value: default
+            - name: SMTP_HOST
+              value: in-v3.mailjet.com.
+            - name: SMTP_PORT
+              value: "465"
+            - name: SMTP_FROM
+              value: no-reply@chezmoi.sh
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  key: smtp_username
+                  name: pocket-id-secrets
+            - name: SMTP_PASSWORD_FILE
+              value: /var/run/secrets/pocket-id.org/smtp_password
+            - name: SMTP_TLS
+              value: tls
+            - name: EMAIL_LOGIN_NOTIFICATION_ENABLED
+              value: "true"
+            - name: EMAIL_ONE_TIME_ACCESS_AS_ADMIN_ENABLED
+              value: "true"
+            - name: EMAIL_API_KEY_EXPIRATION_ENABLED
+              value: "true"
+            - name: EMAIL_ONE_TIME_ACCESS_AS_UNAUTHENTICATED_ENABLED
+              value: "true"
+            - name: LOG_JSON
+              value: "true"
+            - name: METRICS_ENABLED
+              value: "true"
+            - name: OTEL_METRICS_EXPORTER
+              value: prometheus
+            - name: OTEL_EXPORTER_PROMETHEUS_HOST
+              value: 0.0.0.0
+            - name: OTEL_EXPORTER_PROMETHEUS_PORT
+              value: "9464"
+          image: ghcr.io/pocket-id/pocket-id:v2.7.0
+          livenessProbe:
+            exec:
+              command:
+                - /app/pocket-id
+                - healthcheck
+            failureThreshold: 2
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+          name: pocket-id
+          ports:
+            - containerPort: 1411
+              name: http
+              protocol: TCP
+            - containerPort: 9464
+              name: metrics
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - /app/pocket-id
+                - healthcheck
+            failureThreshold: 2
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - mountPath: /data
+              name: data
+            - mountPath: /var/run/secrets/pocket-id.org
+              name: pocket-id-secrets
+              readOnly: true
+      securityContext:
+        fsGroup: 45706
+        runAsGroup: 45706
+        runAsNonRoot: true
+        runAsUser: 45706
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - emptyDir: {}
+          name: data
+        - name: pocket-id-secrets
+          projected:
+            sources:
+              - secret:
+                  items:
+                    - key: maxmind_license_key
+                      path: maxmind_license_key
+                    - key: encryption_key
+                      path: encryption_key
+                    - key: smtp_password
+                      path: smtp_password
+                  name: pocket-id-secrets
+              - secret:
+                  items:
+                    - key: uri
+                      path: postgres_connection_string
+                  name: pocket-id-database-pocket-id
