@@ -66,23 +66,23 @@ after cluster upgrades, connecting it to the previous day's Zot incident.
 
 ## Timeline
 
-<!-- skew: ±5 min — timestamps inferred from pod restart ages at time of investigation; no authoritative log source available for the start of the incident -->
+<!-- skew: ±? — timestamps inferred from pod restart ages at time of investigation (~7h old at 17:41 UTC); no authoritative log source for incident start; recovery actions ±5m from shell history -->
 
-| Time (UTC)         | Actor                          | Event or Decision                                                                                                                                        |
-| ------------------ | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-05-26 \~16:40 | Alexandre                      | Cluster upgrades performed on amiya.akn; pod restarts triggered across namespaces                                                                        |
-| 2026-05-26 \~16:41 | \[system:kubernetes]           | Longhorn pods restarted; Kyverno mutates images with Zot prefix + `imagePullPolicy: Always`                                                              |
-| 2026-05-26 \~16:41 | \[system:longhorn]             | Longhorn pods unable to pull from Zot; storage layer begins degrading                                                                                    |
-| 2026-05-26 \~16:41 | \[system:zot]                  | Zot PVC unavailable (Longhorn degraded); all image pull requests fail                                                                                    |
-| 2026-05-26 \~16:42 | \[system:kubernetes]           | Cascade: all namespaces with `imagePullPolicy: Always` pods enter `ImagePullBackOff`                                                                     |
-| 2026-05-26 \~17:40 | Alexandre                      | Cluster-wide `ImagePullBackOff` confirmed; root cause identified via Zot/Longhorn pod states + knowledge of previous day's incident; Kyverno scaled to 0 |
-| 2026-05-26 \~17:41 | \[anthropic:claude-sonnet-4-6] | Root cause confirmed by reading `enforce-local-registry` policy — `longhorn-system` absent from exclusion list                                           |
-| 2026-05-26 \~17:48 | \[anthropic:claude-sonnet-4-6] | Fix committed: `longhorn-system` added to namespace exclusion list in MutatingPolicy                                                                     |
-| 2026-05-26 \~17:48 | \[anthropic:claude-sonnet-4-6] | Fixed policy applied directly via `kubectl apply` (ArgoCD unavailable)                                                                                   |
-| 2026-05-26 \~17:49 | \[anthropic:claude-sonnet-4-6] | Kyverno reinstalled via `helm template \| kubectl apply` to restore webhooks with fixed policy                                                           |
-| 2026-05-26 \~17:51 | Alexandre                      | Decision: remove Kyverno entirely pending redesign in issue #1005                                                                                        |
-| 2026-05-26 \~17:51 | \[anthropic:claude-sonnet-4-6] | Kyverno deployments deleted; webhooks removed; namespace left with completed jobs only                                                                   |
-| 2026-05-26 \~17:55 | Alexandre                      | All workloads restarted; cluster restored                                                                                                                |
+| Time (UTC)           | Actor                          | Event or Decision                                                                                                                                        |
+| -------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ±5m 2026-05-26T16:40 | Alexandre                      | Cluster upgrades performed on amiya.akn; pod restarts triggered across namespaces                                                                        |
+| ±5m 2026-05-26T16:41 | \[system:kubernetes]           | Longhorn pods restarted; Kyverno mutates images with Zot prefix + `imagePullPolicy: Always`                                                              |
+| ±5m 2026-05-26T16:41 | \[system:longhorn]             | Longhorn pods unable to pull from Zot; storage layer begins degrading                                                                                    |
+| ±5m 2026-05-26T16:41 | \[system:zot]                  | Zot PVC unavailable (Longhorn degraded); all image pull requests fail                                                                                    |
+| ±5m 2026-05-26T16:42 | \[system:kubernetes]           | Cascade: all namespaces with `imagePullPolicy: Always` pods enter `ImagePullBackOff`                                                                     |
+| ±? 2026-05-26T17:40  | Alexandre                      | Cluster-wide `ImagePullBackOff` confirmed; root cause identified via Zot/Longhorn pod states + knowledge of previous day's incident; Kyverno scaled to 0 |
+| ±5m 2026-05-26T17:41 | \[anthropic:claude-sonnet-4-6] | Root cause confirmed by reading `enforce-local-registry` policy — `longhorn-system` absent from exclusion list                                           |
+| ±5m 2026-05-26T17:48 | \[anthropic:claude-sonnet-4-6] | Fix committed: `longhorn-system` added to namespace exclusion list in MutatingPolicy                                                                     |
+| ±5m 2026-05-26T17:48 | \[anthropic:claude-sonnet-4-6] | Fixed policy applied directly via `kubectl apply` (ArgoCD unavailable)                                                                                   |
+| ±5m 2026-05-26T17:49 | \[anthropic:claude-sonnet-4-6] | Kyverno reinstalled via `helm template \| kubectl apply` to restore webhooks with fixed policy                                                           |
+| ±5m 2026-05-26T17:51 | Alexandre                      | Decision: remove Kyverno entirely pending redesign in issue #1005                                                                                        |
+| ±5m 2026-05-26T17:51 | \[anthropic:claude-sonnet-4-6] | Kyverno deployments deleted; webhooks removed; namespace left with completed jobs only                                                                   |
+| ±5m 2026-05-26T17:55 | Alexandre                      | All workloads restarted; cluster restored                                                                                                                |
 
 ***
 

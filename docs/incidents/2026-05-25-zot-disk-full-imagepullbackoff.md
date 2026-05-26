@@ -60,30 +60,30 @@ at `~2026-05-25T21:50 UTC` (total incident window ≥ 5h20m).
 
 ## Timeline
 
-<!-- skew: ±5 min — approximate timestamps for manual actions; exact timestamps for system events sourced from Zot logs -->
+<!-- skew: exact for [system:zot] events (sourced from structured JSON logs); ±5m for AI agent actions (shell history); ±? for user-reported times -->
 
-| Time (UTC)         | Actor                          | Event or Decision                                                                                                                 |
-| ------------------ | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-05-25 16:28   | \[system:zot]                  | First `no space left on device` error logged during `csi-resizer` layer sync                                                      |
-| 2026-05-25 \~18:30 | Alexandre                      | Cluster-wide `ImagePullBackOff` on `lungmen.akn` discovered; investigation started                                                |
-| 2026-05-25 \~18:37 | \[anthropic:claude-sonnet-4-6] | Zot logs checked; `no space left on device` identified as root cause                                                              |
-| 2026-05-25 \~18:38 | \[anthropic:claude-sonnet-4-6] | `talosctl mounts` confirms PVC at 99.6% (0.21 Gi free)                                                                            |
-| 2026-05-25 \~18:39 | \[anthropic:claude-sonnet-4-6] | PVC patched live: 50 Gi → 100 Gi (`kubectl patch pvc`)                                                                            |
-| 2026-05-25 \~18:40 | \[system:longhorn]             | Volume resized and filesystem expanded; free space 0.21 Gi → 53 Gi (49.65% used)                                                  |
-| 2026-05-25 \~18:40 | Alexandre                      | Decision: also update PVC size in code (`zot.helmvalues/default.yaml`)                                                            |
-| 2026-05-25 19:37   | \[system:zot]                  | `actual-server:26.5.0` sync starts; write interrupted by full disk; `index.json` partially overwritten with null bytes            |
-| 2026-05-25 19:37   | \[system:zot]                  | Subsequent manifest requests for `actual-server` return 500 (`invalid JSON` / `unsupported repository layout version`)            |
-| 2026-05-25 \~20:18 | \[system:kubernetes]           | `actual-budget-0` pod restarted and enters `ImagePullBackOff` (estimate from pod age at time of check)                            |
-| 2026-05-25 \~21:20 | Alexandre                      | `actual-budget` still in `ImagePullBackOff`; second investigation started                                                         |
-| 2026-05-25 \~21:21 | \[anthropic:claude-sonnet-4-6] | 500 error on `actual-server` manifest identified; Zot logs show corrupted `index.json` (null bytes)                               |
-| 2026-05-25 \~21:22 | \[anthropic:claude-sonnet-4-6] | First scale-down attempt; ArgoCD (selfHeal=true) immediately restores Zot pod                                                     |
-| 2026-05-25 \~21:24 | \[anthropic:claude-sonnet-4-6] | ArgoCD `selfHeal` disabled on `zot-registry` app                                                                                  |
-| 2026-05-25 \~21:41 | \[anthropic:claude-sonnet-4-6] | Zot scaled to 0, pod confirmed deleted; cleanup pod created with `system-cluster-critical` to bypass Kyverno image rewrite policy |
-| 2026-05-25 \~21:43 | \[anthropic:claude-sonnet-4-6] | Cleanup pod completes: `ghcr.io/actualbudget/actual-server` directory deleted from PVC                                            |
-| 2026-05-25 \~21:44 | \[anthropic:claude-sonnet-4-6] | Zot scaled back to 1; pod Ready                                                                                                   |
-| 2026-05-25 \~21:44 | \[anthropic:claude-sonnet-4-6] | ArgoCD `selfHeal` re-enabled                                                                                                      |
-| 2026-05-25 \~21:45 | \[anthropic:claude-sonnet-4-6] | `HEAD /v2/ghcr.io/actualbudget/actual-server/manifests/26.5.0` returns 200; Zot re-synced from ghcr.io                            |
-| 2026-05-25 \~21:50 | \[system:kubernetes]           | `actual-budget-0` Running 1/1                                                                                                     |
+| Time (UTC)           | Actor                          | Event or Decision                                                                                                                 |
+| -------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-25T16:28:24  | \[system:zot]                  | First `no space left on device` error logged during `csi-resizer` layer sync                                                      |
+| ±? 2026-05-25T18:30  | Alexandre                      | Cluster-wide `ImagePullBackOff` on `lungmen.akn` discovered; investigation started                                                |
+| ±5m 2026-05-25T18:37 | \[anthropic:claude-sonnet-4-6] | Zot logs checked; `no space left on device` identified as root cause                                                              |
+| ±5m 2026-05-25T18:38 | \[anthropic:claude-sonnet-4-6] | `talosctl mounts` confirms PVC at 99.6% (0.21 Gi free)                                                                            |
+| ±5m 2026-05-25T18:39 | \[anthropic:claude-sonnet-4-6] | PVC patched live: 50 Gi → 100 Gi (`kubectl patch pvc`)                                                                            |
+| ±5m 2026-05-25T18:40 | \[system:longhorn]             | Volume resized and filesystem expanded; free space 0.21 Gi → 53 Gi (49.65% used)                                                  |
+| ±5m 2026-05-25T18:40 | Alexandre                      | Decision: also update PVC size in code (`zot.helmvalues/default.yaml`)                                                            |
+| 2026-05-25T19:37     | \[system:zot]                  | `actual-server:26.5.0` sync starts; write interrupted by full disk; `index.json` partially overwritten with null bytes            |
+| 2026-05-25T19:37     | \[system:zot]                  | Subsequent manifest requests for `actual-server` return 500 (`invalid JSON` / `unsupported repository layout version`)            |
+| ±? 2026-05-25T20:18  | \[system:kubernetes]           | `actual-budget-0` pod restarted and enters `ImagePullBackOff` (estimate from pod age at time of check)                            |
+| ±? 2026-05-25T21:20  | Alexandre                      | `actual-budget` still in `ImagePullBackOff`; second investigation started                                                         |
+| ±5m 2026-05-25T21:21 | \[anthropic:claude-sonnet-4-6] | 500 error on `actual-server` manifest identified; Zot logs show corrupted `index.json` (null bytes)                               |
+| ±5m 2026-05-25T21:22 | \[anthropic:claude-sonnet-4-6] | First scale-down attempt; ArgoCD (selfHeal=true) immediately restores Zot pod                                                     |
+| ±5m 2026-05-25T21:24 | \[anthropic:claude-sonnet-4-6] | ArgoCD `selfHeal` disabled on `zot-registry` app                                                                                  |
+| ±5m 2026-05-25T21:41 | \[anthropic:claude-sonnet-4-6] | Zot scaled to 0, pod confirmed deleted; cleanup pod created with `system-cluster-critical` to bypass Kyverno image rewrite policy |
+| ±5m 2026-05-25T21:43 | \[anthropic:claude-sonnet-4-6] | Cleanup pod completes: `ghcr.io/actualbudget/actual-server` directory deleted from PVC                                            |
+| ±5m 2026-05-25T21:44 | \[anthropic:claude-sonnet-4-6] | Zot scaled back to 1; pod Ready                                                                                                   |
+| ±5m 2026-05-25T21:44 | \[anthropic:claude-sonnet-4-6] | ArgoCD `selfHeal` re-enabled                                                                                                      |
+| ±5m 2026-05-25T21:45 | \[anthropic:claude-sonnet-4-6] | `HEAD /v2/ghcr.io/actualbudget/actual-server/manifests/26.5.0` returns 200; Zot re-synced from ghcr.io                            |
+| ±5m 2026-05-25T21:50 | \[system:kubernetes]           | `actual-budget-0` Running 1/1                                                                                                     |
 
 ***
 

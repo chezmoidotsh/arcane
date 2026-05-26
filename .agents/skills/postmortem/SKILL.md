@@ -99,6 +99,33 @@ happened, when, and what decision was made (if any) at that moment.
 A complete timeline prevents the "we should have caught this earlier" fallacy by showing exactly
 what was visible and when — it anchors hindsight bias.
 
+**Timestamp format** — all timestamps are UTC, using ISO 8601:
+
+```
+YYYY-MM-DDTHH:mm[:ss[.nnnn]]
+```
+
+Sub-seconds and seconds are optional. When a timestamp is approximate, prefix it with
+`±Xm` (known skew) or `±?` (approximate, skew unknown):
+
+| Example                | Meaning                                               |
+| ---------------------- | ----------------------------------------------------- |
+| `2026-05-25T16:28:24`  | Exact — sourced from a structured log                 |
+| `±5m 2026-05-25T18:30` | Approximate ±5 min — inferred from log gaps or memory |
+| `±? 2026-05-25T18:30`  | Approximate — skew not quantifiable                   |
+
+**Clock skew** — always add a `<!-- skew: ... -->` comment before the timeline table
+documenting the uncertainty source and how it was (or could be) measured. To measure
+clock skew at incident time on a Talos cluster:
+
+```bash
+# NTP skew on Talos nodes — compare LOCAL TIME vs REFERENCE TIME (NTP) columns
+talosctl time --nodes <node-ip>
+
+# Local machine UTC reference at this instant
+date -u +"%Y-%m-%dT%H:%M:%S.%3NZ"
+```
+
 ### Step 4 — Choose the root-cause technique
 
 Select the right technique based on the failure type, then read the corresponding reference file

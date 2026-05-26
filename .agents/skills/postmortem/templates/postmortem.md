@@ -51,11 +51,25 @@ related-adrs: []                          # e.g. "docs/decisions/005-envoy-gatew
 >
 > Actor format: `Name` for humans · `[provider:model]` for AI agents · `[system:name]` for
 > automated systems (alerts, ArgoCD, CI pipelines).
+>
+> Timestamp format (UTC, ISO 8601): `YYYY-MM-DDTHH:mm[:ss[.nnnn]]`
+> Prefix with `±Xm` when skew is known (e.g. `±5m 2026-05-25T18:30`) or `±?` when
+> approximate but not quantifiable. Always add the skew comment below before the table.
+>
+> To measure clock skew on Talos nodes:
+>
+> ```bash
+> talosctl time --nodes <node-ip>   # compare LOCAL TIME vs REFERENCE TIME (NTP)
+> date -u +"%Y-%m-%dT%H:%M:%S.%3NZ"  # local machine UTC reference
+> ```
 
-| Time (UTC)          | Actor                                     | Event or Decision                    |
-| ------------------- | ----------------------------------------- | ------------------------------------ |
-| \[YYYY-MM-DD HH:MM] | Name / \[provider:model] / \[system:name] | \[What happened or what was decided] |
-| \[YYYY-MM-DD HH:MM] | Name / \[provider:model] / \[system:name] | \[What happened or what was decided] |
+<!-- skew: ±? — [source of uncertainty, e.g. "timestamps inferred from memory / log gaps"] -->
+
+| Time (UTC)           | Actor                                     | Event or Decision                    |
+| -------------------- | ----------------------------------------- | ------------------------------------ |
+| YYYY-MM-DDTHH:mm     | Name / \[provider:model] / \[system:name] | \[What happened or what was decided] |
+| ±5m YYYY-MM-DDTHH:mm | Name / \[provider:model] / \[system:name] | \[What happened or what was decided] |
+| ±? YYYY-MM-DDTHH:mm  | Name / \[provider:model] / \[system:name] | \[What happened or what was decided] |
 
 ***
 

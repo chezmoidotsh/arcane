@@ -47,16 +47,18 @@ The `vault.chezmoi.sh` ClusterSecretStore on the lungmen.akn cluster was unable 
 
 ## Timeline
 
-| Time (UTC)              | Actor                      | Event or Decision                                                                                                       |
-| ----------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| 2026-05-25 \~14:30 UTC  | Alexandre                  | Requests investigation of ClusterSecretStore failure on lungmen                                                         |
-| 2026-05-25 \~14:45 UTC  | \[zai-coding-plan:glm-5.1] | Identifies 403 error at `/v1/auth/lungmen.akn/login` in ESO logs via `kubectl logs`                                     |
-| 2026-05-25 \~15:00 UTC  | \[zai-coding-plan:glm-5.1] | Decodes JWT from `lungmen-akn-eso-credentials` secret — discovers `openbao-auth-delegator` SA does not exist on lungmen |
-| 2026-05-25 \~15:10 UTC  | \[zai-coding-plan:glm-5.1] | Generates new token from lungmen's `external-secrets` SA, updates OpenBao via `bao kv patch` (v2 → v3)                  |
-| 2026-05-25 \~15:20 UTC  | \[zai-coding-plan:glm-5.1] | Forces ExternalSecret refresh on amiya to propagate new token to Crossplane secret                                      |
-| 2026-05-25 \~15:25 UTC  | \[zai-coding-plan:glm-5.1] | Crossplane does not re-apply `AuthBackendConfig` despite reconciliation trigger                                         |
-| 2026-05-25 \~15:30 UTC  | \[zai-coding-plan:glm-5.1] | Directly updates OpenBao auth backend config via `bao write auth/lungmen.akn/config`                                    |
-| 2026-05-25 15:34:24 UTC | \[system:external-secrets] | ClusterSecretStore transitions to `Ready: store validated`. 33/34 ExternalSecrets sync successfully.                    |
+<!-- skew: ±15m for Alexandre's detection (noticed ~4h after PR merge); ±5m for AI agent actions; exact for [system:external-secrets] event (sourced from ESO controller log) -->
+
+| Time (UTC)           | Actor                      | Event or Decision                                                                                                       |
+| -------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| ±? 2026-05-25T14:30  | Alexandre                  | Requests investigation of ClusterSecretStore failure on lungmen                                                         |
+| ±5m 2026-05-25T14:45 | \[zai-coding-plan:glm-5.1] | Identifies 403 error at `/v1/auth/lungmen.akn/login` in ESO logs via `kubectl logs`                                     |
+| ±5m 2026-05-25T15:00 | \[zai-coding-plan:glm-5.1] | Decodes JWT from `lungmen-akn-eso-credentials` secret — discovers `openbao-auth-delegator` SA does not exist on lungmen |
+| ±5m 2026-05-25T15:10 | \[zai-coding-plan:glm-5.1] | Generates new token from lungmen's `external-secrets` SA, updates OpenBao via `bao kv patch` (v2 → v3)                  |
+| ±5m 2026-05-25T15:20 | \[zai-coding-plan:glm-5.1] | Forces ExternalSecret refresh on amiya to propagate new token to Crossplane secret                                      |
+| ±5m 2026-05-25T15:25 | \[zai-coding-plan:glm-5.1] | Crossplane does not re-apply `AuthBackendConfig` despite reconciliation trigger                                         |
+| ±5m 2026-05-25T15:30 | \[zai-coding-plan:glm-5.1] | Directly updates OpenBao auth backend config via `bao write auth/lungmen.akn/config`                                    |
+| 2026-05-25T15:34:24  | \[system:external-secrets] | ClusterSecretStore transitions to `Ready: store validated`. 33/34 ExternalSecrets sync successfully.                    |
 
 ***
 
