@@ -13,6 +13,9 @@ metadata:
       are excluded to keep them sourced from the upstream registry.
       System-critical pods (marked via priorityClassName or annotation) are also
       excluded to ensure cluster stability.
+      Storage namespaces (longhorn-system) are excluded because Longhorn provides
+      the PVC backing Zot — mutating Longhorn images creates a circular dependency
+      that takes down the entire cluster.
       WARNING: This policy may interfere with pod managed by operators or controllers
       that expect specific image names, like Cloud Native Postgres operator.
 spec:
@@ -26,7 +29,7 @@ spec:
       matchExpressions:
         - key: kubernetes.io/metadata.name
           operator: NotIn
-          values: [kyverno-system, kube-system, kube-public, kube-node-lease]
+          values: [kyverno-system, kube-system, kube-public, kube-node-lease, longhorn-system]
 
   matchConditions:
     - name: exclude-critical-pods
