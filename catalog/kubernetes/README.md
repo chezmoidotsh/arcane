@@ -62,4 +62,3 @@ project-specific overrides) into a single file when setting up a new project.
 | cloudnative-pg   | ImageCatalog (local registry mirrors)                           | operator config                  |
 | envoy-gateway    | GatewayClass, default Gateway, HTTP→HTTPS redirect              | resources, logging, securityCtx  |
 | external-secrets | ClusterSecretStore (OpenBao/Vault)                              | auth-delegator RBAC, securityCtx |
-| kyverno          | ClusterPolicy (enforce local registry)                          | replicaCount, webhooks           |
