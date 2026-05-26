@@ -10,7 +10,7 @@ machine:
     # - siderolabs/intel-ucode
     # - siderolabs/iscsi-tools
     # - siderolabs/util-linux-tools
-    image: factory.talos.dev/nocloud-installer-secureboot/36cd6536eaec8ba802be2d38974108359069cedba8857302f69792b26b87c010:v1.10.7
+    image: factory.talos.dev/nocloud-installer-secureboot/36cd6536eaec8ba802be2d38974108359069cedba8857302f69792b26b87c010:v1.13.2
     diskSelector:
       type: hdd
       model: QEMU HARDDISK
@@ -25,7 +25,6 @@ machine:
     extraConfig:
       featureGates:
         UserNamespacesSupport: true
-        UserNamespacesPodSecurityStandards: true
         ImageVolume: true
   sysctls:
     user.max_user_namespaces: "11255"
@@ -55,7 +54,7 @@ cluster:
   # -- Custom configuration (enable user namespaces)
   apiServer:
     extraArgs:
-      feature-gates: UserNamespacesSupport=true,UserNamespacesPodSecurityStandards=true,ImageVolume=true
+      feature-gates: UserNamespacesSupport=true,ImageVolume=true
 
   # -- Install extra components
   extraManifests:
