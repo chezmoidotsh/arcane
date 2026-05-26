@@ -18,6 +18,6 @@ roleRef:
   kind: Role
   name: envoy-gateway-gateway-helm-certgen
 subjects:
-  - kind: ServiceAccount
-    name: envoy-gateway-gateway-helm-certgen
-    namespace: envoy-gateway-system
+- kind: ServiceAccount
+  name: envoy-gateway-gateway-helm-certgen
+  namespace: envoy-gateway-system

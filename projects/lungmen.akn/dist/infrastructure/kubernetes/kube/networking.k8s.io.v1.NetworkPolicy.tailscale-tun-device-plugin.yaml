@@ -15,5 +15,5 @@ spec:
       app.kubernetes.io/instance: device-manager
       app.kubernetes.io/name: tun-device-plugin
   policyTypes:
-    - Ingress
-    - Egress
+  - Ingress
+  - Egress

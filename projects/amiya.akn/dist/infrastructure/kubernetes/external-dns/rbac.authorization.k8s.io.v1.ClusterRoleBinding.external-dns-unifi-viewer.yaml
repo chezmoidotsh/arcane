@@ -14,6 +14,6 @@ roleRef:
   kind: ClusterRole
   name: external-dns-unifi
 subjects:
-  - kind: ServiceAccount
-    name: external-dns-unifi
-    namespace: external-dns-system
+- kind: ServiceAccount
+  name: external-dns-unifi
+  namespace: external-dns-system

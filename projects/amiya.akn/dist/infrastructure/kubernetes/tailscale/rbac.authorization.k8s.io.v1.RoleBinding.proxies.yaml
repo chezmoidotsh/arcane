@@ -9,6 +9,6 @@ roleRef:
   kind: Role
   name: proxies
 subjects:
-  - kind: ServiceAccount
-    name: proxies
-    namespace: tailscale-system
+- kind: ServiceAccount
+  name: proxies
+  namespace: tailscale-system

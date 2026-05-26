@@ -71,7 +71,7 @@ class BuildItem:
     def src_path(self) -> str:
         idx = self.rel.find("/src/")
         if idx >= 0:
-            return self.rel[idx + 5:]
+            return self.rel[idx + 5 :]
         return self.src.name
 
 
@@ -191,7 +191,9 @@ def split_yaml_docs(content: str) -> Iterator[tuple[dict, str]]:
 # ── render ────────────────────────────────────────────────────────────────────
 
 
-def render_one(src: Path, *, check: bool, stage: bool) -> tuple[BuildStatus, str, float]:
+def render_one(
+    src: Path, *, check: bool, stage: bool
+) -> tuple[BuildStatus, str, float]:
     """Render src/ -> dist/. Returns (status, error_msg, duration)."""
     src = src.resolve()
     rel = _relpath(src)
@@ -237,7 +239,11 @@ def render_one(src: Path, *, check: bool, stage: bool) -> tuple[BuildStatus, str
             (tmp / _resource_filename(doc, idx, used)).write_text("---\n" + raw + "\n")
 
         if not used:
-            return BuildStatus.FAILED, "kustomize produced no renderable resources", duration
+            return (
+                BuildStatus.FAILED,
+                "kustomize produced no renderable resources",
+                duration,
+            )
 
         patch_src = src / ".application.patch"
         if patch_src.exists():
@@ -349,12 +355,12 @@ class _LiveRenderable:
     def __rich__(self) -> Group:
         total = len(self.items)
         completed = sum(
-            1 for i in self.items
+            1
+            for i in self.items
             if i.status not in (BuildStatus.PENDING, BuildStatus.BUILDING)
         )
         failed = sum(
-            1 for i in self.items
-            if i.status in (BuildStatus.FAILED, BuildStatus.STALE)
+            1 for i in self.items if i.status in (BuildStatus.FAILED, BuildStatus.STALE)
         )
         elapsed = time.monotonic() - self._t0
         wp, wpa = self._w_proj, self._w_path
@@ -474,17 +480,13 @@ class PlainDisplay:
 # ── Runner ───────────────────────────────────────────────────────────────────
 
 
-def run_builds(
-    items: list[BuildItem], *, check: bool, stage: bool, jobs: int
-) -> int:
+def run_builds(items: list[BuildItem], *, check: bool, stage: bool, jobs: int) -> int:
     if IS_TTY:
         return _run_tty(items, check=check, stage=stage, jobs=jobs)
     return _run_plain(items, check=check, stage=stage, jobs=jobs)
 
 
-def _run_tty(
-    items: list[BuildItem], *, check: bool, stage: bool, jobs: int
-) -> int:
+def _run_tty(items: list[BuildItem], *, check: bool, stage: bool, jobs: int) -> int:
     display = RichDisplay(items, jobs=jobs)
     display.start()
     failures = 0
@@ -508,9 +510,7 @@ def _run_tty(
     return failures
 
 
-def _run_plain(
-    items: list[BuildItem], *, check: bool, stage: bool, jobs: int
-) -> int:
+def _run_plain(items: list[BuildItem], *, check: bool, stage: bool, jobs: int) -> int:
     failures = 0
 
     def _work(item: BuildItem) -> None:
@@ -608,9 +608,7 @@ def main() -> None:
             )
             print("       Run:  scripts/dist:render --all", file=sys.stderr)
         else:
-            print(
-                f"\nERROR: {failures} build(s) failed.", file=sys.stderr
-            )
+            print(f"\nERROR: {failures} build(s) failed.", file=sys.stderr)
         sys.exit(1)
 
 

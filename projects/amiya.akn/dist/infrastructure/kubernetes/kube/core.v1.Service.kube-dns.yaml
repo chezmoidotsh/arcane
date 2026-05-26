@@ -15,15 +15,15 @@ metadata:
 spec:
   clusterIP: 10.96.0.10
   ports:
-    - name: dns
-      port: 53
-      protocol: UDP
-    - name: dns-tcp
-      port: 53
-      protocol: TCP
-    - name: metrics
-      port: 9153
-      protocol: TCP
+  - name: dns
+    port: 53
+    protocol: UDP
+  - name: dns-tcp
+    port: 53
+    protocol: TCP
+  - name: metrics
+    port: 9153
+    protocol: TCP
   selector:
     app.kubernetes.io/name: coredns
     k8s-app: kube-dns

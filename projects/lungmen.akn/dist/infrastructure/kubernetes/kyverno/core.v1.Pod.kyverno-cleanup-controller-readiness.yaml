@@ -16,33 +16,33 @@ metadata:
 spec:
   automountServiceAccountToken: true
   containers:
-    - args:
-        - check-http
-        - --service-name=kyverno-cleanup-controller
-        - --namespace=kyverno-system
-        - --port=443
-        - --path=health/readiness
-        - --https
-      image: ghcr.io/kyverno/readiness-checker:latest
-      imagePullPolicy: IfNotPresent
-      name: test
-      resources:
-        limits:
-          cpu: 100m
-          memory: 256Mi
-        requests:
-          cpu: 10m
-          memory: 64Mi
-      securityContext:
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop:
-            - ALL
-        privileged: false
-        readOnlyRootFilesystem: true
-        runAsGroup: 65534
-        runAsNonRoot: true
-        runAsUser: 65534
-        seccompProfile:
-          type: RuntimeDefault
+  - args:
+    - check-http
+    - --service-name=kyverno-cleanup-controller
+    - --namespace=kyverno-system
+    - --port=443
+    - --path=health/readiness
+    - --https
+    image: ghcr.io/kyverno/readiness-checker:latest
+    imagePullPolicy: IfNotPresent
+    name: test
+    resources:
+      limits:
+        cpu: 100m
+        memory: 256Mi
+      requests:
+        cpu: 10m
+        memory: 64Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      privileged: false
+      readOnlyRootFilesystem: true
+      runAsGroup: 65534
+      runAsNonRoot: true
+      runAsUser: 65534
+      seccompProfile:
+        type: RuntimeDefault
   restartPolicy: Never

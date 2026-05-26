@@ -10,10 +10,10 @@ metadata:
   namespace: longhorn-system
 spec:
   from:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      namespace: envoy-gateway-system
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    namespace: envoy-gateway-system
   to:
-    - group: ""
-      kind: Service
-      name: longhorn-frontend
+  - group: ""
+    kind: Service
+    name: longhorn-frontend

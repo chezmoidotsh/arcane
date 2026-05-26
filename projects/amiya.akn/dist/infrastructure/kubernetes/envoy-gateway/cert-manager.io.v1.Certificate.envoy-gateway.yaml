@@ -10,16 +10,16 @@ metadata:
 spec:
   commonName: envoy-gateway
   dnsNames:
-    - envoy-gateway
-    - envoy-gateway.envoy-gateway-system
-    - envoy-gateway.envoy-gateway-system.svc
-    - envoy-gateway.envoy-gateway-system.svc.cluster.local
+  - envoy-gateway
+  - envoy-gateway.envoy-gateway-system
+  - envoy-gateway.envoy-gateway-system.svc
+  - envoy-gateway.envoy-gateway-system.svc.cluster.local
   issuerRef:
     kind: Issuer
     name: eg-issuer
   secretName: envoy-gateway
   usages:
-    - digital signature
-    - data encipherment
-    - key encipherment
-    - content commitment
+  - digital signature
+  - data encipherment
+  - key encipherment
+  - content commitment

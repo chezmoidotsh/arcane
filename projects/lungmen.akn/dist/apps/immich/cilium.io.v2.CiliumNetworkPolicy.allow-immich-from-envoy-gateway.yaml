@@ -15,10 +15,10 @@ spec:
     matchLabels:
       app.kubernetes.io/name: immich
   ingress:
-    - fromEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: envoy-gateway-system
-      toPorts:
-        - ports:
-            - port: "2283"
-              protocol: TCP
+  - fromEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: envoy-gateway-system
+    toPorts:
+    - ports:
+      - port: "2283"
+        protocol: TCP

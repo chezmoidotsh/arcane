@@ -16,31 +16,31 @@ metadata:
     helm.sh/chart: kyverno-3.8.1
   name: kyverno:migrate-resources
 rules:
-  - apiGroups:
-      - kyverno.io
-    resources:
-      - "*"
-    verbs:
-      - get
-      - list
-      - update
-  - apiGroups:
-      - policies.kyverno.io
-    resources:
-      - "*"
-    verbs:
-      - get
-      - list
-      - update
-  - apiGroups:
-      - apiextensions.k8s.io
-    resources:
-      - customresourcedefinitions
-    verbs:
-      - get
-  - apiGroups:
-      - apiextensions.k8s.io
-    resources:
-      - customresourcedefinitions/status
-    verbs:
-      - update
+- apiGroups:
+  - kyverno.io
+  resources:
+  - '*'
+  verbs:
+  - get
+  - list
+  - update
+- apiGroups:
+  - policies.kyverno.io
+  resources:
+  - '*'
+  verbs:
+  - get
+  - list
+  - update
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions/status
+  verbs:
+  - update

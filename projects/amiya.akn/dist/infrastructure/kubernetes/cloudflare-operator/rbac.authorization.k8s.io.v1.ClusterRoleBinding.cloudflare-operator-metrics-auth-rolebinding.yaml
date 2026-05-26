@@ -8,6 +8,6 @@ roleRef:
   kind: ClusterRole
   name: cloudflare-operator-metrics-auth-role
 subjects:
-  - kind: ServiceAccount
-    name: cloudflare-operator-controller-manager
-    namespace: cloudflare-operator-system
+- kind: ServiceAccount
+  name: cloudflare-operator-controller-manager
+  namespace: cloudflare-operator-system

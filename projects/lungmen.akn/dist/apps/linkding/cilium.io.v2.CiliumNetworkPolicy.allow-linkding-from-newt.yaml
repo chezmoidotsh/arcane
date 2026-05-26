@@ -15,11 +15,11 @@ spec:
     matchLabels:
       app.kubernetes.io/name: linkding
   ingress:
-    - fromEndpoints:
-        - matchLabels:
-            app.kubernetes.io/name: newt
-            io.kubernetes.pod.namespace: newt-system
-      toPorts:
-        - ports:
-            - port: "9090"
-              protocol: TCP
+  - fromEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: newt
+        io.kubernetes.pod.namespace: newt-system
+    toPorts:
+    - ports:
+      - port: "9090"
+        protocol: TCP

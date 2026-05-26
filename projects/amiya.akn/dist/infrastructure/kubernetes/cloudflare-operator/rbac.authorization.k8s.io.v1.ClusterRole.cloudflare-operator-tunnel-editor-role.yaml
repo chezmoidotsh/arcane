@@ -4,21 +4,21 @@ kind: ClusterRole
 metadata:
   name: cloudflare-operator-tunnel-editor-role
 rules:
-  - apiGroups:
-      - networking.cfargotunnel.com
-    resources:
-      - tunnels
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - networking.cfargotunnel.com
-    resources:
-      - tunnels/status
-    verbs:
-      - get
+- apiGroups:
+  - networking.cfargotunnel.com
+  resources:
+  - tunnels
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - networking.cfargotunnel.com
+  resources:
+  - tunnels/status
+  verbs:
+  - get

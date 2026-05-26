@@ -14,11 +14,11 @@ metadata:
   namespace: kyverno-system
 spec:
   ports:
-    - appProtocol: https
-      name: https
-      port: 443
-      protocol: TCP
-      targetPort: https
+  - appProtocol: https
+    name: https
+    port: 443
+    protocol: TCP
+    targetPort: https
   selector:
     app.kubernetes.io/component: cleanup-controller
     app.kubernetes.io/instance: kyverno

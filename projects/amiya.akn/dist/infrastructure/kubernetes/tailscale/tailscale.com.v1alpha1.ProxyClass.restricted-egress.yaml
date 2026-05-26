@@ -20,9 +20,9 @@ spec:
           allowPrivilegeEscalation: false
           capabilities:
             add:
-              - NET_ADMIN
+            - NET_ADMIN
             drop:
-              - ALL
+            - ALL
           readOnlyRootFilesystem: false
           seccompProfile:
             type: RuntimeDefault

@@ -13,20 +13,20 @@ metadata:
     helm.sh/chart: gateway-helm-1.8.0
   name: envoy-gateway-gateway-helm-certgen:envoy-gateway-system
 rules:
-  - apiGroups:
-      - admissionregistration.k8s.io
-    resources:
-      - mutatingwebhookconfigurations
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - admissionregistration.k8s.io
-    resourceNames:
-      - envoy-gateway-topology-injector.envoy-gateway-system
-    resources:
-      - mutatingwebhookconfigurations
-    verbs:
-      - update
-      - patch
+- apiGroups:
+  - admissionregistration.k8s.io
+  resources:
+  - mutatingwebhookconfigurations
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - admissionregistration.k8s.io
+  resourceNames:
+  - envoy-gateway-topology-injector.envoy-gateway-system
+  resources:
+  - mutatingwebhookconfigurations
+  verbs:
+  - update
+  - patch

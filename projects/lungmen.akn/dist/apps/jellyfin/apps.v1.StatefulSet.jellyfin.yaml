@@ -22,54 +22,54 @@ spec:
     spec:
       automountServiceAccountToken: false
       containers:
-        - image: ghcr.io/jellyfin/jellyfin:10.11.10
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: http
-            initialDelaySeconds: 30
-            periodSeconds: 30
-          name: jellyfin
-          ports:
-            - containerPort: 8096
-              name: http
-              protocol: TCP
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: http
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            readOnlyRootFilesystem: true
-            runAsGroup: 64710
-            runAsNonRoot: true
-            runAsUser: 64710
-            seccompProfile:
-              type: RuntimeDefault
-          volumeMounts:
-            - mountPath: /config
-              name: persistent
-            - mountPath: /cache
-              name: cache
-            - mountPath: /tmp
-              name: tmpdir
-            - mountPath: /media/movies
-              name: movies
-              readOnly: true
-            - mountPath: /media/tvshows
-              name: tvshows
-              readOnly: true
-            - mountPath: /media/musics
-              name: musics
-              readOnly: true
-            - mountPath: /media/animes
-              name: animes
-              readOnly: true
+      - image: ghcr.io/jellyfin/jellyfin:10.11.10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        name: jellyfin
+        ports:
+        - containerPort: 8096
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 64710
+          runAsNonRoot: true
+          runAsUser: 64710
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /config
+          name: persistent
+        - mountPath: /cache
+          name: cache
+        - mountPath: /tmp
+          name: tmpdir
+        - mountPath: /media/movies
+          name: movies
+          readOnly: true
+        - mountPath: /media/tvshows
+          name: tvshows
+          readOnly: true
+        - mountPath: /media/musics
+          name: musics
+          readOnly: true
+        - mountPath: /media/animes
+          name: animes
+          readOnly: true
       securityContext:
         fsGroup: 64710
         runAsGroup: 64710
@@ -78,47 +78,47 @@ spec:
         seccompProfile:
           type: RuntimeDefault
         supplementalGroups:
-          - 65534
+        - 65534
       volumes:
-        - emptyDir: {}
-          name: cache
-        - emptyDir: {}
-          name: tmpdir
-        - name: movies
-          nfs:
-            path: /mnt/zp1cs01/media/movies
-            readOnly: true
-            server: nas.chezmoi.sh
-        - name: tvshows
-          nfs:
-            path: /mnt/zp1cs01/media/tvshows
-            readOnly: true
-            server: nas.chezmoi.sh
-        - name: musics
-          nfs:
-            path: /mnt/zp1cs01/media/musics
-            readOnly: true
-            server: nas.chezmoi.sh
-        - name: animes
-          nfs:
-            path: /mnt/zp1cs01/media/animes
-            readOnly: true
-            server: nas.chezmoi.sh
+      - emptyDir: {}
+        name: cache
+      - emptyDir: {}
+        name: tmpdir
+      - name: movies
+        nfs:
+          path: /mnt/zp1cs01/media/movies
+          readOnly: true
+          server: nas.chezmoi.sh
+      - name: tvshows
+        nfs:
+          path: /mnt/zp1cs01/media/tvshows
+          readOnly: true
+          server: nas.chezmoi.sh
+      - name: musics
+        nfs:
+          path: /mnt/zp1cs01/media/musics
+          readOnly: true
+          server: nas.chezmoi.sh
+      - name: animes
+        nfs:
+          path: /mnt/zp1cs01/media/animes
+          readOnly: true
+          server: nas.chezmoi.sh
   volumeClaimTemplates:
-    - apiVersion: v1
-      kind: PersistentVolumeClaim
-      metadata:
-        labels:
-          app.kubernetes.io/instance: jellyfin
-          app.kubernetes.io/name: jellyfin
-          recurring-job-group.longhorn.io/auto-snapshots: enabled
-          recurring-job-group.longhorn.io/daily: enabled
-          recurring-job-group.longhorn.io/monthly: enabled
-          recurring-job-group.longhorn.io/weekly: enabled
-        name: persistent
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 10Gi
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app.kubernetes.io/instance: jellyfin
+        app.kubernetes.io/name: jellyfin
+        recurring-job-group.longhorn.io/auto-snapshots: enabled
+        recurring-job-group.longhorn.io/daily: enabled
+        recurring-job-group.longhorn.io/monthly: enabled
+        recurring-job-group.longhorn.io/weekly: enabled
+      name: persistent
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi

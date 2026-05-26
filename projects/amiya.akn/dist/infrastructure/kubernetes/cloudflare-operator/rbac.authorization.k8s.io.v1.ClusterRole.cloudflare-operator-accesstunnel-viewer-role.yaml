@@ -7,17 +7,17 @@ metadata:
     app.kubernetes.io/name: cloudflare-operator
   name: cloudflare-operator-accesstunnel-viewer-role
 rules:
-  - apiGroups:
-      - networking.cfargotunnel.com
-    resources:
-      - accesstunnels
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - networking.cfargotunnel.com
-    resources:
-      - accesstunnels/status
-    verbs:
-      - get
+- apiGroups:
+  - networking.cfargotunnel.com
+  resources:
+  - accesstunnels
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - networking.cfargotunnel.com
+  resources:
+  - accesstunnels/status
+  verbs:
+  - get

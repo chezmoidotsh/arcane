@@ -25,63 +25,63 @@ spec:
     spec:
       automountServiceAccountToken: false
       containers:
-        - args:
-            - redis-server
-            - --save
-            - "300"
-            - "1"
-          image: docker.io/library/redis:8.6.3-alpine@sha256:d146f83b1e0f02fc27c26a50cee39338c736674c5959db84363e6ae3cd9e02d2
-          livenessProbe:
-            exec:
-              command:
-                - redis-cli
-                - ping
-            failureThreshold: 3
-            periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 5
+      - args:
+        - redis-server
+        - --save
+        - "300"
+        - "1"
+        image: docker.io/library/redis:8.6.3-alpine@sha256:d146f83b1e0f02fc27c26a50cee39338c736674c5959db84363e6ae3cd9e02d2
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: redis
+        ports:
+        - containerPort: 6379
           name: redis
-          ports:
-            - containerPort: 6379
-              name: redis
-              protocol: TCP
-          readinessProbe:
-            exec:
-              command:
-                - redis-cli
-                - ping
-            failureThreshold: 3
-            periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 5
-          resources:
-            limits:
-              memory: 64Mi
-            requests:
-              cpu: 100m
-              memory: 64Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            readOnlyRootFilesystem: true
-            runAsGroup: 52678
-            runAsNonRoot: true
-            runAsUser: 52678
-          startupProbe:
-            exec:
-              command:
-                - redis-cli
-                - ping
-            failureThreshold: 30
-            initialDelaySeconds: 0
-            periodSeconds: 2
-            successThreshold: 1
-            timeoutSeconds: 5
-          volumeMounts:
-            - mountPath: /data
-              name: data
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources:
+          limits:
+            memory: 64Mi
+          requests:
+            cpu: 100m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 52678
+          runAsNonRoot: true
+          runAsUser: 52678
+        startupProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          failureThreshold: 30
+          initialDelaySeconds: 0
+          periodSeconds: 2
+          successThreshold: 1
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /data
+          name: data
       securityContext:
         fsGroup: 52678
         runAsGroup: 52678
@@ -89,20 +89,20 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: data
+      - name: data
+        persistentVolumeClaim:
+          claimName: data
   volumeClaimTemplates:
-    - apiVersion: v1
-      kind: PersistentVolumeClaim
-      metadata:
-        labels:
-          app.kubernetes.io/instance: paperless-ngx
-          app.kubernetes.io/name: paperless-ngx
-        name: data
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 256Mi
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      labels:
+        app.kubernetes.io/instance: paperless-ngx
+        app.kubernetes.io/name: paperless-ngx
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 256Mi

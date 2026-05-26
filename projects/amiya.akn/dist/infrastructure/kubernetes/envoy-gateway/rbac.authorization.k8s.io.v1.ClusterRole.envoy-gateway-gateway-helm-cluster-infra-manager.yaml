@@ -10,58 +10,58 @@ metadata:
     helm.sh/chart: gateway-helm-1.8.0
   name: envoy-gateway-gateway-helm-cluster-infra-manager
 rules:
-  - apiGroups:
-      - ""
-    resources:
-      - serviceaccounts
-      - services
-      - configmaps
-    verbs:
-      - create
-      - get
-      - list
-      - delete
-      - deletecollection
-      - patch
-      - watch
-  - apiGroups:
-      - apps
-    resources:
-      - deployments
-      - daemonsets
-    verbs:
-      - create
-      - get
-      - list
-      - delete
-      - deletecollection
-      - patch
-      - watch
-  - apiGroups:
-      - autoscaling
-      - policy
-    resources:
-      - horizontalpodautoscalers
-      - poddisruptionbudgets
-    verbs:
-      - create
-      - get
-      - list
-      - delete
-      - deletecollection
-      - patch
-      - watch
-  - apiGroups:
-      - certificates.k8s.io
-    resources:
-      - clustertrustbundles
-    verbs:
-      - list
-      - get
-      - watch
-  - apiGroups:
-      - authentication.k8s.io
-    resources:
-      - tokenreviews
-    verbs:
-      - create
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  - services
+  - configmaps
+  verbs:
+  - create
+  - get
+  - list
+  - delete
+  - deletecollection
+  - patch
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  verbs:
+  - create
+  - get
+  - list
+  - delete
+  - deletecollection
+  - patch
+  - watch
+- apiGroups:
+  - autoscaling
+  - policy
+  resources:
+  - horizontalpodautoscalers
+  - poddisruptionbudgets
+  verbs:
+  - create
+  - get
+  - list
+  - delete
+  - deletecollection
+  - patch
+  - watch
+- apiGroups:
+  - certificates.k8s.io
+  resources:
+  - clustertrustbundles
+  verbs:
+  - list
+  - get
+  - watch
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create

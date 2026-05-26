@@ -12,9 +12,9 @@ metadata:
   namespace: cloudnative-pg-system
 spec:
   ports:
-    - name: webhook-server
-      port: 443
-      targetPort: webhook-server
+  - name: webhook-server
+    port: 443
+    targetPort: webhook-server
   selector:
     app.kubernetes.io/instance: cloudnative-pg
     app.kubernetes.io/name: cloudnative-pg

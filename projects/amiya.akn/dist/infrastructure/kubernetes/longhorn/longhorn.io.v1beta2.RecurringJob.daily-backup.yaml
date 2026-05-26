@@ -8,7 +8,7 @@ spec:
   concurrency: 1
   cron: 0 2 * * *
   groups:
-    - daily
+  - daily
   labels:
     backup.longhorn.io/type: daily
   name: daily-backup

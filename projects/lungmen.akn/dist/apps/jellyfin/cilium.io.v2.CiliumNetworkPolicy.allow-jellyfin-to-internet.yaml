@@ -16,18 +16,18 @@ metadata:
   namespace: jellyfin
 spec:
   egress:
-    - toFQDNs:
-        - matchName: repo.jellyfin.org
-        - matchPattern: "*.mirror.jellyfin.org"
-        - matchName: github.com
-        - matchName: raw.githubusercontent.com
-        - matchName: www.iamparadox.dev
-        - matchName: artworks.thetvdb.com
-        - matchName: image.tmdb.org
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
+  - toFQDNs:
+    - matchName: repo.jellyfin.org
+    - matchPattern: '*.mirror.jellyfin.org'
+    - matchName: github.com
+    - matchName: raw.githubusercontent.com
+    - matchName: www.iamparadox.dev
+    - matchName: artworks.thetvdb.com
+    - matchName: image.tmdb.org
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: jellyfin

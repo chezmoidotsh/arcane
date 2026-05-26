@@ -17,6 +17,6 @@ roleRef:
   kind: Role
   name: cert-manager-cainjector:leaderelection
 subjects:
-  - kind: ServiceAccount
-    name: cert-manager-cainjector
-    namespace: cert-manager-system
+- kind: ServiceAccount
+  name: cert-manager-cainjector
+  namespace: cert-manager-system

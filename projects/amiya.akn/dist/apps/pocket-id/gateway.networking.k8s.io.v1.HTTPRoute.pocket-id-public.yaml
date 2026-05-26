@@ -13,21 +13,21 @@ metadata:
   namespace: pocket-id
 spec:
   hostnames:
-    - auth.chezmoi.sh
+  - auth.chezmoi.sh
   parentRefs:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: public
-      namespace: cloudflare-public-gateway-system
-      sectionName: public
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: public
+    namespace: cloudflare-public-gateway-system
+    sectionName: public
   rules:
-    - backendRefs:
-        - group: ""
-          kind: Service
-          name: pocket-id
-          port: 80
-          weight: 1
-      matches:
-        - path:
-            type: PathPrefix
-            value: /
+  - backendRefs:
+    - group: ""
+      kind: Service
+      name: pocket-id
+      port: 80
+      weight: 1
+    matches:
+    - path:
+        type: PathPrefix
+        value: /

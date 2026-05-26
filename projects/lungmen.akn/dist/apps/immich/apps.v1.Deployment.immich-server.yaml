@@ -26,62 +26,62 @@ spec:
     spec:
       automountServiceAccountToken: false
       containers:
-        - env:
-            - name: IMMICH_CONFIG_FILE
-              value: /config/immich-config.yaml
-            - name: DB_URL_FILE
-              value: /run/secrets/immich.app/database/url
-            - name: REDIS_HOSTNAME
-              value: immich-redis
-            - name: REDIS_PORT
-              value: "6379"
-          image: ghcr.io/immich-app/immich-server:v2.7.5
-          imagePullPolicy: IfNotPresent
-          livenessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /api/server/ping
-              port: http
-            initialDelaySeconds: 0
-            periodSeconds: 10
-            timeoutSeconds: 1
-          name: immich-server
-          ports:
-            - containerPort: 2283
-              name: http
-              protocol: TCP
-          readinessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /api/server/ping
-              port: http
-            initialDelaySeconds: 0
-            periodSeconds: 10
-            timeoutSeconds: 1
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            readOnlyRootFilesystem: true
-            runAsGroup: 31847
-            runAsNonRoot: true
-            runAsUser: 31847
-          startupProbe:
-            failureThreshold: 30
-            httpGet:
-              path: /api/server/ping
-              port: http
-            initialDelaySeconds: 0
-            periodSeconds: 10
-            timeoutSeconds: 1
-          volumeMounts:
-            - mountPath: /config
-              name: config
-            - mountPath: /usr/src/app/upload
-              name: library
-            - mountPath: /run/secrets/immich.app
-              name: secrets
+      - env:
+        - name: IMMICH_CONFIG_FILE
+          value: /config/immich-config.yaml
+        - name: DB_URL_FILE
+          value: /run/secrets/immich.app/database/url
+        - name: REDIS_HOSTNAME
+          value: immich-redis
+        - name: REDIS_PORT
+          value: "6379"
+        image: ghcr.io/immich-app/immich-server:v2.7.5
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /api/server/ping
+            port: http
+          initialDelaySeconds: 0
+          periodSeconds: 10
+          timeoutSeconds: 1
+        name: immich-server
+        ports:
+        - containerPort: 2283
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /api/server/ping
+            port: http
+          initialDelaySeconds: 0
+          periodSeconds: 10
+          timeoutSeconds: 1
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 31847
+          runAsNonRoot: true
+          runAsUser: 31847
+        startupProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /api/server/ping
+            port: http
+          initialDelaySeconds: 0
+          periodSeconds: 10
+          timeoutSeconds: 1
+        volumeMounts:
+        - mountPath: /config
+          name: config
+        - mountPath: /usr/src/app/upload
+          name: library
+        - mountPath: /run/secrets/immich.app
+          name: secrets
       securityContext:
         fsGroup: 31847
         runAsGroup: 31847
@@ -89,17 +89,17 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       volumes:
-        - name: config
-          secret:
-            secretName: immich-configuration
-        - name: library
-          persistentVolumeClaim:
-            claimName: immich-smb-storage
-        - name: secrets
-          projected:
-            sources:
-              - secret:
-                  items:
-                    - key: uri
-                      path: database/url
-                  name: immich-database-immich
+      - name: config
+        secret:
+          secretName: immich-configuration
+      - name: library
+        persistentVolumeClaim:
+          claimName: immich-smb-storage
+      - name: secrets
+        projected:
+          sources:
+          - secret:
+              items:
+              - key: uri
+                path: database/url
+              name: immich-database-immich

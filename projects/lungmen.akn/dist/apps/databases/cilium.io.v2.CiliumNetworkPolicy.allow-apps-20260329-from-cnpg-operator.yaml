@@ -19,13 +19,13 @@ spec:
     matchLabels:
       cnpg.io/cluster: apps-20260329
   ingress:
-    - fromEndpoints:
-        - matchLabels:
-            app.kubernetes.io/name: cloudnative-pg
-            io.kubernetes.pod.namespace: cloudnative-pg-system
-      toPorts:
-        - ports:
-            - port: "5432"
-              protocol: TCP
-            - port: "8000"
-              protocol: TCP
+  - fromEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: cloudnative-pg
+        io.kubernetes.pod.namespace: cloudnative-pg-system
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP
+      - port: "8000"
+        protocol: TCP

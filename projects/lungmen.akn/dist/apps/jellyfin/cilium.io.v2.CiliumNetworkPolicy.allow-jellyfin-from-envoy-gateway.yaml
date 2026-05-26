@@ -15,10 +15,10 @@ spec:
     matchLabels:
       app.kubernetes.io/name: jellyfin
   ingress:
-    - fromEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: envoy-gateway-system
-      toPorts:
-        - ports:
-            - port: "8096"
-              protocol: TCP
+  - fromEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: envoy-gateway-system
+    toPorts:
+    - ports:
+      - port: "8096"
+        protocol: TCP

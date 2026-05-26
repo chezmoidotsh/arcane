@@ -1,12 +1,12 @@
 ---
 aggregationRule:
   clusterRoleSelectors:
-    - matchLabels:
-        rbac.kyverno.io/aggregate-to-background-controller: "true"
-    - matchLabels:
-        app.kubernetes.io/component: background-controller
-        app.kubernetes.io/instance: kyverno
-        app.kubernetes.io/part-of: kyverno
+  - matchLabels:
+      rbac.kyverno.io/aggregate-to-background-controller: "true"
+  - matchLabels:
+      app.kubernetes.io/component: background-controller
+      app.kubernetes.io/instance: kyverno
+      app.kubernetes.io/part-of: kyverno
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:

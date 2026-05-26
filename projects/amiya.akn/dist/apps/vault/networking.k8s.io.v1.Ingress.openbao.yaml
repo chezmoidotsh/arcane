@@ -17,5 +17,5 @@ spec:
         number: 8200
   ingressClassName: tailscale
   tls:
-    - hosts:
-        - vault
+  - hosts:
+    - vault

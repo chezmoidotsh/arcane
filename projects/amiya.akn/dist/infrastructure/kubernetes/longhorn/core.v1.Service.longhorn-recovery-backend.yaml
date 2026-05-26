@@ -13,9 +13,9 @@ metadata:
   namespace: longhorn-system
 spec:
   ports:
-    - name: recovery-backend
-      port: 9503
-      targetPort: recov-backend
+  - name: recovery-backend
+    port: 9503
+    targetPort: recov-backend
   selector:
     longhorn.io/recovery-backend: longhorn-recovery-backend
   type: ClusterIP

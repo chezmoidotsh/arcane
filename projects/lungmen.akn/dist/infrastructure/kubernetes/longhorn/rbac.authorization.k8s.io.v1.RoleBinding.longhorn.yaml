@@ -9,6 +9,6 @@ roleRef:
   kind: Role
   name: longhorn
 subjects:
-  - kind: ServiceAccount
-    name: longhorn-service-account
-    namespace: longhorn-system
+- kind: ServiceAccount
+  name: longhorn-service-account
+  namespace: longhorn-system

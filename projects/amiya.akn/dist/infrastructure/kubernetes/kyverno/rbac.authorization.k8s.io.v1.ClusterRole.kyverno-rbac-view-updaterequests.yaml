@@ -12,11 +12,11 @@ metadata:
     rbac.authorization.k8s.io/aggregate-to-view: "true"
   name: kyverno:rbac:view:updaterequests
 rules:
-  - apiGroups:
-      - kyverno.io
-    resources:
-      - updaterequests
-    verbs:
-      - get
-      - list
-      - watch
+- apiGroups:
+  - kyverno.io
+  resources:
+  - updaterequests
+  verbs:
+  - get
+  - list
+  - watch

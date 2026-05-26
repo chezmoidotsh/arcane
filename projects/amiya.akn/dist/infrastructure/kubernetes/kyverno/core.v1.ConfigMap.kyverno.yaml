@@ -5,7 +5,7 @@ data:
   enableDefaultRegistryMutation: "true"
   excludeGroups: system:nodes
   generateSuccessEvents: "false"
-  resourceFilters: "[*/*,kyverno-system,*] [Event,*,*] [*/*,kube-system,*] [*/*,kube-public,*]
+  resourceFilters: '[*/*,kyverno-system,*] [Event,*,*] [*/*,kube-system,*] [*/*,kube-public,*]
     [*/*,kube-node-lease,*] [Node,*,*] [Node/?*,*,*] [APIService,*,*] [APIService/?*,*,*]
     [TokenReview,*,*] [SubjectAccessReview,*,*] [SelfSubjectAccessReview,*,*] [Binding,*,*]
     [Pod/binding,*,*] [ReplicaSet,*,*] [ReplicaSet/?*,*,*] [EphemeralReport,*,*] [ClusterEphemeralReport,*,*]
@@ -51,7 +51,7 @@ data:
     [Service/?*,kyverno-system,kyverno-reports-controller-metrics] [ServiceMonitor,kyverno-system,kyverno-admission-controller]
     [ServiceMonitor,kyverno-system,kyverno-background-controller] [ServiceMonitor,kyverno-system,kyverno-cleanup-controller]
     [ServiceMonitor,kyverno-system,kyverno-reports-controller] [Secret,kyverno-system,kyverno-svc.kyverno-system.svc.*]
-    [Secret,kyverno-system,kyverno-cleanup-controller.kyverno-system.svc.*]"
+    [Secret,kyverno-system,kyverno-cleanup-controller.kyverno-system.svc.*]'
   updateRequestThreshold: "1000"
   webhookAnnotations: '{"admissions.enforcer/disabled":"true"}'
   webhooks: '{"namespaceSelector":{"matchExpressions":[{"key":"kubernetes.io/metadata.name","operator":"NotIn","values":["kube-system"]},{"key":"kubernetes.io/metadata.name","operator":"NotIn","values":["kyverno-system"]}],"matchLabels":null}}'

@@ -15,11 +15,11 @@ spec:
   cluster:
     name: apps-secured-20260329
   extensions:
-    - ensure: present
-      name: cube
-    - ensure: present
-      name: earthdistance
-    - ensure: present
-      name: vector
+  - ensure: present
+    name: cube
+  - ensure: present
+    name: earthdistance
+  - ensure: present
+    name: vector
   name: immich
   owner: immich

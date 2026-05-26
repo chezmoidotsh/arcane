@@ -17,56 +17,56 @@ spec:
         app: operator
     spec:
       containers:
-        - env:
-            - name: OPERATOR_INITIAL_TAGS
-              value: tag:kubernetes-cluster
-            - name: OPERATOR_HOSTNAME
-              value: amiya-akn
-            - name: OPERATOR_SECRET
-              value: operator
-            - name: OPERATOR_LOGGING
-              value: info
-            - name: OPERATOR_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: OPERATOR_LOGIN_SERVER
-              value: null
-            - name: OPERATOR_INGRESS_CLASS_NAME
-              value: tailscale
-            - name: CLIENT_ID_FILE
-              value: /oauth/client_id
-            - name: CLIENT_SECRET_FILE
-              value: /oauth/client_secret
-            - name: PROXY_IMAGE
-              value: tailscale/tailscale:v1.98.3
-            - name: PROXY_TAGS
-              value: tag:kubernetes-apps
-            - name: APISERVER_PROXY
-              value: "false"
-            - name: PROXY_FIREWALL_MODE
-              value: auto
-            - name: PROXY_DEFAULT_CLASS
-              value: restricted
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: POD_UID
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.uid
-          image: tailscale/k8s-operator:v1.98.3
-          imagePullPolicy: Always
-          name: operator
-          volumeMounts:
-            - mountPath: /oauth
-              name: oauth
-              readOnly: true
+      - env:
+        - name: OPERATOR_INITIAL_TAGS
+          value: tag:kubernetes-cluster
+        - name: OPERATOR_HOSTNAME
+          value: amiya-akn
+        - name: OPERATOR_SECRET
+          value: operator
+        - name: OPERATOR_LOGGING
+          value: info
+        - name: OPERATOR_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: OPERATOR_LOGIN_SERVER
+          value: null
+        - name: OPERATOR_INGRESS_CLASS_NAME
+          value: tailscale
+        - name: CLIENT_ID_FILE
+          value: /oauth/client_id
+        - name: CLIENT_SECRET_FILE
+          value: /oauth/client_secret
+        - name: PROXY_IMAGE
+          value: tailscale/tailscale:v1.98.3
+        - name: PROXY_TAGS
+          value: tag:kubernetes-apps
+        - name: APISERVER_PROXY
+          value: "false"
+        - name: PROXY_FIREWALL_MODE
+          value: auto
+        - name: PROXY_DEFAULT_CLASS
+          value: restricted
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        image: tailscale/k8s-operator:v1.98.3
+        imagePullPolicy: Always
+        name: operator
+        volumeMounts:
+        - mountPath: /oauth
+          name: oauth
+          readOnly: true
       nodeSelector:
         kubernetes.io/os: linux
       serviceAccountName: operator
       volumes:
-        - name: oauth
-          secret:
-            secretName: operator-oauth
+      - name: oauth
+        secret:
+          secretName: operator-oauth

@@ -38,137 +38,137 @@ spec:
         release: crossplane
     spec:
       containers:
-        - args:
-            - core
-            - start
-          env:
-            - name: GOMAXPROCS
-              valueFrom:
-                resourceFieldRef:
-                  containerName: crossplane
-                  divisor: "1"
-                  resource: limits.cpu
-            - name: GOMEMLIMIT
-              valueFrom:
-                resourceFieldRef:
-                  containerName: crossplane
-                  divisor: "1"
-                  resource: limits.memory
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: POD_SERVICE_ACCOUNT
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.serviceAccountName
-            - name: LEADER_ELECTION
-              value: "true"
-            - name: TLS_SERVER_SECRET_NAME
-              value: crossplane-tls-server
-            - name: TLS_SERVER_CERTS_DIR
-              value: /tls/server
-            - name: TLS_CLIENT_SECRET_NAME
-              value: crossplane-tls-client
-            - name: TLS_CLIENT_CERTS_DIR
-              value: /tls/client
-          image: xpkg.crossplane.io/crossplane/crossplane:v1.20.0-rc.0.140.g629ca2e2f
-          imagePullPolicy: IfNotPresent
-          name: crossplane
-          ports:
-            - containerPort: 8081
-              name: readyz
-            - containerPort: 9443
-              name: webhooks
-          resources:
-            limits:
-              cpu: 500m
-              memory: 1024Mi
-            requests:
-              cpu: 100m
-              memory: 256Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsGroup: 65532
-            runAsUser: 65532
-          startupProbe:
-            failureThreshold: 30
-            periodSeconds: 2
-            tcpSocket:
-              port: readyz
-          volumeMounts:
-            - mountPath: /cache/xpkg
-              name: package-cache
-            - mountPath: /cache/xfn
-              name: function-cache
-            - mountPath: /tls/server
-              name: tls-server-certs
-            - mountPath: /tls/client
-              name: tls-client-certs
+      - args:
+        - core
+        - start
+        env:
+        - name: GOMAXPROCS
+          valueFrom:
+            resourceFieldRef:
+              containerName: crossplane
+              divisor: "1"
+              resource: limits.cpu
+        - name: GOMEMLIMIT
+          valueFrom:
+            resourceFieldRef:
+              containerName: crossplane
+              divisor: "1"
+              resource: limits.memory
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_SERVICE_ACCOUNT
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.serviceAccountName
+        - name: LEADER_ELECTION
+          value: "true"
+        - name: TLS_SERVER_SECRET_NAME
+          value: crossplane-tls-server
+        - name: TLS_SERVER_CERTS_DIR
+          value: /tls/server
+        - name: TLS_CLIENT_SECRET_NAME
+          value: crossplane-tls-client
+        - name: TLS_CLIENT_CERTS_DIR
+          value: /tls/client
+        image: xpkg.crossplane.io/crossplane/crossplane:v1.20.0-rc.0.140.g629ca2e2f
+        imagePullPolicy: IfNotPresent
+        name: crossplane
+        ports:
+        - containerPort: 8081
+          name: readyz
+        - containerPort: 9443
+          name: webhooks
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1024Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsGroup: 65532
+          runAsUser: 65532
+        startupProbe:
+          failureThreshold: 30
+          periodSeconds: 2
+          tcpSocket:
+            port: readyz
+        volumeMounts:
+        - mountPath: /cache/xpkg
+          name: package-cache
+        - mountPath: /cache/xfn
+          name: function-cache
+        - mountPath: /tls/server
+          name: tls-server-certs
+        - mountPath: /tls/client
+          name: tls-client-certs
       hostNetwork: false
       initContainers:
-        - args:
-            - core
-            - init
-          env:
-            - name: GOMAXPROCS
-              valueFrom:
-                resourceFieldRef:
-                  containerName: crossplane-init
-                  divisor: "1"
-                  resource: limits.cpu
-            - name: GOMEMLIMIT
-              valueFrom:
-                resourceFieldRef:
-                  containerName: crossplane-init
-                  divisor: "1"
-                  resource: limits.memory
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: POD_SERVICE_ACCOUNT
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.serviceAccountName
-            - name: WEBHOOK_SERVICE_NAME
-              value: crossplane-webhooks
-            - name: WEBHOOK_SERVICE_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: WEBHOOK_SERVICE_PORT
-              value: "9443"
-            - name: TLS_CA_SECRET_NAME
-              value: crossplane-root-ca
-            - name: TLS_SERVER_SECRET_NAME
-              value: crossplane-tls-server
-            - name: TLS_CLIENT_SECRET_NAME
-              value: crossplane-tls-client
-          image: xpkg.crossplane.io/crossplane/crossplane:v1.20.0-rc.0.140.g629ca2e2f
-          imagePullPolicy: IfNotPresent
-          name: crossplane-init
-          resources:
-            limits:
-              cpu: 500m
-              memory: 1024Mi
-            requests:
-              cpu: 100m
-              memory: 256Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsGroup: 65532
-            runAsUser: 65532
+      - args:
+        - core
+        - init
+        env:
+        - name: GOMAXPROCS
+          valueFrom:
+            resourceFieldRef:
+              containerName: crossplane-init
+              divisor: "1"
+              resource: limits.cpu
+        - name: GOMEMLIMIT
+          valueFrom:
+            resourceFieldRef:
+              containerName: crossplane-init
+              divisor: "1"
+              resource: limits.memory
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: POD_SERVICE_ACCOUNT
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.serviceAccountName
+        - name: WEBHOOK_SERVICE_NAME
+          value: crossplane-webhooks
+        - name: WEBHOOK_SERVICE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: WEBHOOK_SERVICE_PORT
+          value: "9443"
+        - name: TLS_CA_SECRET_NAME
+          value: crossplane-root-ca
+        - name: TLS_SERVER_SECRET_NAME
+          value: crossplane-tls-server
+        - name: TLS_CLIENT_SECRET_NAME
+          value: crossplane-tls-client
+        image: xpkg.crossplane.io/crossplane/crossplane:v1.20.0-rc.0.140.g629ca2e2f
+        imagePullPolicy: IfNotPresent
+        name: crossplane-init
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1024Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsGroup: 65532
+          runAsUser: 65532
       securityContext:
         fsGroup: 27491
         runAsGroup: 27491
@@ -178,17 +178,17 @@ spec:
           type: RuntimeDefault
       serviceAccountName: crossplane
       volumes:
-        - emptyDir:
-            medium: null
-            sizeLimit: 20Mi
-          name: package-cache
-        - emptyDir:
-            medium: null
-            sizeLimit: 512Mi
-          name: function-cache
-        - name: tls-server-certs
-          secret:
-            secretName: crossplane-tls-server
-        - name: tls-client-certs
-          secret:
-            secretName: crossplane-tls-client
+      - emptyDir:
+          medium: null
+          sizeLimit: 20Mi
+        name: package-cache
+      - emptyDir:
+          medium: null
+          sizeLimit: 512Mi
+        name: function-cache
+      - name: tls-server-certs
+        secret:
+          secretName: crossplane-tls-server
+      - name: tls-client-certs
+        secret:
+          secretName: crossplane-tls-client

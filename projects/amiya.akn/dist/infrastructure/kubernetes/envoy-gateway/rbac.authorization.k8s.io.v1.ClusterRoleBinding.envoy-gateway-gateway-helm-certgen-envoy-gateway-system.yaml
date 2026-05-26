@@ -17,6 +17,6 @@ roleRef:
   kind: ClusterRole
   name: envoy-gateway-gateway-helm-certgen:envoy-gateway-system
 subjects:
-  - kind: ServiceAccount
-    name: envoy-gateway-gateway-helm-certgen
-    namespace: envoy-gateway-system
+- kind: ServiceAccount
+  name: envoy-gateway-gateway-helm-certgen
+  namespace: envoy-gateway-system

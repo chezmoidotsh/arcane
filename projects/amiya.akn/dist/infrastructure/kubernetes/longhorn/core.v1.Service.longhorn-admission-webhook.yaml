@@ -13,9 +13,9 @@ metadata:
   namespace: longhorn-system
 spec:
   ports:
-    - name: admission-webhook
-      port: 9502
-      targetPort: admission-wh
+  - name: admission-webhook
+    port: 9502
+    targetPort: admission-wh
   selector:
     longhorn.io/admission-webhook: longhorn-admission-webhook
   type: ClusterIP

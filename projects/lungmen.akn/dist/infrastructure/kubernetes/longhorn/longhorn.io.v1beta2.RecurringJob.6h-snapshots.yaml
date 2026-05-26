@@ -8,7 +8,7 @@ spec:
   concurrency: 1
   cron: 0 */6 * * *
   groups:
-    - auto-snapshots
+  - auto-snapshots
   labels:
     snapshot.longhorn.io/interval: 6h
     snapshot.longhorn.io/type: auto

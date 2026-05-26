@@ -9,14 +9,14 @@ metadata:
   namespace: forgejo
 spec:
   egress:
-    - toEndpoints:
-        - matchLabels:
-            cnpg.io/cluster: apps-20260329
-            io.kubernetes.pod.namespace: databases
-      toPorts:
-        - ports:
-            - port: "5432"
-              protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        cnpg.io/cluster: apps-20260329
+        io.kubernetes.pod.namespace: databases
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: forgejo

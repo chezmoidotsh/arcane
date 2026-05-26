@@ -16,6 +16,6 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-webhook:subjectaccessreviews
 subjects:
-  - kind: ServiceAccount
-    name: cert-manager-webhook
-    namespace: cert-manager-system
+- kind: ServiceAccount
+  name: cert-manager-webhook
+  namespace: cert-manager-system

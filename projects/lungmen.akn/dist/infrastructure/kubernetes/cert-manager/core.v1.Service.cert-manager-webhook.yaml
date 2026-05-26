@@ -14,14 +14,14 @@ metadata:
   namespace: cert-manager-system
 spec:
   ports:
-    - name: https
-      port: 443
-      protocol: TCP
-      targetPort: https
-    - name: metrics
-      port: 9402
-      protocol: TCP
-      targetPort: http-metrics
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: https
+  - name: metrics
+    port: 9402
+    protocol: TCP
+    targetPort: http-metrics
   selector:
     app.kubernetes.io/component: webhook
     app.kubernetes.io/instance: cert-manager

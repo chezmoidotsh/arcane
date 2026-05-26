@@ -13,22 +13,22 @@ metadata:
   namespace: newt-system
 spec:
   egress:
-    - toEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: kube-system
-            k8s-app: kube-dns
-      toPorts:
-        - ports:
-            - port: "53"
-              protocol: UDP
-          rules:
-            dns:
-              - matchPattern: "*"
-    - toEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: newt-system
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: kube-system
+        k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+      rules:
+        dns:
+        - matchPattern: '*'
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: newt-system
   endpointSelector: {}
   ingress:
-    - fromEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: newt-system
+  - fromEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: newt-system

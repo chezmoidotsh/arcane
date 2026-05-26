@@ -12,12 +12,12 @@ metadata:
     rbac.authorization.k8s.io/aggregate-to-view: "true"
   name: kyverno:rbac:view:reports
 rules:
-  - apiGroups:
-      - reports.kyverno.io
-    resources:
-      - ephemeralreports
-      - clusterephemeralreports
-    verbs:
-      - get
-      - list
-      - watch
+- apiGroups:
+  - reports.kyverno.io
+  resources:
+  - ephemeralreports
+  - clusterephemeralreports
+  verbs:
+  - get
+  - list
+  - watch

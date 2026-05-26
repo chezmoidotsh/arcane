@@ -9,10 +9,10 @@ metadata:
   namespace: immich
 spec:
   ports:
-    - name: http
-      port: 3003
-      protocol: TCP
-      targetPort: http
+  - name: http
+    port: 3003
+    protocol: TCP
+    targetPort: http
   selector:
     app.kubernetes.io/component: machine-learning
     app.kubernetes.io/instance: immich

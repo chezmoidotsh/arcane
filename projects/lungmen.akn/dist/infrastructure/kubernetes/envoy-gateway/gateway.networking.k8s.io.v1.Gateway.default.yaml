@@ -15,22 +15,22 @@ spec:
       kind: EnvoyProxy
       name: default
   listeners:
-    - allowedRoutes:
-        namespaces:
-          from: All
-      name: web
-      port: 80
-      protocol: HTTP
-    - allowedRoutes:
-        namespaces:
-          from: All
-      hostname: "*.chezmoi.sh"
-      name: chezmoi.sh-websecure
-      port: 443
-      protocol: HTTPS
-      tls:
-        certificateRefs:
-          - group: ""
-            kind: Secret
-            name: wildcard.chezmoi.sh-certificate
-        mode: Terminate
+  - allowedRoutes:
+      namespaces:
+        from: All
+    name: web
+    port: 80
+    protocol: HTTP
+  - allowedRoutes:
+      namespaces:
+        from: All
+    hostname: '*.chezmoi.sh'
+    name: chezmoi.sh-websecure
+    port: 443
+    protocol: HTTPS
+    tls:
+      certificateRefs:
+      - group: ""
+        kind: Secret
+        name: wildcard.chezmoi.sh-certificate
+      mode: Terminate

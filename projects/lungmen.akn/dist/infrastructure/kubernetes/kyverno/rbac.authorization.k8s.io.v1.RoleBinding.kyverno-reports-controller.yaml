@@ -17,6 +17,6 @@ roleRef:
   kind: Role
   name: kyverno:reports-controller
 subjects:
-  - kind: ServiceAccount
-    name: kyverno-reports-controller
-    namespace: kyverno-system
+- kind: ServiceAccount
+  name: kyverno-reports-controller
+  namespace: kyverno-system

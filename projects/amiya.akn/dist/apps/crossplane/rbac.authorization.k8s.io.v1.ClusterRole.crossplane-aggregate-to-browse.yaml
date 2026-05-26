@@ -14,19 +14,19 @@ metadata:
     rbac.crossplane.io/aggregate-to-browse: "true"
   name: crossplane:aggregate-to-browse
 rules:
-  - apiGroups:
-      - ""
-    resources:
-      - events
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - apiextensions.crossplane.io
-    resources:
-      - "*"
-    verbs:
-      - get
-      - list
-      - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apiextensions.crossplane.io
+  resources:
+  - '*'
+  verbs:
+  - get
+  - list
+  - watch

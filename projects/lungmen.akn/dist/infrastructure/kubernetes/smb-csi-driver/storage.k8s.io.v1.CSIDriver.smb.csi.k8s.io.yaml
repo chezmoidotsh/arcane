@@ -7,5 +7,5 @@ spec:
   attachRequired: false
   podInfoOnMount: true
   volumeLifecycleModes:
-    - Persistent
-    - Ephemeral
+  - Persistent
+  - Ephemeral

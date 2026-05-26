@@ -13,7 +13,7 @@ metadata:
   namespace: atuin
 spec:
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   resources:
     requests:
       storage: 250Mi

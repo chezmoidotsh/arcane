@@ -10,23 +10,23 @@ metadata:
     helm.sh/chart: cloudnative-pg-0.28.2
   name: cloudnative-pg-edit
 rules:
-  - apiGroups:
-      - postgresql.cnpg.io
-    resources:
-      - backups
-      - clusters
-      - clusters/status
-      - databases
-      - failoverquorums
-      - poolers
-      - publications
-      - scheduledbackups
-      - imagecatalogs
-      - clusterimagecatalogs
-      - subscriptions
-    verbs:
-      - create
-      - delete
-      - deletecollection
-      - patch
-      - update
+- apiGroups:
+  - postgresql.cnpg.io
+  resources:
+  - backups
+  - clusters
+  - clusters/status
+  - databases
+  - failoverquorums
+  - poolers
+  - publications
+  - scheduledbackups
+  - imagecatalogs
+  - clusterimagecatalogs
+  - subscriptions
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - patch
+  - update

@@ -14,10 +14,10 @@ metadata:
   namespace: kyverno-system
 spec:
   ports:
-    - name: metrics-port
-      port: 8000
-      protocol: TCP
-      targetPort: 8000
+  - name: metrics-port
+    port: 8000
+    protocol: TCP
+    targetPort: 8000
   selector:
     app.kubernetes.io/component: reports-controller
     app.kubernetes.io/instance: kyverno

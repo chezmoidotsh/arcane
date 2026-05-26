@@ -14,32 +14,32 @@ metadata:
     helm.sh/chart: cert-manager-v1.20.2
   name: cert-manager-webhook
 webhooks:
-  - admissionReviewVersions:
-      - v1
-    clientConfig:
-      service:
-        name: cert-manager-webhook
-        namespace: cert-manager-system
-        path: /validate
-    failurePolicy: Fail
-    matchPolicy: Equivalent
-    name: webhook.cert-manager.io
-    namespaceSelector:
-      matchExpressions:
-        - key: cert-manager.io/disable-validation
-          operator: NotIn
-          values:
-            - "true"
-    rules:
-      - apiGroups:
-          - cert-manager.io
-          - acme.cert-manager.io
-        apiVersions:
-          - v1
-        operations:
-          - CREATE
-          - UPDATE
-        resources:
-          - "*/*"
-    sideEffects: None
-    timeoutSeconds: 30
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: cert-manager-webhook
+      namespace: cert-manager-system
+      path: /validate
+  failurePolicy: Fail
+  matchPolicy: Equivalent
+  name: webhook.cert-manager.io
+  namespaceSelector:
+    matchExpressions:
+    - key: cert-manager.io/disable-validation
+      operator: NotIn
+      values:
+      - "true"
+  rules:
+  - apiGroups:
+    - cert-manager.io
+    - acme.cert-manager.io
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - '*/*'
+  sideEffects: None
+  timeoutSeconds: 30

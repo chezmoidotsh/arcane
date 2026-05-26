@@ -12,9 +12,9 @@ metadata:
     helm.sh/chart: cert-manager-v1.20.2
   name: cert-manager-webhook:subjectaccessreviews
 rules:
-  - apiGroups:
-      - authorization.k8s.io
-    resources:
-      - subjectaccessreviews
-    verbs:
-      - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create

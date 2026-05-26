@@ -16,20 +16,20 @@ metadata:
   namespace: immich
 spec:
   egress:
-    - toFQDNs:
-        - matchName: tiles.immich.cloud
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
-    - toCIDRSet:
-        - cidr: 34.22.188.249/32
-      toFQDNs:
-        - matchName: in-v3.mailjet.com
-      toPorts:
-        - ports:
-            - port: "465"
-              protocol: TCP
+  - toFQDNs:
+    - matchName: tiles.immich.cloud
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+  - toCIDRSet:
+    - cidr: 34.22.188.249/32
+    toFQDNs:
+    - matchName: in-v3.mailjet.com
+    toPorts:
+    - ports:
+      - port: "465"
+        protocol: TCP
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: immich

@@ -12,16 +12,16 @@ metadata:
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
   name: kyverno:rbac:admin:policyreports
 rules:
-  - apiGroups:
-      - wgpolicyk8s.io
-    resources:
-      - policyreports
-      - clusterpolicyreports
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
+- apiGroups:
+  - wgpolicyk8s.io
+  resources:
+  - policyreports
+  - clusterpolicyreports
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch

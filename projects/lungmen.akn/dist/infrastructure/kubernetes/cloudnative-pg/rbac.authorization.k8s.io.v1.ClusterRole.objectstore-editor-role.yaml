@@ -7,21 +7,21 @@ metadata:
     app.kubernetes.io/name: plugin-barman-cloud
   name: objectstore-editor-role
 rules:
-  - apiGroups:
-      - barmancloud.cnpg.io
-    resources:
-      - objectstores
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - patch
-      - update
-      - watch
-  - apiGroups:
-      - barmancloud.cnpg.io
-    resources:
-      - objectstores/status
-    verbs:
-      - get
+- apiGroups:
+  - barmancloud.cnpg.io
+  resources:
+  - objectstores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - barmancloud.cnpg.io
+  resources:
+  - objectstores/status
+  verbs:
+  - get

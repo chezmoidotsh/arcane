@@ -9,7 +9,7 @@ metadata:
   namespace: immich
 spec:
   accessModes:
-    - ReadWriteMany
+  - ReadWriteMany
   resources:
     requests:
       storage: 50Gi

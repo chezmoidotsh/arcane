@@ -12,10 +12,10 @@ metadata:
   namespace: zot-registry
 spec:
   ports:
-    - name: zot
-      port: 5000
-      protocol: TCP
-      targetPort: zot
+  - name: zot
+    port: 5000
+    protocol: TCP
+    targetPort: zot
   selector:
     app.kubernetes.io/instance: zot
     app.kubernetes.io/name: zot

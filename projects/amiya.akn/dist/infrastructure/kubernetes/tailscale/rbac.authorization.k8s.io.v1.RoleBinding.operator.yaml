@@ -9,6 +9,6 @@ roleRef:
   kind: Role
   name: operator
 subjects:
-  - kind: ServiceAccount
-    name: operator
-    namespace: tailscale-system
+- kind: ServiceAccount
+  name: operator
+  namespace: tailscale-system

@@ -12,20 +12,20 @@ metadata:
   namespace: atuin
 spec:
   hostnames:
-    - atuin.chezmoi.sh
+  - atuin.chezmoi.sh
   parentRefs:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: default
-      namespace: envoy-gateway-system
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: default
+    namespace: envoy-gateway-system
   rules:
-    - backendRefs:
-        - group: ""
-          kind: Service
-          name: atuin
-          port: 80
-          weight: 1
-      matches:
-        - path:
-            type: PathPrefix
-            value: /
+  - backendRefs:
+    - group: ""
+      kind: Service
+      name: atuin
+      port: 80
+      weight: 1
+    matches:
+    - path:
+        type: PathPrefix
+        value: /

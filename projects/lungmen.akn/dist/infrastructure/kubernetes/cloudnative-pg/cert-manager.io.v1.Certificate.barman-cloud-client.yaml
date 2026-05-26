@@ -15,4 +15,4 @@ spec:
   renewBefore: 360h
   secretName: barman-cloud-client-tls
   usages:
-    - client auth
+  - client auth

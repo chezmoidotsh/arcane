@@ -22,29 +22,29 @@ spec:
     spec:
       automountServiceAccountToken: true
       containers:
-        - args:
-            - scale-deploy
-          image: ghcr.io/kyverno/readiness-checker:v1.18.1
-          imagePullPolicy: null
-          name: kubectl
-          resources:
-            limits:
-              cpu: 100m
-              memory: 256Mi
-            requests:
-              cpu: 10m
-              memory: 64Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsGroup: 65534
-            runAsNonRoot: true
-            runAsUser: 65534
-            seccompProfile:
-              type: RuntimeDefault
+      - args:
+        - scale-deploy
+        image: ghcr.io/kyverno/readiness-checker:v1.18.1
+        imagePullPolicy: null
+        name: kubectl
+        resources:
+          limits:
+            cpu: 100m
+            memory: 256Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsGroup: 65534
+          runAsNonRoot: true
+          runAsUser: 65534
+          seccompProfile:
+            type: RuntimeDefault
       restartPolicy: Never
       serviceAccountName: kyverno-admission-controller

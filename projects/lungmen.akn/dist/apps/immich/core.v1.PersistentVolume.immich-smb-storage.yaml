@@ -10,7 +10,7 @@ metadata:
   name: immich-smb-storage
 spec:
   accessModes:
-    - ReadWriteMany
+  - ReadWriteMany
   capacity:
     storage: 50Gi
   csi:
@@ -22,13 +22,13 @@ spec:
       source: //nas.chezmoi.sh/application-immich
     volumeHandle: smb-server.default.svc.cluster.local/immich##
   mountOptions:
-    - dir_mode=0777
-    - file_mode=0777
-    - uid=31847
-    - gid=31847
-    - noperm
-    - mfsymlinks
-    - cache=strict
-    - noserverino
+  - dir_mode=0777
+  - file_mode=0777
+  - uid=31847
+  - gid=31847
+  - noperm
+  - mfsymlinks
+  - cache=strict
+  - noserverino
   persistentVolumeReclaimPolicy: Retain
   storageClassName: smb

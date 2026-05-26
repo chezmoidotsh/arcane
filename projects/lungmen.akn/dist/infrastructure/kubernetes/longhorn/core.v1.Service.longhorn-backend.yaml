@@ -13,9 +13,9 @@ metadata:
   namespace: longhorn-system
 spec:
   ports:
-    - name: manager
-      port: 9500
-      targetPort: manager
+  - name: manager
+    port: 9500
+    targetPort: manager
   selector:
     app: longhorn-manager
   type: ClusterIP

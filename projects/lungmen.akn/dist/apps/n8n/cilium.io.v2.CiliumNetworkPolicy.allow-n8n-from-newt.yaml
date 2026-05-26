@@ -12,11 +12,11 @@ spec:
     matchLabels:
       app.kubernetes.io/name: n8n
   ingress:
-    - fromEndpoints:
-        - matchLabels:
-            app.kubernetes.io/name: newt
-            io.kubernetes.pod.namespace: newt-system
-      toPorts:
-        - ports:
-            - port: "5678"
-              protocol: TCP
+  - fromEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: newt
+        io.kubernetes.pod.namespace: newt-system
+    toPorts:
+    - ports:
+      - port: "5678"
+        protocol: TCP

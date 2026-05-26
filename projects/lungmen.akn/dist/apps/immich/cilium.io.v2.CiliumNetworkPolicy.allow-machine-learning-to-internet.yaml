@@ -9,14 +9,14 @@ metadata:
   namespace: immich
 spec:
   egress:
-    - toEntities:
-        - world
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
-            - port: "80"
-              protocol: TCP
+  - toEntities:
+    - world
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+      - port: "80"
+        protocol: TCP
   endpointSelector:
     matchLabels:
       app.kubernetes.io/component: machine-learning

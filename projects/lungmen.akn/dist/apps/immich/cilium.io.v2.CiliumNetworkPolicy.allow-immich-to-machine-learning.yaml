@@ -9,14 +9,14 @@ metadata:
   namespace: immich
 spec:
   egress:
-    - toEndpoints:
-        - matchLabels:
-            app.kubernetes.io/component: machine-learning
-            app.kubernetes.io/name: immich
-      toPorts:
-        - ports:
-            - port: "3003"
-              protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        app.kubernetes.io/component: machine-learning
+        app.kubernetes.io/name: immich
+    toPorts:
+    - ports:
+      - port: "3003"
+        protocol: TCP
   endpointSelector:
     matchLabels:
       app.kubernetes.io/component: server

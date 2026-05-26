@@ -24,72 +24,72 @@ spec:
     spec:
       automountServiceAccountToken: false
       containers:
-        - env:
-            - name: DB_POSTGRESDB_HOST_FILE
-              value: /run/secrets/n8n.io/database/host
-            - name: DB_POSTGRESDB_PORT_FILE
-              value: /run/secrets/n8n.io/database/port
-            - name: DB_POSTGRESDB_DATABASE_FILE
-              value: /run/secrets/n8n.io/database/database
-            - name: DB_POSTGRESDB_USERNAME_FILE
-              value: /run/secrets/n8n.io/database/username
-            - name: DB_POSTGRESDB_PASSWORD_FILE
-              value: /run/secrets/n8n.io/database/password
-            - name: N8N_ENCRYPTION_KEY_FILE
-              value: /run/secrets/n8n.io/security/encryption-key
-          envFrom:
-            - configMapRef:
-                name: n8n-common
-            - configMapRef:
-                name: n8n-main
-          image: ghcr.io/n8n-io/n8n:2.22.3@sha256:75d18a9ecc588c32ece70d87bfd3319004601cf1d0d4fea5f4ba3640acb87f7b
-          imagePullPolicy: IfNotPresent
-          livenessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /healthz
-              port: http
-            initialDelaySeconds: 30
-            periodSeconds: 30
-            timeoutSeconds: 5
-          name: n8n
-          ports:
-            - containerPort: 5678
-              name: http
-              protocol: TCP
-          readinessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /healthz
-              port: http
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 3
-          resources:
-            limits:
-              cpu: 1000m
-              memory: 2Gi
-            requests:
-              cpu: 250m
-              memory: 512Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            readOnlyRootFilesystem: true
-            runAsGroup: 25678
-            runAsNonRoot: true
-            runAsUser: 25678
-          volumeMounts:
-            - mountPath: /home/node/.cache
-              name: cache
-            - mountPath: /tmp
-              name: tmp
-            - mountPath: /home/node/.n8n
-              name: n8n-data
-            - mountPath: /run/secrets/n8n.io
-              name: secrets
+      - env:
+        - name: DB_POSTGRESDB_HOST_FILE
+          value: /run/secrets/n8n.io/database/host
+        - name: DB_POSTGRESDB_PORT_FILE
+          value: /run/secrets/n8n.io/database/port
+        - name: DB_POSTGRESDB_DATABASE_FILE
+          value: /run/secrets/n8n.io/database/database
+        - name: DB_POSTGRESDB_USERNAME_FILE
+          value: /run/secrets/n8n.io/database/username
+        - name: DB_POSTGRESDB_PASSWORD_FILE
+          value: /run/secrets/n8n.io/database/password
+        - name: N8N_ENCRYPTION_KEY_FILE
+          value: /run/secrets/n8n.io/security/encryption-key
+        envFrom:
+        - configMapRef:
+            name: n8n-common
+        - configMapRef:
+            name: n8n-main
+        image: ghcr.io/n8n-io/n8n:2.22.3@sha256:75d18a9ecc588c32ece70d87bfd3319004601cf1d0d4fea5f4ba3640acb87f7b
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+        name: n8n
+        ports:
+        - containerPort: 5678
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 25678
+          runAsNonRoot: true
+          runAsUser: 25678
+        volumeMounts:
+        - mountPath: /home/node/.cache
+          name: cache
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /home/node/.n8n
+          name: n8n-data
+        - mountPath: /run/secrets/n8n.io
+          name: secrets
       securityContext:
         fsGroup: 25678
         runAsGroup: 25678
@@ -98,30 +98,30 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       volumes:
-        - emptyDir: {}
-          name: cache
-        - emptyDir: {}
-          name: tmp
-        - emptyDir: {}
-          name: n8n-data
-        - name: secrets
-          projected:
-            sources:
-              - secret:
-                  items:
-                    - key: host
-                      path: database/host
-                    - key: port
-                      path: database/port
-                    - key: dbname
-                      path: database/database
-                    - key: username
-                      path: database/username
-                    - key: password
-                      path: database/password
-                  name: n8n-database-n8n
-              - secret:
-                  items:
-                    - key: encryption-key
-                      path: security/encryption-key
-                  name: n8n-encryption-key
+      - emptyDir: {}
+        name: cache
+      - emptyDir: {}
+        name: tmp
+      - emptyDir: {}
+        name: n8n-data
+      - name: secrets
+        projected:
+          sources:
+          - secret:
+              items:
+              - key: host
+                path: database/host
+              - key: port
+                path: database/port
+              - key: dbname
+                path: database/database
+              - key: username
+                path: database/username
+              - key: password
+                path: database/password
+              name: n8n-database-n8n
+          - secret:
+              items:
+              - key: encryption-key
+                path: security/encryption-key
+              name: n8n-encryption-key

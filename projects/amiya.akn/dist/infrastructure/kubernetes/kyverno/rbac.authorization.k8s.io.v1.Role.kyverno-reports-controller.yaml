@@ -13,39 +13,39 @@ metadata:
   name: kyverno:reports-controller
   namespace: kyverno-system
 rules:
-  - apiGroups:
-      - ""
-    resourceNames:
-      - kyverno
-      - kyverno-metrics
-    resources:
-      - configmaps
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - ""
-    resources:
-      - secrets
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - coordination.k8s.io
-    resources:
-      - leases
-    verbs:
-      - create
-  - apiGroups:
-      - coordination.k8s.io
-    resourceNames:
-      - kyverno-reports-controller
-    resources:
-      - leases
-    verbs:
-      - delete
-      - get
-      - patch
-      - update
+- apiGroups:
+  - ""
+  resourceNames:
+  - kyverno
+  - kyverno-metrics
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+- apiGroups:
+  - coordination.k8s.io
+  resourceNames:
+  - kyverno-reports-controller
+  resources:
+  - leases
+  verbs:
+  - delete
+  - get
+  - patch
+  - update

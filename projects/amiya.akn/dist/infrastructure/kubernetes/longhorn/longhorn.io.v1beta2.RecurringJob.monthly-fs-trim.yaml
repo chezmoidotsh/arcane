@@ -8,7 +8,7 @@ spec:
   concurrency: 1
   cron: 0 5 1 * *
   groups:
-    - default
+  - default
   labels:
     maintenance.longhorn.io/type: filesystem-trim
   name: monthly-fs-trim

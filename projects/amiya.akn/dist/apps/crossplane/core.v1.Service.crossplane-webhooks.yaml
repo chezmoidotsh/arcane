@@ -16,9 +16,9 @@ metadata:
   namespace: crossplane
 spec:
   ports:
-    - port: 9443
-      protocol: TCP
-      targetPort: 9443
+  - port: 9443
+    protocol: TCP
+    targetPort: 9443
   selector:
     app: crossplane
     app.kubernetes.io/instance: crossplane

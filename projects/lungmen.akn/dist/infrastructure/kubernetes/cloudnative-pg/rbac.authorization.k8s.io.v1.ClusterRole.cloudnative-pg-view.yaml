@@ -10,21 +10,21 @@ metadata:
     helm.sh/chart: cloudnative-pg-0.28.2
   name: cloudnative-pg-view
 rules:
-  - apiGroups:
-      - postgresql.cnpg.io
-    resources:
-      - backups
-      - clusters
-      - clusters/status
-      - databases
-      - failoverquorums
-      - poolers
-      - publications
-      - scheduledbackups
-      - imagecatalogs
-      - clusterimagecatalogs
-      - subscriptions
-    verbs:
-      - get
-      - list
-      - watch
+- apiGroups:
+  - postgresql.cnpg.io
+  resources:
+  - backups
+  - clusters
+  - clusters/status
+  - databases
+  - failoverquorums
+  - poolers
+  - publications
+  - scheduledbackups
+  - imagecatalogs
+  - clusterimagecatalogs
+  - subscriptions
+  verbs:
+  - get
+  - list
+  - watch

@@ -12,14 +12,14 @@ metadata:
   namespace: actual-budget
 spec:
   egress:
-    - toFQDNs:
-        - matchName: auth.chezmoi.sh
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
-          serverNames:
-            - auth.chezmoi.sh
+  - toFQDNs:
+    - matchName: auth.chezmoi.sh
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+      serverNames:
+      - auth.chezmoi.sh
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: actual-budget

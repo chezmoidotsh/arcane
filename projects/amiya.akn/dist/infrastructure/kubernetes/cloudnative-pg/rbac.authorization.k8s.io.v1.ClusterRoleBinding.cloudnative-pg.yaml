@@ -14,6 +14,6 @@ roleRef:
   kind: ClusterRole
   name: cloudnative-pg
 subjects:
-  - kind: ServiceAccount
-    name: cloudnative-pg
-    namespace: cloudnative-pg-system
+- kind: ServiceAccount
+  name: cloudnative-pg
+  namespace: cloudnative-pg-system

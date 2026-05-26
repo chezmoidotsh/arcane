@@ -9,10 +9,10 @@ metadata:
   namespace: immich
 spec:
   ports:
-    - name: http
-      port: 2283
-      protocol: TCP
-      targetPort: http
+  - name: http
+    port: 2283
+    protocol: TCP
+    targetPort: http
   selector:
     app.kubernetes.io/component: server
     app.kubernetes.io/instance: immich

@@ -16,8 +16,8 @@ metadata:
   name: allow-apps-20260329-to-kube-apiserver
 spec:
   egress:
-    - toEntities:
-        - kube-apiserver
+  - toEntities:
+    - kube-apiserver
   endpointSelector:
     matchLabels:
       cnpg.io/cluster: apps-20260329

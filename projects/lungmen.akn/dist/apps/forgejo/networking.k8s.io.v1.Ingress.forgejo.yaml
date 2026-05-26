@@ -16,5 +16,5 @@ spec:
         number: 3000
   ingressClassName: tailscale
   tls:
-    - hosts:
-        - git
+  - hosts:
+    - git

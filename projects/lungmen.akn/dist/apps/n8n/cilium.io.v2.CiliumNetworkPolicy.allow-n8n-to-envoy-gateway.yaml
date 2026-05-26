@@ -11,15 +11,15 @@ metadata:
   namespace: n8n
 spec:
   egress:
-    - toEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: envoy-gateway-system
-      toPorts:
-        - ports:
-            - port: "10080"
-              protocol: TCP
-            - port: "10443"
-              protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: envoy-gateway-system
+    toPorts:
+    - ports:
+      - port: "10080"
+        protocol: TCP
+      - port: "10443"
+        protocol: TCP
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: n8n

@@ -89,12 +89,6 @@ lint:
       paths:
         - projects/nx/src/apps/*sso/authelia/configurations/authelia.yaml
         - catalog/helm/**/templates/*.yaml
-    - # Ignore everything in folder managed by FluxCD
-      linters: [ALL]
-      paths: ["**/flux-system/*"]
-    - # Ignore everything in folder managed by Cursor
-      linters: [ALL]
-      paths: ["**/.cursor/**/*"]
     - # Ansible modules commonly have imports not at the top due to the way they handle module metadata
       linters: [ruff]
       paths:
@@ -103,6 +97,10 @@ lint:
       linters: [remark-lint]
       paths:
         - "**/*.AGENT.md"
+    - # dist/ folders contain generated manifests — security scanning deferred
+      linters: [ALL]
+      paths:
+        - "**/dist/**"
 
   # This is the section where you override some linters' configurations.
   definitions:

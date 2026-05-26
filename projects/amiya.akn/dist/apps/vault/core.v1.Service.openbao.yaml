@@ -11,13 +11,13 @@ metadata:
   namespace: vault
 spec:
   ports:
-    - appProtocol: HTTP
-      name: http
-      port: 8200
-      targetPort: 8200
-    - name: https-internal
-      port: 8201
-      targetPort: 8201
+  - appProtocol: HTTP
+    name: http
+    port: 8200
+    targetPort: 8200
+  - name: https-internal
+    port: 8201
+    targetPort: 8201
   publishNotReadyAddresses: true
   selector:
     app.kubernetes.io/instance: openbao

@@ -16,6 +16,6 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-controller-orders
 subjects:
-  - kind: ServiceAccount
-    name: cert-manager
-    namespace: cert-manager-system
+- kind: ServiceAccount
+  name: cert-manager
+  namespace: cert-manager-system

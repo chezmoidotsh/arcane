@@ -17,9 +17,9 @@ metadata:
   name: cert-manager-startupapicheck:create-cert
   namespace: cert-manager-system
 rules:
-  - apiGroups:
-      - cert-manager.io
-    resources:
-      - certificaterequests
-    verbs:
-      - create
+- apiGroups:
+  - cert-manager.io
+  resources:
+  - certificaterequests
+  verbs:
+  - create

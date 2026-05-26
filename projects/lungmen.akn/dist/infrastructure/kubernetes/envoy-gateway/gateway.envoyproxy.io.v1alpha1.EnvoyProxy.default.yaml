@@ -9,7 +9,7 @@ spec:
     kubernetes:
       envoyService:
         annotations:
-          lbipam.cilium.io/sharing-cross-namespace: "*"
+          lbipam.cilium.io/sharing-cross-namespace: '*'
           lbipam.cilium.io/sharing-key: lungmen-gateway
         externalTrafficPolicy: Cluster
         type: LoadBalancer

@@ -11,14 +11,14 @@ metadata:
   namespace: newt-system
 spec:
   egress:
-    - toEndpoints:
-        - matchLabels:
-            app.kubernetes.io/name: n8n
-            io.kubernetes.pod.namespace: n8n
-      toPorts:
-        - ports:
-            - port: "5678"
-              protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: n8n
+        io.kubernetes.pod.namespace: n8n
+    toPorts:
+    - ports:
+      - port: "5678"
+        protocol: TCP
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: newt

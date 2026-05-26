@@ -16,6 +16,6 @@ roleRef:
   kind: ClusterRole
   name: view
 subjects:
-  - kind: ServiceAccount
-    name: kyverno-background-controller
-    namespace: kyverno-system
+- kind: ServiceAccount
+  name: kyverno-background-controller
+  namespace: kyverno-system

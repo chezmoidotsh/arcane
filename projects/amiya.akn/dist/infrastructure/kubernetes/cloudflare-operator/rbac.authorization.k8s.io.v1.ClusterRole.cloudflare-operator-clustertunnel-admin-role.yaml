@@ -7,15 +7,15 @@ metadata:
     app.kubernetes.io/name: cloudflare-operator
   name: cloudflare-operator-clustertunnel-admin-role
 rules:
-  - apiGroups:
-      - networking.cfargotunnel.com
-    resources:
-      - clustertunnels
-    verbs:
-      - "*"
-  - apiGroups:
-      - networking.cfargotunnel.com
-    resources:
-      - clustertunnels/status
-    verbs:
-      - get
+- apiGroups:
+  - networking.cfargotunnel.com
+  resources:
+  - clustertunnels
+  verbs:
+  - '*'
+- apiGroups:
+  - networking.cfargotunnel.com
+  resources:
+  - clustertunnels/status
+  verbs:
+  - get

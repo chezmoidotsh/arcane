@@ -10,10 +10,10 @@ metadata:
   namespace: paperless-ngx
 spec:
   ports:
-    - name: http
-      port: 80
-      protocol: TCP
-      targetPort: 8000
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8000
   selector:
     app.kubernetes.io/component: webserver
     app.kubernetes.io/instance: paperless-ngx

@@ -17,6 +17,6 @@ roleRef:
   kind: ClusterRole
   name: crossplane-admin
 subjects:
-  - apiGroup: rbac.authorization.k8s.io
-    kind: Group
-    name: crossplane:masters
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: crossplane:masters

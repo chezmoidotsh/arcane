@@ -15,6 +15,6 @@ roleRef:
   kind: Role
   name: envoy-gateway-gateway-helm-infra-manager
 subjects:
-  - kind: ServiceAccount
-    name: envoy-gateway
-    namespace: envoy-gateway-system
+- kind: ServiceAccount
+  name: envoy-gateway
+  namespace: envoy-gateway-system

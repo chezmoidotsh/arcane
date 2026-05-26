@@ -4,17 +4,17 @@ kind: ClusterRole
 metadata:
   name: cloudflare-operator-tunnel-viewer-role
 rules:
-  - apiGroups:
-      - networking.cfargotunnel.com
-    resources:
-      - tunnels
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - networking.cfargotunnel.com
-    resources:
-      - tunnels/status
-    verbs:
-      - get
+- apiGroups:
+  - networking.cfargotunnel.com
+  resources:
+  - tunnels
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - networking.cfargotunnel.com
+  resources:
+  - tunnels/status
+  verbs:
+  - get

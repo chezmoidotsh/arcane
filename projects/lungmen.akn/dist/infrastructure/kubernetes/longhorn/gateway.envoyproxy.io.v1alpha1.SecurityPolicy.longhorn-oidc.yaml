@@ -21,7 +21,7 @@ spec:
       issuer: https://auth.chezmoi.sh
     redirectURL: https://longhorn.lungmen.akn.chezmoi.sh/oauth2/callback
     scopes:
-      - openid
+    - openid
   targetRef:
     group: gateway.networking.k8s.io
     kind: HTTPRoute

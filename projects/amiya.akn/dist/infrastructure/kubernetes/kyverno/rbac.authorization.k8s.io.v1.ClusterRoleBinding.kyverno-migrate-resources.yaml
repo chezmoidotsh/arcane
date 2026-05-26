@@ -20,6 +20,6 @@ roleRef:
   kind: ClusterRole
   name: kyverno:migrate-resources
 subjects:
-  - kind: ServiceAccount
-    name: kyverno-migrate-resources
-    namespace: kyverno-system
+- kind: ServiceAccount
+  name: kyverno-migrate-resources
+  namespace: kyverno-system

@@ -10,7 +10,7 @@ metadata:
   name: silverbullet-smb-storage
 spec:
   accessModes:
-    - ReadWriteMany
+  - ReadWriteMany
   capacity:
     storage: 5Gi
   csi:
@@ -22,13 +22,13 @@ spec:
       source: //nas.chezmoi.sh/application-silverbullet
     volumeHandle: smb-server.default.svc.cluster.local/silverbullet##
   mountOptions:
-    - dir_mode=0777
-    - file_mode=0777
-    - uid=25705
-    - gid=25705
-    - noperm
-    - mfsymlinks
-    - cache=strict
-    - noserverino
+  - dir_mode=0777
+  - file_mode=0777
+  - uid=25705
+  - gid=25705
+  - noperm
+  - mfsymlinks
+  - cache=strict
+  - noserverino
   persistentVolumeReclaimPolicy: Retain
   storageClassName: smb

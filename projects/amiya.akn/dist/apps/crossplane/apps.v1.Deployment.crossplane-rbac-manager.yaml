@@ -38,80 +38,80 @@ spec:
         release: crossplane
     spec:
       containers:
-        - args:
-            - rbac
-            - start
-            - --provider-clusterrole=crossplane:allowed-provider-permissions
-          env:
-            - name: GOMAXPROCS
-              valueFrom:
-                resourceFieldRef:
-                  containerName: crossplane
-                  divisor: "1"
-                  resource: limits.cpu
-            - name: GOMEMLIMIT
-              valueFrom:
-                resourceFieldRef:
-                  containerName: crossplane
-                  divisor: "1"
-                  resource: limits.memory
-            - name: LEADER_ELECTION
-              value: "true"
-          image: xpkg.crossplane.io/crossplane/crossplane:v1.20.0-rc.0.140.g629ca2e2f
-          imagePullPolicy: IfNotPresent
-          name: crossplane
-          resources:
-            limits:
-              cpu: 100m
-              memory: 512Mi
-            requests:
-              cpu: 100m
-              memory: 256Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsGroup: 65532
-            runAsUser: 65532
+      - args:
+        - rbac
+        - start
+        - --provider-clusterrole=crossplane:allowed-provider-permissions
+        env:
+        - name: GOMAXPROCS
+          valueFrom:
+            resourceFieldRef:
+              containerName: crossplane
+              divisor: "1"
+              resource: limits.cpu
+        - name: GOMEMLIMIT
+          valueFrom:
+            resourceFieldRef:
+              containerName: crossplane
+              divisor: "1"
+              resource: limits.memory
+        - name: LEADER_ELECTION
+          value: "true"
+        image: xpkg.crossplane.io/crossplane/crossplane:v1.20.0-rc.0.140.g629ca2e2f
+        imagePullPolicy: IfNotPresent
+        name: crossplane
+        resources:
+          limits:
+            cpu: 100m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsGroup: 65532
+          runAsUser: 65532
       initContainers:
-        - args:
-            - rbac
-            - init
-          env:
-            - name: GOMAXPROCS
-              valueFrom:
-                resourceFieldRef:
-                  containerName: crossplane-init
-                  divisor: "1"
-                  resource: limits.cpu
-            - name: GOMEMLIMIT
-              valueFrom:
-                resourceFieldRef:
-                  containerName: crossplane-init
-                  divisor: "1"
-                  resource: limits.memory
-          image: xpkg.crossplane.io/crossplane/crossplane:v1.20.0-rc.0.140.g629ca2e2f
-          imagePullPolicy: IfNotPresent
-          name: crossplane-init
-          resources:
-            limits:
-              cpu: 100m
-              memory: 512Mi
-            requests:
-              cpu: 100m
-              memory: 256Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsGroup: 65532
-            runAsUser: 65532
+      - args:
+        - rbac
+        - init
+        env:
+        - name: GOMAXPROCS
+          valueFrom:
+            resourceFieldRef:
+              containerName: crossplane-init
+              divisor: "1"
+              resource: limits.cpu
+        - name: GOMEMLIMIT
+          valueFrom:
+            resourceFieldRef:
+              containerName: crossplane-init
+              divisor: "1"
+              resource: limits.memory
+        image: xpkg.crossplane.io/crossplane/crossplane:v1.20.0-rc.0.140.g629ca2e2f
+        imagePullPolicy: IfNotPresent
+        name: crossplane-init
+        resources:
+          limits:
+            cpu: 100m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsGroup: 65532
+          runAsUser: 65532
       securityContext:
         fsGroup: 31459
         runAsGroup: 31459

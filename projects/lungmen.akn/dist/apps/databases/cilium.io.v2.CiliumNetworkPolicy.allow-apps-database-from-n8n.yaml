@@ -13,11 +13,11 @@ spec:
     matchLabels:
       cnpg.io/cluster: postgres-apps
   ingress:
-    - fromEndpoints:
-        - matchLabels:
-            app.kubernetes.io/name: n8n
-            io.kubernetes.pod.namespace: n8n
-      toPorts:
-        - ports:
-            - port: "5432"
-              protocol: TCP
+  - fromEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: n8n
+        io.kubernetes.pod.namespace: n8n
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP

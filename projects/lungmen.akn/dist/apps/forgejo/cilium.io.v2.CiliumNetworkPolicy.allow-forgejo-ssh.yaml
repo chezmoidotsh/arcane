@@ -12,7 +12,7 @@ spec:
     matchLabels:
       app.kubernetes.io/name: forgejo
   ingress:
-    - toPorts:
-        - ports:
-            - port: "2222"
-              protocol: TCP
+  - toPorts:
+    - ports:
+      - port: "2222"
+        protocol: TCP

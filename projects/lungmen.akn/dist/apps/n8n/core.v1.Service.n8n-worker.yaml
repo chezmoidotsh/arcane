@@ -10,10 +10,10 @@ metadata:
   namespace: n8n
 spec:
   ports:
-    - name: http
-      port: 5678
-      protocol: TCP
-      targetPort: http
+  - name: http
+    port: 5678
+    protocol: TCP
+    targetPort: http
   selector:
     app.kubernetes.io/component: worker
     app.kubernetes.io/instance: n8n-worker

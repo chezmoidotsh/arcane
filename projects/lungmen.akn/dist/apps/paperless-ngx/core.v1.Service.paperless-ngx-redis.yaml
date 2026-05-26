@@ -10,10 +10,10 @@ metadata:
   namespace: paperless-ngx
 spec:
   ports:
-    - name: redis
-      port: 6379
-      protocol: TCP
-      targetPort: 6379
+  - name: redis
+    port: 6379
+    protocol: TCP
+    targetPort: 6379
   selector:
     app.kubernetes.io/component: tasks-broker
     app.kubernetes.io/instance: paperless-ngx

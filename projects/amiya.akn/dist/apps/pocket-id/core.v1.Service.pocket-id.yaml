@@ -10,10 +10,10 @@ metadata:
   namespace: pocket-id
 spec:
   ports:
-    - name: http
-      port: 80
-      protocol: TCP
-      targetPort: http
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
   selector:
     app.kubernetes.io/component: application
     app.kubernetes.io/instance: pocket-id

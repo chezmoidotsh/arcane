@@ -9,21 +9,21 @@ metadata:
   namespace: longhorn-system
 spec:
   hostnames:
-    - longhorn.lungmen.akn.chezmoi.sh
+  - longhorn.lungmen.akn.chezmoi.sh
   parentRefs:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: default
-      namespace: envoy-gateway-system
-      sectionName: chezmoi.sh-websecure
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: default
+    namespace: envoy-gateway-system
+    sectionName: chezmoi.sh-websecure
   rules:
-    - backendRefs:
-        - group: ""
-          kind: Service
-          name: longhorn-frontend
-          port: 80
-          weight: 1
-      matches:
-        - path:
-            type: PathPrefix
-            value: /
+  - backendRefs:
+    - group: ""
+      kind: Service
+      name: longhorn-frontend
+      port: 80
+      weight: 1
+    matches:
+    - path:
+        type: PathPrefix
+        value: /

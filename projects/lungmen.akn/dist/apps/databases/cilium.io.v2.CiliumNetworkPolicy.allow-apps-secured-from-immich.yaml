@@ -19,11 +19,11 @@ spec:
     matchLabels:
       cnpg.io/cluster: apps-secured-20260329
   ingress:
-    - fromEndpoints:
-        - matchLabels:
-            app.kubernetes.io/name: immich
-            io.kubernetes.pod.namespace: immich
-      toPorts:
-        - ports:
-            - port: "5432"
-              protocol: TCP
+  - fromEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: immich
+        io.kubernetes.pod.namespace: immich
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP

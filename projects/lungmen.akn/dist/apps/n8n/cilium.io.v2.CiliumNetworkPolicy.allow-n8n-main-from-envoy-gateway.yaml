@@ -14,10 +14,10 @@ spec:
       app.kubernetes.io/component: main
       app.kubernetes.io/name: n8n
   ingress:
-    - fromEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: envoy-gateway-system
-      toPorts:
-        - ports:
-            - port: "5678"
-              protocol: TCP
+  - fromEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: envoy-gateway-system
+    toPorts:
+    - ports:
+      - port: "5678"
+        protocol: TCP

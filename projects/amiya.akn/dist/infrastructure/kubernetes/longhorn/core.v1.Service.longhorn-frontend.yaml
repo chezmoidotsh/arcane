@@ -13,10 +13,10 @@ metadata:
   namespace: longhorn-system
 spec:
   ports:
-    - name: http
-      nodePort: null
-      port: 80
-      targetPort: http
+  - name: http
+    nodePort: null
+    port: 80
+    targetPort: http
   selector:
     app: longhorn-ui
   type: ClusterIP

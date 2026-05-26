@@ -17,18 +17,18 @@ metadata:
   namespace: forgejo
 spec:
   hostnames:
-    - git.chezmoi.sh
+  - git.chezmoi.sh
   parentRefs:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      name: default
-      namespace: envoy-gateway-system
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: default
+    namespace: envoy-gateway-system
   rules:
-    - backendRefs:
-        - kind: Service
-          name: forgejo-http
-          port: 3000
-      matches:
-        - path:
-            type: PathPrefix
-            value: /
+  - backendRefs:
+    - kind: Service
+      name: forgejo-http
+      port: 3000
+    matches:
+    - path:
+        type: PathPrefix
+        value: /

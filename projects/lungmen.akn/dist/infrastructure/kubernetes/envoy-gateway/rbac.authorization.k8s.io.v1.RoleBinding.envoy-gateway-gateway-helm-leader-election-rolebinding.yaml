@@ -15,6 +15,6 @@ roleRef:
   kind: Role
   name: envoy-gateway-gateway-helm-leader-election-role
 subjects:
-  - kind: ServiceAccount
-    name: envoy-gateway
-    namespace: envoy-gateway-system
+- kind: ServiceAccount
+  name: envoy-gateway
+  namespace: envoy-gateway-system

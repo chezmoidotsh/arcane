@@ -16,6 +16,6 @@ roleRef:
   kind: ClusterRole
   name: kyverno:admission-controller
 subjects:
-  - kind: ServiceAccount
-    name: kyverno-admission-controller
-    namespace: kyverno-system
+- kind: ServiceAccount
+  name: kyverno-admission-controller
+  namespace: kyverno-system

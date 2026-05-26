@@ -13,10 +13,10 @@ metadata:
   namespace: pocket-id
 spec:
   from:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      namespace: envoy-gateway-system
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    namespace: envoy-gateway-system
   to:
-    - group: ""
-      kind: Service
-      name: pocket-id
+  - group: ""
+    kind: Service
+    name: pocket-id

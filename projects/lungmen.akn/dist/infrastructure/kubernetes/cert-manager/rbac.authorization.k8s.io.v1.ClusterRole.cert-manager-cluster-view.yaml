@@ -13,11 +13,11 @@ metadata:
     rbac.authorization.k8s.io/aggregate-to-cluster-reader: "true"
   name: cert-manager-cluster-view
 rules:
-  - apiGroups:
-      - cert-manager.io
-    resources:
-      - clusterissuers
-    verbs:
-      - get
-      - list
-      - watch
+- apiGroups:
+  - cert-manager.io
+  resources:
+  - clusterissuers
+  verbs:
+  - get
+  - list
+  - watch

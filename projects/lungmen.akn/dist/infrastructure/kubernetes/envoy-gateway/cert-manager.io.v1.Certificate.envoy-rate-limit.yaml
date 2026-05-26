@@ -8,15 +8,15 @@ metadata:
   name: envoy-rate-limit
   namespace: envoy-gateway-system
 spec:
-  commonName: "*"
+  commonName: '*'
   dnsNames:
-    - "*.envoy-gateway-system"
+  - '*.envoy-gateway-system'
   issuerRef:
     kind: Issuer
     name: eg-issuer
   secretName: envoy-rate-limit
   usages:
-    - digital signature
-    - data encipherment
-    - key encipherment
-    - content commitment
+  - digital signature
+  - data encipherment
+  - key encipherment
+  - content commitment

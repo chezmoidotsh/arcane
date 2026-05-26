@@ -12,14 +12,14 @@ metadata:
   namespace: external-dns-system
 spec:
   ports:
-    - name: http
-      port: 7979
-      protocol: TCP
-      targetPort: http
-    - name: http-webhook
-      port: 8080
-      protocol: TCP
-      targetPort: http-webhook
+  - name: http
+    port: 7979
+    protocol: TCP
+    targetPort: http
+  - name: http-webhook
+    port: 8080
+    protocol: TCP
+    targetPort: http-webhook
   selector:
     app.kubernetes.io/instance: external-dns-unifi
     app.kubernetes.io/name: external-dns

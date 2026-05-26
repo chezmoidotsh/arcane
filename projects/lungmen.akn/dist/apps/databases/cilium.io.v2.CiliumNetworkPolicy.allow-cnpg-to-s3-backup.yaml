@@ -12,13 +12,13 @@ metadata:
   namespace: databases
 spec:
   egress:
-    - toFQDNs:
-        - matchName: s3.chezmoi.sh
-      toPorts:
-        - ports:
-            - port: "9000"
-              protocol: TCP
+  - toFQDNs:
+    - matchName: s3.chezmoi.sh
+    toPorts:
+    - ports:
+      - port: "9000"
+        protocol: TCP
   endpointSelector:
     matchExpressions:
-      - key: cnpg.io/cluster
-        operator: Exists
+    - key: cnpg.io/cluster
+      operator: Exists

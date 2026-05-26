@@ -12,10 +12,10 @@ metadata:
   name: forgejo-valkey
 spec:
   ports:
-    - name: tcp
-      port: 6379
-      protocol: TCP
-      targetPort: tcp
+  - name: tcp
+    port: 6379
+    protocol: TCP
+    targetPort: tcp
   selector:
     app.kubernetes.io/instance: forgejo-valkey
     app.kubernetes.io/name: valkey

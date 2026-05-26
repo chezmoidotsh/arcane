@@ -8,7 +8,7 @@ spec:
   concurrency: 1
   cron: 0 4 1 * *
   groups:
-    - monthly
+  - monthly
   labels:
     backup.longhorn.io/type: monthly
   name: monthly-backup

@@ -7,7 +7,7 @@ metadata:
 spec:
   commonName: barman-cloud
   dnsNames:
-    - barman-cloud
+  - barman-cloud
   duration: 2160h
   isCA: false
   issuerRef:
@@ -17,4 +17,4 @@ spec:
   renewBefore: 360h
   secretName: barman-cloud-server-tls
   usages:
-    - server auth
+  - server auth

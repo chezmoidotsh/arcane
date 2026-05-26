@@ -15,10 +15,10 @@ metadata:
   name: forgejo-test-connection
 spec:
   containers:
-    - args:
-        - forgejo-http:3000
-      command:
-        - wget
-      image: busybox:latest
-      name: wget
+  - args:
+    - forgejo-http:3000
+    command:
+    - wget
+    image: busybox:latest
+    name: wget
   restartPolicy: Never

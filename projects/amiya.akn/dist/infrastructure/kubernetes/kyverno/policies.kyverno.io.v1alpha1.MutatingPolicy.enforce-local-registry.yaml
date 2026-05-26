@@ -23,37 +23,51 @@ spec:
     mutateExisting:
       enabled: true
   matchConditions:
-    - expression: |
-        !(has(object.metadata.annotations) && 'scheduler.alpha.kubernetes.io/critical-pod' in object.metadata.annotations) &&
-        !(has(object.spec.priorityClassName) && (object.spec.priorityClassName == 'system-cluster-critical' || object.spec.priorityClassName == 'system-node-critical'))
-      name: exclude-critical-pods
+  - expression: |
+      !(has(object.metadata.annotations) && 'scheduler.alpha.kubernetes.io/critical-pod' in object.metadata.annotations) &&
+      !(has(object.spec.priorityClassName) && (object.spec.priorityClassName == 'system-cluster-critical' || object.spec.priorityClassName == 'system-node-critical'))
+    name: exclude-critical-pods
   matchConstraints:
     namespaceSelector:
       matchExpressions:
-        - key: kubernetes.io/metadata.name
-          operator: NotIn
-          values:
-            - kyverno-system
-            - kube-system
-            - kube-public
-            - kube-node-lease
+      - key: kubernetes.io/metadata.name
+        operator: NotIn
+        values:
+        - kyverno-system
+        - kube-system
+        - kube-public
+        - kube-node-lease
     resourceRules:
-      - apiGroups:
-          - ""
-        apiVersions:
-          - v1
-        operations:
-          - CREATE
-          - UPDATE
-        resources:
-          - pods
+    - apiGroups:
+      - ""
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
   mutations:
-    - applyConfiguration:
-        expression: |
-          Object{
-            spec: Object.spec{
-              containers: object.spec.containers.map(c,
-                Object.spec.containers{
+  - applyConfiguration:
+      expression: |
+        Object{
+          spec: Object.spec{
+            containers: object.spec.containers.map(c,
+              Object.spec.containers{
+                name: c.name,
+                image: c.image.startsWith('oci.chezmoi.sh/') || c.image.startsWith('ghcr.io/project-zot/') ?
+                  c.image :
+                  c.image.split('/').size() == 1 ?
+                    'oci.chezmoi.sh/docker.io/library/' + c.image :
+                    c.image.split('/').size() == 2 ?
+                      'oci.chezmoi.sh/docker.io/' + c.image :
+                      'oci.chezmoi.sh/' + c.image,
+                imagePullPolicy: 'Always'
+              }
+            ),
+            initContainers: has(object.spec.initContainers) ?
+              object.spec.initContainers.map(c,
+                Object.spec.initContainers{
                   name: c.name,
                   image: c.image.startsWith('oci.chezmoi.sh/') || c.image.startsWith('ghcr.io/project-zot/') ?
                     c.image :
@@ -64,23 +78,9 @@ spec:
                         'oci.chezmoi.sh/' + c.image,
                   imagePullPolicy: 'Always'
                 }
-              ),
-              initContainers: has(object.spec.initContainers) ?
-                object.spec.initContainers.map(c,
-                  Object.spec.initContainers{
-                    name: c.name,
-                    image: c.image.startsWith('oci.chezmoi.sh/') || c.image.startsWith('ghcr.io/project-zot/') ?
-                      c.image :
-                      c.image.split('/').size() == 1 ?
-                        'oci.chezmoi.sh/docker.io/library/' + c.image :
-                        c.image.split('/').size() == 2 ?
-                          'oci.chezmoi.sh/docker.io/' + c.image :
-                          'oci.chezmoi.sh/' + c.image,
-                    imagePullPolicy: 'Always'
-                  }
-                ) : []
-            }
+              ) : []
           }
-      patchType: ApplyConfiguration
+        }
+    patchType: ApplyConfiguration
   webhookConfiguration:
     timeoutSeconds: 10

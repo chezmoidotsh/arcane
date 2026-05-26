@@ -18,5 +18,5 @@ spec:
         number: 80
   ingressClassName: tailscale
   tls:
-    - hosts:
-        - atuin
+  - hosts:
+    - atuin

@@ -10,10 +10,10 @@ metadata:
   namespace: envoy-gateway-system
 spec:
   from:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      namespace: cloudflare-public-gateway-system
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    namespace: cloudflare-public-gateway-system
   to:
-    - group: ""
-      kind: Secret
-      name: wildcard.chezmoi.sh-certificate
+  - group: ""
+    kind: Secret
+    name: wildcard.chezmoi.sh-certificate

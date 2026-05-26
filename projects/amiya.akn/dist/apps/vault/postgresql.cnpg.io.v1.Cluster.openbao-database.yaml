@@ -14,14 +14,14 @@ spec:
       source: "2026-01-11T08:07:53.126Z"
   description: PostgreSQL database dedicated to OpenBao
   externalClusters:
-    - name: "2026-01-11T08:07:53.126Z"
-      plugin:
-        enabled: true
-        isWALArchiver: false
-        name: barman-cloud.cloudnative-pg.io
-        parameters:
-          barmanObjectName: selfhosted
-          serverName: 01KEP1HV1693BFHSVVNCTQWZ7A
+  - name: "2026-01-11T08:07:53.126Z"
+    plugin:
+      enabled: true
+      isWALArchiver: false
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: selfhosted
+        serverName: 01KEP1HV1693BFHSVVNCTQWZ7A
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog
@@ -30,21 +30,21 @@ spec:
   instances: 1
   managed:
     roles:
-      - comment: PostgreSQL role for openbao
-        connectionLimit: -1
-        ensure: present
-        inherit: true
-        login: true
-        name: openbao
-        passwordSecret:
-          name: openbao-database-credentials
+    - comment: PostgreSQL role for openbao
+      connectionLimit: -1
+      ensure: present
+      inherit: true
+      login: true
+      name: openbao
+      passwordSecret:
+        name: openbao-database-credentials
   plugins:
-    - enabled: true
-      isWALArchiver: true
-      name: barman-cloud.cloudnative-pg.io
-      parameters:
-        barmanObjectName: selfhosted
-        serverName: 01KEPSN912SSFFARX3YYZNA22Q
+  - enabled: true
+    isWALArchiver: true
+    name: barman-cloud.cloudnative-pg.io
+    parameters:
+      barmanObjectName: selfhosted
+      serverName: 01KEPSN912SSFFARX3YYZNA22Q
   postgresql:
     parameters:
       max_slot_wal_keep_size: 900MB

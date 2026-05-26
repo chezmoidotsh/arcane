@@ -11,6 +11,6 @@ roleRef:
   kind: ClusterRole
   name: plugin-barman-cloud
 subjects:
-  - kind: ServiceAccount
-    name: plugin-barman-cloud
-    namespace: cloudnative-pg-system
+- kind: ServiceAccount
+  name: plugin-barman-cloud
+  namespace: cloudnative-pg-system

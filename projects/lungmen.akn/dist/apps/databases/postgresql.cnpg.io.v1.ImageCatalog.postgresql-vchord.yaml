@@ -6,11 +6,11 @@ metadata:
   namespace: databases
 spec:
   images:
-    - image: oci.chezmoi.sh/ghcr.io/tensorchord/vchord-postgres:pg15-v1.1.1
-      major: 15
-    - image: oci.chezmoi.sh/ghcr.io/tensorchord/vchord-postgres:pg16-v1.1.1
-      major: 16
-    - image: oci.chezmoi.sh/ghcr.io/tensorchord/vchord-postgres:pg17-v1.1.1
-      major: 17
-    - image: oci.chezmoi.sh/ghcr.io/tensorchord/vchord-postgres:pg18-v1.1.1
-      major: 18
+  - image: oci.chezmoi.sh/ghcr.io/tensorchord/vchord-postgres:pg15-v1.1.1
+    major: 15
+  - image: oci.chezmoi.sh/ghcr.io/tensorchord/vchord-postgres:pg16-v1.1.1
+    major: 16
+  - image: oci.chezmoi.sh/ghcr.io/tensorchord/vchord-postgres:pg17-v1.1.1
+    major: 17
+  - image: oci.chezmoi.sh/ghcr.io/tensorchord/vchord-postgres:pg18-v1.1.1
+    major: 18

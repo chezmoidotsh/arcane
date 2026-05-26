@@ -9,13 +9,13 @@ metadata:
   namespace: forgejo
 spec:
   egress:
-    - toFQDNs:
-        - matchName: api.github.com
-        - matchName: github.com
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
+  - toFQDNs:
+    - matchName: api.github.com
+    - matchName: github.com
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: forgejo

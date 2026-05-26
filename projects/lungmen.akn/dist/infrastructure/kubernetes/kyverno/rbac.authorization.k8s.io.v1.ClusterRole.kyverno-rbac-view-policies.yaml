@@ -12,14 +12,14 @@ metadata:
     rbac.authorization.k8s.io/aggregate-to-view: "true"
   name: kyverno:rbac:view:policies
 rules:
-  - apiGroups:
-      - kyverno.io
-    resources:
-      - cleanuppolicies
-      - clustercleanuppolicies
-      - policies
-      - clusterpolicies
-    verbs:
-      - get
-      - list
-      - watch
+- apiGroups:
+  - kyverno.io
+  resources:
+  - cleanuppolicies
+  - clustercleanuppolicies
+  - policies
+  - clusterpolicies
+  verbs:
+  - get
+  - list
+  - watch

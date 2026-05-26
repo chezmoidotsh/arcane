@@ -25,21 +25,21 @@ spec:
   instances: 2
   managed:
     roles:
-      - comment: PostgreSQL role for pocket_id
-        connectionLimit: -1
-        ensure: present
-        inherit: true
-        login: true
-        name: pocket_id
-        passwordSecret:
-          name: pocket-id-database-pocket-id
+    - comment: PostgreSQL role for pocket_id
+      connectionLimit: -1
+      ensure: present
+      inherit: true
+      login: true
+      name: pocket_id
+      passwordSecret:
+        name: pocket-id-database-pocket-id
   plugins:
-    - enabled: true
-      isWALArchiver: true
-      name: barman-cloud.cloudnative-pg.io
-      parameters:
-        barmanObjectName: selfhosted
-        serverName: 01KEPA38352GYQHNKTFYPA4HE1
+  - enabled: true
+    isWALArchiver: true
+    name: barman-cloud.cloudnative-pg.io
+    parameters:
+      barmanObjectName: selfhosted
+      serverName: 01KEPA38352GYQHNKTFYPA4HE1
   postgresql:
     parameters:
       max_slot_wal_keep_size: 900MB

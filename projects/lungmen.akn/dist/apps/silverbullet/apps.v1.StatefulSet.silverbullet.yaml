@@ -22,51 +22,51 @@ spec:
     spec:
       automountServiceAccountToken: false
       containers:
-        - args:
-            - --port
-            - "3000"
-          image: docker.io/zefhemel/silverbullet:2.8.1
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          name: silverbullet
-          ports:
-            - containerPort: 3000
-              name: http
-              protocol: TCP
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
-          resources:
-            limits:
-              memory: 512Mi
-            requests:
-              cpu: 100m
-              memory: 256Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            privileged: false
-            readOnlyRootFilesystem: true
-            seccompProfile:
-              type: RuntimeDefault
-          volumeMounts:
-            - mountPath: /space
-              name: persistent
-            - mountPath: /tmp
-              name: tmp
+      - args:
+        - --port
+        - "3000"
+        image: docker.io/zefhemel/silverbullet:2.8.1
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+        name: silverbullet
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        resources:
+          limits:
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /space
+          name: persistent
+        - mountPath: /tmp
+          name: tmp
       securityContext:
         fsGroup: 25705
         runAsGroup: 25705
         runAsNonRoot: true
         runAsUser: 25705
       volumes:
-        - name: persistent
-          persistentVolumeClaim:
-            claimName: silverbullet-smb-storage
-        - emptyDir: {}
-          name: tmp
+      - name: persistent
+        persistentVolumeClaim:
+          claimName: silverbullet-smb-storage
+      - emptyDir: {}
+        name: tmp

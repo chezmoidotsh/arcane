@@ -9,9 +9,9 @@ metadata:
   namespace: envoy-gateway-system
 spec:
   dnsNames:
-    - "*.chezmoi.sh"
-    - "*.akn.chezmoi.sh"
-    - "*.lungmen.akn.chezmoi.sh"
+  - '*.chezmoi.sh'
+  - '*.akn.chezmoi.sh'
+  - '*.lungmen.akn.chezmoi.sh'
   duration: 2160h
   issuerRef:
     kind: ClusterIssuer

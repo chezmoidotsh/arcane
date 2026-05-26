@@ -5,4 +5,4 @@ metadata:
   name: primary
 spec:
   blocks:
-    - cidr: 10.0.2.0/28
+  - cidr: 10.0.2.0/28

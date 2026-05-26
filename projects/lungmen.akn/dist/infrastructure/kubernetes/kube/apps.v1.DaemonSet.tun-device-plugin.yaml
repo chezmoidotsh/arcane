@@ -22,46 +22,46 @@ spec:
     spec:
       automountServiceAccountToken: false
       containers:
-        - args:
-            - --device
-            - |
-              name: tun
-              groups:
-                - count: 1000
-                  paths:
-                    - path: /dev/net/tun
-          image: ghcr.io/squat/generic-device-plugin@sha256:d7d0951df7f11479185fd9fba1c1cb4d9c8f3232d38a5468d6fe80074f2b45d5
-          imagePullPolicy: Always
-          name: generic-device-plugin
-          ports:
-            - containerPort: 8080
-              name: http
-          resources:
-            limits:
-              cpu: 50m
-              memory: 20Mi
-            requests:
-              cpu: 50m
-              memory: 10Mi
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - mountPath: /var/lib/kubelet/device-plugins
-              name: device-plugin
-            - mountPath: /dev
-              name: dev
+      - args:
+        - --device
+        - |
+          name: tun
+          groups:
+            - count: 1000
+              paths:
+                - path: /dev/net/tun
+        image: ghcr.io/squat/generic-device-plugin@sha256:d7d0951df7f11479185fd9fba1c1cb4d9c8f3232d38a5468d6fe80074f2b45d5
+        imagePullPolicy: Always
+        name: generic-device-plugin
+        ports:
+        - containerPort: 8080
+          name: http
+        resources:
+          limits:
+            cpu: 50m
+            memory: 20Mi
+          requests:
+            cpu: 50m
+            memory: 10Mi
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /var/lib/kubelet/device-plugins
+          name: device-plugin
+        - mountPath: /dev
+          name: dev
       priorityClassName: system-node-critical
       tolerations:
-        - effect: NoExecute
-          operator: Exists
-        - effect: NoSchedule
-          operator: Exists
+      - effect: NoExecute
+        operator: Exists
+      - effect: NoSchedule
+        operator: Exists
       volumes:
-        - hostPath:
-            path: /var/lib/kubelet/device-plugins
-          name: device-plugin
-        - hostPath:
-            path: /dev
-          name: dev
+      - hostPath:
+          path: /var/lib/kubelet/device-plugins
+        name: device-plugin
+      - hostPath:
+          path: /dev
+        name: dev
   updateStrategy:
     type: RollingUpdate

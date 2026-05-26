@@ -8,6 +8,6 @@ roleRef:
   kind: ClusterRole
   name: tailscale-operator
 subjects:
-  - kind: ServiceAccount
-    name: operator
-    namespace: tailscale-system
+- kind: ServiceAccount
+  name: operator
+  namespace: tailscale-system

@@ -11,9 +11,9 @@ metadata:
   namespace: vault
 spec:
   ports:
-    - name: http
-      port: 8200
-      targetPort: 8200
+  - name: http
+    port: 8200
+    targetPort: 8200
   publishNotReadyAddresses: true
   selector:
     app.kubernetes.io/instance: openbao

@@ -8,10 +8,10 @@ metadata:
   namespace: zot-registry
 spec:
   from:
-    - group: gateway.networking.k8s.io
-      kind: Gateway
-      namespace: envoy-gateway-system
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    namespace: envoy-gateway-system
   to:
-    - group: ""
-      kind: Service
-      name: zot
+  - group: ""
+    kind: Service
+    name: zot

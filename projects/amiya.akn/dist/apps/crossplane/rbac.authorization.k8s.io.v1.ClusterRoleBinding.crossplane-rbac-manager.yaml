@@ -17,6 +17,6 @@ roleRef:
   kind: ClusterRole
   name: crossplane-rbac-manager
 subjects:
-  - kind: ServiceAccount
-    name: rbac-manager
-    namespace: crossplane
+- kind: ServiceAccount
+  name: rbac-manager
+  namespace: crossplane

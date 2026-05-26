@@ -14,6 +14,6 @@ roleRef:
   kind: ClusterRole
   name: smb-external-provisioner-role
 subjects:
-  - kind: ServiceAccount
-    name: csi-smb-controller-sa
-    namespace: smb-csi-driver-system
+- kind: ServiceAccount
+  name: csi-smb-controller-sa
+  namespace: smb-csi-driver-system

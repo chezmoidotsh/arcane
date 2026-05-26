@@ -22,32 +22,32 @@ spec:
         app: certgen
     spec:
       containers:
-        - command:
-            - envoy-gateway
-            - certgen
-          env:
-            - name: ENVOY_GATEWAY_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: metadata.namespace
-            - name: KUBERNETES_CLUSTER_DOMAIN
-              value: cluster.local
-          image: docker.io/envoyproxy/gateway:v1.8.0
-          imagePullPolicy: IfNotPresent
-          name: envoy-gateway-certgen
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-            privileged: false
-            readOnlyRootFilesystem: true
-            runAsGroup: 65532
-            runAsNonRoot: true
-            runAsUser: 65532
-            seccompProfile:
-              type: RuntimeDefault
+      - command:
+        - envoy-gateway
+        - certgen
+        env:
+        - name: ENVOY_GATEWAY_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: cluster.local
+        image: docker.io/envoyproxy/gateway:v1.8.0
+        imagePullPolicy: IfNotPresent
+        name: envoy-gateway-certgen
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+          seccompProfile:
+            type: RuntimeDefault
       imagePullSecrets: []
       restartPolicy: Never
       serviceAccountName: envoy-gateway-gateway-helm-certgen

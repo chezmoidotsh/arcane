@@ -11,14 +11,14 @@ metadata:
   namespace: newt-system
 spec:
   egress:
-    - toEndpoints:
-        - matchLabels:
-            app.kubernetes.io/name: linkding
-            io.kubernetes.pod.namespace: linkding
-      toPorts:
-        - ports:
-            - port: "9090"
-              protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: linkding
+        io.kubernetes.pod.namespace: linkding
+    toPorts:
+    - ports:
+      - port: "9090"
+        protocol: TCP
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: newt

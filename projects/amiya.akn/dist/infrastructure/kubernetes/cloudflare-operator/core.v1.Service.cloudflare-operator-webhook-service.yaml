@@ -9,8 +9,8 @@ metadata:
   namespace: cloudflare-operator-system
 spec:
   ports:
-    - port: 443
-      protocol: TCP
-      targetPort: 9443
+  - port: 443
+    protocol: TCP
+    targetPort: 9443
   selector:
     control-plane: controller-manager

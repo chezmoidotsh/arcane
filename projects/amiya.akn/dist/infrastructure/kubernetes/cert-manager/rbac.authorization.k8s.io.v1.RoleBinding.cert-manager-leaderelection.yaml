@@ -17,6 +17,6 @@ roleRef:
   kind: Role
   name: cert-manager:leaderelection
 subjects:
-  - kind: ServiceAccount
-    name: cert-manager
-    namespace: cert-manager-system
+- kind: ServiceAccount
+  name: cert-manager
+  namespace: cert-manager-system

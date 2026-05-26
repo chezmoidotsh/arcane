@@ -14,9 +14,9 @@ metadata:
   namespace: cert-manager-system
 spec:
   ports:
-    - name: http-metrics
-      port: 9402
-      protocol: TCP
+  - name: http-metrics
+    port: 9402
+    protocol: TCP
   selector:
     app.kubernetes.io/component: cainjector
     app.kubernetes.io/instance: cert-manager

@@ -8,7 +8,7 @@ spec:
   concurrency: 1
   cron: 0 3 * * 0
   groups:
-    - weekly
+  - weekly
   labels:
     backup.longhorn.io/type: weekly
   name: weekly-backup

@@ -14,9 +14,9 @@ metadata:
   namespace: forgejo
 spec:
   ports:
-    - name: http
-      port: 3000
-      targetPort: http
+  - name: http
+    port: 3000
+    targetPort: http
   selector:
     app.kubernetes.io/instance: forgejo
     app.kubernetes.io/name: forgejo

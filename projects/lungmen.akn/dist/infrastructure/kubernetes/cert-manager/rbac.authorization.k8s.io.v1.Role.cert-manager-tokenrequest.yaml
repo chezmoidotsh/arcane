@@ -13,11 +13,11 @@ metadata:
   name: cert-manager-tokenrequest
   namespace: cert-manager-system
 rules:
-  - apiGroups:
-      - ""
-    resourceNames:
-      - cert-manager
-    resources:
-      - serviceaccounts/token
-    verbs:
-      - create
+- apiGroups:
+  - ""
+  resourceNames:
+  - cert-manager
+  resources:
+  - serviceaccounts/token
+  verbs:
+  - create

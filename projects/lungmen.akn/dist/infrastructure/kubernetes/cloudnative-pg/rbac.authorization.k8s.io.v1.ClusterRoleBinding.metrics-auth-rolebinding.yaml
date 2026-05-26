@@ -8,6 +8,6 @@ roleRef:
   kind: ClusterRole
   name: metrics-auth-role
 subjects:
-  - kind: ServiceAccount
-    name: plugin-barman-cloud
-    namespace: cloudnative-pg-system
+- kind: ServiceAccount
+  name: plugin-barman-cloud
+  namespace: cloudnative-pg-system

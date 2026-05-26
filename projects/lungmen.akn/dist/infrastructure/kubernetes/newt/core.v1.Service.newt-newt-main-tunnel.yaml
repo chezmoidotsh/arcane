@@ -13,10 +13,10 @@ metadata:
   namespace: newt-system
 spec:
   ports:
-    - name: wg
-      port: 51820
-      protocol: UDP
-      targetPort: 51820
+  - name: wg
+    port: 51820
+    protocol: UDP
+    targetPort: 51820
   selector:
     app.kubernetes.io/instance: newt
     app.kubernetes.io/name: newt

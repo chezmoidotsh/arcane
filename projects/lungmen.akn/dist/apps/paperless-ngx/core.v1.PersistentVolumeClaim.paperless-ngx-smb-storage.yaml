@@ -9,7 +9,7 @@ metadata:
   namespace: paperless-ngx
 spec:
   accessModes:
-    - ReadWriteMany
+  - ReadWriteMany
   resources:
     requests:
       storage: 10Gi

@@ -16,6 +16,6 @@ roleRef:
   kind: ClusterRole
   name: cert-manager-cainjector
 subjects:
-  - kind: ServiceAccount
-    name: cert-manager-cainjector
-    namespace: cert-manager-system
+- kind: ServiceAccount
+  name: cert-manager-cainjector
+  namespace: cert-manager-system

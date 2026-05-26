@@ -10,7 +10,7 @@ metadata:
   name: paperless-ngx-smb-storage
 spec:
   accessModes:
-    - ReadWriteMany
+  - ReadWriteMany
   capacity:
     storage: 10Gi
   csi:
@@ -22,13 +22,13 @@ spec:
       source: //nas.chezmoi.sh/application-paperless
     volumeHandle: smb-server.default.svc.cluster.local/paperless##
   mountOptions:
-    - dir_mode=0777
-    - file_mode=0777
-    - uid=21473
-    - gid=21473
-    - noperm
-    - mfsymlinks
-    - cache=strict
-    - noserverino
+  - dir_mode=0777
+  - file_mode=0777
+  - uid=21473
+  - gid=21473
+  - noperm
+  - mfsymlinks
+  - cache=strict
+  - noserverino
   persistentVolumeReclaimPolicy: Retain
   storageClassName: smb

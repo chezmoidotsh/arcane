@@ -13,48 +13,48 @@ metadata:
   name: kyverno:admission-controller
   namespace: kyverno-system
 rules:
-  - apiGroups:
-      - ""
-    resources:
-      - secrets
-      - serviceaccounts
-    verbs:
-      - get
-      - list
-      - watch
-      - patch
-      - create
-      - update
-      - delete
-  - apiGroups:
-      - ""
-    resourceNames:
-      - kyverno
-      - kyverno-metrics
-    resources:
-      - configmaps
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - coordination.k8s.io
-    resources:
-      - leases
-    verbs:
-      - create
-      - delete
-      - get
-      - patch
-      - update
-  - apiGroups:
-      - apps
-    resources:
-      - deployments
-      - deployments/scale
-    verbs:
-      - get
-      - list
-      - watch
-      - patch
-      - update
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  - serviceaccounts
+  verbs:
+  - get
+  - list
+  - watch
+  - patch
+  - create
+  - update
+  - delete
+- apiGroups:
+  - ""
+  resourceNames:
+  - kyverno
+  - kyverno-metrics
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+  - delete
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - deployments/scale
+  verbs:
+  - get
+  - list
+  - watch
+  - patch
+  - update

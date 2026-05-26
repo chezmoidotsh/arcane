@@ -10,10 +10,10 @@ metadata:
   namespace: linkding
 spec:
   ports:
-    - name: http
-      port: 80
-      protocol: TCP
-      targetPort: http
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
   selector:
     app.kubernetes.io/instance: linkding
     app.kubernetes.io/name: linkding

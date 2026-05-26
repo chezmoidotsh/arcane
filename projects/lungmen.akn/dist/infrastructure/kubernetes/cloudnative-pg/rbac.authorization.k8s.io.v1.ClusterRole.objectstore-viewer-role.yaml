@@ -7,17 +7,17 @@ metadata:
     app.kubernetes.io/name: plugin-barman-cloud
   name: objectstore-viewer-role
 rules:
-  - apiGroups:
-      - barmancloud.cnpg.io
-    resources:
-      - objectstores
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - barmancloud.cnpg.io
-    resources:
-      - objectstores/status
-    verbs:
-      - get
+- apiGroups:
+  - barmancloud.cnpg.io
+  resources:
+  - objectstores
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - barmancloud.cnpg.io
+  resources:
+  - objectstores/status
+  verbs:
+  - get

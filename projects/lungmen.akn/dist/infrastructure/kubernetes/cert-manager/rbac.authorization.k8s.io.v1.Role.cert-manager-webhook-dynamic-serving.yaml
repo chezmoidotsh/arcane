@@ -13,20 +13,20 @@ metadata:
   name: cert-manager-webhook:dynamic-serving
   namespace: cert-manager-system
 rules:
-  - apiGroups:
-      - ""
-    resourceNames:
-      - cert-manager-webhook-ca
-    resources:
-      - secrets
-    verbs:
-      - get
-      - list
-      - watch
-      - update
-  - apiGroups:
-      - ""
-    resources:
-      - secrets
-    verbs:
-      - create
+- apiGroups:
+  - ""
+  resourceNames:
+  - cert-manager-webhook-ca
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
