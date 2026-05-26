@@ -24,7 +24,11 @@ machine:
       rotate-server-certificates: true # NOTE: This is required for Metrics Server
     extraConfig:
       featureGates:
+        # UserNamespacesSupport: alpha K8s 1.25 · beta K8s 1.28 · GA K8s 1.33
+        # Gate can be dropped once confirmed the cluster runs ≥1.34 without it.
         UserNamespacesSupport: true
+        # ImageVolume: alpha K8s 1.31 · beta K8s 1.33
+        # Review graduation status before each minor upgrade.
         ImageVolume: true
   sysctls:
     user.max_user_namespaces: "11255"
@@ -54,6 +58,14 @@ cluster:
   # -- Custom configuration (enable user namespaces)
   apiServer:
     extraArgs:
+      # UserNamespacesSupport: alpha K8s 1.25 · beta K8s 1.28 · GA K8s 1.33
+      # ImageVolume: alpha K8s 1.31 · beta K8s 1.33
+      # When removing a graduated gate: talosctl patch machineconfig is a STRATEGIC MERGE
+      # and cannot delete keys. Extract + edit + re-apply:
+      #   talosctl get machineconfig -o yaml > /tmp/mc.yaml
+      #   # edit /tmp/mc.yaml — remove the gate from both kubelet.extraConfig.featureGates
+      #   # and apiServer.extraArgs.feature-gates
+      #   talosctl apply-config --file /tmp/mc.yaml
       feature-gates: UserNamespacesSupport=true,ImageVolume=true
 
   # -- Install extra components
