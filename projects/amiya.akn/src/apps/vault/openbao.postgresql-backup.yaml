@@ -7,4 +7,7 @@ spec:
   backupOwnerReference: cluster
   cluster:
     name: openbao-database
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
   schedule: "@weekly"

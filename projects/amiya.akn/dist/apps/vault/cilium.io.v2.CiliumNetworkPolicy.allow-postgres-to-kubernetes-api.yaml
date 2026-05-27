@@ -1,0 +1,30 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows OpenBao PostgreSQL pods to access the Kubernetes API server.
+  labels:
+    app.kubernetes.io/name: vault
+  name: allow-postgres-to-kubernetes-api
+  namespace: vault
+spec:
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: kube-system
+        k8s-app: kube-apiserver
+    toPorts:
+    - ports:
+      - port: "6443"
+        protocol: TCP
+  - toEntities:
+    - host
+    toPorts:
+    - ports:
+      - port: "6443"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: openbao-database

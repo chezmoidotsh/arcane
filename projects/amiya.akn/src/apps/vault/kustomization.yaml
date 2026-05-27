@@ -17,6 +17,7 @@ resources:
   - openbao.postgresql-objectstore.yaml
   - openbao.postgresql.yaml
   - openbao.secretstore.yaml
+  - security/
 
 helmCharts:
   - repo: https://openbao.github.io/openbao-helm

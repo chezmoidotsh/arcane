@@ -1,0 +1,28 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows CloudNative-PG operator to manage the OpenBao PostgreSQL database.
+      Based on CloudNative-PG networking requirements: operator needs access to
+      port 5432 (PostgreSQL) and port 8000 (metrics/management).
+  labels:
+    app.kubernetes.io/name: vault
+  name: allow-postgres-from-cnpg
+  namespace: vault
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: openbao-database
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: cloudnative-pg
+        io.kubernetes.pod.namespace: cloudnative-pg-system
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP
+      - port: "8000"
+        protocol: TCP

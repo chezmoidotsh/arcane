@@ -1,0 +1,34 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows OpenBao PostgreSQL database to perform backup operations to S3 storage.
+      Enables scheduled backups and WAL archiving to the configured S3 endpoint.
+  labels:
+    app.kubernetes.io/name: vault
+  name: allow-postgres-to-s3-backup
+  namespace: vault
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: s3.chezmoi.sh
+    toPorts:
+    - ports:
+      - port: "9000"
+        protocol: TCP
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: kube-system
+        k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+      rules:
+        dns:
+        - matchPattern: '*'
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: openbao-database
