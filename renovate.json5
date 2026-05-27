@@ -2,11 +2,14 @@
   // Use the official Renovate schema for validation and IDE auto-completion.
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
 
+  // Disable Renovate until the configuration has been reworked to avoid some annoying auto-upgrades.
+  "enabled": false,
+
   // Extend shared configurations. This is great for maintainability.
   "extends": [
     "github>chezmoidotsh/renovate-config",
     "github>chezmoidotsh/renovate-config:github-actions(monthly)",
-    "github>chezmoidotsh/renovate-config:gitmoji"
+    "github>chezmoidotsh/renovate-config:gitmoji",
   ],
 
   // ---
@@ -15,7 +18,6 @@
   // This is the core of your custom workflow. We are using regex to find
   // dependencies based on special #renovate: comments.
   "regexManagers": [
-
     // ---
     // Group: Kustomization File Updates (kustomization.yaml)
     // ---
@@ -28,19 +30,19 @@
       // # renovate: datasource=... depName=...
       // app.kubernetes.io/version: <currentValue>
       "matchStrings": [
-		"#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s+app\\.kubernetes\\.io/version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)"
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s+app\\.kubernetes\\.io/version:\\s*[\"']?(?<currentValue>[^\"'\\s]+)",
       ],
-      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
+      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}",
     },
 
     {
       "description": "Update value in .application.patch files",
       "fileMatch": ["\\.application\\.patch$"],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s+(?:\\w+:\\s*.*\\s+)?value:\\s*[\"']?(?<currentValue>[^\"'\\s]+)"
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s+(?:\\w+:\\s*.*\\s+)?value:\\s*[\"']?(?<currentValue>[^\"'\\s]+)",
       ],
-      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
-    }
+      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}",
+    },
 
     // ---
     // Group: Ad-hoc Inline Image Updates (All other .yaml files)
@@ -74,9 +76,9 @@
     //   "matchStrings": [
     //     "(?P<header>#\\s*renovate:\\s*datasource=(?P<datasource>\\S+)\\s+depName=(?P<depName>\\S+)(?:\\s+registryUrl=(?P<registryUrl>\\S+))?\\s*)\\n(?P<indent>\\s*)image:\\s*['\"]?{{depName}}(?P<tag>:[^'\"\\s@]+)?@['\"]?(?P<currentValue>sha256:[A-Fa-f0-9]+)(?P<suffix>['\"]?)"
     //   ],
-	//   "autoReplaceStringTemplate": "{{{header}}}\n{{{indent}}}image:{{{depName}}}{{#if tag}}{{{tag}}}{{/if}}@{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}{{{suffix}}}",
-	//   "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}",
-	//   "extractVersionTemplate": "{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}"
+    //   "autoReplaceStringTemplate": "{{{header}}}\n{{{indent}}}image:{{{depName}}}{{#if tag}}{{{tag}}}{{/if}}@{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}{{{suffix}}}",
+    //   "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}",
+    //   "extractVersionTemplate": "{{#if newDigest}}sha256:{{newDigest}}{{else}}{{newValue}}{{/if}}"
     // }
   ],
 
@@ -88,14 +90,14 @@
     {
       "description": "Group all updates for the same package name into a single PR",
       "matchDatasources": ["docker", "helm"],
-      "groupName": "{{{depName}}}"
+      "groupName": "{{{depName}}}",
     },
     {
       // This rule enables digest updates on Kustomization files.
       "description": "Enable digest updates for Kustomization files",
       "matchDatasources": ["docker"],
       "matchFileNames": ["/(^|/)kustomization\\.ya?ml$/"],
-      "pinDigest": true
-    }
-  ]
+      "pinDigest": true,
+    },
+  ],
 }
