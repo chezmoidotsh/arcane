@@ -1,0 +1,23 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows OpenBao to reach Pocket-ID OIDC endpoints for user authentication.
+      OpenBao uses Pocket-ID as its OIDC provider (oidcDiscoveryUrl: https://auth.chezmoi.sh)
+      for both UI login and CLI authentication flows.
+  name: allow-openbao-to-pocket-id
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: vault
+      component: server
+  egress:
+    - toFQDNs:
+        - matchName: auth.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+          serverNames:
+            - auth.chezmoi.sh
