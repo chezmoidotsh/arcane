@@ -9,7 +9,7 @@ resources:
 helmCharts:
   - repo: https://helm.cilium.io/
     name: cilium
-    version: 1.19.4
+    version: 1.18.10
 
     releaseName: cilium
     namespace: kube-system

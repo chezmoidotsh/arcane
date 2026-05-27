@@ -60,9 +60,8 @@ cgroup:
 # Kubernetes Service Configuration
 # Specifies how Cilium connects to the Kubernetes API server
 # Using localhost and port 7445 for Talos Linux compatibility
-k8sService:
-  host: localhost
-  port: 7445
+k8sServiceHost: localhost
+k8sServicePort: 7445
 
 # K8s Client Rate Limit Configuration
 # Controls the rate limit for the Kubernetes client, required because
