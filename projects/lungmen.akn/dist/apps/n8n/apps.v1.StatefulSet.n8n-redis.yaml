@@ -21,7 +21,7 @@ spec:
     spec:
       automountServiceAccountToken: false
       containers:
-      - image: docker.io/library/redis:8.6.3-alpine
+      - image: docker.io/library/redis:8.8.0-alpine
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
