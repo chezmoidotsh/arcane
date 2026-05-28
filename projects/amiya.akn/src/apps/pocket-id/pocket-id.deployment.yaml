@@ -141,6 +141,10 @@ spec:
             - name: OTEL_EXPORTER_PROMETHEUS_PORT
               value: "9464"
 
+            - # Disable version check as api.github.com is blocked in this namespace
+              name: VERSION_CHECK_DISABLED
+              value: "true"
+
           livenessProbe:
             exec:
               command:

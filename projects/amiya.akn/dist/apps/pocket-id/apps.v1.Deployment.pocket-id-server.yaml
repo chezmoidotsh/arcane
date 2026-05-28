@@ -96,6 +96,8 @@ spec:
           value: 0.0.0.0
         - name: OTEL_EXPORTER_PROMETHEUS_PORT
           value: "9464"
+        - name: VERSION_CHECK_DISABLED
+          value: "true"
         image: ghcr.io/pocket-id/pocket-id:v2.7.0
         livenessProbe:
           exec:
