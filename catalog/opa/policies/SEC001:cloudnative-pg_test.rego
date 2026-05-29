@@ -81,26 +81,26 @@ test_catalog_mixed_entries if {
 }
 
 test_non_cnpg_resource_ignored if {
-    not is_cnpg_catalog with input as {
+    not is_cnpg_catalog({
         "apiVersion": "apps/v1",
         "kind": "Deployment",
         "metadata": {"name": "app", "namespace": "default"},
         "spec": {},
-    }
+    })
 }
 
 test_image_catalog_detected if {
-    is_cnpg_catalog with input as {
+    is_cnpg_catalog({
         "apiVersion": "postgresql.cnpg.io/v1",
         "kind": "ImageCatalog",
         "metadata": {"name": "test"},
-    }
+    })
 }
 
 test_cluster_image_catalog_detected if {
-    is_cnpg_catalog with input as {
+    is_cnpg_catalog({
         "apiVersion": "postgresql.cnpg.io/v1",
         "kind": "ClusterImageCatalog",
         "metadata": {"name": "default"},
-    }
+    })
 }

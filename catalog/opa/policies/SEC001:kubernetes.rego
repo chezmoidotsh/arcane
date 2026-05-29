@@ -18,80 +18,78 @@ default excluded_namespaces := {
 # All container images must be pulled through the local Zot mirror at
 # oci.chezmoi.sh. This applies to containers, initContainers,
 # ephemeralContainers, and OCI image volumes.
+#
+# Supports both conftest invocation modes:
+#   conftest test <file>           → input is a single document
+#   conftest test <dir> --combine  → input.document holds all documents,
+#                                    enabling multi-resource rules
 # ──────────────────────────────────────────────────────────────────────────────
 
+# ── Input normalization ───────────────────────────────────────────────────────
+
+resources contains r if {
+    # --combine mode (conftest 0.68+): input is [{path, contents}, ...]
+    is_array(input)
+    some item in input
+    r := item.contents
+    is_object(r)
+}
+
+resources contains r if {
+    # single-file mode: input is the document object itself
+    is_object(input)
+    r := input
+}
+
 # ── Shared helpers ────────────────────────────────────────────────────────────
-
-is_excluded_namespace if {
-    not input.metadata.namespace
-}
-
-is_excluded_namespace if {
-    input.metadata.namespace in excluded_namespaces
-}
 
 is_local_image(image) if {
     startswith(image, local_registry)
 }
 
+is_excluded_namespace(res) if {
+    not res.metadata.namespace
+}
+
+is_excluded_namespace(res) if {
+    res.metadata.namespace in excluded_namespaces
+}
+
 # ── Container extraction ──────────────────────────────────────────────────────
-# Collects from direct Pod specs, workload resources with a Pod template
-# (Deployment, StatefulSet, DaemonSet, Job, …), and CronJob's nested jobTemplate.
+# Returns all containers for a resource: main, init, and ephemeral containers
+# across direct Pod specs, workload templates, and CronJob jobTemplates.
+# Useful for writing custom multi-resource rules on top of resources.
 
-all_containers contains c if {
-    some c in input.spec.containers
-}
+_container_paths := [
+    ["spec", "containers"],
+    ["spec", "initContainers"],
+    ["spec", "ephemeralContainers"],
+    ["spec", "template", "spec", "containers"],
+    ["spec", "template", "spec", "initContainers"],
+    ["spec", "template", "spec", "ephemeralContainers"],
+    ["spec", "jobTemplate", "spec", "template", "spec", "containers"],
+    ["spec", "jobTemplate", "spec", "template", "spec", "initContainers"],
+    ["spec", "jobTemplate", "spec", "template", "spec", "ephemeralContainers"],
+]
 
-all_containers contains c if {
-    some c in input.spec.initContainers
-}
-
-all_containers contains c if {
-    some c in input.spec.ephemeralContainers
-}
-
-all_containers contains c if {
-    some c in input.spec.template.spec.containers
-}
-
-all_containers contains c if {
-    some c in input.spec.template.spec.initContainers
-}
-
-all_containers contains c if {
-    some c in input.spec.template.spec.ephemeralContainers
-}
-
-all_containers contains c if {
-    some c in input.spec.jobTemplate.spec.template.spec.containers
-}
-
-all_containers contains c if {
-    some c in input.spec.jobTemplate.spec.template.spec.initContainers
-}
-
-all_containers contains c if {
-    some c in input.spec.jobTemplate.spec.template.spec.ephemeralContainers
+resource_containers(res) := {c |
+    some path in _container_paths
+    some c in object.get(res, path, [])
 }
 
 # ── OCI image volume extraction ───────────────────────────────────────────────
 # KEP-127 / Kubernetes 1.31+ (ImageVolume feature gate) adds an `image` field
 # directly on volume entries. Only volumes with a string `image` are matched.
 
-all_volume_images contains v if {
-    some vol in input.spec.volumes
-    is_string(vol.image)
-    v := {"name": vol.name, "image": vol.image}
-}
+_volume_paths := [
+    ["spec", "volumes"],
+    ["spec", "template", "spec", "volumes"],
+    ["spec", "jobTemplate", "spec", "template", "spec", "volumes"],
+]
 
-all_volume_images contains v if {
-    some vol in input.spec.template.spec.volumes
-    is_string(vol.image)
-    v := {"name": vol.name, "image": vol.image}
-}
-
-all_volume_images contains v if {
-    some vol in input.spec.jobTemplate.spec.template.spec.volumes
+resource_volume_images(res) := {v |
+    some path in _volume_paths
+    some vol in object.get(res, path, [])
     is_string(vol.image)
     v := {"name": vol.name, "image": vol.image}
 }
@@ -99,15 +97,17 @@ all_volume_images contains v if {
 # ── Deny rules ────────────────────────────────────────────────────────────────
 
 deny contains msg if {
-    not is_excluded_namespace
-    some c in all_containers
+    some res in resources
+    not is_excluded_namespace(res)
+    some c in resource_containers(res)
     not is_local_image(c.image)
-    msg := sprintf("SEC001: container %q in namespace %q must use local registry prefix %q (got %q)", [c.name, input.metadata.namespace, local_registry, c.image])
+    msg := sprintf("SEC001: container %q in namespace %q must use local registry prefix %q (got %q)", [c.name, res.metadata.namespace, local_registry, c.image])
 }
 
 deny contains msg if {
-    not is_excluded_namespace
-    some v in all_volume_images
+    some res in resources
+    not is_excluded_namespace(res)
+    some v in resource_volume_images(res)
     not is_local_image(v.image)
-    msg := sprintf("SEC001: OCI volume %q in namespace %q must use local registry prefix %q (got %q)", [v.name, input.metadata.namespace, local_registry, v.image])
+    msg := sprintf("SEC001: OCI volume %q in namespace %q must use local registry prefix %q (got %q)", [v.name, res.metadata.namespace, local_registry, v.image])
 }

@@ -19,15 +19,15 @@ test_local_image_rejected_ghcr if {
 }
 
 test_excluded_namespace_kube_system if {
-    is_excluded_namespace with input.metadata.namespace as "kube-system"
+    is_excluded_namespace({"metadata": {"namespace": "kube-system"}})
 }
 
 test_excluded_namespace_longhorn if {
-    is_excluded_namespace with input.metadata.namespace as "longhorn-system"
+    is_excluded_namespace({"metadata": {"namespace": "longhorn-system"}})
 }
 
 test_non_excluded_namespace if {
-    not is_excluded_namespace with input.metadata.namespace as "default"
+    not is_excluded_namespace({"metadata": {"namespace": "default"}})
 }
 
 test_deployment_compliant if {
@@ -371,5 +371,54 @@ test_cluster_scoped_resource_no_namespace if {
         "metadata": {"name": "read-pods"},
         "rules": [{"apiGroups": [""], "resources": ["pods"], "verbs": ["get", "list"]}],
     }}
+    count(violations) == 0
+}
+
+# ── --combine mode tests ──────────────────────────────────────────────────────
+
+test_combine_mode_detects_violation if {
+    # conftest --combine passes [{path, contents}, ...] as input.
+    violations := {msg | some msg in deny with input as [{"path": "a.yaml", "contents": {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {"name": "app", "namespace": "default"},
+        "spec": {"template": {"spec": {"containers": [
+            {"name": "app", "image": "docker.io/library/nginx:latest"},
+        ]}}},
+    }}]}
+    count(violations) == 1
+}
+
+test_combine_mode_only_non_compliant_flagged if {
+    violations := {msg | some msg in deny with input as [
+        {"path": "ok.yaml", "contents": {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "metadata": {"name": "ok", "namespace": "default"},
+            "spec": {"template": {"spec": {"containers": [
+                {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
+            ]}}},
+        }},
+        {"path": "bad.yaml", "contents": {
+            "apiVersion": "apps/v1",
+            "kind": "Deployment",
+            "metadata": {"name": "bad", "namespace": "default"},
+            "spec": {"template": {"spec": {"containers": [
+                {"name": "app", "image": "docker.io/library/nginx:latest"},
+            ]}}},
+        }},
+    ]}
+    count(violations) == 1
+}
+
+test_combine_mode_excluded_namespace_skipped if {
+    violations := {msg | some msg in deny with input as [{"path": "ds.yaml", "contents": {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "metadata": {"name": "app", "namespace": "kube-system"},
+        "spec": {"template": {"spec": {"containers": [
+            {"name": "app", "image": "docker.io/library/nginx:latest"},
+        ]}}},
+    }}]}
     count(violations) == 0
 }

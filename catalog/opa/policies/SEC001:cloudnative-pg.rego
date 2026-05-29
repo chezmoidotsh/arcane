@@ -10,27 +10,25 @@ import rego.v1
 # where each entry has an `image` field that must resolve through the local
 # registry mirror.
 #
-# Relies on is_local_image from the companion SEC001:kubernetes policy.
+# Relies on resources and is_local_image from the companion SEC001:kubernetes
+# policy (same package). Supports both single-file and --combine modes via the
+# shared resources rule.
 # ──────────────────────────────────────────────────────────────────────────────
 
-is_cnpg_catalog if {
-    input.kind == "ImageCatalog"
-    input.apiVersion == "postgresql.cnpg.io/v1"
+is_cnpg_catalog(res) if {
+    res.kind == "ImageCatalog"
+    res.apiVersion == "postgresql.cnpg.io/v1"
 }
 
-is_cnpg_catalog if {
-    input.kind == "ClusterImageCatalog"
-    input.apiVersion == "postgresql.cnpg.io/v1"
-}
-
-cnpg_images contains {"major": entry.major, "image": entry.image} if {
-    is_cnpg_catalog
-    some entry in input.spec.images
+is_cnpg_catalog(res) if {
+    res.kind == "ClusterImageCatalog"
+    res.apiVersion == "postgresql.cnpg.io/v1"
 }
 
 deny contains msg if {
-    is_cnpg_catalog
-    some img in cnpg_images
-    not is_local_image(img.image)
-    msg := sprintf("SEC001: CNPG %s %q image for major %d must use local registry prefix %q (got %q)", [input.kind, input.metadata.name, img.major, local_registry, img.image])
+    some res in resources
+    is_cnpg_catalog(res)
+    some entry in res.spec.images
+    not is_local_image(entry.image)
+    msg := sprintf("SEC001: CNPG %s %q image for major %d must use local registry prefix %q (got %q)", [res.kind, res.metadata.name, entry.major, local_registry, entry.image])
 }
