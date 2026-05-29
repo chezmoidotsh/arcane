@@ -2,12 +2,10 @@ name: 🔍 Raw Kubernetes Validation
 
 on:
   push:
+    branches: [main]
     paths:
-      - "projects/*/src/apps/**"
-      - "projects/*/src/infrastructure/kubernetes/**"
+      - ".github/workflows/push,pull_request.validation.yaml"
       - "catalog/helm/**"
-  pull_request:
-    paths:
       - "projects/*/src/apps/**"
       - "projects/*/src/infrastructure/kubernetes/**"
 
@@ -94,4 +92,4 @@ jobs:
           install: true
 
       - name: 🧪 Run conftest
-        run: mise exec conftest -- conftest test "${{ matrix.directory }}" -p catalog/opa/policies/ --combine --no-color
+        run: mise exec conftest -- conftest test "${{ matrix.directory }}" --policy catalog/opa/policies/ --combine --output github
