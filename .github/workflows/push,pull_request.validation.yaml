@@ -1,0 +1,78 @@
+name: 🔍 Raw Kubernetes Validation
+
+on:
+  push:
+    paths:
+      - "projects/*/src/apps/**"
+      - "projects/*/src/infrastructure/kubernetes/**"
+      - "catalog/helm/**"
+  pull_request:
+    paths:
+      - "projects/*/src/apps/**"
+      - "projects/*/src/infrastructure/kubernetes/**"
+
+  pull_request:
+    paths:
+      - ".github/workflows/push,pull_request.validation.yaml"
+      - "catalog/helm/**"
+      - "projects/*/src/apps/**"
+      - "projects/*/src/infrastructure/kubernetes/**"
+
+  merge_group: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  dist-staleness:
+    name: ✅ Verify rendered manifests are up to date
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: ⬇️ Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+
+      - name: 🏗️ Re-render all dist/ directories
+        run: scripts/dist:render --all
+
+      - name: 🔍 Fail if any dist/ file is stale
+        run: |
+          if ! git diff --exit-code -- 'projects/*/dist/**'; then
+            echo ""
+            echo "::error ::One or more dist/ directories are out of sync with their src/ sources."
+            echo "::error ::Run 'scripts/dist:render --all' locally and commit the result."
+            exit 1
+          fi
+
+  conftest:
+    name: 🔒 Validate dist/ against OPA policies
+    needs: dist-staleness
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 📂 Find dist/ directories
+        id: dist
+        run: echo "dirs=$(find projects -type d -name dist | paste -sd ' ')" >> "$GITHUB_OUTPUT"
+
+      - name: 🧪 Run conftest
+        uses: YubicoLabs/action-conftest@83b4ac2089b31b1aa424a150650181fb62132a24 # v3.1.1
+        with:
+          files: ${{ steps.dist.outputs.dirs }}
+          policy: catalog/opa/policies/
+          add-comment: "true"
+          docs-url: "true"
+          no-fail: "true" # Don't fail the job until all files issues have been fixed
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
+          gh-comment-url: ${{ github.event.pull_request.comments_url }}

@@ -116,6 +116,10 @@ const scopes = [
 		value: "catalog:talos",
 	},
 	{
+		name: "catalog:opa           - Anything related to the OPA policy catalog",
+		value: "catalog:opa",
+	},
+	{
 		name: "project:amiya.akn     - Anything related to the amiya.akn project",
 		value: "project:amiya.akn",
 	},

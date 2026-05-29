@@ -107,8 +107,10 @@ talosctl = "latest" # Talos Linux cluster management tool for bare-metal Kuberne
 # -----------------------------------------------------------------------------
 # Tools for handling secrets, data processing, and security operations
 
-dive = "latest" # Container image analysis tool for security scanning
-yq = "latest"   # YAML/JSON processor for configuration file manipulation
+conftest = "latest" # OPA policy testing for Kubernetes manifests
+dive = "latest"     # Container image analysis tool for security scanning
+opa = "latest"      # Open Policy Agent engine for policy evaluation
+yq = "latest"       # YAML/JSON processor for configuration file manipulation
 
 # -----------------------------------------------------------------------------
 # Development and Documentation Tools

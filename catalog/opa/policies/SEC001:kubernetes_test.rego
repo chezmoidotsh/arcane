@@ -1,0 +1,375 @@
+package main
+
+import rego.v1
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Tests for SEC001 — Enforce Local Registry (native Kubernetes resources)
+# ──────────────────────────────────────────────────────────────────────────────
+
+test_local_image_accepted if {
+    is_local_image("oci.chezmoi.sh/docker.io/library/nginx:latest")
+}
+
+test_local_image_rejected if {
+    not is_local_image("docker.io/library/nginx:latest")
+}
+
+test_local_image_rejected_ghcr if {
+    not is_local_image("ghcr.io/atuinsh/atuin:latest")
+}
+
+test_excluded_namespace_kube_system if {
+    is_excluded_namespace with input.metadata.namespace as "kube-system"
+}
+
+test_excluded_namespace_longhorn if {
+    is_excluded_namespace with input.metadata.namespace as "longhorn-system"
+}
+
+test_non_excluded_namespace if {
+    not is_excluded_namespace with input.metadata.namespace as "default"
+}
+
+test_deployment_compliant if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {"name": "app", "namespace": "default"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "containers": [
+                        {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 0
+}
+
+test_deployment_non_compliant if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {"name": "app", "namespace": "default"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "containers": [
+                        {"name": "app", "image": "docker.io/library/nginx:latest"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 1
+}
+
+test_init_container_non_compliant if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {"name": "app", "namespace": "default"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "initContainers": [
+                        {"name": "init", "image": "busybox:latest"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 1
+}
+
+test_ephemeral_container_non_compliant if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {"name": "app", "namespace": "default"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "ephemeralContainers": [
+                        {"name": "debug", "image": "busybox:latest"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 1
+}
+
+test_pod_spec_direct_containers if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {"name": "app", "namespace": "default"},
+        "spec": {
+            "containers": [
+                {"name": "app", "image": "nginx:latest"},
+            ],
+        },
+    }}
+    count(violations) == 1
+}
+
+test_pod_spec_direct_init_containers if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {"name": "app", "namespace": "default"},
+        "spec": {
+            "initContainers": [
+                {"name": "init", "image": "busybox:1.36"},
+            ],
+        },
+    }}
+    count(violations) == 1
+}
+
+test_pod_spec_direct_ephemeral_containers if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {"name": "app", "namespace": "default"},
+        "spec": {
+            "ephemeralContainers": [
+                {"name": "debug", "image": "busybox:1.36"},
+            ],
+        },
+    }}
+    count(violations) == 1
+}
+
+test_excluded_namespace_bypasses_check if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "metadata": {"name": "app", "namespace": "kube-system"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "containers": [
+                        {"name": "app", "image": "docker.io/library/nginx:latest"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 0
+}
+
+test_oci_volume_non_compliant if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {"name": "app", "namespace": "default"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "containers": [
+                        {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
+                    ],
+                    "volumes": [
+                        {"name": "tools", "image": "ghcr.io/tools/tool:v1"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 1
+}
+
+test_oci_volume_compliant if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {"name": "app", "namespace": "default"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "containers": [
+                        {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
+                    ],
+                    "volumes": [
+                        {"name": "tools", "image": "oci.chezmoi.sh/ghcr.io/tools/tool:v1"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 0
+}
+
+test_pod_direct_oci_volume_non_compliant if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {"name": "app", "namespace": "default"},
+        "spec": {
+            "containers": [
+                {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
+            ],
+            "volumes": [
+                {"name": "tools", "image": "ghcr.io/tools/tool:v1"},
+            ],
+        },
+    }}
+    count(violations) == 1
+}
+
+test_configmap_no_containers_passes if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "v1",
+        "kind": "ConfigMap",
+        "metadata": {"name": "config", "namespace": "default"},
+        "data": {"key": "value"},
+    }}
+    count(violations) == 0
+}
+
+test_multiple_violations if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {"name": "app", "namespace": "default"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "containers": [
+                        {"name": "app", "image": "nginx:latest"},
+                        {"name": "sidecar", "image": "busybox:1.36"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 2
+}
+
+test_all_container_types_mixed if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {"name": "app", "namespace": "default"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "containers": [
+                        {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
+                    ],
+                    "initContainers": [
+                        {"name": "init", "image": "busybox:1.36"},
+                    ],
+                    "ephemeralContainers": [
+                        {"name": "debug", "image": "alpine:3.19"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 2
+}
+
+test_kube_system_excluded if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {"name": "app", "namespace": "kube-system"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "containers": [
+                        {"name": "app", "image": "docker.io/library/nginx:latest"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 0
+}
+
+test_cronjob_non_compliant if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "batch/v1",
+        "kind": "CronJob",
+        "metadata": {"name": "backup", "namespace": "default"},
+        "spec": {
+            "schedule": "0 2 * * *",
+            "jobTemplate": {
+                "spec": {
+                    "template": {
+                        "spec": {
+                            "containers": [
+                                {"name": "backup", "image": "docker.io/library/alpine:latest"},
+                            ],
+                        },
+                    },
+                },
+            },
+        },
+    }}
+    count(violations) == 1
+}
+
+test_cronjob_compliant if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "batch/v1",
+        "kind": "CronJob",
+        "metadata": {"name": "backup", "namespace": "default"},
+        "spec": {
+            "schedule": "0 2 * * *",
+            "jobTemplate": {
+                "spec": {
+                    "template": {
+                        "spec": {
+                            "containers": [
+                                {"name": "backup", "image": "oci.chezmoi.sh/docker.io/library/alpine:latest"},
+                            ],
+                        },
+                    },
+                },
+            },
+        },
+    }}
+    count(violations) == 0
+}
+
+test_cronjob_init_container_non_compliant if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "batch/v1",
+        "kind": "CronJob",
+        "metadata": {"name": "backup", "namespace": "default"},
+        "spec": {
+            "schedule": "0 2 * * *",
+            "jobTemplate": {
+                "spec": {
+                    "template": {
+                        "spec": {
+                            "containers": [
+                                {"name": "backup", "image": "oci.chezmoi.sh/docker.io/library/alpine:latest"},
+                            ],
+                            "initContainers": [
+                                {"name": "init", "image": "busybox:1.36"},
+                            ],
+                        },
+                    },
+                },
+            },
+        },
+    }}
+    count(violations) == 1
+}
+
+test_cluster_scoped_resource_no_namespace if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "rbac.authorization.k8s.io/v1",
+        "kind": "ClusterRole",
+        "metadata": {"name": "read-pods"},
+        "rules": [{"apiGroups": [""], "resources": ["pods"], "verbs": ["get", "list"]}],
+    }}
+    count(violations) == 0
+}
