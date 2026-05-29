@@ -30,7 +30,7 @@ spec:
         - --save
         - "300"
         - "1"
-        image: docker.io/library/redis:8.8.0-alpine@sha256:9156d3e4cab19c9b5507e18d7fcfca90c17762914270a3e34c08397ebdf746ff
+        image: oci.chezmoi.sh/docker.io/library/redis:8.8.0-alpine@sha256:9156d3e4cab19c9b5507e18d7fcfca90c17762914270a3e34c08397ebdf746ff
         livenessProbe:
           exec:
             command:

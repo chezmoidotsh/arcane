@@ -24,12 +24,15 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server
   - name: ghcr.io/immich-app/immich-server
+    newName: oci.chezmoi.sh/ghcr.io/immich-app/immich-server
     newTag: v2.7.5
   # renovate: datasource=docker depName=ghcr.io/immich-app/immich-machine-learning
   - name: ghcr.io/immich-app/immich-machine-learning
+    newName: oci.chezmoi.sh/ghcr.io/immich-app/immich-machine-learning
     newTag: v2.7.5
   # renovate: datasource=docker depName=docker.io/library/redis
   - name: docker.io/library/redis
+    newName: oci.chezmoi.sh/docker.io/library/redis
     newTag: 8.8.0-alpine@sha256:9156d3e4cab19c9b5507e18d7fcfca90c17762914270a3e34c08397ebdf746ff
   # renovate: datasource=docker depName=ghcr.io/tensorchord/pgvecto-rs
   - name: ghcr.io/tensorchord/pgvecto-rs

@@ -17,3 +17,9 @@ helmCharts:
 
 resources:
   - unifi.externalsecret.yaml
+
+images:
+  - name: registry.k8s.io/external-dns/external-dns
+    newName: oci.chezmoi.sh/registry.k8s.io/external-dns/external-dns
+  - name: ghcr.io/kashalls/external-dns-unifi-webhook
+    newName: oci.chezmoi.sh/ghcr.io/kashalls/external-dns-unifi-webhook

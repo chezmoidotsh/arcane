@@ -79,7 +79,7 @@ spec:
           value: "1"
         - name: S6_READ_ONLY_ROOT
           value: "1"
-        image: ghcr.io/paperless-ngx/paperless-ngx:2.20.15@sha256:6c86cad803970ea782683a8e80e7403444c5bf3cf70de63b4d3c8e87500db92f
+        image: oci.chezmoi.sh/ghcr.io/paperless-ngx/paperless-ngx:2.20.15@sha256:6c86cad803970ea782683a8e80e7403444c5bf3cf70de63b4d3c8e87500db92f
         imagePullPolicy: Always
         livenessProbe:
           failureThreshold: 3

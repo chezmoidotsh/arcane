@@ -26,7 +26,7 @@ spec:
     spec:
       automountServiceAccountToken: false
       containers:
-      - image: ghcr.io/immich-app/immich-machine-learning:v2.7.5
+      - image: oci.chezmoi.sh/ghcr.io/immich-app/immich-machine-learning:v2.7.5
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3

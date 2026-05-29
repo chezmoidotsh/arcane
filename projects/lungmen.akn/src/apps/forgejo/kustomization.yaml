@@ -30,3 +30,7 @@ resources:
   - forgejo.tailscale.yaml
 
   - security/
+
+images:
+  - name: code.forgejo.org/forgejo/forgejo
+    newName: oci.chezmoi.sh/code.forgejo.org/forgejo/forgejo

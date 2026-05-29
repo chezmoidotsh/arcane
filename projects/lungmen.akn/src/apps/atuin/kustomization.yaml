@@ -22,4 +22,5 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/atuinsh/atuin
   - name: ghcr.io/atuinsh/atuin
+    newName: oci.chezmoi.sh/ghcr.io/atuinsh/atuin
     newTag: 18.16.1@sha256:9d4d79507b51be6d292b218f5cc791d79ca0a72f51ab48f786b091bd6eafb39f

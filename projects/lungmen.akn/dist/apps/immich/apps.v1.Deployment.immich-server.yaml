@@ -35,7 +35,7 @@ spec:
           value: immich-redis
         - name: REDIS_PORT
           value: "6379"
-        image: ghcr.io/immich-app/immich-server:v2.7.5
+        image: oci.chezmoi.sh/ghcr.io/immich-app/immich-server:v2.7.5
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3

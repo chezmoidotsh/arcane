@@ -74,7 +74,7 @@ spec:
               name: linkding-oidc-credentials
         - name: LD_FAVICON_PROVIDER
           value: https://icons.duckduckgo.com/ip3/{domain}.ico
-        image: docker.io/sissbruecker/linkding:1.45.0-alpine
+        image: oci.chezmoi.sh/docker.io/sissbruecker/linkding:1.45.0-alpine
         livenessProbe:
           httpGet:
             path: /
