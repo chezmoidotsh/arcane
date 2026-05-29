@@ -33,9 +33,9 @@ spec:
     env:
     - name: VAULT_ADDR
       value: http://openbao.vault.svc:8200
-    image: ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm:2.2.2-25.05-x86_64-linux
+    image: oci.chezmoi.sh/ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm:2.2.2-25.05-x86_64-linux
     imagePullPolicy: IfNotPresent
     name: openbao-server-test
     volumeMounts: null
   restartPolicy: Never
-  volumes: null
+  volumes: []

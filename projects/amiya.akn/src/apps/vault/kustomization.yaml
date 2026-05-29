@@ -71,3 +71,7 @@ patches:
     target:
       kind: StatefulSet
       name: openbao
+
+images:
+  - name: ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm
+    newName: oci.chezmoi.sh/ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm

@@ -56,7 +56,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.uid
-        image: tailscale/k8s-operator:v1.98.3
+        image: oci.chezmoi.sh/docker.io/tailscale/k8s-operator:v1.98.3
         imagePullPolicy: Always
         name: operator
         volumeMounts:

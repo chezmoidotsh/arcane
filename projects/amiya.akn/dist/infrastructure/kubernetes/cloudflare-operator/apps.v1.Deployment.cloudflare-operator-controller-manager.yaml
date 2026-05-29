@@ -42,7 +42,7 @@ spec:
         - --webhook-cert-path=/tmp/k8s-webhook-server/serving-certs
         command:
         - /manager
-        image: adyanth/cloudflare-operator:0.13.1
+        image: oci.chezmoi.sh/docker.io/adyanth/cloudflare-operator:0.13.1
         livenessProbe:
           httpGet:
             path: /healthz
