@@ -51,28 +51,47 @@ jobs:
             exit 1
           fi
 
-  conftest:
-    name: 🔒 Validate dist/ against OPA policies
+  detect-changes:
+    name: 📂 Detect changed dist/ directories
     needs: dist-staleness
     permissions:
       contents: read
-      pull-requests: write
     runs-on: ubuntu-latest
+    outputs:
+      directories: ${{ steps.diff.outputs.directories }}
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: 📂 Find dist/ directories
-        id: dist
-        run: echo "dirs=$(find projects -type d -name dist | paste -sd ' ')" >> "$GITHUB_OUTPUT"
+      - name: 🔍 Detect changed dist/ directories
+        id: diff
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            projects/*/dist/**
+          dir_names: true
+          dir_names_exclude_root: true
+          json: true
+
+  conftest:
+    name: 🧪 ${{ matrix.directory }}
+    needs: detect-changes
+    if: needs.detect-changes.outputs.directories != '[]'
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: ${{ fromJson(needs.detect-changes.outputs.directories) }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 🛠️ Set up mise
+        uses: jdx/mise-action@7a474b166130e0f2b94e03f8e38c25e6801f2f22 # v2.4.4
+        with:
+          install: true
 
       - name: 🧪 Run conftest
-        uses: YubicoLabs/action-conftest@83b4ac2089b31b1aa424a150650181fb62132a24 # v3.1.1
-        with:
-          files: ${{ steps.dist.outputs.dirs }}
-          policy: catalog/opa/policies/
-          add-comment: "true"
-          docs-url: "true"
-          no-fail: "true" # Don't fail the job until all files issues have been fixed
-          gh-token: ${{ secrets.GITHUB_TOKEN }}
-          gh-comment-url: ${{ github.event.pull_request.comments_url }}
+        run: mise exec conftest -- conftest test "${{ matrix.directory }}" -p catalog/opa/policies/ --combine --no-color
