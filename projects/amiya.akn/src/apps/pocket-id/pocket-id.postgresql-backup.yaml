@@ -2,11 +2,11 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: ScheduledBackup
 metadata:
-  name: pocket-id-database
+  name: pocket-id-20260530
 spec:
   backupOwnerReference: self
   cluster:
-    name: pocket-id-database
+    name: pocket-id-20260530
   method: plugin
   pluginConfiguration:
     name: barman-cloud.cloudnative-pg.io

@@ -5,23 +5,18 @@ metadata:
   labels:
     app.kubernetes.io/component: database
     app.kubernetes.io/instance: pocket-id-database
-  name: pocket-id-database
+  name: pocket-id-20260530
 spec:
   bootstrap:
-    initdb:
-      database: pocket_id
-      owner: pocket_id
-      secret:
-        name: pocket-id-database-pocket-id
-    # recovery:
-    #   source: 0001-01-01T00:00:00.000Z
+    recovery:
+      source: 2026-01-11T10:37:12.165Z
   description: PostgreSQL database dedicated to pocket-id
   enablePDB: false
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog
     name: default
-    major: 17
+    major: 18
   instances: 2
   managed:
     roles:
@@ -39,7 +34,7 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01KEPA38352GYQHNKTFYPA4HE1 # 2026-01-11T10:37:12.165Z
+        serverName: 01KSWFKGPZMJVTX8CNTEK8CYXT # 2026-05-30T13:01:34.815Z
   postgresql:
     parameters:
       # Limit WAL retention to avoid DB crash due to storage bloat
@@ -50,14 +45,12 @@ spec:
   walStorage:
     size: 1Gi
 
-  # Restore all data from legacy cluster present in the sso namespace
-  # externalClusters:
-  #   NOTE: Uncomment and adjust the following to restore from a specific backup
-  #   - name: 0001-01-01T00:00:00.000Z
-  #     plugin:
-  #       enabled: true
-  #       isWALArchiver: false
-  #       name: barman-cloud.cloudnative-pg.io
-  #       parameters:
-  #         barmanObjectName: selfhosted
-  #         serverName: ??? # Fill in appropriate server name
+  externalClusters:
+    - name: 2026-01-11T10:37:12.165Z
+      plugin:
+        enabled: true
+        isWALArchiver: false
+        name: barman-cloud.cloudnative-pg.io
+        parameters:
+          barmanObjectName: selfhosted
+          serverName: 01KEPA38352GYQHNKTFYPA4HE1 # 2026-01-11T10:37:12.165Z

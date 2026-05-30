@@ -11,7 +11,7 @@ helmCharts:
     releaseName: cloudnative-pg
     namespace: cloudnative-pg-system
 
-    valuesFile: default.helmvalues.yaml
+    valuesFile: cloudnative-pg.helmvalues/default.yaml
 
 resources:
   - # Install Barman Cloud CNPG-I plugin (v0.6.0)

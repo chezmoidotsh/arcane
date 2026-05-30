@@ -12,7 +12,7 @@ config:
     # Overrides the default operator image to use the local ZOT registry mirror.
     # The operator uses this image for instance manager pods and maintenance operations.
     # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/cloudnative-pg
-    OPERATOR_IMAGE_NAME: oci.chezmoi.sh/ghcr.io/cloudnative-pg/cloudnative-pg:1.28.0-ubi9@sha256:0869f9b996923aaf3eb761abe032b10ef482eaaef32fc6c604605a7223c13c1b
+    OPERATOR_IMAGE_NAME: oci.chezmoi.sh/ghcr.io/cloudnative-pg/cloudnative-pg:1.29.1@sha256:0dfff19ba7b52ca25851a1010028b6940fff2e233290465af1cfb08a5f3f4661
 
     # PgBouncer connection pooler image override
     # Overrides the default PgBouncer image to use the local ZOT registry mirror.
