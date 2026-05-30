@@ -181,15 +181,20 @@ Logs / metrics / probes that will confirm the fix in production.
 
 ## Creating the PR
 
+Always write the PR body to a temp file and use `--body-file`. **Never** use
+`--body "$(cat <<'EOF' ... EOF)"` — shell quoting in that pattern causes agents
+to escape backticks as \`\`\`, which GitHub renders literally and corrupts the body.
+
 ```sh
 git push -u origin <branch-name>
+cat > /tmp/pr_body.md << 'PREOF'
+<body following the selected template>
+PREOF
 gh pr create \
   --title "type[scope]: Subject" \
-  --body "$(cat <<'EOF'
-<body following the selected template>
-EOF
-)" \
+  --body-file /tmp/pr_body.md \
   --base main
+rm /tmp/pr_body.md
 ```
 
 ## Rules
@@ -216,9 +221,7 @@ illustrating one of the three templates.
 
 ```sh
 git push -u origin feat/forgejo-lungmen
-gh pr create \
-  --title "+[project:lungmen.akn]: Add Forgejo Git hosting service" \
-  --body "$(cat <<'EOF'
+cat > /tmp/pr_body.md << 'PREOF'
 ## Summary
 
 Adds Forgejo as a self-hosted Git forge to the lungmen.akn cluster. Forgejo is
@@ -275,9 +278,12 @@ Closes #973
 
 ---
 <sub>AI-assisted with Z.ai:GLM-4.7 under human supervision</sub>
-EOF
-)" \
+PREOF
+gh pr create \
+  --title "+[project:lungmen.akn]: Add Forgejo Git hosting service" \
+  --body-file /tmp/pr_body.md \
   --base main
+rm /tmp/pr_body.md
 ```
 
 **Bad — wrong title, no structure, no file links, no Technical Impact sub-sections:**
