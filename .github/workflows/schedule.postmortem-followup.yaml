@@ -1,0 +1,29 @@
+---
+name: 📋 Post-mortem followup
+
+on:
+  schedule:
+    - cron: "13 7 * * *" # daily at 07:13 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  followup:
+    name: 📋 Open issues for overdue post-mortem actions
+    permissions:
+      contents: read
+      issues: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 🐍 Install uv
+        uses: astral-sh/setup-uv@bd01e18f51369d5a26f1651c3cb451d3417e3bba # v6.3.1
+
+      - name: 📋 Run postmortem:followup
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: ./.github/scripts/postmortem-followup.py

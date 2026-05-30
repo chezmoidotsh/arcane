@@ -5,18 +5,20 @@ author: "[anthropic:claude-sonnet-4-6]"
 participants:
   - "Alexandre"
   - "[anthropic:claude-sonnet-4-6]"
-severity: "High"
-status: "Final"
+severity: "High"   # all lungmen workloads down; actual-budget 2h additional outage
+status: "Open"
 detection-method: "Manual discovery"
-mttd: "~2h (disk full since ~16:28 UTC; reported ~18:30 UTC)"
-mttr: "~3h20m (from first report to actual-budget fully Running at ~21:50 UTC)"
+duration: "~5h20m (saturation 16:28 UTC → actual-budget Running 21:50 UTC)"
 services-affected:
   - "zot-registry (amiya.akn) — OCI mirror/proxy for all clusters"
   - "all workloads on lungmen.akn — ImagePullBackOff cluster-wide"
   - "actual-budget (lungmen.akn) — additional 2h outage due to index corruption"
-users-affected: "All services on lungmen.akn unavailable for the duration"
+users-affected: "Me — all lungmen.akn services unavailable for ~3h20m"
+root-cause-family:
+  - observability-gap
 related-incidents:
-  - "docs/incidents/2026-05-25-lungmen-clustersecretstore-vault-auth-failure.md"
+  - path: "docs/incidents/2026-05-26-amiya-kyverno-zot-circular-imagepullbackoff.md"
+    relation: "The `system-cluster-critical` Kyverno bypass used here became the unheeded warning sign for the next-day amiya cluster collapse"
 related-adrs: []
 ---
 
@@ -105,7 +107,13 @@ at `~2026-05-25T21:50 UTC` (total incident window ≥ 5h20m).
 
 ## Root-Cause Analysis
 
-### Technique: 5 Whys
+**Technique:** Swiss Cheese
+**Why this technique:** Three defenses failed in sequence (GC interval too long, no size-based retention, no PVC capacity alert). A pure 5 Whys hides the layered nature — Swiss Cheese makes the multi-defense gap explicit.
+
+> 5 Whys is retained below as a supporting view of the immediate cause chain, but the
+> primary frame is multi-layer: each defense, if present, would have prevented saturation.
+
+### Analysis
 
 1. **Why were lungmen workloads in `ImagePullBackOff`?**
    → Zot returned 404 (most images) and 500 (`actual-server`) for manifest requests.
@@ -202,20 +210,51 @@ at `~2026-05-25T21:50 UTC` (total incident window ≥ 5h20m).
 
 ***
 
+## From Lesson to Control
+
+| Lesson                                                                          | Artifact type | Linked artifact                                                  |
+| ------------------------------------------------------------------------------- | ------------- | ---------------------------------------------------------------- |
+| Shared infrastructure PVCs need capacity alerts before saturation               | Alert rule    | TBD — part of meta-pattern `observability-gap` (see INDEX.md)    |
+| Disk-full during a write leaves stores in inconsistent state — cleanup required | Runbook step  | `docs/procedures/` Zot emergency maintenance (to write)          |
+| ArgoCD `selfHeal` fights manual scale-down on infra components                  | Runbook step  | Same Zot emergency runbook — `argocd app set --sync-policy none` |
+| Zot cache grows unbounded without size-based retention                          | Config        | `projects/amiya.akn/src/apps/zot-registry/zot.helmvalues/`       |
+
+***
+
 ## Change Register
 
-| # | Priority | Action                                                                                           | Owner     | Due Date   | Verification                                                                                  |
-| - | -------- | ------------------------------------------------------------------------------------------------ | --------- | ---------- | --------------------------------------------------------------------------------------------- |
-| 1 | P1       | Reduce Zot `gcInterval` from 168 h to 24 h in `zot.helmvalues/default.yaml`                      | Alexandre | 2026-06-01 | Config present in Helm values; ArgoCD synced; Zot logs show GC run within 24 h of change      |
-| 4 | P2       | Add a size-based retention policy in Zot config (`storage.retention` max total size or per-repo) | Alexandre | 2026-06-15 | Policy visible in configmap; `zot-0` logs confirm retention runs after GC                     |
-| 5 | P2       | Write emergency maintenance runbook for Zot: scale down, ArgoCD suspend, cleanup, scale up       | Alexandre | 2026-06-15 | Runbook exists in `docs/procedures/`; covers the Kyverno bypass via `system-cluster-critical` |
+* [ ] \[due:: 2026-06-01] \[priority:: high] \[size:: S] \[owner:: Alexandre] Reduce Zot `gcInterval` from 168h to 24h in `zot.helmvalues/default.yaml`
+  * **Verification:** Zot PVC usage stays below 70% for 7 consecutive days after change (daily check by user); GC log entry visible every 24h
+  * **If not done:** Cache continues to grow unchecked; next saturation expected within \~5 months at current upstream image growth
+
+* [ ] \[due:: 2026-06-15] \[priority:: high] \[size:: M] \[owner:: Alexandre] Add size-based retention policy in Zot config (`storage.retention` max total size and/or per-repo)
+  * **Verification:** Zot config exposes the retention policy; first retention sweep visible in logs; PVC usage trends down after rollout
+  * **If not done:** GC alone is insufficient — old layers accumulate until next saturation
+
+* [ ] \[due:: 2026-06-15] \[priority:: high] \[size:: M] \[owner:: Alexandre] Write emergency maintenance runbook for Zot covering scale-down, ArgoCD suspend, cleanup of partial writes, and `system-cluster-critical` Kyverno bypass
+  * **Verification:** Next planned Zot maintenance follows the runbook end-to-end without rediscovery of the ArgoCD selfHeal fight
+  * **If not done:** Next disk-full / corruption event repeats the 20-minute ArgoCD selfHeal struggle
+
+* [ ] \[due:: 2026-06-22] \[priority:: high] \[size:: L] \[owner:: Alexandre] Establish a baseline observability plan for shared-infra PVCs (Zot, Longhorn system) — this is the meta-pattern from family `observability-gap`
+  * **Verification:** Concrete proposal committed (ADR or experiment doc); covers PVC utilization thresholds and alert channel
+  * **If not done:** Next "suddenly full" event on any shared PVC discovered by failure, not signal
+
+***
+
+## Agent Knowledge
+
+* Zot OCI registry: caches every requested image from configured upstream registries. Without size-based retention, the cache grows monotonically — `gcInterval` controls cleanup of obsolete layers, not total size.
+* Zot disk-full during a write can corrupt `index.json` with null bytes, producing 500 errors on that specific repo (distinct from 404 for missing images). Recovery: scale Zot to 0, delete the corrupted repo directory from the PVC, scale back up.
+* ArgoCD `selfHeal` will undo manual scale-downs within seconds. To do manual maintenance: `argocd app set <app> --sync-policy none` first, then perform changes, then re-enable.
+* Kyverno `enforce-local-registry` policy: exclusion via `priorityClassName: system-cluster-critical` works as an escape hatch for emergency pods that need to bypass the registry rewrite. (Note: Kyverno was later removed entirely — see related incident.)
+* Longhorn PVC online resize: `kubectl patch pvc <name> -p '{"spec":{"resources":{"requests":{"storage":"<size>"}}}}'` works without pod restart; volume + filesystem are expanded transparently.
 
 ***
 
 ## Verification Schedule
 
-| Checkpoint     | Date       | What we'll check                                                                   | Forum       |
-| -------------- | ---------- | ---------------------------------------------------------------------------------- | ----------- |
-| 1-week review  | 2026-06-01 | P1 items complete; gcInterval updated and GC running                               | Solo review |
-| 1-month review | 2026-06-25 | P1 items complete; Zot PVC usage stable below 70% with daily GC; no recurrence     | Solo review |
-| 3-month review | 2026-08-25 | No disk-saturation incident on any shared infrastructure PVC; alert coverage audit | Solo review |
+| Checkpoint | Date       | What we'll check                                                                   | Forum       |
+| ---------- | ---------- | ---------------------------------------------------------------------------------- | ----------- |
+| 1-week     | 2026-06-01 | gcInterval reduced; Zot PVC usage trending down                                    | Solo review |
+| 1-month    | 2026-06-25 | Retention policy active; Zot PVC stable below 70%; runbook used or rehearsed once  | Solo review |
+| 3-month    | 2026-08-25 | No disk-saturation incident on any shared infrastructure PVC; alert coverage audit | Solo review |
