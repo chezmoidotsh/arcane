@@ -45,20 +45,11 @@ spec:
       pushInterval: "5m"
 
     networkPolicies:
-      # -- Master toggle for cluster-level CiliumNetworkPolicies.
-      # Impact: Controls Operator ingress and API server egress.
+      # -- Master toggle for per-database CiliumNetworkPolicies (application access).
+      # Operator ingress and kube-apiserver egress are covered by cluster-wide
+      # policies shipped with the CNPG operator catalog base — no configuration
+      # needed here for those.
       enabled: false
-      fromOperator:
-        # -- Allows CNPG Operator to connect to pods (ports 5432, 8000).
-        # Why: Required for backups, health checks, and role management.
-        enabled: true
-        operator:
-          namespace: cnpg-system
-          name: cloudnative-pg
-      toKubeApiserver:
-        # -- Allows pods to connect to the Kubernetes API.
-        # Why: Required for CNPG instances to coordinate and report status.
-        enabled: true
 
   # -- CloudNativePG Cluster Specification.
   # This block is passed VERBATIM to the postgresql.cnpg.io/v1 Cluster resource.

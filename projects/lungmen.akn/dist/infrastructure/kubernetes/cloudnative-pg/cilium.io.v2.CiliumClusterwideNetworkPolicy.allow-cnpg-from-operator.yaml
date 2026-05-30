@@ -1,0 +1,27 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the CloudNative-PG operator (cloudnative-pg-system) to manage any CNPG
+      cluster pod in any namespace. Required for lifecycle management, health checks,
+      and metrics collection. Covers PostgreSQL (5432) and management (8000) ports.
+  name: allow-cnpg-from-operator
+  namespace: cloudnative-pg-system
+spec:
+  endpointSelector:
+    matchExpressions:
+    - key: cnpg.io/cluster
+      operator: Exists
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: cloudnative-pg
+        io.kubernetes.pod.namespace: cloudnative-pg-system
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP
+      - port: "8000"
+        protocol: TCP

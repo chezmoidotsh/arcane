@@ -1,16 +1,17 @@
 apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
+kind: CiliumClusterwideNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows CloudNative-PG operator to manage the n8n PostgreSQL database.
-      Based on CloudNative-PG networking requirements: operator needs access to
-      port 5432 (PostgreSQL) and port 8000 (metrics/management).
-  name: allow-postgres-from-cnpg
+      Allows the CloudNative-PG operator (cloudnative-pg-system) to manage any CNPG
+      cluster pod in any namespace. Required for lifecycle management, health checks,
+      and metrics collection. Covers PostgreSQL (5432) and management (8000) ports.
+  name: allow-cnpg-from-operator
 spec:
   endpointSelector:
-    matchLabels:
-      cnpg.io/cluster: n8n-database
+    matchExpressions:
+      - key: cnpg.io/cluster
+        operator: Exists
   ingress:
     - fromEndpoints:
         - matchLabels:

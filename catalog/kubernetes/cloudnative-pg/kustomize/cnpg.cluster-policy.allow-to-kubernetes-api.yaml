@@ -1,0 +1,17 @@
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows all CloudNative-PG cluster pods (any namespace) to reach the Kubernetes
+      API server. Required for operator integration, status reporting, lease management,
+      and recovery bootstrap. Covers pod IP, host IP, and ClusterIP (10.96.0.1:443).
+  name: allow-cnpg-to-kubernetes-api
+spec:
+  endpointSelector:
+    matchExpressions:
+      - key: cnpg.io/cluster
+        operator: Exists
+  egress:
+    - toEntities:
+        - kube-apiserver

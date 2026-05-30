@@ -16,12 +16,6 @@ spec:
       pushInterval: "5m"
     networkPolicies:
       enabled: true
-      fromOperator:
-        enabled: true
-        operator:
-          namespace: cloudnative-pg-system
-      toKubeApiserver:
-        enabled: true
 
   cluster:
     name: "20260329"

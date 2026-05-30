@@ -4,3 +4,5 @@ kind: Kustomization
 
 resources:
   - default.image-catalog.yaml
+  - cnpg.cluster-policy.allow-to-kubernetes-api.yaml
+  - cnpg.cluster-policy.allow-from-operator.yaml

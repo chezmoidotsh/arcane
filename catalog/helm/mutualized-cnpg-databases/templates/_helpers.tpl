@@ -56,13 +56,6 @@ Driven exclusively by .Values.metadata.name to ensure stable references.
 {{- end -}}
 
 {{/* Network Policy Operator Resolution */}}
-{{- define "mutualized-cnpg-databases.operatorNamespace" -}}
-{{- .Values.spec.behavior.networkPolicies.fromOperator | dig "operator" "namespace" "cnpg-system" -}}
-{{- end -}}
-
-{{- define "mutualized-cnpg-databases.operatorName" -}}
-{{- .Values.spec.behavior.networkPolicies.fromOperator | dig "operator" "name" "cloudnative-pg" -}}
-{{- end -}}
 
 {{/*
 Default Labels helper:

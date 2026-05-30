@@ -16,14 +16,7 @@ spec:
       # -- Ensures Vault remains a near-real-time source of truth for app credentials.
       pushInterval: "5m"
     networkPolicies:
-      # -- Enforces Zero-Trust isolation for both management and application traffic.
       enabled: true
-      fromOperator:
-        enabled: true
-        operator:
-          namespace: cloudnative-pg-system
-      toKubeApiserver:
-        enabled: true
 
   cluster:
     # -- Unique generation ID; allows for side-by-side cluster deployments during upgrades.

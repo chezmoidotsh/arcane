@@ -6,6 +6,4 @@ resources:
   - network-policy.allow-openbao-from-envoy-gateway.yaml
   - network-policy.allow-openbao-to-kubernetes-api.yaml
   - network-policy.allow-openbao-to-pocket-id.yaml
-  - network-policy.allow-postgres-from-cnpg.yaml
-  - network-policy.allow-postgres-to-kubernetes-api.yaml
   - network-policy.allow-postgres-to-s3-backup.yaml
