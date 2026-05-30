@@ -10,19 +10,7 @@ spec:
     matchLabels:
       cnpg.io/cluster: openbao-database
   egress:
-    - toEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: kube-system
-            k8s-app: kube-apiserver
-      toPorts:
-        - ports:
-            - port: "6443"
-              protocol: TCP
-
-    # Allow access to API server via host network (common in Talos)
+    # kube-apiserver entity covers pod IP, host IP, and ClusterIP (10.96.0.1:443)
+    # required for recovery pods that connect via the kubernetes service
     - toEntities:
-        - host
-      toPorts:
-        - ports:
-            - port: "6443"
-              protocol: TCP
+        - kube-apiserver

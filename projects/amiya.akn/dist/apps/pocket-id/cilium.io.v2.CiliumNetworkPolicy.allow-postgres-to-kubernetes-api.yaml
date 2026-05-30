@@ -12,20 +12,8 @@ metadata:
   namespace: pocket-id
 spec:
   egress:
-  - toEndpoints:
-    - matchLabels:
-        io.kubernetes.pod.namespace: kube-system
-        k8s-app: kube-apiserver
-    toPorts:
-    - ports:
-      - port: "6443"
-        protocol: TCP
   - toEntities:
-    - host
-    toPorts:
-    - ports:
-      - port: "6443"
-        protocol: TCP
+    - kube-apiserver
   endpointSelector:
     matchLabels:
       cnpg.io/cluster: pocket-id-database
