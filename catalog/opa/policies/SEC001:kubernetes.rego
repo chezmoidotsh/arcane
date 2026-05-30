@@ -102,7 +102,7 @@ deny contains msg if {
     not is_excluded_namespace(res)
     some c in resource_containers(res)
     not is_local_image(c.image)
-    ns := object.get(res.metadata, "namespace", "<cluster-scoped>")
+    ns := object.get(res.metadata, "namespace", "<no namespace in manifest>")
     msg := sprintf("SEC001: container %q in namespace %q must use local registry prefix %q (got %q)", [c.name, ns, local_registry, c.image])
 }
 
@@ -111,7 +111,7 @@ deny contains msg if {
     not is_excluded_namespace(res)
     some v in resource_volume_images(res)
     not is_local_image(v.image)
-    ns := object.get(res.metadata, "namespace", "<cluster-scoped>")
+    ns := object.get(res.metadata, "namespace", "<no namespace in manifest>")
     msg := sprintf("SEC001: OCI volume %q in namespace %q must use local registry prefix %q (got %q)", [v.name, ns, local_registry, v.image])
 }
 
