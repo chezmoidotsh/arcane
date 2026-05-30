@@ -37,4 +37,5 @@ labels:
 images:
   # renovate: datasource=docker depName=docker.io/fosrl/newt
   - name: docker.io/fosrl/newt
+    newName: oci.chezmoi.sh/docker.io/fosrl/newt
     newTag: 1.12.5@sha256:3c009663332145cae39b940b07857469038d5e9d71aacb1497e78795ba4e3b9b

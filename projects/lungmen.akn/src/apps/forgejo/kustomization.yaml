@@ -34,3 +34,7 @@ resources:
 images:
   - name: code.forgejo.org/forgejo/forgejo
     newName: oci.chezmoi.sh/code.forgejo.org/forgejo/forgejo
+  - name: docker.io/valkey/valkey
+    newName: oci.chezmoi.sh/docker.io/valkey/valkey
+  - name: busybox
+    newName: oci.chezmoi.sh/docker.io/library/busybox

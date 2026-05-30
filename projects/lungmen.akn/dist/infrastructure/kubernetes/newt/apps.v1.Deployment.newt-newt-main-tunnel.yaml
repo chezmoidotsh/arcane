@@ -47,7 +47,7 @@ spec:
               name: newt-credentials
         - name: LOG_LEVEL
           value: INFO
-        image: docker.io/fosrl/newt:1.12.5@sha256:3c009663332145cae39b940b07857469038d5e9d71aacb1497e78795ba4e3b9b
+        image: oci.chezmoi.sh/docker.io/fosrl/newt:1.12.5@sha256:3c009663332145cae39b940b07857469038d5e9d71aacb1497e78795ba4e3b9b
         imagePullPolicy: IfNotPresent
         name: newt
         ports:
