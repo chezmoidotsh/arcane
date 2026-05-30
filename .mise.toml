@@ -99,6 +99,7 @@ kustomize = "latest" # Kubernetes configuration management tool for customizing 
 
 argocd = "latest"   # ArgoCD CLI for GitOps application deployment and management
 hcloud = "latest"   # Hetzner Cloud CLI for managing cloud resources
+k9s = "latest"      # Terminal UI for real-time Kubernetes cluster management and observability
 openbao = "latest"  # OpenBao CLI for secret management (HashiCorp Vault fork)
 talosctl = "latest" # Talos Linux cluster management tool for bare-metal Kubernetes
 
@@ -110,6 +111,7 @@ talosctl = "latest" # Talos Linux cluster management tool for bare-metal Kuberne
 conftest = "latest" # OPA policy testing for Kubernetes manifests
 dive = "latest"     # Container image analysis tool for security scanning
 opa = "latest"      # Open Policy Agent engine for policy evaluation
+sops = "latest"     # Secrets OPerationS CLI for encrypting/decrypting secrets in Git
 yq = "latest"       # YAML/JSON processor for configuration file manipulation
 
 # -----------------------------------------------------------------------------
