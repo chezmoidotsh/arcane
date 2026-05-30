@@ -1,0 +1,111 @@
+name: 🏛️ Partial Compliance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/push,pull_request.compliance-partial.yaml"
+      - ".github/scripts/check-zot-coverage.py"
+      - "catalog/helm/**"
+      - "projects/*/src/apps/**"
+      - "projects/*/src/infrastructure/kubernetes/**"
+      - "projects/amiya.akn/dist/apps/zot-registry/**"
+
+  pull_request:
+    paths:
+      - ".github/workflows/push,pull_request.compliance-partial.yaml"
+      - ".github/scripts/check-zot-coverage.py"
+      - "catalog/helm/**"
+      - "projects/*/src/apps/**"
+      - "projects/*/src/infrastructure/kubernetes/**"
+      - "projects/amiya.akn/dist/apps/zot-registry/**"
+
+  merge_group: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  dist-freshness:
+    name: Verify rendered manifests are up to date
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: ⬇️ Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+
+      - name: 🏗️ Re-render all dist/ directories
+        run: scripts/dist:render --all
+
+      - name: 🔍 Fail if any dist/ file is stale
+        run: |
+          if ! git diff --exit-code -- 'projects/*/dist/**'; then
+            echo ""
+            echo "::error ::One or more dist/ directories are out of sync with their src/ sources."
+            echo "::error ::Run 'scripts/dist:render --all' locally and commit the result."
+            exit 1
+          fi
+
+  detect-changes:
+    name: Detect changed dist/ directories
+    needs: dist-freshness
+    permissions:
+      pull-requests: read
+    runs-on: ubuntu-latest
+    outputs:
+      directories: ${{ steps.diff.outputs.all_changed_files }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 🔍 Detect changed dist/ directories
+        id: diff
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            projects/**/dist/**
+          dir_names: true
+          matrix: true
+
+  compliance:
+    name: ${{ matrix.directory }}
+    needs: detect-changes
+    if: needs.detect-changes.outputs.directories != '[]'
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: ${{ fromJson(needs.detect-changes.outputs.directories) }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: ⬇️ Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+
+      - name: 🛠️ Set up mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        with:
+          install: true
+
+      - name: 🧪 OPA policy check
+        run: >-
+          mise exec conftest --
+          conftest test "${{ matrix.directory }}"
+          --policy catalog/opa/policies/
+          --combine
+          --output github
+
+      - name: 🔍 Zot registry coverage check
+        run: >-
+          .github/scripts/check-zot-coverage.py
+          --dist "${{ matrix.directory }}"

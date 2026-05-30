@@ -31,6 +31,7 @@ catalog/        Reusable components (charts, compositions, OCI images, …)
 ├── helm/           Helm chart sources
 ├── kairos-bundles/ Kairos OS bundles
 ├── kustomize/      Kustomize bases
+├── opa/            OPA/Rego policies for CI-time manifest validation (policies/, rules/)
 └── talos/          Talos Linux machine config patches
 
 defaults/       Baseline Helm values / Talos configs used across projects

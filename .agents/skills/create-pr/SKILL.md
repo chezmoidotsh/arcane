@@ -3,9 +3,9 @@ name: create-pr
 description: >
   Opens a well-formed pull request for the Arcane repository following project
   conventions. Use when asked to create, open, or submit a pull request, or to
-  push a branch and request a review. Enforces Gitmoji PR title, branch naming
-  conventions, structured PR body, and Assisted-by transparency trailer
-  per emerging open-source standards.
+  push a branch and request a review. Enforces symbol-based PR title matching
+  commit format, branch naming conventions, structured PR body, and Assisted-by
+  transparency trailer.
 compatibility: Requires git and GitHub CLI (gh)
 ---
 
@@ -51,7 +51,7 @@ Before pushing anything:
 
    The script prints `OK`, `FAIL`, or `WARN` for each check:
 
-   * **`FAIL`** — must be fixed before opening the PR (Gitmoji format, GPG signature, Assisted-by trailer).
+   * **`FAIL`** — must be fixed before opening the PR (symbol format, GPG signature, Assisted-by trailer).
    * **`WARN`** — `Signed-off-by` is missing. This is a **user responsibility**: the Signed-off-by line is
      a DCO legal attestation that only the human committer can make. Surface the warning to the user and
      let them decide. Do not add `-s` to any commit command yourself.
@@ -73,7 +73,7 @@ Before pushing anything:
 2. Push: `git push -u origin <branch-name>`
 3. Run the commit validator (step 4 above) and fix any `FAIL` items; surface `WARN` items to the user.
 4. Draft the PR body following the selected template — see `.github/PULL_REQUEST_TEMPLATE/<type>.md` and `references/pr-examples.md`.
-5. Create the PR with a Gitmoji title.
+5. Create the PR with a symbol-based title matching the primary commit format.
 
 ## PR body structure
 
@@ -184,7 +184,7 @@ Logs / metrics / probes that will confirm the fix in production.
 ```sh
 git push -u origin <branch-name>
 gh pr create \
-  --title ":emoji:(scope): Subject" \
+  --title "type[scope]: Subject" \
   --body "$(cat <<'EOF'
 <body following the selected template>
 EOF
@@ -194,8 +194,8 @@ EOF
 
 ## Rules
 
-* **PR title**: Gitmoji format matching the primary commit — `:emoji:(scope): Subject`
-* **Commits**: All commits must have Gitmoji format, GPG signature (`-S`), and `Assisted-by:` trailer.
+* **PR title**: Symbol-based format matching the primary commit — `type[scope]: Subject` (see `.agents/skills/git-commit/SKILL.md` for type table)
+* **Commits**: All commits must have symbol format, GPG signature (`-S`), and `Assisted-by:` trailer.
   Signed-off-by is the user's responsibility — never add `-s` yourself.
 * **File paths**: Link files in Changes Made using `[`path`](path)` markdown syntax
 * **Technical Impact**: Always present with **named sub-sections** — never just a bare Before/After
@@ -216,7 +216,7 @@ illustrating one of the three templates.
 ```sh
 git push -u origin feat/forgejo-lungmen
 gh pr create \
-  --title ":sparkles:(project:lungmen.akn): Add Forgejo Git hosting service" \
+  --title "+[project:lungmen.akn]: Add Forgejo Git hosting service" \
   --body "$(cat <<'EOF'
 ## Summary
 
@@ -291,7 +291,7 @@ gh pr create \
 
 * [ ] Branch name follows convention
 * [ ] Commit validator shows no `FAIL` lines; `WARN` lines surfaced to user
-* [ ] PR title is Gitmoji-formatted with correct scope
+* [ ] PR title uses symbol-based format with correct scope (`type[scope]: Subject`)
 * [ ] PR body matches the selected template skeleton: Summary, Changes Made (with subsystem headings),
   Technical Impact (with **named sub-sections**), Testing Validation, Related Issues
 * [ ] Refactor PRs include `## Rationale`; bugfix PRs include `## Root Cause` with evidence

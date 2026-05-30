@@ -10,6 +10,7 @@ metadata:
     app.kubernetes.io/version: 9.0.2
     helm.sh/chart: valkey-0.9.4
   name: forgejo-valkey
+  namespace: forgejo
 spec:
   ports:
   - name: tcp

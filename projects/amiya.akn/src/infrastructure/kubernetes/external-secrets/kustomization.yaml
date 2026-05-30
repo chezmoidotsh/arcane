@@ -30,3 +30,7 @@ patches:
     target:
       kind: ClusterSecretStore
       name: vault.chezmoi.sh
+
+images:
+  - name: oci.external-secrets.io/external-secrets/external-secrets
+    newName: oci.chezmoi.sh/oci.external-secrets.io/external-secrets/external-secrets

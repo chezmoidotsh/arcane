@@ -23,3 +23,7 @@ resources:
 patches:
   - path: wildcard.chezmoi.sh.certificate.yaml
   - path: default.gateway.patch.yaml
+
+images:
+  - name: docker.io/envoyproxy/gateway
+    newName: oci.chezmoi.sh/docker.io/envoyproxy/gateway

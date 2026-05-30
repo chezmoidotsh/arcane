@@ -4,7 +4,7 @@ name: ♻️ Refresh Trunk cache
 on:
   push:
     branches: [main]
-    paths: [.trunk/trunk.yaml]
+    paths: [.trunk/trunk.yaml, .github/workflows/push.trunk-cache.yaml]
 
 permissions: {}
 

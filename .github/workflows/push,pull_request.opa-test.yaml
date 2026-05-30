@@ -1,0 +1,36 @@
+name: 🧪 OPA Policy Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/push,pull_request.opa-test.yaml"
+      - "catalog/opa/**"
+
+  pull_request:
+    paths:
+      - ".github/workflows/push,pull_request.opa-test.yaml"
+      - "catalog/opa/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  opa-test:
+    name: Run OPA unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 🛠️ Set up mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        with:
+          install: true
+
+      - name: 🧪 Run opa test
+        run: mise exec opa -- opa test catalog/opa/policies/ -v

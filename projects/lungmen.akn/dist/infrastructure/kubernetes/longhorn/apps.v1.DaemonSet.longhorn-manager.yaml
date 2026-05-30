@@ -31,17 +31,17 @@ spec:
         - -d
         - daemon
         - --engine-image
-        - oci.chezmoi.sh/docker.io/longhornio/longhorn-engine:v1.11.2
+        - docker.io/longhornio/longhorn-engine:v1.11.2
         - --instance-manager-image
-        - oci.chezmoi.sh/docker.io/longhornio/longhorn-instance-manager:v1.11.2
+        - docker.io/longhornio/longhorn-instance-manager:v1.11.2
         - --share-manager-image
-        - oci.chezmoi.sh/docker.io/longhornio/longhorn-share-manager:v1.11.2
+        - docker.io/longhornio/longhorn-share-manager:v1.11.2
         - --backing-image-manager-image
-        - oci.chezmoi.sh/docker.io/longhornio/backing-image-manager:v1.11.2
+        - docker.io/longhornio/backing-image-manager:v1.11.2
         - --support-bundle-manager-image
-        - oci.chezmoi.sh/docker.io/longhornio/support-bundle-kit:v0.0.84
+        - docker.io/longhornio/support-bundle-kit:v0.0.84
         - --manager-image
-        - oci.chezmoi.sh/docker.io/longhornio/longhorn-manager:v1.11.2
+        - docker.io/longhornio/longhorn-manager:v1.11.2
         - --service-account
         - longhorn-service-account
         - --upgrade-version-check
@@ -62,7 +62,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: oci.chezmoi.sh/docker.io/longhornio/longhorn-manager:v1.11.2
+        image: docker.io/longhornio/longhorn-manager:v1.11.2
         imagePullPolicy: IfNotPresent
         name: longhorn-manager
         ports:
@@ -100,7 +100,7 @@ spec:
         - sh
         - -c
         - echo share-manager image pulled && sleep infinity
-        image: oci.chezmoi.sh/docker.io/longhornio/longhorn-share-manager:v1.11.2
+        image: docker.io/longhornio/longhorn-share-manager:v1.11.2
         imagePullPolicy: IfNotPresent
         name: pre-pull-share-manager-image
       priorityClassName: longhorn-critical

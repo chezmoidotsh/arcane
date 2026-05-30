@@ -28,6 +28,18 @@ helmCharts:
               secretKey: "NEWT_SECRET"
           enabled: true
 
+# kustomize's namespace transformer does not post-process helmCharts resources.
+# The newt Deployment template does not call {{ .Release.Namespace }}, so the
+# namespace field is absent in the rendered output. This patch injects it.
+patches:
+  - patch: |
+      - op: add
+        path: /metadata/namespace
+        value: newt-system
+    target:
+      kind: Deployment
+      name: newt-newt-main-tunnel
+
 labels:
   - pairs:
       app.kubernetes.io/name: newt
@@ -37,4 +49,5 @@ labels:
 images:
   # renovate: datasource=docker depName=docker.io/fosrl/newt
   - name: docker.io/fosrl/newt
+    newName: oci.chezmoi.sh/docker.io/fosrl/newt
     newTag: 1.12.5@sha256:3c009663332145cae39b940b07857469038d5e9d71aacb1497e78795ba4e3b9b

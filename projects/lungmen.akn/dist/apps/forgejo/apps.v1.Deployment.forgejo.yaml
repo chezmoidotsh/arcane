@@ -74,7 +74,7 @@ spec:
             secretKeyRef:
               key: password
               name: forgejo-database-forgejo
-        image: code.forgejo.org/forgejo/forgejo:15.0.2-rootless
+        image: oci.chezmoi.sh/code.forgejo.org/forgejo/forgejo:15.0.2-rootless
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 10
@@ -148,7 +148,7 @@ spec:
             secretKeyRef:
               key: password
               name: forgejo-database-forgejo
-        image: code.forgejo.org/forgejo/forgejo:15.0.2-rootless
+        image: oci.chezmoi.sh/code.forgejo.org/forgejo/forgejo:15.0.2-rootless
         imagePullPolicy: IfNotPresent
         name: init-directories
         resources:
@@ -205,7 +205,7 @@ spec:
             secretKeyRef:
               key: password
               name: forgejo-database-forgejo
-        image: code.forgejo.org/forgejo/forgejo:15.0.2-rootless
+        image: oci.chezmoi.sh/code.forgejo.org/forgejo/forgejo:15.0.2-rootless
         imagePullPolicy: IfNotPresent
         name: init-app-ini
         resources:
@@ -288,7 +288,7 @@ spec:
             secretKeyRef:
               key: password
               name: forgejo-database-forgejo
-        image: code.forgejo.org/forgejo/forgejo:15.0.2-rootless
+        image: oci.chezmoi.sh/code.forgejo.org/forgejo/forgejo:15.0.2-rootless
         imagePullPolicy: IfNotPresent
         name: configure-gitea
         resources:

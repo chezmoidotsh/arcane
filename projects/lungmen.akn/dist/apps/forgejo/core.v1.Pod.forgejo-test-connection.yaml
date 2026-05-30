@@ -19,6 +19,6 @@ spec:
     - forgejo-http:3000
     command:
     - wget
-    image: busybox:latest
+    image: oci.chezmoi.sh/docker.io/library/busybox:latest
     name: wget
   restartPolicy: Never

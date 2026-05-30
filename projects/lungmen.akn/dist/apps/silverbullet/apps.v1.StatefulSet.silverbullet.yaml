@@ -25,7 +25,7 @@ spec:
       - args:
         - --port
         - "3000"
-        image: docker.io/zefhemel/silverbullet:2.8.1
+        image: oci.chezmoi.sh/docker.io/zefhemel/silverbullet:2.8.1
         livenessProbe:
           httpGet:
             path: /

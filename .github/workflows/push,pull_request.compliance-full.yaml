@@ -1,0 +1,75 @@
+name: 🏛️ Full Compliance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/push,pull_request.compliance-full.yaml"
+      - "catalog/opa/policies/**"
+
+  pull_request:
+    paths:
+      - ".github/workflows/push,pull_request.compliance-full.yaml"
+      - "catalog/opa/policies/**"
+
+  merge_group: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  collect-directories:
+    name: Collect all dist/ directories
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    outputs:
+      directories: ${{ steps.all-dist.outputs.directories }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 📋 Collect all dist/ directories
+        id: all-dist
+        run: |
+          dirs=$(find projects -path '*/dist/**' -name '*.yaml' | sed 's|/[^/]*$||' | sort -u | jq -R -s -c 'split("\n") | map(select(. != ""))')
+          echo "directories=$dirs" >> "$GITHUB_OUTPUT"
+
+  compliance:
+    name: ${{ matrix.directory }}
+    needs: collect-directories
+    if: needs.collect-directories.outputs.directories != '[]'
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        directory: ${{ fromJson(needs.collect-directories.outputs.directories) }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: ⬇️ Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+
+      - name: 🛠️ Set up mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        with:
+          install: true
+
+      - name: 🧪 OPA policy check
+        run: >-
+          mise exec conftest --
+          conftest test "${{ matrix.directory }}"
+          --policy catalog/opa/policies/
+          --combine
+          --output github
+
+      - name: 🔍 Zot registry coverage check
+        run: >-
+          .github/scripts/check-zot-coverage.py
+          --dist "${{ matrix.directory }}"

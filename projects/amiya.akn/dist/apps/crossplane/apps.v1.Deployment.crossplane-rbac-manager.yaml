@@ -57,7 +57,7 @@ spec:
               resource: limits.memory
         - name: LEADER_ELECTION
           value: "true"
-        image: xpkg.crossplane.io/crossplane/crossplane:v1.20.0-rc.0.140.g629ca2e2f
+        image: oci.chezmoi.sh/xpkg.crossplane.io/crossplane/crossplane:v1.20.0-rc.0.140.g629ca2e2f
         imagePullPolicy: IfNotPresent
         name: crossplane
         resources:
@@ -93,7 +93,7 @@ spec:
               containerName: crossplane-init
               divisor: "1"
               resource: limits.memory
-        image: xpkg.crossplane.io/crossplane/crossplane:v1.20.0-rc.0.140.g629ca2e2f
+        image: oci.chezmoi.sh/xpkg.crossplane.io/crossplane/crossplane:v1.20.0-rc.0.140.g629ca2e2f
         imagePullPolicy: IfNotPresent
         name: crossplane-init
         resources:

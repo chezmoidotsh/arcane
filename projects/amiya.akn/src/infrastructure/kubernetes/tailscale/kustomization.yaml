@@ -31,3 +31,7 @@ helmCharts:
     additionalValuesFiles:
       - tailscale.helmvalues/hardened.yaml
     includeCRDs: true
+
+images:
+  - name: tailscale/k8s-operator
+    newName: oci.chezmoi.sh/docker.io/tailscale/k8s-operator

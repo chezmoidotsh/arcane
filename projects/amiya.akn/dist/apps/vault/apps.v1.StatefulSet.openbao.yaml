@@ -81,7 +81,7 @@ spec:
           value: https://$(HOSTNAME).openbao-internal:8201
         - name: HOME
           value: /home/openbao
-        image: ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm:2.2.2-25.05-x86_64-linux
+        image: oci.chezmoi.sh/ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm:2.2.2-25.05-x86_64-linux
         imagePullPolicy: IfNotPresent
         lifecycle:
           preStop:

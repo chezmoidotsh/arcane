@@ -122,6 +122,13 @@ data:
               "onDemand": true,
               "preserveDigest": true,
               "tlsVerify": true
+            },
+            {
+              "urls": ["https://code.forgejo.org"],
+              "content": [{"destination": "/code.forgejo.org", "prefix": "**"}],
+              "onDemand": true,
+              "preserveDigest": true,
+              "tlsVerify": true
             }
           ]
         }

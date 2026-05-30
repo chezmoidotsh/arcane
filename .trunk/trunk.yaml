@@ -58,6 +58,7 @@ lint:
     - trivy@0.69.3
     - taplo@0.10.0
     - trufflehog@3.93.8
+    - conftest
   threshold:
     - linters: [checkov, trivy]
       level: none
@@ -97,13 +98,53 @@ lint:
       linters: [remark-lint]
       paths:
         - "**/*.AGENT.md"
-    - # dist/ folders contain generated manifests — security scanning deferred
-      linters: [ALL]
+    - # dist/ folders contain generated manifests — excluded from all linters except conftest
+      linters:
+        - nixpkgs-fmt
+        - actionlint
+        - biome
+        - checkov
+        - git-diff-check
+        - hadolint
+        - markdown-link-check
+        - markdownlint
+        - osv-scanner
+        - oxipng
+        - prettier
+        - remark-lint
+        - renovate
+        - ruff
+        - shellcheck
+        - shfmt
+        - sort-package-json
+        - svgo
+        - trivy
+        - taplo
+        - trufflehog
       paths:
         - "**/dist/**"
+    - # conftest validates only rendered manifests in dist/
+      linters: [conftest]
+      paths:
+        - catalog/**
+        - defaults/**
+        - docs/**
+        - .github/**
+        - .trunk/**
+        - scripts/**
+        - projects/*/src/**
 
   # This is the section where you override some linters' configurations.
   definitions:
+    - name: conftest
+      files: [yaml]
+      commands:
+        - output: regex
+          run: conftest test "${target}" -p catalog/opa/policies/ --no-color
+          read_output_from: stdout
+          run_linter_from: workspace
+          success_codes: [0, 1, 2]
+          parse_regex: 'FAIL - (?P<path>.+?) - \w+ - (?P<message>.+)'
     - name: remark-lint
       extra_packages:
         - remark-preset-lint-consistent

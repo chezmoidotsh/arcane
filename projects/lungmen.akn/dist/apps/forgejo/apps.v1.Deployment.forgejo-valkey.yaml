@@ -9,6 +9,7 @@ metadata:
     app.kubernetes.io/version: 9.0.2
     helm.sh/chart: valkey-0.9.4
   name: forgejo-valkey
+  namespace: forgejo
 spec:
   replicas: 1
   selector:
@@ -34,7 +35,7 @@ spec:
         env:
         - name: VALKEY_LOGLEVEL
           value: notice
-        image: docker.io/valkey/valkey:9.0.2
+        image: oci.chezmoi.sh/docker.io/valkey/valkey:9.0.2
         imagePullPolicy: IfNotPresent
         livenessProbe:
           exec:
@@ -74,7 +75,7 @@ spec:
       initContainers:
       - command:
         - /scripts/init.sh
-        image: docker.io/valkey/valkey:9.0.2
+        image: oci.chezmoi.sh/docker.io/valkey/valkey:9.0.2
         imagePullPolicy: IfNotPresent
         name: forgejo-valkey-init
         securityContext:
