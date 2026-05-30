@@ -197,6 +197,7 @@ EOF
 * **PR title**: Symbol-based format matching the primary commit — `type[scope]: Subject` (see `.agents/skills/git-commit/SKILL.md` for type table)
 * **Commits**: All commits must have symbol format, GPG signature (`-S`), and `Assisted-by:` trailer.
   Signed-off-by is the user's responsibility — never add `-s` yourself.
+* **PR body line length**: No hard limit — do NOT wrap PR body text at 80 characters. GitHub renders Markdown, so natural prose flow is preferred over artificial line breaks. The 80-char rule applies only to git commit bodies, not PR descriptions.
 * **File paths**: Link files in Changes Made using `[`path`](path)` markdown syntax
 * **Technical Impact**: Always present with **named sub-sections** — never just a bare Before/After
   table or a flat bullet list. Drop sub-sections that don't apply rather than leaving them empty.
