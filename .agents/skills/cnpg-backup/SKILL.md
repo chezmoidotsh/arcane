@@ -1,7 +1,7 @@
 ---
 name: cnpg-backup
 description: Use this skill whenever the user wants an on-demand CloudNative-PG (CNPG) backup in this Arcane repository — phrases like "backup pocket-id", "backup openbao", "backup atuin", "backup paperless", "backup the apps database", or "backup all postgres in lungmen". Also use it when the user names a logical database (atuin, n8n, immich, paperless, forgejo, linkding, …) without knowing which CNPG cluster owns it. Discover the matching cluster from `projects/` via the bundled discovery script, map it to a kubectl context, require explicit confirmation, then create and verify a plugin-based Backup.
-compatibility: Requires `kubectl` with the CloudNativePG plugin (`kubectl cnpg`), plus `yq` (v4+), `jq`, and `rg` for discovery.
+compatibility: Requires `kubectl`, plus `yq` (v4+), `jq`, and `rg` for discovery. `yq` is installed via `mise` in this repo — run the discovery script with `mise exec --` if `yq` is not on the system PATH. The `kubectl cnpg` plugin is optional; the manifest fallback works without it.
 ---
 
 # CNPG Backup
@@ -38,15 +38,43 @@ These look adjacent but need a different flow — say so and stop:
 6. **Create** one on-demand plugin backup per confirmed target.
 7. **Verify** the resulting `Backup` and report status per target.
 
+## Step 0 — Target resolution order
+
+**Run discovery before asking the user anything.** The order matters:
+
+1. Run the discovery script (Step 1).
+2. If the user already named a target in their message, apply Step 2 filtering immediately.
+3. If no target was stated, present the discovered clusters/apps as `ask_user` choices and
+   wait for the user to pick. Do **not** ask a free-form "which database?" question — the
+   user cannot be expected to know internal cluster names like `pocket-id-20260530`.
+
+Example `ask_user` when no target is given:
+
+```text
+Which cluster or app would you like to back up?
+
+Choices derived from discovery:
+  - pocket-id  (amiya.akn / pocket-id)
+  - openbao    (amiya.akn / vault)
+  - atuin      (lungmen.akn / databases — mutualized with n8n, linkding, forgejo)
+  - n8n        (lungmen.akn / databases — mutualized with atuin, linkding, forgejo)
+  - …
+```
+
+Surface **app-level names** (logical databases and app\_dir values) as choices, not raw
+cluster names — the user thinks in terms of "pocket-id", not "pocket-id-20260530".
+
 ## Step 1 — Discover
 
-Run the bundled discovery script from the repository root. It parses both direct
-`postgresql.cnpg.io/v1` `Cluster` manifests and mutualized clusters rendered from the
-`mutualized-cnpg-databases` Helm chart, and outputs a JSON array.
+Run the bundled discovery script from the repository root. It scans only `dist/`
+directories (the rendered, ArgoCD-applied state), producing one entry per unique cluster
+with no duplicates. Logical databases are derived from `Database` objects in the same
+`dist/` directory.
 
 ```bash
-.agents/skills/cnpg-backup/scripts/discover-cnpg.sh                # all candidates
-.agents/skills/cnpg-backup/scripts/discover-cnpg.sh lungmen.akn    # scope to one project
+# yq is installed via mise — use mise exec if yq is not on the system PATH
+mise exec -- .agents/skills/cnpg-backup/scripts/discover-cnpg.sh                # all candidates
+mise exec -- .agents/skills/cnpg-backup/scripts/discover-cnpg.sh lungmen.akn    # scope to one project
 ```
 
 Each entry has this shape:
@@ -56,12 +84,12 @@ Each entry has this shape:
   "cluster_name": "apps-20260329",
   "project": "lungmen.akn",
   "namespace": "databases",
-  "namespace_source": "helmCharts",
+  "namespace_source": "kustomization",
   "app_dir": "databases",
   "source": "mutualized",
   "plugin_enabled": true,
   "logical_databases": ["atuin", "n8n", "linkding", "forgejo"],
-  "manifest_path": "projects/lungmen.akn/src/apps/databases/postgres-apps.helmvalues.yaml",
+  "manifest_path": "projects/lungmen.akn/dist/apps/databases/postgresql.cnpg.io.v1.Cluster.apps-20260329.yaml",
   "context_hint": "admin@lungmen.akn"
 }
 ```
@@ -83,7 +111,13 @@ priority order:
 1. Exact `cluster_name` match
 2. Exact `logical_databases[]` member match (resolves "backup atuin" to the right cluster)
 3. Exact `app_dir` or `project` match
-4. Substring match as a last resort
+4. **Prefix or substring of `cluster_name`** — this is the common case: users say
+   "pocket-id" when the actual cluster is "pocket-id-20260530". Match any candidate whose
+   `cluster_name` or `app_dir` starts with or contains the user's term.
+
+Example: user says "pocket-id" → matches `cluster_name: pocket-id-20260530` via prefix.
+Example: user says "openbao" → matches `app_dir: vault` via `logical_databases` or
+`cluster_name: openbao-database` via substring.
 
 Tie-breaking: if multiple candidates remain after exact matching, surface them all in the
 confirmation step. If the user says "all" or "everything" for a project, keep every
@@ -133,93 +167,44 @@ is the failure mode this skill exists to prevent.
 
 ## Step 5 — Validate the live cluster
 
-For each confirmed target, in order:
+For each confirmed target, run the bundled validation script:
 
 ```bash
-# Does it exist?
-kubectl get cluster.postgresql.cnpg.io <cluster_name> \
-  --namespace <namespace> --context <context> -o yaml
-
-# Is it healthy and plugin-ready?
-kubectl cnpg status <cluster_name> --namespace <namespace> --context <context>
+.agents/skills/cnpg-backup/scripts/validate-cnpg.sh <cluster_name> <namespace> <context>
 ```
 
-Proceed only if **both** are true:
+The script checks that the cluster exists, is in healthy state, and has the
+`barman-cloud.cloudnative-pg.io` plugin enabled. It exits non-zero with a clear error
+message if any check fails — stop for that target and surface the reason to the user.
 
-* The live cluster exists and reports a healthy state.
-* The plugin `barman-cloud.cloudnative-pg.io` is enabled — either in `.spec.plugins[]` on a
-  direct cluster, or in `.spec.cluster.plugins[]` of the mutualized values file (the
-  discovery script already exposes this as `plugin_enabled`).
-
-If either check fails, stop for that target and explain why. This skill is plugin-only on
-purpose: the deprecated `barmanObjectStore` method is out of scope and should not be used
-as a fallback.
+Proceed only after the script exits 0. This skill is plugin-only on purpose: the
+deprecated `barmanObjectStore` method is out of scope and must not be used as a fallback.
 
 ## Step 6 — Create the backup
 
-Prefer the plugin command — it picks up the cluster's own plugin config:
+Run the bundled backup script. It applies a plugin `Backup` manifest with a
+timestamp-based name, prints the created `Backup` name on stdout, and exits non-zero on
+failure.
 
 ```bash
-kubectl cnpg backup <cluster_name> \
-  --namespace <namespace> --context <context> --method plugin
+backup_name="$(.agents/skills/cnpg-backup/scripts/backup-cnpg.sh \
+  <cluster_name> <namespace> <context>)"
 ```
 
-Capture stdout in case the command prints the created `Backup` name.
-
-If (and only if) the local plugin version doesn't support `--method plugin`, apply a
-`Backup` manifest explicitly — this is the documented escape hatch:
-
-```bash
-backup_name="<cluster_name>-on-demand-$(date +%s)"
-kubectl apply --context <context> -f - <<EOF
-apiVersion: postgresql.cnpg.io/v1
-kind: Backup
-metadata:
-  name: ${backup_name}
-  namespace: <namespace>
-spec:
-  cluster:
-    name: <cluster_name>
-  method: plugin
-  pluginConfiguration:
-    name: barman-cloud.cloudnative-pg.io
-EOF
-```
-
-Only use this fallback after plugin capability has been confirmed in step 5.
+Capture the printed name — it is required for Step 7.
 
 ## Step 7 — Verify
 
-Wait a few seconds, then locate the `Backup` object.
-
-If the plugin command printed a name, use it. Otherwise, find the newest `Backup` for the
-cluster:
+Wait a few seconds, then run the bundled verification script with the name printed by
+Step 6:
 
 ```bash
-kubectl get backup -n <namespace> --context <context> -o json \
-  | jq -r --arg c <cluster_name> '.items[]
-      | select(.spec.cluster.name == $c)
-      | "\(.metadata.creationTimestamp) \(.metadata.name)"' \
-  | sort | tail -1
+sleep 5
+.agents/skills/cnpg-backup/scripts/verify-cnpg.sh <backup_name> <namespace> <context>
 ```
 
-Then inspect it:
-
-```bash
-kubectl get backup <backup_name> --namespace <namespace> --context <context> -o yaml
-```
-
-Report one of:
-
-* **`running` / `pending`** — backup started; give the user a watch command.
-* **`completed`** — done; report and stop.
-* **`failed`** — surface the failure and suggest `kubectl describe backup <backup_name> …`.
-
-Useful watch command:
-
-```bash
-kubectl get backup <backup_name> --namespace <namespace> --context <context> -w
-```
+The script reports `COMPLETED`, `RUNNING` (with a watch command), or `FAILED` (with a
+describe command), and exits non-zero on failure.
 
 ## Storage, retention, and lifecycle
 
@@ -231,7 +216,7 @@ should know once the backup is running:
   `ScheduledBackup`'s `retentionPolicy` applies to its own scheduled backups, not to
   ad-hoc ones. If this backup was created for a one-shot purpose (pre-migration, etc.),
   the user is responsible for deleting the `Backup` object once it's no longer needed:
-  `kubectl delete backup <backup_name> -n <namespace> --context <context>`.
+  `kubectl delete backup.postgresql.cnpg.io <backup_name> -n <namespace> --context <context>`.
 * **Deleting the `Backup` object does not always delete the bucket data** — that depends
   on the plugin's `retentionPolicy` and the `ObjectStore` config. Mention this when the
   user explicitly asks about cleanup.
