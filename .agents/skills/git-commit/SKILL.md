@@ -58,6 +58,8 @@ The type is a single ASCII symbol (two characters for breaking changes) that enc
 nature of the change. It appears at the very start of the commit subject and is readable
 in any terminal or rendering environment without emoji support.
 
+**Allowed types (exhaustive list):**
+
 | Type | Meaning                                                         |
 | ---- | --------------------------------------------------------------- |
 | `+`  | Add — new feature, service, resource, initial deploy            |
@@ -73,15 +75,13 @@ in any terminal or rendering environment without emoji support.
 | `?`  | Experiment — POC, investigation, research                       |
 | `*`  | Wildcard — does not fit any other type                          |
 
-**Breaking change types** (append `!` to the base type, before `[`):
+**Breaking change types** (append `!` to the base type, before `[`) — only `+`, `~`, and `-` can break:
 
 | Type | Meaning                                                                   |
 | ---- | ------------------------------------------------------------------------- |
 | `+!` | Add (breaking) — addition that breaks backward compatibility              |
 | `~!` | Improve (breaking) — behavioral change that breaks backward compatibility |
 | `-!` | Remove (breaking) — removal that breaks backward compatibility            |
-
-> The full authoritative list lives in `.commitlintrc.js` → `types` array.
 
 **Type selection rules:**
 
@@ -97,24 +97,26 @@ in any terminal or rendering environment without emoji support.
 ### Scope
 
 The scope is enclosed in square brackets and identifies which part of the repository
-the commit touches. It must be an exact value from `.commitlintrc.js` → `scopes` array.
+the commit touches.
 
-| Scope                   | Path                          |
-| ----------------------- | ----------------------------- |
-| `project:amiya.akn`     | `projects/amiya.akn/`         |
-| `project:chezmoi.sh`    | `projects/chezmoi.sh/`        |
-| `project:hass`          | `projects/hass/`              |
-| `project:kazimierz.akn` | `projects/kazimierz.akn/`     |
-| `project:lungmen.akn`   | `projects/lungmen.akn/`       |
-| `project:shodan.akn`    | `projects/shodan.akn/`        |
-| `catalog:ansible`       | `catalog/ansible/`            |
-| `catalog:crossplane`    | `catalog/crossplane/`         |
-| `catalog:flakes`        | `catalog/flakes/`             |
-| `catalog:kustomize`     | `catalog/kustomize/`          |
-| `catalog:kairos-bundle` | `catalog/kairos-bundles/`     |
-| `catalog:talos`         | `catalog/talos/`              |
-| `gh`                    | `.github/`, root config files |
-| `deps`                  | Dependency updates            |
+**Allowed scopes (exhaustive list):**
+
+| Scope                   | Path / Description                       |
+| ----------------------- | ---------------------------------------- |
+| `project:amiya.akn`     | `projects/amiya.akn/`                    |
+| `project:chezmoi.sh`    | `projects/chezmoi.sh/`                   |
+| `project:hass`          | `projects/hass/`                         |
+| `project:kazimierz.akn` | `projects/kazimierz.akn/`                |
+| `project:lungmen.akn`   | `projects/lungmen.akn/`                  |
+| `project:shodan.akn`    | `projects/shodan.akn/`                   |
+| `catalog:ansible`       | `catalog/ansible/`                       |
+| `catalog:crossplane`    | `catalog/crossplane/`                    |
+| `catalog:flakes`        | `catalog/flakes/`                        |
+| `catalog:kustomize`     | `catalog/kustomize/`                     |
+| `catalog:kairos-bundle` | `catalog/kairos-bundles/`                |
+| `catalog:talos`         | `catalog/talos/`                         |
+| `gh`                    | `.github/`, root config files            |
+| `deps`                  | Dependency updates (automated or manual) |
 
 **Multiple scopes:** `[scope1,scope2]` (comma-separated inside brackets, no spaces, max 3)
 — only when one logical change atomically touches multiple components.
@@ -189,6 +191,156 @@ command is always:
 git commit -S -m "..."
 ```
 
+## Commitlint rules (canonical reference)
+
+This section reproduces every rule from `.commitlintrc.js` so the skill is fully
+self-contained. When commitlint is updated in `.commitlintrc.js`, this section MUST be
+updated in sync (see "Keeping this skill in sync" below).
+
+### Header rules
+
+| Rule                | Level | Value         | Notes                                   |
+| ------------------- | ----- | ------------- | --------------------------------------- |
+| `header-max-length` | error | 100           | Full header line max 100 chars          |
+| `header-min-length` | error | 0             | No minimum enforced                     |
+| `header-full-stop`  | error | never `"."`   | No trailing period in header            |
+| `header-trim`       | error | always        | No leading/trailing whitespace          |
+| `header-case`       | off   | sentence-case | Disabled — symbol prefixes have no case |
+
+### Type rules
+
+| Rule              | Level | Value                                                                        |
+| ----------------- | ----- | ---------------------------------------------------------------------------- |
+| `type-enum`       | error | `+`, `-`, `~`, `!`, `=`, `^`, `>`, `<`, `@`, `$`, `?`, `*`, `+!`, `~!`, `-!` |
+| `type-empty`      | error | never                                                                        |
+| `type-case`       | off   | lower-case (disabled — symbols have no case)                                 |
+| `type-max-length` | error | Infinity                                                                     |
+| `type-min-length` | error | 0                                                                            |
+
+### Scope rules
+
+| Rule               | Level | Value                                                                                                                                                                                                                                                                   |
+| ------------------ | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scope-enum`       | warn  | `catalog:ansible`, `catalog:crossplane`, `catalog:flakes`, `catalog:kustomize`, `catalog:kairos-bundle`, `catalog:talos`, `project:amiya.akn`, `project:chezmoi.sh`, `project:hass`, `project:kazimierz.akn`, `project:lungmen.akn`, `project:shodan.akn`, `deps`, `gh` |
+| `scope-empty`      | error | never                                                                                                                                                                                                                                                                   |
+| `scope-case`       | error | lower-case                                                                                                                                                                                                                                                              |
+| `scope-max-length` | error | Infinity                                                                                                                                                                                                                                                                |
+| `scope-min-length` | error | 0                                                                                                                                                                                                                                                                       |
+
+`scope-enum` is set to **warning** because multi-scope commits (`scope1,scope2`) won't
+match single enum entries. Validation is enforced by the cz-git prompt instead.
+
+### Subject rules
+
+| Rule                       | Level | Value         |
+| -------------------------- | ----- | ------------- |
+| `subject-empty`            | error | never         |
+| `subject-case`             | error | sentence-case |
+| `subject-full-stop`        | error | never `"."`   |
+| `subject-max-length`       | error | 100           |
+| `subject-min-length`       | error | 0             |
+| `subject-exclamation-mark` | off   | never         |
+
+### Body rules
+
+| Rule                   | Level | Value         |
+| ---------------------- | ----- | ------------- |
+| `body-empty`           | off   | always        |
+| `body-full-stop`       | off   | always `"."`  |
+| `body-leading-blank`   | off   | always        |
+| `body-max-length`      | error | Infinity      |
+| `body-max-line-length` | error | 80            |
+| `body-min-length`      | error | 0             |
+| `body-case`            | error | sentence-case |
+
+### Footer rules
+
+| Rule                     | Level | Value    |
+| ------------------------ | ----- | -------- |
+| `footer-empty`           | error | always   |
+| `footer-leading-blank`   | error | always   |
+| `footer-max-length`      | error | Infinity |
+| `footer-max-line-length` | error | 80       |
+| `footer-min-length`      | error | 0        |
+
+### Other rules
+
+| Rule               | Level | Value                      |
+| ------------------ | ----- | -------------------------- |
+| `references-empty` | off   | never                      |
+| `signed-off-by`    | off   | always `"Signed-off-by: "` |
+
+### Parser pattern
+
+```
+headerPattern: /^(?<type>\S+?)\[(?<scope>[^\]]+)\]:\s(?<subject>.+)$/
+breakingHeaderPattern: /^(?<type>[+~-]!)\[(?<scope>[^\]]+)\]:\s(?<subject>.+)$/
+```
+
+### Prompt configuration
+
+| Setting                | Value                            |
+| ---------------------- | -------------------------------- |
+| `allowBreakingChanges` | `+!`, `~!`, `-!`                 |
+| `allowCustomScopes`    | false                            |
+| `allowEmptyScopes`     | false                            |
+| `enableMultipleScopes` | true                             |
+| `scopeEnumSeparator`   | `,`                              |
+| `typesSearchValue`     | false                            |
+| `skipQuestions`        | `body`, `footerPrefix`, `footer` |
+| `upperCaseSubject`     | true                             |
+| `useCommitSignGPG`     | true                             |
+| `useEmoji`             | false                            |
+
+## Keeping this skill in sync
+
+When `.commitlintrc.js` changes (new types, scopes, or rules), this skill MUST be
+updated to match. Follow this procedure:
+
+1. **Read `.commitlintrc.js`** and identify what changed (types, scopes, rules, parser
+   pattern, or prompt config).
+2. **Update the corresponding section** in this skill:
+   * New type → add to both the "Type" table and the `type-enum` row
+   * New scope → add to both the "Scope" table and the `scope-enum` row
+   * Rule change → update the relevant rules table
+   * Parser change → update the "Parser pattern" section
+   * Prompt change → update the "Prompt configuration" table
+3. **Remove the now-stale note** — there is no reference to `.commitlintrc.js` anywhere
+   in this skill for the AI to "check". The skill IS the reference.
+4. **Verify** — re-read both files and confirm every rule, type, scope, and pattern
+   matches exactly.
+
+### When commitlint fails
+
+If `git commit` is rejected by commitlint (via a git hook), follow these steps:
+
+1. **Read the error message carefully.** Commitlint reports the specific rule that
+   failed (e.g. `type-enum`, `scope-enum`, `subject-case`, `header-full-stop`).
+2. **Map the rule to this skill.** Look up the failed rule in the "Commitlint rules"
+   tables above to understand the exact constraint.
+3. **Fix the commit message** to satisfy the rule and retry the commit.
+4. **If the rule is genuinely wrong or too strict,** do NOT silently work around it.
+   Instead:
+   * Tell the user which rule failed and why the message doesn't satisfy it
+   * Propose updating `.commitlintrc.js` to relax or change the rule
+   * If the user agrees, update `.commitlintrc.js` AND then follow "Keeping this
+     skill in sync" above to update this skill in the same commit
+
+Common failures and fixes:
+
+| Error                  | Cause                               | Fix                                    |
+| ---------------------- | ----------------------------------- | -------------------------------------- |
+| `type-enum`            | Unknown type symbol                 | Use only types from the allowed list   |
+| `scope-enum` (warning) | Unknown scope or multi-scope format | Use only scopes from the allowed list  |
+| `subject-case`         | Subject not in sentence-case        | Uppercase first letter, rest as needed |
+| `subject-full-stop`    | Subject ends with `.`               | Remove trailing period                 |
+| `header-full-stop`     | Full header ends with `.`           | Remove trailing period from subject    |
+| `header-max-length`    | Header exceeds 100 chars            | Shorten subject or scope               |
+| `body-max-line-length` | Body line exceeds 80 chars          | Wrap body text at 80 chars             |
+| `scope-empty`          | Missing scope brackets              | Add `[scope]` after type               |
+| `type-empty`           | Missing type symbol                 | Add type symbol before `[scope]`       |
+| `footer-leading-blank` | Missing blank line before trailer   | Add empty line before `Assisted-by:`   |
+
 ## Workflow
 
 ### 1. Survey the workspace
@@ -219,7 +371,7 @@ type selection rules. Never guess on ambiguous cases — ask the user.
 
 ### 4. Determine the scope
 
-Use the scope decision tree. Validate against `.commitlintrc.js` if unsure.
+Use the scope decision tree. Validate against the allowed scopes list above.
 Never guess on ambiguous cases — ask the user.
 
 ### 5. Draft the subject
@@ -366,7 +518,6 @@ git commit -S -m "!![project:amiya.akn]: Fix OIDC redirect loop"
 
 ## References
 
-* Commit config: `.commitlintrc.js`
 * ADR-010: `docs/decisions/010-replace-gitmoji-with-symbol-commit-types.md`
 * <https://allthingsopen.org/articles/open-source-ai-contributions-assisted-by-git-trailer-standard>
 * <https://github.com/rust-lang/rust-forge/blob/8a1ce25d78f9d20a85201bf8808f1c8081be41cf/src/policies/llm-usage.md>
