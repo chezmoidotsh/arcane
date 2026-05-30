@@ -26,7 +26,9 @@ while IFS= read -r sha; do
 
   # 1. Symbol format: type[scope]: Subject  (ADR-010, replaces Gitmoji)
   # Valid types: + - ~ ! = ^ > < @ $ ? * and breaking variants +! ~! -!
-  if ! echo "${subject}" | grep -qE '^([+\-~!=^><@$?*]|[+~-]!)\[[a-z:,._-]+(,[a-z:,._-]+)*\]: [A-Z].+'; then
+  # printf avoids echo misinterpreting a leading '-' as a flag; '-' is moved
+  # to the start of each character class to avoid range ambiguity.
+  if ! printf '%s\n' "${subject}" | grep -qE '^([-+~!=^><@$?*]|[-+~]!)\[[a-z:,._-]+(,[a-z:,._-]+)*\]: [A-Z].+'; then
     echo "FAIL [${short}] subject — expected 'type[scope]: Subject' (symbol format)"
     echo "     got: ${subject}"
     FAILED=1
@@ -43,7 +45,7 @@ while IFS= read -r sha; do
   fi
 
   # 3. Signed-off-by — USER must add this (DCO, not AI responsibility)
-  if echo "${body}" | grep -q "^Signed-off-by:"; then
+  if printf '%s\n' "${body}" | grep -q "^Signed-off-by:"; then
     echo "OK   [${short}] Signed-off-by present"
   else
     echo "WARN [${short}] Signed-off-by missing"
@@ -52,7 +54,7 @@ while IFS= read -r sha; do
   fi
 
   # 4. Assisted-by trailer
-  if echo "${body}" | grep -q "^Assisted-by:"; then
+  if printf '%s\n' "${body}" | grep -q "^Assisted-by:"; then
     echo "OK   [${short}] Assisted-by trailer"
   else
     echo "FAIL [${short}] Assisted-by trailer missing"
