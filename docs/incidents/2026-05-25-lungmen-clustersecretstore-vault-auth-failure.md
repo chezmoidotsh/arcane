@@ -5,17 +5,22 @@ author: "[zai-coding-plan:glm-5.1]"
 participants:
   - "Alexandre"
   - "[zai-coding-plan:glm-5.1]"
-severity: "High"
-status: "Final"
+severity: "Medium"   # apps kept running on cached secrets; only rotation paths blocked
+status: "Open"
 detection-method: "Manual discovery"
-mttd: "~3h48m"
-mttr: "~1h04m from investigation start to resolution"
+duration: "~4h52m (latent failure surfaced ~10:42 UTC at PR #996 merge → resolved ~15:34 UTC)"
 services-affected:
   - "external-secrets-operator (lungmen.akn)"
   - "All 33 ExternalSecrets and 6 PushSecrets on lungmen.akn"
-users-affected: "All applications on lungmen.akn depending on Vault-synced secrets (Forgejo, Immich, Paperless, n8n, Linkding, Atuin, Longhorn, cert-manager, Tailscale, etc.)"
-related-incidents: []
+users-affected: "No end-user impact — applications kept running on cached secrets; only secret rotation paths were blocked"
+root-cause-family:
+  - bootstrap-coupling
+  - observability-gap
+  - state-drift
 trigger: "PR #996 merged at 2026-05-25T10:42:53Z — migrated shoot apps to per-project infrastructure pattern, which removed the legacy `openbao-auth-delegator` ServiceAccount that had been deployed via the shoot mechanism, exposing the fact that the token reviewer JWT had always been sourced from the wrong cluster"
+related-incidents:
+  - path: "docs/incidents/2026-05-30-lungmen-databases-pushsecrets-504-vault-netpol.md"
+    relation: "Same ESO → OpenBao → lungmen kube-apiserver auth chain — second failure mode on same path"
 related-adrs:
   - "docs/decisions/001-centralized-secret-management.md"
   - "docs/decisions/002-openbao-secrets-topology.md"
@@ -49,16 +54,16 @@ The `vault.chezmoi.sh` ClusterSecretStore on the lungmen.akn cluster was unable 
 
 <!-- skew: ±15m for Alexandre's detection (noticed ~4h after PR merge); ±5m for AI agent actions; exact for [system:external-secrets] event (sourced from ESO controller log) -->
 
-| Time (UTC)           | Actor                      | Event or Decision                                                                                                       |
-| -------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| ±? 2026-05-25T14:30  | Alexandre                  | Requests investigation of ClusterSecretStore failure on lungmen                                                         |
-| ±5m 2026-05-25T14:45 | \[zai-coding-plan:glm-5.1] | Identifies 403 error at `/v1/auth/lungmen.akn/login` in ESO logs via `kubectl logs`                                     |
-| ±5m 2026-05-25T15:00 | \[zai-coding-plan:glm-5.1] | Decodes JWT from `lungmen-akn-eso-credentials` secret — discovers `openbao-auth-delegator` SA does not exist on lungmen |
-| ±5m 2026-05-25T15:10 | \[zai-coding-plan:glm-5.1] | Generates new token from lungmen's `external-secrets` SA, updates OpenBao via `bao kv patch` (v2 → v3)                  |
-| ±5m 2026-05-25T15:20 | \[zai-coding-plan:glm-5.1] | Forces ExternalSecret refresh on amiya to propagate new token to Crossplane secret                                      |
-| ±5m 2026-05-25T15:25 | \[zai-coding-plan:glm-5.1] | Crossplane does not re-apply `AuthBackendConfig` despite reconciliation trigger                                         |
-| ±5m 2026-05-25T15:30 | \[zai-coding-plan:glm-5.1] | Directly updates OpenBao auth backend config via `bao write auth/lungmen.akn/config`                                    |
-| 2026-05-25T15:34:24  | \[system:external-secrets] | ClusterSecretStore transitions to `Ready: store validated`. 33/34 ExternalSecrets sync successfully.                    |
+| Time (UTC) | Actor                      | Event or Decision                                                                                                       |
+| ---------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+|            | Alexandre                  | Requests investigation of ClusterSecretStore failure on lungmen                                                         |
+|            | \[zai-coding-plan:glm-5.1] | Identifies 403 error at `/v1/auth/lungmen.akn/login` in ESO logs via `kubectl logs`                                     |
+|            | \[zai-coding-plan:glm-5.1] | Decodes JWT from `lungmen-akn-eso-credentials` secret — discovers `openbao-auth-delegator` SA does not exist on lungmen |
+|            | \[zai-coding-plan:glm-5.1] | Generates new token from lungmen's `external-secrets` SA, updates OpenBao via `bao kv patch` (v2 → v3)                  |
+|            | \[zai-coding-plan:glm-5.1] | Forces ExternalSecret refresh on amiya to propagate new token to Crossplane secret                                      |
+|            | \[zai-coding-plan:glm-5.1] | Crossplane does not re-apply `AuthBackendConfig` despite reconciliation trigger                                         |
+|            | \[zai-coding-plan:glm-5.1] | Directly updates OpenBao auth backend config via `bao write auth/lungmen.akn/config`                                    |
+|            | \[system:external-secrets] | ClusterSecretStore transitions to `Ready: store validated`. 33/34 ExternalSecrets sync successfully.                    |
 
 ***
 
@@ -72,7 +77,10 @@ The `vault.chezmoi.sh` ClusterSecretStore on the lungmen.akn cluster was unable 
 
 ## Root-Cause Analysis
 
-### Technique: 5 Whys
+**Technique:** 5 Whys
+**Why this technique:** Single linear chain — token from wrong cluster passed through bootstrap and was never validated. Cause chain converges cleanly without branching.
+
+### Analysis
 
 1. **Why were all ExternalSecrets on lungmen.akn failing?** Because the ClusterSecretStore `vault.chezmoi.sh` could not authenticate with OpenBao, returning 403 at `/v1/auth/lungmen.akn/login`.
 
@@ -128,3 +136,48 @@ The `vault.chezmoi.sh` ClusterSecretStore on the lungmen.akn cluster was unable 
 * **Crossplane drift detection is insufficient for secret references** — When a Crossplane managed resource references a Kubernetes secret (via `*SecretRef`), the provider reads the secret at create/update time but does not re-read it on subsequent reconciles unless the spec changes. This means secret rotation requires either a spec change (e.g., bumping an annotation) or a direct API call outside GitOps. This affects all `AuthBackendConfig` resources using `tokenReviewerJwtSecretRef`.
 
 * **No observability for secret management health** — The ESO and Crossplane ecosystems report status via CRD conditions, but nothing in the current monitoring stack surfaces ClusterSecretStore or ExternalSecret readiness. A single `ClusterSecretStore` failure cascades to all dependent applications. Adding alerting on CRD conditions is the right long-term fix; it is not scheduled yet.
+
+***
+
+## From Lesson to Control
+
+| Lesson                                                                               | Artifact type                | Linked artifact                                                          |
+| ------------------------------------------------------------------------------------ | ---------------------------- | ------------------------------------------------------------------------ |
+| Crossplane `*SecretRef` does not re-read on secret change — rotation needs spec bump | Knowledge file               | `.agents/knowledge/crossplane.md`                                        |
+| ClusterSecretStore / ExternalSecret readiness has no signal                          | Alert rule                   | TBD — depends on monitoring stack rollout (no monitoring yet)            |
+| `RemoteClusterVault` Composition trusts any token in the referenced secret           | OPA rule / Composition guard | `catalog/crossplane/clustervault.vault.chezmoi.sh/` — token issuer check |
+
+***
+
+## Change Register
+
+* [ ] \[due:: 2026-06-15] \[priority:: high] \[size:: M] \[owner:: Alexandre] Add `iss` claim validation in the `RemoteClusterVault` Composition bootstrap path (or a pre-flight OPA rule) so a token from the wrong cluster cannot be silently accepted
+  * **Verification:** Manually test: store a token from amiya in lungmen's slot — composition rejects with a clear error message
+  * **If not done:** Same class of latent auth failure possible on every new `RemoteClusterVault`
+
+* [ ] \[due:: 2026-06-22] \[priority:: high] \[size:: L] \[owner:: Alexandre] Plan observability stack covering ClusterSecretStore + ExternalSecret readiness (this is the meta-pattern from `observability-gap` family)
+  * **Verification:** Document a concrete monitoring proposal (Prometheus rule set or alternative) committed to `docs/decisions/` or `docs/experiments/`
+  * **If not done:** Next ESO/Vault auth failure also discovered by user, not signal
+
+* [ ] \[due:: 2026-06-08] \[priority:: medium] \[size:: S] \[owner:: Alexandre] Document in the `RemoteClusterVault` Composition the manual rotation procedure (since Crossplane won't re-apply auth backend config automatically)
+  * **Verification:** Comment block visible in `remote.x.v1alpha1.openbao.yaml`; next rotation event uses documented procedure without rediscovery
+  * **If not done:** Future token rotation will rediscover the `bao write` workaround under pressure
+
+***
+
+## Agent Knowledge
+
+* Crossplane `provider-vault` `AuthBackendConfig.tokenReviewerJwtSecretRef`: reads the referenced secret at create/update, **does not re-read** on subsequent reconciles. Rotating the token requires a spec bump (e.g., an annotation change) or a direct `bao write auth/<mount>/config`.
+* OpenBao Kubernetes auth method: when called from a remote cluster, OpenBao itself makes a TokenReview call to that cluster's kube-apiserver. The token reviewer JWT must come from a SA on **the target cluster**, not the OpenBao host cluster.
+* JWT issuer (`iss` claim) reveals the source cluster — `legacy kubernetes/serviceaccount` (no `exp`) is the old-format SA token; projected tokens carry a full issuer URL. Always cross-check `iss` against the cluster the auth backend points to.
+* External Secrets Operator `Helm extraObjects` is used to bind `system:auth-delegator` to the `external-secrets` SA on every cluster — that binding is the prerequisite for OpenBao's TokenReview to succeed.
+
+***
+
+## Verification Schedule
+
+| Checkpoint     | Date       | Observable                                                                                  | Forum       |
+| -------------- | ---------- | ------------------------------------------------------------------------------------------- | ----------- |
+| 1-week review  | 2026-06-08 | Medium item complete; rotation procedure documented in the Composition                      | Solo review |
+| 1-month review | 2026-06-22 | High items 1 & 2 progressed; issuer validation tested; observability plan drafted           | Solo review |
+| 3-month review | 2026-08-25 | No recurrence of secret-store auth failure discovered by user (signal-first detection only) | Solo review |

@@ -5,19 +5,22 @@ author: "[anthropic:claude-sonnet-4-6]"
 participants:
   - "Alexandre"
   - "[anthropic:claude-sonnet-4-6]"
-severity: "Critical"
-status: "Final"
+severity: "Critical"   # platform cluster down; all downstream clusters indirectly affected
+status: "Open"
 detection-method: "Manual discovery (post-upgrade monitoring)"
-mttd: "~0m (detected immediately after cluster upgrades)"
-mttr: "~15m (Kyverno scaled to 0; cluster fully restored after workload restart)"
+duration: "~1h (triggered immediately after cluster upgrades)"
 services-affected:
   - "All workloads on amiya.akn — ImagePullBackOff cluster-wide"
   - "longhorn-system — storage layer degraded"
   - "zot-registry (amiya.akn) — OCI mirror unavailable"
   - "Downstream clusters (lungmen.akn) — indirect impact via shared Zot instance"
-users-affected: "All services on amiya.akn unavailable for the duration"
+users-affected: "Family — every cluster lost access to OpenBao, Pocket-Id, Zot during the platform outage"
+root-cause-family:
+  - dependency-cycle
+  - policy-scope-too-broad
 related-incidents:
-  - "docs/incidents/2026-05-25-zot-disk-full-imagepullbackoff.md"
+  - path: "docs/incidents/2026-05-25-zot-disk-full-imagepullbackoff.md"
+    relation: "The `system-cluster-critical` Kyverno bypass discovered there was the unheeded warning sign for this incident"
 related-adrs: []
 related-issues:
   - "https://github.com/chezmoidotsh/arcane/issues/1005"
@@ -103,7 +106,10 @@ after cluster upgrades, connecting it to the previous day's Zot incident.
 
 ## Root-Cause Analysis
 
-### Technique: 5 Whys
+**Technique:** 5 Whys
+**Why this technique:** Single causal chain — admission policy redirected storage-layer images through a registry that depends on that same storage. Linear, no branching.
+
+### Analysis
 
 1. **Why was `amiya.akn` cluster-wide in `ImagePullBackOff`?**
    → Pods could not pull images from Zot (`oci.chezmoi.sh`) because Zot was unavailable.
@@ -192,20 +198,49 @@ whenever Longhorn pods restarted (e.g. during cluster upgrades).
 
 ***
 
+## From Lesson to Control
+
+| Lesson                                                                              | Artifact type  | Linked artifact                                                                |
+| ----------------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------ |
+| Image-rewrite policies must model the full dependency graph of the target registry  | OPA rule / ADR | `catalog/opa/rules/` validation for any policy redirecting to `oci.chezmoi.sh` |
+| Warning signals from adjacent incidents must trigger policy review                  | Process step   | This very PM cross-references the prior workaround — propagated via INDEX.md   |
+| Kyverno replacement must precede re-enabling supply-chain enforcement               | ADR + issue    | [issue #1005](https://github.com/chezmoidotsh/arcane/issues/1005) + ADR-TBD    |
+| ArgoCD self-heal complicates emergency recovery — needs documented suspend sequence | Runbook step   | `docs/procedures/` ArgoCD emergency suspend (to write — shared with Zot PM)    |
+
+***
+
 ## Change Register
 
-| # | Priority | Action                                                                                         | Owner     | Due Date   | Verification                                                                                    |
-| - | -------- | ---------------------------------------------------------------------------------------------- | --------- | ---------- | ----------------------------------------------------------------------------------------------- |
-| 1 | P0       | Kyverno removed from amiya.akn and lungmen.akn                                                 | Alexandre | Done       | No Kyverno pods or webhooks in kyverno-system                                                   |
-| 2 | P0       | Kyverno sources removed from catalog and all project src trees                                 | Alexandre | Done       | `catalog/kubernetes/kyverno/`, `projects/*/src/infrastructure/kubernetes/kyverno/` deleted      |
-| 3 | P1       | Design and implement replacement image policy (issue #1005) with correct dependency exclusions | Alexandre | TBD        | New policy excludes all storage/network namespaces; dependency graph reviewed before deployment |
-| 4 | P2       | Audit all future admission policies for dependency cycles before deployment                    | Alexandre | 2026-06-15 | Checklist item in policy authoring process: map what the target registry depends on             |
+* [x] \[due:: 2026-05-26] \[priority:: high] \[size:: S] \[owner:: Alexandre] Remove Kyverno from amiya.akn and lungmen.akn (live cluster)
+  * **Verification:** `kubectl get pods,validatingwebhookconfigurations,mutatingwebhookconfigurations -n kyverno-system` returns nothing on both clusters
+  * **If not done:** Cluster collapse repeats on next upgrade
+
+* [x] \[due:: 2026-05-26] \[priority:: high] \[size:: S] \[owner:: Alexandre] Remove Kyverno sources from catalog and all project src trees
+  * **Verification:** `find . -path '*/kyverno*' -type d` returns no policy directories
+  * **If not done:** ArgoCD re-installs Kyverno on next sync
+
+* [ ] \[due:: 2026-07-15] \[priority:: high] \[size:: L] \[owner:: Alexandre] Design and implement replacement image policy (issue #1005) with correct dependency exclusions — must include `longhorn-system`, CNI namespaces, DNS, and any other namespace whose workloads the OCI mirror depends on
+  * **Verification:** New policy deployed; controlled test: kill a Longhorn pod — it pulls and recovers within normal restart window
+  * **If not done:** Cluster operates without supply-chain enforcement indefinitely (accepted but unbounded risk)
+
+* [ ] \[due:: 2026-06-15] \[priority:: medium] \[size:: S] \[owner:: Alexandre] Add a dependency-cycle audit checklist to the policy authoring process: "What does the registry/admission target depend on? Are those namespaces excluded?"
+  * **Verification:** Checklist visible alongside future policy PRs; reviewed at least once on a real policy change
+  * **If not done:** Same class of cycle possible on the next admission/mutation policy
+
+***
+
+## Agent Knowledge
+
+* Kyverno `MutatingPolicy` with `imagePullPolicy: Always` redirection: forces fresh pulls on every pod restart. If applied to the namespace hosting the registry's storage backend (e.g. `longhorn-system`), creates a hard circular dependency. Any policy that rewrites images for the cluster's OCI mirror **must** exclude every namespace the mirror transitively depends on.
+* The "system namespaces" exclusion (`kube-system`, `kube-public`, `kube-node-lease`) is **insufficient** in this homelab — application-tier infrastructure (Longhorn, Cilium operator namespace, etc.) is on the registry's critical path too.
+* Recovery from cluster-wide `ImagePullBackOff` when ArgoCD is also down: `helm template` + `kubectl apply` directly, then re-enable ArgoCD sync afterward.
 
 ***
 
 ## Verification Schedule
 
-| Checkpoint     | Date       | What we'll check                                                    | Forum       |
-| -------------- | ---------- | ------------------------------------------------------------------- | ----------- |
-| 1-week review  | 2026-06-02 | Issue #1005 design started; no Kyverno remnants in cluster          | Solo review |
-| 1-month review | 2026-06-26 | Issue #1005 implemented or scheduled; runbook exists; no recurrence | Solo review |
+| Checkpoint | Date       | Observable                                                                            | Forum       |
+| ---------- | ---------- | ------------------------------------------------------------------------------------- | ----------- |
+| 1-week     | 2026-06-02 | No Kyverno remnants; issue #1005 design discussion started                            | Solo review |
+| 1-month    | 2026-06-26 | Dependency-cycle checklist live; #1005 implementation scheduled or progressing        | Solo review |
+| 3-month    | 2026-08-26 | New policy deployed and validated with controlled Longhorn pod restart; no recurrence | Solo review |
