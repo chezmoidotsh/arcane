@@ -19,8 +19,8 @@ root-cause-family:                        # tag with one or more families (used 
 related-incidents:                        # list with explicit relation
   - path: "docs/incidents/YYYY-MM-DD-other.md"
     relation: "Same auth chain" | "Same dependency cycle" | "Recurring on same component" | …
-related-adrs: []                          # e.g. "docs/decisions/005-envoy-gateway-oidc.md"
-related-issues: []                        # GitHub issue URLs
+related-adrs: []                          # e.g. ADR-005 (envoy-gateway-oidc)
+related-issues: []                        # GitHub issue links
 ---
 
 > **Authoring instructions:** Fill in every section. Remove all lines starting with `>`
@@ -71,6 +71,12 @@ related-issues: []                        # GitHub issue URLs
 >
 > To measure clock skew on Talos: `talosctl time --nodes <node-ip>` then
 > `date -u +"%Y-%m-%dT%H:%M:%S.%3NZ"` for local UTC reference.
+>
+> **Optional — omit the table when timestamps are unreliable.** If no structured logs are
+> available, the incident was observed only retrospectively, or every timestamp would be
+> `±?` with unknown skew, **omit the timeline entirely** rather than including inaccurate
+> data. Note the omission in Event Summary: "Timeline omitted — timestamps not reliably
+> reconstructable." Consistent with the anti-fabrication rule in SKILL.md.
 
 <!-- skew: ±? — [src of uncertainty] -->
 
@@ -166,7 +172,7 @@ related-issues: []                        # GitHub issue URLs
 > **Artifact types:** ADR · OPA rule · Runbook step · Alert rule · CI test · Pre-deploy check ·
 > Comment in code · Knowledge file in `.agents/knowledge/`
 
-| Lesson                | Artifact type | Linked artifact (path / URL / "TBD")              |
+| Lesson                | Artifact type | Linked artifact (path / link / "TBD")             |
 | --------------------- | ------------- | ------------------------------------------------- |
 | \[Lesson short title] | \[Type]       | \[Path or "TBD with deadline in Change Register"] |
 
@@ -209,6 +215,28 @@ related-issues: []                        # GitHub issue URLs
 
 * \[Component or command]: \[Behavior or gotcha in one sentence]
 * \[Component]: \[Heuristic to apply in the future]
+
+***
+
+## Resolution Tracker
+
+> **What to write:** A living checklist of what has been done and what remains outstanding.
+> Unlike the Change Register (planning artifact with owners and dates), this section tracks
+> actual execution status with links to GitHub issues and PRs. Update it as items complete.
+> Group by natural dependency boundaries (e.g., "pending merge", "pending alerting").
+> Every item that has a corresponding GitHub issue or PR must link to it.
+
+<!-- trunk-ignore-begin(markdown-link-check): URL is a placeholder, not a real link -->
+
+### Done
+
+* [x] \[What was completed] — [PR #N](URL) / [Issue #N](URL)
+
+### Pending — \[group label, e.g. "after PR #N merges"]
+
+* [ ] \[What remains] — [Issue #N](URL) if applicable — \[brief note on blocker if any]
+
+<!-- trunk-ignore-end(markdown-link-check) -->
 
 ***
 

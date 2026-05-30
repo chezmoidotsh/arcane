@@ -12,22 +12,38 @@ Auto-generated cross-incident view. Post-mortems are grouped by `root-cause-fami
 See `.agents/skills/postmortem/SKILL.md` §"Root-cause family tagging" for the family
 vocabulary.
 
+## 🚨 Pareto triggers
+
+Families at 3+ incidents — treat as structural projects:
+
+* **`observability-gap`** — 4 incidents
+
 ## All families
 
-Total: **5** post-mortems across **8** families.
+Total: **7** post-mortems across **8** families.
 
-### `observability-gap` — 2 incident(s)
+### `observability-gap` — 4 incident(s) 🚨
 
-| Date       | Severity | Status | Post-mortem                                                                                                                |
-| ---------- | -------- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
-| 2026-05-25 | Medium   | Open   | [lungmen.akn ClusterSecretStore Vault Authentication Failure](2026-05-25-lungmen-clustersecretstore-vault-auth-failure.md) |
-| 2026-05-25 | High     | Open   | [Zot registry disk saturation — widespread ImagePullBackOff on lungmen.akn](2026-05-25-zot-disk-full-imagepullbackoff.md)  |
+| Date       | Severity | Status | Post-mortem                                                                                                                              |
+| ---------- | -------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-30 | Critical | Open   | [CNPG WAL PVC saturation — immich and paperless-ngx down 4+ days on lungmen.akn](2026-05-30-cnpg-wal-disk-full-apps-secured.md)          |
+| 2026-05-30 | High     | Open   | [Redis ImagePullBackOff — Zot corrupted index.json + Docker Hub rate limiting](2026-05-30-redis-imagepullbackoff-zot-corrupted-index.md) |
+| 2026-05-25 | Medium   | Open   | [lungmen.akn ClusterSecretStore Vault Authentication Failure](2026-05-25-lungmen-clustersecretstore-vault-auth-failure.md)               |
+| 2026-05-25 | High     | Open   | [Zot registry disk saturation — widespread ImagePullBackOff on lungmen.akn](2026-05-25-zot-disk-full-imagepullbackoff.md)                |
 
-### `bootstrap-coupling` — 1 incident(s)
+### `bootstrap-coupling` — 2 incident(s)
 
-| Date       | Severity | Status | Post-mortem                                                                                                                |
-| ---------- | -------- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
-| 2026-05-25 | Medium   | Open   | [lungmen.akn ClusterSecretStore Vault Authentication Failure](2026-05-25-lungmen-clustersecretstore-vault-auth-failure.md) |
+| Date       | Severity | Status | Post-mortem                                                                                                                     |
+| ---------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-30 | Critical | Open   | [CNPG WAL PVC saturation — immich and paperless-ngx down 4+ days on lungmen.akn](2026-05-30-cnpg-wal-disk-full-apps-secured.md) |
+| 2026-05-25 | Medium   | Open   | [lungmen.akn ClusterSecretStore Vault Authentication Failure](2026-05-25-lungmen-clustersecretstore-vault-auth-failure.md)      |
+
+### `upstream-regression` — 2 incident(s)
+
+| Date       | Severity | Status | Post-mortem                                                                                                                              |
+| ---------- | -------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-30 | High     | Open   | [Redis ImagePullBackOff — Zot corrupted index.json + Docker Hub rate limiting](2026-05-30-redis-imagepullbackoff-zot-corrupted-index.md) |
+| 2026-05-27 | Medium   | Open   | [Cilium 1.19 upgrade failure — amiya.akn node unreachable](2026-05-27-cilium-1.19-upgrade-failure.md)                                    |
 
 ### `dependency-cycle` — 1 incident(s)
 
@@ -58,9 +74,3 @@ Total: **5** post-mortems across **8** families.
 | Date       | Severity | Status | Post-mortem                                                                                                                |
 | ---------- | -------- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
 | 2026-05-25 | Medium   | Open   | [lungmen.akn ClusterSecretStore Vault Authentication Failure](2026-05-25-lungmen-clustersecretstore-vault-auth-failure.md) |
-
-### `upstream-regression` — 1 incident(s)
-
-| Date       | Severity | Status | Post-mortem                                                                                           |
-| ---------- | -------- | ------ | ----------------------------------------------------------------------------------------------------- |
-| 2026-05-27 | Medium   | Open   | [Cilium 1.19 upgrade failure — amiya.akn node unreachable](2026-05-27-cilium-1.19-upgrade-failure.md) |

@@ -10,6 +10,10 @@ Each procedure is designed to be a clear and actionable guide for a specific tec
 
 * **[SEC-20250808-00: Add OIDC SecurityPolicy to an HTTPRoute](./security/SEC-20250808-00.add-securitypolicy-on-httproute.md)**: Details how to secure an application exposed via a Kubernetes `HTTPRoute` with OIDC authentication using Envoy Gateway, Authelia, and Vault.
 
+### Databases
+
+* **[DB-20260530-00: CNPG WAL disk full recovery](./databases/DB-20260530-00.cnpg-wal-disk-full-recovery.md)**: Recovery procedure for a CloudNative-PG cluster whose WAL PVC has reached 100% capacity. Covers PVC expansion, `Expected empty archive` S3 fix, WAL archiving verification, and backup trigger. Origin: `docs/incidents/2026-05-30-cnpg-wal-disk-full-apps-secured.md`.
+
 ### Infrastructure
 
 * **[INF-20260525-00: Upgrade Talos OS on a Single-Node Cluster](./infrastructure/INF-20260525-00.upgrade-talos.md)**: Full lifecycle upgrade of the Talos OS version on a single-node cluster, including pre-upgrade checks, image pre-pull, upgrade execution, post-upgrade verification, and rollback.
