@@ -31,6 +31,17 @@ resources:
 
   - security/
 
+# kustomize's namespace transformer does not post-process helmCharts resources.
+# Charts that do not call {{ .Release.Namespace }} in their templates (valkey)
+# produce resources without a namespace field. This patch injects it.
+patches:
+  - patch: |
+      - op: add
+        path: /metadata/namespace
+        value: forgejo
+    target:
+      labelSelector: "app.kubernetes.io/instance=forgejo-valkey"
+
 images:
   - name: code.forgejo.org/forgejo/forgejo
     newName: oci.chezmoi.sh/code.forgejo.org/forgejo/forgejo

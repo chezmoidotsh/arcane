@@ -11,6 +11,7 @@ metadata:
     helm.sh/chart: newt-1.5.0
     newt.instance: main-tunnel
   name: newt-newt-main-tunnel
+  namespace: newt-system
 spec:
   replicas: 1
   revisionHistoryLimit: 3
