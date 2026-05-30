@@ -1,0 +1,21 @@
+---
+# Daily base backup for apps-secured-20260530.
+# WAL archiving is disabled on this cluster (isWALArchiver: false), so PITR is not available.
+# This daily base backup is the primary recovery mechanism — keep at least 30 days.
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: apps-secured-daily
+  namespace: databases
+spec:
+  cluster:
+    name: apps-secured-20260530
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io
+  # Run daily at 02:00 UTC. CNPG uses a 6-field cron: sec min hour dom month dow
+  schedule: "0 0 2 * * *"
+  # Trigger an immediate backup when the ScheduledBackup is first created.
+  immediate: true
+  # Ensures the Backup object is owned by the cluster (simplifies cleanup on cluster deletion).
+  backupOwnerReference: cluster

@@ -13,7 +13,7 @@
 #   postgres-apps         → postgres-apps.helmvalues.yaml
 #     CNPG Cluster name: "apps-20260329"   (metadata.name + spec.cluster.name date suffix)
 #   postgres-apps-secured → postgres-apps-secured.helmvalues.yaml
-#     CNPG Cluster name: "apps-secured-20260329"   (metadata.name + spec.cluster.name date suffix)
+#     CNPG Cluster name: "apps-secured-20260530"   (metadata.name + spec.cluster.name date suffix)
 #
 # Resources NOT managed by the chart (kept as standalone manifests):
 #   - ObjectStore CRs (barmancloud.cnpg.io/v1) — one per cluster, in *.objectstore.yaml
@@ -30,9 +30,9 @@
 #   - generators.external-secrets.io/v1alpha1 Password (one per user, behavior.passwords.generate: true)
 #   - external-secrets.io/v1alpha1 PushSecret   (one per user, behavior.passwords.generate: true)
 #   - cilium.io/v2 CiliumNetworkPolicy:
-#       cluster-level: operator ingress (apps-20260329-allow-from-cnpg-operator, apps-secured-20260329-allow-from-cnpg-operator)
-#                      kube-apiserver egress (apps-20260329-allow-to-kube-apiserver, apps-secured-20260329-allow-to-kube-apiserver)
-#       per-database:  application ingress (allow-apps-20260329-database-from-*, allow-apps-secured-20260329-database-from-*)
+#       cluster-level: operator ingress (apps-20260329-allow-from-cnpg-operator, apps-secured-20260530-allow-from-cnpg-operator)
+#                      kube-apiserver egress (apps-20260329-allow-to-kube-apiserver, apps-secured-20260530-allow-to-kube-apiserver)
+#       per-database:  application ingress (allow-apps-20260329-database-from-*, allow-apps-secured-20260530-database-from-*)
 
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -71,6 +71,9 @@ resources:
   - apps.objectstore.yaml
   - apps-secured.objectstore.yaml
   - cnpg-backup-credentials.externalsecret.yaml
+
+  # Daily base backup for apps-secured-20260530 (WAL archiving disabled, PITR not available).
+  - apps-secured.scheduledbackup.yaml
 
   # Custom PG images using vchord to handle vectors
   - postgresql-vchord.imagecatalog.yaml

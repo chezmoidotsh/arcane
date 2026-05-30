@@ -14,7 +14,7 @@ spec:
   egress:
   - toEndpoints:
     - matchLabels:
-        cnpg.io/cluster: apps-secured-20260329
+        cnpg.io/cluster: apps-secured-20260530
         io.kubernetes.pod.namespace: databases
     toPorts:
     - ports:
