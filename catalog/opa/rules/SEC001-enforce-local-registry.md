@@ -74,11 +74,10 @@ volume fields must reference `oci.chezmoi.sh`:
 
 SEC001 applies two complementary rules depending on namespace:
 
-| Namespace class          | Rule                                            |
-| ------------------------ | ----------------------------------------------- |
-| Normal namespaces        | Images **must** use `oci.chezmoi.sh` prefix     |
-| Bootstrap namespaces     | Images **must NOT** use `oci.chezmoi.sh` prefix |
-| Cluster-scoped resources | No image-registry enforcement                   |
+| Namespace class                                | Rule                                            |
+| ---------------------------------------------- | ----------------------------------------------- |
+| Normal namespaces and cluster-scoped resources | Images **must** use `oci.chezmoi.sh` prefix     |
+| Bootstrap namespaces                           | Images **must NOT** use `oci.chezmoi.sh` prefix |
 
 Bootstrap namespaces host infrastructure that must be schedulable before the
 local registry mirror is available. Pulling from `oci.chezmoi.sh` in these

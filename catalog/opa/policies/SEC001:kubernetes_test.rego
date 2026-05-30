@@ -198,8 +198,7 @@ test_bootstrap_namespace_denies_local_registry_longhorn if {
     count(violations) == 1
 }
 
-test_cluster_scoped_resource_with_local_image_passes if {
-    # Cluster-scoped resources have no namespace — is_bootstrap_namespace must NOT fire for them.
+test_cluster_scoped_resource_local_image_passes if {
     violations := {msg | some msg in deny with input as {
         "apiVersion": "v1",
         "kind": "Pod",
@@ -211,6 +210,20 @@ test_cluster_scoped_resource_with_local_image_passes if {
         },
     }}
     count(violations) == 0
+}
+
+test_cluster_scoped_resource_non_local_image_denied if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {"name": "standalone"},
+        "spec": {
+            "containers": [
+                {"name": "app", "image": "docker.io/library/nginx:latest"},
+            ],
+        },
+    }}
+    count(violations) == 1
 }
 
 test_oci_volume_non_compliant if {
