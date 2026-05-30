@@ -1,23 +1,21 @@
-name: 🏛️ Compliance
+name: 🏛️ Partial Compliance
 
 on:
   push:
     branches: [main]
     paths:
-      - ".github/workflows/push,pull_request.compliance.yaml"
+      - ".github/workflows/push,pull_request.compliance-partial.yaml"
       - ".github/scripts/check-zot-coverage.py"
       - "catalog/helm/**"
-      - "catalog/opa/policies/**"
       - "projects/*/src/apps/**"
       - "projects/*/src/infrastructure/kubernetes/**"
       - "projects/amiya.akn/dist/apps/zot-registry/**"
 
   pull_request:
     paths:
-      - ".github/workflows/push,pull_request.compliance.yaml"
+      - ".github/workflows/push,pull_request.compliance-partial.yaml"
       - ".github/scripts/check-zot-coverage.py"
       - "catalog/helm/**"
-      - "catalog/opa/policies/**"
       - "projects/*/src/apps/**"
       - "projects/*/src/infrastructure/kubernetes/**"
       - "projects/amiya.akn/dist/apps/zot-registry/**"
@@ -62,27 +60,13 @@ jobs:
       pull-requests: read
     runs-on: ubuntu-latest
     outputs:
-      directories: ${{ steps.policy-changed.outputs.any_changed == 'true' && steps.all-dist.outputs.directories || steps.diff.outputs.directories }}
+      directories: ${{ steps.diff.outputs.all_changed_files }}
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: 🔍 Detect changed OPA policies
-        id: policy-changed
-        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
-        with:
-          files: catalog/opa/policies/**
-
-      - name: 📋 Collect all dist/ directories (policy changed)
-        id: all-dist
-        if: steps.policy-changed.outputs.any_changed == 'true'
-        run: |
-          dirs=$(find projects -path '*/dist/**' -name '*.yaml' | sed 's|/[^/]*$||' | sort -u | jq -R -s -c 'split("\n") | map(select(. != ""))')
-          echo "directories=$dirs" >> "$GITHUB_OUTPUT"
-
       - name: 🔍 Detect changed dist/ directories
         id: diff
-        if: steps.policy-changed.outputs.any_changed != 'true'
         uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
