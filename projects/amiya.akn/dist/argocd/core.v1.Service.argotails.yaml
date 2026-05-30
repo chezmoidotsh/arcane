@@ -1,0 +1,25 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/instance: argotails-controller
+    app.kubernetes.io/name: argotails
+    app.kubernetes.io/part-of: argotails
+  name: argotails
+  namespace: argocd
+spec:
+  ports:
+  - appProtocol: prometheus
+    name: metrics
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: health
+    port: 8081
+    protocol: TCP
+    targetPort: 8081
+  selector:
+    app.kubernetes.io/instance: argotails-controller
+    app.kubernetes.io/name: argotails
+  type: ClusterIP

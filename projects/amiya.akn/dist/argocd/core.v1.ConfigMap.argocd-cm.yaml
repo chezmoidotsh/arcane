@@ -1,0 +1,236 @@
+---
+apiVersion: v1
+data:
+  additionalUrls: '[https://argocd.tail831c5d.ts.net]'
+  admin.enabled: "true"
+  application.instanceLabelKey: argocd.argoproj.io/instance
+  application.resourceTrackingMethod: annotation
+  application.sync.impersonation.enabled: "false"
+  exec.enabled: "true"
+  kustomize.buildOptions: --enable-helm --enable-alpha-plugins --enable-exec --load-restrictor
+    LoadRestrictionsNone
+  oidc.config: |
+    name: Pocket ID
+    issuer: https://auth.chezmoi.sh
+    clientID: $argocd-oidc:oidc.pocket-id.clientID
+    clientSecret: $argocd-oidc:oidc.pocket-id.clientSecret
+    cliClientID: $argocd-oidc:oidc.pocket-id.cliClientID
+    enablePKCEAuthentication: true
+    requestedScopes:
+      - openid
+      - profile
+      - email
+      - groups
+
+    # By default, Authelia will only return the `sub` claim in the ID token.
+    requestedIDTokenClaims:
+      email: {essential: true}
+      groups: {essential: true}
+  resource.customizations: |
+    "*.upbound.io/*":
+      health.lua: |
+        health_status = {
+          status = "Progressing",
+          message = "Provisioning ..."
+        }
+
+        local function contains (table, val)
+          for i, v in ipairs(table) do
+            if v == val then
+              return true
+            end
+          end
+          return false
+        end
+
+        local has_no_status = {
+          "ProviderConfig",
+          "ProviderConfigUsage"
+        }
+
+        if obj.status == nil or next(obj.status) == nil and contains(has_no_status, obj.kind) then
+          health_status.status = "Healthy"
+          health_status.message = "Resource is up-to-date."
+          return health_status
+        end
+
+        if obj.status == nil or next(obj.status) == nil or obj.status.conditions == nil then
+          if obj.kind == "ProviderConfig" and obj.status.users ~= nil then
+            health_status.status = "Healthy"
+            health_status.message = "Resource is in use."
+            return health_status
+          end
+          return health_status
+        end
+
+        for i, condition in ipairs(obj.status.conditions) do
+          if condition.type == "LastAsyncOperation" then
+            if condition.status == "False" then
+              health_status.status = "Degraded"
+              health_status.message = condition.message
+              return health_status
+            end
+          end
+
+          if condition.type == "Synced" then
+            if condition.status == "False" then
+              health_status.status = "Degraded"
+              health_status.message = condition.message
+              return health_status
+            end
+          end
+
+          if condition.type == "Ready" then
+            if condition.status == "True" then
+              health_status.status = "Healthy"
+              health_status.message = "Resource is up-to-date."
+              return health_status
+            end
+          end
+        end
+        return health_status
+
+    "*.crossplane.io/*":
+      health.lua: |
+        health_status = {
+          status = "Progressing",
+          message = "Provisioning ..."
+        }
+
+        local function contains (table, val)
+          for i, v in ipairs(table) do
+            if v == val then
+              return true
+            end
+          end
+          return false
+        end
+
+        local has_no_status = {
+          "Composition",
+          "CompositionRevision",
+          "DeploymentRuntimeConfig",
+          "ControllerConfig",
+          "ProviderConfig",
+          "ProviderConfigUsage"
+        }
+
+        if obj.status == nil or next(obj.status) == nil and contains(has_no_status, obj.kind) then
+            health_status.status = "Healthy"
+            health_status.message = "Resource is up-to-date."
+          return health_status
+        end
+
+        if obj.status == nil or next(obj.status) == nil or obj.status.conditions == nil then
+          if obj.kind == "ProviderConfig" and obj.status.users ~= nil then
+            health_status.status = "Healthy"
+            health_status.message = "Resource is in use."
+            return health_status
+          end
+          return health_status
+        end
+
+        for i, condition in ipairs(obj.status.conditions) do
+          if condition.type == "LastAsyncOperation" then
+            if condition.status == "False" then
+              health_status.status = "Degraded"
+              health_status.message = condition.message
+              return health_status
+            end
+          end
+
+          if condition.type == "Synced" then
+            if condition.status == "False" then
+              health_status.status = "Degraded"
+              health_status.message = condition.message
+              return health_status
+            end
+          end
+
+          if contains({"Ready", "Healthy", "Offered", "Established"}, condition.type) then
+            if condition.status == "True" then
+              health_status.status = "Healthy"
+              health_status.message = "Resource is up-to-date."
+              return health_status
+            end
+          end
+        end
+
+        return health_status
+  resource.customizations.ignoreDifferences._Secret: |
+    managedFieldsManagers:
+      - cilium
+  resource.customizations.ignoreDifferences._Service: |
+    managedFieldsManagers:
+    - operator # Tailscale Operator
+    jsonPointers:
+    - /spec/externalName
+  resource.customizations.ignoreDifferences.apiextensions.k8s.io_CustomResourceDefinition: |
+    jsonPointers:
+      - /spec/preserveUnknownFields
+  resource.customizations.ignoreDifferences.external-secrets.io_ExternalSecret: |
+    jqPathExpressions:
+      - .. | .conversionStrategy? | select(. == "Default")
+      - .. | .decodingStrategy? | select(. == "None")
+      - .. | .metadataPolicy? | select(. == "None")
+  resource.customizations.ignoreResourceUpdates.ConfigMap: |
+    jqPathExpressions:
+      # Ignore the cluster-autoscaler status
+      - '.metadata.annotations."cluster-autoscaler.kubernetes.io/last-updated"'
+      # Ignore the annotation of the legacy Leases election
+      - '.metadata.annotations."control-plane.alpha.kubernetes.io/leader"'
+  resource.customizations.ignoreResourceUpdates.Endpoints: |
+    jsonPointers:
+      - /metadata
+      - /subsets
+  resource.customizations.ignoreResourceUpdates.all: |
+    jsonPointers:
+      - /status
+  resource.customizations.ignoreResourceUpdates.apps_ReplicaSet: |
+    jqPathExpressions:
+      - '.metadata.annotations."deployment.kubernetes.io/desired-replicas"'
+      - '.metadata.annotations."deployment.kubernetes.io/max-replicas"'
+      - '.metadata.annotations."rollout.argoproj.io/desired-replicas"'
+  resource.customizations.ignoreResourceUpdates.argoproj.io_Application: |
+    jqPathExpressions:
+      - '.metadata.annotations."notified.notifications.argoproj.io"'
+      - '.metadata.annotations."argocd.argoproj.io/refresh"'
+      - '.metadata.annotations."argocd.argoproj.io/hydrate"'
+      - '.operation'
+  resource.customizations.ignoreResourceUpdates.argoproj.io_Rollout: |
+    jqPathExpressions:
+      - '.metadata.annotations."notified.notifications.argoproj.io"'
+  resource.customizations.ignoreResourceUpdates.autoscaling_HorizontalPodAutoscaler: |
+    jqPathExpressions:
+      - '.metadata.annotations."autoscaling.alpha.kubernetes.io/behavior"'
+      - '.metadata.annotations."autoscaling.alpha.kubernetes.io/conditions"'
+      - '.metadata.annotations."autoscaling.alpha.kubernetes.io/metrics"'
+      - '.metadata.annotations."autoscaling.alpha.kubernetes.io/current-metrics"'
+  resource.customizations.ignoreResourceUpdates.discovery.k8s.io_EndpointSlice: |
+    jsonPointers:
+      - /metadata
+      - /endpoints
+      - /ports
+  resource.exclusions: |
+    - apiGroups:
+        - "*"
+      kinds:
+        - ProviderConfigUsage
+  statusbadge.enabled: "false"
+  timeout.hard.reconciliation: 0s
+  timeout.reconciliation: 120s
+  timeout.reconciliation.jitter: 60s
+  url: https://argocd.akn.chezmoi.sh
+  users.anonymous.enabled: "false"
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/version: v3.4.2
+    helm.sh/chart: argo-cd-9.5.15
+  name: argocd-cm
+  namespace: argocd

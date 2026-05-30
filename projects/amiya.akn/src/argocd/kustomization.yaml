@@ -16,23 +16,6 @@ resources:
   - https://github.com/chezmoidotsh/argotails.git//deploy/manifests/default?ref=v0.1.12
   - argotails.ts-secrets.externalsecret.yaml
 
-generators:
-  - # Because ArgoCD needs to be independent from Vault in order to bootstrap
-    # the rest of the cluster, we store some secrets directly in SOPS-encrypted
-    # Secrets (SOPS age encryption and Github Application secrets).
-    |-
-    apiVersion: viaduct.ai/v1
-    kind: ksops
-    metadata:
-      name: ksops
-      annotations:
-        config.kubernetes.io/function: |
-          exec:
-            path: ksops
-    files:
-      - argocd.github.secrets.yaml
-      - argocd.sops.secrets.yaml
-
 helmCharts:
   - repo: https://argoproj.github.io/argo-helm
     name: argo-cd

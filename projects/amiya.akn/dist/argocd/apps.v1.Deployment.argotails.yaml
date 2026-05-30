@@ -1,0 +1,102 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: argotails-controller
+    app.kubernetes.io/name: argotails
+    app.kubernetes.io/part-of: argotails
+  name: argotails
+  namespace: argocd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: argotails-controller
+      app.kubernetes.io/name: argotails
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: argotails-controller
+        app.kubernetes.io/name: argotails
+        app.kubernetes.io/part-of: argotails
+    spec:
+      automountServiceAccountToken: true
+      containers:
+      - args:
+        - run
+        - --ts.authkey-file=/run/secrets/argotails/authkey
+        - --ts.device-filter=kubernetes-remote-cluster
+        - --service.create
+        - --service.proxy-class=remote-cluster
+        env:
+        - name: TAILSCALE_TAILNET
+          value: tail831c5d.ts.net
+        image: ghcr.io/chezmoidotsh/argotails:v0.1.12@sha256:7c3009c95786ce2db9810ec998b0d2e28febd7d1432c076214c07bc1722c6ff9
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: 8081
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 1
+        name: argotails
+        ports:
+        - containerPort: 8080
+          name: metrics
+          protocol: TCP
+        - containerPort: 8081
+          name: health
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readyz
+            port: 8081
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 500m
+            memory: 100Mi
+          requests:
+            cpu: 50m
+            memory: 100Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+        startupProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /readyz
+            port: 8081
+            scheme: HTTP
+          periodSeconds: 3
+          timeoutSeconds: 1
+        volumeMounts:
+        - mountPath: /run/secrets/argotails
+          name: credentials
+      securityContext:
+        fsGroup: 54684
+        runAsGroup: 45563
+        runAsNonRoot: true
+        runAsUser: 30584
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: argotails
+      volumes:
+      - name: credentials
+        secret:
+          secretName: argotails-secrets

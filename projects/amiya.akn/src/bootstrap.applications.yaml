@@ -12,9 +12,12 @@ metadata:
       deletion when an issue on ApplicationSet occurs.
 
     # Source reference for argocd-extension-application-map
-    source-ref.argocd.argoproj.io/0.path: projects/amiya.akn/src/argocd
+    source-ref.argocd.argoproj.io/0.path: projects/amiya.akn/dist/argocd
     source-ref.argocd.argoproj.io/0.repository-url: https://github.com/chezmoidotsh/arcane.git
     source-ref.argocd.argoproj.io/0.target-revision: main
+    source-ref.argocd.argoproj.io/1.path: projects/amiya.akn/src/argocd/sops
+    source-ref.argocd.argoproj.io/1.repository-url: https://github.com/chezmoidotsh/arcane.git
+    source-ref.argocd.argoproj.io/1.target-revision: main
   name: argocd
 spec:
   destination:
@@ -24,7 +27,10 @@ spec:
   sources:
     - repoURL: https://github.com/chezmoidotsh/arcane.git
       targetRevision: main
-      path: projects/amiya.akn/src/argocd
+      path: projects/amiya.akn/dist/argocd
+    - repoURL: https://github.com/chezmoidotsh/arcane.git
+      targetRevision: main
+      path: projects/amiya.akn/src/argocd/sops
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
