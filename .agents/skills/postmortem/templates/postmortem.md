@@ -5,79 +5,87 @@ author: "Name"                            # human: Name · AI agent: [provider:m
 participants:
   - "Name"                                # human: Name · AI agent: [provider:model] · system: [system:name]
   - "[anthropic:claude-sonnet-4-6]"
-severity: "Critical | High | Medium | Low"
-status: "Draft | Under Review | Final"
+severity: "Critical | High | Medium | Low"   # see SKILL.md §"Severity grid" — homelab-calibrated
+status: "Draft | Open | Verified | Closed"   # Draft: in progress · Open: merged, follow-up pending
+                                              # Verified: all actions confirmed · Closed: archived
 detection-method: "Alert | User report | Manual discovery | External report | AI anomaly detection"
-mttd: ""                                  # time from incident start to detection, e.g. "12 min"
-mttr: ""                                  # time from detection to full resolution, e.g. "47 min"
+duration: ""                              # free-form: "~45min" / "5h20m" / "3 days, 8 attempts"
 services-affected: []
-users-affected: ""                        # quantified, e.g. "all users of X" or "3 dependent clusters"
-related-incidents: []                     # paths to docs/incidents/*.md
+users-affected: ""                        # qualitative: "family — NAS down" / "me only" / "no impact"
+root-cause-family:                        # tag with one or more families (used by INDEX.md + Pareto review)
+  - ""                                    # e.g. observability-gap, dependency-cycle, merge-vs-replace,
+                                          #     policy-scope-too-broad, missing-pre-deploy-check,
+                                          #     state-drift, network-policy-incomplete, …
+related-incidents:                        # list with explicit relation
+  - path: "docs/incidents/YYYY-MM-DD-other.md"
+    relation: "Same auth chain" | "Same dependency cycle" | "Recurring on same component" | …
 related-adrs: []                          # e.g. "docs/decisions/005-envoy-gateway-oidc.md"
+related-issues: []                        # GitHub issue URLs
 ---
 
 > **Authoring instructions:** Fill in every section. Remove all lines starting with `>`
-> (these are instructions, not content). Save to `docs/incidents/YYYY-MM-DD-<short-description>.md`.
+> (they are instructions, not content). Save to `docs/incidents/YYYY-MM-DD-<short-description>.md`.
+>
+> **For incidents <2h with no data loss and no systemic lesson:** use the **lite format** instead
+> (see SKILL.md §"Lite format"). The full template below is reserved for Critical/High incidents
+> or any incident that surfaces a structural lesson.
 
 # Post-Mortem: \[Event Name]
 
 ## Executive Summary
 
-> **What to write:** 3–5 sentences for non-technical readers. No jargon, no acronyms.
-> What failed, what the impact was, why it happened at the highest level, and what the
-> main fix is. A stakeholder should understand the full picture from this paragraph alone.
+> 3–5 sentences for non-technical readers. No jargon, no acronyms. What failed, what the
+> impact was, why it happened at the highest level, and what the main fix is.
 
-\[3–5 sentence plain-language summary for stakeholders]
+\[3–5 sentence plain-language summary]
 
 ***
 
 ## Event Summary
 
-> **What to write:** Quantified expected vs actual outcome. Numbers, not adjectives.
+**Expected outcome:** \[What was supposed to happen — specific, quantified]
 
-**Expected outcome:** \[What was supposed to happen — be specific and quantified]
 **Actual outcome:** \[What happened — same level of specificity]
-**Impact:** \[Financial, operational, reputational — quantify where possible]
+
+**Impact:** \[Operational, data, security, family — qualitative for homelab]
+
 **Duration:** \[Incident start → fully resolved, with timestamps]
-**First signal:** \[When did the divergence from expected behavior first become visible?]
+
+**First signal:** \[When did the divergence first become visible?]
 
 ***
 
 ## Timeline
 
-> **What to write:** Chronological sequence from first signal to full resolution. Include
-> the actor for each decision so it's clear who did what and when. Be honest about what
-> was and wasn't visible at the time — this anchors hindsight bias.
+> Chronological sequence from first signal to full resolution. Actor format:
+> `Name` (human) · `[provider:model]` (AI) · `[system:name]` (alerts, ArgoCD, CI…).
 >
-> Actor format: `Name` for humans · `[provider:model]` for AI agents · `[system:name]` for
-> automated systems (alerts, ArgoCD, CI pipelines).
+> Timestamp format (UTC, ISO 8601): `YYYY-MM-DDTHH:mm[:ss]`
+> Prefix `±Xm` when skew is known, `±?` when approximate but not quantifiable.
+> Always add a `<!-- skew: ... -->` comment before the table.
 >
-> Timestamp format (UTC, ISO 8601): `YYYY-MM-DDTHH:mm[:ss[.nnnn]]`
-> Prefix with `±Xm` when skew is known (e.g. `±5m 2026-05-25T18:30`) or `±?` when
-> approximate but not quantifiable. Always add the skew comment below before the table.
+> **DO NOT invent timestamps.** Every entry must come from a real source: a log line, shell
+> history, commit time, pod age, or explicit human recall. Interpolating "+5 min" between
+> two known points to fill the timeline is fabrication. If no source exists for a step,
+> either omit the time column or write `±? — unsourced`. See SKILL.md §"Timestamp sourcing".
 >
-> To measure clock skew on Talos nodes:
->
-> ```bash
-> talosctl time --nodes <node-ip>   # compare LOCAL TIME vs REFERENCE TIME (NTP)
-> date -u +"%Y-%m-%dT%H:%M:%S.%3NZ"  # local machine UTC reference
-> ```
+> To measure clock skew on Talos: `talosctl time --nodes <node-ip>` then
+> `date -u +"%Y-%m-%dT%H:%M:%S.%3NZ"` for local UTC reference.
 
-<!-- skew: ±? — [source of uncertainty, e.g. "timestamps inferred from memory / log gaps"] -->
+<!-- skew: ±? — [src of uncertainty] -->
 
-| Time (UTC)           | Actor                                     | Event or Decision                    |
-| -------------------- | ----------------------------------------- | ------------------------------------ |
-| YYYY-MM-DDTHH:mm     | Name / \[provider:model] / \[system:name] | \[What happened or what was decided] |
-| ±5m YYYY-MM-DDTHH:mm | Name / \[provider:model] / \[system:name] | \[What happened or what was decided] |
-| ±? YYYY-MM-DDTHH:mm  | Name / \[provider:model] / \[system:name] | \[What happened or what was decided] |
+| Time (UTC)           | Actor                    | Event or decision   |
+| -------------------- | ------------------------ | ------------------- |
+| YYYY-MM-DDTHH:mm     | Name / \[provider:model] | \[What happened]    |
+| ±5m YYYY-MM-DDTHH:mm | Name / \[provider:model] | \[What was decided] |
+| ±? YYYY-MM-DDTHH:mm  | \[system:name]           | \[Automated event]  |
 
 ***
 
 ## What Went Well
 
-> **What to write:** Controls that actually worked — monitoring that fired, runbooks that were
-> followed, decisions that contained the blast radius, people who escalated correctly. This is
-> not decoration: it identifies behaviors worth reinforcing and controls worth keeping.
+> Controls that actually worked. Not decoration — identifies behaviors and controls worth
+> keeping when the system evolves.
 
 * \[What worked and why it mattered]
 
@@ -85,27 +93,29 @@ related-adrs: []                          # e.g. "docs/decisions/005-envoy-gatew
 
 ## Root-Cause Analysis
 
-> **What to write:** Apply the chosen technique (see `references/` for step-by-step guides).
-> Default to 5 Whys; switch to Ishikawa, Fault Tree, Swiss Cheese, or Pareto when the
-> situation calls for it (see SKILL.md for the selection table). Show the reasoning chain,
-> not just the conclusion.
+**Technique:** \[5 Whys | Ishikawa | Swiss Cheese | Fault Tree | Pareto]
+**Why this technique:** \[One-sentence justification — see SKILL.md §"Choosing a technique"]
 
-### Technique: \[5 Whys / Ishikawa / Fault Tree / Swiss Cheese / Pareto]
+> **Escalation rule:** if 5 Whys blocks at a "Why" (no honest answer) or branches into >1
+> independent chains, **switch** to Ishikawa or Swiss Cheese — don't stop with "no root cause".
 
-> Remove the placeholder below and replace with the actual analysis using the chosen technique.
+### Analysis
 
-1. **Why did \[symptom] happen?** → Because \[cause]
-2. **Why did \[cause] happen?** → Because \[deeper cause]
-3. **Why did \[deeper cause] happen?** → Because \[deeper still]
-4. **Why did \[deeper still] happen?** → Because \[near root]
-5. **Why did \[near root] happen?** → Because **\[ROOT CAUSE]**
+> Apply the chosen technique (see `references/` for step-by-step guides). Show the reasoning
+> chain, not just the conclusion.
+
+1. **Why did \[symptom]?** → Because \[cause]
+2. **Why did \[cause]?** → Because \[deeper cause]
+3. **Why did \[deeper cause]?** → Because \[deeper still]
+4. **Why did \[deeper still]?** → Because \[near root]
+5. **Why did \[near root]?** → Because **\[ROOT CAUSE]**
 
 ### Root Causes
 
 > **Test each candidate:** "If I fix this, does this *class* of problem stop recurring?"
 > If no, move it to Contributing Factors.
 
-* **\[Root cause 1]** — \[One clear sentence explaining why this condition made the failure probable]
+* **\[Root cause]** — \[One sentence explaining why this condition made the failure probable]
 
 ### Contributing Factors
 
@@ -115,13 +125,12 @@ related-adrs: []                          # e.g. "docs/decisions/005-envoy-gatew
 
 ## Warning Signs Missed
 
-> **What to write:** Signals that were visible before the failure, in hindsight. For each:
-> when it was visible, and why it wasn't acted on. "We didn't feel safe raising it" is often
-> a deeper root cause than any technical finding.
+> Signals visible in retrospect. For each: when it was visible, why it wasn't acted on.
+> "We didn't have visibility" → monitoring gap. "It was flagged but dismissed" → prioritization.
 
-| Signal                 | When visible     | Why it wasn't acted on                                               |
-| ---------------------- | ---------------- | -------------------------------------------------------------------- |
-| \[What was observable] | \[Date or phase] | \[Dismissed / not raised / no owner / optimism bias / no visibility] |
+| Signal                 | When visible     | Why it wasn't acted on                                  |
+| ---------------------- | ---------------- | ------------------------------------------------------- |
+| \[What was observable] | \[Date or phase] | \[Dismissed / no owner / no visibility / optimism bias] |
 
 ***
 
@@ -129,14 +138,9 @@ related-adrs: []                          # e.g. "docs/decisions/005-envoy-gatew
 
 ### In Control (what we could have changed)
 
-> Internal decisions, process gaps, tooling choices, resource allocation. The question is prevention.
-
-* \[Internal decision or gap]
+* \[Internal decision, process gap, tooling choice]
 
 ### Out of Control (external factors)
-
-> Market conditions, vendor outages, customer decisions, macro events. For each: what specific
-> change would have reduced our exposure? That question usually reveals an in-control decision.
 
 | External factor | What would reduce exposure?    |
 | --------------- | ------------------------------ |
@@ -146,37 +150,76 @@ related-adrs: []                          # e.g. "docs/decisions/005-envoy-gatew
 
 ## Systemic Lessons
 
-> **What to write:** The broader insight this post-mortem surfaces — something true beyond
-> this specific incident. Not "we should have caught this sooner" but "our monitoring coverage
-> has no owner and drifts over time." Link to related ADRs or incidents if they share the
-> same systemic pattern. Systemic lessons often deserve their own ADR.
+> The broader insight beyond this specific incident — a structural condition that will produce
+> similar failures until addressed. Link related ADRs or incidents sharing the same pattern.
 
-* **\[Lesson]** — \[Why this is systemic, not incident-specific. Reference related ADR or incident if applicable.]
+* **\[Lesson]** — \[Why this is systemic, not incident-specific. Reference related ADR/incident.]
+
+***
+
+## From Lesson to Control
+
+> **Mandatory section.** Every systemic lesson above must map to a concrete artifact that will
+> enforce or surface it in the future. If a lesson cannot be converted (no artifact type fits),
+> say so explicitly — but the default expectation is that lessons become controls.
+>
+> **Artifact types:** ADR · OPA rule · Runbook step · Alert rule · CI test · Pre-deploy check ·
+> Comment in code · Knowledge file in `.agents/knowledge/`
+
+| Lesson                | Artifact type | Linked artifact (path / URL / "TBD")              |
+| --------------------- | ------------- | ------------------------------------------------- |
+| \[Lesson short title] | \[Type]       | \[Path or "TBD with deadline in Change Register"] |
 
 ***
 
 ## Change Register
 
-> **What to write:** Every action item must be specific (not "improve X"), owned by a named
-> person or agent, dated, and verifiable. An AI agent can own an item it will execute
-> autonomously; a human must own anything requiring judgment, approval, or external interaction.
-> Priority: P0 = fix within 24h · P1 = this week · P2 = this month.
+> Every action: what changes, who owns it, when it's due, what proves it worked.
+>
+> **Format** (parseable by `.github/workflows/schedule.postmortem-followup.yaml`):
+> `- [ ] [due:: YYYY-MM-DD] [priority:: high|medium|low] [size:: S|M|L] [owner:: Name] Action`
+>
+> **Priority semantics (homelab):**
+>
+> * `high`   = without this, the same class of incident recurs likely within 1 month
+> * `medium` = mitigation or hardening; recurrence possible but not immediate
+> * `low`    = improvement, cleanup, or nice-to-have
+>
+> **Size:** S = <2h work · M = half-day to 1 day · L = multi-day or requires research
+>
+> **Verification = observable outcome of the system, not output (no "commit done").**
 
-| # | Priority     | Action                                   | Owner                    | Due Date   | Verification                                              |
-| - | ------------ | ---------------------------------------- | ------------------------ | ---------- | --------------------------------------------------------- |
-| 1 | P0 / P1 / P2 | \[Specific, concrete change — not vague] | Name / \[provider:model] | YYYY-MM-DD | \[Observable evidence the change happened and had effect] |
-| 2 |              |                                          |                          |            |                                                           |
-| 3 |              |                                          |                          |            |                                                           |
+* [ ] \[due:: YYYY-MM-DD] \[priority:: high] \[size:: S] \[owner:: Name] \[Specific action]
+  * **Verification:** \[Observable system behavior, not "file present in git"]
+  * **If not done:** \[Concrete consequence — what breaks or recurs]
+
+* [ ] \[due:: YYYY-MM-DD] \[priority:: medium] \[size:: M] \[owner:: Name] \[Specific action]
+  * **Verification:** \[Observable]
+  * **If not done:** \[Consequence]
+
+***
+
+## Agent Knowledge
+
+> **Mandatory if any non-obvious operational truth was discovered.** Distill 1–5 bullets that
+> future AI agents (or you, in 6 months) should know before touching this component. These
+> bullets get extracted to `.agents/knowledge/<topic>.md` and loaded by relevant skills.
+>
+> Format: declarative facts, not narrative. Each bullet stands alone without PM context.
+
+* \[Component or command]: \[Behavior or gotcha in one sentence]
+* \[Component]: \[Heuristic to apply in the future]
 
 ***
 
 ## Verification Schedule
 
-> **Don't skip this section.** Without checkpoints and specific observables, the change
-> register is a list of intentions with no feedback loop. Set at least two dates.
+> **Don't skip.** A change register without follow-up is theatre. The GA at
+> `.github/workflows/schedule.postmortem-followup.yaml` opens GitHub issues when `[due::]` dates pass
+> without an issue existing — but this final review is the human checkpoint.
 
-| Checkpoint     | Date       | What we'll check                                 | Forum                      |
-| -------------- | ---------- | ------------------------------------------------ | -------------------------- |
-| 1-week review  | YYYY-MM-DD | \[Are P0/P1 items complete? Any regressions?]    | \[Standup / 1:1]           |
-| 1-month review | YYYY-MM-DD | \[Are P2 items complete? Are metrics improving?] | \[Team review]             |
-| 3-month review | YYYY-MM-DD | \[Has this class of incident recurred?]          | \[Quarterly retrospective] |
+| Checkpoint | Date       | What we'll check                                 | Forum       |
+| ---------- | ---------- | ------------------------------------------------ | ----------- |
+| 1-week     | YYYY-MM-DD | \[High-priority items complete? Any regression?] | Solo review |
+| 1-month    | YYYY-MM-DD | \[Medium items done? Has metric improved?]       | Solo review |
+| 3-month    | YYYY-MM-DD | \[Has this class of incident recurred?]          | Solo review |
