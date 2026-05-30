@@ -70,18 +70,29 @@ volume fields must reference `oci.chezmoi.sh`:
 * `postgresql.cnpg.io/v1` kind `ImageCatalog` → `.spec.images[].image`
 * `postgresql.cnpg.io/v1` kind `ClusterImageCatalog` → `.spec.images[].image`
 
-## Exclusions
+## Namespace enforcement model
 
-The following namespaces are excluded from enforcement — they host infrastructure
-components that must be schedulable before the registry mirror is available:
+SEC001 applies two complementary rules depending on namespace:
 
-| Namespace            | Reason                                                 |
-| -------------------- | ------------------------------------------------------ |
-| `kube-system`        | Core Kubernetes components                             |
-| `kube-public`        | Cluster metadata                                       |
-| `kube-node-lease`    | Node heartbeat leases                                  |
-| `longhorn-system`    | CSI - required for the registry (bootstrap dependency) |
-| `local-path-storage` | Local path provisioner (bootstrap dependency)          |
+| Namespace class          | Rule                                            |
+| ------------------------ | ----------------------------------------------- |
+| Normal namespaces        | Images **must** use `oci.chezmoi.sh` prefix     |
+| Bootstrap namespaces     | Images **must NOT** use `oci.chezmoi.sh` prefix |
+| Cluster-scoped resources | No image-registry enforcement                   |
+
+Bootstrap namespaces host infrastructure that must be schedulable before the
+local registry mirror is available. Pulling from `oci.chezmoi.sh` in these
+namespaces risks a circular dependency: if the registry itself is degraded,
+these critical components cannot be scheduled, potentially preventing the
+registry from recovering.
+
+| Namespace         | Reason                                                     |
+| ----------------- | ---------------------------------------------------------- |
+| `kube-system`     | Core Kubernetes components                                 |
+| `kube-public`     | Cluster metadata                                           |
+| `kube-node-lease` | Node heartbeat leases                                      |
+| `longhorn-system` | CSI — required for registry storage (bootstrap dependency) |
+| `zot-registry`    | The registry itself — circular dependency by definition    |
 
 ## Enforcement
 

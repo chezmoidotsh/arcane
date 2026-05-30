@@ -144,7 +144,7 @@ test_pod_spec_direct_ephemeral_containers if {
     count(violations) == 1
 }
 
-test_excluded_namespace_bypasses_check if {
+test_bootstrap_namespace_allows_public_registry if {
     violations := {msg | some msg in deny with input as {
         "apiVersion": "apps/v1",
         "kind": "DaemonSet",
@@ -157,6 +157,57 @@ test_excluded_namespace_bypasses_check if {
                     ],
                 },
             },
+        },
+    }}
+    count(violations) == 0
+}
+
+test_bootstrap_namespace_denies_local_registry if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "metadata": {"name": "app", "namespace": "kube-system"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "containers": [
+                        {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 1
+}
+
+test_bootstrap_namespace_denies_local_registry_longhorn if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "metadata": {"name": "longhorn-manager", "namespace": "longhorn-system"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "containers": [
+                        {"name": "longhorn-manager", "image": "oci.chezmoi.sh/docker.io/longhornio/longhorn-manager:latest"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 1
+}
+
+test_cluster_scoped_resource_with_local_image_passes if {
+    # Cluster-scoped resources have no namespace — is_bootstrap_namespace must NOT fire for them.
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "v1",
+        "kind": "Pod",
+        "metadata": {"name": "standalone"},
+        "spec": {
+            "containers": [
+                {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
+            ],
         },
     }}
     count(violations) == 0
@@ -274,7 +325,7 @@ test_all_container_types_mixed if {
     count(violations) == 2
 }
 
-test_kube_system_excluded if {
+test_kube_system_public_registry_allowed if {
     violations := {msg | some msg in deny with input as {
         "apiVersion": "apps/v1",
         "kind": "Deployment",
@@ -411,7 +462,7 @@ test_combine_mode_only_non_compliant_flagged if {
     count(violations) == 1
 }
 
-test_combine_mode_excluded_namespace_skipped if {
+test_combine_mode_bootstrap_namespace_public_registry_allowed if {
     violations := {msg | some msg in deny with input as [{"path": "ds.yaml", "contents": {
         "apiVersion": "apps/v1",
         "kind": "DaemonSet",
@@ -421,4 +472,16 @@ test_combine_mode_excluded_namespace_skipped if {
         ]}}},
     }}]}
     count(violations) == 0
+}
+
+test_combine_mode_bootstrap_namespace_local_registry_denied if {
+    violations := {msg | some msg in deny with input as [{"path": "ds.yaml", "contents": {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "metadata": {"name": "app", "namespace": "longhorn-system"},
+        "spec": {"template": {"spec": {"containers": [
+            {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
+        ]}}},
+    }}]}
+    count(violations) == 1
 }

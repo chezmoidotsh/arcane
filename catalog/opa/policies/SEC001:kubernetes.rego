@@ -47,6 +47,9 @@ is_local_image(image) if {
     startswith(image, local_registry)
 }
 
+# Excluded namespaces bypass the "must use OCI" rule — but they must also NOT
+# use local registries: if the registry is KO, these namespaces must still be
+# schedulable to allow recovery (circular-dependency hazard).
 is_excluded_namespace(res) if {
     not res.metadata.namespace
 }
@@ -110,4 +113,20 @@ deny contains msg if {
     some v in resource_volume_images(res)
     not is_local_image(v.image)
     msg := sprintf("SEC001: OCI volume %q in namespace %q must use local registry prefix %q (got %q)", [v.name, res.metadata.namespace, local_registry, v.image])
+}
+
+deny contains msg if {
+    some res in resources
+    res.metadata.namespace in excluded_namespaces
+    some c in resource_containers(res)
+    is_local_image(c.image)
+    msg := sprintf("SEC001: container %q in bootstrap namespace %q must NOT use local registry %q — namespace must be schedulable before the registry is available (got %q)", [c.name, res.metadata.namespace, local_registry, c.image])
+}
+
+deny contains msg if {
+    some res in resources
+    res.metadata.namespace in excluded_namespaces
+    some v in resource_volume_images(res)
+    is_local_image(v.image)
+    msg := sprintf("SEC001: OCI volume %q in bootstrap namespace %q must NOT use local registry %q — namespace must be schedulable before the registry is available (got %q)", [v.name, res.metadata.namespace, local_registry, v.image])
 }
