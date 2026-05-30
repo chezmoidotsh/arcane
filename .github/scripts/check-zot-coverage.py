@@ -9,7 +9,7 @@ a dist/ directory is backed by a pull-through entry in the Zot configuration.
 
 HOW IT WORKS
 ------------
-Zot is configured as an on-demand pull-through cache.  Each upstream registry
+Zot is configured as an on-demand pull-through cache. Each upstream registry
 is mapped to a local *destination* path under oci.chezmoi.sh/  e.g.
 
     "destination": "/ghcr.io"   ←→   oci.chezmoi.sh/ghcr.io/<image>
