@@ -276,10 +276,11 @@ development workflows.
 
 ## Implementation Details / Status
 
-* **Completed Components**: ADR drafted; render script and CI workflow defined.
+* **Completed Components**: ADR drafted; render script and CI workflow defined;
+  `amiya.akn` apps, infrastructure, and argocd migrated (incl. SOPS splits).
 
-* **Pending Components**: `scripts/dist:render`, trunk actions, CI workflow, lungmen.akn
-  migration, amiya.akn migration and SOPS splits, ApplicationSet updates.
+* **Pending Components**: Trunk actions, lungmen.akn migration, ApplicationSet updates
+  (switching system/applications AppSets from `src/` to `dist/` paths).
 
 * **Architecture — directory convention**:
 
@@ -311,17 +312,13 @@ projects/<cluster>/
 
 * **SOPS exception list** — components retaining a `src/<app>/sops/` overlay:
 
-  | Component                   | Project     | Encrypted secrets                                                                                   |
-  | --------------------------- | ----------- | --------------------------------------------------------------------------------------------------- |
-  | `pocket-id`                 | `amiya.akn` | SSO identity, PostgreSQL credentials, S3 backup key                                                 |
-  | `vault` (OpenBao)           | `amiya.akn` | SoftHSM tokens, database credentials, S3 backup key                                                 |
-  | `tailscale`                 | `amiya.akn` | Connector auth key                                                                                  |
-  | `cloudflare-public-gateway` | `amiya.akn` | Cloudflare Tunnel credentials                                                                       |
-  | `argocd`                    | `amiya.akn` | Bootstrap secrets, GitHub credentials — entire app stays in `src/` (bootstrap exception, see below) |
-
-  **Bootstrap exception**: `argocd` itself cannot participate in the `dist/` pattern because
-  ArgoCD must be running to apply ArgoCD resources. The argocd application is bootstrapped
-  manually and stays entirely in `src/argocd/` outside the ApplicationSet discovery flow.
+  | Component                   | Project     | Encrypted secrets                                                                                                                               |
+  | --------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `pocket-id`                 | `amiya.akn` | SSO identity, PostgreSQL credentials, S3 backup key                                                                                             |
+  | `vault` (OpenBao)           | `amiya.akn` | SoftHSM tokens, database credentials, S3 backup key                                                                                             |
+  | `tailscale`                 | `amiya.akn` | Connector auth key                                                                                                                              |
+  | `cloudflare-public-gateway` | `amiya.akn` | Cloudflare Tunnel credentials                                                                                                                   |
+  | `argocd`                    | `amiya.akn` | Bootstrap secrets, GitHub credentials — follows the `sops/` split pattern; bootstrapped manually but self-manages via `dist/argocd/` thereafter |
 
 * **Standards Specification**:
   * `dist/` files are never edited by hand; all changes flow through `scripts/dist:render`.
@@ -363,6 +360,9 @@ projects/<cluster>/
 
 ## Changelog
 
+* **2026-05-28**: **FEATURE**: Applied `sops/` split to `argocd`; `dist/argocd/` is now
+  rendered and `bootstrap.application.yaml` sources from `dist/argocd/` + `src/argocd/sops/`.
+  Removed bootstrap exception — argocd self-manages after initial bootstrapping.
 * **2026-05-24**: **FEATURE**: Initial creation of ADR documenting the decision to adopt
   the pre-rendered manifests (dist/) pattern for supply-chain hardening and GitOps
   diffability.
