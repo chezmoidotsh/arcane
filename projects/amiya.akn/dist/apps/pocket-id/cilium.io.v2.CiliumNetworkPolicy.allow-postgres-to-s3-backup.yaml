@@ -32,4 +32,6 @@ spec:
         - matchPattern: '*'
   endpointSelector:
     matchLabels:
-      cnpg.io/cluster: pocket-id-database
+      app.kubernetes.io/component: database
+      app.kubernetes.io/managed-by: cloudnative-pg
+      app.kubernetes.io/name: postgresql

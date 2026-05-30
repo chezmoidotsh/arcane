@@ -9,7 +9,9 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      cnpg.io/cluster: openbao-database
+      app.kubernetes.io/component: database
+      app.kubernetes.io/managed-by: cloudnative-pg
+      app.kubernetes.io/name: postgresql
   egress:
     # Allow backup operations to S3 storage
     - toFQDNs:

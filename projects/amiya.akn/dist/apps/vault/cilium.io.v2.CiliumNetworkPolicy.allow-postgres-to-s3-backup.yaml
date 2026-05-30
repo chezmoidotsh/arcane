@@ -31,4 +31,6 @@ spec:
         - matchPattern: '*'
   endpointSelector:
     matchLabels:
-      cnpg.io/cluster: openbao-database
+      app.kubernetes.io/component: database
+      app.kubernetes.io/managed-by: cloudnative-pg
+      app.kubernetes.io/name: postgresql
