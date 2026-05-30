@@ -18,7 +18,7 @@ spec:
       enabled: true
 
   cluster:
-    name: "20260329"
+    name: "20260530"
     description: "Shared PostgreSQL database cluster for applications with sensitive data"
 
     # -- Mandatory for sensitive workloads to prevent unplanned downtime during node drains.
@@ -33,30 +33,51 @@ spec:
     instances: 2
     storage:
       size: 5Gi
+    # -- Reduced from 5Gi: WAL archiving is disabled (isWALArchiver: false), so WALs are
+    # recycled automatically after each checkpoint. 2Gi is ample for max_wal_size: 100MB.
     walStorage:
-      size: 5Gi
+      size: 2Gi
     postgresql:
       parameters:
-        max_slot_wal_keep_size: 900MB
         max_wal_size: 100MB
+        # -- Caps WAL retained for the streaming replica slot. Without this, a lagging
+        # replica could fill the 2Gi walStorage even without WAL archiving.
+        # At 1500MB the slot is invalidated and the replica does a fresh pg_basebackup
+        # rather than crashing the primary — acceptable trade-off for a homelab.
+        max_slot_wal_keep_size: 1500MB
 
       shared_preload_libraries:
         - vchord
 
     postgresUID: 999
     postgresGID: 999
+
+    # -- Bootstrap from the last backup of apps-secured-20260329.
+    # CNPG restores the base backup and replays available WALs to reach consistency.
+    # After bootstrap the cluster operates normally; this block is ignored on subsequent reconciliations.
     bootstrap:
-      initdb:
-        postInitSQL:
-          # -- Ensures all extensions are ready for use immediately after provisioning.
-          - CREATE EXTENSION IF NOT EXISTS vchord CASCADE;
+      recovery:
+        source: apps-secured-20260329
+
+    # -- Source cluster for bootstrap recovery.
+    externalClusters:
+      - name: apps-secured-20260329
+        plugin:
+          name: barman-cloud.cloudnative-pg.io
+          parameters:
+            barmanObjectName: apps-secured-selfhosted
+            serverName: 01KMWETKMBK0MYNB3X7RH6BT0X
+
     plugins:
       - enabled: true
-        isWALArchiver: true
+        # -- WAL archiving disabled: PostgreSQL recycles WALs automatically after checkpoint.
+        # This prevents WAL disk fill-up even when S3 is unavailable.
+        # Trade-off: no PITR — recovery relies on daily base backups (see apps-secured.scheduledbackup.yaml).
+        isWALArchiver: false
         name: barman-cloud.cloudnative-pg.io
         parameters:
           barmanObjectName: apps-secured-selfhosted
-          serverName: 01KMWETKMBK0MYNB3X7RH6BT0X
+          serverName: 01KSWX2DMP9RNXX19Z23W2T57M
 
   databases:
     - name: immich

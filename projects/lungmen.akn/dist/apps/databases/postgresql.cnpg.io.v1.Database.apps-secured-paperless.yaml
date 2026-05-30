@@ -3,16 +3,16 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
   labels:
-    app.kubernetes.io/instance: apps-secured-20260329
+    app.kubernetes.io/instance: apps-secured-20260530
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: mutualized-cnpg-databases
     helm.sh/chart: mutualized-cnpg-databases-0.1.0
-    mutualized.cloudnative-pg.io/cluster: apps-secured-20260329
+    mutualized.cloudnative-pg.io/cluster: apps-secured-20260530
     mutualized.cloudnative-pg.io/database: paperless
     mutualized.cloudnative-pg.io/group: apps-secured
   name: apps-secured-paperless
 spec:
   cluster:
-    name: apps-secured-20260329
+    name: apps-secured-20260530
   name: paperless
   owner: paperless

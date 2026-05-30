@@ -3,21 +3,27 @@ apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
   labels:
-    app.kubernetes.io/instance: apps-secured-20260329
+    app.kubernetes.io/instance: apps-secured-20260530
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: mutualized-cnpg-databases
     helm.sh/chart: mutualized-cnpg-databases-0.1.0
-    mutualized.cloudnative-pg.io/cluster: apps-secured-20260329
+    mutualized.cloudnative-pg.io/cluster: apps-secured-20260530
     mutualized.cloudnative-pg.io/group: apps-secured
-  name: apps-secured-20260329
+  name: apps-secured-20260530
 spec:
   bootstrap:
-    initdb:
-      postInitSQL:
-      - CREATE EXTENSION IF NOT EXISTS vchord CASCADE;
+    recovery:
+      source: apps-secured-20260329
   description: Shared PostgreSQL database cluster for applications with sensitive
     data
   enablePDB: true
+  externalClusters:
+  - name: apps-secured-20260329
+    plugin:
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: apps-secured-selfhosted
+        serverName: 01KMWETKMBK0MYNB3X7RH6BT0X
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ImageCatalog
@@ -44,20 +50,20 @@ spec:
         name: cnpg.apps-secured-paperless-paperless-credentials
   plugins:
   - enabled: true
-    isWALArchiver: true
+    isWALArchiver: false
     name: barman-cloud.cloudnative-pg.io
     parameters:
       barmanObjectName: apps-secured-selfhosted
-      serverName: 01KMWETKMBK0MYNB3X7RH6BT0X
+      serverName: 01KSWX2DMP9RNXX19Z23W2T57M
   postgresGID: 999
   postgresUID: 999
   postgresql:
     parameters:
-      max_slot_wal_keep_size: 900MB
+      max_slot_wal_keep_size: 1500MB
       max_wal_size: 100MB
     shared_preload_libraries:
     - vchord
   storage:
     size: 5Gi
   walStorage:
-    size: 5Gi
+    size: 2Gi
