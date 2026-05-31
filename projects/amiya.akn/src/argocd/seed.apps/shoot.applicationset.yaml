@@ -66,20 +66,20 @@ spec:
               - patch: |
                   - op: add
                     path: /spec/generators/0/merge/generators/0/matrix/generators/0/git/directories/0/path
-                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/*
+                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/dist/infrastructure/kubernetes/*
                   - op: add
                     path: /spec/generators/0/merge/generators/1/matrix/generators/0/git/files/0/path
-                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/infrastructure/kubernetes/*/.application.patch
+                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/dist/infrastructure/kubernetes/*/.application.patch
                 target:
                   kind: ApplicationSet
                   name: system
               - patch: |
                   - op: add
                     path: /spec/generators/0/merge/generators/0/matrix/generators/0/git/directories/0/path
-                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/apps/*
+                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/dist/apps/*
                   - op: add
                     path: /spec/generators/0/merge/generators/1/matrix/generators/0/git/files/0/path
-                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/src/apps/*/.application.patch
+                    value: projects/{{ index .metadata.annotations "device.tailscale.com/hostname" | default .name }}/dist/apps/*/.application.patch
                 target:
                   kind: ApplicationSet
                   name: applications
