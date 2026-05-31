@@ -1,181 +1,103 @@
 name: "Bug Report"
-description: Report a bug or issue in the infrastructure
-title: ":bug:(scope): Brief description of the issue"
-labels: ["bug"]
+description: Report a bug in the infrastructure
+title: "Brief sentence describing what is broken and where"
+labels: ["type::bug", "status::triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting a bug! Please provide detailed information to help us resolve the issue quickly.
+        ## Title
 
-  - type: input
-    id: summary
-    attributes:
-      label: Summary
-      description: One-sentence summary of the bug and its impact
-      placeholder: Brief description of what's broken and how it affects the system
-    validations:
-      required: true
+        A sentence — not a commit format. Lead with the symptom, then where it appears, then user impact. The `type::bug` label and the scope label (`project:lungmen.akn`, `gh`, …) carry classification.
 
-  - type: dropdown
-    id: scope
-    attributes:
-      label: Scope
-      description: Which component is affected?
-      options:
-        - project:amiya.akn
-        - project:lungmen.akn
-        - project:kazimierz.akn
-        - project:chezmoi.sh
-        - catalog:crossplane
-        - catalog:flakes
-        - catalog:kustomize
-        - catalog:talos
-        - other
-    validations:
-      required: true
+        Examples:
+        - `WAL volume full on apps-secured cluster — immich and paperless unavailable`
+        - `validate_commits.sh false-positive on '-' type rejects valid commits`
 
-  - type: input
-    id: cluster
-    attributes:
-      label: Cluster
-      description: Which cluster is affected?
-      placeholder: "e.g., amiya.akn, lungmen.akn"
-    validations:
-      required: false
-
-  - type: input
-    id: namespace
-    attributes:
-      label: Namespace
-      description: Kubernetes namespace if applicable
-      placeholder: "e.g., default, kube-system"
-    validations:
-      required: false
-
-  - type: input
-    id: application
-    attributes:
-      label: Application/Service
-      description: Name and version if known
-      placeholder: "e.g., argocd v2.10.0"
-    validations:
-      required: false
-
-  - type: dropdown
-    id: gitops-tool
-    attributes:
-      label: GitOps Tool
-      description: Which GitOps tool is being used?
-      options:
-        - ArgoCD
-        - N/A
-    validations:
-      required: false
+        Don't use:
+        - `![scope]: …` — that's the commit format, kept on commits only
+        - `🔧(scope): …` — gitmoji + parens, retired
 
   - type: textarea
-    id: observable-behavior
+    id: tldr
     attributes:
-      label: Observable Behavior
-      description: What is currently happening? Be specific and factual.
-      placeholder: Describe what you're observing...
+      label: TL;DR
+      description: One sentence — what is broken, where, what the user impact is.
+      placeholder: "Component fails when condition X, causing impact Y on Z."
     validations:
       required: true
 
   - type: textarea
-    id: expected-behavior
+    id: context
     attributes:
-      label: Expected Behavior
-      description: What should happen instead?
-      placeholder: Describe the expected behavior...
+      label: Context
+      description: Cluster, namespace, app/version, when it started, and any deploy/change that correlates.
+      placeholder: |
+        - Cluster: lungmen.akn
+        - Namespace: immich
+        - Started: 2026-05-28 ~02:00 UTC, around the time CNPG cluster `apps-secured` rotated WAL retention
     validations:
       required: true
+
+  - type: textarea
+    id: observable
+    attributes:
+      label: Observable behavior
+      description: Symptoms, error messages, status. Be factual. Verbatim error strings beat paraphrasing.
+      placeholder: |
+        immich-server pod restarts with `ECONNREFUSED 10.43.x.x:5432` every 30s.
+        `kubectl get cluster -n databases` shows `apps-secured` in `Cluster in healthy state` despite WAL archiving failure.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Exact commands or sequence anyone can run to see the bug. If intermittent, say so and describe trigger conditions.
+      placeholder: |
+        1. kubectl -n immich get pods
+        2. kubectl -n immich logs deploy/immich-server --tail=200
+        3. kubectl -n databases get cluster apps-secured -o yaml | yq .status
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence (logs, status, config)
+      description: Paste actual command output and relevant config. Redact secrets. Wrap shell output in ```shell, YAML in ```yaml.
+      render: shell
 
   - type: checkboxes
     id: impact
     attributes:
-      label: Impact Assessment
-      description: How does this affect the system?
+      label: Impact
       options:
-        - label: Service unavailable/degraded
-        - label: Data integrity issue
-        - label: Security concern
-        - label: Performance degradation
-        - label: Deployment blocked
+        - label: Service unavailable or degraded for users
+        - label: Data integrity at risk (loss, corruption, divergence)
+        - label: Security implication (exposure, broken policy, credential leak)
+        - label: Deployment or sync blocked
 
   - type: textarea
-    id: reproduction-steps
+    id: investigation
     attributes:
-      label: Reproduction Steps
-      description: Provide clear, step-by-step instructions to reproduce the issue
+      label: Investigation so far
+      description: What has been ruled in or out, what failed to help. Avoids duplicate work for whoever picks this up.
       placeholder: |
-        1.
-        2.
-        3.
-    validations:
-      required: true
-
-  - type: dropdown
-    id: reproduction-frequency
-    attributes:
-      label: Reproduction Frequency
-      description: How often does this occur?
-      options:
-        - Always
-        - Intermittent
-        - Once
-    validations:
-      required: false
+        - Verified ExternalSecrets are synced (kubectl get externalsecrets -n immich, all `SecretSynced=True`)
+        - Restarted the CNPG primary — same error after restart
+        - Suspected WAL volume saturation (90% on `apps-secured-1` PVC)
 
   - type: textarea
-    id: logs
+    id: hypothesis
     attributes:
-      label: Logs
-      description: Paste relevant logs (include timestamps if available)
+      label: Hypothesis or known root cause
+      description: Best current guess + confidence (low / medium / high). Skip if no signal yet.
       placeholder: |
-        kubectl logs, argocd app logs, or other relevant output
-      render: shell
+        Medium confidence — WAL retention not enforced because Barman archiving has been failing
+        silently since 2026-05-24 (S3 credentials rotated). Root cause TBD.
 
   - type: textarea
-    id: resource-status
+    id: links
     attributes:
-      label: Resource Status
-      description: Output of kubectl describe, argocd app get, etc.
-      placeholder: |
-        kubectl get pods -n <namespace>
-        kubectl describe <resource-type> <resource-name> -n <namespace>
-      render: shell
-
-  - type: textarea
-    id: configuration
-    attributes:
-      label: Configuration
-      description: Relevant configuration snippets (redact secrets!)
-      render: yaml
-
-  - type: checkboxes
-    id: already-tried
-    attributes:
-      label: Troubleshooting Already Attempted
-      description: What steps have you already taken?
-      options:
-        - label: Checked application logs
-        - label: Verified resource status (pods, deployments, etc.)
-        - label: Checked ArgoCD sync status
-        - label: Reviewed recent commits/changes
-        - label: Verified secrets synchronization (External Secrets Operator)
-        - label: Checked network connectivity (Cilium, Envoy Gateway)
-
-  - type: textarea
-    id: findings
-    attributes:
-      label: Investigation Findings
-      description: What did you discover during investigation?
-      placeholder: Document any findings from troubleshooting...
-
-  - type: textarea
-    id: additional-context
-    attributes:
-      label: Additional Context
-      description: Any other relevant information, screenshots, or references
-      placeholder: Related issues, external references, etc.
+      label: Links and references
+      description: Related issues, PRs, post-mortems, dashboards, upstream bug reports.

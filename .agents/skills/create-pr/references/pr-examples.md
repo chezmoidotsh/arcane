@@ -4,11 +4,19 @@ Real merged PRs from this repository. Use these as style reference when drafting
 PR bodies — each example matches one of the three PR templates in
 `.github/PULL_REQUEST_TEMPLATE/`.
 
+> Note on titles: the merged PRs below were opened under the old gitmoji
+> convention (`:sparkles:(scope):`). Under the current convention, titles are
+> sentence-form English (no symbol prefix, no bracketed scope) and the type +
+> scope live in labels. The "Title" line on each example shows the sentence
+> form a new PR would use today; the body excerpts and structure are otherwise
+> faithful to the merged PRs.
+
 ***
 
 ## PR #973 — `feature.md` template
 
-**Title:** `:sparkles:(project:lungmen.akn): Add Forgejo Git hosting service`
+**Title:** `Add Forgejo as a self-hosted Git forge on lungmen`
+**Labels:** `type::feature`, `project:lungmen.akn`, `size::M`
 **Branch:** `feature/forgejo-lungmen`
 
 ```sh
@@ -80,7 +88,8 @@ OpenBao via ExternalSecrets Operator. SSH L7 policy with protocol inspection.
 
 ## PR #939 — `refactoring.md` template (consolidation)
 
-**Title:** `:bricks:(project:lungmen.akn): Consolidate PostgreSQL databases into shared CNPG clusters`
+**Title:** `Consolidate PostgreSQL databases into shared CNPG clusters on lungmen`
+**Labels:** `type::refactor`, `project:lungmen.akn`, `size::L`
 **Branch:** `issue-661/centralise-db`
 
 ```sh
@@ -160,7 +169,8 @@ PostgreSQL role isolation + namespace-to-namespace Cilium allowlisting.
 
 ## PR #667 — `refactoring.md` template (migration)
 
-**Title:** `:recycle:(project:amiya.akn): Complete Phase 1 migration to centralized OpenBao`
+**Title:** `Complete Phase 1 migration to centralized OpenBao on amiya`
+**Labels:** `type::refactor`, `project:amiya.akn`, `size::L`
 **Branch:** `issue-401/deprecate-kubevault`
 
 ```sh

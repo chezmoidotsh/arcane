@@ -1,122 +1,100 @@
 name: "Application Addition"
-description: Request to add a new application to the infrastructure
-title: ":sparkles:(project:<cluster>): Add <application-name>"
-labels: ["enhancement", "application"]
+description: Request to add a new application to a cluster
+title: "Add <application> on <cluster>"
+labels: ["type::feature", "status::triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for requesting a new application! Please provide detailed information to help streamline the deployment process.
+        ## Title
+
+        Sentence-form: `Add <application> on <cluster>` (or a richer sentence that says what it brings). Type is `type::feature`; scope label is `project:<cluster>`.
+
+        Examples:
+        - `Add Forgejo as a self-hosted Git forge on lungmen`
+        - `Add Immich for self-hosted photo backup on lungmen`
 
   - type: input
-    id: app-name
+    id: app
     attributes:
-      label: Application Name
-      description: The name of the application to add
-      placeholder: "e.g., Immich, Paperless-ngx, Grafana"
-    validations:
-      required: true
-
-  - type: input
-    id: app-url
-    attributes:
-      label: Application URL
-      description: Official website or repository URL
-      placeholder: "https://github.com/..."
+      label: Application name and upstream URL
+      placeholder: "Forgejo — https://codeberg.org/forgejo/forgejo"
     validations:
       required: true
 
   - type: textarea
-    id: description
+    id: tldr
     attributes:
-      label: Description
-      description: Brief description of what this application does and why it's needed
-      placeholder: Tell us what this application does and how it will be used
+      label: TL;DR — why this app, why now
+      description: One or two sentences. What does it do, what existing gap does it close?
+      placeholder: "Self-hosted Git forge for personal infrastructure repositories — removes dependency on external SaaS for sensitive configs."
     validations:
       required: true
 
   - type: dropdown
-    id: target-cluster
+    id: cluster
     attributes:
-      label: Target Cluster
-      description: Which cluster/project should host this application?
+      label: Target cluster
       options:
-        - project:amiya.akn (Mission-critical services)
-        - project:lungmen.akn (Home applications)
-    validations:
-      required: true
-
-  - type: dropdown
-    id: app-type
-    attributes:
-      label: Application Type
-      description: What category does this application fall into?
-      options:
-        - Media (Streaming, Photos, Music)
-        - Productivity (Documents, Notes, Tasks)
-        - Infrastructure (Monitoring, Logging, Networking)
-        - Security (Authentication, Authorization, Secrets)
-        - Storage (Backup, File sharing)
-        - Automation (CI/CD, Home automation)
-        - Communication (Chat, Email, Calendar)
-        - Other
+        - project:amiya.akn (core platform — auth, secrets, GitOps)
+        - project:lungmen.akn (home applications — media, productivity, personal)
+        - project:kazimierz.akn (public-access gateway)
+        - project:hass (Home Assistant ecosystem)
     validations:
       required: true
 
   - type: checkboxes
-    id: integration-requirements
+    id: integration
     attributes:
-      label: Integration Requirements
-      description: Select all integration needs for this application
+      label: Integration requirements
       options:
-        - label: Requires SSO/OIDC authentication (Pocket-Id)
-        - label: Requires internet access (public exposure)
-        - label: Requires VPN access (Tailscale exposure)
-        - label: Requires persistent storage (PVC)
-        - label: Requires database (PostgreSQL via CloudNative-PG)
-        - label: Requires S3-compatible storage
-        - label: Requires custom DNS records (Cloudflare)
-        - label: Requires TLS certificates (cert-manager)
+        - label: SSO / OIDC via Pocket-Id
+        - label: Public exposure via Pangolin / Envoy Gateway
+        - label: Tailscale-only access
+        - label: Persistent storage (Longhorn PVC)
+        - label: PostgreSQL via CloudNative-PG
+        - label: S3-compatible object storage
+        - label: Custom Cloudflare DNS record
+        - label: TLS via cert-manager (DNS-01)
+        - label: Secrets from OpenBao via ExternalSecrets
 
   - type: checkboxes
-    id: security-requirements
+    id: security
     attributes:
-      label: Security Requirements
-      description: Security-related considerations for this application
+      label: Security posture
       options:
-        - label: Handles sensitive data (requires encryption at rest)
-        - label: Requires network isolation (microsegmentation)
-        - label: Needs secrets from OpenBao
-        - label: External exposure acceptable (internet-facing)
-        - label: Tailscale-only access required
+        - label: Handles sensitive data (encryption at rest required)
+        - label: Network isolation via Cilium NetworkPolicy (default for new apps)
+        - label: Internet-facing — must be hardened
+        - label: VPN-only access (Tailscale) — internal-only
 
   - type: textarea
     id: dependencies
     attributes:
-      label: Dependencies
-      description: List any dependencies or prerequisites (other applications, services, specific infrastructure)
+      label: Dependencies on other services
+      description: Databases, caches, message brokers, external APIs — anything that must exist or be deployed first.
       placeholder: |
-        - Requires PostgreSQL database
-        - Depends on Redis for caching
-        - Needs MinIO for S3 storage
+        - PostgreSQL (CNPG cluster `apps-secured`)
+        - SMTP relay (if email is needed)
 
   - type: textarea
-    id: configuration-notes
+    id: resources
     attributes:
-      label: Configuration Notes
-      description: Any specific configuration requirements, environment variables, resource limits, or deployment considerations
+      label: Resource footprint (CPU / RAM / storage)
+      description: Initial estimate from upstream docs. Refine during implementation.
       placeholder: |
-        Resource Requirements:
-        - CPU: 500m-1000m
-        - Memory: 512Mi-1Gi
-        - Storage: 10Gi
-
-        Special Configurations:
-        - Custom Helm values needed
-        - Special network policies required
+        - CPU: 100m → 500m
+        - Memory: 256Mi → 1Gi
+        - Storage: 20Gi (Longhorn) for repository data
 
   - type: textarea
-    id: additional-context
+    id: notes
     attributes:
-      label: Additional Context
-      description: Any other relevant information, screenshots, or references
+      label: Special configuration notes
+      description: Non-standard Helm values, ConfigMaps, env vars, startup quirks, known operational gotchas.
+
+  - type: textarea
+    id: links
+    attributes:
+      label: Links and references
+      description: Upstream docs, Helm chart, container image, similar deployments elsewhere.

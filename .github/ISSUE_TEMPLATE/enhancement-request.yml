@@ -1,226 +1,105 @@
 name: "Enhancement Request"
-description: Propose improvements to existing systems or workflows
-title: ":wrench:(scope): Brief description of the enhancement"
-labels: ["enhancement"]
+description: Propose an improvement, new feature, or refactor
+title: "Brief sentence describing the outcome"
+labels: ["type::improve", "status::triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for proposing an enhancement! Please provide detailed information to help evaluate and implement your idea.
+        ## Title
 
-  - type: input
-    id: summary
-    attributes:
-      label: Summary
-      description: One-sentence summary of what this enhancement achieves and why it matters
-      placeholder: Brief overview of the enhancement and its value
-    validations:
-      required: true
+        A sentence in English. Start with a verb (`Set up …`, `Replace …`, `Reduce …`, `Extract …`). Type and scope live in labels, not in the title.
 
-  - type: dropdown
-    id: scope
+        After filing, change the default `type::improve` label to the right one if your intent is different:
+        - `type::feature` — new capability, service, or initial deployment
+        - `type::improve` — better behavior on something that exists (perf, config, UX)
+        - `type::refactor` — restructure without observable change
+        - `type::docs` — documentation only
+        - `type::security` — security hardening
+        - `type::chore` — tooling, CI, deps
+
+        Also add a scope label: `project:<cluster>`, `catalog:<area>`, `gh` for cross-cutting, `deps` for dependency work.
+
+        Examples:
+        - `Set up cluster observability stack (metrics, logs, alerting)` + `type::feature` + `gh`
+        - `Reduce ArgoCD sync churn by tuning reconciliation interval` + `type::improve` + `project:amiya.akn`
+        - `Extract shared CNPG backup overlay for cross-cluster reuse` + `type::refactor` + `catalog:kustomize`
+
+  - type: textarea
+    id: tldr
     attributes:
-      label: Scope
-      description: Which component will be enhanced?
-      options:
-        - project:amiya.akn
-        - project:lungmen.akn
-        - project:kazimierz.akn
-        - project:chezmoi.sh
-        - project:hass
-        - catalog:crossplane
-        - catalog:flakes
-        - catalog:kustomize
-        - catalog:talos
-        - other
+      label: TL;DR
+      description: One sentence — the outcome you want and the value it brings.
+      placeholder: "Deploy [X] on [scope] so that [concrete benefit, ideally measurable]."
     validations:
       required: true
 
   - type: textarea
-    id: current-state
+    id: context
     attributes:
-      label: Current State
-      description: Describe what exists today and how it works
-      placeholder: What is the current implementation?
-    validations:
-      required: true
-
-  - type: textarea
-    id: pain-points
-    attributes:
-      label: Pain Points
-      description: What problems or limitations does the current implementation have?
+      label: Context — what exists today and why it falls short
+      description: Be concrete. Current state + specific pain points, not generic complaints.
       placeholder: |
-        - Problem 1
-        - Problem 2
+        Current state: each cluster relies on `kubectl logs` for debugging. No centralized
+        logs, no metrics, no alerting.
+
+        Specific pain points observed:
+        - Post-mortem #1013 (WAL volume full) was undetected for 4 days
+        - No way to spot disk-pressure trends before they become incidents
     validations:
       required: true
 
   - type: textarea
-    id: motivation
+    id: proposal
     attributes:
-      label: Motivation
-      description: Why is this enhancement important now? What triggered this proposal?
-      placeholder: Context and reasoning for this enhancement
+      label: Proposal
+      description: What you want to do. Be specific enough that someone could start building. If you are weighing options, list them with their tradeoffs.
+      placeholder: |
+        Deploy VictoriaMetrics + VictoriaLogs + Grafana on lungmen.akn, scraped by
+        vmagent via ServiceMonitor. Multi-cluster ready: vmagent on amiya/kazimierz
+        ships to the central vminsert.
+
+        Alternative considered: Prometheus + Loki — rejected for higher resource cost
+        at homelab scale.
     validations:
       required: true
 
   - type: textarea
-    id: objectives
+    id: acceptance
     attributes:
-      label: Primary Objectives
-      description: Define clear, measurable objectives for this enhancement
+      label: Acceptance criteria
+      description: Observable outcomes that signal "done". Check during review and after deploy.
       placeholder: |
-        1. Objective 1
-        2. Objective 2
-        3. Objective 3
+        - [ ] Metrics scraped from all `lungmen.akn` namespaces via ServiceMonitor
+        - [ ] Logs from all pods queryable in Grafana with sub-second p99
+        - [ ] Alert fires on CrashLoopBackOff > 5min and disk > 85%
+        - [ ] Cilium policies preserve namespace isolation
     validations:
       required: true
-
-  - type: textarea
-    id: success-criteria
-    attributes:
-      label: Success Criteria
-      description: How will we know this enhancement is successful?
-      placeholder: |
-        - [ ] Criterion 1
-        - [ ] Criterion 2
-    validations:
-      required: true
-
-  - type: textarea
-    id: must-have
-    attributes:
-      label: Must-Have Features
-      description: Critical requirements that must be met
-      placeholder: |
-        - Feature 1
-        - Feature 2
-
-  - type: textarea
-    id: nice-to-have
-    attributes:
-      label: Nice-to-Have Features
-      description: Optional enhancements that would be beneficial
-      placeholder: |
-        - Feature 1
-        - Feature 2
-
-  - type: checkboxes
-    id: architectural-impact
-    attributes:
-      label: Architectural Impact
-      description: How does this change affect the overall architecture?
-      options:
-        - label: Infrastructure changes (Crossplane, Kubernetes manifests)
-        - label: GitOps configuration (ArgoCD)
-        - label: Network changes (Cilium, Envoy Gateway)
-        - label: Security updates (Pocket-Id, OpenBao, network policies)
-        - label: Storage changes (PVCs, CloudNative-PG, S3)
-        - label: No architectural changes required
-
-  - type: textarea
-    id: implementation-approach
-    attributes:
-      label: Implementation Approach
-      description: High-level strategy for implementing this enhancement
-      placeholder: Describe how you envision implementing this...
 
   - type: textarea
     id: dependencies
     attributes:
-      label: Dependencies
-      description: External services, libraries, or infrastructure changes required
+      label: Dependencies and risks
+      description: External services, prerequisite work, breaking impact, migration concerns.
       placeholder: |
-        - Dependency 1
-        - Dependency 2
-
-  - type: dropdown
-    id: compatibility
-    attributes:
-      label: Compatibility
-      description: What are the compatibility implications?
-      options:
-        - Fully backward compatible
-        - Requires migration
-        - Breaking changes
-    validations:
-      required: false
-
-  - type: textarea
-    id: migration-plan
-    attributes:
-      label: Migration Plan (if applicable)
-      description: Steps to transition from current to enhanced state
-      placeholder: |
-        1. Step 1
-        2. Step 2
-        3. Step 3
-
-  - type: textarea
-    id: risks
-    attributes:
-      label: Risk Assessment
-      description: Potential risks and mitigation strategies
-      placeholder: |
-        | Risk | Probability | Impact | Mitigation |
-        | ---- | ----------- | ------ | ---------- |
-        |      |             |        |            |
-
-  - type: textarea
-    id: benefits
-    attributes:
-      label: Expected Benefits
-      description: Operational, technical, UX, and maintenance benefits
-      placeholder: |
-        **Operational:**
-        - Benefit 1
-
-        **Technical:**
-        - Benefit 1
-
-        **User Experience:**
-        - Benefit 1
+        Depends on: Longhorn (PVCs), ExternalSecrets (Grafana admin), Pocket-Id (OIDC for Grafana UI).
+        Risk: vmagent footprint on small Talos nodes — needs limits validation in a dry run.
+        Migration: greenfield, no existing data to preserve.
 
   - type: dropdown
     id: effort
     attributes:
-      label: Estimated Effort
-      description: Rough estimate of implementation complexity
+      label: Estimated effort
       options:
-        - Small (< 1 day)
-        - Medium (1-3 days)
-        - Large (3-7 days)
-        - XL (> 1 week)
-    validations:
-      required: false
-
-  - type: checkboxes
-    id: documentation-impact
-    attributes:
-      label: Documentation Impact
-      description: What documentation needs to be created or updated?
-      options:
-        - label: Architecture Decision Record (ADR)
-        - label: Bootstrap procedures
-        - label: README updates
-        - label: Operational procedures
-        - label: Architecture diagrams (D2)
+        - "size::XS"
+        - "size::S"
+        - "size::M"
+        - "size::L"
+        - "size::XL"
 
   - type: textarea
-    id: alternatives
+    id: links
     attributes:
-      label: Alternative Approaches Considered
-      description: Other solutions considered and why they were not chosen
-      placeholder: |
-        **Alternative 1:**
-        - Pros:
-        - Cons:
-        - Reason not chosen:
-
-  - type: textarea
-    id: additional-context
-    attributes:
-      label: Additional Context
-      description: References, related issues, inspiration, etc.
-      placeholder: Links to related documentation, GitHub issues, blog posts, etc.
+      label: Links and references
+      description: Related issues, ADRs, upstream docs, post-mortems motivating this work.

@@ -3,9 +3,10 @@ name: create-pr
 description: >
   Opens a well-formed pull request for the Arcane repository following project
   conventions. Use when asked to create, open, or submit a pull request, or to
-  push a branch and request a review. Enforces symbol-based PR title matching
-  commit format, branch naming conventions, structured PR body, and Assisted-by
-  transparency trailer.
+  push a branch and request a review. Enforces sentence-form PR titles (the
+  symbol-based `type[scope]: Subject` format stays on commits — labels carry
+  type and scope on the PR), branch naming conventions, structured PR body,
+  and Assisted-by transparency trailer.
 compatibility: Requires git and GitHub CLI (gh)
 ---
 
@@ -73,7 +74,30 @@ Before pushing anything:
 2. Push: `git push -u origin <branch-name>`
 3. Run the commit validator (step 4 above) and fix any `FAIL` items; surface `WARN` items to the user.
 4. Draft the PR body following the selected template — see `.github/PULL_REQUEST_TEMPLATE/<type>.md` and `references/pr-examples.md`.
-5. Create the PR with a symbol-based title matching the primary commit format.
+5. Create the PR with a **sentence-form** title that says what changes (no symbol prefix, no bracketed scope — the commit symbol format is for git log, not for PR titles).
+6. Apply labels: one `type::*` + the scope label (`project:*`, `catalog:*`, `gh`, `deps`). The PR auto-labeler will add `pr::*` based on changed files / branch name.
+
+## PR title format
+
+Sentence form, no symbol prefix, no bracketed scope. Type and scope live in
+**labels** (one `type::*` + the scope label). The commit symbol format stays
+where it belongs — on commits — and is validated by commitlint there.
+
+Examples:
+
+| Bad (commit format applied to a PR)                       | Good (sentence + labels)                            |
+| --------------------------------------------------------- | --------------------------------------------------- |
+| `+[project:lungmen.akn]: Add Forgejo Git hosting service` | `Add Forgejo as a self-hosted Git forge on lungmen` |
+| `![project:lungmen.akn]: WAL volume full`                 | `Fix CNPG apps-secured WAL retention on lungmen`    |
+| `^[deps]: cert-manager to v1.16`                          | `Bump cert-manager to v1.16`                        |
+
+Rules:
+
+* Sentence-case, no trailing period.
+* ≤ 70 characters when possible (GitHub truncates around there in lists).
+* Start with a verb — `Add …`, `Fix …`, `Replace …`, `Bump …`, `Document …`.
+* If the change is the implementation of a single issue, the PR title can be
+  the same sentence as the issue title — that's a feature, not a duplicate.
 
 ## PR body structure
 
@@ -191,16 +215,19 @@ cat > /tmp/pr_body.md << 'PREOF'
 <body following the selected template>
 PREOF
 gh pr create \
-  --title "type[scope]: Subject" \
+  --title "Sentence describing the change" \
   --body-file /tmp/pr_body.md \
-  --base main
+  --base main \
+  --label "type::feature" \
+  --label "project:lungmen.akn"
 rm /tmp/pr_body.md
 ```
 
 ## Rules
 
-* **PR title**: Symbol-based format matching the primary commit — `type[scope]: Subject` (see `.agents/skills/git-commit/SKILL.md` for type table)
-* **Commits**: All commits must have symbol format, GPG signature (`-S`), and `Assisted-by:` trailer.
+* **PR title**: sentence-case English, verb-first, no symbol prefix, no bracketed scope, no trailing period. The commit symbol format stays on commits.
+* **PR labels**: one `type::*` + the scope label mandatory. Add `priority::*` / `size::*` when you have signal. The auto-labeler will set `pr::*` based on branch/files.
+* **Commits**: All commits must have the symbol-based `type[scope]: Subject` format, GPG signature (`-S`), and `Assisted-by:` trailer.
   Signed-off-by is the user's responsibility — never add `-s` yourself.
 * **PR body line length**: No hard limit — do NOT wrap PR body text at 80 characters. GitHub renders Markdown, so natural prose flow is preferred over artificial line breaks. The 80-char rule applies only to git commit bodies, not PR descriptions.
 * **File paths**: Link files in Changes Made using `[`path`](path)` markdown syntax
@@ -280,25 +307,28 @@ Closes #973
 <sub>AI-assisted with Z.ai:GLM-4.7 under human supervision</sub>
 PREOF
 gh pr create \
-  --title "+[project:lungmen.akn]: Add Forgejo Git hosting service" \
+  --title "Add Forgejo as a self-hosted Git forge on lungmen" \
   --body-file /tmp/pr_body.md \
-  --base main
+  --base main \
+  --label "type::feature" \
+  --label "project:lungmen.akn"
 rm /tmp/pr_body.md
 ```
 
-**Bad — wrong title, no structure, no file links, no Technical Impact sub-sections:**
+**Bad — empty body, no labels, title doesn't say what changes:**
 
 ```sh
 gh pr create \
-  --title "Add Forgejo to lungmen" \
-  --body "Added Forgejo as described in issue #973"
+  --title "Forgejo"               # single word, no outcome
+  --body "Added Forgejo as described in issue #973"   # no Summary, no template
 ```
 
 ## Review checklist
 
 * [ ] Branch name follows convention
 * [ ] Commit validator shows no `FAIL` lines; `WARN` lines surfaced to user
-* [ ] PR title uses symbol-based format with correct scope (`type[scope]: Subject`)
+* [ ] PR title is a sentence — verb-first, no symbol prefix, no bracketed scope
+* [ ] PR labels include one `type::*` + the scope label
 * [ ] PR body matches the selected template skeleton: Summary, Changes Made (with subsystem headings),
   Technical Impact (with **named sub-sections**), Testing Validation, Related Issues
 * [ ] Refactor PRs include `## Rationale`; bugfix PRs include `## Root Cause` with evidence
