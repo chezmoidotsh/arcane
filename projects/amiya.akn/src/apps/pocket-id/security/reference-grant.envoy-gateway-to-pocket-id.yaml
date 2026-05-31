@@ -3,14 +3,14 @@ kind: ReferenceGrant
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows Envoy Gateway from the envoy-gateway-system namespace to access the pocket-id service
+      Allows Cilium Gateway from the in-gateway-system namespace to access the pocket-id service
       to enable SSO access from the local network.
-  name: envoy-gateway-system-to-pocket-id
+  name: in-gateway-system-to-pocket-id
 spec:
   from:
     - group: gateway.networking.k8s.io
       kind: Gateway
-      namespace: envoy-gateway-system
+      namespace: in-gateway-system
   to:
     - group: ""
       kind: Service

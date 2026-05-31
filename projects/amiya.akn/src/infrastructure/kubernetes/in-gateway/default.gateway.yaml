@@ -1,0 +1,31 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: default
+  annotations:
+    argocd.argoproj.io/description: |
+      Cilium Gateway API gateway for amiya.akn cluster.
+      Handles all HTTP/HTTPS ingress traffic with TLS termination.
+spec:
+  gatewayClassName: cilium
+  listeners:
+    - name: web
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: chezmoi.sh-websecure
+      port: 443
+      protocol: HTTPS
+      hostname: "*.chezmoi.sh"
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: wildcard.chezmoi.sh-certificate

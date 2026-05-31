@@ -14,7 +14,7 @@ spec:
   - group: gateway.networking.k8s.io
     kind: Gateway
     name: default
-    namespace: envoy-gateway-system
+    namespace: in-gateway-system
     sectionName: chezmoi.sh-websecure
   rules:
   - backendRefs:

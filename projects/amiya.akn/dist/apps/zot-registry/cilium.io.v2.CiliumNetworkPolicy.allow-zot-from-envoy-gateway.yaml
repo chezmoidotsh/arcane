@@ -16,7 +16,7 @@ spec:
   ingress:
   - fromEndpoints:
     - matchLabels:
-        io.kubernetes.pod.namespace: envoy-gateway-system
+        io.kubernetes.pod.namespace: in-gateway-system
     toPorts:
     - ports:
       - port: "5000"

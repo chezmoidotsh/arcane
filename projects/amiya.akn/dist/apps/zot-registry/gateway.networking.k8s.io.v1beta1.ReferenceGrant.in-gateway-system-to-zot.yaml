@@ -3,15 +3,15 @@ apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:
   labels:
-    app.kubernetes.io/name: vault
-  name: envoy-gateway-system-to-openbao-ui
-  namespace: vault
+    app.kubernetes.io/name: zot
+  name: in-gateway-system-to-zot
+  namespace: zot-registry
 spec:
   from:
   - group: gateway.networking.k8s.io
     kind: Gateway
-    namespace: envoy-gateway-system
+    namespace: in-gateway-system
   to:
   - group: ""
     kind: Service
-    name: openbao-ui
+    name: zot

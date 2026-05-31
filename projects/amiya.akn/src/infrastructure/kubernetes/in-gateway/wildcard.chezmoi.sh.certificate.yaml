@@ -1,0 +1,16 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard.chezmoi.sh
+spec:
+  secretName: wildcard.chezmoi.sh-certificate
+  dnsNames:
+    - "*.chezmoi.sh"
+    - "*.akn.chezmoi.sh"
+    - "*.amiya.akn.chezmoi.sh"
+  duration: 2160h
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
+  renewBefore: 360h
