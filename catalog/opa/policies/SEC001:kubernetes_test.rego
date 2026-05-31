@@ -498,3 +498,43 @@ test_combine_mode_bootstrap_namespace_local_registry_denied if {
     }}]}
     count(violations) == 1
 }
+
+test_excluded_namespace_argocd if {
+    is_excluded_namespace({"metadata": {"namespace": "argocd"}})
+}
+
+test_argocd_namespace_allows_public_registry if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {"name": "argocd-server", "namespace": "argocd"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "containers": [
+                        {"name": "argocd-server", "image": "quay.io/argoproj/argocd:latest"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 0
+}
+
+test_argocd_namespace_denies_local_registry if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {"name": "argocd-server", "namespace": "argocd"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "containers": [
+                        {"name": "argocd-server", "image": "oci.chezmoi.sh/quay.io/argoproj/argocd:latest"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 1
+}

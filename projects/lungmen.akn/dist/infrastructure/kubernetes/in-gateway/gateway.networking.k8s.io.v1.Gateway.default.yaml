@@ -1,0 +1,36 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  annotations:
+    argocd.argoproj.io/description: |
+      Cilium Gateway API gateway for lungmen.akn cluster.
+      Handles all HTTP/HTTPS ingress traffic with TLS termination.
+  name: default
+  namespace: in-gateway-system
+spec:
+  gatewayClassName: cilium
+  infrastructure:
+    annotations:
+      lbipam.cilium.io/sharing-cross-namespace: '*'
+      lbipam.cilium.io/sharing-key: lungmen-gateway
+  listeners:
+  - allowedRoutes:
+      namespaces:
+        from: All
+    name: web
+    port: 80
+    protocol: HTTP
+  - allowedRoutes:
+      namespaces:
+        from: All
+    hostname: '*.chezmoi.sh'
+    name: chezmoi.sh-websecure
+    port: 443
+    protocol: HTTPS
+    tls:
+      certificateRefs:
+      - group: ""
+        kind: Secret
+        name: wildcard.chezmoi.sh-certificate
+      mode: Terminate

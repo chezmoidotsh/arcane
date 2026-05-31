@@ -357,7 +357,7 @@ spec:
               key: server.sync.replace.allowed
               name: argocd-cmd-params-cm
               optional: true
-        image: oci.chezmoi.sh/quay.io/argoproj/argocd:v3.4.2
+        image: quay.io/argoproj/argocd:v3.4.2
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
@@ -421,7 +421,7 @@ spec:
           value: https://github.com/chezmoidotsh/argocd-extension-application-map/releases/download/v1.1.0/extension-application-map.tar
         - name: EXTENSION_CHECKSUM_URL
           value: https://github.com/chezmoidotsh/argocd-extension-application-map/releases/download/v1.1.0/extension-application-map_checksums.txt
-        image: oci.chezmoi.sh/quay.io/argoprojlabs/argocd-extension-installer:v1.0.0
+        image: quay.io/argoprojlabs/argocd-extension-installer:v1.0.0
         imagePullPolicy: IfNotPresent
         name: extension-application-map
         resources: {}

@@ -5,7 +5,6 @@ namespace: longhorn-system
 
 resources:
   - longhorn.externalsecret.yaml
-  - longhorn.httproute.yaml
   - namespace.yaml
   - recurring-jobs/6h-snapshots.recurringjob.yaml
   - recurring-jobs/daily-backup.recurringjob.yaml
