@@ -1,7 +1,7 @@
 {
   description = "Zot — OCI-native container registry binary packages (pre-built release binaries)";
 
-  inputs.nixpkgs.url = "nixpkgs/nixos-25.05";
+  inputs.nixpkgs.url = "nixpkgs/nixos-26.05";
 
   outputs =
     { self, nixpkgs }:
@@ -57,6 +57,13 @@
                 url = bin.url;
                 hash = bin.hash;
               };
+
+              # Zot release binaries are dynamically linked (CGO). autoPatchelfHook
+              # rewrites the ELF interpreter and RPATH to point into the Nix store,
+              # which is required because /lib64/ld-linux-x86-64.so.2 does not exist
+              # on NixOS.
+              nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+              buildInputs = [ pkgs.glibc ];
 
               dontUnpack = true;
               dontConfigure = true;
