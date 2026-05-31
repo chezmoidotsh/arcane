@@ -215,7 +215,7 @@ spec:
               key: applicationsetcontroller.status.max.resources.count
               name: argocd-cmd-params-cm
               optional: true
-        image: oci.chezmoi.sh/quay.io/argoproj/argocd:v3.4.2
+        image: quay.io/argoproj/argocd:v3.4.2
         imagePullPolicy: IfNotPresent
         name: applicationset-controller
         ports:
