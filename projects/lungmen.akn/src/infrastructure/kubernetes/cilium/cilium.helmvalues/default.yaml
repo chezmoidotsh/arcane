@@ -78,3 +78,10 @@ l2announcements:
 gatewayAPI:
   enabled: true
   externalTrafficPolicy: Cluster
+  gatewayClass:
+    # Force GatewayClass creation unconditionally. The default "auto" relies on
+    # .Capabilities.APIVersions which is empty during local Helm rendering (kustomize
+    # build / dist:render), causing the GatewayClass to be silently skipped in dist/.
+    # Forcing "true" ensures the manifest is always emitted regardless of whether the
+    # Gateway API CRDs are detectable at render time.
+    create: "true"
