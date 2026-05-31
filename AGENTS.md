@@ -7,7 +7,7 @@ This file is the single source of truth — `CLAUDE.md` and other CLI-specific f
 
 Arcane is a personal homelab managed as code. Multiple Kubernetes clusters (Talos Linux)
 deployed via GitOps (ArgoCD), with Crossplane for cloud infrastructure, OpenBao for secrets,
-and Cilium + Envoy Gateway for networking.
+and Cilium (CNI + Gateway API) for networking.
 
 The project has been rewritten four times (see `CHANGELOG.md`). It is currently in its
 **Steel Age (A3)**, which trades universal reproducibility for maintainability:
@@ -59,7 +59,7 @@ scripts/        Operational scripts (added to PATH by mise)
 | Infrastructure     | Crossplane, Helm, Kustomize, Ansible (bare-metal / VPS provisioning)             |
 | Cluster bootstrap  | Kairos bundles + Talos machine config patches (`catalog/talos/`)                 |
 | CNI / Policies     | Cilium                                                                           |
-| Ingress / Gateway  | Envoy Gateway (HTTPRoute, TCPRoute) — Traefik has been removed                   |
+| Ingress / Gateway  | Cilium Gateway API (HTTPRoute, TCPRoute) — Envoy Gateway is being phased out     |
 | DNS                | external-dns + Cloudflare operator (managed records & public gateway)            |
 | TLS                | cert-manager with DNS-01 validation                                              |
 | Storage            | Longhorn (distributed block), SMB CSI driver, NAS-backed PVCs                    |
@@ -86,17 +86,18 @@ mise trust          # Trust .mise.toml (first run only)
 
 Operational scripts in `scripts/` (already on PATH after `mise install`):
 
-| Script                   | Purpose                                           |
-| ------------------------ | ------------------------------------------------- |
-| `argocd:app:sync <path>` | Sync an ArgoCD application from its project path  |
-| `app:icon:generator`     | Generate app icons from source assets             |
-| `bao:kv:copy`            | Copy KV secrets between OpenBao paths/mounts      |
-| `cnpg:db:migrate`        | Migrate data between CloudNative-PG clusters      |
-| `folderinfo`             | Generate the repository structure overview        |
-| `nix:build:image`        | Build a Nix-based OCI image                       |
-| `nix:hash:update`        | Refresh Nix package hashes                        |
-| `nonix`                  | Run a command outside the Nix sandbox             |
-| `talosctl`               | Wrapper around `talosctl` with context management |
+| Script                                       | Purpose                                                                                  |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `argocd:app:sync <path>`                     | Sync an ArgoCD application from its project path                                         |
+| `app:icon:generator`                         | Generate app icons from source assets                                                    |
+| `bao:kv:copy`                                | Copy KV secrets between OpenBao paths/mounts                                             |
+| `cnpg:db:migrate`                            | Migrate data between CloudNative-PG clusters                                             |
+| `dist:render [--all\|--staged-only\|<path>]` | Regenerate `dist/` files from `src/` — always use instead of editing dist files manually |
+| `folderinfo`                                 | Generate the repository structure overview                                               |
+| `nix:build:image`                            | Build a Nix-based OCI image                                                              |
+| `nix:hash:update`                            | Refresh Nix package hashes                                                               |
+| `nonix`                                      | Run a command outside the Nix sandbox                                                    |
+| `talosctl`                                   | Wrapper around `talosctl` with context management                                        |
 
 Frequently used `mise` tasks:
 
@@ -116,6 +117,8 @@ mise run ansible:install    # Sync Python venv for Ansible roles
 * **App-of-Apps via ApplicationSets**, bootstrapped by `seed.application.yaml`.
 * **Apps**: `projects/<cluster>/src/apps/*<name>/` (leading `*` = ArgoCD-managed).
 * **Infrastructure (in-cluster)**: `projects/<cluster>/src/infrastructure/kubernetes/<name>/`.
+  The ArgoCD ApplicationSet automatically appends `-system` to the directory name to form
+  the target namespace (e.g. `in-gateway/` → namespace `in-gateway-system`).
 * **Infrastructure (cloud)**: `projects/<cluster>/src/infrastructure/crossplane/<name>/`.
 * **Helm overlays**: per-app `helmvalues/` directory (`default.yaml`, `hardened.yaml`, …) with
   cluster-specific `override.helmvalues.yaml` patched via Kustomize.
@@ -152,8 +155,11 @@ phased out in favor of `lungmen.akn`. Don't add new dependencies on FluxCD.
 ### Network and security
 
 * **Cilium NetworkPolicies** for microsegmentation — required for every app.
-* **Envoy Gateway** for ingress (HTTPRoute, TCPRoute). Public-facing routes are wrapped in
+* **Cilium Gateway API** for ingress (HTTPRoute, TCPRoute). Public-facing routes are wrapped in
   a `SecurityPolicy` enforcing OIDC via Pocket-Id when authentication is required.
+  Envoy Gateway remains deployed during migration and will be removed once all routes
+  are validated on the Cilium GatewayClass (`cilium`). The Gateway lives in the
+  `in-gateway-system` namespace (`projects/*/src/infrastructure/kubernetes/in-gateway/`).
 * **cert-manager** with DNS-01 validation; **external-dns** publishes records to Cloudflare
   via the `cloudflare-operator`.
 * **Public access** to home services goes through Pangolin (`kazimierz.akn` VPS) with a
