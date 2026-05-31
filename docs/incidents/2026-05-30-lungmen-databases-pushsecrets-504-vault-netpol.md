@@ -6,19 +6,20 @@ participants:
   - "Alexandre"
   - "[anthropic:claude-sonnet-4-6]"
 severity: "Medium"
-status: "Final"
+status: "Open"
 detection-method: "User report"
-mttd: "unknown"
-mttr: "~15m from investigation start to fix"
+duration: "Unknown — detected via user report; interruption duration not measured"
 services-affected:
   - "databases PushSecrets (lungmen.akn) — n8n, atuin, forgejo, immich, linkding, paperless"
 users-affected: "No direct user impact; database credential sync to OpenBao interrupted"
+root-cause-family:
+  - "network-policy-incomplete"
 related-incidents:
-  - "docs/incidents/2026-05-25-lungmen-clustersecretstore-vault-auth-failure.md"
+  - path: "docs/incidents/2026-05-25-lungmen-clustersecretstore-vault-auth-failure.md"
+    relation: "Same auth chain (ESO → OpenBao → lungmen Kubernetes auth)"
 related-adrs: []
+related-issues: []
 ---
-
-# Post-Mortem: lungmen.akn databases PushSecrets 504 — vault namespace NetPol
 
 ## Executive Summary
 
@@ -56,7 +57,10 @@ PushSecrets in the `databases` namespace on `lungmen.akn` were failing to push d
 
 ## Root-Cause Analysis
 
-### Technique: 5 Whys
+**Technique:** 5 Whys
+**Why this technique:** Single failure chain with a clear causal sequence from symptom to structural condition; no branching into independent causes.
+
+### Analysis
 
 1. **Why did PushSecrets fail?** → ESO received a 504 when authenticating to OpenBao via `auth/lungmen.akn`.
 2. **Why did OpenBao return 504?** → OpenBao could not reach `kubernetes.lungmen.akn.chezmoi.sh:6443` to validate the Kubernetes JWT presented by ESO (TokenReview).
@@ -105,13 +109,32 @@ PushSecrets in the `databases` namespace on `lungmen.akn` were failing to push d
 
 ***
 
+## From Lesson to Control
+
+| Lesson                                               | Artifact type    | Linked artifact                                                                    |
+| ---------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------- |
+| Broker namespace NetPols must model all egress paths | Pre-deploy check | `projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md` — post-NetPol smoke-test checklist |
+| Every RemoteClusterVault requires a vault CNP        | Comment in code  | `catalog/crossplane/clustervault.vault.chezmoi.sh/remote.x.v1alpha1.openbao.yaml`  |
+
+***
+
 ## Change Register
 
-| # | Priority | Action                                                                                                                                                     | Owner                          | Due Date   | Verification                                        |
-| - | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ---------- | --------------------------------------------------- |
-| 1 | P0       | Add `allow-openbao-to-lungmen-api` CNP (`toFQDNs: kubernetes.lungmen.akn.chezmoi.sh:6443`) — **already applied**                                           | \[anthropic:claude-sonnet-4-6] | 2026-05-30 | All databases PushSecrets in `Synced` state         |
-| 2 | P1       | Add a comment in `remote.x.v1alpha1.openbao.yaml` (Crossplane Composition) noting that a vault namespace CNP is required for each new `RemoteClusterVault` | Alexandre                      | 2026-06-06 | Comment visible in the Composition; PR merged       |
-| 3 | P2       | Add a post-NetPol smoke-test checklist in `HOW_TO_BOOTSTRAP.md`: verify `ClusterSecretStore` Ready and PushSecrets Synced                                  | Alexandre                      | 2026-06-15 | "Post-NetPol validation" section present in the doc |
+* [ ] \[due:: 2026-06-06] \[priority:: medium] \[size:: S] \[owner:: Alexandre] Add a comment in `remote.x.v1alpha1.openbao.yaml` (Crossplane Composition) noting that a vault namespace CNP is required for each new `RemoteClusterVault`
+  * **Verification:** Comment visible in the Composition; next `RemoteClusterVault` creation is preceded by a corresponding CNP
+  * **If not done:** Next new remote cluster silently breaks PushSecrets, same incident shape recurs
+
+* [ ] \[due:: 2026-06-15] \[priority:: medium] \[size:: S] \[owner:: Alexandre] Add a post-NetPol smoke-test checklist in `HOW_TO_BOOTSTRAP.md`: verify `ClusterSecretStore` Ready and PushSecrets Synced
+  * **Verification:** "Post-NetPol validation" section present in the doc; next NetPol change in the vault namespace triggers the checklist
+  * **If not done:** Future vault NetPol changes can silently break auth backends without detection
+
+***
+
+## Agent Knowledge
+
+* \[OpenBao + Cilium]: When adding or modifying CiliumNetworkPolicies in the `vault` namespace, model ALL Kubernetes auth backends' egress paths — each remote cluster API server (e.g., `kubernetes.lungmen.akn.chezmoi.sh:6443`) needs an explicit `toFQDNs` allow rule.
+* \[OpenBao + Kubernetes auth]: OpenBao initiates outbound connections to remote cluster API servers for JWT TokenReview — this is invisible in ESO's config and easy to miss when writing network policies.
+* \[RemoteClusterVault]: Each `RemoteClusterVault` Crossplane resource implicitly requires a corresponding CiliumNetworkPolicy in the `vault` namespace. This coupling is not expressed in code.
 
 ***
 
@@ -121,7 +144,7 @@ PushSecrets in the `databases` namespace on `lungmen.akn` were failing to push d
 
 * [x] Add `allow-openbao-to-lungmen-api` CiliumNetworkPolicy (`toFQDNs: kubernetes.lungmen.akn.chezmoi.sh:6443`) — applied in `projects/amiya.akn/src/apps/vault/security/` and `dist/`
 
-### Pending — after next PR merges
+### Pending — after PR merges
 
 * [ ] Add comment in `catalog/crossplane/clustervault.vault.chezmoi.sh/remote.x.v1alpha1.openbao.yaml` noting CiliumNetworkPolicy requirement per `RemoteClusterVault`
 * [ ] Add post-NetPol smoke-test checklist in `projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md`
@@ -130,7 +153,7 @@ PushSecrets in the `databases` namespace on `lungmen.akn` were failing to push d
 
 ## Verification Schedule
 
-| Checkpoint    | Date       | What we'll check                                        | Forum                |
-| ------------- | ---------- | ------------------------------------------------------- | -------------------- |
-| Immediate     | 2026-05-30 | All databases PushSecrets in `Synced` after ArgoCD sync | ArgoCD UI            |
-| 1-week review | 2026-06-06 | Action #2 complete; no new 504s on `auth/lungmen.akn`   | ArgoCD events review |
+| Checkpoint | Date       | What we'll check                                                         | Forum       |
+| ---------- | ---------- | ------------------------------------------------------------------------ | ----------- |
+| 1-week     | 2026-06-06 | All databases PushSecrets in `Synced`; no new 504s on `auth/lungmen.akn` | Solo review |
+| 1-month    | 2026-06-30 | Change Register items #1 and #2 complete; no recurrence                  | Solo review |
