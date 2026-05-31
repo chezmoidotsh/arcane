@@ -3,7 +3,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - network-policy.allow-paperless-ngx-from-envoy-gateway.yaml
+  - network-policy.allow-paperless-ngx-from-cilium-gateway.yaml
   - network-policy.allow-paperless-ngx-to-sso.yaml
   - network-policy.allow-paperless-to-internet.yaml
   - network-policy.allow-paperless-ngx-to-databases.yaml

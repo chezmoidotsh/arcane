@@ -4,20 +4,21 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows Envoy Gateway to route traffic to atuin application.
+      Allows the Cilium Gateway API to route traffic to the atuin application.
+      Traffic proxied by Cilium Gateway API carries the reserved:ingress identity,
+      as per https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
   labels:
     app.kubernetes.io/instance: atuin
     app.kubernetes.io/name: atuin
-  name: allow-atuin-from-envoy-gateway
+  name: allow-atuin-from-cilium-gateway
   namespace: atuin
 spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: atuin
   ingress:
-  - fromEndpoints:
-    - matchLabels:
-        io.kubernetes.pod.namespace: in-gateway-system
+  - fromEntities:
+    - ingress
     toPorts:
     - ports:
       - port: "8888"

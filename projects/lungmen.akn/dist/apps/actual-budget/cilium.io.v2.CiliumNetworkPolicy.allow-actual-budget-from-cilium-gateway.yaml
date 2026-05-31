@@ -4,20 +4,21 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows Envoy Gateway to route traffic to Actual Budget application.
+      Allows the Cilium Gateway API to route traffic to the Actual Budget application.
+      Traffic proxied by Cilium Gateway API carries the reserved:ingress identity,
+      as per https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
   labels:
     app.kubernetes.io/instance: actual-budget
     app.kubernetes.io/name: actual-budget
-  name: allow-actual-budget-from-envoy-gateway
+  name: allow-actual-budget-from-cilium-gateway
   namespace: actual-budget
 spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: actual-budget
   ingress:
-  - fromEndpoints:
-    - matchLabels:
-        io.kubernetes.pod.namespace: in-gateway-system
+  - fromEntities:
+    - ingress
     toPorts:
     - ports:
       - port: "5006"

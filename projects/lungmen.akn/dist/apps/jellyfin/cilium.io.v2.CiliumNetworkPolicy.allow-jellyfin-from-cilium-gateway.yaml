@@ -4,20 +4,21 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows Envoy Gateway to route traffic to Jellyfin application.
+      Allows the Cilium Gateway API to route traffic to the Jellyfin application.
+      Traffic proxied by Cilium Gateway API carries the reserved:ingress identity,
+      as per https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
   labels:
     app.kubernetes.io/instance: jellyfin
     app.kubernetes.io/name: jellyfin
-  name: allow-jellyfin-from-envoy-gateway
+  name: allow-jellyfin-from-cilium-gateway
   namespace: jellyfin
 spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: jellyfin
   ingress:
-  - fromEndpoints:
-    - matchLabels:
-        io.kubernetes.pod.namespace: in-gateway-system
+  - fromEntities:
+    - ingress
     toPorts:
     - ports:
       - port: "8096"
