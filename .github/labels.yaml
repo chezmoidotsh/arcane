@@ -12,7 +12,61 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ----------------------------------------------------------------------------
+#
+# Label taxonomy
+# --------------
+# Six orthogonal groups, applied independently:
+#
+#   type::<x>        What kind of work is this?      (issues + PRs)
+#   pr::<x>          PR auto-labeler categorization  (PRs only, set by labeler.yml)
+#   size::<x>        Effort estimate                  (issues + PRs)
+#   priority::<x>    Urgency                          (issues only)
+#   status::<x>      Workflow state                   (issues only)
+#   <scope>          Where in the repo               (mirrors commit scopes verbatim)
+#
+# Plus a small set of bare meta labels (`stale`, `breaking-change`, …).
+#
+# Scope labels are the same identifiers used as commit scopes in `.commitlintrc.js`
+# (e.g. `project:amiya.akn`, `catalog:crossplane`, `gh`, `deps`). They use a single
+# colon — the `::` separator is reserved for the orthogonal classification groups
+# above.
+#
+# When adding or renaming a label, prefer `gh label edit <old> --name <new>` first
+# to preserve issue associations, then update this file to match. The sync workflow
+# (`.github/workflows/push,schedule.sync-labels.yaml`) uses `prune: true`, so any
+# label not declared here will be deleted on the next sync.
 ---
+# ----------------------------------------------------------------------------
+# type:: — what kind of work is this?
+# ----------------------------------------------------------------------------
+- name: type::bug
+  description: Something is broken or behaves incorrectly
+  color: D73A4A
+- name: type::feature
+  description: New capability, service, or initial deployment
+  color: 0E8A16
+- name: type::improve
+  description: Improve existing behavior (perf, config, UX) — not a bug fix
+  color: 86CB55
+- name: type::refactor
+  description: Restructure without observable behavior change
+  color: 1F77B4
+- name: type::docs
+  description: Documentation only (ADRs, READMEs, procedures, comments)
+  color: 0075CA
+- name: type::security
+  description: Security hardening, vulnerability, or secret management
+  color: 8B0000
+- name: type::chore
+  description: Tooling, CI, dependencies, repository maintenance
+  color: CFD3D7
+- name: type::question
+  description: Clarification or discussion, no concrete change requested
+  color: D876E3
+
+# ----------------------------------------------------------------------------
+# pr:: — PR auto-labeler (consumed by .github/labeler.yml — do not rename)
+# ----------------------------------------------------------------------------
 - name: pr::bugfix
   description: Something that wasn't working is now fixed
   color: D73A4A
@@ -29,49 +83,137 @@
   description: Anything else
   color: DEDB26
 
+# ----------------------------------------------------------------------------
+# size:: — effort estimate
+# ----------------------------------------------------------------------------
 - name: size::XS
-  color: 008000
+  description: Trivial — under one hour of focused work
+  color: 0E8A16
 - name: size::S
-  color: 008000
+  description: Small — under one day
+  color: 47A248
 - name: size::M
-  color: FFFF00
+  description: Medium — one to three days
+  color: FBCA04
 - name: size::L
-  color: FF0000
+  description: Large — three days to one week
+  color: F4A261
 - name: size::XL
-  color: FF0000
+  description: Extra large — more than one week, likely multi-phase
+  color: D93F0B
 
-- name: bug
-  description: Something isn't working
-  color: D73A4A
-- name: duplicate
-  description: This doesn't seem right
+# ----------------------------------------------------------------------------
+# priority:: — urgency
+# ----------------------------------------------------------------------------
+- name: priority::critical
+  description: Outage, data loss, or active security incident — drop everything
+  color: B60205
+- name: priority::high
+  description: Important, needs attention this week
+  color: D93F0B
+- name: priority::medium
+  description: Normal scheduled work
+  color: FBCA04
+- name: priority::low
+  description: Nice to have, no time pressure
+  color: 0E8A16
+
+# ----------------------------------------------------------------------------
+# status:: — workflow state
+# ----------------------------------------------------------------------------
+- name: status::triage
+  description: Needs initial review, categorization, or scope decision
   color: CFD3D7
-- name: good first issue
-  description: Good for newcomers
-  color: 7057FF
-- name: help wanted
-  description: Extra attention is needed
-  color: 008672
-- name: invalid
-  description: This doesn't seem right
-  color: E4E669
-- name: question
-  description: Further information is requested
-  color: D876E3
-- name: wontfix
-  description: This will not be worked on
-  color: FFFFFF
-- name: 💥breaking change
-  description: This PR introduces a breaking change
+- name: status::blocked
+  description: Waiting on an external dependency or decision
+  color: B60205
+- name: status::in-progress
+  description: Actively being worked on
+  color: 1D76DB
+- name: status::needs-info
+  description: Waiting on more information from the reporter
+  color: D4C5F9
+
+# ----------------------------------------------------------------------------
+# Scope — mirrors commit scopes in .commitlintrc.js verbatim
+# ----------------------------------------------------------------------------
+- name: project:amiya.akn
+  description: amiya.akn — core platform cluster (SSO, secrets, GitOps backbone)
+  color: 1D76DB
+- name: project:lungmen.akn
+  description: lungmen.akn — home applications cluster
+  color: 1D76DB
+- name: project:kazimierz.akn
+  description: kazimierz.akn — VPS public-access gateway (Pangolin + CrowdSec)
+  color: 1D76DB
+- name: project:chezmoi.sh
+  description: chezmoi.sh — shared Crossplane providers
+  color: 1D76DB
+- name: project:hass
+  description: hass — Home Assistant project
+  color: 1D76DB
+- name: project:shodan.akn
+  description: shodan.akn — future AI stack cluster
+  color: 1D76DB
+- name: catalog:ansible
+  description: Reusable Ansible roles and collections
+  color: 8B5CF6
+- name: catalog:crossplane
+  description: Crossplane XRDs and Composition definitions
+  color: 8B5CF6
+- name: catalog:flakes
+  description: Nix flakes producing OCI images
+  color: 8B5CF6
+- name: catalog:kustomize
+  description: Kustomize bases
+  color: 8B5CF6
+- name: catalog:kairos-bundle
+  description: Kairos OS bundles
+  color: 8B5CF6
+- name: catalog:talos
+  description: Talos Linux machine config patches
+  color: 8B5CF6
+- name: catalog:opa
+  description: OPA/Rego policies for CI-time manifest validation
+  color: 8B5CF6
+- name: gh
+  description: GitHub workflows, issue/PR templates, root config files, cross-cutting
+  color: 6E5494
+- name: deps
+  description: Dependency updates (automated or manual)
+  color: 2B098D
+
+# ----------------------------------------------------------------------------
+# Meta / special
+# ----------------------------------------------------------------------------
+- name: breaking-change
+  description: Introduces a breaking change for users or operators
   color: F0CB2C
-
-- name: 💖 sponsor
-  description: This issue comes from a sponsor
+- name: good-first-issue
+  description: Good entry point for new contributors
+  color: 7057FF
+- name: help-wanted
+  description: Maintainer is actively looking for outside help
+  color: 008672
+- name: sponsor
+  description: Filed by a sponsor
   color: FFDBF0
-
 - name: stale
-  description: This issue has not had recent activity
+  description: No recent activity — eligible for auto-close
   color: 6A5ACD
 - name: no-stale
-  description: This issue cannot be marked as stale
+  description: Exempt from staleness automation
   color: 6A5ACD
+
+# ----------------------------------------------------------------------------
+# Triage close reasons (GitHub-native semantics, kept as-is)
+# ----------------------------------------------------------------------------
+- name: duplicate
+  description: Already tracked by another issue or PR
+  color: CFD3D7
+- name: invalid
+  description: Not actionable as filed
+  color: E4E669
+- name: wontfix
+  description: Will not be addressed (by design or out of scope)
+  color: FFFFFF
