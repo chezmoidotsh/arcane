@@ -31,12 +31,25 @@ jobs:
       - name: ⬇️ Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: 🔧 Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: 24
-
-      - name: ✅ Validate PR title with commitlint
+      - name: ✅ Validate PR title is sentence-form
         env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: echo "$PR_TITLE" | npx @commitlint/cli --config .github/.commitlintrc.pr.js
+          TITLE: ${{ github.event.pull_request.title }}
+          KIND: PR
+        run: bash .github/scripts/check-title.sh
+
+  issue-title-check:
+    name: ✅ Validate Issue Title
+    if: github.event_name == 'issues'
+    permissions:
+      contents: read
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: ✅ Validate issue title is sentence-form
+        env:
+          TITLE: ${{ github.event.issue.title }}
+          KIND: issue
+        run: bash .github/scripts/check-title.sh
