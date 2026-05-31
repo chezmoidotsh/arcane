@@ -3,6 +3,6 @@ kind: Kustomization
 
 resources:
   - network-policy.default-deny.yaml
-  - network-policy.allow-zot-from-envoy-gateway.yaml
+  - network-policy.allow-zot-from-cilium-gateway.yaml
   - network-policy.allow-zot-to-internet.yaml
   - reference-grant.envoy-gateway-to-zot.yaml
