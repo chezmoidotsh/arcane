@@ -30,8 +30,6 @@ related-issues: []                        # GitHub issue links
 > (see SKILL.md §"Lite format"). The full template below is reserved for Critical/High incidents
 > or any incident that surfaces a structural lesson.
 
-# Post-Mortem: \[Event Name]
-
 ## Executive Summary
 
 > 3–5 sentences for non-technical readers. No jargon, no acronyms. What failed, what the

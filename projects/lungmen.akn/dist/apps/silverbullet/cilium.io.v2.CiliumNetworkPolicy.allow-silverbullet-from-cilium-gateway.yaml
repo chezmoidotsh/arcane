@@ -4,20 +4,21 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows Envoy Gateway to route traffic to Silverbullet application.
+      Allows the Cilium Gateway API to route traffic to the silverbullet application.
+      Traffic proxied by Cilium Gateway API carries the reserved:ingress identity,
+      as per https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
   labels:
     app.kubernetes.io/instance: silverbullet
     app.kubernetes.io/name: silverbullet
-  name: allow-silverbullet-from-envoy-gateway
+  name: allow-silverbullet-from-cilium-gateway
   namespace: silverbullet
 spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: silverbullet
   ingress:
-  - fromEndpoints:
-    - matchLabels:
-        io.kubernetes.pod.namespace: in-gateway-system
+  - fromEntities:
+    - ingress
     toPorts:
     - ports:
       - port: "3000"
