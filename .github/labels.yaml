@@ -176,6 +176,15 @@
 - name: catalog:opa
   description: OPA/Rego policies for CI-time manifest validation
   color: 8B5CF6
+- name: agents:knowledge
+  description: Operational knowledge distilled from incidents (.agents/knowledge/)
+  color: F9D0C4
+- name: agents:sessions
+  description: Agent session documents (.agents/sessions/)
+  color: F9D0C4
+- name: agents:skills
+  description: Agent skill definitions (.agents/skills/)
+  color: F9D0C4
 - name: gh
   description: GitHub workflows, issue/PR templates, root config files, cross-cutting
   color: 6E5494
