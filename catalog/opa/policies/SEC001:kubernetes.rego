@@ -5,12 +5,9 @@ import rego.v1
 default local_registry := "oci.chezmoi.sh"
 
 default excluded_namespaces := {
-    "kube-system", # Kubernetes system components (e.g. CoreDNS, kube-proxy) may pull from public registries - avoid OCI dependency for critical cluster components
-    "kube-public", # Public namespace, typically read-only and used for cluster info - exclude from OCI enforcement
-    "kube-node-lease", # Node lease namespace, used for node heartbeats - exclude from OCI enforcement
-    "longhorn-system", # Longhorn must pull from public registry as the local registry requires Longhorn for its storage - TODO > migrate zot-registry to host-directory storage
-    "zot-registry", # Exclude the local registry itself to avoid circular dependency
-    "argocd" # ArgoCD manages the GitOps reconciliation loop - if it depends on the local registry, a registry outage prevents any recovery via GitOps (circular dependency)
+    "kube-system", # Kubernetes system components (e.g. CoreDNS, kube-proxy) may pull from public registries — avoid OCI dependency for critical cluster components
+    "kube-public", # Public namespace, typically read-only and used for cluster info — exclude from OCI enforcement
+    "kube-node-lease", # Node lease namespace, used for node heartbeats — exclude from OCI enforcement
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
