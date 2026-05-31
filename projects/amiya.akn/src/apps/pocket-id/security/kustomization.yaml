@@ -3,7 +3,7 @@ kind: Kustomization
 
 resources:
   - network-policy.default-hardened.yaml
-  - network-policy.allow-pocket-id-from-envoy-gateway.yaml
+  - network-policy.allow-pocket-id-from-cilium-gateway.yaml
   - network-policy.allow-pocket-id-from-envoy-public-gateway.yaml
   - network-policy.allow-pocket-id-to-analytics.yaml
   - network-policy.allow-pocket-id-to-internet.yaml

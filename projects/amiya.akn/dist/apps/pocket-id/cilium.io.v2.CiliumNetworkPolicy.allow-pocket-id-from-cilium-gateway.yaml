@@ -4,20 +4,21 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows Envoy Gateway to route traffic to Pocket ID application.
+      Allows the Cilium Gateway API to route traffic to the Pocket ID application.
+      Traffic proxied by Cilium Gateway API carries the reserved:ingress identity,
+      as per https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
   labels:
     app.kubernetes.io/instance: pocket-id
     app.kubernetes.io/name: pocket-id
-  name: allow-pocket-id-from-envoy-gateway
+  name: allow-pocket-id-from-cilium-gateway
   namespace: pocket-id
 spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: pocket-id
   ingress:
-  - fromEndpoints:
-    - matchLabels:
-        io.kubernetes.pod.namespace: in-gateway-system
+  - fromEntities:
+    - ingress
     toPorts:
     - ports:
       - port: "1411"

@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Cilium Gateway API to route traffic to the Pocket ID application.
+      Traffic proxied by Cilium Gateway API carries the reserved:ingress identity,
+      as per https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
+  name: allow-pocket-id-from-cilium-gateway
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: pocket-id
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "1411"
+              protocol: TCP

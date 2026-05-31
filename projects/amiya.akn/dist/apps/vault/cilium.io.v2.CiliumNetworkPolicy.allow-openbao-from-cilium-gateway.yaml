@@ -4,10 +4,12 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows Envoy Gateway to route traffic to OpenBao application.
+      Allows the Cilium Gateway API to route traffic to the OpenBao application.
+      Traffic proxied by Cilium Gateway API carries the reserved:ingress identity,
+      as per https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
   labels:
     app.kubernetes.io/name: vault
-  name: allow-openbao-from-envoy-gateway
+  name: allow-openbao-from-cilium-gateway
   namespace: vault
 spec:
   endpointSelector:
@@ -15,9 +17,8 @@ spec:
       app.kubernetes.io/name: vault
       component: server
   ingress:
-  - fromEndpoints:
-    - matchLabels:
-        io.kubernetes.pod.namespace: in-gateway-system
+  - fromEntities:
+    - ingress
     toPorts:
     - ports:
       - port: "8200"
