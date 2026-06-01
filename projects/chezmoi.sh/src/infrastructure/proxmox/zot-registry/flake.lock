@@ -1,22 +1,5 @@
 {
   "nodes": {
-    "lxc-oci-registry": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "zot": "zot"
-      },
-      "locked": {
-        "path": "../../../../../../catalog/flakes/chezmoi.sh/lxc-oci-registry",
-        "type": "path"
-      },
-      "original": {
-        "path": "../../../../../../catalog/flakes/chezmoi.sh/lxc-oci-registry",
-        "type": "path"
-      },
-      "parent": []
-    },
     "nixlib": {
       "locked": {
         "lastModified": 1736643958,
@@ -70,29 +53,26 @@
     },
     "root": {
       "inputs": {
-        "lxc-oci-registry": "lxc-oci-registry",
         "nixos-generators": "nixos-generators",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "zot": "zot"
       }
     },
     "zot": {
       "inputs": {
         "nixpkgs": [
-          "lxc-oci-registry",
           "nixpkgs"
         ]
       },
       "locked": {
-        "path": "../zot",
+        "path": "../../../../../../catalog/flakes/chezmoi.sh/zot",
         "type": "path"
       },
       "original": {
-        "path": "../zot",
+        "path": "../../../../../../catalog/flakes/chezmoi.sh/zot",
         "type": "path"
       },
-      "parent": [
-        "lxc-oci-registry"
-      ]
+      "parent": []
     }
   },
   "root": "root",
