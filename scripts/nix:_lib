@@ -54,8 +54,14 @@ _nix_ensure_volumes() {
 }
 
 # Populates DOCKER_TTY_FLAGS based on whether stdin/stdout are ttys.
+#
+# Implementation note: returning the exit status of `[[ -t 1 ]]` would make
+# `set -e` callers exit silently whenever stdout is not a tty (mise tasks,
+# CI pipelines, piped invocations). The explicit `return 0` decouples the
+# function's success from the tty probe's boolean answer.
 _nix_tty_flags() {
   DOCKER_TTY_FLAGS=()
   [[ -t 0 ]] && DOCKER_TTY_FLAGS+=(-i)
   [[ -t 1 ]] && DOCKER_TTY_FLAGS+=(-t)
+  return 0
 }
