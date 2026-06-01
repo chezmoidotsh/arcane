@@ -1,35 +1,81 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# oci-staging.chezmoi.sh — Zot OCI registry LXC (Proxmox)
+# ─────────────────────────────────────────────────────────────────────────────
+# This file is the **deployment** layer. It imports the reusable module
+# library at `catalog/flakes/chezmoi.sh/lxc-oci-registry` and supplies every
+# site-specific value:
+#
+#   * Public domain                — oci-staging.chezmoi.sh
+#   * Upstream pull-through list   — see upstreams.nix
+#   * GC retention policies        — defined below
+#   * Caddy build with Cloudflare  — `pkgs.caddy.withPlugins`
+#   * TLS secrets                  — Cloudflare API token injected at build
+#
+# Build inputs (flake.nix injects them through `_module.args`):
+#
+#   zotPackage         — Zot binary to run.
+#   cloudflareToken    — Optional. When non-empty, baked into the image so
+#                        Caddy can obtain a certificate on first boot.
+#
+# Operator surface:
+#
+#   * No SSH service. Console access is via Proxmox `pct enter <vmid>`.
+#   * Default firewall: only TCP/80 and TCP/443 cross the LXC boundary.
+#   * Zot listens on 127.0.0.1:5000 only — Caddy is the public surface.
+#   * Management API (read-only) at
+#     https://oci-staging.chezmoi.sh/v2/_zot/ext/mgmt.
+#
+# See README.md for the full Proxmox + firewall deployment runbook.
+# ─────────────────────────────────────────────────────────────────────────────
 { pkgs, lib, zotPackage, cloudflareToken ? "", ... }:
 
+let
+  upstreams = import ./upstreams.nix { inherit lib; };
+in
 {
-  # ── System basics ──────────────────────────────────────────────────────────
+  # ── System identity ────────────────────────────────────────────────────────
   system.stateVersion = "26.05";
   networking.hostName = "oci-registry";
 
-  # ── Zot registry ──────────────────────────────────────────────────────────
+  time.timeZone = "Etc/UTC";
+  i18n.defaultLocale = "C.UTF-8";
+
+  # ── Registry (Zot) ─────────────────────────────────────────────────────────
   services.lxc-oci-registry.zot = {
     package = zotPackage;
     storageDir = "/var/lib/zot";
 
+    # Enable mgmt + search + ui extensions (read-only). The mgmt endpoint
+    # is reachable at https://oci-staging.chezmoi.sh/v2/_zot/ext/mgmt and
+    # returns the running configuration with secrets stripped.
+    enableManagementAPI = true;
+
     settings = {
       storage = {
-        gc = true;
-        gcDelay = "1h";
-        gcInterval = "24h";
+        gcDelay = "1h"; # delay before a blob is eligible for GC
+        gcInterval = "24h"; # how often the GC worker runs
+
+        # ── Retention policy ────────────────────────────────────────────
+        # Two repositories, two rules:
+        #
+        #   * `ghcr.io/chezmoidotsh/**` — first-party images. Keep the 3
+        #     most-recent tags (we redeploy frequently).
+        #   * Everything else — pull-through cache. Keep the 5 most
+        #     recently *pulled* tags within a 6-month sliding window.
+        # ----------------------------------------------------------------
         retention = {
           dryRun = false;
           delay = "24h";
           policies = [
             {
-              # Maintainer-pushed images: keep last 3
+              # Maintainer-pushed images.
               repositories = [ "ghcr.io/chezmoidotsh/**" ];
               deleteReferrers = false;
               deleteUntagged = true;
-              keepTags = [
-                { mostRecentlyPushedCount = 3; }
-              ];
+              keepTags = [{ mostRecentlyPushedCount = 3; }];
             }
             {
-              # Pull-through cache: keep last 5 pulled within 6 months
+              # Pull-through cache (everything else).
               repositories = [ "**" ];
               deleteReferrers = false;
               deleteUntagged = true;
@@ -44,108 +90,43 @@
         };
       };
 
+      # The reverse proxy strips the public hostname and forwards
+      # path-rewritten requests to localhost:5000. `externalUrl` tells Zot
+      # the canonical URL clients see — used in 30x redirects.
       http = {
-        address = "127.0.0.1";
-        port = "5000";
-        externalUrl = "oci-staging.chezmoi.sh";
+        externalUrl = "https://oci-staging.chezmoi.sh";
+        # docker2s2 compat keeps Docker clients pulling fat manifests happy.
         compat = [ "docker2s2" ];
+
+        # Anonymous read for everyone. Pushes are not exposed (no
+        # `defaultPolicy`/`adminPolicy`) — first-party images are pushed
+        # from the maintainer's workstation over a localhost tunnel.
         accessControl.repositories."**".anonymousPolicy = [ "read" ];
       };
 
+      log.level = "info";
+
       extensions = {
+        # Periodic integrity check on stored blobs.
         scrub = {
           enable = true;
           interval = "24h";
         };
 
+        # ── Pull-through cache ────────────────────────────────────────────
         sync = {
           enable = true;
-          registries = [
-            {
-              urls = [ "https://docker.io" "https://registry-1.docker.io" ];
-              content = [{ destination = "/docker.io"; prefix = "**"; }];
-              onDemand = true;
-              preserveDigest = true;
-              tlsVerify = true;
-            }
-            {
-              urls = [ "https://gcr.io" ];
-              content = [{ destination = "/gcr.io"; prefix = "**"; }];
-              onDemand = true;
-              preserveDigest = true;
-              tlsVerify = true;
-            }
-            {
-              urls = [ "https://ghcr.io" ];
-              content = [{ destination = "/ghcr.io"; prefix = "**"; }];
-              onDemand = true;
-              preserveDigest = true;
-              tlsVerify = true;
-            }
-            {
-              urls = [ "https://ecr-public.aws.com" "https://public.ecr.aws" ];
-              content = [{ destination = "/ecr-public.aws.com"; prefix = "**"; }];
-              onDemand = true;
-              preserveDigest = true;
-              tlsVerify = true;
-            }
-            {
-              urls = [ "https://quay.io" ];
-              content = [{ destination = "/quay.io"; prefix = "**"; }];
-              onDemand = true;
-              preserveDigest = true;
-              tlsVerify = true;
-            }
-            {
-              urls = [ "https://registry.gitlab.com" ];
-              content = [{ destination = "/registry.gitlab.com"; prefix = "**"; }];
-              onDemand = true;
-              preserveDigest = true;
-              tlsVerify = true;
-            }
-            {
-              urls = [ "https://registry.k8s.io" ];
-              content = [{ destination = "/registry.k8s.io"; prefix = "**"; }];
-              onDemand = true;
-              preserveDigest = true;
-              tlsVerify = true;
-            }
-            {
-              urls = [ "https://xpkg.crossplane.io" ];
-              content = [{ destination = "/xpkg.crossplane.io"; prefix = "**"; }];
-              onDemand = true;
-              preserveDigest = true;
-              tlsVerify = true;
-            }
-            {
-              urls = [ "https://mcr.microsoft.com" ];
-              content = [{ destination = "/mcr.microsoft.com"; prefix = "**"; }];
-              onDemand = true;
-              preserveDigest = true;
-              tlsVerify = true;
-            }
-            {
-              urls = [ "https://oci.external-secrets.io" ];
-              content = [{ destination = "/oci.external-secrets.io"; prefix = "**"; }];
-              onDemand = true;
-              preserveDigest = true;
-              tlsVerify = true;
-            }
-            {
-              urls = [ "https://code.forgejo.org" ];
-              content = [{ destination = "/code.forgejo.org"; prefix = "**"; }];
-              onDemand = true;
-              preserveDigest = true;
-              tlsVerify = true;
-            }
-          ];
+          registries = upstreams.registries;
         };
       };
     };
   };
 
-  # ── Caddy reverse proxy (HTTPS + DNS-01 via Cloudflare) ───────────────────
+  # ── Reverse proxy (Caddy + Cloudflare DNS-01) ──────────────────────────────
   services.lxc-oci-registry.caddy = {
+    # Caddy with the Cloudflare DNS plugin for the ACME DNS-01 challenge.
+    # The hash below is the output of `pkgs.caddy.withPlugins` for this
+    # specific plugin version — refresh it when bumping the plugin.
     package = pkgs.caddy.withPlugins {
       plugins = [ "github.com/caddy-dns/cloudflare@v0.2.4" ];
       hash = "sha256-bzMqxWTqrJ1skZmRTXyEMCKStXpljbqe5r0Ve2cnBfM=";
@@ -162,43 +143,44 @@
     '';
   };
 
-  # Bake the Caddy secrets file into the image when cloudflareToken is provided at
-  # build time via --secrets (see README). When absent, Caddy starts but TLS fails
-  # until the operator places /etc/caddy/secrets manually.
+  # ── Caddy secrets (Cloudflare API token) ───────────────────────────────────
+  # When `cloudflareToken` is non-empty (build performed with --impure +
+  # CLOUDFLARE_API_TOKEN in the environment), the token is written into
+  # /etc/caddy/secrets and the file is owned by the caddy user.
+  #
+  # When empty (pure build), the file is *not* created — Caddy starts but
+  # ACME issuance fails until the operator drops the token in manually.
+  # The `-` prefix on EnvironmentFile makes systemd tolerate the missing
+  # file at boot.
   environment.etc."caddy/secrets" = lib.mkIf (cloudflareToken != "") {
     text = "CLOUDFLARE_API_TOKEN=${cloudflareToken}\n";
     mode = "0400";
     user = "caddy";
     group = "caddy";
   };
-  # '-' prefix: Caddy starts even if the file is absent (pure build or first boot).
   systemd.services.caddy.serviceConfig.EnvironmentFile = "-/etc/caddy/secrets";
 
-  # ── Admin user ────────────────────────────────────────────────────────────
-  users.users.nixos = {
-    isNormalUser = true;
-    extraGroups = [ "wheel" ];
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP2wkl8OiO7EkQp8Y8mLjL0s4mgZy3GiyrGY/XD7FZQ9"
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK0QoYptOmqsFNN7uOiFb7NatkhiGnSQc6itYri6bUnT"
-    ];
-  };
-  security.sudo.wheelNeedsPassword = false;
+  # ── Hardening profile ──────────────────────────────────────────────────────
+  # Pulls in:
+  #   * sysctl defaults (IP forwarding off, redirects off, SYN cookies, …)
+  #   * service surface trimming (no avahi/cups/polkit/udisks)
+  #   * documentation off (no man-db, info, nixos-docs)
+  #   * firewall default deny + open :80 + :443
+  #   * journald → console (so `pct console <vmid>` shows boot)
+  services.lxc-oci-registry.hardening.enable = true;
 
-  # ── SSH access ────────────────────────────────────────────────────────────
-  services.openssh = {
-    enable = true;
-    settings.PermitRootLogin = "no";
-  };
-
-  # ── Proxmox LXC console ───────────────────────────────────────────────────
-  # ForwardToConsole + TTYPath route journal entries to pct console <vmid>.
-  services.journald.console = "/dev/console";
-  services.journald.extraConfig = "ForwardToConsole=yes";
-
-  # ── Firewall ──────────────────────────────────────────────────────────────
-  networking.firewall = {
-    enable = true;
-    allowedTCPPorts = [ 22 80 443 ];
-  };
+  # ── Sanity / observability ─────────────────────────────────────────────────
+  # Minimal toolbox kept on the console for emergency triage:
+  #   * curl  — probe /v2/ and the mgmt endpoint locally
+  #   * jq    — pretty-print the mgmt JSON response
+  #
+  # `htpasswd` is intentionally not installed. `services.lxc-oci-registry.zot.htpasswdFile`
+  # is null in this deployment, and pulling in ~50 MiB of Apache HTTP server
+  # just for one binary is not worth it. If credentials ever need to be
+  # generated, do so from outside the LXC and bake the file via the secrets
+  # pipeline.
+  environment.systemPackages = with pkgs; [
+    curl
+    jq
+  ];
 }

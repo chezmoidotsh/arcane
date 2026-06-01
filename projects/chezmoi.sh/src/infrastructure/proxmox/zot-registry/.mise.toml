@@ -2,22 +2,21 @@
 # zot-registry LXC — Task Automation
 # =============================================================================
 # Tasks for building, uploading, and maintaining the Proxmox LXC template that
-# runs the Zot OCI registry (oci.chezmoi.sh) with Caddy HTTPS termination.
+# runs the Zot OCI registry (oci-staging.chezmoi.sh) with Caddy HTTPS termination.
 #
 # Usage:
-#   mise run lxc:secrets:init              # Fetch Cloudflare token from cluster → secrets/caddy.sops.env
-#   mise run lxc:build                     # Pure build (no TLS secrets baked in)
-#   mise run lxc:build:with-secrets        # Full build with Cloudflare token baked in
+#   mise run lxc:secrets:sync              # Fetch Cloudflare token from cluster → secrets/caddy.sops.env
+#   mise run lxc:build                     # Build the LXC tarball with Cloudflare token baked in
 #   mise run lxc:push -- <pve-host> [storage]  # Upload template to Proxmox
 #
 # Typical workflow (first time):
-#   mise run lxc:secrets:init              # Requires kubectl access to amiya.akn
-#   mise run lxc:build:with-secrets
+#   mise run lxc:secrets:sync              # Requires kubectl access to amiya.akn
+#   mise run lxc:build
 #   mise run lxc:push -- pve.lan local
 #
 # Prerequisites:
 #   - Docker (for the Nix build container)
-#   - kubectl configured for amiya.akn (for lxc:secrets:init)
+#   - kubectl configured for amiya.akn (for lxc:secrets:sync)
 #   - sops + age key in SOPS_AGE_KEY_FILE (configured in root .mise.toml)
 #   - SSH key-based access to root@<pve-host> (for lxc:push)
 # =============================================================================
