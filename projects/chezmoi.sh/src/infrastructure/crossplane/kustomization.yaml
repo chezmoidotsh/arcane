@@ -26,6 +26,7 @@ resources:
 
   # Cloudflare resources
   - cloudflare.iam.terraform-provider.yaml
+  - cloudflare.iam.zot-registry.yaml
 
   # AWS resources
   - aws.domainidentity.yaml
