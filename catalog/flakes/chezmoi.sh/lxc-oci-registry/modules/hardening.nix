@@ -148,12 +148,16 @@ in
     # Default deny; only :80 and :443 cross the LXC boundary.
     # Proxmox's host-level firewall should layer on top of this — see the
     # deployment README for the matching `pve-firewall` rules.
-    networking.firewall = {
-      enable = lib.mkDefault true;
-      allowedTCPPorts = lib.mkDefault [ 80 443 ];
-      allowedUDPPorts = lib.mkDefault [ ];
-      logRefusedConnections = lib.mkDefault false; # noise; rely on PVE FW logs
-    };
+    #
+    # NOTE: do NOT use lib.mkDefault here. nixos-generators' lxc format
+    # module sets allowedTCPPorts = [] at normal priority (100), which
+    # silently wins over lib.mkDefault (priority 1000). Normal-priority
+    # assignments from multiple modules are concatenated by lib.concatLists,
+    # so setting [ 80 443 ] here adds to whatever the generator sets.
+    networking.firewall.enable = lib.mkDefault true;
+    networking.firewall.allowedTCPPorts = [ 80 443 ];
+    networking.firewall.allowedUDPPorts = lib.mkDefault [ ];
+    networking.firewall.logRefusedConnections = lib.mkDefault false;
 
     # ── Misc ─────────────────────────────────────────────────────────────
     # Time sync via systemd-timesyncd. Container clock drift breaks ACME

@@ -169,6 +169,18 @@ in
   #   * journald → console (so `pct console <vmid>` shows boot)
   services.lxc-oci-registry.hardening.enable = true;
 
+  # ── Console shell (pct enter) ─────────────────────────────────────────────
+  # `pct enter` spawns /proc/1/exe (systemd) → /bin/sh without a login shell,
+  # so /run/current-system/sw/bin is never added to PATH. Switching root to
+  # bash and sourcing /etc/set-environment in shellInit ensures every
+  # non-login bash session (including `pct enter`) gets the full NixOS PATH.
+  users.users.root.shell = pkgs.bashInteractive;
+  programs.bash.shellInit = ''
+    if [ -z "''${__NIXOS_SET_ENVIRONMENT_DONE-}" ]; then
+      . /etc/set-environment
+    fi
+  '';
+
   # ── Sanity / observability ─────────────────────────────────────────────────
   # Minimal toolbox kept on the console for emergency triage:
   #   * curl  — probe /v2/ and the mgmt endpoint locally
