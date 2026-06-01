@@ -35,16 +35,15 @@ fi
 # NOTE: This method can be ******* slow because it requires to run the NIX build
 #       command for each hash in the file. I didn't find a better way to do this.
 function update_nix_hashes() {
-  local __stderr __stdout
+  local __stderr
   __stderr="$(mktemp --suffix=".nix:hash.stderr")"
-  __stdout="$(mktemp --suffix=".nix:hash.stdout")"
   # trunk-ignore(shellcheck/SC2064)
-  trap "rm -f '${__stderr}' '${__stdout}'" EXIT
+  trap "rm -f '${__stderr}'" EXIT
 
   echo >&2 '> Run Nix store GC to clean up the store (required to get the correct hash).'
   nix-store --gc
 
-  echo >&2 "> Start the NIX hashes reconcilation."
+  echo >&2 "> Start the NIX hashes reconciliation."
   echo >&2 "> Run \`nix build ${NIX_PKG}\` (can be slow... be patient)."
 
   until nix build "${NIX_PKG}" 2>"${__stderr}"; do

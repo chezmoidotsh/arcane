@@ -1,0 +1,61 @@
+# Shared library for nix:* scripts — source this file, do not execute directly.
+# Guard against double-sourcing.
+[[ -n ${_NIX_LIB_LOADED:-} ]] && return 0
+readonly _NIX_LIB_LOADED=1
+
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly NC='\033[0m'
+
+readonly NIX_CACHE_VOLUME="nix-store-cache"
+readonly NIX_TOOLS_VOLUME="nix-tools-cache"
+
+log_info()    { echo -e "${BLUE}[INFO]${NC} $*" >&2; }
+log_success() { echo -e "${GREEN}[SUCCESS]${NC} $*" >&2; }
+log_warning() { echo -e "${YELLOW}[WARNING]${NC} $*" >&2; }
+log_error()   { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+
+# Sets REPO_ROOT and RELATIVE_FLAKE_PATH (no trailing slash) from a flake directory.
+_nix_resolve_flake_dir() {
+  local flake_dir="$1"
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    REPO_ROOT="$(git rev-parse --show-toplevel)"
+    RELATIVE_FLAKE_PATH="$(cd "${flake_dir}" && git rev-parse --show-prefix)"
+  else
+    REPO_ROOT="$(cd "${flake_dir}" && pwd)"
+    RELATIVE_FLAKE_PATH=""
+  fi
+  RELATIVE_FLAKE_PATH="${RELATIVE_FLAKE_PATH%/}"
+}
+
+# Ensures Docker cache volumes exist and nix-output-monitor is installed in the tools volume.
+# Uses docker volume inspect (fast, no container) to decide whether nom needs installing.
+_nix_ensure_volumes() {
+  docker volume create "${NIX_CACHE_VOLUME}" >/dev/null
+
+  local needs_nom=false
+  docker volume inspect "${NIX_TOOLS_VOLUME}" >/dev/null 2>&1 || needs_nom=true
+  docker volume create "${NIX_TOOLS_VOLUME}" >/dev/null
+
+  if [[ ${needs_nom} == true ]]; then
+    log_info "Installing nix-output-monitor in tools cache (first time only)..."
+    docker run --rm \
+      -v "${NIX_CACHE_VOLUME}:/nix" \
+      -v "${NIX_TOOLS_VOLUME}:/tools" \
+      nixos/nix sh -c '
+        nix --extra-experimental-features "nix-command flakes" build nixpkgs#nix-output-monitor --out-link /tmp/nom-build
+        mkdir -p /tools/bin
+        cp -L /tmp/nom-build/bin/nom /tools/bin/
+        chmod +x /tools/bin/nom
+      '
+  fi
+}
+
+# Populates DOCKER_TTY_FLAGS based on whether stdin/stdout are ttys.
+_nix_tty_flags() {
+  DOCKER_TTY_FLAGS=()
+  [[ -t 0 ]] && DOCKER_TTY_FLAGS+=(-i)
+  [[ -t 1 ]] && DOCKER_TTY_FLAGS+=(-t)
+}
