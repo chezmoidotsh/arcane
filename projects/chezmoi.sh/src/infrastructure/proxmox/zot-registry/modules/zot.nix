@@ -34,7 +34,7 @@ let
       # ── Retention policy ────────────────────────────────────────────────
       # Two tiers:
       #   * ghcr.io/chezmoidotsh/** — first-party images, keep last 3 tags.
-      #   * Everything else         — pull-through cache, keep last 5 tags
+      #   * Everything else         — pull-through cache, keep last 3 tags
       #                               pulled within the past 6 months.
       retention = {
         dryRun = false;

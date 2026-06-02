@@ -2,7 +2,7 @@
 # zot-registry LXC — Task Automation
 # =============================================================================
 # Tasks for building, uploading, and maintaining the Proxmox LXC template that
-# runs the Zot OCI registry (oci-staging.chezmoi.sh) with Caddy HTTPS termination.
+# runs the Zot OCI registry (oci.chezmoi.sh) with Caddy HTTPS termination.
 #
 # Usage:
 #   mise run lxc:secrets:sync                              # Fetch Cloudflare token from cluster → secrets/caddy.sops.env

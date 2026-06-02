@@ -70,7 +70,7 @@ namespace exceptions in `SEC001:kubernetes.rego`.
 ├── README.md              ← you are here
 ├── flake.nix              ← LXC image build (nixos-generators)
 ├── flake.lock             ← pinned inputs
-├── configuration.nix      ← site config (domain, GC policies, hardening on)
+├── configuration.nix      ← site identity, locale, console toolbox (modules own service config)
 ├── upstreams.nix          ← 11 pull-through cache definitions
 ├── .mise.toml             ← mise tasks (build / push / secrets)
 └── secrets/
@@ -150,7 +150,7 @@ uploads it to `/var/lib/vz/template/cache/`, create the container with:
 
 ```sh
 # Pick an unused VMID (Proxmox prints used ones with `pct list`).
-VMID=100
+VMID="<vmid>"   # e.g. 100 — replace before running, pct will reject the placeholder.
 TEMPLATE=oci-proxy.<version>-amd64.tar.xz
 NODE=pve.lan
 
@@ -185,7 +185,7 @@ ssh root@${NODE} pct start ${VMID}
 > Run the following **on the Proxmox node** (`ssh root@${NODE}`):
 >
 > ```sh
-> VMID=100   # adjust
+> VMID="<vmid>"   # replace with the VMID from `pct create` above
 > # Default Proxmox mapping: container uid N → host uid 100000+N.
 > # zot uid is fixed at 994 in zot.nix → host uid = 100000 + 994 = 100994.
 > # Verify: grep ^root /etc/subuid   (expect root:100000:65536)
@@ -221,7 +221,7 @@ never touches the root disk. If a future rebuild exceeds the limit,
 bump with `pct resize <vmid> rootfs +2G` before rebuilding.
 
 If you push first-party images aggressively, raise `mostRecentlyPushedCount`
-in `configuration.nix` (the Zot data volume will absorb the extra blobs).
+in `modules/zot.nix` (the Zot data volume will absorb the extra blobs).
 
 ### `pct.conf` features explained
 
@@ -265,7 +265,7 @@ pvesh set /cluster/firewall/options --enable 1
 Create the firewall config for `<vmid>`:
 
 ```sh
-VMID=210
+VMID="<vmid>"   # same VMID as the LXC created above
 
 # 1. Enable the LXC firewall, default-deny inbound, allow outbound, ICMPv6 ND
 cat <<'EOF' >/etc/pve/firewall/${VMID}.fw
@@ -385,7 +385,7 @@ ssh root@pve.lan pct exec <vmid> -- systemctl restart zot
 
 ### Log management on a 1 GiB root disk
 
-The root volume has no space to spare. By default `configuration.nix`
+The root volume has no space to spare. By default `modules/hardening.nix`
 configures journald with `Storage=volatile` + `RuntimeMaxUse=64M`: logs
 live in `/run/log/journal` (tmpfs), are capped at 64 MiB in RAM, and
 disappear on container stop. That is the right default for a stateless
@@ -516,7 +516,7 @@ ssh root@pve.lan pct exec <vmid> -- journalctl -u zot --since '5 minutes ago'
   was not done before first start. Fix from the Proxmox host:
 
   ```sh
-  VMID=<vmid>
+  VMID="<vmid>"
   pct stop ${VMID}
   pct mount ${VMID}
   chown 100994:100994 /var/lib/lxc/${VMID}/rootfs/var/lib/zot
@@ -576,7 +576,7 @@ The current setup is functional but the items below are worth tracking:
    manually.
 
 9. **Caddy plugin hash drift.** Bumping the Cloudflare DNS plugin
-   version means recomputing the hash in `configuration.nix`. The
+   version means recomputing the hash in `modules/caddy.nix`. The
    command is in the old README — preserved here for posterity:
 
    ```sh
@@ -586,7 +586,7 @@ The current setup is functional but the items below are worth tracking:
        hash = (import <nixpkgs> {}).lib.fakeHash;
      }
    '
-   # Read the correct hash from the error message; update configuration.nix.
+   # Read the correct hash from the error message; update modules/caddy.nix.
    ```
 
 10. **No NixOS test (`pkgs.testers.runNixOSTest`).** A smoke test that
