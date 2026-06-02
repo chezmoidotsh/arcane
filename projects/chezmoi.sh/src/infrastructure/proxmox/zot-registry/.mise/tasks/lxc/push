@@ -9,9 +9,8 @@ pve_host="${usage_pve_host}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
-REPO_ROOT="$(git -C "${CONFIG_ROOT}" rev-parse --show-toplevel)"
 
-ver=$(grep -m1 'version = "v' "${REPO_ROOT}/catalog/flakes/chezmoi.sh/zot/flake.nix" |
+ver=$(grep -m1 'version = "v' "${CONFIG_ROOT}/flake.nix" |
   grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
 template="oci-proxy.${ver}-amd64.tar.xz"
 src="${CONFIG_ROOT}/${template}"
