@@ -97,12 +97,13 @@ in
 {
   users.users.zot = {
     isSystemUser = true;
+    uid = 994; # fixed — host uid = 100000 + 994 = 100994 with default Proxmox mapping
     group = "zot";
     home = "/var/lib/zot";
     createHome = false; # StateDirectory owns the lifecycle
     description = "Zot OCI registry service account";
   };
-  users.groups.zot = { };
+  users.groups.zot = { gid = 994; };
 
   # World-readable — no secrets embedded; htpasswd lives at a separate path.
   environment.etc."zot/config.json".source = configFile;
@@ -131,22 +132,18 @@ in
       WorkingDirectory = "/var/lib/zot";
 
       # ── systemd hardening (LXC-safe subset) ──────────────────────────
-      # PrivateDevices / ProtectKernelModules / RestrictNamespaces clash
-      # with the LXC's restricted view of the host — intentionally omitted.
+      # Options requiring a mount namespace fail in an unprivileged LXC with
+      # "Failed at step NAMESPACE … /proc: Permission denied". Omitted:
+      #   PrivateTmp, ProtectSystem, ProtectHome, ProtectControlGroups,
+      #   ProtectKernelLogs, ProtectClock, PrivateDevices,
+      #   ProtectKernelModules, RestrictNamespaces.
+      # Compensated by: PVE firewall, NixOS firewall, loopback-only binding.
       NoNewPrivileges = true;
-      PrivateTmp = true;
-      ProtectSystem = "strict";
-      ProtectHome = true;
-      ProtectControlGroups = true;
-      ProtectKernelLogs = true;
-      ProtectClock = true;
       RestrictSUIDSGID = true;
       RestrictRealtime = true;
       LockPersonality = true;
       MemoryDenyWriteExecute = true;
       SystemCallArchitectures = "native";
-
-      ReadWritePaths = [ "/var/lib/zot" ];
 
       # Zot opens many files during sync; the default 1024 trips under load.
       LimitNOFILE = 65536;
