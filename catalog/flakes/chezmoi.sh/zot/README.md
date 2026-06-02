@@ -5,9 +5,10 @@ release artifacts as Nix derivations. No source rebuild, no Go toolchain — the
 official GitHub release binary is fetched, hash-pinned, and `autoPatchelfHook`
 rewrites the ELF interpreter so it runs on NixOS.
 
-This flake is consumed by [`../lxc-oci-registry`](../lxc-oci-registry/) (the
-NixOS module library) which in turn is consumed by the deployable LXC flake at
+This flake is consumed directly by the deployable LXC flake at
 [`projects/chezmoi.sh/src/infrastructure/proxmox/zot-registry/`](../../../../projects/chezmoi.sh/src/infrastructure/proxmox/zot-registry/).
+The NixOS modules previously housed in a separate `lxc-oci-registry` catalog
+entry were collapsed into that project directory.
 
 ## Why pre-built binaries?
 
