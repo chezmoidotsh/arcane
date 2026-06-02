@@ -10,8 +10,8 @@ This replaces the legacy `zot-registry` Kubernetes StatefulSet on
 namespace exceptions in `SEC001:kubernetes.rego`.
 
 > **Status** — replacement for `projects/amiya.akn/src/apps/zot-registry/`.
-> Until the migration is signed off, the K8s StatefulSet stays the source
-> of truth for `oci.chezmoi.sh` DNS. Track the cut-over in issue #1022.
+> The K8s StatefulSet removal is tracked in PR #1027. Until that PR is merged
+> and ArgoCD has pruned the resources, the LXC is the live registry.
 
 ## Table of contents
 
@@ -136,11 +136,12 @@ finishes. The fully documented one is in the next section.
 
 ### Task reference
 
-| Task                                        | What it does                                                        |
-| ------------------------------------------- | ------------------------------------------------------------------- |
-| `mise run lxc:secrets:sync`                 | Fetch Cloudflare token from cluster → `secrets/caddy.sops.env`      |
-| `mise run lxc:build`                        | Build with the token baked in (requires `secrets/caddy.sops.env`)   |
-| `mise run lxc:push -- <pve-host> [storage]` | scp the tarball to Proxmox and print the matching `pct create` line |
+| Task                                                         | What it does                                                      |
+| ------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `mise run lxc:secrets:sync`                                  | Fetch Cloudflare token from cluster → `secrets/caddy.sops.env`    |
+| `mise run lxc:build`                                         | Build with the token baked in (requires `secrets/caddy.sops.env`) |
+| `mise run lxc:push -- <pve-host> [storage]`                  | scp the tarball to Proxmox                                        |
+| `mise run lxc:upgrade -- <pve-host> <source_id> <target_id>` | Upgrade a running LXC to a new image while preserving config      |
 
 ## Proxmox LXC creation
 
@@ -428,6 +429,65 @@ services.journald = {
 * **Secrets** — `secrets/caddy.sops.env` is age-encrypted and committed
   to git. No separate backup needed.
 
+### Upgrading to a new version
+
+Upgrading replaces the rootfs with a freshly built image while keeping the
+Proxmox config and the `/var/lib/zot` data volume intact. The source
+container stays running throughout; the cut-over is a single `pct stop`.
+
+```sh
+# 1. Build the new image and upload it to the Proxmox host
+mise run lxc:build
+mise run lxc:push -- <pve-host>
+
+# 2. Create the new container, copy config, fix ownership, and start it
+mise run lxc:upgrade -- <pve-host> <source_id> <target_id>
+#    Template is auto-detected from the zot flake version.
+#    Override: mise run lxc:upgrade -- pve.lan 100 101 oci-proxy.X.Y.Z-amd64.tar.xz
+
+# 3. Wait for Caddy to obtain a fresh TLS certificate (allow 30–60 s)
+ssh root@<pve-host> pct exec <target_id> -- journalctl -u caddy -f
+curl -sSf https://oci.chezmoi.sh/v2/   # → 200 {} or 401
+
+# 4. Cut over
+ssh root@<pve-host> pct stop <source_id>
+```
+
+#### What to expect
+
+| Aspect          | Detail                                                                                                                                                                                                    |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TLS certificate | Caddy requests a new certificate on first boot — the old one is not carried over.                                                                                                                         |
+| Data volume     | The `mp0` volume (`/var/lib/zot`) config is copied from source; blobs and metadata are preserved without any sync.                                                                                        |
+| Parallel run    | Both containers are alive between steps 2 and 4. Use this window to verify before cutting over.                                                                                                           |
+| Cold cache risk | The data volume references the source's LVM volume — both containers share the same underlying storage. If you want a clean break, provision a new `mp0` and let the cache rebuild on demand (see below). |
+
+#### Syncing blobs to a fresh data volume
+
+If the new container gets a fresh `mp0` (different storage or explicit
+resize), sync blobs before starting it. Zot's index (BoltDB) cannot be
+copied safely while the source is running, so stop it first.
+
+```sh
+# After lxc:upgrade creates the container but before pct start <dest>
+pct stop <source>
+pct mount <source>
+pct mount <dest>
+
+rsync -a --delete \
+  /var/lib/lxc/<source>/rootfs/var/lib/zot/ \
+  /var/lib/lxc/<dest>/rootfs/var/lib/zot/
+
+pct unmount <source>
+pct unmount <dest>
+pct start <dest>
+# Source is already stopped — skip pct stop once verified.
+```
+
+> **Trade-off:** syncing causes a brief outage (`pct stop <source>` before
+> the new container is serving). Skip it if uptime matters more than a warm
+> cache — the pull-through proxy rebuilds on demand.
+
 ## Troubleshooting
 
 ### Caddy fails to obtain a certificate
@@ -484,11 +544,11 @@ The current setup is functional but the items below are worth tracking:
    breaks we won't know until the cert expires. A blackbox-exporter
    probe from `amiya.akn` would close that gap.
 
-3. **No image data migration plan.** When cutting over from the K8s
-   StatefulSet, the on-demand cache will rebuild itself; first-party
-   `ghcr.io/chezmoidotsh/**` images don't live in Zot at all (we push
-   them to GHCR directly), so nothing needs to be migrated. Documented
-   here so it doesn't get re-asked.
+3. **K8s StatefulSet still present on amiya.akn.** The removal is tracked
+   in PR #1027. Until merged and ArgoCD-synced, the old `zot-registry`
+   namespace and its resources remain on the cluster (harmless but noisy
+   in `kubectl get ns`). No data migration is needed — the cache rebuilds
+   on demand; first-party images live on GHCR, not in Zot.
 
 4. **No HA.** Single LXC, single Proxmox node. If the node dies, pulls
    that aren't in the upstream-resolver cache will fail until the LXC is
