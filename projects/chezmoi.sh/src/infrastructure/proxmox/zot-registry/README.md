@@ -60,8 +60,29 @@ namespace exceptions in `SEC001:kubernetes.rego`.
   Zot. ACME uses DNS-01 via Cloudflare (no inbound :80 challenge required).
 * **Zot** binds to 127.0.0.1:5000 only — never exposed on the network.
   Anonymous read everywhere; mgmt API enabled (read-only).
+  Upstreams are declared statically in `upstreams.nix`; there is no
+  dynamic proxy and no wildcard routing.
 * **No SSH.** Console access goes through `pct enter <vmid>` on the
   Proxmox host. The LXC has no `getty` autologin, no `sshd`, no shell user.
+
+### Static upstream configuration — limitation and strength
+
+Zot cannot proxy arbitrary registries on demand. Every upstream must be
+declared explicitly in `upstreams.nix` and baked into the LXC image at
+build time. There is no runtime API, no wildcard, and no hot-reload.
+
+**Limitation** — adding a new upstream (e.g. `quay.io`, a private
+registry) requires editing `upstreams.nix`, running `mise run lxc:build`,
+and upgrading the running container with `mise run lxc:upgrade`. Expect a
+few minutes of Nix build time and a brief parallel-run window during the
+upgrade (see [Upgrading to a new version](#upgrading-to-a-new-version)).
+
+**Strength** — the same constraint is a security boundary. No runtime
+request, no authenticated client, and no compromised process inside the
+LXC can route traffic through an undeclared upstream. The allowlist is
+code-reviewed, GPG-signed, and version-controlled. Expanding it requires
+intent — a deliberate code change, a build, and a deploy — not just a
+configuration tweak or a misconfigured pull.
 
 ## What's in this directory
 
