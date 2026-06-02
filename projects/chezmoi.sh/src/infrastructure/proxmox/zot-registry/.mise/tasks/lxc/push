@@ -6,7 +6,6 @@
 set -euo pipefail
 
 pve_host="${usage_pve_host}"
-storage="${usage_storage:-local}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"

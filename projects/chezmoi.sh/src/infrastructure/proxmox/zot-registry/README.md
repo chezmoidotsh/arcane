@@ -118,7 +118,7 @@ mise run lxc:secrets:sync
 
 # 4. Rebuild and redeploy the LXC
 mise run lxc:build
-mise run lxc:push -- pve.lan local
+mise run lxc:push -- pve.lan
 ```
 
 ## Build & deploy
@@ -128,7 +128,7 @@ mise run lxc:push -- pve.lan local
 mise run lxc:build
 
 # 2. Upload to Proxmox (creates /var/lib/vz/template/cache/oci-proxy.<v>-amd64.tar.xz)
-mise run lxc:push -- pve.lan local
+mise run lxc:push -- pve.lan
 ```
 
 The `lxc:push` task prints a sample `pct create` invocation when it
@@ -140,7 +140,7 @@ finishes. The fully documented one is in the next section.
 | ------------------------------------------------------------ | ----------------------------------------------------------------- |
 | `mise run lxc:secrets:sync`                                  | Fetch Cloudflare token from cluster → `secrets/caddy.sops.env`    |
 | `mise run lxc:build`                                         | Build with the token baked in (requires `secrets/caddy.sops.env`) |
-| `mise run lxc:push -- <pve-host> [storage]`                  | scp the tarball to Proxmox                                        |
+| `mise run lxc:push -- <pve-host>`                            | scp the tarball to Proxmox (`local` storage, hardcoded)           |
 | `mise run lxc:upgrade -- <pve-host> <source_id> <target_id>` | Upgrade a running LXC to a new image while preserving config      |
 
 ## Proxmox LXC creation

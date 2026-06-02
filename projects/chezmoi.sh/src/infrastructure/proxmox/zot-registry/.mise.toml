@@ -7,13 +7,13 @@
 # Usage:
 #   mise run lxc:secrets:sync                              # Fetch Cloudflare token from cluster → secrets/caddy.sops.env
 #   mise run lxc:build                                     # Build the LXC tarball with Cloudflare token baked in
-#   mise run lxc:push -- <pve-host> [storage]              # Upload template to Proxmox
+#   mise run lxc:push -- <pve-host>                        # Upload template to Proxmox (local storage)
 #   mise run lxc:upgrade -- <pve-host> <src> <dest>        # Upgrade a running LXC to a new image
 #
 # Typical workflow (first time):
 #   mise run lxc:secrets:sync              # Requires kubectl access to amiya.akn
 #   mise run lxc:build
-#   mise run lxc:push -- pve.lan local
+#   mise run lxc:push -- pve.lan
 #
 # Typical workflow (upgrade):
 #   mise run lxc:build
