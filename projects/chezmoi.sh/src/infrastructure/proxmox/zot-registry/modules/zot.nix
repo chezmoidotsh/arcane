@@ -76,7 +76,11 @@ let
 
     extensions = {
       # search activates mgmt + ui transitively.
-      search.enable = true;
+      # cve enables periodic trivy-db downloads; DB is stored under rootDirectory.
+      search = {
+        enable = true;
+        cve.updateInterval = "24h";
+      };
       ui.enable = true;
 
       # Periodic integrity check on stored blobs.

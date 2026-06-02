@@ -164,7 +164,7 @@ ssh root@${NODE} pct create ${VMID} local:vztmpl/${TEMPLATE} \
     --cores        1 \
     --memory       512 \
     --swap         0 \
-    --rootfs       local-zfs:1 \
+    --rootfs       local-zfs:2 \
     --mp0          local-zfs:100,mp=/var/lib/zot \
     --net0         name=eth0,bridge=vmbr0,ip=dhcp,firewall=1 \
     --onboot       1
@@ -212,10 +212,12 @@ mounted at `/var/lib/zot` inside the LXC.
 | Zot data volume     | 100 GiB (mounted at `/var/lib/zot`) |
 | Swap                | 0 (let OOM kill on overrun)         |
 
-The 1 GiB root is intentionally minimal — the LXC is stateless (rebuilt
-from the flake) and carries no user data. The Nix closure for the minimal
-image typically lands under 900 MiB. If a future rebuild exceeds that,
-bump the rootfs with `pct resize <vmid> rootfs 2G` before rebuilding.
+The 2 GiB root is intentionally minimal — the LXC is stateless (rebuilt
+from the flake) and carries no user data. The Nix closure for the image
+typically lands under 1.5 GiB. The trivy vulnerability database is stored
+inside Zot's storage root (`/var/lib/zot`, on the `mp0` data volume) and
+never touches the root disk. If a future rebuild exceeds the limit,
+bump with `pct resize <vmid> rootfs +2G` before rebuilding.
 
 If you push first-party images aggressively, raise `mostRecentlyPushedCount`
 in `configuration.nix` (the Zot data volume will absorb the extra blobs).
@@ -413,7 +415,7 @@ services.journald = {
 > pct exec <vmid> -- df -h /
 > ```
 >
-> If `/` is above 80 % after a fresh deploy, resize with `pct resize <vmid> rootfs 2G`
+> If `/` is above 80 % after a fresh deploy, resize with `pct resize <vmid> rootfs +2G`
 > before the next rebuild.
 
 ### Backups

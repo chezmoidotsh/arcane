@@ -125,9 +125,4 @@ run = '''
   echo "[INFO] Uploading ${template} to root@${usage_pve_host}..." >&2
   scp "${src}" "root@${usage_pve_host}:/var/lib/vz/template/cache/${template}"
   echo "[SUCCESS] Template uploaded." >&2
-  echo ""
-  echo "To create the container on ${usage_pve_host}:"
-  echo "  pct create <VMID> ${usage_storage}:vztmpl/${template} \\"
-  echo "    --hostname oci-registry --cores 1 --memory 512 \\"
-  echo "    --rootfs ${storage}:20 --net0 name=eth0,bridge=vmbr0,ip=dhcp"
 '''
