@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# [MISE] description="Build the LXC template with Cloudflare token baked in"
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+
+[[ -f "${CONFIG_ROOT}/secrets/caddy.sops.env" ]] ||
+  {
+    echo "[ERROR] secrets/caddy.sops.env not found — run 'mise run lxc:secrets:sync' first" >&2
+    exit 1
+  }
+
+ver=$(grep -m1 'version = "v' "${CONFIG_ROOT}/flake.nix" |
+  grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+echo "[INFO] Building oci-proxy.${ver}-amd64..." >&2
+
+export CLOUDFLARE_API_TOKEN
+CLOUDFLARE_API_TOKEN=$(sops -d --extract '["CLOUDFLARE_API_TOKEN"]' \
+  "${CONFIG_ROOT}/secrets/caddy.sops.env")
+
+nix:build:lxc --impure --output-name "oci-proxy.${ver}-amd64" "${CONFIG_ROOT}"
+unset CLOUDFLARE_API_TOKEN

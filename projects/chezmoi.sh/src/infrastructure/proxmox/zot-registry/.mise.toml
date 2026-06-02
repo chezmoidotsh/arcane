@@ -21,6 +21,7 @@
 #   mise run lxc:upgrade -- pve.lan <source_id> <target_id>
 #
 # File-based tasks (bash scripts, easier to maintain):
+#   .mise/tasks/lxc/build    — build task
 #   .mise/tasks/lxc/push     — upload task
 #   .mise/tasks/lxc/upgrade  — upgrade task
 #
@@ -71,37 +72,8 @@ run = '''
 dir = "{{ config_root }}"
 
 # -----------------------------------------------------------------------------
-# Build Tasks
-# -----------------------------------------------------------------------------
-# Two build variants:
-#   lxc:build — decrypts secrets/caddy.sops.env into the
-#               environment, builds with --impure so
-#               builtins.getEnv can read the token, and bakes
-#               /etc/caddy/secrets into the image.
-
-[tasks."lxc:build"]
-description = "Build the LXC template with Cloudflare token baked in (requires secrets/caddy.sops.env)"
-run = '''
-  set -euo pipefail
-
-  [[ -f "{{ config_root }}/secrets/caddy.sops.env" ]] \
-    || { echo "[ERROR] secrets/caddy.sops.env not found — run 'mise run lxc:secrets:sync' first" >&2; exit 1; }
-
-  REPO_ROOT=$(git -C "{{ config_root }}" rev-parse --show-toplevel)
-  ver=$(grep -m1 'version = "v' "${REPO_ROOT}/catalog/flakes/chezmoi.sh/zot/flake.nix" \
-    | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-
-  export CLOUDFLARE_API_TOKEN
-  CLOUDFLARE_API_TOKEN=$(sops -d --extract '["CLOUDFLARE_API_TOKEN"]' \
-    "{{ config_root }}/secrets/caddy.sops.env")
-
-  nix:build:lxc --impure --output-name "oci-proxy.${ver}-amd64" "{{ config_root }}"
-  unset CLOUDFLARE_API_TOKEN
-'''
-dir = "{{ config_root }}"
-
-# -----------------------------------------------------------------------------
 # Deployment Tasks — see .mise/tasks/lxc/ for file-based scripts
 # -----------------------------------------------------------------------------
+# lxc:build   → .mise/tasks/lxc/build   (build LXC tarball with token baked in)
 # lxc:push    → .mise/tasks/lxc/push    (upload template to Proxmox)
 # lxc:upgrade → .mise/tasks/lxc/upgrade (upgrade running LXC to new image)
