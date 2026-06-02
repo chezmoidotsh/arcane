@@ -180,21 +180,21 @@ ssh root@${NODE} pct start ${VMID}
 > **Before step 3 — fix mp0 ownership (unprivileged LXC).**
 > Proxmox creates the ZFS subvolume with host uid 0, which falls outside
 > the container's uid map and appears as `nobody` (65534) inside the LXC.
-> systemd's `StateDirectory=zot` cannot chown it.
 >
 > Run the following **on the Proxmox node** (`ssh root@${NODE}`):
 >
 > ```sh
 > VMID=100   # adjust
-> # Default Proxmox unprivileged mapping: container uid 0 → host uid 100000.
+> # Default Proxmox mapping: container uid N → host uid 100000+N.
+> # zot uid is fixed at 994 in zot.nix → host uid = 100000 + 994 = 100994.
 > # Verify: grep ^root /etc/subuid   (expect root:100000:65536)
 > pct mount ${VMID}
-> chown 100000:100000 /var/lib/lxc/${VMID}/rootfs/var/lib/zot
+> chown 100994:100994 /var/lib/lxc/${VMID}/rootfs/var/lib/zot
 > pct unmount ${VMID}
 > ```
 >
-> This hands `/var/lib/zot` to container root (uid 0), letting systemd
-> set final `zot:zot` ownership on first start.
+> `/var/lib/zot` is already owned by `zot:zot` (uid 994) inside the
+> container before first start — `StateDirectory` is a no-op.
 > See [Troubleshooting](#zot-does-not-start) if you missed this step.
 
 Adjust `local-zfs` to your storage backend (`local-lvm`, `nas`, …).
@@ -315,25 +315,28 @@ docker pull oci.chezmoi.sh/docker.io/library/alpine:3.20          # → success
 The hardening module (`modules/hardening.nix`) is always active — imported
 unconditionally by `modules/default.nix`. Concretely:
 
-| Layer                | What we change                                                                                                                                                                                                                                                                                                    |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Login surface**    | No `sshd`. No autologin getty. No console user by default.                                                                                                                                                                                                                                                        |
-| **Sudo**             | `wheelNeedsPassword = true`. No-op because there are no normal users.                                                                                                                                                                                                                                             |
-| **Kernel sysctls**   | IP forwarding off, source-routing off, ICMP redirects off, SYN cookies on, reverse-path filter on, ptrace YAMA = children-only, magic SysRq off, SUID coredumps off.                                                                                                                                              |
-| **Services**         | Avahi, CUPS, Polkit, UDisks2 disabled with `mkForce` (some of these are pulled in by other modules and would otherwise sneak in).                                                                                                                                                                                 |
-| **Docs**             | man-db / info / nixos-docs disabled. Smaller image, no setuid `man`.                                                                                                                                                                                                                                              |
-| **Journald**         | `Storage=volatile`, `RuntimeMaxUse=64M` — logs live in `/run/log/journal` (tmpfs), never touch the root disk, disappear on reboot. `ForwardToConsole=yes` so `pct console <vmid>` still shows boot messages. See [Log management](#log-management-on-a-1-gib-root-disk) for options if persistence is needed.     |
-| **Firewall (NixOS)** | Default-deny inbound. Only TCP/80 and TCP/443 allowed.                                                                                                                                                                                                                                                            |
-| **Firewall (PVE)**   | Layered on top — see previous section.                                                                                                                                                                                                                                                                            |
-| **Zot systemd**      | `NoNewPrivileges`, `PrivateTmp`, `ProtectSystem=strict`, `ProtectHome`, `ProtectControlGroups`, `ProtectKernelLogs`, `ProtectClock`, `RestrictSUIDSGID`, `RestrictRealtime`, `LockPersonality`, `MemoryDenyWriteExecute`, `SystemCallArchitectures=native`, `ReadWritePaths=[/var/lib/zot]`, `LimitNOFILE=65536`. |
-| **Caddy systemd**    | Same hardening flags applied via `mkDefault` (nixpkgs already sets some).                                                                                                                                                                                                                                         |
+| Layer                | What we change                                                                                                                                                                                                                                                                                                                                                                               |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Login surface**    | No `sshd`. No autologin getty. No console user by default.                                                                                                                                                                                                                                                                                                                                   |
+| **Sudo**             | `wheelNeedsPassword = true`. No-op because there are no normal users.                                                                                                                                                                                                                                                                                                                        |
+| **Kernel sysctls**   | IP forwarding off, source-routing off, ICMP redirects off, SYN cookies on, reverse-path filter on, ptrace YAMA = children-only, magic SysRq off, SUID coredumps off.                                                                                                                                                                                                                         |
+| **Services**         | Avahi, CUPS, Polkit, UDisks2 disabled with `mkForce` (some of these are pulled in by other modules and would otherwise sneak in).                                                                                                                                                                                                                                                            |
+| **Docs**             | man-db / info / nixos-docs disabled. Smaller image, no setuid `man`.                                                                                                                                                                                                                                                                                                                         |
+| **Journald**         | `Storage=volatile`, `RuntimeMaxUse=64M` — logs live in `/run/log/journal` (tmpfs), never touch the root disk, disappear on reboot. `ForwardToConsole=yes` so `pct console <vmid>` still shows boot messages. See [Log management](#log-management-on-a-1-gib-root-disk) for options if persistence is needed.                                                                                |
+| **Firewall (NixOS)** | Default-deny inbound. Only TCP/80 and TCP/443 allowed.                                                                                                                                                                                                                                                                                                                                       |
+| **Firewall (PVE)**   | Layered on top — see previous section.                                                                                                                                                                                                                                                                                                                                                       |
+| **Zot systemd**      | `NoNewPrivileges`, `RestrictSUIDSGID`, `RestrictRealtime`, `LockPersonality`, `MemoryDenyWriteExecute`, `SystemCallArchitectures=native`, `LimitNOFILE=65536`. Mount-namespace options (`PrivateTmp`, `ProtectSystem`, `ProtectHome`, `ProtectControlGroups`, `ProtectKernelLogs`, `ProtectClock`) are omitted — they fail with "step NAMESPACE … Permission denied" in an unprivileged LXC. |
+| **Caddy systemd**    | Same hardening flags applied via `mkDefault` (nixpkgs already sets some).                                                                                                                                                                                                                                                                                                                    |
 
 ### What we explicitly do **not** harden
 
-* `PrivateDevices`, `ProtectKernelTunables`, `ProtectKernelModules`,
-  `RestrictNamespaces` — these clash with the LXC's already-restricted
-  view of the host and would either fail to load or break legitimate
-  syscalls.
+* `PrivateTmp`, `ProtectSystem`, `ProtectHome`, `ProtectControlGroups`,
+  `ProtectKernelLogs`, `ProtectClock`, `PrivateDevices`,
+  `ProtectKernelModules`, `RestrictNamespaces` — all require creating a
+  mount namespace, which fails in an unprivileged LXC with
+  "Failed at step NAMESPACE … /proc: Permission denied".
+  The PVE + NixOS layered firewalls and Zot's loopback-only binding
+  compensate for the missing filesystem isolation.
 * AppArmor / SELinux — Proxmox uses AppArmor at the host level; we don't
   ship a per-service profile.
 
@@ -454,8 +457,8 @@ ssh root@pve.lan pct exec <vmid> -- journalctl -u zot --since '5 minutes ago'
   VMID=<vmid>
   pct stop ${VMID}
   pct mount ${VMID}
-  chown 100000:100000 /var/lib/lxc/${VMID}/rootfs/var/lib/zot
-  pct umount ${VMID}
+  chown 100994:100994 /var/lib/lxc/${VMID}/rootfs/var/lib/zot
+  pct unmount ${VMID}
   pct start ${VMID}
   ```
 
