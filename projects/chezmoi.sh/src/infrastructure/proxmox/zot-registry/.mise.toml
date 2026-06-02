@@ -5,14 +5,24 @@
 # runs the Zot OCI registry (oci-staging.chezmoi.sh) with Caddy HTTPS termination.
 #
 # Usage:
-#   mise run lxc:secrets:sync              # Fetch Cloudflare token from cluster → secrets/caddy.sops.env
-#   mise run lxc:build                     # Build the LXC tarball with Cloudflare token baked in
-#   mise run lxc:push -- <pve-host> [storage]  # Upload template to Proxmox
+#   mise run lxc:secrets:sync                              # Fetch Cloudflare token from cluster → secrets/caddy.sops.env
+#   mise run lxc:build                                     # Build the LXC tarball with Cloudflare token baked in
+#   mise run lxc:push -- <pve-host> [storage]              # Upload template to Proxmox
+#   mise run lxc:upgrade -- <pve-host> <src> <dest>        # Upgrade a running LXC to a new image
 #
 # Typical workflow (first time):
 #   mise run lxc:secrets:sync              # Requires kubectl access to amiya.akn
 #   mise run lxc:build
 #   mise run lxc:push -- pve.lan local
+#
+# Typical workflow (upgrade):
+#   mise run lxc:build
+#   mise run lxc:push -- pve.lan
+#   mise run lxc:upgrade -- pve.lan <source_id> <target_id>
+#
+# File-based tasks (bash scripts, easier to maintain):
+#   .mise/tasks/lxc/push     — upload task
+#   .mise/tasks/lxc/upgrade  — upgrade task
 #
 # Prerequisites:
 #   - Docker (for the Nix build container)
@@ -91,38 +101,7 @@ run = '''
 dir = "{{ config_root }}"
 
 # -----------------------------------------------------------------------------
-# Deployment Tasks
+# Deployment Tasks — see .mise/tasks/lxc/ for file-based scripts
 # -----------------------------------------------------------------------------
-# Uploads the built tarball to a Proxmox host and prints the pct create command.
-#
-# Usage: mise run lxc:push -- <pve-host> [storage]
-#   pve-host   Hostname or IP of the Proxmox node (e.g. pve.lan)
-#   storage    Proxmox storage name for the template (default: local)
-#
-# Example:
-#   mise run lxc:push -- pve.lan local
-#   mise run lxc:push -- pve.lan local-zfs
-
-[tasks."lxc:push"]
-description = "Upload the LXC template to Proxmox: mise run lxc:push -- <pve-host> [storage]"
-depends = ['lxc:build']
-usage = '''
-arg "<pve_host>" help="Hostname or IP of the Proxmox node (e.g. pve.lan)"
-arg "<storage>" help="Proxmox storage name for the template (default: local)" default="local"
-'''
-run = '''
-  set -euo pipefail
-
-  pve_host="${usage_pve_host}"
-  storage="${usage_storage}"
-
-  REPO_ROOT=$(git -C "{{ config_root }}" rev-parse --show-toplevel)
-  ver=$(grep -m1 'version = "v' "${REPO_ROOT}/catalog/flakes/chezmoi.sh/zot/flake.nix" \
-    | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-  template="oci-proxy.${ver}-amd64.tar.xz"
-  src="{{ config_root }}/${template}"
-
-  echo "[INFO] Uploading ${template} to root@${usage_pve_host}..." >&2
-  scp "${src}" "root@${usage_pve_host}:/var/lib/vz/template/cache/${template}"
-  echo "[SUCCESS] Template uploaded." >&2
-'''
+# lxc:push    → .mise/tasks/lxc/push    (upload template to Proxmox)
+# lxc:upgrade → .mise/tasks/lxc/upgrade (upgrade running LXC to new image)

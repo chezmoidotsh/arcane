@@ -36,8 +36,9 @@ projects/*/src/**/charts/
 # Ignore all .cache directories
 .cache/
 
-# Ignore .mise folder
-.mise/
+# Ignore .mise folder contents, but track file-based tasks
+.mise/*
+!.mise/tasks
 
 # Ignore all Nix result files and directories
 catalog/**/result

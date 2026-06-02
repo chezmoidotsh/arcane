@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+# [MISE] description="Upgrade (or downgrade) an LXC to a specific image version"
+# [USAGE] arg "<pve_host>" help="Hostname or IP of the Proxmox node (e.g. pve.lan)"
+# [USAGE] arg "<source_id>" help="VMID of the running container whose config is copied"
+# [USAGE] arg "<target_id>" help="VMID for the new container (must not already exist)"
+# [USAGE] flag "-V --version <version>" help="Zot version to deploy (e.g. v2.1.17) — auto-detected from flake if omitted"
+
+set -euo pipefail
+
+pve_host="${usage_pve_host}"
+source_id="${usage_source_id}"
+target_id="${usage_target_id}"
+version="${usage_version-}"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+REPO_ROOT="$(git -C "${CONFIG_ROOT}" rev-parse --show-toplevel)"
+
+# --- Resolve version and template name -------------------------------------
+if [[ -z ${version} ]]; then
+  version="v$(grep -m1 'version = "v' "${REPO_ROOT}/catalog/flakes/chezmoi.sh/zot/flake.nix" |
+    grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
+  echo "[INFO] Auto-detected version: ${version}" >&2
+fi
+# Strip leading 'v' for the filename (v2.1.17 → 2.1.17)
+template="oci-proxy.${version#v}-amd64.tar.xz"
+template_path="/var/lib/vz/template/cache/${template}"
+
+# --- Verify template is present on the PVE host ----------------------------
+echo "[>] ssh root@${pve_host} test -f '${template_path}'" >&2
+if ! ssh "root@${pve_host}" "test -f '${template_path}'"; then
+  echo "[ERROR] Template not found on ${pve_host}: ${template_path}" >&2
+  echo "        Run 'mise run lxc:build && mise run lxc:push -- ${pve_host}' to upload it." >&2
+  exit 1
+fi
+
+# --- Verify source exists; confirm with user --------------------------------
+echo "[>] ssh root@${pve_host} cat /etc/pve/lxc/${source_id}.conf" >&2
+source_conf=$(ssh "root@${pve_host}" "cat /etc/pve/lxc/${source_id}.conf 2>/dev/null" || true)
+if [[ -z ${source_conf} ]]; then
+  echo "[ERROR] CT ${source_id} does not exist on ${pve_host}." >&2
+  exit 1
+fi
+source_hostname=$(echo "${source_conf}" | awk '/^hostname:/{print $2}')
+echo "[INFO] Source: CT ${source_id} (${source_hostname})" >&2
+
+read -r -p "[?] Upgrade CT ${source_id} (${source_hostname}) → CT ${target_id} using ${template}? [y/N] " confirm
+[[ ${confirm} =~ ^[Yy]$ ]] || {
+  echo "[ABORTED]" >&2
+  exit 1
+}
+
+# --- Verify target does not exist ------------------------------------------
+echo "[>] ssh root@${pve_host} cat /etc/pve/lxc/${target_id}.conf" >&2
+target_conf=$(ssh "root@${pve_host}" "cat /etc/pve/lxc/${target_id}.conf 2>/dev/null" || true)
+if [[ -n ${target_conf} ]]; then
+  target_hostname=$(echo "${target_conf}" | awk '/^hostname:/{print $2}')
+  echo "[ERROR] CT ${target_id} (${target_hostname}) already exists on ${pve_host}." >&2
+  echo "        Choose a different VMID or destroy CT ${target_id} first." >&2
+  exit 1
+fi
+
+# --- Parse rootfs and mp0 from source config --------------------------------
+rootfs_line=$(echo "${source_conf}" | grep '^rootfs:' | sed 's/^rootfs: //')
+rootfs_storage=$(echo "${rootfs_line}" | cut -d: -f1)
+rootfs_size=$(echo "${rootfs_line}" | grep -oE 'size=[0-9]+[GMKTgmkt]?' | cut -d= -f2 | tr -d 'GMKTgmkt')
+
+mp0_line=$(echo "${source_conf}" | grep '^mp0:' | sed 's/^mp0: //')
+mp0_storage=$(echo "${mp0_line}" | cut -d: -f1)
+mp0_size=$(echo "${mp0_line}" | grep -oE 'size=[0-9]+[GMKTgmkt]?' | cut -d= -f2 | tr -d 'GMKTgmkt')
+mp0_mount=$(echo "${mp0_line}" | grep -oE 'mp=[^,]+' | cut -d= -f2-)
+
+echo "[INFO] rootfs: ${rootfs_storage}:${rootfs_size}  mp0: ${mp0_storage}:${mp0_size} → ${mp0_mount}" >&2
+
+# --- Create target container ------------------------------------------------
+echo "[INFO] Creating CT ${target_id} from ${template}..." >&2
+echo "[>] ssh root@${pve_host} pct create ${target_id} ${template_path} --rootfs ${rootfs_storage}:${rootfs_size} --mp0 ${mp0_storage}:${mp0_size},mp=${mp0_mount}" >&2
+ssh "root@${pve_host}" \
+  pct create "${target_id}" "${template_path}" \
+  --rootfs "${rootfs_storage}:${rootfs_size}" \
+  --mp0 "${mp0_storage}:${mp0_size},mp=${mp0_mount}"
+
+# --- Copy Proxmox config (rewrite vm-<source> disk references) --------------
+echo "[INFO] Copying LXC config from CT ${source_id} to CT ${target_id}..." >&2
+echo "[>] ssh root@${pve_host} sed 's|vm-${source_id}|vm-${target_id}|g' /etc/pve/lxc/${source_id}.conf > /etc/pve/lxc/${target_id}.conf" >&2
+ssh "root@${pve_host}" \
+  "sed 's|vm-${source_id}|vm-${target_id}|g' /etc/pve/lxc/${source_id}.conf \
+    > /etc/pve/lxc/${target_id}.conf"
+
+# --- Copy firewall config ----------------------------------------------------
+echo "[INFO] Copying firewall config from CT ${source_id} to CT ${target_id}..." >&2
+echo "[>] ssh root@${pve_host} cp /etc/pve/firewall/${source_id}.fw /etc/pve/firewall/${target_id}.fw" >&2
+ssh "root@${pve_host}" "
+  if [[ -f /etc/pve/firewall/${source_id}.fw ]]; then
+    cp /etc/pve/firewall/${source_id}.fw /etc/pve/firewall/${target_id}.fw
+  else
+    echo '[WARN] No firewall config found for CT ${source_id} — skipping.' >&2
+  fi
+"
+
+# --- Fix data-volume ownership (uid map: container uid 994 → host 100994) --
+echo "[INFO] Fixing ${mp0_mount} ownership (uid 100994 = container zot uid 994)..." >&2
+echo "[>] ssh root@${pve_host} pct mount ${target_id} && chown -R 100994:100994 /var/lib/lxc/${target_id}/rootfs${mp0_mount} && pct unmount ${target_id}" >&2
+ssh "root@${pve_host}" "
+  pct mount ${target_id}
+  chown --recursive 100994:100994 /var/lib/lxc/${target_id}/rootfs${mp0_mount}
+  pct unmount ${target_id}
+"
+
+# --- Start the new container ------------------------------------------------
+echo "[INFO] Starting CT ${target_id}..." >&2
+echo "[>] ssh root@${pve_host} pct start ${target_id}" >&2
+ssh "root@${pve_host}" pct start "${target_id}"
+
+echo "" >&2
+echo "✓  CT ${target_id} (${source_hostname}) is starting with ${template}" >&2
+echo "" >&2
+echo "Next steps:" >&2
+echo "  1. Wait for Caddy TLS certificate:" >&2
+echo "       ssh root@${pve_host} pct exec ${target_id} -- journalctl -u caddy -f" >&2
+echo "  2. Verify the registry is responding:" >&2
+echo "       curl -sSf https://oci.chezmoi.sh/v2/" >&2
+echo "  3. Cut over — stop the old container:" >&2
+echo "       ssh root@${pve_host} pct stop ${source_id}" >&2
