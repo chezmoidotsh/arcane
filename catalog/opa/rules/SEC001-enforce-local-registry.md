@@ -85,13 +85,17 @@ namespaces risks a circular dependency: if the registry itself is degraded,
 these critical components cannot be scheduled, potentially preventing the
 registry from recovering.
 
-| Namespace         | Reason                                                     |
-| ----------------- | ---------------------------------------------------------- |
-| `kube-system`     | Core Kubernetes components                                 |
-| `kube-public`     | Cluster metadata                                           |
-| `kube-node-lease` | Node heartbeat leases                                      |
-| `longhorn-system` | CSI — required for registry storage (bootstrap dependency) |
-| `zot-registry`    | The registry itself — circular dependency by definition    |
+| Namespace         | Reason                                                          |
+| ----------------- | --------------------------------------------------------------- |
+| `kube-system`     | Core Kubernetes components                                      |
+| `kube-public`     | Cluster metadata                                                |
+| `kube-node-lease` | Node heartbeat leases                                           |
+
+`longhorn-system`, `zot-registry`, and `argocd` were previously excluded due to
+the circular bootstrap dependency introduced by running Zot on Kubernetes with
+Longhorn storage. Since Zot now runs as a standalone Proxmox LXC (independent of
+any Kubernetes cluster), these exclusions are no longer necessary and have been
+removed.
 
 ## Enforcement
 
