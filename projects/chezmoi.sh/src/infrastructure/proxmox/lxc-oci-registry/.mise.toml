@@ -1,0 +1,79 @@
+# =============================================================================
+# zot-registry LXC — Task Automation
+# =============================================================================
+# Tasks for building, uploading, and maintaining the Proxmox LXC template that
+# runs the Zot OCI registry (oci.chezmoi.sh) with Caddy HTTPS termination.
+#
+# Usage:
+#   mise run lxc:secrets:sync                              # Fetch Cloudflare token from cluster → secrets/caddy.sops.env
+#   mise run lxc:build                                     # Build the LXC tarball with Cloudflare token baked in
+#   mise run lxc:push -- <pve-host>                        # Upload template to Proxmox (local storage)
+#   mise run lxc:upgrade -- <pve-host> <src> <dest>        # Upgrade a running LXC to a new image
+#
+# Typical workflow (first time):
+#   mise run lxc:secrets:sync              # Requires kubectl access to amiya.akn
+#   mise run lxc:build
+#   mise run lxc:push -- pve.lan
+#
+# Typical workflow (upgrade):
+#   mise run lxc:build
+#   mise run lxc:push -- pve.lan
+#   mise run lxc:upgrade -- pve.lan <source_id> <target_id>
+#
+# File-based tasks (bash scripts, easier to maintain):
+#   .mise/tasks/lxc/build    — build task
+#   .mise/tasks/lxc/push     — upload task
+#   .mise/tasks/lxc/upgrade  — upgrade task
+#
+# Prerequisites:
+#   - Docker (for the Nix build container)
+#   - kubectl configured for amiya.akn (for lxc:secrets:sync)
+#   - sops + age key in SOPS_AGE_KEY_FILE (configured in root .mise.toml)
+#   - SSH key-based access to root@<pve-host> (for lxc:push)
+# =============================================================================
+
+# =============================================================================
+# Tasks definition
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Secret Management
+# -----------------------------------------------------------------------------
+# Fetches the Cloudflare DNS-01 API token created by Crossplane (see
+# cloudflare.iam.zot-registry.yaml) and encrypts it into secrets/caddy.sops.env
+# so it can be baked into the LXC image at build time.
+#
+# The Crossplane APIToken resource must be Ready before running this task.
+# Check with: kubectl get apitoken chezmoi-sh-caddy-dns01-zot -n crossplane
+
+[tasks."lxc:secrets:sync"]
+description = "Fetch Cloudflare DNS-01 token from cluster and write secrets/caddy.sops.env"
+run = '''
+  set -euo pipefail
+
+  echo "[INFO] Fetching token from crossplane-secrets/chezmoi.sh-cloudflare-token-caddy-dns01-zot..." >&2
+  TOKEN=$(
+    kubectl get secret -n crossplane-secrets chezmoi.sh-cloudflare-token-caddy-dns01-zot \
+    -o jsonpath='{.data.attribute\.value}' | base64 -d \
+  )
+  [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — is the Crossplane APIToken Ready?" >&2; exit 1; }
+
+  mkdir -p "{{ config_root }}/secrets"
+  # TMPFILE must be inside the repo and match the .sops.yaml path_regex so that
+  # sops can discover the config and the creation rule when traversing up.
+  TMPFILE="{{ config_root }}/secrets/.tmp.$$.sops.env"
+  trap 'rm -f "${TMPFILE}"' EXIT
+  printf 'CLOUDFLARE_API_TOKEN=%s\n' "${TOKEN}" > "${TMPFILE}"
+  sops --encrypt --input-type dotenv --output-type dotenv "${TMPFILE}" \
+    > "{{ config_root }}/secrets/caddy.sops.env"
+
+  echo "[SUCCESS] secrets/caddy.sops.env written." >&2
+'''
+dir = "{{ config_root }}"
+
+# -----------------------------------------------------------------------------
+# Deployment Tasks — see .mise/tasks/lxc/ for file-based scripts
+# -----------------------------------------------------------------------------
+# lxc:build   → .mise/tasks/lxc/build   (build LXC tarball with token baked in)
+# lxc:push    → .mise/tasks/lxc/push    (upload template to Proxmox)
+# lxc:upgrade → .mise/tasks/lxc/upgrade (upgrade running LXC to new image)

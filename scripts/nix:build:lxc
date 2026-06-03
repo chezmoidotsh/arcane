@@ -1,0 +1,181 @@
+#!/usr/bin/env bash
+# trunk-ignore-all(shellcheck/SC2312): don't care about masking return value
+set -euo pipefail
+
+# shellcheck source=nix:_lib
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/nix:_lib"
+
+show_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [--no-sandbox] [--impure] [--system <platform>] [--output-name <basename>] <path-to-flake-dir>
+
+Builds a Proxmox LXC template from a NixOS flake using a Docker-wrapped Nix build.
+Tarballs are written alongside flake.nix. Without --output-name, files keep their
+nixos-generators names (nixos-image-lxc-*.tar.xz).
+
+Options:
+  --no-sandbox             Disable Nix sandbox (useful in certain CI environments)
+  --impure                 Pass --impure to nix build (enables builtins.getEnv in the flake)
+  --system <platform>      Force a specific platform (default: x86_64-linux)
+  --output-name <basename> Rename the first output tarball to <basename>.tar.xz
+
+Examples:
+  $(basename "$0") projects/chezmoi.sh/src/infrastructure/proxmox/zot-registry
+  $(basename "$0") --impure --output-name oci-proxy.2.1.17-amd64 projects/chezmoi.sh/src/infrastructure/proxmox/zot-registry
+
+Upload to Proxmox after building:
+  scp <path-to-flake-dir>/<name>.tar.xz root@<proxmox-host>:/var/lib/vz/template/cache/<name>.tar.xz
+  pct create <VMID> local:vztmpl/<name>.tar.xz --hostname <hostname> --cores 1 --memory 512 \\
+      --rootfs local-lvm:20 --net0 name=eth0,bridge=vmbr0,ip=dhcp
+EOF
+}
+
+FLAKE_DIR=""
+TARGET_SYSTEM="x86_64-linux"
+USE_SANDBOX=true
+USE_IMPURE=false
+OUTPUT_NAME=""
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+  --no-sandbox)
+    USE_SANDBOX=false
+    shift
+    ;;
+  --impure)
+    USE_IMPURE=true
+    shift
+    ;;
+  --system)
+    if [[ -n ${2-} && $2 != -* ]]; then
+      TARGET_SYSTEM="$2"
+      shift 2
+    else
+      log_error "Option --system requires a platform argument."
+      show_usage
+      exit 1
+    fi
+    ;;
+  --output-name)
+    if [[ -n ${2-} && $2 != -* ]]; then
+      OUTPUT_NAME="$2"
+      shift 2
+    else
+      log_error "Option --output-name requires a basename argument."
+      show_usage
+      exit 1
+    fi
+    ;;
+  -*)
+    log_error "Unknown option: $1"
+    show_usage
+    exit 1
+    ;;
+  *)
+    if [[ -z ${FLAKE_DIR} ]]; then
+      FLAKE_DIR="$1"
+    else
+      log_error "Multiple flake directories specified."
+      show_usage
+      exit 1
+    fi
+    shift
+    ;;
+  esac
+done
+
+if [[ -z ${FLAKE_DIR} ]]; then
+  show_usage
+  exit 1
+fi
+
+if [[ ! -d ${FLAKE_DIR} || ! -f "${FLAKE_DIR}/flake.nix" ]]; then
+  log_error "Flake directory '${FLAKE_DIR}' or '${FLAKE_DIR}/flake.nix' not found."
+  exit 1
+fi
+
+_nix_resolve_flake_dir "${FLAKE_DIR}"
+_nix_ensure_volumes
+_nix_tty_flags
+
+log_info "Cleaning last build result..."
+if [[ -n ${OUTPUT_NAME} ]]; then
+  rm -f "${FLAKE_DIR}/${OUTPUT_NAME}.tar.xz"
+else
+  rm -f "${FLAKE_DIR}"/nixos-image-lxc-*.tar.xz
+fi
+
+log_info "Building LXC template from '${FLAKE_DIR}' (target: ${TARGET_SYSTEM})..."
+
+# When --impure is set, forward UPPER_CASE env vars from the host into Docker
+# so that builtins.getEnv can read them inside the Nix flake evaluation.
+# System variables that would override the container's own environment (PATH,
+# HOME, …) are intentionally excluded to avoid breaking commands inside Docker.
+PASSTHROUGH_ENV_FLAGS=()
+if [[ ${USE_IMPURE} == "true" ]]; then
+  readonly BLOCKED_VARS="^(PATH|HOME|USER|LOGNAME|SHELL|TERM|TMPDIR|TEMPDIR|TMP|TEMP|DISPLAY|SSH_AUTH_SOCK|SSH_AGENT_PID|SHLVL|OLDPWD|PWD)$"
+  while IFS='=' read -r key _; do
+    [[ ${key} =~ ^[A-Z][A-Z0-9_]+$ ]] || continue
+    [[ ${key} =~ ${BLOCKED_VARS} ]] && continue
+    PASSTHROUGH_ENV_FLAGS+=(-e "${key}")
+  done < <(env)
+fi
+
+# We mount the entire repository into the container at /src.
+# The working directory is set to the specific flake location within /src
+# so Nix can access git context and use self.lastModifiedDate.
+docker run --rm \
+  -v "${NIX_CACHE_VOLUME}:/nix" \
+  -v "${NIX_TOOLS_VOLUME}:/tools" \
+  -v "${REPO_ROOT}:/src" \
+  -w "/src/${RELATIVE_FLAKE_PATH:-.}" \
+  ${DOCKER_TTY_FLAGS[@]+"${DOCKER_TTY_FLAGS[@]}"} \
+  ${PASSTHROUGH_ENV_FLAGS[@]+"${PASSTHROUGH_ENV_FLAGS[@]}"} \
+  -e USE_SANDBOX="${USE_SANDBOX}" \
+  -e USE_IMPURE="${USE_IMPURE}" \
+  -e TARGET_SYSTEM="${TARGET_SYSTEM}" \
+  -e OUTPUT_NAME="${OUTPUT_NAME}" \
+  nixos/nix sh -c '
+    set -euo pipefail
+    rm -rf /homeless-shelter
+
+    SANDBOX_FLAG=""
+    [[ "${USE_SANDBOX:-true}" == "false" ]] && SANDBOX_FLAG="--option sandbox false"
+
+    IMPURE_FLAG=""
+    [[ "${USE_IMPURE:-false}" == "true" ]] && IMPURE_FLAG="--impure"
+
+    SYSTEM_ARG="--system ${TARGET_SYSTEM}"
+
+    if [[ -x /tools/bin/nom ]]; then
+        /tools/bin/nom build --extra-experimental-features "nix-command flakes" ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace .#default --out-link result
+    else
+        nix --extra-experimental-features "nix-command flakes" build ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace .#default --out-link result
+    fi
+
+    # Copy all .tar.xz out of the read-only Nix store via the result symlink.
+    # Structure: result/tarball/nixos-image-lxc-*.tar.xz
+    # Using glob (not find -L) since result is a valid symlink inside Docker.
+    # With --output-name: the first tarball is renamed; extras keep their original basename.
+    COPIED=0
+    for f in result/tarball/*.tar.xz; do
+        [[ -f "$f" ]] || continue
+        if [[ -n "${OUTPUT_NAME}" && ${COPIED} -eq 0 ]]; then
+            cp "$f" "${OUTPUT_NAME}.tar.xz"
+        else
+            cp "$f" "$(basename "$f")"
+        fi
+        COPIED=$((COPIED + 1))
+    done
+    if [[ "${COPIED}" -eq 0 ]]; then
+        echo "ERROR: no .tar.xz found in result/tarball/" >&2
+        exit 1
+    fi
+    rm -f result
+  '
+
+if [[ -n ${OUTPUT_NAME} ]]; then
+  log_success "LXC template is ready at '${FLAKE_DIR}/${OUTPUT_NAME}.tar.xz'."
+else
+  log_success "LXC template(s) are ready in '${FLAKE_DIR}'."
+fi
