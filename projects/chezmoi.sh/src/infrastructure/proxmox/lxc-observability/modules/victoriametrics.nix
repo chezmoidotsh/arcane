@@ -39,12 +39,12 @@ let
         # AM runs with --web.route-prefix=/alerts, so /metrics moves too.
         metrics_path: /alerts/metrics
         static_configs: [{ targets: ["127.0.0.1:9093"] }]
-      - job_name: oci-registry
-        # Scraped through the full path (DNS + TLS + Caddy + Zot) so the `up`
-        # metric validates every layer. Zot exposes /metrics when the
-        # extensions.metrics option is enabled (see lxc-oci-registry).
-        scheme: https
-        static_configs: [{ targets: ["oci.chezmoi.sh"] }]
+      # OCI registry metrics arrive via remote_write from vmagent running on
+      # the oci-registry LXC (cluster="oci-registry"). The previous HTTPS pull
+      # job was removed when push was introduced; the trade-off is that the
+      # external path (DNS + TLS + Caddy + Zot) is no longer continuously
+      # validated by this scrape. See oci-registry.rules.yaml for the
+      # absent()-based liveness alert that replaces the up{} check.
   '';
 in
 {

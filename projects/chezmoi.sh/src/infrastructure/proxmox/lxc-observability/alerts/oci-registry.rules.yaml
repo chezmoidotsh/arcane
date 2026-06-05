@@ -1,0 +1,29 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# OCI registry — availability and health alerts
+# ─────────────────────────────────────────────────────────────────────────────
+# Metrics arrive via remote_write from a vmagent running on the oci-registry
+# LXC (cluster="oci-registry"). The push model means we no longer observe the
+# external path (DNS + TLS + Caddy + Zot) — only that Zot itself is alive and
+# vmagent can reach o11y. Add a blackbox-style probe from amiya if end-to-end
+# public-path monitoring becomes necessary.
+#
+# OCIRegistryDown fires when no Zot scrape has succeeded for >5m, which can
+# mean: Zot crashed, vmagent crashed, oci-registry LXC down, or the
+# oci-registry → o11y network path is broken.
+# ─────────────────────────────────────────────────────────────────────────────
+groups:
+  - name: oci-registry
+    rules:
+      - alert: OCIRegistryDown
+        expr: up{job="zot", cluster="oci-registry"} == 0 or absent(up{job="zot", cluster="oci-registry"})
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "OCI registry is unreachable"
+          description: >-
+            No successful Zot scrape from oci-registry for >5m. Possible
+            causes: Zot crashed, vmagent crashed, oci-registry LXC down, or
+            the oci-registry → o11y network path is broken. Image pulls
+            across the homelab will fail or fall back to upstream (slower,
+            may hit rate limits).

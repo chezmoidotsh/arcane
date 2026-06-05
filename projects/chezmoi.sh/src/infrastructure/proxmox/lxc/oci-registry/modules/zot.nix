@@ -83,6 +83,9 @@ let
       };
       ui.enable = true;
 
+      # Prometheus metrics at /metrics on the main HTTP listener.
+      metrics.enable = true;
+
       # Periodic integrity check on stored blobs.
       scrub = {
         enable = true;
