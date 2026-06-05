@@ -45,7 +45,7 @@
       # Proxmox template (observability.<date>-amd64.tar.xz). Component
       # versions track the nixpkgs pin. Bump this date before every
       # `mise run lxc:build`; append -N for multiple builds on the same day.
-      version = "2026.06.05";
+      version = "2026.06.05-1";
 
       # -----------------------------------------------------------------------
       # Build-time secrets, forwarded to the modules via _module.args.
