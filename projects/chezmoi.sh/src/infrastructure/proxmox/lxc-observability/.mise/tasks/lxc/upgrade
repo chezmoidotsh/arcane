@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# trunk-ignore-all(shellcheck/SC2029): SSH commands intentionally expand ${pve_host}, ${source_id}, ${target_id}, ${template_path}, ${mp0_mount}, ${mp1_mount} on the client; the values are local to this script, not on the remote PVE host.
+# trunk-ignore-all(shellcheck/SC2029): SSH commands intentionally expand ${pve_host}, ${source_id}, ${target_id}, ${template_path}, ${mp0_mount} on the client; the values are local to this script, not on the remote PVE host.
 # [MISE] description="Upgrade (or downgrade) the observability LXC to a specific image version"
 # [USAGE] arg "<pve_host>" help="Hostname or IP of the Proxmox node (e.g. pve.lan)"
 # [USAGE] arg "<source_id>" help="VMID of the running container whose config is copied"
@@ -18,7 +18,7 @@ yes="${usage_yes-}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
-# Container uid for the shared `victoria` user (configuration.nix: uid 980).
+# Container uid for the shared `o11y` user (configuration.nix: uid 980).
 # Default Proxmox mapping: container uid N → host uid 100000 + N.
 HOST_UID=100980
 
@@ -69,13 +69,12 @@ if [[ -n ${target_conf} ]]; then
   exit 1
 fi
 
-# --- Parse rootfs, mp0, and mp1 from source config --------------------------
+# --- Parse rootfs and mp0 from source config --------------------------------
 # Volume architecture:
 #   rootfs  — NixOS system files; ephemeral, rebuilt from template on upgrade.
-#   mp0     — persistent stack data (/var/lib/victoria); reattached to the
-#             new CT as-is. No copy needed: the LVM thin volume follows.
-#   mp1     — Caddy state (/var/lib/caddy): TLS certs + tsnet identity.
-#             Same reattach mechanic. Absent on pre-caddy-volume builds.
+#   mp0     — persistent stack data (/var/lib/o11y): metrics, logs, traces,
+#             alertmanager, vector, caddy (TLS certs + tsnet identity).
+#             Reattached to the new CT as-is. No copy needed.
 rootfs_line=$(echo "${source_conf}" | grep '^rootfs:' | sed 's/^rootfs: //')
 rootfs_storage=$(echo "${rootfs_line}" | cut -d: -f1)
 rootfs_size=$(echo "${rootfs_line}" | grep -oE 'size=[0-9]+[GMKTgmkt]?' | cut -d= -f2 | tr -d 'GMKTgmkt')
@@ -84,15 +83,12 @@ source_rootfs_vol=$(echo "${rootfs_line}" | cut -d, -f1) # e.g. nvme-lvm:vm-100-
 mp0_line=$(echo "${source_conf}" | grep '^mp0:' | sed 's/^mp0: //')
 mp0_mount=$(echo "${mp0_line}" | grep -oE 'mp=[^,]+' | cut -d= -f2-)
 
-mp1_line=$(echo "${source_conf}" | grep '^mp1:' | sed 's/^mp1: //' || true)
-mp1_mount=$(echo "${mp1_line}" | grep -oE 'mp=[^,]+' | cut -d= -f2- || true)
+echo "[INFO] rootfs: ${rootfs_storage}:${rootfs_size}G  mp0→${mp0_mount}" >&2
 
-echo "[INFO] rootfs: ${rootfs_storage}:${rootfs_size}G  mp0→${mp0_mount}${mp1_mount:+  mp1→${mp1_mount}}" >&2
-
-# --- Create target container (fresh rootfs only; mp0/mp1 reattached below) --
+# --- Create target container (fresh rootfs only; mp0 reattached below) -------
 # pct create allocates a new rootfs volume (vm-<target>-disk-0) and writes the
-# template into it. We do NOT pass --mp0/--mp1 — persistent volumes are
-# reattached via config copy in the next step; no data copy needed.
+# template into it. We do NOT pass --mp0 — the persistent volume is reattached
+# via config copy in the next step; no data copy needed.
 echo "[INFO] Creating CT ${target_id} from ${template}..." >&2
 echo "[>] ssh root@${pve_host} pct create ${target_id} ${template_path} --rootfs ${rootfs_storage}:${rootfs_size}" >&2
 ssh "root@${pve_host}" \
@@ -104,7 +100,7 @@ ssh "root@${pve_host}" \
 new_rootfs_vol=$(ssh "root@${pve_host}" \
   "grep '^rootfs:' /etc/pve/lxc/${target_id}.conf | awk '{print \$2}' | cut -d, -f1")
 
-echo "[INFO] Merging config: rootfs ${source_rootfs_vol} → ${new_rootfs_vol}, mp0${mp1_mount:+/mp1} unchanged" >&2
+echo "[INFO] Merging config: rootfs ${source_rootfs_vol} → ${new_rootfs_vol}, mp0 unchanged" >&2
 echo "[>] ssh root@${pve_host} sed 's|${source_rootfs_vol}|${new_rootfs_vol}|g' /etc/pve/lxc/${source_id}.conf > /etc/pve/lxc/${target_id}.conf" >&2
 ssh "root@${pve_host}" \
   "sed 's|${source_rootfs_vol}|${new_rootfs_vol}|g' /etc/pve/lxc/${source_id}.conf \
@@ -122,12 +118,9 @@ ssh "root@${pve_host}" "
 "
 
 # --- Fix data-volume ownership (uid map: container uid 980 → host 100980) --
-# Only mp0 needs a manual chown: the victoria user (uid 980) owns all stack
+# Only mp0 needs a manual chown: the o11y user (uid 980) owns all stack
 # data and the host uid (100980) must match before the service starts.
-# mp1 (caddy) is skipped — nixpkgs assigns caddy a static uid (374, via
-# ids.nix), so host uid 100374 is consistent across rebuilds. systemd's
-# StateDirectory chowns /var/lib/caddy to the caddy user on first start.
-echo "[INFO] Fixing ${mp0_mount} ownership (uid ${HOST_UID} = container victoria uid 980)..." >&2
+echo "[INFO] Fixing ${mp0_mount} ownership (uid ${HOST_UID} = container o11y uid 980)..." >&2
 ssh "root@${pve_host}" "
   pct mount ${target_id}
   chown --recursive ${HOST_UID}:${HOST_UID} /var/lib/lxc/${target_id}/rootfs${mp0_mount}
@@ -159,19 +152,18 @@ ssh "root@${pve_host}" pct stop "${source_id}"
 
 read -r -p "[?] CT ${target_id} is working correctly? [y/N] " confirm_ok
 if [[ ${confirm_ok} =~ ^[Yy]$ ]]; then
-  # Detach persistent volumes from source CT so pct destroy only removes rootfs.
-  # mp0/mp1 are now owned by CT ${target_id}; without --delete, lvremove would
-  # attempt to remove live volumes and fail with "filesystem in use".
-  delete_args=(--delete mp0)
-  [[ -n ${mp1_mount} ]] && delete_args+=(--delete mp1)
-  echo "[>] ssh root@${pve_host} pct set ${source_id} ${delete_args[*]}" >&2
+  # Detach persistent volume from source CT so pct destroy only removes rootfs.
+  # mp0 is now owned by CT ${target_id}; without --delete, lvremove would
+  # attempt to remove the live volume and fail with "filesystem in use".
+  echo "[>] ssh root@${pve_host} pct set ${source_id} --delete mp0" >&2
+  ssh "root@${pve_host}" pct set "${source_id}" --delete mp0
   ssh "root@${pve_host}" pct set "${source_id}" "${delete_args[@]}"
   echo "[>] ssh root@${pve_host} pct destroy ${source_id}" >&2
   ssh "root@${pve_host}" pct destroy "${source_id}"
   echo "" >&2
   echo "✓  Upgrade complete. CT ${target_id} (${source_hostname}) is live." >&2
 else
-  # Rollback: restart source, stop target. Detach persistent volumes from the
+  # Rollback: restart source, stop target. Detach persistent volume from the
   # target config before offering to destroy it — same lvremove issue applies.
   echo "[INFO] Rolling back — starting CT ${source_id}, stopping CT ${target_id}..." >&2
   echo "[>] ssh root@${pve_host} pct start ${source_id}" >&2
@@ -181,9 +173,7 @@ else
   echo "" >&2
   echo "✗  Rolled back to CT ${source_id}. CT ${target_id} is stopped." >&2
   echo "   Once CT ${source_id} is confirmed healthy, destroy the failed CT:" >&2
-  delete_args=(--delete mp0)
-  [[ -n ${mp1_mount} ]] && delete_args+=(--delete mp1)
-  echo "     ssh root@${pve_host} pct set ${target_id} ${delete_args[*]}" >&2
+  echo "     ssh root@${pve_host} pct set ${target_id} --delete mp0" >&2
   echo "     ssh root@${pve_host} pct destroy ${target_id}" >&2
   exit 1
 fi
