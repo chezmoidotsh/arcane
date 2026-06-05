@@ -97,6 +97,36 @@ run = '''
 '''
 
 # -----------------------------------------------------------------------------
+# Vector configuration tests
+# -----------------------------------------------------------------------------
+# Validates and unit-tests the Vector pipeline configuration without starting
+# a live Vector instance. Requires `vector` on PATH (install from https://vector.dev).
+#
+#   mise run vector:validate   — syntax check all production YAML files
+#   mise run vector:test       — run all unit tests + e2e pipeline tests
+
+[tasks."vector:validate"]
+description = "Validate Vector config syntax and component graph (all files)"
+dir = "{{ config_root }}"
+run = '''
+  set -euo pipefail
+  vector validate --no-environment --config-dir config/vector
+  echo "[OK] Vector config validated."
+'''
+
+[tasks."vector:test"]
+description = "Run all inline Vector tests (unit per transform + e2e pipeline)"
+dir = "{{ config_root }}"
+run = '''
+  set -euo pipefail
+  # Tests are inline in each transform file (10-/15-/20-/30-) and in the
+  # dedicated pipeline test file (50-tests-pipeline.yaml). --config-dir loads
+  # all *.yaml files and runs every `tests:` section found.
+  vector test --config-dir config/vector
+  echo "[OK] All Vector tests passed."
+'''
+
+# -----------------------------------------------------------------------------
 # Deployment Tasks — see .mise/tasks/lxc/ for file-based scripts
 # -----------------------------------------------------------------------------
 # lxc:build   → .mise/tasks/lxc/build   (build LXC tarball with all secrets baked in)
