@@ -1,0 +1,234 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Transform: SemConv loki-like validation
+# ─────────────────────────────────────────────────────────────────────────────
+# Validates that every incoming event conforms to the VictoriaLogs loki-like
+# SemConv layout before it reaches the sink. Events with unknown top-level
+# fields are rewritten as ingestion-error records with:
+#
+#   service.name = "vector-ingest"       — dedicated stream for fast filtering
+#   attr.error.type = "semconv_invalid"
+#   attr.error.invalid_fields            — comma-separated list of offenders
+#   attr.error.original_event            — JSON-encoded original event
+#   _msg = "ingestion_validation_error"
+#
+# Query ingestion errors in VictoriaLogs:
+#   service.name:vector-ingest attr.error.type:semconv_invalid
+#
+# Valid top-level fields:
+#   _msg, _time, trace_id, span_id       — VLogs / OTel reserved
+#   attr.*                               — per-log attributes
+#   <semconv_namespace>.*                — OTel resource attribute namespaces
+#     (service, host, cloud, container, k8s, os, process, deployment, device,
+#      faas, telemetry, webengine, browser, android, ios, network, system,
+#      db, log, thread, gcp, aws, azure, heroku, cicd)
+# ─────────────────────────────────────────────────────────────────────────────
+transforms:
+  validate_semconv:
+    type: remap
+    inputs:
+      - syslog_to_semconv
+      - otlp_to_semconv
+      - in_vector
+    source: |
+      # Ordered list of known OTel resource attribute namespaces.
+      # Source: https://opentelemetry.io/docs/specs/semconv/resource/
+      known_resource_namespaces = [
+        "android", "aws", "azure", "browser", "cicd",
+        "cloud", "container", "db", "deployment", "device",
+        "faas", "gcp", "heroku", "host", "ios",
+        "k8s", "log", "network", "os", "process",
+        "service", "system", "telemetry", "thread",
+        "webengine"
+      ]
+
+      reserved_fields = ["_msg", "_time", "trace_id", "span_id"]
+
+      all_keys = keys(.)
+
+      invalid_keys = filter(all_keys) -> |_index, key| {
+        if includes(reserved_fields, key) {
+          false
+        } else if starts_with(key, "attr.") {
+          false
+        } else {
+          namespace = split(key, ".")[0] || key
+          !includes(known_resource_namespaces, namespace)
+        }
+      }
+
+      if length(invalid_keys) > 0 {
+        original_time  = string(._time) ?? format_timestamp!(now(), format: "%+")
+        # Preserve observed_timestamp so error records keep the correct
+        # observation time (when the bad event was read, not when validated).
+        original_obs   = ."attr.observed_timestamp"
+        original_event = encode_json!(.)
+
+        . = {
+          "_msg":  "ingestion_validation_error",
+          "_time": original_time,
+          "service.name": "vector-ingest",
+          "host.name": get_hostname!(),
+          "attr.error.type":           "semconv_invalid",
+          "attr.error.invalid_fields": join!(invalid_keys, ","),
+          "attr.error.original_event": original_event
+        }
+        if original_obs != null {
+          ."attr.observed_timestamp" = original_obs
+        }
+      }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Unit tests — validate_semconv
+# ─────────────────────────────────────────────────────────────────────────────
+tests:
+  - name: "validate: well-formed SemConv event passes through unchanged"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          _msg: "User logged in"
+          _time: "2024-01-15T10:30:00+00:00"
+          service.name: "auth-service"
+          host.name: "k8s-node-01"
+          k8s.namespace.name: "production"
+          attr.user.id: "u-123"
+          trace_id: "aabbccdd11223344"
+          span_id: "55667788"
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._msg, "User logged in")
+              assert_eq!(.["service.name"], "auth-service")
+              assert_eq!(.["attr.user.id"], "u-123")
+              assert_eq!(.trace_id, "aabbccdd11223344")
+              assert!(is_null(.["attr.error.type"]))
+              true
+
+  - name: "validate: unknown root field triggers ingestion error"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          _msg: "original message"
+          _time: "2024-01-15T10:30:00+00:00"
+          service.name: "my-svc"
+          unknown_field: "bad value"
+          another_bad_field: "also bad"
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._msg, "ingestion_validation_error")
+              assert_eq!(.["service.name"], "vector-ingest")
+              assert_eq!(.["attr.error.type"], "semconv_invalid")
+              bad = string!(.["attr.error.invalid_fields"])
+              assert!(contains(bad, "unknown_field"))
+              assert!(contains(bad, "another_bad_field"))
+              orig = string!(.["attr.error.original_event"])
+              assert!(contains(orig, "original message"))
+              assert!(contains(orig, "my-svc"))
+              true
+
+  - name: "validate: attr.* prefix is always valid"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          _msg: "test"
+          _time: "2024-01-01T00:00:00Z"
+          service.name: "svc"
+          attr.anything.goes: "value"
+          attr.custom_metric: "42"
+          attr.some.deeply.nested.key: "ok"
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._msg, "test")
+              assert!(is_null(.["attr.error.type"]))
+              true
+
+  - name: "validate: all known SemConv resource namespaces accepted"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          _msg: "all namespaces"
+          _time: "2024-01-01T00:00:00Z"
+          service.name: "svc"
+          host.name: "h"
+          cloud.provider: "aws"
+          container.name: "app"
+          k8s.cluster.name: "prod"
+          os.type: "linux"
+          process.pid: "42"
+          deployment.environment: "production"
+          telemetry.sdk.name: "opentelemetry"
+          network.name: "eth0"
+          db.system: "postgresql"
+          log.file.name: "app.log"
+          browser.brands: "Chrome"
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(is_null(.["attr.error.type"]), "all known namespaces pass")
+              true
+
+  - name: "validate: _time preserved in error record"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          _msg: "msg"
+          _time: "2024-06-01T12:00:00+00:00"
+          service.name: "svc"
+          bad_field: "oops"
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._time, "2024-06-01T12:00:00+00:00")
+              true
+
+  - name: "validate: trace_id and span_id are reserved (not invalid)"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          _msg: "traced request"
+          _time: "2024-01-01T00:00:00Z"
+          service.name: "svc"
+          trace_id: "00112233445566778899aabbccddeeff"
+          span_id: "0011223344556677"
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(is_null(.["attr.error.type"]))
+              assert_eq!(.trace_id, "00112233445566778899aabbccddeeff")
+              assert_eq!(.span_id, "0011223344556677")
+              true
+
+  - name: "validate: error record uses service.name=vector-ingest for VLogs query"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          _msg: "msg"
+          _time: "2024-01-01T00:00:00Z"
+          bad_ns.field: "value"
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.["service.name"], "vector-ingest")
+              true

@@ -80,7 +80,9 @@
 
   # ── Firewall ───────────────────────────────────────────────────────────────
   # Default deny; :80/:443 are the public surface (Caddy). :5140 is the syslog
-  # TCP ingest port for PVE host/LXC log forwarding — internal bridge only.
+  # TCP ingest port — now owned by Vector (not VictoriaLogs) for PVE host/LXC
+  # log forwarding via rsyslog omfwd. Vector's OTLP (:4317/:4318) and native
+  # (:6000) ports bind loopback only and need no firewall rule.
   # Do NOT use lib.mkDefault for allowedTCPPorts — nixos-generators' lxc format
   # sets it to [] at normal priority and would silently win over mkDefault (1000).
   networking.firewall.enable = lib.mkDefault true;

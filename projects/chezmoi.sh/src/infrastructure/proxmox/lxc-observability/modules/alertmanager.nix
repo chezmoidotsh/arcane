@@ -31,7 +31,7 @@
 
 let
   listenAddr = "127.0.0.1:9093";
-  dataDir = "/var/lib/victoria/alertmanager";
+  dataDir = "/var/lib/o11y/alertmanager";
 
   slackWebhookUrl = secrets.slackWebhookUrl or "";
   deadmanUrl = secrets.alertmanagerDeadmanUrl or "";
@@ -111,14 +111,14 @@ in
       ];
       ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
 
-      User = "victoria";
-      Group = "victoria";
+      User = "o11y";
+      Group = "o11y";
       Type = "simple";
 
       Restart = "always";
       RestartSec = "5s";
       TimeoutStopSec = "30s";
-      StateDirectory = "victoria/alertmanager";
+      StateDirectory = "o11y/alertmanager";
       WorkingDirectory = dataDir;
 
       NoNewPrivileges = true;

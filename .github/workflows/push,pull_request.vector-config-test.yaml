@@ -1,0 +1,90 @@
+---
+name: 🧪 Vector Pipeline Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/push,pull_request.vector-config-test.yaml"
+      - "projects/chezmoi.sh/src/infrastructure/proxmox/lxc-observability/config/vector/**"
+
+  pull_request:
+    paths:
+      - ".github/workflows/push,pull_request.vector-config-test.yaml"
+      - "projects/chezmoi.sh/src/infrastructure/proxmox/lxc-observability/config/vector/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  VECTOR_CONFIG_DIR: projects/chezmoi.sh/src/infrastructure/proxmox/lxc-observability/config/vector
+  # Pinned to the Vector version shipped with the NixOS channel used in the LXC flake.
+  # Bump together with nixpkgs when upgrading the appliance image.
+  VECTOR_VERSION: "0.45.0"
+
+jobs:
+  install-vector:
+    name: 🛠️ Cache Vector binary
+    runs-on: ubuntu-latest
+    steps:
+      - name: 💾 Cache Vector binary
+        id: cache-vector
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: /usr/local/bin/vector
+          key: vector-${{ env.VECTOR_VERSION }}-linux-amd64
+
+      - name: ⬇️ Download Vector ${{ env.VECTOR_VERSION }}
+        if: steps.cache-vector.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL \
+            "https://github.com/vectordotdev/vector/releases/download/v${VECTOR_VERSION}/vector-${VECTOR_VERSION}-x86_64-unknown-linux-musl.tar.gz" \
+            | tar -xzf - -C /tmp --strip-components=2 \
+              "vector-x86_64-unknown-linux-musl/bin/vector"
+          sudo mv /tmp/vector /usr/local/bin/vector
+          vector --version
+
+  validate:
+    name: 🔍 Validate config syntax
+    runs-on: ubuntu-latest
+    needs: install-vector
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 💾 Restore Vector binary
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: /usr/local/bin/vector
+          key: vector-${{ env.VECTOR_VERSION }}-linux-amd64
+
+      - name: 🔍 Validate all config files (syntax + component graph)
+        # --no-environment skips env-var presence checks irrelevant in CI.
+        # --config-dir loads every *.yaml in the directory including inline tests
+        # (the `tests:` section is ignored by `validate`, only by `test`).
+        run: vector validate --no-environment --config-dir "${VECTOR_CONFIG_DIR}"
+
+  test:
+    name: 🧪 Run all tests (unit + e2e)
+    runs-on: ubuntu-latest
+    needs: [install-vector, validate]
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 💾 Restore Vector binary
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: /usr/local/bin/vector
+          key: vector-${{ env.VECTOR_VERSION }}-linux-amd64
+
+      - name: 🧪 Run all inline tests
+        # Tests are co-located with each transform file (10-/15-/20-/30-) and
+        # the end-to-end pipeline tests live in 50-tests-pipeline.yaml.
+        # `vector test --config-dir` loads all *.yaml files and runs every
+        # `tests:` section found — unit tests for each transform first, then e2e.
+        run: vector test --config-dir "${VECTOR_CONFIG_DIR}"

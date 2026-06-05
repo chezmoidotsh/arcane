@@ -16,7 +16,7 @@
 #
 # Shared service account
 # ──────────────────────
-# Every stack daemon runs as the single `victoria` user (uid/gid 980). This is
+# Every stack daemon runs as the single `o11y` user (uid/gid 980). This is
 # deliberate: the LXC is a single-purpose appliance, the whole container is the
 # trust boundary, and per-unit systemd hardening still applies. A single fixed
 # uid keeps the Proxmox unprivileged uid-map ownership model trivial — the data
@@ -32,7 +32,7 @@
 
 {
   system.stateVersion = "26.05";
-  networking.hostName = "observability";
+  networking.hostName = "o11y";
 
   time.timeZone = "Etc/UTC";
   i18n.defaultLocale = "C.UTF-8";
@@ -40,15 +40,15 @@
   # ── Shared service account ────────────────────────────────────────────────
   # uid/gid 980 fixed → host uid 100980 with the default Proxmox mapping.
   # All daemons run as this user; the data volume is owned by it.
-  users.users.victoria = {
+  users.users.o11y = {
     isSystemUser = true;
     uid = 980;
-    group = "victoria";
-    home = "/var/lib/victoria";
+    group = "o11y";
+    home = "/var/lib/o11y";
     createHome = false; # the mp0 data volume owns the lifecycle
-    description = "VictoriaMetrics stack service account";
+    description = "Observability stack service account";
   };
-  users.groups.victoria = { gid = 980; };
+  users.groups.o11y = { gid = 980; };
 
   # ── Console shell (pct enter) ─────────────────────────────────────────────
   # `pct enter` spawns a shell without a login session, so /run/current-system/

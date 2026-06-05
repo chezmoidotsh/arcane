@@ -1,15 +1,14 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # VictoriaLogs — central log store
 # ─────────────────────────────────────────────────────────────────────────────
-# Receives logs from every cluster's Vector pipeline. Logs carry a `cluster`
-# stream field set by the sending Vector instance — same correlation model as
-# metrics, no hard tenancy.
+# Receives processed logs from the local Vector pipeline (loopback :9428 only).
+# Vector owns all ingest: syslog TCP :5140, OTLP HTTP :4318, Vector native :6000.
+# VictoriaLogs serves HTTP for both ingest (Vector → ES-compatible API) and
+# query (Caddy → /logs/* → :9428).
 #
-# HTTP binds 127.0.0.1:9428 only — Caddy (path routing, no auth) is the public
-# surface; access control is the Proxmox host firewall by source CIDR. Vector
-# ships to the Elasticsearch-compatible ingest API under /insert/* (routed by Caddy).
-# Syslog TCP listens on :5140 (all interfaces) for PVE host/LXC log forwarding
-# via rsyslog omfwd — restricted to the LXC bridge network by the NixOS firewall.
+# Access control: Caddy (path routing, no auth) is the sole public surface;
+# the Proxmox host firewall restricts by source CIDR. No syslog listener here —
+# Vector handles protocol conversion and SemConv validation before forwarding.
 #
 # NOTE: `pkgs.victorialogs` must exist on the pinned nixpkgs. If the channel
 # only ships the binary under a different attribute, adjust the ExecStart path
@@ -19,8 +18,7 @@
 
 let
   listenAddr = "127.0.0.1:9428";
-  syslogTcpAddr = ":5140"; # reachable from PVE hosts on the LXC bridge network
-  dataDir = "/var/lib/victoria/logs";
+  dataDir = "/var/lib/o11y/logs";
 in
 {
   systemd.services.victorialogs = {
@@ -35,19 +33,18 @@ in
         "${pkgs.victorialogs}/bin/victoria-logs"
         "-storageDataPath=${dataDir}"
         "-httpListenAddr=${listenAddr}"
-        "-syslog.listenAddr.tcp=${syslogTcpAddr}"
         "-retentionPeriod=30d" # homelab baseline; raise per disk budget
         "-loggerFormat=json"
       ];
 
-      User = "victoria";
-      Group = "victoria";
+      User = "o11y";
+      Group = "o11y";
       Type = "simple";
 
       Restart = "always";
       RestartSec = "5s";
       TimeoutStopSec = "30s";
-      StateDirectory = "victoria/logs";
+      StateDirectory = "o11y/logs";
       WorkingDirectory = dataDir;
 
       NoNewPrivileges = true;

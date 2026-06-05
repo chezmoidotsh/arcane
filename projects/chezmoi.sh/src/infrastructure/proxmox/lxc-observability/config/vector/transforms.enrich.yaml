@@ -1,0 +1,146 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Transform: enrichment — pipeline timestamps
+# ─────────────────────────────────────────────────────────────────────────────
+# Stamps the egress timestamp (attr.stored_timestamp) on every event just
+# before the sink. Also acts as the safety net for attr.observed_timestamp:
+# syslog and otlp source transforms set it explicitly, but events arriving
+# via the vector-native source (in_vector) may not carry one — in that case
+# we stamp it here with now() rather than letting it stay null.
+#
+# Three timestamps together let queries measure pipeline latency:
+#   _time                   — when the event happened (original log timestamp)
+#   attr.observed_timestamp — first read by Vector (source receive time)
+#   attr.stored_timestamp   — pushed to VLogs (pipeline egress)
+#
+# Useful LogsQL latencies:
+#   in-pipeline latency = attr.stored_timestamp - attr.observed_timestamp
+#   collection delay    = attr.observed_timestamp - _time
+# ─────────────────────────────────────────────────────────────────────────────
+transforms:
+  add_timestamps:
+    type: remap
+    inputs:
+      - validate_semconv
+    source: |
+      # Safety net for in_vector events with no upstream observed_timestamp
+      if ."attr.observed_timestamp" == null {
+        ."attr.observed_timestamp" = format_timestamp!(now(), format: "%+")
+      }
+      ."attr.stored_timestamp" = format_timestamp!(now(), format: "%+")
+
+  # ── Internal metrics: attach the cluster external label ────────────────────
+  # Vector 0.55+ rejects arbitrary keys under sources.in_internal_metrics.tags
+  # (only host_key / pid_key are valid there). The supported way to add a
+  # constant label is a remap transform that mutates .tags on every metric.
+  # Wired ahead of out_vector_metrics in sinks.yaml.
+  tag_internal_metrics:
+    type: remap
+    inputs:
+      - in_internal_metrics
+    source: |
+      .tags.cluster = "o11y-appliance"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Unit tests — add_timestamps
+# ─────────────────────────────────────────────────────────────────────────────
+tests:
+  - name: "enrich: attr.stored_timestamp added on every event"
+    inputs:
+      - insert_at: add_timestamps
+        type: log
+        log_fields:
+          _msg: "some log line"
+          _time: "2024-01-15T10:30:00+00:00"
+          service.name: "my-svc"
+          host.name: "my-host"
+          attr.observed_timestamp: "2024-01-15T10:30:00.100+00:00"
+    outputs:
+      - extract_from: add_timestamps
+        conditions:
+          - type: vrl
+            source: |
+              ts = string!(.["attr.stored_timestamp"])
+              parsed = parse_timestamp!(ts, format: "%+")
+              assert!(parsed != null, "attr.stored_timestamp is RFC3339")
+              true
+
+  - name: "enrich: existing attr.observed_timestamp is preserved"
+    inputs:
+      - insert_at: add_timestamps
+        type: log
+        log_fields:
+          _msg: "preserved"
+          _time: "2024-06-01T00:00:00Z"
+          service.name: "svc"
+          attr.observed_timestamp: "2024-06-01T00:00:00.123+00:00"
+    outputs:
+      - extract_from: add_timestamps
+        conditions:
+          - type: vrl
+            source: |
+              # Source-set observed timestamp must round-trip unchanged
+              assert_eq!(.["attr.observed_timestamp"], "2024-06-01T00:00:00.123+00:00")
+              true
+
+  - name: "enrich: vector-native event without observed_timestamp gets fallback"
+    inputs:
+      - insert_at: add_timestamps
+        type: log
+        log_fields:
+          _msg: "from cluster Vector, no observed set"
+          _time: "2024-06-01T00:00:00Z"
+          service.name: "argocd"
+    outputs:
+      - extract_from: add_timestamps
+        conditions:
+          - type: vrl
+            source: |
+              obs = string!(.["attr.observed_timestamp"])
+              parsed = parse_timestamp!(obs, format: "%+")
+              assert!(parsed != null, "fallback observed_timestamp set when missing")
+              true
+
+  - name: "enrich: original fields are preserved alongside timestamps"
+    inputs:
+      - insert_at: add_timestamps
+        type: log
+        log_fields:
+          _msg: "preserved"
+          _time: "2024-06-01T00:00:00Z"
+          service.name: "svc"
+          attr.custom: "still here"
+          trace_id: "deadbeef"
+    outputs:
+      - extract_from: add_timestamps
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._msg, "preserved")
+              assert_eq!(._time, "2024-06-01T00:00:00Z")
+              assert_eq!(.["attr.custom"], "still here")
+              assert_eq!(.trace_id, "deadbeef")
+              assert!(.["attr.stored_timestamp"] != null)
+              assert!(.["attr.observed_timestamp"] != null)
+              true
+
+  - name: "enrich: ingestion error events also receive timestamps"
+    inputs:
+      - insert_at: add_timestamps
+        type: log
+        log_fields:
+          _msg: "ingestion_validation_error"
+          _time: "2024-01-01T00:00:00Z"
+          service.name: "vector-ingest"
+          host.name: "appliance"
+          attr.error.type: "semconv_invalid"
+          attr.error.invalid_fields: "bad_field"
+          attr.error.original_event: "{}"
+    outputs:
+      - extract_from: add_timestamps
+        conditions:
+          - type: vrl
+            source: |
+              assert!(.["attr.stored_timestamp"] != null)
+              assert!(.["attr.observed_timestamp"] != null)
+              assert_eq!(.["service.name"], "vector-ingest")
+              true

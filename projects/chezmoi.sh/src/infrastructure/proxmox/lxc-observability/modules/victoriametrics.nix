@@ -17,7 +17,7 @@
 
 let
   listenAddr = "127.0.0.1:8428";
-  dataDir = "/var/lib/victoria/metrics";
+  dataDir = "/var/lib/o11y/metrics";
 
   # Self-scrape: the appliance monitors its own components. These targets are
   # all loopback; their `up` series feed the self.rules alerts (see ../alerts).
@@ -39,6 +39,12 @@ let
         # AM runs with --web.route-prefix=/alerts, so /metrics moves too.
         metrics_path: /alerts/metrics
         static_configs: [{ targets: ["127.0.0.1:9093"] }]
+      - job_name: oci-registry
+        # Scraped through the full path (DNS + TLS + Caddy + Zot) so the `up`
+        # metric validates every layer. Zot exposes /metrics when the
+        # extensions.metrics option is enabled (see lxc-oci-registry).
+        scheme: https
+        static_configs: [{ targets: ["oci.chezmoi.sh"] }]
   '';
 in
 {
@@ -62,14 +68,14 @@ in
         "-loggerFormat=json"
       ];
 
-      User = "victoria";
-      Group = "victoria";
+      User = "o11y";
+      Group = "o11y";
       Type = "simple";
 
       Restart = "always";
       RestartSec = "5s";
       TimeoutStopSec = "30s";
-      StateDirectory = "victoria/metrics";
+      StateDirectory = "o11y/metrics";
       WorkingDirectory = dataDir;
 
       # ── systemd hardening (LXC-safe subset) ──────────────────────────────

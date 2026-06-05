@@ -52,8 +52,8 @@ in
         "-loggerFormat=json"
       ];
 
-      User = "victoria";
-      Group = "victoria";
+      User = "o11y";
+      Group = "o11y";
       Type = "simple";
 
       Restart = "always";

@@ -1,0 +1,301 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Transform: syslog → SemConv loki-like format
+# ─────────────────────────────────────────────────────────────────────────────
+# Maps RFC 5424 syslog fields to the VictoriaLogs loki-like SemConv layout:
+#
+#   VLogs loki-like convention:
+#     _msg          — the log body
+#     _time         — RFC 3339 timestamp
+#     <resource.*>  — OTel resource attributes at root (service.name, host.name…)
+#     attr.<key>    — per-log attributes prefixed with "attr."
+#     trace_id      — trace correlation (optional)
+#     span_id       — span correlation (optional)
+#
+#   Syslog field mapping:
+#     hostname        → host.name                      (resource)
+#     appname         → service.name                   (resource)
+#     procid          → attr.process.pid
+#     msgid           → attr.syslog.message_id
+#     severity        → attr.syslog.severity.text
+#     facility        → attr.syslog.facility.name
+#     structured_data → attr.syslog.structured_data    (JSON-encoded)
+#     message         → _msg
+#     timestamp       → _time
+#     (reconstructed) → attr.log.record.original       (OTel semconv)
+#     (generated)     → attr.log.record.uid             (OTel semconv)
+# ─────────────────────────────────────────────────────────────────────────────
+transforms:
+  syslog_to_semconv:
+    type: remap
+    inputs:
+      - in_syslog
+    source: |
+      # ── Observation timestamp: stamp at the earliest possible point ───────
+      # Captures when Vector first read the event off the syslog TCP socket.
+      # Pair with attr.stored_timestamp (set just before the sink) to measure
+      # in-pipeline latency: stored - observed.
+      ."attr.observed_timestamp" = format_timestamp!(now(), format: "%+")
+
+      # ── Capture raw fields before any del() call ──────────────────────────
+      # Required to reconstruct attr.log.record.original from parsed syslog.
+      _host_r = string(.hostname) ?? "-"
+      _app_r  = string(.appname)  ?? "-"
+      _pid_r  = to_string(.procid) ?? "-"
+      _msg_r  = string(.message) ?? ""
+      _ts_fmt = format_timestamp!(.timestamp || now(), format: "%+")
+
+      # ── OTel general log identification attributes ─────────────────────────
+      # https://opentelemetry.io/docs/specs/semconv/general/logs/#general-log-identification-attributes
+      # uuid_v4() assigns a stable per-record identifier for deduplication.
+      # log.record.original reconstructs the syslog header; exact original bytes
+      # are unavailable after Vector's RFC 5424 parser consumes them.
+      # Format: TIMESTAMP HOSTNAME APP-NAME[PROCID]: MSG
+      ."attr.log.record.uid"      = uuid_v4()
+      ."attr.log.record.original" = _ts_fmt + " " + _host_r + " " + _app_r + "[" + _pid_r + "]: " + _msg_r
+
+      # ── Core VLogs fields ─────────────────────────────────────────────────
+      ._msg  = del(.message) || ""
+      ._time = _ts_fmt
+      del(.timestamp)
+
+      # ── Resource attributes (root-level) ──────────────────────────────────
+      ."service.name" = string(del(.appname))  ?? "unknown"
+      ."host.name"    = string(del(.hostname)) ?? get_hostname!()
+
+      # ── Per-log attributes (attr.* prefix) ────────────────────────────────
+      severity = del(.severity)
+      if severity != null {
+        ."attr.syslog.severity.text" = to_string!(severity)
+      }
+
+      facility = del(.facility)
+      if facility != null {
+        ."attr.syslog.facility.name" = to_string!(facility)
+      }
+
+      procid = del(.procid)
+      if procid != null {
+        ."attr.process.pid" = to_string!(procid)
+      }
+
+      msgid = del(.msgid)
+      if msgid != null {
+        ."attr.syslog.message_id" = to_string!(msgid)
+      }
+
+      # RFC 5424 structured data — JSON-encoded to preserve structure without
+      # polluting the root namespace with arbitrary SD-ID / param-name pairs.
+      sd = del(.structured_data)
+      if sd != null {
+        ."attr.syslog.structured_data" = encode_json!(sd)
+      }
+
+      # ── Cleanup — drop Vector-internal syslog metadata ────────────────────
+      del(.version)
+      del(.source_ip)
+      del(.source_type)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Unit tests — syslog_to_semconv
+# ─────────────────────────────────────────────────────────────────────────────
+tests:
+  - name: "syslog: full RFC5424 event maps to SemConv loki-like"
+    inputs:
+      - insert_at: syslog_to_semconv
+        type: log
+        log_fields:
+          message: "Started NetworkManager.service"
+          hostname: "pve-01"
+          appname: "systemd"
+          procid: "1"
+          msgid: "SERVICE"
+          severity: "info"
+          facility: "daemon"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          version: 1
+          structured_data:
+            timeQuality:
+              tzKnown: "1"
+              isSynced: "1"
+    outputs:
+      - extract_from: syslog_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._msg, "Started NetworkManager.service", "_msg")
+              assert_eq!(.["host.name"], "pve-01", "host.name")
+              assert_eq!(.["service.name"], "systemd", "service.name")
+              assert_eq!(.["attr.process.pid"], "1", "attr.process.pid")
+              assert_eq!(.["attr.syslog.message_id"], "SERVICE", "attr.syslog.message_id")
+              assert_eq!(.["attr.syslog.severity.text"], "info", "attr.syslog.severity.text")
+              assert_eq!(.["attr.syslog.facility.name"], "daemon", "attr.syslog.facility.name")
+              assert!(starts_with(string!(._time), "2024-01-15"), "_time prefix")
+              assert!(.["attr.syslog.structured_data"] != null, "structured_data encoded")
+              assert!(is_null(.message), "message deleted")
+              assert!(is_null(.hostname), "hostname deleted")
+              assert!(is_null(.appname), "appname deleted")
+              assert!(is_null(.version), "version deleted")
+              assert!(.["attr.observed_timestamp"] != null, "observed_timestamp set at source")
+              true
+
+  - name: "syslog: attr.observed_timestamp is a valid RFC3339 timestamp"
+    inputs:
+      - insert_at: syslog_to_semconv
+        type: log
+        log_fields:
+          message: "test"
+          hostname: "h"
+          timestamp: "2024-01-01T00:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              obs = string!(.["attr.observed_timestamp"])
+              parsed = parse_timestamp!(obs, format: "%+")
+              assert!(parsed != null, "attr.observed_timestamp is RFC3339")
+              true
+
+  - name: "syslog: log.record.uid is a non-empty string (UUID)"
+    inputs:
+      - insert_at: syslog_to_semconv
+        type: log
+        log_fields:
+          message: "test"
+          hostname: "pve-01"
+          appname: "sshd"
+          timestamp: "2024-06-01T10:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              uid = string!(.["attr.log.record.uid"])
+              # UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+              assert!(length(uid) == 36, "UUID length is 36")
+              assert!(contains(uid, "-"), "UUID contains hyphens")
+              true
+
+  - name: "syslog: log.record.original reconstructs header from parsed fields"
+    inputs:
+      - insert_at: syslog_to_semconv
+        type: log
+        log_fields:
+          message: "Connection accepted"
+          hostname: "pve-01"
+          appname: "sshd"
+          procid: "9876"
+          timestamp: "2024-06-01T10:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              orig = string!(.["attr.log.record.original"])
+              assert!(contains(orig, "pve-01"), "hostname in original")
+              assert!(contains(orig, "sshd"), "appname in original")
+              assert!(contains(orig, "9876"), "procid in original")
+              assert!(contains(orig, "Connection accepted"), "message in original")
+              assert!(contains(orig, "2024-06-01"), "timestamp in original")
+              true
+
+  - name: "syslog: log.record.original uses dash placeholders for missing fields"
+    inputs:
+      - insert_at: syslog_to_semconv
+        type: log
+        log_fields:
+          message: "kernel panic"
+          hostname: "pve-01"
+    outputs:
+      - extract_from: syslog_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              orig = string!(.["attr.log.record.original"])
+              # No appname → "-", no procid → "-"
+              assert!(contains(orig, "[-]:"), "missing app+procid → -[-]:")
+              assert!(contains(orig, "kernel panic"), "message preserved")
+              true
+
+  - name: "syslog: minimal event — missing optional fields"
+    inputs:
+      - insert_at: syslog_to_semconv
+        type: log
+        log_fields:
+          message: "kernel: oom-kill"
+          hostname: "pve-02"
+          severity: "emerg"
+          facility: "kern"
+    outputs:
+      - extract_from: syslog_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._msg, "kernel: oom-kill")
+              assert_eq!(.["host.name"], "pve-02")
+              assert_eq!(.["service.name"], "unknown", "no appname → unknown")
+              assert!(is_null(.["attr.process.pid"]))
+              assert!(is_null(.["attr.syslog.message_id"]))
+              assert!(is_null(.["attr.syslog.structured_data"]))
+              assert!(.["attr.log.record.uid"] != null, "uid always set")
+              assert!(.["attr.log.record.original"] != null, "original always set")
+              true
+
+  - name: "syslog: _time is a valid RFC3339 timestamp"
+    inputs:
+      - insert_at: syslog_to_semconv
+        type: log
+        log_fields:
+          message: "test"
+          hostname: "host"
+          timestamp: "2024-06-01T08:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              t = string!(._time)
+              assert!(parse_timestamp!(t, format: "%+") != null, "_time parses as RFC3339")
+              true
+
+  - name: "syslog: procid is coerced to string"
+    inputs:
+      - insert_at: syslog_to_semconv
+        type: log
+        log_fields:
+          message: "msg"
+          hostname: "h"
+          appname: "app"
+          procid: 42
+    outputs:
+      - extract_from: syslog_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.["attr.process.pid"], "42")
+              true
+
+  - name: "syslog: no raw syslog fields survive the transform"
+    inputs:
+      - insert_at: syslog_to_semconv
+        type: log
+        log_fields:
+          message: "test"
+          hostname: "h"
+          appname: "app"
+          procid: "100"
+          severity: "debug"
+          facility: "user"
+          version: 1
+          source_ip: "10.0.0.1"
+          source_type: "syslog"
+    outputs:
+      - extract_from: syslog_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              forbidden = ["message", "hostname", "appname", "version", "source_ip", "source_type"]
+              all_keys = keys(.)
+              leftovers = filter(forbidden) -> |_i, k| { includes(all_keys, k) }
+              assert_eq!(leftovers, [], "no raw syslog fields at root")
+              true

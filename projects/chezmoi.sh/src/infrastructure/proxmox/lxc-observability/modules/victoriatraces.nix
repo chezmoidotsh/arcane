@@ -17,7 +17,7 @@
 
 let
   listenAddr = "127.0.0.1:10428";
-  dataDir = "/var/lib/victoria/traces";
+  dataDir = "/var/lib/o11y/traces";
 in
 {
   systemd.services.victoriatraces = {
@@ -36,14 +36,14 @@ in
         "-loggerFormat=json"
       ];
 
-      User = "victoria";
-      Group = "victoria";
+      User = "o11y";
+      Group = "o11y";
       Type = "simple";
 
       Restart = "always";
       RestartSec = "5s";
       TimeoutStopSec = "30s";
-      StateDirectory = "victoria/traces";
+      StateDirectory = "o11y/traces";
       WorkingDirectory = dataDir;
 
       NoNewPrivileges = true;

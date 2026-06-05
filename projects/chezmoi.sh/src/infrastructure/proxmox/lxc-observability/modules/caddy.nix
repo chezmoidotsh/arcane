@@ -27,8 +27,8 @@
 #     issuance fails until the file is present (the `-` prefix tolerates it).
 #   secrets.tailscaleOauthKey — Tailscale OAuth client secret (tag:o11y). When
 #     empty the tsnet listener starts but the node cannot join the tailnet.
-#     tsnet state lives at /var/lib/victoria/caddy (mp0 — persisted across
-#     upgrades). TLS certificates are also stored there.
+#     tsnet state and TLS certificates live at /var/lib/o11y/caddy (mp0 —
+#     persisted across upgrades alongside all other stack data).
 # ─────────────────────────────────────────────────────────────────────────────
 { lib, pkgs, secrets ? { }, ... }:
 
@@ -91,6 +91,14 @@ in
           }
         }
 
+        # OTLP HTTP log ingest → Vector :4318 (more specific — matched before /logs/*)
+        handle_path /logs/otlp/* {
+          reverse_proxy localhost:4318 {
+            flush_interval -1
+          }
+        }
+
+        # All other /logs/* (queries, ES ingest via Vector, health) → VictoriaLogs :9428
         handle_path /logs/* {
           reverse_proxy localhost:9428 {
             flush_interval -1
@@ -149,19 +157,48 @@ in
           ++ lib.optional (tailscaleOauthKey != "") "TS_AUTHKEY=${tailscaleOauthKey}"
       ) + "\n";
     mode = "0400";
-    user = "caddy";
-    group = "caddy";
+    user = "o11y";
+    group = "o11y";
   };
 
-  systemd.services.caddy.serviceConfig = {
-    EnvironmentFile = "-/etc/caddy/secrets";
+  systemd.services.caddy = {
+    environment = {
+      # caddy uses AppDataDir() = $XDG_DATA_HOME/Caddy when set.
+      # Points into mp0 (/var/lib/o11y) so tsnet state and TLS certs are persisted
+      # alongside all other stack data on the single volume.
+      XDG_DATA_HOME = "/var/lib/o11y";
+    };
+    serviceConfig = {
+      # Run as the shared o11y user (uid 980) — consistent with all other stack
+      # daemons. Everything lives on mp0 (/var/lib/o11y): a single recursive
+      # chown to host uid 100980 covers all stack data.
+      User = lib.mkForce "o11y";
+      Group = lib.mkForce "o11y";
 
-    # Extra hardening on top of what nixpkgs' caddy unit already sets.
-    ProtectHome = lib.mkDefault true;
-    ProtectKernelLogs = lib.mkDefault true;
-    ProtectClock = lib.mkDefault true;
-    RestrictSUIDSGID = lib.mkDefault true;
-    LockPersonality = lib.mkDefault true;
-    LimitNOFILE = 65536;
+      # nixpkgs' caddy module sets StateDirectory/ReadWritePaths/LogsDirectory to
+      # "caddy" (/var/lib/caddy). Since we moved all state into mp0 (/var/lib/o11y),
+      # override them to point there instead. Without this, systemd's namespace setup
+      # fails with ENOENT because /var/lib/caddy does not exist.
+      StateDirectory = lib.mkForce "";
+      ReadWritePaths = lib.mkForce "/var/lib/o11y";
+      LogsDirectory = lib.mkForce "";
+
+      EnvironmentFile = "-/etc/caddy/secrets";
+
+      # Extra hardening on top of what nixpkgs' caddy unit already sets.
+      ProtectHome = lib.mkDefault true;
+      ProtectKernelLogs = lib.mkDefault true;
+      ProtectClock = lib.mkDefault true;
+      RestrictSUIDSGID = lib.mkDefault true;
+      LockPersonality = lib.mkDefault true;
+      LimitNOFILE = 65536;
+    };
   };
+
+  # Ensure /var/lib/o11y/Caddy is owned by o11y before caddy starts.
+  # tmpfiles.d runs as root and succeeds where the service's StateDirectory
+  # chown fails (unprivileged LXC can't chown from a non-root service user).
+  systemd.tmpfiles.rules = [
+    "d /var/lib/o11y/Caddy 0750 o11y o11y - -"
+  ];
 }

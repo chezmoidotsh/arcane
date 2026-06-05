@@ -22,3 +22,44 @@ groups:
           description: >-
             {{ $labels.job }} on the observability appliance has been
             unreachable for >5m. Metrics/logs/alerting may be degraded.
+
+      - alert: VectorDown
+        expr: absent(vector_uptime_seconds{cluster="o11y-appliance"})
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Vector is not reporting metrics"
+          description: >-
+            No Vector internal metrics received for >5m — Vector may be down
+            or unable to push to VictoriaMetrics.
+
+      - alert: VectorHighErrorRate
+        expr: >
+          sum by (component_type) (rate(vector_component_errors_total{cluster="o11y-appliance"}[5m]))
+          /
+          sum by (component_type) (rate(vector_component_received_events_total{cluster="o11y-appliance"}[5m]))
+          > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Vector error rate > 5% on {{ $labels.component_type }}"
+          description: >-
+            Vector's {{ $labels.component_type }} components are erroring at
+            >5% of received events for >10m.
+
+      - alert: VectorComponentStalled
+        expr: >
+          rate(vector_component_sent_events_total{cluster="o11y-appliance"}[5m]) == 0
+          and
+          rate(vector_component_received_events_total{cluster="o11y-appliance"}[5m]) > 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Vector {{ $labels.component_name }} receives events but sends none"
+          description: >-
+            Vector component {{ $labels.component_name }} has been receiving
+            events for >15m but sending nothing — possible transform or sink
+            stall.

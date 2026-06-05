@@ -1,0 +1,69 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Vector sinks — push processed logs to VictoriaLogs
+# ─────────────────────────────────────────────────────────────────────────────
+# VictoriaLogs JSON-line ingest API (loopback). Native format — preserves the
+# dotted SemConv field names (service.name, k8s.cluster.name…) verbatim so
+# LogsQL queries can use them directly: `service.name:"my-svc"`.
+#
+#   _msg_field=_msg     — field that becomes the log body in VLogs
+#   _time_field=_time   — field used as the log timestamp (RFC 3339)
+#   _stream_fields=...  — comma-separated fields indexed as stream labels;
+#                         primary query axes first, secondaries after.
+#                         All other fields stored but not stream-indexed.
+#
+# Stream fields, ordered by query priority (service first, then machine):
+#   service.name        — primary axis: filter by application identity
+#   host.name           — secondary axis: per-host filtering
+#   service.namespace   — OTel K8s service attribute (annotation or k8s.namespace.name fallback)
+#   service.version     — per-deploy-version filtering
+#   k8s.cluster.name    — per-cluster filtering
+#   k8s.namespace.name  — kept alongside service.namespace since they can differ
+#                         when resource.opentelemetry.io/service.namespace is set
+#
+# Refs: https://opentelemetry.io/docs/specs/semconv/non-normative/k8s-attributes/#service-attributes
+#       https://docs.victoriametrics.com/victorialogs/data-ingestion/#json-stream-api
+#
+# Backpressure: memory buffer (1000 events) + when_full=block. Fills within ~1s
+# under moderate load when VLogs slows, propagating block upstream through
+# transforms → sources → TCP/gRPC sender. The cluster-side rsyslog / vmagent
+# queues become the buffer of last resort (intentional — they're per-source
+# and survive an appliance restart).
+#
+# Ingestion error records (validate_semconv) carry service.name=vector-ingest
+# and are findable via: `service.name:"vector-ingest" attr.error.type:"semconv_invalid"`
+# ─────────────────────────────────────────────────────────────────────────────
+sinks:
+  out_victorialogs:
+    type: http
+    inputs:
+      - add_timestamps
+    uri: "http://127.0.0.1:9428/insert/jsonline?_msg_field=_msg&_time_field=_time&_stream_fields=service.name,host.name,service.namespace,service.version,k8s.cluster.name,k8s.namespace.name"
+    method: post
+    encoding:
+      codec: json
+    framing:
+      method: newline_delimited
+    # No compression — loopback to VLogs, CPU cost > saved bandwidth.
+    request:
+      retry_max_duration_secs: 30 # short — slowness propagates via block, not retries
+      timeout_secs: 10
+    buffer:
+      type: memory
+      max_events: 1000 # small enough that VLogs slowness is felt within ~1s
+      when_full: block
+    healthcheck:
+      enabled: true
+      uri: "http://127.0.0.1:9428/health"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Vector self-observability — Prometheus remote write
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Pushes Vector's internal metrics (in_internal_metrics) directly to
+  # VictoriaMetrics via remote write. Separate pipeline from the log processing
+  # chain — metrics never mix with log events.
+  # ─────────────────────────────────────────────────────────────────────────────
+  out_vector_metrics:
+    type: prometheus_remote_write
+    inputs:
+      - tag_internal_metrics
+    endpoint: "http://127.0.0.1:8428/api/v1/write"
