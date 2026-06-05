@@ -114,14 +114,15 @@ the **tailnet** (off-LAN). Rendered diagram:
 
 ### Ports
 
-| Service         | Bind              | Exposed?                                                                               |
-| --------------- | ----------------- | -------------------------------------------------------------------------------------- |
-| Caddy           | `:80`, `:443`     | **Yes** — the only public surface                                                      |
-| VictoriaMetrics | `127.0.0.1:8428`  | No (behind Caddy; also OTLP ingest)                                                    |
-| VictoriaLogs    | `127.0.0.1:9428`  | No (behind Caddy)                                                                      |
-| VictoriaTraces  | `127.0.0.1:10428` | No (behind Caddy; OTLP/Jaeger ingest)                                                  |
-| vmalert         | `127.0.0.1:8880`  | No (self-scrape only)                                                                  |
-| Alertmanager    | `127.0.0.1:9093`  | Via Caddy `/alerts/*` (cluster vmalert → notify); egress for notifications + heartbeat |
+| Service               | Bind              | Exposed?                                                                               |
+| --------------------- | ----------------- | -------------------------------------------------------------------------------------- |
+| Caddy                 | `:80`, `:443`     | **Yes** — the only public surface (HTTP/S)                                             |
+| VictoriaMetrics       | `127.0.0.1:8428`  | No (behind Caddy; also OTLP ingest)                                                    |
+| VictoriaLogs (HTTP)   | `127.0.0.1:9428`  | No (behind Caddy)                                                                      |
+| VictoriaLogs (syslog) | `:5140`           | **Yes** — TCP syslog ingest from PVE hosts/LXCs on the bridge network                  |
+| VictoriaTraces        | `127.0.0.1:10428` | No (behind Caddy; OTLP/Jaeger ingest)                                                  |
+| vmalert               | `127.0.0.1:8880`  | No (self-scrape only)                                                                  |
+| Alertmanager          | `127.0.0.1:9093`  | Via Caddy `/alerts/*` (cluster vmalert → notify); egress for notifications + heartbeat |
 
 ## What's in this directory
 
@@ -306,10 +307,12 @@ log_level_out: nolog
 
 [RULES]
 # HTTPS ingest + query from the LAN — restrict source to the homelab subnet.
-IN ACCEPT -p tcp -dport 443 -source 10.0.0.0/8  -log nolog # homelab (tighten to node subnet)
-IN ACCEPT -p tcp -dport 80                       -log nolog # HTTP → HTTPS redirect
-IN ACCEPT -p udp -dport 41641                    -log nolog # Tailscale direct connections
-IN ACCEPT -p icmp                                -log nolog # liveness
+IN ACCEPT -p tcp -dport 443   -source 10.0.0.0/8  -log nolog # homelab (tighten to node subnet)
+IN ACCEPT -p tcp -dport 80                         -log nolog # HTTP → HTTPS redirect
+IN ACCEPT -p udp -dport 41641                      -log nolog # Tailscale direct connections
+# Syslog TCP ingest from PVE hosts and LXCs on the bridge network.
+IN ACCEPT -p tcp -dport 5140  -source 10.0.0.0/8  -log nolog # rsyslog omfwd (RFC 5424)
+IN ACCEPT -p icmp                                  -log nolog # liveness
 EOF
 pve-firewall restart
 ```
@@ -428,6 +431,46 @@ the Jaeger/VictoriaTraces datasource at `https://o11y.chezmoi.sh/traces`.
 Configure the Proxmox OTEL metric server to push OTLP/HTTP to
 `https://o11y.chezmoi.sh/metrics/opentelemetry/v1/metrics` with an external
 label `cluster=proxmox`.
+
+### Proxmox host — logs (rsyslog)
+
+VictoriaLogs exposes a syslog TCP listener on `:5140` (RFC 5424). Configure
+rsyslog on the PVE host to forward via the built-in `omfwd` module — no extra
+packages required.
+
+Create `/etc/rsyslog.d/50-victorialogs.conf`:
+
+```
+# Forward Proxmox host logs to VictoriaLogs (syslog TCP RFC 5424)
+*.* action(
+  type="omfwd"
+  target="<lxc-ip>"
+  port="5140"
+  protocol="tcp"
+  template="RSYSLOG_SyslogProtocol23Format"
+  queue.type="LinkedList"
+  queue.size="5000"
+  queue.saveOnShutdown="on"
+  action.resumeRetryCount="-1"
+)
+```
+
+Then validate and restart:
+
+```sh
+rsyslogd -N1 && systemctl restart rsyslog
+```
+
+Logs arrive in VictoriaLogs with fields: `hostname`, `app_name`, `facility`,
+`severity`, `proc_id`, `_msg`. Query them at `https://o11y.chezmoi.sh/logs`
+(LogsQL: `hostname:pve-01`).
+
+> **Why TCP syslog and not `systemd-journal-upload`?** The Debian build of
+> `systemd-journal-remote` has `/etc/ssl/certs/journal-upload.pem` as a
+> compile-time default for the client certificate — the service fails to start
+> when that file is absent and the config-file override with an empty string is
+> not honored. TCP syslog via `omfwd` uses only the rsyslog base package, carries
+> the same structured RFC 5424 fields, and requires no overrides on either side.
 
 ### kazimierz (VPS, Docker) — over Tailscale
 

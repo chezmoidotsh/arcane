@@ -79,16 +79,17 @@
   };
 
   # ── Firewall ───────────────────────────────────────────────────────────────
-  # Default deny; only :80 and :443 cross the LXC boundary. Do NOT use
-  # lib.mkDefault for allowedTCPPorts — nixos-generators' lxc format sets it to
-  # [] at normal priority and would silently win over mkDefault (1000).
+  # Default deny; :80/:443 are the public surface (Caddy). :5140 is the syslog
+  # TCP ingest port for PVE host/LXC log forwarding — internal bridge only.
+  # Do NOT use lib.mkDefault for allowedTCPPorts — nixos-generators' lxc format
+  # sets it to [] at normal priority and would silently win over mkDefault (1000).
   networking.firewall.enable = lib.mkDefault true;
 
   # UDP 41641 enables direct (non-DERP) Tailscale WireGuard connections. tsnet
   # (caddy-tailscale) falls back to DERP relays if closed; direct path is kept
   # open for lower latency. Set at normal priority so it wins over mkDefault [].
   networking.firewall.allowedUDPPorts = [ 41641 ];
-  networking.firewall.allowedTCPPorts = [ 80 443 ];
+  networking.firewall.allowedTCPPorts = [ 80 443 5140 ];
   networking.firewall.logRefusedConnections = lib.mkDefault false;
 
   # No trustedInterfaces: caddy-tailscale uses tsnet (userspace), so there is

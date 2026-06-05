@@ -5,9 +5,11 @@
 # stream field set by the sending Vector instance — same correlation model as
 # metrics, no hard tenancy.
 #
-# Binds 127.0.0.1:9428 only — Caddy (path routing, no auth) is the sole public
+# HTTP binds 127.0.0.1:9428 only — Caddy (path routing, no auth) is the public
 # surface; access control is the Proxmox host firewall by source CIDR. Vector
 # ships to the Elasticsearch-compatible ingest API under /insert/* (routed by Caddy).
+# Syslog TCP listens on :5140 (all interfaces) for PVE host/LXC log forwarding
+# via rsyslog omfwd — restricted to the LXC bridge network by the NixOS firewall.
 #
 # NOTE: `pkgs.victorialogs` must exist on the pinned nixpkgs. If the channel
 # only ships the binary under a different attribute, adjust the ExecStart path
@@ -17,6 +19,7 @@
 
 let
   listenAddr = "127.0.0.1:9428";
+  syslogTcpAddr = ":5140"; # reachable from PVE hosts on the LXC bridge network
   dataDir = "/var/lib/victoria/logs";
 in
 {
@@ -32,6 +35,7 @@ in
         "${pkgs.victorialogs}/bin/victoria-logs"
         "-storageDataPath=${dataDir}"
         "-httpListenAddr=${listenAddr}"
+        "-syslog.listenAddr.tcp=${syslogTcpAddr}"
         "-retentionPeriod=30d" # homelab baseline; raise per disk budget
         "-loggerFormat=json"
       ];
