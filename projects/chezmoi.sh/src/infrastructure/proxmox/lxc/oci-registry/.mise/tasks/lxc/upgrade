@@ -20,7 +20,8 @@ yes="${usage_yes-}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
-HOST_UID=100994
+HOST_UID_ZOT=100994
+HOST_UID_CADDY=100997
 
 # --- Resolve version and template -------------------------------------------
 if [[ -z ${version} ]]; then
@@ -159,10 +160,11 @@ pct set ${source_id} --delete mp0
 pct set ${target_id} -mp0 '${MP0_SPEC}'
 "
 
-echo "[INFO] Fixing data ownership (uid ${HOST_UID})..." >&2
+echo "[INFO] Fixing data ownership..." >&2
 ssh "root@${pve_host}" "
 pct mount ${target_id} >/dev/null
-chown --recursive ${HOST_UID}:${HOST_UID} /var/lib/lxc/${target_id}/rootfs${mp0_mount}
+chown --recursive ${HOST_UID_ZOT} /var/lib/lxc/${target_id}/rootfs${mp0_mount}/zot
+chown --recursive ${HOST_UID_CADDY} /var/lib/lxc/${target_id}/rootfs${mp0_mount}/caddy
 pct unmount ${target_id}
 pct start ${target_id}
 "

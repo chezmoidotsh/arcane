@@ -23,7 +23,7 @@ let
     distSpecVersion = "1.1.1";
 
     storage = {
-      rootDirectory = "/var/lib/zot";
+      rootDirectory = "/persistent/zot";
       commit = true; # fsync after blob writes
       dedupe = true; # cross-repo deduplication via content-addressable links
       gc = true; # background GC of unreferenced blobs
@@ -106,8 +106,7 @@ in
     isSystemUser = true;
     uid = 994; # fixed — host uid = 100000 + 994 = 100994 with default Proxmox mapping
     group = "zot";
-    home = "/var/lib/zot";
-    createHome = false; # StateDirectory owns the lifecycle
+    home = "/persistent/zot";
     description = "Zot OCI registry service account";
   };
   users.groups.zot = { gid = 994; };
@@ -134,9 +133,7 @@ in
       RestartSec = "5s";
       TimeoutStopSec = "30s";
 
-      StateDirectory = "zot";
-      StateDirectoryMode = "0750";
-      WorkingDirectory = "/var/lib/zot";
+      WorkingDirectory = "/persistent/zot";
 
       # ── systemd hardening (LXC-safe subset) ──────────────────────────
       # Options requiring a mount namespace fail in an unprivileged LXC with
