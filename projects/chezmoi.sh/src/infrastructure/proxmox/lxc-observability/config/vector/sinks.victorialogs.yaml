@@ -44,13 +44,13 @@ transforms:
       . = merge(., resources)
 
       attrs = object(del(.attributes)) ?? {}
-      prefixed = map_keys(attrs) -> |key| { "attr." + key }
+      prefixed = map_keys(attrs) -> |key| { "attrs." + key }
       . = merge(., prefixed)
 
       # Add stored_timestamp at the end of the pipeline to get the value when
       # the event is pushed to VLogs, enabling latency measurements in LogsQL.
       if !is_object(.attributes) { .attributes = {} }
-      ."attributes"."stored_timestamp" = format_timestamp!(now(), format: "%+")
+      ."attrs"."stored_timestamp" = format_timestamp!(now(), format: "%+")
 
 sinks:
   # Sink: VictoriaLogs JSON-line ingest
