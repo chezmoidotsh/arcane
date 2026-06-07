@@ -1,0 +1,153 @@
+# Parse Zot OCI registry JSON logs → SemConv.
+#
+# Format: {"time":"RFC3339","level":"info","message":"...","component":"cve",
+#          "caller":"zotregistry.dev/zot/v2/pkg/.../file.go:141",
+#          "func":"zotregistry.dev/zot/v2/pkg/...(*Type).Method","goroutine":37}
+#
+# SemConv mapping:
+#   time      → _time
+#   message   → _msg                  (Zot uses "message", not "msg")
+#   level     → log.severity_text + log.severity_number  (OTel)
+#   caller    → attr.code.filepath + attr.code.lineno    (attr.* required)
+#   func      → attr.code.function                       (attr.* required)
+#   goroutine → thread.id                                (thread.* namespace is valid)
+#   component → attr.zot.component
+#
+# Unrecognised services (service.name != "zot") pass through unchanged.
+transforms:
+  route_zot:
+    type: route
+    inputs:
+      - journald_to_semconv
+    route:
+      zot: '.["service.name"] == "zot"'
+
+  zot_to_o11y:
+    type: remap
+    inputs:
+      - route_zot.zot
+    drop_on_error: false
+    source: |
+      if is_string(._msg) {
+        parsed, _err = parse_json(._msg)
+        if _err == null && is_object(parsed) {
+
+          # Timestamp (RFC 3339 — Zot uses "time" not "ts")
+          if exists(parsed.time) {
+            _ts, _ts_err = parse_timestamp(to_string!(parsed.time), format: "%+")
+            if _ts_err == null { ._time = format_timestamp!(_ts, format: "%+") }
+          }
+
+          # Message (Zot uses "message" not "msg")
+          if exists(parsed.message) { ._msg = to_string!(parsed.message) }
+
+          # Severity — OTel SemConv
+          if exists(parsed.level) {
+            _level = downcase(to_string!(parsed.level))
+            _sev = {
+              "trace": 1, "debug": 5, "info": 9, "information": 9, "notice": 9,
+              "warning": 13, "warn": 13, "error": 17,
+              "critical": 21, "fatal": 21, "alert": 21, "emergency": 21, "panic": 21
+            }
+            .["log.severity_text"]   = _level
+            .["log.severity_number"] = get(_sev, [_level]) ?? 9
+          }
+
+          # caller: "zotregistry.dev/zot/v2/pkg/.../scan.go:141"
+          # → attr.code.filepath + attr.code.lineno  (attr.* required: code.* not in namespaces)
+          if exists(parsed.caller) {
+            _parts = split(to_string!(parsed.caller), ":", limit: 2)
+            .["attr.code.filepath"] = _parts[0]
+            if length(_parts) > 1 {
+              _n, _n_err = to_int(_parts[1])
+              if _n_err == null { .["attr.code.lineno"] = _n }
+            }
+          }
+
+          # func: fully-qualified Go function name  (OTel: code.function, via attr.*)
+          if exists(parsed.func) {
+            .["attr.code.function"] = to_string!(parsed.func)
+          }
+
+          # goroutine → thread.id  (thread.* namespace accepted by validate_semconv)
+          if exists(parsed.goroutine) {
+            _g, _g_err = to_int(parsed.goroutine)
+            if _g_err == null { .["thread.id"] = _g }
+          }
+
+          # Zot-specific subsystem label
+          if exists(parsed.component) {
+            .["attr.zot.component"] = to_string!(parsed.component)
+          }
+        }
+      }
+
+  unmatched_to_o11y:
+    type: filter
+    inputs:
+      - route_zot._unmatched
+    condition:
+      type: vrl
+      source: "true"
+
+# ─────────────────────────────────────────────────────────────────────────────
+tests:
+  - name: "zot: parse CVE scan log"
+    inputs:
+      - insert_at: zot_to_o11y
+        type: log
+        log_fields:
+          _msg: '{"time":"2026-06-06T19:28:31.621968901Z","level":"info","message":"finished scanning available images during scheduled cve scan","component":"cve","caller":"zotregistry.dev/zot/v2/pkg/extensions/search/cve/scan.go:141","func":"zotregistry.dev/zot/v2/pkg/extensions/search/cve.(*scanTaskGenerator).Next","goroutine":37}'
+          service.name: zot
+          host.name: oci-registry
+    outputs:
+      - extract_from: zot_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._msg, "finished scanning available images during scheduled cve scan")
+              assert!(starts_with(string!(._time) ?? "", "2026-06-06"))
+              assert_eq!(.["log.severity_text"],   "info")
+              assert_eq!(.["log.severity_number"],  9)
+              assert_eq!(.["attr.code.filepath"],   "zotregistry.dev/zot/v2/pkg/extensions/search/cve/scan.go")
+              assert_eq!(.["attr.code.lineno"],     141)
+              assert_eq!(.["attr.code.function"],   "zotregistry.dev/zot/v2/pkg/extensions/search/cve.(*scanTaskGenerator).Next")
+              assert_eq!(.["thread.id"],            37)
+              assert_eq!(.["attr.zot.component"],   "cve")
+              true
+
+  - name: "zot: error level maps to OTel severity 17"
+    inputs:
+      - insert_at: zot_to_o11y
+        type: log
+        log_fields:
+          _msg: '{"time":"2026-06-06T10:00:00Z","level":"error","message":"failed to pull image","component":"sync","caller":"pkg/sync.go:88","goroutine":12}'
+          service.name: zot
+          host.name: oci-registry
+    outputs:
+      - extract_from: zot_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.["log.severity_text"],   "error")
+              assert_eq!(.["log.severity_number"],  17)
+              assert_eq!(.["attr.zot.component"],   "sync")
+              assert_eq!(.["thread.id"],            12)
+              true
+
+  - name: "zot: non-JSON _msg passes through unchanged"
+    inputs:
+      - insert_at: zot_to_o11y
+        type: log
+        log_fields:
+          _msg: "plain startup line"
+          service.name: zot
+          host.name: oci-registry
+    outputs:
+      - extract_from: zot_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._msg, "plain startup line")
+              assert!(is_null(.["log.severity_text"]))
+              true

@@ -116,7 +116,7 @@ let
     };
   };
 
-  dataDir = "/var/lib/vector-lxc-agent";
+  dataDir = "/var/lib/lxc-agent";
 
   # ── Config directory: static YAML + generated JSON merged into conf.d/ ────
   # Vector loads all files in the dir; cross-file references (e.g.
@@ -126,7 +126,7 @@ let
   # configLinkFarm assembles the files; configDir wraps it with a build-time
   # `vector validate` so any consumer (including the systemd service) implicitly
   # requires validation to pass.
-  configLinkFarm = pkgs.linkFarm "vector-lxc-agent-config" (
+  configLinkFarm = pkgs.linkFarm "lxc-agent-config" (
     [
       {
         name = "conf.d/root.yaml";
@@ -138,29 +138,29 @@ let
       }
       {
         name = "conf.d/sinks.vector.json";
-        path = pkgs.writeText "vector-lxc-agent-sinks-vector.json"
+        path = pkgs.writeText "lxc-agent-sinks-vector.json"
           (builtins.toJSON vectorSinkConfig);
       }
     ]
     ++ lib.optional cfg.metrics.enable {
       name = "conf.d/sources.prometheus.json";
-      path = pkgs.writeText "vector-lxc-agent-sources-prometheus.json"
+      path = pkgs.writeText "lxc-agent-sources-prometheus.json"
         (builtins.toJSON prometheusConfig);
     }
     ++ lib.optional cfg.metrics.enable {
       name = "conf.d/sinks.prometheus.json";
-      path = pkgs.writeText "vector-lxc-agent-sinks-prometheus.json"
+      path = pkgs.writeText "lxc-agent-sinks-prometheus.json"
         (builtins.toJSON metricsSinkConfig);
     }
     ++ map
       (t: {
         name = "conf.d/${t.name}";
-        path = pkgs.writeText "vector-lxc-agent-transform-${t.name}" t.content;
+        path = pkgs.writeText "lxc-agent-transform-${t.name}" t.content;
       })
       cfg.logs.extraTransforms
     ++ lib.optional (cfg.logs.extraTransforms == [ ]) {
       name = "conf.d/transforms.passthrough.json";
-      path = pkgs.writeText "vector-lxc-agent-transforms-passthrough.json"
+      path = pkgs.writeText "lxc-agent-transforms-passthrough.json"
         (builtins.toJSON passthroughConfig);
     }
   );
@@ -168,7 +168,7 @@ let
   # Validated config dir: build-time schema check via `vector validate`.
   # The systemd service depends on this derivation, so validation is implicit
   # in every NixOS build.
-  configDir = pkgs.runCommand "vector-lxc-agent-config-validated"
+  configDir = pkgs.runCommand "lxc-agent-config-validated"
     { nativeBuildInputs = [ pkgs.vector ]; }
     ''
       VECTOR_DATA_DIR="$(mktemp -d "$TMPDIR/vector-data.XXXXXX")" \
@@ -298,15 +298,15 @@ in
   config = lib.mkIf cfg.enable {
 
     # ── Vector: journald reader + metrics scraper → o11y ────────────────────
-    users.users.vector-lxc-agent = {
+    users.users.lxc-agent = {
       isSystemUser = true;
-      group = "vector-lxc-agent";
+      group = "lxc-agent";
       extraGroups = [ "systemd-journal" ]; # required to read the journal
       description = "Vector LXC agent service account";
     };
-    users.groups.vector-lxc-agent = { };
+    users.groups.lxc-agent = { };
 
-    systemd.services.vector-lxc-agent = {
+    systemd.services.lxc-agent = {
       description = "Vector LXC agent — journald reader + metrics scraper → o11y";
       documentation = [ "https://vector.dev/docs/" ];
       wantedBy = [ "multi-user.target" ];
@@ -318,14 +318,14 @@ in
       serviceConfig = {
         ExecStart = "${pkgs.vector}/bin/vector --config-dir ${configDir}/conf.d";
 
-        User = "vector-lxc-agent";
-        Group = "vector-lxc-agent";
+        User = "lxc-agent";
+        Group = "lxc-agent";
         Type = "simple";
 
         Restart = "always";
         RestartSec = "5s";
         TimeoutStopSec = "30s";
-        StateDirectory = "vector-lxc-agent";
+        StateDirectory = "lxc-agent";
         WorkingDirectory = dataDir;
 
         # systemd hardening — LXC-safe subset (mount-namespace options omitted)

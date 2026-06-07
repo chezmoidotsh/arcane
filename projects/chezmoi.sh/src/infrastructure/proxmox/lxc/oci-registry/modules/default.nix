@@ -2,8 +2,7 @@
   imports = [
     ./zot.nix
     ./caddy.nix
-    ./log-shipper.nix
-    ./vmagent.nix
+    ./o11y.nix
     ./hardening.nix
   ];
 }

@@ -349,11 +349,11 @@ runs as a build step of `configDir`, which the systemd service already depends o
 Any `nixos-rebuild switch` or `nix build .#nixosConfigurations.<host>.config.system.build.toplevel`
 will fail fast if the assembled config is invalid, without needing any extra wiring.
 
-`system.build.vector-lxc-agent-test` is an alias to `configDir` for explicit
+`system.build.lxc-agent-test` is an alias to `configDir` for explicit
 CI or debugging use:
 
 ```sh
-nix build .#nixosConfigurations.<host>.config.system.build.vector-lxc-agent-test
+nix build .#nixosConfigurations.<host>.config.system.build.lxc-agent-test
 ```
 
 To test the static journald transform in isolation (30+ inline unit tests):

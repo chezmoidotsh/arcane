@@ -6,8 +6,11 @@
   inputs.nixos-generators.url = "github:nix-community/nixos-generators";
   inputs.nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
 
+  inputs.arcane-catalog.url = "path:../../../../../../catalog/nix";
+  inputs.arcane-catalog.inputs.nixpkgs.follows = "nixpkgs";
+
   outputs =
-    { self, nixpkgs, nixos-generators }:
+    { self, nixpkgs, nixos-generators, arcane-catalog }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
@@ -20,6 +23,7 @@
         inherit system pkgs;
         format = "lxc";
         modules = [
+          arcane-catalog.nixosModules.lxcAgent
           ./modules
           ./configuration.nix
           { _module.args = { inherit pveHost pveTokenValue; }; }
