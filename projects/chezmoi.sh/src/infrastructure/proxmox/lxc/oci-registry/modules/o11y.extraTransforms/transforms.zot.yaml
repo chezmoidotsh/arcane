@@ -74,7 +74,7 @@ transforms:
           for_each(_zot_keys) -> |_i, key| {
             _val = get!(parsed, [key])
             if _val != null {
-              .attributes."zot.%{key}" = _val
+              .attributes = set!(.attributes ?? {}, ["zot." + key], _val)
             }
           }
         }
