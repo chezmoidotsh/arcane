@@ -16,7 +16,8 @@
 #   client ─┬─ /metrics/*  → VictoriaMetrics :8428 (remote_write, query, OTLP)
 #            ├─ /logs/*     → VictoriaLogs :9428 (ingest + query)
 #            ├─ /traces/*   → VictoriaTraces :10428 (OTLP/Jaeger)
-#            └─ /alerts/*   → Alertmanager :9093 (per-cluster vmalert notify)
+#            ├─ /alerts/*   → Alertmanager :9093 (per-cluster vmalert notify)
+#            └─ /           → static landing page (caddy.statics/index.html)
 #
 # VM/VLogs/VTraces serve at root — Caddy strips the /<signal> prefix
 # (handle_path); Alertmanager keeps it (--web.route-prefix=/alerts).
@@ -35,6 +36,9 @@
 let
   cloudflareToken = secrets.cloudflareToken or "";
   tailscaleOauthKey = secrets.tailscaleOauthKey or "";
+  # Static landing page directory. Copied to the Nix store at build time — Caddy
+  # serves it read-only at / with index.html as the fallback for unknown paths.
+  staticDir = ./caddy.statics;
 in
 {
   services.caddy = {
@@ -124,7 +128,9 @@ in
         }
 
         handle {
-          respond "Not found" 404
+          root * ${staticDir}
+          try_files {path} /index.html
+          file_server
         }
       }
 
