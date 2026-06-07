@@ -65,9 +65,8 @@ transforms:
 
       # Severity: journald PRIORITY is numeric 0-7 (emerg…debug).
       # Stored verbatim in attributes for querying, and also mapped to the
-      # OTLP-style root fields severity_number / severity_text.
+      # OTLP-style root field severity_number (severity_text derived in to_vlogs_format).
       _severity_number = null
-      _severity_text   = null
       if _priority != null {
         p = to_int!(_priority)
         _attrs."syslog.severity.code" = p
@@ -80,7 +79,6 @@ transforms:
           # crit=FATAL(21). Derived text matches severity_text_values[number - 1].
           # emerg=FATAL4(24), alert=FATAL3(23), crit=FATAL(21), err=ERROR(17), warning=WARN(13), notice/info=INFO(9), debug=DEBUG(5)
           _severity_number = if p == 0 { 24 } else if p == 1 { 23 } else if p == 2 { 21 } else if p == 3 { 17 } else if p == 4 { 13 } else if p <= 6 { 9 } else { 5 }
-          _severity_text   = if p == 0 { "FATAL4" } else if p == 1 { "FATAL3" } else if p == 2 { "FATAL" } else if p == 3 { "ERROR" } else if p == 4 { "WARN" } else if p <= 6 { "INFO" } else { "DEBUG" }
         }
       }
 
@@ -111,7 +109,6 @@ transforms:
       }
       if _severity_number != null {
         .severity_number = _severity_number
-        .severity_text   = _severity_text
       }
 
 # Unit tests — run with: vector test sources.journald.yaml
@@ -275,8 +272,8 @@ tests:
             source: |
               assert_eq!(."attributes"."syslog.severity.text", "info")
               assert_eq!(."attributes"."syslog.severity.code", 6)
-              assert_eq!(.severity_number, 9,     "INFO → 9")
-              assert_eq!(.severity_text,   "INFO", "INFO text")
+              assert_eq!(.severity_number, 9, "INFO → 9")
+              assert!(is_null(.severity_text), "severity_text derived in to_vlogs_format")
               true
 
   - name: "journald: PRIORITY 4 = warning → OTel WARN"
@@ -294,8 +291,8 @@ tests:
             source: |
               assert_eq!(."attributes"."syslog.severity.text", "warning")
               assert_eq!(."attributes"."syslog.severity.code", 4)
-              assert_eq!(.severity_number, 13,    "WARN → 13")
-              assert_eq!(.severity_text,   "WARN", "WARN text")
+              assert_eq!(.severity_number, 13, "WARN → 13")
+              assert!(is_null(.severity_text), "severity_text derived in to_vlogs_format")
               true
 
   - name: "journald: PRIORITY 0 (emerg) → FATAL4 (24)"
@@ -311,8 +308,8 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(.severity_number, 24,      "emerg → FATAL4 24")
-              assert_eq!(.severity_text,   "FATAL4", "FATAL4 text")
+              assert_eq!(.severity_number, 24, "emerg → FATAL4 24")
+              assert!(is_null(.severity_text), "severity_text derived in to_vlogs_format")
               true
 
   - name: "journald: PRIORITY 1 (alert) → FATAL3 (23)"
@@ -328,8 +325,8 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(.severity_number, 23,      "alert → FATAL3 23")
-              assert_eq!(.severity_text,   "FATAL3", "FATAL3 text")
+              assert_eq!(.severity_number, 23, "alert → FATAL3 23")
+              assert!(is_null(.severity_text), "severity_text derived in to_vlogs_format")
               true
 
   - name: "journald: PRIORITY 2 (crit) → FATAL (21)"
@@ -345,8 +342,8 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(.severity_number, 21,     "crit → FATAL 21")
-              assert_eq!(.severity_text,   "FATAL", "FATAL text")
+              assert_eq!(.severity_number, 21, "crit → FATAL 21")
+              assert!(is_null(.severity_text), "severity_text derived in to_vlogs_format")
               true
 
   - name: "journald: PRIORITY 3 (err) → OTel ERROR"
@@ -362,8 +359,8 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(.severity_number, 17,      "err → ERROR 17")
-              assert_eq!(.severity_text,   "ERROR", "ERROR text")
+              assert_eq!(.severity_number, 17, "err → ERROR 17")
+              assert!(is_null(.severity_text), "severity_text derived in to_vlogs_format")
               true
 
   - name: "journald: PRIORITY 7 (debug) → OTel DEBUG"
@@ -379,8 +376,8 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(.severity_number, 5,       "debug → DEBUG 5")
-              assert_eq!(.severity_text,   "DEBUG", "DEBUG text")
+              assert_eq!(.severity_number, 5, "debug → DEBUG 5")
+              assert!(is_null(.severity_text), "severity_text derived in to_vlogs_format")
               true
 
   - name: "journald: no PRIORITY → no severity root fields"

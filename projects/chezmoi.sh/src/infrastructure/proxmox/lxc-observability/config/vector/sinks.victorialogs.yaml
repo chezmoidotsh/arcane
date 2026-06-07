@@ -11,8 +11,9 @@ transforms:
   #   timestamp      → _time       (VLogs timestamp field, RFC3339)
   #   resources.*    → *           (flattened to root as stream labels)
   #   attributes.*   → attr.*      (prefixed for queryability)
-  #   observed_timestamp, severity_text, severity_number,
-  #   trace_id, span_id            (kept at root unchanged)
+  #   observed_timestamp, severity_number, trace_id, span_id (kept at root)
+  #   severity_text      → derived from severity_number if absent (canonical OTel
+  #                        mapping: 1=TRACE … 24=FATAL4)
   #
   # The transform also adds attr.stored_timestamp at the end of the pipeline to
   # capture the time when the event is pushed to VLogs, enabling latency
@@ -22,6 +23,20 @@ transforms:
     inputs:
       - validate_semconv
     source: |
+      # Derive severity_text from severity_number when absent (canonical OTel mapping).
+      if is_null(.severity_text) && !is_null(.severity_number) {
+        _sev_names = [
+          "TRACE",  "TRACE2",  "TRACE3",  "TRACE4",
+          "DEBUG",  "DEBUG2",  "DEBUG3",  "DEBUG4",
+          "INFO",   "INFO2",   "INFO3",   "INFO4",
+          "WARN",   "WARN2",   "WARN3",   "WARN4",
+          "ERROR",  "ERROR2",  "ERROR3",  "ERROR4",
+          "FATAL",  "FATAL2",  "FATAL3",  "FATAL4"
+        ]
+        _sn = to_int(.severity_number) ?? 0
+        if _sn >= 1 && _sn <= 24 { .severity_text = get!(_sev_names, [_sn - 1]) }
+      }
+
       ._msg  = string(del(.body)) ?? ""
       ._time = string(del(.timestamp)) ?? format_timestamp!(now(), format: "%+")
 
@@ -203,6 +218,61 @@ tests:
               assert!(is_null(.body))
               assert!(is_null(.resources))
               assert!(is_null(.attributes))
+
+  - name: "vlogs: severity_text derived from severity_number when absent"
+    inputs:
+      - insert_at: to_vlogs_format
+        type: log
+        log_fields:
+          body: "disk error"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          resources:
+            service.name: "my-svc"
+          severity_number: 17
+    outputs:
+      - extract_from: to_vlogs_format
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_number, 17)
+              assert_eq!(.severity_text, "ERROR", "severity_number 17 → ERROR")
+              true
+
+  - name: "vlogs: severity_number=0 (UNSPECIFIED) leaves severity_text null"
+    inputs:
+      - insert_at: to_vlogs_format
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          severity_number: 0
+    outputs:
+      - extract_from: to_vlogs_format
+        conditions:
+          - type: vrl
+            source: |
+              assert!(is_null(.severity_text), "UNSPECIFIED has no canonical text")
+              true
+
+  - name: "vlogs: pre-existing severity_text is preserved as-is"
+    inputs:
+      - insert_at: to_vlogs_format
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          severity_number: 9
+          severity_text: "info"
+    outputs:
+      - extract_from: to_vlogs_format
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_text, "info", "pre-existing text not overwritten")
+              true
 
   - name: "vlogs: error records also convert correctly"
     inputs:

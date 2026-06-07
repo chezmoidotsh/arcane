@@ -5,7 +5,7 @@
 #
 # OTLP-style mapping (enriches existing event in-place):
 #   msg       → body
-#   level     → severity_text / severity_number  (AM emits uppercase; normalised)
+#   level     → severity_number                  (severity_text derived in to_vlogs_format; AM emits uppercase)
 #   source    → attributes.code.filepath + attributes.code.lineno
 #   component → attributes.alertmanager.component
 #   file      → attributes.alertmanager.config_file
@@ -30,7 +30,6 @@ transforms:
               "warning": 13, "warn": 13, "error": 17,
               "critical": 21, "fatal": 21, "alert": 21, "emergency": 21, "panic": 21
             }
-            .severity_text   = _level
             .severity_number = get(_sev, [_level]) ?? 9
           }
 
@@ -74,8 +73,8 @@ tests:
           - type: vrl
             source: |
               assert_eq!(.body, "Loading configuration file")
-              assert_eq!(.severity_text, "info")
               assert_eq!(.severity_number, 9)
+              assert!(is_null(.severity_text))
               assert_eq!(."attributes"."code.filepath", "coordinator.go")
               assert_eq!(."attributes"."code.lineno", 111)
               assert_eq!(."attributes"."alertmanager.component", "configuration")
@@ -97,8 +96,8 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(.severity_text, "warn")
               assert_eq!(.severity_number, 13)
+              assert!(is_null(.severity_text))
 
   - name: "alertmanager: source without line number is safe"
     inputs:

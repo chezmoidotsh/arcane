@@ -5,7 +5,7 @@
 #
 # OTLP-style mapping (enriches existing event in-place):
 #   msg     → body                        (replaces JSON-encoded body)
-#   level   → severity_text / severity_number  (root OTLP fields)
+#   level   → severity_number                  (severity_text derived in to_vlogs_format)
 #   caller  → attributes.code.filepath + attributes.code.lineno
 transforms:
   victoria_to_o11y:
@@ -28,7 +28,6 @@ transforms:
               "warning": 13, "warn": 13, "error": 17,
               "critical": 21, "fatal": 21, "alert": 21, "emergency": 21, "panic": 21
             }
-            .severity_text   = _level
             .severity_number = get(_sev, [_level]) ?? 9
           }
 
@@ -64,8 +63,8 @@ tests:
           - type: vrl
             source: |
               assert_eq!(.body, "started VictoriaMetrics in 0.289 seconds")
-              assert_eq!(.severity_text, "info")
               assert_eq!(.severity_number, 9)
+              assert!(is_null(.severity_text))
               assert_eq!(."attributes"."code.filepath", "VictoriaMetrics/app/victoria-metrics/main.go")
               assert_eq!(."attributes"."code.lineno", 106)
 
@@ -86,7 +85,8 @@ tests:
           - type: vrl
             source: |
               assert!(starts_with(string!(.body), "group"))
-              assert_eq!(.severity_text, "info")
+              assert_eq!(.severity_number, 9)
+              assert!(is_null(.severity_text))
               assert_eq!(."attributes"."code.lineno", 535)
 
   - name: "victoria: warn level maps to OTel severity 13"
@@ -105,8 +105,8 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(.severity_text, "warn")
               assert_eq!(.severity_number, 13)
+              assert!(is_null(.severity_text))
 
   - name: "victoria: non-JSON body passes through unchanged"
     inputs:
