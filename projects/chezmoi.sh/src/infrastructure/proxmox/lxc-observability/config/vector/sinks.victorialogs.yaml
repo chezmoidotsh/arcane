@@ -50,7 +50,7 @@ transforms:
       # Add stored_timestamp at the end of the pipeline to get the value when
       # the event is pushed to VLogs, enabling latency measurements in LogsQL.
       if !is_object(.attributes) { .attributes = {} }
-      ."attrs"."stored_timestamp" = format_timestamp!(now(), format: "%+")
+      ."stored_timestamp" = format_timestamp!(now(), format: "%+")
 
 sinks:
   # Sink: VictoriaLogs JSON-line ingest
