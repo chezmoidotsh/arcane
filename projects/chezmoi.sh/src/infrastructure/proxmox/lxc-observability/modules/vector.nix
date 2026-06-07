@@ -45,7 +45,7 @@ let
       vector validate --no-environment --config-dir "$out"
     '';
 
-  dataDir = "/var/lib/o11y/vector";
+  dataDir = "/persistent/o11y/vector";
 in
 {
   systemd.services.vector = {
@@ -71,7 +71,7 @@ in
       Restart = "always";
       RestartSec = "5s";
       TimeoutStopSec = "30s";
-      StateDirectory = "o11y/vector";
+      StateDirectory = lib.mkForce ""; # directory managed by tmpfiles.d (/persistent/o11y/vector)
       WorkingDirectory = dataDir;
 
       # ── systemd hardening (LXC-safe subset) ──────────────────────────────

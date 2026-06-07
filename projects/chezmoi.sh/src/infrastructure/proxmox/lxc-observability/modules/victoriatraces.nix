@@ -17,7 +17,7 @@
 
 let
   listenAddr = "127.0.0.1:10428";
-  dataDir = "/var/lib/o11y/traces";
+  dataDir = "/persistent/o11y/traces";
 in
 {
   systemd.services.victoriatraces = {
@@ -43,7 +43,7 @@ in
       Restart = "always";
       RestartSec = "5s";
       TimeoutStopSec = "30s";
-      StateDirectory = "o11y/traces";
+      StateDirectory = lib.mkForce ""; # directory managed by tmpfiles.d (/persistent/o11y/traces)
       WorkingDirectory = dataDir;
 
       NoNewPrivileges = true;

@@ -31,7 +31,7 @@
 
 let
   listenAddr = "127.0.0.1:9093";
-  dataDir = "/var/lib/o11y/alertmanager";
+  dataDir = "/persistent/o11y/alertmanager";
 
   slackWebhookUrl = secrets.slackWebhookUrl or "";
   deadmanUrl = secrets.alertmanagerDeadmanUrl or "";
@@ -118,7 +118,7 @@ in
       Restart = "always";
       RestartSec = "5s";
       TimeoutStopSec = "30s";
-      StateDirectory = "o11y/alertmanager";
+      StateDirectory = lib.mkForce ""; # directory managed by tmpfiles.d (/persistent/o11y/alertmanager)
       WorkingDirectory = dataDir;
 
       NoNewPrivileges = true;

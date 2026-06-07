@@ -27,8 +27,8 @@
 #     issuance fails until the file is present (the `-` prefix tolerates it).
 #   secrets.tailscaleOauthKey — Tailscale OAuth client secret (tag:o11y). When
 #     empty the tsnet listener starts but the node cannot join the tailnet.
-#     tsnet state and TLS certificates live at /var/lib/o11y/caddy (mp0 —
-#     persisted across upgrades alongside all other stack data).
+#     tsnet state and TLS certificates live at /persistent/caddy (mp0 —
+#     persisted across upgrades, isolated from the rest of the stack data).
 # ─────────────────────────────────────────────────────────────────────────────
 { lib, pkgs, secrets ? { }, ... }:
 
@@ -149,6 +149,13 @@ in
     '';
   };
 
+  # Dedicated uid — host uid 100000 + 997 = 100997 with default Proxmox mapping.
+  # Isolated from the shared o11y uid (980) so the upgrade script can chown
+  # /persistent/caddy and /persistent/o11y independently.
+  users.users.caddy = {
+    uid = lib.mkForce 997;
+  };
+
   # Secrets file: Cloudflare DNS-01 token + Tailscale OAuth key (TS_AUTHKEY).
   # Created only when at least one value is non-empty. The `-` prefix on
   # EnvironmentFile keeps Caddy startable on a pure build (no secrets).
@@ -159,31 +166,26 @@ in
           ++ lib.optional (tailscaleOauthKey != "") "TS_AUTHKEY=${tailscaleOauthKey}"
       ) + "\n";
     mode = "0400";
-    user = "o11y";
-    group = "o11y";
+    user = "caddy";
+    group = "caddy";
   };
 
   systemd.services.caddy = {
     environment = {
       # caddy uses AppDataDir() = $XDG_DATA_HOME/Caddy when set.
-      # Points into mp0 (/var/lib/o11y) so tsnet state and TLS certs are persisted
-      # alongside all other stack data on the single volume.
-      XDG_DATA_HOME = "/var/lib/o11y";
+      # Points into /persistent/caddy (mp0) so tsnet state and TLS certs survive
+      # image upgrades, isolated from the rest of the stack data.
+      XDG_DATA_HOME = "/persistent/caddy";
     };
     serviceConfig = {
-      # Run as the shared o11y user (uid 980) — consistent with all other stack
-      # daemons. Everything lives on mp0 (/var/lib/o11y): a single recursive
-      # chown to host uid 100980 covers all stack data.
-      User = lib.mkForce "o11y";
-      Group = lib.mkForce "o11y";
-
       # nixpkgs' caddy module sets StateDirectory/ReadWritePaths/LogsDirectory to
-      # "caddy" (/var/lib/caddy). Since we moved all state into mp0 (/var/lib/o11y),
-      # override them to point there instead. Without this, systemd's namespace setup
-      # fails with ENOENT because /var/lib/caddy does not exist.
+      # "caddy" (/var/lib/caddy). Since all state is in /persistent/caddy,
+      # override them. Without this, systemd's namespace setup fails with ENOENT
+      # because /var/lib/caddy does not exist.
       StateDirectory = lib.mkForce "";
-      ReadWritePaths = lib.mkForce "/var/lib/o11y";
+      ReadWritePaths = lib.mkForce "/persistent/caddy";
       LogsDirectory = lib.mkForce "";
+      WorkingDirectory = lib.mkForce "/persistent/caddy";
 
       EnvironmentFile = "-/etc/caddy/secrets";
 
@@ -197,10 +199,11 @@ in
     };
   };
 
-  # Ensure /var/lib/o11y/Caddy is owned by o11y before caddy starts.
+  # Ensure /persistent/caddy is owned by caddy before the service starts.
   # tmpfiles.d runs as root and succeeds where the service's StateDirectory
   # chown fails (unprivileged LXC can't chown from a non-root service user).
   systemd.tmpfiles.rules = [
-    "d /var/lib/o11y/Caddy 0750 o11y o11y - -"
+    "d /persistent/caddy      0750 caddy caddy - -"
+    "d /persistent/caddy/Caddy 0750 caddy caddy - -"
   ];
 }

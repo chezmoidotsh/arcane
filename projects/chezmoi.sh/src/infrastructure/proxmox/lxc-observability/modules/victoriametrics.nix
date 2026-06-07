@@ -16,7 +16,7 @@
 
 let
   listenAddr = "127.0.0.1:8428";
-  dataDir = "/var/lib/o11y/metrics";
+  dataDir = "/persistent/o11y/metrics";
 in
 {
   systemd.services.victoriametrics = {
@@ -43,7 +43,7 @@ in
       Restart = "always";
       RestartSec = "5s";
       TimeoutStopSec = "30s";
-      StateDirectory = "o11y/metrics";
+      StateDirectory = lib.mkForce ""; # directory managed by tmpfiles.d (/persistent/o11y/metrics)
       WorkingDirectory = dataDir;
 
       # ── systemd hardening (LXC-safe subset) ──────────────────────────────
