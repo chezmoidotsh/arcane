@@ -1,7 +1,17 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # pve-exporter — site configuration
 # ─────────────────────────────────────────────────────────────────────────────
-# Minimal LXC: runs prometheus-pve-exporter + Vector agent. No public services.
+# Supplies only site-specific values that are not part of the module logic:
+# system identity, locale, the console shell, and the console toolbox.
+#
+# The modules in ./modules/ own all service configuration:
+#   * pve-exporter.nix — prometheus-pve-exporter (inline Python packages)
+#   * o11y.nix         — Vector agent (catalog.lxcAgent) shipping metrics + logs
+#   * hardening.nix    — sysctl, firewall default-deny, login surface, journald
+#
+# No shared service account: unlike the o11y/oci LXCs, this container has no
+# persistent data volume (mp0) — the PVE token is baked into the image and the
+# exporter pushes outbound only.
 #
 # Build inputs forwarded via _module.args (see flake.nix):
 #   pveHost        — PVE API host address (e.g. 10.0.0.254)

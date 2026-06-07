@@ -1,0 +1,66 @@
+# =============================================================================
+# pve-exporter LXC — Task Automation
+# =============================================================================
+# Tasks for building, uploading, and maintaining the Proxmox LXC template that
+# runs prometheus-pve-exporter + Vector agent. No public services — the LXC
+# only pushes outbound (metrics + logs) to the o11y appliance.
+#
+# Usage:
+#   mise run lxc:secrets:sync                       # Create placeholder secrets files (operator must fill PVE credentials)
+#   mise run lxc:build                              # Build the LXC tarball with secrets baked in
+#   mise run lxc:push -- <pve-host>                 # Upload template to Proxmox (local storage)
+#   mise run lxc:upgrade -- <pve-host> <src> <dst>  # Upgrade a running LXC to a new image
+#
+# Secret files (SOPS/age-encrypted, baked into the image at build time):
+#   secrets/pve-exporter.sops.env  PVE_HOST        (operator-provided — PVE API host address)
+#                                  PVE_TOKEN_VALUE  (operator-provided — API token secret)
+#
+# File-based tasks (bash scripts):
+#   .mise/tasks/lxc/build    — build task
+#   .mise/tasks/lxc/push     — upload task
+#   .mise/tasks/lxc/upgrade  — upgrade task
+#
+# Prerequisites:
+#   - Docker (for the Nix build container)
+#   - sops + age key in SOPS_AGE_KEY_FILE (configured in root .mise.toml)
+#   - SSH key-based access to root@<pve-host> (for lxc:push)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Secret Management — PVE API credentials (operator-provided)
+# -----------------------------------------------------------------------------
+# Creates placeholder secret files. The operator must fill in PVE_HOST and
+# PVE_TOKEN_VALUE manually (these are not managed by Crossplane).
+#
+#   sops -d secrets/pve-exporter.sops.env    # inspect current values
+#   sops secrets/pve-exporter.sops.env       # edit in $EDITOR
+
+[tasks."lxc:secrets:sync"]
+description = "Create placeholder PVE secrets files (operator must fill credentials)"
+dir = "{{ config_root }}"
+run = '''
+  set -euo pipefail
+
+  mkdir -p "{{ config_root }}/secrets"
+  PVE_SECRETS="{{ config_root }}/secrets/pve-exporter.sops.env"
+  TMP_PVE="{{ config_root }}/secrets/.tmp.$$.pve.sops.env"
+  trap 'rm -f "${TMP_PVE}"' EXIT
+
+  if [[ -f "${PVE_SECRETS}" ]]; then
+    echo "[INFO] secrets/pve-exporter.sops.env already exists — preserving existing values." >&2
+    exit 0
+  fi
+
+  printf 'PVE_HOST=\nPVE_TOKEN_VALUE=\n' > "${TMP_PVE}"
+  sops --encrypt --input-type dotenv --output-type dotenv "${TMP_PVE}" > "${PVE_SECRETS}"
+
+  echo "[SUCCESS] secrets/pve-exporter.sops.env created (empty). Fill PVE_HOST and PVE_TOKEN_VALUE:" >&2
+  echo "  sops secrets/pve-exporter.sops.env" >&2
+'''
+
+# -----------------------------------------------------------------------------
+# Deployment Tasks — see .mise/tasks/lxc/ for file-based scripts
+# -----------------------------------------------------------------------------
+# lxc:build   → .mise/tasks/lxc/build   (build LXC tarball with secrets baked in)
+# lxc:push    → .mise/tasks/lxc/push    (upload template to Proxmox)
+# lxc:upgrade → .mise/tasks/lxc/upgrade (upgrade running LXC to new image)
