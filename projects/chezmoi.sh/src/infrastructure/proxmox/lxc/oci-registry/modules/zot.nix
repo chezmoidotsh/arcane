@@ -65,11 +65,9 @@ let
       realm = "zot";
       externalUrl = "https://oci.chezmoi.sh";
       compat = [ "docker2s2" ]; # keep fat-manifest clients happy
-
-      # Anonymous read for everyone. Pushes are not exposed — first-party
-      # images are pushed from a maintainer workstation over a localhost
-      # tunnel (`ssh -L 5000:127.0.0.1:5000 <pve-host> pct exec 102 …`).
-      accessControl.repositories."**".anonymousPolicy = [ "read" ];
+      # No accessControl: Zot binds loopback-only; Caddy is the sole external
+      # surface. Omitting accessControl keeps /metrics unauthenticated so
+      # Vector can scrape without credentials.
     };
 
     log.level = "info";
