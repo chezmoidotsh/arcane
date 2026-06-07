@@ -60,9 +60,15 @@ in
         # --advertise-tags" without it). hostname must live inside a named node
         # block; bind tailscale/<name> then references that node. Using
         # bind tailscale/ (no suffix) falls back to the binary name ("caddy").
+        #
+        # state_dir is required: caddy-tailscale falls back to os.UserConfigDir()
+        # (i.e. $HOME/.config) — not XDG_DATA_HOME — when unset. HOME=/var/lib/caddy
+        # for the caddy service user, but that directory does not exist (StateDirectory
+        # is cleared), so os.MkdirAll errors with "permission denied" at /var/lib/caddy.
         tailscale {
-          auth_key {env.TS_AUTHKEY}
+          auth_key  {env.TS_AUTHKEY}
           tags      tag:o11y
+          state_dir /persistent/caddy/tsnet
           o11y-ep {
             hostname o11y-ep
           }
@@ -172,9 +178,10 @@ in
 
   systemd.services.caddy = {
     environment = {
-      # caddy uses AppDataDir() = $XDG_DATA_HOME/Caddy when set.
-      # Points into /persistent/caddy (mp0) so tsnet state and TLS certs survive
-      # image upgrades, isolated from the rest of the stack data.
+      # caddy uses AppDataDir() = $XDG_DATA_HOME/caddy when set (cert/key storage).
+      # Points into /persistent/caddy (mp0) so TLS certs survive image upgrades.
+      # Note: caddy-tailscale uses os.UserConfigDir() (not XDG_DATA_HOME) for tsnet
+      # state; that path is set explicitly via state_dir in the Caddyfile instead.
       XDG_DATA_HOME = "/persistent/caddy";
     };
     serviceConfig = {
