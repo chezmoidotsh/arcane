@@ -292,7 +292,7 @@ ssh root@pve.lan pct exec <vmid> -- journalctl -u omni-infra-provider-proxmox -f
 ### Upgrade provider version
 
 1. Bump `services.omniInfraProviderProxmox.version` and `hashes` in
-   `catalog/nix/siderolabs/omni/infra-provider-proxmox.nix` (Renovate proposes this).
+   `catalog/nix/siderolabs/omni/infra-provider/proxmox.nix` (Renovate proposes this).
 2. Bump `version` in `flake.nix`.
 3. Build, push, upgrade.
 

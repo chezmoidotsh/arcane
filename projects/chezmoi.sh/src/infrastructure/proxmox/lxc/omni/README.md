@@ -5,9 +5,8 @@ Standalone Proxmox LXC running NixOS + Omni + Dex + Caddy. Serves
 (SideroLink + Kubernetes proxy + UI), with a co-located Dex OIDC provider
 exposed under the `/dex` sub-path on the same hostname.
 
-This replaces the earlier ISO-based VM (`../../iso-omni/`) with the same
-unprivileged-LXC pattern used by `../oci-registry/` and
-`../observability/`.
+This replaces the earlier ISO-based Omni VM with the same
+unprivileged-LXC pattern used by `../oci-registry/`.
 
 > **Status** — fresh deployment target. The catalog modules
 > (`catalog/nix/siderolabs/omni/`) are shared with the legacy ISO build
@@ -232,6 +231,12 @@ mise run lxc:secrets:sync
 
 ## Build & deploy
 
+> **Before the first build** — replace the `CHANGEME` placeholders in
+> `configuration.nix`: `initialUsers`, `eulaAcceptName`, `eulaAcceptEmail`,
+> and the Dex static user's `email`. The build succeeds with the
+> placeholders in place, but Omni only grants admin access to the listed
+> emails — deploying them as-is locks you out of the UI.
+
 ```sh
 # 1. Build the LXC tarball with both secrets baked in
 mise run lxc:build
@@ -335,8 +340,9 @@ ssh root@${NODE} pct start ${VMID}
   is a read-only log view; for a shell use `pct enter <vmid>`.
 * `firewall=1` on the NIC — enables the Proxmox per-VM firewall (rules
   in the next section).
-* `--mp0 storage:20,mp=/var/lib/omni` — dedicated 20 GiB volume for
-  Omni's PKI, GPG key, and SQLite store. Size is comfortable for a
+* `--mp0 storage:20,mp=/persistent` — dedicated 20 GiB volume holding
+  Omni's PKI, GPG key, and SQLite store (`/persistent/omni`) plus
+  Caddy's ACME state (`/persistent/caddy`). Size is comfortable for a
   homelab fleet; bump it if you onboard hundreds of Talos nodes.
 
 ### Resource sizing — starting values
@@ -496,10 +502,9 @@ Symptom: Talos machines never reach `connected` state in the Omni UI.
   [Host kernel prerequisite](#host-kernel-prerequisite--wireguard) section.
 * Confirm UDP `50180` is open in `/etc/pve/firewall/<vmid>.fw` and on
   whatever upstream firewall sits in front of the Proxmox host.
-* Verify `services.omni.advertiseHost` in `configuration.nix` is the
-  public IP the Talos machines can actually reach (the SideroLink
-  WireGuard endpoint advertised by Omni). Placeholder
-  `CHANGEME_PUBLIC_IP` must be replaced before deploying.
+* Verify `services.omni.advertiseHost` in `configuration.nix` (currently
+  `omni.chezmoi.sh`) resolves to an IP the Talos machines can actually
+  reach (it is the SideroLink WireGuard endpoint advertised by Omni).
 
 ### `pct console` fails with `lxc_cmd_get_tty_fd: … Denied access to tty`
 
@@ -561,13 +566,13 @@ pct start ${VMID}
    inherited from the VM build and is a no-op (failed silently) under
    LXC. If you want clean `systemctl status`, gate it with
    `lib.mkIf (!config.boot.isContainer)` in `catalog/nix/siderolabs/omni/omni.nix`
-   — that change benefits the OCI registry and observability LXCs too.
+   — that change benefits the OCI registry LXC too.
 3. **No automated NixOS test.** A `pkgs.testers.runNixOSTest` that boots
    the LXC and asserts the Dex discovery doc and Omni `/healthz` would
    catch regressions in the catalog modules before they reach Proxmox.
 4. **No alert on certificate expiry.** Caddy renews silently; if ACME
-   breaks, the cert expires unnoticed. A blackbox-exporter probe from
-   the observability LXC (`lxc-observability`) closes this gap.
+   breaks, the cert expires unnoticed. A blackbox-exporter probe from a
+   future observability stack would close this gap.
 5. **Single-LXC, single-node.** Acceptable trade-off for a homelab; HA
    would require an external etcd and pairs of Omni instances behind a
    load-balancer (out of scope).
