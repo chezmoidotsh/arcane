@@ -6,14 +6,14 @@
 # the co-located Dex OIDC provider (/dex).
 #
 # Usage:
-#   mise run lxc:secrets:init                              # Generate Dex admin hash → secrets/omni.sops.env
+#   mise run lxc:secrets:rotate                            # Generate Dex admin hash → secrets/omni.sops.env
 #   mise run lxc:secrets:sync                              # Fetch Cloudflare token from cluster → secrets/caddy.sops.env
 #   mise run lxc:build                                     # Build the LXC tarball with secrets baked in
 #   mise run lxc:push -- <pve-host>                        # Upload template to Proxmox (local storage)
 #   mise run lxc:upgrade -- <pve-host> <src> [-t <dst>]    # Upgrade a running LXC (target VMID auto-picked ≥ 100 if omitted)
 #
 # Typical workflow (first time):
-#   mise run lxc:secrets:init              # Sets the Dex admin password
+#   mise run lxc:secrets:rotate            # Sets the Dex admin password
 #   mise run lxc:secrets:sync              # Requires kubectl access to amiya.akn
 #   mise run lxc:build
 #   mise run lxc:push -- pve.lan
@@ -36,7 +36,7 @@
 #   - Docker (for the Nix build container)
 #   - kubectl configured for amiya.akn (for lxc:secrets:sync)
 #   - sops + age key in SOPS_AGE_KEY_FILE (configured in root .mise.toml)
-#   - htpasswd (apache2-utils / httpd-tools) for lxc:secrets:init
+#   - htpasswd (apache2-utils / httpd-tools) for lxc:secrets:rotate
 #   - SSH key-based access to root@<pve-host> (for lxc:push / lxc:upgrade)
 # =============================================================================
 
@@ -53,7 +53,7 @@
 # Run once before the first build, and again whenever the password needs
 # to be rotated.
 
-[tasks."lxc:secrets:init"]
+[tasks."lxc:secrets:rotate"]
 description = "Generate Dex admin password hash and write secrets/omni.sops.env"
 dir = "{{ config_root }}"
 run = '''

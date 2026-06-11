@@ -187,7 +187,7 @@ PVE host config, not inside the container rootfs).
 * Docker (used by `nix:build:lxc` to wrap the Nix build).
 * `kubectl` configured for `amiya.akn` (only for the initial token sync).
 * `sops` with the repo age key loaded (`SOPS_AGE_KEY_FILE` already set by mise).
-* `htpasswd` (apache2-utils / httpd-tools) for `lxc:secrets:init`.
+* `htpasswd` (apache2-utils / httpd-tools) for `lxc:secrets:rotate`.
 * SSH key-based root access to the Proxmox node you intend to push to.
 
 ## Proxmox user and role setup
@@ -216,7 +216,7 @@ time. The plaintext values never touch disk.
 
 ```sh
 # 1. Generate the Dex admin password hash (interactive)
-mise run lxc:secrets:init
+mise run lxc:secrets:rotate
 
 # 2. Sync the Cloudflare DNS-01 token from amiya.akn
 mise run lxc:secrets:sync
@@ -224,7 +224,7 @@ mise run lxc:secrets:sync
 
 ### Rotation
 
-* **Dex admin password** — re-run `mise run lxc:secrets:init`, rebuild,
+* **Dex admin password** — re-run `mise run lxc:secrets:rotate`, rebuild,
   redeploy.
 * **Cloudflare token** — delete the Crossplane `APIToken` so it gets
   recreated, wait for `Ready`, then re-run `mise run lxc:secrets:sync`,
@@ -249,7 +249,7 @@ multiple builds the same day.
 
 | Task                                                              | What it does                                                                                                                     |
 | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `mise run lxc:secrets:init`                                       | Generate the Dex admin bcrypt hash → `secrets/omni.sops.env`                                                                     |
+| `mise run lxc:secrets:rotate`                                     | Generate the Dex admin bcrypt hash → `secrets/omni.sops.env`                                                                     |
 | `mise run lxc:secrets:sync`                                       | Fetch Cloudflare token from cluster → `secrets/caddy.sops.env`                                                                   |
 | `mise run lxc:build`                                              | Build with both secrets baked in (requires the two `.sops.env`)                                                                  |
 | `mise run lxc:push -- <pve-host>`                                 | `scp` the tarball to Proxmox (`local` storage, hardcoded)                                                                        |
