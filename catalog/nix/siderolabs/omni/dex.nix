@@ -1,0 +1,123 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Dex OIDC — optional integration with services.omni
+# ─────────────────────────────────────────────────────────────────────────────
+# Dex is *one* possible OIDC provider for Omni. You can equally point
+# services.omni.oidcProviderUrl at Pocket-Id, Keycloak, or any other provider.
+# Enable this module only when you want a co-located Dex instance.
+#
+# When enabled, Dex runs in HTTP mode on services.omni.dex.bindAddr.
+# TLS termination is left to the site (Caddy, nginx, …).
+# The Dex issuer URL must match services.omni.oidcProviderUrl exactly.
+#
+# Password hashes are read from environmentFile at Nix eval time (build --impure)
+# and baked into the config. Generate with:
+#   htpasswd -bnBC 12 "" '<password>' | tr -d ':\n'
+# ─────────────────────────────────────────────────────────────────────────────
+{ config, lib, ... }:
+
+let
+  cfg = config.services.omni;
+  dex = cfg.dex;
+in
+{
+  options.services.omni.dex = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Enable a co-located Dex OIDC provider. Not mandatory — any OIDC provider works.";
+    };
+
+    bindAddr = lib.mkOption {
+      type = lib.types.str;
+      default = "127.0.0.1:5557";
+      description = "Dex HTTP bind address. TLS is handled externally by the site.";
+    };
+
+    environmentFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "Environment file for the dex unit (e.g. SOPS-decrypted secrets).";
+    };
+
+    users = lib.mkOption {
+      type = lib.types.listOf (lib.types.submodule {
+        options = {
+          email = lib.mkOption { type = lib.types.str; };
+          username = lib.mkOption { type = lib.types.str; };
+          hashEnvVar = lib.mkOption {
+            type = lib.types.str;
+            description = "Env var name holding the bcrypt hash (from environmentFile).";
+          };
+        };
+      });
+      default = [ ];
+      example = lib.literalExpression ''
+        [{ email = "admin@example.com"; username = "admin"; hashEnvVar = "DEX_ADMIN_PASSWORD_HASH"; }]
+      '';
+    };
+  };
+
+  config =
+    let
+      # Dex does not expand ${VAR} in its YAML config (Dex ≥2.40 dropped
+      # the internal envsubst pass). Bake the hash directly by reading the
+      # value from the secrets file at Nix evaluation time and emitting
+      # the literal string into the config. When the file is absent (pure
+      # build), hashes are empty — Dex will reject the config at startup,
+      # which is the expected behavior for a build without secrets.
+      mkHash = u:
+        let
+          # Read from dex.environmentFile specifically (set to a nix-store
+          # file at build time in the site configuration.nix), not from the
+          # main cfg.environmentFile which is a runtime path.
+          envFile = dex.environmentFile or (cfg.environmentFile or "/dev/null");
+          raw = builtins.readFile envFile;
+          lines = lib.splitString "\n" (lib.replaceStrings [ "\r" ] [ "" ] raw);
+          prefix = "${u.hashEnvVar}=";
+          match = lib.findFirst (lib.hasPrefix prefix) "" lines;
+        in
+        lib.removePrefix prefix match;
+
+      # Pure-build fallback: empty string so the hash slot is populated
+      # but invalid. Dex rejects it, which is the desired behaviour.
+      mkHashOrEmpty = u:
+        let envFile = dex.environmentFile or (cfg.environmentFile or "/dev/null");
+        in if builtins.pathExists envFile
+        then mkHash u
+        else "";
+
+      passwordUsers = map
+        (u: {
+          email = u.email;
+          username = u.username;
+          preferredUsername = u.username;
+          hash = mkHashOrEmpty u;
+        })
+        dex.users;
+    in
+    lib.mkIf (cfg.enable && dex.enable) {
+      services.dex = {
+        enable = true;
+
+        environmentFile =
+          lib.mkIf (dex.environmentFile != null) dex.environmentFile;
+
+        settings = {
+          issuer = cfg.oidcProviderUrl;
+          storage.type = "memory";
+          web.http = dex.bindAddr;
+
+          enablePasswordDB = true;
+
+          staticClients = [{
+            id = cfg.oidcClientId;
+            secret = cfg.oidcClientSecret;
+            name = "Omni";
+            redirectURIs = [ "https://${cfg.domain}/oidc/consume" ];
+          }];
+
+          staticPasswords = passwordUsers;
+        };
+      };
+    };
+}
