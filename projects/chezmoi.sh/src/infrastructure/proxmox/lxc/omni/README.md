@@ -19,14 +19,15 @@ unprivileged-LXC pattern used by `../oci-registry/` and
 1. [Architecture](#architecture)
 2. [What's in this directory](#whats-in-this-directory)
 3. [Prerequisites](#prerequisites)
-4. [Secrets](#secrets)
-5. [Build & deploy](#build--deploy)
-6. [Proxmox LXC creation](#proxmox-lxc-creation)
-7. [Proxmox host firewall](#proxmox-host-firewall)
-8. [Hardening reference](#hardening-reference)
-9. [Operations](#operations)
-10. [Troubleshooting](#troubleshooting)
-11. [Known gaps / follow-ups](#known-gaps--follow-ups)
+4. [Proxmox user and role setup](#proxmox-user-and-role-setup)
+5. [Secrets](#secrets)
+6. [Build & deploy](#build--deploy)
+7. [Proxmox LXC creation](#proxmox-lxc-creation)
+8. [Proxmox host firewall](#proxmox-host-firewall)
+9. [Hardening reference](#hardening-reference)
+10. [Operations](#operations)
+11. [Troubleshooting](#troubleshooting)
+12. [Known gaps / follow-ups](#known-gaps--follow-ups)
 
 ## Architecture
 
@@ -119,6 +120,47 @@ PVE host config, not inside the container rootfs).
 > boot.kernelModules = lib.mkForce [ ];
 > ```
 
+### Homelab network context
+
+```text
+                      ┌─────────────────────┐
+                      │    Internet / LAN    │
+                      └─────────┬───────────┘
+                                │
+                   ┌────────────▼────────────┐
+                   │  Proxmox host           │
+                   │  pve-01.pve.chezmoi.sh  │
+                   │                         │
+                   │  ┌───────────────────┐  │
+                   │  │  LXC: omni        │  │
+                   │  │  omni.chezmoi.sh  │  │
+                   │  │                   │  │
+                   │  │  Caddy :443       │  │
+                   │  │  Omni  :8090/8100 │  │
+                   │  │  WG    :50180/udp │  │
+                   │  │  Dex   :5557      │  │
+                   │  └───────────────────┘  │
+                   │                         │
+                   │  ┌───────────────────┐  │
+                   │  │  LXC: infra-     │  │
+                   │  │  provider-proxmox│  │
+                   │  │  (no inbound)    │  │
+                   │  └───────────────────┘  │
+                   │                         │
+                   │  ┌───────────────────┐  │
+                   │  │  LXC: oci-registry│  │
+                   │  │  registry.chezmoi │  │
+                   │  └───────────────────┘  │
+                   └─────────────────────────┘
+                          │ SideroLink WG
+              ┌───────────┴───────────┐
+              ▼                       ▼
+    ┌─────────────────┐   ┌─────────────────┐
+    │ Talos node 1    │   │ Talos node N    │
+    │ (amiya/lungmen) │   │ (amiya/lungmen) │
+    └─────────────────┘   └─────────────────┘
+```
+
 ## What's in this directory
 
 ```text
@@ -147,6 +189,56 @@ PVE host config, not inside the container rootfs).
 * `sops` with the repo age key loaded (`SOPS_AGE_KEY_FILE` already set by mise).
 * `htpasswd` (apache2-utils / httpd-tools) for `lxc:secrets:init`.
 * SSH key-based root access to the Proxmox node you intend to push to.
+
+## Proxmox user and role setup
+
+The Omni LXC itself does not authenticate with Proxmox — it serves Talos
+machines via SideroLink and exposes the management UI. However, the
+**companion infra-provider LXC** (`../omni-infra-provider-proxmox/`) needs a
+Proxmox API user with VM creation permissions.
+
+Create the Proxmox user and role on the Proxmox host:
+
+```sh
+# On the Proxmox node (pve-01.pve.chezmoi.sh):
+
+# 1. Create a PVE realm user for the infra provider
+pveum user add omni@pve
+
+# 2. Create a role with the minimum permissions for VM lifecycle
+pveum role add OmniProvider -privs \
+  "VM.Allocate VM.Clone VM.Config.CPU VM.Config.Disk VM.Config.Memory \
+   VM.Config.Network VM.Config.Options VM.Monitor VM.PowerMgmt \
+   VM.Console Datastore.AllocateSpace Datastore.Audit"
+
+# 3. Assign the role to the user on the target path
+#    '/' = all nodes and VMs — restrict to a specific node or pool if needed.
+pveum acl modify / --users omni@pve --roles OmniProvider
+
+# 4. Set a password for the user (used by the infra-provider LXC)
+pveum passwd omni@pve
+```
+
+### Proxmox permissions reference
+
+| Privilege                 | Why needed                                  |
+| ------------------------- | ------------------------------------------- |
+| `VM.Allocate`             | Create new VMs for Talos nodes.             |
+| `VM.Clone`                | Clone VM templates (if using a base image). |
+| `VM.Config.CPU`           | Set CPU cores/count on new VMs.             |
+| `VM.Config.Disk`          | Attach and resize disks.                    |
+| `VM.Config.Memory`        | Set memory allocation.                      |
+| `VM.Config.Network`       | Configure NICs (bridge, VLAN, model).       |
+| `VM.Config.Options`       | Set boot order, OSType, description.        |
+| `VM.Monitor`              | Query VM status via QEMU monitor.           |
+| `VM.PowerMgmt`            | Start, stop, reset VMs.                     |
+| `VM.Console`              | Access VNC/terminal for debugging.          |
+| `Datastore.AllocateSpace` | Create disks on storage (local-zfs, etc.).  |
+| `Datastore.Audit`         | List available storage and templates.       |
+
+> **Security note.** The `omni@pve` user has broad VM lifecycle permissions.
+> Restrict the ACL path to a specific node (`/nodes/pve-01`) or resource pool
+> if the Proxmox host runs other workloads beyond Omni-managed Talos VMs.
 
 ## Secrets
 
@@ -483,3 +575,12 @@ pct start ${VMID}
 5. **Single-LXC, single-node.** Acceptable trade-off for a homelab; HA
    would require an external etcd and pairs of Omni instances behind a
    load-balancer (out of scope).
+
+## References
+
+* [Omni documentation](https://omni.siderolabs.com)
+* [Omni GitHub — siderolabs/omni](https://github.com/siderolabs/omni)
+* [Talos Linux](https://www.talos.dev)
+* [Dex OIDC provider](https://github.com/dexidp/dex)
+* [Catalog NixOS modules](../../../../../catalog/nix/siderolabs/omni/) — `omni.nix`, `dex.nix`, `infra-provider/proxmox.nix`
+* [Companion LXC — infra-provider-proxmox](../omni-infra-provider-proxmox/)

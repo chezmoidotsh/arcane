@@ -12,31 +12,41 @@ independently. Each LXC has its own `.mise/tasks` and lifecycle.
 
 1. [Architecture](#architecture)
 2. [Prerequisites](#prerequisites)
-3. [Secrets — two-phase setup](#secrets--two-phase-setup)
-4. [Build & deploy](#build--deploy)
-5. [Proxmox LXC creation](#proxmox-lxc-creation)
-6. [Operations](#operations)
-7. [Troubleshooting](#troubleshooting)
+3. [Proxmox user and role setup](#proxmox-user-and-role-setup)
+4. [Secrets — two-phase setup](#secrets--two-phase-setup)
+5. [Build & deploy](#build--deploy)
+6. [Proxmox LXC creation](#proxmox-lxc-creation)
+7. [Operations](#operations)
+8. [Troubleshooting](#troubleshooting)
+9. [References](#references)
 
 ## Architecture
 
 ```text
-                    Omni UI / CLI
-                         │
-                         │ infra provider API
-                         ▼
-         ┌───────────────────────────────────┐
-         │  LXC (unprivileged)   NixOS       │
-         │                                   │
-         │  omni-infra-provider-proxmox      │
-         │   ├─ → Omni API (omni.chezmoi.sh) │
-         │   └─ → Proxmox API (pve host)     │
-         │                                   │
-         │  No inbound ports                 │
-         └───────────────────────────────────┘
-                         │ Proxmox API
-                         ▼
-              Proxmox host — creates Talos VMs
+                      ┌─────────────────────┐
+                      │    Internet / LAN    │
+                      └─────────┬───────────┘
+                                │
+                   ┌────────────▼────────────┐
+                   │  Proxmox host           │
+                   │  pve-01.pve.chezmoi.sh  │
+                   │                         │
+                   │  ┌───────────────────┐  │
+                   │  │  LXC: omni        │  │
+                   │  │  omni.chezmoi.sh  │  │
+                   │  └────────┬──────────┘  │
+                   │           │              │
+                   │  ┌────────▼──────────┐  │
+                   │  │  LXC: infra-     │  │
+                   │  │  provider-proxmox│──┤──→ Omni API
+                   │  │  (no inbound)    │  │    (omni.chezmoi.sh)
+                   │  └────────┬──────────┘  │
+                   │           │              │
+                   │           └──→ Proxmox API
+                   │                (localhost:8006)
+                   │                         │
+                   │  Creates Talos VMs ◄────┘
+                   └─────────────────────────┘
 ```
 
 * **No inbound ports** — the provider connects out to Omni and Proxmox only.
@@ -44,6 +54,8 @@ independently. Each LXC has its own `.mise/tasks` and lifecycle.
 * **Stateless** — no persistent volume. Upgrades replace the rootfs entirely.
 * **No TUN/WireGuard** — unlike the Omni LXC, no special kernel or device
   prerequisites are needed.
+* **Proxmox user** — authenticates as `omni@pve` with VM lifecycle permissions
+  (see [Proxmox user and role setup](#proxmox-user-and-role-setup)).
 
 ## Prerequisites
 
@@ -51,6 +63,71 @@ independently. Each LXC has its own `.mise/tasks` and lifecycle.
 * `sops` with the repo age key loaded (`SOPS_AGE_KEY_FILE` set by mise).
 * SSH key-based root access to the Proxmox node.
 * The `omni` LXC must be running and reachable at `omni.chezmoi.sh`.
+
+## Proxmox user and role setup
+
+The infra provider authenticates with Proxmox using a dedicated `omni@pve` user.
+Create it on the Proxmox host before first deployment:
+
+```sh
+# On the Proxmox node (pve-01.pve.chezmoi.sh):
+
+# 1. Create a PVE realm user
+pveum user add omni@pve
+
+# 2. Create a role with the minimum permissions for VM lifecycle
+pveum role add OmniProvider -privs \
+  "VM.Allocate VM.Clone VM.Config.CPU VM.Config.Disk VM.Config.Memory \
+   VM.Config.Network VM.Config.Options VM.Monitor VM.PowerMgmt \
+   VM.Console Datastore.AllocateSpace Datastore.Audit"
+
+# 3. Assign the role to the user on the target path
+#    '/' = all nodes and VMs — restrict to a specific node or pool if needed.
+pveum acl modify / --users omni@pve --roles OmniProvider
+
+# 4. Set a password for the user (this is the PROXMOX_PASSWORD secret)
+pveum passwd omni@pve
+
+# 5. (Optional) Create an API token for non-interactive use
+pveum user token add omni@pve provider --privsep 0
+# Record the full token ID (omni@pve!provider) and secret for automation.
+```
+
+### Proxmox permissions reference
+
+| Privilege                 | Why needed                                  |
+| ------------------------- | ------------------------------------------- |
+| `VM.Allocate`             | Create new VMs for Talos nodes.             |
+| `VM.Clone`                | Clone VM templates (if using a base image). |
+| `VM.Config.CPU`           | Set CPU cores/count on new VMs.             |
+| `VM.Config.Disk`          | Attach and resize disks.                    |
+| `VM.Config.Memory`        | Set memory allocation.                      |
+| `VM.Config.Network`       | Configure NICs (bridge, VLAN, model).       |
+| `VM.Config.Options`       | Set boot order, OSType, description.        |
+| `VM.Monitor`              | Query VM status via QEMU monitor.           |
+| `VM.PowerMgmt`            | Start, stop, reset VMs.                     |
+| `VM.Console`              | Access VNC/terminal for debugging.          |
+| `Datastore.AllocateSpace` | Create disks on storage (local-zfs, etc.).  |
+| `Datastore.Audit`         | List available storage and templates.       |
+
+> **Security note.** Restrict the ACL path to `/nodes/<name>` or a resource
+> pool if the Proxmox host runs workloads beyond Omni-managed Talos VMs. The
+> `omni@pve` user should not have access to unrelated VMs or containers.
+
+### Configuration mapping
+
+The Proxmox user configured above maps to these options in `configuration.nix`:
+
+```nix
+services.omniInfraProviderProxmox.proxmox = {
+  url = "https://pve-01.pve.chezmoi.sh:8006/api2/json";
+  username = "omni@pve";    # from pveum user add
+  realm = "pve";            # PVE realm (not pam)
+};
+```
+
+The password is stored in `secrets/proxmox.sops.env` and baked into the image at
+build time.
 
 ## Secrets — two-phase setup
 
@@ -199,3 +276,12 @@ Verify the password and username in `configuration.nix` and
 
 Expected — the `OMNI_SERVICE_ACCOUNT_KEY` is not set yet. Complete phase 2
 (register in Omni UI, run `lxc:secrets:omni`, rebuild).
+
+## References
+
+* [omni-infra-provider-proxmox GitHub](https://github.com/siderolabs/omni-infra-provider-proxmox)
+* [Omni documentation](https://omni.siderolabs.com)
+* [Omni infrastructure providers docs](https://omni.siderolabs.com/docs/how-to-guides/infrastructure-providers/)
+* [Proxmox VE user management](https://pve.proxmox.com/pve-docs/pveum.1.html)
+* [Catalog NixOS module](../../../../../catalog/nix/siderolabs/omni/infra-provider/proxmox.nix)
+* [Companion LXC — Omni](../omni/)
