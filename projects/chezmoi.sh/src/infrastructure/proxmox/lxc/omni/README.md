@@ -195,50 +195,12 @@ PVE host config, not inside the container rootfs).
 The Omni LXC itself does not authenticate with Proxmox — it serves Talos
 machines via SideroLink and exposes the management UI. However, the
 **companion infra-provider LXC** (`../omni-infra-provider-proxmox/`) needs a
-Proxmox API user with VM creation permissions.
+Proxmox API user with VM lifecycle permissions, scoped to the `Talos`
+resource pool so it can never touch the LXCs running on the same host.
 
-Create the Proxmox user and role on the Proxmox host:
-
-```sh
-# On the Proxmox node (pve-01.pve.chezmoi.sh):
-
-# 1. Create a PVE realm user for the infra provider
-pveum user add omni@pve
-
-# 2. Create a role with the minimum permissions for VM lifecycle
-pveum role add OmniProvider -privs \
-  "VM.Allocate VM.Clone VM.Config.CPU VM.Config.Disk VM.Config.Memory \
-   VM.Config.Network VM.Config.Options VM.Monitor VM.PowerMgmt \
-   VM.Console Datastore.AllocateSpace Datastore.Audit"
-
-# 3. Assign the role to the user on the target path
-#    '/' = all nodes and VMs — restrict to a specific node or pool if needed.
-pveum acl modify / --users omni@pve --roles OmniProvider
-
-# 4. Set a password for the user (used by the infra-provider LXC)
-pveum passwd omni@pve
-```
-
-### Proxmox permissions reference
-
-| Privilege                 | Why needed                                  |
-| ------------------------- | ------------------------------------------- |
-| `VM.Allocate`             | Create new VMs for Talos nodes.             |
-| `VM.Clone`                | Clone VM templates (if using a base image). |
-| `VM.Config.CPU`           | Set CPU cores/count on new VMs.             |
-| `VM.Config.Disk`          | Attach and resize disks.                    |
-| `VM.Config.Memory`        | Set memory allocation.                      |
-| `VM.Config.Network`       | Configure NICs (bridge, VLAN, model).       |
-| `VM.Config.Options`       | Set boot order, OSType, description.        |
-| `VM.Monitor`              | Query VM status via QEMU monitor.           |
-| `VM.PowerMgmt`            | Start, stop, reset VMs.                     |
-| `VM.Console`              | Access VNC/terminal for debugging.          |
-| `Datastore.AllocateSpace` | Create disks on storage (local-zfs, etc.).  |
-| `Datastore.Audit`         | List available storage and templates.       |
-
-> **Security note.** The `omni@pve` user has broad VM lifecycle permissions.
-> Restrict the ACL path to a specific node (`/nodes/pve-01`) or resource pool
-> if the Proxmox host runs other workloads beyond Omni-managed Talos VMs.
+The full `pveum` setup (user, role, `Talos` pool, ACLs, permission
+reference) lives in the companion README:
+[Proxmox user and role setup](../omni-infra-provider-proxmox/README.md#proxmox-user-and-role-setup).
 
 ## Secrets
 
