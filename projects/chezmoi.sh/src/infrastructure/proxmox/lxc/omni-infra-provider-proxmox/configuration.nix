@@ -32,6 +32,15 @@
     fi
   '';
 
+  # `pct exec` (lxc-attach) runs the command directly with PATH set to
+  # /sbin:/bin:/usr/sbin:/usr/bin — no shell is involved, so shellInit
+  # above never executes and the NixOS binaries are unreachable.
+  # /usr/sbin is unused by NixOS: pointing it at the system profile makes
+  # `pct exec <vmid> -- journalctl …` work without absolute paths.
+  systemd.tmpfiles.rules = [
+    "L+ /usr/sbin - - - - /run/current-system/sw/bin"
+  ];
+
   # ── Console toolbox ──────────────────────────────────────────────────────
   environment.systemPackages = with pkgs; [ curl jq ];
 

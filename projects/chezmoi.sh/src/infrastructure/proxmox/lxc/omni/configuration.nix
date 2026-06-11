@@ -65,6 +65,13 @@
     "d /persistent       0755 root  root  - -"
     "d /persistent/omni  0750 omni  omni  - -"
     "d /persistent/caddy 0750 caddy caddy - -"
+
+    # `pct exec` (lxc-attach) runs the command directly with PATH set to
+    # /sbin:/bin:/usr/sbin:/usr/bin — no shell is involved, so shellInit
+    # below never executes and the NixOS binaries are unreachable.
+    # /usr/sbin is unused by NixOS: pointing it at the system profile makes
+    # `pct exec <vmid> -- journalctl …` work without absolute paths.
+    "L+ /usr/sbin - - - - /run/current-system/sw/bin"
   ];
 
   # ── Console shell (pct enter) ────────────────────────────────────────────

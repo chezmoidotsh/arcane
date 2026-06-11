@@ -280,10 +280,12 @@ ssh root@${NODE} pct create ${VMID} local:vztmpl/${TEMPLATE} \
     --rootfs       local-zfs:4 \
     --mp0          local-zfs:20,mp=/persistent \
     --net0         name=eth0,bridge=vmbr0,ip=dhcp,firewall=1 \
+    --cmode        console \
     --onboot       1
 
-# 2. Wire up the console device and TUN device (required for SideroLink).
-ssh root@${NODE} "echo 'lxc.console.path: /dev/console' >> /etc/pve/lxc/${VMID}.conf"
+# 2. Wire up the TUN device (required for SideroLink).
+#    Do NOT add 'lxc.console.path: /dev/console' — it redirects the console
+#    away from the pty and breaks `pct console` ("Denied access to tty").
 ssh root@${NODE} "echo 'lxc.cgroup2.devices.allow: c 10:200 rwm' >> /etc/pve/lxc/${VMID}.conf"
 ssh root@${NODE} "echo 'lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file' >> /etc/pve/lxc/${VMID}.conf"
 
@@ -327,6 +329,10 @@ ssh root@${NODE} pct start ${VMID}
 * `nesting=1` — required for stage-2 NixOS activation
   (`systemd-nspawn`-style mounts during boot).
 * `keyctl=0` — neither Omni nor Dex use the kernel keyring.
+* `cmode=console` — `pct console` attaches to `/dev/console`, where
+  journald forwards boot and runtime logs. The image runs no getty, so
+  the default `tty` mode fails with `Denied access to tty`. The console
+  is a read-only log view; for a shell use `pct enter <vmid>`.
 * `firewall=1` on the NIC — enables the Proxmox per-VM firewall (rules
   in the next section).
 * `--mp0 storage:20,mp=/var/lib/omni` — dedicated 20 GiB volume for
@@ -494,6 +500,34 @@ Symptom: Talos machines never reach `connected` state in the Omni UI.
   public IP the Talos machines can actually reach (the SideroLink
   WireGuard endpoint advertised by Omni). Placeholder
   `CHANGEME_PUBLIC_IP` must be replaced before deploying.
+
+### `pct console` fails with `lxc_cmd_get_tty_fd: … Denied access to tty`
+
+A raw `lxc.console.path: /dev/console` line in `/etc/pve/lxc/<vmid>.conf`
+redirects the console away from the pty that `lxc-console` attaches to.
+Remove it and rely on `cmode: console` (set at creation):
+
+```sh
+ssh root@pve.lan "sed -i '/^lxc.console.path:/d' /etc/pve/lxc/<vmid>.conf"
+ssh root@pve.lan pct set <vmid> --cmode console
+ssh root@pve.lan pct reboot <vmid>
+```
+
+`pct console` then shows boot + journal output (read-only — the image runs
+no getty and root is locked). For a shell, use `pct enter <vmid>`.
+
+### `pct exec <vmid> -- <cmd>` fails with `command not found`
+
+`pct exec` (lxc-attach) bypasses bash, so the `shellInit` PATH setup never
+runs and the PATH is the FHS default (`/sbin:/bin:/usr/sbin:/usr/bin`).
+Images built before the `/usr/sbin → /run/current-system/sw/bin` tmpfiles
+symlink need either absolute paths (`/run/current-system/sw/bin/<cmd>`) or
+a one-off fix on the live CT:
+
+```sh
+ssh root@pve.lan pct exec <vmid> -- /bin/sh -c \
+  '/run/current-system/sw/bin/ln -sfn /run/current-system/sw/bin /usr/sbin'
+```
 
 ### `omni-pki-init` or `omni-gpg-init` fails
 

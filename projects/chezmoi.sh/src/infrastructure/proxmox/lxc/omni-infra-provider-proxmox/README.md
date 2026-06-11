@@ -252,10 +252,8 @@ ssh root@${NODE} pct create ${VMID} local:vztmpl/${TEMPLATE} \
     --swap         0 \
     --rootfs       local-zfs:4 \
     --net0         name=eth0,bridge=vmbr1,ip=dhcp,firewall=1,tag=5 \
+    --cmode        console \
     --onboot       1
-
-# Wire up the console device
-ssh root@${NODE} "echo 'lxc.console.path: /dev/console' >> /etc/pve/lxc/${VMID}.conf"
 
 # Start
 ssh root@${NODE} pct start ${VMID}
