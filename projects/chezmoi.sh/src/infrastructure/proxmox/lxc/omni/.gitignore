@@ -1,0 +1,4 @@
+# Nix build output
+result
+nixos-image-lxc-*.tar.xz
+omni.*.tar.xz

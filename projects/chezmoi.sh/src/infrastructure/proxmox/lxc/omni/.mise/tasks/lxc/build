@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# [MISE] description="Build the Omni LXC template with secrets baked in"
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+
+caddy_secrets="${CONFIG_ROOT}/secrets/caddy.sops.env"
+omni_secrets="${CONFIG_ROOT}/secrets/omni.sops.env"
+
+[[ -f ${caddy_secrets} ]] ||
+  {
+    echo "[ERROR] secrets/caddy.sops.env not found — run 'mise run lxc:secrets:sync' first" >&2
+    exit 1
+  }
+[[ -f ${omni_secrets} ]] ||
+  {
+    echo "[ERROR] secrets/omni.sops.env not found — run 'mise run lxc:secrets:init' first" >&2
+    exit 1
+  }
+
+# CalVer image version, declared in flake.nix.
+ver=$(grep -m1 'version = "' "${CONFIG_ROOT}/flake.nix" |
+  sed 's/.*version = "\(.*\)".*/\1/')
+[[ -n ${ver} ]] || {
+  echo "[ERROR] Could not detect version from flake.nix." >&2
+  exit 1
+}
+echo "[INFO] Building omni.${ver}-amd64..." >&2
+
+# Decrypt secrets into the environment for the impure Nix build. Keep them out
+# of argv and the Nix store inputs — they are read via builtins.getEnv.
+export CLOUDFLARE_API_TOKEN DEX_ADMIN_PASSWORD_HASH
+CLOUDFLARE_API_TOKEN=$(sops -d --extract '["CLOUDFLARE_API_TOKEN"]' "${caddy_secrets}")
+DEX_ADMIN_PASSWORD_HASH=$(sops -d --extract '["DEX_ADMIN_PASSWORD_HASH"]' "${omni_secrets}")
+
+nix:build:lxc --impure --output-name "omni.${ver}-amd64" "${CONFIG_ROOT}"
+
+unset CLOUDFLARE_API_TOKEN DEX_ADMIN_PASSWORD_HASH
