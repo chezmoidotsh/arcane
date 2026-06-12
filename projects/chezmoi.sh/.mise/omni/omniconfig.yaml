@@ -1,0 +1,7 @@
+contexts:
+  default:
+    url: https://omni.chezmoi.sh/
+    auth:
+      siderov1:
+        identity: admin@chezmoi.sh
+context: default

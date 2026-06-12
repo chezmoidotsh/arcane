@@ -1,0 +1,55 @@
+---
+# w1.large — general-purpose worker (8 GiB). Default tier for mixed workloads.
+metadata:
+  namespace: default
+  type: MachineClasses.omni.sidero.dev
+  id: w1.large
+spec:
+  matchlabels: []
+  autoprovision:
+    providerid: pve-01.pve.chezmoi.sh
+    kernelargs: []
+    metavalues: []
+    # providerdata is an opaque YAML string handed to the Proxmox provider.
+    # The inline comments document *why* each value — they are valid YAML and
+    # ignored by the provider's parser.
+    providerdata: |
+      # MANDATORY. The omni@pve ACL is scoped to /pool/talos; a VM created
+      # outside the pool is denied by Proxmox with a 403.
+      pool: talos
+
+      # w1 = balanced worker family (vCPU ≈ RAM / 2 GiB). General-purpose tier
+      # for mixed workloads — the default worker size.
+      cores: 4
+      memory: 8192
+
+      # Fixed 32 GB on every class for now (root/ephemeral only — Talos system
+      # partitions + container images + emptyDir). Persistent data lives on the
+      # Proxmox CSI driver, not the node disk. Thin pool is sparse → a ceiling.
+      disk_size: 32
+
+      # CEL over the pool's storages. nvme-lvm is the only image-capable storage.
+      storage_selector: 'name == "nvme-lvm"'
+
+      # VLAN-aware guest bridge.
+      network_bridge: vmbr1
+      # Talos VLAN (tag=2). Platform LXCs use VLAN 5.
+      vlan: 2
+
+      # Matches tal01. The provider default (x86-64-v2-AES) is more conservative.
+      cpu_type: x86-64-v3
+
+      # NVMe lvmthin tuning: SSD emulation on, TRIM passthrough to keep the thin
+      # pool lean, dedicated I/O thread, io_uring async, and no host page-cache
+      # (write-back only adds latency on NVMe).
+      disk_ssd: true
+      disk_discard: true
+      disk_iothread: true
+      disk_aio: io_uring
+      disk_cache: none
+
+      # Proxmox VM tags — visible in the UI and usable for filtering.
+      # talos/omni are added automatically by the provider; only role and class.
+      tags:
+        - worker
+        - w1.large

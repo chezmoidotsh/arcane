@@ -15,6 +15,31 @@
 #   - Ansible installed (configured in root .mise.toml)
 # =============================================================================
 
+[env]
+# -----------------------------------------------------------------------------
+# Omni/Talos Configuration
+# -----------------------------------------------------------------------------
+OMNICONFIG = "{{ config_root }}/.mise/omni/omniconfig.yaml"
+
+# =============================================================================
+# Tool Installation Matrix
+# =============================================================================
+# Tools are organized by functional category for infrastructure management
+# All tools default to "latest" version unless stability requires pinning
+
+[tools]
+# -----------------------------------------------------------------------------
+# Omni/Talos Tools
+# -----------------------------------------------------------------------------
+# Tools for cluster management through Omni/Talos
+
+omnictl = "latest" # Omni management CLI
+
+
+# =============================================================================
+# Tasks definition
+# =============================================================================
+
 # -----------------------------------------------------------------------------
 # Ansible Task Automation
 # -----------------------------------------------------------------------------
@@ -44,3 +69,22 @@ env = { ANSIBLE_CONFIG = "{{ config_root }}/src/infrastructure/ansible/ansible.c
 description = "Extract current TrueNAS configuration state (READ-ONLY operation)"
 dir = "{{ config_root }}/src/infrastructure/ansible"
 run = "ansible-playbook -i inventory/production.yaml truenas-audit.yaml"
+
+# -----------------------------------------------------------------------------
+# Omni Machine Class Management
+# -----------------------------------------------------------------------------
+# Declarative Talos machine classes applied to the Omni instance at
+# omni.chezmoi.sh via omnictl. Definitions live in
+# src/infrastructure/omni/machineclasses/ (see that README for the catalog).
+
+[tasks."omni:machineclass:diff"]
+description = "Preview machine class changes against Omni (dry-run, READ-ONLY)"
+run = "omnictl apply --dry-run --file {{ config_root }}/src/infrastructure/omni/machineclasses"
+
+[tasks."omni:machineclass:apply"]
+description = "Apply all Talos machine classes to the Omni instance"
+run = "omnictl apply --file {{ config_root }}/src/infrastructure/omni/machineclasses"
+
+[tasks."omni:machineclass:list"]
+description = "List machine classes currently registered in Omni (READ-ONLY)"
+run = "omnictl get machineclasses"
