@@ -417,5 +417,5 @@ Expected — the `OMNI_SERVICE_ACCOUNT_KEY` is not set yet. Complete phase 2
 * [Omni documentation](https://omni.siderolabs.com)
 * [Omni infrastructure providers docs](https://omni.siderolabs.com/docs/how-to-guides/infrastructure-providers/)
 * [Proxmox VE user management](https://pve.proxmox.com/pve-docs/pveum.1.html)
-* [Catalog NixOS module](../../../../../catalog/nix/siderolabs/omni/infra-provider/proxmox.nix)
+* [Catalog NixOS module](../../../../../../../catalog/nix/siderolabs/omni/infra-provider/proxmox.nix)
 * [Companion LXC — Omni](../omni/)

@@ -14,7 +14,7 @@ creates the VMs). This directory is only the **fleet sizing catalog**.
 
 1. [Naming convention](#naming-convention)
 2. [Class catalog](#class-catalog)
-3. [Control-plane caveat (1 GiB)](#control-plane-caveat-1-gib)
+3. [Control-plane caveat (2 GiB)](#control-plane-caveat-2-gib)
 4. [Provider data](#provider-data)
 5. [Applying changes](#applying-changes)
 6. [Using a class in a cluster](#using-a-class-in-a-cluster)

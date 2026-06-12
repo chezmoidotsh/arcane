@@ -557,5 +557,5 @@ pct start ${VMID}
 * [Omni GitHub — siderolabs/omni](https://github.com/siderolabs/omni)
 * [Talos Linux](https://www.talos.dev)
 * [Dex OIDC provider](https://github.com/dexidp/dex)
-* [Catalog NixOS modules](../../../../../catalog/nix/siderolabs/omni/) — `omni.nix`, `dex.nix`, `infra-provider/proxmox.nix`
+* [Catalog NixOS modules](../../../../../../../catalog/nix/siderolabs/omni/) — `omni.nix`, `dex.nix`, `infra-provider/proxmox.nix`
 * [Companion LXC — infra-provider-proxmox](../omni-infra-provider-proxmox/)
