@@ -13,11 +13,30 @@
 # and baked into the config. Generate with:
 #   htpasswd -bnBC 12 "" '<password>' | tr -d ':\n'
 # ─────────────────────────────────────────────────────────────────────────────
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   cfg = config.services.omni;
   dex = cfg.dex;
+
+  # Dex web assets with an extra "omni" theme that mirrors the Omni UI
+  # design tokens (see ./dex-theme/). Dex only allows overriding the
+  # whole web directory, so upstream assets are copied verbatim and the
+  # theme is layered on top. The logo/favicon are rasterized from the
+  # committed SVG sources at build time (Dex templates hardcode the
+  # theme/logo.png and theme/favicon.png paths).
+  omniWebDir = pkgs.runCommand "dex-web-omni"
+    { nativeBuildInputs = [ pkgs.resvg ]; }
+    ''
+      mkdir -p $out
+      cp -r ${pkgs.dex-oidc.src}/web/. $out/
+      chmod -R u+w $out
+      mkdir -p $out/themes/omni
+      cp ${./dex-theme/styles.css} $out/themes/omni/styles.css
+      resvg --zoom 4 ${./dex-theme/logo.svg} $out/themes/omni/logo.png
+      resvg --width 128 --height 128 ${./dex-theme/favicon.svg} \
+        $out/themes/omni/favicon.png
+    '';
 in
 {
   options.services.omni.dex = {
@@ -37,6 +56,16 @@ in
       type = lib.types.nullOr lib.types.str;
       default = null;
       description = "Environment file for the dex unit (e.g. SOPS-decrypted secrets).";
+    };
+
+    omniTheme = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Style the Dex login page like the Omni UI (dark background,
+        Sidero orange accents, Sidero logo). Disable to keep the stock
+        Dex frontend.
+      '';
     };
 
     users = lib.mkOption {
@@ -108,6 +137,12 @@ in
           web.http = dex.bindAddr;
 
           enablePasswordDB = true;
+
+          frontend = lib.mkIf dex.omniTheme {
+            dir = toString omniWebDir;
+            theme = "omni";
+            issuer = "Omni";
+          };
 
           staticClients = [{
             id = cfg.oidcClientId;
