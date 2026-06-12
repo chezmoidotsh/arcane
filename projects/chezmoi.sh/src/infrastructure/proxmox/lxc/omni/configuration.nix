@@ -154,15 +154,17 @@
       }];
       # Set to a nix-store file so dex.nix can read DEX_ADMIN_PASSWORD_HASH
       # at Nix eval time (builtins.readFile only works on build-accessible
-      # paths). When dexAdminPasswordHash is empty (pure build), falls back
-      # to the runtime path so the module still evaluates cleanly.
+      # paths). When dexAdminPasswordHash is empty (pure build), null so
+      # dex.nix falls back to cfg.environmentFile (/etc/omni/secrets) for
+      # the eval-time read, and the dex unit starts without an EnvironmentFile
+      # dependency (hash is empty → Dex rejects logins, expected behaviour).
       environmentFile =
         if dexAdminPasswordHash != ""
         then
           toString
             (pkgs.writeText "dex-env"
               "DEX_ADMIN_PASSWORD_HASH=${dexAdminPasswordHash}\n")
-        else "/etc/omni/secrets";
+        else null;
     };
   };
 }

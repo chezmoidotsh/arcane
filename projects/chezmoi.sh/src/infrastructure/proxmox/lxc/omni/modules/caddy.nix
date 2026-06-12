@@ -60,7 +60,8 @@ in
         # Dex OIDC — sub-path. The catalog Dex module sets the issuer to
         # https://omni.chezmoi.sh/dex, so Dex itself serves every route under
         # the /dex prefix. Forward the request verbatim (no path rewrite).
-        handle /dex/* {
+        # `/dex*` matches both the bare `/dex` path and all `/dex/…` sub-paths.
+        handle /dex* {
           reverse_proxy http://${cfg.dex.bindAddr}
         }
 

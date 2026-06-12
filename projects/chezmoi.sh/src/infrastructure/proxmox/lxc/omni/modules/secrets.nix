@@ -10,12 +10,10 @@
 # configuration.nix), so a single source of truth covers both.
 #
 # If the variable is absent (pure build), the file is not created.
-# The operator must then create it manually on the live system:
-#
-#   printf 'DEX_ADMIN_PASSWORD_HASH=%s\n' \
-#     "$(htpasswd -bnBC 12 "" '<pw>' | tr -d ':\n')" \
-#     > /etc/omni/secrets
-#   chmod 0400 /etc/omni/secrets
+# The hash is baked into the Dex config at Nix eval time (builtins.readFile
+# in dex.nix) — creating /etc/omni/secrets manually at runtime will NOT
+# make Dex accept logins. Rebuild the image with secrets available instead:
+#   mise run lxc:build   # exports DEX_ADMIN_PASSWORD_HASH from omni.sops.env
 #
 # Build arg forwarded from flake.nix via _module.args:
 #   dexAdminPasswordHash  — bcrypt hash for the Dex admin user

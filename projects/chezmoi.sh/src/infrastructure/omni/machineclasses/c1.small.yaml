@@ -1,5 +1,5 @@
 ---
-# c1.small — minimal single-node control plane (1 GiB).
+# c1.small — minimal single-node control plane (2 GiB).
 #
 # Compute-lean family (c1): just enough RAM for etcd + API server on a quiet
 # homelab mono-CP. Intentionally below Sidero's recommended etcd floor (4 GiB);

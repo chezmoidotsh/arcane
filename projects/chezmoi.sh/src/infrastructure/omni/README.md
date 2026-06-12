@@ -35,7 +35,7 @@ w1.xlarge
 As in AWS, **family and size both carry meaning**: the `c1` family runs lean on
 RAM (etcd + API server need cores more than memory), while the `w1` family is
 balanced (`vCPU ≈ RAM / 2 GiB`). A given size label therefore maps to different
-RAM across families — `c1.small` is 1 GiB, the smallest worker is `w1.medium`.
+RAM across families — `c1.small` is 2 GiB, the smallest worker is `w1.medium`.
 
 ## Class catalog
 

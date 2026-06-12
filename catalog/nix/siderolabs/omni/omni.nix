@@ -148,7 +148,7 @@ in
     oidcClientSecret = mkOption {
       type = types.str;
       default = "omni-secret";
-      description = "OIDC client secret. Stored in the Nix store; use environmentFile for production.";
+      description = "OIDC client secret. Always passed as a literal CLI flag and stored in the Nix store; there is no way to supply this via environmentFile.";
     };
 
     oidcProviderUrl = mkOption {

@@ -89,11 +89,6 @@ in
         description = "Proxmox API username (user@realm).";
       };
 
-      realm = mkOption {
-        type = types.str;
-        default = "pam";
-      };
-
       insecureSkipVerify = mkOption {
         type = types.bool;
         default = false;
@@ -163,7 +158,6 @@ in
           url: ${cfg.proxmox.url}
           username: ${cfg.proxmox.username}
           password: ${proxmoxPassword}
-          realm: ${cfg.proxmox.realm}
           insecureSkipVerify: ${boolToString cfg.proxmox.insecureSkipVerify}
       '';
       mode = "0400";
