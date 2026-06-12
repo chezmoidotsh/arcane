@@ -21,6 +21,7 @@ spec:
 
       # w1 = balanced worker family (vCPU ≈ RAM / 2 GiB). Heavy tier: databases
       # and costly services (lungmen.akn-style — CNPG + Percona + heavier apps).
+      sockets: 1
       cores: 8
       memory: 16384
 
@@ -52,5 +53,7 @@ spec:
       # Proxmox VM tags — visible in the UI and usable for filtering.
       # talos/omni are added automatically by the provider; only role and class.
       tags:
+        - kubernetes
+        - talos
         - worker
         - w1.xlarge

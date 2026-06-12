@@ -21,6 +21,7 @@ spec:
 
       # w1 = balanced worker family (vCPU ≈ RAM / 2 GiB). Light tier: Argo,
       # ingress, small stateless services (amiya.akn-style).
+      sockets: 1
       cores: 2
       memory: 4096
 
@@ -52,5 +53,7 @@ spec:
       # Proxmox VM tags — visible in the UI and usable for filtering.
       # talos/omni are added automatically by the provider; only role and class.
       tags:
+        - kubernetes
+        - talos
         - worker
         - w1.medium

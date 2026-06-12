@@ -25,6 +25,7 @@ spec:
 
       # c1 = compute-lean control-plane family. 2 vCPU is enough for etcd +
       # kube-apiserver on a single-node homelab control plane.
+      sockets: 1
       cores: 2
       # 2 GiB — deliberately below Sidero's etcd floor (4 GiB). Fine for a quiet
       # mono-CP; risky under etcd compaction/restore. See README caveat.
@@ -58,5 +59,7 @@ spec:
       # Proxmox VM tags — visible in the UI and usable for filtering.
       # talos/omni are added automatically by the provider; only role and class.
       tags:
+        - kubernetes
+        - talos
         - control-plane
         - c1.small

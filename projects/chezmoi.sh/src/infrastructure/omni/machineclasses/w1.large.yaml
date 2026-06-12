@@ -20,6 +20,7 @@ spec:
 
       # w1 = balanced worker family (vCPU ≈ RAM / 2 GiB). General-purpose tier
       # for mixed workloads — the default worker size.
+      sockets: 1
       cores: 4
       memory: 8192
 
@@ -51,5 +52,7 @@ spec:
       # Proxmox VM tags — visible in the UI and usable for filtering.
       # talos/omni are added automatically by the provider; only role and class.
       tags:
+        - kubernetes
+        - talos
         - worker
         - w1.large
