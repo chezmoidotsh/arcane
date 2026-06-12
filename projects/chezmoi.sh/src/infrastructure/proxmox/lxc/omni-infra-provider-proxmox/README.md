@@ -78,12 +78,16 @@ pveum user add omni@pve
 #    VM.Config.HWType is required for controller/BIOS settings.
 #    Datastore.AllocateTemplate is required to upload Talos ISOs
 #    (storage download-url API).
+#    Pool.Allocate + Pool.Audit are required because the provider calls
+#    GET /pools to verify the pool exists; Proxmox filters the response
+#    by effective permissions and excludes pools the user cannot audit.
 #    Note: VM.Monitor was removed in PVE 9 and is no longer a valid privilege.
 pveum role add OmniProvider -privs \
   "VM.Allocate VM.Audit VM.Clone VM.Config.CDROM VM.Config.CPU VM.Config.Disk \
    VM.Config.HWType VM.Config.Memory VM.Config.Network VM.Config.Options \
    VM.PowerMgmt VM.Console \
-   Datastore.AllocateSpace Datastore.AllocateTemplate Datastore.Audit"
+   Datastore.AllocateSpace Datastore.AllocateTemplate Datastore.Audit \
+   Pool.Allocate Pool.Audit"
 
 # 4. Scope the role to the pool — NOT '/'. The provider only sees and
 #    manages pool members (Talos VMs + the two storages added above).
@@ -127,25 +131,27 @@ pveum user token add omni@pve provider --privsep 0
 
 ### Proxmox permissions reference
 
-\| Privilege                    | ACL path                        | Why needed                                     |
-\| `VM.Allocate`                | `/pool/talos`                   | Create / delete VMs inside the pool.           |
-\| `VM.Audit`                   | `/pool/talos`                   | Read VM status and config.                     |
-\| `VM.Clone`                   | `/pool/talos`                   | Clone VM templates (if using a base image).    |
-\| `VM.Config.CDROM`            | `/pool/talos`                   | Attach the Talos ISO to VMs.                   |
-\| `VM.Config.CPU`              | `/pool/talos`                   | CPU settings.                                  |
-\| `VM.Config.Disk`             | `/pool/talos`                   | Disk settings.                                 |
-\| `VM.Config.HWType`           | `/pool/talos`                   | Controller / BIOS settings.                    |
-\| `VM.Config.Memory`           | `/pool/talos`                   | Memory settings.                               |
-\| `VM.Config.Network`          | `/pool/talos`                   | NIC settings.                                  |
-\| `VM.Config.Options`          | `/pool/talos`                   | Boot-order and other options.                  |
-\| `VM.PowerMgmt`               | `/pool/talos`                   | Start, stop, reset VMs.                        |
-\| `VM.Console`                 | `/pool/talos`                   | Access VNC/terminal for debugging.             |
-\| `Datastore.AllocateSpace`    | pool storages                   | Create VM disks (`nvme-lvm`).                  |
-\| `Datastore.AllocateTemplate` | pool storages                   | Upload Talos ISOs (`download-url` API).        |
-\| `Datastore.Audit`            | pool storages                   | List storages for `storage_selector` matching. |
-\| `Sys.Audit`                  | `/nodes/pve-01`                 | Read node status for VM scheduling.            |
-\| `Sys.AccessNetwork`          | `/nodes/pve-01`                 | Fetch Talos ISOs via `download-url` (8.1+).    |
-\| `SDN.Use`                    | `/sdn/zones/localnetwork/vmbr1` | Attach VM NICs to the bridge.                  |
+\| Privilege                    | ACL path                        | Why needed                                                       |
+\| `VM.Allocate`                | `/pool/talos`                   | Create / delete VMs inside the pool.                                   |
+\| `VM.Audit`                   | `/pool/talos`                   | Read VM status and config.                                             |
+\| `VM.Clone`                   | `/pool/talos`                   | Clone VM templates (if using a base image).                            |
+\| `VM.Config.CDROM`            | `/pool/talos`                   | Attach the Talos ISO to VMs.                                           |
+\| `VM.Config.CPU`              | `/pool/talos`                   | CPU settings.                                                            |
+\| `VM.Config.Disk`             | `/pool/talos`                   | Disk settings.                                                           |
+\| `VM.Config.HWType`           | `/pool/talos`                   | Controller / BIOS settings.                                              |
+\| `VM.Config.Memory`           | `/pool/talos`                   | Memory settings.                                                         |
+\| `VM.Config.Network`          | `/pool/talos`                   | NIC settings.                                                            |
+\| `VM.Config.Options`          | `/pool/talos`                   | Boot-order and other options.                                            |
+\| `VM.PowerMgmt`               | `/pool/talos`                   | Start, stop, reset VMs.                                                  |
+\| `VM.Console`                 | `/pool/talos`                   | Access VNC/terminal for debugging.                                      |
+\| `Pool.Allocate`              | `/pool/talos`                   | Assign VMs to the pool on creation.                                     |
+\| `Pool.Audit`                 | `/pool/talos`                   | List pools via `GET /pools` — Proxmox filters the response by effective permissions; without this the provider cannot verify the pool exists. |
+\| `Datastore.AllocateSpace`    | pool storages                   | Create VM disks (`nvme-lvm`).                                            |
+\| `Datastore.AllocateTemplate` | pool storages                   | Upload Talos ISOs (`download-url` API).                                 |
+\| `Datastore.Audit`            | pool storages                   | List storages for `storage_selector` matching.                           |
+\| `Sys.Audit`                  | `/nodes/pve-01`                 | Read node status for VM scheduling.                                     |
+\| `Sys.AccessNetwork`          | `/nodes/pve-01`                 | Fetch Talos ISOs via `download-url` (8.1+).                             |
+\| `SDN.Use`                    | `/sdn/zones/localnetwork/vmbr1` | Attach VM NICs to the bridge.                                            |
 
 > **What this blocks.** There is no ACL on `/`, `/vms`, or the LXC VMIDs —
 > the provider cannot list, modify, stop, or delete the LXCs or any VM
@@ -405,6 +411,25 @@ realm set separately via `proxmox.realm = "pve"`. Appending `@pve` to
 (`username=omni@pve&realm=pve`) — the Proxmox API rejects it. Also verify
 that `insecureSkipVerify = true` is set, as the Proxmox API TLS cert is
 self-signed.
+
+### VM provisioning fails: "proxmox pool does not exist"
+
+The provider calls `GET /pools` to verify the pool before creating a VM.
+Proxmox filters this response by the caller's effective permissions — if the
+`OmniProvider` role lacks `Pool.Audit`, the pool is excluded from the list
+and the provider reports it as missing.
+
+**Fix:** ensure the `OmniProvider` role includes `Pool.Allocate` and
+`Pool.Audit`:
+
+```sh
+pveum role modify OmniProvider -privs \
+  "VM.Allocate VM.Audit VM.Clone VM.Config.CDROM VM.Config.CPU VM.Config.Disk \
+   VM.Config.HWType VM.Config.Memory VM.Config.Network VM.Config.Options \
+   VM.PowerMgmt VM.Console \
+   Datastore.AllocateSpace Datastore.AllocateTemplate Datastore.Audit \
+   Pool.Allocate Pool.Audit"
+```
 
 ### Phase-1 deploy — provider logs "empty key"
 
