@@ -94,12 +94,18 @@ in
       # the literal string into the config. When the file is absent (pure
       # build), hashes are empty — Dex will reject the config at startup,
       # which is the expected behavior for a build without secrets.
+      # Read from dex.environmentFile specifically (set to a nix-store file
+      # at build time in the site configuration.nix), not from the main
+      # cfg.environmentFile which is a runtime path. Both are declared
+      # options (nullOr str), so `or` never falls through — test for null
+      # explicitly.
+      envFile =
+        if dex.environmentFile != null then dex.environmentFile
+        else if cfg.environmentFile != null then cfg.environmentFile
+        else null;
+
       mkHash = u:
         let
-          # Read from dex.environmentFile specifically (set to a nix-store
-          # file at build time in the site configuration.nix), not from the
-          # main cfg.environmentFile which is a runtime path.
-          envFile = dex.environmentFile or (cfg.environmentFile or "/dev/null");
           raw = builtins.readFile envFile;
           lines = lib.splitString "\n" (lib.replaceStrings [ "\r" ] [ "" ] raw);
           prefix = "${u.hashEnvVar}=";
@@ -110,8 +116,7 @@ in
       # Pure-build fallback: empty string so the hash slot is populated
       # but invalid. Dex rejects it, which is the desired behaviour.
       mkHashOrEmpty = u:
-        let envFile = dex.environmentFile or (cfg.environmentFile or "/dev/null");
-        in if builtins.pathExists envFile
+        if envFile != null && builtins.pathExists envFile
         then mkHash u
         else "";
 
