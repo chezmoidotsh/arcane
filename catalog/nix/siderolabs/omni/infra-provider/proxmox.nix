@@ -85,8 +85,19 @@ in
 
       username = mkOption {
         type = types.str;
-        default = "root@pam";
-        description = "Proxmox API username (user@realm).";
+        default = "root";
+        description = ''
+          Proxmox API username WITHOUT the realm suffix — the realm is sent
+          separately via proxmox.realm. Appending @realm here (e.g. "omni@pve"
+          with realm = "pve") produces username=omni@pve&realm=pve, which
+          Proxmox rejects as a double-realm authentication failure.
+        '';
+      };
+
+      realm = mkOption {
+        type = types.str;
+        default = "pam";
+        description = "Proxmox authentication realm (sent as a separate field, not as a username suffix).";
       };
 
       insecureSkipVerify = mkOption {
@@ -158,6 +169,7 @@ in
           url: ${cfg.proxmox.url}
           username: ${cfg.proxmox.username}
           password: ${proxmoxPassword}
+          realm: ${cfg.proxmox.realm}
           insecureSkipVerify: ${boolToString cfg.proxmox.insecureSkipVerify}
       '';
       mode = "0400";
