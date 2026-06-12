@@ -61,7 +61,7 @@ unprivileged-LXC pattern used by `../oci-registry/`.
    │                │                                             │  │
    │                │   /var/lib/omni  (mp0 — PKI + GPG + SQLite) │  │
    │                └─────────────────────────────────────────────┘  │
-   └──────────────────────────────────────────────────────────────────┘
+   └─────────────────────────────────────────────────────────────────┘
 ```
 
 * **Caddy** terminates TLS for `omni.chezmoi.sh`, redirects HTTP, routes
@@ -122,42 +122,42 @@ PVE host config, not inside the container rootfs).
 ### Homelab network context
 
 ```text
-                      ┌─────────────────────┐
-                      │    Internet / LAN    │
-                      └─────────┬───────────┘
-                                │
-                   ┌────────────▼────────────┐
-                   │  Proxmox host           │
-                   │  pve-01.pve.chezmoi.sh  │
-                   │                         │
-                   │  ┌───────────────────┐  │
-                   │  │  LXC: omni        │  │
-                   │  │  omni.chezmoi.sh  │  │
-                   │  │                   │  │
-                   │  │  Caddy :443       │  │
-                   │  │  Omni  :8090/8100 │  │
-                   │  │  WG    :50180/udp │  │
-                   │  │  Dex   :5557      │  │
-                   │  └───────────────────┘  │
-                   │                         │
-                   │  ┌───────────────────┐  │
-                   │  │  LXC: infra-     │  │
-                   │  │  provider-proxmox│  │
-                   │  │  (no inbound)    │  │
-                   │  └───────────────────┘  │
-                   │                         │
-                   │  ┌───────────────────┐  │
-                   │  │  LXC: oci-registry│  │
-                   │  │  registry.chezmoi │  │
-                   │  └───────────────────┘  │
-                   └─────────────────────────┘
-                          │ SideroLink WG
-              ┌───────────┴───────────┐
-              ▼                       ▼
-    ┌─────────────────┐   ┌─────────────────┐
-    │ Talos node 1    │   │ Talos node N    │
-    │ (amiya/lungmen) │   │ (amiya/lungmen) │
-    └─────────────────┘   └─────────────────┘
+          ┌─────────────────────┐
+          │    Internet / LAN   │
+          └─────────┬───────────┘  
+                    │
+         ┌──────────▼──────────────┐
+         │  Proxmox host           │
+         │  pve-01.pve.chezmoi.sh  │
+         │                         │
+         │  ┌───────────────────┐  │
+         │  │  LXC: omni        │  │
+         │  │  omni.chezmoi.sh  │  │
+         │  │                   │  │
+         │  │  Caddy :443       │  │
+         │  │  Omni  :8090/8100 │  │
+         │  │  WG    :50180/udp │  │
+         │  │  Dex   :5557      │  │
+         │  └───────────────────┘  │
+         │                         │
+         │  ┌───────────────────┐  │
+         │  │  LXC: infra-      │  │
+         │  │  provider-proxmox │  │
+         │  │  (no inbound)     │  │
+         │  └───────────────────┘  │
+         │                         │
+         │  ┌───────────────────┐  │
+         │  │  LXC: oci-registry│  │
+         │  │  registry.chezmoi │  │
+         │  └───────────────────┘  │
+         └─────────────────────────┘
+                      │ SideroLink WG
+          ┌───────────┴───────────┐
+          ▼                       ▼
+  ┌─────────────────┐   ┌─────────────────┐
+  │ Talos node 1    │   │ Talos node N    │
+  │ (amiya/lungmen) │   │ (amiya/lungmen) │
+  └─────────────────┘   └─────────────────┘
 ```
 
 ## What's in this directory
@@ -194,10 +194,10 @@ PVE host config, not inside the container rootfs).
 The Omni LXC itself does not authenticate with Proxmox — it serves Talos
 machines via SideroLink and exposes the management UI. However, the
 **companion infra-provider LXC** (`../omni-infra-provider-proxmox/`) needs a
-Proxmox API user with VM lifecycle permissions, scoped to the `Talos`
+Proxmox API user with VM lifecycle permissions, scoped to the `talos`
 resource pool so it can never touch the LXCs running on the same host.
 
-The full `pveum` setup (user, role, `Talos` pool, ACLs, permission
+The full `pveum` setup (user, role, `talos` pool, ACLs, permission
 reference) lives in the companion README:
 [Proxmox user and role setup](../omni-infra-provider-proxmox/README.md#proxmox-user-and-role-setup).
 
@@ -242,7 +242,7 @@ mise run lxc:secrets:sync
 mise run lxc:build
 
 # 2. Upload to Proxmox (creates /var/lib/vz/template/cache/omni.<v>-amd64.tar.xz)
-mise run lxc:push -- pve.lan
+mise run lxc:push -- pve-01.pve.chezmoi.sh
 ```
 
 The template name is derived from the **CalVer** version declared in
@@ -269,7 +269,7 @@ it to `/var/lib/vz/template/cache/`, create the container with:
 # Pick an unused VMID (`pct list` shows used ones).
 VMID="<vmid>"
 TEMPLATE=omni.<version>-amd64.tar.xz
-NODE=pve.lan
+NODE=pve-01.pve.chezmoi.sh
 
 # 1. Create the container — do NOT start yet (console + pre-chown come next).
 ssh root@${NODE} pct create ${VMID} local:vztmpl/${TEMPLATE} \
@@ -282,9 +282,9 @@ ssh root@${NODE} pct create ${VMID} local:vztmpl/${TEMPLATE} \
     --cores        2 \
     --memory       2048 \
     --swap         0 \
-    --rootfs       local-zfs:4 \
-    --mp0          local-zfs:20,mp=/persistent \
-    --net0         name=eth0,bridge=vmbr0,ip=dhcp,firewall=1 \
+    --rootfs       nvme-lvm:4 \
+    --mp0          nvme-lvm:20,mp=/persistent,backup=1 \
+    --net0         name=eth0,bridge=vmbr1,ip=dhcp,firewall=1,tag=5 \
     --cmode        console \
     --onboot       1
 
@@ -423,9 +423,9 @@ layered firewall + loopback bindings (UI, Dex) compensate.
 ### Inspecting live logs
 
 ```sh
-ssh root@pve.lan pct exec <vmid> -- journalctl -u omni  -f
-ssh root@pve.lan pct exec <vmid> -- journalctl -u dex   -f
-ssh root@pve.lan pct exec <vmid> -- journalctl -u caddy -f
+ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- journalctl -u omni  -f
+ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- journalctl -u dex   -f
+ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- journalctl -u caddy -f
 ```
 
 ### Backups (mandatory — losing them = losing the cluster)
@@ -446,15 +446,15 @@ three. Pull `/persistent/omni/omni.asc` to a separate secure location.
 2. Rebuild and upload the LXC template:
    ```sh
    mise run lxc:build
-   mise run lxc:push -- pve.lan
+   mise run lxc:push -- pve-01.pve.chezmoi.sh
    ```
 3. Upgrade in place — preserves the `mp0` data volume:
    ```sh
    # Auto-picks the first free VMID ≥ 100 for the target.
-   mise run lxc:upgrade -- pve.lan <source_id>
+   mise run lxc:upgrade -- pve-01.pve.chezmoi.sh <source_id>
 
    # Or specify an explicit target VMID:
-   mise run lxc:upgrade -- pve.lan <source_id> -t <target_id>
+   mise run lxc:upgrade -- pve-01.pve.chezmoi.sh <source_id> -t <target_id>
    ```
 
 The upgrade script follows the rootfs-swap pattern: a fresh CT is
@@ -468,7 +468,7 @@ roll back.
 ### Caddy fails to obtain a certificate
 
 ```sh
-ssh root@pve.lan pct exec <vmid> -- journalctl -u caddy --since '5 minutes ago' | grep -Ei 'acme|cert|cloudflare'
+ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- journalctl -u caddy --since '5 minutes ago' | grep -Ei 'acme|cert|cloudflare'
 ```
 
 Same root causes as the OCI registry LXC (expired token, no egress,
@@ -482,7 +482,7 @@ startup.
 Check:
 
 ```sh
-ssh root@pve.lan pct exec <vmid> -- \
+ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- \
   curl -sSf https://omni.chezmoi.sh/dex/.well-known/openid-configuration | jq .
 ```
 
@@ -513,9 +513,9 @@ redirects the console away from the pty that `lxc-console` attaches to.
 Remove it and rely on `cmode: console` (set at creation):
 
 ```sh
-ssh root@pve.lan "sed -i '/^lxc.console.path:/d' /etc/pve/lxc/<vmid>.conf"
-ssh root@pve.lan pct set <vmid> --cmode console
-ssh root@pve.lan pct reboot <vmid>
+ssh root@pve-01.pve.chezmoi.sh "sed -i '/^lxc.console.path:/d' /etc/pve/lxc/<vmid>.conf"
+ssh root@pve-01.pve.chezmoi.sh pct set <vmid> --cmode console
+ssh root@pve-01.pve.chezmoi.sh pct reboot <vmid>
 ```
 
 `pct console` then shows boot + journal output (read-only — the image runs
@@ -530,7 +530,7 @@ symlink need either absolute paths (`/run/current-system/sw/bin/<cmd>`) or
 a one-off fix on the live CT:
 
 ```sh
-ssh root@pve.lan pct exec <vmid> -- /bin/sh -c \
+ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- /bin/sh -c \
   '/run/current-system/sw/bin/ln -sfn /run/current-system/sw/bin /usr/sbin'
 ```
 
