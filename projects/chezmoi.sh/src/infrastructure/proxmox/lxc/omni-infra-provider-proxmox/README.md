@@ -78,6 +78,8 @@ pveum user add omni@pve
 #    VM.Config.HWType is required for controller/BIOS settings.
 #    Datastore.AllocateTemplate is required to upload Talos ISOs
 #    (storage download-url API).
+#    Datastore.Allocate is required to delete content from pool storages
+#    (e.g. cloud-init user-data ISO cleanup during VM teardown).
 #    Pool.Allocate + Pool.Audit are required because the provider calls
 #    GET /pools to verify the pool exists; Proxmox filters the response
 #    by effective permissions and excludes pools the user cannot audit.
@@ -86,7 +88,7 @@ pveum role add OmniProvider -privs \
   "VM.Allocate VM.Audit VM.Clone VM.Config.CDROM VM.Config.CPU VM.Config.Disk \
    VM.Config.HWType VM.Config.Memory VM.Config.Network VM.Config.Options \
    VM.PowerMgmt VM.Console \
-   Datastore.AllocateSpace Datastore.AllocateTemplate Datastore.Audit \
+   Datastore.Allocate Datastore.AllocateSpace Datastore.AllocateTemplate Datastore.Audit \
    Pool.Allocate Pool.Audit"
 
 # 4. Scope the role to the pool — NOT '/'. The provider only sees and
@@ -146,6 +148,7 @@ pveum user token add omni@pve provider --privsep 0
 \| `VM.Console`                 | `/pool/talos`                   | Access VNC/terminal for debugging.                                      |
 \| `Pool.Allocate`              | `/pool/talos`                   | Assign VMs to the pool on creation.                                     |
 \| `Pool.Audit`                 | `/pool/talos`                   | List pools via `GET /pools` — Proxmox filters the response by effective permissions; without this the provider cannot verify the pool exists. |
+\| `Datastore.Allocate`         | pool storages                   | Delete content from storages (cloud-init ISO cleanup during VM teardown). |
 \| `Datastore.AllocateSpace`    | pool storages                   | Create VM disks (`nvme-lvm`).                                            |
 \| `Datastore.AllocateTemplate` | pool storages                   | Upload Talos ISOs (`download-url` API).                                 |
 \| `Datastore.Audit`            | pool storages                   | List storages for `storage_selector` matching.                           |
