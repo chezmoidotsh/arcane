@@ -137,9 +137,9 @@
     # discovery and the auth/token endpoints.
     oidcProviderUrl = "https://omni.chezmoi.sh/dex";
 
-    initialUsers = [ "CHANGEME@example.com" ];
-    eulaAcceptName = "CHANGEME Name";
-    eulaAcceptEmail = "CHANGEME@example.com";
+    initialUsers = [ "admin@chezmoi.sh" ];
+    eulaAcceptName = "Alexandre NICOLAIE";
+    eulaAcceptEmail = "admin@chezmoi.sh";
 
     environmentFile = "/etc/omni/secrets";
 
@@ -148,7 +148,7 @@
       # Loopback only — Caddy is the public surface (see modules/caddy.nix).
       bindAddr = "127.0.0.1:5557";
       users = [{
-        email = "CHANGEME@example.com";
+        email = "admin@chezmoi.sh";
         username = "admin";
         hashEnvVar = "DEX_ADMIN_PASSWORD_HASH";
       }];
