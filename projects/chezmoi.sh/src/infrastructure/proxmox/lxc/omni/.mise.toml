@@ -1,0 +1,126 @@
+# =============================================================================
+# omni LXC — Task Automation
+# =============================================================================
+# Tasks for building, uploading, and maintaining the Proxmox LXC template that
+# runs Omni (omni.chezmoi.sh) with Caddy HTTPS termination + path routing to
+# the co-located Dex OIDC provider (/dex).
+#
+# Usage:
+#   mise run lxc:secrets:rotate                            # Generate Dex admin hash → secrets/omni.sops.env
+#   mise run lxc:secrets:sync                              # Fetch Cloudflare token from cluster → secrets/caddy.sops.env
+#   mise run lxc:build                                     # Build the LXC tarball with secrets baked in
+#   mise run lxc:push -- <pve-host>                        # Upload template to Proxmox (local storage)
+#   mise run lxc:upgrade -- <pve-host> <src> [-t <dst>]    # Upgrade a running LXC (target VMID auto-picked ≥ 100 if omitted)
+#
+# Typical workflow (first time):
+#   mise run lxc:secrets:rotate            # Sets the Dex admin password
+#   mise run lxc:secrets:sync              # Requires kubectl access to amiya.akn
+#   mise run lxc:build
+#   mise run lxc:push -- pve.lan
+#
+# Typical workflow (upgrade):
+#   mise run lxc:build
+#   mise run lxc:push -- pve.lan
+#   mise run lxc:upgrade -- pve.lan <source_id> <target_id>
+#
+# Secret files (SOPS/age-encrypted, baked into the image at build time):
+#   secrets/omni.sops.env    DEX_ADMIN_PASSWORD_HASH    (operator-provided — bcrypt hash for the Dex admin user)
+#   secrets/caddy.sops.env   CLOUDFLARE_API_TOKEN       (Crossplane — DNS-01 ACME for omni.chezmoi.sh)
+#
+# File-based tasks (bash scripts, easier to maintain):
+#   .mise/tasks/lxc/build    — build task
+#   .mise/tasks/lxc/push     — upload task
+#   .mise/tasks/lxc/upgrade  — upgrade task
+#
+# Prerequisites:
+#   - Docker (for the Nix build container)
+#   - kubectl configured for amiya.akn (for lxc:secrets:sync)
+#   - sops + age key in SOPS_AGE_KEY_FILE (configured in root .mise.toml)
+#   - htpasswd (apache2-utils / httpd-tools) for lxc:secrets:rotate
+#   - SSH key-based access to root@<pve-host> (for lxc:push / lxc:upgrade)
+# =============================================================================
+
+# =============================================================================
+# Tasks definition
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Secret Management — Dex admin password hash
+# -----------------------------------------------------------------------------
+# Generates a bcrypt hash for the Dex admin user and writes it to
+# secrets/omni.sops.env, SOPS-encrypted.
+#
+# Run once before the first build, and again whenever the password needs
+# to be rotated.
+
+[tasks."lxc:secrets:rotate"]
+description = "Generate Dex admin password hash and write secrets/omni.sops.env"
+dir = "{{ config_root }}"
+run = '''
+  set -euo pipefail
+
+  command -v htpasswd >/dev/null 2>&1 ||
+    { echo "[ERROR] htpasswd not found — install apache2-utils (Debian/Ubuntu) or httpd-tools (RHEL)." >&2; exit 1; }
+
+  echo -n "Dex admin password: " >&2
+  read -r -s password
+  echo >&2
+  [[ -n "${password}" ]] || { echo "[ERROR] Empty password." >&2; exit 1; }
+
+  HASH=$(htpasswd -bnBC 12 "" "${password}" | tr -d ':\n')
+  [[ -n "${HASH}" ]] || { echo "[ERROR] Hash generation failed." >&2; exit 1; }
+
+  mkdir -p "{{ config_root }}/secrets"
+  TMPFILE="{{ config_root }}/secrets/.tmp.$$.omni.sops.env"
+  trap 'rm -f "${TMPFILE}"' EXIT
+  printf 'DEX_ADMIN_PASSWORD_HASH=%s\n' "${HASH}" > "${TMPFILE}"
+  sops --encrypt --input-type dotenv --output-type dotenv "${TMPFILE}" \
+    > "{{ config_root }}/secrets/omni.sops.env"
+
+  echo "[SUCCESS] secrets/omni.sops.env written." >&2
+'''
+
+[tools]
+sops = "latest"
+
+# -----------------------------------------------------------------------------
+# Secret Management — Cloudflare DNS-01 token
+# -----------------------------------------------------------------------------
+# Fetches the Cloudflare API token created by Crossplane (see
+# cloudflare.iam.omni.yaml) and encrypts it into secrets/caddy.sops.env so it
+# can be baked into the LXC image at build time.
+#
+# The Crossplane APIToken resource must be Ready before running this task.
+# Check with: kubectl get apitoken chezmoi-sh-caddy-dns01-omni -n crossplane
+
+[tasks."lxc:secrets:sync"]
+description = "Fetch Cloudflare DNS-01 token from cluster and write secrets/caddy.sops.env"
+dir = "{{ config_root }}"
+run = '''
+  set -euo pipefail
+
+  echo "[INFO] Fetching token from crossplane-secrets/chezmoi.sh-cloudflare-token-caddy-dns01-omni..." >&2
+  TOKEN=$(
+    kubectl get secret -n crossplane-secrets chezmoi.sh-cloudflare-token-caddy-dns01-omni \
+    -o jsonpath='{.data.attribute\.value}' | base64 -d
+  )
+  [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — is the Crossplane APIToken Ready?" >&2; exit 1; }
+
+  mkdir -p "{{ config_root }}/secrets"
+  # TMPFILE must be inside the repo and match the .sops.yaml path_regex so that
+  # sops can discover the config and the creation rule when traversing up.
+  TMPFILE="{{ config_root }}/secrets/.tmp.$$.sops.env"
+  trap 'rm -f "${TMPFILE}"' EXIT
+  printf 'CLOUDFLARE_API_TOKEN=%s\n' "${TOKEN}" > "${TMPFILE}"
+  sops --encrypt --input-type dotenv --output-type dotenv "${TMPFILE}" \
+    > "{{ config_root }}/secrets/caddy.sops.env"
+
+  echo "[SUCCESS] secrets/caddy.sops.env written." >&2
+'''
+
+# -----------------------------------------------------------------------------
+# Deployment Tasks — see .mise/tasks/lxc/ for file-based scripts
+# -----------------------------------------------------------------------------
+# lxc:build   → .mise/tasks/lxc/build   (build LXC tarball with secrets baked in)
+# lxc:push    → .mise/tasks/lxc/push    (upload template to Proxmox)
+# lxc:upgrade → .mise/tasks/lxc/upgrade (rootfs-swap upgrade of a running LXC)

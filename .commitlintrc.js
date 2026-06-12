@@ -112,6 +112,10 @@ const scopes = [
 		value: "catalog:kairos-bundle",
 	},
 	{
+		name: "catalog:nix - Anything related to the Nix* catalogs (nixpkgs, nixos, home-manager, etc.)",
+		value: "catalog:nix",
+	},
+	{
 		name: "catalog:talos         - Anything related to the Talos manifests catalog",
 		value: "catalog:talos",
 	},

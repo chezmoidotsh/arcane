@@ -1,0 +1,96 @@
+# =============================================================================
+# omni-infra-provider-proxmox LXC — Task Automation
+# =============================================================================
+# Tasks for building, uploading, and maintaining the Proxmox LXC template that
+# runs omni-infra-provider-proxmox — the Omni infra provider enabling Talos VM
+# provisioning directly from the Omni UI.
+#
+# Two-phase deployment (first time):
+#
+#   Phase 1 — Proxmox credentials:
+#     mise run lxc:secrets:proxmox        # Proxmox password → proxmox.sops.env
+#     mise run lxc:build
+#     mise run lxc:push -- <pve-host>
+#     # Create the LXC manually (see README § Proxmox LXC creation)
+#     # Provider starts but cannot connect to Omni yet.
+#
+#   Phase 2 — Omni registration:
+#     # In Omni UI: Settings → Infrastructure Providers → Create
+#     # Copy the generated provider key.
+#     mise run lxc:secrets:omni           # Paste key → omni.sops.env
+#     mise run lxc:build
+#     mise run lxc:push -- <pve-host>
+#     mise run lxc:upgrade -- <pve-host> <source_id>
+#
+# Typical upgrade workflow (after initial setup):
+#     mise run lxc:build
+#     mise run lxc:push -- <pve-host>
+#     mise run lxc:upgrade -- <pve-host> <source_id>
+#
+# Secret files (SOPS/age-encrypted):
+#   secrets/proxmox.sops.env   PROXMOX_PASSWORD         (Proxmox API password)
+#   secrets/omni.sops.env      OMNI_SERVICE_ACCOUNT_KEY (Omni infra provider key)
+#
+# File-based tasks:
+#   .mise/tasks/lxc/build    — build LXC tarball with secrets baked in
+#   .mise/tasks/lxc/push     — upload template to Proxmox
+#   .mise/tasks/lxc/upgrade  — rootfs-swap upgrade of a running LXC
+# =============================================================================
+
+[tools]
+sops = "latest"
+
+# -----------------------------------------------------------------------------
+# Secret Management — Proxmox API password
+# -----------------------------------------------------------------------------
+[tasks."lxc:secrets:proxmox"]
+description = "Store Proxmox API password in secrets/proxmox.sops.env"
+dir = "{{ config_root }}"
+run = '''
+  set -euo pipefail
+
+  echo -n "Proxmox API password for the configured username: " >&2
+  read -r -s password
+  echo >&2
+  [[ -n "${password}" ]] || { echo "[ERROR] Empty password." >&2; exit 1; }
+
+  mkdir -p "{{ config_root }}/secrets"
+  TMPFILE="{{ config_root }}/secrets/.tmp.$$.proxmox.sops.env"
+  trap 'rm -f "${TMPFILE}"' EXIT
+  printf 'PROXMOX_PASSWORD=%s\n' "${password}" > "${TMPFILE}"
+  sops --encrypt --input-type dotenv --output-type dotenv "${TMPFILE}" \
+    > "{{ config_root }}/secrets/proxmox.sops.env"
+
+  echo "[SUCCESS] secrets/proxmox.sops.env written." >&2
+'''
+
+# -----------------------------------------------------------------------------
+# Secret Management — Omni infrastructure provider key
+# -----------------------------------------------------------------------------
+[tasks."lxc:secrets:omni"]
+description = "Store Omni infra provider key in secrets/omni.sops.env"
+dir = "{{ config_root }}"
+run = '''
+  set -euo pipefail
+
+  echo "Paste the Omni infrastructure provider key" >&2
+  echo "(from Omni UI: Settings → Infrastructure Providers → Create):" >&2
+  read -r key
+  [[ -n "${key}" ]] || { echo "[ERROR] Empty key." >&2; exit 1; }
+
+  mkdir -p "{{ config_root }}/secrets"
+  TMPFILE="{{ config_root }}/secrets/.tmp.$$.omni.sops.env"
+  trap 'rm -f "${TMPFILE}"' EXIT
+  printf 'OMNI_SERVICE_ACCOUNT_KEY=%s\n' "${key}" > "${TMPFILE}"
+  sops --encrypt --input-type dotenv --output-type dotenv "${TMPFILE}" \
+    > "{{ config_root }}/secrets/omni.sops.env"
+
+  echo "[SUCCESS] secrets/omni.sops.env written." >&2
+'''
+
+# -----------------------------------------------------------------------------
+# Deployment Tasks — see .mise/tasks/lxc/ for file-based scripts
+# -----------------------------------------------------------------------------
+# lxc:build   → .mise/tasks/lxc/build   (build LXC tarball)
+# lxc:push    → .mise/tasks/lxc/push    (upload to Proxmox)
+# lxc:upgrade → .mise/tasks/lxc/upgrade (rootfs-swap upgrade)

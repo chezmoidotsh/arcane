@@ -29,6 +29,6 @@ creation_rules:
       age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
 
   # Proxmox LXC build-time secrets (dotenv format, baked into image at build time)
-  - path_regex: projects/[^/]+/src/infrastructure/proxmox/[^/]+/secrets/.*\.sops\.env$
+  - path_regex: projects/[^/]+/src/infrastructure/proxmox/.+/secrets/.*\.sops\.env$
     age: >-
-      age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
+      age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9,age1es2vf7fjj4jja6mhyc2r8cfp0kzpce2qdru3cz8cllsuw3qmwpqstplq0f

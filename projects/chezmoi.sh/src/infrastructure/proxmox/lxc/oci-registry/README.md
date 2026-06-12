@@ -109,7 +109,7 @@ configuration tweak or a misconfigured pull.
 ## Secrets — Cloudflare DNS-01 token
 
 The Cloudflare API token is managed by Crossplane
-([`cloudflare.iam.zot-registry.yaml`](../../crossplane/cloudflare.iam.zot-registry.yaml)).
+([`cloudflare.iam.zot-registry.yaml`](../../../crossplane/cloudflare.iam.zot-registry.yaml)).
 Crossplane provisions the token at Cloudflare and writes it into the
 `crossplane-secrets` namespace on `amiya.akn`. We then fetch it once and
 encrypt it into the repository, so we can bake it into the LXC image
