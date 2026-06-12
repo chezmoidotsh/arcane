@@ -5,9 +5,6 @@ with the Omni instance at `omni.chezmoi.sh` and enables provisioning of Talos VM
 directly from the Omni UI — select a machine class, Omni calls this provider, the
 provider creates a VM on Proxmox and boots it with a Talos image.
 
-This LXC is a **companion to `../omni/`** and is deployed and operated
-independently. Each LXC has its own `.mise/tasks` and lifecycle.
-
 ## Table of contents
 
 1. [Architecture](#architecture)
@@ -23,31 +20,19 @@ independently. Each LXC has its own `.mise/tasks` and lifecycle.
 
 ## Architecture
 
-```text
-                      ┌─────────────────────┐
-                      │    Internet / LAN   │
-                      └─────────┬───────────┘
-                                │
-                   ┌────────────▼────────────┐
-                   │  Proxmox host           │
-                   │  pve-01.pve.chezmoi.sh  │
-                   │                         │
-                   │  ┌───────────────────┐  │
-                   │  │  LXC: omni        │  │
-                   │  │  omni.chezmoi.sh  │  │
-                   │  └────────┬──────────┘  │
-                   │           │             │
-                   │  ┌────────▼──────────┐  │
-                   │  │  LXC: infra-      │  │
-                   │  │  provider-proxmox │────→ Omni API
-                   │  │  (no inbound)     │  │    (omni.chezmoi.sh)
-                   │  └────────┬──────────┘  │
-                   │           │             │
-                   │           └────→ Proxmox API
-                   │                  (localhost:8006)
-                   │                         │ │
-                   │  Creates Talos VMs   ◄────┘
-                   └─────────────────────────┘
+```mermaid
+flowchart LR
+    omni["Omni API<br/>omni.chezmoi.sh"]
+
+    subgraph host["Proxmox host · pve-01"]
+        prov["LXC: omni-infra-provider-proxmox<br/>no inbound · stateless"]
+        pmox["Proxmox API<br/>localhost:8006"]
+        vms["Talos VMs<br/>pool: talos"]
+    end
+
+    prov -->|"register (outbound)"| omni
+    prov -->|"VM lifecycle"| pmox
+    pmox -->|"creates"| vms
 ```
 
 * **No inbound ports** — the provider connects out to Omni and Proxmox only.
@@ -55,8 +40,9 @@ independently. Each LXC has its own `.mise/tasks` and lifecycle.
 * **Stateless** — no persistent volume. Upgrades replace the rootfs entirely.
 * **No TUN/WireGuard** — unlike the Omni LXC, no special kernel or device
   prerequisites are needed.
-* **Proxmox user** — authenticates as `omni@pve` with VM lifecycle permissions
-  (see [Proxmox user and role setup](#proxmox-user-and-role-setup)).
+* **Proxmox user** — authenticates as `omni` (bare username, realm `pve`
+  passed separately) with VM lifecycle permissions scoped to the `talos`
+  resource pool (see [Proxmox user and role setup](#proxmox-user-and-role-setup)).
 
 ## Prerequisites
 
@@ -141,26 +127,25 @@ pveum user token add omni@pve provider --privsep 0
 
 ### Proxmox permissions reference
 
-| Privilege                    | ACL path                        | Why needed                                     |
-| ---------------------------- | ------------------------------- | ---------------------------------------------- |
-| `VM.Allocate`                | `/pool/talos`                   | Create / delete VMs inside the pool.           |
-| `VM.Audit`                   | `/pool/talos`                   | Read VM status and config.                     |
-| `VM.Clone`                   | `/pool/talos`                   | Clone VM templates (if using a base image).    |
-| `VM.Config.CDROM`            | `/pool/talos`                   | Attach the Talos ISO to VMs.                   |
-| `VM.Config.CPU`              | `/pool/talos`                   | CPU settings.                                  |
-| `VM.Config.Disk`             | `/pool/talos`                   | Disk settings.                                 |
-| `VM.Config.HWType`           | `/pool/talos`                   | Controller / BIOS settings.                    |
-| `VM.Config.Memory`           | `/pool/talos`                   | Memory settings.                               |
-| `VM.Config.Network`          | `/pool/talos`                   | NIC settings.                                  |
-| `VM.Config.Options`          | `/pool/talos`                   | Boot-order and other options.                  |
-| `VM.PowerMgmt`               | `/pool/talos`                   | Start, stop, reset VMs.                        |
-| `VM.Console`                 | `/pool/talos`                   | Access VNC/terminal for debugging.             |
-| `Datastore.AllocateSpace`    | pool storages                   | Create VM disks (`nvme-lvm`).                  |
-| `Datastore.AllocateTemplate` | pool storages                   | Upload Talos ISOs (`download-url` API).        |
-| `Datastore.Audit`            | pool storages                   | List storages for `storage_selector` matching. |
-| `Sys.Audit`                  | `/nodes/pve-01`                 | Read node status for VM scheduling.            |
-| `Sys.AccessNetwork`          | `/nodes/pve-01`                 | Fetch Talos ISOs via `download-url` (8.1+).    |
-| `SDN.Use`                    | `/sdn/zones/localnetwork/vmbr1` | Attach VM NICs to the bridge.                  |
+\| Privilege                    | ACL path                        | Why needed                                     |
+\| `VM.Allocate`                | `/pool/talos`                   | Create / delete VMs inside the pool.           |
+\| `VM.Audit`                   | `/pool/talos`                   | Read VM status and config.                     |
+\| `VM.Clone`                   | `/pool/talos`                   | Clone VM templates (if using a base image).    |
+\| `VM.Config.CDROM`            | `/pool/talos`                   | Attach the Talos ISO to VMs.                   |
+\| `VM.Config.CPU`              | `/pool/talos`                   | CPU settings.                                  |
+\| `VM.Config.Disk`             | `/pool/talos`                   | Disk settings.                                 |
+\| `VM.Config.HWType`           | `/pool/talos`                   | Controller / BIOS settings.                    |
+\| `VM.Config.Memory`           | `/pool/talos`                   | Memory settings.                               |
+\| `VM.Config.Network`          | `/pool/talos`                   | NIC settings.                                  |
+\| `VM.Config.Options`          | `/pool/talos`                   | Boot-order and other options.                  |
+\| `VM.PowerMgmt`               | `/pool/talos`                   | Start, stop, reset VMs.                        |
+\| `VM.Console`                 | `/pool/talos`                   | Access VNC/terminal for debugging.             |
+\| `Datastore.AllocateSpace`    | pool storages                   | Create VM disks (`nvme-lvm`).                  |
+\| `Datastore.AllocateTemplate` | pool storages                   | Upload Talos ISOs (`download-url` API).        |
+\| `Datastore.Audit`            | pool storages                   | List storages for `storage_selector` matching. |
+\| `Sys.Audit`                  | `/nodes/pve-01`                 | Read node status for VM scheduling.            |
+\| `Sys.AccessNetwork`          | `/nodes/pve-01`                 | Fetch Talos ISOs via `download-url` (8.1+).    |
+\| `SDN.Use`                    | `/sdn/zones/localnetwork/vmbr1` | Attach VM NICs to the bridge.                  |
 
 > **What this blocks.** There is no ACL on `/`, `/vms`, or the LXC VMIDs —
 > the provider cannot list, modify, stop, or delete the LXCs or any VM
@@ -171,10 +156,21 @@ pveum user token add omni@pve provider --privsep 0
 The Proxmox user configured above maps to these options in `configuration.nix`:
 
 ```nix
-services.omniInfraProviderProxmox.proxmox = {
-  url = "https://pve-01.pve.chezmoi.sh:8006/api2/json";
-  username = "omni@pve";    # from pveum user add
-  realm = "pve";            # PVE realm (not pam)
+services.omniInfraProviderProxmox = {
+  id = "pve-01.pve.chezmoi.sh";
+  omniApiEndpoint = "https://omni.chezmoi.sh/";
+
+  proxmox = {
+    url = "https://pve-01.pve.chezmoi.sh:8006/api2/json";
+    # Username WITHOUT realm suffix — realm is passed separately.
+    # Appending @pve here (username=omni@pve&realm=pve) causes a
+    # double-realm authentication failure; only username=omni + realm=pve
+    # succeeds.
+    username = "omni";
+    realm    = "pve";
+    # Proxmox API TLS cert is self-signed.
+    insecureSkipVerify = true;
+  };
 };
 ```
 
@@ -186,10 +182,9 @@ build time.
 The provider needs credentials from two sources. They are collected in two
 separate SOPS env files and baked into the image at build time.
 
-| File                       | Variable                   | When available          |
-| -------------------------- | -------------------------- | ----------------------- |
-| `secrets/proxmox.sops.env` | `PROXMOX_PASSWORD`         | Before first build      |
-| `secrets/omni.sops.env`    | `OMNI_SERVICE_ACCOUNT_KEY` | After Omni registration |
+\| File                       | Variable                   | When available          |
+\| `secrets/proxmox.sops.env` | `PROXMOX_PASSWORD`         | Before first build      |
+\| `secrets/omni.sops.env`    | `OMNI_SERVICE_ACCOUNT_KEY` | After Omni registration |
 
 ### Phase 1 — Proxmox credentials
 
@@ -232,13 +227,12 @@ Bump the `version` in `flake.nix` before each build.
 
 ### Task reference
 
-| Task                                          | What it does                                     |
-| --------------------------------------------- | ------------------------------------------------ |
-| `mise run lxc:secrets:proxmox`                | Proxmox password → `secrets/proxmox.sops.env`    |
-| `mise run lxc:secrets:omni`                   | Omni provider key → `secrets/omni.sops.env`      |
-| `mise run lxc:build`                          | Build LXC tarball with both secrets baked in     |
-| `mise run lxc:push -- <pve-host>`             | Upload template to Proxmox                       |
-| `mise run lxc:upgrade -- <pve-host> <src_id>` | Rootfs-swap upgrade (stateless — no volume swap) |
+\| Task                                          | What it does                                     |
+\| `mise run lxc:secrets:proxmox`                | Proxmox password → `secrets/proxmox.sops.env`    |
+\| `mise run lxc:secrets:omni`                   | Omni provider key → `secrets/omni.sops.env`      |
+\| `mise run lxc:build`                          | Build LXC tarball with both secrets baked in     |
+\| `mise run lxc:push -- <pve-host>`             | Upload template to Proxmox                       |
+\| `mise run lxc:upgrade -- <pve-host> <src_id>` | Rootfs-swap upgrade (stateless — no volume swap) |
 
 ## Proxmox LXC creation
 
@@ -251,7 +245,11 @@ NODE=pve-01.pve.chezmoi.sh
 
 ssh root@${NODE} pct create ${VMID} local:vztmpl/${TEMPLATE} \
     --hostname     omni-infra-provider-proxmox \
-    --description  "Omni infra provider for Proxmox — managed by chezmoidotsh/arcane" \
+    --description  "$(cat <<'EOF'
+# Omni infrastructure provider for Proxmox
+Provisions and deletes Talos VMs in the talos pool when a machine class is triggered from the Omni UI. No inbound ports — connects outbound to Omni and the Proxmox API only.
+EOF
+)" \
     --ostype       nixos \
     --arch         amd64 \
     --unprivileged 1 \
@@ -273,12 +271,11 @@ No persistent volume, no TUN device, no WireGuard — simpler than `omni`.
 
 ### Resource sizing
 
-| Workload  | Recommended |
-| --------- | ----------- |
-| CPU       | 1 vCPU      |
-| Memory    | 512 MiB     |
-| Root disk | 4 GiB       |
-| Swap      | 0           |
+\| Workload  | Recommended |
+\| CPU       | 1 vCPU      |
+\| Memory    | 512 MiB     |
+\| Root disk | 4 GiB       |
+\| Swap      | 0           |
 
 ## Machine classes
 
@@ -290,18 +287,17 @@ the provider data. The full schema ships with the provider at
 
 ### Field reference
 
-| Field              | Value to use           | Why                                                                                                                             |
-| ------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `pool`             | `talos`                | Mandatory. The `omni@pve` ACL only authorizes VM creation inside `/pool/talos`; omitting it yields a 403.                       |
-| `storage_selector` | `'name == "nvme-lvm"'` | CEL expression over `name`, `node`, `storageType`, `availableSpace`. `nvme-lvm` is the only image-capable storage on this host. |
-| `network_bridge`   | `vmbr1`                | The VLAN-aware guest bridge.                                                                                                    |
-| `vlan`             | `2`                    | Talos VMs live on VLAN 2 (same as the existing `tal01`); rendered as `tag=2` on `net0`. Platform LXCs use VLAN 5.               |
-| `cpu_type`         | `x86-64-v3`            | Matches the existing Talos VM. The provider default is `x86-64-v2-AES` (more conservative).                                     |
-| `disk_ssd`         | `true`                 | NVMe-backed lvmthin — enables SSD emulation inside the guest.                                                                   |
-| `disk_discard`     | `true`                 | Passes TRIM commands through to the thin pool, keeping it lean.                                                                 |
-| `disk_iothread`    | `true`                 | Dedicated I/O thread per disk (`tal01` already uses `iothread=1`).                                                              |
-| `disk_aio`         | `io_uring`             | Best async I/O mode for modern kernels and NVMe.                                                                                |
-| `disk_cache`       | `none`                 | Disable host-side page-cache for NVMe (write-back adds latency, not throughput here).                                           |
+\| Field              | Value to use           | Why                                                                                                                             |
+\| `pool`             | `talos`                | Mandatory. The `omni@pve` ACL only authorizes VM creation inside `/pool/talos`; omitting it yields a 403.                       |
+\| `storage_selector` | `'name == "nvme-lvm"'` | CEL expression over `name`, `node`, `storageType`, `availableSpace`. `nvme-lvm` is the only image-capable storage on this host. |
+\| `network_bridge`   | `vmbr1`                | The VLAN-aware guest bridge.                                                                                                    |
+\| `vlan`             | `2`                    | Talos VMs live on VLAN 2 (same as the existing `tal01`); rendered as `tag=2` on `net0`. Platform LXCs use VLAN 5.               |
+\| `cpu_type`         | `x86-64-v3`            | Matches the existing Talos VM. The provider default is `x86-64-v2-AES` (more conservative).                                     |
+\| `disk_ssd`         | `true`                 | NVMe-backed lvmthin — enables SSD emulation inside the guest.                                                                   |
+\| `disk_discard`     | `true`                 | Passes TRIM commands through to the thin pool, keeping it lean.                                                                 |
+\| `disk_iothread`    | `true`                 | Dedicated I/O thread per disk (`tal01` already uses `iothread=1`).                                                              |
+\| `disk_aio`         | `io_uring`             | Best async I/O mode for modern kernels and NVMe.                                                                                |
+\| `disk_cache`       | `none`                 | Disable host-side page-cache for NVMe (write-back adds latency, not throughput here).                                           |
 
 ### Recommended classes
 
@@ -402,8 +398,13 @@ and that the ISO storage (`local`) is a member of the `talos` pool.
 
 ### Authentication failure to Proxmox
 
-Verify the password and username in `configuration.nix` and
-`secrets/proxmox.sops.env`. The username must be in `user@realm` format.
+Verify the password in `secrets/proxmox.sops.env` and the username in
+`configuration.nix`. The username must be the bare login (`omni`) with the
+realm set separately via `proxmox.realm = "pve"`. Appending `@pve` to
+`username` (e.g. `"omni@pve"`) causes a double-realm auth failure
+(`username=omni@pve&realm=pve`) — the Proxmox API rejects it. Also verify
+that `insecureSkipVerify = true` is set, as the Proxmox API TLS cert is
+self-signed.
 
 ### Phase-1 deploy — provider logs "empty key"
 

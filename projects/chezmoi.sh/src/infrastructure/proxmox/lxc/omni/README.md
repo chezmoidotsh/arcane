@@ -5,14 +5,6 @@ Standalone Proxmox LXC running NixOS + Omni + Dex + Caddy. Serves
 (SideroLink + Kubernetes proxy + UI), with a co-located Dex OIDC provider
 exposed under the `/dex` sub-path on the same hostname.
 
-This replaces the earlier ISO-based Omni VM with the same
-unprivileged-LXC pattern used by `../oci-registry/`.
-
-> **Status** — fresh deployment target. The catalog modules
-> (`catalog/nix/siderolabs/omni/`) are shared with the legacy ISO build
-> and unchanged; only the LXC scaffolding and Caddy reverse-proxy are
-> new.
-
 ## Table of contents
 
 1. [Architecture](#architecture)
@@ -26,51 +18,48 @@ unprivileged-LXC pattern used by `../oci-registry/`.
 9. [Hardening reference](#hardening-reference)
 10. [Operations](#operations)
 11. [Troubleshooting](#troubleshooting)
-12. [Known gaps / follow-ups](#known-gaps--follow-ups)
+12. [Known limitations](#known-limitations)
 
 ## Architecture
 
-```text
-                         Internet / homelab
-                                │
-   ┌────────────────────────────┼────────────────────────────────────┐
-   │  Proxmox host              │                                    │
-   │                            │                                    │
-   │  PVE firewall ─────────────┤                                    │
-   │                            │                                    │
-   │   TCP 80/443 (Caddy)       │                                    │
-   │   TCP 8090   (Machine API, direct TLS)                          │
-   │   TCP 8091   (Event sink,  TCP)                                 │
-   │   TCP 8100   (k8s proxy,   direct TLS)                          │
-   │   UDP 50180  (SideroLink WireGuard)                             │
-   │                            │                                    │
-   │                ┌───────────▼─────────────────────────────────┐  │
-   │                │  LXC (unprivileged)   nixos / omni          │  │
-   │                │                                             │  │
-   │                │   Caddy   :80 → 301 → :443                  │  │
-   │                │   Caddy   :443  ACME DNS-01 (Cloudflare)    │  │
-   │                │     ├─ /dex/* → http://127.0.0.1:5557 (Dex) │  │
-   │                │     └─ /      → https://127.0.0.1:8443 (UI) │  │
-   │                │                                             │  │
-   │                │   Omni    UI/API  127.0.0.1:8443 (PKI TLS)  │  │
-   │                │   Omni    Machine 0.0.0.0:8090  (PKI TLS)   │  │
-   │                │   Omni    k8s     0.0.0.0:8100  (PKI TLS)   │  │
-   │                │   Omni    events  0.0.0.0:8091              │  │
-   │                │   Omni    WG      0.0.0.0:50180/udp         │  │
-   │                │   Dex             127.0.0.1:5557            │  │
-   │                │                                             │  │
-   │                │   /var/lib/omni  (mp0 — PKI + GPG + SQLite) │  │
-   │                └─────────────────────────────────────────────┘  │
-   └─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    net(["Internet / homelab"])
+
+    subgraph host["Proxmox host · pve-01"]
+        subgraph lxc["LXC: omni — unprivileged NixOS"]
+            caddy["Caddy — public TLS surface<br/>:80 → 301 redirect<br/>:443 ACME DNS-01 (Cloudflare)<br/>:8090 ACME DNS-01 (Cloudflare)"]
+            omni["Omni<br/>UI :8443 (loopback, PKI TLS)<br/>Machine API :9090 (loopback, PKI TLS)<br/>events :8091 (direct)<br/>k8s proxy :8100 (direct, PKI TLS)<br/>SideroLink WG :50180/udp (direct)"]
+            dex["Dex OIDC<br/>:5557 (loopback)"]
+            vol[("mp0 → /persistent<br/>omni/ · caddy/")]
+        end
+    end
+
+    net -->|"HTTPS :443"| caddy
+    net -->|"Machine API :8090"| caddy
+    net -->|":8091 · :8100 · :50180/udp"| omni
+    caddy -->|"/dex/*"| dex
+    caddy -->|"/* → :8443"| omni
+    caddy -->|":8090 → :9090"| omni
+    omni -. persists .-> vol
+    caddy -. persists .-> vol
 ```
 
-* **Caddy** terminates TLS for `omni.chezmoi.sh`, redirects HTTP, routes
-  `/dex/*` to Dex and everything else to Omni. ACME uses DNS-01 via
-  Cloudflare (no inbound :80 challenge required).
-* **Omni** binds the UI on loopback (Caddy is the front), but keeps the
-  Machine API, event sink, k8s proxy, and the SideroLink WireGuard
-  socket on `0.0.0.0` with its own self-signed PKI — these ports are
-  consumed by Talos machines and `kubectl` directly, not by browsers.
+* **Caddy** terminates TLS for `omni.chezmoi.sh` on port 443, redirects
+  HTTP, routes `/dex/*` to Dex and everything else to Omni's UI. ACME
+  uses DNS-01 via Cloudflare (no inbound :80 challenge required).
+* **Caddy also fronts port 8090** with its own Let's Encrypt cert
+  (DNS-01). It reverse-proxies to Omni's Machine API on
+  `127.0.0.1:9090`. The benefit: Talos machines trust the public LE cert
+  and never need to import Omni's self-signed PKI CA.
+* **Omni UI** binds on `127.0.0.1:8443` (loopback, PKI TLS — Caddy
+  proxies with `tls_insecure_skip_verify`). **Omni Machine API** binds
+  on `127.0.0.1:9090` (loopback, same PKI TLS — Caddy on :8090 is the
+  only public face).
+* **Direct Omni ports** — the event sink (`:8091` TCP), Kubernetes proxy
+  (`:8100` PKI TLS), and SideroLink WireGuard (`:50180/udp`) are bound
+  directly on `0.0.0.0` by Omni and are **not** proxied by Caddy. These
+  ports are consumed by Talos machines and `kubectl` directly.
 * **Dex** runs on loopback and is reached only through Caddy. Its issuer
   is `https://omni.chezmoi.sh/dex`; Dex automatically prefixes every
   internal route with `/dex`, so the single sub-path handles discovery,
@@ -119,47 +108,6 @@ PVE host config, not inside the container rootfs).
 > boot.kernelModules = lib.mkForce [ ];
 > ```
 
-### Homelab network context
-
-```text
-          ┌─────────────────────┐
-          │    Internet / LAN   │
-          └─────────┬───────────┘  
-                    │
-         ┌──────────▼──────────────┐
-         │  Proxmox host           │
-         │  pve-01.pve.chezmoi.sh  │
-         │                         │
-         │  ┌───────────────────┐  │
-         │  │  LXC: omni        │  │
-         │  │  omni.chezmoi.sh  │  │
-         │  │                   │  │
-         │  │  Caddy :443       │  │
-         │  │  Omni  :8090/8100 │  │
-         │  │  WG    :50180/udp │  │
-         │  │  Dex   :5557      │  │
-         │  └───────────────────┘  │
-         │                         │
-         │  ┌───────────────────┐  │
-         │  │  LXC: infra-      │  │
-         │  │  provider-proxmox │  │
-         │  │  (no inbound)     │  │
-         │  └───────────────────┘  │
-         │                         │
-         │  ┌───────────────────┐  │
-         │  │  LXC: oci-registry│  │
-         │  │  registry.chezmoi │  │
-         │  └───────────────────┘  │
-         └─────────────────────────┘
-                      │ SideroLink WG
-          ┌───────────┴───────────┐
-          ▼                       ▼
-  ┌─────────────────┐   ┌─────────────────┐
-  │ Talos node 1    │   │ Talos node N    │
-  │ (amiya/lungmen) │   │ (amiya/lungmen) │
-  └─────────────────┘   └─────────────────┘
-```
-
 ## What's in this directory
 
 ```text
@@ -206,10 +154,9 @@ reference) lives in the companion README:
 Two files, both SOPS / age-encrypted, both baked into the image at build
 time. The plaintext values never touch disk.
 
-| File                     | Variable                  | Source                                    |
-| ------------------------ | ------------------------- | ----------------------------------------- |
-| `secrets/omni.sops.env`  | `DEX_ADMIN_PASSWORD_HASH` | Operator (`htpasswd -bnBC 12 "" '<pw>'`). |
-| `secrets/caddy.sops.env` | `CLOUDFLARE_API_TOKEN`    | Crossplane (`cloudflare.iam.omni.yaml`).  |
+\| File                     | Variable                  | Source                                    |
+\| `secrets/omni.sops.env`  | `DEX_ADMIN_PASSWORD_HASH` | Operator (`htpasswd -bnBC 12 "" '<pw>'`). |
+\| `secrets/caddy.sops.env` | `CLOUDFLARE_API_TOKEN`    | Crossplane (`cloudflare.iam.omni.yaml`), or manual (bootstrap). |
 
 ### First-time setup
 
@@ -217,25 +164,58 @@ time. The plaintext values never touch disk.
 # 1. Generate the Dex admin password hash (interactive)
 mise run lxc:secrets:rotate
 
-# 2. Sync the Cloudflare DNS-01 token from amiya.akn
-mise run lxc:secrets:sync
+# 2. Provide the Cloudflare DNS-01 token (pick ONE of the two paths below)
 ```
+
+**Cloudflare token — bootstrap ordering matters.** The `lxc:secrets:sync`
+task pulls the token from a Kubernetes secret that Crossplane writes. But
+Crossplane runs on a Talos cluster that Omni itself manages — so on a
+first bootstrap, **Omni comes up before Crossplane exists**, and the token
+cannot be synced from the cluster yet. There is no automation for this
+chicken-and-egg case; create the token by hand.
+
+* **Path A — Crossplane is already running** (steady state / rebuilds):
+
+  ```sh
+  mise run lxc:secrets:sync
+  ```
+
+  Reads the Kubernetes secret `chezmoi.sh-cloudflare-token-caddy-dns01-omni`
+  from the `crossplane-secrets` namespace, written by the Crossplane
+  `APIToken` resource `chezmoi-sh-caddy-dns01-omni`
+  (`cloudflare.iam.omni.yaml`).
+
+* **Path B — Crossplane not up yet** (initial bootstrap): mint the token
+  manually in the Cloudflare dashboard, then SOPS-encrypt it straight into
+  the secret file.
+
+  1. Cloudflare dashboard → **My Profile → API Tokens → Create Token**.
+  2. Use the **Edit zone DNS** template, or a custom token with these
+     permissions (same scope as `cloudflare.iam.omni.yaml`):
+     * **Zone → DNS → Edit**
+     * **Zone → Zone → Read**
+  3. **Zone Resources → Include → Specific zone → `chezmoi.sh`**.
+  4. Create the token and copy it.
+  5. Encrypt it into `secrets/caddy.sops.env` (plaintext never hits disk):
+
+     ```sh
+     printf 'CLOUDFLARE_API_TOKEN=%s\n' '<token>' \
+       | sops -e --input-type dotenv --output-type dotenv /dev/stdin \
+       > secrets/caddy.sops.env
+     ```
+
+  Once Crossplane is online, switch to Path A on the next rebuild so the
+  token is managed declaratively (and rotate the hand-made one out).
 
 ### Rotation
 
 * **Dex admin password** — re-run `mise run lxc:secrets:rotate`, rebuild,
   redeploy.
-* **Cloudflare token** — delete the Crossplane `APIToken` so it gets
-  recreated, wait for `Ready`, then re-run `mise run lxc:secrets:sync`,
-  rebuild, redeploy.
+* **Cloudflare token** — delete the Crossplane `APIToken`
+  `chezmoi-sh-caddy-dns01-omni` so it gets recreated, wait for `Ready`,
+  then re-run `mise run lxc:secrets:sync`, rebuild, redeploy.
 
 ## Build & deploy
-
-> **Before the first build** — replace the `CHANGEME` placeholders in
-> `configuration.nix`: `initialUsers`, `eulaAcceptName`, `eulaAcceptEmail`,
-> and the Dex static user's `email`. The build succeeds with the
-> placeholders in place, but Omni only grants admin access to the listed
-> emails — deploying them as-is locks you out of the UI.
 
 ```sh
 # 1. Build the LXC tarball with both secrets baked in
@@ -252,13 +232,12 @@ multiple builds the same day.
 
 ### Task reference
 
-| Task                                                              | What it does                                                                                                                     |
-| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `mise run lxc:secrets:rotate`                                     | Generate the Dex admin bcrypt hash → `secrets/omni.sops.env`                                                                     |
-| `mise run lxc:secrets:sync`                                       | Fetch Cloudflare token from cluster → `secrets/caddy.sops.env`                                                                   |
-| `mise run lxc:build`                                              | Build with both secrets baked in (requires the two `.sops.env`)                                                                  |
-| `mise run lxc:push -- <pve-host>`                                 | `scp` the tarball to Proxmox (`local` storage, hardcoded)                                                                        |
-| `mise run lxc:upgrade -- <pve-host> <source_id> [-t <target_id>]` | Rootfs-swap upgrade of a running LXC; preserves the `mp0` volume. `--target-id` auto-picks the first free VMID ≥ 100 if omitted. |
+\| Task                                                              | What it does                                                                                                                     |
+\| `mise run lxc:secrets:rotate`                                     | Generate the Dex admin bcrypt hash → `secrets/omni.sops.env`                                                                     |
+\| `mise run lxc:secrets:sync`                                       | Fetch Cloudflare token from Crossplane → `secrets/caddy.sops.env`                                                                   |
+\| `mise run lxc:build`                                              | Build with both secrets baked in (requires the two `.sops.env`)                                                                  |
+\| `mise run lxc:push -- <pve-host>`                                 | `scp` the tarball to Proxmox (`local` storage, hardcoded)                                                                        |
+\| `mise run lxc:upgrade -- <pve-host> <source_id> [-t <target_id>]` | Rootfs-swap upgrade of a running LXC; preserves the `mp0` volume. `--target-id` auto-picks the first free VMID ≥ 100 if omitted. |
 
 ## Proxmox LXC creation
 
@@ -274,7 +253,13 @@ NODE=pve-01.pve.chezmoi.sh
 # 1. Create the container — do NOT start yet (console + pre-chown come next).
 ssh root@${NODE} pct create ${VMID} local:vztmpl/${TEMPLATE} \
     --hostname     omni \
-    --description  "Omni Talos manager — managed by chezmoidotsh/arcane" \
+    --description  "$(cat <<'EOF'
+# Omni Talos cluster manager
+Manages all Talos clusters: SideroLink machine enrollment (WireGuard), cluster lifecycle, and Kubernetes API proxy. Co-hosts a Dex OIDC provider at /dex.
+
+https://omni.chezmoi.sh
+EOF
+)" \
     --ostype       nixos \
     --arch         amd64 \
     --unprivileged 1 \
@@ -347,13 +332,12 @@ ssh root@${NODE} pct start ${VMID}
 
 ### Resource sizing — starting values
 
-| Workload            | Recommended                                                                         |
-| ------------------- | ----------------------------------------------------------------------------------- |
-| CPU                 | 2 vCPU                                                                              |
-| Memory              | 2 GiB                                                                               |
-| Root disk (OS only) | 4 GiB                                                                               |
-| Persistent volume   | 20 GiB (mounted at `/persistent`, holds `/persistent/omni` and `/persistent/caddy`) |
-| Swap                | 0 (let OOM kill on overrun)                                                         |
+\| Workload            | Recommended                                                                         |
+\| CPU                 | 2 vCPU                                                                              |
+\| Memory              | 2 GiB                                                                               |
+\| Root disk (OS only) | 4 GiB                                                                               |
+\| Persistent volume   | 20 GiB (mounted at `/persistent`, holds `/persistent/omni` and `/persistent/caddy`) |
+\| Swap                | 0 (let OOM kill on overrun)                                                         |
 
 ## Proxmox host firewall
 
@@ -378,10 +362,12 @@ log_level_out: nolog
 IN ACCEPT -p tcp -dport 80   -log nolog # HTTP → HTTPS redirect
 IN ACCEPT -p tcp -dport 443  -log nolog # HTTPS (Caddy → Omni / Dex)
 
-# Omni direct ports — Talos machines and kubectl proxy connect here.
-IN ACCEPT -p tcp -dport 8090 -log nolog # Machine API (direct TLS)
-IN ACCEPT -p tcp -dport 8091 -log nolog # Event sink
-IN ACCEPT -p tcp -dport 8100 -log nolog # Kubernetes proxy (direct TLS)
+# Caddy — Machine API (LE cert terminates here, proxies to Omni loopback)
+IN ACCEPT -p tcp -dport 8090 -log nolog # Machine API (Caddy TLS → 127.0.0.1:9090)
+
+# Omni direct ports — event sink, k8s proxy, WireGuard connect here.
+IN ACCEPT -p tcp -dport 8091 -log nolog # Event sink (direct TCP)
+IN ACCEPT -p tcp -dport 8100 -log nolog # Kubernetes proxy (direct PKI TLS)
 
 # SideroLink WireGuard
 IN ACCEPT -p udp -dport 50180 -log nolog
@@ -391,32 +377,31 @@ EOF
 pve-firewall restart
 ```
 
-Restrict the source CIDR on `8090`/`8091`/`8100` to the homelab range if
-Omni is exposed publicly only through `:443`.
+Restrict the source CIDR on `8091`/`8100` to the homelab range if
+Omni is exposed publicly only through `:443` and `:8090`.
 
 ## Hardening reference
 
 `modules/hardening.nix` is always active — same shape as the OCI
 registry LXC:
 
-| Layer                | What we change                                                                                                                                       |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Login surface**    | No `sshd`, no autologin getty.                                                                                                                       |
-| **Kernel sysctls**   | IP forwarding off, source-routing off, ICMP redirects off, SYN cookies on, rp\_filter on, ptrace YAMA, SUID coredumps off.                           |
-| **Services**         | Avahi, CUPS, Polkit, UDisks2 disabled with `mkForce`.                                                                                                |
-| **Docs**             | man-db / info / nixos-docs disabled.                                                                                                                 |
-| **Journald**         | `Storage=volatile`, `RuntimeMaxUse=64M`, `ForwardToConsole=yes`.                                                                                     |
-| **Firewall (NixOS)** | Default-deny inbound; ports opened by `caddy.nix` (80/443) and `catalog/.../omni.nix` (8090/8091/8100 + WG UDP).                                     |
-| **Firewall (PVE)**   | Layered on top — see previous section.                                                                                                               |
-| **Caddy systemd**    | Same `ProtectHome`/`ProtectKernelLogs`/`ProtectClock`/`RestrictSUIDSGID`/`LockPersonality` flags as the OCI registry LXC.                            |
-| **Omni systemd**     | `AmbientCapabilities = [ CAP_NET_ADMIN ]` (required for WireGuard); `NoNewPrivileges`, `RestrictSUIDSGID`, `LockPersonality`, `LimitNOFILE = 65536`. |
+\| Layer                | What we change                                                                                                                                       |
+\| **Login surface**    | No `sshd`, no autologin getty.                                                                                                                       |
+\| **Kernel sysctls**   | IP forwarding off, source-routing off, ICMP redirects off, SYN cookies on, rp\_filter on, ptrace YAMA, SUID coredumps off.                           |
+\| **Services**         | Avahi, CUPS, Polkit, UDisks2 disabled with `mkForce`.                                                                                                |
+\| **Docs**             | man-db / info / nixos-docs disabled.                                                                                                                 |
+\| **Journald**         | `Storage=volatile`, `RuntimeMaxUse=64M`, `ForwardToConsole=yes`.                                                                                     |
+\| **Firewall (NixOS)** | Default-deny inbound; ports opened by `caddy.nix` (80/443) and `catalog/.../omni.nix` (8090/8091/8100 + WG UDP).                                     |
+\| **Firewall (PVE)**   | Layered on top — see previous section.                                                                                                               |
+\| **Caddy systemd**    | Same `ProtectHome`/`ProtectKernelLogs`/`ProtectClock`/`RestrictSUIDSGID`/`LockPersonality` flags as the OCI registry LXC.                            |
+\| **Omni systemd**     | `AmbientCapabilities = [ CAP_NET_ADMIN ]` (required for WireGuard); `NoNewPrivileges`, `RestrictSUIDSGID`, `LockPersonality`, `LimitNOFILE = 65536`. |
 
 ### What we explicitly do **not** harden
 
 Same caveats as `oci-registry`: mount-namespace options
 (`PrivateTmp`, `ProtectSystem`, …) fail in unprivileged LXC with "step
 NAMESPACE … Permission denied" and are intentionally omitted. The
-layered firewall + loopback bindings (UI, Dex) compensate.
+layered firewall + loopback bindings (UI, Dex, Machine API) compensate.
 
 ## Operations
 
@@ -430,11 +415,10 @@ ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- journalctl -u caddy -f
 
 ### Backups (mandatory — losing them = losing the cluster)
 
-| File                                     | What happens if lost                                 |
-| ---------------------------------------- | ---------------------------------------------------- |
-| `/persistent/omni/omni.asc` (GPG key)    | All Omni state is unrecoverable. **Back this up.**   |
-| `/persistent/omni/pki/ca.pem` (Talos CA) | Talos machines can no longer verify the Machine API. |
-| `/persistent/omni/db/omni.db`            | Cluster inventory + machine assignments lost.        |
+\| File                                     | What happens if lost                                 |
+\| `/persistent/omni/omni.asc` (GPG key)    | All Omni state is unrecoverable. **Back this up.**   |
+\| `/persistent/omni/pki/ca.pem` (Talos CA) | Talos machines can no longer verify the Machine API. |
+\| `/persistent/omni/db/omni.db`            | Cluster inventory + machine assignments lost.        |
 
 A weekly snapshot of the `mp0` volume from the Proxmox side covers all
 three. Pull `/persistent/omni/omni.asc` to a separate secure location.
@@ -499,7 +483,7 @@ Symptom: Talos machines never reach `connected` state in the Omni UI.
 
 * Check that the WireGuard module is loaded on the Proxmox **host**:
   `lsmod | grep -E '^wireguard'`. If empty, run the `modprobe` from the
-  [Host kernel prerequisite](#host-kernel-prerequisite--wireguard) section.
+  [Host kernel prerequisites — WireGuard + TUN device](#host-kernel-prerequisites--wireguard--tun-device) section.
 * Confirm UDP `50180` is open in `/etc/pve/firewall/<vmid>.fw` and on
   whatever upstream firewall sits in front of the Proxmox host.
 * Verify `services.omni.advertiseHost` in `configuration.nix` (currently
@@ -550,30 +534,20 @@ pct unmount ${VMID}
 pct start ${VMID}
 ```
 
-## Known gaps / follow-ups
+## Known limitations
 
-1. **No Crossplane resource for the Cloudflare token yet.** Create
-   `projects/chezmoi.sh/src/infrastructure/crossplane/cloudflare.iam.omni.yaml`
-   modelled on `cloudflare.iam.oci-registry.yaml`. Until it exists,
-   `mise run lxc:secrets:sync` will fail and the token must be loaded
-   manually:
-   ```sh
-   printf 'CLOUDFLARE_API_TOKEN=<token>\n' \
-     | sops -e --input-type dotenv --output-type dotenv /dev/stdin \
-     > secrets/caddy.sops.env
-   ```
-2. **`boot.kernelModules` in the catalog module.** The line is
+1. **`boot.kernelModules` in the catalog module.** The line is
    inherited from the VM build and is a no-op (failed silently) under
    LXC. If you want clean `systemctl status`, gate it with
    `lib.mkIf (!config.boot.isContainer)` in `catalog/nix/siderolabs/omni/omni.nix`
    — that change benefits the OCI registry LXC too.
-3. **No automated NixOS test.** A `pkgs.testers.runNixOSTest` that boots
+2. **No automated NixOS test.** A `pkgs.testers.runNixOSTest` that boots
    the LXC and asserts the Dex discovery doc and Omni `/healthz` would
    catch regressions in the catalog modules before they reach Proxmox.
-4. **No alert on certificate expiry.** Caddy renews silently; if ACME
+3. **No alert on certificate expiry.** Caddy renews silently; if ACME
    breaks, the cert expires unnoticed. A blackbox-exporter probe from a
    future observability stack would close this gap.
-5. **Single-LXC, single-node.** Acceptable trade-off for a homelab; HA
+4. **Single-LXC, single-node.** Acceptable trade-off for a homelab; HA
    would require an external etcd and pairs of Omni instances behind a
    load-balancer (out of scope).
 

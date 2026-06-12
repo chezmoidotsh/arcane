@@ -9,8 +9,9 @@
 #   /dex/*  →  Dex OIDC      (loopback HTTP, prefix preserved)
 #   /*      →  Omni UI/API   (loopback HTTPS, self-signed cert from Omni PKI)
 #
-# The Omni Machine API (:8090), event sink (:8091), Kubernetes proxy (:8100)
-# and SideroLink WireGuard (:50180/UDP) are NOT proxied — they keep their
+# The Machine API (:8090) is fronted by Caddy (DNS-01 LE cert → loopback
+# 127.0.0.1:9090). The event sink (:8091), Kubernetes proxy (:8100), and
+# SideroLink WireGuard (:50180/UDP) are NOT proxied — they keep their
 # direct binding and are opened by `catalog/nix/siderolabs/omni/omni.nix`
 # at the firewall layer.
 #
