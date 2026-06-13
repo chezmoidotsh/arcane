@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "path": "../../../../../../catalog/nix",
+        "path": "../../../../../../../catalog/nix",
         "type": "path"
       },
       "original": {
-        "path": "../../../../../../catalog/nix",
+        "path": "../../../../../../../catalog/nix",
         "type": "path"
       },
       "parent": []

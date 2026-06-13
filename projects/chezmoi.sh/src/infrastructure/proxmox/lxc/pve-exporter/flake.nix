@@ -29,7 +29,7 @@
   inputs.nixos-generators.url = "github:nix-community/nixos-generators";
   inputs.nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
 
-  inputs.arcane-catalog.url = "path:../../../../../../catalog/nix";
+  inputs.arcane-catalog.url = "path:../../../../../../../catalog/nix";
   inputs.arcane-catalog.inputs.nixpkgs.follows = "nixpkgs";
 
   outputs =

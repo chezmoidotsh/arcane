@@ -480,7 +480,7 @@ A terse normative checklist (the *why* is in Supporting design decisions above):
   * ADR-008: `kazimierz`.AKN Ansible over Kubernetes — precedent for leaving
     Kubernetes when it does not serve the workload; the `kazimierz` agent model
     follows from it.
-* **Implementation**: [`lxc-observability/README.md`](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc-observability/README.md)
+* **Implementation**: [`lxc/observability/README.md`](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/README.md)
   and the sibling [`lxc-oci-registry`](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc-oci-registry/README.md) it is modeled on.
 * **External documentation**:
   * [VictoriaMetrics Operator — Prometheus integration](https://docs.victoriametrics.com/operator/integrations/prometheus/)

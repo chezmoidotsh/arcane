@@ -6,12 +6,12 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/push,pull_request.vector-config-test.yaml"
-      - "projects/chezmoi.sh/src/infrastructure/proxmox/lxc-observability/config/vector/**"
+      - "projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/config/vector/**"
 
   pull_request:
     paths:
       - ".github/workflows/push,pull_request.vector-config-test.yaml"
-      - "projects/chezmoi.sh/src/infrastructure/proxmox/lxc-observability/config/vector/**"
+      - "projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/config/vector/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -21,7 +21,7 @@ permissions:
   contents: read
 
 env:
-  VECTOR_CONFIG_DIR: projects/chezmoi.sh/src/infrastructure/proxmox/lxc-observability/config/vector
+  VECTOR_CONFIG_DIR: projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/config/vector
   # Pinned to the Vector version shipped with the NixOS channel used in the LXC flake.
   # Bump together with nixpkgs when upgrading the appliance image.
   VECTOR_VERSION: "0.45.0"
