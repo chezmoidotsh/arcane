@@ -43,6 +43,7 @@ in
       Restart = "always";
       RestartSec = "5s";
       TimeoutStopSec = "30s";
+      StateDirectory = "victoria/logs";
       WorkingDirectory = dataDir;
 
       NoNewPrivileges = true;

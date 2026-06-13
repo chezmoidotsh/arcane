@@ -23,7 +23,7 @@ let
   # all loopback; their `up` series feed the self.rules alerts (see ../alerts).
   scrapeConfig = pkgs.writeText "vm-selfscrape.yml" ''
     global:
-      scrape_interval: 15s
+      scrape_interval: 30s
       external_labels:
         cluster: o11y-appliance
     scrape_configs:
@@ -56,7 +56,7 @@ in
         "${pkgs.victoriametrics}/bin/victoria-metrics"
         "-storageDataPath=${dataDir}"
         "-httpListenAddr=${listenAddr}"
-        "-retentionPeriod=6" # months — homelab baseline; raise per disk budget
+        "-retentionPeriod=18" # months — homelab baseline; raise per disk budget
         "-promscrape.config=/etc/victoriametrics/selfscrape.yml"
         "-memory.allowedPercent=60"
         "-loggerFormat=json"
@@ -69,6 +69,7 @@ in
       Restart = "always";
       RestartSec = "5s";
       TimeoutStopSec = "30s";
+      StateDirectory = "victoria/metrics";
       WorkingDirectory = dataDir;
 
       # ── systemd hardening (LXC-safe subset) ──────────────────────────────

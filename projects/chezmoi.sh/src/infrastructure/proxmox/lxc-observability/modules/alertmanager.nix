@@ -38,22 +38,25 @@ let
 
   # Slack receiver — a receiver with no configs is a valid no-op in Alertmanager
   # so the config stays syntactically valid on a pure build.
+  # Nix ''...'' interpolation only prepends leading spaces to the FIRST line of
+  # an interpolated variable. These strings are inserted at 4-space indent inside
+  # the receiver list, so lines 2+ must already carry those 4 extra spaces.
   slackConfig = lib.optionalString (slackWebhookUrl != "") ''
     slack_configs:
-      - api_url: '${slackWebhookUrl}'
-        channel: '#notifications'
-        send_resolved: true
-        title: '{{ template "slack.default.title" . }}'
-        title_link: 'https://o11y.chezmoi.sh/alerts'
-        text: '{{ template "slack.default.text" . }}'
-        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
-        icon_emoji: ':fire:'
+          - api_url: '${slackWebhookUrl}'
+            channel: '#notifications'
+            send_resolved: true
+            title: '{{ template "slack.default.title" . }}'
+            title_link: 'https://o11y.chezmoi.sh/alerts'
+            text: '{{ template "slack.default.text" . }}'
+            color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+            icon_emoji: ':fire:'
   '';
 
   deadmanWebhook = lib.optionalString (deadmanUrl != "") ''
     webhook_configs:
-      - url: '${deadmanUrl}'
-        send_resolved: false
+          - url: '${deadmanUrl}'
+            send_resolved: false
   '';
 
   configFile = pkgs.writeText "alertmanager.yml" ''
@@ -115,6 +118,7 @@ in
       Restart = "always";
       RestartSec = "5s";
       TimeoutStopSec = "30s";
+      StateDirectory = "victoria/alertmanager";
       WorkingDirectory = dataDir;
 
       NoNewPrivileges = true;

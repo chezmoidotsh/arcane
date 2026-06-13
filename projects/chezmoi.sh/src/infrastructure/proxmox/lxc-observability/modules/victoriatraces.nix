@@ -32,7 +32,7 @@ in
         "${pkgs.victoriatraces}/bin/victoria-traces"
         "-storageDataPath=${dataDir}"
         "-httpListenAddr=${listenAddr}"
-        "-retentionPeriod=15d" # traces are voluminous; shorter than metrics/logs
+        "-retentionPeriod=2d" # traces are voluminous; shorter than metrics/logs
         "-loggerFormat=json"
       ];
 
@@ -43,6 +43,7 @@ in
       Restart = "always";
       RestartSec = "5s";
       TimeoutStopSec = "30s";
+      StateDirectory = "victoria/traces";
       WorkingDirectory = dataDir;
 
       NoNewPrivileges = true;

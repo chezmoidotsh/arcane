@@ -56,9 +56,16 @@ in
       {
         # caddy-tailscale: embedded tsnet node (no /dev/net/tun, no tailscaled).
         # TS_AUTHKEY is the Tailscale OAuth client secret for tag:o11y.
+        # tags is mandatory with OAuth keys (error: "oauth authkeys require
+        # --advertise-tags" without it). hostname must live inside a named node
+        # block; bind tailscale/<name> then references that node. Using
+        # bind tailscale/ (no suffix) falls back to the binary name ("caddy").
         tailscale {
           auth_key {env.TS_AUTHKEY}
-          hostname  observability
+          tags      tag:o11y
+          observability {
+            hostname observability
+          }
         }
       }
 
@@ -123,7 +130,7 @@ in
       # TLS is issued automatically by Tailscale's ACME for *.ts.net — no
       # Cloudflare token needed on this path.
       https:// {
-        bind tailscale/
+        bind tailscale/observability
         tls {
           get_certificate tailscale
         }
