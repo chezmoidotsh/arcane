@@ -10,8 +10,8 @@ pve_host="${usage_pve_host}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
-ver=$(grep -m1 'version = "v' "${CONFIG_ROOT}/flake.nix" |
-  grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+ver=$(grep -m1 'version = "' "${CONFIG_ROOT}/flake.nix" |
+  sed 's/.*version = "\(.*\)".*/\1/')
 template="observability.${ver}-amd64.tar.xz"
 src="${CONFIG_ROOT}/${template}"
 

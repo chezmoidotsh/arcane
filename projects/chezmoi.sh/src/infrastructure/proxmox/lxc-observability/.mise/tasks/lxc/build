@@ -20,8 +20,8 @@ stack_secrets="${CONFIG_ROOT}/secrets/observability.sops.env"
     exit 1
   }
 
-ver=$(grep -m1 'version = "v' "${CONFIG_ROOT}/flake.nix" |
-  grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+ver=$(grep -m1 'version = "' "${CONFIG_ROOT}/flake.nix" |
+  sed 's/.*version = "\(.*\)".*/\1/')
 echo "[INFO] Building observability.${ver}-amd64..." >&2
 
 # Decrypt secrets into the environment for the impure Nix build. Keep them out

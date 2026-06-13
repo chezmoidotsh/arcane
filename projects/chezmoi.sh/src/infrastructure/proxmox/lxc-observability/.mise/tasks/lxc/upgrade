@@ -4,7 +4,8 @@
 # [USAGE] arg "<pve_host>" help="Hostname or IP of the Proxmox node (e.g. pve.lan)"
 # [USAGE] arg "<source_id>" help="VMID of the running container whose config is copied"
 # [USAGE] arg "<target_id>" help="VMID for the new container (must not already exist)"
-# [USAGE] flag "-V --version <version>" help="Appliance image version (e.g. v1.0.0) — auto-detected from flake if omitted"
+# [USAGE] flag "-V --version <version>" help="Appliance image version (e.g. 2026.06.05) — auto-detected from flake if omitted"
+# [USAGE] flag "-y --yes" help="Skip confirmation prompt"
 
 set -euo pipefail
 
@@ -12,6 +13,7 @@ pve_host="${usage_pve_host}"
 source_id="${usage_source_id}"
 target_id="${usage_target_id}"
 version="${usage_version-}"
+yes="${usage_yes-}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
@@ -22,11 +24,11 @@ HOST_UID=100980
 
 # --- Resolve version and template name -------------------------------------
 if [[ -z ${version} ]]; then
-  version="v$(grep -m1 'version = "v' "${CONFIG_ROOT}/flake.nix" |
-    grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
+  version="$(grep -m1 'version = "' "${CONFIG_ROOT}/flake.nix" |
+    sed 's/.*version = "\(.*\)".*/\1/')"
   echo "[INFO] Auto-detected version: ${version}" >&2
 fi
-template="observability.${version#v}-amd64.tar.xz"
+template="observability.${version}-amd64.tar.xz"
 template_path="/var/lib/vz/template/cache/${template}"
 
 # --- Verify template is present on the PVE host ----------------------------
@@ -47,11 +49,15 @@ fi
 source_hostname=$(echo "${source_conf}" | awk '/^hostname:/{print $2}')
 echo "[INFO] Source: CT ${source_id} (${source_hostname})" >&2
 
-read -r -p "[?] Upgrade CT ${source_id} (${source_hostname}) → CT ${target_id} using ${template}? [y/N] " confirm
-[[ ${confirm} =~ ^[Yy]$ ]] || {
-  echo "[ABORTED]" >&2
-  exit 1
-}
+if [[ -z ${yes} ]]; then
+  read -r -p "[?] Upgrade CT ${source_id} (${source_hostname}) → CT ${target_id} using ${template}? [y/N] " confirm
+  [[ ${confirm} =~ ^[Yy]$ ]] || {
+    echo "[ABORTED]" >&2
+    exit 1
+  }
+else
+  echo "[INFO] Skipping confirmation (--yes)" >&2
+fi
 
 # --- Verify target does not exist ------------------------------------------
 echo "[>] ssh root@${pve_host} cat /etc/pve/lxc/${target_id}.conf" >&2
@@ -64,30 +70,39 @@ if [[ -n ${target_conf} ]]; then
 fi
 
 # --- Parse rootfs and mp0 from source config --------------------------------
+# Volume architecture:
+#   rootfs  — NixOS system files; ephemeral, rebuilt from template on upgrade.
+#   mp0     — persistent data (/var/lib/victoria); reattached to the new CT
+#             as-is. No copy needed: the LVM thin volume follows the container.
 rootfs_line=$(echo "${source_conf}" | grep '^rootfs:' | sed 's/^rootfs: //')
 rootfs_storage=$(echo "${rootfs_line}" | cut -d: -f1)
 rootfs_size=$(echo "${rootfs_line}" | grep -oE 'size=[0-9]+[GMKTgmkt]?' | cut -d= -f2 | tr -d 'GMKTgmkt')
+source_rootfs_vol=$(echo "${rootfs_line}" | cut -d, -f1) # e.g. nvme-lvm:vm-100-disk-0
 
 mp0_line=$(echo "${source_conf}" | grep '^mp0:' | sed 's/^mp0: //')
-mp0_storage=$(echo "${mp0_line}" | cut -d: -f1)
-mp0_size=$(echo "${mp0_line}" | grep -oE 'size=[0-9]+[GMKTgmkt]?' | cut -d= -f2 | tr -d 'GMKTgmkt')
 mp0_mount=$(echo "${mp0_line}" | grep -oE 'mp=[^,]+' | cut -d= -f2-)
 
-echo "[INFO] rootfs: ${rootfs_storage}:${rootfs_size}  mp0: ${mp0_storage}:${mp0_size} → ${mp0_mount}" >&2
+echo "[INFO] rootfs: ${rootfs_storage}:${rootfs_size}G  mp0: reattach ${source_rootfs_vol%disk-0}disk-1 → ${mp0_mount}" >&2
 
-# --- Create target container ------------------------------------------------
+# --- Create target container (fresh rootfs only; mp0 added below) -----------
+# pct create allocates a new rootfs volume (vm-<target>-disk-0) and writes the
+# template into it. We do NOT pass --mp0 here — the data volume is reattached
+# from the source CT in the next step so no copy is needed.
 echo "[INFO] Creating CT ${target_id} from ${template}..." >&2
-echo "[>] ssh root@${pve_host} pct create ${target_id} ${template_path} --rootfs ${rootfs_storage}:${rootfs_size} --mp0 ${mp0_storage}:${mp0_size},mp=${mp0_mount}" >&2
+echo "[>] ssh root@${pve_host} pct create ${target_id} ${template_path} --rootfs ${rootfs_storage}:${rootfs_size}" >&2
 ssh "root@${pve_host}" \
   pct create "${target_id}" "${template_path}" \
-  --rootfs "${rootfs_storage}:${rootfs_size}" \
-  --mp0 "${mp0_storage}:${mp0_size},mp=${mp0_mount}"
+  --rootfs "${rootfs_storage}:${rootfs_size}"
 
-# --- Copy Proxmox config (rewrite vm-<source> disk references) --------------
-echo "[INFO] Copying LXC config from CT ${source_id} to CT ${target_id}..." >&2
-echo "[>] ssh root@${pve_host} sed 's|vm-${source_id}|vm-${target_id}|g' /etc/pve/lxc/${source_id}.conf > /etc/pve/lxc/${target_id}.conf" >&2
+# --- Rewrite config: source settings + new rootfs vol + same mp0 vol --------
+# Grab the new rootfs volume name that pct create just assigned.
+new_rootfs_vol=$(ssh "root@${pve_host}" \
+  "grep '^rootfs:' /etc/pve/lxc/${target_id}.conf | awk '{print \$2}' | cut -d, -f1")
+
+echo "[INFO] Merging config: rootfs ${source_rootfs_vol} → ${new_rootfs_vol}, mp0 unchanged" >&2
+echo "[>] ssh root@${pve_host} sed 's|${source_rootfs_vol}|${new_rootfs_vol}|g' /etc/pve/lxc/${source_id}.conf > /etc/pve/lxc/${target_id}.conf" >&2
 ssh "root@${pve_host}" \
-  "sed 's|vm-${source_id}|vm-${target_id}|g' /etc/pve/lxc/${source_id}.conf \
+  "sed 's|${source_rootfs_vol}|${new_rootfs_vol}|g' /etc/pve/lxc/${source_id}.conf \
     > /etc/pve/lxc/${target_id}.conf"
 
 # --- Copy firewall config ----------------------------------------------------

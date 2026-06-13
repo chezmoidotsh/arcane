@@ -200,6 +200,22 @@ printf 'CLOUDFLARE_API_TOKEN=<token>\nTAILSCALE_OAUTH_KEY=<key>\n' | \
 
 ## Build & deploy
 
+### Versioning
+
+The appliance uses **CalVer** (`YYYY.MM.DD`). The version is a static string in
+`flake.nix` — bump it to today's date before every `lxc:build`. Append `-N` for
+multiple builds on the same calendar day (`2026.06.05-2`).
+
+```nix
+# flake.nix — bump before each build
+version = "2026.06.05";
+```
+
+The version only names the Proxmox template tarball
+(`observability.2026.06.05-amd64.tar.xz`). Component versions (VictoriaMetrics,
+Caddy, …) are pinned by the nixpkgs flake lock — CalVer tracks *when the image
+was built*, not what changed inside it.
+
 ```sh
 mise run lxc:build              # build the tarball with secrets baked in
 mise run lxc:push -- pve.lan    # upload to /var/lib/vz/template/cache/
@@ -483,9 +499,26 @@ ssh root@pve.lan pct exec <vmid> -- curl -s 127.0.0.1:9093/alerts/api/v2/alerts 
 
 ### Upgrading
 
-Same parallel-run flow as the oci-registry — see `.mise/tasks/lxc/upgrade`.
+#### Volume architecture
+
+Each LXC has two Proxmox LVM thin volumes:
+
+| Volume                                  | Size   | Content                                | On upgrade                                                |
+| --------------------------------------- | ------ | -------------------------------------- | --------------------------------------------------------- |
+| `rootfs` (`disk-0`)                     | 8 GiB  | NixOS system files                     | **replaced** — new template written to a fresh LVM volume |
+| `mp0` (`disk-1`) at `/var/lib/victoria` | 64 GiB | TSDB, logs, traces, Alertmanager state | **reattached** — same LVM volume, zero data copy          |
+
+The upgrade script creates a new rootfs from the template and rewrites the
+container config so the new CT inherits the existing `mp0` volume. No `pvesm
+copy`, no rsync — the LVM volume just moves from one CT config to the other.
+
+Both containers must not run simultaneously against the same `mp0`; stop the
+old CT before (or immediately after) the new one is verified.
+
+#### Procedure
 
 ```sh
+# 1. Bump flake.nix version to today's date, then:
 mise run lxc:build
 mise run lxc:push -- pve.lan
 mise run lxc:upgrade -- pve.lan <source_id> <target_id>
