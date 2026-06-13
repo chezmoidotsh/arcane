@@ -1,0 +1,57 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Availability — the page-tier signals only the central appliance can see
+# ─────────────────────────────────────────────────────────────────────────────
+# Scope (ADR-013): the LXC vmalert evaluates ONLY what requires the central
+# vantage point and must page even when the observed thing (and its own vmalert)
+# is gone:
+#
+#   * ClusterAbsent  — a whole cluster stopped reporting ("perte de cluster")
+#   * GrafanaDown    — Grafana is down ("perte de grafana")
+#   * (Watchdog/self live in their own files; node/disk/PVC/crash-loop are
+#      per-cluster VMRule, evaluated cluster-side and paged via Alertmanager.)
+#
+# Expected clusters are listed explicitly: detecting "something that USED to
+# report has gone silent" needs a reference set, and this is exactly the kind of
+# existential, rarely-changing, signed rule that belongs baked in the image.
+# Add a cluster here when onboarding it (a deliberate, code-reviewed change).
+# ─────────────────────────────────────────────────────────────────────────────
+groups:
+  - name: availability
+    rules:
+      - alert: ClusterAbsent
+        # No `up` samples from this cluster for 5m → the cluster (or its link to
+        # the appliance) is down. One rule per expected cluster.
+        expr: absent(up{cluster="lungmen"} == 1)
+        for: 5m
+        labels: { severity: page, cluster: lungmen }
+        annotations:
+          summary: "Cluster lungmen is not reporting"
+          description: "No metrics received from cluster=lungmen for >5m — possible cluster outage or lost connectivity."
+
+      - alert: ClusterAbsent
+        expr: absent(up{cluster="amiya"} == 1)
+        for: 5m
+        labels: { severity: page, cluster: amiya }
+        annotations:
+          summary: "Cluster amiya is not reporting"
+          description: "No metrics received from cluster=amiya for >5m — possible cluster outage. Grafana also lives here."
+
+      - alert: ClusterAbsent
+        expr: absent(up{cluster="kazimierz"} == 1)
+        for: 10m
+        labels: { severity: page, cluster: kazimierz }
+        annotations:
+          summary: "Cluster kazimierz is not reporting"
+          description: "No metrics received from cluster=kazimierz for >10m (remote VPS over Tailscale) — possible outage or tunnel loss."
+
+      - alert: GrafanaDown
+        # Grafana is the alert-routing brain for everything non-paging; if it is
+        # down we lose that path, so it pages. Depends on amiya's vmagent scraping
+        # Grafana's /metrics (a ServiceMonitor). The amiya-fully-down case is also
+        # covered by ClusterAbsent{amiya} and the Grafana deadman heartbeat.
+        expr: up{job=~".*grafana.*"} == 0
+        for: 5m
+        labels: { severity: page }
+        annotations:
+          summary: "Grafana is down ({{ $labels.cluster }})"
+          description: "Grafana has been unreachable for >5m — non-paging alert routing is degraded."

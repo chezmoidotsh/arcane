@@ -1,0 +1,24 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Self-monitoring — the appliance's own components
+# ─────────────────────────────────────────────────────────────────────────────
+# Fires when a stack component stops exposing /metrics. These targets come from
+# the VictoriaMetrics self-scrape config (cluster="o11y-appliance"). Note: if VM
+# itself is down, these cannot fire — that gap is covered by the Watchdog /
+# external Dead-Man's-Switch, not by these rules.
+#
+# Ingest-health checks (per-cluster "are we still receiving data?") live in
+# Grafana on amiya, where they can be expressed per cluster as-code (ADR-013).
+# ─────────────────────────────────────────────────────────────────────────────
+groups:
+  - name: self
+    rules:
+      - alert: ObservabilityComponentDown
+        expr: up{cluster="o11y-appliance"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Observability component {{ $labels.job }} is down"
+          description: >-
+            {{ $labels.job }} on the observability appliance has been
+            unreachable for >5m. Metrics/logs/alerting may be degraded.

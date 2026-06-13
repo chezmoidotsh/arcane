@@ -1,0 +1,45 @@
+# Tailscale OAuth client for the observability LXC (o11y.chezmoi.sh)
+#
+# Description:
+#   Creates a Tailscale OAuth client whose secret is used by tailscaled in the
+#   observability LXC to join the tailnet (kernel TUN mode), so off-LAN sources
+#   (notably the kazimierz.akn VPS) can reach the appliance over the tailnet.
+#   The client owns tag:o11y; tailscaled advertises that tag on join.
+#
+# Consumption:
+#   The observability LXC is not a Kubernetes workload — it bakes the secret at
+#   build time. Retrieve the client secret with:
+#     kubectl get secret -n crossplane-secrets observability-tailscale-oauth-client \
+#       -o jsonpath='{.data.client_secret}' | base64 -d
+#   then place it in secrets/observability.sops.env as TAILSCALE_OAUTH_KEY.
+#   A PushSecret also mirrors it into OpenBao (shared/) for backup.
+---
+apiVersion: tf.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  name: observability-tailscale-oauth-client
+spec:
+  forProvider:
+    module: |
+      resource "tailscale_oauth_client" "self" {
+        description = "OAuth client for the o11y LXC"
+        scopes      = ["auth_keys"]
+        tags        = ["tag:o11y"]
+      }
+
+      output "client_id" {
+        description = "OAuth Client ID"
+        value       = tailscale_oauth_client.self.id
+      }
+
+      output "client_secret" {
+        sensitive   = true
+        description = "OAuth Client Secret"
+        value       = tailscale_oauth_client.self.key
+      }
+    source: Inline
+  providerConfigRef:
+    name: tailscale
+  writeConnectionSecretToRef:
+    name: observability-tailscale-oauth-client
+    namespace: crossplane-secrets

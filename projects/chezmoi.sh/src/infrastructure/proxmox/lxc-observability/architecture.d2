@@ -1,0 +1,136 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@../../../../../../docs/assets/d2/architecture-styles.d2
+
+explanation: |md
+  # o11y.chezmoi.sh — Observability Appliance
+
+  Centralized VictoriaMetrics stack on a single NixOS LXC (Proxmox), \
+  independent of every Kubernetes cluster's failure domain. \
+  Clusters and the Proxmox host push (metrics + logs); the appliance \
+  stores and runs existential alerting. Grafana (on amiya) owns the \
+  rich, per-cluster alerting and dashboards. No ingest auth — access \
+  control is the Proxmox firewall by source CIDR (ADR-013).
+| {
+  near: top-left
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Networks
+internet: {class: network}
+tailnet: {
+  class: network
+  tooltip: Tailnet — used by kazimierz (remote VPS) to reach the appliance
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Notification targets (external, off-homelab on purpose)
+notify: {
+  class: platform
+  label: "ntfy / Slack\n(notifications)"
+}
+deadman: {
+  class: platform
+  label: "external monitor — TBD\n(healthchecks.io / Cloudflare?)\nDead-Man's-Switch ×2"
+}
+cloudflare: {
+  class: platform
+  label: "Cloudflare\n(DNS-01 ACME)"
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Source clusters + Proxmox host — collection only (no local storage)
+lungmen: {
+  class: namespace
+  label: "lungmen.akn (K8s)"
+
+  vmagent: {class: application-system; label: "VMAgent\n(ServiceMonitor → scrape\n+ streamAggr)"}
+  vmalert: {class: application-system; label: "VMAlert\n(VMRule: alerts + records)"}
+  vector: {class: application-system; label: "Vector\n(pod logs)"}
+}
+amiya: {
+  class: namespace
+  label: "amiya.akn (K8s)"
+
+  vmagent: {class: application-system; label: "VMAgent"}
+  vmalert: {class: application-system; label: "VMAlert (VMRule)"}
+  vector: {class: application-system; label: "Vector"}
+  grafana: {
+    class: application
+    label: "Grafana\n(OIDC Pocket-Id + local break-glass)\ndashboards only + deadman"
+  }
+}
+kazimierz: {
+  class: namespace
+  label: "kazimierz.akn (VPS, Docker)"
+
+  vmagent: {class: application-system; label: "vmagent\n(container)"}
+  vector: {class: application-system; label: "Vector\n(container)"}
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# The appliance
+proxmox: {
+  class: hardware
+  label: "Proxmox host"
+
+  otel: {class: application-system; label: "OTEL metric server\n(host metrics → OTLP)"}
+
+  lxc: {
+    class: namespace
+    label: "LXC (unprivileged) — nixos / observability"
+
+    tailscale: {class: tailscaled; label: "tailscaled\n(tag:o11y, kernel TUN)"}
+    caddy: {class: application-system; label: "Caddy :80/:443\nTLS (ACME) + path routing"}
+
+    vm: {class: application-datastore; label: "VictoriaMetrics\n:8428 — 6mo (+ OTLP)"}
+    vlogs: {class: application-datastore; label: "VictoriaLogs\n:9428 — 30d"}
+    vtraces: {class: application-datastore; label: "VictoriaTraces\n:10428 — 15d (OTLP/Jaeger)"}
+    vmalert: {class: application-system; label: "vmalert :8880\ncluster/Grafana down\n+ watchdog"}
+    alertmanager: {class: application-system; label: "Alertmanager :9093\n/alerts + deadman"}
+
+    data: {class: application-datastore; label: "/var/lib/victoria\n(mp0 — snapshot/backup)"}
+
+    # internal wiring — Caddy routes by /<signal> path, no auth proxy
+    tailscale -> caddy: "tailnet → :443"
+    caddy -> vm: "/metrics/*"
+    caddy -> vlogs: "/logs/*"
+    caddy -> vtraces: "/traces/*"
+    caddy -> alertmanager: "/alerts/*"
+    vmalert -> vm: "eval (datasource)"
+    vmalert -> alertmanager: "fire (existential)"
+    vm -> data
+    vlogs -> data
+    vtraces -> data
+    alertmanager -> data
+  }
+}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Ingest paths (write) — TLS, access-controlled by source CIDR at the PVE firewall
+lungmen.vmagent -> proxmox.lxc.caddy: "remote_write" {class: connect-network}
+lungmen.vector -> proxmox.lxc.caddy: "logs" {class: connect-network}
+amiya.vmagent -> proxmox.lxc.caddy: "remote_write" {class: connect-network}
+amiya.vector -> proxmox.lxc.caddy: "logs" {class: connect-network}
+proxmox.otel -> proxmox.lxc.caddy: "OTLP metrics" {class: connect-network}
+kazimierz.vmagent -> tailnet: {class: connect-vpn}
+kazimierz.vector -> tailnet: {class: connect-vpn}
+tailnet -> proxmox.lxc.tailscale: "remote_write + logs\n(over Tailscale)" {class: connect-vpn-backbone}
+
+# Rule evaluation (per cluster) — query central VM, notify central Alertmanager
+lungmen.vmalert -> proxmox.lxc.caddy: "query + records + alerts" {class: connect-network}
+amiya.vmalert -> proxmox.lxc.caddy: "query + records + alerts" {class: connect-network}
+
+# Query path (read) — Grafana dashboards
+amiya.grafana -> proxmox.lxc.caddy: "query metrics + logs" {class: connect-network}
+
+# Egress — notifications + heartbeats + cert issuance
+proxmox.lxc.alertmanager -> notify: "alerts (existential + per-cluster)" {class: connect-to-internet}
+proxmox.lxc.alertmanager -> deadman: "heartbeat (1m)\nappliance Watchdog" {class: connect-to-internet}
+amiya.grafana -> deadman: "heartbeat\nGrafana/amiya alive" {class: connect-to-internet}
+proxmox.lxc.caddy -> cloudflare: "DNS-01" {class: connect-to-internet}
