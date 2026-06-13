@@ -1,0 +1,114 @@
+# Parse Caddy JSON logs → OTLP-style.
+#
+# Format: {"level":"info","ts":1234567890.123,"logger":"tailscale","msg":"..."}
+#   ts is a Unix float (seconds since epoch), NOT RFC3339 — Caddy-specific.
+#   Access logs add: request{}, duration, size, status.
+#
+# OTLP-style mapping (enriches existing event in-place):
+#   msg      → body
+#   level    → severity_text / severity_number
+#   logger   → attributes.log.logger.name  (OTel SemConv)
+#   request  → attributes.caddy.request    (access-log only)
+#   duration → attributes.caddy.duration   (access-log only)
+#   size     → attributes.caddy.size       (access-log only)
+#   status   → attributes.caddy.status     (access-log only)
+transforms:
+  caddy_to_o11y:
+    type: remap
+    inputs:
+      - route_by_service.caddy
+    drop_on_error: false
+    source: |
+      if is_string(.body) {
+        parsed, _err = parse_json(.body)
+        if _err == null && is_object(parsed) {
+          # Message
+          if exists(parsed.msg) { .body = to_string!(parsed.msg) }
+
+          # Severity — OTel SemConv root fields
+          if exists(parsed.level) {
+            _level = downcase(to_string!(parsed.level))
+            _sev = {
+              "trace": 1, "debug": 5, "info": 9, "information": 9, "notice": 9,
+              "warning": 13, "warn": 13, "error": 17,
+              "critical": 21, "fatal": 21, "alert": 21, "emergency": 21, "panic": 21
+            }
+            .severity_text   = _level
+            .severity_number = get(_sev, [_level]) ?? 9
+          }
+
+          if !is_object(.attributes) { .attributes = {} }
+
+          # logger → attributes.log.logger.name (OTel SemConv)
+          if exists(parsed.logger) {
+            ."attributes"."log.logger.name" = to_string!(parsed.logger)
+          }
+
+          # Access-log structured fields (absent on startup / info logs)
+          if exists(parsed.request)  { ."attributes"."caddy.request"  = parsed.request  }
+          if exists(parsed.duration) { ."attributes"."caddy.duration" = parsed.duration }
+          if exists(parsed.size)     { ."attributes"."caddy.size"     = parsed.size     }
+          if exists(parsed.status)   { ."attributes"."caddy.status"   = parsed.status   }
+        }
+      }
+
+tests:
+  - name: "caddy: parse tailscale tsnet startup log (Unix float ts)"
+    inputs:
+      - insert_at: caddy_to_o11y
+        type: log
+        log_fields:
+          body: '{"level":"info","ts":1780762408.0995722,"logger":"tailscale","msg":"tsnet starting with hostname \"o11y-ep\""}'
+          timestamp: "2026-06-05T21:13:28.099Z"
+          observed_timestamp: "2026-06-05T21:13:28.099Z"
+          resources:
+            service.name: caddy
+            host.name: o11y
+    outputs:
+      - extract_from: caddy_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "tsnet starting with hostname \"o11y-ep\"")
+              assert_eq!(.severity_text, "info")
+              assert_eq!(.severity_number, 9)
+              assert_eq!(."attributes"."log.logger.name", "tailscale")
+
+  - name: "caddy: error level maps to OTel severity 17"
+    inputs:
+      - insert_at: caddy_to_o11y
+        type: log
+        log_fields:
+          body: '{"level":"error","ts":1780762408.0,"logger":"http","msg":"dial failed"}'
+          timestamp: "2026-06-05T21:13:28.000Z"
+          observed_timestamp: "2026-06-05T21:13:28.000Z"
+          resources:
+            service.name: caddy
+            host.name: o11y
+    outputs:
+      - extract_from: caddy_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_text, "error")
+              assert_eq!(.severity_number, 17)
+              assert_eq!(."attributes"."log.logger.name", "http")
+
+  - name: "caddy: non-JSON body passes through unchanged"
+    inputs:
+      - insert_at: caddy_to_o11y
+        type: log
+        log_fields:
+          body: "plain startup line"
+          timestamp: "2026-06-05T21:13:28.000Z"
+          observed_timestamp: "2026-06-05T21:13:28.000Z"
+          resources:
+            service.name: caddy
+            host.name: o11y
+    outputs:
+      - extract_from: caddy_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "plain startup line")
+              assert!(is_null(.severity_text))

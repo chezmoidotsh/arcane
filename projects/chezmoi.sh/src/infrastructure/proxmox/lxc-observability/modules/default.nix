@@ -4,7 +4,7 @@
     ./victorialogs.nix
     ./victoriatraces.nix
     ./vector.nix
-    ./log-shipper.nix
+    ./o11y.nix
     ./vmalert.nix
     ./alertmanager.nix
     ./caddy.nix

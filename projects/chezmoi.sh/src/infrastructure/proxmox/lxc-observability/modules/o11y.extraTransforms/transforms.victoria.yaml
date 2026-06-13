@@ -1,0 +1,128 @@
+# Parse VictoriaMetrics-family JSON logs → OTLP-style.
+# Handles: victoria-metrics, victoria-logs, victoria-traces, vmalert.
+#
+# Format: {"ts":"RFC3339","level":"info","caller":"pkg/file.go:N","msg":"..."}
+#
+# OTLP-style mapping (enriches existing event in-place):
+#   msg     → body                        (replaces JSON-encoded body)
+#   level   → severity_text / severity_number  (root OTLP fields)
+#   caller  → attributes.code.filepath + attributes.code.lineno
+transforms:
+  victoria_to_o11y:
+    type: remap
+    inputs:
+      - route_by_service.victoria
+    drop_on_error: false
+    source: |
+      if is_string(.body) {
+        parsed, _err = parse_json(.body)
+        if _err == null && is_object(parsed) {
+          # Message
+          if exists(parsed.msg) { .body = to_string!(parsed.msg) }
+
+          # Severity — OTel SemConv root fields
+          if exists(parsed.level) {
+            _level = downcase(to_string!(parsed.level))
+            _sev = {
+              "trace": 1, "debug": 5, "info": 9, "information": 9, "notice": 9,
+              "warning": 13, "warn": 13, "error": 17,
+              "critical": 21, "fatal": 21, "alert": 21, "emergency": 21, "panic": 21
+            }
+            .severity_text   = _level
+            .severity_number = get(_sev, [_level]) ?? 9
+          }
+
+          # caller: "VictoriaMetrics/app/pkg/file.go:535"
+          # → attributes.code.filepath + attributes.code.lineno (OTel SemConv)
+          if exists(parsed.caller) {
+            _parts = split(to_string!(parsed.caller), ":", limit: 2)
+            if !is_object(.attributes) { .attributes = {} }
+            ."attributes"."code.filepath" = _parts[0]
+            if length(_parts) > 1 {
+              _n, _n_err = to_int(_parts[1])
+              if _n_err == null { ."attributes"."code.lineno" = _n }
+            }
+          }
+        }
+      }
+
+tests:
+  - name: "victoria: parse victoria-metrics startup log"
+    inputs:
+      - insert_at: victoria_to_o11y
+        type: log
+        log_fields:
+          body: '{"ts":"2026-06-06T16:13:27.882Z","level":"info","caller":"VictoriaMetrics/app/victoria-metrics/main.go:106","msg":"started VictoriaMetrics in 0.289 seconds"}'
+          timestamp: "2026-06-06T16:13:27.882Z"
+          observed_timestamp: "2026-06-06T16:13:27.882Z"
+          resources:
+            service.name: victoria-metrics
+            host.name: o11y
+    outputs:
+      - extract_from: victoria_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "started VictoriaMetrics in 0.289 seconds")
+              assert_eq!(.severity_text, "info")
+              assert_eq!(.severity_number, 9)
+              assert_eq!(."attributes"."code.filepath", "VictoriaMetrics/app/victoria-metrics/main.go")
+              assert_eq!(."attributes"."code.lineno", 106)
+
+  - name: "victoria: parse vmalert rule group log"
+    inputs:
+      - insert_at: victoria_to_o11y
+        type: log
+        log_fields:
+          body: '{"ts":"2026-06-06T16:13:48.003Z","level":"info","caller":"VictoriaMetrics/app/vmalert/rule/group.go:535","msg":"group \"self\" started; interval=30s"}'
+          timestamp: "2026-06-06T16:13:48.003Z"
+          observed_timestamp: "2026-06-06T16:13:48.003Z"
+          resources:
+            service.name: vmalert
+            host.name: o11y
+    outputs:
+      - extract_from: victoria_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert!(starts_with(string!(.body), "group"))
+              assert_eq!(.severity_text, "info")
+              assert_eq!(."attributes"."code.lineno", 535)
+
+  - name: "victoria: warn level maps to OTel severity 13"
+    inputs:
+      - insert_at: victoria_to_o11y
+        type: log
+        log_fields:
+          body: '{"ts":"2026-06-06T10:00:00Z","level":"warn","caller":"pkg/file.go:1","msg":"something slow"}'
+          timestamp: "2026-06-06T10:00:00Z"
+          observed_timestamp: "2026-06-06T10:00:00Z"
+          resources:
+            service.name: victoria-metrics
+            host.name: o11y
+    outputs:
+      - extract_from: victoria_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_text, "warn")
+              assert_eq!(.severity_number, 13)
+
+  - name: "victoria: non-JSON body passes through unchanged"
+    inputs:
+      - insert_at: victoria_to_o11y
+        type: log
+        log_fields:
+          body: "plain text log line"
+          timestamp: "2026-06-06T10:00:00Z"
+          observed_timestamp: "2026-06-06T10:00:00Z"
+          resources:
+            service.name: victoria-logs
+            host.name: o11y
+    outputs:
+      - extract_from: victoria_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "plain text log line")
+              assert!(is_null(.severity_text))

@@ -35,8 +35,11 @@
   inputs.nixos-generators.url = "github:nix-community/nixos-generators";
   inputs.nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
 
+  inputs.arcane-catalog.url = "path:../../../../../../catalog/nix";
+  inputs.arcane-catalog.inputs.nixpkgs.follows = "nixpkgs";
+
   outputs =
-    { self, nixpkgs, nixos-generators }:
+    { self, nixpkgs, nixos-generators, arcane-catalog }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
@@ -45,7 +48,7 @@
       # Proxmox template (observability.<date>-amd64.tar.xz). Component
       # versions track the nixpkgs pin. Bump this date before every
       # `mise run lxc:build`; append -N for multiple builds on the same day.
-      version = "2026.06.05-1";
+      version = "2026.06.06";
 
       # -----------------------------------------------------------------------
       # Build-time secrets, forwarded to the modules via _module.args.
@@ -71,6 +74,7 @@
         inherit system pkgs;
         format = "lxc";
         modules = [
+          arcane-catalog.nixosModules.lxcAgent
           ./modules
           ./configuration.nix
           { _module.args = { inherit secrets; }; }

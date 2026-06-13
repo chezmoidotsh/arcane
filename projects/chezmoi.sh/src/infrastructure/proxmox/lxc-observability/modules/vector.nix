@@ -31,12 +31,19 @@ let
   # excluded — Vector's --config-dir only reads the top-level YAML files, so
   # tests cannot accidentally be loaded as production config. Tests are passed
   # explicitly only when running `vector test`.
-  configDir = pkgs.runCommand "vector-config" { } ''
-    mkdir -p $out
-    for f in ${../config/vector}/*.yaml; do
-      cp "$f" "$out/$(basename "$f")"
-    done
-  '';
+  configDir = pkgs.runCommand "vector-config"
+    {
+      nativeBuildInputs = [ pkgs.vector ];
+    }
+    ''
+      mkdir -p $out
+      for f in ${../config/vector}/*.yaml; do
+        cp "$f" "$out/$(basename "$f")"
+      done
+
+      VECTOR_DATA_DIR="$(mktemp -d "$TMPDIR/vector-data.XXXXXX")" \
+      vector validate --no-environment --config-dir "$out"
+    '';
 
   dataDir = "/var/lib/o11y/vector";
 in

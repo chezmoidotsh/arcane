@@ -1,0 +1,18 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Source: Vector internal metrics
+# ─────────────────────────────────────────────────────────────────────────────
+# Emits Vector's own component metrics every 30s: events received/sent per
+# component, errors, buffer sizes. Wired to the prometheus_remote_write sink
+# (see sinks.yaml) so VictoriaMetrics receives them alongside the rest of the
+# o11y-appliance stack.
+#
+# The `tags` block on internal_metrics only accepts host_key / pid_key in
+# Vector 0.55+. To attach external_labels like cluster=o11y-appliance, use
+# the tag_internal_metrics remap transform (transforms.enrich.yaml).
+#
+# No SemConv transform — this is a metrics pipeline, not a log pipeline.
+# ─────────────────────────────────────────────────────────────────────────────
+sources:
+  in_internal_metrics:
+    type: internal_metrics
+    scrape_interval_secs: 30

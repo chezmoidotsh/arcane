@@ -180,7 +180,7 @@ echo === system ===
 systemctl is-system-running
 systemctl --failed --no-legend
 echo === stack ===
-for u in caddy vector victoriametrics victorialogs victoriatraces vmalert alertmanager syslog; do
+for u in caddy vector victoriametrics victorialogs victoriatraces vmalert alertmanager; do
   printf \"%-20s %s\\n\" \"\$u\" \"\$(systemctl is-active \$u)\"
 done
 '" >&2

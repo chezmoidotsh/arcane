@@ -1,14 +1,13 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # VictoriaMetrics — single-node metrics TSDB
 # ─────────────────────────────────────────────────────────────────────────────
-# The central metrics store. Receives remote_write from every cluster's vmagent
-# and from the PVE exporter LXC (prometheus_remote_write through Vector), and
-# self-scrapes the local stack so the appliance observes itself
-# ("who watches the watchmen").
+# The central metrics store. Receives remote_write from every cluster's agent
+# and from every LXC's catalog.lxcAgent (Vector prometheus_remote_write).
+# Every series carries a `cluster` external label injected by the sender;
+# one flat store keeps cross-cluster correlation trivial. See ADR-013.
 #
-# Single-node by design — multi-tenancy is NOT used. Every series carries a
-# `cluster` external label injected by the sender; one flat store keeps
-# cross-cluster correlation trivial and the appliance light. See ADR-013.
+# Self-scrape is handled by catalog.lxcAgent (modules/o11y.nix) — it scrapes
+# all local services and remote_writes here with cluster=o11y-appliance.
 #
 # Binds 127.0.0.1:8428 only — Caddy (path routing, no auth) is the sole public
 # surface; access control is the Proxmox host firewall by source CIDR.
@@ -18,38 +17,8 @@
 let
   listenAddr = "127.0.0.1:8428";
   dataDir = "/var/lib/o11y/metrics";
-
-  # Self-scrape: the appliance monitors its own components. These targets are
-  # all loopback; their `up` series feed the self.rules alerts (see ../alerts).
-  scrapeConfig = pkgs.writeText "vm-selfscrape.yml" ''
-    global:
-      scrape_interval: 30s
-      external_labels:
-        cluster: o11y-appliance
-    scrape_configs:
-      - job_name: victoriametrics
-        static_configs: [{ targets: ["127.0.0.1:8428"] }]
-      - job_name: victorialogs
-        static_configs: [{ targets: ["127.0.0.1:9428"] }]
-      - job_name: victoriatraces
-        static_configs: [{ targets: ["127.0.0.1:10428"] }]
-      - job_name: vmalert
-        static_configs: [{ targets: ["127.0.0.1:8880"] }]
-      - job_name: alertmanager
-        # AM runs with --web.route-prefix=/alerts, so /metrics moves too.
-        metrics_path: /alerts/metrics
-        static_configs: [{ targets: ["127.0.0.1:9093"] }]
-      # OCI registry metrics arrive via remote_write from vmagent running on
-      # the oci-registry LXC (cluster="oci-registry"). The previous HTTPS pull
-      # job was removed when push was introduced; the trade-off is that the
-      # external path (DNS + TLS + Caddy + Zot) is no longer continuously
-      # validated by this scrape. See oci-registry.rules.yaml for the
-      # absent()-based liveness alert that replaces the up{} check.
-  '';
 in
 {
-  environment.etc."victoriametrics/selfscrape.yml".source = scrapeConfig;
-
   systemd.services.victoriametrics = {
     description = "VictoriaMetrics — single-node metrics TSDB";
     documentation = [ "https://docs.victoriametrics.com/" ];
@@ -63,7 +32,6 @@ in
         "-storageDataPath=${dataDir}"
         "-httpListenAddr=${listenAddr}"
         "-retentionPeriod=18" # months — homelab baseline; raise per disk budget
-        "-promscrape.config=/etc/victoriametrics/selfscrape.yml"
         "-memory.allowedPercent=60"
         "-loggerFormat=json"
       ];

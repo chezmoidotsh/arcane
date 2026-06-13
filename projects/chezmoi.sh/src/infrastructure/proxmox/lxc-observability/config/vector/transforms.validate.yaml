@@ -1,210 +1,417 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# Transform: SemConv loki-like validation
-# ─────────────────────────────────────────────────────────────────────────────
-# Validates that every incoming event conforms to the VictoriaLogs loki-like
-# SemConv layout before it reaches the sink. Events with unknown top-level
-# fields are rewritten as ingestion-error records with:
+# Transform: OTLP-style SemConv validation
 #
-#   service.name = "vector-ingest"       — dedicated stream for fast filtering
-#   attr.error.type = "semconv_invalid"
-#   attr.error.invalid_fields            — comma-separated list of offenders
-#   attr.error.original_event            — JSON-encoded original event
-#   _msg = "ingestion_validation_error"
+# Validates every incoming event against the OTLP-like internal pipeline format.
+# Unlike a first-error-exit approach, ALL violations are collected before
+# rewriting the event as an error record. This lets operators see the full
+# picture in one query rather than fixing issues one at a time.
 #
-# Query ingestion errors in VictoriaLogs:
+# Valid root-level fields:
+#   body               — mandatory, string: the log body
+#   timestamp          — mandatory, RFC3339: event time
+#   observed_timestamp — mandatory, RFC3339: first-observed time
+#   resources          — optional, object: OTel resource attributes (flat keys)
+#   attributes         — optional, object: per-log attributes (flat keys)
+#   severity_text      — optional, string: severity label
+#   severity_number    — optional, integer 0-24: OTel severity number
+#   trace_id           — optional, string: trace correlation
+#   span_id            — optional, string: span correlation
+#
+# Checks performed (all collected before rewriting):
+#   1. Missing mandatory fields (body, timestamp, observed_timestamp)
+#   2. Unknown root-level fields
+#   3. severity_number not an integer in [0, 24]
+#   4. severity_text not a string
+#   5. resources not an object
+#   6. attributes not an object
+#
+# Error record (also OTLP-style — flows through to_vlogs_format before VLogs):
+#   body = "ingestion_validation_error"
+#   resources.service.name = "vector-ingest"
+#   attributes.error.type = "semconv_invalid"
+#   attributes.error.messages = "<semicolon-separated list of all errors>"
+#   attributes.error.original_service = "<original service.name if available>"
+#   attributes.error.original_event = "<JSON-encoded original event>"
+#
+# Query in VictoriaLogs (after VLogs transform flattens resources/attributes):
 #   service.name:vector-ingest attr.error.type:semconv_invalid
-#
-# Valid top-level fields:
-#   _msg, _time, trace_id, span_id       — VLogs / OTel reserved
-#   attr.*                               — per-log attributes
-#   <semconv_namespace>.*                — OTel resource attribute namespaces
-#     (service, host, cloud, container, k8s, os, process, deployment, device,
-#      faas, telemetry, webengine, browser, android, ios, network, system,
-#      db, log, thread, gcp, aws, azure, heroku, cicd)
-# ─────────────────────────────────────────────────────────────────────────────
+
 transforms:
   validate_semconv:
     type: remap
     inputs:
-      - parse_syslog_json
+      - syslog_to_semconv
       - otlp_to_semconv
-      - in_vector
+      - strip_vector_meta
     source: |
-      # Ordered list of known OTel resource attribute namespaces.
-      # Source: https://opentelemetry.io/docs/specs/semconv/resource/
-      known_resource_namespaces = [
-        "android", "aws", "azure", "browser", "cicd",
-        "cloud", "container", "db", "deployment", "device",
-        "faas", "gcp", "heroku", "host", "ios",
-        "k8s", "log", "network", "os", "process",
-        "service", "system", "telemetry", "thread",
-        "webengine"
+      # Vector's test harness and some sources inject internal fields that are
+      # not part of the OTLP-style format. Remove them before validating.
+      del(.message)
+      del(.source_type)
+
+      errors = []
+
+      # 1. Mandatory fields
+      if !exists(.body) || .body == null {
+        errors = push(errors, "missing mandatory field: body")
+      }
+      # timestamp must be an explicit RFC3339 string set by a source transform.
+      # Vector's internal event timestamp is a timestamp type (not a string) and
+      # is intentionally rejected here to catch agents that forget to set it.
+      if !exists(.timestamp) || .timestamp == null || !is_string(.timestamp) {
+        errors = push(errors, "missing mandatory field: timestamp (must be an RFC3339 string)")
+      }
+      if !exists(.observed_timestamp) || .observed_timestamp == null {
+        errors = push(errors, "missing mandatory field: observed_timestamp")
+      }
+
+      # 2. Unknown root-level fields
+      valid_fields = [
+        "body", "timestamp", "observed_timestamp",
+        "resources", "attributes",
+        "severity_text", "severity_number",
+        "trace_id", "span_id"
       ]
+      unknown = filter(keys(.)) -> |_i, key| { !includes(valid_fields, key) }
+      if length(unknown) > 0 {
+        errors = push(errors, "unknown root fields: " + join!(unknown, ", "))
+      }
 
-      reserved_fields = ["_msg", "_time", "trace_id", "span_id"]
-
-      all_keys = keys(.)
-
-      invalid_keys = filter(all_keys) -> |_index, key| {
-        if includes(reserved_fields, key) {
-          false
-        } else if starts_with(key, "attr.") {
-          false
-        } else {
-          namespace = split(key, ".")[0] || key
-          !includes(known_resource_namespaces, namespace)
+      # 3. severity_number: must be integer in [0, 24]
+      if exists(.severity_number) && .severity_number != null {
+        sn, _sn_err = to_int(.severity_number)
+        if _sn_err != null {
+          errors = push(errors, "severity_number is not an integer: " + to_string!(.severity_number))
+        } else if sn < 0 || sn > 24 {
+          errors = push(errors, "severity_number out of range [0,24]: " + to_string!(sn))
         }
       }
 
-      if length(invalid_keys) > 0 {
-        original_time  = string(._time) ?? format_timestamp!(now(), format: "%+")
-        # Preserve observed_timestamp so error records keep the correct
-        # observation time (when the bad event was read, not when validated).
-        original_obs   = ."attr.observed_timestamp"
-        original_event = encode_json!(.)
+      # 4. severity_text: valid SemConv name, consistent with severity_number.
+      #    Comparison is case-insensitive (transforms emit lowercase; spec is uppercase).
+      severity_text_values = [
+        "TRACE", "TRACE2", "TRACE3", "TRACE4",
+        "DEBUG", "DEBUG2", "DEBUG3", "DEBUG4",
+        "INFO",  "INFO2",  "INFO3",  "INFO4",
+        "WARN",  "WARN2",  "WARN3",  "WARN4",
+        "ERROR", "ERROR2", "ERROR3", "ERROR4",
+        "FATAL", "FATAL2", "FATAL3", "FATAL4"
+      ]
+      # severity_text_values is ordered TRACE…FATAL4 (indices 0-23).
+      # severity_text_values[severity_number - 1] gives the expected text for
+      # any severity_number in [1, 24]; 0 (UNSPECIFIED) has no required text.
+      if exists(.severity_text) && .severity_text != null {
+        if !is_string(.severity_text) {
+          errors = push(errors, "severity_text must be a string, got: " + to_string!(.severity_text))
+        } else {
+          # Pre-extract to avoid E630 (fallible arg inside push).
+          _sev_txt = to_string!(.severity_text)
+          if !includes(severity_text_values, upcase(_sev_txt)) {
+            errors = push(errors, "severity_text \"" + _sev_txt + "\" is not a valid SemConv severity name")
+          } else if exists(.severity_number) && .severity_number != null {
+            sn4, _sn4_err = to_int(.severity_number)
+            if _sn4_err == null && sn4 >= 1 && sn4 <= 24 {
+              expected_text = get(severity_text_values, [sn4 - 1]) ?? null
+              if expected_text != null && upcase(_sev_txt) != to_string!(expected_text) {
+                errors = push(errors, "severity_text \"" + _sev_txt + "\" does not match severity_number " + to_string!(sn4) + " (expected \"" + to_string!(expected_text) + "\")")
+              }
+            }
+          }
+        }
+      }
+
+      # 5. resources: must be an object
+      if exists(.resources) && .resources != null && !is_object(.resources) {
+        errors = push(errors, "resources must be an object")
+      }
+
+      # 6. attributes: must be an object
+      if exists(.attributes) && .attributes != null && !is_object(.attributes) {
+        errors = push(errors, "attributes must be an object")
+      }
+
+      if length(errors) > 0 {
+        original_ts    = string(.timestamp) ?? format_timestamp!(now(), format: "%+")
+        original_obs   = string(.observed_timestamp) ?? original_ts
+        original_svc   = string(."resources"."service.name") ?? "unknown"
+        original_host  = ."resources"."host.name"
+        original_event = encode_json(.)
 
         . = {
-          "_msg":  "ingestion_validation_error",
-          "_time": original_time,
-          "service.name": "vector-ingest",
-          "host.name": get_hostname!(),
-          "attr.error.type":           "semconv_invalid",
-          "attr.error.invalid_fields": join!(invalid_keys, ","),
-          "attr.error.original_event": original_event
-        }
-        if original_obs != null {
-          ."attr.observed_timestamp" = original_obs
+          "body":               "ingestion_validation_error",
+          "timestamp":          original_ts,
+          "observed_timestamp": original_obs,
+          "resources": {
+            "service.name": "vector-ingest",
+            "host.name":    original_host
+          },
+          "attributes": {
+            "error.type":             "semconv_invalid",
+            "error.messages":         join!(errors, "; "),
+            "error.original_service": original_svc,
+            "error.original_event":   original_event
+          }
         }
       }
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Unit tests — validate_semconv
-# ─────────────────────────────────────────────────────────────────────────────
 tests:
-  - name: "validate: well-formed SemConv event passes through unchanged"
+  - name: "validate: well-formed OTLP event passes through unchanged"
     inputs:
       - insert_at: validate_semconv
         type: log
         log_fields:
-          _msg: "User logged in"
-          _time: "2024-01-15T10:30:00+00:00"
-          service.name: "auth-service"
-          host.name: "k8s-node-01"
-          k8s.namespace.name: "production"
-          attr.user.id: "u-123"
+          body: "User logged in"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          resources:
+            service.name: "auth-service"
+            host.name: "k8s-node-01"
+          attributes:
+            user.id: "u-123"
           trace_id: "aabbccdd11223344"
           span_id: "55667788"
+          severity_text: "info"
+          severity_number: 9
     outputs:
       - extract_from: validate_semconv
         conditions:
           - type: vrl
             source: |
-              assert_eq!(._msg, "User logged in")
-              assert_eq!(.["service.name"], "auth-service")
-              assert_eq!(.["attr.user.id"], "u-123")
+              assert_eq!(.body, "User logged in")
+              assert_eq!(."resources"."service.name", "auth-service")
+              assert_eq!(."attributes"."user.id", "u-123")
               assert_eq!(.trace_id, "aabbccdd11223344")
-              assert!(is_null(.["attr.error.type"]))
-              true
+              assert!(is_null(."attributes"."error.type"))
 
-  - name: "validate: unknown root field triggers ingestion error"
+  - name: "validate: missing body triggers error"
     inputs:
       - insert_at: validate_semconv
         type: log
         log_fields:
-          _msg: "original message"
-          _time: "2024-01-15T10:30:00+00:00"
-          service.name: "my-svc"
-          unknown_field: "bad value"
-          another_bad_field: "also bad"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          resources:
+            service.name: "svc"
     outputs:
       - extract_from: validate_semconv
         conditions:
           - type: vrl
             source: |
-              assert_eq!(._msg, "ingestion_validation_error")
-              assert_eq!(.["service.name"], "vector-ingest")
-              assert_eq!(.["attr.error.type"], "semconv_invalid")
-              bad = string!(.["attr.error.invalid_fields"])
-              assert!(contains(bad, "unknown_field"))
-              assert!(contains(bad, "another_bad_field"))
-              orig = string!(.["attr.error.original_event"])
-              assert!(contains(orig, "original message"))
-              assert!(contains(orig, "my-svc"))
-              true
+              assert_eq!(.body, "ingestion_validation_error")
+              assert!(contains(string!(."attributes"."error.messages"), "missing mandatory field: body"))
 
-  - name: "validate: attr.* prefix is always valid"
+  - name: "validate: missing timestamp triggers error"
     inputs:
       - insert_at: validate_semconv
         type: log
         log_fields:
-          _msg: "test"
-          _time: "2024-01-01T00:00:00Z"
-          service.name: "svc"
-          attr.anything.goes: "value"
-          attr.custom_metric: "42"
-          attr.some.deeply.nested.key: "ok"
+          body: "hello"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
     outputs:
       - extract_from: validate_semconv
         conditions:
           - type: vrl
             source: |
-              assert_eq!(._msg, "test")
-              assert!(is_null(.["attr.error.type"]))
-              true
+              assert_eq!(.body, "ingestion_validation_error")
+              assert!(contains(string!(."attributes"."error.messages"), "missing mandatory field: timestamp"))
 
-  - name: "validate: all known SemConv resource namespaces accepted"
+  - name: "validate: missing observed_timestamp triggers error"
     inputs:
       - insert_at: validate_semconv
         type: log
         log_fields:
-          _msg: "all namespaces"
-          _time: "2024-01-01T00:00:00Z"
-          service.name: "svc"
-          host.name: "h"
-          cloud.provider: "aws"
-          container.name: "app"
-          k8s.cluster.name: "prod"
-          os.type: "linux"
-          process.pid: "42"
-          deployment.environment: "production"
-          telemetry.sdk.name: "opentelemetry"
-          network.name: "eth0"
-          db.system: "postgresql"
-          log.file.name: "app.log"
-          browser.brands: "Chrome"
+          body: "hello"
+          timestamp: "2024-01-15T10:30:00+00:00"
     outputs:
       - extract_from: validate_semconv
         conditions:
           - type: vrl
             source: |
-              assert!(is_null(.["attr.error.type"]), "all known namespaces pass")
-              true
+              assert_eq!(.body, "ingestion_validation_error")
+              assert!(contains(string!(."attributes"."error.messages"), "missing mandatory field: observed_timestamp"))
 
-  - name: "validate: _time preserved in error record"
+  - name: "validate: unknown root field triggers error"
     inputs:
       - insert_at: validate_semconv
         type: log
         log_fields:
-          _msg: "msg"
-          _time: "2024-06-01T12:00:00+00:00"
-          service.name: "svc"
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          unknown_field: "bad"
+          another_bad: "also bad"
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "ingestion_validation_error")
+              msgs = string!(."attributes"."error.messages")
+              assert!(contains(msgs, "unknown root fields"))
+              assert!(contains(msgs, "unknown_field"))
+              assert!(contains(msgs, "another_bad"))
+
+  - name: "validate: multiple errors all collected in one record"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          timestamp: "2024-01-15T10:30:00+00:00"
+          bad_field: "oops"
+          severity_number: 99
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              msgs = string!(."attributes"."error.messages")
+              assert!(contains(msgs, "missing mandatory field: body"))
+              assert!(contains(msgs, "missing mandatory field: observed_timestamp"))
+              assert!(contains(msgs, "unknown root fields"))
+              assert!(contains(msgs, "severity_number out of range"))
+
+  - name: "validate: severity_number = 0 is valid (UNSPECIFIED)"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          severity_number: 0
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(is_null(."attributes"."error.type"))
+
+  - name: "validate: severity_number = 24 is valid (FATAL4)"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          severity_number: 24
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(is_null(."attributes"."error.type"))
+
+  - name: "validate: severity_number = 25 is out of range"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          severity_number: 25
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(contains(string!(."attributes"."error.messages"), "severity_number out of range"))
+
+  - name: "validate: severity_text not a string triggers error"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          severity_text: 42
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(contains(string!(."attributes"."error.messages"), "severity_text must be a string"))
+
+  - name: "validate: resources not an object triggers error"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          resources: "not-an-object"
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(contains(string!(."attributes"."error.messages"), "resources must be an object"))
+
+  - name: "validate: attributes not an object triggers error"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          attributes: 99
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(contains(string!(."attributes"."error.messages"), "attributes must be an object"))
+
+  - name: "validate: error record is OTLP-style with vector-ingest service"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          resources:
+            service.name: "my-svc"
+            host.name: "my-host"
           bad_field: "oops"
     outputs:
       - extract_from: validate_semconv
         conditions:
           - type: vrl
             source: |
-              assert_eq!(._time, "2024-06-01T12:00:00+00:00")
-              true
+              assert_eq!(."resources"."service.name", "vector-ingest")
+              assert_eq!(."resources"."host.name", "my-host")
+              assert_eq!(."attributes"."error.type", "semconv_invalid")
+              assert_eq!(."attributes"."error.original_service", "my-svc")
 
-  - name: "validate: trace_id and span_id are reserved (not invalid)"
+  - name: "validate: timestamp preserved in error record"
     inputs:
       - insert_at: validate_semconv
         type: log
         log_fields:
-          _msg: "traced request"
-          _time: "2024-01-01T00:00:00Z"
-          service.name: "svc"
+          body: "msg"
+          timestamp: "2024-06-01T12:00:00+00:00"
+          observed_timestamp: "2024-06-01T12:00:00.001+00:00"
+          bad_field: "oops"
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.timestamp, "2024-06-01T12:00:00+00:00")
+
+  - name: "validate: trace_id and span_id are valid root fields"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          body: "traced request"
+          timestamp: "2024-01-01T00:00:00Z"
+          observed_timestamp: "2024-01-01T00:00:00.001Z"
           trace_id: "00112233445566778899aabbccddeeff"
           span_id: "0011223344556677"
     outputs:
@@ -212,23 +419,95 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert!(is_null(.["attr.error.type"]))
+              assert!(is_null(."attributes"."error.type"))
               assert_eq!(.trace_id, "00112233445566778899aabbccddeeff")
               assert_eq!(.span_id, "0011223344556677")
-              true
 
-  - name: "validate: error record uses service.name=vector-ingest for VLogs query"
+  - name: "validate: severity_text matching severity_number is valid"
     inputs:
       - insert_at: validate_semconv
         type: log
         log_fields:
-          _msg: "msg"
-          _time: "2024-01-01T00:00:00Z"
-          bad_ns.field: "value"
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          severity_number: 9
+          severity_text: "info"
     outputs:
       - extract_from: validate_semconv
         conditions:
           - type: vrl
             source: |
-              assert_eq!(.["service.name"], "vector-ingest")
-              true
+              assert!(is_null(."attributes"."error.type"))
+
+  - name: "validate: severity_text mismatch with severity_number triggers error"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          severity_number: 9
+          severity_text: "warn"
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              msgs = string!(."attributes"."error.messages")
+              assert!(contains(msgs, "does not match severity_number"))
+              assert!(contains(msgs, "expected \"INFO\""))
+
+  - name: "validate: severity_text not in SemConv list triggers error"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          severity_text: "critical"
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              msgs = string!(."attributes"."error.messages")
+              assert!(contains(msgs, "is not a valid SemConv severity name"))
+
+  - name: "validate: severity_text without severity_number is valid when in list"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          severity_text: "ERROR"
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(is_null(."attributes"."error.type"))
+
+  - name: "validate: original event JSON-encoded in error attributes"
+    inputs:
+      - insert_at: validate_semconv
+        type: log
+        log_fields:
+          body: "original message"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          resources:
+            service.name: "my-svc"
+          bad_field: "oops"
+    outputs:
+      - extract_from: validate_semconv
+        conditions:
+          - type: vrl
+            source: |
+              orig = string!(."attributes"."error.original_event")
+              assert!(contains(orig, "original message"))
+              assert!(contains(orig, "my-svc"))
