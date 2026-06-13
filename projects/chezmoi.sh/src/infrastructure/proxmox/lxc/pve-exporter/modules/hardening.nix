@@ -1,11 +1,13 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Hardening profile — always active for this LXC
 # ─────────────────────────────────────────────────────────────────────────────
-# Same baseline as oci-registry but NO public ports — this LXC only pushes
-# outbound (metrics + logs). No Caddy, no TLS termination, no ingress.
+# Same baseline as oci-registry. The only inbound port is :5140 (syslog TCP),
+# the ingest listener for PVE-host/LXC log forwarding via rsyslog omfwd — this
+# LXC parses syslog and pushes it (plus metrics) outbound to o11y. No Caddy, no
+# TLS termination, no other ingress.
 #
 # Covers: kernel sysctls, SSH disabled, services disabled, volatile journald,
-# default-deny firewall (no open TCP/UDP ports).
+# default-deny firewall (only :5140 open).
 # ─────────────────────────────────────────────────────────────────────────────
 { lib, ... }:
 
@@ -60,7 +62,10 @@
   };
 
   networking.firewall.enable = lib.mkDefault true;
-  networking.firewall.allowedTCPPorts = lib.mkDefault [ ];
+  # Do NOT use lib.mkDefault for allowedTCPPorts — nixos-generators' lxc format
+  # sets it to [] at normal priority and would silently win over mkDefault (1000).
+  # :5140 is the syslog TCP ingest port (PVE host log forwarding via rsyslog omfwd).
+  networking.firewall.allowedTCPPorts = [ 5140 ];
   networking.firewall.allowedUDPPorts = lib.mkDefault [ ];
   networking.firewall.logRefusedConnections = lib.mkDefault false;
 

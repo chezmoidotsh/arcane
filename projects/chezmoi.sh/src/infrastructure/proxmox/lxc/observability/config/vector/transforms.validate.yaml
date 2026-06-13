@@ -39,7 +39,6 @@ transforms:
   validate_semconv:
     type: remap
     inputs:
-      - syslog_to_semconv
       - otlp_to_semconv
       - strip_vector_meta
     source: |

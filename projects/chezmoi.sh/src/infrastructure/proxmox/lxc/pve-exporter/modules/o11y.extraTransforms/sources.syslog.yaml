@@ -1,7 +1,13 @@
-# Source: syslog TCP :5140
+# Source: syslog TCP :5140  (injected into catalog.lxcAgent via logs.extraTransforms)
 #
-# PVE host / LXC log forwarding via rsyslog omfwd. Restricted to the bridge
-# network by the NixOS firewall and the Proxmox host firewall (source CIDR).
+# PVE host / LXC log forwarding via rsyslog omfwd. The PVE host forwards its
+# syslog here (not to o11y directly): this LXC parses RFC 5424 into the OTLP-style
+# internal format and the catalog.lxcAgent out_logs sink ships it to o11y over the
+# Vector native protocol (:6000). Restricted to the bridge network by the NixOS
+# firewall (hardening.nix opens :5140) and the Proxmox host firewall (source CIDR).
+#
+# Contract: this fragment exposes `syslog_to_o11y`, consumed by the lxcAgent
+# out_logs sink via the `*_to_o11y` glob.
 
 sources:
   in_syslog:
@@ -32,7 +38,7 @@ sources:
 #       syslog.structured_data ← JSON-encoded (optional)
 
 transforms:
-  syslog_to_semconv:
+  syslog_to_o11y:
     type: remap
     inputs:
       - in_syslog
@@ -82,11 +88,11 @@ transforms:
         "attributes": _attrs
       }
 
-# Unit tests — syslog_to_semconv
+# Unit tests — syslog_to_o11y
 tests:
   - name: "syslog: full RFC5424 event maps to OTLP-style"
     inputs:
-      - insert_at: syslog_to_semconv
+      - insert_at: syslog_to_o11y
         type: log
         log_fields:
           message: "Started NetworkManager.service"
@@ -103,7 +109,7 @@ tests:
               tzKnown: "1"
               isSynced: "1"
     outputs:
-      - extract_from: syslog_to_semconv
+      - extract_from: syslog_to_o11y
         conditions:
           - type: vrl
             source: |
@@ -121,7 +127,7 @@ tests:
 
   - name: "syslog: only valid OTLP root fields at output"
     inputs:
-      - insert_at: syslog_to_semconv
+      - insert_at: syslog_to_o11y
         type: log
         log_fields:
           message: "test"
@@ -134,7 +140,7 @@ tests:
           source_ip: "10.0.0.1"
           source_type: "syslog"
     outputs:
-      - extract_from: syslog_to_semconv
+      - extract_from: syslog_to_o11y
         conditions:
           - type: vrl
             source: |
@@ -146,14 +152,14 @@ tests:
 
   - name: "syslog: observed_timestamp is a valid RFC3339 timestamp"
     inputs:
-      - insert_at: syslog_to_semconv
+      - insert_at: syslog_to_o11y
         type: log
         log_fields:
           message: "test"
           hostname: "h"
           timestamp: "2024-01-01T00:00:00+00:00"
     outputs:
-      - extract_from: syslog_to_semconv
+      - extract_from: syslog_to_o11y
         conditions:
           - type: vrl
             source: |
@@ -163,7 +169,7 @@ tests:
 
   - name: "syslog: log.record.uid is a UUID"
     inputs:
-      - insert_at: syslog_to_semconv
+      - insert_at: syslog_to_o11y
         type: log
         log_fields:
           message: "test"
@@ -171,7 +177,7 @@ tests:
           appname: "sshd"
           timestamp: "2024-06-01T10:00:00+00:00"
     outputs:
-      - extract_from: syslog_to_semconv
+      - extract_from: syslog_to_o11y
         conditions:
           - type: vrl
             source: |
@@ -182,7 +188,7 @@ tests:
 
   - name: "syslog: log.record.original reconstructs header"
     inputs:
-      - insert_at: syslog_to_semconv
+      - insert_at: syslog_to_o11y
         type: log
         log_fields:
           message: "Connection accepted"
@@ -191,7 +197,7 @@ tests:
           procid: "9876"
           timestamp: "2024-06-01T10:00:00+00:00"
     outputs:
-      - extract_from: syslog_to_semconv
+      - extract_from: syslog_to_o11y
         conditions:
           - type: vrl
             source: |
@@ -205,13 +211,13 @@ tests:
 
   - name: "syslog: minimal event — missing optional fields produce no extra attrs"
     inputs:
-      - insert_at: syslog_to_semconv
+      - insert_at: syslog_to_o11y
         type: log
         log_fields:
           message: "kernel: oom-kill"
           hostname: "pve-02"
     outputs:
-      - extract_from: syslog_to_semconv
+      - extract_from: syslog_to_o11y
         conditions:
           - type: vrl
             source: |
@@ -227,13 +233,13 @@ tests:
 
   - name: "syslog: log.record.original uses dash for missing fields"
     inputs:
-      - insert_at: syslog_to_semconv
+      - insert_at: syslog_to_o11y
         type: log
         log_fields:
           message: "kernel panic"
           hostname: "pve-01"
     outputs:
-      - extract_from: syslog_to_semconv
+      - extract_from: syslog_to_o11y
         conditions:
           - type: vrl
             source: |
@@ -244,14 +250,14 @@ tests:
 
   - name: "syslog: timestamp is a valid RFC3339 string"
     inputs:
-      - insert_at: syslog_to_semconv
+      - insert_at: syslog_to_o11y
         type: log
         log_fields:
           message: "test"
           hostname: "host"
           timestamp: "2024-06-01T08:00:00+00:00"
     outputs:
-      - extract_from: syslog_to_semconv
+      - extract_from: syslog_to_o11y
         conditions:
           - type: vrl
             source: |
@@ -261,7 +267,7 @@ tests:
 
   - name: "syslog: procid coerced to string in attributes"
     inputs:
-      - insert_at: syslog_to_semconv
+      - insert_at: syslog_to_o11y
         type: log
         log_fields:
           message: "msg"
@@ -269,7 +275,7 @@ tests:
           appname: "app"
           procid: 42
     outputs:
-      - extract_from: syslog_to_semconv
+      - extract_from: syslog_to_o11y
         conditions:
           - type: vrl
             source: |

@@ -79,10 +79,11 @@
   };
 
   # ── Firewall ───────────────────────────────────────────────────────────────
-  # Default deny; :80/:443 are the public surface (Caddy). :5140 is the syslog
-  # TCP ingest port for PVE host log forwarding via rsyslog omfwd. :6000 is the
-  # Vector native ingest port for LXC agents (catalog.lxcAgent). Vector's OTLP
-  # (:4317/:4318) ports bind loopback only and need no firewall rule.
+  # Default deny; :80/:443 are the public surface (Caddy). :6000 is the Vector
+  # native ingest port for LXC + cluster agents (catalog.lxcAgent) and for the
+  # pve-exporter LXC, which now owns syslog ingest and forwards parsed events
+  # here. Vector's OTLP (:4317/:4318) ports bind loopback only and need no
+  # firewall rule.
   # Do NOT use lib.mkDefault for allowedTCPPorts — nixos-generators' lxc format
   # sets it to [] at normal priority and would silently win over mkDefault (1000).
   networking.firewall.enable = lib.mkDefault true;
@@ -91,7 +92,7 @@
   # (caddy-tailscale) falls back to DERP relays if closed; direct path is kept
   # open for lower latency. Set at normal priority so it wins over mkDefault [].
   networking.firewall.allowedUDPPorts = [ 41641 ];
-  networking.firewall.allowedTCPPorts = [ 80 443 5140 6000 ];
+  networking.firewall.allowedTCPPorts = [ 80 443 6000 ];
   networking.firewall.logRefusedConnections = lib.mkDefault false;
 
   # No trustedInterfaces: caddy-tailscale uses tsnet (userspace), so there is

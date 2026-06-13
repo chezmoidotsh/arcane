@@ -1,28 +1,26 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Vector — log processing middleware
 # ─────────────────────────────────────────────────────────────────────────────
-# Sits between every log source and VictoriaLogs. Handles:
+# Sits between every log source and VictoriaLogs. The appliance no longer
+# ingests raw syslog — that listener moved to the pve-exporter LXC, which parses
+# PVE host / LXC syslog into SemConv and forwards it here over the Vector native
+# protocol (:6000). The o11y appliance now only ingests already-structured
+# events and runs validation + loki-like conversion. Handles:
 #
-#   1. Multi-protocol ingest:
-#        syslog TCP :5140        — PVE host / LXC rsyslog forwarding
+#   1. Structured ingest:
 #        OTLP HTTP  :4318        — OpenTelemetry-native (loopback; via Caddy /logs/otlp/*)
 #        OTLP gRPC  :4317        — OpenTelemetry-native (loopback)
-#        Vector     :6000        — Vector-native from cluster-side Vector agents (loopback)
+#        Vector     :6000        — Vector-native from cluster + pve-exporter agents (loopback/bridge)
 #
-#   2. Syslog → SemConv conversion (10-transforms-syslog.yaml)
-#   3. OTLP normalization to loki-like layout (15-transforms-otlp.yaml)
-#   4. SemConv loki-like validation; invalid events become queryable error records
-#      (20-transforms-validate.yaml) — findable via:
+#   2. OTLP normalization to the internal OTLP-style format (sources.otlp.yaml)
+#   3. SemConv validation; invalid events become queryable error records
+#      (transforms.validate.yaml) — findable via:
 #        service.name:vector-ingest attr.error.type:semconv_invalid
-#   5. Ingestion timestamp enrichment (30-transforms-enrich.yaml)
-#   6. Push to VictoriaLogs :9428 (40-sinks.yaml)
+#   4. loki-like conversion + push to VictoriaLogs :9428 (sinks.victorialogs.yaml)
 #
 # Configuration lives under ../config/vector/ — YAML files are baked into the
-# Nix store at build time and loaded via --config-dir. Tests in
-# ../config/vector/tests/ are loaded alongside for `vector test`.
-#
-# NOTE: the syslog TCP listener (:5140) moves from VictoriaLogs to Vector.
-# victorialogs.nix must NOT pass -syslog.listenAddr.tcp — Vector owns that port.
+# Nix store at build time and loaded via --config-dir. Inline `tests:` blocks in
+# each file are run by `vector test` (mise run vector:test).
 # ─────────────────────────────────────────────────────────────────────────────
 { lib, pkgs, ... }:
 
