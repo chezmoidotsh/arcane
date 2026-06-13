@@ -26,7 +26,7 @@ transforms:
   validate_semconv:
     type: remap
     inputs:
-      - syslog_to_semconv
+      - parse_syslog_json
       - otlp_to_semconv
       - in_vector
     source: |

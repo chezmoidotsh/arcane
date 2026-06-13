@@ -2,9 +2,9 @@
 # VictoriaMetrics — single-node metrics TSDB
 # ─────────────────────────────────────────────────────────────────────────────
 # The central metrics store. Receives remote_write from every cluster's vmagent
-# and OTLP metrics from the Proxmox host's OpenTelemetry exporter (native
-# /opentelemetry/v1/metrics endpoint), and self-scrapes the local stack so the
-# appliance observes itself ("who watches the watchmen").
+# and from the PVE exporter LXC (prometheus_remote_write through Vector), and
+# self-scrapes the local stack so the appliance observes itself
+# ("who watches the watchmen").
 #
 # Single-node by design — multi-tenancy is NOT used. Every series carries a
 # `cluster` external label injected by the sender; one flat store keeps

@@ -1,0 +1,54 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Disk space — PVE guest and node storage usage alerts
+# ─────────────────────────────────────────────────────────────────────────────
+# All metrics come from the PVE exporter (pve_disk_usage_bytes /
+# pve_disk_size_bytes) which reports disk usage for both PVE nodes and guests
+# (LXC/QEMU) via the PVE API. No node_exporter needed.
+#
+# Covers the o11y LXC data volume, the oci-registry LXC, and the PVE host
+# root disk — everything the PVE API can see.
+#
+# Three signals:
+#   DiskSpaceWarning     — usage > 85% for 5m (early heads-up)
+#   DiskSpaceCritical    — usage > 90% for 5m (act now)
+#   DiskSpacePredictFill — will exhaust within ~5 days (1h trend)
+# ─────────────────────────────────────────────────────────────────────────────
+groups:
+  - name: disk
+    rules:
+      - alert: DiskSpaceWarning
+        expr: pve_disk_usage_bytes / pve_disk_size_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk usage > 85% on {{ $labels.name }}"
+          description: >-
+            {{ $labels.name }} (type={{ $labels.type }},
+            node={{ $labels.node }}) disk is
+            {{ $value | humanizePercentage }} full.
+
+      - alert: DiskSpaceCritical
+        expr: pve_disk_usage_bytes / pve_disk_size_bytes > 0.90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk usage > 90% on {{ $labels.name }}"
+          description: >-
+            {{ $labels.name }} (type={{ $labels.type }},
+            node={{ $labels.node }}) disk is
+            {{ $value | humanizePercentage }} full.
+            Immediate action required to prevent service degradation.
+
+      - alert: DiskSpacePredictFill
+        expr: predict_linear(pve_disk_usage_bytes[1h], 5 * 24 * 3600) > pve_disk_size_bytes
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk on {{ $labels.name }} will fill within ~5 days"
+          description: >-
+            Based on the write rate over the last hour, {{ $labels.name }}
+            (type={{ $labels.type }}, node={{ $labels.node }}) is predicted
+            to run out of disk space within approximately 5 days.

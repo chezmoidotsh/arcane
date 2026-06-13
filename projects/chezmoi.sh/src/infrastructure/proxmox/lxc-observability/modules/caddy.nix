@@ -74,6 +74,8 @@ in
       # VM/VLogs/VTraces serve at root (prefix stripped); Alertmanager keeps
       # its prefix via --web.route-prefix=/alerts.
       (routes) {
+        log
+
         request_body {
           max_size 256MiB
         }
