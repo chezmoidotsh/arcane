@@ -10,12 +10,12 @@ transforms:
   #   body           → _msg        (VLogs body field)
   #   timestamp      → _time       (VLogs timestamp field, RFC3339)
   #   resources.*    → *           (flattened to root as stream labels)
-  #   attributes.*   → attr.*      (prefixed for queryability)
+  #   attributes.*   → attrs.*     (prefixed for queryability)
   #   observed_timestamp, severity_number, trace_id, span_id (kept at root)
   #   severity_text      → derived from severity_number if absent (canonical OTel
   #                        mapping: 1=TRACE … 24=FATAL4)
   #
-  # The transform also adds attr.stored_timestamp at the end of the pipeline to
+  # The transform also adds a root stored_timestamp at the end of the pipeline to
   # capture the time when the event is pushed to VLogs, enabling latency
 
   to_vlogs_format:
@@ -40,6 +40,11 @@ transforms:
       ._msg  = string(del(.body)) ?? ""
       ._time = string(del(.timestamp)) ?? format_timestamp!(now(), format: "%+")
 
+      # observed_timestamp is normally set by the source; fall back to the event
+      # time if a sender omitted it. validate already errors on a missing
+      # observed_timestamp, so this is a defensive default for the loki-like layout.
+      if is_null(.observed_timestamp) { .observed_timestamp = ._time }
+
       resources = object(del(.resources)) ?? {}
       . = merge(., resources)
 
@@ -49,7 +54,6 @@ transforms:
 
       # Add stored_timestamp at the end of the pipeline to get the value when
       # the event is pushed to VLogs, enabling latency measurements in LogsQL.
-      if !is_object(.attributes) { .attributes = {} }
       ."stored_timestamp" = format_timestamp!(now(), format: "%+")
 
 sinks:
@@ -98,7 +102,7 @@ sinks:
 
 # Unit tests — to_vlogs_format
 tests:
-  - name: "enrich: attr.stored_timestamp added on every event"
+  - name: "enrich: stored_timestamp added on every event"
     inputs:
       - insert_at: to_vlogs_format
         type: log
@@ -114,9 +118,9 @@ tests:
         conditions:
           - type: vrl
             source: |
-              ts = string!(."attributes"."stored_timestamp")
+              ts = string!(.stored_timestamp)
               parsed = parse_timestamp!(ts, format: "%+")
-              assert!(parsed != null, "attr.stored_timestamp is RFC3339")
+              assert!(parsed != null, "stored_timestamp is RFC3339")
               true
 
   - name: "enrich: existing observed_timestamp is preserved"
@@ -172,11 +176,11 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(.body, "preserved")
-              assert_eq!(.timestamp, "2024-06-01T00:00:00Z")
-              assert_eq!(."attributes"."custom", "still here")
+              assert_eq!(._msg, "preserved")
+              assert_eq!(._time, "2024-06-01T00:00:00Z")
+              assert_eq!(."attrs.custom", "still here")
               assert_eq!(.trace_id, "deadbeef")
-              assert!(."attributes"."stored_timestamp" != null)
+              assert!(.stored_timestamp != null)
               assert!(.observed_timestamp != null)
               true
 
@@ -209,8 +213,8 @@ tests:
               assert_eq!(."service.name", "my-svc")
               assert_eq!(."host.name", "my-host")
               assert_eq!(."k8s.cluster.name", "prod")
-              assert_eq!(."attr.log.source", "syslog")
-              assert_eq!(."attr.process.pid", "42")
+              assert_eq!(."attrs.log.source", "syslog")
+              assert_eq!(."attrs.process.pid", "42")
               assert_eq!(.severity_text, "info")
               assert_eq!(.severity_number, 9)
               assert_eq!(.trace_id, "aabbccdd")
@@ -296,8 +300,8 @@ tests:
             source: |
               assert_eq!(._msg, "ingestion_validation_error")
               assert_eq!(."service.name", "vector-ingest")
-              assert_eq!(."attr.error.type", "semconv_invalid")
-              assert_eq!(."attr.stored_timestamp", "2024-01-01T00:00:01Z")
+              assert_eq!(."attrs.error.type", "semconv_invalid")
+              assert_eq!(."attrs.stored_timestamp", "2024-01-01T00:00:01Z")
               assert!(is_null(.body))
               assert!(is_null(.resources))
               assert!(is_null(.attributes))
