@@ -4,15 +4,23 @@
 #          "caller":"zotregistry.dev/zot/v2/pkg/.../file.go:141",
 #          "func":"zotregistry.dev/zot/v2/pkg/...(*Type).Method","goroutine":37}
 #
-# SemConv mapping:
-#   time      → .timestamp
-#   level     → .severity_number  (OTel SemConv severity values)
-#   message   → .body
-#   caller    → .attributes."code.file.path" + .attributes."code.line.number"
-#   func      → .attributes."code.function"
+# HTTP API access logs add: clientIP, method, path, statusCode, latency, bodySize, headers.
 #
-# Remaining Zot fields (component, goroutine, image, tag, status, …)
-#   → .attributes."zot.*"
+# SemConv mapping:
+#   time        → .timestamp
+#   level       → .severity_number        (OTel SemConv severity values)
+#   message     → .body
+#   caller      → .attributes."code.file.path" + .attributes."code.line.number"
+#   func        → .attributes."code.function"
+#   method      → .attributes."http.request.method"   (HTTP API only)
+#   path        → .attributes."url.path"              (HTTP API only)
+#   statusCode  → .attributes."http.response.status_code"  (HTTP API only)
+#   bodySize    → .attributes."http.response.body.size"    (HTTP API only)
+#   clientIP    → .attributes."network.peer.address" + .attributes."network.peer.port"
+#   User-Agent  → .attributes."user_agent.original"   (HTTP API only)
+#   latency     → .attributes."zot.latency"           (HTTP API only)
+#
+# Any unrecognised field left in parsed → .attributes."zot.*"
 #
 # Unrecognised services (service.name != "zot") pass through unchanged.
 transforms:
@@ -34,14 +42,16 @@ transforms:
         if _err == null && is_object(parsed) {
 
           # Timestamp (RFC 3339)
-          if exists(parsed.time) {
-            _ts, _ts_err = parse_timestamp(to_string!(parsed.time), format: "%+")
+          _time = del(parsed.time)
+          if _time != null {
+            _ts, _ts_err = parse_timestamp(to_string!(_time), format: "%+")
             if _ts_err == null { .timestamp = format_timestamp!(_ts, format: "%+") }
           }
 
           # Severity — OTel SemConv numbers
-          if exists(parsed.level) {
-            _level = downcase(to_string!(parsed.level))
+          _level_raw = del(parsed.level)
+          if _level_raw != null {
+            _level = downcase(to_string!(_level_raw))
             _sev = {
               "trace": 1, "debug": 5, "info": 9, "information": 9, "notice": 9,
               "warning": 13, "warn": 13, "error": 17,
@@ -50,13 +60,76 @@ transforms:
             .severity_number = get(_sev, [_level]) ?? 9
           }
 
-          # Message body
-          if exists(parsed.message) { .body = to_string!(parsed.message) }
+          # Message body — save value for HTTP API detection below
+          _msg_raw = del(parsed.message)
+          _msg = if _msg_raw != null { to_string!(_msg_raw) } else { "" }
+          if _msg != "" { .body = _msg }
+
+          # HTTP API access logs — Apache Combined Log Format body + OTel SemConv attrs
+          if _msg == "HTTP API" {
+            _clientIP   = del(parsed.clientIP)
+            _method     = del(parsed.method)
+            _path       = del(parsed.path)
+            _statusCode = del(parsed.statusCode)
+            _bodySize   = del(parsed.bodySize)
+            _headers    = del(parsed.headers)
+            _latency    = del(parsed.latency)
+
+            # CLF timestamp from _time (already captured above)
+            _ts_clf = if _time != null {
+              _t, _t_err = parse_timestamp(to_string!(_time), format: "%+")
+              if _t_err == null { "[" + format_timestamp!(_t, format: "%d/%b/%Y:%T %z") + "]" } else { "[-]" }
+            } else { "[-]" }
+
+            # Decompose clientIP → host + port (reused for body and attrs)
+            _cip_str = if _clientIP != null { to_string!(_clientIP) } else { "-" }
+            _cm, _cm_err = parse_regex(_cip_str, r'^(?P<ip>.+):(?P<port>\d+)$')
+            _ip = if _cm_err == null { _cm.ip } else { _cip_str }
+
+            # Referer and User-Agent from headers (reused for body and attrs)
+            _ref = "-"
+            _ua  = "-"
+            if _headers != null && is_object(_headers) {
+              _hdrs = object!(_headers)
+              _ref_arr = get(_hdrs, ["Referer"]) ?? null
+              if is_array(_ref_arr) { _ref = string(_ref_arr[0]) ?? "-" }
+              _ua_arr = get(_hdrs, ["User-Agent"]) ?? null
+              if is_array(_ua_arr)  { _ua  = string(_ua_arr[0]) ?? "-" }
+            }
+
+            # Size: "-" when absent or zero (Apache convention)
+            _size_int = if _bodySize != null { to_int!(_bodySize) } else { 0 }
+            _size_str = if _size_int > 0 { to_string(_size_int) } else { "-" }
+
+            # Pre-compute string tokens for the body (avoids ?? inside to_string! — E651)
+            _m_str = if _method     != null { to_string!(_method) }     else { "-" }
+            _p_str = if _path       != null { to_string!(_path) }       else { "-" }
+            _s_str = if _statusCode != null { to_string!(_statusCode) } else { "-" }
+
+            # Apache Combined Log Format (single expression — VRL requires + at end of line)
+            .body = _ip + " - - " + _ts_clf + " \"" + _m_str + " " + _p_str + " HTTP/1.1\" " + _s_str + " " + _size_str + " \"" + _ref + "\" \"" + _ua + "\""
+
+            if _method     != null { .attributes."http.request.method"       = to_string!(_method) }
+            if _path       != null { .attributes."url.path"                  = to_string!(_path) }
+            if _statusCode != null { .attributes."http.response.status_code" = _statusCode }
+            if _bodySize   != null { .attributes."http.response.body.size"   = _bodySize }
+            if _latency    != null { .attributes."zot.latency"               = to_string!(_latency) }
+            if _ua != "-"          { .attributes."user_agent.original"       = _ua }
+
+            if _cm_err == null {
+              .attributes."network.peer.address" = _cm.ip
+              _port, _port_err = to_int(_cm.port)
+              if _port_err == null { .attributes."network.peer.port" = _port }
+            } else if _clientIP != null {
+              .attributes."network.peer.address" = _cip_str
+            }
+          }
 
           # caller: "pkg/file.go:141"
           # → .attributes."code.file.path" + .attributes."code.line.number"
-          if exists(parsed.caller) {
-            _parts = split(to_string!(parsed.caller), ":", limit: 2)
+          _caller = del(parsed.caller)
+          if _caller != null {
+            _parts = split(to_string!(_caller), ":", limit: 2)
             .attributes."code.file.path" = _parts[0]
             if length(_parts) > 1 {
               _n, _n_err = to_int(_parts[1])
@@ -65,17 +138,12 @@ transforms:
           }
 
           # func: fully-qualified Go function name
-          if exists(parsed.func) {
-            .attributes."code.function" = to_string!(parsed.func)
-          }
+          _func = del(parsed.func)
+          if _func != null { .attributes."code.function" = to_string!(_func) }
 
-          # Remaining Zot fields →.attributes."zot.*"
-          _zot_keys = ["component", "goroutine", "image", "tag", "status"]
-          for_each(_zot_keys) -> |_i, key| {
-            _val = get!(parsed, [key])
-            if _val != null {
-              .attributes = set!(.attributes ?? {}, ["zot." + key], _val)
-            }
+          # Any unrecognised field remaining → .attributes."zot.*"
+          for_each(object!(parsed)) -> |key, val| {
+            .attributes = set!(.attributes, ["zot." + key], val)
           }
         }
       }
@@ -104,12 +172,12 @@ tests:
           - type: vrl
             source: |
               assert_eq!(.body, "executing scrub to check manifest/blob integrity for /var/lib/zot/docker.io/library/redis")
-              assert!(starts_with(string!(.timestamp) ?? "", "2026-06-07"))
+              assert!(starts_with(string(.timestamp) ?? "", "2026-06-07"))
               assert_eq!(.severity_number, 9)
-              assert_eq!(.attributes."code.file.path," "zotregistry.dev/zot/v2/pkg/extensions/scrub/scrub.go")
-              assert_eq!(.attributes."code.line.number," 18)
-              assert_eq!(.attributes."code.function," "zotregistry.dev/zot/v2/pkg/extensions/scrub.RunScrubRepo")
-              assert_eq!(.attributes."zot.goroutine," 44)
+              assert_eq!(.attributes."code.file.path", "zotregistry.dev/zot/v2/pkg/extensions/scrub/scrub.go")
+              assert_eq!(.attributes."code.line.number", 18)
+              assert_eq!(.attributes."code.function", "zotregistry.dev/zot/v2/pkg/extensions/scrub.RunScrubRepo")
+              assert_eq!(.attributes."zot.goroutine", 44)
               true
 
   - name: "zot: parse blob/manifest ok log"
@@ -127,10 +195,10 @@ tests:
             source: |
               assert_eq!(.body, "blobs/manifest ok")
               assert_eq!(.severity_number, 9)
-              assert_eq!(.attributes."zot.image," "docker.io/longhornio/longhorn-engine")
-              assert_eq!(.attributes."zot.tag," "v1.11.2")
-              assert_eq!(.attributes."zot.status," "ok")
-              assert_eq!(.attributes."zot.component," "scrub")
+              assert_eq!(.attributes."zot.image", "docker.io/longhornio/longhorn-engine")
+              assert_eq!(.attributes."zot.tag", "v1.11.2")
+              assert_eq!(.attributes."zot.status", "ok")
+              assert_eq!(.attributes."zot.component", "scrub")
               true
 
   - name: "zot: error level maps to OTel severity 17"
@@ -147,8 +215,37 @@ tests:
           - type: vrl
             source: |
               assert_eq!(.severity_number, 17)
-              assert_eq!(.attributes."zot.component," "sync")
-              assert_eq!(.attributes."zot.goroutine," 12)
+              assert_eq!(.attributes."zot.component", "sync")
+              assert_eq!(.attributes."zot.goroutine", 12)
+              true
+
+  - name: "zot: HTTP API log extracts OTel HTTP SemConv fields"
+    inputs:
+      - insert_at: zot_to_o11y
+        type: log
+        log_fields:
+          body: '{"time":"2026-06-07T14:45:22.351982392Z","level":"info","message":"HTTP API","module":"http","component":"session","clientIP":"127.0.0.1:43204","method":"GET","path":"/metrics","statusCode":200,"latency":"0s","bodySize":17619,"headers":{"Accept":["text/plain"],"Accept-Encoding":["identity"],"User-Agent":["Vector/0.55.0 (x86_64-unknown-linux-gnu)"]},"caller":"zotregistry.dev/zot/v2/pkg/api/session.go:92","func":"zotregistry.dev/zot/v2/pkg/api.SessionLogger.func1.1","goroutine":116}'
+          resources."service.name": zot
+          resources."host.name": oci-registry
+    outputs:
+      - extract_from: zot_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert!(contains(string!(.body), "127.0.0.1 - - ["), "CLF: host and timestamp bracket")
+              assert!(contains(string!(.body), "] \"GET /metrics HTTP/1.1\" 200 17619"), "CLF: request line, status, size")
+              assert!(contains(string!(.body), "\"Vector/0.55.0 (x86_64-unknown-linux-gnu)\""), "CLF: User-Agent")
+              assert_eq!(.attributes."http.request.method", "GET")
+              assert_eq!(.attributes."url.path", "/metrics")
+              assert_eq!(.attributes."http.response.status_code", 200)
+              assert_eq!(.attributes."http.response.body.size", 17619)
+              assert_eq!(.attributes."network.peer.address", "127.0.0.1")
+              assert_eq!(.attributes."network.peer.port", 43204)
+              assert_eq!(.attributes."user_agent.original", "Vector/0.55.0 (x86_64-unknown-linux-gnu)")
+              assert_eq!(.attributes."zot.latency", "0s")
+              assert_eq!(.attributes."zot.module", "http")
+              assert_eq!(.attributes."zot.component", "session")
+              assert_eq!(.severity_number, 9)
               true
 
   - name: "zot: non-JSON body passes through unchanged"
