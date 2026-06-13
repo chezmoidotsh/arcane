@@ -34,21 +34,47 @@ NixOS-as-code, GPG-signed, single-purpose-appliance philosophy as the
 
 ## Architecture
 
-```text
- SOURCES (push over TLS — LAN by source CIDR, or tailnet)     LXC APPLIANCE (Proxmox)
+```mermaid
+flowchart LR
+    subgraph sources["Sources (push — LAN by source CIDR, or tailnet)"]
+        vmagent["VMAgent<br/>(cluster metrics)"]
+        clvector["Vector agents<br/>(cluster + pve-exporter logs)"]
+        clalert["per-cluster vmalert<br/>(VMRule alerts)"]
+        otlp["OTEL/OTLP<br/>(Proxmox host metrics)"]
+        kaz["kazimierz<br/>(over tailnet)"]
+    end
 
-   VMAgent    ──/metrics──▶ ┐
-   Vector     ──/logs────▶  │                ┌─▶ VictoriaMetrics :8428 (+OTLP)
-   vmalert    ──/alerts──▶  ├─▶ Caddy :443 ──┼─▶ VictoriaLogs    :9428
-   (VMRule)                 │   (path route, ├─▶ VictoriaTraces  :10428
-   OTEL/OTLP  ──/metrics──▶ │    no auth)    └─▶ Alertmanager    :9093 ──┐
-   kazimierz  ──tailnet──▶  ┘                                            │
-                            LXC vmalert :8880 ──▶ Alertmanager           │  page channel
-                            (cluster/Grafana down + watchdog)            ├─▶ ntfy / Slack
-                            data → /var/lib/victoria (mp0)               │  deadman (TBD)
-                                                                         ▼
-   amiya Grafana ──query──▶ dashboards + non-paging alerts      + deadman heartbeats ─┘
-                            + its own deadman heartbeat
+    subgraph lxc["LXC appliance (Proxmox)"]
+        caddy["Caddy :443<br/>path route, no auth<br/>(+ tailnet via tsnet)"]
+        vm["VictoriaMetrics :8428 (+OTLP)"]
+        vl["VictoriaLogs :9428"]
+        vt["VictoriaTraces :10428"]
+        am["Alertmanager :9093"]
+        lxcalert["LXC vmalert :8880<br/>(cluster/Grafana down + watchdog)"]
+        data[("/var/lib/victoria (mp0)")]
+    end
+
+    page(["ntfy / Slack + deadman (TBD)"])
+    grafana(["amiya Grafana<br/>dashboards + non-paging alerts<br/>+ its own deadman heartbeat"])
+
+    vmagent -->|"/metrics"| caddy
+    clvector -->|"/logs (Vector :6000)"| caddy
+    clalert -->|"/alerts"| caddy
+    otlp -->|"/metrics (OTLP)"| caddy
+    kaz -.tailnet.-> caddy
+
+    caddy --> vm
+    caddy --> vl
+    caddy --> vt
+    caddy --> am
+    lxcalert --> am
+    am --> page
+    vm -.-> data
+    vl -.-> data
+    vt -.-> data
+    am -.-> data
+    grafana -->|query| vm
+    grafana -->|query| vl
 ```
 
 The LXC vmalert evaluates only the existential page-tier (cluster absent, Grafana
@@ -56,8 +82,15 @@ down, watchdog/deadman). Per-cluster `vmalert` evaluates that cluster's
 `VMRule`/`PrometheusRule` (records + page-worthy alerts) against the central VM and
 notifies the central Alertmanager through Caddy; non-paging alerts are routed by
 Grafana. Access control is the **Proxmox host firewall by source CIDR** (LAN) plus
-the **tailnet** (off-LAN). Rendered diagram:
-[`assets/architecture.svg`](./assets/architecture.svg) (source
+the **tailnet** (off-LAN).
+
+> **Logs ingest** — the appliance ingests only already-structured events (Vector
+> native `:6000` and OTLP, all loopback behind Caddy). It no longer runs a syslog
+> listener: the [`pve-exporter`](../pve-exporter/README.md) LXC owns syslog ingest,
+> parses RFC 5424 into the OTLP-style format, and forwards it here. The appliance's
+> Vector pipeline is now validation + loki-like conversion only.
+
+Rendered diagram: [`assets/architecture.svg`](./assets/architecture.svg) (source
 [`architecture.d2`](./architecture.d2)).
 
 ### Design decisions (the short version — full rationale in ADR-013)
@@ -114,15 +147,15 @@ the **tailnet** (off-LAN). Rendered diagram:
 
 ### Ports
 
-| Service               | Bind              | Exposed?                                                                               |
-| --------------------- | ----------------- | -------------------------------------------------------------------------------------- |
-| Caddy                 | `:80`, `:443`     | **Yes** — the only public surface (HTTP/S)                                             |
-| VictoriaMetrics       | `127.0.0.1:8428`  | No (behind Caddy; also OTLP ingest)                                                    |
-| VictoriaLogs (HTTP)   | `127.0.0.1:9428`  | No (behind Caddy)                                                                      |
-| VictoriaLogs (syslog) | `:5140`           | **Yes** — TCP syslog ingest from PVE hosts/LXCs on the bridge network                  |
-| VictoriaTraces        | `127.0.0.1:10428` | No (behind Caddy; OTLP/Jaeger ingest)                                                  |
-| vmalert               | `127.0.0.1:8880`  | No (self-scrape only)                                                                  |
-| Alertmanager          | `127.0.0.1:9093`  | Via Caddy `/alerts/*` (cluster vmalert → notify); egress for notifications + heartbeat |
+| Service             | Bind              | Exposed?                                                                               |
+| ------------------- | ----------------- | -------------------------------------------------------------------------------------- |
+| Caddy               | `:80`, `:443`     | **Yes** — the only public surface (HTTP/S)                                             |
+| VictoriaMetrics     | `127.0.0.1:8428`  | No (behind Caddy; also OTLP ingest)                                                    |
+| VictoriaLogs (HTTP) | `127.0.0.1:9428`  | No (behind Caddy)                                                                      |
+| Vector (native)     | `:6000`           | **Yes** — Vector-native log ingest from cluster + pve-exporter agents (bridge/tailnet) |
+| VictoriaTraces      | `127.0.0.1:10428` | No (behind Caddy; OTLP/Jaeger ingest)                                                  |
+| vmalert             | `127.0.0.1:8880`  | No (self-scrape only)                                                                  |
+| Alertmanager        | `127.0.0.1:9093`  | Via Caddy `/alerts/*` (cluster vmalert → notify); egress for notifications + heartbeat |
 
 ## What's in this directory
 
@@ -132,7 +165,15 @@ the **tailnet** (off-LAN). Rendered diagram:
 ├── architecture.d2        ← diagram source (→ assets/architecture.svg)
 ├── flake.nix              ← LXC image build (nixos-generators) + image version
 ├── flake.lock             ← pinned inputs
-├── configuration.nix      ← site identity, shared `victoria` user, console toolbox
+├── configuration.nix      ← site identity, shared `o11y` user, console toolbox
+├── config/
+│   └── vector/            ← Vector pipeline config (baked into image at build time)
+│       ├── sinks.victorialogs.yaml       ← VictoriaLogs sink
+│       ├── sinks.victoriametrics.yaml    ← VictoriaMetrics self-scrape sink
+│       ├── sources.internal_metrics.yaml ← Vector self-metrics source
+│       ├── sources.otlp.yaml             ← OTLP HTTP + gRPC ingest (loopback)
+│       ├── sources.vector.yaml           ← Vector protocol :6000 (cluster + pve-exporter agents)
+│       └── transforms.validate.yaml      ← SemConv validation + error records
 ├── modules/
 │   ├── default.nix            ← module aggregator
 │   ├── victoriametrics.nix    ← metrics TSDB (+ OTLP) + self-scrape
@@ -141,17 +182,29 @@ the **tailnet** (off-LAN). Rendered diagram:
 │   ├── vmalert.nix            ← existential rule evaluation
 │   ├── alertmanager.nix       ← page-tier alerts + deadman switch
 │   ├── caddy.nix              ← TLS termination + path routing + caddy-tailscale tsnet
+│   ├── caddy.statics/         ← static files served at / (signal navigation landing page)
+│   │   └── index.html
+│   ├── vector.nix             ← log processing middleware (multi-source ingest → VictoriaLogs)
+│   ├── o11y.nix               ← self-observability (scrape local services + forward journal)
+│   ├── o11y.extraTransforms/  ← per-source VRL transforms injected by catalog.lxcAgent
+│   │   ├── transforms.alertmanager.yaml
+│   │   ├── transforms.caddy.yaml
+│   │   ├── transforms.route.yaml
+│   │   └── transforms.victoria.yaml
 │   └── hardening.nix          ← sysctl, firewall, login surface, journald
 ├── alerts/                ← LXC vmalert rule groups (baked; existential-only)
 │   ├── watchdog.rules.yaml             ← Dead-Man's-Switch
 │   ├── self.rules.yaml                 ← appliance self-monitoring
-│   └── cluster-availability.rules.yaml ← cluster absent + Grafana down
+│   ├── cluster-availability.rules.yaml ← cluster absent + Grafana down
+│   ├── disk.rules.yaml                 ← disk space / inodes
+│   ├── oci-registry.rules.yaml         ← OCI registry health
+│   └── pve.rules.yaml                  ← Proxmox host health
 │                                          (node/disk/PVC/crash-loop → per-cluster VMRule)
-├── .mise.toml             ← mise tasks (secrets / build)
+├── .mise.toml             ← mise tasks (secrets / build / vector:validate / vector:test)
 ├── .mise/tasks/lxc/       ← build / push / upgrade scripts
 └── secrets/
-    ├── caddy.sops.env          ← SOPS: CLOUDFLARE_API_TOKEN
-    └── observability.sops.env  ← SOPS: Alertmanager notify + deadman URLs
+    ├── caddy.sops.env          ← SOPS: CLOUDFLARE_API_TOKEN, TAILSCALE_OAUTH_KEY
+    └── observability.sops.env  ← SOPS: SLACK_WEBHOOK_URL, ALERTMANAGER_DEADMAN_URL
 ```
 
 ## Prerequisites
@@ -187,12 +240,31 @@ sops secrets/observability.sops.env
 #    → ALERTMANAGER_DEADMAN_URL (e.g. https://hc-ping.com/<uuid>)
 
 # 2. Cloudflare DNS-01 token + Tailscale OAuth key.
-#    Once the Crossplane resources are Ready (see Known gaps):
+#    Path A — Crossplane already running (steady state / rebuilds):
 mise run lxc:secrets:sync
-#    …or set them manually until then:
-printf 'CLOUDFLARE_API_TOKEN=<token>\nTAILSCALE_OAUTH_KEY=<key>\n' | \
-  sops -e --input-type dotenv --output-type dotenv /dev/stdin > secrets/caddy.sops.env
 ```
+
+> **Cloudflare/Tailscale tokens — bootstrap ordering matters (same as omni).** The
+> `lxc:secrets:sync` task pulls both tokens from Kubernetes secrets that Crossplane
+> writes. But Crossplane runs on a Talos cluster that **Omni** manages, and Omni
+> depends on this observability appliance being up — so on a **first bootstrap the
+> cluster (and Crossplane) does not exist yet**, and the tokens cannot be synced
+> from it. There is no automation for this chicken-and-egg case; create the secret
+> by hand.
+>
+> **Path B — Crossplane not up yet (initial bootstrap):** mint the Cloudflare
+> DNS-01 token (Cloudflare dashboard → API Tokens → *Edit zone DNS* on `chezmoi.sh`,
+> scope **Zone → DNS → Edit** + **Zone → Zone → Read**) and a Tailscale OAuth client
+> (tag `tag:o11y`), then SOPS-encrypt them straight into the file — plaintext never
+> hits disk:
+>
+> ```sh
+> printf 'CLOUDFLARE_API_TOKEN=<token>\nTAILSCALE_OAUTH_KEY=<key>\n' | \
+>   sops -e --input-type dotenv --output-type dotenv /dev/stdin > secrets/caddy.sops.env
+> ```
+>
+> Once Crossplane is online, switch to Path A (`lxc:secrets:sync`) on the next
+> rebuild so both tokens are managed declaratively, and rotate the hand-made ones out.
 
 > **Migrating from `ALERTMANAGER_NOTIFY_URL`**: if you already have an
 > `observability.sops.env` with the old key, run
@@ -310,12 +382,16 @@ log_level_out: nolog
 IN ACCEPT -p tcp -dport 443   -source 10.0.0.0/8  -log nolog # homelab (tighten to node subnet)
 IN ACCEPT -p tcp -dport 80                         -log nolog # HTTP → HTTPS redirect
 IN ACCEPT -p udp -dport 41641                      -log nolog # Tailscale direct connections
-# Syslog TCP ingest from PVE hosts and LXCs on the bridge network.
-IN ACCEPT -p tcp -dport 5140  -source 10.0.0.0/8  -log nolog # rsyslog omfwd (RFC 5424)
+# Vector native log ingest from cluster + pve-exporter agents on the bridge network.
+IN ACCEPT -p tcp -dport 6000  -source 10.0.0.0/8  -log nolog # Vector native (cluster + pve-exporter)
 IN ACCEPT -p icmp                                  -log nolog # liveness
 EOF
 pve-firewall restart
 ```
+
+> Syslog is no longer ingested here — the [`pve-exporter`](../pve-exporter/README.md)
+> LXC owns the `:5140` listener and forwards parsed events over Vector native
+> (`:6000`). Open `:5140` on that LXC's firewall, not this one.
 
 > Tighten the homelab CIDR to the actual cluster-node subnet if you can — on the
 > LAN path this rule *is* the security boundary. Tailnet traffic is handled entirely
@@ -432,45 +508,18 @@ Configure the Proxmox OTEL metric server to push OTLP/HTTP to
 `https://o11y.chezmoi.sh/metrics/opentelemetry/v1/metrics` with an external
 label `cluster=proxmox`.
 
-### Proxmox host — logs (rsyslog)
+### Proxmox host — logs (rsyslog → pve-exporter)
 
-VictoriaLogs exposes a syslog TCP listener on `:5140` (RFC 5424). Configure
-rsyslog on the PVE host to forward via the built-in `omfwd` module — no extra
-packages required.
+The appliance no longer listens on syslog. The PVE host forwards its syslog to
+the [`pve-exporter`](../pve-exporter/README.md) LXC (`:5140`), which parses RFC
+5424 into the OTLP-style format and forwards it here over Vector native. The
+rsyslog `omfwd` config and the `target` (the pve-exporter LXC IP, not o11y) live
+in that LXC's README under
+[Proxmox host — syslog forwarding](../pve-exporter/README.md#proxmox-host--syslog-forwarding).
 
-Create `/etc/rsyslog.d/50-victorialogs.conf`:
-
-```
-# Forward Proxmox host logs to VictoriaLogs (syslog TCP RFC 5424)
-*.* action(
-  type="omfwd"
-  target="<lxc-ip>"
-  port="5140"
-  protocol="tcp"
-  template="RSYSLOG_SyslogProtocol23Format"
-  queue.type="LinkedList"
-  queue.size="5000"
-  queue.saveOnShutdown="on"
-  action.resumeRetryCount="-1"
-)
-```
-
-Then validate and restart:
-
-```sh
-rsyslogd -N1 && systemctl restart rsyslog
-```
-
-Logs arrive in VictoriaLogs with fields: `hostname`, `app_name`, `facility`,
-`severity`, `proc_id`, `_msg`. Query them at `https://o11y.chezmoi.sh/logs`
-(LogsQL: `hostname:pve-01`).
-
-> **Why TCP syslog and not `systemd-journal-upload`?** The Debian build of
-> `systemd-journal-remote` has `/etc/ssl/certs/journal-upload.pem` as a
-> compile-time default for the client certificate — the service fails to start
-> when that file is absent and the config-file override with an empty string is
-> not honored. TCP syslog via `omfwd` uses only the rsyslog base package, carries
-> the same structured RFC 5424 fields, and requires no overrides on either side.
+Parsed logs arrive here via Vector native (`:6000`) already in SemConv form
+(`log.source=syslog`, `host.name`, `service.name`, severity/facility, …). Query
+them at `https://o11y.chezmoi.sh/logs` (LogsQL: `attr.log.source:syslog`).
 
 ### kazimierz (VPS, Docker) — over Tailscale
 
@@ -494,10 +543,10 @@ heartbeat**, so an amiya/Grafana outage is detected independently of the LXC.
 
 Identical model to the oci-registry (`modules/hardening.nix`, always active): no
 SSH, no autologin, kernel sysctls, avahi/cups/polkit/udisks2 disabled, volatile
-journald (RAM-only, 64 MiB), NixOS firewall default-deny (only 80/443, plus UDP
+journald (RAM-only, 64 MiB), NixOS firewall default-deny (only 80/443/6000, plus UDP
 41641 for Tailscale direct connections — no `tailscale0` kernel interface since
 caddy-tailscale uses tsnet), timesyncd on. All stack daemons run as the
-unprivileged `victoria` user with the LXC-safe systemd hardening subset
+unprivileged `o11y` user with the LXC-safe systemd hardening subset
 (mount-namespace options omitted — they fail in an unprivileged LXC). Compensations:
 loopback-only binding for every backend, and the layered PVE + NixOS firewalls +
 Tailscale ACLs as the access boundary.
@@ -522,6 +571,20 @@ curl -sSf 'https://o11y.chezmoi.sh/metrics/api/v1/query?query=up' | jq .
 ssh root@pve.lan pct exec <vmid> -- curl -s 127.0.0.1:8880/api/alerts | jq .
 ssh root@pve.lan pct exec <vmid> -- curl -s 127.0.0.1:9093/alerts/api/v2/alerts | jq .
 ```
+
+### Vector pipeline (validate + test)
+
+The Vector config lives in `config/vector/` and is baked into the image at
+build time. Two mise tasks work against the local config without a running
+LXC:
+
+```sh
+mise run vector:validate   # syntax-check all YAML files + graph connectivity
+mise run vector:test       # run all inline unit tests (transforms + e2e pipeline)
+```
+
+Run both before bumping the image version and rebuilding — they catch VRL
+type errors and transform regressions without a full Nix build.
 
 ### Editing alert rules
 

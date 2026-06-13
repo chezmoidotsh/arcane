@@ -6,7 +6,8 @@
 # only pushes outbound (metrics + logs) to the o11y appliance.
 #
 # Usage:
-#   mise run lxc:secrets:sync                       # Create placeholder secrets files (operator must fill PVE credentials)
+#   mise run lxc:secrets:sync                       # Create placeholder secrets file (first-time only)
+#   mise run lxc:secrets:rotate                     # Interactively set/rotate the PVE token (and host)
 #   mise run lxc:build                              # Build the LXC tarball with secrets baked in
 #   mise run lxc:push -- <pve-host>                 # Upload template to Proxmox (local storage)
 #   mise run lxc:upgrade -- <pve-host> <src> <dst>  # Upgrade a running LXC to a new image
@@ -54,8 +55,63 @@ run = '''
   printf 'PVE_HOST=\nPVE_TOKEN_VALUE=\n' > "${TMP_PVE}"
   sops --encrypt --input-type dotenv --output-type dotenv "${TMP_PVE}" > "${PVE_SECRETS}"
 
-  echo "[SUCCESS] secrets/pve-exporter.sops.env created (empty). Fill PVE_HOST and PVE_TOKEN_VALUE:" >&2
-  echo "  sops secrets/pve-exporter.sops.env" >&2
+  echo "[SUCCESS] secrets/pve-exporter.sops.env created (empty). Fill the values with:" >&2
+  echo "  mise run lxc:secrets:rotate" >&2
+'''
+
+# -----------------------------------------------------------------------------
+# Secret Management — interactive PVE token rotation
+# -----------------------------------------------------------------------------
+# Prompts for the PVE API token value (and host) and writes the SOPS-encrypted
+# secrets/pve-exporter.sops.env. Run this on first setup and whenever the token
+# is rotated on the Proxmox host:
+#
+#   pveum user token remove prometheus@pve exporter
+#   pveum user token add    prometheus@pve exporter --privsep 0
+#
+# then `mise run lxc:secrets:rotate`, rebuild, and redeploy. The plaintext token
+# never touches disk — it is read interactively and encrypted via an atomic temp
+# file inside ./secrets (matching the .sops.yaml path_regex).
+
+[tasks."lxc:secrets:rotate"]
+description = "Interactively set/rotate the PVE host + API token in secrets/pve-exporter.sops.env"
+dir = "{{ config_root }}"
+run = '''
+  set -euo pipefail
+
+  command -v sops >/dev/null 2>&1 ||
+    { echo "[ERROR] sops not found — install it or check SOPS_AGE_KEY_FILE." >&2; exit 1; }
+
+  mkdir -p "{{ config_root }}/secrets"
+  PVE_SECRETS="{{ config_root }}/secrets/pve-exporter.sops.env"
+  TMP_PVE="{{ config_root }}/secrets/.tmp.$$.pve.sops.env"
+  trap 'rm -f "${TMP_PVE}"' EXIT
+
+  # Preserve the existing host when the operator just rotates the token.
+  CUR_HOST=""
+  if [[ -f "${PVE_SECRETS}" ]]; then
+    CUR_HOST=$(sops -d --extract '["PVE_HOST"]' "${PVE_SECRETS}" 2>/dev/null || true)
+  fi
+
+  if [[ -n "${CUR_HOST}" ]]; then
+    printf 'PVE API host [%s]: ' "${CUR_HOST}" >&2
+  else
+    printf 'PVE API host (e.g. 10.0.0.11): ' >&2
+  fi
+  read -r PVE_HOST
+  PVE_HOST="${PVE_HOST:-${CUR_HOST}}"
+  [[ -n "${PVE_HOST}" ]] || { echo "[ERROR] PVE host is required." >&2; exit 1; }
+
+  printf 'PVE API token value (prometheus@pve!exporter): ' >&2
+  read -rs PVE_TOKEN_VALUE
+  echo >&2
+  [[ -n "${PVE_TOKEN_VALUE}" ]] || { echo "[ERROR] Empty token." >&2; exit 1; }
+
+  printf 'PVE_HOST=%s\nPVE_TOKEN_VALUE=%s\n' "${PVE_HOST}" "${PVE_TOKEN_VALUE}" > "${TMP_PVE}"
+  sops --encrypt --input-type dotenv --output-type dotenv "${TMP_PVE}" > "${PVE_SECRETS}"
+
+  echo "[SUCCESS] secrets/pve-exporter.sops.env written (host=${PVE_HOST}). Rebuild and redeploy:" >&2
+  echo "  mise run lxc:build && mise run lxc:push -- <pve-host>" >&2
 '''
 
 # -----------------------------------------------------------------------------

@@ -8,10 +8,11 @@
 #   * victoriametrics.nix — metrics TSDB + self-scrape
 #   * victorialogs.nix    — log store
 #   * victoriatraces.nix  — tracing store (OTLP/Jaeger)
+#   * vector.nix          — log ingest pipeline (OTLP + Vector native → validate → VictoriaLogs)
+#   * o11y.nix            — self-observability (catalog.lxcAgent: scrape local services + journal)
 #   * vmalert.nix         — existential rule evaluation
 #   * alertmanager.nix    — existential alerts + deadman switch
-#   * caddy.nix           — TLS termination + path routing for o11y.chezmoi.sh
-#   * tailscale.nix       — tailnet membership (OAuth) for off-LAN sources
+#   * caddy.nix           — TLS termination + path routing + caddy-tailscale tsnet (off-LAN sources)
 #   * hardening.nix       — sysctl, firewall, login surface, journald
 #
 # Shared service account
