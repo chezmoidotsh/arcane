@@ -160,7 +160,7 @@ echo === system ===
 systemctl is-system-running
 systemctl --failed --no-legend
 echo === stack ===
-for u in pve-exporter vector lxc-agent; do
+for u in pve-exporter lxc-agent; do
   printf \"%-20s %s\\n\" \"\$u\" \"\$(systemctl is-active \$u)\"
 done
 '" >&2
