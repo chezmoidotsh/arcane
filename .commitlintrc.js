@@ -104,6 +104,10 @@ const scopes = [
 		value: "catalog:flakes",
 	},
 	{
+		name: "catalog:nix           - Anything related to the Nix modules catalog",
+		value: "catalog:nix",
+	},
+	{
 		name: "catalog:kustomize     - Anything related to the Kustomize component catalog",
 		value: "catalog:kustomize",
 	},

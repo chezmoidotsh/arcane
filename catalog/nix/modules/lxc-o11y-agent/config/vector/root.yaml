@@ -1,0 +1,10 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Root Vector configuration — global settings
+# ─────────────────────────────────────────────────────────────────────────────
+# data_dir: directory used by disk buffers (sinks with buffer.type = "disk").
+# At runtime, systemd sets VECTOR_DATA_DIR to /var/lib/vector-lxc-agent via
+# environment.VECTOR_DATA_DIR in the service unit.
+# At build time, vector validate sets VECTOR_DATA_DIR to a temp directory
+# so the data_dir exists during validation.
+# ─────────────────────────────────────────────────────────────────────────────
+data_dir: "${VECTOR_DATA_DIR}"

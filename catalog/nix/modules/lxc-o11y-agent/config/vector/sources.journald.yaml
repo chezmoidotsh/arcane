@@ -1,0 +1,842 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Source: journald → SemConv loki-like format
+# ─────────────────────────────────────────────────────────────────────────────
+# Reads the systemd journal for the current boot and maps fields to the
+# VictoriaLogs loki-like SemConv layout.
+#
+# SemConv validation is intentionally absent — it runs on the o11y side
+# (transforms.validate_semconv in the o11y Vector pipeline).
+#
+# Field mapping (journald → SemConv):
+#   MESSAGE           → _msg
+#   timestamp         → _time                            (parsed from journal)
+#   _HOSTNAME         → host.name                        (resource)
+#   SYSLOG_IDENTIFIER → service.name                     (resource, fallback: _COMM)
+#   _PID              → attr.process.pid                 (int, OTel semconv)
+#   PRIORITY          → attr.syslog.severity.{code,text} (numeric 0-7)
+#   SYSLOG_FACILITY   → attr.syslog.facility.code        (numeric)
+#   SYSLOG_MSGID      → attr.syslog.message_id
+#   _SYSTEMD_UNIT     → attr.systemd.unit
+#   _TRANSPORT        → attr.journald.transport
+#                     → attr.log.iostream                (when stdout/stderr)
+#   _COMM             → attr.process.executable.name     (OTel semconv)
+#   (generated)       → attr.log.record.uid              (OTel semconv)
+#   (reconstructed)   → attr.log.record.original         (OTel semconv)
+# ─────────────────────────────────────────────────────────────────────────────
+sources:
+  in_journald:
+    type: journald
+    current_boot_only: true
+
+transforms:
+  journald_to_semconv:
+    type: remap
+    inputs:
+      - in_journald
+    source: |
+      # ── Capture input fields before clearing the event ─────────────────────
+      _ts_raw   = del(.timestamp) || now()
+      _ts_fmt   = if is_string(_ts_raw) {
+                    format_timestamp!(parse_timestamp!(_ts_raw, format: "%+"), format: "%+")
+                  } else {
+                    format_timestamp!(_ts_raw, format: "%+")
+                  }
+      _msg_r     = string(.message) ?? ""
+      _host      = string(._HOSTNAME) ?? get_hostname!()
+      _comm      = string(._COMM) ?? null
+      _app       = if .SYSLOG_IDENTIFIER != null { .SYSLOG_IDENTIFIER } else if _comm != null { _comm } else { "-" }
+      _pid       = ._PID
+      _priority  = .PRIORITY
+      _facility  = .SYSLOG_FACILITY
+      _unit      = ._SYSTEMD_UNIT
+      _transport = ._TRANSPORT
+      _msgid     = .SYSLOG_MSGID
+
+      # ── Build clean output — all raw journald fields are discarded ──────────
+      . = {}
+
+      # Core VLogs fields
+      ._msg  = _msg_r
+      ._time = _ts_fmt
+
+      # Resource attributes (root-level)
+      ."service.name" = if _app == "-" { "unknown" } else { _app }
+      ."host.name"    = _host
+
+      # OTel general log identification attributes
+      # https://opentelemetry.io/docs/specs/semconv/general/logs/#general-log-identification-attributes
+      ."attr.observed_timestamp"   = format_timestamp!(now(), format: "%+")
+      ."attr.log.record.uid"       = uuid_v4()
+      _pid_str = if _pid != null { to_string!(_pid) } else { "-" }
+      ."attr.log.record.original", _ = _ts_fmt + " " + _host + " " + _app + "[" + _pid_str + "]: " + _msg_r
+
+      # Severity: journald PRIORITY is numeric 0-7 (emerg…debug)
+      if _priority != null {
+        p = to_int!(_priority)
+        ."attr.syslog.severity.code" = p
+        if p >= 0 && p <= 7 {
+          _sev = if p == 0 { "emerg" } else if p == 1 { "alert" } else if p == 2 { "crit" } else if p == 3 { "err" } else if p == 4 { "warning" } else if p == 5 { "notice" } else if p == 6 { "info" } else { "debug" }
+          ."attr.syslog.severity.text" = _sev
+        }
+      }
+
+      # Facility (numeric — journald does not provide the text form)
+      if _facility != null {
+        ."attr.syslog.facility.code" = to_int!(_facility)
+      }
+
+      # Process ID (int per OTel semconv: process.pid)
+      if _pid != null {
+        ."attr.process.pid" = to_int!(_pid)
+      }
+
+      # Systemd unit (e.g. "sshd.service")
+      if _unit != null {
+        ."attr.systemd.unit" = to_string!(_unit)
+      }
+
+      # Transport: kernel, syslog, journal, stdout, stderr, …
+      # When stdout/stderr, also set attr.log.iostream per OTel semconv.
+      if _transport != null {
+        ."attr.journald.transport" = to_string!(_transport)
+        t = to_string!(_transport)
+        if t == "stdout" || t == "stderr" {
+          ."attr.log.iostream" = t
+        }
+      }
+
+      # Executable name (OTel semconv: process.executable.name)
+      # _COMM is the comm field — the actual binary name of the process.
+      if _comm != null {
+        ."attr.process.executable.name" = _comm
+      }
+
+      # Ingestion path marker
+      ."attr.log.source" = "journald"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Unit tests — run with: vector test sources.journald.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+tests:
+  - name: "journald: full event maps to SemConv loki-like"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "Started NetworkManager.service"
+          _HOSTNAME: "pve-01"
+          SYSLOG_IDENTIFIER: "systemd"
+          _PID: "1"
+          SYSLOG_MSGID: "SERVICE"
+          PRIORITY: "6"
+          SYSLOG_FACILITY: "3"
+          _SYSTEMD_UNIT: "NetworkManager.service"
+          _TRANSPORT: "journal"
+          timestamp: "2024-01-15T10:30:00+00:00"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._msg, "Started NetworkManager.service", "_msg")
+              assert_eq!(."host.name", "pve-01", "host.name")
+              assert_eq!(."service.name", "systemd", "service.name")
+              assert_eq!(."attr.process.pid", 1, "attr.process.pid is int")
+              assert_eq!(."attr.syslog.message_id", "SERVICE", "attr.syslog.message_id")
+              assert_eq!(."attr.syslog.severity.text", "info", "severity text")
+              assert_eq!(."attr.syslog.severity.code", 6, "severity code")
+              assert_eq!(."attr.syslog.facility.code", 3, "facility code")
+              assert_eq!(."attr.systemd.unit", "NetworkManager.service", "systemd unit")
+              assert_eq!(."attr.journald.transport", "journal", "transport")
+              assert!(starts_with(string!(._time), "2024-01-15"), "_time prefix")
+              assert!(is_null(.message), "message deleted")
+              assert!(is_null(._HOSTNAME), "hostname deleted")
+              assert!(is_null(.SYSLOG_IDENTIFIER), "syslog_id deleted")
+              assert!(."attr.observed_timestamp" != null, "observed_timestamp set")
+              true
+
+  - name: "journald: attr.observed_timestamp is a valid RFC3339 timestamp"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "test"
+          _HOSTNAME: "h"
+          timestamp: "2024-01-01T00:00:00+00:00"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              obs = string!(."attr.observed_timestamp")
+              parsed = parse_timestamp!(obs, format: "%+")
+              assert!(parsed != null, "attr.observed_timestamp is RFC3339")
+              true
+
+  - name: "journald: log.record.uid is a valid UUID"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "test"
+          _HOSTNAME: "pve-01"
+          SYSLOG_IDENTIFIER: "sshd"
+          timestamp: "2024-06-01T10:00:00+00:00"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              uid = string!(."attr.log.record.uid")
+              assert!(length(uid) == 36, "UUID length is 36")
+              assert!(contains(uid, "-"), "UUID contains hyphens")
+              true
+
+  - name: "journald: log.record.original reconstructs header from captured fields"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "Connection accepted"
+          _HOSTNAME: "pve-01"
+          SYSLOG_IDENTIFIER: "sshd"
+          _PID: "9876"
+          timestamp: "2024-06-01T10:00:00+00:00"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              orig = string!(."attr.log.record.original")
+              assert!(contains(orig, "pve-01"), "hostname in original")
+              assert!(contains(orig, "sshd"), "appname in original")
+              assert!(contains(orig, "9876"), "pid in original")
+              assert!(contains(orig, "Connection accepted"), "message in original")
+              assert!(contains(orig, "2024-06-01"), "timestamp in original")
+              true
+
+  - name: "journald: log.record.original uses dash placeholders for missing fields"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "kernel panic"
+          _HOSTNAME: "pve-01"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              orig = string!(."attr.log.record.original")
+              assert!(contains(orig, "[-]:"), "missing app+pid → -[-]:")
+              assert!(contains(orig, "kernel panic"), "message preserved")
+              true
+
+  - name: "journald: minimal event — only message and hostname"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "kernel: oom-kill"
+          _HOSTNAME: "pve-02"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._msg, "kernel: oom-kill")
+              assert_eq!(."host.name", "pve-02")
+              assert_eq!(."service.name", "unknown", "no SYSLOG_IDENTIFIER → unknown")
+              assert!(is_null(."attr.process.pid"), "no pid → null")
+              assert!(is_null(."attr.syslog.severity.text"))
+              assert!(is_null(."attr.syslog.facility.code"))
+              assert!(is_null(."attr.systemd.unit"))
+              assert!(."attr.log.record.uid" != null, "uid always set")
+              assert!(."attr.log.record.original" != null, "original always set")
+              true
+
+  - name: "journald: _time is a valid RFC3339 timestamp"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "test"
+          _HOSTNAME: "host"
+          timestamp: "2024-06-01T08:00:00+00:00"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              t = string!(._time)
+              assert!(parse_timestamp!(t, format: "%+") != null, "_time parses as RFC3339")
+              true
+
+  - name: "journald: PRIORITY 0-7 maps to severity code and text"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "msg"
+          _HOSTNAME: "h"
+          PRIORITY: "3"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.syslog.severity.code", 3, "severity code = 3 (err)")
+              assert_eq!(."attr.syslog.severity.text", "err", "severity text = err")
+              true
+
+  - name: "journald: attr.log.source is always set to journald"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "test"
+          _HOSTNAME: "h"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.log.source", "journald")
+              true
+
+  - name: "journald: no raw journald fields survive the transform"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "test"
+          _HOSTNAME: "h"
+          SYSLOG_IDENTIFIER: "app"
+          _PID: "100"
+          PRIORITY: "6"
+          SYSLOG_FACILITY: "1"
+          _SYSTEMD_UNIT: "app.service"
+          _TRANSPORT: "journal"
+          source_type: "journald"
+          _BOOT_ID: "abc123"
+          _MACHINE_ID: "def456"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              forbidden = ["message", "_HOSTNAME", "SYSLOG_IDENTIFIER", "_PID",
+                           "PRIORITY", "SYSLOG_FACILITY", "_SYSTEMD_UNIT",
+                           "_TRANSPORT", "source_type", "_BOOT_ID", "_MACHINE_ID"]
+              all_keys = keys(.)
+              leftovers = filter(forbidden) -> |_i, k| { includes(all_keys, k) }
+              assert_eq!(leftovers, [], "no raw journald fields at root")
+              true
+
+  - name: "journald: _COMM used as service.name fallback when SYSLOG_IDENTIFIER absent"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "msg"
+          _HOSTNAME: "h"
+          _COMM: "nginx"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."service.name", "nginx", "_COMM used as service.name fallback")
+              assert_eq!(."attr.process.executable.name", "nginx", "attr.process.executable.name from _COMM")
+              true
+
+  - name: "journald: _TRANSPORT stdout sets attr.log.iostream"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "test"
+          _HOSTNAME: "h"
+          _TRANSPORT: "stdout"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.journald.transport", "stdout")
+              assert_eq!(."attr.log.iostream", "stdout", "attr.log.iostream set for stdout")
+              true
+
+  - name: "journald: _TRANSPORT stderr sets attr.log.iostream"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "test"
+          _HOSTNAME: "h"
+          _TRANSPORT: "stderr"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.journald.transport", "stderr")
+              assert_eq!(."attr.log.iostream", "stderr", "attr.log.iostream set for stderr")
+              true
+
+  - name: "journald: _TRANSPORT journal does NOT set attr.log.iostream"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "test"
+          _HOSTNAME: "h"
+          _TRANSPORT: "journal"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.journald.transport", "journal")
+              assert!(is_null(."attr.log.iostream"), "no iostream for journal transport")
+              true
+
+  - name: "journald: attr.process.pid is an integer"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "msg"
+          _HOSTNAME: "h"
+          _PID: "42"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              pid = ."attr.process.pid"
+              assert!(is_integer(pid), "attr.process.pid is an integer")
+              assert_eq!(pid, 42, "attr.process.pid value")
+              true
+
+  # ── Severity boundary: all PRIORITY values 0-7 produce correct text ───────
+  - name: "journald: PRIORITY 0 (emerg)"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+          PRIORITY: "0"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.syslog.severity.code", 0)
+              assert_eq!(."attr.syslog.severity.text", "emerg")
+              true
+
+  - name: "journald: PRIORITY 1 (alert)"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+          PRIORITY: "1"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.syslog.severity.code", 1)
+              assert_eq!(."attr.syslog.severity.text", "alert")
+              true
+
+  - name: "journald: PRIORITY 2 (crit)"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+          PRIORITY: "2"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.syslog.severity.code", 2)
+              assert_eq!(."attr.syslog.severity.text", "crit")
+              true
+
+  - name: "journald: PRIORITY 4 (warning)"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+          PRIORITY: "4"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.syslog.severity.code", 4)
+              assert_eq!(."attr.syslog.severity.text", "warning")
+              true
+
+  - name: "journald: PRIORITY 5 (notice)"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+          PRIORITY: "5"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.syslog.severity.code", 5)
+              assert_eq!(."attr.syslog.severity.text", "notice")
+              true
+
+  - name: "journald: PRIORITY 7 (debug)"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+          PRIORITY: "7"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.syslog.severity.code", 7)
+              assert_eq!(."attr.syslog.severity.text", "debug")
+              true
+
+  - name: "journald: PRIORITY out of range sets code but no text"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+          PRIORITY: "99"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.syslog.severity.code", 99, "out-of-range code preserved")
+              assert!(is_null(."attr.syslog.severity.text"), "no text for out-of-range")
+              true
+
+  # ── Facility ─────────────────────────────────────────────────────────────
+  - name: "journald: SYSLOG_FACILITY is set as numeric code"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+          SYSLOG_FACILITY: "18"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              fac = ."attr.syslog.facility.code"
+              assert!(is_integer(fac), "facility.code is integer")
+              assert_eq!(fac, 18, "facility.code value")
+              true
+
+  - name: "journald: no SYSLOG_FACILITY → attr.syslog.facility.code absent"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(is_null(."attr.syslog.facility.code"))
+              true
+
+  # ── Message ID ────────────────────────────────────────────────────────────
+  - name: "journald: SYSLOG_MSGID mapped to attr.syslog.message_id"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+          SYSLOG_MSGID: "ID47"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.syslog.message_id", "ID47")
+              assert!(is_null(.SYSLOG_MSGID), "raw field deleted")
+              true
+
+  # ── Systemd unit ─────────────────────────────────────────────────────────
+  - name: "journald: _SYSTEMD_UNIT mapped"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+          _SYSTEMD_UNIT: "cron.service"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.systemd.unit", "cron.service")
+              assert!(is_null(._SYSTEMD_UNIT), "raw field deleted")
+              true
+
+  # ── Empty message ────────────────────────────────────────────────────────
+  - name: "journald: empty message produces empty _msg"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: ""
+          _HOSTNAME: "h"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._msg, "")
+              assert!(."attr.log.record.original" != null, "original still set for empty msg")
+              true
+
+  # ── No timestamp — now() fallback ────────────────────────────────────────
+  - name: "journald: missing timestamp uses now() and produces valid RFC3339"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              t = string!(._time)
+              parsed = parse_timestamp!(t, format: "%+")
+              assert!(parsed != null, "_time is valid RFC3339 even without input timestamp")
+              true
+
+  # ── No _HOSTNAME — get_hostname!() fallback ───────────────────────────────
+  - name: "journald: missing _HOSTNAME uses get_hostname!"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              h = ."host.name"
+              assert!(h != null, "host.name always set")
+              assert!(length(string!(h)) > 0, "host.name is non-empty")
+              true
+
+  # ── No SYSLOG_IDENTIFIER, no _COMM → service.name = unknown ──────────────
+  - name: "journald: no identifier and no _COMM → service.name unknown"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."service.name", "unknown")
+              assert!(is_null(."attr.process.executable.name"), "no _COMM → no executable.name")
+              true
+
+  # ── SYSLOG_IDENTIFIER takes precedence over _COMM ───────────────────────
+  - name: "journald: SYSLOG_IDENTIFIER overrides _COMM for service.name"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+          SYSLOG_IDENTIFIER: "myapp"
+          _COMM: "myapp.bin"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."service.name", "myapp", "SYSLOG_IDENTIFIER wins")
+              assert_eq!(."attr.process.executable.name", "myapp.bin", "_COMM → executable.name")
+              true
+
+  # ── Transport: stdout/stderr set iostream, others do not ────────────────────
+  - name: "journald: _TRANSPORT syslog does NOT set attr.log.iostream"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+          _TRANSPORT: "syslog"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.journald.transport", "syslog")
+              assert!(is_null(."attr.log.iostream"), "no iostream for syslog transport")
+              true
+
+  - name: "journald: _TRANSPORT kernel does NOT set attr.log.iostream"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+          _TRANSPORT: "kernel"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(."attr.journald.transport", "kernel")
+              assert!(is_null(."attr.log.iostream"), "no iostream for kernel transport")
+              true
+
+  - name: "journald: no _TRANSPORT → attr.journald.transport absent"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(is_null(."attr.journald.transport"))
+              assert!(is_null(."attr.log.iostream"))
+              true
+
+  # ── log.record.original: _COMM without SYSLOG_IDENTIFIER ──────────────────
+  - name: "journald: log.record.original uses _COMM as app when no SYSLOG_IDENTIFIER"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "error: something failed"
+          _HOSTNAME: "node-03"
+          _COMM: "postgres"
+          _PID: "4521"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              orig = string!(."attr.log.record.original")
+              assert!(contains(orig, "node-03"), "hostname")
+              assert!(contains(orig, "postgres"), "_COMM as app in original")
+              assert!(contains(orig, "4521"), "pid")
+              assert!(contains(orig, "error: something failed"), "message")
+              true
+
+  # ── Comprehensive: every field populated ──────────────────────────────────
+  - name: "journald: all fields populated — comprehensive check"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "Listening on 0.0.0.0:80"
+          _HOSTNAME: "web-01"
+          SYSLOG_IDENTIFIER: "nginx"
+          _COMM: "nginx"
+          _PID: "1234"
+          PRIORITY: "6"
+          SYSLOG_FACILITY: "1"
+          _SYSTEMD_UNIT: "nginx.service"
+          _TRANSPORT: "stdout"
+          SYSLOG_MSGID: "NGINX001"
+          timestamp: "2025-03-14T12:00:00Z"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._msg, "Listening on 0.0.0.0:80")
+              assert_eq!(."host.name", "web-01")
+              assert_eq!(."service.name", "nginx")
+              assert_eq!(."attr.process.pid", 1234)
+              assert_eq!(."attr.process.executable.name", "nginx")
+              assert_eq!(."attr.syslog.severity.code", 6)
+              assert_eq!(."attr.syslog.severity.text", "info")
+              assert_eq!(."attr.syslog.facility.code", 1)
+              assert_eq!(."attr.syslog.message_id", "NGINX001")
+              assert_eq!(."attr.systemd.unit", "nginx.service")
+              assert_eq!(."attr.journald.transport", "stdout")
+              assert_eq!(."attr.log.iostream", "stdout")
+              assert_eq!(."attr.log.source", "journald")
+              assert!(."attr.log.record.uid" != null, "uid set")
+              assert!(."attr.log.record.original" != null, "original set")
+              assert!(."attr.observed_timestamp" != null, "observed set")
+              assert!(starts_with(string!(._time), "2025-03-14"), "_time")
+              # Verify no raw fields leaked
+              forbidden = ["message", "_HOSTNAME", "SYSLOG_IDENTIFIER", "_COMM",
+                           "_PID", "PRIORITY", "SYSLOG_FACILITY", "_SYSTEMD_UNIT",
+                           "_TRANSPORT", "SYSLOG_MSGID"]
+              all_keys = keys(.)
+              leftovers = filter(forbidden) -> |_i, k| { includes(all_keys, k) }
+              assert_eq!(leftovers, [], "no raw fields leaked")
+              true
+
+  # ── Only attr.* keys at output (plus SemConv core fields) ─────────────────
+  - name: "journald: output only contains SemConv core fields and attr.*"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "m"
+          _HOSTNAME: "h"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              allowed = ["_msg", "_time", "service.name", "host.name",
+                         "attr.observed_timestamp", "attr.log.record.uid",
+                         "attr.log.record.original", "attr.log.source"]
+              all_keys = keys(.)
+              unexpected = filter(all_keys) -> |_i, key| {
+                !includes(allowed, key) && !starts_with(key, "attr.")
+              }
+              assert_eq!(unexpected, [], "no unexpected keys outside SemConv core + attr.*")
+              true
