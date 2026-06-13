@@ -1,0 +1,417 @@
+# Parse Omni control-plane JSON logs (Zap) → OTLP SemConv fields.
+#
+# Format (Zap logger, identical base to Zot but different field names):
+#   {"level":"info","ts":1781365341.424599,"caller":"qruntime/qruntime.go:320",
+#    "msg":"reconcile succeeded","component":"omni_runtime",...}
+#
+# Key differences vs Zot:
+#   ts      → Unix float seconds (NOT RFC3339 like Zot's "time")
+#   msg     → message body      (NOT "message" like Zot)
+#   no func field
+#
+# Pipeline (two-stage):
+#   Stage 1 — omni_zap_parse (common to all omni logs):
+#     ts            → .timestamp              (RFC3339, nanosecond precision)
+#     level         → .severity_number        (OTel SemConv)
+#     msg           → .body
+#     caller        → .attributes."code.file.path" + .attributes."code.line.number"
+#     (rest)        → .attributes.json        (JSON blob, renamed in stage 2)
+#
+#   Stage 2 — routed by body content:
+#     gRPC ("finished unary call …"):
+#       grpc.service          → .attributes."rpc.service"
+#       grpc.method           → .attributes."rpc.method"
+#       grpc.code             → .attributes."rpc.grpc.status_code"
+#       grpc.time_ms          → .attributes."omni.grpc.time_ms"
+#       peer.address          → .attributes."network.peer.address"
+#       user_agent            → .attributes."user_agent.original"
+#       authenticator.user_id → .attributes."enduser.id"         (SIEM)
+#       authenticator.role    → .attributes."enduser.role"       (SIEM)
+#       authenticator.identity    → .attributes."omni.authenticator.identity"
+#       authenticator.fingerprint → .attributes."omni.authenticator.fingerprint"
+#       error                 → .attributes."error.message"      (errors only)
+#       grpc.{request,response}.content → dropped (too large)
+#     reconcile ("reconcile …"):
+#       controller  → .attributes."omni.controller"
+#       namespace   → .attributes."omni.namespace"
+#       type        → .attributes."omni.resource.type"
+#       id          → .attributes."omni.resource.id"
+#       job         → .attributes."omni.job"
+#       busy        → .attributes."omni.busy"
+#       interval    → .attributes."omni.interval"   (optional)
+#       requeued    → .attributes."omni.requeued"   (optional)
+#     other: pass through with attributes.json → attributes."omni.json"
+#
+# Input: route_by_service.omni (from transforms.route.yaml).
+# Non-omni services are handled by unmatched_to_o11y in transforms.route.yaml.
+transforms:
+  # ── Stage 1: Common Zap JSON parse ────────────────────────────────────────
+  omni_zap_parse:
+    type: remap
+    inputs:
+      - route_by_service.omni
+    drop_on_error: false
+    source: |
+      if is_string(.body) {
+        parsed, _err = parse_json(.body)
+        if _err == null && is_object(parsed) {
+
+          # Timestamp: Zap encodes ts as Unix float seconds with sub-second precision.
+          # Decompose into integer seconds + nanosecond fractional to avoid float64
+          # loss when multiplying the full value by 1e9.
+          _ts_raw = del(parsed.ts)
+          if _ts_raw != null {
+            _ts_f   = to_float!(_ts_raw)
+            _ts_sec = floor(_ts_f)
+            _ts_ns  = to_int(_ts_sec) * 1000000000 + to_int(round((_ts_f - _ts_sec) * 1000000000.0))
+            _ts, _ts_err = from_unix_timestamp(_ts_ns, unit: "nanoseconds")
+            if _ts_err == null { .timestamp = format_timestamp!(_ts, format: "%+") }
+          }
+
+          # Severity — OTel SemConv numbers
+          _level_raw = del(parsed.level)
+          if _level_raw != null {
+            _l = downcase(to_string!(_level_raw))
+            _sev = {
+              "trace": 1, "debug": 5, "info": 9, "notice": 9,
+              "warning": 13, "warn": 13, "error": 17,
+              "critical": 21, "fatal": 21, "panic": 21
+            }
+            .severity_number = get(_sev, [_l]) ?? 9
+          }
+
+          # Message body
+          _msg = del(parsed.msg)
+          if _msg != null { .body = to_string!(_msg) }
+
+          # Caller: "path/to/file.go:N"
+          _caller = del(parsed.caller)
+          if _caller != null {
+            _parts = split(to_string!(_caller), ":", limit: 2)
+            .attributes."code.file.path" = _parts[0]
+            if length(_parts) > 1 {
+              _n, _n_err = to_int(_parts[1])
+              if _n_err == null { .attributes."code.line.number" = _n }
+            }
+          }
+
+          # Remaining fields → attributes.json (stage 2 will extract further)
+          if length(object!(parsed)) > 0 {
+            .attributes.json = encode_json(parsed)
+          }
+        }
+      }
+
+  # ── Stage 2: Route by log type ────────────────────────────────────────────
+  route_omni_type:
+    type: route
+    inputs:
+      - omni_zap_parse
+    route:
+      grpc: 'starts_with(string(.body) ?? "", "finished unary call") || starts_with(string(.body) ?? "", "finished streaming")'
+      reconcile: 'contains(string(.body) ?? "", "reconcile")'
+
+  # ── Stage 2a: gRPC call enrichment ────────────────────────────────────────
+  omni_grpc_to_semconv:
+    type: remap
+    inputs:
+      - route_omni_type.grpc
+    drop_on_error: false
+    source: |
+      _json_str = del(.attributes.json)
+      if _json_str != null {
+        parsed, _err = parse_json(to_string!(_json_str))
+        if _err == null && is_object(parsed) {
+
+          # RPC SemConv
+          _svc = del(parsed."grpc.service")
+          if _svc != null { .attributes."rpc.service" = to_string!(_svc) }
+
+          _method = del(parsed."grpc.method")
+          if _method != null { .attributes."rpc.method" = to_string!(_method) }
+
+          _code = del(parsed."grpc.code")
+          if _code != null { .attributes."rpc.grpc.status_code" = to_string!(_code) }
+
+          _ms = del(parsed."grpc.time_ms")
+          if _ms != null { .attributes."omni.grpc.time_ms" = _ms }
+
+          # Network SemConv (SIEM: tracks caller IP)
+          _peer = del(parsed."peer.address")
+          if _peer != null { .attributes."network.peer.address" = to_string!(_peer) }
+
+          _ua = del(parsed."user_agent")
+          if _ua != null { .attributes."user_agent.original" = to_string!(_ua) }
+
+          # Identity SemConv (SIEM: tracks authenticated principal)
+          _uid = del(parsed."authenticator.user_id")
+          if _uid != null { .attributes."enduser.id" = to_string!(_uid) }
+
+          _role = del(parsed."authenticator.role")
+          if _role != null { .attributes."enduser.role" = to_string!(_role) }
+
+          _identity = del(parsed."authenticator.identity")
+          if _identity != null { .attributes."omni.authenticator.identity" = to_string!(_identity) }
+
+          _fp = del(parsed."authenticator.fingerprint")
+          if _fp != null { .attributes."omni.authenticator.fingerprint" = to_string!(_fp) }
+
+          # Error message (present when gRPC code is not OK)
+          _error = del(parsed.error)
+          if _error != null { .attributes."error.message" = to_string!(_error) }
+
+          # Remaining fields (component, system, span.kind, grpc.start_time,
+          # grpc.request.content, grpc.response.content, …) kept for debugging.
+          if length(object!(parsed)) > 0 {
+            .attributes."omni.json" = encode_json(parsed)
+          }
+        }
+      }
+
+  # ── Stage 2b: Reconcile event enrichment ──────────────────────────────────
+  omni_reconcile_to_semconv:
+    type: remap
+    inputs:
+      - route_omni_type.reconcile
+    drop_on_error: false
+    source: |
+      _json_str = del(.attributes.json)
+      if _json_str != null {
+        parsed, _err = parse_json(to_string!(_json_str))
+        if _err == null && is_object(parsed) {
+
+          _ctrl = del(parsed.controller)
+          if _ctrl != null { .attributes."omni.controller" = to_string!(_ctrl) }
+
+          _ns = del(parsed.namespace)
+          if _ns != null { .attributes."omni.namespace" = to_string!(_ns) }
+
+          _type = del(parsed.type)
+          if _type != null { .attributes."omni.resource.type" = to_string!(_type) }
+
+          _id = del(parsed.id)
+          if _id != null { .attributes."omni.resource.id" = to_string!(_id) }
+
+          _job = del(parsed.job)
+          if _job != null { .attributes."omni.job" = to_string!(_job) }
+
+          _busy = del(parsed.busy)
+          if _busy != null { .attributes."omni.busy" = to_float!(_busy) }
+
+          _interval = del(parsed.interval)
+          if _interval != null { .attributes."omni.interval" = to_float!(_interval) }
+
+          _requeued = del(parsed.requeued)
+          if _requeued != null { .attributes."omni.requeued" = to_bool!(_requeued) }
+
+          # component and remaining fields kept for debugging.
+          if length(object!(parsed)) > 0 {
+            .attributes."omni.json" = encode_json(parsed)
+          }
+        }
+      }
+
+  # ── Stage 2c: Other omni logs (startup, misc) ─────────────────────────────
+  omni_other_to_semconv:
+    type: remap
+    inputs:
+      - route_omni_type._unmatched
+    drop_on_error: false
+    source: |
+      if exists(.attributes.json) {
+        .attributes."omni.json" = del(.attributes.json)
+      }
+
+  # ── Merge all omni paths → single sink input ──────────────────────────────
+  omni_to_o11y:
+    type: filter
+    inputs:
+      - omni_grpc_to_semconv
+      - omni_reconcile_to_semconv
+      - omni_other_to_semconv
+    condition:
+      type: vrl
+      source: "true"
+
+tests:
+  - name: "omni: parse reconcile succeeded — common fields + reconcile attrs"
+    inputs:
+      - insert_at: omni_zap_parse
+        type: log
+        log_fields:
+          body: '{"level":"info","ts":1781365341.6630929,"caller":"qruntime/qruntime.go:320","msg":"reconcile succeeded","component":"omni_runtime","controller":"ServiceAccountStatusController","namespace":"default","type":"Identities.omni.sidero.dev","id":"pve-01.pve.chezmoi.sh@infra-provider.serviceaccount.omni.sidero.dev","job":"reconcile","busy":0.014929727}'
+          timestamp: "2026-06-13T00:00:00Z"
+          observed_timestamp: "2026-06-13T00:00:00Z"
+          resources."service.name": omni
+          resources."host.name": omni
+    outputs:
+      - extract_from: omni_reconcile_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "reconcile succeeded")
+              assert_eq!(.severity_number, 9)
+              assert!(starts_with(string!(.timestamp), "2026-06-13T15:42:21"), "ts unix float → RFC3339")
+              assert_eq!(.attributes."code.file.path", "qruntime/qruntime.go")
+              assert_eq!(.attributes."code.line.number", 320)
+              assert_eq!(.attributes."omni.controller", "ServiceAccountStatusController")
+              assert_eq!(.attributes."omni.namespace", "default")
+              assert_eq!(.attributes."omni.resource.type", "Identities.omni.sidero.dev")
+              assert_eq!(.attributes."omni.resource.id", "pve-01.pve.chezmoi.sh@infra-provider.serviceaccount.omni.sidero.dev")
+              assert_eq!(.attributes."omni.job", "reconcile")
+              assert!(is_float(.attributes."omni.busy"))
+              assert!(is_null(.attributes.json), "attributes.json consumed by stage 2")
+              true
+
+  - name: "omni: parse gRPC finished unary call OK — RPC + network + identity"
+    inputs:
+      - insert_at: omni_zap_parse
+        type: log
+        log_fields:
+          body: '{"level":"info","ts":1781365341.8207052,"caller":"zap/options.go:212","msg":"finished unary call with code OK","component":"server","grpc.start_time":"2026-06-13T15:42:21Z","system":"grpc","span.kind":"server","grpc.service":"cosi.resource.State","grpc.method":"Update","peer.address":"10.0.1.211","user_agent":"grpc-go/1.81.0","authenticator.identity":"pve-01.pve.chezmoi.sh@infra-provider.serviceaccount.omni.sidero.dev","authenticator.user_id":"f4659ce8-1f80-4d55-9e7f-f97563987e58","authenticator.role":"InfraProvider","authenticator.fingerprint":"0c0e69d5740901a699e457a67222fac0f21c0fd3","grpc.response.content":{},"grpc.request.content":{},"grpc.code":"OK","grpc.time_ms":3.484}'
+          timestamp: "2026-06-13T00:00:00Z"
+          observed_timestamp: "2026-06-13T00:00:00Z"
+          resources."service.name": omni
+          resources."host.name": omni
+    outputs:
+      - extract_from: omni_grpc_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "finished unary call with code OK")
+              assert_eq!(.severity_number, 9)
+              assert_eq!(.attributes."rpc.service", "cosi.resource.State")
+              assert_eq!(.attributes."rpc.method", "Update")
+              assert_eq!(.attributes."rpc.grpc.status_code", "OK")
+              assert_eq!(.attributes."network.peer.address", "10.0.1.211")
+              assert_eq!(.attributes."user_agent.original", "grpc-go/1.81.0")
+              assert_eq!(.attributes."enduser.id", "f4659ce8-1f80-4d55-9e7f-f97563987e58")
+              assert_eq!(.attributes."enduser.role", "InfraProvider")
+              assert_eq!(.attributes."omni.authenticator.identity", "pve-01.pve.chezmoi.sh@infra-provider.serviceaccount.omni.sidero.dev")
+              assert_eq!(.attributes."omni.authenticator.fingerprint", "0c0e69d5740901a699e457a67222fac0f21c0fd3")
+              assert!(is_null(.attributes.json), "attributes.json consumed by stage 2")
+              # debug fields kept in omni.json — component, span.kind, grpc payloads, etc.
+              _blob = string(.attributes."omni.json") ?? ""
+              assert!(contains(_blob, "server"), "component kept in blob")
+              assert!(contains(_blob, "grpc.request.content"), "request payload kept for debug")
+              true
+
+  - name: "omni: gRPC error — error.message extracted + status code non-OK"
+    inputs:
+      - insert_at: omni_zap_parse
+        type: log
+        log_fields:
+          body: '{"level":"info","ts":1781365341.7246342,"caller":"zap/options.go:212","msg":"finished unary call with code AlreadyExists","component":"server","grpc.service":"cosi.resource.State","grpc.method":"Create","peer.address":"10.0.1.211","user_agent":"grpc-go/1.81.0","authenticator.user_id":"f4659ce8-1f80-4d55-9e7f-f97563987e58","authenticator.role":"InfraProvider","authenticator.fingerprint":"0c0e69d5740901a699e457a67222fac0f21c0fd3","error":"rpc error: code = AlreadyExists desc = failed to create","grpc.code":"AlreadyExists","grpc.time_ms":12.336}'
+          timestamp: "2026-06-13T00:00:00Z"
+          observed_timestamp: "2026-06-13T00:00:00Z"
+          resources."service.name": omni
+          resources."host.name": omni
+    outputs:
+      - extract_from: omni_grpc_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.attributes."rpc.grpc.status_code", "AlreadyExists")
+              assert_eq!(.attributes."error.message", "rpc error: code = AlreadyExists desc = failed to create")
+              assert!(is_float(.attributes."omni.grpc.time_ms"))
+              true
+
+  - name: "omni: reconcile with interval + requeued flags"
+    inputs:
+      - insert_at: omni_zap_parse
+        type: log
+        log_fields:
+          body: '{"level":"info","ts":1781365163.9819403,"caller":"qruntime/qruntime.go:320","msg":"reconcile succeeded","component":"omni_runtime","controller":"InfraProviderStatusController","namespace":"infra-provider","type":"InfraProviders.omni.sidero.dev","id":"pve-01.pve.chezmoi.sh","job":"reconcile","busy":0.002337357,"interval":31.992030344,"requeued":true}'
+          timestamp: "2026-06-13T00:00:00Z"
+          observed_timestamp: "2026-06-13T00:00:00Z"
+          resources."service.name": omni
+          resources."host.name": omni
+    outputs:
+      - extract_from: omni_reconcile_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(is_float(.attributes."omni.interval"))
+              assert_eq!(.attributes."omni.requeued", true)
+              assert_eq!(.attributes."omni.controller", "InfraProviderStatusController")
+              assert_eq!(.attributes."omni.resource.id", "pve-01.pve.chezmoi.sh")
+              true
+
+  - name: "omni: error level maps to OTel severity 17"
+    inputs:
+      - insert_at: omni_zap_parse
+        type: log
+        log_fields:
+          body: '{"level":"error","ts":1781365341.0,"caller":"pkg/main.go:1","msg":"something failed"}'
+          timestamp: "2026-06-13T00:00:00Z"
+          observed_timestamp: "2026-06-13T00:00:00Z"
+          resources."service.name": omni
+          resources."host.name": omni
+    outputs:
+      - extract_from: omni_other_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_number, 17)
+              assert_eq!(.body, "something failed")
+              true
+
+  - name: "omni: warn level maps to OTel severity 13"
+    inputs:
+      - insert_at: omni_zap_parse
+        type: log
+        log_fields:
+          body: '{"level":"warn","ts":1781365341.0,"caller":"pkg/main.go:1","msg":"something slow"}'
+          timestamp: "2026-06-13T00:00:00Z"
+          observed_timestamp: "2026-06-13T00:00:00Z"
+          resources."service.name": omni
+          resources."host.name": omni
+    outputs:
+      - extract_from: omni_other_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_number, 13)
+              true
+
+  - name: "omni: non-JSON body passes through unchanged"
+    inputs:
+      - insert_at: omni_zap_parse
+        type: log
+        log_fields:
+          body: "plain startup line"
+          timestamp: "2026-06-13T00:00:00Z"
+          observed_timestamp: "2026-06-13T00:00:00Z"
+          resources."service.name": omni
+          resources."host.name": omni
+    outputs:
+      - extract_from: omni_other_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "plain startup line")
+              assert!(is_null(.severity_number))
+              assert!(is_null(.attributes.json))
+              true
+
+  - name: "omni: startup log — other path, attributes.json renamed to omni.json"
+    inputs:
+      - insert_at: omni_zap_parse
+        type: log
+        log_fields:
+          body: '{"level":"info","ts":1781365341.424599,"caller":"omni/main.go:42","msg":"Omni started","version":"v0.44.0"}'
+          timestamp: "2026-06-13T00:00:00Z"
+          observed_timestamp: "2026-06-13T00:00:00Z"
+          resources."service.name": omni
+          resources."host.name": omni
+    outputs:
+      - extract_from: omni_other_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "Omni started")
+              assert_eq!(.attributes."code.file.path", "omni/main.go")
+              assert_eq!(.attributes."code.line.number", 42)
+              assert!(is_null(.attributes.json), "attributes.json renamed")
+              assert!(contains(string!(.attributes."omni.json"), "v0.44.0"), "version in omni.json")
+              true

@@ -1,4 +1,4 @@
-# Parse Zot OCI registry JSON logs → OTLP SemConv fields.
+# Parse Zot OCI registry JSON logs (Zap) → OTLP SemConv fields.
 #
 # Format: {"time":"RFC3339","level":"info","message":"...","component":"cve",
 #          "caller":"zotregistry.dev/zot/v2/pkg/.../file.go:141",
@@ -6,42 +6,43 @@
 #
 # HTTP API access logs add: clientIP, method, path, statusCode, latency, bodySize, headers.
 #
-# SemConv mapping:
-#   time        → .timestamp
-#   level       → .severity_number        (OTel SemConv severity values)
-#   message     → .body
-#   caller      → .attributes."code.file.path" + .attributes."code.line.number"
-#   func        → .attributes."code.function"
-#   method      → .attributes."http.request.method"   (HTTP API only)
-#   path        → .attributes."url.path"              (HTTP API only)
-#   statusCode  → .attributes."http.response.status_code"  (HTTP API only)
-#   bodySize    → .attributes."http.response.body.size"    (HTTP API only)
-#   clientIP    → .attributes."network.peer.address" + .attributes."network.peer.port"
-#   User-Agent  → .attributes."user_agent.original"   (HTTP API only)
-#   latency     → .attributes."zot.latency"           (HTTP API only)
+# Pipeline (three stages):
+#   Stage 1 — zot_zap_parse (common Zap fields):
+#     time      → .timestamp              (RFC3339)
+#     level     → .severity_number        (OTel SemConv)
+#     message   → .body
+#     caller    → .attributes."code.file.path" + .attributes."code.line.number"
+#     func      → .attributes."code.function"
+#     (rest)    → .attributes.json        (JSON blob, renamed in stage 2)
 #
-# Any unrecognised field left in parsed → .attributes."zot.*"
+#   Stage 2 — routed by body content:
+#     HTTP API ("HTTP API"):
+#       clientIP    → .attributes."network.peer.address" + .attributes."network.peer.port"
+#       method      → .attributes."http.request.method"
+#       path        → .attributes."url.path"
+#       statusCode  → .attributes."http.response.status_code"
+#       bodySize    → .attributes."http.response.body.size"
+#       User-Agent  → .attributes."user_agent.original"
+#       latency     → .attributes."zot.latency"
+#       (rest)      → .attributes."zot.json"
+#     other:
+#       (rest)      → .attributes."zot.json"  (direct rename of attributes.json)
 #
-# Unrecognised services (service.name != "zot") pass through unchanged.
+# Input: route_by_service.zot (from transforms.route.yaml).
+# Non-zot services are handled by unmatched_to_o11y in transforms.route.yaml.
 transforms:
-  route_zot:
-    type: route
-    inputs:
-      - journald_to_semconv
-    route:
-      zot: '.resources."service.name" == "zot"'
-
-  zot_to_o11y:
+  # ── Stage 1: Common Zap JSON parse ────────────────────────────────────────
+  zot_zap_parse:
     type: remap
     inputs:
-      - route_zot.zot
+      - route_by_service.zot
     drop_on_error: false
     source: |
       if is_string(.body) {
         parsed, _err = parse_json(.body)
         if _err == null && is_object(parsed) {
 
-          # Timestamp (RFC 3339)
+          # Timestamp (RFC3339 string in Zot, unlike omni's Unix float)
           _time = del(parsed.time)
           if _time != null {
             _ts, _ts_err = parse_timestamp(to_string!(_time), format: "%+")
@@ -51,82 +52,20 @@ transforms:
           # Severity — OTel SemConv numbers
           _level_raw = del(parsed.level)
           if _level_raw != null {
-            _level = downcase(to_string!(_level_raw))
+            _l = downcase(to_string!(_level_raw))
             _sev = {
               "trace": 1, "debug": 5, "info": 9, "information": 9, "notice": 9,
               "warning": 13, "warn": 13, "error": 17,
               "critical": 21, "fatal": 21, "alert": 21, "emergency": 21, "panic": 21
             }
-            .severity_number = get(_sev, [_level]) ?? 9
+            .severity_number = get(_sev, [_l]) ?? 9
           }
 
-          # Message body — save value for HTTP API detection below
-          _msg_raw = del(parsed.message)
-          _msg = if _msg_raw != null { to_string!(_msg_raw) } else { "" }
-          if _msg != "" { .body = _msg }
+          # Message body
+          _msg = del(parsed.message)
+          if _msg != null { .body = to_string!(_msg) }
 
-          # HTTP API access logs — Apache Combined Log Format body + OTel SemConv attrs
-          if _msg == "HTTP API" {
-            _clientIP   = del(parsed.clientIP)
-            _method     = del(parsed.method)
-            _path       = del(parsed.path)
-            _statusCode = del(parsed.statusCode)
-            _bodySize   = del(parsed.bodySize)
-            _headers    = del(parsed.headers)
-            _latency    = del(parsed.latency)
-
-            # CLF timestamp from _time (already captured above)
-            _ts_clf = if _time != null {
-              _t, _t_err = parse_timestamp(to_string!(_time), format: "%+")
-              if _t_err == null { "[" + format_timestamp!(_t, format: "%d/%b/%Y:%T %z") + "]" } else { "[-]" }
-            } else { "[-]" }
-
-            # Decompose clientIP → host + port (reused for body and attrs)
-            _cip_str = if _clientIP != null { to_string!(_clientIP) } else { "-" }
-            _cm, _cm_err = parse_regex(_cip_str, r'^(?P<ip>.+):(?P<port>\d+)$')
-            _ip = if _cm_err == null { _cm.ip } else { _cip_str }
-
-            # Referer and User-Agent from headers (reused for body and attrs)
-            _ref = "-"
-            _ua  = "-"
-            if _headers != null && is_object(_headers) {
-              _hdrs = object!(_headers)
-              _ref_arr = get(_hdrs, ["Referer"]) ?? null
-              if is_array(_ref_arr) { _ref = string(_ref_arr[0]) ?? "-" }
-              _ua_arr = get(_hdrs, ["User-Agent"]) ?? null
-              if is_array(_ua_arr)  { _ua  = string(_ua_arr[0]) ?? "-" }
-            }
-
-            # Size: "-" when absent or zero (Apache convention)
-            _size_int = if _bodySize != null { to_int!(_bodySize) } else { 0 }
-            _size_str = if _size_int > 0 { to_string(_size_int) } else { "-" }
-
-            # Pre-compute string tokens for the body (avoids ?? inside to_string! — E651)
-            _m_str = if _method     != null { to_string!(_method) }     else { "-" }
-            _p_str = if _path       != null { to_string!(_path) }       else { "-" }
-            _s_str = if _statusCode != null { to_string!(_statusCode) } else { "-" }
-
-            # Apache Combined Log Format (single expression — VRL requires + at end of line)
-            .body = _ip + " - - " + _ts_clf + " \"" + _m_str + " " + _p_str + " HTTP/1.1\" " + _s_str + " " + _size_str + " \"" + _ref + "\" \"" + _ua + "\""
-
-            if _method     != null { .attributes."http.request.method"       = to_string!(_method) }
-            if _path       != null { .attributes."url.path"                  = to_string!(_path) }
-            if _statusCode != null { .attributes."http.response.status_code" = _statusCode }
-            if _bodySize   != null { .attributes."http.response.body.size"   = _bodySize }
-            if _latency    != null { .attributes."zot.latency"               = to_string!(_latency) }
-            if _ua != "-"          { .attributes."user_agent.original"       = _ua }
-
-            if _cm_err == null {
-              .attributes."network.peer.address" = _cm.ip
-              _port, _port_err = to_int(_cm.port)
-              if _port_err == null { .attributes."network.peer.port" = _port }
-            } else if _clientIP != null {
-              .attributes."network.peer.address" = _cip_str
-            }
-          }
-
-          # caller: "pkg/file.go:141"
-          # → .attributes."code.file.path" + .attributes."code.line.number"
+          # Caller: "path/to/file.go:N"
           _caller = del(parsed.caller)
           if _caller != null {
             _parts = split(to_string!(_caller), ":", limit: 2)
@@ -137,104 +76,191 @@ transforms:
             }
           }
 
-          # func: fully-qualified Go function name
+          # func: fully-qualified Go function name (present in Zot, absent in omni)
           _func = del(parsed.func)
           if _func != null { .attributes."code.function" = to_string!(_func) }
 
-          # Any unrecognised field remaining → .attributes."zot.*"
-          for_each(object!(parsed)) -> |key, val| {
-            .attributes = set!(.attributes, ["zot." + key], val)
+          # Remaining fields → attributes.json for stage 2
+          if length(object!(parsed)) > 0 {
+            .attributes.json = encode_json(parsed)
           }
         }
       }
 
-  unmatched_to_o11y:
+  # ── Stage 2: Route by log type ────────────────────────────────────────────
+  route_zot_type:
+    type: route
+    inputs:
+      - zot_zap_parse
+    route:
+      http_api: '.body == "HTTP API"'
+
+  # ── Stage 2a: HTTP API enrichment ─────────────────────────────────────────
+  zot_http_to_semconv:
+    type: remap
+    inputs:
+      - route_zot_type.http_api
+    drop_on_error: false
+    source: |
+      _json_str = del(.attributes.json)
+      if _json_str != null {
+        parsed, _err = parse_json(to_string!(_json_str))
+        if _err == null && is_object(parsed) {
+
+          # Network SemConv (SIEM: tracks caller IP + port)
+          _cip = del(parsed.clientIP)
+          if _cip != null {
+            _cip_str = to_string!(_cip)
+            _cm, _cm_err = parse_regex(_cip_str, r'^(?P<ip>.+):(?P<port>\d+)$')
+            if _cm_err == null {
+              .attributes."network.peer.address" = _cm.ip
+              _port, _port_err = to_int(_cm.port)
+              if _port_err == null { .attributes."network.peer.port" = _port }
+            } else {
+              .attributes."network.peer.address" = _cip_str
+            }
+          }
+
+          # HTTP SemConv
+          _method = del(parsed.method)
+          if _method != null { .attributes."http.request.method" = to_string!(_method) }
+
+          _path = del(parsed.path)
+          if _path != null { .attributes."url.path" = to_string!(_path) }
+
+          _status = del(parsed.statusCode)
+          if _status != null { .attributes."http.response.status_code" = _status }
+
+          _size = del(parsed.bodySize)
+          if _size != null { .attributes."http.response.body.size" = _size }
+
+          _latency = del(parsed.latency)
+          if _latency != null { .attributes."zot.latency" = to_string!(_latency) }
+
+          # User-Agent from headers array
+          _headers = del(parsed.headers)
+          if _headers != null && is_object(_headers) {
+            _ua_arr = get(object!(_headers), ["User-Agent"]) ?? null
+            if is_array(_ua_arr) {
+              _ua = string(_ua_arr[0]) ?? null
+              if _ua != null { .attributes."user_agent.original" = _ua }
+            }
+          }
+
+          # Remaining fields (component, module, goroutine, …) kept for debugging
+          if length(object!(parsed)) > 0 {
+            .attributes."zot.json" = encode_json(parsed)
+          }
+        }
+      }
+
+  # ── Stage 2b: Other zot logs ──────────────────────────────────────────────
+  zot_other_to_semconv:
+    type: remap
+    inputs:
+      - route_zot_type._unmatched
+    drop_on_error: false
+    source: |
+      if exists(.attributes.json) {
+        .attributes."zot.json" = del(.attributes.json)
+      }
+
+  # ── Merge all zot paths → single sink input ───────────────────────────────
+  zot_to_o11y:
     type: filter
     inputs:
-      - route_zot._unmatched
+      - zot_http_to_semconv
+      - zot_other_to_semconv
     condition:
       type: vrl
       source: "true"
 
-# ─────────────────────────────────────────────────────────────────────────────
 tests:
-  - name: "zot: parse scrub start log"
+  - name: "zot: parse scrub start log — common fields + extra in zot.json"
     inputs:
-      - insert_at: zot_to_o11y
+      - insert_at: zot_zap_parse
         type: log
         log_fields:
           body: '{"time":"2026-06-07T12:30:23.731873299Z","level":"info","message":"executing scrub to check manifest/blob integrity for /var/lib/zot/docker.io/library/redis","caller":"zotregistry.dev/zot/v2/pkg/extensions/scrub/scrub.go:18","func":"zotregistry.dev/zot/v2/pkg/extensions/scrub.RunScrubRepo","goroutine":44}'
+          timestamp: "2026-06-07T00:00:00Z"
+          observed_timestamp: "2026-06-07T00:00:00Z"
           resources."service.name": zot
           resources."host.name": oci-registry
     outputs:
-      - extract_from: zot_to_o11y
+      - extract_from: zot_other_to_semconv
         conditions:
           - type: vrl
             source: |
               assert_eq!(.body, "executing scrub to check manifest/blob integrity for /var/lib/zot/docker.io/library/redis")
-              assert!(starts_with(string(.timestamp) ?? "", "2026-06-07"))
+              assert!(starts_with(string!(.timestamp), "2026-06-07"))
               assert_eq!(.severity_number, 9)
               assert_eq!(.attributes."code.file.path", "zotregistry.dev/zot/v2/pkg/extensions/scrub/scrub.go")
               assert_eq!(.attributes."code.line.number", 18)
               assert_eq!(.attributes."code.function", "zotregistry.dev/zot/v2/pkg/extensions/scrub.RunScrubRepo")
-              assert_eq!(.attributes."zot.goroutine", 44)
+              assert!(is_null(.attributes.json), "attributes.json renamed")
+              assert!(contains(string!(.attributes."zot.json"), "44"), "goroutine in zot.json blob")
               true
 
-  - name: "zot: parse blob/manifest ok log"
+  - name: "zot: parse blob/manifest ok log — extra fields in zot.json"
     inputs:
-      - insert_at: zot_to_o11y
+      - insert_at: zot_zap_parse
         type: log
         log_fields:
           body: '{"time":"2026-06-07T12:30:47.44485218Z","level":"info","message":"blobs/manifest ok","image":"docker.io/longhornio/longhorn-engine","tag":"v1.11.2","status":"ok","component":"scrub","caller":"zotregistry.dev/zot/v2/pkg/extensions/scrub/scrub.go:31","func":"zotregistry.dev/zot/v2/pkg/extensions/scrub.RunScrubRepo","goroutine":42}'
+          timestamp: "2026-06-07T00:00:00Z"
+          observed_timestamp: "2026-06-07T00:00:00Z"
           resources."service.name": zot
           resources."host.name": oci-registry
     outputs:
-      - extract_from: zot_to_o11y
+      - extract_from: zot_other_to_semconv
         conditions:
           - type: vrl
             source: |
               assert_eq!(.body, "blobs/manifest ok")
               assert_eq!(.severity_number, 9)
-              assert_eq!(.attributes."zot.image", "docker.io/longhornio/longhorn-engine")
-              assert_eq!(.attributes."zot.tag", "v1.11.2")
-              assert_eq!(.attributes."zot.status", "ok")
-              assert_eq!(.attributes."zot.component", "scrub")
+              _blob = string!(.attributes."zot.json")
+              assert!(contains(_blob, "longhorn-engine"), "image in zot.json")
+              assert!(contains(_blob, "v1.11.2"), "tag in zot.json")
+              assert!(contains(_blob, "scrub"), "component in zot.json")
               true
 
   - name: "zot: error level maps to OTel severity 17"
     inputs:
-      - insert_at: zot_to_o11y
+      - insert_at: zot_zap_parse
         type: log
         log_fields:
           body: '{"time":"2026-06-06T10:00:00Z","level":"error","message":"failed to pull image","component":"sync","caller":"pkg/sync.go:88","goroutine":12}'
+          timestamp: "2026-06-06T00:00:00Z"
+          observed_timestamp: "2026-06-06T00:00:00Z"
           resources."service.name": zot
           resources."host.name": oci-registry
     outputs:
-      - extract_from: zot_to_o11y
+      - extract_from: zot_other_to_semconv
         conditions:
           - type: vrl
             source: |
               assert_eq!(.severity_number, 17)
-              assert_eq!(.attributes."zot.component", "sync")
-              assert_eq!(.attributes."zot.goroutine", 12)
+              assert_eq!(.body, "failed to pull image")
+              assert!(contains(string!(.attributes."zot.json"), "sync"), "component in zot.json")
               true
 
-  - name: "zot: HTTP API log extracts OTel HTTP SemConv fields"
+  - name: "zot: HTTP API log — OTel HTTP SemConv fields extracted"
     inputs:
-      - insert_at: zot_to_o11y
+      - insert_at: zot_zap_parse
         type: log
         log_fields:
-          body: '{"time":"2026-06-07T14:45:22.351982392Z","level":"info","message":"HTTP API","module":"http","component":"session","clientIP":"127.0.0.1:43204","method":"GET","path":"/metrics","statusCode":200,"latency":"0s","bodySize":17619,"headers":{"Accept":["text/plain"],"Accept-Encoding":["identity"],"User-Agent":["Vector/0.55.0 (x86_64-unknown-linux-gnu)"]},"caller":"zotregistry.dev/zot/v2/pkg/api/session.go:92","func":"zotregistry.dev/zot/v2/pkg/api.SessionLogger.func1.1","goroutine":116}'
+          body: '{"time":"2026-06-07T14:45:22.351982392Z","level":"info","message":"HTTP API","module":"http","component":"session","clientIP":"127.0.0.1:43204","method":"GET","path":"/metrics","statusCode":200,"latency":"0s","bodySize":17619,"headers":{"Accept":["text/plain"],"User-Agent":["Vector/0.55.0 (x86_64-unknown-linux-gnu)"]},"caller":"zotregistry.dev/zot/v2/pkg/api/session.go:92","func":"zotregistry.dev/zot/v2/pkg/api.SessionLogger.func1.1","goroutine":116}'
+          timestamp: "2026-06-07T00:00:00Z"
+          observed_timestamp: "2026-06-07T00:00:00Z"
           resources."service.name": zot
           resources."host.name": oci-registry
     outputs:
-      - extract_from: zot_to_o11y
+      - extract_from: zot_http_to_semconv
         conditions:
           - type: vrl
             source: |
-              assert!(contains(string!(.body), "127.0.0.1 - - ["), "CLF: host and timestamp bracket")
-              assert!(contains(string!(.body), "] \"GET /metrics HTTP/1.1\" 200 17619"), "CLF: request line, status, size")
-              assert!(contains(string!(.body), "\"Vector/0.55.0 (x86_64-unknown-linux-gnu)\""), "CLF: User-Agent")
+              assert_eq!(.body, "HTTP API")
+              assert_eq!(.severity_number, 9)
               assert_eq!(.attributes."http.request.method", "GET")
               assert_eq!(.attributes."url.path", "/metrics")
               assert_eq!(.attributes."http.response.status_code", 200)
@@ -243,24 +269,29 @@ tests:
               assert_eq!(.attributes."network.peer.port", 43204)
               assert_eq!(.attributes."user_agent.original", "Vector/0.55.0 (x86_64-unknown-linux-gnu)")
               assert_eq!(.attributes."zot.latency", "0s")
-              assert_eq!(.attributes."zot.module", "http")
-              assert_eq!(.attributes."zot.component", "session")
-              assert_eq!(.severity_number, 9)
+              assert!(is_null(.attributes.json), "attributes.json consumed")
+              # component, module, goroutine kept in blob for debug
+              _blob = string!(.attributes."zot.json")
+              assert!(contains(_blob, "session"), "component in blob")
+              assert!(contains(_blob, "http"), "module in blob")
               true
 
   - name: "zot: non-JSON body passes through unchanged"
     inputs:
-      - insert_at: zot_to_o11y
+      - insert_at: zot_zap_parse
         type: log
         log_fields:
           body: "plain startup line"
+          timestamp: "2026-06-07T00:00:00Z"
+          observed_timestamp: "2026-06-07T00:00:00Z"
           resources."service.name": zot
           resources."host.name": oci-registry
     outputs:
-      - extract_from: zot_to_o11y
+      - extract_from: zot_other_to_semconv
         conditions:
           - type: vrl
             source: |
               assert_eq!(.body, "plain startup line")
               assert!(is_null(.severity_number))
+              assert!(is_null(.attributes."zot.json"))
               true
