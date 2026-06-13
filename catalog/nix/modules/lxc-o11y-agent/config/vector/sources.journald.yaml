@@ -45,9 +45,7 @@ transforms:
       _message   = string(.message) ?? ""
       _host      = string(._HOSTNAME) ?? get_hostname!()
       _comm      = string(._COMM) ?? null
-      _app       = if .SYSLOG_IDENTIFIER != null { .SYSLOG_IDENTIFIER }
-                   else if _comm != null { _comm }
-                   else { null }
+      _app       = if .SYSLOG_IDENTIFIER != null { .SYSLOG_IDENTIFIER } else if _comm != null { _comm } else { null }
       _pid       = ._PID
       _priority  = .PRIORITY
       _facility  = .SYSLOG_FACILITY
@@ -65,16 +63,24 @@ transforms:
         "log.source":          "journald"
       }
 
-      # Severity: journald PRIORITY is numeric 0-7 (emerg…debug)
+      # Severity: journald PRIORITY is numeric 0-7 (emerg…debug).
+      # Stored verbatim in attributes for querying, and also mapped to the
+      # OTLP-style root fields severity_number / severity_text.
+      _severity_number = null
+      _severity_text   = null
       if _priority != null {
         p = to_int!(_priority)
         _attrs."syslog.severity.code" = p
         if p >= 0 && p <= 7 {
-          _sev = if p == 0 { "emerg" } else if p == 1 { "alert" }
-                 else if p == 2 { "crit" } else if p == 3 { "err" }
-                 else if p == 4 { "warning" } else if p == 5 { "notice" }
-                 else if p == 6 { "info" } else { "debug" }
+          _sev = if p == 0 { "emerg" } else if p == 1 { "alert" } else if p == 2 { "crit" } else if p == 3 { "err" } else if p == 4 { "warning" } else if p == 5 { "notice" } else if p == 6 { "info" } else { "debug" }
           _attrs."syslog.severity.text" = _sev
+
+          # Map syslog priority to OTel severity_number.
+          # Uses the granular FATAL sub-levels: emerg=FATAL4(24), alert=FATAL3(23),
+          # crit=FATAL(21). Derived text matches severity_text_values[number - 1].
+          # emerg=FATAL4(24), alert=FATAL3(23), crit=FATAL(21), err=ERROR(17), warning=WARN(13), notice/info=INFO(9), debug=DEBUG(5)
+          _severity_number = if p == 0 { 24 } else if p == 1 { 23 } else if p == 2 { 21 } else if p == 3 { 17 } else if p == 4 { 13 } else if p <= 6 { 9 } else { 5 }
+          _severity_text   = if p == 0 { "FATAL4" } else if p == 1 { "FATAL3" } else if p == 2 { "FATAL" } else if p == 3 { "ERROR" } else if p == 4 { "WARN" } else if p <= 6 { "INFO" } else { "DEBUG" }
         }
       }
 
@@ -102,6 +108,10 @@ transforms:
           "host.name":    _host
         },
         "attributes": _attrs
+      }
+      if _severity_number != null {
+        .severity_number = _severity_number
+        .severity_text   = _severity_text
       }
 
 # Unit tests — run with: vector test sources.journald.yaml
@@ -250,7 +260,7 @@ tests:
               assert!(contains(orig, "kernel panic"))
               true
 
-  - name: "journald: PRIORITY 6 = info severity"
+  - name: "journald: PRIORITY 6 = info → OTel INFO"
     inputs:
       - insert_at: journald_to_semconv
         type: log
@@ -265,9 +275,11 @@ tests:
             source: |
               assert_eq!(."attributes"."syslog.severity.text", "info")
               assert_eq!(."attributes"."syslog.severity.code", 6)
+              assert_eq!(.severity_number, 9,     "INFO → 9")
+              assert_eq!(.severity_text,   "INFO", "INFO text")
               true
 
-  - name: "journald: PRIORITY 4 = warning severity"
+  - name: "journald: PRIORITY 4 = warning → OTel WARN"
     inputs:
       - insert_at: journald_to_semconv
         type: log
@@ -282,6 +294,109 @@ tests:
             source: |
               assert_eq!(."attributes"."syslog.severity.text", "warning")
               assert_eq!(."attributes"."syslog.severity.code", 4)
+              assert_eq!(.severity_number, 13,    "WARN → 13")
+              assert_eq!(.severity_text,   "WARN", "WARN text")
+              true
+
+  - name: "journald: PRIORITY 0 (emerg) → FATAL4 (24)"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "system unusable"
+          _HOSTNAME: "h"
+          PRIORITY: "0"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_number, 24,      "emerg → FATAL4 24")
+              assert_eq!(.severity_text,   "FATAL4", "FATAL4 text")
+              true
+
+  - name: "journald: PRIORITY 1 (alert) → FATAL3 (23)"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "action required"
+          _HOSTNAME: "h"
+          PRIORITY: "1"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_number, 23,      "alert → FATAL3 23")
+              assert_eq!(.severity_text,   "FATAL3", "FATAL3 text")
+              true
+
+  - name: "journald: PRIORITY 2 (crit) → FATAL (21)"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "critical condition"
+          _HOSTNAME: "h"
+          PRIORITY: "2"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_number, 21,     "crit → FATAL 21")
+              assert_eq!(.severity_text,   "FATAL", "FATAL text")
+              true
+
+  - name: "journald: PRIORITY 3 (err) → OTel ERROR"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "disk error"
+          _HOSTNAME: "h"
+          PRIORITY: "3"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_number, 17,      "err → ERROR 17")
+              assert_eq!(.severity_text,   "ERROR", "ERROR text")
+              true
+
+  - name: "journald: PRIORITY 7 (debug) → OTel DEBUG"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "verbose output"
+          _HOSTNAME: "h"
+          PRIORITY: "7"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_number, 5,       "debug → DEBUG 5")
+              assert_eq!(.severity_text,   "DEBUG", "DEBUG text")
+              true
+
+  - name: "journald: no PRIORITY → no severity root fields"
+    inputs:
+      - insert_at: journald_to_semconv
+        type: log
+        log_fields:
+          message: "msg"
+          _HOSTNAME: "h"
+    outputs:
+      - extract_from: journald_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(is_null(.severity_number), "no severity_number without PRIORITY")
+              assert!(is_null(.severity_text),   "no severity_text without PRIORITY")
               true
 
   - name: "journald: stdout transport sets log.iostream"
