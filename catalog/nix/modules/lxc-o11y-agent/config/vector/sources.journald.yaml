@@ -6,6 +6,12 @@
 # SemConv validation is intentionally absent — it runs on the o11y side
 # (validate_semconv in the o11y Vector pipeline).
 #
+# Resources and attributes are built as nested objects (e.g. service.name lives
+# at resources.service.name, an object path — NOT a flat "service.name" key).
+# VictoriaLogs flattens nested JSON to dot-separated field names on ingest, so
+# the final queryable fields are identical while the Vector-side representation
+# stays idiomatic.
+#
 # Field mapping (journald → OTLP-style):
 #   MESSAGE           → body
 #   timestamp         → timestamp                         (RFC3339 string)
