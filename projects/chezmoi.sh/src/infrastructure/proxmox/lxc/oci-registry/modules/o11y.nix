@@ -5,7 +5,6 @@
 { ... }: {
   catalog.lxcAgent = {
     enable = true;
-    clusterName = "oci-registry";
 
     o11y = {
       logsAddress = "o11y.chezmoi.sh:6000";

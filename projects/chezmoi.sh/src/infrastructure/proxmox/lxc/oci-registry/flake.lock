@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "arcane-catalog": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "path": "../../../../../../catalog/nix",
+        "type": "path"
+      },
+      "original": {
+        "path": "../../../../../../catalog/nix",
+        "type": "path"
+      },
+      "parent": []
+    },
     "nixlib": {
       "locked": {
         "lastModified": 1736643958,
@@ -53,6 +69,7 @@
     },
     "root": {
       "inputs": {
+        "arcane-catalog": "arcane-catalog",
         "nixos-generators": "nixos-generators",
         "nixpkgs": "nixpkgs"
       }

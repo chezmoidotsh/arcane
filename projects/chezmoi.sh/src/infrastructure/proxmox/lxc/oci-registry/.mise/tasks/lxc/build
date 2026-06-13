@@ -12,8 +12,8 @@ CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
     exit 1
   }
 
-ver=$(grep -m1 'version = "v' "${CONFIG_ROOT}/flake.nix" |
-  grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+ver=$(grep -m1 'imageVersion = "' "${CONFIG_ROOT}/flake.nix" |
+  sed 's/.*imageVersion = "\(.*\)".*/\1/')
 echo "[INFO] Building oci-proxy.${ver}-amd64..." >&2
 
 export CLOUDFLARE_API_TOKEN

@@ -6,7 +6,7 @@
 # [USAGE] arg "<pve_host>" help="Hostname or IP of the Proxmox node (e.g. pve.lan)"
 # [USAGE] arg "<source_id>" help="VMID of the running container"
 # [USAGE] arg "<target_id>" help="VMID for the new container (must not already exist)"
-# [USAGE] flag "-V --version <version>" help="Image version (e.g. v2.1.17) — auto-detected from flake if omitted"
+# [USAGE] flag "-V --version <version>" help="Image version (e.g. 2026.06.07) — auto-detected from flake if omitted"
 # [USAGE] flag "-y --yes" help="Skip confirmation prompts"
 
 set -euo pipefail
@@ -24,11 +24,11 @@ HOST_UID=100994
 
 # --- Resolve version and template -------------------------------------------
 if [[ -z ${version} ]]; then
-  version="v$(grep -m1 'version = "v' "${CONFIG_ROOT}/flake.nix" |
-    grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
+  version="$(grep -m1 'imageVersion = "' "${CONFIG_ROOT}/flake.nix" |
+    sed 's/.*imageVersion = "\(.*\)".*/\1/')"
   echo "[INFO] Auto-detected version: ${version}" >&2
 fi
-template="oci-proxy.${version#v}-amd64.tar.xz"
+template="oci-proxy.${version}-amd64.tar.xz"
 template_path="/var/lib/vz/template/cache/${template}"
 
 # ============================================================================
@@ -180,7 +180,7 @@ echo === system ===
 systemctl is-system-running
 systemctl --failed --no-legend
 echo === stack ===
-for u in caddy zot; do
+for u in caddy zot lxc-agent; do
   printf \"%-20s %s\\n\" \"\$u\" \"\$(systemctl is-active \$u)\"
 done
 '" >&2
