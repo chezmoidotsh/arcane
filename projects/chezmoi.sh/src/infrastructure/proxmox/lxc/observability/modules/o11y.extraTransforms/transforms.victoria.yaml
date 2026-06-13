@@ -36,10 +36,10 @@ transforms:
           if exists(parsed.caller) {
             _parts = split(to_string!(parsed.caller), ":", limit: 2)
             if !is_object(.attributes) { .attributes = {} }
-            ."attributes"."code.filepath" = _parts[0]
+            .attributes.code.filepath = _parts[0]
             if length(_parts) > 1 {
               _n, _n_err = to_int(_parts[1])
-              if _n_err == null { ."attributes"."code.lineno" = _n }
+              if _n_err == null { .attributes.code.lineno = _n }
             }
           }
         }
@@ -55,8 +55,10 @@ tests:
           timestamp: "2026-06-06T16:13:27.882Z"
           observed_timestamp: "2026-06-06T16:13:27.882Z"
           resources:
-            service.name: victoria-metrics
-            host.name: o11y
+            service:
+              name: victoria-metrics
+            host:
+              name: o11y
     outputs:
       - extract_from: victoria_to_o11y
         conditions:
@@ -65,8 +67,8 @@ tests:
               assert_eq!(.body, "started VictoriaMetrics in 0.289 seconds")
               assert_eq!(.severity_number, 9)
               assert!(is_null(.severity_text))
-              assert_eq!(."attributes"."code.filepath", "VictoriaMetrics/app/victoria-metrics/main.go")
-              assert_eq!(."attributes"."code.lineno", 106)
+              assert_eq!(.attributes.code.filepath, "VictoriaMetrics/app/victoria-metrics/main.go")
+              assert_eq!(.attributes.code.lineno, 106)
 
   - name: "victoria: parse vmalert rule group log"
     inputs:
@@ -77,8 +79,10 @@ tests:
           timestamp: "2026-06-06T16:13:48.003Z"
           observed_timestamp: "2026-06-06T16:13:48.003Z"
           resources:
-            service.name: vmalert
-            host.name: o11y
+            service:
+              name: vmalert
+            host:
+              name: o11y
     outputs:
       - extract_from: victoria_to_o11y
         conditions:
@@ -87,7 +91,7 @@ tests:
               assert!(starts_with(string!(.body), "group"))
               assert_eq!(.severity_number, 9)
               assert!(is_null(.severity_text))
-              assert_eq!(."attributes"."code.lineno", 535)
+              assert_eq!(.attributes.code.lineno, 535)
 
   - name: "victoria: warn level maps to OTel severity 13"
     inputs:
@@ -98,8 +102,10 @@ tests:
           timestamp: "2026-06-06T10:00:00Z"
           observed_timestamp: "2026-06-06T10:00:00Z"
           resources:
-            service.name: victoria-metrics
-            host.name: o11y
+            service:
+              name: victoria-metrics
+            host:
+              name: o11y
     outputs:
       - extract_from: victoria_to_o11y
         conditions:
@@ -117,8 +123,10 @@ tests:
           timestamp: "2026-06-06T10:00:00Z"
           observed_timestamp: "2026-06-06T10:00:00Z"
           resources:
-            service.name: victoria-logs
-            host.name: o11y
+            service:
+              name: victoria-logs
+            host:
+              name: o11y
     outputs:
       - extract_from: victoria_to_o11y
         conditions:

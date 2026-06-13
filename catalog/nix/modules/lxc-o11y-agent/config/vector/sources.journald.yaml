@@ -63,11 +63,10 @@ transforms:
       _pid_str  = if _pid != null { to_string!(_pid) } else { "-" }
 
       # ── Build attributes object ─────────────────────────────────────────
-      _attrs = {
-        "log.record.uid":      uuid_v4(),
-        "log.record.original": _ts_fmt + " " + _host + " " + _svc_name + "[" + _pid_str + "]: " + _message,
-        "log.source":          "journald"
-      }
+      _attrs = {}
+      _attrs.log.record.uid      = uuid_v4()
+      _attrs.log.record.original = _ts_fmt + " " + _host + " " + _svc_name + "[" + _pid_str + "]: " + _message
+      _attrs.log.source          = "journald"
 
       # Severity: journald PRIORITY is numeric 0-7 (emerg…debug).
       # Stored verbatim in attributes for querying, and also mapped to the
@@ -75,10 +74,10 @@ transforms:
       _severity_number = null
       if _priority != null {
         p = to_int!(_priority)
-        _attrs."syslog.severity.code" = p
+        _attrs.syslog.severity.code = p
         if p >= 0 && p <= 7 {
           _sev = if p == 0 { "emerg" } else if p == 1 { "alert" } else if p == 2 { "crit" } else if p == 3 { "err" } else if p == 4 { "warning" } else if p == 5 { "notice" } else if p == 6 { "info" } else { "debug" }
-          _attrs."syslog.severity.text" = _sev
+          _attrs.syslog.severity.text = _sev
 
           # Map syslog priority to OTel severity_number.
           # Uses the granular FATAL sub-levels: emerg=FATAL4(24), alert=FATAL3(23),
@@ -88,17 +87,17 @@ transforms:
         }
       }
 
-      if _facility != null { _attrs."syslog.facility.code"        = to_int!(_facility)    }
-      if _pid != null      { _attrs."process.pid"                 = to_int!(_pid)         }
-      if _unit != null     { _attrs."systemd.unit"                = to_string!(_unit)     }
-      if _msgid != null    { _attrs."syslog.message_id"           = to_string!(_msgid)    }
-      if _comm != null     { _attrs."process.executable.name"     = _comm                 }
+      if _facility != null { _attrs.syslog.facility.code    = to_int!(_facility)    }
+      if _pid != null      { _attrs.process.pid             = to_int!(_pid)         }
+      if _unit != null     { _attrs.systemd.unit            = to_string!(_unit)     }
+      if _msgid != null    { _attrs.syslog.message_id       = to_string!(_msgid)    }
+      if _comm != null     { _attrs.process.executable.name = _comm                 }
 
       if _transport != null {
-        _attrs."journald.transport" = to_string!(_transport)
+        _attrs.journald.transport = to_string!(_transport)
         t = to_string!(_transport)
         if t == "stdout" || t == "stderr" {
-          _attrs."log.iostream" = t
+          _attrs.log.iostream = t
         }
       }
 
@@ -108,8 +107,8 @@ transforms:
         "timestamp":          _ts_fmt,
         "observed_timestamp": format_timestamp!(now(), format: "%+"),
         "resources": {
-          "service.name": _svc_name,
-          "host.name":    _host
+          "service": {"name": _svc_name},
+          "host":    {"name": _host}
         },
         "attributes": _attrs
       }
@@ -139,16 +138,16 @@ tests:
           - type: vrl
             source: |
               assert_eq!(.body, "Started NetworkManager.service", "body")
-              assert_eq!(."resources"."host.name", "pve-01", "host.name")
-              assert_eq!(."resources"."service.name", "systemd", "service.name")
-              assert_eq!(."attributes"."process.pid", 1, "process.pid is int")
-              assert_eq!(."attributes"."syslog.message_id", "SERVICE", "syslog.message_id")
-              assert_eq!(."attributes"."syslog.severity.text", "info", "severity.text")
-              assert_eq!(."attributes"."syslog.severity.code", 6, "severity.code")
-              assert_eq!(."attributes"."syslog.facility.code", 3, "facility.code")
-              assert_eq!(."attributes"."systemd.unit", "NetworkManager.service", "systemd.unit")
-              assert_eq!(."attributes"."journald.transport", "journal", "transport")
-              assert!(."attributes"."log.record.uid" != null, "uid set")
+              assert_eq!(.resources.host.name, "pve-01", "host.name")
+              assert_eq!(.resources.service.name, "systemd", "service.name")
+              assert_eq!(.attributes.process.pid, 1, "process.pid is int")
+              assert_eq!(.attributes.syslog.message_id, "SERVICE", "syslog.message_id")
+              assert_eq!(.attributes.syslog.severity.text, "info", "severity.text")
+              assert_eq!(.attributes.syslog.severity.code, 6, "severity.code")
+              assert_eq!(.attributes.syslog.facility.code, 3, "facility.code")
+              assert_eq!(.attributes.systemd.unit, "NetworkManager.service", "systemd.unit")
+              assert_eq!(.attributes.journald.transport, "journal", "transport")
+              assert!(.attributes.log.record.uid != null, "uid set")
               assert!(.observed_timestamp != null, "observed_timestamp set")
               true
 
@@ -198,7 +197,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              uid = string!(."attributes"."log.record.uid")
+              uid = string!(.attributes.log.record.uid)
               assert!(length(uid) == 36, "UUID length is 36")
               assert!(contains(uid, "-"), "UUID contains hyphens")
               true
@@ -217,7 +216,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              orig = string!(."attributes"."log.record.original")
+              orig = string!(.attributes.log.record.original)
               assert!(contains(orig, "pve-01"), "hostname in original")
               assert!(contains(orig, "sshd"), "appname in original")
               assert!(contains(orig, "9876"), "pid in original")
@@ -237,12 +236,12 @@ tests:
           - type: vrl
             source: |
               assert_eq!(.body, "kernel: oom-kill")
-              assert_eq!(."resources"."host.name", "pve-02")
-              assert_eq!(."resources"."service.name", "unknown", "no SYSLOG_IDENTIFIER → unknown")
-              assert!(is_null(."attributes"."process.pid"))
-              assert!(is_null(."attributes"."syslog.message_id"))
-              assert!(is_null(."attributes"."syslog.facility.code"))
-              assert!(."attributes"."log.record.uid" != null, "uid always set")
+              assert_eq!(.resources.host.name, "pve-02")
+              assert_eq!(.resources.service.name, "unknown", "no SYSLOG_IDENTIFIER → unknown")
+              assert!(is_null(.attributes.process.pid))
+              assert!(is_null(.attributes.syslog.message_id))
+              assert!(is_null(.attributes.syslog.facility.code))
+              assert!(.attributes.log.record.uid != null, "uid always set")
               true
 
   - name: "journald: log.record.original uses dash placeholder for missing pid"
@@ -258,7 +257,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              orig = string!(."attributes"."log.record.original")
+              orig = string!(.attributes.log.record.original)
               assert!(contains(orig, "kernel[-]:"), "missing pid → -")
               assert!(contains(orig, "kernel panic"))
               true
@@ -276,8 +275,8 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(."attributes"."syslog.severity.text", "info")
-              assert_eq!(."attributes"."syslog.severity.code", 6)
+              assert_eq!(.attributes.syslog.severity.text, "info")
+              assert_eq!(.attributes.syslog.severity.code, 6)
               assert_eq!(.severity_number, 9, "INFO → 9")
               assert!(is_null(.severity_text), "severity_text derived in to_vlogs_format")
               true
@@ -295,8 +294,8 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(."attributes"."syslog.severity.text", "warning")
-              assert_eq!(."attributes"."syslog.severity.code", 4)
+              assert_eq!(.attributes.syslog.severity.text, "warning")
+              assert_eq!(.attributes.syslog.severity.code, 4)
               assert_eq!(.severity_number, 13, "WARN → 13")
               assert!(is_null(.severity_text), "severity_text derived in to_vlogs_format")
               true
@@ -416,8 +415,8 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(."attributes"."journald.transport", "stdout")
-              assert_eq!(."attributes"."log.iostream", "stdout")
+              assert_eq!(.attributes.journald.transport, "stdout")
+              assert_eq!(.attributes.log.iostream, "stdout")
               true
 
   - name: "journald: journal transport does not set log.iostream"
@@ -433,8 +432,8 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(."attributes"."journald.transport", "journal")
-              assert!(is_null(."attributes"."log.iostream"))
+              assert_eq!(.attributes.journald.transport, "journal")
+              assert!(is_null(.attributes.log.iostream))
               true
 
   - name: "journald: _COMM used as service.name fallback when SYSLOG_IDENTIFIER absent"
@@ -450,8 +449,8 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(."resources"."service.name", "bash")
-              assert_eq!(."attributes"."process.executable.name", "bash")
+              assert_eq!(.resources.service.name, "bash")
+              assert_eq!(.attributes.process.executable.name, "bash")
               true
 
   - name: "journald: process.pid stored as integer"
@@ -467,7 +466,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              pid = ."attributes"."process.pid"
+              pid = .attributes.process.pid
               assert!(is_integer(pid), "process.pid is integer")
               assert_eq!(pid, 42)
               true

@@ -7,7 +7,7 @@ transforms:
     inputs:
       - journald_to_semconv
     route:
-      omni: '.resources."service.name" == "omni"'
+      omni: '.resources.service.name == "omni"'
 
   unmatched_to_o11y:
     type: filter
@@ -26,13 +26,13 @@ tests:
           body: "other service log"
           timestamp: "2026-06-13T00:00:00Z"
           observed_timestamp: "2026-06-13T00:00:00Z"
-          resources."service.name": caddy
-          resources."host.name": omni
+          resources.service.name: caddy
+          resources.host.name: omni
     outputs:
       - extract_from: unmatched_to_o11y
         conditions:
           - type: vrl
             source: |
               assert_eq!(.body, "other service log")
-              assert_eq!(."resources"."service.name", "caddy")
+              assert_eq!(.resources.service.name, "caddy")
               true

@@ -9,8 +9,8 @@
 #   body               — mandatory, string: the log body
 #   timestamp          — mandatory, RFC3339: event time
 #   observed_timestamp — mandatory, RFC3339: first-observed time
-#   resources          — optional, object: OTel resource attributes (flat keys)
-#   attributes         — optional, object: per-log attributes (flat keys)
+#   resources          — optional, object: OTel resource attributes (nested objects)
+#   attributes         — optional, object: per-log attributes (nested objects)
 #   severity_text      — optional, string: severity label
 #   severity_number    — optional, integer 0-24: OTel severity number
 #   trace_id           — optional, string: trace correlation
@@ -32,7 +32,7 @@
 #   attributes.error.original_service = "<original service.name if available>"
 #   attributes.error.original_event = "<JSON-encoded original event>"
 #
-# Query in VictoriaLogs (after VLogs transform flattens resources/attributes):
+# Query in VictoriaLogs (VictoriaLogs flattens nested JSON on ingest):
 #   service.name:vector-ingest attr.error.type:semconv_invalid
 
 transforms:
@@ -131,8 +131,8 @@ transforms:
       if length(errors) > 0 {
         original_ts    = string(.timestamp) ?? format_timestamp!(now(), format: "%+")
         original_obs   = string(.observed_timestamp) ?? original_ts
-        original_svc   = string(."resources"."service.name") ?? "unknown"
-        original_host  = ."resources"."host.name"
+        original_svc   = string(.resources.service.name) ?? "unknown"
+        original_host  = .resources.host.name
         original_event = encode_json(.)
 
         . = {
@@ -140,14 +140,16 @@ transforms:
           "timestamp":          original_ts,
           "observed_timestamp": original_obs,
           "resources": {
-            "service.name": "vector-ingest",
-            "host.name":    original_host
+            "service": {"name": "vector-ingest"},
+            "host":    {"name": original_host}
           },
           "attributes": {
-            "error.type":             "semconv_invalid",
-            "error.messages":         join!(errors, "; "),
-            "error.original_service": original_svc,
-            "error.original_event":   original_event
+            "error": {
+              "type":             "semconv_invalid",
+              "messages":         join!(errors, "; "),
+              "original_service": original_svc,
+              "original_event":   original_event
+            }
           }
         }
       }
@@ -163,10 +165,13 @@ tests:
           timestamp: "2024-01-15T10:30:00+00:00"
           observed_timestamp: "2024-01-15T10:30:00.001+00:00"
           resources:
-            service.name: "auth-service"
-            host.name: "k8s-node-01"
+            service:
+              name: "auth-service"
+            host:
+              name: "k8s-node-01"
           attributes:
-            user.id: "u-123"
+            user:
+              id: "u-123"
           trace_id: "aabbccdd11223344"
           span_id: "55667788"
           severity_text: "info"
@@ -177,10 +182,10 @@ tests:
           - type: vrl
             source: |
               assert_eq!(.body, "User logged in")
-              assert_eq!(."resources"."service.name", "auth-service")
-              assert_eq!(."attributes"."user.id", "u-123")
+              assert_eq!(.resources.service.name, "auth-service")
+              assert_eq!(.attributes.user.id, "u-123")
               assert_eq!(.trace_id, "aabbccdd11223344")
-              assert!(is_null(."attributes"."error.type"))
+              assert!(is_null(.attributes.error.type))
 
   - name: "validate: missing body triggers error"
     inputs:
@@ -190,14 +195,15 @@ tests:
           timestamp: "2024-01-15T10:30:00+00:00"
           observed_timestamp: "2024-01-15T10:30:00.001+00:00"
           resources:
-            service.name: "svc"
+            service:
+              name: "svc"
     outputs:
       - extract_from: validate_semconv
         conditions:
           - type: vrl
             source: |
               assert_eq!(.body, "ingestion_validation_error")
-              assert!(contains(string!(."attributes"."error.messages"), "missing mandatory field: body"))
+              assert!(contains(string!(.attributes.error.messages), "missing mandatory field: body"))
 
   - name: "validate: missing timestamp triggers error"
     inputs:
@@ -212,7 +218,7 @@ tests:
           - type: vrl
             source: |
               assert_eq!(.body, "ingestion_validation_error")
-              assert!(contains(string!(."attributes"."error.messages"), "missing mandatory field: timestamp"))
+              assert!(contains(string!(.attributes.error.messages), "missing mandatory field: timestamp"))
 
   - name: "validate: missing observed_timestamp triggers error"
     inputs:
@@ -227,7 +233,7 @@ tests:
           - type: vrl
             source: |
               assert_eq!(.body, "ingestion_validation_error")
-              assert!(contains(string!(."attributes"."error.messages"), "missing mandatory field: observed_timestamp"))
+              assert!(contains(string!(.attributes.error.messages), "missing mandatory field: observed_timestamp"))
 
   - name: "validate: unknown root field triggers error"
     inputs:
@@ -245,7 +251,7 @@ tests:
           - type: vrl
             source: |
               assert_eq!(.body, "ingestion_validation_error")
-              msgs = string!(."attributes"."error.messages")
+              msgs = string!(.attributes.error.messages)
               assert!(contains(msgs, "unknown root fields"))
               assert!(contains(msgs, "unknown_field"))
               assert!(contains(msgs, "another_bad"))
@@ -263,7 +269,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              msgs = string!(."attributes"."error.messages")
+              msgs = string!(.attributes.error.messages)
               assert!(contains(msgs, "missing mandatory field: body"))
               assert!(contains(msgs, "missing mandatory field: observed_timestamp"))
               assert!(contains(msgs, "unknown root fields"))
@@ -283,7 +289,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert!(is_null(."attributes"."error.type"))
+              assert!(is_null(.attributes.error.type))
 
   - name: "validate: severity_number = 24 is valid (FATAL4)"
     inputs:
@@ -299,7 +305,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert!(is_null(."attributes"."error.type"))
+              assert!(is_null(.attributes.error.type))
 
   - name: "validate: severity_number = 25 is out of range"
     inputs:
@@ -315,7 +321,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert!(contains(string!(."attributes"."error.messages"), "severity_number out of range"))
+              assert!(contains(string!(.attributes.error.messages), "severity_number out of range"))
 
   - name: "validate: severity_text not a string triggers error"
     inputs:
@@ -331,7 +337,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert!(contains(string!(."attributes"."error.messages"), "severity_text must be a string"))
+              assert!(contains(string!(.attributes.error.messages), "severity_text must be a string"))
 
   - name: "validate: resources not an object triggers error"
     inputs:
@@ -347,7 +353,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert!(contains(string!(."attributes"."error.messages"), "resources must be an object"))
+              assert!(contains(string!(.attributes.error.messages), "resources must be an object"))
 
   - name: "validate: attributes not an object triggers error"
     inputs:
@@ -363,7 +369,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert!(contains(string!(."attributes"."error.messages"), "attributes must be an object"))
+              assert!(contains(string!(.attributes.error.messages), "attributes must be an object"))
 
   - name: "validate: error record is OTLP-style with vector-ingest service"
     inputs:
@@ -374,18 +380,20 @@ tests:
           timestamp: "2024-01-15T10:30:00+00:00"
           observed_timestamp: "2024-01-15T10:30:00.001+00:00"
           resources:
-            service.name: "my-svc"
-            host.name: "my-host"
+            service:
+              name: "my-svc"
+            host:
+              name: "my-host"
           bad_field: "oops"
     outputs:
       - extract_from: validate_semconv
         conditions:
           - type: vrl
             source: |
-              assert_eq!(."resources"."service.name", "vector-ingest")
-              assert_eq!(."resources"."host.name", "my-host")
-              assert_eq!(."attributes"."error.type", "semconv_invalid")
-              assert_eq!(."attributes"."error.original_service", "my-svc")
+              assert_eq!(.resources.service.name, "vector-ingest")
+              assert_eq!(.resources.host.name, "my-host")
+              assert_eq!(.attributes.error.type, "semconv_invalid")
+              assert_eq!(.attributes.error.original_service, "my-svc")
 
   - name: "validate: timestamp preserved in error record"
     inputs:
@@ -418,7 +426,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert!(is_null(."attributes"."error.type"))
+              assert!(is_null(.attributes.error.type))
               assert_eq!(.trace_id, "00112233445566778899aabbccddeeff")
               assert_eq!(.span_id, "0011223344556677")
 
@@ -437,7 +445,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert!(is_null(."attributes"."error.type"))
+              assert!(is_null(.attributes.error.type))
 
   - name: "validate: severity_text mismatch with severity_number triggers error"
     inputs:
@@ -454,7 +462,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              msgs = string!(."attributes"."error.messages")
+              msgs = string!(.attributes.error.messages)
               assert!(contains(msgs, "does not match severity_number"))
               assert!(contains(msgs, "expected \"INFO\""))
 
@@ -472,7 +480,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              msgs = string!(."attributes"."error.messages")
+              msgs = string!(.attributes.error.messages)
               assert!(contains(msgs, "is not a valid SemConv severity name"))
 
   - name: "validate: severity_text without severity_number is valid when in list"
@@ -489,7 +497,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert!(is_null(."attributes"."error.type"))
+              assert!(is_null(.attributes.error.type))
 
   - name: "validate: original event JSON-encoded in error attributes"
     inputs:
@@ -500,13 +508,14 @@ tests:
           timestamp: "2024-01-15T10:30:00+00:00"
           observed_timestamp: "2024-01-15T10:30:00.001+00:00"
           resources:
-            service.name: "my-svc"
+            service:
+              name: "my-svc"
           bad_field: "oops"
     outputs:
       - extract_from: validate_semconv
         conditions:
           - type: vrl
             source: |
-              orig = string!(."attributes"."error.original_event")
+              orig = string!(.attributes.error.original_event)
               assert!(contains(orig, "original message"))
               assert!(contains(orig, "my-svc"))

@@ -11,22 +11,22 @@
 #     time      → .timestamp              (RFC3339)
 #     level     → .severity_number        (OTel SemConv)
 #     message   → .body
-#     caller    → .attributes."code.file.path" + .attributes."code.line.number"
-#     func      → .attributes."code.function"
+#     caller    → .attributes.code.file.path + .attributes.code.line.number
+#     func      → .attributes.code.function
 #     (rest)    → .attributes.json        (JSON blob, renamed in stage 2)
 #
 #   Stage 2 — routed by body content:
 #     HTTP API ("HTTP API"):
-#       clientIP    → .attributes."network.peer.address" + .attributes."network.peer.port"
-#       method      → .attributes."http.request.method"
-#       path        → .attributes."url.path"
-#       statusCode  → .attributes."http.response.status_code"
-#       bodySize    → .attributes."http.response.body.size"
-#       User-Agent  → .attributes."user_agent.original"
-#       latency     → .attributes."zot.latency"
-#       (rest)      → .attributes."zot.json"
+#       clientIP    → .attributes.network.peer.address + .attributes.network.peer.port
+#       method      → .attributes.http.request.method
+#       path        → .attributes.url.path
+#       statusCode  → .attributes.http.response.status_code
+#       bodySize    → .attributes.http.response.body.size
+#       User-Agent  → .attributes.user_agent.original
+#       latency     → .attributes.zot.latency
+#       (rest)      → .attributes.zot.json
 #     other:
-#       (rest)      → .attributes."zot.json"  (direct rename of attributes.json)
+#       (rest)      → .attributes.zot.json  (direct rename of attributes.json)
 #
 # Input: route_by_service.zot (from transforms.route.yaml).
 # Non-zot services are handled by unmatched_to_o11y in transforms.route.yaml.
@@ -69,16 +69,16 @@ transforms:
           _caller = del(parsed.caller)
           if _caller != null {
             _parts = split(to_string!(_caller), ":", limit: 2)
-            .attributes."code.file.path" = _parts[0]
+            .attributes.code.file.path = _parts[0]
             if length(_parts) > 1 {
               _n, _n_err = to_int(_parts[1])
-              if _n_err == null { .attributes."code.line.number" = _n }
+              if _n_err == null { .attributes.code.line.number = _n }
             }
           }
 
           # func: fully-qualified Go function name (present in Zot, absent in omni)
           _func = del(parsed.func)
-          if _func != null { .attributes."code.function" = to_string!(_func) }
+          if _func != null { .attributes.code.function = to_string!(_func) }
 
           # Remaining fields → attributes.json for stage 2
           if length(object!(parsed)) > 0 {
@@ -113,29 +113,29 @@ transforms:
             _cip_str = to_string!(_cip)
             _cm, _cm_err = parse_regex(_cip_str, r'^(?P<ip>.+):(?P<port>\d+)$')
             if _cm_err == null {
-              .attributes."network.peer.address" = _cm.ip
+              .attributes.network.peer.address = _cm.ip
               _port, _port_err = to_int(_cm.port)
-              if _port_err == null { .attributes."network.peer.port" = _port }
+              if _port_err == null { .attributes.network.peer.port = _port }
             } else {
-              .attributes."network.peer.address" = _cip_str
+              .attributes.network.peer.address = _cip_str
             }
           }
 
           # HTTP SemConv
           _method = del(parsed.method)
-          if _method != null { .attributes."http.request.method" = to_string!(_method) }
+          if _method != null { .attributes.http.request.method = to_string!(_method) }
 
           _path = del(parsed.path)
-          if _path != null { .attributes."url.path" = to_string!(_path) }
+          if _path != null { .attributes.url.path = to_string!(_path) }
 
           _status = del(parsed.statusCode)
-          if _status != null { .attributes."http.response.status_code" = _status }
+          if _status != null { .attributes.http.response.status_code = _status }
 
           _size = del(parsed.bodySize)
-          if _size != null { .attributes."http.response.body.size" = _size }
+          if _size != null { .attributes.http.response.body.size = _size }
 
           _latency = del(parsed.latency)
-          if _latency != null { .attributes."zot.latency" = to_string!(_latency) }
+          if _latency != null { .attributes.zot.latency = to_string!(_latency) }
 
           # User-Agent from headers array
           _headers = del(parsed.headers)
@@ -143,13 +143,13 @@ transforms:
             _ua_arr = get(object!(_headers), ["User-Agent"]) ?? null
             if is_array(_ua_arr) {
               _ua = string(_ua_arr[0]) ?? null
-              if _ua != null { .attributes."user_agent.original" = _ua }
+              if _ua != null { .attributes.user_agent.original = _ua }
             }
           }
 
           # Remaining fields (component, module, goroutine, …) kept for debugging
           if length(object!(parsed)) > 0 {
-            .attributes."zot.json" = encode_json(parsed)
+            .attributes.zot.json = encode_json(parsed)
           }
         }
       }
@@ -162,7 +162,7 @@ transforms:
     drop_on_error: false
     source: |
       if exists(.attributes.json) {
-        .attributes."zot.json" = del(.attributes.json)
+        .attributes.zot.json = del(.attributes.json)
       }
 
   # ── Merge all zot paths → single sink input ───────────────────────────────
@@ -184,8 +184,8 @@ tests:
           body: '{"time":"2026-06-07T12:30:23.731873299Z","level":"info","message":"executing scrub to check manifest/blob integrity for /var/lib/zot/docker.io/library/redis","caller":"zotregistry.dev/zot/v2/pkg/extensions/scrub/scrub.go:18","func":"zotregistry.dev/zot/v2/pkg/extensions/scrub.RunScrubRepo","goroutine":44}'
           timestamp: "2026-06-07T00:00:00Z"
           observed_timestamp: "2026-06-07T00:00:00Z"
-          resources."service.name": zot
-          resources."host.name": oci-registry
+          resources.service.name: zot
+          resources.host.name: oci-registry
     outputs:
       - extract_from: zot_other_to_semconv
         conditions:
@@ -194,11 +194,11 @@ tests:
               assert_eq!(.body, "executing scrub to check manifest/blob integrity for /var/lib/zot/docker.io/library/redis")
               assert!(starts_with(string!(.timestamp), "2026-06-07"))
               assert_eq!(.severity_number, 9)
-              assert_eq!(.attributes."code.file.path", "zotregistry.dev/zot/v2/pkg/extensions/scrub/scrub.go")
-              assert_eq!(.attributes."code.line.number", 18)
-              assert_eq!(.attributes."code.function", "zotregistry.dev/zot/v2/pkg/extensions/scrub.RunScrubRepo")
+              assert_eq!(.attributes.code.file.path, "zotregistry.dev/zot/v2/pkg/extensions/scrub/scrub.go")
+              assert_eq!(.attributes.code.line.number, 18)
+              assert_eq!(.attributes.code.function, "zotregistry.dev/zot/v2/pkg/extensions/scrub.RunScrubRepo")
               assert!(is_null(.attributes.json), "attributes.json renamed")
-              assert!(contains(string!(.attributes."zot.json"), "44"), "goroutine in zot.json blob")
+              assert!(contains(string!(.attributes.zot.json), "44"), "goroutine in zot.json blob")
               true
 
   - name: "zot: parse blob/manifest ok log — extra fields in zot.json"
@@ -209,8 +209,8 @@ tests:
           body: '{"time":"2026-06-07T12:30:47.44485218Z","level":"info","message":"blobs/manifest ok","image":"docker.io/longhornio/longhorn-engine","tag":"v1.11.2","status":"ok","component":"scrub","caller":"zotregistry.dev/zot/v2/pkg/extensions/scrub/scrub.go:31","func":"zotregistry.dev/zot/v2/pkg/extensions/scrub.RunScrubRepo","goroutine":42}'
           timestamp: "2026-06-07T00:00:00Z"
           observed_timestamp: "2026-06-07T00:00:00Z"
-          resources."service.name": zot
-          resources."host.name": oci-registry
+          resources.service.name: zot
+          resources.host.name: oci-registry
     outputs:
       - extract_from: zot_other_to_semconv
         conditions:
@@ -218,7 +218,7 @@ tests:
             source: |
               assert_eq!(.body, "blobs/manifest ok")
               assert_eq!(.severity_number, 9)
-              _blob = string!(.attributes."zot.json")
+              _blob = string!(.attributes.zot.json)
               assert!(contains(_blob, "longhorn-engine"), "image in zot.json")
               assert!(contains(_blob, "v1.11.2"), "tag in zot.json")
               assert!(contains(_blob, "scrub"), "component in zot.json")
@@ -232,8 +232,8 @@ tests:
           body: '{"time":"2026-06-06T10:00:00Z","level":"error","message":"failed to pull image","component":"sync","caller":"pkg/sync.go:88","goroutine":12}'
           timestamp: "2026-06-06T00:00:00Z"
           observed_timestamp: "2026-06-06T00:00:00Z"
-          resources."service.name": zot
-          resources."host.name": oci-registry
+          resources.service.name: zot
+          resources.host.name: oci-registry
     outputs:
       - extract_from: zot_other_to_semconv
         conditions:
@@ -241,7 +241,7 @@ tests:
             source: |
               assert_eq!(.severity_number, 17)
               assert_eq!(.body, "failed to pull image")
-              assert!(contains(string!(.attributes."zot.json"), "sync"), "component in zot.json")
+              assert!(contains(string!(.attributes.zot.json), "sync"), "component in zot.json")
               true
 
   - name: "zot: HTTP API log — OTel HTTP SemConv fields extracted"
@@ -252,8 +252,8 @@ tests:
           body: '{"time":"2026-06-07T14:45:22.351982392Z","level":"info","message":"HTTP API","module":"http","component":"session","clientIP":"127.0.0.1:43204","method":"GET","path":"/metrics","statusCode":200,"latency":"0s","bodySize":17619,"headers":{"Accept":["text/plain"],"User-Agent":["Vector/0.55.0 (x86_64-unknown-linux-gnu)"]},"caller":"zotregistry.dev/zot/v2/pkg/api/session.go:92","func":"zotregistry.dev/zot/v2/pkg/api.SessionLogger.func1.1","goroutine":116}'
           timestamp: "2026-06-07T00:00:00Z"
           observed_timestamp: "2026-06-07T00:00:00Z"
-          resources."service.name": zot
-          resources."host.name": oci-registry
+          resources.service.name: zot
+          resources.host.name: oci-registry
     outputs:
       - extract_from: zot_http_to_semconv
         conditions:
@@ -261,17 +261,17 @@ tests:
             source: |
               assert_eq!(.body, "HTTP API")
               assert_eq!(.severity_number, 9)
-              assert_eq!(.attributes."http.request.method", "GET")
-              assert_eq!(.attributes."url.path", "/metrics")
-              assert_eq!(.attributes."http.response.status_code", 200)
-              assert_eq!(.attributes."http.response.body.size", 17619)
-              assert_eq!(.attributes."network.peer.address", "127.0.0.1")
-              assert_eq!(.attributes."network.peer.port", 43204)
-              assert_eq!(.attributes."user_agent.original", "Vector/0.55.0 (x86_64-unknown-linux-gnu)")
-              assert_eq!(.attributes."zot.latency", "0s")
+              assert_eq!(.attributes.http.request.method, "GET")
+              assert_eq!(.attributes.url.path, "/metrics")
+              assert_eq!(.attributes.http.response.status_code, 200)
+              assert_eq!(.attributes.http.response.body.size, 17619)
+              assert_eq!(.attributes.network.peer.address, "127.0.0.1")
+              assert_eq!(.attributes.network.peer.port, 43204)
+              assert_eq!(.attributes.user_agent.original, "Vector/0.55.0 (x86_64-unknown-linux-gnu)")
+              assert_eq!(.attributes.zot.latency, "0s")
               assert!(is_null(.attributes.json), "attributes.json consumed")
               # component, module, goroutine kept in blob for debug
-              _blob = string!(.attributes."zot.json")
+              _blob = string!(.attributes.zot.json)
               assert!(contains(_blob, "session"), "component in blob")
               assert!(contains(_blob, "http"), "module in blob")
               true
@@ -284,8 +284,8 @@ tests:
           body: "plain startup line"
           timestamp: "2026-06-07T00:00:00Z"
           observed_timestamp: "2026-06-07T00:00:00Z"
-          resources."service.name": zot
-          resources."host.name": oci-registry
+          resources.service.name: zot
+          resources.host.name: oci-registry
     outputs:
       - extract_from: zot_other_to_semconv
         conditions:
@@ -293,5 +293,5 @@ tests:
             source: |
               assert_eq!(.body, "plain startup line")
               assert!(is_null(.severity_number))
-              assert!(is_null(.attributes."zot.json"))
+              assert!(is_null(.attributes.zot.json))
               true
