@@ -6,7 +6,7 @@
 #   :80 / :443 (public)   — TLS via Cloudflare DNS-01 ACME for o11y.chezmoi.sh
 #   tailnet (tsnet)       — caddy-tailscale (embedded Tailscale, userspace)
 #                           TLS issued automatically by Tailscale's ACME
-#                           reachable at observability.<tailnet>.ts.net
+#                           reachable at o11y-ep.<tailnet>.ts.net
 #
 # caddy-tailscale embeds a tsnet node directly in the Caddy process — there is
 # no kernel TUN device and no separate tailscaled daemon. The LXC gains tailnet
@@ -27,8 +27,8 @@
 #     issuance fails until the file is present (the `-` prefix tolerates it).
 #   secrets.tailscaleOauthKey — Tailscale OAuth client secret (tag:o11y). When
 #     empty the tsnet listener starts but the node cannot join the tailnet.
-#     tsnet state lives at /var/lib/caddy — a rebuild wipes it, but the OAuth
-#     key re-registers the node on the next start (use a non-ephemeral key).
+#     tsnet state lives at /var/lib/victoria/caddy (mp0 — persisted across
+#     upgrades). TLS certificates are also stored there.
 # ─────────────────────────────────────────────────────────────────────────────
 { lib, pkgs, secrets ? { }, ... }:
 
@@ -63,8 +63,8 @@ in
         tailscale {
           auth_key {env.TS_AUTHKEY}
           tags      tag:o11y
-          observability {
-            hostname observability
+          o11y-ep {
+            hostname o11y-ep
           }
         }
       }
@@ -126,11 +126,11 @@ in
       }
 
       # ─── HTTPS — Tailscale virtual listener (tsnet) ────────────────────────
-      # Reachable at observability.<tailnet>.ts.net from tailnet members.
+      # Reachable at o11y-ep.<tailnet>.ts.net from tailnet members.
       # TLS is issued automatically by Tailscale's ACME for *.ts.net — no
       # Cloudflare token needed on this path.
       https:// {
-        bind tailscale/observability
+        bind tailscale/o11y-ep
         tls {
           get_certificate tailscale
         }
