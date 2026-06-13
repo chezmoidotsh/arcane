@@ -200,6 +200,12 @@ in
 
         serviceConfig = {
           ExecStart = startScript;
+          # Pin a clean journald SYSLOG_IDENTIFIER. Without it, stdout-captured
+          # logs inherit the basename of argv[0] — the wrapper script's store
+          # path, /nix/store/<hash>-infra-provider-start — which catalog.lxcAgent
+          # then maps to resources.service.name. Pinning makes logs show a stable
+          # service.name = "omni-infra-provider-proxmox".
+          SyslogIdentifier = "omni-infra-provider-proxmox";
           User = "infra-provider";
           Group = "infra-provider";
           Type = "simple";
