@@ -142,10 +142,48 @@ ssh "root@${pve_host}" pct start "${target_id}"
 echo "" >&2
 echo "✓  CT ${target_id} (${source_hostname}) is starting with ${template}" >&2
 echo "" >&2
-echo "Next steps:" >&2
-echo "  1. Wait for Caddy TLS certificate:" >&2
-echo "       ssh root@${pve_host} pct exec ${target_id} -- journalctl -u caddy -f" >&2
-echo "  2. Verify ingest/query endpoint is responding:" >&2
-echo "       curl -sSf https://o11y.chezmoi.sh/health" >&2
-echo "  3. Cut over — stop the old container:" >&2
-echo "       ssh root@${pve_host} pct stop ${source_id}" >&2
+echo "  Verify before cutting over:" >&2
+echo "    journalctl: ssh root@${pve_host} pct exec ${target_id} -- journalctl -u caddy -f" >&2
+echo "    health:     curl -sSf https://o11y.chezmoi.sh/health" >&2
+echo "" >&2
+
+# --- Interactive cutover ----------------------------------------------------
+read -r -p "[?] Stop old CT ${source_id} to cut over? [y/N] " confirm_cutover
+if [[ ! ${confirm_cutover} =~ ^[Yy]$ ]]; then
+  echo "[INFO] Both containers are running. Cut over manually when ready." >&2
+  exit 0
+fi
+
+echo "[>] ssh root@${pve_host} pct stop ${source_id}" >&2
+ssh "root@${pve_host}" pct stop "${source_id}"
+
+read -r -p "[?] CT ${target_id} is working correctly? [y/N] " confirm_ok
+if [[ ${confirm_ok} =~ ^[Yy]$ ]]; then
+  # Detach persistent volumes from source CT so pct destroy only removes rootfs.
+  # mp0/mp1 are now owned by CT ${target_id}; without --delete, lvremove would
+  # attempt to remove live volumes and fail with "filesystem in use".
+  delete_args=(--delete mp0)
+  [[ -n ${mp1_mount} ]] && delete_args+=(--delete mp1)
+  echo "[>] ssh root@${pve_host} pct set ${source_id} ${delete_args[*]}" >&2
+  ssh "root@${pve_host}" pct set "${source_id}" "${delete_args[@]}"
+  echo "[>] ssh root@${pve_host} pct destroy ${source_id}" >&2
+  ssh "root@${pve_host}" pct destroy "${source_id}"
+  echo "" >&2
+  echo "✓  Upgrade complete. CT ${target_id} (${source_hostname}) is live." >&2
+else
+  # Rollback: restart source, stop target. Detach persistent volumes from the
+  # target config before offering to destroy it — same lvremove issue applies.
+  echo "[INFO] Rolling back — starting CT ${source_id}, stopping CT ${target_id}..." >&2
+  echo "[>] ssh root@${pve_host} pct start ${source_id}" >&2
+  ssh "root@${pve_host}" pct start "${source_id}"
+  echo "[>] ssh root@${pve_host} pct stop ${target_id}" >&2
+  ssh "root@${pve_host}" pct stop "${target_id}"
+  echo "" >&2
+  echo "✗  Rolled back to CT ${source_id}. CT ${target_id} is stopped." >&2
+  echo "   Once CT ${source_id} is confirmed healthy, destroy the failed CT:" >&2
+  delete_args=(--delete mp0)
+  [[ -n ${mp1_mount} ]] && delete_args+=(--delete mp1)
+  echo "     ssh root@${pve_host} pct set ${target_id} ${delete_args[*]}" >&2
+  echo "     ssh root@${pve_host} pct destroy ${target_id}" >&2
+  exit 1
+fi
