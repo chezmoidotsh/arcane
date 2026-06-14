@@ -16,8 +16,8 @@ One Vector process runs two independent pipelines on the LXC:
 │  systemd journal  (current boot)                                           │
 │       │                                                                    │
 │       ▼  journald source                                                   │
-│  journald_to_semconv        ◄── lib/vector/conf.d/sources.journald.yaml    │
-│       │  journald fields → OTel SemConv / VictoriaLogs layout              │
+│  journald_to_semconv        ◄── conf.d/sources.journald.yaml               │
+│       │  fields → OTel SemConv · stamps host.name + axnic.infra.kind       │
 │       │                                                                    │
 │       ▼  [logs.extraTransforms]   user filters, if any                     │
 │       │   else journald_to_o11y   auto passthrough (when none)             │
@@ -30,16 +30,17 @@ One Vector process runs two independent pipelines on the LXC:
 
 ┌─ METRICS (optional) ───────────────────────────────────────────────────────┐
 │                                                                            │
-│  in_internal_metrics  (always shipped) ─────────────────────────────────┐  │
-│                                                                         │  │
-│  scrape_<job>  (prometheus_scrape, one source per job)                  │  │
-│       │                                                                 │  │
-│       ▼  tag_<job>  (stamps `job` label) ───────────────────────────────┤  │
-│                                                                         │  │
-│       ┌─────────────────────────────────────────────────────────────────┘  │
+│  in_internal_metrics ─▶ tag_internal ────────────────────┐  always shipped │
+│                                                          │                 │
+│  scrape_<job>  (prometheus_scrape, one source per job)   │                 │
+│       │                                                  │                 │
+│       ▼  tag_<job>  (adds `job` label) ──────────────────┤  per job        │
+│                                                          │                 │
+│       ┌──────────────────────────────────────────────────┘                 │
 │       ▼                                                                    │
 │  out_metrics ───────────────────────────────────▶  o11y VictoriaMetrics    │
 │              prometheus_remote_write · 256 MiB disk buffer (drop-newest)   │
+│              every series tagged `node`  (machine identity)                │
 │                                                                            │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -210,10 +211,11 @@ transforms:
 
 ### `o11y` options
 
-| Option        | Type   | Description                                                          |
-| ------------- | ------ | -------------------------------------------------------------------- |
-| `logsAddress` | string | Vector native address on o11y — `host:port` (e.g. `10.0.0.252:6000`) |
-| `metricsUrl`  | string | Prometheus `remote_write` endpoint on o11y                           |
+| Option        | Type   | Description                                                                        |
+| ------------- | ------ | ---------------------------------------------------------------------------------- |
+| `logsAddress` | string | Vector native address on o11y — `host:port` (e.g. `10.0.0.252:6000`)               |
+| `metricsUrl`  | string | Prometheus `remote_write` endpoint on o11y                                         |
+| `sourceKind`  | string | Source entity category stamped on log events as `axnic.infra.kind`. Default `lxc`. |
 
 ### `logs` options
 
@@ -252,24 +254,25 @@ Each `scrapeTargets` entry:
 The `journald_to_semconv` transform discards all raw journald fields and
 produces only these keys:
 
-| Journald field                | SemConv field                         | Notes                         |
-| ----------------------------- | ------------------------------------- | ----------------------------- |
-| `MESSAGE`                     | `_msg`                                |                               |
-| `timestamp`                   | `_time`                               | RFC 3339                      |
-| `_HOSTNAME`                   | `host.name`                           | resource                      |
-| `SYSLOG_IDENTIFIER` / `_COMM` | `service.name`                        | resource, `_COMM` as fallback |
-| `_PID`                        | `attr.process.pid`                    | integer                       |
-| `_COMM`                       | `attr.process.executable.name`        | OTel semconv                  |
-| `PRIORITY`                    | `attr.syslog.severity.code` + `.text` | numeric 0–7                   |
-| `SYSLOG_FACILITY`             | `attr.syslog.facility.code`           | numeric                       |
-| `SYSLOG_MSGID`                | `attr.syslog.message_id`              |                               |
-| `_SYSTEMD_UNIT`               | `attr.systemd.unit`                   |                               |
-| `_TRANSPORT`                  | `attr.journald.transport`             |                               |
-| `_TRANSPORT` (stdout/stderr)  | `attr.log.iostream`                   |                               |
-| *(generated)*                 | `attr.log.record.uid`                 | UUID v4                       |
-| *(reconstructed)*             | `attr.log.record.original`            | OTel semconv                  |
-| *(generated)*                 | `attr.observed_timestamp`             |                               |
-| *(generated)*                 | `attr.log.src`                        |                               |
+| Journald field                | SemConv field                         | Notes                                                             |
+| ----------------------------- | ------------------------------------- | ----------------------------------------------------------------- |
+| `MESSAGE`                     | `_msg`                                |                                                                   |
+| `timestamp`                   | `_time`                               | RFC 3339                                                          |
+| `_HOSTNAME`                   | `host.name`                           | resource                                                          |
+| *(injected)*                  | `axnic.infra.kind`                    | resource — entity category from `o11y.sourceKind` (default `lxc`) |
+| `SYSLOG_IDENTIFIER` / `_COMM` | `service.name`                        | resource, `_COMM` as fallback                                     |
+| `_PID`                        | `attr.process.pid`                    | integer                                                           |
+| `_COMM`                       | `attr.process.executable.name`        | OTel semconv                                                      |
+| `PRIORITY`                    | `attr.syslog.severity.code` + `.text` | numeric 0–7                                                       |
+| `SYSLOG_FACILITY`             | `attr.syslog.facility.code`           | numeric                                                           |
+| `SYSLOG_MSGID`                | `attr.syslog.message_id`              |                                                                   |
+| `_SYSTEMD_UNIT`               | `attr.systemd.unit`                   |                                                                   |
+| `_TRANSPORT`                  | `attr.journald.transport`             |                                                                   |
+| `_TRANSPORT` (stdout/stderr)  | `attr.log.iostream`                   |                                                                   |
+| *(generated)*                 | `attr.log.record.uid`                 | UUID v4                                                           |
+| *(reconstructed)*             | `attr.log.record.original`            | OTel semconv                                                      |
+| *(generated)*                 | `attr.observed_timestamp`             |                                                                   |
+| *(generated)*                 | `attr.log.src`                        |                                                                   |
 
 SemConv **validation is not performed here** — it runs on the o11y side
 (`transforms.validate_semconv` in the o11y Vector pipeline).
@@ -390,3 +393,12 @@ Log events are immutable and irreplaceable — every event matters, so the log
 sink blocks when the buffer is full. Metric samples are point-in-time and
 replaceable; dropping the newest is acceptable and prevents backpressure from
 stalling the log pipeline.
+
+**Why a custom `axnic.infra.kind` instead of an OTel attribute?**
+OTel SemConv identifies *which* entity emits telemetry (`host.name` for a
+host, `k8s.cluster.name` for a cluster) but has no canonical attribute for the
+*category* of source (LXC vs VM vs bare-metal vs k8s). `host.type` exists but
+officially means "cloud instance type", so reusing it would be a semantic
+abuse. SemConv's rule for this case is to define a custom attribute under your
+own namespace — hence `axnic.*`, kept clear of the reserved OTel namespaces so
+it never collides with a future standard key.

@@ -7,15 +7,18 @@
 #
 #   systemd journal
 #       ↓ Vector journald source (current boot only)
-#   journald_to_semconv              ← lib/vector/conf.d/sources.journald.yaml
+#   journald_to_semconv              ← conf.d/sources.journald.yaml
+#       │  maps fields → OTel SemConv; stamps resources.host.name and
+#       │  resources.axnic.infra.kind (source provenance)
 #       ↓
 #   [logs.extraTransforms, if any]   ← conf.d/transforms.*.yaml (user-provided)
 #    OR journald_to_o11y (passthrough) ← conf.d/transforms.passthrough.json (auto)
 #       ↓ glob: *_to_o11y
 #   out_logs (vector native)         → o11y in_vector  (logs, SemConv)
 #
-#   Vector (prometheus_scrape per job, always including internal metrics)
-#       ↓ tag_<job>                  ← conf.d/sources.prometheus.json (generated)
+#   in_internal_metrics → tag_internal ──┐  (always shipped)
+#   scrape_<job>        → tag_<job> ─────┤  (per job, adds `job` label)
+#       ← conf.d/sources.prometheus.json (generated)
 #   out_metrics (prometheus_remote_write) → o11y VictoriaMetrics
 #
 # Config directory layout (baked into the Nix store):
@@ -32,6 +35,10 @@
 
 let
   cfg = config.catalog.lxcAgent;
+
+  # VRL applied to every metric series before shipping to VictoriaMetrics.
+  metricProvenance = ''
+  '';
 
   # ── Prometheus: sources + tag transforms (generated when metrics.enable) ──
   prometheusConfig = lib.optionalAttrs cfg.metrics.enable {
@@ -57,22 +64,33 @@ let
       })
       cfg.metrics.scrapeTargets);
 
-    transforms = lib.listToAttrs (
+    # Per-job scrapes carry the configured job name; internal metrics are
+    # tagged via tag_internal using metricProvenance for source provenance.
+    transforms = {
+      tag_internal = {
+        type = "remap";
+        inputs = [ "in_internal_metrics" ];
+        source = metricProvenance;
+      };
+    } // lib.listToAttrs (
       map
         (target: {
           name = "tag_${target.jobName}";
           value = {
             type = "remap";
             inputs = [ "scrape_${target.jobName}" ];
-            source = ''.tags.job = "${target.jobName}"'';
+            source = ''.tags.job = "${target.jobName}"'' + "\n" + metricProvenance;
           };
         })
         cfg.metrics.scrapeTargets
     );
   };
 
+  # in_internal_metrics is always shipped (via tag_internal); per-job scrapes
+  # go through their tag_<job> transform. All carry provenance tags.
   metricOutputs =
-    map (t: "tag_${t.jobName}") cfg.metrics.scrapeTargets;
+    [ "tag_internal" ]
+    ++ map (t: "tag_${t.jobName}") cfg.metrics.scrapeTargets;
 
   # ── Sinks ─────────────────────────────────────────────────────────────────
   vectorSinkConfig = {
@@ -118,6 +136,19 @@ let
 
   dataDir = "/var/lib/lxc-agent";
 
+  # journald source + semconv transform. The static file ships kind = "lxc"
+  # (so it stays self-contained and `vector test`-able); rewrite the injected
+  # resource only when this agent runs on another entity type.
+  journaldSourceFile =
+    if cfg.o11y.sourceKind == "lxc"
+    then ./config/vector/sources.journald.yaml
+    else
+      pkgs.writeText "sources.journald.yaml"
+        (builtins.replaceStrings
+          [ ''"axnic":   {"infra": {"kind": "lxc"}}'' ]
+          [ ''"axnic":   {"infra": {"kind": "${cfg.o11y.sourceKind}"}}'' ]
+          (builtins.readFile ./config/vector/sources.journald.yaml));
+
   # ── Config directory: static YAML + generated JSON merged into conf.d/ ────
   # Vector loads all files in the dir; cross-file references (e.g.
   # journald_to_semconv defined in sources.journald.yaml, consumed by
@@ -134,7 +165,7 @@ let
       }
       {
         name = "conf.d/sources.journald.yaml";
-        path = ./config/vector/sources.journald.yaml;
+        path = journaldSourceFile;
       }
       {
         name = "conf.d/sinks.vector.json";
@@ -191,6 +222,19 @@ in
         type = lib.types.str;
         description = "Prometheus remote_write endpoint on the o11y appliance.";
         example = "https://o11y.chezmoi.sh/metrics/api/v1/write";
+      };
+      sourceKind = lib.mkOption {
+        type = lib.types.str;
+        default = "lxc";
+        example = "vm";
+        description = ''
+          Infrastructure category this agent runs on, stamped on every signal
+          so telemetry traces back to its origin entity type:
+            - logs:    resources.axnic.infra.kind  (OTel resource attribute)
+            - metrics: axnic_infra_kind            (label)
+          Identity (which machine) is carried by host.name / host_name; this
+          option sets only the *category*. Override for VM / device reuse.
+        '';
       };
     };
 

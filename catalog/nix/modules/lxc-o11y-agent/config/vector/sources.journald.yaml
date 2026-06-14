@@ -17,6 +17,7 @@
 #   timestamp         → timestamp                         (RFC3339 string)
 #   (generated)       → observed_timestamp                (Vector receive time)
 #   _HOSTNAME         → resources.host.name
+#   (injected)        → resources.axnic.infra.kind        (source entity category)
 #   SYSLOG_IDENTIFIER → resources.service.name            (fallback: _COMM)
 #   (generated)       → attributes.log.record.uid         (OTel semconv)
 #   (reconstructed)   → attributes.log.record.original    (OTel semconv)
@@ -108,7 +109,8 @@ transforms:
         "observed_timestamp": format_timestamp!(now(), format: "%+"),
         "resources": {
           "service": {"name": _svc_name},
-          "host":    {"name": _host}
+          "host":    {"name": _host},
+          "axnic":   {"infra": {"kind": "lxc"}}
         },
         "attributes": _attrs
       }
@@ -139,6 +141,7 @@ tests:
             source: |
               assert_eq!(.body, "Started NetworkManager.service", "body")
               assert_eq!(.resources.host.name, "pve-01", "host.name")
+              assert_eq!(.resources.axnic.infra.kind, "lxc", "axnic.infra.kind")
               assert_eq!(.resources.service.name, "systemd", "service.name")
               assert_eq!(.attributes.process.pid, 1, "process.pid is int")
               assert_eq!(.attributes.syslog.message_id, "SERVICE", "syslog.message_id")
