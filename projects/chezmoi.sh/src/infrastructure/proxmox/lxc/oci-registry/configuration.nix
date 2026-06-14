@@ -25,7 +25,7 @@
 
 {
   system.stateVersion = "26.05";
-  networking.hostName = "oci-persistent";
+  networking.hostName = "oci-registry";
 
   time.timeZone = "Etc/UTC";
   i18n.defaultLocale = "C.UTF-8";

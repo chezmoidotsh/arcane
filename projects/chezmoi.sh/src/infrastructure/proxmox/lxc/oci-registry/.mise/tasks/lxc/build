@@ -14,11 +14,11 @@ CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
 ver=$(grep -m1 'imageVersion = "' "${CONFIG_ROOT}/flake.nix" |
   sed 's/.*imageVersion = "\(.*\)".*/\1/')
-echo "[INFO] Building oci-proxy.${ver}-amd64..." >&2
+echo "[INFO] Building oci-registry.${ver}-amd64..." >&2
 
 export CLOUDFLARE_API_TOKEN
 CLOUDFLARE_API_TOKEN=$(sops -d --extract '["CLOUDFLARE_API_TOKEN"]' \
   "${CONFIG_ROOT}/secrets/caddy.sops.env")
 
-nix:build:lxc --impure --output-name "oci-proxy.${ver}-amd64" "${CONFIG_ROOT}"
+nix:build:lxc --impure --output-name "oci-registry.${ver}-amd64" "${CONFIG_ROOT}"
 unset CLOUDFLARE_API_TOKEN

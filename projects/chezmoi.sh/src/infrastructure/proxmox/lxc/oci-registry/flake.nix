@@ -50,7 +50,7 @@
       version = "v2.1.17";
 
       # Image version — CalVer (YYYY.MM.DD), used only to name the Proxmox
-      # template (oci-proxy.<date>-amd64.tar.xz). Bump before every
+      # template (oci-registry.<date>-amd64.tar.xz). Bump before every
       # `mise run lxc:build`; append -N for multiple builds on the same day.
       imageVersion = "2026.06.14";
 

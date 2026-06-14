@@ -12,7 +12,7 @@ CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
 ver=$(grep -m1 'imageVersion = "' "${CONFIG_ROOT}/flake.nix" |
   sed 's/.*imageVersion = "\(.*\)".*/\1/')
-template="oci-proxy.${ver}-amd64.tar.xz"
+template="oci-registry.${ver}-amd64.tar.xz"
 src="${CONFIG_ROOT}/${template}"
 
 [[ -f ${src} ]] ||

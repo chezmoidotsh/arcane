@@ -148,7 +148,7 @@ mise run lxc:push -- pve.lan
 # 1. Build the LXC tarball with the Cloudflare token baked in
 mise run lxc:build
 
-# 2. Upload to Proxmox (creates /var/lib/vz/template/cache/oci-proxy.<v>-amd64.tar.xz)
+# 2. Upload to Proxmox (creates /var/lib/vz/template/cache/oci-registry.<v>-amd64.tar.xz)
 mise run lxc:push -- pve.lan
 ```
 
@@ -166,13 +166,13 @@ finishes. The fully documented one is in the next section.
 
 ## Proxmox LXC creation
 
-The build emits `oci-proxy.<version>-amd64.tar.xz`. After `lxc:push`
+The build emits `oci-registry.<version>-amd64.tar.xz`. After `lxc:push`
 uploads it to `/var/lib/vz/template/cache/`, create the container with:
 
 ```sh
 # Pick an unused VMID (Proxmox prints used ones with `pct list`).
 VMID="<vmid>"   # e.g. 100 — replace before running, pct will reject the placeholder.
-TEMPLATE=oci-proxy.<version>-amd64.tar.xz
+TEMPLATE=oci-registry.<version>-amd64.tar.xz
 NODE=pve.lan
 
 # 1. Create the container — do NOT start yet (console config comes next).
@@ -464,7 +464,7 @@ mise run lxc:push -- <pve-host>
 # 2. Create the new container, copy config, fix ownership, and start it
 mise run lxc:upgrade -- <pve-host> <source_id> <target_id>
 #    Template is auto-detected from the zot flake version.
-#    Override: mise run lxc:upgrade -- pve.lan 100 101 oci-proxy.X.Y.Z-amd64.tar.xz
+#    Override: mise run lxc:upgrade -- pve.lan 100 101 oci-registry.X.Y.Z-amd64.tar.xz
 
 # 3. Wait for Caddy to obtain a fresh TLS certificate (allow 30–60 s)
 ssh root@<pve-host> pct exec <target_id> -- journalctl -u caddy -f
