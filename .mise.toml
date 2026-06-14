@@ -102,6 +102,7 @@ hcloud = "latest"   # Hetzner Cloud CLI for managing cloud resources
 k9s = "latest"      # Terminal UI for real-time Kubernetes cluster management and observability
 openbao = "latest"  # OpenBao CLI for secret management (HashiCorp Vault fork)
 talosctl = "latest" # Talos Linux cluster management tool for bare-metal Kubernetes
+vector = "0.55.0"   # Vector CLI for observability and log aggregation
 
 # -----------------------------------------------------------------------------
 # Security and Data Tools

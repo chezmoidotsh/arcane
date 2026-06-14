@@ -1,4 +1,4 @@
-# `pve-exporter` — Prometheus PVE Exporter LXC (Proxmox)
+# `pve-exporter` — Proxmox VE Metrics Exporter LXC (Proxmox)
 
 Standalone Proxmox LXC running NixOS + prometheus-pve-exporter + Vector. A
 lightweight monitoring sidecar that scrapes the Proxmox VE API and ships
@@ -230,7 +230,11 @@ NODE=pve.lan
 
 ssh root@${NODE} pct create ${VMID} local:vztmpl/${TEMPLATE} \
     --hostname     pve-exporter \
-    --description  "Prometheus PVE exporter — managed by chezmoidotsh/arcane" \
+    --description  "$(cat <<'EOF'
+# Proxmox VE metrics exporter
+Scrapes the PVE API and ships host-level metrics and logs to o11y.chezmoi.sh. Also ingests Proxmox host syslog (RFC 5424) and forwards parsed events to o11y. No inbound ports except :5140 (syslog TCP).
+EOF
+)" \
     --ostype       nixos \
     --arch         amd64 \
     --unprivileged 1 \
