@@ -172,6 +172,25 @@ transforms:
           if length(object!(parsed)) > 0 {
             .attributes.zot.extra = encode_json(parsed)
           }
+
+          # Body → Common Log Format (CLF)
+          # https://en.wikipedia.org/wiki/Common_Log_Format
+          # Zot does not expose the HTTP protocol; "-" used as placeholder.
+          _ts_str = string(.timestamp) ?? ""
+          _t, _te = parse_timestamp(_ts_str, format: "%+")
+          _clf_ts = if _te == null {
+            format_timestamp!(_t, format: "%d/%b/%Y:%H:%M:%S %z")
+          } else {
+            format_timestamp!(now(), format: "%d/%b/%Y:%H:%M:%S %z")
+          }
+          _clf_ip = string(.attributes.network.peer.address) ?? "-"
+          _clf_method = string(.attributes.http.request.method) ?? "-"
+          _clf_path = string(.attributes.url.path) ?? "-"
+          _sc = .attributes.http.response.status_code
+          _clf_status = if _sc == null { "-" } else { to_string!(_sc) }
+          _bs = .attributes.http.response.body.size
+          _clf_bytes = if _bs == null { "-" } else { to_string!(_bs) }
+          .body = _clf_ip + " - - [" + _clf_ts + "] \"" + _clf_method + " " + _clf_path + " -\" " + _clf_status + " " + _clf_bytes
         }
       }
 
@@ -283,7 +302,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(.body, "HTTP API")
+              assert_eq!(.body, "127.0.0.1 - - [07/Jun/2026:14:45:22 +0000] \"GET /metrics -\" 200 17619")
               assert_eq!(.severity_number, 9)
               assert_eq!(.attributes.http.request.method, "GET")
               assert_eq!(.attributes.url.path, "/metrics")

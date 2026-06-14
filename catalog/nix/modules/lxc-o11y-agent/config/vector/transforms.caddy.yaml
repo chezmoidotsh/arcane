@@ -118,6 +118,24 @@ transforms:
             # Keep full headers blob for debugging
             _all_hdrs = get(_req, ["headers"]) ?? null
             if _all_hdrs != null { .attributes.caddy.headers = _all_hdrs }
+
+            # Body → Common Log Format (CLF)
+            # https://en.wikipedia.org/wiki/Common_Log_Format
+            _ts_raw = get(parsed, ["ts"]) ?? null
+            _clf_ts = if _ts_raw != null {
+              format_timestamp!(from_unix_timestamp!(to_int(to_float!(_ts_raw))), format: "%d/%b/%Y:%H:%M:%S %z")
+            } else {
+              format_timestamp!(now(), format: "%d/%b/%Y:%H:%M:%S %z")
+            }
+            _clf_ip = string(.attributes.network.peer.address) ?? "-"
+            _clf_method = string(.attributes.http.request.method) ?? "-"
+            _clf_uri = if _uri != null { to_string!(_uri) } else { "-" }
+            _clf_proto = string(.attributes.caddy.proto) ?? "-"
+            _sc = .attributes.http.response.status_code
+            _clf_status = if _sc == null { "-" } else { to_string!(_sc) }
+            _bs = .attributes.http.response.body.size
+            _clf_bytes = if _bs == null { "-" } else { to_string!(_bs) }
+            .body = _clf_ip + " - - [" + _clf_ts + "] \"" + _clf_method + " " + _clf_uri + " " + _clf_proto + "\" " + _clf_status + " " + _clf_bytes
           }
         }
       }
@@ -200,7 +218,7 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(.body, "handled request")
+              assert_eq!(.body, "10.0.0.1 - - [14/Nov/2023:22:13:20 +0000] \"GET /api/health?q=1 HTTP/2.0\" 200 42")
               assert_eq!(.severity_number, 9)
               assert_eq!(.attributes.http.request.method, "GET")
               assert_eq!(.attributes.url.path, "/api/health")
