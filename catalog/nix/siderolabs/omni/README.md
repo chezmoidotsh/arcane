@@ -122,13 +122,24 @@ imports = [
 
 #### Network
 
-| Option               | Type  | Default          | Description                                         |
-| -------------------- | ----- | ---------------- | --------------------------------------------------- |
-| `bindAddr`           | `str` | `"0.0.0.0:443"`  | UI/API bind address (`--bind-addr`).                |
-| `machineApiBindAddr` | `str` | `"0.0.0.0:8090"` | SideroLink machine API (`--machine-api-bind-addr`). |
-| `k8sProxyBindAddr`   | `str` | `"0.0.0.0:8100"` | Kubernetes proxy (`--k8s-proxy-bind-addr`).         |
-| `eventSinkPort`      | `int` | `8091`           | Event sink port (`--event-sink-port`).              |
-| `wireguardPort`      | `int` | `50180`          | WireGuard UDP port.                                 |
+| Option               | Type  | Default          | Description                                          |
+| -------------------- | ----- | ---------------- | ---------------------------------------------------- |
+| `bindAddr`           | `str` | `"0.0.0.0:443"`  | UI/API bind address (`--bind-addr`).                 |
+| `machineApiBindAddr` | `str` | `"0.0.0.0:8090"` | SideroLink machine API (`--machine-api-bind-addr`).  |
+| `k8sProxyBindAddr`   | `str` | `"0.0.0.0:8100"` | Kubernetes proxy (`--k8s-proxy-bind-addr`).          |
+| `eventSinkPort`      | `int` | `8091`           | Event sink port (`--event-sink-port`).               |
+| `wireguardPort`      | `int` | `50180`          | WireGuard UDP port.                                  |
+| `metricsBindAddr`    | `str` | `"0.0.0.0:2122"` | Prometheus metrics endpoint (`--metrics-bind-addr`). |
+
+\| `machineApiAdvertisedUrl` | `str` | `"https://api.<domain>/"` | SideroLink URL advertised to Talos machines (`--siderolink-api-advertised-url`). |
+\| `k8sProxyAdvertisedUrl`   | `str` | `"https://kube.<domain>/"` | Kubernetes proxy URL advertised to clients (`--advertised-kubernetes-proxy-url`). |
+
+> **Subdomain routing** — defaults derive both advertised URLs from
+> `domain` (`api.<domain>` and `kube.<domain>`). Bind
+> `machineApiBindAddr` and `k8sProxyBindAddr` to loopback and front them
+> with a reverse proxy (e.g. Caddy) on port 443. The in-module firewall
+> only opens port 8091 (event sink, WireGuard-internal) and the WireGuard
+> UDP port — 8090 and 8100 are not opened.
 
 #### OIDC
 

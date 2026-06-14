@@ -11,7 +11,8 @@
 #   5. Journald        — volatile (RAM-only, no root-disk usage), capped at
 #                        64 MiB; forwarded to /dev/console for `pct console`.
 #   6. Firewall        — default deny; ports opened by caddy.nix (80/443) and
-#                        catalog/nix/siderolabs/omni (8090/8091/8100 + WG/UDP).
+#                        catalog/nix/siderolabs/omni (8091 event sink + WG/UDP).
+#                        Machine API and k8s proxy route via Caddy subdomains.
 #   7. Time sync       — systemd-timesyncd on (clock drift breaks ACME and the
 #                        Omni PKI cert validation window).
 # ─────────────────────────────────────────────────────────────────────────────
@@ -82,8 +83,10 @@
   # ── Firewall ───────────────────────────────────────────────────────────────
   # Default deny; allowed ports are added by:
   #   * modules/caddy.nix                       — TCP 80, 443
-  #   * catalog/nix/siderolabs/omni/omni.nix    — TCP 8090, 8091, 8100
+  #   * catalog/nix/siderolabs/omni/omni.nix    — TCP 8091 (event sink)
   #                                               + UDP cfg.wireguardPort
+  # Machine API and k8s proxy are NOT opened directly; they are routed
+  # through Caddy subdomains (api.<domain>:443, kube.<domain>:443).
   networking.firewall.enable = lib.mkDefault true;
   networking.firewall.allowedUDPPorts = lib.mkDefault [ ];
   networking.firewall.logRefusedConnections = lib.mkDefault false;
