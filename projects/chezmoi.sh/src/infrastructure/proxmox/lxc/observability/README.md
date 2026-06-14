@@ -7,7 +7,7 @@ observability appliance: metrics, logs, traces, and *existential* alerting.
 It deliberately lives **outside** every Kubernetes cluster's failure domain.
 When a cluster (or its node) goes down, the appliance keeps collecting and
 keeps the existential alerts (cluster/Grafana down) firing — closing the "we had
-no signal" gap that drove every recent post-mortem (see [#1013], [#1018]). Same
+no signal" gap that drove every recent post-mortem (see [#1013][], [#1018][]). Same
 NixOS-as-code, GPG-signed, single-purpose-appliance philosophy as the
 `lxc-oci-registry`.
 
@@ -90,8 +90,7 @@ the **tailnet** (off-LAN).
 > parses RFC 5424 into the OTLP-style format, and forwards it here. The appliance's
 > Vector pipeline is now validation + loki-like conversion only.
 
-Rendered diagram: [`assets/architecture.svg`](./assets/architecture.svg) (source
-[`architecture.d2`](./architecture.d2)).
+Architecture diagram source: [`architecture.d2`](./architecture.d2).
 
 ### Design decisions (the short version — full rationale in ADR-013)
 
@@ -495,7 +494,7 @@ _stream_fields = "cluster,namespace,pod,container"   # set cluster=<name> in a t
 Point any OTLP trace exporter (Vector `opentelemetry` sink, an OTEL collector, or
 an app's OTLP SDK) at the VictoriaTraces ingest path:
 
-```
+```text
 https://o11y.chezmoi.sh/traces/insert/opentelemetry/v1/traces
 ```
 
@@ -678,7 +677,7 @@ for tailnet clients — they connect to the MagicDNS name directly.
    VMAlert + VMRule/PrometheusRule, Vector (logs + optional trace export), the
    Proxmox OTEL push, and Grafana (datasources for metrics/logs/traces + dashboards
    * the Grafana-side deadman) live in their own projects and are tracked as
-     separate phases of [#1018].
+     separate phases of [#1018][].
 
 5. **No HA.** Single LXC, single Proxmox node. If the node dies, the LXC deadman
    stops and the external monitor pages; collection halts until the LXC is

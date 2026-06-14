@@ -36,7 +36,6 @@ informed: []
 * [Implementation Details / Status](#implementation-details--status)
   * [Architecture](#architecture)
   * [Supporting design decisions](#supporting-design-decisions)
-  * [Standards Specification](#standards-specification)
   * [Status](#status)
 * [References and Related Decisions](#references-and-related-decisions)
 * [Changelog](#changelog)
@@ -53,7 +52,7 @@ unavailable.
 This gap is not theoretical. Every recent post-mortem converges on the same root
 cause — the absence of signal:
 
-* **[#1013]**: the `apps-secured` CloudNative-PG WAL volume filled to 100% and the
+* **[#1013][]**: the `apps-secured` CloudNative-PG WAL volume filled to 100% and the
   cluster was down for **four days** before anyone noticed. Immich and
   Paperless were unavailable the entire time. WAL archiving had been failing
   silently since the cluster was created 25 days earlier. A single
@@ -67,7 +66,7 @@ The naive fix — deploy Prometheus/Grafana inside `lungmen.akn` — carries a
 structural flaw specific to observability: **a monitoring system that lives
 inside the thing it monitors goes blind exactly when it is needed most.** Had the
 stack been inside `lungmen` during a node or etcd incident, it would have failed
-alongside the workloads it was meant to observe. The [#1013] scenario is the
+alongside the workloads it was meant to observe. The [#1013][] scenario is the
 canonical case: the cluster itself was the patient.
 
 The deployment must also be **multi-cluster from day one**. `amiya.akn`,
@@ -90,7 +89,7 @@ and remains operationally light enough for a single maintainer?**
 * **`ServiceMonitor` / `PodMonitor` discovery** — apps (ArgoCD, CNPG, Longhorn, …)
   already ship these CRDs; the stack must consume them without bespoke scrape
   configuration.
-* **End-to-end alerting** for real conditions: node down, disk > 85% (the [#1013]
+* **End-to-end alerting** for real conditions: node down, disk > 85% (the [#1013][]
   class), `CrashLoopBackOff` > 5 min.
 * **Grafana dashboards** for visualization and non-paging alerts (SLOs, warnings).
 * **Vector as the log transfer/conversion pipeline** — a stated objective: pod
@@ -113,7 +112,7 @@ and remains operationally light enough for a single maintainer?**
 ### Constraints
 
 * **Existing skill stack is Prometheus-shaped** — zero prior ClickHouse
-  experience (per [#1018]).
+  experience (per [#1018][]).
 * **Proxmox is the substrate** — clusters run as VMs; standalone services
   already run as NixOS LXCs (the `oci.chezmoi.sh` precedent, see ADR-008's
   sibling reasoning).
@@ -183,7 +182,7 @@ data on Longhorn PVCs.
 * `+` Native in-cluster service discovery.
 * `-` **Fatal flaw: the monitor shares the failure domain of the monitored.**
   A node/etcd/Longhorn incident blinds observability precisely when it is needed —
-  the [#1013] scenario.
+  the [#1013][] scenario.
 * `-` No single pane of glass; correlation across clusters is manual.
 * `-` `kazimierz` (non-K8s) cannot host it this way at all.
 
@@ -194,7 +193,7 @@ data on Longhorn PVCs.
 Each cluster keeps a local store; a central Grafana federates reads across them.
 
 * `+` No cross-cluster dependency for collection; each cluster is self-contained.
-* `-` Still places storage inside each observed failure domain (partial [#1013] exposure).
+* `-` Still places storage inside each observed failure domain (partial [#1013][] exposure).
 * `-` Cross-cluster correlation is hard — federated queries fan out to N stores
   with no shared index.
 * `-` N stores to operate, back up, and tune — the opposite of operational lightness.
@@ -258,7 +257,7 @@ store" pitch claims to remove. Option A removes a component; Option B adds one.
 
 #### 3. Multi-cluster from day one, correlation for free
 
-A [#1018] acceptance criterion is that adding `amiya` and `kazimierz` requires "no
+A [#1018][] acceptance criterion is that adding `amiya` and `kazimierz` requires "no
 redesign — only collection agents". The centralized model satisfies this
 literally: a new cluster deploys a `VMAgent` + `VMAlert` + Vector (or, for
 `kazimierz`, the Docker equivalents over Tailscale) pointed at `o11y.chezmoi.sh`,
@@ -285,7 +284,7 @@ a workload Kubernetes did not serve well.
 
 * ✅ **Resilient signal** — observability survives the outage of any monitored cluster.
 * ✅ **Fleet-wide coverage** — clusters, the Proxmox host, and standalone LXCs in one place.
-* ✅ **[#1013] class caught** — disk > 85%, `predict_linear` 24 h projection, and PVC < 15 %
+* ✅ **[#1013][] class caught** — disk > 85%, `predict_linear` 24 h projection, and PVC < 15 %
   rules fire within minutes instead of days.
 * ✅ **Low ingest friction** — existing `ServiceMonitor`s are scraped automatically.
 * ✅ **Cheap multi-cluster growth** — onboarding a cluster is an agent deployment.
@@ -409,7 +408,7 @@ they shape the security and reliability posture:
   cardinality reduction is `vmagent` stream aggregation, per cluster. The LXC's own
   vmalert is kept *minimal* — only what requires the central vantage point and must
   page even when the observed thing is gone: **cluster absent, Grafana down, and the
-  watchdog/deadman**. Node/disk/PVC/crash-loop guards (incl. the [#1013] disk guard)
+  watchdog/deadman**. Node/disk/PVC/crash-loop guards (incl. the [#1013][] disk guard)
   are per-cluster `VMRule`, evaluated cluster-side and paged via Alertmanager.
   *Residual trade-off: a cluster's vmalert queries the central VM, so a cluster↔LXC
   partition pauses that cluster's rule evaluation — but the LXC's "cluster absent"
@@ -466,7 +465,7 @@ A terse normative checklist (the *why* is in Supporting design decisions above):
   trace export (and the `kazimierz` Docker equivalents); configure the Proxmox OTEL
   push; wire Grafana datasources (metrics/logs/traces) + dashboards + non-paging
   alert routing + the Grafana-side deadman on `amiya`; render `architecture.svg`.
-  Tracked under the phases of [#1018].
+  Tracked under the phases of [#1018][].
 
 ## References and Related Decisions
 
@@ -481,7 +480,7 @@ A terse normative checklist (the *why* is in Supporting design decisions above):
     Kubernetes when it does not serve the workload; the `kazimierz` agent model
     follows from it.
 * **Implementation**: [`lxc/observability/README.md`](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/README.md)
-  and the sibling [`lxc-oci-registry`](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc-oci-registry/README.md) it is modeled on.
+  and the sibling [`lxc/oci-registry`](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/oci-registry/README.md) it is modeled on.
 * **External documentation**:
   * [VictoriaMetrics Operator — Prometheus integration](https://docs.victoriametrics.com/operator/integrations/prometheus/)
   * [VictoriaLogs](https://docs.victoriametrics.com/victorialogs/)
