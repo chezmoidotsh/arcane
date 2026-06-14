@@ -13,7 +13,7 @@ journal stream.
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  journald source  (from lxc-o11y-agent)                                     │
-│       ↓ journald_to_semconv                                                 │
+│       ↓ route_builtin._unmatched                                            │
 │       ↓ journald_to_o11y (passthrough filter)       ──────────────────────┐ │
 │                                                                           │ │
 │  in_syslog (TCP :5140, RFC 5424 from PVE host)                            │ │
@@ -63,7 +63,7 @@ passthrough in `catalog.lxcAgent`.
 | `info`           | 6    | 9                 | INFO       |
 | `debug`          | 7    | 5                 | DEBUG      |
 
-### LXC journal events (from `journald_to_semconv`)
+### LXC journal events (from `route_builtin._unmatched`)
 
 Fields follow the standard journald-to-OTLP mapping defined in
 `catalog/nix/modules/lxc-o11y-agent/config/vector/sources.journald.yaml`.

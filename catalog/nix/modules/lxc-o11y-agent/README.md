@@ -19,10 +19,15 @@ One Vector process runs two independent pipelines on the LXC:
 │  journald_to_semconv        ◄── conf.d/sources.journald.yaml               │
 │       │  fields → OTel SemConv · stamps host.name + axnic.infra.kind       │
 │       │                                                                    │
-│       ▼  [logs.extraTransforms]   user filters, if any                     │
-│       │   else journald_to_o11y   auto passthrough (when none)             │
-│       │                                                                    │
-│       ▼  glob *_to_o11y                                                    │
+│       ▼                                                                    │
+│  route_builtin                ◄── conf.d/transforms.caddy.yaml (built-in)    │
+│       ├── .caddy → caddy_parse → caddy_to_o11y   (OTEL HTTP SemConv)       │
+│       └── ._unmatched                                                       │
+│           │                                                                 │
+│           ▼  [logs.extraTransforms]   user filters, if any                 │
+│           │   else journald_to_o11y   auto passthrough (when none)         │
+│           │                                                                 │
+│           ▼  glob *_to_o11y                                                │
 │  out_logs ─────────────────────────────────────────▶  o11y in_vector       │
 │           Vector native protocol · 256 MiB disk buffer (block)             │
 │                                                                            │
@@ -285,19 +290,20 @@ all baked into the Nix store:
 ```
 conf.d/
 ├── sources.journald.yaml         static — journald source + semconv remap
+├── transforms.caddy.yaml         static — caddy route + parse (built-in)
 ├── sources.prometheus.json       generated — internal metrics + scrape targets
 │                                           (only when metrics.enable = true)
 ├── sinks.vector.json             generated — Vector native log sink
 ├── sinks.prometheus.json         generated — prometheus_remote_write sink
 │                                           (only when metrics.enable = true)
-├── transforms.passthrough.json   generated — filter passthrough journald→o11y
+├── transforms.passthrough.json   generated — filter passthrough route_builtin→o11y
 │                                           (only when extraTransforms = [])
 └── <name>                        generated — one file per extraTransforms entry
 ```
 
 Cross-file component references (e.g. `journald_to_semconv` defined in the
-static YAML, consumed by `sinks.vector.json` via the `*_to_o11y` glob) are
-resolved by Vector at startup.
+static YAML, consumed by `route_builtin` which feeds `caddy_to_o11y` and the
+`*_to_o11y` glob) are resolved by Vector at startup.
 
 ### C — Extra transforms
 
@@ -306,10 +312,11 @@ When non-empty, the auto-generated `journald_to_o11y` passthrough is **not**
 injected — your transform must close the pipeline by exposing a component
 named `*_to_o11y`.
 
-The upstream component is always `journald_to_semconv`.
+The upstream component is always `route_builtin._unmatched` (the non-caddy
+branch of the built-in caddy router).
 
 ```
-journald_to_semconv
+route_builtin._unmatched
         │
         ▼
   [your transforms]
@@ -325,7 +332,7 @@ Common patterns:
 transforms:
   journald_to_o11y:
     type: filter
-    inputs: [journald_to_semconv]
+    inputs: [route_builtin._unmatched]
     condition:
       type: vrl
       source: .["attr.syslog.severity.code"] < 7
@@ -336,7 +343,7 @@ transforms:
 transforms:
   parse_json:
     type: remap
-    inputs: [journald_to_semconv]
+    inputs: [route_builtin._unmatched]
     source: |
       if is_string(._msg) {
         parsed, err = parse_json(._msg)

@@ -5,7 +5,7 @@ transforms:
   route_by_service:
     type: route
     inputs:
-      - journald_to_semconv
+      - route_builtin._unmatched
     route:
       omni: '.resources.service.name == "omni"'
 
@@ -18,7 +18,7 @@ transforms:
       source: "true"
 
 tests:
-  - name: "route: non-omni service passes through unmatched_to_o11y unchanged"
+  - name: "route: unrecognised service passes through unmatched_to_o11y unchanged"
     inputs:
       - insert_at: unmatched_to_o11y
         type: log
@@ -26,7 +26,7 @@ tests:
           body: "other service log"
           timestamp: "2026-06-13T00:00:00Z"
           observed_timestamp: "2026-06-13T00:00:00Z"
-          resources.service.name: caddy
+          resources.service.name: unknown-svc
           resources.host.name: omni
     outputs:
       - extract_from: unmatched_to_o11y
@@ -34,5 +34,5 @@ tests:
           - type: vrl
             source: |
               assert_eq!(.body, "other service log")
-              assert_eq!(.resources.service.name, "caddy")
+              assert_eq!(.resources.service.name, "unknown-svc")
               true

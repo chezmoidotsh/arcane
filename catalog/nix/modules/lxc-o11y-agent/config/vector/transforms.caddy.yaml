@@ -1,0 +1,285 @@
+# Parse Caddy JSON logs → OTLP-style with OTEL HTTP SemConv.
+#
+# Reads from route_builtin.caddy (built-in route in transforms.route.yaml).
+#
+# Caddy JSON format:
+#   {"level":"info","ts":1234567890.123,"logger":"tailscale","msg":"..."}
+#   ts is a Unix float (seconds since epoch), NOT RFC3339.
+#   Access logs add: request{}, duration, size, status.
+#
+# OTEL HTTP SemConv (access logs only):
+#   request.method       → attributes.http.request.method
+#   request.uri (path)   → attributes.url.path
+#   request.uri (query)  → attributes.url.query
+#   request.host         → attributes.server.address
+#   request.remote_ip    → attributes.network.peer.address
+#   request.remote_port  → attributes.network.peer.port
+#   status               → attributes.http.response.status_code
+#   size                 → attributes.http.response.body.size
+#   request.headers.User-Agent → attributes.user_agent.original
+#
+# Caddy-specific (no OTEL equivalent, kept for debugging):
+#   duration             → attributes.caddy.duration
+#   request.proto        → attributes.caddy.proto
+#   request.tls          → attributes.caddy.tls
+#   request.headers      → attributes.caddy.headers
+transforms:
+  caddy_parse:
+    type: remap
+    inputs:
+      - route_builtin.caddy
+    drop_on_error: false
+    source: |
+      if is_string(.body) {
+        parsed, _err = parse_json(.body)
+        if _err == null && is_object(parsed) {
+          # Message
+          if exists(parsed.msg) { .body = to_string!(parsed.msg) }
+
+          # Severity — only severity_number; severity_text derived in to_vlogs_format
+          if exists(parsed.level) {
+            _level = downcase(to_string!(parsed.level))
+            _sev = {
+              "trace": 1, "debug": 5, "info": 9, "information": 10, "notice": 11,
+              "warning": 13, "warn": 13, "error": 17,
+              "critical": 21, "fatal": 21, "alert": 22, "emergency": 23, "panic": 24
+            }
+            .severity_number = get(_sev, [_level]) ?? 9
+          }
+
+          if !is_object(.attributes) { .attributes = {} }
+
+          # logger → attributes.log.logger.name
+          if exists(parsed.logger) {
+            .attributes.log.logger.name = to_string!(parsed.logger)
+          }
+
+          # Access logs: map to OTEL HTTP SemConv
+          if exists(parsed.request) && is_object(parsed.request) {
+            _req = object!(parsed.request)
+
+            # HTTP method
+            _method = get(_req, ["method"]) ?? null
+            if _method != null { .attributes.http.request.method = to_string!(_method) }
+
+            # URI → split into path + query
+            _uri = get(_req, ["uri"]) ?? null
+            if _uri != null {
+              _uri_str = to_string!(_uri)
+              _uri_parts = split(_uri_str, "?", limit: 2)
+              .attributes.url.path = _uri_parts[0]
+              if length(_uri_parts) > 1 {
+                .attributes.url.query = _uri_parts[1]
+              }
+            }
+
+            # Host → server.address
+            _host = get(_req, ["host"]) ?? null
+            if _host != null { .attributes.server.address = to_string!(_host) }
+
+            # Client IP → network.peer.address
+            _remote_ip = get(_req, ["remote_ip"]) ?? null
+            if _remote_ip != null { .attributes.network.peer.address = to_string!(_remote_ip) }
+
+            # Client port → network.peer.port
+            _remote_port = get(_req, ["remote_port"]) ?? null
+            if _remote_port != null {
+              _port, _port_err = to_int(_remote_port)
+              if _port_err == null { .attributes.network.peer.port = _port }
+            }
+
+            # HTTP status code (top-level in Caddy JSON, not inside request)
+            if exists(parsed.status) {
+              .attributes.http.response.status_code = parsed.status
+            }
+
+            # Response body size
+            if exists(parsed.size) {
+              .attributes.http.response.body.size = parsed.size
+            }
+
+            # User-Agent → user_agent.original
+            _headers = object(get(_req, ["headers"]) ?? {}) ?? {}
+            _ua_arr = get(_headers, ["User-Agent"]) ?? null
+            if is_array(_ua_arr) {
+              _ua = string(_ua_arr[0]) ?? null
+              if _ua != null { .attributes.user_agent.original = _ua }
+            }
+
+            # Caddy-specific fields (no OTEL equivalent)
+            if exists(parsed.duration) { .attributes.caddy.duration = parsed.duration }
+
+            _proto = get(_req, ["proto"]) ?? null
+            if _proto != null { .attributes.caddy.proto = to_string!(_proto) }
+
+            _tls = get(_req, ["tls"]) ?? null
+            if _tls != null { .attributes.caddy.tls = _tls }
+
+            # Keep full headers blob for debugging
+            _all_hdrs = get(_req, ["headers"]) ?? null
+            if _all_hdrs != null { .attributes.caddy.headers = _all_hdrs }
+          }
+        }
+      }
+
+  # Drop /metrics scrapes and remote writes — they're noise.
+  # Non-access logs (no url.path) always pass through.
+  caddy_to_o11y:
+    type: filter
+    inputs:
+      - caddy_parse
+    condition:
+      type: vrl
+      source: |
+        _path, _err = to_string(.attributes.url.path)
+        _err != null || !starts_with(_path, "/metrics")
+
+tests:
+  - name: "caddy: parse tailscale tsnet startup log (Unix float ts)"
+    inputs:
+      - insert_at: caddy_parse
+        type: log
+        log_fields:
+          body: '{"level":"info","ts":1780762408.0995722,"logger":"tailscale","msg":"tsnet starting with hostname \"o11y-ep\""}'
+          timestamp: "2026-06-05T21:13:28.099Z"
+          observed_timestamp: "2026-06-05T21:13:28.099Z"
+          resources:
+            service:
+              name: caddy
+            host:
+              name: o11y
+    outputs:
+      - extract_from: caddy_parse
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "tsnet starting with hostname \"o11y-ep\"")
+              assert_eq!(.severity_number, 9)
+              assert!(is_null(.severity_text), "severity_text derived in to_vlogs_format")
+              assert_eq!(.attributes.log.logger.name, "tailscale")
+              assert!(is_null(.attributes.http), "no http attrs for startup log")
+              assert!(is_null(.attributes.url), "no url attrs for startup log")
+
+  - name: "caddy: error level maps to OTel severity 17"
+    inputs:
+      - insert_at: caddy_parse
+        type: log
+        log_fields:
+          body: '{"level":"error","ts":1780762408.0,"logger":"http","msg":"dial failed"}'
+          timestamp: "2026-06-05T21:13:28.000Z"
+          observed_timestamp: "2026-06-05T21:13:28.000Z"
+          resources:
+            service:
+              name: caddy
+            host:
+              name: o11y
+    outputs:
+      - extract_from: caddy_parse
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_number, 17)
+              assert!(is_null(.severity_text), "severity_text derived in to_vlogs_format")
+              assert_eq!(.attributes.log.logger.name, "http")
+
+  - name: "caddy: access log maps to OTEL HTTP SemConv"
+    inputs:
+      - insert_at: caddy_parse
+        type: log
+        log_fields:
+          body: '{"level":"info","ts":1700000000.0,"logger":"http.log.access","msg":"handled request","request":{"remote_ip":"10.0.0.1","remote_port":"54312","proto":"HTTP/2.0","method":"GET","host":"o11y.chezmoi.sh","uri":"/api/health?q=1","headers":{"User-Agent":["curl/8.0"],"Referer":["-"]}},"duration":0.001,"size":42,"status":200}'
+          timestamp: "2023-11-14T22:13:20.000Z"
+          observed_timestamp: "2023-11-14T22:13:20.001Z"
+          resources:
+            service:
+              name: caddy
+            host:
+              name: o11y
+    outputs:
+      - extract_from: caddy_parse
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "handled request")
+              assert_eq!(.severity_number, 9)
+              assert_eq!(.attributes.http.request.method, "GET")
+              assert_eq!(.attributes.url.path, "/api/health")
+              assert_eq!(.attributes.url.query, "q=1")
+              assert_eq!(.attributes.server.address, "o11y.chezmoi.sh")
+              assert_eq!(.attributes.network.peer.address, "10.0.0.1")
+              assert_eq!(.attributes.network.peer.port, 54312)
+              assert_eq!(.attributes.http.response.status_code, 200)
+              assert_eq!(.attributes.http.response.body.size, 42)
+              assert_eq!(.attributes.user_agent.original, "curl/8.0")
+              assert_eq!(.attributes.caddy.duration, 0.001)
+              assert_eq!(.attributes.caddy.proto, "HTTP/2.0")
+              assert!(is_null(.severity_text))
+              true
+
+  - name: "caddy: non-JSON body passes through unchanged"
+    inputs:
+      - insert_at: caddy_parse
+        type: log
+        log_fields:
+          body: "plain startup line"
+          timestamp: "2026-06-05T21:13:28.000Z"
+          observed_timestamp: "2026-06-05T21:13:28.000Z"
+          resources:
+            service:
+              name: caddy
+            host:
+              name: o11y
+    outputs:
+      - extract_from: caddy_parse
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "plain startup line")
+              assert!(is_null(.severity_text))
+
+  - name: "caddy: /metrics path is dropped by caddy_to_o11y filter"
+    inputs:
+      - insert_at: caddy_to_o11y
+        type: log
+        log_fields:
+          body: "handled request"
+          timestamp: "2023-11-14T22:13:20.000Z"
+          observed_timestamp: "2023-11-14T22:13:20.001Z"
+          attributes:
+            url:
+              path: "/metrics/api/v1/write"
+    no_outputs_from:
+      - caddy_to_o11y
+
+  - name: "caddy: non-/metrics access log passes caddy_to_o11y filter"
+    inputs:
+      - insert_at: caddy_to_o11y
+        type: log
+        log_fields:
+          body: "handled request"
+          timestamp: "2023-11-14T22:13:20.000Z"
+          observed_timestamp: "2023-11-14T22:13:20.001Z"
+          attributes:
+            url:
+              path: "/api/health"
+    outputs:
+      - extract_from: caddy_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.attributes.url.path, "/api/health")
+
+  - name: "caddy: startup log (no url.path) passes caddy_to_o11y filter"
+    inputs:
+      - insert_at: caddy_to_o11y
+        type: log
+        log_fields:
+          body: "tsnet starting"
+          timestamp: "2026-06-05T21:13:28.000Z"
+          observed_timestamp: "2026-06-05T21:13:28.000Z"
+    outputs:
+      - extract_from: caddy_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "tsnet starting")

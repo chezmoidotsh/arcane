@@ -5,7 +5,7 @@ transforms:
   route_by_service:
     type: route
     inputs:
-      - journald_to_semconv
+      - route_builtin._unmatched
     route:
       provider: '.resources.service.name == "omni-infra-provider-proxmox"'
 
@@ -26,7 +26,7 @@ tests:
           body: "other service log"
           timestamp: "2026-06-13T00:00:00Z"
           observed_timestamp: "2026-06-13T00:00:00Z"
-          resources.service.name: caddy
+          resources.service.name: unknown-svc
           resources.host.name: omni-infra-provider-proxmox
     outputs:
       - extract_from: unmatched_to_o11y
@@ -34,5 +34,5 @@ tests:
           - type: vrl
             source: |
               assert_eq!(.body, "other service log")
-              assert_eq!(.resources.service.name, "caddy")
+              assert_eq!(.resources.service.name, "unknown-svc")
               true

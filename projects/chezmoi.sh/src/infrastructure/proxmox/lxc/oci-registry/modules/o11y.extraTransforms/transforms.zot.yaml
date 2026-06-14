@@ -187,6 +187,7 @@ transforms:
       }
 
   # ── Merge all zot paths → single sink input ───────────────────────────────
+  # Drops /metrics scrapes — they're noise from Vector's own metrics polling.
   zot_to_o11y:
     type: filter
     inputs:
@@ -194,7 +195,9 @@ transforms:
       - zot_other_to_semconv
     condition:
       type: vrl
-      source: "true"
+      source: |
+        _path, _err = to_string(.attributes.url.path)
+        _err != null || !starts_with(_path, "/metrics")
 
 tests:
   - name: "zot: parse scrub start log — common fields + extra in zot.extra"
@@ -316,3 +319,51 @@ tests:
               assert!(is_null(.severity_number))
               assert!(is_null(.attributes.zot.extra))
               true
+
+  - name: "zot: /metrics path is dropped by zot_to_o11y filter"
+    inputs:
+      - insert_at: zot_to_o11y
+        type: log
+        log_fields:
+          body: "HTTP API"
+          timestamp: "2026-06-07T00:00:00Z"
+          observed_timestamp: "2026-06-07T00:00:00Z"
+          attributes:
+            url:
+              path: "/metrics"
+    no_outputs_from:
+      - zot_to_o11y
+
+  - name: "zot: non-/metrics HTTP log passes zot_to_o11y filter"
+    inputs:
+      - insert_at: zot_to_o11y
+        type: log
+        log_fields:
+          body: "HTTP API"
+          timestamp: "2026-06-07T00:00:00Z"
+          observed_timestamp: "2026-06-07T00:00:00Z"
+          attributes:
+            url:
+              path: "/v2/"
+    outputs:
+      - extract_from: zot_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "HTTP API")
+              assert_eq!(.attributes.url.path, "/v2/")
+
+  - name: "zot: non-HTTP log (no url.path) passes zot_to_o11y filter"
+    inputs:
+      - insert_at: zot_to_o11y
+        type: log
+        log_fields:
+          body: "blobs/manifest ok"
+          timestamp: "2026-06-07T00:00:00Z"
+          observed_timestamp: "2026-06-07T00:00:00Z"
+    outputs:
+      - extract_from: zot_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "blobs/manifest ok")

@@ -8,7 +8,7 @@ Parses Zap JSON logs into OTLP SemConv fields before shipping to VictoriaLogs.
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                                                                            │
-│  journald_to_semconv  (from lxc-o11y-agent)                                │
+│  route_builtin._unmatched  (from lxc-o11y-agent)                           │
 │       │                                                                    │
 │       ▼  route_by_service     switch on service.name                       │
 │       │                                                                    │

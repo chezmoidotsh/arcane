@@ -11,6 +11,10 @@
 #       │  maps fields → OTel SemConv; stamps resources.host.name and
 #       │  resources.axnic.infra.kind (source provenance)
 #       ↓
+#   route_builtin                      ← conf.d/transforms.caddy.yaml (built-in)
+#       ├── .caddy → caddy_parse → caddy_to_o11y   (OTEL HTTP SemConv)
+#       └── ._unmatched
+#           ↓
 #   [logs.extraTransforms, if any]   ← conf.d/transforms.*.yaml (user-provided)
 #    OR journald_to_o11y (passthrough) ← conf.d/transforms.passthrough.json (auto)
 #       ↓ glob: *_to_o11y
@@ -23,6 +27,8 @@
 #
 # Config directory layout (baked into the Nix store):
 #   conf.d/sources.journald.yaml       — static: journald source + semconv remap
+#   conf.d/transforms.route.yaml       — static: built-in service routing
+#   conf.d/transforms.caddy.yaml       — static: caddy parse (built-in parser)
 #   conf.d/sources.prometheus.json     — generated: internal metrics + scrape targets
 #   conf.d/sinks.vector.json           — generated: vector native log sink
 #   conf.d/sinks.prometheus.json       — generated (metrics.enable only)
@@ -123,13 +129,13 @@ let
     };
   };
 
-  # ── Passthrough: journald_to_semconv → journald_to_o11y ───────────────────
+  # ── Passthrough: route_builtin._unmatched → journald_to_o11y ────────────────
   # Injected automatically when no extraTransforms are configured.
   # A filter transform with `true` is the cleanest Vector passthrough.
   passthroughConfig = {
     transforms.journald_to_o11y = {
       type = "filter";
-      inputs = [ "journald_to_semconv" ];
+      inputs = [ "route_builtin._unmatched" ];
       condition = {
         type = "vrl";
         source = "true";
@@ -139,9 +145,10 @@ let
 
   dataDir = "/var/lib/lxc-agent";
 
-  # journald source + semconv transform. The static file ships kind = "lxc"
-  # (so it stays self-contained and `vector test`-able); rewrite the injected
-  # resource only when this agent runs on another entity type.
+  # journald source + semconv transform + built-in caddy route/parse.
+  # The static journald file ships kind = "lxc" (so it stays self-contained
+  # and `vector test`-able); rewrite the injected resource only when this
+  # agent runs on another entity type.
   journaldSourceFile =
     if cfg.o11y.sourceKind == "lxc"
     then ./config/vector/sources.journald.yaml
@@ -169,6 +176,14 @@ let
       {
         name = "conf.d/sources.journald.yaml";
         path = journaldSourceFile;
+      }
+      {
+        name = "conf.d/transforms.route.yaml";
+        path = ./config/vector/transforms.route.yaml;
+      }
+      {
+        name = "conf.d/transforms.caddy.yaml";
+        path = ./config/vector/transforms.caddy.yaml;
       }
       {
         name = "conf.d/sinks.vector.json";
@@ -267,7 +282,8 @@ in
                 Contract: the fragment must expose at least one component
                 named `*_to_o11y`. The log sink consumes all components
                 matching that glob. The upstream component produced by this
-                module is `journald_to_semconv`.
+                module is `route_builtin._unmatched` (the non-caddy branch of
+                the built-in caddy router).
 
                 When extraTransforms is empty, an auto-generated passthrough
                 `journald_to_o11y` is inserted so the pipeline is complete.
@@ -288,7 +304,7 @@ in
               transforms:
                 journald_to_o11y:
                   type: filter
-                  inputs: [journald_to_semconv]
+                  inputs: [route_builtin._unmatched]
                   condition:
                     type: vrl
                     source: .["attr.syslog.severity.text"] != "debug"

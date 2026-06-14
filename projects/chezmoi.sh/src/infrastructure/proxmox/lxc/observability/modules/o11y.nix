@@ -33,7 +33,6 @@
       { name = "transforms.route.yaml"; content = builtins.readFile ./o11y.extraTransforms/transforms.route.yaml; }
       { name = "transforms.victoria.yaml"; content = builtins.readFile ./o11y.extraTransforms/transforms.victoria.yaml; }
       { name = "transforms.alertmanager.yaml"; content = builtins.readFile ./o11y.extraTransforms/transforms.alertmanager.yaml; }
-      { name = "transforms.caddy.yaml"; content = builtins.readFile ./o11y.extraTransforms/transforms.caddy.yaml; }
     ];
   };
 }
