@@ -10,7 +10,7 @@ transforms:
   #   body           → _msg        (VLogs body field)
   #   timestamp      → _time       (VLogs timestamp field, RFC3339)
   #   resources.*    → *           (flattened to root as stream labels)
-  #   attributes.*   → attrs.*     (prefixed for queryability)
+  #   attributes     → .attrs      (raw nested object, indexed by VictoriaLogs as attrs.*)
   #   observed_timestamp, severity_number, trace_id, span_id (kept at root)
   #   severity_text      → derived from severity_number if absent (canonical OTel
   #                        mapping: 1=TRACE … 24=FATAL4)
@@ -48,9 +48,7 @@ transforms:
       resources = object(del(.resources)) ?? {}
       . = merge(., resources)
 
-      attrs = object(del(.attributes)) ?? {}
-      prefixed = map_keys(attrs) -> |key| { "attrs." + key }
-      . = merge(., prefixed)
+      .attrs = object(del(.attributes)) ?? {}
 
       # Add stored_timestamp at the end of the pipeline to get the value when
       # the event is pushed to VLogs, enabling latency measurements in LogsQL.
@@ -178,7 +176,7 @@ tests:
             source: |
               assert_eq!(._msg, "preserved")
               assert_eq!(._time, "2024-06-01T00:00:00Z")
-              assert_eq!(."attrs.custom", "still here")
+              assert_eq!(.attrs.custom, "still here")
               assert_eq!(.trace_id, "deadbeef")
               assert!(.stored_timestamp != null)
               assert!(.observed_timestamp != null)
@@ -197,8 +195,10 @@ tests:
             host.name: "my-host"
             k8s.cluster.name: "prod"
           attributes:
-            log.source: "syslog"
-            process.pid: "42"
+            log:
+              source: "syslog"
+            process:
+              pid: "42"
           severity_text: "info"
           severity_number: 9
           trace_id: "aabbccdd"
@@ -213,8 +213,8 @@ tests:
               assert_eq!(."service.name", "my-svc")
               assert_eq!(."host.name", "my-host")
               assert_eq!(."k8s.cluster.name", "prod")
-              assert_eq!(."attrs.log.source", "syslog")
-              assert_eq!(."attrs.process.pid", "42")
+              assert_eq!(.attrs.log.source, "syslog")
+              assert_eq!(.attrs.process.pid, "42")
               assert_eq!(.severity_text, "info")
               assert_eq!(.severity_number, 9)
               assert_eq!(.trace_id, "aabbccdd")
@@ -290,8 +290,9 @@ tests:
             service.name: "vector-ingest"
             host.name: "appliance"
           attributes:
-            error.type: "semconv_invalid"
-            error.messages: "missing mandatory field: body"
+            error:
+              type: "semconv_invalid"
+              messages: "missing mandatory field: body"
             stored_timestamp: "2024-01-01T00:00:01Z"
     outputs:
       - extract_from: to_vlogs_format
@@ -300,8 +301,8 @@ tests:
             source: |
               assert_eq!(._msg, "ingestion_validation_error")
               assert_eq!(."service.name", "vector-ingest")
-              assert_eq!(."attrs.error.type", "semconv_invalid")
-              assert_eq!(."attrs.stored_timestamp", "2024-01-01T00:00:01Z")
+              assert_eq!(.attrs.error.type, "semconv_invalid")
+              assert_eq!(.attrs.stored_timestamp, "2024-01-01T00:00:01Z")
               assert!(is_null(.body))
               assert!(is_null(.resources))
               assert!(is_null(.attributes))

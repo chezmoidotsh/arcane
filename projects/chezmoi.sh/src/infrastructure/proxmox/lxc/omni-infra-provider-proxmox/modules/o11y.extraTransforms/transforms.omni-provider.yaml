@@ -9,7 +9,7 @@
 #   level  → .severity_number        (OTel SemConv)
 #   msg    → .body
 #   caller → .attributes.code.file.path + .attributes.code.line.number
-#   (rest) → .attributes.provider.json   (JSON blob)
+#   (rest) → .attributes.provider   (JSON blob)
 #
 # Input: route_by_service.provider (from transforms.route.yaml).
 # Non-provider services are handled by unmatched_to_o11y in transforms.route.yaml.
@@ -61,9 +61,9 @@ transforms:
             }
           }
 
-          # Remaining fields → attributes.provider.json
+          # Remaining fields → attributes.provider
           if length(object!(parsed)) > 0 {
-            .attributes.provider.json = encode_json(parsed)
+            .attributes.provider = encode_json(parsed)
           }
         }
       }
@@ -97,10 +97,10 @@ tests:
               assert!(starts_with(string!(.timestamp), "2026-06-13T15:42:21"), "ts unix float → RFC3339")
               assert_eq!(.attributes.code.file.path, "omni-infra-provider-proxmox/main.go")
               assert_eq!(.attributes.code.line.number, 117)
-              assert!(is_null(.attributes.provider.json), "no extra fields → no json blob")
+              assert!(is_null(.attributes.provider), "no extra fields → no provider blob")
               true
 
-  - name: "omni-provider: parse log with extra fields → provider.json blob"
+  - name: "omni-provider: parse log with extra fields → provider blob"
     inputs:
       - insert_at: provider_zap_parse
         type: log
@@ -116,8 +116,8 @@ tests:
           - type: vrl
             source: |
               assert_eq!(.body, "using insecure connection to Proxmox")
-              assert!(is_string(.attributes.provider.json))
-              assert!(contains(string!(.attributes.provider.json), "pve-01.pve.chezmoi.sh"), "endpoint in json blob")
+              assert!(is_string(.attributes.provider))
+              assert!(contains(string!(.attributes.provider), "pve-01.pve.chezmoi.sh"), "endpoint in provider blob")
               true
 
   - name: "omni-provider: error level maps to OTel severity 17"
@@ -156,5 +156,5 @@ tests:
             source: |
               assert_eq!(.body, "plain startup line")
               assert!(is_null(.severity_number))
-              assert!(is_null(.attributes.provider.json))
+              assert!(is_null(.attributes.provider))
               true

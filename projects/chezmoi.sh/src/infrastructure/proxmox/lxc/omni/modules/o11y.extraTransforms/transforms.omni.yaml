@@ -21,16 +21,17 @@
 #     gRPC ("finished unary call …"):
 #       grpc.service          → .attributes.rpc.service
 #       grpc.method           → .attributes.rpc.method
-#       grpc.code             → .attributes.rpc.grpc.status_code
-#       grpc.time_ms          → .attributes.omni.grpc.time_ms
+#       grpc.code             → .attributes.rpc.response.status_code (generic)
+#                               + .attributes.omni.grpc.status_code (gRPC-specific)
+#       grpc.time_ms          → .attributes.rpc.duration_ms
 #       peer.address          → .attributes.network.peer.address
 #       user_agent            → .attributes.user_agent.original
-#       authenticator.user_id → .attributes.enduser.id            (SIEM)
-#       authenticator.role    → .attributes.enduser.role          (SIEM)
+#       authenticator.user_id → .attributes.user.id + .attributes.identity.id (SIEM)
+#       authenticator.role    → .attributes.identity.role         (SIEM)
 #       authenticator.identity    → .attributes.omni.authenticator.identity
 #       authenticator.fingerprint → .attributes.omni.authenticator.fingerprint
 #       error                 → .attributes.error.message         (errors only)
-#       (rest)                → .attributes.omni.json
+#       (rest)                → .attributes.omni.extra
 #     reconcile ("reconcile …"):
 #       controller  → .attributes.omni.controller
 #       namespace   → .attributes.omni.namespace
@@ -40,8 +41,8 @@
 #       busy        → .attributes.omni.busy
 #       interval    → .attributes.omni.interval   (optional)
 #       requeued    → .attributes.omni.requeued   (optional)
-#       (rest)      → .attributes.omni.json
-#     other: pass through with attributes.json → attributes.omni.json
+#       (rest)      → .attributes.omni.extra
+#     other: pass through with attributes.json → attributes.omni.extra
 #
 # Input: route_by_service.omni (from transforms.route.yaml).
 # Non-omni services are handled by unmatched_to_o11y in transforms.route.yaml.
@@ -125,6 +126,8 @@ transforms:
         if _err == null && is_object(parsed) {
 
           # RPC SemConv
+          .attributes.rpc.system = "grpc"
+
           _svc = del(parsed."grpc.service")
           if _svc != null { .attributes.rpc.service = to_string!(_svc) }
 
@@ -132,10 +135,13 @@ transforms:
           if _method != null { .attributes.rpc.method = to_string!(_method) }
 
           _code = del(parsed."grpc.code")
-          if _code != null { .attributes.rpc.grpc.status_code = to_string!(_code) }
+          if _code != null {
+            .attributes.rpc.response.status_code = to_string!(_code)
+            .attributes.omni.grpc.status_code    = to_string!(_code)
+          }
 
           _ms = del(parsed."grpc.time_ms")
-          if _ms != null { .attributes.omni.grpc.time_ms = _ms }
+          if _ms != null { .attributes.rpc.duration_ms = _ms }
 
           # Network SemConv (SIEM: tracks caller IP)
           _peer = del(parsed."peer.address")
@@ -146,10 +152,13 @@ transforms:
 
           # Identity SemConv (SIEM: tracks authenticated principal)
           _uid = del(parsed."authenticator.user_id")
-          if _uid != null { .attributes.enduser.id = to_string!(_uid) }
+          if _uid != null {
+            .attributes.user.id     = to_string!(_uid)
+            .attributes.identity.id = to_string!(_uid)
+          }
 
           _role = del(parsed."authenticator.role")
-          if _role != null { .attributes.enduser.role = to_string!(_role) }
+          if _role != null { .attributes.identity.role = to_string!(_role) }
 
           _identity = del(parsed."authenticator.identity")
           if _identity != null { .attributes.omni.authenticator.identity = to_string!(_identity) }
@@ -164,7 +173,7 @@ transforms:
           # Remaining fields (component, system, span.kind, grpc.start_time,
           # grpc.request.content, grpc.response.content, …) kept for debugging.
           if length(object!(parsed)) > 0 {
-            .attributes.omni.json = encode_json(parsed)
+            .attributes.omni.extra = encode_json(parsed)
           }
         }
       }
@@ -207,7 +216,7 @@ transforms:
 
           # component and remaining fields kept for debugging.
           if length(object!(parsed)) > 0 {
-            .attributes.omni.json = encode_json(parsed)
+            .attributes.omni.extra = encode_json(parsed)
           }
         }
       }
@@ -220,7 +229,7 @@ transforms:
     drop_on_error: false
     source: |
       if exists(.attributes.json) {
-        .attributes.omni.json = del(.attributes.json)
+        .attributes.omni.extra = del(.attributes.json)
       }
 
   # ── Merge all omni paths → single sink input ──────────────────────────────
@@ -283,16 +292,17 @@ tests:
               assert_eq!(.severity_number, 9)
               assert_eq!(.attributes.rpc.service, "cosi.resource.State")
               assert_eq!(.attributes.rpc.method, "Update")
-              assert_eq!(.attributes.rpc.grpc.status_code, "OK")
+              assert_eq!(.attributes.rpc.response.status_code, "OK")
+              assert_eq!(.attributes.omni.grpc.status_code, "OK")
               assert_eq!(.attributes.network.peer.address, "10.0.1.211")
               assert_eq!(.attributes.user_agent.original, "grpc-go/1.81.0")
-              assert_eq!(.attributes.enduser.id, "f4659ce8-1f80-4d55-9e7f-f97563987e58")
-              assert_eq!(.attributes.enduser.role, "InfraProvider")
+              assert_eq!(.attributes.user.id, "f4659ce8-1f80-4d55-9e7f-f97563987e58")
+              assert_eq!(.attributes.identity.role, "InfraProvider")
               assert_eq!(.attributes.omni.authenticator.identity, "pve-01.pve.chezmoi.sh@infra-provider.serviceaccount.omni.sidero.dev")
               assert_eq!(.attributes.omni.authenticator.fingerprint, "0c0e69d5740901a699e457a67222fac0f21c0fd3")
               assert!(is_null(.attributes.json), "attributes.json consumed by stage 2")
-              # debug fields kept in omni.json — component, span.kind, grpc payloads, etc.
-              _blob = string(.attributes.omni.json) ?? ""
+              # debug fields kept in omni.extra — component, span.kind, grpc payloads, etc.
+              _blob = string(.attributes.omni.extra) ?? ""
               assert!(contains(_blob, "server"), "component kept in blob")
               assert!(contains(_blob, "grpc.request.content"), "request payload kept for debug")
               true
@@ -312,9 +322,10 @@ tests:
         conditions:
           - type: vrl
             source: |
-              assert_eq!(.attributes.rpc.grpc.status_code, "AlreadyExists")
+              assert_eq!(.attributes.rpc.response.status_code, "AlreadyExists")
+              assert_eq!(.attributes.omni.grpc.status_code, "AlreadyExists")
               assert_eq!(.attributes.error.message, "rpc error: code = AlreadyExists desc = failed to create")
-              assert!(is_float(.attributes.omni.grpc.time_ms))
+              assert!(is_float(.attributes.rpc.duration_ms))
               true
 
   - name: "omni: reconcile with interval + requeued flags"
@@ -395,7 +406,7 @@ tests:
               assert!(is_null(.attributes.json))
               true
 
-  - name: "omni: startup log — other path, attributes.json renamed to omni.json"
+  - name: "omni: startup log — other path, attributes.json renamed to omni.extra"
     inputs:
       - insert_at: omni_zap_parse
         type: log
@@ -414,5 +425,5 @@ tests:
               assert_eq!(.attributes.code.file.path, "omni/main.go")
               assert_eq!(.attributes.code.line.number, 42)
               assert!(is_null(.attributes.json), "attributes.json renamed")
-              assert!(contains(string!(.attributes.omni.json), "v0.44.0"), "version in omni.json")
+              assert!(contains(string!(.attributes.omni.extra), "v0.44.0"), "version in omni.extra")
               true

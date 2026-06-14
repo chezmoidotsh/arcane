@@ -23,10 +23,10 @@
 #       statusCode  → .attributes.http.response.status_code
 #       bodySize    → .attributes.http.response.body.size
 #       User-Agent  → .attributes.user_agent.original
-#       latency     → .attributes.zot.latency
-#       (rest)      → .attributes.zot.json
+#       latency     → .attributes.zot.latency_ms (integer ms)
+#       (rest)      → .attributes.zot.extra
 #     other:
-#       (rest)      → .attributes.zot.json  (direct rename of attributes.json)
+#       (rest)      → .attributes.zot.extra  (direct rename of attributes.json)
 #
 # Input: route_by_service.zot (from transforms.route.yaml).
 # Non-zot services are handled by unmatched_to_o11y in transforms.route.yaml.
@@ -135,7 +135,21 @@ transforms:
           if _size != null { .attributes.http.response.body.size = _size }
 
           _latency = del(parsed.latency)
-          if _latency != null { .attributes.zot.latency = to_string!(_latency) }
+          if _latency != null {
+            _lat_str = to_string!(_latency)
+            _lat_m, _lat_err = parse_regex(_lat_str, r'^(?P<val>[0-9]+(?:\.[0-9]+)?)(?P<unit>ns|µs|ms|s|m|h)$')
+            if _lat_err == null {
+              _v  = to_float!(_lat_m.val)
+              _u  = string!(_lat_m.unit)
+              _ms = if _u == "ns" { _v / 1000000.0 }
+                    else if _u == "µs" { _v / 1000.0 }
+                    else if _u == "ms" { _v }
+                    else if _u == "s"  { _v * 1000.0 }
+                    else if _u == "m"  { _v * 60000.0 }
+                    else               { _v * 3600000.0 }
+              .attributes.zot.latency_ms = to_int(_ms)
+            }
+          }
 
           # User-Agent from headers array
           _headers = del(parsed.headers)
@@ -149,7 +163,7 @@ transforms:
 
           # Remaining fields (component, module, goroutine, …) kept for debugging
           if length(object!(parsed)) > 0 {
-            .attributes.zot.json = encode_json(parsed)
+            .attributes.zot.extra = encode_json(parsed)
           }
         }
       }
@@ -162,7 +176,7 @@ transforms:
     drop_on_error: false
     source: |
       if exists(.attributes.json) {
-        .attributes.zot.json = del(.attributes.json)
+        .attributes.zot.extra = del(.attributes.json)
       }
 
   # ── Merge all zot paths → single sink input ───────────────────────────────
@@ -176,7 +190,7 @@ transforms:
       source: "true"
 
 tests:
-  - name: "zot: parse scrub start log — common fields + extra in zot.json"
+  - name: "zot: parse scrub start log — common fields + extra in zot.extra"
     inputs:
       - insert_at: zot_zap_parse
         type: log
@@ -198,10 +212,10 @@ tests:
               assert_eq!(.attributes.code.line.number, 18)
               assert_eq!(.attributes.code.function, "zotregistry.dev/zot/v2/pkg/extensions/scrub.RunScrubRepo")
               assert!(is_null(.attributes.json), "attributes.json renamed")
-              assert!(contains(string!(.attributes.zot.json), "44"), "goroutine in zot.json blob")
+              assert!(contains(string!(.attributes.zot.extra), "44"), "goroutine in zot.extra blob")
               true
 
-  - name: "zot: parse blob/manifest ok log — extra fields in zot.json"
+  - name: "zot: parse blob/manifest ok log — extra fields in zot.extra"
     inputs:
       - insert_at: zot_zap_parse
         type: log
@@ -218,10 +232,10 @@ tests:
             source: |
               assert_eq!(.body, "blobs/manifest ok")
               assert_eq!(.severity_number, 9)
-              _blob = string!(.attributes.zot.json)
-              assert!(contains(_blob, "longhorn-engine"), "image in zot.json")
-              assert!(contains(_blob, "v1.11.2"), "tag in zot.json")
-              assert!(contains(_blob, "scrub"), "component in zot.json")
+              _blob = string!(.attributes.zot.extra)
+              assert!(contains(_blob, "longhorn-engine"), "image in zot.extra")
+              assert!(contains(_blob, "v1.11.2"), "tag in zot.extra")
+              assert!(contains(_blob, "scrub"), "component in zot.extra")
               true
 
   - name: "zot: error level maps to OTel severity 17"
@@ -241,7 +255,7 @@ tests:
             source: |
               assert_eq!(.severity_number, 17)
               assert_eq!(.body, "failed to pull image")
-              assert!(contains(string!(.attributes.zot.json), "sync"), "component in zot.json")
+              assert!(contains(string!(.attributes.zot.extra), "sync"), "component in zot.extra")
               true
 
   - name: "zot: HTTP API log — OTel HTTP SemConv fields extracted"
@@ -268,10 +282,10 @@ tests:
               assert_eq!(.attributes.network.peer.address, "127.0.0.1")
               assert_eq!(.attributes.network.peer.port, 43204)
               assert_eq!(.attributes.user_agent.original, "Vector/0.55.0 (x86_64-unknown-linux-gnu)")
-              assert_eq!(.attributes.zot.latency, "0s")
+              assert_eq!(.attributes.zot.latency_ms, 0)
               assert!(is_null(.attributes.json), "attributes.json consumed")
               # component, module, goroutine kept in blob for debug
-              _blob = string!(.attributes.zot.json)
+              _blob = string!(.attributes.zot.extra)
               assert!(contains(_blob, "session"), "component in blob")
               assert!(contains(_blob, "http"), "module in blob")
               true
@@ -293,5 +307,5 @@ tests:
             source: |
               assert_eq!(.body, "plain startup line")
               assert!(is_null(.severity_number))
-              assert!(is_null(.attributes.zot.json))
+              assert!(is_null(.attributes.zot.extra))
               true
