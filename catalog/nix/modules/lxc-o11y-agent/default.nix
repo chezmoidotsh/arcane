@@ -36,8 +36,11 @@
 let
   cfg = config.catalog.lxcAgent;
 
-  # VRL applied to every metric series before shipping to VictoriaMetrics.
+  # `node` identifies the originating machine following the node_exporter
+  # convention — it refers to the host rather than the scrape endpoint.
+  # The (job, node) pair uniquely identifies a series for remote_write.
   metricProvenance = ''
+    .tags.node = get_hostname!()
   '';
 
   # ── Prometheus: sources + tag transforms (generated when metrics.enable) ──
@@ -64,13 +67,13 @@ let
       })
       cfg.metrics.scrapeTargets);
 
-    # Per-job scrapes carry the configured job name; internal metrics are
-    # tagged via tag_internal using metricProvenance for source provenance.
+    # Every series carries the (job, node) pair. Per-job scrapes use the
+    # configured job name; internal metrics get job="vector-agent" explicitly.
     transforms = {
       tag_internal = {
         type = "remap";
         inputs = [ "in_internal_metrics" ];
-        source = metricProvenance;
+        source = ''.tags.job = "vector-agent"'' + "\n" + metricProvenance;
       };
     } // lib.listToAttrs (
       map
