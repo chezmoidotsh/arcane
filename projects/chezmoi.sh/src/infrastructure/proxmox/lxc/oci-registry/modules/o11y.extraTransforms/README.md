@@ -6,31 +6,24 @@ Parses Zap JSON logs into OTLP SemConv fields before shipping to VictoriaLogs.
 ## Pipeline overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                                                                         │
-│  journald_to_semconv  (from lxc-o11y-agent)                             │
-│       │                                                                 │
-│       ▼  route_zot                                                      │
-│       │  service.name == 'zot'?                                         │
-│       │                                                                 │
-│       ├── zot ────▶  zot_zap_parse                                      │
-│       │              time · level · message · caller · func             │
-│       │                   │                                             │
-│       │                   ▼  route_zot_type                             │
-│       │                   │                                             │
-│       │                   ├── HTTP API ──▶  zot_http_to_semconv         │
-│       │                   │                method · path · status · …   │
-│       │                   │                      │                      │
-│       │                   └── scrub/sync/… ▶  zot_other_to_semconv      │
-│       │                                          │                      │
-│       │                   ▼  zot_to_o11y  ◄── (both paths converge)    │
-│       │                   │                                             │
-│       └── other ──▶  unmatched_to_o11y                                  │
-│                           │                                             │
-│       ▼  (all paths converge)                                           │
-│  out_logs  ──────────────────────────────────────►  o11y in_vector      │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│                                                                            │
+│  journald_to_semconv  (from lxc-o11y-agent)                                │
+│       │                                                                    │
+│       ▼  route_by_service     switch on service.name                       │
+│       │                                                                    │
+│       ├─ zot ─▶ zot_zap_parse ─▶ route_zot_type                            │
+│       │      │                                                             │
+│       │      ├─ HTTP API ─▶ zot_http_to_semconv ──┐                        │
+│       │      └─ other ────▶ zot_other_to_semconv ─┴─▶ zot_to_o11y ──┐      │
+│       │                                                             │      │
+│       └─ other ────────────────────────────────▶ unmatched_to_o11y ─┤      │
+│                                                    glob *_to_o11y   │      │
+│       ┌─────────────────────────────────────────────────────────────┘      │
+│       ▼                                                                    │
+│  out_logs  ──────────────────────────────────────────▶  o11y in_vector     │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Available fields in VictoriaLogs

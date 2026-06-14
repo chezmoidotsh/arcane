@@ -6,24 +6,20 @@ Parses Zap JSON logs into OTLP SemConv fields before shipping to VictoriaLogs.
 ## Pipeline overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                                                                         │
-│  journald_to_semconv  (from lxc-o11y-agent)                             │
-│       │                                                                 │
-│       ▼  route_omni_provider                                            │
-│       │  service.name == 'omni-infra-provider-proxmox'?                 │
-│       │                                                                 │
-│       ├── provider ──▶  provider_zap_parse                              │
-│       │                 ts · level · msg · caller · (rest) → attrs      │
-│       │                      │                                          │
-│       │                      ▼  provider_to_o11y                        │
-│       │                      │                                          │
-│       └── other ────▶  unmatched_to_o11y                                │
-│                              │                                          │
-│       ▼  (both paths converge)                                          │
-│  out_logs  ──────────────────────────────────────►  o11y in_vector      │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│                                                                            │
+│  journald_to_semconv  (from lxc-o11y-agent)                                │
+│       │                                                                    │
+│       ▼  route_by_service     switch on service.name                       │
+│       │                                                                    │
+│       ├─ provider ─▶ provider_zap_parse ─▶ provider_to_o11y ──┐            │
+│       └─ other ──────────────────────────▶ unmatched_to_o11y ─┤            │
+│                                               glob *_to_o11y  │            │
+│       ┌───────────────────────────────────────────────────────┘            │
+│       ▼                                                                    │
+│  out_logs  ──────────────────────────────────────────▶  o11y in_vector     │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
 Provider logs are simpler than omni's (no gRPC call tracking, no reconcile loop) —

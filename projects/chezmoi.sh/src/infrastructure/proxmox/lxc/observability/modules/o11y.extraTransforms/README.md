@@ -8,29 +8,22 @@ before shipping to VictoriaLogs.
 ## Pipeline overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                                                                         │
-│  journald_to_semconv  (from lxc-o11y-agent)                             │
-│       │                                                                 │
-│       ▼  route_by_service                                               │
-│       │                                                                 │
-│       ├── victoria-* / vmalert                                          │
-│       │        └─▶  victoria_to_o11y                                    │
-│       │              victoria-metrics · victoria-logs                   │
-│       │              victoria-traces · vmalert                          │
-│       │                   │                                             │
-│       ├── alertmanager                                                  │
-│       │        └─▶  alertmanager_to_o11y                                │
-│       │                   │                                             │
-│       ├── caddy                                                         │
-│       │        └─▶  caddy_to_o11y                                       │
-│       │                   │                                             │
-│       └── other ──▶  unmatched_to_o11y                                  │
-│                           │                                             │
-│       ▼  (all paths converge)                                           │
-│  out_logs  ──────────────────────────────────────►  o11y in_vector      │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│                                                                            │
+│  journald_to_semconv  (from lxc-o11y-agent)                                │
+│       │                                                                    │
+│       ▼  route_by_service     switch on service.name                       │
+│       │                                                                    │
+│       ├─ victoria-* / vmalert ─▶  victoria_to_o11y ──────┐                 │
+│       ├─ alertmanager         ─▶  alertmanager_to_o11y ──┤                 │
+│       ├─ caddy                ─▶  caddy_to_o11y ─────────┤                 │
+│       └─ other                ─▶  unmatched_to_o11y ─────┤                 │
+│                                                          │  glob *_to_o11y │
+│       ┌──────────────────────────────────────────────────┘                 │
+│       ▼                                                                    │
+│  out_logs  ──────────────────────────────────────────▶  o11y in_vector     │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Available fields in VictoriaLogs

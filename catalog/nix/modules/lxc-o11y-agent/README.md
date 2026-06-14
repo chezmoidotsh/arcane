@@ -11,32 +11,37 @@ Prometheus exporters, forwarding everything to the central `o11y` appliance.
 One Vector process runs two independent pipelines on the LXC:
 
 ```
-┌─ LOGS ──────────────────────────────────────────────────────────────┐
-│                                                                     │
-│  systemd journal (current boot)                                     │
-│       │                                                             │
-│       ▼  Vector journald source                                     │
-│  journald_to_semconv  ◄── lib/vector/conf.d/sources.journald.yaml   │
-│       │  (maps journald fields → OTel SemConv / VictoriaLogs layout)│
-│       │                                                             │
-│       ▼  [logs.extraTransforms — user-provided filters, if any]     │
-│       │   OR  journald_to_o11y  (auto passthrough when none)        │
-│       │                                                             │
-│       ▼  glob: *_to_o11y                                            │
-│  out_logs  ──────────────────────────────────────►  o11y in_vector  │
-│           (Vector native protocol, 256 MiB disk buffer)             │
-└─────────────────────────────────────────────────────────────────────┘
+┌─ LOGS ─────────────────────────────────────────────────────────────────────┐
+│                                                                            │
+│  systemd journal  (current boot)                                           │
+│       │                                                                    │
+│       ▼  journald source                                                   │
+│  journald_to_semconv        ◄── lib/vector/conf.d/sources.journald.yaml    │
+│       │  journald fields → OTel SemConv / VictoriaLogs layout              │
+│       │                                                                    │
+│       ▼  [logs.extraTransforms]   user filters, if any                     │
+│       │   else journald_to_o11y   auto passthrough (when none)             │
+│       │                                                                    │
+│       ▼  glob *_to_o11y                                                    │
+│  out_logs ─────────────────────────────────────────▶  o11y in_vector       │
+│           Vector native protocol · 256 MiB disk buffer (block)             │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
 
-┌─ METRICS (optional) ────────────────────────────────────────────────┐
-│                                                                     │
-│  Vector internal metrics                                            │
-│  prometheus_scrape (one source per configured job)                  │
-│       │                                                             │
-│       ▼  tag_<job>  (adds `job`)                                    │
-│                                                                     │
-│  out_metrics  ──────────────────────────────────►  VictoriaMetrics  │
-│              (prometheus_remote_write, 128 MiB disk buffer)         │
-└─────────────────────────────────────────────────────────────────────┘
+┌─ METRICS (optional) ───────────────────────────────────────────────────────┐
+│                                                                            │
+│  in_internal_metrics  (always shipped) ─────────────────────────────────┐  │
+│                                                                         │  │
+│  scrape_<job>  (prometheus_scrape, one source per job)                  │  │
+│       │                                                                 │  │
+│       ▼  tag_<job>  (stamps `job` label) ───────────────────────────────┤  │
+│                                                                         │  │
+│       ┌─────────────────────────────────────────────────────────────────┘  │
+│       ▼                                                                    │
+│  out_metrics ───────────────────────────────────▶  o11y VictoriaMetrics    │
+│              prometheus_remote_write · 256 MiB disk buffer (drop-newest)   │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Logs** — Vector reads the systemd journal natively (no extra daemon).
@@ -47,7 +52,7 @@ o11y outages without dropping events.
 **Metrics** — One `prometheus_scrape` source per job (required for per-job
 labels). A remap transform stamps every series with `job` labels before
 shipping via `prometheus_remote_write`. Vector's own internal metrics are
-always included. A 128 MiB disk buffer absorbs outages; newest samples are
+always included. A 256 MiB disk buffer absorbs outages; newest samples are
 dropped when full (point-in-time data is replaceable).
 
 ***

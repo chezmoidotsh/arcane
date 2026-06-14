@@ -6,35 +6,25 @@ Parses Zap JSON logs into OTLP SemConv fields before shipping to VictoriaLogs.
 ## Pipeline overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                                                                         │
-│  journald_to_semconv  (from lxc-o11y-agent)                             │
-│       │                                                                 │
-│       ▼  route_omni                                                     │
-│       │  service.name == 'omni'?                                        │
-│       │                                                                 │
-│       ├── omni ───▶  omni_zap_parse                                     │
-│       │              ts · level · msg · caller                          │
-│       │                   │                                             │
-│       │                   ▼  route_omni_type                            │
-│       │                   │                                             │
-│       │                   ├── "finished unary call …"                   │
-│       │                   │        └─▶  omni_grpc_to_semconv            │
-│       │                   │                  │                          │
-│       │                   ├── "reconcile …"                             │
-│       │                   │        └─▶  omni_reconcile_to_semconv       │
-│       │                   │                  │                          │
-│       │                   └── startup / misc                            │
-│       │                            └─▶  omni_other_to_semconv           │
-│       │                                       │                         │
-│       │                   ▼  omni_to_o11y  ◄── (all paths converge)    │
-│       │                   │                                             │
-│       └── other ──▶  unmatched_to_o11y                                  │
-│                           │                                             │
-│       ▼  (all paths converge)                                           │
-│  out_logs  ──────────────────────────────────────►  o11y in_vector      │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│                                                                            │
+│  journald_to_semconv  (from lxc-o11y-agent)                                │
+│       │                                                                    │
+│       ▼  route_by_service     switch on service.name                       │
+│       │                                                                    │
+│       ├─ omni ─▶ omni_zap_parse ─▶ route_omni_type                         │
+│       │      │                                                             │
+│       │      ├─ gRPC ──────▶ omni_grpc_to_semconv ─────┐                   │
+│       │      ├─ reconcile ─▶ omni_reconcile_to_semconv ┤                   │
+│       │      └─ other ─────▶ omni_other_to_semconv ────┴─▶  omni_to_o11y ┐ │
+│       │                                                                  │ │
+│       └─ other ────────────────────────────────────▶ unmatched_to_o11y ──┤ │
+│                                                        glob *_to_o11y    │ │
+│       ┌──────────────────────────────────────────────────────────────────┘ │
+│       ▼                                                                    │
+│  out_logs  ──────────────────────────────────────────▶  o11y in_vector     │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Available fields in VictoriaLogs

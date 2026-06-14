@@ -7,35 +7,33 @@ external OTLP senders, validates them, then ships to VictoriaLogs.
 ## Pipeline overview
 
 ```
-┌─ LOGS ──────────────────────────────────────────────────────────────────┐
-│                                                                         │
-│  in_otlp  (gRPC :4317 / HTTP :4318)                                     │
-│       │                                                                 │
-│       ▼  otlp_to_semconv                                                │
-│       │  normalize OTLP envelope → internal format                      │
-│       │                                                                 │
-│  in_vector  (Vector native :6000)                                       │
-│       │                                                                 │
-│       ▼  strip_vector_meta                                              │
-│       │  drop .source_type                                              │
-│       │                                                                 │
-│       ▼  validate_semconv  ◄── both sources converge here               │
-│       │  validate contract · bad events → ingestion error record        │
-│       │                                                                 │
-│       ▼  to_vlogs_format                                                │
-│       │  body→_msg · resources.*→root · attributes→.attrs               │
-│       │                                                                 │
-│       ▼  out_victorialogs                                               │
-│          HTTP → VictoriaLogs :9428                                      │
-│                                                                         │
-├─ METRICS ───────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  in_internal_metrics  (Vector self-metrics, every 30 s)                 │
-│       │                                                                 │
-│       ▼  out_victoriametrics                                            │
-│          Prometheus remote write → VictoriaMetrics :8428                │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+┌─ LOGS ─────────────────────────────────────────────────────────────────────┐
+│                                                                            │
+│  in_otlp  (gRPC :4317 / HTTP :4318)        in_vector  (Vector native :6000)│
+│       │                                    │                               │
+│       ▼  otlp_to_semconv                   ▼  strip_vector_meta            │
+│       │  normalize OTLP envelope           │  drop .source_type            │
+│       │  → internal format                 │                               │
+│       │                                    │                               │
+│       └────────────────┬───────────────────┘                               │
+│                        ▼  validate_semconv                                 │
+│                        │  validate internal contract                       │
+│                        │  bad events → ingestion error record              │
+│                        │                                                   │
+│                        ▼  to_vlogs_format                                  │
+│                        │  body→_msg · resources.*→root · attributes→.attrs │
+│                        │                                                   │
+│                        ▼  out_victorialogs                                 │
+│                           HTTP → VictoriaLogs :9428                        │
+│                                                                            │
+├─ METRICS ──────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  in_internal_metrics  (Vector self-metrics, every 30 s)                    │
+│       │                                                                    │
+│       ▼  out_victoriametrics                                               │
+│          Prometheus remote write → VictoriaMetrics :8428                   │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Internal OTLP-like format
