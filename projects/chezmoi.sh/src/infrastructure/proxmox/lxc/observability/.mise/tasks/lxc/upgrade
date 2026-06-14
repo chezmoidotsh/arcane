@@ -1,0 +1,223 @@
+#!/usr/bin/env bash
+# trunk-ignore-all(shellcheck/SC2029): SSH commands intentionally expand local
+# variables on the client; the values are local to this script, not on the
+# remote PVE host.
+# [MISE] description="Upgrade the observability LXC to a new image version via rootfs swap"
+# [USAGE] arg "<pve_host>" help="Hostname or IP of the Proxmox node (e.g. pve.lan)"
+# [USAGE] arg "<source_id>" help="VMID of the running container"
+# [USAGE] arg "<target_id>" help="VMID for the new container (must not already exist)"
+# [USAGE] flag "-V --version <version>" help="Image version (e.g. 2026.06.05-1) — auto-detected from flake if omitted"
+# [USAGE] flag "-y --yes" help="Skip confirmation prompts"
+
+set -euo pipefail
+
+pve_host="${usage_pve_host}"
+source_id="${usage_source_id}"
+target_id="${usage_target_id}"
+version="${usage_version-}"
+yes="${usage_yes-}"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+
+HOST_UID_O11Y=100980  # o11y uid (980) + Proxmox default offset (100000)
+HOST_UID_CADDY=100997 # caddy uid (997) + Proxmox default offset (100000)
+
+# --- Resolve version and template -------------------------------------------
+if [[ -z ${version} ]]; then
+  version="$(grep -m1 'version = "' "${CONFIG_ROOT}/flake.nix" |
+    sed 's/.*version = "\(.*\)".*/\1/')"
+  echo "[INFO] Auto-detected version: ${version}" >&2
+fi
+template="observability.${version}-amd64.tar.xz"
+template_path="/var/lib/vz/template/cache/${template}"
+
+# ============================================================================
+# Step 1 — Pre-flight checks
+# ============================================================================
+echo "===== Step 1 — Pre-flight checks =====" >&2
+
+if ! ssh "root@${pve_host}" "test -f '${template_path}'"; then
+  echo "[ERROR] Template not found on ${pve_host}: ${template_path}" >&2
+  echo "        Run 'mise run lxc:build && mise run lxc:push -- ${pve_host}' to upload it." >&2
+  exit 1
+fi
+echo "[OK] Template present: ${template}" >&2
+
+source_conf=$(ssh "root@${pve_host}" "cat /etc/pve/lxc/${source_id}.conf 2>/dev/null" || true)
+if [[ -z ${source_conf} ]]; then
+  echo "[ERROR] CT ${source_id} does not exist on ${pve_host}." >&2
+  exit 1
+fi
+source_hostname=$(echo "${source_conf}" | awk '/^hostname:/{print $2}')
+echo "[OK] Source: CT ${source_id} (${source_hostname})" >&2
+
+target_conf=$(ssh "root@${pve_host}" "cat /etc/pve/lxc/${target_id}.conf 2>/dev/null" || true)
+if [[ -n ${target_conf} ]]; then
+  echo "[ERROR] CT ${target_id} already exists on ${pve_host}. Destroy it first or choose another VMID." >&2
+  exit 1
+fi
+echo "[OK] Target VMID ${target_id} is free" >&2
+
+MP0_SPEC=$(echo "${source_conf}" | grep '^mp0:' | sed 's/^mp0: //')
+if [[ -z ${MP0_SPEC} ]]; then
+  echo "[ERROR] No mp0 found in CT ${source_id} config." >&2
+  exit 1
+fi
+mp0_mount=$(echo "${MP0_SPEC}" | grep -oE 'mp=[^,]+' | cut -d= -f2-)
+echo "[OK] mp0: ${MP0_SPEC}" >&2
+
+if [[ -z ${yes} ]]; then
+  read -r -p "[?] Upgrade CT ${source_id} (${source_hostname}) → CT ${target_id} using ${template}? [y/N] " confirm
+  [[ ${confirm} =~ ^[Yy]$ ]] || {
+    echo "[ABORTED]" >&2
+    exit 1
+  }
+fi
+
+# ============================================================================
+# Step 2 — Create target CT (rootfs only, no mp0)
+# ============================================================================
+echo "===== Step 2 — Create target CT (rootfs only) =====" >&2
+
+ssh "root@${pve_host}" "
+ROOTFS_LINE=\$(grep '^rootfs:' /etc/pve/lxc/${source_id}.conf | sed 's/^rootfs: //')
+ROOTFS_STORAGE=\$(echo \"\$ROOTFS_LINE\" | cut -d: -f1)
+ROOTFS_SIZE=\$(echo \"\$ROOTFS_LINE\" | grep -oE 'size=[0-9]+' | cut -d= -f2)
+FEATURES=\$(grep '^features:' /etc/pve/lxc/${source_id}.conf | sed 's/^features: //')
+MEMORY=\$(grep '^memory:' /etc/pve/lxc/${source_id}.conf | awk '{print \$2}')
+CORES=\$(grep '^cores:' /etc/pve/lxc/${source_id}.conf | awk '{print \$2}')
+
+pct create ${target_id} ${template_path} \
+  --rootfs \$ROOTFS_STORAGE:\$ROOTFS_SIZE \
+  --features \"\$FEATURES\" \
+  --memory \$MEMORY \
+  --cores \$CORES \
+  --swap 0
+"
+echo "[OK] Target CT ${target_id} created" >&2
+
+# ============================================================================
+# Step 3 — Smoke-test the new template
+# ============================================================================
+echo "===== Step 3 — Smoke-test =====" >&2
+
+ssh "root@${pve_host}" "pct start ${target_id}"
+sleep 10
+
+activation=$(ssh "root@${pve_host}" "pct exec ${target_id} -- /bin/sh -c 'test -e /run/current-system && echo OK || echo FAIL'")
+if [[ ${activation} != *"OK"* ]]; then
+  echo "[ERROR] Stage-2 activation failed — is features:nesting=1 set?" >&2
+  ssh "root@${pve_host}" "pct stop ${target_id}" 2>/dev/null || true
+  exit 1
+fi
+echo "[OK] NixOS activation passed" >&2
+
+ssh "root@${pve_host}" "pct exec ${target_id} -- /run/current-system/sw/bin/bash -lc '
+systemctl is-system-running
+systemctl --failed --no-legend
+'" >&2
+
+ssh "root@${pve_host}" "pct stop ${target_id}"
+echo "[OK] Smoke test passed" >&2
+
+# ============================================================================
+# Step 4 — Merge source config into target (rootfs swap, drop mp0)
+# ============================================================================
+echo "===== Step 4 — Merge config (rootfs swap, strip mp0) =====" >&2
+
+ssh "root@${pve_host}" "
+NEW_ROOTFS_VOL=\$(grep '^rootfs:' /etc/pve/lxc/${target_id}.conf | awk '{print \$2}' | cut -d, -f1)
+OLD_ROOTFS_VOL=\$(grep '^rootfs:' /etc/pve/lxc/${source_id}.conf | sed 's/^rootfs: //' | cut -d, -f1)
+sed \"s|\$OLD_ROOTFS_VOL|\$NEW_ROOTFS_VOL|g\" /etc/pve/lxc/${source_id}.conf > /etc/pve/lxc/${target_id}.conf
+sed -i '/^mp0:/d' /etc/pve/lxc/${target_id}.conf
+"
+
+ssh "root@${pve_host}" "
+if [[ -f /etc/pve/firewall/${source_id}.fw ]]; then
+  cp /etc/pve/firewall/${source_id}.fw /etc/pve/firewall/${target_id}.fw
+fi
+"
+echo "[OK] Config merged" >&2
+
+# ============================================================================
+# Step 5 — Cutover (downtime starts)
+# ============================================================================
+if [[ -z ${yes} ]]; then
+  read -r -p "[?] Ready to cut over (downtime starts — CT ${source_id} will stop)? [y/N] " confirm
+  [[ ${confirm} =~ ^[Yy]$ ]] || {
+    echo "[ABORTED] Target ready but not started." >&2
+    exit 0
+  }
+fi
+
+echo "===== Step 5 — Cutover =====" >&2
+T0=$(date +%s)
+
+ssh "root@${pve_host}" "
+pct stop ${source_id}
+pct set ${source_id} --delete mp0
+pct set ${target_id} -mp0 '${MP0_SPEC}'
+"
+
+echo "[INFO] Fixing data ownership (o11y:${HOST_UID_O11Y}, caddy:${HOST_UID_CADDY})..." >&2
+ssh "root@${pve_host}" "
+pct mount ${target_id} >/dev/null
+chown --recursive ${HOST_UID_O11Y}:${HOST_UID_O11Y} /var/lib/lxc/${target_id}/rootfs${mp0_mount}/o11y
+chown --recursive ${HOST_UID_CADDY}:${HOST_UID_CADDY} /var/lib/lxc/${target_id}/rootfs${mp0_mount}/caddy
+pct unmount ${target_id}
+pct start ${target_id}
+"
+
+now=$(date +%s)
+echo "[OK] Cutover: $((now - T0))s — services warming up" >&2
+
+# ============================================================================
+# Step 6 — Verify the new CT is healthy
+# ============================================================================
+echo "===== Step 6 — Verify health (15s warm-up) =====" >&2
+sleep 15
+
+ssh "root@${pve_host}" "pct exec ${target_id} -- /run/current-system/sw/bin/bash -lc '
+echo === system ===
+systemctl is-system-running
+systemctl --failed --no-legend
+echo === stack ===
+for u in caddy vector victoriametrics victorialogs victoriatraces vmalert alertmanager lxc-agent; do
+  printf \"%-20s %s\\n\" \"\$u\" \"\$(systemctl is-active \$u)\"
+done
+'" >&2
+
+echo "" >&2
+echo "  End-to-end: curl -sSf https://o11y.chezmoi.sh/metrics/api/v1/query?query=up" >&2
+echo "" >&2
+
+# ============================================================================
+# Step 7 — Decommission or rollback
+# ============================================================================
+if [[ -z ${yes} ]]; then
+  read -r -p "[?] CT ${target_id} is working correctly? [y/N] " confirm
+else
+  confirm="y"
+fi
+
+if [[ ${confirm} =~ ^[Yy]$ ]]; then
+  echo "===== Step 7 — Decommission CT ${source_id} =====" >&2
+  ssh "root@${pve_host}" "
+sed -i '/^rootfs:/d; /^unused0:/d' /etc/pve/lxc/${source_id}.conf
+pct destroy ${source_id}
+"
+  echo "[OK] Upgrade complete. CT ${target_id} (${source_hostname}) is live." >&2
+else
+  echo "[WARN] Rolling back — restarting CT ${source_id}..." >&2
+  ssh "root@${pve_host}" "
+pct stop ${target_id}
+pct set ${target_id} --delete mp0
+pct set ${source_id} -mp0 '${MP0_SPEC}'
+pct start ${source_id}
+"
+  echo "[OK] Rolled back to CT ${source_id}." >&2
+  echo "  Destroy the failed target:" >&2
+  echo "    ssh root@${pve_host} \"sed -i '/^unused0:/d' /etc/pve/lxc/${target_id}.conf && pct destroy ${target_id}\"" >&2
+  exit 1
+fi

@@ -1,0 +1,38 @@
+# First routing stage: dispatch journald events by service name.
+# Service-specific parsers take their inputs from route_by_service.<key>.
+# Unrecognised services pass through to the sink unchanged.
+transforms:
+  route_by_service:
+    type: route
+    inputs:
+      - route_builtin._unmatched
+    route:
+      omni: '.resources.service.name == "omni"'
+
+  unmatched_to_o11y:
+    type: filter
+    inputs:
+      - route_by_service._unmatched
+    condition:
+      type: vrl
+      source: "true"
+
+tests:
+  - name: "route: unrecognised service passes through unmatched_to_o11y unchanged"
+    inputs:
+      - insert_at: unmatched_to_o11y
+        type: log
+        log_fields:
+          body: "other service log"
+          timestamp: "2026-06-13T00:00:00Z"
+          observed_timestamp: "2026-06-13T00:00:00Z"
+          resources.service.name: unknown-svc
+          resources.host.name: omni
+    outputs:
+      - extract_from: unmatched_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "other service log")
+              assert_eq!(.resources.service.name, "unknown-svc")
+              true

@@ -1,0 +1,69 @@
+---
+name: 🧪 Vector Pipeline Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/push,pull_request.vector-config-test.yaml"
+      - "projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/config/vector/**"
+
+  pull_request:
+    paths:
+      - ".github/workflows/push,pull_request.vector-config-test.yaml"
+      - "projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/config/vector/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  VECTOR_CONFIG_DIR: projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/config/vector
+
+jobs:
+  validate:
+    name: 🔍 Validate config syntax
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 🛠️ Set up mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        with:
+          install: false
+
+      - name: ⬇️ Install Vector
+        run: mise install vector
+
+      - name: 🔍 Validate all config files (syntax + component graph)
+        # --no-environment skips env-var presence checks irrelevant in CI.
+        # --config-dir loads every *.yaml in the directory including inline tests
+        # (the `tests:` section is ignored by `validate`, only by `test`).
+        run: vector validate --no-environment --config-dir "${VECTOR_CONFIG_DIR}"
+
+  test:
+    name: 🧪 Run all tests (unit + e2e)
+    runs-on: ubuntu-latest
+    needs: [validate]
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 🛠️ Set up mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        with:
+          install: false
+
+      - name: ⬇️ Install Vector
+        run: mise install vector
+
+      - name: 🧪 Run all inline tests
+        # Tests are co-located with each transform file (10-/15-/20-/30-) and
+        # the end-to-end pipeline tests live in 50-tests-pipeline.yaml.
+        # `vector test --config-dir` loads all *.yaml files and runs every
+        # `tests:` section found — unit tests for each transform first, then e2e.
+        run: vector test --config-dir "${VECTOR_CONFIG_DIR}"

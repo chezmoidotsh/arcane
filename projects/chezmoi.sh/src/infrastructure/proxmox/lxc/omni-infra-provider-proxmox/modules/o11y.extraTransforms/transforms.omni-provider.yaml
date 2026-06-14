@@ -1,0 +1,160 @@
+# Parse Omni Proxmox infra-provider JSON logs (Zap) → OTLP SemConv fields.
+#
+# Format (Zap logger, same base as omni):
+#   {"level":"info","ts":1781365341.424599,
+#    "caller":"omni-infra-provider-proxmox/main.go:117","msg":"starting infra provider"}
+#
+# Pipeline (single stage — provider logs are simpler than omni's):
+#   ts     → .timestamp              (RFC3339, nanosecond precision from Unix float)
+#   level  → .severity_number        (OTel SemConv)
+#   msg    → .body
+#   caller → .attributes.code.file.path + .attributes.code.line.number
+#   (rest) → .attributes.provider   (JSON blob)
+#
+# Input: route_by_service.provider (from transforms.route.yaml).
+# Non-provider services are handled by unmatched_to_o11y in transforms.route.yaml.
+transforms:
+  provider_zap_parse:
+    type: remap
+    inputs:
+      - route_by_service.provider
+    drop_on_error: false
+    source: |
+      if is_string(.body) {
+        parsed, _err = parse_json(.body)
+        if _err == null && is_object(parsed) {
+
+          # Timestamp: Zap encodes ts as Unix float seconds with sub-second precision.
+          _ts_raw = del(parsed.ts)
+          if _ts_raw != null {
+            _ts_f   = to_float!(_ts_raw)
+            _ts_sec = floor(_ts_f)
+            _ts_ns  = to_int(_ts_sec) * 1000000000 + to_int(round((_ts_f - _ts_sec) * 1000000000.0))
+            _ts, _ts_err = from_unix_timestamp(_ts_ns, unit: "nanoseconds")
+            if _ts_err == null { .timestamp = format_timestamp!(_ts, format: "%+") }
+          }
+
+          # Severity — OTel SemConv numbers
+          _level_raw = del(parsed.level)
+          if _level_raw != null {
+            _l = downcase(to_string!(_level_raw))
+            _sev = {
+              "trace": 1, "debug": 5, "info": 9, "notice": 9,
+              "warning": 13, "warn": 13, "error": 17,
+              "critical": 21, "fatal": 21, "panic": 21
+            }
+            .severity_number = get(_sev, [_l]) ?? 9
+          }
+
+          # Message body
+          _msg = del(parsed.msg)
+          if _msg != null { .body = to_string!(_msg) }
+
+          # Caller: "path/to/file.go:N"
+          _caller = del(parsed.caller)
+          if _caller != null {
+            _parts = split(to_string!(_caller), ":", limit: 2)
+            .attributes.code.file.path = _parts[0]
+            if length(_parts) > 1 {
+              _n, _n_err = to_int(_parts[1])
+              if _n_err == null { .attributes.code.line.number = _n }
+            }
+          }
+
+          # Remaining fields → attributes.provider
+          if length(object!(parsed)) > 0 {
+            .attributes.provider = encode_json(parsed)
+          }
+        }
+      }
+
+  provider_to_o11y:
+    type: filter
+    inputs:
+      - provider_zap_parse
+    condition:
+      type: vrl
+      source: "true"
+
+tests:
+  - name: "omni-provider: parse startup log — common fields extracted"
+    inputs:
+      - insert_at: provider_zap_parse
+        type: log
+        log_fields:
+          body: '{"level":"info","ts":1781365341.424599,"caller":"omni-infra-provider-proxmox/main.go:117","msg":"starting infra provider"}'
+          timestamp: "2026-06-13T00:00:00Z"
+          observed_timestamp: "2026-06-13T00:00:00Z"
+          resources.service.name: omni-infra-provider-proxmox
+          resources.host.name: omni-infra-provider-proxmox
+    outputs:
+      - extract_from: provider_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "starting infra provider")
+              assert_eq!(.severity_number, 9)
+              assert!(starts_with(string!(.timestamp), "2026-06-13T15:42:21"), "ts unix float → RFC3339")
+              assert_eq!(.attributes.code.file.path, "omni-infra-provider-proxmox/main.go")
+              assert_eq!(.attributes.code.line.number, 117)
+              assert!(is_null(.attributes.provider), "no extra fields → no provider blob")
+              true
+
+  - name: "omni-provider: parse log with extra fields → provider blob"
+    inputs:
+      - insert_at: provider_zap_parse
+        type: log
+        log_fields:
+          body: '{"level":"info","ts":1781365341.423121,"caller":"omni-infra-provider-proxmox/main.go:93","msg":"using insecure connection to Proxmox","endpoint":"https://pve-01.pve.chezmoi.sh:8006"}'
+          timestamp: "2026-06-13T00:00:00Z"
+          observed_timestamp: "2026-06-13T00:00:00Z"
+          resources.service.name: omni-infra-provider-proxmox
+          resources.host.name: omni-infra-provider-proxmox
+    outputs:
+      - extract_from: provider_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "using insecure connection to Proxmox")
+              assert!(is_string(.attributes.provider))
+              assert!(contains(string!(.attributes.provider), "pve-01.pve.chezmoi.sh"), "endpoint in provider blob")
+              true
+
+  - name: "omni-provider: error level maps to OTel severity 17"
+    inputs:
+      - insert_at: provider_zap_parse
+        type: log
+        log_fields:
+          body: '{"level":"error","ts":1781365341.0,"caller":"pkg/proxmox.go:88","msg":"failed to connect to Proxmox"}'
+          timestamp: "2026-06-13T00:00:00Z"
+          observed_timestamp: "2026-06-13T00:00:00Z"
+          resources.service.name: omni-infra-provider-proxmox
+          resources.host.name: omni-infra-provider-proxmox
+    outputs:
+      - extract_from: provider_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_number, 17)
+              assert_eq!(.body, "failed to connect to Proxmox")
+              true
+
+  - name: "omni-provider: non-JSON body passes through unchanged"
+    inputs:
+      - insert_at: provider_zap_parse
+        type: log
+        log_fields:
+          body: "plain startup line"
+          timestamp: "2026-06-13T00:00:00Z"
+          observed_timestamp: "2026-06-13T00:00:00Z"
+          resources.service.name: omni-infra-provider-proxmox
+          resources.host.name: omni-infra-provider-proxmox
+    outputs:
+      - extract_from: provider_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "plain startup line")
+              assert!(is_null(.severity_number))
+              assert!(is_null(.attributes.provider))
+              true

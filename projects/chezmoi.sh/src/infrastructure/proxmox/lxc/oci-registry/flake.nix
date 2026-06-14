@@ -23,8 +23,11 @@
   inputs.nixos-generators.url = "github:nix-community/nixos-generators";
   inputs.nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
 
+  inputs.arcane-catalog.url = "path:../../../../../../../catalog/nix";
+  inputs.arcane-catalog.inputs.nixpkgs.follows = "nixpkgs";
+
   outputs =
-    { self, nixpkgs, nixos-generators }:
+    { self, nixpkgs, nixos-generators, arcane-catalog }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
@@ -45,6 +48,11 @@
       # -----------------------------------------------------------------------
       # renovate: datasource=github-releases depName=project-zot/zot
       version = "v2.1.17";
+
+      # Image version — CalVer (YYYY.MM.DD), used only to name the Proxmox
+      # template (oci-registry.<date>-amd64.tar.xz). Bump before every
+      # `mise run lxc:build`; append -N for multiple builds on the same day.
+      imageVersion = "2026.06.14-2";
 
       zotPackage = pkgs.stdenvNoCC.mkDerivation {
         pname = "zot";
@@ -86,6 +94,7 @@
         inherit system pkgs;
         format = "lxc";
         modules = [
+          arcane-catalog.nixosModules.lxcAgent
           ./modules
           ./configuration.nix
           { _module.args = { inherit zotPackage cloudflareToken; }; }

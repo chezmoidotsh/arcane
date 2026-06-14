@@ -1,0 +1,57 @@
+# Built-in service routing.
+#
+# Routes known services to their built-in parsers. Everything else
+# passes through to the LXC's extraTransforms via ._unmatched.
+#
+# To add a new built-in service parser:
+#   1. Add a route entry below: `name: '.resources.service.name == "name"'`
+#   2. Create config/vector/transforms.<name>.yaml reading from route_builtin.name
+#   3. The transform must output a *_to_o11y component (sink glob match)
+transforms:
+  route_builtin:
+    type: route
+    inputs:
+      - journald_to_semconv
+    route:
+      caddy: '.resources.service.name == "caddy"'
+
+tests:
+  - name: "route_builtin: caddy event routed to .caddy branch"
+    inputs:
+      - insert_at: route_builtin
+        type: log
+        log_fields:
+          body: '{"level":"info","ts":1700000000.0,"msg":"handled request"}'
+          timestamp: "2023-11-14T22:13:20.000Z"
+          observed_timestamp: "2023-11-14T22:13:20.001Z"
+          resources:
+            service:
+              name: caddy
+            host:
+              name: o11y
+    outputs:
+      - extract_from: route_builtin.caddy
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.resources.service.name, "caddy")
+
+  - name: "route_builtin: non-caddy event routed to ._unmatched"
+    inputs:
+      - insert_at: route_builtin
+        type: log
+        log_fields:
+          body: "some log"
+          timestamp: "2023-11-14T22:13:20.000Z"
+          observed_timestamp: "2023-11-14T22:13:20.001Z"
+          resources:
+            service:
+              name: zot
+            host:
+              name: oci-registry
+    outputs:
+      - extract_from: route_builtin._unmatched
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.resources.service.name, "zot")

@@ -1,0 +1,13 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Sink: Prometheus remote write — Vector self-observability
+# ─────────────────────────────────────────────────────────────────────────────
+# Pushes Vector's internal metrics (in_internal_metrics) directly to
+# VictoriaMetrics via remote write. Separate pipeline from the log processing
+# chain — metrics never mix with log events.
+# ─────────────────────────────────────────────────────────────────────────────
+sinks:
+  out_victoriametrics:
+    type: prometheus_remote_write
+    inputs:
+      - in_internal_metrics
+    endpoint: "http://127.0.0.1:8428/api/v1/write"

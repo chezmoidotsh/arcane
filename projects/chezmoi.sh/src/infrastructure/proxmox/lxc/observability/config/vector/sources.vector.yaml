@@ -1,0 +1,23 @@
+# Source: Vector native :6000
+#
+# Vector-to-Vector native protocol (loopback only). Intended for cluster-side
+# Vector agents sending pre-formatted OTLP-style events (body, timestamp,
+# resources, attributes, …). Expose externally via Caddy h2c if needed.
+#
+# No format transform — events are expected to arrive already in the OTLP-like
+# internal format. A lightweight transform strips Vector-internal metadata
+# (.source_type) before validate_semconv.
+
+sources:
+  in_vector:
+    type: vector
+    address: "0.0.0.0:6000"
+    version: "2"
+
+transforms:
+  strip_vector_meta:
+    type: remap
+    inputs:
+      - in_vector
+    source: |
+      del(.source_type)

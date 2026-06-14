@@ -1,0 +1,21 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Watchdog — Dead-Man's-Switch
+# ─────────────────────────────────────────────────────────────────────────────
+# An alert that ALWAYS fires. Alertmanager routes it to the `deadman` receiver,
+# which pings an external heartbeat (healthchecks.io / a snitch) every minute.
+# If the appliance, vmalert, or Alertmanager stops, the heartbeat stops and the
+# external service pages the operator. This is the only thing that watches the
+# watchmen — do not disable it.
+# ─────────────────────────────────────────────────────────────────────────────
+groups:
+  - name: watchdog
+    rules:
+      - alert: Watchdog
+        expr: vector(1)
+        labels:
+          severity: none
+        annotations:
+          summary: "Observability appliance heartbeat"
+          description: >-
+            This alert is always firing. If it stops, the external heartbeat
+            monitor will alert — meaning vmalert/Alertmanager/the appliance is down.

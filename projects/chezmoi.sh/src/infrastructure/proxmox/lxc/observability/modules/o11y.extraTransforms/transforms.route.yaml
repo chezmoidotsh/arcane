@@ -1,0 +1,28 @@
+# Route route_builtin._unmatched events by service name (OTLP-style: resources.service.name).
+# Each named route feeds its own parser transform; _unmatched feeds the passthrough.
+#
+# resources.service.name → binary basename from execve (set by SYSLOG_IDENTIFIER):
+#   victoria-metrics, victoria-logs, victoria-traces, vmalert → route: victoria
+#   alertmanager                                               → route: alertmanager
+#   caddy                                                      → route: caddy
+#   everything else                                            → _unmatched
+transforms:
+  route_by_service:
+    type: route
+    inputs:
+      - route_builtin._unmatched
+    route:
+      victoria: >-
+        includes(["victoria-metrics", "victoria-logs", "victoria-traces", "vmalert"], .resources.service.name)
+      alertmanager: '.resources.service.name == "alertmanager"'
+
+  # Pass unrecognised services through unchanged.
+  # Feeds from route_by_service._unmatched — events whose service.name does not
+  # match any of the named routes (victoria, alertmanager, caddy).
+  unmatched_to_o11y:
+    type: filter
+    inputs:
+      - route_by_service._unmatched
+    condition:
+      type: vrl
+      source: "true"

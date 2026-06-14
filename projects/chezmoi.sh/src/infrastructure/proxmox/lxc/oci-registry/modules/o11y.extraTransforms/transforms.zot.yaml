@@ -1,0 +1,388 @@
+# Parse Zot OCI registry JSON logs (Zap) → OTLP SemConv fields.
+#
+# Format: {"time":"RFC3339","level":"info","message":"...","component":"cve",
+#          "caller":"zotregistry.dev/zot/v2/pkg/.../file.go:141",
+#          "func":"zotregistry.dev/zot/v2/pkg/...(*Type).Method","goroutine":37}
+#
+# HTTP API access logs add: clientIP, method, path, statusCode, latency, bodySize, headers.
+#
+# Pipeline (three stages):
+#   Stage 1 — zot_zap_parse (common Zap fields):
+#     time      → .timestamp              (RFC3339)
+#     level     → .severity_number        (OTel SemConv)
+#     message   → .body
+#     caller    → .attributes.code.file.path + .attributes.code.line.number
+#     func      → .attributes.code.function
+#     (rest)    → .attributes.json        (JSON blob, renamed in stage 2)
+#
+#   Stage 2 — routed by body content:
+#     HTTP API ("HTTP API"):
+#       clientIP    → .attributes.network.peer.address + .attributes.network.peer.port
+#       method      → .attributes.http.request.method
+#       path        → .attributes.url.path
+#       statusCode  → .attributes.http.response.status_code
+#       bodySize    → .attributes.http.response.body.size
+#       User-Agent  → .attributes.user_agent.original
+#       latency     → .attributes.zot.latency_ms (integer ms)
+#       (rest)      → .attributes.zot.extra
+#     other:
+#       (rest)      → .attributes.zot.extra  (direct rename of attributes.json)
+#
+# Input: route_by_service.zot (from transforms.route.yaml).
+# Non-zot services are handled by unmatched_to_o11y in transforms.route.yaml.
+transforms:
+  # ── Stage 1: Common Zap JSON parse ────────────────────────────────────────
+  zot_zap_parse:
+    type: remap
+    inputs:
+      - route_by_service.zot
+    drop_on_error: false
+    source: |
+      if is_string(.body) {
+        parsed, _err = parse_json(.body)
+        if _err == null && is_object(parsed) {
+
+          # Timestamp (RFC3339 string in Zot, unlike omni's Unix float)
+          _time = del(parsed.time)
+          if _time != null {
+            _ts, _ts_err = parse_timestamp(to_string!(_time), format: "%+")
+            if _ts_err == null { .timestamp = format_timestamp!(_ts, format: "%+") }
+          }
+
+          # Severity — OTel SemConv numbers
+          _level_raw = del(parsed.level)
+          if _level_raw != null {
+            _l = downcase(to_string!(_level_raw))
+            _sev = {
+              "trace": 1, "debug": 5, "info": 9, "information": 9, "notice": 9,
+              "warning": 13, "warn": 13, "error": 17,
+              "critical": 21, "fatal": 21, "alert": 21, "emergency": 21, "panic": 21
+            }
+            .severity_number = get(_sev, [_l]) ?? 9
+          }
+
+          # Message body
+          _msg = del(parsed.message)
+          if _msg != null { .body = to_string!(_msg) }
+
+          # Caller: "path/to/file.go:N"
+          _caller = del(parsed.caller)
+          if _caller != null {
+            _parts = split(to_string!(_caller), ":", limit: 2)
+            .attributes.code.file.path = _parts[0]
+            if length(_parts) > 1 {
+              _n, _n_err = to_int(_parts[1])
+              if _n_err == null { .attributes.code.line.number = _n }
+            }
+          }
+
+          # func: fully-qualified Go function name (present in Zot, absent in omni)
+          _func = del(parsed.func)
+          if _func != null { .attributes.code.function = to_string!(_func) }
+
+          # Remaining fields → attributes.json for stage 2
+          if length(object!(parsed)) > 0 {
+            .attributes.json = encode_json(parsed)
+          }
+        }
+      }
+
+  # ── Stage 2: Route by log type ────────────────────────────────────────────
+  route_zot_type:
+    type: route
+    inputs:
+      - zot_zap_parse
+    route:
+      http_api: '.body == "HTTP API"'
+
+  # ── Stage 2a: HTTP API enrichment ─────────────────────────────────────────
+  zot_http_to_semconv:
+    type: remap
+    inputs:
+      - route_zot_type.http_api
+    drop_on_error: false
+    source: |
+      _json_str = del(.attributes.json)
+      if _json_str != null {
+        parsed, _err = parse_json(to_string!(_json_str))
+        if _err == null && is_object(parsed) {
+
+          # Network SemConv (SIEM: tracks caller IP + port)
+          _cip = del(parsed.clientIP)
+          if _cip != null {
+            _cip_str = to_string!(_cip)
+            _cm, _cm_err = parse_regex(_cip_str, r'^(?P<ip>.+):(?P<port>\d+)$')
+            if _cm_err == null {
+              .attributes.network.peer.address = _cm.ip
+              _port, _port_err = to_int(_cm.port)
+              if _port_err == null { .attributes.network.peer.port = _port }
+            } else {
+              .attributes.network.peer.address = _cip_str
+            }
+          }
+
+          # HTTP SemConv
+          _method = del(parsed.method)
+          if _method != null { .attributes.http.request.method = to_string!(_method) }
+
+          _path = del(parsed.path)
+          if _path != null { .attributes.url.path = to_string!(_path) }
+
+          _status = del(parsed.statusCode)
+          if _status != null { .attributes.http.response.status_code = _status }
+
+          _size = del(parsed.bodySize)
+          if _size != null { .attributes.http.response.body.size = _size }
+
+          _latency = del(parsed.latency)
+          if _latency != null {
+            _lat_str = to_string!(_latency)
+            _lat_m, _lat_err = parse_regex(_lat_str, r'^(?P<val>[0-9]+(?:\.[0-9]+)?)(?P<unit>ns|µs|ms|s|m|h)$')
+            if _lat_err == null {
+              _v  = to_float!(_lat_m.val)
+              _u  = string!(_lat_m.unit)
+              _ms = if _u == "ns" {
+                      _v / 1000000.0
+                    } else if _u == "µs" {
+                      _v / 1000.0
+                    } else if _u == "ms" {
+                      _v
+                    } else if _u == "s" {
+                      _v * 1000.0
+                    } else if _u == "m" {
+                      _v * 60000.0
+                    } else {
+                      _v * 3600000.0
+                    }
+              .attributes.zot.latency_ms = to_int(_ms)
+            }
+          }
+
+          # User-Agent from headers array
+          _headers = del(parsed.headers)
+          if _headers != null && is_object(_headers) {
+            _ua_arr = get(object!(_headers), ["User-Agent"]) ?? null
+            if is_array(_ua_arr) {
+              _ua = string(_ua_arr[0]) ?? null
+              if _ua != null { .attributes.user_agent.original = _ua }
+            }
+          }
+
+          # Remaining fields (component, module, goroutine, …) kept for debugging
+          if length(object!(parsed)) > 0 {
+            .attributes.zot.extra = encode_json(parsed)
+          }
+
+          # Body → Common Log Format (CLF)
+          # https://en.wikipedia.org/wiki/Common_Log_Format
+          # Zot does not expose the HTTP protocol; "-" used as placeholder.
+          _ts_str = string(.timestamp) ?? ""
+          _t, _te = parse_timestamp(_ts_str, format: "%+")
+          _clf_ts = if _te == null {
+            format_timestamp!(_t, format: "%d/%b/%Y:%H:%M:%S %z")
+          } else {
+            format_timestamp!(now(), format: "%d/%b/%Y:%H:%M:%S %z")
+          }
+          _clf_ip = string(.attributes.network.peer.address) ?? "-"
+          _clf_method = string(.attributes.http.request.method) ?? "-"
+          _clf_path = string(.attributes.url.path) ?? "-"
+          _sc = .attributes.http.response.status_code
+          _clf_status = if _sc == null { "-" } else { to_string!(_sc) }
+          _bs = .attributes.http.response.body.size
+          _clf_bytes = if _bs == null { "-" } else { to_string!(_bs) }
+          .body = _clf_ip + " - - [" + _clf_ts + "] \"" + _clf_method + " " + _clf_path + " -\" " + _clf_status + " " + _clf_bytes
+        }
+      }
+
+  # ── Stage 2b: Other zot logs ──────────────────────────────────────────────
+  zot_other_to_semconv:
+    type: remap
+    inputs:
+      - route_zot_type._unmatched
+    drop_on_error: false
+    source: |
+      if exists(.attributes.json) {
+        .attributes.zot.extra = del(.attributes.json)
+      }
+
+  # ── Merge all zot paths → single sink input ───────────────────────────────
+  # Drops /metrics scrapes — they're noise from Vector's own metrics polling.
+  zot_to_o11y:
+    type: filter
+    inputs:
+      - zot_http_to_semconv
+      - zot_other_to_semconv
+    condition:
+      type: vrl
+      source: |
+        _path, _err = to_string(.attributes.url.path)
+        _err != null || !starts_with(_path, "/metrics")
+
+tests:
+  - name: "zot: parse scrub start log — common fields + extra in zot.extra"
+    inputs:
+      - insert_at: zot_zap_parse
+        type: log
+        log_fields:
+          body: '{"time":"2026-06-07T12:30:23.731873299Z","level":"info","message":"executing scrub to check manifest/blob integrity for /var/lib/zot/docker.io/library/redis","caller":"zotregistry.dev/zot/v2/pkg/extensions/scrub/scrub.go:18","func":"zotregistry.dev/zot/v2/pkg/extensions/scrub.RunScrubRepo","goroutine":44}'
+          timestamp: "2026-06-07T00:00:00Z"
+          observed_timestamp: "2026-06-07T00:00:00Z"
+          resources.service.name: zot
+          resources.host.name: oci-registry
+    outputs:
+      - extract_from: zot_other_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "executing scrub to check manifest/blob integrity for /var/lib/zot/docker.io/library/redis")
+              assert!(starts_with(string!(.timestamp), "2026-06-07"))
+              assert_eq!(.severity_number, 9)
+              assert_eq!(.attributes.code.file.path, "zotregistry.dev/zot/v2/pkg/extensions/scrub/scrub.go")
+              assert_eq!(.attributes.code.line.number, 18)
+              assert_eq!(.attributes.code.function, "zotregistry.dev/zot/v2/pkg/extensions/scrub.RunScrubRepo")
+              assert!(is_null(.attributes.json), "attributes.json renamed")
+              assert!(contains(string!(.attributes.zot.extra), "44"), "goroutine in zot.extra blob")
+              true
+
+  - name: "zot: parse blob/manifest ok log — extra fields in zot.extra"
+    inputs:
+      - insert_at: zot_zap_parse
+        type: log
+        log_fields:
+          body: '{"time":"2026-06-07T12:30:47.44485218Z","level":"info","message":"blobs/manifest ok","image":"docker.io/longhornio/longhorn-engine","tag":"v1.11.2","status":"ok","component":"scrub","caller":"zotregistry.dev/zot/v2/pkg/extensions/scrub/scrub.go:31","func":"zotregistry.dev/zot/v2/pkg/extensions/scrub.RunScrubRepo","goroutine":42}'
+          timestamp: "2026-06-07T00:00:00Z"
+          observed_timestamp: "2026-06-07T00:00:00Z"
+          resources.service.name: zot
+          resources.host.name: oci-registry
+    outputs:
+      - extract_from: zot_other_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "blobs/manifest ok")
+              assert_eq!(.severity_number, 9)
+              _blob = string!(.attributes.zot.extra)
+              assert!(contains(_blob, "longhorn-engine"), "image in zot.extra")
+              assert!(contains(_blob, "v1.11.2"), "tag in zot.extra")
+              assert!(contains(_blob, "scrub"), "component in zot.extra")
+              true
+
+  - name: "zot: error level maps to OTel severity 17"
+    inputs:
+      - insert_at: zot_zap_parse
+        type: log
+        log_fields:
+          body: '{"time":"2026-06-06T10:00:00Z","level":"error","message":"failed to pull image","component":"sync","caller":"pkg/sync.go:88","goroutine":12}'
+          timestamp: "2026-06-06T00:00:00Z"
+          observed_timestamp: "2026-06-06T00:00:00Z"
+          resources.service.name: zot
+          resources.host.name: oci-registry
+    outputs:
+      - extract_from: zot_other_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_number, 17)
+              assert_eq!(.body, "failed to pull image")
+              assert!(contains(string!(.attributes.zot.extra), "sync"), "component in zot.extra")
+              true
+
+  - name: "zot: HTTP API log — OTel HTTP SemConv fields extracted"
+    inputs:
+      - insert_at: zot_zap_parse
+        type: log
+        log_fields:
+          body: '{"time":"2026-06-07T14:45:22.351982392Z","level":"info","message":"HTTP API","module":"http","component":"session","clientIP":"127.0.0.1:43204","method":"GET","path":"/metrics","statusCode":200,"latency":"0s","bodySize":17619,"headers":{"Accept":["text/plain"],"User-Agent":["Vector/0.55.0 (x86_64-unknown-linux-gnu)"]},"caller":"zotregistry.dev/zot/v2/pkg/api/session.go:92","func":"zotregistry.dev/zot/v2/pkg/api.SessionLogger.func1.1","goroutine":116}'
+          timestamp: "2026-06-07T00:00:00Z"
+          observed_timestamp: "2026-06-07T00:00:00Z"
+          resources.service.name: zot
+          resources.host.name: oci-registry
+    outputs:
+      - extract_from: zot_http_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "127.0.0.1 - - [07/Jun/2026:14:45:22 +0000] \"GET /metrics -\" 200 17619")
+              assert_eq!(.severity_number, 9)
+              assert_eq!(.attributes.http.request.method, "GET")
+              assert_eq!(.attributes.url.path, "/metrics")
+              assert_eq!(.attributes.http.response.status_code, 200)
+              assert_eq!(.attributes.http.response.body.size, 17619)
+              assert_eq!(.attributes.network.peer.address, "127.0.0.1")
+              assert_eq!(.attributes.network.peer.port, 43204)
+              assert_eq!(.attributes.user_agent.original, "Vector/0.55.0 (x86_64-unknown-linux-gnu)")
+              assert_eq!(.attributes.zot.latency_ms, 0)
+              assert!(is_null(.attributes.json), "attributes.json consumed")
+              # component, module, goroutine kept in blob for debug
+              _blob = string!(.attributes.zot.extra)
+              assert!(contains(_blob, "session"), "component in blob")
+              assert!(contains(_blob, "http"), "module in blob")
+              true
+
+  - name: "zot: non-JSON body passes through unchanged"
+    inputs:
+      - insert_at: zot_zap_parse
+        type: log
+        log_fields:
+          body: "plain startup line"
+          timestamp: "2026-06-07T00:00:00Z"
+          observed_timestamp: "2026-06-07T00:00:00Z"
+          resources.service.name: zot
+          resources.host.name: oci-registry
+    outputs:
+      - extract_from: zot_other_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "plain startup line")
+              assert!(is_null(.severity_number))
+              assert!(is_null(.attributes.zot.extra))
+              true
+
+  - name: "zot: /metrics path is dropped by zot_to_o11y filter"
+    inputs:
+      - insert_at: zot_to_o11y
+        type: log
+        log_fields:
+          body: "HTTP API"
+          timestamp: "2026-06-07T00:00:00Z"
+          observed_timestamp: "2026-06-07T00:00:00Z"
+          attributes:
+            url:
+              path: "/metrics"
+    no_outputs_from:
+      - zot_to_o11y
+
+  - name: "zot: non-/metrics HTTP log passes zot_to_o11y filter"
+    inputs:
+      - insert_at: zot_to_o11y
+        type: log
+        log_fields:
+          body: "HTTP API"
+          timestamp: "2026-06-07T00:00:00Z"
+          observed_timestamp: "2026-06-07T00:00:00Z"
+          attributes:
+            url:
+              path: "/v2/"
+    outputs:
+      - extract_from: zot_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "HTTP API")
+              assert_eq!(.attributes.url.path, "/v2/")
+
+  - name: "zot: non-HTTP log (no url.path) passes zot_to_o11y filter"
+    inputs:
+      - insert_at: zot_to_o11y
+        type: log
+        log_fields:
+          body: "blobs/manifest ok"
+          timestamp: "2026-06-07T00:00:00Z"
+          observed_timestamp: "2026-06-07T00:00:00Z"
+    outputs:
+      - extract_from: zot_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "blobs/manifest ok")

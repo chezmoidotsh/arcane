@@ -7,7 +7,8 @@
   # The Omni binary is fetched from the upstream GitHub release (statically
   # linked Go binary, no patchelf needed). Module library lives in:
   #   catalog/nix/siderolabs/omni/   — Omni service + Dex OIDC + PKI init
-  #   ./modules/                     — Caddy HTTPS termination + LXC hardening
+  #   catalog/nix/modules/lxc-o11y-agent — catalog.lxcAgent (journal → o11y)
+  #   ./modules/                     — Caddy HTTPS termination + LXC hardening + o11y
   #
   # Build (produces a Proxmox-importable .tar.xz):
   #
@@ -29,8 +30,11 @@
   inputs.nixos-generators.url = "github:nix-community/nixos-generators";
   inputs.nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
 
+  inputs.arcane-catalog.url = "path:../../../../../../../catalog/nix";
+  inputs.arcane-catalog.inputs.nixpkgs.follows = "nixpkgs";
+
   outputs =
-    { self, nixpkgs, nixos-generators }:
+    { self, nixpkgs, nixos-generators, arcane-catalog }:
     let
       system = "x86_64-linux";
       # allowUnfree is required because Omni is BSL-1.1, which nixpkgs
@@ -42,7 +46,7 @@
       # version itself is tracked in catalog/nix/siderolabs/omni/omni.nix
       # and bumped by Renovate. Bump this date before every `mise run
       # lxc:build`; append -N for multiple builds on the same day.
-      version = "2026.06.13";
+      version = "2026.06.14-2";
 
       # -----------------------------------------------------------------------
       # Build-time secrets, forwarded to the modules via _module.args.
@@ -63,6 +67,7 @@
         inherit system pkgs;
         format = "lxc";
         modules = [
+          arcane-catalog.nixosModules.lxcAgent
           ./modules
           ./configuration.nix
           { _module.args = { inherit cloudflareToken dexAdminPasswordHash; }; }

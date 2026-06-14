@@ -28,42 +28,51 @@ flowchart TB
 
     subgraph host["Proxmox host · pve-01"]
         subgraph lxc["LXC: omni — unprivileged NixOS"]
-            caddy["Caddy — public TLS surface<br/>:80 → 301 redirect<br/>:443 ACME DNS-01 (Cloudflare)<br/>:8090 ACME DNS-01 (Cloudflare)"]
-            omni["Omni<br/>UI :8443 (loopback, PKI TLS)<br/>Machine API :9090 (loopback, PKI TLS)<br/>events :8091 (direct)<br/>k8s proxy :8100 (direct, PKI TLS)<br/>SideroLink WG :50180/udp (direct)"]
+            caddy["Caddy — sole public TLS surface<br/>:80 → 301 redirect<br/>:443 all subdomains (ACME DNS-01 Cloudflare)"]
+            omni["Omni<br/>UI :8443 (loopback, PKI TLS)<br/>Machine API :9090 (loopback, PKI TLS)<br/>k8s proxy :8100 (loopback, HTTP)<br/>events :8091 (WG-internal)<br/>SideroLink WG :50180/udp (direct)"]
             dex["Dex OIDC<br/>:5557 (loopback)"]
             vol[("mp0 → /persistent<br/>omni/ · caddy/")]
         end
     end
 
-    net -->|"HTTPS :443"| caddy
-    net -->|"Machine API :8090"| caddy
-    net -->|":8091 · :8100 · :50180/udp"| omni
+    net -->|"omni.chezmoi.sh :443"| caddy
+    net -->|"api.omni.chezmoi.sh :443"| caddy
+    net -->|"kube.omni.chezmoi.sh :443"| caddy
+    net -->|":50180/udp"| omni
     caddy -->|"/dex/*"| dex
     caddy -->|"/* → :8443"| omni
-    caddy -->|":8090 → :9090"| omni
+    caddy -->|"api → :9090"| omni
+    caddy -->|"kube → :8100"| omni
     omni -. persists .-> vol
     caddy -. persists .-> vol
 ```
 
-* **Caddy** terminates TLS for `omni.chezmoi.sh` on port 443, redirects
-  HTTP, routes `/dex/*` to Dex and everything else to Omni's UI. ACME
-  uses DNS-01 via Cloudflare (no inbound :80 challenge required).
-* **Caddy also fronts port 8090** with its own Let's Encrypt cert
-  (DNS-01). It reverse-proxies to Omni's Machine API on
-  `127.0.0.1:9090`. The benefit: Talos machines trust the public LE cert
-  and never need to import Omni's self-signed PKI CA.
-* **Omni UI** binds on `127.0.0.1:8443` (loopback, PKI TLS — Caddy
-  proxies with `tls_insecure_skip_verify`). **Omni Machine API** binds
-  on `127.0.0.1:9090` (loopback, same PKI TLS — Caddy on :8090 is the
-  only public face).
-* **Direct Omni ports** — the event sink (`:8091` TCP), Kubernetes proxy
-  (`:8100` PKI TLS), and SideroLink WireGuard (`:50180/udp`) are bound
-  directly on `0.0.0.0` by Omni and are **not** proxied by Caddy. These
-  ports are consumed by Talos machines and `kubectl` directly.
-* **Dex** runs on loopback and is reached only through Caddy. Its issuer
-  is `https://omni.chezmoi.sh/dex`; Dex automatically prefixes every
-  internal route with `/dex`, so the single sub-path handles discovery,
-  auth, and token.
+### URL map
+
+| Subdomain              | Port      | Service                           | Internal target                    |
+| ---------------------- | --------- | --------------------------------- | ---------------------------------- |
+| `omni.chezmoi.sh`      | 443       | Omni UI/API + Dex OIDC (`/dex/*`) | `:8443` (PKI TLS) + `:5557` (HTTP) |
+| `api.omni.chezmoi.sh`  | 443       | SideroLink Machine API (gRPC)     | `:9090` (PKI TLS)                  |
+| `kube.omni.chezmoi.sh` | 443       | Kubernetes API proxy              | `:8100` (HTTP)                     |
+| —                      | 50180/UDP | SideroLink WireGuard              | direct                             |
+
+> All TCP services run on port **443** only. No non-standard TCP ports are
+> exposed externally. The event sink (`:8091`) is only reachable from
+> WireGuard-connected Talos machines (internal VPN, not internet-facing).
+
+* **Caddy** is the sole public TCP surface. It terminates TLS for all
+  three subdomains using DNS-01 ACME via Cloudflare (no inbound `:80`
+  challenge required). All subdomains share the same LE certificate.
+* **Machine API** (`api.omni.chezmoi.sh`) — Caddy terminates TLS with
+  the DNS-01 Let's Encrypt cert and proxies to Omni's loopback
+  `127.0.0.1:9090` (PKI TLS, `tls_insecure_skip_verify`). Talos machines
+  trust the public LE cert without importing Omni's self-signed PKI CA.
+* **Kubernetes proxy** (`kube.omni.chezmoi.sh`) — Caddy terminates TLS
+  and proxies to Omni's loopback `127.0.0.1:8100` (plain HTTP). `omnictl`
+  and `kubectl` connect via the HTTPS subdomain.
+* **Omni UI/API** binds on `127.0.0.1:8443` (loopback, PKI TLS).
+  **Dex** binds on `127.0.0.1:5557` (loopback, plain HTTP). Both are only
+  reachable through Caddy.
 * **No SSH.** Console access goes through `pct enter <vmid>` on the
   Proxmox host.
 
@@ -345,6 +354,9 @@ The Proxmox firewall layers in front of the in-LXC `iptables` rules from
 `hardening.nix`. Settings live in `/etc/pve/firewall/<vmid>.fw` on the
 Proxmox host.
 
+All Omni services are routed through Caddy on port **443** via subdomains;
+no non-standard TCP ports need to be exposed externally.
+
 ```sh
 VMID="<vmid>"
 cat <<'EOF' >/etc/pve/firewall/${VMID}.fw
@@ -358,18 +370,11 @@ log_level_in: nolog
 log_level_out: nolog
 
 [RULES]
-# Caddy — HTTPS UI + Dex
-IN ACCEPT -p tcp -dport 80   -log nolog # HTTP → HTTPS redirect
-IN ACCEPT -p tcp -dport 443  -log nolog # HTTPS (Caddy → Omni / Dex)
+# Caddy — all Omni services via subdomains on standard HTTPS
+IN ACCEPT -p tcp -dport 80  -log nolog # HTTP → HTTPS redirect
+IN ACCEPT -p tcp -dport 443 -log nolog # HTTPS: omni / api.omni / kube.omni
 
-# Caddy — Machine API (LE cert terminates here, proxies to Omni loopback)
-IN ACCEPT -p tcp -dport 8090 -log nolog # Machine API (Caddy TLS → 127.0.0.1:9090)
-
-# Omni direct ports — event sink, k8s proxy, WireGuard connect here.
-IN ACCEPT -p tcp -dport 8091 -log nolog # Event sink (direct TCP)
-IN ACCEPT -p tcp -dport 8100 -log nolog # Kubernetes proxy (direct PKI TLS)
-
-# SideroLink WireGuard
+# SideroLink WireGuard (UDP, cannot be proxied over TCP)
 IN ACCEPT -p udp -dport 50180 -log nolog
 
 IN ACCEPT -p icmp -log nolog
@@ -377,8 +382,16 @@ EOF
 pve-firewall restart
 ```
 
-Restrict the source CIDR on `8091`/`8100` to the homelab range if
-Omni is exposed publicly only through `:443` and `:8090`.
+> **Migration note** — if upgrading from a previous setup that opened
+> ports 8090/8091/8100, those rules can be removed: Machine API now
+> routes through `api.omni.chezmoi.sh:443` and the Kubernetes proxy
+> through `kube.omni.chezmoi.sh:443`. The event sink (8091) is only
+> reachable from WireGuard-connected Talos machines (inside the VPN).
+
+> **DNS prerequisite** — create A/CNAME records for `api.omni.chezmoi.sh`
+> and `kube.omni.chezmoi.sh` pointing to the same IP as `omni.chezmoi.sh`
+> before deploying. Caddy will obtain separate LE certificates for each
+> subdomain via DNS-01 (Cloudflare).
 
 ## Hardening reference
 
@@ -391,8 +404,8 @@ registry LXC:
 \| **Services**         | Avahi, CUPS, Polkit, UDisks2 disabled with `mkForce`.                                                                                                |
 \| **Docs**             | man-db / info / nixos-docs disabled.                                                                                                                 |
 \| **Journald**         | `Storage=volatile`, `RuntimeMaxUse=64M`, `ForwardToConsole=yes`.                                                                                     |
-\| **Firewall (NixOS)** | Default-deny inbound; ports opened by `caddy.nix` (80/443) and `catalog/.../omni.nix` (8090/8091/8100 + WG UDP).                                     |
-\| **Firewall (PVE)**   | Layered on top — see previous section.                                                                                                               |
+\| **Firewall (NixOS)** | Default-deny inbound; ports opened by `caddy.nix` (80/443) and `catalog/.../omni.nix` (8091 event sink + WG UDP). Machine API + k8s proxy route via Caddy on 443. |
+\| **Firewall (PVE)**   | Layered on top — only 80/443 TCP + 50180/UDP open externally. See previous section.                                                                  |
 \| **Caddy systemd**    | Same `ProtectHome`/`ProtectKernelLogs`/`ProtectClock`/`RestrictSUIDSGID`/`LockPersonality` flags as the OCI registry LXC.                            |
 \| **Omni systemd**     | `AmbientCapabilities = [ CAP_NET_ADMIN ]` (required for WireGuard); `NoNewPrivileges`, `RestrictSUIDSGID`, `LockPersonality`, `LimitNOFILE = 65536`. |
 

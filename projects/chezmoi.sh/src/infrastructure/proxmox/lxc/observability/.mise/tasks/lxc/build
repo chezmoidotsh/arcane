@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# [MISE] description="Build the observability LXC template with all secrets baked in"
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+
+caddy_secrets="${CONFIG_ROOT}/secrets/caddy.sops.env"
+stack_secrets="${CONFIG_ROOT}/secrets/observability.sops.env"
+
+[[ -f ${caddy_secrets} ]] ||
+  {
+    echo "[ERROR] secrets/caddy.sops.env not found — run 'mise run lxc:secrets:sync' first" >&2
+    exit 1
+  }
+[[ -f ${stack_secrets} ]] ||
+  {
+    echo "[ERROR] secrets/observability.sops.env not found" >&2
+    exit 1
+  }
+
+ver=$(grep -m1 'version = "' "${CONFIG_ROOT}/flake.nix" |
+  sed 's/.*version = "\(.*\)".*/\1/')
+echo "[INFO] Building observability.${ver}-amd64..." >&2
+
+# Decrypt secrets into the environment for the impure Nix build. Keep them out
+# of argv and the Nix store inputs — they are read via builtins.getEnv.
+# caddy.sops.env holds both Crossplane-provisioned tokens (Cloudflare DNS-01
+# and the Tailscale OAuth key for caddy-tailscale tsnet).
+export CLOUDFLARE_API_TOKEN TAILSCALE_OAUTH_KEY
+CLOUDFLARE_API_TOKEN=$(sops -d --extract '["CLOUDFLARE_API_TOKEN"]' "${caddy_secrets}")
+TAILSCALE_OAUTH_KEY=$(sops -d --extract '["TAILSCALE_OAUTH_KEY"]' "${caddy_secrets}")
+
+export SLACK_WEBHOOK_URL ALERTMANAGER_DEADMAN_URL
+SLACK_WEBHOOK_URL=$(sops -d --extract '["SLACK_WEBHOOK_URL"]' "${stack_secrets}")
+ALERTMANAGER_DEADMAN_URL=$(sops -d --extract '["ALERTMANAGER_DEADMAN_URL"]' "${stack_secrets}")
+
+nix:build:lxc --impure --output-name "observability.${ver}-amd64" "${CONFIG_ROOT}"
+
+unset CLOUDFLARE_API_TOKEN TAILSCALE_OAUTH_KEY SLACK_WEBHOOK_URL ALERTMANAGER_DEADMAN_URL

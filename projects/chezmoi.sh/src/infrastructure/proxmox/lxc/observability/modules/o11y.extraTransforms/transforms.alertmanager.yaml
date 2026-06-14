@@ -1,0 +1,125 @@
+# Parse Alertmanager JSON logs → OTLP-style.
+#
+# Format: {"time":"RFC3339","level":"INFO","source":"file.go:N","msg":"...",
+#          "component":"...","file":"..."}
+#
+# OTLP-style mapping (enriches existing event in-place):
+#   msg       → body
+#   level     → severity_number                  (severity_text derived in to_vlogs_format; AM emits uppercase)
+#   source    → attributes.code.filepath + attributes.code.lineno
+#   component → attributes.alertmanager.component
+#   file      → attributes.alertmanager.config_file
+transforms:
+  alertmanager_to_o11y:
+    type: remap
+    inputs:
+      - route_by_service.alertmanager
+    drop_on_error: false
+    source: |
+      if is_string(.body) {
+        parsed, _err = parse_json(.body)
+        if _err == null && is_object(parsed) {
+          # Message
+          if exists(parsed.msg) { .body = to_string!(parsed.msg) }
+
+          # Severity — AM emits uppercase (INFO, WARN, ERROR); normalise to lowercase
+          if exists(parsed.level) {
+            _level = downcase(to_string!(parsed.level))
+            _sev = {
+              "trace": 1, "debug": 5, "info": 9, "information": 9, "notice": 9,
+              "warning": 13, "warn": 13, "error": 17,
+              "critical": 21, "fatal": 21, "alert": 21, "emergency": 21, "panic": 21
+            }
+            .severity_number = get(_sev, [_level]) ?? 9
+          }
+
+          # source: "coordinator.go:111" → attributes.code.*
+          if exists(parsed.source) {
+            _parts = split(to_string!(parsed.source), ":", limit: 2)
+            if !is_object(.attributes) { .attributes = {} }
+            .attributes.code.filepath = _parts[0]
+            if length(_parts) > 1 {
+              _n, _n_err = to_int(_parts[1])
+              if _n_err == null { .attributes.code.lineno = _n }
+            }
+          }
+
+          # Alertmanager structured fields
+          if !is_object(.attributes) { .attributes = {} }
+          if exists(parsed.component) {
+            .attributes.alertmanager.component = to_string!(parsed.component)
+          }
+          if exists(parsed.file) {
+            .attributes.alertmanager.config_file = to_string!(parsed.file)
+          }
+        }
+      }
+
+tests:
+  - name: "alertmanager: parse coordinator startup log"
+    inputs:
+      - insert_at: alertmanager_to_o11y
+        type: log
+        log_fields:
+          body: '{"time":"2026-06-06T16:13:27.798266941Z","level":"INFO","source":"coordinator.go:111","msg":"Loading configuration file","component":"configuration","file":"/etc/alertmanager/alertmanager.yml"}'
+          timestamp: "2026-06-06T16:13:27.798Z"
+          observed_timestamp: "2026-06-06T16:13:27.798Z"
+          resources:
+            service:
+              name: alertmanager
+            host:
+              name: o11y
+    outputs:
+      - extract_from: alertmanager_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "Loading configuration file")
+              assert_eq!(.severity_number, 9)
+              assert!(is_null(.severity_text))
+              assert_eq!(.attributes.code.filepath, "coordinator.go")
+              assert_eq!(.attributes.code.lineno, 111)
+              assert_eq!(.attributes.alertmanager.component, "configuration")
+              assert_eq!(.attributes.alertmanager.config_file, "/etc/alertmanager/alertmanager.yml")
+
+  - name: "alertmanager: WARN level maps to OTel severity 13"
+    inputs:
+      - insert_at: alertmanager_to_o11y
+        type: log
+        log_fields:
+          body: '{"time":"2026-06-06T10:00:00Z","level":"WARN","source":"silence.go:42","msg":"silence expired"}'
+          timestamp: "2026-06-06T10:00:00Z"
+          observed_timestamp: "2026-06-06T10:00:00Z"
+          resources:
+            service:
+              name: alertmanager
+            host:
+              name: o11y
+    outputs:
+      - extract_from: alertmanager_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_number, 13)
+              assert!(is_null(.severity_text))
+
+  - name: "alertmanager: source without line number is safe"
+    inputs:
+      - insert_at: alertmanager_to_o11y
+        type: log
+        log_fields:
+          body: '{"time":"2026-06-06T10:00:00Z","level":"INFO","source":"main.go","msg":"starting"}'
+          timestamp: "2026-06-06T10:00:00Z"
+          observed_timestamp: "2026-06-06T10:00:00Z"
+          resources:
+            service:
+              name: alertmanager
+            host:
+              name: o11y
+    outputs:
+      - extract_from: alertmanager_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.attributes.code.filepath, "main.go")
+              assert!(is_null(.attributes.code.lineno))

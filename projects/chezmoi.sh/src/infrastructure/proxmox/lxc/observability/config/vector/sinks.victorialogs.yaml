@@ -1,0 +1,308 @@
+transforms:
+  # Transform: VLogs loki-like conversion
+  #
+  # Converts the OTLP-style internal format to the VictoriaLogs loki-like layout
+  # just before the HTTP sink. Keeping this conversion as the last step ensures
+  # the rest of the pipeline operates on the clean OTLP format, making a future
+  # backend migration straightforward.
+  #
+  # Field mapping:
+  #   body           → _msg        (VLogs body field)
+  #   timestamp      → _time       (VLogs timestamp field, RFC3339)
+  #   resources.*    → *           (flattened to root as stream labels)
+  #   attributes     → .attrs      (raw nested object, indexed by VictoriaLogs as attrs.*)
+  #   observed_timestamp, severity_number, trace_id, span_id (kept at root)
+  #   severity_text      → derived from severity_number if absent (canonical OTel
+  #                        mapping: 1=TRACE … 24=FATAL4)
+  #
+  # The transform also adds a root stored_timestamp at the end of the pipeline to
+  # capture the time when the event is pushed to VLogs, enabling latency
+
+  to_vlogs_format:
+    type: remap
+    inputs:
+      - validate_semconv
+    source: |
+      # Derive severity_text from severity_number when absent (canonical OTel mapping).
+      if is_null(.severity_text) && !is_null(.severity_number) {
+        _sev_names = [
+          "TRACE",  "TRACE2",  "TRACE3",  "TRACE4",
+          "DEBUG",  "DEBUG2",  "DEBUG3",  "DEBUG4",
+          "INFO",   "INFO2",   "INFO3",   "INFO4",
+          "WARN",   "WARN2",   "WARN3",   "WARN4",
+          "ERROR",  "ERROR2",  "ERROR3",  "ERROR4",
+          "FATAL",  "FATAL2",  "FATAL3",  "FATAL4"
+        ]
+        _sn = to_int(.severity_number) ?? 0
+        if _sn >= 1 && _sn <= 24 { .severity_text = get!(_sev_names, [_sn - 1]) }
+      }
+
+      ._msg  = string(del(.body)) ?? ""
+      ._time = string(del(.timestamp)) ?? format_timestamp!(now(), format: "%+")
+
+      # observed_timestamp is normally set by the source; fall back to the event
+      # time if a sender omitted it. validate already errors on a missing
+      # observed_timestamp, so this is a defensive default for the loki-like layout.
+      if is_null(.observed_timestamp) { .observed_timestamp = ._time }
+
+      resources = object(del(.resources)) ?? {}
+      . = merge(., resources)
+
+      .attrs = object(del(.attributes)) ?? {}
+
+      # Add stored_timestamp at the end of the pipeline to get the value when
+      # the event is pushed to VLogs, enabling latency measurements in LogsQL.
+      ."stored_timestamp" = format_timestamp!(now(), format: "%+")
+
+sinks:
+  # Sink: VictoriaLogs JSON-line ingest
+  #
+  # Native format — dotted SemConv field names (service.name, k8s.cluster.name…)
+  # are already at root after to_vlogs_format, so LogsQL queries work directly:
+  # `service.name:"my-svc"`.
+  #
+  #   _msg_field=_msg     — field that becomes the log body in VLogs
+  #   _time_field=_time   — field used as the log timestamp (RFC 3339)
+  #   _stream_fields=...  — comma-separated stream labels (primary query axes first)
+  #
+  # Stream fields, ordered by query priority:
+  #   service.name        — primary axis: filter by application identity
+  #   host.name           — secondary axis: per-host filtering
+  #   service.namespace   — OTel K8s service attribute
+  #   service.version     — per-deploy-version filtering
+  #   k8s.cluster.name    — per-cluster filtering
+  #   k8s.namespace.name  — kept alongside service.namespace
+  #
+  # Backpressure: memory buffer (1000 events) + when_full=block. Fills within ~1s
+  # under moderate load when VLogs slows, propagating back upstream through
+  # transforms → sources → TCP/gRPC sender.
+
+  out_victorialogs:
+    type: http
+    inputs:
+      - to_vlogs_format
+    uri: "http://127.0.0.1:9428/insert/jsonline?_msg_field=_msg&_time_field=_time&_stream_fields=service.name,host.name,service.namespace,service.version,k8s.cluster.name,k8s.namespace.name"
+    method: post
+    encoding:
+      codec: json
+    framing:
+      method: newline_delimited
+    request:
+      retry_max_duration_secs: 30
+      timeout_secs: 10
+    buffer:
+      type: memory
+      max_events: 1000
+      when_full: block
+    healthcheck:
+      enabled: true
+      uri: "http://127.0.0.1:9428/health"
+
+# Unit tests — to_vlogs_format
+tests:
+  - name: "enrich: stored_timestamp added on every event"
+    inputs:
+      - insert_at: to_vlogs_format
+        type: log
+        log_fields:
+          body: "some log line"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.100+00:00"
+          resources:
+            service.name: "my-svc"
+            host.name: "my-host"
+    outputs:
+      - extract_from: to_vlogs_format
+        conditions:
+          - type: vrl
+            source: |
+              ts = string!(.stored_timestamp)
+              parsed = parse_timestamp!(ts, format: "%+")
+              assert!(parsed != null, "stored_timestamp is RFC3339")
+              true
+
+  - name: "enrich: existing observed_timestamp is preserved"
+    inputs:
+      - insert_at: to_vlogs_format
+        type: log
+        log_fields:
+          body: "preserved"
+          timestamp: "2024-06-01T00:00:00Z"
+          observed_timestamp: "2024-06-01T00:00:00.123+00:00"
+    outputs:
+      - extract_from: to_vlogs_format
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.observed_timestamp, "2024-06-01T00:00:00.123+00:00")
+              true
+
+  - name: "enrich: missing observed_timestamp falls back to timestamp"
+    inputs:
+      - insert_at: to_vlogs_format
+        type: log
+        log_fields:
+          body: "from cluster Vector"
+          timestamp: "2024-06-01T00:00:00Z"
+          resources:
+            service.name: "argocd"
+    outputs:
+      - extract_from: to_vlogs_format
+        conditions:
+          - type: vrl
+            source: |
+              obs = string!(.observed_timestamp)
+              parsed = parse_timestamp!(obs, format: "%+")
+              assert!(parsed != null, "fallback observed_timestamp set when missing")
+              true
+
+  - name: "enrich: original OTLP fields preserved alongside timestamps"
+    inputs:
+      - insert_at: to_vlogs_format
+        type: log
+        log_fields:
+          body: "preserved"
+          timestamp: "2024-06-01T00:00:00Z"
+          observed_timestamp: "2024-06-01T00:00:00.001Z"
+          resources:
+            service.name: "svc"
+          attributes:
+            custom: "still here"
+          trace_id: "deadbeef"
+    outputs:
+      - extract_from: to_vlogs_format
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._msg, "preserved")
+              assert_eq!(._time, "2024-06-01T00:00:00Z")
+              assert_eq!(.attrs.custom, "still here")
+              assert_eq!(.trace_id, "deadbeef")
+              assert!(.stored_timestamp != null)
+              assert!(.observed_timestamp != null)
+              true
+
+  - name: "vlogs: OTLP event converts to VLogs loki-like format"
+    inputs:
+      - insert_at: to_vlogs_format
+        type: log
+        log_fields:
+          body: "hello world"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          resources:
+            service.name: "my-svc"
+            host.name: "my-host"
+            k8s.cluster.name: "prod"
+          attributes:
+            log:
+              source: "syslog"
+            process:
+              pid: "42"
+          severity_text: "info"
+          severity_number: 9
+          trace_id: "aabbccdd"
+          span_id: "11223344"
+    outputs:
+      - extract_from: to_vlogs_format
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._msg, "hello world")
+              assert_eq!(._time, "2024-01-15T10:30:00+00:00")
+              assert_eq!(."service.name", "my-svc")
+              assert_eq!(."host.name", "my-host")
+              assert_eq!(."k8s.cluster.name", "prod")
+              assert_eq!(.attrs.log.source, "syslog")
+              assert_eq!(.attrs.process.pid, "42")
+              assert_eq!(.severity_text, "info")
+              assert_eq!(.severity_number, 9)
+              assert_eq!(.trace_id, "aabbccdd")
+              assert_eq!(.observed_timestamp, "2024-01-15T10:30:00.001+00:00")
+              assert!(is_null(.body))
+              assert!(is_null(.resources))
+              assert!(is_null(.attributes))
+
+  - name: "vlogs: severity_text derived from severity_number when absent"
+    inputs:
+      - insert_at: to_vlogs_format
+        type: log
+        log_fields:
+          body: "disk error"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          resources:
+            service.name: "my-svc"
+          severity_number: 17
+    outputs:
+      - extract_from: to_vlogs_format
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_number, 17)
+              assert_eq!(.severity_text, "ERROR", "severity_number 17 → ERROR")
+              true
+
+  - name: "vlogs: severity_number=0 (UNSPECIFIED) leaves severity_text null"
+    inputs:
+      - insert_at: to_vlogs_format
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          severity_number: 0
+    outputs:
+      - extract_from: to_vlogs_format
+        conditions:
+          - type: vrl
+            source: |
+              assert!(is_null(.severity_text), "UNSPECIFIED has no canonical text")
+              true
+
+  - name: "vlogs: pre-existing severity_text is preserved as-is"
+    inputs:
+      - insert_at: to_vlogs_format
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          observed_timestamp: "2024-01-15T10:30:00.001+00:00"
+          severity_number: 9
+          severity_text: "info"
+    outputs:
+      - extract_from: to_vlogs_format
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.severity_text, "info", "pre-existing text not overwritten")
+              true
+
+  - name: "vlogs: error records also convert correctly"
+    inputs:
+      - insert_at: to_vlogs_format
+        type: log
+        log_fields:
+          body: "ingestion_validation_error"
+          timestamp: "2024-01-01T00:00:00Z"
+          observed_timestamp: "2024-01-01T00:00:00.001Z"
+          resources:
+            service.name: "vector-ingest"
+            host.name: "appliance"
+          attributes:
+            error:
+              type: "semconv_invalid"
+              messages: "missing mandatory field: body"
+            stored_timestamp: "2024-01-01T00:00:01Z"
+    outputs:
+      - extract_from: to_vlogs_format
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(._msg, "ingestion_validation_error")
+              assert_eq!(."service.name", "vector-ingest")
+              assert_eq!(.attrs.error.type, "semconv_invalid")
+              assert_eq!(.attrs.stored_timestamp, "2024-01-01T00:00:01Z")
+              assert!(is_null(.body))
+              assert!(is_null(.resources))
+              assert!(is_null(.attributes))

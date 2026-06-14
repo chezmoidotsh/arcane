@@ -25,9 +25,13 @@ resources:
   - providers/vault/provider.yaml
 
   # Cloudflare resources
+  - cloudflare.iam.observability.yaml
+  - cloudflare.iam.oci-registry.yaml
   - cloudflare.iam.omni.yaml
   - cloudflare.iam.terraform-provider.yaml
-  - cloudflare.iam.zot-registry.yaml
+
+  # Tailscale resources
+  - tailscale.oauth.observability.yaml
 
   # AWS resources
   - aws.domainidentity.yaml

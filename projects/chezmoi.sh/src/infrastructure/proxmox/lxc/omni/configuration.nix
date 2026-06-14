@@ -131,6 +131,20 @@
     # This avoids Talos machines needing to trust Omni's self-signed PKI CA.
     machineApiBindAddr = "127.0.0.1:9090";
 
+    # Kubernetes proxy on loopback — Caddy terminates TLS externally on
+    # kube.omni.chezmoi.sh:443 and proxies here. Plain HTTP on the backend.
+    k8sProxyBindAddr = "127.0.0.1:8100";
+
+    # Advertised URLs — must match the Caddy subdomains in modules/caddy.nix.
+    # Talos machines use machineApiAdvertisedUrl for SideroLink registration;
+    # omnictl / kubectl use k8sProxyAdvertisedUrl for cluster API access.
+    machineApiAdvertisedUrl = "https://api.omni.chezmoi.sh/";
+    k8sProxyAdvertisedUrl = "https://kube.omni.chezmoi.sh/";
+
+    # Metrics on loopback only — scraped locally by Vector (lxcAgent).
+    # Port 2122 is the upstream Omni default; no external exposure needed.
+    metricsBindAddr = "127.0.0.1:2122";
+
     # Dex is served through Caddy under the /dex sub-path. The catalog Dex
     # module sets `issuer = oidcProviderUrl`, and Dex automatically prefixes
     # every route with the issuer's path, so this single URL covers both

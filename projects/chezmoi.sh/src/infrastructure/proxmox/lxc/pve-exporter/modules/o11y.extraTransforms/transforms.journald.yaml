@@ -1,0 +1,19 @@
+# Journald passthrough  (injected into catalog.lxcAgent via logs.extraTransforms)
+#
+# catalog.lxcAgent injects an automatic journald_to_o11y passthrough ONLY when
+# logs.extraTransforms is empty. As soon as we add the syslog fragment the auto
+# passthrough is omitted and the caller (us) owns wiring journald to the sink.
+# This fragment restores it: route_builtin._unmatched (non-caddy events from the
+# built-in caddy router) → journald_to_o11y → out_logs (via `*_to_o11y` glob).
+#
+# A filter with `true` is the cleanest Vector passthrough — identical to the
+# auto-generated component it replaces.
+
+transforms:
+  journald_to_o11y:
+    type: filter
+    inputs:
+      - route_builtin._unmatched
+    condition:
+      type: vrl
+      source: "true"

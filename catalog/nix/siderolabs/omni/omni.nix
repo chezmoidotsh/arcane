@@ -139,6 +139,30 @@ in
       description = "WireGuard UDP port advertised to Talos machines.";
     };
 
+    metricsBindAddr = mkOption {
+      type = types.str;
+      default = "0.0.0.0:2122";
+      description = "Bind address for the Prometheus metrics endpoint (--metrics-bind-addr).";
+    };
+
+    # ── Advertised URLs ───────────────────────────────────────────────────────
+    # These URLs are advertised to Talos machines and clients. Defaults are
+    # derived from `domain` in the config section (via mkDefault) so they can
+    # be overridden when the subdomain layout differs from the standard
+    # api.<domain> / kube.<domain> convention.
+
+    machineApiAdvertisedUrl = mkOption {
+      type = types.str;
+      defaultText = literalExpression "\"https://api.\${cfg.domain}/\"";
+      description = "SideroLink machine API URL advertised to Talos machines (--siderolink-api-advertised-url).";
+    };
+
+    k8sProxyAdvertisedUrl = mkOption {
+      type = types.str;
+      defaultText = literalExpression "\"https://kube.\${cfg.domain}/\"";
+      description = "Kubernetes proxy URL advertised to clients (--advertised-kubernetes-proxy-url).";
+    };
+
     # ── OIDC ─────────────────────────────────────────────────────────────────
     oidcClientId = mkOption {
       type = types.str;
@@ -252,8 +276,12 @@ in
       # ── Derived defaults ──────────────────────────────────────────────────
       # pkiDir / sqliteStoragePath default to subpaths of dataDir so a single
       # `services.omni.dataDir` override moves everything together.
+      # Advertised URLs default to the standard subdomain convention so that
+      # overriding `domain` is sufficient in the common case.
       services.omni.pkiDir = mkDefault "${cfg.dataDir}/pki";
       services.omni.sqliteStoragePath = mkDefault "${cfg.dataDir}/db/omni.db";
+      services.omni.machineApiAdvertisedUrl = mkDefault "https://api.${cfg.domain}/";
+      services.omni.k8sProxyAdvertisedUrl = mkDefault "https://kube.${cfg.domain}/";
 
       # ── Persistence guard ─────────────────────────────────────────────────
       assertions = [{
@@ -437,9 +465,9 @@ in
               "--k8s-proxy-bind-addr=${cfg.k8sProxyBindAddr}"
               "--event-sink-port=${toString cfg.eventSinkPort}"
               "--advertised-api-url=https://${cfg.domain}/"
-              "--siderolink-api-advertised-url=https://${cfg.domain}:8090/"
+              "--siderolink-api-advertised-url=${cfg.machineApiAdvertisedUrl}"
               "--siderolink-wireguard-advertised-addr=${cfg.advertiseHost}:${toString cfg.wireguardPort}"
-              "--advertised-kubernetes-proxy-url=https://${cfg.domain}:8100/"
+              "--advertised-kubernetes-proxy-url=${cfg.k8sProxyAdvertisedUrl}"
               "--private-key-source=file://${cfg.dataDir}/omni.asc"
               "--sqlite-storage-path=${cfg.sqliteStoragePath}"
               "--auth-auth0-enabled=false"
@@ -452,6 +480,7 @@ in
               "--auth-oidc-scopes=email"
               "--eula-accept-name=${cfg.eulaAcceptName}"
               "--eula-accept-email=${cfg.eulaAcceptEmail}"
+              "--metrics-bind-addr=${cfg.metricsBindAddr}"
             ]
             ++ map (u: "--initial-users=${u}") cfg.initialUsers
             ++ cfg.extraArgs;
@@ -470,6 +499,12 @@ in
 
           serviceConfig = {
             ExecStart = "${startScript}";
+            # Pin a clean journald SYSLOG_IDENTIFIER. Without it, stdout-captured
+            # logs inherit the basename of argv[0] — the wrapper script's store
+            # path, /nix/store/<hash>-omni-start — which catalog.lxcAgent then
+            # maps to resources.service.name. Pinning makes logs show a stable
+            # service.name = "omni" (and the hash no longer churns per rebuild).
+            SyslogIdentifier = "omni";
             User = "omni";
             Group = "omni";
             Type = "simple";
@@ -502,12 +537,14 @@ in
       # Opens only ports that Omni always exposes externally.
       # The UI port (bindAddr) is site-specific — the site module opens it
       # when needed (e.g. port 443 without a reverse proxy, or via Caddy).
+      # Machine API (8090) and Kubernetes proxy (8100) are NOT opened here;
+      # they must be routed via a reverse proxy (Caddy) on port 443 using
+      # subdomains (api.<domain> and kube.<domain>).
+      # Event sink (8091) stays open for WireGuard-connected Talos machines.
       networking.firewall = {
         enable = lib.mkDefault true;
         allowedTCPPorts = [
-          8090 # Machine API (SideroLink, direct TLS)
-          8091 # Event sink
-          8100 # Kubernetes proxy (direct TLS)
+          8091 # Event sink (reachable from WireGuard-connected Talos machines)
         ];
         allowedUDPPorts = [ cfg.wireguardPort ];
       };

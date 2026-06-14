@@ -23,7 +23,7 @@ let
     distSpecVersion = "1.1.1";
 
     storage = {
-      rootDirectory = "/var/lib/zot";
+      rootDirectory = "/persistent/zot";
       commit = true; # fsync after blob writes
       dedupe = true; # cross-repo deduplication via content-addressable links
       gc = true; # background GC of unreferenced blobs
@@ -65,11 +65,9 @@ let
       realm = "zot";
       externalUrl = "https://oci.chezmoi.sh";
       compat = [ "docker2s2" ]; # keep fat-manifest clients happy
-
-      # Anonymous read for everyone. Pushes are not exposed — first-party
-      # images are pushed from a maintainer workstation over a localhost
-      # tunnel (`ssh -L 5000:127.0.0.1:5000 <pve-host> pct exec 102 …`).
-      accessControl.repositories."**".anonymousPolicy = [ "read" ];
+      # No accessControl: Zot binds loopback-only; Caddy is the sole external
+      # surface. Omitting accessControl keeps /metrics unauthenticated so
+      # Vector can scrape without credentials.
     };
 
     log.level = "info";
@@ -82,6 +80,9 @@ let
         cve.updateInterval = "24h";
       };
       ui.enable = true;
+
+      # Prometheus metrics at /metrics on the main HTTP listener.
+      metrics.enable = true;
 
       # Periodic integrity check on stored blobs.
       scrub = {
@@ -103,8 +104,7 @@ in
     isSystemUser = true;
     uid = 994; # fixed — host uid = 100000 + 994 = 100994 with default Proxmox mapping
     group = "zot";
-    home = "/var/lib/zot";
-    createHome = false; # StateDirectory owns the lifecycle
+    home = "/persistent/zot";
     description = "Zot OCI registry service account";
   };
   users.groups.zot = { gid = 994; };
@@ -131,9 +131,7 @@ in
       RestartSec = "5s";
       TimeoutStopSec = "30s";
 
-      StateDirectory = "zot";
-      StateDirectoryMode = "0750";
-      WorkingDirectory = "/var/lib/zot";
+      WorkingDirectory = "/persistent/zot";
 
       # ── systemd hardening (LXC-safe subset) ──────────────────────────
       # Options requiring a mount namespace fail in an unprivileged LXC with

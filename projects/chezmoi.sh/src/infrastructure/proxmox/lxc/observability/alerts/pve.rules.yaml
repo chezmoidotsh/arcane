@@ -1,0 +1,34 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Proxmox VE — host and guest availability alerts
+# ─────────────────────────────────────────────────────────────────────────────
+# Metrics come from the PVE exporter LXC (prometheus-pve-exporter queried via
+# Vector's prometheus_scrape source, pushed via remote_write with cluster=pve).
+#
+# pve_up == 0 means the exporter failed to reach the PVE API.
+# pve_running == 0 means a guest (LXC/QEMU) is stopped.
+# ─────────────────────────────────────────────────────────────────────────────
+groups:
+  - name: pve
+    rules:
+      - alert: ProxmoxHostDown
+        expr: pve_up == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Proxmox API unreachable"
+          description: >-
+            pve_exporter failed to reach the PVE API for >5m.
+            The PVE host may be down or the API token revoked.
+
+      - alert: ProxmoxGuestDown
+        expr: pve_running == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PVE guest {{ $labels.name }} is not running"
+          description: >-
+            PVE guest {{ $labels.name }} (type={{ $labels.type }},
+            vmid={{ $labels.vmid }}) has been in a non-running state
+            for >10m on node {{ $labels.node }}.

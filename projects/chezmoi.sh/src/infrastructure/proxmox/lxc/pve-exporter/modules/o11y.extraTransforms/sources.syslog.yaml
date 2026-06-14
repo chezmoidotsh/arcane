@@ -1,0 +1,465 @@
+# Source: syslog TCP :5140  (injected into catalog.lxcAgent via logs.extraTransforms)
+#
+# PVE host / LXC log forwarding via rsyslog omfwd. The PVE host forwards its
+# syslog here (not to o11y directly): this LXC parses RFC 5424 into the OTLP-style
+# internal format and the catalog.lxcAgent out_logs sink ships it to o11y over the
+# Vector native protocol (:6000). Restricted to the bridge network by the NixOS
+# firewall (hardening.nix opens :5140) and the Proxmox host firewall (source CIDR).
+#
+# Contract: this fragment exposes `syslog_to_o11y`, consumed by the lxcAgent
+# out_logs sink via the `*_to_o11y` glob.
+
+sources:
+  in_syslog:
+    type: syslog
+    mode: tcp
+    address: "0.0.0.0:5140"
+    max_length: 102400
+
+# Transform: syslog → OTLP-style internal format
+#
+# Maps RFC 5424 syslog fields to the OTLP-like internal pipeline format.
+# Resources and attributes are built as nested objects (e.g. syslog.severity.text
+# lives at attributes.syslog.severity.text, an object path — NOT a flat key).
+# VictoriaLogs flattens nested JSON to dot-separated field names on ingest, so
+# the final queryable fields are identical while the Vector-side representation
+# stays idiomatic.
+#
+#   OTLP-style fields produced:
+#     body               — the log body
+#     timestamp          — RFC3339 event time
+#     observed_timestamp — Vector receive time (RFC3339)
+#     severity_number    — OTel numeric severity (5=DEBUG … 24=FATAL4)
+#     resources          — object: OTel resource attributes
+#       service.name     ← appname
+#       host.name        ← hostname
+#     attributes         — object: per-log attributes
+#       log.record.uid      ← generated UUID (OTel semconv)
+#       log.record.original ← reconstructed syslog header (OTel semconv)
+#       log.source          = "syslog"
+#       syslog.severity.text ← severity keyword (optional)
+#       syslog.severity.code ← numeric 0-7 (optional)
+#       syslog.facility.name ← facility keyword (optional)
+#       process.pid          ← procid as string (optional; RFC5424 procid can be non-numeric)
+#       syslog.message_id    ← msgid (optional)
+#       syslog.structured_data ← JSON-encoded (optional)
+
+transforms:
+  syslog_to_o11y:
+    type: remap
+    inputs:
+      - in_syslog
+    source: |
+      _ts_raw   = del(.timestamp)
+      _message  = string(del(.message)) ?? ""
+      _hostname = string(del(.hostname)) ?? get_hostname!()
+      _appname  = string(del(.appname)) ?? "unknown"
+      _procid   = del(.procid)
+      _severity = del(.severity)
+      _facility = del(.facility)
+      _msgid    = del(.msgid)
+      _sd       = del(.structured_data)
+
+      _pid_r  = if _procid != null { to_string!(_procid) } else { "-" }
+      # In production .timestamp is a timestamp type from the syslog source;
+      # in tests it is provided as a string — handle both without erroring.
+      _ts_fmt = if is_string(_ts_raw) {
+        string!(_ts_raw)
+      } else {
+        format_timestamp!(_ts_raw || now(), format: "%+")
+      }
+
+      # https://opentelemetry.io/docs/specs/semconv/general/logs/#general-log-identification-attributes
+      # Build each namespace separately so VRL's type checker can track field
+      # types through conditional branches (same pattern as sources.journald.yaml).
+
+      # log namespace (always present)
+      _log = {}
+      _log.record = {}
+      _log.record.uid      = uuid_v4()
+      _log.record.original = _ts_fmt + " " + _hostname + " " + _appname + "[" + _pid_r + "]: " + _message
+      _log.source          = "syslog"
+
+      # Severity: RFC 5424 keywords → syslog.severity.{text,code} + OTel severity_number.
+      # Uses the same granular FATAL sub-levels as the journald source:
+      # emerg=FATAL4(24), alert=FATAL3(23), crit=FATAL(21), err=ERROR(17),
+      # warning=WARN(13), notice/info=INFO(9), debug=DEBUG(5).
+      _syslog = {}
+      _severity_number = null
+      if _severity != null {
+        _sev = downcase(to_string!(_severity))
+        _sev_code = if _sev == "emerg" || _sev == "emergency" { 0 } else if _sev == "alert" { 1 } else if _sev == "crit" || _sev == "critical" { 2 } else if _sev == "err" || _sev == "error" { 3 } else if _sev == "warning" || _sev == "warn" { 4 } else if _sev == "notice" { 5 } else if _sev == "info" { 6 } else if _sev == "debug" { 7 } else { null }
+        if _sev_code != null {
+          _syslog.severity = { "text": _sev, "code": _sev_code }
+          _severity_number = if _sev_code == 0 { 24 } else if _sev_code == 1 { 23 } else if _sev_code == 2 { 21 } else if _sev_code == 3 { 17 } else if _sev_code == 4 { 13 } else if _sev_code == 5 || _sev_code == 6 { 9 } else { 5 }
+        } else {
+          _syslog.severity = { "text": _sev }
+        }
+      }
+      if _facility != null { _syslog.facility         = { "name": to_string!(_facility) } }
+      if _msgid    != null { _syslog.message_id        = to_string!(_msgid) }
+      if _sd       != null { _syslog.structured_data   = encode_json(_sd) }
+
+      _process = {}
+      if _procid != null { _process.pid = to_string!(_procid) }
+
+      _attrs = { "log": _log }
+      if !is_empty(_syslog)  { _attrs.syslog  = _syslog  }
+      if !is_empty(_process) { _attrs.process = _process }
+
+      . = {
+        "body":               _message,
+        "timestamp":          _ts_fmt,
+        "observed_timestamp": format_timestamp!(now(), format: "%+"),
+        "resources": {
+          "service": {"name": _appname},
+          "host":    {"name": _hostname},
+          "axnic":   {"infra": {"kind": "node"}}
+        },
+        "attributes": _attrs
+      }
+      if _severity_number != null { .severity_number = _severity_number }
+
+# Unit tests — syslog_to_o11y
+tests:
+  - name: "syslog: full RFC5424 event maps to OTLP-style"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "Started NetworkManager.service"
+          hostname: "pve-01"
+          appname: "systemd"
+          procid: "1"
+          msgid: "SERVICE"
+          severity: "info"
+          facility: "daemon"
+          timestamp: "2024-01-15T10:30:00+00:00"
+          version: 1
+          structured_data:
+            timeQuality:
+              tzKnown: "1"
+              isSynced: "1"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "Started NetworkManager.service", "body")
+              assert_eq!(.resources.host.name, "pve-01", "host.name")
+              assert_eq!(.resources.service.name, "systemd", "service.name")
+              assert_eq!(.resources.axnic.infra.kind, "node", "axnic.infra.kind")
+              assert_eq!(.attributes.process.pid, "1", "process.pid")
+              assert_eq!(.attributes.syslog.message_id, "SERVICE", "syslog.message_id")
+              assert_eq!(.attributes.syslog.severity.text, "info", "syslog.severity.text")
+              assert_eq!(.attributes.syslog.severity.code, 6, "syslog.severity.code")
+              assert_eq!(.attributes.syslog.facility.name, "daemon", "syslog.facility.name")
+              assert_eq!(.severity_number, 9, "severity_number INFO=9")
+              assert!(starts_with(string!(.timestamp), "2024-01-15"), "timestamp prefix")
+              assert!(.attributes.syslog.structured_data != null, "structured_data encoded")
+              assert!(.observed_timestamp != null, "observed_timestamp set")
+              true
+
+  - name: "syslog: only valid OTLP root fields at output"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "test"
+          hostname: "h"
+          appname: "app"
+          procid: "100"
+          severity: "debug"
+          facility: "user"
+          version: 1
+          source_ip: "10.0.0.1"
+          source_type: "syslog"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              allowed = ["body", "timestamp", "observed_timestamp", "resources", "attributes", "severity_number"]
+              all_keys = keys(.)
+              extra = filter(all_keys) -> |_i, k| { !includes(allowed, k) }
+              assert_eq!(extra, [], "no extra root fields")
+              true
+
+  - name: "syslog: observed_timestamp is a valid RFC3339 timestamp"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "test"
+          hostname: "h"
+          timestamp: "2024-01-01T00:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              obs = string!(.observed_timestamp)
+              assert!(parse_timestamp!(obs, format: "%+") != null, "observed_timestamp is RFC3339")
+              true
+
+  - name: "syslog: log.record.uid is a UUID"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "test"
+          hostname: "pve-01"
+          appname: "sshd"
+          timestamp: "2024-06-01T10:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              uid = string!(.attributes.log.record.uid)
+              assert!(length(uid) == 36, "UUID length is 36")
+              assert!(contains(uid, "-"), "UUID contains hyphens")
+              true
+
+  - name: "syslog: log.record.original reconstructs header"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "Connection accepted"
+          hostname: "pve-01"
+          appname: "sshd"
+          procid: "9876"
+          timestamp: "2024-06-01T10:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              orig = string!(.attributes.log.record.original)
+              assert!(contains(orig, "pve-01"), "hostname in original")
+              assert!(contains(orig, "sshd"), "appname in original")
+              assert!(contains(orig, "9876"), "procid in original")
+              assert!(contains(orig, "Connection accepted"), "message in original")
+              assert!(contains(orig, "2024-06-01"), "timestamp in original")
+              true
+
+  - name: "syslog: minimal event — missing optional fields produce no extra attrs"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "kernel: oom-kill"
+          hostname: "pve-02"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "kernel: oom-kill")
+              assert_eq!(.resources.host.name, "pve-02")
+              assert_eq!(.resources.service.name, "unknown", "no appname → unknown")
+              assert!(is_null(.attributes.process.pid))
+              assert!(is_null(.attributes.syslog.message_id))
+              assert!(is_null(.attributes.syslog.structured_data))
+              assert!(is_null(.severity_number), "no severity_number when severity absent")
+              assert!(.attributes.log.record.uid != null, "uid always set")
+              assert!(.attributes.log.record.original != null, "original always set")
+              true
+
+  - name: "syslog: log.record.original uses dash for missing fields"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "kernel panic"
+          hostname: "pve-01"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              orig = string!(.attributes.log.record.original)
+              assert!(contains(orig, "[-]:"), "missing app+procid → -[-]:")
+              assert!(contains(orig, "kernel panic"), "message preserved")
+              true
+
+  - name: "syslog: timestamp is a valid RFC3339 string"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "test"
+          hostname: "host"
+          timestamp: "2024-06-01T08:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              t = string!(.timestamp)
+              assert!(parse_timestamp!(t, format: "%+") != null, "timestamp parses as RFC3339")
+              true
+
+  - name: "syslog: procid coerced to string in attributes"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "msg"
+          hostname: "h"
+          appname: "app"
+          procid: 42
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.attributes.process.pid, "42")
+              true
+
+  - name: "syslog: severity info → severity_number 9 + code 6"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "unit started"
+          hostname: "pve-01"
+          severity: "info"
+          timestamp: "2024-06-01T10:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.attributes.syslog.severity.text, "info")
+              assert_eq!(.attributes.syslog.severity.code, 6)
+              assert_eq!(.severity_number, 9, "INFO → 9")
+              true
+
+  - name: "syslog: severity warning → severity_number 13 + code 4"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "low memory"
+          hostname: "pve-01"
+          severity: "warning"
+          timestamp: "2024-06-01T10:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.attributes.syslog.severity.text, "warning")
+              assert_eq!(.attributes.syslog.severity.code, 4)
+              assert_eq!(.severity_number, 13, "WARN → 13")
+              true
+
+  - name: "syslog: severity err → severity_number 17 + code 3"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "disk I/O error"
+          hostname: "pve-01"
+          severity: "err"
+          timestamp: "2024-06-01T10:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.attributes.syslog.severity.code, 3)
+              assert_eq!(.severity_number, 17, "ERROR → 17")
+              true
+
+  - name: "syslog: severity crit → severity_number 21 + code 2"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "critical condition"
+          hostname: "pve-01"
+          severity: "crit"
+          timestamp: "2024-06-01T10:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.attributes.syslog.severity.code, 2)
+              assert_eq!(.severity_number, 21, "FATAL → 21")
+              true
+
+  - name: "syslog: severity alert → severity_number 23 + code 1"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "action required"
+          hostname: "pve-01"
+          severity: "alert"
+          timestamp: "2024-06-01T10:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.attributes.syslog.severity.code, 1)
+              assert_eq!(.severity_number, 23, "FATAL3 → 23")
+              true
+
+  - name: "syslog: severity emerg → severity_number 24 + code 0"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "system unusable"
+          hostname: "pve-01"
+          severity: "emerg"
+          timestamp: "2024-06-01T10:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.attributes.syslog.severity.code, 0)
+              assert_eq!(.severity_number, 24, "FATAL4 → 24")
+              true
+
+  - name: "syslog: severity debug → severity_number 5 + code 7"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "verbose trace"
+          hostname: "pve-01"
+          severity: "debug"
+          timestamp: "2024-06-01T10:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.attributes.syslog.severity.code, 7)
+              assert_eq!(.severity_number, 5, "DEBUG → 5")
+              true
+
+  - name: "syslog: notice severity → severity_number 9 (maps to INFO)"
+    inputs:
+      - insert_at: syslog_to_o11y
+        type: log
+        log_fields:
+          message: "system boot complete"
+          hostname: "pve-01"
+          severity: "notice"
+          timestamp: "2024-06-01T10:00:00+00:00"
+    outputs:
+      - extract_from: syslog_to_o11y
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.attributes.syslog.severity.code, 5)
+              assert_eq!(.severity_number, 9, "notice → INFO 9")
+              true

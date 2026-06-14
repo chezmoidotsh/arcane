@@ -1,0 +1,280 @@
+# Source: OTLP gRPC :4317 / HTTP :4318
+#
+# OpenTelemetry-native ingest (loopback only). Exposed publicly via
+# Caddy /logs/otlp/* → TLS. Accepts OTLP logs/v1 protobuf or JSON.
+
+sources:
+  in_otlp:
+    type: opentelemetry
+    grpc:
+      address: "127.0.0.1:4317"
+    http:
+      address: "127.0.0.1:4318"
+
+# Transform: OTLP envelope → OTLP-style internal format
+#
+# Vector's opentelemetry source wraps resource attributes under
+# resources.attributes. This transform normalises the envelope to the
+# flat OTLP-like internal format:
+#
+#   In (Vector OTLP source):
+#     .message                 — log body (Vector maps OTLP body to .message; renamed → .body)
+#     .timestamp               — event time (timestamp type or RFC3339)
+#     .observed_timestamp      — OTLP observed time (optional)
+#     .resources.attributes.*  — resource attributes (nested)
+#     .attributes.*            — per-log attributes (flat object)
+#     .severity_text           — severity label
+#     .severity_number         — numeric severity
+#     .trace_id, .span_id      — trace correlation
+#     .flags                   — OTLP flags (stored in attributes.trace.flags)
+#
+#   Out (OTLP-like internal format):
+#     .body                    — renamed from .message
+#     .timestamp               — RFC3339 string
+#     .observed_timestamp      — preserved or stamped with now()
+#     .resources               — flat object (was resources.attributes)
+#     .attributes              — flat object + log.source="otlp" + trace.flags if flags present
+#     .severity_text           — preserved
+#     .severity_number         — preserved
+#     .trace_id, .span_id      — preserved
+#
+# NOTE: the exact field names produced by Vector's opentelemetry source may
+# shift between Vector releases. Verify against `vector generate opentelemetry`
+# for the pinned version.
+
+transforms:
+  otlp_to_semconv:
+    type: remap
+    inputs:
+      - in_otlp.logs
+    source: |
+      # Ensure timestamp is an RFC3339 string.
+      # In production the OTLP source provides a timestamp type; in tests it is
+      # provided as a string — handle both without erroring.
+      .timestamp = if is_string(.timestamp) {
+        string!(.timestamp)
+      } else {
+        format_timestamp!(.timestamp || now(), format: "%+")
+      }
+
+      # Stamp observed_timestamp if the OTLP sender omitted it
+      if .observed_timestamp == null {
+        .observed_timestamp = format_timestamp!(now(), format: "%+")
+      }
+
+      # Flatten resources.attributes → resources
+      .resources = object(."resources"."attributes") ?? {}
+
+      # Mark ingestion path; preserve existing log attributes
+      if !is_object(.attributes) { .attributes = {} }
+      ."attributes"."log.source" = "otlp"
+
+      # Store OTLP flags as attributes.trace.flags (W3C trace-flags byte: bit 0 = sampled).
+      if .flags != null {
+        _tf, _tf_err = to_int(.flags)
+        if _tf_err == null && _tf >= 0 { ."attributes"."trace.flags" = _tf }
+      }
+      del(.flags)
+      del(.source_type)
+      # Vector's opentelemetry source maps OTLP body to .message; normalize to .body.
+      if .body == null { .body = del(.message) } else { del(.message) }
+
+# Unit tests — otlp_to_semconv
+tests:
+  - name: "otlp: full event with resource + log attributes maps to OTLP-style"
+    inputs:
+      - insert_at: otlp_to_semconv
+        type: log
+        log_fields:
+          body: "Request handled in 42ms"
+          timestamp: "2024-03-10T14:00:00+00:00"
+          observed_timestamp: "2024-03-10T14:00:00.001+00:00"
+          trace_id: "abc123def456abc1"
+          span_id: "aabbccdd"
+          severity_text: "INFO"
+          severity_number: 9
+          flags: 1
+          resources:
+            attributes:
+              service.name: "api-gateway"
+              host.name: "k8s-node-01"
+              k8s.namespace.name: "production"
+          attributes:
+            http.method: "GET"
+            http.route: "/api/v1/users"
+    outputs:
+      - extract_from: otlp_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "Request handled in 42ms")
+              assert!(starts_with(string!(.timestamp), "2024-03-10"))
+              assert_eq!(."resources"."service.name", "api-gateway")
+              assert_eq!(."resources"."host.name", "k8s-node-01")
+              assert_eq!(."resources"."k8s.namespace.name", "production")
+              assert_eq!(."attributes"."http.method", "GET")
+              assert_eq!(."attributes"."http.route", "/api/v1/users")
+              assert_eq!(."attributes"."log.source", "otlp")
+              assert_eq!(.trace_id, "abc123def456abc1")
+              assert_eq!(.span_id, "aabbccdd")
+              assert_eq!(.severity_text, "INFO")
+              assert_eq!(.severity_number, 9)
+              true
+
+  - name: "otlp: observed_timestamp preserved from OTLP envelope"
+    inputs:
+      - insert_at: otlp_to_semconv
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-06-01T10:00:00+00:00"
+          observed_timestamp: "2024-06-01T10:00:00.500+00:00"
+          resources:
+            attributes:
+              service.name: "svc"
+    outputs:
+      - extract_from: otlp_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              obs = string!(.observed_timestamp)
+              assert!(starts_with(obs, "2024-06-01T10:00:00"), "OTLP observed_timestamp preserved")
+              true
+
+  - name: "otlp: observed_timestamp stamped with now() when OTLP omits it"
+    inputs:
+      - insert_at: otlp_to_semconv
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-06-01T10:00:00+00:00"
+          resources:
+            attributes:
+              service.name: "svc"
+    outputs:
+      - extract_from: otlp_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              obs = string!(.observed_timestamp)
+              parsed = parse_timestamp!(obs, format: "%+")
+              assert!(parsed != null, "fallback observed_timestamp is RFC3339")
+              true
+
+  - name: "otlp: resources.attributes flattened to resources"
+    inputs:
+      - insert_at: otlp_to_semconv
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-01T00:00:00Z"
+          observed_timestamp: "2024-01-01T00:00:00.001Z"
+          resources:
+            attributes:
+              service.name: "svc"
+              host.name: "node-01"
+    outputs:
+      - extract_from: otlp_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(is_object(.resources), "resources is an object")
+              assert_eq!(."resources"."service.name", "svc")
+              assert_eq!(."resources"."host.name", "node-01")
+              assert!(is_null(."resources"."attributes"), "nested attributes gone")
+              true
+
+  - name: "otlp: raw OTLP envelope fields removed after normalisation"
+    inputs:
+      - insert_at: otlp_to_semconv
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-01T00:00:00Z"
+          observed_timestamp: "2024-01-01T00:00:00.001Z"
+          flags: 0
+          source_type: "opentelemetry"
+          resources:
+            attributes:
+              service.name: "svc"
+    outputs:
+      - extract_from: otlp_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(is_null(.flags), "flags removed")
+              assert!(is_null(.source_type), "source_type removed")
+              true
+
+  - name: "otlp: only valid OTLP root fields at output"
+    inputs:
+      - insert_at: otlp_to_semconv
+        type: log
+        log_fields:
+          body: "msg"
+          timestamp: "2024-01-01T00:00:00Z"
+          observed_timestamp: "2024-01-01T00:00:00.001Z"
+          severity_text: "WARN"
+          severity_number: 13
+          trace_id: "abc"
+          span_id: "def"
+          resources:
+            attributes:
+              service.name: "svc"
+          attributes:
+            custom.key: "val"
+    outputs:
+      - extract_from: otlp_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              valid = ["body", "timestamp", "observed_timestamp",
+                       "resources", "attributes",
+                       "severity_text", "severity_number",
+                       "trace_id", "span_id"]
+              extra = filter(keys(.)) -> |_i, k| { !includes(valid, k) }
+              assert_eq!(extra, [], "no extra root fields")
+              true
+
+  - name: "otlp: .message renamed to .body when .body is absent (Vector OTLP source behavior)"
+    inputs:
+      - insert_at: otlp_to_semconv
+        type: log
+        log_fields:
+          message: "body from vector otlp source"
+          timestamp: "2024-01-01T00:00:00Z"
+          observed_timestamp: "2024-01-01T00:00:00.001Z"
+          resources:
+            attributes:
+              service.name: "svc"
+    outputs:
+      - extract_from: otlp_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert_eq!(.body, "body from vector otlp source", ".message renamed to .body")
+              assert!(is_null(.message), ".message removed")
+              true
+
+  - name: "otlp: flags field stored in attributes.trace.flags"
+    inputs:
+      - insert_at: otlp_to_semconv
+        type: log
+        log_fields:
+          body: "request"
+          timestamp: "2024-01-01T00:00:00Z"
+          observed_timestamp: "2024-01-01T00:00:00.001Z"
+          trace_id: "4bf92f3577b34da6a3ce929d0e0e4736"
+          span_id: "00f067aa0ba902b7"
+          flags: 1
+          resources:
+            attributes:
+              service.name: "api"
+    outputs:
+      - extract_from: otlp_to_semconv
+        conditions:
+          - type: vrl
+            source: |
+              assert!(is_null(.flags), "flags removed from root")
+              assert_eq!(."attributes"."trace.flags", 1, "flags stored in attributes.trace.flags")
+              true

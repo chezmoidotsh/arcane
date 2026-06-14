@@ -1,19 +1,22 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Caddy reverse proxy — TLS termination for omni.chezmoi.sh
+# Caddy reverse proxy — TLS termination for all Omni subdomains
 # ─────────────────────────────────────────────────────────────────────────────
-# Listens on :80 (redirect) and :443 (HTTPS). TLS is obtained via DNS-01
-# ACME using the Cloudflare plugin so that :80 never needs to be reachable
+# Listens on :80 (redirect) and :443 (HTTPS only). TLS is obtained via
+# DNS-01 ACME using the Cloudflare plugin — :80 never needs to be reachable
 # from the ACME infrastructure.
 #
-# Path routing on the single hostname `omni.chezmoi.sh`:
-#   /dex/*  →  Dex OIDC      (loopback HTTP, prefix preserved)
-#   /*      →  Omni UI/API   (loopback HTTPS, self-signed cert from Omni PKI)
+# All Omni services are exposed through subdomains on port 443:
 #
-# The Machine API (:8090) is fronted by Caddy (DNS-01 LE cert → loopback
-# 127.0.0.1:9090). The event sink (:8091), Kubernetes proxy (:8100), and
-# SideroLink WireGuard (:50180/UDP) are NOT proxied — they keep their
-# direct binding and are opened by `catalog/nix/siderolabs/omni/omni.nix`
-# at the firewall layer.
+#   omni.chezmoi.sh        — Omni UI/API + Dex OIDC
+#     /dex/*  →  Dex OIDC       (loopback HTTP :5557, prefix preserved)
+#     /*      →  Omni UI/API    (loopback HTTPS :8443, Omni PKI cert)
+#
+#   api.omni.chezmoi.sh    — SideroLink Machine API (gRPC, loopback HTTPS :9090)
+#
+#   kube.omni.chezmoi.sh   — Kubernetes API proxy  (HTTP, loopback :8100)
+#
+# No non-standard TCP ports are opened externally. The event sink (:8091)
+# and SideroLink WireGuard (:50180/UDP) keep their direct bindings.
 #
 # Build arg:
 #   cloudflareToken — Cloudflare API token, forwarded from flake.nix via
@@ -47,7 +50,7 @@ in
         redir https://{host}{uri} permanent
       }
 
-      # ─── HTTPS termination + path routing ──────────────────────────────
+      # ─── omni.chezmoi.sh — UI/API + Dex OIDC ──────────────────────────
       https://${domain} {
         header {
           # 1 year HSTS, includeSubDomains, preload-eligible.
@@ -83,18 +86,30 @@ in
         }
       }
 
-      # ─── Machine API (SideroLink) on port 8090 ─────────────────────────
+      # ─── api.omni.chezmoi.sh — SideroLink Machine API ──────────────────
       # Talos machines connect here for SideroLink registration and the
-      # gRPC tunnel (grpc_tunnel=true). Caddy terminates TLS with the
-      # DNS-01 Let's Encrypt cert so machines trust it without needing
-      # Omni's self-signed PKI CA. Omni's machine API is moved to a
-      # loopback-only internal port (machineApiBindAddr) to keep Caddy
-      # as the single TLS entry point.
-      https://${domain}:8090 {
+      # gRPC tunnel. Caddy terminates TLS with the DNS-01 Let's Encrypt
+      # cert so machines trust it without needing Omni's self-signed PKI CA.
+      # Omni's machine API binds on loopback (machineApiBindAddr).
+      https://api.${domain} {
         reverse_proxy https://${cfg.machineApiBindAddr} {
           transport http {
             tls_insecure_skip_verify
           }
+          flush_interval -1
+        }
+
+        tls {
+          dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+        }
+      }
+
+      # ─── kube.omni.chezmoi.sh — Kubernetes API proxy ───────────────────
+      # omnictl / kubectl connects here to reach managed cluster APIs.
+      # Omni's k8s proxy binds on loopback (k8sProxyBindAddr) over plain
+      # HTTP; Caddy provides the external TLS layer.
+      https://kube.${domain} {
+        reverse_proxy http://${cfg.k8sProxyBindAddr} {
           flush_interval -1
         }
 
@@ -126,8 +141,9 @@ in
     LimitNOFILE = 65536;
   };
 
-  # Caddy is the public surface; the catalog omni module opens the direct
-  # API/proxy ports (8090/8091/8100) and the WireGuard UDP port separately.
+  # Caddy is the sole public TCP surface — all Omni services are routed
+  # through subdomains on 443. The catalog omni module opens 8091 (event
+  # sink, WireGuard-internal) and the WireGuard UDP port separately.
   # Do NOT use lib.mkDefault for allowedTCPPorts — nixos-generators' lxc
   # format sets it to [] at normal priority and would silently win over
   # mkDefault (1000). Normal-priority assignments from multiple modules are

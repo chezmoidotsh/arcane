@@ -1,0 +1,403 @@
+<!doctype html>
+<!-- Landing page for the o11y appliance — served by Caddy at / (and as a 404 fallback).
+     Pure HTML/CSS, no JavaScript. Dark-mode toggle uses a hidden checkbox + CSS sibling
+     selector so the theme state survives across navigations without any client-side script.
+     Design: gummy/neo-brutalist card grid with progressive press shadow effect. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>o11y // chezmoi.sh</title>
+    <style>
+      :root {
+        /* Light palette */
+        --bg: #e2e8f0;
+        --grid-bg: #ffffff;
+        --border-color: #000000;
+        --text-color: #000000;
+        --text-muted: #4a5568;
+        --shadow-color: #000000;
+
+        /* Block colors (gummy pastels) */
+        --color-metrics: #a5d8ff; /* pastel blue  */
+        --color-logs: #b2f2bb; /* pastel green */
+        --color-traces: #fcc2d7; /* pastel pink  */
+        --color-alerts: #ffd8a8; /* pastel orange */
+
+        /* Dynamic toggle button */
+        --toggle-bg: #ffe066; /* bright yellow — sun */
+
+        /* Cartoon borders and shadows */
+        --border-width: 4px;
+        --card-radius: 20px;
+
+        /* Progressive press shadows (gummy effect) */
+        --gummy-shadow: 8px 8px 0px var(--shadow-color);
+        --gummy-shadow-hover: 4px 4px 0px var(--shadow-color);
+        --gummy-shadow-active: 0px 0px 0px var(--shadow-color);
+
+        --font-stack: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      }
+
+      /* Dark mode toggle via CSS sibling selector on the hidden checkbox — no JS required */
+      #theme-toggle-checkbox:checked ~ .app-wrapper {
+        --bg: #0f1115;
+        --grid-bg: #161920;
+        --border-color: #ffffff;
+        --text-color: #ffffff;
+        --text-muted: #94a3b8;
+        --shadow-color: #ffffff; /* light gummy shadow */
+
+        /* Block colors in dark mode (slightly more contrasted) */
+        --color-metrics: #3b82f6;
+        --color-logs: #10b981;
+        --color-traces: #ec4899;
+        --color-alerts: #f97316;
+
+        /* Toggle button in dark mode */
+        --toggle-bg: #3b82f6; /* royal blue — moon */
+
+        --gummy-shadow: 8px 8px 0px var(--shadow-color);
+        --gummy-shadow-hover: 4px 4px 0px var(--shadow-color);
+        --gummy-shadow-active: 0px 0px 0px var(--shadow-color);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: var(--font-stack);
+        background-color: #e2e8f0; /* light fallback */
+        transition: background-color 0.25s ease;
+      }
+
+      /* Modern fallback to sync body background when the browser supports :has() */
+      body:has(#theme-toggle-checkbox:checked) {
+        background-color: #0f1115;
+      }
+
+      /* Main wrapper — manages the global page background and vertical distribution */
+      .app-wrapper {
+        position: relative;
+        background-color: var(--bg);
+        color: var(--text-color);
+        min-height: 100vh;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        padding: 5rem 1.5rem 3rem 1.5rem;
+        transition:
+          background-color 0.25s ease,
+          color 0.25s ease;
+        overflow-x: hidden;
+      }
+
+      .theme-switch-container {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        z-index: 10;
+      }
+
+      .theme-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        background-color: var(--toggle-bg);
+        border: var(--border-width) solid var(--border-color);
+        color: var(--text-color);
+        padding: 0.6rem 1.2rem;
+        border-radius: 14px;
+        font-weight: 900;
+        font-size: 0.9rem;
+        box-shadow: 6px 6px 0px var(--shadow-color);
+        transform: translate(0, 0);
+        user-select: none;
+        transition:
+          transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+          box-shadow 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+          background-color 0.25s ease,
+          color 0.25s ease;
+      }
+
+      /* Progressive press on hover then click for the toggle button */
+      .theme-label:hover {
+        transform: translate(3px, 3px);
+        box-shadow: 3px 3px 0px var(--shadow-color);
+      }
+
+      .theme-label:active {
+        transform: translate(6px, 6px);
+        box-shadow: 0px 0px 0px var(--shadow-color);
+      }
+
+      #theme-toggle-checkbox {
+        display: none;
+      }
+
+      .sun-icon {
+        display: inline-block;
+      }
+      .moon-icon {
+        display: none;
+      }
+
+      #theme-toggle-checkbox:checked ~ .app-wrapper .sun-icon {
+        display: none;
+      }
+      #theme-toggle-checkbox:checked ~ .app-wrapper .moon-icon {
+        display: inline-block;
+      }
+
+      .main-content {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 800px;
+      }
+
+      .grid-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        width: 100%;
+        position: relative;
+      }
+
+      .gummy-card {
+        background-color: var(--grid-bg);
+        border: var(--border-width) solid var(--border-color);
+        border-radius: var(--card-radius);
+        padding: 1.75rem;
+        text-decoration: none;
+        color: var(--text-color);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between; /* aligns badge/description at top, path at bottom */
+        min-height: 230px;
+        box-shadow: var(--gummy-shadow);
+        transform: translate(0, 0);
+        transition:
+          transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+          box-shadow 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+          background-color 0.25s ease,
+          border-color 0.25s ease;
+      }
+
+      /* Progressive bottom-right press (hover = half depth, active = flush) */
+      .gummy-card:hover,
+      .gummy-card:focus {
+        transform: translate(4px, 4px);
+        box-shadow: var(--gummy-shadow-hover);
+        outline: none;
+      }
+
+      .gummy-card:active {
+        transform: translate(8px, 8px);
+        box-shadow: var(--gummy-shadow-active);
+      }
+
+      .card-header-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        border: var(--border-width) solid var(--border-color);
+        font-weight: 900;
+        font-size: 0.95rem;
+        text-transform: lowercase;
+        margin-bottom: 1.25rem;
+        align-self: flex-start;
+        transition:
+          background-color 0.25s ease,
+          border-color 0.25s ease;
+      }
+
+      .card-metrics .card-header-badge {
+        background-color: var(--color-metrics);
+      }
+      .card-logs .card-header-badge {
+        background-color: var(--color-logs);
+      }
+      .card-traces .card-header-badge {
+        background-color: var(--color-traces);
+      }
+      .card-alerts .card-header-badge {
+        background-color: var(--color-alerts);
+      }
+
+      .card-body {
+        margin-top: 0.25rem;
+      }
+
+      .card-description {
+        font-size: 0.85rem;
+        line-height: 1.5;
+        color: var(--text-muted);
+        transition: color 0.25s ease;
+      }
+
+      .card-footer-path {
+        font-size: 0.75rem;
+        background: rgba(0, 0, 0, 0.05);
+        border: 1px dashed var(--border-color);
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        color: var(--text-muted);
+        align-self: flex-start;
+        word-break: break-all;
+        margin-top: 1.25rem;
+        transition:
+          color 0.25s ease,
+          background-color 0.25s ease,
+          border-color 0.25s ease;
+      }
+
+      #theme-toggle-checkbox:checked ~ .app-wrapper .card-footer-path {
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      /* Subtle credits pinned at the bottom */
+      .credits-footer {
+        margin-top: 4rem;
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        opacity: 0.45;
+        text-align: center;
+        line-height: 1.4;
+        transition:
+          opacity 0.25s ease,
+          color 0.25s ease;
+        max-width: 600px;
+        user-select: none;
+      }
+
+      .credits-footer:hover {
+        opacity: 0.9;
+      }
+
+      @media (max-width: 640px) {
+        .grid-container {
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+        }
+        .gummy-card {
+          min-height: auto;
+        }
+        .app-wrapper {
+          padding: 6rem 1.25rem 3rem 1.25rem;
+        }
+        .theme-switch-container {
+          top: 1rem;
+          right: 1rem;
+        }
+        .credits-footer {
+          margin-top: 2.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Hidden checkbox used as dark-mode state toggle (no JS) -->
+    <input type="checkbox" id="theme-toggle-checkbox" />
+
+    <!-- Main application container -->
+    <div class="app-wrapper">
+      <!-- Theme switcher -->
+      <div class="theme-switch-container">
+        <label for="theme-toggle-checkbox" class="theme-label" title="Toggle theme">
+          <svg
+            class="sun-icon"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            viewBox="0 0 24 24"
+          >
+            <circle cx="12" cy="12" r="5"></circle>
+            <path
+              d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+            ></path>
+          </svg>
+          <svg
+            class="moon-icon"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            viewBox="0 0 24 24"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <span>mode</span>
+        </label>
+      </div>
+
+      <!-- Central section containing the card grid -->
+      <div class="main-content">
+        <!-- Card grid -->
+        <div class="grid-container">
+          <!-- Metrics -->
+          <a href="/metrics/vmui/" class="gummy-card card-metrics" title="/metrics/vmui/">
+            <div>
+              <div class="card-header-badge">metrics</div>
+              <div class="card-body">
+                <p class="card-description">Explore cluster and server metrics via VMUI.</p>
+              </div>
+            </div>
+            <div class="card-footer-path">/metrics/vmui/</div>
+          </a>
+
+          <!-- Logs -->
+          <a href="/logs/select/vmui/" class="gummy-card card-logs" title="/logs/select/vmui/">
+            <div>
+              <div class="card-header-badge">logs</div>
+              <div class="card-body">
+                <p class="card-description">Search, filter, and aggregate log streams with VictoriaLogs.</p>
+              </div>
+            </div>
+            <div class="card-footer-path">/logs/select/vmui/</div>
+          </a>
+
+          <!-- Traces -->
+          <a href="/traces/select/vmui/" class="gummy-card card-traces" title="/traces/select/vmui/">
+            <div>
+              <div class="card-header-badge">traces</div>
+              <div class="card-body">
+                <p class="card-description">Analyse latency and distributed traces across your services.</p>
+              </div>
+            </div>
+            <div class="card-footer-path">/traces/select/vmui/</div>
+          </a>
+
+          <!-- Alerts -->
+          <a href="/alerts/#/alerts" class="gummy-card card-alerts" title="/alerts/#/alerts">
+            <div>
+              <div class="card-header-badge">alerts</div>
+              <div class="card-body">
+                <p class="card-description">Alert state, VMAlert monitoring, and Alertmanager configuration.</p>
+              </div>
+            </div>
+            <div class="card-footer-path">/alerts/#/alerts</div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Subtle credits pinned at the very bottom -->
+      <div class="credits-footer">inspired by Totolo Letoto diagram at Radiofrance</div>
+    </div>
+  </body>
+</html>
