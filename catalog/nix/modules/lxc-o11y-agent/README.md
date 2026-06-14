@@ -20,7 +20,7 @@ One Vector process runs two independent pipelines on the LXC:
 │       │  fields → OTel SemConv · stamps host.name + axnic.infra.kind       │
 │       │                                                                    │
 │       ▼                                                                    │
-│  route_builtin                ◄── conf.d/transforms.caddy.yaml (built-in)    │
+│  route_builtin                ◄── conf.d/transforms.builtin-route.yaml        │
 │       ├── .caddy → caddy_parse → caddy_to_o11y   (OTEL HTTP SemConv)       │
 │       └── ._unmatched                                                       │
 │           │                                                                 │
@@ -290,7 +290,8 @@ all baked into the Nix store:
 ```
 conf.d/
 ├── sources.journald.yaml         static — journald source + semconv remap
-├── transforms.caddy.yaml         static — caddy route + parse (built-in)
+├── transforms.builtin-route.yaml  static — built-in service routing
+├── transforms.builtin-caddy.yaml  static — caddy parse (built-in)
 ├── sources.prometheus.json       generated — internal metrics + scrape targets
 │                                           (only when metrics.enable = true)
 ├── sinks.vector.json             generated — Vector native log sink

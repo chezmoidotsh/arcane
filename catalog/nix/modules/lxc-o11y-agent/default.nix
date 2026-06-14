@@ -11,7 +11,7 @@
 #       │  maps fields → OTel SemConv; stamps resources.host.name and
 #       │  resources.axnic.infra.kind (source provenance)
 #       ↓
-#   route_builtin                      ← conf.d/transforms.caddy.yaml (built-in)
+#   route_builtin                      ← conf.d/transforms.builtin-route.yaml (built-in)
 #       ├── .caddy → caddy_parse → caddy_to_o11y   (OTEL HTTP SemConv)
 #       └── ._unmatched
 #           ↓
@@ -27,8 +27,8 @@
 #
 # Config directory layout (baked into the Nix store):
 #   conf.d/sources.journald.yaml       — static: journald source + semconv remap
-#   conf.d/transforms.route.yaml       — static: built-in service routing
-#   conf.d/transforms.caddy.yaml       — static: caddy parse (built-in parser)
+#   conf.d/transforms.builtin-route.yaml — static: built-in service routing
+#   conf.d/transforms.builtin-caddy.yaml — static: caddy parse (built-in parser)
 #   conf.d/sources.prometheus.json     — generated: internal metrics + scrape targets
 #   conf.d/sinks.vector.json           — generated: vector native log sink
 #   conf.d/sinks.prometheus.json       — generated (metrics.enable only)
@@ -178,11 +178,11 @@ let
         path = journaldSourceFile;
       }
       {
-        name = "conf.d/transforms.route.yaml";
+        name = "conf.d/transforms.builtin-route.yaml";
         path = ./config/vector/transforms.route.yaml;
       }
       {
-        name = "conf.d/transforms.caddy.yaml";
+        name = "conf.d/transforms.builtin-caddy.yaml";
         path = ./config/vector/transforms.caddy.yaml;
       }
       {
