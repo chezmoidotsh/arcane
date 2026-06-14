@@ -78,8 +78,7 @@ in
     serviceConfig = {
       ExecStart = lib.concatStringsSep " " [
         "${pythonEnv}/bin/pve_exporter"
-        "--address=127.0.0.1"
-        "--port=9221"
+        "--web.listen-address=127.0.0.1:9221"
       ];
 
       EnvironmentFile = "/etc/pve-exporter/secrets";
