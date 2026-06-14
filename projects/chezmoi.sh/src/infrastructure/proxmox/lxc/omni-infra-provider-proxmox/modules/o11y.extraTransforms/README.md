@@ -5,7 +5,7 @@ Parses Zap JSON logs into OTLP SemConv fields before shipping to VictoriaLogs.
 
 ## Pipeline overview
 
-```
+```text
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                                                                            │
 │  route_builtin._unmatched  (from lxc-o11y-agent)                           │
@@ -40,7 +40,7 @@ a single parse stage is sufficient.
 
 ## VictoriaLogs query examples
 
-```
+```text
 # All provider errors and above
 service.name:omni-infra-provider-proxmox severity_number:>=17
 

@@ -308,7 +308,7 @@ pve-firewall restart
 Point the Proxmox host's rsyslog at this LXC (not at o11y). Create
 `/etc/rsyslog.d/50-pve-exporter.conf` on the PVE host:
 
-```
+```text
 # Forward Proxmox host logs to the pve-exporter LXC (syslog TCP RFC 5424)
 *.* action(
   type="omfwd"

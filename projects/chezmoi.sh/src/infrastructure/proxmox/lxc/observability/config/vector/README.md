@@ -6,7 +6,7 @@ external OTLP senders, validates them, then ships to VictoriaLogs.
 
 ## Pipeline overview
 
-```
+```text
 ┌─ LOGS ─────────────────────────────────────────────────────────────────────┐
 │                                                                            │
 │  in_otlp  (gRPC :4317 / HTTP :4318)        in_vector  (Vector native :6000)│
@@ -91,7 +91,7 @@ Checks:
 
 Validation errors produce a replacement event:
 
-```
+```text
 body      = "ingestion_validation_error"
 resources.service.name = "vector-ingest"
 attributes.error.type             = "semconv_invalid"
@@ -102,7 +102,7 @@ attributes.error.original_event   = "<JSON-encoded original event>"
 
 Query in VictoriaLogs:
 
-```
+```text
 service.name:vector-ingest attrs.error.type:semconv_invalid
 ```
 

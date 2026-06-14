@@ -5,7 +5,7 @@ Parses Zap JSON logs into OTLP SemConv fields before shipping to VictoriaLogs.
 
 ## Pipeline overview
 
-```
+```text
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                                                                            │
 │  route_builtin._unmatched  (from lxc-o11y-agent)                           │
@@ -63,7 +63,7 @@ Parses Zap JSON logs into OTLP SemConv fields before shipping to VictoriaLogs.
 
 ## VictoriaLogs query examples
 
-```
+```text
 # All zot errors and above
 service.name:zot severity_number:>=17
 

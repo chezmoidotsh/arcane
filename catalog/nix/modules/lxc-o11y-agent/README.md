@@ -10,7 +10,7 @@ Prometheus exporters, forwarding everything to the central `o11y` appliance.
 
 One Vector process runs two independent pipelines on the LXC:
 
-```
+```text
 ┌─ LOGS ─────────────────────────────────────────────────────────────────────┐
 │                                                                            │
 │  systemd journal  (current boot)                                           │
@@ -154,7 +154,7 @@ outputs = { self, nixpkgs, nixos-generators, arcane-catalog, ... }:
 Keep complex transforms out of the Nix string by storing them as plain YAML
 files next to the module and loading them with `builtins.readFile`:
 
-```
+```text
 modules/
 ├── log-shipper.nix
 └── vector/
@@ -287,7 +287,7 @@ SemConv **validation is not performed here** — it runs on the o11y side
 The module assembles a Vector `--config-dir` from static and generated files,
 all baked into the Nix store:
 
-```
+```text
 conf.d/
 ├── sources.journald.yaml         static — journald source + semconv remap
 ├── transforms.builtin-route.yaml  static — built-in service routing
@@ -316,7 +316,7 @@ named `*_to_o11y`.
 The upstream component is always `route_builtin._unmatched` (the non-caddy
 branch of the built-in caddy router).
 
-```
+```text
 route_builtin._unmatched
         │
         ▼

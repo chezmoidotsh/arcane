@@ -10,7 +10,7 @@ journal stream.
 
 ## Pipeline overview
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  journald source  (from lxc-o11y-agent)                                     │
 │       ↓ route_builtin._unmatched                                            │
@@ -71,7 +71,7 @@ The service running in this LXC is `pve-prometheus-exporter`.
 
 ## VictoriaLogs query examples
 
-```
+```text
 # All syslog errors from the Proxmox host
 log.source:syslog severity_number:>=17
 

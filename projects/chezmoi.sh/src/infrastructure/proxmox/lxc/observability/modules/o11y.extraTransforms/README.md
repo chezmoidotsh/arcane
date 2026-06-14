@@ -7,7 +7,7 @@ before shipping to VictoriaLogs.
 
 ## Pipeline overview
 
-```
+```text
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                                                                            │
 │  route_builtin._unmatched  (from lxc-o11y-agent)                                │
@@ -79,7 +79,7 @@ Log format: `{..., "request":{...}, "duration":float, "size":int, "status":int}`
 
 ## VictoriaLogs query examples
 
-```
+```text
 # All errors from the Victoria stack
 service.name:victoria-metrics severity_number:>=17
 
