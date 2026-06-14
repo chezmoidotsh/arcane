@@ -113,7 +113,8 @@ transforms:
         "observed_timestamp": format_timestamp!(now(), format: "%+"),
         "resources": {
           "service": {"name": _appname},
-          "host":    {"name": _hostname}
+          "host":    {"name": _hostname},
+          "axnic":   {"infra": {"kind": "node"}}
         },
         "attributes": _attrs
       }
@@ -147,6 +148,7 @@ tests:
               assert_eq!(.body, "Started NetworkManager.service", "body")
               assert_eq!(.resources.host.name, "pve-01", "host.name")
               assert_eq!(.resources.service.name, "systemd", "service.name")
+              assert_eq!(.resources.axnic.infra.kind, "node", "axnic.infra.kind")
               assert_eq!(.attributes.process.pid, "1", "process.pid")
               assert_eq!(.attributes.syslog.message_id, "SERVICE", "syslog.message_id")
               assert_eq!(.attributes.syslog.severity.text, "info", "syslog.severity.text")
