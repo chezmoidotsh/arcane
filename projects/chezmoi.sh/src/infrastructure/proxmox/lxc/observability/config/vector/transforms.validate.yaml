@@ -81,7 +81,7 @@ transforms:
         if _sn_err != null {
           errors = push(errors, "severity_number is not an integer: " + to_string!(.severity_number))
         } else if sn < 0 || sn > 24 {
-          errors = push(errors, "severity_number out of range [0,24]: " + to_string!(sn))
+          errors = push(errors, "severity_number out of range [0,24]: " + to_string(sn))
         }
       }
 
@@ -111,7 +111,7 @@ transforms:
             if _sn4_err == null && sn4 >= 1 && sn4 <= 24 {
               expected_text = get(severity_text_values, [sn4 - 1]) ?? null
               if expected_text != null && upcase(_sev_txt) != to_string!(expected_text) {
-                errors = push(errors, "severity_text \"" + _sev_txt + "\" does not match severity_number " + to_string!(sn4) + " (expected \"" + to_string!(expected_text) + "\")")
+                errors = push(errors, "severity_text \"" + _sev_txt + "\" does not match severity_number " + to_string(sn4) + " (expected \"" + to_string!(expected_text) + "\")")
               }
             }
           }

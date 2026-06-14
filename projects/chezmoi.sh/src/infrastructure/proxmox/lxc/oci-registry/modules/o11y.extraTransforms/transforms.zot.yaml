@@ -141,12 +141,19 @@ transforms:
             if _lat_err == null {
               _v  = to_float!(_lat_m.val)
               _u  = string!(_lat_m.unit)
-              _ms = if _u == "ns" { _v / 1000000.0 }
-                    else if _u == "µs" { _v / 1000.0 }
-                    else if _u == "ms" { _v }
-                    else if _u == "s"  { _v * 1000.0 }
-                    else if _u == "m"  { _v * 60000.0 }
-                    else               { _v * 3600000.0 }
+              _ms = if _u == "ns" {
+                      _v / 1000000.0
+                    } else if _u == "µs" {
+                      _v / 1000.0
+                    } else if _u == "ms" {
+                      _v
+                    } else if _u == "s" {
+                      _v * 1000.0
+                    } else if _u == "m" {
+                      _v * 60000.0
+                    } else {
+                      _v * 3600000.0
+                    }
               .attributes.zot.latency_ms = to_int(_ms)
             }
           }

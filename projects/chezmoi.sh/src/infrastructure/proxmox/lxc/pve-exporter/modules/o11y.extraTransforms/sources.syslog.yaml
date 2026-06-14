@@ -70,44 +70,42 @@ transforms:
       }
 
       # https://opentelemetry.io/docs/specs/semconv/general/logs/#general-log-identification-attributes
-      _attrs = {}
-      _attrs.log.record.uid      = uuid_v4()
-      _attrs.log.record.original = _ts_fmt + " " + _hostname + " " + _appname + "[" + _pid_r + "]: " + _message
-      _attrs.log.source          = "syslog"
+      # Build each namespace separately so VRL's type checker can track field
+      # types through conditional branches (same pattern as sources.journald.yaml).
+
+      # log namespace (always present)
+      _log = {}
+      _log.record = {}
+      _log.record.uid      = uuid_v4()
+      _log.record.original = _ts_fmt + " " + _hostname + " " + _appname + "[" + _pid_r + "]: " + _message
+      _log.source          = "syslog"
 
       # Severity: RFC 5424 keywords → syslog.severity.{text,code} + OTel severity_number.
       # Uses the same granular FATAL sub-levels as the journald source:
       # emerg=FATAL4(24), alert=FATAL3(23), crit=FATAL(21), err=ERROR(17),
       # warning=WARN(13), notice/info=INFO(9), debug=DEBUG(5).
+      _syslog = {}
       _severity_number = null
       if _severity != null {
         _sev = downcase(to_string!(_severity))
-        _attrs.syslog.severity.text = _sev
-        _sev_code = if _sev == "emerg" || _sev == "emergency" { 0 }
-                    else if _sev == "alert" { 1 }
-                    else if _sev == "crit" || _sev == "critical" { 2 }
-                    else if _sev == "err" || _sev == "error" { 3 }
-                    else if _sev == "warning" || _sev == "warn" { 4 }
-                    else if _sev == "notice" { 5 }
-                    else if _sev == "info" { 6 }
-                    else if _sev == "debug" { 7 }
-                    else { null }
+        _sev_code = if _sev == "emerg" || _sev == "emergency" { 0 } else if _sev == "alert" { 1 } else if _sev == "crit" || _sev == "critical" { 2 } else if _sev == "err" || _sev == "error" { 3 } else if _sev == "warning" || _sev == "warn" { 4 } else if _sev == "notice" { 5 } else if _sev == "info" { 6 } else if _sev == "debug" { 7 } else { null }
         if _sev_code != null {
-          _attrs.syslog.severity.code = _sev_code
-          _severity_number = if _sev_code == 0 { 24 }
-                             else if _sev_code == 1 { 23 }
-                             else if _sev_code == 2 { 21 }
-                             else if _sev_code == 3 { 17 }
-                             else if _sev_code == 4 { 13 }
-                             else if _sev_code <= 6 { 9 }
-                             else { 5 }
+          _syslog.severity = { "text": _sev, "code": _sev_code }
+          _severity_number = if _sev_code == 0 { 24 } else if _sev_code == 1 { 23 } else if _sev_code == 2 { 21 } else if _sev_code == 3 { 17 } else if _sev_code == 4 { 13 } else if _sev_code == 5 || _sev_code == 6 { 9 } else { 5 }
+        } else {
+          _syslog.severity = { "text": _sev }
         }
       }
+      if _facility != null { _syslog.facility         = { "name": to_string!(_facility) } }
+      if _msgid    != null { _syslog.message_id        = to_string!(_msgid) }
+      if _sd       != null { _syslog.structured_data   = encode_json(_sd) }
 
-      if _facility != null { _attrs.syslog.facility.name    = to_string!(_facility)  }
-      if _procid != null   { _attrs.process.pid             = to_string!(_procid)    }
-      if _msgid != null    { _attrs.syslog.message_id       = to_string!(_msgid)     }
-      if _sd != null       { _attrs.syslog.structured_data  = encode_json(_sd)       }
+      _process = {}
+      if _procid != null { _process.pid = to_string!(_procid) }
+
+      _attrs = { "log": _log }
+      if !is_empty(_syslog)  { _attrs.syslog  = _syslog  }
+      if !is_empty(_process) { _attrs.process = _process }
 
       . = {
         "body":               _message,

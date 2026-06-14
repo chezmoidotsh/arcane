@@ -64,43 +64,59 @@ transforms:
       _pid_str  = if _pid != null { to_string!(_pid) } else { "-" }
 
       # ── Build attributes object ─────────────────────────────────────────
-      _attrs = {}
-      _attrs.log.record.uid      = uuid_v4()
-      _attrs.log.record.original = _ts_fmt + " " + _host + " " + _svc_name + "[" + _pid_str + "]: " + _message
-      _attrs.log.source          = "journald"
+      # VRL's type checker requires parent paths to be initialized as objects
+      # before sub-field assignment. Build each namespace separately and merge.
+
+      # log namespace (always present)
+      _log = {}
+      _log.record = {}
+      _log.record.uid      = uuid_v4()
+      _log.record.original = _ts_fmt + " " + _host + " " + _svc_name + "[" + _pid_str + "]: " + _message
+      _log.source          = "journald"
 
       # Severity: journald PRIORITY is numeric 0-7 (emerg…debug).
       # Stored verbatim in attributes for querying, and also mapped to the
       # OTLP-style root field severity_number (severity_text derived in to_vlogs_format).
+      _syslog = {}
       _severity_number = null
       if _priority != null {
         p = to_int!(_priority)
-        _attrs.syslog.severity.code = p
         if p >= 0 && p <= 7 {
           _sev = if p == 0 { "emerg" } else if p == 1 { "alert" } else if p == 2 { "crit" } else if p == 3 { "err" } else if p == 4 { "warning" } else if p == 5 { "notice" } else if p == 6 { "info" } else { "debug" }
-          _attrs.syslog.severity.text = _sev
-
+          _syslog.severity = { "code": p, "text": _sev }
           # Map syslog priority to OTel severity_number.
           # Uses the granular FATAL sub-levels: emerg=FATAL4(24), alert=FATAL3(23),
           # crit=FATAL(21). Derived text matches severity_text_values[number - 1].
           # emerg=FATAL4(24), alert=FATAL3(23), crit=FATAL(21), err=ERROR(17), warning=WARN(13), notice/info=INFO(9), debug=DEBUG(5)
           _severity_number = if p == 0 { 24 } else if p == 1 { 23 } else if p == 2 { 21 } else if p == 3 { 17 } else if p == 4 { 13 } else if p <= 6 { 9 } else { 5 }
+        } else {
+          _syslog.severity = { "code": p }
         }
       }
+      if _facility != null { _syslog.facility   = { "code": to_int!(_facility) } }
+      if _msgid    != null { _syslog.message_id = to_string!(_msgid) }
 
-      if _facility != null { _attrs.syslog.facility.code    = to_int!(_facility)    }
-      if _pid != null      { _attrs.process.pid             = to_int!(_pid)         }
-      if _unit != null     { _attrs.systemd.unit            = to_string!(_unit)     }
-      if _msgid != null    { _attrs.syslog.message_id       = to_string!(_msgid)    }
-      if _comm != null     { _attrs.process.executable.name = _comm                 }
+      _process = {}
+      if _pid  != null { _process.pid        = to_int!(_pid) }
+      if _comm != null { _process.executable = { "name": _comm } }
 
+      _systemd = {}
+      if _unit != null { _systemd.unit = to_string!(_unit) }
+
+      _journald = {}
       if _transport != null {
-        _attrs.journald.transport = to_string!(_transport)
         t = to_string!(_transport)
+        _journald.transport = t
         if t == "stdout" || t == "stderr" {
-          _attrs.log.iostream = t
+          _log.iostream = t
         }
       }
+
+      _attrs = { "log": _log }
+      if !is_empty(_syslog)   { _attrs.syslog   = _syslog   }
+      if !is_empty(_process)  { _attrs.process  = _process  }
+      if !is_empty(_systemd)  { _attrs.systemd  = _systemd  }
+      if !is_empty(_journald) { _attrs.journald = _journald }
 
       # ── Build clean OTLP-style event ────────────────────────────────────
       . = {

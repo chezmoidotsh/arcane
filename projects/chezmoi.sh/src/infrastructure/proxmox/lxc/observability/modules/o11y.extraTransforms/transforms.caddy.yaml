@@ -35,7 +35,7 @@ transforms:
             _proto   = string(get(_req, ["proto"]) ?? null) ?? "HTTP/1.1"
             _status  = if exists(parsed.status) { to_string!(parsed.status) } else { "-" }
             _sz      = if exists(parsed.size) { to_int!(parsed.size) } else { 0 }
-            _size    = if _sz > 0 { to_string!(_sz) } else { "-" }
+            _size    = if _sz > 0 { to_string(_sz) } else { "-" }
             _hdrs    = object(get(_req, ["headers"]) ?? {}) ?? {}
             _ref_arr = get(_hdrs, ["Referer"]) ?? null
             _referer = if is_array(_ref_arr) { string(_ref_arr[0]) ?? "-" } else { "-" }
