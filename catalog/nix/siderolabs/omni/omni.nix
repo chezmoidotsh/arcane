@@ -139,6 +139,12 @@ in
       description = "WireGuard UDP port advertised to Talos machines.";
     };
 
+    metricsBindAddr = mkOption {
+      type = types.str;
+      default = "0.0.0.0:2122";
+      description = "Bind address for the Prometheus metrics endpoint (--metrics-bind-addr).";
+    };
+
     # ── OIDC ─────────────────────────────────────────────────────────────────
     oidcClientId = mkOption {
       type = types.str;
@@ -452,6 +458,7 @@ in
               "--auth-oidc-scopes=email"
               "--eula-accept-name=${cfg.eulaAcceptName}"
               "--eula-accept-email=${cfg.eulaAcceptEmail}"
+              "--metrics-bind-addr=${cfg.metricsBindAddr}"
             ]
             ++ map (u: "--initial-users=${u}") cfg.initialUsers
             ++ cfg.extraArgs;
