@@ -207,6 +207,13 @@ let
     ''
       VECTOR_DATA_DIR="$(mktemp -d "$TMPDIR/vector-data.XXXXXX")" \
       vector validate --no-environment --config-dir "${configLinkFarm}/conf.d"
+
+      for f in "${configLinkFarm}/conf.d/"*.yaml; do
+        grep -q "^tests:" "$f" || continue
+        VECTOR_DATA_DIR="$(mktemp -d "$TMPDIR/vector-data.XXXXXX")" \
+        vector test "$f"
+      done
+
       ln -s ${configLinkFarm} $out
     '';
 
