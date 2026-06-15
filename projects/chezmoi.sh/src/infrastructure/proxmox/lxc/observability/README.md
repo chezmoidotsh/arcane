@@ -51,7 +51,7 @@ flowchart LR
         vt["VictoriaTraces :10428"]
         am["Alertmanager :9093"]
         lxcalert["LXC vmalert :8880<br/>(cluster/Grafana down + watchdog)"]
-        data[("/var/lib/victoria (mp0)")]
+        data[("/persistent (mp0)")]
     end
 
     page(["ntfy / Slack + deadman (TBD)"])
@@ -316,7 +316,7 @@ ssh root@${NODE} pct create ${VMID} local:vztmpl/${TEMPLATE} \
     --memory       4096 \
     --swap         0 \
     --rootfs       local-zfs:4 \
-    --mp0          local-zfs:64,mp=/var/lib/victoria \
+    --mp0          local-zfs:64,mp=/persistent \
     --net0         name=eth0,bridge=vmbr0,ip=dhcp,firewall=1 \
     --onboot       1
 
@@ -335,7 +335,7 @@ EOF"
 > VMID="<vmid>"
 > # Verify mapping: grep ^root /etc/subuid  (expect root:100000:65536)
 > pct mount ${VMID}
-> chown -R 100980:100980 /var/lib/lxc/${VMID}/rootfs/var/lib/victoria
+> chown -R 100980:100980 /var/lib/lxc/${VMID}/rootfs/persistent
 > pct unmount ${VMID}
 > ```
 
@@ -346,13 +346,13 @@ ssh root@${NODE} pct start ${VMID}
 
 ### Resource sizing — starting values
 
-| Workload            | Recommended                                         |
-| ------------------- | --------------------------------------------------- |
-| CPU                 | 2 vCPU                                              |
-| Memory              | 4 GiB (VM `-memory.allowedPercent=60`)              |
-| Root disk (OS only) | 4 GiB (stateless, rebuilt from flake)               |
-| Data volume (`mp0`) | 64 GiB at `/var/lib/victoria` (raise per retention) |
-| Swap                | 0                                                   |
+| Workload            | Recommended                                   |
+| ------------------- | --------------------------------------------- |
+| CPU                 | 2 vCPU                                        |
+| Memory              | 4 GiB (VM `-memory.allowedPercent=60`)        |
+| Root disk (OS only) | 4 GiB (stateless, rebuilt from flake)         |
+| Data volume (`mp0`) | 64 GiB at `/persistent` (raise per retention) |
+| Swap                | 0                                             |
 
 Retention defaults: metrics **6 months**, logs **30 days**.
 
@@ -597,9 +597,8 @@ type errors and transform regressions without a full Nix build.
 ### Backups
 
 * **Image / OS** — stateless: recreate from the flake for an identical config.
-* **Data** (`/var/lib/victoria`) — **stateful, back it up.** Daily Proxmox
-  snapshot of the `mp0` dataset minimum. Losing it loses history (alerting
-  recovers on restart).
+* **Data** (`/persistent`) — **stateful, back it up.** Daily Proxmox snapshot of
+  the `mp0` dataset minimum. Losing it loses history (alerting recovers on restart).
 * **Secrets** — age-encrypted in git.
 
 ### Upgrading
@@ -608,10 +607,10 @@ type errors and transform regressions without a full Nix build.
 
 Each LXC has two Proxmox LVM thin volumes:
 
-| Volume                                  | Size   | Content                                | On upgrade                                                |
-| --------------------------------------- | ------ | -------------------------------------- | --------------------------------------------------------- |
-| `rootfs` (`disk-0`)                     | 8 GiB  | NixOS system files                     | **replaced** — new template written to a fresh LVM volume |
-| `mp0` (`disk-1`) at `/var/lib/victoria` | 64 GiB | TSDB, logs, traces, Alertmanager state | **reattached** — same LVM volume, zero data copy          |
+| Volume                            | Size   | Content                                | On upgrade                                                |
+| --------------------------------- | ------ | -------------------------------------- | --------------------------------------------------------- |
+| `rootfs` (`disk-0`)               | 8 GiB  | NixOS system files                     | **replaced** — new template written to a fresh LVM volume |
+| `mp0` (`disk-1`) at `/persistent` | 64 GiB | TSDB, logs, traces, Alertmanager state | **reattached** — same LVM volume, zero data copy          |
 
 The upgrade script creates a new rootfs from the template and rewrites the
 container config so the new CT inherits the existing `mp0` volume. No `pvesm
@@ -636,7 +635,7 @@ mise run lxc:upgrade -- pve.lan <source_id> <target_id>
 | ------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------ |
 | Caddy `unauthorized` from Cloudflare        | Token expired/rotated                            | `lxc:secrets:sync` + rebuild + redeploy                                  |
 | remote\_write / query refused (timeout)     | Source IP not in the PVE firewall allowlist      | Add the source CIDR to `/etc/pve/firewall/<vmid>.fw`                     |
-| Component `Permission denied` on start      | `mp0` not chowned to `100980` before start       | `pct mount` → `chown -R 100980:100980 …/var/lib/victoria` → unmount      |
+| Component `Permission denied` on start      | `mp0` not chowned to `100980` before start       | `pct mount` → `chown -R 100980:100980 …/persistent` → unmount            |
 | Existential alerts never fire               | `ALERTMANAGER_NOTIFY_URL` empty at build         | Set it in `observability.sops.env`, rebuild                              |
 | External heartbeat keeps paging             | Watchdog not reaching `ALERTMANAGER_DEADMAN_URL` | Check egress (`policy_out: ACCEPT`) and the URL                          |
 | Tailnet clients can't reach appliance       | tsnet auth failed or TS\_AUTHKEY missing         | Check Caddy logs (`journalctl -u caddy`); verify `TS_AUTHKEY` in secrets |
@@ -660,10 +659,9 @@ mise run lxc:upgrade -- pve.lan <source_id> <target_id>
    `observability-tailscale-oauth-client`, `tag:o11y`) live in
    `projects/chezmoi.sh/src/infrastructure/crossplane/`. After they reconcile,
    `lxc:secrets:sync` fetches both tokens into `caddy.sops.env` automatically.
-   Run `scripts/dist:render` to regenerate the rendered manifests. *(Note:
-   caddy-tailscale's tsnet state is stored at `/var/lib/caddy` on the stateless
-   root disk, so a rebuild wipes it — use a non-ephemeral OAuth key so the node
-   re-registers on the next start without manual intervention.)*
+   Run `scripts/dist:render` to regenerate the rendered manifests. tsnet state is
+   stored at `/persistent/caddy/tsnet` (the mp0 data volume) and survives image
+   rebuilds — the OAuth key does not need to be non-ephemeral.
 
 2c. **Cert validity over the tailnet — resolved.** caddy-tailscale serves the
 tailnet listener at `observability.<tailnet>.ts.net` with TLS issued automatically
