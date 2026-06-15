@@ -6,9 +6,9 @@
 
 set -euo pipefail
 
-CONFIG_ROOT="$PWD"
+CONFIG_ROOT="$(pwd)"
+# shellcheck source=../.mise/lib/lxc.sh
+source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
-source "$(pwd)/../.mise/lib/lxc.sh"
-
-lxc_init "observability" "$(pwd)" _o11y
+lxc_init "observability" "${CONFIG_ROOT}" _o11y
 lxc_push "${usage_pve_host}"

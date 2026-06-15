@@ -4,9 +4,11 @@
 
 set -euo pipefail
 
-source "$(pwd)/../.mise/lib/lxc.sh"
+CONFIG_ROOT="$(pwd)"
+# shellcheck source=../.mise/lib/lxc.sh
+source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
-lxc_init "observability" "$(pwd)" _o11y
+lxc_init "observability" "${CONFIG_ROOT}" _o11y
 lxc_secret "secrets/caddy.sops.env" CLOUDFLARE_API_TOKEN TAILSCALE_OAUTH_KEY
 lxc_secret "secrets/observability.sops.env" SLACK_WEBHOOK_URL ALERTMANAGER_DEADMAN_URL
 lxc_build

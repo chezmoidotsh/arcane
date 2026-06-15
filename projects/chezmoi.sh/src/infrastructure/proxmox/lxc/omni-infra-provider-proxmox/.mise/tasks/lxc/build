@@ -4,9 +4,11 @@
 
 set -euo pipefail
 
-source "$(pwd)/../.mise/lib/lxc.sh"
+CONFIG_ROOT="$(pwd)"
+# shellcheck source=../.mise/lib/lxc.sh
+source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
-lxc_init "omni-infra-provider-proxmox" "$(pwd)" _omni_proxmox_provider
+lxc_init "omni-infra-provider-proxmox" "${CONFIG_ROOT}" _omni_proxmox_provider
 lxc_secret "secrets/proxmox.sops.env" PROXMOX_PASSWORD
 lxc_secret_optional "secrets/omni.sops.env" OMNI_SERVICE_ACCOUNT_KEY
 lxc_build

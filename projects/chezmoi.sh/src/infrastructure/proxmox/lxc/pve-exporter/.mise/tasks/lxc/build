@@ -4,8 +4,10 @@
 
 set -euo pipefail
 
-source "$(pwd)/../.mise/lib/lxc.sh"
+CONFIG_ROOT="$(pwd)"
+# shellcheck source=../.mise/lib/lxc.sh
+source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
-lxc_init "pve-exporter" "$(pwd)" _pve_exporter
+lxc_init "pve-exporter" "${CONFIG_ROOT}" _pve_exporter
 lxc_secret "secrets/pve-exporter.sops.env" PVE_HOST PVE_TOKEN_VALUE
 lxc_build

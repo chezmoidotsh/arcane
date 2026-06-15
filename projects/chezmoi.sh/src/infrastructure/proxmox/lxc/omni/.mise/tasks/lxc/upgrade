@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-# trunk-ignore-all(shellcheck/SC2029): SSH commands intentionally expand local
-# variables on the client; the values are local to this script, not on the
-# remote PVE host.
-#
 # [MISE] description="Upgrade the Omni LXC to a new image version via rootfs swap"
 # [MISE] dir="{{config_root}}"
 # [USAGE] arg "<pve_host>" help="Hostname or IP of the Proxmox node (e.g. pve.lan)"
@@ -13,9 +9,11 @@
 
 set -euo pipefail
 
-source "$(pwd)/../.mise/lib/lxc.sh"
+CONFIG_ROOT="$(pwd)"
+# shellcheck source=../.mise/lib/lxc.sh
+source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
-lxc_init "omni" "$(pwd)" _omni
+lxc_init "omni" "${CONFIG_ROOT}" _omni
 lxc_services "caddy" "dex" "omni" "omni-pki-init" "omni-gpg-init"
 lxc_mp "mp0" "omni" 100980
 lxc_mp "mp0" "caddy" 100997

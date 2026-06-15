@@ -4,8 +4,10 @@
 
 set -euo pipefail
 
-source "$(pwd)/../.mise/lib/lxc.sh"
+CONFIG_ROOT="$(pwd)"
+# shellcheck source=../.mise/lib/lxc.sh
+source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
-lxc_init "oci-registry" "$(pwd)" _oci_registry
+lxc_init "oci-registry" "${CONFIG_ROOT}" _oci_registry
 lxc_secret "secrets/caddy.sops.env" CLOUDFLARE_API_TOKEN
 lxc_build
