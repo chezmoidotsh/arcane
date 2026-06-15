@@ -307,10 +307,11 @@ a workload Kubernetes did not serve well.
 * ⚙️ **Alertmanager must be exposed** — `/alerts` is reachable through Caddy
   (CIDR-restricted, no auth) so cluster vmalerts can notify it; one more surface to
   keep behind the firewall.
-* ⚙️ **Tailscale needs `/dev/net/tun` in the LXC** — the unprivileged container is
-  granted the TUN device (a benign, standard relaxation — not full privilege) so
-  tailscaled runs in kernel mode. tailscaled state on the stateless root disk means
-  a rebuild re-registers the node.
+* ⚙️ **Tailscale via caddy-tailscale (tsnet, no kernel TUN)** — Tailscale is
+  embedded in the Caddy process using userspace networking; no `/dev/net/tun`
+  passthrough and no `tailscaled` daemon required. tsnet state persists on the mp0
+  data volume (`/persistent/caddy`), so image rebuilds do not re-register the
+  tailnet node.
 * ⚠️ **Tooling split** — observability backend lives outside the Kubernetes/ArgoCD
   workflow (consistent with the `oci.chezmoi.sh` and `kazimierz` precedents).
 
@@ -332,32 +333,37 @@ a workload Kubernetes did not serve well.
 flowchart LR
   subgraph sources["Sources (push)"]
     LA["lungmen / amiya<br/>VMAgent (+streamAggr) + Vector<br/>VMAlert (VMRule: records + page alerts)"]
-    KZ["kazimierz (VPS)<br/>vmagent + Vector (Docker)<br/>via Tailscale"]
+    KZ["kazimierz (VPS)<br/>vmagent + Vector (Docker)<br/>via Tailscale (caddy-tailscale tsnet)"]
     OTEL["Proxmox host<br/>OTEL metric server"]
+    PVEXP["pve-exporter LXC<br/>Vector (syslog → SemConv)"]
   end
 
   subgraph lxc["NixOS LXC — o11y.chezmoi.sh (Proxmox)"]
-    CADDY["Caddy :443<br/>TLS (ACME) + path routing"]
+    CADDY["Caddy :443<br/>TLS (ACME) + path routing<br/>(+ tailnet via tsnet)"]
+    VECTOR["Vector :4317/:4318/:6000<br/>OTLP + Vector native → VLogs"]
     VM["VictoriaMetrics :8428<br/>(+ OTLP)"]
     VL["VictoriaLogs :9428"]
     VT["VictoriaTraces :10428<br/>(OTLP/Jaeger)"]
     VMALERT["vmalert :8880<br/>cluster/Grafana down + watchdog"]
     AM["Alertmanager :9093<br/>/alerts"]
+    CADDY -->|"/logs/otlp/*"| VECTOR
     CADDY -->|"/logs/*"| VL
     CADDY -->|"/traces/*"| VT
     CADDY -->|"/alerts/*"| AM
     CADDY -->|"/metrics/* (+OTLP)"| VM
+    VECTOR --> VL
     VMALERT --> VM
     VMALERT --> AM
   end
 
   GRAF["Grafana on amiya<br/>(OIDC Pocket-Id)<br/>dashboards + non-paging alerts"]
-  EXT["page channel (ntfy / Slack)<br/>+ deadman monitor — service TBD"]
+  EXT["page channel (Slack #notifications)<br/>+ deadman monitor — service TBD"]
 
-  LA -->|"remote_write + logs"| CADDY
+  LA -->|"remote_write + logs (Vector :6000)"| CADDY
   LA -->|"query + records + page alerts"| CADDY
-  KZ -->|"over Tailscale"| CADDY
+  KZ -->|"over tailnet"| CADDY
   OTEL -->|"OTLP metrics"| CADDY
+  PVEXP -->|"logs (Vector :6000)"| CADDY
   GRAF -->|"query"| CADDY
   AM -->|"page alerts + 1 min heartbeat"| EXT
   GRAF -->|"deadman heartbeat"| EXT
@@ -383,6 +389,9 @@ they shape the security and reliability posture:
 * **Clean, versioned, signal-typed paths.** Caddy owns ACME DNS-01 and routes a
   `/<signal>/*` scheme: `/metrics/*` → VictoriaMetrics, `/logs/*` →
   VictoriaLogs, `/traces/*` → VictoriaTraces, `/alerts/*` → Alertmanager.
+  Within `/logs/*`, the more-specific `/logs/otlp/*` sub-route is intercepted by
+  the appliance-side Vector (OTLP HTTP ingest on `:4318`) before the generic
+  `/logs/*` path reaches VictoriaLogs.
   VM/VLogs/VTraces prefixes are stripped (they serve at root); Alertmanager keeps
   its prefix via `--web.route-prefix`. Same Caddy module as the `oci.chezmoi.sh` LXC.
 * **Three signals from day one (metrics, logs, traces).** VictoriaTraces is
@@ -413,23 +422,31 @@ they shape the security and reliability posture:
   *Residual trade-off: a cluster's vmalert queries the central VM, so a cluster↔LXC
   partition pauses that cluster's rule evaluation — but the LXC's "cluster absent"
   rule still pages.*
-* **Tailscale membership (OAuth, `tag:o11y`).** The LXC joins the tailnet so
-  off-LAN sources — notably the `kazimierz.akn` VPS — push metrics/logs and notify
-  Alertmanager over the encrypted tailnet rather than a public endpoint. tailscaled
-  runs in kernel TUN mode (the unprivileged LXC is granted `/dev/net/tun`), giving
-  the appliance a tailnet IP; `tailscale0` is a trusted firewall interface so
-  tailnet clients reach Caddy while the loopback backends stay unreachable. The
-  OAuth client secret is a baked secret, mirroring the Cloudflare-token pattern.
+* **Tailscale membership via caddy-tailscale (OAuth, `tag:o11y`).** The LXC joins
+  the tailnet so off-LAN sources — notably the `kazimierz.akn` VPS — push
+  metrics/logs and notify Alertmanager over the encrypted tailnet rather than a
+  public endpoint. Tailscale is embedded directly in Caddy using
+  **caddy-tailscale** (tsnet, userspace networking): no separate `tailscaled`
+  daemon and no kernel `/dev/net/tun` passthrough required. The tsnet listener runs
+  inside the Caddy process; the loopback backends remain unreachable over the
+  tailnet. tsnet state is stored at `/persistent/caddy` (the mp0 data volume) and
+  survives image rebuilds — the node does not re-register on a rebuild. The OAuth
+  client secret is a baked secret, mirroring the Cloudflare-token pattern.
 * **Alertmanager is centralized and exposed under `/alerts` (no auth).** The
   LXC's existential vmalert and every cluster's vmalert notify the same
   Alertmanager (routed via Caddy, CIDR-restricted). Notification routing is thus
   cluster-independent — more resilient than evaluating alerts inside `amiya`.
   Grafana auth remains Pocket-Id OIDC (ADR-005) with a local admin fallback.
-* **Vector for logs, vmagent for metrics.** Vector is the log transfer/conversion
-  pipeline (edge DaemonSet → VictoriaLogs), satisfying the stated objective.
-  Metrics deliberately stay on vmagent (not routed through Vector) to preserve
-  native `ServiceMonitor` discovery; Vector can be inserted for metrics later with
-  nothing lost.
+* **Vector for logs, vmagent for metrics.** Vector operates at two levels: (1) an
+  **edge agent** (DaemonSet on Kubernetes clusters, Docker on kazimierz) forwards
+  logs to the appliance via the Vector native protocol (`:6000`); (2) an
+  **appliance-side Vector** receives structured events (OTLP HTTP/gRPC and Vector
+  native from cluster agents and the `pve-exporter` LXC), runs SemConv validation,
+  converts to a loki-like format, and pushes to VictoriaLogs. The appliance does not
+  run a syslog listener — that role belongs to the dedicated `pve-exporter` LXC,
+  which parses RFC 5424 into SemConv fields and forwards events here over Vector
+  native. Metrics deliberately stay on vmagent (not routed through Vector) to
+  preserve native `ServiceMonitor` discovery.
 * **Two Dead-Man's-Switches (external service TBD).** The LXC Alertmanager
   heartbeats an external monitor every minute — appliance death stops it. A Grafana
   always-on rule heartbeats the same monitor — `amiya`/Grafana death stops it.
@@ -452,20 +469,20 @@ A terse normative checklist (the *why* is in Supporting design decisions above):
 
 * **Completed (scaffolded, not yet deployed):** NixOS flake, service modules
   (VictoriaMetrics + OTLP, VictoriaLogs, VictoriaTraces, existential vmalert,
-  Alertmanager exposed under `/alerts`, Caddy with `/<signal>` path routing,
-  Tailscale, hardening), existential alert rules (watchdog, self,
-  cluster-availability incl. Grafana-down), mise build/push/upgrade tasks, and the
-  Crossplane Cloudflare APIToken + Tailscale OAuth client
+  Alertmanager exposed under `/alerts`, Caddy with `/<signal>` path routing +
+  caddy-tailscale tsnet, appliance-side Vector pipeline, hardening), existential
+  alert rules (watchdog, self, cluster-availability incl. Grafana-down, disk via
+  pve-exporter, PVE host/guest, OCI registry), mise build/push/upgrade tasks, and
+  the Crossplane Cloudflare APIToken + Tailscale OAuth client
   (`cloudflare.iam.observability.yaml`, `tailscale.oauth.observability.yaml`).
 * **Pending:** verify nixpkgs package/attribute names (incl. `victoriatraces` + its
   port) on the pinned channel; `dist:render` the new Crossplane resources and let
-  them reconcile; deploy the LXC (with `/dev/net/tun` passthrough); set the Proxmox
-  firewall source-CIDR allowlist and the tailnet split-DNS override; deploy
-  cluster-side `VMAgent` (+ optional streamAggr), `VMAlert` + `VMRule`, Vector, and
-  trace export (and the `kazimierz` Docker equivalents); configure the Proxmox OTEL
-  push; wire Grafana datasources (metrics/logs/traces) + dashboards + non-paging
-  alert routing + the Grafana-side deadman on `amiya`; render `architecture.svg`.
-  Tracked under the phases of [#1018][].
+  them reconcile; deploy the LXC; set the Proxmox firewall source-CIDR allowlist;
+  deploy cluster-side `VMAgent` (+ optional streamAggr), `VMAlert` + `VMRule`,
+  Vector, and trace export (and the `kazimierz` Docker equivalents); configure the
+  Proxmox OTEL push; wire Grafana datasources (metrics/logs/traces) + dashboards +
+  non-paging alert routing + the Grafana-side deadman on `amiya`; render
+  `architecture.svg`. Tracked under the phases of [#1018][].
 
 ## References and Related Decisions
 
@@ -494,6 +511,13 @@ A terse normative checklist (the *why* is in Supporting design decisions above):
 
 ## Changelog
 
+* **2026-06-15**: Align with scaffold implementation: Tailscale via **caddy-tailscale
+  tsnet** (no `/dev/net/tun`, no `tailscaled`, state persisted at
+  `/persistent/caddy`); appliance-side Vector pipeline (OTLP + Vector native ingest,
+  SemConv validation); syslog listener moved to `pve-exporter` LXC; `/logs/otlp/*`
+  sub-route intercepted by Vector before `/logs/*` reaches VictoriaLogs; page
+  channel settled as Slack (ntfy dropped); `pve-exporter` source added to
+  architecture diagram; mermaid updated to show appliance-side Vector.
 * **2026-06-04**: **ACCEPTED**: VictoriaMetrics stack (metrics + logs + traces) on
   a centralized NixOS LXC; single-node + `cluster` label; no ingest auth (Proxmox
   firewall by source CIDR + tailnet); `/<signal>` Caddy routing; Proxmox
