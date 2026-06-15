@@ -1,17 +1,6 @@
 name: 🏛️ Full Compliance
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/push,pull_request.compliance-full.yaml"
-      - "catalog/opa/policies/**"
-
-  pull_request:
-    paths:
-      - ".github/workflows/push,pull_request.compliance-full.yaml"
-      - "catalog/opa/policies/**"
-
   merge_group: {}
 
 concurrency:
@@ -21,8 +10,32 @@ concurrency:
 permissions: {}
 
 jobs:
+  detect-changes:
+    name: Detect watched path changes
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    outputs:
+      any_changed: ${{ steps.diff.outputs.any_changed }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Detect watched path changes
+        id: diff
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            .github/workflows/merge_group.compliance-full.yaml
+            catalog/opa/policies/**
+            projects/*/dist/**
+
   collect-directories:
     name: Collect all dist/ directories
+    needs: detect-changes
+    if: needs.detect-changes.outputs.any_changed == 'true'
     permissions:
       contents: read
     runs-on: ubuntu-latest
