@@ -57,6 +57,20 @@ Before pushing anything:
      a DCO legal attestation that only the human committer can make. Surface the warning to the user and
      let them decide. Do not add `-s` to any commit command yourself.
 
+5. Run trunk check on the changed files and fix all issues before pushing:
+
+   ```sh
+   trunk check --filter=-conftest
+   ```
+
+   * **`ISSUES` reported** — fix every lint/format error before creating the PR. Do not suppress
+     trunk warnings with `trunk-ignore` unless the warning is a known false positive; explain why
+     in a comment when you do.
+   * **`No issues`** — proceed to push.
+
+   Run trunk check locally rather than relying on the CI to catch it: a failed CI run after
+   the PR is open costs a round-trip and blocks review.
+
 ## Branch naming
 
 | Type          | Pattern                 | Example                     |
@@ -70,12 +84,29 @@ Before pushing anything:
 
 ## Workflow
 
+### Opening a new PR
+
 1. Create a branch following the naming conventions above.
-2. Push: `git push -u origin <branch-name>`
-3. Run the commit validator (step 4 above) and fix any `FAIL` items; surface `WARN` items to the user.
-4. Draft the PR body following the selected template — see `.github/PULL_REQUEST_TEMPLATE/<type>.md` and `references/pr-examples.md`.
-5. Create the PR with a **sentence-form** title that says what changes (no symbol prefix, no bracketed scope — the commit symbol format is for git log, not for PR titles).
-6. Apply labels: one `type::*` + the scope label (`project:*`, `catalog:*`, `gh`, `deps`). The PR auto-labeler will add `pr::*` based on changed files / branch name.
+2. Run the commit validator (step 4 above) and fix any `FAIL` items; surface `WARN` items to the user.
+3. Run `trunk check --filter=-conftest` (step 5 above) and fix all issues.
+4. Push: `git push -u origin <branch-name>`
+5. Draft the PR body following the selected template — see `.github/PULL_REQUEST_TEMPLATE/<type>.md` and `references/pr-examples.md`.
+6. Create the PR with a **sentence-form** title that says what changes (no symbol prefix, no bracketed scope — the commit symbol format is for git log, not for PR titles).
+7. Apply labels: one `type::*` + the scope label (`project:*`, `catalog:*`, `gh`, `deps`). The PR auto-labeler will add `pr::*` based on changed files / branch name.
+
+### Pushing follow-up commits to an existing PR
+
+When adding a commit to a branch that already has an open PR:
+
+1. Run the commit validator and trunk check as above.
+2. Push the commit.
+3. **Ask the user** whether the PR body needs updating to reflect the new changes:
+
+   > A follow-up commit was just pushed to PR #N. Do you want me to review the PR body and update it to reflect the new changes?
+
+   If the user says yes, fetch the current body with `gh pr view --json body`, diff it against the new
+   commits, and propose targeted edits to the Summary, Changes Made, and Testing Validation sections.
+   Never silently rewrite the PR body — always show the diff to the user before applying.
 
 ## PR title format
 
@@ -327,6 +358,7 @@ gh pr create \
 
 * [ ] Branch name follows convention
 * [ ] Commit validator shows no `FAIL` lines; `WARN` lines surfaced to user
+* [ ] `trunk check --filter=-conftest` reports `No issues` locally
 * [ ] PR title is a sentence — verb-first, no symbol prefix, no bracketed scope
 * [ ] PR labels include one `type::*` + the scope label
 * [ ] PR body matches the selected template skeleton: Summary, Changes Made (with subsystem headings),
