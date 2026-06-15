@@ -110,7 +110,7 @@ in
           }
         }
 
-        # All other /logs/* (queries, ES ingest via Vector, health) → VictoriaLogs :9428
+        # All other /logs/* (queries, ES-compatible ingest, health) → VictoriaLogs :9428
         handle_path /logs/* {
           reverse_proxy localhost:9428 {
             flush_interval -1
