@@ -9,8 +9,8 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: crossplane
     app.kubernetes.io/part-of: crossplane
-    app.kubernetes.io/version: 1.20.0-rc.0.140.g629ca2e2f
-    helm.sh/chart: crossplane-1.20.0-rc.0.140.g629ca2e2f
+    app.kubernetes.io/version: 2.3.2
+    helm.sh/chart: crossplane-2.3.2
     release: crossplane
   name: crossplane-rbac-manager
   namespace: crossplane
@@ -33,8 +33,8 @@ spec:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: crossplane
         app.kubernetes.io/part-of: crossplane
-        app.kubernetes.io/version: 1.20.0-rc.0.140.g629ca2e2f
-        helm.sh/chart: crossplane-1.20.0-rc.0.140.g629ca2e2f
+        app.kubernetes.io/version: 2.3.2
+        helm.sh/chart: crossplane-2.3.2
         release: crossplane
     spec:
       containers:
@@ -57,7 +57,7 @@ spec:
               resource: limits.memory
         - name: LEADER_ELECTION
           value: "true"
-        image: oci.chezmoi.sh/xpkg.crossplane.io/crossplane/crossplane:v1.20.0-rc.0.140.g629ca2e2f
+        image: oci.chezmoi.sh/xpkg.crossplane.io/crossplane/crossplane:v2.3.2
         imagePullPolicy: IfNotPresent
         name: crossplane
         resources:
@@ -93,7 +93,7 @@ spec:
               containerName: crossplane-init
               divisor: "1"
               resource: limits.memory
-        image: oci.chezmoi.sh/xpkg.crossplane.io/crossplane/crossplane:v1.20.0-rc.0.140.g629ca2e2f
+        image: oci.chezmoi.sh/xpkg.crossplane.io/crossplane/crossplane:v2.3.2
         imagePullPolicy: IfNotPresent
         name: crossplane-init
         resources:
