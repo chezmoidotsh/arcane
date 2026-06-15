@@ -5,7 +5,7 @@
 set -euo pipefail
 
 CONFIG_ROOT="$(pwd)"
-# shellcheck source=../.mise/lib/lxc.sh
+# shellcheck source=/dev/null
 source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
 lxc_init "oci-registry" "${CONFIG_ROOT}" _oci_registry

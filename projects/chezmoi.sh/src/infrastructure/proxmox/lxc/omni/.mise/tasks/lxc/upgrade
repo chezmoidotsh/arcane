@@ -10,7 +10,7 @@
 set -euo pipefail
 
 CONFIG_ROOT="$(pwd)"
-# shellcheck source=../.mise/lib/lxc.sh
+# shellcheck source=/dev/null
 source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
 lxc_init "omni" "${CONFIG_ROOT}" _omni
