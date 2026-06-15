@@ -1,38 +1,11 @@
 #!/usr/bin/env bash
 # [MISE] description="Build the pve-exporter LXC template with secrets baked in"
+# [MISE] dir="{{config_root}}"
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+source "$(pwd)/../.mise/lib/lxc.sh"
 
-pve_secrets="${CONFIG_ROOT}/secrets/pve-exporter.sops.env"
-
-[[ -f ${pve_secrets} ]] ||
-  {
-    echo "[ERROR] secrets/pve-exporter.sops.env not found — run 'mise run lxc:secrets:sync' first" >&2
-    exit 1
-  }
-
-ver=$(grep -m1 'version = "' "${CONFIG_ROOT}/flake.nix" |
-  sed 's/.*version = "\(.*\)".*/\1/')
-echo "[INFO] Building pve-exporter.${ver}-amd64..." >&2
-
-export PVE_HOST PVE_TOKEN_VALUE
-PVE_HOST=$(sops -d --extract '["PVE_HOST"]' "${pve_secrets}")
-PVE_TOKEN_VALUE=$(sops -d --extract '["PVE_TOKEN_VALUE"]' "${pve_secrets}")
-
-[[ -n ${PVE_HOST} ]] ||
-  {
-    echo "[ERROR] PVE_HOST is empty — set it in secrets/pve-exporter.sops.env" >&2
-    exit 1
-  }
-[[ -n ${PVE_TOKEN_VALUE} ]] ||
-  {
-    echo "[ERROR] PVE_TOKEN_VALUE is empty — set it in secrets/pve-exporter.sops.env" >&2
-    exit 1
-  }
-
-nix:build:lxc --impure --output-name "pve-exporter.${ver}-amd64" "${CONFIG_ROOT}"
-
-unset PVE_HOST PVE_TOKEN_VALUE
+lxc_init "pve-exporter" "$(pwd)" _pve_exporter
+lxc_secret "secrets/pve-exporter.sops.env" PVE_HOST PVE_TOKEN_VALUE
+lxc_build

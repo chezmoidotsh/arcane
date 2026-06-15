@@ -1,43 +1,12 @@
 #!/usr/bin/env bash
 # [MISE] description="Build the omni-infra-provider-proxmox LXC template with secrets baked in"
+# [MISE] dir="{{config_root}}"
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+source "$(pwd)/../.mise/lib/lxc.sh"
 
-proxmox_secrets="${CONFIG_ROOT}/secrets/proxmox.sops.env"
-omni_secrets="${CONFIG_ROOT}/secrets/omni.sops.env"
-
-[[ -f ${proxmox_secrets} ]] ||
-  {
-    echo "[ERROR] secrets/proxmox.sops.env not found — run 'mise run lxc:secrets:proxmox' first" >&2
-    exit 1
-  }
-
-# omni.sops.env is optional at phase 1 (before Omni registration)
-if [[ ! -f ${omni_secrets} ]]; then
-  echo "[WARN] secrets/omni.sops.env not found — building phase-1 image (no Omni key)." >&2
-  echo "       Run 'mise run lxc:secrets:omni' after registering the provider in Omni." >&2
-fi
-
-ver=$(grep -m1 'version = "' "${CONFIG_ROOT}/flake.nix" |
-  sed 's/.*version = "\(.*\)".*/\1/')
-[[ -n ${ver} ]] || {
-  echo "[ERROR] Could not detect version from flake.nix." >&2
-  exit 1
-}
-echo "[INFO] Building omni-infra-provider-proxmox.${ver}-amd64..." >&2
-
-export PROXMOX_PASSWORD OMNI_SERVICE_ACCOUNT_KEY
-PROXMOX_PASSWORD=$(sops -d --extract '["PROXMOX_PASSWORD"]' "${proxmox_secrets}")
-
-if [[ -f ${omni_secrets} ]]; then
-  OMNI_SERVICE_ACCOUNT_KEY=$(sops -d --extract '["OMNI_SERVICE_ACCOUNT_KEY"]' "${omni_secrets}")
-else
-  OMNI_SERVICE_ACCOUNT_KEY=""
-fi
-
-nix:build:lxc --impure --output-name "omni-infra-provider-proxmox.${ver}-amd64" "${CONFIG_ROOT}"
-
-unset PROXMOX_PASSWORD OMNI_SERVICE_ACCOUNT_KEY
+lxc_init "omni-infra-provider-proxmox" "$(pwd)" _omni_proxmox_provider
+lxc_secret "secrets/proxmox.sops.env" PROXMOX_PASSWORD
+lxc_secret_optional "secrets/omni.sops.env" OMNI_SERVICE_ACCOUNT_KEY
+lxc_build

@@ -1,24 +1,11 @@
 #!/usr/bin/env bash
-# [MISE] description="Build the LXC template with Cloudflare token baked in"
+# [MISE] description="Build the oci-registry LXC template with Cloudflare token baked in"
+# [MISE] dir="{{config_root}}"
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+source "$(pwd)/../.mise/lib/lxc.sh"
 
-[[ -f "${CONFIG_ROOT}/secrets/caddy.sops.env" ]] ||
-  {
-    echo "[ERROR] secrets/caddy.sops.env not found — run 'mise run lxc:secrets:sync' first" >&2
-    exit 1
-  }
-
-ver=$(grep -m1 'imageVersion = "' "${CONFIG_ROOT}/flake.nix" |
-  sed 's/.*imageVersion = "\(.*\)".*/\1/')
-echo "[INFO] Building oci-registry.${ver}-amd64..." >&2
-
-export CLOUDFLARE_API_TOKEN
-CLOUDFLARE_API_TOKEN=$(sops -d --extract '["CLOUDFLARE_API_TOKEN"]' \
-  "${CONFIG_ROOT}/secrets/caddy.sops.env")
-
-nix:build:lxc --impure --output-name "oci-registry.${ver}-amd64" "${CONFIG_ROOT}"
-unset CLOUDFLARE_API_TOKEN
+lxc_init "oci-registry" "$(pwd)" _oci_registry
+lxc_secret "secrets/caddy.sops.env" CLOUDFLARE_API_TOKEN
+lxc_build
