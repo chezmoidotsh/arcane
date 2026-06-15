@@ -39,56 +39,74 @@ flowchart LR
     subgraph sources["Sources (push — LAN by source CIDR, or tailnet)"]
         vmagent["VMAgent<br/>(cluster metrics)"]
         clvector["Vector agents<br/>(cluster + pve-exporter logs)"]
-        clalert["per-cluster vmalert<br/>(VMRule alerts)"]
-        otlp["OTEL/OTLP<br/>(Proxmox host metrics)"]
+        clalert["per-cluster vmalert<br/>(VMRule) → per-cluster AM"]
+        pvexp["pve-exporter LXC<br/>pve_* metrics + syslog→Vector"]
         kaz["kazimierz<br/>(over tailnet)"]
     end
 
     subgraph lxc["LXC appliance (Proxmox)"]
         caddy["Caddy :443<br/>path route, no auth<br/>(+ tailnet via tsnet)"]
+        vector["Vector<br/>:4317/:4318 OTLP (loopback)<br/>:6000 Vector native (bridge)"]
         vm["VictoriaMetrics :8428 (+OTLP)"]
         vl["VictoriaLogs :9428"]
         vt["VictoriaTraces :10428"]
-        am["Alertmanager :9093"]
-        lxcalert["LXC vmalert :8880<br/>(cluster/Grafana down + watchdog)"]
-        data[("/var/lib/victoria (mp0)")]
+        am["Alertmanager :9093<br/>(existential + DMS)"]
+        lxcalert["LXC vmalert :8880<br/>(cluster-absent + Grafana down + watchdog)"]
+        data[("/persistent (mp0)")]
     end
 
-    page(["ntfy / Slack + deadman (TBD)"])
-    grafana(["amiya Grafana<br/>dashboards + non-paging alerts<br/>+ its own deadman heartbeat"])
+    page(["Slack #notifications<br/>+ healthchecks.io (DMS)"])
+    clam(["per-cluster AM"])
+    grafana(["amiya Grafana<br/>dashboards + non-paging alerts"])
 
     vmagent -->|"/metrics"| caddy
-    clvector -->|"/logs (Vector :6000)"| caddy
-    clalert -->|"/alerts"| caddy
-    otlp -->|"/metrics (OTLP)"| caddy
+    clvector -->|"Vector native :6000"| vector
+    pvexp -->|"/metrics"| caddy
+    pvexp -.->|":6000 syslog→Vector"| vector
     kaz -.tailnet.-> caddy
 
-    caddy --> vm
-    caddy --> vl
-    caddy --> vt
-    caddy --> am
+    caddy -->|"/metrics/*"| vm
+    caddy -->|"/logs/otlp/*"| vector
+    caddy -->|"/logs/*"| vl
+    caddy -->|"/traces/*"| vt
+    caddy -->|"/alerts/*"| am
+    vector -->|"jsonline"| vl
     lxcalert --> am
+    clalert --> clam
+    clam --> page
     am --> page
     vm -.-> data
     vl -.-> data
     vt -.-> data
     am -.-> data
+    vector -.-> data
     grafana -->|query| vm
     grafana -->|query| vl
 ```
 
 The LXC vmalert evaluates only the existential page-tier (cluster absent, Grafana
-down, watchdog/deadman). Per-cluster `vmalert` evaluates that cluster's
+down, watchdog/DMS). Per-cluster `vmalert` evaluates that cluster's
 `VMRule`/`PrometheusRule` (records + page-worthy alerts) against the central VM and
-notifies the central Alertmanager through Caddy; non-paging alerts are routed by
-Grafana. Access control is the **Proxmox host firewall by source CIDR** (LAN) plus
-the **tailnet** (off-LAN).
+notifies the cluster's **own Alertmanager**; non-paging alerts are routed by
+Grafana. The LXC Alertmanager handles only existential alerts and the
+healthchecks.io DMS heartbeat — Grafana is not in the DMS path. Access control is
+the **Proxmox host firewall by source CIDR** (LAN) plus the **tailnet** (off-LAN).
 
-> **Logs ingest** — the appliance ingests only already-structured events (Vector
-> native `:6000` and OTLP, all loopback behind Caddy). It no longer runs a syslog
-> listener: the [`pve-exporter`](../pve-exporter/README.md) LXC owns syslog ingest,
-> parses RFC 5424 into the OTLP-style format, and forwards it here. The appliance's
-> Vector pipeline is now validation + loki-like conversion only.
+> **Logs ingest** — three entry points:
+>
+> * **Vector native `:6000`** (exposed directly on the bridge network, **not**
+>   behind Caddy) — cluster and pve-exporter agents pushing pre-formatted
+>   OTLP-style events. This is the intended primary log path (ADR-013).
+> * **OTLP HTTP via Caddy `/logs/otlp/*`** → Vector `:4318` (loopback). OTLP
+>   gRPC `:4317` is loopback-only.
+> * **ES-compatible via Caddy `/logs/*`** → VictoriaLogs `:9428` (queries and
+>   direct ES insert — bypasses the appliance Vector pipeline).
+>
+> The appliance no longer runs a syslog listener: the
+> [`pve-exporter`](../pve-exporter/README.md) LXC owns syslog ingest, parses RFC
+> 5424 into the OTLP-style format, and forwards it here over Vector native. The
+> appliance's Vector pipeline (Vector native + OTLP sources) runs SemConv
+> validation and loki-like conversion before pushing to VictoriaLogs.
 
 Architecture diagram source: [`architecture.d2`](./architecture.d2).
 
@@ -110,25 +128,27 @@ Architecture diagram source: [`architecture.d2`](./architecture.d2).
   `/<signal>/*` scheme: `/metrics/*` → VictoriaMetrics, `/logs/*` →
   VictoriaLogs, `/traces/*` → VictoriaTraces, `/alerts/*` → Alertmanager.
   VM/VLogs/VTraces prefixes are stripped; Alertmanager keeps its prefix.
-* **Proxmox host metrics via OTEL/OTLP** — the Proxmox OTEL metric server pushes
-  to `…/metrics/opentelemetry/v1/metrics` (VictoriaMetrics' native OTLP endpoint).
-* **Routing rule: if it pages → Alertmanager, otherwise → Grafana.** Alertmanager
-  is reserved for the **page-tier** — the critical alerts that wake you up (loss of
-  a cluster, loss of Grafana, node/disk/PVC down). Everything else (warnings, FYI,
-  per-app SLOs) is evaluated and routed by **Grafana**, whose contact points /
-  notification policies are far simpler to manage than Alertmanager receivers.
-* **Recording rules + page-tier cluster alerts → per-cluster vmalert (VMRule).**
+* **Proxmox host and guest metrics via the `pve-exporter` LXC** —
+  prometheus-pve-exporter scrapes the PVE API for `pve_*` metrics and
+  remote-writes them to the appliance (`cluster=pve`). Proxmox OTEL push is not
+  yet active.
+* **Routing rule: page → AM (two tiers); else → Grafana.** Each cluster has its
+  **own Alertmanager** for cluster-specific page alerts. The **LXC Alertmanager**
+  handles only what requires the central vantage point: cluster absent, Grafana
+  down, watchdog/DMS. Non-paging alerts are routed by Grafana. Grafana is not in
+  the DMS path.
+* **Recording rules + page-tier cluster alerts → per-cluster vmalert + per-cluster AM.**
   Each cluster runs a vmalert (VictoriaMetrics Operator, reading `VMRule` /
   `PrometheusRule`) that evaluates that cluster's **recording rules** (Grafana
   cannot persist these) and any **page-worthy** alerts against the central VM,
-  writes records back, and notifies the central Alertmanager. Rules live in the
+  writes records back, and notifies its **own Alertmanager**. Rules live in the
   cluster's ArgoCD repo — no LXC rebuild. Edge cardinality reduction is `vmagent`
   stream aggregation. The LXC keeps a *minimal* set of **existential,
-  cluster-independent** page rules (cluster absent, node/disk/PVC, self, Watchdog)
-  so paging survives even an amiya outage.
-* **Alertmanager is centralized and exposed under `/alerts`** — both the
-  LXC's existential vmalert and each cluster's vmalert reach it, so paging is
-  cluster-independent. Grafana never gates paging.
+  cluster-independent** page rules so paging survives even an amiya outage.
+* **Two Alertmanager tiers: per-cluster AM + LXC AM** — per-cluster AM handles
+  cluster-specific alerts; LXC AM handles existential alerts and the DMS heartbeat
+  to healthchecks.io. LXC AM exposed under `/alerts` (CIDR-restricted) for
+  loopback access from the LXC vmalert. Grafana never gates paging.
 * **Tailscale membership via caddy-tailscale** — Tailscale is embedded directly
   in Caddy using [caddy-tailscale](https://github.com/tailscale/caddy-tailscale)
   (tsnet, userspace networking). No separate `tailscaled` daemon and no kernel
@@ -137,12 +157,10 @@ Architecture diagram source: [`architecture.d2`](./architecture.d2).
   automatically by Tailscale's ACME. The loopback backends remain unreachable over
   the tailnet — the tsnet listener runs inside the Caddy process, not via a kernel
   interface.
-* **Two Dead-Man's-Switches (external service TBD)** — the LXC Alertmanager
-  heartbeats an external monitor every minute (catches appliance death); a Grafana
-  always-on rule heartbeats it too (catches amiya/Grafana death). If either stops,
-  the external monitor pages. The external service is **not yet chosen** — candidates
-  include healthchecks.io or a Cloudflare-based check; `ALERTMANAGER_DEADMAN_URL` is
-  the placeholder for whatever we land on.
+* **Dead-Man's-Switch: LXC AM → healthchecks.io** — the Watchdog alert always
+  fires; the LXC Alertmanager pings healthchecks.io every minute. Appliance death
+  stops the heartbeat and healthchecks.io pages. Grafana is not involved in the DMS
+  path. URL: `ALERTMANAGER_DEADMAN_URL` in `observability.sops.env`.
 
 ### Ports
 
@@ -154,7 +172,7 @@ Architecture diagram source: [`architecture.d2`](./architecture.d2).
 | Vector (native)     | `:6000`           | **Yes** — Vector-native log ingest from cluster + pve-exporter agents (bridge/tailnet) |
 | VictoriaTraces      | `127.0.0.1:10428` | No (behind Caddy; OTLP/Jaeger ingest)                                                  |
 | vmalert             | `127.0.0.1:8880`  | No (self-scrape only)                                                                  |
-| Alertmanager        | `127.0.0.1:9093`  | Via Caddy `/alerts/*` (cluster vmalert → notify); egress for notifications + heartbeat |
+| Alertmanager        | `127.0.0.1:9093`  | Via Caddy `/alerts/*` (LXC loopback only); egress for Slack + healthchecks.io DMS      |
 
 ## What's in this directory
 
@@ -316,7 +334,7 @@ ssh root@${NODE} pct create ${VMID} local:vztmpl/${TEMPLATE} \
     --memory       4096 \
     --swap         0 \
     --rootfs       local-zfs:4 \
-    --mp0          local-zfs:64,mp=/var/lib/victoria \
+    --mp0          local-zfs:64,mp=/persistent \
     --net0         name=eth0,bridge=vmbr0,ip=dhcp,firewall=1 \
     --onboot       1
 
@@ -335,7 +353,7 @@ EOF"
 > VMID="<vmid>"
 > # Verify mapping: grep ^root /etc/subuid  (expect root:100000:65536)
 > pct mount ${VMID}
-> chown -R 100980:100980 /var/lib/lxc/${VMID}/rootfs/var/lib/victoria
+> chown -R 100980:100980 /var/lib/lxc/${VMID}/rootfs/persistent
 > pct unmount ${VMID}
 > ```
 
@@ -346,15 +364,15 @@ ssh root@${NODE} pct start ${VMID}
 
 ### Resource sizing — starting values
 
-| Workload            | Recommended                                         |
-| ------------------- | --------------------------------------------------- |
-| CPU                 | 2 vCPU                                              |
-| Memory              | 4 GiB (VM `-memory.allowedPercent=60`)              |
-| Root disk (OS only) | 4 GiB (stateless, rebuilt from flake)               |
-| Data volume (`mp0`) | 64 GiB at `/var/lib/victoria` (raise per retention) |
-| Swap                | 0                                                   |
+| Workload            | Recommended                                   |
+| ------------------- | --------------------------------------------- |
+| CPU                 | 2 vCPU                                        |
+| Memory              | 4 GiB (VM `-memory.allowedPercent=60`)        |
+| Root disk (OS only) | 4 GiB (stateless, rebuilt from flake)         |
+| Data volume (`mp0`) | 64 GiB at `/persistent` (raise per retention) |
+| Swap                | 0                                             |
 
-Retention defaults: metrics **6 months**, logs **30 days**.
+Retention defaults: metrics **18 months**, logs **30 days**, traces **2 days**.
 
 ## Proxmox host firewall
 
@@ -447,7 +465,7 @@ spec:
   remoteWrite:  { url: https://o11y.chezmoi.sh/metrics/api/v1/write } # recording-rule results
   remoteRead:   { url: https://o11y.chezmoi.sh/metrics }            # restore alert state
   notifiers:
-    - url: https://o11y.chezmoi.sh/alerts                          # central Alertmanager
+    - url: http://alertmanager.monitoring.svc:9093                 # per-cluster AM
 ---
 apiVersion: operator.victoriametrics.com/v1beta1
 kind: VMRule
@@ -479,6 +497,25 @@ spec:
 
 ### Kubernetes clusters — logs (Vector DaemonSet)
 
+**Recommended — Vector native `:6000`** (goes through the appliance Vector
+pipeline: SemConv validation + loki-like conversion):
+
+```toml
+[sinks.o11y_vector]
+type = "vector"
+inputs = ["kubernetes_logs"]            # add a transform to set cluster=<name>
+address = "o11y.chezmoi.sh:6000"
+mode = "grpc"
+```
+
+Events must arrive in the OTLP-like internal format (body, timestamp,
+resources, attributes …) — see the pipeline contract in
+[`config/vector/README.md`](./config/vector/README.md). Invalid events become
+queryable error records instead of being dropped silently.
+
+**Alternative — ES-compatible via Caddy** (simpler, but **bypasses** the
+appliance Vector pipeline — no SemConv validation):
+
 ```toml
 [sinks.victorialogs]
 type = "elasticsearch"                # VictoriaLogs ES-compatible ingest
@@ -501,11 +538,17 @@ https://o11y.chezmoi.sh/traces/insert/opentelemetry/v1/traces
 Set a `cluster=<name>` resource attribute for correlation. Query from Grafana via
 the Jaeger/VictoriaTraces datasource at `https://o11y.chezmoi.sh/traces`.
 
-### Proxmox host — metrics (OTEL)
+### Proxmox host — metrics (pve-exporter LXC)
 
-Configure the Proxmox OTEL metric server to push OTLP/HTTP to
-`https://o11y.chezmoi.sh/metrics/opentelemetry/v1/metrics` with an external
-label `cluster=proxmox`.
+PVE host and guest metrics (`pve_*`) are collected by the
+[`pve-exporter`](../pve-exporter/README.md) LXC, which scrapes the PVE API via
+prometheus-pve-exporter and remote-writes to the appliance at
+`https://o11y.chezmoi.sh/metrics/api/v1/write` with `cluster=pve`. No
+configuration is needed on the appliance side. See the pve-exporter README for
+the scrape config and the required PVE API token.
+
+> Proxmox OTEL push (`/metrics/opentelemetry/v1/metrics`) is not yet active;
+> VictoriaMetrics already exposes that endpoint if it is enabled later.
 
 ### Proxmox host — logs (rsyslog → pve-exporter)
 
@@ -528,15 +571,14 @@ it over the encrypted tailnet — `externalLabels: { cluster: kazimierz }`. Poin
 them at `https://observability.<tailnet>.ts.net` directly; TLS is valid for that
 MagicDNS name without any split-DNS override.
 
-### Grafana (amiya) — dashboards + the Grafana-side deadman
+### Grafana (amiya) — dashboards
 
 Two datasources (no auth): Prometheus-type → `https://o11y.chezmoi.sh/metrics`,
 VictoriaLogs-type → `https://o11y.chezmoi.sh/logs` *(verify the query path for
 the installed VictoriaLogs version — see Known gaps)*. Grafana is for
 **dashboards** and **non-paging alert routing** — page-tier alerting/recording
-rules live in VMRule per cluster (above). The
-one alerting Grafana keeps: a single **always-firing rule wired to the external
-heartbeat**, so an amiya/Grafana outage is detected independently of the LXC.
+rules live in VMRule per cluster (above). Grafana is not wired to the DMS
+heartbeat; the LXC Alertmanager owns that path entirely.
 
 ## Hardening reference
 
@@ -597,9 +639,8 @@ type errors and transform regressions without a full Nix build.
 ### Backups
 
 * **Image / OS** — stateless: recreate from the flake for an identical config.
-* **Data** (`/var/lib/victoria`) — **stateful, back it up.** Daily Proxmox
-  snapshot of the `mp0` dataset minimum. Losing it loses history (alerting
-  recovers on restart).
+* **Data** (`/persistent`) — **stateful, back it up.** Daily Proxmox snapshot of
+  the `mp0` dataset minimum. Losing it loses history (alerting recovers on restart).
 * **Secrets** — age-encrypted in git.
 
 ### Upgrading
@@ -608,10 +649,10 @@ type errors and transform regressions without a full Nix build.
 
 Each LXC has two Proxmox LVM thin volumes:
 
-| Volume                                  | Size   | Content                                | On upgrade                                                |
-| --------------------------------------- | ------ | -------------------------------------- | --------------------------------------------------------- |
-| `rootfs` (`disk-0`)                     | 8 GiB  | NixOS system files                     | **replaced** — new template written to a fresh LVM volume |
-| `mp0` (`disk-1`) at `/var/lib/victoria` | 64 GiB | TSDB, logs, traces, Alertmanager state | **reattached** — same LVM volume, zero data copy          |
+| Volume                            | Size   | Content                                | On upgrade                                                |
+| --------------------------------- | ------ | -------------------------------------- | --------------------------------------------------------- |
+| `rootfs` (`disk-0`)               | 8 GiB  | NixOS system files                     | **replaced** — new template written to a fresh LVM volume |
+| `mp0` (`disk-1`) at `/persistent` | 64 GiB | TSDB, logs, traces, Alertmanager state | **reattached** — same LVM volume, zero data copy          |
 
 The upgrade script creates a new rootfs from the template and rewrites the
 container config so the new CT inherits the existing `mp0` volume. No `pvesm
@@ -636,7 +677,7 @@ mise run lxc:upgrade -- pve.lan <source_id> <target_id>
 | ------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------ |
 | Caddy `unauthorized` from Cloudflare        | Token expired/rotated                            | `lxc:secrets:sync` + rebuild + redeploy                                  |
 | remote\_write / query refused (timeout)     | Source IP not in the PVE firewall allowlist      | Add the source CIDR to `/etc/pve/firewall/<vmid>.fw`                     |
-| Component `Permission denied` on start      | `mp0` not chowned to `100980` before start       | `pct mount` → `chown -R 100980:100980 …/var/lib/victoria` → unmount      |
+| Component `Permission denied` on start      | `mp0` not chowned to `100980` before start       | `pct mount` → `chown -R 100980:100980 …/persistent` → unmount            |
 | Existential alerts never fire               | `ALERTMANAGER_NOTIFY_URL` empty at build         | Set it in `observability.sops.env`, rebuild                              |
 | External heartbeat keeps paging             | Watchdog not reaching `ALERTMANAGER_DEADMAN_URL` | Check egress (`policy_out: ACCEPT`) and the URL                          |
 | Tailnet clients can't reach appliance       | tsnet auth failed or TS\_AUTHKEY missing         | Check Caddy logs (`journalctl -u caddy`); verify `TS_AUTHKEY` in secrets |
@@ -660,10 +701,9 @@ mise run lxc:upgrade -- pve.lan <source_id> <target_id>
    `observability-tailscale-oauth-client`, `tag:o11y`) live in
    `projects/chezmoi.sh/src/infrastructure/crossplane/`. After they reconcile,
    `lxc:secrets:sync` fetches both tokens into `caddy.sops.env` automatically.
-   Run `scripts/dist:render` to regenerate the rendered manifests. *(Note:
-   caddy-tailscale's tsnet state is stored at `/var/lib/caddy` on the stateless
-   root disk, so a rebuild wipes it — use a non-ephemeral OAuth key so the node
-   re-registers on the next start without manual intervention.)*
+   Run `scripts/dist:render` to regenerate the rendered manifests. tsnet state is
+   stored at `/persistent/caddy/tsnet` (the mp0 data volume) and survives image
+   rebuilds — the OAuth key does not need to be non-ephemeral.
 
 2c. **Cert validity over the tailnet — resolved.** caddy-tailscale serves the
 tailnet listener at `observability.<tailnet>.ts.net` with TLS issued automatically
@@ -675,9 +715,9 @@ for tailnet clients — they connect to the MagicDNS name directly.
 
 4. **Cluster-side resources not included.** VMAgent (+ optional streamAggr),
    VMAlert + VMRule/PrometheusRule, Vector (logs + optional trace export), the
-   Proxmox OTEL push, and Grafana (datasources for metrics/logs/traces + dashboards
-   * the Grafana-side deadman) live in their own projects and are tracked as
-     separate phases of [#1018][].
+   Proxmox OTEL push, and Grafana (datasources for metrics/logs/traces +
+   dashboards + non-paging alert routing) live in their own projects and are
+   tracked as separate phases of [#1018][].
 
 5. **No HA.** Single LXC, single Proxmox node. If the node dies, the LXC deadman
    stops and the external monitor pages; collection halts until the LXC is

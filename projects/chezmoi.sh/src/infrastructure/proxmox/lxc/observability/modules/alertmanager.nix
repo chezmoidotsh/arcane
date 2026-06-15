@@ -1,17 +1,20 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Alertmanager — existential alert routing + the Dead-Man's-Switch
 # ─────────────────────────────────────────────────────────────────────────────
-# The central, cluster-independent notification hub (ADR-013). It receives alerts
-# from BOTH the LXC's existential vmalert AND every cluster's vmalert (which
-# notifies it through Caddy under /alerts), routes on the `cluster` label,
-# and runs the Dead-Man's-Switch. Centralizing notification here keeps paging
-# independent of any single cluster — more resilient than alerting inside amiya.
+# The LXC Alertmanager handles ONLY existential, cluster-independent alerts
+# (ADR-013 two-tier model): cluster-absent, Grafana-down, and the Watchdog/DMS.
+# It receives alerts exclusively from the LXC's own vmalert (loopback).
+#
+# Per-cluster page-tier alerts (node/disk/PVC/crash-loop) are routed by each
+# cluster's OWN Alertmanager, fed by that cluster's vmalert. The LXC AM is NOT
+# in that path — centralizing only the existential layer here keeps paging
+# independent of any single cluster outage.
 #
 # Notification channels
 # ──────────────────────
-#   default  — Slack incoming webhook (#notifications). Fires on any page-tier
-#               alert (severity=page) including cluster-absent, Grafana-down,
-#               node/disk/PVC events sent by per-cluster vmalert.
+#   default  — Slack incoming webhook (#notifications). Fires on existential
+#               page-tier alerts: cluster-absent, Grafana-down, appliance
+#               component down, PVE host/guest down.
 #   deadman  — HTTP webhook pinging an external heartbeat service (e.g.
 #               healthchecks.io). Always fires the Watchdog alert on a 1-minute
 #               cadence. If the heartbeat stops, the external service pages —
@@ -101,10 +104,11 @@ in
         "--config.file=/etc/alertmanager/alertmanager.yml"
         "--storage.path=${dataDir}"
         "--web.listen-address=${listenAddr}"
-        # Served under /alerts/* so per-cluster vmalert instances can notify
-        # it through Caddy (the only exposed surface). The route-prefix applies to
-        # ALL paths: API at /alerts/api/v2, metrics at /alerts/metrics —
-        # kept consistent in vmalert.nix and the VM self-scrape config.
+        # Exposed under /alerts/* via Caddy for operator UI/API access. The LXC
+        # vmalert reaches it over loopback (127.0.0.1:9093/alerts). Per-cluster
+        # vmalerts notify their OWN Alertmanager — NOT this one. The route-prefix
+        # applies to ALL paths: API at /alerts/api/v2, metrics at /alerts/metrics
+        # — kept consistent in vmalert.nix and the VM self-scrape config.
         "--web.route-prefix=/alerts"
         "--web.external-url=https://o11y.chezmoi.sh/alerts"
         "--log.format=json"

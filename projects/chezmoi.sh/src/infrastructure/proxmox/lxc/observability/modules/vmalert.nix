@@ -2,19 +2,22 @@
 # vmalert — EXISTENTIAL rule evaluation only
 # ─────────────────────────────────────────────────────────────────────────────
 # Scope (ADR-013): this evaluates ONLY the small, stable set of existential,
-# cluster-independent rules in ../alerts/ — node/disk/PVC down, appliance
-# self-monitoring, and the Watchdog. These must fire even when amiya is down.
-# Each cluster's own alerting AND recording rules live as VMRule/PrometheusRule
-# CRDs evaluated by that cluster's vmalert (VM Operator), notifying this same
-# central Alertmanager — managed as-code per cluster, with no LXC rebuild.
+# cluster-independent rules in ../alerts/ — cluster-absent, Grafana-down,
+# appliance self-monitoring, PVE host/guest/disk, OCI registry, and the Watchdog.
+# These must fire even when amiya (or any observed cluster) is down.
+#
+# Per-cluster alerting AND recording rules (node/disk/PVC/crash-loop, recording
+# rules) live as VMRule/PrometheusRule CRDs evaluated by that cluster's OWN
+# vmalert (VM Operator), notifying the cluster's OWN Alertmanager — NOT this
+# central one. Managed as-code per cluster, with no LXC rebuild.
 #
 # Because this existential rule set is rare-changing, it is baked into the image
 # (code-reviewed, GPG-signed) rather than hot-loaded — the "rebuild to add a rule"
 # cost that pushed per-cluster rules out to VMRule does not apply here.
 #
-# vmalert cannot notify on its own; it pushes firing alerts to the local
-# Alertmanager. Alert state is written back to VictoriaMetrics so it survives a
-# restart and is queryable from Grafana.
+# vmalert pushes firing alerts to the LOCAL Alertmanager (loopback). Alert state
+# is written back to VictoriaMetrics so it survives a restart and is queryable
+# from Grafana.
 #
 # Binds 127.0.0.1:8880 (loopback) — exposed for self-scrape only.
 # ─────────────────────────────────────────────────────────────────────────────
