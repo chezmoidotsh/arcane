@@ -1,26 +1,14 @@
 #!/usr/bin/env bash
-# [MISE] description="Upload the LXC template to Proxmox"
+# [MISE] description="Upload the oci-registry LXC template to Proxmox"
 # [MISE] depends=["lxc:build"]
+# [MISE] dir="{{config_root}}"
 # [USAGE] arg "<pve_host>" help="Hostname or IP of the Proxmox node (e.g. pve.lan)"
 
 set -euo pipefail
 
-pve_host="${usage_pve_host}"
+CONFIG_ROOT="$(pwd)"
+# shellcheck source=/dev/null
+source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
-
-ver=$(grep -m1 'imageVersion = "' "${CONFIG_ROOT}/flake.nix" |
-  sed 's/.*imageVersion = "\(.*\)".*/\1/')
-template="oci-registry.${ver}-amd64.tar.xz"
-src="${CONFIG_ROOT}/${template}"
-
-[[ -f ${src} ]] ||
-  {
-    echo "[ERROR] ${src} not found — run 'mise run lxc:build' first" >&2
-    exit 1
-  }
-
-echo "[INFO] Uploading ${template} to root@${pve_host}:/var/lib/vz/template/cache/..." >&2
-scp "${src}" "root@${pve_host}:/var/lib/vz/template/cache/${template}"
-echo "[SUCCESS] Template uploaded." >&2
+lxc_init "oci-registry" "${CONFIG_ROOT}" _oci_registry
+lxc_push "${usage_pve_host}"

@@ -220,14 +220,12 @@ let
   configDir = pkgs.runCommand "lxc-agent-config-validated"
     { nativeBuildInputs = [ pkgs.vector ]; }
     ''
-      VECTOR_DATA_DIR="$(mktemp -d "$TMPDIR/vector-data.XXXXXX")" \
+      export VECTOR_DATA_DIR="$(mktemp -d "$TMPDIR/vector-data.XXXXXX")"
+
+      vector test --config-dir "${configLinkFarm}/conf.d"
       vector validate --no-environment --config-dir "${configLinkFarm}/conf.d"
 
-      for f in "${configLinkFarm}/conf.d/"*.yaml; do
-        grep -q "^tests:" "$f" || continue
-        VECTOR_DATA_DIR="$(mktemp -d "$TMPDIR/vector-data.XXXXXX")" \
-        vector test "$f"
-      done
+      unset VECTOR_DATA_DIR
 
       ln -s ${configLinkFarm} $out
     '';
