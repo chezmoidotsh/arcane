@@ -40,12 +40,13 @@ flowchart LR
         vmagent["VMAgent<br/>(cluster metrics)"]
         clvector["Vector agents<br/>(cluster + pve-exporter logs)"]
         clalert["per-cluster vmalert<br/>(VMRule) → per-cluster AM"]
-        pvexp["pve-exporter LXC<br/>pve_* metrics + Vector logs"]
+        pvexp["pve-exporter LXC<br/>pve_* metrics + syslog→Vector"]
         kaz["kazimierz<br/>(over tailnet)"]
     end
 
     subgraph lxc["LXC appliance (Proxmox)"]
         caddy["Caddy :443<br/>path route, no auth<br/>(+ tailnet via tsnet)"]
+        vector["Vector<br/>:4317/:4318 OTLP (loopback)<br/>:6000 Vector native (bridge)"]
         vm["VictoriaMetrics :8428 (+OTLP)"]
         vl["VictoriaLogs :9428"]
         vt["VictoriaTraces :10428"]
@@ -59,14 +60,17 @@ flowchart LR
     grafana(["amiya Grafana<br/>dashboards + non-paging alerts"])
 
     vmagent -->|"/metrics"| caddy
-    clvector -->|"/logs (Vector :6000)"| caddy
-    pvexp -->|"metrics + logs"| caddy
+    clvector -->|"Vector native :6000"| vector
+    pvexp -->|"/metrics"| caddy
+    pvexp -.->|":6000 syslog→Vector"| vector
     kaz -.tailnet.-> caddy
 
-    caddy --> vm
-    caddy --> vl
-    caddy --> vt
-    caddy --> am
+    caddy -->|"/metrics/*"| vm
+    caddy -->|"/logs/otlp/*"| vector
+    caddy -->|"/logs/*"| vl
+    caddy -->|"/traces/*"| vt
+    caddy -->|"/alerts/*"| am
+    vector -->|"jsonline"| vl
     lxcalert --> am
     clalert --> clam
     clam --> page
@@ -75,6 +79,7 @@ flowchart LR
     vl -.-> data
     vt -.-> data
     am -.-> data
+    vector -.-> data
     grafana -->|query| vm
     grafana -->|query| vl
 ```
@@ -87,11 +92,21 @@ Grafana. The LXC Alertmanager handles only existential alerts and the
 healthchecks.io DMS heartbeat — Grafana is not in the DMS path. Access control is
 the **Proxmox host firewall by source CIDR** (LAN) plus the **tailnet** (off-LAN).
 
-> **Logs ingest** — the appliance ingests only already-structured events (Vector
-> native `:6000` and OTLP, all loopback behind Caddy). It no longer runs a syslog
-> listener: the [`pve-exporter`](../pve-exporter/README.md) LXC owns syslog ingest,
-> parses RFC 5424 into the OTLP-style format, and forwards it here. The appliance's
-> Vector pipeline is now validation + loki-like conversion only.
+> **Logs ingest** — three entry points:
+>
+> * **Vector native `:6000`** (exposed directly on the bridge network, **not**
+>   behind Caddy) — cluster and pve-exporter agents pushing pre-formatted
+>   OTLP-style events. This is the intended primary log path (ADR-013).
+> * **OTLP HTTP via Caddy `/logs/otlp/*`** → Vector `:4318` (loopback). OTLP
+>   gRPC `:4317` is loopback-only.
+> * **ES-compatible via Caddy `/logs/*`** → VictoriaLogs `:9428` (queries and
+>   direct ES insert — bypasses the appliance Vector pipeline).
+>
+> The appliance no longer runs a syslog listener: the
+> [`pve-exporter`](../pve-exporter/README.md) LXC owns syslog ingest, parses RFC
+> 5424 into the OTLP-style format, and forwards it here over Vector native. The
+> appliance's Vector pipeline (Vector native + OTLP sources) runs SemConv
+> validation and loki-like conversion before pushing to VictoriaLogs.
 
 Architecture diagram source: [`architecture.d2`](./architecture.d2).
 
@@ -357,7 +372,7 @@ ssh root@${NODE} pct start ${VMID}
 | Data volume (`mp0`) | 64 GiB at `/persistent` (raise per retention) |
 | Swap                | 0                                             |
 
-Retention defaults: metrics **6 months**, logs **30 days**.
+Retention defaults: metrics **18 months**, logs **30 days**, traces **2 days**.
 
 ## Proxmox host firewall
 
@@ -481,6 +496,25 @@ spec:
 > is enabled, so community mixin rule sets work unchanged.
 
 ### Kubernetes clusters — logs (Vector DaemonSet)
+
+**Recommended — Vector native `:6000`** (goes through the appliance Vector
+pipeline: SemConv validation + loki-like conversion):
+
+```toml
+[sinks.o11y_vector]
+type = "vector"
+inputs = ["kubernetes_logs"]            # add a transform to set cluster=<name>
+address = "o11y.chezmoi.sh:6000"
+mode = "grpc"
+```
+
+Events must arrive in the OTLP-like internal format (body, timestamp,
+resources, attributes …) — see the pipeline contract in
+[`config/vector/README.md`](./config/vector/README.md). Invalid events become
+queryable error records instead of being dropped silently.
+
+**Alternative — ES-compatible via Caddy** (simpler, but **bypasses** the
+appliance Vector pipeline — no SemConv validation):
 
 ```toml
 [sinks.victorialogs]
@@ -681,9 +715,9 @@ for tailnet clients — they connect to the MagicDNS name directly.
 
 4. **Cluster-side resources not included.** VMAgent (+ optional streamAggr),
    VMAlert + VMRule/PrometheusRule, Vector (logs + optional trace export), the
-   Proxmox OTEL push, and Grafana (datasources for metrics/logs/traces + dashboards
-   * the Grafana-side deadman) live in their own projects and are tracked as
-     separate phases of [#1018][].
+   Proxmox OTEL push, and Grafana (datasources for metrics/logs/traces +
+   dashboards + non-paging alert routing) live in their own projects and are
+   tracked as separate phases of [#1018][].
 
 5. **No HA.** Single LXC, single Proxmox node. If the node dies, the LXC deadman
    stops and the external monitor pages; collection halts until the LXC is
