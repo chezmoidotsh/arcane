@@ -39,14 +39,12 @@ let
         cp "$f" "$out/$(basename "$f")"
       done
 
-      VECTOR_DATA_DIR="$(mktemp -d "$TMPDIR/vector-data.XXXXXX")" \
+      export VECTOR_DATA_DIR="$(mktemp -d "$TMPDIR/vector-data.XXXXXX")"
+
+      vector test --config-dir "$out"
       vector validate --no-environment --config-dir "$out"
 
-      for f in "$out/"*.yaml; do
-        grep -q "^tests:" "$f" || continue
-        VECTOR_DATA_DIR="$(mktemp -d "$TMPDIR/vector-data.XXXXXX")" \
-        vector test "$f"
-      done
+      unset VECTOR_DATA_DIR
     '';
 
   dataDir = "/persistent/o11y/vector";
