@@ -175,6 +175,10 @@ sole author, the AI is acknowledged as an assistant, not a co-author with legal 
 Format: `Assisted-by: <provider>:<model-id>` — use the identifier of the model powering
 the current session (e.g. `Assisted-by: github-copilot:claude-sonnet-4.6`).
 
+Version numbers always use a dot separator: `4.6`, `4.8` — never a hyphen (`4-6`).
+The system's internal model ID format uses hyphens (`claude-sonnet-4-6`), but the
+`Assisted-by` trailer always uses the public model name with dots.
+
 ### Signing and DCO — the AI must stay out of this
 
 The `git commit -s` flag adds a `Signed-off-by:` trailer. This is the committer's
