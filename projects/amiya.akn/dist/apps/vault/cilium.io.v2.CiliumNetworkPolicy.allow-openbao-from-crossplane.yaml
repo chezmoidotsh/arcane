@@ -1,0 +1,27 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Crossplane (running in the crossplane namespace) to reach OpenBao directly
+      over the cluster-internal service. The Vault provider authenticates via the
+      Kubernetes auth backend (role crossplane-provisioning) to manage mounts, policies
+      and auth backends declaratively.
+  labels:
+    app.kubernetes.io/name: vault
+  name: allow-openbao-from-crossplane
+  namespace: vault
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: vault
+      component: server
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: crossplane
+    toPorts:
+    - ports:
+      - port: "8200"
+        protocol: TCP
