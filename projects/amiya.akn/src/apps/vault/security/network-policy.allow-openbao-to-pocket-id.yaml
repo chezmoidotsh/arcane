@@ -3,9 +3,11 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows OpenBao to reach Pocket-ID OIDC endpoints via the in-cluster Cilium Gateway.
-      auth.chezmoi.sh resolves to the Gateway's cluster IP, so we must use toEndpoints
-      (not toFQDNs, which only matches IPs outside the cluster).
+      Allows OpenBao to reach Pocket-ID OIDC endpoints via the Cilium Gateway.
+      auth.chezmoi.sh resolves to the Gateway's LoadBalancer IP (from the
+      10.0.2.0/28 pool). Both toFQDNs (only matches external IPs) and
+      toEndpoints (no Gateway pods in in-gateway-system) fail for this
+      destination, so toCIDR targeting the LB pool is used instead.
   name: allow-openbao-to-pocket-id
 spec:
   endpointSelector:
@@ -13,9 +15,8 @@ spec:
       app.kubernetes.io/name: vault
       component: server
   egress:
-    - toEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: in-gateway-system
+    - toCIDR:
+        - 10.0.2.0/28
       toPorts:
         - ports:
             - port: "443"
