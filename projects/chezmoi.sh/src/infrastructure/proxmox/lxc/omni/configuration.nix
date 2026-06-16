@@ -132,7 +132,9 @@
     machineApiBindAddr = "127.0.0.1:9090";
 
     # Kubernetes proxy on loopback — Caddy terminates TLS externally on
-    # kube.omni.chezmoi.sh:443 and proxies here. Plain HTTP on the backend.
+    # kube.omni.chezmoi.sh:443 and proxies here. The backend also serves
+    # TLS (Omni inherits the main API cert/key for the k8s proxy listener),
+    # so Caddy uses tls_insecure_skip_verify just like the UI/API vhost.
     k8sProxyBindAddr = "127.0.0.1:8100";
 
     # Advertised URLs — must match the Caddy subdomains in modules/caddy.nix.

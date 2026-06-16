@@ -13,7 +13,7 @@
 #
 #   api.omni.chezmoi.sh    — SideroLink Machine API (gRPC, loopback HTTPS :9090)
 #
-#   kube.omni.chezmoi.sh   — Kubernetes API proxy  (HTTP, loopback :8100)
+#   kube.omni.chezmoi.sh   — Kubernetes API proxy  (HTTPS, loopback :8100)
 #
 # No non-standard TCP ports are opened externally. The event sink (:8091)
 # and SideroLink WireGuard (:50180/UDP) keep their direct bindings.
@@ -106,10 +106,14 @@ in
 
       # ─── kube.omni.chezmoi.sh — Kubernetes API proxy ───────────────────
       # omnictl / kubectl connects here to reach managed cluster APIs.
-      # Omni's k8s proxy binds on loopback (k8sProxyBindAddr) over plain
-      # HTTP; Caddy provides the external TLS layer.
+      # Omni's k8s proxy binds on loopback (k8sProxyBindAddr) with its own
+      # PKI TLS cert (inherited from the main API cert/key); Caddy proxies
+      # with tls_insecure_skip_verify, matching the UI/API and Machine API.
       https://kube.${domain} {
-        reverse_proxy http://${cfg.k8sProxyBindAddr} {
+        reverse_proxy https://${cfg.k8sProxyBindAddr} {
+          transport http {
+            tls_insecure_skip_verify
+          }
           flush_interval -1
         }
 
