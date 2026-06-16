@@ -9,8 +9,8 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: crossplane
     app.kubernetes.io/part-of: crossplane
-    app.kubernetes.io/version: 2.3.2
-    helm.sh/chart: crossplane-2.3.2
+    app.kubernetes.io/version: 1.20.0-rc.0.140.g629ca2e2f
+    helm.sh/chart: crossplane-1.20.0-rc.0.140.g629ca2e2f
     rbac.crossplane.io/aggregate-to-admin: "true"
   name: crossplane:aggregate-to-admin
 rules:
@@ -71,15 +71,3 @@ rules:
   - get
   - list
   - watch
-- apiGroups:
-  - protection.crossplane.io
-  resources:
-  - '*'
-  verbs:
-  - '*'
-- apiGroups:
-  - ops.crossplane.io
-  resources:
-  - '*'
-  verbs:
-  - '*'
