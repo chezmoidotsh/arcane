@@ -1,0 +1,34 @@
+config:
+  clusters:
+    - url: https://pve-01.pve.chezmoi.sh:8006/api2/json
+      token_id: "kubernetes-csi@pve!csi"
+      token_secret: "" # set via --set config.clusters[0].token_secret
+      region: homelab
+
+storageClass:
+  - name: proxmox-lvmthin-ext4
+    storage: nvme-lvm
+    reclaimPolicy: Delete
+    fstype: ext4
+    cache: writethrough
+    ssd: false
+    annotations:
+      storageclass.kubernetes.io/is-default-class: "true"
+  - name: proxmox-lvmthin-xfs
+    storage: nvme-lvm
+    reclaimPolicy: Delete
+    fstype: xfs
+    cache: directsync
+    ssd: false
+
+controller:
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      effect: NoSchedule
+
+node:
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      effect: NoSchedule
