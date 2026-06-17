@@ -17,9 +17,9 @@ resources:
   - crossplane.applicationset.yaml
 
 helmCharts:
-  - repo: https://charts.crossplane.io/master/
+  - repo: https://charts.crossplane.io/stable
     name: crossplane
-    version: 1.20.0-rc.0.140.g629ca2e2f
+    version: 2.3.2
 
     releaseName: crossplane
     namespace: crossplane
