@@ -16,6 +16,8 @@ resources:
   - providers/aws/provider.yaml
   - providers/cloudflare/default.providerconfig.yaml
   - providers/cloudflare/provider.yaml
+  - providers/cloudflare/wildbitca.providers.yaml
+  - providers/cloudflare/wildbitca.providerconfig.yaml
   - providers/terraform/cloudflare.providerconfig.yaml
   - providers/terraform/default.providerconfig.yaml
   - providers/terraform/kazimierz.providerconfig.yaml
