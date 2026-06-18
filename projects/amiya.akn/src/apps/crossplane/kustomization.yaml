@@ -15,6 +15,7 @@ resources:
 
   # Crossplane x ArgoCD
   - crossplane.applicationset.yaml
+  - crossplane-providers.applicationset.yaml
 
 helmCharts:
   - repo: https://charts.crossplane.io/stable
