@@ -16,3 +16,21 @@ spec:
   package: xpkg.upbound.io/wildbitca/provider-cloudflare-account:v0.2.6
   runtimeConfigRef:
     name: hardened
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: wildbitca-provider-cloudflare-zone
+spec:
+  package: xpkg.upbound.io/wildbitca/provider-cloudflare-zone:v0.2.6
+  runtimeConfigRef:
+    name: hardened
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: wildbitca-provider-cloudflare-dns
+spec:
+  package: xpkg.upbound.io/wildbitca/provider-cloudflare-dns:v0.2.6
+  runtimeConfigRef:
+    name: hardened

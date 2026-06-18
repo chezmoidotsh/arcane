@@ -15,7 +15,6 @@ resources:
   - providers/aws/default.providerconfig.yaml
   - providers/aws/provider.yaml
   - providers/cloudflare/default.providerconfig.yaml
-  - providers/cloudflare/provider.yaml
   - providers/cloudflare/wildbitca.providers.yaml
   - providers/cloudflare/wildbitca.providerconfig.yaml
   - providers/terraform/cloudflare.providerconfig.yaml
@@ -46,18 +45,3 @@ patches:
         value: "-1"
     target:
       group: apiextensions.crossplane.io
-
-generators:
-  - # Cloudflare resources need to provide the external-name annotation,
-    # which is encrypted.
-    |-
-    apiVersion: viaduct.ai/v1
-    kind: ksops
-    metadata:
-      name: crossplane-external-name
-      annotations:
-        config.kubernetes.io/function: |
-          exec:
-            path: ksops
-    files:
-      - cloudflare.zone.yaml
