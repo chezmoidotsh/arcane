@@ -1,0 +1,11 @@
+---
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: UserPolicyAttachment
+metadata:
+  name: amiya.akn.chezmoi.sh-amazonses-pocket-id
+spec:
+  forProvider:
+    policyArnRef:
+      name: amiya.akn.chezmoi.sh-amazonses-pocket-id
+    userRef:
+      name: amiya.akn.chezmoi.sh-amazonses-pocket-id

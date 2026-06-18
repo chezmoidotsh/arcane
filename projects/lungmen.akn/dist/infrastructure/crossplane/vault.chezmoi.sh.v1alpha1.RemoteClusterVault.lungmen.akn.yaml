@@ -1,0 +1,10 @@
+---
+apiVersion: vault.chezmoi.sh/v1alpha1
+kind: RemoteClusterVault
+metadata:
+  name: lungmen.akn
+spec:
+  additionalPolicies:
+  - lungmen.akn-mutualized-cnpg-databases
+  host: https://kubernetes.lungmen.akn.chezmoi.sh:6443
+  name: lungmen.akn

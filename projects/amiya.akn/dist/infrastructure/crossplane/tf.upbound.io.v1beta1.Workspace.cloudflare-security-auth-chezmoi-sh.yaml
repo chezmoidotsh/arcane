@@ -1,0 +1,34 @@
+---
+apiVersion: tf.upbound.io/v1beta1
+kind: Workspace
+metadata:
+  annotations:
+    argocd.argoproj.io/description: |
+      Cloudflare security configuration for auth.chezmoi.sh (Pocket-ID).
+      Implements rate limiting protection against abuse.
+  name: cloudflare-security-auth-chezmoi-sh
+spec:
+  forProvider:
+    module: "# Variables for zone configuration\nvariable \"zone_name\" {\n  type
+      \       = string\n  default     = \"chezmoi.sh\"\n  description = \"Cloudflare
+      zone name\"\n}\n\nvariable \"hostname\" {\n  type        = string\n  default
+      \    = \"auth.chezmoi.sh\"\n  description = \"Hostname to protect\"\n}\n\n#
+      Data source to get zone information\ndata \"cloudflare_zone\" \"main\" {\n  filter
+      = {\n    name = var.zone_name\n  }\n}\n\n# Rate limiting ruleset\n# Note: period
+      must be >= 10s, so 100 requests/10s = 10 req/s average  \nresource \"cloudflare_ruleset\"
+      \"rate_limiting\" {\n  kind        = \"zone\"\n  name        = \"Rate limiting
+      for auth.chezmoi.sh\"\n  phase       = \"http_ratelimit\"\n  zone_id     = data.cloudflare_zone.main.zone_id\n\n
+      \ description = \"Limit to 100 requests per 10 seconds per endpoint, ban for
+      10s\"\n\n  rules = [{\n    action      = \"block\"\n    expression  = \"(http.host
+      eq \\\"${var.hostname}\\\")\"\n    description = \"Rate limit all auth.chezmoi.sh
+      endpoints\"\n\n    ratelimit = {\n      characteristics = [\n        \"cf.colo.id\",\n
+      \       \"ip.src\",\n      ]\n      period              = 10  # 10 seconds (minimum
+      allowed)\n      requests_per_period = 100  # 100 requests max (= 10 req/s average)\n
+      \     mitigation_timeout  = 10  # Ban for 10 seconds\n    }\n  }]\n}\n\n# Outputs
+      for verification\noutput \"zone_id\" {\n  value       = data.cloudflare_zone.main.zone_id\n
+      \ description = \"Cloudflare zone ID\"\n}\n\noutput \"rate_limiting_ruleset_id\"
+      {\n  value       = cloudflare_ruleset.rate_limiting.id\n  description = \"Rate
+      limiting ruleset ID\"\n}\n"
+    source: Inline
+  providerConfigRef:
+    name: cloudflare
