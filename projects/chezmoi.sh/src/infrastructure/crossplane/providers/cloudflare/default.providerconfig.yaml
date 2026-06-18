@@ -1,16 +1,4 @@
 ---
-apiVersion: cloudflare.crossplane.io/v1beta1
-kind: ProviderConfig
-metadata:
-  name: default
-spec:
-  credentials:
-    source: Secret
-    secretRef:
-      namespace: crossplane
-      name: cloudflare-credentials
-      key: credentials
----
 apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 metadata:
