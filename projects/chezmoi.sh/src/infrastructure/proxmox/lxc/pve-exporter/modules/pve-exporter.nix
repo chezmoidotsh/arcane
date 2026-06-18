@@ -5,64 +5,9 @@
 # Exposes metrics at 127.0.0.1:9221. Vector scrapes the /pve endpoint with
 # ?target=<host>&cluster=1&node=1 and pushes via remote_write to the o11y
 # appliance.
-#
-# Neither prometheus-pve-exporter nor proxmoxer are in nixpkgs, so both are
-# packaged inline from PyPI sdists.
 # ─────────────────────────────────────────────────────────────────────────────
 { lib, pkgs, pveHost, pveTokenValue, ... }:
 
-let
-  pythonPkgs = pkgs.python312.pkgs;
-
-  proxmoxer = pythonPkgs.buildPythonPackage rec {
-    pname = "proxmoxer";
-    version = "2.3.0";
-    src = pkgs.fetchPypi {
-      inherit pname version;
-      hash = "sha256-CwsgZxh68fxtQlekasaMj9ecwl0oE2N82uepqY+/0R8=";
-    };
-    # nixpkgs ≥ 25.05 requires an explicit build format for buildPythonPackage.
-    pyproject = true;
-    build-system = [ pythonPkgs.setuptools ];
-    propagatedBuildInputs = [ pythonPkgs.requests ];
-    doCheck = false;
-  };
-
-  pveExporter = pythonPkgs.buildPythonPackage rec {
-    pname = "prometheus-pve-exporter";
-    version = "3.9.0";
-    src = pkgs.fetchPypi {
-      # PyPI normalises sdist filenames to underscores (PEP 625); the hyphenated
-      # URL 404s, so the fetch pname must use underscores.
-      pname = "prometheus_pve_exporter";
-      inherit version;
-      hash = "sha256-ctK2lf7GflF1T2evlwZBZ0xjkNbOHfKMTkaqzxb7TMg=";
-    };
-    # nixpkgs ≥ 25.05 requires an explicit build format for buildPythonPackage.
-    # The sdist's [build-system] requires setuptools + setuptools-scm.
-    pyproject = true;
-    build-system = [
-      pythonPkgs.setuptools
-      pythonPkgs.setuptools-scm
-    ];
-    # Runtime deps come from the sdist's requirements.in (dynamic dependencies):
-    # prometheus_client, proxmoxer, pyyaml, requests, Werkzeug, gunicorn,
-    # paramiko, wrapt. All must be present or pythonRuntimeDepsCheck fails.
-    propagatedBuildInputs = [
-      pythonPkgs.prometheus-client
-      proxmoxer
-      pythonPkgs.pyyaml
-      pythonPkgs.requests
-      pythonPkgs.werkzeug
-      pythonPkgs.gunicorn
-      pythonPkgs.paramiko
-      pythonPkgs.wrapt
-    ];
-    doCheck = false;
-  };
-
-  pythonEnv = pkgs.python312.withPackages (ps: [ pveExporter ]);
-in
 {
   environment.etc."pve-exporter/secrets".text = ''
     PVE_TOKEN_VALUE=${pveTokenValue}
@@ -77,7 +22,7 @@ in
 
     serviceConfig = {
       ExecStart = lib.concatStringsSep " " [
-        "${pythonEnv}/bin/pve_exporter"
+        "${pkgs.prometheus-pve-exporter}/bin/pve_exporter"
         "--web.listen-address=127.0.0.1:9221"
       ];
 

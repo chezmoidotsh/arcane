@@ -5,7 +5,7 @@
 # system identity, locale, the console shell, and the console toolbox.
 #
 # The modules in ./modules/ own all service configuration:
-#   * pve-exporter.nix — prometheus-pve-exporter (inline Python packages)
+#   * pve-exporter.nix — prometheus-pve-exporter (nixpkgs)
 #   * o11y.nix         — Vector agent (catalog.lxcAgent) shipping metrics + logs
 #   * hardening.nix    — sysctl, firewall default-deny, login surface, journald
 #

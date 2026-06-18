@@ -16,9 +16,6 @@ This container holds **no persistent data** — it pushes outbound (metrics via
 remote\_write, logs via the Vector protocol) and can be rebuilt and replaced at any
 time without data loss. Its only inbound port is the syslog listener (`:5140`).
 
-> **Note** — `prometheus-pve-exporter` and its Python dependency `proxmoxer` are
-> not in nixpkgs; both are packaged inline from PyPI sdists in `modules/pve-exporter.nix`.
-
 ## Table of contents
 
 1. [Architecture](#architecture)
@@ -58,7 +55,7 @@ flowchart TB
     syslog -->|"parsed syslog (Vector :6000)"| o11y
 ```
 
-* **prometheus-pve-exporter** (`v3.9.0`) binds to `127.0.0.1:9221`. It
+* **prometheus-pve-exporter** binds to `127.0.0.1:9221`. It
   authenticates against the PVE API with the `prometheus@pve!exporter` token
   (read-only) and exposes metrics on demand via the multi-target `/pve` endpoint.
 * **Vector** (via `catalog.lxcAgent`) does three things: scrapes the exporter with
@@ -83,14 +80,14 @@ flowchart TB
 ```text
 .
 ├── README.md              ← you are here
-├── flake.nix              ← LXC image build (nixos-generators) + inline Python packages
+├── flake.nix              ← LXC image build (nixos-generators)
 ├── flake.lock             ← pinned inputs
 ├── configuration.nix      ← site identity, locale, console toolbox
 ├── .mise.toml             ← mise tasks (secrets / build)
 ├── .mise/tasks/lxc/       ← build / push / upgrade scripts
 ├── modules/
 │   ├── default.nix        ← module aggregator
-│   ├── pve-exporter.nix   ← prometheus-pve-exporter service (inline PyPI build)
+│   ├── pve-exporter.nix   ← prometheus-pve-exporter service (nixpkgs)
 │   ├── o11y.nix           ← catalog.lxcAgent (metrics scrape + journald + syslog → o11y)
 │   ├── o11y.extraTransforms/  ← Vector fragments injected into catalog.lxcAgent
 │   │   ├── sources.syslog.yaml      ← syslog :5140 source + syslog_to_o11y (parse + tests)
@@ -106,10 +103,6 @@ flowchart TB
 * Docker (used by `nix:build:lxc` to wrap the Nix build).
 * `sops` with the repo age key loaded (`SOPS_AGE_KEY_FILE` already set by mise).
 * SSH key-based root access to the Proxmox node you push to.
-
-The `prometheus-pve-exporter` and `proxmoxer` Python packages are built inline
-from PyPI sdists by Nix — no internet access is needed at runtime, but the build
-phase fetches from PyPI (or a local cache if one is configured).
 
 ## Proxmox user and API token setup
 
@@ -264,9 +257,9 @@ so no pre-start chown step is needed.
 \| Data volume         | None                                  |
 \| Swap                | 0 (let OOM kill on overrun)           |
 
-The root disk holds the NixOS closure + the inline Python environment for
-prometheus-pve-exporter. Keep 2 GiB; if a future rebuild exceeds it bump with
-`pct resize <vmid> rootfs +2G` before rebuilding.
+The root disk holds the NixOS closure for prometheus-pve-exporter. Keep 2 GiB;
+if a future rebuild exceeds it bump with `pct resize <vmid> rootfs +2G` before
+rebuilding.
 
 ## Proxmox host firewall
 
@@ -419,25 +412,18 @@ source CT. No `mp0` transfer needed.
    with `../observability`, so its lock was copied from there to give a valid pin.
    Run `nix flake lock` here to refresh it independently when bumping inputs.
 
-2. **PyPI hashes require manual updates on version bumps.** The `hash =` fields
-   for `proxmoxer` and `prometheus-pve-exporter` in `modules/pve-exporter.nix` are
-   not tracked by `flake.lock` (they are `fetchPypi` hashes). Renovate won't
-   propose bumps. When upgrading either package: update the version string, set
-   `hash = lib.fakeHash`, run a build, read the correct hash from the error, and
-   patch the file.
-
-3. **PVE token baked into image.** Rotating `prometheus@pve!exporter` requires a
+2. **PVE token baked into image.** Rotating `prometheus@pve!exporter` requires a
    rebuild and redeploy. There is no runtime secret injection. For a homelab this
    is acceptable; a production system would use OpenBao + a sidecar to inject the
    token at runtime without rebuilding.
 
-4. **No alert if the exporter goes silent.** If the LXC dies or the token is
+3. **No alert if the exporter goes silent.** If the LXC dies or the token is
    revoked, the o11y appliance stops receiving PVE metrics without notification.
    Adding `up{job="pve_exporter"} == 0` to
    [`../observability/alerts/pve.rules.yaml`](../observability/alerts/pve.rules.yaml)
    would close this gap.
 
-5. **Syslog parsing tests are not auto-run.** The `syslog_to_o11y` unit tests live
+4. **Syslog parsing tests are not auto-run.** The `syslog_to_o11y` unit tests live
    in `modules/o11y.extraTransforms/sources.syslog.yaml`, but `catalog.lxcAgent`
    only runs `vector validate` (not `vector test`) at build time, and the fragment
    isn't testable standalone (the journald passthrough references the catalog's
@@ -445,6 +431,6 @@ source CT. No `mp0` transfer needed.
    o11y transform. A future `vector test` harness over the assembled config would
    restore coverage.
 
-6. **No NixOS smoke test.** A `pkgs.testers.runNixOSTest` that boots the LXC,
+5. **No NixOS smoke test.** A `pkgs.testers.runNixOSTest` that boots the LXC,
    asserts `pve-exporter.service` is active, and curls `127.0.0.1:9221/metrics`
    would catch module regressions before they reach Proxmox.
