@@ -2,7 +2,7 @@
   description = "pve-exporter — Proxmox VE monitoring LXC image (Proxmox)";
 
   # ---------------------------------------------------------------------------
-  # All-in-one flake: inline Python packages + NixOS modules + site config.
+  # All-in-one flake: NixOS modules + site config.
   #
   # A single unprivileged LXC running:
   #
@@ -11,9 +11,6 @@
   #
   # No public services: the LXC only pushes outbound (metrics + logs). No Caddy,
   # no TLS termination, no ingress.
-  #
-  # Neither prometheus-pve-exporter nor proxmoxer are in nixpkgs, so both are
-  # packaged inline from PyPI sdists.
   #
   # Build (produces a Proxmox-importable .tar.xz):
   #
@@ -42,7 +39,7 @@
       # Proxmox template (pve-exporter.<date>-amd64.tar.xz). Component
       # versions track the nixpkgs pin. Bump this date before every
       # `mise run lxc:build`; append -N for multiple builds on the same day.
-      version = "2026.06.14-2";
+      version = "2026.06.18";
 
       # -----------------------------------------------------------------------
       # Build-time secrets, forwarded to the modules via _module.args.
