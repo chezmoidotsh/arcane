@@ -78,31 +78,28 @@ When in doubt: read the title cold without the body. If it doesn't answer
 
 ## Labels
 
-The title doesn't carry type or scope — **labels do**. Apply at least one from
-each mandatory group:
+The title doesn't carry type or scope — **labels and Issue Type do**. Apply one Issue Type and at least one label from each mandatory group:
 
-| Group         | Mandatory            | Apply                                                                                                                                                                             |
+| Field / Group | Mandatory            | Apply                                                                                                                                                                             |
 | ------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `type::*`     | **yes**              | One of `type::bug`, `type::feature`, `type::improve`, `type::refactor`, `type::docs`, `type::security`, `type::chore`, `type::question`                                           |
+| Issue Type    | **yes**              | One of `Bug`, `Feature`, `Improvement`, `Task`, `Docs`, `Security`, `Question` — set with `--type <Name>`                                                                         |
 | scope         | **yes**              | The repository area as a label (`project:amiya.akn`, `project:lungmen.akn`, `catalog:crossplane`, `gh`, `deps`, …) — same identifiers used as commit scopes in `.commitlintrc.js` |
 | `size::*`     | yes when known       | `size::XS`, `size::S`, `size::M`, `size::L`, `size::XL`. If you cannot estimate, leave it off rather than guessing.                                                               |
 | `priority::*` | yes when non-default | `priority::critical` (outage / data loss / active security), `priority::high` (this week), `priority::medium` (default — omit unless explicit), `priority::low` (nice-to-have)    |
-| `status::*`   | optional             | `status::triage` (default for new issues — picked up by templates), `status::blocked`, `status::in-progress`, `status::needs-info`                                                |
 
-### Type-label decision tree
+### Issue Type decision tree
 
 What does the issue ask for?
 
-| Intent                                                    | Label            |
-| --------------------------------------------------------- | ---------------- |
-| Repair broken behavior                                    | `type::bug`      |
-| Add a new capability, service, or initial deployment      | `type::feature`  |
-| Improve existing behavior (perf, config, UX) — not a bug  | `type::improve`  |
-| Restructure without observable change                     | `type::refactor` |
-| Documentation only (ADRs, READMEs, procedures)            | `type::docs`     |
-| Security hardening, vulnerability, secret management      | `type::security` |
-| Tooling, CI, dependencies, repo maintenance               | `type::chore`    |
-| Clarification or discussion, no concrete change requested | `type::question` |
+| Intent                                                    | Type          |
+| --------------------------------------------------------- | ------------- |
+| Repair broken behavior                                    | `Bug`         |
+| Add a new capability, service, or initial deployment      | `Feature`     |
+| Improve existing behavior (perf, config, UX) — not a bug  | `Improvement` |
+| Tooling, CI, refactoring, or repository maintenance       | `Task`        |
+| Documentation only (ADRs, READMEs, procedures)            | `Docs`        |
+| Security hardening, vulnerability, secret management      | `Security`    |
+| Clarification or discussion, no concrete change requested | `Question`    |
 
 Breaking variants of any change add the `breaking-change` label.
 
@@ -198,9 +195,9 @@ exists, decide: comment on it, or file a distinct one and cross-link.
 
 Apply the rules above. Read the title aloud — does it say what changes?
 
-### 3. Pick labels
+### 3. Pick Issue Type and labels
 
-Mandatory: one `type::*` + the scope label. Add `size::*` and `priority::*`
+Mandatory: `--type <Name>` + the scope label. Add `size::*` and `priority::*`
 when you have signal for them.
 
 ### 4. Create the issue
@@ -239,7 +236,7 @@ gh issue create \
   --repo chezmoidotsh/arcane \
   --title "Sentence describing the outcome" \
   --body-file /tmp/issue_body.md \
-  --label "type::feature" \
+  --type "Feature" \
   --label "gh" \
   --label "size::M"
 
@@ -257,7 +254,7 @@ that post-mortem. If it parks scope deferred from a PR, link both ways.
 
 **Title:** `Set up cluster observability stack (metrics, logs, alerting)`
 
-**Labels:** `type::feature`, `gh`, `size::XL`, `priority::high`
+**Type:** `Feature` — **Labels:** `gh`, `size::XL`, `priority::high`
 
 **Body skeleton (excerpt):**
 
@@ -303,7 +300,7 @@ operational baseline exists.
 
 **Title:** `WAL volume full on apps-secured cluster — immich and paperless unavailable`
 
-**Labels:** `type::bug`, `project:lungmen.akn`, `priority::critical`, `size::M`
+**Type:** `Bug` — **Labels:** `project:lungmen.akn`, `priority::critical`, `size::M`
 
 **Body (excerpt):**
 
@@ -338,12 +335,12 @@ operational baseline exists.
 * Gitmoji + parens — looks like a commit, not a title
 * Repeats `project:lungmen.akn` (which the body says is just the first deploy target — scope is actually cross-cutting)
 * Body has 12 sections, 250 lines, "Pain Points / Motivation / Background" repeating themselves, an empty Risk table, an empty "AI Analysis Placeholder" — none of which a reader can act on
-* No labels beyond `size::XL` — no `type::*`, no scope label
+* No `--type`, no scope label, no `size::*`
 
 ## Rules summary
 
 * **Title**: sentence-case, ≤100 chars, no trailing period, no symbol prefix, no bracketed scope. Carries the outcome — not the type, not the scope.
-* **Type and scope live in labels**, not in the title. One `type::*` + scope label mandatory.
+* **Issue Type** (`--type`) is mandatory — it replaces `type::*` labels. Scope label is also mandatory.
 * **Labels**: add `size::*` / `priority::*` when you have signal.
 * **Body**: TL;DR + Context + Proposal/Reproduction + Acceptance criteria + Notes. Drop sections that don't apply.
 * **Attribution**: end with `<sub>AI-assisted with <provider>:<model-id> under human supervision</sub>`

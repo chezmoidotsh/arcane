@@ -15,14 +15,16 @@
 #
 # Label taxonomy
 # --------------
-# Six orthogonal groups, applied independently:
+# Four orthogonal groups, applied independently:
 #
-#   type::<x>        What kind of work is this?      (issues + PRs)
 #   pr::<x>          PR auto-labeler categorization  (PRs only, set by labeler.yml)
 #   size::<x>        Effort estimate                  (issues + PRs)
 #   priority::<x>    Urgency                          (issues only)
-#   status::<x>      Workflow state                   (issues only)
 #   <scope>          Where in the repo               (mirrors commit scopes verbatim)
+#
+# Type and status are now GitHub-native fields:
+#   Issue Type       Bug / Feature / Improvement / Task / Docs / Security / Question
+#   Status           Triage / In Progress / Blocked / Done  (project field, not label)
 #
 # Plus a small set of bare meta labels (`stale`, `breaking-change`, …).
 #
@@ -36,34 +38,6 @@
 # (`.github/workflows/push,schedule.sync-labels.yaml`) uses `prune: true`, so any
 # label not declared here will be deleted on the next sync.
 ---
-# ----------------------------------------------------------------------------
-# type:: — what kind of work is this?
-# ----------------------------------------------------------------------------
-- name: type::bug
-  description: Something is broken or behaves incorrectly
-  color: D73A4A
-- name: type::feature
-  description: New capability, service, or initial deployment
-  color: 0E8A16
-- name: type::improve
-  description: Improve existing behavior (perf, config, UX) — not a bug fix
-  color: 86CB55
-- name: type::refactor
-  description: Restructure without observable behavior change
-  color: 1F77B4
-- name: type::docs
-  description: Documentation only (ADRs, READMEs, procedures, comments)
-  color: 0075CA
-- name: type::security
-  description: Security hardening, vulnerability, or secret management
-  color: 8B0000
-- name: type::chore
-  description: Tooling, CI, dependencies, repository maintenance
-  color: CFD3D7
-- name: type::question
-  description: Clarification or discussion, no concrete change requested
-  color: D876E3
-
 # ----------------------------------------------------------------------------
 # pr:: — PR auto-labeler (consumed by .github/labeler.yml — do not rename)
 # ----------------------------------------------------------------------------
@@ -117,22 +91,6 @@
 - name: priority::low
   description: Nice to have, no time pressure
   color: 0E8A16
-
-# ----------------------------------------------------------------------------
-# status:: — workflow state
-# ----------------------------------------------------------------------------
-- name: status::triage
-  description: Needs initial review, categorization, or scope decision
-  color: CFD3D7
-- name: status::blocked
-  description: Waiting on an external dependency or decision
-  color: B60205
-- name: status::in-progress
-  description: Actively being worked on
-  color: 1D76DB
-- name: status::needs-info
-  description: Waiting on more information from the reporter
-  color: D4C5F9
 
 # ----------------------------------------------------------------------------
 # Scope — mirrors commit scopes in .commitlintrc.js verbatim
