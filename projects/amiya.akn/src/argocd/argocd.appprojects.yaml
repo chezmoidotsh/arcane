@@ -120,6 +120,9 @@ spec:
       # TODO: when all crossplane secret will be migrated to Vault, remove this namespace
       namespace: kubevault-kvstore
       server: https://kubernetes.default.svc
+    - # NOTE: wildbitca Cloudflare Tokens are deployed into the amiya-akn namespace
+      namespace: amiya-akn
+      server: https://kubernetes.default.svc
   clusterResourceWhitelist: [{ group: "*", kind: "*" }]
   clusterResourceBlacklist:
     - group: ""

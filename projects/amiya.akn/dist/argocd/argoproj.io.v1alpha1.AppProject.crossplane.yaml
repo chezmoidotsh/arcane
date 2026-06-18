@@ -26,6 +26,8 @@ spec:
     server: https://kubernetes.default.svc
   - namespace: kubevault-kvstore
     server: https://kubernetes.default.svc
+  - namespace: amiya-akn
+    server: https://kubernetes.default.svc
   namespaceResourceBlacklist: []
   namespaceResourceWhitelist:
   - group: '*'
