@@ -11,20 +11,6 @@ resources:
   - functions.yaml
   - runtimeconfigs.yaml
 
-  # Crossplane provider configuration
-  - providers/aws/default.providerconfig.yaml
-  - providers/aws/provider.yaml
-  - providers/cloudflare/default.providerconfig.yaml
-  - providers/cloudflare/wildbitca.providers.yaml
-  - providers/cloudflare/wildbitca.providerconfig.yaml
-  - providers/terraform/cloudflare.providerconfig.yaml
-  - providers/terraform/default.providerconfig.yaml
-  - providers/terraform/kazimierz.providerconfig.yaml
-  - providers/terraform/provider.yaml
-  - providers/terraform/tailscale.providerconfig.yaml
-  - providers/vault/default.providerconfig.yaml
-  - providers/vault/provider.yaml
-
   # Cloudflare resources
   - cloudflare.iam.observability.yaml
   - cloudflare.iam.oci-registry.yaml
