@@ -1,0 +1,22 @@
+---
+apiVersion: amazonses.chezmoi.sh/v1alpha1
+kind: DomainIdentity
+metadata:
+  labels:
+    crossplane.chezmoi.sh/project: nex.rpi
+  name: chezmoi.sh
+spec:
+  compositionRef:
+    name: cloudflare.xdomainidentities.amazonses.chezmoi.sh
+  dnsOptions:
+    dmarcOptions:
+      policy: none
+  domain: chezmoi.sh
+  mailFrom: amazonses
+  providerConfigRefs:
+    aws:
+      region: us-east-1
+    cloudflare:
+      zoneIdSelector:
+        matchLabels:
+          cf.chezmoi.sh/zone: chezmoi.sh

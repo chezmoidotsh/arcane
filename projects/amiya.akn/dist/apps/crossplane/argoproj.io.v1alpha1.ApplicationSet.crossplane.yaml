@@ -15,7 +15,9 @@ spec:
   generators:
   - git:
       directories:
-      - path: projects/*/src/infrastructure/crossplane
+      - path: projects/*/dist/infrastructure/crossplane
+      - exclude: true
+        path: projects/*/dist/infrastructure/crossplane/*/*
       repoURL: https://github.com/chezmoidotsh/arcane.git
       revision: main
   goTemplate: true

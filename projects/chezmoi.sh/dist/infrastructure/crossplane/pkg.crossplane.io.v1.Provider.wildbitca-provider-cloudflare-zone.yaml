@@ -1,0 +1,9 @@
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: wildbitca-provider-cloudflare-zone
+spec:
+  package: xpkg.upbound.io/wildbitca/provider-cloudflare-zone:v0.2.6
+  runtimeConfigRef:
+    name: hardened
