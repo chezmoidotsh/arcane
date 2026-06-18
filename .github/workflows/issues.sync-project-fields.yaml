@@ -1,0 +1,74 @@
+---
+name: 🔄 Sync issue labels to project fields
+
+on:
+  issues:
+    types: [labeled, unlabeled]
+
+permissions:
+  issues: read
+  repository-projects: write
+
+jobs:
+  sync:
+    name: 🔄 Sync labels to Arcane Roadmap fields
+    runs-on: ubuntu-latest
+    steps:
+      - name: "🔄 Sync priority:: and size:: labels to project fields"
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const OWNER       = 'chezmoidotsh';
+            const PROJECT_NUM = 1;
+            const PRIORITY_FIELD = 'IFSS_kgDOAYM1Jg';
+            const EFFORT_FIELD   = 'IFSS_kgDOAYM1KQ';
+
+            // priority:: label → Priority field option ID
+            const PRIORITY_MAP = {
+              'priority::critical': 'IFSSO_kgDOAqWFjg',
+              'priority::high':     'IFSSO_kgDOAqWFjw',
+              'priority::medium':   'IFSSO_kgDOAqWFkA',
+              'priority::low':      'IFSSO_kgDOAqWFkQ',
+            };
+
+            // size:: label → Effort field option ID
+            const EFFORT_MAP = {
+              'size::XS': 'IFSSO_kgDOBIV_Fw',
+              'size::S':  'IFSSO_kgDOAqWFlA',
+              'size::M':  'IFSSO_kgDOAqWFkw',
+              'size::L':  'IFSSO_kgDOAqWFkg',
+              'size::XL': 'IFSSO_kgDOBIV_Fg',
+            };
+
+            const label = context.payload.label.name;
+            const issueId = context.payload.issue.node_id;
+            const isRemove = context.eventName === 'issues' && context.payload.action === 'unlabeled';
+
+            let fieldId, optionId;
+
+            if (PRIORITY_MAP[label] !== undefined) {
+              fieldId  = PRIORITY_FIELD;
+              optionId = isRemove ? null : PRIORITY_MAP[label];
+            } else if (EFFORT_MAP[label] !== undefined) {
+              fieldId  = EFFORT_FIELD;
+              optionId = isRemove ? null : EFFORT_MAP[label];
+            } else {
+              core.info(`Label "${label}" is not mapped — skipping.`);
+              return;
+            }
+
+            const issueFields = optionId
+              ? [{ fieldId, singleSelectOptionId: optionId }]
+              : [{ fieldId, delete: true }];
+
+            const mutation = `
+              mutation($issueId: ID!, $issueFields: [IssueFieldCreateOrUpdateInput!]!) {
+                setIssueFieldValue(input: { issueId: $issueId, issueFields: $issueFields }) {
+                  issue { number }
+                }
+              }`;
+
+            const result = await github.graphql(mutation, { issueId, issueFields });
+            const num = result.setIssueFieldValue?.issue?.number;
+            core.info(`✓ #${num} — "${label}" → ${fieldId} = ${optionId ?? 'cleared'}`);
