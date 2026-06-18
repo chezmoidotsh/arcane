@@ -1,0 +1,25 @@
+---
+apiVersion: jwt.vault.upbound.io/v1alpha1
+kind: AuthBackend
+metadata:
+  annotations:
+    crossplane.io/external-name: pocket-id
+  name: pocket-id
+spec:
+  forProvider:
+    boundIssuer: https://auth.chezmoi.sh
+    defaultRole: default
+    description: pocket-id sso auth backend for UI/CLI user authentication
+    oidcClientId: 762ac35a-f6ea-4831-ab61-a7e923e4b5cf
+    oidcClientSecretSecretRef:
+      key: client_secret
+      name: pocket-id-client-secret
+      namespace: crossplane
+    oidcDiscoveryUrl: https://auth.chezmoi.sh
+    path: pocket-id
+    tune:
+    - defaultLeaseTtl: 30m
+      listingVisibility: unauth
+      maxLeaseTtl: 2h
+      tokenType: default-service
+    type: oidc

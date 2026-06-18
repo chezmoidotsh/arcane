@@ -2,17 +2,11 @@ name: 🏗️ dist/ Staleness Check
 on:
   push:
     paths:
-      - "projects/*/src/apps/**"
-      - "projects/*/src/argocd/**"
-      - "projects/*/src/infrastructure/kubernetes/**"
-      - "projects/*/src/infrastructure/crossplane/**"
+      - "projects/*/**"
       - "catalog/helm/**"
   pull_request:
     paths:
-      - "projects/*/src/apps/**"
-      - "projects/*/src/argocd/**"
-      - "projects/*/src/infrastructure/kubernetes/**"
-      - "projects/*/src/infrastructure/crossplane/**"
+      - "projects/*/**"
       - "catalog/helm/**"
   merge_group: {}
 

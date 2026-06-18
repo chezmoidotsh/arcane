@@ -1,0 +1,12 @@
+---
+apiVersion: iam.aws.upbound.io/v1beta1
+kind: AccessKey
+metadata:
+  name: amiya.akn.chezmoi.sh-amazonses-pocket-id
+spec:
+  forProvider:
+    userRef:
+      name: amiya.akn.chezmoi.sh-amazonses-pocket-id
+  writeConnectionSecretToRef:
+    name: pocket-id-amazonses-credentials
+    namespace: crossplane-secrets

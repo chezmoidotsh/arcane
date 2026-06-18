@@ -7,20 +7,14 @@ on:
       - ".github/workflows/push,pull_request.compliance-partial.yaml"
       - ".github/scripts/check-zot-coverage.py"
       - "catalog/helm/**"
-      - "projects/*/src/apps/**"
-      - "projects/*/src/infrastructure/kubernetes/**"
-      - "projects/*/src/infrastructure/crossplane/**"
-      - "projects/amiya.akn/dist/apps/zot-registry/**"
+      - "projects/*/dist/**"
 
   pull_request:
     paths:
       - ".github/workflows/push,pull_request.compliance-partial.yaml"
       - ".github/scripts/check-zot-coverage.py"
       - "catalog/helm/**"
-      - "projects/*/src/apps/**"
-      - "projects/*/src/infrastructure/kubernetes/**"
-      - "projects/*/src/infrastructure/crossplane/**"
-      - "projects/amiya.akn/dist/apps/zot-registry/**"
+      - "projects/*/dist/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
