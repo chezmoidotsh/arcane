@@ -24,11 +24,6 @@ spec:
           - path: projects/*/dist/infrastructure/crossplane
           - path: projects/*/dist/infrastructure/crossplane/*/*
             exclude: true
-    - git:
-        repoURL: https://github.com/chezmoidotsh/arcane.git
-        revision: main
-        directories:
-          - path: projects/*/dist/infrastructure/crossplane/providers/*
   syncPolicy:
     # Always preserve Applications on deletion of ApplicationSet
     preserveResourcesOnDeletion: true
@@ -43,7 +38,7 @@ spec:
         source-ref.argocd.argoproj.io/0.repository-url: https://github.com/chezmoidotsh/arcane.git
         source-ref.argocd.argoproj.io/0.target-revision: main
 
-      name: crossplane-{{ index .path.segments 1 }}{{- if gt (len .path.segments) 5 }}-{{ index .path.segments 6 }}{{ end -}}
+      name: crossplane-{{ index .path.segments 1 }}
     spec:
       destination:
         server: https://kubernetes.default.svc
