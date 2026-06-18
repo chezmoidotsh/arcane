@@ -24,15 +24,16 @@ spec:
               {{- fail "Cloudflare provider configuration is required for SES domain mail from" }}
             {{- end }}
             ---
-            apiVersion: dns.cloudflare.crossplane.io/v1alpha1
+            apiVersion: dns.upjet-cloudflare.m.upbound.io/v1alpha1
             kind: Record
             metadata:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: CloudflareTXTDMARC
-              name: {{ $xr.spec.domain | replace "." "-" }}-txt-dmarc # TODO: remove the replace function when the provider-cloudflare supports dots in name
+              name: {{ $xr.spec.domain | replace "." "-" }}-txt-dmarc
+              namespace: crossplane
             spec:
               forProvider:
-                zoneIdSelector: {{ toYaml $xr.spec.providerConfigRefs.cloudflare.zoneIdSelector | nindent 8 }}
+                zoneId: {{ $xr.spec.providerConfigRefs.cloudflare.zoneId }}
                 name: _dmarc.{{ $xr.spec.domain }}
                 type: TXT
                 content: '"v=DMARC1; p={{ $xr.spec.dnsOptions.dmarcOptions.policy | default "none" }}; {{- with $xr.spec.dnsOptions.dmarcOptions.rua }} rua={{ . }};{{ end }}"'
@@ -84,15 +85,16 @@ spec:
             {{- $dkimTokens := (index ($.observed.resources | default dict) "AmazonSESDomainDKIM").resource.status.atProvider.dkimTokens }}
             {{- range $i, $dkimToken := (index ($.observed.resources | default dict) "AmazonSESDomainDKIM").resource.status.atProvider.dkimTokens }}
             ---
-            apiVersion: dns.cloudflare.crossplane.io/v1alpha1
+            apiVersion: dns.upjet-cloudflare.m.upbound.io/v1alpha1
             kind: Record
             metadata:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: CloudflareDKIMRecord{{ $i }}
-              name: cname-{{ $dkimToken }}-domainkey-{{ $xr.spec.domain | replace "." "-" }} # TODO: remove the replace function when the provider-cloudflare supports dots in name
+              name: cname-{{ $dkimToken }}-domainkey-{{ $xr.spec.domain | replace "." "-" }}
+              namespace: crossplane
             spec:
               forProvider:
-                zoneIdSelector: {{ toYaml $xr.spec.providerConfigRefs.cloudflare.zoneIdSelector | nindent 8 }}
+                zoneId: {{ $xr.spec.providerConfigRefs.cloudflare.zoneId }}
                 name: {{ $dkimToken }}._domainkey.{{ $xr.spec.domain }}
                 type: CNAME
                 content: {{ $dkimToken }}.dkim.amazonses.com
@@ -131,15 +133,16 @@ spec:
                 name: {{ $xr.spec.providerConfigRefs.aws.name }}
               {{- end }}
             ---
-            apiVersion: dns.cloudflare.crossplane.io/v1alpha1
+            apiVersion: dns.upjet-cloudflare.m.upbound.io/v1alpha1
             kind: Record
             metadata:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: CloudflareMXSES
-              name: {{ $xr.spec.mailFrom | replace "." "-" }}-{{ $xr.spec.domain | replace "." "-" }}-mx-mailfrom # TODO: remove the replace function when the provider-cloudflare supports dots in name
+              name: {{ $xr.spec.mailFrom | replace "." "-" }}-{{ $xr.spec.domain | replace "." "-" }}-mx-mailfrom
+              namespace: crossplane
             spec:
               forProvider:
-                zoneIdSelector: {{ toYaml $xr.spec.providerConfigRefs.cloudflare.zoneIdSelector | nindent 8 }}
+                zoneId: {{ $xr.spec.providerConfigRefs.cloudflare.zoneId }}
                 name: {{ $xr.spec.mailFrom }}.{{ $xr.spec.domain }}
                 type: MX
                 content: feedback-smtp.{{ $xr.spec.providerConfigRefs.aws.region }}.amazonses.com
@@ -147,15 +150,16 @@ spec:
                 comment: (Crossplane) AWS SES MX record for {{ $xr.spec.domain }}
             {{- end }}
             ---
-            apiVersion: dns.cloudflare.crossplane.io/v1alpha1
+            apiVersion: dns.upjet-cloudflare.m.upbound.io/v1alpha1
             kind: Record
             metadata:
               annotations:
                 gotemplating.fn.crossplane.io/composition-resource-name: CloudflareTXTMailFromSPF
-              name: {{ $xr.spec.domain | replace "." "-" }}-txt-spf-mailfrom # TODO: remove the replace function when the provider-cloudflare supports dots in name
+              name: {{ $xr.spec.domain | replace "." "-" }}-txt-spf-mailfrom
+              namespace: crossplane
             spec:
               forProvider:
-                zoneIdSelector: {{ toYaml $xr.spec.providerConfigRefs.cloudflare.zoneIdSelector | nindent 8 }}
+                zoneId: {{ $xr.spec.providerConfigRefs.cloudflare.zoneId }}
                 name: {{ $xr.spec.mailFrom }}.{{ $xr.spec.domain }}
                 type: TXT
                 content: '"v=spf1 include:amazonses.com ~all"'
