@@ -1,0 +1,18 @@
+---
+apiVersion: account.upjet-cloudflare.m.upbound.io/v1alpha1
+kind: Token
+metadata:
+  name: chezmoi-sh-caddy-dns01-omni
+  namespace: crossplane
+spec:
+  forProvider:
+    accountId: 00736631322131f61ce95f2c235143da
+    name: (chezmoi.sh) - caddy-dns01/omni
+    policies:
+    - effect: allow
+      permissionGroups:
+      - id: c8fed203ed3043cba015a93ad1616f1f
+      - id: 4755a26eedb94da69e1066d98aa820be
+      resources: '{"com.cloudflare.api.account.zone.2734d7b22cf00222046320ed3187cb94":"*"}'
+  writeConnectionSecretToRef:
+    name: chezmoi.sh-cloudflare-token-caddy-dns01-omni
