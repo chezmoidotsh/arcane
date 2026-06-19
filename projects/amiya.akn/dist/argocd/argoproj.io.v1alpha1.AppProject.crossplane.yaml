@@ -8,8 +8,6 @@ metadata:
   namespace: argocd
 spec:
   clusterResourceBlacklist:
-  - group: ""
-    kind: Namespace
   - group: rbac.authorization.k8s.io
     kind: ClusterRole
   - group: rbac.authorization.k8s.io
@@ -20,13 +18,7 @@ spec:
   description: |
     This project is responsible for deploying all Crossplane resources inside current cluster.
   destinations:
-  - namespace: crossplane
-    server: https://kubernetes.default.svc
-  - namespace: crossplane-secrets
-    server: https://kubernetes.default.svc
-  - namespace: kubevault-kvstore
-    server: https://kubernetes.default.svc
-  - namespace: amiya-akn
+  - namespace: '*'
     server: https://kubernetes.default.svc
   namespaceResourceBlacklist: []
   namespaceResourceWhitelist:
