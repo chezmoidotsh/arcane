@@ -26,6 +26,7 @@ configs:
 
           local has_no_status = {
             "ProviderConfig",
+            "ClusterProviderConfig",
             "ProviderConfigUsage"
           }
 
@@ -36,7 +37,7 @@ configs:
           end
 
           if obj.status == nil or next(obj.status) == nil or obj.status.conditions == nil then
-            if obj.kind == "ProviderConfig" and obj.status.users ~= nil then
+            if contains({"ProviderConfig", "ClusterProviderConfig"}, obj.kind) and obj.status.users ~= nil then
               health_status.status = "Healthy"
               health_status.message = "Resource is in use."
               return health_status
@@ -93,6 +94,7 @@ configs:
             "DeploymentRuntimeConfig",
             "ControllerConfig",
             "ProviderConfig",
+            "ClusterProviderConfig",
             "ProviderConfigUsage"
           }
 
@@ -103,7 +105,7 @@ configs:
           end
 
           if obj.status == nil or next(obj.status) == nil or obj.status.conditions == nil then
-            if obj.kind == "ProviderConfig" and obj.status.users ~= nil then
+            if contains({"ProviderConfig", "ClusterProviderConfig"}, obj.kind) and obj.status.users ~= nil then
               health_status.status = "Healthy"
               health_status.message = "Resource is in use."
               return health_status
