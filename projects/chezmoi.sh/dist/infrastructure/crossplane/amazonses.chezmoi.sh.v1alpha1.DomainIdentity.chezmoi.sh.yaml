@@ -17,6 +17,4 @@ spec:
     aws:
       region: us-east-1
     cloudflare:
-      zoneIdSelector:
-        matchLabels:
-          cf.chezmoi.sh/zone: chezmoi.sh
+      zoneId: 2734d7b22cf00222046320ed3187cb94

@@ -31,7 +31,7 @@ spec:
             namespace: crossplane
           spec:
             forProvider:
-              zoneId: 2734d7b22cf00222046320ed3187cb94
+              zoneId: {{ $xr.spec.providerConfigRefs.cloudflare.zoneId }}
               name: _dmarc.{{ $xr.spec.domain }}
               type: TXT
               content: '"v=DMARC1; p={{ $xr.spec.dnsOptions.dmarcOptions.policy | default "none" }}; {{- with $xr.spec.dnsOptions.dmarcOptions.rua }} rua={{ . }};{{ end }}"'
@@ -90,7 +90,7 @@ spec:
             namespace: crossplane
           spec:
             forProvider:
-              zoneId: 2734d7b22cf00222046320ed3187cb94
+              zoneId: {{ $xr.spec.providerConfigRefs.cloudflare.zoneId }}
               name: {{ $dkimToken }}._domainkey.{{ $xr.spec.domain }}
               type: CNAME
               content: {{ $dkimToken }}.dkim.amazonses.com
@@ -136,7 +136,7 @@ spec:
             namespace: crossplane
           spec:
             forProvider:
-              zoneId: 2734d7b22cf00222046320ed3187cb94
+              zoneId: {{ $xr.spec.providerConfigRefs.cloudflare.zoneId }}
               name: {{ $xr.spec.mailFrom }}.{{ $xr.spec.domain }}
               type: MX
               content: feedback-smtp.{{ $xr.spec.providerConfigRefs.aws.region }}.amazonses.com
@@ -153,7 +153,7 @@ spec:
             namespace: crossplane
           spec:
             forProvider:
-              zoneId: 2734d7b22cf00222046320ed3187cb94
+              zoneId: {{ $xr.spec.providerConfigRefs.cloudflare.zoneId }}
               name: {{ $xr.spec.mailFrom }}.{{ $xr.spec.domain }}
               type: TXT
               content: '"v=spf1 include:amazonses.com ~all"'
