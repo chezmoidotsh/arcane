@@ -110,23 +110,12 @@ spec:
   sourceRepos:
     - https://github.com/chezmoidotsh/arcane.git # NOTE: main repository
   destinations:
-    - # NOTE: crossplane resources should only be installed in the crossplane namespace
-      namespace: crossplane
-      server: https://kubernetes.default.svc
-    - # NOTE: crossplane-secrets are used to store all secrets
-      namespace: crossplane-secrets
-      server: https://kubernetes.default.svc
-    - # NOTE: in order to configure RBAC on the "vault", this namespace should be allowed too
-      # TODO: when all crossplane secret will be migrated to Vault, remove this namespace
-      namespace: kubevault-kvstore
-      server: https://kubernetes.default.svc
-    - # NOTE: wildbitca Cloudflare Tokens are deployed into the amiya-akn namespace
-      namespace: amiya-akn
+    - # NOTE: crossplane resources can land in any namespace (Tokens write connection
+      # secrets to their own namespace, so each project needs its own namespace)
+      namespace: "*"
       server: https://kubernetes.default.svc
   clusterResourceWhitelist: [{ group: "*", kind: "*" }]
   clusterResourceBlacklist:
-    - group: ""
-      kind: Namespace
     - group: rbac.authorization.k8s.io
       kind: ClusterRole
     - group: rbac.authorization.k8s.io
