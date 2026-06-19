@@ -102,23 +102,13 @@ spec:
                           to use.
                         example: default
                         type: string
-                      zoneIdSelector:
+                      zoneId:
                         description: |
-                          Selector for the Cloudflare zone to use for managing resources.
-                        properties:
-                          matchLabels:
-                            additionalProperties:
-                              description: |
-                                Label key and value to match on the Cloudflare zone to use for managing resources.
-                              type: string
-                            description: |
-                              Labels to match on the Cloudflare zone to use for managing resources.
-                            type: object
-                        required:
-                        - matchLabels
-                        type: object
+                          The Cloudflare zone ID to use for managing DNS resources.
+                        example: 2734d7b22cf00222046320ed3187cb94
+                        type: string
                     required:
-                    - zoneIdSelector
+                    - zoneId
                     type: object
                 type: object
             required:
