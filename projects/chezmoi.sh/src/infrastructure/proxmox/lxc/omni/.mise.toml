@@ -99,9 +99,9 @@ dir = "{{ config_root }}"
 run = '''
   set -euo pipefail
 
-  echo "[INFO] Fetching token from crossplane-secrets/chezmoi.sh-cloudflare-token-caddy-dns01-omni..." >&2
+  echo "[INFO] Fetching token from crossplane/chezmoi.sh-cloudflare-token-caddy-dns01-omni..." >&2
   TOKEN=$(
-    kubectl get secret -n crossplane-secrets chezmoi.sh-cloudflare-token-caddy-dns01-omni \
+    kubectl get secret -n crossplane chezmoi.sh-cloudflare-token-caddy-dns01-omni \
     -o jsonpath='{.data.attribute\.value}' | base64 -d
   )
   [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — is the Crossplane APIToken Ready?" >&2; exit 1; }
