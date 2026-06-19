@@ -30,3 +30,16 @@ spec:
         kind: Secret
         name: wildcard.chezmoi.sh-certificate
       mode: Terminate
+  - allowedRoutes:
+      namespaces:
+        from: All
+    hostname: '*.akn.chezmoi.sh'
+    name: akn.chezmoi.sh-websecure
+    port: 443
+    protocol: HTTPS
+    tls:
+      certificateRefs:
+      - group: ""
+        kind: Secret
+        name: wildcard.chezmoi.sh-certificate
+      mode: Terminate

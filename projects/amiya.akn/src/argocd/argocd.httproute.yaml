@@ -12,7 +12,7 @@ spec:
       kind: Gateway
       name: default
       namespace: in-gateway-system
-      sectionName: chezmoi.sh-websecure
+      sectionName: akn.chezmoi.sh-websecure
   hostnames:
     - argocd.akn.chezmoi.sh
   rules:

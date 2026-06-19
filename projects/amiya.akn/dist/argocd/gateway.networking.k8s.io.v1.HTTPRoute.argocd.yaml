@@ -15,7 +15,7 @@ spec:
     kind: Gateway
     name: default
     namespace: in-gateway-system
-    sectionName: chezmoi.sh-websecure
+    sectionName: akn.chezmoi.sh-websecure
   rules:
   - backendRefs:
     - group: ""
