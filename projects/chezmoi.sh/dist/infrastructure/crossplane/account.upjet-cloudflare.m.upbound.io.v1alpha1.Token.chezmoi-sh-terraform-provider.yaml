@@ -23,4 +23,3 @@ spec:
       resources: '{"com.cloudflare.api.account.00736631322131f61ce95f2c235143da":"*"}'
   writeConnectionSecretToRef:
     name: chezmoi.sh-cloudflare-token-terraform-provider
-    namespace: crossplane-secrets
