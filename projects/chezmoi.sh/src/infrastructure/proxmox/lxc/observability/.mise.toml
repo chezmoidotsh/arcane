@@ -55,8 +55,8 @@ run = '''
   set -euo pipefail
 
   # --- Fetch Crossplane-provisioned tokens ---------------------------------
-  echo "[INFO] Fetching Cloudflare token (crossplane/chezmoi.sh-cloudflare-token-o11y)..." >&2
-  CF_TOKEN=$(kubectl get secret -n crossplane chezmoi.sh-cloudflare-token-o11y \
+  echo "[INFO] Fetching Cloudflare token (chezmoi-sh/chezmoi.sh-cloudflare-token-o11y)..." >&2
+  CF_TOKEN=$(kubectl get secret -n chezmoi-sh chezmoi.sh-cloudflare-token-o11y \
     -o jsonpath='{.data.attribute\.value}' | base64 -d)
   [[ -n "${CF_TOKEN}" ]] || { echo "[ERROR] Empty Cloudflare token — is the APIToken Ready?" >&2; exit 1; }
 

@@ -12,7 +12,7 @@
 #
 # Security:
 #   Two-policy split prevents zone-level permission groups from reaching account
-#   resources (and vice versa). The connection secret lands in the crossplane
+#   resources (and vice versa). The connection secret lands in the chezmoi-sh
 #   namespace and is synchronized to Vault (vault.chezmoi.sh) via the co-located
 #   PushSecret.
 ---
@@ -20,7 +20,7 @@ apiVersion: account.upjet-cloudflare.m.upbound.io/v1alpha1
 kind: Token
 metadata:
   name: chezmoi-sh-terraform-provider
-  namespace: crossplane
+  namespace: chezmoi-sh
 spec:
   forProvider:
     name: (chezmoi.sh) - terraform-provider
@@ -45,7 +45,7 @@ apiVersion: external-secrets.io/v1alpha1
 kind: PushSecret
 metadata:
   name: chezmoi.sh-cloudflare-token-terraform-provider
-  namespace: crossplane
+  namespace: chezmoi-sh
 spec:
   refreshInterval: 1h
   secretStoreRefs:

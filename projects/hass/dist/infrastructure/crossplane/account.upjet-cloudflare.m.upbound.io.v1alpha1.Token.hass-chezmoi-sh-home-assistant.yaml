@@ -3,7 +3,7 @@ apiVersion: account.upjet-cloudflare.m.upbound.io/v1alpha1
 kind: Token
 metadata:
   name: hass-chezmoi-sh-home-assistant
-  namespace: crossplane
+  namespace: hass
 spec:
   forProvider:
     accountId: 00736631322131f61ce95f2c235143da

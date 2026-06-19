@@ -11,15 +11,15 @@
 #
 # Security:
 #   No account-level permissions. The connection secret lands in the
-#   crossplane namespace; retrieve it with:
-#     kubectl get secret -n crossplane chezmoi.sh-cloudflare-token-caddy-dns01-zot \
+#   chezmoi-sh namespace; retrieve it with:
+#     kubectl get secret -n chezmoi-sh chezmoi.sh-cloudflare-token-caddy-dns01-zot \
 #       -o jsonpath='{.data.attribute\.value}' | base64 -d
 ---
 apiVersion: account.upjet-cloudflare.m.upbound.io/v1alpha1
 kind: Token
 metadata:
   name: chezmoi-sh-caddy-dns01-zot
-  namespace: crossplane
+  namespace: chezmoi-sh
 spec:
   forProvider:
     name: (chezmoi.sh) - caddy-dns01/zot-registry

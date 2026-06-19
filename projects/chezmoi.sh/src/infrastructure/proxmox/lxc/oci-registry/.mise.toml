@@ -44,16 +44,16 @@
 # so it can be baked into the LXC image at build time.
 #
 # The Crossplane APIToken resource must be Ready before running this task.
-# Check with: kubectl get apitoken chezmoi-sh-caddy-dns01-zot -n crossplane
+# Check with: kubectl get apitoken chezmoi-sh-caddy-dns01-zot -n chezmoi-sh
 
 [tasks."lxc:secrets:sync"]
 description = "Fetch Cloudflare DNS-01 token from cluster and write secrets/caddy.sops.env"
 run = '''
   set -euo pipefail
 
-  echo "[INFO] Fetching token from crossplane/chezmoi.sh-cloudflare-token-caddy-dns01-zot..." >&2
+  echo "[INFO] Fetching token from chezmoi-sh/chezmoi.sh-cloudflare-token-caddy-dns01-zot..." >&2
   TOKEN=$(
-    kubectl get secret -n crossplane chezmoi.sh-cloudflare-token-caddy-dns01-zot \
+    kubectl get secret -n chezmoi-sh chezmoi.sh-cloudflare-token-caddy-dns01-zot \
     -o jsonpath='{.data.attribute\.value}' | base64 -d \
   )
   [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — is the Crossplane APIToken Ready?" >&2; exit 1; }

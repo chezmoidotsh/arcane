@@ -3,7 +3,7 @@ apiVersion: account.upjet-cloudflare.m.upbound.io/v1alpha1
 kind: Token
 metadata:
   name: chezmoi-sh-caddy-dns01-omni
-  namespace: crossplane
+  namespace: chezmoi-sh
 spec:
   forProvider:
     accountId: 00736631322131f61ce95f2c235143da
