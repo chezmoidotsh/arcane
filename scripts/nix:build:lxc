@@ -127,26 +127,28 @@ fi
 #
 # In a git worktree, REPO_ROOT is the main repo root (not the worktree root)
 # so Docker sees a real .git directory rather than a .git file whose absolute
-# path is unreachable inside the sandbox. The worktree's actual flake files
-# are bind-mounted over the main-branch copy, and nix evaluates via path:.
-# (no git filtering) so worktree-only files like new modules are included.
+# path is unreachable inside the sandbox.
+#
+# Worktree build strategy:
+#   The worktree's changed files (flake dir + catalog) are bind-mounted over
+#   the main-repo copy at /src. Inside Docker we then:
+#     1. git clone --local /src into a temp dir (fast, hardlinks)
+#     2. Copy the overlay files into the clone (so the clone sees worktree
+#        content on the filesystem)
+#     3. git add -A in the clone to stage them
+#     4. Run nix build . from the clone's flake dir
+#   This approach uses the normal git-ref evaluation (not path:.) so that
+#   out-of-directory module imports (e.g. ../../../../catalog/nix/siderolabs/…)
+#   resolve correctly via the full git tree — something path:. can't do since
+#   it copies only the flake directory into an isolated Nix store path.
 WORKTREE_OVERLAY_FLAGS=()
-FLAKE_REF="."
-OVERRIDE_INPUT_FLAGS=""
+IS_WORKTREE_BUILD=""
 if [[ -n ${WORKTREE_FLAKE_OVERLAY-} ]]; then
-  # Mount both the worktree's flake dir and its catalog/nix directory over
-  # the corresponding paths inside the main-repo mount. This ensures that
-  # in-worktree catalog changes (new module options, etc.) are visible to
-  # the Nix build without touching the main-branch copy.
   WORKTREE_OVERLAY_FLAGS=(
     -v "${WORKTREE_FLAKE_OVERLAY}:/src/${RELATIVE_FLAKE_PATH}"
     -v "${WORKTREE_ROOT}/catalog/nix:/src/catalog/nix"
   )
-  # path:. copies only the flake dir — relative inputs like
-  # path:../../../../../../../catalog/nix would resolve outside the isolated
-  # copy. Override arcane-catalog explicitly so nix finds it under /src.
-  FLAKE_REF="path:."
-  OVERRIDE_INPUT_FLAGS="--override-input arcane-catalog path:/src/catalog/nix --no-write-lock-file"
+  IS_WORKTREE_BUILD="1"
 fi
 
 docker run --rm \
@@ -161,8 +163,8 @@ docker run --rm \
   -e USE_IMPURE="${USE_IMPURE}" \
   -e TARGET_SYSTEM="${TARGET_SYSTEM}" \
   -e OUTPUT_NAME="${OUTPUT_NAME}" \
-  -e FLAKE_REF="${FLAKE_REF}" \
-  -e OVERRIDE_INPUT_FLAGS="${OVERRIDE_INPUT_FLAGS}" \
+  -e IS_WORKTREE_BUILD="${IS_WORKTREE_BUILD}" \
+  -e RELATIVE_FLAKE_PATH="${RELATIVE_FLAKE_PATH}" \
   nixos/nix sh -c '
     set -euo pipefail
     rm -rf /homeless-shelter
@@ -175,11 +177,25 @@ docker run --rm \
 
     SYSTEM_ARG="--system ${TARGET_SYSTEM}"
 
+    # Worktree mode: the overlay mounts at /src already expose the worktree
+    # files on the filesystem, but Nix git evaluation reads the git INDEX
+    # (main-branch content). Fix: clone the repo locally, copy the overlay
+    # files into the clone, stage them, and evaluate from the clone.
+    if [[ -n "${IS_WORKTREE_BUILD:-}" ]]; then
+      WORK_DIR=$(mktemp -d)
+      git clone --quiet --local /src "${WORK_DIR}"
+      # Filesystem at /src has overlay files already applied by Docker mounts
+      cp -rf "/src/${RELATIVE_FLAKE_PATH}/." "${WORK_DIR}/${RELATIVE_FLAKE_PATH}/"
+      cp -rf /src/catalog/nix/. "${WORK_DIR}/catalog/nix/"
+      git -C "${WORK_DIR}" add -A
+      cd "${WORK_DIR}/${RELATIVE_FLAKE_PATH}"
+    fi
+
     # shellcheck disable=SC2086
     if [[ -x /tools/bin/nom ]]; then
-        /tools/bin/nom build --extra-experimental-features "nix-command flakes" ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace ${OVERRIDE_INPUT_FLAGS} "${FLAKE_REF:-.}#default" --out-link result
+        /tools/bin/nom build --extra-experimental-features "nix-command flakes" ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace ".#default" --out-link result
     else
-        nix --extra-experimental-features "nix-command flakes" build ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace ${OVERRIDE_INPUT_FLAGS} "${FLAKE_REF:-.}#default" --out-link result
+        nix --extra-experimental-features "nix-command flakes" build ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace ".#default" --out-link result
     fi
 
     # Copy all .tar.xz out of the read-only Nix store via the result symlink.
