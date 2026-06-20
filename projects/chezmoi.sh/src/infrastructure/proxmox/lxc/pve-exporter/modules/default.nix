@@ -4,6 +4,7 @@
 { ... }: {
   imports = [
     ./pve-exporter.nix
+    ./node-exporter.nix
     ./o11y.nix
     ./hardening.nix
   ];

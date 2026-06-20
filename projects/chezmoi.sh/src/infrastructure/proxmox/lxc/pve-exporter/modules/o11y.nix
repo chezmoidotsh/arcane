@@ -46,6 +46,10 @@
           jobName = "pve_exporter";
           targets = [ "127.0.0.1:9221/pve?target=${pveHost}&cluster=1&node=1" ];
         }
+        {
+          jobName = "node_exporter";
+          targets = [ "127.0.0.1:9100" ];
+        }
       ];
     };
 
