@@ -4,6 +4,6 @@ kind: Function
 metadata:
   name: function-auto-ready
 spec:
-  package: xpkg.upbound.io/crossplane-contrib/function-auto-ready:v0.6.5
+  package: oci.chezmoi.sh/xpkg.upbound.io/crossplane-contrib/function-auto-ready:v0.6.5
   runtimeConfigRef:
     name: hardened

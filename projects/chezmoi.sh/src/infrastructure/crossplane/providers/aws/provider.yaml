@@ -4,7 +4,7 @@ kind: Provider
 metadata:
   name: upbound-provider-family-aws
 spec:
-  package: xpkg.upbound.io/upbound/provider-family-aws:v2.6.0
+  package: oci.chezmoi.sh/xpkg.upbound.io/upbound/provider-family-aws:v2.6.0
   runtimeConfigRef:
     name: hardened
 ---
@@ -13,7 +13,7 @@ kind: Provider
 metadata:
   name: provider-aws-iam
 spec:
-  package: xpkg.upbound.io/upbound/provider-aws-iam:v2.6.0
+  package: oci.chezmoi.sh/xpkg.upbound.io/upbound/provider-aws-iam:v2.6.0
   runtimeConfigRef:
     name: hardened
 ---
@@ -22,6 +22,6 @@ kind: Provider
 metadata:
   name: provider-aws-ses
 spec:
-  package: xpkg.upbound.io/upbound/provider-aws-ses:v2.6.0
+  package: oci.chezmoi.sh/xpkg.upbound.io/upbound/provider-aws-ses:v2.6.0
   runtimeConfigRef:
     name: hardened

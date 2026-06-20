@@ -4,6 +4,6 @@ kind: Provider
 metadata:
   name: upbound-provider-vault
 spec:
-  package: xpkg.upbound.io/upbound/provider-vault:v3.0.7
+  package: oci.chezmoi.sh/xpkg.upbound.io/upbound/provider-vault:v3.0.7
   runtimeConfigRef:
     name: hardened
