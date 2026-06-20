@@ -5,9 +5,11 @@ import rego.v1
 default local_registry := "oci.chezmoi.sh"
 
 default excluded_namespaces := {
-    "kube-system", # Kubernetes system components (e.g. CoreDNS, kube-proxy) may pull from public registries — avoid OCI dependency for critical cluster components
-    "kube-public", # Public namespace, typically read-only and used for cluster info — exclude from OCI enforcement
+    "kube-system",    # Kubernetes system components (e.g. CoreDNS, kube-proxy) may pull from public registries — avoid OCI dependency for critical cluster components
+    "kube-public",    # Public namespace, typically read-only and used for cluster info — exclude from OCI enforcement
     "kube-node-lease", # Node lease namespace, used for node heartbeats — exclude from OCI enforcement
+    "longhorn-system", # Longhorn images still pull from docker.io — migrate to oci.chezmoi.sh in a dedicated follow-up PR
+    "argocd",         # ArgoCD manages the GitOps reconciliation loop — must stay schedulable if oci.chezmoi.sh is down
 }
 
 # ──────────────────────────────────────────────────────────────────────────────

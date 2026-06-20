@@ -26,18 +26,13 @@ test_non_excluded_namespace if {
     not is_excluded_namespace({"metadata": {"namespace": "default"}})
 }
 
-# longhorn-system, zot-registry, argocd are no longer excluded
-# (Zot now runs as a standalone Proxmox LXC, not on K8s with Longhorn storage)
-test_longhorn_system_no_longer_excluded if {
-    not is_excluded_namespace({"metadata": {"namespace": "longhorn-system"}})
+test_excluded_namespace_longhorn if {
+    is_excluded_namespace({"metadata": {"namespace": "longhorn-system"}})
 }
 
+# zot-registry namespace is removed with the Kubernetes zot-registry deployment
 test_zot_registry_no_longer_excluded if {
     not is_excluded_namespace({"metadata": {"namespace": "zot-registry"}})
-}
-
-test_argocd_no_longer_excluded if {
-    not is_excluded_namespace({"metadata": {"namespace": "argocd"}})
 }
 
 test_deployment_compliant if {
@@ -190,26 +185,7 @@ test_bootstrap_namespace_denies_local_registry if {
     count(violations) == 1
 }
 
-# longhorn-system now requires oci.chezmoi.sh (no more bootstrap exclusion)
-test_longhorn_system_requires_local_registry if {
-    violations := {msg | some msg in deny with input as {
-        "apiVersion": "apps/v1",
-        "kind": "DaemonSet",
-        "metadata": {"name": "longhorn-manager", "namespace": "longhorn-system"},
-        "spec": {
-            "template": {
-                "spec": {
-                    "containers": [
-                        {"name": "longhorn-manager", "image": "docker.io/longhornio/longhorn-manager:latest"},
-                    ],
-                },
-            },
-        },
-    }}
-    count(violations) == 1
-}
-
-test_longhorn_system_local_registry_accepted if {
+test_bootstrap_namespace_denies_local_registry_longhorn if {
     violations := {msg | some msg in deny with input as {
         "apiVersion": "apps/v1",
         "kind": "DaemonSet",
@@ -224,44 +200,7 @@ test_longhorn_system_local_registry_accepted if {
             },
         },
     }}
-    count(violations) == 0
-}
-
-# argocd now requires oci.chezmoi.sh (no more bootstrap exclusion)
-test_argocd_requires_local_registry if {
-    violations := {msg | some msg in deny with input as {
-        "apiVersion": "apps/v1",
-        "kind": "Deployment",
-        "metadata": {"name": "argocd-server", "namespace": "argocd"},
-        "spec": {
-            "template": {
-                "spec": {
-                    "containers": [
-                        {"name": "argocd-server", "image": "quay.io/argoproj/argocd:latest"},
-                    ],
-                },
-            },
-        },
-    }}
     count(violations) == 1
-}
-
-test_argocd_local_registry_accepted if {
-    violations := {msg | some msg in deny with input as {
-        "apiVersion": "apps/v1",
-        "kind": "Deployment",
-        "metadata": {"name": "argocd-server", "namespace": "argocd"},
-        "spec": {
-            "template": {
-                "spec": {
-                    "containers": [
-                        {"name": "argocd-server", "image": "oci.chezmoi.sh/quay.io/argoproj/argocd:latest"},
-                    ],
-                },
-            },
-        },
-    }}
-    count(violations) == 0
 }
 
 test_cluster_scoped_resource_local_image_passes if {
@@ -562,18 +501,46 @@ test_combine_mode_bootstrap_namespace_local_registry_denied if {
             {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
         ]}}},
     }}]}
-    count(violations) == 0  # longhorn-system is no longer excluded; local registry is accepted
+    count(violations) == 1
 }
 
-test_combine_mode_longhorn_public_registry_denied if {
-    violations := {msg | some msg in deny with input as [{"path": "ds.yaml", "contents": {
+test_excluded_namespace_argocd if {
+    is_excluded_namespace({"metadata": {"namespace": "argocd"}})
+}
+
+test_argocd_namespace_allows_public_registry if {
+    violations := {msg | some msg in deny with input as {
         "apiVersion": "apps/v1",
-        "kind": "DaemonSet",
-        "metadata": {"name": "app", "namespace": "longhorn-system"},
-        "spec": {"template": {"spec": {"containers": [
-            {"name": "app", "image": "docker.io/library/nginx:latest"},
-        ]}}},
-    }}]}
-    count(violations) == 1  # longhorn-system must use oci.chezmoi.sh
+        "kind": "Deployment",
+        "metadata": {"name": "argocd-server", "namespace": "argocd"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "containers": [
+                        {"name": "argocd-server", "image": "quay.io/argoproj/argocd:latest"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 0
+}
+
+test_argocd_namespace_denies_local_registry if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "Deployment",
+        "metadata": {"name": "argocd-server", "namespace": "argocd"},
+        "spec": {
+            "template": {
+                "spec": {
+                    "containers": [
+                        {"name": "argocd-server", "image": "oci.chezmoi.sh/quay.io/argoproj/argocd:latest"},
+                    ],
+                },
+            },
+        },
+    }}
+    count(violations) == 1
 }
 
