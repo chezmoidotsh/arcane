@@ -181,9 +181,12 @@ docker run --rm \
     # files on the filesystem, but Nix git evaluation reads the git INDEX
     # (main-branch content). Fix: clone the repo locally, copy the overlay
     # files into the clone, stage them, and evaluate from the clone.
+    # The output tarballs are copied back to the original /src/… directory
+    # so the host can find them after the container exits.
+    OUTPUT_DIR=$(pwd)
     if [[ -n "${IS_WORKTREE_BUILD:-}" ]]; then
       WORK_DIR=$(mktemp -d)
-      git clone --quiet --local /src "${WORK_DIR}"
+      git clone --quiet --no-hardlinks /src "${WORK_DIR}"
       # Filesystem at /src has overlay files already applied by Docker mounts
       cp -rf "/src/${RELATIVE_FLAKE_PATH}/." "${WORK_DIR}/${RELATIVE_FLAKE_PATH}/"
       cp -rf /src/catalog/nix/. "${WORK_DIR}/catalog/nix/"
@@ -217,6 +220,12 @@ docker run --rm \
         exit 1
     fi
     rm -f result
+
+    # In worktree mode the build ran in a temp clone; copy the output
+    # tarballs back to the bind-mounted /src path visible to the host.
+    if [[ -n "${IS_WORKTREE_BUILD:-}" ]]; then
+      cp -f ./*.tar.xz "${OUTPUT_DIR}/"
+    fi
   '
 
 if [[ -n ${OUTPUT_NAME} ]]; then
