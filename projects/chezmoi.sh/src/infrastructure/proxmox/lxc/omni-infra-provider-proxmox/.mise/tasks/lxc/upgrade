@@ -14,7 +14,7 @@ CONFIG_ROOT="$(pwd)"
 source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
 lxc_init "omni-infra-provider-proxmox" "${CONFIG_ROOT}" _omni_proxmox_provider
-lxc_services "omni-infra-provider-proxmox"
+lxc_services "omni-infra-provider-proxmox" "prometheus-node-exporter" "lxc-agent"
 
 lxc_upgrade \
   --pve-host "${usage_pve_host}" \

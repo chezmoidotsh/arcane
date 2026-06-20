@@ -34,6 +34,8 @@
       ];
     };
 
+    nodeExporter.enable = true;
+
     hostsOverride = {
       "10.0.0.252" = [ "o11y.chezmoi.sh" ];
     };
