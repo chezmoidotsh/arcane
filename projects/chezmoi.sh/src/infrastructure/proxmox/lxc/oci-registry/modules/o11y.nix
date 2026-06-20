@@ -18,6 +18,8 @@
       ];
     };
 
+    nodeExporter.enable = true;
+
     logs.extraTransforms = [
       { name = "transforms.route.yaml"; content = builtins.readFile ./o11y.extraTransforms/transforms.route.yaml; }
       { name = "transforms.zot.yaml"; content = builtins.readFile ./o11y.extraTransforms/transforms.zot.yaml; }
