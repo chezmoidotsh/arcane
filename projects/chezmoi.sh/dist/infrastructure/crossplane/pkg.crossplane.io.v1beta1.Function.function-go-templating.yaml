@@ -4,6 +4,6 @@ kind: Function
 metadata:
   name: function-go-templating
 spec:
-  package: xpkg.upbound.io/crossplane-contrib/function-go-templating:v0.12.1
+  package: oci.chezmoi.sh/xpkg.upbound.io/crossplane-contrib/function-go-templating:v0.12.1
   runtimeConfigRef:
     name: hardened

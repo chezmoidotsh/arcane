@@ -69,8 +69,11 @@ in
     # Upstream Kubernetes images.
     (mkUpstream "registry.k8s.io")
 
-    # Crossplane provider packages.
+    # Crossplane provider packages (crossplane-contrib).
     (mkUpstream "xpkg.crossplane.io")
+
+    # Upbound marketplace packages (provider-family-aws, provider-vault, …).
+    (mkUpstream "xpkg.upbound.io")
 
     # Microsoft Container Registry.
     (mkUpstream "mcr.microsoft.com")

@@ -223,6 +223,13 @@ configFiles:
               "onDemand": true,
               "preserveDigest": true,
               "tlsVerify": true
+            },
+            {
+              "urls": ["https://xpkg.upbound.io"],
+              "content": [{"destination": "/xpkg.upbound.io", "prefix": "**"}],
+              "onDemand": true,
+              "preserveDigest": true,
+              "tlsVerify": true
             }
           ]
         }

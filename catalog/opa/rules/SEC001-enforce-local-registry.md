@@ -48,6 +48,7 @@ prefix, eliminating the need for runtime mutation.
 | ------------------------------------- | -------------------------------------------------------------- |
 | `policies/SEC001:kubernetes.rego`     | Native Kubernetes resources (Pods, Deployments, DaemonSets, …) |
 | `policies/SEC001:cloudnative-pg.rego` | CloudNative-PG `ImageCatalog` and `ClusterImageCatalog`        |
+| `policies/SEC001:crossplane.rego`     | Crossplane `Provider` and `Function` (`.spec.package`)         |
 
 ## What is checked
 
@@ -69,6 +70,18 @@ volume fields must reference `oci.chezmoi.sh`:
 
 * `postgresql.cnpg.io/v1` kind `ImageCatalog` → `.spec.images[].image`
 * `postgresql.cnpg.io/v1` kind `ClusterImageCatalog` → `.spec.images[].image`
+
+### Crossplane resources
+
+Crossplane `Provider` and `Function` resources reference OCI packages through
+`.spec.package` rather than a pod spec container image field. This field is
+functionally equivalent to a container image pull and must equally resolve
+through `oci.chezmoi.sh`.
+
+* `pkg.crossplane.io/v1` kind `Provider` → `.spec.package`
+* `pkg.crossplane.io/v1beta1` kind `Function` → `.spec.package`
+
+These resources are cluster-scoped; namespace exclusions do not apply.
 
 ## Namespace enforcement model
 
@@ -106,5 +119,5 @@ mise exec conftest -- conftest test <manifest.yaml> -p catalog/opa/policies/
 mise exec opa -- opa test catalog/opa/policies/ -v
 ```
 
-CI enforcement is **non-blocking** during the initial rollout (see ADR-012).
-The policy will transition to blocking once all existing manifests are compliant.
+CI enforcement is **blocking** (no `continue-on-error`). All manifests in
+`projects/*/dist/` must be compliant before merging.

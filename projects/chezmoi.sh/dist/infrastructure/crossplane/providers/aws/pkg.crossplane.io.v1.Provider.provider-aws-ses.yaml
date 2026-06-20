@@ -4,6 +4,6 @@ kind: Provider
 metadata:
   name: provider-aws-ses
 spec:
-  package: xpkg.upbound.io/upbound/provider-aws-ses:v2.6.0
+  package: oci.chezmoi.sh/xpkg.upbound.io/upbound/provider-aws-ses:v2.6.0
   runtimeConfigRef:
     name: hardened
