@@ -124,10 +124,38 @@ fi
 # We mount the entire repository into the container at /src.
 # The working directory is set to the specific flake location within /src
 # so Nix can access git context and use self.lastModifiedDate.
+#
+# In a git worktree, REPO_ROOT is the main repo root (not the worktree root)
+# so Docker sees a real .git directory rather than a .git file whose absolute
+# path is unreachable inside the sandbox.
+#
+# Worktree build strategy:
+#   The worktree's changed files (flake dir + catalog) are bind-mounted over
+#   the main-repo copy at /src. Inside Docker we then:
+#     1. git clone --local /src into a temp dir (fast, hardlinks)
+#     2. Copy the overlay files into the clone (so the clone sees worktree
+#        content on the filesystem)
+#     3. git add -A in the clone to stage them
+#     4. Run nix build . from the clone's flake dir
+#   This approach uses the normal git-ref evaluation (not path:.) so that
+#   out-of-directory module imports (e.g. ../../../../catalog/nix/siderolabs/…)
+#   resolve correctly via the full git tree — something path:. can't do since
+#   it copies only the flake directory into an isolated Nix store path.
+WORKTREE_OVERLAY_FLAGS=()
+IS_WORKTREE_BUILD=""
+if [[ -n ${WORKTREE_FLAKE_OVERLAY-} ]]; then
+  WORKTREE_OVERLAY_FLAGS=(
+    -v "${WORKTREE_FLAKE_OVERLAY}:/src/${RELATIVE_FLAKE_PATH}"
+    -v "${WORKTREE_ROOT}/catalog/nix:/src/catalog/nix"
+  )
+  IS_WORKTREE_BUILD="1"
+fi
+
 docker run --rm \
   -v "${NIX_CACHE_VOLUME}:/nix" \
   -v "${NIX_TOOLS_VOLUME}:/tools" \
   -v "${REPO_ROOT}:/src" \
+  ${WORKTREE_OVERLAY_FLAGS[@]+"${WORKTREE_OVERLAY_FLAGS[@]}"} \
   -w "/src/${RELATIVE_FLAKE_PATH:-.}" \
   ${DOCKER_TTY_FLAGS[@]+"${DOCKER_TTY_FLAGS[@]}"} \
   ${PASSTHROUGH_ENV_FLAGS[@]+"${PASSTHROUGH_ENV_FLAGS[@]}"} \
@@ -135,6 +163,8 @@ docker run --rm \
   -e USE_IMPURE="${USE_IMPURE}" \
   -e TARGET_SYSTEM="${TARGET_SYSTEM}" \
   -e OUTPUT_NAME="${OUTPUT_NAME}" \
+  -e IS_WORKTREE_BUILD="${IS_WORKTREE_BUILD}" \
+  -e RELATIVE_FLAKE_PATH="${RELATIVE_FLAKE_PATH}" \
   nixos/nix sh -c '
     set -euo pipefail
     rm -rf /homeless-shelter
@@ -147,10 +177,28 @@ docker run --rm \
 
     SYSTEM_ARG="--system ${TARGET_SYSTEM}"
 
+    # Worktree mode: the overlay mounts at /src already expose the worktree
+    # files on the filesystem, but Nix git evaluation reads the git INDEX
+    # (main-branch content). Fix: clone the repo locally, copy the overlay
+    # files into the clone, stage them, and evaluate from the clone.
+    # The output tarballs are copied back to the original /src/… directory
+    # so the host can find them after the container exits.
+    OUTPUT_DIR=$(pwd)
+    if [[ -n "${IS_WORKTREE_BUILD:-}" ]]; then
+      WORK_DIR=$(mktemp -d)
+      git clone --quiet --no-hardlinks /src "${WORK_DIR}"
+      # Filesystem at /src has overlay files already applied by Docker mounts
+      cp -rf "/src/${RELATIVE_FLAKE_PATH}/." "${WORK_DIR}/${RELATIVE_FLAKE_PATH}/"
+      cp -rf /src/catalog/nix/. "${WORK_DIR}/catalog/nix/"
+      git -C "${WORK_DIR}" add -A
+      cd "${WORK_DIR}/${RELATIVE_FLAKE_PATH}"
+    fi
+
+    # shellcheck disable=SC2086
     if [[ -x /tools/bin/nom ]]; then
-        /tools/bin/nom build --extra-experimental-features "nix-command flakes" ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace .#default --out-link result
+        /tools/bin/nom build --extra-experimental-features "nix-command flakes" ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace ".#default" --out-link result
     else
-        nix --extra-experimental-features "nix-command flakes" build ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace .#default --out-link result
+        nix --extra-experimental-features "nix-command flakes" build ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace ".#default" --out-link result
     fi
 
     # Copy all .tar.xz out of the read-only Nix store via the result symlink.
@@ -172,6 +220,12 @@ docker run --rm \
         exit 1
     fi
     rm -f result
+
+    # In worktree mode the build ran in a temp clone; copy the output
+    # tarballs back to the bind-mounted /src path visible to the host.
+    if [[ -n "${IS_WORKTREE_BUILD:-}" ]]; then
+      cp -f ./*.tar.xz "${OUTPUT_DIR}/"
+    fi
   '
 
 if [[ -n ${OUTPUT_NAME} ]]; then

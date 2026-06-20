@@ -14,7 +14,7 @@ CONFIG_ROOT="$(pwd)"
 source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
 lxc_init "observability" "${CONFIG_ROOT}" _o11y
-lxc_services "caddy" "vector" "victoriametrics" "victorialogs" "victoriatraces" "vmalert" "alertmanager" "lxc-agent"
+lxc_services "caddy" "vector" "victoriametrics" "victorialogs" "victoriatraces" "vmalert" "alertmanager" "prometheus-node-exporter" "lxc-agent"
 lxc_mp "mp0" "o11y" 100980
 lxc_mp "mp0" "caddy" 100997
 lxc_e2e_hint "curl -sSf https://o11y.chezmoi.sh/metrics/api/v1/query?query=up"

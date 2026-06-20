@@ -14,7 +14,7 @@ CONFIG_ROOT="$(pwd)"
 source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
 lxc_init "oci-registry" "${CONFIG_ROOT}" _oci_registry
-lxc_services "caddy" "zot" "lxc-agent"
+lxc_services "caddy" "zot" "prometheus-node-exporter" "lxc-agent"
 lxc_mp "mp0" "zot" 100994
 lxc_mp "mp0" "caddy" 100997
 lxc_e2e_hint "curl -sSf https://oci.chezmoi.sh/v2/"

@@ -46,7 +46,7 @@
       # version itself is tracked in catalog/nix/siderolabs/omni/omni.nix
       # and bumped by Renovate. Bump this date before every `mise run
       # lxc:build`; append -N for multiple builds on the same day.
-      version = "2026.06.19";
+      version = "2026.06.20";
 
       # -----------------------------------------------------------------------
       # Build-time secrets, forwarded to the modules via _module.args.

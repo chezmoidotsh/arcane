@@ -49,6 +49,16 @@ let
     .tags.node = get_hostname!()
   '';
 
+  # When nodeExporter is enabled, inject its scrape target automatically so
+  # callers don't need to wire it up manually in scrapeTargets.
+  effectiveScrapeTargets =
+    cfg.metrics.scrapeTargets
+    ++ lib.optional cfg.nodeExporter.enable {
+      jobName = "node_exporter";
+      targets = [ "127.0.0.1:${toString cfg.nodeExporter.port}" ];
+      extraLabels = { };
+    };
+
   # ── Prometheus: sources + tag transforms (generated when metrics.enable) ──
   prometheusConfig = lib.optionalAttrs cfg.metrics.enable {
     sources = {
@@ -71,7 +81,7 @@ let
           scrape_interval_secs = cfg.metrics.scrapeInterval;
         };
       })
-      cfg.metrics.scrapeTargets);
+      effectiveScrapeTargets);
 
     # Every series carries the (job, node) pair. Per-job scrapes use the
     # configured job name; internal metrics get job="vector-agent" explicitly.
@@ -88,10 +98,16 @@ let
           value = {
             type = "remap";
             inputs = [ "scrape_${target.jobName}" ];
-            source = ''.tags.job = "${target.jobName}"'' + "\n" + metricProvenance;
+            # extraLabels are applied after metricProvenance so they can
+            # override the hostname-derived `node` label for remote targets.
+            source =
+              ''.tags.job = "${target.jobName}"'' + "\n" + metricProvenance
+                + lib.concatStrings (lib.mapAttrsToList
+                (k: v: "\n.tags.${k} = ${builtins.toJSON v}")
+                target.extraLabels);
           };
         })
-        cfg.metrics.scrapeTargets
+        effectiveScrapeTargets
     );
   };
 
@@ -99,7 +115,7 @@ let
   # go through their tag_<job> transform. All carry provenance tags.
   metricOutputs =
     [ "tag_internal" ]
-    ++ map (t: "tag_${t.jobName}") cfg.metrics.scrapeTargets;
+    ++ map (t: "tag_${t.jobName}") effectiveScrapeTargets;
 
   # ── Sinks ─────────────────────────────────────────────────────────────────
   vectorSinkConfig = {
@@ -341,6 +357,16 @@ in
               '';
               example = [ "127.0.0.1:5000" "127.0.0.1:9221/pve?target=pve&cluster=1&node=1" ];
             };
+            extraLabels = lib.mkOption {
+              type = lib.types.attrsOf lib.types.str;
+              default = { };
+              description = ''
+                Extra labels stamped on every series from this job, applied
+                after the hostname-derived `node` label. Use to override `node`
+                when scraping a remote target (e.g. the PVE host).
+              '';
+              example = lib.literalExpression ''{ node = "pve-01"; }'';
+            };
           };
         });
         default = [ ];
@@ -348,6 +374,24 @@ in
         example = lib.literalExpression ''
           [{ jobName = "zot"; targets = [ "127.0.0.1:5000" ]; }]
         '';
+      };
+    };
+
+    nodeExporter = {
+      enable = lib.mkEnableOption ''
+        LXC-aware node-exporter for local resource monitoring.
+        Starts prometheus-node-exporter on loopback with only the collectors
+        that work correctly in an unprivileged LXC: cpu, filesystem, loadavg,
+        meminfo, netdev, netstat, processes, sockstat, stat, systemd, time,
+        uname, vmstat. Hardware-specific collectors (diskstats, hwmon, nvme,
+        rapl, wifi) are excluded. The scrape target is injected into the
+        Vector metrics pipeline automatically. Requires
+        catalog.lxcAgent.metrics.enable = true
+      '';
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 9100;
+        description = "Loopback port for the node-exporter instance.";
       };
     };
 
@@ -364,6 +408,39 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+
+    assertions = lib.optional cfg.nodeExporter.enable {
+      assertion = cfg.metrics.enable;
+      message = ''
+        catalog.lxcAgent.nodeExporter.enable = true requires
+        catalog.lxcAgent.metrics.enable = true to ship the scraped data.
+      '';
+    };
+
+    # ── node-exporter: LXC-safe collector subset, loopback only ─────────────
+    # Disable all defaults; re-enable only collectors that function correctly
+    # in an unprivileged LXC (no raw disk access, no hardware sensors/RAPL).
+    services.prometheus.exporters.node = lib.mkIf cfg.nodeExporter.enable {
+      enable = true;
+      listenAddress = "127.0.0.1";
+      port = cfg.nodeExporter.port;
+      extraFlags = [ "--collector.disable-defaults" ];
+      enabledCollectors = [
+        "cpu"
+        "filesystem"
+        "loadavg"
+        "meminfo"
+        "netdev"
+        "netstat"
+        "processes"
+        "sockstat"
+        "stat"
+        "systemd"
+        "time"
+        "uname"
+        "vmstat"
+      ];
+    };
 
     # ── Vector: journald reader + metrics scraper → o11y ────────────────────
     users.users.lxc-agent = {

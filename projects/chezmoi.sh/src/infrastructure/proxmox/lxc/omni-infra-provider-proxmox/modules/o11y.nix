@@ -6,9 +6,6 @@
 #   - remaining fields → attributes."omni-provider.json" blob
 # See o11y.extraTransforms/README.md for available fields and query examples.
 #
-# Metrics scraping is left disabled until a verified Prometheus endpoint is
-# identified.
-#
 # hostsOverride resolves o11y.chezmoi.sh to the Proxmox bridge IP (10.0.0.252)
 # — same trick used by the other proxmox/lxc appliances to avoid hairpin NAT.
 { ... }: {
@@ -24,6 +21,9 @@
       { name = "transforms.route.yaml"; content = builtins.readFile ./o11y.extraTransforms/transforms.route.yaml; }
       { name = "transforms.omni-provider.yaml"; content = builtins.readFile ./o11y.extraTransforms/transforms.omni-provider.yaml; }
     ];
+
+    metrics.enable = true;
+    nodeExporter.enable = true;
 
     hostsOverride = {
       "10.0.0.252" = [ "o11y.chezmoi.sh" ];
