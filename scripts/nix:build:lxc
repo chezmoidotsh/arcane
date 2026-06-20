@@ -132,9 +132,14 @@ fi
 # (no git filtering) so worktree-only files like new modules are included.
 WORKTREE_OVERLAY_FLAGS=()
 FLAKE_REF="."
+OVERRIDE_INPUT_FLAGS=""
 if [[ -n ${WORKTREE_FLAKE_OVERLAY-} ]]; then
   WORKTREE_OVERLAY_FLAGS=(-v "${WORKTREE_FLAKE_OVERLAY}:/src/${RELATIVE_FLAKE_PATH}")
+  # path:. copies only the flake dir — relative inputs like
+  # path:../../../../../../../catalog/nix would resolve outside the isolated
+  # copy. Override arcane-catalog explicitly so nix finds it under /src.
   FLAKE_REF="path:."
+  OVERRIDE_INPUT_FLAGS="--override-input arcane-catalog path:/src/catalog/nix --no-write-lock-file"
 fi
 
 docker run --rm \
@@ -150,6 +155,7 @@ docker run --rm \
   -e TARGET_SYSTEM="${TARGET_SYSTEM}" \
   -e OUTPUT_NAME="${OUTPUT_NAME}" \
   -e FLAKE_REF="${FLAKE_REF}" \
+  -e OVERRIDE_INPUT_FLAGS="${OVERRIDE_INPUT_FLAGS}" \
   nixos/nix sh -c '
     set -euo pipefail
     rm -rf /homeless-shelter
@@ -162,10 +168,11 @@ docker run --rm \
 
     SYSTEM_ARG="--system ${TARGET_SYSTEM}"
 
+    # shellcheck disable=SC2086
     if [[ -x /tools/bin/nom ]]; then
-        /tools/bin/nom build --extra-experimental-features "nix-command flakes" ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace "${FLAKE_REF:-.}#default" --out-link result
+        /tools/bin/nom build --extra-experimental-features "nix-command flakes" ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace ${OVERRIDE_INPUT_FLAGS} "${FLAKE_REF:-.}#default" --out-link result
     else
-        nix --extra-experimental-features "nix-command flakes" build ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace "${FLAKE_REF:-.}#default" --out-link result
+        nix --extra-experimental-features "nix-command flakes" build ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace ${OVERRIDE_INPUT_FLAGS} "${FLAKE_REF:-.}#default" --out-link result
     fi
 
     # Copy all .tar.xz out of the read-only Nix store via the result symlink.
