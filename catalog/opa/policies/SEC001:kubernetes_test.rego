@@ -22,12 +22,17 @@ test_excluded_namespace_kube_system if {
     is_excluded_namespace({"metadata": {"namespace": "kube-system"}})
 }
 
+test_non_excluded_namespace if {
+    not is_excluded_namespace({"metadata": {"namespace": "default"}})
+}
+
 test_excluded_namespace_longhorn if {
     is_excluded_namespace({"metadata": {"namespace": "longhorn-system"}})
 }
 
-test_non_excluded_namespace if {
-    not is_excluded_namespace({"metadata": {"namespace": "default"}})
+# zot-registry namespace is removed with the Kubernetes zot-registry deployment
+test_zot_registry_no_longer_excluded if {
+    not is_excluded_namespace({"metadata": {"namespace": "zot-registry"}})
 }
 
 test_deployment_compliant if {
@@ -538,3 +543,4 @@ test_argocd_namespace_denies_local_registry if {
     }}
     count(violations) == 1
 }
+
