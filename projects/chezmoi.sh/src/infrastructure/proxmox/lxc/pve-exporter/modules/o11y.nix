@@ -46,6 +46,13 @@
           jobName = "pve_exporter";
           targets = [ "127.0.0.1:9221/pve?target=${pveHost}&cluster=1&node=1" ];
         }
+        {
+          jobName = "node_exporter_pve";
+          targets = [ "10.0.0.11:9100" ];
+          # Override `node` so series are attributed to the PVE host, not the
+          # LXC doing the scraping. get_hostname!() would give "pve-exporter".
+          extraLabels = { node = "pve-01"; };
+        }
       ];
     };
 
