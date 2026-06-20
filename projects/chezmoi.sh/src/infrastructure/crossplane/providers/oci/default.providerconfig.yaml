@@ -1,0 +1,50 @@
+---
+apiVersion: oci.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane
+      name: oci-credentials
+      key: credentials
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: oci-credentials
+spec:
+  refreshInterval: 720h # 30 days
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    name: oci-credentials
+    template:
+      type: Opaque
+      engineVersion: v2
+      data:
+        credentials: '{"tenancy_ocid":"{{ .tenancy_ocid }}","user_ocid":"{{ .user_ocid }}","private_key":"{{ replace .private_key "\n" "\\n" }}","fingerprint":"{{ .fingerprint }}","region":"{{ .region }}","auth":"ApiKey"}'
+  data:
+    - secretKey: tenancy_ocid
+      remoteRef:
+        key: shared/third-parties/oci/iam/chezmoi.sh/crossplane-rw
+        property: tenancy_ocid
+    - secretKey: user_ocid
+      remoteRef:
+        key: shared/third-parties/oci/iam/chezmoi.sh/crossplane-rw
+        property: user_ocid
+    - secretKey: private_key
+      remoteRef:
+        key: shared/third-parties/oci/iam/chezmoi.sh/crossplane-rw
+        property: private_key
+    - secretKey: fingerprint
+      remoteRef:
+        key: shared/third-parties/oci/iam/chezmoi.sh/crossplane-rw
+        property: fingerprint
+    - secretKey: region
+      remoteRef:
+        key: shared/third-parties/oci/iam/chezmoi.sh/crossplane-rw
+        property: region
