@@ -14,7 +14,7 @@ CONFIG_ROOT="$(pwd)"
 source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 
 lxc_init "pve-exporter" "${CONFIG_ROOT}" _pve_exporter
-lxc_services "pve-exporter" "lxc-agent"
+lxc_services "pve-exporter" "prometheus-node-exporter" "lxc-agent"
 
 lxc_upgrade \
   --pve-host "${usage_pve_host}" \
