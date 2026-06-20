@@ -17,11 +17,27 @@ log_success() { echo -e "${GREEN}[SUCCESS]${NC} $*" >&2; }
 log_warning() { echo -e "${YELLOW}[WARNING]${NC} $*" >&2; }
 log_error()   { echo -e "${RED}[ERROR]${NC} $*" >&2; }
 
-# Sets REPO_ROOT and RELATIVE_FLAKE_PATH (no trailing slash) from a flake directory.
+# Sets REPO_ROOT, RELATIVE_FLAKE_PATH (no trailing slash), and
+# WORKTREE_FLAKE_OVERLAY from a flake directory.
+#
+# In a git worktree, REPO_ROOT is set to the main repository root (not the
+# worktree root) so Docker receives a directory with a real .git directory
+# rather than a .git file whose absolute path is unreachable inside the Docker
+# sandbox. WORKTREE_FLAKE_OVERLAY holds the absolute flake path on disk so
+# callers can bind-mount the worktree-modified files over the main-branch copy.
 _nix_resolve_flake_dir() {
   local flake_dir="$1"
+  WORKTREE_FLAKE_OVERLAY=""
   if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    REPO_ROOT="$(git rev-parse --show-toplevel)"
+    local git_common_dir
+    git_common_dir="$(git rev-parse --git-common-dir)"
+    if [[ "${git_common_dir}" == /* ]]; then
+      # Git worktree: git-common-dir is an absolute path to the main .git dir.
+      REPO_ROOT="$(dirname "${git_common_dir}")"
+      WORKTREE_FLAKE_OVERLAY="$(cd "${flake_dir}" && pwd -P)"
+    else
+      REPO_ROOT="$(git rev-parse --show-toplevel)"
+    fi
     RELATIVE_FLAKE_PATH="$(cd "${flake_dir}" && git rev-parse --show-prefix)"
   else
     REPO_ROOT="$(cd "${flake_dir}" && pwd)"

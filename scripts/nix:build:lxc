@@ -124,10 +124,24 @@ fi
 # We mount the entire repository into the container at /src.
 # The working directory is set to the specific flake location within /src
 # so Nix can access git context and use self.lastModifiedDate.
+#
+# In a git worktree, REPO_ROOT is the main repo root (not the worktree root)
+# so Docker sees a real .git directory rather than a .git file whose absolute
+# path is unreachable inside the sandbox. The worktree's actual flake files
+# are bind-mounted over the main-branch copy, and nix evaluates via path:.
+# (no git filtering) so worktree-only files like new modules are included.
+WORKTREE_OVERLAY_FLAGS=()
+FLAKE_REF="."
+if [[ -n ${WORKTREE_FLAKE_OVERLAY-} ]]; then
+  WORKTREE_OVERLAY_FLAGS=(-v "${WORKTREE_FLAKE_OVERLAY}:/src/${RELATIVE_FLAKE_PATH}")
+  FLAKE_REF="path:."
+fi
+
 docker run --rm \
   -v "${NIX_CACHE_VOLUME}:/nix" \
   -v "${NIX_TOOLS_VOLUME}:/tools" \
   -v "${REPO_ROOT}:/src" \
+  ${WORKTREE_OVERLAY_FLAGS[@]+"${WORKTREE_OVERLAY_FLAGS[@]}"} \
   -w "/src/${RELATIVE_FLAKE_PATH:-.}" \
   ${DOCKER_TTY_FLAGS[@]+"${DOCKER_TTY_FLAGS[@]}"} \
   ${PASSTHROUGH_ENV_FLAGS[@]+"${PASSTHROUGH_ENV_FLAGS[@]}"} \
@@ -135,6 +149,7 @@ docker run --rm \
   -e USE_IMPURE="${USE_IMPURE}" \
   -e TARGET_SYSTEM="${TARGET_SYSTEM}" \
   -e OUTPUT_NAME="${OUTPUT_NAME}" \
+  -e FLAKE_REF="${FLAKE_REF}" \
   nixos/nix sh -c '
     set -euo pipefail
     rm -rf /homeless-shelter
@@ -148,9 +163,9 @@ docker run --rm \
     SYSTEM_ARG="--system ${TARGET_SYSTEM}"
 
     if [[ -x /tools/bin/nom ]]; then
-        /tools/bin/nom build --extra-experimental-features "nix-command flakes" ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace .#default --out-link result
+        /tools/bin/nom build --extra-experimental-features "nix-command flakes" ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace "${FLAKE_REF:-.}#default" --out-link result
     else
-        nix --extra-experimental-features "nix-command flakes" build ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace .#default --out-link result
+        nix --extra-experimental-features "nix-command flakes" build ${SANDBOX_FLAG} ${SYSTEM_ARG} ${IMPURE_FLAG} --show-trace "${FLAKE_REF:-.}#default" --out-link result
     fi
 
     # Copy all .tar.xz out of the read-only Nix store via the result symlink.
