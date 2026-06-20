@@ -134,7 +134,14 @@ WORKTREE_OVERLAY_FLAGS=()
 FLAKE_REF="."
 OVERRIDE_INPUT_FLAGS=""
 if [[ -n ${WORKTREE_FLAKE_OVERLAY-} ]]; then
-  WORKTREE_OVERLAY_FLAGS=(-v "${WORKTREE_FLAKE_OVERLAY}:/src/${RELATIVE_FLAKE_PATH}")
+  # Mount both the worktree's flake dir and its catalog/nix directory over
+  # the corresponding paths inside the main-repo mount. This ensures that
+  # in-worktree catalog changes (new module options, etc.) are visible to
+  # the Nix build without touching the main-branch copy.
+  WORKTREE_OVERLAY_FLAGS=(
+    -v "${WORKTREE_FLAKE_OVERLAY}:/src/${RELATIVE_FLAKE_PATH}"
+    -v "${WORKTREE_ROOT}/catalog/nix:/src/catalog/nix"
+  )
   # path:. copies only the flake dir — relative inputs like
   # path:../../../../../../../catalog/nix would resolve outside the isolated
   # copy. Override arcane-catalog explicitly so nix finds it under /src.

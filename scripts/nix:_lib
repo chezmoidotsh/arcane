@@ -34,9 +34,11 @@ _nix_resolve_flake_dir() {
     if [[ "${git_common_dir}" == /* ]]; then
       # Git worktree: git-common-dir is an absolute path to the main .git dir.
       REPO_ROOT="$(dirname "${git_common_dir}")"
+      WORKTREE_ROOT="$(git rev-parse --show-toplevel)"
       WORKTREE_FLAKE_OVERLAY="$(cd "${flake_dir}" && pwd -P)"
     else
       REPO_ROOT="$(git rev-parse --show-toplevel)"
+      WORKTREE_ROOT=""
     fi
     RELATIVE_FLAKE_PATH="$(cd "${flake_dir}" && git rev-parse --show-prefix)"
   else
