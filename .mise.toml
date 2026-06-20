@@ -47,6 +47,11 @@ SOPS_AGE_KEY_FILE = "{{ config_root }}/.mise/age/key.txt"
 # Centralized secret storage for the Arcane infrastructure
 VAULT_ADDR = "https://vault.chezmoi.sh"
 
+# Oracle Cloud Infrastructure CLI configuration
+# Keep OCI CLI state inside the repository-managed .mise directory.
+OCI_CLI_CONFIG_FILE = "{{ config_root }}/.mise/oci/config"
+OCI_CLI_PROFILE = "DEFAULT"
+
 # -----------------------------------------------------------------------------
 # Talos Configuration
 # -----------------------------------------------------------------------------
@@ -101,6 +106,7 @@ argocd = "latest"   # ArgoCD CLI for GitOps application deployment and managemen
 hcloud = "latest"   # Hetzner Cloud CLI for managing cloud resources
 k9s = "latest"      # Terminal UI for real-time Kubernetes cluster management and observability
 openbao = "latest"  # OpenBao CLI for secret management (HashiCorp Vault fork)
+oci = "latest"      # Oracle Cloud Infrastructure CLI for IAM and API key setup
 talosctl = "latest" # Talos Linux cluster management tool for bare-metal Kubernetes
 vector = "0.55.0"   # Vector CLI for observability and log aggregation
 

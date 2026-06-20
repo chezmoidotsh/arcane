@@ -1,0 +1,9 @@
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-family-oci
+spec:
+  package: oci.chezmoi.sh/ghcr.io/oracle/provider-family-oci:v1.1.0
+  runtimeConfigRef:
+    name: hardened
