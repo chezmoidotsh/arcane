@@ -16,6 +16,7 @@ spec:
   package: oci.chezmoi.sh/xpkg.upbound.io/upbound/provider-aws-iam:v2.6.0
   runtimeConfigRef:
     name: hardened
+  skipDependencyResolution: true
 ---
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
@@ -25,3 +26,4 @@ spec:
   package: oci.chezmoi.sh/xpkg.upbound.io/upbound/provider-aws-ses:v2.6.0
   runtimeConfigRef:
     name: hardened
+  skipDependencyResolution: true

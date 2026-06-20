@@ -16,3 +16,4 @@ spec:
   package: oci.chezmoi.sh/ghcr.io/oracle/provider-oci-core:v1.1.0
   runtimeConfigRef:
     name: hardened
+  skipDependencyResolution: true

@@ -7,3 +7,4 @@ spec:
   package: oci.chezmoi.sh/xpkg.upbound.io/upbound/provider-aws-ses:v2.6.0
   runtimeConfigRef:
     name: hardened
+  skipDependencyResolution: true

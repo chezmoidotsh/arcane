@@ -7,3 +7,4 @@ spec:
   package: oci.chezmoi.sh/xpkg.upbound.io/wildbitca/provider-cloudflare-dns:v0.2.6
   runtimeConfigRef:
     name: hardened
+  skipDependencyResolution: true
