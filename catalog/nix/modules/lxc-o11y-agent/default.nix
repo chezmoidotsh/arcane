@@ -56,6 +56,7 @@ let
     ++ lib.optional cfg.nodeExporter.enable {
       jobName = "node_exporter";
       targets = [ "127.0.0.1:${toString cfg.nodeExporter.port}" ];
+      extraLabels = { };
     };
 
   # ── Prometheus: sources + tag transforms (generated when metrics.enable) ──
@@ -97,7 +98,13 @@ let
           value = {
             type = "remap";
             inputs = [ "scrape_${target.jobName}" ];
-            source = ''.tags.job = "${target.jobName}"'' + "\n" + metricProvenance;
+            # extraLabels are applied after metricProvenance so they can
+            # override the hostname-derived `node` label for remote targets.
+            source =
+              ''.tags.job = "${target.jobName}"'' + "\n" + metricProvenance
+                + lib.concatStrings (lib.mapAttrsToList
+                (k: v: "\n.tags.${k} = ${builtins.toJSON v}")
+                target.extraLabels);
           };
         })
         effectiveScrapeTargets
@@ -349,6 +356,16 @@ in
                   "http://..."        → used verbatim            (full URL)
               '';
               example = [ "127.0.0.1:5000" "127.0.0.1:9221/pve?target=pve&cluster=1&node=1" ];
+            };
+            extraLabels = lib.mkOption {
+              type = lib.types.attrsOf lib.types.str;
+              default = { };
+              description = ''
+                Extra labels stamped on every series from this job, applied
+                after the hostname-derived `node` label. Use to override `node`
+                when scraping a remote target (e.g. the PVE host).
+              '';
+              example = lib.literalExpression ''{ node = "pve-01"; }'';
             };
           };
         });
