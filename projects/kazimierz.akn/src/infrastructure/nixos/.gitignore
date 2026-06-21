@@ -1,0 +1,8 @@
+result/
+result
+# Built disk images (CalVer-named qcow2 per architecture)
+kazimierz.*.qcow2
+nixos.qcow2
+secrets/*.env
+.direnv/
+.envrc
