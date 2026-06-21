@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# [MISE] description="Smoke-test the built qcow2 on a Proxmox host (UEFI boot + data volume)"
+# [MISE] dir="{{config_root}}"
+# [USAGE] arg "[pve_host]" help="Proxmox node (default pve-01.pve.chezmoi.sh)" default="pve-01.pve.chezmoi.sh"
+# [USAGE] arg "[arch]" help="Image architecture to test (default amd64)" default="amd64"
+# [USAGE] flag "--keep" help="Keep the test VM running afterwards (default: leave it for inspection)"
+#
+# Uploads the image to the Proxmox node, creates a throwaway UEFI VM with the
+# qcow2 as boot disk plus a scratch disk standing in for the persistent block
+# volume, boots it, and reports the boot result over the serial console. This is
+# a disposable validation VM — destroy it with:
+#   ssh root@<pve_host> 'qm stop <vmid>; qm destroy <vmid>'
+#
+# NOTE: amd64 only — Proxmox x86 hosts cannot boot the aarch64 image. The arm64
+# image is validated by importing it into OCI (see README, OCI import step).
+set -euo pipefail
+
+CONFIG_ROOT="$(pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/nix:_lib"
+
+PVE_HOST="${usage_pve_host:-pve-01.pve.chezmoi.sh}"
+ARCH="${usage_arch:-amd64}"
+KEEP="${usage_keep-}"
+
+[[ ${ARCH} == "amd64" ]] || {
+  log_error "Proxmox can only boot amd64; got '${ARCH}'."
+  exit 1
+}
+
+VERSION="$(grep -m1 -oE 'imageVersion = "[^"]*"' "${CONFIG_ROOT}/flake.nix" | sed 's/.*"\(.*\)"/\1/')"
+IMAGE="kazimierz.${VERSION}-${ARCH}.qcow2"
+[[ -f ${CONFIG_ROOT}/${IMAGE} ]] || {
+  log_error "${IMAGE} not found — run 'mise run image:build' first."
+  exit 1
+}
+
+ssh_pve() { ssh -o StrictHostKeyChecking=no "root@${PVE_HOST}" "$@"; }
+
+log_info "Uploading ${IMAGE} to ${PVE_HOST}:/var/tmp/ ..."
+scp -o StrictHostKeyChecking=no "${CONFIG_ROOT}/${IMAGE}" "root@${PVE_HOST}:/var/tmp/${IMAGE}"
+
+# Pick the first free VMID at or above 150 (across VMs and containers).
+VMID="$(ssh_pve '
+  id=99999
+  while [ -f "/etc/pve/qemu-server/${id}.conf" ] || [ -f "/etc/pve/lxc/${id}.conf" ]; do id=$((id-1)); done
+  echo "${id}"
+')"
+log_info "Using VMID ${VMID} on ${PVE_HOST}."
+
+log_info "Creating UEFI test VM ${VMID} (boot disk + 6G scratch data volume)..."
+ssh_pve "
+  set -e
+  qm create ${VMID} --name kazimierz-test --memory 2048 --cores 2 --cpu host \
+    --machine q35 --bios ovmf --ostype l26 --scsihw virtio-scsi-single \
+    --net0 virtio,bridge=vmbr1,tag=5,firewall=1 --serial0 socket
+  qm set ${VMID} --efidisk0 nvme-lvm:1,efitype=4m,pre-enrolled-keys=0
+  DISK=\$(qm importdisk ${VMID} /var/tmp/${IMAGE} nvme-lvm 2>&1 | grep -oE \"vm-${VMID}-disk-[0-9]+\" | tail -1)
+  qm set ${VMID} --scsi0 nvme-lvm:\${DISK}
+  qm set ${VMID} --boot order=scsi0
+  qm set ${VMID} --scsi1 nvme-lvm:6
+  pkill -f \"qemu-server/${VMID}.serial0\" 2>/dev/null || true
+  qm start ${VMID}
+  sleep 2
+  setsid socat -u UNIX-CONNECT:/var/run/qemu-server/${VMID}.serial0 OPEN:/tmp/serial-${VMID}.log,creat,trunc >/dev/null 2>&1 </dev/null &
+"
+
+log_info "Waiting for boot (multi-user / login)..."
+for _ in $(seq 1 30); do
+  if ssh_pve "grep -qE 'login:|Reached target Multi-User|emergency|Boot Failed' /tmp/serial-${VMID}.log" 2>/dev/null; then break; fi
+  sleep 6
+done
+
+echo "" >&2
+log_info "Serial boot tail:"
+ssh_pve "tail -20 /tmp/serial-${VMID}.log | sed 's/\x1b\[[0-9;:?]*[a-zA-Z]//g'" >&2 || true
+
+if ssh_pve "grep -qE 'Reached target Multi-User|login:' /tmp/serial-${VMID}.log" 2>/dev/null; then
+  log_success "Boot reached multi-user on VM ${VMID}."
+else
+  log_error "VM ${VMID} did not reach multi-user — inspect /tmp/serial-${VMID}.log on ${PVE_HOST}."
+fi
+
+if [[ -z ${KEEP} ]]; then
+  echo "" >&2
+  log_info "Leaving VM ${VMID} running for inspection. Destroy it with:"
+  echo "    ssh root@${PVE_HOST} 'qm stop ${VMID}; qm destroy ${VMID}'" >&2
+fi

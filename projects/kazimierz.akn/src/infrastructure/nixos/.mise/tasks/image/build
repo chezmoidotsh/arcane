@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# [MISE] description="Build the kazimierz NixOS qcow2 image (arg: amd64|arm64)"
+# [MISE] dir="{{config_root}}"
+# [USAGE] arg "[arch]" help="Target architecture: amd64 (default, for Proxmox) or arm64 (OCI)" default="amd64"
+#
+# Builds an immutable, bootable UEFI qcow2 from the flake, in a Docker-wrapped
+# Nix build (no local Nix needed) — same idiom as the LXC builds. The artifact
+# is written alongside flake.nix as kazimierz.<imageVersion>-<arch>.qcow2.
+#
+#   mise run image:build            # amd64 (Proxmox validation)
+#   mise run image:build -- arm64   # aarch64 (OCI Ampere A1)
+set -euo pipefail
+
+CONFIG_ROOT="$(pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/nix:_lib"
+
+ARCH="${usage_arch:-amd64}"
+case "${ARCH}" in
+amd64)
+  SYSTEM="x86_64-linux"
+  ATTR="qcow-amd64"
+  ;;
+arm64)
+  SYSTEM="aarch64-linux"
+  ATTR="qcow-arm64"
+  ;;
+*)
+  log_error "Unknown arch '${ARCH}' — use amd64 or arm64."
+  exit 1
+  ;;
+esac
+
+VERSION="$(grep -m1 -oE 'imageVersion = "[^"]*"' "${CONFIG_ROOT}/flake.nix" | sed 's/.*"\(.*\)"/\1/')"
+[[ -n ${VERSION} ]] || {
+  log_error "could not detect imageVersion from flake.nix"
+  exit 1
+}
+OUT="kazimierz.${VERSION}-${ARCH}.qcow2"
+
+_nix_resolve_flake_dir "${CONFIG_ROOT}"
+_nix_tty_flags
+docker volume create "${NIX_CACHE_VOLUME}" >/dev/null
+
+log_info "Building ${OUT} (system ${SYSTEM})..."
+rm -f "${CONFIG_ROOT}/${OUT}"
+
+# WHY --system-features kvm: the disk-image step (make-disk-image) boots a
+# short-lived QEMU VM whose derivation declares requiredSystemFeatures=["kvm"].
+# The Docker builder has no /dev/kvm, but QEMU transparently falls back to
+# software (TCG) emulation — slower, yet it needs no special host. This is also
+# what lets the aarch64 image cross-build under binfmt with no ARM/KVM machine.
+docker run --rm \
+  -v "${NIX_CACHE_VOLUME}:/nix" \
+  -v "${REPO_ROOT}:/src" \
+  -w "/src/${RELATIVE_FLAKE_PATH:-.}" \
+  ${DOCKER_TTY_FLAGS[@]+"${DOCKER_TTY_FLAGS[@]}"} \
+  -e SYSTEM="${SYSTEM}" \
+  -e ATTR="${ATTR}" \
+  -e OUT="${OUT}" \
+  nixos/nix sh -c '
+    set -e
+    rm -rf /homeless-shelter
+    export NIX_CONFIG="experimental-features = nix-command flakes"
+    nix build --system "${SYSTEM}" \
+      --system-features "kvm benchmark big-parallel nixos-test uid-range" \
+      ".#${ATTR}" --out-link result --show-trace
+    for f in result/*.qcow2; do cp -L "$f" "./${OUT}"; done
+    rm -f result
+  '
+
+log_success "Image ready: ${CONFIG_ROOT}/${OUT}"

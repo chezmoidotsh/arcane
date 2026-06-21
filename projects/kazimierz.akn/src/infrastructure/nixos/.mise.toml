@@ -1,0 +1,25 @@
+# =============================================================================
+# kazimierz.akn NixOS image — Task Automation
+# =============================================================================
+# Builds and validates the immutable NixOS qcow2 for the kazimierz.akn VPS
+# gateway (Pangolin + Gerbil + Traefik + error-pages). No comin, no nixos-infect.
+#
+# Workflow:
+#   mise run image:build               # build the amd64 qcow2 (Proxmox)
+#   mise run image:test                # boot it on pve-01, check it reaches multi-user
+#   mise run image:build -- arm64      # build the aarch64 qcow2 (OCI Ampere A1)
+#   # then upload the arm64 image to the OCI bucket + import as a custom image
+#   # (see README) and recreate the instance via the Crossplane stack (#1076).
+#
+# File-based tasks (bash scripts under .mise/tasks/image/):
+#   image:build  — Docker-wrapped Nix build → kazimierz.<version>-<arch>.qcow2
+#   image:test   — upload to a Proxmox node, boot a throwaway UEFI VM, report
+#
+# Prerequisites:
+#   - Docker (for the Nix build container — no local Nix needed)
+#   - SSH key-based access to root@<pve-host> (for image:test)
+#   - socat on the Proxmox host (for serial capture during image:test)
+#
+# The build runs entirely on the workstation via Docker; it needs no KVM host
+# (QEMU falls back to TCG for the disk-image step — see .mise/tasks/image/build).
+# =============================================================================
