@@ -1,0 +1,10 @@
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-oci-networking
+spec:
+  package: oci.chezmoi.sh/ghcr.io/oracle/provider-oci-networking:v1.1.0
+  runtimeConfigRef:
+    name: hardened
+  skipDependencyResolution: true
