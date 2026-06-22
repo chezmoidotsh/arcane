@@ -1,0 +1,195 @@
+#!/usr/bin/env bash
+# [MISE] description="Push a built arm64 qcow2 to the OCI bucket and register it as a Crossplane MR"
+# [MISE] dir="{{config_root}}"
+# [USAGE] flag "--dry-run" help="Print what would happen without uploading or modifying files"
+#
+# Uploads kazimierz.<version>-arm64.qcow2 (output of mise run image:build -- arm64)
+# to the OCI Object Storage bucket kazimierz-akn-nixos-images, then generates
+# the Crossplane Object managed resource that tracks the uploaded object.
+#
+# The MR uses managementPolicies: [Observe, Delete] — Crossplane observes
+# the pre-existing OCI object without re-uploading content. Removing the MR
+# file from git causes ArgoCD + Crossplane to delete the actual OCI object.
+#
+# After this task completes:
+#   1. Run: dist:render projects/kazimierz.akn/src/infrastructure/crossplane
+#   2. Import the qcow2 as an OCI custom image (CUSTOM launch mode, UEFI_64)
+#   3. Update claim.yaml spec.instance.imageId with the new image OCID
+#   4. Commit and push
+set -euo pipefail
+
+CONFIG_ROOT="$(pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/nix:_lib"
+
+DRY_RUN="${usage_dry_run-}"
+BUCKET_NAME="kazimierz-akn-nixos-images"
+CROSSPLANE_DIR="${REPO_ROOT}/projects/kazimierz.akn/src/infrastructure/crossplane"
+
+# ---------------------------------------------------------------------------
+# Resolve image version and artifact path
+# ---------------------------------------------------------------------------
+VERSION="$(grep -m1 -oE 'imageVersion = "[^"]*"' "${CONFIG_ROOT}/flake.nix" | sed 's/.*"\(.*\)"/\1/')"
+[[ -n ${VERSION} ]] || {
+  log_error "could not detect imageVersion from flake.nix"
+  exit 1
+}
+
+IMAGE="${CONFIG_ROOT}/kazimierz.${VERSION}-arm64.qcow2"
+[[ -f ${IMAGE} ]] || {
+  log_error "${IMAGE} not found — run 'mise run image:build -- arm64' first."
+  exit 1
+}
+
+# Canonical OCI object name — dots in CalVer are preserved (bucket key, not k8s name).
+OBJECT_NAME="kazimierz.${VERSION}-arm64.qcow2"
+
+# Kubernetes resource name: dots → dashes (k8s DNS-label constraints).
+MR_NAME="kazimierz-akn-nixos-image-$(echo "${VERSION}" | tr '.' '-')"
+
+MR_FILE="${CROSSPLANE_DIR}/oci.image.${VERSION}.yaml"
+KUSTOMIZATION="${CROSSPLANE_DIR}/kustomization.yaml"
+
+# Guard: refuse to overwrite an already-registered version.
+[[ ! -f ${MR_FILE} ]] || {
+  log_error "MR file already exists: ${MR_FILE#"${REPO_ROOT}/"}"
+  log_error "Bump imageVersion in flake.nix before pushing a new build."
+  exit 1
+}
+
+# ---------------------------------------------------------------------------
+# Resolve OCI tenancy namespace
+# ---------------------------------------------------------------------------
+log_info "Resolving OCI tenancy namespace..."
+OCI_NAMESPACE="$(oci os ns get --query 'data' --raw-output 2>/dev/null)" || {
+  log_error "OCI CLI not configured — run: oci setup config"
+  exit 1
+}
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+log_info "Image version : ${VERSION}"
+log_info "Object name   : ${OBJECT_NAME}"
+log_info "OCI namespace : ${OCI_NAMESPACE}"
+log_info "Bucket        : ${BUCKET_NAME}"
+IMAGE_SIZE="$(du -sh "${IMAGE}" | cut -f1)"
+log_info "Local file    : ${IMAGE} (${IMAGE_SIZE})"
+log_info "MR file       : ${MR_FILE#"${REPO_ROOT}/"}"
+[[ -z ${DRY_RUN} ]] || log_warning "Dry-run mode — no upload or file modifications."
+
+# ---------------------------------------------------------------------------
+# Upload to OCI Object Storage
+# ---------------------------------------------------------------------------
+if [[ -z ${DRY_RUN} ]]; then
+  log_info "Uploading ${OBJECT_NAME} to oci://${BUCKET_NAME}/ ..."
+  oci os object put \
+    --namespace "${OCI_NAMESPACE}" \
+    --bucket-name "${BUCKET_NAME}" \
+    --name "${OBJECT_NAME}" \
+    --file "${IMAGE}" \
+    --force \
+    --no-multipart
+  log_success "Upload complete."
+else
+  log_info "[dry-run] oci os object put --namespace ${OCI_NAMESPACE} --bucket-name ${BUCKET_NAME} --name ${OBJECT_NAME} --file ${IMAGE}"
+fi
+
+# ---------------------------------------------------------------------------
+# Create Crossplane Object managed resource
+# ---------------------------------------------------------------------------
+
+# WHY external-name annotation: must exactly match the OCI object key so
+# Crossplane can locate the pre-existing object via the API. Without it,
+# Crossplane creates a new empty object instead of observing the uploaded one.
+MR_CONTENT="# Crossplane Object MR — kazimierz.akn NixOS image ${VERSION}
+#
+# managementPolicies: [Observe, Delete] — Crossplane tracks this pre-existing
+# OCI object without re-uploading content. Deleting this file from git causes
+# ArgoCD + Crossplane to delete the actual OCI object from the bucket.
+---
+apiVersion: objectstorage.oci.upbound.io/v1beta1
+kind: Object
+metadata:
+  name: ${MR_NAME}
+  annotations:
+    crossplane.io/external-name: ${OBJECT_NAME}
+spec:
+  managementPolicies:
+    - Observe
+    - Delete
+  forProvider:
+    namespace: ${OCI_NAMESPACE}
+    bucketRef:
+      name: ${BUCKET_NAME}
+    object: ${OBJECT_NAME}
+  providerConfigRef:
+    name: default
+"
+
+if [[ -z ${DRY_RUN} ]]; then
+  log_info "Writing Crossplane MR: ${MR_FILE#"${REPO_ROOT}/"}"
+  echo "${MR_CONTENT}" >"${MR_FILE}"
+  log_success "MR file written."
+else
+  log_info "[dry-run] Would write ${MR_FILE#"${REPO_ROOT}/"}:"
+  # trunk-ignore(shellcheck/SC2001): multi-line indent — bash ${var//pattern/} cannot anchor to ^
+  echo "${MR_CONTENT}" | sed 's/^/  /' >&2
+fi
+
+# ---------------------------------------------------------------------------
+# Register in kustomization.yaml
+# ---------------------------------------------------------------------------
+MR_FILENAME="oci.image.${VERSION}.yaml"
+
+if grep -qF "${MR_FILENAME}" "${KUSTOMIZATION}"; then
+  log_warning "${MR_FILENAME} already listed in kustomization.yaml — skipping."
+elif [[ -z ${DRY_RUN} ]]; then
+  log_info "Registering ${MR_FILENAME} in kustomization.yaml..."
+  # Insert before claim.yaml when present, otherwise append after the last resource line.
+  if grep -qF "claim.yaml" "${KUSTOMIZATION}"; then
+    sed -i '' "s|  - claim.yaml|  # NixOS image ${VERSION}\n  - ${MR_FILENAME}\n  - claim.yaml|" "${KUSTOMIZATION}"
+  else
+    python3 - "${KUSTOMIZATION}" "${MR_FILENAME}" <<'PYEOF'
+import sys, re
+path, entry = sys.argv[1], sys.argv[2]
+with open(path) as f:
+    content = f.read()
+last = list(re.finditer(r'^  - \S+', content, re.MULTILINE))
+if last:
+    pos = last[-1].end()
+    content = content[:pos] + f"\n  - {entry}" + content[pos:]
+with open(path, 'w') as f:
+    f.write(content)
+PYEOF
+  fi
+  log_success "kustomization.yaml updated."
+else
+  log_info "[dry-run] Would register ${MR_FILENAME} in kustomization.yaml."
+fi
+
+# ---------------------------------------------------------------------------
+# Next steps
+# ---------------------------------------------------------------------------
+log_success "Image ${VERSION} registered."
+cat >&2 <<EOF
+
+Next steps:
+  1. Re-render dist/:
+       dist:render projects/kazimierz.akn/src/infrastructure/crossplane
+
+  2. Import as OCI custom image (CUSTOM launch mode, UEFI_64):
+       oci compute image import from-object \\
+         --namespace ${OCI_NAMESPACE} \\
+         --bucket-name ${BUCKET_NAME} \\
+         --name ${OBJECT_NAME} \\
+         --display-name "kazimierz-${VERSION}-arm64" \\
+         --launch-mode CUSTOM \\
+         --compartment-id <compartment-ocid>
+
+  3. Update claim.yaml spec.instance.imageId with the new image OCID.
+
+  4. Commit and push the MR file and updated kustomization.
+
+EOF
