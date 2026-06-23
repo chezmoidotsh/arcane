@@ -1,0 +1,24 @@
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: RouteTable
+metadata:
+  name: kazimierz-akn-rt
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    compartmentIdRef:
+      name: kazimierz-akn
+    routeRules:
+    - destination: 0.0.0.0/0
+      destinationType: CIDR_BLOCK
+      networkEntityIdRef:
+        name: kazimierz-akn-igw
+    - destination: ::/0
+      destinationType: CIDR_BLOCK
+      networkEntityIdRef:
+        name: kazimierz-akn-igw
+    vcnIdRef:
+      name: kazimierz-akn-vcn
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default

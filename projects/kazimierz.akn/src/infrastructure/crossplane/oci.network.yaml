@@ -1,0 +1,102 @@
+# OCI VCN networking for kazimierz.akn
+#
+# Provisioned resources:
+#   Vcn              172.16.0.0/26 (IPv4) + OCI-assigned /56 (IPv6 GUA)
+#   InternetGateway  Dual-stack (IPv4 + IPv6 default routes)
+#   RouteTable       0.0.0.0/0 → IGW, ::/0 → IGW
+#   Subnet           172.16.0.0/28 (IPv4), no SecurityList
+#
+# NSG and security rules live in oci.security-group.yaml.
+#
+# The Subnet carries no custom SecurityList (uses VCN default, which is
+# left unmanaged and empty by convention). All traffic control is via
+# the NSG defined in oci.security-group.yaml.
+#
+# IPv6 subnet procedure (post-creation):
+# 1. After the VCN becomes READY, retrieve its Oracle-assigned IPv6 CIDR:
+#    kubectl get vcn kazimierz-akn-vcn -n kazimierz-akn \
+#      -o jsonpath='{.status.atProvider.ipv6CidrBlocks[0]}'
+# 2. The first /64 from that /56 is the default subnet CIDR.
+# 3. Add ipv6CidrBlock to the Subnet resource in this file.
+# 4. Re-render dist: dist:render
+# 5. ArgoCD will sync the subnet update.
+#
+# All resources depend on the OCI ProviderConfig "default" (see oci.providerconfig.yaml).
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: Vcn
+metadata:
+  name: kazimierz-akn-vcn
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    cidrBlocks:
+      - "172.16.0.0/26"
+    compartmentIdRef:
+      name: kazimierz-akn
+    displayName: kazimierz-akn-vcn
+    dnsLabel: kazimierzaknvcn
+    isIpv6Enabled: true
+    isOracleGuaAllocationEnabled: true
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: InternetGateway
+metadata:
+  name: kazimierz-akn-igw
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    compartmentIdRef:
+      name: kazimierz-akn
+    vcnIdRef:
+      name: kazimierz-akn-vcn
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: RouteTable
+metadata:
+  name: kazimierz-akn-rt
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    compartmentIdRef:
+      name: kazimierz-akn
+    vcnIdRef:
+      name: kazimierz-akn-vcn
+    routeRules:
+      - destination: "0.0.0.0/0"
+        destinationType: CIDR_BLOCK
+        networkEntityIdRef:
+          name: kazimierz-akn-igw
+      - destination: "::/0"
+        destinationType: CIDR_BLOCK
+        networkEntityIdRef:
+          name: kazimierz-akn-igw
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+---
+# No securityListIds — subnet-level SL is left unmanaged (OCI default,
+# empty by convention). All traffic control is via the NSG in oci.security-group.yaml.
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: Subnet
+metadata:
+  name: kazimierz-akn-subnet
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    cidrBlock: "172.16.0.0/28"
+    compartmentIdRef:
+      name: kazimierz-akn
+    vcnIdRef:
+      name: kazimierz-akn-vcn
+    routeTableIdRef:
+      name: kazimierz-akn-rt
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig

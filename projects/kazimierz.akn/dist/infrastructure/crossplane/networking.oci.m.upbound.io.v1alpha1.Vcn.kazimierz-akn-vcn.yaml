@@ -1,0 +1,19 @@
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: Vcn
+metadata:
+  name: kazimierz-akn-vcn
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    cidrBlocks:
+    - 172.16.0.0/26
+    compartmentIdRef:
+      name: kazimierz-akn
+    displayName: kazimierz-akn-vcn
+    dnsLabel: kazimierzaknvcn
+    isIpv6Enabled: true
+    isOracleGuaAllocationEnabled: true
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default

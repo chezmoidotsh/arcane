@@ -1,0 +1,18 @@
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: Subnet
+metadata:
+  name: kazimierz-akn-subnet
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    cidrBlock: 172.16.0.0/28
+    compartmentIdRef:
+      name: kazimierz-akn
+    routeTableIdRef:
+      name: kazimierz-akn-rt
+    vcnIdRef:
+      name: kazimierz-akn-vcn
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default

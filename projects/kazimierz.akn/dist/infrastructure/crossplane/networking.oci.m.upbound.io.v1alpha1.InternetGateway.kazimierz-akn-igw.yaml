@@ -1,0 +1,15 @@
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: InternetGateway
+metadata:
+  name: kazimierz-akn-igw
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    compartmentIdRef:
+      name: kazimierz-akn
+    vcnIdRef:
+      name: kazimierz-akn-vcn
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default
