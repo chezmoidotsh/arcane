@@ -3,4 +3,11 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - pangolin.terraform.yaml
+  - oci.bucket.yaml # OCI Object Storage bucket for NixOS images (private, dated objects)
+  - oci.identity.yaml # OCI Compartment (imported/observed — source of compartmentIdRef)
+  - oci.network.yaml # OCI networking: VCN, IGW, route table, subnet
+  - oci.providerconfig.yaml # OCI ProviderConfig for the Oracle provider family (oci.m.upbound.io)
+  - oci.security-group.yaml # OCI NSG + 14 security rules (ingress TCP/UDP, egress TCP/UDP)
+  - oci.volume.yaml # OCI persistent block volume for Pangolin/Gerbil/Traefik state (survives instance recreation)
+
+  - pangolin.terraform.yaml # Hetzner Terraform workspace — kept until OCI instance is validated at cutover
