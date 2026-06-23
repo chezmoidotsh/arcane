@@ -26,7 +26,7 @@ spec:
       type: Opaque
       engineVersion: v2
       data:
-        credentials: '{"tenancy_ocid":"{{ .tenancy_ocid }}","user_ocid":"{{ .user_ocid }}","private_key":"{{ replace .private_key "\n" "\\n" }}","fingerprint":"{{ .fingerprint }}","region":"{{ .region }}","auth":"ApiKey"}'
+        credentials: '{"tenancy_ocid":"{{ .tenancy_ocid }}","user_ocid":"{{ .user_ocid }}","private_key":"{{ .private_key | replace "\n" "\\n" }}","fingerprint":"{{ .fingerprint }}","region":"{{ .region }}","auth":"ApiKey"}'
   data:
     - secretKey: tenancy_ocid
       remoteRef:
