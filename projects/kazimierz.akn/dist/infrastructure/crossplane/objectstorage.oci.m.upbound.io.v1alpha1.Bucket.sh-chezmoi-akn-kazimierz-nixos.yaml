@@ -1,0 +1,21 @@
+---
+apiVersion: objectstorage.oci.m.upbound.io/v1alpha1
+kind: Bucket
+metadata:
+  name: sh-chezmoi-akn-kazimierz-nixos
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    accessType: NoPublicAccess
+    compartmentIdRef:
+      name: kazimierz-akn
+    freeformTags:
+      managed_by: crossplane
+      project: kazimierz.akn
+      role: nixos-images
+    name: sh-chezmoi-akn-kazimierz-nixos
+    namespace: ax25b8ybxdyk
+    storageTier: Standard
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default

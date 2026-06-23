@@ -1,0 +1,98 @@
+# OCI Object Storage bucket for kazimierz.akn NixOS images
+#
+# Purpose
+# ──────────────────────────────────────────────────────────────────────
+# Stores the raw/UEFI images produced by the NixOS flake build
+# (issue 1077). Images are imported from here into OCI as custom images
+# via the OCI CLI / raw API before recreating the instance.
+#
+# Access model
+# ──────────────────────────────────────────────────────────────────────
+# accessType: NoPublicAccess — fully private; no public or cross-tenancy
+# access. Access is governed by OCI IAM policies in the compartment.
+#
+# Image lifecycle — 2-slot model (10 GB free-tier constraint)
+# ──────────────────────────────────────────────────────────────────────
+# OCI Object Storage free tier is capped at 10 GB. At most two images
+# are kept in the bucket simultaneously:
+#
+#   slot   Object MR file               managementPolicies
+#   ────   ──────────────────────────   ──────────────────
+#   prod   oci.image.<prod-date>.yaml   [Observe]          ← immutable
+#   next   oci.image.<next-date>.yaml   [Observe, Delete]  ← in-flight
+#
+# prod uses [Observe] only: removing its MR from git does NOT delete the
+# OCI object, protecting the running image from accidental loss.
+# next uses [Observe, Delete]: Crossplane deletes the OCI object when
+# its MR is removed from git.
+# No archiving — 10 GB cap allows exactly 2 images; old prod is deleted
+# immediately upon promotion.
+#
+# Workflow — deploying a new image:
+#   1. Build:  nix build .#packages.aarch64-linux.oci-image
+#   2. Push:   oci os object put \
+#                --namespace ax25b8ybxdyk \
+#                --bucket-name sh-chezmoi-akn-kazimierz-nixos \
+#                --name nixos-kazimierz-<YYYYMMDD>.raw.gz \
+#                --file result/nixos-*.raw.gz
+#   3. Import: create a custom image via raw API (CUSTOM launch mode,
+#              firmware=UEFI_64)
+#   4. Create oci.image.<YYYYMMDD>.yaml from the template below with
+#      managementPolicies: [Observe, Delete] (next slot).
+#      Add it to kustomization.yaml and sync ArgoCD.
+#
+# Workflow — promoting next to prod (once instance is validated):
+#   1. Delete the current prod MR (oci.image.<old-date>.yaml) from git —
+#      Crossplane deletes the old OCI object, freeing space.
+#   2. In the next MR (oci.image.<new-date>.yaml): change
+#      managementPolicies to [Observe] — it is now immutable prod.
+#   3. Update claim.yaml spec.instance.imageId to the new image OCID.
+#   4. Commit and sync.
+#
+# Object MR template — copy to oci.image.<YYYYMMDD>.yaml:
+# ─────────────────────────────────────────────────────────────────────
+#   ---
+#   apiVersion: objectstorage.oci.m.upbound.io/v1alpha1
+#   kind: Object
+#   metadata:
+#     name: kazimierz-akn-nixos-image-<YYYYMMDD>
+#     annotations:
+#       crossplane.io/external-name: nixos-kazimierz-<YYYYMMDD>.raw.gz
+#   spec:
+#     managementPolicies:    # [Observe, Delete] for next; [Observe] for prod
+#       - Observe
+#       - Delete
+#     forProvider:
+#       namespace: "ax25b8ybxdyk"
+#       bucketRef:
+#         name: sh-chezmoi-akn-kazimierz-nixos
+#       object: nixos-kazimierz-<YYYYMMDD>.raw.gz
+#     providerConfigRef:
+#       name: default
+#       kind: ProviderConfig
+#
+# Prerequisites
+# ──────────────────────────────────────────────────────────────────────
+# • provider-oci-objectstorage is installed (PR #1080, merged 2026-06-22).
+# • Run `dist:render` after any edit: never hand-edit dist/ files.
+---
+apiVersion: objectstorage.oci.m.upbound.io/v1alpha1
+kind: Bucket
+metadata:
+  name: sh-chezmoi-akn-kazimierz-nixos
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    compartmentIdRef:
+      name: kazimierz-akn
+    namespace: ax25b8ybxdyk
+    name: sh-chezmoi-akn-kazimierz-nixos
+    accessType: NoPublicAccess
+    storageTier: Standard
+    freeformTags:
+      project: kazimierz.akn
+      role: nixos-images
+      managed_by: crossplane
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
