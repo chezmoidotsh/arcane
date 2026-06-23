@@ -1,0 +1,15 @@
+---
+apiVersion: identity.oci.m.upbound.io/v1alpha1
+kind: Compartment
+metadata:
+  name: kazimierz-akn
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    compartmentId: ocid1.compartment.oc1..aaaaaaaajyh7a5rbs3gcnvmxffcwewtuftrakz5ndd6ojwxcjyjecuvnafaq
+    description: kazimierz.akn — public VPS gateway (Pangolin + Gerbil + Traefik +
+      CrowdSec)
+    name: kazimierz.akn
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default

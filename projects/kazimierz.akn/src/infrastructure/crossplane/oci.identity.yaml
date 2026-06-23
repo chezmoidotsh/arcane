@@ -1,0 +1,31 @@
+# OCI Identity resources for kazimierz.akn
+#
+# Provisioned resources:
+#   Compartment  kazimierz.akn isolation boundary (imported — already exists in OCI)
+#
+# The Compartment already exists and is imported via managementPolicies: [Observe].
+# Crossplane reads the existing OCI object (identified by crossplane.io/external-name)
+# and populates status.atProvider, making it referenceable by all other resources via:
+#   compartmentIdRef:
+#     name: kazimierz-akn
+#
+# Prerequisites
+# ──────────────────────────────────────────────────────────────────────
+# • provider-oci-identity must be installed (added to chezmoi.sh provider stack).
+# • spec.forProvider.compartmentId is the parent (tenancy root) OCID.
+#   Retrieve it with: oci iam compartment list --include-root
+# • Run `dist:render` after any edit: never hand-edit dist/ files.
+---
+apiVersion: identity.oci.m.upbound.io/v1alpha1
+kind: Compartment
+metadata:
+  name: kazimierz-akn
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    compartmentId: ocid1.compartment.oc1..aaaaaaaajyh7a5rbs3gcnvmxffcwewtuftrakz5ndd6ojwxcjyjecuvnafaq
+    description: kazimierz.akn — public VPS gateway (Pangolin + Gerbil + Traefik + CrowdSec)
+    name: kazimierz.akn
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
