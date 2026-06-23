@@ -1,0 +1,59 @@
+# OCI persistent block volume for kazimierz.akn Pangolin state
+#
+# Design rationale
+# ──────────────────────────────────────────────────────────────────────
+# The instance uses an immutable NixOS image: the OS disk is disposable
+# and recreated from a fresh image on every update (#1077). All mutable
+# state (Pangolin DB, Traefik config, Gerbil keys, TLS certs) must live
+# on a block volume that is decoupled from the instance lifecycle.
+#
+# Volume lifecycle
+# ──────────────────────────────────────────────────────────────────────
+#   • The Volume has no deletionPolicy (blockstorage v1alpha1 CRD does not
+#     declare the field). DO NOT delete the Volume managed resource without
+#     first manually protecting or backing up the OCI block volume.
+#   • The VolumeAttachment is managed separately and re-added once the
+#     OCI compute instance is provisioned (provider-oci-compute required).
+#
+# Instance recreation procedure (image update):
+#   1. Delete VolumeAttachment (detach from old instance) if it exists:
+#      kubectl delete volumeattachment kazimierz-akn-pangolin-data-attachment \
+#        -n kazimierz-akn
+#   2. Delete and recreate the instance via the Claim (or update imageId).
+#   3. Once the new instance is READY, re-add the VolumeAttachment resource.
+#      The Volume already exists in OCI — only the attachment is recreated.
+#
+# Storage on the instance
+# ──────────────────────────────────────────────────────────────────────
+# The volume is attached paravirtualized (required for ARM Ampere) and
+# appears as /dev/oracleoci/oraclevdb (or /dev/sdb). The NixOS
+# storage.nix module mounts it by filesystem label "pangolin-data"
+# (set during first-boot provisioning), ensuring a stable mount
+# identity that is independent of device enumeration order.
+#
+# Prerequisites
+# ──────────────────────────────────────────────────────────────────────
+#   • availabilityDomain must match the instance (currently jbln:EU-PARIS-1-AD-1;
+#     update this field if the instance moves to a different AD).
+#   • The Volume must be in the same AD as the instance.
+#   • Run `dist:render` after any edit: never hand-edit dist/ files.
+---
+apiVersion: blockstorage.oci.m.upbound.io/v1alpha1
+kind: Volume
+metadata:
+  name: kazimierz-akn-pangolin-data
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    availabilityDomain: jbln:EU-PARIS-1-AD-1
+    compartmentIdRef:
+      name: kazimierz-akn
+    displayName: kazimierz-pangolin-data
+    sizeInGbs: "50"
+    freeformTags:
+      project: "kazimierz.akn"
+      role: "data"
+      managed_by: "crossplane"
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig

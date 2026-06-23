@@ -1,0 +1,20 @@
+---
+apiVersion: blockstorage.oci.m.upbound.io/v1alpha1
+kind: Volume
+metadata:
+  name: kazimierz-akn-pangolin-data
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    availabilityDomain: jbln:EU-PARIS-1-AD-1
+    compartmentIdRef:
+      name: kazimierz-akn
+    displayName: kazimierz-pangolin-data
+    freeformTags:
+      managed_by: crossplane
+      project: kazimierz.akn
+      role: data
+    sizeInGbs: "50"
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default
