@@ -61,9 +61,9 @@ spec:
 apiVersion: pkg.crossplane.io/v1
 kind: Provider
 metadata:
-  name: provider-oci-compute
+  name: provider-oci-identity
 spec:
-  package: oci.chezmoi.sh/ghcr.io/oracle/provider-oci-compute:v1.1.0
+  package: oci.chezmoi.sh/ghcr.io/oracle/provider-oci-identity:v1.1.0
   runtimeConfigRef:
     name: hardened
   skipDependencyResolution: true
