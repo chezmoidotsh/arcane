@@ -1,0 +1,21 @@
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-ingress-udp21820-ipv6
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    direction: INGRESS
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    protocol: "17"
+    source: ::/0
+    sourceType: CIDR_BLOCK
+    udpOptions:
+    - destinationPortRange:
+      - max: 21820
+        min: 21820
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default

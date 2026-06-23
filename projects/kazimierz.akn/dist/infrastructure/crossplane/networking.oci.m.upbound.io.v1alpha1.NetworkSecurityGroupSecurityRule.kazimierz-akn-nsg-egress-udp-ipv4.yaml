@@ -1,0 +1,17 @@
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-egress-udp-ipv4
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    destination: 0.0.0.0/0
+    destinationType: CIDR_BLOCK
+    direction: EGRESS
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    protocol: "17"
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default

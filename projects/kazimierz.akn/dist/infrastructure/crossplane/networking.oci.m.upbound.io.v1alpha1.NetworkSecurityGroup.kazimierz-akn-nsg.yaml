@@ -1,0 +1,19 @@
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroup
+metadata:
+  name: kazimierz-akn-nsg
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    compartmentIdRef:
+      name: kazimierz-akn
+    displayName: kazimierz-akn-nsg
+    freeformTags:
+      managed_by: crossplane
+      project: kazimierz.akn
+    vcnIdRef:
+      name: kazimierz-akn-vcn
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default

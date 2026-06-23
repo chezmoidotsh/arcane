@@ -1,0 +1,21 @@
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-ingress-tcp443-ipv4
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    direction: INGRESS
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    protocol: "6"
+    source: 0.0.0.0/0
+    sourceType: CIDR_BLOCK
+    tcpOptions:
+    - destinationPortRange:
+      - max: 443
+        min: 443
+  providerConfigRef:
+    kind: ProviderConfig
+    name: default

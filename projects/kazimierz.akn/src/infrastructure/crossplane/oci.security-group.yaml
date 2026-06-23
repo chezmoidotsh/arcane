@@ -1,0 +1,348 @@
+# OCI Network Security Group for kazimierz.akn
+#
+# Provisioned resources:
+#   NetworkSecurityGroup                   Instance-level firewall (VNIC-attached)
+#   NetworkSecurityGroupSecurityRule × 14  See security model below
+#
+# Security model
+# ──────────────────────────────────────────────────────────────────────
+# NSGs are preferred over Security Lists: they decouple the VCN subnet
+# topology from application-level security requirements, and rules apply
+# at the VNIC level rather than the subnet level.
+#
+# The NSG is attached to the instance via claim.yaml → spec.instance.nsgIds.
+# The OCID emitted in status.atProvider.id must be copied to
+# claim.yaml spec.instance.nsgIds after first provisioning.
+#
+# Ingress rules (stateful, dual-stack):
+#   Protocol  Port      Purpose                      Source
+#   ───────  ────────  ────────────────────────────  ───────────────
+#   TCP      22        SSH (remote admin)            0.0.0.0/0, ::/0
+#   TCP      80        HTTP → HTTPS redirect         0.0.0.0/0, ::/0
+#   TCP      443       HTTPS (Traefik reverse proxy) 0.0.0.0/0, ::/0
+#   UDP      51820     WireGuard site tunnels (Newt) 0.0.0.0/0, ::/0
+#   UDP      21820     WireGuard client tunnels      0.0.0.0/0, ::/0
+#
+# Egress rules (stateful, dual-stack):
+#   Protocol 6 (TCP)  → 0.0.0.0/0, ::/0
+#   Protocol 17 (UDP) → 0.0.0.0/0, ::/0
+#
+# Notes:
+#   • All rules are stateful — NSG rules do not expose isStateless, unlike
+#     Security Lists. OCI NSG rules are always connection-tracked.
+#   • SSH (port 22) is open to the world. Access is restricted to
+#     pubkey-only authentication (see claim.yaml and the NixOS config).
+#   • WireGuard ports 51820/21820 are for Newt tunnel transport.
+#     Further authorization is handled at the WireGuard layer.
+#   • IPv6 is enabled on the VCN (Oracle GUA allocation). Subnet IPv6
+#     CIDR procedure is documented in oci.network.yaml.
+#
+# All resources depend on the OCI ProviderConfig "default" (see oci.providerconfig.yaml).
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroup
+metadata:
+  name: kazimierz-akn-nsg
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    compartmentIdRef:
+      name: kazimierz-akn
+    vcnIdRef:
+      name: kazimierz-akn-vcn
+    displayName: kazimierz-akn-nsg
+    freeformTags:
+      project: "kazimierz.akn"
+      managed_by: "crossplane"
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+# ── Ingress rules ──────────────────────────────────────────────────────
+---
+# TCP/22 — SSH (remote admin, pubkey-only)
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-ingress-tcp22-ipv4
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    direction: INGRESS
+    protocol: "6"
+    source: "0.0.0.0/0"
+    sourceType: CIDR_BLOCK
+    tcpOptions:
+      - destinationPortRange:
+          - min: 22
+            max: 22
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-ingress-tcp22-ipv6
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    direction: INGRESS
+    protocol: "6"
+    source: "::/0"
+    sourceType: CIDR_BLOCK
+    tcpOptions:
+      - destinationPortRange:
+          - min: 22
+            max: 22
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+---
+# TCP/80 — HTTP → HTTPS redirect
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-ingress-tcp80-ipv4
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    direction: INGRESS
+    protocol: "6"
+    source: "0.0.0.0/0"
+    sourceType: CIDR_BLOCK
+    tcpOptions:
+      - destinationPortRange:
+          - min: 80
+            max: 80
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-ingress-tcp80-ipv6
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    direction: INGRESS
+    protocol: "6"
+    source: "::/0"
+    sourceType: CIDR_BLOCK
+    tcpOptions:
+      - destinationPortRange:
+          - min: 80
+            max: 80
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+---
+# TCP/443 — HTTPS (Traefik reverse proxy)
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-ingress-tcp443-ipv4
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    direction: INGRESS
+    protocol: "6"
+    source: "0.0.0.0/0"
+    sourceType: CIDR_BLOCK
+    tcpOptions:
+      - destinationPortRange:
+          - min: 443
+            max: 443
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-ingress-tcp443-ipv6
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    direction: INGRESS
+    protocol: "6"
+    source: "::/0"
+    sourceType: CIDR_BLOCK
+    tcpOptions:
+      - destinationPortRange:
+          - min: 443
+            max: 443
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+---
+# UDP/51820 — WireGuard site tunnels (Newt)
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-ingress-udp51820-ipv4
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    direction: INGRESS
+    protocol: "17"
+    source: "0.0.0.0/0"
+    sourceType: CIDR_BLOCK
+    udpOptions:
+      - destinationPortRange:
+          - min: 51820
+            max: 51820
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-ingress-udp51820-ipv6
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    direction: INGRESS
+    protocol: "17"
+    source: "::/0"
+    sourceType: CIDR_BLOCK
+    udpOptions:
+      - destinationPortRange:
+          - min: 51820
+            max: 51820
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+---
+# UDP/21820 — WireGuard client tunnels
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-ingress-udp21820-ipv4
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    direction: INGRESS
+    protocol: "17"
+    source: "0.0.0.0/0"
+    sourceType: CIDR_BLOCK
+    udpOptions:
+      - destinationPortRange:
+          - min: 21820
+            max: 21820
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+---
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-ingress-udp21820-ipv6
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    direction: INGRESS
+    protocol: "17"
+    source: "::/0"
+    sourceType: CIDR_BLOCK
+    udpOptions:
+      - destinationPortRange:
+          - min: 21820
+            max: 21820
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+# ── Egress rules ───────────────────────────────────────────────────────
+---
+# TCP — all outbound (IPv4)
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-egress-tcp-ipv4
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    direction: EGRESS
+    protocol: "6"
+    destination: "0.0.0.0/0"
+    destinationType: CIDR_BLOCK
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+---
+# TCP — all outbound (IPv6)
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-egress-tcp-ipv6
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    direction: EGRESS
+    protocol: "6"
+    destination: "::/0"
+    destinationType: CIDR_BLOCK
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+---
+# UDP — all outbound (IPv4)
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-egress-udp-ipv4
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    direction: EGRESS
+    protocol: "17"
+    destination: "0.0.0.0/0"
+    destinationType: CIDR_BLOCK
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
+---
+# UDP — all outbound (IPv6)
+apiVersion: networking.oci.m.upbound.io/v1alpha1
+kind: NetworkSecurityGroupSecurityRule
+metadata:
+  name: kazimierz-akn-nsg-egress-udp-ipv6
+  namespace: kazimierz-akn
+spec:
+  forProvider:
+    networkSecurityGroupIdRef:
+      name: kazimierz-akn-nsg
+    direction: EGRESS
+    protocol: "17"
+    destination: "::/0"
+    destinationType: CIDR_BLOCK
+  providerConfigRef:
+    name: default
+    kind: ProviderConfig
