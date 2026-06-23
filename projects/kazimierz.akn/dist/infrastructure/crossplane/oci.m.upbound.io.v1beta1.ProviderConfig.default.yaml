@@ -1,0 +1,13 @@
+---
+apiVersion: oci.m.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+  namespace: kazimierz-akn
+spec:
+  credentials:
+    secretRef:
+      key: credentials
+      name: oci-credentials
+      namespace: kazimierz-akn
+    source: Secret

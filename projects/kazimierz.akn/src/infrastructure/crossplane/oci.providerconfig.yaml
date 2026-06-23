@@ -1,0 +1,65 @@
+# ProviderConfig for the Oracle OCI provider family (oci.m.upbound.io).
+# The Oracle providers (provider-family-oci, provider-oci-networking, etc.)
+# use namespaced ProviderConfigs — one per namespace that uses OCI resources.
+# This is distinct from the legacy oci.upbound.io ProviderConfig in chezmoi.sh.
+#
+# Namespaced ProviderConfigs only read credentials from their own namespace,
+# so an ExternalSecret syncs oci-credentials into kazimierz-akn from Vault.
+# The secret format mirrors chezmoi.sh/src/infrastructure/crossplane/providers/oci/:
+#   {"tenancy_ocid":"...","user_ocid":"...","private_key":"...",
+#    "fingerprint":"...","region":"...","auth":"ApiKey"}
+# Ensure the IAM user has access to compartment
+# ocid1.compartment.oc1..aaaaaaaajyh7a5rbs3gcnvmxffcwewtuftrakz5ndd6ojwxcjyjecuvnafaq
+# and that the region matches the availability domain used by the instance.
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: oci-credentials
+  namespace: kazimierz-akn
+spec:
+  refreshInterval: 720h # 30 days
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+  target:
+    name: oci-credentials
+    template:
+      type: Opaque
+      engineVersion: v2
+      data:
+        credentials: '{"tenancy_ocid":"{{ .tenancy_ocid }}","user_ocid":"{{ .user_ocid }}","private_key":"{{ .private_key | replace "\n" "\\n" }}","fingerprint":"{{ .fingerprint }}","region":"{{ .region }}","auth":"ApiKey"}'
+  data:
+    - secretKey: tenancy_ocid
+      remoteRef:
+        key: shared/third-parties/oci/iam/chezmoi.sh/crossplane-rw
+        property: tenancy_ocid
+    - secretKey: user_ocid
+      remoteRef:
+        key: shared/third-parties/oci/iam/chezmoi.sh/crossplane-rw
+        property: user_ocid
+    - secretKey: private_key
+      remoteRef:
+        key: shared/third-parties/oci/iam/chezmoi.sh/crossplane-rw
+        property: private_key
+    - secretKey: fingerprint
+      remoteRef:
+        key: shared/third-parties/oci/iam/chezmoi.sh/crossplane-rw
+        property: fingerprint
+    - secretKey: region
+      remoteRef:
+        key: shared/third-parties/oci/iam/chezmoi.sh/crossplane-rw
+        property: region
+---
+apiVersion: oci.m.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+  namespace: kazimierz-akn
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: kazimierz-akn
+      name: oci-credentials
+      key: credentials
