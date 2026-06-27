@@ -1,0 +1,196 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+...@../assets/d2/architecture-styles.d2
+
+explanation: |md
+  # Homelab Network Topology
+
+  Physical and logical network topology of the homelab.\
+  The UDM Pro manages 5 VLANs. pve-01 connects directly to the UDM Pro\
+  via two NICs: vmbr0 (VLAN 5 management) and vmbr1 (full VLAN trunk).\
+  pve-01 hosts all clusters and standalone services as Proxmox guests.\
+  Talos VMs use a dual-NIC design: eth0 on vmbr1 for Cilium L2\
+  LoadBalancer ARP announcements, eth1 on a dedicated SDN VNet for\
+  inter-node traffic (kubelet, etcd).
+| {
+  near: center-left
+}
+
+# ── External ──────────────────────────────────────────────────────────────────
+internet: {class: [network]}
+
+# ── Physical network layer ─────────────────────────────────────────────────────
+udm-pro: {
+  class: [hardware]
+  label: UDM Pro\n10.0.0.1 (gateway)
+  icon: ../assets/icons/hardware/unifi.svg
+  tooltip: UniFi Dream Machine Pro — L3 gateway, DHCP, inter-VLAN firewall
+}
+
+wifi-ap: {
+  class: [hardware]
+  label: WiFi AP
+  icon: ../assets/icons/hardware/unifi.svg
+  tooltip: UniFi Access Point — SSID-to-VLAN mapping (Home/Guest/IoT)
+}
+
+# ── VLANs ─────────────────────────────────────────────────────────────────────
+vlan1: {
+  class: [network]
+  label: VLAN 1 — Backbone\n10.10.10.0/24
+}
+
+vlan2: {
+  class: [network]
+  label: VLAN 2 — Home\n192.168.10.0/25
+}
+
+vlan3: {
+  class: [network]
+  label: VLAN 3 — Guest\n192.168.10.128/25
+}
+
+vlan4: {
+  class: [network]
+  label: VLAN 4 — IoT\n192.168.3.0/25
+  tooltip: IoT devices; internet blocked by default — HASS has a VLAN-level internet exception; IoT → HASS only
+}
+
+vlan5: {
+  class: [network]
+  label: VLAN 5 — Homelab\n10.0.0.0/22
+}
+
+# ── Proxmox hypervisor ────────────────────────────────────────────────────────
+pve-01: {
+  class: [namespace]
+  label: pve-01\n10.0.0.11 (OS) / 10.0.0.10 (IPMI)
+  tooltip: Proxmox hypervisor — 2 physical NICs, both connected directly to UDM Pro
+  style.fill-pattern: none
+
+  vmbr0: {
+    class: [application-system]
+    label: vmbr0\nManagement bridge
+    tooltip: PVE OS management bridge — VLAN 5 only (static 10.0.0.11); NIC 2 → UDM Pro
+  }
+
+  vmbr1: {
+    class: [application-system]
+    label: vmbr1\nVLAN-aware guest bridge
+    tooltip: Trunks all VLANs to guest VMs and LXC containers; NIC 1 → UDM Pro
+  }
+
+  # ── LXC containers ──────────────────────────────────────────────────────────
+  lxcs: {
+    class: [namespace]
+    label: LXC containers — VLAN 5
+    style.fill-pattern: none
+
+    omni: {
+      class: [application-system]
+      label: omni\n10.0.0.21
+      tooltip: Omni cluster manager — API, dashboard, Wireguard tunnel
+    }
+    o11y: {
+      class: [application-system]
+      label: o11y\n10.0.0.22
+      tooltip: Observability — VictoriaMetrics, VictoriaLogs, Alertmanager
+    }
+    oci-registry: {
+      class: [application-system]
+      label: oci-registry\n10.0.0.23
+      tooltip: OCI container registry (Zot)
+    }
+    pve-exporter: {
+      class: [application-system]
+      label: pve-exporter\n(dynamic)
+      tooltip: Prometheus PVE exporter — scrapes Proxmox API; TCP 9221 inbound only
+    }
+    omni-provider: {
+      class: [application-system]
+      label: omni-infra-provider-proxmox\n(dynamic)
+      tooltip: Omni infrastructure provider for Proxmox — provisions Talos VMs
+    }
+  }
+
+  # ── Proxmox SDN VXLAN ───────────────────────────────────────────────────────
+  sdn: {
+    class: [namespace]
+    label: SDN — VXLAN zone\n10.128.0.0/16
+    style.fill-pattern: none
+    tooltip: Per-cluster L2 isolation via VXLAN — SNAT to Proxmox API; MTU 1450
+
+    vnet-lungmen: {
+      class: [application-system]
+      label: vnet-lungmen\n10.128.1.0/28
+      tooltip: lungmen.akn node traffic (eth1) — kubelet, etcd, inter-node; DHCP stable per MAC
+    }
+    vnet-rhodes: {
+      class: [application-system; undeployed]
+      label: vnet-rhodes\n10.128.2.0/28
+      tooltip: rhodes.akn (future cluster)
+    }
+    vnet-sandbox: {
+      class: [application-system]
+      label: vnet-sandbox\n10.128.255.0/28
+      tooltip: Shared sandbox / ephemeral clusters
+    }
+  }
+
+  # ── Talos VMs ───────────────────────────────────────────────────────────────
+  talos: {
+    class: [namespace]
+    label: Talos VMs — lungmen.akn
+    style.fill-pattern: none
+    tooltip: Dual-NIC Talos VMs — separate Cilium L2 and node traffic planes
+
+    vm-eth0: {
+      class: [application-system]
+      label: eth0 → vmbr1 (VLAN 5)\nNo node IP — L2 ARP only\nCilium LB: 10.0.0.64/29 (lungmen.akn slice)
+      tooltip: Cilium L2Announcement ARP responses for lungmen.akn's /29 slice of the /26 pool; no kubelet/etcd traffic
+    }
+    vm-eth1: {
+      class: [application-system]
+      label: eth1 → vnet-lungmen\n10.128.1.x (DHCP, stable per MAC)\nkubelet · etcd · inter-node
+      tooltip: Node management plane; SNAT to pve-01:8006 (Proxmox API for proxmox-csi-plugin)
+    }
+  }
+}
+
+# ── Physical connections ───────────────────────────────────────────────────────
+internet -> udm-pro: "WAN" {class: [connect-from-internet]}
+udm-pro -> wifi-ap: "AP trunk" {class: [connect-network]}
+udm-pro -> pve-01.vmbr1: "VLAN trunk (NIC 1)" {class: [connect-network]}
+udm-pro -> pve-01.vmbr0: "VLAN 5 access (NIC 2)" {class: [connect-network]}
+
+# ── UDM Pro → VLANs ──────────────────────────────────────────────────────────
+udm-pro -> vlan1
+udm-pro -> vlan2
+udm-pro -> vlan3
+udm-pro -> vlan4
+udm-pro -> vlan5
+
+# WiFi AP → VLANs
+wifi-ap -> vlan2: "Home SSID"
+wifi-ap -> vlan3: "Guest SSID"
+wifi-ap -> vlan4: "IoT SSID"
+
+# ── pve-01 bridge → VLAN / guest attachment ───────────────────────────────────
+pve-01.vmbr0 -> vlan5: "10.0.0.11 (static)"
+pve-01.vmbr1 -> vlan5: "VLAN 5 tagged"
+pve-01.vmbr1 -> pve-01.lxcs: "VLAN 5 ports"
+pve-01.vmbr1 -> pve-01.talos.vm-eth0: "VLAN 5 tagged (no node IP)"
+
+# SDN VNet → Talos eth1
+pve-01.sdn.vnet-lungmen -> pve-01.talos.vm-eth1: "VXLAN DHCP (stable per MAC)"
+
+# ── Inter-VLAN firewall (UDM Pro) ─────────────────────────────────────────────
+vlan2 -> vlan5: "Allowed: home → services" {
+  style.stroke-dash: 4
+  style.stroke: "#22C55E"
+  style.font-color: "#22C55E"
+}
