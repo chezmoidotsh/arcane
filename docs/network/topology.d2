@@ -14,8 +14,8 @@ explanation: |md
   via two NICs: vmbr0 (VLAN 5 management) and vmbr1 (full VLAN trunk).\
   pve-01 hosts all clusters and standalone services as Proxmox guests.\
   Talos VMs use a dual-NIC design: eth0 on vmbr1 for Cilium L2\
-  LoadBalancer ARP announcements, eth1 on a dedicated SDN VNet for\
-  inter-node traffic (kubelet, etcd).
+  LoadBalancer ARP announcements, eth1 on the shared vnet-talos\
+  SDN VNet for inter-node traffic (kubelet, etcd).
 | {
   near: center-left
 }
@@ -122,22 +122,12 @@ pve-01: {
     class: [namespace]
     label: SDN — VXLAN zone\n10.128.0.0/16
     style.fill-pattern: none
-    tooltip: Per-cluster L2 isolation via VXLAN — SNAT to Proxmox API; MTU 1450
+    tooltip: Shared VXLAN VNet (vnet-talos) for all Talos clusters — SNAT to Proxmox API; MTU 1450
 
-    vnet-lungmen: {
+    vnet-talos: {
       class: [application-system]
-      label: vnet-lungmen\n10.128.1.0/28
-      tooltip: lungmen.akn node traffic (eth1) — kubelet, etcd, inter-node; DHCP stable per MAC
-    }
-    vnet-rhodes: {
-      class: [application-system; undeployed]
-      label: vnet-rhodes\n10.128.2.0/28
-      tooltip: rhodes.akn (future cluster)
-    }
-    vnet-sandbox: {
-      class: [application-system]
-      label: vnet-sandbox\n10.128.255.0/28
-      tooltip: Shared sandbox / ephemeral clusters
+      label: vnet-talos\n10.128.0.0/24
+      tooltip: Shared node traffic (eth1) for all Talos/Omni clusters — kubelet, etcd, inter-node; DHCP stable per MAC (.10–.250)
     }
   }
 
@@ -155,7 +145,7 @@ pve-01: {
     }
     vm-eth1: {
       class: [application-system]
-      label: eth1 → vnet-lungmen\n10.128.1.x (DHCP, stable per MAC)\nkubelet · etcd · inter-node
+      label: eth1 → vnet-talos\n10.128.0.x (DHCP, stable per MAC)\nkubelet · etcd · inter-node
       tooltip: Node management plane; SNAT to pve-01:8006 (Proxmox API for proxmox-csi-plugin)
     }
   }
@@ -186,7 +176,7 @@ pve-01.vmbr1 -> pve-01.lxcs: "VLAN 5 ports"
 pve-01.vmbr1 -> pve-01.talos.vm-eth0: "VLAN 5 tagged (no node IP)"
 
 # SDN VNet → Talos eth1
-pve-01.sdn.vnet-lungmen -> pve-01.talos.vm-eth1: "VXLAN DHCP (stable per MAC)"
+pve-01.sdn.vnet-talos -> pve-01.talos.vm-eth1: "VXLAN DHCP (stable per MAC)"
 
 # ── Inter-VLAN firewall (UDM Pro) ─────────────────────────────────────────────
 vlan2 -> vlan5: "Allowed: home → services" {

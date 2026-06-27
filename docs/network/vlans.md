@@ -143,20 +143,31 @@ Each cluster gets a `/29` block (6 usable IPs). The `/26` holds exactly 8 × `/2
 
 Internal node-to-node network for Talos clusters. Not routed on physical VLANs — VXLAN-encapsulated over the PVE management network.
 
-**Range:** `10.128.0.0/16` — no conflict with any existing subnet.
+**Parent range:** `10.128.0.0/16` — no conflict with any existing subnet. A single `/24` is
+currently allocated to the shared Talos VNet (see table below).
 
-Each VNet is configured with:
+`vnet-talos` is configured with:
 
-* **Gateway:** `.1` (PVE node acts as L3 router)
-* **DHCP:** dnsmasq with stable leases per MAC (node IPs survive reboots)
+* **Gateway:** `10.128.0.1` (PVE node acts as L3 router)
+* **DHCP:** dnsmasq with stable leases per MAC (node IPs survive reboots), range `.10`–`.250`
 * **SNAT:** enabled so nodes can reach `pve-01.pve.chezmoi.sh:8006` (required for proxmox-csi-plugin)
 * **MTU:** 1450 (standard 1500 minus 50-byte VXLAN header)
 
-| VNet           | Subnet          | Block                    | Purpose                               |
-| -------------- | --------------- | ------------------------ | ------------------------------------- |
-| `vnet-lungmen` | 10.128.1.0/28   | .1 gateway, .2–.14 nodes | lungmen.akn Talos node traffic (eth1) |
-| `vnet-rhodes`  | 10.128.2.0/28   | .1 gateway, .2–.14 nodes | rhodes.akn (future cluster)           |
-| `vnet-sandbox` | 10.128.255.0/28 | .1 gateway, .2–.14 nodes | Shared sandbox / ephemeral clusters   |
+| VNet         | Subnet          | Block                           | Purpose                                           |
+| ------------ | --------------- | ------------------------------- | ------------------------------------------------- |
+| `vnet-talos` | `10.128.0.0/24` | `.1` gateway, `.10`–`.250` DHCP | Shared node traffic (eth1) for all Talos clusters |
+
+> **Why a single shared VNet?** The original design allocated one VNet per cluster
+> (`vnet-lungmen`, `vnet-rhodes`, `vnet-sandbox`). Implementation of
+> [#1038](https://github.com/chezmoidotsh/arcane/issues/1038) uncovered an Omni constraint:
+> cluster-template `patches[]` are Talos machine-config patches only and cannot override a
+> `MachineClass`'s `providerdata` (where `additional_nics[].bridge` lives), and
+> MachineClasses are non-kustomizable shared COSI resources. Per-cluster VNets would force
+> one MachineClass set per cluster, so all Talos clusters now share `vnet-talos`.
+> Per-cluster isolation of *external* LoadBalancer traffic is unaffected — it is provided by
+> the per-cluster VLAN 5 LB pools, not by the SDN VNet. See
+> [ADR-014 (Revision 2026-06-27)](../decisions/014-network-topology.md) for the full
+> rationale and trade-offs.
 
 > **ACL:** `SDN.Use` must be granted to `omni@pve` on each VNet before the Omni infra provider can attach VMs to it:
 >
