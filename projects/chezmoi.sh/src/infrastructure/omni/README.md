@@ -10,6 +10,12 @@ The provider and Omni instance themselves are deployed as Proxmox LXCs — see
 [`../proxmox/lxc/omni-infra-provider-proxmox/`][provider] (the provider that
 creates the VMs). This directory is only the **fleet sizing catalog**.
 
+> **Cluster templates** — the reusable Omni cluster-template *base* lives at
+> [`catalog/omni/clustertemplates/base.yaml`](../../../../../catalog/omni/clustertemplates/base.yaml)
+> (repo root), documented in
+> [`catalog/omni/README.md`](../../../../../catalog/omni/README.md).
+> Machine classes are referenced by name from those templates.
+
 ## Table of contents
 
 1. [Naming convention](#naming-convention)
@@ -86,7 +92,9 @@ Proxmox tuning. The rationale for each field lives in the provider README's
 | `pool`             | `talos`                                           | Mandatory — the `omni@pve` ACL only authorizes this pool.                                                                                                      |
 | `storage_selector` | `name == "nvme-lvm"`                              | Only image-capable storage on this host.                                                                                                                       |
 | `network_bridge`   | `vmbr1`                                           | VLAN-aware guest bridge.                                                                                                                                       |
-| `vlan`             | `2`                                               | Talos VLAN (LXCs use VLAN 5).                                                                                                                                  |
+| `vlan`             | `5`                                               | Talos VLAN 5 (Homelab); was 2 in V1.                                                                                                                           |
+| `network_firewall` | `false`                                           | Disables the per-VM Proxmox fwbr on eth0 so Cilium L2 ARP/NDP broadcasts on vmbr1 are not filtered (provider default is true and breaks L2 announcements).     |
+| `additional_nics`  | `[{bridge: vnet-talos, firewall: false}]`         | eth1 — shared SDN VNet `vnet-talos` (DHCP, MTU 1450) for kubelet/etcd/inter-node traffic.                                                                      |
 | `cpu_type`         | `x86-64-v3`                                       | Matches `tal01`.                                                                                                                                               |
 | `disk_*`           | SSD / discard / iothread / io\_uring / cache=none | NVMe-optimised.                                                                                                                                                |
 | `tags`             | role, class name                                  | Proxmox UI filtering. `talos` and `omni` are added automatically by the provider; only role (`control-plane`/`worker`) and class (`c1.small`, …) are set here. |
@@ -129,9 +137,11 @@ then calls the provider to auto-provision VMs matching that class.
 3. `mise run omni:machineclass:diff` to preview, then `:apply`.
 
 Advanced provider fields (`sockets`, `numa`, `hugepages`, `balloon`,
-`pci_devices`, `additional_disks`, `additional_nics`) exist in the [provider
-schema][provider] for special cases such as GPU passthrough — keep them out of
-the base catalog and add a dedicated class instead.
+`pci_devices`, `additional_disks`) exist in the [provider schema][provider]
+for special cases such as GPU passthrough — keep them out of the base catalog
+and add a dedicated class instead. `additional_nics` is the exception: every
+base class sets eth1 on the shared SDN VNet `vnet-talos` (dual-NIC V2 layout),
+so a per-cluster NIC would still need a dedicated class.
 
 [omni-mc]: https://docs.siderolabs.com/omni/how-to-guides/create-a-machine-class/
 

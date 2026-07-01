@@ -12,7 +12,7 @@ metadata:
 spec:
   matchlabels: []
   autoprovision:
-    providerid: pve-01.pve.chezmoi.sh
+    providerid: pve.chezmoi.sh
     kernelargs: []
     metavalues: []
     # providerdata is an opaque YAML string handed to the Proxmox provider.
@@ -39,10 +39,23 @@ spec:
       # CEL over the pool's storages. nvme-lvm is the only image-capable storage.
       storage_selector: 'name == "nvme-lvm"'
 
-      # VLAN-aware guest bridge.
+      # --- Networking (dual-NIC V2 layout, see ADR-014) ---
+      # eth0 — VLAN-aware trunk on vmbr1. V2 moves Talos to VLAN 5 (Homelab);
+      # V1 used VLAN 2.
       network_bridge: vmbr1
-      # Talos VLAN (tag=2). Platform LXCs use VLAN 5.
-      vlan: 2
+      vlan: 5
+      # CRITICAL: disable the Proxmox fwbr firewall layer on eth0. It defaults
+      # to enabled and filters L2 broadcast, which breaks Cilium L2 ARP/NDP
+      # announcements for the Talos node VIPs.
+      network_firewall: false
+
+      # eth1 — second NIC on the shared SDN VNet "talosnet" for east-west
+      # cluster traffic. A single VNet serves every Talos cluster because Omni
+      # cluster-template patches cannot override a MachineClass's providerdata,
+      # so per-cluster VNets would each need their own class set.
+      additional_nics:
+        - bridge: talosnet
+          firewall: false
 
       # Matches tal01. The provider default (x86-64-v2-AES) is more conservative.
       cpu_type: x86-64-v3
