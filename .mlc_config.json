@@ -1,0 +1,13 @@
+{
+	"ignorePatterns": [
+		{
+			"pattern": "^\\.\\./"
+		},
+		{
+			"pattern": "^https://omni\\.sidero\\.dev/"
+		}
+	],
+	"retryOn429": true,
+	"retryCount": 2,
+	"aliveStatusCodes": [200, 206]
+}

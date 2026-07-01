@@ -144,6 +144,10 @@ lint:
 
   # This is the section where you override some linters' configurations.
   definitions:
+    - name: markdown-link-check
+      commands:
+        - name: lint
+          run: markdown-link-check --config .mlc_config.json -q "${target}"
     - name: conftest
       files: [yaml]
       commands:
