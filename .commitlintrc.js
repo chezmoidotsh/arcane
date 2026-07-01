@@ -96,6 +96,10 @@ const scopes = [
 		value: "catalog:ansible",
 	},
 	{
+		name: "catalog:omni          - Anything related to the Omni cluster-template catalog",
+		value: "catalog:omni",
+	},
+	{
 		name: "catalog:crossplane    - Anything related to the Crossplane resource catalog",
 		value: "catalog:crossplane",
 	},
