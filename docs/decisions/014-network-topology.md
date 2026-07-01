@@ -2,7 +2,7 @@
 status: "accepted"
 date: 2026-06-27
 decision-makers: ["Alexandre"]
-assisted-by: ["claude-sonnet-4-6"]
+assisted-by: ["claude-sonnet-4-6", "glm-5.2"]
 informed: []
 ---
 
@@ -143,18 +143,38 @@ Each Talos VM gets two NICs:
 
 * `eth0` → `vmbr1` (VLAN 5 trunk, no node IP assigned) — Cilium L2Announcement ARP
   responses only; the VM responds to ARP for LB pool IPs but carries no kubelet traffic.
-* `eth1` → per-cluster SDN VNet (VXLAN-encapsulated, DHCP with stable leases per MAC) —
-  all node management traffic: kubelet API, etcd, inter-node pod overlay.
+* `eth1` → shared SDN VNet `vnet-talos` (VXLAN-encapsulated, DHCP with stable leases per
+  MAC) — all node management traffic: kubelet API, etcd, inter-node pod overlay.
 
-One Proxmox SDN VXLAN zone is created; one VNet per production cluster and one shared
-sandbox VNet. SNAT on each VNet gateway lets nodes reach `pve-01:8006` (required for
-`proxmox-csi-plugin`). The UDM Pro needs no changes — VLAN 5 already exists and carries
-the Cilium LB announcements from `eth0`.
+A single Proxmox SDN VXLAN zone backs one shared VNet, `vnet-talos` (`10.128.0.0/24`), used
+by **all** Talos/Omni clusters. SNAT on the VNet gateway (`10.128.0.1`, PVE acting as L3
+router) lets nodes reach `pve-01:8006` (required for `proxmox-csi-plugin`). The UDM Pro
+needs no changes — VLAN 5 already exists and carries the Cilium LB announcements from `eth0`.
 
-* `+` **Inter-cluster node isolation at L2** — each cluster's kubelet/etcd traffic is
-  confined to its VNet; a misconfiguration on `lungmen.akn` cannot reach `rhodes.akn` nodes.
-* `+` **No UDM Pro changes per new cluster** — adding a cluster means creating a new
-  Proxmox SDN VNet (IaC, no GUI), not touching the UDM Pro.
+> **Revision (2026-06-27) — per-cluster VNets collapsed into `vnet-talos`.**
+> The original Option 3 design called for one VNet per cluster (`vnet-lungmen`,
+> `vnet-rhodes`, `vnet-sandbox`) carved from `10.128.0.0/16`, each providing L2 isolation of
+> node-plane traffic between clusters. During implementation we hit a hard Omni constraint: a
+> cluster-template's `patches[]` are Talos machine-config strategic-merge patches only — they
+> **cannot override a `MachineClass`'s `providerdata`** (e.g. `additional_nics[].bridge`).
+> The cluster-template's `machineClass` reference exposes only `name` and `size`; the bridge
+> a NIC attaches to lives inside the MachineClass's `providerdata`, and MachineClasses are
+> shared COSI typed resources (`metadata.type`/`metadata.id`) that cannot be kustomize-patched
+> per cluster ([Omni cluster-template reference][omni-ct]; maintainer confirmation in
+> [siderolabs/omni#2593][omni-2593]). Per-cluster VNets would therefore require a distinct
+> set of MachineClasses per cluster. Rather than multiply MachineClasses, we adopt a single
+> shared `vnet-talos` (`10.128.0.0/24`) for all Talos clusters. **Trade-off:** per-cluster L2
+> isolation for node (`eth1`) traffic is sacrificed in exchange for a simple, shared
+> MachineClass catalog — consistent with the repo's "Steel Age: pragmatic over perfect"
+> philosophy (AGENTS.md). Inter-cluster isolation for *external* LoadBalancer traffic is
+> preserved by the per-cluster VLAN 5 LB pools (`10.0.0.64/26`), which remain separate `/29`
+> slices per cluster on `eth0`.
+
+* `+` **Node-plane separation from the homelab VLAN** — all cluster node traffic (kubelet,
+  etcd, inter-node) is confined to the shared `vnet-talos` and kept off VLAN 5, which is
+  left to Cilium LB announcements only.
+* `+` **No UDM Pro changes per new cluster** — adding a cluster reuses the shared
+  `vnet-talos` and the MachineClass catalog (IaC, no GUI); the UDM Pro is untouched.
 * `+` **Clean traffic separation** — Cilium L2 announcements on `eth0` (VLAN 5, visible to
   the UDM Pro) and node management on `eth1` (VXLAN, invisible to physical VLANs). Reduces
   ARP broadcast noise on VLAN 5 to LB-pool announcements only.
@@ -195,7 +215,9 @@ isolation into the Proxmox SDN layer, which is API-driven and can be expressed a
 the announcement plane (`eth0`, VLAN 5) and the management plane (`eth1`, SDN VNet). This
 separation means that the physical VLAN 5 broadcast domain only sees Cilium gratuitous ARP
 for LB pool IPs — not kubelet handshakes, etcd elections, or inter-node pod tunnel setup.
-The blast radius of a CNI misconfiguration is bounded to the VNet's `/28` block.
+The blast radius of a node-plane CNI misconfiguration is bounded to `vnet-talos`
+(`10.128.0.0/24`); inter-cluster isolation of *external* service traffic is preserved by
+the per-cluster VLAN 5 LB pools.
 
 **Proxmox API reachability via SNAT.** The `proxmox-csi-plugin` requires nodes to call the
 Proxmox API (`pve-01:8006`). Under the SDN design, nodes have no direct VLAN 5 IP, so the
@@ -206,15 +228,31 @@ targeted exception that does not expose node management ports to VLAN 5.
 
 ### Positive
 
-* ✅ Inter-cluster node traffic is L2-isolated; a workload bug on one cluster cannot reach
-  another cluster's kubelet port at the network layer.
-* ✅ Adding a new cluster requires only a new Proxmox SDN VNet — no UDM Pro changes.
+* ✅ Cluster node traffic (kubelet/etcd) is kept off VLAN 5 on the shared `vnet-talos`;
+  VLAN 5 ARP broadcasts are limited to Cilium LB announcements.
+* ✅ Adding a new cluster reuses the existing `vnet-talos` and shared MachineClass catalog —
+  no new VNet, no new MachineClasses, and no UDM Pro changes.
 * ✅ VLAN 5 ARP broadcast domain carries only Cilium LB announcements, not cluster node traffic.
 * ✅ Node IPs are stable across reboots (DHCP stable leases per MAC from SDN dnsmasq).
 * ✅ Network topology is fully documented and reproducible (this ADR + `docs/network/vlans.md`).
+* ✅ All clusters share one Cilium install manifest — the pod CIDR supernet `172.30.0.0/16`
+  is set as `ipv4NativeRoutingCIDR` (`catalog/talos/manifests/cilium/`). This is a
+  **ClusterMesh prerequisite**: Cilium skips SNAT for destinations within the
+  supernet, so inter-cluster pod traffic retains its source identity. Each cluster
+  still allocates its own non-overlapping /19 from within the /16 — the
+  `ipv4NativeRoutingCIDR` setting simply tells Cilium not to masquerade traffic
+  headed to any address in the broader range.
+* ✅ **Service CIDR unified across all clusters** — all clusters share `172.31.0.0/19`
+  (kube-dns `172.31.0.10` everywhere) instead of per-cluster `/19` ranges. This is
+  ClusterMesh-compatible: Cilium resolves ClusterIPs at the source node via eBPF, so
+  they never traverse the inter-cluster link. Pod CIDRs remain unique per cluster
+  (mandatory). See the ClusterMesh prerequisites table in `docs/network/vlans.md`.
 
 ### Negative
 
+* ⚠️ All Talos clusters share `vnet-talos`, so node-plane (`eth1`) traffic is **not**
+  L2-isolated per cluster (per the 2026-06-27 revision). External service isolation remains
+  provided by the per-cluster VLAN 5 LB pools.
 * ⚠️ VXLAN adds 50-byte encapsulation overhead per packet; relevant for storage-heavy
   workloads on NAS-backed PVCs (mitigated: homelab inter-node bandwidth is well within 1G).
 * ⚠️ Node IPs are not visible on VLAN 5; debugging requires `kubectl get nodes -o wide`
@@ -240,6 +278,22 @@ targeted exception that does not expose node management ports to VLAN 5.
   avoid GUI-only UDM Pro dependency per cluster. Cilium LB pool moved from `192.168.10.64/28`
   (VLAN 2 / Home) to `10.0.0.64/26` (VLAN 5 / Homelab) to keep all cluster traffic inside
   the Homelab VLAN.
+* **2026-06-27 (revision)**: **Per-cluster VNets collapsed into a single shared
+  `vnet-talos`.** Implementation revealed that Omni cluster-template `patches[]` cannot
+  override a `MachineClass`'s `providerdata` (where the NIC bridge lives); MachineClasses
+  are non-kustomizable shared COSI resources, so per-cluster VNets would force one
+  MachineClass set per cluster. Resolved by adopting a single `vnet-talos`
+  (`10.128.0.0/24`) for all Talos clusters, trading per-cluster L2 node isolation for a
+  simple MachineClass catalog. External LB isolation is retained via the unchanged
+  per-cluster VLAN 5 LB pools.
+* **2026-06-29**: **Service CIDR unification (ClusterMesh readiness)** — Moved from
+  per-cluster service CIDRs (each cluster had its own `/19` from `172.31.0.0/16`) to a
+  single shared service CIDR `172.31.0.0/19` for all clusters. Cilium's eBPF-based
+  service load-balancing means ClusterIPs are resolved at the source node and never appear
+  on the inter-cluster wire, so overlapping service CIDRs are transparent to ClusterMesh.
+  Simplifies cluster templates (service CIDR and kube-dns are now defaults, not per-cluster
+  overrides). Pod CIDRs remain per-cluster (mandatory ClusterMesh prerequisite). Added
+  `cluster.name`/`cluster.id` allocation table for future ClusterMesh enablement.
 
 ## References and Related Decisions
 
@@ -260,6 +314,19 @@ targeted exception that does not expose node management ports to VLAN 5.
 
 ## Changelog
 
+* **2026-06-29**: **REVISION**: Service CIDR unified across all clusters — all clusters
+  now share `172.31.0.0/19` (kube-dns `172.31.0.10` everywhere) instead of per-cluster
+  `/19` ranges. Overlapping service CIDRs are ClusterMesh-compatible: Cilium's eBPF
+  service load-balancing resolves ClusterIPs at the source node. The previous per-cluster
+  service CIDR allocation (`172.31.0.0/16` split into 8 × /19) is superseded; remaining
+  `172.31.x.x` space is reserved. Added `cluster.name`/`cluster.id` allocation table
+  (ClusterMesh prerequisites, not yet applied).
+* **2026-06-27**: **REVISION**: Per-cluster SDN VNets (`vnet-lungmen`, `vnet-rhodes`,
+  `vnet-sandbox`) replaced by a single shared `vnet-talos` (`10.128.0.0/24`) after
+  discovering Omni cluster-template `patches[]` cannot override a MachineClass's
+  `providerdata` (NIC bridge). Trade-off: per-cluster L2 node isolation is sacrificed for a
+  simple shared MachineClass catalog; per-cluster external-LB isolation is preserved via the
+  VLAN 5 LB pools.
 * **2026-06-27**: **ACCEPTED**: Initial ADR documenting V1 (single-NIC, single cluster)
   and V2 (dual-NIC + Proxmox SDN VXLAN, multi-cluster) network design. Created alongside
   `docs/network/vlans.md` and `docs/network/topology.d2` as the full network reference.
@@ -269,3 +336,9 @@ targeted exception that does not expose node management ports to VLAN 5.
 [#1032]: https://github.com/chezmoidotsh/arcane/issues/1032
 
 [#1038]: https://github.com/chezmoidotsh/arcane/issues/1038
+
+<!-- External reference links -->
+
+[omni-ct]: https://docs.siderolabs.com/omni/reference/cluster-templates
+
+[omni-2593]: https://github.com/siderolabs/omni/issues/2593

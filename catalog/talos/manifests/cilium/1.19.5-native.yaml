@@ -1,0 +1,134 @@
+# Cilium is a CNI (Container Network Interface) that provides networking for the Kubernetes cluster.
+# It replaces flannel/kube-proxy and provides a more efficient and secure networking solution (Network
+# Policies, Service Mesh, Kubernetes Gateway, etc.)
+#
+# Native routing variant — for new Proxmox/SDN clusters where pod CIDRs are routable without
+# encapsulation (routingMode=native, autoDirectNodeRoutes, kube-proxy replacement).
+# trunk-ignore-all(checkov,trivy)
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/part-of: cilium
+  name: cilium-installer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: cilium-installer
+    namespace: kube-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/part-of: cilium
+  name: cilium-installer
+  namespace: kube-system
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    app.kubernetes.io/part-of: cilium
+  name: cilium-installer-native
+  namespace: kube-system
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cilium-native
+        app.kubernetes.io/part-of: cilium
+        app.kubernetes.io/component: installer
+    spec:
+      restartPolicy: OnFailure
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoExecute
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+        # Required for bootstrap: the node is NotReady (no CNI yet) when this
+        # Job runs. Without these tolerations the scheduler cannot place the pod
+        # and the cluster is stuck — CNI never installs, node never becomes Ready.
+        - key: node.kubernetes.io/not-ready
+          operator: Exists
+          effect: NoSchedule
+        - key: node.kubernetes.io/unreachable
+          operator: Exists
+          effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: Exists
+      serviceAccount: cilium-installer
+      serviceAccountName: cilium-installer
+      hostNetwork: true
+      containers:
+        - name: cilium-installer-native
+          image: quay.io/cilium/cilium-cli:v0.19.5@sha256:cf905ad51326b197d6fc2933154dc74aa4c1ff13c3a257e89e5e40dbd2448c5f
+          env:
+            - name: KUBERNETES_SERVICE_HOST
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: KUBERNETES_SERVICE_PORT
+              value: "6443"
+          command:
+            - cilium
+            - install
+            - --version
+            - 1.19.5
+            - --set
+            - ipam.mode=kubernetes
+            - --set
+            - kubeProxyReplacement=true
+            - --set
+            - routingMode=native
+            - --set
+            - autoDirectNodeRoutes=true
+            - --set
+            - securityContext.capabilities.ciliumAgent={CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}
+            - --set
+            - securityContext.capabilities.cleanCiliumState={NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}
+            - --set
+            - cgroup.autoMount.enabled=false
+            - --set
+            - cgroup.hostRoot=/sys/fs/cgroup
+            - --set
+            - l2announcements.enabled=true
+            - --set
+            - gatewayAPI.enabled=true
+            # ClusterMesh prerequisite: ipv4NativeRoutingCIDR must cover the pod CIDR
+            # supernet (172.30.0.0/16 = 8 × /19, one per cluster — see ADR-014, vlans.md).
+            # With native routing, Cilium skips SNAT for destinations in this range, so
+            # inter-cluster pod-to-pod traffic retains its source identity. Without it,
+            # ClusterMesh traffic would be masqueraded to the node IP, breaking cross-
+            # cluster connectivity.
+            #
+            # This covers ONLY pod CIDRs — the service CIDR (172.31.0.0/19) is excluded
+            # because services are resolved by eBPF at the source node, not routed natively.
+            #
+            # ClusterMesh TODO (not yet set in this shared manifest):
+            #   cluster.name  — unique per cluster (e.g. "lungmen-akn"); see vlans.md table
+            #   cluster.id    — unique integer 1–255 per cluster; encoded in security identities
+            # These MUST be set per-cluster post-install (the shared URL manifest can't
+            # differentiate clusters). Mechanism TBD (cilium config set / Helm overlay).
+            - --set
+            - ipv4NativeRoutingCIDR=172.30.0.0/16
+            - --set
+            - k8sServiceHost=127.0.0.1
+            - --set
+            - k8sServicePort=7445

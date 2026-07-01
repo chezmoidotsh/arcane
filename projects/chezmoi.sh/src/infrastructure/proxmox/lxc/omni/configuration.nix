@@ -99,6 +99,22 @@
   # round-trip through the gateway just to reach a service on the same host.
   networking.hosts."127.0.0.1" = [ "omni.chezmoi.sh" ];
 
+  # ── pvenet (talosnet) interface ──────────────────────────────────────────
+  # eth1 is the second NIC added to CT 101 via Proxmox (bridge=talosnet,
+  # firewall=0). It gives pvenet VMs (10.128.0.0/24) a direct path to Omni
+  # without SNAT or conntrack zone crossing — which would cause RSTs due to
+  # zone mismatch between the host-level NAT (zone 0) and the LXC firewall
+  # bridge (zone 1).
+  # pvenet dnsmasq overrides api.omni.chezmoi.sh and omni.chezmoi.sh to this
+  # address so Talos VMs resolve directly to eth1 for both HTTPS (port 443,
+  # Caddy) and SideroLink WireGuard (UDP 50180).
+  networking.interfaces.eth1 = {
+    ipv4.addresses = [{
+      address = "10.128.0.2";
+      prefixLength = 24;
+    }];
+  };
+
   # ── Caddy persistent state ───────────────────────────────────────────────
   # Cert chains + ACME account data land under /persistent/caddy/caddy/...
   # via nixpkgs' caddy module dataDir option. journald remains volatile.

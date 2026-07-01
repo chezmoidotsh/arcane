@@ -75,6 +75,11 @@ lint:
       paths:
         - projects/chezmoi.sh/src/kubevault/kvstore/*
         - projects/chezmoi.sh/src/kubevault/kvstore/**/*
+    - # SOPS-encrypted dotenv files must not be reformatted — linters corrupt
+      # the lowercase sops_* metadata keys that SOPS requires for decryption.
+      linters: [ALL]
+      paths:
+        - "**/*.sops.env"
     - # Encrypted files are cannot be linted like shell or yaml files
       linters:
         - shellcheck
@@ -139,6 +144,10 @@ lint:
 
   # This is the section where you override some linters' configurations.
   definitions:
+    - name: markdown-link-check
+      commands:
+        - name: lint
+          run: markdown-link-check --config .mlc_config.json -q "${target}"
     - name: conftest
       files: [yaml]
       commands:

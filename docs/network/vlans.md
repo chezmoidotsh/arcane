@@ -15,6 +15,9 @@ Update this document before adding new clusters, services, or static IPs.
   * [Cilium LoadBalancer Pools](#cilium-loadbalancer-pools)
 * [Proxmox SDN — VXLAN VNets](#proxmox-sdn--vxlan-vnets)
 * [Kubernetes CIDRs](#kubernetes-cidrs)
+  * [Service CIDR — shared across all clusters (ClusterMesh-ready)](#service-cidr--shared-across-all-clusters-clustermesh-ready)
+  * [Pod CIDRs — unique per cluster (ClusterMesh prerequisite)](#pod-cidrs--unique-per-cluster-clustermesh-prerequisite)
+  * [ClusterMesh prerequisites](#clustermesh-prerequisites)
 * [Firewall Rules](#firewall-rules)
   * [UDM Pro — Inter-VLAN](#udm-pro--inter-vlan)
   * [Proxmox — Per-LXC](#proxmox--per-lxc-nic-level)
@@ -128,8 +131,8 @@ Each cluster gets a `/29` block (6 usable IPs). The `/26` holds exactly 8 × `/2
 
 | Block           | Usable IPs | Cluster                     |
 | --------------- | ---------- | --------------------------- |
-| `10.0.0.64/29`  | .65–.70    | lungmen.akn                 |
-| `10.0.0.72/29`  | .73–.78    | rhodes.akn (future)         |
+| `10.0.0.64/29`  | .65–.70    | rhodes.akn                  |
+| `10.0.0.72/29`  | .73–.78    | lungmen.akn                 |
 | `10.0.0.80/29`  | .81–.86    | —                           |
 | `10.0.0.88/29`  | .89–.94    | —                           |
 | `10.0.0.96/29`  | .97–.102   | —                           |
@@ -143,20 +146,31 @@ Each cluster gets a `/29` block (6 usable IPs). The `/26` holds exactly 8 × `/2
 
 Internal node-to-node network for Talos clusters. Not routed on physical VLANs — VXLAN-encapsulated over the PVE management network.
 
-**Range:** `10.128.0.0/16` — no conflict with any existing subnet.
+**Parent range:** `10.128.0.0/16` — no conflict with any existing subnet. A single `/24` is
+currently allocated to the shared Talos VNet (see table below).
 
-Each VNet is configured with:
+`vnet-talos` is configured with:
 
-* **Gateway:** `.1` (PVE node acts as L3 router)
-* **DHCP:** dnsmasq with stable leases per MAC (node IPs survive reboots)
+* **Gateway:** `10.128.0.1` (PVE node acts as L3 router)
+* **DHCP:** dnsmasq with stable leases per MAC (node IPs survive reboots), range `.10`–`.250`
 * **SNAT:** enabled so nodes can reach `pve-01.pve.chezmoi.sh:8006` (required for proxmox-csi-plugin)
 * **MTU:** 1450 (standard 1500 minus 50-byte VXLAN header)
 
-| VNet           | Subnet          | Block                    | Purpose                               |
-| -------------- | --------------- | ------------------------ | ------------------------------------- |
-| `vnet-lungmen` | 10.128.1.0/28   | .1 gateway, .2–.14 nodes | lungmen.akn Talos node traffic (eth1) |
-| `vnet-rhodes`  | 10.128.2.0/28   | .1 gateway, .2–.14 nodes | rhodes.akn (future cluster)           |
-| `vnet-sandbox` | 10.128.255.0/28 | .1 gateway, .2–.14 nodes | Shared sandbox / ephemeral clusters   |
+| VNet         | Subnet          | Block                           | Purpose                                           |
+| ------------ | --------------- | ------------------------------- | ------------------------------------------------- |
+| `vnet-talos` | `10.128.0.0/24` | `.1` gateway, `.10`–`.250` DHCP | Shared node traffic (eth1) for all Talos clusters |
+
+> **Why a single shared VNet?** The original design allocated one VNet per cluster
+> (`vnet-rhodes`, `vnet-lungmen`, `vnet-sandbox`). Implementation of
+> [#1038](https://github.com/chezmoidotsh/arcane/issues/1038) uncovered an Omni constraint:
+> cluster-template `patches[]` are Talos machine-config patches only and cannot override a
+> `MachineClass`'s `providerdata` (where `additional_nics[].bridge` lives), and
+> MachineClasses are non-kustomizable shared COSI resources. Per-cluster VNets would force
+> one MachineClass set per cluster, so all Talos clusters now share `vnet-talos`.
+> Per-cluster isolation of *external* LoadBalancer traffic is unaffected — it is provided by
+> the per-cluster VLAN 5 LB pools, not by the SDN VNet. See
+> [ADR-014 (Revision 2026-06-27)](../decisions/014-network-topology.md) for the full
+> rationale and trade-offs.
 
 > **ACL:** `SDN.Use` must be granted to `omni@pve` on each VNet before the Omni infra provider can attach VMs to it:
 >
@@ -174,21 +188,69 @@ Allocated from `172.16.0.0/12` exclusively — no `10.x` or `192.168.x` ranges t
 
 * `172.16.0.0/12` contains exactly 8 × `/15` blocks
 * Last block (`172.30.0.0/15`) is the Kubernetes space, split into two `/16`:
-  * `172.30.0.0/16` — pod CIDRs (8 clusters × `/19` = 8,192 IPs each)
-  * `172.31.0.0/16` — service CIDRs (8 clusters × `/19`)
+  * `172.30.0.0/16` — pod CIDRs (8 clusters × `/19` = 8,192 IPs each; unique per cluster)
+  * `172.31.0.0/16` — reserved; first `/19` (`172.31.0.0/19`) is the shared service CIDR
 
-> **Note on sizing:** `/19` per cluster rather than `/18` — a `/16` fits exactly 8 × `/19`; fitting 8 × `/18` would require a `/14`. 8,192 pod IPs per cluster is well above any homelab requirement.
+### Service CIDR — shared across all clusters (ClusterMesh-ready)
 
-| Cluster     | Pod CIDR          | Service CIDR      | kube-dns      |
-| ----------- | ----------------- | ----------------- | ------------- |
-| lungmen.akn | `172.30.0.0/19`   | `172.31.0.0/19`   | 172.31.0.10   |
-| rhodes.akn  | `172.30.32.0/19`  | `172.31.32.0/19`  | 172.31.32.10  |
-| cluster 3   | `172.30.64.0/19`  | `172.31.64.0/19`  | 172.31.64.10  |
-| cluster 4   | `172.30.96.0/19`  | `172.31.96.0/19`  | 172.31.96.10  |
-| cluster 5   | `172.30.128.0/19` | `172.31.128.0/19` | 172.31.128.10 |
-| cluster 6   | `172.30.160.0/19` | `172.31.160.0/19` | 172.31.160.10 |
-| cluster 7   | `172.30.192.0/19` | `172.31.192.0/19` | 172.31.192.10 |
-| sandbox     | `172.30.224.0/19` | `172.31.224.0/19` | 172.31.224.10 |
+All clusters share a single service CIDR: **`172.31.0.0/19`** — kube-dns at `172.31.0.10`
+everywhere. This is intentional and **ClusterMesh-compatible**: Cilium performs service
+load-balancing at the source node via eBPF, so the ClusterIP is rewritten to a backend pod
+IP *before* the packet leaves the node. ClusterIPs never traverse the inter-cluster link,
+making overlapping service CIDRs between clusters transparent.
+
+> **Previous design (pre-2026-06-29):** Each cluster had its own `/19` service CIDR carved
+> from `172.31.0.0/16`. Unified to a single shared CIDR for ClusterMesh readiness and
+> simpler cluster templates. The rest of `172.31.0.0/16` is reserved.
+
+### Pod CIDRs — unique per cluster (ClusterMesh prerequisite)
+
+Pod CIDRs MUST be non-overlapping between clusters — this is a hard ClusterMesh requirement.
+Each cluster allocates from its own `/19` within `172.30.0.0/16`.
+
+> **Sizing note:** A `/16` fits exactly 8 × `/19`. 8,192 pod IPs per cluster is well above
+> any homelab requirement.
+
+| Cluster     | cluster.name   | cluster.id | Pod CIDR          | Service CIDR    | kube-dns    |
+| ----------- | -------------- | ---------- | ----------------- | --------------- | ----------- |
+| rhodes.akn  | rhodes-akn     | 1          | `172.30.0.0/19`   | `172.31.0.0/19` | 172.31.0.10 |
+| lungmen.akn | lungmen-akn    | 2          | `172.30.32.0/19`  | `172.31.0.0/19` | 172.31.0.10 |
+| cluster 3   | *(unassigned)* | 3          | `172.30.64.0/19`  | `172.31.0.0/19` | 172.31.0.10 |
+| cluster 4   | *(unassigned)* | 4          | `172.30.96.0/19`  | `172.31.0.0/19` | 172.31.0.10 |
+| cluster 5   | *(unassigned)* | 5          | `172.30.128.0/19` | `172.31.0.0/19` | 172.31.0.10 |
+| cluster 6   | *(unassigned)* | 6          | `172.30.160.0/19` | `172.31.0.0/19` | 172.31.0.10 |
+| cluster 7   | *(unassigned)* | 7          | `172.30.192.0/19` | `172.31.0.0/19` | 172.31.0.10 |
+| sandbox     | sandbox        | 8          | `172.30.224.0/19` | `172.31.0.0/19` | 172.31.0.10 |
+
+### ClusterMesh prerequisites
+
+<!-- markdownlint-disable MD060 -->
+
+| Prerequisite                                | Status | Notes                                                                                                   |
+| ------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------- |
+| Pod CIDRs unique per cluster                | ✅      | 8 × /19 from `172.30.0.0/16`, non-overlapping                                                           |
+| Shared service CIDR across clusters         | ✅      | `172.31.0.0/19` — ClusterMesh-compatible (service LB at source via eBPF)                                |
+| `ipv4NativeRoutingCIDR` = pod supernet      | ✅      | `172.30.0.0/16` — Cilium skips SNAT for inter-cluster pod traffic                                       |
+| `routingMode=native` + kubeProxyReplacement | ✅      | Native routing, no overlay, kube-proxy disabled                                                         |
+| `cluster.name` unique per cluster           | ⏳      | Allocated above. Must be set in Cilium config per cluster (NOT in the shared install manifest).         |
+| `cluster.id` unique per cluster (1–255)     | ⏳      | Allocated above. Encoded into security identities — set at install time, effectively immutable.         |
+| `clustermesh-apiserver` reachable           | ⏳      | Control plane exposure via LoadBalancer (TCP 2379). Mechanism TBD (SDN `vnet-talos` or VLAN 5 LB pool). |
+| Shared `cilium-ca` across clusters          | ⏳      | Required for cross-cluster mTLS identity verification.                                                  |
+
+<!-- markdownlint-enable MD060 -->
+
+> **`cluster.name` / `cluster.id` caveat:** The shared Cilium install manifest
+> (`catalog/talos/manifests/cilium/1.19.5-native.yaml`) is referenced via URL by all
+> cluster templates and cannot set per-cluster values. These must be applied post-install
+> (e.g., `cilium config set cluster-name rhodes-akn` + `cilium config set cluster-id 1`,
+> or a Helm values overlay managed by ArgoCD). The exact mechanism will be decided when
+> ClusterMesh is enabled.
+
+**Cilium `ipv4NativeRoutingCIDR`:** Set to `172.30.0.0/16` (the pod CIDR supernet) in every
+cluster's Cilium install manifest. This tells Cilium not to SNAT traffic destined to any pod
+IP in the supernet — essential for inter-cluster pod-to-pod connectivity in ClusterMesh. The
+service CIDR is deliberately excluded: services are resolved by eBPF at the source node, not
+routed natively. See the comment in `catalog/talos/manifests/cilium/1.19.5-native.yaml`.
 
 **Conflict check — no overlap with any existing range:**
 

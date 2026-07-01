@@ -534,18 +534,22 @@ in
       boot.kernelModules = [ "wireguard" "tun" ];
 
       # ── Firewall ──────────────────────────────────────────────────────────
-      # Opens only ports that Omni always exposes externally.
-      # The UI port (bindAddr) is site-specific — the site module opens it
-      # when needed (e.g. port 443 without a reverse proxy, or via Caddy).
       # Machine API (8090) and Kubernetes proxy (8100) are NOT opened here;
       # they must be routed via a reverse proxy (Caddy) on port 443 using
       # subdomains (api.<domain> and kube.<domain>).
-      # Event sink (8091) stays open for WireGuard-connected Talos machines.
+      #
+      # SideroLink interface: Omni binds ALL its node-facing services to the
+      # WireGuard `siderolink` interface — trustd proxy (50001, signs worker
+      # apid certs), event sink (8091), log/aux services (8092-8093), and more
+      # across versions. Trust the whole interface instead of enumerating
+      # ports: every packet on it is an authenticated WireGuard peer (a
+      # registered Talos machine), and a single missing port silently breaks
+      # worker cert signing — control planes self-sign and hide the problem
+      # until the first worker fails to join.
       networking.firewall = {
         enable = lib.mkDefault true;
-        allowedTCPPorts = [
-          8091 # Event sink (reachable from WireGuard-connected Talos machines)
-        ];
+        trustedInterfaces = [ "siderolink" ];
+        # WireGuard underlay arrives on the public NIC (not siderolink).
         allowedUDPPorts = [ cfg.wireguardPort ];
       };
     })
