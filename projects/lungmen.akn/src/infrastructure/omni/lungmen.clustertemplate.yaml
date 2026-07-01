@@ -8,7 +8,7 @@
 #
 # Overrides relative to the base:
 #   Cluster.name                   lungmen-akn            (was base-default)
-#   cluster.network.podSubnets     172.30.0.0/19          (ADR-014: lungmen pod CIDR — unique per cluster)
+#   cluster.network.podSubnets     172.30.32.0/19         (ADR-014: lungmen pod CIDR — unique per cluster)
 #   Workers.machineClass.size      2                      (was 3 in base)
 #
 # NOTE: serviceSubnets (172.31.0.0/19) and clusterDNS (172.31.0.10) match the SHARED
@@ -89,7 +89,7 @@ patches:
               # applying to a live cluster.
               - https://raw.githubusercontent.com/chezmoidotsh/arcane/97c8cb69f5c648d8b7ac687603d429092e5f0b2d/catalog/talos/manifests/cilium/1.19.5-native.yaml
           podSubnets:
-            - 172.30.0.0/19
+            - 172.30.32.0/19
           serviceSubnets:
             - 172.31.0.0/19 # Shared across all clusters (ClusterMesh-ready)
         proxy:

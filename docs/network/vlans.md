@@ -131,8 +131,8 @@ Each cluster gets a `/29` block (6 usable IPs). The `/26` holds exactly 8 × `/2
 
 | Block           | Usable IPs | Cluster                     |
 | --------------- | ---------- | --------------------------- |
-| `10.0.0.64/29`  | .65–.70    | lungmen.akn                 |
-| `10.0.0.72/29`  | .73–.78    | rhodes.akn (future)         |
+| `10.0.0.64/29`  | .65–.70    | rhodes.akn                  |
+| `10.0.0.72/29`  | .73–.78    | lungmen.akn                 |
 | `10.0.0.80/29`  | .81–.86    | —                           |
 | `10.0.0.88/29`  | .89–.94    | —                           |
 | `10.0.0.96/29`  | .97–.102   | —                           |
@@ -161,7 +161,7 @@ currently allocated to the shared Talos VNet (see table below).
 | `vnet-talos` | `10.128.0.0/24` | `.1` gateway, `.10`–`.250` DHCP | Shared node traffic (eth1) for all Talos clusters |
 
 > **Why a single shared VNet?** The original design allocated one VNet per cluster
-> (`vnet-lungmen`, `vnet-rhodes`, `vnet-sandbox`). Implementation of
+> (`vnet-rhodes`, `vnet-lungmen`, `vnet-sandbox`). Implementation of
 > [#1038](https://github.com/chezmoidotsh/arcane/issues/1038) uncovered an Omni constraint:
 > cluster-template `patches[]` are Talos machine-config patches only and cannot override a
 > `MachineClass`'s `providerdata` (where `additional_nics[].bridge` lives), and
@@ -213,8 +213,8 @@ Each cluster allocates from its own `/19` within `172.30.0.0/16`.
 
 | Cluster     | cluster.name   | cluster.id | Pod CIDR          | Service CIDR    | kube-dns    |
 | ----------- | -------------- | ---------- | ----------------- | --------------- | ----------- |
-| lungmen.akn | lungmen-akn    | 1          | `172.30.0.0/19`   | `172.31.0.0/19` | 172.31.0.10 |
-| rhodes.akn  | rhodes-akn     | 2          | `172.30.32.0/19`  | `172.31.0.0/19` | 172.31.0.10 |
+| rhodes.akn  | rhodes-akn     | 1          | `172.30.0.0/19`   | `172.31.0.0/19` | 172.31.0.10 |
+| lungmen.akn | lungmen-akn    | 2          | `172.30.32.0/19`  | `172.31.0.0/19` | 172.31.0.10 |
 | cluster 3   | *(unassigned)* | 3          | `172.30.64.0/19`  | `172.31.0.0/19` | 172.31.0.10 |
 | cluster 4   | *(unassigned)* | 4          | `172.30.96.0/19`  | `172.31.0.0/19` | 172.31.0.10 |
 | cluster 5   | *(unassigned)* | 5          | `172.30.128.0/19` | `172.31.0.0/19` | 172.31.0.10 |
@@ -242,7 +242,7 @@ Each cluster allocates from its own `/19` within `172.30.0.0/16`.
 > **`cluster.name` / `cluster.id` caveat:** The shared Cilium install manifest
 > (`catalog/talos/manifests/cilium/1.19.5-native.yaml`) is referenced via URL by all
 > cluster templates and cannot set per-cluster values. These must be applied post-install
-> (e.g., `cilium config set cluster-name lungmen-akn` + `cilium config set cluster-id 1`,
+> (e.g., `cilium config set cluster-name rhodes-akn` + `cilium config set cluster-id 1`,
 > or a Helm values overlay managed by ArgoCD). The exact mechanism will be decided when
 > ClusterMesh is enabled.
 

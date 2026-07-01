@@ -132,8 +132,8 @@ patches:
             # Uncomment ONE line and set it to the cluster's allocated /19 from vlans.md.
             # A forgotten override makes Talos fall back to its built-in CIDR (NOT in our
             # 172.30.0.0/16 range) — this is intentional: fail-safe, not silent collision.
-            # - 172.30.0.0/19   # lungmen-akn  (cluster.id 1) — ALREADY IN USE
-            # - 172.30.32.0/19  # rhodes-akn   (cluster.id 2)
+            # - 172.30.0.0/19   # rhodes-akn   (cluster.id 1)
+            # - 172.30.32.0/19  # lungmen-akn  (cluster.id 2) — ALREADY IN USE
             # - 172.30.64.0/19  # cluster 3    (cluster.id 3)
             # - 172.30.96.0/19  # cluster 4    (cluster.id 4)
             # - 172.30.128.0/19 # cluster 5    (cluster.id 5)
