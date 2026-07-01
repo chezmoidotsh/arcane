@@ -50,7 +50,7 @@
 
     # Must match the provider ID registered in Omni UI
     # (Settings → Infrastructure Providers → the "id" field).
-    id = "pve-01.pve.chezmoi.sh";
+    id = "pve.chezmoi.sh";
 
     # Omni instance this provider registers with.
     omniApiEndpoint = "https://omni.chezmoi.sh/";
