@@ -1,0 +1,121 @@
+# =============================================================================
+# Omni cluster template — lungmen.akn (Talos-on-Proxmox-VE).
+# =============================================================================
+#
+# Derived from catalog/omni/clustertemplates/base.yaml. This is a STANDALONE
+# FULL COPY — no kustomize overlays, because omnictl rejects the apiVersion /
+# metadata fields that kustomize requires. Edits are made in place.
+#
+# Overrides relative to the base:
+#   Cluster.name                   lungmen-akn            (was base-default)
+#   cluster.network.podSubnets     172.30.0.0/19          (ADR-014: lungmen pod CIDR — unique per cluster)
+#   Workers.machineClass.size      2                      (was 3 in base)
+#
+# NOTE: serviceSubnets (172.31.0.0/19) and clusterDNS (172.31.0.10) match the SHARED
+# defaults in the base template. They are duplicated here because this is a standalone
+# full-copy (omnictl requires all fields present — no overlays). All clusters share the
+# same service CIDR for ClusterMesh readiness (see ADR-014, vlans.md).
+#
+# Validate (offline, no Omni connectivity):
+#   omnictl cluster template validate -f <file>
+# Apply (requires OMNICONFIG from `mise run bao:login:admin` in chezmoi.sh):
+#   omnictl apply -f <file>
+#
+# Cross-references:
+#   catalog/omni/clustertemplates/base.yaml              (reference base)
+#   ADR-014  docs/decisions/014-network-topology.md      (CIDR / DNS decisions)
+#   docs/network/vlans.md                                (VLAN 5 / SDN VNet layout)
+#   projects/chezmoi.sh/src/infrastructure/omni/machineclasses/  (machine class defs)
+# =============================================================================
+---
+kind: Cluster
+name: lungmen-akn
+kubernetes:
+  version: v1.35.0
+talos:
+  version: v1.13.2 # v-prefix mandatory for omnictl validate
+features:
+  diskEncryption: false # PVE VMs have no vTPM by default
+  enableWorkloadProxy: false
+  # Self-hosted Omni does not run the embedded discovery service (no
+  # --embedded-discovery-service-enabled flag), and KubeSpan is unused (native
+  # routing). Discovery is disabled entirely via the cluster-common patch below.
+  useEmbeddedDiscoveryService: false
+  backupConfiguration:
+    interval: 6h # requires etcd backup infra configured in Omni; offline validate passes
+systemExtensions:
+  - siderolabs/qemu-guest-agent # clean PVE ACPI shutdown/restart
+  - siderolabs/iscsi-tools # proxmox-csi-plugin
+  - siderolabs/util-linux-tools
+patches:
+  - name: dual-nic
+    inline:
+      machine:
+        network:
+          interfaces:
+            - interface: eth0 # vmbr1 trunk, NO IP — Proxmox tags VLAN 5; Cilium L2 ARP only
+            - interface: eth1 # vnet-talos SDN VNet (DHCP, MTU 1450 for VXLAN overhead)
+              dhcp: true
+              mtu: 1450
+  - name: machine-common
+    inline:
+      machine:
+        features:
+          hostDNS:
+            enabled: true
+            forwardKubeDNSToHost: true
+            resolveMemberNames: true
+        kubelet:
+          clusterDNS:
+            - 172.31.0.10 # Shared service CIDR default (all clusters, ClusterMesh-ready)
+          extraArgs:
+            rotate-server-certificates: "true" # enables kubelet-serving-cert-approver
+          extraConfig:
+            featureGates:
+              UserNamespacesSupport: true
+              ImageVolume: true
+        sysctls:
+          user.max_user_namespaces: "11255"
+  - name: cluster-common
+    inline:
+      cluster:
+        network:
+          cni:
+            name: custom
+            urls:
+              # SHA points to the commit on this branch that added 1.19.5-native.yaml.
+              # After merging, update to the resulting merge commit SHA (or a tag).
+              # Squash-merge risk: the branch SHA leaves main's history — repin before
+              # applying to a live cluster.
+              - https://raw.githubusercontent.com/chezmoidotsh/arcane/a29a4b23f70677613bee6414cca249d3e9e4f4d6/catalog/talos/manifests/cilium/1.19.5-native.yaml
+          podSubnets:
+            - 172.30.0.0/19
+          serviceSubnets:
+            - 172.31.0.0/19 # Shared across all clusters (ClusterMesh-ready)
+        proxy:
+          disabled: true # Cilium kubeProxyReplacement=true replaces kube-proxy
+        discovery:
+          enabled: false # KubeSpan unused (native routing); embedded service not enabled in Omni — nodes join via the Kubernetes API
+        allowSchedulingOnControlPlanes: false # taint stays; only workloads with explicit CP tolerations run there (Cilium, o11y DaemonSets)
+        apiServer:
+          extraArgs:
+            feature-gates: UserNamespacesSupport=true,ImageVolume=true
+        extraManifests:
+          # Pinned to the commit on this branch that added these manifests.
+          # Update to the merge commit SHA after merging (same squash-merge caveat as above).
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/a29a4b23f70677613bee6414cca249d3e9e4f4d6/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/a29a4b23f70677613bee6414cca249d3e9e4f4d6/catalog/talos/manifests/metric-server/0.8.1.yaml
+---
+kind: ControlPlane
+machineClass:
+  name: c1.small # V2 dual-NIC (projects/chezmoi.sh/src/infrastructure/omni/machineclasses/c1.small.yaml)
+  size: 1 # single control-plane; c1.small is sized for etcd + API server only
+---
+kind: Workers
+name: workers
+machineClass:
+  name: w1.large # V2 dual-NIC (projects/chezmoi.sh/src/infrastructure/omni/machineclasses/w1.large.yaml)
+  size: 2 # lungmen topology: 2 workers (base default is 3)
+updateStrategy:
+  rolling:
+    maxParallelism: 1
