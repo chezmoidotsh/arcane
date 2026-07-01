@@ -61,6 +61,11 @@ TALOS_CONFIG_DIR = "{{ config_root }}/.mise/talos"
 TALOSCONFIG = "{{ env.TALOS_CONFIG_DIR }}/config"
 
 # -----------------------------------------------------------------------------
+# Omni/Talos Configuration
+# -----------------------------------------------------------------------------
+OMNICONFIG = "{{ config_root }}/.mise/omni/omniconfig.yaml"
+
+# -----------------------------------------------------------------------------
 # Path Extensions
 # -----------------------------------------------------------------------------
 # Additional directories added to PATH for tool accessibility
@@ -140,6 +145,13 @@ uv = "latest"                    # Extremely fast Python package and project man
 # Additional extensions for kubectl, managed by mise instead of krew
 
 "go:github.com/cloudnative-pg/cloudnative-pg/cmd/kubectl-cnpg" = "latest"
+
+# -----------------------------------------------------------------------------
+# Omni Cluster Management Tools
+# -----------------------------------------------------------------------------
+# Tools for managing Omni cluster templates and configurations
+
+omnictl = "1.8.2"
 
 # =============================================================================
 # Tasks definition

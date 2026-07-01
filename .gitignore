@@ -223,7 +223,7 @@ fabric.properties
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
 
 # Thumbnails
 ._*
@@ -668,8 +668,10 @@ catalog/kustomize/**/charts/
 projects/*/src/**/charts/
 
 # mise: ignore generated state but keep file-based tasks under .mise/tasks/
+# and static config files under .mise/omni/
 .mise/*
 !.mise/tasks
+!.mise/omni
 
 # Nix build artefacts under catalog/* (overrides project-level result/)
 catalog/**/result

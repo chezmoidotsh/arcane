@@ -9,6 +9,17 @@
 # Architecture: Talos Linux + ArgoCD
 # =============================================================================
 
+# =============================================================================
+# Tool Installation Matrix
+# =============================================================================
+# Tools needed only when operating on the lungmen Omni cluster template.
+# omnictl is declared here (not in the root .mise.toml) so `omni:clustertemplate:validate`
+# resolves from this project without depending on projects/chezmoi.sh/.mise.toml.
+
+# =============================================================================
+# Tasks definition
+# =============================================================================
+
 [tasks."diagram:generate"]
 description = "Generate the architecture diagram for lungmen.akn cluster"
 # Converts the D2 diagram source to SVG format for documentation
@@ -20,3 +31,16 @@ dir = "{{ config_root }}"
 [tasks."app:build"]
 description = "Build all apps manifests to verify Kustomize configuration"
 run = "kustomize build --enable-helm"
+
+# -----------------------------------------------------------------------------
+# Omni Cluster Template Validation
+# -----------------------------------------------------------------------------
+# Offline validation only — `omnictl cluster template validate` needs no Omni
+# connectivity or OMNICONFIG. Applying a template is an online operation (needs
+# OMNICONFIG from projects/chezmoi.sh/.mise.toml and an Omni login); see
+# catalog/omni/README.md for the apply workflow instead of a task here.
+
+[tasks."omni:clustertemplate:validate"]
+description = "Validate the lungmen Omni cluster template offline (no Omni connectivity)"
+run = "omnictl cluster template validate -f {{ config_root }}/src/infrastructure/omni/lungmen.clustertemplate.yaml"
+dir = "{{ config_root }}"
