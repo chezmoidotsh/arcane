@@ -235,6 +235,18 @@ targeted exception that does not expose node management ports to VLAN 5.
 * ✅ VLAN 5 ARP broadcast domain carries only Cilium LB announcements, not cluster node traffic.
 * ✅ Node IPs are stable across reboots (DHCP stable leases per MAC from SDN dnsmasq).
 * ✅ Network topology is fully documented and reproducible (this ADR + `docs/network/vlans.md`).
+* ✅ All clusters share one Cilium install manifest — the pod CIDR supernet `172.30.0.0/16`
+  is set as `ipv4NativeRoutingCIDR` (`catalog/talos/manifests/cilium/`). This is a
+  **ClusterMesh prerequisite**: Cilium skips SNAT for destinations within the
+  supernet, so inter-cluster pod traffic retains its source identity. Each cluster
+  still allocates its own non-overlapping /19 from within the /16 — the
+  `ipv4NativeRoutingCIDR` setting simply tells Cilium not to masquerade traffic
+  headed to any address in the broader range.
+* ✅ **Service CIDR unified across all clusters** — all clusters share `172.31.0.0/19`
+  (kube-dns `172.31.0.10` everywhere) instead of per-cluster `/19` ranges. This is
+  ClusterMesh-compatible: Cilium resolves ClusterIPs at the source node via eBPF, so
+  they never traverse the inter-cluster link. Pod CIDRs remain unique per cluster
+  (mandatory). See the ClusterMesh prerequisites table in `docs/network/vlans.md`.
 
 ### Negative
 
@@ -274,6 +286,14 @@ targeted exception that does not expose node management ports to VLAN 5.
   (`10.128.0.0/24`) for all Talos clusters, trading per-cluster L2 node isolation for a
   simple MachineClass catalog. External LB isolation is retained via the unchanged
   per-cluster VLAN 5 LB pools.
+* **2026-06-29**: **Service CIDR unification (ClusterMesh readiness)** — Moved from
+  per-cluster service CIDRs (each cluster had its own `/19` from `172.31.0.0/16`) to a
+  single shared service CIDR `172.31.0.0/19` for all clusters. Cilium's eBPF-based
+  service load-balancing means ClusterIPs are resolved at the source node and never appear
+  on the inter-cluster wire, so overlapping service CIDRs are transparent to ClusterMesh.
+  Simplifies cluster templates (service CIDR and kube-dns are now defaults, not per-cluster
+  overrides). Pod CIDRs remain per-cluster (mandatory ClusterMesh prerequisite). Added
+  `cluster.name`/`cluster.id` allocation table for future ClusterMesh enablement.
 
 ## References and Related Decisions
 
@@ -294,6 +314,13 @@ targeted exception that does not expose node management ports to VLAN 5.
 
 ## Changelog
 
+* **2026-06-29**: **REVISION**: Service CIDR unified across all clusters — all clusters
+  now share `172.31.0.0/19` (kube-dns `172.31.0.10` everywhere) instead of per-cluster
+  `/19` ranges. Overlapping service CIDRs are ClusterMesh-compatible: Cilium's eBPF
+  service load-balancing resolves ClusterIPs at the source node. The previous per-cluster
+  service CIDR allocation (`172.31.0.0/16` split into 8 × /19) is superseded; remaining
+  `172.31.x.x` space is reserved. Added `cluster.name`/`cluster.id` allocation table
+  (ClusterMesh prerequisites, not yet applied).
 * **2026-06-27**: **REVISION**: Per-cluster SDN VNets (`vnet-lungmen`, `vnet-rhodes`,
   `vnet-sandbox`) replaced by a single shared `vnet-talos` (`10.128.0.0/24`) after
   discovering Omni cluster-template `patches[]` cannot override a MachineClass's
