@@ -35,11 +35,11 @@ Kubernetes clusters run as **Talos VMs** with a dual-NIC design:
 * **eth0 → vmbr1 (VLAN 5, no node IP)** — Cilium L2 LoadBalancer ARP announcements only.
   Each cluster's LB pool is a `/29` slice of `10.0.0.64/26`, visible to home devices via
   the UDM Pro.
-* **eth1 → shared SDN VNet `vnet-talos` (VXLAN, `10.128.0.0/24`)** — all node management
+* **eth1 → shared SDN VNet `talosnet` (`10.128.0.0/24`)** — all node management
   traffic (kubelet, etcd, inter-node) for every Talos cluster. SNAT lets nodes reach the
   Proxmox API for the CSI volume driver.
 
-The Proxmox SDN VXLAN zone (`10.128.0.0/16`) hosts the shared `vnet-talos`, keeping node
+The Proxmox SDN zone (`pvenet`) hosts the shared `talosnet`, keeping node
 traffic off the homelab VLAN with no UDM Pro configuration changes per new cluster.
 Per-cluster isolation of *external* LoadBalancer traffic is preserved by the per-cluster
 VLAN 5 LB pools. See [ADR-014](../decisions/014-network-topology.md) for the full rationale.
@@ -62,11 +62,11 @@ VLAN 5 LB pools. See [ADR-014](../decisions/014-network-topology.md) for the ful
 
 For full detail see [`vlans.md`](vlans.md). Key numbers:
 
-| Resource                         | Range                                             |
-| -------------------------------- | ------------------------------------------------- |
-| Homelab VLAN 5                   | `10.0.0.0/22`                                     |
-| Management zone (PVE + LXCs)     | `10.0.0.0/26` (.1–.62)                            |
-| Cilium LB pool                   | `10.0.0.64/26` (8 clusters × /29)                 |
-| Proxmox SDN VXLAN (`vnet-talos`) | `10.128.0.0/24` (parent `/16`)                    |
-| Pod CIDRs                        | `172.30.0.0/16` (8 clusters × /19)                |
-| Service CIDR (shared)            | `172.31.0.0/19` (all clusters, ClusterMesh-ready) |
+| Resource                     | Range                                             |
+| ---------------------------- | ------------------------------------------------- |
+| Homelab VLAN 5               | `10.0.0.0/22`                                     |
+| Management zone (PVE + LXCs) | `10.0.0.0/26` (.1–.62)                            |
+| Cilium LB pool               | `10.0.0.64/26` (8 clusters × /29)                 |
+| Proxmox SDN (`talosnet`)     | `10.128.0.0/24` (parent `/16`)                    |
+| Pod CIDRs                    | `172.30.0.0/16` (8 clusters × /19)                |
+| Service CIDR (shared)        | `172.31.0.0/19` (all clusters, ClusterMesh-ready) |

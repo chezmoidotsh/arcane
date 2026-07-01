@@ -13,8 +13,8 @@
 # Tool Installation Matrix
 # =============================================================================
 # Tools needed only when operating on the lungmen Omni cluster template.
-# omnictl is declared here (not in the root .mise.toml) so `omni:clustertemplate:validate`
-# resolves from this project without depending on projects/chezmoi.sh/.mise.toml.
+# omnictl is declared in the root .mise.toml (pinned to 1.8.2); no project-level
+# override is needed — the root pin is inherited here automatically.
 
 # =============================================================================
 # Tasks definition

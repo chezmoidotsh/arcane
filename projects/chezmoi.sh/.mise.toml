@@ -15,27 +15,6 @@
 #   - Ansible installed (configured in root .mise.toml)
 # =============================================================================
 
-[env]
-# -----------------------------------------------------------------------------
-# Omni/Talos Configuration
-# -----------------------------------------------------------------------------
-OMNICONFIG = "{{ config_root }}/.mise/omni/omniconfig.yaml"
-
-# =============================================================================
-# Tool Installation Matrix
-# =============================================================================
-# Tools are organized by functional category for infrastructure management
-# All tools default to "latest" version unless stability requires pinning
-
-[tools]
-# -----------------------------------------------------------------------------
-# Omni/Talos Tools
-# -----------------------------------------------------------------------------
-# Tools for cluster management through Omni/Talos
-
-omnictl = "latest" # Omni management CLI
-
-
 # =============================================================================
 # Tasks definition
 # =============================================================================

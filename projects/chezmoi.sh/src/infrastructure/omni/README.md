@@ -94,7 +94,7 @@ Proxmox tuning. The rationale for each field lives in the provider README's
 | `network_bridge`   | `vmbr1`                                           | VLAN-aware guest bridge.                                                                                                                                       |
 | `vlan`             | `5`                                               | Talos VLAN 5 (Homelab); was 2 in V1.                                                                                                                           |
 | `network_firewall` | `false`                                           | Disables the per-VM Proxmox fwbr on eth0 so Cilium L2 ARP/NDP broadcasts on vmbr1 are not filtered (provider default is true and breaks L2 announcements).     |
-| `additional_nics`  | `[{bridge: vnet-talos, firewall: false}]`         | eth1 — shared SDN VNet `vnet-talos` (DHCP, MTU 1450) for kubelet/etcd/inter-node traffic.                                                                      |
+| `additional_nics`  | `[{bridge: talosnet, firewall: false}]`           | eth1 — shared SDN VNet `talosnet` (DHCP, MTU 1450) for kubelet/etcd/inter-node traffic.                                                                        |
 | `cpu_type`         | `x86-64-v3`                                       | Matches `tal01`.                                                                                                                                               |
 | `disk_*`           | SSD / discard / iothread / io\_uring / cache=none | NVMe-optimised.                                                                                                                                                |
 | `tags`             | role, class name                                  | Proxmox UI filtering. `talos` and `omni` are added automatically by the provider; only role (`control-plane`/`worker`) and class (`c1.small`, …) are set here. |
@@ -140,7 +140,7 @@ Advanced provider fields (`sockets`, `numa`, `hugepages`, `balloon`,
 `pci_devices`, `additional_disks`) exist in the [provider schema][provider]
 for special cases such as GPU passthrough — keep them out of the base catalog
 and add a dedicated class instead. `additional_nics` is the exception: every
-base class sets eth1 on the shared SDN VNet `vnet-talos` (dual-NIC V2 layout),
+base class sets eth1 on the shared SDN VNet `talosnet` (dual-NIC V2 layout),
 so a per-cluster NIC would still need a dedicated class.
 
 [omni-mc]: https://docs.siderolabs.com/omni/how-to-guides/create-a-machine-class/

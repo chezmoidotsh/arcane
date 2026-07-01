@@ -9,7 +9,7 @@
 # Overrides relative to the base:
 #   Cluster.name                   lungmen-akn            (was base-default)
 #   cluster.network.podSubnets     172.30.32.0/19         (ADR-014: lungmen pod CIDR — unique per cluster)
-#   Workers.machineClass.size      2                      (was 3 in base)
+#   Workers.machineClass.size      2                      (same as base default — kept explicit)
 #
 # NOTE: serviceSubnets (172.31.0.0/19) and clusterDNS (172.31.0.10) match the SHARED
 # defaults in the base template. They are duplicated here because this is a standalone
@@ -54,7 +54,7 @@ patches:
         network:
           interfaces:
             - interface: eth0 # vmbr1 trunk, NO IP — Proxmox tags VLAN 5; Cilium L2 ARP only
-            - interface: eth1 # vnet-talos SDN VNet (DHCP, MTU 1450 for VXLAN overhead)
+            - interface: eth1 # talosnet SDN VNet (DHCP; MTU 1450 pre-set for future VXLAN migration)
               dhcp: true
               mtu: 1450
   - name: machine-common
@@ -115,7 +115,7 @@ kind: Workers
 name: workers
 machineClass:
   name: w1.large # V2 dual-NIC (projects/chezmoi.sh/src/infrastructure/omni/machineclasses/w1.large.yaml)
-  size: 2 # lungmen topology: 2 workers (base default is 3)
+  size: 2 # lungmen topology: 2 workers (matches base default)
 updateStrategy:
   rolling:
     maxParallelism: 1

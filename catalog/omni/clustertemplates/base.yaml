@@ -17,7 +17,7 @@
 # OS:          Talos Linux, VM provisioned via Omni machine classes
 # NIC layout:  V2 dual-NIC (ADR-014 §V2):
 #   eth0 → vmbr1 trunk, VLAN 5 tagged by PVE; NO IP — Cilium L2 ARP only
-#   eth1 → vnet-talos SDN VNet; DHCP, MTU 1450 (VXLAN overhead)
+#   eth1 → talosnet SDN VNet; DHCP, MTU 1450 (pre-set for future VXLAN migration)
 # CNI:         Cilium 1.19.5, native-routing mode
 #   kubeProxyReplacement=true  — kube-proxy disabled
 #   routingMode=native         — pod CIDRs routable between nodes without overlay
@@ -93,7 +93,7 @@ patches:
         network:
           interfaces:
             - interface: eth0 # vmbr1 trunk, NO IP — Proxmox tags VLAN 5; Cilium L2 ARP only
-            - interface: eth1 # vnet-talos SDN VNet (DHCP, MTU 1450 for VXLAN overhead)
+            - interface: eth1 # talosnet SDN VNet (DHCP; MTU 1450 pre-set for future VXLAN migration)
               dhcp: true
               mtu: 1450
   - name: machine-common
