@@ -15,12 +15,17 @@ These manifests are deployed at bootstrap for several critical reasons:
 
 ### 🌐 Cilium
 
-**Available versions:** `1.17.3`
+**Available versions:** `1.19.5-native`, `1.18.1`, `1.17.3`
 
 Cilium is a CNI (Container Network Interface) that provides the network layer for the Kubernetes cluster. It replaces flannel/kube-proxy and offers a more efficient and secure networking solution with support for Network Policies, Service Mesh, and Kubernetes Gateway.
 
+* `1.19.5-native` — active, native-routing variant for Proxmox/SDN clusters
+* `1.18.1` — legacy, non-native; retained for pre-Omni bootstrap reference
+* `1.17.3` — legacy, non-native; retained for pre-Omni bootstrap reference
+
+The `-native` variants use native routing mode (`routingMode=native`, `kubeProxyReplacement=true`, `l2announcements=true`) for Proxmox/SDN clusters where pod CIDRs are routable between nodes without overlay encapsulation.
+
 * **Documentation:** [Cilium Documentation](https://docs.cilium.io/)
-* **Usage:** Required only for the `amiya.akn` project (other clusters manage networking via ArgoCD)
 * **Criticality:** Essential - Without CNI, the cluster cannot function
 
 ### 🔍 CoreDNS + Tailscale
@@ -35,7 +40,7 @@ Custom CoreDNS configuration that allows redirecting DNS queries for `*.ts.net` 
 
 ### 📜 Kubelet Serving Cert Approver
 
-**Available versions:** `0.9.1`
+**Available versions:** `0.9.1`, `0.11.0`
 
 Component that automates the approval of TLS certificates for kubelets. Required for the Metrics Server to function properly and collect node metrics.
 
@@ -45,7 +50,7 @@ Component that automates the approval of TLS certificates for kubelets. Required
 
 ### 📊 Metrics Server
 
-**Available versions:** `0.7.2`
+**Available versions:** `0.7.2`, `0.8.1`
 
 > \[!TODO]
 > This component should not be deployed at bootstrap and should be managed by ArgoCD instead. It's currently here temporarily.
