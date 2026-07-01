@@ -87,7 +87,7 @@ patches:
               # After merging, update to the resulting merge commit SHA (or a tag).
               # Squash-merge risk: the branch SHA leaves main's history — repin before
               # applying to a live cluster.
-              - https://raw.githubusercontent.com/chezmoidotsh/arcane/a29a4b23f70677613bee6414cca249d3e9e4f4d6/catalog/talos/manifests/cilium/1.19.5-native.yaml
+              - https://raw.githubusercontent.com/chezmoidotsh/arcane/97c8cb69f5c648d8b7ac687603d429092e5f0b2d/catalog/talos/manifests/cilium/1.19.5-native.yaml
           podSubnets:
             - 172.30.0.0/19
           serviceSubnets:
@@ -103,8 +103,8 @@ patches:
         extraManifests:
           # Pinned to the commit on this branch that added these manifests.
           # Update to the merge commit SHA after merging (same squash-merge caveat as above).
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/a29a4b23f70677613bee6414cca249d3e9e4f4d6/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/a29a4b23f70677613bee6414cca249d3e9e4f4d6/catalog/talos/manifests/metric-server/0.8.1.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/97c8cb69f5c648d8b7ac687603d429092e5f0b2d/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/97c8cb69f5c648d8b7ac687603d429092e5f0b2d/catalog/talos/manifests/metric-server/0.8.1.yaml
 ---
 kind: ControlPlane
 machineClass:
