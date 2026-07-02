@@ -19,6 +19,9 @@ echo "==> Deploying Garage (S3 state backend)"
 kubectl apply -f "${DIR}/manifests/garage.yaml"
 kubectl -n pulumi-poc rollout status deployment/garage --timeout=120s
 
+echo "==> Deploying the npm cache PVC (persists across workspace pod restarts)"
+kubectl apply -f "${DIR}/manifests/npm-cache-pvc.yaml"
+
 echo "==> Deploying OpenBao (dev mode)"
 helm repo add openbao https://openbao.github.io/openbao-helm >/dev/null 2>&1 || true
 helm repo update openbao >/dev/null

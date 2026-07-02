@@ -133,6 +133,44 @@ backend, an ESO read policy, and an ESO auth role. `stack/index.ts` instantiates
 Local variant against a sandbox-only cluster name (`poc-cluster`) — it never
 references `amiya.akn` or `lungmen.akn`.
 
+### 3.3 Workspace pod: image pull and npm cache
+
+The Pulumi Kubernetes Operator's default workspace image is
+`pulumi/pulumi:latest-nonroot` (\~3 GB, bundles the Pulumi CLI + Node.js).
+`stack/stack.yaml` overrides this via `spec.workspaceTemplate`:
+
+* **Pinned image tag** (`pulumi/pulumi:3.250.0-nonroot`, matching the local `pulumi`
+  CLI version from `mise`) instead of `latest-nonroot`. Verified with `crictl images`
+  that both tags resolve to the identical digest — so this isn't about image size.
+  It's about `imagePullPolicy`: Kubernetes defaults to `Always` for a `latest` tag and
+  `IfNotPresent` for any other tag. With `latest-nonroot` and no explicit
+  `imagePullPolicy`, the \~3 GB image is re-pulled on every workspace pod
+  (re)creation even when already cached on the node; pinning switches the default to
+  `IfNotPresent`, so a warm node cache is reused. Confirmed by forcing a workspace pod
+  recreation after pinning — `pullPolicy=IfNotPresent` on the container, pod `Ready`
+  in under a second.
+* **Persistent npm cache** — `manifests/npm-cache-pvc.yaml` (1Gi, `standard`
+  StorageClass, kind's bundled `rancher.io/local-path` provisioner), mounted at
+  `/npm-cache` with `NPM_CONFIG_CACHE=/npm-cache` on the `pulumi` container. Verified
+  by forcing a reconcile and inspecting the pod: the volume filled with npm's
+  `_cacache` store (32 MB after one install of `@pulumi/pulumi`/`@pulumi/vault`).
+
+**Caveat:** neither trick survives `mise run poc:teardown` — it deletes the whole kind
+cluster, wiping the node's containerd image cache and the PVC's backing
+`local-path` directory with it. Both only pay off across workspace pod restarts
+*within* a live cluster (Stack spec changes, pod evictions, node hiccups), not across
+teardown/bootstrap cycles. That's the dominant reason a full sandbox rebuild still
+feels slow — a fresh kind cluster has no node-local image cache regardless of tag
+pinning.
+
+**npm cache invalidation on provider bumps:** not needed, and not built. npm's cache
+is content-addressed by package name + version + integrity hash
+(`_cacache`), so bumping `@pulumi/vault` (or any dependency) to a new version just
+adds a new cache entry — it never serves stale content for a version bump. Neither
+npm nor the Pulumi Kubernetes Operator ship an automatic cache-pruning hook, so no
+custom cleanup mechanism was added; the cache just grows (bounded by the 1Gi PVC)
+and only needs attention if disk usage becomes an actual problem, not preemptively.
+
 ***
 
 ## 4. Bootstrap
@@ -202,6 +240,7 @@ look like.
 | `manifests/garage.yaml`                               | Single-node Garage (S3 state backend)                                      |
 | `manifests/openbao-credentials.yaml`                  | Dev-mode OpenBao address/token as a K8s Secret                             |
 | `manifests/pulumi-credentials.yaml`                   | Fixed dev-only Pulumi stack passphrase as a K8s Secret                     |
+| `manifests/npm-cache-pvc.yaml`                        | 1Gi PVC persisting the workspace pod's npm cache (see §3.3)                |
 | `stack/`                                              | The Pulumi TypeScript program (`ClusterVaultComponent`, Local variant)     |
 | `stack/stack.yaml`                                    | Optional Stack CR + `ServiceAccount`/`ClusterRoleBinding` for the operator |
 | `scripts/bootstrap.sh` / `preview.sh` / `teardown.sh` | Sandbox lifecycle, wired into `mise run poc:*`                             |
