@@ -3,6 +3,25 @@
 # clones projectRepo/branch — it can't see local, uncommitted changes).
 # Apply manually: kubectl apply -f stack.yaml
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pulumi
+  namespace: pulumi-poc
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: default:pulumi:system:auth-delegator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator # permissions: TokenReview, SubjectAccessReview
+subjects:
+  - kind: ServiceAccount
+    namespace: pulumi-poc
+    name: pulumi
+---
 apiVersion: pulumi.com/v1
 kind: Stack
 metadata:
@@ -11,6 +30,7 @@ metadata:
 spec:
   stack: organization/pulumi-crossplane-poc-sandbox/dev
   backend: "s3://pulumi-states?endpoint=garage.pulumi-poc.svc.cluster.local:3900&disableSSL=true&s3ForcePathStyle=true&region=garage"
+  serviceAccountName: pulumi
 
   projectRepo: https://github.com/chezmoidotsh/arcane.git
   branch: issue-1089/pulumi-poc
@@ -42,3 +62,8 @@ spec:
       secret:
         name: openbao-credentials
         key: token
+    PULUMI_CONFIG_PASSPHRASE:
+      type: Secret
+      secret:
+        name: pulumi-credentials
+        key: passphrase

@@ -144,7 +144,15 @@ mise run poc:bootstrap
 Idempotent — creates the kind cluster if missing, reuses it otherwise. Deploys, in
 order: Garage (`manifests/garage.yaml`), OpenBao in dev mode (official Helm chart,
 `server.dev.enabled=true`), the Pulumi Kubernetes Operator (`oci://ghcr.io/pulumi/
-helm-charts/pulumi-kubernetes-operator`, pinned to v2.7.0).
+helm-charts/pulumi-kubernetes-operator`, pinned to v2.7.0), and a fixed dev-only
+Pulumi passphrase Secret (`manifests/pulumi-credentials.yaml`) — local `pulumi
+preview` and the in-cluster operator must decrypt the same S3-backed stack config
+with the same passphrase.
+
+`stack/stack.yaml` carries its own `ServiceAccount`/`ClusterRoleBinding` (`pulumi`,
+bound to `system:auth-delegator`) — applied only when that file is applied (see
+§5), not at bootstrap time. It's required because Stack workspace pods authenticate
+back to the operator via the Kubernetes `TokenReview` API.
 
 ```sh
 mise run poc:teardown   # deletes the kind cluster and everything in it
@@ -158,9 +166,12 @@ mise run poc:teardown   # deletes the kind cluster and everything in it
 mise run poc:preview
 ```
 
-This port-forwards Garage (`3900`) and OpenBao (`8200`) to localhost, exports the
-sandbox's fixed dev credentials, `npm install`s from the repo-root workspace, logs
-in to the S3 backend, and runs `pulumi preview` from `stack/`.
+This port-forwards Garage (`3900`) and OpenBao (`8200`) to localhost, `npm install`s
+from the repo-root workspace, logs in to the S3 backend, and runs `pulumi preview`
+from `stack/`. The sandbox's fixed dev credentials (`AWS_ACCESS_KEY_ID`,
+`AWS_SECRET_ACCESS_KEY`, `VAULT_ADDR`, `VAULT_TOKEN`, `PULUMI_CONFIG_PASSPHRASE`)
+come from `.mise.toml`'s `[env]`, not the script — only set when running through
+`mise run`.
 
 The repo-root `package.json` declares both `stack/` and `catalog/pulumi/cluster-vault/`
 as npm workspaces, so a single install hoists `@pulumi/pulumi`/`@pulumi/vault` into a
@@ -183,15 +194,16 @@ look like.
 
 ## 6. Manifests
 
-| File                                                  | Purpose                                                                |
-| ----------------------------------------------------- | ---------------------------------------------------------------------- |
-| `package.json` (repo root)                            | npm workspaces linking `stack/` and `catalog/pulumi/cluster-vault/`    |
-| `catalog/pulumi/cluster-vault/`                       | `ClusterVaultComponent` under test (shared, not sandbox-only)          |
-| `manifests/garage.yaml`                               | Single-node Garage (S3 state backend)                                  |
-| `manifests/openbao-credentials.yaml`                  | Dev-mode OpenBao address/token as a K8s Secret                         |
-| `stack/`                                              | The Pulumi TypeScript program (`ClusterVaultComponent`, Local variant) |
-| `stack/stack.yaml`                                    | Optional Stack CR for the in-cluster operator                          |
-| `scripts/bootstrap.sh` / `preview.sh` / `teardown.sh` | Sandbox lifecycle, wired into `mise run poc:*`                         |
+| File                                                  | Purpose                                                                    |
+| ----------------------------------------------------- | -------------------------------------------------------------------------- |
+| `package.json` (repo root)                            | npm workspaces linking `stack/` and `catalog/pulumi/cluster-vault/`        |
+| `catalog/pulumi/cluster-vault/`                       | `ClusterVaultComponent` under test (shared, not sandbox-only)              |
+| `manifests/garage.yaml`                               | Single-node Garage (S3 state backend)                                      |
+| `manifests/openbao-credentials.yaml`                  | Dev-mode OpenBao address/token as a K8s Secret                             |
+| `manifests/pulumi-credentials.yaml`                   | Fixed dev-only Pulumi stack passphrase as a K8s Secret                     |
+| `stack/`                                              | The Pulumi TypeScript program (`ClusterVaultComponent`, Local variant)     |
+| `stack/stack.yaml`                                    | Optional Stack CR + `ServiceAccount`/`ClusterRoleBinding` for the operator |
+| `scripts/bootstrap.sh` / `preview.sh` / `teardown.sh` | Sandbox lifecycle, wired into `mise run poc:*`                             |
 
 ***
 

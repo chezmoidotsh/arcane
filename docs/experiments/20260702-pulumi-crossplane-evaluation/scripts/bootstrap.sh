@@ -35,6 +35,9 @@ helm upgrade --install pulumi-kubernetes-operator \
   --namespace pulumi-poc --create-namespace \
   --wait
 
+echo "==> Deploying the shared Pulumi passphrase (local + in-cluster must match)"
+kubectl apply -f "${DIR}/manifests/pulumi-credentials.yaml"
+
 cat <<'EOF'
 
 ==> Sandbox ready. Next steps:
@@ -44,7 +47,7 @@ cat <<'EOF'
 
   2. Optional — prove the in-cluster operator shares the same state as your
      local run. Push this branch first, then:
-       kubectl apply -f docs/experiments/20260702-pulumi-crossplane-evaluation/stack/stack.yaml
+       kubectl apply -f stack/stack.yaml
        kubectl -n pulumi-poc get stacks.pulumi.com pulumi-crossplane-poc-sandbox -w
 
   3. Tear down when done:

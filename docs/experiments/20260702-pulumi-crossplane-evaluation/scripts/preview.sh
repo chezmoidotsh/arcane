@@ -22,11 +22,9 @@ OPENBAO_PF=$!
 trap 'kill "$GARAGE_PF" "$OPENBAO_PF" 2>/dev/null || true' EXIT
 sleep 2 # let the port-forwards come up
 
-export AWS_ACCESS_KEY_ID=PULUMIPOCACCESSKEY
-export AWS_SECRET_ACCESS_KEY=pulumipocsecretkeypulumipocsecretkeypulumipocsecretkey
-export VAULT_ADDR=http://localhost:8200
-export VAULT_TOKEN=root
-
+# AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, VAULT_ADDR, VAULT_TOKEN and
+# PULUMI_CONFIG_PASSPHRASE come from .mise.toml [env] — this script only
+# runs through `mise run poc:preview`.
 pulumi login 's3://pulumi-states?endpoint=localhost:3900&disableSSL=true&s3ForcePathStyle=true&region=garage'
 pulumi stack select organization/pulumi-crossplane-poc-sandbox/dev --create
 pulumi preview
