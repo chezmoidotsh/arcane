@@ -1,0 +1,97 @@
+# Optional: proves the operator and a local `pulumi preview` share the same
+# state. Requires this branch to be pushed to GitHub first (the operator
+# clones projectRepo/branch — it can't see local, uncommitted changes).
+# Apply manually: kubectl apply -f stack.yaml
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pulumi
+  namespace: pulumi-poc
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: default:pulumi:system:auth-delegator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator # permissions: TokenReview, SubjectAccessReview
+subjects:
+  - kind: ServiceAccount
+    namespace: pulumi-poc
+    name: pulumi
+---
+apiVersion: pulumi.com/v1
+kind: Stack
+metadata:
+  name: pulumi-crossplane-poc-sandbox
+  namespace: pulumi-poc
+spec:
+  stack: organization/pulumi-crossplane-poc-sandbox/dev
+  backend: "s3://pulumi-states?endpoint=garage.pulumi-poc.svc.cluster.local:3900&disableSSL=true&s3ForcePathStyle=true&region=garage"
+  serviceAccountName: pulumi
+
+  projectRepo: https://github.com/chezmoidotsh/arcane.git
+  branch: issue-1089/pulumi-poc
+  repoDir: docs/experiments/20260702-pulumi-crossplane-evaluation/stack
+
+  # Sandbox only — safe to apply for real, unlike a stack targeting a
+  # production cluster. Still previewed by default so a first run is
+  # inspectable before it writes to the disposable OpenBao.
+  preview: true
+
+  # EXPERIMENT: pinned workspace image + generic ephemeral npm cache volume
+  # (see issue 1089 follow-up notes). The ephemeral volume is PVC-backed
+  # (real StorageClass storage, not the node's rootfs/emptyDir) but tied to
+  # the pod's lifecycle: a fresh, empty volume on every pod (re)creation, so
+  # a compromised install never survives past the pod that produced it.
+  workspaceTemplate:
+    spec:
+      image: pulumi/pulumi:3.250.0-nonroot
+      podTemplate:
+        spec:
+          containers:
+            - name: pulumi
+              env:
+                - name: NPM_CONFIG_CACHE
+                  value: /npm-cache
+              volumeMounts:
+                - name: npm-cache
+                  mountPath: /npm-cache
+          volumes:
+            - name: npm-cache
+              ephemeral:
+                volumeClaimTemplate:
+                  spec:
+                    accessModes: ["ReadWriteOnce"]
+                    resources:
+                      requests:
+                        storage: 1Gi
+
+  envRefs:
+    AWS_ACCESS_KEY_ID:
+      type: Secret
+      secret:
+        name: garage-credentials
+        key: access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      type: Secret
+      secret:
+        name: garage-credentials
+        key: secret_access_key
+    VAULT_ADDR:
+      type: Secret
+      secret:
+        name: openbao-credentials
+        key: address
+    VAULT_TOKEN:
+      type: Secret
+      secret:
+        name: openbao-credentials
+        key: token
+    PULUMI_CONFIG_PASSPHRASE:
+      type: Secret
+      secret:
+        name: pulumi-credentials
+        key: passphrase

@@ -1,0 +1,13 @@
+{
+	"name": "pulumi-crossplane-poc-sandbox",
+	"version": "0.1.0",
+	"private": true,
+	"main": "index.ts",
+	"dependencies": {
+		"@pulumi/pulumi": "^3.140.0",
+		"@pulumi/vault": "^6.5.0"
+	},
+	"devDependencies": {
+		"typescript": "^5.6.0"
+	}
+}

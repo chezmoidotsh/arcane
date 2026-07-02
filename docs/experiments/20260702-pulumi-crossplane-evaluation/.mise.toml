@@ -1,0 +1,46 @@
+[env]
+# -----------------------------------------------------------------------------
+# Kubernetes Configuration
+# -----------------------------------------------------------------------------
+# Kubernetes client configuration file containing cluster access credentials
+# Supports multiple cluster contexts for the Arcane infrastructure
+KUBECONFIG = "{{ config_root }}/.mise/kubeconfig"
+
+# -----------------------------------------------------------------------------
+# Pulumi POC sandbox — fixed dev-only credentials
+# -----------------------------------------------------------------------------
+# Disposable local kind cluster only — never touches real infrastructure.
+# Same values as manifests/garage.yaml, manifests/openbao-credentials.yaml and
+# manifests/pulumi-credentials.yaml, so local `pulumi preview` and the
+# in-cluster operator (stack/stack.yaml) read/decrypt the exact same state.
+AWS_ACCESS_KEY_ID = "PULUMIPOCACCESSKEY"
+AWS_SECRET_ACCESS_KEY = "pulumipocsecretkeypulumipocsecretkeypulumipocsecretkey"
+VAULT_ADDR = "http://localhost:8200"
+VAULT_TOKEN = "root"
+PULUMI_CONFIG_PASSPHRASE = "pulumipocpassphrase"
+
+[tools]
+"ubi:runmedev/runme" = "latest" # Interactive markdown execution tool for runbooks and documentation
+kind = "latest"                 # Lightweight Kubernetes cluster for local development and testing
+pulumi = "latest"               # Pulumi CLI for evaluating IaC stacks against the S3 state backend (#1089 POC)
+
+# -----------------------------------------------------------------------------
+# Pulumi vs Crossplane POC
+# -----------------------------------------------------------------------------
+# Disposable kind sandbox (Garage S3 state + dev-mode OpenBao + the Pulumi
+# Kubernetes Operator) — see docs/experiments/20260702-pulumi-crossplane-evaluation/.
+
+[tasks."poc:bootstrap"]
+description = "Bootstrap the local kind sandbox for the Pulumi POC (issue 1089)"
+run = "scripts/bootstrap.sh"
+dir = "{{config_root}}"
+
+[tasks."poc:preview"]
+description = "Run `pulumi preview` locally against the sandbox"
+run = "scripts/preview.sh"
+dir = "{{config_root}}"
+
+[tasks."poc:teardown"]
+description = "Delete the local kind sandbox for the Pulumi POC"
+run = "scripts/teardown.sh"
+dir = "{{config_root}}"

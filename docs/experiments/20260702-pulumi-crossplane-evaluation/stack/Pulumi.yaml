@@ -1,0 +1,13 @@
+name: pulumi-crossplane-poc-sandbox
+runtime: nodejs
+description: >-
+  Sandbox (#1089): validates ClusterVaultComponent against a disposable kind
+  cluster (Garage S3 state + dev-mode OpenBao). Safe to run repeatedly —
+  never touches a real cluster.
+
+backend:
+  # Local runs: port-forwarded via `mise run pulumi-poc:preview` (see the
+  # experiment README). In-cluster runs (the operator): Garage is reached
+  # via its in-cluster DNS name instead — same bucket, same state, either
+  # way, since only the endpoint differs.
+  url: "s3://pulumi-states?endpoint=localhost:3900&disableSSL=true&s3ForcePathStyle=true&region=garage"

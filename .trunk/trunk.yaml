@@ -90,9 +90,9 @@ lint:
     - # Prettier should not lint/format markdown files (conflict with remark-lint)
       linters: [prettier]
       paths: ["*.md", "**/*.md"]
-    - # Prettier should not lint/format JS/JSON/CSS files (conflict with biome)
+    - # Prettier should not lint/format JS/TS/JSON/CSS files (conflict with biome)
       linters: [prettier]
-      paths: ["*.js", "**/*.js", "*.json", "**/*.json", "*.css", "**/*.css"]
+      paths: ["*.js", "**/*.js", "*.ts", "**/*.ts", "*.tsx", "**/*.tsx", "*.json", "**/*.json", "*.css", "**/*.css"]
     - # Prettier should not lint/format templated YAML files
       linters: [prettier]
       paths:
