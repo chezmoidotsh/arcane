@@ -11,8 +11,10 @@ DIR="${ROOT}/stack"
 # Single install from the POC's own workspace root: hoists @pulumi/pulumi and
 # @pulumi/vault into node_modules there, which is the common ancestor
 # catalog/cluster-vault/ and this stack both resolve against — see this
-# directory's package.json "workspaces" field.
-npm install --no-audit --no-fund --prefix "${ROOT}"
+# directory's package.json "workspaces" field. `ci`, not `install`: installs
+# strictly from package-lock.json (fails instead of silently re-resolving on
+# a package.json/lockfile mismatch).
+npm ci --no-audit --no-fund --prefix "${ROOT}"
 cd "${DIR}"
 
 kubectl -n pulumi-poc port-forward svc/garage 3900:3900 >/tmp/pulumi-poc-garage-pf.log 2>&1 &

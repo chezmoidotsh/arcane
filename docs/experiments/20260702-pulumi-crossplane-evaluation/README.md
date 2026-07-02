@@ -149,27 +149,40 @@ The Pulumi Kubernetes Operator's default workspace image is
   `IfNotPresent`, so a warm node cache is reused. Confirmed by forcing a workspace pod
   recreation after pinning — `pullPolicy=IfNotPresent` on the container, pod `Ready`
   in under a second.
-* **Persistent npm cache** — `manifests/npm-cache-pvc.yaml` (1Gi, `standard`
-  StorageClass, kind's bundled `rancher.io/local-path` provisioner), mounted at
-  `/npm-cache` with `NPM_CONFIG_CACHE=/npm-cache` on the `pulumi` container. Verified
-  by forcing a reconcile and inspecting the pod: the volume filled with npm's
-  `_cacache` store (32 MB after one install of `@pulumi/pulumi`/`@pulumi/vault`).
+* **Ephemeral npm cache volume** — `spec.workspaceTemplate.spec.podTemplate.spec
+  .volumes[].ephemeral` (a Kubernetes "generic ephemeral volume"), not a
+  hand-provisioned PVC. It's still backed by a real StorageClass (`standard`, kind's
+  bundled `rancher.io/local-path` provisioner) rather than the node's rootfs/emptyDir
+  — but the PVC is created fresh and owned by the workspace pod
+  (`ownerReferences: [Pod/<workspace-pod>]`), so it's garbage-collected the moment
+  that pod is deleted. Deliberately traded persistence for this: if a `pulumi up` run
+  ever pulled a compromised npm package into the cache, that cache dies with the pod
+  instead of quietly serving the same poisoned content to every future run.
+  `NPM_CONFIG_CACHE=/npm-cache` on the `pulumi` container. Verified: killed the
+  workspace pod, the StatefulSet recreated it, the ephemeral PVC was recreated empty
+  (`du -sh /npm-cache` → `0` right after, `32M` again after the next reconcile).
 
-**Caveat:** neither trick survives `mise run poc:teardown` — it deletes the whole kind
-cluster, wiping the node's containerd image cache and the PVC's backing
-`local-path` directory with it. Both only pay off across workspace pod restarts
-*within* a live cluster (Stack spec changes, pod evictions, node hiccups), not across
-teardown/bootstrap cycles. That's the dominant reason a full sandbox rebuild still
-feels slow — a fresh kind cluster has no node-local image cache regardless of tag
-pinning.
+**Caveat:** the image pin doesn't survive `mise run poc:teardown` — it deletes the
+whole kind cluster, wiping the node's containerd image cache with it. It only pays
+off across workspace pod restarts *within* a live cluster (Stack spec changes, pod
+evictions, node hiccups), not across teardown/bootstrap cycles. That's the dominant
+reason a full sandbox rebuild still feels slow — a fresh kind cluster has no
+node-local image cache regardless of tag pinning. The npm cache volume doesn't have
+this caveat since it's designed to reset on every pod recreation anyway.
 
-**npm cache invalidation on provider bumps:** not needed, and not built. npm's cache
-is content-addressed by package name + version + integrity hash
-(`_cacache`), so bumping `@pulumi/vault` (or any dependency) to a new version just
-adds a new cache entry — it never serves stale content for a version bump. Neither
-npm nor the Pulumi Kubernetes Operator ship an automatic cache-pruning hook, so no
-custom cleanup mechanism was added; the cache just grows (bounded by the 1Gi PVC)
-and only needs attention if disk usage becomes an actual problem, not preemptively.
+**Supply-chain note (`package-lock.json` + Trivy):** pinning a lockfile plus running
+Trivy over it is not sufficient to be confident a package isn't compromised — they
+cover different risks than that. The lockfile's SRI hashes guarantee the *same*
+resolved bytes on every install, not that those bytes are safe; most npm supply-chain
+incidents (malicious versions published under a legitimate name, `postinstall`
+exfiltration) are never filed as CVEs, so Trivy's OSV/GHSA/NVD-based scanning won't
+catch them, and Trivy doesn't execute or inspect install scripts at all. One low-risk,
+native improvement made here: `scripts/preview.sh` now runs `npm ci` instead of
+`npm install` — it installs strictly from `package-lock.json` and fails loudly on any
+package.json/lockfile drift, rather than silently re-resolving. `npm audit
+signatures` (verifies npm registry signing) is a further native option not yet
+wired in. A real malicious-package detector (e.g. Socket.dev-style behavioral
+scanning) is out of scope for this POC — noted, not built.
 
 ***
 
@@ -240,7 +253,6 @@ look like.
 | `manifests/garage.yaml`                               | Single-node Garage (S3 state backend)                                      |
 | `manifests/openbao-credentials.yaml`                  | Dev-mode OpenBao address/token as a K8s Secret                             |
 | `manifests/pulumi-credentials.yaml`                   | Fixed dev-only Pulumi stack passphrase as a K8s Secret                     |
-| `manifests/npm-cache-pvc.yaml`                        | 1Gi PVC persisting the workspace pod's npm cache (see §3.3)                |
 | `stack/`                                              | The Pulumi TypeScript program (`ClusterVaultComponent`, Local variant)     |
 | `stack/stack.yaml`                                    | Optional Stack CR + `ServiceAccount`/`ClusterRoleBinding` for the operator |
 | `scripts/bootstrap.sh` / `preview.sh` / `teardown.sh` | Sandbox lifecycle, wired into `mise run poc:*`                             |

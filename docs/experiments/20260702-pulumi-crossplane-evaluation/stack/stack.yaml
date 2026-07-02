@@ -41,9 +41,11 @@ spec:
   # inspectable before it writes to the disposable OpenBao.
   preview: true
 
-  # EXPERIMENT: pinned workspace image + persistent npm cache (see issue
-  # 1089 follow-up notes). Testing whether this cuts the `latest-nonroot`
-  # pull time and whether npm reuses the cache across runs.
+  # EXPERIMENT: pinned workspace image + generic ephemeral npm cache volume
+  # (see issue 1089 follow-up notes). The ephemeral volume is PVC-backed
+  # (real StorageClass storage, not the node's rootfs/emptyDir) but tied to
+  # the pod's lifecycle: a fresh, empty volume on every pod (re)creation, so
+  # a compromised install never survives past the pod that produced it.
   workspaceTemplate:
     spec:
       image: pulumi/pulumi:3.250.0-nonroot
@@ -59,8 +61,13 @@ spec:
                   mountPath: /npm-cache
           volumes:
             - name: npm-cache
-              persistentVolumeClaim:
-                claimName: pulumi-poc-npm-cache
+              ephemeral:
+                volumeClaimTemplate:
+                  spec:
+                    accessModes: ["ReadWriteOnce"]
+                    resources:
+                      requests:
+                        storage: 1Gi
 
   envRefs:
     AWS_ACCESS_KEY_ID:
