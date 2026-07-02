@@ -1,0 +1,6 @@
+encryptionsalt: v1:vUsj+XWfvY4=:v1:7djD2oSRnLlE13PZ:Z245Uh1jdU3VkpDbR1HaF88TXC3ZSQ==
+
+# No vault:address here on purpose: the @pulumi/vault provider falls back to
+# the VAULT_ADDR env var, which differs between a local run (port-forwarded
+# localhost:8200) and an operator run (in-cluster DNS) — see stack.yaml's
+# envRefs and the experiment README's local dev workflow.

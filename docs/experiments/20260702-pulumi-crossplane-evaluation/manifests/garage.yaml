@@ -1,0 +1,137 @@
+# Single-node Garage (S3-compatible object store) used as the Pulumi state
+# backend for this sandbox. Raw manifests instead of the upstream Helm chart
+# on purpose: the chart isn't published to a registry (git-clone only, no
+# version pin) and needs a manual cluster-layout step. `--single-node
+# --default-bucket` (Garage >= v2.3.0) does the equivalent of that manual
+# step automatically, so a plain Deployment is simpler and fully pinned.
+#
+# Storage is emptyDir: this sandbox is meant to be torn down and recreated,
+# state resetting on every bootstrap is a feature, not a bug.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pulumi-poc
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: garage-config
+  namespace: pulumi-poc
+data:
+  garage.toml: |
+    metadata_dir = "/var/lib/garage/meta"
+    data_dir = "/var/lib/garage/data"
+    db_engine = "sqlite"
+
+    replication_factor = 1
+
+    rpc_bind_addr = "[::]:3901"
+    # Dev-only, not a secret: this cluster is local, disposable, and never
+    # reachable from outside the pod.
+    rpc_secret = "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
+
+    [s3_api]
+    s3_region = "garage"
+    api_bind_addr = "[::]:3900"
+    root_domain = ".s3.garage.localhost"
+
+    [admin]
+    api_bind_addr = "[::]:3903"
+    admin_token = "pulumi-poc-admin-token"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: garage-credentials
+  namespace: pulumi-poc
+type: Opaque
+stringData:
+  # Dev-only fixed values — same reasoning as rpc_secret above.
+  access_key_id: PULUMIPOCACCESSKEY
+  secret_access_key: pulumipocsecretkeypulumipocsecretkeypulumipocsecretkey
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garage
+  namespace: pulumi-poc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: garage
+  template:
+    metadata:
+      labels:
+        app: garage
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10000
+        runAsGroup: 10000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: garage
+          image: dxflrs/garage:v2.3.0
+          args: ["/garage", "server", "--single-node", "--default-bucket"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          env:
+            - name: GARAGE_DEFAULT_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: garage-credentials
+                  key: access_key_id
+            - name: GARAGE_DEFAULT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: garage-credentials
+                  key: secret_access_key
+            - name: GARAGE_DEFAULT_BUCKET
+              value: pulumi-states
+          ports:
+            - name: s3-api
+              containerPort: 3900
+            - name: rpc
+              containerPort: 3901
+            - name: admin
+              containerPort: 3903
+          volumeMounts:
+            - name: config
+              mountPath: /etc/garage.toml
+              subPath: garage.toml
+            - name: data
+              mountPath: /var/lib/garage
+      volumes:
+        - name: config
+          configMap:
+            name: garage-config
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: garage
+  namespace: pulumi-poc
+spec:
+  selector:
+    app: garage
+  ports:
+    - name: s3-api
+      port: 3900
+      targetPort: 3900
+    - name: admin
+      port: 3903
+      targetPort: 3903

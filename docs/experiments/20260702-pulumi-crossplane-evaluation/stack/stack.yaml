@@ -1,0 +1,44 @@
+# Optional: proves the operator and a local `pulumi preview` share the same
+# state. Requires this branch to be pushed to GitHub first (the operator
+# clones projectRepo/branch — it can't see local, uncommitted changes).
+# Apply manually: kubectl apply -f stack.yaml
+---
+apiVersion: pulumi.com/v1
+kind: Stack
+metadata:
+  name: pulumi-crossplane-poc-sandbox
+  namespace: pulumi-poc
+spec:
+  stack: organization/pulumi-crossplane-poc-sandbox/dev
+  backend: "s3://pulumi-states?endpoint=garage.pulumi-poc.svc.cluster.local:3900&disableSSL=true&s3ForcePathStyle=true&region=garage"
+
+  projectRepo: https://github.com/chezmoidotsh/arcane.git
+  branch: issue-1089/pulumi-poc
+  repoDir: docs/experiments/20260702-pulumi-crossplane-evaluation/stack
+
+  # Sandbox only — safe to apply for real, unlike a stack targeting a
+  # production cluster. Still previewed by default so a first run is
+  # inspectable before it writes to the disposable OpenBao.
+  preview: true
+
+  envRefs:
+    AWS_ACCESS_KEY_ID:
+      type: Secret
+      secret:
+        name: garage-credentials
+        key: access_key_id
+    AWS_SECRET_ACCESS_KEY:
+      type: Secret
+      secret:
+        name: garage-credentials
+        key: secret_access_key
+    VAULT_ADDR:
+      type: Secret
+      secret:
+        name: openbao-credentials
+        key: address
+    VAULT_TOKEN:
+      type: Secret
+      secret:
+        name: openbao-credentials
+        key: token
