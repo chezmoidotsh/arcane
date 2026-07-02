@@ -420,9 +420,11 @@ Filed directly from this POC's conclusions:
   CRs, a path for manual/non-templated Pulumi code, migration ordering — not
   a migration PR yet)
 * [#1092](https://github.com/chezmoidotsh/arcane/issues/1092) — Create a
-  native Pulumi provider for Garage (S3-compatible storage), against Garage's
-  own v2 admin API rather than bridging an existing community Terraform
-  provider
+  native Pulumi provider for Garage, against Garage's own v2 admin API rather
+  than bridging an existing community Terraform provider. Raised in priority
+  after this POC: Garage is becoming the homelab's primary S3, replacing
+  MinIO (Longhorn backup target today, Omni backups and general object
+  storage planned) — not just the POC's disposable state backend
 * [#1093](https://github.com/chezmoidotsh/arcane/issues/1093) — Create a
   native Pulumi provider for Talos Omni (no Terraform provider exists to
   bridge from either way)
