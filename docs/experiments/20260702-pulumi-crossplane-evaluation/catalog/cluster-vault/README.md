@@ -15,14 +15,15 @@ does not manage any real OpenBao yet.
 
 ## Usage
 
-This module is an npm workspace member of the repo-root `package.json` — a single
-`npm install` from anywhere in the tree installs its dependencies too. A new consumer
+This module is an npm workspace member of this POC's own `package.json`
+(`docs/experiments/20260702-pulumi-crossplane-evaluation/package.json`) — a single
+`npm install` from that directory installs its dependencies too. A new consumer
 stack needs to be added to that `workspaces` array as well, otherwise its own
 `@pulumi/pulumi`/`@pulumi/vault` won't be hoisted to a `node_modules` this module can
 see (Node resolves imports from this file's real path, not the consumer's).
 
 ```ts
-import { ClusterVaultComponent } from "../../../../../catalog/pulumi/cluster-vault";
+import { ClusterVaultComponent } from "../catalog/cluster-vault";
 
 // Local variant — cluster hosting OpenBao itself
 new ClusterVaultComponent("amiya.akn", {

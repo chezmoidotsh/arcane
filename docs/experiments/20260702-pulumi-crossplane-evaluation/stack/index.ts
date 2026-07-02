@@ -1,4 +1,4 @@
-import { ClusterVaultComponent } from "../../../../catalog/pulumi/cluster-vault";
+import { ClusterVaultComponent } from "../catalog/cluster-vault";
 
 // Sandbox-only cluster name: this stack never touches the real amiya.akn or
 // lungmen.akn OpenBao instances, only the disposable dev-mode OpenBao

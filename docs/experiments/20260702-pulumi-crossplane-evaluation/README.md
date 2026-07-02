@@ -126,7 +126,7 @@ steps automatically at boot.
 
 ### 3.2 Component under test
 
-`catalog/pulumi/cluster-vault/` — `ClusterVaultComponent`, a Pulumi `ComponentResource`
+`catalog/cluster-vault/` — `ClusterVaultComponent`, a Pulumi `ComponentResource`
 replacing the Crossplane Compositions in
 `catalog/crossplane/clustervault.vault.chezmoi.sh/`: a KV v2 mount, a Kubernetes auth
 backend, an ESO read policy, and an ESO auth role. `stack/index.ts` instantiates the
@@ -167,16 +167,17 @@ mise run poc:preview
 ```
 
 This port-forwards Garage (`3900`) and OpenBao (`8200`) to localhost, `npm install`s
-from the repo-root workspace, logs in to the S3 backend, and runs `pulumi preview`
-from `stack/`. The sandbox's fixed dev credentials (`AWS_ACCESS_KEY_ID`,
-`AWS_SECRET_ACCESS_KEY`, `VAULT_ADDR`, `VAULT_TOKEN`, `PULUMI_CONFIG_PASSPHRASE`)
-come from `.mise.toml`'s `[env]`, not the script — only set when running through
-`mise run`.
+from this directory's own workspace root, logs in to the S3 backend, and runs
+`pulumi preview` from `stack/`. The sandbox's fixed dev credentials
+(`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `VAULT_ADDR`, `VAULT_TOKEN`,
+`PULUMI_CONFIG_PASSPHRASE`) come from `.mise.toml`'s `[env]`, not the script —
+only set when running through `mise run`.
 
-The repo-root `package.json` declares both `stack/` and `catalog/pulumi/cluster-vault/`
+This directory's `package.json` declares both `stack/` and `catalog/cluster-vault/`
 as npm workspaces, so a single install hoists `@pulumi/pulumi`/`@pulumi/vault` into a
 `node_modules` that both resolve against — no separate install inside the catalog
-module needed, in this script or in a real Pulumi Kubernetes Operator run.
+module needed, in this script or in a real Pulumi Kubernetes Operator run. This
+package.json is scoped to the POC only and is not part of the repo-root npm setup.
 
 To also validate the in-cluster operator against the same state (proves the
 "local + in-cluster share state" requirement), push this branch first, then:
@@ -196,8 +197,8 @@ look like.
 
 | File                                                  | Purpose                                                                    |
 | ----------------------------------------------------- | -------------------------------------------------------------------------- |
-| `package.json` (repo root)                            | npm workspaces linking `stack/` and `catalog/pulumi/cluster-vault/`        |
-| `catalog/pulumi/cluster-vault/`                       | `ClusterVaultComponent` under test (shared, not sandbox-only)              |
+| `package.json` (this directory's root)                | npm workspaces linking `stack/` and `catalog/cluster-vault/`               |
+| `catalog/cluster-vault/`                              | `ClusterVaultComponent` under test (shared, not sandbox-only)              |
 | `manifests/garage.yaml`                               | Single-node Garage (S3 state backend)                                      |
 | `manifests/openbao-credentials.yaml`                  | Dev-mode OpenBao address/token as a K8s Secret                             |
 | `manifests/pulumi-credentials.yaml`                   | Fixed dev-only Pulumi stack passphrase as a K8s Secret                     |

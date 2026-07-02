@@ -5,13 +5,13 @@
 # DNS) differs.
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
-DIR="${ROOT}/docs/experiments/20260702-pulumi-crossplane-evaluation/stack"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DIR="${ROOT}/stack"
 
-# Single install from the workspace root: hoists @pulumi/pulumi and
+# Single install from the POC's own workspace root: hoists @pulumi/pulumi and
 # @pulumi/vault into node_modules there, which is the common ancestor
-# catalog/pulumi/cluster-vault/ and this stack both resolve against —
-# see the root package.json "workspaces" field.
+# catalog/cluster-vault/ and this stack both resolve against — see this
+# directory's package.json "workspaces" field.
 npm install --no-audit --no-fund --prefix "${ROOT}"
 cd "${DIR}"
 

@@ -1,0 +1,8 @@
+{
+	"name": "pulumi-crossplane-poc",
+	"private": true,
+	"workspaces": [
+		"catalog/cluster-vault",
+		"stack"
+	]
+}
