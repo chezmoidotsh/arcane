@@ -32,6 +32,7 @@ shaped every tooling choice below.
 7. [Validation Criteria](#7-validation-criteria)
 8. [Results](#8-results)
 9. [Conclusions](#9-conclusions)
+10. [Actionable Next Steps](#10-actionable-next-steps)
 
 ***
 
@@ -81,7 +82,7 @@ operator executes in production.
 * Cloudflare / multi-provider validation — the issue asks for a Cloudflare
   cert-manager token alongside Vault, but creating one (even a scoped, revocable
   one) means calling the real Cloudflare API. Deferred until the kind sandbox
-  pattern itself is proven; see [§9.1](#91-deferred).
+  pattern itself is proven; see [§9.2](#92-deferred).
 * AWS SES / `DomainIdentity`
 * Hetzner / Tailscale Terraform Workspaces
 * OCI (the original trigger — migrate only if this POC succeeds)
@@ -184,6 +185,40 @@ signatures` (verifies npm registry signing) is a further native option not yet
 wired in. A real malicious-package detector (e.g. Socket.dev-style behavioral
 scanning) is out of scope for this POC — noted, not built.
 
+### 3.4 Network egress (not validated — CNI mismatch)
+
+Considered — and rejected as untestable in this sandbox — using a CI-built,
+Trivy-scanned OCI artifact (dependencies pre-resolved, pushed to Zot, mounted
+read-only via Kubernetes 1.36's GA `ImageVolume` feature) instead of installing
+npm dependencies at runtime. Confirmed technically feasible at the
+Kubernetes/containerd layer (`ImageVolume` is GA and locked-to-default since
+1.36, containerd ≥2.1 supports it, the Stack CRD already models
+`volumes[].image`), but rejected: reproduced that the Pulumi Operator's internal
+dependency-install step unconditionally tries to write into `node_modules`
+even when it's already present and lockfile-satisfied (`EROFS` on a read-only
+mount, no CRD field to skip the step), and — separately — Trivy plus a pinned
+lockfile don't catch the actual worst case (a malicious version published
+under the exact hash the lockfile pins). The CI + artifact + image-lifecycle
+cost wasn't justified by the marginal risk reduction over what §3.3 already
+does.
+
+The stronger mitigation for the same threat (a compromised dependency
+exfiltrating secrets or opening a reverse shell) is a **per-Stack egress
+`CiliumNetworkPolicy`**: restrict the workspace pod to DNS, the S3 state
+backend, the target Vault/OpenBao endpoint, the Cloudflare API (if managing
+tokens), the npm registry, and GitHub (for `projectRepo` clones) — nothing
+else. This is complementary to, not a replacement for, §3.3's mitigations:
+even a fully "clean" dependency tree benefits from a tight egress allowlist,
+and it caps the damage regardless of how a compromise got in.
+
+**Not tested in this sandbox.** `kubectl get pods -n kube-system` shows
+`kindnet`, not Cilium — kindnet enforces no NetworkPolicy at all, so creating
+a `CiliumNetworkPolicy` here would be silently unenforced, not a valid test.
+The real clusters (`amiya.akn`, `lungmen.akn`) run Cilium. Validating this
+would mean recreating the kind cluster with `disableDefaultCNI: true` and
+installing Cilium via Helm — deferred rather than done half-faithfully; see
+[§9](#9-conclusions).
+
 ***
 
 ## 4. Bootstrap
@@ -261,30 +296,91 @@ look like.
 
 ## 7. Validation Criteria
 
-| ID    | Criterion                                                                          | Status                            |
-| ----- | ---------------------------------------------------------------------------------- | --------------------------------- |
-| V-001 | `mise run poc:bootstrap` stands up Garage + OpenBao + operator                     | Pending — not run yet             |
-| V-002 | `ClusterVaultComponent` covers the Local variant                                   | Done (code)                       |
-| V-003 | `mise run poc:preview` succeeds against the sandbox state                          | Pending                           |
-| V-004 | Operator run (`stack/stack.yaml`) reads/writes the same S3 state as the local run  | Pending — needs the branch pushed |
-| V-005 | Operator resource footprint measured (CPU/RAM idle + reconcile) inside the sandbox | Pending                           |
-| V-006 | Comparison table: Crossplane vs Pulumi (resources, CRDs, CPU/RAM, DX)              | Pending — needs V-005             |
+| ID    | Criterion                                                                          | Status                                      |
+| ----- | ---------------------------------------------------------------------------------- | ------------------------------------------- |
+| V-001 | `mise run poc:bootstrap` stands up Garage + OpenBao + operator                     | Done — run repeatedly, idempotent           |
+| V-002 | `ClusterVaultComponent` covers the Local variant                                   | Done (code)                                 |
+| V-003 | `mise run poc:preview` succeeds against the sandbox state                          | Pending — script not exercised end-to-end   |
+| V-004 | Operator run (`stack/stack.yaml`) reads/writes the same S3 state as the local run  | Done — reconciles repeatedly to `succeeded` |
+| V-005 | Operator resource footprint measured (CPU/RAM idle + reconcile) inside the sandbox | Pending                                     |
+| V-006 | Comparison table: Crossplane vs Pulumi (resources, CRDs, CPU/RAM, DX)              | Pending — needs V-005                       |
 
 ***
 
 ## 8. Results
 
-Not yet run. This is scaffolding: sandbox manifests, bootstrap/teardown/preview
-scripts, the shared component, and a sandbox-only Pulumi stack — all reviewable and
-inert until `mise run poc:bootstrap` is actually executed.
+`mise run poc:bootstrap` and the in-cluster Stack reconcile have both been run
+repeatedly against the live sandbox and consistently reach `succeeded`
+(`kubectl get stacks.pulumi.com pulumi-crossplane-poc-sandbox -n pulumi-poc`),
+including after killing the workspace pod to prove the ephemeral npm-cache
+volume and the pinned-image `pullPolicy` behavior (§3.3). `mise run
+poc:preview` (the local, port-forwarded workflow) has not been exercised
+end-to-end — only its `npm ci` step was validated in isolation.
+
+The dependency-hardening and network-isolation experiments (§3.3, §3.4) were
+run to completion, including one rejected design (OCI image-volume +
+read-only `node_modules`, reproduced failing with `EROFS`). V-005 (footprint)
+and V-006 (comparison table) remain pending — they need a deliberate
+measurement pass, not just "does it work" runs.
 
 ***
 
 ## 9. Conclusions
 
-TBD — pending V-001 through V-006.
+Full V-001–V-006 verdict is still pending (V-005/V-006 need a deliberate
+measurement pass — see [§8](#8-results)). But the functional and security
+questions this POC set out to answer are resolved enough to size the
+follow-up work, summarized here.
 
-### 9.1 Deferred
+**Pulumi can plausibly manage almost everything Crossplane does today** —
+`ClusterVault`, `DomainIdentity`, and beyond — at a fraction of the resource
+footprint, with two deliberate exceptions:
+
+* **Proxmox and Unifi stay out of Kubernetes/GitOps entirely.** Both are
+  foundational to the homelab — Proxmox hosts every cluster, Unifi is the
+  network substrate. Letting a workload *inside* a cluster hold write
+  credentials to the thing *hosting* that cluster creates a trust cycle:
+  `Proxmox → hosts K8s → K8s manages Proxmox`. A compromise anywhere in that
+  cluster (the exact npm supply-chain scenario in §3.3) would then escalate
+  from "one Vault mount" to "the physical hypervisor," not stay contained.
+  The existing Proxmox CSI/CCM integration (`docs/experiments/20260617-proxmox-csi-ccm/`)
+  already accepts a version of this risk, but with a narrowly-scoped
+  read/attach-only token — full IaC management of VMs/storage/SDN would be a
+  much broader credential on the same hypervisor that hosts the executor.
+  Going fully manual for Proxmox/Unifi would also break this repo's
+  non-negotiable "declarative + versioned" rule, so the real fix is running
+  that IaC from *outside* any cluster Proxmox hosts (e.g. GitHub-hosted CI
+  applying on merge, not a self-hosted operator) — kept as an open design
+  question for whoever picks this up, not decided here.
+* **No first-party Pulumi provider exists yet for Garage, Talos Omni, or
+  Pocket-Id** — all three need to exist before those resources can move off
+  Crossplane/manual management. Community Terraform providers exist for
+  Garage and Pocket-Id (bridging would have been cheaper), but all three are
+  being built as **native** providers against each product's own API instead
+  — no Terraform-bridge indirection for any of them, Omni included, which has
+  no Terraform provider to bridge from anyway (see
+  [§10](#10-actionable-next-steps)).
+
+**Residual supply-chain risk is real and not fully closeable, but is
+tractable.** §3.3 and §3.4 cover the reasoning; the summary: `npm ci` +
+ephemeral cache volume closes the cheap, high-value gaps (lockfile drift,
+cache persistence across compromise); a CI-audited OCI artifact was evaluated
+and rejected as not worth its cost and not fully effective anyway; a
+per-Stack egress `CiliumNetworkPolicy` is the recommended next layer —
+untested here (CNI mismatch, §3.4) but structurally the strongest lever
+available, since it bounds the *impact* of a compromise regardless of how
+novel or well-hidden it was.
+
+### 9.1 Bonus idea (not part of this POC's results)
+
+A deployment-visualization tool for what Pulumi actually manages —
+[mlops-club/pulumi-ui](https://github.com/mlops-club/pulumi-ui) is a
+reference point — would help close the biggest DX gap Crossplane has today
+(no equivalent of `kubectl get composite,claim` for Pulumi state) if this
+migration goes ahead at scale. Parked as an idea; not evaluated, not
+prioritized, not part of the acceptance criteria for this POC.
+
+### 9.2 Deferred
 
 * **Cloudflare / multi-provider validation** (issue 1089 asks for this) — needs a
   real, scoped Cloudflare API token, which falls outside "fully local and
@@ -294,8 +390,10 @@ TBD — pending V-001 through V-006.
 * **Real cluster cutover** (`amiya.akn`, `lungmen.akn`) — deliberately out of scope
   until this sandbox proves the pattern; see the original issue's "if the POC
   succeeds" migration path.
+* **Egress `CiliumNetworkPolicy` validation** (§3.4) — needs the sandbox rebuilt
+  with Cilium instead of kindnet.
 
-### 9.2 References
+### 9.3 References
 
 * Issue: [#1089](https://github.com/chezmoidotsh/arcane/issues/1089)
 * Related: [#1010](https://github.com/chezmoidotsh/arcane/issues/1010) (kazimierz.akn
@@ -305,3 +403,34 @@ TBD — pending V-001 through V-006.
 * Pulumi S3-compatible (DIY) backends: <https://www.pulumi.com/docs/iac/operations/stack-management/using-a-diy-backend/>
 * Garage: <https://garagehq.deuxfleurs.fr/>
 * OpenBao Helm chart: <https://openbao.github.io/openbao-helm>
+* Kubernetes `ImageVolume` (KEP-4639): GA + locked-to-default since 1.36
+  (`pkg/features/kube_features.go` in kubernetes/kubernetes)
+* containerd OCI/Image Volume Source support: added in 2.1.0, subPath support in 2.2.0
+* Proxmox CSI/CCM precedent: `docs/experiments/20260617-proxmox-csi-ccm/`
+
+***
+
+## 10. Actionable Next Steps
+
+Filed directly from this POC's conclusions:
+
+* [#1091](https://github.com/chezmoidotsh/arcane/issues/1091) — Migrate
+  Crossplane resource management to Pulumi Kubernetes Operator (design
+  brainstorm first: ArgoCD `ApplicationSet` mechanism to auto-generate Stack
+  CRs, a path for manual/non-templated Pulumi code, migration ordering — not
+  a migration PR yet)
+* [#1092](https://github.com/chezmoidotsh/arcane/issues/1092) — Create a
+  native Pulumi provider for Garage (S3-compatible storage), against Garage's
+  own v2 admin API rather than bridging an existing community Terraform
+  provider
+* [#1093](https://github.com/chezmoidotsh/arcane/issues/1093) — Create a
+  native Pulumi provider for Talos Omni (no Terraform provider exists to
+  bridge from either way)
+* [#1095](https://github.com/chezmoidotsh/arcane/issues/1095) — Create a
+  native Pulumi provider for Pocket-Id (OIDC clients, users, groups), against
+  its own REST API rather than bridging an existing community Terraform
+  provider
+* [#1094](https://github.com/chezmoidotsh/arcane/issues/1094) — Inventory
+  infrastructure that is still managed 100% manually, so the Proxmox/Unifi
+  exclusion above is recorded as one deliberate case among a documented set,
+  not an isolated one-off
