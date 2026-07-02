@@ -80,12 +80,12 @@ When in doubt: read the title cold without the body. If it doesn't answer
 
 The title doesn't carry type or scope — **labels and Issue Type do**. Apply one Issue Type and at least one label from each mandatory group:
 
-| Field / Group | Mandatory            | Apply                                                                                                                                                                             |
-| ------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Issue Type    | **yes**              | One of `Bug`, `Feature`, `Improvement`, `Task`, `Docs`, `Security`, `Question` — set with `--type <Name>`                                                                         |
-| scope         | **yes**              | The repository area as a label (`project:amiya.akn`, `project:lungmen.akn`, `catalog:crossplane`, `gh`, `deps`, …) — same identifiers used as commit scopes in `.commitlintrc.js` |
-| `size::*`     | yes when known       | `size::XS`, `size::S`, `size::M`, `size::L`, `size::XL`. If you cannot estimate, leave it off rather than guessing.                                                               |
-| `priority::*` | yes when non-default | `priority::critical` (outage / data loss / active security), `priority::high` (this week), `priority::medium` (default — omit unless explicit), `priority::low` (nice-to-have)    |
+| Field / Group | Mandatory            | Apply                                                                                                                                                                          |
+| ------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Issue Type    | **yes**              | One of `Bug`, `Feature`, `Improvement`, `Task`, `Docs`, `Security`, `Question` — set with `--type <Name>`                                                                      |
+| scope         | **yes**              | The repository area as a label (`project`, `catalog`, `gh`, `deps`, …) — name the specific cluster/area in the issue body                                                      |
+| `size::*`     | yes when known       | `size::XS`, `size::S`, `size::M`, `size::L`, `size::XL`. If you cannot estimate, leave it off rather than guessing.                                                            |
+| `priority::*` | yes when non-default | `priority::critical` (outage / data loss / active security), `priority::high` (this week), `priority::medium` (default — omit unless explicit), `priority::low` (nice-to-have) |
 
 ### Issue Type decision tree
 
@@ -107,12 +107,12 @@ Breaking variants of any change add the `breaking-change` label.
 
 Which area of the repo does this touch?
 
-| Where the work lands                             | Label                                        |
-| ------------------------------------------------ | -------------------------------------------- |
-| `projects/<cluster>/`                            | `project:<cluster>` (`project:amiya.akn`, …) |
-| `catalog/<area>/`                                | `catalog:<area>` (`catalog:crossplane`, …)   |
-| `.github/`, root configs, cross-cutting concerns | `gh`                                         |
-| Dependency updates                               | `deps`                                       |
+| Where the work lands                             | Label                                    |
+| ------------------------------------------------ | ---------------------------------------- |
+| `projects/<cluster>/`                            | `project` (name the cluster in the body) |
+| `catalog/<area>/`                                | `catalog` (name the area in the body)    |
+| `.github/`, root configs, cross-cutting concerns | `gh`                                     |
+| Dependency updates                               | `deps`                                   |
 
 **Cross-cutting test:** if the issue body would say "this affects all clusters"
 or "this is a systemic concern", the scope is `gh`, not one of the projects.
@@ -300,7 +300,7 @@ operational baseline exists.
 
 **Title:** `WAL volume full on apps-secured cluster — immich and paperless unavailable`
 
-**Type:** `Bug` — **Labels:** `project:lungmen.akn`, `priority::critical`, `size::M`
+**Type:** `Bug` — **Labels:** `project`, `priority::critical`, `size::M`
 
 **Body (excerpt):**
 

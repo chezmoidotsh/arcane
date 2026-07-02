@@ -92,7 +92,7 @@ Before pushing anything:
 4. Push: `git push -u origin <branch-name>`
 5. Draft the PR body following the selected template — see `.github/PULL_REQUEST_TEMPLATE/<type>.md` and `references/pr-examples.md`.
 6. Create the PR with a **sentence-form** title that says what changes (no symbol prefix, no bracketed scope — the commit symbol format is for git log, not for PR titles).
-7. Apply labels: one `type::*` + the scope label (`project:*`, `catalog:*`, `gh`, `deps`). The PR auto-labeler will add `pr::*` based on changed files / branch name.
+7. Apply labels: one `type::*` + the scope label (`project`, `catalog`, `gh`, `deps`).
 
 ### Pushing follow-up commits to an existing PR
 
@@ -250,14 +250,14 @@ gh pr create \
   --body-file /tmp/pr_body.md \
   --base main \
   --label "type::feature" \
-  --label "project:lungmen.akn"
+  --label "project"
 rm /tmp/pr_body.md
 ```
 
 ## Rules
 
 * **PR title**: sentence-case English, verb-first, no symbol prefix, no bracketed scope, no trailing period. The commit symbol format stays on commits.
-* **PR labels**: one `type::*` + the scope label mandatory. Add `priority::*` / `size::*` when you have signal. The auto-labeler will set `pr::*` based on branch/files.
+* **PR labels**: one `type::*` + the scope label mandatory. Add `priority::*` / `size::*` when you have signal.
 * **Commits**: All commits must have the symbol-based `type[scope]: Subject` format, GPG signature (`-S`), and `Assisted-by:` trailer.
   Signed-off-by is the user's responsibility — never add `-s` yourself.
 * **PR body line length**: No hard limit — do NOT wrap PR body text at 80 characters. GitHub renders Markdown, so natural prose flow is preferred over artificial line breaks. The 80-char rule applies only to git commit bodies, not PR descriptions.
@@ -342,7 +342,7 @@ gh pr create \
   --body-file /tmp/pr_body.md \
   --base main \
   --label "type::feature" \
-  --label "project:lungmen.akn"
+  --label "project"
 rm /tmp/pr_body.md
 ```
 

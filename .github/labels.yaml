@@ -15,9 +15,8 @@
 #
 # Label taxonomy
 # --------------
-# Four orthogonal groups, applied independently:
+# Three orthogonal groups, applied independently:
 #
-#   pr::<x>          PR auto-labeler categorization  (PRs only, set by labeler.yml)
 #   size::<x>        Effort estimate                  (issues + PRs)
 #   priority::<x>    Urgency                          (issues only)
 #   <scope>          Where in the repo               (mirrors commit scopes verbatim)
@@ -28,35 +27,16 @@
 #
 # Plus a small set of bare meta labels (`stale`, `breaking-change`, …).
 #
-# Scope labels are the same identifiers used as commit scopes in `.commitlintrc.js`
-# (e.g. `project:amiya.akn`, `catalog:crossplane`, `gh`, `deps`). They use a single
-# colon — the `::` separator is reserved for the orthogonal classification groups
-# above.
+# Scope labels use a single colon (e.g. `project`, `catalog`, `gh`, `deps`) — the
+# `::` separator is reserved for the orthogonal classification groups above.
+# `project` and `catalog` are deliberately coarse: which project/catalog area is
+# visible from the PR/issue body, not duplicated as a label.
 #
 # When adding or renaming a label, prefer `gh label edit <old> --name <new>` first
 # to preserve issue associations, then update this file to match. The sync workflow
 # (`.github/workflows/push,schedule.sync-labels.yaml`) uses `prune: true`, so any
 # label not declared here will be deleted on the next sync.
 ---
-# ----------------------------------------------------------------------------
-# pr:: — PR auto-labeler (consumed by .github/labeler.yml — do not rename)
-# ----------------------------------------------------------------------------
-- name: pr::bugfix
-  description: Something that wasn't working is now fixed
-  color: D73A4A
-- name: pr::dependencies
-  description: Dependencies upgrade
-  color: 2B098D
-- name: pr::documentation
-  description: Improvements or additions to documentation
-  color: 0075CA
-- name: pr::workflows
-  description: Changes on workflows
-  color: 6A5ACD
-- name: pr::others
-  description: Anything else
-  color: DEDB26
-
 # ----------------------------------------------------------------------------
 # size:: — effort estimate
 # ----------------------------------------------------------------------------
@@ -93,46 +73,13 @@
   color: 0E8A16
 
 # ----------------------------------------------------------------------------
-# Scope — mirrors commit scopes in .commitlintrc.js verbatim
+# Scope
 # ----------------------------------------------------------------------------
-- name: project:amiya.akn
-  description: amiya.akn — core platform cluster (SSO, secrets, GitOps backbone)
+- name: project
+  description: Anything under projects/ — which cluster/app is named in the body
   color: 1D76DB
-- name: project:lungmen.akn
-  description: lungmen.akn — home applications cluster
-  color: 1D76DB
-- name: project:kazimierz.akn
-  description: kazimierz.akn — VPS public-access gateway (Pangolin + CrowdSec)
-  color: 1D76DB
-- name: project:chezmoi.sh
-  description: chezmoi.sh — shared Crossplane providers
-  color: 1D76DB
-- name: project:hass
-  description: hass — Home Assistant project
-  color: 1D76DB
-- name: project:shodan.akn
-  description: shodan.akn — future AI stack cluster
-  color: 1D76DB
-- name: catalog:ansible
-  description: Reusable Ansible roles and collections
-  color: 8B5CF6
-- name: catalog:crossplane
-  description: Crossplane XRDs and Composition definitions
-  color: 8B5CF6
-- name: catalog:flakes
-  description: Nix flakes producing OCI images
-  color: 8B5CF6
-- name: catalog:kustomize
-  description: Kustomize bases
-  color: 8B5CF6
-- name: catalog:kairos-bundle
-  description: Kairos OS bundles
-  color: 8B5CF6
-- name: catalog:talos
-  description: Talos Linux machine config patches
-  color: 8B5CF6
-- name: catalog:opa
-  description: OPA/Rego policies for CI-time manifest validation
+- name: catalog
+  description: Anything under catalog/ — which area (ansible, crossplane, …) is named in the body
   color: 8B5CF6
 - name: agents:knowledge
   description: Operational knowledge distilled from incidents (.agents/knowledge/)
