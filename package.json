@@ -1,0 +1,8 @@
+{
+	"name": "arcane",
+	"private": true,
+	"workspaces": [
+		"catalog/pulumi/cluster-vault",
+		"docs/experiments/20260702-pulumi-crossplane-evaluation/stack"
+	]
+}

@@ -159,14 +159,19 @@ mise run poc:preview
 ```
 
 This port-forwards Garage (`3900`) and OpenBao (`8200`) to localhost, exports the
-sandbox's fixed dev credentials, `npm install`s, logs in to the S3 backend, and runs
-`pulumi preview` from `stack/`.
+sandbox's fixed dev credentials, `npm install`s from the repo-root workspace, logs
+in to the S3 backend, and runs `pulumi preview` from `stack/`.
+
+The repo-root `package.json` declares both `stack/` and `catalog/pulumi/cluster-vault/`
+as npm workspaces, so a single install hoists `@pulumi/pulumi`/`@pulumi/vault` into a
+`node_modules` that both resolve against — no separate install inside the catalog
+module needed, in this script or in a real Pulumi Kubernetes Operator run.
 
 To also validate the in-cluster operator against the same state (proves the
 "local + in-cluster share state" requirement), push this branch first, then:
 
 ```sh
-kubectl apply -f docs/experiments/20260702-pulumi-crossplane-evaluation/stack/stack.yaml
+kubectl apply -f stack/stack.yaml
 kubectl -n pulumi-poc get stacks.pulumi.com pulumi-crossplane-poc-sandbox -w
 ```
 
@@ -180,6 +185,7 @@ look like.
 
 | File                                                  | Purpose                                                                |
 | ----------------------------------------------------- | ---------------------------------------------------------------------- |
+| `package.json` (repo root)                            | npm workspaces linking `stack/` and `catalog/pulumi/cluster-vault/`    |
 | `catalog/pulumi/cluster-vault/`                       | `ClusterVaultComponent` under test (shared, not sandbox-only)          |
 | `manifests/garage.yaml`                               | Single-node Garage (S3 state backend)                                  |
 | `manifests/openbao-credentials.yaml`                  | Dev-mode OpenBao address/token as a K8s Secret                         |
