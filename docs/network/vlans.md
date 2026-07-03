@@ -113,18 +113,22 @@ All active addressing is consolidated in `10.0.0.0/24`. The remaining three `/24
 
 Allocation convention within `10.0.0.0/26`: `.1` gateway, `.10–.19` hypervisor, `.20–.29` system LXCs, `.30–.62` other devices.
 
-| IP        | Host                            | Notes                                                    |
-| --------- | ------------------------------- | -------------------------------------------------------- |
-| 10.0.0.1  | Gateway (UDM Pro)               |                                                          |
-| 10.0.0.10 | pve-01 IPMI                     | BMC remote management                                    |
-| 10.0.0.11 | pve-01 OS                       | Hypervisor management IP                                 |
-| 10.0.0.21 | omni LXC                        |                                                          |
-| 10.0.0.22 | o11y LXC                        |                                                          |
-| 10.0.0.23 | oci-registry LXC                |                                                          |
-| 10.0.0.24 | pve-exporter LXC                |                                                          |
-| 10.0.0.25 | omni-infra-provider-proxmox LXC |                                                          |
-| 10.0.0.30 | NAS                             | Primary interface                                        |
-| 10.0.0.31 | NAS (applications)              | Dedicated IP for the applications dataset (Garage, etc.) |
+| IP        | Host                            | DNS                                                        | Notes                                                    |
+| --------- | ------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------- |
+| 10.0.0.1  | Gateway (UDM Pro)               |                                                            |                                                          |
+| 10.0.0.10 | pve-01 IPMI                     |                                                            | BMC remote management                                    |
+| 10.0.0.11 | pve-01 OS                       | pve-01.pve.chezmoi.sh                                      | Hypervisor management IP                                 |
+| 10.0.0.21 | omni LXC                        | omni.chezmoi.sh, api.omni.chezmoi.sh, kube.omni.chezmoi.sh | Omni UI/API SideroLink Machine API, Kubernetes API proxy |
+| 10.0.0.22 | o11y LXC                        | o11y.chezmoi.sh                                            | Victoria stack — central metrics/logs/traces             |
+| 10.0.0.23 | oci-registry LXC                | oci.chezmoi.sh                                             | Zot — pull-through OCI cache + first-party images        |
+| 10.0.0.24 | pve-exporter LXC                |                                                            |                                                          |
+| 10.0.0.25 | omni-infra-provider-proxmox LXC |                                                            |                                                          |
+| 10.0.0.30 | NAS                             | nas.chezmoi.sh                                             | Primary interface                                        |
+| 10.0.0.31 | NAS (applications)              |                                                            | Dedicated IP for the applications (Garage, etc.)         |
+
+> `*.omni.chezmoi.sh` is a wildcard record pointing to the public Pangolin gateway
+> (`195.201.114.83`, kazimierz.akn) — it resolves outside VLAN 5 entirely and isn't tied to any
+> IP in this table.
 
 ### Cilium LoadBalancer Pools
 
