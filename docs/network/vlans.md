@@ -113,18 +113,18 @@ All active addressing is consolidated in `10.0.0.0/24`. The remaining three `/24
 
 Allocation convention within `10.0.0.0/26`: `.1` gateway, `.10–.19` hypervisor, `.20–.29` system LXCs, `.30–.62` other devices.
 
-| IP        | Host               | Notes                                                    |
-| --------- | ------------------ | -------------------------------------------------------- |
-| 10.0.0.1  | Gateway (UDM Pro)  |                                                          |
-| 10.0.0.10 | pve-01 IPMI        | BMC remote management                                    |
-| 10.0.0.11 | pve-01 OS          | Hypervisor management IP                                 |
-| 10.0.0.21 | omni LXC           |                                                          |
-| 10.0.0.22 | o11y LXC           |                                                          |
-| 10.0.0.23 | oci-registry LXC   |                                                          |
-| 10.0.0.30 | NAS                | Primary interface                                        |
-| 10.0.0.31 | NAS (applications) | Dedicated IP for the applications dataset (Garage, etc.) |
-
-> `pve-exporter` and `omni-infra-provider-proxmox` IPs are assigned during deployment — not pre-allocated here.
+| IP        | Host                            | Notes                                                    |
+| --------- | ------------------------------- | -------------------------------------------------------- |
+| 10.0.0.1  | Gateway (UDM Pro)               |                                                          |
+| 10.0.0.10 | pve-01 IPMI                     | BMC remote management                                    |
+| 10.0.0.11 | pve-01 OS                       | Hypervisor management IP                                 |
+| 10.0.0.21 | omni LXC                        |                                                          |
+| 10.0.0.22 | o11y LXC                        |                                                          |
+| 10.0.0.23 | oci-registry LXC                |                                                          |
+| 10.0.0.24 | pve-exporter LXC                |                                                          |
+| 10.0.0.25 | omni-infra-provider-proxmox LXC |                                                          |
+| 10.0.0.30 | NAS                             | Primary interface                                        |
+| 10.0.0.31 | NAS (applications)              | Dedicated IP for the applications dataset (Garage, etc.) |
 
 ### Cilium LoadBalancer Pools
 
