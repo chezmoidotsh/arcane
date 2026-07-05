@@ -1,8 +1,8 @@
 ---
-status: "proposed"
+status: "accepted"
 date: 2026-07-05
 decision-makers: ["Alexandre"]
-assisted-by: ["claude-opus-4-8"]
+assisted-by: ["claude-opus-4.8"]
 informed: []
 template-version: "1.1.0"
 ---
@@ -84,8 +84,8 @@ cluster is guaranteed?**
 ## Decision Drivers
 
 * **Escape the per-provider model**: replace Crossplane's one-CRD-set-per-API-family
-  overhead, whose structural explosion (7 providers / \~500 resources for OCI alone) is the
-  primary motivation. Footprint reduction is expected but unquantified.
+  overhead, whose structural explosion (quantified in Context) is the primary motivation.
+  Footprint reduction is expected but unquantified.
 * **Composition as code**: express fan-out logic (the `ClusterVault`/`DomainIdentity`
   patterns) in a real programming language rather than a templating/HCL-module layer, for
   maintainability and easier reasoning.
@@ -112,8 +112,8 @@ genuine strength — a live control loop that self-heals drift and surfaces stat
 `kubectl get composite,claim` and ArgoCD.
 
 It is rejected on the two structural problems it cannot shed. The per-provider model is the
-overhead this decision exists to remove (the OCI migration's 7-provider / \~500-resource
-explosion is intrinsic, not a misconfiguration). And being an in-cluster controller, it
+overhead this decision exists to remove (the OCI migration's provider explosion is intrinsic,
+not a misconfiguration). And being an in-cluster controller, it
 cannot manage cloud state when no cluster exists — a hard blocker for the `rhodes`
 reconstruction (#370).
 
@@ -210,28 +210,28 @@ not the argument.
 
 ### Positive
 
-* Sheds Crossplane's per-provider CRD/controller model and its structural resource explosion.
-* Cloud state becomes manageable with no cluster running — unblocking the `rhodes`
+* ✅ Sheds Crossplane's per-provider CRD/controller model and its structural resource explosion.
+* ✅ Cloud state becomes manageable with no cluster running — unblocking the `rhodes`
   reconstruction (#370).
-* One toolchain runs locally now and in-cluster later, so the execution model can evolve
+* ✅ One toolchain runs locally now and in-cluster later, so the execution model can evolve
   without re-choosing tools.
-* Terraform Workspaces consolidate into native Pulumi providers, removing a second IaC system.
+* ✅ Terraform Workspaces consolidate into native Pulumi providers, removing a second IaC system.
 
 ### Negative
 
-* **While executed locally (current phase)**: no continuous drift reconciliation (drift
+* ⚠️ **While executed locally (current phase)**: no continuous drift reconciliation (drift
   surfaces only when a human runs `pulumi preview`) and no ArgoCD-UI visibility into cloud
   state. These are precisely the properties the deferred **in-cluster phase** restores — so
   they are phase limitations, not permanent regressions.
-* Migration must `pulumi import` every Crossplane-managed resource with zero recreation.
-* Pulumi's supply-chain surface (npm dependencies executing with cloud credentials) must be
+* ⚠️ Migration must `pulumi import` every Crossplane-managed resource with zero recreation.
+* ⚠️ Pulumi's supply-chain surface (npm dependencies executing with cloud credentials) must be
   managed — lightly now (`npm ci` strict-lockfile installs locally), and with the POC's
   pod-hardening controls when the in-cluster phase lands (see Implementation).
 
 ### Neutral
 
-* Proxmox/Unifi remain manual (#1094) — unchanged by this decision.
-* Garage as the state backend (#1097) is a premise, not an effect, of this ADR.
+* ⚖️ Proxmox/Unifi remain manual (#1094) — unchanged by this decision.
+* ⚖️ Garage as the state backend (#1097) is a premise, not an effect, of this ADR.
 
 ***
 
