@@ -38,7 +38,7 @@ in
     };
 
     prefixLength = lib.mkOption {
-      type = lib.types.int;
+      type = lib.types.ints.between 0 32;
       description = "Subnet prefix length, matching the PVE net0 `ip=` field (e.g. 22 for a /22).";
     };
 
@@ -55,9 +55,17 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    networking.interfaces.${cfg.interface}.ipv4.addresses = [
-      { inherit (cfg) address prefixLength; }
-    ];
+    # Disabling DHCP on this interface is required, not cosmetic: NixOS's
+    # default DHCP client still runs otherwise, spends ~30s retrying against
+    # a VLAN with DHCP disabled, delays network-online.target (and anything
+    # ordered after it, e.g. lxc-agent), and risks landing on the same
+    # link-local fallback address this module exists to eliminate.
+    networking.interfaces.${cfg.interface} = {
+      useDHCP = false;
+      ipv4.addresses = [
+        { inherit (cfg) address prefixLength; }
+      ];
+    };
     networking.defaultGateway = cfg.gateway;
     networking.nameservers = cfg.nameservers;
   };
