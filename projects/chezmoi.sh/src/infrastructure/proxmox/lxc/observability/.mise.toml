@@ -9,7 +9,7 @@
 #   mise run lxc:secrets:sync                       # Sync Crossplane tokens (Cloudflare + Tailscale); preserves Alertmanager URLs
 #   mise run lxc:build                              # Build the LXC tarball with all secrets baked in
 #   mise run lxc:push -- <pve-host>                 # Upload template to Proxmox (local storage)
-#   mise run lxc:upgrade -- <pve-host> <src> <dst>  # Upgrade a running LXC to a new image
+#   mise run lxc:upgrade -- <pve-host> --vmid <vmid>  # Upgrade a running LXC in place
 #
 # Secret files (both SOPS/age-encrypted, baked into the image at build time):
 #   secrets/caddy.sops.env          CLOUDFLARE_API_TOKEN          (Crossplane — DNS-01 ACME)
@@ -131,4 +131,4 @@ run = '''
 # -----------------------------------------------------------------------------
 # lxc:build   → .mise/tasks/lxc/build   (build LXC tarball with all secrets baked in)
 # lxc:push    → .mise/tasks/lxc/push    (upload template to Proxmox)
-# lxc:upgrade → .mise/tasks/lxc/upgrade (upgrade running LXC to new image)
+# lxc:upgrade → .mise/tasks/lxc/upgrade (in-place rootfs-swap upgrade, same VMID)

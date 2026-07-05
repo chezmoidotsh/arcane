@@ -20,12 +20,12 @@
 #     mise run lxc:secrets:omni           # Paste key → omni.sops.env
 #     mise run lxc:build
 #     mise run lxc:push -- <pve-host>
-#     mise run lxc:upgrade -- <pve-host> <source_id>
+#     mise run lxc:upgrade -- <pve-host> --vmid <vmid>
 #
 # Typical upgrade workflow (after initial setup):
 #     mise run lxc:build
 #     mise run lxc:push -- <pve-host>
-#     mise run lxc:upgrade -- <pve-host> <source_id>
+#     mise run lxc:upgrade -- <pve-host> --vmid <vmid>
 #
 # Secret files (SOPS/age-encrypted):
 #   secrets/proxmox.sops.env   PROXMOX_PASSWORD         (Proxmox API password)
@@ -34,7 +34,7 @@
 # File-based tasks:
 #   .mise/tasks/lxc/build    — build LXC tarball with secrets baked in
 #   .mise/tasks/lxc/push     — upload template to Proxmox
-#   .mise/tasks/lxc/upgrade  — rootfs-swap upgrade of a running LXC
+#   .mise/tasks/lxc/upgrade  — in-place rootfs-swap upgrade (same VMID)
 # =============================================================================
 
 [tools]
@@ -93,4 +93,4 @@ run = '''
 # -----------------------------------------------------------------------------
 # lxc:build   → .mise/tasks/lxc/build   (build LXC tarball)
 # lxc:push    → .mise/tasks/lxc/push    (upload to Proxmox)
-# lxc:upgrade → .mise/tasks/lxc/upgrade (rootfs-swap upgrade)
+# lxc:upgrade → .mise/tasks/lxc/upgrade (in-place rootfs-swap upgrade, same VMID)

@@ -2,8 +2,7 @@
 # [MISE] description="Upgrade the Omni LXC to a new image version via rootfs swap"
 # [MISE] dir="{{config_root}}"
 # [USAGE] arg "<pve_host>" help="Hostname or IP of the Proxmox node (e.g. pve.lan)"
-# [USAGE] flag "-s --source-id <id>" help="VMID of the running container (auto-detected via PVE tags if omitted)"
-# [USAGE] flag "-t --target-id <id>" help="VMID for the new container (auto-picked if omitted)"
+# [USAGE] flag "-i --vmid <id>" help="VMID of the running container (auto-detected via PVE tags if omitted)"
 # [USAGE] flag "-V --version <version>" help="Image version (e.g. 2026.06.14-2) — auto-detected from flake if omitted"
 # [USAGE] flag "-y --yes" help="Skip confirmation prompts"
 
@@ -21,7 +20,6 @@ lxc_e2e_hint "curl -sSfk https://omni.chezmoi.sh/"
 
 lxc_upgrade \
   --pve-host "${usage_pve_host}" \
-  --source-id "${usage_source_id-}" \
-  --target-id "${usage_target_id-}" \
+  --vmid "${usage_vmid-}" \
   --version "${usage_version-}" \
   ${usage_yes:+--yes}
