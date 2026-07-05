@@ -278,7 +278,7 @@ EOF
     --swap         0 \
     --rootfs       nvme-lvm:4 \
     --mp0          nvme-lvm:20,mp=/persistent,backup=1 \
-    --net0         name=eth0,bridge=vmbr1,ip=dhcp,firewall=1,tag=5 \
+    --net0         name=eth0,bridge=vmbr1,ip=10.0.0.21/22,gw=10.0.0.1,firewall=1,tag=5 \
     --cmode        console \
     --onboot       1
 

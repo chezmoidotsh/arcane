@@ -27,6 +27,16 @@
   system.stateVersion = "26.05";
   networking.hostName = "oci-registry";
 
+  # ── Static IPv4 (mirrors PVE net0: ip=10.0.0.23/22,gw=10.0.0.1) ──────────
+  # See catalog.nix's lxc-static-network module — without this, eth0 falls
+  # back to a link-local address on every reboot (VLAN 5 has DHCP disabled).
+  catalog.staticNetwork = {
+    enable = true;
+    address = "10.0.0.23";
+    prefixLength = 22;
+    gateway = "10.0.0.1";
+  };
+
   time.timeZone = "Etc/UTC";
   i18n.defaultLocale = "C.UTF-8";
 

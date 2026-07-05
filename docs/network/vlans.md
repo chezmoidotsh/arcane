@@ -130,6 +130,11 @@ Allocation convention within `10.0.0.0/26`: `.1` gateway, `.10–.19` hypervisor
 > (`195.201.114.83`, kazimierz.akn) — it resolves outside VLAN 5 entirely and isn't tied to any
 > IP in this table.
 
+> **DNS resolvers.** VLAN 5 has no internal DNS relay documented here — the UDM Pro gateway
+> (`10.0.0.1`) does not answer DNS queries from this VLAN. The static-IP LXCs above use public
+> resolvers (`1.1.1.1`, `9.9.9.9`) via `catalog.staticNetwork.nameservers`
+> (`catalog/nix/modules/lxc-static-network/`). Revisit if an internal resolver is ever stood up.
+
 ### Cilium LoadBalancer Pools
 
 Each cluster gets a `/29` block (6 usable IPs). The `/26` holds exactly 8 × `/29`. Order follows cluster creation sequence; sandbox takes the last slot.

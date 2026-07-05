@@ -267,7 +267,7 @@ EOF
     --memory       512 \
     --swap         0 \
     --rootfs       nvme-lvm:4 \
-    --net0         name=eth0,bridge=vmbr1,ip=dhcp,firewall=1,tag=5 \
+    --net0         name=eth0,bridge=vmbr1,ip=10.0.0.25/22,gw=10.0.0.1,firewall=1,tag=5 \
     --pool         core \
     --cmode        console \
     --onboot       1

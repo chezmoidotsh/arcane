@@ -236,7 +236,7 @@ EOF
     --memory       256 \
     --swap         0 \
     --rootfs       nvme-lvm:2 \
-    --net0         name=eth0,bridge=vmbr1,ip=dhcp,firewall=1,tag=5 \
+    --net0         name=eth0,bridge=vmbr1,ip=10.0.0.24/22,gw=10.0.0.1,firewall=1,tag=5 \
     --onboot       1
 
 # Wire the console device so `pct console <vmid>` works.
