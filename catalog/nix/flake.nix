@@ -9,5 +9,6 @@
     in
     {
       nixosModules.lxcAgent = ./modules/lxc-o11y-agent;
+      nixosModules.staticNetwork = ./modules/lxc-static-network;
     };
 }

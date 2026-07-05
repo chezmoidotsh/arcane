@@ -56,6 +56,7 @@
         format = "lxc";
         modules = [
           arcane-catalog.nixosModules.lxcAgent
+          arcane-catalog.nixosModules.staticNetwork
           ./modules
           ./configuration.nix
           { _module.args = { inherit proxmoxPassword omniServiceAccountKey; }; }

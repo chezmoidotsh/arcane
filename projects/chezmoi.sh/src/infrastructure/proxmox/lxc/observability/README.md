@@ -335,7 +335,7 @@ ssh root@${NODE} pct create ${VMID} local:vztmpl/${TEMPLATE} \
     --swap         0 \
     --rootfs       local-zfs:4 \
     --mp0          local-zfs:64,mp=/persistent \
-    --net0         name=eth0,bridge=vmbr0,ip=dhcp,firewall=1 \
+    --net0         name=eth0,bridge=vmbr1,ip=10.0.0.22/22,gw=10.0.0.1,firewall=1,tag=5 \
     --onboot       1
 
 # 2. Wire up the console device for `pct console <vmid>`.
