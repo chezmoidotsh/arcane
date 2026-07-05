@@ -112,6 +112,7 @@ hcloud = "latest"   # Hetzner Cloud CLI for managing cloud resources
 k9s = "latest"      # Terminal UI for real-time Kubernetes cluster management and observability
 openbao = "latest"  # OpenBao CLI for secret management (HashiCorp Vault fork)
 oci = "latest"      # Oracle Cloud Infrastructure CLI for IAM and API key setup
+pulumi = "latest"   # Pulumi CLI for TypeScript-based infrastructure as code (ADR-015)
 talosctl = "latest" # Talos Linux cluster management tool for bare-metal Kubernetes
 vector = "0.55.0"   # Vector CLI for observability and log aggregation
 
@@ -136,6 +137,7 @@ yq = "latest"       # YAML/JSON processor for configuration file manipulation
 "ubi:runmedev/runme" = "latest"  # Interactive markdown execution tool for runbooks and documentation
 gum = "latest"                   # Terminal UI framework for interactive scripts and prompts
 node = "24.16.0"                 # JavaScript runtime for running Node-based tools and scripts
+pnpm = "latest"                  # Workspace-aware package manager for catalog/pulumi + Pulumi stacks (ADR-015)
 trunk = "latest"                 # Metalinter and formatter for all
 uv = "latest"                    # Extremely fast Python package and project manager
 

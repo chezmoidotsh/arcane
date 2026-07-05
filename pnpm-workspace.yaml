@@ -1,0 +1,3 @@
+packages:
+  - "catalog/pulumi/*"
+  - "projects/*/src/infrastructure/pulumi"

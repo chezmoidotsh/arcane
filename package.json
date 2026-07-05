@@ -1,0 +1,9 @@
+{
+	"name": "arcane-pulumi-workspace",
+	"version": "0.0.0",
+	"private": true,
+	"description": "pnpm workspace for catalog/pulumi/* shared components and per-project Pulumi stacks (ADR-015). Dev-tooling convenience only — Pulumi itself still installs each stack's dependencies with plain npm, scoped to that stack's own directory; see catalog/pulumi/README.md. Deliberately NOT an npm 'workspaces' root: that field makes a bare `npm install` run inside a stack directory walk up and try to be workspace-aware, which conflicts with pnpm's own state here. Workspace membership for pnpm lives solely in pnpm-workspace.yaml.",
+	"scripts": {
+		"typecheck": "pnpm -r exec tsc --noEmit"
+	}
+}
