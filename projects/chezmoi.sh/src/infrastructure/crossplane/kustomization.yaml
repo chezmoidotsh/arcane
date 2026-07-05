@@ -7,7 +7,6 @@ resources:
   - namespace.chezmoi-sh.yaml
 
   # Required modules
-  - ../../../../../catalog/crossplane/domainidentity.amazonses.chezmoi.sh
   - ../../../../../catalog/crossplane/clustervault.vault.chezmoi.sh
 
   # Crossplane global configuration
@@ -22,9 +21,6 @@ resources:
 
   # Tailscale resources
   - tailscale.oauth.observability.yaml
-
-  # AWS resources
-  - aws.domainidentity.yaml
 
 patches:
   - # NOTE: Crossplane API extensions must be applied before applying the resources
