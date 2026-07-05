@@ -10,7 +10,7 @@
 #   mise run lxc:secrets:rotate                     # Interactively set/rotate the PVE token (and host)
 #   mise run lxc:build                              # Build the LXC tarball with secrets baked in
 #   mise run lxc:push -- <pve-host>                 # Upload template to Proxmox (local storage)
-#   mise run lxc:upgrade -- <pve-host> <src> <dst>  # Upgrade a running LXC to a new image
+#   mise run lxc:upgrade -- <pve-host> --vmid <vmid>  # Upgrade a running LXC in place
 #
 # Secret files (SOPS/age-encrypted, baked into the image at build time):
 #   secrets/pve-exporter.sops.env  PVE_HOST        (operator-provided — PVE API host address)
@@ -119,4 +119,4 @@ run = '''
 # -----------------------------------------------------------------------------
 # lxc:build   → .mise/tasks/lxc/build   (build LXC tarball with secrets baked in)
 # lxc:push    → .mise/tasks/lxc/push    (upload template to Proxmox)
-# lxc:upgrade → .mise/tasks/lxc/upgrade (upgrade running LXC to new image)
+# lxc:upgrade → .mise/tasks/lxc/upgrade (in-place rootfs-swap upgrade, same VMID)

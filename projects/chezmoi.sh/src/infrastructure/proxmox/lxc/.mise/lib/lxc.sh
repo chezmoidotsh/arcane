@@ -344,12 +344,45 @@ _lxc_pick_free_vmid() {
   echo "${candidate}"
 }
 
+# Attempt automatic rollback if lxc_upgrade aborts unexpectedly (e.g. a
+# remote command fails under `set -e`) after the pre-upgrade snapshot was
+# taken but before the function reached its own commit/rollback decision.
+# Relies on bash's dynamic scoping: pve_host/vmid/snapshot/new_vol are
+# lxc_upgrade's local variables, still visible here because the trap fires
+# while lxc_upgrade's stack frame is active. A no-op on a clean exit or
+# before the snapshot exists; every intentional return path in lxc_upgrade
+# clears the trap first with `trap - EXIT` so this never double-fires.
+_lxc_recover_on_abort() {
+  local ec=$?
+  [[ ${ec} -eq 0 ]] && return
+  [[ -z ${snapshot:-} ]] && return
+
+  echo "" >&2
+  _fail "Upgrade aborted unexpectedly (exit ${ec}) — attempting automatic rollback."
+  if _lxc_ssh "${pve_host}" "
+    set -e
+    pct status ${vmid} | grep -q running && pct stop ${vmid}
+    pct rollback ${vmid} ${snapshot}
+    pct start ${vmid}
+  " 2>/dev/null; then
+    _ok "Rolled back CT ${vmid} to snapshot ${snapshot}."
+    if [[ -n ${new_vol:-} ]] && ! _lxc_ssh "${pve_host}" "pvesm free ${new_vol}" 2>/dev/null; then
+      _warn "Could not free ${new_vol} — free it manually:"
+      echo -e "  ${DIM}  ssh root@${pve_host} \"pvesm free ${new_vol}\"${NC}" >&2
+    fi
+  else
+    echo -e "  ${DIM}Automatic rollback failed — recover manually:${NC}" >&2
+    echo -e "  ${DIM}  ssh root@${pve_host} \"pct stop ${vmid}; pct rollback ${vmid} ${snapshot}; pct start ${vmid}\"${NC}" >&2
+  fi
+}
+
 # ============================================================================
 # lxc_upgrade — in-place rootfs replacement (same CT, snapshot rollback)
 # ============================================================================
 
 lxc_upgrade() {
   local pve_host="" vmid="" version="" auto_yes=""
+  local snapshot="" old_vol="" new_vol=""
 
   while [[ $# -gt 0 ]]; do
     case $1 in
@@ -363,6 +396,8 @@ lxc_upgrade() {
 
   [[ -n ${pve_host} ]] || { echo -e "${RED}[ERROR]${NC} --pve-host is required." >&2; return 1; }
   readonly LXC_YES="${auto_yes}"
+
+  trap _lxc_recover_on_abort EXIT
 
   # Resolve version
   if [[ -n ${version} ]]; then
@@ -411,6 +446,11 @@ lxc_upgrade() {
     fi
   fi
 
+  [[ ${vmid} =~ ^[0-9]+$ ]] || {
+    echo -e "${RED}[ERROR]${NC} Invalid VMID: '${vmid}' (must be numeric)." >&2
+    return 1
+  }
+
   # ------------------------------------------------------------------
   # Header / summary
   # ------------------------------------------------------------------
@@ -444,6 +484,19 @@ lxc_upgrade() {
   fi
   [[ -n ${hostname} ]] || hostname=$(echo "${conf}" | awk '/^hostname:/{print $2}')
   _ok "CT ${vmid} exists (${hostname})"
+
+  # A pre-upgrade-* snapshot already present means a previous run created
+  # one and never reached step 7 (interrupted, or aborted before the
+  # automatic-recovery trap could clean up). Refuse to stack a second
+  # snapshot on top — the operator must resolve the existing one first.
+  local stray_snap
+  stray_snap=$(_lxc_ssh "${pve_host}" "pct listsnapshot ${vmid} 2>/dev/null | grep -oE 'pre-upgrade-[0-9-]+' | head -1" || true)
+  if [[ -n ${stray_snap} ]]; then
+    _fail "CT ${vmid} already has a snapshot '${stray_snap}' from a previous, unfinished upgrade."
+    echo -e "${DIM}        Resolve it first: roll back (ssh root@${pve_host} \"pct stop ${vmid}; pct rollback ${vmid} ${stray_snap}; pct start ${vmid}\")${NC}" >&2
+    echo -e "${DIM}        or, if CT ${vmid} already reflects the desired state, delete it (pct delsnapshot ${vmid} ${stray_snap}).${NC}" >&2
+    return 1
+  fi
 
   # Confirm registered mount points are still present (they are never
   # detached during an in-place upgrade — this is a sanity check only).
@@ -517,13 +570,16 @@ lxc_upgrade() {
   # ==================================================================
   _lxc_step "Snapshot"
 
-  local snapshot
   snapshot="pre-upgrade-$(date +%Y%m%d-%H%M%S)"
   _lxc_ssh "${pve_host}" "pct snapshot ${vmid} ${snapshot} --description 'Before upgrade to ${LXC_UPG_VERSION}'"
   _ok "Snapshot ${snapshot} created"
 
   if ! _lxc_confirm "Ready to start the upgrade? (CT ${vmid} will stop)"; then
     echo -e "  ${DIM}Aborted — snapshot ${snapshot} left in place.${NC}" >&2
+    # Nothing has touched the CT yet (still running, unmodified) — declining
+    # here is not a failure to recover from, so don't let the abort trap
+    # below try to "roll back" a CT that was never actually changed.
+    trap - EXIT
     return 1
   fi
 
@@ -556,15 +612,20 @@ lxc_upgrade() {
     pct create ${scratch_id} ${template_path} --rootfs \${ROOTFS_STORAGE}:\${ROOTFS_SIZE} >&2
     NEW_VOL=\$(grep '^rootfs:' /etc/pve/lxc/${scratch_id}.conf | awk '{print \$2}' | cut -d, -f1)
 
-    sed -i \"0,/^rootfs:/s|^rootfs:.*|rootfs: \${NEW_VOL},size=\${ROOTFS_SIZE}G|\" /etc/pve/lxc/${vmid}.conf
+    # Strip + destroy the scratch config *before* repointing vmid's rootfs:
+    # at no point should two configs simultaneously reference NEW_VOL — if
+    # this were done in the other order, a recovery attempt that destroys
+    # the leftover scratch config (still owning NEW_VOL) after vmid has
+    # already been repointed to it would delete the volume vmid now boots
+    # from.
     sed -i '/^rootfs:/d' /etc/pve/lxc/${scratch_id}.conf
     pct destroy ${scratch_id}
+    sed -i \"0,/^rootfs:/s|^rootfs:.*|rootfs: \${NEW_VOL},size=\${ROOTFS_SIZE}G|\" /etc/pve/lxc/${vmid}.conf
 
     echo \"OLD_VOL=\${OLD_VOL}\"
     echo \"NEW_VOL=\${NEW_VOL}\"
   ")
 
-  local old_vol new_vol
   old_vol=$(echo "${swap_result}" | grep '^OLD_VOL=' | cut -d= -f2)
   new_vol=$(echo "${swap_result}" | grep '^NEW_VOL=' | cut -d= -f2)
   [[ -n ${old_vol} && -n ${new_vol} ]] || {
@@ -621,23 +682,32 @@ lxc_upgrade() {
     _lxc_step "Commit"
 
     _lxc_ssh "${pve_host}" "pct delsnapshot ${vmid} ${snapshot}"
-    _lxc_ssh "${pve_host}" "pvesm free ${old_vol}" 2>/dev/null || true
+    if ! _lxc_ssh "${pve_host}" "pvesm free ${old_vol}" 2>/dev/null; then
+      _warn "Could not free old volume ${old_vol} — free it manually:"
+      echo -e "  ${DIM}  ssh root@${pve_host} \"pvesm free ${old_vol}\"${NC}" >&2
+    fi
     local total
     total=$(($(date +%s) - _LXC_UPGRADE_T0))
     echo "" >&2
     echo -e "${GREEN}${BOLD}  ✓ Upgrade complete${NC} — CT ${vmid} (${hostname}) is on ${LXC_UPG_VERSION} (${total}s)." >&2
     echo "" >&2
+    trap - EXIT
   else
     _lxc_step "Rollback"
     _warn "Rolling back CT ${vmid} to snapshot ${snapshot}..."
 
     _lxc_ssh "${pve_host}" "
+      set -e
       pct stop ${vmid}
       pct rollback ${vmid} ${snapshot}
       pct start ${vmid}
     "
-    _lxc_ssh "${pve_host}" "pvesm free ${new_vol}" 2>/dev/null || true
+    if ! _lxc_ssh "${pve_host}" "pvesm free ${new_vol}" 2>/dev/null; then
+      _warn "Could not free new volume ${new_vol} — free it manually:"
+      echo -e "  ${DIM}  ssh root@${pve_host} \"pvesm free ${new_vol}\"${NC}" >&2
+    fi
     _ok "Rolled back CT ${vmid} to pre-upgrade state."
+    trap - EXIT
     return 1
   fi
 }

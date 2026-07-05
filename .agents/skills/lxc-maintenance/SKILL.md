@@ -99,9 +99,15 @@ and mount point attachments are untouched by the whole process.
 **Auto-detection**: if `--vmid` is omitted, the running container is found
 by matching PVE tags or hostname against `LXC_TAGS`.
 
-**Rollback**: if the health check fails or the user answers "N" at step 7, the
-CT is stopped, `pct rollback`ed to the pre-upgrade snapshot, and restarted. The
-orphaned rootfs volume created during step 5 is freed automatically.
+**Rollback**: the step 6 health check is informational only — it does not
+gate automatically. Answer "N" at step 7 (after reviewing its output) to
+roll back: the CT is stopped, `pct rollback`ed to the pre-upgrade snapshot,
+and restarted, with the orphaned rootfs volume from step 5 freed
+automatically. With `--yes`, step 7 always answers "y" regardless of the
+health check's output — review it yourself before running non-interactively.
+If the script aborts unexpectedly anywhere after the snapshot is taken (a
+remote command failing under `set -e`), an automatic-recovery trap runs the
+same rollback before exiting.
 
 ## Shared library reference
 

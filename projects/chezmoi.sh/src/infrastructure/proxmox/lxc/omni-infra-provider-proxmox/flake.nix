@@ -18,7 +18,7 @@
   #       mise run lxc:secrets:proxmox && mise run lxc:build && mise run lxc:push -- <pve>
   #   Phase 2 — after registering the provider in Omni UI
   #       mise run lxc:secrets:omni && mise run lxc:build && mise run lxc:push -- <pve>
-  #       mise run lxc:upgrade -- <pve> <source_id>
+  #       mise run lxc:upgrade -- <pve> --vmid <vmid>
   # ---------------------------------------------------------------------------
 
   inputs.nixpkgs.url = "nixpkgs/nixos-26.05";
