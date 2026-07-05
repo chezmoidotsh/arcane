@@ -57,11 +57,11 @@ When in doubt, write a short draft and let the user decide whether it deserves a
    RFCs, NIST guidelines, project-specific best practices — to anchor the reasoning in
    something a reader can follow up on independently. The existing ADRs set a high bar here.
 
-4. **Draft:** Use the template at the bottom of this skill. Two things get removed when
-   authoring: the `<!-- ADR TEMPLATE … -->` HTML comment (right after the frontmatter), and
-   every `>` blockquote block (those are *authoring instructions*, not content). Keep the
-   `template-version` frontmatter field — it records which template revision produced the
-   ADR. Then read the
+4. **Draft:** Use the template at the bottom of this skill. Strip its authoring scaffolding
+   (the `<!-- ADR TEMPLATE … -->` comment, every `>` blockquote block, and the `[Optional]`
+   labels on any optional sections you keep — see "ADR Template" below for the full list),
+   but keep the `template-version` frontmatter field — it records which template revision
+   produced the ADR. Then read the
    draft with fresh eyes against "Anti-patterns to avoid" below: is every claim either
    validated or explicitly marked as expected? Is the core argument stated once, not four
    times? Does the title name the *same single* decision as the strategic question?
@@ -98,6 +98,7 @@ implementation-completed: YYYY-MM-DD   # optional, add only once implemented
 decision-makers: ["Alexandre"]         # the human(s) who own this decision
 assisted-by: ["claude-sonnet-4.6"]    # AI models that contributed; format: <model-name>
 informed: []
+template-version: "1.1.0"              # ADR template revision this file was created from
 ---
 ```
 
@@ -366,5 +367,6 @@ it was born from (via the `template-version` frontmatter field).
 The authoritative template is at `references/adr-template.md` (relative to this skill).
 Read that file and copy its content verbatim as the starting point for a new ADR, then,
 before saving: delete the `<!-- ADR TEMPLATE … -->` HTML comment (it sits just after the
-frontmatter), remove all `>` blockquote authoring instructions, and keep the
-`template-version` frontmatter field.
+frontmatter), remove all `>` blockquote authoring instructions, strip the `[Optional]`
+labels from the headings (and TOC entries) of the optional sections you keep — dropping any
+optional section you don't use — and keep the `template-version` frontmatter field.
