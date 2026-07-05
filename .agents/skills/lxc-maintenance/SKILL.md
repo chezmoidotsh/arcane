@@ -13,7 +13,9 @@ compatibility: Requires mise, nix, sops, scp, and SSH access to a Proxmox host
 
 The `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/` directory contains
 five NixOS-based LXC appliances, each built as an immutable tarball and
-deployed to Proxmox via rootfs swap (not in-place updates).
+upgraded in place: the running container keeps its VMID (and therefore its
+static IP and PBS backup identity) while its rootfs volume is swapped for a
+freshly built one, with a Proxmox snapshot as the rollback path.
 
 ```text
 lxc/
@@ -73,31 +75,33 @@ Where `<pve-host>` is the hostname or IP of the target Proxmox node (e.g. `pve.l
 
 ```sh
 mise run lxc:upgrade -- <pve-host>
-# or with explicit VMIDs:
-mise run lxc:upgrade -- --pve-host <pve-host> --source-id <vmid> --target-id <vmid>
+# or with an explicit VMID:
+mise run lxc:upgrade -- --pve-host <pve-host> --vmid <vmid>
 # or non-interactive:
 mise run lxc:upgrade -- --pve-host <pve-host> --yes
 ```
 
 The upgrade executes 7 numbered steps with an ANSI progress display:
 
-| Step | Action                                                                                      |
-| ---- | ------------------------------------------------------------------------------------------- |
-| 1    | Pre-flight: verify template exists on PVE, source CT exists, target VMID is free            |
-| 2    | Create target CT from the new template (rootfs only)                                        |
-| 3    | Smoke-test: start target, verify NixOS activation, stop                                     |
-| 4    | Merge config: copy source config to target, swap rootfs volume, strip mount point lines     |
-| 5    | Cutover: stop source, re-attach mount points to target, start target (downtime starts here) |
-| 6    | Health check: verify services are active after 15s warm-up, show e2e hint                   |
-| 7    | Decommission source (or rollback on failure)                                                |
+| Step | Action                                                                                                     |
+| ---- | ---------------------------------------------------------------------------------------------------------- |
+| 1    | Pre-flight: verify template exists on PVE, CT exists, registered mount points present                      |
+| 2    | Temporary CT smoke-test: create a disposable CT from the new template, verify NixOS activation, destroy it |
+| 3    | Snapshot the CT (`pct snapshot <vmid> pre-upgrade-<timestamp>`)                                            |
+| 4    | Stop the CT (downtime starts here)                                                                         |
+| 5    | Replace the rootfs volume in place (same VMID), then start the CT                                          |
+| 6    | Health check: verify services are active after 30s warm-up, show e2e hint                                  |
+| 7    | Commit — delete the snapshot and free the old volume (or roll back on failure)                             |
 
-**Auto-detection**: if `--source-id` is omitted, the running container is found
-by matching PVE tags or hostname against `LXC_TAGS`. If `--target-id` is omitted,
-the next free VMID at or above 100 is used.
+The VMID never changes across an upgrade, so static IP, PBS backup identity,
+and mount point attachments are untouched by the whole process.
+
+**Auto-detection**: if `--vmid` is omitted, the running container is found
+by matching PVE tags or hostname against `LXC_TAGS`.
 
 **Rollback**: if the health check fails or the user answers "N" at step 7, the
-mount points are re-attached to the source and the source is restarted. The failed
-target CT is left for manual cleanup.
+CT is stopped, `pct rollback`ed to the pre-upgrade snapshot, and restarted. The
+orphaned rootfs volume created during step 5 is freed automatically.
 
 ## Shared library reference
 
@@ -109,7 +113,7 @@ CONFIG_ROOT="$(pwd)"
 source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
 ```
 
-The library is at `lxc/.mise/lib/lxc.sh` (704 lines). Functions:
+The library is at `lxc/.mise/lib/lxc.sh`. Functions:
 
 ### `lxc_init <name> <config_root> [tag ...]`
 
@@ -156,8 +160,9 @@ lxc_services "caddy" "vector" "victoriametrics" "lxc-agent"
 
 ### `lxc_mp <mp-id> <subdir> <uid>`
 
-Register a persistent mount point subdirectory that needs ownership fixing at cutover.
-Call once per sub-directory that has its own UID namespace.
+Register a persistent mount point subdirectory, checked for presence during
+pre-flight. Since the upgrade never detaches mount points (same VMID
+throughout), this is a sanity check only — not a re-attachment mechanism.
 
 ```bash
 lxc_mp "mp0" "o11y" 100980    # /persistent/o11y owned by UID 100980
@@ -178,13 +183,12 @@ lxc_e2e_hint "curl -sSf https://o11y.chezmoi.sh/metrics/api/v1/query?query=up"
 
 Run the full upgrade flow. Flags:
 
-| Flag                 | Default        | Description                         |
-| -------------------- | -------------- | ----------------------------------- |
-| `--pve-host <host>`  | required       | Proxmox node hostname or IP         |
-| `--source-id <vmid>` | auto-detect    | VMID of the running container       |
-| `--target-id <vmid>` | auto-pick      | VMID for the new container          |
-| `--version <ver>`    | from flake.nix | Image version string                |
-| `--yes` / `-y`       | off            | Skip confirmation prompts (CI-safe) |
+| Flag                | Default        | Description                         |
+| ------------------- | -------------- | ----------------------------------- |
+| `--pve-host <host>` | required       | Proxmox node hostname or IP         |
+| `--vmid <vmid>`     | auto-detect    | VMID of the running container       |
+| `--version <ver>`   | from flake.nix | Image version string                |
+| `--yes` / `-y`      | off            | Skip confirmation prompts (CI-safe) |
 
 ## Adding a new LXC appliance
 
@@ -240,11 +244,10 @@ Run the full upgrade flow. Flags:
 
    ```bash
    #!/usr/bin/env bash
-   # [MISE] description="Upgrade the <name> LXC to a new image version via rootfs swap"
+   # [MISE] description="Upgrade the <name> LXC to a new image version in place"
    # [MISE] dir="{{config_root}}"
    # [USAGE] arg "<pve_host>" help="Hostname or IP of the Proxmox node (e.g. pve.lan)"
-   # [USAGE] flag "-s --source-id <id>" help="VMID of the running container (auto-detected via PVE tags if omitted)"
-   # [USAGE] flag "-t --target-id <id>" help="VMID for the new container (auto-picked if omitted)"
+   # [USAGE] flag "-i --vmid <id>" help="VMID of the running container (auto-detected via PVE tags if omitted)"
    # [USAGE] flag "-V --version <version>" help="Image version — auto-detected from flake if omitted"
    # [USAGE] flag "-y --yes" help="Skip confirmation prompts"
 
@@ -261,8 +264,7 @@ Run the full upgrade flow. Flags:
 
    lxc_upgrade \
      --pve-host "${usage_pve_host}" \
-     --source-id "${usage_source_id-}" \
-     --target-id "${usage_target_id-}" \
+     --vmid "${usage_vmid-}" \
      --version "${usage_version-}" \
      ${usage_yes:+--yes}
    ```
@@ -275,14 +277,14 @@ Run the full upgrade flow. Flags:
 
 ## Common issues
 
-| Symptom                                   | Cause                                                      | Fix                                                     |
-| ----------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------- |
-| `Could not detect version from flake.nix` | `imageVersion` or `version` field not found                | Check the flake.nix field name matches the grep pattern |
-| `<KEY> is empty in <file>`                | SOPS key exists but is blank                               | Populate the key in the SOPS file                       |
-| `Template not found on <host>`            | `lxc:push` was not run yet                                 | Run `mise run lxc:push -- <host>`                       |
-| Source CT not auto-detected               | PVE tags don't include any of `LXC_TAGS`                   | Pass `--source-id` explicitly or add the tag in PVE     |
-| Smoke test fails                          | NixOS activation error, often missing `features.nesting=1` | Add `features: nesting=1` to the Proxmox CT config      |
-| Mount point missing after cutover         | `lxc_mp` not called for a mount                            | Register all mounts with `lxc_mp` in the upgrade script |
+| Symptom                                   | Cause                                                      | Fix                                                                 |
+| ----------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------- |
+| `Could not detect version from flake.nix` | `imageVersion` or `version` field not found                | Check the flake.nix field name matches the grep pattern             |
+| `<KEY> is empty in <file>`                | SOPS key exists but is blank                               | Populate the key in the SOPS file                                   |
+| `Template not found on <host>`            | `lxc:push` was not run yet                                 | Run `mise run lxc:push -- <host>`                                   |
+| CT not auto-detected                      | PVE tags don't include any of `LXC_TAGS`                   | Pass `--vmid` explicitly or add the tag in PVE                      |
+| Smoke test fails                          | NixOS activation error, often missing `features.nesting=1` | Add `features: nesting=1` to the Proxmox CT config                  |
+| Orphaned rootfs volume after a failed run | Script interrupted between step 5 and step 7               | Check `pvesm list <storage>` and free unreferenced volumes manually |
 
 ## References
 

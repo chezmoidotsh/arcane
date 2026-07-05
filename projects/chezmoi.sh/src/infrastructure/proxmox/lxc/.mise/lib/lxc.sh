@@ -11,7 +11,7 @@
 #   lxc_build
 #
 # The upgrade flow auto-detects the running container via PVE tags and
-# auto-picks the next available VMID.
+# upgrades it in place (same VMID), using a Proxmox snapshot for rollback.
 
 # Guard against double-sourcing.
 [[ -n ${_LXC_LIB_LOADED:-} ]] && return 0
@@ -326,8 +326,9 @@ _lxc_detect_source() {
   " 2>/dev/null || true
 }
 
-# Find the first free VMID at or above the configured base.
-_lxc_pick_target() {
+# Find a free VMID at or above the configured base, for disposable/scratch
+# CTs used during the upgrade (never the persistent app VMID).
+_lxc_pick_free_vmid() {
   local pve_host="$1"
   local base="${LXC_VMID_BASE:-100}"
   local used
@@ -344,19 +345,18 @@ _lxc_pick_target() {
 }
 
 # ============================================================================
-# lxc_upgrade — full rootfs-swap upgrade with interactive UI
+# lxc_upgrade — in-place rootfs replacement (same CT, snapshot rollback)
 # ============================================================================
 
 lxc_upgrade() {
-  local pve_host="" source_id="" target_id="" version="" auto_yes=""
+  local pve_host="" vmid="" version="" auto_yes=""
 
   while [[ $# -gt 0 ]]; do
     case $1 in
-      --pve-host)   pve_host="$2";   shift 2 ;;
-      --source-id)  source_id="$2";  shift 2 ;;
-      --target-id)  target_id="$2";  shift 2 ;;
-      --version)    version="$2";    shift 2 ;;
-      --yes|-y)     auto_yes="1";    shift ;;
+      --pve-host) pve_host="$2"; shift 2 ;;
+      --vmid)     vmid="$2";     shift 2 ;;
+      --version)  version="$2";  shift 2 ;;
+      --yes|-y)   auto_yes="1";  shift ;;
       *) echo -e "${RED}[ERROR]${NC} Unknown argument: $1" >&2; return 1 ;;
     esac
   done
@@ -381,46 +381,33 @@ lxc_upgrade() {
   _hdr "Initiating ${LXC_NAME} upgrade"
 
   # ------------------------------------------------------------------
-  # Resolve source VMID (auto-detect via tags/hostname)
+  # Resolve VMID (auto-detect via tags/hostname)
   # ------------------------------------------------------------------
-  local source_hostname=""
+  local hostname=""
 
-  if [[ -z ${source_id} ]]; then
+  if [[ -z ${vmid} ]]; then
     local detected
     detected=$(_lxc_detect_source "${pve_host}")
 
     if [[ -n ${detected} ]]; then
-      source_id=$(echo "${detected}" | awk '{print $1}')
-      source_hostname=$(echo "${detected}" | awk '{print $2}')
-      _info "Detected CT ${source_id} (${source_hostname}) via tags/hostname"
+      vmid=$(echo "${detected}" | awk '{print $1}')
+      hostname=$(echo "${detected}" | awk '{print $2}')
+      _info "Detected CT ${vmid} (${hostname}) via tags/hostname"
     fi
 
-    if [[ -z ${source_id} ]]; then
+    if [[ -z ${vmid} ]]; then
       if [[ -n ${LXC_YES} ]]; then
-        echo -e "${RED}[ERROR]${NC} Cannot auto-detect source CT — use --source-id." >&2
+        echo -e "${RED}[ERROR]${NC} Cannot auto-detect CT — use --vmid." >&2
         return 1
       fi
-      _lxc_prompt "  ${BOLD}?${NC} Source CT VMID (no auto-match found): " source_id || true
-      [[ -n ${source_id} ]] || { echo -e "${RED}[ERROR]${NC} Source VMID is required." >&2; return 1; }
+      _lxc_prompt "  ${BOLD}?${NC} CT VMID (no auto-match found): " vmid || true
+      [[ -n ${vmid} ]] || { echo -e "${RED}[ERROR]${NC} VMID is required." >&2; return 1; }
     else
       if [[ -z ${LXC_YES} && -t 0 ]]; then
         local override
-        _lxc_prompt "  ${BOLD}?${NC} Source CT ${DIM}[${source_id}]${NC}: " override || true
-        [[ -n ${override} ]] && source_id="${override}"
+        _lxc_prompt "  ${BOLD}?${NC} CT ${DIM}[${vmid}]${NC}: " override || true
+        [[ -n ${override} ]] && vmid="${override}"
       fi
-    fi
-  fi
-
-  # ------------------------------------------------------------------
-  # Resolve target VMID (auto-pick next free)
-  # ------------------------------------------------------------------
-  if [[ -z ${target_id} ]]; then
-    target_id=$(_lxc_pick_target "${pve_host}")
-    _info "Auto-picked target VMID: ${target_id}"
-    if [[ -z ${LXC_YES} && -t 0 ]]; then
-      local override
-      _lxc_prompt "  ${BOLD}?${NC} Target CT ${DIM}[${target_id}]${NC}: " override || true
-      [[ -n ${override} ]] && target_id="${override}"
     fi
   fi
 
@@ -431,8 +418,7 @@ lxc_upgrade() {
   _hdr "${LXC_NAME} · upgrade"
   echo -e "${CYAN}${DIM}──────────────────────────────────────────────────────${NC}" >&2
   printf "${CYAN}%-12s %s${NC}\n" "Template" "${template}" >&2
-  printf "${CYAN}%-12s CT %s%s${NC}\n" "Source" "${source_id}" "${source_hostname:+ (${source_hostname})}" >&2
-  printf "${CYAN}%-12s CT %s${NC}\n" "Target" "${target_id}" >&2
+  printf "${CYAN}%-12s CT %s%s${NC}\n" "Container" "${vmid}" "${hostname:+ (${hostname})}" >&2
 
   # ==================================================================
   # Step 1 — Pre-flight checks
@@ -446,183 +432,158 @@ lxc_upgrade() {
   fi
   _ok "Template present on PVE"
 
-  local source_conf
-  source_conf=$(_lxc_ssh "${pve_host}" "cat /etc/pve/lxc/${source_id}.conf 2>/dev/null" || true)
-  if [[ -z ${source_conf} ]]; then
-    _fail "CT ${source_id} does not exist on ${pve_host}."
+  # Use `pct config` (not the raw conf file) everywhere below: once a
+  # pre-upgrade snapshot exists, the conf file also contains an embedded
+  # [snapname] section with its own copy of every key (rootfs, mpN, ...),
+  # and a plain grep on the file would match both and double the value.
+  local conf
+  conf=$(_lxc_ssh "${pve_host}" "pct config ${vmid} 2>/dev/null" || true)
+  if [[ -z ${conf} ]]; then
+    _fail "CT ${vmid} does not exist on ${pve_host}."
     return 1
   fi
-  [[ -n ${source_hostname} ]] || source_hostname=$(echo "${source_conf}" | awk '/^hostname:/{print $2}')
-  _ok "Source CT ${source_id} exists (${source_hostname})"
+  [[ -n ${hostname} ]] || hostname=$(echo "${conf}" | awk '/^hostname:/{print $2}')
+  _ok "CT ${vmid} exists (${hostname})"
 
-  local target_conf
-  target_conf=$(_lxc_ssh "${pve_host}" "cat /etc/pve/lxc/${target_id}.conf 2>/dev/null" || true)
-  if [[ -n ${target_conf} ]]; then
-    _fail "CT ${target_id} already exists. Destroy it first or choose another VMID."
-    return 1
-  fi
-  _ok "Target VMID ${target_id} is free"
-
-  # Extract all mpX specs (if any mount points are registered)
+  # Confirm registered mount points are still present (they are never
+  # detached during an in-place upgrade — this is a sanity check only).
   if _lxc_has_mp; then
     local _uid
     while IFS= read -r _uid; do
       [[ -n ${_uid} ]] || continue
       local spec
-      spec=$(_lxc_ssh "${pve_host}" "grep '^${_uid}:' /etc/pve/lxc/${source_id}.conf 2>/dev/null | sed 's/^${_uid}: //'" || true)
+      spec=$(_lxc_ssh "${pve_host}" "pct config ${vmid} 2>/dev/null | grep '^${_uid}:' | sed 's/^${_uid}: //'" || true)
       if [[ -z ${spec} ]]; then
-        _fail "No ${_uid} found in CT ${source_id} config."
+        _fail "No ${_uid} found in CT ${vmid} config."
         return 1
       fi
-      local mnt
-      mnt=$(echo "${spec}" | grep -oE 'mp=[^,]+' | cut -d= -f2-)
       _ok "${_uid}: ${spec}"
-      # Store spec and mount path for later steps (mp IDs are alphanumeric, safe for eval)
-      eval "_MP_SPEC_${_uid}=\"\${spec}\""
-      eval "_MP_MOUNT_${_uid}=\"\${mnt}\""
     done <<< "$(_lxc_unique_mp_ids)"
   fi
 
-  if ! _lxc_confirm "Upgrade CT ${source_id} → CT ${target_id}?"; then
+  if ! _lxc_confirm "Upgrade CT ${vmid} in place to ${LXC_UPG_VERSION}?"; then
     echo -e "  ${DIM}Aborted.${NC}" >&2
     return 1
   fi
 
   # ==================================================================
-  # Step 2 — Create target CT (rootfs only)
+  # Step 2 — Temporary CT smoke-test
   # ==================================================================
-  _lxc_step "Create target CT"
+  _lxc_step "Temporary CT smoke-test"
+
+  local smoke_id
+  smoke_id=$(_lxc_pick_free_vmid "${pve_host}")
 
   _lxc_ssh "${pve_host}" "
-    ROOTFS_LINE=\$(grep '^rootfs:' /etc/pve/lxc/${source_id}.conf | sed 's/^rootfs: //')
+    CONF=\$(pct config ${vmid})
+    ROOTFS_LINE=\$(echo \"\$CONF\" | grep '^rootfs:' | sed 's/^rootfs: //')
     ROOTFS_STORAGE=\$(echo \"\$ROOTFS_LINE\" | cut -d: -f1)
     ROOTFS_SIZE=\$(echo \"\$ROOTFS_LINE\" | grep -oE 'size=[0-9]+' | cut -d= -f2)
-    FEATURES=\$(grep '^features:' /etc/pve/lxc/${source_id}.conf | sed 's/^features: //')
-    MEMORY=\$(grep '^memory:' /etc/pve/lxc/${source_id}.conf | awk '{print \$2}')
-    CORES=\$(grep '^cores:' /etc/pve/lxc/${source_id}.conf | awk '{print \$2}')
+    FEATURES=\$(echo \"\$CONF\" | grep '^features:' | sed 's/^features: //')
+    MEMORY=\$(echo \"\$CONF\" | grep '^memory:' | awk '{print \$2}')
+    CORES=\$(echo \"\$CONF\" | grep '^cores:' | awk '{print \$2}')
 
-    pct create ${target_id} ${template_path} \
+    pct create ${smoke_id} ${template_path} \
       --rootfs \$ROOTFS_STORAGE:\$ROOTFS_SIZE \
       --features \"\$FEATURES\" \
       --memory \$MEMORY \
       --cores \$CORES \
       --swap 0
   "
-  _ok "Created CT ${target_id} from template"
 
-  # ==================================================================
-  # Step 3 — Smoke-test
-  # ==================================================================
-  _lxc_step "Smoke-test"
-
-  _lxc_ssh "${pve_host}" "pct start ${target_id}" || true
+  _lxc_ssh "${pve_host}" "pct start ${smoke_id}" || true
   sleep 10
 
   local activation
-  activation=$(_lxc_ssh "${pve_host}" "pct exec ${target_id} -- /bin/sh -c 'test -e /run/current-system && echo OK || echo FAIL'" || true)
+  activation=$(_lxc_ssh "${pve_host}" "pct exec ${smoke_id} -- /bin/sh -c 'test -e /run/current-system && echo OK || echo FAIL'" || true)
   if [[ ${activation} != *"OK"* ]]; then
     _fail "NixOS activation failed — is features:nesting=1 set?"
-    _lxc_ssh "${pve_host}" "pct stop ${target_id}" 2>/dev/null || true
+    _lxc_ssh "${pve_host}" "pct stop ${smoke_id}" 2>/dev/null || true
+    _lxc_ssh "${pve_host}" "pct destroy ${smoke_id}" 2>/dev/null || true
     return 1
   fi
   _ok "NixOS activation passed"
 
-  _lxc_ssh "${pve_host}" "pct exec ${target_id} -- /run/current-system/sw/bin/bash -lc '
+  _lxc_ssh "${pve_host}" "pct exec ${smoke_id} -- /run/current-system/sw/bin/bash -lc '
     systemctl is-system-running
     systemctl --failed --no-legend
   '" >&2 || true
 
-  _lxc_ssh "${pve_host}" "pct stop ${target_id}"
-  _ok "Smoke test passed"
+  _lxc_ssh "${pve_host}" "pct stop ${smoke_id}; pct destroy ${smoke_id}"
+  _ok "Smoke test passed — temporary CT ${smoke_id} destroyed"
 
   # ==================================================================
-  # Step 4 — Merge config (rootfs swap)
+  # Step 3 — Snapshot
   # ==================================================================
-  if _lxc_has_mp; then
-    _lxc_step "Merge config" "(rootfs swap, strip mounts)"
-  else
-    _lxc_step "Merge config" "(rootfs swap)"
+  _lxc_step "Snapshot"
+
+  local snapshot
+  snapshot="pre-upgrade-$(date +%Y%m%d-%H%M%S)"
+  _lxc_ssh "${pve_host}" "pct snapshot ${vmid} ${snapshot} --description 'Before upgrade to ${LXC_UPG_VERSION}'"
+  _ok "Snapshot ${snapshot} created"
+
+  if ! _lxc_confirm "Ready to start the upgrade? (CT ${vmid} will stop)"; then
+    echo -e "  ${DIM}Aborted — snapshot ${snapshot} left in place.${NC}" >&2
+    return 1
   fi
 
-  _lxc_ssh "${pve_host}" "
-    NEW_ROOTFS_VOL=\$(grep '^rootfs:' /etc/pve/lxc/${target_id}.conf | awk '{print \$2}' | cut -d, -f1)
-    OLD_ROOTFS_VOL=\$(grep '^rootfs:' /etc/pve/lxc/${source_id}.conf | sed 's/^rootfs: //' | cut -d, -f1)
-    sed \"s|\$OLD_ROOTFS_VOL|\$NEW_ROOTFS_VOL|g\" /etc/pve/lxc/${source_id}.conf > /etc/pve/lxc/${target_id}.conf
-  "
-
-  # Strip all mpX lines from target config (stateful LXCs)
-  if _lxc_has_mp; then
-    _lxc_ssh "${pve_host}" "sed -i '/^mp[0-9]:/d' /etc/pve/lxc/${target_id}.conf"
-  fi
-
-  # Copy firewall rules
-  _lxc_ssh "${pve_host}" "
-    if [[ -f /etc/pve/firewall/${source_id}.fw ]]; then
-      cp /etc/pve/firewall/${source_id}.fw /etc/pve/firewall/${target_id}.fw
-    fi
-  " 2>/dev/null || true
-  _ok "Config merged"
-
   # ==================================================================
-  # Step 5 — Cutover (downtime starts)
+  # Step 4 — Stop
   # ==================================================================
-  if ! _lxc_confirm "Ready to cut over? (CT ${source_id} will stop)"; then
-    echo -e "  ${DIM}Aborted — target ready but not started.${NC}" >&2
-    return 0
-  fi
-
-  _lxc_step "Cutover" "(downtime)"
+  _lxc_step "Stop CT ${vmid}" "(downtime starts)"
   local t0
   t0=$(date +%s)
 
-  if _lxc_has_mp; then
-    # Build detach + attach commands for all mount points
-    local mp_detach=""
-    local mp_attach=""
-    local _uid
-    while IFS= read -r _uid; do
-      [[ -n ${_uid} ]] || continue
-      eval "local spec=\"\${_MP_SPEC_${_uid}}\""
-      mp_detach+="pct set ${source_id} --delete ${_uid}; "
-      mp_attach+="pct set ${target_id} -${_uid} '${spec}'; "
-    done <<< "$(_lxc_unique_mp_ids)"
+  _lxc_ssh "${pve_host}" "pct stop ${vmid}"
+  _ok "CT ${vmid} stopped"
 
-    _lxc_ssh "${pve_host}" "pct stop ${source_id}; ${mp_detach} ${mp_attach}"
+  # ==================================================================
+  # Step 5 — Replace rootfs in-place, start
+  # ==================================================================
+  _lxc_step "Replace rootfs in-place"
 
-    # Fix ownership on mount subdirectories
-    local chown_cmds=""
-    local j
-    for ((j = 0; j < ${#_LXC_MP_DIRS[@]}; j++)); do
-      local mp_id="${_LXC_MP_IDS[$j]}"
-      local dir="${_LXC_MP_DIRS[$j]}"
-      local uid="${_LXC_MP_UIDS[$j]}"
-      eval "local mount_path=\"\${_MP_MOUNT_${mp_id}}\""
-      chown_cmds+="mkdir -p /var/lib/lxc/${target_id}/rootfs${mount_path}/${dir}; "
-      chown_cmds+="chown --recursive ${uid}:${uid} /var/lib/lxc/${target_id}/rootfs${mount_path}/${dir}; "
-    done
+  local scratch_id
+  scratch_id=$(_lxc_pick_free_vmid "${pve_host}")
 
-    _lxc_ssh "${pve_host}" "
-      pct mount ${target_id} >/dev/null
-      ${chown_cmds}
-      pct unmount ${target_id}
-      pct start ${target_id}
-    "
-  else
-    _lxc_ssh "${pve_host}" "
-      pct stop ${source_id}
-      pct start ${target_id}
-    "
-  fi
+  local swap_result
+  swap_result=$(_lxc_ssh "${pve_host}" "
+    set -e
+    ROOTFS_LINE=\$(pct config ${vmid} | grep '^rootfs:' | sed 's/^rootfs: //')
+    ROOTFS_STORAGE=\$(echo \"\$ROOTFS_LINE\" | cut -d: -f1)
+    ROOTFS_SIZE=\$(echo \"\$ROOTFS_LINE\" | grep -oE 'size=[0-9]+' | cut -d= -f2)
+    OLD_VOL=\$(echo \"\$ROOTFS_LINE\" | cut -d, -f1)
+
+    pct create ${scratch_id} ${template_path} --rootfs \${ROOTFS_STORAGE}:\${ROOTFS_SIZE} >&2
+    NEW_VOL=\$(grep '^rootfs:' /etc/pve/lxc/${scratch_id}.conf | awk '{print \$2}' | cut -d, -f1)
+
+    sed -i \"0,/^rootfs:/s|^rootfs:.*|rootfs: \${NEW_VOL},size=\${ROOTFS_SIZE}G|\" /etc/pve/lxc/${vmid}.conf
+    sed -i '/^rootfs:/d' /etc/pve/lxc/${scratch_id}.conf
+    pct destroy ${scratch_id}
+
+    echo \"OLD_VOL=\${OLD_VOL}\"
+    echo \"NEW_VOL=\${NEW_VOL}\"
+  ")
+
+  local old_vol new_vol
+  old_vol=$(echo "${swap_result}" | grep '^OLD_VOL=' | cut -d= -f2)
+  new_vol=$(echo "${swap_result}" | grep '^NEW_VOL=' | cut -d= -f2)
+  [[ -n ${old_vol} && -n ${new_vol} ]] || {
+    _fail "Could not determine rootfs volumes during swap."
+    return 1
+  }
+  _ok "rootfs swapped: ${old_vol} → ${new_vol}"
+
+  _lxc_ssh "${pve_host}" "pct start ${vmid}"
 
   local elapsed
   elapsed=$(($(date +%s) - t0))
-  _ok "Cutover done in ${elapsed}s — services warming up"
+  _ok "CT ${vmid} started in ${elapsed}s — services warming up"
 
   # ==================================================================
   # Step 6 — Health check
   # ==================================================================
-  _lxc_step "Health check" "(15s warm-up)"
-  sleep 15
+  _lxc_step "Health check" "(30s warm-up)"
+  sleep 30
 
   local svc_list=""
   local s
@@ -630,7 +591,7 @@ lxc_upgrade() {
     svc_list+="printf \"%-24s %s\\\\n\" \"${s}\" \"\$(systemctl is-active ${s})\"; "
   done
 
-  _lxc_ssh "${pve_host}" "pct exec ${target_id} -- /run/current-system/sw/bin/bash -lc '
+  _lxc_ssh "${pve_host}" "pct exec ${vmid} -- /run/current-system/sw/bin/bash -lc '
     echo === system ===
     systemctl is-system-running
     systemctl --failed --no-legend
@@ -645,59 +606,38 @@ lxc_upgrade() {
   fi
 
   # ==================================================================
-  # Step 7 — Decommission or rollback
+  # Step 7 — Commit or rollback
   # ==================================================================
   local confirm
   if [[ -n ${LXC_YES} ]]; then
     confirm="y"
   else
     local inp
-    _lxc_prompt "  ${BOLD}?${NC} CT ${target_id} is working correctly? ${DIM}[y/N]${NC} " inp || inp=""
+    _lxc_prompt "  ${BOLD}?${NC} CT ${vmid} is working correctly? ${DIM}[y/N]${NC} " inp || inp=""
     confirm="${inp}"
   fi
 
   if [[ ${confirm} =~ ^[Yy]$ ]]; then
-    _lxc_step "Decommission CT ${source_id}"
+    _lxc_step "Commit"
 
-    _lxc_ssh "${pve_host}" "
-      sed -i '/^rootfs:/d; /^unused0:/d' /etc/pve/lxc/${source_id}.conf
-      pct destroy ${source_id}
-    "
+    _lxc_ssh "${pve_host}" "pct delsnapshot ${vmid} ${snapshot}"
+    _lxc_ssh "${pve_host}" "pvesm free ${old_vol}" 2>/dev/null || true
     local total
     total=$(($(date +%s) - _LXC_UPGRADE_T0))
     echo "" >&2
-    echo -e "${GREEN}${BOLD}  ✓ Upgrade complete${NC} — CT ${target_id} (${source_hostname}) is live (${total}s)." >&2
+    echo -e "${GREEN}${BOLD}  ✓ Upgrade complete${NC} — CT ${vmid} (${hostname}) is on ${LXC_UPG_VERSION} (${total}s)." >&2
     echo "" >&2
   else
     _lxc_step "Rollback"
-    _warn "Rolling back — restarting CT ${source_id}..."
+    _warn "Rolling back CT ${vmid} to snapshot ${snapshot}..."
 
-    if _lxc_has_mp; then
-      # Reverse all mount point attachments
-      local rb_detach=""
-      local rb_attach=""
-      local _uid
-      while IFS= read -r _uid; do
-        [[ -n ${_uid} ]] || continue
-        eval "local spec=\"\${_MP_SPEC_${_uid}}\""
-        rb_detach+="pct set ${target_id} --delete ${_uid}; "
-        rb_attach+="pct set ${source_id} -${_uid} '${spec}'; "
-      done <<< "$(_lxc_unique_mp_ids)"
-
-      _lxc_ssh "${pve_host}" "
-        pct stop ${target_id}
-        ${rb_detach} ${rb_attach}
-        pct start ${source_id}
-      "
-    else
-      _lxc_ssh "${pve_host}" "
-        pct stop ${target_id}
-        pct start ${source_id}
-      "
-    fi
-    _ok "Rolled back to CT ${source_id}."
-    echo -e "  ${DIM}Destroy the failed target:${NC}" >&2
-    echo -e "  ${DIM}  ssh root@${pve_host} \"sed -i '/^unused0:/d' /etc/pve/lxc/${target_id}.conf && pct destroy ${target_id}\"${NC}" >&2
+    _lxc_ssh "${pve_host}" "
+      pct stop ${vmid}
+      pct rollback ${vmid} ${snapshot}
+      pct start ${vmid}
+    "
+    _lxc_ssh "${pve_host}" "pvesm free ${new_vol}" 2>/dev/null || true
+    _ok "Rolled back CT ${vmid} to pre-upgrade state."
     return 1
   fi
 }
