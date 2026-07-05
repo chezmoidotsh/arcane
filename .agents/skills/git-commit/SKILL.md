@@ -117,6 +117,7 @@ the commit touches.
 | `catalog:talos`         | `catalog/talos/`                         |
 | `catalog:nix`           | `catalog/nix/` and Nix-related catalogs  |
 | `catalog:opa`           | `catalog/opa/`                           |
+| `catalog:pulumi`        | `catalog/pulumi/`                        |
 | `gh`                    | `.github/`, root config files            |
 | `deps`                  | Dependency updates (automated or manual) |
 
@@ -225,13 +226,13 @@ updated in sync (see "Keeping this skill in sync" below).
 
 ### Scope rules
 
-| Rule               | Level | Value                                                                                                                                                                                                                                                                                                 |
-| ------------------ | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `scope-enum`       | warn  | `catalog:ansible`, `catalog:crossplane`, `catalog:flakes`, `catalog:kustomize`, `catalog:kairos-bundle`, `catalog:talos`, `catalog:nix`, `catalog:opa`, `project:amiya.akn`, `project:chezmoi.sh`, `project:hass`, `project:kazimierz.akn`, `project:lungmen.akn`, `project:shodan.akn`, `deps`, `gh` |
-| `scope-empty`      | error | never                                                                                                                                                                                                                                                                                                 |
-| `scope-case`       | error | lower-case                                                                                                                                                                                                                                                                                            |
-| `scope-max-length` | error | Infinity                                                                                                                                                                                                                                                                                              |
-| `scope-min-length` | error | 0                                                                                                                                                                                                                                                                                                     |
+| Rule               | Level | Value                                                                                                                                                                                                                                                                                                                   |
+| ------------------ | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scope-enum`       | warn  | `catalog:ansible`, `catalog:crossplane`, `catalog:flakes`, `catalog:kustomize`, `catalog:kairos-bundle`, `catalog:talos`, `catalog:nix`, `catalog:opa`, `catalog:pulumi`, `project:amiya.akn`, `project:chezmoi.sh`, `project:hass`, `project:kazimierz.akn`, `project:lungmen.akn`, `project:shodan.akn`, `deps`, `gh` |
+| `scope-empty`      | error | never                                                                                                                                                                                                                                                                                                                   |
+| `scope-case`       | error | lower-case                                                                                                                                                                                                                                                                                                              |
+| `scope-max-length` | error | Infinity                                                                                                                                                                                                                                                                                                                |
+| `scope-min-length` | error | 0                                                                                                                                                                                                                                                                                                                       |
 
 `scope-enum` is set to **warning** because multi-scope commits (`scope1,scope2`) won't
 match single enum entries. Validation is enforced by the cz-git prompt instead.
