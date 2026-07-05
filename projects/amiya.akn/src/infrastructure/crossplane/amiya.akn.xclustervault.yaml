@@ -27,6 +27,11 @@ kind: LocalClusterVault
 metadata:
   name: amiya.akn
 spec:
+  # Managed by Pulumi now (projects/amiya.akn/src/infrastructure/pulumi/) — observe
+  # only, don't reconcile or delete. The two additionalPolicies below
+  # (amiya.akn-authelia-policy, amiya.akn-crossplane-policy) are intentionally NOT
+  # carried over to Pulumi and remain fully Crossplane-managed.
+  managementPolicies: ["Observe"]
   name: amiya.akn
   additionalPolicies:
     - amiya.akn-authelia-policy

@@ -1,0 +1,27 @@
+# =============================================================================
+# amiya.akn Pulumi stack - Mise configuration
+# =============================================================================
+# Cloud + Vault/OpenBao infrastructure for amiya.akn, managed as a Pulumi stack
+# (state in the Garage S3 backend, see Pulumi.yaml).
+#
+# `[env] _.file` loads PULUMI_STACK and PULUMI_CONFIG_PASSPHRASE from
+# .mise/env.yaml — SOPS-encrypted, transparently decrypted by mise using the
+# already-configured age key. This is what lets `pulumi` commands run in this
+# directory without prompting for a stack name or a passphrase.
+# =============================================================================
+
+[tools]
+node = "24"
+
+[env]
+_.file = "{{ config_root }}/.mise/env.yaml"
+
+[tasks."pulumi:diff"]
+description = "Preview pending changes for the amiya.akn Pulumi stack (with diff)"
+run = "export VAULT_TOKEN=\"$(bao print token)\" && pulumi preview --diff"
+dir = "{{ config_root }}"
+
+[tasks."pulumi:apply"]
+description = "Apply pending changes to the amiya.akn Pulumi stack"
+run = "export VAULT_TOKEN=\"$(bao print token)\" && pulumi up"
+dir = "{{ config_root }}"

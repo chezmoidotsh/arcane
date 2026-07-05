@@ -1,0 +1,11 @@
+name: amiya-akn-infra
+runtime: nodejs
+description: >-
+  Cloud + Vault/OpenBao infrastructure for amiya.akn: cluster Vault auth backend
+  and mounts, pocket-id JWT auth backend, Cloudflare API tokens, Tailscale OAuth
+  clients, Cloudflare rate-limit ruleset.
+
+backend:
+  # Garage S3 backend. See docs/procedures/infrastructure/
+  # INF-20260705-00.pulumi-state-and-import.md.
+  url: "s3://pulumi-states?endpoint=s3.chezmoi.sh&region=fr-par-1"

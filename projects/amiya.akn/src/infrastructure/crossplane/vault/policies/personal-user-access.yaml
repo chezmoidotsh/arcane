@@ -4,6 +4,9 @@ kind: Policy
 metadata:
   name: personal-user-access
 spec:
+  # Managed by Pulumi now (projects/amiya.akn/src/infrastructure/pulumi/) — observe
+  # only, don't reconcile or delete.
+  managementPolicies: ["Observe"]
   forProvider:
     name: personal-user-access
     policy: |

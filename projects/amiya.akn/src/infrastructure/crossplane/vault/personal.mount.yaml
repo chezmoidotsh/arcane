@@ -5,6 +5,9 @@ metadata:
   name: personal
 spec:
   deletionPolicy: Orphan
+  # Managed by Pulumi now (projects/amiya.akn/src/infrastructure/pulumi/) — observe
+  # only, don't reconcile or delete.
+  managementPolicies: ["Observe"]
   forProvider:
     description: Personal secrets namespace - user-isolated KV v2 storage for individual secret management with email-based access control
     options:
