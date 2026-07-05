@@ -1,15 +1,10 @@
 ---
 name: adr-authoring
 description: >
-  Writes and updates Architecture Decision Records (ADR) following the standard project
-  template in docs/decisions/. Use this skill whenever the user wants to document an
-  architectural choice, record why a technology was selected, capture a design decision,
-  update the status of an existing ADR, or whenever phrases like "write an ADR",
-  "document this decision", "record why we chose X", "create an architectural decision
-  record", "update ADR-00N", "this should be an ADR", "let's write up this choice",
-  or "how did we decide X" appear. Also trigger this skill when the user has just made
-  a significant design decision during a task and it would be worth preserving for future
-  reference — even if they didn't ask for an ADR explicitly.
+  Writes and updates Architecture Decision Records (ADR) in docs/decisions/. Use it to
+  document an architectural choice or record why a technology was selected ("write an ADR",
+  "document this decision", "update ADR-00N", "this should be an ADR"), or right after a
+  significant design decision worth preserving — even if an ADR wasn't explicitly requested.
 ---
 
 # Architecture Decision Record (ADR) Authoring Skill
@@ -62,10 +57,14 @@ When in doubt, write a short draft and let the user decide whether it deserves a
    RFCs, NIST guidelines, project-specific best practices — to anchor the reasoning in
    something a reader can follow up on independently. The existing ADRs set a high bar here.
 
-4. **Draft:** Use the template at the bottom of this skill. The `>` blockquote blocks are
-   *authoring instructions*, not content — remove them entirely when filling in the sections.
-   Then read the draft with fresh eyes: does the context explain *why now*? Does each option
-   have enough substance? Is the rationale argued, not just stated?
+4. **Draft:** Use the template at the bottom of this skill. Two things get removed when
+   authoring: the `<!-- ADR TEMPLATE … -->` HTML comment (right after the frontmatter), and
+   every `>` blockquote block (those are *authoring instructions*, not content). Keep the
+   `template-version` frontmatter field — it records which template revision produced the
+   ADR. Then read the
+   draft with fresh eyes against "Anti-patterns to avoid" below: is every claim either
+   validated or explicitly marked as expected? Is the core argument stated once, not four
+   times? Does the title name the *same single* decision as the strategic question?
 
 5. **Cross-reference:** Link related ADRs in "References and Related Decisions". Scan
    existing files to find candidates — the chain of decisions (001 → 002 → 003) in this
@@ -155,10 +154,59 @@ to *why* each rejected option was ruled out — not just that it was.
 option addresses each decision driver, what trade-offs were accepted and why they are
 acceptable given the context, and what would need to change for a different option to win.
 
+### Non-Goals — say what you are NOT deciding
+
+State explicitly what the ADR does *not* decide. This is not padding — it is the cheapest
+way to prevent three failure modes:
+
+1. **A settled premise misread as an open option.** If a prior decision (a POC result, an
+   earlier ADR) fixes part of the design, name it as a non-goal so a reader does not think
+   the options reopen it. If one of your "options" is really the already-settled question,
+   you have the wrong options — the real decision is narrower than you framed it.
+2. **A tempting adjacent area silently excluded.** If the decision deliberately leaves
+   something out (a system that stays manual, a capability not migrated), say so *and why*.
+   Otherwise a future reader re-proposes exactly what you already rejected.
+3. **A capability of the old approach knowingly dropped.** Naming it as a non-goal turns a
+   silent regression into a documented, deliberate trade-off.
+
+Put non-goals in their own section right after Context (the template has it). Do not bury
+them in a "Neutral" consequence — a deliberate scope boundary deserves to be visible.
+
+### Anti-patterns to avoid
+
+These are the recurring ways ADRs go wrong. Named anti-patterns follow Olaf Zimmermann's
+[ADR creation guide](https://ozimmer.ch/practices/2023/04/03/ADRCreation.html); the rest
+come from reviews in this repo.
+
+* **Unsupported claim / pseudo-accuracy** — the most damaging, because it looks rigorous.
+  Do not present a benefit as established when it was only asserted. If a POC *expected* a
+  smaller footprint but never measured it, write exactly that and keep it out of the
+  load-bearing rationale. A driver the reader cannot verify is worse than no driver: it
+  invites a rebuttal that collapses the whole argument. Distinguish *validated* from
+  *expected* explicitly, and cite where each came from.
+* **Fairy tale** — only pros, no cons; truisms as justification. Every option (including the
+  chosen one) must list what it costs. An option with no `-` bullets is under-analyzed.
+* **Dummy alternative** — a straw-man option that exists only to be knocked down. If your
+  decisive drivers eliminate an option *the moment they are stated*, that option is not
+  really discriminating the decision. Prefer options that all pass the hard constraints, so
+  the rationale has to argue the *real* trade-off (e.g. two viable designs separated by blast
+  radius, not by a constraint one of them fails outright).
+* **Restating instead of arguing (repetition)** — the same argument appearing in Context,
+  every option's cons, the Decision Outcome, and Consequences reads as length without
+  information. State the core argument *once*, sharply, in the Decision Outcome; elsewhere
+  refer to it, don't re-derive it. Density of reasoning per line matters more than word count.
+* **Mega-ADR / more than one decision** — one ADR decides one thing. If the title says one
+  decision but the options quietly bundle several (tool choice *and* execution model *and*
+  operational policy), split them or narrow the framing. The title and the strategic
+  question must name the *same* decision.
+* **Free lunch coupon** — ignoring hard or long-term consequences. Negative consequences,
+  especially operational ones a future operator will hit, must be spelled out, not softened.
+
 ### Optional sections — include when they add value
 
 | Section                                  | Include when                                                                                                                                               |
 | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Non-Goals**                            | A settled premise, a deliberately excluded adjacent area, or a knowingly dropped capability could be misread as an oversight (see "Non-Goals" above)       |
 | **Consequences**                         | The decision has non-obvious downstream effects worth calling out explicitly                                                                               |
 | **Implementation Details / Status**      | A high-level architecture diagram or current rollout status is useful; avoid runbooks and low-level configs (those belong in Git or `docs/procedures/`)    |
 | **Decision Evolution**                   | The decision pivoted during implementation — document *why* with the specific technical discovery that caused the pivot (ADR-001 is the canonical example) |
@@ -276,11 +324,47 @@ third-party credentials) live in a dedicated `shared/` mount with their own gove
     strong motivation and trade-off analysis
   * [KEP-1287: In-Place Update of Pod Resources](https://github.com/kubernetes/enhancements/tree/master/keps/sig-node/1287-in-place-update-pod-resources) —
     exemplary alternatives and risks sections
+* ADR quality and anti-patterns:
+  * [Olaf Zimmermann — ADR creation, and how not to](https://ozimmer.ch/practices/2023/04/03/ADRCreation.html) —
+    the named anti-pattern catalogue (fairy tale, dummy alternative, mega-ADR, …).
+  * [adr.github.io — AD practices](https://adr.github.io/ad-practices/)
+  * [AWS — ADR best practices](https://aws.amazon.com/blogs/architecture/master-architecture-decision-records-adrs-best-practices-for-effective-decision-making/) —
+    one decision per ADR; keep it short.
+
+***
+
+## Template Versioning
+
+The ADR template (`references/adr-template.md`) is versioned so that changes to the
+*structure* of ADRs are themselves tracked, and so each ADR records the template revision
+it was born from (via the `template-version` frontmatter field).
+
+* **Scheme:** semantic-ish `MAJOR.MINOR.PATCH`.
+  * `MAJOR` — a change that would make old ADRs look structurally wrong (a required
+    section added/removed/renamed).
+  * `MINOR` — a new optional section, or non-breaking authoring-guidance changes carried
+    into the template.
+  * `PATCH` — wording/typo fixes in the template's instructions.
+* **When you change the template**, bump the version in *three* places in sync: the
+  `<!-- ADR TEMPLATE vX.Y.Z -->` comment, the `template-version` frontmatter default, and
+  the changelog below. Existing ADRs are **not** back-migrated — their `template-version`
+  records the revision they were written under, which is the point.
+
+### Template changelog
+
+* **1.1.0** (2026-07-05): Added the **Non-Goals** optional section; introduced
+  `template-version` provenance in frontmatter; expanded authoring guidance with the
+  "Anti-patterns to avoid" and "Non-Goals" standards (unsupported/unmeasured claims,
+  repetition, one-decision scope, dummy alternatives). Prompted by the ADR-015 review.
+* **1.0.0**: Initial template extracted from `docs/decisions/000-adr-template.md` into
+  this skill as the single source of truth.
 
 ***
 
 ## ADR Template
 
 The authoritative template is at `references/adr-template.md` (relative to this skill).
-Read that file and copy its content verbatim as the starting point for a new ADR, then
-remove all `>` blockquote authoring instructions before saving.
+Read that file and copy its content verbatim as the starting point for a new ADR, then,
+before saving: delete the `<!-- ADR TEMPLATE … -->` HTML comment (it sits just after the
+frontmatter), remove all `>` blockquote authoring instructions, and keep the
+`template-version` frontmatter field.

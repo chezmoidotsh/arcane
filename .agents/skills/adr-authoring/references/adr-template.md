@@ -5,13 +5,22 @@ implementation-completed: {YYYY-MM-DD when the implementation was finalized (opt
 decision-makers: ["Alexandre"]
 assisted-by: ["<model-name>"]
 informed: []
+template-version: "1.1.0"
 ---
+
+<!--
+  ADR TEMPLATE v1.1.0 — see the "Template Versioning" section of
+  .agents/skills/adr-authoring/SKILL.md for the changelog and the rules that govern
+  this file. Keep the `template-version` frontmatter field above so each ADR records
+  which template revision produced it. Delete this HTML comment when authoring.
+-->
 
 # {Short title, representative of solved problem and found solution}
 
 ## Table of Contents
 
 * [Context and Problem Statement](#context-and-problem-statement)
+* [Non-Goals \[Optional\]](#non-goals-optional)
 * [Decision Drivers](#decision-drivers)
 * [Considered Options](#considered-options)
   * [Option 1: {title of option 1}](#option-1-title-of-option-1)
@@ -39,6 +48,24 @@ informed: []
 > * **Strategic Question**: The core question this ADR aims to answer.
 
 {Write comprehensive context here...}
+
+## Non-Goals \[Optional]
+
+> List what this ADR deliberately does NOT decide or cover. Non-goals prevent scope
+> creep and stop a reader from mistaking an omission for an oversight. Include this
+> section when any of the following apply:
+>
+> * A related decision is already settled elsewhere and is a *premise* here, not an
+>   option (state it, so the options aren't misread as reopening it).
+> * The decision deliberately excludes a tempting adjacent area (say why — a future
+>   reader will otherwise re-propose it).
+> * A capability of the superseded approach is intentionally given up.
+>
+> Keep each non-goal to a sentence or two with its reason. Omit the section entirely
+> if the decision's scope is self-evident — do not pad with truisms.
+
+* {non-goal 1 — and why it is out of scope}
+* {non-goal 2 — and why it is out of scope}
 
 ## Decision Drivers
 
