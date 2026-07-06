@@ -275,11 +275,19 @@ Phase 1 (now): local, no cluster              Phase 2 (deferred): in-cluster
 * **Completed**: POC (#1089) validated Pulumi/Crossplane functional parity for
   `ClusterVault`/`DomainIdentity` and Garage as the state backend. Footprint (V-005/V-006)
   not measured.
-* **Pending**: Garage in production (#1097, blocking); `pulumi import` of all
-  Crossplane-managed resources; per-family migration (Vault/OpenBao, Cloudflare tokens, AWS
-  SES/IAM, then the Terraform Workspaces via `@pulumi/hcloud` / `@pulumi/tailscale`);
-  Crossplane decommissioning on `amiya.akn`; and — later — the Phase 2 in-cluster cutover.
-  All tracked on #1091.
+* **Completed**: `catalog/pulumi/` scaffolded (`ClusterVaultComponent` with Local/Remote/
+  Tailscaled variants) and all five per-project stacks (`chezmoi.sh`, `amiya.akn`,
+  `lungmen.akn`, `kazimierz.akn`, `hass`) written to declare every currently Crossplane-managed
+  resource 1:1, including the Terraform Workspaces migrated to native
+  `@pulumi/hcloud`/`@pulumi/tailscale` providers.
+* **Dropped from scope**: the `DomainIdentity` XRD/`DomainIdentityComponent` (AWS SES domain
+  verification for chezmoi.sh) — removed from both Crossplane and the Pulumi scaffolding rather
+  than migrated, since outbound email now goes through Mailjet and the AWS SES setup is unused.
+* **Pending**: Garage in production (#1097, blocking real `pulumi login`); running the actual
+  `pulumi import` against live resources (procedure written, not yet executed — needs live
+  cloud/Vault credentials and a resolved Garage endpoint); validating `pulumi preview` is clean
+  post-import; Crossplane decommissioning on `amiya.akn`; and — later — the Phase 2 in-cluster
+  cutover. All tracked on #1091.
 * **Standards**: shared components in `catalog/pulumi/`; per-project stacks in
   `projects/<scope>/src/infrastructure/pulumi/`, mirroring the `catalog/crossplane/` +
   `projects/<cluster>/src/infrastructure/crossplane/` split this replaces.
@@ -335,3 +343,8 @@ Phase 1 (now): local, no cluster              Phase 2 (deferred): in-cluster
 * **2026-07-05**: **FEATURE**: Initial creation of ADR documenting the migration from
   Crossplane to Pulumi for cloud infrastructure management, with a staged execution model
   (local-first, in-cluster deferred) — resolving the direction of #1091.
+* **2026-07-05**: **FEATURE**: Updated Implementation Status — `catalog/pulumi/` and all five
+  per-project stacks scaffolded with 1:1 resource parity (#1091, execution still pending).
+* **2026-07-05**: **REMOVAL**: Dropped the `DomainIdentity` XRD and `DomainIdentityComponent`
+  from both Crossplane and the Pulumi scaffolding — chezmoi.sh's outbound email now goes
+  through Mailjet, making the AWS SES domain identity setup unused.

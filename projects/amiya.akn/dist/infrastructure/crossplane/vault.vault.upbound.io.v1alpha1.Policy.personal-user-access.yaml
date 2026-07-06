@@ -24,3 +24,5 @@ spec:
       { capabilities = [\"list\"] }\n\n# Explicit deny for other users' personal spaces\npath
       \"personal/data/*\" { capabilities = [\"deny\"] }\npath \"personal/metadata/*\"
       { capabilities = [\"deny\"] }\n"
+  managementPolicies:
+  - Observe

@@ -1,0 +1,9 @@
+name: hass-infra
+runtime: nodejs
+description: >-
+  Cloudflare API token for Home Assistant.
+
+backend:
+  # Garage S3 backend. See docs/procedures/infrastructure/
+  # INF-20260705-00.pulumi-state-and-import.md.
+  url: "s3://pulumi-states?endpoint=s3.chezmoi.sh&region=fr-par-1"

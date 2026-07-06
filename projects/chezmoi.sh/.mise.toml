@@ -2,17 +2,25 @@
 # chezmoi.sh Project Development Environment Configuration
 # =============================================================================
 # This mise configuration provides task automation for shared infrastructure
-# management including TrueNAS automation and Crossplane IaC operations.
+# management including TrueNAS automation, Omni machine classes, and
+# distributing Pulumi-provisioned Cloudflare tokens to the LXC appliances.
 #
 # Usage:
 #   mise run truenas:audit           # Extract current TrueNAS state (READ-ONLY)
 #   mise run truenas:configure       # Configure TrueNAS system
 #   mise run truenas:configure:dry-run  # Preview configuration changes
 #   mise run ansible:install         # Install Ansible dependencies
+#   mise run pulumi:cloudflare-token:observability  # Inject Pulumi's Cloudflare token into observability's SOPS secret
+#   mise run pulumi:cloudflare-token:omni           # Inject Pulumi's Cloudflare token into omni's SOPS secret
+#   mise run pulumi:cloudflare-token:oci-registry   # Inject Pulumi's Cloudflare token into oci-registry's SOPS secret
 #
 # Prerequisites:
 #   - SSH key-based access to nas.chezmoi.sh as root user
 #   - Ansible installed (configured in root .mise.toml)
+#   - Pulumi CLI configured for the chezmoi.sh stack (see
+#     src/infrastructure/pulumi/.mise.toml) and sops + age key in
+#     SOPS_AGE_KEY_FILE (configured in root .mise.toml), for the
+#     pulumi:cloudflare-token:* tasks
 # =============================================================================
 
 # =============================================================================
@@ -67,3 +75,59 @@ run = "omnictl apply --file {{ config_root }}/src/infrastructure/omni/machinecla
 [tasks."omni:machineclass:list"]
 description = "List machine classes currently registered in Omni (READ-ONLY)"
 run = "omnictl get machineclasses"
+
+# -----------------------------------------------------------------------------
+# Cloudflare Token Retrieval — Pulumi to LXC SOPS secrets
+# -----------------------------------------------------------------------------
+# Cloudflare DNS-01 tokens for the LXC appliances (observability, omni,
+# oci-registry) are created by the Pulumi stack in src/infrastructure/pulumi/,
+# not pushed to Vault: this stack runs upstream of any Kubernetes cluster, so
+# Vault (which itself lives inside amiya.akn) can't be a dependency here. Each
+# token only exists as a Pulumi stack output.
+#
+# These tasks fetch that output (`pulumi stack output --show-secrets`) and
+# write it into the target LXC's secrets/caddy.sops.env with `sops set`, which
+# updates only the CLOUDFLARE_API_TOKEN key and leaves every other key in that
+# file untouched (e.g. observability's TAILSCALE_OAUTH_KEY).
+#
+# Run one of these after `pulumi up` (or after rotating a token with `pulumi
+# up --replace`), then rebuild/redeploy the LXC to pick up the new value.
+
+[tasks."pulumi:cloudflare-token:observability"]
+description = "Fetch the observability LXC's Cloudflare token from Pulumi and inject it into its SOPS secret"
+dir = "{{ config_root }}/src/infrastructure/pulumi"
+run = '''
+  set -euo pipefail
+  TOKEN=$(pulumi stack output observabilityDns01Token --show-secrets)
+  [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — did 'pulumi up' run?" >&2; exit 1; }
+  sops set --input-type dotenv --output-type dotenv \
+    "{{ config_root }}/src/infrastructure/proxmox/lxc/observability/secrets/caddy.sops.env" \
+    '["CLOUDFLARE_API_TOKEN"]' "\"${TOKEN}\""
+  echo "[SUCCESS] CLOUDFLARE_API_TOKEN updated in observability/secrets/caddy.sops.env" >&2
+'''
+
+[tasks."pulumi:cloudflare-token:omni"]
+description = "Fetch the omni LXC's Cloudflare token from Pulumi and inject it into its SOPS secret"
+dir = "{{ config_root }}/src/infrastructure/pulumi"
+run = '''
+  set -euo pipefail
+  TOKEN=$(pulumi stack output omniDns01Token --show-secrets)
+  [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — did 'pulumi up' run?" >&2; exit 1; }
+  sops set --input-type dotenv --output-type dotenv \
+    "{{ config_root }}/src/infrastructure/proxmox/lxc/omni/secrets/caddy.sops.env" \
+    '["CLOUDFLARE_API_TOKEN"]' "\"${TOKEN}\""
+  echo "[SUCCESS] CLOUDFLARE_API_TOKEN updated in omni/secrets/caddy.sops.env" >&2
+'''
+
+[tasks."pulumi:cloudflare-token:oci-registry"]
+description = "Fetch the oci-registry LXC's Cloudflare token from Pulumi and inject it into its SOPS secret"
+dir = "{{ config_root }}/src/infrastructure/pulumi"
+run = '''
+  set -euo pipefail
+  TOKEN=$(pulumi stack output zotRegistryDns01Token --show-secrets)
+  [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — did 'pulumi up' run?" >&2; exit 1; }
+  sops set --input-type dotenv --output-type dotenv \
+    "{{ config_root }}/src/infrastructure/proxmox/lxc/oci-registry/secrets/caddy.sops.env" \
+    '["CLOUDFLARE_API_TOKEN"]' "\"${TOKEN}\""
+  echo "[SUCCESS] CLOUDFLARE_API_TOKEN updated in oci-registry/secrets/caddy.sops.env" >&2
+'''

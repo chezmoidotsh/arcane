@@ -23,3 +23,5 @@ spec:
       maxLeaseTtl: 2h
       tokenType: default-service
     type: oidc
+  managementPolicies:
+  - Observe

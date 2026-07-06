@@ -21,6 +21,9 @@ metadata:
   name: chezmoi-sh-caddy-dns01-zot
   namespace: chezmoi-sh
 spec:
+  # Managed by Pulumi now (projects/chezmoi.sh/src/infrastructure/pulumi/) — observe
+  # only, don't reconcile or delete.
+  managementPolicies: ["Observe"]
   forProvider:
     name: (chezmoi.sh) - caddy-dns01/zot-registry
     accountId: 00736631322131f61ce95f2c235143da

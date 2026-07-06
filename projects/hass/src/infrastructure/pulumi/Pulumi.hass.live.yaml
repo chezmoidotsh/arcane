@@ -1,0 +1,6 @@
+encryptionsalt: v1:VOq6Lsc4p5Q=:v1:f+oYeVN0sEWrZs+O:KEP0/8jm2rz/aRzvWeuHEUKIgadzMQ==
+config:
+  hass-infra:cloudflare_account_id:
+    secure: v1:ksU027FQTYLln8BD:nN9vju7WXBjgdFjiulG8yCHftJwJLxOor//LU54ww9CoWsaGf/sxwSQdP9xdNVef
+  hass-infra:cloudflare_zone_id:
+    secure: v1:sePkNtxN2LmlyEyO:5eIxCxB4sV8A01cdhsGPty+pPvF8mFPSKgySv02/p9BvYPhF09XBOjozib8dkptk

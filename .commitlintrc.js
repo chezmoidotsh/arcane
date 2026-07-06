@@ -132,6 +132,10 @@ const scopes = [
 		value: "catalog:opa",
 	},
 	{
+		name: "catalog:pulumi        - Anything related to the Pulumi component catalog",
+		value: "catalog:pulumi",
+	},
+	{
 		name: "project:amiya.akn     - Anything related to the amiya.akn project",
 		value: "project:amiya.akn",
 	},
