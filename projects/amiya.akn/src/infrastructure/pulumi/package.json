@@ -6,6 +6,7 @@
 	"dependencies": {
 		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "workspace:*",
 		"@chezmoi.sh/pulumi-cluster-vault": "workspace:*",
+		"@chezmoi.sh/pulumi-lib": "workspace:*",
 		"@pulumi/cloudflare": "catalog:",
 		"@pulumi/pulumi": "catalog:",
 		"@pulumi/tailscale": "catalog:",

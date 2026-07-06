@@ -1,3 +1,4 @@
+import { vaultSecretMetadata } from "@chezmoi.sh/pulumi-lib";
 import * as cloudflare from "@pulumi/cloudflare";
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
@@ -63,26 +64,11 @@ if (!config.isBootstraping) {
 			name: "third-parties/cloudflare/iam/amiya.akn/cloudflare-operator",
 			dataJson: pulumi.jsonStringify({ api_token: token.value }),
 			customMetadata: {
-				// Convention for every secret pushed to Vault in this stack:
-				//   description/owner/application — human identification, shown in
-				//                                    the Vault UI.
-				//   created-by                    — repo-relative path to this file,
-				//                                    for traceability.
-				//   renewal-process/x-renewal-cmd  — what rotating this secret does,
-				//                                    and the exact copy/paste command
-				//                                    to trigger it (built from the
-				//                                    credential's own URN).
 				data: {
 					description: "Cloudflare API Token for tunnel operator",
 					owner: "amiya.akn",
 					application: "cloudflare-operator",
-
-					"created-by":
-						"projects/amiya.akn/src/infrastructure/pulumi/src/cloudflare-operator.ts",
-					"renewal-process":
-						"Rotate the token below; this secret's value is recomputed from " +
-						"it and picks up the new one automatically on the next `pulumi up`.",
-					"x-renewal-cmd": pulumi.interpolate`pulumi up --replace '${token.urn}'`,
+					...vaultSecretMetadata(token),
 				},
 			},
 		},

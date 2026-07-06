@@ -1,3 +1,4 @@
+import { vaultSecretMetadata } from "@chezmoi.sh/pulumi-lib";
 import * as pulumi from "@pulumi/pulumi";
 import * as tailscale from "@pulumi/tailscale";
 import * as vault from "@pulumi/vault";
@@ -34,13 +35,7 @@ new vault.kv.SecretV2(
 					"Tailscale OAuth Client for Tailscale Operator lungmen.akn",
 				owner: "lungmen.akn",
 				application: "tailscale-operator",
-
-				"created-by":
-					"projects/lungmen.akn/src/infrastructure/pulumi/src/tailscale-operator.ts",
-				"renewal-process":
-					"Rotate the client below; this secret's value is recomputed from " +
-					"it and picks up the new one automatically on the next `pulumi up`.",
-				"x-renewal-cmd": pulumi.interpolate`pulumi up --replace '${oauthClient.urn}'`,
+				...vaultSecretMetadata(oauthClient),
 			},
 		},
 	},

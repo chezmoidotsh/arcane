@@ -1,3 +1,4 @@
+import { vaultSecretMetadata } from "@chezmoi.sh/pulumi-lib";
 import * as pulumi from "@pulumi/pulumi";
 import * as tailscale from "@pulumi/tailscale";
 import * as vault from "@pulumi/vault";
@@ -37,26 +38,11 @@ if (!config.isBootstraping) {
 				client_secret: oauthClient.key,
 			}),
 			customMetadata: {
-				// Convention for every secret pushed to Vault in this stack:
-				//   description/owner/application — human identification, shown in
-				//                                    the Vault UI.
-				//   created-by                    — repo-relative path to this file,
-				//                                    for traceability.
-				//   renewal-process/x-renewal-cmd  — what rotating this secret does,
-				//                                    and the exact copy/paste command
-				//                                    to trigger it (built from the
-				//                                    credential's own URN).
 				data: {
 					description: "Tailscale OAuth Client for Argotails on amiya.akn",
 					owner: "amiya.akn",
 					application: "argotails",
-
-					"created-by":
-						"projects/amiya.akn/src/infrastructure/pulumi/src/argotails.ts",
-					"renewal-process":
-						"Rotate the client below; this secret's value is recomputed from " +
-						"it and picks up the new one automatically on the next `pulumi up`.",
-					"x-renewal-cmd": pulumi.interpolate`pulumi up --replace '${oauthClient.urn}'`,
+					...vaultSecretMetadata(oauthClient),
 				},
 			},
 		},
