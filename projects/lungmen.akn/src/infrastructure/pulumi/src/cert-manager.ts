@@ -11,7 +11,7 @@ import * as config from "../config";
 // Cloudflare ClusterIssuer (DNS-01 solver) reads the token from the Vault secret
 // below through an ExternalSecret.
 const certManagerToken = new Dns01TokenComponent("cert-manager", {
-	owner: "lungmen.akn.chezmoi.sh",
+	owner: "lungmen.akn",
 	application: "cert-manager",
 	accountId: config.cloudflare.accountId,
 	zoneId: config.cloudflare.zoneId,

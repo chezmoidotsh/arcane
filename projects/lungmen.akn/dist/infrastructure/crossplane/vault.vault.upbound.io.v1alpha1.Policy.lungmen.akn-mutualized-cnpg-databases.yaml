@@ -14,3 +14,5 @@ spec:
       { capabilities = [\"create\", \"read\", \"update\", \"delete\"] }      \npath
       \"lungmen.akn/metadata/+/database/*\" { capabilities = [\"create\", \"read\",
       \"update\", \"delete\"] }\n"
+  managementPolicies:
+  - Observe

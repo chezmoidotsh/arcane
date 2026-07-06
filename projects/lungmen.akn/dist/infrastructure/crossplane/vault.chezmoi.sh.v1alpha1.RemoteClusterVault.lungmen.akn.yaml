@@ -2,6 +2,8 @@
 apiVersion: vault.chezmoi.sh/v1alpha1
 kind: RemoteClusterVault
 metadata:
+  annotations:
+    crossplane.io/paused: "true"
   name: lungmen.akn
 spec:
   additionalPolicies:

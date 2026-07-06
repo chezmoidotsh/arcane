@@ -23,6 +23,9 @@ kind: Policy
 metadata:
   name: lungmen.akn-mutualized-cnpg-databases
 spec:
+  # Managed by Pulumi now (projects/lungmen.akn/src/infrastructure/pulumi/) —
+  # observe only, don't reconcile or delete.
+  managementPolicies: ["Observe"]
   forProvider:
     name: lungmen.akn-mutualized-cnpg-databases
     policy: |
@@ -39,6 +42,12 @@ apiVersion: vault.chezmoi.sh/v1alpha1
 kind: RemoteClusterVault
 metadata:
   name: lungmen.akn
+  # Managed by Pulumi now (projects/lungmen.akn/src/infrastructure/pulumi/) —
+  # paused so Crossplane stops reconciling/deleting it. managementPolicies
+  # isn't a field on this composite's schema (only on the managed resources
+  # it composes), so the pause annotation is the correct mechanism here.
+  annotations:
+    crossplane.io/paused: "true"
 spec:
   name: lungmen.akn
   host: https://kubernetes.lungmen.akn.chezmoi.sh:6443
