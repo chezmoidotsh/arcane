@@ -1,4 +1,5 @@
 import { Dns01TokenComponent } from "@chezmoi.sh/pulumi-cloudflare-dns01-token";
+import { vaultSecretMetadata } from "@chezmoi.sh/pulumi-lib";
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 import * as config from "../config";
@@ -31,13 +32,9 @@ new vault.kv.SecretV2(
 				description: "Cloudflare API Token for cert-manager",
 				owner: "lungmen.akn",
 				application: "cert-manager",
-
-				"created-by":
-					"projects/lungmen.akn/src/infrastructure/pulumi/src/cert-manager.ts",
-				"renewal-process":
-					"Rotate the token below; this secret's value is recomputed from " +
-					"it and picks up the new one automatically on the next `pulumi up`.",
-				"x-renewal-cmd": pulumi.interpolate`pulumi up --replace '${certManagerToken.tokenUrn}'`,
+				...vaultSecretMetadata(certManagerToken, {
+					renewalUrn: certManagerToken.tokenUrn,
+				}),
 			},
 		},
 	},
