@@ -22,3 +22,5 @@ spec:
     - default
     - personal-user-access
     userClaim: sub
+  managementPolicies:
+  - Observe

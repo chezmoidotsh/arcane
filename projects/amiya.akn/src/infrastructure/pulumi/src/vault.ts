@@ -21,7 +21,19 @@ if (!config.isBootstraping) {
 	// dedicated KV mount and a Kubernetes auth backend to authenticate against,
 	// scoped to this cluster only. ESO authenticates via the generated
 	// `amiya.akn-eso-role` to read the `amiya.akn/` KV mount.
-	new ClusterVaultComponent("amiya.akn", { name: "amiya.akn" });
+	//
+	// amiya.akn-authelia-policy and amiya.akn-crossplane-policy are bound by
+	// name only, not created here: they remain Crossplane-managed standalone
+	// Policy resources (see amiya.akn.xclustervault.yaml) — Vault's tokenPolicies
+	// is a full replace, so leaving them out entirely would silently drop those
+	// bindings the first time this role is reconciled by Pulumi.
+	new ClusterVaultComponent("amiya.akn", {
+		name: "amiya.akn",
+		additionalPolicyNames: [
+			"amiya.akn-authelia-policy",
+			"amiya.akn-crossplane-policy",
+		],
+	});
 
 	// ---------------------------------------------------------------------------
 	// Shared & personal secret mounts

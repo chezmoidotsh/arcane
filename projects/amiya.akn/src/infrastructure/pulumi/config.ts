@@ -1,5 +1,4 @@
 import * as pulumi from "@pulumi/pulumi";
-import { isLegacyApplyEnabled } from "@pulumi/pulumi/runtime";
 
 const config = new pulumi.Config();
 

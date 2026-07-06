@@ -12,5 +12,7 @@ spec:
       version: "2"
     path: shared
     type: kv
+  managementPolicies:
+  - Observe
   providerConfigRef:
     name: default

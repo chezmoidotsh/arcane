@@ -23,6 +23,8 @@ spec:
         value       = tailscale_oauth_client.self.key
       }
     source: Inline
+  managementPolicies:
+  - Observe
   providerConfigRef:
     name: tailscale
   writeConnectionSecretToRef:

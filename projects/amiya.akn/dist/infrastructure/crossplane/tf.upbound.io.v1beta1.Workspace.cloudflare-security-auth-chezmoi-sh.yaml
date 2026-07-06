@@ -30,5 +30,7 @@ spec:
       {\n  value       = cloudflare_ruleset.rate_limiting.id\n  description = \"Rate
       limiting ruleset ID\"\n}\n"
     source: Inline
+  managementPolicies:
+  - Observe
   providerConfigRef:
     name: cloudflare

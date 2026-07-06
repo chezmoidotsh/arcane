@@ -26,3 +26,5 @@ spec:
     - sso-admin-policy
     - personal-admin-access
     userClaim: sub
+  managementPolicies:
+  - Observe

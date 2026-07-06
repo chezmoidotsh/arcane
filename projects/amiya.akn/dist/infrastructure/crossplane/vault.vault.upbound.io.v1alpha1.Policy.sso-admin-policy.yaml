@@ -30,3 +30,5 @@ spec:
       to the cluster)\npath \"sys/rekey/*\" { capabilities = [\"deny\"] }\npath \"sys/rotate/*\"
       { capabilities = [\"deny\"] }\n\n# EXPLICITLY DENIED: Root token endpoint\npath
       \"auth/token/root\" { capabilities = [\"deny\"] }\n"
+  managementPolicies:
+  - Observe
