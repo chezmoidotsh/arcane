@@ -18,17 +18,18 @@ workspace root) lives in [`catalog/pulumi/README.md`](../README.md).
 
 ## `vaultSecretMetadata(source, opts?)`
 
-Builds the three shared `customMetadata.data` fields every `vault.kv.SecretV2`
+Builds the four shared `customMetadata.data` fields every `vault.kv.SecretV2`
 in this homelab carries — the ones that are identical across every call site or
 derivable from the credential resource itself. The per-secret
-`description` / `owner` / `application` fields stay at the call site; spread
-this object's result alongside them.
+`description` / `application` fields stay at the call site; spread this
+object's result alongside them.
 
 ### Returned fields
 
 | Field             | Value                                                                                            | Source                                                                               |
 | ----------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
 | `created-by`      | Repo-relative path of the file that pushed the secret, e.g. `projects/amiya.akn/.../platform.ts` | Auto-detected from the V8 call stack at call time (see [Assumptions](#assumptions)). |
+| `owner`           | Second path segment of the caller's path, e.g. `amiya.akn`.                                      | Derived from `created-by` at call time.                                              |
 | `renewal-process` | A single fixed sentence describing what rotation does.                                           | Hard-coded constant — identical for every secret.                                    |
 | `x-renewal-cmd`   | The exact `pulumi up --replace '<urn>'` command that rotates the credential.                     | `opts.renewalUrn ?? source.urn`, wrapped in `pulumi.interpolate`.                    |
 
@@ -56,7 +57,6 @@ new vault.kv.SecretV2(
 		customMetadata: {
 			data: {
 				description: "Cloudflare API Token for cert-manager",
-				owner: "amiya.akn",
 				application: "cert-manager",
 				...vaultSecretMetadata(token, { renewalUrn: token.tokenUrn }),
 			},

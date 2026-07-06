@@ -37,8 +37,8 @@ if (!config.isBootstraping) {
 			customMetadata: {
 				data: {
 					description: "Cloudflare API Token for cert-manager",
-					owner: "amiya.akn",
 					application: "cert-manager",
+
 					...vaultSecretMetadata(certManagerToken, {
 						renewalUrn: certManagerToken.tokenUrn,
 					}),

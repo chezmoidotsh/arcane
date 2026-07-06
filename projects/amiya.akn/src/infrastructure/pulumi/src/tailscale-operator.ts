@@ -41,8 +41,8 @@ if (!config.isBootstraping) {
 				data: {
 					description:
 						"Tailscale OAuth Client for Tailscale Operator amiya.akn",
-					owner: "amiya.akn",
 					application: "tailscale-operator",
+
 					...vaultSecretMetadata(oauthClient),
 				},
 			},

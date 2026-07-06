@@ -33,8 +33,8 @@ new vault.kv.SecretV2(
 			data: {
 				description:
 					"Tailscale OAuth Client for Tailscale Operator lungmen.akn",
-				owner: "lungmen.akn",
 				application: "tailscale-operator",
+
 				...vaultSecretMetadata(oauthClient),
 			},
 		},

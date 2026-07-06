@@ -66,8 +66,8 @@ if (!config.isBootstraping) {
 			customMetadata: {
 				data: {
 					description: "Cloudflare API Token for tunnel operator",
-					owner: "amiya.akn",
 					application: "cloudflare-operator",
+
 					...vaultSecretMetadata(token),
 				},
 			},

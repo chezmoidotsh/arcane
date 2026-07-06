@@ -3,18 +3,17 @@ import * as fs from "fs";
 import * as path from "path";
 
 /**
- * The three {@link vault.kv.SecretV2} `customMetadata.data` fields every secret
+ * The four {@link vault.kv.SecretV2} `customMetadata.data` fields every secret
  * pushed to Vault in this stack shares — the ones that are identical across
  * every call site or derivable from the credential itself.
  *
- * The per-secret `description` / `owner` / `application` fields stay at the
- * call site (they're inherently per-secret); spread this object alongside them:
+ * The per-secret `description` and `application` fields stay at the call site;
+ * spread this object alongside them:
  *
  * ```ts
  * customMetadata: {
  *   data: {
  *     description: "...",
- *     owner: "...",
  *     application: "...",
  *     ...vaultSecretMetadata(token),
  *   },
@@ -24,6 +23,8 @@ import * as path from "path";
 export interface VaultSecretMetadata {
 	/** Repo-relative path of the file that pushed the secret (auto-detected). */
 	"created-by": string;
+	/** Second path segment of the caller's repo-relative path (e.g. `amiya.akn`). */
+	owner: string;
 	/** The single fixed sentence describing what rotation does. */
 	"renewal-process": string;
 	/** The exact `pulumi up --replace` command targeting the credential's URN. */
@@ -66,6 +67,19 @@ function findRepoRoot(filePath: string): string {
 /** True when `filePath` sits anywhere under a `node_modules` directory. */
 function isInsideNodeModules(filePath: string): boolean {
 	return filePath.split(path.sep).includes("node_modules");
+}
+
+/**
+ * Derives the owner token from a repo-relative path.
+ *
+ * Rule: take the second path segment (index 1). For `projects/<project>/…`
+ * this yields the project name (e.g. `amiya.akn`). For other paths such as
+ * `catalog/pulumi/…` it yields the second-level directory (e.g. `pulumi`).
+ * Falls back to the first segment when the path is a single component.
+ */
+function ownerFromRepoRelativePath(repoRelativePath: string): string {
+	const parts = repoRelativePath.split("/");
+	return parts.length >= 2 ? parts[1] : parts[0];
 }
 
 /**
@@ -124,8 +138,10 @@ export function vaultSecretMetadata(
 	source: pulumi.Resource,
 	opts?: { renewalUrn?: pulumi.Input<pulumi.URN> },
 ): VaultSecretMetadata {
+	const createdBy = callerRepoRelativePath();
 	return {
-		"created-by": callerRepoRelativePath(),
+		"created-by": createdBy,
+		owner: ownerFromRepoRelativePath(createdBy),
 		"renewal-process": RENEWAL_PROCESS,
 		"x-renewal-cmd": pulumi.interpolate`pulumi up --replace '${
 			opts?.renewalUrn ?? source.urn

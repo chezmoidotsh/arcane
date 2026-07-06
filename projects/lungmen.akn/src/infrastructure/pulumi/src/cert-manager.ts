@@ -30,8 +30,8 @@ new vault.kv.SecretV2(
 		customMetadata: {
 			data: {
 				description: "Cloudflare API Token for cert-manager",
-				owner: "lungmen.akn",
 				application: "cert-manager",
+
 				...vaultSecretMetadata(certManagerToken, {
 					renewalUrn: certManagerToken.tokenUrn,
 				}),

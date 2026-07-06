@@ -40,8 +40,8 @@ if (!config.isBootstraping) {
 			customMetadata: {
 				data: {
 					description: "Tailscale OAuth Client for Argotails on amiya.akn",
-					owner: "amiya.akn",
 					application: "argotails",
+
 					...vaultSecretMetadata(oauthClient),
 				},
 			},

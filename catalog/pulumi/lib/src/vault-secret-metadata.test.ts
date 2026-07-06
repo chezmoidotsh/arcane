@@ -33,11 +33,11 @@ function unwrap<T>(output: pulumi.Output<T>): Promise<T> {
 }
 
 describe("vaultSecretMetadata", () => {
-	it("returns exactly the three convention fields", () => {
+	it("returns exactly the four convention fields", () => {
 		const source = new pulumi.ComponentResource("test:Source", "src-1", {});
 		const meta = vaultSecretMetadata(source);
 		expect(Object.keys(meta).sort()).to.deep.equal(
-			["created-by", "renewal-process", "x-renewal-cmd"].sort(),
+			["created-by", "owner", "renewal-process", "x-renewal-cmd"].sort(),
 		);
 	});
 
@@ -47,6 +47,13 @@ describe("vaultSecretMetadata", () => {
 		expect(meta["created-by"]).to.equal(
 			"catalog/pulumi/lib/src/vault-secret-metadata.test.ts",
 		);
+	});
+
+	it("derives owner as the second path segment of the caller file", () => {
+		const source = new pulumi.ComponentResource("test:Source", "src-2b", {});
+		const meta = vaultSecretMetadata(source);
+		// caller is catalog/pulumi/lib/… → second segment is "pulumi"
+		expect(meta["owner"]).to.equal("pulumi");
 	});
 
 	it("uses the single fixed renewal-process sentence", () => {
