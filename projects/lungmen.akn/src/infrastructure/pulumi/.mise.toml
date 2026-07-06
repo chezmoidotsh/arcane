@@ -1,0 +1,35 @@
+# =============================================================================
+# lungmen.akn Pulumi stack - Mise configuration
+# =============================================================================
+# Cloud + Vault/OpenBao infrastructure for lungmen.akn, managed as a Pulumi
+# stack (state in the Garage S3 backend, see Pulumi.yaml).
+#
+# No stack exists yet — `pulumi stack init <name>` plus `pulumi config set
+# --secret ...` for cloudflare_account_id/cloudflare_zone_id/
+# lungmen_kubernetes_ca_cert/lungmen_token_reviewer_jwt come first. Once a
+# stack exists, mirror amiya.akn's `.mise/env.yaml` (SOPS-encrypted
+# PULUMI_STACK/PULUMI_CONFIG_PASSPHRASE, loaded via `[env] _.file` below) so
+# these tasks don't prompt.
+#
+# `node = "24"` (fuzzy, not an exact patch) overrides the root .mise.toml's
+# exact `24.16.0` pin — that specific patch's built-in TypeScript stripping
+# refuses .ts files under any node_modules path, breaking the file:-linked
+# catalog packages; a later 24.x patch fixed it, so pin loosely instead of to
+# a specific version, mirroring amiya.akn's .mise.toml.
+# =============================================================================
+
+[tools]
+node = "24"
+
+[env]
+_.file = "{{ config_root }}/.mise/env.yaml"
+
+[tasks."pulumi:diff"]
+description = "Preview pending changes for the lungmen.akn Pulumi stack (with diff)"
+run = "export VAULT_TOKEN=\"$(bao print token)\" && pulumi preview --diff"
+dir = "{{ config_root }}"
+
+[tasks."pulumi:apply"]
+description = "Apply pending changes to the lungmen.akn Pulumi stack"
+run = "export VAULT_TOKEN=\"$(bao print token)\" && pulumi up"
+dir = "{{ config_root }}"

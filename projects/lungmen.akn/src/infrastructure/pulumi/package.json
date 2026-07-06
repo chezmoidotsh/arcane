@@ -1,0 +1,16 @@
+{
+	"name": "lungmen-akn-infra",
+	"version": "0.1.0",
+	"private": true,
+	"main": "index.ts",
+	"dependencies": {
+		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "file:../../../../../catalog/pulumi/cloudflare-dns01-token",
+		"@chezmoi.sh/pulumi-cluster-vault": "file:../../../../../catalog/pulumi/cluster-vault",
+		"@pulumi/pulumi": "^3.250.0",
+		"@pulumi/tailscale": "^0.28.0",
+		"@pulumi/vault": "^7.10.0"
+	},
+	"devDependencies": {
+		"typescript": "^5.6.0"
+	}
+}
