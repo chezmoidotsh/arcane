@@ -47,7 +47,8 @@ before(async () => {
 	await pulumi.runtime.setMocks(
 		{
 			newResource(args: pulumi.runtime.MockResourceArgs) {
-				(created[args.type] ??= []).push(args);
+				created[args.type] ??= [];
+				created[args.type].push(args);
 				return {
 					id: (args.inputs.name ?? args.name) + "_id",
 					state: args.inputs,
@@ -141,7 +142,7 @@ function sole(type: string): pulumi.runtime.MockResourceArgs {
 }
 
 /** Return the inputs of the single captured resource of a type. */
-function inputsOf(type: string): Record<string, any> {
+function inputsOf(type: string): Record<string, unknown> {
 	return sole(type).inputs;
 }
 
@@ -330,8 +331,10 @@ describe("ClusterVaultComponent — additionalPolicies", () => {
 		const additional = policies.find(
 			(p) => p.inputs.name === "x-mutualized-cnpg-databases",
 		);
-		expect(additional, "additional policy should be created").to.exist;
-		expect(additional!.inputs.policy).to.include('path "x/data/+/database/*"');
+		if (!additional) {
+			throw new Error("additional policy should be created");
+		}
+		expect(additional.inputs.policy).to.include('path "x/data/+/database/*"');
 
 		const role = inputsOf(TYPE_AUTH_BACKEND_ROLE);
 		// pulumi.all(...) resolves to a plain array under the mock, so reveal()

@@ -317,7 +317,7 @@ export interface TailscaledClusterVaultConfig {
 ## Testing
 
 The package ships unit tests in
-[`cluster-vault.test.ts`](./cluster-vault.test.ts) using **Mocha + Chai** with
+[`cluster-vault.test.ts`](./src/cluster-vault.test.ts) using **Mocha + Chai** with
 `@pulumi/pulumi/runtime` mocks (`setMocks`) that capture every child resource the
 component registers. The suite covers all three variants (Local, Remote with shared
 access both on and off, Tailscaled), `additionalPolicies` merging into the role's

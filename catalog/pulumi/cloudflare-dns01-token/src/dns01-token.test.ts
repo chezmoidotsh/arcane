@@ -32,7 +32,8 @@ before(async () => {
 	await pulumi.runtime.setMocks(
 		{
 			newResource(args: pulumi.runtime.MockResourceArgs) {
-				(created[args.type] ??= []).push(args);
+				created[args.type] ??= [];
+				created[args.type].push(args);
 				// NOTE: unlike most resources, AccountToken's own `inputs.name` is the
 				// human-readable label (not an identifier), so — unlike
 				// cluster-vault's mock — the id is always derived from the
@@ -104,9 +105,16 @@ function sole(type: string): pulumi.runtime.MockResourceArgs {
 }
 
 /** Return the inputs of the single captured resource of a type. */
-function inputsOf(type: string): Record<string, any> {
+function inputsOf(type: string): Record<string, unknown> {
 	return sole(type).inputs;
 }
+
+/** Shape of a single entry in AccountToken's `policies` input array. */
+type AccountTokenPolicy = {
+	effect: string;
+	permissionGroups: { id: string }[];
+	resources: string;
+};
 
 describe("Dns01TokenComponent", () => {
 	let component: Dns01TokenComponent;
@@ -140,9 +148,10 @@ describe("Dns01TokenComponent", () => {
 
 	it("scopes exactly one allow policy to Zone Read + Zone DNS Edit on the given zone", () => {
 		const token = inputsOf(TYPE_ACCOUNT_TOKEN);
-		expect(token.policies).to.have.lengthOf(1);
+		const policies = token.policies as AccountTokenPolicy[];
+		expect(policies).to.have.lengthOf(1);
 
-		const policy = token.policies[0];
+		const policy = policies[0];
 		expect(policy.effect).to.equal("allow");
 		expect(policy.permissionGroups).to.have.deep.members([
 			{ id: ZONE_READ },
@@ -175,7 +184,8 @@ describe("Dns01TokenComponent", () => {
 
 		const token = inputsOf(TYPE_ACCOUNT_TOKEN);
 		expect(token.name).to.equal("(amiya.akn) - cert-manager");
-		expect(JSON.parse(token.policies[0].resources)).to.deep.equal({
+		const policies = token.policies as AccountTokenPolicy[];
+		expect(JSON.parse(policies[0].resources)).to.deep.equal({
 			"com.cloudflare.api.account.zone.deadbeefdeadbeefdeadbeefdeadbeef": "*",
 		});
 	});
