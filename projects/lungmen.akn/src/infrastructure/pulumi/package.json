@@ -4,13 +4,13 @@
 	"private": true,
 	"main": "index.ts",
 	"dependencies": {
-		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "file:../../../../../catalog/pulumi/components/cloudflare-dns01-token",
-		"@chezmoi.sh/pulumi-cluster-vault": "file:../../../../../catalog/pulumi/components/cluster-vault",
-		"@pulumi/pulumi": "^3.250.0",
-		"@pulumi/tailscale": "^0.28.0",
-		"@pulumi/vault": "^7.10.0"
+		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "workspace:*",
+		"@chezmoi.sh/pulumi-cluster-vault": "workspace:*",
+		"@pulumi/pulumi": "catalog:",
+		"@pulumi/tailscale": "catalog:",
+		"@pulumi/vault": "catalog:"
 	},
 	"devDependencies": {
-		"typescript": "^5.6.0"
+		"typescript": "catalog:"
 	}
 }

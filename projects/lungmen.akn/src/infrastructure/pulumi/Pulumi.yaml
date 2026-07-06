@@ -1,8 +1,11 @@
 name: lungmen-akn-infra
-runtime: nodejs
 description: >-
   Cloud + Vault/OpenBao infrastructure for lungmen.akn: remote cluster Vault
   auth backend, Cloudflare cert-manager token, Tailscale OAuth client.
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
 
 backend:
   # Garage S3 backend. See docs/procedures/infrastructure/

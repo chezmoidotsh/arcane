@@ -9,20 +9,17 @@
 		"test:watch": "mocha --watch",
 		"typecheck:test": "tsc --noEmit -p tsconfig.test.json"
 	},
-	"overrides": {
-		"serialize-javascript": "^7.0.7"
-	},
 	"dependencies": {
-		"@pulumi/pulumi": "^3.250.0",
-		"@pulumi/vault": "^7.10.0"
+		"@pulumi/pulumi": "catalog:",
+		"@pulumi/vault": "catalog:"
 	},
 	"devDependencies": {
-		"@types/chai": "^4.3.0",
-		"@types/mocha": "^10.0.0",
-		"@types/node": "^22.0.0",
-		"chai": "^4.4.0",
-		"mocha": "^10.0.0",
-		"ts-node": "^10.9.0",
-		"typescript": "^5.6.0"
+		"@types/chai": "catalog:",
+		"@types/mocha": "catalog:",
+		"@types/node": "catalog:",
+		"chai": "catalog:",
+		"mocha": "catalog:",
+		"ts-node": "catalog:",
+		"typescript": "catalog:"
 	}
 }

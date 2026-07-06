@@ -4,6 +4,42 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@pulumi/cloudflare':
+      specifier: ^6.17.0
+      version: 6.17.0
+    '@pulumi/pulumi':
+      specifier: ^3.250.0
+      version: 3.250.0
+    '@pulumi/tailscale':
+      specifier: ^0.28.0
+      version: 0.28.0
+    '@pulumi/vault':
+      specifier: ^7.10.0
+      version: 7.10.0
+    '@types/chai':
+      specifier: ^4.3.0
+      version: 4.3.20
+    '@types/mocha':
+      specifier: ^10.0.0
+      version: 10.0.10
+    '@types/node':
+      specifier: ^22.0.0
+      version: 22.20.0
+    chai:
+      specifier: ^4.4.0
+      version: 4.5.0
+    mocha:
+      specifier: ^10.0.0
+      version: 10.8.2
+    ts-node:
+      specifier: ^10.9.0
+      version: 10.9.2
+    typescript:
+      specifier: ^5.9.3
+      version: 5.9.3
+
 overrides:
   serialize-javascript: ^7.0.7
 
@@ -11,154 +47,182 @@ importers:
 
   .: {}
 
-  catalog/pulumi/cloudflare-dns01-token:
+  catalog/pulumi/components/cloudflare-dns01-token:
     dependencies:
       '@pulumi/cloudflare':
-        specifier: ^6.17.0
+        specifier: 'catalog:'
         version: 6.17.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/pulumi':
-        specifier: ^3.250.0
+        specifier: 'catalog:'
         version: 3.250.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       '@types/chai':
-        specifier: ^4.3.0
+        specifier: 'catalog:'
         version: 4.3.20
       '@types/mocha':
-        specifier: ^10.0.0
+        specifier: 'catalog:'
         version: 10.0.10
       '@types/node':
-        specifier: ^22.0.0
+        specifier: 'catalog:'
         version: 22.20.0
       chai:
-        specifier: ^4.4.0
+        specifier: 'catalog:'
         version: 4.5.0
       mocha:
-        specifier: ^10.0.0
+        specifier: 'catalog:'
         version: 10.8.2
       ts-node:
-        specifier: ^10.9.0
+        specifier: 'catalog:'
         version: 10.9.2(@types/node@22.20.0)(typescript@5.9.3)
       typescript:
-        specifier: ^5.6.0
+        specifier: 'catalog:'
         version: 5.9.3
 
-  catalog/pulumi/cluster-vault:
+  catalog/pulumi/components/cluster-vault:
     dependencies:
       '@pulumi/pulumi':
-        specifier: ^3.250.0
+        specifier: 'catalog:'
         version: 3.250.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/vault':
-        specifier: ^7.10.0
+        specifier: 'catalog:'
         version: 7.10.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       '@types/chai':
-        specifier: ^4.3.0
+        specifier: 'catalog:'
         version: 4.3.20
       '@types/mocha':
-        specifier: ^10.0.0
+        specifier: 'catalog:'
         version: 10.0.10
       '@types/node':
-        specifier: ^22.0.0
+        specifier: 'catalog:'
         version: 22.20.0
       chai:
-        specifier: ^4.4.0
+        specifier: 'catalog:'
         version: 4.5.0
       mocha:
-        specifier: ^10.0.0
+        specifier: 'catalog:'
         version: 10.8.2
       ts-node:
-        specifier: ^10.9.0
+        specifier: 'catalog:'
         version: 10.9.2(@types/node@22.20.0)(typescript@5.9.3)
       typescript:
-        specifier: ^5.6.0
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  catalog/pulumi/lib:
+    dependencies:
+      '@pulumi/pulumi':
+        specifier: 'catalog:'
+        version: 3.250.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+    devDependencies:
+      '@types/chai':
+        specifier: 'catalog:'
+        version: 4.3.20
+      '@types/mocha':
+        specifier: 'catalog:'
+        version: 10.0.10
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.20.0
+      chai:
+        specifier: 'catalog:'
+        version: 4.5.0
+      mocha:
+        specifier: 'catalog:'
+        version: 10.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@22.20.0)(typescript@5.9.3)
+      typescript:
+        specifier: 'catalog:'
         version: 5.9.3
 
   projects/amiya.akn/src/infrastructure/pulumi:
     dependencies:
       '@chezmoi.sh/pulumi-cloudflare-dns01-token':
-        specifier: file:../../../../../catalog/pulumi/cloudflare-dns01-token
-        version: file:catalog/pulumi/cloudflare-dns01-token(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/components/cloudflare-dns01-token
       '@chezmoi.sh/pulumi-cluster-vault':
-        specifier: file:../../../../../catalog/pulumi/cluster-vault
-        version: file:catalog/pulumi/cluster-vault(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/components/cluster-vault
+      '@chezmoi.sh/pulumi-lib':
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/lib
       '@pulumi/cloudflare':
-        specifier: ^6.17.0
+        specifier: 'catalog:'
         version: 6.17.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/pulumi':
-        specifier: ^3.250.0
+        specifier: 'catalog:'
         version: 3.250.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/tailscale':
-        specifier: ^0.28.0
+        specifier: 'catalog:'
         version: 0.28.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/vault':
-        specifier: ^7.10.0
+        specifier: 'catalog:'
         version: 7.10.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       typescript:
-        specifier: ^5.9.3
+        specifier: 'catalog:'
         version: 5.9.3
 
   projects/chezmoi.sh/src/infrastructure/pulumi:
     dependencies:
       '@chezmoi.sh/pulumi-cloudflare-dns01-token':
-        specifier: file:../../../../../catalog/pulumi/cloudflare-dns01-token
-        version: file:catalog/pulumi/cloudflare-dns01-token(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/components/cloudflare-dns01-token
       '@pulumi/cloudflare':
-        specifier: ^6.17.0
+        specifier: 'catalog:'
         version: 6.17.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/pulumi':
-        specifier: ^3.250.0
+        specifier: 'catalog:'
         version: 3.250.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/tailscale':
-        specifier: ^0.28.0
+        specifier: 'catalog:'
         version: 0.28.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       typescript:
-        specifier: ^5.6.0
+        specifier: 'catalog:'
         version: 5.9.3
 
   projects/hass/src/infrastructure/pulumi:
     dependencies:
       '@chezmoi.sh/pulumi-cloudflare-dns01-token':
-        specifier: file:../../../../../catalog/pulumi/cloudflare-dns01-token
-        version: file:catalog/pulumi/cloudflare-dns01-token(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/components/cloudflare-dns01-token
       '@pulumi/pulumi':
-        specifier: ^3.250.0
+        specifier: 'catalog:'
         version: 3.250.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       typescript:
-        specifier: ^5.6.0
+        specifier: 'catalog:'
         version: 5.9.3
 
   projects/lungmen.akn/src/infrastructure/pulumi:
     dependencies:
       '@chezmoi.sh/pulumi-cloudflare-dns01-token':
-        specifier: file:../../../../../catalog/pulumi/cloudflare-dns01-token
-        version: file:catalog/pulumi/cloudflare-dns01-token(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/components/cloudflare-dns01-token
       '@chezmoi.sh/pulumi-cluster-vault':
-        specifier: file:../../../../../catalog/pulumi/cluster-vault
-        version: file:catalog/pulumi/cluster-vault(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/components/cluster-vault
+      '@chezmoi.sh/pulumi-lib':
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/lib
       '@pulumi/pulumi':
-        specifier: ^3.250.0
+        specifier: 'catalog:'
         version: 3.250.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/tailscale':
-        specifier: ^0.28.0
+        specifier: 'catalog:'
         version: 0.28.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/vault':
-        specifier: ^7.10.0
+        specifier: 'catalog:'
         version: 7.10.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       typescript:
-        specifier: ^5.6.0
+        specifier: 'catalog:'
         version: 5.9.3
 
 packages:
-
-  '@chezmoi.sh/pulumi-cloudflare-dns01-token@file:catalog/pulumi/cloudflare-dns01-token':
-    resolution: {directory: catalog/pulumi/cloudflare-dns01-token, type: directory}
-
-  '@chezmoi.sh/pulumi-cluster-vault@file:catalog/pulumi/cluster-vault':
-    resolution: {directory: catalog/pulumi/cluster-vault, type: directory}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -1354,24 +1418,6 @@ packages:
     engines: {node: '>=10'}
 
 snapshots:
-
-  '@chezmoi.sh/pulumi-cloudflare-dns01-token@file:catalog/pulumi/cloudflare-dns01-token(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
-    dependencies:
-      '@pulumi/cloudflare': 6.17.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/pulumi': 3.250.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
-    transitivePeerDependencies:
-      - supports-color
-      - ts-node
-      - typescript
-
-  '@chezmoi.sh/pulumi-cluster-vault@file:catalog/pulumi/cluster-vault(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
-    dependencies:
-      '@pulumi/pulumi': 3.250.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/vault': 7.10.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
-    transitivePeerDependencies:
-      - supports-color
-      - ts-node
-      - typescript
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:

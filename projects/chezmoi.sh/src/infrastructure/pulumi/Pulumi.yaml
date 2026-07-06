@@ -1,8 +1,11 @@
 name: chezmoi-sh-infra
-runtime: nodejs
 description: >-
   Shared cloud infrastructure for chezmoi.sh: Cloudflare API tokens, Tailscale
   OAuth client.
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
 
 backend:
   # Garage S3 backend. See docs/procedures/infrastructure/
