@@ -27,8 +27,10 @@ export interface Dns01TokenArgs {
  * `cloudflare.ApiToken` targets.
  *
  * Only creates the token. If the consumer expects it in Vault, write it yourself
- * with `vault.kv.SecretV2` alongside this component — secret placement is the
- * calling stack's decision, not this component's.
+ * with `vault.kv.SecretV2` alongside this component, parented directly to the
+ * component instance (it is itself a valid Pulumi resource) so both share the
+ * token's lifecycle — secret placement is the calling stack's decision, not this
+ * component's.
  */
 export class Dns01TokenComponent extends pulumi.ComponentResource {
 	public readonly tokenId: pulumi.Output<string>;

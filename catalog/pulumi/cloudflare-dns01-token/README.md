@@ -35,7 +35,8 @@ It has no opinion on where the token's value ends up — that's the calling stac
 decision, not this component's. Some consumers (e.g. cert-manager) expect the token in
 Vault; others (e.g. chezmoi.sh's Caddy DNS-01 tokens) only ever consume it as a plain
 Kubernetes `Secret` or a stack output. Where Vault is needed, write it directly with
-`@pulumi/vault`'s `vault.kv.SecretV2` in the calling stack:
+`@pulumi/vault`'s `vault.kv.SecretV2` in the calling stack, parented to the component
+instance itself so the secret and the token it stores share one lifecycle:
 
 ```typescript
 import * as pulumi from "@pulumi/pulumi";
@@ -49,19 +50,26 @@ const token = new Dns01TokenComponent("cert-manager", {
 	zoneId: chezmoiShZoneId,
 });
 
-new vault.kv.SecretV2("cert-manager-token", {
-	mount: "shared",
-	name: "third-parties/cloudflare/iam/amiya.akn/cert-manager-rw",
-	dataJson: pulumi.jsonStringify({ api_token: token.tokenValue }),
-	customMetadata: {
-		data: {
-			description: "Cloudflare API Token for cert-manager",
-			owner: "amiya.akn",
-			application: "cert-manager",
+new vault.kv.SecretV2(
+	"cert-manager-token",
+	{
+		mount: "shared",
+		name: "third-parties/cloudflare/iam/amiya.akn/cert-manager-rw",
+		dataJson: pulumi.jsonStringify({ api_token: token.tokenValue }),
+		customMetadata: {
+			data: {
+				description: "Cloudflare API Token for cert-manager",
+				owner: "amiya.akn",
+				application: "cert-manager",
+			},
 		},
 	},
-});
+	{ parent: token },
+);
 ```
+
+Prefer this over inventing a separate `pulumi.ComponentResource` "scope" resource just
+to give the token and its secret a shared parent — `Dns01TokenComponent` already is one.
 
 ## Import
 
