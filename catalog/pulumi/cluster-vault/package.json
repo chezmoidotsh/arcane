@@ -9,6 +9,9 @@
 		"test:watch": "mocha --watch",
 		"typecheck:test": "tsc --noEmit -p tsconfig.test.json"
 	},
+	"overrides": {
+		"serialize-javascript": "^7.0.7"
+	},
 	"dependencies": {
 		"@pulumi/pulumi": "^3.250.0",
 		"@pulumi/vault": "^7.10.0"
