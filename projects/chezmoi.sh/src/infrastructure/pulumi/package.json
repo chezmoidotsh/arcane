@@ -4,7 +4,7 @@
 	"private": true,
 	"main": "index.ts",
 	"dependencies": {
-		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "file:../../../../../catalog/pulumi/cloudflare-dns01-token",
+		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "file:../../../../../catalog/pulumi/components/cloudflare-dns01-token",
 		"@pulumi/cloudflare": "^6.17.0",
 		"@pulumi/pulumi": "^3.250.0",
 		"@pulumi/tailscale": "^0.28.0"
