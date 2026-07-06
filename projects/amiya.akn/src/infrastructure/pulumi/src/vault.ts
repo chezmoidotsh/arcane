@@ -7,12 +7,31 @@ import * as config from "../config";
 // Everything that configures Vault/OpenBao itself for this cluster: the cluster's own
 // auth backend + mounts, the shared/personal KV mounts, and pocket-id's SSO auth
 // backend + policies (pocket-id.ts only owns the app-level Cloudflare hardening).
-// All skipped in bootstrap mode, since none of it is reachable before OpenBao itself
-// is up (see config.ts).
 
+// Vault/OpenBao itself runs on this cluster, so nothing below is reachable until
+// the cluster is far enough into bootstrap to serve Vault's own ingress — hence
+// this whole file is skipped in bootstrap mode (see config.ts). Unlike the
+// Cloudflare/Tailscale token files, there is no "external resource" half here to
+// create early: every resource in this file is a Vault-side resource.
 if (!config.isBootstraping) {
+	// ---------------------------------------------------------------------------
+	// Cluster's own Vault access (KV mount + Kubernetes auth backend + ESO role)
+	// ---------------------------------------------------------------------------
+	// External Secrets Operator (ESO) running in this cluster needs its own
+	// dedicated KV mount and a Kubernetes auth backend to authenticate against,
+	// scoped to this cluster only. ESO authenticates via the generated
+	// `amiya.akn-eso-role` to read the `amiya.akn/` KV mount.
 	new ClusterVaultComponent("amiya.akn", { name: "amiya.akn" });
 
+	// ---------------------------------------------------------------------------
+	// Shared & personal secret mounts
+	// ---------------------------------------------------------------------------
+	// Two KV v2 namespaces with different ownership models: "shared" for
+	// cross-project/cross-service secrets (third-party API credentials,
+	// certificates) that authorized roles can read across clusters, "personal"
+	// for per-user secrets isolated by OIDC identity (see the policies below).
+	// Every project's ESO role reads from "shared"; the pocket-id-default and
+	// pocket-id-admin roles below read/write their own "personal" namespace.
 	new vault.Mount("shared", {
 		path: "shared",
 		type: "kv",
@@ -29,6 +48,13 @@ if (!config.isBootstraping) {
 		options: { version: "2" },
 	});
 
+	// ---------------------------------------------------------------------------
+	// Pocket-ID SSO auth backend (OIDC)
+	// ---------------------------------------------------------------------------
+	// Lets Vault UI/CLI users authenticate with their existing Pocket-ID identity
+	// instead of provisioning separate Vault-local users or tokens. The
+	// pocket-id-default/pocket-id-admin roles further down bind this backend to
+	// the policies below based on OIDC group claims.
 	const pocketIdAuthBackend = new vault.jwt.AuthBackend("pocket-id", {
 		path: "pocket-id",
 		type: "oidc",
@@ -46,6 +72,14 @@ if (!config.isBootstraping) {
 		},
 	});
 
+	// ---------------------------------------------------------------------------
+	// Personal namespace access policies
+	// ---------------------------------------------------------------------------
+	// Every OIDC-authenticated user must be confined to their own
+	// personal/<email>/ subtree; the admin variant additionally needs to list
+	// (not read) every other user's namespace for support/troubleshooting. Both
+	// are bound to the pocket-id-admin and pocket-id-default roles below.
+	//
 	// The {{identity.entity.aliases.<accessor>.metadata.email}} templating below needs
 	// the auth backend's own mount accessor (e.g. "auth_oidc_bac48a4e") — read from
 	// pocketIdAuthBackend.accessor instead of hardcoding it, so it's always correct
@@ -93,6 +127,14 @@ path "personal/metadata/*" { capabilities = ["deny"] }
 `,
 	});
 
+	// ---------------------------------------------------------------------------
+	// Vault admin policy (for SSO-authenticated operators)
+	// ---------------------------------------------------------------------------
+	// Lets Pocket-ID users in the "admin" OIDC group manage Vault day to day
+	// (secrets engines, auth methods, identities, audit logs, ACL policies)
+	// without provisioning a separate Vault-local admin account, while explicitly
+	// denying the handful of operations that could take Vault itself down. Bound
+	// to the pocket-id-admin role below.
 	const ssoAdminPolicy = new vault.Policy("sso-admin-policy", {
 		name: "sso-admin-policy",
 		policy: `
@@ -135,6 +177,15 @@ path "auth/token/root" { capabilities = ["deny"] }
 `,
 	});
 
+	// ---------------------------------------------------------------------------
+	// Pocket-ID OIDC roles
+	// ---------------------------------------------------------------------------
+	// Binds the auth backend above to the policies above: "default" is every
+	// authenticated user (personal namespace only), "admin" is scoped to the
+	// OIDC "admin" group claim and additionally gets the Vault admin policy and
+	// the ability to list every user's personal namespace. This is the last link
+	// in the chain — Pocket-ID users hitting vault.chezmoi.sh's OIDC login end up
+	// in one of these two roles.
 	new vault.jwt.AuthBackendRole("pocket-id-default", {
 		backend: pocketIdAuthBackend.path,
 		roleName: "default",

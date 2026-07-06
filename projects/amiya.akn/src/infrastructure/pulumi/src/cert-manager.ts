@@ -4,9 +4,13 @@ import * as vault from "@pulumi/vault";
 
 import * as config from "../config";
 
-// Lets cert-manager complete DNS-01 challenges for amiya.akn.chezmoi.sh certificates.
-// The Vault secret below is parented directly to the token, so they share a
-// single lifecycle without an artificial wrapper resource.
+// -----------------------------------------------------------------------------
+// Cloudflare DNS-01 token for cert-manager
+// -----------------------------------------------------------------------------
+// cert-manager needs a scoped Cloudflare API token to complete DNS-01 challenges
+// when issuing/renewing certificates for amiya.akn.chezmoi.sh. cert-manager's
+// Cloudflare ClusterIssuer (DNS-01 solver) reads the token from the Vault secret
+// below through an ExternalSecret.
 const certManagerToken = new Dns01TokenComponent("cert-manager", {
   owner: "amiya.akn",
   application: "cert-manager",
@@ -15,6 +19,11 @@ const certManagerToken = new Dns01TokenComponent("cert-manager", {
 });
 export const certManagerDns01Token = certManagerToken.tokenValue;
 
+// Vault/OpenBao itself runs on this cluster, so it isn't reachable yet during
+// bootstrap — cert-manager is one of the things that must come up before Vault
+// can be exposed. Only the token above (a Cloudflare-side resource, independent
+// of Vault) can be created at that point; pushing it into Vault waits until
+// bootstrap mode is over.
 if (!config.isBootstraping) {
   new vault.kv.SecretV2(
     "cert-manager-token",

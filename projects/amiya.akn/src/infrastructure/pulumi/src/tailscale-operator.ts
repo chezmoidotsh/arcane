@@ -4,9 +4,14 @@ import * as vault from "@pulumi/vault";
 
 import * as config from "../config";
 
-// Lets the Tailscale Operator join the tailnet and advertise itself to Kubernetes.
-// The Vault secret below is parented directly to the OAuth client, so they share a
-// single lifecycle without an artificial wrapper resource.
+// -----------------------------------------------------------------------------
+// Tailscale OAuth client for the Tailscale Kubernetes operator
+// -----------------------------------------------------------------------------
+// The operator needs to mint ephemeral auth keys (auth_keys) and create/manage
+// tailnet devices (devices:core) on its own, without a human generating a key by
+// hand each time it needs to join or expose a device. The tailscale-operator
+// Helm release (infrastructure/kubernetes/tailscale/) uses this client to let
+// Tailscale Ingress/Connector/ProxyGroup resources join the tailnet.
 const oauthClient = new tailscale.OauthClient(
 	"amiya.akn-tailscale-oauth-client",
 	{
@@ -16,6 +21,11 @@ const oauthClient = new tailscale.OauthClient(
 	},
 );
 
+// Vault/OpenBao itself runs on this cluster, so it isn't reachable yet during
+// bootstrap — the Tailscale operator is one of the things that must come up
+// before Vault can be reachable over the tailnet. Only the client above (a
+// Tailscale-side resource, independent of Vault) can be created at that point;
+// pushing it into Vault waits until bootstrap mode is over.
 if (!config.isBootstraping) {
 	new vault.kv.SecretV2(
 		"amiya.akn-tailscale-oauth-client",

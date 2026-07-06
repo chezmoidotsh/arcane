@@ -4,15 +4,18 @@ import * as vault from "@pulumi/vault";
 
 import * as config from "../config";
 
-// Lets cloudflare-operator create/manage Cloudflare Tunnels and their DNS records.
-// Split zone+account policy prevents either scope's permission groups from reaching
-// the other's resources.
+// -----------------------------------------------------------------------------
+// Cloudflare API token for cloudflare-operator
+// -----------------------------------------------------------------------------
+// cloudflare-operator needs Cloudflare API access to create/manage the Tunnels
+// and DNS records it's responsible for. Split zone+account policy prevents
+// either scope's permission groups from reaching the other's resources. The
+// cloudflare-operator Deployment (infrastructure/kubernetes/cloudflare-operator/)
+// reads the token from the Vault secret below through an ExternalSecret.
 //
 // Uses cloudflare.AccountToken, not cloudflare.ApiToken: this account issues
 // Account (Owned) API Tokens (/accounts/{account_id}/tokens), a distinct
 // resource from classic User API Tokens (/user/tokens) that ApiToken targets.
-// The Vault secret below is parented directly to the token, so they share a
-// single lifecycle without an artificial wrapper resource.
 const token = new cloudflare.AccountToken(
 	"amiyaakn-chezmoi-sh-cloudflare-operator",
 	{
@@ -48,6 +51,10 @@ const token = new cloudflare.AccountToken(
 	},
 );
 
+// Vault/OpenBao itself runs on this cluster, so it isn't reachable yet during
+// bootstrap. Only the token above (a Cloudflare-side resource, independent of
+// Vault) can be created at that point; pushing it into Vault waits until
+// bootstrap mode is over.
 if (!config.isBootstraping) {
 	new vault.kv.SecretV2(
 		"cloudflare-operator-token",
