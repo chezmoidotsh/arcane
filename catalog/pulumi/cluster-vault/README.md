@@ -229,12 +229,17 @@ This matches the **ESO – cluster** policy family in
 creates and names these itself from the caller-supplied policy document; the caller
 never creates the `vault.Policy` resource directly.
 
+`additionalPolicyNames` entries create no resource at all — they're plain strings
+appended to `tokenPolicies` as-is, for policies another owner (e.g. Crossplane, during
+a migration) deliberately keeps managing.
+
 ### Roles
 
 **`<name>-eso-role`** (`vault.kubernetes.AuthBackendRole`):
 
 * Bound to ServiceAccount `external-secrets` in namespace `external-secrets-system`.
-* `tokenPolicies` = `<name>-eso-policy` plus every generated `additionalPolicies` policy.
+* `tokenPolicies` = `<name>-eso-policy` plus every generated `additionalPolicies` policy
+  plus every name in `additionalPolicyNames`.
 * `tokenTtl: 900`, `tokenMaxTtl: 1800` (15-minute tokens, 30-minute max — aligns with
   ADR-004's ephemeral-token principle).
 
@@ -267,6 +272,14 @@ export interface ClusterVaultArgs {
 	 * document, not the resource.
 	 */
 	additionalPolicies?: Record<string, pulumi.Input<string>>;
+	/**
+	 * Names of already-existing Vault policies to bind to the ESO role, alongside
+	 * the generated ESO policy and `additionalPolicies`. Unlike `additionalPolicies`,
+	 * the component does not create these — use this for policies another owner
+	 * (e.g. Crossplane, during a migration) is deliberately keeping ownership of;
+	 * the component only references the name.
+	 */
+	additionalPolicyNames?: pulumi.Input<string>[];
 	/** Present for the Remote variant. Mutually exclusive with `tailscaled`. */
 	remote?: RemoteClusterVaultConfig;
 	/** Present for the Tailscaled variant. Mutually exclusive with `remote`. */

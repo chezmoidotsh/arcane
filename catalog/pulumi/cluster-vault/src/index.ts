@@ -34,6 +34,14 @@ export interface ClusterVaultArgs {
 	 * supply only the policy document, not the resource.
 	 */
 	additionalPolicies?: Record<string, pulumi.Input<string>>;
+	/**
+	 * Names of already-existing Vault policies to bind to this cluster's ESO auth
+	 * role, alongside the generated ESO policy and `additionalPolicies`. Unlike
+	 * `additionalPolicies`, the component does not create these — use this for
+	 * policies that another owner (e.g. Crossplane, during a migration) is
+	 * deliberately keeping ownership of; the component only references the name.
+	 */
+	additionalPolicyNames?: pulumi.Input<string>[];
 	/** Present for RemoteClusterVault, absent for Local/TailscaledClusterVault. */
 	remote?: RemoteClusterVaultConfig;
 	/** Present for TailscaledClusterVault, absent for Local/RemoteClusterVault. */
@@ -162,6 +170,7 @@ ${sharedAccessPolicy}
 				tokenPolicies: pulumi.all([
 					esoPolicy.name,
 					...additionalPolicies.map((policy) => policy.name),
+					...(args.additionalPolicyNames ?? []),
 				]),
 				tokenTtl: 900,
 				tokenMaxTtl: 1800,

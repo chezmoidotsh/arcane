@@ -343,6 +343,32 @@ describe("ClusterVaultComponent — additionalPolicies", () => {
 });
 
 // ----------------------------------------------------------------------------
+// E2. additionalPolicyNames bind an existing, externally-managed policy by
+//     name without the component creating a vault.Policy for it.
+// ----------------------------------------------------------------------------
+describe("ClusterVaultComponent — additionalPolicyNames", () => {
+	it("binds the named policies to the ESO role without creating a Policy resource for them", async () => {
+		build({
+			name: "x",
+			additionalPolicyNames: ["x-authelia-policy", "x-crossplane-policy"],
+		});
+		await drain();
+
+		// Only the generated ESO policy — no vault.Policy was created for the
+		// externally-managed names.
+		const policies = created[TYPE_POLICY];
+		expect(policies).to.have.lengthOf(1);
+		expect(policies[0].inputs.name).to.equal("x-eso-policy");
+
+		const role = inputsOf(TYPE_AUTH_BACKEND_ROLE);
+		const tokenPolicies = reveal<string[]>(role.tokenPolicies);
+		expect(tokenPolicies).to.include("x-eso-policy");
+		expect(tokenPolicies).to.include("x-authelia-policy");
+		expect(tokenPolicies).to.include("x-crossplane-policy");
+	});
+});
+
+// ----------------------------------------------------------------------------
 // F. remote and tailscaled are mutually exclusive.
 // ----------------------------------------------------------------------------
 describe("ClusterVaultComponent — mutually exclusive variants", () => {
