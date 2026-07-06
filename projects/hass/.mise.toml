@@ -1,0 +1,37 @@
+# =============================================================================
+# hass Project Development Environment Configuration
+# =============================================================================
+# This mise configuration provides task automation for retrieving the
+# Pulumi-provisioned Cloudflare token Home Assistant needs.
+#
+# Usage:
+#   mise run pulumi:cloudflare-token  # Print the Cloudflare token for manual copy into secrets.yaml
+#
+# Prerequisites:
+#   - Pulumi CLI configured for the hass stack (see
+#     src/infrastructure/pulumi/.mise.toml)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Cloudflare Token Retrieval — Pulumi to Home Assistant secrets.yaml
+# -----------------------------------------------------------------------------
+# Home Assistant's Cloudflare DNS-01 token is created by the Pulumi stack in
+# src/infrastructure/pulumi/, not pushed to Vault: hass isn't a Kubernetes
+# cluster and doesn't depend on one to run, so Vault (which itself lives
+# inside amiya.akn) can't be a dependency here. The token only exists as a
+# Pulumi stack output.
+#
+# Unlike chezmoi.sh's LXC appliances, hass has no SOPS-encrypted secrets file
+# in this repo to inject into — Home Assistant's secrets.yaml lives on the
+# HAOS host itself. This task only prints the token; copy it into
+# secrets.yaml by hand after running it.
+
+[tasks."pulumi:cloudflare-token"]
+description = "Print the Home Assistant Cloudflare token from Pulumi for manual copy into secrets.yaml"
+dir = "{{ config_root }}/src/infrastructure/pulumi"
+run = '''
+  set -euo pipefail
+  TOKEN=$(pulumi stack output homeAssistantDns01Token --show-secrets)
+  [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — did 'pulumi up' run?" >&2; exit 1; }
+  echo "${TOKEN}"
+'''
