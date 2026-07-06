@@ -1,0 +1,8 @@
+encryptionsalt: v1:KA/xUoWvcgU=:v1:8b6uH+gPQo7bvhsO:AUqXbn/G62LkDD38c+/MyiIy7/egQw==
+config:
+  chezmoi-sh-infra:cloudflare_account_id:
+    secure: v1:f8LD7dbxKhZ9q++p:CmEWp3TnysnmMpPJIlIaAr50dEpzWJUDjn5K0U2DWTAwakm0HW2MRELsGOepLkN4
+  chezmoi-sh-infra:cloudflare_zone_id:
+    secure: v1:miJTN7ntHsY2Ifc1:2MY/NXyshbYjicuJXbYxwBkcIPNpdwoOMyAU+MxvpSiA+QheIF158qjS8JgoiULy
+  tailscale:tailnet:
+    secure: v1:IQXHIbaYdv2J4ako:efaTqROzHE8gIaQ130LBvwERz2Krz1SlaPRVWvFcEErI
