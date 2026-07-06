@@ -5,25 +5,15 @@ import * as vault from "@pulumi/vault";
 import * as config from "../config";
 
 // Lets cert-manager complete DNS-01 challenges for amiya.akn.chezmoi.sh certificates.
-// Groups the token and its Vault secret under one parent so they share a
-// single lifecycle. A dedicated type token (rather than a generic shared
-// name) keeps this specific pairing identifiable in `pulumi preview`/state
-// output.
-const certManagerScope = new pulumi.ComponentResource(
-	"chezmoi:CertManagerCFToken",
-	"cert-manager-token",
-);
-
-const certManagerToken = new Dns01TokenComponent(
-	"cert-manager",
-	{
-		owner: "amiya.akn",
-		application: "cert-manager",
-		accountId: config.cloudflare.accountId,
-		zoneId: config.cloudflare.zoneId,
-	},
-	{ parent: certManagerScope },
-);
+// The Vault secret below is parented directly to the token, so they share a
+// single lifecycle without an artificial wrapper resource.
+const certManagerToken = new Dns01TokenComponent("cert-manager", {
+  owner: "amiya.akn",
+  application: "cert-manager",
+  accountId: config.cloudflare.accountId,
+  zoneId: config.cloudflare.zoneId,
+});
+export const certManagerDns01Token = certManagerToken.tokenValue;
 
 if (!config.isBootstraping) {
   new vault.kv.SecretV2(
@@ -49,15 +39,14 @@ if (!config.isBootstraping) {
           owner: "amiya.akn",
           application: "cert-manager",
 
-					"created-by":
-						"projects/amiya.akn/src/infrastructure/pulumi/src/cert-manager.ts",
-					"renewal-process":
-						"Rotate the token below; this secret's value is recomputed from " +
-						"it and picks up the new one automatically on the next `pulumi up`.",
-					"x-renewal-cmd": pulumi.interpolate`pulumi up --replace '${certManagerToken.tokenUrn}'`,
-				},
-			},
-		},
-		{ parent: certManagerScope },
-	);
+          "created-by": "projects/amiya.akn/src/infrastructure/pulumi/src/cert-manager.ts",
+          "renewal-process":
+            "Rotate the token below; this secret's value is recomputed from " +
+            "it and picks up the new one automatically on the next `pulumi up`.",
+          "x-renewal-cmd": pulumi.interpolate`pulumi up --replace '${certManagerToken.tokenUrn}'`,
+        },
+      },
+    },
+    { parent: certManagerToken },
+  );
 }

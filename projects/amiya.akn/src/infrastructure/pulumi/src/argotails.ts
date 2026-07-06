@@ -5,15 +5,8 @@ import * as vault from "@pulumi/vault";
 import * as config from "../config";
 
 // Read-only device listing for Argotails.
-// Groups the client and its Vault secret under one parent so they share a
-// single lifecycle. A dedicated type token (rather than a generic shared
-// name) keeps this specific pairing identifiable in `pulumi preview`/state
-// output.
-const argotailsScope = new pulumi.ComponentResource(
-	"chezmoi:ArgotailsOAuthClient",
-	"argotails-tailscale-oauth-client",
-);
-
+// The Vault secret below is parented directly to the OAuth client, so they share a
+// single lifecycle without an artificial wrapper resource.
 const oauthClient = new tailscale.OauthClient(
 	"argotails-tailscale-oauth-client",
 	{
@@ -21,7 +14,6 @@ const oauthClient = new tailscale.OauthClient(
 		scopes: ["devices:core:read"],
 		tags: [],
 	},
-	{ parent: argotailsScope },
 );
 
 if (!config.isBootstraping) {
@@ -58,6 +50,6 @@ if (!config.isBootstraping) {
 				},
 			},
 		},
-		{ parent: argotailsScope },
+		{ parent: oauthClient },
 	);
 }

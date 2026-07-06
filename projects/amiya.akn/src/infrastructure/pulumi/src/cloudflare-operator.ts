@@ -11,15 +11,8 @@ import * as config from "../config";
 // Uses cloudflare.AccountToken, not cloudflare.ApiToken: this account issues
 // Account (Owned) API Tokens (/accounts/{account_id}/tokens), a distinct
 // resource from classic User API Tokens (/user/tokens) that ApiToken targets.
-// Groups the token and its Vault secret under one parent so they share a
-// single lifecycle. A dedicated type token (rather than a generic shared
-// name) keeps this specific pairing identifiable in `pulumi preview`/state
-// output.
-const cloudflareOperatorScope = new pulumi.ComponentResource(
-	"chezmoi:CloudflareOperatorCFToken",
-	"cloudflare-operator-token",
-);
-
+// The Vault secret below is parented directly to the token, so they share a
+// single lifecycle without an artificial wrapper resource.
 const token = new cloudflare.AccountToken(
 	"amiyaakn-chezmoi-sh-cloudflare-operator",
 	{
@@ -53,7 +46,6 @@ const token = new cloudflare.AccountToken(
 			},
 		],
 	},
-	{ parent: cloudflareOperatorScope },
 );
 
 if (!config.isBootstraping) {
@@ -87,6 +79,6 @@ if (!config.isBootstraping) {
 				},
 			},
 		},
-		{ parent: cloudflareOperatorScope },
+		{ parent: token },
 	);
 }

@@ -5,15 +5,8 @@ import * as vault from "@pulumi/vault";
 import * as config from "../config";
 
 // Lets the Tailscale Operator join the tailnet and advertise itself to Kubernetes.
-// Groups the client and its Vault secret under one parent so they share a
-// single lifecycle. A dedicated type token (rather than a generic shared
-// name) keeps this specific pairing identifiable in `pulumi preview`/state
-// output.
-const tailscaleOperatorScope = new pulumi.ComponentResource(
-	"chezmoi:TailscaleOperatorOAuthClient",
-	"amiya.akn-tailscale-oauth-client",
-);
-
+// The Vault secret below is parented directly to the OAuth client, so they share a
+// single lifecycle without an artificial wrapper resource.
 const oauthClient = new tailscale.OauthClient(
 	"amiya.akn-tailscale-oauth-client",
 	{
@@ -21,7 +14,6 @@ const oauthClient = new tailscale.OauthClient(
 		scopes: ["auth_keys", "devices:core"],
 		tags: ["tag:kubernetes-cluster"],
 	},
-	{ parent: tailscaleOperatorScope },
 );
 
 if (!config.isBootstraping) {
@@ -59,6 +51,6 @@ if (!config.isBootstraping) {
 				},
 			},
 		},
-		{ parent: tailscaleOperatorScope },
+		{ parent: oauthClient },
 	);
 }
