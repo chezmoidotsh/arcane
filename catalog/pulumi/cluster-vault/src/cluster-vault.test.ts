@@ -308,22 +308,37 @@ describe("ClusterVaultComponent — Tailscaled variant", () => {
 });
 
 // ----------------------------------------------------------------------------
-// E. additionalPolicies are merged into the role's tokenPolicies.
+// E. additionalPolicies are created by the component and merged into the
+//    role's tokenPolicies.
 // ----------------------------------------------------------------------------
 describe("ClusterVaultComponent — additionalPolicies", () => {
-	it("appends extra policies alongside the generated ESO policy", async () => {
+	it("creates each extra policy prefixed by the cluster name and binds it to the ESO role", async () => {
 		build({
 			name: "x",
-			additionalPolicies: [pulumi.Output.create("extra-pol")],
+			additionalPolicies: {
+				"mutualized-cnpg-databases": `path "x/data/+/database/*" { capabilities = ["read"] }`,
+			},
 		});
 		await drain();
+
+		// Two vault.Policy resources now: the generated ESO policy and the
+		// caller-supplied additional one — so `sole()`/`inputsOf()` can't be
+		// used here, unlike the other describe blocks.
+		const policies = created[TYPE_POLICY];
+		expect(policies).to.have.lengthOf(2);
+
+		const additional = policies.find(
+			(p) => p.inputs.name === "x-mutualized-cnpg-databases",
+		);
+		expect(additional, "additional policy should be created").to.exist;
+		expect(additional!.inputs.policy).to.include('path "x/data/+/database/*"');
 
 		const role = inputsOf(TYPE_AUTH_BACKEND_ROLE);
 		// pulumi.all(...) resolves to a plain array under the mock, so reveal()
 		// returns it as-is — no Output to unwrap.
-		const policies = reveal<string[]>(role.tokenPolicies);
-		expect(policies).to.include("x-eso-policy");
-		expect(policies).to.include("extra-pol");
+		const tokenPolicies = reveal<string[]>(role.tokenPolicies);
+		expect(tokenPolicies).to.include("x-eso-policy");
+		expect(tokenPolicies).to.include("x-mutualized-cnpg-databases");
 	});
 });
 

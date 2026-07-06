@@ -26,8 +26,14 @@ export interface TailscaledClusterVaultConfig {
 export interface ClusterVaultArgs {
 	/** Cluster name, used as the KV mount path and auth backend path (e.g. "amiya.akn"). */
 	name: string;
-	/** Additional Vault policy names bound to the ESO auth role, alongside the generated ESO policy. */
-	additionalPolicies?: pulumi.Input<string>[];
+	/**
+	 * Extra Vault policies to bind to this cluster's ESO auth role, alongside the
+	 * generated ESO policy. Keyed by a short identifier; the component creates each
+	 * as a `vault.Policy` named `<cluster>-<key>` (e.g. "mutualized-cnpg-databases"
+	 * on "lungmen.akn" becomes "lungmen.akn-mutualized-cnpg-databases") — callers
+	 * supply only the policy document, not the resource.
+	 */
+	additionalPolicies?: Record<string, pulumi.Input<string>>;
 	/** Present for RemoteClusterVault, absent for Local/TailscaledClusterVault. */
 	remote?: RemoteClusterVaultConfig;
 	/** Present for TailscaledClusterVault, absent for Local/RemoteClusterVault. */
@@ -129,6 +135,23 @@ ${sharedAccessPolicy}
 			parent,
 		);
 
+		// Additional policies are the caller's documents, but this component owns
+		// naming and creation — keeps every ${clusterName}-* Vault policy name
+		// traceable to this one place instead of scattered across call sites.
+		const additionalPolicies = Object.entries(
+			args.additionalPolicies ?? {},
+		).map(
+			([policyName, policyDocument]) =>
+				new vault.Policy(
+					`${name}-${policyName}-policy`,
+					{
+						name: `${clusterName}-${policyName}`,
+						policy: policyDocument,
+					},
+					parent,
+				),
+		);
+
 		new vault.kubernetes.AuthBackendRole(
 			`${name}-eso-role`,
 			{
@@ -138,7 +161,7 @@ ${sharedAccessPolicy}
 				boundServiceAccountNamespaces: ["external-secrets-system"],
 				tokenPolicies: pulumi.all([
 					esoPolicy.name,
-					...(args.additionalPolicies ?? []),
+					...additionalPolicies.map((policy) => policy.name),
 				]),
 				tokenTtl: 900,
 				tokenMaxTtl: 1800,

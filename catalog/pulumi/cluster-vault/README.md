@@ -49,15 +49,14 @@ is **always enabled** for Local and Tailscaled, and **defaults to enabled** for 
 **Usage example** (see [`projects/amiya.akn`](../../../projects/amiya.akn/src/infrastructure/pulumi/src/platform.ts)):
 
 ```typescript
-import * as vault from "@pulumi/vault";
 import { ClusterVaultComponent } from "@chezmoi.sh/pulumi-cluster-vault";
-
-// Project-specific policies defined alongside, then bound through additionalPolicies.
-const monitoringPolicy = new vault.Policy("amiya.akn-monitoring-policy", { /* ... */ });
 
 new ClusterVaultComponent("amiya.akn", {
 	name: "amiya.akn",
-	additionalPolicies: [monitoringPolicy.name],
+	// The component creates and names each policy itself — see additionalPolicies below.
+	additionalPolicies: {
+		monitoring: `path "amiya.akn/data/monitoring/*" { capabilities = ["read"] }`,
+	},
 });
 ```
 
@@ -73,15 +72,17 @@ new ClusterVaultComponent("amiya.akn", {
 **Usage example** (see [`projects/lungmen.akn`](../../../projects/lungmen.akn/src/infrastructure/pulumi/src/platform.ts)):
 
 ```typescript
-import * as vault from "@pulumi/vault";
 import { ClusterVaultComponent } from "@chezmoi.sh/pulumi-cluster-vault";
 import { lungmenKubernetesCaCert, lungmenTokenReviewerJwt } from "./config";
 
-const mutualizedCnpgPolicy = new vault.Policy("lungmen.akn-mutualized-cnpg-databases", { /* ... */ });
-
 new ClusterVaultComponent("lungmen.akn", {
 	name: "lungmen.akn",
-	additionalPolicies: [mutualizedCnpgPolicy.name],
+	additionalPolicies: {
+		"mutualized-cnpg-databases": `
+path "lungmen.akn/data/+/database/*" { capabilities = ["create", "read", "update", "delete"] }
+path "lungmen.akn/metadata/+/database/*" { capabilities = ["create", "read", "update", "delete"] }
+`,
+	},
 	remote: {
 		host: "https://kubernetes.lungmen.akn.chezmoi.sh:6443",
 		caCert: lungmenKubernetesCaCert,
@@ -132,7 +133,9 @@ import { ClusterVaultComponent } from "@chezmoi.sh/pulumi-cluster-vault";
 
 new ClusterVaultComponent("kazimierz.akn", {
 	name: "kazimierz.akn",
-	additionalPolicies: ["monitoring-policy"],
+	additionalPolicies: {
+		monitoring: `path "kazimierz.akn/data/monitoring/*" { capabilities = ["read"] }`,
+	},
 	tailscaled: {
 		host: "https://kubernetes.kazimierz.akn.ts.net:6443",
 	},
@@ -196,8 +199,9 @@ directory automatically — no per-stack install is needed by hand.
 
 ## Created Resources
 
-For a cluster `<name>`, the component registers exactly five child resources, all
-parented to the `chezmoi:vault:ClusterVault` component:
+For a cluster `<name>` with no `additionalPolicies`, the component registers five
+resources, all parented to the `chezmoi:vault:ClusterVault` component. Each
+`additionalPolicies` entry adds one more `vault.Policy`.
 
 ### Core
 
@@ -221,12 +225,16 @@ parented to the `chezmoi:vault:ClusterVault` component:
 This matches the **ESO – cluster** policy family in
 [ADR-004](../../../docs/decisions/004-openbao-policy-naming-conventions.md).
 
+**`<name>-<key>`** (`vault.Policy`, one per `additionalPolicies` entry) — the component
+creates and names these itself from the caller-supplied policy document; the caller
+never creates the `vault.Policy` resource directly.
+
 ### Roles
 
 **`<name>-eso-role`** (`vault.kubernetes.AuthBackendRole`):
 
 * Bound to ServiceAccount `external-secrets` in namespace `external-secrets-system`.
-* `tokenPolicies` = `<name>-eso-policy` plus any `additionalPolicies`.
+* `tokenPolicies` = `<name>-eso-policy` plus every generated `additionalPolicies` policy.
 * `tokenTtl: 900`, `tokenMaxTtl: 1800` (15-minute tokens, 30-minute max — aligns with
   ADR-004's ephemeral-token principle).
 
@@ -252,8 +260,13 @@ The component's Pulumi type token is `chezmoi:vault:ClusterVault`.
 export interface ClusterVaultArgs {
 	/** Cluster name — used as the KV mount path and the auth backend path (e.g. "amiya.akn"). */
 	name: string;
-	/** Additional Vault policy names bound to the ESO role alongside the generated ESO policy. */
-	additionalPolicies?: pulumi.Input<string>[];
+	/**
+	 * Extra Vault policies to bind to the ESO role, alongside the generated ESO
+	 * policy. Keyed by a short identifier; the component creates each as a
+	 * `vault.Policy` named `<cluster>-<key>` — callers supply only the policy
+	 * document, not the resource.
+	 */
+	additionalPolicies?: Record<string, pulumi.Input<string>>;
 	/** Present for the Remote variant. Mutually exclusive with `tailscaled`. */
 	remote?: RemoteClusterVaultConfig;
 	/** Present for the Tailscaled variant. Mutually exclusive with `remote`. */
