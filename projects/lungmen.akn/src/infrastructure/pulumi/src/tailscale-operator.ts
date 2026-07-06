@@ -1,7 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as tailscale from "@pulumi/tailscale";
 import * as vault from "@pulumi/vault";
-import * as config from "../config";
 
 // -----------------------------------------------------------------------------
 // Tailscale OAuth client for the Tailscale Kubernetes operator
