@@ -67,7 +67,7 @@ mise install
 │   └── assets                      # Repository assets (images, video, etc.) used in the documentation.
 ├── catalog                         # Catalog of reusable components
 │   ├── ansible                     # Ansible roles and collections
-│   ├── crossplane                  # Crossplane composition definitions
+│   ├── pulumi                      # Pulumi components and stacks
 │   ├── flakes                      # Nix flakes for OCI images
 │   ├── fluxcd                      # FluxCD definitions
 │   ├── kairos-bundles              # Kairos bundles

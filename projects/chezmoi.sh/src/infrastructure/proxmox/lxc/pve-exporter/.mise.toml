@@ -31,7 +31,7 @@
 # Secret Management — PVE API credentials (operator-provided)
 # -----------------------------------------------------------------------------
 # Creates placeholder secret files. The operator must fill in PVE_HOST and
-# PVE_TOKEN_VALUE manually (these are not managed by Crossplane).
+# PVE_TOKEN_VALUE manually (these are not managed by Pulumi either — operator-provided).
 #
 #   sops -d secrets/pve-exporter.sops.env    # inspect current values
 #   sops secrets/pve-exporter.sops.env       # edit in $EDITOR

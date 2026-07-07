@@ -66,17 +66,13 @@ When the **nex·rpi** instance is up and running, we need to bootstrap and deplo
 
 4. Deploy the **chezmoi.sh** infrastructure *(required by nex·rpi)*:
 
-   ```bash {"category":"disaster-recovery-plan","name":"DRP/chezmoi.sh (crossplane)"}
-   pushd ${ARCANE_DIR}/projects/chezmoi.sh
-   just crossplane generate-applyset || true
-   just crossplane force-apply
-   popd
+   ```bash {"category":"disaster-recovery-plan","name":"DRP/chezmoi.sh (pulumi)"}
+   cd ${ARCANE_DIR}/projects/chezmoi.sh/src/infrastructure/pulumi
+   pulumi up
    ```
 
 5. Deploy the **nex·rpi** infrastructure\*:
-   ```bash {"category":"disaster-recovery-plan","name":"DRP/nex·rpi (crossplane)"}
-   pushd ${ARCANE_DIR}/projects/nx
-   just crossplane generate-applyset || true
-   just crossplane force-apply
-   popd
+   ```bash {"category":"disaster-recovery-plan","name":"DRP/nex·rpi (pulumi)"}
+   cd ${ARCANE_DIR}/projects/nx/src/infrastructure/pulumi
+   pulumi up
    ```

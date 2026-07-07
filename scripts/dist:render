@@ -149,14 +149,6 @@ def find_app_dirs() -> list[Path]:
             dirs.append(kust.parent)
     for kust in REPO_ROOT.glob("projects/*/src/argocd/kustomization.yaml"):
         dirs.append(kust.parent)
-    for kust in REPO_ROOT.glob(
-        "projects/*/src/infrastructure/crossplane/kustomization.yaml"
-    ):
-        dirs.append(kust.parent)
-    for kust in REPO_ROOT.glob(
-        "projects/*/src/infrastructure/crossplane/providers/*/kustomization.yaml"
-    ):
-        dirs.append(kust.parent)
     return sorted(dirs)
 
 
@@ -168,8 +160,7 @@ def find_staged_dirs() -> list[Path]:
         text=True,
     )
     pattern = re.compile(
-        r"^(projects/[^/]+/src/(?:(?:apps|infrastructure/kubernetes)/[^/]+|argocd"
-        r"|infrastructure/crossplane(?:/providers/[^/]+)?))/"
+        r"^(projects/[^/]+/src/(?:(?:apps|infrastructure/kubernetes)/[^/]+|argocd))/"
     )
     seen: set[str] = set()
     dirs: list[Path] = []

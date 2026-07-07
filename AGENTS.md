@@ -6,7 +6,7 @@ This file is the single source of truth — `CLAUDE.md` and other CLI-specific f
 ## Repository overview
 
 Arcane is a personal homelab managed as code. Multiple Kubernetes clusters (Talos Linux)
-deployed via GitOps (ArgoCD), with Crossplane for cloud infrastructure, OpenBao for secrets,
+deployed via GitOps (ArgoCD), with Pulumi for cloud infrastructure, OpenBao for secrets,
 and Cilium (CNI + Gateway API) for networking.
 
 The project has been rewritten four times (see `CHANGELOG.md`). It is currently in its
@@ -24,7 +24,7 @@ When in doubt, prefer the simple, maintainable option over the clever one.
 ```text
 catalog/        Reusable components (charts, compositions, OCI images, …)
 ├── ansible/        Ansible roles and collections
-├── crossplane/     XRDs and Composition definitions
+├── pulumi/          Pulumi components and stacks
 ├── docker/         Containerfile sources
 ├── flakes/         Nix flakes producing OCI images
 ├── fluxcd/         Legacy FluxCD components (being phased out)
@@ -39,7 +39,7 @@ docs/           ADRs (decisions/), experiments/, procedures/, reports/
 
 projects/       One subdirectory per cluster or standalone app
 ├── amiya.akn/      Core platform — Talos + ArgoCD, OpenBao, Pocket-Id, Zot (production)
-├── chezmoi.sh/     Shared Crossplane providers (AWS, Cloudflare, Vault)
+├── chezmoi.sh/     Shared Pulumi stacks (AWS, Cloudflare, Vault, Tailscale)
 ├── hass/           Home Assistant app project (not a cluster)
 ├── kazimierz.akn/  VPS public-access gateway (Pangolin + Gerbil + Traefik + CrowdSec)
 ├── lungmen.akn/    Home applications cluster — Talos + ArgoCD (active dev)
@@ -56,7 +56,7 @@ scripts/        Operational scripts (added to PATH by mise)
 | ------------------ | -------------------------------------------------------------------------------- |
 | Kubernetes         | Talos Linux (primary), K3s (legacy `maison`, being retired)                      |
 | GitOps             | ArgoCD (standardizing across all clusters)                                       |
-| Infrastructure     | Crossplane, Helm, Kustomize, Ansible (bare-metal / VPS provisioning)             |
+| Infrastructure     | Pulumi, Helm, Kustomize, Ansible (bare-metal / VPS provisioning)                 |
 | Cluster bootstrap  | Kairos bundles + Talos machine config patches (`catalog/talos/`)                 |
 | CNI / Policies     | Cilium                                                                           |
 | Ingress / Gateway  | Cilium Gateway API (HTTPRoute, TCPRoute) — Envoy Gateway is being phased out     |
@@ -119,7 +119,7 @@ mise run ansible:install    # Sync Python venv for Ansible roles
 * **Infrastructure (in-cluster)**: `projects/<cluster>/src/infrastructure/kubernetes/<name>/`.
   The ArgoCD ApplicationSet automatically appends `-system` to the directory name to form
   the target namespace (e.g. `in-gateway/` → namespace `in-gateway-system`).
-* **Infrastructure (cloud)**: `projects/<cluster>/src/infrastructure/crossplane/<name>/`.
+* **Infrastructure (cloud)**: `projects/<cluster>/src/infrastructure/pulumi/<name>/`.
 * **Helm overlays**: per-app `helmvalues/` directory (`default.yaml`, `hardened.yaml`, …) with
   cluster-specific `override.helmvalues.yaml` patched via Kustomize.
 * **OIDC** via Pocket-Id (hosted on `amiya.akn`) for the ArgoCD UI and other admin
@@ -138,11 +138,14 @@ See `projects/lungmen.akn/src/apps/` for the current app inventory; do not enume
 Components in `catalog/fluxcd/` exist for the legacy `maison` cluster, which is being
 phased out in favor of `lungmen.akn`. Don't add new dependencies on FluxCD.
 
-### Crossplane
+### Pulumi
 
-* Shared providers (AWS, Cloudflare, Vault) live in `projects/chezmoi.sh/`.
-* Reusable XRDs and Compositions in `catalog/crossplane/`.
-* Per-project Compositions in `projects/<cluster>/src/infrastructure/crossplane/`.
+* Shared components live in `catalog/pulumi/`.
+* Per-project stacks live in `projects/<cluster>/src/infrastructure/pulumi/`.
+* Secrets are published as Pulumi stack outputs (not pushed to Vault for upstream
+  stacks like LXC).
+* The `cluster-vault` component (`catalog/pulumi/components/cluster-vault/`)
+  provisions OpenBao mounts, policies, and auth backends per cluster.
 
 ### Secrets
 
@@ -299,11 +302,12 @@ argocd app get <namespace>/<name>
 kubectl get externalsecrets -n <namespace>
 ```
 
-### Crossplane / Infrastructure
+### Pulumi / Infrastructure
 
 ```sh
-kubectl get composite,claim,xr
-kubectl get providerconfig,provider
+pulumi stack                    # show current stack
+pulumi preview                  # diff pending changes (mise run pulumi:diff)
+pulumi up                       # apply changes (mise run pulumi:apply)
 vault auth -method=oidc        # via mise run bao:login
 ```
 

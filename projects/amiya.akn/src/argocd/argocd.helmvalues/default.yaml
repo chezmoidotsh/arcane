@@ -50,8 +50,8 @@ configs:
     # is used to determine which resources need to be deleted when pruning.
     application.instanceLabelKey: argocd.argoproj.io/instance
 
-    # force annotation tracking method, as we are using Crossplane API that can collide with
-    # the default `label` method.
+    # force annotation tracking method to avoid collisions with resources that
+    # manage their own labels via the default `label` method.
     application.resourceTrackingMethod: annotation
 
     # as only restricted users should be able to exec into pods, the UI exec feature should be

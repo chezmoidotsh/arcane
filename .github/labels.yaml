@@ -79,7 +79,7 @@
   description: Anything under projects/ — which cluster/app is named in the body
   color: 1D76DB
 - name: catalog
-  description: Anything under catalog/ — which area (ansible, crossplane, …) is named in the body
+  description: Anything under catalog/ — which area (ansible, crossplane, pulumi, …) is named in the body
   color: 8B5CF6
 - name: agents:knowledge
   description: Operational knowledge distilled from incidents (.agents/knowledge/)

@@ -53,13 +53,12 @@ GitOps-based deployment tool for Kubernetes.
 
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
-<img src="../../docs/assets/icons/system/crossplane.svg" alt="Crossplane Logo" width="120" align="right" style="margin-left: 16px;">
 
-### [Crossplane](https://crossplane.io/)
+### [Pulumi](https://www.pulumi.com/)
 
-Infrastructure as Code (IaC) tool for Kubernetes.
-
-***Why this choice**: It provides a way to manage cloud/3rd party services using the same IaC tools, ensuring consistency and auditability.*
+Infrastructure as Code (IaC) for cloud resources. Replaces Crossplane (see ADR-015).
+Stacks live in `projects/<cluster>/src/infrastructure/pulumi/`; shared components in
+`catalog/pulumi/`.
 
 </div>
 </div>

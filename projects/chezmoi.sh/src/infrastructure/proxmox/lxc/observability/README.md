@@ -229,7 +229,7 @@ Architecture diagram source: [`architecture.d2`](./architecture.d2).
 * `mise` with the repo's `.mise.toml` trusted (`mise trust`).
 * Docker (used by `nix:build:lxc` to wrap the Nix build).
 * `sops` with the repo age key loaded (`SOPS_AGE_KEY_FILE` already set by mise).
-* `kubectl` configured for `amiya.akn` (only for `lxc:secrets:sync`).
+* Pulumi CLI logged into the chezmoi.sh stack (see `src/infrastructure/pulumi/.mise.toml`); run `pulumi up` first (only for `lxc:secrets:sync`).
 * SSH key-based root access to the Proxmox node you push to.
 
 ## Secrets
@@ -238,12 +238,12 @@ Two SOPS/age-encrypted dotenv files, both baked into the image at build time and
 matched by the `.sops.yaml` rule for `proxmox/*/secrets/*.sops.env`. **No
 ingest/query credentials** — access control is the host firewall.
 
-| File                             | Keys                                            | Source     |
-| -------------------------------- | ----------------------------------------------- | ---------- |
-| `secrets/caddy.sops.env`         | `CLOUDFLARE_API_TOKEN`, `TAILSCALE_OAUTH_KEY`   | Crossplane |
-| `secrets/observability.sops.env` | `SLACK_WEBHOOK_URL`, `ALERTMANAGER_DEADMAN_URL` | operator   |
+| File                             | Keys                                            | Source   |
+| -------------------------------- | ----------------------------------------------- | -------- |
+| `secrets/caddy.sops.env`         | `CLOUDFLARE_API_TOKEN`, `TAILSCALE_OAUTH_KEY`   | Pulumi   |
+| `secrets/observability.sops.env` | `SLACK_WEBHOOK_URL`, `ALERTMANAGER_DEADMAN_URL` | operator |
 
-Both tokens in `caddy.sops.env` are Crossplane-provisioned and consumed exclusively
+Both tokens in `caddy.sops.env` are Pulumi-provisioned and consumed exclusively
 by the Caddy process — `CLOUDFLARE_API_TOKEN` for DNS-01 ACME and `TAILSCALE_OAUTH_KEY`
 for caddy-tailscale's tsnet node (tag `tag:o11y`). `SLACK_WEBHOOK_URL` is the Slack
 incoming webhook for the `#notifications` channel (page-tier alerts).
@@ -257,19 +257,16 @@ sops secrets/observability.sops.env
 #    → ALERTMANAGER_DEADMAN_URL (e.g. https://hc-ping.com/<uuid>)
 
 # 2. Cloudflare DNS-01 token + Tailscale OAuth key.
-#    Path A — Crossplane already running (steady state / rebuilds):
+#    Path A — Pulumi stack already applied (steady state / rebuilds):
 mise run lxc:secrets:sync
 ```
 
 > **Cloudflare/Tailscale tokens — bootstrap ordering matters (same as omni).** The
-> `lxc:secrets:sync` task pulls both tokens from Kubernetes secrets that Crossplane
-> writes. But Crossplane runs on a Talos cluster that **Omni** manages, and Omni
-> depends on this observability appliance being up — so on a **first bootstrap the
-> cluster (and Crossplane) does not exist yet**, and the tokens cannot be synced
-> from it. There is no automation for this chicken-and-egg case; create the secret
-> by hand.
+> `lxc:secrets:sync` task pulls both tokens from Pulumi stack outputs
+> (`pulumi stack output --show-secrets`). Run `pulumi up` in
+> `projects/chezmoi.sh/src/infrastructure/pulumi` first so the outputs exist.
 >
-> **Path B — Crossplane not up yet (initial bootstrap):** mint the Cloudflare
+> **Path B — Pulumi not applied yet (initial bootstrap):** mint the Cloudflare
 > DNS-01 token (Cloudflare dashboard → API Tokens → *Edit zone DNS* on `chezmoi.sh`,
 > scope **Zone → DNS → Edit** + **Zone → Zone → Read**) and a Tailscale OAuth client
 > (tag `tag:o11y`), then SOPS-encrypt them straight into the file — plaintext never
@@ -280,7 +277,7 @@ mise run lxc:secrets:sync
 >   sops -e --input-type dotenv --output-type dotenv /dev/stdin > secrets/caddy.sops.env
 > ```
 >
-> Once Crossplane is online, switch to Path A (`lxc:secrets:sync`) on the next
+> Once the Pulumi stack is applied, switch to Path A (`lxc:secrets:sync`) on the next
 > rebuild so both tokens are managed declaratively, and rotate the hand-made ones out.
 
 > **Migrating from `ALERTMANAGER_NOTIFY_URL`**: if you already have an
@@ -695,15 +692,12 @@ mise run lxc:upgrade -- pve.lan <source_id> <target_id>
    `victoriatraces` is absent from the channel, package the upstream release binary
    with autoPatchelfHook (same pattern as the zot LXC).
 
-2. **Crossplane tokens — provisioned.** The Cloudflare APIToken
-   (`cloudflare.iam.observability.yaml` → secret `chezmoi.sh-cloudflare-token-o11y`)
-   and the Tailscale OAuth client (`tailscale.oauth.observability.yaml` →
-   `observability-tailscale-oauth-client`, `tag:o11y`) live in
-   `projects/chezmoi.sh/src/infrastructure/crossplane/`. After they reconcile,
-   `lxc:secrets:sync` fetches both tokens into `caddy.sops.env` automatically.
-   Run `scripts/dist:render` to regenerate the rendered manifests. tsnet state is
-   stored at `/persistent/caddy/tsnet` (the mp0 data volume) and survives image
-   rebuilds — the OAuth key does not need to be non-ephemeral.
+2. **Pulumi tokens — provisioned.** The Cloudflare DNS-01 token and the
+   Tailscale OAuth key are Pulumi stack outputs in
+   `projects/chezmoi.sh/src/infrastructure/pulumi/`. After `pulumi up`,
+   `lxc:secrets:sync` fetches both into `caddy.sops.env` automatically.
+   tsnet state is stored at `/persistent/caddy/tsnet` (the mp0 data volume) and
+   survives image rebuilds — the OAuth key does not need to be non-ephemeral.
 
 2c. **Cert validity over the tailnet — resolved.** caddy-tailscale serves the
 tailnet listener at `observability.<tailnet>.ts.net` with TLS issued automatically

@@ -22,17 +22,14 @@ if (!config.isBootstraping) {
 	// scoped to this cluster only. ESO authenticates via the generated
 	// `amiya.akn-eso-role` to read the `amiya.akn/` KV mount.
 	//
-	// amiya.akn-authelia-policy and amiya.akn-crossplane-policy are bound by
-	// name only, not created here: they remain Crossplane-managed standalone
-	// Policy resources (see amiya.akn.xclustervault.yaml) — Vault's tokenPolicies
-	// is a full replace, so leaving them out entirely would silently drop those
-	// bindings the first time this role is reconciled by Pulumi.
+	// amiya.akn-authelia-policy is bound by name only, not created here: it
+	// is a pre-existing Vault policy that Authelia depends on — Vault's
+	// tokenPolicies is a full replace, so leaving it out entirely would
+	// silently drop that binding the first time this role is reconciled.
+	// TODO: migrate to additionalPolicies so Pulumi owns it.
 	new ClusterVaultComponent("amiya.akn", {
 		name: "amiya.akn",
-		additionalPolicyNames: [
-			"amiya.akn-authelia-policy",
-			"amiya.akn-crossplane-policy",
-		],
+		additionalPolicyNames: ["amiya.akn-authelia-policy"],
 	});
 
 	// ---------------------------------------------------------------------------

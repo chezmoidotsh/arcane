@@ -22,13 +22,13 @@
 
 `chezmoi.sh` is the root infrastructure project that manages all shared resources and infrastructure-as-code configuration used across the homelab, including:
 
-* **Crossplane providers** for cloud infrastructure (AWS, Cloudflare, Vault)
+* **Pulumi stacks** for cloud infrastructure (AWS, Cloudflare, Vault, Tailscale)
 * **TrueNAS management** for network-attached storage infrastructure
 * **Shared IaC compositions** and resources
 
 > \[!NOTE]
 > Even if this project is the "root" one, it relies on the [`amiya.akn`](../amiya.akn/README.md) project
-> to provide the Kubernetes cluster used by `OpenBao` and `Crossplane` *(IaC)*.
+> to provide the Kubernetes cluster used by `OpenBao` and `Pulumi` *(IaC)*.
 
 ### TrueNAS Scale Infrastructure
 

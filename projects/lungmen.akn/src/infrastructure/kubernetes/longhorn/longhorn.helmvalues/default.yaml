@@ -40,7 +40,7 @@ defaultBackupStore:
   # Endpoint used to access the default backupstore.
   backupTarget: s3://longhorn-backups@eu-west-1/lungmen.akn/
   # Name of the Kubernetes secret associated with the default backup target.
-  backupTargetCredentialSecret: longhorn-backup-credentials # NOTE: The user should be made by Crossplane but currently no provider can handle Access Keys
+  backupTargetCredentialSecret: longhorn-backup-credentials # NOTE: The user should be provisioned by Pulumi but access keys are currently operator-managed
 
 # Longhorn UI configuration
 # Controls the number of UI replicas to deploy

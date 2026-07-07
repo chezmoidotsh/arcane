@@ -150,7 +150,7 @@ plaintext values never touch disk.
 \| `secrets/pve-exporter.sops.env` | `PVE_HOST`        | Operator — PVE API host address (IP or FQDN)       |
 \|                                 | `PVE_TOKEN_VALUE` | Operator — token value from `pveum user token add` |
 
-Both values are operator-provided and not managed by Crossplane.
+Both values are operator-provided and not managed by Pulumi either.
 
 ### First-time setup
 

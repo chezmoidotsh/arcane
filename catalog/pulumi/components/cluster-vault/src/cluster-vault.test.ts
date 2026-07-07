@@ -353,7 +353,7 @@ describe("ClusterVaultComponent — additionalPolicyNames", () => {
 	it("binds the named policies to the ESO role without creating a Policy resource for them", async () => {
 		build({
 			name: "x",
-			additionalPolicyNames: ["x-authelia-policy", "x-crossplane-policy"],
+			additionalPolicyNames: ["x-authelia-policy", "x-external-policy"],
 		});
 		await drain();
 
@@ -367,7 +367,7 @@ describe("ClusterVaultComponent — additionalPolicyNames", () => {
 		const tokenPolicies = reveal<string[]>(role.tokenPolicies);
 		expect(tokenPolicies).to.include("x-eso-policy");
 		expect(tokenPolicies).to.include("x-authelia-policy");
-		expect(tokenPolicies).to.include("x-crossplane-policy");
+		expect(tokenPolicies).to.include("x-external-policy");
 	});
 });
 
