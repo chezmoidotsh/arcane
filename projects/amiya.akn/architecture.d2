@@ -117,14 +117,6 @@ amiya·akn: {
     tooltip: ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes.
   }
 
-  infrastructure.crossplane: {
-    class: [application]
-    label: Crossplane
-    icon: assets/icons/system/crossplane.svg
-    link: https://crossplane.io/
-    tooltip: Crossplane is an open-source Kubernetes add-on that extends your cluster with managed resources from any cloud or on-prem environment.
-  }
-
   # ────────────────────────────────────────────────────────────────────────────
   # Security Components
 
@@ -356,8 +348,6 @@ amiya·akn.system.longhorn <- amiya·akn.system.envoy-default-gateway: { source-
 
 
 amiya·akn.infrastructure.argocd  -> internet: HTTPS (443) / SSH (22) { class: [connect-to-internet] }
-
-amiya·akn.infrastructure.crossplane -> internet: HTTPS (443) {class: [connect-to-internet]}
 
 amiya·akn.security.pocket-id-stack.pocket-id -> aws.ses: "smtps://email-smtp.us-east-1.amazonaws.com:465" { }
 amiya·akn.security.pocket-id-stack.pocket-id -> internet: "https://analytics.pocket-id.org:443" { }

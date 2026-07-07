@@ -102,23 +102,22 @@ configuration tweak or a misconfigured pull.
 
 * `mise` with the repo's `.mise.toml` trusted (`mise trust`).
 * Docker (used by `nix:build:lxc` to wrap the Nix build).
-* `kubectl` configured for `amiya.akn` (only for the initial token sync).
+* Pulumi CLI logged into the chezmoi.sh stack (see `src/infrastructure/pulumi/.mise.toml`); run `pulumi up` first (only for the initial token sync).
 * `sops` with the repo age key loaded (`SOPS_AGE_KEY_FILE` already set by mise).
 * SSH key-based root access to the Proxmox node you intend to push to.
 
 ## Secrets — Cloudflare DNS-01 token
 
-The Cloudflare API token is managed by Crossplane
-([`cloudflare.iam.oci-registry.yaml`](../../../crossplane/cloudflare.iam.oci-registry.yaml)).
-Crossplane provisions the token at Cloudflare and writes it into the
-`crossplane-secrets` namespace on `amiya.akn`. We then fetch it once and
-encrypt it into the repository, so we can bake it into the LXC image
-without relying on a Kubernetes API connection at build time.
+The Cloudflare API token is a Pulumi stack output
+(`zotRegistryDns01Token`) in `projects/chezmoi.sh/src/infrastructure/pulumi/`.
+We fetch it via `mise run pulumi:cloudflare-token:oci-registry` and encrypt
+it into the repository, so we can bake it into the LXC image without relying
+on a Kubernetes API connection at build time.
 
 ### First-time sync (or rotation)
 
 ```sh
-mise run lxc:secrets:sync       # requires kubectl access to amiya.akn
+mise run lxc:secrets:sync       # requires `pulumi up` to have run first
 ```
 
 This writes `secrets/caddy.sops.env` (SOPS / age-encrypted). The plaintext
@@ -127,17 +126,14 @@ token never touches disk.
 ### Rotation
 
 ```sh
-# 1. Delete the Crossplane APIToken — ArgoCD recreates it, Crossplane
-#    rotates the secret, the old token is invalidated.
-kubectl delete apitoken chezmoi-sh-caddy-dns01-zot -n crossplane
+# 1. Rotate the token via Pulumi (replaces the old token at Cloudflare)
+cd projects/chezmoi.sh/src/infrastructure/pulumi
+pulumi up --replace
 
-# 2. Wait for the new secret to land
-kubectl wait --for=condition=Ready apitoken/chezmoi-sh-caddy-dns01-zot -n crossplane --timeout=2m
-
-# 3. Re-sync into the repo
+# 2. Re-sync into the repo
 mise run lxc:secrets:sync
 
-# 4. Rebuild and redeploy the LXC
+# 3. Rebuild and redeploy the LXC
 mise run lxc:build
 mise run lxc:push -- pve.lan
 ```
@@ -159,7 +155,7 @@ finishes. The fully documented one is in the next section.
 
 | Task                                                         | What it does                                                      |
 | ------------------------------------------------------------ | ----------------------------------------------------------------- |
-| `mise run lxc:secrets:sync`                                  | Fetch Cloudflare token from cluster → `secrets/caddy.sops.env`    |
+| `mise run lxc:secrets:sync`                                  | Fetch Cloudflare token from Pulumi → `secrets/caddy.sops.env`     |
 | `mise run lxc:build`                                         | Build with the token baked in (requires `secrets/caddy.sops.env`) |
 | `mise run lxc:push -- <pve-host>`                            | scp the tarball to Proxmox (`local` storage, hardcoded)           |
 | `mise run lxc:upgrade -- <pve-host> <source_id> <target_id>` | Upgrade a running LXC to a new image while preserving config      |

@@ -667,6 +667,9 @@ result-*
 catalog/kustomize/**/charts/
 projects/*/src/**/charts/
 
+# Local git worktrees (never tracked)
+.worktrees/
+
 # mise: ignore generated state but keep file-based tasks under .mise/tasks/,
 # static config files under .mise/omni/, and SOPS-encrypted env files
 .mise/*

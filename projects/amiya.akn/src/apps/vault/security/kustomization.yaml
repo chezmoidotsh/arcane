@@ -4,7 +4,6 @@ kind: Kustomization
 resources:
   - network-policy.default-hardened.yaml
   - network-policy.allow-openbao-from-cilium-gateway.yaml
-  - network-policy.allow-openbao-from-crossplane.yaml
   - network-policy.allow-openbao-to-kubernetes-api.yaml
   - network-policy.allow-openbao-to-lungmen-api.yaml
   - network-policy.allow-openbao-to-pocket-id.yaml

@@ -26,139 +26,6 @@ data:
     requestedIDTokenClaims:
       email: {essential: true}
       groups: {essential: true}
-  resource.customizations: |
-    "*.upbound.io/*":
-      health.lua: |
-        health_status = {
-          status = "Progressing",
-          message = "Provisioning ..."
-        }
-
-        local function contains (table, val)
-          for i, v in ipairs(table) do
-            if v == val then
-              return true
-            end
-          end
-          return false
-        end
-
-        local has_no_status = {
-          "ProviderConfig",
-          "ClusterProviderConfig",
-          "ProviderConfigUsage"
-        }
-
-        if obj.status == nil or next(obj.status) == nil and contains(has_no_status, obj.kind) then
-          health_status.status = "Healthy"
-          health_status.message = "Resource is up-to-date."
-          return health_status
-        end
-
-        if obj.status == nil or next(obj.status) == nil or obj.status.conditions == nil then
-          if contains({"ProviderConfig", "ClusterProviderConfig"}, obj.kind) and obj.status.users ~= nil then
-            health_status.status = "Healthy"
-            health_status.message = "Resource is in use."
-            return health_status
-          end
-          return health_status
-        end
-
-        for i, condition in ipairs(obj.status.conditions) do
-          if condition.type == "LastAsyncOperation" then
-            if condition.status == "False" then
-              health_status.status = "Degraded"
-              health_status.message = condition.message
-              return health_status
-            end
-          end
-
-          if condition.type == "Synced" then
-            if condition.status == "False" then
-              health_status.status = "Degraded"
-              health_status.message = condition.message
-              return health_status
-            end
-          end
-
-          if condition.type == "Ready" then
-            if condition.status == "True" then
-              health_status.status = "Healthy"
-              health_status.message = "Resource is up-to-date."
-              return health_status
-            end
-          end
-        end
-        return health_status
-
-    "*.crossplane.io/*":
-      health.lua: |
-        health_status = {
-          status = "Progressing",
-          message = "Provisioning ..."
-        }
-
-        local function contains (table, val)
-          for i, v in ipairs(table) do
-            if v == val then
-              return true
-            end
-          end
-          return false
-        end
-
-        local has_no_status = {
-          "Composition",
-          "CompositionRevision",
-          "DeploymentRuntimeConfig",
-          "ControllerConfig",
-          "ProviderConfig",
-          "ClusterProviderConfig",
-          "ProviderConfigUsage"
-        }
-
-        if obj.status == nil or next(obj.status) == nil and contains(has_no_status, obj.kind) then
-            health_status.status = "Healthy"
-            health_status.message = "Resource is up-to-date."
-          return health_status
-        end
-
-        if obj.status == nil or next(obj.status) == nil or obj.status.conditions == nil then
-          if contains({"ProviderConfig", "ClusterProviderConfig"}, obj.kind) and obj.status.users ~= nil then
-            health_status.status = "Healthy"
-            health_status.message = "Resource is in use."
-            return health_status
-          end
-          return health_status
-        end
-
-        for i, condition in ipairs(obj.status.conditions) do
-          if condition.type == "LastAsyncOperation" then
-            if condition.status == "False" then
-              health_status.status = "Degraded"
-              health_status.message = condition.message
-              return health_status
-            end
-          end
-
-          if condition.type == "Synced" then
-            if condition.status == "False" then
-              health_status.status = "Degraded"
-              health_status.message = condition.message
-              return health_status
-            end
-          end
-
-          if contains({"Ready", "Healthy", "Offered", "Established"}, condition.type) then
-            if condition.status == "True" then
-              health_status.status = "Healthy"
-              health_status.message = "Resource is up-to-date."
-              return health_status
-            end
-          end
-        end
-
-        return health_status
   resource.customizations.ignoreDifferences._Secret: |
     managedFieldsManagers:
       - cilium
@@ -214,10 +81,60 @@ data:
       - /endpoints
       - /ports
   resource.exclusions: |
+    ### Network resources created by the Kubernetes control plane and excluded to reduce the number of watched events and UI clutter
     - apiGroups:
-        - "*"
+      - ''
+      - discovery.k8s.io
       kinds:
-        - ProviderConfigUsage
+      - Endpoints
+      - EndpointSlice
+    ### Internal Kubernetes resources excluded reduce the number of watched events
+    - apiGroups:
+      - coordination.k8s.io
+      kinds:
+      - Lease
+    ### Internal Kubernetes Authz/Authn resources excluded reduce the number of watched events
+    - apiGroups:
+      - authentication.k8s.io
+      - authorization.k8s.io
+      kinds:
+      - SelfSubjectReview
+      - TokenReview
+      - LocalSubjectAccessReview
+      - SelfSubjectAccessReview
+      - SelfSubjectRulesReview
+      - SubjectAccessReview
+    ### Intermediate Certificate Request excluded reduce the number of watched events
+    - apiGroups:
+      - certificates.k8s.io
+      kinds:
+      - CertificateSigningRequest
+    - apiGroups:
+      - cert-manager.io
+      kinds:
+      - CertificateRequest
+    ### Cilium internal resources excluded reduce the number of watched events and UI Clutter
+    - apiGroups:
+      - cilium.io
+      kinds:
+      - CiliumIdentity
+      - CiliumEndpoint
+      - CiliumEndpointSlice
+    ### Kyverno intermediate and reporting resources excluded reduce the number of watched events and improve performance
+    - apiGroups:
+      - kyverno.io
+      - reports.kyverno.io
+      - wgpolicyk8s.io
+      kinds:
+      - PolicyReport
+      - ClusterPolicyReport
+      - EphemeralReport
+      - ClusterEphemeralReport
+      - AdmissionReport
+      - ClusterAdmissionReport
+      - BackgroundScanReport
+      - ClusterBackgroundScanReport
+      - UpdateRequest
   statusbadge.enabled: "false"
   timeout.hard.reconciliation: 0s
   timeout.reconciliation: 120s

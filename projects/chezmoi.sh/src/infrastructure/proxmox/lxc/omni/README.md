@@ -141,7 +141,7 @@ PVE host config, not inside the container rootfs).
 
 * `mise` with the repo's `.mise.toml` trusted (`mise trust`).
 * Docker (used by `nix:build:lxc` to wrap the Nix build).
-* `kubectl` configured for `amiya.akn` (only for the initial token sync).
+* Pulumi CLI logged into the chezmoi.sh stack (see `src/infrastructure/pulumi/.mise.toml`); run `pulumi up` first (only for the initial token sync).
 * `sops` with the repo age key loaded (`SOPS_AGE_KEY_FILE` already set by mise).
 * `htpasswd` (apache2-utils / httpd-tools) for `lxc:secrets:rotate`.
 * SSH key-based root access to the Proxmox node you intend to push to.
@@ -165,7 +165,7 @@ time. The plaintext values never touch disk.
 
 \| File                     | Variable                  | Source                                    |
 \| `secrets/omni.sops.env`  | `DEX_ADMIN_PASSWORD_HASH` | Operator (`htpasswd -bnBC 12 "" '<pw>'`). |
-\| `secrets/caddy.sops.env` | `CLOUDFLARE_API_TOKEN`    | Crossplane (`cloudflare.iam.omni.yaml`), or manual (bootstrap). |
+\| `secrets/caddy.sops.env` | `CLOUDFLARE_API_TOKEN`    | Pulumi (`omniDns01Token` stack output), or manual (bootstrap). |
 
 ### First-time setup
 
@@ -177,30 +177,26 @@ mise run lxc:secrets:rotate
 ```
 
 **Cloudflare token — bootstrap ordering matters.** The `lxc:secrets:sync`
-task pulls the token from a Kubernetes secret that Crossplane writes. But
-Crossplane runs on a Talos cluster that Omni itself manages — so on a
-first bootstrap, **Omni comes up before Crossplane exists**, and the token
-cannot be synced from the cluster yet. There is no automation for this
-chicken-and-egg case; create the token by hand.
+task pulls the token from a Pulumi stack output (`pulumi stack output --show-secrets`). Run `pulumi up` in
+`projects/chezmoi.sh/src/infrastructure/pulumi` first so the output exists.
 
-* **Path A — Crossplane is already running** (steady state / rebuilds):
+* **Path A — Pulumi stack already applied** (steady state / rebuilds):
 
   ```sh
   mise run lxc:secrets:sync
   ```
 
-  Reads the Kubernetes secret `chezmoi.sh-cloudflare-token-caddy-dns01-omni`
-  from the `crossplane-secrets` namespace, written by the Crossplane
-  `APIToken` resource `chezmoi-sh-caddy-dns01-omni`
-  (`cloudflare.iam.omni.yaml`).
+  Delegates to `mise run pulumi:cloudflare-token:omni`, which fetches the
+  `omniDns01Token` Pulumi stack output and writes it into
+  `secrets/caddy.sops.env`.
 
-* **Path B — Crossplane not up yet** (initial bootstrap): mint the token
+* **Path B — Pulumi not applied yet** (initial bootstrap): mint the token
   manually in the Cloudflare dashboard, then SOPS-encrypt it straight into
   the secret file.
 
   1. Cloudflare dashboard → **My Profile → API Tokens → Create Token**.
   2. Use the **Edit zone DNS** template, or a custom token with these
-     permissions (same scope as `cloudflare.iam.omni.yaml`):
+     permissions:
      * **Zone → DNS → Edit**
      * **Zone → Zone → Read**
   3. **Zone Resources → Include → Specific zone → `chezmoi.sh`**.
@@ -213,16 +209,16 @@ chicken-and-egg case; create the token by hand.
        > secrets/caddy.sops.env
      ```
 
-  Once Crossplane is online, switch to Path A on the next rebuild so the
-  token is managed declaratively (and rotate the hand-made one out).
+  Once the Pulumi stack is applied, switch to Path A on the next rebuild so
+  the token is managed declaratively (and rotate the hand-made one out).
 
 ### Rotation
 
 * **Dex admin password** — re-run `mise run lxc:secrets:rotate`, rebuild,
   redeploy.
-* **Cloudflare token** — delete the Crossplane `APIToken`
-  `chezmoi-sh-caddy-dns01-omni` so it gets recreated, wait for `Ready`,
-  then re-run `mise run lxc:secrets:sync`, rebuild, redeploy.
+* **Cloudflare token** — rotate via `pulumi up --replace` in the
+  chezmoi.sh Pulumi stack, then re-run `mise run lxc:secrets:sync`,
+  rebuild, redeploy.
 
 ## Build & deploy
 
@@ -243,7 +239,7 @@ multiple builds the same day.
 
 \| Task                                                              | What it does                                                                                                                     |
 \| `mise run lxc:secrets:rotate`                                     | Generate the Dex admin bcrypt hash → `secrets/omni.sops.env`                                                                     |
-\| `mise run lxc:secrets:sync`                                       | Fetch Cloudflare token from Crossplane → `secrets/caddy.sops.env`                                                                   |
+\| `mise run lxc:secrets:sync`                                       | Fetch Cloudflare token from Pulumi → `secrets/caddy.sops.env`                                                                   |
 \| `mise run lxc:build`                                              | Build with both secrets baked in (requires the two `.sops.env`)                                                                  |
 \| `mise run lxc:push -- <pve-host>`                                 | `scp` the tarball to Proxmox (`local` storage, hardcoded)                                                                        |
 \| `mise run lxc:upgrade -- <pve-host> <source_id> [-t <target_id>]` | Rootfs-swap upgrade of a running LXC; preserves the `mp0` volume. `--target-id` auto-picks the first free VMID ≥ 100 if omitted. |

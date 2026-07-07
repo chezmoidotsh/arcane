@@ -17,12 +17,11 @@ view. When updating, prefer editing the source PM and re-extracting.
 
 ## Files
 
-| File            | Components covered                                             |
-| --------------- | -------------------------------------------------------------- |
-| `talos.md`      | `talosctl`, machine config patches, K8s upgrade procedure      |
-| `cilium.md`     | Cilium datapath, BPF programs, hardware constraints (r8169)    |
-| `openbao.md`    | OpenBao Kubernetes auth, JWT issuer, ESO integration           |
-| `crossplane.md` | provider-vault behavior, secret reference drift                |
-| `zot.md`        | Zot OCI registry cache, GC, retention, disk-full recovery      |
-| `longhorn.md`   | Longhorn PVC online resize, dependency considerations          |
-| `kyverno.md`    | (Removed from clusters) policy scoping pitfalls — kept for ref |
+| File          | Components covered                                             |
+| ------------- | -------------------------------------------------------------- |
+| `talos.md`    | `talosctl`, machine config patches, K8s upgrade procedure      |
+| `cilium.md`   | Cilium datapath, BPF programs, hardware constraints (r8169)    |
+| `openbao.md`  | OpenBao Kubernetes auth, JWT issuer, ESO integration           |
+| `zot.md`      | Zot OCI registry cache, GC, retention, disk-full recovery      |
+| `longhorn.md` | Longhorn PVC online resize, dependency considerations          |
+| `kyverno.md`  | (Removed from clusters) policy scoping pitfalls — kept for ref |

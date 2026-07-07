@@ -124,14 +124,18 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 Deploy applications in this specific order:
 
 1. `kubevault` and `shoot`
-2. `external-secret`
-3. `cert-manager` (requires Crossplane for Let's Encrypt secrets)
-4. `cilium`, `envoy-gateway`, and `external-dns`
-5. `tailscale`
-6. `argocd` (in this order: ExternalSecret, all components except controller, then controller)
-7. `longhorn` and `crossplane`
 
-* NOTE: for `crossplane`, we need to deploy first the `crossplane-chezmoi.sh` application, and firstly all `Crossplane` providers, required to deploy all CRDs.
+2. `external-secret`
+
+3. `cert-manager` (requires Pulumi for Let's Encrypt secrets)
+
+4. `cilium`, `envoy-gateway`, and `external-dns`
+
+5. `tailscale`
+
+6. `argocd` (in this order: ExternalSecret, all components except controller, then controller)
+
+7. `longhorn`
 
 8. Other applications
 

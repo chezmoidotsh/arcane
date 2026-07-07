@@ -6,14 +6,14 @@
 # HTTPS termination, path routing, and embedded Tailscale (caddy-tailscale).
 #
 # Usage:
-#   mise run lxc:secrets:sync                       # Sync Crossplane tokens (Cloudflare + Tailscale); preserves Alertmanager URLs
+#   mise run lxc:secrets:sync                       # Sync Pulumi tokens (Cloudflare + Tailscale); preserves Alertmanager URLs
 #   mise run lxc:build                              # Build the LXC tarball with all secrets baked in
 #   mise run lxc:push -- <pve-host>                 # Upload template to Proxmox (local storage)
 #   mise run lxc:upgrade -- <pve-host> --vmid <vmid>  # Upgrade a running LXC in place
 #
 # Secret files (both SOPS/age-encrypted, baked into the image at build time):
-#   secrets/caddy.sops.env          CLOUDFLARE_API_TOKEN          (Crossplane — DNS-01 ACME)
-#                                   TAILSCALE_OAUTH_KEY           (Crossplane — caddy-tailscale tsnet, tag:o11y)
+#   secrets/caddy.sops.env          CLOUDFLARE_API_TOKEN          (Pulumi — DNS-01 ACME)
+#                                   TAILSCALE_OAUTH_KEY           (Pulumi — caddy-tailscale tsnet, tag:o11y)
 #   secrets/observability.sops.env  SLACK_WEBHOOK_URL             (operator-provided — Slack incoming webhook)
 #                                   ALERTMANAGER_DEADMAN_URL      (operator-provided — external heartbeat URL)
 #
@@ -27,73 +27,35 @@
 #
 # Prerequisites:
 #   - Docker (for the Nix build container)
-#   - kubectl configured for amiya.akn (for lxc:secrets:sync)
+#   - Pulumi CLI logged into the chezmoi.sh stack (see src/infrastructure/pulumi/.mise.toml); run pulumi up first
 #   - sops + age key in SOPS_AGE_KEY_FILE (configured in root .mise.toml)
 #   - SSH key-based access to root@<pve-host> (for lxc:push)
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Secret Management — Crossplane tokens (Cloudflare DNS-01 + Tailscale OAuth)
+# Secret Management — Pulumi tokens (Cloudflare DNS-01 + Tailscale OAuth)
 # -----------------------------------------------------------------------------
-# Fetches both Crossplane-provisioned tokens and writes them to caddy.sops.env.
-# The Tailscale OAuth key now goes to Caddy (caddy-tailscale tsnet) rather than
-# a separate tailscaled daemon — both tokens share the same secrets file since
-# both are consumed exclusively by the Caddy process.
+# Delegates to the pulumi:cloudflare-token:observability and
+# pulumi:tailscale-oauth:observability tasks (defined in the chezmoi.sh
+# project .mise.toml), which fetch Pulumi stack outputs and write them into
+# caddy.sops.env. Both tokens share the same secrets file since both are
+# consumed exclusively by the Caddy process.
 #
-# Alertmanager URLs in observability.sops.env are preserved (operator-set, never
-# touched by Crossplane).
+# Alertmanager URLs in observability.sops.env are preserved (operator-set,
+# never touched by Pulumi).
 #
-# NOTE: depends on Crossplane resources being Ready — see README "Known gaps".
-# Until they exist, set the tokens manually:
-#   printf 'CLOUDFLARE_API_TOKEN=<token>\nTAILSCALE_OAUTH_KEY=<key>\n' | \
-#     sops -e --input-type dotenv --output-type dotenv /dev/stdin > secrets/caddy.sops.env
+# NOTE: requires `pulumi up` to have run in src/infrastructure/pulumi so the
+# stack outputs exist.
 
 [tasks."lxc:secrets:sync"]
-description = "Sync Crossplane tokens (Cloudflare + Tailscale) into secrets/caddy.sops.env"
+description = "Sync Pulumi tokens (Cloudflare + Tailscale) into secrets/caddy.sops.env"
 dir = "{{ config_root }}"
 run = '''
   set -euo pipefail
-
-  # --- Fetch Crossplane-provisioned tokens ---------------------------------
-  echo "[INFO] Fetching Cloudflare token (chezmoi-sh/chezmoi.sh-cloudflare-token-o11y)..." >&2
-  CF_TOKEN=$(kubectl get secret -n chezmoi-sh chezmoi.sh-cloudflare-token-o11y \
-    -o jsonpath='{.data.attribute\.value}' | base64 -d)
-  [[ -n "${CF_TOKEN}" ]] || { echo "[ERROR] Empty Cloudflare token — is the APIToken Ready?" >&2; exit 1; }
-
-  echo "[INFO] Fetching Tailscale OAuth client_secret (crossplane-secrets/observability-tailscale-oauth-client)..." >&2
-  TS_KEY=$(kubectl get secret -n crossplane-secrets observability-tailscale-oauth-client \
-    -o jsonpath='{.data.client_secret}' | base64 -d)
-  [[ -n "${TS_KEY}" ]] || { echo "[ERROR] Empty Tailscale key — is the Workspace Ready?" >&2; exit 1; }
-
-  mkdir -p "{{ config_root }}/secrets"
-  CADDY="{{ config_root }}/secrets/caddy.sops.env"
-  OBS="{{ config_root }}/secrets/observability.sops.env"
-  TMP_CADDY="{{ config_root }}/secrets/.tmp.$$.caddy.sops.env"
-  TMP_OBS="{{ config_root }}/secrets/.tmp.$$.observability.sops.env"
-  trap 'rm -f "${TMP_CADDY}" "${TMP_OBS}"' EXIT
-
-  # --- caddy.sops.env — both Crossplane tokens, safe to (re)write wholesale --
-  # CLOUDFLARE_API_TOKEN: DNS-01 ACME challenge
-  # TAILSCALE_OAUTH_KEY:  caddy-tailscale tsnet auth (tag:o11y)
-  printf 'CLOUDFLARE_API_TOKEN=%s\nTAILSCALE_OAUTH_KEY=%s\n' "${CF_TOKEN}" "${TS_KEY}" > "${TMP_CADDY}"
-  sops --encrypt --input-type dotenv --output-type dotenv "${TMP_CADDY}" > "${CADDY}"
-
-  # --- observability.sops.env — PRESERVE operator-set Slack webhook and deadman
-  #     URL; no Crossplane-managed keys remain here (Tailscale moved to caddy.sops.env).
-  SLACK_URL=""; DEADMAN=""
-  if [[ -f "${OBS}" ]]; then
-    SLACK_URL=$(sops -d --extract '["SLACK_WEBHOOK_URL"]' "${OBS}" 2>/dev/null || true)
-    DEADMAN=$(sops -d --extract '["ALERTMANAGER_DEADMAN_URL"]' "${OBS}" 2>/dev/null || true)
-  else
-    echo "[WARN] ${OBS} missing — set SLACK_WEBHOOK_URL and ALERTMANAGER_DEADMAN_URL." >&2
-  fi
-  {
-    printf 'SLACK_WEBHOOK_URL=%s\n' "${SLACK_URL}"
-    printf 'ALERTMANAGER_DEADMAN_URL=%s\n' "${DEADMAN}"
-  } > "${TMP_OBS}"
-  sops --encrypt --input-type dotenv --output-type dotenv "${TMP_OBS}" > "${OBS}"
-
-  echo "[SUCCESS] caddy.sops.env (Cloudflare + Tailscale) + observability.sops.env (Slack webhook + deadman URL preserved)." >&2
+  mise run pulumi:cloudflare-token:observability
+  mise run pulumi:tailscale-oauth:observability
+  echo "[SUCCESS] caddy.sops.env synced from Pulumi (Cloudflare + Tailscale)." >&2
+  echo "[NOTE] observability.sops.env (Slack webhook + deadman URL) is operator-managed and untouched." >&2
 '''
 
 # -----------------------------------------------------------------------------

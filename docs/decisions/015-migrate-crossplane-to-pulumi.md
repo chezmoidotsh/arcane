@@ -283,11 +283,19 @@ Phase 1 (now): local, no cluster              Phase 2 (deferred): in-cluster
 * **Dropped from scope**: the `DomainIdentity` XRD/`DomainIdentityComponent` (AWS SES domain
   verification for chezmoi.sh) — removed from both Crossplane and the Pulumi scaffolding rather
   than migrated, since outbound email now goes through Mailjet and the AWS SES setup is unused.
+* **Completed**: Crossplane decommissioned on `amiya.akn` — controller, providers, per-project
+  infrastructure stacks, network policies, and the OpenBao provisioning policy removed.
+  Repository references (`AGENTS.md`, READMEs, bootstrap docs, the disaster recovery plan,
+  architecture diagrams) updated to reflect Pulumi as the IaC layer.
 * **Pending**: Garage in production (#1097, blocking real `pulumi login`); running the actual
   `pulumi import` against live resources (procedure written, not yet executed — needs live
   cloud/Vault credentials and a resolved Garage endpoint); validating `pulumi preview` is clean
-  post-import; Crossplane decommissioning on `amiya.akn`; and — later — the Phase 2 in-cluster
-  cutover. All tracked on #1091.
+  post-import; removing `catalog/crossplane/`'s now-unreferenced shared XRDs/Compositions and
+  their SEC001 OPA policy (deferred to a follow-up PR to avoid conflicting with other in-flight
+  work on that directory); removing the `crossplane` ArgoCD `AppProject` on `amiya.akn`, kept
+  for one more sync cycle so ArgoCD can prune the now-source-less Crossplane Applications
+  before the project they reference is deleted; and — later — the Phase 2 in-cluster cutover.
+  All tracked on #1091.
 * **Standards**: shared components in `catalog/pulumi/`; per-project stacks in
   `projects/<scope>/src/infrastructure/pulumi/`, mirroring the `catalog/crossplane/` +
   `projects/<cluster>/src/infrastructure/crossplane/` split this replaces.
@@ -348,3 +356,10 @@ Phase 1 (now): local, no cluster              Phase 2 (deferred): in-cluster
 * **2026-07-05**: **REMOVAL**: Dropped the `DomainIdentity` XRD and `DomainIdentityComponent`
   from both Crossplane and the Pulumi scaffolding — chezmoi.sh's outbound email now goes
   through Mailjet, making the AWS SES domain identity setup unused.
+* **2026-07-07**: **REMOVAL**: Decommissioned Crossplane on `amiya.akn` — controller, provider
+  definitions, per-project infrastructure stacks, network policies, and the OpenBao
+  provisioning policy removed in favor of the already-scaffolded Pulumi replacement (#1091).
+  `catalog/crossplane/`'s shared XRDs/Compositions are kept for now (unreferenced, no runtime
+  impact) to avoid conflicting with other in-flight work; their removal is deferred to a
+  follow-up PR. The `crossplane` ArgoCD `AppProject` is likewise kept for one more sync
+  cycle, so ArgoCD can prune the Crossplane Applications before the project is deleted.

@@ -1,8 +1,0 @@
----
-apiVersion: vault.upbound.io/v1beta1
-kind: ProviderConfig
-metadata:
-  name: default
-spec:
-  address: http://openbao.vault.svc.cluster.local:8200
-  role: crossplane-provisioning

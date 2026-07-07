@@ -11,15 +11,15 @@ Distilled from incident post-mortems. Each bullet stands alone.
 
 ## Network egress
 
-* **For every `RemoteClusterVault` registered in Crossplane**, OpenBao needs an outbound egress path to that cluster's API server (port 6443) via FQDN. Default-hardened NetworkPolicies in the `vault` namespace will block this unless explicitly allowed.
+* For every remote cluster provisioned by the Pulumi `cluster-vault` component, OpenBao needs an outbound egress path to that cluster's API server (port 6443) via FQDN. Default-hardened NetworkPolicies in the `vault` namespace will block this unless explicitly allowed.
 * Pattern: `CiliumNetworkPolicy` with `toFQDNs: kubernetes.<cluster>.chezmoi.sh:6443` in `projects/amiya.akn/src/apps/vault/security/`.
 
 ## Rotation (manual)
 
-* Crossplane `provider-vault` does not re-apply `AuthBackendConfig` on referenced-secret change. Rotation steps:
-  1. Update the source secret (via ExternalSecret or direct).
-  2. Either bump a spec annotation on the `AuthBackendConfig` to force Crossplane re-apply, **or**
-  3. Direct write: `bao write auth/<mount>/config token_reviewer_jwt=@<file> ...` — bypasses GitOps; document if used.
+* To rotate a remote cluster's token-reviewer JWT (managed by the Pulumi `cluster-vault` component):
+  1. Update the source secret on the target cluster (via ExternalSecret or direct).
+  2. Re-run `pulumi up` in the cluster's Pulumi stack so the `cluster-vault` component re-applies `AuthBackendConfig` with the new JWT, **or**
+  3. Direct write: `bao write auth/<mount>/config token_reviewer_jwt=@<file> ...` — bypasses IaC; document if used.
 
 ## Sources
 

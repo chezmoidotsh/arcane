@@ -466,9 +466,9 @@ git commit -S -m "^[deps]: cert-manager to v1.16.0"
 
 ```bash
 git commit -S -m "$(cat <<'EOF'
-^[catalog:kustomize,catalog:crossplane]: Update cert-manager to v1.16.0
+^[catalog:kustomize,catalog:pulumi]: Update cert-manager to v1.16.0
 
-Both the Kustomize base and Crossplane composition depend on the
+Both the Kustomize base and Pulumi component depend on the
 cert-manager API version. Bumping them atomically prevents version
 skew between the two catalogs.
 

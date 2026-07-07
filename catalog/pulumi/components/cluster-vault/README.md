@@ -99,7 +99,9 @@ path "lungmen.akn/metadata/+/database/*" { capabilities = ["create", "read", "up
 > target cluster.
 >
 > Source them from the target cluster's `external-secrets-system` namespace, from the
-> Secret labelled `vault.crossplane.chezmoi.sh/cluster-name: <cluster-name>`:
+> Secret labelled `vault.crossplane.chezmoi.sh/cluster-name: <cluster-name>` — a
+> legacy label key originally set by Crossplane and preserved for backward
+> compatibility with existing in-cluster Secrets:
 >
 > ```sh
 > # 1. Find the reviewer Secret on the target cluster
@@ -230,8 +232,8 @@ creates and names these itself from the caller-supplied policy document; the cal
 never creates the `vault.Policy` resource directly.
 
 `additionalPolicyNames` entries create no resource at all — they're plain strings
-appended to `tokenPolicies` as-is, for policies another owner (e.g. Crossplane, during
-a migration) deliberately keeps managing.
+appended to `tokenPolicies` as-is, for policies another owner deliberately keeps
+managing outside this component.
 
 ### Roles
 
@@ -275,9 +277,8 @@ export interface ClusterVaultArgs {
 	/**
 	 * Names of already-existing Vault policies to bind to the ESO role, alongside
 	 * the generated ESO policy and `additionalPolicies`. Unlike `additionalPolicies`,
-	 * the component does not create these — use this for policies another owner
-	 * (e.g. Crossplane, during a migration) is deliberately keeping ownership of;
-	 * the component only references the name.
+	 * the component does not create these — use this for policies another owner is
+	 * deliberately keeping ownership of; the component only references the name.
 	 */
 	additionalPolicyNames?: pulumi.Input<string>[];
 	/** Present for the Remote variant. Mutually exclusive with `tailscaled`. */

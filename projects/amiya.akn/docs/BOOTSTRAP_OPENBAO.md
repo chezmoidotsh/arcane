@@ -14,21 +14,20 @@
 
 ## 🔧 OpenBao Configuration Principles and Bootstrap
 
-The target OpenBao architecture is designed for automation and declarative management: all configuration should ideally be managed as code via GitOps tools (Crossplane for policy/secret management, External Secrets Operator for Kubernetes synchronization).
+The target OpenBao architecture is designed for automation and declarative management: all configuration should ideally be managed as code via GitOps tools (Pulumi for policy/secret management, External Secrets Operator for Kubernetes synchronization).
 
 However, an initial manual bootstrap is required to enable this automation:
 
 * **Configure the first (local) Kubernetes authentication backend** in OpenBao, using the OpenBao client's JWT as the reviewer JWT (no need to deploy a dedicated service account).
-* **Manually create the initial policies** (e.g., Crossplane policy) and associated roles, following the principle of least privilege. These policies must only allow Crossplane to configure OpenBao.
-* **From this point, declarative management takes over**: Crossplane manages policy/secret creation and updates then ESO synchronizes secrets into Kubernetes.
+* **Bootstrap with a root/admin token** so the Pulumi Vault provider can authenticate and take over configuration.
+* **From this point, declarative management takes over**: the Pulumi `cluster-vault` component (`catalog/pulumi/components/cluster-vault/`) provisions mounts, policies, and auth backends from each cluster's stack (`projects/<cluster>/src/infrastructure/pulumi/`), then ESO synchronizes secrets into Kubernetes.
 
 This guide details all these steps, clearly distinguishing what must be done manually and what can/should be automated.
 
 ## ⚙️ Phase 1: Configure the First Kubernetes Auth Backend
 
-> \[!WARNING]
-> **Compatibility Issue:** The Crossplane Vault provider does not allow configuring a custom path for the Kubernetes authentication backend (it expects the default path `kubernetes/`).
-> **Consequence:** We must enable the Kubernetes auth backend at the default path `kubernetes/` in OpenBao for the provider to work, even if you manage multiple clusters or want to use custom paths.
+> \[!NOTE]
+> The Pulumi `cluster-vault` component manages per-cluster Kubernetes auth backends at their own path (`<cluster>/`). The **local** backend at the default path `kubernetes/` is the one that must be bootstrapped manually so the Pulumi Vault provider itself can authenticate.
 
 **Goal:**\
 Enable OpenBao to authenticate Kubernetes service accounts from the amiya.akn cluster (local cluster). With the current setup, you do not need to provide a reviewer JWT or the Kubernetes CA certificate.
@@ -38,11 +37,12 @@ Enable OpenBao to authenticate Kubernetes service accounts from the amiya.akn cl
 >
 > * OpenBao instance is up and accessible (CLI or API)
 > * You have a root/admin token for OpenBao
+> * `mise run bao:login` succeeds (sets `VAULT_TOKEN` / `VAULT_ADDR`)
 
 1. **Enable the Kubernetes auth backend for the amiya.akn cluster**
 
    ```bash
-   bao auth enable -path=kubernetes -description="Kubernetes auth backend for amiya.akn cluster (crossplane provider only)" kubernetes
+   bao auth enable -path=kubernetes -description="Kubernetes auth backend for amiya.akn cluster (Pulumi provider bootstrap)" kubernetes
    ```
 
 2. **Configure the backend (no reviewer JWT or CA cert required)**
@@ -57,34 +57,30 @@ Enable OpenBao to authenticate Kubernetes service accounts from the amiya.akn cl
 >
 > * No need to retrieve or provide a service account JWT or the Kubernetes CA certificate for this step.
 > * This configuration only needs to be done once for the amiya.akn cluster.
-> * After this step, you can proceed to policy creation and automation.
+> * After this step, you can proceed to Pulumi-managed provisioning.
 
-3. **Create the Crossplane provisioning policy and role**
+3. **Run the Pulumi cluster-vault component**
 
-   * Create a policy that allows Crossplane to manage OpenBao configuration (policies, auth methods, mounts, etc.), but not application secrets (see [openbao/policies/kubernetes-crossplane-provisioning-policy.hcl](./openbao/policies/kubernetes-crossplane-provisioning-policy.hcl) for the policy).
+   With the local Kubernetes auth backend enabled and a root token available, the Pulumi `cluster-vault` component takes over and provisions every mount, policy, auth backend, and role the cluster needs — including the ESO read policy and role. No manual policy HCL needs to be written.
 
-     ```bash
-     bao policy write kubernetes-crossplane-provisioning-policy ./openbao/policies/kubernetes-crossplane-provisioning-policy.hcl
-     ```
+   From the cluster's Pulumi stack directory:
 
-   * Create a role for Crossplane, binding it to the policy and the appropriate Kubernetes service account:
+   ```bash
+   cd projects/amiya.akn/src/infrastructure/pulumi
+   mise run pulumi:diff    # preview what the cluster-vault component will create
+   mise run pulumi:apply   # apply — provisions mounts/policies/auth-backends/roles
+   ```
 
-     ```bash
-     bao write auth/kubernetes/role/crossplane-provisioning \
-       bound_service_account_names='*' \
-       bound_service_account_namespaces=crossplane \
-       policies=default,kubernetes-crossplane-provisioning-policy \
-       ttl=15m
-     ```
+   > The `pulumi:apply` task (defined in the stack's `.mise.toml`) exports `VAULT_TOKEN` from `bao print token` and runs `pulumi up`. See `projects/<cluster>/src/infrastructure/pulumi/.mise.toml`.
 
 > \[!NOTE]
-> Adjust the service account name and namespace as needed for your environment.
+> For remote clusters (e.g. `lungmen.akn`), the same component is used with the `remote` variant — supply the target cluster's CA certificate and token-reviewer JWT via Pulumi config. See the `cluster-vault` README for details.
 
 ## ⚙️ Phase 2: Automated Synchronization Workflow
 
-1. **Crossplane configures OpenBao globally**
-   * Once Crossplane has the required permissions, it creates all mounts, policies, and roles needed for both ESO and Crossplane to operate on all clusters.
-   * This setup is fully declarative (as code) and applies to every cluster managed.
+1. **Pulumi configures OpenBao globally**
+   * The `cluster-vault` component creates all mounts, policies, and roles needed for both ESO and Pulumi to operate on each cluster.
+   * This setup is fully declarative (as code) and applies to every cluster managed by its own Pulumi stack.
 
 2. **ESO synchronizes secrets across clusters**
    * With the correct roles and policies in place, ESO can now read from and write to OpenBao as needed.
@@ -96,7 +92,7 @@ Enable OpenBao to authenticate Kubernetes service accounts from the amiya.akn cl
 
 ```mermaid
 flowchart LR
-  A[Crossplane<br/>has admin policy] --> B[Crossplane<br/>creates mounts/policies/roles<br/>for all clusters]
+  A[Pulumi<br/>cluster-vault component<br/>runs with root token] --> B[Pulumi creates mounts/policies/roles<br/>for each cluster]
   B --> C[ESO<br/>has required access]
   C --> D[ESO synchronizes secrets<br/>across all clusters]
   D --> E[Secrets are fully synchronized<br/>in all clusters]
@@ -104,7 +100,7 @@ flowchart LR
 
 > \[!WARNING]
 > **Limitation:**
-> As long as Crossplane runs only on the same cluster as the OpenBao instance, it does not require the system:auth-delegator role on its pods. This permission is only needed in a multi-cluster scenario where Crossplane must delegate authentication to the Kubernetes clusters hosting OpenBao instances.
+> Pulumi authenticates to OpenBao using a token obtained via `bao print token` (see the stack's `pulumi:apply` task). For remote clusters, the `cluster-vault` component configures a dedicated Kubernetes auth backend per cluster rather than relying on the local `kubernetes/` backend.
 
 ***
 

@@ -7,14 +7,14 @@
 #
 # Usage:
 #   mise run lxc:secrets:rotate                            # Generate Dex admin hash → secrets/omni.sops.env
-#   mise run lxc:secrets:sync                              # Fetch Cloudflare token from cluster → secrets/caddy.sops.env
+#   mise run lxc:secrets:sync                              # Fetch Cloudflare token from Pulumi → secrets/caddy.sops.env
 #   mise run lxc:build                                     # Build the LXC tarball with secrets baked in
 #   mise run lxc:push -- <pve-host>                        # Upload template to Proxmox (local storage)
 #   mise run lxc:upgrade -- <pve-host> --vmid <vmid>       # Upgrade a running LXC in place
 #
 # Typical workflow (first time):
 #   mise run lxc:secrets:rotate            # Sets the Dex admin password
-#   mise run lxc:secrets:sync              # Requires kubectl access to amiya.akn
+#   mise run lxc:secrets:sync              # Requires Pulumi (pulumi up first)
 #   mise run lxc:build
 #   mise run lxc:push -- pve.lan
 #
@@ -25,7 +25,7 @@
 #
 # Secret files (SOPS/age-encrypted, baked into the image at build time):
 #   secrets/omni.sops.env    DEX_ADMIN_PASSWORD_HASH    (operator-provided — bcrypt hash for the Dex admin user)
-#   secrets/caddy.sops.env   CLOUDFLARE_API_TOKEN       (Crossplane — DNS-01 ACME for omni.chezmoi.sh)
+#   secrets/caddy.sops.env   CLOUDFLARE_API_TOKEN       (Pulumi — DNS-01 ACME for omni.chezmoi.sh)
 #
 # File-based tasks (bash scripts, easier to maintain):
 #   .mise/tasks/lxc/build    — build task
@@ -34,7 +34,7 @@
 #
 # Prerequisites:
 #   - Docker (for the Nix build container)
-#   - kubectl configured for amiya.akn (for lxc:secrets:sync)
+#   - Pulumi CLI logged into the chezmoi.sh stack (see src/infrastructure/pulumi/.mise.toml); run pulumi up first
 #   - sops + age key in SOPS_AGE_KEY_FILE (configured in root .mise.toml)
 #   - htpasswd (apache2-utils / httpd-tools) for lxc:secrets:rotate
 #   - SSH key-based access to root@<pve-host> (for lxc:push / lxc:upgrade)
@@ -86,36 +86,19 @@ sops = "latest"
 # -----------------------------------------------------------------------------
 # Secret Management — Cloudflare DNS-01 token
 # -----------------------------------------------------------------------------
-# Fetches the Cloudflare API token created by Crossplane (see
-# cloudflare.iam.omni.yaml) and encrypts it into secrets/caddy.sops.env so it
-# can be baked into the LXC image at build time.
+# Delegates to the pulumi:cloudflare-token:omni task (defined in the chezmoi.sh
+# project .mise.toml), which fetches the Pulumi stack output and writes it into
+# secrets/caddy.sops.env so it can be baked into the LXC image at build time.
 #
-# The Crossplane APIToken resource must be Ready before running this task.
-# Check with: kubectl get apitoken chezmoi-sh-caddy-dns01-omni -n chezmoi-sh
+# Requires `pulumi up` to have run in src/infrastructure/pulumi first.
 
 [tasks."lxc:secrets:sync"]
-description = "Fetch Cloudflare DNS-01 token from cluster and write secrets/caddy.sops.env"
+description = "Fetch Cloudflare DNS-01 token from Pulumi and write secrets/caddy.sops.env"
 dir = "{{ config_root }}"
 run = '''
   set -euo pipefail
-
-  echo "[INFO] Fetching token from chezmoi-sh/chezmoi.sh-cloudflare-token-caddy-dns01-omni..." >&2
-  TOKEN=$(
-    kubectl get secret -n chezmoi-sh chezmoi.sh-cloudflare-token-caddy-dns01-omni \
-    -o jsonpath='{.data.attribute\.value}' | base64 -d
-  )
-  [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — is the Crossplane APIToken Ready?" >&2; exit 1; }
-
-  mkdir -p "{{ config_root }}/secrets"
-  # TMPFILE must be inside the repo and match the .sops.yaml path_regex so that
-  # sops can discover the config and the creation rule when traversing up.
-  TMPFILE="{{ config_root }}/secrets/.tmp.$$.sops.env"
-  trap 'rm -f "${TMPFILE}"' EXIT
-  printf 'CLOUDFLARE_API_TOKEN=%s\n' "${TOKEN}" > "${TMPFILE}"
-  sops --encrypt --input-type dotenv --output-type dotenv "${TMPFILE}" \
-    > "{{ config_root }}/secrets/caddy.sops.env"
-
-  echo "[SUCCESS] secrets/caddy.sops.env written." >&2
+  mise run pulumi:cloudflare-token:omni
+  echo "[SUCCESS] caddy.sops.env synced from Pulumi." >&2
 '''
 
 # -----------------------------------------------------------------------------
