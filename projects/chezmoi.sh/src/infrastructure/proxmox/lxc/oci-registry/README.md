@@ -92,7 +92,7 @@ configuration tweak or a misconfigured pull.
 ├── flake.nix              ← LXC image build (nixos-generators)
 ├── flake.lock             ← pinned inputs
 ├── configuration.nix      ← site identity, locale, console toolbox (modules own service config)
-├── upstreams.nix          ← 11 pull-through cache definitions
+├── upstreams.nix          ← 12 pull-through cache definitions
 ├── .mise.toml             ← mise tasks (build / push / secrets)
 └── secrets/
     └── caddy.sops.env     ← SOPS-encrypted Cloudflare API token
