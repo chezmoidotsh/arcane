@@ -17,11 +17,6 @@
 import "./alerts";
 import "./apps";
 import "./certificates";
-
-// Renders projects/chezmoi.sh/docs/TRUENAS.md from ./network, ./services,
-// ./shares and the zpools' own topology -- those modules' exports are
-// imported directly by ./docs, so module evaluation order here doesn't matter.
-import "./docs";
 import "./jobs";
 import "./network";
 import "./services";

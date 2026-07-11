@@ -1,16 +1,65 @@
 import { LocalFile } from "@chezmoi.sh/pulumi-lib";
 import * as pulumi from "@pulumi/pulumi";
+import type * as truenas from "@pulumi/truenas";
 import * as fs from "fs";
 import * as Handlebars from "handlebars";
 import * as path from "path";
 
 import { backupSummary } from "../backups";
-import { registerHelpers } from "./docs/helpers";
-import { networkConfig, networkInterfaces } from "./network";
-import { services } from "./services";
-import { nfsShares, smbShares } from "./shares";
-import { zp1cs01 } from "./zpools/zp1cs01";
-import { zp1hs01 } from "./zpools/zp1hs01";
+import { networkConfig, networkInterfaces } from "../truenas/network";
+import { services } from "../truenas/services";
+import { nfsShares, smbShares } from "../truenas/shares";
+import { zp1cs01 } from "../truenas/zpools/zp1cs01";
+import { zp1hs01 } from "../truenas/zpools/zp1hs01";
+import { registerHelpers } from "./helpers";
+
+/**
+ * `nfsShares`/`smbShares` export the actual `truenas.ShareNfs`/`ShareSmb`
+ * resources (not a hand-maintained plain-data summary) -- these two pull
+ * just the fields the template needs back out of each resource's Outputs.
+ * The resource's own logical name isn't one of its Outputs (NFS shares
+ * don't even have a `name` field), so it's recovered from `urn`, whose last
+ * `::`-separated segment is always that logical name regardless of parenting.
+ */
+function resourceName(urn: pulumi.Output<string>): pulumi.Output<string> {
+	return urn.apply((u) => u.split("::").pop() as string);
+}
+
+function nfsShareData(share: truenas.ShareNfs) {
+	return pulumi
+		.all([
+			resourceName(share.urn),
+			share.comment,
+			share.mapallUser,
+			share.enabled,
+			share.readonly,
+		])
+		.apply(([name, comment, mapallUser, enabled, readonly]) => ({
+			name,
+			comment,
+			mapallUser,
+			enabled,
+			readonly,
+		}));
+}
+
+function smbShareData(share: truenas.ShareSmb) {
+	return pulumi
+		.all([
+			resourceName(share.urn),
+			share.comment,
+			share.purpose,
+			share.enabled,
+			share.readonly,
+		])
+		.apply(([name, comment, purpose, enabled, readonly]) => ({
+			name,
+			comment,
+			purpose,
+			enabled,
+			readonly,
+		}));
+}
 
 // Generates `projects/chezmoi.sh/docs/TRUENAS.md` from this stack's own
 // as-code TrueNAS config, so the doc can't silently drift from what's
@@ -21,8 +70,7 @@ import { zp1hs01 } from "./zpools/zp1hs01";
 const handlebars = Handlebars.create();
 registerHelpers(handlebars);
 
-const docsDir = path.join(__dirname, "docs");
-const partialsDir = path.join(docsDir, "partials");
+const partialsDir = path.join(__dirname, "partials");
 for (const file of fs.readdirSync(partialsDir)) {
 	const name = path.basename(file, ".hbs");
 	handlebars.registerPartial(
@@ -31,7 +79,7 @@ for (const file of fs.readdirSync(partialsDir)) {
 	);
 }
 const template = handlebars.compile(
-	fs.readFileSync(path.join(docsDir, "template.hbs"), "utf8"),
+	fs.readFileSync(path.join(__dirname, "template.hbs"), "utf8"),
 );
 
 const enabledServiceNames = services
@@ -65,6 +113,8 @@ const content = pulumi
 		zp1cs01.datasetsTree(),
 		zp1hs01.topology().apply((t) => t.toString()),
 		zp1hs01.datasetsTree(),
+		pulumi.all(nfsShares.map(nfsShareData)),
+		pulumi.all(smbShares.map(smbShareData)),
 	])
 	.apply(
 		([
@@ -72,6 +122,8 @@ const content = pulumi
 			zp1cs01DatasetsTree,
 			zp1hs01Topology,
 			zp1hs01DatasetsTree,
+			nfsSharesData,
+			smbSharesData,
 		]) =>
 			template({
 				pools: [
@@ -86,8 +138,8 @@ const content = pulumi
 						datasetsTree: zp1hs01DatasetsTree,
 					},
 				],
-				nfsShares,
-				smbShares,
+				nfsShares: nfsSharesData,
+				smbShares: smbSharesData,
 				network: {
 					hostname: networkConfig.hostname,
 					gateway: networkConfig.gateway,
