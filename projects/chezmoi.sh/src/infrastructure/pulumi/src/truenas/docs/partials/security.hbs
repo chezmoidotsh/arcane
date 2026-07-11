@@ -1,0 +1,11 @@
+## Security notes
+
+A few things worth knowing about what this configuration does and doesn't
+protect against:
+
+- **Share IP restrictions live entirely on the NAS, not in Pulumi.** Neither
+  NFS's `hosts` allowlist (no Kerberos, so this is the only access control
+  those shares have) nor SMB's `hostsallow`/`auxsmbconf` are managed here --
+  the SMB ones aren't in this provider's schema at all, and NFS's are
+  deliberately left alone to match. Whatever's configured directly on the NAS
+  is the only source of truth; Pulumi can't detect or revert changes to it.

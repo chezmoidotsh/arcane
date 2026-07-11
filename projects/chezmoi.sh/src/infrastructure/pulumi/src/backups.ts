@@ -17,6 +17,46 @@ import * as truenas from "@pulumi/truenas";
 // globally unique across all accounts, like S3) purely to avoid collisions
 // in that shared namespace.
 
+const FILE_LOCK_RETENTION_DAYS = 7;
+const LIFECYCLE_DELETE_DAYS = 60;
+const NAS_BACKUP_BUCKET_NAME = "nas-backup-50a30f2b";
+const GARAGE_BACKUP_BUCKET_NAME = "garage-backup-51891f906ced";
+const CLOUDSYNC_SCHEDULE = {
+	minute: "0",
+	hour: "0",
+	dom: "*",
+	month: "*",
+	dow: "0",
+};
+
+/** Summary of B2 backup buckets and their sync schedule, for documentation. */
+export const backupSummary = {
+	destination: "Backblaze B2",
+	buckets: [
+		{
+			name: NAS_BACKUP_BUCKET_NAME,
+			retentionDays: FILE_LOCK_RETENTION_DAYS,
+			lifecycleDeleteDays: LIFECYCLE_DELETE_DAYS,
+			// The only bucket with a Pulumi-managed sync task -- see
+			// `nas-backup-cloudsync` below.
+			sync: {
+				source: "/mnt/zp1hs01",
+				direction: "PUSH",
+				transferMode: "SYNC",
+				schedule: CLOUDSYNC_SCHEDULE,
+			},
+		},
+		{
+			name: GARAGE_BACKUP_BUCKET_NAME,
+			retentionDays: FILE_LOCK_RETENTION_DAYS,
+			lifecycleDeleteDays: LIFECYCLE_DELETE_DAYS,
+			// Garage replicates to this bucket itself, outside Pulumi -- no
+			// CloudSync task here.
+			sync: undefined,
+		},
+	],
+};
+
 // Standard read/write access for backup tools (restic, rclone, kopia, …) that
 // manage their own pruning; deletion is still bounded by the File Lock above.
 const backupKeyCapabilities = [
@@ -30,18 +70,20 @@ const backupKeyCapabilities = [
 // nas-backup: primary off-site copy of the NAS.
 // -----------------------------------------------------------------------------
 const nasBackupBucket = new b2.Bucket("nas-backup", {
-	bucketName: "nas-backup-50a30f2b",
+	bucketName: NAS_BACKUP_BUCKET_NAME,
 	bucketType: "allPrivate",
 	fileLockConfigurations: [
 		{
 			isFileLockEnabled: true,
 			defaultRetention: {
 				mode: "governance",
-				period: { duration: 7, unit: "days" },
+				period: { duration: FILE_LOCK_RETENTION_DAYS, unit: "days" },
 			},
 		},
 	],
-	lifecycleRules: [{ fileNamePrefix: "", daysFromHidingToDeleting: 60 }],
+	lifecycleRules: [
+		{ fileNamePrefix: "", daysFromHidingToDeleting: LIFECYCLE_DELETE_DAYS },
+	],
 });
 
 const nasBackupApplicationKey = new b2.ApplicationKey(
@@ -62,18 +104,20 @@ export const nasBackupApplicationKeySecret =
 // garage-backup: backup of the Garage S3 cluster only.
 // -----------------------------------------------------------------------------
 const garageBackupBucket = new b2.Bucket("garage-backup", {
-	bucketName: "garage-backup-51891f906ced",
+	bucketName: GARAGE_BACKUP_BUCKET_NAME,
 	bucketType: "allPrivate",
 	fileLockConfigurations: [
 		{
 			isFileLockEnabled: true,
 			defaultRetention: {
 				mode: "governance",
-				period: { duration: 7, unit: "days" },
+				period: { duration: FILE_LOCK_RETENTION_DAYS, unit: "days" },
 			},
 		},
 	],
-	lifecycleRules: [{ fileNamePrefix: "", daysFromHidingToDeleting: 60 }],
+	lifecycleRules: [
+		{ fileNamePrefix: "", daysFromHidingToDeleting: LIFECYCLE_DELETE_DAYS },
+	],
 });
 
 const garageBackupApplicationKey = new b2.ApplicationKey(
@@ -124,14 +168,14 @@ new truenas.CloudSync("nas-backup-cloudsync", {
 	enabled: true,
 	credentials: nasBackupCloudsyncCredential.id.apply((id) => Number(id)),
 	attributesJson: JSON.stringify({
-		bucket: "nas-backup-50a30f2b",
+		bucket: NAS_BACKUP_BUCKET_NAME,
 		chunk_size: 96,
 		fast_list: true,
 		folder: "/nas.chezmoi.uk/truenas/zp1hs01",
 	}),
-	scheduleMinute: "0",
-	scheduleHour: "0",
-	scheduleDom: "*",
-	scheduleMonth: "*",
-	scheduleDow: "0",
+	scheduleMinute: CLOUDSYNC_SCHEDULE.minute,
+	scheduleHour: CLOUDSYNC_SCHEDULE.hour,
+	scheduleDom: CLOUDSYNC_SCHEDULE.dom,
+	scheduleMonth: CLOUDSYNC_SCHEDULE.month,
+	scheduleDow: CLOUDSYNC_SCHEDULE.dow,
 });

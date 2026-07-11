@@ -9,13 +9,24 @@ import * as truenas from "@pulumi/truenas";
 // value at all (rejects it outright) -- not manageable through this
 // resource until the provider's allow-list is updated upstream.
 
-new truenas.Service("service-cifs", { service: "cifs", enable: true });
-new truenas.Service("service-ftp", { service: "ftp", enable: false });
-new truenas.Service("service-iscsitarget", {
-	service: "iscsitarget",
-	enable: false,
-});
-new truenas.Service("service-nfs", { service: "nfs", enable: true });
-new truenas.Service("service-snmp", { service: "snmp", enable: false });
-new truenas.Service("service-ssh", { service: "ssh", enable: true });
-new truenas.Service("service-ups", { service: "ups", enable: false });
+export interface ServiceSpec {
+	service: string;
+	enabled: boolean;
+}
+
+export const services: ServiceSpec[] = [
+	{ service: "cifs", enabled: true },
+	{ service: "ftp", enabled: false },
+	{ service: "iscsitarget", enabled: false },
+	{ service: "nfs", enabled: true },
+	{ service: "snmp", enabled: false },
+	{ service: "ssh", enabled: true },
+	{ service: "ups", enabled: false },
+];
+
+for (const s of services) {
+	new truenas.Service(`service-${s.service}`, {
+		service: s.service,
+		enable: s.enabled,
+	});
+}

@@ -1,9 +1,6 @@
 // -----------------------------------------------------------------------------
 // TrueNAS configuration (nas.chezmoi.sh)
 // -----------------------------------------------------------------------------
-// Pre-existing NAS configuration, imported into this stack's state rather than
-// newly created.
-//
 // Intentionally not managed:
 // - `truenas.Certificate` (ACME-signed certs): the provider can't drive an
 //   ACME issuance (no CSR reference, no DNS-01 config) -- only CSR
@@ -16,3 +13,16 @@
 // - Mail config: configured SMTP (AWS SES) is no longer in use.
 // - `truenas.App` / `truenas.Catalog`: only `garage` and `nginx-proxy-manager`
 //   are managed (./apps.ts), not every installed app.
+
+import "./alerts";
+import "./apps";
+import "./certificates";
+
+// Renders projects/chezmoi.sh/docs/TRUENAS.md from ./network, ./services,
+// ./shares and the zpools' own topology -- those modules' exports are
+// imported directly by ./docs, so module evaluation order here doesn't matter.
+import "./docs";
+import "./jobs";
+import "./network";
+import "./services";
+import "./shares";

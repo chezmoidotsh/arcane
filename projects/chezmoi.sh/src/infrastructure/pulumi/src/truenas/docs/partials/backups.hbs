@@ -1,0 +1,22 @@
+## Backups
+
+Off-site copies go to {{backups.destination}}, in private, File Lock-protected
+buckets (immutable for the retention window below, with older versions pruned
+after the lifecycle window).
+
+{{#each backups.buckets}}
+{{#if sync}}
+`{{sync.source}}` is pushed there {{cronToHuman sync.schedule.minute sync.schedule.hour sync.schedule.dom sync.schedule.month sync.schedule.dow}}
+via TrueNAS CloudSync ({{sync.direction}}/{{sync.transferMode}}), with a
+{{retentionDays}}-day File Lock retention and a {{lifecycleDeleteDays}}-day
+lifecycle prune.
+{{else}}
+The second bucket, `{{name}}`, holds the same {{retentionDays}}-day File Lock /
+{{lifecycleDeleteDays}}-day lifecycle protection, but is replicated by Garage
+itself rather than through a Pulumi-managed CloudSync task.
+{{/if}}
+{{/each}}
+{{#if notBackedUpPools}}
+{{humanList notBackedUpPools}} {{#if (isSingular notBackedUpPools)}}isn't{{else}}aren't{{/if}} included in this off-site sync.
+{{/if}}
+

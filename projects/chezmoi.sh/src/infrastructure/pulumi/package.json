@@ -3,6 +3,11 @@
 	"version": "0.1.0",
 	"private": true,
 	"main": "index.ts",
+	"scripts": {
+		"test": "mocha",
+		"test:watch": "mocha --watch",
+		"typecheck:test": "tsc --noEmit -p tsconfig.test.json"
+	},
 	"dependencies": {
 		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "workspace:*",
 		"@chezmoi.sh/pulumi-lib": "workspace:*",
@@ -11,9 +16,16 @@
 		"@pulumi/cloudflare": "catalog:",
 		"@pulumi/pulumi": "catalog:",
 		"@pulumi/tailscale": "catalog:",
-		"@pulumi/truenas": "workspace:*"
+		"@pulumi/truenas": "workspace:*",
+		"handlebars": "catalog:"
 	},
 	"devDependencies": {
+		"@types/chai": "catalog:",
+		"@types/mocha": "catalog:",
+		"@types/node": "catalog:",
+		"chai": "catalog:",
+		"mocha": "catalog:",
+		"ts-node": "catalog:",
 		"typescript": "catalog:"
 	}
 }

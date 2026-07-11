@@ -1,14 +1,26 @@
 import * as truenas from "@pulumi/truenas";
 
+export interface NetworkInterfaceSpec {
+	name: string;
+	mtu: number;
+	aliases: { address: string; netmask: number }[];
+}
+
 // --- Network ---------------------------------------------------------------
 // `pulumi preview` reports a perpetual, harmless `~ (update)` on the `hosts`
 // list attribute (Terraform-bridge plan-modifier quirk, not a real drift).
 
-new truenas.NetworkConfig("network-config", {
+export const networkConfig = {
 	hostname: "nas.chezmoi.sh",
-	ipv4gateway: "10.0.0.1",
-	nameserver1: "10.0.0.1",
-	nameserver2: "9.9.9.9",
+	gateway: "10.0.0.1",
+	nameservers: ["10.0.0.1", "9.9.9.9"],
+};
+
+new truenas.NetworkConfig("network-config", {
+	hostname: networkConfig.hostname,
+	ipv4gateway: networkConfig.gateway,
+	nameserver1: networkConfig.nameservers[0],
+	nameserver2: networkConfig.nameservers[1],
 	hosts: ["127.0.0.1 ix-truenas ix-truenas.local"],
 });
 
@@ -19,23 +31,29 @@ new truenas.NetworkConfig("network-config", {
 // interfaces. Same `~ (update)` bridge quirk as `network-config` above,
 // tied to the `aliases` attribute.
 
-new truenas.NetworkInterface("network-interface-ens18", {
-	name: "ens18",
-	type: "PHYSICAL",
-	mtu: 1500,
-	ipv4Dhcp: false,
-	ipv6Auto: false,
-	aliases: [
-		{ address: "10.0.0.30", netmask: 22 },
-		{ address: "10.0.0.31", netmask: 22 },
-	],
-});
+export const networkInterfaces: NetworkInterfaceSpec[] = [
+	{
+		name: "ens18",
+		mtu: 1500,
+		aliases: [
+			{ address: "10.0.0.30", netmask: 22 },
+			{ address: "10.0.0.31", netmask: 22 },
+		],
+	},
+	{
+		name: "ens27",
+		mtu: 1500,
+		aliases: [{ address: "172.31.255.253", netmask: 30 }],
+	},
+];
 
-new truenas.NetworkInterface("network-interface-ens27", {
-	name: "ens27",
-	type: "PHYSICAL",
-	mtu: 1500,
-	ipv4Dhcp: false,
-	ipv6Auto: false,
-	aliases: [{ address: "172.31.255.253", netmask: 30 }],
-});
+for (const iface of networkInterfaces) {
+	new truenas.NetworkInterface(`network-interface-${iface.name}`, {
+		name: iface.name,
+		type: "PHYSICAL",
+		mtu: iface.mtu,
+		ipv4Dhcp: false,
+		ipv6Auto: false,
+		aliases: iface.aliases,
+	});
+}

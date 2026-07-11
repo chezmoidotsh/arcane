@@ -1,0 +1,25 @@
+## Shares
+
+NFS is used where a client needs Unix-style permission mapping (media consumers,
+Paperless); SMB covers everything else (Windows/macOS clients, application
+storage, Time Machine).
+
+### NFS
+
+{{#each nfsShares}}
+- `{{name}}` ({{{comment}}}) --
+  {{#if readonly}}read-only{{else}}read/write{{/if}}{{#if mapallUser}}, mapped to `{{mapallUser}}`{{/if}}{{#unless enabled}}, disabled{{/unless}}
+{{/each}}
+
+### SMB
+
+Each share below applies one of TrueNAS's presets: `DEFAULT_SHARE` is the
+general-purpose preset, `LEGACY_SHARE` skips presets entirely (options are
+set manually, not a sign the share is deprecated), `PRIVATE_DATASETS_SHARE`
+is meant for one dataset per user, and `TIMEMACHINE_SHARE` enables the SMB
+extensions macOS Time Machine needs.
+
+{{#each smbShares}}
+- `{{name}}` ({{{comment}}}) -- {{purpose}}{{#if readonly}}, read-only{{/if}}{{#unless enabled}}, disabled{{/unless}}
+{{/each}}
+

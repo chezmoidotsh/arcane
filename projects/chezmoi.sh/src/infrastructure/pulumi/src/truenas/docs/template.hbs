@@ -1,0 +1,21 @@
+# TrueNAS (`nas.chezmoi.sh`)
+
+> Generated from the Pulumi as-code configuration in
+> `projects/chezmoi.sh/src/infrastructure/pulumi/src/truenas/` (+ `../backups.ts`
+> for B2 off-site backups). Do not edit by hand -- regenerate with a real
+> `pulumi up` against the live `chezmoi-sh-infra` stack.
+
+{{> overview}}
+
+## How it's managed
+
+`nas.chezmoi.sh` (TrueNAS SCALE) is managed as code via the `chezmoi-sh-infra`
+Pulumi stack (state in a self-hosted Garage S3 backend). Provider credentials
+come from stack config (`truenas:url`), set via `pulumi config set --secret`
+-- never hardcoded in source.
+
+{{> network}}
+{{> pools}}
+{{> shares}}
+{{> backups}}
+{{> security}}
