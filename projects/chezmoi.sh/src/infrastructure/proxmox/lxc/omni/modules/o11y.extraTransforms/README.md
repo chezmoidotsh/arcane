@@ -1,7 +1,7 @@
 # Omni log transforms
 
-Vector transform pipeline for the Omni control-plane LXC.
-Parses Zap JSON logs into OTLP SemConv fields before shipping to VictoriaLogs.
+Vector transform pipeline for the Omni control-plane LXC. Parses Zap JSON logs into OTLP SemConv fields before shipping
+to VictoriaLogs.
 
 ## Pipeline overview
 

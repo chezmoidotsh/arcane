@@ -1,14 +1,12 @@
 ---
 name: git-commit
 description: >
-  Creates properly formatted Git commits following Arcane project conventions.
-  Use this skill whenever the user wants to commit changes, stage files,
-  write a commit message, or finalize work — including phrases like "commit this",
-  "commit everything", "make a commit", "stage and commit", or "create a commit message".
-  Also triggers when the user finishes a coding task and the next logical step is
-  to persist the changes to git. Enforces symbol-based type format with mandatory
-  square-bracket scope, structured body, and Assisted-by transparency trailer per
-  emerging open-source standards.
+  Creates properly formatted Git commits following Arcane project conventions. Use this skill whenever the user wants to
+  commit changes, stage files, write a commit message, or finalize work — including phrases like "commit this", "commit
+  everything", "make a commit", "stage and commit", or "create a commit message". Also triggers when the user finishes a
+  coding task and the next logical step is to persist the changes to git. Enforces symbol-based type format with
+  mandatory square-bracket scope, structured body, and Assisted-by transparency trailer per emerging open-source
+  standards.
 compatibility: Requires git
 ---
 
@@ -16,19 +14,16 @@ compatibility: Requires git
 
 ## Why we commit this way
 
-This repository treats commits as a historical record, not just a synchronization
-mechanism. We keep all commits — including imperfect ones — rather than squashing
-everything into a single merge commit.
+This repository treats commits as a historical record, not just a synchronization mechanism. We keep all commits —
+including imperfect ones — rather than squashing everything into a single merge commit.
 
-* **Errors are part of the history.** Committing a mistake and then fixing it in the next
-  commit is valuable. It shows the debugging trail and helps future me understand what went
-  wrong and how it was resolved.
-* **Small, atomic commits aid debugging and review.** PRs in this repo tend to be large.
-  Breaking changes into unit-sized commits makes it possible to bisect issues, isolate
-  regressions, and review changes incrementally rather than as a monolithic diff.
-* **Overloading a commit obscures its intent.** A commit that touches ten unrelated things
-  is hard to describe, hard to review, and hard to revert. One logical change per commit
-  keeps the history readable.
+- **Errors are part of the history.** Committing a mistake and then fixing it in the next commit is valuable. It shows
+  the debugging trail and helps future me understand what went wrong and how it was resolved.
+- **Small, atomic commits aid debugging and review.** PRs in this repo tend to be large. Breaking changes into
+  unit-sized commits makes it possible to bisect issues, isolate regressions, and review changes incrementally rather
+  than as a monolithic diff.
+- **Overloading a commit obscures its intent.** A commit that touches ten unrelated things is hard to describe, hard to
+  review, and hard to revert. One logical change per commit keeps the history readable.
 
 ## Commit format
 
@@ -54,9 +49,9 @@ Assisted-by: <provider>:<model-id>
 
 ### Type
 
-The type is a single ASCII symbol (two characters for breaking changes) that encodes the
-nature of the change. It appears at the very start of the commit subject and is readable
-in any terminal or rendering environment without emoji support.
+The type is a single ASCII symbol (two characters for breaking changes) that encodes the nature of the change. It
+appears at the very start of the commit subject and is readable in any terminal or rendering environment without emoji
+support.
 
 **Allowed types (exhaustive list):**
 
@@ -85,19 +80,16 @@ in any terminal or rendering environment without emoji support.
 
 **Type selection rules:**
 
-* `~` vs `!` — if it repaired a broken behavior: `!`. If it changed correct behavior: `~`.
-* `=` vs `~` — if the change is observable by users or dependent systems: `~`. If
-  the behavior is identical from the outside: `=`.
-* `^` — always use for dependency bumps, even manual ones; reserve `~` for configuration
-  changes that affect behavior.
-* `CI/CD` is not a type — use the type that describes what changed (`+` for a new
-  pipeline, `~` for a modified one, `=` for a refactored one) and put `gh` or the
-  relevant project as the scope.
+- `~` vs `!` — if it repaired a broken behavior: `!`. If it changed correct behavior: `~`.
+- `=` vs `~` — if the change is observable by users or dependent systems: `~`. If the behavior is identical from the
+  outside: `=`.
+- `^` — always use for dependency bumps, even manual ones; reserve `~` for configuration changes that affect behavior.
+- `CI/CD` is not a type — use the type that describes what changed (`+` for a new pipeline, `~` for a modified one, `=`
+  for a refactored one) and put `gh` or the relevant project as the scope.
 
 ### Scope
 
-The scope is enclosed in square brackets and identifies which part of the repository
-the commit touches.
+The scope is enclosed in square brackets and identifies which part of the repository the commit touches.
 
 **Allowed scopes (exhaustive list):**
 
@@ -121,8 +113,8 @@ the commit touches.
 | `gh`                    | `.github/`, root config files            |
 | `deps`                  | Dependency updates (automated or manual) |
 
-**Multiple scopes:** `[scope1,scope2]` (comma-separated inside brackets, no spaces, max 3)
-— only when one logical change atomically touches multiple components.
+**Multiple scopes:** `[scope1,scope2]` (comma-separated inside brackets, no spaces, max 3) — only when one logical
+change atomically touches multiple components.
 
 #### Scope decision tree
 
@@ -137,62 +129,59 @@ Which files changed?
 
 ### Subject
 
-* Imperative mood, UPPERCASE first letter, no final period
-* Max 100 characters
-* Describes the change concisely
+- Imperative mood, UPPERCASE first letter, no final period
+- Max 100 characters
+- Describes the change concisely
 
 ### Body
 
-The body is optional for trivial changes and mandatory for everything else. It provides
-context that the subject alone cannot convey.
+The body is optional for trivial changes and mandatory for everything else. It provides context that the subject alone
+cannot convey.
 
 **What to include:**
 
-* The motivation or reason for the change
-* Trade-offs or alternatives considered
-* Impact on affected systems, services, or users
-* References to issues, PRs, or external documentation (do not use '#' syntax for issue
-  references since commitlint breaks on that — use plain text like "see issue 123" instead)
+- The motivation or reason for the change
+- Trade-offs or alternatives considered
+- Impact on affected systems, services, or users
+- References to issues, PRs, or external documentation (do not use '#' syntax for issue references since commitlint
+  breaks on that — use plain text like "see issue 123" instead)
 
 **What NOT to include:**
 
-* A restatement of the diff (the diff already shows what changed)
-* Implementation details that are obvious from the code
+- A restatement of the diff (the diff already shows what changed)
+- Implementation details that are obvious from the code
 
 **Formatting rules:**
 
-* Max 80 characters per line
-* Sentence-case (start each sentence with UPPERCASE)
-* Complete sentences with proper grammar
+- Max 80 characters per line
+- Sentence-case (start each sentence with UPPERCASE)
+- Complete sentences with proper grammar
 
-**Breaking changes** require a mandatory `BREAKING CHANGE:` paragraph in the body
-explaining what breaks and how to migrate.
+**Breaking changes** require a mandatory `BREAKING CHANGE:` paragraph in the body explaining what breaks and how to
+migrate.
 
 ### Assisted-by trailer
 
-This project uses the `Assisted-by:` git trailer to disclose AI assistance. This is
-the emerging open-source standard (Linux Kernel, Fedora, LLVM, OpenTelemetry, OpenInfra,
-Rocky Linux) and is semantically more accurate than `Co-authored-by:` — the human remains
-sole author, the AI is acknowledged as an assistant, not a co-author with legal personhood.
+This project uses the `Assisted-by:` git trailer to disclose AI assistance. This is the emerging open-source standard
+(Linux Kernel, Fedora, LLVM, OpenTelemetry, OpenInfra, Rocky Linux) and is semantically more accurate than
+`Co-authored-by:` — the human remains sole author, the AI is acknowledged as an assistant, not a co-author with legal
+personhood.
 
-Format: `Assisted-by: <provider>:<model-id>` — use the identifier of the model powering
-the current session (e.g. `Assisted-by: github-copilot:claude-sonnet-4.6`).
+Format: `Assisted-by: <provider>:<model-id>` — use the identifier of the model powering the current session (e.g.
+`Assisted-by: github-copilot:claude-sonnet-4.6`).
 
-Version numbers always use a dot separator: `4.6`, `4.8` — never a hyphen (`4-6`).
-The system's internal model ID format uses hyphens (`claude-sonnet-4-6`), but the
-`Assisted-by` trailer always uses the public model name with dots.
+Version numbers always use a dot separator: `4.6`, `4.8` — never a hyphen (`4-6`). The system's internal model ID format
+uses hyphens (`claude-sonnet-4-6`), but the `Assisted-by` trailer always uses the public model name with dots.
 
 ### Signing and DCO — the AI must stay out of this
 
-The `git commit -s` flag adds a `Signed-off-by:` trailer. This is the committer's
-acceptance of the Developer Certificate of Origin (DCO) — a legal attestation that they
-have the right to submit code under the project's license (Apache 2.0). Only the human
-can accept the DCO. The AI must never add signing flags to the commit command:
+The `git commit -s` flag adds a `Signed-off-by:` trailer. This is the committer's acceptance of the Developer
+Certificate of Origin (DCO) — a legal attestation that they have the right to submit code under the project's license
+(Apache 2.0). Only the human can accept the DCO. The AI must never add signing flags to the commit command:
 
-* **`-s` (signoff)** — implies legal acceptance the AI cannot provide
+- **`-s` (signoff)** — implies legal acceptance the AI cannot provide
 
-The human's git hooks or configuration handle signing independently. The AI's commit
-command is always:
+The human's git hooks or configuration handle signing independently. The AI's commit command is always:
 
 ```bash
 git commit -S -m "..."
@@ -200,9 +189,8 @@ git commit -S -m "..."
 
 ## Commitlint rules (canonical reference)
 
-This section reproduces every rule from `.commitlintrc.js` so the skill is fully
-self-contained. When commitlint is updated in `.commitlintrc.js`, this section MUST be
-updated in sync (see "Keeping this skill in sync" below).
+This section reproduces every rule from `.commitlintrc.js` so the skill is fully self-contained. When commitlint is
+updated in `.commitlintrc.js`, this section MUST be updated in sync (see "Keeping this skill in sync" below).
 
 ### Header rules
 
@@ -234,8 +222,8 @@ updated in sync (see "Keeping this skill in sync" below).
 | `scope-max-length` | error | Infinity                                                                                                                                                                                                                                                                                                                |
 | `scope-min-length` | error | 0                                                                                                                                                                                                                                                                                                                       |
 
-`scope-enum` is set to **warning** because multi-scope commits (`scope1,scope2`) won't
-match single enum entries. Validation is enforced by the cz-git prompt instead.
+`scope-enum` is set to **warning** because multi-scope commits (`scope1,scope2`) won't match single enum entries.
+Validation is enforced by the cz-git prompt instead.
 
 ### Subject rules
 
@@ -301,37 +289,34 @@ breakingHeaderPattern: /^(?<type>[+~-]!)\[(?<scope>[^\]]+)\]:\s(?<subject>.+)$/
 
 ## Keeping this skill in sync
 
-When `.commitlintrc.js` changes (new types, scopes, or rules), this skill MUST be
-updated to match. Follow this procedure:
+When `.commitlintrc.js` changes (new types, scopes, or rules), this skill MUST be updated to match. Follow this
+procedure:
 
-1. **Read `.commitlintrc.js`** and identify what changed (types, scopes, rules, parser
-   pattern, or prompt config).
+1. **Read `.commitlintrc.js`** and identify what changed (types, scopes, rules, parser pattern, or prompt config).
 2. **Update the corresponding section** in this skill:
-   * New type → add to both the "Type" table and the `type-enum` row
-   * New scope → add to both the "Scope" table and the `scope-enum` row
-   * Rule change → update the relevant rules table
-   * Parser change → update the "Parser pattern" section
-   * Prompt change → update the "Prompt configuration" table
-3. **Remove the now-stale note** — there is no reference to `.commitlintrc.js` anywhere
-   in this skill for the AI to "check". The skill IS the reference.
-4. **Verify** — re-read both files and confirm every rule, type, scope, and pattern
-   matches exactly.
+   - New type → add to both the "Type" table and the `type-enum` row
+   - New scope → add to both the "Scope" table and the `scope-enum` row
+   - Rule change → update the relevant rules table
+   - Parser change → update the "Parser pattern" section
+   - Prompt change → update the "Prompt configuration" table
+3. **Remove the now-stale note** — there is no reference to `.commitlintrc.js` anywhere in this skill for the AI to
+   "check". The skill IS the reference.
+4. **Verify** — re-read both files and confirm every rule, type, scope, and pattern matches exactly.
 
 ### When commitlint fails
 
 If `git commit` is rejected by commitlint (via a git hook), follow these steps:
 
-1. **Read the error message carefully.** Commitlint reports the specific rule that
-   failed (e.g. `type-enum`, `scope-enum`, `subject-case`, `header-full-stop`).
-2. **Map the rule to this skill.** Look up the failed rule in the "Commitlint rules"
-   tables above to understand the exact constraint.
+1. **Read the error message carefully.** Commitlint reports the specific rule that failed (e.g. `type-enum`,
+   `scope-enum`, `subject-case`, `header-full-stop`).
+2. **Map the rule to this skill.** Look up the failed rule in the "Commitlint rules" tables above to understand the
+   exact constraint.
 3. **Fix the commit message** to satisfy the rule and retry the commit.
-4. **If the rule is genuinely wrong or too strict,** do NOT silently work around it.
-   Instead:
-   * Tell the user which rule failed and why the message doesn't satisfy it
-   * Propose updating `.commitlintrc.js` to relax or change the rule
-   * If the user agrees, update `.commitlintrc.js` AND then follow "Keeping this
-     skill in sync" above to update this skill in the same commit
+4. **If the rule is genuinely wrong or too strict,** do NOT silently work around it. Instead:
+   - Tell the user which rule failed and why the message doesn't satisfy it
+   - Propose updating `.commitlintrc.js` to relax or change the rule
+   - If the user agrees, update `.commitlintrc.js` AND then follow "Keeping this skill in sync" above to update this
+     skill in the same commit
 
 Common failures and fixes:
 
@@ -359,27 +344,26 @@ git diff --name-only
 git --no-pager log --oneline --no-merges -10
 ```
 
-* Staged files (`--cached`) determine what goes into the commit
-* Unstaged files (`diff --name-only`) — mention to the user if there are
-  relevant unstaged changes they might want to include or exclude
-* Recent commits provide style context
+- Staged files (`--cached`) determine what goes into the commit
+- Unstaged files (`diff --name-only`) — mention to the user if there are relevant unstaged changes they might want to
+  include or exclude
+- Recent commits provide style context
 
 ### 2. Check for commit splitting
 
-If staged changes span multiple scopes and are not a single atomic change, suggest
-splitting into separate commits. For example, files from both `projects/lungmen.akn/`
-and `catalog/ansible/` staged together should usually become two commits with different
-scopes and types. Ask the user if unsure.
+If staged changes span multiple scopes and are not a single atomic change, suggest splitting into separate commits. For
+example, files from both `projects/lungmen.akn/` and `catalog/ansible/` staged together should usually become two
+commits with different scopes and types. Ask the user if unsure.
 
 ### 3. Select the type
 
-Match the change type using the table above. When in doubt between two types, use the
-type selection rules. Never guess on ambiguous cases — ask the user.
+Match the change type using the table above. When in doubt between two types, use the type selection rules. Never guess
+on ambiguous cases — ask the user.
 
 ### 4. Determine the scope
 
-Use the scope decision tree. Validate against the allowed scopes list above.
-Never guess on ambiguous cases — ask the user.
+Use the scope decision tree. Validate against the allowed scopes list above. Never guess on ambiguous cases — ask the
+user.
 
 ### 5. Draft the subject
 
@@ -387,41 +371,37 @@ Imperative mood, UPPERCASE start, no period, max 100 chars.
 
 ### 6. Write the body
 
-For non-trivial changes, explain the WHY — motivation, impact, trade-offs — not the
-WHAT (the diff already shows that). Max 80 chars per line, sentence-case.
+For non-trivial changes, explain the WHY — motivation, impact, trade-offs — not the WHAT (the diff already shows that).
+Max 80 chars per line, sentence-case.
 
 **The WHY must come from the user, not from the diff.**
 
-The diff shows what changed. The body captures why the human decided to make that
-change — and only the human knows that. An AI-inferred motivation may sound plausible
-but can actively mislead future readers of the history. A missing body is recoverable;
-a wrong body is not.
+The diff shows what changed. The body captures why the human decided to make that change — and only the human knows
+that. An AI-inferred motivation may sound plausible but can actively mislead future readers of the history. A missing
+body is recoverable; a wrong body is not.
 
 Acceptable sources for the WHY:
 
-* The user's own words anywhere in the conversation — including context set earlier
-  (e.g. "I want to improve this skill because it doesn't follow the new practices"
-  is a valid motivation even if said several exchanges before the commit request)
-* A linked issue or PR description the user pointed to
+- The user's own words anywhere in the conversation — including context set earlier (e.g. "I want to improve this skill
+  because it doesn't follow the new practices" is a valid motivation even if said several exchanges before the commit
+  request)
+- A linked issue or PR description the user pointed to
 
 Not acceptable:
 
-* Your interpretation of the diff
-* Motivations you reconstructed from code or config changes
-* What you think the reason probably was
+- Your interpretation of the diff
+- Motivations you reconstructed from code or config changes
+- What you think the reason probably was
 
 Before writing the body, ask yourself two questions:
 
-**1. Is there a WHY at all?**
-A conclusion is not a reason. "It doesn't make sense anymore", "vire ça", "fix this"
-all express a decision — not the motivation behind it. If the user hasn't said why,
-ask before writing anything.
+**1. Is there a WHY at all?** A conclusion is not a reason. "It doesn't make sense anymore", "vire ça", "fix this" all
+express a decision — not the motivation behind it. If the user hasn't said why, ask before writing anything.
 
-**2. Is the WHY specific enough to be useful in 6 months?**
-A vague reason ("to follow new practices", "for better maintainability") tells a
-future reader nothing. Push for the specifics: which practices? what problem does
-this solve? what would break if we didn't do it? If the body would be vague, ask
-one targeted follow-up question to fill the gap — don't pad with generalities.
+**2. Is the WHY specific enough to be useful in 6 months?** A vague reason ("to follow new practices", "for better
+maintainability") tells a future reader nothing. Push for the specifics: which practices? what problem does this solve?
+what would break if we didn't do it? If the body would be vague, ask one targeted follow-up question to fill the gap —
+don't pad with generalities.
 
 ### 7. Stage and commit
 
@@ -525,7 +505,7 @@ git commit -S -m "!![project:amiya.akn]: Fix OIDC redirect loop"
 
 ## References
 
-* ADR-010: `docs/decisions/010-replace-gitmoji-with-symbol-commit-types.md`
-* <https://allthingsopen.org/articles/open-source-ai-contributions-assisted-by-git-trailer-standard>
-* <https://github.com/rust-lang/rust-forge/blob/8a1ce25d78f9d20a85201bf8808f1c8081be41cf/src/policies/llm-usage.md>
-* <https://docs.kernel.org/process/coding-assistants.html>
+- ADR-010: `docs/decisions/010-replace-gitmoji-with-symbol-commit-types.md`
+- <https://allthingsopen.org/articles/open-source-ai-contributions-assisted-by-git-trailer-standard>
+- <https://github.com/rust-lang/rust-forge/blob/8a1ce25d78f9d20a85201bf8808f1c8081be41cf/src/policies/llm-usage.md>
+- <https://docs.kernel.org/process/coding-assistants.html>

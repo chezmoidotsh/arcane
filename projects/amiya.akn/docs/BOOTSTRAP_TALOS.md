@@ -2,28 +2,29 @@
 
 ## Table of Contents
 
-* [Introduction](#introduction)
-* [Prerequisites](#prerequisites)
-* [Cluster Initialization](#cluster-initialization)
-* [Verification](#verification)
-* [Troubleshooting](#troubleshooting)
+- [Introduction](#introduction)
+- [Prerequisites](#prerequisites)
+- [Cluster Initialization](#cluster-initialization)
+- [Verification](#verification)
+- [Troubleshooting](#troubleshooting)
 
 ## Introduction
 
-This document describes the process of bootstrapping a Talos Linux cluster. It covers the necessary steps to initialize and configure a Talos cluster ready to host Kubernetes workloads.
+This document describes the process of bootstrapping a Talos Linux cluster. It covers the necessary steps to initialize
+and configure a Talos cluster ready to host Kubernetes workloads.
 
 ## Prerequisites
 
-* Physical or virtual machine with Talos Linux installed
-* Access to the machine's IP address
-* Talos secrets file (stored in personal secret manager)
-* Talos configuration patch file
-* The file `bootstrap/talos/tailscale.extensionserviceconfig.yaml` is must be decrypted with SOPS prior applying the configuration (and a new auth key must be generated)
+- Physical or virtual machine with Talos Linux installed
+- Access to the machine's IP address
+- Talos secrets file (stored in personal secret manager)
+- Talos configuration patch file
+- The file `bootstrap/talos/tailscale.extensionserviceconfig.yaml` is must be decrypted with SOPS prior applying the
+  configuration (and a new auth key must be generated)
 
 ## Cluster Initialization
 
-> \[!WARNING]
-> Before proceeding, ensure you have exported the following variable
+> \[!WARNING] Before proceeding, ensure you have exported the following variable
 >
 > ```sh
 > export TALOS_NODE_IP=<node-ip-address>
@@ -56,9 +57,9 @@ talosctl gen config amiya.akn https://kubernetes.amiya.akn.chezmoi.sh:6443 \
 
 This will generate the following files:
 
-* `controlplane.yaml` - Control plane node configuration
-* `worker.yaml` - Worker node configuration
-* `talosconfig` - Talos client configuration
+- `controlplane.yaml` - Control plane node configuration
+- `worker.yaml` - Worker node configuration
+- `talosconfig` - Talos client configuration
 
 ### 3. Apply Configuration
 
@@ -121,5 +122,4 @@ talosctl reset \
   --reboot
 ```
 
-> \[!NOTE]
-> This will completely wipe the node and requires reinstallation of Talos Linux.
+> \[!NOTE] This will completely wipe the node and requires reinstallation of Talos Linux.

@@ -13,7 +13,7 @@
 
 <!-- Optional 1-line intro describing the component, then file list. -->
 
-* **`path/to/file.yaml`** — what it does and why it exists
+- **`path/to/file.yaml`** — what it does and why it exists
 
 <!-- markdownlint-disable MD024 -->
 
@@ -21,7 +21,7 @@
 
 <!-- markdownlint-enable MD024 -->
 
-* ...
+- ...
 
 ## Technical Impact
 
@@ -46,23 +46,23 @@
 
 <!-- Specific checks to run after deployment. -->
 
-* [ ] Pods reach `Running` status in the target namespace
-* [ ] ExternalSecrets sync successfully
-* [ ] HTTPRoute / TCPRoute reports `Accepted` status
-* [ ] Cilium network policies enforce expected traffic isolation
-* [ ] <!-- functional check, e.g. login works, database connection succeeds -->
+- [ ] Pods reach `Running` status in the target namespace
+- [ ] ExternalSecrets sync successfully
+- [ ] HTTPRoute / TCPRoute reports `Accepted` status
+- [ ] Cilium network policies enforce expected traffic isolation
+- [ ] <!-- functional check, e.g. login works, database connection succeeds -->
 
 ## Future Enhancements
 
 <!-- Optional — list follow-ups intentionally out of scope. Remove the section
      if not applicable. -->
 
-* ...
+- ...
 
 ## Related Issues
 
 Closes #<!-- number — use "Addresses #X (Phase N)" for multi-phase work -->
 
-***
+---
 
 <sub>AI-assisted with <!-- provider:model --> under human supervision</sub>

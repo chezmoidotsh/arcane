@@ -1,7 +1,7 @@
 # Zot OCI registry log transforms
 
-Vector transform pipeline for the Zot OCI registry LXC.
-Parses Zap JSON logs into OTLP SemConv fields before shipping to VictoriaLogs.
+Vector transform pipeline for the Zot OCI registry LXC. Parses Zap JSON logs into OTLP SemConv fields before shipping to
+VictoriaLogs.
 
 ## Pipeline overview
 

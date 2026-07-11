@@ -2,11 +2,9 @@
 
 Vector transform pipeline for the PVE exporter LXC.
 
-This LXC has a dual log pipeline: it ships its own systemd journal (like every
-other LXC) and also acts as the **syslog ingest point** for the Proxmox host.
-The PVE host forwards RFC 5424 syslog via rsyslog `omfwd` to this LXC on
-TCP :5140; syslog events are parsed here and forwarded to o11y alongside the
-journal stream.
+This LXC has a dual log pipeline: it ships its own systemd journal (like every other LXC) and also acts as the **syslog
+ingest point** for the Proxmox host. The PVE host forwards RFC 5424 syslog via rsyslog `omfwd` to this LXC on TCP :5140;
+syslog events are parsed here and forwarded to o11y alongside the journal stream.
 
 ## Pipeline overview
 
@@ -25,9 +23,8 @@ journal stream.
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-The `journald_to_o11y` passthrough is required because `logs.extraTransforms`
-is non-empty (syslog source is added), which disables the automatic journald
-passthrough in `catalog.lxcAgent`.
+The `journald_to_o11y` passthrough is required because `logs.extraTransforms` is non-empty (syslog source is added),
+which disables the automatic journald passthrough in `catalog.lxcAgent`.
 
 ## Available fields in VictoriaLogs
 
@@ -66,8 +63,8 @@ passthrough in `catalog.lxcAgent`.
 ### LXC journal events (from `route_builtin._unmatched`)
 
 Fields follow the standard journald-to-OTLP mapping defined in
-`catalog/nix/modules/lxc-o11y-agent/config/vector/sources.journald.yaml`.
-The service running in this LXC is `pve-prometheus-exporter`.
+`catalog/nix/modules/lxc-o11y-agent/config/vector/sources.journald.yaml`. The service running in this LXC is
+`pve-prometheus-exporter`.
 
 ## VictoriaLogs query examples
 

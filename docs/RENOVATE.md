@@ -1,20 +1,21 @@
 # Renovate Configuration Guide
 
-This document describes the Renovate configuration for the Arcane infrastructure project and how it integrates with the standardized project structure defined in [ADR-007](./decisions/007-project-structure-and-naming-conventions.md).
+This document describes the Renovate configuration for the Arcane infrastructure project and how it integrates with the
+standardized project structure defined in [ADR-007](./decisions/007-project-structure-and-naming-conventions.md).
 
 ## Overview
 
 Renovate is configured to automatically update dependencies across the infrastructure, including:
 
-* **Docker images** in Kustomize `images` overrides
-* **Helm charts** versions in `helmCharts` declarations
-* **Kubernetes labels** (`app.kubernetes.io/version`)
-* **GitHub Actions** workflow dependencies
+- **Docker images** in Kustomize `images` overrides
+- **Helm charts** versions in `helmCharts` declarations
+- **Kubernetes labels** (`app.kubernetes.io/version`)
+- **GitHub Actions** workflow dependencies
 
 ## Configuration Files
 
-* **[renovate.json](../renovate.json)**: Local repository configuration
-* **Shared presets**: Extended from `github>chezmoidotsh/renovate-config`
+- **[renovate.json](../renovate.json)**: Local repository configuration
+- **Shared presets**: Extended from `github>chezmoidotsh/renovate-config`
 
 ## Label-Based Version Tracking
 
@@ -68,9 +69,9 @@ images:
 
 ### Important Notes
 
-* **Quote numeric versions**: Always quote version tags like `"25.10.0"` to prevent YAML parsing as floats
-* **Full image name**: Use complete image name in `name` field (registry + repository)
-* **Renovate comment placement**: Comment MUST be on the line immediately before the image entry
+- **Quote numeric versions**: Always quote version tags like `"25.10.0"` to prevent YAML parsing as floats
+- **Full image name**: Use complete image name in `name` field (registry + repository)
+- **Renovate comment placement**: Comment MUST be on the line immediately before the image entry
 
 ## Grouping Updates
 
@@ -84,7 +85,8 @@ Renovate is configured to group label and image updates for the same application
 }
 ```
 
-This ensures that both the `app.kubernetes.io/version` label and the `images.newTag` are updated in a single PR when a new version is available.
+This ensures that both the `app.kubernetes.io/version` label and the `images.newTag` are updated in a single PR when a
+new version is available.
 
 ### Example PR
 
@@ -113,17 +115,18 @@ Applications with asterisk prefix (manual-sync) are labeled for identification:
 
 ### Behavior
 
-* **Automerge enabled**: PRs for manual-sync apps WILL be auto-merged (same as other apps)
-* **Special labels**: PRs tagged with `sync: manual` for easy identification and filtering
-* **ArgoCD control**: The asterisk prefix controls ArgoCD sync behavior, not Renovate automerge
+- **Automerge enabled**: PRs for manual-sync apps WILL be auto-merged (same as other apps)
+- **Special labels**: PRs tagged with `sync: manual` for easy identification and filtering
+- **ArgoCD control**: The asterisk prefix controls ArgoCD sync behavior, not Renovate automerge
 
-> \[!NOTE]
-> The asterisk prefix (`*`) controls **ArgoCD sync policy** (manual vs auto-sync), not Renovate automerge behavior. Renovate will automatically merge dependency updates for all applications regardless of their ArgoCD sync configuration.
+> \[!NOTE] The asterisk prefix (`*`) controls **ArgoCD sync policy** (manual vs auto-sync), not Renovate automerge
+> behavior. Renovate will automatically merge dependency updates for all applications regardless of their ArgoCD sync
+> configuration.
 
 ### Examples
 
-* `projects/amiya.akn/src/apps/*argocd/` → Automerge enabled, `sync: manual` label
-* `projects/lungmen.akn/src/apps/actual-budget/` → Automerge enabled, `type: dependencies` label only
+- `projects/amiya.akn/src/apps/*argocd/` → Automerge enabled, `sync: manual` label
+- `projects/lungmen.akn/src/apps/actual-budget/` → Automerge enabled, `type: dependencies` label only
 
 ## Regex Manager Patterns
 
@@ -135,10 +138,10 @@ Applications with asterisk prefix (manual-sync) are labeled for identification:
 
 **Captures**:
 
-* `datasource`: Docker, Helm, etc.
-* `depName`: Package name
-* `registryUrl`: (Optional) Custom registry URL
-* `currentValue`: Current version number
+- `datasource`: Docker, Helm, etc.
+- `depName`: Package name
+- `registryUrl`: (Optional) Custom registry URL
+- `currentValue`: Current version number
 
 ### Image Override Updates
 
@@ -199,10 +202,10 @@ When `actualbudget/actual-server` releases version `25.11.0`, Renovate will:
 
 **Checklist**:
 
-* [ ] Renovate comment format correct (no typos in `datasource` or `depName`)
-* [ ] Comment on line immediately before version/image
-* [ ] Version value matches current upstream version
-* [ ] No extra whitespace or formatting issues
+- [ ] Renovate comment format correct (no typos in `datasource` or `depName`)
+- [ ] Comment on line immediately before version/image
+- [ ] Version value matches current upstream version
+- [ ] No extra whitespace or formatting issues
 
 ### Duplicate PRs
 
@@ -218,27 +221,28 @@ When `actualbudget/actual-server` releases version `25.11.0`, Renovate will:
 
 **Check**:
 
-* [ ] All status checks passing (required for automerge)
-* [ ] Renovate dashboard shows no conflicts
-* [ ] Base configuration allows automerge (inherited from shared config)
-* [ ] No branch protection rules blocking automerge
+- [ ] All status checks passing (required for automerge)
+- [ ] Renovate dashboard shows no conflicts
+- [ ] Base configuration allows automerge (inherited from shared config)
+- [ ] No branch protection rules blocking automerge
 
 ## References
 
 ### Internal Documentation
 
-* [ADR-007: Project Structure and Naming Conventions](./decisions/007-project-structure-and-naming-conventions.md) - Label standards
-* [renovate.json](../renovate.json) - Local configuration
-* [Shared Renovate Config](https://github.com/chezmoidotsh/renovate-config) - Base presets
+- [ADR-007: Project Structure and Naming Conventions](./decisions/007-project-structure-and-naming-conventions.md) -
+  Label standards
+- [renovate.json](../renovate.json) - Local configuration
+- [Shared Renovate Config](https://github.com/chezmoidotsh/renovate-config) - Base presets
 
 ### Renovate Documentation
 
-* [Renovate Docs](https://docs.renovatebot.com/)
-* [Kubernetes Manager](https://docs.renovatebot.com/modules/manager/kubernetes/)
-* [Regex Manager](https://docs.renovatebot.com/modules/manager/regex/)
-* [Package Rules](https://docs.renovatebot.com/configuration-options/#packagerules)
-* [Grouping Updates](https://docs.renovatebot.com/configuration-options/#groupname)
+- [Renovate Docs](https://docs.renovatebot.com/)
+- [Kubernetes Manager](https://docs.renovatebot.com/modules/manager/kubernetes/)
+- [Regex Manager](https://docs.renovatebot.com/modules/manager/regex/)
+- [Package Rules](https://docs.renovatebot.com/configuration-options/#packagerules)
+- [Grouping Updates](https://docs.renovatebot.com/configuration-options/#groupname)
 
 ## Changelog
 
-* **2025-11-01**: Initial documentation for Renovate label and image override tracking
+- **2025-11-01**: Initial documentation for Renovate label and image override tracking

@@ -2,57 +2,59 @@
 
 ![OpenBao Logo](docs/assets/openbao-text-black.svg)
 
-**OpenBao** is an open-source fork of HashiCorp Vault maintained by the OpenBao community under an open governance model, with enterprise features and PKCS#11 auto-unseal support
+**OpenBao** is an open-source fork of HashiCorp Vault maintained by the OpenBao community under an open governance
+model, with enterprise features and PKCS#11 auto-unseal support
 
-[![OpenBao Nix Package](https://img.shields.io/badge/nixpkgs-openbao-blue?logo=nixos\&logoColor=white)](https://github.com/NixOS/nixpkgs/blob/nixos-25.05/pkgs/by-name/op/openbao/package.nix)
-[![SoftHSMv2 Nix Package](https://img.shields.io/badge/nixpkgs-softhsm-green?logo=nixos\&logoColor=white)](https://github.com/NixOS/nixpkgs/blob/nixos-25.05/pkgs/by-name/so/softhsm/package.nix)
+[![OpenBao Nix Package](https://img.shields.io/badge/nixpkgs-openbao-blue?logo=nixos&logoColor=white)](https://github.com/NixOS/nixpkgs/blob/nixos-25.05/pkgs/by-name/op/openbao/package.nix)
+[![SoftHSMv2 Nix Package](https://img.shields.io/badge/nixpkgs-softhsm-green?logo=nixos&logoColor=white)](https://github.com/NixOS/nixpkgs/blob/nixos-25.05/pkgs/by-name/so/softhsm/package.nix)
 ![License](https://img.shields.io/badge/license-MPL--2.0-orange)
 
 </div>
 
 ## 🧩 About this Project
 
-This repository provides a Nix-based container image of OpenBao pre-configured with SoftHSMv2 and PKCS#11 support for auto-unsealing, optimized for homelab environments and Kubernetes deployments. The image includes custom initialization scripts, comprehensive HSM validation, and seamless integration with cloud-native orchestration platforms.
+This repository provides a Nix-based container image of OpenBao pre-configured with SoftHSMv2 and PKCS#11 support for
+auto-unsealing, optimized for homelab environments and Kubernetes deployments. The image includes custom initialization
+scripts, comprehensive HSM validation, and seamless integration with cloud-native orchestration platforms.
 
 ## 📦 What is OpenBao?
 
-**OpenBao exists to provide a software solution to manage, store, and distribute sensitive data including secrets, certificates, and keys. The OpenBao community intends to provide this software under an OSI-approved open-source license, led by a community run under open governance principles.**
+**OpenBao exists to provide a software solution to manage, store, and distribute sensitive data including secrets,
+certificates, and keys. The OpenBao community intends to provide this software under an OSI-approved open-source
+license, led by a community run under open governance principles.**
 
-A modern system requires access to a multitude of secrets: database credentials, API keys for external services, credentials for service-oriented architecture communication, etc. Understanding who is accessing what secrets is already very difficult and platform-specific. Adding on key rolling, secure storage, and detailed audit logs is almost impossible without a custom solution. This is where OpenBao steps in.
+A modern system requires access to a multitude of secrets: database credentials, API keys for external services,
+credentials for service-oriented architecture communication, etc. Understanding who is accessing what secrets is already
+very difficult and platform-specific. Adding on key rolling, secure storage, and detailed audit logs is almost
+impossible without a custom solution. This is where OpenBao steps in.
 
 The key features of OpenBao are:
 
-* **Secure Secret Storage**: Arbitrary key/value secrets can be stored
-  in OpenBao. OpenBao encrypts these secrets prior to writing them to persistent
-  storage, so gaining access to the raw storage isn't enough to access
-  your secrets. OpenBao can write to disk, [PostgreSQL](https://www.postgresql.org/),
-  and more.
+- **Secure Secret Storage**: Arbitrary key/value secrets can be stored in OpenBao. OpenBao encrypts these secrets prior
+  to writing them to persistent storage, so gaining access to the raw storage isn't enough to access your secrets.
+  OpenBao can write to disk, [PostgreSQL](https://www.postgresql.org/), and more.
 
-* **Dynamic Secrets**: OpenBao can generate secrets on-demand for some
-  systems, such as AWS or SQL databases. For example, when an application
-  needs to access an S3 bucket, it asks OpenBao for credentials, and OpenBao
-  will generate an AWS keypair with valid permissions on demand. After
-  creating these dynamic secrets, OpenBao will also automatically revoke them
-  after the lease is up.
+- **Dynamic Secrets**: OpenBao can generate secrets on-demand for some systems, such as AWS or SQL databases. For
+  example, when an application needs to access an S3 bucket, it asks OpenBao for credentials, and OpenBao will generate
+  an AWS keypair with valid permissions on demand. After creating these dynamic secrets, OpenBao will also automatically
+  revoke them after the lease is up.
 
-* **Data Encryption**: OpenBao can encrypt and decrypt data without storing
-  it. This allows security teams to define encryption parameters and
-  developers to store encrypted data in a location such as a SQL database without
-  having to design their own encryption methods.
+- **Data Encryption**: OpenBao can encrypt and decrypt data without storing it. This allows security teams to define
+  encryption parameters and developers to store encrypted data in a location such as a SQL database without having to
+  design their own encryption methods.
 
-* **Leasing and Renewal**: All secrets in OpenBao have a *lease* associated
-  with them. At the end of the lease, OpenBao will automatically revoke that
-  secret. Clients are able to renew leases via built-in renew APIs.
+- **Leasing and Renewal**: All secrets in OpenBao have a _lease_ associated with them. At the end of the lease, OpenBao
+  will automatically revoke that secret. Clients are able to renew leases via built-in renew APIs.
 
-* **Revocation**: OpenBao has built-in support for secret revocation. OpenBao
-  can revoke not only single secrets, but a tree of secrets, for example,
-  all secrets read by a specific user, or all secrets of a particular type.
-  Revocation assists in key rolling as well as locking down systems in the
-  case of an intrusion.
+- **Revocation**: OpenBao has built-in support for secret revocation. OpenBao can revoke not only single secrets, but a
+  tree of secrets, for example, all secrets read by a specific user, or all secrets of a particular type. Revocation
+  assists in key rolling as well as locking down systems in the case of an intrusion.
 
 > source: [OpenBao GitHub](https://github.com/openbao/openbao)
 
-**Production Considerations**: While SoftHSMv2 provides excellent development and testing capabilities, consider hardware HSM solutions (like AWS CloudHSM, Azure Dedicated HSM, or physical HSM devices) for production environments requiring higher security assurance.
+**Production Considerations**: While SoftHSMv2 provides excellent development and testing capabilities, consider
+hardware HSM solutions (like AWS CloudHSM, Azure Dedicated HSM, or physical HSM devices) for production environments
+requiring higher security assurance.
 
 ## 🏗️ Build Instructions
 
@@ -84,7 +86,8 @@ Use the provided build script for cross-platform builds:
 ./scripts/nix:build:image catalog/flakes/openbao/openbao --system x86_64-linux
 ```
 
-This method allows anyone to build the image on any platform, without requiring Nix to be installed. The build system supports cross-compilation for `linux/amd64` and `linux/arm64` architectures.
+This method allows anyone to build the image on any platform, without requiring Nix to be installed. The build system
+supports cross-compilation for `linux/amd64` and `linux/arm64` architectures.
 
 ## 🚀 Quick Start
 
@@ -139,12 +142,12 @@ kubectl create secret generic openbao-softhsm-tokens \
 
 The example includes:
 
-* Namespace creation
-* ConfigMap for OpenBao configuration
-* PersistentVolumeClaim for data storage
-* Service and optional Ingress
-* Security contexts and resource limits
-* Health checks and probes
+- Namespace creation
+- ConfigMap for OpenBao configuration
+- PersistentVolumeClaim for data storage
+- Service and optional Ingress
+- Security contexts and resource limits
+- Health checks and probes
 
 Deploy with:
 
@@ -193,7 +196,7 @@ listener "tcp" {
 
 seal "pkcs11" {
   lib            = "/lib/softhsm/libsofthsm2.so"
-  pin            = "123456789012"  
+  pin            = "123456789012"
   token_label    = "openbao-token"
   key_label      = "openbao-unseal-key"
   mechanism      = "AES-GCM"      # Supports AES-GCM, AES, RSA
@@ -220,7 +223,8 @@ softhsm:tokens:new [TOKENS_DIR] [TOKEN_LABEL] [KEY_LABEL] [MECHANISM]
 | `KEY_LABEL`   | PKCS#11 key label                   | `openbao-unseal-key` |
 | `MECHANISM`   | Key mechanism (AES-GCM, AES, RSA\*) | `AES-GCM`            |
 
-**\*RSA Compatibility Note**: RSA mechanism is supported for PKCS#11 seal operations but requires specific OpenBao build configuration. AES-GCM is recommended for most use cases as it provides better performance and broader compatibility.
+**\*RSA Compatibility Note**: RSA mechanism is supported for PKCS#11 seal operations but requires specific OpenBao build
+configuration. AES-GCM is recommended for most use cases as it provides better performance and broader compatibility.
 
 ### Integration with Kubernetes Helm Charts
 
@@ -232,29 +236,30 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 helmCharts:
-- name: openbao
-  repo: https://openbao.github.io/openbao-helm
-  version: v0.14.0
-  valuesInline:
-    server:
-      image:
-        repository: openbao-softhsm
-        tag: latest
-      extraSecretEnvironmentVars:
-        - envName: OPENBAO_HSM_PIN
-          secretName: openbao-softhsm-tokens
-          secretKey: pin
-      extraVolumes:
-        - type: secret
-          name: openbao-softhsm-tokens
-          path: /run/secrets/softhsm2
+  - name: openbao
+    repo: https://openbao.github.io/openbao-helm
+    version: v0.14.0
+    valuesInline:
+      server:
+        image:
+          repository: openbao-softhsm
+          tag: latest
+        extraSecretEnvironmentVars:
+          - envName: OPENBAO_HSM_PIN
+            secretName: openbao-softhsm-tokens
+            secretKey: pin
+        extraVolumes:
+          - type: secret
+            name: openbao-softhsm-tokens
+            path: /run/secrets/softhsm2
 ```
 
 ## 🔍 Troubleshooting
 
 ### Kubernetes Debugging
 
-**Important**: The `softhsm2-util` and `pkcs11-tool` commands require that `SOFTHSM2_CONF` be correctly defined, otherwise they cannot locate the HSM tokens.
+**Important**: The `softhsm2-util` and `pkcs11-tool` commands require that `SOFTHSM2_CONF` be correctly defined,
+otherwise they cannot locate the HSM tokens.
 
 ```bash
 # Check pod status and events
@@ -333,18 +338,18 @@ docker exec openbao softhsm2-util --show-slots
 
 ## 📚 References
 
-* **Upstream Documentation**: [OpenBao Documentation](https://openbao.org/docs/)
-* **Nix Package**: [OpenBao in nixpkgs](https://github.com/NixOS/nixpkgs/blob/nixos-25.05/pkgs/by-name/op/openbao/package.nix)
-* **SoftHSMv2**: [SoftHSMv2 Documentation](https://github.com/opendnssec/SoftHSMv2)
-* **PKCS#11**: [PKCS#11 Auto-Unseal Guide](https://openbao.org/docs/configuration/seal/pkcs11)
+- **Upstream Documentation**: [OpenBao Documentation](https://openbao.org/docs/)
+- **Nix Package**:
+  [OpenBao in nixpkgs](https://github.com/NixOS/nixpkgs/blob/nixos-25.05/pkgs/by-name/op/openbao/package.nix)
+- **SoftHSMv2**: [SoftHSMv2 Documentation](https://github.com/opendnssec/SoftHSMv2)
+- **PKCS#11**: [PKCS#11 Auto-Unseal Guide](https://openbao.org/docs/configuration/seal/pkcs11)
 
 ## 📄 License
 
 This project is licensed under the MPL-2.0 License - see the [LICENSE](../../../../LICENSE) file for details.
 
-The packaged software (OpenBao) is licensed under MPL-2.0.
-SoftHSMv2 is licensed under BSD-2-Clause.
+The packaged software (OpenBao) is licensed under MPL-2.0. SoftHSMv2 is licensed under BSD-2-Clause.
 
-***
+---
 
 **Built with ❤️ using [Nix](https://nixos.org/) and [Flakes](https://nixos.wiki/wiki/Flakes)**

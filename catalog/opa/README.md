@@ -1,11 +1,10 @@
 # catalog/opa/
 
-OPA/Rego policies for CI-time validation of Kubernetes manifests. Enforced via
-[conftest](https://www.conftest.dev/) in GitHub Actions and [trunk](https://docs.trunk.io/)
-locally on rendered `dist/` manifests.
+OPA/Rego policies for CI-time validation of Kubernetes manifests. Enforced via [conftest](https://www.conftest.dev/) in
+GitHub Actions and [trunk](https://docs.trunk.io/) locally on rendered `dist/` manifests.
 
-Policies are CI-only — they do **not** mutate resources at runtime, keeping the
-cluster free of admission webhook dependencies.
+Policies are CI-only — they do **not** mutate resources at runtime, keeping the cluster free of admission webhook
+dependencies.
 
 ## Structure
 
@@ -30,6 +29,7 @@ trunk check --filter conftest --no-fix
 ## Adding policies
 
 1. Write a Rego policy in `policies/` using `deny[msg]` rules.
-2. Write a companion `_test.rego` file using OPA's [policy testing](https://www.openpolicyagent.org/docs/latest/policy-testing/).
+2. Write a companion `_test.rego` file using OPA's
+   [policy testing](https://www.openpolicyagent.org/docs/latest/policy-testing/).
 3. Add rule documentation in `rules/`.
 4. CI and trunk pick up new `.rego` files automatically.

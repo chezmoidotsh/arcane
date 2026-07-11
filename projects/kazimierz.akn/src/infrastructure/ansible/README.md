@@ -2,7 +2,9 @@
 
 Deploy and manage the Kazimierz.AKN proxy/firewall/WAF cluster using Ansible with GitOps automation via `ansible-pull`.
 
-This infrastructure uses **Docker Compose** instead of Kubernetes for simplified operation and reduced resource overhead. See [ADR-008](../../../../../docs/decisions/008-kazimierz-ansible-over-kubernetes.md) for the architectural decision rationale.
+This infrastructure uses **Docker Compose** instead of Kubernetes for simplified operation and reduced resource
+overhead. See [ADR-008](../../../../../docs/decisions/008-kazimierz-ansible-over-kubernetes.md) for the architectural
+decision rationale.
 
 ## Architecture
 
@@ -32,8 +34,10 @@ Git Repository (github.com/chezmoidotsh/arcane)
   +--------------------------------+
 ```
 
-> **Why Docker Compose and not Kubernetes?**
-> See [ADR-008](../../../../../docs/decisions/008-kazimierz-ansible-over-kubernetes.md) for the full rationale. Summary: Pangolin is Docker Compose-first, Gerbil requires host networking, and Kubernetes adds 1GB overhead for minimal benefit on this single-app VPS.
+> **Why Docker Compose and not Kubernetes?** See
+> [ADR-008](../../../../../docs/decisions/008-kazimierz-ansible-over-kubernetes.md) for the full rationale. Summary:
+> Pangolin is Docker Compose-first, Gerbil requires host networking, and Kubernetes adds 1GB overhead for minimal
+> benefit on this single-app VPS.
 
 ## Directory Structure
 
@@ -53,16 +57,16 @@ ansible/
 
 **Local machine:**
 
-* Ansible >= 2.14
-* SSH access to VPS
-* Tailscale auth key (environment variable)
-* Ansible Galaxy roles installed (see Installation section)
+- Ansible >= 2.14
+- SSH access to VPS
+- Tailscale auth key (environment variable)
+- Ansible Galaxy roles installed (see Installation section)
 
 **VPS:**
 
-* Ubuntu 22.04 LTS
-* 4GB RAM minimum
-* Public IP address (for initial bootstrap)
+- Ubuntu 22.04 LTS
+- 4GB RAM minimum
+- Public IP address (for initial bootstrap)
 
 ## Installation
 
@@ -75,10 +79,10 @@ ansible-galaxy install -r requirements.yml
 
 This installs:
 
-* `geerlingguy.docker` v7.6.1 - Docker installation and configuration
-* `artis3n.tailscale` v4.2.1 - Tailscale VPN setup
-* `community.general` >= 8.0.0 - General utilities
-* `community.docker` >= 3.0.0 - Docker management
+- `geerlingguy.docker` v7.6.1 - Docker installation and configuration
+- `artis3n.tailscale` v4.2.1 - Tailscale VPN setup
+- `community.general` >= 8.0.0 - General utilities
+- `community.docker` >= 3.0.0 - Docker management
 
 ## Deployment
 
@@ -96,13 +100,13 @@ ansible-playbook -i inventory/hosts.yml playbooks/bootstrap.yml
 
 **What this does:**
 
-* Updates system packages
-* Installs base tools (git, ansible, python3, docker)
-* Configures unattended-upgrades
-* Sets hostname and timezone
-* Installs and configures Tailscale
-* **Sets up ansible-pull systemd timer**
-* Displays Tailscale IP for future access
+- Updates system packages
+- Installs base tools (git, ansible, python3, docker)
+- Configures unattended-upgrades
+- Sets hostname and timezone
+- Installs and configures Tailscale
+- **Sets up ansible-pull systemd timer**
+- Displays Tailscale IP for future access
 
 ### Step 2: Verify ansible-pull
 
@@ -172,15 +176,14 @@ Initial VPS setup playbook.
 
 **Tasks:**
 
-* System package updates
-* Install base packages (ansible, git, docker, python3)
-* Configure unattended-upgrades
-* Set hostname and timezone
-* Install Tailscale
-* Configure ansible-pull systemd timer
+- System package updates
+- Install base packages (ansible, git, docker, python3)
+- Configure unattended-upgrades
+- Set hostname and timezone
+- Install Tailscale
+- Configure ansible-pull systemd timer
 
-**Run once:** Yes (during initial setup)
-**Idempotent:** Yes (safe to re-run)
+**Run once:** Yes (during initial setup) **Idempotent:** Yes (safe to re-run)
 
 ### pangolin-deploy.yml
 
@@ -188,15 +191,14 @@ Deploys and manages the Pangolin Docker Compose stack.
 
 **Tasks:**
 
-* Install Docker Engine and Docker Compose
-* Create Pangolin directories
-* Clone Arcane repository
-* Copy docker-compose.yml and configuration
-* Create .env template if not exists
-* Deploy Pangolin stack with docker-compose
+- Install Docker Engine and Docker Compose
+- Create Pangolin directories
+- Clone Arcane repository
+- Copy docker-compose.yml and configuration
+- Create .env template if not exists
+- Deploy Pangolin stack with docker-compose
 
-**Run frequency:** Every ansible-pull (15 min)
-**Idempotent:** Yes
+**Run frequency:** Every ansible-pull (15 min) **Idempotent:** Yes
 
 ### ansible-pull-setup.yml
 
@@ -204,14 +206,13 @@ Configures GitOps pull-based deployment.
 
 **Tasks:**
 
-* Install Ansible collections (community.docker, etc.)
-* Create ansible-pull systemd service
-* Create ansible-pull systemd timer (15 min interval)
-* Enable and start timer
-* Run initial test
+- Install Ansible collections (community.docker, etc.)
+- Create ansible-pull systemd service
+- Create ansible-pull systemd timer (15 min interval)
+- Enable and start timer
+- Run initial test
 
-**Run once:** Yes (during bootstrap)
-**Idempotent:** Yes
+**Run once:** Yes (during bootstrap) **Idempotent:** Yes
 
 ### site.yml
 
@@ -220,49 +221,49 @@ Configures GitOps pull-based deployment.
 **Execution order (4 phases):**
 
 1. **Setup ansible-pull systemd timer** (GitOps automation)
-   * Install Ansible and required collections
-   * Create systemd service for ansible-pull
-   * Create systemd timer (runs every 15 minutes)
-   * Repository cloned/updated automatically by ansible-pull to `/opt/chezmoidotsh/arcane`
+   - Install Ansible and required collections
+   - Create systemd service for ansible-pull
+   - Create systemd timer (runs every 15 minutes)
+   - Repository cloned/updated automatically by ansible-pull to `/opt/chezmoidotsh/arcane`
 
 2. **System Installation**
-   * APT update and full system upgrade
-   * Install base packages (git, curl, gnupg)
-   * **Docker**: Install via `geerlingguy.docker` role with Compose v2.24.5
-   * **Tailscale VPN**: Install via `artis3n.tailscale` role with SSH enabled
-   * **UFW Firewall**:
-     * Default deny-all policy
-     * Allow HTTP (80), HTTPS (443)
-     * Allow Newt Site Tunnels (51820/udp), Client Tunnels (21820/udp)
-     * **SSH port 22 DISABLED** (Tailscale SSH only)
-     * Enabled via notify handler (prevents SSH connection loss)
-   * **Unattended Upgrades**: Automatic security updates with 03:00 reboot
+   - APT update and full system upgrade
+   - Install base packages (git, curl, gnupg)
+   - **Docker**: Install via `geerlingguy.docker` role with Compose v2.24.5
+   - **Tailscale VPN**: Install via `artis3n.tailscale` role with SSH enabled
+   - **UFW Firewall**:
+     - Default deny-all policy
+     - Allow HTTP (80), HTTPS (443)
+     - Allow Newt Site Tunnels (51820/udp), Client Tunnels (21820/udp)
+     - **SSH port 22 DISABLED** (Tailscale SSH only)
+     - Enabled via notify handler (prevents SSH connection loss)
+   - **Unattended Upgrades**: Automatic security updates with 03:00 reboot
 
 3. **Ansible + ARA Installation**
-   * Install Ansible core and collections (community.general, community.docker)
-   * Deploy ARA Records Ansible via custom role (`roles/ara/`)
-   * ARA runs as systemd service with Docker container
-   * Tailscale Serve automatically configured for HTTPS access
-   * Service management: `systemctl status ara.service`
+   - Install Ansible core and collections (community.general, community.docker)
+   - Deploy ARA Records Ansible via custom role (`roles/ara/`)
+   - ARA runs as systemd service with Docker container
+   - Tailscale Serve automatically configured for HTTPS access
+   - Service management: `systemctl status ara.service`
 
 4. **Pangolin Deployment**
-   * Execute Pangolin Docker Compose deployment
-   * Uses files from ansible-pull directory (`/opt/chezmoidotsh/arcane`)
-   * Configure data directories and environment files
+   - Execute Pangolin Docker Compose deployment
+   - Uses files from ansible-pull directory (`/opt/chezmoidotsh/arcane`)
+   - Configure data directories and environment files
 
 **Key Features:**
 
-* ✅ **ansible-pull GitOps** - Automatic pulls every 15 minutes
-* ✅ **No manual git operations** - ansible-pull handles everything
-* ✅ **Self-contained** - One playbook does everything
-* ✅ **UFW handler** - Firewall enabled safely via notify
-* ✅ **ARA systemd service** - Managed lifecycle with Docker
-* ✅ **SSH disabled** - Tailscale SSH only (port 22 blocked)
+- ✅ **ansible-pull GitOps** - Automatic pulls every 15 minutes
+- ✅ **No manual git operations** - ansible-pull handles everything
+- ✅ **Self-contained** - One playbook does everything
+- ✅ **UFW handler** - Firewall enabled safely via notify
+- ✅ **ARA systemd service** - Managed lifecycle with Docker
+- ✅ **SSH disabled** - Tailscale SSH only (port 22 blocked)
 
 **Run frequency:**
 
-* **Initial setup**: Run once manually
-* **Automatic**: ansible-pull systemd timer (every 15 minutes)
+- **Initial setup**: Run once manually
+- **Automatic**: ansible-pull systemd timer (every 15 minutes)
 
 **Idempotent:** Yes (safe to re-run)
 
@@ -382,22 +383,22 @@ journalctl -u tailscaled -f
 
 ### SSH Access
 
-* Initial bootstrap via public IP/SSH
-* After bootstrap, **all access via Tailscale only**
-* Public SSH should be disabled after Tailscale is configured
+- Initial bootstrap via public IP/SSH
+- After bootstrap, **all access via Tailscale only**
+- Public SSH should be disabled after Tailscale is configured
 
 ### Secrets Management
 
-* Tailscale auth key: Environment variable (not committed to Git)
-* Pangolin secrets: Manual configuration in `/opt/pangolin/docker-compose/.env`
-* .env file is excluded from Git (never pulled by ansible-pull)
+- Tailscale auth key: Environment variable (not committed to Git)
+- Pangolin secrets: Manual configuration in `/opt/pangolin/docker-compose/.env`
+- .env file is excluded from Git (never pulled by ansible-pull)
 
 ### GitOps Security
 
-* VPS pulls from **public Git repository** (read-only)
-* No SSH keys on developer machines
-* No inbound SSH required (Tailscale only)
-* Systemd service runs with standard privileges
+- VPS pulls from **public Git repository** (read-only)
+- No SSH keys on developer machines
+- No inbound SSH required (Tailscale only)
+- Systemd service runs with standard privileges
 
 ## Complete Deployment Example
 
@@ -432,6 +433,6 @@ docker-compose restart
 
 ## References
 
-* [ADR-008: Kazimierz Ansible over Kubernetes](../../../../../docs/decisions/008-kazimierz-ansible-over-kubernetes.md)
-* [Ansible Pull Documentation](https://docs.ansible.com/ansible/latest/cli/ansible-pull.html)
-* [Pangolin Documentation](https://digpangolin.com/)
+- [ADR-008: Kazimierz Ansible over Kubernetes](../../../../../docs/decisions/008-kazimierz-ansible-over-kubernetes.md)
+- [Ansible Pull Documentation](https://docs.ansible.com/ansible/latest/cli/ansible-pull.html)
+- [Pangolin Documentation](https://digpangolin.com/)

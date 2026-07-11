@@ -1,34 +1,37 @@
 # Ansible Role: Pangolin
 
-Deploy the [Pangolin](https://github.com/fosrl/pangolin) tunneled reverse proxy stack with Docker Compose. Pangolin provides a self-hosted, identity-aware alternative to Cloudflare Tunnels and Tailscale Funnel, using WireGuard for secure tunneling.
+Deploy the [Pangolin](https://github.com/fosrl/pangolin) tunneled reverse proxy stack with Docker Compose. Pangolin
+provides a self-hosted, identity-aware alternative to Cloudflare Tunnels and Tailscale Funnel, using WireGuard for
+secure tunneling.
 
 ## Features
 
-* **Complete Stack Deployment** - Automatically deploys Pangolin, Gerbil (WireGuard manager), and Traefik (reverse proxy)
-* **Secure by Default** - Automatic Let's Encrypt SSL certificates with secure file permissions (acme.json at mode 0600)
-* **Idempotent Operations** - Safe to run repeatedly without unnecessary changes
-* **Configuration Validation** - Validates required variables before deployment
-* **Health Checks** - Waits for Pangolin to become healthy before completing
-* **Templated Configuration** - Jinja2 templates for all configuration files
-* **Network Isolation** - Optional public IP binding to prevent Tailscale conflicts
+- **Complete Stack Deployment** - Automatically deploys Pangolin, Gerbil (WireGuard manager), and Traefik (reverse
+  proxy)
+- **Secure by Default** - Automatic Let's Encrypt SSL certificates with secure file permissions (acme.json at mode 0600)
+- **Idempotent Operations** - Safe to run repeatedly without unnecessary changes
+- **Configuration Validation** - Validates required variables before deployment
+- **Health Checks** - Waits for Pangolin to become healthy before completing
+- **Templated Configuration** - Jinja2 templates for all configuration files
+- **Network Isolation** - Optional public IP binding to prevent Tailscale conflicts
 
 ## Requirements
 
 ### Control Node (where Ansible runs)
 
-* Ansible >= 2.14
-* `community.docker` Ansible collection >= 4.0.0
+- Ansible >= 2.14
+- `community.docker` Ansible collection >= 4.0.0
 
 ### Managed Node (target server)
 
-* Ubuntu 22.04 LTS or Debian 11+ (other distros may work but untested)
-* Docker Engine with Docker Compose v2 plugin
-* Domain name with DNS A record pointing to server public IP
-* Firewall rules allowing:
-  * TCP 80 (HTTP - Let's Encrypt validation and redirect to HTTPS)
-  * TCP 443 (HTTPS - Pangolin dashboard and API)
-  * UDP 51820 (WireGuard - Newt site tunnels)
-  * UDP 21820 (WireGuard - Newt client tunnels)
+- Ubuntu 22.04 LTS or Debian 11+ (other distros may work but untested)
+- Docker Engine with Docker Compose v2 plugin
+- Domain name with DNS A record pointing to server public IP
+- Firewall rules allowing:
+  - TCP 80 (HTTP - Let's Encrypt validation and redirect to HTTPS)
+  - TCP 443 (HTTPS - Pangolin dashboard and API)
+  - UDP 51820 (WireGuard - Newt site tunnels)
+  - UDP 21820 (WireGuard - Newt client tunnels)
 
 ## Role Variables
 
@@ -120,7 +123,9 @@ pangolin_http_port: 80
 pangolin_https_port: 443
 ```
 
-**Important for Tailscale users**: If you're running Tailscale with `tailscale serve` on port 443, you must set `pangolin_bind_ip` to your public IP address to avoid port conflicts. The playbook includes a pre\_task to automatically detect your public IP.
+**Important for Tailscale users**: If you're running Tailscale with `tailscale serve` on port 443, you must set
+`pangolin_bind_ip` to your public IP address to avoid port conflicts. The playbook includes a pre_task to automatically
+detect your public IP.
 
 ### Advanced Configuration
 
@@ -168,8 +173,8 @@ ansible-galaxy collection install community.docker:>=4.0.0
 
 **Important**: This role uses the `docker_compose_v2` module, which requires:
 
-* Docker Compose v2 installed on the managed node
-* `community.docker` collection >= 4.0.0
+- Docker Compose v2 installed on the managed node
+- `community.docker` collection >= 4.0.0
 
 The older `docker_compose` module (v1) reached End of Life in July 2022 and is no longer supported.
 
@@ -354,12 +359,12 @@ Note: The dashboard is configured in insecure mode for development. For producti
 
 ## Security Considerations
 
-* **Server Secret**: Use a strong, randomly generated secret (32+ characters recommended)
-* **ACME Email**: Use a valid email for Let's Encrypt notifications
-* **File Permissions**: The role sets secure permissions on sensitive files (acme.json, config files)
-* **Firewall**: Ensure only necessary ports are exposed
-* **Regular Updates**: Keep Docker images updated for security patches
-* **Production Mode**: Disable Traefik insecure dashboard in production
+- **Server Secret**: Use a strong, randomly generated secret (32+ characters recommended)
+- **ACME Email**: Use a valid email for Let's Encrypt notifications
+- **File Permissions**: The role sets secure permissions on sensitive files (acme.json, config files)
+- **Firewall**: Ensure only necessary ports are exposed
+- **Regular Updates**: Keep Docker images updated for security patches
+- **Production Mode**: Disable Traefik insecure dashboard in production
 
 ## Tags
 
@@ -390,28 +395,29 @@ ansible-playbook playbook.yml --tags directories,configuration,docker
 
 ## CrowdSec Integration
 
-This role automatically integrates CrowdSec for WAF (Web Application Firewall) and IPS (Intrusion Prevention System) capabilities with Traefik.
+This role automatically integrates CrowdSec for WAF (Web Application Firewall) and IPS (Intrusion Prevention System)
+capabilities with Traefik.
 
 ### Bouncer API Key Management
 
 The role uses a **persistent file-based approach** for storing the CrowdSec Traefik bouncer API key:
 
-* **Key File Location**: `/opt/pangolin/config/crowdsec/bouncer_key`
-* **Permissions**: `0600` (root read/write only)
-* **Idempotency**: Key is generated once and persisted across playbook runs
+- **Key File Location**: `/opt/pangolin/config/crowdsec/bouncer_key`
+- **Permissions**: `0600` (root read/write only)
+- **Idempotency**: Key is generated once and persisted across playbook runs
 
 ### How It Works
 
 1. **First Deployment**:
-   * Role checks if bouncer key file exists
-   * If missing, generates new API key via CrowdSec CLI
-   * Saves key to persistent file with secure permissions
-   * Templates Traefik dynamic configuration with the key
+   - Role checks if bouncer key file exists
+   - If missing, generates new API key via CrowdSec CLI
+   - Saves key to persistent file with secure permissions
+   - Templates Traefik dynamic configuration with the key
 
 2. **Subsequent Deployments**:
-   * Role detects existing key file
-   * Reads key from file
-   * Uses existing key for configuration (no regeneration)
+   - Role detects existing key file
+   - Reads key from file
+   - Uses existing key for configuration (no regeneration)
 
 ### Manual Key Rotation
 
@@ -538,21 +544,21 @@ docker exec crowdsec cscli capi status
 
 ### Monitoring and Maintenance
 
-* **View Logs**
+- **View Logs**
 
   ```bash
   docker compose -f /opt/pangolin/docker-compose.yml logs -f pangolin
   docker compose -f /opt/pangolin/docker-compose.yml logs -f traefik
   ```
 
-* **Check Service Health**
+- **Check Service Health**
 
   ```bash
   docker compose -f /opt/pangolin/docker-compose.yml ps
   curl -I https://pangolin.yourdomain.com
   ```
 
-* **Update to Latest Images**
+- **Update to Latest Images**
 
   ```bash
   cd /opt/pangolin
@@ -570,8 +576,8 @@ This role was created as part of the [Arcane](https://github.com/chezmoidotsh/ar
 
 ## References
 
-* [Pangolin GitHub Repository](https://github.com/fosrl/pangolin)
-* [Pangolin Documentation](https://docs.pangolin.net)
-* [Gerbil GitHub Repository](https://github.com/fosrl/gerbil)
-* [Newt Client](https://github.com/fosrl/newt)
-* [Traefik Documentation](https://doc.traefik.io/traefik/)
+- [Pangolin GitHub Repository](https://github.com/fosrl/pangolin)
+- [Pangolin Documentation](https://docs.pangolin.net)
+- [Gerbil GitHub Repository](https://github.com/fosrl/gerbil)
+- [Newt Client](https://github.com/fosrl/newt)
+- [Traefik Documentation](https://doc.traefik.io/traefik/)

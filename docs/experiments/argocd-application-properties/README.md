@@ -9,13 +9,16 @@
 | **ArgoCD Version** | 2.14.x         |
 | **Related ADR**    | TBD            |
 
-***
+---
 
 ## Abstract
 
-This experiment evaluates the feasibility of implementing per-application customization in ArgoCD ApplicationSets while preserving the **folder-equals-application** discovery pattern. The proposed solution leverages ArgoCD's Merge Generator to combine Git Directory and Git Files generators, enabling applications to optionally provide a `.application.patch` file for metadata and behavior customization.
+This experiment evaluates the feasibility of implementing per-application customization in ArgoCD ApplicationSets while
+preserving the **folder-equals-application** discovery pattern. The proposed solution leverages ArgoCD's Merge Generator
+to combine Git Directory and Git Files generators, enabling applications to optionally provide a `.application.patch`
+file for metadata and behavior customization.
 
-***
+---
 
 ## Table of Contents
 
@@ -30,13 +33,14 @@ This experiment evaluates the feasibility of implementing per-application custom
 9. [Conclusions](#9-conclusions)
 10. [References](#10-references)
 
-***
+---
 
 ## 1. Problem Statement
 
 ### 1.1 Current Architecture
 
-The Arcane infrastructure uses ArgoCD ApplicationSets with a Git Directory Generator to automatically discover and deploy applications. Each subdirectory in `projects/<cluster>/src/apps/*` becomes an ArgoCD Application.
+The Arcane infrastructure uses ArgoCD ApplicationSets with a Git Directory Generator to automatically discover and
+deploy applications. Each subdirectory in `projects/<cluster>/src/apps/*` becomes an ArgoCD Application.
 
 ```
 projects/lungmen.akn/src/apps/
@@ -48,10 +52,10 @@ projects/lungmen.akn/src/apps/
 
 **Current behavior:**
 
-* Folder name becomes Application name (with `*` prefix stripped)
-* Folder name becomes target namespace
-* `*` prefix indicates manual sync (no automated prune/selfHeal)
-* All applications use hardcoded project `default` (to be overriden)
+- Folder name becomes Application name (with `*` prefix stripped)
+- Folder name becomes target namespace
+- `*` prefix indicates manual sync (no automated prune/selfHeal)
+- All applications use hardcoded project `default` (to be overriden)
 
 ### 1.2 Limitations
 
@@ -71,7 +75,7 @@ As the infrastructure grows, the need for per-application customization becomes 
 3. **Explicit configuration**: Replace implicit conventions with explicit, documented configuration
 4. **Metadata enrichment**: Add custom labels and annotations to applications
 
-***
+---
 
 ## 2. Requirements
 
@@ -98,11 +102,11 @@ As the infrastructure grows, the need for per-application customization becomes 
 
 ### 2.3 Constraints
 
-* Must use native ArgoCD ApplicationSet features
-* Cannot require changes to ArgoCD installation
-* Must maintain GitOps principles (all configuration in Git)
+- Must use native ArgoCD ApplicationSet features
+- Cannot require changes to ArgoCD installation
+- Must maintain GitOps principles (all configuration in Git)
 
-***
+---
 
 ## 3. Technical Background
 
@@ -132,8 +136,8 @@ database:
 
 Becomes available as:
 
-* `{{ .database.host }}` → `postgres.example.com`
-* `{{ .database.port }}` → `5432`
+- `{{ .database.host }}` → `postgres.example.com`
+- `{{ .database.port }}` → `5432`
 
 ### 3.3 Merge Generator
 
@@ -157,10 +161,10 @@ When combining Git generators, parameter name collisions can occur. The `pathPar
 - git:
     directories:
       - path: apps/*
-    pathParamPrefix: app  # Parameters: app.path, app.path.basename, etc.
+    pathParamPrefix: app # Parameters: app.path, app.path.basename, etc.
 ```
 
-***
+---
 
 ## 4. Proposed Solution
 
@@ -197,11 +201,13 @@ When combining Git generators, parameter name collisions can occur. The `pathPar
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-> **Note**: The implementation uses Matrix generators inside Merge because of a known ArgoCD issue with nested key access in Merge generators when goTemplate is enabled ([#12836](https://github.com/argoproj/argo-cd/issues/12836)).
+> **Note**: The implementation uses Matrix generators inside Merge because of a known ArgoCD issue with nested key
+> access in Merge generators when goTemplate is enabled ([#12836](https://github.com/argoproj/argo-cd/issues/12836)).
 
 ### 4.2 Patch File Schema
 
-The `.application.patch` file follows a Kubernetes-style structure with `apiVersion`, `kind`, `metadata`, and `spec` fields. This mirrors the ArgoCD Application Custom Resource for familiarity.
+The `.application.patch` file follows a Kubernetes-style structure with `apiVersion`, `kind`, `metadata`, and `spec`
+fields. This mirrors the ArgoCD Application Custom Resource for familiarity.
 
 ```yaml
 # .application.patch
@@ -240,7 +246,7 @@ spec:
 
   # Target namespace override (optional)
   destination:
-    namespace: custom-namespace  # Default: folder name
+    namespace: custom-namespace # Default: folder name
 ```
 
 **Allowed Fields:**
@@ -253,7 +259,8 @@ spec:
 | `spec`     | `syncPolicy`  | Sync configuration (set `null` for manual)   |
 | `spec`     | `destination` | Only `namespace` can be overridden           |
 
-> **Note**: The `project` field cannot be customized. ArgoCD requires knowing the project before scanning the repository, making runtime project assignment via ApplicationSet impossible.
+> **Note**: The `project` field cannot be customized. ArgoCD requires knowing the project before scanning the
+> repository, making runtime project assignment via ApplicationSet impossible.
 
 ### 4.3 Default Values
 
@@ -296,7 +303,7 @@ syncPolicy:
 | Critical infrastructure        | Present, `syncPolicy: null`      | Manual sync only, no auto-prune      |
 | Shared namespace app           | Present, `destination.namespace` | Custom namespace used                |
 
-***
+---
 
 ## 5. Implementation
 
@@ -307,26 +314,29 @@ See [manifests/apps.applicationset.yaml](manifests/apps.applicationset.yaml)
 Key implementation details:
 
 1. **Merge Generator**: Combines results from two Matrix generators using `app_name` and `app_path` as merge keys
-2. **Matrix + List workaround**: Uses nested Matrix generators with List to work around ArgoCD issue #12836 (nested key access in Merge with goTemplate)
+2. **Matrix + List workaround**: Uses nested Matrix generators with List to work around ArgoCD issue #12836 (nested key
+   access in Merge with goTemplate)
 3. **Git Directory Generator**: Discovers application folders
 4. **Git Files Generator**: Reads optional `.application.patch` files
 5. **templatePatch**: Conditionally applies metadata and spec overrides with field sanitization
 
 ### 5.2 Template Logic
 
-The template uses a combination of `template` (for defaults) and `templatePatch` (for conditional overrides from `.application.patch`).
+The template uses a combination of `template` (for defaults) and `templatePatch` (for conditional overrides from
+`.application.patch`).
 
 **Base Template** defines:
 
-* Application name from folder (`{{ .app_name }}`)
-* Default namespace from folder name
-* Default project (`default`)
-* Default syncPolicy with automated prune/selfHeal
-* Source configuration pointing to the application folder
+- Application name from folder (`{{ .app_name }}`)
+- Default namespace from folder name
+- Default project (`default`)
+- Default syncPolicy with automated prune/selfHeal
+- Source configuration pointing to the application folder
 
 ### 5.3 templatePatch Implementation
 
-The `templatePatch` conditionally applies overrides from `.application.patch` files. It uses Go template functions to safely extract and sanitize allowed fields:
+The `templatePatch` conditionally applies overrides from `.application.patch` files. It uses Go template functions to
+safely extract and sanitize allowed fields:
 
 ```yaml
 templatePatch: |
@@ -354,9 +364,10 @@ templatePatch: |
 | `merge`  | Combine multiple maps into one                            |
 | `toYaml` | Convert Go object to YAML string                          |
 
-**Security**: The `pick` function ensures only allowed fields (`annotations`, `labels`, `info`, `syncPolicy`, `destination.namespace`) are applied, preventing injection of unauthorized configuration.
+**Security**: The `pick` function ensures only allowed fields (`annotations`, `labels`, `info`, `syncPolicy`,
+`destination.namespace`) are applied, preventing injection of unauthorized configuration.
 
-***
+---
 
 ## 6. Test Environment
 
@@ -396,12 +407,13 @@ test-apps/
 
 ### 6.3 Environment Setup
 
-The experiment uses [mise](https://mise.jdx.dev/) to manage tools and provide an isolated environment. All Kubernetes and Helm configurations are local to this directory to prevent interference with production clusters.
+The experiment uses [mise](https://mise.jdx.dev/) to manage tools and provide an isolated environment. All Kubernetes
+and Helm configurations are local to this directory to prevent interference with production clusters.
 
 **Prerequisites:**
 
-* Docker (for k3d)
-* mise (tool version manager)
+- Docker (for k3d)
+- mise (tool version manager)
 
 **Quick Start:**
 
@@ -458,11 +470,11 @@ docs/experiments/argocd-application-properties/
 
 This ensures:
 
-* **No interference** with production `~/.kube/config`
-* **No pollution** of system-wide Helm repositories
-* **Clean state** after `mise run clean`
+- **No interference** with production `~/.kube/config`
+- **No pollution** of system-wide Helm repositories
+- **Clean state** after `mise run clean`
 
-***
+---
 
 ## 7. Validation Criteria
 
@@ -470,22 +482,23 @@ This ensures:
 
 | ID    | Test Case                   | Expected Result                     | Status |
 | ----- | --------------------------- | ----------------------------------- | ------ |
-| TC-01 | App without patch file      | Defaults applied, auto sync enabled | ✅      |
-| TC-02 | App with info + metadata    | Info visible in UI, labels applied  | ✅      |
-| TC-03 | App with `syncPolicy: null` | No automated sync, manual only      | ✅      |
-| TC-04 | App with custom namespace   | Deployed to specified namespace     | ✅      |
-| TC-05 | ApplicationSet generation   | All 4 apps discovered and created   | ✅      |
+| TC-01 | App without patch file      | Defaults applied, auto sync enabled | ✅     |
+| TC-02 | App with info + metadata    | Info visible in UI, labels applied  | ✅     |
+| TC-03 | App with `syncPolicy: null` | No automated sync, manual only      | ✅     |
+| TC-04 | App with custom namespace   | Deployed to specified namespace     | ✅     |
+| TC-05 | ApplicationSet generation   | All 4 apps discovered and created   | ✅     |
 
-> **Note**: Project customization was removed. ArgoCD requires project assignment before repository scanning, making runtime project override impossible via ApplicationSet.
+> **Note**: Project customization was removed. ArgoCD requires project assignment before repository scanning, making
+> runtime project override impossible via ApplicationSet.
 
 ### 7.2 Success Criteria
 
-* All test cases pass
-* No regression in existing behavior (TC-01)
-* Properties file is optional (backward compatible)
-* ArgoCD UI displays custom info fields
+- All test cases pass
+- No regression in existing behavior (TC-01)
+- Properties file is optional (backward compatible)
+- ArgoCD UI displays custom info fields
 
-***
+---
 
 ## 8. Results
 
@@ -504,75 +517,83 @@ This ensures:
 
 | Check  | Result | Details                         |
 | ------ | ------ | ------------------------------- |
-| TC-05a | ✅      | ApplicationSet generated 4 apps |
-| TC-05b | ✅      | ApplicationSet has no errors    |
+| TC-05a | ✅     | ApplicationSet generated 4 apps |
+| TC-05b | ✅     | ApplicationSet has no errors    |
 
 **TC-01: app-default (no patch file)**
 
 | Check  | Result | Details                  |
 | ------ | ------ | ------------------------ |
-| TC-01a | ✅      | Namespace is folder name |
-| TC-01b | ✅      | Project is `default`     |
-| TC-01c | ✅      | SyncPolicy is automated  |
-| TC-01d | ✅      | Info is empty (default)  |
+| TC-01a | ✅     | Namespace is folder name |
+| TC-01b | ✅     | Project is `default`     |
+| TC-01c | ✅     | SyncPolicy is automated  |
+| TC-01d | ✅     | Info is empty (default)  |
 
 **TC-02: app-with-info (info + metadata)**
 
 | Check  | Result | Details                       |
 | ------ | ------ | ----------------------------- |
-| TC-02a | ✅      | Info array has 4 entries      |
-| TC-02b | ✅      | Description field populated   |
-| TC-02c | ✅      | Version field matches (1.0.0) |
-| TC-02d | ✅      | SyncPolicy remains automated  |
+| TC-02a | ✅     | Info array has 4 entries      |
+| TC-02b | ✅     | Description field populated   |
+| TC-02c | ✅     | Version field matches (1.0.0) |
+| TC-02d | ✅     | SyncPolicy remains automated  |
 
 **TC-03: app-manual-sync (syncPolicy: null)**
 
 | Check  | Result | Details                          |
 | ------ | ------ | -------------------------------- |
-| TC-03a | ✅      | SyncPolicy is manual (no auto)   |
-| TC-03d | ✅      | Info array populated (3 entries) |
+| TC-03a | ✅     | SyncPolicy is manual (no auto)   |
+| TC-03d | ✅     | Info array populated (3 entries) |
 
 **TC-04: app-custom-namespace (destination override)**
 
 | Check  | Result | Details                    |
 | ------ | ------ | -------------------------- |
-| TC-04a | ✅      | Namespace override applied |
-| TC-04b | ✅      | Project remains `default`  |
+| TC-04a | ✅     | Namespace override applied |
+| TC-04b | ✅     | Project remains `default`  |
 
 ### 8.3 Observations
 
-1. **Merge Generator works as expected**: Applications without `.application.patch` files receive all defaults, while those with patch files get their customizations merged correctly.
+1. **Merge Generator works as expected**: Applications without `.application.patch` files receive all defaults, while
+   those with patch files get their customizations merged correctly.
 
-2. **Backward compatibility confirmed**: `app-default` demonstrates that existing applications without patch files continue to work identically to the current behavior.
+2. **Backward compatibility confirmed**: `app-default` demonstrates that existing applications without patch files
+   continue to work identically to the current behavior.
 
-3. **syncPolicy: null effectively disables automation**: Setting `syncPolicy: null` in the patch file removes the automated sync block entirely, requiring manual sync operations.
+3. **syncPolicy: null effectively disables automation**: Setting `syncPolicy: null` in the patch file removes the
+   automated sync block entirely, requiring manual sync operations.
 
-4. **Field sanitization works**: Only allowed fields (`info`, `syncPolicy`, `destination.namespace`, `labels`, `annotations`) are applied; other fields are ignored.
+4. **Field sanitization works**: Only allowed fields (`info`, `syncPolicy`, `destination.namespace`, `labels`,
+   `annotations`) are applied; other fields are ignored.
 
-5. **Matrix + List workaround successful**: The nested Matrix generators with List elements correctly work around ArgoCD issue #12836.
+5. **Matrix + List workaround successful**: The nested Matrix generators with List elements correctly work around ArgoCD
+   issue #12836.
 
 ### 8.4 Performance Impact
 
-No measurable performance impact observed. The ApplicationSet controller processes the Merge generator efficiently, with all 4 applications generated within seconds of deployment.
+No measurable performance impact observed. The ApplicationSet controller processes the Merge generator efficiently, with
+all 4 applications generated within seconds of deployment.
 
-***
+---
 
 ## 9. Conclusions
 
 ### 9.1 Findings
 
-1. **Solution is viable**: The Merge Generator approach successfully enables per-application customization while maintaining backward compatibility.
+1. **Solution is viable**: The Merge Generator approach successfully enables per-application customization while
+   maintaining backward compatibility.
 
 2. **All requirements met**:
-   * FR-01 ✅ Applications without patch files work identically
-   * FR-02 ✅ Patch file follows ArgoCD Application CR structure
-   * FR-03 ✅ Metadata fields (labels, annotations) supported
-   * FR-04 ✅ Spec fields (destination, syncPolicy, info) supported
-   * FR-05 ✅ Default values can be overridden
-   * FR-06 ✅ YAML format used
-   * FR-07 ✅ Kubernetes-style structure enables extensibility
+   - FR-01 ✅ Applications without patch files work identically
+   - FR-02 ✅ Patch file follows ArgoCD Application CR structure
+   - FR-03 ✅ Metadata fields (labels, annotations) supported
+   - FR-04 ✅ Spec fields (destination, syncPolicy, info) supported
+   - FR-05 ✅ Default values can be overridden
+   - FR-06 ✅ YAML format used
+   - FR-07 ✅ Kubernetes-style structure enables extensibility
 
-3. **Project limitation confirmed**: ArgoCD cannot support runtime project assignment via ApplicationSet due to its security model requiring project knowledge before repository scanning.
+3. **Project limitation confirmed**: ArgoCD cannot support runtime project assignment via ApplicationSet due to its
+   security model requiring project knowledge before repository scanning.
 
 ### 9.2 Recommendations
 
@@ -580,7 +601,8 @@ No measurable performance impact observed. The ApplicationSet controller process
 
 2. **Create ADR**: Document the decision to adopt `.application.patch` files for application customization.
 
-3. **Migrate from `*` prefix**: Plan phased migration from the `*` prefix convention to explicit `syncPolicy: null` in patch files.
+3. **Migrate from `*` prefix**: Plan phased migration from the `*` prefix convention to explicit `syncPolicy: null` in
+   patch files.
 
 4. **Update documentation**: Add `.application.patch` schema and examples to CLAUDE.md and project documentation.
 
@@ -592,7 +614,7 @@ No measurable performance impact observed. The ApplicationSet controller process
 4. Update CLAUDE.md with new conventions
 5. Implement in production ApplicationSets
 
-***
+---
 
 ## 10. References
 
@@ -604,7 +626,7 @@ No measurable performance impact observed. The ApplicationSet controller process
 6. [ArgoCD Issue #12836 - Merge Generator nested keys with goTemplate](https://github.com/argoproj/argo-cd/issues/12836)
 7. [Arcane Infrastructure Repository](https://github.com/chezmoidotsh/arcane)
 
-***
+---
 
 ## Appendices
 

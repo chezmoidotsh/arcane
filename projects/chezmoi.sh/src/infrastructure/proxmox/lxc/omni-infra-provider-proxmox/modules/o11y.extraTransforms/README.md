@@ -1,7 +1,7 @@
 # Omni infra-provider-proxmox log transforms
 
-Vector transform pipeline for the Omni Proxmox infrastructure provider LXC.
-Parses Zap JSON logs into OTLP SemConv fields before shipping to VictoriaLogs.
+Vector transform pipeline for the Omni Proxmox infrastructure provider LXC. Parses Zap JSON logs into OTLP SemConv
+fields before shipping to VictoriaLogs.
 
 ## Pipeline overview
 
@@ -22,8 +22,7 @@ Parses Zap JSON logs into OTLP SemConv fields before shipping to VictoriaLogs.
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Provider logs are simpler than omni's (no gRPC call tracking, no reconcile loop) —
-a single parse stage is sufficient.
+Provider logs are simpler than omni's (no gRPC call tracking, no reconcile loop) — a single parse stage is sufficient.
 
 ## Available fields in VictoriaLogs
 

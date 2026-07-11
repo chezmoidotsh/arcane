@@ -2,7 +2,8 @@
 
 ## Overview
 
-This document describes how CrowdSec is integrated with Pangolin's Traefik reverse proxy to provide WAF (Web Application Firewall) and threat protection capabilities.
+This document describes how CrowdSec is integrated with Pangolin's Traefik reverse proxy to provide WAF (Web Application
+Firewall) and threat protection capabilities.
 
 ## Architecture
 
@@ -56,10 +57,10 @@ The integration consists of three main components:
 
 The CrowdSec service is configured in `docker-compose.yml.j2` with:
 
-* **Health Check**: `cscli capi status` ensures CrowdSec is ready before Traefik starts
-* **Log Volume**: Shared `traefik-logs` volume allows CrowdSec to read Traefik access logs
-* **Acquis Configuration**: Mounted from `./config/crowdsec/acquis.d/` to define log sources
-* **Collections**: Installed via environment variable (traefik, appsec-virtual-patching, etc.)
+- **Health Check**: `cscli capi status` ensures CrowdSec is ready before Traefik starts
+- **Log Volume**: Shared `traefik-logs` volume allows CrowdSec to read Traefik access logs
+- **Acquis Configuration**: Mounted from `./config/crowdsec/acquis.d/` to define log sources
+- **Collections**: Installed via environment variable (traefik, appsec-virtual-patching, etc.)
 
 ### Traefik Static Configuration
 
@@ -76,7 +77,7 @@ entryPoints:
   websecure:
     http:
       middlewares:
-        - crowdsec@file  # Apply CrowdSec middleware globally
+        - crowdsec@file # Apply CrowdSec middleware globally
 ```
 
 ### Traefik Dynamic Configuration
@@ -96,7 +97,8 @@ http:
           crowdsecAppsecHost: crowdsec:7422
 ```
 
-The Jinja2 variable `{{ pangolin_crowdsec_bouncer_key }}` is interpolated during template deployment. If undefined, it falls back to the placeholder `PUT_YOUR_BOUNCER_KEY_HERE_OR_IT_WILL_NOT_WORK`.
+The Jinja2 variable `{{ pangolin_crowdsec_bouncer_key }}` is interpolated during template deployment. If undefined, it
+falls back to the placeholder `PUT_YOUR_BOUNCER_KEY_HERE_OR_IT_WILL_NOT_WORK`.
 
 ## Ansible Automation
 
@@ -105,37 +107,37 @@ The Jinja2 variable `{{ pangolin_crowdsec_bouncer_key }}` is interpolated during
 The `crowdsec.yml` tasks file implements the following workflow (based on Pangolin's Go implementation):
 
 1. **Directory Setup**: Create required directories for CrowdSec configuration
-   * `/config/crowdsec`
-   * `/config/crowdsec/acquis.d`
-   * `/config/traefik/.ansible` (for hash storage)
+   - `/config/crowdsec`
+   - `/config/crowdsec/acquis.d`
+   - `/config/traefik/.ansible` (for hash storage)
 
 2. **Template Change Detection**:
-   * Calculate SHA256 hash of `dynamic_config.yml.j2` template
-   * Compare with stored hash from previous run
-   * Set `template_has_changed` flag accordingly
+   - Calculate SHA256 hash of `dynamic_config.yml.j2` template
+   - Compare with stored hash from previous run
+   - Set `template_has_changed` flag accordingly
 
 3. **Acquis Configuration**: Deploy two acquisition configs:
-   * `traefik.yaml`: Traefik log file parsing
-   * `appsec.yaml`: AppSec listener on port 7422
+   - `traefik.yaml`: Traefik log file parsing
+   - `appsec.yaml`: AppSec listener on port 7422
 
 4. **Container Health Check**: Wait for CrowdSec container to be healthy
 
 5. **Conditional Bouncer Regeneration** (only if template hash changed):
-   * Check if `traefik-bouncer` already exists
-   * Delete existing bouncer to regenerate API key
-   * Create new bouncer: `docker exec crowdsec cscli bouncers add traefik-bouncer -o raw`
-   * Extract and store key in Ansible fact (`pangolin_crowdsec_bouncer_key`)
-   * Re-deploy dynamic\_config.yml template (Jinja2 automatically interpolates the API key from the fact)
-   * Save new template hash to `.ansible/dynamic_config_template.sha256`
+   - Check if `traefik-bouncer` already exists
+   - Delete existing bouncer to regenerate API key
+   - Create new bouncer: `docker exec crowdsec cscli bouncers add traefik-bouncer -o raw`
+   - Extract and store key in Ansible fact (`pangolin_crowdsec_bouncer_key`)
+   - Re-deploy dynamic_config.yml template (Jinja2 automatically interpolates the API key from the fact)
+   - Save new template hash to `.ansible/dynamic_config_template.sha256`
 
 6. **Service Restart**: Trigger "Restart Pangolin stack" handler to reload Traefik configuration
 
 **Idempotency**:
 
-* Template hash stored in `config/traefik/.ansible/dynamic_config_template.sha256`
-* Bouncer API key only regenerated when template **content** changes (not when config file is touched)
-* Post-deployment modifications to `dynamic_config.yml` (API key injection) don't trigger regeneration
-* Safe to run playbook multiple times without disrupting CrowdSec authentication
+- Template hash stored in `config/traefik/.ansible/dynamic_config_template.sha256`
+- Bouncer API key only regenerated when template **content** changes (not when config file is touched)
+- Post-deployment modifications to `dynamic_config.yml` (API key injection) don't trigger regeneration
+- Safe to run playbook multiple times without disrupting CrowdSec authentication
 
 ### Key Tasks
 
@@ -191,9 +193,9 @@ To ensure idempotency, the playbook tracks changes to the template file itself:
 
 This approach prevents unnecessary bouncer regeneration when:
 
-* The deployed config file is modified (API key injection)
-* File metadata changes (timestamps, permissions)
-* Template variables change but template structure remains the same
+- The deployed config file is modified (API key injection)
+- File metadata changes (timestamps, permissions)
+- Template variables change but template structure remains the same
 
 #### API Key Generation
 
@@ -203,7 +205,7 @@ This approach prevents unnecessary bouncer regeneration when:
     cmd: docker exec crowdsec cscli bouncers add traefik-bouncer -o raw
   register: crowdsec_bouncer_key_raw
   when:
-    - template_has_changed  # Only when template actually changed
+    - template_has_changed # Only when template actually changed
 ```
 
 #### Configuration Update
@@ -220,12 +222,13 @@ This approach prevents unnecessary bouncer regeneration when:
     - template_has_changed
     - pangolin_crowdsec_bouncer_key is defined
   notify: Restart Pangolin stack
-  no_log: true  # Hide sensitive information
+  no_log: true # Hide sensitive information
 ```
 
 **Handler Configuration**:
 
-The `Restart Pangolin stack` handler is triggered when the template changes, ensuring Traefik picks up the new bouncer API key configuration without manual intervention.
+The `Restart Pangolin stack` handler is triggered when the template changes, ensuring Traefik picks up the new bouncer
+API key configuration without manual intervention.
 
 ## CrowdSec Features
 
@@ -233,21 +236,21 @@ The `Restart Pangolin stack` handler is triggered when the template changes, ens
 
 Configured via `pangolin_crowdsec_collections` variable:
 
-* `crowdsecurity/traefik`: Traefik-specific parsers and scenarios
-* `crowdsecurity/appsec-virtual-patching`: CVE-based virtual patching
-* `crowdsecurity/appsec-generic-rules`: Generic AppSec rules
-* `crowdsecurity/appsec-crs-inband`: OWASP Core Rule Set integration
+- `crowdsecurity/traefik`: Traefik-specific parsers and scenarios
+- `crowdsecurity/appsec-virtual-patching`: CVE-based virtual patching
+- `crowdsecurity/appsec-generic-rules`: Generic AppSec rules
+- `crowdsecurity/appsec-crs-inband`: OWASP Core Rule Set integration
 
 ### Parsers Installed
 
-* `crowdsecurity/whitelists`: IP whitelist support
+- `crowdsecurity/whitelists`: IP whitelist support
 
 ### AppSec Configuration
 
-* **Enabled**: Application Security (WAF) functionality active
-* **Body Limit**: 10MB request body inspection
-* **Failure Mode**: Block on AppSec failure or unreachable
-* **Update Interval**: 15 seconds decision refresh
+- **Enabled**: Application Security (WAF) functionality active
+- **Body Limit**: 10MB request body inspection
+- **Failure Mode**: Block on AppSec failure or unreachable
+- **Update Interval**: 15 seconds decision refresh
 
 ## IP Forwarding Configuration
 
@@ -260,7 +263,7 @@ clientTrustedIPs:
   - "10.0.0.0/8"
   - "172.16.0.0/12"
   - "192.168.0.0/16"
-  - "100.89.137.0/20"  # Tailscale network
+  - "100.89.137.0/20" # Tailscale network
 ```
 
 ### Forwarded Headers
@@ -303,40 +306,46 @@ docker exec traefik tail -f /var/log/traefik/access.log
 
 ### Bouncer Authentication Errors (HTTP 403)
 
-**Symptom**: Traefik logs show `statusCode:403` when querying CrowdSec LAPI, and `cscli bouncers list` shows the bouncer exists but has never made an API pull.
+**Symptom**: Traefik logs show `statusCode:403` when querying CrowdSec LAPI, and `cscli bouncers list` shows the bouncer
+exists but has never made an API pull.
 
 **Cause**: API key mismatch between Traefik configuration and CrowdSec database.
 
 **Solution (Ansible Method - Recommended)**:
 
 1. Force template change detection by modifying the `dynamic_config.yml.j2` template:
+
    ```bash
    # Add a comment or whitespace to trigger hash change
    vi roles/pangolin/templates/dynamic_config.yml.j2
    ```
 
 2. Re-run the Ansible playbook with appropriate tags:
+
    ```bash
    ansible-playbook site.yml --tags pangolin,crowdsec
    ```
 
 3. The playbook will automatically:
-   * Detect the template change
-   * Delete and recreate the bouncer
-   * Re-deploy the configuration with the new API key
-   * Restart Traefik via handler
+   - Detect the template change
+   - Delete and recreate the bouncer
+   - Re-deploy the configuration with the new API key
+   - Restart Traefik via handler
 
 **Manual Method (Emergency Only)**:
 
-> **Warning**: Manual changes will be overwritten on the next Ansible run. Use this method only for immediate troubleshooting.
+> **Warning**: Manual changes will be overwritten on the next Ansible run. Use this method only for immediate
+> troubleshooting.
 
 1. Delete and recreate the bouncer with a new API key:
+
    ```bash
    docker exec crowdsec cscli bouncers delete traefik-bouncer
    BOUNCER_KEY=$(docker exec crowdsec cscli bouncers add traefik-bouncer -o raw)
    ```
 
 2. Update the configuration file (note the pipe delimiter to handle special characters):
+
    ```bash
    sed -i "s|crowdsecLapiKey: \".*\"|crowdsecLapiKey: \"$BOUNCER_KEY\"|" \
      /opt/pangolin/config/traefik/dynamic_config.yml
@@ -350,12 +359,14 @@ docker exec traefik tail -f /var/log/traefik/access.log
 **Verification** (for both methods):
 
 1. Verify authentication works:
+
    ```bash
    API_KEY=$(grep "crowdsecLapiKey:" /opt/pangolin/config/traefik/dynamic_config.yml | \
      awk '{print $2}' | tr -d '"')
    docker exec traefik wget -q -O- --header "X-Api-Key: $API_KEY" \
      http://crowdsec:8080/v1/decisions?ip=1.2.3.4
    ```
+
    Expected output: `null` (no decisions for this IP)
 
 2. Check bouncer is now communicating:
@@ -367,11 +378,13 @@ docker exec traefik tail -f /var/log/traefik/access.log
 ### Bouncer Not Working
 
 1. Verify API key is correctly injected:
+
    ```bash
    grep crowdsecLapiKey /opt/pangolin/config/traefik/dynamic_config.yml
    ```
 
 2. Check bouncer connectivity:
+
    ```bash
    docker exec crowdsec cscli bouncers list
    ```
@@ -384,11 +397,13 @@ docker exec traefik tail -f /var/log/traefik/access.log
 ### No Decisions Being Made
 
 1. Verify log acquisition:
+
    ```bash
    docker exec crowdsec cscli metrics
    ```
 
 2. Check log format matches parser:
+
    ```bash
    docker exec traefik cat /var/log/traefik/access.log | head -5
    ```
@@ -401,6 +416,7 @@ docker exec traefik tail -f /var/log/traefik/access.log
 ### AppSec Not Blocking
 
 1. Verify AppSec is enabled:
+
    ```bash
    docker exec crowdsec cscli appsec-configs list
    ```
@@ -412,6 +428,6 @@ docker exec traefik tail -f /var/log/traefik/access.log
 
 ## References
 
-* [Pangolin CrowdSec Implementation](https://github.com/fosrl/pangolin/blob/main/install/crowdsec.go)
-* [CrowdSec Traefik Bouncer Plugin](https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin)
-* [CrowdSec Documentation](https://docs.crowdsec.net/)
+- [Pangolin CrowdSec Implementation](https://github.com/fosrl/pangolin/blob/main/install/crowdsec.go)
+- [CrowdSec Traefik Bouncer Plugin](https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin)
+- [CrowdSec Documentation](https://docs.crowdsec.net/)

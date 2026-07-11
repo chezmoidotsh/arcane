@@ -4,45 +4,47 @@ Send Slack notifications at playbook start and completion with execution summary
 
 ## Table of Contents
 
-* [Overview](#overview)
-* [Features](#features)
-* [Requirements](#requirements)
-* [Role Variables](#role-variables)
-  * [Required Variables](#required-variables)
-  * [Slack Configuration](#slack-configuration)
-  * [ARA Integration](#ara-integration)
-  * [Notification Behavior](#notification-behavior)
-  * [Message Customization](#message-customization)
-  * [Internal Variables](#internal-variables)
-* [Dependencies](#dependencies)
-* [Example Playbook](#example-playbook)
-* [Advanced Usage](#advanced-usage)
-* [License](#license)
+- [Overview](#overview)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Role Variables](#role-variables)
+  - [Required Variables](#required-variables)
+  - [Slack Configuration](#slack-configuration)
+  - [ARA Integration](#ara-integration)
+  - [Notification Behavior](#notification-behavior)
+  - [Message Customization](#message-customization)
+  - [Internal Variables](#internal-variables)
+- [Dependencies](#dependencies)
+- [Example Playbook](#example-playbook)
+- [Advanced Usage](#advanced-usage)
+- [License](#license)
 
 ## Overview
 
-This role provides a standardized way to send Slack notifications during Ansible playbook execution. It sends a notification when the playbook starts and updates it (or sends a new one) when the playbook completes, with execution summary including:
+This role provides a standardized way to send Slack notifications during Ansible playbook execution. It sends a
+notification when the playbook starts and updates it (or sends a new one) when the playbook completes, with execution
+summary including:
 
-* Execution status (success/failure)
-* Execution duration
-* Start and finish timestamps
-* Optional link to ARA web interface via hostname
+- Execution status (success/failure)
+- Execution duration
+- Start and finish timestamps
+- Optional link to ARA web interface via hostname
 
 ## Features
 
-* **Start notification**: Sends a notification when playbook execution begins
-* **Rescue notification**: Automatically captures and reports playbook failures with detailed error context
-* **Completion notification**: Updates or sends new notification with execution results
-* **ARA link**: Optional hostname link to ARA web interface for detailed run reports
-* **Customizable**: Extensive configuration options for behavior and appearance
-* **Error handling**: Configurable error tolerance to prevent notification failures from stopping playbooks
-* **Slack Block Kit**: Rich formatted messages with emoji, fields, and context
+- **Start notification**: Sends a notification when playbook execution begins
+- **Rescue notification**: Automatically captures and reports playbook failures with detailed error context
+- **Completion notification**: Updates or sends new notification with execution results
+- **ARA link**: Optional hostname link to ARA web interface for detailed run reports
+- **Customizable**: Extensive configuration options for behavior and appearance
+- **Error handling**: Configurable error tolerance to prevent notification failures from stopping playbooks
+- **Slack Block Kit**: Rich formatted messages with emoji, fields, and context
 
 ## Requirements
 
-* Ansible 2.9 or higher
-* `community.general` collection (for `slack` module)
-* Slack Bot Token with appropriate permissions (`chat:write`, `chat:write.customize`)
+- Ansible 2.9 or higher
+- `community.general` collection (for `slack` module)
+- Slack Bot Token with appropriate permissions (`chat:write`, `chat:write.customize`)
 
 ## Role Variables
 
@@ -121,7 +123,7 @@ arnos_enabled_fact: "slack_notifications_enabled"
 
 ## Dependencies
 
-* `community.general` collection
+- `community.general` collection
 
 Install with:
 
@@ -352,7 +354,7 @@ Failed: 2025-11-16T10:33:45Z UTC
 
 ### Start Message Not Updated
 
-1. **Verify message\_ts**: Check that start notification succeeded and `slack_message_ts` fact was set
+1. **Verify message_ts**: Check that start notification succeeded and `slack_message_ts` fact was set
 2. **Enable new messages**: Set `arnos_update_start_message: false` to always send new completion message
 3. **Check token permissions**: Ensure bot has `chat:write` permission for updating messages
 

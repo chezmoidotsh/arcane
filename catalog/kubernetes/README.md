@@ -1,8 +1,7 @@
 # catalog/kubernetes/
 
-Shared kustomize bases and helm reference values for Kubernetes infrastructure
-components. These are consumed by per-project `infrastructure/kubernetes/<app>/`
-directories across all clusters.
+Shared kustomize bases and helm reference values for Kubernetes infrastructure components. These are consumed by
+per-project `infrastructure/kubernetes/<app>/` directories across all clusters.
 
 ## Structure
 
@@ -17,9 +16,8 @@ directories across all clusters.
 
 ## Usage pattern
 
-A per-project app directory at
-`projects/<cluster>/src/infrastructure/kubernetes/<app>/kustomization.yaml`
-follows this structure:
+A per-project app directory at `projects/<cluster>/src/infrastructure/kubernetes/<app>/kustomization.yaml` follows this
+structure:
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -31,28 +29,27 @@ helmCharts:
     releaseName: <app>
     repo: <chart-repo>
     version: <version>
-    valuesFile: helmvalues/default.yaml  # local merged values
+    valuesFile: helmvalues/default.yaml # local merged values
 
 resources:
-  - ../../../../../../catalog/kubernetes/<app>/kustomize  # shared base
+  - ../../../../../../catalog/kubernetes/<app>/kustomize # shared base
 
 patches:
   # project-specific patches
 ```
 
-The local `helmvalues/default.yaml` is derived from this catalog's `helm/` reference
-files. Merge `default.helmvalues.yaml` + `hardened.helmvalues.yaml` (and any
-project-specific overrides) into a single file when setting up a new project.
+The local `helmvalues/default.yaml` is derived from this catalog's `helm/` reference files. Merge
+`default.helmvalues.yaml` + `hardened.helmvalues.yaml` (and any project-specific overrides) into a single file when
+setting up a new project.
 
 ## Adding a new component
 
-1. Create `<component>/kustomize/kustomization.yaml` (`kind: Kustomization`) with
-   the cluster-level resources that all projects sharing this component will deploy.
-2. Optionally add `<component>/helm/default.helmvalues.yaml` and
-   `<component>/helm/hardened.helmvalues.yaml` as reference starting points.
-3. In each project that needs the component, create
-   `projects/<cluster>/src/infrastructure/kubernetes/<component>/` following the
-   pattern above.
+1. Create `<component>/kustomize/kustomization.yaml` (`kind: Kustomization`) with the cluster-level resources that all
+   projects sharing this component will deploy.
+2. Optionally add `<component>/helm/default.helmvalues.yaml` and `<component>/helm/hardened.helmvalues.yaml` as
+   reference starting points.
+3. In each project that needs the component, create `projects/<cluster>/src/infrastructure/kubernetes/<component>/`
+   following the pattern above.
 
 ## Components
 

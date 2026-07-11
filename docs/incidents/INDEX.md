@@ -5,18 +5,16 @@
 
 # Post-Mortem Index
 
-Auto-generated cross-incident view. Post-mortems are grouped by `root-cause-family`
-(declared in each PM's frontmatter). A family reaching **3+** incidents is a
-**Pareto trigger** — fix the family, not the next incident.
+Auto-generated cross-incident view. Post-mortems are grouped by `root-cause-family` (declared in each PM's frontmatter).
+A family reaching **3+** incidents is a **Pareto trigger** — fix the family, not the next incident.
 
-See `.agents/skills/postmortem/SKILL.md` §"Root-cause family tagging" for the family
-vocabulary.
+See `.agents/skills/postmortem/SKILL.md` §"Root-cause family tagging" for the family vocabulary.
 
 ## 🚨 Pareto triggers
 
 Families at 3+ incidents — treat as structural projects:
 
-* **`observability-gap`** — 4 incidents
+- **`observability-gap`** — 4 incidents
 
 ## All families
 

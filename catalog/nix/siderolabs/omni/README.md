@@ -1,10 +1,10 @@
 # SideroLabs Omni — NixOS Modules
 
-[![Omni](https://img.shields.io/badge/siderolabs-omni-blue?logo=talos\&logoColor=white)](https://omni.siderolabs.com)
+[![Omni](https://img.shields.io/badge/siderolabs-omni-blue?logo=talos&logoColor=white)](https://omni.siderolabs.com)
 ![License](https://img.shields.io/badge/license-BSL--1.1-orange)
 
-NixOS modules for [SideroLabs Omni](https://omni.siderolabs.com) — the Talos Linux
-management platform — and its infrastructure provider for Proxmox.
+NixOS modules for [SideroLabs Omni](https://omni.siderolabs.com) — the Talos Linux management platform — and its
+infrastructure provider for Proxmox.
 
 ## About
 
@@ -131,15 +131,14 @@ imports = [
 | `wireguardPort`      | `int` | `50180`          | WireGuard UDP port.                                  |
 | `metricsBindAddr`    | `str` | `"0.0.0.0:2122"` | Prometheus metrics endpoint (`--metrics-bind-addr`). |
 
-\| `machineApiAdvertisedUrl` | `str` | `"https://api.<domain>/"` | SideroLink URL advertised to Talos machines (`--siderolink-api-advertised-url`). |
-\| `k8sProxyAdvertisedUrl`   | `str` | `"https://kube.<domain>/"` | Kubernetes proxy URL advertised to clients (`--advertised-kubernetes-proxy-url`). |
+\| `machineApiAdvertisedUrl` | `str` | `"https://api.<domain>/"` | SideroLink URL advertised to Talos machines
+(`--siderolink-api-advertised-url`). | \| `k8sProxyAdvertisedUrl` | `str` | `"https://kube.<domain>/"` | Kubernetes
+proxy URL advertised to clients (`--advertised-kubernetes-proxy-url`). |
 
-> **Subdomain routing** — defaults derive both advertised URLs from
-> `domain` (`api.<domain>` and `kube.<domain>`). Bind
-> `machineApiBindAddr` and `k8sProxyBindAddr` to loopback and front them
-> with a reverse proxy (e.g. Caddy) on port 443. The in-module firewall
-> only opens port 8091 (event sink, WireGuard-internal) and the WireGuard
-> UDP port — 8090 and 8100 are not opened.
+> **Subdomain routing** — defaults derive both advertised URLs from `domain` (`api.<domain>` and `kube.<domain>`). Bind
+> `machineApiBindAddr` and `k8sProxyBindAddr` to loopback and front them with a reverse proxy (e.g. Caddy) on port 443.
+> The in-module firewall only opens port 8091 (event sink, WireGuard-internal) and the WireGuard UDP port — 8090 and
+> 8100 are not opened.
 
 #### OIDC
 
@@ -185,8 +184,8 @@ After first boot, back up these files from `${dataDir}`:
 
 ### `services.omni.dex` — Co-located Dex OIDC provider
 
-Dex is one possible OIDC provider. Any compliant provider (Pocket-Id, Keycloak, …)
-works by pointing `services.omni.oidcProviderUrl` at its issuer URL.
+Dex is one possible OIDC provider. Any compliant provider (Pocket-Id, Keycloak, …) works by pointing
+`services.omni.oidcProviderUrl` at its issuer URL.
 
 | Option            | Type         | Default            | Description                                      |
 | ----------------- | ------------ | ------------------ | ------------------------------------------------ |
@@ -195,8 +194,7 @@ works by pointing `services.omni.oidcProviderUrl` at its issuer URL.
 | `environmentFile` | `nullOr str` | `null`             | Environment file for the `dex` unit.             |
 | `users`           | `list`       | `[]`               | Static users: `{ email, username, hashEnvVar }`. |
 
-Password hashes are read from `environmentFile` at Nix eval time and baked into the
-Dex config. Generate with:
+Password hashes are read from `environmentFile` at Nix eval time and baked into the Dex config. Generate with:
 
 ```sh
 htpasswd -bnBC 12 "" '<password>' | tr -d ':\n'
@@ -217,9 +215,8 @@ htpasswd -bnBC 12 "" '<password>' | tr -d ':\n'
 | `proxmox.realm`              | `str`   | `"pam"`     | Proxmox authentication realm.                    |
 | `proxmox.insecureSkipVerify` | `bool`  | `false`     | Skip TLS verification (self-signed certs only).  |
 
-The provider is stateless with no inbound ports. It connects outbound to Omni and
-Proxmox. Secrets (Proxmox password, Omni service account key) are baked into the
-image at build time via `_module.args`.
+The provider is stateless with no inbound ports. It connects outbound to Omni and Proxmox. Secrets (Proxmox password,
+Omni service account key) are baked into the image at build time via `_module.args`.
 
 ## Version management
 
@@ -236,25 +233,23 @@ Bump `version` and `hashes` together. Renovate proposes these automatically.
 
 ### `omni-pki-init` fails with "Permission denied"
 
-`${dataDir}/pki` is not writable by the `omni` user. Check that the persistent
-volume is mounted and owned correctly. For Proxmox LXCs, pre-create and chown
-the directories before first start.
+`${dataDir}/pki` is not writable by the `omni` user. Check that the persistent volume is mounted and owned correctly.
+For Proxmox LXCs, pre-create and chown the directories before first start.
 
 ### `omni-gpg-init` hangs
 
-GPG key generation uses `/dev/random` and can block on entropy. On virtualized
-or container environments, install `rng-tools` or ensure `virtio-rng` is available.
+GPG key generation uses `/dev/random` and can block on entropy. On virtualized or container environments, install
+`rng-tools` or ensure `virtio-rng` is available.
 
 ### Dex users cannot log in
 
-Password hashes are read at Nix eval time. If the `environmentFile` was absent
-during `nix build`, hashes are empty and Dex rejects authentication. Rebuild
-with the secrets file present.
+Password hashes are read at Nix eval time. If the `environmentFile` was absent during `nix build`, hashes are empty and
+Dex rejects authentication. Rebuild with the secrets file present.
 
 ### Provider not appearing in Omni UI
 
-Verify `omniApiEndpoint` matches the Omni URL exactly (including trailing slash).
-Check that `OMNI_SERVICE_ACCOUNT_KEY` is set in the environment file.
+Verify `omniApiEndpoint` matches the Omni URL exactly (including trailing slash). Check that `OMNI_SERVICE_ACCOUNT_KEY`
+is set in the environment file.
 
 ## Dependencies
 
@@ -268,8 +263,8 @@ Check that `OMNI_SERVICE_ACCOUNT_KEY` is set in the environment file.
 
 ## References
 
-* [Omni documentation](https://omni.siderolabs.com)
-* [Omni GitHub](https://github.com/siderolabs/omni)
-* [omni-infra-provider-proxmox](https://github.com/siderolabs/omni-infra-provider-proxmox)
-* [Talos Linux](https://www.talos.dev)
-* [Dex OIDC provider](https://github.com/dexidp/dex)
+- [Omni documentation](https://omni.siderolabs.com)
+- [Omni GitHub](https://github.com/siderolabs/omni)
+- [omni-infra-provider-proxmox](https://github.com/siderolabs/omni-infra-provider-proxmox)
+- [Talos Linux](https://www.talos.dev)
+- [Dex OIDC provider](https://github.com/dexidp/dex)

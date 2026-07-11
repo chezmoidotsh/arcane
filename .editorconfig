@@ -16,7 +16,7 @@ max_line_length = 120
 # Markdown and text files
 [*.{md,markdown,txt,adoc,asciidoc}]
 trim_trailing_whitespace = false
-max_line_length = off
+max_line_length = 120
 
 [README.md]
 trim_trailing_whitespace = false

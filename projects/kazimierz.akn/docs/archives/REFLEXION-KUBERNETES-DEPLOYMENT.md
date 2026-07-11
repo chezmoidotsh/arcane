@@ -6,20 +6,22 @@
 >
 > See [ADR-008](../../../../docs/decisions/008-kazimierz-ansible-over-kubernetes.md) for rationale.
 
-***
+---
 
 ## Purpose
 
-This document traces the multiple attempts to deploy Kazimierz.AKN on Kubernetes and the lessons learned. It documents the evolution from initial Kubernetes designs through various iterations (FluxCD, ArgoCD) to the final decision to use Ansible + Docker Compose.
+This document traces the multiple attempts to deploy Kazimierz.AKN on Kubernetes and the lessons learned. It documents
+the evolution from initial Kubernetes designs through various iterations (FluxCD, ArgoCD) to the final decision to use
+Ansible + Docker Compose.
 
 **Key learnings**:
 
-* Kubernetes adds complexity without benefits for single-stack deployments
-* Pangolin is Docker Compose-first; Kubernetes adaptation adds maintenance burden
-* Gerbil's IPTables requirements bypass Kubernetes networking anyway
-* Resource constraints on VPS (\~1GB for K3s + ArgoCD = 25% overhead)
+- Kubernetes adds complexity without benefits for single-stack deployments
+- Pangolin is Docker Compose-first; Kubernetes adaptation adds maintenance burden
+- Gerbil's IPTables requirements bypass Kubernetes networking anyway
+- Resource constraints on VPS (\~1GB for K3s + ArgoCD = 25% overhead)
 
-***
+---
 
 ## Summary of Attempts
 
@@ -27,208 +29,205 @@ This document contains 8 major architecture iterations attempting to deploy Pang
 
 ## 0. Project Structure → Apps directory
 
-**Previous**: Pangolin in `infrastructure/kubernetes/pangolin/`
-**Current**: Pangolin in `apps/pangolin/`
+**Previous**: Pangolin in `infrastructure/kubernetes/pangolin/` **Current**: Pangolin in `apps/pangolin/`
 
-**Rationale**: Following project conventions where applications go in `apps/` and infrastructure components (CNPG, cert-manager) stay in `infrastructure/kubernetes/`
+**Rationale**: Following project conventions where applications go in `apps/` and infrastructure components (CNPG,
+cert-manager) stay in `infrastructure/kubernetes/`
 
 **Changes**:
 
-* Moved entire `pangolin/` directory from `infrastructure/kubernetes/` to `apps/`
-* Updated root `kustomization.yaml` to reference new path
-* All subdirectories maintained: `database/`, `pangolin-app/`, `traefik/`, `gerbil/`, `crowdsec/`
+- Moved entire `pangolin/` directory from `infrastructure/kubernetes/` to `apps/`
+- Updated root `kustomization.yaml` to reference new path
+- All subdirectories maintained: `database/`, `pangolin-app/`, `traefik/`, `gerbil/`, `crowdsec/`
 
 ## 1. Traefik → Helm-based deployment
 
-**Previous**: Combined Gerbil + Traefik deployment using raw manifests
-**Current**: Traefik deployed via Helm chart with custom configuration
+**Previous**: Combined Gerbil + Traefik deployment using raw manifests **Current**: Traefik deployed via Helm chart with
+custom configuration
 
 **Changes**:
 
-* `traefik/traefik.helmrelease.yaml`
-  * HelmRepository pointing to <https://traefik.github.io/charts>
-  * HelmRelease with version `>=31.0.0`
-  * Custom `additionalArguments` for Pangolin HTTP provider integration
-  * CrowdSec bouncer plugin configuration (`github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin`)
-  * Persistent volume mount for access logs (`/var/log/traefik/access.log`)
-  * JSON-formatted access logs for CrowdSec parsing
+- `traefik/traefik.helmrelease.yaml`
+  - HelmRepository pointing to <https://traefik.github.io/charts>
+  - HelmRelease with version `>=31.0.0`
+  - Custom `additionalArguments` for Pangolin HTTP provider integration
+  - CrowdSec bouncer plugin configuration (`github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin`)
+  - Persistent volume mount for access logs (`/var/log/traefik/access.log`)
+  - JSON-formatted access logs for CrowdSec parsing
 
-* `traefik/traefik-logs.pvc.yaml`
-  * 2Gi PVC for Traefik access logs
-  * Shared with CrowdSec for log parsing
+- `traefik/traefik-logs.pvc.yaml`
+  - 2Gi PVC for Traefik access logs
+  - Shared with CrowdSec for log parsing
 
-* `traefik/traefik-dynamic-config.configmap.yaml`
-  * File provider for supplementary configuration
+- `traefik/traefik-dynamic-config.configmap.yaml`
+  - File provider for supplementary configuration
 
 **Benefits**:
 
-* Easier upgrades via Helm
-* Better separation of concerns
-* Official Traefik chart maintenance
+- Easier upgrades via Helm
+- Better separation of concerns
+- Official Traefik chart maintenance
 
 ## 2. Gerbil → Standalone deployment
 
-**Previous**: Gerbil bundled with Traefik in same pod
-**Current**: Separate Gerbil deployment
+**Previous**: Gerbil bundled with Traefik in same pod **Current**: Separate Gerbil deployment
 
 **Changes**:
 
-* `gerbil/gerbil.deployment.yaml`
-  * Standalone Deployment with `NET_ADMIN` capability
-  * Mounts shared `pangolin-data` PVC for WireGuard keys
+- `gerbil/gerbil.deployment.yaml`
+  - Standalone Deployment with `NET_ADMIN` capability
+  - Mounts shared `pangolin-data` PVC for WireGuard keys
 
-* `gerbil/gerbil.service.yaml`
-  * LoadBalancer Service exposing WireGuard ports:
-    * `51820/UDP` - Client connections
-    * `21820/UDP` - Peer connections
+- `gerbil/gerbil.service.yaml`
+  - LoadBalancer Service exposing WireGuard ports:
+    - `51820/UDP` - Client connections
+    - `21820/UDP` - Peer connections
 
 **Benefits**:
 
-* Independent scaling and lifecycle management
-* Clearer resource allocation
-* Easier troubleshooting
+- Independent scaling and lifecycle management
+- Clearer resource allocation
+- Easier troubleshooting
 
 ## 3. CloudNative-PG → Helm chart
 
-**Previous**: OCIRepository-based deployment from GitHub releases
-**Current**: Official Helm chart from <https://cloudnative-pg.github.io/charts>
+**Previous**: OCIRepository-based deployment from GitHub releases **Current**: Official Helm chart from
+<https://cloudnative-pg.github.io/charts>
 
 **Changes**:
 
-* `cloudnative-pg/release.yaml`
-  * HelmRepository + HelmRelease resources
-  * Version `>=0.22.0`
-  * Security context configurations
-  * Resource limits and monitoring disabled
+- `cloudnative-pg/release.yaml`
+  - HelmRepository + HelmRelease resources
+  - Version `>=0.22.0`
+  - Security context configurations
+  - Resource limits and monitoring disabled
 
 **Benefits**:
 
-* Consistent deployment method with other components
-* Better configuration management via Helm values
-* Official chart maintenance
+- Consistent deployment method with other components
+- Better configuration management via Helm values
+- Official chart maintenance
 
 ## 4. CNPG Backups → Barman Cloud plugin
 
-**Previous**: In-tree `barmanObjectStore` configuration
-**Current**: Barman Cloud plugin (modern approach)
+**Previous**: In-tree `barmanObjectStore` configuration **Current**: Barman Cloud plugin (modern approach)
 
 **Changes**:
 
-* `cloudnative-pg/barman-cloud-plugin.yaml`
-  * Kustomization to install plugin from GitHub release
-  * Version `v0.9.0`
-  * Installed in `cnpg-system` namespace (same as operator)
-  * `dependsOn` CNPG operator
+- `cloudnative-pg/barman-cloud-plugin.yaml`
+  - Kustomization to install plugin from GitHub release
+  - Version `v0.9.0`
+  - Installed in `cnpg-system` namespace (same as operator)
+  - `dependsOn` CNPG operator
 
-* `pangolin/database/backblaze-objectstore.yaml`
-  * ObjectStore CRD defining Backblaze B2 configuration
-  * S3-compatible endpoint: `https://s3.us-west-002.backblazeb2.com`
-  * Destination: `s3://kazimierz-backups/pangolin/`
-  * WAL compression: gzip
-  * Server-side encryption: AES256
+- `pangolin/database/backblaze-objectstore.yaml`
+  - ObjectStore CRD defining Backblaze B2 configuration
+  - S3-compatible endpoint: `https://s3.us-west-002.backblazeb2.com`
+  - Destination: `s3://kazimierz-backups/pangolin/`
+  - WAL compression: gzip
+  - Server-side encryption: AES256
 
-* `pangolin/database/pangolin-database.cluster.yaml` - Updated
-  * Removed in-tree `barmanObjectStore` configuration
-  * Added `plugins` section with `barman-cloud.cloudnative-pg.io`
-  * References ObjectStore `backblaze-b2`
-  * ScheduledBackup updated to use `method: plugin`
+- `pangolin/database/pangolin-database.cluster.yaml` - Updated
+  - Removed in-tree `barmanObjectStore` configuration
+  - Added `plugins` section with `barman-cloud.cloudnative-pg.io`
+  - References ObjectStore `backblaze-b2`
+  - ScheduledBackup updated to use `method: plugin`
 
 **Secret rename**:
 
-* `backblaze-credentials.secret.yaml` → `backblaze-b2-credentials.secret.yaml`
+- `backblaze-credentials.secret.yaml` → `backblaze-b2-credentials.secret.yaml`
 
 **Benefits**:
 
-* Modern plugin architecture (future-proof)
-* Better error handling (CNPG 1.27+)
-* Separation of configuration from cluster definition
-* Multiple ObjectStore support for different backup targets
+- Modern plugin architecture (future-proof)
+- Better error handling (CNPG 1.27+)
+- Separation of configuration from cluster definition
+- Multiple ObjectStore support for different backup targets
 
 **Documentation references**:
 
-* <https://cloudnative-pg.io/plugin-barman-cloud/docs/intro/>
-* <https://cloudnative-pg.io/plugin-barman-cloud/docs/usage/>
-* <https://cloudnative-pg.io/plugin-barman-cloud/docs/installation/>
+- <https://cloudnative-pg.io/plugin-barman-cloud/docs/intro/>
+- <https://cloudnative-pg.io/plugin-barman-cloud/docs/usage/>
+- <https://cloudnative-pg.io/plugin-barman-cloud/docs/installation/>
 
 ## 5. CrowdSec → Added deployment + Traefik bouncer
 
-**Previous**: Not deployed
-**Current**: Full CrowdSec security engine with Traefik integration
+**Previous**: Not deployed **Current**: Full CrowdSec security engine with Traefik integration
 
 **Changes**:
 
-* `crowdsec/crowdsec.deployment.yaml`
-  * CrowdSec v1.6.4 deployment
-  * Collections: `traefik`, `http-cve`, `whitelist-good-actors`
-  * Parsers: `traefik-logs`
-  * Scenarios: `http-sensitive-files`, `http-bad-user-agent`, `http-path-traversal-probing`
-  * Mounts `traefik-logs` PVC (read-only) for log parsing
-  * Persistent volumes for CrowdSec data and config
-  * Optional CrowdSec Console enrollment
+- `crowdsec/crowdsec.deployment.yaml`
+  - CrowdSec v1.6.4 deployment
+  - Collections: `traefik`, `http-cve`, `whitelist-good-actors`
+  - Parsers: `traefik-logs`
+  - Scenarios: `http-sensitive-files`, `http-bad-user-agent`, `http-path-traversal-probing`
+  - Mounts `traefik-logs` PVC (read-only) for log parsing
+  - Persistent volumes for CrowdSec data and config
+  - Optional CrowdSec Console enrollment
 
-* `crowdsec/crowdsec.service.yaml`
-  * ClusterIP Service for LAPI (Local API)
-  * Port 8080 for bouncer queries
-  * Port 6060 for metrics
+- `crowdsec/crowdsec.service.yaml`
+  - ClusterIP Service for LAPI (Local API)
+  - Port 8080 for bouncer queries
+  - Port 6060 for metrics
 
-* `crowdsec/crowdsec-acquisition.configmap.yaml`
-  * Acquisition configuration for Traefik logs
-  * JSON format parsing
-  * File path: `/var/log/traefik/access.log`
+- `crowdsec/crowdsec-acquisition.configmap.yaml`
+  - Acquisition configuration for Traefik logs
+  - JSON format parsing
+  - File path: `/var/log/traefik/access.log`
 
-* `crowdsec/crowdsec-data.pvc.yaml` - 1Gi storage
+- `crowdsec/crowdsec-data.pvc.yaml` - 1Gi storage
 
-* `crowdsec/crowdsec-config.pvc.yaml` - 100Mi storage
+- `crowdsec/crowdsec-config.pvc.yaml` - 100Mi storage
 
-* `crowdsec/traefik-bouncer-middleware.yaml`
-  * Traefik Middleware using CrowdSec plugin
-  * ForwardAuth to CrowdSec LAPI
-  * Trusted IPs configuration for private networks
+- `crowdsec/traefik-bouncer-middleware.yaml`
+  - Traefik Middleware using CrowdSec plugin
+  - ForwardAuth to CrowdSec LAPI
+  - Trusted IPs configuration for private networks
 
 **Traefik integration**:
 
-* Plugin added to Traefik HelmRelease: `github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin v1.3.5`
-* Access logs in JSON format for CrowdSec parsing
+- Plugin added to Traefik HelmRelease: `github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin v1.3.5`
+- Access logs in JSON format for CrowdSec parsing
 
 **Benefits**:
 
-* Real-time threat detection and blocking
-* Collaborative threat intelligence
-* Automated IP reputation management
-* WAF-like protection for web applications
+- Real-time threat detection and blocking
+- Collaborative threat intelligence
+- Automated IP reputation management
+- WAF-like protection for web applications
 
 **New secrets required**:
 
-* `crowdsec-bouncer-key` - API key for Traefik bouncer authentication
-* `crowdsec-console` (optional) - Enrollment key for CrowdSec Console
+- `crowdsec-bouncer-key` - API key for Traefik bouncer authentication
+- `crowdsec-console` (optional) - Enrollment key for CrowdSec Console
 
 ## 6. Cert-Manager → Added for TLS certificate management
 
-**Previous**: Not deployed (Pangolin manages its own certificates was incorrect assumption)
-**Current**: Full cert-manager deployment with Let's Encrypt issuers
+**Previous**: Not deployed (Pangolin manages its own certificates was incorrect assumption) **Current**: Full
+cert-manager deployment with Let's Encrypt issuers
 
 **Changes**:
 
-* `cert-manager/release.yaml`
-  * HelmRepository: <https://charts.jetstack.io>
-  * HelmRelease with version `>=1.16.0`
-  * CRDs auto-installation enabled
-  * Single replica for VPS (minimal resources)
-  * Resource limits: 100m CPU / 128Mi RAM for controller
-  * Webhook and CA injector with reduced resources (50m CPU / 64Mi RAM)
+- `cert-manager/release.yaml`
+  - HelmRepository: <https://charts.jetstack.io>
+  - HelmRelease with version `>=1.16.0`
+  - CRDs auto-installation enabled
+  - Single replica for VPS (minimal resources)
+  - Resource limits: 100m CPU / 128Mi RAM for controller
+  - Webhook and CA injector with reduced resources (50m CPU / 64Mi RAM)
 
-* `cert-manager/letsencrypt-issuers.yaml`
-  * ClusterIssuer for Let's Encrypt staging (testing)
-  * ClusterIssuer for Let's Encrypt production
-  * HTTP-01 challenge solver via Traefik ingress class
-  * Email: `noreply@chezmoi.sh` for expiration notifications
+- `cert-manager/letsencrypt-issuers.yaml`
+  - ClusterIssuer for Let's Encrypt staging (testing)
+  - ClusterIssuer for Let's Encrypt production
+  - HTTP-01 challenge solver via Traefik ingress class
+  - Email: `noreply@chezmoi.sh` for expiration notifications
 
 **Benefits**:
 
-* Automated TLS certificate provisioning
-* Free certificates from Let's Encrypt
-* Automatic renewal before expiration
-* HTTP-01 challenge (no DNS provider needed)
+- Automated TLS certificate provisioning
+- Free certificates from Let's Encrypt
+- Automatic renewal before expiration
+- HTTP-01 challenge (no DNS provider needed)
 
 **Usage example**:
 
@@ -370,17 +369,17 @@ kubectl get svc -n pangolin crowdsec-lapi
 
 **Breaking changes**:
 
-* Old `gerbil-traefik/` directory removed
-* Pangolin moved from `infrastructure/kubernetes/pangolin/` to `apps/pangolin/`
-* Backblaze secret renamed: `backblaze-credentials` → `backblaze-b2-credentials`
-* CNPG backup method changed from in-tree to plugin
-* Cert-manager added (required for Barman Cloud plugin)
+- Old `gerbil-traefik/` directory removed
+- Pangolin moved from `infrastructure/kubernetes/pangolin/` to `apps/pangolin/`
+- Backblaze secret renamed: `backblaze-credentials` → `backblaze-b2-credentials`
+- CNPG backup method changed from in-tree to plugin
+- Cert-manager added (required for Barman Cloud plugin)
 
 **Non-breaking**:
 
-* Pangolin database data persists (no data loss)
-* Pangolin application configuration unchanged
-* Same namespace (`pangolin`) for all components
+- Pangolin database data persists (no data loss)
+- Pangolin application configuration unchanged
+- Same namespace (`pangolin`) for all components
 
 ## Questions Answered
 
@@ -389,7 +388,7 @@ kubectl get svc -n pangolin crowdsec-lapi
 3. ✅ **Pangolin UI exposure**: Via Traefik (same as docker-compose)
 4. ✅ **Network policies**: Not needed for minimalist approach
 
-***
+---
 
 ## 8. Major Architecture Pivot: Kubernetes → Ansible (2025-01-13)
 
@@ -399,23 +398,23 @@ kubectl get svc -n pangolin crowdsec-lapi
 
 **Simplicity and Clarity**:
 
-* Ansible provides simpler, more straightforward deployment model
-* Configuration is clearer and easier to understand
-* Less abstraction overhead compared to Kubernetes
+- Ansible provides simpler, more straightforward deployment model
+- Configuration is clearer and easier to understand
+- Less abstraction overhead compared to Kubernetes
 
 **Technical Constraints**:
 
-* Gerbil requires IPTables manipulation for WireGuard tunnel management
-* IPTables operations are much simpler with host networking
-* Official docker-compose approach is better suited for this use case
-* Kubernetes networking abstractions add unnecessary complexity
+- Gerbil requires IPTables manipulation for WireGuard tunnel management
+- IPTables operations are much simpler with host networking
+- Official docker-compose approach is better suited for this use case
+- Kubernetes networking abstractions add unnecessary complexity
 
 **Operational Benefits**:
 
-* Direct host access simplifies troubleshooting
-* Easier to debug network issues
-* Better alignment with Gerbil's architecture
-* Standard Docker Compose workflow familiar to most operators
+- Direct host access simplifies troubleshooting
+- Easier to debug network issues
+- Better alignment with Gerbil's architecture
+- Standard Docker Compose workflow familiar to most operators
 
 ### New Architecture
 
@@ -424,17 +423,17 @@ kubectl get svc -n pangolin crowdsec-lapi
 **Components**:
 
 1. **Pangolin** - Docker Compose deployment
-   * Pangolin application container
-   * PostgreSQL database
-   * Traefik reverse proxy
-   * Gerbil WireGuard manager (with IPTables access)
-   * CrowdSec security engine
+   - Pangolin application container
+   - PostgreSQL database
+   - Traefik reverse proxy
+   - Gerbil WireGuard manager (with IPTables access)
+   - CrowdSec security engine
 
 2. **ArgoCD** - Lightweight Kubernetes deployment
-   * Minimal ArgoCD for GitOps visibility
-   * App-of-Apps pattern
-   * Single replica configuration for VPS constraints
-   * Extensions: application-map for visualization
+   - Minimal ArgoCD for GitOps visibility
+   - App-of-Apps pattern
+   - Single replica configuration for VPS constraints
+   - Extensions: application-map for visualization
 
 **Infrastructure Stack**:
 
@@ -465,26 +464,26 @@ kubectl get svc -n pangolin crowdsec-lapi
 
 **Removed**:
 
-* All Kubernetes manifests for Pangolin components
-* CNPG PostgreSQL operator and cluster
-* Barman Cloud backup plugin
-* Cert-manager (replaced by Traefik ACME)
-* FluxCD/ArgoCD application deployments for Pangolin
-* Complex networking and security policies
+- All Kubernetes manifests for Pangolin components
+- CNPG PostgreSQL operator and cluster
+- Barman Cloud backup plugin
+- Cert-manager (replaced by Traefik ACME)
+- FluxCD/ArgoCD application deployments for Pangolin
+- Complex networking and security policies
 
 **Added**:
 
-* Ansible inventory for Kazimierz.AKN VPS
-* Ansible playbooks for Docker Compose deployment
-* Official Pangolin docker-compose.yml
-* Simplified backup strategy using PostgreSQL tools
-* Direct Traefik ACME certificate management
+- Ansible inventory for Kazimierz.AKN VPS
+- Ansible playbooks for Docker Compose deployment
+- Official Pangolin docker-compose.yml
+- Simplified backup strategy using PostgreSQL tools
+- Direct Traefik ACME certificate management
 
 **Kept**:
 
-* ArgoCD infrastructure (minimal deployment)
-* GitOps principles (configuration in Git)
-* Security focus (CrowdSec, Traefik)
+- ArgoCD infrastructure (minimal deployment)
+- GitOps principles (configuration in Git)
+- Security focus (CrowdSec, Traefik)
 
 ### Directory Structure Changes
 
@@ -516,10 +515,10 @@ projects/kazimierz.akn/
 
 **Removed Directories**:
 
-* `src/apps/pangolin/` (Kubernetes manifests)
-* `src/infrastructure/kubernetes/cloudnative-pg/`
-* `src/infrastructure/kubernetes/cert-manager/`
-* All Pangolin Kubernetes components
+- `src/apps/pangolin/` (Kubernetes manifests)
+- `src/infrastructure/kubernetes/cloudnative-pg/`
+- `src/infrastructure/kubernetes/cert-manager/`
+- All Pangolin Kubernetes components
 
 ### Migration Path
 
@@ -535,41 +534,41 @@ For existing deployments, migration steps:
 
 **Technical**:
 
-* Native IPTables access for Gerbil
-* Simpler networking model
-* Standard Docker Compose workflow
-* Easier to debug and troubleshoot
+- Native IPTables access for Gerbil
+- Simpler networking model
+- Standard Docker Compose workflow
+- Easier to debug and troubleshoot
 
 **Operational**:
 
-* Lower learning curve for operators
-* Faster deployment and updates
-* Less resource overhead
-* Better alignment with Pangolin's design
+- Lower learning curve for operators
+- Faster deployment and updates
+- Less resource overhead
+- Better alignment with Pangolin's design
 
 **Maintenance**:
 
-* Official docker-compose.yml from Pangolin project
-* Standard PostgreSQL backup tools
-* Traefik ACME for certificates (no cert-manager complexity)
-* CrowdSec integration remains the same
+- Official docker-compose.yml from Pangolin project
+- Standard PostgreSQL backup tools
+- Traefik ACME for certificates (no cert-manager complexity)
+- CrowdSec integration remains the same
 
 ### Trade-offs Accepted
 
 **Lost Capabilities**:
 
-* Kubernetes-native health checks and restarts (replaced by Docker Compose restart policies)
-* CNPG automated backup to object storage (replaced by standard pg\_dump)
-* Kubernetes network policies (replaced by iptables + Docker network isolation)
-* Cert-manager automation (replaced by Traefik ACME)
+- Kubernetes-native health checks and restarts (replaced by Docker Compose restart policies)
+- CNPG automated backup to object storage (replaced by standard pg_dump)
+- Kubernetes network policies (replaced by iptables + Docker network isolation)
+- Cert-manager automation (replaced by Traefik ACME)
 
 **Gained Simplicity**:
 
-* Single Ansible playbook deployment
-* Direct host access for troubleshooting
-* Standard Docker Compose operations
-* Clearer configuration files
-* Better Gerbil integration
+- Single Ansible playbook deployment
+- Direct host access for troubleshooting
+- Standard Docker Compose operations
+- Clearer configuration files
+- Better Gerbil integration
 
 ### Configuration Management Tool Selection
 
@@ -602,38 +601,38 @@ For existing deployments, migration steps:
 
 **Ecosystem and Modules**:
 
-* `community.docker` collection for Docker Compose management
-* Native modules for K3s, systemd, cron, etc.
-* Better integration with existing infrastructure (already used in Arcane for other clusters)
+- `community.docker` collection for Docker Compose management
+- Native modules for K3s, systemd, cron, etc.
+- Better integration with existing infrastructure (already used in Arcane for other clusters)
 
 **GitOps with ansible-pull**:
 
-* Native pull-based deployment: `ansible-pull -U <repo> -i localhost,`
-* No custom cron logic needed (ansible-pull handles it)
-* Can be scheduled via systemd timer or cron
-* Idempotent by design (safe to run repeatedly)
+- Native pull-based deployment: `ansible-pull -U <repo> -i localhost,`
+- No custom cron logic needed (ansible-pull handles it)
+- Can be scheduled via systemd timer or cron
+- Idempotent by design (safe to run repeatedly)
 
 **Consistency Across Projects**:
 
-* Other Arcane clusters may use Ansible for node bootstrapping
-* Unified tooling simplifies maintenance
-* Team familiarity (if project grows)
+- Other Arcane clusters may use Ansible for node bootstrapping
+- Unified tooling simplifies maintenance
+- Team familiarity (if project grows)
 
 **Production Stability**:
 
-* Battle-tested in production environments
-* Enterprise support available if needed
-* Better documentation and troubleshooting resources
+- Battle-tested in production environments
+- Enterprise support available if needed
+- Better documentation and troubleshooting resources
 
 #### Why NOT pyinfra
 
 Despite pyinfra's advantages (speed, Python, lighter requirements):
 
-* **Overkill performance**: 10x speed improvement not needed for single VPS
-* **Smaller ecosystem**: Fewer ready-made modules for Docker Compose, K3s
-* **Custom GitOps**: Would need to build cron + git pull logic manually
-* **Less mature**: Newer tool, potentially breaking changes
-* **Team knowledge**: Python skills available, but YAML Ansible playbooks are clearer for infrastructure
+- **Overkill performance**: 10x speed improvement not needed for single VPS
+- **Smaller ecosystem**: Fewer ready-made modules for Docker Compose, K3s
+- **Custom GitOps**: Would need to build cron + git pull logic manually
+- **Less mature**: Newer tool, potentially breaking changes
+- **Team knowledge**: Python skills available, but YAML Ansible playbooks are clearer for infrastructure
 
 #### GitOps Implementation with Ansible
 
@@ -652,27 +651,28 @@ systemctl start ansible-pull.timer
 
 **Benefits**:
 
-* No SSH keys stored on developer machines (VPS pulls from Git)
-* Idempotent: safe to run on schedule
-* Git as source of truth
-* Automatic convergence to desired state
-* Audit trail via Git commits
+- No SSH keys stored on developer machines (VPS pulls from Git)
+- Idempotent: safe to run on schedule
+- Git as source of truth
+- Automatic convergence to desired state
+- Audit trail via Git commits
 
 **Security**:
 
-* VPS only needs read access to public Git repository
-* Secrets managed via SOPS (encrypted in Git)
-* No inbound SSH required (Tailscale for emergency access)
+- VPS only needs read access to public Git repository
+- Secrets managed via SOPS (encrypted in Git)
+- No inbound SSH required (Tailscale for emergency access)
 
 ### Future Considerations
 
 This architecture is specific to **Kazimierz.AKN** due to:
 
-* Gerbil's IPTables requirements
-* VPS resource constraints
-* Pangolin's Docker Compose-first design
+- Gerbil's IPTables requirements
+- VPS resource constraints
+- Pangolin's Docker Compose-first design
 
 Other clusters (amiya.akn, lungmen.akn) remain Kubernetes-native as they don't have these specific constraints.
 
-**Potential Future Exploration**:
-If performance becomes critical or Python integration is heavily needed, pyinfra could be reconsidered. For now, Ansible provides the best balance of ecosystem maturity, GitOps support, and project consistency.
+**Potential Future Exploration**: If performance becomes critical or Python integration is heavily needed, pyinfra could
+be reconsidered. For now, Ansible provides the best balance of ecosystem maturity, GitOps support, and project
+consistency.

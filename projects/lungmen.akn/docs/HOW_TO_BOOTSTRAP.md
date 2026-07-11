@@ -3,7 +3,8 @@
 <details>
 <summary><strong>TL;DR</strong></summary>
 
-Deploy a complete Talos Kubernetes cluster on Proxmox VE using custom Talos images with essential extensions. From VM creation to running cluster in one workflow.
+Deploy a complete Talos Kubernetes cluster on Proxmox VE using custom Talos images with essential extensions. From VM
+creation to running cluster in one workflow.
 
 ```bash {"name":"Bootstrap complete cluster","interpreter":"bash","ignore":true}
 set -e
@@ -47,33 +48,36 @@ argocd cluster add lungmen.akn --name lungmen.akn
 
 ## Table of Contents
 
-* [Introduction](#introduction)
-* [Prerequisites](#prerequisites)
+- [Introduction](#introduction)
+- [Prerequisites](#prerequisites)
 
 ### Part 1: Proxmox VE Virtual Machine
 
-* [Step 1: Environment Setup](#step-1-environment-setup)
-* [Step 2: Generate Talos Image](#step-2-generate-talos-image)
-* [Step 3: Create and Configure VM](#step-3-create-and-configure-vm)
-* [Step 4: Verify VM Deployment](#step-4-verify-vm-deployment)
+- [Step 1: Environment Setup](#step-1-environment-setup)
+- [Step 2: Generate Talos Image](#step-2-generate-talos-image)
+- [Step 3: Create and Configure VM](#step-3-create-and-configure-vm)
+- [Step 4: Verify VM Deployment](#step-4-verify-vm-deployment)
 
 ### Part 2: Talos Cluster Bootstrap
 
-* [Step 5: Generate Talos Configuration](#step-5-generate-talos-configuration)
-* [Step 6: Apply Configuration](#step-6-apply-configuration)
-* [Step 7: Bootstrap Cluster](#step-7-bootstrap-cluster)
-* [Step 8: Retrieve Kubeconfig](#step-8-retrieve-kubeconfig)
-* [Step 9: Verify Cluster](#step-9-verify-cluster)
+- [Step 5: Generate Talos Configuration](#step-5-generate-talos-configuration)
+- [Step 6: Apply Configuration](#step-6-apply-configuration)
+- [Step 7: Bootstrap Cluster](#step-7-bootstrap-cluster)
+- [Step 8: Retrieve Kubeconfig](#step-8-retrieve-kubeconfig)
+- [Step 9: Verify Cluster](#step-9-verify-cluster)
 
 ### Part 3: Cluster Registration
 
-* [Step 10: Save Talos Configuration](#step-10-save-talos-configuration)
-* [Step 11: Add to ArgoCD](#step-11-add-to-argocd)
-* [Step 12: Verify ArgoCD Integration](#step-12-verify-argocd-integration)
+- [Step 10: Save Talos Configuration](#step-10-save-talos-configuration)
+- [Step 11: Add to ArgoCD](#step-11-add-to-argocd)
+- [Step 12: Verify ArgoCD Integration](#step-12-verify-argocd-integration)
 
 ## Introduction
 
-This document describes the complete process of deploying a Talos Kubernetes cluster on Proxmox VE infrastructure. The guide covers VM creation with custom Talos images, cluster bootstrapping, and integration with ArgoCD for GitOps-based application management. The lungmen.akn cluster is designed as a home services platform for media management, life organization, and automation.
+This document describes the complete process of deploying a Talos Kubernetes cluster on Proxmox VE infrastructure. The
+guide covers VM creation with custom Talos images, cluster bootstrapping, and integration with ArgoCD for GitOps-based
+application management. The lungmen.akn cluster is designed as a home services platform for media management, life
+organization, and automation.
 
 ## Prerequisites
 
@@ -87,23 +91,23 @@ Ensure you have the following CLI tools installed:
 | `kubectl`  | latest  | Kubernetes client      | [Download](https://kubernetes.io/docs/tasks/tools/)                    |
 | `argocd`   | latest  | ArgoCD CLI             | [Download](https://argo-cd.readthedocs.io/en/stable/cli_installation/) |
 
-> \[!TIP]
-> If you're using the `mise` tool manager (recommended for this project), run `mise install` in the project root to automatically install all required dependencies.
+> \[!TIP] If you're using the `mise` tool manager (recommended for this project), run `mise install` in the project root
+> to automatically install all required dependencies.
 
 ### Infrastructure Access
 
 Before proceeding, ensure you have:
 
-* **Proxmox VE Access**: Administrative access to a Proxmox VE cluster
-* **ArgoCD Access**: Access to the ArgoCD instance running on amiya.akn
-* **Network Configuration**: Properly configured storage pools, VLANs, and bridges in Proxmox VE
-* **DNS Records**: Ability to create DNS records for cluster endpoints
+- **Proxmox VE Access**: Administrative access to a Proxmox VE cluster
+- **ArgoCD Access**: Access to the ArgoCD instance running on amiya.akn
+- **Network Configuration**: Properly configured storage pools, VLANs, and bridges in Proxmox VE
+- **DNS Records**: Ability to create DNS records for cluster endpoints
 
 ### Storage Requirements
 
-* **Storage Pool**: Properly configured storage in Proxmox VE (nvme-lvm recommended)
-* **Disk Space**: Minimum 96GB total (32GB root + 64GB data partition)
-* **Network**: VLAN 2 access on vmbr1 bridge
+- **Storage Pool**: Properly configured storage in Proxmox VE (nvme-lvm recommended)
+- **Disk Space**: Minimum 96GB total (32GB root + 64GB data partition)
+- **Network**: VLAN 2 access on vmbr1 bridge
 
 ## Step 1: Environment Setup
 
@@ -124,8 +128,7 @@ export PVE_NODE="pve-01"                 # Replace with your Proxmox node name
 export PVE_STORAGE="nvme-lvm"            # Replace with your storage pool
 ```
 
-> \[!WARNING]
-> Replace the IP address, node name, and storage pool with your actual Proxmox VE configuration values.
+> \[!WARNING] Replace the IP address, node name, and storage pool with your actual Proxmox VE configuration values.
 
 ## Step 2: Generate Talos Image
 
@@ -135,9 +138,9 @@ Generate a custom Talos image with essential extensions for Proxmox VE deploymen
 
 The custom image includes these extensions for optimal Proxmox integration:
 
-* **siderolabs/iscsi-tools**: iSCSI storage support
-* **siderolabs/qemu-guest-agent**: QEMU Guest Agent for VM management
-* **siderolabs/util-linux-tools**: Additional system utilities
+- **siderolabs/iscsi-tools**: iSCSI storage support
+- **siderolabs/qemu-guest-agent**: QEMU Guest Agent for VM management
+- **siderolabs/util-linux-tools**: Additional system utilities
 
 ```bash {"ignore":true}
 # Download the custom Talos ISO
@@ -150,26 +153,29 @@ echo "Download URL: $TALOS_ISO_URL"
 
 > \[!INFO] **Image Configuration Details**
 >
-> * **Schematic ID**: `36cd6536eaec8ba802be2d38974108359069cedba8857302f69792b26b87c010`
-> * **Version**: Talos Linux 1.10.4 with SecureBoot support
-> * **Platform**: nocloud (optimal for VM deployment)
-> * **Extensions**: Enhanced for virtualized environments
+> - **Schematic ID**: `36cd6536eaec8ba802be2d38974108359069cedba8857302f69792b26b87c010`
+> - **Version**: Talos Linux 1.10.4 with SecureBoot support
+> - **Platform**: nocloud (optimal for VM deployment)
+> - **Extensions**: Enhanced for virtualized environments
 >
 > **Available Images**:
 >
-> * **SecureBoot Disk Image**: [Raw disk image](https://factory.talos.dev/image/36cd6536eaec8ba802be2d38974108359069cedba8857302f69792b26b87c010/v1.10.4/nocloud-amd64-secureboot.raw.xz)
-> * **SecureBoot ISO**: [Installation ISO](https://factory.talos.dev/image/36cd6536eaec8ba802be2d38974108359069cedba8857302f69792b26b87c010/v1.10.4/nocloud-amd64-secureboot.iso)
-> * **Installer Image**: `factory.talos.dev/nocloud-installer-secureboot/36cd6536eaec8ba802be2d38974108359069cedba8857302f69792b26b87c010:v1.10.4`
+> - **SecureBoot Disk Image**:
+>   [Raw disk image](https://factory.talos.dev/image/36cd6536eaec8ba802be2d38974108359069cedba8857302f69792b26b87c010/v1.10.4/nocloud-amd64-secureboot.raw.xz)
+> - **SecureBoot ISO**:
+>   [Installation ISO](https://factory.talos.dev/image/36cd6536eaec8ba802be2d38974108359069cedba8857302f69792b26b87c010/v1.10.4/nocloud-amd64-secureboot.iso)
+> - **Installer Image**:
+>   `factory.talos.dev/nocloud-installer-secureboot/36cd6536eaec8ba802be2d38974108359069cedba8857302f69792b26b87c010:v1.10.4`
 
 ### Upload to Proxmox VE
 
 1. **Download the ISO**: Download the SecureBoot ISO from the URL above
 2. **Upload to Proxmox**:
-   * Access the Proxmox VE web interface
-   * Navigate to your storage location (e.g., `local`)
-   * Select **Content** → **Upload**
-   * Choose the downloaded ISO
-   * Rename to `talos-linux.v1.10.4-amd64.iso` for consistency
+   - Access the Proxmox VE web interface
+   - Navigate to your storage location (e.g., `local`)
+   - Select **Content** → **Upload**
+   - Choose the downloaded ISO
+   - Rename to `talos-linux.v1.10.4-amd64.iso` for consistency
 
 ## Step 3: Create and Configure VM
 
@@ -215,11 +221,11 @@ Create a VM with the following specifications through the Proxmox VE web interfa
 >
 > The VM ID follows this format: `24XXXXX` where:
 >
-> * `2......` indicates a VM instance (0 = LXC, 1 = VM, 9 = Templates)
-> * `.4.....` indicates Talos OS (0 = unknown, 1 = Alpine, 2 = Ubuntu, 3 = Windows, 4 = Talos)
-> * `..110..` represents Talos version 1.10
-> * `.....0.` indicates cluster 0
-> * `......0` indicates node 0
+> - `2......` indicates a VM instance (0 = LXC, 1 = VM, 9 = Templates)
+> - `.4.....` indicates Talos OS (0 = unknown, 1 = Alpine, 2 = Ubuntu, 3 = Windows, 4 = Talos)
+> - `..110..` represents Talos version 1.10
+> - `.....0.` indicates cluster 0
+> - `......0` indicates node 0
 
 #### OS Configuration
 
@@ -241,10 +247,10 @@ Create a VM with the following specifications through the Proxmox VE web interfa
 | Add EFI Disk    | ✔️                   |
 | EFI Storage     | nvme-lvm             |
 | Format          | Raw disk image (raw) |
-| Pre-Enroll keys | ❌                    |
+| Pre-Enroll keys | ❌                   |
 | SCSI Controller | VirtIO SCSI single   |
 | Qemu Agent      | ✔️                   |
-| Add TPM         | ❌                    |
+| Add TPM         | ❌                   |
 
 #### Storage Configuration
 
@@ -258,7 +264,7 @@ Create a VM with the following specifications through the Proxmox VE web interfa
 | Format          | Raw disk image (raw) |
 | Cache           | Default (No cache)   |
 | IO thread       | ✔️                   |
-| SSD Emulation   | ❌                    |
+| SSD Emulation   | ❌                   |
 
 **Data Disk (SCSI 1)**:
 
@@ -274,8 +280,8 @@ Create a VM with the following specifications through the Proxmox VE web interfa
 
 > \[!INFO] **Disk Purpose**
 >
-> * **Root Disk (48GB)**: Contains Talos system, ephemeral storage, and container images
-> * **Data Disk (64GB)**: Used for persistent storage, including Longhorn volumes and application data
+> - **Root Disk (48GB)**: Contains Talos system, ephemeral storage, and container images
+> - **Data Disk (64GB)**: Used for persistent storage, including Longhorn volumes and application data
 
 #### CPU Configuration
 
@@ -300,25 +306,24 @@ Create a VM with the following specifications through the Proxmox VE web interfa
 Add the following description for documentation:
 
 ```html
-<div align='center'>
-# 「龙门」- Lungmen
+<div align="center">
+  # 「龙门」- Lungmen
 
-<br/>
+  <br />
 
-Lungmen is a personal self-hosted platform for home services, designed to provide a complete ecosystem for media
-management, life organization, and automation.
+  Lungmen is a personal self-hosted platform for home services, designed to provide a complete ecosystem for media
+  management, life organization, and automation.
 
-<br/>
+  <br />
 
-See [README](https://github.com/chezmoi-sh/arcane/blob/main/projects/lungmen.akn/README.md) for more information.
-
+  See [README](https://github.com/chezmoi-sh/arcane/blob/main/projects/lungmen.akn/README.md) for more information.
 </div>
 ```
 
 Add these labels:
 
-* `amd64`
-* `talos-linux`
+- `amd64`
+- `talos-linux`
 
 ## Step 4: Verify VM Deployment
 
@@ -338,8 +343,7 @@ curl -k https://"$TALOS_NODE_IP":50000/api/v1alpha1/version || echo "Talos still
 # (Check through Proxmox web interface - VM should show IP address)
 ```
 
-> \[!TIP]
-> Create DNS records for your cluster endpoints:
+> \[!TIP] Create DNS records for your cluster endpoints:
 >
 > ```txt
 > kubernetes.lungmen.akn.chezmoi.sh -> "$TALOS_NODE_IP"
@@ -348,19 +352,19 @@ curl -k https://"$TALOS_NODE_IP":50000/api/v1alpha1/version || echo "Talos still
 
 **Expected VM Status:**
 
-* VM shows as running in Proxmox
-* IP address visible in Proxmox (QEMU guest agent working)
-* Talos API responding on port 50000
-* Network connectivity confirmed
+- VM shows as running in Proxmox
+- IP address visible in Proxmox (QEMU guest agent working)
+- Talos API responding on port 50000
+- Network connectivity confirmed
 
-***
+---
 
 ## Step 5: Generate Talos Configuration
 
 Generate the machine configuration files required for the Talos cluster.
 
-> \[!CAUTION]
-> Ensure you save the generated secrets.yaml file securely, as it contains sensitive information and is required to generate compatible configurations for additional nodes.
+> \[!CAUTION] Ensure you save the generated secrets.yaml file securely, as it contains sensitive information and is
+> required to generate compatible configurations for additional nodes.
 
 ```bash {"ignore":true}
 # Create working directory
@@ -384,24 +388,24 @@ yq '.contexts."lungmen.akn".nodes = ["'"$TALOS_NODE_IP"'"]' generated/talosconfi
 
 > \[!INFO] **What this does**
 >
-> * **Secrets Generation**: Creates cluster-wide cryptographic materials
->   * `secrets.yaml` - Contains sensitive certificates and keys
-> * **Configuration Files**: Generates node-specific configurations
->   * `controlplane.yaml` - Control plane node configuration
->   * `talosconfig` - Client configuration for talosctl
-> * **Custom Patches Applied**:
->   * `lungmen-akn-01.patch-config.yaml` - Node-specific settings (hostname, networking, extensions)
->   * `lungmen-akn-01.volumes.yaml` - Disk partitioning and mount points
+> - **Secrets Generation**: Creates cluster-wide cryptographic materials
+>   - `secrets.yaml` - Contains sensitive certificates and keys
+> - **Configuration Files**: Generates node-specific configurations
+>   - `controlplane.yaml` - Control plane node configuration
+>   - `talosconfig` - Client configuration for talosctl
+> - **Custom Patches Applied**:
+>   - `lungmen-akn-01.patch-config.yaml` - Node-specific settings (hostname, networking, extensions)
+>   - `lungmen-akn-01.volumes.yaml` - Disk partitioning and mount points
 >
 > **Configuration Patch Details:**
 >
 > The patch files contain lungmen.akn-specific customizations:
 >
-> * **Machine Configuration**: Sets hostname and certificate SANs
-> * **Disk Configuration**: Configures root and data partitions
-> * **Network Settings**: Configures static networking if required
-> * **Kubernetes Features**: Enables security features and custom settings
-> * **System Extensions**: Ensures iSCSI, QEMU agent, and utilities are loaded
+> - **Machine Configuration**: Sets hostname and certificate SANs
+> - **Disk Configuration**: Configures root and data partitions
+> - **Network Settings**: Configures static networking if required
+> - **Kubernetes Features**: Enables security features and custom settings
+> - **System Extensions**: Ensures iSCSI, QEMU agent, and utilities are loaded
 
 **Generated files structure:**
 
@@ -427,13 +431,13 @@ talosctl apply-config --insecure \
 
 > \[!INFO] **What this does**
 >
-> * `--insecure` bypasses certificate validation (required for initial bootstrap)
-> * Applies the control plane configuration to the VM
-> * Triggers Talos to reconfigure according to the provided settings
-> * The VM will reboot and configure itself as a Kubernetes control plane
+> - `--insecure` bypasses certificate validation (required for initial bootstrap)
+> - Applies the control plane configuration to the VM
+> - Triggers Talos to reconfigure according to the provided settings
+> - The VM will reboot and configure itself as a Kubernetes control plane
 
-> \[!WARNING]
-> The node will reboot after applying configuration. Wait 2-3 minutes before proceeding to the bootstrap step.
+> \[!WARNING] The node will reboot after applying configuration. Wait 2-3 minutes before proceeding to the bootstrap
+> step.
 
 ## Step 7: Bootstrap Cluster
 
@@ -453,15 +457,15 @@ talosctl bootstrap \
 
 > \[!INFO] **What this does**
 >
-> * Initializes the Kubernetes cluster by starting etcd
-> * Starts all control plane components:
->   * kube-apiserver (Kubernetes API server)
->   * kube-controller-manager (Controller manager)
->   * kube-scheduler (Pod scheduler)
-> * Creates initial cluster state and certificates
+> - Initializes the Kubernetes cluster by starting etcd
+> - Starts all control plane components:
+>   - kube-apiserver (Kubernetes API server)
+>   - kube-controller-manager (Controller manager)
+>   - kube-scheduler (Pod scheduler)
+> - Creates initial cluster state and certificates
 
-> \[!WARNING]
-> The bootstrap command should only be run **once per cluster**. Running it multiple times can cause cluster state corruption.
+> \[!WARNING] The bootstrap command should only be run **once per cluster**. Running it multiple times can cause cluster
+> state corruption.
 
 ## Step 8: Retrieve Kubeconfig
 
@@ -480,10 +484,10 @@ talosctl kubeconfig \
 
 > \[!INFO] **What this does**
 >
-> * Downloads the cluster's kubeconfig from the control plane
-> * `--force` overwrites any existing kubeconfig file
-> * `--merge=false` creates a standalone kubeconfig file
-> * Saves configuration to `generated/kubeconfig`
+> - Downloads the cluster's kubeconfig from the control plane
+> - `--force` overwrites any existing kubeconfig file
+> - `--merge=false` creates a standalone kubeconfig file
+> - Saves configuration to `generated/kubeconfig`
 
 ## Step 9: Verify Cluster
 
@@ -521,14 +525,14 @@ kube-system   kube-scheduler-tal01.lungmen.akn.chezmoi.sh   1/1     Running   0
 
 ### Cluster Validation Checklist
 
-* [ ] Node shows `Ready` status with control-plane role
-* [ ] All system pods are `Running` without restarts
-* [ ] kubectl commands respond without errors
-* [ ] CoreDNS is operational
-* [ ] Kubernetes API is accessible
-* [ ] Node has expected IP address and hostname
+- [ ] Node shows `Ready` status with control-plane role
+- [ ] All system pods are `Running` without restarts
+- [ ] kubectl commands respond without errors
+- [ ] CoreDNS is operational
+- [ ] Kubernetes API is accessible
+- [ ] Node has expected IP address and hostname
 
-***
+---
 
 ## Step 10: Save Talos Configuration
 
@@ -544,8 +548,8 @@ talosctl config save
 
 > \[!INFO] **What this does**
 >
-> * Saves the current Talos configuration to OpenBao vault
-> * Ensures configuration is backed up and can be restored later
+> - Saves the current Talos configuration to OpenBao vault
+> - Ensures configuration is backed up and can be restored later
 
 ## Step 11: Add to ArgoCD
 
@@ -555,9 +559,9 @@ Register the lungmen.akn cluster with ArgoCD (running on amiya.akn) for GitOps-b
 
 Ensure you have:
 
-* Access to the ArgoCD instance on amiya.akn
-* ArgoCD CLI authenticated
-* Proper network connectivity between clusters
+- Access to the ArgoCD instance on amiya.akn
+- ArgoCD CLI authenticated
+- Proper network connectivity between clusters
 
 ### Login to ArgoCD
 
@@ -588,10 +592,10 @@ argocd cluster add lungmen.akn --name lungmen.akn
 
 > \[!INFO] **What this does**
 >
-> * Registers the lungmen.akn cluster in ArgoCD's cluster registry
-> * Creates necessary service accounts and RBAC permissions
-> * Enables ArgoCD to deploy applications to the cluster
-> * The cluster will appear in ArgoCD's web interface under Settings > Clusters
+> - Registers the lungmen.akn cluster in ArgoCD's cluster registry
+> - Creates necessary service accounts and RBAC permissions
+> - Enables ArgoCD to deploy applications to the cluster
+> - The cluster will appear in ArgoCD's web interface under Settings > Clusters
 
 ## Step 12: Verify ArgoCD Integration
 
@@ -642,10 +646,10 @@ kubectl get ingress -A
 
 **Expected Results:**
 
-* Cluster appears in ArgoCD cluster list with "Successful" connection status
-* Applications begin deploying automatically via ApplicationSets
-* All applications show "Synced" and "Healthy" status
-* Cluster resources (pods, services) are being created
+- Cluster appears in ArgoCD cluster list with "Successful" connection status
+- Applications begin deploying automatically via ApplicationSets
+- All applications show "Synced" and "Healthy" status
+- Cluster resources (pods, services) are being created
 
 ### Troubleshooting ArgoCD Integration
 
@@ -676,12 +680,13 @@ argocd cluster add lungmen.akn --name lungmen.akn
 
 ## Completion
 
-Your lungmen.akn Talos cluster is now fully operational and integrated with ArgoCD for GitOps-based application management. The cluster provides:
+Your lungmen.akn Talos cluster is now fully operational and integrated with ArgoCD for GitOps-based application
+management. The cluster provides:
 
-* **Secure Kubernetes Environment**: Running on Talos Linux with security hardening
-* **GitOps Integration**: Managed by ArgoCD for automated application deployment
-* **Persistent Storage**: Configured with separate root and data partitions
-* **VM Integration**: Optimized for Proxmox VE with guest agent support
+- **Secure Kubernetes Environment**: Running on Talos Linux with security hardening
+- **GitOps Integration**: Managed by ArgoCD for automated application deployment
+- **Persistent Storage**: Configured with separate root and data partitions
+- **VM Integration**: Optimized for Proxmox VE with guest agent support
 
 ### Next Steps
 
@@ -695,10 +700,10 @@ Your lungmen.akn Talos cluster is now fully operational and integrated with Argo
 
 Ensure these files are backed up securely:
 
-* `generated/secrets.yaml` - **Critical**: Required for cluster expansion
-* `generated/kubeconfig` - For kubectl access
-* `generated/talosconfig` - For talosctl management
-* `generated/controlplane.yaml` - Node configuration reference
+- `generated/secrets.yaml` - **Critical**: Required for cluster expansion
+- `generated/kubeconfig` - For kubectl access
+- `generated/talosconfig` - For talosctl management
+- `generated/controlplane.yaml` - Node configuration reference
 
-> \[!WARNING]
-> The `secrets.yaml` file contains sensitive cryptographic material and must be stored securely. It's required to add additional nodes or recover the cluster configuration.
+> \[!WARNING] The `secrets.yaml` file contains sensitive cryptographic material and must be stored securely. It's
+> required to add additional nodes or recover the cluster configuration.

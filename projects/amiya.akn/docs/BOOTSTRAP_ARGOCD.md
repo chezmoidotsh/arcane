@@ -1,31 +1,33 @@
 # Cluster Bootstrap with ArgoCD
 
-> \[!CAUTION]
-> This document is no longer relevant due to recent changes in core infrastructure management. The described bootstrap process MUST be superseded and MUST not be used.
+> \[!CAUTION] This document is no longer relevant due to recent changes in core infrastructure management. The described
+> bootstrap process MUST be superseded and MUST not be used.
 
 ## Table of Contents
 
-* [Introduction](#introduction)
-* [Prerequisites](#prerequisites)
-* [GitHub App Configuration](#github-app-configuration)
-* [Cluster Initialization](#cluster-initialization)
-* [Deployment Order](#deployment-order)
-* [Verification](#verification)
-* [Troubleshooting](#troubleshooting)
-* [References](#references)
+- [Introduction](#introduction)
+- [Prerequisites](#prerequisites)
+- [GitHub App Configuration](#github-app-configuration)
+- [Cluster Initialization](#cluster-initialization)
+- [Deployment Order](#deployment-order)
+- [Verification](#verification)
+- [Troubleshooting](#troubleshooting)
+- [References](#references)
 
 ## Introduction
 
-This document describes the process of bootstrapping an empty Kubernetes cluster using ArgoCD. It covers the necessary steps to initialize and configure a cluster ready to host applications, including the setup of essential infrastructure components and the deployment of ArgoCD for GitOps-based application management.
+This document describes the process of bootstrapping an empty Kubernetes cluster using ArgoCD. It covers the necessary
+steps to initialize and configure a cluster ready to host applications, including the setup of essential infrastructure
+components and the deployment of ArgoCD for GitOps-based application management.
 
 ## Prerequisites
 
 Before proceeding, ensure you have:
 
-* An operational Kubernetes cluster
-* Cluster-admin access to the cluster
-* A configured GitHub App for ArgoCD (see [GitHub App Configuration](#github-app-configuration))
-* The following environment variables set:
+- An operational Kubernetes cluster
+- Cluster-admin access to the cluster
+- A configured GitHub App for ArgoCD (see [GitHub App Configuration](#github-app-configuration))
+- The following environment variables set:
 
 ```bash
 export GITHUB_APP_ID=1234567890
@@ -41,27 +43,27 @@ export AGE_KEY_PATH=/path/to/age/key.age
 1. Navigate to [GitHub Settings > Developer settings > GitHub Apps](https://github.com/settings/apps)
 2. Click "New GitHub App"
 3. Configure with these settings:
-   * **GitHub App name**: `argocd-chezmoi-sh`
-   * **Homepage URL**: `https://argocd.chezmoi.sh`
-   * **Webhook**: Disabled
-   * **Repository permissions**:
-     * Contents: Read & write
-     * Metadata: Read-only
-     * Pull requests: Read-only
-   * **Where can this GitHub App be installed?**: Only on this account
+   - **GitHub App name**: `argocd-chezmoi-sh`
+   - **Homepage URL**: `https://argocd.chezmoi.sh`
+   - **Webhook**: Disabled
+   - **Repository permissions**:
+     - Contents: Read & write
+     - Metadata: Read-only
+     - Pull requests: Read-only
+   - **Where can this GitHub App be installed?**: Only on this account
 
 ### 2. Generate Credentials
 
 After creation, note:
 
-* **App ID**: The application identifier
-* **Client ID**: For OAuth authentication
-* **Client Secret**: For OAuth authentication
+- **App ID**: The application identifier
+- **Client ID**: For OAuth authentication
+- **Client Secret**: For OAuth authentication
 
 Generate a private key:
 
-* Click "Generate a private key"
-* Save the generated `.pem` file
+- Click "Generate a private key"
+- Save the generated `.pem` file
 
 ### 3. Install App
 
@@ -139,8 +141,8 @@ Deploy applications in this specific order:
 
 8. Other applications
 
-> \[!WARNING]
-> ArgoCD must be deployed after external-secret to prevent dead-lock. If this occurs, remove the controller's environment variables (ALL\_PROXY, HTTP\_PROXY, HTTPS\_PROXY) and restart it.
+> \[!WARNING] ArgoCD must be deployed after external-secret to prevent dead-lock. If this occurs, remove the
+> controller's environment variables (ALL_PROXY, HTTP_PROXY, HTTPS_PROXY) and restart it.
 
 ## Verification
 
@@ -173,14 +175,14 @@ If ArgoCD fails to install:
 
 When accessing ArgoCD:
 
-* Use HTTP instead of HTTPS
-* If port-forward is lost (e.g., during ArgoCD sync), re-establish it:
+- Use HTTP instead of HTTPS
+- If port-forward is lost (e.g., during ArgoCD sync), re-establish it:
   ```bash
   kubectl port-forward svc/argocd-server -n argocd 8080:443
   ```
 
 ## References
 
-* [ArgoCD Documentation](https://argo-cd.readthedocs.io/en/stable/)
-* [GitHub Apps Documentation](https://docs.github.com/en/apps/creating-github-apps/about-creating-github-apps/about-creating-github-apps#about-github-apps)
-* [ArgoCD Private Repositories Guide](https://argo-cd.readthedocs.io/en/stable/user-guide/private-repositories/#github-app-credential)
+- [ArgoCD Documentation](https://argo-cd.readthedocs.io/en/stable/)
+- [GitHub Apps Documentation](https://docs.github.com/en/apps/creating-github-apps/about-creating-github-apps/about-creating-github-apps#about-github-apps)
+- [ArgoCD Private Repositories Guide](https://argo-cd.readthedocs.io/en/stable/user-guide/private-repositories/#github-app-credential)

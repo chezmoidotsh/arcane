@@ -1,9 +1,8 @@
 # Observability appliance log transforms
 
-Vector transform pipeline for the `observability` LXC itself.
-Parses JSON logs from the Victoria stack (VictoriaMetrics, VictoriaLogs,
-VictoriaTraces, vmalert), Alertmanager, and Caddy into OTLP SemConv fields
-before shipping to VictoriaLogs.
+Vector transform pipeline for the `observability` LXC itself. Parses JSON logs from the Victoria stack (VictoriaMetrics,
+VictoriaLogs, VictoriaTraces, vmalert), Alertmanager, and Caddy into OTLP SemConv fields before shipping to
+VictoriaLogs.
 
 ## Pipeline overview
 

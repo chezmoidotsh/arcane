@@ -1,7 +1,7 @@
 ---
 status: "{proposed | accepted | implemented | rejected | deprecated | superseded by ADR-0123}"
-date: {YYYY-MM-DD when the decision was last updated}
-implementation-completed: {YYYY-MM-DD when the implementation was finalized (optional)}
+date: { YYYY-MM-DD when the decision was last updated }
+implementation-completed: { YYYY-MM-DD when the implementation was finalized (optional) }
 decision-makers: ["Alexandre"]
 assisted-by: ["<model-name>"]
 informed: []
@@ -19,101 +19,97 @@ template-version: "1.1.0"
 
 ## Table of Contents
 
-* [Context and Problem Statement](#context-and-problem-statement)
-* [Non-Goals \[Optional\]](#non-goals-optional)
-* [Decision Drivers](#decision-drivers)
-* [Considered Options](#considered-options)
-  * [Option 1: {title of option 1}](#option-1-title-of-option-1)
-  * [Option 2: {title of option 2}](#option-2-title-of-option-2)
-* [Decision Outcome](#decision-outcome)
-* [Consequences \[Optional\]](#consequences-optional)
-  * [Positive](#positive)
-  * [Negative](#negative)
-  * [Neutral](#neutral)
-* [Implementation Details / Status \[Optional\]](#implementation-details--status-optional)
-* [Decision Evolution \[Optional\]](#decision-evolution-optional)
-* [References and Related Decisions \[Optional\]](#references-and-related-decisions-optional)
-* [Changelog](#changelog)
+- [Context and Problem Statement](#context-and-problem-statement)
+- [Non-Goals \[Optional\]](#non-goals-optional)
+- [Decision Drivers](#decision-drivers)
+- [Considered Options](#considered-options)
+  - [Option 1: {title of option 1}](#option-1-title-of-option-1)
+  - [Option 2: {title of option 2}](#option-2-title-of-option-2)
+- [Decision Outcome](#decision-outcome)
+- [Consequences \[Optional\]](#consequences-optional)
+  - [Positive](#positive)
+  - [Negative](#negative)
+  - [Neutral](#neutral)
+- [Implementation Details / Status \[Optional\]](#implementation-details--status-optional)
+- [Decision Evolution \[Optional\]](#decision-evolution-optional)
+- [References and Related Decisions \[Optional\]](#references-and-related-decisions-optional)
+- [Changelog](#changelog)
 
 ## Context and Problem Statement
 
-> Describe the context and problem statement using clear, complete paragraphs. Do not rely
-> solely on bullet points. Explain exactly why this decision is needed now and omit no
-> technical details.
+> Describe the context and problem statement using clear, complete paragraphs. Do not rely solely on bullet points.
+> Explain exactly why this decision is needed now and omit no technical details.
 >
 > Ensure you explicitly cover:
 >
-> * **Current Architecture Overview**: How things work today.
-> * **Critical Problems Identified**: What is broken, limiting, or missing with the current approach.
-> * **Strategic Question**: The core question this ADR aims to answer.
+> - **Current Architecture Overview**: How things work today.
+> - **Critical Problems Identified**: What is broken, limiting, or missing with the current approach.
+> - **Strategic Question**: The core question this ADR aims to answer.
 
 {Write comprehensive context here...}
 
 ## Non-Goals \[Optional]
 
-> List what this ADR deliberately does NOT decide or cover. Non-goals prevent scope
-> creep and stop a reader from mistaking an omission for an oversight. Include this
-> section when any of the following apply:
+> List what this ADR deliberately does NOT decide or cover. Non-goals prevent scope creep and stop a reader from
+> mistaking an omission for an oversight. Include this section when any of the following apply:
 >
-> * A related decision is already settled elsewhere and is a *premise* here, not an
->   option (state it, so the options aren't misread as reopening it).
-> * The decision deliberately excludes a tempting adjacent area (say why — a future
->   reader will otherwise re-propose it).
-> * A capability of the superseded approach is intentionally given up.
+> - A related decision is already settled elsewhere and is a _premise_ here, not an option (state it, so the options
+>   aren't misread as reopening it).
+> - The decision deliberately excludes a tempting adjacent area (say why — a future reader will otherwise re-propose
+>   it).
+> - A capability of the superseded approach is intentionally given up.
 >
-> Keep each non-goal to a sentence or two with its reason. Omit the section entirely
-> if the decision's scope is self-evident — do not pad with truisms.
+> Keep each non-goal to a sentence or two with its reason. Omit the section entirely if the decision's scope is
+> self-evident — do not pad with truisms.
 
-* {non-goal 1 — and why it is out of scope}
-* {non-goal 2 — and why it is out of scope}
+- {non-goal 1 — and why it is out of scope}
+- {non-goal 2 — and why it is out of scope}
 
 ## Decision Drivers
 
-> List the forces, concerns, and requirements that shape the decision. Categorize them to
-> ensure no details are omitted:
+> List the forces, concerns, and requirements that shape the decision. Categorize them to ensure no details are omitted:
 >
-> * **Functional Requirements**: What the solution must do.
-> * **Non-Functional Requirements**: Qualities the solution must have (Reliability, Security, Maintainability, etc.).
-> * **Constraints**: Limitations we must work within (Ecosystem, existing infrastructure, budget, etc.).
+> - **Functional Requirements**: What the solution must do.
+> - **Non-Functional Requirements**: Qualities the solution must have (Reliability, Security, Maintainability, etc.).
+> - **Constraints**: Limitations we must work within (Ecosystem, existing infrastructure, budget, etc.).
 
-* {decision driver 1}
-* {decision driver 2}
+- {decision driver 1}
+- {decision driver 2}
 
 ## Considered Options
 
-> Detail the options considered. For complex decisions, you can group them by category.
-> Provide a substantial, detailed paragraph describing each option before listing its pros
-> and cons. Mark the status of each option with a bold label: ACCEPTED, REJECTED, or PROPOSED.
+> Detail the options considered. For complex decisions, you can group them by category. Provide a substantial, detailed
+> paragraph describing each option before listing its pros and cons. Mark the status of each option with a bold label:
+> ACCEPTED, REJECTED, or PROPOSED.
 
 ### Option 1: {title of option 1}
 
 > **Status: PROPOSED**
 
-> Write a complete, concise description of how this option works, its architectural impact,
-> and how it addresses the drivers.
+> Write a complete, concise description of how this option works, its architectural impact, and how it addresses the
+> drivers.
 
-* `+` {pro 1}
-* `+` {pro 2}
-* `-` {con 1}
+- `+` {pro 1}
+- `+` {pro 2}
+- `-` {con 1}
 
 ### Option 2: {title of option 2}
 
 > **Status: PROPOSED**
 
-> Write a complete, concise description of how this option works, its architectural impact,
-> and how it addresses the drivers.
+> Write a complete, concise description of how this option works, its architectural impact, and how it addresses the
+> drivers.
 
-* `+` {pro 1}
-* `-` {con 1}
+- `+` {pro 1}
+- `-` {con 1}
 
 ## Decision Outcome
 
-**Chosen option: "{title of chosen option}"**, because {Provide a detailed, complete
-justification in paragraph form. Explain how it uniquely meets the critical decision drivers,
-resolves the forces at play, or mitigates the primary constraints. Do not skimp on the
-rationale}.
+**Chosen option: "{title of chosen option}"**, because {Provide a detailed, complete justification in paragraph form.
+Explain how it uniquely meets the critical decision drivers, resolves the forces at play, or mitigates the primary
+constraints. Do not skimp on the rationale}.
 
-***
+---
 
 ## Consequences \[Optional]
 
@@ -121,66 +117,62 @@ rationale}.
 
 ### Positive
 
-* (+) {Good consequence, e.g., improvement of one or more desired qualities}
+- (+) {Good consequence, e.g., improvement of one or more desired qualities}
 
 ### Negative
 
-* (-) {Bad consequence, e.g., compromising one or more desired qualities}
+- (-) {Bad consequence, e.g., compromising one or more desired qualities}
 
 ### Neutral
 
-* (\~) {Neutral consequence or required mitigation}
+- (\~) {Neutral consequence or required mitigation}
 
-***
+---
 
 ## Implementation Details / Status \[Optional]
 
-> Document the high-level architecture resulting from this decision (e.g., using Mermaid
-> or ASCII diagrams).
+> Document the high-level architecture resulting from this decision (e.g., using Mermaid or ASCII diagrams).
 
-> \[!CAUTION]
-> **ANTI-PATTERN**: DO NOT include step-by-step migration plans, tutorials, runbooks, or
-> low-level technical configurations (like specific Helm values, RBAC account names, or
-> exact file paths) in this document.
+> \[!CAUTION] **ANTI-PATTERN**: DO NOT include step-by-step migration plans, tutorials, runbooks, or low-level technical
+> configurations (like specific Helm values, RBAC account names, or exact file paths) in this document.
 >
-> * **Migration plans and runbooks** belong in GitHub Issues, PRs, or `docs/procedures/`.
-> * **Low-level configurations** belong in the code itself, which is the only source of truth.
+> - **Migration plans and runbooks** belong in GitHub Issues, PRs, or `docs/procedures/`.
+> - **Low-level configurations** belong in the code itself, which is the only source of truth.
 >
-> Keep this section focused on the *conceptual* architecture and the *status* of the
-> implementation.
+> Keep this section focused on the _conceptual_ architecture and the _status_ of the implementation.
 
-* **Completed Components**: {What has been successfully rolled out conceptually}
-* **Pending Components**: {What remains to be done conceptually}
-* **Architecture**: {Diagrams (e.g., Mermaid) or high-level technical breakdown}
-* **Standards Specification**: {Any new conventions, labels, or naming rules introduced by this ADR}
+- **Completed Components**: {What has been successfully rolled out conceptually}
+- **Pending Components**: {What remains to be done conceptually}
+- **Architecture**: {Diagrams (e.g., Mermaid) or high-level technical breakdown}
+- **Standards Specification**: {Any new conventions, labels, or naming rules introduced by this ADR}
 
-***
+---
 
 ## Decision Evolution \[Optional]
 
-> If the decision changes during implementation or over time, document the history and the
-> exact technical reasons for the pivot.
+> If the decision changes during implementation or over time, document the history and the exact technical reasons for
+> the pivot.
 
-* **YYYY-MM-DD**: Initial Decision — {Option}
-* **YYYY-MM-DD**: Revised Decision — {Option} because {Detailed Reason}
+- **YYYY-MM-DD**: Initial Decision — {Option}
+- **YYYY-MM-DD**: Revised Decision — {Option} because {Detailed Reason}
 
-***
+---
 
 ## References and Related Decisions \[Optional]
 
-> Provide links to other decisions, technical specifications, or external references that
-> are crucial for understanding this ADR.
+> Provide links to other decisions, technical specifications, or external references that are crucial for understanding
+> this ADR.
 
-* **Related ADRs**: {e.g., ADR-001: Centralized Secret Management}
-* **Architecture Documentation**: {Links to internal or external architecture guides}
-* **Security Guidelines**: {Links to security best practices}
-* **Implementation References**: {Links to tool documentation}
+- **Related ADRs**: {e.g., ADR-001: Centralized Secret Management}
+- **Architecture Documentation**: {Links to internal or external architecture guides}
+- **Security Guidelines**: {Links to security best practices}
+- **Implementation References**: {Links to tool documentation}
 
-***
+---
 
 ## Changelog
 
-> Document any significant updates made to this ADR after its initial creation. Use
-> semantic prefixes (FEATURE, FIX, SECURITY, DEPRECATION, CLARIFICATION, CHORE).
+> Document any significant updates made to this ADR after its initial creation. Use semantic prefixes (FEATURE, FIX,
+> SECURITY, DEPRECATION, CLARIFICATION, CHORE).
 
-* **YYYY-MM-DD**: **PREFIX**: {Complete description of the change and its impact}
+- **YYYY-MM-DD**: **PREFIX**: {Complete description of the change and its impact}

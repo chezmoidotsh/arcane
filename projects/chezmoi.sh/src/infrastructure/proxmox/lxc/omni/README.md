@@ -1,9 +1,8 @@
 # `omni.chezmoi.sh` — Omni Talos Management LXC (Proxmox)
 
-Standalone Proxmox LXC running NixOS + Omni + Dex + Caddy. Serves
-`https://omni.chezmoi.sh` as the homelab's Talos cluster manager
-(SideroLink + Kubernetes proxy + UI), with a co-located Dex OIDC provider
-exposed under the `/dex` sub-path on the same hostname.
+Standalone Proxmox LXC running NixOS + Omni + Dex + Caddy. Serves `https://omni.chezmoi.sh` as the homelab's Talos
+cluster manager (SideroLink + Kubernetes proxy + UI), with a co-located Dex OIDC provider exposed under the `/dex`
+sub-path on the same hostname.
 
 ## Table of contents
 
@@ -56,31 +55,24 @@ flowchart TB
 | `kube.omni.chezmoi.sh` | 443       | Kubernetes API proxy              | `:8100` (HTTP)                     |
 | —                      | 50180/UDP | SideroLink WireGuard              | direct                             |
 
-> All TCP services run on port **443** only. No non-standard TCP ports are
-> exposed externally. The event sink (`:8091`) is only reachable from
-> WireGuard-connected Talos machines (internal VPN, not internet-facing).
+> All TCP services run on port **443** only. No non-standard TCP ports are exposed externally. The event sink (`:8091`)
+> is only reachable from WireGuard-connected Talos machines (internal VPN, not internet-facing).
 
-* **Caddy** is the sole public TCP surface. It terminates TLS for all
-  three subdomains using DNS-01 ACME via Cloudflare (no inbound `:80`
-  challenge required). All subdomains share the same LE certificate.
-* **Machine API** (`api.omni.chezmoi.sh`) — Caddy terminates TLS with
-  the DNS-01 Let's Encrypt cert and proxies to Omni's loopback
-  `127.0.0.1:9090` (PKI TLS, `tls_insecure_skip_verify`). Talos machines
-  trust the public LE cert without importing Omni's self-signed PKI CA.
-* **Kubernetes proxy** (`kube.omni.chezmoi.sh`) — Caddy terminates TLS
-  and proxies to Omni's loopback `127.0.0.1:8100` (plain HTTP). `omnictl`
-  and `kubectl` connect via the HTTPS subdomain.
-* **Omni UI/API** binds on `127.0.0.1:8443` (loopback, PKI TLS).
-  **Dex** binds on `127.0.0.1:5557` (loopback, plain HTTP). Both are only
-  reachable through Caddy.
-* **No SSH.** Console access goes through `pct enter <vmid>` on the
-  Proxmox host.
+- **Caddy** is the sole public TCP surface. It terminates TLS for all three subdomains using DNS-01 ACME via Cloudflare
+  (no inbound `:80` challenge required). All subdomains share the same LE certificate.
+- **Machine API** (`api.omni.chezmoi.sh`) — Caddy terminates TLS with the DNS-01 Let's Encrypt cert and proxies to
+  Omni's loopback `127.0.0.1:9090` (PKI TLS, `tls_insecure_skip_verify`). Talos machines trust the public LE cert
+  without importing Omni's self-signed PKI CA.
+- **Kubernetes proxy** (`kube.omni.chezmoi.sh`) — Caddy terminates TLS and proxies to Omni's loopback `127.0.0.1:8100`
+  (plain HTTP). `omnictl` and `kubectl` connect via the HTTPS subdomain.
+- **Omni UI/API** binds on `127.0.0.1:8443` (loopback, PKI TLS). **Dex** binds on `127.0.0.1:5557` (loopback, plain
+  HTTP). Both are only reachable through Caddy.
+- **No SSH.** Console access goes through `pct enter <vmid>` on the Proxmox host.
 
 ### Host kernel prerequisites — WireGuard + TUN device
 
-Omni's SideroLink runs a **WireGuard server inside the LXC**. WireGuard
-is a kernel module, and an unprivileged container cannot `modprobe`. The
-operator must load it on the Proxmox host once:
+Omni's SideroLink runs a **WireGuard server inside the LXC**. WireGuard is a kernel module, and an unprivileged
+container cannot `modprobe`. The operator must load it on the Proxmox host once:
 
 ```sh
 # On the Proxmox node:
@@ -89,29 +81,25 @@ modprobe wireguard
 lsmod | grep -E '^wireguard'
 ```
 
-The Omni `systemd` unit already sets `AmbientCapabilities = [
-"CAP_NET_ADMIN" ]`, which is sufficient to create the WireGuard
-interface inside the unprivileged container.
+The Omni `systemd` unit already sets `AmbientCapabilities = [ "CAP_NET_ADMIN" ]`, which is sufficient to create the
+WireGuard interface inside the unprivileged container.
 
-Omni also requires `/dev/net/tun` inside the LXC (for SideroLink's TUN
-interface). In an unprivileged container Proxmox does **not** bind-mount
-it automatically — add these two lines to `/etc/pve/lxc/<vmid>.conf`
-after creating the container:
+Omni also requires `/dev/net/tun` inside the LXC (for SideroLink's TUN interface). In an unprivileged container Proxmox
+does **not** bind-mount it automatically — add these two lines to `/etc/pve/lxc/<vmid>.conf` after creating the
+container:
 
 ```sh
 echo 'lxc.cgroup2.devices.allow: c 10:200 rwm' >> /etc/pve/lxc/${VMID}.conf
 echo 'lxc.mount.entry: /dev/net/tun dev/net/tun none bind,create=file' >> /etc/pve/lxc/${VMID}.conf
 ```
 
-These settings survive container restarts and upgrades (they live in the
-PVE host config, not inside the container rootfs).
+These settings survive container restarts and upgrades (they live in the PVE host config, not inside the container
+rootfs).
 
-> **Note on `boot.kernelModules = [ "wireguard" "tun" ]` in the catalog
-> module.** That line is harmless in the LXC — `systemd-modules-load`
-> tries to load the modules at boot and fails silently (the container
-> has no permission). The modules must be loaded **on the host**; the
-> in-LXC attempt is a no-op. If the failed unit becomes noisy, override
-> in `configuration.nix`:
+> **Note on `boot.kernelModules = [ "wireguard" "tun" ]` in the catalog module.** That line is harmless in the LXC —
+> `systemd-modules-load` tries to load the modules at boot and fails silently (the container has no permission). The
+> modules must be loaded **on the host**; the in-LXC attempt is a no-op. If the failed unit becomes noisy, override in
+> `configuration.nix`:
 >
 > ```nix
 > boot.kernelModules = lib.mkForce [ ];
@@ -139,33 +127,31 @@ PVE host config, not inside the container rootfs).
 
 ## Prerequisites
 
-* `mise` with the repo's `.mise.toml` trusted (`mise trust`).
-* Docker (used by `nix:build:lxc` to wrap the Nix build).
-* Pulumi CLI logged into the chezmoi.sh stack (see `src/infrastructure/pulumi/.mise.toml`); run `pulumi up` first (only for the initial token sync).
-* `sops` with the repo age key loaded (`SOPS_AGE_KEY_FILE` already set by mise).
-* `htpasswd` (apache2-utils / httpd-tools) for `lxc:secrets:rotate`.
-* SSH key-based root access to the Proxmox node you intend to push to.
+- `mise` with the repo's `.mise.toml` trusted (`mise trust`).
+- Docker (used by `nix:build:lxc` to wrap the Nix build).
+- Pulumi CLI logged into the chezmoi.sh stack (see `src/infrastructure/pulumi/.mise.toml`); run `pulumi up` first (only
+  for the initial token sync).
+- `sops` with the repo age key loaded (`SOPS_AGE_KEY_FILE` already set by mise).
+- `htpasswd` (apache2-utils / httpd-tools) for `lxc:secrets:rotate`.
+- SSH key-based root access to the Proxmox node you intend to push to.
 
 ## Proxmox user and role setup
 
-The Omni LXC itself does not authenticate with Proxmox — it serves Talos
-machines via SideroLink and exposes the management UI. However, the
-**companion infra-provider LXC** (`../omni-infra-provider-proxmox/`) needs a
-Proxmox API user with VM lifecycle permissions, scoped to the `talos`
-resource pool so it can never touch the LXCs running on the same host.
+The Omni LXC itself does not authenticate with Proxmox — it serves Talos machines via SideroLink and exposes the
+management UI. However, the **companion infra-provider LXC** (`../omni-infra-provider-proxmox/`) needs a Proxmox API
+user with VM lifecycle permissions, scoped to the `talos` resource pool so it can never touch the LXCs running on the
+same host.
 
-The full `pveum` setup (user, role, `talos` pool, ACLs, permission
-reference) lives in the companion README:
+The full `pveum` setup (user, role, `talos` pool, ACLs, permission reference) lives in the companion README:
 [Proxmox user and role setup](../omni-infra-provider-proxmox/README.md#proxmox-user-and-role-setup).
 
 ## Secrets
 
-Two files, both SOPS / age-encrypted, both baked into the image at build
-time. The plaintext values never touch disk.
+Two files, both SOPS / age-encrypted, both baked into the image at build time. The plaintext values never touch disk.
 
-\| File                     | Variable                  | Source                                    |
-\| `secrets/omni.sops.env`  | `DEX_ADMIN_PASSWORD_HASH` | Operator (`htpasswd -bnBC 12 "" '<pw>'`). |
-\| `secrets/caddy.sops.env` | `CLOUDFLARE_API_TOKEN`    | Pulumi (`omniDns01Token` stack output), or manual (bootstrap). |
+\| File | Variable | Source | \| `secrets/omni.sops.env` | `DEX_ADMIN_PASSWORD_HASH` | Operator
+(`htpasswd -bnBC 12 "" '<pw>'`). | \| `secrets/caddy.sops.env` | `CLOUDFLARE_API_TOKEN` | Pulumi (`omniDns01Token` stack
+output), or manual (bootstrap). |
 
 ### First-time setup
 
@@ -176,29 +162,26 @@ mise run lxc:secrets:rotate
 # 2. Provide the Cloudflare DNS-01 token (pick ONE of the two paths below)
 ```
 
-**Cloudflare token — bootstrap ordering matters.** The `lxc:secrets:sync`
-task pulls the token from a Pulumi stack output (`pulumi stack output --show-secrets`). Run `pulumi up` in
-`projects/chezmoi.sh/src/infrastructure/pulumi` first so the output exists.
+**Cloudflare token — bootstrap ordering matters.** The `lxc:secrets:sync` task pulls the token from a Pulumi stack
+output (`pulumi stack output --show-secrets`). Run `pulumi up` in `projects/chezmoi.sh/src/infrastructure/pulumi` first
+so the output exists.
 
-* **Path A — Pulumi stack already applied** (steady state / rebuilds):
+- **Path A — Pulumi stack already applied** (steady state / rebuilds):
 
   ```sh
   mise run lxc:secrets:sync
   ```
 
-  Delegates to `mise run pulumi:cloudflare-token:omni`, which fetches the
-  `omniDns01Token` Pulumi stack output and writes it into
-  `secrets/caddy.sops.env`.
+  Delegates to `mise run pulumi:cloudflare-token:omni`, which fetches the `omniDns01Token` Pulumi stack output and
+  writes it into `secrets/caddy.sops.env`.
 
-* **Path B — Pulumi not applied yet** (initial bootstrap): mint the token
-  manually in the Cloudflare dashboard, then SOPS-encrypt it straight into
-  the secret file.
+- **Path B — Pulumi not applied yet** (initial bootstrap): mint the token manually in the Cloudflare dashboard, then
+  SOPS-encrypt it straight into the secret file.
 
   1. Cloudflare dashboard → **My Profile → API Tokens → Create Token**.
-  2. Use the **Edit zone DNS** template, or a custom token with these
-     permissions:
-     * **Zone → DNS → Edit**
-     * **Zone → Zone → Read**
+  2. Use the **Edit zone DNS** template, or a custom token with these permissions:
+     - **Zone → DNS → Edit**
+     - **Zone → Zone → Read**
   3. **Zone Resources → Include → Specific zone → `chezmoi.sh`**.
   4. Create the token and copy it.
   5. Encrypt it into `secrets/caddy.sops.env` (plaintext never hits disk):
@@ -209,16 +192,14 @@ task pulls the token from a Pulumi stack output (`pulumi stack output --show-sec
        > secrets/caddy.sops.env
      ```
 
-  Once the Pulumi stack is applied, switch to Path A on the next rebuild so
-  the token is managed declaratively (and rotate the hand-made one out).
+  Once the Pulumi stack is applied, switch to Path A on the next rebuild so the token is managed declaratively (and
+  rotate the hand-made one out).
 
 ### Rotation
 
-* **Dex admin password** — re-run `mise run lxc:secrets:rotate`, rebuild,
-  redeploy.
-* **Cloudflare token** — rotate via `pulumi up --replace` in the
-  chezmoi.sh Pulumi stack, then re-run `mise run lxc:secrets:sync`,
-  rebuild, redeploy.
+- **Dex admin password** — re-run `mise run lxc:secrets:rotate`, rebuild, redeploy.
+- **Cloudflare token** — rotate via `pulumi up --replace` in the chezmoi.sh Pulumi stack, then re-run
+  `mise run lxc:secrets:sync`, rebuild, redeploy.
 
 ## Build & deploy
 
@@ -230,24 +211,22 @@ mise run lxc:build
 mise run lxc:push -- pve-01.pve.chezmoi.sh
 ```
 
-The template name is derived from the **CalVer** version declared in
-`flake.nix` (e.g. `omni.2026.06.10-amd64.tar.xz`). Bump the `version =
-"YYYY.MM.DD"` string in `flake.nix` before each build; append `-N` for
-multiple builds the same day.
+The template name is derived from the **CalVer** version declared in `flake.nix` (e.g. `omni.2026.06.10-amd64.tar.xz`).
+Bump the `version = "YYYY.MM.DD"` string in `flake.nix` before each build; append `-N` for multiple builds the same day.
 
 ### Task reference
 
-\| Task                                                              | What it does                                                                                                                     |
-\| `mise run lxc:secrets:rotate`                                     | Generate the Dex admin bcrypt hash → `secrets/omni.sops.env`                                                                     |
-\| `mise run lxc:secrets:sync`                                       | Fetch Cloudflare token from Pulumi → `secrets/caddy.sops.env`                                                                   |
-\| `mise run lxc:build`                                              | Build with both secrets baked in (requires the two `.sops.env`)                                                                  |
-\| `mise run lxc:push -- <pve-host>`                                 | `scp` the tarball to Proxmox (`local` storage, hardcoded)                                                                        |
-\| `mise run lxc:upgrade -- <pve-host> <source_id> [-t <target_id>]` | Rootfs-swap upgrade of a running LXC; preserves the `mp0` volume. `--target-id` auto-picks the first free VMID ≥ 100 if omitted. |
+\| Task | What it does | \| `mise run lxc:secrets:rotate` | Generate the Dex admin bcrypt hash → `secrets/omni.sops.env`
+| \| `mise run lxc:secrets:sync` | Fetch Cloudflare token from Pulumi → `secrets/caddy.sops.env` | \|
+`mise run lxc:build` | Build with both secrets baked in (requires the two `.sops.env`) | \|
+`mise run lxc:push -- <pve-host>` | `scp` the tarball to Proxmox (`local` storage, hardcoded) | \|
+`mise run lxc:upgrade -- <pve-host> <source_id> [-t <target_id>]` | Rootfs-swap upgrade of a running LXC; preserves the
+`mp0` volume. `--target-id` auto-picks the first free VMID ≥ 100 if omitted. |
 
 ## Proxmox LXC creation
 
-The build emits `omni.<version>-amd64.tar.xz`. After `lxc:push` uploads
-it to `/var/lib/vz/template/cache/`, create the container with:
+The build emits `omni.<version>-amd64.tar.xz`. After `lxc:push` uploads it to `/var/lib/vz/template/cache/`, create the
+container with:
 
 ```sh
 # Pick an unused VMID (`pct list` shows used ones).
@@ -288,11 +267,9 @@ ssh root@${NODE} "echo 'lxc.mount.entry: /dev/net/tun dev/net/tun none bind,crea
 ssh root@${NODE} pct start ${VMID}
 ```
 
-> **Before step 3 — pre-create + chown the persistent subdirs (unprivileged LXC).**
-> Proxmox creates `mp0` owned by host uid 0, which falls outside the
-> container's uid map and appears as `nobody` (65534) inside the LXC.
-> The container then can't even write `/persistent/{omni,caddy}` to let the
-> NixOS tmpfiles take over.
+> **Before step 3 — pre-create + chown the persistent subdirs (unprivileged LXC).** Proxmox creates `mp0` owned by host
+> uid 0, which falls outside the container's uid map and appears as `nobody` (65534) inside the LXC. The container then
+> can't even write `/persistent/{omni,caddy}` to let the NixOS tmpfiles take over.
 >
 > Run the following **on the Proxmox node** (`ssh root@${NODE}`):
 >
@@ -308,50 +285,39 @@ ssh root@${NODE} pct start ${VMID}
 > pct unmount ${VMID}
 > ```
 >
-> Skipping this step makes `omni-pki-init`, `omni-gpg-init`, and `caddy`
-> fail with `Permission denied` on their data directories at first boot.
+> Skipping this step makes `omni-pki-init`, `omni-gpg-init`, and `caddy` fail with `Permission denied` on their data
+> directories at first boot.
 
-> **`services.omni.advertiseHost`** defaults to `omni.chezmoi.sh` (DNS).
-> The catalog `omni-pki-init` detects IP vs DNS and emits the right cert
-> SAN; SideroLink WireGuard uses the same value as its advertised
-> endpoint. Make sure DNS resolves to an IP that Talos machines can reach
-> on UDP `50180` (LAN IP for homelab, public IP if Talos is off-site).
+> **`services.omni.advertiseHost`** defaults to `omni.chezmoi.sh` (DNS). The catalog `omni-pki-init` detects IP vs DNS
+> and emits the right cert SAN; SideroLink WireGuard uses the same value as its advertised endpoint. Make sure DNS
+> resolves to an IP that Talos machines can reach on UDP `50180` (LAN IP for homelab, public IP if Talos is off-site).
 
 ### `pct.conf` features explained
 
-* `unprivileged 1` — root-in-LXC is mapped to a high uid on the host.
-  Mandatory; do not relax.
-* `nesting=1` — required for stage-2 NixOS activation
-  (`systemd-nspawn`-style mounts during boot).
-* `keyctl=0` — neither Omni nor Dex use the kernel keyring.
-* `cmode=console` — `pct console` attaches to `/dev/console`, where
-  journald forwards boot and runtime logs. The image runs no getty, so
-  the default `tty` mode fails with `Denied access to tty`. The console
-  is a read-only log view; for a shell use `pct enter <vmid>`.
-* `firewall=1` on the NIC — enables the Proxmox per-VM firewall (rules
-  in the next section).
-* `--mp0 storage:20,mp=/persistent` — dedicated 20 GiB volume holding
-  Omni's PKI, GPG key, and SQLite store (`/persistent/omni`) plus
-  Caddy's ACME state (`/persistent/caddy`). Size is comfortable for a
-  homelab fleet; bump it if you onboard hundreds of Talos nodes.
+- `unprivileged 1` — root-in-LXC is mapped to a high uid on the host. Mandatory; do not relax.
+- `nesting=1` — required for stage-2 NixOS activation (`systemd-nspawn`-style mounts during boot).
+- `keyctl=0` — neither Omni nor Dex use the kernel keyring.
+- `cmode=console` — `pct console` attaches to `/dev/console`, where journald forwards boot and runtime logs. The image
+  runs no getty, so the default `tty` mode fails with `Denied access to tty`. The console is a read-only log view; for a
+  shell use `pct enter <vmid>`.
+- `firewall=1` on the NIC — enables the Proxmox per-VM firewall (rules in the next section).
+- `--mp0 storage:20,mp=/persistent` — dedicated 20 GiB volume holding Omni's PKI, GPG key, and SQLite store
+  (`/persistent/omni`) plus Caddy's ACME state (`/persistent/caddy`). Size is comfortable for a homelab fleet; bump it
+  if you onboard hundreds of Talos nodes.
 
 ### Resource sizing — starting values
 
-\| Workload            | Recommended                                                                         |
-\| CPU                 | 2 vCPU                                                                              |
-\| Memory              | 2 GiB                                                                               |
-\| Root disk (OS only) | 4 GiB                                                                               |
-\| Persistent volume   | 20 GiB (mounted at `/persistent`, holds `/persistent/omni` and `/persistent/caddy`) |
-\| Swap                | 0 (let OOM kill on overrun)                                                         |
+\| Workload | Recommended | \| CPU | 2 vCPU | \| Memory | 2 GiB | \| Root disk (OS only) | 4 GiB | \| Persistent volume
+| 20 GiB (mounted at `/persistent`, holds `/persistent/omni` and `/persistent/caddy`) | \| Swap | 0 (let OOM kill on
+overrun) |
 
 ## Proxmox host firewall
 
-The Proxmox firewall layers in front of the in-LXC `iptables` rules from
-`hardening.nix`. Settings live in `/etc/pve/firewall/<vmid>.fw` on the
-Proxmox host.
+The Proxmox firewall layers in front of the in-LXC `iptables` rules from `hardening.nix`. Settings live in
+`/etc/pve/firewall/<vmid>.fw` on the Proxmox host.
 
-All Omni services are routed through Caddy on port **443** via subdomains;
-no non-standard TCP ports need to be exposed externally.
+All Omni services are routed through Caddy on port **443** via subdomains; no non-standard TCP ports need to be exposed
+externally.
 
 ```sh
 VMID="<vmid>"
@@ -378,39 +344,34 @@ EOF
 pve-firewall restart
 ```
 
-> **Migration note** — if upgrading from a previous setup that opened
-> ports 8090/8091/8100, those rules can be removed: Machine API now
-> routes through `api.omni.chezmoi.sh:443` and the Kubernetes proxy
-> through `kube.omni.chezmoi.sh:443`. The event sink (8091) is only
-> reachable from WireGuard-connected Talos machines (inside the VPN).
+> **Migration note** — if upgrading from a previous setup that opened ports 8090/8091/8100, those rules can be removed:
+> Machine API now routes through `api.omni.chezmoi.sh:443` and the Kubernetes proxy through `kube.omni.chezmoi.sh:443`.
+> The event sink (8091) is only reachable from WireGuard-connected Talos machines (inside the VPN).
 
-> **DNS prerequisite** — create A/CNAME records for `api.omni.chezmoi.sh`
-> and `kube.omni.chezmoi.sh` pointing to the same IP as `omni.chezmoi.sh`
-> before deploying. Caddy will obtain separate LE certificates for each
-> subdomain via DNS-01 (Cloudflare).
+> **DNS prerequisite** — create A/CNAME records for `api.omni.chezmoi.sh` and `kube.omni.chezmoi.sh` pointing to the
+> same IP as `omni.chezmoi.sh` before deploying. Caddy will obtain separate LE certificates for each subdomain via
+> DNS-01 (Cloudflare).
 
 ## Hardening reference
 
-`modules/hardening.nix` is always active — same shape as the OCI
-registry LXC:
+`modules/hardening.nix` is always active — same shape as the OCI registry LXC:
 
-\| Layer                | What we change                                                                                                                                       |
-\| **Login surface**    | No `sshd`, no autologin getty.                                                                                                                       |
-\| **Kernel sysctls**   | IP forwarding off, source-routing off, ICMP redirects off, SYN cookies on, rp\_filter on, ptrace YAMA, SUID coredumps off.                           |
-\| **Services**         | Avahi, CUPS, Polkit, UDisks2 disabled with `mkForce`.                                                                                                |
-\| **Docs**             | man-db / info / nixos-docs disabled.                                                                                                                 |
-\| **Journald**         | `Storage=volatile`, `RuntimeMaxUse=64M`, `ForwardToConsole=yes`.                                                                                     |
-\| **Firewall (NixOS)** | Default-deny inbound; ports opened by `caddy.nix` (80/443) and `catalog/.../omni.nix` (8091 event sink + WG UDP). Machine API + k8s proxy route via Caddy on 443. |
-\| **Firewall (PVE)**   | Layered on top — only 80/443 TCP + 50180/UDP open externally. See previous section.                                                                  |
-\| **Caddy systemd**    | Same `ProtectHome`/`ProtectKernelLogs`/`ProtectClock`/`RestrictSUIDSGID`/`LockPersonality` flags as the OCI registry LXC.                            |
-\| **Omni systemd**     | `AmbientCapabilities = [ CAP_NET_ADMIN ]` (required for WireGuard); `NoNewPrivileges`, `RestrictSUIDSGID`, `LockPersonality`, `LimitNOFILE = 65536`. |
+\| Layer | What we change | \| **Login surface** | No `sshd`, no autologin getty. | \| **Kernel sysctls** | IP
+forwarding off, source-routing off, ICMP redirects off, SYN cookies on, rp_filter on, ptrace YAMA, SUID coredumps off. |
+\| **Services** | Avahi, CUPS, Polkit, UDisks2 disabled with `mkForce`. | \| **Docs** | man-db / info / nixos-docs
+disabled. | \| **Journald** | `Storage=volatile`, `RuntimeMaxUse=64M`, `ForwardToConsole=yes`. | \| **Firewall (NixOS)**
+| Default-deny inbound; ports opened by `caddy.nix` (80/443) and `catalog/.../omni.nix` (8091 event sink + WG UDP).
+Machine API + k8s proxy route via Caddy on 443. | \| **Firewall (PVE)** | Layered on top — only 80/443 TCP + 50180/UDP
+open externally. See previous section. | \| **Caddy systemd** | Same
+`ProtectHome`/`ProtectKernelLogs`/`ProtectClock`/`RestrictSUIDSGID`/`LockPersonality` flags as the OCI registry LXC. |
+\| **Omni systemd** | `AmbientCapabilities = [ CAP_NET_ADMIN ]` (required for WireGuard); `NoNewPrivileges`,
+`RestrictSUIDSGID`, `LockPersonality`, `LimitNOFILE = 65536`. |
 
 ### What we explicitly do **not** harden
 
-Same caveats as `oci-registry`: mount-namespace options
-(`PrivateTmp`, `ProtectSystem`, …) fail in unprivileged LXC with "step
-NAMESPACE … Permission denied" and are intentionally omitted. The
-layered firewall + loopback bindings (UI, Dex, Machine API) compensate.
+Same caveats as `oci-registry`: mount-namespace options (`PrivateTmp`, `ProtectSystem`, …) fail in unprivileged LXC with
+"step NAMESPACE … Permission denied" and are intentionally omitted. The layered firewall + loopback bindings (UI, Dex,
+Machine API) compensate.
 
 ## Operations
 
@@ -424,24 +385,24 @@ ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- journalctl -u caddy -f
 
 ### Backups (mandatory — losing them = losing the cluster)
 
-\| File                                     | What happens if lost                                 |
-\| `/persistent/omni/omni.asc` (GPG key)    | All Omni state is unrecoverable. **Back this up.**   |
-\| `/persistent/omni/pki/ca.pem` (Talos CA) | Talos machines can no longer verify the Machine API. |
-\| `/persistent/omni/db/omni.db`            | Cluster inventory + machine assignments lost.        |
+\| File | What happens if lost | \| `/persistent/omni/omni.asc` (GPG key) | All Omni state is unrecoverable. **Back this
+up.** | \| `/persistent/omni/pki/ca.pem` (Talos CA) | Talos machines can no longer verify the Machine API. | \|
+`/persistent/omni/db/omni.db` | Cluster inventory + machine assignments lost. |
 
-A weekly snapshot of the `mp0` volume from the Proxmox side covers all
-three. Pull `/persistent/omni/omni.asc` to a separate secure location.
+A weekly snapshot of the `mp0` volume from the Proxmox side covers all three. Pull `/persistent/omni/omni.asc` to a
+separate secure location.
 
 ### Upgrading to a new Omni version
 
-1. Bump `services.omni.version` (and its `hashes`) in
-   `catalog/nix/siderolabs/omni/omni.nix`. Renovate proposes the bump.
+1. Bump `services.omni.version` (and its `hashes`) in `catalog/nix/siderolabs/omni/omni.nix`. Renovate proposes the
+   bump.
 2. Rebuild and upload the LXC template:
    ```sh
    mise run lxc:build
    mise run lxc:push -- pve-01.pve.chezmoi.sh
    ```
 3. Upgrade in place — preserves the `mp0` data volume:
+
    ```sh
    # Auto-picks the first free VMID ≥ 100 for the target.
    mise run lxc:upgrade -- pve-01.pve.chezmoi.sh <source_id>
@@ -450,11 +411,9 @@ three. Pull `/persistent/omni/omni.asc` to a separate secure location.
    mise run lxc:upgrade -- pve-01.pve.chezmoi.sh <source_id> -t <target_id>
    ```
 
-The upgrade script follows the rootfs-swap pattern: a fresh CT is
-created with the new template, smoke-tested, then the `mp0` volume is
-detached from the source and re-attached to the target before the
-cut-over. A prompt at the end lets you decommission the source CT or
-roll back.
+The upgrade script follows the rootfs-swap pattern: a fresh CT is created with the new template, smoke-tested, then the
+`mp0` volume is detached from the source and re-attached to the target before the cut-over. A prompt at the end lets you
+decommission the source CT or roll back.
 
 ## Troubleshooting
 
@@ -464,13 +423,12 @@ roll back.
 ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- journalctl -u caddy --since '5 minutes ago' | grep -Ei 'acme|cert|cloudflare'
 ```
 
-Same root causes as the OCI registry LXC (expired token, no egress,
-DNS, clock drift). Re-run `lxc:secrets:sync` after rotating the token.
+Same root causes as the OCI registry LXC (expired token, no egress, DNS, clock drift). Re-run `lxc:secrets:sync` after
+rotating the token.
 
 ### Omni fails the OIDC discovery handshake
 
-Symptom: `omni.service` logs `failed to fetch openid configuration` at
-startup.
+Symptom: `omni.service` logs `failed to fetch openid configuration` at startup.
 
 Check:
 
@@ -479,31 +437,27 @@ ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- \
   curl -sSf https://omni.chezmoi.sh/dex/.well-known/openid-configuration | jq .
 ```
 
-If this 404s, Caddy is up but the `/dex/*` matcher is not catching the
-request — verify `modules/caddy.nix` matches `/dex/*` **before** the
-catch-all `handle` block.
+If this 404s, Caddy is up but the `/dex/*` matcher is not catching the request — verify `modules/caddy.nix` matches
+`/dex/*` **before** the catch-all `handle` block.
 
-If it 502s, Dex is down or bound to a different port than
-`services.omni.dex.bindAddr` in `configuration.nix`.
+If it 502s, Dex is down or bound to a different port than `services.omni.dex.bindAddr` in `configuration.nix`.
 
 ### SideroLink machines cannot connect
 
 Symptom: Talos machines never reach `connected` state in the Omni UI.
 
-* Check that the WireGuard module is loaded on the Proxmox **host**:
-  `lsmod | grep -E '^wireguard'`. If empty, run the `modprobe` from the
+- Check that the WireGuard module is loaded on the Proxmox **host**: `lsmod | grep -E '^wireguard'`. If empty, run the
+  `modprobe` from the
   [Host kernel prerequisites — WireGuard + TUN device](#host-kernel-prerequisites--wireguard--tun-device) section.
-* Confirm UDP `50180` is open in `/etc/pve/firewall/<vmid>.fw` and on
-  whatever upstream firewall sits in front of the Proxmox host.
-* Verify `services.omni.advertiseHost` in `configuration.nix` (currently
-  `omni.chezmoi.sh`) resolves to an IP the Talos machines can actually
-  reach (it is the SideroLink WireGuard endpoint advertised by Omni).
+- Confirm UDP `50180` is open in `/etc/pve/firewall/<vmid>.fw` and on whatever upstream firewall sits in front of the
+  Proxmox host.
+- Verify `services.omni.advertiseHost` in `configuration.nix` (currently `omni.chezmoi.sh`) resolves to an IP the Talos
+  machines can actually reach (it is the SideroLink WireGuard endpoint advertised by Omni).
 
 ### `pct console` fails with `lxc_cmd_get_tty_fd: … Denied access to tty`
 
-A raw `lxc.console.path: /dev/console` line in `/etc/pve/lxc/<vmid>.conf`
-redirects the console away from the pty that `lxc-console` attaches to.
-Remove it and rely on `cmode: console` (set at creation):
+A raw `lxc.console.path: /dev/console` line in `/etc/pve/lxc/<vmid>.conf` redirects the console away from the pty that
+`lxc-console` attaches to. Remove it and rely on `cmode: console` (set at creation):
 
 ```sh
 ssh root@pve-01.pve.chezmoi.sh "sed -i '/^lxc.console.path:/d' /etc/pve/lxc/<vmid>.conf"
@@ -511,16 +465,14 @@ ssh root@pve-01.pve.chezmoi.sh pct set <vmid> --cmode console
 ssh root@pve-01.pve.chezmoi.sh pct reboot <vmid>
 ```
 
-`pct console` then shows boot + journal output (read-only — the image runs
-no getty and root is locked). For a shell, use `pct enter <vmid>`.
+`pct console` then shows boot + journal output (read-only — the image runs no getty and root is locked). For a shell,
+use `pct enter <vmid>`.
 
 ### `pct exec <vmid> -- <cmd>` fails with `command not found`
 
-`pct exec` (lxc-attach) bypasses bash, so the `shellInit` PATH setup never
-runs and the PATH is the FHS default (`/sbin:/bin:/usr/sbin:/usr/bin`).
-Images built before the `/usr/sbin → /run/current-system/sw/bin` tmpfiles
-symlink need either absolute paths (`/run/current-system/sw/bin/<cmd>`) or
-a one-off fix on the live CT:
+`pct exec` (lxc-attach) bypasses bash, so the `shellInit` PATH setup never runs and the PATH is the FHS default
+(`/sbin:/bin:/usr/sbin:/usr/bin`). Images built before the `/usr/sbin → /run/current-system/sw/bin` tmpfiles symlink
+need either absolute paths (`/run/current-system/sw/bin/<cmd>`) or a one-off fix on the live CT:
 
 ```sh
 ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- /bin/sh -c \
@@ -529,8 +481,7 @@ ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- /bin/sh -c \
 
 ### `omni-pki-init` or `omni-gpg-init` fails
 
-Almost always the mp0 pre-create + chown was not done before first start.
-Fix from the Proxmox host:
+Almost always the mp0 pre-create + chown was not done before first start. Fix from the Proxmox host:
 
 ```sh
 VMID="<vmid>"
@@ -545,26 +496,22 @@ pct start ${VMID}
 
 ## Known limitations
 
-1. **`boot.kernelModules` in the catalog module.** The line is
-   inherited from the VM build and is a no-op (failed silently) under
-   LXC. If you want clean `systemctl status`, gate it with
-   `lib.mkIf (!config.boot.isContainer)` in `catalog/nix/siderolabs/omni/omni.nix`
-   — that change benefits the OCI registry LXC too.
-2. **No automated NixOS test.** A `pkgs.testers.runNixOSTest` that boots
-   the LXC and asserts the Dex discovery doc and Omni `/healthz` would
-   catch regressions in the catalog modules before they reach Proxmox.
-3. **No alert on certificate expiry.** Caddy renews silently; if ACME
-   breaks, the cert expires unnoticed. A blackbox-exporter probe from a
-   future observability stack would close this gap.
-4. **Single-LXC, single-node.** Acceptable trade-off for a homelab; HA
-   would require an external etcd and pairs of Omni instances behind a
-   load-balancer (out of scope).
+1. **`boot.kernelModules` in the catalog module.** The line is inherited from the VM build and is a no-op (failed
+   silently) under LXC. If you want clean `systemctl status`, gate it with `lib.mkIf (!config.boot.isContainer)` in
+   `catalog/nix/siderolabs/omni/omni.nix` — that change benefits the OCI registry LXC too.
+2. **No automated NixOS test.** A `pkgs.testers.runNixOSTest` that boots the LXC and asserts the Dex discovery doc and
+   Omni `/healthz` would catch regressions in the catalog modules before they reach Proxmox.
+3. **No alert on certificate expiry.** Caddy renews silently; if ACME breaks, the cert expires unnoticed. A
+   blackbox-exporter probe from a future observability stack would close this gap.
+4. **Single-LXC, single-node.** Acceptable trade-off for a homelab; HA would require an external etcd and pairs of Omni
+   instances behind a load-balancer (out of scope).
 
 ## References
 
-* [Omni documentation](https://omni.siderolabs.com)
-* [Omni GitHub — siderolabs/omni](https://github.com/siderolabs/omni)
-* [Talos Linux](https://www.talos.dev)
-* [Dex OIDC provider](https://github.com/dexidp/dex)
-* [Catalog NixOS modules](../../../../../../../catalog/nix/siderolabs/omni/) — `omni.nix`, `dex.nix`, `infra-provider/proxmox.nix`
-* [Companion LXC — infra-provider-proxmox](../omni-infra-provider-proxmox/)
+- [Omni documentation](https://omni.siderolabs.com)
+- [Omni GitHub — siderolabs/omni](https://github.com/siderolabs/omni)
+- [Talos Linux](https://www.talos.dev)
+- [Dex OIDC provider](https://github.com/dexidp/dex)
+- [Catalog NixOS modules](../../../../../../../catalog/nix/siderolabs/omni/) — `omni.nix`, `dex.nix`,
+  `infra-provider/proxmox.nix`
+- [Companion LXC — infra-provider-proxmox](../omni-infra-provider-proxmox/)

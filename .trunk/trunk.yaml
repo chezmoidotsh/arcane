@@ -37,6 +37,12 @@ lint:
     - terrascan
     - trunk-toolbox
     - yamllint # yamllint conflicts with prettier
+    - remark-lint # remark-lint ships its own markdown formatter, which fights
+      # Prettier (now the sole markdown formatter, proseWrap/printWidth) --
+      # `trunk fmt` loops ("Unable to resolve autofixes from incompatible
+      # linters") when both try to format the same .md file. markdownlint
+      # (already Prettier-compatible, see .trunk/configs/.markdownlint.yaml)
+      # covers the same class of content-quality checks.
   enabled:
     - pinact@4.1.0
     - dotenv-linter@4.0.0
@@ -51,7 +57,6 @@ lint:
     - osv-scanner@2.4.0
     - oxipng@10.1.1
     - prettier@3.8.4
-    - remark-lint@12.0.1
     - renovate@43.233.3
     - ruff@0.15.18
     - shellcheck@0.11.0
@@ -87,12 +92,15 @@ lint:
         - prettier
       paths:
         - projects/chezmoi.sh/src/kubevault/**/*
-    - # Prettier should not lint/format markdown files (conflict with remark-lint)
-      linters: [prettier]
-      paths: ["*.md", "**/*.md"]
     - # Prettier should not lint/format JS/TS/JSON/CSS files (conflict with biome)
       linters: [prettier]
       paths: ["*.js", "**/*.js", "*.ts", "**/*.ts", "*.tsx", "**/*.tsx", "*.json", "**/*.json", "*.css", "**/*.css"]
+    - # Generated docs must byte-match their generator's output (e.g. `pulumi up`
+      # regenerates this one from a Handlebars template) -- Prettier reformatting
+      # them would just be reverted on the next regeneration.
+      linters: [prettier]
+      paths:
+        - projects/chezmoi.sh/docs/TRUENAS.md
     - # Prettier should not lint/format templated YAML files
       linters: [prettier]
       paths:
@@ -102,10 +110,6 @@ lint:
       linters: [ruff]
       paths:
         - catalog/ansible/collections/**/*.py
-    - # AI agent templates use headings which conflicts with remark-lint expectations
-      linters: [remark-lint]
-      paths:
-        - "**/*.AGENT.md"
     - # Pulumi SDKs dynamically bridged from Terraform providers — 100% generated,
       # never hand-edited, excluded from all linters (also gitignored)
       linters: [ALL]
@@ -124,7 +128,6 @@ lint:
         - osv-scanner
         - oxipng
         - prettier
-        - remark-lint
         - renovate
         - ruff
         - shellcheck
@@ -162,14 +165,6 @@ lint:
           run_linter_from: workspace
           success_codes: [0, 1, 2]
           parse_regex: 'FAIL - (?P<path>.+?) - \w+ - (?P<message>.+)'
-    - name: remark-lint
-      extra_packages:
-        - remark-preset-lint-consistent
-        - remark-preset-lint-recommended
-        - remark-frontmatter
-        - remark-lint-list-item-indent
-        - vfile-reporter-json
-        - remark-gfm
 
 actions:
   definitions:

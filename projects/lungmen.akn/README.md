@@ -9,26 +9,32 @@
 
 <div align="center">
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git\&logoColor=white\&logoWidth=20)](../../LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git&logoColor=white&logoWidth=20)](../../LICENSE)
 
-<a href="#about">About</a> · <a href="#services-overview">Services</a> · <a href="#usage-and-development">Usage</a> · <a href="#disaster-recovery">Recovery</a> · <a href="#roadmap">Roadmap</a> · <a href="#license">License</a>
+<a href="#about">About</a> · <a href="#services-overview">Services</a> · <a href="#usage-and-development">Usage</a> ·
+<a href="#disaster-recovery">Recovery</a> · <a href="#roadmap">Roadmap</a> · <a href="#license">License</a>
 
 </div>
 
-***
+---
 
-> \[!NOTE]
-> **Why Lungmen?** In Arknights lore, Lungmen (龙门) is a prosperous city-state known for its advanced infrastructure, sophisticated urban services, and technological innovation. Just like the fictional city provides comprehensive services to its citizens, this platform delivers all essential home services through modern infrastructure and automation.
+> \[!NOTE] **Why Lungmen?** In Arknights lore, Lungmen (龙门) is a prosperous city-state known for its advanced
+> infrastructure, sophisticated urban services, and technological innovation. Just like the fictional city provides
+> comprehensive services to its citizens, this platform delivers all essential home services through modern
+> infrastructure and automation.
 
 ## About
 
-Lungmen is a personal self-hosted platform for home services, designed to provide a complete ecosystem for media management, life organization, and automation. The platform runs on a Kubernetes cluster and is accessible through both local network and VPN, allowing secure access to services from anywhere while maintaining control over data and infrastructure.
+Lungmen is a personal self-hosted platform for home services, designed to provide a complete ecosystem for media
+management, life organization, and automation. The platform runs on a Kubernetes cluster and is accessible through both
+local network and VPN, allowing secure access to services from anywhere while maintaining control over data and
+infrastructure.
 
 ## Services Overview
 
 ![Architecture diagram](./assets/architecture.svg)
 
-***
+---
 
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
@@ -38,7 +44,8 @@ Lungmen is a personal self-hosted platform for home services, designed to provid
 
 Volunteer-built media solution that puts you in control of your media streaming experience.
 
-***Why this choice**: Open-source alternative to Plex with no premium features locked behind paywalls and complete control over media libraries.*
+**\*Why this choice**: Open-source alternative to Plex with no premium features locked behind paywalls and complete
+control over media libraries.\*
 
 </div>
 </div>
@@ -55,12 +62,13 @@ Volunteer-built media solution that puts you in control of your media streaming 
 
 High-performance self-hosted photo and video management solution with mobile app support.
 
-***Why this choice**: Modern Google Photos alternative with AI-powered features, mobile sync, and Cloudflare Tunnel integration for secure external access.*
+**\*Why this choice**: Modern Google Photos alternative with AI-powered features, mobile sync, and Cloudflare Tunnel
+integration for secure external access.\*
 
 </div>
 </div>
 
-***
+---
 
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
@@ -70,7 +78,8 @@ High-performance self-hosted photo and video management solution with mobile app
 
 Personal finance app that helps you track your spending and save money with privacy-first approach.
 
-***Why this choice**: Open-source budgeting tool with local-first data storage, end-to-end encryption, and intuitive envelope budgeting methodology.*
+**\*Why this choice**: Open-source budgeting tool with local-first data storage, end-to-end encryption, and intuitive
+envelope budgeting methodology.\*
 
 </div>
 </div>
@@ -89,14 +98,15 @@ Personal finance app that helps you track your spending and save money with priv
 
 Document management system to store, search and share documents with OCR and machine learning capabilities.
 
-***Why this choice**: Advanced document digitization with automatic tagging, full-text search, and comprehensive workflow automation for paperless office.*
+**\*Why this choice**: Advanced document digitization with automatic tagging, full-text search, and comprehensive
+workflow automation for paperless office.\*
 
 </div>
 </div>
 
 <!-- trunk-ignore-end(markdown-link-check/403) -->
 
-***
+---
 
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
@@ -106,7 +116,8 @@ Document management system to store, search and share documents with OCR and mac
 
 Self-hosted bookmarking and link aggregation service with tagging and search capabilities.
 
-***Why this choice**: Minimalist bookmark manager with full-text search, archive integration, and browser extension for seamless link collection.*
+**\*Why this choice**: Minimalist bookmark manager with full-text search, archive integration, and browser extension for
+seamless link collection.\*
 
 </div>
 </div>
@@ -121,39 +132,44 @@ Self-hosted bookmarking and link aggregation service with tagging and search cap
 
 Encrypted shell history sync, storing all your shell commands in one place with powerful search.
 
-***Why this choice**: Enhanced shell history with encryption, synchronization across devices, and intelligent command search with context preservation.*
+**\*Why this choice**: Enhanced shell history with encryption, synchronization across devices, and intelligent command
+search with context preservation.\*
 
 </div>
 </div>
 
-***
+---
 
 ## Usage and Development
 
-This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based deployment and [Kustomize](https://kustomize.io/) for configuration management.
+This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based deployment and
+[Kustomize](https://kustomize.io/) for configuration management.
 
-All configurations are located in the `catalog` directory and organized by service. To add or modify a service, update the corresponding Kustomize files. ArgoCD will automatically sync the changes to the cluster.
+All configurations are located in the `catalog` directory and organized by service. To add or modify a service, update
+the corresponding Kustomize files. ArgoCD will automatically sync the changes to the cluster.
 
 ## Disaster Recovery
 
-The recovery process is largely automated through the `amiya.akn` project, which hosts ArgoCD and automatically bootstraps any Kubernetes clusters it detects.
+The recovery process is largely automated through the `amiya.akn` project, which hosts ArgoCD and automatically
+bootstraps any Kubernetes clusters it detects.
 
 ### Recovery Process
 
-> \[!NOTE]
-> If the system cannot be managed using Talosctl, reboot on a live CD
+> \[!NOTE] If the system cannot be managed using Talosctl, reboot on a live CD
 
 1. **Reset/Reinstall Talos OS**:
 
-   See [Talos Recovery](https://www.talos.dev/v1.10/advanced/disaster-recovery/) for more information about recovering from a Talos cluster and the [Bootstrap documentation](./docs/HOW_TO_BOOTSTRAP.md) for more information about bootstrapping the cluster.
+   See [Talos Recovery](https://www.talos.dev/v1.10/advanced/disaster-recovery/) for more information about recovering
+   from a Talos cluster and the [Bootstrap documentation](./docs/HOW_TO_BOOTSTRAP.md) for more information about
+   bootstrapping the cluster.
 
 2. **Link to ArgoCD**:
 
-   > \[!NOTE]
-   > This is only required if the cluster is not already linked to ArgoCD or if the cluster has been reset.
-   > You also need to have the context `admin@amiya.akn` in your kubeconfig.
+   > \[!NOTE] This is only required if the cluster is not already linked to ArgoCD or if the cluster has been reset. You
+   > also need to have the context `admin@amiya.akn` in your kubeconfig.
 
-   Because this project is designed to be run in the same "network" as the `amiya.akn` project, we must link the cluster manually to ArgoCD.
+   Because this project is designed to be run in the same "network" as the `amiya.akn` project, we must link the cluster
+   manually to ArgoCD.
 
    ```bash
    argocd --kube-context admin@amiya.akn cluster add admin@lungmen.akn --name lungmen.akn --label device.tailscale.com/os=linux
@@ -163,9 +179,9 @@ The recovery process is largely automated through the `amiya.akn` project, which
 
 ### Manual Verification
 
-* Check cluster status: `kubectl get pods --all-namespaces`
-* Verify Tailscale connectivity: `tailscale status`
-* Confirm ArgoCD sync status in the `amiya.akn` console
+- Check cluster status: `kubectl get pods --all-namespaces`
+- Verify Tailscale connectivity: `tailscale status`
+- Confirm ArgoCD sync status in the `amiya.akn` console
 
 > The entire platform is designed for zero-touch recovery once Tailscale is configured.
 
@@ -173,32 +189,32 @@ The recovery process is largely automated through the `amiya.akn` project, which
 
 <!-- trunk-ignore-begin(remark-lint/list-item-content-indent) -->
 
-* [x] **Step 0**: Define project scope and architecture
-  * [x] List all services to be deployed
-  * [x] Create architecture diagram
+- [x] **Step 0**: Define project scope and architecture
+  - [x] List all services to be deployed
+  - [x] Create architecture diagram
 
-* [x] **Step 1**: Initial deployment
-  * [x] Deploy base infrastructure (Talos, Cilium)
-  * [x] Configure core services (External Secrets, DNS, cert-manager)
-  * [x] Deploy Longhorn for distributed storage
-  * [x] Deploy Envoy Gateway as API Gateway
+- [x] **Step 1**: Initial deployment
+  - [x] Deploy base infrastructure (Talos, Cilium)
+  - [x] Configure core services (External Secrets, DNS, cert-manager)
+  - [x] Deploy Longhorn for distributed storage
+  - [x] Deploy Envoy Gateway as API Gateway
 
-* [x] **Step 2**: Data Layer
-  * [x] Deploy CloudNativePG operator
-  * [x] Deploy PostgreSQL for application data
+- [x] **Step 2**: Data Layer
+  - [x] Deploy CloudNativePG operator
+  - [x] Deploy PostgreSQL for application data
 
-* [x] **Step 3**: Services Deployment (Partial)
-  * [x] Deploy media services (Jellyfin)
-  * [x] Deploy Immich ~~with Cloudflare Tunnel for external access~~
-  * [x] Deploy life management services (Actual Budget)
-  * [x] Deploy Paperless-ngx for document management
-  * [x] Deploy Linkding for bookmarks
-  * [x] Deploy Atuin for shell history sync
+- [x] **Step 3**: Services Deployment (Partial)
+  - [x] Deploy media services (Jellyfin)
+  - [x] Deploy Immich ~~with Cloudflare Tunnel for external access~~
+  - [x] Deploy life management services (Actual Budget)
+  - [x] Deploy Paperless-ngx for document management
+  - [x] Deploy Linkding for bookmarks
+  - [x] Deploy Atuin for shell history sync
 
-* [ ] **Step 4**: Security and Optimization
-  * [ ] Implement network policies
-  * [x] Configure backup solutions
-  * [ ] Optimize resource usage
+- [ ] **Step 4**: Security and Optimization
+  - [ ] Implement network policies
+  - [x] Configure backup solutions
+  - [ ] Optimize resource usage
 
 <!-- trunk-ignore-end(remark-lint/list-item-content-indent) -->
 
@@ -206,6 +222,5 @@ The recovery process is largely automated through the `amiya.akn` project, which
 
 This repository is licensed under the [Apache-2.0](../../LICENSE).
 
-> \[!CAUTION]
-> This is a personal project intended for my own use. Feel free to explore and use the code,
-> but please note that it comes with no warranties or guarantees. Use it at your own risk.
+> \[!CAUTION] This is a personal project intended for my own use. Feel free to explore and use the code, but please note
+> that it comes with no warranties or guarantees. Use it at your own risk.

@@ -4,13 +4,14 @@ This document describes how to bootstrap the Kazimierz.AKN VPS using Ansible.
 
 ## Overview
 
-The bootstrap process transforms a fresh Ubuntu VPS into a managed node that automatically pulls its configuration from Git.
+The bootstrap process transforms a fresh Ubuntu VPS into a managed node that automatically pulls its configuration from
+Git.
 
 **Key Components**:
 
-* **Tailscale**: Secure VPN access (SSH port 22 is disabled after bootstrap)
-* **Ansible Pull**: GitOps automation running every 15 minutes
-* **Docker Compose**: Container orchestration for Pangolin stack
+- **Tailscale**: Secure VPN access (SSH port 22 is disabled after bootstrap)
+- **Ansible Pull**: GitOps automation running every 15 minutes
+- **Docker Compose**: Container orchestration for Pangolin stack
 
 ## Prerequisites
 
@@ -53,7 +54,8 @@ After the playbook completes:
 
 ## Post-Bootstrap Configuration
 
-Once the VPS is bootstrapped, it will automatically pull the `site.yml` playbook. However, you need to configure secrets manually on the host.
+Once the VPS is bootstrapped, it will automatically pull the `site.yml` playbook. However, you need to configure secrets
+manually on the host.
 
 1. **SSH into VPS**: `ssh root@<tailscale-ip>`
 2. **Edit Environment File**:

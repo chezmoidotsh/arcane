@@ -5,22 +5,20 @@ POC component evaluated in [#1089](https://github.com/chezmoidotsh/arcane/issues
 for context, scope, and status.
 
 `ClusterVaultComponent` is a Pulumi `ComponentResource` that replaces the Crossplane
-`LocalClusterVault`/`RemoteClusterVault` XRDs
-(`catalog/crossplane/clustervault.vault.chezmoi.sh/`): a KV v2 mount, a Kubernetes auth
-backend, an ESO read policy, and an ESO auth role for a single cluster.
+`LocalClusterVault`/`RemoteClusterVault` XRDs (`catalog/crossplane/clustervault.vault.chezmoi.sh/`): a KV v2 mount, a
+Kubernetes auth backend, an ESO read policy, and an ESO auth role for a single cluster.
 
 Currently only exercised by the disposable sandbox in this experiment
-(`docs/experiments/20260702-pulumi-crossplane-evaluation/stack/`, Local variant) — it
-does not manage any real OpenBao yet.
+(`docs/experiments/20260702-pulumi-crossplane-evaluation/stack/`, Local variant) — it does not manage any real OpenBao
+yet.
 
 ## Usage
 
 This module is an npm workspace member of this POC's own `package.json`
-(`docs/experiments/20260702-pulumi-crossplane-evaluation/package.json`) — a single
-`npm install` from that directory installs its dependencies too. A new consumer
-stack needs to be added to that `workspaces` array as well, otherwise its own
-`@pulumi/pulumi`/`@pulumi/vault` won't be hoisted to a `node_modules` this module can
-see (Node resolves imports from this file's real path, not the consumer's).
+(`docs/experiments/20260702-pulumi-crossplane-evaluation/package.json`) — a single `npm install` from that directory
+installs its dependencies too. A new consumer stack needs to be added to that `workspaces` array as well, otherwise its
+own `@pulumi/pulumi`/`@pulumi/vault` won't be hoisted to a `node_modules` this module can see (Node resolves imports
+from this file's real path, not the consumer's).
 
 ```ts
 import { ClusterVaultComponent } from "../catalog/cluster-vault";
@@ -45,7 +43,7 @@ new ClusterVaultComponent("lungmen.akn", {
 
 ## Not covered by this component
 
-* `TailscaledClusterVault` variant (out of POC scope).
-* Fetching the remote cluster's CA certificate / reviewer JWT — the caller is expected
-  to read the existing labelled Secret (`vault.crossplane.chezmoi.sh/cluster-name`) via
-  `@pulumi/kubernetes`, same as the Crossplane `function-extra-resources` step does today.
+- `TailscaledClusterVault` variant (out of POC scope).
+- Fetching the remote cluster's CA certificate / reviewer JWT — the caller is expected to read the existing labelled
+  Secret (`vault.crossplane.chezmoi.sh/cluster-name`) via `@pulumi/kubernetes`, same as the Crossplane
+  `function-extra-resources` step does today.

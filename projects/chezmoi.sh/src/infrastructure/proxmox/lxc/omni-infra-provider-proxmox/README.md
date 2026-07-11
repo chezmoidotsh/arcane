@@ -1,9 +1,8 @@
 # `omni-infra-provider-proxmox` — Omni Infrastructure Provider LXC (Proxmox)
 
-Standalone Proxmox LXC running NixOS + `omni-infra-provider-proxmox`. Registers
-with the Omni instance at `omni.chezmoi.sh` and enables provisioning of Talos VMs
-directly from the Omni UI — select a machine class, Omni calls this provider, the
-provider creates a VM on Proxmox and boots it with a Talos image.
+Standalone Proxmox LXC running NixOS + `omni-infra-provider-proxmox`. Registers with the Omni instance at
+`omni.chezmoi.sh` and enables provisioning of Talos VMs directly from the Omni UI — select a machine class, Omni calls
+this provider, the provider creates a VM on Proxmox and boots it with a Talos image.
 
 ## Table of contents
 
@@ -35,29 +34,25 @@ flowchart LR
     pmox -->|"creates"| vms
 ```
 
-* **No inbound ports** — the provider connects out to Omni and Proxmox only.
-  No Caddy, no TLS termination, no firewall rules needed.
-* **Stateless** — no persistent volume. Upgrades replace the rootfs entirely.
-* **No TUN/WireGuard** — unlike the Omni LXC, no special kernel or device
-  prerequisites are needed.
-* **Proxmox user** — authenticates as `omni` (bare username, realm `pve`
-  passed separately) with VM lifecycle permissions scoped to the `talos`
-  resource pool (see [Proxmox user and role setup](#proxmox-user-and-role-setup)).
+- **No inbound ports** — the provider connects out to Omni and Proxmox only. No Caddy, no TLS termination, no firewall
+  rules needed.
+- **Stateless** — no persistent volume. Upgrades replace the rootfs entirely.
+- **No TUN/WireGuard** — unlike the Omni LXC, no special kernel or device prerequisites are needed.
+- **Proxmox user** — authenticates as `omni` (bare username, realm `pve` passed separately) with VM lifecycle
+  permissions scoped to the `talos` resource pool (see [Proxmox user and role setup](#proxmox-user-and-role-setup)).
 
 ## Prerequisites
 
-* `mise` with the repo's `.mise.toml` trusted (`mise trust`).
-* `sops` with the repo age key loaded (`SOPS_AGE_KEY_FILE` set by mise).
-* SSH key-based root access to the Proxmox node.
-* The `omni` LXC must be running and reachable at `omni.chezmoi.sh`.
+- `mise` with the repo's `.mise.toml` trusted (`mise trust`).
+- `sops` with the repo age key loaded (`SOPS_AGE_KEY_FILE` set by mise).
+- SSH key-based root access to the Proxmox node.
+- The `omni` LXC must be running and reachable at `omni.chezmoi.sh`.
 
 ## Proxmox user and role setup
 
-The infra provider authenticates with Proxmox using a dedicated `omni@pve`
-user, **scoped to the `talos` resource pool**. The provider can create,
-modify, and delete VMs only inside that pool — it has no permission on
-anything else running on the host, in particular the LXCs (`omni`,
-`oci-registry`, itself).
+The infra provider authenticates with Proxmox using a dedicated `omni@pve` user, **scoped to the `talos` resource
+pool**. The provider can create, modify, and delete VMs only inside that pool — it has no permission on anything else
+running on the host, in particular the LXCs (`omni`, `oci-registry`, itself).
 
 Create the pool, user, and role on the Proxmox host before first deployment:
 
@@ -113,10 +108,8 @@ pveum user token add omni@pve provider --privsep 0
 # Record the full token ID (omni@pve!provider) and secret for automation.
 ```
 
-> **Machine classes must target the pool.** With the ACL scoped to
-> `/pool/talos`, VM creation is only authorized when the VM lands in the
-> pool — every Omni machine class for this provider must set `pool: talos`
-> in its provider data:
+> **Machine classes must target the pool.** With the ACL scoped to `/pool/talos`, VM creation is only authorized when
+> the VM lands in the pool — every Omni machine class for this provider must set `pool: talos` in its provider data:
 >
 > ```yaml
 > pool: talos
@@ -127,38 +120,29 @@ pveum user token add omni@pve provider --privsep 0
 > storage_selector: 'name == "nvme-lvm"'
 > ```
 >
-> A machine class without `pool: talos` fails provisioning with a Proxmox
-> 403\. Conversely, never add an LXC to the `talos` pool — pool membership
-> is exactly what grants the provider access.
+> A machine class without `pool: talos` fails provisioning with a Proxmox 403\. Conversely, never add an LXC to the
+> `talos` pool — pool membership is exactly what grants the provider access.
 
 ### Proxmox permissions reference
 
-\| Privilege                    | ACL path                        | Why needed                                                       |
-\| `VM.Allocate`                | `/pool/talos`                   | Create / delete VMs inside the pool.                                   |
-\| `VM.Audit`                   | `/pool/talos`                   | Read VM status and config.                                             |
-\| `VM.Clone`                   | `/pool/talos`                   | Clone VM templates (if using a base image).                            |
-\| `VM.Config.CDROM`            | `/pool/talos`                   | Attach the Talos ISO to VMs.                                           |
-\| `VM.Config.CPU`              | `/pool/talos`                   | CPU settings.                                                            |
-\| `VM.Config.Disk`             | `/pool/talos`                   | Disk settings.                                                           |
-\| `VM.Config.HWType`           | `/pool/talos`                   | Controller / BIOS settings.                                              |
-\| `VM.Config.Memory`           | `/pool/talos`                   | Memory settings.                                                         |
-\| `VM.Config.Network`          | `/pool/talos`                   | NIC settings.                                                            |
-\| `VM.Config.Options`          | `/pool/talos`                   | Boot-order and other options.                                            |
-\| `VM.PowerMgmt`               | `/pool/talos`                   | Start, stop, reset VMs.                                                  |
-\| `VM.Console`                 | `/pool/talos`                   | Access VNC/terminal for debugging.                                      |
-\| `Pool.Allocate`              | `/pool/talos`                   | Assign VMs to the pool on creation.                                     |
-\| `Pool.Audit`                 | `/pool/talos`                   | List pools via `GET /pools` — Proxmox filters the response by effective permissions; without this the provider cannot verify the pool exists. |
-\| `Datastore.Allocate`         | pool storages                   | Delete content from storages (cloud-init ISO cleanup during VM teardown). |
-\| `Datastore.AllocateSpace`    | pool storages                   | Create VM disks (`nvme-lvm`).                                            |
-\| `Datastore.AllocateTemplate` | pool storages                   | Upload Talos ISOs (`download-url` API).                                 |
-\| `Datastore.Audit`            | pool storages                   | List storages for `storage_selector` matching.                           |
-\| `Sys.Audit`                  | `/nodes/pve-01`                 | Read node status for VM scheduling.                                     |
-\| `Sys.AccessNetwork`          | `/nodes/pve-01`                 | Fetch Talos ISOs via `download-url` (8.1+).                             |
-\| `SDN.Use`                    | `/sdn/zones/localnetwork/vmbr1` | Attach VM NICs to the bridge.                                            |
+\| Privilege | ACL path | Why needed | \| `VM.Allocate` | `/pool/talos` | Create / delete VMs inside the pool. | \|
+`VM.Audit` | `/pool/talos` | Read VM status and config. | \| `VM.Clone` | `/pool/talos` | Clone VM templates (if using a
+base image). | \| `VM.Config.CDROM` | `/pool/talos` | Attach the Talos ISO to VMs. | \| `VM.Config.CPU` | `/pool/talos`
+| CPU settings. | \| `VM.Config.Disk` | `/pool/talos` | Disk settings. | \| `VM.Config.HWType` | `/pool/talos` |
+Controller / BIOS settings. | \| `VM.Config.Memory` | `/pool/talos` | Memory settings. | \| `VM.Config.Network` |
+`/pool/talos` | NIC settings. | \| `VM.Config.Options` | `/pool/talos` | Boot-order and other options. | \|
+`VM.PowerMgmt` | `/pool/talos` | Start, stop, reset VMs. | \| `VM.Console` | `/pool/talos` | Access VNC/terminal for
+debugging. | \| `Pool.Allocate` | `/pool/talos` | Assign VMs to the pool on creation. | \| `Pool.Audit` | `/pool/talos`
+| List pools via `GET /pools` — Proxmox filters the response by effective permissions; without this the provider cannot
+verify the pool exists. | \| `Datastore.Allocate` | pool storages | Delete content from storages (cloud-init ISO cleanup
+during VM teardown). | \| `Datastore.AllocateSpace` | pool storages | Create VM disks (`nvme-lvm`). | \|
+`Datastore.AllocateTemplate` | pool storages | Upload Talos ISOs (`download-url` API). | \| `Datastore.Audit` | pool
+storages | List storages for `storage_selector` matching. | \| `Sys.Audit` | `/nodes/pve-01` | Read node status for VM
+scheduling. | \| `Sys.AccessNetwork` | `/nodes/pve-01` | Fetch Talos ISOs via `download-url` (8.1+). | \| `SDN.Use` |
+`/sdn/zones/localnetwork/vmbr1` | Attach VM NICs to the bridge. |
 
-> **What this blocks.** There is no ACL on `/`, `/vms`, or the LXC VMIDs —
-> the provider cannot list, modify, stop, or delete the LXCs or any VM
-> outside the `talos` pool.
+> **What this blocks.** There is no ACL on `/`, `/vms`, or the LXC VMIDs — the provider cannot list, modify, stop, or
+> delete the LXCs or any VM outside the `talos` pool.
 
 ### Configuration mapping
 
@@ -183,17 +167,15 @@ services.omniInfraProviderProxmox = {
 };
 ```
 
-The password is stored in `secrets/proxmox.sops.env` and baked into the image at
-build time.
+The password is stored in `secrets/proxmox.sops.env` and baked into the image at build time.
 
 ## Secrets — two-phase setup
 
-The provider needs credentials from two sources. They are collected in two
-separate SOPS env files and baked into the image at build time.
+The provider needs credentials from two sources. They are collected in two separate SOPS env files and baked into the
+image at build time.
 
-\| File                       | Variable                   | When available          |
-\| `secrets/proxmox.sops.env` | `PROXMOX_PASSWORD`         | Before first build      |
-\| `secrets/omni.sops.env`    | `OMNI_SERVICE_ACCOUNT_KEY` | After Omni registration |
+\| File | Variable | When available | \| `secrets/proxmox.sops.env` | `PROXMOX_PASSWORD` | Before first build | \|
+`secrets/omni.sops.env` | `OMNI_SERVICE_ACCOUNT_KEY` | After Omni registration |
 
 ### Phase 1 — Proxmox credentials
 
@@ -201,14 +183,13 @@ separate SOPS env files and baked into the image at build time.
 mise run lxc:secrets:proxmox
 ```
 
-Prompts for the Proxmox API password for the user configured in
-`configuration.nix` (`services.omniInfraProviderProxmox.proxmox.username`).
+Prompts for the Proxmox API password for the user configured in `configuration.nix`
+(`services.omniInfraProviderProxmox.proxmox.username`).
 
 ### Phase 2 — Omni infrastructure provider key
 
 1. Deploy the phase-1 image (provider starts but cannot connect to Omni).
-2. In the Omni UI: **Settings → Infrastructure Providers → Create**.
-   Copy the generated key.
+2. In the Omni UI: **Settings → Infrastructure Providers → Create**. Copy the generated key.
 3. Run:
    ```sh
    mise run lxc:secrets:omni
@@ -217,9 +198,8 @@ Prompts for the Proxmox API password for the user configured in
 
 ### Key rotation
 
-* **Proxmox password** — re-run `lxc:secrets:proxmox`, rebuild, redeploy.
-* **Omni key** — delete the provider in Omni UI, re-register, re-run
-  `lxc:secrets:omni`, rebuild, redeploy.
+- **Proxmox password** — re-run `lxc:secrets:proxmox`, rebuild, redeploy.
+- **Omni key** — delete the provider in Omni UI, re-register, re-run `lxc:secrets:omni`, rebuild, redeploy.
 
 ## Build & deploy
 
@@ -231,17 +211,15 @@ mise run lxc:build
 mise run lxc:push -- pve-01.pve.chezmoi.sh
 ```
 
-The template name is `omni-infra-provider-proxmox.<CalVer>-amd64.tar.xz`.
-Bump the `version` in `flake.nix` before each build.
+The template name is `omni-infra-provider-proxmox.<CalVer>-amd64.tar.xz`. Bump the `version` in `flake.nix` before each
+build.
 
 ### Task reference
 
-\| Task                                          | What it does                                     |
-\| `mise run lxc:secrets:proxmox`                | Proxmox password → `secrets/proxmox.sops.env`    |
-\| `mise run lxc:secrets:omni`                   | Omni provider key → `secrets/omni.sops.env`      |
-\| `mise run lxc:build`                          | Build LXC tarball with both secrets baked in     |
-\| `mise run lxc:push -- <pve-host>`             | Upload template to Proxmox                       |
-\| `mise run lxc:upgrade -- <pve-host> <src_id>` | Rootfs-swap upgrade (stateless — no volume swap) |
+\| Task | What it does | \| `mise run lxc:secrets:proxmox` | Proxmox password → `secrets/proxmox.sops.env` | \|
+`mise run lxc:secrets:omni` | Omni provider key → `secrets/omni.sops.env` | \| `mise run lxc:build` | Build LXC tarball
+with both secrets baked in | \| `mise run lxc:push -- <pve-host>` | Upload template to Proxmox | \|
+`mise run lxc:upgrade -- <pve-host> <src_id>` | Rootfs-swap upgrade (stateless — no volume swap) |
 
 ## Proxmox LXC creation
 
@@ -280,47 +258,40 @@ No persistent volume, no TUN device, no WireGuard — simpler than `omni`.
 
 ### Resource sizing
 
-\| Workload  | Recommended |
-\| CPU       | 1 vCPU      |
-\| Memory    | 512 MiB     |
-\| Root disk | 4 GiB       |
-\| Swap      | 0           |
+\| Workload | Recommended | \| CPU | 1 vCPU | \| Memory | 512 MiB | \| Root disk | 4 GiB | \| Swap | 0 |
 
 ## Machine classes
 
-Machine classes are created in the Omni UI under **Machine Classes → Create**
-— select the `pve-01.pve.chezmoi.sh` provider, then paste the YAML below as
-the provider data. The full schema ships with the provider at
-`cmd/omni-infra-provider-proxmox/data/schema.json`; the required fields are
-`cores`, `memory`, `disk_size`, and `storage_selector`.
+Machine classes are created in the Omni UI under **Machine Classes → Create** — select the `pve-01.pve.chezmoi.sh`
+provider, then paste the YAML below as the provider data. The full schema ships with the provider at
+`cmd/omni-infra-provider-proxmox/data/schema.json`; the required fields are `cores`, `memory`, `disk_size`, and
+`storage_selector`.
 
 ### Field reference
 
-\| Field              | Value to use           | Why                                                                                                                             |
-\| `pool`             | `talos`                | Mandatory. The `omni@pve` ACL only authorizes VM creation inside `/pool/talos`; omitting it yields a 403.                       |
-\| `storage_selector` | `'name == "nvme-lvm"'` | CEL expression over `name`, `node`, `storageType`, `availableSpace`. `nvme-lvm` is the only image-capable storage on this host. |
-\| `network_bridge`   | `vmbr1`                | The VLAN-aware guest bridge.                                                                                                    |
-\| `vlan`             | `2`                    | Talos VMs live on VLAN 2 (same as the existing `tal01`); rendered as `tag=2` on `net0`. Platform LXCs use VLAN 5.               |
-\| `cpu_type`         | `x86-64-v3`            | Matches the existing Talos VM. The provider default is `x86-64-v2-AES` (more conservative).                                     |
-\| `disk_ssd`         | `true`                 | NVMe-backed lvmthin — enables SSD emulation inside the guest.                                                                   |
-\| `disk_discard`     | `true`                 | Passes TRIM commands through to the thin pool, keeping it lean.                                                                 |
-\| `disk_iothread`    | `true`                 | Dedicated I/O thread per disk (`tal01` already uses `iothread=1`).                                                              |
-\| `disk_aio`         | `io_uring`             | Best async I/O mode for modern kernels and NVMe.                                                                                |
-\| `disk_cache`       | `none`                 | Disable host-side page-cache for NVMe (write-back adds latency, not throughput here).                                           |
+\| Field | Value to use | Why | \| `pool` | `talos` | Mandatory. The `omni@pve` ACL only authorizes VM creation inside
+`/pool/talos`; omitting it yields a 403. | \| `storage_selector` | `'name == "nvme-lvm"'` | CEL expression over `name`,
+`node`, `storageType`, `availableSpace`. `nvme-lvm` is the only image-capable storage on this host. | \|
+`network_bridge` | `vmbr1` | The VLAN-aware guest bridge. | \| `vlan` | `2` | Talos VMs live on VLAN 2 (same as the
+existing `tal01`); rendered as `tag=2` on `net0`. Platform LXCs use VLAN 5. | \| `cpu_type` | `x86-64-v3` | Matches the
+existing Talos VM. The provider default is `x86-64-v2-AES` (more conservative). | \| `disk_ssd` | `true` | NVMe-backed
+lvmthin — enables SSD emulation inside the guest. | \| `disk_discard` | `true` | Passes TRIM commands through to the
+thin pool, keeping it lean. | \| `disk_iothread` | `true` | Dedicated I/O thread per disk (`tal01` already uses
+`iothread=1`). | \| `disk_aio` | `io_uring` | Best async I/O mode for modern kernels and NVMe. | \| `disk_cache` |
+`none` | Disable host-side page-cache for NVMe (write-back adds latency, not throughput here). |
 
 ### Recommended classes
 
-The host has 32 threads and 125 GiB RAM and already runs a 16-core / 32 GiB
-Talos VM (`tal01`), so size new classes accordingly.
+The host has 32 threads and 125 GiB RAM and already runs a 16-core / 32 GiB Talos VM (`tal01`), so size new classes
+accordingly.
 
-**Control plane** (suggested name: `talos-cp`) — etcd + API server; 3 of
-these fit comfortably alongside worker nodes:
+**Control plane** (suggested name: `talos-cp`) — etcd + API server; 3 of these fit comfortably alongside worker nodes:
 
 ```yaml
 pool: talos
 cores: 4
-memory: 8192    # MB — etcd wants headroom; 4 GiB is the floor, 8 GiB is comfortable
-disk_size: 48   # GB — etcd history + Talos system partitions
+memory: 8192 # MB — etcd wants headroom; 4 GiB is the floor, 8 GiB is comfortable
+disk_size: 48 # GB — etcd history + Talos system partitions
 storage_selector: 'name == "nvme-lvm"'
 network_bridge: vmbr1
 vlan: 2
@@ -337,8 +308,8 @@ disk_cache: none
 ```yaml
 pool: talos
 cores: 8
-memory: 16384   # MB
-disk_size: 80   # GB — matches the existing tal01 sizing
+memory: 16384 # MB
+disk_size: 80 # GB — matches the existing tal01 sizing
 storage_selector: 'name == "nvme-lvm"'
 network_bridge: vmbr1
 vlan: 2
@@ -350,13 +321,12 @@ disk_aio: io_uring
 disk_cache: none
 ```
 
-> **Do not set `node`.** The cluster is single-node today; leaving `node`
-> unset keeps the class portable if a second Proxmox node is added later.
+> **Do not set `node`.** The cluster is single-node today; leaving `node` unset keeps the class portable if a second
+> Proxmox node is added later.
 >
-> **Advanced fields** (`sockets`, `numa`, `hugepages`, `balloon`,
-> `pci_devices`, `additional_disks`, `additional_nics`) are available in the
-> schema for special cases such as GPU passthrough or dedicated storage
-> networks. Keep them out of the base classes.
+> **Advanced fields** (`sockets`, `numa`, `hugepages`, `balloon`, `pci_devices`, `additional_disks`, `additional_nics`)
+> are available in the schema for special cases such as GPU passthrough or dedicated storage networks. Keep them out of
+> the base classes.
 
 ## Operations
 
@@ -388,8 +358,8 @@ ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- journalctl -u omni-infra-provi
 
 ### Provider not appearing in Omni UI
 
-Check that `omniApiEndpoint` in `configuration.nix` matches the running Omni
-URL exactly (including trailing slash). Verify connectivity:
+Check that `omniApiEndpoint` in `configuration.nix` matches the running Omni URL exactly (including trailing slash).
+Verify connectivity:
 
 ```sh
 ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- \
@@ -398,32 +368,25 @@ ssh root@pve-01.pve.chezmoi.sh pct exec <vmid> -- \
 
 ### VM provisioning fails with a Proxmox 403
 
-The `omni@pve` ACL is scoped to `/pool/talos` — a machine class whose
-provider data does not set `pool: talos` is denied `VM.Allocate`. Add the
-field (see [Proxmox user and role setup](#proxmox-user-and-role-setup)) and
-retry. If the 403 happens on ISO upload instead, check the
-`OmniProviderNode` ACL on `/nodes/pve-01` (`Sys.AccessNetwork`, PVE 8.1+)
-and that the ISO storage (`local`) is a member of the `talos` pool.
+The `omni@pve` ACL is scoped to `/pool/talos` — a machine class whose provider data does not set `pool: talos` is denied
+`VM.Allocate`. Add the field (see [Proxmox user and role setup](#proxmox-user-and-role-setup)) and retry. If the 403
+happens on ISO upload instead, check the `OmniProviderNode` ACL on `/nodes/pve-01` (`Sys.AccessNetwork`, PVE 8.1+) and
+that the ISO storage (`local`) is a member of the `talos` pool.
 
 ### Authentication failure to Proxmox
 
-Verify the password in `secrets/proxmox.sops.env` and the username in
-`configuration.nix`. The username must be the bare login (`omni`) with the
-realm set separately via `proxmox.realm = "pve"`. Appending `@pve` to
-`username` (e.g. `"omni@pve"`) causes a double-realm auth failure
-(`username=omni@pve&realm=pve`) — the Proxmox API rejects it. Also verify
-that `insecureSkipVerify = true` is set, as the Proxmox API TLS cert is
-self-signed.
+Verify the password in `secrets/proxmox.sops.env` and the username in `configuration.nix`. The username must be the bare
+login (`omni`) with the realm set separately via `proxmox.realm = "pve"`. Appending `@pve` to `username` (e.g.
+`"omni@pve"`) causes a double-realm auth failure (`username=omni@pve&realm=pve`) — the Proxmox API rejects it. Also
+verify that `insecureSkipVerify = true` is set, as the Proxmox API TLS cert is self-signed.
 
 ### VM provisioning fails: "proxmox pool does not exist"
 
-The provider calls `GET /pools` to verify the pool before creating a VM.
-Proxmox filters this response by the caller's effective permissions — if the
-`OmniProvider` role lacks `Pool.Audit`, the pool is excluded from the list
-and the provider reports it as missing.
+The provider calls `GET /pools` to verify the pool before creating a VM. Proxmox filters this response by the caller's
+effective permissions — if the `OmniProvider` role lacks `Pool.Audit`, the pool is excluded from the list and the
+provider reports it as missing.
 
-**Fix:** ensure the `OmniProvider` role includes `Pool.Allocate` and
-`Pool.Audit`:
+**Fix:** ensure the `OmniProvider` role includes `Pool.Allocate` and `Pool.Audit`:
 
 ```sh
 pveum role modify OmniProvider -privs \
@@ -436,14 +399,14 @@ pveum role modify OmniProvider -privs \
 
 ### Phase-1 deploy — provider logs "empty key"
 
-Expected — the `OMNI_SERVICE_ACCOUNT_KEY` is not set yet. Complete phase 2
-(register in Omni UI, run `lxc:secrets:omni`, rebuild).
+Expected — the `OMNI_SERVICE_ACCOUNT_KEY` is not set yet. Complete phase 2 (register in Omni UI, run `lxc:secrets:omni`,
+rebuild).
 
 ## References
 
-* [omni-infra-provider-proxmox GitHub](https://github.com/siderolabs/omni-infra-provider-proxmox)
-* [Omni documentation](https://omni.siderolabs.com)
-* [Omni infrastructure providers docs](https://omni.siderolabs.com/docs/how-to-guides/infrastructure-providers/)
-* [Proxmox VE user management](https://pve.proxmox.com/pve-docs/pveum.1.html)
-* [Catalog NixOS module](../../../../../../../catalog/nix/siderolabs/omni/infra-provider/proxmox.nix)
-* [Companion LXC — Omni](../omni/)
+- [omni-infra-provider-proxmox GitHub](https://github.com/siderolabs/omni-infra-provider-proxmox)
+- [Omni documentation](https://omni.siderolabs.com)
+- [Omni infrastructure providers docs](https://omni.siderolabs.com/docs/how-to-guides/infrastructure-providers/)
+- [Proxmox VE user management](https://pve.proxmox.com/pve-docs/pveum.1.html)
+- [Catalog NixOS module](../../../../../../../catalog/nix/siderolabs/omni/infra-provider/proxmox.nix)
+- [Companion LXC — Omni](../omni/)

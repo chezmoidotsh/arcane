@@ -1,21 +1,20 @@
 # AGENTS.md
 
-Guidance for AI coding agents (Claude Code, Codex, Cursor, Aider, …) working in this repository.
-This file is the single source of truth — `CLAUDE.md` and other CLI-specific files defer to it.
+Guidance for AI coding agents (Claude Code, Codex, Cursor, Aider, …) working in this repository. This file is the single
+source of truth — `CLAUDE.md` and other CLI-specific files defer to it.
 
 ## Repository overview
 
-Arcane is a personal homelab managed as code. Multiple Kubernetes clusters (Talos Linux)
-deployed via GitOps (ArgoCD), with Pulumi for cloud infrastructure, OpenBao for secrets,
-and Cilium (CNI + Gateway API) for networking.
+Arcane is a personal homelab managed as code. Multiple Kubernetes clusters (Talos Linux) deployed via GitOps (ArgoCD),
+with Pulumi for cloud infrastructure, OpenBao for secrets, and Cilium (CNI + Gateway API) for networking.
 
-The project has been rewritten four times (see `CHANGELOG.md`). It is currently in its
-**Steel Age (A3)**, which trades universal reproducibility for maintainability:
+The project has been rewritten four times (see `CHANGELOG.md`). It is currently in its **Steel Age (A3)**, which trades
+universal reproducibility for maintainability:
 
-* **Declarative + versioned** (GitOps rules #1 and #2) — non-negotiable.
-* **Selective testing** — only critical infrastructure components are tested.
-* **Personal use over reusability** — design choices favor the maintainer, not external users.
-* **Pragmatic over perfect** — accept trade-offs that keep the system understandable.
+- **Declarative + versioned** (GitOps rules #1 and #2) — non-negotiable.
+- **Selective testing** — only critical infrastructure components are tested.
+- **Personal use over reusability** — design choices favor the maintainer, not external users.
+- **Pragmatic over perfect** — accept trade-offs that keep the system understandable.
 
 When in doubt, prefer the simple, maintainable option over the clever one.
 
@@ -79,8 +78,8 @@ mise install        # Install kubectl, helm, argocd, talosctl, openbao, …
 mise trust          # Trust .mise.toml (first run only)
 ```
 
-`mise` sets `KUBECONFIG`, `VAULT_ADDR`, `TALOSCONFIG`, `SOPS_AGE_KEY_FILE`, and adds
-`scripts/` to PATH. Project-specific tasks live in `projects/*/.mise.toml`.
+`mise` sets `KUBECONFIG`, `VAULT_ADDR`, `TALOSCONFIG`, `SOPS_AGE_KEY_FILE`, and adds `scripts/` to PATH.
+Project-specific tasks live in `projects/*/.mise.toml`.
 
 ### Common commands
 
@@ -114,149 +113,142 @@ mise run ansible:install    # Sync Python venv for Ansible roles
 
 ### ArgoCD (target state — all clusters)
 
-* **App-of-Apps via ApplicationSets**, bootstrapped by `seed.application.yaml`.
-* **Apps**: `projects/<cluster>/src/apps/*<name>/` (leading `*` = ArgoCD-managed).
-* **Infrastructure (in-cluster)**: `projects/<cluster>/src/infrastructure/kubernetes/<name>/`.
-  The ArgoCD ApplicationSet automatically appends `-system` to the directory name to form
-  the target namespace (e.g. `in-gateway/` → namespace `in-gateway-system`).
-* **Infrastructure (cloud)**: `projects/<cluster>/src/infrastructure/pulumi/<name>/`.
-* **Helm overlays**: per-app `helmvalues/` directory (`default.yaml`, `hardened.yaml`, …) with
-  cluster-specific `override.helmvalues.yaml` patched via Kustomize.
-* **OIDC** via Pocket-Id (hosted on `amiya.akn`) for the ArgoCD UI and other admin
-  interfaces. Envoy Gateway `SecurityPolicy` resources protect HTTPRoutes that need
-  authentication (see `docs/decisions/005-envoy-gateway-oidc-authentication.md`).
+- **App-of-Apps via ApplicationSets**, bootstrapped by `seed.application.yaml`.
+- **Apps**: `projects/<cluster>/src/apps/*<name>/` (leading `*` = ArgoCD-managed).
+- **Infrastructure (in-cluster)**: `projects/<cluster>/src/infrastructure/kubernetes/<name>/`. The ArgoCD ApplicationSet
+  automatically appends `-system` to the directory name to form the target namespace (e.g. `in-gateway/` → namespace
+  `in-gateway-system`).
+- **Infrastructure (cloud)**: `projects/<cluster>/src/infrastructure/pulumi/<name>/`.
+- **Helm overlays**: per-app `helmvalues/` directory (`default.yaml`, `hardened.yaml`, …) with cluster-specific
+  `override.helmvalues.yaml` patched via Kustomize.
+- **OIDC** via Pocket-Id (hosted on `amiya.akn`) for the ArgoCD UI and other admin interfaces. Envoy Gateway
+  `SecurityPolicy` resources protect HTTPRoutes that need authentication (see
+  `docs/decisions/005-envoy-gateway-oidc-authentication.md`).
 
-`amiya.akn` is the **core platform cluster** — it hosts the services every other cluster
-depends on (OpenBao, Authelia, monitoring). Treat it as production: any change there must
-preserve availability for downstream clusters.
+`amiya.akn` is the **core platform cluster** — it hosts the services every other cluster depends on (OpenBao, Authelia,
+monitoring). Treat it as production: any change there must preserve availability for downstream clusters.
 
-`lungmen.akn` is under active development (replacing the legacy `maison` FluxCD cluster).
-See `projects/lungmen.akn/src/apps/` for the current app inventory; do not enumerate it here.
+`lungmen.akn` is under active development (replacing the legacy `maison` FluxCD cluster). See
+`projects/lungmen.akn/src/apps/` for the current app inventory; do not enumerate it here.
 
 ### FluxCD (legacy)
 
-Components in `catalog/fluxcd/` exist for the legacy `maison` cluster, which is being
-phased out in favor of `lungmen.akn`. Don't add new dependencies on FluxCD.
+Components in `catalog/fluxcd/` exist for the legacy `maison` cluster, which is being phased out in favor of
+`lungmen.akn`. Don't add new dependencies on FluxCD.
 
 ### Pulumi
 
-* Shared components live in `catalog/pulumi/`.
-* Per-project stacks live in `projects/<cluster>/src/infrastructure/pulumi/`.
-* Secrets are published as Pulumi stack outputs (not pushed to Vault for upstream
-  stacks like LXC).
-* The `cluster-vault` component (`catalog/pulumi/components/cluster-vault/`)
-  provisions OpenBao mounts, policies, and auth backends per cluster.
+- Shared components live in `catalog/pulumi/`.
+- Per-project stacks live in `projects/<cluster>/src/infrastructure/pulumi/`.
+- Secrets are published as Pulumi stack outputs (not pushed to Vault for upstream stacks like LXC).
+- The `cluster-vault` component (`catalog/pulumi/components/cluster-vault/`) provisions OpenBao mounts, policies, and
+  auth backends per cluster.
 
 ### Secrets
 
-* Source of truth: **OpenBao** at `https://vault.chezmoi.sh`.
-* KV mounts follow `projects-<cluster>/` and `shared/`.
-* **External Secrets Operator** syncs OpenBao → Kubernetes `Secret` objects.
-* **SOPS + age** encrypts secrets that must live in Git; key path is `SOPS_AGE_KEY_FILE`.
-* Never commit plaintext secrets. Network policies are mandatory for any app touching secrets.
+- Source of truth: **OpenBao** at `https://vault.chezmoi.sh`.
+- KV mounts follow `projects-<cluster>/` and `shared/`.
+- **External Secrets Operator** syncs OpenBao → Kubernetes `Secret` objects.
+- **SOPS + age** encrypts secrets that must live in Git; key path is `SOPS_AGE_KEY_FILE`.
+- Never commit plaintext secrets. Network policies are mandatory for any app touching secrets.
 
 ### Network and security
 
-* **Cilium NetworkPolicies** for microsegmentation — required for every app.
-* **Cilium Gateway API** for ingress (HTTPRoute, TCPRoute). Public-facing routes are wrapped in
-  a `SecurityPolicy` enforcing OIDC via Pocket-Id when authentication is required.
-  Envoy Gateway remains deployed during migration and will be removed once all routes
-  are validated on the Cilium GatewayClass (`cilium`). The Gateway lives in the
+- **Cilium NetworkPolicies** for microsegmentation — required for every app.
+- **Cilium Gateway API** for ingress (HTTPRoute, TCPRoute). Public-facing routes are wrapped in a `SecurityPolicy`
+  enforcing OIDC via Pocket-Id when authentication is required. Envoy Gateway remains deployed during migration and will
+  be removed once all routes are validated on the Cilium GatewayClass (`cilium`). The Gateway lives in the
   `in-gateway-system` namespace (`projects/*/src/infrastructure/kubernetes/in-gateway/`).
-* **cert-manager** with DNS-01 validation; **external-dns** publishes records to Cloudflare
-  via the `cloudflare-operator`.
-* **Public access** to home services goes through Pangolin (`kazimierz.akn` VPS) with a
-  Newt tunnel client running in `lungmen.akn`. **Tailscale** remains mandatory for
-  cluster-to-cluster connectivity outside the homelab.
+- **cert-manager** with DNS-01 validation; **external-dns** publishes records to Cloudflare via the
+  `cloudflare-operator`.
+- **Public access** to home services goes through Pangolin (`kazimierz.akn` VPS) with a Newt tunnel client running in
+  `lungmen.akn`. **Tailscale** remains mandatory for cluster-to-cluster connectivity outside the homelab.
 
 ### Storage and databases
 
-* **Longhorn** is the default block storage backend; **SMB CSI driver** mounts shares from
-  the NAS for bulk media (Immich, Jellyfin, Paperless).
-* **CloudNative-PG** for PostgreSQL clusters with automated S3 backups (`projects/*/src/apps/<app>/<app>.postgresql-backup.yaml`).
-* **Percona Operator for MongoDB** for the few apps that require it.
-* Database migrations between CNPG clusters use `scripts/cnpg:db:migrate` (see
-  `.agents/skills/cnpg-backup/SKILL.md` for the backup procedure).
+- **Longhorn** is the default block storage backend; **SMB CSI driver** mounts shares from the NAS for bulk media
+  (Immich, Jellyfin, Paperless).
+- **CloudNative-PG** for PostgreSQL clusters with automated S3 backups
+  (`projects/*/src/apps/<app>/<app>.postgresql-backup.yaml`).
+- **Percona Operator for MongoDB** for the few apps that require it.
+- Database migrations between CNPG clusters use `scripts/cnpg:db:migrate` (see `.agents/skills/cnpg-backup/SKILL.md` for
+  the backup procedure).
 
 ### Important paths
 
-* Bootstrap docs: `projects/*/docs/BOOTSTRAP_*.md` and `projects/*/docs/bootstrap/`
-* Architecture diagrams: `projects/*/architecture.d2` → `projects/*/assets/architecture.svg`
-* Shared D2 styles: `docs/assets/d2/architecture-styles.d2`
-* ADRs: `docs/decisions/`
-* Experiments: `docs/experiments/`
+- Bootstrap docs: `projects/*/docs/BOOTSTRAP_*.md` and `projects/*/docs/bootstrap/`
+- Architecture diagrams: `projects/*/architecture.d2` → `projects/*/assets/architecture.svg`
+- Shared D2 styles: `docs/assets/d2/architecture-styles.d2`
+- ADRs: `docs/decisions/`
+- Experiments: `docs/experiments/`
 
 ## Commits and pull requests
 
-This repository uses a **symbol-based commit type convention** with mandatory
-square-bracket scopes, validated by `commitlint`
-(`.commitlintrc.js` is the authoritative source for allowed types and scopes).
+This repository uses a **symbol-based commit type convention** with mandatory square-bracket scopes, validated by
+`commitlint` (`.commitlintrc.js` is the authoritative source for allowed types and scopes).
 
-Format: `type[scope]: Subject` — e.g. `+[project:lungmen.akn]: Add Forgejo`,
-`^[deps]: cert-manager to v1.16.0`, `![project:amiya.akn]: Fix OIDC redirect loop`.
-Breaking changes use `+!`, `~!`, or `-!` as the type.
+Format: `type[scope]: Subject` — e.g. `+[project:lungmen.akn]: Add Forgejo`, `^[deps]: cert-manager to v1.16.0`,
+`![project:amiya.akn]: Fix OIDC redirect loop`. Breaking changes use `+!`, `~!`, or `-!` as the type.
 
 Detailed conventions, formats, and validation tooling live in skill definitions:
 
-* `.agents/skills/git-commit/SKILL.md` — commit format, scopes, body rules, validation
-* `.agents/skills/create-pr/SKILL.md` — branch naming, PR templates, pre-flight checks
-* `.agents/skills/adr-authoring/SKILL.md` — Architecture Decision Records
-* `.agents/skills/cnpg-backup/SKILL.md` — CloudNative-PG backup procedure
-* `.github/PULL_REQUEST_TEMPLATE/` — feature / bugfix / refactoring templates
-* `.github/ISSUE_TEMPLATE/AGENT_TEMPLATES/` — AI-friendly issue templates
+- `.agents/skills/git-commit/SKILL.md` — commit format, scopes, body rules, validation
+- `.agents/skills/create-pr/SKILL.md` — branch naming, PR templates, pre-flight checks
+- `.agents/skills/adr-authoring/SKILL.md` — Architecture Decision Records
+- `.agents/skills/cnpg-backup/SKILL.md` — CloudNative-PG backup procedure
+- `.github/PULL_REQUEST_TEMPLATE/` — feature / bugfix / refactoring templates
+- `.github/ISSUE_TEMPLATE/AGENT_TEMPLATES/` — AI-friendly issue templates
 
-Read the relevant skill **before** running `git commit` or opening a PR — they enforce
-project conventions and surface required pre-flight checks (signature, validator, etc.).
+Read the relevant skill **before** running `git commit` or opening a PR — they enforce project conventions and surface
+required pre-flight checks (signature, validator, etc.).
 
 In short:
 
-* One logical change per commit; multiple scopes allowed when atomic (`scope1,scope2`).
-* Commit subject starts with an uppercase letter after the scope.
-* Body explains **why**, not **what**, wrapped at 80 chars.
-* Commits must be GPG-signed (`-S`); `Signed-off-by` (`-s`) is the human committer's
-  responsibility — agents must not add it on the user's behalf.
-* Use `Assisted-by: <provider>:<model>` to attribute AI involvement.
+- One logical change per commit; multiple scopes allowed when atomic (`scope1,scope2`).
+- Commit subject starts with an uppercase letter after the scope.
+- Body explains **why**, not **what**, wrapped at 80 chars.
+- Commits must be GPG-signed (`-S`); `Signed-off-by` (`-s`) is the human committer's responsibility — agents must not
+  add it on the user's behalf.
+- Use `Assisted-by: <provider>:<model>` to attribute AI involvement.
 
 ## Operating constraints for AI agents
 
 ### Asking questions — always use the interactive tool
 
-When you need input from the user, use the platform's interactive question tool rather
-than embedding the question in plain text output:
+When you need input from the user, use the platform's interactive question tool rather than embedding the question in
+plain text output:
 
-* **OpenCode** → `question` tool
-* **Claude Code / other agents** → equivalent ask/prompt tool if available; fall back to
-  plain text only when no interactive tool exists in the current runtime
+- **OpenCode** → `question` tool
+- **Claude Code / other agents** → equivalent ask/prompt tool if available; fall back to plain text only when no
+  interactive tool exists in the current runtime
 
-Using the interactive tool lets the user answer without consuming a full premium response
-turn. Plain-text questions buried in a response are easy to miss and expensive to answer.
-This applies everywhere: missing context, ambiguous decisions, confirmation before
-destructive actions, clarification on scope.
+Using the interactive tool lets the user answer without consuming a full premium response turn. Plain-text questions
+buried in a response are easy to miss and expensive to answer. This applies everywhere: missing context, ambiguous
+decisions, confirmation before destructive actions, clarification on scope.
 
 ### CLI: no interactive commands, no pagers
 
 Agents cannot drive interactive tools or scroll through pagers. Always:
 
-* Append `| cat` or use `--no-pager` for git: `git --no-pager log`, `git --no-pager diff`.
-* Avoid `less`, `more`, `man`, `git rebase -i`, `git add -p`, `git add -i`.
-* Prefer batch operations and explicit file arguments over interactive selection.
+- Append `| cat` or use `--no-pager` for git: `git --no-pager log`, `git --no-pager diff`.
+- Avoid `less`, `more`, `man`, `git rebase -i`, `git add -p`, `git add -i`.
+- Prefer batch operations and explicit file arguments over interactive selection.
 
-If the user requests an interactive flow, explain the limitation and propose the
-non-interactive equivalent (`git rebase --continue`, `git add file1 file2`, `cat file`, …).
+If the user requests an interactive flow, explain the limitation and propose the non-interactive equivalent
+(`git rebase --continue`, `git add file1 file2`, `cat file`, …).
 
 ### Destructive and shared-state operations
 
-* Never force-push, `git reset --hard`, drop branches, or rewrite published history
-  without explicit user confirmation in this turn.
-* Never auto-update or close GitHub issues; propose the action and wait.
-* For anything that affects shared state (pushes, PR creation/comments, deployments),
-  confirm before acting — even if a similar action was authorized earlier in the session.
+- Never force-push, `git reset --hard`, drop branches, or rewrite published history without explicit user confirmation
+  in this turn.
+- Never auto-update or close GitHub issues; propose the action and wait.
+- For anything that affects shared state (pushes, PR creation/comments, deployments), confirm before acting — even if a
+  similar action was authorized earlier in the session.
 
 ### Session documentation (for multi-step work)
 
-When a task spans 3+ steps, involves architecture decisions, or requires context across
-multiple exchanges, maintain a session document in `.agents/sessions/` named
-`YYYYMMDD-description.md`. Ask the user before creating one.
+When a task spans 3+ steps, involves architecture decisions, or requires context across multiple exchanges, maintain a
+session document in `.agents/sessions/` named `YYYYMMDD-description.md`. Ask the user before creating one.
 
 Minimum template:
 
@@ -264,33 +256,37 @@ Minimum template:
 # <title>
 
 ## Objective
+
 <what we're trying to achieve>
 
 ## Context & reflections
+
 <decisions, alternatives considered, open questions>
 
 ## Change history
+
 - <chronological log of significant actions>
 
 ## Attention points
+
 <risks, blockers, pending user decisions>
 
 ## Next steps
+
 - [ ] <prioritized actions>
 ```
 
-Update the document when context shifts significantly, re-read it every \~15 exchanges,
-and ask the user before deleting it once the work is merged.
+Update the document when context shifts significantly, re-read it every \~15 exchanges, and ask the user before deleting
+it once the work is merged.
 
 Skip session docs for one-off questions, single-file edits, or trivial changes.
 
 ### Scope management
 
-* Surface deviations from the stated objective explicitly.
-* For unrelated bugs or improvements discovered along the way, propose a separate GitHub
-  issue rather than expanding the current change.
-* Ask permission before spending time on investigations that aren't strictly required
-  to complete the user's request.
+- Surface deviations from the stated objective explicitly.
+- For unrelated bugs or improvements discovered along the way, propose a separate GitHub issue rather than expanding the
+  current change.
+- Ask permission before spending time on investigations that aren't strictly required to complete the user's request.
 
 ## Operational quick reference
 

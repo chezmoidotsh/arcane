@@ -17,7 +17,7 @@
 
 <!-- Changes grouped by subsystem. Link file paths. -->
 
-* **`path/to/file.yaml`** — what was changed and why
+- **`path/to/file.yaml`** — what was changed and why
 
 ## Technical Impact
 
@@ -39,15 +39,15 @@
 
 <!-- How to confirm the bug is fixed and no regressions introduced. -->
 
-* [ ] Original issue no longer reproduces
-* [ ] <!-- service-specific health check -->
-* [ ] No regressions in related functionality
-* [ ] Relevant metrics / logs confirm fix in target environment
+- [ ] Original issue no longer reproduces
+- [ ] <!-- service-specific health check -->
+- [ ] No regressions in related functionality
+- [ ] Relevant metrics / logs confirm fix in target environment
 
 ## Related Issues
 
 Closes #<!-- number -->
 
-***
+---
 
 <sub>AI-assisted with <!-- provider:model --> under human supervision</sub>

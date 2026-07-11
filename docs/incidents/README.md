@@ -1,13 +1,13 @@
 # Incidents
 
-Post-mortems for production incidents in this repository. Each document follows the
-template in `.agents/skills/postmortem/templates/postmortem.md` and includes structured
-frontmatter with `error_signatures` for programmatic lookup.
+Post-mortems for production incidents in this repository. Each document follows the template in
+`.agents/skills/postmortem/templates/postmortem.md` and includes structured frontmatter with `error_signatures` for
+programmatic lookup.
 
 ## Finding a relevant incident
 
-The fastest search is a grep on the `error_signatures` frontmatter field. Each incident
-declares the exact strings that appear in Kubernetes events, pod logs, or cluster conditions.
+The fastest search is a grep on the `error_signatures` frontmatter field. Each incident declares the exact strings that
+appear in Kubernetes events, pod logs, or cluster conditions.
 
 ```sh
 # Find incidents matching a specific error string
@@ -20,8 +20,8 @@ grep -rl "cnpg\|barman" docs/incidents/
 grep -A5 "procedures:" docs/incidents/2026-05-30-cnpg-wal-disk-full-apps-secured.md
 ```
 
-Agents using the `cnpg-troubleshoot` skill (`.agents/skills/cnpg-troubleshoot/SKILL.md`)
-use this same grep pattern to route from a live error to the appropriate procedure.
+Agents using the `cnpg-troubleshoot` skill (`.agents/skills/cnpg-troubleshoot/SKILL.md`) use this same grep pattern to
+route from a live error to the appropriate procedure.
 
 ## Incident index
 
@@ -37,12 +37,12 @@ use this same grep pattern to route from a live error to the appropriate procedu
 
 ## Conventions
 
-* **`error_signatures`** — exact strings from logs, events, or Kubernetes conditions. Use
-  the literal strings that appear in `kubectl` output or pod logs, not paraphrases.
-* **`procedures`** — paths to `docs/procedures/` runbooks that resolve this class of
-  incident. A post-mortem without a linked procedure is incomplete.
-* **Severity** — Critical (data loss / full cluster down) · High (services unavailable) ·
-  Medium (degraded) · Low (no user impact).
+- **`error_signatures`** — exact strings from logs, events, or Kubernetes conditions. Use the literal strings that
+  appear in `kubectl` output or pod logs, not paraphrases.
+- **`procedures`** — paths to `docs/procedures/` runbooks that resolve this class of incident. A post-mortem without a
+  linked procedure is incomplete.
+- **Severity** — Critical (data loss / full cluster down) · High (services unavailable) · Medium (degraded) · Low (no
+  user impact).
 
-New incidents: copy `.agents/skills/postmortem/templates/postmortem.md`, add `error_signatures`
-and `procedures` fields to the frontmatter, and add a row to the table above.
+New incidents: copy `.agents/skills/postmortem/templates/postmortem.md`, add `error_signatures` and `procedures` fields
+to the frontmatter, and add a row to the table above.

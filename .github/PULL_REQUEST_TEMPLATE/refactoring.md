@@ -17,13 +17,13 @@
 
 <!-- Optional 1-line intro describing the subsystem, then file list. -->
 
-* **`path/to/file.yaml`** — what changed and why
+- **`path/to/file.yaml`** — what changed and why
 
 ### Removed
 
 <!-- Resources / files / dependencies removed and their replacement. -->
 
-* Removed: `path/to/legacy.yaml` — replaced by ...
+- Removed: `path/to/legacy.yaml` — replaced by ...
 
 ## Technical Impact
 
@@ -58,15 +58,15 @@
 
 <!-- Steps to confirm no regressions after the refactor. -->
 
-* [ ] All previously working functionality still works
-* [ ] ArgoCD diff shows only expected resource changes
-* [ ] Cilium network policies still enforce expected isolation
-* [ ] <!-- service-specific check -->
+- [ ] All previously working functionality still works
+- [ ] ArgoCD diff shows only expected resource changes
+- [ ] Cilium network policies still enforce expected isolation
+- [ ] <!-- service-specific check -->
 
 ## Related Issues
 
 Closes #<!-- number — use "Addresses #X (Phase N)" for multi-phase work -->
 
-***
+---
 
 <sub>AI-assisted with <!-- provider:model --> under human supervision</sub>

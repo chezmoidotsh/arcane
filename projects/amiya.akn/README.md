@@ -9,30 +9,34 @@
 
 <div align="center">
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git\&logoColor=white\&logoWidth=20)](../../LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git&logoColor=white&logoWidth=20)](../../LICENSE)
 
 <!-- trunk-ignore-begin(markdown-link-check/404) -->
 
-<a href="#about">About</a> · <a href="#services-overview">Services</a> · <a href="#usage-and-development">Usage</a> · <a href="#disaster-recovery">Recovery</a> · <a href="#roadmap">Roadmap</a> · <a href="#license">License</a>
+<a href="#about">About</a> · <a href="#services-overview">Services</a> · <a href="#usage-and-development">Usage</a> ·
+<a href="#disaster-recovery">Recovery</a> · <a href="#roadmap">Roadmap</a> · <a href="#license">License</a>
 
 <!-- trunk-ignore-end(markdown-link-check/404) -->
 
 </div>
 
-***
+---
 
-> \[!NOTE]
-> **Why Amiya?** In Arknights lore, Amiya is the leader of Rhodes Island, a pharmaceutical company fighting for the infected. She is the core of the operation, just as this project is the core of the homelab, providing mission-critical services that other projects depend on.
+> \[!NOTE] **Why Amiya?** In Arknights lore, Amiya is the leader of Rhodes Island, a pharmaceutical company fighting for
+> the infected. She is the core of the operation, just as this project is the core of the homelab, providing
+> mission-critical services that other projects depend on.
 
 ## About
 
-Amiya·AKN is a project that aims to transform a mini PC into the most critical component of my homelab. This project integrates several essential components to allow other projects to be deployed and managed securely, without[^1] the need of third-party services.
+Amiya·AKN is a project that aims to transform a mini PC into the most critical component of my homelab. This project
+integrates several essential components to allow other projects to be deployed and managed securely, without[^1] the
+need of third-party services.
 
 ## Services Overview
 
 ![Architecture diagram](./assets/architecture.svg)
 
-***
+---
 
 ### Infrastructure
 
@@ -44,7 +48,8 @@ Amiya·AKN is a project that aims to transform a mini PC into the most critical 
 
 GitOps-based deployment tool for Kubernetes.
 
-***Why this choice**: It ensures that all services are deployed and managed in a declarative way, making it easier to maintain and recover from failures.*
+**\*Why this choice**: It ensures that all services are deployed and managed in a declarative way, making it easier to
+maintain and recover from failures.\*
 
 </div>
 </div>
@@ -56,9 +61,8 @@ GitOps-based deployment tool for Kubernetes.
 
 ### [Pulumi](https://www.pulumi.com/)
 
-Infrastructure as Code (IaC) for cloud resources. Replaces Crossplane (see ADR-015).
-Stacks live in `projects/<cluster>/src/infrastructure/pulumi/`; shared components in
-`catalog/pulumi/`.
+Infrastructure as Code (IaC) for cloud resources. Replaces Crossplane (see ADR-015). Stacks live in
+`projects/<cluster>/src/infrastructure/pulumi/`; shared components in `catalog/pulumi/`.
 
 </div>
 </div>
@@ -73,7 +77,10 @@ Stacks live in `projects/<cluster>/src/infrastructure/pulumi/`; shared component
 
 Centralized secret management platform.
 
-***Why this choice**: It acts as the single source of truth for all secrets, eliminating dependencies on external services and improving security and resilience. Uses a multi-mount topology with dedicated KV mounts per project (`projects-amiya-akn/`, `projects-*-akn/`, `shared/`) for optimal isolation and access control. Backed by PostgreSQL database managed by CloudNative-PG (with automated S3 backups) and auto-unsealed using PKCS#11 and SoftHSM2.*
+**\*Why this choice**: It acts as the single source of truth for all secrets, eliminating dependencies on external
+services and improving security and resilience. Uses a multi-mount topology with dedicated KV mounts per project
+(`projects-amiya-akn/`, `projects-*-akn/`, `shared/`) for optimal isolation and access control. Backed by PostgreSQL
+database managed by CloudNative-PG (with automated S3 backups) and auto-unsealed using PKCS#11 and SoftHSM2.\*
 
 </div>
 </div>
@@ -88,12 +95,13 @@ Centralized secret management platform.
 
 PostgreSQL operator for Kubernetes.
 
-***Why this choice**: It manages the PostgreSQL database that stores OpenBao's secrets and metadata, providing automated backups to S3, high availability, and lifecycle management of the database infrastructure.*
+**\*Why this choice**: It manages the PostgreSQL database that stores OpenBao's secrets and metadata, providing
+automated backups to S3, high availability, and lifecycle management of the database infrastructure.\*
 
 </div>
 </div>
 
-***
+---
 
 ### Authentication and Authorization
 
@@ -105,7 +113,8 @@ PostgreSQL operator for Kubernetes.
 
 Centralized authentication with 2FA and SSO support.
 
-***Why this choice**: It provides a centralized authentication system that can be used by other services in the homelab and ensures that all services are secure.*
+**\*Why this choice**: It provides a centralized authentication system that can be used by other services in the homelab
+and ensures that all services are secure.\*
 
 </div>
 </div>
@@ -120,12 +129,13 @@ Centralized authentication with 2FA and SSO support.
 
 Centralized identity management service with passkey support only.
 
-***Why this choice**: It provides a centralized authentication system that can be used by other services in the homelab and ensures that all services are secure *(will replace Authelia)*.*
+**\*Why this choice**: It provides a centralized authentication system that can be used by other services in the homelab
+and ensures that all services are secure _(will replace Authelia)_.\*
 
 </div>
 </div>
 
-***
+---
 
 ### Storage
 
@@ -137,32 +147,37 @@ Centralized identity management service with passkey support only.
 
 Production-ready, vendor-neutral OCI-native container image registry.
 
-***Why this choice**: It provides a local container registry for caching and mirroring upstream images, ensuring that services can be deployed even when external registries are unavailable. Uses local PVC storage (50Gi openebs-zfspv) managed by the Helm chart.*
+**\*Why this choice**: It provides a local container registry for caching and mirroring upstream images, ensuring that
+services can be deployed even when external registries are unavailable. Uses local PVC storage (50Gi openebs-zfspv)
+managed by the Helm chart.\*
 
 </div>
 </div>
 
-***
+---
 
 ### Others
 
 ## 🚀 Usage and Development
 
-This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based deployment and [Kustomize](https://kustomize.io/) for configuration management. Here's how to work with it:
+This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based deployment and
+[Kustomize](https://kustomize.io/) for configuration management. Here's how to work with it:
 
 ### Development Workflow
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/chezmoidotsh/arcane.git
    cd arcane/projects/amiya.akn
    ```
 
 2. **Make changes to application configurations**:
-   * All applications are defined in the `src/apps/` directory
-   * Each application is a self-contained Kustomize package
+   - All applications are defined in the `src/apps/` directory
+   - Each application is a self-contained Kustomize package
 
 3. **Test your changes locally**:
+
    ```bash
    # Validate Kustomize build
    kubectl kustomize src/apps/your-app --enable-helm
@@ -172,6 +187,7 @@ This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based depl
    ```
 
 4. **Commit and push your changes**:
+
    ```bash
    git add .
    git commit -m "feat(app): your descriptive commit message"
@@ -183,6 +199,7 @@ This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based depl
 ### Adding a New Application
 
 1. Create a new directory in `src/apps/` with the following structure:
+
    ```text
    src/apps/new-app/
    ├── kustomization.yaml
@@ -219,8 +236,7 @@ In case of a disaster requiring complete system recovery, follow these steps:
 
 ### 1. Reset the Talos system
 
-> \[!WARNING]
-> If the system cannot be managed using Talosctl, reboot on a live CD
+> \[!WARNING] If the system cannot be managed using Talosctl, reboot on a live CD
 
 1. Reset the system using the following command:
    ```bash
@@ -229,7 +245,8 @@ In case of a disaster requiring complete system recovery, follow these steps:
 
 ### 2. Reinstall the Base Operating System
 
-First, reinstall Talos Linux on the mini PC following the instructions in [BOOTSTRAP\_TALOS.md](./docs/BOOTSTRAP_TALOS.md):
+First, reinstall Talos Linux on the mini PC following the instructions in
+[BOOTSTRAP_TALOS.md](./docs/BOOTSTRAP_TALOS.md):
 
 1. Apply the Talos configuration to the node
 2. Bootstrap the Talos cluster
@@ -239,13 +256,19 @@ First, reinstall Talos Linux on the mini PC following the instructions in [BOOTS
 
 Once the base cluster is running, restore core infrastructure:
 
-1. **Deploy ArgoCD**: Deploy ArgoCD using the bootstrap kustomization as detailed in [BOOTSTRAP\_ARGOCD.md](./docs/BOOTSTRAP_ARGOCD.md). ArgoCD must be deployed first as it will manage all other services including OpenBao.
-2. **Deploy and Restore OpenBao**: Deploy OpenBao via ArgoCD, then restore the PostgreSQL database from S3 backup using CloudNative-PG operator. This step is critical as it contains all secrets for other services, organized in dedicated KV mounts per project.
+1. **Deploy ArgoCD**: Deploy ArgoCD using the bootstrap kustomization as detailed in
+   [BOOTSTRAP_ARGOCD.md](./docs/BOOTSTRAP_ARGOCD.md). ArgoCD must be deployed first as it will manage all other services
+   including OpenBao.
+2. **Deploy and Restore OpenBao**: Deploy OpenBao via ArgoCD, then restore the PostgreSQL database from S3 backup using
+   CloudNative-PG operator. This step is critical as it contains all secrets for other services, organized in dedicated
+   KV mounts per project.
    ```bash
    # Deploy OpenBao via ArgoCD first, then restore PostgreSQL from backup
    kubectl apply -f openbao-postgres-restore.yaml
    ```
-3. **Sync Applications**: Access the ArgoCD UI and ensure all applications are syncing properly. The required secrets for other services (like GitHub integration for ArgoCD) will be pulled from the restored OpenBao instance using the External Secrets Operator.
+3. **Sync Applications**: Access the ArgoCD UI and ensure all applications are syncing properly. The required secrets
+   for other services (like GitHub integration for ArgoCD) will be pulled from the restored OpenBao instance using the
+   External Secrets Operator.
 
 ### 4. Verify Recovery
 
@@ -278,30 +301,30 @@ For detailed step-by-step recovery procedures, refer to the bootstrap documentat
 
 ## 🗺️ Roadmap
 
-* \[X] **Step 0**: Think of what this project should host.
-  * \[X] List all services that should be deployed on this project.
-  * \[X] Create a diagram of the architecture.
-* \[X] **Step 1**: Install all services on the mini PC in a "dirty" way.
-  * \[X] Configure the system by hand (no automation).
-  * \[X] Install and configure the k3s cluster.
-  * \[ ] ~~Install and configure all services using only raw Kubernetes manifests~~.
-  * \[X] Install and configure all services using raw Kubernetes manifests or public Helm Charts.
-* \[ ] **Step 2**: Improve quality and security.
-  * \[X] Migrate secret management to OpenBao with multi-mount topology.
-  * \[X] Configure k3s to use the ZOT registry as mirror/proxy for all images[^2].
-  * \[ ] Make my own images for all services.
-  * \[ ] Develop my own Helm charts for all services.
-  * \[ ] ... probably more, but I don't know yet.
+- \[X] **Step 0**: Think of what this project should host.
+  - \[X] List all services that should be deployed on this project.
+  - \[X] Create a diagram of the architecture.
+- \[X] **Step 1**: Install all services on the mini PC in a "dirty" way.
+  - \[X] Configure the system by hand (no automation).
+  - \[X] Install and configure the k3s cluster.
+  - \[ ] ~~Install and configure all services using only raw Kubernetes manifests~~.
+  - \[X] Install and configure all services using raw Kubernetes manifests or public Helm Charts.
+- \[ ] **Step 2**: Improve quality and security.
+  - \[X] Migrate secret management to OpenBao with multi-mount topology.
+  - \[X] Configure k3s to use the ZOT registry as mirror/proxy for all images[^2].
+  - \[ ] Make my own images for all services.
+  - \[ ] Develop my own Helm charts for all services.
+  - \[ ] ... probably more, but I don't know yet.
 
 ## 🛡️ License
 
 This repository is licensed under the [Apache-2.0](../../LICENSE).
 
-> \[!CAUTION]
-> This is a personal project intended for my own use. Feel free to explore and use the code,
-> but please note that it comes with no warranties or guarantees. Use it at your own risk.
+> \[!CAUTION] This is a personal project intended for my own use. Feel free to explore and use the code, but please note
+> that it comes with no warranties or guarantees. Use it at your own risk.
 
-[^1]: Except for TailScale and SMTP services, which are used for external communication. However, these services are
-    optional and everything *should* work without them.
+[^1]:
+    Except for TailScale and SMTP services, which are used for external communication. However, these services are
+    optional and everything _should_ work without them.
 
 [^2]: See for more details <https://docs.k3s.io/installation/private-registry>.

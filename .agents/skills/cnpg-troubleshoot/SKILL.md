@@ -1,42 +1,40 @@
 ---
 name: cnpg-troubleshoot
 description: >
-  Use this skill whenever a CloudNative-PG cluster is in a broken or degraded state and the
-  cause is not immediately known — phrases like "my database is down", "CNPG cluster is
-  broken", "immich can't connect to postgres", "WAL disk full", "CrashLoopBackOff on the DB
-  pod", "barman archiving error", or "postgres not starting". Also trigger when the user
-  describes symptoms of a CNPG failure (pods restarting, services depending on postgres
-  unavailable, backup not completing) without naming the exact cause. This skill diagnoses
-  the cluster, matches the error pattern against known incidents in `docs/incidents/`, finds
-  the linked procedure, and executes it.
-compatibility: Requires `kubectl`, `mise`, `python3`. The `mc` MinIO client is installed on
-  demand via `mise install mc` if needed for S3 operations.
+  Use this skill whenever a CloudNative-PG cluster is in a broken or degraded state and the cause is not immediately
+  known — phrases like "my database is down", "CNPG cluster is broken", "immich can't connect to postgres", "WAL disk
+  full", "CrashLoopBackOff on the DB pod", "barman archiving error", or "postgres not starting". Also trigger when the
+  user describes symptoms of a CNPG failure (pods restarting, services depending on postgres unavailable, backup not
+  completing) without naming the exact cause. This skill diagnoses the cluster, matches the error pattern against known
+  incidents in `docs/incidents/`, finds the linked procedure, and executes it.
+compatibility:
+  Requires `kubectl`, `mise`, `python3`. The `mc` MinIO client is installed on demand via `mise install mc` if needed
+  for S3 operations.
 ---
 
 # CNPG Troubleshoot
 
-This skill diagnoses a broken CloudNative-PG cluster, matches the failure pattern against
-the incident knowledge base in `docs/incidents/`, and routes to the appropriate recovery
-procedure. It is intentionally thin: the fix logic lives in the procedures, not here.
+This skill diagnoses a broken CloudNative-PG cluster, matches the failure pattern against the incident knowledge base in
+`docs/incidents/`, and routes to the appropriate recovery procedure. It is intentionally thin: the fix logic lives in
+the procedures, not here.
 
 ## When to use this skill
 
 Trigger on:
 
-* "My database is down / not starting / crashing"
-* "CNPG cluster is in phase X"
-* "immich / paperless / forgejo / atuin can't connect to postgres"
-* "WAL disk full", "CrashLoopBackOff on DB pod", "barman archiving error"
-* "Not enough disk space", "Expected empty archive", "ContinuousArchivingFailing"
-* Any symptom of a CNPG cluster failure where the cause is unknown
+- "My database is down / not starting / crashing"
+- "CNPG cluster is in phase X"
+- "immich / paperless / forgejo / atuin can't connect to postgres"
+- "WAL disk full", "CrashLoopBackOff on DB pod", "barman archiving error"
+- "Not enough disk space", "Expected empty archive", "ContinuousArchivingFailing"
+- Any symptom of a CNPG cluster failure where the cause is unknown
 
 ## When NOT to use this skill
 
-* **Backup creation** → use `.agents/skills/cnpg-backup/SKILL.md` (healthy cluster, on-demand
-  backup).
-* **New cluster provisioning or migration** → use the Helm values and PR workflow.
-* **Active cluster that is healthy but needs tuning** → not an incident, handle directly.
-* **Non-CNPG databases** (MongoDB / Percona) → different operator, different skill.
+- **Backup creation** → use `.agents/skills/cnpg-backup/SKILL.md` (healthy cluster, on-demand backup).
+- **New cluster provisioning or migration** → use the Helm values and PR workflow.
+- **Active cluster that is healthy but needs tuning** → not an incident, handle directly.
+- **Non-CNPG databases** (MongoDB / Percona) → different operator, different skill.
 
 ## Workflow
 
@@ -47,7 +45,7 @@ Trigger on:
 5. **Execute** the linked procedure (Step 5).
 6. **Verify** and report (Step 6).
 
-***
+---
 
 ## Step 0 — Target resolution
 
@@ -60,8 +58,8 @@ kubectl --context admin@amiya.akn get cluster -A 2>/dev/null
 # → look for phase != "Cluster in healthy state"
 ```
 
-Surface discovered broken clusters to the user using `ask_user` before proceeding. Do not
-assume which cluster is the target when multiple are broken simultaneously.
+Surface discovered broken clusters to the user using `ask_user` before proceeding. Do not assume which cluster is the
+target when multiple are broken simultaneously.
 
 ## Step 1 — Diagnose cluster state
 
@@ -114,16 +112,15 @@ fi
 
 Collect:
 
-* Cluster `phase`
-* All condition types and messages (especially `ContinuousArchivingFailing`)
-* Pod states and restart counts
-* PVC sizes and usage percentages
-* Key log lines (errors, warnings)
+- Cluster `phase`
+- All condition types and messages (especially `ContinuousArchivingFailing`)
+- Pod states and restart counts
+- PVC sizes and usage percentages
+- Key log lines (errors, warnings)
 
 ## Step 2 — Match against the incident knowledge base
 
-With the error strings collected in Step 1, search the incident knowledge base for a known
-pattern.
+With the error strings collected in Step 1, search the incident knowledge base for a known pattern.
 
 ```sh
 # Search by exact error string from logs or conditions
@@ -161,25 +158,23 @@ for line in lines:
 "
 ```
 
-**If a match is found:** surface the matched incident, its summary, and the linked procedure
-to the user in Step 3.
+**If a match is found:** surface the matched incident, its summary, and the linked procedure to the user in Step 3.
 
-**If no match is found:** present the raw diagnostic output and the cluster conditions to
-the user. Do not attempt to fix an unknown failure pattern. Ask the user for additional
-context and, after resolution, create a new post-mortem in `docs/incidents/`.
+**If no match is found:** present the raw diagnostic output and the cluster conditions to the user. Do not attempt to
+fix an unknown failure pattern. Ask the user for additional context and, after resolution, create a new post-mortem in
+`docs/incidents/`.
 
 ## Step 3 — Confirm with the user
 
-Before executing any remediation, confirm the target and proposed action using `ask_user`.
-Show:
+Before executing any remediation, confirm the target and proposed action using `ask_user`. Show:
 
-* The broken cluster name, namespace, and context
-* The matched error pattern and incident
-* The procedure you will follow
-* Any write operations the procedure will perform (PVC resize, S3 mv, etc.)
+- The broken cluster name, namespace, and context
+- The matched error pattern and incident
+- The procedure you will follow
+- Any write operations the procedure will perform (PVC resize, S3 mv, etc.)
 
-A plain "OK to proceed?" in text is not enough — use the interactive question tool to
-give the user a deliberate confirmation surface.
+A plain "OK to proceed?" in text is not enough — use the interactive question tool to give the user a deliberate
+confirmation surface.
 
 Example confirmation block:
 
@@ -206,9 +201,9 @@ Proceed?
 
 ## Step 4 — Execute the matched procedure
 
-Read the full procedure file before executing. Follow it step by step. Do not skip steps or
-merge steps that have explicit wait conditions between them (e.g., waiting for pods to
-return to Running after PVC expansion before checking barman logs).
+Read the full procedure file before executing. Follow it step by step. Do not skip steps or merge steps that have
+explicit wait conditions between them (e.g., waiting for pods to return to Running after PVC expansion before checking
+barman logs).
 
 ```sh
 # Read the procedure
@@ -217,28 +212,27 @@ cat <procedure_path>
 
 Key execution rules:
 
-* Use explicit `--context` flags on every `kubectl` command.
-* Pause at any step that requires user confirmation (irreversible operations, S3 mutations).
-* If a step fails in a way the procedure does not cover, stop and surface the failure to
-  the user — do not improvise a fix beyond the procedure's scope.
-* When the procedure references the `cnpg-backup` skill (Step 7 of the WAL disk full
-  recovery), invoke that skill directly rather than calling its scripts manually.
+- Use explicit `--context` flags on every `kubectl` command.
+- Pause at any step that requires user confirmation (irreversible operations, S3 mutations).
+- If a step fails in a way the procedure does not cover, stop and surface the failure to the user — do not improvise a
+  fix beyond the procedure's scope.
+- When the procedure references the `cnpg-backup` skill (Step 7 of the WAL disk full recovery), invoke that skill
+  directly rather than calling its scripts manually.
 
 ## Step 5 — Verify and report
 
-After the procedure completes, run the quick verifications defined at its end. Report per
-target:
+After the procedure completes, run the quick verifications defined at its end. Report per target:
 
-* Cluster phase → `Cluster in healthy state` ✓ or still degraded (with details)
-* WAL archiving → `ContinuousArchivingSuccess` ✓ or still failing (with condition message)
-* Pods → all `2/2 Running` ✓ or remaining issues
-* Backup → `Completed` ✓ or status
-* Any pending post-merge actions (e.g., PR to merge, ExternalSecrets refresh needed)
+- Cluster phase → `Cluster in healthy state` ✓ or still degraded (with details)
+- WAL archiving → `ContinuousArchivingSuccess` ✓ or still failing (with condition message)
+- Pods → all `2/2 Running` ✓ or remaining issues
+- Backup → `Completed` ✓ or status
+- Any pending post-merge actions (e.g., PR to merge, ExternalSecrets refresh needed)
 
-If verification fails at any checkpoint, do not declare the incident resolved. Surface the
-remaining failure to the user with the exact kubectl output.
+If verification fails at any checkpoint, do not declare the incident resolved. Surface the remaining failure to the user
+with the exact kubectl output.
 
-***
+---
 
 ## Known error patterns
 
@@ -248,33 +242,31 @@ Quick reference for routing without needing to grep first:
 | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | `Not enough disk space` + `Expected empty archive` + `ContinuousArchivingFailing` | [2026-05-30 cnpg-wal-disk-full](docs/incidents/2026-05-30-cnpg-wal-disk-full-apps-secured.md) | [DB-20260530-00](docs/procedures/databases/DB-20260530-00.cnpg-wal-disk-full-recovery.md) |
 
-This table is a cache for common cases. Always verify against `docs/incidents/` — new
-incidents and procedures supersede it.
+This table is a cache for common cases. Always verify against `docs/incidents/` — new incidents and procedures supersede
+it.
 
-***
+---
 
 ## Guardrails
 
-* **Never run `kubectl apply` or `kubectl patch` without user confirmation.** Cluster
-  mutations during an incident can worsen the failure. Step 3 exists for this reason.
-* **Never delete S3 objects.** Always move to `.bak`. Deletion during a recovery window
-  destroys the only available backup if the new cluster fails to start.
-* **Never skip the PVC wait step.** With high restart counts, the CrashLoopBackOff backoff
-  is \~5 minutes. Checking barman logs before the pod has restarted returns stale data.
-* **Always qualify `kubectl get backup.postgresql.cnpg.io`.** The unqualified `kubectl get
-  backup` returns Longhorn backups, not CNPG backups. This is a silent wrong-resource trap.
-* **Stop if no incident matches.** An improvised fix based on partial understanding of
-  barman internals risks data loss. When the pattern is unknown, gather diagnostics, report
-  to the user, and create a new post-mortem after resolution.
-* **Do not run `validate-cnpg.sh` as a blocker when the replica is in streaming recovery.**
-  The validation script requires `Cluster in healthy state`. A replica replaying a large WAL
-  backlog will keep the cluster in `Waiting for the instances to become active` for 30+ min
-  while the primary is fully healthy. In that case, invoke `backup-cnpg.sh` directly without
-  the validation gate, as documented in the WAL disk full procedure.
+- **Never run `kubectl apply` or `kubectl patch` without user confirmation.** Cluster mutations during an incident can
+  worsen the failure. Step 3 exists for this reason.
+- **Never delete S3 objects.** Always move to `.bak`. Deletion during a recovery window destroys the only available
+  backup if the new cluster fails to start.
+- **Never skip the PVC wait step.** With high restart counts, the CrashLoopBackOff backoff is \~5 minutes. Checking
+  barman logs before the pod has restarted returns stale data.
+- **Always qualify `kubectl get backup.postgresql.cnpg.io`.** The unqualified `kubectl get backup` returns Longhorn
+  backups, not CNPG backups. This is a silent wrong-resource trap.
+- **Stop if no incident matches.** An improvised fix based on partial understanding of barman internals risks data loss.
+  When the pattern is unknown, gather diagnostics, report to the user, and create a new post-mortem after resolution.
+- **Do not run `validate-cnpg.sh` as a blocker when the replica is in streaming recovery.** The validation script
+  requires `Cluster in healthy state`. A replica replaying a large WAL backlog will keep the cluster in
+  `Waiting for the instances to become active` for 30+ min while the primary is fully healthy. In that case, invoke
+  `backup-cnpg.sh` directly without the validation gate, as documented in the WAL disk full procedure.
 
 ## Related skills and references
 
-* **Backup a healthy cluster**: `.agents/skills/cnpg-backup/SKILL.md`
-* **Incident knowledge base**: `docs/incidents/` — search via `grep -rl "<error>" docs/incidents/`
-* **Procedures**: `docs/procedures/databases/`
-* **CNPG documentation**: <https://cloudnative-pg.io/documentation/>
+- **Backup a healthy cluster**: `.agents/skills/cnpg-backup/SKILL.md`
+- **Incident knowledge base**: `docs/incidents/` — search via `grep -rl "<error>" docs/incidents/`
+- **Procedures**: `docs/procedures/databases/`
+- **CNPG documentation**: <https://cloudnative-pg.io/documentation/>

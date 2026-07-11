@@ -11,112 +11,120 @@ informed: []
 
 ## Table of Contents
 
-* [Context and Problem Statement](#context-and-problem-statement)
-* [Decision Drivers](#decision-drivers)
-  * [Functional Requirements](#functional-requirements)
-  * [Non-Functional Requirements](#non-functional-requirements)
-  * [Constraints](#constraints)
-* [Considered Options](#considered-options)
-  * [Option 1: Single Policy Per Cluster](#option-1-single-policy-per-cluster)
-  * [Option 2: Service-Based Policies](#option-2-service-based-policies)
-  * [Option 3: Function-Based Policies](#option-3-function-based-policies)
-  * [Option 4: Role-Based Policies](#option-4-role-based-policies)
-* [Decision Outcome](#decision-outcome)
-  * [Policy Family Matrix](#policy-family-matrix)
-  * [Policy Design Principles](#policy-design-principles)
-    * [1. **Least Privilege Access**](#1-least-privilege-access)
-    * [2. **Ephemeral Admin Tokens**](#2-ephemeral-admin-tokens)
-    * [3. **Function-Based Organization**](#3-function-based-organization)
-    * [4. **Consistent Naming**](#4-consistent-naming)
-    * [5. **Exceptions policies**](#5-exceptions-policies)
-  * [Capability Definitions](#capability-definitions)
-    * [Read-Only Access (`read`)](#read-only-access-read)
-    * [Read-Write Access (`read,write`)](#read-write-access-readwrite)
-    * [Administrative Access (`sudo`)](#administrative-access-sudo)
-* [Consequences](#consequences)
-  * [Positive](#positive)
-  * [Negative](#negative)
-* [Implementation Details / Status](#implementation-details--status)
-  * [Policy Creation Strategy](#policy-creation-strategy)
-  * [Cross-Cluster Considerations](#cross-cluster-considerations)
-  * [Monitoring and Compliance](#monitoring-and-compliance)
-* [Decision Evolution](#decision-evolution)
-  * [Rationale](#rationale)
-    * [Why Function-Based Policy Design](#why-function-based-policy-design)
-    * [Why Ephemeral Admin Tokens](#why-ephemeral-admin-tokens)
-    * [Why This Policy Matrix](#why-this-policy-matrix)
-* [References and Related Decisions](#references-and-related-decisions)
-* [Changelog](#changelog)
+- [Context and Problem Statement](#context-and-problem-statement)
+- [Decision Drivers](#decision-drivers)
+  - [Functional Requirements](#functional-requirements)
+  - [Non-Functional Requirements](#non-functional-requirements)
+  - [Constraints](#constraints)
+- [Considered Options](#considered-options)
+  - [Option 1: Single Policy Per Cluster](#option-1-single-policy-per-cluster)
+  - [Option 2: Service-Based Policies](#option-2-service-based-policies)
+  - [Option 3: Function-Based Policies](#option-3-function-based-policies)
+  - [Option 4: Role-Based Policies](#option-4-role-based-policies)
+- [Decision Outcome](#decision-outcome)
+  - [Policy Family Matrix](#policy-family-matrix)
+  - [Policy Design Principles](#policy-design-principles)
+    - [1. **Least Privilege Access**](#1-least-privilege-access)
+    - [2. **Ephemeral Admin Tokens**](#2-ephemeral-admin-tokens)
+    - [3. **Function-Based Organization**](#3-function-based-organization)
+    - [4. **Consistent Naming**](#4-consistent-naming)
+    - [5. **Exceptions policies**](#5-exceptions-policies)
+  - [Capability Definitions](#capability-definitions)
+    - [Read-Only Access (`read`)](#read-only-access-read)
+    - [Read-Write Access (`read,write`)](#read-write-access-readwrite)
+    - [Administrative Access (`sudo`)](#administrative-access-sudo)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+- [Implementation Details / Status](#implementation-details--status)
+  - [Policy Creation Strategy](#policy-creation-strategy)
+  - [Cross-Cluster Considerations](#cross-cluster-considerations)
+  - [Monitoring and Compliance](#monitoring-and-compliance)
+- [Decision Evolution](#decision-evolution)
+  - [Rationale](#rationale)
+    - [Why Function-Based Policy Design](#why-function-based-policy-design)
+    - [Why Ephemeral Admin Tokens](#why-ephemeral-admin-tokens)
+    - [Why This Policy Matrix](#why-this-policy-matrix)
+- [References and Related Decisions](#references-and-related-decisions)
+- [Changelog](#changelog)
 
 ## Context and Problem Statement
 
-Following the implementation of our OpenBao secrets mount topology ([ADR-002](./002-openbao-secrets-topology.md)) and path naming conventions ([ADR-003](./003-openbao-path-naming-conventions.md)), we need to establish consistent policy naming and scope conventions. Without standardized policy design, access control becomes inconsistent, security boundaries blur, and operational complexity increases.
+Following the implementation of our OpenBao secrets mount topology ([ADR-002](./002-openbao-secrets-topology.md)) and
+path naming conventions ([ADR-003](./003-openbao-path-naming-conventions.md)), we need to establish consistent policy
+naming and scope conventions. Without standardized policy design, access control becomes inconsistent, security
+boundaries blur, and operational complexity increases.
 
 The challenge is defining policy conventions that are:
 
-* **Secure enough** to maintain Zero Trust principles
-* **Simple enough** for solo homelab operation
-* **Consistent** across all clusters and services
-* **Scalable** as the infrastructure grows
+- **Secure enough** to maintain Zero Trust principles
+- **Simple enough** for solo homelab operation
+- **Consistent** across all clusters and services
+- **Scalable** as the infrastructure grows
 
 ## Decision Drivers
 
 ### Functional Requirements
 
-* **Granular Access Control**: Policies should provide least-privilege access to specific path patterns
-* **Cross-Cluster Consistency**: Similar services across clusters should have similar policy structures
-* **Operational Clarity**: Policy names should clearly indicate their purpose and scope
-* **Security Compliance**: Maintain Zero Trust principles with proper isolation
+- **Granular Access Control**: Policies should provide least-privilege access to specific path patterns
+- **Cross-Cluster Consistency**: Similar services across clusters should have similar policy structures
+- **Operational Clarity**: Policy names should clearly indicate their purpose and scope
+- **Security Compliance**: Maintain Zero Trust principles with proper isolation
 
 ### Non-Functional Requirements
 
-* **Zero Trust Security**: Enforce mount-level and path-level isolation
-* **Operational Simplicity**: Minimize complexity for single-operator environment
-* **Audit Trail**: Clear policy names enable better access tracking
-* **Evolutionary Design**: Support future scaling without major restructuring
+- **Zero Trust Security**: Enforce mount-level and path-level isolation
+- **Operational Simplicity**: Minimize complexity for single-operator environment
+- **Audit Trail**: Clear policy names enable better access tracking
+- **Evolutionary Design**: Support future scaling without major restructuring
 
 ### Constraints
 
-* **Homelab Context**: Single operator, no multi-team collaboration requirements
-* **Policy Limitations**: Limited to the capabilities of the policy template system
-* **Existing Architecture**: Must align with established mount topology and path conventions
-* **Allowed Characters**: Only alphanumeric characters, hyphens, dots and underscores are allowed
+- **Homelab Context**: Single operator, no multi-team collaboration requirements
+- **Policy Limitations**: Limited to the capabilities of the policy template system
+- **Existing Architecture**: Must align with established mount topology and path conventions
+- **Allowed Characters**: Only alphanumeric characters, hyphens, dots and underscores are allowed
 
 ## Considered Options
 
-> Note: Several models were considered, but the final solution is a pragmatic hybrid, tailored for a single-operator environment. This approach combines the clarity and security of function-based policies with select elements from service- and role-based models, to maximize operational simplicity and maintain least-privilege boundaries.
+> Note: Several models were considered, but the final solution is a pragmatic hybrid, tailored for a single-operator
+> environment. This approach combines the clarity and security of function-based policies with select elements from
+> service- and role-based models, to maximize operational simplicity and maintain least-privilege boundaries.
 
 ### Option 1: Single Policy Per Cluster
 
 > ✖️ **Status**: Rejected
 
-* `+` Simple, minimal policy count
-* `-` Overly broad access, violates least privilege, difficult to audit
+- `+` Simple, minimal policy count
+- `-` Overly broad access, violates least privilege, difficult to audit
 
 ### Option 2: Service-Based Policies
 
 > ✔️ **Status**: Accepted (in hybrid)
 
-* `+` Clear service boundaries
-* `-` Doesn't handle shared secrets well, complex cross-dependencies
+- `+` Clear service boundaries
+- `-` Doesn't handle shared secrets well, complex cross-dependencies
 
 ### Option 3: Function-Based Policies
 
 > ✔️ **Status**: Accepted (Core model)
 
-* `+` Logical grouping, handles shared resources well
-* `-` Requires careful scope definition
+- `+` Logical grouping, handles shared resources well
+- `-` Requires careful scope definition
 
 ### Option 4: Role-Based Policies
 
 > ✔️ **Status**: Accepted (in hybrid)
 
-* `+` Clear operational boundaries
-* `-` Doesn't align well with application boundaries
+- `+` Clear operational boundaries
+- `-` Doesn't align well with application boundaries
 
 ## Decision Outcome
 
-> The chosen solution is primarily inspired by the function-based approach, but deliberately incorporates aspects of service- and role-based models. This hybrid design is intentional: it addresses the unique needs of a solo operator by balancing operational clarity, security, and future scalability. The resulting policy matrix is thus a pragmatic compromise, not a strict application of any single model.
+> The chosen solution is primarily inspired by the function-based approach, but deliberately incorporates aspects of
+> service- and role-based models. This hybrid design is intentional: it addresses the unique needs of a solo operator by
+> balancing operational clarity, security, and future scalability. The resulting policy matrix is thus a pragmatic
+> compromise, not a strict application of any single model.
 
 **Chosen Option**: **Function-Based Policy Design** with specific policy families
 
@@ -133,73 +141,74 @@ The challenge is defining policy conventions that are:
 
 #### 1. **Least Privilege Access**
 
-* Each policy grants only the minimum required capabilities
-* Path scopes are as specific as possible while remaining practical
-* No cross-mount access unless explicitly required
+- Each policy grants only the minimum required capabilities
+- Path scopes are as specific as possible while remaining practical
+- No cross-mount access unless explicitly required
 
 #### 2. **Ephemeral Admin Tokens**
 
-* Admin actions use short-lived tokens (TTL ≤ 15 minutes)
-* Non-renewable tokens prevent long-term admin access
-* No persistent admin policies for regular operations
+- Admin actions use short-lived tokens (TTL ≤ 15 minutes)
+- Non-renewable tokens prevent long-term admin access
+- No persistent admin policies for regular operations
 
 #### 3. **Function-Based Organization**
 
-* Policies align with operational functions rather than technical boundaries
-* Shared resources have dedicated policies for their specific use cases
-* Clear separation between read-only (ESO) and read-write (Crossplane, Cert-Renewal) access
+- Policies align with operational functions rather than technical boundaries
+- Shared resources have dedicated policies for their specific use cases
+- Clear separation between read-only (ESO) and read-write (Crossplane, Cert-Renewal) access
 
 #### 4. **Consistent Naming**
 
-* All policies follow `{project-name}-{function}-policy` pattern
-* Admin tokens use `{project-name}-admin-ephemeral` pattern
-* Names clearly indicate purpose and scope
+- All policies follow `{project-name}-{function}-policy` pattern
+- Admin tokens use `{project-name}-admin-ephemeral` pattern
+- Names clearly indicate purpose and scope
 
 #### 5. **Exceptions policies**
 
-* `amiya.akn-authelia-policy` is a special cross-mount policy that allows Authelia to read SSO credentials from all project mounts.
+- `amiya.akn-authelia-policy` is a special cross-mount policy that allows Authelia to read SSO credentials from all
+  project mounts.
 
 ### Capability Definitions
 
 #### Read-Only Access (`read`)
 
-* `read` - Access to secret data and metadata
-* Used by External Secrets Operator for secret synchronization
-* No modification capabilities
+- `read` - Access to secret data and metadata
+- Used by External Secrets Operator for secret synchronization
+- No modification capabilities
 
 #### Read-Write Access (`read,write`)
 
-* `read,write` - Full CRUD operations on secrets
-* Used by Crossplane for resource management
-* Used by Cert-Manager for certificate renewal
+- `read,write` - Full CRUD operations on secrets
+- Used by Crossplane for resource management
+- Used by Cert-Manager for certificate renewal
 
 #### Administrative Access (`sudo`)
 
-* `sudo` - Full system access including policy management
-* Limited to ephemeral tokens with short TTL
-* Non-renewable to prevent long-term admin access
+- `sudo` - Full system access including policy management
+- Limited to ephemeral tokens with short TTL
+- Non-renewable to prevent long-term admin access
 
-***
+---
 
 ## Consequences
 
 ### Positive
 
-* ✅ **Security Compliance**: Maintains Zero Trust principles with proper isolation
-* ✅ **Operational Clarity**: Clear policy purposes and scopes
-* ✅ **Audit Trail**: Policy names clearly indicate access patterns
-* ✅ **Scalability**: Easy to add new clusters or functions
-* ✅ **Least Privilege**: Each policy grants only necessary access
-* ✅ **SSO Security**: Eliminates security vulnerability from shared SSO mount
+- ✅ **Security Compliance**: Maintains Zero Trust principles with proper isolation
+- ✅ **Operational Clarity**: Clear policy purposes and scopes
+- ✅ **Audit Trail**: Policy names clearly indicate access patterns
+- ✅ **Scalability**: Easy to add new clusters or functions
+- ✅ **Least Privilege**: Each policy grants only necessary access
+- ✅ **SSO Security**: Eliminates security vulnerability from shared SSO mount
 
 ### Negative
 
-* ⚠️ **Learning Curve**: The operator must understand policy purposes and scopes
-* ⚠️ **Token Management**: Ephemeral admin tokens require more operational overhead
-* ⚠️ **Policy Count**: More policies to manage than single-policy approach
-* ⚠️ **Cross-Mount Complexity**: Authelia policy breaks normal mount isolation principles
+- ⚠️ **Learning Curve**: The operator must understand policy purposes and scopes
+- ⚠️ **Token Management**: Ephemeral admin tokens require more operational overhead
+- ⚠️ **Policy Count**: More policies to manage than single-policy approach
+- ⚠️ **Cross-Mount Complexity**: Authelia policy breaks normal mount isolation principles
 
-***
+---
 
 ## Implementation Details / Status
 
@@ -213,23 +222,24 @@ The challenge is defining policy conventions that are:
 
 ### Cross-Cluster Considerations
 
-* **SSO vs Third-Party Secrets Architecture**: Different isolation models for different risk profiles
-  * **SSO Secrets**: Moved to per-project mounts due to identity spoofing risks (`client_secret` enables impersonation)
-  * **Third-Party Secrets**: Remain in shared mount but scoped to project (`/shared/third-parties/+/+/{project-name}/*`) because:
-    * Multiple apps within same project legitimately share cloud credentials (e.g., S3 information)
-    * Risk profile differs: billing/resource access vs identity impersonation
-    * Project-scoped access pattern maintains isolation between projects while enabling intra-project sharing
-* **Consistency**: Similar services across clusters should have similar policy structures
-* **Isolation**: Ensure cluster-specific policies don't accidentally grant cross-cluster access
-* **Security Trade-offs**: Accept controlled cross-mount access for Authelia to maintain centralized SSO
+- **SSO vs Third-Party Secrets Architecture**: Different isolation models for different risk profiles
+  - **SSO Secrets**: Moved to per-project mounts due to identity spoofing risks (`client_secret` enables impersonation)
+  - **Third-Party Secrets**: Remain in shared mount but scoped to project (`/shared/third-parties/+/+/{project-name}/*`)
+    because:
+    - Multiple apps within same project legitimately share cloud credentials (e.g., S3 information)
+    - Risk profile differs: billing/resource access vs identity impersonation
+    - Project-scoped access pattern maintains isolation between projects while enabling intra-project sharing
+- **Consistency**: Similar services across clusters should have similar policy structures
+- **Isolation**: Ensure cluster-specific policies don't accidentally grant cross-cluster access
+- **Security Trade-offs**: Accept controlled cross-mount access for Authelia to maintain centralized SSO
 
 ### Monitoring and Compliance
 
-* **Access Monitoring**: Track policy usage and access patterns
-* **Policy Validation**: Automated checks for policy compliance
-* **Audit Reviews**: Regular review of policy scopes and capabilities
+- **Access Monitoring**: Track policy usage and access patterns
+- **Policy Validation**: Automated checks for policy compliance
+- **Audit Reviews**: Regular review of policy scopes and capabilities
 
-***
+---
 
 ## Decision Evolution
 
@@ -237,48 +247,64 @@ The challenge is defining policy conventions that are:
 
 #### Why Function-Based Policy Design
 
-* **Operational Clarity**: Policies align with how we actually use the secrets (ESO sync, Crossplane management, cert renewal)
-* **Security Boundaries**: Clear separation between read-only consumers and read-write managers
-* **Shared Resource Handling**: Dedicated policies for shared secrets without breaking isolation
-* **Scalability**: Easy to add new functions without restructuring existing policies
+- **Operational Clarity**: Policies align with how we actually use the secrets (ESO sync, Crossplane management, cert
+  renewal)
+- **Security Boundaries**: Clear separation between read-only consumers and read-write managers
+- **Shared Resource Handling**: Dedicated policies for shared secrets without breaking isolation
+- **Scalability**: Easy to add new functions without restructuring existing policies
 
 #### Why Ephemeral Admin Tokens
 
-* **Security**: Prevents long-term admin access that could be compromised
-* **Audit Trail**: Short-lived tokens create clear audit boundaries
-* **Operational Discipline**: Forces explicit admin actions rather than persistent admin access
-* **Zero Trust Compliance**: Aligns with "never trust, always verify" principles
+- **Security**: Prevents long-term admin access that could be compromised
+- **Audit Trail**: Short-lived tokens create clear audit boundaries
+- **Operational Discipline**: Forces explicit admin actions rather than persistent admin access
+- **Zero Trust Compliance**: Aligns with "never trust, always verify" principles
 
 #### Why This Policy Matrix
 
-* **Coverage**: Handles all current use cases (ESO shared/cluster, SSO/Authelia, Crossplane, cert renewal, admin)
-* **Consistency**: Similar patterns across all clusters
-* **Simplicity**: Only 6 policy types to manage (3 per cluster)
-* **Security**: SSO secrets isolated per-project while maintaining shared resource access
-* **Flexibility**: Easy to extend for new functions or requirements
+- **Coverage**: Handles all current use cases (ESO shared/cluster, SSO/Authelia, Crossplane, cert renewal, admin)
+- **Consistency**: Similar patterns across all clusters
+- **Simplicity**: Only 6 policy types to manage (3 per cluster)
+- **Security**: SSO secrets isolated per-project while maintaining shared resource access
+- **Flexibility**: Easy to extend for new functions or requirements
 
-***
+---
 
 ## References and Related Decisions
 
-* **Related ADRs**: [ADR-002: OpenBao Secrets Mount Topology](./002-openbao-secrets-topology.md), [ADR-003: OpenBao Path and Naming Conventions](./003-openbao-path-naming-conventions.md)
-* **Architecture Documentation**: [OpenBao Policy Documentation](https://openbao.org/docs/concepts/policies/)
+- **Related ADRs**: [ADR-002: OpenBao Secrets Mount Topology](./002-openbao-secrets-topology.md),
+  [ADR-003: OpenBao Path and Naming Conventions](./003-openbao-path-naming-conventions.md)
+- **Architecture Documentation**: [OpenBao Policy Documentation](https://openbao.org/docs/concepts/policies/)
 
 <!-- trunk-ignore-begin(markdown-link-check/403): some link can be behind a paywall -->
 
-* **Security Guidelines**: [HashiCorp Vault Policy Best Practices](https://developer.hashicorp.com/vault/docs/concepts/policies), [HashiCorp Vault Security Model](https://developer.hashicorp.com/vault/docs/internals/security), [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework), [Principle of Least Privilege](https://csrc.nist.gov/glossary/term/least_privilege), [Scaling HashiCorp Vault - Policy Sprawl Part 1](https://sunil-tailor.medium.com/scaling-hashicorp-vault-policy-sprawl-part-1-1b0f599b6eae), [Secret Management Best Practices](https://kubernetes.io/docs/concepts/configuration/secret/)
+- **Security Guidelines**:
+  [HashiCorp Vault Policy Best Practices](https://developer.hashicorp.com/vault/docs/concepts/policies),
+  [HashiCorp Vault Security Model](https://developer.hashicorp.com/vault/docs/internals/security),
+  [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework),
+  [Principle of Least Privilege](https://csrc.nist.gov/glossary/term/least_privilege),
+  [Scaling HashiCorp Vault - Policy Sprawl Part 1](https://sunil-tailor.medium.com/scaling-hashicorp-vault-policy-sprawl-part-1-1b0f599b6eae),
+  [Secret Management Best Practices](https://kubernetes.io/docs/concepts/configuration/secret/)
 
 <!-- trunk-ignore-end(markdown-link-check/403) -->
 
-***
+---
 
 ## Changelog
 
-* **2026-05-24**: **CHORE**: Renamed `consulted` to `assisted-by` in frontmatter; removed `ai/` prefix from model identifiers.
-* **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.
-* **2025-07-05**: **DEPRECATION**: `*-crossplane-policy` is replaced by `amiya.akn-crossplane-policy` as Crossplane is only running in the `amiya.akn` cluster.
-* **2025-07-05**: **DEPRECATION**: Integrate `global-eso-policy` into `{project-name}-eso-policy` as it is way easier to manage it like this.
-* **2025-07-01**: **CLARIFICATION**: Only 3 of the 6 policy types are instantiated per cluster.
-* **2025-07-01**: **CLARIFICATION**: `global-eso-policy` is shared across all clusters.
-* **2025-07-01**: **CLARIFICATION**: `amiya.akn-authelia-policy` and `amiya.akn-cert-renewal-policy` are project-specific.
-* **2025-07-01**: **SECURITY**: Restrict `global-eso-policy` scope to exclude `/shared/sso/*` and migrate SSO secrets to per-project isolation. Add `amiya.akn-authelia-policy` for legitimate cross-mount SSO access. This change addresses security vulnerability where any cluster could access OIDC `client_secret` credentials from other clusters, enabling potential identity spoofing attacks, while maintaining shared access to legitimate shared resources (certificates, third-parties).
+- **2026-05-24**: **CHORE**: Renamed `consulted` to `assisted-by` in frontmatter; removed `ai/` prefix from model
+  identifiers.
+- **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.
+- **2025-07-05**: **DEPRECATION**: `*-crossplane-policy` is replaced by `amiya.akn-crossplane-policy` as Crossplane is
+  only running in the `amiya.akn` cluster.
+- **2025-07-05**: **DEPRECATION**: Integrate `global-eso-policy` into `{project-name}-eso-policy` as it is way easier to
+  manage it like this.
+- **2025-07-01**: **CLARIFICATION**: Only 3 of the 6 policy types are instantiated per cluster.
+- **2025-07-01**: **CLARIFICATION**: `global-eso-policy` is shared across all clusters.
+- **2025-07-01**: **CLARIFICATION**: `amiya.akn-authelia-policy` and `amiya.akn-cert-renewal-policy` are
+  project-specific.
+- **2025-07-01**: **SECURITY**: Restrict `global-eso-policy` scope to exclude `/shared/sso/*` and migrate SSO secrets to
+  per-project isolation. Add `amiya.akn-authelia-policy` for legitimate cross-mount SSO access. This change addresses
+  security vulnerability where any cluster could access OIDC `client_secret` credentials from other clusters, enabling
+  potential identity spoofing attacks, while maintaining shared access to legitimate shared resources (certificates,
+  third-parties).

@@ -2,13 +2,13 @@
 
 ## Introduction
 
-The purpose of this document is to outline the steps and procedures necessary to recover from a disaster affecting
-our systems. A Disaster Recovery Plan (DRP) is a documented, structured approach with instructions for responding to
+The purpose of this document is to outline the steps and procedures necessary to recover from a disaster affecting our
+systems. A Disaster Recovery Plan (DRP) is a documented, structured approach with instructions for responding to
 unplanned incidents. This plan covers essential aspects such as hardware recovery, service restoration, and
 infrastructure deployment to ensure continuity and minimize downtime.
 
-This document is a living document and should be updated regularly to reflect changes in the system architecture,
-new services, and lessons learned from testing and actual recovery scenarios.
+This document is a living document and should be updated regularly to reflect changes in the system architecture, new
+services, and lessons learned from testing and actual recovery scenarios.
 
 ## Scope
 
@@ -17,15 +17,14 @@ instance is the core of our system and contains all the necessary services to op
 
 ## Procedures
 
-> \[!NOTE]
-> The following procedures are not fully tested yet. They are just a draft of the potential steps that need to
+> \[!NOTE] The following procedures are not fully tested yet. They are just a draft of the potential steps that need to
 > be taken in case of a disaster.\
 > All commands that can be run on your local machine are compatible with the [`runme`](https://runme.dev/) CLI.
 
 ### 1. **nex·rpi** Disaster Recovery
 
-Firstly, we need to recover the *nex·rpi* instance before anything else because it contains all the necessary
-services that are required for the rest of the system to function properly *(aka. critical services)*.
+Firstly, we need to recover the _nex·rpi_ instance before anything else because it contains all the necessary services
+that are required for the rest of the system to function properly _(aka. critical services)_.
 
 #### 1.1. **nex·rpi** hardware recovery
 
@@ -64,7 +63,7 @@ When the **nex·rpi** instance is up and running, we need to bootstrap and deplo
    popd
    ```
 
-4. Deploy the **chezmoi.sh** infrastructure *(required by nex·rpi)*:
+4. Deploy the **chezmoi.sh** infrastructure _(required by nex·rpi)_:
 
    ```bash {"category":"disaster-recovery-plan","name":"DRP/chezmoi.sh (pulumi)"}
    cd ${ARCANE_DIR}/projects/chezmoi.sh/src/infrastructure/pulumi

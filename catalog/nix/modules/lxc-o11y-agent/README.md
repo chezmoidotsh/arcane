@@ -1,10 +1,9 @@
 # `lxc-o11y-agent` — LXC observability agent
 
-A reusable NixOS module (`catalog.lxcAgent`) that makes any Proxmox LXC
-fully observable: it ships its systemd journal logs and scrapes its local
-Prometheus exporters, forwarding everything to the central `o11y` appliance.
+A reusable NixOS module (`catalog.lxcAgent`) that makes any Proxmox LXC fully observable: it ships its systemd journal
+logs and scrapes its local Prometheus exporters, forwarding everything to the central `o11y` appliance.
 
-***
+---
 
 ## What it does
 
@@ -50,18 +49,16 @@ One Vector process runs two independent pipelines on the LXC:
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Logs** — Vector reads the systemd journal natively (no extra daemon).
-Fields are mapped once to the OTel SemConv / VictoriaLogs loki-like layout
-and forwarded over the Vector native protocol. A 256 MiB disk buffer absorbs
-o11y outages without dropping events.
+**Logs** — Vector reads the systemd journal natively (no extra daemon). Fields are mapped once to the OTel SemConv /
+VictoriaLogs loki-like layout and forwarded over the Vector native protocol. A 256 MiB disk buffer absorbs o11y outages
+without dropping events.
 
-**Metrics** — One `prometheus_scrape` source per job (required for per-job
-labels). A remap transform stamps every series with `job` labels before
-shipping via `prometheus_remote_write`. Vector's own internal metrics are
-always included. A 256 MiB disk buffer absorbs outages; newest samples are
-dropped when full (point-in-time data is replaceable).
+**Metrics** — One `prometheus_scrape` source per job (required for per-job labels). A remap transform stamps every
+series with `job` labels before shipping via `prometheus_remote_write`. Vector's own internal metrics are always
+included. A 256 MiB disk buffer absorbs outages; newest samples are dropped when full (point-in-time data is
+replaceable).
 
-***
+---
 
 ## When to use it
 
@@ -69,11 +66,11 @@ Use `lxc-o11y-agent` on **every Proxmox LXC that runs NixOS with systemd**.
 
 | Situation                                 |          Use this module?          |
 | ----------------------------------------- | :--------------------------------: |
-| NixOS LXC shipping journald logs to o11y  |               **Yes**              |
+| NixOS LXC shipping journald logs to o11y  |              **Yes**               |
 | NixOS LXC with local Prometheus exporters |     **Yes** (enable `metrics`)     |
 | Non-NixOS container or bare-metal host    | **No** — configure Vector manually |
 
-***
+---
 
 ## How to use it
 
@@ -151,8 +148,8 @@ outputs = { self, nixpkgs, nixos-generators, arcane-catalog, ... }:
 
 **With a custom log transform loaded from a separate file:**
 
-Keep complex transforms out of the Nix string by storing them as plain YAML
-files next to the module and loading them with `builtins.readFile`:
+Keep complex transforms out of the Nix string by storing them as plain YAML files next to the module and loading them
+with `builtins.readFile`:
 
 ```text
 modules/
@@ -199,11 +196,10 @@ transforms:
       source: "true"
 ```
 
-> When `extraTransforms` is non-empty, you are responsible for exposing at
-> least one component named `*_to_o11y`. The auto-generated passthrough is
-> omitted.
+> When `extraTransforms` is non-empty, you are responsible for exposing at least one component named `*_to_o11y`. The
+> auto-generated passthrough is omitted.
 
-***
+---
 
 ## Configuration reference
 
@@ -250,21 +246,20 @@ Each `scrapeTargets` entry:
 | `jobName` | string       | Becomes the `job` label. Must be a valid Nix identifier (alphanumeric + `_`). |
 | `targets` | `listOf str` | Endpoints as `host:port`. `/metrics` is appended automatically.               |
 
-***
+---
 
 ## Annexes
 
 ### A — Journald → SemConv field mapping
 
-The `journald_to_semconv` transform discards all raw journald fields and
-produces only these keys:
+The `journald_to_semconv` transform discards all raw journald fields and produces only these keys:
 
 | Journald field                | SemConv field                         | Notes                                                             |
 | ----------------------------- | ------------------------------------- | ----------------------------------------------------------------- |
 | `MESSAGE`                     | `_msg`                                |                                                                   |
 | `timestamp`                   | `_time`                               | RFC 3339                                                          |
 | `_HOSTNAME`                   | `host.name`                           | resource                                                          |
-| *(injected)*                  | `axnic.infra.kind`                    | resource — entity category from `o11y.sourceKind` (default `lxc`) |
+| _(injected)_                  | `axnic.infra.kind`                    | resource — entity category from `o11y.sourceKind` (default `lxc`) |
 | `SYSLOG_IDENTIFIER` / `_COMM` | `service.name`                        | resource, `_COMM` as fallback                                     |
 | `_PID`                        | `attr.process.pid`                    | integer                                                           |
 | `_COMM`                       | `attr.process.executable.name`        | OTel semconv                                                      |
@@ -274,18 +269,17 @@ produces only these keys:
 | `_SYSTEMD_UNIT`               | `attr.systemd.unit`                   |                                                                   |
 | `_TRANSPORT`                  | `attr.journald.transport`             |                                                                   |
 | `_TRANSPORT` (stdout/stderr)  | `attr.log.iostream`                   |                                                                   |
-| *(generated)*                 | `attr.log.record.uid`                 | UUID v4                                                           |
-| *(reconstructed)*             | `attr.log.record.original`            | OTel semconv                                                      |
-| *(generated)*                 | `attr.observed_timestamp`             |                                                                   |
-| *(generated)*                 | `attr.log.src`                        |                                                                   |
+| _(generated)_                 | `attr.log.record.uid`                 | UUID v4                                                           |
+| _(reconstructed)_             | `attr.log.record.original`            | OTel semconv                                                      |
+| _(generated)_                 | `attr.observed_timestamp`             |                                                                   |
+| _(generated)_                 | `attr.log.src`                        |                                                                   |
 
-SemConv **validation is not performed here** — it runs on the o11y side
-(`transforms.validate_semconv` in the o11y Vector pipeline).
+SemConv **validation is not performed here** — it runs on the o11y side (`transforms.validate_semconv` in the o11y
+Vector pipeline).
 
 ### B — Config directory layout
 
-The module assembles a Vector `--config-dir` from static and generated files,
-all baked into the Nix store:
+The module assembles a Vector `--config-dir` from static and generated files, all baked into the Nix store:
 
 ```text
 conf.d/
@@ -302,19 +296,16 @@ conf.d/
 └── <name>                        generated — one file per extraTransforms entry
 ```
 
-Cross-file component references (e.g. `journald_to_semconv` defined in the
-static YAML, consumed by `route_builtin` which feeds `caddy_to_o11y` and the
-`*_to_o11y` glob) are resolved by Vector at startup.
+Cross-file component references (e.g. `journald_to_semconv` defined in the static YAML, consumed by `route_builtin`
+which feeds `caddy_to_o11y` and the `*_to_o11y` glob) are resolved by Vector at startup.
 
 ### C — Extra transforms
 
-`logs.extraTransforms` is the extension point for per-LXC log processing.
-When non-empty, the auto-generated `journald_to_o11y` passthrough is **not**
-injected — your transform must close the pipeline by exposing a component
+`logs.extraTransforms` is the extension point for per-LXC log processing. When non-empty, the auto-generated
+`journald_to_o11y` passthrough is **not** injected — your transform must close the pipeline by exposing a component
 named `*_to_o11y`.
 
-The upstream component is always `route_builtin._unmatched` (the non-caddy
-branch of the built-in caddy router).
+The upstream component is always `route_builtin._unmatched` (the non-caddy branch of the built-in caddy router).
 
 ```text
 route_builtin._unmatched
@@ -360,13 +351,12 @@ transforms:
 
 ### D — Testing and validation
 
-Config validation is **baked into the config derivation itself** — `vector validate`
-runs as a build step of `configDir`, which the systemd service already depends on.
-Any `nixos-rebuild switch` or `nix build .#nixosConfigurations.<host>.config.system.build.toplevel`
-will fail fast if the assembled config is invalid, without needing any extra wiring.
+Config validation is **baked into the config derivation itself** — `vector validate` runs as a build step of
+`configDir`, which the systemd service already depends on. Any `nixos-rebuild switch` or
+`nix build .#nixosConfigurations.<host>.config.system.build.toplevel` will fail fast if the assembled config is invalid,
+without needing any extra wiring.
 
-`system.build.lxc-agent-test` is an alias to `configDir` for explicit
-CI or debugging use:
+`system.build.lxc-agent-test` is an alias to `configDir` for explicit CI or debugging use:
 
 ```sh
 nix build .#nixosConfigurations.<host>.config.system.build.lxc-agent-test
@@ -380,33 +370,23 @@ vector test ./lib/vector/conf.d/sources.journald.yaml
 
 ### E — Design rationale
 
-**Why Vector journald source directly, not a syslog forwarder?**
-Vector's native `journald` source reads structured journal data for the
-current boot without an intermediate daemon (no `rsyslog`, no `journalbeat`).
-It preserves all metadata fields and keeps the LXC footprint minimal.
+**Why Vector journald source directly, not a syslog forwarder?** Vector's native `journald` source reads structured
+journal data for the current boot without an intermediate daemon (no `rsyslog`, no `journalbeat`). It preserves all
+metadata fields and keeps the LXC footprint minimal.
 
-**Why Vector native protocol instead of syslog TCP to o11y?**
-Sending pre-parsed SemConv events via the Vector native protocol skips the
-`syslog_to_semconv` transform on the o11y side — parsing happens once, on
-the source LXC. The o11y pipeline still runs `validate_semconv` and
-`add_timestamps` on received events.
+**Why Vector native protocol instead of syslog TCP to o11y?** Sending pre-parsed SemConv events via the Vector native
+protocol skips the `syslog_to_semconv` transform on the o11y side — parsing happens once, on the source LXC. The o11y
+pipeline still runs `validate_semconv` and `add_timestamps` on received events.
 
-**Why one scrape source per job?**
-Vector's `prometheus_scrape` source does not support per-endpoint labels.
-Separate sources allow each job to receive its correct `job` label via a
-dedicated `tag_<job>` remap transform.
+**Why one scrape source per job?** Vector's `prometheus_scrape` source does not support per-endpoint labels. Separate
+sources allow each job to receive its correct `job` label via a dedicated `tag_<job>` remap transform.
 
-**Why a disk buffer for logs but drop-newest for metrics?**
-Log events are immutable and irreplaceable — every event matters, so the log
-sink blocks when the buffer is full. Metric samples are point-in-time and
-replaceable; dropping the newest is acceptable and prevents backpressure from
-stalling the log pipeline.
+**Why a disk buffer for logs but drop-newest for metrics?** Log events are immutable and irreplaceable — every event
+matters, so the log sink blocks when the buffer is full. Metric samples are point-in-time and replaceable; dropping the
+newest is acceptable and prevents backpressure from stalling the log pipeline.
 
-**Why a custom `axnic.infra.kind` instead of an OTel attribute?**
-OTel SemConv identifies *which* entity emits telemetry (`host.name` for a
-host, `k8s.cluster.name` for a cluster) but has no canonical attribute for the
-*category* of source (LXC vs VM vs bare-metal vs k8s). `host.type` exists but
-officially means "cloud instance type", so reusing it would be a semantic
-abuse. SemConv's rule for this case is to define a custom attribute under your
-own namespace — hence `axnic.*`, kept clear of the reserved OTel namespaces so
-it never collides with a future standard key.
+**Why a custom `axnic.infra.kind` instead of an OTel attribute?** OTel SemConv identifies _which_ entity emits telemetry
+(`host.name` for a host, `k8s.cluster.name` for a cluster) but has no canonical attribute for the _category_ of source
+(LXC vs VM vs bare-metal vs k8s). `host.type` exists but officially means "cloud instance type", so reusing it would be
+a semantic abuse. SemConv's rule for this case is to define a custom attribute under your own namespace — hence
+`axnic.*`, kept clear of the reserved OTel namespaces so it never collides with a future standard key.

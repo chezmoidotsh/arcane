@@ -11,122 +11,125 @@ informed: []
 
 ## Table of Contents
 
-* [Context and Problem Statement](#context-and-problem-statement)
-* [Decision Drivers](#decision-drivers)
-  * [Functional Requirements](#functional-requirements)
-  * [Non-Functional Requirements](#non-functional-requirements)
-  * [Constraints](#constraints)
-* [Considered Options](#considered-options)
-  * [Application Directory Naming](#application-directory-naming)
-  * [Label Schema](#label-schema)
-  * [HTTPRoute Naming](#httproute-naming)
-* [Decision Outcome](#decision-outcome)
-* [Implementation Details / Status](#implementation-details--status)
-  * [Standards Specification](#standards-specification)
-  * [1. Directory Structure](#1-directory-structure)
-    * [1.1 Application Directory Naming](#11-application-directory-naming)
-    * [1.2 Application Structure](#12-application-structure)
-  * [2. File Naming Conventions](#2-file-naming-conventions)
-    * [2.1 Resource Files](#21-resource-files)
-    * [2.2 Helmvalues Directory](#22-helmvalues-directory)
-    * [2.3 Network Policies](#23-network-policies)
-    * [2.4 Reference Grants](#24-reference-grants)
-  * [3. Kubernetes Labels](#3-kubernetes-labels)
-    * [3.1 Standard Labels (Application Level)](#31-standard-labels-application-level)
-    * [3.2 Workload-Specific Labels](#32-workload-specific-labels)
-    * [3.3 Label Guidelines](#33-label-guidelines)
-  * [4. Container Image Management](#4-container-image-management)
-    * [4.1 Centralized Image Configuration](#41-centralized-image-configuration)
-    * [4.2 Image Reference Pattern](#42-image-reference-pattern)
-    * [4.3 Image Configuration Examples](#43-image-configuration-examples)
-    * [4.4 Image Update Workflow](#44-image-update-workflow)
-    * [4.5 Registry Migration](#45-registry-migration)
-    * [4.6 Security Best Practices](#46-security-best-practices)
-    * [4.7 Helm Chart Image Override](#47-helm-chart-image-override)
-    * [4.8 Exception Cases](#48-exception-cases)
-  * [5. Kubernetes Annotations](#5-kubernetes-annotations)
-    * [5.1 HTTPRoute Annotations](#51-httproute-annotations)
-    * [5.2 Other Standard Annotations](#52-other-standard-annotations)
-  * [6. Resource Naming Standards](#6-resource-naming-standards)
-    * [6.1 HTTPRoute Naming](#61-httproute-naming)
-    * [6.2 PostgreSQL Database Naming](#62-postgresql-database-naming)
-    * [6.3 Secret Naming](#63-secret-naming)
-    * [6.4 Service Naming](#64-service-naming)
-  * [7. Kustomization Structure](#7-kustomization-structure)
-    * [7.1 Standard Kustomization](#71-standard-kustomization)
-    * [7.2 Helm-Based Kustomization](#72-helm-based-kustomization)
-    * [7.3 Component-Based Kustomization](#73-component-based-kustomization)
-  * [8. Security Directory Structure](#8-security-directory-structure)
-    * [8.1 Standard Structure](#81-standard-structure)
-    * [8.2 Security Kustomization](#82-security-kustomization)
-  * [9. Secret Management](#9-secret-management)
-    * [9.1 OpenBao Path Structure](#91-openbao-path-structure)
-    * [9.2 ExternalSecret Configuration](#92-externalsecret-configuration)
-    * [9.3 Database Secret Pattern](#93-database-secret-pattern)
-  * [10. Database Management](#10-database-management)
-    * [10.1 CloudNative-PG Cluster](#101-cloudnative-pg-cluster)
-    * [10.2 Database Backup Configuration](#102-database-backup-configuration)
-    * [10.3 Object Storage Configuration](#103-object-storage-configuration)
-  * [11. Namespace Management](#11-namespace-management)
-    * [11.1 Namespace Creation](#111-namespace-creation)
-  * [12. Project Structure Patterns](#12-project-structure-patterns)
-    * [12.1 Core Platform Cluster (amiya.akn pattern)](#121-core-platform-cluster-amiyaakn-pattern)
-    * [12.2 Application Cluster (lungmen.akn pattern)](#122-application-cluster-lungmenakn-pattern)
-    * [12.3 Shared Infrastructure (chezmoi.sh pattern)](#123-shared-infrastructure-chezmoish-pattern)
-  * [Validation and Compliance](#validation-and-compliance)
-  * [Automated Validation (Future)](#automated-validation-future)
-  * [Manual Review Checklist](#manual-review-checklist)
-  * [Sync Policy Decision Matrix](#sync-policy-decision-matrix)
-* [References and Related Decisions](#references-and-related-decisions)
-  * [Internal Documentation](#internal-documentation)
-  * [Kubernetes Standards](#kubernetes-standards)
-  * [ArgoCD Integration](#argocd-integration)
-  * [Dependency Management](#dependency-management)
-* [Changelog](#changelog)
+- [Context and Problem Statement](#context-and-problem-statement)
+- [Decision Drivers](#decision-drivers)
+  - [Functional Requirements](#functional-requirements)
+  - [Non-Functional Requirements](#non-functional-requirements)
+  - [Constraints](#constraints)
+- [Considered Options](#considered-options)
+  - [Application Directory Naming](#application-directory-naming)
+  - [Label Schema](#label-schema)
+  - [HTTPRoute Naming](#httproute-naming)
+- [Decision Outcome](#decision-outcome)
+- [Implementation Details / Status](#implementation-details--status)
+  - [Standards Specification](#standards-specification)
+  - [1. Directory Structure](#1-directory-structure)
+    - [1.1 Application Directory Naming](#11-application-directory-naming)
+    - [1.2 Application Structure](#12-application-structure)
+  - [2. File Naming Conventions](#2-file-naming-conventions)
+    - [2.1 Resource Files](#21-resource-files)
+    - [2.2 Helmvalues Directory](#22-helmvalues-directory)
+    - [2.3 Network Policies](#23-network-policies)
+    - [2.4 Reference Grants](#24-reference-grants)
+  - [3. Kubernetes Labels](#3-kubernetes-labels)
+    - [3.1 Standard Labels (Application Level)](#31-standard-labels-application-level)
+    - [3.2 Workload-Specific Labels](#32-workload-specific-labels)
+    - [3.3 Label Guidelines](#33-label-guidelines)
+  - [4. Container Image Management](#4-container-image-management)
+    - [4.1 Centralized Image Configuration](#41-centralized-image-configuration)
+    - [4.2 Image Reference Pattern](#42-image-reference-pattern)
+    - [4.3 Image Configuration Examples](#43-image-configuration-examples)
+    - [4.4 Image Update Workflow](#44-image-update-workflow)
+    - [4.5 Registry Migration](#45-registry-migration)
+    - [4.6 Security Best Practices](#46-security-best-practices)
+    - [4.7 Helm Chart Image Override](#47-helm-chart-image-override)
+    - [4.8 Exception Cases](#48-exception-cases)
+  - [5. Kubernetes Annotations](#5-kubernetes-annotations)
+    - [5.1 HTTPRoute Annotations](#51-httproute-annotations)
+    - [5.2 Other Standard Annotations](#52-other-standard-annotations)
+  - [6. Resource Naming Standards](#6-resource-naming-standards)
+    - [6.1 HTTPRoute Naming](#61-httproute-naming)
+    - [6.2 PostgreSQL Database Naming](#62-postgresql-database-naming)
+    - [6.3 Secret Naming](#63-secret-naming)
+    - [6.4 Service Naming](#64-service-naming)
+  - [7. Kustomization Structure](#7-kustomization-structure)
+    - [7.1 Standard Kustomization](#71-standard-kustomization)
+    - [7.2 Helm-Based Kustomization](#72-helm-based-kustomization)
+    - [7.3 Component-Based Kustomization](#73-component-based-kustomization)
+  - [8. Security Directory Structure](#8-security-directory-structure)
+    - [8.1 Standard Structure](#81-standard-structure)
+    - [8.2 Security Kustomization](#82-security-kustomization)
+  - [9. Secret Management](#9-secret-management)
+    - [9.1 OpenBao Path Structure](#91-openbao-path-structure)
+    - [9.2 ExternalSecret Configuration](#92-externalsecret-configuration)
+    - [9.3 Database Secret Pattern](#93-database-secret-pattern)
+  - [10. Database Management](#10-database-management)
+    - [10.1 CloudNative-PG Cluster](#101-cloudnative-pg-cluster)
+    - [10.2 Database Backup Configuration](#102-database-backup-configuration)
+    - [10.3 Object Storage Configuration](#103-object-storage-configuration)
+  - [11. Namespace Management](#11-namespace-management)
+    - [11.1 Namespace Creation](#111-namespace-creation)
+  - [12. Project Structure Patterns](#12-project-structure-patterns)
+    - [12.1 Core Platform Cluster (amiya.akn pattern)](#121-core-platform-cluster-amiyaakn-pattern)
+    - [12.2 Application Cluster (lungmen.akn pattern)](#122-application-cluster-lungmenakn-pattern)
+    - [12.3 Shared Infrastructure (chezmoi.sh pattern)](#123-shared-infrastructure-chezmoish-pattern)
+  - [Validation and Compliance](#validation-and-compliance)
+  - [Automated Validation (Future)](#automated-validation-future)
+  - [Manual Review Checklist](#manual-review-checklist)
+  - [Sync Policy Decision Matrix](#sync-policy-decision-matrix)
+- [References and Related Decisions](#references-and-related-decisions)
+  - [Internal Documentation](#internal-documentation)
+  - [Kubernetes Standards](#kubernetes-standards)
+  - [ArgoCD Integration](#argocd-integration)
+  - [Dependency Management](#dependency-management)
+- [Changelog](#changelog)
 
 ## Context and Problem Statement
 
-The Arcane infrastructure has evolved through multiple clusters and applications, with three primary project types now in production or active development:
+The Arcane infrastructure has evolved through multiple clusters and applications, with three primary project types now
+in production or active development:
 
 1. **amiya.akn**: Core platform cluster (Production) - Talos Linux + ArgoCD
 2. **lungmen.akn**: Home applications cluster (Active development) - Talos Linux + ArgoCD
 3. **chezmoi.sh**: Shared infrastructure resources (Crossplane providers)
 
-During an audit of these projects, significant inconsistencies were identified across application structures, naming conventions, Kubernetes labels, resource organization, and file naming patterns. These inconsistencies create:
+During an audit of these projects, significant inconsistencies were identified across application structures, naming
+conventions, Kubernetes labels, resource organization, and file naming patterns. These inconsistencies create:
 
-* **Maintenance overhead**: Different patterns require context switching between projects
-* **Onboarding friction**: No single source of truth for "correct" structure
-* **Tooling complexity**: Scripts and automation must handle multiple patterns
-* **Migration risks**: Unclear standards make cluster migrations error-prone
+- **Maintenance overhead**: Different patterns require context switching between projects
+- **Onboarding friction**: No single source of truth for "correct" structure
+- **Tooling complexity**: Scripts and automation must handle multiple patterns
+- **Migration risks**: Unclear standards make cluster migrations error-prone
 
-Without standardized conventions, each new application or cluster deployment becomes a decision point, increasing cognitive load and reducing operational velocity.
+Without standardized conventions, each new application or cluster deployment becomes a decision point, increasing
+cognitive load and reducing operational velocity.
 
 ## Decision Drivers
 
 ### Functional Requirements
 
-* **Consistency**: Same pattern across all clusters and applications
-* **ArgoCD Integration**: Support App-of-Apps pattern and GitOps workflows
-* **Discoverability**: Clear structure enables quick location of resources
-* **Version Tracking**: Automated dependency updates via Renovate
-* **Security Isolation**: Network policies and secret management
-* **Sync Control**: Clear mechanism for manual vs automated sync
+- **Consistency**: Same pattern across all clusters and applications
+- **ArgoCD Integration**: Support App-of-Apps pattern and GitOps workflows
+- **Discoverability**: Clear structure enables quick location of resources
+- **Version Tracking**: Automated dependency updates via Renovate
+- **Security Isolation**: Network policies and secret management
+- **Sync Control**: Clear mechanism for manual vs automated sync
 
 ### Non-Functional Requirements
 
-* **Maintainability**: Reduce cognitive overhead for single-operator homelab
-* **Tooling Support**: Enable automation and scripting
-* **Migration Friendliness**: Clear path to standardize existing projects
-* **Scalability**: Support growth without restructuring
-* **Safety**: Protect critical infrastructure from accidental automation
+- **Maintainability**: Reduce cognitive overhead for single-operator homelab
+- **Tooling Support**: Enable automation and scripting
+- **Migration Friendliness**: Clear path to standardize existing projects
+- **Scalability**: Support growth without restructuring
+- **Safety**: Protect critical infrastructure from accidental automation
 
 ### Constraints
 
-* **ArgoCD Ecosystem**: Must work within ArgoCD's capabilities and patterns
-* **Kustomize Integration**: Leverage Kustomize for resource management
-* **Helm Support**: Support Helm charts with values overlays
-* **Existing Infrastructure**: Must migrate gracefully from current state
-* **ApplicationSet Limitations**: Limited control flow in templating
+- **ArgoCD Ecosystem**: Must work within ArgoCD's capabilities and patterns
+- **Kustomize Integration**: Leverage Kustomize for resource management
+- **Helm Support**: Support Helm charts with values overlays
+- **Existing Infrastructure**: Must migrate gracefully from current state
+- **ApplicationSet Limitations**: Limited control flow in templating
 
 ## Considered Options
 
@@ -134,9 +137,8 @@ Without standardized conventions, each new application or cluster deployment bec
 
 **Option 1.1: Asterisk Prefix for Manual-Sync Apps** ~~(Current amiya.akn pattern)~~ (DEPRECATED)
 
-> \[!CAUTION]
-> **DEPRECATED**: This option has been superseded by Option 1.4 (`.application.patch` files).
-> The asterisk prefix approach is no longer recommended and should be migrated to the new pattern.
+> \[!CAUTION] **DEPRECATED**: This option has been superseded by Option 1.4 (`.application.patch` files). The asterisk
+> prefix approach is no longer recommended and should be migrated to the new pattern.
 
 ```
 projects/amiya.akn/src/apps/
@@ -148,8 +150,8 @@ projects/amiya.akn/src/apps/
 
 **Mechanism**: ArgoCD ApplicationSet template patch uses `hasPrefix "*"` to determine sync policy.
 
-* **Pros**: Clear visual indicator, functional mechanism
-* **Cons**: Non-standard filesystem naming, limited extensibility, binary control only
+- **Pros**: Clear visual indicator, functional mechanism
+- **Cons**: Non-standard filesystem naming, limited extensibility, binary control only
 
 **Option 1.2: No Prefix with Metadata Labels**
 
@@ -163,8 +165,8 @@ projects/lungmen.akn/src/apps/
 
 Sync policy controlled through Application-level annotations or labels.
 
-* **Pros**: Clean filesystem listing, standard Kubernetes naming
-* **Cons**: Requires additional metadata, less obvious sync behavior, harder to implement in ApplicationSets
+- **Pros**: Clean filesystem listing, standard Kubernetes naming
+- **Cons**: Requires additional metadata, less obvious sync behavior, harder to implement in ApplicationSets
 
 **Option 1.3: Separate Directories by Sync Policy**
 
@@ -178,8 +180,8 @@ projects/cluster/src/
     └── home-dashboard/
 ```
 
-* **Pros**: Complete separation, very explicit
-* **Cons**: Breaks single `apps/` pattern, harder to reorganize, duplicate ApplicationSet logic
+- **Pros**: Complete separation, very explicit
+- **Cons**: Breaks single `apps/` pattern, harder to reorganize, duplicate ApplicationSet logic
 
 **Option 1.4: ApplicationPatch Files** (NEW - Recommended)
 
@@ -197,7 +199,8 @@ projects/lungmen.akn/src/infrastructure/kubernetes/
     └── ...
 ```
 
-**Mechanism**: Each application directory contains an optional `.application.patch` file that defines sync policy and application metadata using a custom CRD:
+**Mechanism**: Each application directory contains an optional `.application.patch` file that defines sync policy and
+application metadata using a custom CRD:
 
 ```yaml
 apiVersion: arcane.chezmoi.sh/v1alpha1
@@ -218,36 +221,37 @@ spec:
 
   syncPolicy:
     automated:
-      enabled: true      # true = auto sync, false = manual sync
-      prune: true        # Optional, defaults based on enabled
-      selfHeal: true     # Optional, defaults based on enabled
+      enabled: true # true = auto sync, false = manual sync
+      prune: true # Optional, defaults based on enabled
+      selfHeal: true # Optional, defaults based on enabled
 ```
 
 **ArgoCD ApplicationSet Integration**:
 
-The ApplicationSet reads `.application.patch` files and merges their configuration into the generated Application resources, allowing granular per-application control.
+The ApplicationSet reads `.application.patch` files and merges their configuration into the generated Application
+resources, allowing granular per-application control.
 
-* **Pros**:
-  * Standard filesystem naming (no special characters)
-  * Granular sync control (not just binary on/off)
-  * Rich metadata support (descriptions, categories, versions)
-  * Renovate integration for version tracking
-  * Extensible for future requirements
-  * Clear separation of concerns
-* **Cons**:
-  * Requires additional file per application
-  * Slightly more complex than asterisk prefix
+- **Pros**:
+  - Standard filesystem naming (no special characters)
+  - Granular sync control (not just binary on/off)
+  - Rich metadata support (descriptions, categories, versions)
+  - Renovate integration for version tracking
+  - Extensible for future requirements
+  - Clear separation of concerns
+- **Cons**:
+  - Requires additional file per application
+  - Slightly more complex than asterisk prefix
 
 **Chosen Option**: **Option 1.4 - ApplicationPatch Files** ✅
 
 **Rationale**:
 
-* Clean, standard filesystem naming without special characters
-* Granular control over sync policies beyond binary manual/auto
-* Rich metadata support improves ArgoCD UI experience
-* Native Renovate integration for version tracking
-* Extensible architecture for future requirements
-* Clear separation between application code and ArgoCD configuration
+- Clean, standard filesystem naming without special characters
+- Granular control over sync policies beyond binary manual/auto
+- Rich metadata support improves ArgoCD UI experience
+- Native Renovate integration for version tracking
+- Extensible architecture for future requirements
+- Clear separation between application code and ArgoCD configuration
 
 ### Label Schema
 
@@ -265,8 +269,8 @@ labels:
     includeTemplates: true
 ```
 
-* **Pros**: Simple, explicit version tracking for Renovate
-* **Cons**: Missing recommended Kubernetes labels
+- **Pros**: Simple, explicit version tracking for Renovate
+- **Cons**: Missing recommended Kubernetes labels
 
 **Option 2.2: Redundant Labels** (Current lungmen.akn pattern)
 
@@ -282,8 +286,8 @@ labels:
     includeSelectors: true
 ```
 
-* **Pros**: More complete label set
-* **Cons**: No version tracking, redundant `part-of` (same as name)
+- **Pros**: More complete label set
+- **Cons**: No version tracking, redundant `part-of` (same as name)
 
 **Option 2.3: Minimal Standard Labels** (Recommended)
 
@@ -299,19 +303,19 @@ labels:
     includeTemplates: true
 ```
 
-* **Pros**: Clean, focused on application-level metadata, Renovate support, avoids selector conflicts
-* **Cons**: Instance/component labels must be managed per-workload
+- **Pros**: Clean, focused on application-level metadata, Renovate support, avoids selector conflicts
+- **Cons**: Instance/component labels must be managed per-workload
 
 **Chosen Option**: **Option 2.3 - Minimal Standard Labels** ✅
 
 **Rationale**:
 
-* Application-level labels (name, version) belong in kustomization.yaml
-* Workload-level labels (instance, component) belong in individual manifests
-* Avoids selector/label conflicts with Helm charts and workload-specific configurations
-* Enables better resource filtering and organization
-* Supports Renovate automated updates
-* Clear component classification (application, database, storage)
+- Application-level labels (name, version) belong in kustomization.yaml
+- Workload-level labels (instance, component) belong in individual manifests
+- Avoids selector/label conflicts with Helm charts and workload-specific configurations
+- Enables better resource filtering and organization
+- Supports Renovate automated updates
+- Clear component classification (application, database, storage)
 
 ### HTTPRoute Naming
 
@@ -322,8 +326,8 @@ metadata:
   name: pocket-id
 ```
 
-* **Pros**: Clean, matches service name
-* **Cons**: Potential conflicts with other route types
+- **Pros**: Clean, matches service name
+- **Cons**: Potential conflicts with other route types
 
 **Option 3.2: Suffixed Name** (Current lungmen.akn pattern)
 
@@ -332,26 +336,26 @@ metadata:
   name: atuin-websecure
 ```
 
-* **Pros**: Explicit protocol indication
-* **Cons**: Redundant when only one route exists
+- **Pros**: Explicit protocol indication
+- **Cons**: Redundant when only one route exists
 
 **Option 3.3: Context-Aware Naming** (Recommended)
 
-* **Single route**: Use application name (`application-name`)
+- **Single route**: Use application name (`application-name`)
 
-* **Multiple routes**: Use descriptive suffixes (`application-name-public`, `application-name-websecure`)
+- **Multiple routes**: Use descriptive suffixes (`application-name-public`, `application-name-websecure`)
 
-* **Pros**: Minimal verbosity when possible, clear when needed
+- **Pros**: Minimal verbosity when possible, clear when needed
 
-* **Cons**: Requires decision based on context
+- **Cons**: Requires decision based on context
 
 **Chosen Option**: **Option 3.3 - Context-Aware Naming** ✅
 
 **Rationale**:
 
-* Best of both approaches
-* Reduces unnecessary verbosity
-* Provides clarity when multiple routes exist
+- Best of both approaches
+- Reduces unnecessary verbosity
+- Provides clarity when multiple routes exist
 
 ## Decision Outcome
 
@@ -383,9 +387,9 @@ projects/{cluster-name}/src/infrastructure/kubernetes/{component-name}/
 
 Each application directory may contain an optional `.application.patch` file that defines:
 
-* **Sync policy**: Manual vs automated sync, prune, selfHeal settings
-* **Application metadata**: Description, category, version, documentation links
-* **Applies to**: Both user applications (`src/apps/`) and cluster infrastructure (`src/infrastructure/kubernetes/`)
+- **Sync policy**: Manual vs automated sync, prune, selfHeal settings
+- **Application metadata**: Description, category, version, documentation links
+- **Applies to**: Both user applications (`src/apps/`) and cluster infrastructure (`src/infrastructure/kubernetes/`)
 
 **Directory Structure**:
 
@@ -417,51 +421,51 @@ spec:
 
   syncPolicy:
     automated:
-      enabled: true      # true = auto sync, false = manual sync
-      prune: true        # Optional, enable resource pruning
-      selfHeal: true     # Optional, enable drift correction
+      enabled: true # true = auto sync, false = manual sync
+      prune: true # Optional, enable resource pruning
+      selfHeal: true # Optional, enable drift correction
 ```
 
 **Examples - Infrastructure Components**:
 
-* `projects/lungmen.akn/src/infrastructure/kubernetes/cilium/` with `.application.patch` (manual sync for CNI)
-* `projects/lungmen.akn/src/infrastructure/kubernetes/longhorn/` with `.application.patch` (manual sync for storage)
-* `projects/lungmen.akn/src/infrastructure/kubernetes/cloudnative-pg/` with `.application.patch` (auto sync for DB operator)
+- `projects/lungmen.akn/src/infrastructure/kubernetes/cilium/` with `.application.patch` (manual sync for CNI)
+- `projects/lungmen.akn/src/infrastructure/kubernetes/longhorn/` with `.application.patch` (manual sync for storage)
+- `projects/lungmen.akn/src/infrastructure/kubernetes/cloudnative-pg/` with `.application.patch` (auto sync for DB
+  operator)
 
 **Sync Policy Guidelines**:
 
-> \[!WARNING]
-> Applications with `syncPolicy.automated.enabled: false` require manual synchronization.
-> Use this for critical infrastructure where automated changes could cause outages.
+> \[!WARNING] Applications with `syncPolicy.automated.enabled: false` require manual synchronization. Use this for
+> critical infrastructure where automated changes could cause outages.
 
 **Criteria for Manual Sync** (`enabled: false`):
 
-* **Critical user-facing infrastructure**: ArgoCD, Vault, Crossplane, authentication systems
-* **Cluster networking**: CNI (Cilium), DNS automation, service mesh
-* **Storage infrastructure**: CSI drivers (Longhorn), storage classes
-* **Kubernetes core**: Control plane components, kube-system modifications
-* **High-impact changes**: Services where automation could cause cluster-wide outages
+- **Critical user-facing infrastructure**: ArgoCD, Vault, Crossplane, authentication systems
+- **Cluster networking**: CNI (Cilium), DNS automation, service mesh
+- **Storage infrastructure**: CSI drivers (Longhorn), storage classes
+- **Kubernetes core**: Control plane components, kube-system modifications
+- **High-impact changes**: Services where automation could cause cluster-wide outages
 
 **Criteria for Automated Sync** (`enabled: true`):
 
-* **User applications**: Productivity tools, media servers, home automation
-* **Isolated services**: Applications with limited cluster dependencies
-* **Database operators**: CloudNative-PG, Redis operator (if properly configured)
-* **Development workloads**: Non-production testing applications
+- **User applications**: Productivity tools, media servers, home automation
+- **Isolated services**: Applications with limited cluster dependencies
+- **Database operators**: CloudNative-PG, Redis operator (if properly configured)
+- **Development workloads**: Non-production testing applications
 
 **Default Behavior** (no `.application.patch` file):
 
-* Applications without a `.application.patch` file use the ApplicationSet default sync policy
-* Defaults can be configured at the ApplicationSet level
+- Applications without a `.application.patch` file use the ApplicationSet default sync policy
+- Defaults can be configured at the ApplicationSet level
 
 **Rationale**:
 
-* Standard filesystem naming without special characters
-* Granular sync control beyond binary manual/auto
-* Rich metadata improves ArgoCD UI experience
-* Native Renovate integration for version tracking
-* Extensible for future requirements
-* Clear separation between application code and ArgoCD configuration
+- Standard filesystem naming without special characters
+- Granular sync control beyond binary manual/auto
+- Rich metadata improves ArgoCD UI experience
+- Native Renovate integration for version tracking
+- Extensible for future requirements
+- Clear separation between application code and ArgoCD configuration
 
 #### 1.2 Application Structure
 
@@ -488,20 +492,20 @@ spec:
 
 **Examples**:
 
-* `pocket-id.statefulset.yaml`
-* `atuin.deployment.yaml`
-* `argocd.httproute.yaml`
-* `immich.postgresql.yaml`
+- `pocket-id.statefulset.yaml`
+- `atuin.deployment.yaml`
+- `argocd.httproute.yaml`
+- `immich.postgresql.yaml`
 
 **Special Cases**:
 
-* Database backups: `{app}.postgresql-backup.yaml`
-* Object storage: `{app}.postgresql-objectstore.yaml`
-* Configuration: `{app}.configuration.externalsecret.yaml`
+- Database backups: `{app}.postgresql-backup.yaml`
+- Object storage: `{app}.postgresql-objectstore.yaml`
+- Configuration: `{app}.configuration.externalsecret.yaml`
 
 **Exceptions**: When resource has a distinct semantic name:
 
-* `letsencrypt-issuer-credentials.externalsecret.yaml`
+- `letsencrypt-issuer-credentials.externalsecret.yaml`
 
 #### 2.2 Helmvalues Directory
 
@@ -509,17 +513,17 @@ spec:
 
 **Structure**:
 
-* `default.yaml` - Base configuration (REQUIRED)
-* `hardened.yaml` - Security hardening overlay (RECOMMENDED)
-* `extensions.yaml` - Custom CRDs and extensions (OPTIONAL)
-* `addon:{name}.yaml` - Optional feature addons (OPTIONAL)
+- `default.yaml` - Base configuration (REQUIRED)
+- `hardened.yaml` - Security hardening overlay (RECOMMENDED)
+- `extensions.yaml` - Custom CRDs and extensions (OPTIONAL)
+- `addon:{name}.yaml` - Optional feature addons (OPTIONAL)
 
 **Examples**:
 
-* `argocd.helmvalues/default.yaml`
-* `argocd.helmvalues/hardened.yaml`
-* `argocd.helmvalues/addon:crossplane.yaml`
-* `argocd.helmvalues/addon:ksops.yaml`
+- `argocd.helmvalues/default.yaml`
+- `argocd.helmvalues/hardened.yaml`
+- `argocd.helmvalues/addon:crossplane.yaml`
+- `argocd.helmvalues/addon:ksops.yaml`
 
 **Kustomization Integration**:
 
@@ -542,24 +546,24 @@ helmCharts:
 
 **Standard Policies**:
 
-* `network-policy.default-hardened.yaml` - Baseline deny-all (REQUIRED)
+- `network-policy.default-hardened.yaml` - Baseline deny-all (REQUIRED)
 
 **Application Policies**:
 
-* `network-policy.allow-{app}-from-{source}.yaml`
-* `network-policy.allow-{app}-to-{destination}.yaml`
+- `network-policy.allow-{app}-from-{source}.yaml`
+- `network-policy.allow-{app}-to-{destination}.yaml`
 
 **Database Policies**:
 
-* `network-policy.allow-postgres-from-cnpg.yaml`
-* `network-policy.allow-postgres-to-kubernetes-api.yaml`
-* `network-policy.allow-postgres-to-s3-backup.yaml`
+- `network-policy.allow-postgres-from-cnpg.yaml`
+- `network-policy.allow-postgres-to-kubernetes-api.yaml`
+- `network-policy.allow-postgres-to-s3-backup.yaml`
 
 **Examples**:
 
-* `network-policy.allow-pocket-id-from-envoy-gateway.yaml`
-* `network-policy.allow-atuin-from-tailscale.yaml`
-* `network-policy.allow-pocket-id-to-internet.yaml`
+- `network-policy.allow-pocket-id-from-envoy-gateway.yaml`
+- `network-policy.allow-atuin-from-tailscale.yaml`
+- `network-policy.allow-pocket-id-to-internet.yaml`
 
 #### 2.4 Reference Grants
 
@@ -567,8 +571,8 @@ helmCharts:
 
 **Examples**:
 
-* `reference-grant.envoy-gateway-to-pocket-id.yaml`
-* `reference-grant.cloudflare-gateway-to-pocket-id.yaml`
+- `reference-grant.envoy-gateway-to-pocket-id.yaml`
+- `reference-grant.cloudflare-gateway-to-pocket-id.yaml`
 
 ### 3. Kubernetes Labels
 
@@ -579,32 +583,32 @@ helmCharts:
 ```yaml
 labels:
   - pairs:
-      app.kubernetes.io/name: {application-name}
+      app.kubernetes.io/name: { application-name }
     includeTemplates: true
     includeSelectors: true
   - pairs:
       # renovate: datasource={source} depName={package}
-      app.kubernetes.io/version: {version}
+      app.kubernetes.io/version: { version }
     includeTemplates: true
 ```
 
-> \[!WARNING]
-> **Do NOT include `app.kubernetes.io/instance` or `app.kubernetes.io/component` in kustomization.yaml labels**
+> \[!WARNING] **Do NOT include `app.kubernetes.io/instance` or `app.kubernetes.io/component` in kustomization.yaml
+> labels**
 >
 > These labels are workload-specific and cause conflicts when applied globally via Kustomize:
 >
-> * `instance`: Different workloads (deployment, database, redis) have different instance names
-> * `component`: Each workload has its own component type (application, database, cache, etc.)
-> * Kustomize's `includeSelectors: true` adds these to Deployment selectors, causing mismatches
-> * Helm charts and existing manifests define their own instance/component labels
+> - `instance`: Different workloads (deployment, database, redis) have different instance names
+> - `component`: Each workload has its own component type (application, database, cache, etc.)
+> - Kustomize's `includeSelectors: true` adds these to Deployment selectors, causing mismatches
+> - Helm charts and existing manifests define their own instance/component labels
 >
 > Instead, define these labels directly in individual resource manifests for each workload.
 
 **Renovate Sources**:
 
-* `datasource=helm depName=repo/chart` - Helm charts
-* `datasource=github-release depName=owner/repo` - GitHub releases
-* `datasource=docker depName=registry/image` - Container images
+- `datasource=helm depName=repo/chart` - Helm charts
+- `datasource=github-release depName=owner/repo` - GitHub releases
+- `datasource=docker depName=registry/image` - Container images
 
 #### 3.2 Workload-Specific Labels
 
@@ -615,22 +619,22 @@ Each Deployment, StatefulSet, Service, or other workload should define its own c
 ```yaml
 # Example: main application deployment
 metadata:
-  name: {application-name}
+  name: { application-name }
   labels:
-    app.kubernetes.io/name: {application-name}
-    app.kubernetes.io/instance: {application-name}
+    app.kubernetes.io/name: { application-name }
+    app.kubernetes.io/instance: { application-name }
     app.kubernetes.io/component: application
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: {application-name}
-      app.kubernetes.io/instance: {application-name}
+      app.kubernetes.io/name: { application-name }
+      app.kubernetes.io/instance: { application-name }
       app.kubernetes.io/component: application
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {application-name}
-        app.kubernetes.io/instance: {application-name}
+        app.kubernetes.io/name: { application-name }
+        app.kubernetes.io/instance: { application-name }
         app.kubernetes.io/component: application
 ```
 
@@ -682,35 +686,36 @@ metadata:
 
 **In kustomization.yaml** (application-wide):
 
-* **app.kubernetes.io/name**: Application identifier (REQUIRED)
-* **app.kubernetes.io/version**: Version for dependency tracking (REQUIRED for Renovate)
+- **app.kubernetes.io/name**: Application identifier (REQUIRED)
+- **app.kubernetes.io/version**: Version for dependency tracking (REQUIRED for Renovate)
 
 **In individual workload manifests** (per-resource):
 
-* **app.kubernetes.io/name**: Same application identifier (REQUIRED)
-* **app.kubernetes.io/instance**: Unique workload instance name (REQUIRED)
-* **app.kubernetes.io/component**: Workload type - `application`, `database`, `redis`, `storage`, etc. (REQUIRED)
-* **app.kubernetes.io/part-of**: Multi-app grouping (OPTIONAL - only when truly part of larger system)
+- **app.kubernetes.io/name**: Same application identifier (REQUIRED)
+- **app.kubernetes.io/instance**: Unique workload instance name (REQUIRED)
+- **app.kubernetes.io/component**: Workload type - `application`, `database`, `redis`, `storage`, etc. (REQUIRED)
+- **app.kubernetes.io/part-of**: Multi-app grouping (OPTIONAL - only when truly part of larger system)
 
 **Do NOT use**:
 
-* `app.kubernetes.io/instance` in kustomization.yaml (workload-specific)
-* `app.kubernetes.io/component` in kustomization.yaml (workload-specific)
-* `app.kubernetes.io/part-of: {application-name}` when `part-of` equals `name` (redundant)
+- `app.kubernetes.io/instance` in kustomization.yaml (workload-specific)
+- `app.kubernetes.io/component` in kustomization.yaml (workload-specific)
+- `app.kubernetes.io/part-of: {application-name}` when `part-of` equals `name` (redundant)
 
 ### 4. Container Image Management
 
 #### 4.1 Centralized Image Configuration
 
-**Standard**: All container images MUST be defined in `kustomization.yaml` using the `images` field, not in individual resource manifests.
+**Standard**: All container images MUST be defined in `kustomization.yaml` using the `images` field, not in individual
+resource manifests.
 
 **Rationale**:
 
-* **Centralization**: Single source of truth for all images
-* **Version Control**: Easy version updates without touching manifests
-* **Registry Management**: Simple registry migration (e.g., docker.io → internal registry)
-* **Digest Pinning**: Centralized SHA256 digest management for security
-* **Renovate Integration**: Automated image updates via Kustomize transformer
+- **Centralization**: Single source of truth for all images
+- **Version Control**: Easy version updates without touching manifests
+- **Registry Management**: Simple registry migration (e.g., docker.io → internal registry)
+- **Digest Pinning**: Centralized SHA256 digest management for security
+- **Renovate Integration**: Automated image updates via Kustomize transformer
 
 #### 4.2 Image Reference Pattern
 
@@ -732,7 +737,8 @@ spec:
       image: {registry}/{image}  # No tag/digest - managed by Kustomize
 ```
 
-**Kustomize Transformation**: The `images` field transforms all matching image references, replacing tags and digests centrally.
+**Kustomize Transformation**: The `images` field transforms all matching image references, replacing tags and digests
+centrally.
 
 #### 4.3 Image Configuration Examples
 
@@ -847,10 +853,10 @@ images:
 
 **Benefits**:
 
-* Immutable image references
-* Protection against tag mutation attacks
-* Reproducible deployments
-* Clear audit trail
+- Immutable image references
+- Protection against tag mutation attacks
+- Reproducible deployments
+- Clear audit trail
 
 **Tag-Only** (acceptable for development):
 
@@ -903,7 +909,8 @@ images:
 
 **Helm Charts with Embedded Images**:
 
-When using Helm charts that manage images internally (like ArgoCD, Crossplane), image management remains in Helm values to preserve chart compatibility.
+When using Helm charts that manage images internally (like ArgoCD, Crossplane), image management remains in Helm values
+to preserve chart compatibility.
 
 ```yaml
 # argocd.helmvalues/default.yaml
@@ -929,8 +936,8 @@ metadata:
 
 **Purpose**:
 
-* `external-dns.alpha.kubernetes.io/include-unifi`: Enable UniFi DNS integration
-* `link.argocd.argoproj.io/external-link`: Provide direct access link in ArgoCD UI
+- `external-dns.alpha.kubernetes.io/include-unifi`: Enable UniFi DNS integration
+- `link.argocd.argoproj.io/external-link`: Provide direct access link in ArgoCD UI
 
 #### 5.2 Other Standard Annotations
 
@@ -958,7 +965,7 @@ metadata:
 
 ```yaml
 metadata:
-  name: {application-name}
+  name: { application-name }
 ```
 
 **Multiple Routes**:
@@ -970,9 +977,9 @@ metadata:
 
 **Examples**:
 
-* `pocket-id` - Single route for private access
-* `pocket-id-public` - Public route variant
-* `atuin-websecure` - HTTPS route (when distinguishing from HTTP)
+- `pocket-id` - Single route for private access
+- `pocket-id-public` - Public route variant
+- `atuin-websecure` - HTTPS route (when distinguishing from HTTP)
 
 #### 6.2 PostgreSQL Database Naming
 
@@ -996,14 +1003,14 @@ metadata:
 
 **Examples**:
 
-* `pocket-id-database-pocket-id` (application role)
-* `atuin-database-atuin` (application role)
+- `pocket-id-database-pocket-id` (application role)
+- `atuin-database-atuin` (application role)
 
 **ExternalSecret Naming**: Match target secret name
 
 ```yaml
 metadata:
-  name: pocket-id-database-pocket-id  # Matches generated secret
+  name: pocket-id-database-pocket-id # Matches generated secret
 ```
 
 #### 6.4 Service Naming
@@ -1012,9 +1019,9 @@ metadata:
 
 **Database Services** (CloudNative-PG generated):
 
-* `{application-name}-database-rw` (read-write service)
-* `{application-name}-database-ro` (read-only service)
-* `{application-name}-database-r` (read service)
+- `{application-name}-database-rw` (read-write service)
+- `{application-name}-database-ro` (read-only service)
+- `{application-name}-database-r` (read service)
 
 ### 7. Kustomization Structure
 
@@ -1084,14 +1091,14 @@ kind: Component
 
 **When to Use**:
 
-* Reusable infrastructure patterns
-* Shared component libraries
-* Multi-cluster deployments
+- Reusable infrastructure patterns
+- Shared component libraries
+- Multi-cluster deployments
 
 **When NOT to Use**:
 
-* Standard applications
-* Cluster-specific resources
+- Standard applications
+- Cluster-specific resources
 
 ### 8. Security Directory Structure
 
@@ -1135,16 +1142,16 @@ resources:
 
 **Examples**:
 
-* `amiya.akn/pocket-id/database/postgresql`
-* `lungmen.akn/atuin/auth/oidc-client`
-* `amiya.akn/argocd/auth/github-oauth`
+- `amiya.akn/pocket-id/database/postgresql`
+- `lungmen.akn/atuin/auth/oidc-client`
+- `amiya.akn/argocd/auth/github-oauth`
 
 **Categories**:
 
-* `database/` - Database credentials
-* `auth/` - Authentication secrets (OIDC, OAuth, JWT)
-* `api-keys/` - Third-party API tokens
-* `certificates/` - Application-specific TLS certificates
+- `database/` - Database credentials
+- `auth/` - Authentication secrets (OIDC, OAuth, JWT)
+- `api-keys/` - Third-party API tokens
+- `certificates/` - Application-specific TLS certificates
 
 **Reference**: See [ADR-003: OpenBao Path Naming Conventions](./003-openbao-path-naming-conventions.md)
 
@@ -1175,9 +1182,9 @@ spec:
 
 **Refresh Intervals**:
 
-* Production critical: `5m`
-* Standard applications: `1h`
-* Non-critical: `6h`
+- Production critical: `5m`
+- Standard applications: `1h`
+- Non-critical: `6h`
 
 #### 9.3 Database Secret Pattern
 
@@ -1274,13 +1281,13 @@ spec:
 
 **ArgoCD-Managed Applications**:
 
-* **No explicit namespace.yaml file**
-* ArgoCD creates namespace via Application CR:
+- **No explicit namespace.yaml file**
+- ArgoCD creates namespace via Application CR:
 
 ```yaml
 spec:
   destination:
-    namespace: {namespace-name}
+    namespace: { namespace-name }
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
@@ -1288,10 +1295,10 @@ spec:
 
 **Infrastructure Components**:
 
-* **Explicit namespace.yaml when**:
-  * Namespace requires specific labels or annotations
-  * Namespace configuration is complex
-  * Namespace is shared across multiple applications
+- **Explicit namespace.yaml when**:
+  - Namespace requires specific labels or annotations
+  - Namespace configuration is complex
+  - Namespace is shared across multiple applications
 
 **Example**:
 
@@ -1300,9 +1307,9 @@ spec:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: {namespace-name}
+  name: { namespace-name }
   labels:
-    app.kubernetes.io/name: {namespace-name}
+    app.kubernetes.io/name: { namespace-name }
 ```
 
 ### 12. Project Structure Patterns
@@ -1433,75 +1440,86 @@ projects/chezmoi.sh/
 
 **Implementation**:
 
-* Pre-commit hooks for file naming
-* CI/CD pipeline for structure validation
-* ArgoCD health checks for deployed resources
+- Pre-commit hooks for file naming
+- CI/CD pipeline for structure validation
+- ArgoCD health checks for deployed resources
 
 ### Manual Review Checklist
 
 For each new application:
 
-* [ ] Directory name follows lowercase-hyphen pattern (no special characters)
-* [ ] `.application.patch` file present with sync policy defined
-* [ ] kustomization.yaml includes namespace, standard labels
-* [ ] Version label includes Renovate comment
-* [ ] Files follow `{app}.{resource}.yaml` pattern
-* [ ] Security directory exists with standard policies
-* [ ] HTTPRoute includes required annotations
-* [ ] Database resources use `{app}-database` naming
-* [ ] ExternalSecrets reference correct OpenBao paths
-* [ ] Helmvalues directory (if Helm) follows structure
+- [ ] Directory name follows lowercase-hyphen pattern (no special characters)
+- [ ] `.application.patch` file present with sync policy defined
+- [ ] kustomization.yaml includes namespace, standard labels
+- [ ] Version label includes Renovate comment
+- [ ] Files follow `{app}.{resource}.yaml` pattern
+- [ ] Security directory exists with standard policies
+- [ ] HTTPRoute includes required annotations
+- [ ] Database resources use `{app}-database` naming
+- [ ] ExternalSecrets reference correct OpenBao paths
+- [ ] Helmvalues directory (if Helm) follows structure
 
 ### Sync Policy Decision Matrix
 
 **Use manual sync (`enabled: false`) when**:
 
-* [ ] Application is critical infrastructure (ArgoCD, Vault, Crossplane)
-* [ ] Automated changes could cause cluster-wide outages
-* [ ] Application provides authentication/authorization services
-* [ ] Manual review required for all changes
-* [ ] Application is in early deployment/testing phase
+- [ ] Application is critical infrastructure (ArgoCD, Vault, Crossplane)
+- [ ] Automated changes could cause cluster-wide outages
+- [ ] Application provides authentication/authorization services
+- [ ] Manual review required for all changes
+- [ ] Application is in early deployment/testing phase
 
 **Use automated sync (`enabled: true`) when**:
 
-* [ ] Application is isolated user-facing service
-* [ ] Automated sync/prune is safe
-* [ ] Application has minimal cluster dependencies
-* [ ] Rapid iteration and updates desired
+- [ ] Application is isolated user-facing service
+- [ ] Automated sync/prune is safe
+- [ ] Application has minimal cluster dependencies
+- [ ] Rapid iteration and updates desired
 
 ## References and Related Decisions
 
 ### Internal Documentation
 
-* [ADR-003: OpenBao Path Naming Conventions](./003-openbao-path-naming-conventions.md) - Secret path structure
-* [ADR-004: OpenBao Policy Naming Conventions](./004-openbao-policy-naming-conventions.md) - Policy standards
-* [CLAUDE.md](../../CLAUDE.md) - Repository structure overview
-* [ArgoCD README](../../projects/amiya.akn/src/apps/argocd/README.md) - ArgoCD app structure and sync conventions
-* [Renovate Configuration Guide](../RENOVATE.md) - Automated dependency management with label and image tracking
+- [ADR-003: OpenBao Path Naming Conventions](./003-openbao-path-naming-conventions.md) - Secret path structure
+- [ADR-004: OpenBao Policy Naming Conventions](./004-openbao-policy-naming-conventions.md) - Policy standards
+- [CLAUDE.md](../../CLAUDE.md) - Repository structure overview
+- [ArgoCD README](../../projects/amiya.akn/src/apps/argocd/README.md) - ArgoCD app structure and sync conventions
+- [Renovate Configuration Guide](../RENOVATE.md) - Automated dependency management with label and image tracking
 
 ### Kubernetes Standards
 
-* [Kubernetes Recommended Labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/) - Official label standards
-* [Kubernetes Object Names](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/) - Naming conventions
-* [Kustomize Documentation](https://kubectl.docs.kubernetes.io/references/kustomize/) - Resource management patterns
+- [Kubernetes Recommended Labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/common-labels/) -
+  Official label standards
+- [Kubernetes Object Names](https://kubernetes.io/docs/concepts/overview/working-with-objects/names/) - Naming
+  conventions
+- [Kustomize Documentation](https://kubectl.docs.kubernetes.io/references/kustomize/) - Resource management patterns
 
 ### ArgoCD Integration
 
-* [ArgoCD Best Practices](https://argo-cd.readthedocs.io/en/stable/user-guide/best_practices/) - GitOps patterns
-* [ArgoCD App of Apps Pattern](https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/) - Application organization
-* [ArgoCD Sync Waves](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/) - Ordered deployments
-* [ArgoCD ApplicationSet](https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/) - Dynamic application generation
+- [ArgoCD Best Practices](https://argo-cd.readthedocs.io/en/stable/user-guide/best_practices/) - GitOps patterns
+- [ArgoCD App of Apps Pattern](https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/) -
+  Application organization
+- [ArgoCD Sync Waves](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/) - Ordered deployments
+- [ArgoCD ApplicationSet](https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/) - Dynamic
+  application generation
 
 ### Dependency Management
 
-* [Renovate Configuration](https://docs.renovatebot.com/configuration-options/) - Automated updates
-* [Renovate Kubernetes Manager](https://docs.renovatebot.com/modules/manager/kubernetes/) - Label-based version tracking
+- [Renovate Configuration](https://docs.renovatebot.com/configuration-options/) - Automated updates
+- [Renovate Kubernetes Manager](https://docs.renovatebot.com/modules/manager/kubernetes/) - Label-based version tracking
 
 ## Changelog
 
-* **2026-05-24**: **CHORE**: Renamed `consulted` to `assisted-by` in frontmatter; removed `ai/` prefix from model identifiers.
-* **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.
-* **2026-01-13**: Replaced asterisk prefix mechanism with `.application.patch` files for ArgoCD sync control. This provides granular sync policies, rich metadata support, and standard filesystem naming. Deprecated Option 1.1 in favor of new Option 1.4. Status changed from "proposed" to "accepted".
-* **2025-11-02**: Corrected label placement to address selector/template conflicts - removed `app.kubernetes.io/instance` and `app.kubernetes.io/component` from kustomization.yaml (workload-specific), keeping only `app.kubernetes.io/name` (with `includeSelectors: true`) and `app.kubernetes.io/version` at application level
-* **2025-11-01**: Added Renovate configuration for automated label and image override tracking, including regex managers for `app.kubernetes.io/version` labels and Kustomize `images` field updates
-* **2025-10-31**: Initial ADR creation establishing comprehensive project structure and naming standards across all Arcane infrastructure projects, including asterisk prefix convention for ArgoCD sync control
+- **2026-05-24**: **CHORE**: Renamed `consulted` to `assisted-by` in frontmatter; removed `ai/` prefix from model
+  identifiers.
+- **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.
+- **2026-01-13**: Replaced asterisk prefix mechanism with `.application.patch` files for ArgoCD sync control. This
+  provides granular sync policies, rich metadata support, and standard filesystem naming. Deprecated Option 1.1 in favor
+  of new Option 1.4. Status changed from "proposed" to "accepted".
+- **2025-11-02**: Corrected label placement to address selector/template conflicts - removed
+  `app.kubernetes.io/instance` and `app.kubernetes.io/component` from kustomization.yaml (workload-specific), keeping
+  only `app.kubernetes.io/name` (with `includeSelectors: true`) and `app.kubernetes.io/version` at application level
+- **2025-11-01**: Added Renovate configuration for automated label and image override tracking, including regex managers
+  for `app.kubernetes.io/version` labels and Kustomize `images` field updates
+- **2025-10-31**: Initial ADR creation establishing comprehensive project structure and naming standards across all
+  Arcane infrastructure projects, including asterisk prefix convention for ArgoCD sync control

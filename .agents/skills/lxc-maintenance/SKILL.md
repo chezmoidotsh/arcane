@@ -1,9 +1,8 @@
 ---
 name: lxc-maintenance
 description: >
-  Build, push, and upgrade Proxmox LXC appliances in the chezmoi.sh project.
-  Use when asked to build an LXC image, upload it to Proxmox, upgrade a
-  running container, or add a new LXC appliance using the shared library.
+  Build, push, and upgrade Proxmox LXC appliances in the chezmoi.sh project. Use when asked to build an LXC image,
+  upload it to Proxmox, upgrade a running container, or add a new LXC appliance using the shared library.
 compatibility: Requires mise, nix, sops, scp, and SSH access to a Proxmox host
 ---
 
@@ -11,11 +10,10 @@ compatibility: Requires mise, nix, sops, scp, and SSH access to a Proxmox host
 
 ## Overview
 
-The `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/` directory contains
-five NixOS-based LXC appliances, each built as an immutable tarball and
-upgraded in place: the running container keeps its VMID (and therefore its
-static IP and PBS backup identity) while its rootfs volume is swapped for a
-freshly built one, with a Proxmox snapshot as the rollback path.
+The `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/` directory contains five NixOS-based LXC appliances, each built
+as an immutable tarball and upgraded in place: the running container keeps its VMID (and therefore its static IP and PBS
+backup identity) while its rootfs volume is swapped for a freshly built one, with a Proxmox snapshot as the rollback
+path.
 
 ```text
 lxc/
@@ -67,9 +65,9 @@ mise run lxc:push -- <pve-host>
 
 Where `<pve-host>` is the hostname or IP of the target Proxmox node (e.g. `pve.lan`).
 
-* Computes a SHA-256 of the local template and compares it to the remote copy.
-* Skips the upload if the SHA matches — safe to run repeatedly.
-* Uploads to `/var/lib/vz/template/cache/<name>.<ver>-amd64.tar.xz` on the host.
+- Computes a SHA-256 of the local template and compares it to the remote copy.
+- Skips the upload if the SHA matches — safe to run repeatedly.
+- Uploads to `/var/lib/vz/template/cache/<name>.<ver>-amd64.tar.xz` on the host.
 
 ### Upgrade a running container
 
@@ -93,21 +91,18 @@ The upgrade executes 7 numbered steps with an ANSI progress display:
 | 6    | Health check: verify services are active after 30s warm-up, show e2e hint                                  |
 | 7    | Commit — delete the snapshot and free the old volume (or roll back on failure)                             |
 
-The VMID never changes across an upgrade, so static IP, PBS backup identity,
-and mount point attachments are untouched by the whole process.
+The VMID never changes across an upgrade, so static IP, PBS backup identity, and mount point attachments are untouched
+by the whole process.
 
-**Auto-detection**: if `--vmid` is omitted, the running container is found
-by matching PVE tags or hostname against `LXC_TAGS`.
+**Auto-detection**: if `--vmid` is omitted, the running container is found by matching PVE tags or hostname against
+`LXC_TAGS`.
 
-**Rollback**: the step 6 health check is informational only — it does not
-gate automatically. Answer "N" at step 7 (after reviewing its output) to
-roll back: the CT is stopped, `pct rollback`ed to the pre-upgrade snapshot,
-and restarted, with the orphaned rootfs volume from step 5 freed
-automatically. With `--yes`, step 7 always answers "y" regardless of the
-health check's output — review it yourself before running non-interactively.
-If the script aborts unexpectedly anywhere after the snapshot is taken (a
-remote command failing under `set -e`), an automatic-recovery trap runs the
-same rollback before exiting.
+**Rollback**: the step 6 health check is informational only — it does not gate automatically. Answer "N" at step 7
+(after reviewing its output) to roll back: the CT is stopped, `pct rollback`ed to the pre-upgrade snapshot, and
+restarted, with the orphaned rootfs volume from step 5 freed automatically. With `--yes`, step 7 always answers "y"
+regardless of the health check's output — review it yourself before running non-interactively. If the script aborts
+unexpectedly anywhere after the snapshot is taken (a remote command failing under `set -e`), an automatic-recovery trap
+runs the same rollback before exiting.
 
 ## Shared library reference
 
@@ -125,16 +120,16 @@ The library is at `lxc/.mise/lib/lxc.sh`. Functions:
 
 Must be called first. Sets all globals used by subsequent functions.
 
-* `<name>` — LXC appliance name (e.g. `observability`)
-* `<config_root>` — absolute path to the appliance directory (`$CONFIG_ROOT`)
-* `[tag ...]` — extra PVE tag names for auto-detection (e.g. `_o11y`)
+- `<name>` — LXC appliance name (e.g. `observability`)
+- `<config_root>` — absolute path to the appliance directory (`$CONFIG_ROOT`)
+- `[tag ...]` — extra PVE tag names for auto-detection (e.g. `_o11y`)
 
 Sets: `LXC_NAME`, `LXC_VERSION`, `LXC_TAGS`, `LXC_TEMPLATE`, `LXC_ARTIFACT`, `LXC_REMOTE_PATH`
 
 ### `lxc_secret <sops-file> <KEY> [KEY ...]`
 
-Register required secrets from a SOPS-encrypted `.env` file. Secrets are extracted
-at `lxc_build` time and must all be present (non-empty) or the build fails.
+Register required secrets from a SOPS-encrypted `.env` file. Secrets are extracted at `lxc_build` time and must all be
+present (non-empty) or the build fails.
 
 ```bash
 lxc_secret "secrets/caddy.sops.env" CLOUDFLARE_API_TOKEN TAILSCALE_OAUTH_KEY
@@ -166,9 +161,8 @@ lxc_services "caddy" "vector" "victoriametrics" "lxc-agent"
 
 ### `lxc_mp <mp-id> <subdir> <uid>`
 
-Register a persistent mount point subdirectory, checked for presence during
-pre-flight. Since the upgrade never detaches mount points (same VMID
-throughout), this is a sanity check only — not a re-attachment mechanism.
+Register a persistent mount point subdirectory, checked for presence during pre-flight. Since the upgrade never detaches
+mount points (same VMID throughout), this is a sanity check only — not a re-attachment mechanism.
 
 ```bash
 lxc_mp "mp0" "o11y" 100980    # /persistent/o11y owned by UID 100980
@@ -294,6 +288,7 @@ Run the full upgrade flow. Flags:
 
 ## References
 
-* Shared library: `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh`
-* Existing appliances: `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/`
-* Observability README (full deploy procedure): `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/README.md`
+- Shared library: `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/.mise/lib/lxc.sh`
+- Existing appliances: `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/`
+- Observability README (full deploy procedure):
+  `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/README.md`

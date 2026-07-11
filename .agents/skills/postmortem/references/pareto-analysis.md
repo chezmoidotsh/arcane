@@ -1,7 +1,6 @@
 # Pareto Analysis on Historical Incidents
 
-If this is the third or fourth similar failure, stop analyzing individual incidents and
-analyze the *pattern*.
+If this is the third or fourth similar failure, stop analyzing individual incidents and analyze the _pattern_.
 
 ## How it works
 
@@ -25,12 +24,12 @@ The goal is to find the systemic issue that individual post-mortems keep dancing
 
 ## When to use
 
-* Recurring failures that resist individual post-mortem fixes
-* When leadership asks "why does this keep happening"
-* When the current post-mortem feels like it's covering ground you've seen before
+- Recurring failures that resist individual post-mortem fixes
+- When leadership asks "why does this keep happening"
+- When the current post-mortem feels like it's covering ground you've seen before
 
 ## See also
 
-* `five-whys.md` — once you've identified the dominant category, drill into its root cause
-* `ishikawa.md` — useful for categorizing causes across domains before ranking them
-* `../SKILL.md` — technique selection table and full workflow
+- `five-whys.md` — once you've identified the dominant category, drill into its root cause
+- `ishikawa.md` — useful for categorizing causes across domains before ranking them
+- `../SKILL.md` — technique selection table and full workflow

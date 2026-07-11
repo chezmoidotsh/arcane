@@ -1,17 +1,13 @@
 # `oci.chezmoi.sh` — Zot OCI Registry LXC (Proxmox)
 
-Standalone Proxmox LXC running NixOS + Zot + Caddy. Serves
-`https://oci.chezmoi.sh` as a pull-through cache for every public OCI
-registry the homelab clusters depend on, plus first-party
-`ghcr.io/chezmoidotsh/**` images.
+Standalone Proxmox LXC running NixOS + Zot + Caddy. Serves `https://oci.chezmoi.sh` as a pull-through cache for every
+public OCI registry the homelab clusters depend on, plus first-party `ghcr.io/chezmoidotsh/**` images.
 
-This replaces the legacy `zot-registry` Kubernetes StatefulSet on
-`amiya.akn` and breaks the circular bootstrap dependency that forced
-namespace exceptions in `SEC001:kubernetes.rego`.
+This replaces the legacy `zot-registry` Kubernetes StatefulSet on `amiya.akn` and breaks the circular bootstrap
+dependency that forced namespace exceptions in `SEC001:kubernetes.rego`.
 
-> **Status** — replacement for `projects/amiya.akn/src/apps/zot-registry/`.
-> The K8s StatefulSet removal is tracked in PR #1027. Until that PR is merged
-> and ArgoCD has pruned the resources, the LXC is the live registry.
+> **Status** — replacement for `projects/amiya.akn/src/apps/zot-registry/`. The K8s StatefulSet removal is tracked in PR
+> #1027. Until that PR is merged and ArgoCD has pruned the resources, the LXC is the live registry.
 
 ## Table of contents
 
@@ -56,33 +52,26 @@ namespace exceptions in `SEC001:kubernetes.rego`.
    └────────────────────────────────────────────────────────────────┘
 ```
 
-* **Caddy** terminates TLS, redirects HTTP, sets HSTS, reverse-proxies to
-  Zot. ACME uses DNS-01 via Cloudflare (no inbound :80 challenge required).
-* **Zot** binds to 127.0.0.1:5000 only — never exposed on the network.
-  Anonymous read everywhere; mgmt API enabled (read-only).
-  Upstreams are declared statically in `upstreams.nix`; there is no
-  dynamic proxy and no wildcard routing.
-* **No SSH.** Console access goes through `pct enter <vmid>` on the
-  Proxmox host. The LXC has no `getty` autologin, no `sshd`, no shell user.
+- **Caddy** terminates TLS, redirects HTTP, sets HSTS, reverse-proxies to Zot. ACME uses DNS-01 via Cloudflare (no
+  inbound :80 challenge required).
+- **Zot** binds to 127.0.0.1:5000 only — never exposed on the network. Anonymous read everywhere; mgmt API enabled
+  (read-only). Upstreams are declared statically in `upstreams.nix`; there is no dynamic proxy and no wildcard routing.
+- **No SSH.** Console access goes through `pct enter <vmid>` on the Proxmox host. The LXC has no `getty` autologin, no
+  `sshd`, no shell user.
 
 ### Static upstream configuration — limitation and strength
 
-Zot cannot proxy arbitrary registries on demand. Every upstream must be
-declared explicitly in `upstreams.nix` and baked into the LXC image at
-build time. There is no runtime API, no wildcard, and no hot-reload.
+Zot cannot proxy arbitrary registries on demand. Every upstream must be declared explicitly in `upstreams.nix` and baked
+into the LXC image at build time. There is no runtime API, no wildcard, and no hot-reload.
 
-**Limitation** — adding a new upstream (e.g. `quay.io`, a private
-registry) requires editing `upstreams.nix`, running `mise run lxc:build`,
-and upgrading the running container with `mise run lxc:upgrade`. Expect a
-few minutes of Nix build time and a brief parallel-run window during the
-upgrade (see [Upgrading to a new version](#upgrading-to-a-new-version)).
+**Limitation** — adding a new upstream (e.g. `quay.io`, a private registry) requires editing `upstreams.nix`, running
+`mise run lxc:build`, and upgrading the running container with `mise run lxc:upgrade`. Expect a few minutes of Nix build
+time and a brief parallel-run window during the upgrade (see [Upgrading to a new version](#upgrading-to-a-new-version)).
 
-**Strength** — the same constraint is a security boundary. No runtime
-request, no authenticated client, and no compromised process inside the
-LXC can route traffic through an undeclared upstream. The allowlist is
-code-reviewed, GPG-signed, and version-controlled. Expanding it requires
-intent — a deliberate code change, a build, and a deploy — not just a
-configuration tweak or a misconfigured pull.
+**Strength** — the same constraint is a security boundary. No runtime request, no authenticated client, and no
+compromised process inside the LXC can route traffic through an undeclared upstream. The allowlist is code-reviewed,
+GPG-signed, and version-controlled. Expanding it requires intent — a deliberate code change, a build, and a deploy — not
+just a configuration tweak or a misconfigured pull.
 
 ## What's in this directory
 
@@ -100,19 +89,19 @@ configuration tweak or a misconfigured pull.
 
 ## Prerequisites
 
-* `mise` with the repo's `.mise.toml` trusted (`mise trust`).
-* Docker (used by `nix:build:lxc` to wrap the Nix build).
-* Pulumi CLI logged into the chezmoi.sh stack (see `src/infrastructure/pulumi/.mise.toml`); run `pulumi up` first (only for the initial token sync).
-* `sops` with the repo age key loaded (`SOPS_AGE_KEY_FILE` already set by mise).
-* SSH key-based root access to the Proxmox node you intend to push to.
+- `mise` with the repo's `.mise.toml` trusted (`mise trust`).
+- Docker (used by `nix:build:lxc` to wrap the Nix build).
+- Pulumi CLI logged into the chezmoi.sh stack (see `src/infrastructure/pulumi/.mise.toml`); run `pulumi up` first (only
+  for the initial token sync).
+- `sops` with the repo age key loaded (`SOPS_AGE_KEY_FILE` already set by mise).
+- SSH key-based root access to the Proxmox node you intend to push to.
 
 ## Secrets — Cloudflare DNS-01 token
 
-The Cloudflare API token is a Pulumi stack output
-(`zotRegistryDns01Token`) in `projects/chezmoi.sh/src/infrastructure/pulumi/`.
-We fetch it via `mise run pulumi:cloudflare-token:oci-registry` and encrypt
-it into the repository, so we can bake it into the LXC image without relying
-on a Kubernetes API connection at build time.
+The Cloudflare API token is a Pulumi stack output (`zotRegistryDns01Token`) in
+`projects/chezmoi.sh/src/infrastructure/pulumi/`. We fetch it via `mise run pulumi:cloudflare-token:oci-registry` and
+encrypt it into the repository, so we can bake it into the LXC image without relying on a Kubernetes API connection at
+build time.
 
 ### First-time sync (or rotation)
 
@@ -120,8 +109,7 @@ on a Kubernetes API connection at build time.
 mise run lxc:secrets:sync       # requires `pulumi up` to have run first
 ```
 
-This writes `secrets/caddy.sops.env` (SOPS / age-encrypted). The plaintext
-token never touches disk.
+This writes `secrets/caddy.sops.env` (SOPS / age-encrypted). The plaintext token never touches disk.
 
 ### Rotation
 
@@ -148,8 +136,8 @@ mise run lxc:build
 mise run lxc:push -- pve.lan
 ```
 
-The `lxc:push` task prints a sample `pct create` invocation when it
-finishes. The fully documented one is in the next section.
+The `lxc:push` task prints a sample `pct create` invocation when it finishes. The fully documented one is in the next
+section.
 
 ### Task reference
 
@@ -162,8 +150,8 @@ finishes. The fully documented one is in the next section.
 
 ## Proxmox LXC creation
 
-The build emits `oci-registry.<version>-amd64.tar.xz`. After `lxc:push`
-uploads it to `/var/lib/vz/template/cache/`, create the container with:
+The build emits `oci-registry.<version>-amd64.tar.xz`. After `lxc:push` uploads it to `/var/lib/vz/template/cache/`,
+create the container with:
 
 ```sh
 # Pick an unused VMID (Proxmox prints used ones with `pct list`).
@@ -195,9 +183,8 @@ ssh root@${NODE} "echo 'lxc.console.path: /dev/console' >> /etc/pve/lxc/${VMID}.
 ssh root@${NODE} pct start ${VMID}
 ```
 
-> **Before step 3 — fix mp0 ownership (unprivileged LXC).**
-> Proxmox creates the ZFS subvolume with host uid 0, which falls outside
-> the container's uid map and appears as `nobody` (65534) inside the LXC.
+> **Before step 3 — fix mp0 ownership (unprivileged LXC).** Proxmox creates the ZFS subvolume with host uid 0, which
+> falls outside the container's uid map and appears as `nobody` (65534) inside the LXC.
 >
 > Run the following **on the Proxmox node** (`ssh root@${NODE}`):
 >
@@ -211,14 +198,12 @@ ssh root@${NODE} pct start ${VMID}
 > pct unmount ${VMID}
 > ```
 >
-> `/var/lib/zot` is already owned by `zot:zot` (uid 994) inside the
-> container before first start — `StateDirectory` is a no-op.
-> See [Troubleshooting](#zot-does-not-start) if you missed this step.
+> `/var/lib/zot` is already owned by `zot:zot` (uid 994) inside the container before first start — `StateDirectory` is a
+> no-op. See [Troubleshooting](#zot-does-not-start) if you missed this step.
 
-Adjust `local-zfs` to your storage backend (`local-lvm`, `nas`, …).
-The `--mp0` volume is provisioned automatically at `pct create` time
-(a ZFS dataset for `local-zfs`, a directory for `dir` storage) and
-mounted at `/var/lib/zot` inside the LXC.
+Adjust `local-zfs` to your storage backend (`local-lvm`, `nas`, …). The `--mp0` volume is provisioned automatically at
+`pct create` time (a ZFS dataset for `local-zfs`, a directory for `dir` storage) and mounted at `/var/lib/zot` inside
+the LXC.
 
 ### Resource sizing — tested values
 
@@ -230,40 +215,32 @@ mounted at `/var/lib/zot` inside the LXC.
 | Zot data volume     | 100 GiB (mounted at `/var/lib/zot`) |
 | Swap                | 0 (let OOM kill on overrun)         |
 
-The 2 GiB root is intentionally minimal — the LXC is stateless (rebuilt
-from the flake) and carries no user data. The Nix closure for the image
-typically lands under 1.5 GiB. The trivy vulnerability database is stored
-inside Zot's storage root (`/var/lib/zot`, on the `mp0` data volume) and
-never touches the root disk. If a future rebuild exceeds the limit,
+The 2 GiB root is intentionally minimal — the LXC is stateless (rebuilt from the flake) and carries no user data. The
+Nix closure for the image typically lands under 1.5 GiB. The trivy vulnerability database is stored inside Zot's storage
+root (`/var/lib/zot`, on the `mp0` data volume) and never touches the root disk. If a future rebuild exceeds the limit,
 bump with `pct resize <vmid> rootfs +2G` before rebuilding.
 
-If you push first-party images aggressively, raise `mostRecentlyPushedCount`
-in `modules/zot.nix` (the Zot data volume will absorb the extra blobs).
+If you push first-party images aggressively, raise `mostRecentlyPushedCount` in `modules/zot.nix` (the Zot data volume
+will absorb the extra blobs).
 
 ### `pct.conf` features explained
 
-* `unprivileged 1` — root-in-LXC is mapped to a high uid on the host.
-  Mandatory; do not relax.
-* `nesting=0` — we don't run containers inside this LXC.
-* `keyctl=0` — Zot does not use the kernel keyring.
-* `firewall=1` on the NIC — enables the Proxmox per-VM firewall (rules
-  in the next section).
-* `--mp0 storage:100,mp=/var/lib/zot` — dedicated 100 GiB volume for Zot
-  blobs and metadata, completely isolated from the 1 GiB OS root disk.
-  Resize or replace the data volume independently of the system image.
-* `lxc.console.path: /dev/console` (raw LXC config, step 2 above) —
-  routes `pct console <vmid>` to the NixOS `console-getty` unit listening
-  on `/dev/console`. Without this line the Proxmox console widget stays
-  blank after boot.
+- `unprivileged 1` — root-in-LXC is mapped to a high uid on the host. Mandatory; do not relax.
+- `nesting=0` — we don't run containers inside this LXC.
+- `keyctl=0` — Zot does not use the kernel keyring.
+- `firewall=1` on the NIC — enables the Proxmox per-VM firewall (rules in the next section).
+- `--mp0 storage:100,mp=/var/lib/zot` — dedicated 100 GiB volume for Zot blobs and metadata, completely isolated from
+  the 1 GiB OS root disk. Resize or replace the data volume independently of the system image.
+- `lxc.console.path: /dev/console` (raw LXC config, step 2 above) — routes `pct console <vmid>` to the NixOS
+  `console-getty` unit listening on `/dev/console`. Without this line the Proxmox console widget stays blank after boot.
 
 ## Proxmox host firewall
 
-The Proxmox firewall layers in front of the in-LXC `iptables` rules from
-`hardening.nix`. Even if a future change accidentally opens a port in
-NixOS, the PVE firewall will still drop it.
+The Proxmox firewall layers in front of the in-LXC `iptables` rules from `hardening.nix`. Even if a future change
+accidentally opens a port in NixOS, the PVE firewall will still drop it.
 
-> Settings live in `/etc/pve/firewall/<vmid>.fw` on the Proxmox host and
-> are replicated automatically across the cluster.
+> Settings live in `/etc/pve/firewall/<vmid>.fw` on the Proxmox host and are replicated automatically across the
+> cluster.
 
 ### Datacentre-level setup (one-time)
 
@@ -315,11 +292,9 @@ pve-firewall localnet
 iptables -L -nv | grep -E "tap${VMID}|veth${VMID}"
 ```
 
-> The `dport 5000` line is commented because Zot binds to 127.0.0.1 only.
-> Uncomment **and** rebuild the LXC with Zot bound to `0.0.0.0` if you
-> need to scrape Prometheus metrics from outside the LXC. The
-> recommended pattern is to scrape from inside the LXC over `localhost`
-> (e.g. a sidecar `node_exporter` doesn't have this constraint).
+> The `dport 5000` line is commented because Zot binds to 127.0.0.1 only. Uncomment **and** rebuild the LXC with Zot
+> bound to `0.0.0.0` if you need to scrape Prometheus metrics from outside the LXC. The recommended pattern is to scrape
+> from inside the LXC over `localhost` (e.g. a sidecar `node_exporter` doesn't have this constraint).
 
 ### Quick verification
 
@@ -332,8 +307,8 @@ docker pull oci.chezmoi.sh/docker.io/library/alpine:3.20          # → success
 
 ## Hardening reference
 
-The hardening module (`modules/hardening.nix`) is always active — imported
-unconditionally by `modules/default.nix`. Concretely:
+The hardening module (`modules/hardening.nix`) is always active — imported unconditionally by `modules/default.nix`.
+Concretely:
 
 | Layer                | What we change                                                                                                                                                                                                                                                                                                                                                                               |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -350,15 +325,11 @@ unconditionally by `modules/default.nix`. Concretely:
 
 ### What we explicitly do **not** harden
 
-* `PrivateTmp`, `ProtectSystem`, `ProtectHome`, `ProtectControlGroups`,
-  `ProtectKernelLogs`, `ProtectClock`, `PrivateDevices`,
-  `ProtectKernelModules`, `RestrictNamespaces` — all require creating a
-  mount namespace, which fails in an unprivileged LXC with
-  "Failed at step NAMESPACE … /proc: Permission denied".
-  The PVE + NixOS layered firewalls and Zot's loopback-only binding
-  compensate for the missing filesystem isolation.
-* AppArmor / SELinux — Proxmox uses AppArmor at the host level; we don't
-  ship a per-service profile.
+- `PrivateTmp`, `ProtectSystem`, `ProtectHome`, `ProtectControlGroups`, `ProtectKernelLogs`, `ProtectClock`,
+  `PrivateDevices`, `ProtectKernelModules`, `RestrictNamespaces` — all require creating a mount namespace, which fails
+  in an unprivileged LXC with "Failed at step NAMESPACE … /proc: Permission denied". The PVE + NixOS layered firewalls
+  and Zot's loopback-only binding compensate for the missing filesystem isolation.
+- AppArmor / SELinux — Proxmox uses AppArmor at the host level; we don't ship a per-service profile.
 
 ## Operations
 
@@ -374,8 +345,8 @@ Or from a homelab client:
 curl -s https://oci.chezmoi.sh/v2/_zot/ext/mgmt?resource=config | jq .
 ```
 
-The response includes upstream registries, retention policies, version,
-distSpec version, log level — everything minus secrets.
+The response includes upstream registries, retention policies, version, distSpec version, log level — everything minus
+secrets.
 
 ### Inspecting live logs
 
@@ -392,8 +363,7 @@ ssh root@pve.lan pct exec <vmid> -- journalctl -u caddy -f
 
 ### Forcing a GC run
 
-The retention worker runs every 24 h. To trigger an out-of-band run
-(after bumping retention policies, for example):
+The retention worker runs every 24 h. To trigger an out-of-band run (after bumping retention policies, for example):
 
 ```sh
 ssh root@pve.lan pct exec <vmid> -- systemctl restart zot
@@ -402,11 +372,9 @@ ssh root@pve.lan pct exec <vmid> -- systemctl restart zot
 
 ### Log management on a 1 GiB root disk
 
-The root volume has no space to spare. By default `modules/hardening.nix`
-configures journald with `Storage=volatile` + `RuntimeMaxUse=64M`: logs
-live in `/run/log/journal` (tmpfs), are capped at 64 MiB in RAM, and
-disappear on container stop. That is the right default for a stateless
-pull-through cache.
+The root volume has no space to spare. By default `modules/hardening.nix` configures journald with `Storage=volatile` +
+`RuntimeMaxUse=64M`: logs live in `/run/log/journal` (tmpfs), are capped at 64 MiB in RAM, and disappear on container
+stop. That is the right default for a stateless pull-through cache.
 
 ```nix
 # modules/hardening.nix — always active
@@ -433,24 +401,20 @@ services.journald = {
 > pct exec <vmid> -- df -h /
 > ```
 >
-> If `/` is above 80 % after a fresh deploy, resize with `pct resize <vmid> rootfs +2G`
-> before the next rebuild.
+> If `/` is above 80 % after a fresh deploy, resize with `pct resize <vmid> rootfs +2G` before the next rebuild.
 
 ### Backups
 
-* **Image** — the LXC is *stateless*: deleting and recreating it from the
-  same flake produces an identical configuration.
-* **Cache** (`/var/lib/zot`) — losing this means the next pulls hit
-  upstream registries again (slower, no other consequence). A weekly
-  Proxmox snapshot is enough; full backups are unnecessary.
-* **Secrets** — `secrets/caddy.sops.env` is age-encrypted and committed
-  to git. No separate backup needed.
+- **Image** — the LXC is _stateless_: deleting and recreating it from the same flake produces an identical
+  configuration.
+- **Cache** (`/var/lib/zot`) — losing this means the next pulls hit upstream registries again (slower, no other
+  consequence). A weekly Proxmox snapshot is enough; full backups are unnecessary.
+- **Secrets** — `secrets/caddy.sops.env` is age-encrypted and committed to git. No separate backup needed.
 
 ### Upgrading to a new version
 
-Upgrading replaces the rootfs with a freshly built image while keeping the
-Proxmox config and the `/var/lib/zot` data volume intact. The source
-container stays running throughout; the cut-over is a single `pct stop`.
+Upgrading replaces the rootfs with a freshly built image while keeping the Proxmox config and the `/var/lib/zot` data
+volume intact. The source container stays running throughout; the cut-over is a single `pct stop`.
 
 ```sh
 # 1. Build the new image and upload it to the Proxmox host
@@ -481,9 +445,8 @@ ssh root@<pve-host> pct stop <source_id>
 
 #### Syncing blobs to a fresh data volume
 
-If the new container gets a fresh `mp0` (different storage or explicit
-resize), sync blobs before starting it. Zot's index (BoltDB) cannot be
-copied safely while the source is running, so stop it first.
+If the new container gets a fresh `mp0` (different storage or explicit resize), sync blobs before starting it. Zot's
+index (BoltDB) cannot be copied safely while the source is running, so stop it first.
 
 ```sh
 # After lxc:upgrade creates the container but before pct start <dest>
@@ -501,9 +464,8 @@ pct start <dest>
 # Source is already stopped — skip pct stop once verified.
 ```
 
-> **Trade-off:** syncing causes a brief outage (`pct stop <source>` before
-> the new container is serving). Skip it if uptime matters more than a warm
-> cache — the pull-through proxy rebuilds on demand.
+> **Trade-off:** syncing causes a brief outage (`pct stop <source>` before the new container is serving). Skip it if
+> uptime matters more than a warm cache — the pull-through proxy rebuilds on demand.
 
 ## Troubleshooting
 
@@ -528,9 +490,9 @@ Common causes:
 ssh root@pve.lan pct exec <vmid> -- journalctl -u zot --since '5 minutes ago'
 ```
 
-* `config.json` syntax error → check `/etc/zot/config.json` on the host.
-* `Failed at step STATE_DIRECTORY … Permission denied` → the mp0 pre-chown
-  was not done before first start. Fix from the Proxmox host:
+- `config.json` syntax error → check `/etc/zot/config.json` on the host.
+- `Failed at step STATE_DIRECTORY … Permission denied` → the mp0 pre-chown was not done before first start. Fix from the
+  Proxmox host:
 
   ```sh
   VMID="<vmid>"
@@ -543,58 +505,44 @@ ssh root@pve.lan pct exec <vmid> -- journalctl -u zot --since '5 minutes ago'
 
 ### Pulls fail with `503` after a brief outage
 
-Zot retries upstream on demand with no backoff; under flapping network
-conditions the request can fail. Retries on the client side resolve it.
-Adding Caddy-side fallback routing is tracked in issue #1022 comments.
+Zot retries upstream on demand with no backoff; under flapping network conditions the request can fail. Retries on the
+client side resolve it. Adding Caddy-side fallback routing is tracked in issue #1022 comments.
 
 ## Known gaps / follow-ups
 
 The current setup is functional but the items below are worth tracking:
 
-1. **No Prometheus scraping.** The `metrics` extension is implicitly off
-   (we only enable `search`/`ui`/`mgmt`). When we want SLOs, enable
-   `extensions.metrics` plus an htpasswd-protected `metrics` user. Note
-   the firewall section already includes the (commented) PVE rule to let
-   the scraper in.
+1. **No Prometheus scraping.** The `metrics` extension is implicitly off (we only enable `search`/`ui`/`mgmt`). When we
+   want SLOs, enable `extensions.metrics` plus an htpasswd-protected `metrics` user. Note the firewall section already
+   includes the (commented) PVE rule to let the scraper in.
 
-2. **No alert on certificate expiry.** Caddy renews silently; if ACME
-   breaks we won't know until the cert expires. A blackbox-exporter
-   probe from `amiya.akn` would close that gap.
+2. **No alert on certificate expiry.** Caddy renews silently; if ACME breaks we won't know until the cert expires. A
+   blackbox-exporter probe from `amiya.akn` would close that gap.
 
-3. **K8s StatefulSet still present on amiya.akn.** The removal is tracked
-   in PR #1027. Until merged and ArgoCD-synced, the old `zot-registry`
-   namespace and its resources remain on the cluster (harmless but noisy
-   in `kubectl get ns`). No data migration is needed — the cache rebuilds
-   on demand; first-party images live on GHCR, not in Zot.
+3. **K8s StatefulSet still present on amiya.akn.** The removal is tracked in PR #1027. Until merged and ArgoCD-synced,
+   the old `zot-registry` namespace and its resources remain on the cluster (harmless but noisy in `kubectl get ns`). No
+   data migration is needed — the cache rebuilds on demand; first-party images live on GHCR, not in Zot.
 
-4. **No HA.** Single LXC, single Proxmox node. If the node dies, pulls
-   that aren't in the upstream-resolver cache will fail until the LXC is
-   brought up elsewhere. Acceptable trade-off for a homelab.
+4. **No HA.** Single LXC, single Proxmox node. If the node dies, pulls that aren't in the upstream-resolver cache will
+   fail until the LXC is brought up elsewhere. Acceptable trade-off for a homelab.
 
-5. **No log aggregation.** Logs stay on the LXC. Adding Vector / Promtail
-   would mean a sidecar service; today `journalctl` over `pct exec` is
-   enough.
+5. **No log aggregation.** Logs stay on the LXC. Adding Vector / Promtail would mean a sidecar service; today
+   `journalctl` over `pct exec` is enough.
 
-6. **No alert on disk-full.** A runaway sync could fill the 100 GiB
-   `/var/lib/zot` volume. The retention window mitigates this, but a
-   Proxmox storage alert on the `mp0` dataset is a cheap safety net.
-   The root disk (1 GiB) is protected by `Storage=volatile` journald —
-   no log accumulation possible there.
+6. **No alert on disk-full.** A runaway sync could fill the 100 GiB `/var/lib/zot` volume. The retention window
+   mitigates this, but a Proxmox storage alert on the `mp0` dataset is a cheap safety net. The root disk (1 GiB) is
+   protected by `Storage=volatile` journald — no log accumulation possible there.
 
-7. **No automated OPA-test for the rego rules.** PR 2 (post-validation
-   cleanup) removes namespace exceptions from `SEC001:kubernetes.rego`.
-   The migration plan assumes that the cluster confirms `oci.chezmoi.sh`
-   is reachable from inside the cluster before we land the OPA change.
+7. **No automated OPA-test for the rego rules.** PR 2 (post-validation cleanup) removes namespace exceptions from
+   `SEC001:kubernetes.rego`. The migration plan assumes that the cluster confirms `oci.chezmoi.sh` is reachable from
+   inside the cluster before we land the OPA change.
 
-8. **No second source of trust for the Cloudflare token.** If
-   `amiya.akn` is unreachable, we can't `mise run lxc:secrets:sync`.
-   Documented here so an operator knows to rotate the token via the
-   Cloudflare dashboard in an emergency and update the SOPS file
-   manually.
+8. **No second source of trust for the Cloudflare token.** If `amiya.akn` is unreachable, we can't
+   `mise run lxc:secrets:sync`. Documented here so an operator knows to rotate the token via the Cloudflare dashboard in
+   an emergency and update the SOPS file manually.
 
-9. **Caddy plugin hash drift.** Bumping the Cloudflare DNS plugin
-   version means recomputing the hash in `modules/caddy.nix`. The
-   command is in the old README — preserved here for posterity:
+9. **Caddy plugin hash drift.** Bumping the Cloudflare DNS plugin version means recomputing the hash in
+   `modules/caddy.nix`. The command is in the old README — preserved here for posterity:
 
    ```sh
    nix build --impure --expr '
@@ -606,6 +554,5 @@ The current setup is functional but the items below are worth tracking:
    # Read the correct hash from the error message; update modules/caddy.nix.
    ```
 
-10. **No NixOS test (`pkgs.testers.runNixOSTest`).** A smoke test that
-    boots the LXC, curls `/v2/`, and asserts a 200 would catch
-    regressions in the module library before they reach Proxmox.
+10. **No NixOS test (`pkgs.testers.runNixOSTest`).** A smoke test that boots the LXC, curls `/v2/`, and asserts a 200
+    would catch regressions in the module library before they reach Proxmox.
