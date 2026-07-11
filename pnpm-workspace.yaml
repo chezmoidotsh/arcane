@@ -1,20 +1,22 @@
 packages:
-  - "catalog/pulumi/lib"
-  - "catalog/pulumi/components/*"
-  - "projects/*/src/infrastructure/pulumi"
+  - catalog/pulumi/lib
+  - catalog/pulumi/components/*
+  - catalog/pulumi/sdks/*
+  - projects/*/src/infrastructure/pulumi
 
 catalog:
-  # Pulumi providers — bump here to update all stacks at once
-  "@pulumi/cloudflare": "^6.17.0"
-  "@pulumi/pulumi": "^3.250.0"
-  "@pulumi/tailscale": "^0.28.0"
-  "@pulumi/vault": "^7.10.0"
+  "@pulumi/cloudflare": ^6.17.0
+  "@pulumi/pulumi": ^3.250.0
+  "@pulumi/tailscale": ^0.28.0
+  "@pulumi/vault": ^7.10.0
+  "@types/chai": ^4.3.0
+  "@types/mocha": ^10.0.0
+  "@types/node": ^22.0.0
+  chai: ^4.4.0
+  mocha: ^10.0.0
+  ts-node: ^10.9.0
+  typescript: ^5.9.3
 
-  # Dev tooling
-  "@types/chai": "^4.3.0"
-  "@types/mocha": "^10.0.0"
-  "@types/node": "^22.0.0"
-  "chai": "^4.4.0"
-  "mocha": "^10.0.0"
-  "ts-node": "^10.9.0"
-  "typescript": "^5.9.3"
+onlyBuiltDependencies:
+  - "@pulumi/b2"
+  - "@pulumi/truenas"

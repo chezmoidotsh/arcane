@@ -706,3 +706,7 @@ opencode.json
 
 # Allow pulumi library folder
 !catalog/pulumi/lib
+
+# Generated Pulumi SDKs (dynamically bridged Terraform providers via
+# `pulumi package add`) — fully regenerable, never hand-edited
+catalog/pulumi/sdks/*/

@@ -5,9 +5,13 @@
 	"main": "index.ts",
 	"dependencies": {
 		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "workspace:*",
+		"@chezmoi.sh/pulumi-lib": "workspace:*",
+		"@chezmoi.sh/pulumi-truenas-pool": "workspace:*",
+		"@pulumi/b2": "workspace:*",
 		"@pulumi/cloudflare": "catalog:",
 		"@pulumi/pulumi": "catalog:",
-		"@pulumi/tailscale": "catalog:"
+		"@pulumi/tailscale": "catalog:",
+		"@pulumi/truenas": "workspace:*"
 	},
 	"devDependencies": {
 		"typescript": "catalog:"
