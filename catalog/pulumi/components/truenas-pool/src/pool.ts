@@ -6,6 +6,7 @@
 // -----------------------------------------------------------------------------
 
 import * as pulumi from "@pulumi/pulumi";
+import type * as truenas from "@pulumi/truenas";
 
 import { collectDatasetRows, renderRows, type TrueNASDataset } from "./dataset";
 import { TrueNASTopology } from "./topology";
@@ -54,16 +55,30 @@ export class TrueNASPool extends pulumi.ComponentResource {
 	}
 
 	/** Returns the dataset registered at `relativePath` (e.g. `media/animes`), if any. */
-	public get(relativePath: string):
-		| (Omit<TrueNASDataset, "attachLive" | "index" | "materialize"> & {
-				path: string;
-		  })
-		| undefined {
+	public get(relativePath: string): Omit<
+		TrueNASDataset,
+		"attachLive" | "index" | "materialize" | "resource"
+	> & {
+		path: string;
+		resource: truenas.Dataset;
+	} {
 		const dataset = this.byPath.get(relativePath);
-		if (dataset) {
-			return { ...dataset, path: `${this.name}/${relativePath}` };
+		if (!dataset) {
+			throw new Error(
+				`Unknown dataset "${relativePath}" in pool "${this.name}"`,
+			);
 		}
-		return undefined;
+
+		if (!dataset.resource) {
+			throw new Error(
+				`Dataset "${relativePath}" in pool "${this.name}" has no resource... this should never happen if the pool was constructed correctly`,
+			);
+		}
+		return {
+			...dataset,
+			path: `${this.name}/${relativePath}`,
+			resource: dataset.resource,
+		};
 	}
 
 	/**

@@ -1,4 +1,3 @@
-import { must } from "@chezmoi.sh/pulumi-lib";
 import * as pulumi from "@pulumi/pulumi";
 import * as truenas from "@pulumi/truenas";
 
@@ -43,27 +42,13 @@ const MIGRATIONS = [
 ];
 
 for (const { id, source, target, scheduleMinute } of MIGRATIONS) {
-	const sourceDataset = must(
-		zp1hs01.get(source),
-		`${source} dataset not found in zp1hs01`,
-	);
-	const targetDataset = must(
-		zp1hs01.get(target),
-		`${target} dataset not found in zp1hs01`,
-	);
-	const sourceMount = must(
-		sourceDataset.resource?.mountPoint,
-		`${source} dataset is not mounted`,
-	);
-	const targetMount = must(
-		targetDataset.resource?.mountPoint,
-		`${target} dataset is not mounted`,
-	);
+	const sourceDataset = zp1hs01.get(source);
+	const targetDataset = zp1hs01.get(target);
 
 	new truenas.Cronjob(
 		`zp1hs01-migrate-${id}`,
 		{
-			command: pulumi.interpolate`rsync -rt --info=stats1 "${sourceMount}/" "${targetMount}/"`,
+			command: pulumi.interpolate`rsync -rt --info=stats1 "${sourceDataset.resource.mountPoint}/" "${targetDataset.resource.mountPoint}/"`,
 			description: `Migration sync: ${source} -> ${target} (temporary, delete once cut over)`,
 			user: "root",
 			enabled: true,

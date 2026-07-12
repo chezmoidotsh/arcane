@@ -1,4 +1,3 @@
-import { must } from "@chezmoi.sh/pulumi-lib";
 import * as random from "@pulumi/random";
 import * as truenas from "@pulumi/truenas";
 
@@ -47,10 +46,9 @@ export const homeAssistantUser = new truenas.User(
 // via the TrueNAS UI. `../truenas-docs` turns this assignment into that
 // instruction in the generated documentation.
 
-const homeAssistantBackupDataset = must(
-	zp1hs01.get("backups/hass.chezmoi.sh")?.resource,
-	"Unknown dataset `backups/hass.chezmoi.sh` in pool `zp1hs01`",
-);
+const homeAssistantBackupDataset = zp1hs01.get(
+	"backups/hass.chezmoi.sh",
+).resource;
 export const homeAssistantAclAssignment: Nfs4AclAssignment = {
 	dataset: homeAssistantBackupDataset,
 	template: "NFSV4_MANAGED_APPLICATION",

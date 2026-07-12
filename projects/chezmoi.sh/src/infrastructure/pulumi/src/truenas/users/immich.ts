@@ -1,4 +1,3 @@
-import { must } from "@chezmoi.sh/pulumi-lib";
 import * as random from "@pulumi/random";
 import * as truenas from "@pulumi/truenas";
 
@@ -56,10 +55,9 @@ export const immichUser = new truenas.User(
 // via the TrueNAS UI. `../truenas-docs` turns this assignment into that
 // instruction in the generated documentation.
 
-const immichApplicationDataset = must(
-	zp1hs01.get("applications/managed/app.immich")?.resource,
-	"Unknown dataset `applications/managed/app.immich` in pool `zp1hs01`",
-);
+const immichApplicationDataset = zp1hs01.get(
+	"applications/managed/app.immich",
+).resource;
 export const immichAclAssignment: Nfs4AclAssignment = {
 	dataset: immichApplicationDataset,
 	template: "NFSV4_MANAGED_APPLICATION",

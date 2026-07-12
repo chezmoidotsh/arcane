@@ -1,4 +1,3 @@
-import { must } from "@chezmoi.sh/pulumi-lib";
 import type { TrueNASPool } from "@chezmoi.sh/pulumi-truenas-pool";
 import * as b2 from "@pulumi/b2";
 import * as pulumi from "@pulumi/pulumi";
@@ -159,34 +158,25 @@ export const cloudSyncJobs: Array<{
 		pool: zp1hs01,
 		// Sync the userspace dataset root; use specific include/exclude rules via
 		// TrueNAS UI if you want to exclude subfolders such as 'shared'.
-		dataset: must(zp1hs01.get("userspace"), "userspace dataset not found"),
+		dataset: zp1hs01.get("userspace"),
 		scheduler: DAILY_SCHEDULE_PRESET,
 	},
 	{
 		description: "Weekly sync of immich.app application",
 		pool: zp1hs01,
-		dataset: must(
-			zp1hs01.get("applications/managed/app.immich"),
-			"immich.app dataset not found",
-		),
+		dataset: zp1hs01.get("applications/managed/app.immich"),
 		scheduler: WEEKLY_SCHEDULE_PRESET,
 	},
 	{
 		description: "Weekly sync of paperless-ngx.com application",
 		pool: zp1hs01,
-		dataset: must(
-			zp1hs01.get("applications/managed/com.paperless-ngx"),
-			"paperless-ngx.com dataset not found",
-		),
+		dataset: zp1hs01.get("applications/managed/com.paperless-ngx"),
 		scheduler: WEEKLY_SCHEDULE_PRESET,
 	},
 	{
 		description: "Weekly sync of TrueNAS applications",
 		pool: zp1hs01,
-		dataset: must(
-			zp1hs01.get("applications/truenas"),
-			"truenas dataset not found",
-		),
+		dataset: zp1hs01.get("applications/truenas"),
 		scheduler: WEEKLY_SCHEDULE_PRESET,
 	},
 ];
@@ -194,10 +184,7 @@ export const cloudSyncJobs: Array<{
 export const granularCloudSyncTasks: truenas.CloudSync[] = [];
 
 for (const job of cloudSyncJobs) {
-	const mountPoint = must(
-		job.dataset.resource?.mountPoint,
-		`dataset ${job.dataset.path} is not mounted`,
-	);
+	const mountPoint = job.dataset.resource.mountPoint;
 	const task = new truenas.CloudSync(
 		`cs-b2-${job.pool.name}-${job.dataset.path.replace("/", "-")}`,
 		{

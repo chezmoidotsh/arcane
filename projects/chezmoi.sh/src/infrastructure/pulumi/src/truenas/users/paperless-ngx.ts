@@ -1,4 +1,3 @@
-import { must } from "@chezmoi.sh/pulumi-lib";
 import * as random from "@pulumi/random";
 import * as truenas from "@pulumi/truenas";
 
@@ -61,10 +60,9 @@ export const paperlessUser = new truenas.User(
 // as the owner, via the TrueNAS UI. `../truenas-docs` turns this
 // assignment into that instruction in the generated documentation.
 
-const paperlessApplicationDataset = must(
-	zp1hs01.get("applications/managed/com.paperless-ngx")?.resource,
-	"Unknown dataset `applications/managed/com.paperless-ngx` in pool `zp1hs01`",
-);
+const paperlessApplicationDataset = zp1hs01.get(
+	"applications/managed/com.paperless-ngx",
+).resource;
 export const paperlessAclAssignment: Nfs4AclAssignment = {
 	dataset: paperlessApplicationDataset,
 	template: "NFSV4_MANAGED_APPLICATION",

@@ -1,4 +1,3 @@
-import { must } from "@chezmoi.sh/pulumi-lib";
 import * as pulumi from "@pulumi/pulumi";
 import * as truenas from "@pulumi/truenas";
 import * as config from "../../config";
@@ -27,11 +26,8 @@ new truenas.Catalog("truenas-catalog", {
 });
 
 {
-	const path = must(
-		zp1hs01.get("applications/truenas/fr.deuxfleurs.garage")?.resource
-			?.mountPoint,
-		"Unknwon dataset `applications/truenas/fr.deuxfleurs.garage` in pool `zp1hs01`",
-	);
+	const mountPoint = zp1hs01.get("applications/truenas/fr.deuxfleurs.garage")
+		.resource.mountPoint;
 	new truenas.App(
 		"app-garage",
 		{
@@ -123,21 +119,21 @@ new truenas.Catalog("truenas-catalog", {
 					config: {
 						host_path_config: {
 							acl_enable: false,
-							path: pulumi.interpolate`${path}/config`,
+							path: pulumi.interpolate`${mountPoint}/config`,
 						},
 						type: "host_path",
 					},
 					data: {
 						host_path_config: {
 							acl_enable: false,
-							path: pulumi.interpolate`${path}/data`,
+							path: pulumi.interpolate`${mountPoint}/data`,
 						},
 						type: "host_path",
 					},
 					metadata: {
 						host_path_config: {
 							acl_enable: false,
-							path: pulumi.interpolate`${path}/metadata`,
+							path: pulumi.interpolate`${mountPoint}/metadata`,
 						},
 						type: "host_path",
 					},
@@ -156,11 +152,8 @@ new truenas.Catalog("truenas-catalog", {
 }
 
 {
-	const path = must(
-		zp1hs01.get("applications/truenas/com.nginxproxymanager")?.resource
-			?.mountPoint,
-		"Unknwon dataset `applications/truenas/com.nginxproxymanager` in pool `zp1hs01`",
-	);
+	const mountPoint = zp1hs01.get("applications/truenas/com.nginxproxymanager")
+		.resource.mountPoint;
 	new truenas.App(
 		"app-nginx-proxy-manager",
 		{
@@ -203,14 +196,14 @@ new truenas.Catalog("truenas-catalog", {
 					certs: {
 						host_path_config: {
 							acl_enable: false,
-							path: pulumi.interpolate`${path}/certificates`,
+							path: pulumi.interpolate`${mountPoint}/certificates`,
 						},
 						type: "host_path",
 					},
 					data: {
 						host_path_config: {
 							acl_enable: false,
-							path: pulumi.interpolate`${path}/data`,
+							path: pulumi.interpolate`${mountPoint}/data`,
 						},
 						type: "host_path",
 					},

@@ -14,7 +14,7 @@ server, as declarative code. The generated human-facing documentation is publish
 | `jobs.ts`         | Scheduled cron jobs and maintenance tasks (SMART tests, scrubs, snapshots)                                                 |
 | `network.ts`      | Hostname, gateway, DNS nameservers, and physical network interfaces                                                        |
 | `services.ts`     | Service enablement on boot (CIFS, NFS, SSH, etc.) — not state management, only startup policy                              |
-| `shares.ts`       | NFS and SMB network shares, including the `under()` helper to bind shares to their backing datasets                        |
+| `shares.ts`       | NFS and SMB network shares                                                                                                 |
 | `zpools/`         | ZFS pool and dataset hierarchy (one file per pool: `zp1cs01.ts`, `zp1hs01.ts`); see `zpools/README.md` for ZFS conventions |
 
 ### Intentionally not managed via Pulumi
@@ -84,19 +84,6 @@ Shares are declared directly inside the `nfsShares`/`smbShares` export arrays in
 hand-maintained plain-data summary. The documentation generator (`../truenas-docs`) is the consumer, and it's
 responsible for pulling whatever fields it needs back out of each resource's Outputs (see that project's own README).
 
-### The `under()` helper
-
-```typescript
-function under(pool: TrueNASPool, datasetPath: string, ...subpath: string[]);
-```
-
-Resolves a dataset in a pool and returns an object with:
-
-- **`path`**: the dataset's live mount point (e.g., `/mnt/zp1cs01/media/animes`) or mount point + optional subpath for
-  shares rooted in an unmodeled folder
-- **`opts`**: resource options that parent the share under the dataset resource and include aliases for backwards
-  compatibility (preventing destructive replace on schema changes)
-
 ### Adding an NFS share
 
 Add an entry to the `nfsShares` array:
@@ -105,13 +92,13 @@ Add an entry to the `nfsShares` array:
 new truenas.ShareNfs(
   "nfs-share-myshare", // pulumi resource name (arbitrary but unique)
   {
-    path: under(zp1cs01, "media/mynewds").path,
+    path: zp1cs01.get("media/mynewds").resource.mountPoint,
     comment: "Descriptive comment",
     mapallUser: "nobody", // UID/GID mapping; use app name for application shares
     mapallGroup: "nogroup",
     enabled: true,
   },
-  { ...under(zp1cs01, "media/mynewds").opts, ignoreChanges: ["hosts"] },
+  { parent: zp1cs01.get("media/mynewds").resource, ignoreChanges: ["hosts"] },
 ),
 ```
 
@@ -127,13 +114,13 @@ new truenas.ShareSmb(
   "smb-share-myshare", // pulumi resource name (arbitrary but unique)
   {
     name: "MyShare", // SMB share name (what appears in the browse list)
-    path: under(zp1cs01, "media/mynewds").path,
+    path: zp1cs01.get("media/mynewds").resource.mountPoint,
     purpose: "LEGACY_SHARE", // share classification: LEGACY_SHARE, PRIVATE_DATASETS_SHARE, DEFAULT_SHARE, TIMEMACHINE_SHARE
     comment: "Descriptive comment",
     enabled: true,
     readonly: false, // optional
   },
-  under(zp1cs01, "media/mynewds").opts,
+  { parent: zp1cs01.get("media/mynewds").resource, ignoreChanges: ["hosts"] },
 ),
 ```
 

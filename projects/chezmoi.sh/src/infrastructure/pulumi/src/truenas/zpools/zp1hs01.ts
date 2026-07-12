@@ -1,4 +1,4 @@
-import { ByteSize, must } from "@chezmoi.sh/pulumi-lib";
+import { ByteSize } from "@chezmoi.sh/pulumi-lib";
 import {
 	Compression,
 	OnOffInherit,
@@ -187,10 +187,7 @@ const DAILY_SNAPSHOT_DATASETS: { id: string; path: string }[] = [
 ];
 
 for (const { id, path } of DAILY_SNAPSHOT_DATASETS) {
-	const dataset = must(
-		zp1hs01.get(path),
-		`${path} dataset not found in zp1hs01`,
-	);
+	const dataset = zp1hs01.get(path);
 	new truenas.SnapshotTask(
 		`zp1hs01-snapshot-${id}`,
 		{

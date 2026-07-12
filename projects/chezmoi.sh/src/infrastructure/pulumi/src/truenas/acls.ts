@@ -1,4 +1,3 @@
-import { must } from "@chezmoi.sh/pulumi-lib";
 import * as pulumi from "@pulumi/pulumi";
 import * as truenas from "@pulumi/truenas";
 
@@ -195,19 +194,13 @@ export const smbViewerTemplate = new truenas.FilesystemAclTemplate(
 // Home Assistant, Immich, Paperless-ngx -- have their assignment declared
 // next to that identity's `truenas.User`, in `./users/`, not here.)
 
-const mediaDataset = must(
-	zp1cs01.get("media")?.resource,
-	"Unknown dataset `media` in pool `zp1cs01`",
-);
+const mediaDataset = zp1cs01.get("media").resource;
 export const mediaAclAssignment: Nfs4AclAssignment = {
 	dataset: mediaDataset,
 	template: "NFSV4_SMB_ALL",
 };
 
-const userspaceSharedDataset = must(
-	zp1hs01.get("userspace/shared")?.resource,
-	"Unknown dataset `userspace/shared` in pool `zp1hs01`",
-);
+const userspaceSharedDataset = zp1hs01.get("userspace/shared").resource;
 export const userspaceSharedAclAssignment: Nfs4AclAssignment = {
 	dataset: userspaceSharedDataset,
 	template: "NFSV4_SMB_ALL",

@@ -121,8 +121,6 @@ storage, Time Machine).
   read-only, mapped to `nobody`
 - `nfs-share-tvshows` (Séries TV (Jellyfin)) --
   read-only, mapped to `nobody`
-- `nfs-share-documents-alexandre-admin` (Documents personnels d'alexandre (Paperless)) --
-  read/write, mapped to `paperless-ngx`
 
 ### SMB
 
