@@ -1,5 +1,4 @@
-import { ByteSize } from "@chezmoi.sh/pulumi-lib";
-import { TrueNASDataset, TrueNASPool } from "@chezmoi.sh/pulumi-truenas-pool";
+import { TrueNASPool } from "@chezmoi.sh/pulumi-truenas-pool";
 import * as truenas from "@pulumi/truenas";
 
 import { SCRUB_WEEKLY_SUNDAY_MIDNIGHT_PRESET } from "./const";
@@ -26,31 +25,14 @@ import { SCRUB_WEEKLY_SUNDAY_MIDNIGHT_PRESET } from "./const";
 //   re-obtainable, or not critical enough to justify snapshot retention.
 // -----------------------------------------------------------------------------
 
-export const zp1cs01 = new TrueNASPool("zp1cs01", [
-	new TrueNASDataset(
-		"media",
-		{
-			comments: "Bibliothèque multimédia du foyer",
-		},
-		[
-			new TrueNASDataset("animes", {
-				comments: "Séries animées",
-			}),
-			new TrueNASDataset("books", {
-				comments: "Livres",
-			}),
-			new TrueNASDataset("movies", {
-				comments: "Films",
-			}),
-			new TrueNASDataset("musics", {
-				comments: "Musiques",
-			}),
-			new TrueNASDataset("tvshows", {
-				comments: "Séries TV",
-			}),
-		],
-	),
-]);
+export const zp1cs01 = new TrueNASPool("zp1cs01", {
+	"/media": { comments: "Bibliothèque multimédia du foyer" },
+	"/media/animes": { comments: "Séries animées" },
+	"/media/books": { comments: "Livres" },
+	"/media/movies": { comments: "Films" },
+	"/media/musics": { comments: "Musiques" },
+	"/media/tvshows": { comments: "Séries TV" },
+});
 
 new truenas.ScrubTask(
 	"zp1cs01-scrub",

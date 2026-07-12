@@ -155,7 +155,7 @@ once in TrueNAS, and Pulumi only declares properties where they differ from the 
 
 The zp1hs01/documents subtree exists as a placeholder for personal files (documents/{alexandre,estelle,shared}). These
 are not yet managed through Pulumi to avoid exposing personal dataset hierarchies in the infrastructure-as-code
-repository. When needed, they can be added as additional TrueNASDataset entries in the zp1hs01.ts file.
+repository. When needed, they can be added as additional dataset entries in the zp1hs01.ts file.
 
 ### Filesystem ACLs: NFS4 Templates, Applied by Hand
 

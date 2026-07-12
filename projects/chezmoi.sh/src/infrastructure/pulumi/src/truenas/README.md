@@ -28,36 +28,37 @@ server, as declarative code. The generated human-facing documentation is publish
 
 ## Adding or editing a dataset
 
-Datasets are declared recursively as a tree in the zpools files (`zpools/zp1cs01.ts`, `zpools/zp1hs01.ts`) using the
-`TrueNASDataset` and `TrueNASPool` types from `@chezmoi.sh/pulumi-truenas-pool`.
+Datasets are declared as a flat, path-keyed record in the zpools files (`zpools/zp1cs01.ts`, `zpools/zp1hs01.ts`) using
+the `TrueNASPool` type from `@chezmoi.sh/pulumi-truenas-pool`. Each key is the dataset's full pool-relative path
+(leading `/`); nesting is inferred from the path itself, not from object nesting, so every ancestor must be declared as
+its own entry too.
 
 ### Example structure
 
 ```typescript
-export const zp1hs01 = new TrueNASPool("zp1hs01", [
-  new TrueNASDataset("applications", { compression: Compression.Lz4, atime: OnOffInherit.Off }, [
-    new TrueNASDataset("immich", { quota: 50 * ByteSize.Gi }),
-    new TrueNASDataset("paperless", { quota: 10 * ByteSize.Gi }),
-  ]),
-]);
+export const zp1hs01 = new TrueNASPool("zp1hs01", {
+  "/applications": { compression: Compression.Lz4, atime: OnOffInherit.Off },
+  "/applications/immich": { quota: 50 * ByteSize.Gi },
+  "/applications/paperless": { quota: 10 * ByteSize.Gi },
+});
 ```
 
 ### Steps to add or edit
 
-1. **Identify the parent dataset** — datasets nest hierarchically (e.g., `applications` → `immich`). Edit the
-   appropriate pool file (`zp1cs01.ts` or `zp1hs01.ts`) and locate the parent `TrueNASDataset`.
+1. **Identify the parent path** — datasets nest hierarchically (e.g., `/applications` → `/applications/immich`). Edit
+   the appropriate pool file (`zp1cs01.ts` or `zp1hs01.ts`) and locate the parent's entry; it must already exist as its
+   own key.
 
-2. **Add the child dataset** — within the parent's `children` array (third argument), add a new
-   `TrueNASDataset(name, props)`:
+2. **Add the child dataset** — add a new key for the full path, right after its parent's entry:
 
    ```typescript
-   new TrueNASDataset("mynewds", {
+   "/applications/mynewds": {
      comments: "Description of the dataset",
      quota: 100 * ByteSize.Gi, // optional: capacity limit
      compression: Compression.Lz4, // optional: compression algorithm
      atime: OnOffInherit.Off, // optional: disable access-time tracking for performance
      recordSize: RecordSize.Size1M, // optional: ZFS record block size
-   });
+   },
    ```
 
 3. **Understand conventions** — refer to `zpools/README.md` for the rationale behind common settings (compression,
@@ -71,10 +72,10 @@ export const zp1hs01 = new TrueNASPool("zp1hs01", [
    pulumi preview
    ```
 
-5. **Look up the dataset later** — other files (like `shares.ts`) reference datasets by their path using the pool's
-   `get()` method:
+5. **Look up the dataset later** — other files (like `shares.ts`) reference datasets by their path (without the leading
+   `/`) using the pool's `get()` method, which throws if the path isn't declared:
    ```typescript
-   const dataset = pool.get("applications/immich")?.resource;
+   const dataset = pool.get("applications/immich").resource;
    ```
 
 ## Adding or editing a share

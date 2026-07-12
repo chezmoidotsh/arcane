@@ -3,7 +3,6 @@ import {
 	Compression,
 	OnOffInherit,
 	RecordSize,
-	TrueNASDataset,
 	TrueNASPool,
 } from "@chezmoi.sh/pulumi-truenas-pool";
 import * as truenas from "@pulumi/truenas";
@@ -43,102 +42,73 @@ import {
 //   most (e.g. K8s-managed app state).
 // -----------------------------------------------------------------------------
 
-export const zp1hs01 = new TrueNASPool("zp1hs01", [
-	new TrueNASDataset(
-		"applications",
-		{
-			atime: OnOffInherit.Off,
-			compression: Compression.Lz4,
-			comments:
-				"Applications hébergées : natives (TrueNAS Apps) et Kubernetes (lungmen.akn)",
-		},
-		[
-			new TrueNASDataset("immich", {
-				comments:
-					"Immich (TrueNAS Apps) -- migration en cours vers managed/app.immich",
-				quota: 50 * ByteSize.Gi, // 50G
-				recordSize: RecordSize.Size1M,
-			}),
-			new TrueNASDataset("paperless", {
-				comments:
-					"Paperless (TrueNAS Apps) -- migration en cours vers managed/com.paperless-ngx",
-				quota: 10 * ByteSize.Gi,
-			}), // 10G
-			new TrueNASDataset("silverbullet", {
-				comments: "Silverbullet (TrueNAS Apps)",
-				quota: 5 * ByteSize.Gi, // 5G
-			}),
-			new TrueNASDataset(
-				"truenas",
-				{
-					atime: OnOffInherit.Off,
-					comments: "Services internes à TrueNAS lui-même",
-				},
-				[
-					new TrueNASDataset("com.nginxproxymanager", {
-						atime: OnOffInherit.Off,
-						comments: "Reverse-proxy interne (NPM)",
-					}),
-					new TrueNASDataset("fr.deuxfleurs.garage", {
-						atime: OnOffInherit.Off,
-						comments: "Backend S3 Garage",
-					}),
-				],
-			),
-			new TrueNASDataset(
-				"managed",
-				{
-					atime: OnOffInherit.Off,
-					compression: Compression.Lz4,
-					comments: "Applications Kubernetes montées en SMB",
-				},
-				[
-					new TrueNASDataset("app.immich", {
-						comments: "Immich (Kubernetes)",
-						quota: 50 * ByteSize.Gi, // 50G
-						recordSize: RecordSize.Size1M,
-					}),
-					new TrueNASDataset("com.paperless-ngx", {
-						comments: "Paperless-ngx (Kubernetes)",
-						quota: 10 * ByteSize.Gi, // 10G
-					}),
-				],
-			),
-		],
-	),
-	new TrueNASDataset(
-		"backups",
-		{
-			comments: "Cibles de sauvegarde locales",
-			quota: 100 * ByteSize.Gi,
-		}, // 100G
-		[
-			new TrueNASDataset("hass.chezmoi.sh", {
-				comments: "Sauvegardes Home Assistant",
-			}),
-		],
-	),
-	new TrueNASDataset(
-		"documents",
-		{
-			comments: "Ancien espace documents -- migration en cours vers userspace",
-		},
-		[],
-	),
-	new TrueNASDataset(
-		"userspace",
-		{
-			atime: OnOffInherit.Off,
-			compression: Compression.Lz4,
-			comments: "Espaces utilisateurs (remplace documents)",
-		},
-		[
-			new TrueNASDataset("shared", {
-				comments: "Espace partagé entre utilisateurs",
-			}),
-		],
-	),
-]);
+export const zp1hs01 = new TrueNASPool("zp1hs01", {
+	"/applications": {
+		atime: OnOffInherit.Off,
+		compression: Compression.Lz4,
+		comments:
+			"Applications hébergées : natives (TrueNAS Apps) et Kubernetes (lungmen.akn)",
+	},
+	"/applications/immich": {
+		comments:
+			"Immich (TrueNAS Apps) -- migration en cours vers managed/app.immich",
+		quota: 50 * ByteSize.Gi, // 50G
+		recordSize: RecordSize.Size1M,
+	},
+	"/applications/paperless": {
+		comments:
+			"Paperless (TrueNAS Apps) -- migration en cours vers managed/com.paperless-ngx",
+		quota: 10 * ByteSize.Gi, // 10G
+	},
+	"/applications/silverbullet": {
+		comments: "Silverbullet (TrueNAS Apps)",
+		quota: 5 * ByteSize.Gi, // 5G
+	},
+	"/applications/truenas": {
+		atime: OnOffInherit.Off,
+		comments: "Services internes à TrueNAS lui-même",
+	},
+	"/applications/truenas/com.nginxproxymanager": {
+		atime: OnOffInherit.Off,
+		comments: "Reverse-proxy interne (NPM)",
+	},
+	"/applications/truenas/fr.deuxfleurs.garage": {
+		atime: OnOffInherit.Off,
+		comments: "Backend S3 Garage",
+	},
+	"/applications/managed": {
+		atime: OnOffInherit.Off,
+		compression: Compression.Lz4,
+		comments: "Applications Kubernetes montées en SMB",
+	},
+	"/applications/managed/app.immich": {
+		comments: "Immich (Kubernetes)",
+		quota: 50 * ByteSize.Gi, // 50G
+		recordSize: RecordSize.Size1M,
+	},
+	"/applications/managed/com.paperless-ngx": {
+		comments: "Paperless-ngx (Kubernetes)",
+		quota: 10 * ByteSize.Gi, // 10G
+	},
+	"/backups": {
+		comments: "Cibles de sauvegarde locales",
+		quota: 100 * ByteSize.Gi, // 100G
+	},
+	"/backups/hass.chezmoi.sh": {
+		comments: "Sauvegardes Home Assistant",
+	},
+	"/documents": {
+		comments: "Ancien espace documents -- migration en cours vers userspace",
+	},
+	"/userspace": {
+		atime: OnOffInherit.Off,
+		compression: Compression.Lz4,
+		comments: "Espaces utilisateurs (remplace documents)",
+	},
+	"/userspace/shared": {
+		comments: "Espace partagé entre utilisateurs",
+	},
+});
 
 // --- Scrub -------------------------------------------------------------------
 

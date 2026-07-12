@@ -1,14 +1,20 @@
 // -----------------------------------------------------------------------------
-// `TrueNASPool`: groups a `TrueNASDataset` tree under an existing physical
-// pool, and is the only place that actually reaches out to TrueNAS over
-// JSON-RPC (see ./truenas-api) -- `topology()`/`datasetsTree()` fetch once,
-// then delegate all rendering to ./topology and ./dataset respectively.
+// `TrueNASPool`: groups a ZFS dataset hierarchy, declared as a flat
+// `DatasetTree` (path -> args), under an existing physical pool. It's the
+// only place that actually reaches out to TrueNAS over JSON-RPC (see
+// ./truenas-api) -- `topology()`/`datasetsTree()` fetch once, then delegate
+// all rendering to ./topology and ./dataset respectively.
 // -----------------------------------------------------------------------------
 
 import * as pulumi from "@pulumi/pulumi";
 import type * as truenas from "@pulumi/truenas";
 
-import { collectDatasetRows, renderRows, type TrueNASDataset } from "./dataset";
+import {
+	collectDatasetRows,
+	type DatasetArgs,
+	renderRows,
+	TrueNASDataset,
+} from "./dataset";
 import { TrueNASTopology } from "./topology";
 import {
 	fetchDatasets,
@@ -29,24 +35,72 @@ function flattenDatasetInfo(
 }
 
 /**
- * Groups a `TrueNASDataset` tree under an existing, physical TrueNAS pool
- * name. It never creates a `truenas.Pool` resource — the pool (and its disk
+ * Flat, path-keyed declaration of a pool's dataset hierarchy, e.g.
+ * `{ "/media": {...}, "/media/animes": {...} }`. Nesting is inferred from the
+ * path itself -- every ancestor must be declared explicitly as its own
+ * entry -- rather than from object nesting, so a dataset's place in the tree
+ * reads directly off its key regardless of depth.
+ */
+export type DatasetTree = Record<string, DatasetArgs>;
+
+/**
+ * Builds the internal `TrueNASDataset` tree (parent-linked, same shape
+ * `materialize()`/`index()` already expect) from a flat `DatasetTree`.
+ * Processing shallowest paths first guarantees each entry's parent node
+ * already exists by the time it's linked in, regardless of key order in the
+ * source object.
+ */
+function buildDatasetTree(tree: DatasetTree): TrueNASDataset[] {
+	const nodes = new Map<string, TrueNASDataset>();
+	const roots: TrueNASDataset[] = [];
+
+	const entries = Object.entries(tree)
+		.map(([path, args]) => [path.replace(/^\/+/, ""), args] as const)
+		.sort(([a], [b]) => a.split("/").length - b.split("/").length);
+
+	for (const [path, args] of entries) {
+		const segments = path.split("/");
+		const name = segments[segments.length - 1];
+		const parentPath = segments.slice(0, -1).join("/");
+		const node = new TrueNASDataset(name, args);
+
+		if (parentPath) {
+			const parent = nodes.get(parentPath);
+			if (!parent) {
+				throw new Error(
+					`Dataset "/${path}" has no parent dataset declared at "/${parentPath}"`,
+				);
+			}
+			parent.children.push(node);
+		} else {
+			roots.push(node);
+		}
+		nodes.set(path, node);
+	}
+	return roots;
+}
+
+/**
+ * Groups a flat `DatasetTree` under an existing, physical TrueNAS pool name.
+ * It never creates a `truenas.Pool` resource — the pool (and its disk
  * topology) already exists physically; this only builds and manages the
  * dataset hierarchy under it.
  */
 export class TrueNASPool extends pulumi.ComponentResource {
+	private readonly datasets: TrueNASDataset[];
 	private readonly byPath = new Map<string, TrueNASDataset>();
 	private topologyOutput?: pulumi.Output<TrueNASTopology>;
 	private datasetsTreeOutput?: pulumi.Output<string>;
 
 	constructor(
 		public readonly name: string,
-		public readonly datasets: TrueNASDataset[] = [],
+		datasets: DatasetTree = {},
 		opts?: pulumi.ComponentResourceOptions,
 	) {
 		super("chezmoi:truenas:Pool", name, {}, opts);
 
-		for (const dataset of datasets) {
+		this.datasets = buildDatasetTree(datasets);
+		for (const dataset of this.datasets) {
 			dataset.materialize(name, undefined, this);
 			dataset.index(dataset.path, this.byPath);
 		}

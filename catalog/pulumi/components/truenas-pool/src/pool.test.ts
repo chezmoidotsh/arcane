@@ -2,13 +2,12 @@ import * as pulumi from "@pulumi/pulumi";
 import { expect } from "chai";
 import { before, beforeEach, describe, it } from "mocha";
 
-import { TrueNASDataset } from "./dataset";
 import { TrueNASPool } from "./pool";
 
 /**
- * `TrueNASPool`/`TrueNASDataset` materialization exercises real Pulumi
- * resource creation (`truenas.Dataset`), so these tests register Pulumi
- * runtime mocks and record every resource the pool materializes.
+ * `TrueNASPool` materialization exercises real Pulumi resource creation
+ * (`truenas.Dataset`), so these tests register Pulumi runtime mocks and
+ * record every resource the pool materializes.
  *
  * `TrueNASPool.topology()`/`datasetsTree()` themselves (the thin orchestrators
  * that fetch over JSON-RPC then delegate to ./topology and ./dataset) are
@@ -68,14 +67,13 @@ async function drain(): Promise<void> {
 	}
 }
 
-describe("TrueNASDataset materialization", () => {
-	it("creates one Dataset per node, named after its full pool-relative path", async () => {
-		new TrueNASPool("zp1cs01", [
-			new TrueNASDataset("media", {}, [
-				new TrueNASDataset("animes"),
-				new TrueNASDataset("movies"),
-			]),
-		]);
+describe("TrueNASPool dataset materialization", () => {
+	it("creates one Dataset per path, named after its full pool-relative path", async () => {
+		new TrueNASPool("zp1cs01", {
+			"/media": {},
+			"/media/animes": {},
+			"/media/movies": {},
+		});
 		await drain();
 
 		expect(Object.keys(created).sort()).to.deep.equal([
@@ -98,27 +96,52 @@ describe("TrueNASDataset materialization", () => {
 	});
 
 	it("passes dataset args (e.g. quota) through to the Dataset resource", async () => {
-		new TrueNASPool("zp1cs01", [
-			new TrueNASDataset("media", {}, [
-				new TrueNASDataset("inbox", { quota: 100 }),
-			]),
-		]);
+		new TrueNASPool("zp1cs01", {
+			"/media": {},
+			"/media/inbox": { quota: 100 },
+		});
 		await drain();
 
 		expect(created["zp1cs01-media-inbox"].inputs.quota).to.equal(100);
+	});
+
+	it("links datasets by path regardless of declaration order", async () => {
+		new TrueNASPool("zp1cs01", {
+			"/media/animes": {},
+			"/media": {},
+		});
+		await drain();
+
+		expect(created["zp1cs01-media-animes"].inputs).to.include({
+			parentDataset: "media",
+		});
+	});
+
+	it("throws when a dataset's parent path isn't declared", () => {
+		expect(() => new TrueNASPool("zp1cs01", { "/media/animes": {} })).to.throw(
+			'Dataset "/media/animes" has no parent dataset declared at "/media"',
+		);
 	});
 });
 
 describe("TrueNASPool dataset lookup", () => {
 	it("get() resolves nested datasets by pool-relative path", async () => {
-		const animes = new TrueNASDataset("animes");
-		const pool = new TrueNASPool("zp1cs01", [
-			new TrueNASDataset("media", {}, [animes]),
-		]);
+		const pool = new TrueNASPool("zp1cs01", {
+			"/media": {},
+			"/media/animes": {},
+		});
 		await drain();
 
-		expect(pool.get("media/animes")).to.equal(animes);
-		expect(pool.get("media")).to.be.instanceOf(TrueNASDataset);
-		expect(pool.get("does/not/exist")).to.be.undefined;
+		expect(pool.get("media/animes").path).to.equal("zp1cs01/media/animes");
+		expect(pool.get("media").resource).to.exist;
+	});
+
+	it("get() throws for an unknown dataset path", async () => {
+		const pool = new TrueNASPool("zp1cs01", { "/media": {} });
+		await drain();
+
+		expect(() => pool.get("does/not/exist")).to.throw(
+			'Unknown dataset "does/not/exist" in pool "zp1cs01"',
+		);
 	});
 });

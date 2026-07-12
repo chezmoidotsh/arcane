@@ -16,23 +16,24 @@ of what's actually there. Centralizing that here means any project with a TrueNA
 
 ```typescript
 import { ByteSize } from "@chezmoi.sh/pulumi-lib";
-import { TrueNASDataset, TrueNASPool } from "@chezmoi.sh/pulumi-truenas-pool";
+import { TrueNASPool } from "@chezmoi.sh/pulumi-truenas-pool";
 
 // zp1cs01 already exists as a physical pool on the NAS — this only builds the
-// dataset tree under it.
-const zp1cs01 = new TrueNASPool("zp1cs01", [
-  new TrueNASDataset("media", {}, [
-    new TrueNASDataset("animes"),
-    new TrueNASDataset("inbox", { quota: 50 * ByteSize.Gi }),
-  ]),
-]);
+// dataset tree under it. Keys are pool-relative paths (leading "/"); nesting
+// is inferred from the path itself, so every ancestor must be declared as
+// its own entry too (e.g. "/media" before "/media/inbox").
+const zp1cs01 = new TrueNASPool("zp1cs01", {
+  "/media": {},
+  "/media/animes": {},
+  "/media/inbox": { quota: 50 * ByteSize.Gi },
+});
 
 export const zp1cs01Topology = zp1cs01.topology().apply((t) => t.toString());
 export const zp1cs01DatasetsTree = zp1cs01.datasetsTree();
 ```
 
-`TrueNASDataset`'s second argument is `Omit<truenas.DatasetArgs, "name" | "pool" | "parentDataset">` — any `Dataset`
-property except the three the component derives from the tree position itself (the leaf segment, the pool name, and the
+Each entry's value is a `DatasetArgs`, i.e. `Omit<truenas.DatasetArgs, "name" | "pool" | "parentDataset">` — any
+`Dataset` property except the three the component derives from the path itself (the leaf segment, the pool name, and the
 accumulated relative parent path). Every property that's a closed set of values on the real TrueNAS API is re-typed
 against a proper enum instead of the SDK's bare `string` (the underlying Terraform provider schema doesn't model any of
 these as anything narrower than `string`):
@@ -68,7 +69,7 @@ since a couple of these looked plausible enough to almost assume were just undoc
 Reach a dataset by its pool-relative path (i.e. without the pool name prefix) once the tree is built:
 
 ```typescript
-zp1cs01.get("media/inbox"); // typed, returns TrueNASDataset | undefined
+zp1cs01.get("media/inbox"); // typed; throws if the path isn't declared
 ```
 
 ## Topology and dataset tree
@@ -171,18 +172,16 @@ deduplicated — renders (via `datasetsTree()`) as:
 
 ```typescript
 import { ByteSize } from "@chezmoi.sh/pulumi-lib";
-import { OnOffInherit } from "@chezmoi.sh/pulumi-truenas-pool";
+import { OnOffInherit, TrueNASPool } from "@chezmoi.sh/pulumi-truenas-pool";
 
-const zp1hs01 = new TrueNASPool("zp1hs01", [
-  new TrueNASDataset("applications", { comments: "app data" }, [
-    new TrueNASDataset("immich", { quota: 50 * ByteSize.Gi }),
-    new TrueNASDataset("paperless", { quota: 10 * ByteSize.Gi }),
-  ]),
-  new TrueNASDataset("backups", { quota: 100 * ByteSize.Gi, comments: "offsite backups" }, [
-    new TrueNASDataset("hass.chezmoi.sh", { readonly: OnOffInherit.On }),
-  ]),
-  new TrueNASDataset("documents", { deduplication: "ON", comments: "dedup'd shared docs" }),
-]);
+const zp1hs01 = new TrueNASPool("zp1hs01", {
+  "/applications": { comments: "app data" },
+  "/applications/immich": { quota: 50 * ByteSize.Gi },
+  "/applications/paperless": { quota: 10 * ByteSize.Gi },
+  "/backups": { quota: 100 * ByteSize.Gi, comments: "offsite backups" },
+  "/backups/hass.chezmoi.sh": { readonly: OnOffInherit.On },
+  "/documents": { deduplication: "ON", comments: "dedup'd shared docs" },
+});
 ```
 
 ```text
@@ -269,7 +268,7 @@ and `@chezmoi.sh/pulumi-lib`):
 Then import it **by package name** (not by relative path):
 
 ```typescript
-import { TrueNASDataset, TrueNASPool } from "@chezmoi.sh/pulumi-truenas-pool";
+import { TrueNASPool } from "@chezmoi.sh/pulumi-truenas-pool";
 ```
 
 Install from the repository root for editing/type-checking across the workspace:
@@ -305,8 +304,8 @@ comment/JSDoc is the reference for its exact exports, so nothing here duplicates
   a `truenas.Dataset`, and its tree-rendering (`toString()`).
 - [`topology.ts`](./src/topology.ts) — `TrueNASTopology` and the ASCII box-drawing engine behind its
   `toString()`/`diskModels()`.
-- [`pool.ts`](./src/pool.ts) — `TrueNASPool`, the `ComponentResource` itself: dataset-tree materialization, `get()`, and
-  the two JSON-RPC-backed methods `topology()`/`datasetsTree()`.
+- [`pool.ts`](./src/pool.ts) — `TrueNASPool`, the `ComponentResource` itself: `DatasetTree` materialization, `get()`,
+  and the two JSON-RPC-backed methods `topology()`/`datasetsTree()`.
 - [`truenas-api.ts`](./src/truenas-api.ts) — the read-only JSON-RPC 2.0 client backing `topology()`/`datasetsTree()`
   (see [Why neither goes through the managed resources](#why-neither-goes-through-the-managed-resources)).
 
@@ -317,9 +316,9 @@ these files directly.
 
 The package ships unit tests as **Mocha + Chai**, split to mirror `src/`'s own module layout:
 
-- [`pool.test.ts`](./src/pool.test.ts) — `TrueNASDataset`/`TrueNASPool` materialization exercises real Pulumi resource
-  creation, so it uses `@pulumi/pulumi/runtime` mocks (`setMocks`) that capture every `Dataset` resource the pool
-  materializes.
+- [`pool.test.ts`](./src/pool.test.ts) — `TrueNASPool` materialization (from a flat `DatasetTree`) exercises real Pulumi
+  resource creation, so it uses `@pulumi/pulumi/runtime` mocks (`setMocks`) that capture every `Dataset` resource the
+  pool materializes.
 - [`topology.test.ts`](./src/topology.test.ts) — `TrueNASTopology.toString()`/ `diskModels()` against fixture objects
   shaped like real `pool.query`/`disk.query` responses. Coverage includes per-vdev labels, row-wrapping past 5 boxes at
   both the vdev and category level, the degraded-placeholder path when pool information is unavailable, and the model-id
@@ -342,7 +341,7 @@ pnpm test      # inside the pnpm workspace
 
 ## References
 
-- Live consumer: [`chezmoi.sh`](../../../../projects/chezmoi.sh/src/infrastructure/pulumi/src/truenas-datasets.ts)
+- Live consumer: [`chezmoi.sh`](../../../../projects/chezmoi.sh/src/infrastructure/pulumi/src/truenas/zpools/)
 - [`catalog/pulumi/README.md`](../../README.md) — workspace / dependency-resolution rationale
 
 ## License
