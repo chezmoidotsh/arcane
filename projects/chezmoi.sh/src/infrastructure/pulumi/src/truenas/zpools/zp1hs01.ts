@@ -1,4 +1,4 @@
-import { ByteSize } from "@chezmoi.sh/pulumi-lib";
+import { ByteSize, must } from "@chezmoi.sh/pulumi-lib";
 import {
 	Compression,
 	OnOffInherit,
@@ -8,7 +8,40 @@ import {
 } from "@chezmoi.sh/pulumi-truenas-pool";
 import * as truenas from "@pulumi/truenas";
 
-// --- zp1hs01: applications / backups / documents -------------------------
+import {
+	SCRUB_WEEKLY_SUNDAY_MIDNIGHT_PRESET,
+	SNAPSHOT_DAILY_MIDNIGHT_PRESET,
+	SNAPSHOT_NAMING_SCHEMA,
+	SNAPSHOT_WEEKLY_SUNDAY_3AM_PRESET,
+} from "./const";
+
+// -----------------------------------------------------------------------------
+// zp1hs01: applications / backups / documents / userspace
+// -----------------------------------------------------------------------------
+// Naming convention
+//   zp1hs01
+//   │ │ │ │
+//   │ │ │ └─ 01: pool id
+//   │ │ └─── hs: hot storage tier (SSD / fast storage)
+//   │ └───── 1:  naming scheme version
+//   └─────── zp: zpool
+//
+// Purpose
+// - Dataset tree for the main TrueNAS pool (nas.chezmoi.sh): hosted
+//   applications (bare-metal and Kubernetes-managed), local backup targets,
+//   shared documents, and per-user home directories.
+// - Hot storage tier: holds data that needs fast access and/or changes
+//   often. Also the default pool for TrueNAS's own app data (Apps ->
+//   ix-applications and similar system datasets).
+//
+// Data protection strategy
+// - Scrub: weekly integrity check of the whole pool (see `SCRUB_WEEKLY_SUNDAY_MIDNIGHT_PRESET`).
+// - Whole-pool snapshot: weekly, 4-week retention — a coarse safety net that
+//   covers every dataset, including ones without a dedicated task below.
+// - Granular snapshots: daily, 8-day retention, one per dataset listed in
+//   `DAILY_SNAPSHOT_DATASETS` below — for data that changes often or matters
+//   most (e.g. K8s-managed app state).
+// -----------------------------------------------------------------------------
 
 export const zp1hs01 = new TrueNASPool("zp1hs01", [
 	new TrueNASDataset(
@@ -50,6 +83,27 @@ export const zp1hs01 = new TrueNASPool("zp1hs01", [
 					}),
 				],
 			),
+			new TrueNASDataset(
+				"managed",
+				{
+					atime: OnOffInherit.Off,
+					compression: Compression.Lz4,
+					comments:
+						"Dataset TrueNAS pour les applications gérées par Kubernetes",
+				},
+				[
+					new TrueNASDataset("app.immich", {
+						comments: "Dataset TrueNAS réservé pour Immich (K8s-managed)",
+						quota: 50 * ByteSize.Gi, // 50G
+						recordSize: RecordSize.Size1M,
+					}),
+					new TrueNASDataset("com.paperless-ngx", {
+						comments:
+							"Dataset TrueNAS réservé pour Paperless-ngx (K8s-managed)",
+						quota: 10 * ByteSize.Gi, // 10G
+					}),
+				],
+			),
 		],
 	),
 	new TrueNASDataset(
@@ -73,38 +127,86 @@ export const zp1hs01 = new TrueNASPool("zp1hs01", [
 		},
 		[],
 	),
+	new TrueNASDataset(
+		"userspace",
+		{
+			atime: OnOffInherit.Off,
+			compression: Compression.Lz4,
+			comments:
+				"Dataset dédié aux données utilisateurs (partagées ou personnelles)",
+		},
+		[
+			new TrueNASDataset("shared", {
+				comments:
+					"Dataset TrueNAS réservé pour les données partagées entre utilisateurs",
+			}),
+		],
+	),
 ]);
+
+// --- Scrub -------------------------------------------------------------------
 
 new truenas.ScrubTask(
 	"zp1hs01-scrub",
 	{
-		pool: 5,
+		pool: 5, // physical TrueNAS pool ID (not derivable from Pulumi state)
 		threshold: 35,
 		enabled: true,
-		scheduleMinute: "00",
-		scheduleHour: "00",
-		scheduleDom: "*",
-		scheduleMonth: "*",
-		scheduleDow: "7",
+		...SCRUB_WEEKLY_SUNDAY_MIDNIGHT_PRESET,
 	},
 	{ parent: zp1hs01 },
 );
 
+// --- Whole-pool snapshot (coarse safety net) ----------------------------------
+// Covers every dataset in the pool, including ones without a dedicated
+// granular task below. Lower frequency / longer-lived than the granular
+// snapshots since it's a fallback, not the primary recovery point.
+
 new truenas.SnapshotTask(
 	"zp1hs01-snapshot",
 	{
-		dataset: "zp1hs01",
+		dataset: zp1hs01.name,
 		recursive: true,
-		lifetimeValue: 2,
+		lifetimeValue: 4,
 		lifetimeUnit: "WEEK",
 		enabled: true,
-		namingSchema: "auto-%Y-%m-%d_%H-%M",
+		namingSchema: SNAPSHOT_NAMING_SCHEMA,
 		allowEmpty: true,
-		scheduleMinute: "0",
-		scheduleHour: "0",
-		scheduleDom: "*",
-		scheduleMonth: "*",
-		scheduleDow: "*",
+		...SNAPSHOT_WEEKLY_SUNDAY_3AM_PRESET,
 	},
 	{ parent: zp1hs01 },
 );
+
+// --- Granular snapshots (daily, short retention) ------------------------------
+// One dedicated `SnapshotTask` per dataset below. `id` fixes the Pulumi
+// resource name (kept stable/explicit rather than derived from `path`, so
+// renaming or reordering entries here never triggers an unwanted replace).
+// `must(zp1hs01.get(path))` validates each dataset actually exists in the
+// tree above, failing fast at `pulumi preview` instead of silently creating
+// an orphaned task for a typo'd or removed path.
+
+const DAILY_SNAPSHOT_DATASETS: { id: string; path: string }[] = [
+	{ id: "app-immich", path: "applications/managed/app.immich" },
+	{ id: "com-paperless-ngx", path: "applications/managed/com.paperless-ngx" },
+];
+
+for (const { id, path } of DAILY_SNAPSHOT_DATASETS) {
+	const dataset = must(
+		zp1hs01.get(path),
+		`${path} dataset not found in zp1hs01`,
+	);
+	new truenas.SnapshotTask(
+		`zp1hs01-snapshot-${id}`,
+		{
+			dataset: dataset.path,
+			recursive: false,
+			lifetimeValue: 8,
+			lifetimeUnit: "DAY",
+			enabled: true,
+			namingSchema: SNAPSHOT_NAMING_SCHEMA,
+			allowEmpty: true,
+			...SNAPSHOT_DAILY_MIDNIGHT_PRESET,
+		},
+		{ parent: zp1hs01.get(path)?.resource },
+	);
+}

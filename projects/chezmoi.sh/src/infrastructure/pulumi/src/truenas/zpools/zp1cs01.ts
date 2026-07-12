@@ -2,7 +2,29 @@ import { ByteSize } from "@chezmoi.sh/pulumi-lib";
 import { TrueNASDataset, TrueNASPool } from "@chezmoi.sh/pulumi-truenas-pool";
 import * as truenas from "@pulumi/truenas";
 
-// --- zp1cs01: media -----------------------------------------------------
+import { SCRUB_WEEKLY_SUNDAY_MIDNIGHT_PRESET } from "./const";
+
+// -----------------------------------------------------------------------------
+// zp1cs01: media
+// -----------------------------------------------------------------------------
+// Naming
+//   zp 1 cs 01
+//   │  │ │  │
+//   │  │ │  └─ 01: pool id
+//   │  │ └──── cs: cold storage tier (HDD / bulk storage)
+//   │  └────── 1: naming scheme version
+//   └───────── zp: zpool
+//
+// Purpose
+// - Dataset tree for the cold storage pool (nas.chezmoi.sh): bulk media
+//   (movies, TV shows, animes, music, books) that doesn't need fast access
+//   and is written to infrequently, unlike the hot storage pool (`zp1hs01`).
+//
+// Data protection strategy
+// - Scrub: weekly integrity check of the whole pool (see `SCRUB_WEEKLY_SUNDAY_MIDNIGHT_PRESET`).
+// - No snapshot tasks: media here is either sourced from elsewhere and
+//   re-obtainable, or not critical enough to justify snapshot retention.
+// -----------------------------------------------------------------------------
 
 export const zp1cs01 = new TrueNASPool("zp1cs01", [
 	new TrueNASDataset(
@@ -38,14 +60,10 @@ export const zp1cs01 = new TrueNASPool("zp1cs01", [
 new truenas.ScrubTask(
 	"zp1cs01-scrub",
 	{
-		pool: 6,
+		pool: 6, // physical TrueNAS pool ID (not derivable from Pulumi state)
 		threshold: 35,
 		enabled: true,
-		scheduleMinute: "00",
-		scheduleHour: "00",
-		scheduleDom: "*",
-		scheduleMonth: "*",
-		scheduleDow: "7",
+		...SCRUB_WEEKLY_SUNDAY_MIDNIGHT_PRESET,
 	},
 	{ parent: zp1cs01 },
 );
