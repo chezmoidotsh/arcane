@@ -48,7 +48,7 @@ export interface Nfs4AclAssignment {
 interface Nfs4EntrySpec {
 	/** `"owner@"`/`"group@"`/`"everyone@"` (NFS4 special identifiers) or `"USER"`/`"GROUP"` (named principal, requires `id`). */
 	tag: "owner@" | "group@" | "everyone@" | "USER" | "GROUP";
-	/** Numeric uid/gid -- required for `"USER"`/`"GROUP"`, meaningless (and omitted) for the special identifiers. */
+	/** Numeric uid/gid -- required for `"USER"`/`"GROUP"`; defaults to `-1` (TrueNAS's own "no id" sentinel) for the special identifiers. */
 	id?: pulumi.Input<number>;
 	/** One of TrueNAS's basic NFS4 permission presets, in increasing order of access: TRAVERSE < READ < MODIFY < FULL_CONTROL. */
 	basic: "FULL_CONTROL" | "MODIFY" | "READ" | "TRAVERSE";
@@ -63,22 +63,24 @@ interface Nfs4EntrySpec {
  * Resolves any `id` (from a `truenas.getUser`/`getGroup` lookup) before
  * stringifying, since `aclJson` itself must be a plain string, not an
  * object containing unresolved Outputs/Promises.
+ *
+ * Key order (`flags`/`id`/`perms`/`tag`/`type`), the `-1` sentinel for
+ * owner@/group@/everyone@ entries, and the absence of a `who` field are
+ * not stylistic choices -- they match, byte for byte, what
+ * `filesystem.acltemplate` itself returns for these templates (confirmed
+ * via `pulumi refresh --diff`). Anything else here causes a spurious
+ * `update` on every `pulumi preview`/`up`, forever, even though nothing
+ * actually changed.
  */
 function nfs4AclJson(specs: Nfs4EntrySpec[]): pulumi.Output<string> {
-	// `-1` stands in for "no id" (owner@/group@/everyone@ entries) so every
-	// element is a plain `Input<number>` -- `pulumi.all` needs a uniform
-	// element type, and converting the sentinel back to `null` afterwards
-	// matches what a real named-vs-special NFS4 entry looks like once
-	// resolved (confirmed against a live `filesystem.getacl` response).
 	return pulumi.all(specs.map((s) => s.id ?? -1)).apply((ids) =>
 		JSON.stringify(
 			specs.map((s, i) => ({
+				flags: { BASIC: "INHERIT" },
+				id: ids[i],
+				perms: { BASIC: s.basic },
 				tag: s.tag,
 				type: "ALLOW",
-				perms: { BASIC: s.basic },
-				flags: { BASIC: "INHERIT" },
-				id: ids[i] === -1 ? null : ids[i],
-				who: null,
 			})),
 		),
 	);
