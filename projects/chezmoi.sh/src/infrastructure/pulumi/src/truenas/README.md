@@ -82,14 +82,13 @@ export const zp1hs01 = new TrueNASPool("zp1hs01", {
 
 ## Adding or editing a share
 
-Shares are declared directly inside the `nfsShares`/`smbShares` export arrays in `shares.ts` — each array element is a
-`new truenas.ShareNfs(...)`/`new truenas.ShareSmb(...)` call. The arrays export the resource instances themselves, not a
-hand-maintained plain-data summary. The documentation generator (`../truenas-docs`) is the consumer, and it's
-responsible for pulling whatever fields it needs back out of each resource's Outputs (see that project's own README).
+Shares are declared as standalone `new truenas.ShareNfs(...)`/`new truenas.ShareSmb(...)` calls directly in `shares.ts`,
+not collected into a hand-maintained plain-data summary. The documentation generator (`../truenas-docs`) doesn't import
+this file at all — it reads share state back out of `pulumi stack export` (see that project's own README).
 
 ### Adding an NFS share
 
-Add an entry to the `nfsShares` array:
+Add a new declaration in `shares.ts`:
 
 ```typescript
 new truenas.ShareNfs(
@@ -102,7 +101,7 @@ new truenas.ShareNfs(
     enabled: true,
   },
   { parent: zp1cs01.get("media/mynewds").resource, ignoreChanges: ["hosts"] },
-),
+);
 ```
 
 **Important:** IP allowlisting (`hosts`) is deliberately omitted and managed directly on the NAS via the UI. Use
@@ -110,7 +109,7 @@ new truenas.ShareNfs(
 
 ### Adding an SMB share
 
-Add an entry to the `smbShares` array:
+Add a new declaration in `shares.ts`:
 
 ```typescript
 new truenas.ShareSmb(
@@ -124,7 +123,7 @@ new truenas.ShareSmb(
     readonly: false, // optional
   },
   { parent: zp1cs01.get("media/mynewds").resource, ignoreChanges: ["hosts"] },
-),
+);
 ```
 
 ## Running Pulumi commands

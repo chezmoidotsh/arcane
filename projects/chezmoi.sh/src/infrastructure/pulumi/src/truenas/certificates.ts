@@ -14,6 +14,7 @@ import * as config from "../../config";
 // implicit default `keyType`) -- EC isn't usable here either way, the
 // schema only accepts RSA key lengths (1024/2048/4096) regardless of
 // `keyType`.
+
 const csrIdentity = {
 	country: "FR",
 	state: "Ile-de-France",
