@@ -119,7 +119,9 @@ export const builtInUsersGroup = truenas.getGroupOutput({
 // own `groups`.
 export const managedApplicationsGroup = new truenas.Group(
 	"group-managed-applications",
-	{ name: "managed_applications" },
+	{
+		name: "managed_applications",
+	},
 );
 
 export const managedApplicationTemplate = new truenas.FilesystemAclTemplate(
@@ -129,7 +131,10 @@ export const managedApplicationTemplate = new truenas.FilesystemAclTemplate(
 		acltype: "NFS4",
 		comment:
 			"Owner gets read+write, nobody else has any access. For service accounts this stack manages itself (Home Assistant, Immich, Paperless-ngx), as opposed to TrueNAS's own Apps feature.",
-		aclJson: nfs4AclJson([{ tag: "owner@", basic: "MODIFY" }]),
+		aclJson: nfs4AclJson([
+			{ tag: "owner@", basic: "MODIFY" },
+			{ tag: "GROUP", id: managedApplicationsGroup.gid, basic: "TRAVERSE" },
+		]),
 	},
 );
 

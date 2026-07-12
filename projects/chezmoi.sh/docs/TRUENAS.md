@@ -179,6 +179,11 @@ NAS -- Pulumi doesn't manage them.
 
 ### Dataset -> template assignment
 
+> [!NOTE] Why not manage ACLs directly via Pulumi?
+> Because the used TrueNAS TF provider doesn't support handle NFS4 ACLs
+> properly, this stack cannot apply ACLs to datasets. Instead, it manages the
+> templates (named presets) and documents which one to apply to which dataset.
+
 Apply the matching template to each dataset below via the TrueNAS UI's ACL
 editor (Storage -> Datasets -> select dataset -> Edit Permissions -> select
 ACL Type: NFSv4 -> Use ACL Preset).
@@ -190,7 +195,6 @@ ACL Type: NFSv4 -> Use ACL Preset).
 | `zp1hs01/backups/hass.chezmoi.sh` | `NFSV4_MANAGED_APPLICATION` |
 | `zp1hs01/applications/managed/app.immich` | `NFSV4_MANAGED_APPLICATION` |
 | `zp1hs01/applications/managed/com.paperless-ngx` | `NFSV4_MANAGED_APPLICATION` |
-
 ## Backups
 
 Off-site copies go to Backblaze B2, split across private,
