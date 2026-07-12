@@ -36,11 +36,10 @@ import path = require("node:path");
 // - Because these are opaque to Pulumi, validate them against the TrueNAS
 //   API / UI when in doubt.
 //
-// Naming and import caveats
-// - Some CloudSync tasks may have been imported previously. Changing a
-//   resource's `parent` will change its URN and cause Pulumi to delete +
-//   recreate the resource; the global sync below is intentionally created
-//   without a `parent` comment to avoid that.
+// Naming caveats
+// - Changing a resource's `parent` changes its URN and causes Pulumi to
+//   delete + recreate the resource; the global sync below is intentionally
+//   created without a `parent` option to avoid that.
 // -----------------------------------------------------------------------------
 
 // Daily schedule preset (cron equivalent: 0 1 * * *)
@@ -69,11 +68,11 @@ const WEEKLY_SCHEDULE_PRESET = {
 // through B2's native `b2_authorize_account`, so it isn't affected by the b2
 // SDK's v4-only multi-bucket-key restriction (see
 // https://github.com/Backblaze/terraform-provider-b2/issues/129).
+
 const nasBackupApplicationKey = new b2.ApplicationKey("truenas-replication", {
 	keyName: "truenas-replication",
 	bucketIds: [legacyTrueNASBackupBucket.bucketId, trueNASBackupBucket.bucketId],
 	capabilities: [
-		"bypassGovernance",
 		"deleteFiles",
 		"listAllBucketNames",
 		"listBuckets",
@@ -118,12 +117,15 @@ const nasBackupCloudsyncCredential = new truenas.CloudsyncCredential(
 	{ parent: nasBackupApplicationKey },
 );
 
-// --- Global sync (disabled) --------------------------------------------------
-// A previously-imported top-level CloudSync task. It's kept here for reference
-// but explicitly disabled; we rely on smaller, targeted CloudSync jobs below
-// because they make targeted restores and exclusion rules easier to reason
-// about. Do NOT add a `parent` to this resource — changing its URN would
-// recreate the resource during the next `pulumi up`.
+// --- Global sync (active, whole-pool) -----------------------------------------
+// A top-level CloudSync task syncing the entire zp1hs01 pool to the legacy
+// `legacyTrueNASBackupBucket`, running alongside the granular per-dataset jobs
+// below (which target the newer `trueNASBackupBucket`). It stays enabled as a
+// coarse whole-pool safety net -- since it writes to a different bucket, it
+// doesn't duplicate or conflict with the granular jobs' backups. Do NOT add a
+// `parent` to this resource — changing its URN would recreate the resource
+// during the next `pulumi up`.
+
 export const legacyGlobalSync = new truenas.CloudSync("nas-backup-cloudsync", {
 	description: "Backblaze B2 - zp1hs01 sync",
 	path: "/mnt/zp1hs01",
@@ -146,7 +148,8 @@ export const legacyGlobalSync = new truenas.CloudSync("nas-backup-cloudsync", {
 // validate that the referenced dataset exists on the pool during Pulumi's
 // program evaluation. The `scheduler` object is spread into the CloudSync
 // resource to set the run cadence.
-export const cloudSyncJobs: Array<{
+
+const cloudSyncJobs: Array<{
 	description: string;
 	pool: TrueNASPool;
 	dataset: NonNullable<ReturnType<TrueNASPool["get"]>>;
@@ -181,38 +184,33 @@ export const cloudSyncJobs: Array<{
 	},
 ];
 
-export const granularCloudSyncTasks: truenas.CloudSync[] = [];
-
 for (const job of cloudSyncJobs) {
 	const mountPoint = job.dataset.resource.mountPoint;
 	const task = new truenas.CloudSync(
 		`cs-b2-${job.pool.name}-${job.dataset.path.replace("/", "-")}`,
 		{
-			...{
-				description: `B2 — ${job.description}`,
-				path: mountPoint,
-				direction: "PUSH",
-				transferMode: "SYNC",
-				enabled: true,
-				// Provider requires a numeric credential id, convert the Pulumi id to a
-				// Number inside an `.apply()`.
-				credentials: nasBackupCloudsyncCredential.id.apply((id) => Number(id)),
-				attributesJson: pulumi.jsonStringify({
-					bucket: trueNASBackupBucket.bucketName,
-					fast_list: true,
-					// Use the dataset path as the destination folder inside the bucket so
-					// the bucket mirrors the pool structure (easier to find backups later).
-					folder: pulumi.interpolate`${mountPoint.apply((mp) => path.relative("/mnt", mp))}`,
-					storage_class: "STANDARD",
-				}),
+			description: `B2 — ${job.description}`,
+			path: mountPoint,
+			direction: "PUSH",
+			transferMode: "SYNC",
+			enabled: true,
+			// Provider requires a numeric credential id, convert the Pulumi id to a
+			// Number inside an `.apply()`.
+			credentials: nasBackupCloudsyncCredential.id.apply((id) => Number(id)),
+			attributesJson: pulumi.jsonStringify({
+				bucket: trueNASBackupBucket.bucketName,
+				fast_list: true,
+				// Use the dataset path as the destination folder inside the bucket so
+				// the bucket mirrors the pool structure (easier to find backups later).
+				folder: pulumi.interpolate`${mountPoint.apply((mp) => path.relative("/mnt", mp))}`,
+				storage_class: "STANDARD",
+			}),
 
-				...job.scheduler,
-			},
+			...job.scheduler,
 
 			// Apply any overrides from the job definition if present (e.g., to disable a job temporarily).
 			...(job.overrides ?? {}),
 		},
 		{ parent: job.dataset.resource },
 	);
-	granularCloudSyncTasks.push(task);
 }
