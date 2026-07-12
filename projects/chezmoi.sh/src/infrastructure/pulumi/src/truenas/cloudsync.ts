@@ -1,4 +1,5 @@
 import { must } from "@chezmoi.sh/pulumi-lib";
+import type { TrueNASPool } from "@chezmoi.sh/pulumi-truenas-pool";
 import * as b2 from "@pulumi/b2";
 import * as pulumi from "@pulumi/pulumi";
 import * as truenas from "@pulumi/truenas";
@@ -146,7 +147,13 @@ export const legacyGlobalSync = new truenas.CloudSync("nas-backup-cloudsync", {
 // validate that the referenced dataset exists on the pool during Pulumi's
 // program evaluation. The `scheduler` object is spread into the CloudSync
 // resource to set the run cadence.
-export const cloudSyncJobs = [
+export const cloudSyncJobs: Array<{
+	description: string;
+	pool: TrueNASPool;
+	dataset: NonNullable<ReturnType<TrueNASPool["get"]>>;
+	scheduler: typeof DAILY_SCHEDULE_PRESET | typeof WEEKLY_SCHEDULE_PRESET;
+	overrides?: { enabled?: boolean };
+}> = [
 	{
 		description: "Daily sync of users' spaces (shared excluded)",
 		pool: zp1hs01,
@@ -154,7 +161,6 @@ export const cloudSyncJobs = [
 		// TrueNAS UI if you want to exclude subfolders such as 'shared'.
 		dataset: must(zp1hs01.get("userspace"), "userspace dataset not found"),
 		scheduler: DAILY_SCHEDULE_PRESET,
-		overrides: { enabled: false }, // temporarily disabled until we can validate the include/exclude rules
 	},
 	{
 		description: "Weekly sync of immich.app application",
@@ -164,7 +170,6 @@ export const cloudSyncJobs = [
 			"immich.app dataset not found",
 		),
 		scheduler: WEEKLY_SCHEDULE_PRESET,
-		overrides: { enabled: false }, // temporarily disabled until we can validate the include/exclude rules
 	},
 	{
 		description: "Weekly sync of paperless-ngx.com application",
@@ -174,7 +179,15 @@ export const cloudSyncJobs = [
 			"paperless-ngx.com dataset not found",
 		),
 		scheduler: WEEKLY_SCHEDULE_PRESET,
-		overrides: { enabled: false }, // temporarily disabled until we can validate the include/exclude rules
+	},
+	{
+		description: "Weekly sync of TrueNAS applications",
+		pool: zp1hs01,
+		dataset: must(
+			zp1hs01.get("applications/truenas"),
+			"truenas dataset not found",
+		),
+		scheduler: WEEKLY_SCHEDULE_PRESET,
 	},
 ];
 

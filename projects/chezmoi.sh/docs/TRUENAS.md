@@ -203,13 +203,16 @@ older versions pruned after the lifecycle window):
 
 - B2 — Daily sync of users' spaces (shared excluded): `/mnt/zp1hs01/userspace`,
   daily at 01:00,
-  PUSH/SYNC *(disabled)*
+  PUSH/SYNC
 - B2 — Weekly sync of immich.app application: `/mnt/zp1hs01/applications/managed/app.immich`,
   weekly, Sundays at 02:00,
-  PUSH/SYNC *(disabled)*
+  PUSH/SYNC
 - B2 — Weekly sync of paperless-ngx.com application: `/mnt/zp1hs01/applications/managed/com.paperless-ngx`,
   weekly, Sundays at 02:00,
-  PUSH/SYNC *(disabled)*
+  PUSH/SYNC
+- B2 — Weekly sync of TrueNAS applications: `/mnt/zp1hs01/applications/truenas`,
+  weekly, Sundays at 02:00,
+  PUSH/SYNC
 - Before these existed, a legacy global sync of `/mnt/zp1hs01`
   pushed the whole pool
   weekly, Sundays at 02:00,
