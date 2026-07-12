@@ -49,8 +49,14 @@ export type DatasetTree = Record<string, DatasetArgs>;
  * Processing shallowest paths first guarantees each entry's parent node
  * already exists by the time it's linked in, regardless of key order in the
  * source object.
+ *
+ * Exported (not just used by `TrueNASPool`'s own constructor) so
+ * `../../../../projects/chezmoi.sh/src/infrastructure/pulumi/src/truenas-docs/generate.ts`
+ * can build the same tree shape from a set of Pulumi-managed dataset paths
+ * read back out of a `pulumi stack export`, to render `datasetsTree()`-style
+ * output without a running `TrueNASPool` instance.
  */
-function buildDatasetTree(tree: DatasetTree): TrueNASDataset[] {
+export function buildDatasetTree(tree: DatasetTree): TrueNASDataset[] {
 	const nodes = new Map<string, TrueNASDataset>();
 	const roots: TrueNASDataset[] = [];
 

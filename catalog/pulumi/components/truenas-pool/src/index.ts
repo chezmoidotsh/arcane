@@ -12,10 +12,12 @@ export * from "./dataset";
 export * from "./enums";
 export * from "./pool";
 export * from "./topology";
-export type {
-	TrueNASDatasetInfo,
-	TrueNASDatasetProperty,
-	TrueNASDiskInfo,
-	TrueNASPoolInfo,
-	TrueNASVdevNode,
+export {
+	fetchDatasets,
+	fetchTopology,
+	type TrueNASDatasetInfo,
+	type TrueNASDatasetProperty,
+	type TrueNASDiskInfo,
+	type TrueNASPoolInfo,
+	type TrueNASVdevNode,
 } from "./truenas-api";

@@ -1,29 +1,7 @@
 import { expect } from "chai";
-import * as fs from "fs";
-import * as Handlebars from "handlebars";
 import { describe, it } from "mocha";
-import * as path from "path";
 
-import { registerHelpers } from "./helpers";
-
-function render(context: unknown): string {
-	const handlebars = Handlebars.create();
-	registerHelpers(handlebars);
-
-	const partialsDir = path.join(__dirname, "partials");
-	for (const file of fs.readdirSync(partialsDir)) {
-		const name = path.basename(file, ".hbs");
-		handlebars.registerPartial(
-			name,
-			fs.readFileSync(path.join(partialsDir, file), "utf8"),
-		);
-	}
-
-	const template = handlebars.compile(
-		fs.readFileSync(path.join(__dirname, "template.hbs"), "utf8"),
-	);
-	return template(context);
-}
+import { render } from "./render";
 
 const fixtureContext = {
 	pools: [

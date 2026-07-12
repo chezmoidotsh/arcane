@@ -1,9 +1,8 @@
 # TrueNAS (`nas.chezmoi.sh`)
 
-> Generated from the Pulumi as-code configuration in
-> `projects/chezmoi.sh/src/infrastructure/pulumi/src/truenas/` (+ `../backups.ts`
-> for B2 off-site backups). Do not edit by hand -- regenerate with a real
-> `pulumi up` against the live `chezmoi-sh-infra` stack.
+> Generated from the deployed `chezmoi-sh-infra` Pulumi stack's own state. Do
+> not edit by hand -- regenerate with `mise run truenas:docs:generate`
+> (already chained onto `mise run pulumi:apply`).
 
 `nas.chezmoi.sh` is the home NAS: bulk media storage for players on the LAN,
 self-hosted application data (Immich, Paperless, Silverbullet, Garage, and the
@@ -90,14 +89,14 @@ Datasets carved out of `zp1hs01`:
 zp1hs01
 ├─ applications                                       Applications hébergées : natives (TrueNAS Apps) et Kubernetes (lungmen.akn)
 │  ├─ immich                    quota=50Gi            Immich (TrueNAS Apps) -- migration en cours vers managed/app.immich
+│  ├─ managed                   encrypted             Applications Kubernetes montées en SMB
+│  │  ├─ app.immich             quota=50Gi,encrypted  Immich (Kubernetes)
+│  │  └─ com.paperless-ngx      quota=10Gi,encrypted  Paperless-ngx (Kubernetes)
 │  ├─ paperless                 quota=10Gi,encrypted  Paperless (TrueNAS Apps) -- migration en cours vers managed/com.paperless-ngx
 │  ├─ silverbullet              quota=5Gi,encrypted   Silverbullet (TrueNAS Apps)
-│  ├─ truenas                   encrypted             Services internes à TrueNAS lui-même
-│  │  ├─ com.nginxproxymanager  encrypted             Reverse-proxy interne (NPM)
-│  │  └─ fr.deuxfleurs.garage   encrypted             Backend S3 Garage
-│  └─ managed                   encrypted             Applications Kubernetes montées en SMB
-│     ├─ app.immich             quota=50Gi,encrypted  Immich (Kubernetes)
-│     └─ com.paperless-ngx      quota=10Gi,encrypted  Paperless-ngx (Kubernetes)
+│  └─ truenas                   encrypted             Services internes à TrueNAS lui-même
+│     ├─ com.nginxproxymanager  encrypted             Reverse-proxy interne (NPM)
+│     └─ fr.deuxfleurs.garage   encrypted             Backend S3 Garage
 ├─ backups                      quota=100Gi           Cibles de sauvegarde locales
 │  └─ hass.chezmoi.sh                                 Sauvegardes Home Assistant
 ├─ documents                    encrypted             Ancien espace documents -- migration en cours vers userspace
@@ -130,16 +129,16 @@ set manually, not a sign the share is deprecated), `PRIVATE_DATASETS_SHARE`
 is meant for one dataset per user, and `TIMEMACHINE_SHARE` enables the SMB
 extensions macOS Time Machine needs.
 
-- `smb-share-films` (Accès aux films de la médiathèque) -- LEGACY_SHARE
 - `smb-share-animes` (Accès aux animés de la médiathèque) -- LEGACY_SHARE
-- `smb-share-series-tv` (Accès aux séries TV/streaming de la médiathèque) -- LEGACY_SHARE
-- `smb-share-livres` (Accès aux livres de la médiathèque) -- DEFAULT_SHARE
-- `smb-share-musique` (Accès aux musiques de la médiathèque) -- DEFAULT_SHARE
-- `smb-share-mes-documents` (Documents personnels) -- PRIVATE_DATASETS_SHARE
-- `smb-share-shared-documents` (Documents partagés) -- LEGACY_SHARE
-- `smb-share-hass-chezmoi-sh` (Sauvegardes Home Assistant) -- DEFAULT_SHARE
 - `smb-share-application-immich` (Stockage applicatif Immich (Kubernetes)) -- LEGACY_SHARE
 - `smb-share-application-paperless` (Stockage applicatif Paperless-ngx (Kubernetes)) -- LEGACY_SHARE
+- `smb-share-films` (Accès aux films de la médiathèque) -- LEGACY_SHARE
+- `smb-share-hass-chezmoi-sh` (Sauvegardes Home Assistant) -- DEFAULT_SHARE
+- `smb-share-livres` (Accès aux livres de la médiathèque) -- DEFAULT_SHARE
+- `smb-share-mes-documents` (Documents personnels) -- PRIVATE_DATASETS_SHARE
+- `smb-share-musique` (Accès aux musiques de la médiathèque) -- DEFAULT_SHARE
+- `smb-share-series-tv` (Accès aux séries TV/streaming de la médiathèque) -- LEGACY_SHARE
+- `smb-share-shared-documents` (Documents partagés) -- LEGACY_SHARE
 
 ## Permissions
 
@@ -156,19 +155,19 @@ extensions macOS Time Machine needs.
 
 | Username | UID | GID | SMB |
 | --- | --- | --- | --- |
+| `firesticktv` | 3000 | 140 | yes |
 | `home-assistant` | 30001 | 137 | yes |
 | `immich` | 30002 | 136 | yes |
 | `paperless` | 30003 | 138 | yes |
-| `firesticktv` | 3000 | 140 | yes |
 
 ### NFS4 ACL templates
 
 | Name | ACL type | Grants |
 | --- | --- | --- |
 | `NFSV4_MANAGED_APPLICATION` | NFS4 | Owner gets read+write, nobody else has any access. For service accounts this stack manages itself (Home Assistant, Immich, Paperless-ngx), as opposed to TrueNAS&#x27;s own Apps feature. |
-| `NFSV4_TRUENAS_APPLICATION` | NFS4 | Only TrueNAS&#x27;s own &#x60;apps&#x60; service account gets read+write. For datasets backing TrueNAS&#x27;s native Apps feature, not applications this stack manages itself. |
 | `NFSV4_SMB_ALL` | NFS4 | Every local SMB account (TrueNAS&#x27;s built-in &#x60;builtin_users&#x60; group) gets read+write. For datasets with no single dedicated owner. |
 | `NFSV4_SMB_VIEWER` | NFS4 | Owner gets read+write; every other local SMB account (&#x60;builtin_users&#x60;) gets read-only. |
+| `NFSV4_TRUENAS_APPLICATION` | NFS4 | Only TrueNAS&#x27;s own &#x60;apps&#x60; service account gets read+write. For datasets backing TrueNAS&#x27;s native Apps feature, not applications this stack manages itself. |
 
 ### Dataset -> template assignment
 
@@ -196,16 +195,13 @@ Off-site copies go to Backblaze B2, split across private,
 file lock-protected buckets (immutable for the retention window below, with
 older versions pruned after the lifecycle window):
 
-- `nas-backup-50a30f2b` -- 7-day file lock retention, 60-day
-  lifecycle prune.
 - `nas-backup-4e6b1351` -- 7-day file lock retention, 60-day
+  lifecycle prune.
+- `nas-backup-50a30f2b` -- 7-day file lock retention, 60-day
   lifecycle prune.
 
 ### What's synced, and how often
 
-- B2 — Daily sync of users' spaces (shared excluded): `/mnt/zp1hs01/userspace`,
-  daily at 01:00,
-  PUSH/SYNC
 - B2 — Weekly sync of immich.app application: `/mnt/zp1hs01/applications/managed/app.immich`,
   weekly, Sundays at 02:00,
   PUSH/SYNC
@@ -214,6 +210,9 @@ older versions pruned after the lifecycle window):
   PUSH/SYNC
 - B2 — Weekly sync of TrueNAS applications: `/mnt/zp1hs01/applications/truenas`,
   weekly, Sundays at 02:00,
+  PUSH/SYNC
+- B2 — Daily sync of users' spaces (shared excluded): `/mnt/zp1hs01/userspace`,
+  daily at 01:00,
   PUSH/SYNC
 - Before these existed, a legacy global sync of `/mnt/zp1hs01`
   pushed the whole pool
