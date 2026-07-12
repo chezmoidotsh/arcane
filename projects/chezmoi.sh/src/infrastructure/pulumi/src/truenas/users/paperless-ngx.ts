@@ -2,7 +2,7 @@ import { must } from "@chezmoi.sh/pulumi-lib";
 import * as random from "@pulumi/random";
 import * as truenas from "@pulumi/truenas";
 
-import { posixDacls } from "../acls";
+import type { Nfs4AclAssignment } from "../acls";
 import { zp1hs01 } from "../zpools/zp1hs01";
 
 // See ./README.md for the shared conventions (UID range, field choices,
@@ -36,23 +36,17 @@ export const paperlessUser = new truenas.User(
 	{ parent: paperlessPassword },
 );
 
-// Sole identity permitted on `applications/managed/com.paperless-ngx` --
-// Paperless-ngx's own application storage, mounted into Kubernetes via the
-// SMB CSI driver authenticating as this account. Owner and group get full
-// access, OTHER gets none.
+// This stack can't apply an ACL to `applications/managed/com.paperless-ngx`
+// itself (see ../acls.ts for why) -- `NFSV4_MANAGED_APPLICATION`
+// (owner-only read+write) needs to be applied by hand, with this account
+// as the owner, via the TrueNAS UI. `../truenas-docs` turns this
+// assignment into that instruction in the generated documentation.
 
 const paperlessApplicationDataset = must(
 	zp1hs01.get("applications/managed/com.paperless-ngx")?.resource,
 	"Unknown dataset `applications/managed/com.paperless-ngx` in pool `zp1hs01`",
 );
-export const paperlessAcl = new truenas.FilesystemAcl(
-	"acl-app-paperless-ngx",
-	{
-		acltype: "POSIX1E",
-		dacls: posixDacls("rwx------"),
-		path: paperlessApplicationDataset.mountPoint,
-		uid: paperlessUser.uid,
-		gid: paperlessUser.group,
-	},
-	{ parent: paperlessApplicationDataset },
-);
+export const paperlessAclAssignment: Nfs4AclAssignment = {
+	dataset: paperlessApplicationDataset,
+	template: "NFSV4_MANAGED_APPLICATION",
+};

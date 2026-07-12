@@ -6,22 +6,28 @@ import * as fs from "fs";
 import * as Handlebars from "handlebars";
 import * as path from "path";
 import { legacyTrueNASBackupBucket, trueNASBackupBucket } from "../backblaze";
+import type { Nfs4AclAssignment } from "../truenas/acls";
 import {
-	builtInUsersGroup,
-	mediaAcl,
-	nobodyUser,
-	userspaceSharedAcl,
+	managedApplicationTemplate,
+	mediaAclAssignment,
+	smbAllTemplate,
+	smbViewerTemplate,
+	trueNASApplicationTemplate,
+	userspaceSharedAclAssignment,
 } from "../truenas/acls";
 import { granularCloudSyncTasks, legacyGlobalSync } from "../truenas/cloudsync";
 import { networkConfig, networkInterfaces } from "../truenas/network";
 import { services } from "../truenas/services";
 import { nfsShares, smbShares } from "../truenas/shares";
 import {
-	homeAssistantBackupAcl,
+	homeAssistantAclAssignment,
 	homeAssistantUser,
 } from "../truenas/users/home-assistant";
-import { immichAcl, immichUser } from "../truenas/users/immich";
-import { paperlessAcl, paperlessUser } from "../truenas/users/paperless-ngx";
+import { immichAclAssignment, immichUser } from "../truenas/users/immich";
+import {
+	paperlessAclAssignment,
+	paperlessUser,
+} from "../truenas/users/paperless-ngx";
 import { zp1cs01 } from "../truenas/zpools/zp1cs01";
 import { zp1hs01 } from "../truenas/zpools/zp1hs01";
 import { registerHelpers } from "./helpers";
@@ -87,55 +93,29 @@ function identityData(user: truenas.User, primaryGroup?: truenas.Group) {
 }
 
 /**
- * Reduces a `FilesystemAcl`'s `dacls` down to an `ls -l`-style 9-character
- * mode string (owner/group/other, `rwx`/`-`) -- only the access-ACL entries
- * (`default: false`) count; the identical `default: true` entries exist
- * purely so files created later inherit the same policy, not to describe
- * the path itself.
+ * Renders one `truenas.FilesystemAclTemplate` into the plain-data shape the
+ * Permissions section's template table expects. This stack can't apply
+ * these to a path itself (see `../truenas/acls.ts`) -- the generated doc's
+ * job is to make sure a human applying one by hand knows what it actually
+ * grants, straight from the live resource, not a description that could
+ * drift from it.
  */
-function modeString(
-	dacls: {
-		tag: string;
-		default: boolean;
-		permRead: boolean;
-		permWrite: boolean;
-		permExecute: boolean;
-	}[],
-): string {
-	const triad = (tag: string) => {
-		const entry = dacls.find((d) => d.tag === tag && !d.default);
-		return `${entry?.permRead ? "r" : "-"}${entry?.permWrite ? "w" : "-"}${entry?.permExecute ? "x" : "-"}`;
-	};
-	return `${triad("USER_OBJ")}${triad("GROUP_OBJ")}${triad("OTHER")}`;
+function templateData(template: truenas.FilesystemAclTemplate) {
+	return pulumi
+		.all([template.name, template.acltype, template.comment])
+		.apply(([name, acltype, comment]) => ({ name, acltype, comment }));
 }
 
 /**
- * Renders one `FilesystemAcl` into the plain-data shape the Permissions
- * table expects. `owner`/`group` are the *real* identity names -- a
- * `truenas.User`'s `.username` (own primary group created via
- * `groupCreate: true` matches the username, so the same value labels both
- * columns) or a `truenas.getUser`/`getGroup` lookup's `.username`/`.name`
- * for the built-in identities -- never a hand-typed string that could drift
- * from whichever account actually owns the path. The caller pairs each ACL
- * with its owning identity (it's the one that wired them together, in
- * `../truenas/acls.ts` or `../truenas/users/*.ts`); reverse-deriving that
- * pairing here from the ACL's numeric `uid`/`gid` alone would be far more
- * fragile than just asking the identity for its own name.
+ * Renders one dataset -> template pairing into the plain-data shape the
+ * Permissions section's assignment table expects -- the instruction a
+ * human follows to actually apply a template, since Pulumi can't.
  */
-function aclData(row: {
-	acl: truenas.FilesystemAcl;
-	owner: pulumi.Input<string>;
-	group: pulumi.Input<string>;
-}) {
-	return pulumi
-		.all([row.acl.path, row.acl.dacls, row.acl.acltype, row.owner, row.group])
-		.apply(([path, dacls, acltype, owner, group]) => ({
-			path: path.replace(/^\/mnt\//, ""),
-			owner,
-			group,
-			mode: modeString(dacls),
-			acltype,
-		}));
+function assignmentData(assignment: Nfs4AclAssignment) {
+	return assignment.dataset.mountPoint.apply((mountPoint) => ({
+		dataset: mountPoint.replace(/^\/mnt\//, ""),
+		template: assignment.template,
+	}));
 }
 
 /**
@@ -284,33 +264,19 @@ const disabledServiceNames = services
 	.filter((s) => !s.enabled)
 	.map((s) => s.service);
 
-// `owner`/`group` per row are derived from the real identity that owns
-// each path, never a hardcoded string -- see `aclData()`. Accounts created
-// with `groupCreate: true` (every `truenas.User` in `../truenas/users/`)
-// get a primary group matching their own username, so `user.username`
-// labels both columns for those; the two ownerless datasets use the real
-// built-in `nobody`/`builtin_users` names from `../truenas/acls.ts`.
-const nobodyUsername = nobodyUser.then((u) => u.username);
-const builtInUsersGroupName = builtInUsersGroup.then((g) => g.name);
+const aclTemplates = [
+	managedApplicationTemplate,
+	trueNASApplicationTemplate,
+	smbAllTemplate,
+	smbViewerTemplate,
+];
 
-const aclRows = [
-	{ acl: mediaAcl, owner: nobodyUsername, group: builtInUsersGroupName },
-	{
-		acl: userspaceSharedAcl,
-		owner: nobodyUsername,
-		group: builtInUsersGroupName,
-	},
-	{
-		acl: homeAssistantBackupAcl,
-		owner: homeAssistantUser.username,
-		group: homeAssistantUser.username,
-	},
-	{ acl: immichAcl, owner: immichUser.username, group: immichUser.username },
-	{
-		acl: paperlessAcl,
-		owner: paperlessUser.username,
-		group: paperlessUser.username,
-	},
+const aclAssignments: Nfs4AclAssignment[] = [
+	mediaAclAssignment,
+	userspaceSharedAclAssignment,
+	homeAssistantAclAssignment,
+	immichAclAssignment,
+	paperlessAclAssignment,
 ];
 
 const content = pulumi
@@ -325,7 +291,8 @@ const content = pulumi
 			identityData(immichUser),
 			identityData(paperlessUser),
 		]),
-		pulumi.all(aclRows.map(aclData)),
+		pulumi.all(aclTemplates.map(templateData)),
+		pulumi.all(aclAssignments.map(assignmentData)),
 	])
 	.apply(
 		([
@@ -335,7 +302,8 @@ const content = pulumi
 			smbSharesData,
 			backups,
 			identities,
-			acls,
+			aclTemplatesData,
+			aclAssignmentsData,
 		]) =>
 			template({
 				pools: [zp1cs01Doc, zp1hs01Doc],
@@ -352,7 +320,8 @@ const content = pulumi
 				enabledServiceNames,
 				disabledServiceNames,
 				identities,
-				acls,
+				aclTemplates: aclTemplatesData,
+				aclAssignments: aclAssignmentsData,
 			}),
 	);
 

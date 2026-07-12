@@ -2,7 +2,7 @@ import { must } from "@chezmoi.sh/pulumi-lib";
 import * as random from "@pulumi/random";
 import * as truenas from "@pulumi/truenas";
 
-import { posixDacls } from "../acls";
+import type { Nfs4AclAssignment } from "../acls";
 import { zp1hs01 } from "../zpools/zp1hs01";
 
 // See ./README.md for the shared conventions (UID range, field choices,
@@ -34,22 +34,17 @@ export const homeAssistantUser = new truenas.User(
 	{ parent: homeAssistantPassword },
 );
 
-// Sole identity permitted on `backups/hass.chezmoi.sh`: owner and group both
-// get full access, OTHER gets none -- no other account, human or service,
-// can read or write Home Assistant's own backups.
+// This stack can't apply an ACL to `backups/hass.chezmoi.sh` itself (see
+// ../acls.ts for why) -- `NFSV4_MANAGED_APPLICATION` (owner-only
+// read+write) needs to be applied by hand, with this account as the owner,
+// via the TrueNAS UI. `../truenas-docs` turns this assignment into that
+// instruction in the generated documentation.
 
 const homeAssistantBackupDataset = must(
 	zp1hs01.get("backups/hass.chezmoi.sh")?.resource,
 	"Unknown dataset `backups/hass.chezmoi.sh` in pool `zp1hs01`",
 );
-export const homeAssistantBackupAcl = new truenas.FilesystemAcl(
-	"acl-backups-home-assistant",
-	{
-		acltype: "POSIX1E",
-		dacls: posixDacls("rwx------"),
-		path: homeAssistantBackupDataset.mountPoint,
-		uid: homeAssistantUser.uid,
-		gid: homeAssistantUser.group,
-	},
-	{ parent: homeAssistantBackupDataset },
-);
+export const homeAssistantAclAssignment: Nfs4AclAssignment = {
+	dataset: homeAssistantBackupDataset,
+	template: "NFSV4_MANAGED_APPLICATION",
+};

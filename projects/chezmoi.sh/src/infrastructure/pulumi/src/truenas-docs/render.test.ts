@@ -126,20 +126,23 @@ const fixtureContext = {
 		{ username: "home-assistant", uid: 30001, gid: 30001, smb: true },
 		{ username: "immich", uid: 30002, gid: 30002, smb: true },
 	],
-	acls: [
+	aclTemplates: [
 		{
-			path: "zp1cs01/media",
-			owner: "nobody",
-			group: "builtin_users",
-			mode: "rwxrwxr-x",
-			acltype: "POSIX1E",
+			name: "NFSV4_MANAGED_APPLICATION",
+			acltype: "NFS4",
+			comment: "Owner gets read+write, nobody else has any access.",
 		},
 		{
-			path: "zp1hs01/backups/hass.chezmoi.sh",
-			owner: "home-assistant",
-			group: "home-assistant",
-			mode: "rwx------",
-			acltype: "POSIX1E",
+			name: "NFSV4_SMB_ALL",
+			acltype: "NFS4",
+			comment: "Every local SMB account gets read+write.",
+		},
+	],
+	aclAssignments: [
+		{ dataset: "zp1cs01/media", template: "NFSV4_SMB_ALL" },
+		{
+			dataset: "zp1hs01/backups/hass.chezmoi.sh",
+			template: "NFSV4_MANAGED_APPLICATION",
 		},
 	],
 };
@@ -232,15 +235,29 @@ describe("TRUENAS.md template", () => {
 		expect(md).to.include("Share IP restrictions live entirely on the NAS");
 	});
 
-	it("renders identities and dataset permissions as tables", () => {
+	it("renders identities as a table", () => {
 		const md = render(fixtureContext);
 		expect(md).to.include("| `home-assistant` | 30001 | 30001 | yes |");
 		expect(md).to.include("| `immich` | 30002 | 30002 | yes |");
+	});
+
+	it("renders NFS4 ACL templates and dataset assignments as tables", () => {
+		const md = render(fixtureContext);
 		expect(md).to.include(
-			"| `zp1cs01/media` | `nobody` | `builtin_users` | `rwxrwxr-x` | POSIX1E |",
+			"| `NFSV4_MANAGED_APPLICATION` | NFS4 | Owner gets read+write, nobody else has any access. |",
 		);
 		expect(md).to.include(
-			"| `zp1hs01/backups/hass.chezmoi.sh` | `home-assistant` | `home-assistant` | `rwx------` | POSIX1E |",
+			"| `NFSV4_SMB_ALL` | NFS4 | Every local SMB account gets read+write. |",
 		);
+		expect(md).to.include("| `zp1cs01/media` | `NFSV4_SMB_ALL` |");
+		expect(md).to.include(
+			"| `zp1hs01/backups/hass.chezmoi.sh` | `NFSV4_MANAGED_APPLICATION` |",
+		);
+	});
+
+	it("explains permissions are a manual guide, not something Pulumi applies", () => {
+		const md = render(fixtureContext);
+		expect(md).to.include("cannot apply filesystem ACLs to a dataset");
+		expect(md).to.include("Apply the matching template to each dataset below");
 	});
 });

@@ -16,7 +16,8 @@ doc cannot drift out of sync — if the config changes, the doc regenerates auto
    - `../truenas/network` — hostname, gateway, nameservers, network interfaces
    - `../truenas/services` — enabled/disabled service list (SSH, CIFS, NFS, …)
    - `../truenas/shares` — NFS and SMB shares with comments, permissions, mapall users
-   - `../truenas/acls` and `../truenas/users/*` — POSIX1E filesystem ACLs and the service identities that own them
+   - `../truenas/acls` and `../truenas/users/*` — NFS4 ACL templates, the service identities they're meant for, and
+     which dataset each template should be applied to by hand
    - `../truenas/zpools/zp1cs01` and `../truenas/zpools/zp1hs01` — pool names, topology diagrams, ZFS dataset trees
    - `../backups.ts` — B2 bucket definitions and sync schedules
 
@@ -38,7 +39,7 @@ doc cannot drift out of sync — if the config changes, the doc regenerates auto
 | `partials/network.hbs`     | Network configuration (hostname, gateway, DNS, interfaces) and enabled/disabled services.                                                                     |
 | `partials/pools.hbs`       | Pool topology diagrams and ZFS dataset trees.                                                                                                                 |
 | `partials/shares.hbs`      | NFS and SMB shares with mount options, permissions, and purpose labels.                                                                                       |
-| `partials/permissions.hbs` | Service identities and per-dataset POSIX1E permissions (`ls -l`-style owner/group/mode table).                                                                |
+| `partials/permissions.hbs` | Service identities, the 4 NFS4 ACL templates this stack manages, and the dataset -> template guide for manually applying them.                                |
 | `partials/backups.hbs`     | B2 sync buckets, schedules, and which pools are/aren't backed up.                                                                                             |
 | `partials/security.hbs`    | Security notes (e.g., share IP restrictions managed on the NAS).                                                                                              |
 | `render.test.ts`           | Integration tests for full template rendering against a fixture context. Run via `npx mocha`.                                                                 |

@@ -1,192 +1,173 @@
-import {
-	must,
-	parseUnixMode,
-	type UnixPermissionTriad,
-} from "@chezmoi.sh/pulumi-lib";
+import { must } from "@chezmoi.sh/pulumi-lib";
+import * as pulumi from "@pulumi/pulumi";
 import * as truenas from "@pulumi/truenas";
 
 import { zp1cs01 } from "./zpools/zp1cs01";
 import { zp1hs01 } from "./zpools/zp1hs01";
 
 // -----------------------------------------------------------------------------
-// Every `truenas.FilesystemAcl` in this stack uses `acltype: "POSIX1E"`
-// (owner/group/other, the classic UNIX permission model) instead of NFS4
-// ACLs. POSIX1E is the simpler of the two models this provider supports --
-// three permission slots (owner, group, other) instead of an arbitrary list
-// of NFS4 ACEs -- which is the whole point: this stack manages exactly the
-// access control a personal NAS needs (one owning user, one owning group,
-// everyone else), not the fine-grained multi-principal ACLs NFS4 allows for.
-// -----------------------------------------------------------------------------
-
-/**
- * Turns one `{read,write,execute}` triad into the pair of `FilesystemAclDacl`
- * entries `posixDacls()` needs for it -- see that function for why both
- * exist.
- */
-function entries(
-	tag: "USER_OBJ" | "GROUP_OBJ" | "OTHER",
-	perm: UnixPermissionTriad,
-): truenas.types.input.FilesystemAclDacl[] {
-	const base = {
-		tag,
-		id: -1, // required by the provider for USER_OBJ/GROUP_OBJ/OTHER (only USER/GROUP entries -- unused here -- carry a real id)
-		permRead: perm.read,
-		permWrite: perm.write,
-		permExecute: perm.execute,
-	};
-	return [
-		{ ...base, default: false }, // access ACL: governs this path itself
-		{ ...base, default: true }, // default ACL: inherited by anything created under this path later
-	];
-}
-
-/**
- * Builds the `dacls` array for a `truenas.FilesystemAcl` (POSIX1E) from a
- * 9-character `ls -l`-style mode string (e.g. `"rwxrwxr-x"`), covering the
- * owner (`USER_OBJ`), owning group (`GROUP_OBJ`), and everyone else
- * (`OTHER`) -- no named `USER`/`GROUP` entries, since every dataset in this
- * stack has exactly one owning user and one owning group, never a list of
- * additional named principals.
- *
- * Each of the 3 slots gets TWO entries, not one: a POSIX ACL is really two
- * parallel ACLs on the same path --
- * - the **access ACL** (`default: false`) governs the path itself: can the
- *   owning user/group/everyone-else read, write, or traverse *this*
- *   dataset right now.
- * - the **default ACL** (`default: true`) is a template, not a live grant:
- *   it's copied onto whatever gets created *under* this path afterwards
- *   (a new file, a new subdirectory), so that new content inherits the
- *   same policy instead of falling back to whatever the creating process's
- *   umask happens to produce.
- *
- * Declaring only the default ACL (as an earlier draft of this code did)
- * leaves the dataset's own, current permissions unmanaged -- only future
- * children would ever see the intended policy, not the dataset itself.
- * Declaring only the access ACL would do the reverse: the dataset itself
- * would be correct, but nothing created inside it later would inherit
- * anything, silently falling out of policy over time. Both together is
- * what "chmod a directory and have it stick" actually requires.
- */
-export function posixDacls(
-	mode: string,
-): truenas.types.input.FilesystemAclDacl[] {
-	const perms = parseUnixMode(mode);
-	return [
-		...entries("USER_OBJ", perms.owner),
-		...entries("GROUP_OBJ", perms.group),
-		...entries("OTHER", perms.other),
-	];
-}
-
-// -----------------------------------------------------------------------------
-// Filesystem permissions for datasets that have no single owning identity of
-// their own -- multiple local accounts need access, not one dedicated
-// service account. (Datasets that DO belong to one specific identity --
-// Home Assistant, Immich, Paperless-ngx -- have their `FilesystemAcl`
-// declared next to that identity's `truenas.User`, in `./users/`, not here.
-// A dataset's ACL lives wherever its owner is decided: colocated under
-// `./users/<name>.ts` when there's a dedicated account, here when there
-// isn't one and never will be.)
+// This stack does NOT apply filesystem ACLs to any dataset. It only manages
+// NFS4 ACL *templates* -- named presets stored on the NAS, picked manually
+// in the TrueNAS UI's ACL editor -- and documents (via `truenas-docs`, see
+// `../truenas-docs/index.ts`) which template a human should apply to which
+// dataset.
 //
-// `nobody`/`builtin_users` are looked up (`truenas.getUser`/`getGroup`),
-// never created: they're TrueNAS built-ins that exist on every install.
-// `builtin_users` in particular is the reason these ACLs don't need an
-// umbrella "smb-users" `truenas.Group` invented for this purpose -- TrueNAS
-// already ships one containing every local account, and using it here means
-// newly-created NAS accounts automatically gain the access these ACLs
-// intend for "any local user", with no Pulumi change required.
+// This is a direct consequence of what this provider can and can't do,
+// confirmed against the live API, not inferred from docs:
+// - `truenas.FilesystemAcl` (which DOES apply an ACL to a path) only works
+//   for `acltype: "POSIX1E"`. Attempting `acltype: "NFS4"` fails: the real
+//   `filesystem.setacl` endpoint requires `type`/`flags` fields and a
+//   `perms.BASIC` enum this SDK's `FilesystemAclDacl` type doesn't expose
+//   at all (only `permRead`/`permWrite`/`permExecute`, a POSIX1E-shaped
+//   flat boolean set).
+// - `truenas.FilesystemAclTemplate` (this file) DOES work for NFS4, because
+//   its `aclJson` is a raw JSON string, not constrained by that same flat
+//   schema. But a template is just a stored preset -- `filesystem.setacl`
+//   has no field to reference one, so nothing in this provider can apply a
+//   template to a path. Only a human, via the UI, can.
+//
+// Given that, this stack's job shrinks to: keep the 4 templates below
+// correct and up to date, and keep the documented dataset -> template
+// mapping (`../truenas-docs`) from drifting -- applying them is a manual,
+// operational step outside Pulumi's reach.
 // -----------------------------------------------------------------------------
 
-// Exported (not just used locally) so `truenas-docs` can read the real
-// `username`/`name` back for its generated ACL/identity listing, instead of
-// a hardcoded "nobody"/"builtin_users" string duplicating what's already
-// known here.
-export const nobodyUser = truenas.getUser({ username: "nobody" });
-export const builtInUsersGroup = truenas.getGroup({ name: "builtin_users" });
+/** The 4 NFS4 ACL templates this stack manages -- see each `FilesystemAclTemplate` below for what each one grants. */
+export type Nfs4AclTemplateName =
+	| "NFSV4_MANAGED_APPLICATION"
+	| "NFSV4_TRUENAS_APPLICATION"
+	| "NFSV4_SMB_ALL"
+	| "NFSV4_SMB_VIEWER";
 
-// --- zp1cs01/media/** -------------------------------------------------------
-// Owner: `nobody` (no dataset here needs a single dedicated owner). Group:
-// `builtin_users` gets RW -- any locally-authenticated SMB user can manage
-// media. Other gets read+execute only: this is what the NFS media shares
-// actually rely on (`../shares.ts` maps every NFS client to `nobody`, which
-// falls into OTHER here, not GROUP), and NFS shares are `readonly: true`
-// regardless, so write access was never meant to reach this path via NFS.
+/** One dataset paired with the NFS4 ACL template a human should apply to it -- consumed by `../truenas-docs` to render the manual-application guide. */
+export interface Nfs4AclAssignment {
+	dataset: truenas.Dataset;
+	template: Nfs4AclTemplateName;
+}
+
+interface Nfs4EntrySpec {
+	/** `"owner@"`/`"group@"`/`"everyone@"` (NFS4 special identifiers) or `"USER"`/`"GROUP"` (named principal, requires `id`). */
+	tag: "owner@" | "group@" | "everyone@" | "USER" | "GROUP";
+	/** Numeric uid/gid -- required for `"USER"`/`"GROUP"`, meaningless (and omitted) for the special identifiers. */
+	id?: pulumi.Input<number>;
+	/** One of TrueNAS's basic NFS4 permission presets, in increasing order of access: TRAVERSE < READ < MODIFY < FULL_CONTROL. */
+	basic: "FULL_CONTROL" | "MODIFY" | "READ" | "TRAVERSE";
+}
+
+/**
+ * Builds a `FilesystemAclTemplate.aclJson` string from a short list of
+ * `{tag, id?, basic}` entries -- every entry is `type: "ALLOW"` with
+ * `flags: {BASIC: "INHERIT"}` (new files/subdirectories under wherever
+ * this template gets applied inherit the same entries), since nothing in
+ * this stack's 4 templates needs a DENY entry or non-inheriting flags.
+ * Resolves any `id` (from a `truenas.getUser`/`getGroup` lookup) before
+ * stringifying, since `aclJson` itself must be a plain string, not an
+ * object containing unresolved Outputs/Promises.
+ */
+function nfs4AclJson(specs: Nfs4EntrySpec[]): pulumi.Output<string> {
+	// `-1` stands in for "no id" (owner@/group@/everyone@ entries) so every
+	// element is a plain `Input<number>` -- `pulumi.all` needs a uniform
+	// element type, and converting the sentinel back to `null` afterwards
+	// matches what a real named-vs-special NFS4 entry looks like once
+	// resolved (confirmed against a live `filesystem.getacl` response).
+	return pulumi.all(specs.map((s) => s.id ?? -1)).apply((ids) =>
+		JSON.stringify(
+			specs.map((s, i) => ({
+				tag: s.tag,
+				type: "ALLOW",
+				perms: { BASIC: s.basic },
+				flags: { BASIC: "INHERIT" },
+				id: ids[i] === -1 ? null : ids[i],
+				who: null,
+			})),
+		),
+	);
+}
+
+// Real, stable identities these templates reference by id -- looked up
+// (`truenas.getUser`/`getGroup`), never created: all three are TrueNAS
+// built-ins (`apps`) or already-managed accounts (`builtin_users` is a
+// TrueNAS built-in group; see below for why it's used instead of an
+// invented "smb-users" group).
+const appsUser = truenas.getUser({ username: "apps" }); // TrueNAS's own Apps feature: uid 568, confirmed live
+const builtInUsersGroup = truenas.getGroup({ name: "builtin_users" }); // every local account: gid 545, confirmed live
+
+export const managedApplicationTemplate = new truenas.FilesystemAclTemplate(
+	"acl-template-nfs4-managed-application",
+	{
+		name: "NFSV4_MANAGED_APPLICATION",
+		acltype: "NFS4",
+		comment:
+			"Owner gets read+write, nobody else has any access. For service accounts this stack manages itself (Home Assistant, Immich, Paperless-ngx), as opposed to TrueNAS's own Apps feature.",
+		aclJson: nfs4AclJson([{ tag: "owner@", basic: "MODIFY" }]),
+	},
+);
+
+export const trueNASApplicationTemplate = new truenas.FilesystemAclTemplate(
+	"acl-template-nfs4-truenas-application",
+	{
+		name: "NFSV4_TRUENAS_APPLICATION",
+		acltype: "NFS4",
+		comment:
+			"Only TrueNAS's own `apps` service account gets read+write. For datasets backing TrueNAS's native Apps feature, not applications this stack manages itself.",
+		aclJson: nfs4AclJson([
+			{ tag: "USER", id: appsUser.then((u) => u.uid), basic: "MODIFY" },
+		]),
+	},
+);
+
+export const smbAllTemplate = new truenas.FilesystemAclTemplate(
+	"acl-template-nfs4-smb-all",
+	{
+		name: "NFSV4_SMB_ALL",
+		acltype: "NFS4",
+		comment:
+			"Every local SMB account (TrueNAS's built-in `builtin_users` group) gets read+write. For datasets with no single dedicated owner.",
+		aclJson: nfs4AclJson([
+			{
+				tag: "GROUP",
+				id: builtInUsersGroup.then((g) => g.gid),
+				basic: "MODIFY",
+			},
+		]),
+	},
+);
+
+export const smbViewerTemplate = new truenas.FilesystemAclTemplate(
+	"acl-template-nfs4-smb-viewer",
+	{
+		name: "NFSV4_SMB_VIEWER",
+		acltype: "NFS4",
+		comment:
+			"Owner gets read+write; every other local SMB account (`builtin_users`) gets read-only.",
+		aclJson: nfs4AclJson([
+			{ tag: "owner@", basic: "MODIFY" },
+			{ tag: "GROUP", id: builtInUsersGroup.then((g) => g.gid), basic: "READ" },
+		]),
+	},
+);
+
+// --- zp1cs01/media, zp1hs01/userspace/shared --------------------------------
+// Neither dataset has a single dedicated owner -- multiple local accounts
+// need access, not one service account -- so both are documented as
+// NFSV4_SMB_ALL. (Datasets that DO belong to one specific identity --
+// Home Assistant, Immich, Paperless-ngx -- have their assignment declared
+// next to that identity's `truenas.User`, in `./users/`, not here.)
 
 const mediaDataset = must(
 	zp1cs01.get("media")?.resource,
 	"Unknown dataset `media` in pool `zp1cs01`",
 );
-export const mediaAcl = new truenas.FilesystemAcl(
-	"acl-media",
-	{
-		acltype: "POSIX1E",
-		dacls: posixDacls("rwxrwxr-x"),
-		path: mediaDataset.mountPoint,
-		uid: nobodyUser.then((u) => u.uid),
-		gid: builtInUsersGroup.then((g) => g.gid),
-	},
-	{ parent: mediaDataset },
-);
-
-// --- zp1hs01/userspace/shared -----------------------------------------------
-// Same reasoning as media/**, tighter on OTHER: this dataset is SMB-only
-// (no NFS share exists for it), so there's no `nobody`-mapped consumer that
-// needs even read access -- OTHER keeps just the execute bit, enough to
-// traverse into the directory, nothing to read or write outside of being a
-// member of `builtin_users`.
+export const mediaAclAssignment: Nfs4AclAssignment = {
+	dataset: mediaDataset,
+	template: "NFSV4_SMB_ALL",
+};
 
 const userspaceSharedDataset = must(
 	zp1hs01.get("userspace/shared")?.resource,
 	"Unknown dataset `userspace/shared` in pool `zp1hs01`",
 );
-export const userspaceSharedAcl = new truenas.FilesystemAcl(
-	"acl-userspace-shared",
-	{
-		acltype: "POSIX1E",
-		dacls: posixDacls("rwxrwx--x"),
-		path: userspaceSharedDataset.mountPoint,
-		uid: nobodyUser.then((u) => u.uid),
-		gid: builtInUsersGroup.then((g) => g.gid),
-	},
-	{ parent: userspaceSharedDataset },
-);
-
-// `truenas.FilesystemAclTemplate` manages a named NFS4/POSIX1E preset
-// stored on the NAS (visible in the TrueNAS UI's ACL editor as a starting
-// point) -- NOT an ACL applied to any path. That distinction matters here:
-// unlike `FilesystemAcl`, this resource's `aclJson` is a raw JSON string,
-// not the flat `permRead`/`permWrite`/`permExecute` shape `posixDacls()`
-// builds above -- so it's able to express real NFS4 entries (`type`,
-// `flags`, `perms.BASIC`), which `FilesystemAcl` cannot: TrueNAS's real
-// `filesystem.setacl` endpoint (what `FilesystemAcl` calls) rejects NFS4
-// entries built from this SDK's `FilesystemAclDacl` type outright (missing
-// `type`/`flags`, wrong `perms` shape) -- confirmed against the live API,
-// not just inferred. And `setacl` has no template-reference field either,
-// so a template can't be applied to a path through Pulumi -- only through
-// a human picking it in the UI. This template exists for that manual
-// workflow, not for anything this stack applies itself.
-//
-// Scoped to "applications not managed by TrueNAS itself" (Home Assistant,
-// Immich, Paperless-ngx -- as opposed to TrueNAS's own native Apps, e.g.
-// `applications/truenas/{com.nginxproxymanager,fr.deuxfleurs.garage}`):
-// owner gets full control, nobody else gets anything -- the NFS4 analogue
-// of the `rwx------` POSIX1E mode already used for those three datasets.
-export const applicationNfs4Template = new truenas.FilesystemAclTemplate(
-	"test-nfs4-template-application",
-	{
-		name: "nfs4-application",
-		acltype: "NFS4",
-		comment:
-			"Owner-only access (NFS4). For application service accounts not managed by TrueNAS's own Apps -- pick this manually in the ACL editor; Pulumi cannot apply it to a path.",
-		aclJson: JSON.stringify([
-			{
-				tag: "owner@",
-				type: "ALLOW",
-				perms: { BASIC: "FULL_CONTROL" },
-				flags: { BASIC: "INHERIT" },
-				id: null,
-				who: null,
-			},
-		]),
-	},
-);
+export const userspaceSharedAclAssignment: Nfs4AclAssignment = {
+	dataset: userspaceSharedDataset,
+	template: "NFSV4_SMB_ALL",
+};

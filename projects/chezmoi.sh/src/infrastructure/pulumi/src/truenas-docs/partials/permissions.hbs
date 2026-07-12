@@ -1,8 +1,12 @@
 ## Permissions
 
-Datasets not listed here keep whatever permissions are set by hand on the
-NAS -- Pulumi doesn't manage them. `Mode` follows `ls -l` notation
-(owner/group/other, `r`/`w`/`x` or `-`).
+This stack cannot apply filesystem ACLs to a dataset -- `truenas.FilesystemAcl`
+only works for POSIX1E through this provider; NFS4 entries built from its
+schema are rejected outright by the NAS's own API. It manages the NFS4 ACL
+*templates* below instead (named presets, visible in the TrueNAS UI's ACL
+editor) and documents which one to apply, by hand, to which dataset. Datasets
+not listed in the assignment table keep whatever ACL is already set on the
+NAS -- Pulumi doesn't manage them.
 
 ### Identities
 
@@ -12,11 +16,23 @@ NAS -- Pulumi doesn't manage them. `Mode` follows `ls -l` notation
 | `{{username}}` | {{uid}} | {{gid}} | {{#if smb}}yes{{else}}no{{/if}} |
 {{/each}}
 
-### Dataset permissions
+### NFS4 ACL templates
 
-| Dataset | Owner | Group | Mode | ACL type |
-| --- | --- | --- | --- | --- |
-{{#each acls}}
-| `{{path}}` | `{{owner}}` | `{{group}}` | `{{mode}}` | {{acltype}} |
+| Name | ACL type | Grants |
+| --- | --- | --- |
+{{#each aclTemplates}}
+| `{{name}}` | {{acltype}} | {{comment}} |
+{{/each}}
+
+### Dataset -> template assignment
+
+Apply the matching template to each dataset below via the TrueNAS UI's ACL
+editor (Storage -> Datasets -> select dataset -> Edit Permissions -> select
+ACL Type: NFSv4 -> Use ACL Preset).
+
+| Dataset | Template to apply |
+| --- | --- |
+{{#each aclAssignments}}
+| `{{dataset}}` | `{{template}}` |
 {{/each}}
 

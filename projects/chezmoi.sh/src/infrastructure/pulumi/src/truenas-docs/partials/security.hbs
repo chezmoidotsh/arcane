@@ -14,6 +14,10 @@ protect against:
   RO/RW differentiation only ever happens per-share, never per-person. Where
   per-person access actually matters, the Permissions section above uses SMB
   instead, backed by a real account.
-- **Filesystem ACLs (see Permissions above) replace NFS4 permissions where
-  declared.** A dataset not listed in the Permissions table keeps whatever
-  ACL -- POSIX1E or NFS4 -- is set by hand on the NAS.
+- **Filesystem ACLs are never applied automatically.** The NFS4 ACL
+  templates and dataset assignments in the Permissions section above are a
+  guide for a human, not something this stack enforces -- `truenas.FilesystemAcl`
+  cannot express NFS4 entries through this provider (confirmed against the
+  live API), and the templates it *can* manage have no way to be applied to
+  a path except by hand, in the TrueNAS UI. Nothing detects or reverts a
+  dataset whose actual ACL has drifted from its documented assignment.

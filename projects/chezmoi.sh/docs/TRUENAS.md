@@ -116,13 +116,13 @@ storage, Time Machine).
 ### NFS
 
 - `nfs-share-animes` (Dossier partagé des animés) --
-  read/write, mapped to `nobody`
+  read-only, mapped to `nobody`
 - `nfs-share-movies` (Dossier partagé des films) --
-  read/write, mapped to `nobody`
+  read-only, mapped to `nobody`
 - `nfs-share-musics` (Dossier partagé des musiques) --
-  read/write, mapped to `nobody`
+  read-only, mapped to `nobody`
 - `nfs-share-tvshows` (Dossier partagé des séries TVs) --
-  read/write, mapped to `nobody`
+  read-only, mapped to `nobody`
 - `nfs-share-documents-shared` (Dossier partagé de nos documents (Paperless)) --
   read-only, mapped to `paperless-ngx`
 - `nfs-share-documents-alexandre-admin` (Documents personnels d'alexandre (Paperless)) --
@@ -149,6 +149,47 @@ extensions macOS Time Machine needs.
 - `smb-share-application-paperless` (Paperless application storage) -- LEGACY_SHARE
 - `smb-share-application-silverbullet` (Silverbullet application storage) -- LEGACY_SHARE
 - `smb-share-timemachine` (Apple Time Machine Backups) -- TIMEMACHINE_SHARE
+
+## Permissions
+
+This stack cannot apply filesystem ACLs to a dataset -- `truenas.FilesystemAcl`
+only works for POSIX1E through this provider; NFS4 entries built from its
+schema are rejected outright by the NAS's own API. It manages the NFS4 ACL
+*templates* below instead (named presets, visible in the TrueNAS UI's ACL
+editor) and documents which one to apply, by hand, to which dataset. Datasets
+not listed in the assignment table keep whatever ACL is already set on the
+NAS -- Pulumi doesn't manage them.
+
+### Identities
+
+| Username | UID | GID | SMB |
+| --- | --- | --- | --- |
+| `home-assistant` | 30001 | 137 | yes |
+| `immich` | 30002 | 136 | yes |
+| `paperless` | 30003 | 138 | yes |
+
+### NFS4 ACL templates
+
+| Name | ACL type | Grants |
+| --- | --- | --- |
+| `NFSV4_MANAGED_APPLICATION` | NFS4 | Owner gets read+write, nobody else has any access. For service accounts this stack manages itself (Home Assistant, Immich, Paperless-ngx), as opposed to TrueNAS&#x27;s own Apps feature. |
+| `NFSV4_TRUENAS_APPLICATION` | NFS4 | Only TrueNAS&#x27;s own &#x60;apps&#x60; service account gets read+write. For datasets backing TrueNAS&#x27;s native Apps feature, not applications this stack manages itself. |
+| `NFSV4_SMB_ALL` | NFS4 | Every local SMB account (TrueNAS&#x27;s built-in &#x60;builtin_users&#x60; group) gets read+write. For datasets with no single dedicated owner. |
+| `NFSV4_SMB_VIEWER` | NFS4 | Owner gets read+write; every other local SMB account (&#x60;builtin_users&#x60;) gets read-only. |
+
+### Dataset -> template assignment
+
+Apply the matching template to each dataset below via the TrueNAS UI's ACL
+editor (Storage -> Datasets -> select dataset -> Edit Permissions -> select
+ACL Type: NFSv4 -> Use ACL Preset).
+
+| Dataset | Template to apply |
+| --- | --- |
+| `zp1cs01/media` | `NFSV4_SMB_ALL` |
+| `zp1hs01/userspace/shared` | `NFSV4_SMB_ALL` |
+| `zp1hs01/backups/hass.chezmoi.sh` | `NFSV4_MANAGED_APPLICATION` |
+| `zp1hs01/applications/managed/app.immich` | `NFSV4_MANAGED_APPLICATION` |
+| `zp1hs01/applications/managed/com.paperless-ngx` | `NFSV4_MANAGED_APPLICATION` |
 
 ## Backups
 
@@ -190,3 +231,15 @@ protect against:
   the SMB ones aren't in this provider's schema at all, and NFS's are
   deliberately left alone to match. Whatever's configured directly on the NAS
   is the only source of truth; Pulumi can't detect or revert changes to it.
+- **NFS has no per-person access control.** Every NFS share maps all
+  connecting clients to one fixed identity (`mapallUser`/`mapallGroup`), so
+  RO/RW differentiation only ever happens per-share, never per-person. Where
+  per-person access actually matters, the Permissions section above uses SMB
+  instead, backed by a real account.
+- **Filesystem ACLs are never applied automatically.** The NFS4 ACL
+  templates and dataset assignments in the Permissions section above are a
+  guide for a human, not something this stack enforces -- `truenas.FilesystemAcl`
+  cannot express NFS4 entries through this provider (confirmed against the
+  live API), and the templates it *can* manage have no way to be applied to
+  a path except by hand, in the TrueNAS UI. Nothing detects or reverts a
+  dataset whose actual ACL has drifted from its documented assignment.
