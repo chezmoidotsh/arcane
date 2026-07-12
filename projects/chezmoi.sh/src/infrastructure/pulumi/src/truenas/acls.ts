@@ -106,6 +106,22 @@ export const builtInUsersGroup = truenas.getGroupOutput({
 	name: "builtin_users",
 }); // every local account: id 91 / gid 545, confirmed live
 
+// A NFS4 ACL granting one of the service accounts access to its own
+// dataset (e.g. `applications/managed/app.immich`, via
+// `NFSV4_MANAGED_APPLICATION`) isn't enough by itself: NFS4/POSIX both
+// require execute (traverse) permission on every parent directory too, or
+// the client can never reach the leaf dataset in the first place --
+// `applications/managed` itself grants nothing to these accounts on its
+// own. `managed_applications` exists to be that one group, granted
+// TRAVERSE on `applications/managed` (applied by hand, like every other
+// template in this file), with every service account that owns something
+// under it as a member -- see `../users/*.ts`, which each add it to their
+// own `groups`.
+export const managedApplicationsGroup = new truenas.Group(
+	"group-managed-applications",
+	{ name: "managed_applications" },
+);
+
 export const managedApplicationTemplate = new truenas.FilesystemAclTemplate(
 	"acl-template-nfs4-managed-application",
 	{

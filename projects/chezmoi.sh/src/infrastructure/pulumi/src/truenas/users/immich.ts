@@ -2,7 +2,11 @@ import { must } from "@chezmoi.sh/pulumi-lib";
 import * as random from "@pulumi/random";
 import * as truenas from "@pulumi/truenas";
 
-import { builtInUsersGroup, type Nfs4AclAssignment } from "../acls";
+import {
+	builtInUsersGroup,
+	managedApplicationsGroup,
+	type Nfs4AclAssignment,
+} from "../acls";
 import { zp1hs01 } from "../zpools/zp1hs01";
 
 // See ./README.md for the shared conventions (UID range, field choices,
@@ -30,7 +34,15 @@ export const immichUser = new truenas.User(
 		// access to). Declaring it explicitly here, instead of `[]`, stops
 		// `pulumi preview` from perpetually trying to revert it: `[]` was
 		// never a state TrueNAS would actually hold.
-		groups: [builtInUsersGroup.apply((g) => g.id)],
+		//
+		// `managed_applications` (see ../acls.ts) is what's meant to carry
+		// execute/traverse on the `applications/managed` parent directory --
+		// without it, this account could own `app.immich` outright and
+		// still never be able to reach it.
+		groups: [
+			builtInUsersGroup.apply((g) => g.id),
+			managedApplicationsGroup.id.apply((id) => Number.parseInt(id, 10)),
+		],
 		home: "/var/empty",
 		shell: "/usr/sbin/nologin",
 		sudoCommands: [],
