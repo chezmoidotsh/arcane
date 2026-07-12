@@ -17,8 +17,8 @@ off-site copy of the SSD pool pushed to Backblaze B2.
 
 `nas.chezmoi.sh` (TrueNAS SCALE) is managed as code via the `chezmoi-sh-infra`
 Pulumi stack (state in a self-hosted Garage S3 backend). Provider credentials
-come from stack config (`truenas:url` / `truenas:apiKey`), set via
-`pulumi config set --secret` -- never hardcoded in source.
+come from stack config (`truenas:url`), set via `pulumi config set --secret`
+-- never hardcoded in source.
 
 ## Network & services
 
@@ -93,13 +93,18 @@ zp1hs01
 │  ├─ immich                    quota=50Gi            Dataset TrueNAS réservé pour Immich
 │  ├─ paperless                 quota=10Gi,encrypted  Dataset TrueNAS réservé pour Paperless
 │  ├─ silverbullet              quota=5Gi,encrypted   Dataset TrueNAS réservé pour Silverbullet
-│  └─ truenas                   encrypted             Dataset TrueNAS réservé pour les applications hébergées dans TrueNAS
-│     ├─ com.nginxproxymanager  encrypted             Dataset TrueNAS réservé pour NPM (proxy)
-│     └─ fr.deuxfleurs.garage   encrypted             Dataset TrueNAS réservé pour Garage (S3)
+│  ├─ truenas                   encrypted             Dataset TrueNAS réservé pour les applications hébergées dans TrueNAS
+│  │  ├─ com.nginxproxymanager  encrypted             Dataset TrueNAS réservé pour NPM (proxy)
+│  │  └─ fr.deuxfleurs.garage   encrypted             Dataset TrueNAS réservé pour Garage (S3)
+│  └─ managed                   encrypted             Dataset TrueNAS pour les applications gérées par Kubernetes
+│     ├─ app.immich             quota=50Gi,encrypted  Dataset TrueNAS réservé pour Immich (K8s-managed)
+│     └─ com.paperless-ngx      quota=10Gi,encrypted  Dataset TrueNAS réservé pour Paperless-ngx (K8s-managed)
 ├─ backups                      quota=100Gi           Dataset TrueNAS réservé pour les backups
 │  ├─ hass.chezmoi.sh                                 Dataset TrueNAS réservé pour les backups de Home Assistant
 │  └─ timemachine.apple.com
-└─ documents                    encrypted             Dataset TrueNAS réservé pour les documents (partagés ou personnels)
+├─ documents                    encrypted             Dataset TrueNAS réservé pour les documents (partagés ou personnels)
+└─ userspace                    encrypted             Dataset dédié aux données utilisateurs (partagées ou personnelles)
+   └─ shared                    encrypted             Dataset TrueNAS réservé pour les données partagées entre utilisateurs
 ```
 
 ## Shares
@@ -110,17 +115,17 @@ storage, Time Machine).
 
 ### NFS
 
-* `nfs-share-animes` (Dossier partagé des animés) --
+- `nfs-share-animes` (Dossier partagé des animés) --
   read/write, mapped to `nobody`
-* `nfs-share-movies` (Dossier partagé des films) --
+- `nfs-share-movies` (Dossier partagé des films) --
   read/write, mapped to `nobody`
-* `nfs-share-musics` (Dossier partagé des musiques) --
+- `nfs-share-musics` (Dossier partagé des musiques) --
   read/write, mapped to `nobody`
-* `nfs-share-tvshows` (Dossier partagé des séries TVs) --
+- `nfs-share-tvshows` (Dossier partagé des séries TVs) --
   read/write, mapped to `nobody`
-* `nfs-share-documents-shared` (Dossier partagé de nos documents (Paperless)) --
+- `nfs-share-documents-shared` (Dossier partagé de nos documents (Paperless)) --
   read-only, mapped to `paperless-ngx`
-* `nfs-share-documents-alexandre-admin` (Documents personnels d'alexandre (Paperless)) --
+- `nfs-share-documents-alexandre-admin` (Documents personnels d'alexandre (Paperless)) --
   read/write, mapped to `paperless-ngx`
 
 ### SMB
@@ -131,41 +136,55 @@ set manually, not a sign the share is deprecated), `PRIVATE_DATASETS_SHARE`
 is meant for one dataset per user, and `TIMEMACHINE_SHARE` enables the SMB
 extensions macOS Time Machine needs.
 
-* `smb-share-films` (Dossier partagé des films) -- LEGACY\_SHARE
-* `smb-share-animes` (Dossier partagé des séries animés) -- LEGACY\_SHARE
-* `smb-share-series-tv` (Dossier partagé des séries TV) -- LEGACY\_SHARE
-* `smb-share-mes-documents` (Documents personnels) -- PRIVATE\_DATASETS\_SHARE
-* `smb-share-public` (Documents partagés) -- DEFAULT\_SHARE
-* `smb-share-livres` (Dossier partagé des livres) -- DEFAULT\_SHARE
-* `smb-share-hass-chezmoi-sh` (Dossier de backup pour Home Assistant) -- DEFAULT\_SHARE
-* `smb-share-cold-media` (RO access to all media (cold backup only)) -- LEGACY\_SHARE, read-only, disabled
-* `smb-share-cold-documents` (RO access to all documents (cold backup only)) -- LEGACY\_SHARE, read-only, disabled
-* `smb-share-application-immich` (Immich application storage) -- LEGACY\_SHARE
-* `smb-share-application-paperless` (Paperless application storage) -- LEGACY\_SHARE
-* `smb-share-application-silverbullet` (Silverbullet application storage) -- LEGACY\_SHARE
-* `smb-share-timemachine` (Apple Time Machine Backups) -- TIMEMACHINE\_SHARE
+- `smb-share-films` (Dossier partagé des films) -- LEGACY_SHARE
+- `smb-share-animes` (Dossier partagé des séries animés) -- LEGACY_SHARE
+- `smb-share-series-tv` (Dossier partagé des séries TV) -- LEGACY_SHARE
+- `smb-share-mes-documents` (Documents personnels) -- PRIVATE_DATASETS_SHARE
+- `smb-share-public` (Documents partagés) -- DEFAULT_SHARE
+- `smb-share-livres` (Dossier partagé des livres) -- DEFAULT_SHARE
+- `smb-share-hass-chezmoi-sh` (Dossier de backup pour Home Assistant) -- DEFAULT_SHARE
+- `smb-share-cold-media` (RO access to all media (cold backup only)) -- LEGACY_SHARE, read-only, disabled
+- `smb-share-cold-documents` (RO access to all documents (cold backup only)) -- LEGACY_SHARE, read-only, disabled
+- `smb-share-application-immich` (Immich application storage) -- LEGACY_SHARE
+- `smb-share-application-paperless` (Paperless application storage) -- LEGACY_SHARE
+- `smb-share-application-silverbullet` (Silverbullet application storage) -- LEGACY_SHARE
+- `smb-share-timemachine` (Apple Time Machine Backups) -- TIMEMACHINE_SHARE
 
 ## Backups
 
-Off-site copies go to Backblaze B2, in private, File Lock-protected
-buckets (immutable for the retention window below, with older versions pruned
-after the lifecycle window).
+Off-site copies go to Backblaze B2, split across private,
+file lock-protected buckets (immutable for the retention window below, with
+older versions pruned after the lifecycle window):
 
-`/mnt/zp1hs01` is pushed there weekly, Sundays at 00:00
-via TrueNAS CloudSync (PUSH/SYNC), with a
-7-day File Lock retention and a 60-day
-lifecycle prune.
-The second bucket, `garage-backup-51891f906ced`, holds the same 7-day File Lock /
-60-day lifecycle protection, but is replicated by Garage
-itself rather than through a Pulumi-managed CloudSync task.
+- `nas-backup-50a30f2b` -- 7-day file lock retention, 60-day
+  lifecycle prune.
+- `nas-backup-4e6b1351` -- 7-day file lock retention, 60-day
+  lifecycle prune.
+
+### What's synced, and how often
+
+- B2 — Daily sync of users' spaces (shared excluded): `/mnt/zp1hs01/userspace`,
+  daily at 01:00,
+  PUSH/SYNC *(disabled)*
+- B2 — Weekly sync of immich.app application: `/mnt/zp1hs01/applications/managed/app.immich`,
+  weekly, Sundays at 02:00,
+  PUSH/SYNC *(disabled)*
+- B2 — Weekly sync of paperless-ngx.com application: `/mnt/zp1hs01/applications/managed/com.paperless-ngx`,
+  weekly, Sundays at 02:00,
+  PUSH/SYNC *(disabled)*
+- Before these existed, a legacy global sync of `/mnt/zp1hs01`
+  pushed the whole pool
+  weekly, Sundays at 02:00,
+  PUSH/SYNC
+  -- kept for reference only.
+
 zp1cs01 isn't included in this off-site sync.
-
 ## Security notes
 
 A few things worth knowing about what this configuration does and doesn't
 protect against:
 
-* **Share IP restrictions live entirely on the NAS, not in Pulumi.** Neither
+- **Share IP restrictions live entirely on the NAS, not in Pulumi.** Neither
   NFS's `hosts` allowlist (no Kerberos, so this is the only access control
   those shares have) nor SMB's `hostsallow`/`auxsmbconf` are managed here --
   the SMB ones aren't in this provider's schema at all, and NFS's are

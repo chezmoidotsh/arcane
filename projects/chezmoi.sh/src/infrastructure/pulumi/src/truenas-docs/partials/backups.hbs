@@ -1,22 +1,27 @@
 ## Backups
 
-Off-site copies go to {{backups.destination}}, in private, File Lock-protected
-buckets (immutable for the retention window below, with older versions pruned
-after the lifecycle window).
+Off-site copies go to {{backups.destination}}, split across private,
+file lock-protected buckets (immutable for the retention window below, with
+older versions pruned after the lifecycle window):
 
 {{#each backups.buckets}}
-{{#if sync}}
-`{{sync.source}}` is pushed there {{cronToHuman sync.schedule.minute sync.schedule.hour sync.schedule.dom sync.schedule.month sync.schedule.dow}}
-via TrueNAS CloudSync ({{sync.direction}}/{{sync.transferMode}}), with a
-{{retentionDays}}-day File Lock retention and a {{lifecycleDeleteDays}}-day
-lifecycle prune.
-{{else}}
-The second bucket, `{{name}}`, holds the same {{retentionDays}}-day File Lock /
-{{lifecycleDeleteDays}}-day lifecycle protection, but is replicated by Garage
-itself rather than through a Pulumi-managed CloudSync task.
-{{/if}}
+- `{{name}}` -- {{retentionDays}}-day file lock retention, {{lifecycleDeleteDays}}-day
+  lifecycle prune.
 {{/each}}
+
+### What's synced, and how often
+
+{{#each backups.jobs}}
+- {{{description}}}: `{{source}}`,
+  {{cronToHuman schedule.minute schedule.hour schedule.dom schedule.month schedule.dow}},
+  {{direction}}/{{transferMode}}{{#unless enabled}} *(disabled)*{{/unless}}
+{{/each}}
+- Before these existed, a legacy global sync of `{{backups.legacyGlobalSync.source}}`
+  pushed the whole pool
+  {{cronToHuman backups.legacyGlobalSync.schedule.minute backups.legacyGlobalSync.schedule.hour backups.legacyGlobalSync.schedule.dom backups.legacyGlobalSync.schedule.month backups.legacyGlobalSync.schedule.dow}},
+  {{backups.legacyGlobalSync.direction}}/{{backups.legacyGlobalSync.transferMode}}{{#unless backups.legacyGlobalSync.enabled}} *(disabled)*{{/unless}}
+  -- kept for reference only.
+
 {{#if notBackedUpPools}}
 {{humanList notBackedUpPools}} {{#if (isSingular notBackedUpPools)}}isn't{{else}}aren't{{/if}} included in this off-site sync.
 {{/if}}
-

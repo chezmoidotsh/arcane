@@ -80,20 +80,40 @@ const fixtureContext = {
 	},
 	backups: {
 		destination: "Backblaze B2",
+		jobs: [
+			{
+				description: "Daily sync of users' spaces (shared excluded)",
+				source: "/mnt/zp1hs01/userspace",
+				direction: "PUSH",
+				transferMode: "SYNC",
+				enabled: false,
+				schedule: { minute: "0", hour: "1", dom: "*", month: "*", dow: "*" },
+			},
+			{
+				description: "Weekly sync of immich.app application",
+				source: "/mnt/zp1hs01/applications/managed/app.immich",
+				direction: "PUSH",
+				transferMode: "SYNC",
+				enabled: false,
+				schedule: { minute: "0", hour: "2", dom: "*", month: "*", dow: "0" },
+			},
+		],
+		legacyGlobalSync: {
+			description: "Backblaze B2 - zp1hs01 sync",
+			source: "/mnt/zp1hs01",
+			direction: "PUSH",
+			transferMode: "SYNC",
+			enabled: false,
+			schedule: { minute: "0", hour: "2", dom: "*", month: "*", dow: "0" },
+		},
 		buckets: [
 			{
 				name: "nas-backup-50a30f2b",
 				retentionDays: 7,
 				lifecycleDeleteDays: 60,
-				sync: {
-					source: "/mnt/zp1hs01",
-					direction: "PUSH",
-					transferMode: "SYNC",
-					schedule: { minute: "0", hour: "0", dom: "*", month: "*", dow: "0" },
-				},
 			},
 			{
-				name: "garage-backup-51891f906ced",
+				name: "nas-backup-4e6b1351",
 				retentionDays: 7,
 				lifecycleDeleteDays: 60,
 			},
@@ -171,12 +191,13 @@ describe("TRUENAS.md template", () => {
 		expect(md).to.include("ssh, cifs and nfs\nare enabled; ftp stay off.");
 	});
 
-	it("renders backups leading with the source path and a human-readable schedule", () => {
+	it("renders backup jobs with source paths and human-readable schedules", () => {
 		const md = render(fixtureContext);
-		expect(md).to.include("`/mnt/zp1hs01` is pushed there");
-		expect(md).to.include("weekly, Sundays at 00:00");
+		expect(md).to.include("`/mnt/zp1hs01/userspace`");
+		expect(md).to.include("daily at 01:00");
 		expect(md).to.include("PUSH/SYNC");
-		expect(md).to.include("replicated by Garage");
+		expect(md).to.include("*(disabled)*");
+		expect(md).to.include("legacy global sync of `/mnt/zp1hs01`");
 	});
 
 	it("calls out pools that aren't included in the off-site sync", () => {

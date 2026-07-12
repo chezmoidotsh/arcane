@@ -1,11 +1,12 @@
-import { LocalFile } from "@chezmoi.sh/pulumi-lib";
+import { LocalFile, must } from "@chezmoi.sh/pulumi-lib";
+import type * as b2 from "@pulumi/b2";
 import * as pulumi from "@pulumi/pulumi";
 import type * as truenas from "@pulumi/truenas";
 import * as fs from "fs";
 import * as Handlebars from "handlebars";
 import * as path from "path";
-
-import { backupSummary } from "../backups";
+import { legacyTrueNASBackupBucket, trueNASBackupBucket } from "../backblaze";
+import { granularCloudSyncTasks, legacyGlobalSync } from "../truenas/cloudsync";
 import { networkConfig, networkInterfaces } from "../truenas/network";
 import { services } from "../truenas/services";
 import { nfsShares, smbShares } from "../truenas/shares";
@@ -61,6 +62,124 @@ function smbShareData(share: truenas.ShareSmb) {
 		}));
 }
 
+/**
+ * `.apply((t) => t.toString())` here, not after `pulumi.all` combines it with
+ * the other pool -- `TrueNASTopology` is a class instance, and combining
+ * Outputs through `pulumi.all` doesn't preserve its prototype (only plain
+ * data), so calling `.toString()` after the fact silently falls back to
+ * `Object.prototype.toString()` (`"[object Object]"`) instead of the real
+ * ASCII diagram.
+ */
+function poolData(pool: typeof zp1cs01 | typeof zp1hs01) {
+	return pulumi
+		.all([pool.topology().apply((t) => t.toString()), pool.datasetsTree()])
+		.apply(([topology, datasetsTree]) => ({
+			name: pool.name,
+			topology,
+			datasetsTree,
+		}));
+}
+
+/**
+ * Renders one CloudSync task (granular job or the legacy global sync) into
+ * the plain-data shape the template expects. Split into two `pulumi.all`
+ * calls of 5 elements each -- `pulumi.all`'s typed-tuple overloads stop at 8
+ * elements, and this task combines 10 Outputs of mixed types; past that
+ * limit it silently falls back to its single-type-array overload and every
+ * destructured field becomes untyped.
+ */
+function jobData(task: truenas.CloudSync) {
+	return pulumi
+		.all([
+			pulumi.all([
+				task.description,
+				task.path,
+				task.direction,
+				task.transferMode,
+				task.enabled,
+			]),
+			pulumi.all([
+				task.scheduleMinute,
+				task.scheduleHour,
+				task.scheduleDom,
+				task.scheduleMonth,
+				task.scheduleDow,
+			]),
+		])
+		.apply(
+			([
+				[description, source, direction, transferMode, enabled],
+				[minute, hour, dom, month, dow],
+			]) => ({
+				description,
+				source,
+				direction,
+				transferMode,
+				enabled,
+				schedule: { minute, hour, dom, month, dow },
+			}),
+		);
+}
+
+/** Renders one B2 bucket's File Lock retention + lifecycle prune window into the plain-data shape the template expects. */
+function bucketData(bucket: b2.Bucket) {
+	return pulumi
+		.all([
+			bucket.bucketName,
+			bucket.fileLockConfigurations,
+			bucket.lifecycleRules,
+		])
+		.apply(([name, lockConfigs, lifecycleRules]) => {
+			const retention = must(
+				must(lockConfigs, `${name}: no fileLockConfigurations`)[0]
+					.defaultRetention,
+				`${name}: no defaultRetention`,
+			);
+			return {
+				name,
+				retentionDays: must(retention.period, `${name}: no retention period`)
+					.duration,
+				lifecycleDeleteDays: must(
+					lifecycleRules,
+					`${name}: no lifecycleRules`,
+				)[0].daysFromHidingToDeleting,
+			};
+		});
+}
+
+function backupsData() {
+	return pulumi
+		.all([
+			pulumi.all(granularCloudSyncTasks.map(jobData)),
+			jobData(legacyGlobalSync),
+			bucketData(legacyTrueNASBackupBucket),
+			bucketData(trueNASBackupBucket),
+		])
+		.apply(([jobs, legacyGlobalSyncDoc, legacyBucket, currentBucket]) => ({
+			destination: "Backblaze B2",
+			jobs,
+			legacyGlobalSync: legacyGlobalSyncDoc,
+			buckets: [legacyBucket, currentBucket],
+		}));
+}
+
+/**
+ * Pool names that no B2 job syncs from (`job.source` is `/mnt/<pool>/...`)
+ * -- called out explicitly in the Backups section instead of only being
+ * inferable by comparing pool names against job sources by hand.
+ */
+function notBackedUpPools(backups: {
+	jobs: { source: string }[];
+	legacyGlobalSync: { source: string };
+}): string[] {
+	const backedUpPoolNames = new Set(
+		[backups.legacyGlobalSync, ...backups.jobs].map(
+			(j) => j.source.replace(/^\/mnt\//, "").split("/")[0],
+		),
+	);
+	return [zp1cs01.name, zp1hs01.name].filter((n) => !backedUpPoolNames.has(n));
+}
+
 // Generates `projects/chezmoi.sh/docs/TRUENAS.md` from this stack's own
 // as-code TrueNAS config, so the doc can't silently drift from what's
 // actually declared here. Only `topology()`/`datasetsTree()` need a live
@@ -89,68 +208,30 @@ const disabledServiceNames = services
 	.filter((s) => !s.enabled)
 	.map((s) => s.service);
 
-// Pool names that no B2 bucket syncs from (`sync.source` is `/mnt/<pool>`)
-// -- called out explicitly in the Backups section instead of only being
-// inferable by comparing pool names against bucket sources by hand.
-const backedUpPoolNames = new Set(
-	backupSummary.buckets
-		.filter((b) => b.sync)
-		.map((b) => b.sync!.source.replace(/^\/mnt\//, "")),
-);
-const notBackedUpPools = [zp1cs01.name, zp1hs01.name].filter(
-	(name) => !backedUpPoolNames.has(name),
-);
-
 const content = pulumi
 	.all([
-		// `.apply((t) => t.toString())` here, not after `pulumi.all` combines
-		// them -- `TrueNASTopology` is a class instance, and combining Outputs
-		// through `pulumi.all` doesn't preserve its prototype (only plain
-		// data), so calling `.toString()` after the fact silently falls back
-		// to `Object.prototype.toString()` (`"[object Object]"`) instead of
-		// the real ASCII diagram.
-		zp1cs01.topology().apply((t) => t.toString()),
-		zp1cs01.datasetsTree(),
-		zp1hs01.topology().apply((t) => t.toString()),
-		zp1hs01.datasetsTree(),
+		poolData(zp1cs01),
+		poolData(zp1hs01),
 		pulumi.all(nfsShares.map(nfsShareData)),
 		pulumi.all(smbShares.map(smbShareData)),
+		backupsData(),
 	])
-	.apply(
-		([
-			zp1cs01Topology,
-			zp1cs01DatasetsTree,
-			zp1hs01Topology,
-			zp1hs01DatasetsTree,
-			nfsSharesData,
-			smbSharesData,
-		]) =>
-			template({
-				pools: [
-					{
-						name: zp1cs01.name,
-						topology: zp1cs01Topology,
-						datasetsTree: zp1cs01DatasetsTree,
-					},
-					{
-						name: zp1hs01.name,
-						topology: zp1hs01Topology,
-						datasetsTree: zp1hs01DatasetsTree,
-					},
-				],
-				nfsShares: nfsSharesData,
-				smbShares: smbSharesData,
-				network: {
-					hostname: networkConfig.hostname,
-					gateway: networkConfig.gateway,
-					nameservers: networkConfig.nameservers,
-					interfaces: networkInterfaces,
-				},
-				backups: backupSummary,
-				notBackedUpPools,
-				enabledServiceNames,
-				disabledServiceNames,
-			}),
+	.apply(([zp1cs01Doc, zp1hs01Doc, nfsSharesData, smbSharesData, backups]) =>
+		template({
+			pools: [zp1cs01Doc, zp1hs01Doc],
+			nfsShares: nfsSharesData,
+			smbShares: smbSharesData,
+			network: {
+				hostname: networkConfig.hostname,
+				gateway: networkConfig.gateway,
+				nameservers: networkConfig.nameservers,
+				interfaces: networkInterfaces,
+			},
+			backups,
+			notBackedUpPools: notBackedUpPools(backups),
+			enabledServiceNames,
+			disabledServiceNames,
+		}),
 	);
 
 // Pulumi's nodejs runtime always executes this program from the directory
