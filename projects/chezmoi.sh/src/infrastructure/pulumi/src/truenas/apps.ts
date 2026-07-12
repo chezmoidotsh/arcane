@@ -151,7 +151,7 @@ new truenas.Catalog("truenas-catalog", {
 				},
 			}),
 		},
-		{ ignoreChanges: ["version"] },
+		{ ignoreChanges: ["version"], retainOnDelete: true },
 	);
 }
 
@@ -217,6 +217,6 @@ new truenas.Catalog("truenas-catalog", {
 				},
 			}),
 		},
-		{ ignoreChanges: ["version"] },
+		{ ignoreChanges: ["version"], retainOnDelete: true },
 	);
 }
