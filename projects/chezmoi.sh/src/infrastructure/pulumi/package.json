@@ -15,6 +15,7 @@
 		"@pulumi/b2": "workspace:*",
 		"@pulumi/cloudflare": "catalog:",
 		"@pulumi/pulumi": "catalog:",
+		"@pulumi/random": "catalog:",
 		"@pulumi/tailscale": "catalog:",
 		"@pulumi/truenas": "workspace:*",
 		"handlebars": "catalog:"

@@ -16,6 +16,7 @@ doc cannot drift out of sync — if the config changes, the doc regenerates auto
    - `../truenas/network` — hostname, gateway, nameservers, network interfaces
    - `../truenas/services` — enabled/disabled service list (SSH, CIFS, NFS, …)
    - `../truenas/shares` — NFS and SMB shares with comments, permissions, mapall users
+   - `../truenas/acls` and `../truenas/users/*` — POSIX1E filesystem ACLs and the service identities that own them
    - `../truenas/zpools/zp1cs01` and `../truenas/zpools/zp1hs01` — pool names, topology diagrams, ZFS dataset trees
    - `../backups.ts` — B2 bucket definitions and sync schedules
 
@@ -27,19 +28,20 @@ doc cannot drift out of sync — if the config changes, the doc regenerates auto
 
 ## File structure
 
-| File                    | Purpose                                                                                                                                                       |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `index.ts`              | Entry point. Registers helpers, loads template and partials, gathers config data, renders template, writes output via `LocalFile`.                            |
-| `helpers.ts`            | Custom Handlebars helpers: `cronToHuman()` (cron fields → prose schedule), `humanList()` (arrays → "a, b and c"), `isSingular()` (singular/plural agreement). |
-| `helpers.test.ts`       | Unit tests for helpers using mocha/chai. Run via `npx mocha` from the pulumi project root.                                                                    |
-| `template.hbs`          | Main template structure; includes partials.                                                                                                                   |
-| `partials/overview.hbs` | TrueNAS instance overview.                                                                                                                                    |
-| `partials/network.hbs`  | Network configuration (hostname, gateway, DNS, interfaces) and enabled/disabled services.                                                                     |
-| `partials/pools.hbs`    | Pool topology diagrams and ZFS dataset trees.                                                                                                                 |
-| `partials/shares.hbs`   | NFS and SMB shares with mount options, permissions, and purpose labels.                                                                                       |
-| `partials/backups.hbs`  | B2 sync buckets, schedules, and which pools are/aren't backed up.                                                                                             |
-| `partials/security.hbs` | Security notes (e.g., share IP restrictions managed on the NAS).                                                                                              |
-| `render.test.ts`        | Integration tests for full template rendering against a fixture context. Run via `npx mocha`.                                                                 |
+| File                       | Purpose                                                                                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index.ts`                 | Entry point. Registers helpers, loads template and partials, gathers config data, renders template, writes output via `LocalFile`.                            |
+| `helpers.ts`               | Custom Handlebars helpers: `cronToHuman()` (cron fields → prose schedule), `humanList()` (arrays → "a, b and c"), `isSingular()` (singular/plural agreement). |
+| `helpers.test.ts`          | Unit tests for helpers using mocha/chai. Run via `npx mocha` from the pulumi project root.                                                                    |
+| `template.hbs`             | Main template structure; includes partials.                                                                                                                   |
+| `partials/overview.hbs`    | TrueNAS instance overview.                                                                                                                                    |
+| `partials/network.hbs`     | Network configuration (hostname, gateway, DNS, interfaces) and enabled/disabled services.                                                                     |
+| `partials/pools.hbs`       | Pool topology diagrams and ZFS dataset trees.                                                                                                                 |
+| `partials/shares.hbs`      | NFS and SMB shares with mount options, permissions, and purpose labels.                                                                                       |
+| `partials/permissions.hbs` | Service identities and per-dataset POSIX1E permissions (`ls -l`-style owner/group/mode table).                                                                |
+| `partials/backups.hbs`     | B2 sync buckets, schedules, and which pools are/aren't backed up.                                                                                             |
+| `partials/security.hbs`    | Security notes (e.g., share IP restrictions managed on the NAS).                                                                                              |
+| `render.test.ts`           | Integration tests for full template rendering against a fixture context. Run via `npx mocha`.                                                                 |
 
 ## Extending the documentation
 

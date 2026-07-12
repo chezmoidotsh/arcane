@@ -157,13 +157,39 @@ The zp1hs01/documents subtree exists as a placeholder for personal files (docume
 are not yet managed through Pulumi to avoid exposing personal dataset hierarchies in the infrastructure-as-code
 repository. When needed, they can be added as additional TrueNASDataset entries in the zp1hs01.ts file.
 
-### Filesystem ACLs Not Managed via Pulumi
+### Filesystem ACLs: POSIX1E, Managed via Pulumi
 
-Every dataset on the real NAS uses NFS4 "BASIC" permission presets, which offer simplified, human-readable ACLs specific
-to NFS shares. The Pulumi TrueNAS provider's FilesystemAcl resource maps POSIX1E-style flat booleans (read, write,
-execute) and does not support NFS4 permissions at all. Managing ACLs through Pulumi as-is would silently strip real NFS4
-permissions on the first `pulumi up` that touched them, breaking access control. Therefore, filesystem ACLs are
-intentionally NOT declared as Pulumi resources; they are set manually in the TrueNAS UI once per dataset and left alone.
+Every managed dataset gets exactly one `truenas.FilesystemAcl` (`acltype: "POSIX1E"`: owner/group/other, no named
+USER/GROUP entries, no ACL MASK), built from a 9-character `ls -l`-style mode string via `posixDacls()` (`../dacls.ts`)
+-- see that file for why POSIX1E over NFS4, and why each mode string expands to both an access ACL and a default ACL. A
+dataset's ACL lives in one of two places, depending on whether it has a single dedicated owner:
+
+- **No dedicated owner** (`zp1cs01/media`, `zp1hs01/userspace/shared`): declared in `../acls.ts`, owned by TrueNAS's
+  built-in `nobody`/`builtin_users` identities (looked up, never created) rather than a Pulumi-invented "smb-users"
+  group.
+- **One dedicated service account** (`zp1hs01/backups/hass.chezmoi.sh`,
+  `zp1hs01/applications/managed/{app.immich,com.paperless-ngx,...}`): declared next to that account's `truenas.User`, in
+  `../users`. See `../users/README.md` for the shared conventions (UID range, field choices, password handling every
+  account there follows.
+
+Limitations:
+
+- `FilesystemAcl` supports exactly one ACL type per path (POSIX1E or NFS4), never both — applying it to a path that
+  currently carries a different ACL (of either type) replaces it outright, with no way back short of manually recreating
+  the old one. Review `pulumi preview` dataset by dataset (not as one bulk apply) before running `pulumi up` on
+  `../acls.ts` or `../users/*.ts`.
+- `truenas.ShareSmb` has no per-user access-control field (no `validusers`/`hostsallow` equivalent) — every SMB access
+  decision is enforced at the filesystem layer (owner/group/mode), never at the share layer.
+- NFS shares have no per-person access control at all: NFS here runs AUTH*SYS with `mapallUser`/`mapallGroup` collapsing
+  every connecting client to one fixed identity (`../shares.ts`), so RO/RW differentiation is only ever per-\_share*
+  (`readonly` flag + `hosts`/`networks` trust), never per-person. Use SMB (backed by a real `truenas.User`) wherever
+  per-person access actually matters.
+- `zp1hs01/backups/timemachine.apple.com` is unmanaged: TrueNAS's `TIMEMACHINE_SHARE`/`vfs_fruit` does not isolate
+  different SMB users' backups from each other on a shared dataset (unlike `userspace/%U` below). Real isolation needs a
+  per-user subdataset + share, mirroring the `userspace` pattern.
+- `zp1hs01/userspace/%U` is unmanaged: TrueNAS's own dynamic per-connecting-user share mechanism has no fixed path to
+  point a `FilesystemAcl` at, so it can't be modeled as a static Pulumi resource.
+- `zp1hs01/documents/**` (except the two Paperless NFS shares) stays unmanaged intentionally — see above.
 
 ### Scrub/Snapshot Tasks as Plain Resources
 

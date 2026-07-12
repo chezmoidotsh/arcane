@@ -9,3 +9,11 @@ protect against:
   the SMB ones aren't in this provider's schema at all, and NFS's are
   deliberately left alone to match. Whatever's configured directly on the NAS
   is the only source of truth; Pulumi can't detect or revert changes to it.
+- **NFS has no per-person access control.** Every NFS share maps all
+  connecting clients to one fixed identity (`mapallUser`/`mapallGroup`), so
+  RO/RW differentiation only ever happens per-share, never per-person. Where
+  per-person access actually matters, the Permissions section above uses SMB
+  instead, backed by a real account.
+- **Filesystem ACLs (see Permissions above) replace NFS4 permissions where
+  declared.** A dataset not listed in the Permissions table keeps whatever
+  ACL -- POSIX1E or NFS4 -- is set by hand on the NAS.

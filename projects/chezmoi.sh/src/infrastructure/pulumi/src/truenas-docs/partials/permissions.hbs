@@ -1,0 +1,22 @@
+## Permissions
+
+Datasets not listed here keep whatever permissions are set by hand on the
+NAS -- Pulumi doesn't manage them. `Mode` follows `ls -l` notation
+(owner/group/other, `r`/`w`/`x` or `-`).
+
+### Identities
+
+| Username | UID | GID | SMB |
+| --- | --- | --- | --- |
+{{#each identities}}
+| `{{username}}` | {{uid}} | {{gid}} | {{#if smb}}yes{{else}}no{{/if}} |
+{{/each}}
+
+### Dataset permissions
+
+| Dataset | Owner | Group | Mode | ACL type |
+| --- | --- | --- | --- | --- |
+{{#each acls}}
+| `{{path}}` | `{{owner}}` | `{{group}}` | `{{mode}}` | {{acltype}} |
+{{/each}}
+

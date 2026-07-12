@@ -16,8 +16,15 @@ import { zp1hs01 } from "./zpools/zp1hs01";
  * parent, so adding one changes their URN -- without the alias, Pulumi would
  * plan a destructive delete+recreate of each share instead of an in-place
  * update.
+ *
+ * Exported for `../acls.ts`, which needs the same dataset path/opts
+ * resolution to parent `FilesystemAcl` resources under their dataset.
  */
-function under(pool: TrueNASPool, datasetPath: string, ...subpath: string[]) {
+export function under(
+	pool: TrueNASPool,
+	datasetPath: string,
+	...subpath: string[]
+) {
 	const dataset = must(
 		pool.get(datasetPath)?.resource,
 		`Unknown dataset "${datasetPath}" in pool "${pool.name}"`,
@@ -55,6 +62,7 @@ export const nfsShares = [
 		{
 			path: under(zp1cs01, "media/animes").path,
 			comment: "Dossier partagé des animés",
+			readonly: true,
 			mapallUser: "nobody",
 			mapallGroup: "nogroup",
 			enabled: true,
@@ -67,6 +75,7 @@ export const nfsShares = [
 		{
 			path: under(zp1cs01, "media/movies").path,
 			comment: "Dossier partagé des films",
+			readonly: true,
 			mapallUser: "nobody",
 			mapallGroup: "nogroup",
 			enabled: true,
@@ -79,6 +88,7 @@ export const nfsShares = [
 		{
 			path: under(zp1cs01, "media/musics").path,
 			comment: "Dossier partagé des musiques",
+			readonly: true,
 			mapallUser: "nobody",
 			mapallGroup: "nogroup",
 			enabled: true,
@@ -91,6 +101,7 @@ export const nfsShares = [
 		{
 			path: under(zp1cs01, "media/tvshows").path,
 			comment: "Dossier partagé des séries TVs",
+			readonly: true,
 			mapallUser: "nobody",
 			mapallGroup: "nogroup",
 			enabled: true,
