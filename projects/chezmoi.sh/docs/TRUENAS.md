@@ -145,13 +145,14 @@ extensions macOS Time Machine needs.
 
 ## Permissions
 
-This stack cannot apply filesystem ACLs to a dataset -- `truenas.FilesystemAcl`
-only works for POSIX1E through this provider; NFS4 entries built from its
-schema are rejected outright by the NAS's own API. It manages the NFS4 ACL
-*templates* below instead (named presets, visible in the TrueNAS UI's ACL
-editor) and documents which one to apply, by hand, to which dataset. Datasets
-not listed in the assignment table keep whatever ACL is already set on the
-NAS -- Pulumi doesn't manage them.
+> [!WARNING]
+> This stack cannot apply filesystem ACLs to a dataset -- `truenas.FilesystemAcl`
+> only works for POSIX1E through this provider; NFS4 entries built from its
+> schema are rejected outright by the NAS's own API. It manages the NFS4 ACL
+> *templates* below instead (named presets, visible in the TrueNAS UI's ACL
+> editor) and documents which one to apply, by hand, to which dataset. Datasets
+> not listed in the assignment table keep whatever ACL is already set on the
+> NAS -- Pulumi doesn't manage them.
 
 ### Identities
 
@@ -172,7 +173,9 @@ NAS -- Pulumi doesn't manage them.
 
 ### Dataset -> template assignment
 
-> [!NOTE] Why not manage ACLs directly via Pulumi?
+> [!NOTE]
+> **Why not manage ACLs directly via Pulumi?**
+>
 > Because the used TrueNAS TF provider doesn't support handle NFS4 ACLs
 > properly, this stack cannot apply ACLs to datasets. Instead, it manages the
 > templates (named presets) and documents which one to apply to which dataset.
