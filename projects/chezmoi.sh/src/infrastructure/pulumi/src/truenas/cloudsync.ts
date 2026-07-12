@@ -135,7 +135,7 @@ export const legacyGlobalSync = new truenas.CloudSync("nas-backup-cloudsync", {
 		bucket: legacyTrueNASBackupBucket.bucketName,
 		fast_list: true,
 		folder: "/nas.chezmoi.uk/truenas/zp1hs01",
-		storage_class: "GLACIER",
+		storage_class: "STANDARD",
 	}),
 	// Runs weekly at midnight UTC Sunday (cron: 0 0 * * 0)
 	...WEEKLY_SCHEDULE_PRESET,
@@ -203,7 +203,7 @@ for (const job of cloudSyncJobs) {
 					// Use the dataset path as the destination folder inside the bucket so
 					// the bucket mirrors the pool structure (easier to find backups later).
 					folder: pulumi.interpolate`${mountPoint.apply((mp) => path.relative("/mnt/zp1hs01", mp))}`,
-					storage_class: "GLACIER",
+					storage_class: "STANDARD",
 				}),
 
 				...job.scheduler,
