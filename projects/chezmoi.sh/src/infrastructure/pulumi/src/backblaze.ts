@@ -2,9 +2,9 @@
 // Backblaze B2 buckets for TrueNAS backups
 // -----------------------------------------------------------------------------
 // Two B2 buckets are defined here:
-// - `legacyTrueNASBackupBucket`: the bucket used by the legacy TrueNAS setup. It's
-//   protected and retained on delete to avoid accidental data loss while the
-//   migration completes.
+// - `legacyTrueNASBackupBucket`: the bucket backing the whole-pool CloudSync task
+//   (see `truenas/cloudsync.ts`). It's protected and retained on delete to avoid
+//   accidental data loss.
 // - `trueNASBackupBucket`: the current bucket intended for TrueNAS backups. It
 //   has file-locking and lifecycle rules to retain recent versions for a short
 //   retention window and to expire older/hide superseded files automatically.

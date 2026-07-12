@@ -207,7 +207,7 @@ export function extractCloudSyncJobs(
 		.sort(byKey((j) => j.source));
 }
 
-/** The one legacy whole-pool CloudSync task that predates the per-dataset jobs -- it has no `chezmoi:truenas:Pool` ancestor, since it was declared directly under the stack. */
+/** The one whole-pool CloudSync task declared directly under the stack -- it has no `chezmoi:truenas:Pool` ancestor, unlike the per-dataset jobs below it. */
 export function extractLegacyGlobalSync(
 	resources: ExportedResource[],
 ): CloudSyncJobDoc {

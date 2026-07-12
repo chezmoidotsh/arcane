@@ -9,12 +9,10 @@ import { zp1hs01 } from "./zpools/zp1hs01";
 // Only the app catalog itself and two apps (`garage`, `nginx-proxy-manager`)
 // are managed here, not every installed app (see ./index.ts).
 //
-// The provider's `App` Read is broken: it returns `catalogApp: ""`,
-// `train: "stable"`, `version: "latest"` regardless of the real values, and
-// both fields are `Immutable after creation` -- trusting that Read on a
-// `pulumi up`/`--refresh` would force a real replace (destroy + recreate) of
-// the running container. `ignoreChanges` below on exactly those three fields
-// works around it; keep it until the provider's Read is fixed upstream.
+// `version` is intentionally in `ignoreChanges` below: TrueNAS SCALE updates
+// app chart versions on its own schedule via the UI, and without this,
+// Pulumi would fight that by trying to pin the version back to what's in
+// this file on every `pulumi up`.
 //
 // `values` (chart config) is NOT in `ignoreChanges`, so it's a real, live
 // diff against the (broken) state -- the next `pulumi up` here will push

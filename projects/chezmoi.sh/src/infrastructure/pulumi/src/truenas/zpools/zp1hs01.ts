@@ -51,13 +51,13 @@ export const zp1hs01 = new TrueNASPool("zp1hs01", {
 	},
 	"/applications/immich": {
 		comments:
-			"Immich (TrueNAS Apps) -- migration en cours vers managed/app.immich",
+			"Immich (TrueNAS Apps) -- ancienne instance, voir managed/app.immich",
 		quota: 50 * ByteSize.Gi, // 50G
 		recordSize: RecordSize.Size1M,
 	},
 	"/applications/paperless": {
 		comments:
-			"Paperless (TrueNAS Apps) -- migration en cours vers managed/com.paperless-ngx",
+			"Paperless (TrueNAS Apps) -- ancienne instance, voir managed/com.paperless-ngx",
 		quota: 10 * ByteSize.Gi, // 10G
 	},
 	"/applications/silverbullet": {
@@ -98,7 +98,7 @@ export const zp1hs01 = new TrueNASPool("zp1hs01", {
 		comments: "Sauvegardes Home Assistant",
 	},
 	"/documents": {
-		comments: "Ancien espace documents -- migration en cours vers userspace",
+		comments: "Ancien espace documents -- remplacé par userspace",
 	},
 	"/userspace": {
 		atime: OnOffInherit.Off,

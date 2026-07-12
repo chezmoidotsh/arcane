@@ -229,5 +229,5 @@ This pattern allows lookups of dataset resources by path while keeping the stack
 
 - **Shares**: `../shares.ts` — NFS share declarations tied to specific datasets
 - **Apps**: `../apps.ts` — application configurations using datasets for storage
-- **Backups**: `../backups.ts` — B2 bucket and CloudSync configuration (File Lock details, lifecycle rules)
+- **Backups**: `../../backblaze.ts` (B2 buckets, File Lock, lifecycle rules) and `../cloudsync.ts` (CloudSync jobs)
 - **Documentation**: `../../truenas-docs/index.ts` — auto-generated pool/dataset reference
