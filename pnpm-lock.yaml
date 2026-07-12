@@ -12,6 +12,9 @@ catalogs:
     '@pulumi/pulumi':
       specifier: ^3.250.0
       version: 3.250.0
+    '@pulumi/random':
+      specifier: ^4.18.0
+      version: 4.21.0
     '@pulumi/tailscale':
       specifier: ^0.28.0
       version: 0.28.0
@@ -246,6 +249,9 @@ importers:
       '@pulumi/pulumi':
         specifier: 'catalog:'
         version: 3.250.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/random':
+        specifier: 'catalog:'
+        version: 4.21.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/tailscale':
         specifier: 'catalog:'
         version: 0.28.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
@@ -566,6 +572,9 @@ packages:
         optional: true
       typescript:
         optional: true
+
+  '@pulumi/random@4.21.0':
+    resolution: {integrity: sha512-k4JHqQFOKXWkbSLZtX37xBlRsurfgZbLd1Zib0cLSDP4Dt3uTllR3CBWfMLSnXJGAoTr9MlwyHCer/5tmSaF0Q==}
 
   '@pulumi/tailscale@0.28.0':
     resolution: {integrity: sha512-cBmzs+8+A1yJSRiQD/Snb2CI6mLYz1S2Q5Lm6WShZEVTxfvXW1lIAJ5hpX1EQuhHnrmbym9pLf45/bL4kljRog==}
@@ -1947,6 +1956,14 @@ snapshots:
       typescript: 5.9.3
     transitivePeerDependencies:
       - supports-color
+
+  '@pulumi/random@4.21.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)':
+    dependencies:
+      '@pulumi/pulumi': 3.250.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+    transitivePeerDependencies:
+      - supports-color
+      - ts-node
+      - typescript
 
   '@pulumi/tailscale@0.28.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
