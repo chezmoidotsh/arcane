@@ -14,7 +14,7 @@ export interface ServiceSpec {
 	enabled: boolean;
 }
 
-export const services: ServiceSpec[] = [
+const services: ServiceSpec[] = [
 	{ service: "cifs", enabled: true },
 	{ service: "ftp", enabled: false },
 	{ service: "iscsitarget", enabled: false },

@@ -10,7 +10,7 @@ export interface NetworkInterfaceSpec {
 // `pulumi preview` reports a perpetual, harmless `~ (update)` on the `hosts`
 // list attribute (Terraform-bridge plan-modifier quirk, not a real drift).
 
-export const networkConfig = {
+const networkConfig = {
 	hostname: "nas.chezmoi.sh",
 	gateway: "10.0.0.1",
 	nameservers: ["10.0.0.1", "9.9.9.9"],
@@ -31,7 +31,7 @@ new truenas.NetworkConfig("network-config", {
 // interfaces. Same `~ (update)` bridge quirk as `network-config` above,
 // tied to the `aliases` attribute.
 
-export const networkInterfaces: NetworkInterfaceSpec[] = [
+const networkInterfaces: NetworkInterfaceSpec[] = [
 	{
 		name: "ens18",
 		mtu: 1500,
