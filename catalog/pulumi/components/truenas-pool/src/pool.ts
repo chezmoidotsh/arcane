@@ -54,8 +54,16 @@ export class TrueNASPool extends pulumi.ComponentResource {
 	}
 
 	/** Returns the dataset registered at `relativePath` (e.g. `media/animes`), if any. */
-	public get(relativePath: string): TrueNASDataset | undefined {
-		return this.byPath.get(relativePath);
+	public get(relativePath: string):
+		| (Omit<TrueNASDataset, "attachLive" | "index" | "materialize"> & {
+				path: string;
+		  })
+		| undefined {
+		const dataset = this.byPath.get(relativePath);
+		if (dataset) {
+			return { ...dataset, path: `${this.name}/${relativePath}` };
+		}
+		return undefined;
 	}
 
 	/**
