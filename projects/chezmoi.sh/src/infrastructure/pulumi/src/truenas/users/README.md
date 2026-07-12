@@ -16,6 +16,12 @@ login. UIDs `30000`-`30999` are reserved for service accounts managed by this st
 that separates them from personal/human accounts on the NAS (a different range, not managed by Pulumi). Picking a number
 in that range and moving on is the whole rule; there's no further sub-structure to it.
 
+> [!WARNING] **Exception: `firesticktv.ts`.** Not a service account backing an application, and it owns no dataset --
+> it's a dedicated SMB login for one viewer device (a Fire TV Stick) to reach the media shares. It has no `uid` at all
+> (TrueNAS assigns one from its normal range) and no `Nfs4AclAssignment`, since the shares it needs are already open to
+> every local SMB account via `NFSV4_SMB_ALL` (`../acls.ts`). Everything else about it (password handling,
+> `groupCreate`, `home`/`shell`) still follows the same conventions as every other account below.
+
 ## Why every field below is set explicitly
 
 Each account declares the same shape:

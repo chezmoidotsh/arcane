@@ -161,6 +161,7 @@ extensions macOS Time Machine needs.
 | `home-assistant` | 30001 | 137 | yes |
 | `immich` | 30002 | 136 | yes |
 | `paperless` | 30003 | 138 | yes |
+| `firesticktv` | 3000 | 140 | yes |
 
 ### NFS4 ACL templates
 

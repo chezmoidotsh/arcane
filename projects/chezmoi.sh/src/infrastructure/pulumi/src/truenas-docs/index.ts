@@ -19,6 +19,7 @@ import { granularCloudSyncTasks, legacyGlobalSync } from "../truenas/cloudsync";
 import { networkConfig, networkInterfaces } from "../truenas/network";
 import { services } from "../truenas/services";
 import { nfsShares, smbShares } from "../truenas/shares";
+import { fireStickTvUser } from "../truenas/users/firesticktv";
 import {
 	homeAssistantAclAssignment,
 	homeAssistantUser,
@@ -290,6 +291,7 @@ const content = pulumi
 			identityData(homeAssistantUser),
 			identityData(immichUser),
 			identityData(paperlessUser),
+			identityData(fireStickTvUser),
 		]),
 		pulumi.all(aclTemplates.map(templateData)),
 		pulumi.all(aclAssignments.map(assignmentData)),
