@@ -59,13 +59,12 @@ Datasets carved out of `zp1cs01`:
 
 ```text
 zp1cs01
-└─ media                    Dataset TrueNAS réservé pour tout les media (films, animés, musiques, ...)
-   ├─ animes                Dataset TrueNAS réservé pour les series animées
-   ├─ books                 Dataset TrueNAS réservé pour les livres
-   ├─ inbox    quota=500Gi  Dataset TrueNAS réservé pour les média à trier
-   ├─ movies                Dataset TrueNAS réservé pour les films
-   ├─ musics                Dataset TrueNAS réservé pour les musiques
-   └─ tvshows               Dataset TrueNAS réservé pour les series TV
+└─ media         Bibliothèque multimédia du foyer
+   ├─ animes     Séries animées
+   ├─ books      Livres
+   ├─ movies     Films
+   ├─ musics     Musiques
+   └─ tvshows    Séries TV
 ```
 
 ### `zp1hs01`
@@ -89,22 +88,21 @@ Datasets carved out of `zp1hs01`:
 
 ```text
 zp1hs01
-├─ applications                                       Dataset TrueNAS réservé pour les applications hébergées
-│  ├─ immich                    quota=50Gi            Dataset TrueNAS réservé pour Immich
-│  ├─ paperless                 quota=10Gi,encrypted  Dataset TrueNAS réservé pour Paperless
-│  ├─ silverbullet              quota=5Gi,encrypted   Dataset TrueNAS réservé pour Silverbullet
-│  ├─ truenas                   encrypted             Dataset TrueNAS réservé pour les applications hébergées dans TrueNAS
-│  │  ├─ com.nginxproxymanager  encrypted             Dataset TrueNAS réservé pour NPM (proxy)
-│  │  └─ fr.deuxfleurs.garage   encrypted             Dataset TrueNAS réservé pour Garage (S3)
-│  └─ managed                   encrypted             Dataset TrueNAS pour les applications gérées par Kubernetes
-│     ├─ app.immich             quota=50Gi,encrypted  Dataset TrueNAS réservé pour Immich (K8s-managed)
-│     └─ com.paperless-ngx      quota=10Gi,encrypted  Dataset TrueNAS réservé pour Paperless-ngx (K8s-managed)
-├─ backups                      quota=100Gi           Dataset TrueNAS réservé pour les backups
-│  ├─ hass.chezmoi.sh                                 Dataset TrueNAS réservé pour les backups de Home Assistant
-│  └─ timemachine.apple.com
-├─ documents                    encrypted             Dataset TrueNAS réservé pour les documents (partagés ou personnels)
-└─ userspace                    encrypted             Dataset dédié aux données utilisateurs (partagées ou personnelles)
-   └─ shared                    encrypted             Dataset TrueNAS réservé pour les données partagées entre utilisateurs
+├─ applications                                       Applications hébergées : natives (TrueNAS Apps) et Kubernetes (lungmen.akn)
+│  ├─ immich                    quota=50Gi            Immich (TrueNAS Apps) -- migration en cours vers managed/app.immich
+│  ├─ paperless                 quota=10Gi,encrypted  Paperless (TrueNAS Apps) -- migration en cours vers managed/com.paperless-ngx
+│  ├─ silverbullet              quota=5Gi,encrypted   Silverbullet (TrueNAS Apps)
+│  ├─ truenas                   encrypted             Services internes à TrueNAS lui-même
+│  │  ├─ com.nginxproxymanager  encrypted             Reverse-proxy interne (NPM)
+│  │  └─ fr.deuxfleurs.garage   encrypted             Backend S3 Garage
+│  └─ managed                   encrypted             Applications Kubernetes montées en SMB
+│     ├─ app.immich             quota=50Gi,encrypted  Immich (Kubernetes)
+│     └─ com.paperless-ngx      quota=10Gi,encrypted  Paperless-ngx (Kubernetes)
+├─ backups                      quota=100Gi           Cibles de sauvegarde locales
+│  └─ hass.chezmoi.sh                                 Sauvegardes Home Assistant
+├─ documents                    encrypted             Ancien espace documents -- migration en cours vers userspace
+└─ userspace                    encrypted             Espaces utilisateurs (remplace documents)
+   └─ shared                    encrypted             Espace partagé entre utilisateurs
 ```
 
 ## Shares
@@ -115,16 +113,14 @@ storage, Time Machine).
 
 ### NFS
 
-- `nfs-share-animes` (Dossier partagé des animés) --
+- `nfs-share-animes` (Animés (Jellyfin)) --
   read-only, mapped to `nobody`
-- `nfs-share-movies` (Dossier partagé des films) --
+- `nfs-share-movies` (Films (Jellyfin)) --
   read-only, mapped to `nobody`
-- `nfs-share-musics` (Dossier partagé des musiques) --
+- `nfs-share-musics` (Musiques (Jellyfin)) --
   read-only, mapped to `nobody`
-- `nfs-share-tvshows` (Dossier partagé des séries TVs) --
+- `nfs-share-tvshows` (Séries TV (Jellyfin)) --
   read-only, mapped to `nobody`
-- `nfs-share-documents-shared` (Dossier partagé de nos documents (Paperless)) --
-  read-only, mapped to `paperless-ngx`
 - `nfs-share-documents-alexandre-admin` (Documents personnels d'alexandre (Paperless)) --
   read/write, mapped to `paperless-ngx`
 
@@ -136,19 +132,16 @@ set manually, not a sign the share is deprecated), `PRIVATE_DATASETS_SHARE`
 is meant for one dataset per user, and `TIMEMACHINE_SHARE` enables the SMB
 extensions macOS Time Machine needs.
 
-- `smb-share-films` (Dossier partagé des films) -- LEGACY_SHARE
-- `smb-share-animes` (Dossier partagé des séries animés) -- LEGACY_SHARE
-- `smb-share-series-tv` (Dossier partagé des séries TV) -- LEGACY_SHARE
+- `smb-share-films` (Accès aux films de la médiathèque) -- LEGACY_SHARE
+- `smb-share-animes` (Accès aux animés de la médiathèque) -- LEGACY_SHARE
+- `smb-share-series-tv` (Accès aux séries TV/streaming de la médiathèque) -- LEGACY_SHARE
+- `smb-share-livres` (Accès aux livres de la médiathèque) -- DEFAULT_SHARE
+- `smb-share-musique` (Accès aux musiques de la médiathèque) -- DEFAULT_SHARE
 - `smb-share-mes-documents` (Documents personnels) -- PRIVATE_DATASETS_SHARE
-- `smb-share-public` (Documents partagés) -- DEFAULT_SHARE
-- `smb-share-livres` (Dossier partagé des livres) -- DEFAULT_SHARE
-- `smb-share-hass-chezmoi-sh` (Dossier de backup pour Home Assistant) -- DEFAULT_SHARE
-- `smb-share-cold-media` (RO access to all media (cold backup only)) -- LEGACY_SHARE, read-only, disabled
-- `smb-share-cold-documents` (RO access to all documents (cold backup only)) -- LEGACY_SHARE, read-only, disabled
-- `smb-share-application-immich` (Immich application storage) -- LEGACY_SHARE
-- `smb-share-application-paperless` (Paperless application storage) -- LEGACY_SHARE
-- `smb-share-application-silverbullet` (Silverbullet application storage) -- LEGACY_SHARE
-- `smb-share-timemachine` (Apple Time Machine Backups) -- TIMEMACHINE_SHARE
+- `smb-share-shared-documents` (Documents partagés) -- LEGACY_SHARE
+- `smb-share-hass-chezmoi-sh` (Sauvegardes Home Assistant) -- DEFAULT_SHARE
+- `smb-share-application-immich` (Stockage applicatif Immich (Kubernetes)) -- LEGACY_SHARE
+- `smb-share-application-paperless` (Stockage applicatif Paperless-ngx (Kubernetes)) -- LEGACY_SHARE
 
 ## Permissions
 

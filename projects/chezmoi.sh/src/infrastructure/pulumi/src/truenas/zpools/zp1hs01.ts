@@ -49,37 +49,39 @@ export const zp1hs01 = new TrueNASPool("zp1hs01", [
 		{
 			atime: OnOffInherit.Off,
 			compression: Compression.Lz4,
-			comments: "Dataset TrueNAS réservé pour les applications hébergées",
+			comments:
+				"Applications hébergées : natives (TrueNAS Apps) et Kubernetes (lungmen.akn)",
 		},
 		[
 			new TrueNASDataset("immich", {
-				comments: "Dataset TrueNAS réservé pour Immich",
+				comments:
+					"Immich (TrueNAS Apps) -- migration en cours vers managed/app.immich",
 				quota: 50 * ByteSize.Gi, // 50G
 				recordSize: RecordSize.Size1M,
 			}),
 			new TrueNASDataset("paperless", {
-				comments: "Dataset TrueNAS réservé pour Paperless",
+				comments:
+					"Paperless (TrueNAS Apps) -- migration en cours vers managed/com.paperless-ngx",
 				quota: 10 * ByteSize.Gi,
 			}), // 10G
 			new TrueNASDataset("silverbullet", {
-				comments: "Dataset TrueNAS réservé pour Silverbullet",
+				comments: "Silverbullet (TrueNAS Apps)",
 				quota: 5 * ByteSize.Gi, // 5G
 			}),
 			new TrueNASDataset(
 				"truenas",
 				{
 					atime: OnOffInherit.Off,
-					comments:
-						"Dataset TrueNAS réservé pour les applications hébergées dans TrueNAS",
+					comments: "Services internes à TrueNAS lui-même",
 				},
 				[
 					new TrueNASDataset("com.nginxproxymanager", {
 						atime: OnOffInherit.Off,
-						comments: "Dataset TrueNAS réservé pour NPM (proxy)",
+						comments: "Reverse-proxy interne (NPM)",
 					}),
 					new TrueNASDataset("fr.deuxfleurs.garage", {
 						atime: OnOffInherit.Off,
-						comments: "Dataset TrueNAS réservé pour Garage (S3)",
+						comments: "Backend S3 Garage",
 					}),
 				],
 			),
@@ -88,18 +90,16 @@ export const zp1hs01 = new TrueNASPool("zp1hs01", [
 				{
 					atime: OnOffInherit.Off,
 					compression: Compression.Lz4,
-					comments:
-						"Dataset TrueNAS pour les applications gérées par Kubernetes",
+					comments: "Applications Kubernetes montées en SMB",
 				},
 				[
 					new TrueNASDataset("app.immich", {
-						comments: "Dataset TrueNAS réservé pour Immich (K8s-managed)",
+						comments: "Immich (Kubernetes)",
 						quota: 50 * ByteSize.Gi, // 50G
 						recordSize: RecordSize.Size1M,
 					}),
 					new TrueNASDataset("com.paperless-ngx", {
-						comments:
-							"Dataset TrueNAS réservé pour Paperless-ngx (K8s-managed)",
+						comments: "Paperless-ngx (Kubernetes)",
 						quota: 10 * ByteSize.Gi, // 10G
 					}),
 				],
@@ -109,20 +109,19 @@ export const zp1hs01 = new TrueNASPool("zp1hs01", [
 	new TrueNASDataset(
 		"backups",
 		{
-			comments: "Dataset TrueNAS réservé pour les backups",
+			comments: "Cibles de sauvegarde locales",
 			quota: 100 * ByteSize.Gi,
 		}, // 100G
 		[
 			new TrueNASDataset("hass.chezmoi.sh", {
-				comments: "Dataset TrueNAS réservé pour les backups de Home Assistant",
+				comments: "Sauvegardes Home Assistant",
 			}),
 		],
 	),
 	new TrueNASDataset(
 		"documents",
 		{
-			comments:
-				"Dataset TrueNAS réservé pour les documents (partagés ou personnels)",
+			comments: "Ancien espace documents -- migration en cours vers userspace",
 		},
 		[],
 	),
@@ -131,13 +130,11 @@ export const zp1hs01 = new TrueNASPool("zp1hs01", [
 		{
 			atime: OnOffInherit.Off,
 			compression: Compression.Lz4,
-			comments:
-				"Dataset dédié aux données utilisateurs (partagées ou personnelles)",
+			comments: "Espaces utilisateurs (remplace documents)",
 		},
 		[
 			new TrueNASDataset("shared", {
-				comments:
-					"Dataset TrueNAS réservé pour les données partagées entre utilisateurs",
+				comments: "Espace partagé entre utilisateurs",
 			}),
 		],
 	),

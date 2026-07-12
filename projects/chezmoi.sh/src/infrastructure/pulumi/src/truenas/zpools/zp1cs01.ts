@@ -30,24 +30,23 @@ export const zp1cs01 = new TrueNASPool("zp1cs01", [
 	new TrueNASDataset(
 		"media",
 		{
-			comments:
-				"Dataset TrueNAS réservé pour tout les media (films, animés, musiques, ...)",
+			comments: "Bibliothèque multimédia du foyer",
 		},
 		[
 			new TrueNASDataset("animes", {
-				comments: "Dataset TrueNAS réservé pour les series animées",
+				comments: "Séries animées",
 			}),
 			new TrueNASDataset("books", {
-				comments: "Dataset TrueNAS réservé pour les livres",
+				comments: "Livres",
 			}),
 			new TrueNASDataset("movies", {
-				comments: "Dataset TrueNAS réservé pour les films",
+				comments: "Films",
 			}),
 			new TrueNASDataset("musics", {
-				comments: "Dataset TrueNAS réservé pour les musiques",
+				comments: "Musiques",
 			}),
 			new TrueNASDataset("tvshows", {
-				comments: "Dataset TrueNAS réservé pour les series TV",
+				comments: "Séries TV",
 			}),
 		],
 	),
