@@ -8,4 +8,4 @@ import "./services";
 import "./shares";
 import "./zpools/zp1cs01";
 import "./zpools/zp1hs01";
-import "./zpools/zp1hs01-migrations";
+import "./zpools/zp1hs01-migrations-rsync";
