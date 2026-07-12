@@ -109,22 +109,6 @@ export const nfsShares = [
 		{ ...under(zp1cs01, "media/tvshows").opts, ignoreChanges: ["hosts"] },
 	),
 
-	new truenas.ShareNfs(
-		"nfs-share-documents-shared",
-		{
-			path: under(zp1hs01, "documents", "shared").path,
-			comment: "Dossier partagé de nos documents (Paperless)",
-			readonly: true,
-			mapallUser: "paperless-ngx",
-			mapallGroup: "paperless-ngx",
-			enabled: true,
-		},
-		{
-			...under(zp1hs01, "documents", "shared").opts,
-			ignoreChanges: ["hosts"],
-		},
-	),
-
 	// RW, unlike its documents-shared sibling above: Paperless imports/consumes
 	// files directly from this dataset, so it needs write access here.
 	new truenas.ShareNfs(
@@ -157,6 +141,7 @@ new truenas.SmbConfig("smb-config", {
 });
 
 export const smbShares = [
+	// --- Media shares --------------------------------------------------------
 	new truenas.ShareSmb(
 		"smb-share-films",
 		{
@@ -194,30 +179,6 @@ export const smbShares = [
 	),
 
 	new truenas.ShareSmb(
-		"smb-share-mes-documents",
-		{
-			name: "Mes documents",
-			path: under(zp1hs01, "documents").path,
-			purpose: "PRIVATE_DATASETS_SHARE",
-			comment: "Documents personnels",
-			enabled: true,
-		},
-		under(zp1hs01, "documents").opts,
-	),
-
-	new truenas.ShareSmb(
-		"smb-share-public",
-		{
-			name: "Public",
-			path: under(zp1hs01, "documents", "shared").path,
-			purpose: "DEFAULT_SHARE",
-			comment: "Documents partagés",
-			enabled: true,
-		},
-		under(zp1hs01, "documents", "shared").opts,
-	),
-
-	new truenas.ShareSmb(
 		"smb-share-livres",
 		{
 			name: "Livres",
@@ -230,93 +191,79 @@ export const smbShares = [
 	),
 
 	new truenas.ShareSmb(
+		"smb-share-musique",
+		{
+			name: "Musiques",
+			path: under(zp1cs01, "media/musics").path,
+			purpose: "DEFAULT_SHARE",
+			comment: "Dossier partagé des musiques",
+			enabled: true,
+		},
+		under(zp1cs01, "media/musics").opts,
+	),
+
+	// --- Userspace shares ----------------------------------------------------
+	new truenas.ShareSmb(
+		"smb-share-mes-documents",
+		{
+			name: "Mes Documents",
+			path: under(zp1hs01, "userspace").path,
+			purpose: "PRIVATE_DATASETS_SHARE",
+			comment: "Documents personnels",
+			enabled: true,
+		},
+		under(zp1hs01, "userspace").opts,
+	),
+
+	new truenas.ShareSmb(
+		"smb-share-shared-documents",
+		{
+			name: "Documents partagés",
+			path: under(zp1hs01, "userspace/shared").path,
+			purpose: "LEGACY_SHARE",
+			comment: "Documents partagés",
+			enabled: true,
+		},
+		under(zp1hs01, "userspace").opts,
+	),
+
+	// --- Application shares ----------------------------------------------------
+	new truenas.ShareSmb(
 		"smb-share-hass-chezmoi-sh",
 		{
 			name: "hass.chezmoi.sh",
 			path: under(zp1hs01, "backups/hass.chezmoi.sh").path,
 			purpose: "DEFAULT_SHARE",
 			comment: "Dossier de backup pour Home Assistant",
+			browsable: false,
 			enabled: true,
 		},
 		under(zp1hs01, "backups/hass.chezmoi.sh").opts,
-	),
-
-	// Disabled: read-only cold-backup mirror.
-	new truenas.ShareSmb(
-		"smb-share-cold-media",
-		{
-			name: "mnt-zp1cs01-media",
-			path: under(zp1cs01, "media").path,
-			purpose: "LEGACY_SHARE",
-			comment: "RO access to all media (cold backup only)",
-			readonly: true,
-			enabled: false,
-		},
-		under(zp1cs01, "media").opts,
-	),
-
-	// Disabled: read-only cold-backup mirror.
-	new truenas.ShareSmb(
-		"smb-share-cold-documents",
-		{
-			name: "mnt-zp1hs01-documents",
-			path: under(zp1hs01, "documents").path,
-			purpose: "LEGACY_SHARE",
-			comment: "RO access to all documents (cold backup only)",
-			readonly: true,
-			enabled: false,
-		},
-		under(zp1hs01, "documents").opts,
 	),
 
 	new truenas.ShareSmb(
 		"smb-share-application-immich",
 		{
 			name: "application-immich",
-			path: under(zp1hs01, "applications/immich").path,
+			path: under(zp1hs01, "applications/managed/app.immich").path,
 			purpose: "LEGACY_SHARE",
-			comment: "Immich application storage",
+			comment: "Stockage applicatif Immich (Kubernetes)",
 			browsable: false,
 			enabled: true,
 		},
-		under(zp1hs01, "applications/immich").opts,
+		under(zp1hs01, "applications/managed/app.immich").opts,
 	),
 
 	new truenas.ShareSmb(
 		"smb-share-application-paperless",
 		{
 			name: "application-paperless",
-			path: under(zp1hs01, "applications/paperless").path,
+			path: under(zp1hs01, "applications/managed/com.paperless-ngx").path,
 			purpose: "LEGACY_SHARE",
-			comment: "Paperless application storage",
+			comment: "Stockage applicatif Paperless-ngx (Kubernetes)",
 			browsable: false,
 			enabled: true,
 		},
-		under(zp1hs01, "applications/paperless").opts,
-	),
-
-	new truenas.ShareSmb(
-		"smb-share-application-silverbullet",
-		{
-			name: "application-silverbullet",
-			path: under(zp1hs01, "applications/silverbullet").path,
-			purpose: "LEGACY_SHARE",
-			comment: "Silverbullet application storage",
-			browsable: false,
-			enabled: true,
-		},
-		under(zp1hs01, "applications/silverbullet").opts,
-	),
-
-	new truenas.ShareSmb(
-		"smb-share-timemachine",
-		{
-			name: "timemachine.apple.com",
-			path: under(zp1hs01, "backups/timemachine.apple.com").path,
-			purpose: "TIMEMACHINE_SHARE",
-			comment: "Apple Time Machine Backups",
-			enabled: true,
-		},
-		under(zp1hs01, "backups/timemachine.apple.com").opts,
+		under(zp1hs01, "applications/managed/com.paperless-ngx").opts,
 	),
 ];

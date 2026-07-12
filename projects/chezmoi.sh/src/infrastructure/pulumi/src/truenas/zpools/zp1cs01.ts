@@ -40,10 +40,6 @@ export const zp1cs01 = new TrueNASPool("zp1cs01", [
 			new TrueNASDataset("books", {
 				comments: "Dataset TrueNAS réservé pour les livres",
 			}),
-			new TrueNASDataset("inbox", {
-				comments: "Dataset TrueNAS réservé pour les média à trier",
-				quota: 500 * ByteSize.Gi,
-			}), // 500G
 			new TrueNASDataset("movies", {
 				comments: "Dataset TrueNAS réservé pour les films",
 			}),

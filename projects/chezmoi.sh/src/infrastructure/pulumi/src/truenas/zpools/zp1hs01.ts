@@ -116,7 +116,6 @@ export const zp1hs01 = new TrueNASPool("zp1hs01", [
 			new TrueNASDataset("hass.chezmoi.sh", {
 				comments: "Dataset TrueNAS réservé pour les backups de Home Assistant",
 			}),
-			new TrueNASDataset("timemachine.apple.com"),
 		],
 	),
 	new TrueNASDataset(
