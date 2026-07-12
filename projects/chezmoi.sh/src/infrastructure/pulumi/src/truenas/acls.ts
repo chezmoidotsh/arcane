@@ -150,3 +150,43 @@ export const userspaceSharedAcl = new truenas.FilesystemAcl(
 	},
 	{ parent: userspaceSharedDataset },
 );
+
+// `truenas.FilesystemAclTemplate` manages a named NFS4/POSIX1E preset
+// stored on the NAS (visible in the TrueNAS UI's ACL editor as a starting
+// point) -- NOT an ACL applied to any path. That distinction matters here:
+// unlike `FilesystemAcl`, this resource's `aclJson` is a raw JSON string,
+// not the flat `permRead`/`permWrite`/`permExecute` shape `posixDacls()`
+// builds above -- so it's able to express real NFS4 entries (`type`,
+// `flags`, `perms.BASIC`), which `FilesystemAcl` cannot: TrueNAS's real
+// `filesystem.setacl` endpoint (what `FilesystemAcl` calls) rejects NFS4
+// entries built from this SDK's `FilesystemAclDacl` type outright (missing
+// `type`/`flags`, wrong `perms` shape) -- confirmed against the live API,
+// not just inferred. And `setacl` has no template-reference field either,
+// so a template can't be applied to a path through Pulumi -- only through
+// a human picking it in the UI. This template exists for that manual
+// workflow, not for anything this stack applies itself.
+//
+// Scoped to "applications not managed by TrueNAS itself" (Home Assistant,
+// Immich, Paperless-ngx -- as opposed to TrueNAS's own native Apps, e.g.
+// `applications/truenas/{com.nginxproxymanager,fr.deuxfleurs.garage}`):
+// owner gets full control, nobody else gets anything -- the NFS4 analogue
+// of the `rwx------` POSIX1E mode already used for those three datasets.
+export const applicationNfs4Template = new truenas.FilesystemAclTemplate(
+	"test-nfs4-template-application",
+	{
+		name: "nfs4-application",
+		acltype: "NFS4",
+		comment:
+			"Owner-only access (NFS4). For application service accounts not managed by TrueNAS's own Apps -- pick this manually in the ACL editor; Pulumi cannot apply it to a path.",
+		aclJson: JSON.stringify([
+			{
+				tag: "owner@",
+				type: "ALLOW",
+				perms: { BASIC: "FULL_CONTROL" },
+				flags: { BASIC: "INHERIT" },
+				id: null,
+				who: null,
+			},
+		]),
+	},
+);
