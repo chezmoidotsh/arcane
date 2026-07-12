@@ -189,6 +189,7 @@ ACL Type: NFSv4 -> Use ACL Preset).
 | `zp1hs01/backups/hass.chezmoi.sh` | `NFSV4_MANAGED_APPLICATION` |
 | `zp1hs01/applications/managed/app.immich` | `NFSV4_MANAGED_APPLICATION` |
 | `zp1hs01/applications/managed/com.paperless-ngx` | `NFSV4_MANAGED_APPLICATION` |
+
 ## Backups
 
 Off-site copies go to Backblaze B2, split across private,

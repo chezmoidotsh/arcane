@@ -186,7 +186,7 @@ const cloudSyncJobs: Array<{
 
 for (const job of cloudSyncJobs) {
 	const mountPoint = job.dataset.resource.mountPoint;
-	const task = new truenas.CloudSync(
+	new truenas.CloudSync(
 		`cs-b2-${job.pool.name}-${job.dataset.path.replace("/", "-")}`,
 		{
 			description: `B2 — ${job.description}`,
