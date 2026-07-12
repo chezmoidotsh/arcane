@@ -202,7 +202,7 @@ for (const job of cloudSyncJobs) {
 					fast_list: true,
 					// Use the dataset path as the destination folder inside the bucket so
 					// the bucket mirrors the pool structure (easier to find backups later).
-					folder: pulumi.interpolate`${mountPoint.apply((mp) => path.relative("/mnt/zp1hs01", mp))}`,
+					folder: pulumi.interpolate`${mountPoint.apply((mp) => path.relative("/mnt", mp))}`,
 					storage_class: "STANDARD",
 				}),
 
