@@ -2,7 +2,7 @@ import { must } from "@chezmoi.sh/pulumi-lib";
 import * as random from "@pulumi/random";
 import * as truenas from "@pulumi/truenas";
 
-import type { Nfs4AclAssignment } from "../acls";
+import { builtInUsersGroup, type Nfs4AclAssignment } from "../acls";
 import { zp1hs01 } from "../zpools/zp1hs01";
 
 // See ./README.md for the shared conventions (UID range, field choices,
@@ -23,7 +23,14 @@ export const immichUser = new truenas.User(
 		uid: 30002,
 		smb: true,
 		groupCreate: true,
-		groups: [],
+		// TrueNAS automatically adds every `smb: true` account to its
+		// built-in `builtin_users` group on creation -- not something this
+		// stack asked for, but not undesirable either (see ../acls.ts:
+		// that's the exact group NFSV4_SMB_ALL/NFSV4_SMB_VIEWER grant
+		// access to). Declaring it explicitly here, instead of `[]`, stops
+		// `pulumi preview` from perpetually trying to revert it: `[]` was
+		// never a state TrueNAS would actually hold.
+		groups: [builtInUsersGroup.apply((g) => g.id)],
 		home: "/var/empty",
 		shell: "/usr/sbin/nologin",
 		sudoCommands: [],

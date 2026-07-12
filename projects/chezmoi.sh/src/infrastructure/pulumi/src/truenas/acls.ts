@@ -85,12 +85,26 @@ function nfs4AclJson(specs: Nfs4EntrySpec[]): pulumi.Output<string> {
 }
 
 // Real, stable identities these templates reference by id -- looked up
-// (`truenas.getUser`/`getGroup`), never created: all three are TrueNAS
-// built-ins (`apps`) or already-managed accounts (`builtin_users` is a
-// TrueNAS built-in group; see below for why it's used instead of an
-// invented "smb-users" group).
-const appsUser = truenas.getUser({ username: "apps" }); // TrueNAS's own Apps feature: uid 568, confirmed live
-const builtInUsersGroup = truenas.getGroup({ name: "builtin_users" }); // every local account: gid 545, confirmed live
+// (`truenas.getUserOutput`/`getGroupOutput`), never created: `apps` is a
+// TrueNAS built-in service account, `builtin_users` a TrueNAS built-in
+// group (see below for why it's used instead of an invented "smb-users"
+// group). The `*Output` lookup variants, not the plain-`Promise`-returning
+// `getUser`/`getGroup`, are required here, not just a style choice: a
+// resource input derived from a raw `Promise` (`.then(...)`) loses
+// Pulumi's own dependency/known-ness tracking, which made every
+// `FilesystemAclTemplate` below show a spurious `update` on every
+// `pulumi preview` even when `aclJson` resolved to the exact same string
+// -- confirmed by comparing old/new state, byte for byte, in
+// `pulumi preview --json`. `.apply(...)`, not `.then(...)`, follows from
+// that: it's the `Output`-native equivalent.
+//
+// Exported (not just used locally) so `../truenas/users/*.ts` can put the
+// same `builtin_users` id in their own accounts' `groups` -- see there for
+// why that's needed, not optional.
+export const appsUser = truenas.getUserOutput({ username: "apps" }); // TrueNAS's own Apps feature: uid 568, confirmed live
+export const builtInUsersGroup = truenas.getGroupOutput({
+	name: "builtin_users",
+}); // every local account: id 91 / gid 545, confirmed live
 
 export const managedApplicationTemplate = new truenas.FilesystemAclTemplate(
 	"acl-template-nfs4-managed-application",
@@ -111,7 +125,7 @@ export const trueNASApplicationTemplate = new truenas.FilesystemAclTemplate(
 		comment:
 			"Only TrueNAS's own `apps` service account gets read+write. For datasets backing TrueNAS's native Apps feature, not applications this stack manages itself.",
 		aclJson: nfs4AclJson([
-			{ tag: "USER", id: appsUser.then((u) => u.uid), basic: "MODIFY" },
+			{ tag: "USER", id: appsUser.apply((u) => u.uid), basic: "MODIFY" },
 		]),
 	},
 );
@@ -126,7 +140,7 @@ export const smbAllTemplate = new truenas.FilesystemAclTemplate(
 		aclJson: nfs4AclJson([
 			{
 				tag: "GROUP",
-				id: builtInUsersGroup.then((g) => g.gid),
+				id: builtInUsersGroup.apply((g) => g.gid),
 				basic: "MODIFY",
 			},
 		]),
@@ -142,7 +156,11 @@ export const smbViewerTemplate = new truenas.FilesystemAclTemplate(
 			"Owner gets read+write; every other local SMB account (`builtin_users`) gets read-only.",
 		aclJson: nfs4AclJson([
 			{ tag: "owner@", basic: "MODIFY" },
-			{ tag: "GROUP", id: builtInUsersGroup.then((g) => g.gid), basic: "READ" },
+			{
+				tag: "GROUP",
+				id: builtInUsersGroup.apply((g) => g.gid),
+				basic: "READ",
+			},
 		]),
 	},
 );
