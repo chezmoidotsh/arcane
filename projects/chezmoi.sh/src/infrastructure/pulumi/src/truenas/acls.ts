@@ -58,48 +58,62 @@ export interface Nfs4AclAssignment {
  * The 14 individual NFS4 permission bits TrueNAS's `filesystem.getacl`
  * reports and `filesystem.setacl`/`filesystem.acltemplate` accept. Used
  * only by `writeOnlyBits` below -- every other entry in this file uses the
- * `basic` shorthand instead.
+ * `basic` shorthand instead. Declared here (alphabetical) in the exact key
+ * order TrueNAS itself returns them in -- see `writeOnlyBits` for why that
+ * order has to match byte-for-byte, same as everywhere else in this file.
  */
 type Nfs4PermBits = Record<
-	| "READ_DATA"
-	| "WRITE_DATA"
 	| "APPEND_DATA"
-	| "READ_NAMED_ATTRS"
-	| "WRITE_NAMED_ATTRS"
-	| "EXECUTE"
 	| "DELETE"
 	| "DELETE_CHILD"
-	| "READ_ATTRIBUTES"
-	| "WRITE_ATTRIBUTES"
+	| "EXECUTE"
 	| "READ_ACL"
+	| "READ_ATTRIBUTES"
+	| "READ_DATA"
+	| "READ_NAMED_ATTRS"
+	| "SYNCHRONIZE"
 	| "WRITE_ACL"
-	| "WRITE_OWNER"
-	| "SYNCHRONIZE",
+	| "WRITE_ATTRIBUTES"
+	| "WRITE_DATA"
+	| "WRITE_NAMED_ATTRS"
+	| "WRITE_OWNER",
 	boolean
 >;
 
 /**
- * Every bit `MODIFY` grants that `READ` doesn't -- i.e. "every write-shaped
- * right, none of the read-shaped ones". Confirmed against TrueNAS's own
- * live `filesystem.getacl` output for both presets (`pulumi refresh` can't
- * verify this the way it does the `basic` shorthand below, since this
- * exact bit combination has no `BASIC` keyword of its own).
+ * Every bit that's specifically about writing, deleting, or modifying
+ * attributes -- deliberately *not* "every bit `MODIFY` grants that `READ`
+ * doesn't", despite that being how this was first derived. That first cut
+ * included `SYNCHRONIZE` (present in TrueNAS's `MODIFY` preset, absent
+ * from `READ`) and broke every file open through this account: SMB2
+ * read-only opens commonly request `SYNCHRONIZE` alongside `READ_DATA` as
+ * part of a normal "generic read" access mask, and TrueNAS's
+ * `filesystem.setacl` canonicalizes DENY entries ahead of ALLOW ones (see
+ * `smbMediaTemplate` below) -- so denying `SYNCHRONIZE` here, even though
+ * `READ_DATA` itself stayed granted via the group entry, was enough to
+ * fail the whole open. `ls` still worked throughout, because directory
+ * enumeration doesn't request the same access mask a file open does --
+ * that's what made this one easy to miss initially.
+ *
+ * Keys are ordered alphabetically to match TrueNAS's own
+ * `filesystem.getacl` output byte-for-byte (see `nfs4AclJson`'s doc
+ * comment for why that matters).
  */
 const writeOnlyBits: Nfs4PermBits = {
-	READ_DATA: false,
-	WRITE_DATA: true,
 	APPEND_DATA: true,
-	READ_NAMED_ATTRS: false,
-	WRITE_NAMED_ATTRS: true,
-	EXECUTE: false,
 	DELETE: true,
 	DELETE_CHILD: true,
-	READ_ATTRIBUTES: false,
-	WRITE_ATTRIBUTES: true,
+	EXECUTE: false,
 	READ_ACL: false,
+	READ_ATTRIBUTES: false,
+	READ_DATA: false,
+	READ_NAMED_ATTRS: false,
+	SYNCHRONIZE: false,
 	WRITE_ACL: false,
+	WRITE_ATTRIBUTES: true,
+	WRITE_DATA: true,
+	WRITE_NAMED_ATTRS: true,
 	WRITE_OWNER: false,
-	SYNCHRONIZE: true,
 };
 
 export interface Nfs4EntrySpec {
