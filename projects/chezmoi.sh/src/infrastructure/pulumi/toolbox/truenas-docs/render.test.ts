@@ -11,6 +11,35 @@ const fixtureContext = {
 			datasetsTree: "zp1cs01\n└─ media",
 		},
 	],
+	poolsList: "`zp1cs01`",
+	scrubTasks: [
+		{
+			poolName: "zp1cs01",
+			thresholdDays: 35,
+			enabled: true,
+			schedule: { minute: "00", hour: "00", dom: "*", month: "*", dow: "7" },
+		},
+	],
+	snapshotTasks: [
+		{
+			dataset: "zp1cs01",
+			wholePool: true,
+			recursive: true,
+			lifetimeValue: 4,
+			lifetimeUnit: "WEEK",
+			enabled: true,
+			schedule: { minute: "0", hour: "3", dom: "*", month: "*", dow: "0" },
+		},
+		{
+			dataset: "zp1cs01/media",
+			wholePool: false,
+			recursive: false,
+			lifetimeValue: 8,
+			lifetimeUnit: "DAY",
+			enabled: true,
+			schedule: { minute: "0", hour: "0", dom: "*", month: "*", dow: "*" },
+		},
+	],
 	nfsShares: [
 		{
 			name: "nfs-share-animes",
@@ -140,10 +169,17 @@ describe("TRUENAS.md template", () => {
 
 	it("renders the overview before How it's managed", () => {
 		const md = render(fixtureContext);
-		const overviewIndex = md.indexOf("`nas.chezmoi.sh` is the home NAS");
+		const overviewIndex = md.indexOf("`nas.chezmoi.sh` is my home NAS");
 		const managedIndex = md.indexOf("## How it's managed");
 		expect(overviewIndex).to.be.greaterThan(-1);
 		expect(overviewIndex).to.be.lessThan(managedIndex);
+	});
+
+	it("mentions Proxmox and states the pool count/names from real data, unescaped", () => {
+		const md = render(fixtureContext);
+		expect(md).to.include("virtual machine on Proxmox");
+		expect(md).to.include("1 ZFS pool --\n`zp1cs01`");
+		expect(md).to.not.include("&#x60;");
 	});
 
 	it("does not mention that anything was imported into state", () => {
@@ -175,11 +211,27 @@ describe("TRUENAS.md template", () => {
 		);
 	});
 
-	it("explains the SMB purpose presets and renders shares as a bullet list", () => {
+	it("explains the SMB purpose presets one per line and renders shares as a bullet list", () => {
 		const md = render(fixtureContext);
-		expect(md).to.include("`DEFAULT_SHARE` is the");
+		expect(md).to.include("- `DEFAULT_SHARE` -- the general-purpose preset.");
 		expect(md).to.include(
 			"- `smb-share-films` (Dossier partagé des films) -- LEGACY_SHARE",
+		);
+	});
+
+	it("omits the NFS/SMB subsection entirely when its share list is empty", () => {
+		// "### NFS\n" (not just "### NFS") to avoid a false match against the
+		// unrelated "### NFS4 ACL templates" heading in the Permissions section.
+		const md = render({ ...fixtureContext, nfsShares: [] });
+		expect(md).to.not.include("### NFS\n");
+		expect(md).to.include("### SMB");
+		expect(md).to.include("SMB is the only share protocol in use right now");
+
+		const mdNoSmb = render({ ...fixtureContext, smbShares: [] });
+		expect(mdNoSmb).to.not.include("### SMB");
+		expect(mdNoSmb).to.include("### NFS\n");
+		expect(mdNoSmb).to.include(
+			"NFS is the only share protocol in use right now",
 		);
 	});
 
@@ -196,10 +248,28 @@ describe("TRUENAS.md template", () => {
 	it("renders backup jobs with source paths and human-readable schedules", () => {
 		const md = render(fixtureContext);
 		expect(md).to.include("`/mnt/zp1hs01/userspace`");
-		expect(md).to.include("daily at 01:00");
-		expect(md).to.include("PUSH/SYNC");
+		expect(md).to.include("Each day at 01:00");
+		expect(md).to.include("PUSH & SYNC");
 		expect(md).to.include("*(disabled)*");
-		expect(md).to.include("legacy global sync of `/mnt/zp1hs01`");
+		expect(md).to.include("legacy whole-pool sync of `/mnt/zp1hs01`");
+	});
+
+	it("renders the three backup layers with real scrub/snapshot schedules", () => {
+		const md = render(fixtureContext);
+		expect(md).to.include("### Layer 1: Bitrot detection (scrubbing)");
+		expect(md).to.include(
+			"Each Sunday at 00:00**:\n  scrub `zp1cs01` (35-day alert threshold)",
+		);
+		expect(md).to.include(
+			"### Layer 2: Accidental-deletion protection (snapshots)",
+		);
+		expect(md).to.include(
+			"Each Sunday at 03:00**:\n  recursive snapshot of `zp1cs01` (whole pool),\n  4-week retention",
+		);
+		expect(md).to.include(
+			"Each day at 00:00**:\n  snapshot of `zp1cs01/media`,\n  8-day retention",
+		);
+		expect(md).to.include("### Layer 3: Site-loss protection (remote sync)");
 	});
 
 	it("calls out pools that aren't included in the off-site sync", () => {

@@ -22,10 +22,10 @@
 | Name | ACL type | Grants |
 | --- | --- | --- |
 {{#each aclTemplates}}
-| `{{name}}` | {{acltype}} | {{comment}} |
+| `{{name}}` | {{acltype}} | {{{comment}}} |
 {{/each}}
 
-### Dataset -> template assignment
+### Dataset → template assignment
 
 > [!NOTE]
 > **Why not manage ACLs directly via Pulumi?**
@@ -35,8 +35,8 @@
 > templates (named presets) and documents which one to apply to which dataset.
 
 Apply the matching template to each dataset below via the TrueNAS UI's ACL
-editor (Storage -> Datasets -> select dataset -> Edit Permissions -> select
-ACL Type: NFSv4 -> Use ACL Preset).
+editor: `Storage` → `Datasets` → select the dataset → `Edit Permissions` →
+set `ACL Type` to `NFSv4` → `Use ACL Preset`.
 
 | Dataset | Template to apply |
 | --- | --- |

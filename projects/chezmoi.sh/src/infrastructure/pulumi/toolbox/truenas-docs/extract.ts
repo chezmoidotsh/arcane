@@ -220,6 +220,84 @@ export function extractLegacyGlobalSync(
 	);
 }
 
+export interface ScrubTaskDoc {
+	poolName: string;
+	thresholdDays: number;
+	enabled: boolean;
+	schedule: {
+		minute: string;
+		hour: string;
+		dom: string;
+		month: string;
+		dow: string;
+	};
+}
+
+/** `poolName` is the resource's own read-only output (populated by the API), not derived from URN ancestry. */
+export function extractScrubTasks(
+	resources: ExportedResource[],
+): ScrubTaskDoc[] {
+	return resourcesOfType(resources, "truenas:index/scrubTask:ScrubTask")
+		.map(
+			(r): ScrubTaskDoc => ({
+				poolName: out(r, "poolName"),
+				thresholdDays: out(r, "threshold"),
+				enabled: out(r, "enabled"),
+				schedule: {
+					minute: out(r, "scheduleMinute"),
+					hour: out(r, "scheduleHour"),
+					dom: out(r, "scheduleDom"),
+					month: out(r, "scheduleMonth"),
+					dow: out(r, "scheduleDow"),
+				},
+			}),
+		)
+		.sort(byKey((t) => t.poolName));
+}
+
+export interface SnapshotTaskDoc {
+	dataset: string;
+	/** True when `dataset` is a bare pool name (no `/`) -- the whole-pool safety-net task, not a per-dataset one. */
+	wholePool: boolean;
+	recursive: boolean;
+	lifetimeValue: number;
+	lifetimeUnit: string;
+	enabled: boolean;
+	schedule: {
+		minute: string;
+		hour: string;
+		dom: string;
+		month: string;
+		dow: string;
+	};
+}
+
+/** `dataset` is pool-relative (e.g. `zp1hs01` or `zp1hs01/applications/managed/app.immich`), matching the `nfs4AclAssignments` dataset convention -- no `/mnt/` prefix, unlike CloudSync's `source`. */
+export function extractSnapshotTasks(
+	resources: ExportedResource[],
+): SnapshotTaskDoc[] {
+	return resourcesOfType(resources, "truenas:index/snapshotTask:SnapshotTask")
+		.map((r): SnapshotTaskDoc => {
+			const dataset = out<string>(r, "dataset");
+			return {
+				dataset,
+				wholePool: !dataset.includes("/"),
+				recursive: out(r, "recursive"),
+				lifetimeValue: out(r, "lifetimeValue"),
+				lifetimeUnit: out(r, "lifetimeUnit"),
+				enabled: out(r, "enabled"),
+				schedule: {
+					minute: out(r, "scheduleMinute"),
+					hour: out(r, "scheduleHour"),
+					dom: out(r, "scheduleDom"),
+					month: out(r, "scheduleMonth"),
+					dow: out(r, "scheduleDow"),
+				},
+			};
+		})
+		.sort(byKey((t) => t.dataset));
+}
+
 export interface BucketDoc {
 	name: string;
 	retentionDays: number;

@@ -4,13 +4,15 @@
 > not edit by hand -- regenerate with `mise run truenas:docs:generate`
 > (already chained onto `mise run pulumi:apply`).
 
-`nas.chezmoi.sh` is the home NAS: bulk media storage for players on the LAN,
+`nas.chezmoi.sh` is my home NAS: bulk media storage for players on the LAN,
 self-hosted application data (Immich, Paperless, Silverbullet, Garage, and the
 reverse proxy in front of them), personal and shared documents, and backup
-targets for Home Assistant and Time Machine. It runs two ZFS pools -- `zp1cs01`
-on spinning disks for media, and `zp1hs01` on SSDs for everything that
-benefits from lower latency (applications, documents, backups) -- with an
-off-site copy of the SSD pool pushed to Backblaze B2.
+targets for Home Assistant and Time Machine.
+
+It runs as a TrueNAS SCALE virtual machine on Proxmox, with
+2 ZFS pools --
+`zp1cs01` and `zp1hs01` -- detailed in the section below, plus an off-site copy of
+the data pushed to Backblaze B2.
 
 ## How it's managed
 
@@ -106,20 +108,17 @@ zp1hs01
 
 ## Shares
 
-NFS is used where a client needs Unix-style permission mapping (media consumers,
-Paperless); SMB covers everything else (Windows/macOS clients, application
-storage, Time Machine).
-
-### NFS
-
+SMB is the only share protocol in use right now -- covering Windows/macOS
+clients, application storage, and Time Machine.
 
 ### SMB
 
-Each share below applies one of TrueNAS's presets: `DEFAULT_SHARE` is the
-general-purpose preset, `LEGACY_SHARE` skips presets entirely (options are
-set manually, not a sign the share is deprecated), `PRIVATE_DATASETS_SHARE`
-is meant for one dataset per user, and `TIMEMACHINE_SHARE` enables the SMB
-extensions macOS Time Machine needs.
+Each share below applies one of TrueNAS's presets:
+
+- `DEFAULT_SHARE` -- the general-purpose preset.
+- `LEGACY_SHARE` -- skips presets entirely (options are set manually by hand, not a sign the share is deprecated).
+- `PRIVATE_DATASETS_SHARE` -- meant for one dataset per user.
+- `TIMEMACHINE_SHARE` -- enables the SMB extensions macOS Time Machine needs.
 
 - `smb-share-animes` (Accès aux animés de la médiathèque) -- LEGACY_SHARE
 - `smb-share-application-immich` (Stockage applicatif Immich (Kubernetes)) -- LEGACY_SHARE
@@ -157,13 +156,13 @@ extensions macOS Time Machine needs.
 
 | Name | ACL type | Grants |
 | --- | --- | --- |
-| `NFSV4_MANAGED_APPLICATION` | NFS4 | Owner gets read+write, nobody else has any access. For service accounts this stack manages itself (Home Assistant, Immich, Paperless-ngx), as opposed to TrueNAS&#x27;s own Apps feature. |
-| `NFSV4_SMB_ALL` | NFS4 | Every local SMB account (TrueNAS&#x27;s built-in &#x60;builtin_users&#x60; group) gets read+write. For datasets with no single dedicated owner. |
+| `NFSV4_MANAGED_APPLICATION` | NFS4 | Owner gets read+write, nobody else has any access. For service accounts this stack manages itself (Home Assistant, Immich, Paperless-ngx), as opposed to TrueNAS's own Apps feature. |
+| `NFSV4_SMB_ALL` | NFS4 | Every local SMB account (TrueNAS's built-in `builtin_users` group) gets read+write. For datasets with no single dedicated owner. |
 | `NFSV4_SMB_MEDIA` | NFS4 | Like NFSV4_SMB_ALL (every local SMB account gets read+write), except FireStickTV and Jellyfin are pinned to read-only -- both only ever consume the media library, never write to it. |
-| `NFSV4_SMB_VIEWER` | NFS4 | Owner gets read+write; every other local SMB account (&#x60;builtin_users&#x60;) gets read-only. |
-| `NFSV4_TRUENAS_APPLICATION` | NFS4 | Only TrueNAS&#x27;s own &#x60;apps&#x60; service account gets read+write. For datasets backing TrueNAS&#x27;s native Apps feature, not applications this stack manages itself. |
+| `NFSV4_SMB_VIEWER` | NFS4 | Owner gets read+write; every other local SMB account (`builtin_users`) gets read-only. |
+| `NFSV4_TRUENAS_APPLICATION` | NFS4 | Only TrueNAS's own `apps` service account gets read+write. For datasets backing TrueNAS's native Apps feature, not applications this stack manages itself. |
 
-### Dataset -> template assignment
+### Dataset → template assignment
 
 > [!NOTE]
 > **Why not manage ACLs directly via Pulumi?**
@@ -173,50 +172,79 @@ extensions macOS Time Machine needs.
 > templates (named presets) and documents which one to apply to which dataset.
 
 Apply the matching template to each dataset below via the TrueNAS UI's ACL
-editor (Storage -> Datasets -> select dataset -> Edit Permissions -> select
-ACL Type: NFSv4 -> Use ACL Preset).
+editor: `Storage` → `Datasets` → select the dataset → `Edit Permissions` →
+set `ACL Type` to `NFSv4` → `Use ACL Preset`.
 
 | Dataset | Template to apply |
 | --- | --- |
 | `zp1cs01/media` | `NFSV4_SMB_MEDIA` |
-| `zp1hs01/userspace/shared` | `NFSV4_SMB_ALL` |
-| `zp1hs01/backups/hass.chezmoi.sh` | `NFSV4_MANAGED_APPLICATION` |
 | `zp1hs01/applications/managed/app.immich` | `NFSV4_MANAGED_APPLICATION` |
 | `zp1hs01/applications/managed/com.paperless-ngx` | `NFSV4_MANAGED_APPLICATION` |
+| `zp1hs01/backups/hass.chezmoi.sh` | `NFSV4_MANAGED_APPLICATION` |
+| `zp1hs01/userspace/shared` | `NFSV4_SMB_ALL` |
 
 
 ## Backups
 
-Off-site copies go to Backblaze B2, split across private,
-file lock-protected buckets (immutable for the retention window below, with
-older versions pruned after the lifecycle window):
+`nas.chezmoi.sh` protects its data through three independent layers, each
+covering a different failure mode: bitrot (Layer 1), accidental deletion
+(Layer 2), and total site loss (Layer 3).
+
+### Layer 1: Bitrot detection (scrubbing)
+
+A scrub reads every block stored in a pool and verifies its checksum against
+ZFS's own metadata, repairing corruption automatically when the pool has
+redundancy (mirror or RAID-Z). It's the first, local line of defense against
+silent disk decay.
+
+- **Each Sunday at 00:00**:
+  scrub `zp1cs01` (35-day alert threshold)
+- **Each Sunday at 00:00**:
+  scrub `zp1hs01` (35-day alert threshold)
+
+### Layer 2: Accidental-deletion protection (snapshots)
+
+A snapshot is an instant, read-only, point-in-time copy of a dataset,
+consuming disk space only for data that changes after it's taken. It
+protects against an accidentally deleted or overwritten file -- not against
+losing the NAS itself.
+
+- **Each Sunday at 03:00**:
+  recursive snapshot of `zp1hs01` (whole pool),
+  4-week retention
+- **Each day at 00:00**:
+  snapshot of `zp1hs01/applications/managed/app.immich`,
+  8-day retention
+- **Each day at 00:00**:
+  snapshot of `zp1hs01/applications/managed/com.paperless-ngx`,
+  8-day retention
+
+### Layer 3: Site-loss protection (remote sync)
+
+Selected datasets are pushed off-site to Backblaze B2, split
+across private, file lock-protected buckets (immutable for the retention
+window below, with older versions pruned after the lifecycle window):
 
 - `nas-backup-4e6b1351` -- 7-day file lock retention, 60-day
   lifecycle prune.
 - `nas-backup-50a30f2b` -- 7-day file lock retention, 60-day
   lifecycle prune.
 
-### What's synced, and how often
-
-- B2 — Weekly sync of immich.app application: `/mnt/zp1hs01/applications/managed/app.immich`,
-  weekly, Sundays at 02:00,
-  PUSH/SYNC
-- B2 — Weekly sync of paperless-ngx.com application: `/mnt/zp1hs01/applications/managed/com.paperless-ngx`,
-  weekly, Sundays at 02:00,
-  PUSH/SYNC
-- B2 — Weekly sync of TrueNAS applications: `/mnt/zp1hs01/applications/truenas`,
-  daily at 01:00,
-  PUSH/SYNC
-- B2 — Daily sync of users' spaces (shared excluded): `/mnt/zp1hs01/userspace`,
-  daily at 01:00,
-  PUSH/SYNC
-- Before these existed, a legacy global sync of `/mnt/zp1hs01`
-  pushed the whole pool
-  weekly, Sundays at 02:00,
-  PUSH/SYNC
-  -- kept for reference only.
+- **Each Sunday at 02:00**:
+  Weekly sync of immich.app application on `/mnt/zp1hs01/applications/managed/app.immich` (PUSH & SYNC)
+- **Each Sunday at 02:00**:
+  Weekly sync of paperless-ngx.com application on `/mnt/zp1hs01/applications/managed/com.paperless-ngx` (PUSH & SYNC)
+- **Each day at 01:00**:
+  Weekly sync of TrueNAS applications on `/mnt/zp1hs01/applications/truenas` (PUSH & SYNC)
+- **Each day at 01:00**:
+  Daily sync of users' spaces (shared excluded) on `/mnt/zp1hs01/userspace` (PUSH & SYNC)
+- **Each Sunday at 02:00**:
+  legacy whole-pool sync of `/mnt/zp1hs01`
+  (PUSH & SYNC) --
+  kept for reference only
 
 zp1cs01 isn't included in this off-site sync.
+
 ## Security notes
 
 A few things worth knowing about what this configuration does and doesn't

@@ -12,8 +12,10 @@ import {
 	extractNetwork,
 	extractNfsShares,
 	extractPoolNames,
+	extractScrubTasks,
 	extractServices,
 	extractSmbShares,
+	extractSnapshotTasks,
 	hasAncestorType,
 	logicalName,
 	resourcesOfType,
@@ -158,6 +160,58 @@ const resources: ExportedResource[] = [
 				{ defaultRetention: { period: { duration: 7, unit: "days" } } },
 			],
 			lifecycleRules: [{ daysFromHidingToDeleting: 60 }],
+		},
+	},
+	{
+		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/scrubTask:ScrubTask::zp1hs01-scrub",
+		type: "truenas:index/scrubTask:ScrubTask",
+		parent:
+			"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool::zp1hs01",
+		outputs: {
+			poolName: "zp1hs01",
+			threshold: 35,
+			enabled: true,
+			scheduleMinute: "00",
+			scheduleHour: "00",
+			scheduleDom: "*",
+			scheduleMonth: "*",
+			scheduleDow: "7",
+		},
+	},
+	{
+		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/snapshotTask:SnapshotTask::zp1hs01-snapshot",
+		type: "truenas:index/snapshotTask:SnapshotTask",
+		parent:
+			"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool::zp1hs01",
+		outputs: {
+			dataset: "zp1hs01",
+			recursive: true,
+			lifetimeValue: 4,
+			lifetimeUnit: "WEEK",
+			enabled: true,
+			scheduleMinute: "0",
+			scheduleHour: "3",
+			scheduleDom: "*",
+			scheduleMonth: "*",
+			scheduleDow: "0",
+		},
+	},
+	{
+		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/dataset:Dataset$truenas:index/snapshotTask:SnapshotTask::zp1hs01-snapshot-app-immich",
+		type: "truenas:index/snapshotTask:SnapshotTask",
+		parent:
+			"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/dataset:Dataset$truenas:index/dataset:Dataset::zp1hs01-applications-managed-app.immich",
+		outputs: {
+			dataset: "zp1hs01/applications/managed/app.immich",
+			recursive: false,
+			lifetimeValue: 8,
+			lifetimeUnit: "DAY",
+			enabled: true,
+			scheduleMinute: "0",
+			scheduleHour: "0",
+			scheduleDom: "*",
+			scheduleMonth: "*",
+			scheduleDow: "*",
 		},
 	},
 	{
@@ -354,6 +408,50 @@ describe("extractPoolNames()", () => {
 			"zp1cs01",
 			"zp1hs01",
 		]);
+	});
+});
+
+describe("extractScrubTasks()", () => {
+	it("reads poolName from the resource's own read-only output, not URN ancestry", () => {
+		expect(extractScrubTasks(resources)).to.deep.equal([
+			{
+				poolName: "zp1hs01",
+				thresholdDays: 35,
+				enabled: true,
+				schedule: {
+					minute: "00",
+					hour: "00",
+					dom: "*",
+					month: "*",
+					dow: "7",
+				},
+			},
+		]);
+	});
+});
+
+describe("extractSnapshotTasks()", () => {
+	it("flags the whole-pool task via wholePool, sorted with the pool root before its children", () => {
+		const tasks = extractSnapshotTasks(resources);
+		expect(tasks).to.have.lengthOf(2);
+		expect(tasks[0]).to.deep.equal({
+			dataset: "zp1hs01",
+			wholePool: true,
+			recursive: true,
+			lifetimeValue: 4,
+			lifetimeUnit: "WEEK",
+			enabled: true,
+			schedule: { minute: "0", hour: "3", dom: "*", month: "*", dow: "0" },
+		});
+		expect(tasks[1]).to.deep.equal({
+			dataset: "zp1hs01/applications/managed/app.immich",
+			wholePool: false,
+			recursive: false,
+			lifetimeValue: 8,
+			lifetimeUnit: "DAY",
+			enabled: true,
+			schedule: { minute: "0", hour: "0", dom: "*", month: "*", dow: "*" },
+		});
 	});
 });
 

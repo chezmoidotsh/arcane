@@ -23,10 +23,13 @@ import {
 	extractNetwork,
 	extractNfsShares,
 	extractPoolNames,
+	extractScrubTasks,
 	extractServices,
 	extractSmbShares,
+	extractSnapshotTasks,
 	resourcesOfType,
 } from "./extract";
+import { humanList } from "./helpers";
 import { render } from "./render";
 import {
 	type ExportedResource,
@@ -145,9 +148,15 @@ async function main(): Promise<void> {
 
 	const context = {
 		pools,
+		// `poolsList` is pre-formatted (not left to the template) so its backticks
+		// survive Handlebars' default HTML-escaping of `{{ }}` expressions --
+		// `{{{poolsList}}}` (triple-stache) renders it unescaped.
+		poolsList: humanList(poolNames.map((name) => `\`${name}\``)),
 		nfsShares: extractNfsShares(resources),
 		smbShares: extractSmbShares(resources),
 		network: extractNetwork(resources),
+		scrubTasks: extractScrubTasks(resources),
+		snapshotTasks: extractSnapshotTasks(resources),
 		backups: {
 			destination: "Backblaze B2",
 			jobs,
