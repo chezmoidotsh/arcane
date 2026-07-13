@@ -1,7 +1,7 @@
 <h1 align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./assets/logo.dark.svg">
-      <img alt="Stylized letter 'K' with a futuristic font and a subscript 12, representing Kazimierz·AKN branding" src="./assets/logo.light.svg" width="200">
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/logo.dark.svg">
+      <img alt="Stylized letter 'K' with a futuristic font and a subscript 12, representing Kazimierz·AKN branding" src="./docs/assets/logo.light.svg" width="200">
   </picture>
 </h1>
 
@@ -67,8 +67,8 @@ This architecture provides:
 
 ## Services Overview
 
-![Architecture diagram](./assets/architecture-dark.svg#gh-dark-mode-only)
-![Architecture diagram](./assets/architecture-light.svg#gh-light-mode-only)
+![Architecture diagram](./docs/assets/architecture-dark.svg#gh-dark-mode-only)
+![Architecture diagram](./docs/assets/architecture-light.svg#gh-light-mode-only)
 
 ---
 
@@ -240,10 +240,10 @@ This project contains documentation, infrastructure-as-code (Ansible), and confi
 kazimierz.akn/
 ├── README.md                                   # This documentation
 ├── architecture.d2                             # Architecture diagram source (D2 format)
-├── assets/                                     # Generated diagrams and assets
-│   ├── architecture-dark.svg                   # Dark theme architecture diagram
-│   └── architecture-light.svg                  # Light theme architecture diagram
 ├── docs/
+│   ├── assets/                                 # Generated diagrams and assets
+│   │   ├── architecture-dark.svg               # Dark theme architecture diagram
+│   │   └── architecture-light.svg              # Light theme architecture diagram
 │   ├── BOOTSTRAP.md                            # Complete VPS bootstrap procedure
 │   ├── CROWDSEC-INTEGRATION.md                 # CrowdSec integration details
 │   └── archives/                               # Historical documents
