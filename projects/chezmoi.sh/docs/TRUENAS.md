@@ -205,7 +205,7 @@ older versions pruned after the lifecycle window):
   weekly, Sundays at 02:00,
   PUSH/SYNC
 - B2 — Weekly sync of TrueNAS applications: `/mnt/zp1hs01/applications/truenas`,
-  weekly, Sundays at 02:00,
+  daily at 01:00,
   PUSH/SYNC
 - B2 — Daily sync of users' spaces (shared excluded): `/mnt/zp1hs01/userspace`,
   daily at 01:00,

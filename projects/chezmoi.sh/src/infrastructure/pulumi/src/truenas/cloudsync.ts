@@ -180,7 +180,7 @@ const cloudSyncJobs: Array<{
 		description: "Weekly sync of TrueNAS applications",
 		pool: zp1hs01,
 		dataset: zp1hs01.get("applications/truenas"),
-		scheduler: WEEKLY_SCHEDULE_PRESET,
+		scheduler: DAILY_SCHEDULE_PRESET,
 	},
 ];
 
