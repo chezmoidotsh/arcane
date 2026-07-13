@@ -180,9 +180,9 @@ with the template it should get, via a `Nfs4AclAssignment` export living next to
   `truenas.User`, in `../users`. See `../users/README.md` for the shared conventions (UID range, field choices, password
   handling) every account there follows.
 
-`../truenas-docs` turns every `Nfs4AclAssignment` into the Permissions section of the generated `TRUENAS.md` -- that
-table is the actual operational instruction (which template to apply to which dataset), since Pulumi can't carry out the
-last step itself.
+`toolbox/truenas-docs` turns every `Nfs4AclAssignment` into the Permissions section of the generated `TRUENAS.md` --
+that table is the actual operational instruction (which template to apply to which dataset), since Pulumi can't carry
+out the last step itself.
 
 Limitations:
 
@@ -216,7 +216,7 @@ Declaring them separately keeps the abstraction boundaries clean and the compone
 
 Pools are declared in zp1cs01.ts and zp1hs01.ts but NOT re-exported from an index file. This prevents the zpool
 resources themselves from being included in stack outputs (which would be massive). Other files (apps.ts, shares.ts,
-truenas-docs/index.ts) import pools directly:
+toolbox/truenas-docs/generate.ts) import pools directly:
 
 ```typescript
 import { zp1hs01 } from "./zpools/zp1hs01";
@@ -230,4 +230,4 @@ This pattern allows lookups of dataset resources by path while keeping the stack
 - **Shares**: `../shares.ts` — NFS share declarations tied to specific datasets
 - **Apps**: `../apps.ts` — application configurations using datasets for storage
 - **Backups**: `../../backblaze.ts` (B2 buckets, File Lock, lifecycle rules) and `../cloudsync.ts` (CloudSync jobs)
-- **Documentation**: `../../truenas-docs/index.ts` — auto-generated pool/dataset reference
+- **Documentation**: `toolbox/truenas-docs/generate.ts` — auto-generated pool/dataset reference

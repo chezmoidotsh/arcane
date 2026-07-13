@@ -3,8 +3,8 @@
 One file per service account (`truenas.User`), each colocated with the `Nfs4AclAssignment` for the dataset that account
 owns -- which NFS4 ACL template (`../acls.ts`) a human should apply to it, and with this account as owner. This stack
 can't apply that template itself (see `../zpools/README.md`'s "Filesystem ACLs" section for why); the assignment exists
-so `../truenas-docs` can turn it into an instruction in the generated documentation. A dataset's assignment lives here,
-next to its owner, instead of in `../acls.ts`, whenever that dataset has exactly one dedicated identity -- reading
+so `toolbox/truenas-docs` can turn it into an instruction in the generated documentation. A dataset's assignment lives
+here, next to its owner, instead of in `../acls.ts`, whenever that dataset has exactly one dedicated identity -- reading
 `home-assistant.ts` tells you everything about that account and what it's meant to own, without cross-referencing a
 second file. Datasets with no single owning identity (multiple local accounts need access, not one service account) have
 their assignment in `../acls.ts` instead -- see that file's header comment.

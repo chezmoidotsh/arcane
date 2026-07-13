@@ -36,5 +36,5 @@ dir = "{{ config_root }}"
 
 [tasks."truenas:docs:generate"]
 description = "Regenerate projects/chezmoi.sh/docs/TRUENAS.md from the live chezmoi.sh Pulumi stack state"
-run = "pnpm exec ts-node src/truenas-docs/generate.ts"
+run = "pnpm exec ts-node toolbox/truenas-docs/generate.ts"
 dir = "{{ config_root }}"

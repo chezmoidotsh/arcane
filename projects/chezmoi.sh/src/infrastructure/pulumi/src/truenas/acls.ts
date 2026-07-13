@@ -10,8 +10,8 @@ import { zp1hs01 } from "./zpools/zp1hs01";
 // -----------------------------------------------------------------------------
 // This stack does NOT apply filesystem ACLs to any dataset. It only manages
 // NFS4 ACL *templates* -- named presets stored on the NAS, picked manually
-// in the TrueNAS UI's ACL editor -- and documents (via `truenas-docs`, see
-// `../truenas-docs/index.ts`) which template a human should apply to which
+// in the TrueNAS UI's ACL editor -- and documents (via `toolbox/truenas-docs`, see
+// `toolbox/truenas-docs/generate.ts`) which template a human should apply to which
 // dataset.
 //
 // This is a direct consequence of what this provider can and can't do,
@@ -30,7 +30,7 @@ import { zp1hs01 } from "./zpools/zp1hs01";
 //
 // Given that, this stack's job shrinks to: keep the 5 templates below
 // correct and up to date, and keep the documented dataset -> template
-// mapping (`../truenas-docs`) from drifting -- applying them is a manual,
+// mapping (`toolbox/truenas-docs`) from drifting -- applying them is a manual,
 // operational step outside Pulumi's reach.
 //
 // `appsUser`/`builtInUsersGroup` live in `./identities.ts`, not here, and
@@ -48,7 +48,7 @@ export type Nfs4AclTemplateName =
 	| "NFSV4_SMB_VIEWER"
 	| "NFSV4_SMB_MEDIA";
 
-/** One dataset paired with the NFS4 ACL template a human should apply to it -- consumed by `../truenas-docs` to render the manual-application guide. */
+/** One dataset paired with the NFS4 ACL template a human should apply to it -- consumed by `toolbox/truenas-docs` to render the manual-application guide. */
 export interface Nfs4AclAssignment {
 	dataset: truenas.Dataset;
 	template: Nfs4AclTemplateName;

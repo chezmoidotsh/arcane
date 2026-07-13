@@ -6,12 +6,12 @@ This module auto-generates `projects/chezmoi.sh/docs/TRUENAS.md` — an up-to-da
 `nas.chezmoi.sh` that captures operational details without hand-maintenance burden.
 
 The core idea: the doc is **derived from the deployed Pulumi stack's own state**, not from hand-picked imports across
-sibling modules. Adding a new resource (a `truenas.User`, an NFS share, a CloudSync job, …) anywhere under `../truenas/`
-is enough — the next regeneration picks it up automatically, grouped by its Pulumi type token, with no import list to
-maintain here. The one exception is the NFS4-ACL-template-to-dataset assignment guide (`../truenas/acls.ts`): this
-provider can't apply NFS4 ACLs itself, so that pairing has no infrastructure resource of its own and travels as a
-**Pulumi stack output** (`nfs4AclAssignments`, see `../truenas/index.ts`) instead — read the same generic way as every
-other section, still with no import of `acls.ts`.
+sibling modules. Adding a new resource (a `truenas.User`, an NFS share, a CloudSync job, …) anywhere under
+`../../src/truenas/` is enough — the next regeneration picks it up automatically, grouped by its Pulumi type token, with
+no import list to maintain here. The one exception is the NFS4-ACL-template-to-dataset assignment guide
+(`../../src/truenas/acls.ts`): this provider can't apply NFS4 ACLs itself, so that pairing has no infrastructure
+resource of its own and travels as a **Pulumi stack output** (`nfs4AclAssignments`, see `../../src/truenas/index.ts`)
+instead — read the same generic way as every other section, still with no import of `acls.ts`.
 
 Generation runs standalone (`mise run truenas:docs:generate`, chained onto `pulumi:apply`), **not** as part of
 `pulumi up`/`preview` itself — it reads the stack's last-applied state via `pulumi stack export`, so it always reflects
@@ -80,10 +80,10 @@ Run it standalone after any out-of-band state change (e.g. a manual `pulumi refr
 
 ### Adding a new resource (e.g. a `truenas.User`, a share, a CloudSync job)
 
-Nothing to do here — declare it under `../truenas/` as usual, apply, then regenerate. `extract.ts` picks it up by type
-token automatically. The one exception: a new NFS4-ACL-template-to-dataset assignment needs a new entry in the
-`allAclAssignments` array in `../truenas/index.ts` (see there), since that pairing has no infrastructure resource of its
-own to derive from.
+Nothing to do here — declare it under `../../src/truenas/` as usual, apply, then regenerate. `extract.ts` picks it up by
+type token automatically. The one exception: a new NFS4-ACL-template-to-dataset assignment needs a new entry in the
+`allAclAssignments` array in `../../src/truenas/index.ts` (see there), since that pairing has no infrastructure resource
+of its own to derive from.
 
 ### Adding a new doc section backed by a new resource type
 

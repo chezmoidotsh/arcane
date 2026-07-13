@@ -54,7 +54,7 @@ export const paperlessUser = new truenas.User(
 // This stack can't apply an ACL to `applications/managed/com.paperless-ngx`
 // itself (see ../acls.ts for why) -- `NFSV4_MANAGED_APPLICATION`
 // (owner-only read+write) needs to be applied by hand, with this account
-// as the owner, via the TrueNAS UI. `../truenas-docs` turns this
+// as the owner, via the TrueNAS UI. `toolbox/truenas-docs` turns this
 // assignment into that instruction in the generated documentation.
 
 const paperlessApplicationDataset = zp1hs01.get(

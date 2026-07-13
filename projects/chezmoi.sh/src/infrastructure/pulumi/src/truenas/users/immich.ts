@@ -49,7 +49,7 @@ export const immichUser = new truenas.User(
 // This stack can't apply an ACL to `applications/managed/app.immich` itself
 // (see ../acls.ts for why) -- `NFSV4_MANAGED_APPLICATION` (owner-only
 // read+write) needs to be applied by hand, with this account as the owner,
-// via the TrueNAS UI. `../truenas-docs` turns this assignment into that
+// via the TrueNAS UI. `toolbox/truenas-docs` turns this assignment into that
 // instruction in the generated documentation.
 
 const immichApplicationDataset = zp1hs01.get(

@@ -30,7 +30,7 @@ export { paperlessPasswordSecret } from "./users/paperless-ngx";
 // Every NFS4-ACL-template-to-dataset assignment this stack knows about, in
 // one place -- this provider can't apply them itself (see ../truenas/acls.ts),
 // so this stack output is the only artifact tying that advisory list to
-// actual infrastructure state. `../truenas-docs/generate.ts` reads it
+// actual infrastructure state. `toolbox/truenas-docs/generate.ts` reads it
 // straight off the stack export's `pulumi:pulumi:Stack` outputs, the same
 // way it reads every other section, with no import of `./acls` or
 // `./users/*` needed.

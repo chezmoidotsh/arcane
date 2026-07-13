@@ -123,7 +123,7 @@ async function buildPoolDoc(
 }
 
 async function main(): Promise<void> {
-	// `src/truenas-docs` -> project root (where Pulumi.yaml lives), resolved
+	// `toolbox/truenas-docs` -> project root (where Pulumi.yaml lives), resolved
 	// from this file's own location so it doesn't depend on the caller's cwd.
 	const projectRoot = path.resolve(__dirname, "../..");
 
