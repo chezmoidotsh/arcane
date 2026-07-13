@@ -49,7 +49,7 @@ tailnet: {
 
 udm-pro: {
   class: hardware
-  icon: assets/icons/hardware/unifi.svg
+  icon: docs/assets/icons/hardware/unifi.svg
   tooltip: UniFi Dream Machine Pro - Gateway & Network Controller
 }
 
@@ -59,12 +59,12 @@ udm-pro: {
 amiya·akn: {
   class: [application]
   label: amiya·akn
-  icon: ../amiya.akn/assets/logo.svg
+  icon: ../amiya.akn/docs/assets/logo.svg
   tooltip: Mission-critical services cluster (SSO, Secrets, etc.)
 
   pocket-id: {
     class: [application]
-    icon: assets/icons/apps/pocket-id.svg
+    icon: docs/assets/icons/apps/pocket-id.svg
     label: auth.chezmoi.sh
     link: https://pocket-id.org/
     tooltip: Pocket-ID is an open-source identity and access management solution based only on passkeys.
@@ -72,7 +72,7 @@ amiya·akn: {
 
   openbao: {
     class: [application]
-    icon: assets/icons/apps/openbao.svg
+    icon: docs/assets/icons/apps/openbao.svg
     label: vault.chezmoi.sh
     link: https://openbao.org/
     tooltip: OpenBao is an open-source, community-driven fork of Vault managed by the Linux Foundation.
@@ -82,12 +82,12 @@ amiya·akn: {
 kazimierz·akn: {
   class: [application]
   label: kazimierz·akn
-  icon: ../kazimierz.akn/assets/logo.light.svg
+  icon: ../kazimierz.akn/docs/assets/logo.light.svg
   tooltip: Public gateway cluster (Pangolin, WAF, etc.)
 
   pangolin: {
     class: [application]
-    icon: assets/icons/system/pangolin.svg
+    icon: docs/assets/icons/system/pangolin.svg
     label: pangolin.chezmoi.sh
     link: https://github.com/fosrl/pangolin
     tooltip: Pangolin is a reverse proxy and WAF that provides secure access to homelab services.
@@ -100,13 +100,13 @@ kazimierz·akn: {
 nas: {
   class: namespace
   label: TrueNAS Scale
-  icon: assets/icons/hardware/truenas-scale.svg
+  icon: docs/assets/icons/hardware/truenas-scale.svg
   tooltip: Home Network Attached Storage (NAS)
 
   minio: {
     class: [application]
     label: MinIO
-    icon: assets/icons/apps/minio.svg
+    icon: docs/assets/icons/apps/minio.svg
     link: https://min.io/
     tooltip: MinIO is a high-performance, distributed object storage system.
   }
@@ -122,7 +122,7 @@ nas: {
 # ╰────────────────────────────────────────────────────────────────────────────╯
 
 lungmen·akn: {
-  icon: assets/logo.svg
+  icon: docs/assets/logo.svg
   style.fill-pattern: none
 
   system: {class: namespace}
@@ -137,7 +137,7 @@ lungmen·akn: {
   databases.shared: {
     class: [application-datastore]
     shared: "Shared PostgreSQL Cluster" {
-      icon: assets/icons/system/cloudnativepg.svg
+      icon: docs/assets/icons/system/cloudnativepg.svg
     }
     link: https://postgresql.org/
     tooltip: Shared PostgreSQL database cluster for multiple applications, managed by CloudNative-PG operator with automated backups to S3.
@@ -149,7 +149,7 @@ lungmen·akn: {
   system.cert-manager: {
     class: [application-system]
     label: Cert-Manager
-    icon: assets/icons/system/cert-manager.svg
+    icon: docs/assets/icons/system/cert-manager.svg
     link: https://cert-manager.io/
     tooltip: Cert-Manager is a Kubernetes controller that automates the management and issuance of TLS certificates.
   }
@@ -157,7 +157,7 @@ lungmen·akn: {
   system.cilium: {
     class: [application-system]
     label: Cilium
-    icon: assets/icons/system/cilium.svg
+    icon: docs/assets/icons/system/cilium.svg
     link: https://cilium.io/
     tooltip: Cilium is a networking, observability, and security solution with an eBPF-based dataplane.
   }
@@ -165,7 +165,7 @@ lungmen·akn: {
   system.cloudnativepg: {
     class: [application-system]
     label: CloudNativePG
-    icon: assets/icons/system/cloudnativepg.svg
+    icon: docs/assets/icons/system/cloudnativepg.svg
     link: https://cloudnativepg.io/
     tooltip: CloudNativePG is a comprehensive platform designed to seamlessly manage PostgreSQL databases within Kubernetes environments.
   }
@@ -173,7 +173,7 @@ lungmen·akn: {
   system.envoy-gateway: {
     class: [application-system]
     label: Envoy Gateway
-    icon: assets/icons/system/envoy-gateway.svg
+    icon: docs/assets/icons/system/envoy-gateway.svg
     link: https://gateway.envoyproxy.io/
     tooltip: Envoy Gateway is a Kubernetes-native API Gateway powered by Envoy Proxy with support for Gateway API.
   }
@@ -181,7 +181,7 @@ lungmen·akn: {
   system.external-dns: {
     class: [application-system]
     label: ExternalDNS
-    icon: assets/icons/system/external-dns.png
+    icon: docs/assets/icons/system/external-dns.png
     link: https://github.com/kubernetes-sigs/external-dns
     tooltip: ExternalDNS configures DNS records automatically for exposed services.
   }
@@ -189,7 +189,7 @@ lungmen·akn: {
   system.external-secrets: {
     class: [application-system]
     label: External-Secret
-    icon: assets/icons/system/external-secret.svg
+    icon: docs/assets/icons/system/external-secret.svg
     link: https://external-secrets.io/
     tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
   }
@@ -197,7 +197,7 @@ lungmen·akn: {
   system.cloudnativepg: {
     class: [application-system]
     label: CloudNativePG
-    icon: assets/icons/system/cloudnativepg.svg
+    icon: docs/assets/icons/system/cloudnativepg.svg
     link: https://cloudnativepg.io/
     tooltip: CloudNativePG is a comprehensive platform designed to seamlessly manage PostgreSQL databases within Kubernetes environments.
   }
@@ -205,7 +205,7 @@ lungmen·akn: {
   system.longhorn: {
     class: [application-system]
     label: Longhorn
-    icon: assets/icons/system/longhorn.svg
+    icon: docs/assets/icons/system/longhorn.svg
     link: https://longhorn.io/
     tooltip: Longhorn is a lightweight, reliable, and powerful distributed block storage system for Kubernetes.
   }
@@ -213,7 +213,7 @@ lungmen·akn: {
   system.tailscale: {
     class: [application-system]
     label: Tailscale
-    icon: assets/icons/platform/tailscale.svg
+    icon: docs/assets/icons/platform/tailscale.svg
     link: https://tailscale.com/
     tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
   }
@@ -221,7 +221,7 @@ lungmen·akn: {
   system.newt: {
     class: [application-system]
     label: Newt
-    icon: assets/icons/system/pangolin.svg
+    icon: docs/assets/icons/system/pangolin.svg
     link: https://github.com/fosrl/newt
     tooltip: Newt is a client for Pangolin that establishes a secure tunnel to the public gateway.
   }
@@ -237,7 +237,7 @@ lungmen·akn: {
     immich: {
       class: [application]
       label: Immich
-      icon: assets/icons/apps/immich.svg
+      icon: docs/assets/icons/apps/immich.svg
       link: https://immich.app/
       tooltip: High-performance self-hosted photo and video management solution with mobile app support.
     }
@@ -245,7 +245,7 @@ lungmen·akn: {
     postgresql: {
       class: [application-datastore]
       label: PostgreSQL
-      icon: assets/icons/system/cloudnativepg.svg
+      icon: docs/assets/icons/system/cloudnativepg.svg
       link: https://postgresql.org/
       tooltip: PostgreSQL database backend for Immich with VectorChord extension, managed by CloudNative-PG operator with automated backups to S3.
     }
@@ -253,7 +253,7 @@ lungmen·akn: {
     redis: {
       class: [application-datastore]
       label: Redis
-      icon: assets/icons/apps/redis.svg
+      icon: docs/assets/icons/apps/redis.svg
       link: https://redis.io/
       tooltip: Redis cache for improved Immich performance and background task processing.
     }
@@ -262,7 +262,7 @@ lungmen·akn: {
   media.jellyfin: {
     class: [application]
     label: Jellyfin
-    icon: assets/icons/apps/jellyfin.svg
+    icon: docs/assets/icons/apps/jellyfin.svg
     link: https://jellyfin.org/
     tooltip: Volunteer-built media solution that puts you in control of your media.
   }
@@ -273,7 +273,7 @@ lungmen·akn: {
   life.actual-budget: {
     class: [application]
     label: Actual Budget
-    icon: assets/icons/apps/actual-budget.png
+    icon: docs/assets/icons/apps/actual-budget.png
     link: https://actualbudget.com/
     tooltip: Personal finance app that helps you track your spending and save money.
   }
@@ -286,7 +286,7 @@ lungmen·akn: {
     paperless: {
       class: [application]
       label: Paperless-ngx
-      icon: assets/icons/apps/paperless.svg
+      icon: docs/assets/icons/apps/paperless.svg
       link: https://docs.paperless-ngx.com/
       tooltip: Document management system to store, search and share documents.
     }
@@ -294,7 +294,7 @@ lungmen·akn: {
     postgresql: {
       class: [application-datastore]
       label: PostgreSQL
-      icon: assets/icons/system/cloudnativepg.svg
+      icon: docs/assets/icons/system/cloudnativepg.svg
       link: https://postgresql.org/
       tooltip: PostgreSQL database backend for Paperless, managed by CloudNative-PG operator with automated backups to S3.
     }
@@ -302,7 +302,7 @@ lungmen·akn: {
     redis: {
       class: [application-datastore]
       label: Redis
-      icon: assets/icons/apps/redis.svg
+      icon: docs/assets/icons/apps/redis.svg
       link: https://redis.io/
       tooltip: Redis cache for improved Paperless performance and background task processing.
     }
@@ -319,7 +319,7 @@ lungmen·akn: {
     atuin: {
       class: [application]
       label: Atuin
-      icon: assets/icons/apps/atuin.svg
+      icon: docs/assets/icons/apps/atuin.svg
       link: https://docs.atuin.sh/
       tooltip: Encrypted shell history sync, storing all your shell commands in one place.
     }
@@ -327,7 +327,7 @@ lungmen·akn: {
     postgresql: {
       class: [application-datastore]
       label: PostgreSQL
-      icon: assets/icons/system/cloudnativepg.svg
+      icon: docs/assets/icons/system/cloudnativepg.svg
       link: https://postgresql.org/
       tooltip: PostgreSQL database backend for Atuin, managed by CloudNative-PG operator with automated backups to S3.
     }
@@ -341,7 +341,7 @@ lungmen·akn: {
     linkding: {
       class: [application]
       label: Linkding
-      icon: assets/icons/apps/linkding.svg
+      icon: docs/assets/icons/apps/linkding.svg
       link: https://github.com/sissbruecker/linkding
       tooltip: Self-hosted bookmarking and link aggregation service with OIDC authentication.
     }
@@ -349,7 +349,7 @@ lungmen·akn: {
     postgresql: {
       class: [application-datastore]
       label: PostgreSQL
-      icon: assets/icons/system/cloudnativepg.svg
+      icon: docs/assets/icons/system/cloudnativepg.svg
       link: https://postgresql.org/
       tooltip: PostgreSQL database backend for Linkding, managed by CloudNative-PG operator with automated backups to S3.
     }
@@ -363,7 +363,7 @@ lungmen·akn: {
     n8n: {
       class: [application]
       label: n8n
-      icon: assets/icons/apps/n8n.svg
+      icon: docs/assets/icons/apps/n8n.svg
       link: https://n8n.io/
       tooltip: Workflow automation platform with visual editor and extensive integrations.
     }
@@ -371,7 +371,7 @@ lungmen·akn: {
     postgresql: {
       class: [application-datastore]
       label: PostgreSQL
-      icon: assets/icons/system/cloudnativepg.svg
+      icon: docs/assets/icons/system/cloudnativepg.svg
       link: https://postgresql.org/
       tooltip: PostgreSQL database backend for n8n, managed by CloudNative-PG operator with automated backups to S3.
     }
@@ -379,7 +379,7 @@ lungmen·akn: {
     redis: {
       class: [application-datastore]
       label: Redis
-      icon: assets/icons/apps/redis.svg
+      icon: docs/assets/icons/apps/redis.svg
       link: https://redis.io/
       tooltip: Redis queue for n8n workflow execution in queue mode with workers.
     }
@@ -388,7 +388,7 @@ lungmen·akn: {
   others.silverbullet: {
     class: [application]
     label: Silverbullet
-    icon: assets/icons/apps/silverbullet.png
+    icon: docs/assets/icons/apps/silverbullet.png
     link: https://silverbullet.md/
     tooltip: Personal productivity platform and wiki built on Markdown with Lua scripting capabilities.
   }

@@ -1,7 +1,7 @@
 <h1 align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./assets/logo.dark.svg">
-      <img alt="Stylized logo with traditional Chinese characters 龙门 (Lungmen) and subtitle, representing Lungmen·AKN branding" src="./assets/logo.light.svg" width="200">
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/logo.dark.svg">
+      <img alt="Stylized logo with traditional Chinese characters 龙门 (Lungmen) and subtitle, representing Lungmen·AKN branding" src="./docs/assets/logo.light.svg" width="200">
   </picture>
 </h1>
 
@@ -32,7 +32,7 @@ infrastructure.
 
 ## Services Overview
 
-![Architecture diagram](./assets/architecture.svg)
+![Architecture diagram](./docs/assets/architecture.svg)
 
 ---
 
