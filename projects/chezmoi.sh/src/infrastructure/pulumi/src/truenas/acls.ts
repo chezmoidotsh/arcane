@@ -54,28 +54,88 @@ export interface Nfs4AclAssignment {
 	template: Nfs4AclTemplateName;
 }
 
+/**
+ * The 14 individual NFS4 permission bits TrueNAS's `filesystem.getacl`
+ * reports and `filesystem.setacl`/`filesystem.acltemplate` accept. Used
+ * only by `writeOnlyBits` below -- every other entry in this file uses the
+ * `basic` shorthand instead.
+ */
+type Nfs4PermBits = Record<
+	| "READ_DATA"
+	| "WRITE_DATA"
+	| "APPEND_DATA"
+	| "READ_NAMED_ATTRS"
+	| "WRITE_NAMED_ATTRS"
+	| "EXECUTE"
+	| "DELETE"
+	| "DELETE_CHILD"
+	| "READ_ATTRIBUTES"
+	| "WRITE_ATTRIBUTES"
+	| "READ_ACL"
+	| "WRITE_ACL"
+	| "WRITE_OWNER"
+	| "SYNCHRONIZE",
+	boolean
+>;
+
+/**
+ * Every bit `MODIFY` grants that `READ` doesn't -- i.e. "every write-shaped
+ * right, none of the read-shaped ones". Confirmed against TrueNAS's own
+ * live `filesystem.getacl` output for both presets (`pulumi refresh` can't
+ * verify this the way it does the `basic` shorthand below, since this
+ * exact bit combination has no `BASIC` keyword of its own).
+ */
+const writeOnlyBits: Nfs4PermBits = {
+	READ_DATA: false,
+	WRITE_DATA: true,
+	APPEND_DATA: true,
+	READ_NAMED_ATTRS: false,
+	WRITE_NAMED_ATTRS: true,
+	EXECUTE: false,
+	DELETE: true,
+	DELETE_CHILD: true,
+	READ_ATTRIBUTES: false,
+	WRITE_ATTRIBUTES: true,
+	READ_ACL: false,
+	WRITE_ACL: false,
+	WRITE_OWNER: false,
+	SYNCHRONIZE: true,
+};
+
 export interface Nfs4EntrySpec {
 	/** `"owner@"`/`"group@"`/`"everyone@"` (NFS4 special identifiers) or `"USER"`/`"GROUP"` (named principal, requires `id`). */
 	tag: "owner@" | "group@" | "everyone@" | "USER" | "GROUP";
 	/** Numeric uid/gid -- required for `"USER"`/`"GROUP"`; defaults to `-1` (TrueNAS's own "no id" sentinel) for the special identifiers. */
 	id?: pulumi.Input<number>;
-	/** One of TrueNAS's basic NFS4 permission presets, in increasing order of access: TRAVERSE < READ < MODIFY < FULL_CONTROL. */
-	basic: "FULL_CONTROL" | "MODIFY" | "READ" | "TRAVERSE";
+	/**
+	 * One of TrueNAS's basic NFS4 permission presets, in increasing order
+	 * of access: TRAVERSE < READ < MODIFY < FULL_CONTROL. Mutually
+	 * exclusive with `perms` -- set exactly one of the two.
+	 */
+	basic?: "FULL_CONTROL" | "MODIFY" | "READ" | "TRAVERSE";
+	/**
+	 * Explicit per-bit permissions, for the one case (`smbMediaTemplate`'s
+	 * `writeOnlyBits`) no `basic` preset covers. Mutually exclusive with
+	 * `basic` -- set exactly one of the two.
+	 */
+	perms?: Nfs4PermBits;
 	/**
 	 * `"ALLOW"` (default) or `"DENY"`. Only `smbMediaTemplate` below needs
-	 * `"DENY"` (to pin two specific accounts to read-only despite their
-	 * `builtin_users` group membership granting MODIFY) -- see the comment
-	 * on that template for why entry *order* matters just as much as this
-	 * flag: NFS4/ZFS ACL evaluation resolves each requested permission bit
-	 * against the first applicable ACE that mentions it, independently per
-	 * bit, not "first ACE wins outright".
+	 * `"DENY"`, paired with `perms: writeOnlyBits` -- see the comment on
+	 * that template for why the entry must be scoped to the write-shaped
+	 * bits specifically, not `basic: "MODIFY"`: TrueNAS's
+	 * `filesystem.setacl` canonicalizes stored ACEs (every DENY entry
+	 * sorts before every ALLOW entry, regardless of the order they're
+	 * submitted in), so a broad `DENY MODIFY` -- which includes the read
+	 * bits -- ends up blocking read too, no matter how carefully an
+	 * `ALLOW READ` entry is ordered ahead of it in this file.
 	 */
 	type?: "ALLOW" | "DENY";
 }
 
 /**
  * Builds a `FilesystemAclTemplate.aclJson` string from a short list of
- * `{tag, id?, basic, type?}` entries -- every entry gets
+ * `{tag, id?, basic|perms, type?}` entries -- every entry gets
  * `flags: {BASIC: "INHERIT"}` (new files/subdirectories under wherever
  * this template gets applied inherit the same entries), since nothing in
  * this stack's templates needs non-inheriting flags. `type` defaults to
@@ -98,7 +158,7 @@ export function nfs4AclJson(specs: Nfs4EntrySpec[]): pulumi.Output<string> {
 			specs.map((s, i) => ({
 				flags: { BASIC: "INHERIT" },
 				id: ids[i],
-				perms: { BASIC: s.basic },
+				perms: s.perms ?? { BASIC: s.basic },
 				tag: s.tag,
 				type: s.type ?? "ALLOW",
 			})),
@@ -188,21 +248,24 @@ export const smbViewerTemplate = new truenas.FilesystemAclTemplate(
 
 // Like NFSV4_SMB_ALL (every local SMB account gets read+write) -- except
 // FireStickTV and Jellyfin, both consumer-only accounts with no business
-// ever writing to the media library, are pinned to read-only. A single
-// `USER ... ALLOW READ` entry per account wouldn't do that on its own:
-// NFS4/ZFS ACL evaluation resolves each requested permission bit against
-// the first applicable ACE that mentions it, per requester, not "first ACE
-// wins outright" -- so an unresolved write bit would still fall through to
-// the `GROUP builtin_users ALLOW MODIFY` entry below, since both accounts
-// are members of that group (every `smb: true` account is). Each account
-// therefore gets two entries, in this order: `ALLOW READ` first (resolves
-// the read bits), then `DENY MODIFY` (MODIFY is a superset of READ, but
-// those bits are already resolved and won't be reconsidered -- only the
-// remaining write/delete bits are still undecided, and this is what
-// actually blocks them). By the time the `GROUP builtin_users ALLOW
-// MODIFY` entry runs, every bit for these two accounts is already decided,
-// so it only ends up granting MODIFY to every other local SMB account,
-// same as NFSV4_SMB_ALL.
+// ever writing to the media library, are pinned to read-only.
+//
+// This is a plain `DENY writeOnlyBits` per account, nothing else -- no
+// paired `ALLOW READ` entry, and deliberately not `DENY basic: "MODIFY"`.
+// An earlier version of this template used `ALLOW READ` followed by `DENY
+// MODIFY`, banking on NFS4/ZFS's per-bit ACE evaluation (each requested
+// bit resolves against the first applicable entry that mentions it) to let
+// the ALLOW claim the read bits before the DENY could reach them. That
+// doesn't survive a real `pulumi up` + manual apply: TrueNAS's
+// `filesystem.setacl` canonicalizes stored ACEs, moving every DENY entry
+// ahead of every ALLOW entry regardless of submission order -- so `DENY
+// MODIFY` (which includes the read bits) always resolves READ_DATA first,
+// blocking read entirely, no matter how the entries were ordered here.
+// `writeOnlyBits` sidesteps the whole problem: it never mentions a
+// read-shaped bit, so canonicalization can put it anywhere and it still
+// only blocks writes -- the read bits stay unresolved until the `GROUP
+// builtin_users ALLOW MODIFY` entry below grants them (every `smb: true`
+// account, including these two, is a member of that group).
 export const smbMediaTemplate = new truenas.FilesystemAclTemplate(
 	"acl-template-nfs4-smb-media",
 	{
@@ -211,10 +274,13 @@ export const smbMediaTemplate = new truenas.FilesystemAclTemplate(
 		comment:
 			"Like NFSV4_SMB_ALL (every local SMB account gets read+write), except FireStickTV and Jellyfin are pinned to read-only -- both only ever consume the media library, never write to it.",
 		aclJson: nfs4AclJson([
-			{ tag: "USER", id: fireStickTvUser.uid, basic: "READ" },
-			{ tag: "USER", id: fireStickTvUser.uid, basic: "MODIFY", type: "DENY" },
-			{ tag: "USER", id: jellyfinUser.uid, basic: "READ" },
-			{ tag: "USER", id: jellyfinUser.uid, basic: "MODIFY", type: "DENY" },
+			{
+				tag: "USER",
+				id: fireStickTvUser.uid,
+				perms: writeOnlyBits,
+				type: "DENY",
+			},
+			{ tag: "USER", id: jellyfinUser.uid, perms: writeOnlyBits, type: "DENY" },
 			{
 				tag: "GROUP",
 				id: builtInUsersGroup.apply((g) => g.gid),
