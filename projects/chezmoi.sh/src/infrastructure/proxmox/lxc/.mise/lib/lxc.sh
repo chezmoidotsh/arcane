@@ -610,17 +610,29 @@ lxc_upgrade() {
     OLD_VOL=\$(echo \"\$ROOTFS_LINE\" | cut -d, -f1)
 
     pct create ${scratch_id} ${template_path} --rootfs \${ROOTFS_STORAGE}:\${ROOTFS_SIZE} >&2
-    NEW_VOL=\$(grep '^rootfs:' /etc/pve/lxc/${scratch_id}.conf | awk '{print \$2}' | cut -d, -f1)
 
-    # Strip + destroy the scratch config *before* repointing vmid's rootfs:
-    # at no point should two configs simultaneously reference NEW_VOL — if
-    # this were done in the other order, a recovery attempt that destroys
-    # the leftover scratch config (still owning NEW_VOL) after vmid has
-    # already been repointed to it would delete the volume vmid now boots
-    # from.
-    sed -i '/^rootfs:/d' /etc/pve/lxc/${scratch_id}.conf
+    # Move the freshly-created rootfs volume out of the scratch CT's config
+    # and into vmid's, as an 'unused' entry. For same-storage LVM-thin this
+    # is a metadata rename (vm-${scratch_id}-disk-0 -> vm-\${VMID}-disk-N),
+    # not a data copy — so the new rootfs volume ends up correctly named
+    # under vmid's own VMID instead of staying under the disposable scratch
+    # VMID forever (which is what silently produced e.g. vm-104-disk-7 as
+    # CT 103's rootfs in the past). move-volume also atomically drops the
+    # 'rootfs:' key from the scratch config as part of the move, so there's
+    # never a window where two configs reference the same volume.
+    UNUSED_IDX=0
+    while pct config ${vmid} | grep -q \"^unused\${UNUSED_IDX}:\"; do
+      UNUSED_IDX=\$((UNUSED_IDX + 1))
+    done
+    UNUSED_KEY=\"unused\${UNUSED_IDX}\"
+    pct move-volume ${scratch_id} rootfs \${ROOTFS_STORAGE} ${vmid} \${UNUSED_KEY} >&2
+    NEW_VOL=\$(pct config ${vmid} | grep \"^\${UNUSED_KEY}:\" | awk '{print \$2}' | cut -d, -f1)
+
     pct destroy ${scratch_id}
-    sed -i \"0,/^rootfs:/s|^rootfs:.*|rootfs: \${NEW_VOL},size=\${ROOTFS_SIZE}G|\" /etc/pve/lxc/${vmid}.conf
+
+    # Promote the moved-in volume from its temporary unused slot to rootfs:
+    # and drop the unused: entry in the same edit.
+    sed -i \"0,/^rootfs:/s|^rootfs:.*|rootfs: \${NEW_VOL},size=\${ROOTFS_SIZE}G|; /^\${UNUSED_KEY}:/d\" /etc/pve/lxc/${vmid}.conf
 
     echo \"OLD_VOL=\${OLD_VOL}\"
     echo \"NEW_VOL=\${NEW_VOL}\"
