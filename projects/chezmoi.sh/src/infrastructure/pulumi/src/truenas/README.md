@@ -6,18 +6,19 @@ server, as declarative code. The generated human-facing documentation is publish
 
 ## What's managed here
 
-| File/Folder       | Responsibility                                                                                                             |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `acls.ts`         | NFS4 ACL templates and dataset-to-template assignments for datasets with no single owning account (see `zpools/README.md`) |
-| `alerts.ts`       | Alert notifications (e-mail destinations, per-class alert policies)                                                        |
-| `apps.ts`         | TrueNAS SCALE app catalog and containerized applications (`garage`, `nginx-proxy-manager`)                                 |
-| `certificates.ts` | Certificate Signing Requests (CSRs) for ACME; ACME-signed certificates remain TrueNAS-managed (provider limitation)        |
-| `jobs.ts`         | Scheduled cron jobs and maintenance tasks (SMART tests, scrubs, snapshots)                                                 |
-| `network.ts`      | Hostname, gateway, DNS nameservers, and physical network interfaces                                                        |
-| `services.ts`     | Service enablement on boot (CIFS, NFS, SSH, etc.) — not state management, only startup policy                              |
-| `shares.ts`       | NFS and SMB network shares                                                                                                 |
-| `users/`          | Service accounts (`truenas.User`), one file per account, colocated with the NFS4 ACL assignment for the dataset it owns    |
-| `zpools/`         | ZFS pool and dataset hierarchy (one file per pool: `zp1cs01.ts`, `zp1hs01.ts`); see `zpools/README.md` for ZFS conventions |
+| File/Folder       | Responsibility                                                                                                                |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `acls.ts`         | NFS4 ACL templates and dataset-to-template assignments for datasets with no single owning account (see `zpools/README.md`)    |
+| `alerts.ts`       | Alert notifications (e-mail destinations, per-class alert policies)                                                           |
+| `apps.ts`         | TrueNAS SCALE app catalog and containerized applications (`garage`, `nginx-proxy-manager`)                                    |
+| `certificates.ts` | Certificate Signing Requests (CSRs) for ACME; ACME-signed certificates remain TrueNAS-managed (provider limitation)           |
+| `identities.ts`   | Lookups (not resources) for pre-existing TrueNAS identities (`apps` user, `builtin_users` group) shared by `acls.ts`/`users/` |
+| `jobs.ts`         | Scheduled cron jobs and maintenance tasks (SMART tests, scrubs, snapshots)                                                    |
+| `network.ts`      | Hostname, gateway, DNS nameservers, and physical network interfaces                                                           |
+| `services.ts`     | Service enablement on boot (CIFS, NFS, SSH, etc.) — not state management, only startup policy                                 |
+| `shares.ts`       | NFS and SMB network shares                                                                                                    |
+| `users/`          | Service accounts (`truenas.User`), one file per account, colocated with the NFS4 ACL assignment for the dataset it owns       |
+| `zpools/`         | ZFS pool and dataset hierarchy (one file per pool: `zp1cs01.ts`, `zp1hs01.ts`); see `zpools/README.md` for ZFS conventions    |
 
 ### Intentionally not managed via Pulumi
 

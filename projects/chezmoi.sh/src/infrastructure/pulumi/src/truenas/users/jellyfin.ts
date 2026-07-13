@@ -1,7 +1,7 @@
 import * as random from "@pulumi/random";
 import * as truenas from "@pulumi/truenas";
 
-import { builtInUsersGroup } from "../acls";
+import { builtInUsersGroup } from "../identities";
 
 // See ./README.md for the shared conventions (UID range, field choices,
 // password/parent handling) every account in this directory follows. This
@@ -9,10 +9,12 @@ import { builtInUsersGroup } from "../acls";
 // login, this time for Jellyfin (Kubernetes) to reach the media shares
 // (Films, Series TV, Animes, Musiques) instead of the NFS exports it used
 // before. Access to those shares is already granted to every local SMB
-// account via `NFSV4_SMB_ALL` (../acls.ts), so there's no `Nfs4AclAssignment`
-// to declare here either. Unlike `firesticktv.ts`, this *is* a service
-// account backing an application, so it still takes a `uid` from the
-// 30000-30999 SA range.
+// account via `NFSV4_SMB_ALL`/`NFSV4_SMB_MEDIA` (../acls.ts), so there's no
+// `Nfs4AclAssignment` to declare here either -- `../acls.ts`'s
+// `smbMediaTemplate` references this account by id directly, to pin it (and
+// FireStickTV) to read-only on the media dataset. Unlike `firesticktv.ts`,
+// this *is* a service account backing an application, so it still takes a
+// `uid` from the 30000-30999 SA range.
 
 const jellyfinPassword = new random.RandomPassword("password-jellyfin", {
 	length: 32,

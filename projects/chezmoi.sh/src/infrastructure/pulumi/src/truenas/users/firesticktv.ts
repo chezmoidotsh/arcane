@@ -1,7 +1,7 @@
 import * as random from "@pulumi/random";
 import * as truenas from "@pulumi/truenas";
 
-import { builtInUsersGroup } from "../acls";
+import { builtInUsersGroup } from "../identities";
 
 // See ./README.md for the shared conventions (field choices, password/parent
 // handling) every account in this directory follows -- with two deliberate
@@ -9,9 +9,9 @@ import { builtInUsersGroup } from "../acls";
 // take one from the 30000-30999 SA range; TrueNAS assigns one from its
 // normal range instead) and no owned dataset/`Nfs4AclAssignment`. This
 // account exists purely so the Fire TV Stick has its own SMB login to
-// browse the media shares (Films, Séries, Animés, Musique) -- access those
-// shares already grant every local SMB account via `NFSV4_SMB_ALL`
-// (../acls.ts), nothing dedicated to add here.
+// browse the media shares (Films, Séries, Animés, Musique). `../acls.ts`'s
+// `smbMediaTemplate` (NFSV4_SMB_MEDIA) references this account by id
+// directly, to pin it (and Jellyfin) to read-only on the media dataset.
 
 const fireStickTvPassword = new random.RandomPassword("password-firesticktv", {
 	length: 32,

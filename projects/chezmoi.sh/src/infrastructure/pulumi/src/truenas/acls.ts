@@ -1,6 +1,9 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as truenas from "@pulumi/truenas";
 
+import { appsUser, builtInUsersGroup } from "./identities";
+import { fireStickTvUser } from "./users/firesticktv";
+import { jellyfinUser } from "./users/jellyfin";
 import { zp1cs01 } from "./zpools/zp1cs01";
 import { zp1hs01 } from "./zpools/zp1hs01";
 
@@ -25,18 +28,25 @@ import { zp1hs01 } from "./zpools/zp1hs01";
 //   has no field to reference one, so nothing in this provider can apply a
 //   template to a path. Only a human, via the UI, can.
 //
-// Given that, this stack's job shrinks to: keep the 4 templates below
+// Given that, this stack's job shrinks to: keep the 5 templates below
 // correct and up to date, and keep the documented dataset -> template
 // mapping (`../truenas-docs`) from drifting -- applying them is a manual,
 // operational step outside Pulumi's reach.
+//
+// `appsUser`/`builtInUsersGroup` live in `./identities.ts`, not here, and
+// `./users/firesticktv.ts`/`./users/jellyfin.ts` are imported directly
+// above (for `NFSV4_SMB_MEDIA`'s per-account entries) in that direction
+// only -- see `./identities.ts` for why the reverse would be a circular
+// import.
 // -----------------------------------------------------------------------------
 
-/** The 4 NFS4 ACL templates this stack manages -- see each `FilesystemAclTemplate` below for what each one grants. */
+/** The 5 NFS4 ACL templates this stack manages -- see each `FilesystemAclTemplate` below for what each one grants. */
 export type Nfs4AclTemplateName =
 	| "NFSV4_MANAGED_APPLICATION"
 	| "NFSV4_TRUENAS_APPLICATION"
 	| "NFSV4_SMB_ALL"
-	| "NFSV4_SMB_VIEWER";
+	| "NFSV4_SMB_VIEWER"
+	| "NFSV4_SMB_MEDIA";
 
 /** One dataset paired with the NFS4 ACL template a human should apply to it -- consumed by `../truenas-docs` to render the manual-application guide. */
 export interface Nfs4AclAssignment {
@@ -44,21 +54,32 @@ export interface Nfs4AclAssignment {
 	template: Nfs4AclTemplateName;
 }
 
-interface Nfs4EntrySpec {
+export interface Nfs4EntrySpec {
 	/** `"owner@"`/`"group@"`/`"everyone@"` (NFS4 special identifiers) or `"USER"`/`"GROUP"` (named principal, requires `id`). */
 	tag: "owner@" | "group@" | "everyone@" | "USER" | "GROUP";
 	/** Numeric uid/gid -- required for `"USER"`/`"GROUP"`; defaults to `-1` (TrueNAS's own "no id" sentinel) for the special identifiers. */
 	id?: pulumi.Input<number>;
 	/** One of TrueNAS's basic NFS4 permission presets, in increasing order of access: TRAVERSE < READ < MODIFY < FULL_CONTROL. */
 	basic: "FULL_CONTROL" | "MODIFY" | "READ" | "TRAVERSE";
+	/**
+	 * `"ALLOW"` (default) or `"DENY"`. Only `smbMediaTemplate` below needs
+	 * `"DENY"` (to pin two specific accounts to read-only despite their
+	 * `builtin_users` group membership granting MODIFY) -- see the comment
+	 * on that template for why entry *order* matters just as much as this
+	 * flag: NFS4/ZFS ACL evaluation resolves each requested permission bit
+	 * against the first applicable ACE that mentions it, independently per
+	 * bit, not "first ACE wins outright".
+	 */
+	type?: "ALLOW" | "DENY";
 }
 
 /**
  * Builds a `FilesystemAclTemplate.aclJson` string from a short list of
- * `{tag, id?, basic}` entries -- every entry is `type: "ALLOW"` with
+ * `{tag, id?, basic, type?}` entries -- every entry gets
  * `flags: {BASIC: "INHERIT"}` (new files/subdirectories under wherever
  * this template gets applied inherit the same entries), since nothing in
- * this stack's 4 templates needs a DENY entry or non-inheriting flags.
+ * this stack's templates needs non-inheriting flags. `type` defaults to
+ * `"ALLOW"`; only `smbMediaTemplate` below needs `"DENY"`.
  * Resolves any `id` (from a `truenas.getUser`/`getGroup` lookup) before
  * stringifying, since `aclJson` itself must be a plain string, not an
  * object containing unresolved Outputs/Promises.
@@ -71,7 +92,7 @@ interface Nfs4EntrySpec {
  * `update` on every `pulumi preview`/`up`, forever, even though nothing
  * actually changed.
  */
-function nfs4AclJson(specs: Nfs4EntrySpec[]): pulumi.Output<string> {
+export function nfs4AclJson(specs: Nfs4EntrySpec[]): pulumi.Output<string> {
 	return pulumi.all(specs.map((s) => s.id ?? -1)).apply((ids) =>
 		JSON.stringify(
 			specs.map((s, i) => ({
@@ -79,33 +100,11 @@ function nfs4AclJson(specs: Nfs4EntrySpec[]): pulumi.Output<string> {
 				id: ids[i],
 				perms: { BASIC: s.basic },
 				tag: s.tag,
-				type: "ALLOW",
+				type: s.type ?? "ALLOW",
 			})),
 		),
 	);
 }
-
-// Real, stable identities these templates reference by id -- looked up
-// (`truenas.getUserOutput`/`getGroupOutput`), never created: `apps` is a
-// TrueNAS built-in service account, `builtin_users` a TrueNAS built-in
-// group (see below for why it's used instead of an invented "smb-users"
-// group). The `*Output` lookup variants, not the plain-`Promise`-returning
-// `getUser`/`getGroup`, are required here, not just a style choice: a
-// resource input derived from a raw `Promise` (`.then(...)`) loses
-// Pulumi's own dependency/known-ness tracking, which made every
-// `FilesystemAclTemplate` below show a spurious `update` on every
-// `pulumi preview` even when `aclJson` resolved to the exact same string
-// -- confirmed by comparing old/new state, byte for byte, in
-// `pulumi preview --json`. `.apply(...)`, not `.then(...)`, follows from
-// that: it's the `Output`-native equivalent.
-//
-// Exported (not just used locally) so `../truenas/users/*.ts` can put the
-// same `builtin_users` id in their own accounts' `groups` -- see there for
-// why that's needed, not optional.
-export const appsUser = truenas.getUserOutput({ username: "apps" }); // TrueNAS's own Apps feature: uid 568, confirmed live
-export const builtInUsersGroup = truenas.getGroupOutput({
-	name: "builtin_users",
-}); // every local account: id 91 / gid 545, confirmed live
 
 // A NFS4 ACL granting one of the service accounts access to its own
 // dataset (e.g. `applications/managed/app.immich`, via
@@ -187,17 +186,58 @@ export const smbViewerTemplate = new truenas.FilesystemAclTemplate(
 	},
 );
 
+// Like NFSV4_SMB_ALL (every local SMB account gets read+write) -- except
+// FireStickTV and Jellyfin, both consumer-only accounts with no business
+// ever writing to the media library, are pinned to read-only. A single
+// `USER ... ALLOW READ` entry per account wouldn't do that on its own:
+// NFS4/ZFS ACL evaluation resolves each requested permission bit against
+// the first applicable ACE that mentions it, per requester, not "first ACE
+// wins outright" -- so an unresolved write bit would still fall through to
+// the `GROUP builtin_users ALLOW MODIFY` entry below, since both accounts
+// are members of that group (every `smb: true` account is). Each account
+// therefore gets two entries, in this order: `ALLOW READ` first (resolves
+// the read bits), then `DENY MODIFY` (MODIFY is a superset of READ, but
+// those bits are already resolved and won't be reconsidered -- only the
+// remaining write/delete bits are still undecided, and this is what
+// actually blocks them). By the time the `GROUP builtin_users ALLOW
+// MODIFY` entry runs, every bit for these two accounts is already decided,
+// so it only ends up granting MODIFY to every other local SMB account,
+// same as NFSV4_SMB_ALL.
+export const smbMediaTemplate = new truenas.FilesystemAclTemplate(
+	"acl-template-nfs4-smb-media",
+	{
+		name: "NFSV4_SMB_MEDIA",
+		acltype: "NFS4",
+		comment:
+			"Like NFSV4_SMB_ALL (every local SMB account gets read+write), except FireStickTV and Jellyfin are pinned to read-only -- both only ever consume the media library, never write to it.",
+		aclJson: nfs4AclJson([
+			{ tag: "USER", id: fireStickTvUser.uid, basic: "READ" },
+			{ tag: "USER", id: fireStickTvUser.uid, basic: "MODIFY", type: "DENY" },
+			{ tag: "USER", id: jellyfinUser.uid, basic: "READ" },
+			{ tag: "USER", id: jellyfinUser.uid, basic: "MODIFY", type: "DENY" },
+			{
+				tag: "GROUP",
+				id: builtInUsersGroup.apply((g) => g.gid),
+				basic: "MODIFY",
+			},
+		]),
+	},
+);
+
 // --- zp1cs01/media, zp1hs01/userspace/shared --------------------------------
 // Neither dataset has a single dedicated owner -- multiple local accounts
-// need access, not one service account -- so both are documented as
-// NFSV4_SMB_ALL. (Datasets that DO belong to one specific identity --
-// Home Assistant, Immich, Paperless-ngx -- have their assignment declared
-// next to that identity's `truenas.User`, in `./users/`, not here.)
+// need access, not one service account. `userspace/shared` is documented as
+// plain NFSV4_SMB_ALL. `media` uses NFSV4_SMB_MEDIA instead: everywhere else,
+// NFSV4_SMB_ALL's blanket read+write for every local SMB account still
+// applies, but FireStickTV and Jellyfin are pinned to read-only.
+// (Datasets that DO belong to one specific identity -- Home Assistant,
+// Immich, Paperless-ngx -- have their assignment declared next to that
+// identity's `truenas.User`, in `./users/`, not here.)
 
 const mediaDataset = zp1cs01.get("media").resource;
 export const mediaAclAssignment: Nfs4AclAssignment = {
 	dataset: mediaDataset,
-	template: "NFSV4_SMB_ALL",
+	template: "NFSV4_SMB_MEDIA",
 };
 
 const userspaceSharedDataset = zp1hs01.get("userspace/shared").resource;

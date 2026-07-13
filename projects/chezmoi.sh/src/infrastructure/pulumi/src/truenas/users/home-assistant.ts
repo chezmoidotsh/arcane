@@ -1,7 +1,8 @@
 import * as random from "@pulumi/random";
 import * as truenas from "@pulumi/truenas";
 
-import { builtInUsersGroup, type Nfs4AclAssignment } from "../acls";
+import type { Nfs4AclAssignment } from "../acls";
+import { builtInUsersGroup } from "../identities";
 import { zp1hs01 } from "../zpools/zp1hs01";
 
 // See ./README.md for the shared conventions (UID range, field choices,
