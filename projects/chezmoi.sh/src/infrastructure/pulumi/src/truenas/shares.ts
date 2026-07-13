@@ -3,73 +3,11 @@ import * as truenas from "@pulumi/truenas";
 import { zp1cs01 } from "./zpools/zp1cs01";
 import { zp1hs01 } from "./zpools/zp1hs01";
 
-// --- NFS -------------------------------------------------------------------
-// `hosts` (IP allowlist) is deliberately not managed here, to match SMB
-// below -- neither protocol's IP restrictions are driven through Pulumi.
-// `ignoreChanges` keeps Pulumi from touching whatever's actually configured
-// on the NAS.
-
-new truenas.NfsConfig("nfs-config", {
-	servers: 4,
-	allowNonroot: false,
-	protocols: ["NFSV4"],
-	bindips: ["10.0.0.30"],
-});
-
-// Exports the resources themselves (not a hand-maintained plain-data
-// summary) -- the doc generator (../truenas-docs) is responsible for pulling
-// whatever fields it needs out of these.
-new truenas.ShareNfs(
-	"nfs-share-animes",
-	{
-		path: zp1cs01.get("media/animes").resource.mountPoint,
-		comment: "Animés (Jellyfin)",
-		readonly: true,
-		mapallUser: "nobody",
-		mapallGroup: "nogroup",
-		enabled: true,
-	},
-	{ parent: zp1cs01.get("media/animes").resource, ignoreChanges: ["hosts"] },
-);
-
-new truenas.ShareNfs(
-	"nfs-share-movies",
-	{
-		path: zp1cs01.get("media/movies").resource.mountPoint,
-		comment: "Films (Jellyfin)",
-		readonly: true,
-		mapallUser: "nobody",
-		mapallGroup: "nogroup",
-		enabled: true,
-	},
-	{ parent: zp1cs01.get("media/movies").resource, ignoreChanges: ["hosts"] },
-);
-
-new truenas.ShareNfs(
-	"nfs-share-musics",
-	{
-		path: zp1cs01.get("media/musics").resource.mountPoint,
-		comment: "Musiques (Jellyfin)",
-		readonly: true,
-		mapallUser: "nobody",
-		mapallGroup: "nogroup",
-		enabled: true,
-	},
-	{ parent: zp1cs01.get("media/musics").resource, ignoreChanges: ["hosts"] },
-);
-
-new truenas.ShareNfs(
-	"nfs-share-tvshows",
-	{
-		path: zp1cs01.get("media/tvshows").resource.mountPoint,
-		comment: "Séries TV (Jellyfin)",
-		readonly: true,
-		mapallUser: "nobody",
-		mapallGroup: "nogroup",
-		enabled: true,
-	},
-	{ parent: zp1cs01.get("media/tvshows").resource, ignoreChanges: ["hosts"] },
-);
+// No NFS shares/config here anymore -- Jellyfin (the only consumer this
+// stack ever had for NFS) reads the media library over SMB now, same as
+// every other client. `hosts` (IP allowlist) is deliberately not managed on
+// the SMB shares below either -- IP restrictions for either protocol aren't
+// driven through Pulumi.
 
 // --- SMB ---------------------------------------------------------------
 // `hostsallow`/`auxsmbconf`/`timemachine_quota` aren't in this provider's

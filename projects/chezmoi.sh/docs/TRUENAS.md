@@ -88,18 +88,18 @@ Datasets carved out of `zp1hs01`:
 ```text
 zp1hs01
 ├─ applications                                       Applications hébergées : natives (TrueNAS Apps) et Kubernetes (lungmen.akn)
-│  ├─ immich                    quota=50Gi            Immich (TrueNAS Apps) -- migration en cours vers managed/app.immich
+│  ├─ immich                    quota=50Gi            Immich (TrueNAS Apps) -- ancienne instance, voir managed/app.immich
 │  ├─ managed                   encrypted             Applications Kubernetes montées en SMB
 │  │  ├─ app.immich             quota=50Gi,encrypted  Immich (Kubernetes)
 │  │  └─ com.paperless-ngx      quota=10Gi,encrypted  Paperless-ngx (Kubernetes)
-│  ├─ paperless                 quota=10Gi,encrypted  Paperless (TrueNAS Apps) -- migration en cours vers managed/com.paperless-ngx
+│  ├─ paperless                 quota=10Gi,encrypted  Paperless (TrueNAS Apps) -- ancienne instance, voir managed/com.paperless-ngx
 │  ├─ silverbullet              quota=5Gi,encrypted   Silverbullet (TrueNAS Apps)
 │  └─ truenas                   encrypted             Services internes à TrueNAS lui-même
 │     ├─ com.nginxproxymanager  encrypted             Reverse-proxy interne (NPM)
 │     └─ fr.deuxfleurs.garage   encrypted             Backend S3 Garage
 ├─ backups                      quota=100Gi           Cibles de sauvegarde locales
 │  └─ hass.chezmoi.sh                                 Sauvegardes Home Assistant
-├─ documents                    encrypted             Ancien espace documents -- migration en cours vers userspace
+├─ documents                    encrypted             Ancien espace documents -- remplacé par userspace
 └─ userspace                    encrypted             Espaces utilisateurs (remplace documents)
    └─ shared                    encrypted             Espace partagé entre utilisateurs
 ```
@@ -112,14 +112,6 @@ storage, Time Machine).
 
 ### NFS
 
-- `nfs-share-animes` (Animés (Jellyfin)) --
-  read-only, mapped to `nobody`
-- `nfs-share-movies` (Films (Jellyfin)) --
-  read-only, mapped to `nobody`
-- `nfs-share-musics` (Musiques (Jellyfin)) --
-  read-only, mapped to `nobody`
-- `nfs-share-tvshows` (Séries TV (Jellyfin)) --
-  read-only, mapped to `nobody`
 
 ### SMB
 
@@ -158,6 +150,7 @@ extensions macOS Time Machine needs.
 | `firesticktv` | 3000 | 140 | yes |
 | `home-assistant` | 30001 | 137 | yes |
 | `immich` | 30002 | 136 | yes |
+| `jellyfin` | 30004 | 141 | yes |
 | `paperless` | 30003 | 138 | yes |
 
 ### NFS4 ACL templates
@@ -166,6 +159,7 @@ extensions macOS Time Machine needs.
 | --- | --- | --- |
 | `NFSV4_MANAGED_APPLICATION` | NFS4 | Owner gets read+write, nobody else has any access. For service accounts this stack manages itself (Home Assistant, Immich, Paperless-ngx), as opposed to TrueNAS&#x27;s own Apps feature. |
 | `NFSV4_SMB_ALL` | NFS4 | Every local SMB account (TrueNAS&#x27;s built-in &#x60;builtin_users&#x60; group) gets read+write. For datasets with no single dedicated owner. |
+| `NFSV4_SMB_MEDIA` | NFS4 | Like NFSV4_SMB_ALL (every local SMB account gets read+write), except FireStickTV and Jellyfin are pinned to read-only -- both only ever consume the media library, never write to it. |
 | `NFSV4_SMB_VIEWER` | NFS4 | Owner gets read+write; every other local SMB account (&#x60;builtin_users&#x60;) gets read-only. |
 | `NFSV4_TRUENAS_APPLICATION` | NFS4 | Only TrueNAS&#x27;s own &#x60;apps&#x60; service account gets read+write. For datasets backing TrueNAS&#x27;s native Apps feature, not applications this stack manages itself. |
 
@@ -184,11 +178,12 @@ ACL Type: NFSv4 -> Use ACL Preset).
 
 | Dataset | Template to apply |
 | --- | --- |
-| `zp1cs01/media` | `NFSV4_SMB_ALL` |
+| `zp1cs01/media` | `NFSV4_SMB_MEDIA` |
 | `zp1hs01/userspace/shared` | `NFSV4_SMB_ALL` |
 | `zp1hs01/backups/hass.chezmoi.sh` | `NFSV4_MANAGED_APPLICATION` |
 | `zp1hs01/applications/managed/app.immich` | `NFSV4_MANAGED_APPLICATION` |
 | `zp1hs01/applications/managed/com.paperless-ngx` | `NFSV4_MANAGED_APPLICATION` |
+
 
 ## Backups
 
