@@ -1,0 +1,26 @@
+{
+	"name": "@chezmoi.sh/pulumi-truenas-pool",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Pulumi ComponentResource modeling a TrueNAS ZFS pool as a tree of Dataset resources, with pool-relative dataset lookup and a live topology/dataset-tree summary",
+	"main": "src/index.ts",
+	"scripts": {
+		"test": "mocha",
+		"test:watch": "mocha --watch",
+		"typecheck:test": "tsc --noEmit -p tsconfig.test.json"
+	},
+	"dependencies": {
+		"@chezmoi.sh/pulumi-lib": "workspace:*",
+		"@pulumi/pulumi": "catalog:",
+		"@pulumi/truenas": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/chai": "catalog:",
+		"@types/mocha": "catalog:",
+		"@types/node": "catalog:",
+		"chai": "catalog:",
+		"mocha": "catalog:",
+		"ts-node": "catalog:",
+		"typescript": "catalog:"
+	}
+}

@@ -1,0 +1,9 @@
+## Network & services
+
+`{{network.hostname}}` sits behind gateway `{{network.gateway}}` and resolves
+DNS through {{humanList network.nameservers}}. Its physical interfaces:
+{{#each network.interfaces}}`{{name}}` at {{#each aliases}}`{{address}}/{{netmask}}`{{#unless @last}}, {{/unless}}{{/each}} (MTU {{mtu}}){{#unless @last}}; {{/unless}}{{/each}}.
+
+The NAS exposes only the protocols it needs: {{humanList enabledServiceNames}}
+are enabled; {{humanList disabledServiceNames}} stay off.
+

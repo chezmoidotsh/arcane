@@ -1,0 +1,58 @@
+## Backups
+
+`nas.chezmoi.sh` protects its data through three independent layers, each
+covering a different failure mode: bitrot (Layer 1), accidental deletion
+(Layer 2), and total site loss (Layer 3).
+
+### Layer 1: Bitrot detection (scrubbing)
+
+A scrub reads every block stored in a pool and verifies its checksum against
+ZFS's own metadata, repairing corruption automatically when the pool has
+redundancy (mirror or RAID-Z). It's the first, local line of defense against
+silent disk decay.
+
+{{#each scrubTasks}}
+- **{{cronToEach schedule.minute schedule.hour schedule.dom schedule.month schedule.dow}}**:
+  scrub `{{poolName}}` ({{thresholdDays}}-day alert threshold){{#unless enabled}} *(disabled)*{{/unless}}
+{{/each}}
+
+### Layer 2: Accidental-deletion protection (snapshots)
+
+A snapshot is an instant, read-only, point-in-time copy of a dataset,
+consuming disk space only for data that changes after it's taken. It
+protects against an accidentally deleted or overwritten file -- not against
+losing the NAS itself.
+
+{{#each snapshotTasks}}
+- **{{cronToEach schedule.minute schedule.hour schedule.dom schedule.month schedule.dow}}**:
+  {{#if wholePool}}recursive snapshot of `{{dataset}}` (whole pool){{else}}snapshot of `{{dataset}}`{{/if}},
+  {{retentionLabel lifetimeValue lifetimeUnit}} retention{{#unless enabled}} *(disabled)*{{/unless}}
+{{/each}}
+
+### Layer 3: Site-loss protection (remote sync)
+
+Selected datasets are pushed off-site to {{backups.destination}}, split
+across private, file lock-protected buckets (immutable for the retention
+window below, with older versions pruned after the lifecycle window):
+
+#### Where are the backups stored
+{{#each backups.buckets}}
+- `{{name}}` -- {{retentionDays}}-day file lock retention, {{lifecycleDeleteDays}}-day
+  lifecycle prune.
+{{/each}}
+
+
+#### What is backed up and when
+{{#each backups.jobs}}
+- **{{cronToEach schedule.minute schedule.hour schedule.dom schedule.month schedule.dow}}**:
+  {{{description}}} on `{{source}}` ({{direction}} & {{transferMode}}){{#unless enabled}} *(disabled)*{{/unless}}
+{{/each}}
+- **{{cronToEach backups.legacyGlobalSync.schedule.minute backups.legacyGlobalSync.schedule.hour backups.legacyGlobalSync.schedule.dom backups.legacyGlobalSync.schedule.month backups.legacyGlobalSync.schedule.dow}}**:
+  legacy whole-pool sync of `{{backups.legacyGlobalSync.source}}`
+  ({{backups.legacyGlobalSync.direction}} & {{backups.legacyGlobalSync.transferMode}}) --
+  kept for reference only{{#unless backups.legacyGlobalSync.enabled}}, *(disabled)*{{/unless}}
+
+{{#if notBackedUpPools}}
+{{humanList notBackedUpPools}} {{#if (isSingular notBackedUpPools)}}isn't{{else}}aren't{{/if}} included in this off-site sync.
+
+{{/if}}

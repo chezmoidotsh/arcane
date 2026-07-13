@@ -1,3 +1,6 @@
-export * from "./src/observability";
-export * from "./src/omni";
-export * from "./src/zot-registry";
+import "./stack/backblaze";
+import "./stack/observability";
+import "./stack/omni";
+import "./stack/zot-registry";
+
+export * from "./stack/truenas";

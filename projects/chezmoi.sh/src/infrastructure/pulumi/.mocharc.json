@@ -1,0 +1,6 @@
+{
+	"require": ["ts-node/register"],
+	"spec": ["stack/**/*.test.ts", "toolbox/**/*.test.ts"],
+	"timeout": 10000,
+	"node-option": ["disable-warning=MODULE_TYPELESS_PACKAGE_JSON"]
+}

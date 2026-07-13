@@ -77,33 +77,27 @@ spec:
         runAsUser: 64710
         seccompProfile:
           type: RuntimeDefault
-        supplementalGroups:
-        - 65534
       volumes:
       - emptyDir: {}
         name: cache
       - emptyDir: {}
         name: tmpdir
       - name: movies
-        nfs:
-          path: /mnt/zp1cs01/media/movies
+        persistentVolumeClaim:
+          claimName: jellyfin-movies-smb-storage
           readOnly: true
-          server: nas.chezmoi.sh
       - name: tvshows
-        nfs:
-          path: /mnt/zp1cs01/media/tvshows
+        persistentVolumeClaim:
+          claimName: jellyfin-tvshows-smb-storage
           readOnly: true
-          server: nas.chezmoi.sh
       - name: musics
-        nfs:
-          path: /mnt/zp1cs01/media/musics
+        persistentVolumeClaim:
+          claimName: jellyfin-musics-smb-storage
           readOnly: true
-          server: nas.chezmoi.sh
       - name: animes
-        nfs:
-          path: /mnt/zp1cs01/media/animes
+        persistentVolumeClaim:
+          claimName: jellyfin-animes-smb-storage
           readOnly: true
-          server: nas.chezmoi.sh
   volumeClaimTemplates:
   - apiVersion: v1
     kind: PersistentVolumeClaim

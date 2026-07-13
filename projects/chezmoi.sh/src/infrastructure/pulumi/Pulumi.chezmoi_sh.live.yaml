@@ -1,8 +1,18 @@
-encryptionsalt: v1:KA/xUoWvcgU=:v1:8b6uH+gPQo7bvhsO:AUqXbn/G62LkDD38c+/MyiIy7/egQw==
+encryptionsalt: v1:WI/uHyMiTw8=:v1:r5rEpOiujBDfqrei:wyKJhoGkxyVFg0ZZtO6QSVEAebB6hg==
 config:
   chezmoi-sh-infra:cloudflare_account_id:
-    secure: v1:f8LD7dbxKhZ9q++p:CmEWp3TnysnmMpPJIlIaAr50dEpzWJUDjn5K0U2DWTAwakm0HW2MRELsGOepLkN4
+    secure: v1:RC9hckvq5hYbOq/s:Tnnlg50zt9NkIwjEDtI8l+7aIy2CdHYTJUT8NrbzJHSBLbCCA/OYASBrhQfmqHdb
   chezmoi-sh-infra:cloudflare_zone_id:
-    secure: v1:miJTN7ntHsY2Ifc1:2MY/NXyshbYjicuJXbYxwBkcIPNpdwoOMyAU+MxvpSiA+QheIF158qjS8JgoiULy
+    secure: v1:kjjfI91R96RPUXzm:d5dP4b7RBlUciLQyVXb5NU/olfnffpUtsFL9yxZf673N4afm9bAAJ+oI2fu1c/Bb
+  chezmoi-sh-infra:garage_admin_token:
+    secure: v1:N8/cY//l2q6mAKgL:GAYXb6A024F69taNfCAkWt4S29TIoJecvUzxdOKmRe3LVrr2tWVLQfxawxuKs4S3
+  chezmoi-sh-infra:garage_rpc_secret:
+    secure: v1:mfJ3FDbbHXdNLhym:Zo6fWjl9OUpBcEgpu4tw45gM+WkiYQYRWYFx7bmnSUKVW11aG/GnNP7oeTiBnMWDUa5J9/fX/iHaWB8C4vCkT+dEZmvR1i1y3ZD+l/myW4Q=
+  chezmoi-sh-infra:garage_web_ui_password:
+    secure: v1:C4bn+ZQfrgX2eQlU:sL2GXtnYGqbon7k88g+5pj2a3iJ0fSLQhSTssId2
+  chezmoi-sh-infra:garage_web_ui_username:
+    secure: v1:gmCF7n75MuShAoHX:IZIghnY+OeMs9sfLdzXGhXe29oMbp/1OBC0lWkG/OVE=
   tailscale:tailnet:
-    secure: v1:IQXHIbaYdv2J4ako:efaTqROzHE8gIaQ130LBvwERz2Krz1SlaPRVWvFcEErI
+    secure: v1:sLhY5DfYf/T18EyL:xvQ3lkIJoS04v9jaycJxyv4UlbruzkYAm3Dna3DVQs+C
+  truenas:destroyProtection: "true"
+  truenas:url: https://nas.chezmoi.sh

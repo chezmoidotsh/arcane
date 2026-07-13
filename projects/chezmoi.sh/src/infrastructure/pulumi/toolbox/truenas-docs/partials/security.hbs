@@ -1,0 +1,23 @@
+## Security notes
+
+A few things worth knowing about what this configuration does and doesn't
+protect against:
+
+- **Share IP restrictions live entirely on the NAS, not in Pulumi.** Neither
+  NFS's `hosts` allowlist (no Kerberos, so this is the only access control
+  those shares have) nor SMB's `hostsallow`/`auxsmbconf` are managed here --
+  the SMB ones aren't in this provider's schema at all, and NFS's are
+  deliberately left alone to match. Whatever's configured directly on the NAS
+  is the only source of truth; Pulumi can't detect or revert changes to it.
+- **NFS has no per-person access control.** Every NFS share maps all
+  connecting clients to one fixed identity (`mapallUser`/`mapallGroup`), so
+  RO/RW differentiation only ever happens per-share, never per-person. Where
+  per-person access actually matters, the Permissions section above uses SMB
+  instead, backed by a real account.
+- **Filesystem ACLs are never applied automatically.** The NFS4 ACL
+  templates and dataset assignments in the Permissions section above are a
+  guide for a human, not something this stack enforces -- `truenas.FilesystemAcl`
+  cannot express NFS4 entries through this provider (confirmed against the
+  live API), and the templates it *can* manage have no way to be applied to
+  a path except by hand, in the TrueNAS UI. Nothing detects or reverts a
+  dataset whose actual ACL has drifted from its documented assignment.

@@ -1,0 +1,9 @@
+`nas.chezmoi.sh` is my home NAS: bulk media storage for players on the LAN,
+self-hosted application data (Immich, Paperless, Silverbullet, Garage, and the
+reverse proxy in front of them), personal and shared documents, and backup
+targets for Home Assistant and Time Machine.
+
+It runs as a TrueNAS SCALE virtual machine on Proxmox, with
+{{pools.length}} ZFS pool{{#unless (isSingular pools)}}s{{/unless}} --
+{{{poolsList}}} -- detailed in the section below, plus an off-site copy of
+the data pushed to Backblaze B2.
