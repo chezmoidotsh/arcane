@@ -57,6 +57,22 @@ stack's own state on every `pulumi:apply`, so it never drifts from what's actual
 authoritative reference for backup rules, not this README. The subsections below capture the design rationale behind
 those schedules and retention windows — _why_ these specific values, not what they currently are.
 
+### CloudSync jobs vs. buckets — two different concerns
+
+Layer 3 (remote sync) spans two separate files that are easy to conflate:
+
+- `../cloudsync.ts` declares the CloudSync **jobs**: which dataset gets pushed, on what schedule, in which
+  direction/mode (PUSH/SYNC). This is the "what and when" of the sync.
+- `../../backblaze.ts` declares the target **buckets**: where that data lands and how long it stays protected once there
+  — governance-mode File Lock (7-day default retention, so uploads can't be deleted or overwritten for a week) and a
+  60-day lifecycle rule that prunes superseded versions. This is the "where and for how long" once synced.
+
+Neither file references the other directly — the only link is each job's `attributesJson.bucket` field. Granular
+per-dataset jobs target the current bucket (`nas-backup-4e6b1351` / `trueNASBackupBucket`); the legacy whole-pool job
+targets the legacy one (`nas-backup-50a30f2b` / `legacyTrueNASBackupBucket`), kept protected and `retainOnDelete` since
+it predates the granular jobs. Both buckets use identical File Lock/lifecycle settings — the split is about which jobs
+write where, not a difference in retention policy.
+
 ## Best Practices & Operational Guidance
 
 ### Scrub Scheduling

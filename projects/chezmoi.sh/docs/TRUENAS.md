@@ -178,10 +178,10 @@ set `ACL Type` to `NFSv4` → `Use ACL Preset`.
 | Dataset | Template to apply |
 | --- | --- |
 | `zp1cs01/media` | `NFSV4_SMB_MEDIA` |
+| `zp1hs01/userspace/shared` | `NFSV4_SMB_ALL` |
+| `zp1hs01/backups/hass.chezmoi.sh` | `NFSV4_MANAGED_APPLICATION` |
 | `zp1hs01/applications/managed/app.immich` | `NFSV4_MANAGED_APPLICATION` |
 | `zp1hs01/applications/managed/com.paperless-ngx` | `NFSV4_MANAGED_APPLICATION` |
-| `zp1hs01/backups/hass.chezmoi.sh` | `NFSV4_MANAGED_APPLICATION` |
-| `zp1hs01/userspace/shared` | `NFSV4_SMB_ALL` |
 
 
 ## Backups
@@ -225,19 +225,22 @@ Selected datasets are pushed off-site to Backblaze B2, split
 across private, file lock-protected buckets (immutable for the retention
 window below, with older versions pruned after the lifecycle window):
 
+#### Where are the backups stored:
 - `nas-backup-4e6b1351` -- 7-day file lock retention, 60-day
   lifecycle prune.
 - `nas-backup-50a30f2b` -- 7-day file lock retention, 60-day
   lifecycle prune.
 
+
+#### What is backed up and when:
 - **Each Sunday at 02:00**:
-  Weekly sync of immich.app application on `/mnt/zp1hs01/applications/managed/app.immich` (PUSH & SYNC)
+  B2 — Weekly sync of immich.app application on `/mnt/zp1hs01/applications/managed/app.immich` (PUSH & SYNC)
 - **Each Sunday at 02:00**:
-  Weekly sync of paperless-ngx.com application on `/mnt/zp1hs01/applications/managed/com.paperless-ngx` (PUSH & SYNC)
+  B2 — Weekly sync of paperless-ngx.com application on `/mnt/zp1hs01/applications/managed/com.paperless-ngx` (PUSH & SYNC)
 - **Each day at 01:00**:
-  Weekly sync of TrueNAS applications on `/mnt/zp1hs01/applications/truenas` (PUSH & SYNC)
+  B2 — Weekly sync of TrueNAS applications on `/mnt/zp1hs01/applications/truenas` (PUSH & SYNC)
 - **Each day at 01:00**:
-  Daily sync of users' spaces (shared excluded) on `/mnt/zp1hs01/userspace` (PUSH & SYNC)
+  B2 — Daily sync of users' spaces (shared excluded) on `/mnt/zp1hs01/userspace` (PUSH & SYNC)
 - **Each Sunday at 02:00**:
   legacy whole-pool sync of `/mnt/zp1hs01`
   (PUSH & SYNC) --

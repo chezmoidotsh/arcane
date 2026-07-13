@@ -35,11 +35,14 @@ Selected datasets are pushed off-site to {{backups.destination}}, split
 across private, file lock-protected buckets (immutable for the retention
 window below, with older versions pruned after the lifecycle window):
 
+#### Where are the backups stored:
 {{#each backups.buckets}}
 - `{{name}}` -- {{retentionDays}}-day file lock retention, {{lifecycleDeleteDays}}-day
   lifecycle prune.
 {{/each}}
 
+
+#### What is backed up and when:
 {{#each backups.jobs}}
 - **{{cronToEach schedule.minute schedule.hour schedule.dom schedule.month schedule.dow}}**:
   {{{description}}} on `{{source}}` ({{direction}} & {{transferMode}}){{#unless enabled}} *(disabled)*{{/unless}}
