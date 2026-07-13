@@ -4,6 +4,7 @@ import { describe, it } from "mocha";
 import { render } from "./render";
 
 const fixtureContext = {
+	builtAt: "2026-07-13T12:34:56.789Z",
 	pools: [
 		{
 			name: "zp1cs01",
@@ -11,7 +12,6 @@ const fixtureContext = {
 			datasetsTree: "zp1cs01\n└─ media",
 		},
 	],
-	poolsList: "`zp1cs01`",
 	scrubTasks: [
 		{
 			poolName: "zp1cs01",
@@ -157,7 +157,8 @@ const fixtureContext = {
 describe("TRUENAS.md template", () => {
 	it("renders every section heading", () => {
 		const md = render(fixtureContext);
-		expect(md).to.include("# TrueNAS (`nas.chezmoi.sh`)");
+		expect(md).to.include('<h1 align="center">');
+		expect(md).to.include("TrueNAS SCALE - Home NAS");
 		expect(md).to.include("## How it's managed");
 		expect(md).to.include("## Network & services");
 		expect(md).to.include("## Pools, disks & datasets");
@@ -169,16 +170,16 @@ describe("TRUENAS.md template", () => {
 
 	it("renders the overview before How it's managed", () => {
 		const md = render(fixtureContext);
-		const overviewIndex = md.indexOf("`nas.chezmoi.sh` is my home NAS");
+		const overviewIndex = md.indexOf("`nas.chezmoi.sh` is the household NAS");
 		const managedIndex = md.indexOf("## How it's managed");
 		expect(overviewIndex).to.be.greaterThan(-1);
 		expect(overviewIndex).to.be.lessThan(managedIndex);
 	});
 
-	it("mentions Proxmox and states the pool count/names from real data, unescaped", () => {
+	it("mentions Proxmox and states the pool count from real data", () => {
 		const md = render(fixtureContext);
 		expect(md).to.include("virtual machine on Proxmox");
-		expect(md).to.include("1 ZFS pool --\n`zp1cs01`");
+		expect(md).to.include("1 ZFS pool detailed");
 		expect(md).to.not.include("&#x60;");
 	});
 
@@ -196,10 +197,10 @@ describe("TRUENAS.md template", () => {
 	it("renders NFS shares as a bullet list, without any host information", () => {
 		const md = render(fixtureContext);
 		expect(md).to.include(
-			"- `nfs-share-animes` (Dossier partagé des animés) --\n  read/write, mapped to `nobody`",
+			"- `nfs-share-animes` (Dossier partagé des animés) —\n  read/write, mapped to `nobody`",
 		);
 		expect(md).to.include(
-			"- `nfs-share-documents-shared` (Documents personnels d'alexandre) --\n  read-only, mapped to `paperless-ngx`",
+			"- `nfs-share-documents-shared` (Documents personnels d'alexandre) —\n  read-only, mapped to `paperless-ngx`",
 		);
 		expect(md).to.not.include("10.0.3.195");
 	});
@@ -207,15 +208,15 @@ describe("TRUENAS.md template", () => {
 	it("marks a disabled NFS share", () => {
 		const md = render(fixtureContext);
 		expect(md).to.include(
-			"- `nfs-share-disabled-example` (Example disabled share) --\n  read/write, disabled",
+			"- `nfs-share-disabled-example` (Example disabled share) —\n  read/write, disabled",
 		);
 	});
 
 	it("explains the SMB purpose presets one per line and renders shares as a bullet list", () => {
 		const md = render(fixtureContext);
-		expect(md).to.include("- `DEFAULT_SHARE` -- the general-purpose preset.");
+		expect(md).to.include("**`DEFAULT_SHARE`** — the general-purpose preset.");
 		expect(md).to.include(
-			"- `smb-share-films` (Dossier partagé des films) -- LEGACY_SHARE",
+			"- `smb-share-films` (Dossier partagé des films) — **LEGACY_SHARE**",
 		);
 	});
 
@@ -240,8 +241,8 @@ describe("TRUENAS.md template", () => {
 		expect(md).to.include(
 			"`nas.chezmoi.sh` sits behind gateway `10.0.0.1` and resolves\nDNS through 10.0.0.1 and 9.9.9.9.",
 		);
-		expect(md).to.include("`ens18` at `10.0.0.30/22` (MTU 1500)");
-		expect(md).to.include("`ens27` at `172.31.255.253/30` (MTU 1500)");
+		expect(md).to.include("`ens18` at `10.0.0.30/22` _(MTU 1500)_");
+		expect(md).to.include("`ens27` at `172.31.255.253/30` _(MTU 1500)_");
 		expect(md).to.include("ssh, cifs and nfs\nare enabled; ftp stay off.");
 	});
 
@@ -307,5 +308,10 @@ describe("TRUENAS.md template", () => {
 		const md = render(fixtureContext);
 		expect(md).to.include("cannot apply filesystem ACLs to a dataset");
 		expect(md).to.include("Apply the matching template to each dataset below");
+	});
+
+	it("renders a last-built footer with timestamp", () => {
+		const md = render(fixtureContext);
+		expect(md).to.include("Last built: 2026-07-13T12:34:56.789Z");
 	});
 });

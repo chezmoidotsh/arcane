@@ -29,7 +29,6 @@ import {
 	extractSnapshotTasks,
 	resourcesOfType,
 } from "./extract";
-import { humanList } from "./helpers";
 import { render } from "./render";
 import {
 	type ExportedResource,
@@ -136,7 +135,11 @@ async function main(): Promise<void> {
 		resources.find((r) => r.type === "pulumi:pulumi:Stack")?.outputs ?? {};
 
 	const url = readConfig(projectRoot, "truenas:url");
-	const apiKey = readConfig(projectRoot, "truenas:apiKey");
+	const apiKey = process.env.TRUENAS_API_KEY;
+	if (!apiKey)
+		throw new Error(
+			"TRUENAS_API_KEY env var is required to generate TrueNAS docs",
+		);
 
 	const poolNames = extractPoolNames(resources);
 	const pools = await Promise.all(
@@ -147,11 +150,8 @@ async function main(): Promise<void> {
 	const legacyGlobalSync = extractLegacyGlobalSync(resources);
 
 	const context = {
+		builtAt: new Date().toISOString(),
 		pools,
-		// `poolsList` is pre-formatted (not left to the template) so its backticks
-		// survive Handlebars' default HTML-escaping of `{{ }}` expressions --
-		// `{{{poolsList}}}` (triple-stache) renders it unescaped.
-		poolsList: humanList(poolNames.map((name) => `\`${name}\``)),
 		nfsShares: extractNfsShares(resources),
 		smbShares: extractSmbShares(resources),
 		network: extractNetwork(resources),

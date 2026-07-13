@@ -1,17 +1,34 @@
-# TrueNAS (`nas.chezmoi.sh`)
+<h1 align="center">
+  <picture>
+    <img alt="TrueNAS SCALE logo" src="assets/icons/hardware/truenas-scale.svg" width="201">
+  </picture>
+</h1>
 
-> Generated from the deployed `chezmoi-sh-infra` Pulumi stack's own state. Do
-> not edit by hand -- regenerate with `mise run truenas:docs:generate`
-> (already chained onto `mise run pulumi:apply`).
+<h4 align="center">TrueNAS SCALE - Home NAS</h4>
+
+---
+
+> [!NOTE]
+> This document is **auto-generated** from the `chezmoi-sh-infra` Pulumi stack's
+> own live state — do not edit it by hand. Regenerate it with
+> `mise run truenas:docs:generate` (already chained onto `mise run pulumi:apply`).
 
 {{> overview}}
 
 ## How it's managed
 
-`nas.chezmoi.sh` (TrueNAS SCALE) is managed as code via the `chezmoi-sh-infra`
-Pulumi stack (state in a self-hosted Garage S3 backend). Provider credentials
-come from stack config (`truenas:url`), set via `pulumi config set --secret`
--- never hardcoded in source.
+`nas.chezmoi.sh` (TrueNAS SCALE) is managed as code via the
+[`chezmoi-sh-infra`](../src/infrastructure/pulumi/) Pulumi stack.
+
+```sh
+mise run pulumi:diff              # preview pending changes
+mise run pulumi:apply             # apply changes (regenerates this doc automatically)
+mise run truenas:docs:generate    # regenerate this document only
+```
+
+Any change to the NAS (datasets, shares, users, snapshots, …) is declared in
+the stack above and applied through Pulumi. Applying the stack also regenerates
+this document — there is normally no reason to run the generator by hand.
 
 {{> network}}
 {{> pools}}
@@ -19,3 +36,6 @@ come from stack config (`truenas:url`), set via `pulumi config set --secret`
 {{> permissions}}
 {{> backups}}
 {{> security}}
+
+---
+<sup>Last built: {{builtAt}}</sup>

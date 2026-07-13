@@ -11,19 +11,27 @@
 
 ### Identities
 
+<div align="center">
+
 | Username | UID | GID | SMB |
 | --- | --- | --- | --- |
 {{#each identities}}
 | `{{username}}` | {{uid}} | {{gid}} | {{#if smb}}yes{{else}}no{{/if}} |
 {{/each}}
 
+</div>
+
 ### NFS4 ACL templates
+
+<div align="center">
 
 | Name | ACL type | Grants |
 | --- | --- | --- |
 {{#each aclTemplates}}
 | `{{name}}` | {{acltype}} | {{{comment}}} |
 {{/each}}
+
+</div>
 
 ### Dataset → template assignment
 
@@ -38,10 +46,12 @@ Apply the matching template to each dataset below via the TrueNAS UI's ACL
 editor: `Storage` → `Datasets` → select the dataset → `Edit Permissions` →
 set `ACL Type` to `NFSv4` → `Use ACL Preset`.
 
+<div align="center">
+
 | Dataset | Template to apply |
 | --- | --- |
 {{#each aclAssignments}}
 | `{{dataset}}` | `{{template}}` |
 {{/each}}
 
-
+</div>

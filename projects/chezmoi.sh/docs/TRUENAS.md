@@ -1,31 +1,54 @@
-# TrueNAS (`nas.chezmoi.sh`)
+<h1 align="center">
+  <picture>
+    <img alt="TrueNAS SCALE logo" src="assets/icons/hardware/truenas-scale.svg" width="201">
+  </picture>
+</h1>
 
-> Generated from the deployed `chezmoi-sh-infra` Pulumi stack's own state. Do
-> not edit by hand -- regenerate with `mise run truenas:docs:generate`
-> (already chained onto `mise run pulumi:apply`).
+<h4 align="center">TrueNAS SCALE - Home NAS</h4>
 
-`nas.chezmoi.sh` is my home NAS: bulk media storage for players on the LAN,
-self-hosted application data (Immich, Paperless, Silverbullet, Garage, and the
-reverse proxy in front of them), personal and shared documents, and backup
-targets for Home Assistant and Time Machine.
+---
+
+> [!NOTE]
+> This document is **auto-generated** from the `chezmoi-sh-infra` Pulumi stack's
+> own live state — do not edit it by hand. Regenerate it with
+> `mise run truenas:docs:generate` (already chained onto `mise run pulumi:apply`).
+
+`nas.chezmoi.sh` is the household NAS. Its sole role is **data storage**: the
+media library (films, series, anime, music, books), personal documents and home
+archives, data volumes for select self-hosted applications (Immich,
+Paperless-ngx, Silverbullet), and backup targets — including database dumps
+pushed to S3.
+
+The only service it runs beyond plain file storage is
+[Garage](https://garagehq.deuxfleurs.fr/), an S3-compatible object store —
+TrueNAS SCALE has no native S3, so Garage fills that gap, but it stays in the
+data-serving domain, not application hosting.
 
 It runs as a TrueNAS SCALE virtual machine on Proxmox, with
-2 ZFS pools --
-`zp1cs01` and `zp1hs01` -- detailed in the section below, plus an off-site copy of
-the data pushed to Backblaze B2.
+2 ZFS pools detailed
+in the section below, plus an off-site copy of the data pushed to Backblaze B2.
 
 ## How it's managed
 
-`nas.chezmoi.sh` (TrueNAS SCALE) is managed as code via the `chezmoi-sh-infra`
-Pulumi stack (state in a self-hosted Garage S3 backend). Provider credentials
-come from stack config (`truenas:url`), set via `pulumi config set --secret`
--- never hardcoded in source.
+`nas.chezmoi.sh` (TrueNAS SCALE) is managed as code via the
+[`chezmoi-sh-infra`](../src/infrastructure/pulumi/) Pulumi stack.
+
+```sh
+mise run pulumi:diff              # preview pending changes
+mise run pulumi:apply             # apply changes (regenerates this doc automatically)
+mise run truenas:docs:generate    # regenerate this document only
+```
+
+Any change to the NAS (datasets, shares, users, snapshots, …) is declared in
+the stack above and applied through Pulumi. Applying the stack also regenerates
+this document — there is normally no reason to run the generator by hand.
 
 ## Network & services
 
 `nas.chezmoi.sh` sits behind gateway `10.0.0.1` and resolves
 DNS through 10.0.0.1 and 9.9.9.9. Its physical interfaces:
-`ens18` at `10.0.0.30/22`, `10.0.0.31/22` (MTU 1500); `ens27` at `172.31.255.253/30` (MTU 1500).
+- `ens18` at `10.0.0.30/22`, `10.0.0.31/22` _(MTU 1500)_
+- `ens27` at `172.31.255.253/30` _(MTU 1500)_
 
 The NAS exposes only the protocols it needs: cifs, nfs and ssh
 are enabled; ftp, iscsitarget, snmp and ups stay off.
@@ -113,23 +136,24 @@ clients, application storage, and Time Machine.
 
 ### SMB
 
-Each share below applies one of TrueNAS's presets:
+> [!NOTE]
+> Each share applies one of TrueNAS's presets:
+>
+> - **`DEFAULT_SHARE`** — the general-purpose preset.
+> - **`LEGACY_SHARE`** — skips presets entirely (options are set manually, not a sign the share is deprecated).
+> - **`PRIVATE_DATASETS_SHARE`** — meant for one dataset per user.
+> - **`TIMEMACHINE_SHARE`** — enables the SMB extensions macOS Time Machine needs.
 
-- `DEFAULT_SHARE` -- the general-purpose preset.
-- `LEGACY_SHARE` -- skips presets entirely (options are set manually by hand, not a sign the share is deprecated).
-- `PRIVATE_DATASETS_SHARE` -- meant for one dataset per user.
-- `TIMEMACHINE_SHARE` -- enables the SMB extensions macOS Time Machine needs.
-
-- `smb-share-animes` (Accès aux animés de la médiathèque) -- LEGACY_SHARE
-- `smb-share-application-immich` (Stockage applicatif Immich (Kubernetes)) -- LEGACY_SHARE
-- `smb-share-application-paperless` (Stockage applicatif Paperless-ngx (Kubernetes)) -- LEGACY_SHARE
-- `smb-share-films` (Accès aux films de la médiathèque) -- LEGACY_SHARE
-- `smb-share-hass-chezmoi-sh` (Sauvegardes Home Assistant) -- DEFAULT_SHARE
-- `smb-share-livres` (Accès aux livres de la médiathèque) -- DEFAULT_SHARE
-- `smb-share-mes-documents` (Documents personnels) -- PRIVATE_DATASETS_SHARE
-- `smb-share-musique` (Accès aux musiques de la médiathèque) -- DEFAULT_SHARE
-- `smb-share-series-tv` (Accès aux séries TV/streaming de la médiathèque) -- LEGACY_SHARE
-- `smb-share-shared-documents` (Documents partagés) -- LEGACY_SHARE
+- `smb-share-animes` (Accès aux animés de la médiathèque) — **LEGACY_SHARE**
+- `smb-share-application-immich` (Stockage applicatif Immich (Kubernetes)) — **LEGACY_SHARE**
+- `smb-share-application-paperless` (Stockage applicatif Paperless-ngx (Kubernetes)) — **LEGACY_SHARE**
+- `smb-share-films` (Accès aux films de la médiathèque) — **LEGACY_SHARE**
+- `smb-share-hass-chezmoi-sh` (Sauvegardes Home Assistant) — **DEFAULT_SHARE**
+- `smb-share-livres` (Accès aux livres de la médiathèque) — **DEFAULT_SHARE**
+- `smb-share-mes-documents` (Documents personnels) — **PRIVATE_DATASETS_SHARE**
+- `smb-share-musique` (Accès aux musiques de la médiathèque) — **DEFAULT_SHARE**
+- `smb-share-series-tv` (Accès aux séries TV/streaming de la médiathèque) — **LEGACY_SHARE**
+- `smb-share-shared-documents` (Documents partagés) — **LEGACY_SHARE**
 
 ## Permissions
 
@@ -144,6 +168,8 @@ Each share below applies one of TrueNAS's presets:
 
 ### Identities
 
+<div align="center">
+
 | Username | UID | GID | SMB |
 | --- | --- | --- | --- |
 | `firesticktv` | 3000 | 140 | yes |
@@ -152,7 +178,11 @@ Each share below applies one of TrueNAS's presets:
 | `jellyfin` | 30004 | 141 | yes |
 | `paperless` | 30003 | 138 | yes |
 
+</div>
+
 ### NFS4 ACL templates
+
+<div align="center">
 
 | Name | ACL type | Grants |
 | --- | --- | --- |
@@ -161,6 +191,8 @@ Each share below applies one of TrueNAS's presets:
 | `NFSV4_SMB_MEDIA` | NFS4 | Like NFSV4_SMB_ALL (every local SMB account gets read+write), except FireStickTV and Jellyfin are pinned to read-only -- both only ever consume the media library, never write to it. |
 | `NFSV4_SMB_VIEWER` | NFS4 | Owner gets read+write; every other local SMB account (`builtin_users`) gets read-only. |
 | `NFSV4_TRUENAS_APPLICATION` | NFS4 | Only TrueNAS's own `apps` service account gets read+write. For datasets backing TrueNAS's native Apps feature, not applications this stack manages itself. |
+
+</div>
 
 ### Dataset → template assignment
 
@@ -175,6 +207,8 @@ Apply the matching template to each dataset below via the TrueNAS UI's ACL
 editor: `Storage` → `Datasets` → select the dataset → `Edit Permissions` →
 set `ACL Type` to `NFSv4` → `Use ACL Preset`.
 
+<div align="center">
+
 | Dataset | Template to apply |
 | --- | --- |
 | `zp1cs01/media` | `NFSV4_SMB_MEDIA` |
@@ -183,7 +217,7 @@ set `ACL Type` to `NFSv4` → `Use ACL Preset`.
 | `zp1hs01/applications/managed/app.immich` | `NFSV4_MANAGED_APPLICATION` |
 | `zp1hs01/applications/managed/com.paperless-ngx` | `NFSV4_MANAGED_APPLICATION` |
 
-
+</div>
 ## Backups
 
 `nas.chezmoi.sh` protects its data through three independent layers, each
@@ -271,3 +305,6 @@ protect against:
   live API), and the templates it *can* manage have no way to be applied to
   a path except by hand, in the TrueNAS UI. Nothing detects or reverts a
   dataset whose actual ACL has drifted from its documented assignment.
+
+---
+<sup>Last built: 2026-07-13T22:52:15.977Z</sup>
