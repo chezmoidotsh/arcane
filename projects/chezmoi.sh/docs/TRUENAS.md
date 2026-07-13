@@ -225,14 +225,14 @@ Selected datasets are pushed off-site to Backblaze B2, split
 across private, file lock-protected buckets (immutable for the retention
 window below, with older versions pruned after the lifecycle window):
 
-#### Where are the backups stored:
+#### Where are the backups stored
 - `nas-backup-4e6b1351` -- 7-day file lock retention, 60-day
   lifecycle prune.
 - `nas-backup-50a30f2b` -- 7-day file lock retention, 60-day
   lifecycle prune.
 
 
-#### What is backed up and when:
+#### What is backed up and when
 - **Each Sunday at 02:00**:
   B2 — Weekly sync of immich.app application on `/mnt/zp1hs01/applications/managed/app.immich` (PUSH & SYNC)
 - **Each Sunday at 02:00**:

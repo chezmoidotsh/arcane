@@ -1,8 +1,7 @@
 # TrueNAS SCALE (nas.chezmoi.sh) as Code
 
-This folder contains the Pulumi TypeScript stack that manages [nas.chezmoi.sh](https://nas.chezmoi.sh), a TrueNAS SCALE
-server, as declarative code. The generated human-facing documentation is published at
-[`docs/TRUENAS.md`](../../../../../docs/TRUENAS.md).
+This folder contains the Pulumi TypeScript stack that manages `nas.chezmoi.sh`, a TrueNAS SCALE server, as declarative
+code. The generated human-facing documentation is published at [`docs/TRUENAS.md`](../../../../../docs/TRUENAS.md).
 
 ## What's managed here
 

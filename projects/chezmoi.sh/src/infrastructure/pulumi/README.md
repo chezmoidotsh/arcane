@@ -1,8 +1,8 @@
 # chezmoi.sh Shared Infrastructure (`chezmoi-sh-infra`)
 
 The Pulumi TypeScript stack managing shared cloud infrastructure for chezmoi.sh: Cloudflare and Tailscale API tokens,
-Backblaze B2 buckets, and the TrueNAS SCALE server [nas.chezmoi.sh](https://nas.chezmoi.sh) as code. State lives in the
-Garage S3 backend (`s3://pulumi-states`, see `Pulumi.yaml`); the generated TrueNAS reference is published at
+Backblaze B2 buckets, and the TrueNAS SCALE server `nas.chezmoi.sh` as code. State lives in the Garage S3 backend
+(`s3://pulumi-states`, see `Pulumi.yaml`); the generated TrueNAS reference is published at
 [`../../../docs/TRUENAS.md`](../../../docs/TRUENAS.md).
 
 ## Directory layout
