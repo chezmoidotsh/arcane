@@ -24,6 +24,7 @@ import { paperlessAclAssignment } from "./users/paperless-ngx";
 export { fireStickTvPasswordSecret } from "./users/firesticktv";
 export { homeAssistantPasswordSecret } from "./users/home-assistant";
 export { immichPasswordSecret } from "./users/immich";
+export { jellyfinPasswordSecret } from "./users/jellyfin";
 export { paperlessPasswordSecret } from "./users/paperless-ngx";
 
 // Every NFS4-ACL-template-to-dataset assignment this stack knows about, in

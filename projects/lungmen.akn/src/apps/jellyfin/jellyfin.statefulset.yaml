@@ -76,32 +76,26 @@ spec:
         fsGroup: 64710
         seccompProfile:
           type: RuntimeDefault
-        # 65534 is the group ID for 'nobody' (or 'nfsnobody'), required for access to NFS-mounted media directories exported with this group.
-        supplementalGroups: [65534]
       volumes:
         - name: cache
           emptyDir: {}
         - name: tmpdir
           emptyDir: {}
         - name: movies
-          nfs:
-            server: nas.chezmoi.sh
-            path: /mnt/zp1cs01/media/movies
+          persistentVolumeClaim:
+            claimName: jellyfin-movies-smb-storage
             readOnly: true
         - name: tvshows
-          nfs:
-            server: nas.chezmoi.sh
-            path: /mnt/zp1cs01/media/tvshows
+          persistentVolumeClaim:
+            claimName: jellyfin-tvshows-smb-storage
             readOnly: true
         - name: musics
-          nfs:
-            server: nas.chezmoi.sh
-            path: /mnt/zp1cs01/media/musics
+          persistentVolumeClaim:
+            claimName: jellyfin-musics-smb-storage
             readOnly: true
         - name: animes
-          nfs:
-            server: nas.chezmoi.sh
-            path: /mnt/zp1cs01/media/animes
+          persistentVolumeClaim:
+            claimName: jellyfin-animes-smb-storage
             readOnly: true
   volumeClaimTemplates:
     - apiVersion: v1

@@ -21,6 +21,10 @@ in that range and moving on is the whole rule; there's no further sub-structure 
 > (TrueNAS assigns one from its normal range) and no `Nfs4AclAssignment`, since the shares it needs are already open to
 > every local SMB account via `NFSV4_SMB_ALL` (`../acls.ts`). Everything else about it (password handling,
 > `groupCreate`, `home`/`shell`) still follows the same conventions as every other account below.
+>
+> **Partial exception: `jellyfin.ts`.** This one _does_ back an application (Jellyfin, in Kubernetes) and so still takes
+> a `uid` from the SA range below -- but like `firesticktv.ts`, it owns no dataset and has no `Nfs4AclAssignment`: it
+> only needs to read the same already-open media shares over SMB.
 
 ## Why every field below is set explicitly
 

@@ -12,6 +12,7 @@ labels:
 
 resources:
   - jellyfin.httproute.yaml
+  - jellyfin.smb-storage.yaml
   - jellyfin.statefulset.yaml
   - security/
 
