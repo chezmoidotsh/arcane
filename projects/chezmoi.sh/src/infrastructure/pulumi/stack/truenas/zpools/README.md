@@ -61,34 +61,44 @@ errors are caught early. This is the _local_ first layer of defense.
 
 ### Layer 2: Accidental-Deletion Protection (SnapshotTask)
 
-Only zp1hs01 has an automated snapshot task (daily at 00:00):
+Two snapshot tiers run on zp1hs01 (zp1cs01 has none — its media is re-obtainable or not critical enough to justify
+retention):
 
-- **Recursive**: snapshots the entire zp1hs01 tree and all children
-- **Lifetime**: 2 weeks (snapshots are automatically deleted after 14 days)
-- **Schedule**: daily
-- **Naming scheme**: auto-%Y-%m-%d\_%H-%M (e.g., auto-2026-07-11_00-00)
+- **Whole-pool snapshot** (`zp1hs01-snapshot`): recursive, weekly Sunday at 03:00, 4-week retention. A coarse safety net
+  covering every dataset in the pool, including ones without a dedicated granular task.
+- **Granular daily snapshots** (`zp1hs01-snapshot-{id}`): non-recursive, daily at midnight, 8-day retention — one per
+  dataset that changes often or matters most. Currently `applications/managed/app.immich` and
+  `applications/managed/com.paperless-ngx` (Kubernetes-managed app state).
 
-Snapshots provide point-in-time recovery for accidental deletions, filesystem corruption, or ransomware-like attacks.
-They are instant, lightweight copies that consume minimal disk space while they exist. The 2-week retention window
-balances recovery options against storage cost. This is the _local_ second layer of defense.
+Both use the naming schema `auto-%Y-%m-%d_%H-%M`. Snapshots are instant, lightweight copies that consume only the disk
+space of changes made after they are taken. The two tiers balance breadth (a whole-pool fallback) against tighter daily
+granularity for the data most likely to need a recent restore point. This is the _local_ second layer of defense.
 
 ### Layer 3: Site-Loss Protection (CloudSync to Backblaze B2)
 
-The zp1hs01 pool is continuously replicated off-site to Backblaze B2 via CloudSync:
+Selected datasets from zp1hs01 are pushed off-site to Backblaze B2 (zp1cs01 is not synced — its media is re-obtainable).
+Two private, file lock-protected buckets back this:
 
-- **Source**: /mnt/zp1hs01 (entire pool)
-- **Destination**: nas-backup-50a30f2b bucket on Backblaze B2
-- **Schedule**: weekly, Sundays at 00:00
-- **Sync mode**: SYNC (one-way, any local deletions are replicated)
-- **Protection**: File Lock (Object Lock) in governance mode
-  - Uploads become immutable for 7 days against deletion/overwrite
-  - The sync credentials have no bypassGovernance capability (even if leaked, cannot immediately delete backups)
-  - Lifecycle rules auto-delete superseded file versions after 60 days
-  - Account root key retains bypassGovernance for genuine recovery (key escrow)
+- `nas-backup-50a30f2b` (legacy) — backs the whole-pool sync.
+- `nas-backup-4e6b1351` (current) — backs the granular per-dataset syncs.
 
-This off-site copy protects against site loss (fire, theft, complete NAS failure). The File Lock immutability window and
-low-privilege credentials provide defense against ransomware or a leaked sync key. This is the _remote_ third layer of
-defense.
+Both enforce governance-mode File Lock with a 7-day default retention (uploads become immutable against
+deletion/overwrite for a week) and a 60-day lifecycle prune of superseded versions.
+
+Granular syncs (PUSH/SYNC, one per dataset, targeting the current bucket):
+
+- `applications/managed/app.immich` — weekly, Sundays at 02:00.
+- `applications/managed/com.paperless-ngx` — weekly, Sundays at 02:00.
+- `applications/truenas` — daily at 01:00.
+- `userspace` (shared excluded) — daily at 01:00.
+
+A legacy whole-pool sync of `/mnt/zp1hs01` (weekly, Sundays at 02:00, PUSH/SYNC) still runs against the legacy bucket as
+a coarse fallback — it writes to a different bucket, so it doesn't duplicate or conflict with the granular jobs.
+
+The exact, live set of sync jobs, schedules, and buckets is regenerated into `projects/chezmoi.sh/docs/TRUENAS.md` by
+`toolbox/truenas-docs` on every `pulumi:apply` — that file is the authoritative reference for backup rules, not this
+README. This off-site copy protects against site loss (fire, theft, total NAS failure); the File Lock window limits the
+damage a leaked sync key can do. This is the _remote_ third layer of defense.
 
 **Why three layers?**
 
@@ -114,33 +124,28 @@ keeping the workload manageable.
 
 ### Snapshot Retention Trade-Offs
 
-Snapshots consume disk space only for changed data after the snapshot is taken. The zp1hs01 pool retains 2-week
-snapshots:
-
-- **Pro**: 14 days to recover from accidental deletion or corruption
-- **Con**: if changes are rapid, snapshot space can accumulate; the 2-week window balances both
-
-Increasing retention to 1 month would cost more disk space but allow recovery from older incidents. Decreasing to 1 week
-would free space but narrow the recovery window. The current 2-week retention is a practical middle ground for a
-personal NAS.
+Snapshots consume disk space only for changed data after the snapshot is taken. zp1hs01 runs two tiers (see Layer 2
+above): a 4-week whole-pool snapshot and 8-day granular snapshots for the two most volatile datasets. The whole-pool
+tier gives a month-long fallback for any dataset; the granular tier gives a tighter daily window for Kubernetes app
+state that changes often. Widening either window costs more space; narrowing it frees space but shortens the recovery
+window.
 
 ### Dataset-Specific Configuration Details
 
-**zp1hs01/applications/immich (recordSize=1M)** Immich is a photo management system that handles large media files
-(photos, video). The 1 MiB recordsize is set explicitly because larger records reduce fragmentation and improve
-throughput for photo/video I/O, outweighing the slightly larger minimum allocation. All other datasets use the 128 KiB
-default.
+**recordsize=1M** (`applications/immich`, `applications/managed/app.immich`) Both Immich datasets — the legacy
+TrueNAS-App instance and the current Kubernetes-managed one — handle large media files, so a 1 MiB recordsize reduces
+fragmentation and improves throughput. All other datasets use the 128 KiB default.
 
-**zp1hs01/applications (atime=off, compression=lz4)** These properties are explicitly set on the applications subtree to
-override any pool-wide defaults. While the pool root already inherits these from TrueNAS (not managed by Pulumi), the
-explicit declaration ensures consistency if the configuration is ever migrated or re-applied.
+**atime=off, compression=lz4** Set explicitly on the `applications`, `applications/truenas`, `applications/managed`, and
+`userspace` subtrees. While the pool root already inherits these from TrueNAS (not managed by Pulumi), the explicit
+declaration ensures consistency if the configuration is ever re-applied.
 
-**zp1hs01/applications/immich, paperless, silverbullet (quotas)** Each application dataset has a strict quota to prevent
-one misbehaving or fast-growing app from consuming all available space:
+**Quotas** Each application dataset has a strict quota to prevent one fast-growing app from consuming all available
+space:
 
-- Immich: 50 GiB
-- Paperless: 10 GiB
-- Silverbullet: 5 GiB
+- Immich (`applications/immich`, `applications/managed/app.immich`): 50 GiB
+- Paperless (`applications/paperless`, `applications/managed/com.paperless-ngx`): 10 GiB
+- Silverbullet (`applications/silverbullet`): 5 GiB
 
 Quotas are enforced at write time; once reached, further writes to that dataset fail. This is essential for multi-tenant
 NAS scenarios where different apps compete for storage.
@@ -151,11 +156,13 @@ Both pools are configured (outside Pulumi) with atime=off and compression=lz4 at
 these properties unless explicitly overridden. This design avoids redundant Pulumi declarations—the defaults are set
 once in TrueNAS, and Pulumi only declares properties where they differ from the parent.
 
-### Personal Datasets Intentionally Excluded
+### Legacy and Unmanaged Datasets
 
-The zp1hs01/documents subtree exists as a placeholder for personal files (documents/{alexandre,estelle,shared}). These
-are not yet managed through Pulumi to avoid exposing personal dataset hierarchies in the infrastructure-as-code
-repository. When needed, they can be added as additional dataset entries in the zp1hs01.ts file.
+`zp1hs01/documents` is a legacy space, now superseded by `userspace` (see its comment in `zp1hs01.ts`). Per-user
+subdatasets under `userspace/%U` are unmanaged: TrueNAS's dynamic per-connecting-user share mechanism has no fixed path
+to point an ACL at, so it can't be modeled as a static Pulumi resource or assignment. `documents/**` (except the two
+Paperless NFS shares) stays unmanaged intentionally for the same reason — see the Limitations notes under the ACL
+section below.
 
 ### Filesystem ACLs: NFS4 Templates, Applied by Hand
 
@@ -170,9 +177,10 @@ TrueNAS API rather than assumed from docs:
   no field to reference a template by id, so nothing in this provider can apply one to a path. Only a human can, through
   the UI.
 
-Given that, `../acls.ts` manages 4 NFS4 ACL templates (`NFSV4_MANAGED_APPLICATION`, `NFSV4_TRUENAS_APPLICATION`,
-`NFSV4_SMB_ALL`, `NFSV4_SMB_VIEWER` -- see that file for what each grants and why), and every managed dataset is paired
-with the template it should get, via a `Nfs4AclAssignment` export living next to whatever declared the dataset:
+Given that, `../acls.ts` manages 5 NFS4 ACL templates (`NFSV4_MANAGED_APPLICATION`, `NFSV4_TRUENAS_APPLICATION`,
+`NFSV4_SMB_ALL`, `NFSV4_SMB_MEDIA`, `NFSV4_SMB_VIEWER` -- see that file for what each grants and why), and every managed
+dataset is paired with the template it should get, via a `Nfs4AclAssignment` export living next to whatever declared the
+dataset:
 
 - **No dedicated owner** (`zp1cs01/media`, `zp1hs01/userspace/shared`): the assignment lives in `../acls.ts`.
 - **One dedicated service account** (`zp1hs01/backups/hass.chezmoi.sh`,
@@ -215,8 +223,9 @@ Declaring them separately keeps the abstraction boundaries clean and the compone
 ### Import Pattern
 
 Pools are declared in zp1cs01.ts and zp1hs01.ts but NOT re-exported from an index file. This prevents the zpool
-resources themselves from being included in stack outputs (which would be massive). Other files (apps.ts, shares.ts,
-toolbox/truenas-docs/generate.ts) import pools directly:
+resources themselves from being included in stack outputs (which would be massive). Other files (`apps.ts`, `shares.ts`)
+import pools directly; `toolbox/truenas-docs/generate.ts` reads pool state from the Pulumi stack export instead. They
+import as follows:
 
 ```typescript
 import { zp1hs01 } from "./zpools/zp1hs01";
