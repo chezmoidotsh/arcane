@@ -7,19 +7,19 @@ Garage S3 backend (`s3://pulumi-states`, see `Pulumi.yaml`); the generated TrueN
 
 ## Directory layout
 
-`src/` holds Pulumi resources (run by `pulumi up`); `toolbox/` holds standalone tooling that shells out to the `pulumi`
-CLI and is never part of a Pulumi run.
+`stack/` holds Pulumi resources (run by `pulumi up`); `toolbox/` holds standalone tooling that shells out to the
+`pulumi` CLI and is never part of a Pulumi run.
 
-| File/Folder             | Responsibility                                                                                                                                          |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `index.ts`              | Entry point — side-effect imports of every resource module below (no logic)                                                                             |
-| `config.ts`             | Pulumi secret config (Cloudflare account/zone IDs, Garage admin credentials)                                                                            |
-| `src/backblaze.ts`      | Backblaze B2 buckets backing the TrueNAS CloudSync backup jobs                                                                                          |
-| `src/observability.ts`  | Observability LXC appliance tokens (Cloudflare DNS-01 + Tailscale OAuth)                                                                                |
-| `src/omni.ts`           | Omni LXC appliance token (Cloudflare DNS-01)                                                                                                            |
-| `src/zot-registry.ts`   | Zot-registry LXC appliance token (Cloudflare DNS-01)                                                                                                    |
-| `src/truenas/`          | TrueNAS SCALE as code (datasets, shares, users, ACL templates); see [`src/truenas/README.md`](src/truenas/README.md)                                    |
-| `toolbox/truenas-docs/` | Standalone doc generator — rebuilds `docs/TRUENAS.md` from deployed stack state; see [`toolbox/truenas-docs/README.md`](toolbox/truenas-docs/README.md) |
+| File/Folder              | Responsibility                                                                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index.ts`               | Entry point — side-effect imports of every resource module below (no logic)                                                                             |
+| `config.ts`              | Pulumi secret config (Cloudflare account/zone IDs, Garage admin credentials)                                                                            |
+| `stack/backblaze.ts`     | Backblaze B2 buckets backing the TrueNAS CloudSync backup jobs                                                                                          |
+| `stack/observability.ts` | Observability LXC appliance tokens (Cloudflare DNS-01 + Tailscale OAuth)                                                                                |
+| `stack/omni.ts`          | Omni LXC appliance token (Cloudflare DNS-01)                                                                                                            |
+| `stack/zot-registry.ts`  | Zot-registry LXC appliance token (Cloudflare DNS-01)                                                                                                    |
+| `stack/truenas/`         | TrueNAS SCALE as code (datasets, shares, users, ACL templates); see [`stack/truenas/README.md`](stack/truenas/README.md)                                |
+| `toolbox/truenas-docs/`  | Standalone doc generator — rebuilds `docs/TRUENAS.md` from deployed stack state; see [`toolbox/truenas-docs/README.md`](toolbox/truenas-docs/README.md) |
 
 ## Tasks
 
@@ -33,5 +33,5 @@ Defined in `.mise.toml`, run from this directory:
 
 ## Further reading
 
-- [`src/truenas/README.md`](src/truenas/README.md) — TrueNAS datasets, shares, users, and ACL conventions
+- [`stack/truenas/README.md`](stack/truenas/README.md) — TrueNAS datasets, shares, users, and ACL conventions
 - [`toolbox/truenas-docs/README.md`](toolbox/truenas-docs/README.md) — how the TrueNAS doc generator works

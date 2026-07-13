@@ -39,7 +39,7 @@ import {
 // `chezmoi_sh.live` stack state -- run standalone (`mise run
 // truenas:docs:generate`, chained onto `pulumi:apply`), not as part of
 // `pulumi up`/`preview` itself. See `./extract.ts` for how resource state
-// becomes plain data, and `../../src/truenas/index.ts` for the one section
+// becomes plain data, and `../../stack/truenas/index.ts` for the one section
 // (NFS4 ACL assignments) that has no infrastructure resource of its own and
 // so travels as a stack output instead.
 // -----------------------------------------------------------------------------
