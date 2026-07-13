@@ -1,7 +1,7 @@
 <h1 align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./assets/logo.dark.svg">
-      <img alt="Stylized letter 'A' with a futuristic font and a subscript 8, representing Amiya·AKN branding" src="./assets/logo.light.svg" width="201">
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/logo.dark.svg">
+      <img alt="Stylized letter 'A' with a futuristic font and a subscript 8, representing Amiya·AKN branding" src="./docs/assets/logo.light.svg" width="201">
   </picture>
 </h1>
 
@@ -34,7 +34,7 @@ need of third-party services.
 
 ## Services Overview
 
-![Architecture diagram](./assets/architecture.svg)
+![Architecture diagram](./docs/assets/architecture.svg)
 
 ---
 

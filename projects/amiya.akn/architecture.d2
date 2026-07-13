@@ -45,7 +45,7 @@ tailnet: {
 aws.ses {
   class: [application]
   label: AWS SES
-  icon: assets/icons/platform/aws.svg
+  icon: docs/assets/icons/platform/aws.svg
   link: https://aws.amazon.com/ses/
   tooltip: Amazon Simple Email Service (SES).
 }
@@ -53,7 +53,7 @@ aws.ses {
 cloudflare: {
   class: [application]
   label: Cloudflare
-  icon: assets/icons/platform/cloudflare.svg
+  icon: docs/assets/icons/platform/cloudflare.svg
   link: https://cloudflare.com/
   tooltip: Cloudflare edge network providing tunneling and security services for public SSO access.
 }
@@ -64,13 +64,13 @@ cloudflare: {
 nas: {
   class: namespace
   label: TrueNAS Scale
-  icon: assets/icons/hardware/truenas-scale.svg
+  icon: docs/assets/icons/hardware/truenas-scale.svg
   tooltip: Home Network Attached Storage (NAS)
 
   minio: {
     class: [application]
     label: MinIO
-    icon: assets/icons/apps/minio.svg
+    icon: docs/assets/icons/apps/minio.svg
     link: https://min.io/
     tooltip: MinIO is a high-performance, distributed object storage system.
   }
@@ -79,7 +79,7 @@ nas: {
 udm-pro: {
   class: hardware
   label: UDM-Pro
-  icon: assets/icons/hardware/unifi.svg
+  icon: docs/assets/icons/hardware/unifi.svg
   tooltip: UniFi Dream Machine Pro - Gateway & Network Controller
 }
 
@@ -112,7 +112,7 @@ amiya·akn: {
   infrastructure.argocd: {
     class: [application]
     label: ArgoCD
-    icon: assets/icons/apps/argo-cd.svg
+    icon: docs/assets/icons/apps/argo-cd.svg
     link: https://argoproj.github.io/cd/
     tooltip: ArgoCD is a declarative, GitOps continuous delivery tool for Kubernetes.
   }
@@ -128,7 +128,7 @@ amiya·akn: {
     openbao: {
       class: [application]
       label: OpenBao
-      icon: assets/icons/apps/openbao.svg
+      icon: docs/assets/icons/apps/openbao.svg
       link: https://openbao.org/
       tooltip: OpenBao is an open-source, community-driven fork of Vault managed by the Linux Foundation. Uses multi-mount topology with dedicated project mounts and shared/ mount.
     }
@@ -136,7 +136,7 @@ amiya·akn: {
     postgresql: {
       class: [application-datastore]
       label: PostgreSQL
-      icon: assets/icons/system/cloudnativepg.svg
+      icon: docs/assets/icons/system/cloudnativepg.svg
       link: https://postgresql.org/
       tooltip: PostgreSQL database backend for OpenBao, managed by CloudNative-PG operator with automated backups to S3.
     }
@@ -150,7 +150,7 @@ amiya·akn: {
     pocket-id: {
       class: [application]
       label: Pocket-ID
-      icon: assets/icons/apps/pocket-id.svg
+      icon: docs/assets/icons/apps/pocket-id.svg
       link: https://pocket-id.org/
       tooltip: Pocket-ID is an open-source identity and access management solution based only on passkeys.
     }
@@ -158,7 +158,7 @@ amiya·akn: {
     postgresql: {
       class: [application-datastore]
       label: PostgreSQL
-      icon: assets/icons/system/cloudnativepg.svg
+      icon: docs/assets/icons/system/cloudnativepg.svg
       link: https://postgresql.org/
       tooltip: PostgreSQL database backend for Pocket-ID, managed by CloudNative-PG operator with automated backups to S3.
     }
@@ -170,7 +170,7 @@ amiya·akn: {
   storage.zot-registry: {
     class: [application]
     label: zot registry
-    icon: assets/icons/apps/zot-registry.svg
+    icon: docs/assets/icons/apps/zot-registry.svg
     link: https://zotregistry.dev/
     tooltip: Zot is a production-ready, vendor-neutral OCI-native container image registry with local PVC storage (50Gi openebs-zfspv).
   }
@@ -181,7 +181,7 @@ amiya·akn: {
   system.cert-manager: {
     class: [application-system]
     label: Cert-Manager
-    icon: assets/icons/system/cert-manager.svg
+    icon: docs/assets/icons/system/cert-manager.svg
     link: https://cert-manager.io/
     tooltip: Cert-Manager is a Kubernetes controller that automates the management and issuance of TLS certificates.
   }
@@ -189,7 +189,7 @@ amiya·akn: {
   system.cilium: {
     class: [application-system]
     label: Cilium
-    icon: assets/icons/system/cilium.svg
+    icon: docs/assets/icons/system/cilium.svg
     link: https://cilium.io/
     tooltip: Cilium is a networking, observability, and security solution with an eBPF-based dataplane.
   }
@@ -197,7 +197,7 @@ amiya·akn: {
   system.envoy-gateway: {
     class: [application-system]
     label: Envoy Gateway
-    icon: assets/icons/system/envoy-gateway.svg
+    icon: docs/assets/icons/system/envoy-gateway.svg
     link: https://gateway.envoyproxy.io/
     tooltip: Envoy Gateway is a modern, open-source Kubernetes-native API gateway built on Envoy Proxy.
   }
@@ -205,7 +205,7 @@ amiya·akn: {
   system.envoy-default-gateway: {
     class: [application-system]
     label: Envoy Default Gateway
-    icon: assets/icons/system/envoy.svg
+    icon: docs/assets/icons/system/envoy.svg
     link: https://gateway.envoyproxy.io/
     tooltip: Envoy to proxy all HTTP/HTTPS traffic in the cluster.
   }
@@ -213,7 +213,7 @@ amiya·akn: {
   system.externaldns: {
     class: [application-system]
     label: ExternalDNS
-    icon: assets/icons/system/external-dns.png
+    icon: docs/assets/icons/system/external-dns.png
     link: https://github.com/kubernetes-sigs/external-dns
     tooltip: ExternalDNS is a Kubernetes controller that configures DNS resources.
   }
@@ -221,7 +221,7 @@ amiya·akn: {
   system.external-secret: {
     class: [application-system]
     label: External-Secret
-    icon: assets/icons/system/external-secret.svg
+    icon: docs/assets/icons/system/external-secret.svg
     link: https://external-secrets.io/
     tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
   }
@@ -229,7 +229,7 @@ amiya·akn: {
   system.longhorn: {
     class: [application-system]
     label: Longhorn
-    icon: assets/icons/system/longhorn.svg
+    icon: docs/assets/icons/system/longhorn.svg
     link: https://longhorn.io/
     tooltip: Longhorn is a distributed block storage system for Kubernetes.
   }
@@ -237,7 +237,7 @@ amiya·akn: {
   system.tailscale: {
     class: [application-system]
     label: Tailscale
-    icon: assets/icons/platform/tailscale.svg
+    icon: docs/assets/icons/platform/tailscale.svg
     link: https://tailscale.com/
     tooltip: TailScale is a mesh VPN that makes it easy to connect your devices, wherever they are.
   }
@@ -245,7 +245,7 @@ amiya·akn: {
   system.cloudnative-pg: {
     class: [application-system]
     label: CloudNative-PG
-    icon: assets/icons/system/cloudnativepg.svg
+    icon: docs/assets/icons/system/cloudnativepg.svg
     link: https://cloudnative-pg.io/
     tooltip: CloudNative-PG is a Kubernetes operator for PostgreSQL management with advanced features like automated backups and high availability.
   }
@@ -253,7 +253,7 @@ amiya·akn: {
   system.cloudflare-operator: {
     class: [application-system]
     label: Cloudflare Operator
-    icon: assets/icons/platform/cloudflare.svg
+    icon: docs/assets/icons/platform/cloudflare.svg
     link: https://github.com/cloudflare/cloudflare-operator
     tooltip: Kubernetes operator for managing Cloudflare tunnels and DNS records declaratively.
   }
@@ -265,7 +265,7 @@ amiya·akn: {
   public-gateway.envoy-public-gateway: {
     class: [application-system]
     label: Envoy Public Gateway
-    icon: assets/icons/system/envoy.svg
+    icon: docs/assets/icons/system/envoy.svg
     link: https://gateway.envoyproxy.io/
     tooltip: Dedicated Envoy gateway for public internet access via Cloudflare tunnel with ClusterIP-only service type for security isolation.
   }
@@ -273,7 +273,7 @@ amiya·akn: {
   public-gateway.cloudflared: {
     class: [application-system]
     label: cloudflared
-    icon: assets/icons/platform/cloudflare.svg
+    icon: docs/assets/icons/platform/cloudflare.svg
     link: https://github.com/cloudflare/cloudflared
     tooltip: Cloudflare tunnel daemon establishing secure connection to Cloudflare's edge network, managed by cloudflare-operator.
   }
@@ -282,7 +282,7 @@ amiya·akn: {
 
   tailscale-connector: {
     label: Tailscale-Connector
-    icon: assets/icons/platform/tailscale.svg
+    icon: docs/assets/icons/platform/tailscale.svg
     link: https://tailscale.com/kb/1441/kubernetes-operator-connector
     tooltip: Tailscale Connector for Kubernetes - Connects local network to tailnet
   }

@@ -13,6 +13,6 @@
 description = "Generate the architecture diagram for amiya.akn cluster"
 # Converts the D2 diagram source to SVG format for documentation
 # Input: architecture.d2 (diagram-as-code source)
-# Output: assets/architecture.svg (embedded in cluster documentation)
-run = "d2 architecture.d2 assets/architecture.svg"
+# Output: docs/assets/architecture.svg (embedded in cluster documentation)
+run = "d2 architecture.d2 docs/assets/architecture.svg"
 dir = "{{ config_root }}"
