@@ -25,13 +25,13 @@ _.file = "{{ config_root }}/.mise/env.yaml"
 
 [tasks."pulumi:diff"]
 description = "Preview pending changes for the chezmoi.sh Pulumi stack (with diff)"
-run = "pulumi preview --diff"
+run = "pulumi preview --refresh --parallel 15"
 dir = "{{ config_root }}"
 
 [tasks."pulumi:apply"]
 description = "Apply pending changes to the chezmoi.sh Pulumi stack, then regenerate TrueNAS docs"
 depends_post = ["truenas:docs:generate"]
-run = ["pulumi up"]
+run = ["pulumi up --refresh --parallel 15"]
 dir = "{{ config_root }}"
 
 [tasks."truenas:docs:generate"]
