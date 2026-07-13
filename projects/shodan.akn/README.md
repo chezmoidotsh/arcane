@@ -34,7 +34,7 @@ while maintaining control over my data and infrastructure.
 
 ## 🏗️ Architecture
 
-![Architecture diagram](./assets/architecture.svg)
+![Architecture diagram](./docs/assets/architecture.svg)
 
 ### 🏗️ Platform Infrastructure
 
