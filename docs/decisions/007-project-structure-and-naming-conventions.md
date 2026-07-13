@@ -1353,12 +1353,12 @@ projects/amiya.akn/
 │       │   └── cloudnative-pg/  # Auto sync - Database operator
 │       │       └── .application.patch
 │       └── crossplane/          # Infrastructure as Code definitions
-├── docs/
-│   ├── BOOTSTRAP_TALOS.md
-│   ├── BOOTSTRAP_ARGOCD.md
-│   └── bootstrap/
-└── assets/
-    └── architecture.svg
+└── docs/
+    ├── assets/
+    │   └── architecture.svg
+    ├── BOOTSTRAP_TALOS.md
+    ├── BOOTSTRAP_ARGOCD.md
+    └── bootstrap/
 ```
 
 #### 12.2 Application Cluster (lungmen.akn pattern)
@@ -1403,11 +1403,11 @@ projects/lungmen.akn/
 │       │       └── .application.patch
 │       ├── crossplane/          # Infrastructure as Code definitions
 │       └── talos/               # Talos configuration files
-├── docs/
-│   ├── BOOTSTRAP_TALOS.md
-│   └── BOOTSTRAP_ARGOCD.md
-└── assets/
-    └── architecture.svg
+└── docs/
+    ├── assets/
+    │   └── architecture.svg
+    ├── BOOTSTRAP_TALOS.md
+    └── BOOTSTRAP_ARGOCD.md
 ```
 
 #### 12.3 Shared Infrastructure (chezmoi.sh pattern)

@@ -177,7 +177,7 @@ Components in `catalog/fluxcd/` exist for the legacy `maison` cluster, which is 
 ### Important paths
 
 - Bootstrap docs: `projects/*/docs/BOOTSTRAP_*.md` and `projects/*/docs/bootstrap/`
-- Architecture diagrams: `projects/*/architecture.d2` → `projects/*/assets/architecture.svg`
+- Architecture diagrams: `projects/*/architecture.d2` → `projects/*/docs/assets/architecture.svg`
 - Shared D2 styles: `docs/assets/d2/architecture-styles.d2`
 - ADRs: `docs/decisions/`
 - Experiments: `docs/experiments/`

@@ -74,7 +74,7 @@ lint:
     - # Architecture SVG diagram cannot be linted by svgo
       linters: [svgo]
       paths:
-        - projects/*/assets/architecture.svg
+        - projects/*/docs/assets/architecture.svg
     - # DO NOT SCAN ANY FILES IN THE UNENCRYPTED KVSTORE
       linters: [ALL]
       paths:
