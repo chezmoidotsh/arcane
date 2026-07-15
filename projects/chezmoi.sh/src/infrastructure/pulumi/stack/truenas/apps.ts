@@ -24,6 +24,69 @@ new truenas.Catalog("truenas-catalog", {
 });
 
 {
+	const mountPoint = zp1hs01.get("applications/truenas/com.nginxproxymanager")
+		.resource.mountPoint;
+	new truenas.App(
+		"app-nginx-proxy-manager",
+		{
+			appName: "nginx-proxy-manager",
+			catalogApp: "nginx-proxy-manager",
+			train: "community",
+			values: pulumi.jsonStringify({
+				TZ: "Europe/Paris",
+				ix_certificate_authorities: {},
+				ix_certificates: {},
+				ix_volumes: {},
+				labels: [],
+				network: {
+					additional_ports: [],
+					http_port: {
+						bind_mode: "published",
+						host_ips: ["10.0.0.31"],
+						port_number: 80,
+					},
+					https_port: {
+						bind_mode: "published",
+						host_ips: ["10.0.0.31"],
+						port_number: 443,
+					},
+					networks: [],
+					web_port: {
+						bind_mode: "published",
+						host_ips: ["10.0.0.31"],
+						port_number: 30020,
+					},
+				},
+				npm: {
+					additional_envs: [{ name: "SKIP_CERTBOT_OWNERSHIP", value: "1" }],
+				},
+				release_name: "nginx-proxy-manager",
+				resources: { limits: { cpus: 1, memory: 512 } },
+				run_as: { group: 568, user: 568 },
+				storage: {
+					additional_storage: [],
+					certs: {
+						host_path_config: {
+							acl_enable: false,
+							path: pulumi.interpolate`${mountPoint}/certificates`,
+						},
+						type: "host_path",
+					},
+					data: {
+						host_path_config: {
+							acl_enable: false,
+							path: pulumi.interpolate`${mountPoint}/data`,
+						},
+						type: "host_path",
+					},
+				},
+			}),
+		},
+		{ ignoreChanges: ["version"], retainOnDelete: true },
+	);
+}
+
+{
 	const mountPoint = zp1hs01.get("applications/truenas/fr.deuxfleurs.garage")
 		.resource.mountPoint;
 	new truenas.App(
@@ -148,66 +211,5 @@ new truenas.Catalog("truenas-catalog", {
 		{ ignoreChanges: ["version"], retainOnDelete: true },
 	);
 }
-
-{
-	const mountPoint = zp1hs01.get("applications/truenas/com.nginxproxymanager")
-		.resource.mountPoint;
-	new truenas.App(
-		"app-nginx-proxy-manager",
-		{
-			appName: "nginx-proxy-manager",
-			catalogApp: "nginx-proxy-manager",
-			train: "community",
-			values: pulumi.jsonStringify({
-				TZ: "Europe/Paris",
-				ix_certificate_authorities: {},
-				ix_certificates: {},
-				ix_volumes: {},
-				labels: [],
-				network: {
-					additional_ports: [],
-					http_port: {
-						bind_mode: "published",
-						host_ips: ["10.0.0.31"],
-						port_number: 80,
-					},
-					https_port: {
-						bind_mode: "published",
-						host_ips: ["10.0.0.31"],
-						port_number: 443,
-					},
-					networks: [],
-					web_port: {
-						bind_mode: "published",
-						host_ips: ["10.0.0.31"],
-						port_number: 30020,
-					},
-				},
-				npm: {
-					additional_envs: [{ name: "SKIP_CERTBOT_OWNERSHIP", value: "1" }],
-				},
-				release_name: "nginx-proxy-manager",
-				resources: { limits: { cpus: 1, memory: 512 } },
-				run_as: { group: 568, user: 568 },
-				storage: {
-					additional_storage: [],
-					certs: {
-						host_path_config: {
-							acl_enable: false,
-							path: pulumi.interpolate`${mountPoint}/certificates`,
-						},
-						type: "host_path",
-					},
-					data: {
-						host_path_config: {
-							acl_enable: false,
-							path: pulumi.interpolate`${mountPoint}/data`,
-						},
-						type: "host_path",
-					},
-				},
-			}),
-		},
-		{ ignoreChanges: ["version"], retainOnDelete: true },
-	);
-}
+export const garageAdminEndpointUrl = `https://s3.chezmoi.sh`;
+export const garageAdminTokem = config.garage.adminToken;
