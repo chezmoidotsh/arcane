@@ -1,1 +1,1 @@
-export * from "./src/home-assistant";
+export * from "./stack/home-assistant";
