@@ -25,8 +25,8 @@ spec:
   configuration:
     data:
       compression: bzip2
-    destinationPath: s3://cnpg-backups/lungmen.akn/apps-secured
-    endpointURL: https://s3.chezmoi.sh:9000
+    destinationPath: s3://cnpg-lungmen-akn/apps-secured
+    endpointURL: https://s3.chezmoi.sh
     s3Credentials:
       accessKeyId:
         name: cnpg-backup-credentials

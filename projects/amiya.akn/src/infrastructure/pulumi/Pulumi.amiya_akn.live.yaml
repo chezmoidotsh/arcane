@@ -4,8 +4,9 @@ config:
     secure: v1:s7Im9KN+0D9s5UZH:sMQIVpHtzOvjbTum4NnnT5cTzgECsrUXoRXqdx4mahu+z+yTuvY74V4w00xhXXN/
   amiya-akn-infra:cloudflare_zone_id:
     secure: v1:5d6Sbg5n66PnZJiV:nW8zU/W8WnlYUCHHU8kKmGTCKRcNUdcoHidGhUWvJCG2ck9BqcKOa9a0TVDSrITF
-  tailscale:tailnet:
-    secure: v1:rsTo8KZ2i1hKZDko:QjJ581+ecSViDNJDXqMcbuV+lTZqh/uuu0U4SfO0wIe8
   amiya-akn-infra:pocket_id_oidc_client_secret:
     secure: v1:x9UIUgz2baYmIfiR:s0hnHVkLZTR+Y2T3RAsEUujhPRnoWn01CzuGQ1BqXgtvqRiQPLgULVR7qZ9gWGwp
+  garage:endpoint: https://admin.s3.chezmoi.sh
+  tailscale:tailnet:
+    secure: v1:rsTo8KZ2i1hKZDko:QjJ581+ecSViDNJDXqMcbuV+lTZqh/uuu0U4SfO0wIe8
   vault:vaultVersionOverride: 2.2.2

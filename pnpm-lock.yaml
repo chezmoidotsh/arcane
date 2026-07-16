@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    '@axnic/pulumi-garage':
+      specifier: ^1.0.1
+      version: 1.0.1
     '@pulumi/cloudflare':
       specifier: ^6.17.0
       version: 6.17.0
@@ -92,6 +95,37 @@ importers:
       '@pulumi/vault':
         specifier: 'catalog:'
         version: 7.10.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+    devDependencies:
+      '@types/chai':
+        specifier: 'catalog:'
+        version: 4.3.20
+      '@types/mocha':
+        specifier: 'catalog:'
+        version: 10.0.10
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.20.0
+      chai:
+        specifier: 'catalog:'
+        version: 4.5.0
+      mocha:
+        specifier: 'catalog:'
+        version: 10.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@22.20.0)(typescript@5.9.3)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  catalog/pulumi/components/garage-cnpg-backup:
+    dependencies:
+      '@axnic/pulumi-garage':
+        specifier: ^1.0.1
+        version: 1.0.1(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi':
+        specifier: 'catalog:'
+        version: 3.250.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       '@types/chai':
         specifier: 'catalog:'
@@ -203,12 +237,18 @@ importers:
 
   projects/amiya.akn/src/infrastructure/pulumi:
     dependencies:
+      '@axnic/pulumi-garage':
+        specifier: 'catalog:'
+        version: 1.0.1(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@chezmoi.sh/pulumi-cloudflare-dns01-token':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/components/cloudflare-dns01-token
       '@chezmoi.sh/pulumi-cluster-vault':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/components/cluster-vault
+      '@chezmoi.sh/pulumi-garage-cnpg-backup':
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/components/garage-cnpg-backup
       '@chezmoi.sh/pulumi-lib':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/lib
@@ -299,12 +339,18 @@ importers:
 
   projects/lungmen.akn/src/infrastructure/pulumi:
     dependencies:
+      '@axnic/pulumi-garage':
+        specifier: 'catalog:'
+        version: 1.0.1(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@chezmoi.sh/pulumi-cloudflare-dns01-token':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/components/cloudflare-dns01-token
       '@chezmoi.sh/pulumi-cluster-vault':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/components/cluster-vault
+      '@chezmoi.sh/pulumi-garage-cnpg-backup':
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/components/garage-cnpg-backup
       '@chezmoi.sh/pulumi-lib':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/lib
@@ -323,6 +369,9 @@ importers:
         version: 5.9.3
 
 packages:
+
+  '@axnic/pulumi-garage@1.0.1':
+    resolution: {integrity: sha512-3Kaob/uMaUEyyaWBliEyHhbFDGHyXzAFb0lqmKBl6/Wxp2IeTEa+81oLUeK6wbjctlAQudvtZdJnyInv4je6AA==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -1545,6 +1594,22 @@ packages:
     engines: {node: '>=10'}
 
 snapshots:
+
+  '@axnic/pulumi-garage@1.0.1(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)':
+    dependencies:
+      '@pulumi/pulumi': 3.250.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+    transitivePeerDependencies:
+      - supports-color
+      - ts-node
+      - typescript
+
+  '@axnic/pulumi-garage@1.0.1(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
+    dependencies:
+      '@pulumi/pulumi': 3.250.0(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+    transitivePeerDependencies:
+      - supports-color
+      - ts-node
+      - typescript
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:

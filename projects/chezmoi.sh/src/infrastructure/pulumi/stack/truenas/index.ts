@@ -21,6 +21,7 @@ import { homeAssistantAclAssignment } from "./users/home-assistant";
 import { immichAclAssignment } from "./users/immich";
 import { paperlessAclAssignment } from "./users/paperless-ngx";
 
+export { garageAdminEndpointUrl, garageAdminTokem } from "./apps";
 export { fireStickTvPasswordSecret } from "./users/firesticktv";
 export { homeAssistantPasswordSecret } from "./users/home-assistant";
 export { immichPasswordSecret } from "./users/immich";

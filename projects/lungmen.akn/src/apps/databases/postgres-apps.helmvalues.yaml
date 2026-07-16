@@ -33,6 +33,8 @@ spec:
     instances: 1
     storage:
       size: 2Gi
+    # -- WAL archiving is disabled (isWALArchiver: false), so WALs are recycled
+    # automatically after each checkpoint. 2Gi is ample for max_wal_size: 100MB.
     walStorage:
       size: 2Gi
     postgresql:
@@ -41,7 +43,10 @@ spec:
         max_wal_size: 100MB
     plugins:
       - enabled: true
-        isWALArchiver: true
+        # -- WAL archiving disabled: PostgreSQL recycles WALs automatically after checkpoint.
+        # This prevents WAL disk fill-up even when S3 is unavailable.
+        # Trade-off: no PITR — recovery relies on daily base backups (see apps.scheduledbackup.yaml).
+        isWALArchiver: false
         name: barman-cloud.cloudnative-pg.io
         parameters:
           barmanObjectName: apps-selfhosted
