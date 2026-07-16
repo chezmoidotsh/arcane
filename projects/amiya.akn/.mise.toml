@@ -21,15 +21,16 @@ dir = "{{ config_root }}"
 description = "Sync CNPG backup credentials from Pulumi outputs to SOPS secrets"
 dir = "src/infrastructure/pulumi"
 run = """
+  set -euo pipefail
   ACCESS_KEY=$(pulumi stack output --show-secrets garageBackupAccessKeyId)
   SECRET_KEY=$(pulumi stack output --show-secrets garageBackupSecretAccessKey)
   for f in \
-    ../../src/apps/vault/cnpg.backup-credentials.secret.yaml \
-    ../../src/apps/pocket-id/sops/cnpg.backup-credentials.secret.yaml
+    ../../apps/vault/cnpg.backup-credentials.secret.yaml \
+    ../../apps/pocket-id/sops/cnpg.backup-credentials.secret.yaml
   do
-    sops set -i "$f" 'stringData.access_key_id' "$ACCESS_KEY"
-    sops set -i "$f" 'stringData.access_secret_key' "$SECRET_KEY"
-    sops set -i "$f" 'stringData.endpoint_url' 'https://s3.chezmoi.sh'
-    sops set -i "$f" 'stringData.region' 'fr-par-1'
+    sops set "$f" '["stringData"]["access_key_id"]' "\\"${ACCESS_KEY}\\""
+    sops set "$f" '["stringData"]["access_secret_key"]' "\\"${SECRET_KEY}\\""
+    sops set "$f" '["stringData"]["endpoint_url"]' '"https://s3.chezmoi.sh"'
+    sops set "$f" '["stringData"]["region"]' '"fr-par-1"'
   done
 """
