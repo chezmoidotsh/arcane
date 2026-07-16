@@ -3,10 +3,69 @@ import * as b2 from "@pulumi/b2";
 import * as pulumi from "@pulumi/pulumi";
 import * as truenas from "@pulumi/truenas";
 
-import { legacyTrueNASBackupBucket, trueNASBackupBucket } from "../backblaze";
 import { zp1hs01 } from "./zpools/zp1hs01";
 
 import path = require("node:path");
+
+// -----------------------------------------------------------------------------
+// Backblaze B2 buckets for TrueNAS backups
+// -----------------------------------------------------------------------------
+// - `legacyTrueNASBackupBucket`: the bucket backing the whole-pool CloudSync
+//   task below. It's protected and retained on delete to avoid accidental
+//   data loss.
+// - `trueNASBackupBucket`: the current bucket intended for TrueNAS backups.
+//
+// Both enable file-lock (governance mode, 7 days default retention) — recent
+// backups are protected against accidental or malicious deletion for a week
+// even if a CloudSync job or a compromised credential tries to remove them.
+// Their lifecycle rules remove hidden/superseded files after 60 days; the
+// production bucket also cancels unfinished large-file uploads after 1 day.
+
+export const legacyTrueNASBackupBucket = new b2.Bucket(
+	"nas-backup",
+	{
+		bucketName: "nas-backup-50a30f2b",
+		bucketType: "allPrivate",
+		fileLockConfigurations: [
+			{
+				isFileLockEnabled: true,
+				defaultRetention: {
+					mode: "governance",
+					period: { duration: 7, unit: "days" },
+				},
+			},
+		],
+		lifecycleRules: [{ fileNamePrefix: "", daysFromHidingToDeleting: 60 }],
+	},
+	{ protect: true, retainOnDelete: true },
+);
+
+export const trueNASBackupBucket = new b2.Bucket(
+	"truenas-backup",
+	{
+		bucketName: "nas-backup-4e6b1351",
+		bucketType: "allPrivate",
+		fileLockConfigurations: [
+			{
+				isFileLockEnabled: true,
+				defaultRetention: {
+					mode: "governance",
+					period: { duration: 7, unit: "days" },
+				},
+			},
+		],
+		lifecycleRules: [
+			{
+				// Default rule for all files: delete 60 days after hiding (superseded by newer version)
+				// and cancel unfinished large files after 1 day.
+				fileNamePrefix: "",
+				daysFromHidingToDeleting: 60,
+				daysFromStartingToCancelingUnfinishedLargeFiles: 1,
+			},
+		],
+	},
+	{ protect: true, retainOnDelete: true },
+);
 
 // -----------------------------------------------------------------------------
 // TrueNAS CloudSync configuration (nas.chezmoi.sh -> Backblaze B2)
