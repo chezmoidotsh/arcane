@@ -18,7 +18,7 @@ spec:
         - matchName: s3.chezmoi.sh
       toPorts:
         - ports:
-            - port: "9000"
+            - port: "443"
               protocol: TCP
     # Allow DNS resolution for backup operations
     - toEndpoints:

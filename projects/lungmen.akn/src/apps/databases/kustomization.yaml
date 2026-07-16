@@ -72,6 +72,8 @@ resources:
   - apps-secured.objectstore.yaml
   - cnpg-backup-credentials.externalsecret.yaml
 
+  # Daily base backup for apps-20260329 (WAL archiving disabled, PITR not available).
+  - apps.scheduledbackup.yaml
   # Daily base backup for apps-secured-20260530 (WAL archiving disabled, PITR not available).
   - apps-secured.scheduledbackup.yaml
 
