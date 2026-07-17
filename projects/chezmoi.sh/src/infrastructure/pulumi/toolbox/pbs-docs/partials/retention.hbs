@@ -1,0 +1,14 @@
+## Retention & verification
+
+### Prune jobs
+
+{{#each pruneJobs}}
+- `{{id}}` on `{{store}}`{{#if disabled}} _(disabled)_{{/if}}, schedule `{{schedule}}`: {{{retentionSummary}}}{{#if comment}} — {{{comment}}}{{/if}}
+{{/each}}
+
+### Verify jobs
+
+{{#each verifyJobs}}
+- `{{id}}` on `{{store}}`{{#if disabled}} _(disabled)_{{/if}}, schedule `{{schedule}}`{{#if ignoreVerified}}, skips backups re-verified within the last {{outdatedAfter}} days{{/if}}{{#if comment}} — {{{comment}}}{{/if}}
+{{/each}}
+

@@ -1,0 +1,37 @@
+## Configuring Proxmox VE to use this datastore
+
+Once `pve-backup@pbs`'s token exists (`stack/pbs/access.ts`, created during "Bootstrapping"), add each datastore
+above as a `pbs`-type storage in Proxmox VE so VMs/LXCs can actually be backed up to it.
+
+{{#each datastores}}
+### `{{name}}`
+
+**Via the UI**: Datacenter → Storage → Add → Proxmox Backup Server, then:
+
+| Field | Value |
+| --- | --- |
+| ID | a local name for this storage entry in Proxmox VE, e.g. `pbs-{{name}}` |
+| Server | `pbs.pve.chezmoi.sh:8007` |
+| Datastore | `{{name}}` |
+| User | `pve-backup@pbs` |
+| API Token | the `pveBackupTokenId`/`pveBackupTokenSecret` stack outputs (see `stack/pbs/README.md`, "Bootstrapping") |
+| Fingerprint | leave blank — the server has a valid ACME certificate (`stack/pbs/acme.ts`), no manual pinning needed |
+{{#if namespaces.length}}| Namespace | one of {{#each namespaces}}`{{namespace}}`{{#unless @last}}, {{/unless}}{{/each}} above, or blank for the datastore root |
+{{/if}}
+
+**Via the CLI**, equivalent to the above:
+
+```sh
+pvesm add pbs pbs-{{name}} \
+  --server pbs.pve.chezmoi.sh \
+  --datastore {{name}} \
+  --username pve-backup@pbs \
+  --token-id pve-backup@pbs!pve-storage \
+  --token-secret <pveBackupTokenSecret>{{#if namespaces.length}} \
+  --namespace <one of: {{#each namespaces}}{{namespace}}{{#unless @last}}, {{/unless}}{{/each}}>{{/if}}
+```
+
+Once the storage entry exists, assign VMs/LXCs to it from Datacenter → Backup → Add, picking this storage (and
+namespace, if scoping to `vms`/`pvcs`) and a schedule — *which* guest gets backed up, and how often, stays a manual
+Proxmox VE step; see `stack/pbs/README.md`, "Intentionally not managed via Pulumi", for why.
+{{/each}}

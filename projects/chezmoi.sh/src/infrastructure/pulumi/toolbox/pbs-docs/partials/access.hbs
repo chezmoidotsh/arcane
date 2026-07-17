@@ -1,0 +1,25 @@
+## Access
+
+### Users
+
+{{#each users}}
+- `{{userid}}`{{#unless enabled}} _(disabled)_{{/unless}}{{#if comment}} — {{{comment}}}{{/if}}
+{{/each}}
+
+### API tokens
+
+{{#each apiTokens}}
+- `{{tokenid}}`{{#unless enabled}} _(disabled)_{{/unless}}{{#if comment}} — {{{comment}}}{{/if}}
+{{/each}}
+
+Token secrets are one-time values Proxmox Backup Server never returns again after creation — never shown here, and
+not recoverable from stack state either; see `stack/pbs/README.md`, "Bootstrapping".
+
+### ACLs
+
+| Path | Grantee | Role | Propagates |
+| ---- | ------- | ---- | ---------- |
+{{#each acls}}
+| `{{path}}` | `{{ugid}}` | `{{roleId}}` | {{#if propagate}}yes{{else}}no{{/if}} |
+{{/each}}
+

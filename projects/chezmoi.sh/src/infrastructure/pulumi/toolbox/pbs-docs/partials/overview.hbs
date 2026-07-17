@@ -1,0 +1,6 @@
+`pbs.pve.chezmoi.sh` is the household's Proxmox Backup Server, protecting Proxmox VE-hosted VMs and LXC containers
+with deduplicated, incremental, checksum-verified backups.
+
+It runs as a dedicated Proxmox VE virtual machine installed from the official ISO — not a Nix/LXC appliance, since
+Proxmox Backup Server is not officially supported inside an LXC container — reachable at `{{endpoint}}`, with
+{{datastores.length}} datastore{{#unless (isSingular datastores)}}s{{/unless}} detailed below.

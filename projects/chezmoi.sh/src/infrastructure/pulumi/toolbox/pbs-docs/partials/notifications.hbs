@@ -1,0 +1,17 @@
+## Notifications
+
+### Targets
+
+{{#each notificationTargets}}
+- `{{name}}` ({{kind}}){{#if disabled}} _(disabled)_{{/if}}{{#if comment}} — {{{comment}}}{{/if}}
+{{/each}}
+
+Target endpoints (URLs, server addresses, …) are deliberately not shown here even though the underlying provider does
+not always mark them as secret outputs — see `toolbox/pbs-docs/extract.ts`, `extractNotificationTargets`.
+
+### Routing
+
+{{#each notificationMatchers}}
+- `{{name}}`{{#if disabled}} _(disabled)_{{/if}}: {{mode}} of [{{humanList matchSeverities}}] → {{humanList targets}}{{#if comment}} — {{{comment}}}{{/if}}
+{{/each}}
+

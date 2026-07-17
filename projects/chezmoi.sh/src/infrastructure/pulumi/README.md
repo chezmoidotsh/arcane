@@ -20,19 +20,22 @@ published at [`../../../docs/TRUENAS.md`](../../../docs/TRUENAS.md).
 | `stack/truenas/`         | TrueNAS SCALE as code (datasets, shares, users, ACL templates); see [`stack/truenas/README.md`](stack/truenas/README.md)                                |
 | `stack/pbs/`             | Proxmox Backup Server as code (datastore, jobs, notifications, access); see [`stack/pbs/README.md`](stack/pbs/README.md)                                |
 | `toolbox/truenas-docs/`  | Standalone doc generator — rebuilds `docs/TRUENAS.md` from deployed stack state; see [`toolbox/truenas-docs/README.md`](toolbox/truenas-docs/README.md) |
+| `toolbox/pbs-docs/`      | Standalone doc generator — rebuilds `docs/PBS.md` from deployed stack state; see [`toolbox/pbs-docs/README.md`](toolbox/pbs-docs/README.md)             |
 
 ## Tasks
 
 Defined in `.mise.toml`, run from this directory:
 
-| Task                    | What it does                                                                                        |
-| ----------------------- | --------------------------------------------------------------------------------------------------- |
-| `pulumi:diff`           | `pulumi preview --diff --refresh` against the live stack                                            |
-| `pulumi:apply`          | `pulumi up --refresh`, then regenerates `docs/TRUENAS.md` via the `truenas:docs:generate` post-task |
-| `truenas:docs:generate` | Rebuild `docs/TRUENAS.md` from the last-applied stack state (standalone; no Pulumi run)             |
+| Task                    | What it does                                                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `pulumi:diff`           | `pulumi preview --diff --refresh` against the live stack                                                           |
+| `pulumi:apply`          | `pulumi up --refresh`, then regenerates `docs/TRUENAS.md` and `docs/PBS.md` via their `*:docs:generate` post-tasks |
+| `truenas:docs:generate` | Rebuild `docs/TRUENAS.md` from the last-applied stack state (standalone; no Pulumi run)                            |
+| `pbs:docs:generate`     | Rebuild `docs/PBS.md` from the last-applied stack state (standalone; no Pulumi run)                                |
 
 ## Further reading
 
 - [`stack/truenas/README.md`](stack/truenas/README.md) — TrueNAS datasets, shares, users, and ACL conventions
 - [`stack/pbs/README.md`](stack/pbs/README.md) — Proxmox Backup Server datastore, retention, and access conventions
 - [`toolbox/truenas-docs/README.md`](toolbox/truenas-docs/README.md) — how the TrueNAS doc generator works
+- [`toolbox/pbs-docs/README.md`](toolbox/pbs-docs/README.md) — how the PBS doc generator works
