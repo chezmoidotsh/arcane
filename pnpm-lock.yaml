@@ -223,6 +223,18 @@ importers:
         specifier: ^4.7.0
         version: 4.9.5
 
+  catalog/pulumi/sdks/pbs:
+    dependencies:
+      '@pulumi/pulumi':
+        specifier: ^3.238.0
+        version: 3.250.0(ts-node@10.9.2(@types/node@20.19.43)(typescript@4.9.5))(typescript@4.9.5)
+      '@types/node':
+        specifier: ^20
+        version: 20.19.43
+      typescript:
+        specifier: ^4.7.0
+        version: 4.9.5
+
   catalog/pulumi/sdks/truenas:
     dependencies:
       '@pulumi/pulumi':
