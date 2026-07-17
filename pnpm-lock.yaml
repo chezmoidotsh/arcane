@@ -298,6 +298,9 @@ importers:
       '@pulumi/cloudflare':
         specifier: 'catalog:'
         version: 6.17.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pbs':
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/sdks/pbs
       '@pulumi/pulumi':
         specifier: 'catalog:'
         version: 3.250.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)

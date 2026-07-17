@@ -1,9 +1,9 @@
 # chezmoi.sh Shared Infrastructure (`chezmoi-sh-infra`)
 
 The Pulumi TypeScript stack managing shared cloud infrastructure for chezmoi.sh: Cloudflare and Tailscale API tokens,
-Backblaze B2 buckets, and the TrueNAS SCALE server `nas.chezmoi.sh` as code. State lives in the Garage S3 backend
-(`s3://pulumi-states`, see `Pulumi.yaml`); the generated TrueNAS reference is published at
-[`../../../docs/TRUENAS.md`](../../../docs/TRUENAS.md).
+Backblaze B2 buckets, the TrueNAS SCALE server `nas.chezmoi.sh`, and the Proxmox Backup Server `pbs.pve.chezmoi.sh` as
+code. State lives in the Garage S3 backend (`s3://pulumi-states`, see `Pulumi.yaml`); the generated TrueNAS reference is
+published at [`../../../docs/TRUENAS.md`](../../../docs/TRUENAS.md).
 
 ## Directory layout
 
@@ -14,11 +14,11 @@ Backblaze B2 buckets, and the TrueNAS SCALE server `nas.chezmoi.sh` as code. Sta
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `index.ts`               | Entry point — side-effect imports of every resource module below (no logic)                                                                             |
 | `config.ts`              | Pulumi secret config (Cloudflare account/zone IDs, Garage admin credentials)                                                                            |
-| `stack/backblaze.ts`     | Backblaze B2 buckets backing the TrueNAS CloudSync backup jobs                                                                                          |
 | `stack/observability.ts` | Observability LXC appliance tokens (Cloudflare DNS-01 + Tailscale OAuth)                                                                                |
 | `stack/omni.ts`          | Omni LXC appliance token (Cloudflare DNS-01)                                                                                                            |
 | `stack/zot-registry.ts`  | Zot-registry LXC appliance token (Cloudflare DNS-01)                                                                                                    |
 | `stack/truenas/`         | TrueNAS SCALE as code (datasets, shares, users, ACL templates); see [`stack/truenas/README.md`](stack/truenas/README.md)                                |
+| `stack/pbs/`             | Proxmox Backup Server as code (datastore, jobs, notifications, access); see [`stack/pbs/README.md`](stack/pbs/README.md)                                |
 | `toolbox/truenas-docs/`  | Standalone doc generator — rebuilds `docs/TRUENAS.md` from deployed stack state; see [`toolbox/truenas-docs/README.md`](toolbox/truenas-docs/README.md) |
 
 ## Tasks
@@ -34,4 +34,5 @@ Defined in `.mise.toml`, run from this directory:
 ## Further reading
 
 - [`stack/truenas/README.md`](stack/truenas/README.md) — TrueNAS datasets, shares, users, and ACL conventions
+- [`stack/pbs/README.md`](stack/pbs/README.md) — Proxmox Backup Server datastore, retention, and access conventions
 - [`toolbox/truenas-docs/README.md`](toolbox/truenas-docs/README.md) — how the TrueNAS doc generator works
