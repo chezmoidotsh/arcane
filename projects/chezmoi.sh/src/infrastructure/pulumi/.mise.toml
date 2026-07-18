@@ -25,21 +25,22 @@ _.file = "{{ config_root }}/.mise/env.yaml"
 
 [tasks."pulumi:diff"]
 description = "Preview pending changes for the current Pulumi stack"
-run = "pulumi preview --refresh --parallel 15"
 dir = "{{ config_root }}"
+run = "pulumi preview --refresh --parallel 15"
 
 [tasks."pulumi:apply"]
-description = "Apply pending changes to the current Pulumi stack"
 depends_post = ["truenas:docs:generate", "pbs:docs:generate"]
-run = ["pulumi up --refresh --parallel 15"]
+description = "Apply pending changes to the current Pulumi stack"
 dir = "{{ config_root }}"
+interactive = true
+run = ["pulumi up --refresh --parallel 15"]
 
 [tasks."truenas:docs:generate"]
 description = "Regenerate projects/chezmoi.sh/docs/TRUENAS.md from the live chezmoi.sh Pulumi stack state"
-run = "pnpm exec ts-node toolbox/truenas-docs/generate.ts"
 dir = "{{ config_root }}"
+run = "pnpm exec ts-node toolbox/truenas-docs/generate.ts"
 
 [tasks."pbs:docs:generate"]
-description = "Regenerate projects/chezmoi.sh/docs/PBS.md from the live chezmoi.sh Pulumi stack state"
-run = "pnpm exec ts-node toolbox/pbs-docs/generate.ts"
+description = "Regenerate projects/chezmoi.sh/docs/PROXMOX_BACKUP_SERVER.md from the live chezmoi.sh Pulumi stack state"
 dir = "{{ config_root }}"
+run = "pnpm exec ts-node toolbox/pbs-docs/generate.ts"
