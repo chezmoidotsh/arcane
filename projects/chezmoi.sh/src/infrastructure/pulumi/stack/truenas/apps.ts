@@ -1,7 +1,8 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as truenas from "@pulumi/truenas";
-import * as config from "../../config";
 import { zp1hs01 } from "./zpools/zp1hs01";
+
+const config = new pulumi.Config();
 
 // -----------------------------------------------------------------------------
 // TrueNAS SCALE Apps (nas.chezmoi.sh)
@@ -111,13 +112,13 @@ new truenas.Catalog("truenas-catalog", {
 							value: "s3.chezmoi.sh",
 						},
 					],
-					admin_token: config.garage.adminToken,
+					admin_token: config.requireSecret("garage_admin_token"),
 					enable_web_ui_auth: true,
 					region: "fr-par-1",
 					replication_factor: 1,
-					rpc_secret: config.garage.rpcSecret,
-					web_ui_password: config.garage.webUiPassword,
-					web_ui_username: config.garage.webUiUsername,
+					rpc_secret: config.requireSecret("garage_rpc_secret"),
+					web_ui_password: config.requireSecret("garage_web_ui_password"),
+					web_ui_username: config.requireSecret("garage_web_ui_username"),
 				},
 				ix_certificate_authorities: {},
 				ix_certificates: {},
@@ -212,4 +213,4 @@ new truenas.Catalog("truenas-catalog", {
 	);
 }
 export const garageAdminEndpointUrl = `https://s3.chezmoi.sh`;
-export const garageAdminTokem = config.garage.adminToken;
+export const garageAdminTokem = config.requireSecret("garage_admin_token");

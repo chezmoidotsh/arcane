@@ -1,5 +1,7 @@
 encryptionsalt: v1:WI/uHyMiTw8=:v1:r5rEpOiujBDfqrei:wyKJhoGkxyVFg0ZZtO6QSVEAebB6hg==
 config:
+  pbs:endpoint: https://pbs.pve.chezmoi.sh:8007
+  pbs:insecure: "true"
   chezmoi-sh-infra:cloudflare_account_id:
     secure: v1:RC9hckvq5hYbOq/s:Tnnlg50zt9NkIwjEDtI8l+7aIy2CdHYTJUT8NrbzJHSBLbCCA/OYASBrhQfmqHdb
   chezmoi-sh-infra:cloudflare_zone_id:
@@ -12,6 +14,8 @@ config:
     secure: v1:C4bn+ZQfrgX2eQlU:sL2GXtnYGqbon7k88g+5pj2a3iJ0fSLQhSTssId2
   chezmoi-sh-infra:garage_web_ui_username:
     secure: v1:gmCF7n75MuShAoHX:IZIghnY+OeMs9sfLdzXGhXe29oMbp/1OBC0lWkG/OVE=
+  chezmoi-sh-infra:notificationsSlackWebhookUrl:
+    secure: v1:eGBY+TWz9wYKFPFA:ln4jXnyzm1E/aiM5gXDbJMpJ8+taN3FyqCUUhEMwvcU81EH6aGG0l1l3Xja20ucXCiSi7kNF+fVliDc4Gt9AKvOFLQ/byQrHGFnAMjT02i5nMPgApd5MVrZq6zVSHw8ukw==
   tailscale:tailnet:
     secure: v1:sLhY5DfYf/T18EyL:xvQ3lkIJoS04v9jaycJxyv4UlbruzkYAm3Dna3DVQs+C
   truenas:destroyProtection: "true"

@@ -1,5 +1,7 @@
 import { Dns01TokenComponent } from "@chezmoi.sh/pulumi-cloudflare-dns01-token";
-import * as config from "../config";
+import * as pulumi from "@pulumi/pulumi";
+
+const config = new pulumi.Config();
 
 // -----------------------------------------------------------------------------
 // Cloudflare DNS-01 token for the zot-registry LXC
@@ -15,7 +17,7 @@ import * as config from "../config";
 const caddyDns01Token = new Dns01TokenComponent("caddy-dns01-zot", {
 	owner: "chezmoi.sh",
 	application: "caddy-dns01/zot-registry",
-	accountId: config.cloudflare.accountId,
-	zoneId: config.cloudflare.zoneId,
+	accountId: config.requireSecret("cloudflare_account_id"),
+	zoneId: config.requireSecret("cloudflare_zone_id"),
 });
 export const zotRegistryDns01Token = caddyDns01Token.tokenValue;
