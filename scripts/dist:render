@@ -160,27 +160,73 @@ def find_app_dirs() -> list[Path]:
     return sorted(dirs)
 
 
-def find_staged_dirs() -> list[Path]:
-    """src/ app dirs that have staged git changes."""
-    proc = subprocess.run(
-        ["git", "-C", str(REPO_ROOT), "diff", "--cached", "--name-only"],
-        capture_output=True,
-        text=True,
-    )
-    pattern = re.compile(
-        r"^(projects/[^/]+/src/(?:(?:apps|infrastructure/kubernetes)/[^/]+|argocd"
-        r"|infrastructure/crossplane(?:/providers/[^/]+)?))/"
-    )
+_APP_DIR_PATTERN = re.compile(
+    r"^(projects/[^/]+/src/(?:(?:apps|infrastructure/kubernetes)/[^/]+|argocd"
+    r"|infrastructure/crossplane(?:/providers/[^/]+)?))/"
+)
+
+DEFAULT_BRANCH = "main"
+
+
+def _dirs_from_paths(paths: list[str]) -> list[Path]:
     seen: set[str] = set()
     dirs: list[Path] = []
-    for line in proc.stdout.splitlines():
-        m = pattern.match(line)
+    for line in paths:
+        m = _APP_DIR_PATTERN.match(line)
         if m and m.group(1) not in seen:
             seen.add(m.group(1))
             d = REPO_ROOT / m.group(1)
             if d.is_dir():
                 dirs.append(d)
     return dirs
+
+
+def _git(*args: str) -> str:
+    proc = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), *args], capture_output=True, text=True
+    )
+    return proc.stdout
+
+
+def _untracked_files() -> list[str]:
+    return _git("ls-files", "--others", "--exclude-standard").splitlines()
+
+
+def find_staged_dirs() -> list[Path]:
+    """src/ app dirs that have staged git changes."""
+    files = _git("diff", "--cached", "--name-only").splitlines()
+    return _dirs_from_paths(files)
+
+
+def find_changed_dirs() -> list[Path]:
+    """src/ app dirs with uncommitted changes (staged, unstaged, or untracked)."""
+    files = _git("diff", "HEAD", "--name-only").splitlines() + _untracked_files()
+    return _dirs_from_paths(files)
+
+
+def _current_branch() -> str:
+    return _git("rev-parse", "--abbrev-ref", "HEAD").strip()
+
+
+def _resolve_default_branch() -> str:
+    if _git("rev-parse", "--verify", "--quiet", f"origin/{DEFAULT_BRANCH}").strip():
+        return f"origin/{DEFAULT_BRANCH}"
+    return DEFAULT_BRANCH
+
+
+def find_branch_dirs() -> list[Path]:
+    """src/ app dirs that differ from the parent branch (falls back to
+    find_changed_dirs() when already on the default branch)."""
+    if _current_branch() == DEFAULT_BRANCH:
+        return find_changed_dirs()
+
+    base = _resolve_default_branch()
+    merge_base = _git("merge-base", "HEAD", base).strip()
+    if not merge_base:
+        return find_changed_dirs()
+
+    files = _git("diff", merge_base, "--name-only").splitlines() + _untracked_files()
+    return _dirs_from_paths(files)
 
 
 # ── YAML splitting ────────────────────────────────────────────────────────────
@@ -553,8 +599,10 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Examples:\n"
+            "  dist:render                 # same as --branch\n"
             "  dist:render --check --all\n"
             "  dist:render --staged-only\n"
+            "  dist:render --changed\n"
             "  dist:render -j4 --all\n"
             "  dist:render projects/lungmen.akn/src/apps/forgejo\n"
         ),
@@ -576,6 +624,19 @@ def main() -> None:
         help="Re-render only projects with staged src/ changes (pre-commit)",
     )
     parser.add_argument(
+        "--changed",
+        action="store_true",
+        help="Re-render projects with uncommitted src/ changes (staged, unstaged or untracked)",
+    )
+    parser.add_argument(
+        "--branch",
+        action="store_true",
+        help=(
+            "Re-render projects that differ from the parent branch (default; "
+            f"falls back to --changed when already on {DEFAULT_BRANCH})"
+        ),
+    )
+    parser.add_argument(
         "-j",
         "--jobs",
         type=int,
@@ -591,21 +652,35 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    modes = [args.all, args.staged, args.src_path is not None]
-    if sum(modes) != 1:
-        parser.error("specify exactly one of: --all, --staged-only, <src-path>")
+    modes = [args.all, args.staged, args.changed, args.branch, args.src_path is not None]
+    if sum(modes) > 1:
+        parser.error(
+            "specify at most one of: --all, --staged-only, --changed, --branch, <src-path>"
+        )
+    if sum(modes) == 0:
+        args.branch = True
 
-    stage = args.staged and not args.check
+    stage = (args.staged or args.changed or args.branch) and not args.check
 
     if args.src_path:
         p = Path(args.src_path)
         dirs = [p if p.is_absolute() else REPO_ROOT / p]
     elif args.all:
         dirs = find_app_dirs()
-    else:
+    elif args.staged:
         dirs = find_staged_dirs()
         if not dirs:
             print("INFO: no src/ changes staged -- nothing to re-render")
+            return
+    elif args.changed:
+        dirs = find_changed_dirs()
+        if not dirs:
+            print("INFO: no uncommitted src/ changes -- nothing to re-render")
+            return
+    else:
+        dirs = find_branch_dirs()
+        if not dirs:
+            print(f"INFO: no src/ changes vs {DEFAULT_BRANCH} -- nothing to re-render")
             return
 
     items = [BuildItem(src=d, rel=_relpath(d)) for d in dirs]

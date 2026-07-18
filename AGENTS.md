@@ -85,18 +85,18 @@ Project-specific tasks live in `projects/*/.mise.toml`.
 
 Operational scripts in `scripts/` (already on PATH after `mise install`):
 
-| Script                                       | Purpose                                                                                  |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `argocd:app:sync <path>`                     | Sync an ArgoCD application from its project path                                         |
-| `app:icon:generator`                         | Generate app icons from source assets                                                    |
-| `bao:kv:copy`                                | Copy KV secrets between OpenBao paths/mounts                                             |
-| `cnpg:db:migrate`                            | Migrate data between CloudNative-PG clusters                                             |
-| `dist:render [--all\|--staged-only\|<path>]` | Regenerate `dist/` files from `src/` — always use instead of editing dist files manually |
-| `folderinfo`                                 | Generate the repository structure overview                                               |
-| `nix:build:image`                            | Build a Nix-based OCI image                                                              |
-| `nix:hash:update`                            | Refresh Nix package hashes                                                               |
-| `nonix`                                      | Run a command outside the Nix sandbox                                                    |
-| `talosctl`                                   | Wrapper around `talosctl` with context management                                        |
+| Script                                                            | Purpose                                                                                  |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `argocd:app:sync <path>`                                          | Sync an ArgoCD application from its project path                                         |
+| `app:icon:generator`                                              | Generate app icons from source assets                                                    |
+| `bao:kv:copy`                                                     | Copy KV secrets between OpenBao paths/mounts                                             |
+| `cnpg:db:migrate`                                                 | Migrate data between CloudNative-PG clusters                                             |
+| `dist:render [--all\|--staged-only\|--changed\|--branch\|<path>]` | Regenerate `dist/` files from `src/` — always use instead of editing dist files manually |
+| `folderinfo`                                                      | Generate the repository structure overview                                               |
+| `nix:build:image`                                                 | Build a Nix-based OCI image                                                              |
+| `nix:hash:update`                                                 | Refresh Nix package hashes                                                               |
+| `nonix`                                                           | Run a command outside the Nix sandbox                                                    |
+| `talosctl`                                                        | Wrapper around `talosctl` with context management                                        |
 
 Frequently used `mise` tasks:
 
