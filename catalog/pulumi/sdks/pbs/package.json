@@ -1,0 +1,26 @@
+{
+	"name": "@pulumi/pbs",
+	"version": "0.1.1",
+	"description": "A Pulumi provider dynamically bridged from pbs.",
+	"repository": "https://github.com/yavasura/terraform-provider-pbs",
+	"main": "bin/index.js",
+	"scripts": {
+		"build": "tsc",
+		"postinstall": "node ./scripts/postinstall.js"
+	},
+	"dependencies": {
+		"@pulumi/pulumi": "^3.238.0",
+		"@types/node": "^20",
+		"typescript": "^4.7.0"
+	},
+	"pulumi": {
+		"resource": true,
+		"name": "terraform-provider",
+		"version": "1.1.4",
+		"parameterization": {
+			"name": "pbs",
+			"version": "0.1.1",
+			"value": "eyJyZW1vdGUiOnsidXJsIjoicmVnaXN0cnkudGVycmFmb3JtLmlvL3lhdmFzdXJhL3BicyIsInZlcnNpb24iOiIwLjEuMSJ9fQ=="
+		}
+	}
+}
