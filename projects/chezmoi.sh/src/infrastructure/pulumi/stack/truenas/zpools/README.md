@@ -63,9 +63,10 @@ Layer 3 (remote sync) spans two separate files that are easy to conflate:
 
 - `../cloudsync.ts` declares the CloudSync **jobs**: which dataset gets pushed, on what schedule, in which
   direction/mode (PUSH/SYNC). This is the "what and when" of the sync.
-- `../../backblaze.ts` declares the target **buckets**: where that data lands and how long it stays protected once there
-  — governance-mode File Lock (7-day default retention, so uploads can't be deleted or overwritten for a week) and a
-  60-day lifecycle rule that prunes superseded versions. This is the "where and for how long" once synced.
+- `../../backblaze.ts` declares the target **buckets**: where that data lands and how long it stays there. File Lock is
+  disabled on both — it made the SYNC-mode jobs fail whenever they needed to delete/overwrite a version still under its
+  retention hold — but a 60-day lifecycle rule still prunes superseded versions. This is the "where and for how long"
+  once synced.
 
 Neither file references the other directly — the only link is each job's `attributesJson.bucket` field. Granular
 per-dataset jobs target the current bucket (`nas-backup-4e6b1351` / `trueNASBackupBucket`); the legacy whole-pool job

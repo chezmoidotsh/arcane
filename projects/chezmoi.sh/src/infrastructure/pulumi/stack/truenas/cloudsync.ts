@@ -15,26 +15,19 @@ import path = require("node:path");
 //   data loss.
 // - `trueNASBackupBucket`: the current bucket intended for TrueNAS backups.
 //
-// Both enable file-lock (governance mode, 7 days default retention) — recent
-// backups are protected against accidental or malicious deletion for a week
-// even if a CloudSync job or a compromised credential tries to remove them.
-// Their lifecycle rules remove hidden/superseded files after 60 days; the
-// production bucket also cancels unfinished large-file uploads after 1 day.
+// File-lock (governance mode, 7 days default retention) is disabled on both:
+// it made the SYNC-mode CloudSync jobs below fail whenever they needed to
+// delete/overwrite a version still under its 7-day hold, blocking backups
+// entirely. Their lifecycle rules remove hidden/superseded files after 60
+// days; the production bucket also cancels unfinished large-file uploads
+// after 1 day.
 
 export const legacyTrueNASBackupBucket = new b2.Bucket(
 	"nas-backup",
 	{
 		bucketName: "nas-backup-50a30f2b",
 		bucketType: "allPrivate",
-		fileLockConfigurations: [
-			{
-				isFileLockEnabled: true,
-				defaultRetention: {
-					mode: "governance",
-					period: { duration: 7, unit: "days" },
-				},
-			},
-		],
+		fileLockConfigurations: [{ isFileLockEnabled: false }],
 		lifecycleRules: [{ fileNamePrefix: "", daysFromHidingToDeleting: 60 }],
 	},
 	{ protect: true, retainOnDelete: true },
@@ -45,15 +38,7 @@ export const trueNASBackupBucket = new b2.Bucket(
 	{
 		bucketName: "nas-backup-4e6b1351",
 		bucketType: "allPrivate",
-		fileLockConfigurations: [
-			{
-				isFileLockEnabled: true,
-				defaultRetention: {
-					mode: "governance",
-					period: { duration: 7, unit: "days" },
-				},
-			},
-		],
+		fileLockConfigurations: [{ isFileLockEnabled: false }],
 		lifecycleRules: [
 			{
 				// Default rule for all files: delete 60 days after hiding (superseded by newer version)
