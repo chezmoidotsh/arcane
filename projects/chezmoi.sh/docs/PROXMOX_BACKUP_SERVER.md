@@ -62,6 +62,12 @@ Primary S3-backed datastore (Backblaze B2)
 - **Garbage collection**: `Sun 04:00`
 - **Notification delivery**: notification-system
 
+**Namespaces** — a namespace is a path prefix within this datastore (`Backblaze-B2:<namespace>`), not a separate storage
+location; each one below can be browsed, restored, and (once scoped that way) pruned/verified independently:
+
+- `kubernetes-volumes`
+- `vms`
+
 ## Retention & verification
 
 ### Prune jobs
@@ -93,7 +99,7 @@ not always mark them as secret outputs — see `toolbox/pbs-docs/extract.ts`, `e
 
 ### API tokens
 
-- `pve-backup@pbs!pve-storage` — Used by /etc/pve/storage.cfg's `pbs` storage entry
+- `pve-backup@pbs!pve-storage` — Used by Proxmox VE's `pbs`-type storage entry
 
 Token secrets are one-time values Proxmox Backup Server never returns again after creation — never shown here, and
 not recoverable from stack state either; see `stack/pbs/README.md`, "Bootstrapping".
@@ -121,6 +127,7 @@ above as a `pbs`-type storage in Proxmox VE so VMs/LXCs can actually be backed u
 | User | `pve-backup@pbs` |
 | API Token | the `pveBackupTokenId`/`pveBackupTokenSecret` stack outputs (see `stack/pbs/README.md`, "Bootstrapping") |
 | Fingerprint | leave blank — the server has a valid ACME certificate (`stack/pbs/acme.ts`), no manual pinning needed |
+| Namespace | one of `kubernetes-volumes`, `vms` above, or blank for the datastore root |
 
 **Via the CLI**, equivalent to the above:
 
@@ -130,7 +137,8 @@ pvesm add pbs pbs-Backblaze-B2 \
   --datastore Backblaze-B2 \
   --username pve-backup@pbs \
   --token-id pve-backup@pbs!pve-storage \
-  --token-secret <pveBackupTokenSecret>
+  --token-secret <pveBackupTokenSecret> \
+  --namespace <one of: kubernetes-volumes, vms>
 ```
 
 Once the storage entry exists, assign VMs/LXCs to it from Datacenter → Backup → Add, picking this storage (and
