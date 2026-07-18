@@ -14,9 +14,17 @@ compatibility: Requires git and GitHub CLI (gh)
 
 Before pushing anything:
 
-1. Read `.agents/skills/git-commit/SKILL.md` for commit format and scope conventions.
+1. Gather context in one pass (branch, issue number, push status, commits since base, files changed, untracked files):
 
-2. Pick the matching PR template in `.github/PULL_REQUEST_TEMPLATE/`:
+   ```sh
+   bash .agents/skills/create-pr/scripts/gather-context.sh main
+   ```
+
+   Use this output for the whole draft below instead of re-running `git log` / `git diff` / `git status` piecemeal.
+
+2. Read `.agents/skills/git-commit/SKILL.md` for commit format and scope conventions.
+
+3. Pick the matching PR template in `.github/PULL_REQUEST_TEMPLATE/`:
 
    | Change type                             | Template                                                | Distinguishing sections                                                                                                 |
    | --------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
@@ -28,7 +36,7 @@ Before pushing anything:
    The root `pull_request_template.md` is a copy of `feature.md` and applies by default. To use a non-default template
    explicitly, append `?template=<name>.md` to the PR URL or use `gh pr create --web` and pick from the GitHub picker.
 
-3. List the last 3 merged PRs that are not dependency bumps for style reference:
+4. List the last 3 merged PRs that are not dependency bumps for style reference:
 
    ```sh
    gh pr list --limit 30 --state merged --json number,title,author \
@@ -40,7 +48,7 @@ Before pushing anything:
    "
    ```
 
-4. Run the commit validator and review its output:
+5. Run the commit validator and review its output:
 
    ```sh
    bash .agents/skills/create-pr/scripts/validate_commits.sh main
@@ -53,7 +61,7 @@ Before pushing anything:
      attestation that only the human committer can make. Surface the warning to the user and let them decide. Do not add
      `-s` to any commit command yourself.
 
-5. Run trunk check on the changed files and fix all issues before pushing:
+6. Run trunk check on the changed files and fix all issues before pushing:
 
    ```sh
    trunk check --filter=-conftest
@@ -82,8 +90,8 @@ Before pushing anything:
 ### Opening a new PR
 
 1. Create a branch following the naming conventions above.
-2. Run the commit validator (step 4 above) and fix any `FAIL` items; surface `WARN` items to the user.
-3. Run `trunk check --filter=-conftest` (step 5 above) and fix all issues.
+2. Run the commit validator (step 5 above) and fix any `FAIL` items; surface `WARN` items to the user.
+3. Run `trunk check --filter=-conftest` (step 6 above) and fix all issues.
 4. Push: `git push -u origin <branch-name>`
 5. Draft the PR body following the selected template — see `.github/PULL_REQUEST_TEMPLATE/<type>.md` and
    `references/pr-examples.md`.
