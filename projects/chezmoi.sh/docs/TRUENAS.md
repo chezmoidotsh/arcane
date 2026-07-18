@@ -28,6 +28,27 @@ It runs as a TrueNAS SCALE virtual machine on Proxmox, with
 2 ZFS pools detailed
 in the section below, plus an off-site copy of the data pushed to Backblaze B2.
 
+## Key terms
+
+TrueNAS SCALE is a NAS operating system built on ZFS, a filesystem that treats data integrity, snapshots, and
+storage pooling as first-class features rather than something bolted on with LVM/RAID.
+
+- **Pool** — a group of physical disks combined into one storage unit (mirror, RAID-Z, or a plain stripe), the
+  container everything below lives inside. Redundancy and total capacity are pool-level properties.
+- **Dataset** — a filesystem within a pool, with its own compression, quota, record size, and permissions, nested
+  hierarchically (a dataset's children can override any of those settings). Roughly ZFS's equivalent of a directory
+  that's also independently configurable, snapshottable, and shareable.
+- **Snapshot** — an instant, read-only, point-in-time copy of a dataset, consuming disk space only for data that
+  changes *after* it's taken. Protects against an accidentally deleted or overwritten file, not against losing the
+  pool itself.
+- **Scrub** — reads every block in a pool and verifies its checksum against ZFS's own metadata, repairing corruption
+  automatically when the pool has redundancy. The first, local line of defense against silent disk decay (bitrot).
+- **Compression / record size** — per-dataset tunables trading CPU for disk space (compression) and matching the
+  filesystem's block size to the workload's typical I/O pattern (record size) — large for sequential media files,
+  small for databases or many small files.
+- **ACL (NFS4)** — TrueNAS SCALE's native permission model for datasets, richer than classic Unix owner/group/other
+  bits — see "Permissions" below for the templates this stack applies.
+
 ## How it's managed
 
 `nas.chezmoi.sh` (TrueNAS SCALE) is managed as code via the
@@ -305,6 +326,3 @@ protect against:
   live API), and the templates it *can* manage have no way to be applied to
   a path except by hand, in the TrueNAS UI. Nothing detects or reverts a
   dataset whose actual ACL has drifted from its documented assignment.
-
----
-<sup>Last built: 2026-07-16T21:05:15.471Z</sup>

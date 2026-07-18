@@ -159,6 +159,7 @@ describe("TRUENAS.md template", () => {
 		const md = render(fixtureContext);
 		expect(md).to.include('<h1 align="center">');
 		expect(md).to.include("TrueNAS SCALE - Home NAS");
+		expect(md).to.include("## Key terms");
 		expect(md).to.include("## How it's managed");
 		expect(md).to.include("## Network & services");
 		expect(md).to.include("## Pools, disks & datasets");
@@ -166,6 +167,13 @@ describe("TRUENAS.md template", () => {
 		expect(md).to.include("## Permissions");
 		expect(md).to.include("## Backups");
 		expect(md).to.include("## Security notes");
+	});
+
+	it("explains the key ZFS terms before diving into specifics", () => {
+		const md = render(fixtureContext);
+		expect(md).to.include("**Pool** — a group of physical disks");
+		expect(md).to.include("**Snapshot** — an instant, read-only");
+		expect(md).to.include("**Scrub** — reads every block in a pool");
 	});
 
 	it("renders the overview before How it's managed", () => {
@@ -308,10 +316,5 @@ describe("TRUENAS.md template", () => {
 		const md = render(fixtureContext);
 		expect(md).to.include("cannot apply filesystem ACLs to a dataset");
 		expect(md).to.include("Apply the matching template to each dataset below");
-	});
-
-	it("renders a last-built footer with timestamp", () => {
-		const md = render(fixtureContext);
-		expect(md).to.include("Last built: 2026-07-13T12:34:56.789Z");
 	});
 });
