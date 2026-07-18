@@ -104,6 +104,14 @@ ACL resources total. Confirmed live: granting a role to only the user, or only t
 `proxmox-backup-client` failing with `missing permissions '...'` even though the "missing" role was correctly scoped to
 whichever one it was granted to. Granting the same role to both is what actually works.
 
+**No `Datastore.Prune` on this token, on purpose.** `DatastorePowerUser` would cover both the listing requirement above
+and let Proxmox VE's own per-job "keep" retention prune old backups directly — but that permission would live on the
+credential `vzdump` uses on every automated backup run. Retention is already handled without it, centrally, by this
+datastore's own scheduled `PruneJob` (see "Retention policy" above), which runs server-side and never touches
+`pve-backup@pbs`. Granting Prune here would only matter for a Proxmox VE-side retention setting that isn't configured
+(see `docs/PROXMOX_BACKUP_SERVER.md`, "Configuring Proxmox VE to use this datastore" — don't set one), and would mean a
+compromised Proxmox VE host could delete existing offsite backups, defeating their purpose.
+
 The bootstrap credential this stack's own Pulumi provider authenticates as (`pbs:apiToken`, see "Bootstrapping" below)
 is a **separate**, pre-existing credential, created once by hand during the manual VM setup — the same chicken-and-egg
 reasoning as `truenas:apiKey` in `../truenas/README.md`: Pulumi cannot create the credential it needs in order to run.

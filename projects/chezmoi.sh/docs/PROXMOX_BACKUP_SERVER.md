@@ -139,3 +139,10 @@ pvesm add pbs pbs-Backblaze-B2 \
 Once the storage entry exists, assign VMs/LXCs to it from Datacenter → Backup → Add, picking this storage and a
 schedule — *which* guest gets backed up, and how often, stays a manual Proxmox VE step; see `stack/pbs/README.md`,
 "Intentionally not managed via Pulumi", for why.
+
+**Do not set a "Prune Backups" / keep-retention policy on this storage entry or on the backup job.** `pve-backup@pbs`
+deliberately has no `Datastore.Prune` permission (see `stack/pbs/access.ts`) — retention is already handled centrally
+by this datastore's own `Prune jobs`, above, which run server-side under PBS's own scheduling and don't depend on the
+Proxmox VE token at all. A per-job retention setting here would need `Datastore.Prune` on the token to work, which
+would let a compromised Proxmox VE host delete existing offsite backups — the credential automated `vzdump` runs use
+is a poor place to hold that permission.

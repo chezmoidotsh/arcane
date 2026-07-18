@@ -80,6 +80,17 @@ export const pveBackupTokenAcl = new pbs.Acl(
 // escalating to `DatastoreAdmin`. PBS ACLs are additive, so this stacks
 // cleanly with the Backup grant above -- and, like it, needs granting to both
 // the user and the token.
+//
+// Deliberately NOT `DatastorePowerUser`, even though it would additionally
+// grant `Datastore.Prune` and let Proxmox VE's own per-job "keep" retention
+// prune old backups through this token: retention is already handled
+// centrally by this datastore's own scheduled `PruneJob` (../jobs.ts), which
+// runs server-side and never touches this token. Giving `Datastore.Prune` to
+// the identity `vzdump` uses on every automated run would let a compromised
+// Proxmox VE host delete existing offsite backups -- exactly what backups are
+// meant to survive. See ../../../../../toolbox/pbs-docs/partials/pve-integration.hbs
+// for the matching operator-facing note not to set a "Prune Backups" policy on
+// the Proxmox VE storage entry.
 export const pveBackupReaderAcl = new pbs.Acl(
 	"pbs-acl-pve-backup-reader",
 	{
