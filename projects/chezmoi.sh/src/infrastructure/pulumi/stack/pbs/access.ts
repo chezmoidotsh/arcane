@@ -15,11 +15,10 @@ import { backupsDatastore } from "./datastore";
 // state, mirroring the CCM/CSI dual-token least-privilege pattern used
 // elsewhere in this repo.
 //
-// The ACLs below are granted to the **user**, not the token itself. Granting
-// them directly to `pveBackupTokenId` didn't work against the live instance --
-// `proxmox-backup-client` kept failing with `missing permissions
-// 'Datastore.Backup'` even with the ACL present and correctly scoped to the
-// token. Scoping to the user instead is what actually works in practice.
+// Every role below is granted twice -- once to the user, once to the token.
+// Confirmed live: granting a role to only the user, or only the token, both
+// left `proxmox-backup-client` failing with `missing permissions '...'`.
+// Granting the same role to both is what actually works.
 export const pveBackupUser = new pbs.User("pbs-user-pve-backup", {
 	userid: "pve-backup@pbs",
 	comment: "Proxmox VE storage integration -- pushes LXC/VM backups",
@@ -46,10 +45,12 @@ export const pveBackupTokenId = pveBackupToken.tokenid;
 // anywhere else -- see ./README.md, "Bootstrapping".
 export const pveBackupTokenSecret = pveBackupToken.value;
 
+const backupAclPath = pulumi.interpolate`/datastore/${backupsDatastore.name}`;
+
 export const pveBackupAcl = new pbs.Acl(
 	"pbs-acl-pve-backup",
 	{
-		path: pulumi.interpolate`/datastore/${backupsDatastore.name}`,
+		path: backupAclPath,
 		ugid: pveBackupUser.userid,
 		roleId: "DatastoreBackup",
 		propagate: true,
@@ -57,23 +58,46 @@ export const pveBackupAcl = new pbs.Acl(
 	{ parent: pveBackupUser },
 );
 
+export const pveBackupTokenAcl = new pbs.Acl(
+	"pbs-acl-pve-backup-token",
+	{
+		path: backupAclPath,
+		ugid: pveBackupTokenId,
+		roleId: "DatastoreBackup",
+		propagate: true,
+	},
+	{ parent: pveBackupToken },
+);
+
 // `DatastoreBackup` alone only grants `Datastore.Backup` -- enough to push/pull
 // backups, but not to list datastores. Proxmox VE's `pvesm add pbs` (and the
 // GUI wizard) fetches the datastore list before it will create the storage
 // entry, which needs `Datastore.Audit`. PBS has no built-in role that combines
-// just Backup + Audit, so this second ACL uses `DatastoreReader` (Audit +
+// just Backup + Audit, so this second role uses `DatastoreReader` (Audit +
 // Read) -- broader than strictly required (Read also allows browsing/
 // restoring backups owned by other users on this datastore), but the
 // narrowest built-in role that covers the listing requirement without
 // escalating to `DatastoreAdmin`. PBS ACLs are additive, so this stacks
-// cleanly with the Backup grant above.
+// cleanly with the Backup grant above -- and, like it, needs granting to both
+// the user and the token.
 export const pveBackupReaderAcl = new pbs.Acl(
 	"pbs-acl-pve-backup-reader",
 	{
-		path: pulumi.interpolate`/datastore/${backupsDatastore.name}`,
+		path: backupAclPath,
 		ugid: pveBackupUser.userid,
 		roleId: "DatastoreReader",
 		propagate: true,
 	},
 	{ parent: pveBackupUser },
+);
+
+export const pveBackupTokenReaderAcl = new pbs.Acl(
+	"pbs-acl-pve-backup-token-reader",
+	{
+		path: backupAclPath,
+		ugid: pveBackupTokenId,
+		roleId: "DatastoreReader",
+		propagate: true,
+	},
+	{ parent: pveBackupToken },
 );

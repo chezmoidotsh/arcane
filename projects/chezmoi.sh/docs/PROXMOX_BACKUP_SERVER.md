@@ -102,6 +102,8 @@ not recoverable from stack state either; see `stack/pbs/README.md`, "Bootstrappi
 | ---- | ------- | ---- | ---------- |
 | `/datastore/Backblaze-B2` | `pve-backup@pbs` | `DatastoreReader` | yes |
 | `/datastore/Backblaze-B2` | `pve-backup@pbs` | `DatastoreBackup` | yes |
+| `/datastore/Backblaze-B2` | `pve-backup@pbs!pve-storage` | `DatastoreBackup` | yes |
+| `/datastore/Backblaze-B2` | `pve-backup@pbs!pve-storage` | `DatastoreReader` | yes |
 
 ## Configuring Proxmox VE to use this datastore
 

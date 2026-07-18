@@ -94,15 +94,15 @@ adjust here if it would otherwise contend with Longhorn/CSI I/O windows on other
 ## Access model
 
 `pve-backup@pbs` (`access.ts`) is the only identity Proxmox VE's own `pbs`-type storage integration authenticates as,
-via its `pve-storage` API token. It receives two ACL bindings on the datastore root, nothing broader — `DatastoreBackup`
+via its `pve-storage` API token. It receives two roles on the datastore root, nothing broader — `DatastoreBackup`
 (push/restore its own backups) and `DatastoreReader` (list/audit the datastore, needed by `pvesm add pbs`'s own
 connectivity check when it fetches the datastore list before creating the storage entry) — mirroring the CCM/CSI
 dual-token least-privilege pattern used elsewhere in this repo. No credential in steady-state operation uses `root@pam`.
 
-The ACLs are granted to the **user** (`pveBackupUser.userid`), not the token. Granting them directly to the token
-(`pveBackupTokenId`) was tried first and didn't work against the live instance — `proxmox-backup-client` kept failing
-with `missing permissions 'Datastore.Backup'` even with the ACL present and correctly scoped to the token. Scoping to
-the user instead is what actually works in practice.
+Each role is granted **twice** — once to the user (`pveBackupUser.userid`), once to the token (`pveBackupTokenId`), four
+ACL resources total. Confirmed live: granting a role to only the user, or only the token, both left
+`proxmox-backup-client` failing with `missing permissions '...'` even though the "missing" role was correctly scoped to
+whichever one it was granted to. Granting the same role to both is what actually works.
 
 The bootstrap credential this stack's own Pulumi provider authenticates as (`pbs:apiToken`, see "Bootstrapping" below)
 is a **separate**, pre-existing credential, created once by hand during the manual VM setup — the same chicken-and-egg
