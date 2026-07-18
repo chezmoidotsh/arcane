@@ -14,9 +14,17 @@ compatibility: Requires git and GitHub CLI (gh)
 
 Before pushing anything:
 
-1. Read `.agents/skills/git-commit/SKILL.md` for commit format and scope conventions.
+1. Gather context in one pass (branch, issue number, push status, commits since base, files changed, untracked files):
 
-2. Pick the matching PR template in `.github/PULL_REQUEST_TEMPLATE/`:
+   ```sh
+   bash .agents/skills/create-pr/scripts/gather-context.sh main
+   ```
+
+   Use this output for the whole draft below instead of re-running `git log` / `git diff` / `git status` piecemeal.
+
+2. Read `.agents/skills/git-commit/SKILL.md` for commit format and scope conventions.
+
+3. Pick the matching PR template in `.github/PULL_REQUEST_TEMPLATE/`:
 
    | Change type                             | Template                                                | Distinguishing sections                                                                                                 |
    | --------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
@@ -28,7 +36,7 @@ Before pushing anything:
    The root `pull_request_template.md` is a copy of `feature.md` and applies by default. To use a non-default template
    explicitly, append `?template=<name>.md` to the PR URL or use `gh pr create --web` and pick from the GitHub picker.
 
-3. List the last 3 merged PRs that are not dependency bumps for style reference:
+4. List the last 3 merged PRs that are not dependency bumps for style reference:
 
    ```sh
    gh pr list --limit 30 --state merged --json number,title,author \
@@ -40,7 +48,7 @@ Before pushing anything:
    "
    ```
 
-4. Run the commit validator and review its output:
+5. Run the commit validator and review its output:
 
    ```sh
    bash .agents/skills/create-pr/scripts/validate_commits.sh main
@@ -53,7 +61,7 @@ Before pushing anything:
      attestation that only the human committer can make. Surface the warning to the user and let them decide. Do not add
      `-s` to any commit command yourself.
 
-5. Run trunk check on the changed files and fix all issues before pushing:
+6. Run trunk check on the changed files and fix all issues before pushing:
 
    ```sh
    trunk check --filter=-conftest
@@ -82,14 +90,16 @@ Before pushing anything:
 ### Opening a new PR
 
 1. Create a branch following the naming conventions above.
-2. Run the commit validator (step 4 above) and fix any `FAIL` items; surface `WARN` items to the user.
-3. Run `trunk check --filter=-conftest` (step 5 above) and fix all issues.
+2. Run the commit validator (step 5 above) and fix any `FAIL` items; surface `WARN` items to the user.
+3. Run `trunk check --filter=-conftest` (step 6 above) and fix all issues.
 4. Push: `git push -u origin <branch-name>`
 5. Draft the PR body following the selected template — see `.github/PULL_REQUEST_TEMPLATE/<type>.md` and
    `references/pr-examples.md`.
 6. Create the PR with a **sentence-form** title that says what changes (no symbol prefix, no bracketed scope — the
    commit symbol format is for git log, not for PR titles).
-7. Apply labels: one `type::*` + the scope label (`project`, `catalog`, `gh`, `deps`).
+7. Apply the scope label(s) matching the changed paths (`project`, `catalog`, `agents:skills`, `agents:sessions`,
+   `agents:knowledge`, `gh`, `deps`) — see `.github/labels.yaml`. There is no `type::*` label for PRs; type is a
+   GitHub-native Issue Type field on issues only. Add `size::*` when you have signal.
 
 ### Pushing follow-up commits to an existing PR
 
@@ -108,8 +118,9 @@ When adding a commit to a branch that already has an open PR:
 
 ## PR title format
 
-Sentence form, no symbol prefix, no bracketed scope. Type and scope live in **labels** (one `type::*` + the scope
-label). The commit symbol format stays where it belongs — on commits — and is validated by commitlint there.
+Sentence form, no symbol prefix, no bracketed scope. Scope lives in the **scope label** (`project`, `catalog`,
+`agents:skills`, …) — there's no `type::*` label for PRs, type is a GitHub-native Issue Type field on issues only. The
+commit symbol format stays where it belongs — on commits — and is validated by commitlint there.
 
 Examples:
 
@@ -257,7 +268,6 @@ gh pr create \
   --title "Sentence describing the change" \
   --body-file /tmp/pr_body.md \
   --base main \
-  --label "type::feature" \
   --label "project"
 rm /tmp/pr_body.md
 ```
@@ -266,7 +276,9 @@ rm /tmp/pr_body.md
 
 - **PR title**: sentence-case English, verb-first, no symbol prefix, no bracketed scope, no trailing period. The commit
   symbol format stays on commits.
-- **PR labels**: one `type::*` + the scope label mandatory. Add `priority::*` / `size::*` when you have signal.
+- **PR labels**: the scope label(s) matching the changed paths are mandatory (see `.github/labels.yaml`: `project`,
+  `catalog`, `agents:skills`, `agents:sessions`, `agents:knowledge`, `gh`, `deps`). Add `size::*` when you have signal;
+  `priority::*` is issues-only.
 - **Commits**: All commits must have the symbol-based `type[scope]: Subject` format, GPG signature (`-S`), and
   `Assisted-by:` trailer. Signed-off-by is the user's responsibility — never add `-s` yourself.
 - **PR body line length**: No hard limit — do NOT wrap PR body text at 80 characters. GitHub renders Markdown, so
@@ -351,7 +363,6 @@ gh pr create \
   --title "Add Forgejo as a self-hosted Git forge on lungmen" \
   --body-file /tmp/pr_body.md \
   --base main \
-  --label "type::feature" \
   --label "project"
 rm /tmp/pr_body.md
 ```
@@ -370,7 +381,7 @@ gh pr create \
 - [ ] Commit validator shows no `FAIL` lines; `WARN` lines surfaced to user
 - [ ] `trunk check --filter=-conftest` reports `No issues` locally
 - [ ] PR title is a sentence — verb-first, no symbol prefix, no bracketed scope
-- [ ] PR labels include one `type::*` + the scope label
+- [ ] PR labels include the scope label(s) matching the changed paths
 - [ ] PR body matches the selected template skeleton: Summary, Changes Made (with subsystem headings), Technical Impact
       (with **named sub-sections**), Testing Validation, Related Issues
 - [ ] Refactor PRs include `## Rationale`; bugfix PRs include `## Root Cause` with evidence
