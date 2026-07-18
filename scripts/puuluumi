@@ -1,0 +1,389 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#   "prompt_toolkit>=3.0",
+#   "pfzy>=0.3",
+#   "rich>=13",
+# ]
+# ///
+"""Interactively pick Pulumi resources from a live, fuzzy-filterable, colored
+tree, then exec pulumi. Three modes, based on the forwarded arguments's verb
+(the first non-flag argument):
+
+- `up` / `preview` / `destroy`: a multiselect picker. Arrows navigate, typing
+  filters in place, tab toggles a selection (component or leaf; checking a
+  component expands to every resource underneath it), enter confirms. Runs:
+
+      pulumi <verb> [forwarded args...] --target <urn> [--target <urn> ...]
+
+- `state taint|untaint|protect|unprotect`: a mono-select picker (enter picks
+  the resource under the cursor directly, no tab/multiselect). Runs:
+
+      pulumi state <subcommand> [forwarded args...] <urn>
+
+- anything else, including no verb at all: no picker, no default verb,
+  forwarded straight to pulumi as-is.
+
+esc/ctrl-c cancels a picker. Examples:
+
+    puuluumi up --refresh --parallel 15
+    puuluumi preview --diff
+    puuluumi destroy --stack staging
+    puuluumi state taint
+    puuluumi stack ls
+    puuluumi --refresh          # no verb -> plain `pulumi --refresh`
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from dataclasses import dataclass, field
+
+from pfzy.score import fzy_scorer
+from prompt_toolkit import Application
+from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.layout import HSplit, Layout, Window
+from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
+from prompt_toolkit.layout.dimension import Dimension
+from prompt_toolkit.styles import Style
+from rich.console import Console
+
+TARGET_VERBS = {"up", "preview", "destroy"}
+STATE_MONO_SUBCOMMANDS = {"taint", "untaint", "protect", "unprotect"}
+SKIP_TYPES_EXACT = {"pulumi:pulumi:Stack"}
+SKIP_TYPE_PREFIXES = ("pulumi:providers:",)
+VISIBLE_ROWS = 20
+
+console = Console(stderr=True, highlight=False)
+
+STYLE = Style.from_dict(
+    {
+        "pointer": "fg:ansicyan bold",
+        "marker": "fg:ansigreen bold",
+        "connector": "fg:ansibrightblack",
+        "type": "fg:ansiyellow",
+        "name": "fg:ansicyan",
+        "name.component": "fg:ansicyan bold",
+        "status": "fg:ansired",
+        "filter-prompt": "fg:ansigreen bold",
+    }
+)
+
+
+@dataclass
+class Resource:
+    urn: str
+    type: str
+    parent: str
+    children: list[Resource] = field(default_factory=list)
+
+    @property
+    def name(self) -> str:
+        return self.urn.rsplit("::", 1)[-1]
+
+
+def stack_resources(stack: str | None) -> list[dict]:
+    cmd = ["pulumi", "stack", "--show-urns", "--output", "json"]
+    if stack:
+        cmd += ["--stack", stack]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        sys.stderr.write(result.stderr)
+        sys.exit(result.returncode)
+    return json.loads(result.stdout).get("resources", [])
+
+
+def build_tree(resources: list[dict]) -> list[Resource]:
+    by_urn: dict[str, Resource] = {
+        raw["urn"]: Resource(urn=raw["urn"], type=raw.get("type", ""), parent=raw.get("parent", ""))
+        for raw in resources
+    }
+
+    def skip(res: Resource) -> bool:
+        return res.type in SKIP_TYPES_EXACT or res.type.startswith(SKIP_TYPE_PREFIXES)
+
+    roots: list[Resource] = []
+    for res in by_urn.values():
+        if skip(res):
+            continue
+        parent = by_urn.get(res.parent)
+        if parent is not None and not skip(parent):
+            parent.children.append(res)
+        else:
+            roots.append(res)
+
+    def sort_rec(nodes: list[Resource]) -> None:
+        nodes.sort(key=lambda r: r.name)
+        for node in nodes:
+            sort_rec(node.children)
+
+    sort_rec(roots)
+    return roots
+
+
+def tree_lines(nodes: list[Resource], prefix: str = "", is_root: bool = True) -> list[tuple[Resource, str]]:
+    """Flatten nodes depth-first, pairing each with a `tree`-style box-drawing prefix."""
+    out: list[tuple[Resource, str]] = []
+    for i, node in enumerate(nodes):
+        is_last = i == len(nodes) - 1
+        connector = "" if is_root else ("└─ " if is_last else "├─ ")
+        out.append((node, prefix + connector))
+        child_prefix = prefix if is_root else prefix + ("   " if is_last else "│  ")
+        out.extend(tree_lines(node.children, child_prefix, is_root=False))
+    return out
+
+
+def leaves_under(res: Resource) -> list[str]:
+    if not res.children:
+        return [res.urn]
+    return [urn for child in res.children for urn in leaves_under(child)]
+
+
+@dataclass
+class Row:
+    res: Resource
+    segments: list[tuple[str, str]]
+    text: str  # plain concatenation of segments, lowercased, for fuzzy matching
+
+
+def build_rows(roots: list[Resource]) -> list[Row]:
+    rows = []
+    for res, connector in tree_lines(roots):
+        name_class = "class:name.component" if res.children else "class:name"
+        segments = [
+            ("class:connector", connector),
+            ("class:type", res.type),
+            ("", ":"),
+            (name_class, res.name),
+        ]
+        text = "".join(t for _, t in segments)
+        rows.append(Row(res, segments, text.lower()))
+    return rows
+
+
+def filter_rows(rows: list[Row], query: str) -> list[tuple[Row, set[int] | None]]:
+    if not query:
+        return [(row, None) for row in rows]
+    needle = query.lower()
+    scored: list[tuple[float, Row, set[int]]] = []
+    for row in rows:
+        score, indices = fzy_scorer(needle, row.text)
+        if indices is not None:
+            scored.append((score, row, set(indices)))
+    scored.sort(key=lambda t: -t[0])
+    return [(row, indices) for _, row, indices in scored]
+
+
+def render_row(row: Row, matched: set[int] | None, *, selected: bool, is_cursor: bool) -> list[tuple[str, str]]:
+    frags: list[tuple[str, str]] = [
+        ("class:pointer", "❯ " if is_cursor else "  "),
+        ("class:marker", "✓ " if selected else "  "),
+    ]
+    pos = 0
+    for style, text in row.segments:
+        if matched:
+            for ch in text:
+                s = f"{style} underline" if pos in matched else style
+                frags.append((s, ch))
+                pos += 1
+        else:
+            frags.append((style, text))
+            pos += len(text)
+    return frags
+
+
+def run_picker(roots: list[Resource], *, multiselect: bool) -> list[str] | None:
+    """Run the interactive tree picker.
+
+    Multiselect mode: tab toggles a set, enter confirms it (expanding any
+    selected component to every resource underneath it). Mono-select mode:
+    enter immediately picks the resource under the cursor, no expansion.
+    """
+    rows = build_rows(roots)
+    by_urn = {row.res.urn: row.res for row in rows}
+    selected: set[str] = set()
+
+    state: dict = {"filtered": [(row, None) for row in rows], "cursor": 0, "error": ""}
+    result: dict = {"value": None}
+
+    filter_buffer = Buffer(multiline=False)
+
+    def recompute(_=None) -> None:
+        state["filtered"] = filter_rows(rows, filter_buffer.text)
+        if state["cursor"] >= len(state["filtered"]):
+            state["cursor"] = max(0, len(state["filtered"]) - 1)
+        state["error"] = ""
+
+    filter_buffer.on_text_changed += recompute
+
+    def get_list_fragments() -> list[tuple[str, str]]:
+        filtered = state["filtered"]
+        total = len(filtered)
+        cursor = state["cursor"]
+        first = max(0, min(cursor - VISIBLE_ROWS // 2, max(0, total - VISIBLE_ROWS)))
+        last = min(total, first + VISIBLE_ROWS)
+
+        frags: list[tuple[str, str]] = []
+        if total == 0:
+            frags.append(("class:status", "  (no match)\n"))
+        for i in range(first, last):
+            row, matched = filtered[i]
+            is_selected = multiselect and row.res.urn in selected
+            frags.extend(render_row(row, matched, selected=is_selected, is_cursor=i == cursor))
+            frags.append(("", "\n"))
+        if frags and frags[-1] == ("", "\n"):
+            frags.pop()
+        return frags
+
+    def get_status_fragments() -> list[tuple[str, str]]:
+        if state["error"]:
+            return [("class:status", state["error"])]
+        shown = f"{len(state['filtered'])}/{len(rows)} shown"
+        if multiselect:
+            hint = f"{len(selected)} selected · {shown}  ·  ↑/↓ move · tab select · enter confirm · esc quit"
+        else:
+            hint = f"{shown}  ·  ↑/↓ move · enter select · esc quit"
+        return [("class:connector", hint)]
+
+    kb = KeyBindings()
+
+    @kb.add("c-c")
+    @kb.add("escape")
+    def _cancel(event) -> None:
+        result["value"] = None
+        event.app.exit()
+
+    @kb.add("up")
+    @kb.add("c-p")
+    def _up(event) -> None:
+        state["cursor"] = max(0, state["cursor"] - 1)
+
+    @kb.add("down")
+    @kb.add("c-n")
+    def _down(event) -> None:
+        state["cursor"] = min(max(0, len(state["filtered"]) - 1), state["cursor"] + 1)
+
+    if multiselect:
+
+        @kb.add("tab")
+        def _toggle(event) -> None:
+            if not state["filtered"]:
+                return
+            row, _ = state["filtered"][state["cursor"]]
+            urn = row.res.urn
+            if urn in selected:
+                selected.discard(urn)
+            else:
+                selected.add(urn)
+
+        @kb.add("enter")
+        def _confirm(event) -> None:
+            if not selected:
+                state["error"] = "Select at least one target (tab to toggle) before confirming."
+                return
+            result["value"] = sorted(selected)
+            event.app.exit()
+    else:
+
+        @kb.add("enter")
+        def _confirm_single(event) -> None:
+            if not state["filtered"]:
+                state["error"] = "No match."
+                return
+            row, _ = state["filtered"][state["cursor"]]
+            result["value"] = [row.res.urn]
+            event.app.exit()
+
+    body = HSplit(
+        [
+            Window(FormattedTextControl(lambda: [("class:filter-prompt", "? ")]), height=1, dont_extend_width=True),
+            Window(BufferControl(buffer=filter_buffer), height=1),
+            Window(FormattedTextControl(get_list_fragments), wrap_lines=False, height=Dimension(min=1, max=VISIBLE_ROWS)),
+            Window(FormattedTextControl(get_status_fragments), height=1),
+        ]
+    )
+
+    app: Application = Application(
+        layout=Layout(body, focused_element=filter_buffer),
+        key_bindings=kb,
+        style=STYLE,
+        full_screen=False,
+    )
+    app.run()
+
+    if result["value"] is None:
+        return None
+    if not multiselect:
+        return result["value"]
+
+    targets: set[str] = set()
+    for urn in result["value"]:
+        targets.add(urn)
+        targets.update(leaves_under(by_urn[urn]))
+    return sorted(targets)
+
+
+def load_roots(stack: str | None) -> list[Resource]:
+    resources = stack_resources(stack)
+    roots = build_tree(resources)
+    if not roots:
+        console.print("[red]No resources found in this stack.[/red]")
+        sys.exit(1)
+    return roots
+
+
+def run_and_exec(cmd: list[str]) -> None:
+    console.print(f"\n[bold green]$[/bold green] [cyan]{' '.join(cmd)}[/cyan]\n")
+    os.execvp("pulumi", cmd)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        prog="puuluumi",
+        description="Interactively pick Pulumi resources from a tree, then exec pulumi.",
+    )
+    parser.add_argument("--stack", help="Stack name to export/operate on (defaults to the current stack)")
+    args, forwarded = parser.parse_known_args()
+    stack_flag = ["--stack", args.stack] if args.stack else []
+
+    # First positional (non-flag) token is the verb; there is no default verb.
+    verb, rest = (forwarded[0], forwarded[1:]) if forwarded and not forwarded[0].startswith("-") else (None, forwarded)
+
+    if verb in TARGET_VERBS:
+        targets = run_picker(load_roots(args.stack), multiselect=True)
+        if targets is None:
+            sys.exit(130)  # esc / ctrl-c
+
+        console.print(f"\n[bold]{len(targets)}[/bold] target(s) selected:")
+        for urn in targets:
+            console.print(f"  [green]•[/green] {urn.rsplit('::', 1)[-1]}")
+
+        cmd = ["pulumi", verb, *rest, *stack_flag]
+        for urn in targets:
+            cmd += ["--target", urn]
+        run_and_exec(cmd)
+        return
+
+    if verb == "state" and rest and rest[0] in STATE_MONO_SUBCOMMANDS:
+        subcommand, extra = rest[0], rest[1:]
+        picked = run_picker(load_roots(args.stack), multiselect=False)
+        if picked is None:
+            sys.exit(130)  # esc / ctrl-c
+
+        console.print(f"\n[bold]Target:[/bold] {picked[0].rsplit('::', 1)[-1]}")
+        cmd = ["pulumi", "state", subcommand, *extra, *stack_flag, picked[0]]
+        run_and_exec(cmd)
+        return
+
+    # Anything else: no picker, forward straight to pulumi.
+    os.execvp("pulumi", ["pulumi", *forwarded, *stack_flag])
+
+
+if __name__ == "__main__":
+    main()
