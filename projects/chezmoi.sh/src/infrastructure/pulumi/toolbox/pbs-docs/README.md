@@ -24,10 +24,8 @@ what's actually deployed, not what's about to change.
    `pbs:apiToken`, which this generator never reads).
 
 2. **Extract plain data**: `extract.ts` groups the exported resource list by Pulumi type token
-   (`pbs:index/datastore:Datastore`, `pbs:index/namespace:Namespace`, `pbs:index/pruneJob:PruneJob`, …) and turns each
-   group into the exact plain shape `template.hbs`/`partials/*.hbs` expect. `generate.ts` then joins
-   `extractNamespaces()`'s output onto each datastore by `store` name, since a namespace belongs to exactly one
-   datastore and the template renders them nested underneath it.
+   (`pbs:index/datastore:Datastore`, `pbs:index/pruneJob:PruneJob`, …) and turns each group into the exact plain shape
+   `template.hbs`/`partials/*.hbs` expect.
 
 3. **Render**: `render.ts` compiles `template.hbs` (with partials from `./partials/`) via Handlebars — byte-identical
    logic to `../truenas-docs/render.ts`.
@@ -54,24 +52,24 @@ asserts the known webhook host never appears in rendered output, as a regression
 
 ## File structure
 
-| File                           | Purpose                                                                                                                                                                                                                                      |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `generate.ts`                  | Entry point (run via `mise run pbs:docs:generate`). Reads stack state, extracts data, joins namespaces onto their owning datastore, renders, writes the doc.                                                                                 |
-| `stack-export.ts`              | Thin `pulumi` CLI wrapper: `readStackExport()` (`pulumi stack export`, never `--show-secrets`), `readConfig()`, `readOptionalConfig()`.                                                                                                      |
-| `extract.ts`                   | Pure functions turning the exported resource list into the plain-data shapes the templates expect, grouped by type token. Each extractor covers exactly one resource type — the datastore/namespace join happens in `generate.ts`, not here. |
-| `extract.test.ts`              | Unit tests for every extractor, against a hand-trimmed fixture shaped like a real `pulumi stack export`.                                                                                                                                     |
-| `render.ts`                    | `render(context)`: compiles `template.hbs` + `partials/*.hbs` via Handlebars. Shared by `generate.ts` and `render.test.ts`.                                                                                                                  |
-| `helpers.ts`                   | Custom Handlebars helpers: `humanList()` (arrays → "a, b and c"), `isSingular()` (singular/plural agreement).                                                                                                                                |
-| `helpers.test.ts`              | Unit tests for helpers using mocha/chai.                                                                                                                                                                                                     |
-| `template.hbs`                 | Main template structure; includes partials.                                                                                                                                                                                                  |
-| `partials/overview.hbs`        | PBS instance overview: what it's for, that it runs as a Proxmox VE VM, and the live datastore count.                                                                                                                                         |
-| `partials/glossary.hbs`        | Static "Key terms" primer (datastore, namespace, chunk, prune, GC, verify, notification target/matcher) — not data-driven, read once by anyone unfamiliar with PBS before the data-driven sections below.                                    |
-| `partials/datastore.hbs`       | Each datastore's S3 backend, local cache path, GC schedule, notification delivery mode, and its namespaces.                                                                                                                                  |
-| `partials/retention.hbs`       | Prune jobs (retention summary per job) and verify jobs (schedule, outdated-after window).                                                                                                                                                    |
-| `partials/notifications.hbs`   | Notification targets (name + kind only — see "A secret this provider doesn't mark as secret" above) and their routing matchers.                                                                                                              |
-| `partials/access.hbs`          | Users, API tokens (never their one-time secret), and the ACL bindings table.                                                                                                                                                                 |
-| `partials/pve-integration.hbs` | Per-datastore, copy-pasteable instructions (UI and `pvesm add` CLI) for adding it as Proxmox VE storage, referencing its namespaces.                                                                                                         |
-| `render.test.ts`               | Integration tests for full template rendering against a fixture context. Run via `npx mocha`.                                                                                                                                                |
+| File                           | Purpose                                                                                                                                                                                        |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `generate.ts`                  | Entry point (run via `mise run pbs:docs:generate`). Reads stack state, extracts data, renders, writes the doc.                                                                                 |
+| `stack-export.ts`              | Thin `pulumi` CLI wrapper: `readStackExport()` (`pulumi stack export`, never `--show-secrets`), `readConfig()`, `readOptionalConfig()`.                                                        |
+| `extract.ts`                   | Pure functions turning the exported resource list into the plain-data shapes the templates expect, grouped by type token. Each extractor covers exactly one resource type.                     |
+| `extract.test.ts`              | Unit tests for every extractor, against a hand-trimmed fixture shaped like a real `pulumi stack export`.                                                                                       |
+| `render.ts`                    | `render(context)`: compiles `template.hbs` + `partials/*.hbs` via Handlebars. Shared by `generate.ts` and `render.test.ts`.                                                                    |
+| `helpers.ts`                   | Custom Handlebars helpers: `humanList()` (arrays → "a, b and c"), `isSingular()` (singular/plural agreement).                                                                                  |
+| `helpers.test.ts`              | Unit tests for helpers using mocha/chai.                                                                                                                                                       |
+| `template.hbs`                 | Main template structure; includes partials.                                                                                                                                                    |
+| `partials/overview.hbs`        | PBS instance overview: what it's for, that it runs as a Proxmox VE VM, and the live datastore count.                                                                                           |
+| `partials/glossary.hbs`        | Static "Key terms" primer (datastore, chunk, prune, GC, verify, notification target/matcher) — not data-driven, read once by anyone unfamiliar with PBS before the data-driven sections below. |
+| `partials/datastore.hbs`       | Each datastore's S3 backend, local cache path, GC schedule, and notification delivery mode.                                                                                                    |
+| `partials/retention.hbs`       | Prune jobs (retention summary per job) and verify jobs (schedule, outdated-after window).                                                                                                      |
+| `partials/notifications.hbs`   | Notification targets (name + kind only — see "A secret this provider doesn't mark as secret" above) and their routing matchers.                                                                |
+| `partials/access.hbs`          | Users, API tokens (never their one-time secret), and the ACL bindings table.                                                                                                                   |
+| `partials/pve-integration.hbs` | Per-datastore, copy-pasteable instructions (UI and `pvesm add` CLI) for adding it as Proxmox VE storage.                                                                                       |
+| `render.test.ts`               | Integration tests for full template rendering against a fixture context. Run via `npx mocha`.                                                                                                  |
 
 ## Regenerating the doc
 

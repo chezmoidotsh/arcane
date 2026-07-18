@@ -19,8 +19,8 @@ appliance pattern used elsewhere in `projects/chezmoi.sh/src/infrastructure/prox
 supported inside an LXC container (its storage stack expects a full VM or bare metal). The VM itself — disk layout,
 network, initial `root@pam` setup — is a manual, one-time install, the same way any vendor-image install is handled in
 this repo (see `docs/decisions/015-migrate-crossplane-to-pulumi.md`, "Non-Goals": Proxmox itself stays outside
-Pulumi/GitOps). Everything from that point on — datastore, namespaces, notifications, users/ACLs, prune/verify jobs — is
-this stack's job.
+Pulumi/GitOps). Everything from that point on — datastore, notifications, users/ACLs, prune/verify jobs — is this
+stack's job.
 
 ## What's managed here
 
@@ -28,7 +28,6 @@ this stack's job.
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `acme.ts`          | Cloudflare DNS-01 ACME token for `pbs.pve.chezmoi.sh`'s own TLS certificate (PBS's built-in ACME client consumes it directly, no Caddy involved) |
 | `datastore.ts`     | Backblaze B2 bucket + application key, the S3 endpoint, and the S3-backed datastore itself                                                       |
-| `namespaces.ts`    | The `vms`/`pvcs` namespaces splitting the two backup workloads sharing the datastore                                                             |
 | `jobs.ts`          | Prune job (retention policy) and verify job (weekly checksum verification) on the datastore                                                      |
 | `notifications.ts` | Webhook notification target routing datastore events to the shared Slack `#notifications` channel                                                |
 | `access.ts`        | The `pve-backup@pbs` service account, its API token, and the least-privilege ACL binding Proxmox VE's storage integration uses to push backups   |
@@ -76,26 +75,12 @@ depend on wildcard DNS/TLS for a bucket subdomain, plus `providerQuirks: ["skip-
 Backblaze B2 incompatibility with the standard S3 `If-None-Match` header PBS sends on chunk upload — without it, every
 chunk write fails.
 
-## Namespaces
-
-`namespaces.ts` splits the datastore into two namespaces — organizational path prefixes within the _same_ datastore
-(same bucket, same GC), not separate storage:
-
-- **`vms`** — whole-VM backups Proxmox VE's own storage integration pushes for the `talos` pool.
-- **`pvcs`** — per-volume backups of the individual CSI-provisioned virtual disks backing Kubernetes
-  PersistentVolumeClaims, finer-grained than a full VM restore.
-
-Retention/verification (`jobs.ts`) is currently datastore-wide, covering both namespaces with the same policy — see
-"Retention policy" below. Scope a job to one namespace only if the two workloads' retention needs actually diverge;
-until then, splitting the policy up front would be speculative.
-
 ## Retention policy
 
 `keepDaily=4, keepWeekly=2, keepMonthly=3` (last 4 days, last 2 Sundays, last 3 months), applied by the `pbs.PruneJob`
 in `jobs.ts`. This assumes daily backups feeding PBS's chunk-level incremental dedup, which is what makes the monthly
 tier affordable — an opaque/compressed backup archive (e.g. a NAS backup blob) may not dedup as well, worth checking
-PBS's GC stats after the first few weeks of real backups before committing further. Same policy for both namespaces to
-start; revisit per-workload if needed.
+PBS's GC stats after the first few weeks of real backups before committing further.
 
 Verification runs weekly (`pbs.VerifyJob`), deep enough to catch bitrot before the oldest kept daily snapshot is pruned
 away. Garbage collection runs off the `Datastore` resource itself (`gcSchedule`, in `datastore.ts`) — there is no
@@ -136,8 +121,8 @@ disaster recovery. One-time setup, after the PBS VM is installed and reachable:
    `/mnt/datastore/cache` (the `path` in `datastore.ts`) doesn't exist yet.
 
 2. **Create a scoped Pulumi-management credential** on the PBS VM (not `root@pam` — e.g. an `admin@pbs` user with an API
-   token scoped to what this stack needs to manage: datastores, namespaces, jobs, notifications, users, ACLs). Set it as
-   Pulumi secret config:
+   token scoped to what this stack needs to manage: datastores, jobs, notifications, users, ACLs). Set it as Pulumi
+   secret config:
 
    ```sh
    pulumi config set pbs:endpoint https://pbs.pve.chezmoi.sh:8007
@@ -152,8 +137,8 @@ disaster recovery. One-time setup, after the PBS VM is installed and reachable:
    pulumi config set --secret pbs:notificationsSlackWebhookUrl <url>
    ```
 
-4. **Run `pulumi up`** (see "Running Pulumi commands" below) to create the datastore, namespaces, jobs, notification
-   target, and the `pve-backup@pbs` access token.
+4. **Run `pulumi up`** (see "Running Pulumi commands" below) to create the datastore, jobs, notification target, and the
+   `pve-backup@pbs` access token.
 
 5. **Retrieve the one-time token secret** this run produces and store it in OpenBao (this stack cannot push to Vault
    itself — see `acme.ts`: it runs upstream of any cluster):
@@ -180,21 +165,13 @@ disaster recovery. One-time setup, after the PBS VM is installed and reachable:
    [`../../../docs/PROXMOX_BACKUP_SERVER.md`](../../../docs/PROXMOX_BACKUP_SERVER.md), "Configuring Proxmox VE to use
    this datastore", for the exact UI/CLI steps, generated per-datastore from this stack's own state.
 
-## Adding or editing a namespace
-
-Declared as standalone `new pbs.Namespace(...)` calls in `namespaces.ts`, each keyed by an explicit `namespace` path and
-scoped to a `store`. To add a third namespace, follow the same shape — see
-`../../../../../../catalog/pulumi/sdks/pbs/namespace.ts` for the full argument list. Namespace comments are immutable
-(changes force replacement), so renaming one destroys and recreates it — PBS does not migrate existing backups between
-namespaces automatically.
-
 ## Adding or editing a prune/verify job
 
 Both live in `jobs.ts` as standalone `new pbs.PruneJob(...)`/`new pbs.VerifyJob(...)` declarations, each keyed by an
-explicit `pruneJobId`/`verifyJobId` and scoped to a `store` (currently the whole datastore, covering both namespaces).
-To scope a job to a single namespace instead, add a new declaration with that namespace's `namespace` field set — see
-the PBS provider's own resource docs (`../../../../../../catalog/pulumi/sdks/pbs/pruneJob.ts` / `verifyJob.ts`) for the
-full argument list (e.g. `namespace`, `maxDepth`).
+explicit `pruneJobId`/`verifyJobId` and scoped to a `store` (currently the whole datastore). PBS namespaces (path
+prefixes within a datastore) aren't used in this stack today — see the PBS provider's own resource docs
+(`../../../../../../catalog/pulumi/sdks/pbs/pruneJob.ts` / `verifyJob.ts`, `namespace.ts`) if a future workload needs
+scoped retention or per-namespace access control.
 
 ## Adding a new notification target or route
 

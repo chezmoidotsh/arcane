@@ -5,7 +5,6 @@ import {
 	extractAcls,
 	extractApiTokens,
 	extractDatastores,
-	extractNamespaces,
 	extractNotificationMatchers,
 	extractNotificationTargets,
 	extractPruneJobs,
@@ -49,18 +48,9 @@ async function main(): Promise<void> {
 	const exported = readStackExport(projectRoot);
 	const resources = exported.deployment.resources;
 
-	const namespaces = extractNamespaces(resources);
-	// Each datastore carries its own namespaces for the template -- extractors
-	// stay single-purpose (one resource type each), this is where they're
-	// joined for rendering. See partials/datastore.hbs.
-	const datastores = extractDatastores(resources).map((store) => ({
-		...store,
-		namespaces: namespaces.filter((n) => n.store === store.name),
-	}));
-
 	const context = {
 		endpoint,
-		datastores,
+		datastores: extractDatastores(resources),
 		pruneJobs: extractPruneJobs(resources),
 		verifyJobs: extractVerifyJobs(resources),
 		notificationTargets: extractNotificationTargets(resources),

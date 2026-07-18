@@ -5,7 +5,6 @@ import {
 	extractAcls,
 	extractApiTokens,
 	extractDatastores,
-	extractNamespaces,
 	extractNotificationMatchers,
 	extractNotificationTargets,
 	extractPruneJobs,
@@ -39,26 +38,6 @@ const resources: ExportedResource[] = [
 			gcSchedule: "Sun 04:00",
 			notificationMode: "notification-system",
 			disabled: false,
-		},
-	},
-	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::pbs:index/namespace:Namespace::pbs-namespace-vms",
-		type: "pbs:index/namespace:Namespace",
-		parent: STACK_URN,
-		outputs: {
-			store: "backups",
-			namespace: "vms",
-			comment: "Whole-VM backups (Proxmox VE talos pool)",
-		},
-	},
-	{
-		urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::pbs:index/namespace:Namespace::pbs-namespace-pvcs",
-		type: "pbs:index/namespace:Namespace",
-		parent: STACK_URN,
-		outputs: {
-			store: "backups",
-			namespace: "pvcs",
-			comment: "Per-volume backups of CSI-provisioned PersistentVolumeClaims",
 		},
 	},
 	{
@@ -179,18 +158,6 @@ describe("extractDatastores", () => {
 		expect(datastore.s3Bucket).to.equal("pbs-vm-backup-fcc7acb9");
 		expect(datastore.s3Client).to.equal("backblaze-b2");
 		expect(datastore.gcSchedule).to.equal("Sun 04:00");
-	});
-});
-
-describe("extractNamespaces", () => {
-	it("extracts store/namespace/comment, sorted", () => {
-		const namespaces = extractNamespaces(resources);
-		expect(namespaces).to.have.lengthOf(2);
-		expect(namespaces.map((n) => n.namespace)).to.deep.equal(["pvcs", "vms"]);
-		expect(namespaces[1].store).to.equal("backups");
-		expect(namespaces[1].comment).to.equal(
-			"Whole-VM backups (Proxmox VE talos pool)",
-		);
 	});
 });
 

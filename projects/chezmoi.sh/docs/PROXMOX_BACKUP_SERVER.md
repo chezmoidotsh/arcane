@@ -20,12 +20,10 @@ files, so a nightly full backup of mostly-unchanged data costs close to nothing 
 
 - **Datastore** — the top-level backup repository: where chunks physically live (a local directory, or here, an S3
   bucket) plus its own retention/GC/notification settings. Everything else below lives inside one.
-- **Namespace** — a path prefix within a datastore (`<datastore>:<namespace>`), used to separate unrelated backup
-  workloads sharing the same datastore without needing a second one. Purely organizational: same bucket, same GC.
 - **Chunk** — the unit PBS actually stores: backup data is split into content-addressed blocks, and two backups that
   share a block store it only once. This is what makes daily full backups affordable.
-- **Prune** — deletes old backup snapshots according to a keep-daily/weekly/monthly/… policy, per datastore or
-  namespace. Pruning only removes the snapshot *index*; the chunks it referenced are reclaimed separately by GC.
+- **Prune** — deletes old backup snapshots according to a keep-daily/weekly/monthly/… policy, per datastore. Pruning
+  only removes the snapshot *index*; the chunks it referenced are reclaimed separately by GC.
 - **Garbage collection (GC)** — walks every remaining snapshot, marks the chunks still referenced, and deletes
   whatever isn't. Runs on its own schedule, after pruning, so it always sees the post-prune reference set.
 - **Verify** — re-reads a snapshot's chunks and checks their checksums, catching silent corruption (bitrot, a bad
@@ -61,12 +59,6 @@ Primary S3-backed datastore (Backblaze B2)
 - **Local cache path**: `/mnt/datastore/cache` — chunk cache only, not the full backup set (see `stack/pbs/README.md`, "Datastore architecture")
 - **Garbage collection**: `Sun 04:00`
 - **Notification delivery**: notification-system
-
-**Namespaces** — a namespace is a path prefix within this datastore (`Backblaze-B2:<namespace>`), not a separate storage
-location; each one below can be browsed, restored, and (once scoped that way) pruned/verified independently:
-
-- `kubernetes-volumes`
-- `vms`
 
 ## Retention & verification
 
@@ -108,7 +100,8 @@ not recoverable from stack state either; see `stack/pbs/README.md`, "Bootstrappi
 
 | Path | Grantee | Role | Propagates |
 | ---- | ------- | ---- | ---------- |
-| `/datastore/Backblaze-B2` | `pve-backup@pbs!pve-storage` | `DatastoreBackup` | yes |
+| `/datastore/Backblaze-B2` | `pve-backup@pbs` | `DatastoreReader` | yes |
+| `/datastore/Backblaze-B2` | `pve-backup@pbs` | `DatastoreBackup` | yes |
 
 ## Configuring Proxmox VE to use this datastore
 
@@ -122,25 +115,25 @@ above as a `pbs`-type storage in Proxmox VE so VMs/LXCs can actually be backed u
 | Field | Value |
 | --- | --- |
 | ID | a local name for this storage entry in Proxmox VE, e.g. `pbs-Backblaze-B2` |
-| Server | `pbs.pve.chezmoi.sh:8007` |
+| Server | `pbs.pve.chezmoi.sh` |
+| Port | `8007` — PVE's "Add: Proxmox Backup Server" dialog defaults this field, but it isn't always applied; leaving it blank on some PVE versions causes `create storage failed: ...: error fetching datastores - 401 Unauthorized` even with correct credentials, so set it explicitly |
 | Datastore | `Backblaze-B2` |
 | User | `pve-backup@pbs` |
 | API Token | the `pveBackupTokenId`/`pveBackupTokenSecret` stack outputs (see `stack/pbs/README.md`, "Bootstrapping") |
 | Fingerprint | leave blank — the server has a valid ACME certificate (`stack/pbs/acme.ts`), no manual pinning needed |
-| Namespace | one of `kubernetes-volumes`, `vms` above, or blank for the datastore root |
 
 **Via the CLI**, equivalent to the above:
 
 ```sh
 pvesm add pbs pbs-Backblaze-B2 \
   --server pbs.pve.chezmoi.sh \
+  --port 8007 \
   --datastore Backblaze-B2 \
   --username pve-backup@pbs \
   --token-id pve-backup@pbs!pve-storage \
-  --token-secret <pveBackupTokenSecret> \
-  --namespace <one of: kubernetes-volumes, vms>
+  --token-secret <pveBackupTokenSecret>
 ```
 
-Once the storage entry exists, assign VMs/LXCs to it from Datacenter → Backup → Add, picking this storage (and
-namespace, if scoping to `vms`/`pvcs`) and a schedule — *which* guest gets backed up, and how often, stays a manual
-Proxmox VE step; see `stack/pbs/README.md`, "Intentionally not managed via Pulumi", for why.
+Once the storage entry exists, assign VMs/LXCs to it from Datacenter → Backup → Add, picking this storage and a
+schedule — *which* guest gets backed up, and how often, stays a manual Proxmox VE step; see `stack/pbs/README.md`,
+"Intentionally not managed via Pulumi", for why.

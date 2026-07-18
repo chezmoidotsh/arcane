@@ -10,13 +10,4 @@
 - **Garbage collection**: `{{gcSchedule}}`
 - **Notification delivery**: {{notificationMode}}
 
-{{#if namespaces.length}}
-**Namespaces** — a namespace is a path prefix within this datastore (`{{name}}:<namespace>`), not a separate storage
-location; each one below can be browsed, restored, and (once scoped that way) pruned/verified independently:
-
-{{#each namespaces}}
-- `{{namespace}}`{{#if comment}} — {{{comment}}}{{/if}}
-{{/each}}
-
-{{/if}}
 {{/each}}

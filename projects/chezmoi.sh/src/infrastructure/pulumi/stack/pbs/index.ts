@@ -1,6 +1,5 @@
 import "./access";
 import "./jobs";
-import "./namespaces";
 import "./notifications";
 
 export { pveBackupTokenId, pveBackupTokenSecret } from "./access";

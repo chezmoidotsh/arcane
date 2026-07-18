@@ -15,19 +15,6 @@ const fixtureContext = {
 			gcSchedule: "Sun 04:00",
 			notificationMode: "notification-system",
 			disabled: false,
-			namespaces: [
-				{
-					store: "backups",
-					namespace: "vms",
-					comment: "Whole-VM backups (Proxmox VE talos pool)",
-				},
-				{
-					store: "backups",
-					namespace: "pvcs",
-					comment:
-						"Per-volume backups of CSI-provisioned PersistentVolumeClaims",
-				},
-			],
 		},
 	],
 	pruneJobs: [
@@ -108,25 +95,15 @@ describe("PROXMOX_BACKUP_SERVER.md template", () => {
 	it("explains the key PBS terms before diving into specifics", () => {
 		const md = render(fixtureContext);
 		expect(md).to.include("**Datastore** — the top-level backup repository");
-		expect(md).to.include("**Namespace** — a path prefix within a datastore");
 		expect(md).to.include("**Garbage collection (GC)**");
 	});
 
-	it("lists namespaces under their owning datastore", () => {
-		const md = render(fixtureContext);
-		expect(md).to.include("**Namespaces**");
-		expect(md).to.include("- `vms` — Whole-VM backups (Proxmox VE talos pool)");
-		expect(md).to.include(
-			"- `pvcs` — Per-volume backups of CSI-provisioned PersistentVolumeClaims",
-		);
-	});
-
-	it("explains how to add the datastore as Proxmox VE storage, referencing its namespaces", () => {
+	it("explains how to add the datastore as Proxmox VE storage, including the port", () => {
 		const md = render(fixtureContext);
 		expect(md).to.include("pvesm add pbs pbs-backups");
 		expect(md).to.include("--datastore backups");
 		expect(md).to.include("--username pve-backup@pbs");
-		expect(md).to.include("one of `vms`, `pvcs` above");
+		expect(md).to.include("--port 8007");
 	});
 
 	it("renders the overview before How it's managed", () => {

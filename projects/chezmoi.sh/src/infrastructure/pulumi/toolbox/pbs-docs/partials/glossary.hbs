@@ -6,12 +6,10 @@ files, so a nightly full backup of mostly-unchanged data costs close to nothing 
 
 - **Datastore** — the top-level backup repository: where chunks physically live (a local directory, or here, an S3
   bucket) plus its own retention/GC/notification settings. Everything else below lives inside one.
-- **Namespace** — a path prefix within a datastore (`<datastore>:<namespace>`), used to separate unrelated backup
-  workloads sharing the same datastore without needing a second one. Purely organizational: same bucket, same GC.
 - **Chunk** — the unit PBS actually stores: backup data is split into content-addressed blocks, and two backups that
   share a block store it only once. This is what makes daily full backups affordable.
-- **Prune** — deletes old backup snapshots according to a keep-daily/weekly/monthly/… policy, per datastore or
-  namespace. Pruning only removes the snapshot *index*; the chunks it referenced are reclaimed separately by GC.
+- **Prune** — deletes old backup snapshots according to a keep-daily/weekly/monthly/… policy, per datastore. Pruning
+  only removes the snapshot *index*; the chunks it referenced are reclaimed separately by GC.
 - **Garbage collection (GC)** — walks every remaining snapshot, marks the chunks still referenced, and deletes
   whatever isn't. Runs on its own schedule, after pruning, so it always sees the post-prune reference set.
 - **Verify** — re-reads a snapshot's chunks and checks their checksums, catching silent corruption (bitrot, a bad

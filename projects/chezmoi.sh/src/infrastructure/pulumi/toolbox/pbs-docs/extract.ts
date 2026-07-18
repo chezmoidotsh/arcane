@@ -66,26 +66,6 @@ export function extractDatastores(
 		.sort(byKey((d) => d.name));
 }
 
-export interface NamespaceDoc {
-	store: string;
-	namespace: string;
-	comment?: string;
-}
-
-export function extractNamespaces(
-	resources: ExportedResource[],
-): NamespaceDoc[] {
-	return resourcesOfType(resources, "pbs:index/namespace:Namespace")
-		.map(
-			(r): NamespaceDoc => ({
-				store: out(r, "store"),
-				namespace: out(r, "namespace") ?? logicalName(r.urn),
-				comment: out(r, "comment"),
-			}),
-		)
-		.sort(byKey((n) => `${n.store}/${n.namespace}`));
-}
-
 export interface PruneJobDoc {
 	id: string;
 	store: string;
