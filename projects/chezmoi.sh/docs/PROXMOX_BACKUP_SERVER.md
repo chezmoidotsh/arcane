@@ -110,7 +110,7 @@ not recoverable from stack state either; see `stack/pbs/README.md`, "Bootstrappi
 Once `pve-backup@pbs`'s token exists (`stack/pbs/access.ts`, created during "Bootstrapping"), add each datastore
 above as a `pbs`-type storage in Proxmox VE so VMs/LXCs can actually be backed up to it.
 
-### `Backblaze-B2`
+### Add `Backblaze-B2` to Proxmox VE
 
 **Via the UI**: Datacenter → Storage → Add → Proxmox Backup Server, then:
 
