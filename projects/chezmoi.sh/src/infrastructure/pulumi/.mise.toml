@@ -60,11 +60,26 @@ run = "pnpm run proxmox:docs"
 # username/password in the environment (Proxmox VE's ACME endpoints reject API
 # tokens outright) -- see docs/PROXMOX-VE.md, "Deploy a change", for how to
 # supply them without ever writing the password to disk or shell history.
+#
+# The URN is resolved from whichever stack is currently selected rather than
+# hard-coded, so running this against a different stack taints that stack's own
+# token -- or fails with a clear message if it has none -- instead of silently
+# doing nothing or tainting the wrong resource.
 [tasks."proxmox:acme:rotate"]
 description = "Rotate the Cloudflare DNS-01 token backing Proxmox VE's ACME plugin"
 dir = "{{ config_root }}"
 interactive = true
-run = [
-  "pulumi state taint 'urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:cloudflare:Dns01Token$cloudflare:index/accountToken:AccountToken::acme-dns-pve-token' --yes",
-  "pulumi up --refresh --parallel 15",
-]
+run = """
+set -euo pipefail
+urn=$(pulumi stack export | jq -re '
+  .deployment.resources[]
+  | select(.urn | endswith("::acme-dns-pve-token"))
+  | .urn
+' | head -1) || {
+  echo "acme-dns-pve-token not found in stack '$(pulumi stack --show-name)'" >&2
+  exit 1
+}
+echo "Tainting $urn"
+pulumi state taint "$urn" --yes
+pulumi up --refresh --parallel 15
+"""

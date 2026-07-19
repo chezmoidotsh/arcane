@@ -76,10 +76,12 @@ state-file ordering. The one exception is firewall rules: their order **is** the
 `dport: ""`, …). A plain `??` never falls back — `"" ?? "ACCEPT"` is `""` — which silently renders blank table cells.
 Route every optional string from state through `extract/index.ts`'s `text()` helper.
 
-**A credential the provider does not mark secret.** `AcmeDnsPlugin`'s `data` map holds the Cloudflare DNS-01 API token,
-and unlike `UserToken.value` or `StoragePbs.password` it is **not** an additional secret output — so
-`pulumi stack export` returns it in plaintext. `extract/acme-dns-plugin.ts` never reads that field at all, and
-`render.test.ts` asserts a fixture token never reaches rendered output.
+**A credential whose secrecy is not guaranteed by the schema.** `AcmeDnsPlugin`'s `data` map holds the Cloudflare DNS-01
+API token. Unlike `UserToken.value` or `StoragePbs.password`, the provider does **not** declare it an additional secret
+output — only `dataWo`. It is encrypted in state today because the declaration feeds it secret Outputs and Pulumi
+propagates secretness, which `../../stack/proxmox/acme.ts` now pins explicitly with `additionalSecretOutputs`. That is a
+property of the call site, not of the resource type, so `extract/acme-dns-plugin.ts` never reads the field at all as an
+independent second layer, and `render.test.ts` asserts a fixture token never reaches rendered output.
 
 ## File structure
 

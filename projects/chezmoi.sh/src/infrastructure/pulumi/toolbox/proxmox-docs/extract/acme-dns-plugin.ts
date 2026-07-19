@@ -13,12 +13,16 @@ export interface AcmeDnsPluginDoc {
 
 /**
  * **Never reads `data` (or `dataWo`).** That map holds the DNS provider's API
- * credentials -- for this stack, the Cloudflare DNS-01 token -- and the
- * provider does *not* mark it as a secret output, so `pulumi stack export`
- * returns it in **plaintext**. Unlike the token/password fields elsewhere in
- * this package, ciphertext is not a safety net here: not reading the field is
- * the only thing keeping the credential out of the generated document.
- * `../render.test.ts` asserts a fixture token value never reaches the output.
+ * credentials -- for this stack, the Cloudflare DNS-01 token.
+ *
+ * The provider's schema does *not* list `data` as a secret output (only
+ * `dataWo`), so its encryption in state is not guaranteed by the resource
+ * type: it depends on the declaration feeding it secret Outputs, which
+ * `../../stack/proxmox/acme.ts` now pins with `additionalSecretOutputs`.
+ * Not reading the field at all is the second, independent layer -- a future
+ * declaration that loses the secret marking still cannot leak through this
+ * document. `../render.test.ts` asserts a fixture token never reaches the
+ * output.
  */
 export function extractAcmeDnsPlugins(
 	resources: ExportedResource[],

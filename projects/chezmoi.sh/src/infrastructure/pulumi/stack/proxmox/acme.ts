@@ -57,6 +57,15 @@ export const acmeAccount = new proxmox.AcmeAccount("pve-acme-account-default", {
 // cloudflare -- the DNS-01 plugin the node's certificate uses to prove
 // domain ownership
 // -----------------------------------------------------------------------------
+// `data` holds the Cloudflare credentials. It *is* encrypted in state today,
+// but only because both values arrive as secret Outputs (`requireSecret` and
+// the token component's own secret `tokenValue`) and Pulumi propagates
+// secretness from input to output. The bridged provider's schema marks only
+// `dataWo` as an additional secret output, not `data` -- so that encryption
+// is a property of how these inputs happen to be built, not of the resource.
+// Feed it a plain string once and the credential lands in the state file in
+// cleartext. `additionalSecretOutputs` makes it secret by construction
+// instead, independent of the caller.
 export const acmeDnsPlugin = new proxmox.AcmeDnsPlugin(
 	"pve-acme-dns-plugin-cloudflare",
 	{
@@ -67,6 +76,7 @@ export const acmeDnsPlugin = new proxmox.AcmeDnsPlugin(
 			CF_Token: acmeDns01Token.tokenValue,
 		},
 	},
+	{ additionalSecretOutputs: ["data"] },
 );
 
 // -----------------------------------------------------------------------------
