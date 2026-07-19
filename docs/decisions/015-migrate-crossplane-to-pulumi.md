@@ -1,8 +1,8 @@
 ---
 status: "accepted"
-date: 2026-07-05
+date: 2026-07-19
 decision-makers: ["Alexandre"]
-assisted-by: ["claude-opus-4.8"]
+assisted-by: ["claude-opus-4.8", "claude-sonnet-5"]
 informed: []
 template-version: "1.1.0"
 ---
@@ -63,11 +63,20 @@ infrastructure as code, replacing Crossplane's per-provider CRD/controller model
   rolled out in phases: **local / out-of-cluster first**, during the migration; running Pulumi **in-cluster** via the
   Pulumi Kubernetes Operator remains the eventual target and is **deferred, not rejected** (see
   [Implementation](#implementation-details--status) for the sequencing and its reasons).
-- **Proxmox and Unifi IaC management.** Both stay outside Pulumi/GitOps and remain manual. They are foundational to the
-  homelab (Proxmox hosts every cluster; Unifi is the network substrate), so credentials to manage them must never sit
-  inside — or downstream of — anything a cluster runs, to avoid a `Proxmox → hosts K8s → K8s manages Proxmox` trust
-  cycle. Tracked as a deliberate case by the manual-infrastructure inventory (#1094); reasoning carried forward from the
-  POC (§9).
+- **Proxmox VM/LXC lifecycle, and Unifi IaC management.** Both stay outside Pulumi/GitOps and remain manual. They are
+  foundational to the homelab (Proxmox hosts every cluster; Unifi is the network substrate), so credentials able to
+  create, modify, or delete compute must never sit inside — or downstream of — anything a cluster runs, to avoid a
+  `Proxmox → hosts K8s → K8s manages Proxmox` trust cycle. Tracked as a deliberate case by the manual-infrastructure
+  inventory (#1094); reasoning carried forward from the POC (§9).
+
+  > [!NOTE] **Narrow carve-out (#1118, see Decision Evolution).** Proxmox VE's ACLs (user/role/token creation), SDN
+  > (zones/vnets), backup-storage registration, resource pools, and ACME are managed via Pulumi — these are
+  > administrative config objects, not compute lifecycle, so they don't carry the trust-cycle risk this non-goal exists
+  > to block. The carve-out only holds as long as `stack/pve/` (like every `chezmoi-sh-infra` stack today) executes
+  > **locally** (this ADR's Phase 1, see Implementation). If Pulumi execution ever moves in-cluster (Phase 2),
+  > `stack/pve/` must stay excluded from that migration, or the exact `Proxmox → hosts K8s → K8s manages Proxmox` cycle
+  > re-opens through it.
+
 - **Re-opening the state backend choice.** Garage as the S3 state backend is settled by \#1097 and is a premise here.
 
 ## Decision Drivers
@@ -199,7 +208,8 @@ unmeasured resource delta is a bonus, not the argument.
 
 ### Neutral
 
-- ⚖️ Proxmox/Unifi remain manual (#1094) — unchanged by this decision.
+- ⚖️ Unifi remains fully manual (#1094) — unchanged by this decision. Proxmox VM/LXC lifecycle remains manual too; its
+  ACL/SDN/backup-storage/pools/ACME layer is carved out as of #1118 (see Non-Goals, Decision Evolution).
 - ⚖️ Garage as the state backend (#1097) is a premise, not an effect, of this ADR.
 
 ---
@@ -271,6 +281,17 @@ Phase 1 (now): local, no cluster              Phase 2 (deferred): in-cluster
 - **2026-07-05 (this ADR)**: Decided to migrate from Crossplane to Pulumi, driven by the per-provider structural
   overhead and the `rhodes` no-cluster requirement, with Terraform/ OpenTofu considered and set aside. Execution staged:
   local-first during the migration, in-cluster (Pulumi Operator) deferred as the eventual target.
+- **2026-07-19 (#1118)**: Amended the Proxmox non-goal with a narrow carve-out: Proxmox VE **ACLs, SDN, backup-storage
+  registration, resource pools, and ACME** become Pulumi-managed via a new `catalog/pulumi/sdks/proxmox/` bridged
+  provider (`@pulumi/proxmox`, from `bpg/terraform-provider-proxmox`) and `stack/pve/`, mirroring the `pbs`/`b2`/
+  `truenas` bridged-SDK pattern already in use. Driven by three manual `pveum`/`pvesh` recipes repeated by hand for
+  every Proxmox-based cluster recreation (CCM/CSI tokens, Omni's SDN access, PBS storage registration) — full inventory
+  in #1118. Explicitly does **not** reopen VM/LXC lifecycle (the compute-creation capability the original trust-cycle
+  reasoning protects), realms (only the built-in `pam`/`pve` exist; not worth codifying), local/`nvme-lvm` storage
+  (stays manual, same as the VM/OS layer), PCI/USB resource mapping (host-specific IOMMU addresses that need rediscovery
+  on rebuild regardless — codifying the mapping object saves no real work), or notifications (the bridged provider has
+  no PVE notification resource type — PVE stays on its built-in `sendmail`→`root@pam` matcher, documented as manual in
+  `stack/pve/README.md`).
 
 ---
 
@@ -319,3 +340,6 @@ Phase 1 (now): local, no cluster              Phase 2 (deferred): in-cluster
   (unreferenced, no runtime impact) to avoid conflicting with other in-flight work; their removal is deferred to a
   follow-up PR. The `crossplane` ArgoCD `AppProject` is likewise kept for one more sync cycle, so ArgoCD can prune the
   Crossplane Applications before the project is deleted.
+- **2026-07-19**: **FEATURE**: Amended the Proxmox Non-Goal with a narrow ACL/SDN/backup-storage/pools/ACME carve-out
+  (#1118), scoped to stay compatible with the original trust-cycle reasoning as long as Pulumi execution remains local
+  (Phase 1).
