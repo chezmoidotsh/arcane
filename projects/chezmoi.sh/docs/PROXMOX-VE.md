@@ -96,12 +96,12 @@ from stack state either.
 
 | Path | Grantee | Role | Propagates |
 | --- | --- | --- | --- |
-| `/nodes/pve-01` | `omni@pve` | `OmniProviderNode` | yes |
+| `/` | `prometheus@pve` | `Exporter` | yes |
 | `/nodes/pve` | `kubernetes-ccm@pve` | `KubernetesCCM` | yes |
+| `/nodes/pve-01` | `omni@pve` | `OmniProviderNode` | yes |
 | `/pool/talos` | `kubernetes-ccm@pve` | `KubernetesCCM` | yes |
 | `/pool/talos` | `kubernetes-csi@pve` | `KubernetesCSI` | yes |
 | `/pool/talos` | `omni@pve` | `OmniProvider` | yes |
-| `/` | `prometheus@pve` | `Exporter` | yes |
 | `/sdn/zones/localnetwork/vmbr1` | `omni@pve` | `PVESDNUser` | yes |
 | `/sdn/zones/pvenet/talosnet` | `omni@pve` | `PVESDNUser` | yes |
 
