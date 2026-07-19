@@ -1,0 +1,26 @@
+{
+    "name": "@pulumi/proxmox",
+    "version": "0.111.1",
+    "description": "A Pulumi provider dynamically bridged from proxmox.",
+    "repository": "https://github.com/bpg/terraform-provider-proxmox",
+    "main": "bin/index.js",
+    "scripts": {
+        "build": "tsc",
+        "postinstall": "node ./scripts/postinstall.js"
+    },
+    "dependencies": {
+        "@pulumi/pulumi": "^3.238.0",
+        "@types/node": "^20",
+        "typescript": "^4.7.0"
+    },
+    "pulumi": {
+        "resource": true,
+        "name": "terraform-provider",
+        "version": "1.1.4",
+        "parameterization": {
+            "name": "proxmox",
+            "version": "0.111.1",
+            "value": "eyJyZW1vdGUiOnsidXJsIjoicmVnaXN0cnkub3BlbnRvZnUub3JnL2JwZy9wcm94bW94IiwidmVyc2lvbiI6IjAuMTExLjEifX0="
+        }
+    }
+}
