@@ -1,0 +1,23 @@
+## Firewall
+
+{{#if securityGroups.length}}
+{{countWord securityGroups}} Security Group{{#unless (isSingular securityGroups)}}s{{/unless}} guests can opt into:
+
+{{#each securityGroups}}
+### `{{name}}`{{#if comment}} — _{{{comment}}}_{{/if}}
+
+| Action | Protocol | Port | Source | Purpose |
+| --- | --- | --- | --- | --- |
+{{#each rules}}
+| `{{action}}`{{#if disabled}} _(disabled)_{{/if}} | `{{protocol}}` | {{#if port}}`{{port}}`{{else}}—{{/if}} | `{{source}}` | {{{comment}}} |
+{{/each}}
+
+{{! Subject prose, guarded so it renders only under the group it documents. }}
+{{#if (eq name "talos")}}
+{{> [firewall.talos]}}
+{{/if}}
+
+{{/each}}
+{{else}}
+No Security Group is managed by this stack.
+{{/if}}

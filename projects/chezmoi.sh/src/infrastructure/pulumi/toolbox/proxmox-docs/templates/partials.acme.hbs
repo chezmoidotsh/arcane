@@ -1,0 +1,20 @@
+## Certificates
+
+{{#if certificates.length}}
+The node's web UI and API serve a certificate renewed by Proxmox VE's own ACME client.
+
+| Certificate | Account | Directory | Challenge |
+| --- | --- | --- | --- |
+{{#each certificates}}
+| `{{primaryDomain}}` | `{{account}}` | {{#with (lookup ../accountsByName account)}}{{{directoryLabel}}}{{#if staging}} ⚠️ staging{{/if}}{{else}}—{{/with}} | {{#if plugins.length}}DNS-01 via {{#each plugins}}`{{this}}`{{#unless @last}}, {{/unless}}{{/each}}{{else}}HTTP-01 (standalone){{/if}} |
+{{/each}}
+
+{{#each certificates}}
+{{#if (eq primaryDomain "pve-01.pve.chezmoi.sh")}}
+{{> [acme.certificate]}}
+
+{{/if}}
+{{/each}}
+{{else}}
+No certificate is managed by this stack.
+{{/if}}

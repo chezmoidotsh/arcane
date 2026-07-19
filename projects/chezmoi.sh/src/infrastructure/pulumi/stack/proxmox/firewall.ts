@@ -21,7 +21,9 @@ import * as proxmox from "@pulumi/proxmox";
 // quorum) depends on control-plane topology this stack has no visibility
 // into and is layered on top via each VM's own `.fw` (`GROUP talos` plus
 // cluster-specific rules), not baked in here -- see ADR-014/vlans.md,
-// "Firewall Rules": default-drop inbound, open the minimum required.
+// "Firewall Rules": default-drop inbound, open the minimum required. The
+// operator-facing version of that rationale lives in
+// `toolbox/proxmox-docs/templates/partials.firewall.talos.hbs`.
 //
 // `+rfc1918` reuses the existing cluster-level IPSET (cluster.fw) rather
 // than duplicating the CIDR list -- see docs/decisions/015-migrate-crossplane-to-pulumi.md's

@@ -1,0 +1,3 @@
+Only the ports every Talos node needs regardless of topology are here. Kubelet, the Kubernetes API, and etcd quorum
+depend on control-plane layout this stack has no visibility into, so they are layered per-VM on top of `GROUP talos`
+rather than baked into the baseline. Attaching a VM to the group is part of that VM's config, and stays manual.

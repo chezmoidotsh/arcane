@@ -29,7 +29,11 @@ dir = "{{ config_root }}"
 run = "pulumi preview --refresh --parallel 15"
 
 [tasks."pulumi:apply"]
-depends_post = ["truenas:docs:generate", "pbs:docs:generate"]
+depends_post = [
+  "truenas:docs:generate",
+  "pbs:docs:generate",
+  "proxmox:docs:generate",
+]
 description = "Apply pending changes to the current Pulumi stack"
 dir = "{{ config_root }}"
 interactive = true
@@ -44,3 +48,8 @@ run = "pnpm exec ts-node toolbox/truenas-docs/generate.ts"
 description = "Regenerate projects/chezmoi.sh/docs/PROXMOX_BACKUP_SERVER.md from the live chezmoi.sh Pulumi stack state"
 dir = "{{ config_root }}"
 run = "pnpm exec ts-node toolbox/pbs-docs/generate.ts"
+
+[tasks."proxmox:docs:generate"]
+description = "Regenerate projects/chezmoi.sh/docs/PROXMOX-VE.md from the live chezmoi.sh Pulumi stack state"
+dir = "{{ config_root }}"
+run = "pnpm run proxmox:docs"

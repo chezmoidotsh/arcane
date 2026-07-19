@@ -1,0 +1,50 @@
+## Identities & access
+
+{{countWord access.identities}} service account{{#unless (isSingular access.identities)}}s{{/unless}}, each scoped to the narrowest path that works.
+
+| Identity | Purpose | Granted |
+| --- | --- | --- |
+{{#each access.identities}}
+| `{{userId}}`{{#unless enabled}} _(disabled)_{{/unless}} | {{#if purpose}}{{{purpose}}}{{else}}—{{/if}} | {{#each grants}}`{{roleId}}` on `{{path}}`{{#unless @last}}, {{/unless}}{{/each}} |
+{{/each}}
+
+{{#if access.globalIdentities.length}}
+{{#if (isSingular access.globalIdentities)}}
+`{{access.globalIdentities.0.userId}}` is the only identity granted anything at `/`{{#if access.globalGrantsAreReadOnly}}, and its role carries audit privileges exclusively — it can read the whole host and change none of it{{/if}}. Every other grant is bounded by a resource pool or a single node.
+{{else}}
+{{countWord access.globalIdentities}} identities hold a grant at `/`{{#if access.globalGrantsAreReadOnly}}, all of them audit-only — they can read the whole host and change none of it{{/if}}. Every other grant is bounded by a resource pool or a single node.
+{{/if}}
+{{else}}
+No identity holds a grant at `/`: every grant is bounded by a resource pool or a single node.
+{{/if}}
+
+{{#if access.tokenIdentities.length}}
+{{countWord access.tokenIdentities}} identit{{#if (isSingular access.tokenIdentities)}}y authenticates{{else}}ies authenticate{{/if}} with an API token ({{{humanList access.tokenIds}}}){{#if access.allTokensInheritUser}}, all with privilege separation disabled — each token therefore carries exactly its user's permissions, no more{{/if}}.
+{{/if}}
+{{#if access.passwordIdentities.length}}
+{{{humanList access.passwordIdentityIds}}} {{#if (isSingular access.passwordIdentities)}}has{{else}}have{{/if}} no token: {{#if (isSingular access.passwordIdentities)}}it authenticates{{else}}they authenticate{{/if}} with a password held outside this stack, which Pulumi never reads or writes.
+{{/if}}
+Token secrets are one-time values Proxmox VE never returns again; they are not in this document and not recoverable
+from stack state either.
+
+<details>
+<summary>Custom roles and their privileges</summary>
+
+| Role | Privileges |
+| --- | --- |
+{{#each roles}}
+| `{{roleId}}` | {{#each privileges}}`{{this}}`{{#unless @last}}, {{/unless}}{{/each}} |
+{{/each}}
+
+</details>
+
+<details>
+<summary>ACL bindings</summary>
+
+| Path | Grantee | Role | Propagates |
+| --- | --- | --- | --- |
+{{#each acls}}
+| `{{path}}` | `{{grantee}}` | `{{roleId}}` | {{yesNo propagate}} |
+{{/each}}
+
+</details>
