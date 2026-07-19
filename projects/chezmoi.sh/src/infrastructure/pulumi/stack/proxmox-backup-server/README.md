@@ -4,8 +4,8 @@ This folder contains the Pulumi TypeScript stack that manages `pbs.pve.chezmoi.s
 declarative code. It follows the same config-as-code pattern already established for TrueNAS SCALE
 ([`../truenas/`](../truenas/), `@pulumi/truenas`): the appliance's **operating system is installed manually** (see
 "Deployment target" below), and **everything above the OS layer is managed here** through
-[`@pulumi/pbs`](../../../../../../catalog/pulumi/sdks/pbs/), a Pulumi provider dynamically bridged from the
-[`yavasura/pbs`](https://registry.terraform.io/providers/yavasura/pbs) Terraform provider.
+[`@pulumi/proxmox-backup-server`](../../../../../../catalog/pulumi/sdks/proxmox-backup-server/), a Pulumi provider
+dynamically bridged from the [`yavasura/pbs`](https://registry.terraform.io/providers/yavasura/pbs) Terraform provider.
 
 The generated human-facing documentation (including step-by-step Proxmox VE integration instructions) is published at
 [`../../../docs/PROXMOX_BACKUP_SERVER.md`](../../../docs/PROXMOX_BACKUP_SERVER.md) (see `toolbox/pbs-docs`'s own
@@ -185,8 +185,8 @@ disaster recovery. One-time setup, after the PBS VM is installed and reachable:
 Both live in `jobs.ts` as standalone `new pbs.PruneJob(...)`/`new pbs.VerifyJob(...)` declarations, each keyed by an
 explicit `pruneJobId`/`verifyJobId` and scoped to a `store` (currently the whole datastore). PBS namespaces (path
 prefixes within a datastore) aren't used in this stack today — see the PBS provider's own resource docs
-(`../../../../../../catalog/pulumi/sdks/pbs/pruneJob.ts` / `verifyJob.ts`, `namespace.ts`) if a future workload needs
-scoped retention or per-namespace access control.
+(`../../../../../../catalog/pulumi/sdks/proxmox-backup-server/pruneJob.ts` / `verifyJob.ts`, `namespace.ts`) if a future
+workload needs scoped retention or per-namespace access control.
 
 ## Adding a new notification target or route
 

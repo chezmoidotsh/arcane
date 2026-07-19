@@ -223,7 +223,7 @@ importers:
         specifier: ^4.7.0
         version: 4.9.5
 
-  catalog/pulumi/sdks/pbs:
+  catalog/pulumi/sdks/proxmox:
     dependencies:
       '@pulumi/pulumi':
         specifier: ^3.238.0
@@ -235,7 +235,7 @@ importers:
         specifier: ^4.7.0
         version: 4.9.5
 
-  catalog/pulumi/sdks/proxmox:
+  catalog/pulumi/sdks/proxmox-backup-server:
     dependencies:
       '@pulumi/pulumi':
         specifier: ^3.238.0
@@ -310,9 +310,9 @@ importers:
       '@pulumi/cloudflare':
         specifier: 'catalog:'
         version: 6.17.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/pbs':
+      '@pulumi/proxmox-backup-server':
         specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/sdks/pbs
+        version: link:../../../../../catalog/pulumi/sdks/proxmox-backup-server
       '@pulumi/pulumi':
         specifier: 'catalog:'
         version: 3.250.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)

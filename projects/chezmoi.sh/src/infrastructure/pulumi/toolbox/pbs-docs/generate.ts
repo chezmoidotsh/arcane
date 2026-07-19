@@ -19,11 +19,12 @@ import { readOptionalConfig, readStackExport } from "./stack-export";
 // *deployed* `chezmoi_sh.live` stack state -- run standalone (`mise run
 // pbs:docs:generate`, chained onto `pulumi:apply`), not as part of `pulumi
 // up`/`preview` itself. See `./extract.ts` for how resource state becomes
-// plain data, and `../../stack/pbs/README.md` for the sections this document
-// doesn't cover (the manual VM/OS install, the encryption keyfile/paperkey,
-// and the Proxmox VE-side backup job definitions -- none of these are
-// `@pulumi/pbs` resources, so this generator has nothing to read for them;
-// see that README's "Intentionally not managed via Pulumi").
+// plain data, and `../../stack/proxmox-backup-server/README.md` for the
+// sections this document doesn't cover (the manual VM/OS install, the
+// encryption keyfile/paperkey, and the Proxmox VE-side backup job
+// definitions -- none of these are `@pulumi/proxmox-backup-server`
+// resources, so this generator has nothing to read for them; see that
+// README's "Intentionally not managed via Pulumi").
 // -----------------------------------------------------------------------------
 
 async function main(): Promise<void> {
@@ -31,8 +32,9 @@ async function main(): Promise<void> {
 	// from this file's own location so it doesn't depend on the caller's cwd.
 	const projectRoot = path.resolve(__dirname, "../..");
 
-	// `pbs:endpoint` is normally always set (see stack/pbs/README.md,
-	// "Bootstrapping") -- this guard is a safety net for the rare case it
+	// `pbs:endpoint` is normally always set (see
+	// stack/proxmox-backup-server/README.md, "Bootstrapping") -- this guard
+	// is a safety net for the rare case it
 	// isn't (e.g. a fresh stack config, a corrupted config file): skip
 	// gracefully instead of failing `mise run pulumi:apply`'s post-task for
 	// the entire shared stack, which covers observability/omni/truenas/

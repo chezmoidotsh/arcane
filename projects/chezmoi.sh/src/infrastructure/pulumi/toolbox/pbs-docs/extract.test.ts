@@ -18,7 +18,7 @@ import type { ExportedResource } from "./stack-export";
 /**
  * A small, hand-trimmed fixture shaped like a real `pulumi stack export`
  * (type tokens and output field names copied verbatim from
- * `catalog/pulumi/sdks/pbs/*.ts`) -- not the live stack itself, so these
+ * `catalog/pulumi/sdks/proxmox-backup-server/*.ts`) -- not the live stack itself, so these
  * tests never touch the network or `child_process`.
  */
 const STACK_URN =

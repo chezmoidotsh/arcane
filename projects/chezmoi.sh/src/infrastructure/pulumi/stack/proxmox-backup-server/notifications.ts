@@ -1,4 +1,4 @@
-import * as pbs from "@pulumi/pbs";
+import * as pbs from "@pulumi/proxmox-backup-server";
 import * as pulumi from "@pulumi/pulumi";
 
 const config = new pulumi.Config();

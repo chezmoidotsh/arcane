@@ -23,5 +23,5 @@ catalog:
 onlyBuiltDependencies:
   - "@pulumi/b2"
   - "@pulumi/truenas"
-  - "@pulumi/pbs"
+  - "@pulumi/proxmox-backup-server"
   - "@pulumi/proxmox"

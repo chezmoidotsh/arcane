@@ -1,5 +1,5 @@
 {
-	"name": "@pulumi/pbs",
+	"name": "@pulumi/proxmox-backup-server",
 	"version": "0.1.1",
 	"description": "A Pulumi provider dynamically bridged from pbs.",
 	"repository": "https://github.com/yavasura/terraform-provider-pbs",

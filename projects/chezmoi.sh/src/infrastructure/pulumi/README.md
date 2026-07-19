@@ -10,17 +10,17 @@ published at [`../../../docs/TRUENAS.md`](../../../docs/TRUENAS.md).
 `stack/` holds Pulumi resources (run by `pulumi up`); `toolbox/` holds standalone tooling that shells out to the
 `pulumi` CLI and is never part of a Pulumi run.
 
-| File/Folder              | Responsibility                                                                                                                                                |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `index.ts`               | Entry point — side-effect imports of every resource module below (no logic)                                                                                   |
-| `config.ts`              | Pulumi secret config (Cloudflare account/zone IDs, Garage admin credentials)                                                                                  |
-| `stack/observability.ts` | Observability LXC appliance tokens (Cloudflare DNS-01 + Tailscale OAuth)                                                                                      |
-| `stack/omni.ts`          | Omni LXC appliance token (Cloudflare DNS-01)                                                                                                                  |
-| `stack/zot-registry.ts`  | Zot-registry LXC appliance token (Cloudflare DNS-01)                                                                                                          |
-| `stack/truenas/`         | TrueNAS SCALE as code (datasets, shares, users, ACL templates); see [`stack/truenas/README.md`](stack/truenas/README.md)                                      |
-| `stack/pbs/`             | Proxmox Backup Server as code (datastore, jobs, notifications, access); see [`stack/pbs/README.md`](stack/pbs/README.md)                                      |
-| `toolbox/truenas-docs/`  | Standalone doc generator — rebuilds `docs/TRUENAS.md` from deployed stack state; see [`toolbox/truenas-docs/README.md`](toolbox/truenas-docs/README.md)       |
-| `toolbox/pbs-docs/`      | Standalone doc generator — rebuilds `docs/PROXMOX_BACKUP_SERVER.md` from deployed stack state; see [`toolbox/pbs-docs/README.md`](toolbox/pbs-docs/README.md) |
+| File/Folder                    | Responsibility                                                                                                                                                |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index.ts`                     | Entry point — side-effect imports of every resource module below (no logic)                                                                                   |
+| `config.ts`                    | Pulumi secret config (Cloudflare account/zone IDs, Garage admin credentials)                                                                                  |
+| `stack/observability.ts`       | Observability LXC appliance tokens (Cloudflare DNS-01 + Tailscale OAuth)                                                                                      |
+| `stack/omni.ts`                | Omni LXC appliance token (Cloudflare DNS-01)                                                                                                                  |
+| `stack/zot-registry.ts`        | Zot-registry LXC appliance token (Cloudflare DNS-01)                                                                                                          |
+| `stack/truenas/`               | TrueNAS SCALE as code (datasets, shares, users, ACL templates); see [`stack/truenas/README.md`](stack/truenas/README.md)                                      |
+| `stack/proxmox-backup-server/` | Proxmox Backup Server as code (datastore, jobs, notifications, access); see [`stack/proxmox-backup-server/README.md`](stack/proxmox-backup-server/README.md)  |
+| `toolbox/truenas-docs/`        | Standalone doc generator — rebuilds `docs/TRUENAS.md` from deployed stack state; see [`toolbox/truenas-docs/README.md`](toolbox/truenas-docs/README.md)       |
+| `toolbox/pbs-docs/`            | Standalone doc generator — rebuilds `docs/PROXMOX_BACKUP_SERVER.md` from deployed stack state; see [`toolbox/pbs-docs/README.md`](toolbox/pbs-docs/README.md) |
 
 ## Tasks
 
@@ -36,6 +36,7 @@ Defined in `.mise.toml`, run from this directory:
 ## Further reading
 
 - [`stack/truenas/README.md`](stack/truenas/README.md) — TrueNAS datasets, shares, users, and ACL conventions
-- [`stack/pbs/README.md`](stack/pbs/README.md) — Proxmox Backup Server datastore, retention, and access conventions
+- [`stack/proxmox-backup-server/README.md`](stack/proxmox-backup-server/README.md) — Proxmox Backup Server datastore,
+  retention, and access conventions
 - [`toolbox/truenas-docs/README.md`](toolbox/truenas-docs/README.md) — how the TrueNAS doc generator works
 - [`toolbox/pbs-docs/README.md`](toolbox/pbs-docs/README.md) — how the PBS doc generator works
