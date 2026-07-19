@@ -111,8 +111,10 @@ lint:
       linters: [ruff]
       paths:
         - catalog/ansible/collections/**/*.py
-    - # Pulumi SDKs dynamically bridged from Terraform providers — 100% generated,
-      # never hand-edited, excluded from all linters (also gitignored)
+    - # Pulumi SDKs dynamically bridged from Terraform providers — 100%
+      # generated, never hand-edited, excluded from all linters. Source is
+      # committed (pnpm install can't regenerate a missing SDK directory);
+      # build artifacts (node_modules/, bin/) stay gitignored per SDK.
       linters: [ALL]
       paths:
         - catalog/pulumi/sdks/**
