@@ -53,3 +53,17 @@ run = "pnpm exec ts-node toolbox/pbs-docs/generate.ts"
 description = "Regenerate projects/chezmoi.sh/docs/PROXMOX-VE.md from the live chezmoi.sh Pulumi stack state"
 dir = "{{ config_root }}"
 run = "pnpm run proxmox:docs"
+
+# Rotating the Cloudflare DNS-01 token is a two-step operation: taint marks the
+# token for replacement, the apply that follows mints a fresh one and
+# reconfigures the ACME plugin with it. Both steps need `root@pam`
+# username/password in the environment (Proxmox VE's ACME endpoints reject API
+# tokens outright) -- see docs/PROXMOX-VE.md, "Deploy a change", for how to
+# supply them without ever writing the password to disk or shell history.
+[tasks."proxmox:acme:rotate"]
+description = "Rotate the Cloudflare DNS-01 token backing Proxmox VE's ACME plugin"
+dir = "{{ config_root }}"
+run = [
+  "pulumi state taint 'urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:cloudflare:Dns01Token$cloudflare:index/accountToken:AccountToken::acme-dns-pve-token' --yes",
+  "pulumi up --refresh --parallel 15",
+]
