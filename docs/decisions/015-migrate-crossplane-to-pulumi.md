@@ -72,10 +72,10 @@ infrastructure as code, replacing Crossplane's per-provider CRD/controller model
   > [!NOTE] **Narrow carve-out (#1118, see Decision Evolution).** Proxmox VE's ACLs (user/role/token creation), SDN
   > (zones/vnets), backup-storage registration, resource pools, and ACME are managed via Pulumi — these are
   > administrative config objects, not compute lifecycle, so they don't carry the trust-cycle risk this non-goal exists
-  > to block. The carve-out only holds as long as `stack/pve/` (like every `chezmoi-sh-infra` stack today) executes
+  > to block. The carve-out only holds as long as `stack/proxmox/` (like every `chezmoi-sh-infra` stack today) executes
   > **locally** (this ADR's Phase 1, see Implementation). If Pulumi execution ever moves in-cluster (Phase 2),
-  > `stack/pve/` must stay excluded from that migration, or the exact `Proxmox → hosts K8s → K8s manages Proxmox` cycle
-  > re-opens through it.
+  > `stack/proxmox/` must stay excluded from that migration, or the exact `Proxmox → hosts K8s → K8s manages Proxmox`
+  > cycle re-opens through it.
 
 - **Re-opening the state backend choice.** Garage as the S3 state backend is settled by \#1097 and is a premise here.
 
@@ -283,15 +283,15 @@ Phase 1 (now): local, no cluster              Phase 2 (deferred): in-cluster
   local-first during the migration, in-cluster (Pulumi Operator) deferred as the eventual target.
 - **2026-07-19 (#1118)**: Amended the Proxmox non-goal with a narrow carve-out: Proxmox VE **ACLs, SDN, backup-storage
   registration, resource pools, and ACME** become Pulumi-managed via a new `catalog/pulumi/sdks/proxmox/` bridged
-  provider (`@pulumi/proxmox`, from `bpg/terraform-provider-proxmox`) and `stack/pve/`, mirroring the `pbs`/`b2`/
-  `truenas` bridged-SDK pattern already in use. Driven by three manual `pveum`/`pvesh` recipes repeated by hand for
-  every Proxmox-based cluster recreation (CCM/CSI tokens, Omni's SDN access, PBS storage registration) — full inventory
-  in #1118. Explicitly does **not** reopen VM/LXC lifecycle (the compute-creation capability the original trust-cycle
-  reasoning protects), realms (only the built-in `pam`/`pve` exist; not worth codifying), local/`nvme-lvm` storage
-  (stays manual, same as the VM/OS layer), PCI/USB resource mapping (host-specific IOMMU addresses that need rediscovery
-  on rebuild regardless — codifying the mapping object saves no real work), or notifications (the bridged provider has
-  no PVE notification resource type — PVE stays on its built-in `sendmail`→`root@pam` matcher, documented as manual in
-  `stack/pve/README.md`).
+  provider (`@pulumi/proxmox`, from `bpg/terraform-provider-proxmox`) and `stack/proxmox/`, mirroring the
+  `proxmox-backup-server`/`b2`/`truenas` bridged-SDK pattern already in use. Driven by three manual `pveum`/`pvesh`
+  recipes repeated by hand for every Proxmox-based cluster recreation (CCM/CSI tokens, Omni's SDN access, PBS storage
+  registration) — full inventory in #1118. Explicitly does **not** reopen VM/LXC lifecycle (the compute-creation
+  capability the original trust-cycle reasoning protects), realms (only the built-in `pam`/`pve` exist; not worth
+  codifying), local/`nvme-lvm` storage (stays manual, same as the VM/OS layer), PCI/USB resource mapping (host-specific
+  IOMMU addresses that need rediscovery on rebuild regardless — codifying the mapping object saves no real work), or
+  notifications (the bridged provider has no PVE notification resource type — PVE stays on its built-in
+  `sendmail`→`root@pam` matcher, documented as manual in `stack/proxmox/README.md`).
 
 ---
 

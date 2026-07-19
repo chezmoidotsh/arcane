@@ -308,7 +308,7 @@ export interface BucketDoc {
  * Logical (Pulumi resource) names of the B2 buckets that actually back
  * TrueNAS, i.e. the ones defined in `stack/truenas/cloudsync.ts`. The `b2`
  * provider is shared across the whole chezmoi.sh stack -- other consumers
- * (e.g. `stack/pbs.ts`) create their own `b2:index/bucket:Bucket` resources
+ * (e.g. `stack/proxmox-backup-server/`) create their own `b2:index/bucket:Bucket` resources
  * with no file-lock retention, which this TrueNAS-specific doc generator
  * doesn't know how to describe. Buckets aren't parented under a TrueNAS
  * ancestor resource, so `hasAncestorType` can't scope this the way it does

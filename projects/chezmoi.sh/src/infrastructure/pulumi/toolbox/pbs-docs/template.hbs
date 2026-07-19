@@ -13,7 +13,7 @@
 
 `pbs.pve.chezmoi.sh` (Proxmox Backup Server) is managed as code via the
 [`chezmoi-sh-infra`](../src/infrastructure/pulumi/) Pulumi stack, specifically
-[`stack/pbs/`](../src/infrastructure/pulumi/stack/pbs/README.md).
+[`stack/proxmox-backup-server/`](../src/infrastructure/pulumi/stack/proxmox-backup-server/README.md).
 
 ```sh
 mise run pulumi:diff           # preview pending changes
@@ -24,7 +24,7 @@ mise run pbs:docs:generate     # regenerate this document only
 The VM/OS install itself, the datastore's client-side encryption keyfile, and
 the actual per-VM/LXC backup job definitions (Proxmox VE resources) are not
 covered here — see
-[`stack/pbs/README.md`](../src/infrastructure/pulumi/stack/pbs/README.md),
+[`stack/proxmox-backup-server/README.md`](../src/infrastructure/pulumi/stack/proxmox-backup-server/README.md),
 "Intentionally not managed via Pulumi".
 
 {{> datastore}}

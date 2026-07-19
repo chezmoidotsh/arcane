@@ -1,6 +1,6 @@
 ## Configuring Proxmox VE to use this datastore
 
-Once `pve-backup@pbs`'s token exists (`stack/pbs/access.ts`, created during "Bootstrapping"), add each datastore
+Once `pve-backup@pbs`'s token exists (`stack/proxmox-backup-server/access.ts`, created during "Bootstrapping"), add each datastore
 above as a `pbs`-type storage in Proxmox VE so VMs/LXCs can actually be backed up to it.
 
 {{#each datastores}}
@@ -15,8 +15,8 @@ above as a `pbs`-type storage in Proxmox VE so VMs/LXCs can actually be backed u
 | Port | `8007` — PVE's "Add: Proxmox Backup Server" dialog defaults this field, but it isn't always applied; leaving it blank on some PVE versions causes `create storage failed: ...: error fetching datastores - 401 Unauthorized` even with correct credentials, so set it explicitly |
 | Datastore | `{{name}}` |
 | User | `pve-backup@pbs` |
-| API Token | the `pveBackupTokenId`/`pveBackupTokenSecret` stack outputs (see `stack/pbs/README.md`, "Bootstrapping") |
-| Fingerprint | leave blank — the server has a valid ACME certificate (`stack/pbs/acme.ts`), no manual pinning needed |
+| API Token | the `pveBackupTokenId`/`pveBackupTokenSecret` stack outputs (see `stack/proxmox-backup-server/README.md`, "Bootstrapping") |
+| Fingerprint | leave blank — the server has a valid ACME certificate (`stack/proxmox-backup-server/acme.ts`), no manual pinning needed |
 
 **Via the CLI**, equivalent to the above:
 
@@ -31,11 +31,11 @@ pvesm add pbs pbs-{{name}} \
 ```
 
 Once the storage entry exists, assign VMs/LXCs to it from Datacenter → Backup → Add, picking this storage and a
-schedule — *which* guest gets backed up, and how often, stays a manual Proxmox VE step; see `stack/pbs/README.md`,
+schedule — *which* guest gets backed up, and how often, stays a manual Proxmox VE step; see `stack/proxmox-backup-server/README.md`,
 "Intentionally not managed via Pulumi", for why.
 
 **Do not set a "Prune Backups" / keep-retention policy on this storage entry or on the backup job.** `pve-backup@pbs`
-deliberately has no `Datastore.Prune` permission (see `stack/pbs/access.ts`) — retention is already handled centrally
+deliberately has no `Datastore.Prune` permission (see `stack/proxmox-backup-server/access.ts`) — retention is already handled centrally
 by this datastore's own `Prune jobs`, above, which run server-side under PBS's own scheduling and don't depend on the
 Proxmox VE token at all. A per-job retention setting here would need `Datastore.Prune` on the token to work, which
 would let a compromised Proxmox VE host delete existing offsite backups — the credential automated `vzdump` runs use

@@ -4,13 +4,14 @@
 
 This module auto-generates `projects/chezmoi.sh/docs/PROXMOX_BACKUP_SERVER.md` — an up-to-date, human-readable reference
 document for `pbs.pve.chezmoi.sh` that captures operational details without hand-maintenance burden. It mirrors
-[`../truenas-docs/`](../truenas-docs/) — same architecture, same safety properties — scaled down to what `stack/pbs/`
-actually manages: no live topology/dataset-tree fetch, since Proxmox Backup Server has no ZFS-pool equivalent to walk.
+[`../truenas-docs/`](../truenas-docs/) — same architecture, same safety properties — scaled down to what
+`stack/proxmox-backup-server/` actually manages: no live topology/dataset-tree fetch, since Proxmox Backup Server has no
+ZFS-pool equivalent to walk.
 
 The core idea: the doc is **derived from the deployed Pulumi stack's own state**, not from hand-picked imports across
 sibling modules. Adding a new resource (a `pbs.PruneJob`, a notification target, an ACL binding, …) anywhere under
-`../../stack/pbs/` is enough — the next regeneration picks it up automatically, grouped by its Pulumi type token, with
-no import list to maintain here.
+`../../stack/proxmox-backup-server/` is enough — the next regeneration picks it up automatically, grouped by its Pulumi
+type token, with no import list to maintain here.
 
 Generation runs standalone (`mise run pbs:docs:generate`, chained onto `pulumi:apply`), **not** as part of
 `pulumi up`/`preview` itself — it reads the stack's last-applied state via `pulumi stack export`, so it always reflects
@@ -41,8 +42,9 @@ on every regeneration even with no actual config change.
 
 `pbs.WebhookNotification`'s `url` field (a Slack incoming-webhook URL, sensitive in practice — anyone holding it can
 post to the channel) is **not** in the `yavasura/pbs` provider's own `additionalSecretOutputs` list (only
-`WebhookNotification`'s `secret` field, the HMAC signing key, is — see `../../stack/pbs/notifications.ts`'s constructor
-call and `catalog/pulumi/sdks/pbs/webhookNotification.ts`). That means `pulumi stack export` returns it in
+`WebhookNotification`'s `secret` field, the HMAC signing key, is — see
+`../../stack/proxmox-backup-server/notifications.ts`'s constructor call and
+`catalog/pulumi/sdks/proxmox-backup-server/webhookNotification.ts`). That means `pulumi stack export` returns it in
 **plaintext**, unlike a `pbs.ApiToken`'s `value`.
 
 `extractNotificationTargets` (`extract.ts`) is written defensively around this: it never reads `outputs.url` (or the
@@ -80,17 +82,18 @@ mise run pbs:docs:generate
 Already chained onto `mise run pulumi:apply` (i.e. `pulumi up`), so a normal apply keeps the doc current automatically.
 Run it standalone after any out-of-band state change (e.g. a manual `pulumi refresh`).
 
-**Safety net:** if `pbs:endpoint` is ever unset (see `../../stack/pbs/README.md`, "Bootstrapping"), `generate.ts` logs a
-message and exits cleanly instead of failing — `pulumi:apply`'s post-task chain covers the whole shared stack
-(`observability`/`omni`/`truenas`/`zot-registry`), not just PBS, so a hard failure here would block applies to all of
-them. `docs/PROXMOX_BACKUP_SERVER.md` simply stays as its last-written state until the next successful regeneration.
+**Safety net:** if `pbs:endpoint` is ever unset (see `../../stack/proxmox-backup-server/README.md`, "Bootstrapping"),
+`generate.ts` logs a message and exits cleanly instead of failing — `pulumi:apply`'s post-task chain covers the whole
+shared stack (`observability`/`omni`/`truenas`/`zot-registry`), not just PBS, so a hard failure here would block applies
+to all of them. `docs/PROXMOX_BACKUP_SERVER.md` simply stays as its last-written state until the next successful
+regeneration.
 
 ## Extending the documentation
 
 ### Adding a new resource (e.g. a second `pbs.Datastore`, another `pbs.PruneJob`)
 
-Nothing to do here — declare it under `../../stack/pbs/` as usual, apply, then regenerate. `extract.ts` picks it up by
-type token automatically.
+Nothing to do here — declare it under `../../stack/proxmox-backup-server/` as usual, apply, then regenerate.
+`extract.ts` picks it up by type token automatically.
 
 ### Adding a new doc section backed by a new resource type
 

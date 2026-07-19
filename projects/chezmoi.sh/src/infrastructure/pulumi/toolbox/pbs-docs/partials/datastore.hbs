@@ -6,7 +6,7 @@
 {{#if comment}}{{{comment}}}{{/if}}
 
 - **Backend**: S3 (Backblaze B2), bucket `{{s3Bucket}}`, endpoint config `{{s3Client}}`
-- **Local cache path**: `{{path}}` — chunk cache only, not the full backup set (see `stack/pbs/README.md`, "Datastore architecture")
+- **Local cache path**: `{{path}}` — chunk cache only, not the full backup set (see `stack/proxmox-backup-server/README.md`, "Datastore architecture")
 - **Garbage collection**: `{{gcSchedule}}`
 - **Notification delivery**: {{notificationMode}}
 

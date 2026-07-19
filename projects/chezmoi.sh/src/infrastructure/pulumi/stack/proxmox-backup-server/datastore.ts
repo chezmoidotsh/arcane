@@ -1,5 +1,5 @@
 import * as b2 from "@pulumi/b2";
-import * as pbs from "@pulumi/pbs";
+import * as pbs from "@pulumi/proxmox-backup-server";
 
 // -----------------------------------------------------------------------------
 // Backblaze B2 bucket + application key backing the S3 datastore
