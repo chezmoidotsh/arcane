@@ -15,19 +15,23 @@ import path = require("node:path");
 //   data loss.
 // - `trueNASBackupBucket`: the current bucket intended for TrueNAS backups.
 //
-// File-lock (governance mode, 7 days default retention) is disabled on both:
-// it made the SYNC-mode CloudSync jobs below fail whenever they needed to
-// delete/overwrite a version still under its 7-day hold, blocking backups
-// entirely. Their lifecycle rules remove hidden/superseded files after 60
-// days; the production bucket also cancels unfinished large-file uploads
-// after 1 day.
+// File-lock's `isFileLockEnabled` flag must stay `true` on both -- Backblaze
+// B2 only allows enabling file lock on a bucket, never disabling it once
+// set, so flipping it to `false` here would force Pulumi to replace (delete
+// + recreate) the bucket. The lock is effectively neutralized instead by
+// omitting `defaultRetention`: with no default retention period, new
+// uploads aren't put under a hold, so the SYNC-mode CloudSync jobs below can
+// freely delete/overwrite superseded versions -- which is what actually
+// fixes the backup failures that motivated disabling file lock in the first
+// place. Lifecycle rules remove hidden/superseded files after 60 days; the
+// production bucket also cancels unfinished large-file uploads after 1 day.
 
 export const legacyTrueNASBackupBucket = new b2.Bucket(
 	"nas-backup",
 	{
 		bucketName: "nas-backup-50a30f2b",
 		bucketType: "allPrivate",
-		fileLockConfigurations: [{ isFileLockEnabled: false }],
+		fileLockConfigurations: [{ isFileLockEnabled: true }],
 		lifecycleRules: [{ fileNamePrefix: "", daysFromHidingToDeleting: 60 }],
 	},
 	{ protect: true, retainOnDelete: true },
@@ -38,7 +42,7 @@ export const trueNASBackupBucket = new b2.Bucket(
 	{
 		bucketName: "nas-backup-4e6b1351",
 		bucketType: "allPrivate",
-		fileLockConfigurations: [{ isFileLockEnabled: false }],
+		fileLockConfigurations: [{ isFileLockEnabled: true }],
 		lifecycleRules: [
 			{
 				// Default rule for all files: delete 60 days after hiding (superseded by newer version)

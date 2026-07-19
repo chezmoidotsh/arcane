@@ -63,12 +63,13 @@ Layer 3 (remote sync) spans two separate files that are easy to conflate:
 
 - `../cloudsync.ts` declares the CloudSync **jobs**: which dataset gets pushed, on what schedule, in which
   direction/mode (PUSH/SYNC). This is the "what and when" of the sync.
-- `../../backblaze.ts` declares the target **buckets**: where that data lands and how long it stays there. File Lock is
-  disabled on both — it made the SYNC-mode jobs fail whenever they needed to delete/overwrite a version still under its
-  retention hold — but a 60-day lifecycle rule still prunes superseded versions. This is the "where and for how long"
-  once synced.
+- `../cloudsync.ts` also declares the target **buckets**: where that data lands and how long it stays there.
+  `isFileLockEnabled` stays `true` on both — Backblaze B2 never allows disabling it once set, so flipping it to `false`
+  would force a bucket replacement — but no `defaultRetention` is configured, so the lock holds no files by default and
+  the SYNC-mode jobs can freely delete/overwrite superseded versions. A 60-day lifecycle rule still prunes those
+  versions. This is the "where and for how long" once synced.
 
-Neither file references the other directly — the only link is each job's `attributesJson.bucket` field. Granular
+Neither concern references the other directly — the only link is each job's `attributesJson.bucket` field. Granular
 per-dataset jobs target the current bucket (`nas-backup-4e6b1351` / `trueNASBackupBucket`); the legacy whole-pool job
 targets the legacy one (`nas-backup-50a30f2b` / `legacyTrueNASBackupBucket`), kept protected and `retainOnDelete` since
 it predates the granular jobs. Both buckets use identical File Lock/lifecycle settings — the split is about which jobs
@@ -204,5 +205,5 @@ This pattern allows lookups of dataset resources by path while keeping the stack
 
 - **Shares**: `../shares.ts` — NFS share declarations tied to specific datasets
 - **Apps**: `../apps.ts` — application configurations using datasets for storage
-- **Backups**: `../../backblaze.ts` (B2 buckets, File Lock, lifecycle rules) and `../cloudsync.ts` (CloudSync jobs)
+- **Backups**: `../cloudsync.ts` (B2 buckets, File Lock, lifecycle rules, and CloudSync jobs)
 - **Documentation**: `toolbox/truenas-docs/generate.ts` — auto-generated pool/dataset reference
