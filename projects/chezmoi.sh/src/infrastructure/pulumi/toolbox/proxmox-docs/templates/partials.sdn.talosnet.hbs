@@ -1,0 +1,7 @@
+SNAT is load-bearing, not an optimisation: Talos nodes hold no address on the home VLAN, so without it they cannot
+reach the Proxmox API — and `proxmox-csi-plugin` calls that API on every volume attach and detach.
+
+A single shared VNet, rather than one per cluster, is an Omni constraint: MachineClasses are shared COSI resources
+whose `providerdata` a cluster template cannot override, so per-cluster VNets would force a duplicate MachineClass set
+per cluster. Isolation of _external_ traffic is unaffected — it comes from the per-cluster LoadBalancer pools in
+[`vlans.md`](../../../docs/network/vlans.md), not from the SDN.

@@ -1,0 +1,28 @@
+## The host
+
+A single machine, directly cabled to the UDM Pro — no switch, no second node, no HA, no quorum. Guest availability is
+bounded by this one machine's availability; the mitigation is backups, not redundancy.
+
+| Component | Reference |
+| --- | --- |
+{{#each host.hardware}}
+| {{component}} | {{{reference}}} |
+{{/each}}
+
+Addressing (management IP, IPMI, LoadBalancer pools, VLAN layout) is not repeated here — it lives in
+[`docs/network/vlans.md`](../../../docs/network/vlans.md), the single source of truth for the homelab's IPAM.
+
+### Bridges
+
+Not managed by this stack — the host's own network config, set up at install time — but every SDN object and firewall
+rule below is meaningless without knowing which bridge it sits on:
+
+| Bridge | Role |
+| --- | --- |
+{{#each host.bridges}}
+| `{{name}}` | {{{role}}} |
+{{/each}}
+
+Talos nodes are dual-NIC (see [ADR-014](../../../docs/decisions/014-network-topology.md)): `eth0` on `vmbr1` so
+Cilium's L2 LoadBalancer announcements stay reachable from home devices, and `eth1` on the SDN below so node-to-node
+traffic never touches the home L2 domain.

@@ -1,0 +1,31 @@
+### Resource pools
+
+| Pool | Purpose | Referenced by ACLs |
+| --- | --- | --- |
+{{#each pools}}
+| `{{poolId}}` | {{{comment}}} | {{#if isBoundary}}yes — {{grants.length}} grant{{#unless (isSingular grants)}}s{{/unless}}{{else}}no{{/if}} |
+{{/each}}
+
+{{#each pools}}
+{{#if isBoundary}}
+`{{poolId}}` is referenced by ACL bindings, which makes it an enforcement boundary rather than a label: the identities
+granted on `/pool/{{poolId}}` can see and act on guests **inside that pool and nowhere else**.
+{{/if}}
+{{/each}}
+{{#each pools}}
+{{#unless isBoundary}}
+`{{poolId}}` is referenced by no grant at all, which is what keeps its members unreachable from any automation
+credential.
+{{/unless}}
+{{/each}}
+
+{{#if boundaryPools.length}}
+> [!CAUTION]
+> Adding a guest to {{{humanList boundaryPoolIds}}} silently grants every identity bound to that pool full access to
+> it. Pool membership _is_ the permission — there is no second check.
+{{/if}}
+
+{{#if poolStorages.length}}
+Storage-level membership is declared for {{{humanList poolStorages}}}, so the CSI plugin can provision volumes there.
+Guest membership is not: it is set when Omni creates the VM, which is outside this stack.
+{{/if}}

@@ -1,0 +1,10 @@
+## What this stack does not manage
+
+| Not managed | Why |
+| --- | --- |
+| **VM / LXC lifecycle** | Proxmox hosts the Kubernetes clusters; letting those clusters manage Proxmox would close a trust cycle. Structurally excluded — no VM resource type is imported anywhere in this stack. See [ADR-015](../../../docs/decisions/015-migrate-crossplane-to-pulumi.md). |
+| **Backup jobs** | Which guest is backed up on what schedule is VM-lifecycle-adjacent; same reasoning. This stack only prepares the destination. |
+| **Host storage and network** | Local storage and the bridges are part of the OS install, same layer as the hypervisor itself. |
+| **PCI/USB passthrough mappings** | They encode host-specific IOMMU addresses needing rediscovery on any rebuild anyway, and are consumed by exactly one guest. |
+| **Realms** | `pam` and `pve` are built-ins; nothing custom exists to codify. |
+| **Notifications** | The bridged provider exposes no Proxmox VE notification resource. The node stays on its built-in `sendmail` → `root@pam` matcher. |

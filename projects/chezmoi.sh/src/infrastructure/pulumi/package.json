@@ -4,6 +4,7 @@
 	"private": true,
 	"main": "index.ts",
 	"scripts": {
+		"proxmox:docs": "ts-node toolbox/proxmox-docs/index.ts",
 		"test": "mocha",
 		"test:watch": "mocha --watch",
 		"typecheck:test": "tsc --noEmit -p tsconfig.test.json"
@@ -14,6 +15,7 @@
 		"@chezmoi.sh/pulumi-truenas-pool": "workspace:*",
 		"@pulumi/b2": "workspace:*",
 		"@pulumi/cloudflare": "catalog:",
+		"@pulumi/proxmox": "workspace:*",
 		"@pulumi/proxmox-backup-server": "workspace:*",
 		"@pulumi/pulumi": "catalog:",
 		"@pulumi/random": "catalog:",

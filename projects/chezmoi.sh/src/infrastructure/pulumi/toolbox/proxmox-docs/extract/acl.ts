@@ -1,0 +1,37 @@
+import type { ExportedResource } from "../stack-export";
+import { byKey, out, resourcesOfType } from "./index";
+
+export const ACL_TYPE = "proxmox:index/acl:Acl";
+
+export interface AclDoc {
+	path: string;
+	/** Whichever of user/group/token the grant targets, normalised for display. */
+	grantee: string;
+	roleId: string;
+	propagate: boolean;
+	/** `/pool/<id>` grants only -- the pool this ACL binds to. Drives the "is this pool a boundary" derivation. */
+	poolId?: string;
+	/** True for a grant at `/`, i.e. one that is not bounded by a pool or node. */
+	global: boolean;
+}
+
+const POOL_PATH = /^\/pool\/([^/]+)/;
+
+export function extractAcls(resources: ExportedResource[]): AclDoc[] {
+	return resourcesOfType(resources, ACL_TYPE)
+		.map((r): AclDoc => {
+			const path = out<string>(r, "path");
+			return {
+				path,
+				grantee:
+					out<string>(r, "userId") ??
+					out<string>(r, "tokenId") ??
+					out<string>(r, "groupId"),
+				roleId: out(r, "roleId"),
+				propagate: out(r, "propagate"),
+				poolId: POOL_PATH.exec(path)?.[1],
+				global: path === "/",
+			};
+		})
+		.sort(byKey((a) => `${a.path} ${a.grantee} ${a.roleId}`));
+}

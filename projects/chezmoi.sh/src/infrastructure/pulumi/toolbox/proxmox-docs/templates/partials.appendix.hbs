@@ -1,0 +1,30 @@
+## Appendix
+
+### Key terms
+
+- **Node** — one physical Proxmox VE machine. Here there is exactly one; most Proxmox documentation assumes a
+  multi-node cluster, and those features (HA, quorum, live migration) do not apply.
+- **Resource pool** — a named group of guests and storages. ACLs can be granted on `/pool/<name>`, which turns
+  membership into a permission.
+- **Realm** — an authentication source. `pam` is the host's Linux users (`root@pam`); `pve` is Proxmox's own internal
+  user database, where every service account here lives.
+- **API token** — a credential belonging to a user, with its own identity. With _privilege separation_ disabled it
+  carries the user's permissions; enabled, it gets only what is granted to the token itself.
+- **Bridge (`vmbr*`)** — a virtual switch on the host. A _VLAN-aware_ bridge passes 802.1Q tags through to guests, so
+  one bridge can carry several VLANs.
+- **SDN zone / VNet / subnet** — Proxmox's software-defined networking: a zone is the backing technology, a VNet a
+  virtual network inside it, a subnet its addressing (gateway, DHCP, SNAT). Changes are staged until applied.
+- **Security Group** — a named, reusable set of firewall rules a guest references, instead of carrying its own copy.
+- **ACME / DNS-01** — the protocol Let's Encrypt uses to issue certificates. DNS-01 proves ownership by writing a DNS
+  record, which works for hosts that are not publicly reachable.
+
+### References
+
+- [`stack/proxmox/README.md`](../src/infrastructure/pulumi/stack/proxmox/README.md) — the stack managing this host
+- [`PROXMOX_BACKUP_SERVER.md`](./PROXMOX_BACKUP_SERVER.md) — the backup server this host pushes to
+- [`TRUENAS.md`](./TRUENAS.md) — the NAS guest running on this host
+- [`docs/network/vlans.md`](../../../docs/network/vlans.md) — VLAN layout and address plan (IPAM)
+- [ADR-014](../../../docs/decisions/014-network-topology.md) — dual-NIC Talos topology
+- [ADR-015](../../../docs/decisions/015-migrate-crossplane-to-pulumi.md) — why VM/LXC lifecycle stays manual
+- [`INF-20260627-00.proxmox-sdn-setup.md`](../../../docs/procedures/infrastructure/INF-20260627-00.proxmox-sdn-setup.md) — SDN setup
+- [`INF-20260620-00.proxmox-node-exporter.md`](../../../docs/procedures/infrastructure/INF-20260620-00.proxmox-node-exporter.md) — monitoring setup

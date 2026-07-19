@@ -1,0 +1,38 @@
+# Proxmox VE ({{host.fqdn}})
+
+> [!NOTE]
+> This document is **auto-generated** from the `chezmoi-sh-infra` Pulumi stack's own live state — do not edit it by
+> hand. Regenerate it with `mise run proxmox:docs:generate` (already chained onto `mise run pulumi:apply`).
+
+`{{host.nodeName}}` is the single hypervisor this homelab runs on: every Kubernetes node, every platform LXC, and the
+NAS itself are guests on this one machine. It is the bottom of the dependency chain — nothing else in the homelab
+survives its loss — which is why its configuration is versioned as code rather than clicked into the web UI.
+
+> [!IMPORTANT]
+> **This document describes what the stack manages, and nothing else.** Access control, resource pools, SDN, backup
+> storage, certificates, and the firewall baseline are declared in
+> [`stack/proxmox/`](../src/infrastructure/pulumi/stack/proxmox/README.md) and rendered here from its deployed state.
+> Anything a human configured directly on the host — guests, their disks, their backup jobs — is out of scope by
+> design and does not appear below. See [What this stack does not manage](#what-this-stack-does-not-manage).
+
+{{> quick-reference}}
+
+{{> host}}
+
+{{> access}}
+
+{{> pools}}
+
+{{> sdn}}
+
+{{> storage}}
+
+{{> acme}}
+
+{{> firewall}}
+
+{{> not-managed}}
+
+{{> procedures}}
+
+{{> appendix}}

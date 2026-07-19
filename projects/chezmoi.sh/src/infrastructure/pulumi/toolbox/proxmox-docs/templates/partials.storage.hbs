@@ -1,0 +1,20 @@
+## Backup storage
+
+{{#if storages.length}}
+| Storage | Server | Datastore | Authenticates as | Content | Retention here |
+| --- | --- | --- | --- | --- | --- |
+{{#each storages}}
+| `{{storageId}}`{{#if disabled}} _(disabled)_{{/if}} | `{{server}}` | `{{datastore}}` | {{#if username}}`{{username}}`{{else}}—{{/if}} | {{#each contents}}{{this}}{{#unless @last}}, {{/unless}}{{/each}} | {{{retention}}} |
+{{/each}}
+
+{{#each storages}}
+{{#if (eq storageId "pbs.pve.chezmoi.sh")}}
+{{> [storage.pbs]}}
+
+{{/if}}
+{{/each}}
+_Which_ guests get backed up, and when, is a Proxmox VE backup job — see
+[What this stack does not manage](#what-this-stack-does-not-manage).
+{{else}}
+No backup storage is managed by this stack.
+{{/if}}

@@ -1,0 +1,116 @@
+## Procedures
+
+### Deploy a change
+
+Every procedure below ends in an apply, so this comes first.
+
+**Prerequisite — authenticate as `root@pam` with a password, not an API token.** Unlike every other stack in this
+project, this one cannot use a scoped API token: Proxmox VE's ACME endpoints reject token authentication outright,
+even a full-privilege token with privilege separation disabled, because they check for a real `root@pam` session. The
+credential is passed as environment variables, scoped to the single command that needs it:
+
+```sh
+cd projects/chezmoi.sh/src/infrastructure/pulumi
+
+PROXMOX_VE_USERNAME="root@pam" \
+PROXMOX_VE_PASSWORD="$(security find-generic-password -a root@pam -s {{host.fqdn}} -w)" \
+  mise run pulumi:diff     # preview pending changes
+
+PROXMOX_VE_USERNAME="root@pam" \
+PROXMOX_VE_PASSWORD="$(security find-generic-password -a root@pam -s {{host.fqdn}} -w)" \
+  mise run pulumi:apply    # apply, then regenerate this document
+```
+
+> [!IMPORTANT]
+> The password never goes into Pulumi config — not even as `--secret`. `Pulumi.<stack>.yaml` is committed to git, and
+> encrypted-at-rest is not the same as safe to commit. Read it from a password manager inline, as above, and never
+> `export` it into a long-lived shell. The one-time Keychain setup is in
+> [`stack/proxmox/README.md`](../src/infrastructure/pulumi/stack/proxmox/README.md), "Bootstrapping".
+
+Applying also regenerates this document from the resulting state, so it never drifts from what is deployed.
+
+### Rotate the Cloudflare DNS-01 token
+
+The token is owned by the stack, so rotation is a stack operation — not a Cloudflare dashboard one. Tainting marks it
+for replacement; the apply that follows mints a fresh token and reconfigures the ACME plugin with it:
+
+```sh
+mise run proxmox:acme:rotate
+```
+
+The task taints the token and applies in one go. It needs the same credentials as
+[Deploy a change](#deploy-a-change), passed the same way.
+
+Revoke the old token in the Cloudflare dashboard once the apply succeeds. Deleting it there _first_ breaks renewals
+until the next apply.
+
+### Force a certificate renewal
+
+Proxmox VE renews automatically at 30 days remaining. To re-issue early — after a domain change, or to verify DNS-01
+still works following a token rotation:
+
+```sh
+pvenode acme cert order --force
+journalctl -u pvedaemon -f    # watch the challenge
+```
+
+### Add a service identity
+
+Add the role (if no built-in fits), the user, an optional token, and one ACL per grant to
+[`stack/proxmox/access.ts`](../src/infrastructure/pulumi/stack/proxmox/access.ts), then apply. Scope every grant to a
+pool or a node, never to `/`.
+
+Give the user a `comment`: it is what fills the Purpose column above. An identity declared without one renders blank,
+which is the signal to go write it in the code rather than here.
+
+New tokens print their one-time secret in the apply output. It is never shown again and is not recoverable from stack
+state.
+
+### Attach a Kubernetes cluster to the SDN
+
+Nothing to do — all Talos clusters share the existing VNet, and the Omni provider identity already holds `SDN.Use` on
+it. The cluster's MachineClass references that VNet.
+
+Adding a _new_ VNet instead requires an ACL granting `PVESDNUser` to the Omni identity on it, or the infra provider
+cannot attach NICs to guests there. See
+[`INF-20260627-00.proxmox-sdn-setup.md`](../../../docs/procedures/infrastructure/INF-20260627-00.proxmox-sdn-setup.md).
+
+### Restore a guest from backup
+
+Backups live on the backup server, not on this host. From the web UI: **Datacenter → Storage → the PBS storage →
+Backups**, pick a snapshot, then **Restore**. From the CLI:
+
+```sh
+pvesm list <storage>       # find the snapshot
+qmrestore <volume> <vmid>  # VM
+pct restore <vmid> <volume>  # LXC
+```
+
+Restoring requires the datastore's client-side encryption key to be configured on this host. It already is; if the
+host was rebuilt, restore that key before anything else or the backups are unreadable.
+
+### Rebuild the host
+
+1. Install Proxmox VE; restore the management address and both bridges per
+   [`vlans.md`](../../../docs/network/vlans.md).
+2. Restore the PBS datastore encryption key — without it, every backup is unreadable.
+3. Re-register the PBS storage, then restore the platform LXCs first: Omni is what rebuilds the Talos clusters.
+4. Re-apply this stack (`mise run pulumi:apply`) to recreate roles, identities, ACLs, pools, SDN, and the firewall
+   baseline.
+5. Re-create the PCI/USB mappings by hand — IOMMU addresses will have changed.
+
+### Import an existing object
+
+When a Proxmox VE object was created by hand and should come under Pulumi without being recreated:
+
+```sh
+pulumi import proxmox:index/<type>:<Type> <name> <id>
+```
+
+See
+[`INF-20260705-00.pulumi-state-and-import.md`](../../../docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md).
+
+> [!IMPORTANT]
+> ACME resources cannot be imported or applied with an API token. Proxmox VE's ACME endpoints reject token
+> authentication outright — even a full-privilege one — and require a real `root@pam` password session. See
+> [`stack/proxmox/README.md`](../src/infrastructure/pulumi/stack/proxmox/README.md), "Bootstrapping".

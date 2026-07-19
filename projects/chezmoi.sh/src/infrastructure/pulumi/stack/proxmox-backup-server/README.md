@@ -144,6 +144,20 @@ disaster recovery. One-time setup, after the PBS VM is installed and reachable:
    pulumi config set --secret pbs:apiToken 'admin@pbs!pulumi=<token-value>'
    ```
 
+   The provider also accepts a `username`/`password` pair as an alternative to `pbs:apiToken`. Nothing this stack
+   currently manages requires it — unlike `../proxmox/`, where Proxmox VE's `/cluster/acme/account` endpoint
+   hard-rejects API token auth and username/password is mandatory (see `../proxmox/README.md`, "Bootstrapping", for why
+   and for a macOS Keychain-based tutorial on retrieving the password securely). Kept documented here too, deliberately,
+   so a future PBS-side resource with the same kind of root-only restriction doesn't require rediscovering that the
+   option exists.
+
+   > [!IMPORTANT] If ever needed, supply it as an **environment variable scoped to the single command that needs it —
+   > never via `pulumi config set`, not even `--secret`.** That still writes an encrypted blob into the git-tracked
+   > `Pulumi.chezmoi_sh.live.yaml`; encrypted-at-rest is not the same as safe to commit. See `../proxmox/README.md`,
+   > "Bootstrapping" step 1, for the env-var-only pattern this stack would follow if it ever needs password auth
+   > (`PBS_USERNAME`/`PBS_PASSWORD` or whatever the provider's actual env var names turn out to be — verify against the
+   > provider before relying on them, they haven't been exercised for this stack yet).
+
 3. **Copy the shared Slack webhook URL** from observability's Alertmanager config
    (`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/secrets/observability.sops.env`) into this stack's
    own secret config:

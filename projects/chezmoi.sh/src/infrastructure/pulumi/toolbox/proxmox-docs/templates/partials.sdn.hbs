@@ -1,0 +1,27 @@
+## Network (SDN)
+
+{{#if sdn.length}}
+{{countWord sdnVnets}} virtual network{{#unless (isSingular sdnVnets)}}s{{/unless}} carrying guest traffic off the host's physical VLANs.
+
+| Zone | Type | VNet | Subnet | Gateway | DHCP | SNAT |
+| --- | --- | --- | --- | --- | --- | --- |
+{{#each sdn}}
+| `{{zoneId}}` | `{{zoneKind}}` | `{{vnetId}}` | `{{cidr}}` | {{#if gateway}}`{{gateway}}`{{else}}—{{/if}} | {{#if dhcp}}`{{dhcp}}`{{else}}—{{/if}} | {{yesNo snat}} |
+{{/each}}
+
+{{#each sdnVnets}}
+{{#if alias}}
+`{{vnetId}}` — _{{{alias}}}_.
+{{/if}}
+{{#if (eq vnetId "talosnet")}}
+
+{{> [sdn.talosnet]}}
+{{/if}}
+
+{{/each}}
+> [!NOTE]
+> SDN changes are staged by Proxmox VE and inert until applied. The stack applies them automatically after any zone,
+> VNet, subnet, or SDN ACL change, so a completed `pulumi up` always leaves the fabric live.
+{{else}}
+No SDN zone is managed by this stack.
+{{/if}}

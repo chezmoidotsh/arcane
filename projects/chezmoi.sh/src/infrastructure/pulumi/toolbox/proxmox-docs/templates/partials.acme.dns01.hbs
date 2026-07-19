@@ -1,0 +1,3 @@
+DNS-01 is the only workable challenge here: the management interface is not publicly reachable, so HTTP-01 has no way
+to validate it. The Cloudflare credential is a scoped, DNS-01-only API token minted and owned by this stack — not a
+long-lived zone-edit token — and the plugin's stored credentials never appear in this document.
