@@ -25,7 +25,21 @@ tree, then exec pulumi. Three modes, based on the forwarded arguments's verb
 - anything else, including no verb at all: no picker, no default verb,
   forwarded straight to pulumi as-is.
 
-esc/ctrl-c cancels a picker. Examples:
+esc/ctrl-c cancels a picker. `up` / `preview` / `destroy` also accept
+`--changed` or `--changed-from COMMIT` to preselect (not auto-run -- the
+picker still opens for review) resources whose defining code changed:
+
+- `--changed`: files with uncommitted changes (staged + unstaged, via
+  `git diff HEAD`) in the current directory tree.
+- `--changed-from COMMIT`: files changed since COMMIT (via `git diff
+  COMMIT`), including any uncommitted changes on top.
+
+Both scan the matched `.ts`/`.tsx` files for `new <Type>("logical-name", ...)`
+declarations and preselect any live resource whose name matches -- a
+heuristic on the current working-tree content, not a real Pulumi diff, so
+still confirm the selection in the picker before running.
+
+Examples:
 
     puuluumi up --refresh --parallel 15
     puuluumi preview --diff
@@ -33,6 +47,8 @@ esc/ctrl-c cancels a picker. Examples:
     puuluumi state taint
     puuluumi stack ls
     puuluumi --refresh          # no verb -> plain `pulumi --refresh`
+    puuluumi up --changed                # preselect uncommitted changes
+    puuluumi preview --changed-from HEAD~3
 """
 
 from __future__ import annotations
@@ -40,6 +56,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -59,6 +76,12 @@ STATE_MONO_SUBCOMMANDS = {"taint", "untaint", "protect", "unprotect"}
 SKIP_TYPES_EXACT = {"pulumi:pulumi:Stack"}
 SKIP_TYPE_PREFIXES = ("pulumi:providers:",)
 VISIBLE_ROWS = 20
+CODE_EXTENSIONS = (".ts", ".tsx")
+# Matches the logical name of a Pulumi resource declaration, e.g.
+# `new pbs.VerifyJob("pbs-verify-backups", {...})` -> "pbs-verify-backups".
+# A heuristic (any `new X("...")` call), not a TS parse -- good enough to
+# preselect candidates for human review in the picker.
+RESOURCE_DECL_RE = re.compile(r"""\bnew\s+[\w.]+\s*\(\s*['"`]([^'"`]+)['"`]""")
 
 console = Console(stderr=True, highlight=False)
 
@@ -97,6 +120,50 @@ def stack_resources(stack: str | None) -> list[dict]:
         sys.stderr.write(result.stderr)
         sys.exit(result.returncode)
     return json.loads(result.stdout).get("resources", [])
+
+
+def git_repo_root() -> str | None:
+    result = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, check=False
+    )
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def git_changed_paths(base: str | None) -> list[str]:
+    """Paths (repo-root-relative) changed under the current directory.
+
+    `base=None`: uncommitted changes (staged + unstaged) via `git diff HEAD`.
+    `base=<ref>`: everything changed since `<ref>`, including any
+    uncommitted changes on top, via `git diff <ref>`.
+    """
+    cmd = ["git", "diff", "--name-only", base or "HEAD", "--", "."]
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        console.print(f"[red]git diff failed:[/red] {result.stderr.strip()}")
+        sys.exit(result.returncode)
+    return [line for line in result.stdout.splitlines() if line]
+
+
+def extract_resource_names(path: str) -> set[str]:
+    try:
+        with open(path, encoding="utf-8") as f:
+            text = f.read()
+    except OSError:
+        return set()  # deleted, unreadable, or otherwise gone from the worktree
+    return set(RESOURCE_DECL_RE.findall(text))
+
+
+def changed_resource_names(base: str | None) -> set[str]:
+    """Logical resource names declared in code changed under cwd since `base`
+    (or uncommitted, if `base` is None) -- see `git_changed_paths`."""
+    root = git_repo_root()
+    names: set[str] = set()
+    for relpath in git_changed_paths(base):
+        if not relpath.endswith(CODE_EXTENSIONS):
+            continue
+        abspath = os.path.join(root, relpath) if root else relpath
+        names |= extract_resource_names(abspath)
+    return names
 
 
 def build_tree(resources: list[dict]) -> list[Resource]:
@@ -198,16 +265,24 @@ def render_row(row: Row, matched: set[int] | None, *, selected: bool, is_cursor:
     return frags
 
 
-def run_picker(roots: list[Resource], *, multiselect: bool) -> list[str] | None:
+def run_picker(
+    roots: list[Resource], *, multiselect: bool, preselect_names: set[str] | None = None
+) -> list[str] | None:
     """Run the interactive tree picker.
 
     Multiselect mode: tab toggles a set, enter confirms it (expanding any
     selected component to every resource underneath it). Mono-select mode:
     enter immediately picks the resource under the cursor, no expansion.
+
+    `preselect_names`, if given, checks every row whose resource name is in
+    the set before the picker opens (multiselect mode only) -- the starting
+    point for `--changed`/`--changed-from`, still reviewable/editable via tab.
     """
     rows = build_rows(roots)
     by_urn = {row.res.urn: row.res for row in rows}
     selected: set[str] = set()
+    if multiselect and preselect_names:
+        selected = {row.res.urn for row in rows if row.res.name in preselect_names}
 
     state: dict = {"filtered": [(row, None) for row in rows], "cursor": 0, "error": ""}
     result: dict = {"value": None}
@@ -349,14 +424,39 @@ def main() -> None:
         description="Interactively pick Pulumi resources from a tree, then exec pulumi.",
     )
     parser.add_argument("--stack", help="Stack name to export/operate on (defaults to the current stack)")
+    changed_group = parser.add_mutually_exclusive_group()
+    changed_group.add_argument(
+        "--changed",
+        action="store_true",
+        help="Preselect resources whose defining code has uncommitted changes (staged + unstaged)",
+    )
+    changed_group.add_argument(
+        "--changed-from",
+        metavar="COMMIT",
+        help="Preselect resources whose defining code changed since COMMIT",
+    )
     args, forwarded = parser.parse_known_args()
     stack_flag = ["--stack", args.stack] if args.stack else []
 
     # First positional (non-flag) token is the verb; there is no default verb.
     verb, rest = (forwarded[0], forwarded[1:]) if forwarded and not forwarded[0].startswith("-") else (None, forwarded)
 
+    if (args.changed or args.changed_from) and verb not in TARGET_VERBS:
+        console.print("[red]--changed/--changed-from only apply to up, preview, or destroy.[/red]")
+        sys.exit(2)
+
     if verb in TARGET_VERBS:
-        targets = run_picker(load_roots(args.stack), multiselect=True)
+        preselect_names: set[str] | None = None
+        if args.changed or args.changed_from:
+            preselect_names = changed_resource_names(args.changed_from)
+            if preselect_names:
+                console.print(f"[bold]{len(preselect_names)}[/bold] changed resource name(s) found via git:")
+                for name in sorted(preselect_names):
+                    console.print(f"  [green]•[/green] {name}")
+            else:
+                console.print("[yellow]No resource declarations found in the changed files -- starting empty.[/yellow]")
+
+        targets = run_picker(load_roots(args.stack), multiselect=True, preselect_names=preselect_names)
         if targets is None:
             sys.exit(130)  # esc / ctrl-c
 
