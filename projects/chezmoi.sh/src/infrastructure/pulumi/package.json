@@ -14,6 +14,7 @@
 		"@chezmoi.sh/pulumi-truenas-pool": "workspace:*",
 		"@pulumi/b2": "workspace:*",
 		"@pulumi/cloudflare": "catalog:",
+		"@pulumi/proxmox": "workspace:*",
 		"@pulumi/proxmox-backup-server": "workspace:*",
 		"@pulumi/pulumi": "catalog:",
 		"@pulumi/random": "catalog:",

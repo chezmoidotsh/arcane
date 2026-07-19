@@ -20,3 +20,5 @@ config:
     secure: v1:sLhY5DfYf/T18EyL:xvQ3lkIJoS04v9jaycJxyv4UlbruzkYAm3Dna3DVQs+C
   truenas:destroyProtection: "true"
   truenas:url: https://nas.chezmoi.sh
+  proxmox:endpoint: https://pve-01.pve.chezmoi.sh:8006/api2/json
+  proxmox:insecure: "true"

@@ -310,6 +310,9 @@ importers:
       '@pulumi/cloudflare':
         specifier: 'catalog:'
         version: 6.17.0(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/proxmox':
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/sdks/proxmox
       '@pulumi/proxmox-backup-server':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/sdks/proxmox-backup-server
