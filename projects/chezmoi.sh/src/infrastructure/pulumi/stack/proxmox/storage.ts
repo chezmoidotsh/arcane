@@ -38,10 +38,14 @@ function readStoragePbsEncryptionKey(): pulumi.Output<string> | undefined {
 	// Node's fs module doesn't expand `~` the way a shell expands it in an
 	// unquoted command -- a quoted value or one sourced from a non-shell
 	// wrapper (a mise task, an IDE run config, ...) reaches us as a literal
-	// `~/...` string and fails with ENOENT. Expand it ourselves.
-	const resolvedPath = keyPath.startsWith("~")
-		? os.homedir() + keyPath.slice(1)
-		: keyPath;
+	// `~/...` string and fails with ENOENT. Expand it ourselves, but only the
+	// current user's home: `~other/key` means *another user's* home to a
+	// shell, and rewriting it against `os.homedir()` would silently build a
+	// nonsense path rather than fail.
+	const resolvedPath =
+		keyPath === "~" || keyPath.startsWith("~/")
+			? os.homedir() + keyPath.slice(1)
+			: keyPath;
 	return pulumi.secret(fs.readFileSync(resolvedPath, "utf-8").trim());
 }
 

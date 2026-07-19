@@ -181,6 +181,18 @@ describe("ACME extractors", () => {
 		expect(cert.primaryDomain).to.equal("pve-01.example.test");
 		expect(cert.plugins).to.deep.equal(["cloudflare"]);
 	});
+
+	it("survives a certificate carrying no domain at all", () => {
+		const [cert] = extractAcmeCertificates([
+			{
+				urn: "urn:x::y::proxmox:index/acmeCertificate:AcmeCertificate::bare",
+				type: "proxmox:index/acmeCertificate:AcmeCertificate",
+				outputs: { nodeName: "pve-01", account: "default", domains: [] },
+			},
+		]);
+		expect(cert.primaryDomain).to.equal(undefined);
+		expect(cert.plugins).to.deep.equal([]);
+	});
 });
 
 describe("extractSecurityGroups", () => {

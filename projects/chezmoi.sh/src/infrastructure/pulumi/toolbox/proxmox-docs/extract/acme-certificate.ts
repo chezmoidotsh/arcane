@@ -14,8 +14,13 @@ export interface AcmeCertificateDoc {
 	nodeName: string;
 	account: string;
 	domains: CertificateDomain[];
-	/** Primary subject -- the first domain, which is what the node actually serves. */
-	primaryDomain: string;
+	/**
+	 * Primary subject -- the first domain, which is what the node serves.
+	 * Optional because a certificate resource can carry an empty `domains`
+	 * list (a half-applied import, a malformed export); the template renders
+	 * a dash for it rather than an empty cell.
+	 */
+	primaryDomain?: string;
 	/**
 	 * The DNS plugins used across this certificate's domains. Empty when every
 	 * domain validates over HTTP-01, which is what makes the "DNS-01 is the only

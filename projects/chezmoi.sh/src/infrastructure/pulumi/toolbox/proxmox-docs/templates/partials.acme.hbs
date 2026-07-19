@@ -6,12 +6,12 @@ The node's web UI and API serve a certificate renewed by Proxmox VE's own ACME c
 | Certificate | Account | Directory | Challenge |
 | --- | --- | --- | --- |
 {{#each certificates}}
-| `{{primaryDomain}}` | `{{account}}` | {{#with (lookup ../accountsByName account)}}{{{directoryLabel}}}{{#if staging}} ⚠️ staging{{/if}}{{else}}—{{/with}} | {{#if plugins.length}}DNS-01 via {{#each plugins}}`{{this}}`{{#unless @last}}, {{/unless}}{{/each}}{{else}}HTTP-01 (standalone){{/if}} |
+| {{#if primaryDomain}}`{{primaryDomain}}`{{else}}—{{/if}} | `{{account}}` | {{#with (lookup ../accountsByName account)}}{{{directoryLabel}}}{{#if staging}} ⚠️ staging{{/if}}{{else}}—{{/with}} | {{#if plugins.length}}DNS-01 via {{#each plugins}}`{{this}}`{{#unless @last}}, {{/unless}}{{/each}}{{else}}HTTP-01 (standalone){{/if}} |
 {{/each}}
 
 {{#each certificates}}
-{{#if (eq primaryDomain "pve-01.pve.chezmoi.sh")}}
-{{> [acme.certificate]}}
+{{#if plugins.length}}
+{{> [acme.dns01]}}
 
 {{/if}}
 {{/each}}

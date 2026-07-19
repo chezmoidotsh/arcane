@@ -63,6 +63,7 @@ run = "pnpm run proxmox:docs"
 [tasks."proxmox:acme:rotate"]
 description = "Rotate the Cloudflare DNS-01 token backing Proxmox VE's ACME plugin"
 dir = "{{ config_root }}"
+interactive = true
 run = [
   "pulumi state taint 'urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:cloudflare:Dns01Token$cloudflare:index/accountToken:AccountToken::acme-dns-pve-token' --yes",
   "pulumi up --refresh --parallel 15",
