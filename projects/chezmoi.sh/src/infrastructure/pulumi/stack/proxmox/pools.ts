@@ -4,15 +4,11 @@ import * as proxmox from "@pulumi/proxmox";
 // core -- critical platform LXCs (omni, omni-infra-provider-proxmox, o11y,
 // oci-registry, pve-exporter); required for everything else to function
 // -----------------------------------------------------------------------------
-export const corePool = new proxmox.VirtualEnvironmentPool(
-	"pve-pool-core",
-	{
-		poolId: "core",
-		comment:
-			"Critical platform LXCs — required for everything else (oci-registry, o11y, omni)",
-	},
-	{ protect: true },
-);
+export const corePool = new proxmox.VirtualEnvironmentPool("pve-pool-core", {
+	poolId: "core",
+	comment:
+		"Critical platform LXCs — required for everything else (oci-registry, o11y, omni)",
+});
 
 // -----------------------------------------------------------------------------
 // talos -- Omni-managed Talos VMs; the ACL boundary the omni@pve,
@@ -20,14 +16,10 @@ export const corePool = new proxmox.VirtualEnvironmentPool(
 // ./access.ts). Never add a non-Kubernetes VM/LXC to this pool -- pool
 // membership is exactly what grants those identities access.
 // -----------------------------------------------------------------------------
-export const talosPool = new proxmox.VirtualEnvironmentPool(
-	"pve-pool-talos",
-	{
-		poolId: "talos",
-		comment: "Omni-managed Talos VMs",
-	},
-	{ protect: true },
-);
+export const talosPool = new proxmox.VirtualEnvironmentPool("pve-pool-talos", {
+	poolId: "talos",
+	comment: "Omni-managed Talos VMs",
+});
 
 // Storage membership only -- VM/LXC membership is a side effect of VM
 // creation (Omni machine classes set `pool: talos` in their provider data;
@@ -42,7 +34,6 @@ export const talosPoolLocalStorage = new proxmox.PoolMembership(
 		poolId: talosPool.poolId,
 		storageId: "local",
 	},
-	{ protect: true },
 );
 
 export const talosPoolNvmeLvmStorage = new proxmox.PoolMembership(
@@ -51,5 +42,4 @@ export const talosPoolNvmeLvmStorage = new proxmox.PoolMembership(
 		poolId: talosPool.poolId,
 		storageId: "nvme-lvm",
 	},
-	{ protect: true },
 );

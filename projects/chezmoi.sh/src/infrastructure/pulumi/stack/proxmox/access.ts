@@ -14,7 +14,6 @@ export const exporterRole = new proxmox.VirtualEnvironmentRole(
 		roleId: "Exporter",
 		privileges: ["Datastore.Audit", "Pool.Audit", "Sys.Audit", "VM.Audit"],
 	},
-	{ protect: true },
 );
 
 export const kubernetesCcmRole = new proxmox.VirtualEnvironmentRole(
@@ -23,7 +22,6 @@ export const kubernetesCcmRole = new proxmox.VirtualEnvironmentRole(
 		roleId: "KubernetesCCM",
 		privileges: ["Sys.Audit", "VM.Audit", "VM.GuestAgent.Audit"],
 	},
-	{ protect: true },
 );
 
 export const kubernetesCsiRole = new proxmox.VirtualEnvironmentRole(
@@ -46,7 +44,6 @@ export const kubernetesCsiRole = new proxmox.VirtualEnvironmentRole(
 			"VM.PowerMgmt",
 		],
 	},
-	{ protect: true },
 );
 
 export const omniProviderRole = new proxmox.VirtualEnvironmentRole(
@@ -74,7 +71,6 @@ export const omniProviderRole = new proxmox.VirtualEnvironmentRole(
 			"VM.PowerMgmt",
 		],
 	},
-	{ protect: true },
 );
 
 export const omniProviderNodeRole = new proxmox.VirtualEnvironmentRole(
@@ -83,7 +79,6 @@ export const omniProviderNodeRole = new proxmox.VirtualEnvironmentRole(
 		roleId: "OmniProviderNode",
 		privileges: ["Sys.AccessNetwork", "Sys.Audit"],
 	},
-	{ protect: true },
 );
 
 // -----------------------------------------------------------------------------
@@ -96,30 +91,21 @@ export const prometheusUser = new proxmox.VirtualEnvironmentUser(
 		comment: "prometheus-pve-exporter monitoring",
 		enabled: true,
 	},
-	{ protect: true },
 );
 
-export const prometheusToken = new proxmox.UserToken(
-	"pve-token-prometheus",
-	{
-		userId: prometheusUser.userId,
-		tokenName: "exporter",
-		comment: "pve-exporter scrape token",
-		privilegesSeparation: false,
-	},
-	{ protect: true },
-);
+export const prometheusToken = new proxmox.UserToken("pve-token-prometheus", {
+	userId: prometheusUser.userId,
+	tokenName: "exporter",
+	comment: "pve-exporter scrape token",
+	privilegesSeparation: false,
+});
 
-export const prometheusAcl = new proxmox.Acl(
-	"pve-acl-prometheus",
-	{
-		path: "/",
-		userId: prometheusUser.userId,
-		roleId: exporterRole.roleId,
-		propagate: true,
-	},
-	{ protect: true },
-);
+export const prometheusAcl = new proxmox.Acl("pve-acl-prometheus", {
+	path: "/",
+	userId: prometheusUser.userId,
+	roleId: exporterRole.roleId,
+	propagate: true,
+});
 
 // -----------------------------------------------------------------------------
 // kubernetes-ccm@pve -- proxmox-cloud-controller-manager (topology labels,
@@ -132,7 +118,6 @@ export const kubernetesCcmUser = new proxmox.VirtualEnvironmentUser(
 		userId: "kubernetes-ccm@pve",
 		enabled: true,
 	},
-	{ protect: true },
 );
 
 export const kubernetesCcmToken = new proxmox.UserToken(
@@ -142,7 +127,6 @@ export const kubernetesCcmToken = new proxmox.UserToken(
 		tokenName: "ccm",
 		privilegesSeparation: false,
 	},
-	{ protect: true },
 );
 
 // Node-scoped grant: topology + lifecycle status. Live ACL path is
@@ -159,7 +143,6 @@ export const kubernetesCcmNodeAcl = new proxmox.Acl(
 		roleId: kubernetesCcmRole.roleId,
 		propagate: true,
 	},
-	{ protect: true },
 );
 
 // Pool-scoped grant: VM/guest-agent audit, scoped to the `talos` pool only
@@ -172,7 +155,6 @@ export const kubernetesCcmPoolAcl = new proxmox.Acl(
 		roleId: kubernetesCcmRole.roleId,
 		propagate: true,
 	},
-	{ protect: true },
 );
 
 // -----------------------------------------------------------------------------
@@ -185,7 +167,6 @@ export const kubernetesCsiUser = new proxmox.VirtualEnvironmentUser(
 		userId: "kubernetes-csi@pve",
 		enabled: true,
 	},
-	{ protect: true },
 );
 
 export const kubernetesCsiToken = new proxmox.UserToken(
@@ -195,7 +176,6 @@ export const kubernetesCsiToken = new proxmox.UserToken(
 		tokenName: "csi",
 		privilegesSeparation: false,
 	},
-	{ protect: true },
 );
 
 export const kubernetesCsiPoolAcl = new proxmox.Acl(
@@ -206,7 +186,6 @@ export const kubernetesCsiPoolAcl = new proxmox.Acl(
 		roleId: kubernetesCsiRole.roleId,
 		propagate: true,
 	},
-	{ protect: true },
 );
 
 // -----------------------------------------------------------------------------
@@ -219,37 +198,25 @@ export const kubernetesCsiPoolAcl = new proxmox.Acl(
 // `UserToken` for this identity. `password` is deliberately left unset here:
 // Pulumi never reads or writes it, so the existing credential stays untouched
 // on import.
-export const omniUser = new proxmox.VirtualEnvironmentUser(
-	"pve-user-omni",
-	{
-		userId: "omni@pve",
-		comment: "Omni infra provider - VM lifecycle scoped to /pool/talos",
-		enabled: true,
-	},
-	{ protect: true },
-);
+export const omniUser = new proxmox.VirtualEnvironmentUser("pve-user-omni", {
+	userId: "omni@pve",
+	comment: "Omni infra provider - VM lifecycle scoped to /pool/talos",
+	enabled: true,
+});
 
-export const omniPoolAcl = new proxmox.Acl(
-	"pve-acl-omni-pool",
-	{
-		path: "/pool/talos",
-		userId: omniUser.userId,
-		roleId: omniProviderRole.roleId,
-		propagate: true,
-	},
-	{ protect: true },
-);
+export const omniPoolAcl = new proxmox.Acl("pve-acl-omni-pool", {
+	path: "/pool/talos",
+	userId: omniUser.userId,
+	roleId: omniProviderRole.roleId,
+	propagate: true,
+});
 
-export const omniNodeAcl = new proxmox.Acl(
-	"pve-acl-omni-node",
-	{
-		path: "/nodes/pve-01",
-		userId: omniUser.userId,
-		roleId: omniProviderNodeRole.roleId,
-		propagate: true,
-	},
-	{ protect: true },
-);
+export const omniNodeAcl = new proxmox.Acl("pve-acl-omni-node", {
+	path: "/nodes/pve-01",
+	userId: omniUser.userId,
+	roleId: omniProviderNodeRole.roleId,
+	propagate: true,
+});
 
 // SDN.Use on both bridges omni@pve attaches Talos VM NICs to: the legacy
 // `vmbr1` bridge (Cilium L2 plane, `eth0`) and the `talosnet` VNet this
@@ -258,13 +225,9 @@ export const omniNodeAcl = new proxmox.Acl(
 // `/sdn/zones/localnetwork/vmbr1` predates this stack (the `localnetwork`
 // zone and `vmbr1` bridge are manual, outside the SDN abstraction this stack
 // manages) -- kept as a plain ACL path, not tied to a Pulumi-managed zone.
-export const omniSdnVmbr1Acl = new proxmox.Acl(
-	"pve-acl-omni-sdn-vmbr1",
-	{
-		path: "/sdn/zones/localnetwork/vmbr1",
-		userId: omniUser.userId,
-		roleId: "PVESDNUser",
-		propagate: true,
-	},
-	{ protect: true },
-);
+export const omniSdnVmbr1Acl = new proxmox.Acl("pve-acl-omni-sdn-vmbr1", {
+	path: "/sdn/zones/localnetwork/vmbr1",
+	userId: omniUser.userId,
+	roleId: "PVESDNUser",
+	propagate: true,
+});
