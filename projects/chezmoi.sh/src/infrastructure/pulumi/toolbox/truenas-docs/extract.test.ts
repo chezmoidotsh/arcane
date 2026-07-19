@@ -400,6 +400,27 @@ describe("extractBuckets()", () => {
 			},
 		]);
 	});
+
+	it("tolerates a bucket with file lock enabled but no default retention", () => {
+		const withoutRetention = resources.map((r) =>
+			r.type === "b2:index/bucket:Bucket"
+				? {
+						...r,
+						outputs: {
+							...r.outputs,
+							fileLockConfigurations: [{ isFileLockEnabled: true }],
+						},
+					}
+				: r,
+		);
+		expect(extractBuckets(withoutRetention)).to.deep.equal([
+			{
+				name: "nas-backup-50a30f2b",
+				retentionDays: undefined,
+				lifecycleDeleteDays: 60,
+			},
+		]);
+	});
 });
 
 describe("extractPoolNames()", () => {
