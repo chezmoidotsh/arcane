@@ -116,6 +116,9 @@ export const kubernetesCcmUser = new proxmox.VirtualEnvironmentUser(
 	"pve-user-kubernetes-ccm",
 	{
 		userId: "kubernetes-ccm@pve",
+		// `comment` is what fills the identity table's Purpose column in
+		// docs/PROXMOX-VE.md -- an identity without one renders blank there.
+		comment: "Kubernetes cloud-controller-manager - node labels and VM state",
 		enabled: true,
 	},
 );
@@ -125,6 +128,7 @@ export const kubernetesCcmToken = new proxmox.UserToken(
 	{
 		userId: kubernetesCcmUser.userId,
 		tokenName: "ccm",
+		comment: "proxmox-cloud-controller-manager token",
 		privilegesSeparation: false,
 	},
 );
@@ -165,6 +169,7 @@ export const kubernetesCsiUser = new proxmox.VirtualEnvironmentUser(
 	"pve-user-kubernetes-csi",
 	{
 		userId: "kubernetes-csi@pve",
+		comment: "Kubernetes CSI plugin - dynamic volume provisioning",
 		enabled: true,
 	},
 );
@@ -174,6 +179,7 @@ export const kubernetesCsiToken = new proxmox.UserToken(
 	{
 		userId: kubernetesCsiUser.userId,
 		tokenName: "csi",
+		comment: "proxmox-csi-plugin token",
 		privilegesSeparation: false,
 	},
 );
