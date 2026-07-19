@@ -5,7 +5,9 @@ already manages physically -- Pulumi never creates or resizes a pool, it only
 manages the ZFS datasets carved out of it. The diagram under each pool name is
 its live vdev/disk layout, fetched straight from the NAS rather than declared
 anywhere in code; the tree under that lists every dataset Pulumi manages in
-that pool, with its quota, encryption and purpose where relevant.
+that pool, with its quota, encryption and purpose where relevant. The
+4-character code under each disk identifies its *model* (a stable hash), so
+two identical disks deliberately share the same code.
 
 {{#each pools}}
 ### `{{name}}`

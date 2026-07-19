@@ -15,7 +15,18 @@
 
 {{> overview}}
 
-{{> glossary}}
+## Quick reference
+
+| I need to… | Go to |
+| --- | --- |
+| Deploy a change to the NAS | [How it's managed](#how-its-managed) |
+| Find a dataset, its quota or encryption | [Pools, disks & datasets](#pools-disks--datasets) |
+| Add a dataset or a share | [Add a dataset or a share](#add-a-dataset-or-a-share) |
+| Set or fix permissions on a dataset | [Permissions](#permissions) |
+| Recover a deleted or overwritten file | [Recover a file from a snapshot](#recover-a-file-from-a-snapshot) |
+| See what is backed up, where, and when | [Backups](#backups) |
+| Understand Garage (S3) and what depends on it | [Applications](#applications-garage--nginx-proxy-manager) |
+| Rebuild the NAS after losing the VM | [Rebuild the NAS](#rebuild-the-nas) |
 
 ## How it's managed
 
@@ -33,8 +44,94 @@ the stack above and applied through Pulumi. Applying the stack also regenerates
 this document — there is normally no reason to run the generator by hand.
 
 {{> network}}
+
 {{> pools}}
+
+## Applications (Garage & Nginx Proxy Manager)
+
+Two TrueNAS _Apps_ are managed by the stack
+([`stack/truenas/apps.ts`](../src/infrastructure/pulumi/stack/truenas/apps.ts))
+— the app catalog itself, plus:
+
+- **[Garage](https://garagehq.deuxfleurs.fr/)** — the homelab's S3-compatible
+  object store (`s3.chezmoi.sh`), backed by the
+  `zp1hs01/applications/truenas/fr.deuxfleurs.garage` dataset. Beyond database
+  dumps, it holds the **Pulumi state of every stack in this repository**
+  (`s3://pulumi-states` — see
+  [`INF-20260705-00.pulumi-state-and-import.md`](../../../docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md)):
+  while Garage is down, no `pulumi` command can run anywhere. Its dataset is
+  covered by the daily off-site sync in [Backups](#backups), Layer 3.
+- **Nginx Proxy Manager** — the NAS-internal reverse proxy, backed by
+  `zp1hs01/applications/truenas/com.nginxproxymanager`.
+
+App chart _versions_ are deliberately left unpinned — TrueNAS SCALE updates
+them on its own schedule via the UI — but their configuration (chart values,
+credentials, mounts) is owned by the stack. Any other app installed on the NAS
+is not managed here.
+
 {{> shares}}
+
 {{> permissions}}
+
 {{> backups}}
+
 {{> security}}
+
+## Procedures
+
+### Add a dataset or a share
+
+Declare the dataset in [`stack/truenas/zpools/`](../src/infrastructure/pulumi/stack/truenas/zpools/)
+(quota, encryption, comment — the comment is what fills the dataset trees
+above) and, if it must be reachable over the network, the share in
+[`stack/truenas/shares.ts`](../src/infrastructure/pulumi/stack/truenas/shares.ts),
+then `mise run pulumi:apply`. If the dataset needs specific permissions, add
+its row to the assignment table (see
+[`stack/truenas/acls.ts`](../src/infrastructure/pulumi/stack/truenas/acls.ts))
+and apply the template **by hand** in the TrueNAS UI — Pulumi cannot do that
+part; see [Permissions](#permissions).
+
+### Recover a file from a snapshot
+
+Snapshots cover `zp1hs01` (see [Backups](#backups), Layer 2). Two
+non-destructive ways to get a file back:
+
+- Browse the hidden snapshot directory over SSH and copy the file out:
+  `/mnt/<pool>/<dataset>/.zfs/snapshot/<snapshot-name>/…`
+- Or from the TrueNAS UI: **Datasets → select the dataset → Snapshots**, then
+  clone the snapshot and copy the file from the clone.
+
+Rolling back the whole dataset to a snapshot also exists but **destroys
+everything written after it** — reserve it for a dataset-wide incident, not a
+single lost file.
+
+### Rebuild the NAS
+
+The NAS VM's system disk is backed up to PBS, but the ZFS pools live on
+**passthrough physical disks** — they are not part of the VM backup and
+survive independently of the VM.
+
+1. **VM lost, disks intact** — restore the VM from its PBS backup
+   ([`PROXMOX-VE.md`, "Restore a guest from backup"](./PROXMOX-VE.md#restore-a-guest-from-backup)),
+   re-create the PCI passthrough mappings if the host changed, and the pools
+   re-import with all data — Garage (and the Pulumi state) come back with
+   `zp1hs01`.
+2. **Disks lost too** — reinstall or restore the VM, create fresh pools, then
+   pull data back from Backblaze B2 ([Backups](#backups), Layer 3). Only the
+   synced datasets come back; anything outside the off-site sync (see the note
+   under Layer 3) is gone with the disks.
+3. Once Garage is reachable again, `mise run pulumi:apply` reconciles
+   datasets, shares, users and apps — then re-apply the ACL templates by hand
+   ([Permissions](#permissions)).
+
+## Appendix
+
+{{> glossary}}
+
+### References
+
+- [`stack/truenas/README.md`](../src/infrastructure/pulumi/stack/truenas/README.md) — the stack managing this NAS
+- [`INF-20260705-00.pulumi-state-and-import.md`](../../../docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md)
+  — the Pulumi state hosted on Garage
+- [`PROXMOX-VE.md`](./PROXMOX-VE.md) — the hypervisor this VM runs on
+- [`PROXMOX_BACKUP_SERVER.md`](./PROXMOX_BACKUP_SERVER.md) — where the VM's system disk is backed up

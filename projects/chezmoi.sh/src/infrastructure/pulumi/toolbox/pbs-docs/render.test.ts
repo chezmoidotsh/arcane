@@ -83,19 +83,32 @@ describe("PROXMOX_BACKUP_SERVER.md template", () => {
 	it("renders every section heading", () => {
 		const md = render(fixtureContext);
 		expect(md).to.include("# Proxmox Backup Server (pbs.pve.chezmoi.sh)");
-		expect(md).to.include("## Key terms");
+		expect(md).to.include("## Quick reference");
 		expect(md).to.include("## How it's managed");
 		expect(md).to.include("## Datastore");
 		expect(md).to.include("## Retention & verification");
 		expect(md).to.include("## Notifications");
 		expect(md).to.include("## Access");
 		expect(md).to.include("## Configuring Proxmox VE to use this datastore");
+		expect(md).to.include("## Procedures");
+		expect(md).to.include("### Key terms");
 	});
 
-	it("explains the key PBS terms before diving into specifics", () => {
+	it("explains the key PBS terms in the appendix, after the procedures", () => {
 		const md = render(fixtureContext);
 		expect(md).to.include("**Datastore** — the top-level backup repository");
 		expect(md).to.include("**Garbage collection (GC)**");
+		expect(md.indexOf("## Procedures")).to.be.lessThan(
+			md.indexOf("### Key terms"),
+		);
+	});
+
+	it("points restores, rotation and rebuild at their procedures", () => {
+		const md = render(fixtureContext);
+		expect(md).to.include("### Restore a backup");
+		expect(md).to.include("### Rotate the Proxmox VE storage token");
+		expect(md).to.include("### Rebuild the server");
+		expect(md).to.include("stored in OpenBao");
 	});
 
 	it("explains how to add the datastore as Proxmox VE storage, including the port", () => {
@@ -136,7 +149,21 @@ describe("PROXMOX_BACKUP_SERVER.md template", () => {
 
 	it("renders the verify job's outdated-after note", () => {
 		const md = render(fixtureContext);
-		expect(md).to.include("skips backups re-verified within the last 30 days");
+		expect(md).to.include(
+			"skips backups already verified within the last 30 days",
+		);
+	});
+
+	it("omits the outdated-after window when the job doesn't set one", () => {
+		const md = render({
+			...fixtureContext,
+			verifyJobs: fixtureContext.verifyJobs.map((j) => ({
+				...j,
+				outdatedAfter: undefined,
+			})),
+		});
+		expect(md).to.include("skips backups already verified —");
+		expect(md).to.not.include("within the last");
 	});
 
 	it("names notification targets and routing without ever printing a URL", () => {

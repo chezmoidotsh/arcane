@@ -4,10 +4,11 @@ archives, data volumes for select self-hosted applications (Immich,
 Paperless-ngx, Silverbullet), and backup targets — including database dumps
 pushed to S3.
 
-The only service it runs beyond plain file storage is
+The only services it runs beyond plain file storage are
 [Garage](https://garagehq.deuxfleurs.fr/), an S3-compatible object store —
-TrueNAS SCALE has no native S3, so Garage fills that gap, but it stays in the
-data-serving domain, not application hosting.
+TrueNAS SCALE has no native S3, so Garage fills that gap — and a small internal
+reverse proxy (Nginx Proxy Manager). Both stay in the data-serving domain, not
+application hosting; see "Applications" below.
 
 It runs as a TrueNAS SCALE virtual machine on Proxmox, with
 {{pools.length}} ZFS pool{{#unless (isSingular pools)}}s{{/unless}} detailed

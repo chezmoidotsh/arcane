@@ -32,13 +32,20 @@ losing the NAS itself.
 ### Layer 3: Site-loss protection (remote sync)
 
 Selected datasets are pushed off-site to {{backups.destination}}, split
-across private, file lock-protected buckets (immutable for the retention
-window below, with older versions pruned after the lifecycle window):
+across private buckets (older versions are pruned after each bucket's
+lifecycle window):
 
 #### Where are the backups stored
 {{#each backups.buckets}}
+{{#if retentionDays}}
 - `{{name}}` -- {{retentionDays}}-day file lock retention, {{lifecycleDeleteDays}}-day
   lifecycle prune.
+{{else}}
+- `{{name}}` -- file lock **deliberately neutralized** (enabled with no
+  default retention -- a retention hold would block the SYNC jobs below from
+  pruning superseded versions; see `stack/truenas/cloudsync.ts`),
+  {{lifecycleDeleteDays}}-day lifecycle prune.
+{{/if}}
 {{/each}}
 
 
@@ -50,9 +57,14 @@ window below, with older versions pruned after the lifecycle window):
 - **{{cronToEach backups.legacyGlobalSync.schedule.minute backups.legacyGlobalSync.schedule.hour backups.legacyGlobalSync.schedule.dom backups.legacyGlobalSync.schedule.month backups.legacyGlobalSync.schedule.dow}}**:
   legacy whole-pool sync of `{{backups.legacyGlobalSync.source}}`
   ({{backups.legacyGlobalSync.direction}} & {{backups.legacyGlobalSync.transferMode}}) --
-  kept for reference only{{#unless backups.legacyGlobalSync.enabled}}, *(disabled)*{{/unless}}
+  predates the per-dataset jobs above and overlaps them{{#if backups.legacyGlobalSync.enabled}}; **still
+  active** (and still paying for the duplicated B2 storage) until it is
+  retired{{else}} *(disabled)*{{/if}}
 
 {{#if notBackedUpPools}}
-{{humanList notBackedUpPools}} {{#if (isSingular notBackedUpPools)}}isn't{{else}}aren't{{/if}} included in this off-site sync.
+{{humanList notBackedUpPools}} {{#if (isSingular notBackedUpPools)}}isn't{{else}}aren't{{/if}} included in this off-site sync — a
+deliberate trade-off, not an oversight: the contents are considered
+re-acquirable, so mirror redundancy and the scrubs above are their only
+protection. Anything that must survive site loss belongs on a synced dataset.
 
 {{/if}}
