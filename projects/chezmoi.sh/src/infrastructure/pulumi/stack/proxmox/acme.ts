@@ -24,7 +24,6 @@ const acmeDns01Token = new Dns01TokenComponent("acme-dns-pve", {
 	accountId: config.requireSecret("cloudflare_account_id"),
 	zoneId: config.requireSecret("cloudflare_zone_id"),
 });
-export const pveDns01Token = acmeDns01Token.tokenValue;
 
 // -----------------------------------------------------------------------------
 // default -- the ACME account the node's own TLS certificate uses (node
@@ -65,7 +64,30 @@ export const acmeDnsPlugin = new proxmox.AcmeDnsPlugin(
 		api: "cf",
 		data: {
 			CF_Account_ID: config.requireSecret("cloudflare_account_id"),
-			CF_Token: pveDns01Token,
+			CF_Token: acmeDns01Token.tokenValue,
 		},
+	},
+);
+
+// -----------------------------------------------------------------------------
+// pve-01.pve.chezmoi.sh -- the node's own web UI/API TLS certificate, ordered
+// against `default` (above) via the `cloudflare` DNS-01 plugin (also above)
+// -----------------------------------------------------------------------------
+// References both by their Pulumi-managed output, not by the literal strings
+// the node config already has (`acme: account=default`,
+// `acmedomain0: pve-01.pve.chezmoi.sh,plugin=cloudflare`), so a rename of
+// either the account or the plugin id is caught here instead of silently
+// pointing this certificate at a resource that no longer exists.
+export const acmeCertificate = new proxmox.AcmeCertificate(
+	"pve-acme-certificate",
+	{
+		nodeName: "pve-01",
+		account: acmeAccount.name,
+		domains: [
+			{
+				domain: "pve-01.pve.chezmoi.sh",
+				plugin: acmeDnsPlugin.plugin,
+			},
+		],
 	},
 );
