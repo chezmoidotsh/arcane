@@ -23,6 +23,7 @@ registration, resource pools, ACME) as code. State lives in the Garage S3 backen
 | `stack/proxmox/`               | Proxmox VE as code (ACL, SDN, backup-storage registration, pools, ACME — VM/LXC lifecycle stays manual); see [`stack/proxmox/README.md`](stack/proxmox/README.md) |
 | `toolbox/truenas-docs/`        | Standalone doc generator — rebuilds `docs/TRUENAS.md` from deployed stack state; see [`toolbox/truenas-docs/README.md`](toolbox/truenas-docs/README.md)           |
 | `toolbox/pbs-docs/`            | Standalone doc generator — rebuilds `docs/PROXMOX_BACKUP_SERVER.md` from deployed stack state; see [`toolbox/pbs-docs/README.md`](toolbox/pbs-docs/README.md)     |
+| `toolbox/proxmox-docs/`        | Standalone doc generator — rebuilds `docs/PROXMOX-VE.md` from deployed stack state; see [`toolbox/proxmox-docs/README.md`](toolbox/proxmox-docs/README.md)        |
 
 ## Tasks
 
@@ -43,3 +44,4 @@ Defined in `.mise.toml`, run from this directory:
 - [`stack/proxmox/README.md`](stack/proxmox/README.md) — Proxmox VE ACL, SDN, storage, pool, and ACME conventions
 - [`toolbox/truenas-docs/README.md`](toolbox/truenas-docs/README.md) — how the TrueNAS doc generator works
 - [`toolbox/pbs-docs/README.md`](toolbox/pbs-docs/README.md) — how the PBS doc generator works
+- [`toolbox/proxmox-docs/README.md`](toolbox/proxmox-docs/README.md) — how the Proxmox VE doc generator works

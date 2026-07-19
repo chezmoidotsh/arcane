@@ -94,9 +94,17 @@ One-time setup before the first `pulumi up` against this stack:
    preferable and this whole requirement would go away; it's in scope because managing the Cloudflare DNS-01 plugin
    without also managing the account it authenticates against doesn't accomplish anything (see `acme.ts`'s comment).
 
-   The read-only `root@pam!pulumi-import` token (`PVEAuditor` role at `/`, already provisioned) still covers most
-   read-only operations and non-ACME resources, but **cannot** be used for `pulumi up`, and cannot import or manage
-   `acme.ts`'s `AcmeAccount` under any circumstances — only a real password session can.
+   > [!CAUTION] The `root@pam!pulumi-import` token on this host is **not** the read-only credential its name suggests:
+   > it holds both `PVEAuditor` and `Administrator` at `/`, i.e. full cluster control including `Permissions.Modify` and
+   > `User.Modify`. The `Administrator` grant was added while trying to get the ACME import to work, before it was
+   > established that no token can reach those endpoints — it served no purpose and was never rolled back. Nothing in
+   > this stack needs that token any more, since every operation authenticates as `root@pam` with a password. Revoke it,
+   > or at minimum drop the `Administrator` ACL:
+   >
+   > ```sh
+   > pveum user token remove root@pam pulumi-import                       # preferred
+   > pveum acl delete / --tokens 'root@pam!pulumi-import' --roles Administrator  # minimum
+   > ```
 
    Set the non-sensitive connection details in Pulumi config (safe to commit — a URL and a boolean, not credentials):
 
@@ -180,13 +188,15 @@ One-time setup before the first `pulumi up` against this stack:
    it to a git-tracked file.
 
 4. **Import existing live resources** with zero recreation (see
-   `docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md` for the general procedure) — every
-   resource declared in `access.ts`, `sdn.ts`, `pools.ts`, and `acme.ts`'s `AcmeAccount` already exists on `pve-01`,
-   created by the manual recipes this stack replaces. The `AcmeAccount` import specifically requires the
-   username/password credential from step 1 — it fails under the read-only `pulumi-import` token the same way
-   `pulumi up` would. `storage.ts` and the Cloudflare token in `acme.ts` are new/rotated, not imported. `firewall.ts`'s
-   `talos` Security Group is new too — no Security Group exists on this host today (see `firewall.ts`'s own comment for
-   the current state this replaces).
+   `docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md` for the general procedure). Everything
+   declared in `access.ts`, `sdn.ts`, `pools.ts` and `storage.ts`, plus `acme.ts`'s `AcmeAccount`, `AcmeDnsPlugin` and
+   `AcmeCertificate`, already exists on `pve-01` — created by the manual recipes this stack replaces — and was imported
+   rather than recreated. The three ACME imports require the username/password credential from step 1: they fail under
+   an API token no matter how it is scoped, the same way `pulumi up` would.
+
+   Only two things are genuinely new: the Cloudflare DNS-01 token in `acme.ts` (a deliberate rotation of the
+   hand-configured one) and `firewall.ts`'s `talos` Security Group — no Security Group was in use on this host before
+   (see `firewall.ts`'s own comment for the state it replaces).
 
 5. **Run `pulumi up`** (see "Running Pulumi commands" below). The Cloudflare DNS-01 token in `acme.ts` rotates on first
    apply — the previously hand-configured long-lived token stops being used by the `cloudflare` ACME plugin at that
