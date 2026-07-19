@@ -25,12 +25,16 @@ export const backupsPruneJob = new pbs.PruneJob(
 );
 
 // -----------------------------------------------------------------------------
-// Verification: weekly, checksum-verifies every backup in the datastore
+// Verification: weekly, checksum-verifies each backup exactly once
 // -----------------------------------------------------------------------------
-// Weekly is a reasonable default given the retention depth above -- deep
-// enough to catch bitrot before the oldest kept snapshot is pruned away.
-// `outdatedAfter: 30` skips backups re-verified within the last 30 days, so a
-// second manual verify run doesn't redundantly re-check everything.
+// `ignoreVerified: true` with no `outdatedAfter` means a verified snapshot is
+// never re-checked. PBS does not cache verification state per chunk across
+// separate job runs -- re-verifying later would mean re-downloading every
+// chunk again from B2, not just what changed. That periodic re-check exists
+// to catch storage-level bitrot, which B2 already guards against at the
+// object level (checksums, replication); it isn't worth its own egress cost
+// here. The one-time first verify (never skipped) still confirms every
+// backup is restorable before it's ever relied on.
 export const backupsVerifyJob = new pbs.VerifyJob(
 	"pbs-verify-backups",
 	{
@@ -38,8 +42,7 @@ export const backupsVerifyJob = new pbs.VerifyJob(
 		store: backupsDatastore.name,
 		schedule: "Sun 03:30",
 		ignoreVerified: true,
-		outdatedAfter: 30,
-		comment: "Weekly checksum verification",
+		comment: "Weekly checksum verification of new backups",
 	},
 	{ parent: backupsDatastore },
 );
