@@ -3,7 +3,7 @@
 > [!NOTE]
 > This document is **auto-generated** from the `chezmoi-sh-infra` Pulumi stack's
 > own live state — do not edit it by hand. Regenerate it with
-> `mise run pbs:docs:generate` (already chained onto `mise run pulumi:apply`).
+> `mise run proxmox-backup-server:docs:generate` (already chained onto `mise run pulumi:apply`).
 
 {{> overview}}
 
@@ -27,7 +27,7 @@
 ```sh
 mise run pulumi:diff           # preview pending changes
 mise run pulumi:apply          # apply changes (regenerates this doc automatically)
-mise run pbs:docs:generate     # regenerate this document only
+mise run proxmox-backup-server:docs:generate     # regenerate this document only
 ```
 
 Backups are **encrypted client-side** by Proxmox VE before they ever reach this server: without the encryption key,

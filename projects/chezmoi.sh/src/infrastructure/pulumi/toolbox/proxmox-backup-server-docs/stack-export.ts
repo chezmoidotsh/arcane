@@ -51,7 +51,7 @@ export function readConfig(cwd: string, key: string): string {
 /**
  * Same as `readConfig`, but returns `undefined` instead of throwing when
  * `key` isn't set -- lets `index.ts` skip cleanly if `pbs:endpoint` is
- * ever unset, instead of crashing `mise run pbs:docs:generate`, which is
+ * ever unset, instead of crashing `mise run proxmox-backup-server:docs:generate`, which is
  * chained onto `pulumi:apply` for the whole shared stack
  * (`observability`/`omni`/`truenas`/`zot-registry`, not just PBS).
  */

@@ -17,7 +17,7 @@ import { readOptionalConfig, readStackExport } from "./stack-export";
 // -----------------------------------------------------------------------------
 // Regenerates `projects/chezmoi.sh/docs/PROXMOX_BACKUP_SERVER.md` from the
 // *deployed* `chezmoi_sh.live` stack state -- run standalone (`mise run
-// pbs:docs:generate`, chained onto `pulumi:apply`), not as part of `pulumi
+// proxmox-backup-server:docs:generate`, chained onto `pulumi:apply`), not as part of `pulumi
 // up`/`preview` itself. See `./extract.ts` for how resource state becomes
 // plain data, and `../../stack/proxmox-backup-server/README.md` for the
 // sections this document doesn't cover (the manual VM/OS install, the
@@ -28,7 +28,7 @@ import { readOptionalConfig, readStackExport } from "./stack-export";
 // -----------------------------------------------------------------------------
 
 async function main(): Promise<void> {
-	// `toolbox/pbs-docs` -> project root (where Pulumi.yaml lives), resolved
+	// `toolbox/proxmox-backup-server-docs` -> project root (where Pulumi.yaml lives), resolved
 	// from this file's own location so it doesn't depend on the caller's cwd.
 	const projectRoot = path.resolve(__dirname, "../..");
 

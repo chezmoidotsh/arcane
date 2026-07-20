@@ -4,8 +4,9 @@
 
 This module auto-generates `projects/chezmoi.sh/docs/PROXMOX-VE.md` — an up-to-date reference for
 `pve-01.pve.chezmoi.sh` derived from the deployed Pulumi stack's own state, not from hand-picked imports. It follows the
-same architecture as [`../truenas-docs/`](../truenas-docs/) and [`../pbs-docs/`](../pbs-docs/), with two additions those
-two don't have: a **derive layer** and a **static host facts file**.
+same architecture as [`../truenas-docs/`](../truenas-docs/) and
+[`../proxmox-backup-server-docs/`](../proxmox-backup-server-docs/), with two additions those two don't have: a **derive
+layer** and a **static host facts file**.
 
 Adding a resource anywhere under `../../stack/proxmox/` is enough — the next regeneration picks it up by Pulumi type
 token, with no import list to maintain here.

@@ -13,9 +13,9 @@ sibling modules. Adding a new resource (a `pbs.PruneJob`, a notification target,
 `../../stack/proxmox-backup-server/` is enough — the next regeneration picks it up automatically, grouped by its Pulumi
 type token, with no import list to maintain here.
 
-Generation runs standalone (`mise run pbs:docs:generate`, chained onto `pulumi:apply`), **not** as part of
-`pulumi up`/`preview` itself — it reads the stack's last-applied state via `pulumi stack export`, so it always reflects
-what's actually deployed, not what's about to change.
+Generation runs standalone (`mise run proxmox-backup-server:docs:generate`, chained onto `pulumi:apply`), **not** as
+part of `pulumi up`/`preview` itself — it reads the stack's last-applied state via `pulumi stack export`, so it always
+reflects what's actually deployed, not what's about to change.
 
 ## How it works
 
@@ -56,7 +56,7 @@ asserts the known webhook host never appears in rendered output, as a regression
 
 | File                                     | Purpose                                                                                                                                                                                        |
 | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `index.ts`                               | Entry point (run via `mise run pbs:docs:generate`). Reads stack state, extracts data, renders, writes the doc.                                                                                 |
+| `index.ts`                               | Entry point (run via `mise run proxmox-backup-server:docs:generate`). Reads stack state, extracts data, renders, writes the doc.                                                               |
 | `stack-export.ts`                        | Thin `pulumi` CLI wrapper: `readStackExport()` (`pulumi stack export`, never `--show-secrets`), `readConfig()`, `readOptionalConfig()`.                                                        |
 | `extract.ts`                             | Pure functions turning the exported resource list into the plain-data shapes the templates expect, grouped by type token. Each extractor covers exactly one resource type.                     |
 | `extract.test.ts`                        | Unit tests for every extractor, against a hand-trimmed fixture shaped like a real `pulumi stack export`.                                                                                       |
@@ -76,7 +76,7 @@ asserts the known webhook host never appears in rendered output, as a regression
 ## Regenerating the doc
 
 ```sh
-mise run pbs:docs:generate
+mise run proxmox-backup-server:docs:generate
 ```
 
 Already chained onto `mise run pulumi:apply` (i.e. `pulumi up`), so a normal apply keeps the doc current automatically.

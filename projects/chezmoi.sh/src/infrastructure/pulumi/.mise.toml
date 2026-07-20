@@ -31,7 +31,7 @@ run = "pulumi preview --refresh --parallel 15"
 [tasks."pulumi:apply"]
 depends_post = [
   "truenas:docs:generate",
-  "pbs:docs:generate",
+  "proxmox-backup-server:docs:generate",
   "proxmox:docs:generate",
 ]
 description = "Apply pending changes to the current Pulumi stack"
@@ -44,10 +44,10 @@ description = "Regenerate projects/chezmoi.sh/docs/TRUENAS.md from the live chez
 dir = "{{ config_root }}"
 run = "pnpm run truenas:docs"
 
-[tasks."pbs:docs:generate"]
+[tasks."proxmox-backup-server:docs:generate"]
 description = "Regenerate projects/chezmoi.sh/docs/PROXMOX_BACKUP_SERVER.md from the live chezmoi.sh Pulumi stack state"
 dir = "{{ config_root }}"
-run = "pnpm run pbs:docs"
+run = "pnpm run proxmox-backup-server:docs"
 
 [tasks."proxmox:docs:generate"]
 description = "Regenerate projects/chezmoi.sh/docs/PROXMOX-VE.md from the live chezmoi.sh Pulumi stack state"

@@ -4,8 +4,8 @@
 	"private": true,
 	"main": "index.ts",
 	"scripts": {
-		"pbs:docs": "ts-node toolbox/pbs-docs/index.ts",
 		"proxmox:docs": "ts-node toolbox/proxmox-docs/index.ts",
+		"proxmox-backup-server:docs": "ts-node toolbox/proxmox-backup-server-docs/index.ts",
 		"test": "mocha",
 		"test:watch": "mocha --watch",
 		"truenas:docs": "ts-node toolbox/truenas-docs/index.ts",

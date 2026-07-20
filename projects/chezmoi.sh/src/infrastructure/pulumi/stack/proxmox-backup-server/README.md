@@ -8,8 +8,8 @@ declarative code. It follows the same config-as-code pattern already established
 dynamically bridged from the [`yavasura/pbs`](https://registry.terraform.io/providers/yavasura/pbs) Terraform provider.
 
 The generated human-facing documentation (including step-by-step Proxmox VE integration instructions) is published at
-[`../../../docs/PROXMOX_BACKUP_SERVER.md`](../../../docs/PROXMOX_BACKUP_SERVER.md) (see `toolbox/pbs-docs`'s own
-README).
+[`../../../docs/PROXMOX_BACKUP_SERVER.md`](../../../docs/PROXMOX_BACKUP_SERVER.md) (see
+`toolbox/proxmox-backup-server-docs`'s own README).
 
 ## Deployment target
 
