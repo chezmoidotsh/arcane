@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { describe, it } from "mocha";
 
 import { resources, SECRET_DNS_TOKEN } from "./fixture";
-import { buildContext } from "./index";
+import { buildContext } from "./generate";
 import { render } from "./render";
 
 const context = buildContext(resources, "https://pve-01.example.test:8006");
