@@ -52,7 +52,7 @@ export function readConfig(cwd: string, key: string): string {
 
 /**
  * Same as `readConfig`, but returns `undefined` instead of throwing when `key`
- * isn't set -- lets `generate.ts` skip cleanly if `proxmox:endpoint` is ever
+ * isn't set -- lets `../index.ts` skip cleanly if `proxmox:endpoint` is ever
  * unset, instead of crashing `mise run pulumi:apply`, whose post-task chain
  * covers the whole shared stack (observability/omni/truenas/zot-registry), not
  * just Proxmox VE.

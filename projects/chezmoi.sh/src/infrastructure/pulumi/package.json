@@ -4,6 +4,7 @@
 	"private": true,
 	"main": "index.ts",
 	"scripts": {
+		"proxmox:docs": "ts-node toolbox/proxmox-docs/index.ts",
 		"test": "mocha",
 		"test:watch": "mocha --watch",
 		"typecheck:test": "tsc --noEmit -p tsconfig.test.json"

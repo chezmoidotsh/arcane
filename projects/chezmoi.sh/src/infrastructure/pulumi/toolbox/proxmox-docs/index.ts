@@ -38,7 +38,7 @@ import { readOptionalConfig, readStackExport } from "./stack-export";
 // the handful of facts the provider cannot know.
 //
 // Prose that explains *one* resource lives in its own subject partial
-// (`partials/<section>.<subject>.hbs`), included from the section
+// (`templates/partials.<section>.<subject>.hbs`), included from the section
 // partial inside that resource's loop iteration -- so it renders under the
 // heading it belongs to and cannot leak onto a sibling declared later.
 // -----------------------------------------------------------------------------
