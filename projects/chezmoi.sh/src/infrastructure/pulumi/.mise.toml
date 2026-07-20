@@ -42,12 +42,12 @@ run = ["pulumi up --refresh --parallel 15"]
 [tasks."truenas:docs:generate"]
 description = "Regenerate projects/chezmoi.sh/docs/TRUENAS.md from the live chezmoi.sh Pulumi stack state"
 dir = "{{ config_root }}"
-run = "pnpm exec ts-node toolbox/truenas-docs/generate.ts"
+run = "pnpm run truenas:docs"
 
 [tasks."pbs:docs:generate"]
 description = "Regenerate projects/chezmoi.sh/docs/PROXMOX_BACKUP_SERVER.md from the live chezmoi.sh Pulumi stack state"
 dir = "{{ config_root }}"
-run = "pnpm exec ts-node toolbox/pbs-docs/generate.ts"
+run = "pnpm run pbs:docs"
 
 [tasks."proxmox:docs:generate"]
 description = "Regenerate projects/chezmoi.sh/docs/PROXMOX-VE.md from the live chezmoi.sh Pulumi stack state"

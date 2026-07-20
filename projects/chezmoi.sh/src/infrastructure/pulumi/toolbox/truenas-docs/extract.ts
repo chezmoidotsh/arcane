@@ -5,7 +5,7 @@ import type { ExportedResource } from "./stack-export";
 // -----------------------------------------------------------------------------
 // Pure functions turning a `pulumi stack export` resource list (+ the
 // `pulumi:pulumi:Stack` pseudo-resource's own outputs) into the plain-data
-// shapes `template.hbs`/`partials/*.hbs` expect. No Pulumi, no network --
+// shapes `templates/root.hbs`/`templates/partials.*.hbs` expect. No Pulumi, no network --
 // everything here is a straight read of already-deployed state, grouped by
 // stable type token instead of by hand-picked imports.
 // -----------------------------------------------------------------------------
