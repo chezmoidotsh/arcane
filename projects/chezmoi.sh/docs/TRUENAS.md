@@ -149,9 +149,8 @@ zp1hs01
 
 ## Applications (Garage & Nginx Proxy Manager)
 
-Two TrueNAS _Apps_ are managed by the stack
-([`stack/truenas/apps.ts`](../src/infrastructure/pulumi/stack/truenas/apps.ts))
-— the app catalog itself, plus:
+The stack ([`stack/truenas/apps.ts`](../src/infrastructure/pulumi/stack/truenas/apps.ts))
+manages the TrueNAS App catalog itself plus two _Apps_:
 
 - **[Garage](https://garagehq.deuxfleurs.fr/)** — the homelab's S3-compatible
   object store (`s3.chezmoi.sh`), backed by the
