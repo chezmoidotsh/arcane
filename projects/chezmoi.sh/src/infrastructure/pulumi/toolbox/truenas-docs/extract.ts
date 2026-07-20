@@ -300,7 +300,14 @@ export function extractSnapshotTasks(
 
 export interface BucketDoc {
 	name: string;
-	retentionDays: number;
+	/**
+	 * Default file-lock retention, in days — absent when the bucket has file
+	 * lock enabled but no default retention configured. For this stack's
+	 * buckets that absence is deliberate (a retention hold would block the
+	 * SYNC jobs from pruning superseded versions — see
+	 * `stack/truenas/cloudsync.ts`), so render it, don't fail on it.
+	 */
+	retentionDays?: number;
 	lifecycleDeleteDays: number;
 }
 
@@ -328,15 +335,16 @@ export function extractBuckets(resources: ExportedResource[]): BucketDoc[] {
 				r,
 				"lifecycleRules",
 			);
-			const retention = must(
+			// Default retention is optional on purpose: the stack only enables
+			// file lock, so whether a default retention exists is B2-side state
+			// that `--refresh` may or may not report. Render its absence rather
+			// than failing the whole doc generation over it.
+			const retention =
 				must(lockConfigs, `${name}: no fileLockConfigurations`)[0]
-					.defaultRetention,
-				`${name}: no defaultRetention`,
-			);
+					.defaultRetention ?? undefined;
 			return {
 				name,
-				retentionDays: must(retention.period, `${name}: no retention period`)
-					.duration,
+				retentionDays: retention?.period?.duration,
 				lifecycleDeleteDays: must(
 					lifecycleRules,
 					`${name}: no lifecycleRules`,

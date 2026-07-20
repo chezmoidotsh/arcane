@@ -52,7 +52,7 @@ run = "pnpm exec ts-node toolbox/pbs-docs/generate.ts"
 [tasks."proxmox:docs:generate"]
 description = "Regenerate projects/chezmoi.sh/docs/PROXMOX-VE.md from the live chezmoi.sh Pulumi stack state"
 dir = "{{ config_root }}"
-run = "pnpm run proxmox:docs"
+run = "pnpm exec ts-node toolbox/proxmox-docs/generate.ts"
 
 # Rotating the Cloudflare DNS-01 token is a two-step operation: taint marks the
 # token for replacement, the apply that follows mints a fresh one and

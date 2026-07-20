@@ -120,8 +120,9 @@ const fixtureContext = {
 				lifecycleDeleteDays: 60,
 			},
 			{
+				// File lock enabled but no default retention configured on the
+				// B2 side — the generator must render the gap, not crash on it.
 				name: "nas-backup-4e6b1351",
-				retentionDays: 7,
 				lifecycleDeleteDays: 60,
 			},
 		],
@@ -159,21 +160,33 @@ describe("TRUENAS.md template", () => {
 		const md = render(fixtureContext);
 		expect(md).to.include('<h1 align="center">');
 		expect(md).to.include("TrueNAS SCALE - Home NAS");
-		expect(md).to.include("## Key terms");
+		expect(md).to.include("## Quick reference");
 		expect(md).to.include("## How it's managed");
 		expect(md).to.include("## Network & services");
 		expect(md).to.include("## Pools, disks & datasets");
+		expect(md).to.include("## Applications (Garage & Nginx Proxy Manager)");
 		expect(md).to.include("## Shares");
 		expect(md).to.include("## Permissions");
 		expect(md).to.include("## Backups");
 		expect(md).to.include("## Security notes");
+		expect(md).to.include("## Procedures");
+		expect(md).to.include("### Key terms");
 	});
 
-	it("explains the key ZFS terms before diving into specifics", () => {
+	it("explains the key ZFS terms in the appendix, after the procedures", () => {
 		const md = render(fixtureContext);
 		expect(md).to.include("**Pool** — a group of physical disks");
 		expect(md).to.include("**Snapshot** — an instant, read-only");
 		expect(md).to.include("**Scrub** — reads every block in a pool");
+		expect(md.indexOf("## Procedures")).to.be.lessThan(
+			md.indexOf("### Key terms"),
+		);
+	});
+
+	it("documents Garage as the Pulumi state dependency", () => {
+		const md = render(fixtureContext);
+		expect(md).to.include("Pulumi state of every stack in this repository");
+		expect(md).to.include("fr.deuxfleurs.garage");
 	});
 
 	it("renders the overview before How it's managed", () => {
@@ -281,9 +294,21 @@ describe("TRUENAS.md template", () => {
 		expect(md).to.include("### Layer 3: Site-loss protection (remote sync)");
 	});
 
+	it("renders each bucket's file-lock retention, including its absence", () => {
+		const md = render(fixtureContext);
+		expect(md).to.include(
+			"`nas-backup-50a30f2b` -- 7-day file lock retention, 60-day",
+		);
+		expect(md).to.include(
+			"`nas-backup-4e6b1351` -- file lock **deliberately neutralized**",
+		);
+	});
+
 	it("calls out pools that aren't included in the off-site sync", () => {
 		const md = render(fixtureContext);
-		expect(md).to.include("zp1cs01 isn't included in this off-site sync.");
+		expect(md).to.include(
+			"zp1cs01 isn't included in this off-site sync — a\ndeliberate trade-off, not an oversight",
+		);
 	});
 
 	it("keeps a single, unified note about share IP restrictions", () => {

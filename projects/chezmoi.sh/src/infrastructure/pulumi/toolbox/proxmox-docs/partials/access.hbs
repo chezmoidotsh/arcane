@@ -48,3 +48,14 @@ from stack state either.
 {{/each}}
 
 </details>
+{{#each acls}}
+{{#if (eq path "/nodes/pve")}}
+
+> [!NOTE]
+> The `{{roleId}}` grant on `/nodes/pve` (not `/nodes/pve-01`) is a known quirk, not a choice: the live ACL predates
+> this stack and was imported as-is for zero recreation. It is harmless while there is a single node — `pve` and
+> `pve-01` cover the same host — but must be corrected to `/nodes/pve-01` the day a second node exists. See the
+> comment on `kubernetesCcmNodeAcl` in
+> [`stack/proxmox/access.ts`](../src/infrastructure/pulumi/stack/proxmox/access.ts).
+{{/if}}
+{{/each}}

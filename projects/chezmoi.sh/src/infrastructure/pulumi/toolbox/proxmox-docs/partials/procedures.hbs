@@ -87,17 +87,26 @@ pct restore <vmid> <volume>  # LXC
 ```
 
 Restoring requires the datastore's client-side encryption key to be configured on this host. It already is; if the
-host was rebuilt, restore that key before anything else or the backups are unreadable.
+host was rebuilt, restore that key before anything else or the backups are unreadable. The keyfile and its paperkey
+are stored in OpenBao (`vault.chezmoi.sh`) — see
+[`stack/proxmox-backup-server/README.md`](../src/infrastructure/pulumi/stack/proxmox-backup-server/README.md),
+"Bootstrapping", step 6.
 
 ### Rebuild the host
 
 1. Install Proxmox VE; restore the management address and both bridges per
    [`vlans.md`](../../../docs/network/vlans.md).
-2. Restore the PBS datastore encryption key — without it, every backup is unreadable.
-3. Re-register the PBS storage, then restore the platform LXCs first: Omni is what rebuilds the Talos clusters.
-4. Re-apply this stack (`mise run pulumi:apply`) to recreate roles, identities, ACLs, pools, SDN, and the firewall
+2. Restore the PBS datastore encryption key — without it, every backup is unreadable. The keyfile and paperkey are
+   stored in OpenBao (`vault.chezmoi.sh`) — but OpenBao itself runs on a cluster hosted by this very machine, so with
+   the whole host gone, only an **offline** copy of the paperkey can start the recovery. Make sure one exists *before*
+   this procedure is ever needed.
+3. Re-register the PBS storage, then restore the NAS VM (`nas.chezmoi.sh`) first: Garage on the NAS holds this stack's
+   own Pulumi state, so no `pulumi` command can run until it is back (see
+   [`INF-20260705-00.pulumi-state-and-import.md`](../../../docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md)).
+4. Restore the platform LXCs: Omni is what rebuilds the Talos clusters.
+5. Re-apply this stack (`mise run pulumi:apply`) to recreate roles, identities, ACLs, pools, SDN, and the firewall
    baseline.
-5. Re-create the PCI/USB mappings by hand — IOMMU addresses will have changed.
+6. Re-create the PCI/USB mappings by hand — IOMMU addresses will have changed.
 
 ### Import an existing object
 

@@ -9,6 +9,6 @@
 ### Verify jobs
 
 {{#each verifyJobs}}
-- `{{id}}` on `{{store}}`{{#if disabled}} _(disabled)_{{/if}}, schedule `{{schedule}}`{{#if ignoreVerified}}, skips backups re-verified within the last {{outdatedAfter}} days{{/if}}{{#if comment}} — {{{comment}}}{{/if}}
+- `{{id}}` on `{{store}}`{{#if disabled}} _(disabled)_{{/if}}, schedule `{{schedule}}`{{#if ignoreVerified}}, skips backups already verified{{#if outdatedAfter}} within the last {{outdatedAfter}} days{{/if}}{{/if}}{{#if comment}} — {{{comment}}}{{/if}}
 {{/each}}
 
