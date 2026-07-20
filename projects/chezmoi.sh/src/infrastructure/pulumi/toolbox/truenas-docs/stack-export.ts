@@ -37,7 +37,7 @@ export function readStackExport(cwd: string): StackExport {
  * there's no separate "give me the secret" flag to opt into (confirmed:
  * this CLI version doesn't even have a `--show-secrets` flag on `get`).
  * That's fine here: the only secret this package ever reads is
- * `truenas:apiKey`, needed for `generate.ts`'s live topology/dataset-tree
+ * `truenas:apiKey`, needed for `index.ts`'s live topology/dataset-tree
  * JSON-RPC fetch -- it's never used for the resource-state export above,
  * which stays safe by construction via `readStackExport()` never requesting
  * secrets in the first place.

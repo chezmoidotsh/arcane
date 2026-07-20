@@ -3,7 +3,7 @@
 > [!NOTE]
 > This document is **auto-generated** from the `chezmoi-sh-infra` Pulumi stack's
 > own live state — do not edit it by hand. Regenerate it with
-> `mise run pbs:docs:generate` (already chained onto `mise run pulumi:apply`).
+> `mise run proxmox-backup-server:docs:generate` (already chained onto `mise run pulumi:apply`).
 
 `pbs.pve.chezmoi.sh` is the household's Proxmox Backup Server, protecting Proxmox VE-hosted VMs and LXC containers
 with deduplicated, incremental, checksum-verified backups.
@@ -32,7 +32,7 @@ Proxmox Backup Server is not officially supported inside an LXC container — re
 ```sh
 mise run pulumi:diff           # preview pending changes
 mise run pulumi:apply          # apply changes (regenerates this doc automatically)
-mise run pbs:docs:generate     # regenerate this document only
+mise run proxmox-backup-server:docs:generate     # regenerate this document only
 ```
 
 Backups are **encrypted client-side** by Proxmox VE before they ever reach this server: without the encryption key,
@@ -74,7 +74,7 @@ Primary S3-backed datastore (Backblaze B2)
 - `slack-notifications` (Webhook) — Slack #notifications
 
 Target endpoints (URLs, server addresses, …) are deliberately not shown here even though the underlying provider does
-not always mark them as secret outputs — see `toolbox/pbs-docs/extract.ts`, `extractNotificationTargets`.
+not always mark them as secret outputs — see `toolbox/proxmox-backup-server-docs/extract.ts`, `extractNotificationTargets`.
 
 ### Routing
 

@@ -31,7 +31,7 @@ run = "pulumi preview --refresh --parallel 15"
 [tasks."pulumi:apply"]
 depends_post = [
   "truenas:docs:generate",
-  "pbs:docs:generate",
+  "proxmox-backup-server:docs:generate",
   "proxmox:docs:generate",
 ]
 description = "Apply pending changes to the current Pulumi stack"
@@ -42,17 +42,17 @@ run = ["pulumi up --refresh --parallel 15"]
 [tasks."truenas:docs:generate"]
 description = "Regenerate projects/chezmoi.sh/docs/TRUENAS.md from the live chezmoi.sh Pulumi stack state"
 dir = "{{ config_root }}"
-run = "pnpm exec ts-node toolbox/truenas-docs/generate.ts"
+run = "pnpm run truenas:docs"
 
-[tasks."pbs:docs:generate"]
+[tasks."proxmox-backup-server:docs:generate"]
 description = "Regenerate projects/chezmoi.sh/docs/PROXMOX_BACKUP_SERVER.md from the live chezmoi.sh Pulumi stack state"
 dir = "{{ config_root }}"
-run = "pnpm exec ts-node toolbox/pbs-docs/generate.ts"
+run = "pnpm run proxmox-backup-server:docs"
 
 [tasks."proxmox:docs:generate"]
 description = "Regenerate projects/chezmoi.sh/docs/PROXMOX-VE.md from the live chezmoi.sh Pulumi stack state"
 dir = "{{ config_root }}"
-run = "pnpm exec ts-node toolbox/proxmox-docs/generate.ts"
+run = "pnpm run proxmox:docs"
 
 # Rotating the Cloudflare DNS-01 token is a two-step operation: taint marks the
 # token for replacement, the apply that follows mints a fresh one and

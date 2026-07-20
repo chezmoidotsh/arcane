@@ -88,7 +88,7 @@ export const pveBackupTokenAcl = new pbs.Acl(
 // runs server-side and never touches this token. Giving `Datastore.Prune` to
 // the identity `vzdump` uses on every automated run would let a compromised
 // Proxmox VE host delete existing offsite backups -- exactly what backups are
-// meant to survive. See ../../../../../toolbox/pbs-docs/partials/pve-integration.hbs
+// meant to survive. See ../../../../../toolbox/proxmox-backup-server-docs/templates/partials.pve-integration.hbs
 // for the matching operator-facing note not to set a "Prune Backups" policy on
 // the Proxmox VE storage entry.
 export const pveBackupReaderAcl = new pbs.Acl(

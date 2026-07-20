@@ -2,7 +2,7 @@ import type { ExportedResource } from "./stack-export";
 
 // -----------------------------------------------------------------------------
 // Pure functions turning a `pulumi stack export` resource list into the plain
-// -data shapes `template.hbs`/`partials/*.hbs` expect. No Pulumi, no network
+// -data shapes `templates/root.hbs`/`templates/partials.*.hbs` expect. No Pulumi, no network
 // -- everything here is a straight read of already-deployed state, grouped by
 // stable type token instead of by hand-picked imports. Mirrors
 // `../truenas-docs/extract.ts`; see that file for the origin of this pattern.
