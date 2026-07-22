@@ -23,10 +23,11 @@ by either a human operator or an AI agent.
 
 ### Omni
 
-- **[OMNI-20260629-00: Omni cluster creation](./omni/OMNI-20260629-00.omni-cluster-creation.md)**: Creates a new Talos
-  cluster managed by Omni (Sidero Omni) on Proxmox VE. Covers cluster identity and pod CIDR allocation (ADR-014),
-  generating the cluster template from the reference base, SHA reachability checks, machine-class application, template
-  validation and application, convergence monitoring, and kubeconfig retrieval.
+- **[OMNI-20260721-00: Talos cluster bring-up on Proxmox](./omni/OMNI-20260721-00.omni-cluster-creation.md)**: Full
+  cluster bring-up, from Omni provisioning to GitOps registration. Covers cluster identity and pod CIDR allocation
+  (ADR-014), cluster template generation, SHA reachability checks, machine-class application, template validation and
+  application, convergence monitoring, kubeconfig/CNI verification, Proxmox CCM/CSI credential bootstrap, CSI/CCM
+  deployment via `dist/`, ArgoCD hub/spoke registration, and a CNI/CSI/CCM validation checklist.
 - **[OMNI-20260629-03: SHA pinning — repinning Omni bootstrap manifests after a squash-merge](./omni/OMNI-20260629-03.sha-repin.md)**:
   Repins the Talos bootstrap manifest SHA references in Omni cluster templates after a pull request is squash-merged to
   `main`. Covers why SHA pinning exists, the squash-merge 404 problem, reachability verification, template updates,
