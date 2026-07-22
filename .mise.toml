@@ -182,6 +182,26 @@ description = "Log in to Vault with the CLI using administrative privileges"
 run = "bao login -method=oidc -path=pocket-id role=admin"
 
 # -----------------------------------------------------------------------------
+# Omni Machine Class Management
+# -----------------------------------------------------------------------------
+# Declarative Talos machine classes applied to the Omni instance at
+# omni.chezmoi.sh via omnictl. Definitions live in catalog/omni/machineclasses/
+# (see that directory's README for the catalog) — shared across every cluster,
+# not project-specific, so these tasks live at the repo root.
+
+[tasks."omni:machineclass:diff"]
+description = "Preview machine class changes against Omni (dry-run, READ-ONLY)"
+run = "omnictl apply --dry-run --file {{ config_root }}/catalog/omni/machineclasses"
+
+[tasks."omni:machineclass:apply"]
+description = "Apply all Talos machine classes to the Omni instance"
+run = "omnictl apply --file {{ config_root }}/catalog/omni/machineclasses"
+
+[tasks."omni:machineclass:list"]
+description = "List machine classes currently registered in Omni (READ-ONLY)"
+run = "omnictl get machineclasses"
+
+# -----------------------------------------------------------------------------
 # Talos Context Management Tasks
 # -----------------------------------------------------------------------------
 # Tasks for managing Talos cluster contexts using OpenBao secure storage.

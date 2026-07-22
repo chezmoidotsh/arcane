@@ -59,25 +59,6 @@ dir = "{{ config_root }}/src/infrastructure/ansible"
 run = "ansible-playbook -i inventory/production.yaml truenas-audit.yaml"
 
 # -----------------------------------------------------------------------------
-# Omni Machine Class Management
-# -----------------------------------------------------------------------------
-# Declarative Talos machine classes applied to the Omni instance at
-# omni.chezmoi.sh via omnictl. Definitions live in
-# src/infrastructure/omni/machineclasses/ (see that README for the catalog).
-
-[tasks."omni:machineclass:diff"]
-description = "Preview machine class changes against Omni (dry-run, READ-ONLY)"
-run = "omnictl apply --dry-run --file {{ config_root }}/src/infrastructure/omni/machineclasses"
-
-[tasks."omni:machineclass:apply"]
-description = "Apply all Talos machine classes to the Omni instance"
-run = "omnictl apply --file {{ config_root }}/src/infrastructure/omni/machineclasses"
-
-[tasks."omni:machineclass:list"]
-description = "List machine classes currently registered in Omni (READ-ONLY)"
-run = "omnictl get machineclasses"
-
-# -----------------------------------------------------------------------------
 # Cloudflare Token Retrieval — Pulumi to LXC SOPS secrets
 # -----------------------------------------------------------------------------
 # Cloudflare DNS-01 tokens for the LXC appliances (observability, omni,

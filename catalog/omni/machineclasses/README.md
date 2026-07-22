@@ -5,14 +5,13 @@ via `omnictl`. Each class is an auto-provisioning template the [Proxmox infra pr
 when Omni scales a cluster.
 
 The provider and Omni instance themselves are deployed as Proxmox LXCs — see
-[`../proxmox/lxc/omni/`](../proxmox/lxc/omni/) (Omni + Dex + Caddy) and
-[`../proxmox/lxc/omni-infra-provider-proxmox/`][provider] (the provider that creates the VMs). This directory is only
-the **fleet sizing catalog**.
+[`omni/`](../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni/) (Omni + Dex + Caddy) and
+[`omni-infra-provider-proxmox/`][provider] (the provider that creates the VMs). This directory is only the **fleet
+sizing catalog**.
 
 > **Cluster templates** — the reusable Omni cluster-template _base_ lives at
-> [`catalog/omni/clustertemplates/base.yaml`](../../../../../catalog/omni/clustertemplates/base.yaml) (repo root),
-> documented in [`catalog/omni/README.md`](../../../../../catalog/omni/README.md). Machine classes are referenced by
-> name from those templates.
+> [`catalog/omni/clustertemplates/base.yaml`](../clustertemplates/base.yaml), documented in
+> [`catalog/omni/README.md`](../README.md). Machine classes are referenced by name from those templates.
 
 ## Table of contents
 
@@ -97,7 +96,8 @@ field lives in the provider README's [field reference][field-ref] — the highli
 
 ## Applying changes
 
-`omnictl` reads `OMNICONFIG` (set by `.mise.toml` to `.mise/omni/omniconfig.yaml`). From `projects/chezmoi.sh/`:
+`omnictl` reads `OMNICONFIG` (set by the root `.mise.toml` to `.mise/omni/omniconfig.yaml`). These tasks are defined at
+the repo root, so they run from anywhere in the repo:
 
 ```sh
 mise run omni:machineclass:diff    # dry-run — preview, changes nothing
@@ -106,10 +106,10 @@ mise run omni:machineclass:list    # show what Omni currently has
 ```
 
 `omnictl apply` is idempotent and recursive over the directory, so adding a file and re-running `apply` is the whole
-workflow. Equivalent raw command:
+workflow. Equivalent raw command (from the repo root):
 
 ```sh
-omnictl apply --file src/infrastructure/omni/machineclasses
+omnictl apply --file catalog/omni/machineclasses
 ```
 
 ## Using a class in a cluster
@@ -132,5 +132,6 @@ dedicated class instead. `additional_nics` is the exception: every base class se
 `talosnet` (dual-NIC V2 layout), so a per-cluster NIC would still need a dedicated class.
 
 [omni-mc]: https://docs.siderolabs.com/omni/how-to-guides/create-a-machine-class/
-[provider]: ../proxmox/lxc/omni-infra-provider-proxmox/
-[field-ref]: ../proxmox/lxc/omni-infra-provider-proxmox/README.md#field-reference
+[provider]: ../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/
+[field-ref]:
+  ../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/README.md#field-reference

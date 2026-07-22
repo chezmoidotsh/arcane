@@ -180,7 +180,7 @@ module.exports = {
 		"body-min-length": [2, "always", 0],
 		"body-case": [2, "always", "sentence-case"],
 		"footer-leading-blank": [2, "always"],
-		"footer-empty": [2, "always"],
+		"footer-empty": [0, "always"],
 		"footer-max-length": [2, "always", "Infinity"],
 		"footer-max-line-length": [2, "always", 80],
 		"footer-min-length": [2, "always", 0],
