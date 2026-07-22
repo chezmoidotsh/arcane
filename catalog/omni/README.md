@@ -1,16 +1,19 @@
-# `omni` — shared Omni cluster-template base
+# `omni` — shared Omni cluster-template base and machine-class catalog
 
-This catalog holds the **reusable Omni cluster-template base** for Talos-on-Proxmox-VE. The machine-class catalog is
-project-specific — it lives in
-[`../../projects/chezmoi.sh/src/infrastructure/omni/machineclasses/`](../../projects/chezmoi.sh/src/infrastructure/omni/machineclasses/)
-because it is tightly coupled to the Proxmox instance that `chezmoi.sh` manages.
+This catalog holds the **reusable Omni cluster-template base** and the **machine-class catalog** for Talos-on-Proxmox-VE
+— both are shared, reusable definitions, not tied to any one cluster project.
 
 ## Layout
 
 ```text
 catalog/omni/
-└── clustertemplates/
-    └── base.yaml              # reference base — NOT applied directly
+├── clustertemplates/
+│   └── base.yaml              # reference base — NOT applied directly
+└── machineclasses/            # VM sizing catalog — see machineclasses/README.md
+    ├── c1.small.yaml
+    ├── w1.medium.yaml
+    ├── w1.large.yaml
+    └── w1.xlarge.yaml
 ```
 
 ## Cluster templates
@@ -58,18 +61,17 @@ mise run omni:clustertemplate:validate
 omnictl apply -f <path/to/template>.clustertemplate.yaml
 ```
 
-`apply` requires `OMNICONFIG` (set by `projects/chezmoi.sh/.mise.toml`) and an Omni login, so run it from a context
-where both are configured — e.g. the `projects/chezmoi.sh/` project after `mise run bao:login:admin`. There is no
-`omni:clustertemplate:apply` task by design: apply is an online, authenticated, state-changing operation and does not
-belong in a per-cluster offline task.
+`apply` requires `OMNICONFIG` (set by the root `.mise.toml`) and an Omni login
+(`omnictl config new`/`omnictl config add`). There is no `omni:clustertemplate:apply` task by design: apply is an
+online, authenticated, state-changing operation and does not belong in a per-cluster offline task.
 
 ## Cross-references
 
 - [ADR-014 — Network topology](../../docs/decisions/014-network-topology.md) — pod/service CIDRs and the kube-dns IP
   decision.
 - [VLAN / SDN VNet layout](../../docs/network/vlans.md) — VLAN 5 and the `vnet-talos` SDN.
-- [Machine-class catalog README](../../projects/chezmoi.sh/src/infrastructure/omni/README.md) — detailed sizing, naming,
-  and provider tuning (includes the YAML).
+- [Machine-class catalog README](machineclasses/README.md) — detailed sizing, naming, and provider tuning (includes the
+  YAML).
 - [Proxmox infra provider README](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/README.md)
   — the provider that turns a machine class into a Talos VM.
 

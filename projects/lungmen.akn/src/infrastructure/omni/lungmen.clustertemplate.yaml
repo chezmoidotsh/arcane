@@ -25,7 +25,7 @@
 #   catalog/omni/clustertemplates/base.yaml              (reference base)
 #   ADR-014  docs/decisions/014-network-topology.md      (CIDR / DNS decisions)
 #   docs/network/vlans.md                                (VLAN 5 / SDN VNet layout)
-#   projects/chezmoi.sh/src/infrastructure/omni/machineclasses/  (machine class defs)
+#   catalog/omni/machineclasses/                          (machine class defs)
 # =============================================================================
 ---
 kind: Cluster
@@ -108,13 +108,13 @@ patches:
 ---
 kind: ControlPlane
 machineClass:
-  name: c1.small # V2 dual-NIC (projects/chezmoi.sh/src/infrastructure/omni/machineclasses/c1.small.yaml)
+  name: c1.small # V2 dual-NIC (catalog/omni/machineclasses/c1.small.yaml)
   size: 1 # single control-plane; c1.small is sized for etcd + API server only
 ---
 kind: Workers
 name: workers
 machineClass:
-  name: w1.large # V2 dual-NIC (projects/chezmoi.sh/src/infrastructure/omni/machineclasses/w1.large.yaml)
+  name: w1.large # V2 dual-NIC (catalog/omni/machineclasses/w1.large.yaml)
   size: 2 # lungmen topology: 2 workers (matches base default)
 updateStrategy:
   rolling:

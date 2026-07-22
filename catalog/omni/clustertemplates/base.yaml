@@ -64,7 +64,7 @@
 # Cross-references:
 #   ADR-014                    docs/decisions/014-network-topology.md
 #   VLAN / SDN layout          docs/network/vlans.md
-#   Machine class definitions  projects/chezmoi.sh/src/infrastructure/omni/machineclasses/
+#   Machine class definitions  catalog/omni/machineclasses/
 # =============================================================================
 ---
 kind: Cluster
@@ -159,13 +159,13 @@ patches:
 ---
 kind: ControlPlane
 machineClass:
-  name: c1.small # V2 dual-NIC (projects/chezmoi.sh/src/infrastructure/omni/machineclasses/c1.small.yaml)
+  name: c1.small # V2 dual-NIC (catalog/omni/machineclasses/c1.small.yaml)
   size: 1 # single control-plane; c1.small is sized for etcd + API server only
 ---
 kind: Workers
 name: workers
 machineClass:
-  name: w1.large # V2 dual-NIC (projects/chezmoi.sh/src/infrastructure/omni/machineclasses/w1.large.yaml)
+  name: w1.large # V2 dual-NIC (catalog/omni/machineclasses/w1.large.yaml)
   size: 2 # override per cluster; "unlimited" is not a valid value
 updateStrategy:
   rolling:
