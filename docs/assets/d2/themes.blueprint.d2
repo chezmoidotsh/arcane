@@ -1,0 +1,102 @@
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                          "Blueprint" D2 Theme                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   A custom color theme mimicking architectural blueprint paper: one flat   │
+# │   deep-blue background everywhere (no shading-by-nesting-depth — that      │
+# │   read as muddy/ugly, so every fill token is pinned to the exact same      │
+# │   color), white lines/text. Line/stroke color is NOT handled here — that's │
+# │   styles.blueprint.d2 (class overrides), which imports this file for the   │
+# │   vars.colors palette. This file only owns the fill palette, via d2        │
+# │   theme-overrides (ColorPalette: N1-N7 neutrals, B1-B6 container fills,    │
+# │   AA/AB accents) since no built-in --theme matches this.                   │
+# │                                                                            │
+# │   Forces sketch mode OFF on purpose: blueprints are precise technical      │
+# │   drawings, not hand-sketched — straight lines only.                       │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+#
+# ──────────────────────────────────────────────────────────────────────────────
+# Usage Instructions
+#
+# Don't import this file directly — styles.blueprint.d2 imports it for its
+# vars.colors palette, so importing that file alone is enough:
+#
+#   ...@"../../docs/assets/d2/styles.blueprint.d2"
+#
+# Logos/icons are not adjusted here — swap to *.blueprint.svg icon variants
+# separately if the default (dark-on-transparent) icons don't read well
+# against this background.
+
+vars: {
+  colors: {
+    background: "#0B3C6E"
+    linework: "#FFFFFF"
+    labels: "#FFFFFF"
+    # Muted ochre/amber — the traditional color for hand-annotated revision
+    # marks on blueprint paper (less jarring than a pure "redline" red, reads
+    # as "worth watching" rather than "alarm"). Used sparingly, only for
+    # internet-facing exposure, so it stays meaningful. Must differ from
+    # `background` or accented strokes vanish.
+    accent: "#C68A3D"
+  }
+  d2-config: {
+    sketch: false
+
+    theme-overrides: {
+      # Neutrals: N1 = primary text/lines (white). N2-N6 also white — this
+      # diagram has no secondary/muted text tier, and a gray-blue ramp here
+      # would read as dim text on top of a flat background, not a deliberate
+      # shade. N7 = the one true background color.
+      N1: ${colors.linework}
+      N2: ${colors.linework}
+      N3: ${colors.linework}
+      N4: ${colors.linework}
+      N5: ${colors.linework}
+      N6: ${colors.linework}
+      N7: ${colors.background}
+
+      # Container fills (B1-B6, normally progressively lighter with nesting
+      # depth) pinned to the exact same value as N7 — every box, however
+      # deeply nested, is the same flat blue. Nesting is communicated by the
+      # white outlines (styles.blueprint.d2), not by fill-shade variation.
+      B1: ${colors.background}
+      B2: ${colors.background}
+      B3: ${colors.background}
+      B4: ${colors.background}
+      B5: ${colors.background}
+      B6: ${colors.background}
+
+      # Accents (datastores, etc.) — same flat blue, same reasoning.
+      AA2: ${colors.background}
+      AA4: ${colors.background}
+      AA5: ${colors.background}
+      AB4: ${colors.background}
+      AB5: ${colors.background}
+    }
+
+    # Same palette in dark mode — this theme IS the dark mode, don't let the
+    # viewer's OS setting wash it back out to a light default.
+    dark-theme-overrides: {
+      N1: ${colors.linework}
+      N2: ${colors.linework}
+      N3: ${colors.linework}
+      N4: ${colors.linework}
+      N5: ${colors.linework}
+      N6: ${colors.linework}
+      N7: ${colors.background}
+
+      B1: ${colors.background}
+      B2: ${colors.background}
+      B3: ${colors.background}
+      B4: ${colors.background}
+      B5: ${colors.background}
+      B6: ${colors.background}
+
+      AA2: ${colors.background}
+      AA4: ${colors.background}
+      AA5: ${colors.background}
+      AB4: ${colors.background}
+      AB5: ${colors.background}
+    }
+  }
+}

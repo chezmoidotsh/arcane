@@ -1,0 +1,367 @@
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                        Architecture Diagram Styles                         │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   This file contains common styles and classes used across all             │
+# │   architecture diagrams in the project. It defines the visual appearance   │
+# │   of different components and their relationships in D2 diagrams.          │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+#
+# ──────────────────────────────────────────────────────────────────────────────
+# Usage Instructions
+#
+# 1. Import this file in your architecture diagram (it pulls in
+#    themes.blueprint.d2 itself for the color vars, so nothing else to import):
+#    ...@"../../docs/assets/d2/styles.blueprint.d2"
+#
+# 2. Apply component classes:
+#    my-component: {
+#      class: [application]          # Regular applications
+#      class: [application-system]   # System-level applications
+#      class: [namespace]            # Grouping components
+#      class: [network]              # Network elements
+#      class: [hardware]             # Physical hardware
+#    }
+#
+# 3. Apply connection classes:
+#    component1 -> component2: {class: [connect-to-internet]}
+#
+# ──────────────────────────────────────────────────────────────────────────────
+# Available Component Styles
+#
+# - application-datastore: Datastore applications (e.g., PostgreSQL, Redis)
+# - application-system: System-level applications (e.g., Traefik, Cert-Manager).
+#   Slightly heavier border (2) + dashed + smaller text (font-size 14) than
+#   application — reads as secondary/background infrastructure rather than a
+#   primary service. No opacity change: opacity is reserved for `undeployed`
+#   (not-yet-active components) only, never used as a generic dimming/weight
+#   trick elsewhere.
+# - application: Regular applications (e.g., Jellyfin, n8n, Paperless). Light
+#   border (1), solid — the primary/foreground services, kept plain and simple.
+# - hardware: Physical hardware components (e.g., UDM-Pro). Icon only, no
+#   border/shape — same reasoning as platform below, a badge looked worse
+#   than the bare logo.
+# - namespace: Grouping container for related components
+# - network: Network elements (e.g., internet, localnet, tailnet)
+# - platform: 3rd-party external services (e.g., Cloudflare, GitHub, Mailjet).
+#   Icon only, no border/shape — tried a circle then a rounded-rectangle
+#   badge, both looked worse than just the bare logo.
+# - project: Top-level project container (e.g., rhodes.akn)
+# - tailscaled: Tailscale proxy nodes
+# - undeployed: Components not yet deployed (reduced opacity)
+#
+# ──────────────────────────────────────────────────────────────────────────────
+# Available Connection Styles
+#
+# Exactly three independent signals, each spent on one meaning only — see the
+# "Connection Styles" comment further down (next to the classes) for the full
+# rationale:
+#
+#   - dash  → connect-management ONLY. Every other class is solid.
+#   - color → local (colors.linework, white) vs. internet (colors.accent,
+#     muted ochre). Nothing else changes color.
+#   - width → secondary (2, an individual app's own flow) vs. primary (10, an
+#     aggregation point many flows funnel through before fan-out).
+#
+# - connect-app / connect-local: local, secondary, solid. THE DEFAULT — apply
+#   connect-app to any connection that doesn't fit a more specific class,
+#   instead of leaving it classless (classless connections have no explicit
+#   stroke and don't render visibly against a flat background — see
+#   themes.blueprint.d2).
+# - connect-management: local, secondary, dashed. The ONLY dashed class —
+#   also gets an unfilled circle arrowhead + "Manages" label so "what
+#   controls this" reads at a glance.
+# - connect-management-to-internet: same as connect-management, but internet
+#   colored — for management/control flows whose target is on the internet
+#   (e.g. cert-manager driving Let's Encrypt/Cloudflare's APIs). Proof that
+#   dash and color are genuinely independent signals.
+# - connect-vpn / connect-vpn-backbone: local (VPN membership is still a
+#   trusted boundary, not internet exposure). connect-vpn: secondary (a
+#   single app's tunneled link). connect-vpn-backbone: primary (the VPN's
+#   own aggregate backbone).
+# - secured-connect-from-internet / connect-from-internet / connect-to-internet:
+#   internet, secondary — a single app's own internet-facing connection,
+#   whichever direction/mediation.
+# - connect-internet-backbone: internet, primary — the aggregation points
+#   where ALL external traffic funnels through before fan-out (e.g. the
+#   Cloudflare Tunnel entrypoint, or the gateway receiving the tunnel's
+#   traffic), as opposed to a single app's own internet call.
+# - connect-network: local, primary — the non-internet equivalent, a bulk
+#   aggregation point (e.g. gateway <- whole LAN).
+
+...@"themes.blueprint.d2"
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                            Component Classes                               │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   Visual style definitions for different types of components in the        │
+# │   architecture diagrams. Each class defines shape, colors, and other       │
+# │   visual properties.                                                       │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+*.fill-pattern: none
+
+classes: {
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Application Components
+
+  application: {
+    shape: rectangle
+    style: {
+      multiple: true
+      shadow: false
+      stroke-width: 1
+      stroke: ${colors.linework}
+    }
+  }
+
+  application-system: {
+    shape: rectangle
+    style: {
+      font-size: 14
+      multiple: true
+      stroke-dash: 3
+      stroke-width: 2
+      stroke: ${colors.linework}
+    }
+  }
+
+  application-datastore: {
+    shape: cylinder
+    style: {
+      shadow: false
+      stroke: ${colors.linework}
+    }
+    height: 160
+    width: 180
+  }
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Network & Infrastructure Components
+
+  network: {
+    shape: rectangle
+    style: {
+      bold: true
+      border-radius: 12
+      font-size: 24
+      stroke-width: 3
+      stroke: ${colors.linework}
+      text-transform: uppercase
+    }
+  }
+
+  hardware: {
+    shape: none
+    style: {
+      bold: true
+      stroke-width: 3
+      stroke: ${colors.linework}
+    }
+  }
+
+  platform: {
+    shape: none
+    style: {
+      bold: true
+      stroke-width: 3
+      stroke: ${colors.linework}
+    }
+  }
+
+  tailscaled: {
+    shape: image
+    icon: ../icons/platform/tailscale.svg
+    width: 48
+    height: 48
+  }
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Organizational & State Components
+
+  project: {
+    shape: rectangle
+    style: {
+      double-border: true
+      stroke-width: 3
+      stroke: ${colors.linework}
+      text-transform: uppercase
+    }
+  }
+
+  namespace: {
+    shape: rectangle
+    style: {
+      #stroke-dash: 5
+      stroke: ${colors.linework}
+      text-transform: uppercase
+    }
+  }
+
+  undeployed: {
+    style: {
+      opacity: 0.4
+    }
+  }
+
+
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Connection Styles — three signals, each spent on exactly one meaning:
+  #
+  #   - dash:  reserved EXCLUSIVELY for connect-management. Every other class
+  #     is solid. Dash means "control/config flow", full stop — it's never
+  #     used to hint at risk or volume, so seeing a dash always answers "what
+  #     manages this" without a second read.
+  #   - color: local vs. internet. colors.linework (white) = stays inside the
+  #     homelab. colors.accent (muted ochre) = crosses the internet boundary,
+  #     in either direction. That's the only thing color encodes.
+  #   - width: primary vs. secondary flow, i.e. volume/aggregation, not risk.
+  #     SECONDARY (2) = an individual app's own connection. PRIMARY (10) = an
+  #     aggregation point where traffic from many sources funnels through
+  #     before fan-out (e.g. the Cloudflare Tunnel entrypoint, or the
+  #     gateway's aggregate LAN ingress) — reserved for the handful of edges
+  #     that are actually a bigger pipe, not a per-app link.
+  #
+  # Combine the three independently: e.g. connect-internet-backbone is
+  # internet-colored (crosses the boundary) + primary-sized (it's the funnel)
+  # + solid (not a management link).
+
+  connect-app: {
+    style: {
+      stroke-width: 2
+      stroke: ${colors.linework}
+    }
+  }
+
+  connect-local: {
+    style: {
+      stroke-width: 2
+      stroke: ${colors.linework}
+    }
+  }
+
+  connect-management: {
+    style: {
+      stroke-dash: 3
+      stroke-width: 2
+      stroke: ${colors.linework}
+    }
+    target-arrowhead: {
+      shape: circle
+      style.filled: false
+    }
+  }
+
+  # connect-management-to-internet: same dash + arrowhead + "Manages" label as
+  # connect-management, but the target is an internet endpoint (e.g.
+  # cert-manager driving Let's Encrypt/Cloudflare's ACME/DNS-01 APIs) — the
+  # color signal (local vs. internet) is independent of the dash signal
+  # (management vs. not), so this still needs the accent color even though
+  # it's a control/config flow, not a data flow.
+  connect-management-to-internet: {
+    style: {
+      stroke-dash: 3
+      stroke-width: 2
+      stroke: ${colors.accent}
+    }
+    target-arrowhead: {
+      shape: circle
+      style.filled: false
+    }
+  }
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # VPN Connection Styles
+  #
+  # VPN membership is still a trusted/local boundary, not internet exposure —
+  # linework color, same as connect-local. connect-vpn-backbone is the VPN's
+  # own aggregate link (primary size); connect-vpn is a single app's tunneled
+  # connection (secondary size).
+
+  connect-vpn: {
+    style: {
+      stroke-width: 2
+      stroke: ${colors.linework}
+    }
+  }
+
+  connect-vpn-backbone: {
+    style: {
+      bold: true
+      font-size: 32
+      stroke-width: 10
+      stroke: ${colors.linework}
+    }
+  }
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Internet Connection Styles
+  #
+  # The only classes that use colors.accent instead of colors.linework — color
+  # is spent exclusively on "this crosses into/out of the internet", so it
+  # stays meaningful instead of becoming decoration.
+
+  secured-connect-from-internet: {
+    style: {
+      bold: true
+      font-color: ${colors.labels}
+      stroke-width: 2
+      stroke: ${colors.accent}
+    }
+  }
+
+  connect-from-internet: {
+    style: {
+      bold: true
+      font-color: ${colors.labels}
+      stroke-width: 2
+      stroke: ${colors.accent}
+    }
+  }
+
+  connect-to-internet: {
+    style: {
+      bold: true
+      font-color: ${colors.labels}
+      stroke-width: 2
+      stroke: ${colors.accent}
+    }
+  }
+
+  # connect-internet-backbone: for the small number of aggregation points where
+  # ALL external traffic funnels through before fan-out (e.g. the Cloudflare
+  # Tunnel entrypoint, or the gateway receiving the tunnel's traffic) — as
+  # opposed to a single app's own internet call. Same accent color, but
+  # primary size, so volume/aggregation reads through width, not just
+  # exposure through color.
+  connect-internet-backbone: {
+    style: {
+      bold: true
+      font-color: ${colors.labels}
+      stroke-width: 10
+      stroke: ${colors.accent}
+    }
+  }
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Network Connection Styles
+
+  # connect-network: same "aggregation point" idea as connect-internet-backbone
+  # (primary size = more traffic funnels through here), but for bulk
+  # non-internet traffic (e.g. the gateway's aggregate LAN ingress) — linework
+  # color, since that's reserved for actual internet exposure.
+  connect-network: {
+    style {
+      stroke-width: 10
+      stroke: ${colors.linework}
+    }
+  }
+}
