@@ -13,7 +13,7 @@ explanation: |md
   near: top-left
 }
 
-...@../../docs/assets/d2/architecture-styles.d2
+...@../../docs/assets/d2/styles.architecture.d2
 
 
 # ------------------------------------------------------------------------------------------------
@@ -34,7 +34,7 @@ tailnet: {
 
 UDM-Pro: {
   class: [hardware]
-  icon: docs/assets/icons/hardware/unifi.svg
+  icon: docs/assets/icons/hardware/ubiquiti_unifi.svg
   tooltip: UniFi Dream Machine Pro - Gateway & Network Controller
 }
 
@@ -170,4 +170,4 @@ shodan.system.kgateway <- localnet: {
 }
 
 shodan.system.cert-manager -> internet: HTTPS (443) {class: [connect-to-internet; undeployed]}
-shodan.system.External-DNS -> UDM-Pro: DNS updates {class: undeployed} 
+shodan.system.External-DNS -> UDM-Pro: DNS updates {class: undeployed}

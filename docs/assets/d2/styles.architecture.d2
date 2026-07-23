@@ -11,7 +11,7 @@
 # Usage Instructions
 #
 # 1. Import this file in your architecture diagram:
-#    ...@../../docs/assets/d2/architecture-styles.d2
+#    ...@../../docs/assets/d2/styles.architecture.d2
 #
 # 2. Apply component classes:
 #    my-component: {
@@ -67,7 +67,7 @@ vars: {
 classes: {
   # ──────────────────────────────────────────────────────────────────────────────
   # Application Components
-  
+
   application: {
     shape: rectangle
     style: {
@@ -75,7 +75,7 @@ classes: {
       shadow: false
     }
   }
-  
+
   application-system: {
     shape: rectangle
     style: {
@@ -85,7 +85,7 @@ classes: {
       font-size: 14
     }
   }
-  
+
   application-datastore: {
     shape: cylinder
     style: {
@@ -97,7 +97,7 @@ classes: {
 
   # ──────────────────────────────────────────────────────────────────────────────
   # Network & Infrastructure Components
-  
+
   network: {
     shape: cloud
     style: {
@@ -106,7 +106,7 @@ classes: {
       bold: true
     }
   }
-  
+
   hardware: {
     shape: none
     style: {
@@ -114,7 +114,7 @@ classes: {
       bold: true
     }
   }
-  
+
   platform: {
     shape: none
     style: {
@@ -122,7 +122,7 @@ classes: {
       bold: true
     }
   }
-  
+
   tailscaled: {
     shape: image
     icon: ../icons/platform/tailscale.svg
@@ -132,7 +132,7 @@ classes: {
 
   # ──────────────────────────────────────────────────────────────────────────────
   # Organizational & State Components
-  
+
   namespace: {
     shape: page
     style: {
@@ -140,7 +140,7 @@ classes: {
       text-transform: lowercase
     }
   }
-  
+
   undeployed: {
     style: {
       opacity: 0.4
@@ -151,13 +151,13 @@ classes: {
 
   # ──────────────────────────────────────────────────────────────────────────────
   # Network Connection Styles
-  
+
   connect-network: {
     style {
       stroke-width: 8
     }
   }
-  
+
   connect-from-internet: {
     style: {
       bold: true
@@ -167,7 +167,7 @@ classes: {
       stroke: "#D7263D"
     }
   }
-  
+
   connect-to-internet: {
     style: {
       stroke-dash: 3
@@ -188,7 +188,7 @@ classes: {
 
   # ──────────────────────────────────────────────────────────────────────────────
   # VPN Connection Styles
-  
+
   connect-vpn-backbone: {
     style: {
       bold: true
@@ -196,7 +196,7 @@ classes: {
       stroke-width: 8
     }
   }
-  
+
   connect-vpn: {
     style: {
       stroke-dash: 3
@@ -205,7 +205,7 @@ classes: {
 
   # ──────────────────────────────────────────────────────────────────────────────
   # Management Connection Styles
-  
+
   connect-management: {
     label: Manages
     style: {
@@ -218,4 +218,4 @@ classes: {
       style.filled: false
     }
   }
-} 
+}
