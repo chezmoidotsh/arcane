@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#MISE description "Print the latest barman-cloud serverName ULID for a CNPG cluster's S3 backup"
+#USAGE arg "<context>" help="kubectl context for the cluster hosting the ObjectStore/credentials secret"
+#USAGE complete "context" run="kubectl config get-contexts -o name"
+#USAGE arg "<namespace>" help="namespace the credentials secret and ObjectStore live in"
+#USAGE arg "<objectstore_manifest>" help="path to the ObjectStore manifest (spec.configuration.destinationPath/endpointURL)"
+#USAGE arg "[credentials_secret]" default="cnpg-backup-credentials" help="name of the Secret with access_key_id/access_secret_key"
+#
+# Generic across every CNPG cluster in this repo backed by the
+# barman-cloud.cloudnative-pg.io plugin — see
+# docs/procedures/databases/DB-20260723-00.cnpg-restore-from-object-store.md
+# (Steps 1-2) for the manual equivalent and the full restore procedure this
+# feeds into. Read-only: makes no cluster or S3 mutations.
+#
+# Requires: kubectl, yq (v4+), python3, and s3cmd (`mise install pipx:s3cmd`).
+set -euo pipefail
+
+BUCKET_PATH="$(yq -r '.spec.configuration.destinationPath' "${usage_objectstore_manifest}" | sed 's#^s3://##')"
+ENDPOINT="$(yq -r '.spec.configuration.endpointURL' "${usage_objectstore_manifest}" | sed -E 's#^https?://##')"
+
+if [[ -z ${BUCKET_PATH} ]] || [[ -z ${ENDPOINT} ]]; then
+  echo "Could not read destinationPath/endpointURL from ${usage_objectstore_manifest}" >&2
+  exit 1
+fi
+
+# Split into separate statements (not one nested `eval "$(cmd | cmd)"`) so a
+# kubectl or python3 failure is caught by `set -e` — a command substitution
+# used directly as eval's argument masks the inner pipeline's exit status.
+SECRET_JSON="$(kubectl --context "${usage_context}" get secret "${usage_credentials_secret}" -n "${usage_namespace}" -o json)"
+
+# eval'd safely: python quotes each value with shlex before printing, so
+# secret content can never be interpreted as shell syntax.
+ENV_ASSIGNMENTS="$(printf '%s' "${SECRET_JSON}" | python3 -c "
+import sys, json, base64, shlex
+s = json.load(sys.stdin)
+for k, v in s['data'].items():
+    print(f'{k.upper()}={shlex.quote(base64.b64decode(v).decode())}')
+")"
+
+eval "${ENV_ASSIGNMENTS}"
+
+[[ -z ${ACCESS_KEY_ID} ]] && echo "ACCESS_KEY_ID is empty or missing... see ${usage_credentials_secret}" >&2 && exit 1
+[[ -z ${ACCESS_SECRET_KEY} ]] && echo "ACCESS_SECRET_KEY is empty or missing... see ${usage_credentials_secret}" >&2 && exit 1
+
+LATEST="$(mise exec pipx:s3cmd -- s3cmd --access_key="${ACCESS_KEY_ID}" --secret_key="${ACCESS_SECRET_KEY}" \
+  --host="${ENDPOINT}" --host-bucket="${ENDPOINT}" ls "s3://${BUCKET_PATH}/" |
+  awk '{print $NF}' | grep -oE '[0-9A-Z]{26}' | sort | tail -1)"
+
+if [[ -z ${LATEST} ]]; then
+  echo "No backup folders found under s3://${BUCKET_PATH}/" >&2
+  exit 1
+fi
+
+echo "${LATEST}"

@@ -20,6 +20,11 @@ by either a human operator or an AI agent.
   procedure for a CloudNative-PG cluster whose WAL PVC has reached 100% capacity. Covers PVC expansion,
   `Expected empty archive` S3 fix, WAL archiving verification, and backup trigger. Origin:
   `docs/incidents/2026-05-30-cnpg-wal-disk-full-apps-secured.md`.
+- **[DB-20260723-00: Restore a CNPG cluster from its S3 object-store backup](./databases/DB-20260723-00.cnpg-restore-from-object-store.md)**:
+  Generic, app-agnostic bootstrap of a CNPG `Cluster` from an existing `barman-cloud.cloudnative-pg.io` backup — finding
+  the latest `serverName` on S3, wiring `bootstrap.recovery`/`externalClusters`, and verifying the restore. Used by
+  `projects/rhodes.akn/docs/disaster-recovery/openbao.md` and `projects/rhodes.akn/docs/disaster-recovery/pocket-id.md`
+  as their database-restore step.
 
 ### Omni
 
