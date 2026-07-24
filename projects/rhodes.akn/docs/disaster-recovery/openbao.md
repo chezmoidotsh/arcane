@@ -40,10 +40,12 @@ this document solves is **regaining admin access** to that already-configured in
      `noParent: true`, `ttl: 8760h`), recreated on roughly a 6-month cadence via a rotation trigger. It is independent
      of the cluster and of Pocket-Id entirely — retrievable from Pulumi state (Garage S3) alone.
 
-  > \[!WARNING] **If both paths are unavailable** (Pocket-Id also unrecoverable, and the break-glass token expired with
-  > no `pulumi up` having run in over a year), Vault admin access is **unrecoverable** short of a full
-  > `bao operator init`, which destroys all existing data. This is a known, accepted gap for this instance, not
-  > something this procedure closes — see Known issues.
+  > [!WARNING]
+  >
+  > **If both paths are unavailable** (Pocket-Id also unrecoverable, and the break-glass token expired with no
+  > `pulumi up` having run in over a year), Vault admin access is **unrecoverable** short of a full `bao operator init`,
+  > which destroys all existing data. This is a known, accepted gap for this instance, not something this procedure
+  > closes — see Known issues.
 
 - **Kubernetes auth backends should self-heal, but this is unverified in practice.** Both the `kubernetes/` backend
   (used for the Pulumi Vault provider's own authentication) and the `rhodes.akn` ESO backend are configured via the
@@ -54,9 +56,11 @@ this document solves is **regaining admin access** to that already-configured in
   long as the `system:auth-delegator` ClusterRoleBinding and the `openbao` ServiceAccount are (re)applied (Step 3 does
   this).
 
-  > \[!IMPORTANT] This is the expected behavior per the code, **not a guarantee** — it has not yet been observed against
-  > an actual cluster recreation. Confirm it during Step 6, and if it fails, do not assume the fallback is "reconfigure
-  > by hand and move on" without understanding why the self-heal didn't happen. Tracked in
+  > [!IMPORTANT]
+  >
+  > This is the expected behavior per the code, **not a guarantee** — it has not yet been observed against an actual
+  > cluster recreation. Confirm it during Step 6, and if it fails, do not assume the fallback is "reconfigure by hand
+  > and move on" without understanding why the self-heal didn't happen. Tracked in
   > [chezmoidotsh/arcane#1138](https://github.com/chezmoidotsh/arcane/issues/1138) — validate on the first real drill.
 
 ## Prerequisites
@@ -88,7 +92,9 @@ You must also have:
 
 ## Step 1 — Restore the `vault` namespace's SOPS secrets
 
-> \[!TIP] `mise run dr:openbao:secrets -- <CLUSTER_CONTEXT>` runs both commands below in one call.
+> [!TIP]
+>
+> `mise run dr:openbao:secrets -- <CLUSTER_CONTEXT>` runs both commands below in one call.
 
 ```sh
 # Namespace isn't created by any manifest in this app — create it first
@@ -106,16 +112,19 @@ kubectl --context <CLUSTER_CONTEXT> get secrets -n vault
 # → cnpg-backup-credentials, openbao-softhsm-tokens, openbao-database-credentials present
 ```
 
-> \[!IMPORTANT] If `openbao-softhsm-tokens` fails to decrypt (wrong/missing `SOPS_AGE_KEY_FILE`), stop here. Nothing
-> past this point works without it, and there is no fallback (see
-> [Technical framework](#technical-framework-and-conventions) above).
+> [!IMPORTANT]
+>
+> If `openbao-softhsm-tokens` fails to decrypt (wrong/missing `SOPS_AGE_KEY_FILE`), stop here. Nothing past this point
+> works without it, and there is no fallback (see [Technical framework](#technical-framework-and-conventions) above).
 
 ## Step 2 — Restore the `openbao-database` CNPG cluster
 
-> \[!TIP] `mise run dr:openbao:backup:latest -- <CLUSTER_CONTEXT>` prints the latest `serverName` (Steps 1-2 of the
-> procedure below), and `mise run dr:openbao:patch-recovery -- <SERVER_NAME>` writes it into `openbao.postgresql.yaml`
-> (Step 3) — it edits the file only, it does not `kubectl apply` anything. Both wrap the manual steps; use whichever you
-> trust more mid-incident.
+> [!TIP]
+>
+> `mise run dr:openbao:backup:latest -- <CLUSTER_CONTEXT>` prints the latest `serverName` (Steps 1-2 of the procedure
+> below), and `mise run dr:openbao:patch-recovery -- <SERVER_NAME>` writes it into `openbao.postgresql.yaml` (Step 3) —
+> it edits the file only, it does not `kubectl apply` anything. Both wrap the manual steps; use whichever you trust more
+> mid-incident.
 
 Follow [DB-20260723-00](../../../../docs/procedures/databases/DB-20260723-00.cnpg-restore-from-object-store.md) in full,
 with:
@@ -155,8 +164,10 @@ kubectl --context <CLUSTER_CONTEXT> exec -n vault "$POD" -- bao status -tls-skip
 `Sealed: false` confirms two things at once: the restored Postgres data is intact and reachable, and the SoftHSM
 token/PIN restored in Step 1 correctly decrypts it via PKCS#11 auto-unseal.
 
-> \[!WARNING] If `Sealed: true` or the pod is crash-looping, stop and diagnose before proceeding — do not attempt any of
-> the admin-recovery steps below against a sealed instance. Check `kubectl logs` on the `openbao` container first; a
+> [!WARNING]
+>
+> If `Sealed: true` or the pod is crash-looping, stop and diagnose before proceeding — do not attempt any of the
+> admin-recovery steps below against a sealed instance. Check `kubectl logs` on the `openbao` container first; a
 > mismatch between the restored Postgres data and the restored SoftHSM token (e.g. secrets from two different
 > source-instance snapshots) is the most likely cause.
 
@@ -187,9 +198,11 @@ switch to `https://vault.chezmoi.sh`.
 
 **Option B — Pocket-Id SSO (requires `projects/rhodes.akn/docs/disaster-recovery/pocket-id.md` already done):**
 
-> \[!IMPORTANT] Unlike Option A, this path is **not** available until the Gateway and a valid TLS certificate are
-> serving `vault.chezmoi.sh`. Pocket-Id's OIDC device-flow login requires HTTPS — there is no port-forward equivalent
-> for it. If the Gateway/cert-manager aren't up yet, use Option A first, even if Pocket-Id itself is already restored.
+> [!IMPORTANT]
+>
+> Unlike Option A, this path is **not** available until the Gateway and a valid TLS certificate are serving
+> `vault.chezmoi.sh`. Pocket-Id's OIDC device-flow login requires HTTPS — there is no port-forward equivalent for it. If
+> the Gateway/cert-manager aren't up yet, use Option A first, even if Pocket-Id itself is already restored.
 
 Log into the OpenBao UI (`https://vault.chezmoi.sh/ui`) via the Pocket-Id OIDC method, as a user in the `admin` OIDC
 group. This binds `sso-admin-policy` automatically — no CLI steps needed beyond a normal SSO login.
@@ -263,3 +276,5 @@ this instance's operators ever change.
 - _2026-07-24_: Peer review pass — fixed the SSO hostname reference, added the Gateway/TLS dependency callouts and a
   port-forward path for Option A/Step 4 (Gateway/cert-manager may not be up yet at this point in a real recovery), added
   `openbao:*` mise tasks for the mechanical parts of Steps 1-2, linked cross-references throughout.
+- _2026-07-24_: GitHub Copilot PR review — unescaped `\[!TYPE]` callout markers so they actually render as GitHub
+  alerts.

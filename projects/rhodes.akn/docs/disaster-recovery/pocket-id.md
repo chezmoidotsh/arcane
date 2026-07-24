@@ -12,11 +12,13 @@ worth its own document because **OpenBao's own admin-recovery path (Option B in 
 Pocket-Id being reachable** — if both instances are being restored together after a full cluster loss, restore Pocket-Id
 first, or at least in parallel, rather than after OpenBao.
 
-> \[!IMPORTANT] Pocket-Id requires the Gateway and a valid TLS certificate (cert-manager) to be serving
-> `auth.chezmoi.sh` before it is usable end to end: passkeys (WebAuthn) require a "secure context," i.e. HTTPS, and will
-> not register or authenticate over plain HTTP or a port-forward. If the Gateway/cert-manager aren't up yet on the new
-> cluster, Step 4's reachability check will pass over a port-forward, but passkey login will not work until HTTPS is
-> live — plan accordingly if this is blocking OpenBao's Option B (see `openbao.md`).
+> [!IMPORTANT]
+>
+> Pocket-Id requires the Gateway and a valid TLS certificate (cert-manager) to be serving `auth.chezmoi.sh` before it is
+> usable end to end: passkeys (WebAuthn) require a "secure context," i.e. HTTPS, and will not register or authenticate
+> over plain HTTP or a port-forward. If the Gateway/cert-manager aren't up yet on the new cluster, Step 4's reachability
+> check will pass over a port-forward, but passkey login will not work until HTTPS is live — plan accordingly if this is
+> blocking OpenBao's Option B (see `openbao.md`).
 
 ## Prerequisites
 
@@ -41,7 +43,9 @@ You must also have:
 
 ## Step 1 — Restore the `pocket-id` namespace's SOPS secrets
 
-> \[!TIP] `mise run dr:pocket-id:secrets -- <CLUSTER_CONTEXT>` runs both commands below in one call.
+> [!TIP]
+>
+> `mise run dr:pocket-id:secrets -- <CLUSTER_CONTEXT>` runs both commands below in one call.
 
 ```sh
 kubectl --context <CLUSTER_CONTEXT> create namespace pocket-id \
@@ -56,12 +60,14 @@ kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/app
 ```sh
 # Verify
 kubectl --context <CLUSTER_CONTEXT> get secrets -n pocket-id
-# → cnpg-backup-credentials, pocket-id secret, pocket-id-database-pocket-id present
+# → cnpg-backup-credentials, pocket-id-secrets, pocket-id-database-pocket-id present
 ```
 
 ## Step 2 — Restore the Pocket-Id CNPG cluster
 
-> \[!TIP] `mise run dr:pocket-id:backup:latest -- <CLUSTER_CONTEXT>` prints the latest `serverName`, and
+> [!TIP]
+>
+> `mise run dr:pocket-id:backup:latest -- <CLUSTER_CONTEXT>` prints the latest `serverName`, and
 > `mise run dr:pocket-id:patch-recovery -- <SERVER_NAME>` writes it into `pocket-id.postgresql.yaml` — it edits the file
 > only, it does not `kubectl apply` anything.
 
@@ -73,8 +79,10 @@ with:
 - `OBJECTSTORE_MANIFEST=projects/rhodes.akn/src/apps/pocket-id/pocket-id.postgresql-objectstore.yaml`
 - `SCHEDULEDBACKUP_MANIFEST=projects/rhodes.akn/src/apps/pocket-id/pocket-id.postgresql-backup.yaml`
 
-> \[!NOTE] The cluster name (`pocket-id-20260530`) embeds a generation suffix that changes whenever this cluster is
-> recreated — the same pattern the `cnpg-backup` skill's discovery script accounts for. Confirm the current name in
+> [!NOTE]
+>
+> The cluster name (`pocket-id-20260530`) embeds a generation suffix that changes whenever this cluster is recreated —
+> the same pattern the `cnpg-backup` skill's discovery script accounts for. Confirm the current name in
 > `projects/rhodes.akn/src/apps/pocket-id/pocket-id.postgresql.yaml` rather than assuming this exact value still
 > applies.
 
@@ -138,3 +146,6 @@ client registrations all live in the CNPG database restored in Step 2. Verifying
 - _2026-07-24_: Peer review pass — fixed `id.chezmoi.sh` → `auth.chezmoi.sh` (wrong hostname), added the Gateway/
   cert-manager/passkey dependency callout, removed the OpenBao-SSO verification step (out of scope for this document,
   covered in `openbao.md` instead), added `pocket-id:*` mise tasks for Steps 1-2, linked cross-references throughout.
+- _2026-07-24_: GitHub Copilot PR review — unescaped `\[!TYPE]` callout markers so they actually render as GitHub
+  alerts, fixed the Step 1 verification comment (`pocket-id-secrets`, not "pocket-id secret" — matches the real secret
+  name in `sops/pocket-id.secret.yaml`).
