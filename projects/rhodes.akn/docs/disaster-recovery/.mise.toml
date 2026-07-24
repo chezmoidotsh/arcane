@@ -7,20 +7,10 @@
 # .mise/tasks/cnpg/backup/latest, generic across any CNPG cluster, not
 # rhodes-specific), and patching a Cluster manifest's recovery source.
 #
-# kubectl, kustomize, ksops, yq are already global via this repo's root
-# .mise.toml. s3cmd is declared here (not global) because it's only needed
-# for CNPG restore work — `mise install` from this folder puts it on PATH,
-# which openbao.md / pocket-id.md's Prerequisites rely on, and which manually
-# running DB-20260723-00's Step 2 (bare `s3cmd` commands, no mise task
-# wrapping) requires directly.
-#
 # Deliberately NOT automated: `kubectl apply` of the patched Cluster manifest,
 # or of any other manifest that mutates the cluster. Those stay manual,
 # explicit steps in the procedure documents themselves.
 # =============================================================================
-
-[tools]
-"pipx:s3cmd" = "latest"
 
 # -----------------------------------------------------------------------------
 # OpenBao Disaster Recovery Tasks

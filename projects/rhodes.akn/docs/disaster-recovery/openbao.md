@@ -66,8 +66,8 @@ this document solves is **regaining admin access** to that already-configured in
 ## Prerequisites
 
 Before starting, ensure the following tools are installed and configured: `kubectl`, `s3cmd`, `kustomize`, `ksops`. Run
-`mise install` from `projects/rhodes.akn/docs/disaster-recovery/` to provision `s3cmd` (the other three are already
-global via this repo's root `.mise.toml`) and to get the `dr:openbao:*` convenience tasks referenced below.
+`mise install` from `projects/rhodes.akn/` to provision all of them, and from this folder specifically to get the
+`dr:openbao:*` convenience tasks referenced below.
 
 You must also have:
 
@@ -75,9 +75,8 @@ You must also have:
   [OMNI-20260721-00](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md)). No ArgoCD required.
 - `kubectl` access to the new cluster with permission to create namespaces and manage resources cluster-wide (RBAC
   bindings are part of what's restored) — configured per `OMNI-20260721-00`'s kubeconfig retrieval step.
-- `s3cmd`, `kustomize`, `ksops` on PATH — all provisioned by `mise install` from this folder's own `.mise.toml` (`s3cmd`
-  needs no config file; credentials are passed as flags in each command below). `kustomize` and `ksops` need no
-  configuration either.
+- `s3cmd`, `kustomize`, `ksops` on PATH (`s3cmd` needs no config file; credentials are passed as flags in each command
+  below). `kustomize` and `ksops` need no configuration either.
 - A valid `SOPS_AGE_KEY_FILE` (via `mise install` / this repo's environment) to decrypt the `vault/sops/` secrets.
 - **Either** Pocket-Id already restored and reachable (`projects/rhodes.akn/docs/disaster-recovery/pocket-id.md`),
   **or** access to the `rhodes.akn` Pulumi stack (`pulumi login`, correct stack selected) to retrieve the break-glass

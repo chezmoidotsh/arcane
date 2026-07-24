@@ -1,0 +1,31 @@
+# =============================================================================
+# Rhodes.akn Cluster - Mise Configuration
+# =============================================================================
+# Project-specific mise configuration for the rhodes.akn cluster.
+# This cluster reconstructs amiya.akn as the mission-critical core-platform /
+# hub cluster (#370), provisioned via Omni on Talos-on-Proxmox-VE with ArgoCD
+# for GitOps deployment.
+#
+# Services: OpenBao, Pocket-Id, Core Infrastructure
+# Architecture: Talos Linux (Omni-provisioned) + ArgoCD
+# =============================================================================
+
+[tools]
+# Needed for CNPG object-store disaster-recovery work (finding/restoring
+# backups) — see docs/disaster-recovery/{openbao,pocket-id}.md.
+"pipx:s3cmd" = "latest"
+
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram for rhodes.akn cluster"
+dir = "{{ config_root }}"
+# Converts the D2 diagram source to PNG for documentation. PNG, not SVG:
+# GitHub renders SVGs from this repo too small to read in the README, and
+# opening one directly triggers GitHub's SVG sandboxing (no icons, security
+# warning). architecture.d2 has no tooltip:/link: fields on purpose — d2
+# appends a footnote list of every tooltip/link to PNG exports since they
+# can't be interactive there, which would clutter a static image.
+# Input: architecture.d2 (diagram-as-code source)
+# Output: docs/assets/architecture.png (embedded in cluster documentation)
+outputs = ["docs/assets/architecture.png"]
+run = "d2 --scale 0.8 architecture.d2 docs/assets/architecture.png"
+sources = ["architecture.d2"]

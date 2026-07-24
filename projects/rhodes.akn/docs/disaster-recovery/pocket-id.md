@@ -23,8 +23,8 @@ first, or at least in parallel, rather than after OpenBao.
 ## Prerequisites
 
 Before starting, ensure the following tools are installed and configured: `kubectl`, `s3cmd`, `kustomize`, `ksops`. Run
-`mise install` from `projects/rhodes.akn/docs/disaster-recovery/` to provision `s3cmd` (the other three are already
-global via this repo's root `.mise.toml`) and to get the `dr:pocket-id:*` convenience tasks referenced below.
+`mise install` from `projects/rhodes.akn/` to provision all of them, and from this folder specifically to get the
+`dr:pocket-id:*` convenience tasks referenced below.
 
 You must also have:
 
