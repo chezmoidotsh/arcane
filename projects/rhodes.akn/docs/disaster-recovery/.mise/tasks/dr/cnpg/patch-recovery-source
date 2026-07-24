@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+#MISE description="Point a CNPG Cluster manifest at a specific backup for restore: renames the cluster with today's date, regenerates its own ongoing serverName, and sets the recovery source/externalCluster to the given backup (edits the file only, does not apply)"
+#USAGE arg "<cluster_manifest>" help="path to the Cluster manifest to patch (e.g. projects/rhodes.akn/src/apps/vault/openbao.postgresql.yaml)"
+#USAGE arg "<server_name>" help="barman-cloud serverName ULID of the backup to restore from — see cnpg:backup:latest"
+#
+# Every field this script touches follows a convention verified against the
+# real manifests in this repo, not an arbitrary choice:
+#
+#   - metadata.name gets a fresh "-YYYYMMDD" suffix (today's UTC date). CNPG
+#     restore-from-backup creates a NEW Cluster object rather than mutating
+#     the old one in place, so the new incarnation needs its own name — this
+#     is the same pattern already visible in e.g. pocket-id-20260530. Any
+#     existing "-YYYYMMDD" suffix is replaced, not appended to.
+#   - spec.bootstrap.recovery.source and spec.externalClusters[0].name are
+#     NOT an arbitrary "when this restore ran" label — they are always the
+#     decoded creation timestamp embedded in the recovery serverName's own
+#     ULID (verified: every existing occurrence in this repo's CNPG
+#     manifests matches its serverName's decoded ULID timestamp exactly).
+#   - spec.externalClusters[0].plugin.parameters.serverName is set to the
+#     given <server_name> (the backup being restored from); its trailing
+#     comment is that same decoded timestamp, for the same reason.
+#   - spec.plugins[0].parameters.serverName — the NEW cluster's own ongoing
+#     WAL archiver going forward — is regenerated as a fresh ULID. It must
+#     never reuse the recovery source's serverName, which identifies a
+#     different, already-closed archive stream. Its trailing comment is ITS
+#     OWN decoded timestamp (effectively "now").
+#
+# Uses yq (v4+), not sed: verified against this repo's current yq (4.50.1)
+# that it preserves every existing comment and touches only the assigned
+# fields, and that `line_comment =` sets a trailing comment natively. Expect
+# minor cosmetic diff noise on save — RFC3339 values get double-quoted, and
+# yq's round-trip can drop a stray blank line — but no comments are lost.
+#
+# Targets plugins/externalClusters entries by filtering on their plugin name
+# (select(.name == "barman-cloud.cloudnative-pg.io") / select(.plugin.name ==
+# ...)), not by positional [0] indexing — a manifest with more than one
+# plugin, or with barman-cloud not first, is still patched correctly. Each
+# filter is asserted to match exactly one entry before anything is written;
+# if it doesn't, the script aborts rather than silently touching the wrong
+# entry (both current target manifests, openbao/pocket-id, have exactly one
+# of each).
+#
+# Does NOT update anything outside this one file — in particular, a renamed
+# metadata.name means the matching ScheduledBackup manifest's
+# spec.cluster.name (and any `app.kubernetes.io/instance` labels keyed on
+# the old name) need the same rename by hand. Not automated here.
+#
+# Requires: yq (v4+), python3 (ULID timestamps are Crockford Base32, not the
+# same alphabet as standard base32 — no shell-native decoder).
+set -euo pipefail
+
+MANIFEST="${usage_cluster_manifest}"
+SERVER_NAME="${usage_server_name}"
+
+decode_ulid_time() {
+  python3 -c "
+import sys, datetime
+CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
+val = 0
+for ch in sys.argv[1][:10]:
+    val = val * 32 + CROCKFORD.index(ch)
+sec, ms = divmod(val, 1000)
+dt = datetime.datetime.fromtimestamp(sec, tz=datetime.timezone.utc)
+print(dt.strftime('%Y-%m-%dT%H:%M:%S') + f'.{ms:03d}Z')
+" "$1"
+}
+
+new_ulid() {
+  python3 -c "
+import os, time
+CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
+def encode(n, width):
+    s = ''
+    for _ in range(width):
+        s = CROCKFORD[n & 0x1F] + s
+        n >>= 5
+    return s
+ms = int(time.time() * 1000)
+print(encode(ms, 10) + encode(int.from_bytes(os.urandom(10), 'big'), 16))
+"
+}
+
+RECOVERY_LABEL="$(decode_ulid_time "${SERVER_NAME}")"
+NEW_SERVER_NAME="$(new_ulid)"
+NEW_SERVER_LABEL="$(decode_ulid_time "${NEW_SERVER_NAME}")"
+
+TODAY="$(date -u +%Y%m%d)"
+OLD_NAME="$(yq -r '.metadata.name' "${MANIFEST}")"
+NEW_NAME="$(echo "${OLD_NAME}" | sed -E 's/-[0-9]{8}$//')-${TODAY}"
+
+PLUGIN_FILTER='select(.name == "barman-cloud.cloudnative-pg.io")'
+EXTERNAL_FILTER='select(.plugin.name == "barman-cloud.cloudnative-pg.io")'
+
+assert_single_match() {
+  local query="$1" label="$2"
+  local count
+  count="$(yq "[${query}] | length" "${MANIFEST}")"
+  if [[ ${count} -ne 1 ]]; then
+    echo "Expected exactly one '${label}' entry matching ${query} in ${MANIFEST}, found ${count}." >&2
+    echo "Refusing to guess — this manifest doesn't match the expected structure. Patch it by hand." >&2
+    exit 1
+  fi
+}
+
+assert_single_match ".spec.plugins[] | ${PLUGIN_FILTER}" "spec.plugins[].name == barman-cloud.cloudnative-pg.io"
+assert_single_match ".spec.externalClusters[] | ${EXTERNAL_FILTER}" "spec.externalClusters[].plugin.name == barman-cloud.cloudnative-pg.io"
+
+yq -i "
+  .metadata.name = \"${NEW_NAME}\" |
+  .spec.bootstrap.recovery.source = \"${RECOVERY_LABEL}\" |
+  (.spec.externalClusters[] | ${EXTERNAL_FILTER} | .name) = \"${RECOVERY_LABEL}\" |
+  (.spec.externalClusters[] | ${EXTERNAL_FILTER} | .plugin.parameters.serverName) = \"${SERVER_NAME}\" |
+  (.spec.externalClusters[] | ${EXTERNAL_FILTER} | .plugin.parameters.serverName) line_comment = \"${RECOVERY_LABEL}\" |
+  (.spec.plugins[] | ${PLUGIN_FILTER} | .parameters.serverName) = \"${NEW_SERVER_NAME}\" |
+  (.spec.plugins[] | ${PLUGIN_FILTER} | .parameters.serverName) line_comment = \"${NEW_SERVER_LABEL}\"
+" "${MANIFEST}"
+
+echo "Patched ${MANIFEST}:"
+echo "  metadata.name -> ${NEW_NAME}"
+echo "  bootstrap.recovery.source / externalClusters[0].name -> ${RECOVERY_LABEL}"
+echo "  externalClusters[0].plugin.parameters.serverName -> ${SERVER_NAME} (${RECOVERY_LABEL})"
+echo "  plugins[0].parameters.serverName -> ${NEW_SERVER_NAME} (${NEW_SERVER_LABEL})"
+echo "Review the diff — remember to rename the matching ScheduledBackup's spec.cluster.name to ${NEW_NAME} by hand."
+echo "This script does not run kubectl apply."

@@ -1,0 +1,105 @@
+# =============================================================================
+# rhodes.akn disaster recovery — Mise configuration
+# =============================================================================
+# Exposes convenience tasks for the mechanical, low-risk parts of
+# openbao.md / pocket-id.md: applying SOPS secrets, finding the latest S3
+# backup (delegates to the repo-wide `cnpg:backup:latest` file task —
+# .mise/tasks/cnpg/backup/latest, generic across any CNPG cluster, not
+# rhodes-specific), and patching a Cluster manifest's recovery source.
+#
+# kubectl, kustomize, ksops, yq are already global via this repo's root
+# .mise.toml. s3cmd is declared here (not global) because it's only needed
+# for CNPG restore work — `mise install` from this folder puts it on PATH,
+# which openbao.md / pocket-id.md's Prerequisites rely on, and which manually
+# running DB-20260723-00's Step 2 (bare `s3cmd` commands, no mise task
+# wrapping) requires directly.
+#
+# Deliberately NOT automated: `kubectl apply` of the patched Cluster manifest,
+# or of any other manifest that mutates the cluster. Those stay manual,
+# explicit steps in the procedure documents themselves.
+# =============================================================================
+
+[tools]
+"pipx:s3cmd" = "latest"
+
+# -----------------------------------------------------------------------------
+# OpenBao Disaster Recovery Tasks
+# -----------------------------------------------------------------------------
+
+[tasks."dr:openbao:secrets"]
+description = "Apply the vault namespace's SOPS secrets."
+usage = '''
+arg "<context>" help="Kubernetes context for the target cluster"
+complete "context" run="kubectl config get-contexts -o name"
+'''
+run = '''
+kubectl --context "$usage_context" create namespace vault --dry-run=client -o yaml | kubectl --context "$usage_context" apply -f -
+kustomize build --enable-alpha-plugins --enable-exec ../../src/apps/vault/sops | kubectl --context "$usage_context" --namespace vault apply -f -
+'''
+
+[tasks."dr:openbao:backup:latest"]
+description = "Print the latest openbao-database backup serverName on S3."
+usage = '''
+arg "<context>" help="Kubernetes context for the target cluster"
+complete "context" run="kubectl config get-contexts -o name"
+'''
+depends = [
+  { task = "cnpg:backup:latest", args = [
+    "{{usage.context}}",
+    "vault",
+    "projects/rhodes.akn/src/apps/vault/openbao.postgresql-objectstore.yaml",
+  ] },
+]
+
+[tasks."dr:openbao:patch-recovery"]
+description = "Patch openbao.postgresql.yaml's recovery source with a given serverName — does NOT apply."
+usage = '''
+arg "<server_name>" help="Server name to patch into openbao.postgresql.yaml's recovery source"
+'''
+depends = [
+  { task = "dr:cnpg:patch-recovery-source", args = [
+    "../../src/apps/vault/openbao.postgresql.yaml",
+    "{{usage.server_name}}",
+  ] },
+]
+
+# -----------------------------------------------------------------------------
+# Pocket-Id Disaster Recovery Tasks
+# -----------------------------------------------------------------------------
+
+[tasks."dr:pocket-id:secrets"]
+description = "Apply the pocket-id namespace's SOPS secrets."
+usage = '''
+arg "<context>" help="Kubernetes context for the target cluster"
+complete "context" run="kubectl config get-contexts -o name"
+'''
+run = '''
+kubectl --context "$usage_context" create namespace pocket-id --dry-run=client -o yaml | kubectl --context "$usage_context" apply -f -
+kustomize build --enable-alpha-plugins --enable-exec ../../src/apps/pocket-id/sops | kubectl --context "$usage_context" --namespace pocket-id apply -f -
+'''
+
+[tasks."dr:pocket-id:backup:latest"]
+description = "Print the latest Pocket-Id backup serverName on S3."
+usage = '''
+arg "<context>" help="Kubernetes context for the target cluster"
+complete "context" run="kubectl config get-contexts -o name"
+'''
+depends = [
+  { task = "cnpg:backup:latest", args = [
+    "{{usage.context}}",
+    "pocket-id",
+    "projects/rhodes.akn/src/apps/pocket-id/pocket-id.postgresql-objectstore.yaml",
+  ] },
+]
+
+[tasks."dr:pocket-id:patch-recovery"]
+description = "Patch pocket-id.postgresql.yaml's recovery source with a given serverName — does NOT apply."
+usage = '''
+arg "<server_name>" help="Server name to patch into pocket-id.postgresql.yaml's recovery source"
+'''
+depends = [
+  { task = "dr:cnpg:patch-recovery-source", args = [
+    "../../src/apps/pocket-id/pocket-id.postgresql.yaml",
+    "{{usage.server_name}}",
+  ] },
+]
