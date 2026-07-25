@@ -1,0 +1,23 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Cilium-managed Envoy proxy backing the "default" Gateway to receive traffic from
+      anywhere, on the ports exposed by its listeners: web (HTTP/80) and the chezmoi.sh /
+      akn.chezmoi.sh websecure listeners (HTTPS/443). This is the cluster's public/internal
+      ingress entrypoint.
+  name: allow-ingress-gateway-from-anywhere
+  namespace: ingress-gateway-system
+spec:
+  endpointSelector: {}
+  ingress:
+  - fromEntities:
+    - all
+    toPorts:
+    - ports:
+      - port: "80"
+        protocol: TCP
+      - port: "443"
+        protocol: TCP

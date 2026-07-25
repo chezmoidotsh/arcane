@@ -1,0 +1,22 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the cert-manager controller to reach the Cloudflare API to create and verify DNS-01
+      challenge records used for ACME certificate issuance.
+  name: allow-cert-manager-to-cloudflare
+  namespace: cert-manager-system
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: api.cloudflare.com
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: controller
+      app.kubernetes.io/name: cert-manager

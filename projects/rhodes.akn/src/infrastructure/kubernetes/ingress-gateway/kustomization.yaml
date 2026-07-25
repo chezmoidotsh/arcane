@@ -6,4 +6,5 @@ namespace: ingress-gateway-system
 resources:
   - default.gateway.yaml
   - redirect-http-to-https.httproute.yaml
+  - security/
   - wildcard.chezmoi.sh.certificate.yaml

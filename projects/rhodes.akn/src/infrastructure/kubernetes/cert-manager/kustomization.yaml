@@ -18,6 +18,7 @@ helmCharts:
 
 resources:
   - ../../../../../../catalog/kubernetes/cert-manager/kustomize
+  - security/
 
 patches:
   - path: letsencrypt-issuer-credentials.externalsecret.yaml

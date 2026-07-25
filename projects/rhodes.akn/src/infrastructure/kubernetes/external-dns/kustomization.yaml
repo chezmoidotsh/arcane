@@ -17,6 +17,7 @@ helmCharts:
 
 resources:
   - unifi.externalsecret.yaml
+  - security/
 
 images:
   - name: registry.k8s.io/external-dns/external-dns
