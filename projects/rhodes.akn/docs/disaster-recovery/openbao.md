@@ -21,15 +21,15 @@ this document solves is **regaining admin access** to that already-configured in
 
 ## Technical framework and conventions
 
-- **Storage backend is PostgreSQL, not Raft.** `storage "postgresql"` in `openbao-config.externalsecret.yaml` — the CNPG
-  cluster `openbao-database` **is** Vault's data. Restoring that Postgres cluster from its S3 backup restores every
-  mount, policy, role, and auth backend exactly as they were, with no need to re-run Pulumi's `cluster-vault` component
-  — this holds even though the Kubernetes auth backends' trust config is cluster-specific, because of the self-heal
-  behavior described below, not in spite of it.
+- **Storage backend is PostgreSQL, not Raft.** `storage "postgresql"` in `config.externalsecret.yaml` — the CNPG cluster
+  `openbao-database` **is** Vault's data. Restoring that Postgres cluster from its S3 backup restores every mount,
+  policy, role, and auth backend exactly as they were, with no need to re-run Pulumi's `cluster-vault` component — this
+  holds even though the Kubernetes auth backends' trust config is cluster-specific, because of the self-heal behavior
+  described below, not in spite of it.
 - **Auto-unseal is PKCS#11 via SoftHSM**, not Shamir. The token + PIN are SOPS-encrypted in git
-  (`openbao-softhsm-tokens.secret.yaml`) — this is the second, and only other, piece of state needed to bring OpenBao
-  back. **If this secret is ever lost, the restored Postgres data can never be decrypted again** — there is no fallback;
-  the instance would have to be reinitialized from empty, discarding all data.
+  (`sops/softhsm-tokens.secret.yaml`) — this is the second, and only other, piece of state needed to bring OpenBao back.
+  **If this secret is ever lost, the restored Postgres data can never be decrypted again** — there is no fallback; the
+  instance would have to be reinitialized from empty, discarding all data.
 - **No root token and no recovery keys are held for this instance.** Two admin-recovery paths exist instead of the usual
   `bao operator generate-root` ceremony (which requires recovery key shares this instance's operators do not have):
   1. **Pocket-Id SSO**, logging in as a member of the `admin` OIDC group → binds `sso-admin-policy` (`stack/vault.ts`),
@@ -89,26 +89,39 @@ You must also have:
 
 ---
 
-## Step 1 — Restore the `vault` namespace's SOPS secrets
+## Step 1 — Restore the `vault` namespace's bootstrap secrets
+
+Three secrets, three different sources — none of them Vault, all for the same chicken-and-egg reason (OpenBao's own
+storage backend is the Postgres cluster these credentials unlock):
 
 > [!TIP]
 >
-> `mise run dr:openbao:secrets -- <CLUSTER_CONTEXT>` runs both commands below in one call.
+> `mise run dr:openbao:secrets -- <CLUSTER_CONTEXT>` runs the commands below in one call.
 
 ```sh
 # Namespace isn't created by any manifest in this app — create it first
 kubectl --context <CLUSTER_CONTEXT> create namespace vault \
   --dry-run=client -o yaml | kubectl --context <CLUSTER_CONTEXT> apply -f -
 
-# Decrypt and apply: cnpg-backup-credentials, openbao-softhsm-tokens, openbao-database-credentials
+# openbao-softhsm-tokens: the one secret that must stay SOPS-committed (see the
+# [!IMPORTANT] callout below — there is no fallback if this is ever lost)
 kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/apps/vault/sops \
   | kubectl --context <CLUSTER_CONTEXT> apply -f -
+
+# cnpg-backup-credentials: written directly into this namespace by the
+# rhodes-akn-infra Pulumi stack — not gated by the `recovery` flag, safe to run here
+(cd projects/rhodes.akn/src/infrastructure/pulumi && pulumi up --refresh --parallel 15)
+
+# openbao-database-credentials: generated locally by an ESO Generator, no Vault
+# involved — requires ESO already deployed (see docs/disaster-recovery/README.md
+# Step 3, done before this document)
+kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/src/apps/vault/database.externalsecret.yaml
 ```
 
 ```sh
 # Verify all three landed
 kubectl --context <CLUSTER_CONTEXT> get secrets -n vault
-# → cnpg-backup-credentials, openbao-softhsm-tokens, openbao-database-credentials present
+# → openbao-softhsm-tokens, cnpg-backup-credentials, openbao-database-credentials present
 ```
 
 > [!IMPORTANT]
@@ -121,17 +134,17 @@ kubectl --context <CLUSTER_CONTEXT> get secrets -n vault
 > [!TIP]
 >
 > `mise run dr:openbao:backup:latest -- <CLUSTER_CONTEXT>` prints the latest `serverName` (Steps 1-2 of the procedure
-> below), and `mise run dr:openbao:patch-recovery -- <SERVER_NAME>` writes it into `openbao.postgresql.yaml` (Step 3) —
-> it edits the file only, it does not `kubectl apply` anything. Both wrap the manual steps; use whichever you trust more
+> below), and `mise run dr:openbao:patch-recovery -- <SERVER_NAME>` writes it into `cnpg.cluster.yaml` (Step 3) — it
+> edits the file only, it does not `kubectl apply` anything. Both wrap the manual steps; use whichever you trust more
 > mid-incident.
 
 Follow [DB-20260723-00](../../../../docs/procedures/databases/DB-20260723-00.cnpg-restore-from-object-store.md) in full,
 with:
 
 - `NAMESPACE=vault`
-- `CLUSTER_MANIFEST=projects/rhodes.akn/src/apps/vault/openbao.postgresql.yaml`
-- `OBJECTSTORE_MANIFEST=projects/rhodes.akn/src/apps/vault/openbao.postgresql-objectstore.yaml`
-- `SCHEDULEDBACKUP_MANIFEST=projects/rhodes.akn/src/apps/vault/openbao.postgresql-backup.yaml`
+- `CLUSTER_MANIFEST=projects/rhodes.akn/src/apps/vault/cnpg.cluster.yaml`
+- `OBJECTSTORE_MANIFEST=projects/rhodes.akn/src/apps/vault/cnpg.objectstore.yaml`
+- `SCHEDULEDBACKUP_MANIFEST=projects/rhodes.akn/src/apps/vault/cnpg.scheduledbackup.yaml`
 
 Return here once that procedure's Quick verifications pass (`Cluster in healthy state`).
 
@@ -277,3 +290,9 @@ this instance's operators ever change.
   `openbao:*` mise tasks for the mechanical parts of Steps 1-2, linked cross-references throughout.
 - _2026-07-24_: GitHub Copilot PR review — unescaped `\[!TYPE]` callout markers so they actually render as GitHub
   alerts.
+- _2026-07-25_: Moved OpenBao's own CNPG role password (`openbao-database-credentials`) off SOPS onto a local ESO
+  `Generator`/`ExternalSecret` pair (`database.externalsecret.yaml`), and the S3 backup credentials
+  (`cnpg-backup-credentials`) off SOPS onto a direct Pulumi-managed `Secret` — both still never source from the real
+  Vault (same chicken-and-egg reasoning as the SoftHSM tokens), only their origin changed. Reordered Step 1 to reflect
+  the three different sources; requires ESO deployed first (see `README.md` Step 3, now ahead of this document in the
+  chain).
