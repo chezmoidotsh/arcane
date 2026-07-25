@@ -1,0 +1,54 @@
+---
+# proxmox-cloud-controller-manager — provides node topology labels and
+# providerID that proxmox-csi-plugin relies on for volume scheduling.
+# Cilium handles all networking (route/service controllers stay disabled).
+# Validated in docs/experiments/20260617-proxmox-csi-ccm/.
+
+# config.clusters is intentionally left unset (chart default: []), which
+# also keeps the chart from rendering its own Secret/proxmox-cloud-controller-
+# manager (templates/secrets.yaml guards on `len .Values.config.clusters`).
+# The Proxmox API token is Pulumi-owned end-to-end (issue #370's bring-up
+# plan, .agents/sessions/20260720-rhodes-cluster-bringup-planning.md decision
+# #1: Pulumi already needs privileged kubeconfig access to deliver it, so
+# routing it through Vault/ESO would add indirection with no confidentiality
+# benefit). That Secret is created directly by
+# projects/rhodes.akn/src/infrastructure/pulumi/stack/proxmox.ts (via a
+# StackReference into chezmoi.sh's stack/proxmox/access.ts), matching
+# upstream's own secrets.yaml shape (verified against
+# https://artifacthub.io/packages/helm/proxmox-ccm/proxmox-cloud-controller-manager?modal=template&template=secrets.yaml):
+#
+#   apiVersion: v1
+#   kind: Secret
+#   metadata:
+#     name: proxmox-cloud-controller-manager
+#     namespace: proxmox-system
+#   data:
+#     config.yaml: <base64 of the YAML below>
+#
+#   clusters:
+#     - url: https://pve-01.pve.chezmoi.sh:8006/api2/json
+#       token_id: "kubernetes-ccm@pve!ccm"
+#       token_secret: "<real token>"
+#       region: homelab
+#   features:
+#     provider: default
+#
+# existingConfigSecret/existingConfigSecretKey below point the Deployment at
+# that Pulumi-owned Secret instead.
+existingConfigSecret: proxmox-cloud-controller-manager
+existingConfigSecretKey: config.yaml
+
+enabledControllers:
+  - cloud-node
+  - cloud-node-lifecycle
+
+nodeSelector:
+  node-role.kubernetes.io/control-plane: ""
+
+tolerations:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/control-plane
+    operator: Exists
+  - effect: NoSchedule
+    key: node.cloudprovider.kubernetes.io/uninitialized
+    operator: Exists

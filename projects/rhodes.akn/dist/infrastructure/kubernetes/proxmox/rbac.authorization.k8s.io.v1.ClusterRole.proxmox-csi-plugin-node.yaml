@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/version: v0.18.1
     helm.sh/chart: proxmox-csi-plugin-0.5.7
   name: proxmox-csi-plugin-node
-  namespace: kube-system
+  namespace: proxmox-system
 rules:
 - apiGroups:
   - ""

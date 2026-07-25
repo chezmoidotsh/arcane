@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/version: v0.18.1
     helm.sh/chart: proxmox-csi-plugin-0.5.7
   name: proxmox-csi-plugin-node
-  namespace: kube-system
+  namespace: proxmox-system
 spec:
   selector:
     matchLabels:
@@ -33,7 +33,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: ghcr.io/sergelogvinov/proxmox-csi-node:v0.18.1
+        image: oci.chezmoi.sh/ghcr.io/sergelogvinov/proxmox-csi-node:v0.18.1
         imagePullPolicy: IfNotPresent
         name: proxmox-csi-plugin-node
         resources: {}
@@ -62,7 +62,7 @@ spec:
         - -v=5
         - --csi-address=unix:///csi/csi.sock
         - --kubelet-registration-path=/var/lib/kubelet/plugins/csi.proxmox.sinextra.dev/csi.sock
-        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0
+        image: oci.chezmoi.sh/registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0
         imagePullPolicy: IfNotPresent
         name: csi-node-driver-registrar
         resources:
@@ -85,7 +85,7 @@ spec:
       - args:
         - -v=5
         - --csi-address=unix:///csi/csi.sock
-        image: registry.k8s.io/sig-storage/livenessprobe:v2.16.0
+        image: oci.chezmoi.sh/registry.k8s.io/sig-storage/livenessprobe:v2.16.0
         imagePullPolicy: IfNotPresent
         name: liveness-probe
         resources:

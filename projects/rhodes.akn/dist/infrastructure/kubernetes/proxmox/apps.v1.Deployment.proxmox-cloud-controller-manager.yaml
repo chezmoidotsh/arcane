@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/version: v0.13.1
     helm.sh/chart: proxmox-cloud-controller-manager-0.2.28
   name: proxmox-cloud-controller-manager
-  namespace: kube-system
+  namespace: proxmox-system
 spec:
   replicas: 1
   selector:
@@ -23,7 +23,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: d39d7ce6ef8d7420e539abd3deeae5dab34e8fc3fcbc9646c5a7878531fbaea7
+        checksum/config: ce080eff0c26b50fe73bf9fcda017c8ad47c1000729fd0c555cfe3535c6d6222
       labels:
         app.kubernetes.io/instance: proxmox-cloud-controller-manager
         app.kubernetes.io/name: proxmox-cloud-controller-manager
@@ -53,7 +53,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.serviceAccountName
-        image: ghcr.io/sergelogvinov/proxmox-cloud-controller-manager:v0.13.1
+        image: oci.chezmoi.sh/ghcr.io/sergelogvinov/proxmox-cloud-controller-manager:v0.13.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
@@ -113,4 +113,7 @@ spec:
       - name: cloud-config
         secret:
           defaultMode: 416
+          items:
+          - key: config.yaml
+            path: config.yaml
           secretName: proxmox-cloud-controller-manager

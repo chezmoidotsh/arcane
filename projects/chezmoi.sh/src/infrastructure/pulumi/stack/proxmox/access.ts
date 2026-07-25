@@ -1,4 +1,5 @@
 import * as proxmox from "@pulumi/proxmox";
+import * as pulumi from "@pulumi/pulumi";
 
 // -----------------------------------------------------------------------------
 // Custom roles
@@ -133,6 +134,16 @@ export const kubernetesCcmToken = new proxmox.UserToken(
 	},
 );
 
+// Exported (via ./index.ts) for rhodes.akn's Pulumi program to consume through
+// a StackReference and write straight into the cluster as the Secret
+// proxmox-cloud-controller-manager's chart expects (existingConfigSecret in
+// projects/rhodes.akn/src/infrastructure/kubernetes/proxmox/proxmox-cloud-
+// controller-manager.helmvalues/default.yaml) — see that file's comment for
+// the full rationale (Pulumi-owned end-to-end, never Vault/ESO, for this
+// token specifically).
+export const kubernetesCcmTokenId = pulumi.interpolate`${kubernetesCcmToken.userId}!${kubernetesCcmToken.tokenName}`;
+export const kubernetesCcmTokenSecret = kubernetesCcmToken.value;
+
 // Node-scoped grant: topology + lifecycle status. Live ACL path is
 // `/nodes/pve` (not `/nodes/pve-01`) -- kept as-is for zero-recreation
 // import; harmless on a single-node cluster where `pve` and `pve-01` cover
@@ -183,6 +194,12 @@ export const kubernetesCsiToken = new proxmox.UserToken(
 		privilegesSeparation: false,
 	},
 );
+
+// Exported (via ./index.ts) for rhodes.akn's Pulumi program to consume — same
+// pattern as kubernetesCcmTokenId/Secret above, feeding
+// proxmox-csi-plugin.helmvalues/default.yaml's existingConfigSecret instead.
+export const kubernetesCsiTokenId = pulumi.interpolate`${kubernetesCsiToken.userId}!${kubernetesCsiToken.tokenName}`;
+export const kubernetesCsiTokenSecret = kubernetesCsiToken.value;
 
 export const kubernetesCsiPoolAcl = new proxmox.Acl(
 	"pve-acl-kubernetes-csi-pool",

@@ -11,4 +11,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: proxmox-cloud-controller-manager
-  namespace: kube-system
+  namespace: proxmox-system

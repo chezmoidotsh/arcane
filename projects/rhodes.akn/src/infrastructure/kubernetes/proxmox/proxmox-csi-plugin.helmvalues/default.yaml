@@ -10,17 +10,15 @@
 # Proxmox storage backend name still applies to rhodes' actual VM placement
 # before relying on it.
 
-config:
-  clusters:
-    - url: https://pve-01.pve.chezmoi.sh:8006/api2/json
-      token_id: "kubernetes-csi@pve!csi"
-      # TODO(rhodes.akn): token_secret intentionally blank — Pulumi-owned,
-      # same as proxmox-cloud-controller-manager/helmvalues/default.yaml,
-      # including the same concrete gap (this chart also bakes config into
-      # its own release Secret at Helm-render time). See that file's TODO for
-      # the full rationale.
-      token_secret: ""
-      region: homelab
+# config.clusters is intentionally left unset (chart default: []) — same
+# Pulumi-owned token delivery as proxmox-cloud-controller-manager.helmvalues
+# /default.yaml in this same directory (see that file's comment for the full
+# rationale and the exact Secret shape Pulumi must create; only the token_id
+# differs here: "kubernetes-csi@pve!csi"). existingConfigSecret/
+# existingConfigSecretKey below point this chart's controller and node pods
+# at that Pulumi-owned Secret instead of the chart's own.
+existingConfigSecret: proxmox-csi-plugin
+existingConfigSecretKey: config.yaml
 
 storageClass:
   - name: proxmox-lvmthin-ext4

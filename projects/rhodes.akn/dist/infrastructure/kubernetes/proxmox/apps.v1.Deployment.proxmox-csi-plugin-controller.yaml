@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/version: v0.18.1
     helm.sh/chart: proxmox-csi-plugin-0.5.7
   name: proxmox-csi-plugin-controller
-  namespace: kube-system
+  namespace: proxmox-system
 spec:
   replicas: 1
   selector:
@@ -24,7 +24,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: bf77e24432c642bef899e6d696cf5fb74d7966e3519ec017bbda922658cd1887
+        checksum/config: ce080eff0c26b50fe73bf9fcda017c8ad47c1000729fd0c555cfe3535c6d6222
       labels:
         app.kubernetes.io/component: controller
         app.kubernetes.io/instance: proxmox-csi-plugin
@@ -35,7 +35,7 @@ spec:
         - -v=5
         - --csi-address=unix:///csi/csi.sock
         - --cloud-config=/etc/proxmox/config.yaml
-        image: ghcr.io/sergelogvinov/proxmox-csi-controller:v0.18.1
+        image: oci.chezmoi.sh/ghcr.io/sergelogvinov/proxmox-csi-controller:v0.18.1
         imagePullPolicy: IfNotPresent
         name: proxmox-csi-plugin-controller
         ports: null
@@ -62,7 +62,7 @@ spec:
         - --timeout=3m
         - --leader-election
         - --default-fstype=ext4
-        image: registry.k8s.io/sig-storage/csi-attacher:v4.10.0
+        image: oci.chezmoi.sh/registry.k8s.io/sig-storage/csi-attacher:v4.10.0
         imagePullPolicy: IfNotPresent
         name: csi-attacher
         resources:
@@ -97,7 +97,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        image: registry.k8s.io/sig-storage/csi-provisioner:v5.3.0
+        image: oci.chezmoi.sh/registry.k8s.io/sig-storage/csi-provisioner:v5.3.0
         imagePullPolicy: IfNotPresent
         name: csi-provisioner
         resources:
@@ -121,7 +121,7 @@ spec:
         - --timeout=3m
         - --handle-volume-inuse-error=false
         - --leader-election
-        image: registry.k8s.io/sig-storage/csi-resizer:v1.14.0
+        image: oci.chezmoi.sh/registry.k8s.io/sig-storage/csi-resizer:v1.14.0
         imagePullPolicy: IfNotPresent
         name: csi-resizer
         resources:
@@ -142,7 +142,7 @@ spec:
       - args:
         - -v=5
         - --csi-address=unix:///csi/csi.sock
-        image: registry.k8s.io/sig-storage/livenessprobe:v2.16.0
+        image: oci.chezmoi.sh/registry.k8s.io/sig-storage/livenessprobe:v2.16.0
         imagePullPolicy: IfNotPresent
         name: liveness-probe
         resources:
@@ -185,4 +185,7 @@ spec:
         name: socket-dir
       - name: cloud-config
         secret:
+          items:
+          - key: config.yaml
+            path: config.yaml
           secretName: proxmox-csi-plugin
