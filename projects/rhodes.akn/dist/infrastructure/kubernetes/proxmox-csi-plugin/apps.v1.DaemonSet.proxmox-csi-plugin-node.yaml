@@ -1,0 +1,137 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/instance: proxmox-csi-plugin
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: proxmox-csi-plugin
+    app.kubernetes.io/version: v0.18.1
+    helm.sh/chart: proxmox-csi-plugin-0.5.7
+  name: proxmox-csi-plugin-node
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: node
+      app.kubernetes.io/instance: proxmox-csi-plugin
+      app.kubernetes.io/name: proxmox-csi-plugin
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: node
+        app.kubernetes.io/instance: proxmox-csi-plugin
+        app.kubernetes.io/name: proxmox-csi-plugin
+    spec:
+      containers:
+      - args:
+        - -v=5
+        - --csi-address=unix:///csi/csi.sock
+        - --node-id=$(NODE_NAME)
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: ghcr.io/sergelogvinov/proxmox-csi-node:v0.18.1
+        imagePullPolicy: IfNotPresent
+        name: proxmox-csi-plugin-node
+        resources: {}
+        securityContext:
+          capabilities:
+            add:
+            - SYS_ADMIN
+            - CHOWN
+            - DAC_OVERRIDE
+            drop:
+            - ALL
+          privileged: true
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /csi
+          name: socket
+        - mountPath: /var/lib/kubelet
+          mountPropagation: Bidirectional
+          name: kubelet
+        - mountPath: /dev
+          name: dev
+        - mountPath: /sys
+          name: sys
+      - args:
+        - -v=5
+        - --csi-address=unix:///csi/csi.sock
+        - --kubelet-registration-path=/var/lib/kubelet/plugins/csi.proxmox.sinextra.dev/csi.sock
+        image: registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.15.0
+        imagePullPolicy: IfNotPresent
+        name: csi-node-driver-registrar
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /csi
+          name: socket
+        - mountPath: /registration
+          name: registration
+      - args:
+        - -v=5
+        - --csi-address=unix:///csi/csi.sock
+        image: registry.k8s.io/sig-storage/livenessprobe:v2.16.0
+        imagePullPolicy: IfNotPresent
+        name: liveness-probe
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /csi
+          name: socket
+      enableServiceLinks: false
+      priorityClassName: system-node-critical
+      securityContext:
+        runAsGroup: 0
+        runAsUser: 0
+      serviceAccountName: proxmox-csi-plugin-node
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+      volumes:
+      - hostPath:
+          path: /var/lib/kubelet/plugins/csi.proxmox.sinextra.dev/
+          type: DirectoryOrCreate
+        name: socket
+      - hostPath:
+          path: /var/lib/kubelet/plugins_registry/
+          type: Directory
+        name: registration
+      - hostPath:
+          path: /var/lib/kubelet
+          type: Directory
+        name: kubelet
+      - hostPath:
+          path: /dev
+          type: Directory
+        name: dev
+      - hostPath:
+          path: /sys
+          type: Directory
+        name: sys
+  updateStrategy:
+    type: RollingUpdate

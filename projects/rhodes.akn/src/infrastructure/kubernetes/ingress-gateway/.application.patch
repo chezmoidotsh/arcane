@@ -1,0 +1,17 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: Cilium Gateway API ingress gateway
+    - name: Category
+      value: Networking / Ingress
+    # -- Documentation & Resources
+    - name: Documentation
+      value: https://docs.cilium.io/en/latest/network/servicemap/gateway-api/
+
+  syncPolicy:
+    automated:
+      enabled: true

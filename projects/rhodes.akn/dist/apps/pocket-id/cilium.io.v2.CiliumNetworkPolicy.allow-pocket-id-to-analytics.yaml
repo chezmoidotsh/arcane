@@ -1,0 +1,27 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Pocket ID to send anonymous usage analytics to analytics.pocket-id.org.
+      This helps the open source project understand usage patterns and improve the software.
+      Only anonymous telemetry data is sent, no personal information is transmitted.
+  labels:
+    app.kubernetes.io/instance: pocket-id
+    app.kubernetes.io/name: pocket-id
+  name: allow-pocket-id-to-analytics
+  namespace: pocket-id
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: analytics.pocket-id.org
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+      serverNames:
+      - analytics.pocket-id.org
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: pocket-id

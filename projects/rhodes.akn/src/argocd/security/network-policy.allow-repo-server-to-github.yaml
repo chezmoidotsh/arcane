@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the ArgoCD repo-server to reach GitHub for cloning the arcane and
+      vault.kubernetes source repositories, and to exchange the GitHub App credentials
+      (argocd-repo-creds-github.chezmoi-sh) for an installation access token before cloning.
+  name: allow-argocd-repo-server-to-github
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-repo-server
+  egress:
+    - toFQDNs:
+        - matchName: github.com
+        - matchName: api.github.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

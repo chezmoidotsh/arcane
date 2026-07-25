@@ -1,0 +1,30 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows OpenBao pods to access the Kubernetes API server for the Kubernetes auth
+      method (TokenReview) and general cluster operations.
+  name: allow-openbao-to-kubernetes-api
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: vault
+      component: server
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+
+    # Allow access to API server via host network (common in Talos)
+    - toEntities:
+        - host
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP

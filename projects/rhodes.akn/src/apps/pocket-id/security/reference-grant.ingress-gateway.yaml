@@ -1,0 +1,17 @@
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Cilium Gateway from the ingress-gateway-system namespace to access the pocket-id service
+      to enable SSO access from the local network.
+  name: ingress-gateway-system-to-pocket-id
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: ingress-gateway-system
+  to:
+    - group: ""
+      kind: Service
+      name: pocket-id

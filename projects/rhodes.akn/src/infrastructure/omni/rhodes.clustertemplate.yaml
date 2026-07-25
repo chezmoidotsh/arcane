@@ -1,0 +1,150 @@
+# =============================================================================
+# Omni cluster template — rhodes.akn (Talos-on-Proxmox-VE).
+# =============================================================================
+#
+# Derived from catalog/omni/clustertemplates/base.yaml, following the same
+# pattern as projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml.
+# This is a STANDALONE FULL COPY — no kustomize overlays, because omnictl
+# rejects the apiVersion / metadata fields that kustomize requires. Edits are
+# made in place.
+#
+# rhodes.akn is the homelab's core-platform / hub cluster (OpenBao, Pocket-Id,
+# ArgoCD), provisioned as a Talos-on-Proxmox-VE VM through Omni, same as
+# lungmen.akn.
+#
+# Overrides relative to the base:
+#   Cluster.name                   rhodes-akn
+#   cluster.network.podSubnets     172.30.0.0/19   (ADR-014 / docs/network/vlans.md: rhodes = cluster ID 1)
+#   machine.kubelet.extraArgs.cloud-provider  external  (REQUIRED from day one — the
+#     Proxmox CCM silently no-ops without it, and providerID is immutable once a
+#     node registers; fixing this later means delete+recreate the node. See
+#     .agents/sessions/20260720-rhodes-cluster-bringup-planning.md.)
+#
+# NOTE: serviceSubnets (172.31.0.0/19) and clusterDNS (172.31.0.10) match the SHARED
+# defaults in the base template — all clusters share the same service CIDR for
+# ClusterMesh readiness (see ADR-014, vlans.md). Do not change them.
+#
+# Topology: 1 control-plane + 2 workers. Worker class is w1.large (4 vCPU /
+# 8 GiB each), not the lighter w1.medium — the rolling upgrade strategy below
+# (maxParallelism: 1) takes one worker down for a Talos reboot at a time, so
+# each worker alone must be able to carry the *entire* app set while its
+# sibling is down: ArgoCD, OpenBao + its single-instance CNPG cluster, and
+# Pocket-Id + its 2-instance CNPG cluster — plus the per-node infra DaemonSets
+# every worker already runs (Cilium, Proxmox CSI, ESO, cert-manager,
+# external-dns). Estimated combined app footprint is ~2.5-4.5 GiB (amiya.akn's
+# OpenBao and Pocket-Id requests are 256Mi and 256-512Mi respectively; ArgoCD
+# has no fixed request on amiya but is light at this scale) — w1.large's 8 GiB
+# leaves real headroom, not a bare fit. No HA/anti-affinity tuning needed to
+# make this safe: Pocket-Id tolerates node loss (stateless, 2 CNPG instances),
+# and OpenBao tolerates a short outage (single instance, no HA) — both just
+# need to fit on one node, not stay spread across two.
+#
+# CNI/extraManifests are pinned to f048d841523ce72a4b9153e8e1384efeb3e44d79,
+# reachable on `main` as of this writing — re-verify with
+# `git merge-base --is-ancestor <sha> origin/main` before `omnictl apply` if
+# this file has aged (see OMNI-20260629-03.sha-repin.md's squash-merge trap).
+#
+# Validate (offline, no Omni connectivity):
+#   omnictl cluster template validate -f <file>
+# Apply (requires OMNICONFIG from `mise run bao:login:admin` in chezmoi.sh):
+#   omnictl apply -f <file>
+#
+# Cross-references:
+#   catalog/omni/clustertemplates/base.yaml                     (reference base)
+#   projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml (sibling example)
+#   ADR-014  docs/decisions/014-network-topology.md             (CIDR / DNS decisions)
+#   docs/network/vlans.md                                       (VLAN 5 / SDN VNet layout, LB IP pool)
+#   docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md (bring-up procedure)
+#   catalog/omni/machineclasses/                                (machine class defs)
+# =============================================================================
+---
+kind: Cluster
+name: rhodes-akn
+kubernetes:
+  version: v1.36.2
+talos:
+  version: v1.13.7 # v-prefix mandatory for omnictl validate
+features:
+  diskEncryption: false # PVE VMs have no vTPM by default
+  enableWorkloadProxy: false
+  # Self-hosted Omni does not run the embedded discovery service (no
+  # --embedded-discovery-service-enabled flag), and KubeSpan is unused (native
+  # routing). Discovery is disabled entirely via the cluster-common patch below.
+  useEmbeddedDiscoveryService: false
+  backupConfiguration:
+    interval: 6h # requires etcd backup infra configured in Omni; offline validate passes
+systemExtensions:
+  - siderolabs/qemu-guest-agent # clean PVE ACPI shutdown/restart
+  - siderolabs/iscsi-tools # proxmox-csi-plugin
+  - siderolabs/util-linux-tools
+patches:
+  - name: dual-nic
+    inline:
+      machine:
+        network:
+          interfaces:
+            - interface: eth0 # vmbr1 trunk, NO IP — Proxmox tags VLAN 5; Cilium L2 ARP only
+            - interface: eth1 # talosnet SDN VNet (DHCP; MTU 1450 pre-set for future VXLAN migration)
+              dhcp: true
+              mtu: 1450
+  - name: machine-common
+    inline:
+      machine:
+        features:
+          hostDNS:
+            enabled: true
+            forwardKubeDNSToHost: true
+            resolveMemberNames: true
+        kubelet:
+          clusterDNS:
+            - 172.31.0.10 # Shared service CIDR default (all clusters, ClusterMesh-ready)
+          extraArgs:
+            rotate-server-certificates: "true" # enables kubelet-serving-cert-approver
+            # REQUIRED from day one — Proxmox CCM silently no-ops otherwise, and
+            # providerID is immutable post-registration (see header note above).
+            cloud-provider: external
+          extraConfig:
+            featureGates:
+              UserNamespacesSupport: true
+              ImageVolume: true
+        sysctls:
+          user.max_user_namespaces: "11255"
+  - name: cluster-common
+    inline:
+      cluster:
+        network:
+          cni:
+            name: custom
+            urls:
+              # TODO(rhodes.akn): repin to a commit reachable on `main` at apply time.
+              - https://raw.githubusercontent.com/chezmoidotsh/arcane/f048d841523ce72a4b9153e8e1384efeb3e44d79/catalog/talos/manifests/cilium/1.19.5-native.yaml
+          podSubnets:
+            - 172.30.0.0/19
+          serviceSubnets:
+            - 172.31.0.0/19 # Shared across all clusters (ClusterMesh-ready)
+        proxy:
+          disabled: true # Cilium kubeProxyReplacement=true replaces kube-proxy
+        discovery:
+          enabled: false # KubeSpan unused (native routing); embedded service not enabled in Omni — nodes join via the Kubernetes API
+        allowSchedulingOnControlPlanes: false # taint stays; only workloads with explicit CP tolerations run there (Cilium, o11y DaemonSets)
+        apiServer:
+          extraArgs:
+            feature-gates: UserNamespacesSupport=true,ImageVolume=true
+        extraManifests:
+          # TODO(rhodes.akn): repin to a commit reachable on `main` at apply time.
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/f048d841523ce72a4b9153e8e1384efeb3e44d79/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/f048d841523ce72a4b9153e8e1384efeb3e44d79/catalog/talos/manifests/metric-server/0.8.1.yaml
+---
+kind: ControlPlane
+machineClass:
+  name: c1.small # V2 dual-NIC (catalog/omni/machineclasses/c1.small.yaml)
+  size: 1 # single control-plane; c1.small is sized for etcd + API server only
+---
+kind: Workers
+name: workers
+machineClass:
+  name: w1.large # V2 dual-NIC (catalog/omni/machineclasses/w1.large.yaml)
+  size: 2 # sized to survive a one-at-a-time Talos reboot — see the sizing note at the top of this file
+updateStrategy:
+  rolling:
+    maxParallelism: 1 # one worker reboots at a time — the other alone must carry the full app set (see header)

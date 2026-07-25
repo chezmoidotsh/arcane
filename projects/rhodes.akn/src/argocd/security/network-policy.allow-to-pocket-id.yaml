@@ -1,0 +1,18 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the ArgoCD server to reach Pocket-ID OIDC endpoints at auth.chezmoi.sh, via both
+      FQDN (external path) and cluster entity (in-cluster Cilium Gateway LB), for the SSO login
+      configured in configs.cm.oidc.config.
+  name: allow-argocd-to-pocket-id
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-server
+  egress:
+    - toFQDNs:
+        - matchName: auth.chezmoi.sh
+    - toEntities:
+        - cluster

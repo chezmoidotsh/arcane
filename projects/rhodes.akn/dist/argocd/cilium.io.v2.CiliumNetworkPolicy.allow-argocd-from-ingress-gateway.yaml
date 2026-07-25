@@ -1,0 +1,22 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Cilium Gateway API to route traffic to the ArgoCD server UI/API.
+      Traffic proxied by Cilium Gateway API carries the reserved:ingress identity,
+      as per https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
+  name: allow-argocd-from-ingress-gateway
+  namespace: argocd
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-server
+  ingress:
+  - fromEntities:
+    - ingress
+    toPorts:
+    - ports:
+      - port: "8080"
+        protocol: TCP

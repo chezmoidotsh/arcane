@@ -1,0 +1,30 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the cert-manager controller to access the Kubernetes API server to watch and manage
+      Certificate, Issuer and other cert-manager custom resources cluster-wide.
+  name: allow-cert-manager-to-kubernetes-api
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: cert-manager
+      app.kubernetes.io/component: controller
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+
+    # Allow access to API server via host network (common in Talos)
+    - toEntities:
+        - host
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP

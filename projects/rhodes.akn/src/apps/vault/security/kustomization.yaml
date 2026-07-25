@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - network-policy.default-hardened.yaml
+  - network-policy.allow-from-ingress-gateway.yaml
+  - network-policy.allow-to-kubernetes-api.yaml
+  - network-policy.allow-to-lungmen-api.yaml
+  - network-policy.allow-to-pocket-id.yaml
+  - network-policy.allow-postgres-to-s3-backup.yaml
