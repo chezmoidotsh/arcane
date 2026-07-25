@@ -1,0 +1,15 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: kube-system
+
+helmCharts:
+  - repo: oci://ghcr.io/sergelogvinov/charts
+    name: proxmox-csi-plugin
+    # renovate: datasource=helm depName=proxmox-csi-plugin registryUrl=oci://ghcr.io/sergelogvinov/charts
+    version: 0.5.7
+
+    releaseName: proxmox-csi-plugin
+    namespace: kube-system
+
+    valuesFile: helmvalues/default.yaml

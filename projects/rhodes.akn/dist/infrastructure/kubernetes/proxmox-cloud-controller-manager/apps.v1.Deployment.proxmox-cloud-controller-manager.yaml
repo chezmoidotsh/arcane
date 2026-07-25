@@ -1,0 +1,116 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: proxmox-cloud-controller-manager
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: proxmox-cloud-controller-manager
+    app.kubernetes.io/version: v0.13.1
+    helm.sh/chart: proxmox-cloud-controller-manager-0.2.28
+  name: proxmox-cloud-controller-manager
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: proxmox-cloud-controller-manager
+      app.kubernetes.io/name: proxmox-cloud-controller-manager
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/config: d39d7ce6ef8d7420e539abd3deeae5dab34e8fc3fcbc9646c5a7878531fbaea7
+      labels:
+        app.kubernetes.io/instance: proxmox-cloud-controller-manager
+        app.kubernetes.io/name: proxmox-cloud-controller-manager
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/instance: proxmox-cloud-controller-manager
+                  app.kubernetes.io/name: proxmox-cloud-controller-manager
+              topologyKey: topology.kubernetes.io/zone
+            weight: 1
+      containers:
+      - args:
+        - --v=2
+        - --cloud-provider=proxmox
+        - --cloud-config=/etc/proxmox/config.yaml
+        - --controllers=cloud-node,cloud-node-lifecycle
+        - --leader-elect-resource-name=cloud-controller-manager-proxmox
+        - --use-service-account-credentials
+        - --secure-port=10258
+        - --authorization-always-allow-paths=/healthz,/livez,/readyz,/metrics
+        env:
+        - name: SERVICE_ACCOUNT
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.serviceAccountName
+        image: ghcr.io/sergelogvinov/proxmox-cloud-controller-manager:v0.13.1
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: metrics
+            scheme: HTTPS
+          initialDelaySeconds: 20
+          periodSeconds: 30
+          timeoutSeconds: 5
+        name: proxmox-cloud-controller-manager
+        ports:
+        - containerPort: 10258
+          name: metrics
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /etc/proxmox
+          name: cloud-config
+          readOnly: true
+      enableServiceLinks: false
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      priorityClassName: system-cluster-critical
+      securityContext:
+        fsGroup: 10258
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 10258
+        runAsNonRoot: true
+        runAsUser: 10258
+      serviceAccountName: proxmox-cloud-controller-manager
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      - effect: NoSchedule
+        key: node.cloudprovider.kubernetes.io/uninitialized
+        operator: Exists
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/instance: proxmox-cloud-controller-manager
+            app.kubernetes.io/name: proxmox-cloud-controller-manager
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: DoNotSchedule
+      volumes:
+      - name: cloud-config
+        secret:
+          defaultMode: 416
+          secretName: proxmox-cloud-controller-manager

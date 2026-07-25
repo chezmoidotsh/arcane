@@ -1,0 +1,51 @@
+---
+# proxmox-csi-plugin — dynamic provisioning of block volumes on the Proxmox
+# hypervisor side. Volumes are decoupled from VM lifecycle (survive VM
+# rebuilds, reattach to any VM on the same Proxmox node). Replaces Longhorn
+# on Proxmox-based clusters (see docs/experiments/20260617-proxmox-csi-ccm/,
+# conclusion #9).
+#
+# TODO(rhodes.akn): storageClass entries below are copied verbatim from the
+# validated experiment (single-node pve-01, `nvme-lvm` storage). Confirm the
+# Proxmox storage backend name still applies to rhodes' actual VM placement
+# before relying on it.
+
+config:
+  clusters:
+    - url: https://pve-01.pve.chezmoi.sh:8006/api2/json
+      token_id: "kubernetes-csi@pve!csi"
+      # TODO(rhodes.akn): token_secret intentionally blank — Pulumi-owned,
+      # same as proxmox-cloud-controller-manager/helmvalues/default.yaml,
+      # including the same concrete gap (this chart also bakes config into
+      # its own release Secret at Helm-render time). See that file's TODO for
+      # the full rationale.
+      token_secret: ""
+      region: homelab
+
+storageClass:
+  - name: proxmox-lvmthin-ext4
+    storage: nvme-lvm
+    reclaimPolicy: Delete
+    fstype: ext4
+    cache: writethrough
+    ssd: false
+    annotations:
+      storageclass.kubernetes.io/is-default-class: "true"
+  - name: proxmox-lvmthin-xfs
+    storage: nvme-lvm
+    reclaimPolicy: Delete
+    fstype: xfs
+    cache: directsync
+    ssd: false
+
+controller:
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      effect: NoSchedule
+
+node:
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      effect: NoSchedule

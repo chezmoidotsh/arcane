@@ -1,0 +1,18 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- app metadata
+    - name: desc
+      val: Kubernetes operator integrating external secret management systems
+    - name: Category
+      val: Security / Secrets
+    # -- Documentation & Resources
+    - name: Documentation
+      val: https://external-secrets.io/latest/
+    - name: GitHub repo
+      val: https://github.com/external-secrets/external-secrets
+  syncPolicy:
+    automated:
+      enabled: true
