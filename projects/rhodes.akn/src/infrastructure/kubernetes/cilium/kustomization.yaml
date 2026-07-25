@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
   - default.l2announcementpolicy.yaml
   - primary.ippool.yaml
+  - security/
 
 helmCharts:
   - repo: https://helm.cilium.io/

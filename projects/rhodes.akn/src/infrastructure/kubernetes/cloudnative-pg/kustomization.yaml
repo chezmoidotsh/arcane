@@ -18,6 +18,7 @@ resources:
     https://raw.githubusercontent.com/cloudnative-pg/plugin-barman-cloud/e0c8b64470cc31f36b0511b80bbac6ecaa8bd283/manifest.yaml
   - # Configure defaults for CloudNativePG
     ../../../../../../catalog/kubernetes/cloudnative-pg/kustomize
+  - security/
 
 images:
   - name: ghcr.io/cloudnative-pg/cloudnative-pg

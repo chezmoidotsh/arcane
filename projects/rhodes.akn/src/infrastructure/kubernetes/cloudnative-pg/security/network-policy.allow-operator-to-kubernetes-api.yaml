@@ -1,0 +1,20 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the CloudNative-PG operator to access the Kubernetes API server to watch and
+      reconcile Cluster, Backup and other CNPG custom resources cluster-wide. The existing
+      cnpg.io/cluster-scoped ClusterwideNetworkPolicy (allow-cnpg-to-kubernetes-api) does not
+      cover this pod: that label is only set on managed Postgres instance pods, not on the
+      operator's own deployment.
+  name: allow-operator-to-kubernetes-api
+  namespace: cloudnative-pg-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: cloudnative-pg
+  egress:
+    - toEntities:
+        - kube-apiserver

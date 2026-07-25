@@ -3,6 +3,6 @@ kind: Kustomization
 
 resources:
   - network-policy.default-hardened.yaml
-  - network-policy.allow-external-secrets-to-kubernetes-api.yaml
-  - network-policy.allow-external-secrets-to-vault.yaml
+  - network-policy.allow-operator-to-kubernetes-api.yaml
+  - network-policy.allow-operator-to-cnpg-clusters.yaml
   - network-policy.allow-webhook-from-kubernetes-api.yaml

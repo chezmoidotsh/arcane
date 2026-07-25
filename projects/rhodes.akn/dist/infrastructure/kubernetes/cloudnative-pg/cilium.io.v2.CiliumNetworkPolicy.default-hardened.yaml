@@ -1,0 +1,35 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Default hardened network policy for the cloudnative-pg-system namespace that implements a
+      secure baseline by denying all traffic except explicitly allowed connections. Permits
+      intra-namespace communication (operator <-> barman-cloud plugin) and DNS resolution to
+      kube-system, while blocking all other traffic by default. Cross-namespace access to/from
+      CNPG Cluster pods and the Kubernetes API is granted by the other policies in this
+      directory, not here.
+  name: default-hardened
+  namespace: cloudnative-pg-system
+spec:
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: kube-system
+        k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+      rules:
+        dns:
+        - matchPattern: '*'
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: cloudnative-pg-system
+  endpointSelector: {}
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: cloudnative-pg-system
