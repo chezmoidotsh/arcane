@@ -135,7 +135,7 @@ yq = "latest"       # YAML/JSON processor for configuration file manipulation
 # Tools supporting development workflows and documentation generation
 
 "aqua:terrastruct/d2" = "latest" # Diagram-as-code tool for generating architecture visualizations
-"npm:ulid-cli" = "latest"        # ULID generator for unique identifiers in distributed systems
+"cargo:ulid-cli" = "latest"      # ULID generator for unique identifiers in distributed systems
 "ubi:runmedev/runme" = "latest"  # Interactive markdown execution tool for runbooks and documentation
 gum = "latest"                   # Terminal UI framework for interactive scripts and prompts
 node = "24.16.0"                 # JavaScript runtime for running Node-based tools and scripts
