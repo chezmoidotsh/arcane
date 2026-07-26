@@ -43,7 +43,7 @@ in
     # renovate: datasource=github-releases depName=siderolabs/omni-infra-provider-proxmox
     version = mkOption {
       type = types.str;
-      default = "v0.1.0";
+      default = "v0.2.0";
       description = "Release version to fetch from GitHub.";
     };
 
@@ -51,8 +51,8 @@ in
       type = types.attrsOf types.str;
       description = "SRI hashes keyed by system. Bump alongside version.";
       default = {
-        "x86_64-linux" = "sha256-8FLlc+oBgC1vGuGNaHnvLQYLzIS6HO8M5bzboNbzr0k=";
-        "aarch64-linux" = "sha256-rGhsjR4OjhkPd4vrxgKjC+03U/5Cyd6KP9iFxwfcm/M=";
+        "x86_64-linux" = "sha256-8ZyKANwEOw+cEhAqCkSxcvtwdqtw2cA0eAnnXLwuM3I=";
+        "aarch64-linux" = "sha256-Spid0K7IgN0GrZ6AMUzqCOEx7dCsvjdGXSaJeBPkOyM=";
       };
     };
 
