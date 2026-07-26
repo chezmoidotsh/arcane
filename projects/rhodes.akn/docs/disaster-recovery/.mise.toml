@@ -1,34 +1,21 @@
 # =============================================================================
 # rhodes.akn disaster recovery — Mise configuration
 # =============================================================================
-# Exposes convenience tasks for the mechanical, low-risk parts of
-# openbao.md / pocket-id.md: restoring the three bootstrap secrets (SOPS,
-# Pulumi-managed S3 backup creds, ESO-generated PG creds), finding the latest
-# S3 backup (delegates to the repo-wide `cnpg:backup:latest` file task —
+# Exposes convenience tasks for the mechanical, low-risk parts of openbao.md /
+# pocket-id.md that are more than a couple of commands: finding the latest S3
+# backup (delegates to the repo-wide `cnpg:backup:latest` file task —
 # .mise/tasks/cnpg/backup/latest, generic across any CNPG cluster, not
 # rhodes-specific), and patching a Cluster manifest's recovery source.
 #
 # Deliberately NOT automated: `kubectl apply` of the patched Cluster manifest,
-# or of any other manifest that mutates the cluster. Those stay manual,
-# explicit steps in the procedure documents themselves.
+# restoring bootstrap secrets, or of any other manifest that mutates the
+# cluster. Those stay manual, explicit steps in the procedure documents
+# themselves — they're only ever a couple of commands, not worth wrapping.
 # =============================================================================
 
 # -----------------------------------------------------------------------------
 # OpenBao Disaster Recovery Tasks
 # -----------------------------------------------------------------------------
-
-[tasks."dr:openbao:secrets"]
-description = "Restore the vault namespace's three bootstrap secrets (SOPS, Pulumi-managed S3 creds, ESO-generated PG creds)."
-usage = '''
-arg "<context>" help="Kubernetes context for the target cluster"
-complete "context" run="kubectl config get-contexts -o name"
-'''
-run = '''
-kubectl --context "$usage_context" create namespace vault --dry-run=client -o yaml | kubectl --context "$usage_context" apply -f -
-kustomize build --enable-alpha-plugins --enable-exec ../../src/apps/vault/sops | kubectl --context "$usage_context" --namespace vault apply -f -
-(cd ../../src/infrastructure/pulumi && pulumi up --refresh --parallel 15)
-kubectl --context "$usage_context" apply -f ../../src/apps/vault/database.externalsecret.yaml
-'''
 
 [tasks."dr:openbao:backup:latest"]
 description = "Print the latest openbao-database backup serverName on S3."
@@ -59,19 +46,6 @@ depends = [
 # -----------------------------------------------------------------------------
 # Pocket-Id Disaster Recovery Tasks
 # -----------------------------------------------------------------------------
-
-[tasks."dr:pocket-id:secrets"]
-description = "Restore the pocket-id namespace's three bootstrap secrets (SOPS, Pulumi-managed S3 creds, ESO-generated PG creds)."
-usage = '''
-arg "<context>" help="Kubernetes context for the target cluster"
-complete "context" run="kubectl config get-contexts -o name"
-'''
-run = '''
-kubectl --context "$usage_context" create namespace pocket-id --dry-run=client -o yaml | kubectl --context "$usage_context" apply -f -
-kustomize build --enable-alpha-plugins --enable-exec ../../src/apps/pocket-id/sops | kubectl --context "$usage_context" --namespace pocket-id apply -f -
-(cd ../../src/infrastructure/pulumi && pulumi up --refresh --parallel 15)
-kubectl --context "$usage_context" apply -f ../../src/apps/pocket-id/database.externalsecret.yaml
-'''
 
 [tasks."dr:pocket-id:backup:latest"]
 description = "Print the latest Pocket-Id backup serverName on S3."

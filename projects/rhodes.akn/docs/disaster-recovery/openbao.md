@@ -1,18 +1,8 @@
 # OpenBao Disaster Recovery
 
 This document covers restoring OpenBao's state onto a **new** Kubernetes cluster after the cluster that hosted it
-(`rhodes.akn`) has been lost and rebuilt from scratch. It assumes the new cluster already exists through CNI/CSI/CCM,
-the CNPG operator + `barman-cloud.cloudnative-pg.io` plugin, and External Secrets Operator — see
-[OMNI-20260721-00](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md). ArgoCD is **not**
-assumed to exist yet: per `rhodes.akn`'s bring-up order, ArgoCD bootstraps last, so every step below is a manual
-`kubectl apply`, not a GitOps sync.
-
-OpenBao backs every other cluster's secret delivery
-([ADR-002](../../../../docs/decisions/002-openbao-secrets-topology.md),
-[ADR-003](../../../../docs/decisions/003-openbao-path-naming-conventions.md),
-[ADR-004](../../../../docs/decisions/004-openbao-policy-naming-conventions.md)) and Vault UI/CLI admin access for the
-whole homelab — of every disaster-recovery procedure in this repo, this is one of the highest-blast-radius (Pocket-Id,
-its only peer in that respect, is covered separately). Read it end to end before running anything.
+(`rhodes.akn`) has been lost and rebuilt from scratch — see [docs/disaster-recovery/README.md](README.md) for
+prerequisites and where this fits in the full recovery chain.
 
 This document covers restoring a **previously-initialized** instance whose storage (all mounts, policies, roles, auth
 backends, secrets) is restored from backup and arrives already configured — there is no `bao operator init`, no
@@ -71,8 +61,10 @@ Before starting, ensure the following tools are installed and configured: `kubec
 
 You must also have:
 
-- The new cluster up through CNI/CSI/CCM, CNPG operator + `barman-cloud.cloudnative-pg.io` plugin, and ESO (see
-  [OMNI-20260721-00](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md)). No ArgoCD required.
+- The new cluster up through CNI/CSI/CCM (see
+  [OMNI-20260721-00](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md)) and the CNPG
+  operator + `barman-cloud.cloudnative-pg.io` plugin and ESO deployed (see [README.md](README.md) Step 2). No ArgoCD
+  required.
 - `kubectl` access to the new cluster with permission to create namespaces and manage resources cluster-wide (RBAC
   bindings are part of what's restored) — configured per `OMNI-20260721-00`'s kubeconfig retrieval step.
 - `s3cmd`, `kustomize`, `ksops` on PATH (`s3cmd` needs no config file; credentials are passed as flags in each command
@@ -91,30 +83,18 @@ You must also have:
 
 ## Step 1 — Restore the `vault` namespace's bootstrap secrets
 
-Three secrets, three different sources — none of them Vault, all for the same chicken-and-egg reason (OpenBao's own
-storage backend is the Postgres cluster these credentials unlock):
-
-> [!TIP]
->
-> `mise run dr:openbao:secrets -- <CLUSTER_CONTEXT>` runs the commands below in one call.
+The `vault` namespace and `cnpg-backup-credentials` already exist ([README.md](README.md) Step 3). Two secrets left,
+neither from Vault:
 
 ```sh
-# Namespace isn't created by any manifest in this app — create it first
-kubectl --context <CLUSTER_CONTEXT> create namespace vault \
-  --dry-run=client -o yaml | kubectl --context <CLUSTER_CONTEXT> apply -f -
-
 # openbao-softhsm-tokens: the one secret that must stay SOPS-committed (see the
 # [!IMPORTANT] callout below — there is no fallback if this is ever lost)
 kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/apps/vault/sops \
   | kubectl --context <CLUSTER_CONTEXT> apply -f -
 
-# cnpg-backup-credentials: written directly into this namespace by the
-# rhodes-akn-infra Pulumi stack — not gated by the `recovery` flag, safe to run here
-(cd projects/rhodes.akn/src/infrastructure/pulumi && pulumi up --refresh --parallel 15)
-
 # openbao-database-credentials: generated locally by an ESO Generator, no Vault
 # involved — requires ESO already deployed (see docs/disaster-recovery/README.md
-# Step 3, done before this document)
+# Step 2, done before this document)
 kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/src/apps/vault/database.externalsecret.yaml
 ```
 
@@ -282,17 +262,14 @@ this instance's operators ever change.
 
 ## History
 
-- _2026-07-23_: Initial creation, ahead of any actual need — written as a proactive DR exercise before the amiya.akn →
-  rhodes.akn migration, to surface gaps (no recovery keys, no root token) before they matter in a real incident. Steps 5
-  and 6 have not yet been exercised against a real cluster recreation.
-- _2026-07-24_: Peer review pass — fixed the SSO hostname reference, added the Gateway/TLS dependency callouts and a
-  port-forward path for Option A/Step 4 (Gateway/cert-manager may not be up yet at this point in a real recovery), added
-  `openbao:*` mise tasks for the mechanical parts of Steps 1-2, linked cross-references throughout.
-- _2026-07-24_: GitHub Copilot PR review — unescaped `\[!TYPE]` callout markers so they actually render as GitHub
-  alerts.
-- _2026-07-25_: Moved OpenBao's own CNPG role password (`openbao-database-credentials`) off SOPS onto a local ESO
-  `Generator`/`ExternalSecret` pair (`database.externalsecret.yaml`), and the S3 backup credentials
-  (`cnpg-backup-credentials`) off SOPS onto a direct Pulumi-managed `Secret` — both still never source from the real
-  Vault (same chicken-and-egg reasoning as the SoftHSM tokens), only their origin changed. Reordered Step 1 to reflect
-  the three different sources; requires ESO deployed first (see `README.md` Step 3, now ahead of this document in the
-  chain).
+- _2026-07-23_: Initial creation, ahead of any actual need — proactive DR exercise before the amiya.akn → rhodes.akn
+  migration. Steps 5-6 not yet exercised against a real cluster recreation.
+- _2026-07-24_: Peer review — fixed the SSO hostname, added Gateway/TLS dependency callouts and a port-forward path for
+  Option A/Step 4, added `openbao:*` mise tasks, fixed callout markers.
+- _2026-07-25_: Moved OpenBao's own CNPG role password and S3 backup credentials off SOPS — the former to a local ESO
+  `Generator`, the latter to a direct Pulumi-managed `Secret` — neither ever sourced from the real Vault, only their
+  origin changed. Reordered Step 1 accordingly; requires ESO deployed first.
+- _2026-07-26_: Moved the `vault` namespace creation and `pulumi up` call out of Step 1 — both now happen once, for this
+  document and `pocket-id.md`, in `README.md`'s Step 3.
+- _2026-07-26_ (review follow-up): Trimmed the intro to a single sentence pointing at `README.md` — it duplicated
+  prerequisites already listed there. Removed the `dr:openbao:secrets` mise task — two commands, not worth a wrapper.
