@@ -7,27 +7,31 @@
 # config.clusters is intentionally left unset (chart default: []), which
 # also keeps the chart from rendering its own Secret/proxmox-cloud-controller-
 # manager (templates/secrets.yaml guards on `len .Values.config.clusters`).
-# The Proxmox API token is Pulumi-owned end-to-end (issue #370's bring-up
-# plan, .agents/sessions/20260720-rhodes-cluster-bringup-planning.md decision
-# #1: Pulumi already needs privileged kubeconfig access to deliver it, so
-# routing it through Vault/ESO would add indirection with no confidentiality
-# benefit). That Secret is created directly by
-# projects/rhodes.akn/src/infrastructure/pulumi/stack/proxmox.ts (via a
-# StackReference into chezmoi.sh's stack/proxmox/access.ts), matching
-# upstream's own secrets.yaml shape (verified against
+# The Proxmox API token is Pulumi-owned end-to-end: Pulumi already needs
+# privileged kubeconfig access to deliver it, so routing it through
+# Vault/ESO would add indirection with no confidentiality benefit. That
+# Secret is created directly by
+# projects/rhodes.akn/src/infrastructure/pulumi/stack/proxmox.ts, which
+# self-provisions the kubernetes-cloud-provider@pve identity against pve-01
+# (via catalog/pulumi/components/proxmox-cluster-identity, authenticated with
+# a delegated credential minted by chezmoi.sh's stack/proxmox/access.ts,
+# scoped to /access only) rather than consuming a token minted by that stack.
+# proxmox-csi-plugin shares this same Secret — see that chart's own
+# helmvalues comment for the merged-identity trade-off. Matches upstream's
+# own secrets.yaml shape (verified against
 # https://artifacthub.io/packages/helm/proxmox-ccm/proxmox-cloud-controller-manager?modal=template&template=secrets.yaml):
 #
 #   apiVersion: v1
 #   kind: Secret
 #   metadata:
-#     name: proxmox-cloud-controller-manager
+#     name: proxmox-cloud-provider
 #     namespace: proxmox-system
 #   data:
 #     config.yaml: <base64 of the YAML below>
 #
 #   clusters:
 #     - url: https://pve-01.pve.chezmoi.sh:8006/api2/json
-#       token_id: "kubernetes-ccm@pve!ccm"
+#       token_id: "kubernetes-cloud-provider@pve!cloud-provider"
 #       token_secret: "<real token>"
 #       region: homelab
 #   features:
@@ -35,7 +39,7 @@
 #
 # existingConfigSecret/existingConfigSecretKey below point the Deployment at
 # that Pulumi-owned Secret instead.
-existingConfigSecret: proxmox-cloud-controller-manager
+existingConfigSecret: proxmox-cloud-provider # trunk-ignore(checkov/CKV_SECRET_6): false positive; this is a reference to an existing secret, not a secret value.
 existingConfigSecretKey: config.yaml
 
 enabledControllers:

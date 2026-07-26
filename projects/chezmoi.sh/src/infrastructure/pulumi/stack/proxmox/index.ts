@@ -6,8 +6,6 @@ import "./sdn";
 import "./storage";
 
 export {
-	kubernetesCcmTokenId,
-	kubernetesCcmTokenSecret,
-	kubernetesCsiTokenId,
-	kubernetesCsiTokenSecret,
+	rhodesAknBootstrapTokenId,
+	rhodesAknBootstrapTokenSecret,
 } from "./access";

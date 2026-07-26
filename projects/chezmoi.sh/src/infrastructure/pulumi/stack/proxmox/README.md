@@ -15,14 +15,14 @@ administrative config objects (ACLs, SDN, backup-storage registration, resource 
 
 ## What's managed here
 
-| File/Folder   | Responsibility                                                                                                                                                                                                                          |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `access.ts`   | Custom roles (`Exporter`, `KubernetesCCM`, `KubernetesCSI`, `OmniProvider`, `OmniProviderNode`), the `prometheus@pve`, `kubernetes-ccm@pve`, `kubernetes-csi@pve`, `omni@pve` service accounts, their API tokens, and every ACL binding |
-| `sdn.ts`      | The `pvenet` SDN zone, `talosnet` VNet + subnet (shared node-traffic network for all Talos/Omni clusters), and the SDN apply step                                                                                                       |
-| `pools.ts`    | The `core` and `talos` resource pools, and `talos`'s storage-level pool membership (`local`, `nvme-lvm`)                                                                                                                                |
-| `storage.ts`  | Registers Proxmox VE's `pbs`-type storage entry against the datastore [`../proxmox-backup-server/`](../proxmox-backup-server/) manages                                                                                                  |
-| `acme.ts`     | The node's ACME account (`default`) and Cloudflare DNS-01 plugin, plus the scoped Cloudflare token that plugin uses                                                                                                                     |
-| `firewall.ts` | The `talos` cluster Security Group — a baseline firewall policy every Omni-managed Talos VM can opt into                                                                                                                                |
+| File/Folder   | Responsibility                                                                                                                                                                        |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `access.ts`   | Custom roles (`Exporter`, `OmniProvider`, `OmniProviderNode`), the `prometheus@pve`, `rhodes-akn-bootstrap@pve`, `omni@pve` service accounts, their API tokens, and every ACL binding |
+| `sdn.ts`      | The `pvenet` SDN zone, `talosnet` VNet + subnet (shared node-traffic network for all Talos/Omni clusters), and the SDN apply step                                                     |
+| `pools.ts`    | The `core` and `talos` resource pools, and `talos`'s storage-level pool membership (`local`, `nvme-lvm`)                                                                              |
+| `storage.ts`  | Registers Proxmox VE's `pbs`-type storage entry against the datastore [`../proxmox-backup-server/`](../proxmox-backup-server/) manages                                                |
+| `acme.ts`     | The node's ACME account (`default`) and Cloudflare DNS-01 plugin, plus the scoped Cloudflare token that plugin uses                                                                   |
+| `firewall.ts` | The `talos` cluster Security Group — a baseline firewall policy every Omni-managed Talos VM can opt into                                                                              |
 
 ### Intentionally not managed via Pulumi
 
@@ -52,22 +52,28 @@ administrative config objects (ACLs, SDN, backup-storage registration, resource 
 
 ## Access model
 
-Four service identities, each scoped to the minimum the manual `pveum`/`pvesh` recipes they replace actually granted
+Three service identities, each scoped to the minimum the manual `pveum`/`pvesh` recipes they replace actually granted
 (see `docs/experiments/20260617-proxmox-csi-ccm/README.md` and
 `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/README.md`, "Proxmox user and role
 setup" — the recipes this stack codifies):
 
 - **`prometheus@pve`** — read-only cluster audit (`Exporter` role at `/`) for `pve-exporter` monitoring.
-- **`kubernetes-ccm@pve`** — node/VM audit only, scoped to `/nodes/pve` and `/pool/talos`. No VM lifecycle privileges —
-  the CCM only labels nodes and detects VM deletion, never creates or modifies VMs.
-- **`kubernetes-csi@pve`** — VM/disk lifecycle scoped to `/pool/talos` only, for dynamic volume provisioning.
-- **`omni@pve`** — the widest identity (VM allocate/clone/config/power), still scoped to `/pool/talos` plus
+- **`rhodes-akn-bootstrap@pve`** — `Administrator` scoped to `/access` only (users, roles, ACLs, tokens — nothing on
+  VMs, storage or SDN). A delegation credential, not a service identity for a workload: `rhodes.akn`'s own Pulumi
+  program (`projects/rhodes.akn/src/infrastructure/pulumi/stack/proxmox.ts`) uses it to self-provision its own
+  `kubernetes-cloud-provider@pve` identity (CCM+CSI, merged) directly against `pve-01`, via
+  `catalog/pulumi/components/proxmox-cluster-identity`, instead of this stack minting that token on its behalf. This
+  stack no longer owns any Kubernetes CCM/CSI identity for that reason — see that component's README for the full
+  pattern, and this stack's `git log` for the identities/roles that used to live here (`kubernetes-ccm@pve`,
+  `kubernetes-csi@pve`, `KubernetesCCM`, `KubernetesCSI`).
+- **`omni@pve`** — the widest identity (VM allocate/clone/config/power), scoped to `/pool/talos` plus
   `Sys.AccessNetwork`/`Sys.Audit` on `/nodes/pve-01` and `SDN.Use` on both bridges it attaches Talos VM NICs to.
   Authenticates with a password (`PROXMOX_PASSWORD`), not a token — `access.ts` never sets or reads that password, so it
   stays untouched by this stack.
 
-No credential here can act outside `/pool/talos` on VM/LXC resources, and none has any privilege on the `core` pool (the
-platform LXCs this stack itself indirectly depends on via `oci-registry`/`omni`/`o11y`).
+No credential here can act outside `/pool/talos` on VM/LXC resources, `/access` on permission management, and none has
+any privilege on the `core` pool (the platform LXCs this stack itself indirectly depends on via
+`oci-registry`/`omni`/`o11y`).
 
 ## Bootstrapping
 
@@ -194,9 +200,11 @@ One-time setup before the first `pulumi up` against this stack:
    rather than recreated. The three ACME imports require the username/password credential from step 1: they fail under
    an API token no matter how it is scoped, the same way `pulumi up` would.
 
-   Only two things are genuinely new: the Cloudflare DNS-01 token in `acme.ts` (a deliberate rotation of the
-   hand-configured one) and `firewall.ts`'s `talos` Security Group — no Security Group was in use on this host before
-   (see `firewall.ts`'s own comment for the state it replaces).
+   Genuinely new, not imported: the Cloudflare DNS-01 token in `acme.ts` (a deliberate rotation of the hand-configured
+   one), `firewall.ts`'s `talos` Security Group (no Security Group was in use on this host before — see `firewall.ts`'s
+   own comment for the state it replaces), and `rhodes-akn-bootstrap@pve` (its user, token, and `/access`-scoped ACL) —
+   created specifically to let `rhodes.akn`'s own Pulumi program self-provision its Kubernetes CCM/CSI identity; no
+   equivalent existed before that change.
 
 5. **Run `pulumi up`** (see "Running Pulumi commands" below). The Cloudflare DNS-01 token in `acme.ts` rotates on first
    apply — the previously hand-configured long-lived token stops being used by the `cloudflare` ACME plugin at that

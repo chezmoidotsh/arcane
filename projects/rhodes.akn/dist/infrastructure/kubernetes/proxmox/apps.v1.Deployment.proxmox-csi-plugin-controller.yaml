@@ -188,4 +188,4 @@ spec:
           items:
           - key: config.yaml
             path: config.yaml
-          secretName: proxmox-csi-plugin
+          secretName: proxmox-cloud-provider

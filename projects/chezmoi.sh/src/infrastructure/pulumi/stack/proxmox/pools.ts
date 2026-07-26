@@ -11,9 +11,10 @@ export const corePool = new proxmox.VirtualEnvironmentPool("pve-pool-core", {
 });
 
 // -----------------------------------------------------------------------------
-// talos -- Omni-managed Talos VMs; the ACL boundary the omni@pve,
-// kubernetes-ccm@pve, and kubernetes-csi@pve identities are scoped to (see
-// ./access.ts). Never add a non-Kubernetes VM/LXC to this pool -- pool
+// talos -- Omni-managed Talos VMs; the ACL boundary omni@pve is scoped to
+// (see ./access.ts), and that rhodes.akn's own kubernetes-cloud-provider@pve
+// identity (self-provisioned, see stack/proxmox.ts in that project) is
+// scoped to as well. Never add a non-Kubernetes VM/LXC to this pool -- pool
 // membership is exactly what grants those identities access.
 // -----------------------------------------------------------------------------
 export const talosPool = new proxmox.VirtualEnvironmentPool("pve-pool-talos", {
