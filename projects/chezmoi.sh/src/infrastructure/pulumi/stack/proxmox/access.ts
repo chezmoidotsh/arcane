@@ -44,6 +44,41 @@ export const omniProviderRole = new proxmox.VirtualEnvironmentRole(
 	},
 );
 
+// VM.Config.* checks during VM creation have no pool fallback (unlike
+// VM.Allocate, which accepts /pool/{pool}) -- they're checked strictly
+// against /vms/{vmid}. This role exists only to satisfy those create-time
+// checks; it deliberately excludes VM.Clone/VM.Console/VM.PowerMgmt since
+// granting those at /vms (unscoped to any pool) would reach every VM on the
+// host, not just talos. Lifecycle operations on existing VMs stay covered by
+// omniProviderRole at /pool/talos, once VM membership applies.
+//
+// VM.Audit *is* included despite that same host-wide reach: the infra
+// provider polls `/nodes/{node}/qemu/{vmid}/status/current` for VMIDs it has
+// just allocated but that Proxmox hasn't assigned to /pool/talos yet (pool
+// membership is a side effect of a *successful* create, same as the
+// VM.Config.* comment above) -- without it, that poll 403s and the provider
+// can never confirm a VM it just created, or even notice a leftover/orphaned
+// VMID from a previously failed provision. See rhodes-akn incident: stuck
+// MachineRequests reconciling against leftover VMIDs 106/107 with no pool
+// membership, indistinguishable from "not authorized" until this was added.
+export const omniProviderCreateRole = new proxmox.VirtualEnvironmentRole(
+	"pve-role-omni-provider-create",
+	{
+		roleId: "OmniProviderCreate",
+		privileges: [
+			"VM.Allocate",
+			"VM.Audit",
+			"VM.Config.CDROM",
+			"VM.Config.CPU",
+			"VM.Config.Disk",
+			"VM.Config.HWType",
+			"VM.Config.Memory",
+			"VM.Config.Network",
+			"VM.Config.Options",
+		],
+	},
+);
+
 export const omniProviderNodeRole = new proxmox.VirtualEnvironmentRole(
 	"pve-role-omni-provider-node",
 	{
@@ -155,6 +190,21 @@ export const omniPoolAcl = new proxmox.Acl("pve-acl-omni-pool", {
 	path: "/pool/talos",
 	userId: omniUser.userId,
 	roleId: omniProviderRole.roleId,
+	propagate: true,
+});
+
+// VM.Config.* privileges are checked against `/vms/<vmid>`, not
+// `/pool/talos` -- a brand-new VM isn't a member of the pool yet when
+// Proxmox runs these checks during creation (pool membership is a side
+// effect of a *successful* create, not a precondition), so the pool-scoped
+// ACL above never applies at create time. Without this, `pveum` returns 403
+// on VM.Config.Options the moment Omni tries to create a Talos VM. Scoped to
+// omniProviderCreateRole (not the full omniProviderRole) since /vms reaches
+// every VM on the host, not just talos.
+export const omniVmsAcl = new proxmox.Acl("pve-acl-omni-vms", {
+	path: "/vms",
+	userId: omniUser.userId,
+	roleId: omniProviderCreateRole.roleId,
 	propagate: true,
 });
 
