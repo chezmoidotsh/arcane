@@ -39,7 +39,7 @@ in
     # renovate: datasource=github-releases depName=siderolabs/omni
     version = mkOption {
       type = types.str;
-      default = "v1.8.2";
+      default = "v1.9.3";
       description = "Omni release version to fetch from GitHub.";
     };
 
@@ -47,8 +47,8 @@ in
       type = types.attrsOf types.str;
       description = "SRI hashes for the Omni binary keyed by system. Bump alongside version.";
       default = {
-        "x86_64-linux" = "sha256-IwchEEK64VqmDbRaxB1URpFagj/eYFvjDPyyF3IXRdY=";
-        "aarch64-linux" = "sha256-pHpPzFteYSsQL1a5dGRN09Xcojg72J+mogUp1EX55/A=";
+        "x86_64-linux" = "sha256-DZLlr5vpJ47l3152yN0UYBBkpbS3e4scO6Z5+JUmNC0=";
+        "aarch64-linux" = "sha256-e6mQwTo/rXNzAkuCGVBerqyjzr4I0VNCbcCQPKF7pbU=";
       };
     };
 
