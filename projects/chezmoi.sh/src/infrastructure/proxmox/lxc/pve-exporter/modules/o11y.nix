@@ -18,7 +18,7 @@
 # journal still reaches o11y alongside syslog. Both fragments expose a *_to_o11y
 # component consumed by the out_logs sink.
 #
-# hostsOverride resolves o11y.chezmoi.sh to the Proxmox bridge IP (10.0.0.252).
+# hostsOverride resolves o11y.chezmoi.sh to the Proxmox bridge IP (10.0.0.22).
 { pveHost, ... }: {
   catalog.lxcAgent = {
     enable = true;
@@ -59,7 +59,7 @@
     nodeExporter.enable = true;
 
     hostsOverride = {
-      "10.0.0.252" = [ "o11y.chezmoi.sh" ];
+      "10.0.0.22" = [ "o11y.chezmoi.sh" ];
     };
   };
 }

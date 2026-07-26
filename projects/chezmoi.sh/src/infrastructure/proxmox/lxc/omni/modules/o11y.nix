@@ -11,7 +11,7 @@
 # Metrics: Omni exposes Prometheus metrics on 127.0.0.1:2122 (services.metrics,
 # --metrics-bind-addr). Vector scrapes that endpoint and ships to VictoriaMetrics.
 #
-# hostsOverride resolves o11y.chezmoi.sh to the Proxmox bridge IP (10.0.0.252)
+# hostsOverride resolves o11y.chezmoi.sh to the Proxmox bridge IP (10.0.0.22)
 # — same trick used by the other proxmox/lxc appliances to avoid hairpin NAT.
 { ... }: {
   catalog.lxcAgent = {
@@ -37,7 +37,7 @@
     nodeExporter.enable = true;
 
     hostsOverride = {
-      "10.0.0.252" = [ "o11y.chezmoi.sh" ];
+      "10.0.0.22" = [ "o11y.chezmoi.sh" ];
     };
   };
 }

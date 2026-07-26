@@ -33,7 +33,7 @@ protocol) and can be rebuilt and replaced at any time without data loss. Its onl
 flowchart TB
     api(["Proxmox VE API<br/>:8006"])
     host(["Proxmox host rsyslog<br/>(omfwd RFC 5424)"])
-    o11y(["o11y.chezmoi.sh<br/>10.0.0.252"])
+    o11y(["o11y.chezmoi.sh<br/>10.0.0.22"])
 
     subgraph lxc["LXC: pve-exporter — unprivileged NixOS"]
         exp["prometheus-pve-exporter<br/>127.0.0.1:9221"]
@@ -63,8 +63,8 @@ flowchart TB
   `catalog.lxcAgent`'s automatic one.
 - **Only inbound port is `:5140`** (syslog). The exporter binds loopback; metrics and logs are push-only. There is no
   Caddy, no TLS termination, no public surface.
-- **`hostsOverride`** in `modules/o11y.nix` resolves `o11y.chezmoi.sh` to the Proxmox bridge IP (`10.0.0.252`) inside
-  the LXC, bypassing public DNS for the push paths.
+- **`hostsOverride`** in `modules/o11y.nix` resolves `o11y.chezmoi.sh` to the Proxmox bridge IP (`10.0.0.22`) inside the
+  LXC, bypassing public DNS for the push paths.
 - **No SSH.** Console access goes through `pct enter <vmid>` on the Proxmox host.
 
 ## What's in this directory
