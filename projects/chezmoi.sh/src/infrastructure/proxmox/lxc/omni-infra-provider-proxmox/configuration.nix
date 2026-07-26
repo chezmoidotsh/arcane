@@ -24,11 +24,18 @@
   # ── Static IPv4 (mirrors PVE net0: ip=10.0.0.25/22,gw=10.0.0.1) ──────────
   # See catalog.nix's lxc-static-network module — without this, eth0 falls
   # back to a link-local address on every reboot (VLAN 5 has DHCP disabled).
+  #
+  # nameservers overrides the module's public-resolver default: omniApiEndpoint
+  # is split-horizon (omni.chezmoi.sh resolves to the internal 10.0.0.21 via
+  # 10.10.10.10, but to a public IP externally that the LAN can't reach back
+  # through NAT hairpin) — a public resolver here makes the provider dial its
+  # own unreachable public address instead of the local one.
   catalog.staticNetwork = {
     enable = true;
     address = "10.0.0.25";
     prefixLength = 22;
     gateway = "10.0.0.1";
+    nameservers = [ "10.10.10.10" "1.1.1.1" ];
   };
 
   time.timeZone = "Etc/UTC";
