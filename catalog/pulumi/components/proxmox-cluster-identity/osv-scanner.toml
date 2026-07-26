@@ -1,0 +1,3 @@
+[[IgnoredVulns]]
+id = "GHSA-8988-4f7v-96qf"
+reason = "Not fixable in place: @opentelemetry/core is pinned deep inside @pulumi/pulumi own gRPC trace exporter dependency tree, and 3.250.0 is currently the latest stable @pulumi/pulumi release -- no version to bump to yet. Low practical risk here: local CLI tool, not a service parsing untrusted W3C Baggage headers. See issue 1091."

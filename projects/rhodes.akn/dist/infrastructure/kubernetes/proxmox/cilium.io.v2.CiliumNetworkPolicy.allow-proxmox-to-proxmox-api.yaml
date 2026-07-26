@@ -1,0 +1,32 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Proxmox cloud-controller-manager and CSI controller (not the CSI node
+      DaemonSet — verified against templates/node-deployment.yaml: it never mounts cloud-config
+      or takes a --cloud-config flag, so it never calls the Proxmox API directly) to reach the
+      Proxmox VE API (pve-01.pve.chezmoi.sh:8006) referenced in their config.yaml cluster entry,
+      for node topology lookups (CCM) and volume attach/detach operations (CSI controller).
+  name: allow-proxmox-to-proxmox-api
+  namespace: proxmox-system
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: pve-01.pve.chezmoi.sh
+    toPorts:
+    - ports:
+      - port: "8006"
+        protocol: TCP
+  endpointSelector:
+    matchExpressions:
+    - key: app.kubernetes.io/name
+      operator: In
+      values:
+      - proxmox-cloud-controller-manager
+      - proxmox-csi-plugin
+    - key: app.kubernetes.io/component
+      operator: NotIn
+      values:
+      - node

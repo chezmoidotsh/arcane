@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #MISE description="Point a CNPG Cluster manifest at a specific backup for restore: renames the cluster with today's date, regenerates its own ongoing serverName, and sets the recovery source/externalCluster to the given backup (edits the file only, does not apply)"
-#USAGE arg "<cluster_manifest>" help="path to the Cluster manifest to patch (e.g. projects/rhodes.akn/src/apps/vault/openbao.postgresql.yaml)"
+#USAGE arg "<cluster_manifest>" help="path to the Cluster manifest to patch (e.g. projects/rhodes.akn/src/apps/vault/cnpg.cluster.yaml)"
 #USAGE arg "<server_name>" help="barman-cloud serverName ULID of the backup to restore from — see cnpg:backup:latest"
 #
 # Every field this script touches follows a convention verified against the
@@ -45,44 +45,30 @@
 # spec.cluster.name (and any `app.kubernetes.io/instance` labels keyed on
 # the old name) need the same rename by hand. Not automated here.
 #
-# Requires: yq (v4+), python3 (ULID timestamps are Crockford Base32, not the
-# same alphabet as standard base32 — no shell-native decoder).
+# Requires: yq (v4+), ulid-cli (the `ulid` binary — mise cargo:ulid-cli) for
+# ULID generation and parsing.
+#
+# NEW_SERVER_NAME is generated via bare `ulid` (system "now"), never `ulid
+# <timestamp>`: ulid-cli 0.1.12's timestamp-argument path is buggy — it
+# embeds a timestamp exactly 3,600,000ms (1h) off the value given, verified
+# by round-tripping several inputs through `ulid <ts>` then decoding the
+# result back with `ulid <generated>`. The no-argument path doesn't hit that
+# path and was verified to match the wall clock exactly.
 set -euo pipefail
 
 MANIFEST="${usage_cluster_manifest}"
 SERVER_NAME="${usage_server_name}"
 
-decode_ulid_time() {
-  python3 -c "
-import sys, datetime
-CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
-val = 0
-for ch in sys.argv[1][:10]:
-    val = val * 32 + CROCKFORD.index(ch)
-sec, ms = divmod(val, 1000)
-dt = datetime.datetime.fromtimestamp(sec, tz=datetime.timezone.utc)
-print(dt.strftime('%Y-%m-%dT%H:%M:%S') + f'.{ms:03d}Z')
-" "$1"
-}
+RECOVERY_MS="$(ulid "${SERVER_NAME}")"
+RECOVERY_DATE="$(date -u -r "$((RECOVERY_MS / 1000))" +%Y-%m-%dT%H:%M:%S)"
+RECOVERY_MILLIS="$(printf '%03d' $((RECOVERY_MS % 1000)))"
+RECOVERY_LABEL="${RECOVERY_DATE}.${RECOVERY_MILLIS}Z"
 
-new_ulid() {
-  python3 -c "
-import os, time
-CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
-def encode(n, width):
-    s = ''
-    for _ in range(width):
-        s = CROCKFORD[n & 0x1F] + s
-        n >>= 5
-    return s
-ms = int(time.time() * 1000)
-print(encode(ms, 10) + encode(int.from_bytes(os.urandom(10), 'big'), 16))
-"
-}
-
-RECOVERY_LABEL="$(decode_ulid_time "${SERVER_NAME}")"
-NEW_SERVER_NAME="$(new_ulid)"
-NEW_SERVER_LABEL="$(decode_ulid_time "${NEW_SERVER_NAME}")"
+NEW_SERVER_NAME="$(ulid)"
+NEW_SERVER_MS="$(ulid "${NEW_SERVER_NAME}")"
+NEW_SERVER_DATE="$(date -u -r "$((NEW_SERVER_MS / 1000))" +%Y-%m-%dT%H:%M:%S)"
+NEW_SERVER_MILLIS="$(printf '%03d' $((NEW_SERVER_MS % 1000)))"
+NEW_SERVER_LABEL="${NEW_SERVER_DATE}.${NEW_SERVER_MILLIS}Z"
 
 TODAY="$(date -u +%Y%m%d)"
 OLD_NAME="$(yq -r '.metadata.name' "${MANIFEST}")"

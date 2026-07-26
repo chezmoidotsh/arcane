@@ -1,0 +1,31 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: argocd
+
+resources:
+  # Configure ArgoCD
+  - appprojects.yaml
+  - main.httproute.yaml
+  - oidc-credentials.externalsecret.yaml
+  - security/
+
+  # TODO(rhodes.akn): no Tailscale for now — Argotails (remote-cluster
+  # Tailscale device discovery) and its addon:tailscale.yaml Helm overlay are
+  # dropped. ArgoCD is reachable via main.httproute.yaml (Cilium Gateway,
+  # argocd.akn.chezmoi.sh) regardless. Re-add Argotails + the tailscale addon
+  # (see amiya.akn's kustomization.yaml history) once Tailscale returns.
+
+helmCharts:
+  - repo: https://argoproj.github.io/argo-helm
+    name: argo-cd
+    version: 9.5.15
+
+    releaseName: argocd
+    namespace: argocd
+
+    valuesFile: helmvalues/default.yaml
+    additionalValuesFiles:
+      - helmvalues/hardened.yaml
+      - helmvalues/extensions.yaml
+      - helmvalues/addon:ksops.yaml

@@ -1,0 +1,23 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Proxmox cloud-controller-manager and CSI plugin (controller and node pods) to
+      access the Kubernetes API server. CCM patches Node objects with providerID/topology; the
+      CSI controller creates/attaches PersistentVolumes; the CSI node plugin reads its own Node
+      object (proxmox-csi-plugin-node's ClusterRole grants get on nodes).
+  name: allow-proxmox-to-kubernetes-api
+  namespace: proxmox-system
+spec:
+  egress:
+  - toEntities:
+    - kube-apiserver
+  endpointSelector:
+    matchExpressions:
+    - key: app.kubernetes.io/name
+      operator: In
+      values:
+      - proxmox-cloud-controller-manager
+      - proxmox-csi-plugin

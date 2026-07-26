@@ -29,3 +29,16 @@ dir = "{{ config_root }}"
 outputs = ["docs/assets/architecture.png"]
 run = "d2 --scale 0.8 architecture.d2 docs/assets/architecture.png"
 sources = ["architecture.d2"]
+
+# -----------------------------------------------------------------------------
+# Omni Cluster Template Validation
+# -----------------------------------------------------------------------------
+# Offline validation only — `omnictl cluster template validate` needs no Omni
+# connectivity or OMNICONFIG. Applying a template is an online operation (needs
+# OMNICONFIG from projects/chezmoi.sh/.mise.toml and an Omni login); see
+# catalog/omni/README.md for the apply workflow instead of a task here.
+
+[tasks."omni:clustertemplate:validate"]
+description = "Validate the rhodes Omni cluster template offline (no Omni connectivity)"
+dir = "{{ config_root }}"
+run = "omnictl cluster template validate -f {{ config_root }}/src/infrastructure/omni/rhodes.clustertemplate.yaml"

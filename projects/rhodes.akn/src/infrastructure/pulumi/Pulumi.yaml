@@ -1,0 +1,14 @@
+name: rhodes-akn-infra
+description: >-
+  Cloud + Vault/OpenBao infrastructure for rhodes.akn: cluster Vault auth backend
+  and mounts, pocket-id JWT auth backend, Cloudflare API tokens, Cloudflare
+  rate-limit ruleset.
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+
+backend:
+  # Garage S3 backend. See docs/procedures/infrastructure/
+  # INF-20260705-00.pulumi-state-and-import.md.
+  url: "s3://pulumi-states?endpoint=s3.chezmoi.sh&region=fr-par-1"

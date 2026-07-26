@@ -1,4 +1,5 @@
 import * as proxmox from "@pulumi/proxmox";
+import * as pulumi from "@pulumi/pulumi";
 
 // -----------------------------------------------------------------------------
 // Custom roles
@@ -13,36 +14,6 @@ export const exporterRole = new proxmox.VirtualEnvironmentRole(
 	{
 		roleId: "Exporter",
 		privileges: ["Datastore.Audit", "Pool.Audit", "Sys.Audit", "VM.Audit"],
-	},
-);
-
-export const kubernetesCcmRole = new proxmox.VirtualEnvironmentRole(
-	"pve-role-kubernetes-ccm",
-	{
-		roleId: "KubernetesCCM",
-		privileges: ["Sys.Audit", "VM.Audit", "VM.GuestAgent.Audit"],
-	},
-);
-
-export const kubernetesCsiRole = new proxmox.VirtualEnvironmentRole(
-	"pve-role-kubernetes-csi",
-	{
-		roleId: "KubernetesCSI",
-		privileges: [
-			"Datastore.Allocate",
-			"Datastore.AllocateSpace",
-			"Datastore.Audit",
-			"VM.Allocate",
-			"VM.Audit",
-			"VM.Clone",
-			"VM.Config.CPU",
-			"VM.Config.Disk",
-			"VM.Config.HWType",
-			"VM.Config.Memory",
-			"VM.Config.Options",
-			"VM.Migrate",
-			"VM.PowerMgmt",
-		],
 	},
 );
 
@@ -108,88 +79,58 @@ export const prometheusAcl = new proxmox.Acl("pve-acl-prometheus", {
 });
 
 // -----------------------------------------------------------------------------
-// kubernetes-ccm@pve -- proxmox-cloud-controller-manager (topology labels,
-// providerID, node lifecycle only -- no VM/LXC lifecycle privileges; see
-// docs/experiments/20260617-proxmox-csi-ccm/README.md)
+// rhodes-akn-bootstrap@pve -- delegated access-control admin for rhodes.akn's
+// own Pulumi program (projects/rhodes.akn/src/infrastructure/pulumi/stack/
+// proxmox.ts). That program self-provisions its own Kubernetes CCM/CSI
+// identity directly against pve-01 (a proxmox.Provider it configures itself)
+// instead of consuming a token minted here — creating/updating a PVE
+// user+role+token+ACL requires *some* sufficiently privileged identity, and
+// this is that identity, scoped as narrowly as the ACL system allows: bound
+// only under `/access`, not `/`. A token with `Administrator` at `/access`
+// can manage users, roles, ACLs and tokens, but — unlike root@pam or an
+// `Administrator` grant at `/` — cannot touch VMs, storage, SDN or any other
+// object in the tree. (`Administrator` is reused here rather than a
+// hand-picked privilege list because PVE's own access-control endpoints
+// don't document a finer-grained set for role/user/token CRUD, and this
+// stack already has one live, confirmed-working precedent for that grant —
+// see ../README.md, "Bootstrapping", the `root@pam!pulumi-import` token's
+// caution note.)
 // -----------------------------------------------------------------------------
-export const kubernetesCcmUser = new proxmox.VirtualEnvironmentUser(
-	"pve-user-kubernetes-ccm",
+export const rhodesAknBootstrapUser = new proxmox.VirtualEnvironmentUser(
+	"pve-user-rhodes-akn-bootstrap",
 	{
-		userId: "kubernetes-ccm@pve",
-		// `comment` is what fills the identity table's Purpose column in
-		// docs/PROXMOX-VE.md -- an identity without one renders blank there.
-		comment: "Kubernetes cloud-controller-manager - node labels and VM state",
+		userId: "rhodes-akn-bootstrap@pve",
+		comment:
+			"Delegated access-control admin for rhodes.akn's own Pulumi program (scoped to /access)",
 		enabled: true,
 	},
 );
 
-export const kubernetesCcmToken = new proxmox.UserToken(
-	"pve-token-kubernetes-ccm",
+export const rhodesAknBootstrapToken = new proxmox.UserToken(
+	"pve-token-rhodes-akn-bootstrap",
 	{
-		userId: kubernetesCcmUser.userId,
-		tokenName: "ccm",
-		comment: "proxmox-cloud-controller-manager token",
+		userId: rhodesAknBootstrapUser.userId,
+		tokenName: "bootstrap",
+		comment: "rhodes.akn Pulumi stack — self-provisions its own PVE identities",
 		privilegesSeparation: false,
 	},
 );
 
-// Node-scoped grant: topology + lifecycle status. Live ACL path is
-// `/nodes/pve` (not `/nodes/pve-01`) -- kept as-is for zero-recreation
-// import; harmless on a single-node cluster where `pve` and `pve-01` cover
-// the same host, but should be corrected to `/nodes/pve-01` (matching
-// OmniProviderNode's binding below) the next time a second node makes the
-// distinction matter.
-export const kubernetesCcmNodeAcl = new proxmox.Acl(
-	"pve-acl-kubernetes-ccm-node",
-	{
-		path: "/nodes/pve",
-		userId: kubernetesCcmUser.userId,
-		roleId: kubernetesCcmRole.roleId,
-		propagate: true,
-	},
-);
+// Exported (via ./index.ts) for rhodes.akn's Pulumi program to consume through
+// a StackReference — a one-time delegation credential, not a per-apply
+// secret: rhodes.akn's own provider config uses it (via env var, never
+// written to Pulumi config — same "credentials never in git" rule as this
+// stack's own root@pam password, see ../README.md) to authenticate the
+// proxmox.Provider it configures for itself.
+export const rhodesAknBootstrapTokenId = pulumi.interpolate`${rhodesAknBootstrapToken.userId}!${rhodesAknBootstrapToken.tokenName}`;
+export const rhodesAknBootstrapTokenSecret = rhodesAknBootstrapToken.value;
 
-// Pool-scoped grant: VM/guest-agent audit, scoped to the `talos` pool only
-// (see ./pools.ts) -- the CCM cannot see or act on VMs outside it.
-export const kubernetesCcmPoolAcl = new proxmox.Acl(
-	"pve-acl-kubernetes-ccm-pool",
+export const rhodesAknBootstrapAcl = new proxmox.Acl(
+	"pve-acl-rhodes-akn-bootstrap",
 	{
-		path: "/pool/talos",
-		userId: kubernetesCcmUser.userId,
-		roleId: kubernetesCcmRole.roleId,
-		propagate: true,
-	},
-);
-
-// -----------------------------------------------------------------------------
-// kubernetes-csi@pve -- proxmox-csi-plugin (volume provisioning, scoped to
-// the `talos` pool's storages)
-// -----------------------------------------------------------------------------
-export const kubernetesCsiUser = new proxmox.VirtualEnvironmentUser(
-	"pve-user-kubernetes-csi",
-	{
-		userId: "kubernetes-csi@pve",
-		comment: "Kubernetes CSI plugin - dynamic volume provisioning",
-		enabled: true,
-	},
-);
-
-export const kubernetesCsiToken = new proxmox.UserToken(
-	"pve-token-kubernetes-csi",
-	{
-		userId: kubernetesCsiUser.userId,
-		tokenName: "csi",
-		comment: "proxmox-csi-plugin token",
-		privilegesSeparation: false,
-	},
-);
-
-export const kubernetesCsiPoolAcl = new proxmox.Acl(
-	"pve-acl-kubernetes-csi-pool",
-	{
-		path: "/pool/talos",
-		userId: kubernetesCsiUser.userId,
-		roleId: kubernetesCsiRole.roleId,
+		path: "/access",
+		userId: rhodesAknBootstrapUser.userId,
+		roleId: "Administrator",
 		propagate: true,
 	},
 );

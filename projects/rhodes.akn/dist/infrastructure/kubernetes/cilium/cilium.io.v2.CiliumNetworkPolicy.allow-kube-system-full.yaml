@@ -1,0 +1,24 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      kube-system hosts Cilium itself (agent, operator, envoy), CoreDNS, and the Proxmox
+      cloud-controller-manager/csi-plugin — components with connectivity needs far broader than
+      "DNS + ingress gateway" (apiserver, inter-agent health checks and overlay traffic, Hubble,
+      CoreDNS's own ingress from every pod in the cluster on port 53, Proxmox API egress, etc).
+
+      Before allow-dns-and-ingress-gateway existed, kube-system had no CiliumNetworkPolicy
+      selecting it at all, so it was implicitly allow-all. That clusterwide policy selects every
+      pod including kube-system's, which would otherwise newly default-deny both directions for
+      these pods. This policy keeps kube-system's original unrestricted behavior, made explicit
+      and auditable instead of implicit.
+  name: allow-kube-system-full
+  namespace: kube-system
+spec:
+  egress:
+  - {}
+  endpointSelector: {}
+  ingress:
+  - {}

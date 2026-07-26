@@ -1,0 +1,46 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: proxmox-system
+
+helmCharts:
+  - repo: oci://ghcr.io/sergelogvinov/charts
+    name: proxmox-cloud-controller-manager
+    # renovate: datasource=helm depName=proxmox-cloud-controller-manager registryUrl=oci://ghcr.io/sergelogvinov/charts
+    version: 0.2.28
+
+    releaseName: proxmox-cloud-controller-manager
+    namespace: proxmox-system
+
+    valuesFile: proxmox-cloud-controller-manager.helmvalues/default.yaml
+
+  - repo: oci://ghcr.io/sergelogvinov/charts
+    name: proxmox-csi-plugin
+    # renovate: datasource=helm depName=proxmox-csi-plugin registryUrl=oci://ghcr.io/sergelogvinov/charts
+    version: 0.5.7
+
+    releaseName: proxmox-csi-plugin
+    namespace: proxmox-system
+
+    valuesFile: proxmox-csi-plugin.helmvalues/default.yaml
+
+resources:
+  - security/
+
+images:
+  - name: ghcr.io/sergelogvinov/proxmox-cloud-controller-manager
+    newName: oci.chezmoi.sh/ghcr.io/sergelogvinov/proxmox-cloud-controller-manager
+  - name: ghcr.io/sergelogvinov/proxmox-csi-controller
+    newName: oci.chezmoi.sh/ghcr.io/sergelogvinov/proxmox-csi-controller
+  - name: ghcr.io/sergelogvinov/proxmox-csi-node
+    newName: oci.chezmoi.sh/ghcr.io/sergelogvinov/proxmox-csi-node
+  - name: registry.k8s.io/sig-storage/csi-attacher
+    newName: oci.chezmoi.sh/registry.k8s.io/sig-storage/csi-attacher
+  - name: registry.k8s.io/sig-storage/csi-node-driver-registrar
+    newName: oci.chezmoi.sh/registry.k8s.io/sig-storage/csi-node-driver-registrar
+  - name: registry.k8s.io/sig-storage/csi-provisioner
+    newName: oci.chezmoi.sh/registry.k8s.io/sig-storage/csi-provisioner
+  - name: registry.k8s.io/sig-storage/csi-resizer
+    newName: oci.chezmoi.sh/registry.k8s.io/sig-storage/csi-resizer
+  - name: registry.k8s.io/sig-storage/livenessprobe
+    newName: oci.chezmoi.sh/registry.k8s.io/sig-storage/livenessprobe

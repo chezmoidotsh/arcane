@@ -1,0 +1,36 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: cert-manager-system
+
+helmCharts:
+  - repo: https://charts.jetstack.io
+    name: cert-manager
+    # renovate: datasource=helm depName=cert-manager registryUrl=https://charts.jetstack.io
+    version: v1.20.2
+
+    releaseName: cert-manager
+    namespace: cert-manager-system
+
+    valuesFile: ../../../../../../catalog/kubernetes/cert-manager/helm/default.helmvalues.yaml
+    additionalValuesFiles:
+      - ../../../../../../catalog/kubernetes/cert-manager/helm/hardened.helmvalues.yaml
+
+resources:
+  - ../../../../../../catalog/kubernetes/cert-manager/kustomize
+  - security/
+
+patches:
+  - path: letsencrypt-issuer-credentials.externalsecret.yaml
+
+images:
+  - name: quay.io/jetstack/cert-manager-cainjector
+    newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-cainjector
+  - name: quay.io/jetstack/cert-manager-controller
+    newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-controller
+  - name: quay.io/jetstack/cert-manager-startupapicheck
+    newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-startupapicheck
+  - name: quay.io/jetstack/cert-manager-webhook
+    newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-webhook
+  - name: quay.io/jetstack/cert-manager-acmesolver
+    newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-acmesolver

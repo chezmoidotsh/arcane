@@ -1,0 +1,25 @@
+{
+	"name": "@chezmoi.sh/pulumi-proxmox-cluster-identity",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Pulumi ComponentResource provisioning a Proxmox VE service identity (role + user + API token + ACL grants) for a Kubernetes cluster integration",
+	"main": "src/index.ts",
+	"scripts": {
+		"test": "mocha",
+		"test:watch": "mocha --watch",
+		"typecheck:test": "tsc --noEmit -p tsconfig.test.json"
+	},
+	"dependencies": {
+		"@pulumi/proxmox": "workspace:*",
+		"@pulumi/pulumi": "catalog:"
+	},
+	"devDependencies": {
+		"@types/chai": "catalog:",
+		"@types/mocha": "catalog:",
+		"@types/node": "catalog:",
+		"chai": "catalog:",
+		"mocha": "catalog:",
+		"ts-node": "catalog:",
+		"typescript": "catalog:"
+	}
+}

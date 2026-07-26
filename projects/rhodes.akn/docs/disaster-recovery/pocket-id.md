@@ -28,10 +28,13 @@ Before starting, ensure the following tools are installed and configured: `kubec
 
 You must also have:
 
-- The new cluster up through CNI/CSI/CCM and the CNPG operator + `barman-cloud.cloudnative-pg.io` plugin (see
-  [OMNI-20260721-00](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md)). No ArgoCD, no ESO,
-  and no OpenBao required — Pocket-Id's secrets are SOPS-committed directly, not sourced from Vault.
+- The new cluster up through CNI/CSI/CCM, the CNPG operator + `barman-cloud.cloudnative-pg.io` plugin, and ESO deployed
+  (see [OMNI-20260721-00](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md) and
+  [docs/disaster-recovery/README.md](README.md) Step 3). No ArgoCD and no OpenBao required — none of Pocket-Id's own
+  secrets are sourced from the real Vault, only from ESO's local `Generator` and this repo's Pulumi stack (see Step 1).
 - A valid `SOPS_AGE_KEY_FILE` (via `mise install` / this repo's environment) to decrypt the `pocket-id/sops/` secrets.
+- Access to the `rhodes.akn` Pulumi stack (`pulumi login`, correct stack selected) — needed for the S3 backup
+  credentials in Step 1.
 - If passkey login needs to be verified end to end (Step 4), the Gateway and a valid TLS certificate for
   `auth.chezmoi.sh` — see the callout above.
 
@@ -41,26 +44,38 @@ You must also have:
 
 ---
 
-## Step 1 — Restore the `pocket-id` namespace's SOPS secrets
+## Step 1 — Restore the `pocket-id` namespace's bootstrap secrets
+
+Three secrets, three different sources — Pocket-Id has no Vault dependency by design (see the doc intro above), so none
+of them ever come from the real Vault:
 
 > [!TIP]
 >
-> `mise run dr:pocket-id:secrets -- <CLUSTER_CONTEXT>` runs both commands below in one call.
+> `mise run dr:pocket-id:secrets -- <CLUSTER_CONTEXT>` runs the commands below in one call.
 
 ```sh
 kubectl --context <CLUSTER_CONTEXT> create namespace pocket-id \
   --dry-run=client -o yaml | kubectl --context <CLUSTER_CONTEXT> apply -f -
 
-# Decrypt and apply: cnpg-backup-credentials, the Pocket-Id app secret, and the
-# CNPG role password secret
+# pocket-id-secrets: the one secret that must stay SOPS-committed (the app's own
+# config secret — see sops/config.secret.yaml)
 kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/apps/pocket-id/sops \
   | kubectl --context <CLUSTER_CONTEXT> apply -f -
+
+# cnpg-backup-credentials: written directly into this namespace by the
+# rhodes-akn-infra Pulumi stack — not gated by the `recovery` flag, safe to run here
+(cd projects/rhodes.akn/src/infrastructure/pulumi && pulumi up --refresh --parallel 15)
+
+# pocket-id-database-pocket-id: generated locally by an ESO Generator, no Vault
+# involved — requires ESO already deployed (see docs/disaster-recovery/README.md
+# Step 3, done before this document)
+kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/src/apps/pocket-id/database.externalsecret.yaml
 ```
 
 ```sh
-# Verify
+# Verify all three landed
 kubectl --context <CLUSTER_CONTEXT> get secrets -n pocket-id
-# → cnpg-backup-credentials, pocket-id-secrets, pocket-id-database-pocket-id present
+# → pocket-id-secrets, cnpg-backup-credentials, pocket-id-database-pocket-id present
 ```
 
 ## Step 2 — Restore the Pocket-Id CNPG cluster
@@ -68,23 +83,22 @@ kubectl --context <CLUSTER_CONTEXT> get secrets -n pocket-id
 > [!TIP]
 >
 > `mise run dr:pocket-id:backup:latest -- <CLUSTER_CONTEXT>` prints the latest `serverName`, and
-> `mise run dr:pocket-id:patch-recovery -- <SERVER_NAME>` writes it into `pocket-id.postgresql.yaml` — it edits the file
-> only, it does not `kubectl apply` anything.
+> `mise run dr:pocket-id:patch-recovery -- <SERVER_NAME>` writes it into `cnpg.cluster.yaml` — it edits the file only,
+> it does not `kubectl apply` anything.
 
 Follow [DB-20260723-00](../../../../docs/procedures/databases/DB-20260723-00.cnpg-restore-from-object-store.md) in full,
 with:
 
 - `NAMESPACE=pocket-id`
-- `CLUSTER_MANIFEST=projects/rhodes.akn/src/apps/pocket-id/pocket-id.postgresql.yaml`
-- `OBJECTSTORE_MANIFEST=projects/rhodes.akn/src/apps/pocket-id/pocket-id.postgresql-objectstore.yaml`
-- `SCHEDULEDBACKUP_MANIFEST=projects/rhodes.akn/src/apps/pocket-id/pocket-id.postgresql-backup.yaml`
+- `CLUSTER_MANIFEST=projects/rhodes.akn/src/apps/pocket-id/cnpg.cluster.yaml`
+- `OBJECTSTORE_MANIFEST=projects/rhodes.akn/src/apps/pocket-id/cnpg.objectstore.yaml`
+- `SCHEDULEDBACKUP_MANIFEST=projects/rhodes.akn/src/apps/pocket-id/cnpg.scheduledbackup.yaml`
 
 > [!NOTE]
 >
 > The cluster name (`pocket-id-20260530`) embeds a generation suffix that changes whenever this cluster is recreated —
 > the same pattern the `cnpg-backup` skill's discovery script accounts for. Confirm the current name in
-> `projects/rhodes.akn/src/apps/pocket-id/pocket-id.postgresql.yaml` rather than assuming this exact value still
-> applies.
+> `projects/rhodes.akn/src/apps/pocket-id/cnpg.cluster.yaml` rather than assuming this exact value still applies.
 
 Return here once that procedure's Quick verifications pass (`Cluster in healthy state`).
 
@@ -148,4 +162,9 @@ client registrations all live in the CNPG database restored in Step 2. Verifying
   covered in `openbao.md` instead), added `pocket-id:*` mise tasks for Steps 1-2, linked cross-references throughout.
 - _2026-07-24_: GitHub Copilot PR review — unescaped `\[!TYPE]` callout markers so they actually render as GitHub
   alerts, fixed the Step 1 verification comment (`pocket-id-secrets`, not "pocket-id secret" — matches the real secret
-  name in `sops/pocket-id.secret.yaml`).
+  name in `sops/config.secret.yaml`).
+- _2026-07-25_: Moved Pocket-Id's own CNPG role password (`pocket-id-database-pocket-id`) off SOPS onto a local ESO
+  `Generator`/`ExternalSecret` pair (`database.externalsecret.yaml`), and the S3 backup credentials
+  (`cnpg-backup-credentials`) off SOPS onto a direct Pulumi-managed `Secret` — Pocket-Id still never sources from the
+  real Vault, only the origin of these two secrets changed (only the app's own config secret stays SOPS-committed).
+  Reordered Step 1 to reflect the three different sources; now requires ESO deployed first (see `README.md` Step 3).
