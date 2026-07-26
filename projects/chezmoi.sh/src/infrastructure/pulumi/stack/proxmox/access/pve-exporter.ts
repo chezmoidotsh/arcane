@@ -3,10 +3,8 @@ import * as proxmox from "@pulumi/proxmox";
 // -----------------------------------------------------------------------------
 // prometheus@pve -- read-only identity for pve-exporter
 // -----------------------------------------------------------------------------
-// Copied verbatim from the manual `pveum role add` recipe this stack replaces
-// (see docs/experiments/20260617-proxmox-csi-ccm/README.md and
-// projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/README.md,
-// "Proxmox user and role setup").
+
+// Read-only: metrics scraping needs audit access only, no mutation rights.
 export const exporterRole = new proxmox.VirtualEnvironmentRole(
 	"pve-role-exporter",
 	{
@@ -31,6 +29,7 @@ export const prometheusToken = new proxmox.UserToken("pve-token-prometheus", {
 	privilegesSeparation: false,
 });
 
+// Cluster-wide ("/") so every node and VM is scrapable.
 export const prometheusAcl = new proxmox.Acl("pve-acl-prometheus", {
 	path: "/",
 	userId: prometheusUser.userId,

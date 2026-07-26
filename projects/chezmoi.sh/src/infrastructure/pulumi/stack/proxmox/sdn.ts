@@ -40,8 +40,9 @@ export const talosnetSubnet = new proxmox.SdnSubnet("pve-sdn-subnet-talosnet", {
 	},
 });
 
-// omni@pve's SDN.Use grant on this VNet -- see ./access.ts for the matching
-// grant on the legacy `vmbr1` bridge (the `eth0` Cilium-L2 plane, unmanaged).
+// omni@pve's SDN.Use grant on this VNet -- see ./access/omni.ts for the
+// matching grant on the legacy `vmbr1` bridge (the `eth0` Cilium-L2 plane,
+// unmanaged).
 const talosnetAclPath = pulumi.interpolate`/sdn/zones/${pvenetZone.sdnZoneSimpleId}/${talosnetVnet.sdnVnetId}`;
 
 export const omniSdnTalosnetAcl = new proxmox.Acl("pve-acl-omni-sdn-talosnet", {

@@ -5,10 +5,9 @@ import * as proxmox from "@pulumi/proxmox";
 // `/pool/talos`; see
 // projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/README.md)
 // -----------------------------------------------------------------------------
-// Custom roles are each the least-privilege set the ACL below actually needs
-// -- copied verbatim from the manual `pveum role add` recipes this stack
-// replaces (see docs/experiments/20260617-proxmox-csi-ccm/README.md and
-// .../omni-infra-provider-proxmox/README.md, "Proxmox user and role setup").
+
+// Full VM lifecycle (allocate/clone/config/power/console), granted on
+// /pool/talos below.
 export const omniProviderRole = new proxmox.VirtualEnvironmentRole(
 	"pve-role-omni-provider",
 	{
@@ -36,23 +35,11 @@ export const omniProviderRole = new proxmox.VirtualEnvironmentRole(
 	},
 );
 
-// VM.Config.* checks during VM creation have no pool fallback (unlike
-// VM.Allocate, which accepts /pool/{pool}) -- they're checked strictly
-// against /vms/{vmid}. This role exists only to satisfy those create-time
-// checks; it deliberately excludes VM.Clone/VM.Console/VM.PowerMgmt since
-// granting those at /vms (unscoped to any pool) would reach every VM on the
-// host, not just talos. Lifecycle operations on existing VMs stay covered by
-// omniProviderRole at /pool/talos, once VM membership applies.
-//
-// VM.Audit *is* included despite that same host-wide reach: the infra
-// provider polls `/nodes/{node}/qemu/{vmid}/status/current` for VMIDs it has
-// just allocated but that Proxmox hasn't assigned to /pool/talos yet (pool
-// membership is a side effect of a *successful* create, same as the
-// VM.Config.* comment above) -- without it, that poll 403s and the provider
-// can never confirm a VM it just created, or even notice a leftover/orphaned
-// VMID from a previously failed provision. See rhodes-akn incident: stuck
-// MachineRequests reconciling against leftover VMIDs 106/107 with no pool
-// membership, indistinguishable from "not authorized" until this was added.
+// VM.Config.* is checked at /vms/{vmid} directly, with no pool fallback --
+// minimal privileges for the host-wide /vms grant below, so VM creation
+// works without handing out full VM control on every VM on the host.
+// VM.Audit is included because a freshly allocated VMID isn't a pool member
+// yet either, and its status still needs to be readable.
 export const omniProviderCreateRole = new proxmox.VirtualEnvironmentRole(
 	"pve-role-omni-provider-create",
 	{
@@ -71,6 +58,7 @@ export const omniProviderCreateRole = new proxmox.VirtualEnvironmentRole(
 	},
 );
 
+// Network/audit access on pve-01 itself, granted below -- outside pool scope.
 export const omniProviderNodeRole = new proxmox.VirtualEnvironmentRole(
 	"pve-role-omni-provider-node",
 	{
@@ -79,12 +67,8 @@ export const omniProviderNodeRole = new proxmox.VirtualEnvironmentRole(
 	},
 );
 
-// Sys.Audit only -- Sys.AccessNetwork has no purpose at `/` (it's a
-// node-local privilege, already covered at /nodes/pve-01 by
-// omniProviderNodeRole above) and granting it cluster-wide would be pure
-// excess scope. Kept as its own role rather than reusing omniProviderNodeRole
-// so the `/` grant below can't ever carry more than the one privilege it's
-// actually for.
+// Sys.Audit only -- GET /cluster/status is checked at `/` itself; nothing
+// broader is needed there.
 export const omniProviderClusterRole = new proxmox.VirtualEnvironmentRole(
 	"pve-role-omni-provider-cluster",
 	{
@@ -104,6 +88,7 @@ export const omniUser = new proxmox.VirtualEnvironmentUser("pve-user-omni", {
 	enabled: true,
 });
 
+// Main grant: full VM lifecycle, scoped to the talos pool only.
 export const omniPoolAcl = new proxmox.Acl("pve-acl-omni-pool", {
 	path: "/pool/talos",
 	userId: omniUser.userId,
@@ -111,14 +96,8 @@ export const omniPoolAcl = new proxmox.Acl("pve-acl-omni-pool", {
 	propagate: true,
 });
 
-// VM.Config.* privileges are checked against `/vms/<vmid>`, not
-// `/pool/talos` -- a brand-new VM isn't a member of the pool yet when
-// Proxmox runs these checks during creation (pool membership is a side
-// effect of a *successful* create, not a precondition), so the pool-scoped
-// ACL above never applies at create time. Without this, `pveum` returns 403
-// on VM.Config.Options the moment Omni tries to create a Talos VM. Scoped to
-// omniProviderCreateRole (not the full omniProviderRole) since /vms reaches
-// every VM on the host, not just talos.
+// VM.Config.* is checked at /vms/{vmid}, not /pool/talos -- required for
+// creating a VM, and for auditing its status before it joins the pool.
 export const omniVmsAcl = new proxmox.Acl("pve-acl-omni-vms", {
 	path: "/vms",
 	userId: omniUser.userId,
@@ -126,6 +105,7 @@ export const omniVmsAcl = new proxmox.Acl("pve-acl-omni-vms", {
 	propagate: true,
 });
 
+// Node-local access on pve-01, where Talos VM NICs live.
 export const omniNodeAcl = new proxmox.Acl("pve-acl-omni-node", {
 	path: "/nodes/pve-01",
 	userId: omniUser.userId,
@@ -133,11 +113,8 @@ export const omniNodeAcl = new proxmox.Acl("pve-acl-omni-node", {
 	propagate: true,
 });
 
-// GET /cluster/status is checked against `/` itself, not `/nodes/{node}` --
-// the infra provider's pickNode step calls it to read cluster/quorum info
-// before allocating a VM. propagate: false keeps the grant from cascading;
-// omniProviderClusterRole keeps it to the one privilege (Sys.Audit) this
-// exact-path check needs, nothing more.
+// GET /cluster/status (pickNode step) is checked at `/`, not /nodes/{node}.
+// propagate: false keeps the grant to that exact-path check only.
 export const omniClusterAcl = new proxmox.Acl("pve-acl-omni-cluster", {
 	path: "/",
 	userId: omniUser.userId,
@@ -145,13 +122,10 @@ export const omniClusterAcl = new proxmox.Acl("pve-acl-omni-cluster", {
 	propagate: false,
 });
 
-// SDN.Use on both bridges omni@pve attaches Talos VM NICs to: the legacy
-// `vmbr1` bridge (Cilium L2 plane, `eth0`) and the `talosnet` VNet this
-// stack declares in ../sdn.ts (node traffic plane, `eth1`). `PVESDNUser` is
-// Proxmox VE's built-in role (SDN.Audit + SDN.Use) -- not redeclared here.
-// `/sdn/zones/localnetwork/vmbr1` predates this stack (the `localnetwork`
-// zone and `vmbr1` bridge are manual, outside the SDN abstraction this stack
-// manages) -- kept as a plain ACL path, not tied to a Pulumi-managed zone.
+// SDN.Use on the legacy `vmbr1` bridge (Talos VM NICs' `eth0`, Cilium L2
+// plane). The matching grant for `talosnet` (`eth1`) lives in ../sdn.ts,
+// next to the VNet it applies to. `PVESDNUser` is Proxmox's built-in role
+// (SDN.Audit + SDN.Use) -- not redeclared here.
 export const omniSdnVmbr1Acl = new proxmox.Acl("pve-acl-omni-sdn-vmbr1", {
 	path: "/sdn/zones/localnetwork/vmbr1",
 	userId: omniUser.userId,
