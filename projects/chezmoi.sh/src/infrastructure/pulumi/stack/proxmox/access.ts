@@ -87,6 +87,20 @@ export const omniProviderNodeRole = new proxmox.VirtualEnvironmentRole(
 	},
 );
 
+// Sys.Audit only -- Sys.AccessNetwork has no purpose at `/` (it's a
+// node-local privilege, already covered at /nodes/pve-01 by
+// omniProviderNodeRole above) and granting it cluster-wide would be pure
+// excess scope. Kept as its own role rather than reusing omniProviderNodeRole
+// so the `/` grant below can't ever carry more than the one privilege it's
+// actually for.
+export const omniProviderClusterRole = new proxmox.VirtualEnvironmentRole(
+	"pve-role-omni-provider-cluster",
+	{
+		roleId: "OmniProviderCluster",
+		privileges: ["Sys.Audit"],
+	},
+);
+
 // -----------------------------------------------------------------------------
 // prometheus@pve -- read-only identity for pve-exporter
 // -----------------------------------------------------------------------------
@@ -213,6 +227,18 @@ export const omniNodeAcl = new proxmox.Acl("pve-acl-omni-node", {
 	userId: omniUser.userId,
 	roleId: omniProviderNodeRole.roleId,
 	propagate: true,
+});
+
+// GET /cluster/status is checked against `/` itself, not `/nodes/{node}` --
+// the infra provider's pickNode step calls it to read cluster/quorum info
+// before allocating a VM. propagate: false keeps the grant from cascading;
+// omniProviderClusterRole keeps it to the one privilege (Sys.Audit) this
+// exact-path check needs, nothing more.
+export const omniClusterAcl = new proxmox.Acl("pve-acl-omni-cluster", {
+	path: "/",
+	userId: omniUser.userId,
+	roleId: omniProviderClusterRole.roleId,
+	propagate: false,
 });
 
 // SDN.Use on both bridges omni@pve attaches Talos VM NICs to: the legacy
