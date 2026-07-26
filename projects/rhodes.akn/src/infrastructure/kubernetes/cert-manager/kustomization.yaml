@@ -21,7 +21,16 @@ resources:
   - security/
 
 patches:
-  - path: letsencrypt-issuer-credentials.externalsecret.yaml
+  # letsencrypt-issuer-credentials is written directly by Pulumi's Kubernetes
+  # provider (stack/cert-manager.ts), not synced via ESO/Vault like other
+  # clusters — drop the catalog base's ExternalSecret for it.
+  - patch: |-
+      $patch: delete
+      apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      metadata:
+        name: letsencrypt-issuer-credentials
+        namespace: cert-manager-system
 
 images:
   - name: quay.io/jetstack/cert-manager-cainjector

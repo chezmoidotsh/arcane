@@ -1,7 +1,6 @@
 import { Dns01TokenComponent } from "@chezmoi.sh/pulumi-cloudflare-dns01-token";
-import { vaultSecretMetadata } from "@chezmoi.sh/pulumi-lib";
+import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
-import * as vault from "@pulumi/vault";
 
 const config = new pulumi.Config();
 
@@ -9,9 +8,13 @@ const config = new pulumi.Config();
 // Cloudflare DNS-01 token for cert-manager
 // -----------------------------------------------------------------------------
 // cert-manager needs a scoped Cloudflare API token to complete DNS-01 challenges
-// when issuing/renewing certificates for rhodes.akn.chezmoi.sh. cert-manager's
-// Cloudflare ClusterIssuer (DNS-01 solver) reads the token from the Vault secret
-// below through an ExternalSecret.
+// when issuing/renewing certificates for rhodes.akn.chezmoi.sh. Vault/OpenBao
+// itself runs on this cluster, so — unlike other clusters — cert-manager can't
+// source this from Vault via ESO: it would never become reachable before Vault
+// is (same self-hosting bootstrap reasoning as `cloudnative-pg.ts`'s
+// `cnpg-backup-credentials`). The token is written directly as a Kubernetes
+// Secret instead, unconditionally (not gated by `recovery`), so cert-manager is
+// functional as soon as it's deployed.
 const certManagerToken = new Dns01TokenComponent("cert-manager", {
 	owner: "rhodes.akn",
 	application: "cert-manager",
@@ -20,31 +23,17 @@ const certManagerToken = new Dns01TokenComponent("cert-manager", {
 });
 export const certManagerDns01Token = certManagerToken.tokenValue;
 
-// Vault/OpenBao itself runs on this cluster, so it isn't reachable yet during
-// bring-up/recovery — cert-manager is one of the things that must come up before
-// Vault can be exposed. Only the token above (a Cloudflare-side resource, independent
-// of Vault) can be created at that point; pushing it into Vault waits until
-// recovery mode is turned off.
-if (!config.getBoolean("recovery")) {
-	new vault.kv.SecretV2(
-		"cert-manager-token",
-		{
-			mount: "shared",
-			name: "third-parties/cloudflare/iam/rhodes.akn/cert-manager-rw",
-			dataJson: pulumi.jsonStringify({
-				api_token: certManagerToken.tokenValue,
-			}),
-			customMetadata: {
-				data: {
-					description: "Cloudflare API Token for cert-manager",
-					application: "cert-manager",
-
-					...vaultSecretMetadata(certManagerToken, {
-						renewalUrn: certManagerToken.tokenUrn,
-					}),
-				},
-			},
+new k8s.core.v1.Secret(
+	"letsencrypt-issuer-credentials",
+	{
+		metadata: {
+			name: "letsencrypt-issuer-credentials",
+			namespace: "cert-manager-system",
 		},
-		{ parent: certManagerToken },
-	);
-}
+		type: "Opaque",
+		stringData: {
+			"api-token": certManagerToken.tokenValue,
+		},
+	},
+	{ parent: certManagerToken },
+);
