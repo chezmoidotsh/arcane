@@ -65,6 +65,13 @@ spec:
         - key: node.kubernetes.io/unreachable
           operator: Exists
           effect: NoSchedule
+        # Required when machine.kubelet.extraArgs.cloud-provider is "external": every
+        # node carries this taint until the cloud-controller-manager sets providerID,
+        # which itself can't run before Cilium is up — without this toleration the Job
+        # never schedules and the cluster deadlocks permanently (not a transient delay).
+        - key: node.cloudprovider.kubernetes.io/uninitialized
+          operator: Exists
+          effect: NoSchedule
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
