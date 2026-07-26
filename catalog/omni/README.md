@@ -58,10 +58,16 @@ mise run omni:clustertemplate:validate
 **Apply (online, needs Omni auth):**
 
 ```sh
-omnictl apply -f <path/to/template>.clustertemplate.yaml
+omnictl cluster template sync -f <path/to/template>.clustertemplate.yaml
 ```
 
-`apply` requires `OMNICONFIG` (set by the root `.mise.toml`) and an Omni login
+`omnictl apply -f` is the generic COSI resource command (`metadata`/`spec` YAML) — it cannot parse the
+`kind: Cluster`/`ControlPlane`/`Workers` template DSL and fails with
+`yaml: construct errors: ... expected 4 elements node, got N`. `cluster template sync -f <single-file>` is the command
+that understands the DSL, and scoped to one file it only touches that cluster's resources (the
+multi-cluster/delete-everything-not-present risk only applies when `-f` points at a directory).
+
+`sync` requires `OMNICONFIG` (set by the root `.mise.toml`) and an Omni login
 (`omnictl config new`/`omnictl config add`). There is no `omni:clustertemplate:apply` task by design: apply is an
 online, authenticated, state-changing operation and does not belong in a per-cluster offline task.
 

@@ -47,7 +47,11 @@
 # Validate (offline, no Omni connectivity):
 #   omnictl cluster template validate -f <file>
 # Apply (requires OMNICONFIG from `mise run bao:login:admin` in chezmoi.sh):
-#   omnictl apply -f <file>
+#   omnictl cluster template sync -f <file>
+# NOTE: `omnictl apply -f` is the generic COSI resource command (metadata/spec YAML) and cannot parse this
+# kind:Cluster/ControlPlane/Workers template DSL — it fails with "yaml: construct errors: ... expected 4
+# elements node, got N". `cluster template sync -f <single-file>` is scoped to this one cluster only, same
+# as apply would have been; the multi-cluster/delete risk only applies when -f points at a directory.
 #
 # Cross-references:
 #   catalog/omni/clustertemplates/base.yaml                     (reference base)

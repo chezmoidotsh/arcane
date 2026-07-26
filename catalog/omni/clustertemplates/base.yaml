@@ -51,8 +51,10 @@
 # 4. Validate offline (no Omni connectivity):
 #      omnictl cluster template validate -f <file>
 # 5. Apply (requires OMNICONFIG from `mise run bao:login:admin` in chezmoi.sh):
-#      omnictl apply -f <file>
-#    Re-applying is idempotent.
+#      omnictl cluster template sync -f <file>
+#    Re-applying is idempotent. `omnictl apply -f` does NOT work here — it's the generic COSI resource
+#    command (metadata/spec YAML), not the kind:Cluster/ControlPlane/Workers template DSL, and fails with
+#    "yaml: construct errors: ... expected 4 elements node, got N".
 #
 # SHA PINNING
 # -----------
