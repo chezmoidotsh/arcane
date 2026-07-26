@@ -39,7 +39,7 @@
 # and OpenBao tolerates a short outage (single instance, no HA) — both just
 # need to fit on one node, not stay spread across two.
 #
-# CNI/extraManifests are pinned to f048d841523ce72a4b9153e8e1384efeb3e44d79,
+# CNI/extraManifests are pinned to daa8852ced5d4526c776654d08214788cf2488c6,
 # reachable on `main` as of this writing — re-verify with
 # `git merge-base --is-ancestor <sha> origin/main` before `omnictl apply` if
 # this file has aged (see OMNI-20260629-03.sha-repin.md's squash-merge trap).
@@ -121,7 +121,7 @@ patches:
             name: custom
             urls:
               # TODO(rhodes.akn): repin to a commit reachable on `main` at apply time.
-              - https://raw.githubusercontent.com/chezmoidotsh/arcane/f048d841523ce72a4b9153e8e1384efeb3e44d79/catalog/talos/manifests/cilium/1.19.5-native.yaml
+              - https://raw.githubusercontent.com/chezmoidotsh/arcane/daa8852ced5d4526c776654d08214788cf2488c6/catalog/talos/manifests/cilium/1.19.5-native.yaml
           podSubnets:
             - 172.30.0.0/19
           serviceSubnets:
@@ -136,8 +136,8 @@ patches:
             feature-gates: UserNamespacesSupport=true,ImageVolume=true
         extraManifests:
           # TODO(rhodes.akn): repin to a commit reachable on `main` at apply time.
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/f048d841523ce72a4b9153e8e1384efeb3e44d79/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/f048d841523ce72a4b9153e8e1384efeb3e44d79/catalog/talos/manifests/metric-server/0.8.1.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/daa8852ced5d4526c776654d08214788cf2488c6/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/daa8852ced5d4526c776654d08214788cf2488c6/catalog/talos/manifests/metric-server/0.8.1.yaml
 ---
 kind: ControlPlane
 machineClass:
