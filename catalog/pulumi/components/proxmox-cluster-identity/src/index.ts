@@ -95,7 +95,15 @@ export class ProxmoxClusterIdentityComponent extends pulumi.ComponentResource {
 		}
 
 		this.tokenId = pulumi.interpolate`${token.userId}!${token.tokenName}`;
-		this.tokenSecret = token.value;
+		// token.value is already the complete, ready-to-use
+		// `USER@REALM!TOKENID=SECRET` string (confirmed empirically 2026-07-27
+		// against a real Proxmox instance — the provider's own type declares it
+		// as "API token value used for authentication", which reads as just the
+		// secret but isn't). Callers of tokenSecret expect the bare secret
+		// (e.g. a CSI/CCM chart's separate token_id/token_secret config
+		// fields), so strip the `USER@REALM!TOKENID=` prefix here, once, rather
+		// than let every consumer rediscover this the hard way.
+		this.tokenSecret = token.value.apply((v) => v.slice(v.indexOf("=") + 1));
 		this.registerOutputs({
 			tokenId: this.tokenId,
 			tokenSecret: this.tokenSecret,
