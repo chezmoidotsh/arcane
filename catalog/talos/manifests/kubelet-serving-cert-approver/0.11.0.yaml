@@ -213,3 +213,63 @@ spec:
         - effect: NoSchedule
           key: node-role.kubernetes.io/control-plane
           operator: Exists
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Default hardened network policy for the kubelet-serving-cert-approver namespace that
+      implements a secure baseline by denying all traffic except explicitly allowed connections.
+      Permits intra-namespace communication and DNS resolution to kube-system, while blocking all
+      other traffic by default.
+  labels:
+    app.kubernetes.io/instance: kubelet-serving-cert-approver
+    app.kubernetes.io/name: kubelet-serving-cert-approver
+  name: default-hardened
+  namespace: kubelet-serving-cert-approver
+spec:
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kubelet-serving-cert-approver
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+          rules:
+            dns:
+              - matchPattern: "*"
+
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kubelet-serving-cert-approver
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows kubelet-serving-cert-approver to reach the Kubernetes API server, which it watches
+      continuously for kubelet-serving CertificateSigningRequests and approves via a subresource
+      update. Without this, the controller's watch loop times out indefinitely and no new kubelet
+      serving certificate is ever approved.
+  labels:
+    app.kubernetes.io/instance: kubelet-serving-cert-approver
+    app.kubernetes.io/name: kubelet-serving-cert-approver
+  name: allow-kubelet-serving-cert-approver-to-kubernetes-api
+  namespace: kubelet-serving-cert-approver
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/instance: kubelet-serving-cert-approver
+      app.kubernetes.io/name: kubelet-serving-cert-approver
+  egress:
+    - toEntities:
+        - kube-apiserver
