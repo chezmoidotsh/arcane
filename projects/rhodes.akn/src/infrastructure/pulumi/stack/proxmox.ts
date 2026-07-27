@@ -18,9 +18,9 @@ import * as pulumi from "@pulumi/pulumi";
 // configure its own Proxmox provider, authenticated with a delegated,
 // narrowly-scoped credential (rhodes-akn-bootstrap@pve, Administrator at
 // /access only — cannot touch VMs, storage or SDN) that chezmoi.sh's
-// stack/proxmox/access.ts mints for exactly this purpose. See
-// catalog/pulumi/components/proxmox-cluster-identity's README for the full
-// pattern.
+// stack/proxmox/access/rhodes-akn-bootstrap.ts mints for exactly this
+// purpose. See catalog/pulumi/components/proxmox-cluster-identity's README
+// for the full pattern.
 //
 // CCM and CSI share a single identity/token/Secret here — a deliberate
 // simplification over the split-per-concern design chezmoi.sh's stack used
@@ -30,17 +30,31 @@ import * as pulumi from "@pulumi/pulumi";
 // being contained to one. Accepted for this single-node, single-cluster
 // deployment; revisit the split if that trust boundary ever needs to matter
 // again.
-const chezmoiSh = new pulumi.StackReference("chezmoi.sh", {
-	name: "organization/chezmoi-sh-infra/chezmoi_sh.live",
-});
+//
+// The delegated credential arrives as a Kubernetes Secret chezmoi.sh's own
+// stack writes directly into this cluster (kube-system), not through a
+// Pulumi StackReference — reading a *secret* StackReference output requires
+// holding the exporting stack's own passphrase, and this repo deliberately
+// keeps every project's Pulumi state passphrase separate (see
+// docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md
+// and chezmoi.sh's stack/proxmox/access/rhodes-akn-bootstrap.ts for the full
+// reasoning). Uses the default Kubernetes provider — same ambient
+// `kubernetes:context` as everything else in this file.
+const bootstrapSecret = k8s.core.v1.Secret.get(
+	"rhodes-akn-bootstrap-pve",
+	"kube-system/rhodes-akn-bootstrap-pve",
+);
+// Already the complete, ready-to-use `USER@REALM!TOKENID=SECRET` string — see
+// chezmoi.sh's stack/proxmox/access/rhodes-akn-bootstrap.ts for why this must
+// not be rebuilt from separate id/secret parts.
+const bootstrapApiToken = bootstrapSecret.data["api-token"].apply((v) =>
+	Buffer.from(v, "base64").toString("utf-8"),
+);
 
-// Delegated credential from chezmoi.sh's stack — never written to this
-// stack's Pulumi config (same "credentials never in git" rule as chezmoi.sh's
-// own root@pam password), only ever held in memory as this Output chain.
 const pveProvider = new proxmox.Provider("pve-01", {
 	endpoint: "https://pve-01.pve.chezmoi.sh:8006/api2/json",
 	insecure: true,
-	apiToken: pulumi.interpolate`${chezmoiSh.getOutput("rhodesAknBootstrapTokenId")}=${chezmoiSh.getOutput("rhodesAknBootstrapTokenSecret")}`,
+	apiToken: bootstrapApiToken,
 });
 
 const cloudProviderIdentity = new ProxmoxClusterIdentityComponent(
