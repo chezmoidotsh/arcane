@@ -1,5 +1,7 @@
+import * as garage from "@axnic/pulumi-garage";
 import { GarageCloudNativePGObjectStore } from "@chezmoi.sh/pulumi-garage-cnpg-backup";
 import * as k8s from "@pulumi/kubernetes";
+import * as pulumi from "@pulumi/pulumi";
 
 // ---------------------------------------------------------------------------
 // Garage S3 bucket + credentials for CNPG backup object stores (rhodes)
@@ -38,3 +40,22 @@ for (const namespace of ["vault", "pocket-id"]) {
 		{ parent: component },
 	);
 }
+
+// ---------------------------------------------------------------------------
+// Read access to amiya.akn's bucket (pre-migration prep)
+// ---------------------------------------------------------------------------
+// Ahead of the amiya.akn -> rhodes.akn migration, this cluster's own CNPG
+// backup key is granted read-only access to amiya's bucket too, so vault's and
+// pocket-id's Cluster manifests here (see the new "amiya-akn" ObjectStore in
+// src/apps/{vault,pocket-id}/) can bootstrap-recover straight from amiya's live
+// backups. Archiving new backups/WAL keeps going to this cluster's own bucket,
+// unchanged, via the "selfhosted" ObjectStore/Secret above.
+const amiyaAkn = new pulumi.StackReference("amiya.akn", {
+	name: "organization/amiya-akn-infra/amiya_akn.live",
+});
+
+new garage.BucketKeyPermission("garage-cnpg-backup-amiya-akn-permission", {
+	accessKeyId: component.accessKeyId,
+	bucketId: amiyaAkn.getOutput("garageBackupBucketId"),
+	permissions: { read: true },
+});

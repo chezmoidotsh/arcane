@@ -15,6 +15,7 @@ resources:
   - main.httproute.yaml
   - database.externalsecret.yaml
   - cnpg.cluster.yaml
+  - cnpg.objectstore.amiya-akn.yaml
   - cnpg.objectstore.yaml
   - cnpg.scheduledbackup.yaml
   - security/

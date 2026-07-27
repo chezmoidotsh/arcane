@@ -9,7 +9,7 @@ metadata:
 spec:
   bootstrap:
     recovery:
-      source: 2026-07-24T10:29:28.000Z
+      source: 2026-05-30T13:01:34.815Z
   description: PostgreSQL database dedicated to pocket-id
   enablePDB: false
   imageCatalogRef:
@@ -34,7 +34,7 @@ spec:
       name: barman-cloud.cloudnative-pg.io
       parameters:
         barmanObjectName: selfhosted
-        serverName: 01KSWFKGPZMJVTX8CNTEK8CYXT # 2026-05-30T13:01:34.815Z
+        serverName: 01KYH77AK9JY3SSSS8S439ADQT # 2026-07-27T07:21:57.097Z
   postgresql:
     parameters:
       # Limit WAL retention to avoid DB crash due to storage bloat
@@ -46,11 +46,11 @@ spec:
     size: 1Gi
 
   externalClusters:
-    - name: 2026-07-24T10:29:28.000Z
+    - name: 2026-05-30T13:01:34.815Z
       plugin:
         enabled: true
         isWALArchiver: false
         name: barman-cloud.cloudnative-pg.io
         parameters:
-          barmanObjectName: selfhosted
-          serverName: 01KSWFKGPZMJVTX8CNTEK8CYXT # 2026-07-24T10:29:28.000Z
+          barmanObjectName: amiya-akn
+          serverName: 01KSWFKGPZMJVTX8CNTEK8CYXT # 2026-05-30T13:01:34.815Z

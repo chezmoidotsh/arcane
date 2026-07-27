@@ -17,6 +17,7 @@ resources:
   # ingressClass) was dropped. main.httproute.yaml (Cilium Gateway,
   # vault.chezmoi.sh) covers non-Tailscale access.
   - cnpg.cluster.yaml
+  - cnpg.objectstore.amiya-akn.yaml
   - cnpg.objectstore.yaml
   - cnpg.scheduledbackup.yaml
   - secretstore.yaml

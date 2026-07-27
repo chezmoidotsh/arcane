@@ -10,5 +10,6 @@ const component = new GarageCloudNativePGObjectStore("garage-cnpg-backup", {
 });
 
 export const garageBackupBucket = component.bucketName;
+export const garageBackupBucketId = component.bucketId;
 export const garageBackupAccessKeyId = component.accessKeyId;
 export const garageBackupSecretAccessKey = component.secretAccessKey;
