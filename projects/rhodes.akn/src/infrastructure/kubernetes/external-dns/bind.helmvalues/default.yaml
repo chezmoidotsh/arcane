@@ -1,0 +1,73 @@
+# ExternalDNS configuration for the talosnet-dns BIND server (RFC2136/TSIG)
+# This configuration sets up ExternalDNS to manage records under
+# talosnet.chezmoi.sh, the dynamic subdomain talosnet-dns delegates to it.
+
+---
+# Sources define which Kubernetes resources ExternalDNS should monitor for DNS record management
+sources:
+  - crd # Custom Resource Definitions
+  - gateway-grpcroute # gRPC Gateway routes
+  - gateway-httproute # HTTP Gateway routes
+  - gateway-tcproute # TCP Gateway routes
+  - gateway-tlsroute # TLS Gateway routes
+  - gateway-udproute # UDP Gateway routes
+  - ingress # Ingress resources
+  - service # Service resources
+
+# The owner of the TXT records created by ExternalDNS (unique identifier for any clusters)
+txtOwnerId: external-dns.rhodesakn
+
+# Create a service account for ExternalDNS dedicated to talosnet-dns
+rbac:
+  create: true
+serviceAccount:
+  create: true
+  name: external-dns-bind
+
+# Policy defines how ExternalDNS should manage DNS records
+policy: sync # Ensures DNS records match the desired state of Kubernetes resources
+
+# Provider configuration -- rfc2136 is a native provider (no webhook sidecar).
+# The TSIG secret is injected via env instead of extraArgs, to keep it out of
+# the pod spec / process arguments.
+provider:
+  name: rfc2136
+
+env:
+  - name: EXTERNAL_DNS_RFC2136_TSIG_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: external-dns-bind-secret
+        key: tsig-secret
+
+# Because DNS management is currently not "complete", we limit the record types that ExternalDNS will manage
+# to the strict minimum required.
+managedRecordTypes:
+  - A
+  - TXT
+
+# Additional command-line arguments for ExternalDNS
+extraArgs:
+  # Configure CRD source with specific API version and kind
+  - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
+  - --crd-source-kind=DNSEndpoint
+  # Exclude resources without the annotation external-dns.alpha.kubernetes.io/include-bind=true
+  - --annotation-filter=external-dns.alpha.kubernetes.io/include-bind in (true)
+  # talosnet-dns (10.128.0.3) serves chezmoi.sh as a whole, but the
+  # update-policy grant (catalog/proxmox/lxc/talosnet-dns/modules/bind.nix)
+  # only lets this key touch names under talosnet.chezmoi.sh -- everything
+  # outside that subdomain is hand-curated on the server itself.
+  # --rfc2136-zone must be the real zone BIND serves (chezmoi.sh); it's what
+  # ExternalDNS puts in the `zone` field of every UPDATE/AXFR it sends --
+  # using the subdomain there gets NOTAUTH, since BIND has no zone by that
+  # name. --domain-filter is what actually scopes it to the subdomain.
+  - --domain-filter=talosnet.chezmoi.sh
+  - --rfc2136-host=10.128.0.3
+  - --rfc2136-port=53
+  - --rfc2136-zone=chezmoi.sh
+  - --rfc2136-tsig-keyname=external-dns.
+  - --rfc2136-tsig-secret-alg=hmac-sha256
+  # The zone's allow-transfer requires the same TSIG key for AXFR (not just
+  # updates) -- without this flag ExternalDNS's pre-sync zone read is
+  # unsigned and BIND rejects it.
+  - --rfc2136-tsig-axfr

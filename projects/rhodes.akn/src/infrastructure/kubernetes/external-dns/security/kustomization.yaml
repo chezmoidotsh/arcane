@@ -5,3 +5,4 @@ resources:
   - network-policy.default-hardened.yaml
   - network-policy.allow-external-dns-to-kubernetes-api.yaml
   - network-policy.allow-external-dns-to-unifi.yaml
+  - network-policy.allow-external-dns-to-bind.yaml

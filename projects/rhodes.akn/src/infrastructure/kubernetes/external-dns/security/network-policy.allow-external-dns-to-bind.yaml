@@ -1,0 +1,22 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the external-dns-bind instance to reach talosnet-dns (RFC2136_HOST) for
+      AXFR zone reads and TSIG-authenticated DNS UPDATE.
+  name: allow-external-dns-to-bind
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: external-dns
+      app.kubernetes.io/instance: external-dns-bind
+  egress:
+    - toCIDR:
+        - 10.128.0.3/32
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: TCP
+            - port: "53"
+              protocol: UDP
