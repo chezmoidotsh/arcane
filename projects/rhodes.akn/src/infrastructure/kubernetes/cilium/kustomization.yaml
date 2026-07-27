@@ -3,6 +3,10 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+  # Gateway API core CRDs (GatewayClass, Gateway, HTTPRoute, TCPRoute, ...) — Cilium's chart doesn't
+  # bundle these.
+  - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
+
   - default.l2announcementpolicy.yaml
   - primary.ippool.yaml
   - security/
