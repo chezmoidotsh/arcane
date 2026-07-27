@@ -197,6 +197,48 @@ now merged/closed).
     passing. Both Pulumi projects typecheck clean.
   - User still needs to re-run `pulumi up` (chezmoi.sh first, then rhodes.akn) again.
 
+## Change history (cont'd — live cluster instability, post Step 2/3)
+
+- [2026-07-27] User reported three symptoms on the live cluster: many `policy denied` in `hubble observe`, core
+  Kubernetes workloads "crashing", and the Proxmox CCM stuck unable to pull its image. Live investigation:
+  - `hubble observe --verdict DROPPED` was dominated by Cilium's own inter-node `cilium-health` check traffic
+    (`remote-node <> health`, port 4240 + ICMP) being dropped — noise/symptom, not an app-level policy misconfiguration.
+  - `kube-controller-manager`, `kube-scheduler`, and `cilium-operator` were all losing their leader-election lease
+    (`context deadline exceeded` talking to the **local** apiserver proxy at `127.0.0.1:7445`) — 11 restarts each over
+    ~10h. `kube-apiserver`'s own healthz reported `[-]etcd failed: reason withheld`.
+  - Proxmox CCM: `ImagePullBackOff`, `dial tcp 10.0.0.23:443 (oci.chezmoi.sh): i/o timeout`.
+  - Control-plane node was **2 vCPU / ~1.9GB RAM**, single node (no HA), 77%/104% memory requests/limits already
+    allocated before most other apps had even scheduled (blocked by the `uninitialized` taint). Working theory at that
+    point: resource starvation on an undersized single control-plane node.
+  - **User did a brute-force resize to 6 vCPU / 4GB and rebooted the node to test that theory.**
+- [2026-07-27] Post-resize results, mixed:
+  - Leader-election restarts on `kube-controller-manager`/`kube-scheduler`/`cilium-operator` **stopped** (stable for 6+
+    min post-reboot, no new restarts) — partially confirms resource pressure was a real contributing factor for that
+    specific symptom.
+  - **CoreDNS stayed `0/1 Not Ready` indefinitely** (`kubernetes` plugin can't reach the apiserver). Deployed ephemeral
+    `busybox` debug pods (with the uninitialized-taint toleration) to isolate the cause:
+    - Same-node pod-to-pod (debug pod co-located with CoreDNS) DNS lookup: **timeout**.
+    - Cross-node: **timeout**. External IP (`1.1.1.1:443`): **timeout**. `kube-dns` ClusterIP: **timeout**.
+    - Direct node IP:port to the apiserver (`10.128.0.13:6443`, bypassing ClusterIP/service routing entirely): **also
+      timeout**.
+    - This rules out Cilium service/ClusterIP routing and CiliumNetworkPolicy as the cause (tested from `kube-system`
+      with a fully permissive `allow-kube-system-full` policy, still failed identically) — **regular (non-hostNetwork)
+      pods have no working egress at all**, to any destination, while hostNetwork static control-plane pods (talking via
+      `127.0.0.1`) work fine.
+  - `cilium-dbg status`: `KubeProxyReplacement: True [eth1 ... (Direct Routing) ...]` — native routing pinned to a named
+    interface (`eth1`) on a **dual-NIC** node. `Cluster health: 1/3 reachable`. `cilium service list` showed `kube-dns`
+    backends in `(maintenance)` state — consistent with (i.e. not contradicting) CoreDNS's own not-ready state, not a
+    separate bug on its own.
+  - **Working hypothesis, not yet verified**: the brute-force resize's reboot may have reordered the node's two NICs
+    (udev/PCI re-enumeration on hardware change is a known class of issue), so Cilium is now bound to an interface still
+    _named_ `eth1` but no longer the _correct_ physical NIC for pod-network routing — Cilium reports itself healthy
+    because it successfully attached to _an_ interface, just not the right one. Would explain total,
+    destination-independent pod egress failure with Cilium self-reporting OK.
+  - **Blocked on verification**: `talosctl` access has an expired key/cert (separate from `omnictl`, which
+    self-refreshed fine mid-session) — couldn't inspect actual interface/MAC state on the node directly. Needs
+    `talosctl` re-auth (or checking NIC state some other way) before confirming or ruling out this hypothesis. Cleaned
+    up all debug pods (`netdebug`, `netdebug2`, `netdebug3`) after testing.
+
 ## Attention points
 
 - `openbao.md`'s Kubernetes auth backend self-heal (Step 6) is **unverified in practice** — tracked separately in #1138.
