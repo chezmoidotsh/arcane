@@ -3,29 +3,30 @@
 # talosnet.chezmoi.sh, the dynamic subdomain talosnet-dns delegates to it.
 
 ---
-# Sources define which Kubernetes resources ExternalDNS should monitor for DNS record management
+# Kubernetes resource kinds ExternalDNS watches for DNS record management.
 sources:
-  - crd # Custom Resource Definitions
-  - gateway-grpcroute # gRPC Gateway routes
-  - gateway-httproute # HTTP Gateway routes
-  - gateway-tcproute # TCP Gateway routes
-  - gateway-tlsroute # TLS Gateway routes
-  - gateway-udproute # UDP Gateway routes
-  - ingress # Ingress resources
-  - service # Service resources
+  - crd
+  - gateway-grpcroute
+  - gateway-httproute
+  - gateway-tcproute
+  - gateway-tlsroute
+  - gateway-udproute
+  - ingress
+  - service
 
-# The owner of the TXT records created by ExternalDNS (unique identifier for any clusters)
+# Distinguishes this instance's TXT ownership records from any other
+# external-dns instance/cluster writing into the same zone.
 txtOwnerId: external-dns.rhodesakn
 
-# Create a service account for ExternalDNS dedicated to talosnet-dns
 rbac:
   create: true
 serviceAccount:
   create: true
   name: external-dns-bind
 
-# Policy defines how ExternalDNS should manage DNS records
-policy: sync # Ensures DNS records match the desired state of Kubernetes resources
+# sync (not upsert-only/create-only): ExternalDNS also deletes records for
+# resources that disappear from the cluster.
+policy: sync
 
 # Provider configuration -- rfc2136 is a native provider (no webhook sidecar).
 # The TSIG secret is injected via env instead of extraArgs, to keep it out of
@@ -40,18 +41,18 @@ env:
         name: external-dns-bind-secret
         key: tsig-secret
 
-# Because DNS management is currently not "complete", we limit the record types that ExternalDNS will manage
-# to the strict minimum required.
+# Restricted to what talosnet.chezmoi.sh actually needs (host + ownership
+# records). Broadening this list widens what ExternalDNS is authorized to
+# write into the zone without a concrete need for it.
 managedRecordTypes:
   - A
   - TXT
 
-# Additional command-line arguments for ExternalDNS
 extraArgs:
-  # Configure CRD source with specific API version and kind
   - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
   - --crd-source-kind=DNSEndpoint
-  # Exclude resources without the annotation external-dns.alpha.kubernetes.io/include-bind=true
+  # Only resources explicitly opted in are synced to BIND -- without this
+  # filter every Ingress/HTTPRoute/Service cluster-wide would be a candidate.
   - --annotation-filter=external-dns.alpha.kubernetes.io/include-bind in (true)
   # talosnet-dns (10.128.0.3) serves chezmoi.sh as a whole, but the
   # update-policy grant (catalog/proxmox/lxc/talosnet-dns/modules/bind.nix)

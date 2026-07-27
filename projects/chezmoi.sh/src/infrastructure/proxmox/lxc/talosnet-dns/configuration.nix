@@ -23,7 +23,7 @@
 
   # ── talosnet interface ──────────────────────────────────────────────────────
   # eth1 is the second NIC added to this CT via Proxmox (bridge=talosnet,
-  # firewall=0). dnsmasq listens on this interface; talosnet's DHCP advertises
+  # firewall=0). BIND listens on this interface; talosnet's DHCP advertises
   # this address as the DNS server.
   networking.interfaces.eth1 = {
     ipv4.addresses = [{

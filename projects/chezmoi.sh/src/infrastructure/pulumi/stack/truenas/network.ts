@@ -49,12 +49,12 @@ const networkInterfaces: NetworkInterfaceSpec[] = [
 	// Garage/nginx a static IP directly on that subnet so talosnet pods can
 	// reach them without traversing the SDN's SNAT path, which drops
 	// forwarded (non-locally-destined) return traffic due to an asymmetric
-	// conntrack-zone assignment on pve-01 (see the DR drill session that
-	// diagnosed this). Backing NIC (net1 on VM 2022100, bridge=talosnet) was
-	// added directly on pve-01, matching how `ens18`/net0 was provisioned --
-	// the VM's virtual NICs aren't Pulumi-managed, only the TrueNAS-side
-	// interface config here is. Confirmed via the TrueNAS API
-	// (GET /api/v2.0/interface) that the new NIC surfaced as `ens19`.
+	// conntrack-zone assignment on pve-01. Backing NIC (net1 on VM 2022100,
+	// bridge=talosnet) is added directly on pve-01, matching how `ens18`/net0
+	// is provisioned -- the VM's virtual NICs aren't Pulumi-managed, only the
+	// TrueNAS-side interface config here is. TrueNAS names it `ens19`; check
+	// `GET /api/v2.0/interface` if this ever needs re-verifying (e.g. after
+	// adding another NIC changes the enumeration order).
 	{
 		name: "ens19",
 		mtu: 1500,

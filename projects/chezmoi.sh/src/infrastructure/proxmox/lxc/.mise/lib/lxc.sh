@@ -194,8 +194,8 @@ lxc_build() {
   # Cleanup secrets from environment
   # Guarded by array length: macOS's bash 3.2 (set -u) treats a genuinely
   # empty array as unbound, and under set -e a `[[ ]] && cmd` compound
-  # exits the script the moment the test is false — only hit by appliances
-  # with zero registered secrets (e.g. talosnet-dns), never triggered before.
+  # exits the script the moment the test is false — hits any appliance with
+  # zero registered secrets (e.g. talosnet-dns).
   if ((${#extracted[@]})); then
     local k
     for k in "${extracted[@]}"; do
@@ -630,12 +630,13 @@ lxc_upgrade() {
     # pct move-volume refuses to touch 'rootfs' keys ('Cannot move to/from
     # rootfs'), so renaming has to go straight through LVM. For same-storage
     # LVM-thin this is a metadata-only rename (vm-${scratch_id}-disk-0 ->
-    # vm-${vmid}-disk-N), not a data copy — so the new rootfs volume ends up
-    # correctly named under vmid's own VMID instead of staying under the
-    # disposable scratch VMID forever (which is what silently produced e.g.
-    # vm-104-disk-7 as CT 103's rootfs in the past). Non-LVM-thin storages
-    # (dir, NFS, ...) don't have LVs to rename — keep the scratch-named
-    # volid as-is on those rather than risk an unsupported rename.
+    # vm-${vmid}-disk-N), not a data copy. Skipping this rename leaves the
+    # rootfs volume permanently named under the disposable scratch VMID
+    # (e.g. CT 103 booting from vm-104-disk-7) — harmless functionally, but
+    # confusing for any future storage cleanup that keys off VMID naming.
+    # Non-LVM-thin storages (dir, NFS, ...) don't have LVs to rename — keep
+    # the scratch-named volid as-is on those rather than risk an unsupported
+    # rename.
     STORAGE_TYPE=\$(pvesm status | awk -v s=\"\${ROOTFS_STORAGE}\" '\$1==s{print \$2}')
     if [[ \"\${STORAGE_TYPE}\" == lvmthin ]]; then
       NEW_IDX=0

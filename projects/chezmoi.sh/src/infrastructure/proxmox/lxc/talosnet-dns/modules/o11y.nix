@@ -1,9 +1,10 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # observability agent — ships journald logs and node metrics to o11y
 # ─────────────────────────────────────────────────────────────────────────────
-# hostsOverride pins o11y.chezmoi.sh to its talosnet IP to avoid a
-# self-referential bootstrap-ordering dependency (dnsmasq resolving its own
-# upstream target).
+# hostsOverride pins o11y.chezmoi.sh to its talosnet IP as a static /etc/hosts
+# entry, so log/metric shipping doesn't depend on BIND already being up and
+# serving its own zone (this LXC is its own DNS server, so that dependency
+# would otherwise be self-referential at boot).
 { ... }: {
   catalog.lxcAgent = {
     enable = true;

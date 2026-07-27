@@ -1,7 +1,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Hardening profile
 # ─────────────────────────────────────────────────────────────────────────────
-# Only inbound port: :53 (DNS, TCP+UDP) on eth1 via dnsmasq with bind-interfaces.
+# Only inbound port: :53 (DNS, TCP+UDP) on eth1, served by BIND (bind.nix).
 # Kernel sysctls, SSH disabled, services disabled, volatile journald,
 # default-deny firewall.
 # ─────────────────────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@
   networking.firewall.enable = lib.mkDefault true;
   # Do NOT use lib.mkDefault for allowedTCPPorts/allowedUDPPorts —
   # nixos-generators' lxc format sets them to [] at normal priority and
-  # would silently win over mkDefault (1000). :53 is dnsmasq's DNS port.
+  # would silently win over mkDefault (1000). :53 is BIND's DNS port.
   networking.firewall.allowedTCPPorts = [ 53 ];
   networking.firewall.allowedUDPPorts = [ 53 ];
   networking.firewall.logRefusedConnections = lib.mkDefault false;

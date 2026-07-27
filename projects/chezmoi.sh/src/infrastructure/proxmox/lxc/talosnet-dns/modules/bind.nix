@@ -2,7 +2,7 @@
 # BIND — split-horizon DNS, talosnet-only
 # ─────────────────────────────────────────────────────────────────────────────
 # DNS only. Listens on eth1 (talosnet) so LAN queries on eth0 are never
-# answered. One daemon covers both roles dnsmasq used to:
+# answered. Serves two roles from one daemon:
 #   - static records for talosnet-only hostnames (avoiding SNAT + cross-zone
 #     conntrack issues): omni/api.omni/oci/o11y/nas/s3.chezmoi.sh
 #   - forwarding everything else upstream (10.10.10.10, 1.1.1.1/1.0.0.1 fallback)

@@ -27,12 +27,10 @@ export const rhodesAknBootstrapToken = new proxmox.UserToken(
 );
 
 // `rhodesAknBootstrapToken.value` is already the complete, ready-to-use
-// `USER@REALM!TOKENID=SECRET` credential string (confirmed empirically on
-// 2026-07-27 — this StackReference-turned-direct-Secret path had never been
-// exercised before that drill: the original code re-concatenated userId!
-// tokenName onto `.value`, producing a doubly-prefixed, invalid token that
-// Proxmox rejected with "authentication failure: no such user"). Don't
-// rebuild it from userId/tokenName — just pass it through as-is.
+// `USER@REALM!TOKENID=SECRET` credential string. Re-concatenating
+// userId!tokenName onto it produces a doubly-prefixed, invalid token that
+// Proxmox rejects with "authentication failure: no such user" — pass it
+// through as-is, don't rebuild it.
 const rhodesAknBootstrapApiToken = rhodesAknBootstrapToken.value;
 
 // Delivered as a direct Kubernetes Secret into rhodes.akn's own cluster —
@@ -78,10 +76,9 @@ export const rhodesAknBootstrapAcl = new proxmox.Acl(
 // -----------------------------------------------------------------------------
 // Delegation rights: rhodes.akn's Pulumi program uses this identity to grant
 // its own kubernetes-cloud-provider@pve identity ACLs at /nodes/pve-01 and
-// /pool/talos (see rhodes.akn/stack/proxmox.ts). Proxmox can't let a user
-// grant an ACL at a path it has no rights on itself (confirmed 2026-07-27:
-// 403 "Permission check failed" on both paths with only the /access grant
-// above) -- so this identity needs Permissions.Modify (+ Pool.Allocate for
+// /pool/talos (see rhodes.akn/stack/proxmox.ts). Proxmox rejects an ACL grant
+// at a path the granting user has no rights on itself ("403 Permission check
+// failed"), so this identity needs Permissions.Modify (+ Pool.Allocate for
 // the pool path) at exactly those two paths. Deliberately NOT Administrator
 // and NOT scoped to `/`: this grants the *ability to assign permissions*
 // there, not to create/modify/delete VMs, storage, or SDN itself -- the

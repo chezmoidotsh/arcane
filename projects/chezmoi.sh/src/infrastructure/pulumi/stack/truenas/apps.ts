@@ -20,12 +20,11 @@ const config = new pulumi.Config();
 // `values` for real to both production apps (update-in-place, not a
 // replace, but still a real redeploy). Confirm before running `up`.
 //
-// Every published port's `host_ips` now also includes `10.128.0.6`
-// (talosnet, see ./network.ts) alongside the existing `10.0.0.31` --
-// additive only, existing reachability on 10.0.0.31 is unchanged. Lets
-// talosnet pods reach Garage/nginx directly on that subnet instead of
-// through the SDN's SNAT path, which drops forwarded return traffic due to
-// an asymmetric conntrack-zone assignment on pve-01.
+// Every published port's `host_ips` includes both `10.0.0.31` and
+// `10.128.0.6` (talosnet, see ./network.ts): talosnet pods need to reach
+// Garage/nginx directly on that subnet, since the SDN's SNAT path drops
+// forwarded return traffic due to an asymmetric conntrack-zone assignment on
+// pve-01.
 
 new truenas.Catalog("truenas-catalog", {
 	preferredTrains: ["community", "stable"],

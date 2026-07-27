@@ -22,14 +22,12 @@ import * as pulumi from "@pulumi/pulumi";
 // purpose. See catalog/pulumi/components/proxmox-cluster-identity's README
 // for the full pattern.
 //
-// CCM and CSI share a single identity/token/Secret here — a deliberate
-// simplification over the split-per-concern design chezmoi.sh's stack used
-// to have (KubernetesCCM/KubernetesCSI as two separate least-privilege
-// roles). The trade-off: a compromise of this one token now carries both
-// concerns' privileges (node/VM audit AND volume/VM lifecycle) instead of
-// being contained to one. Accepted for this single-node, single-cluster
-// deployment; revisit the split if that trust boundary ever needs to matter
-// again.
+// CCM and CSI deliberately share a single identity/token/Secret rather than
+// one least-privilege role each. Risk: a compromise of this one token
+// carries both concerns' privileges (node/VM audit AND volume/VM lifecycle)
+// instead of being contained to one — acceptable for this single-node,
+// single-cluster deployment, but split the roles if that trust boundary
+// ever needs to matter.
 //
 // The delegated credential arrives as a Kubernetes Secret chezmoi.sh's own
 // stack writes directly into this cluster (kube-system), not through a
@@ -65,10 +63,9 @@ const cloudProviderIdentity = new ProxmoxClusterIdentityComponent(
 			"Kubernetes CCM+CSI (rhodes.akn) - node/VM audit and volume lifecycle",
 		role: {
 			roleId: "KubernetesCloudProvider",
-			// Union of the former KubernetesCCM (node/VM audit) and
-			// KubernetesCSI (volume + VM lifecycle, for dynamic provisioning)
-			// privilege sets — see this file's header comment for the
-			// merged-identity trade-off.
+			// Covers both CCM (node/VM audit) and CSI (volume + VM lifecycle,
+			// for dynamic provisioning) — see this file's header comment for
+			// the merged-identity trade-off.
 			privileges: [
 				"Sys.Audit",
 				"VM.Audit",
