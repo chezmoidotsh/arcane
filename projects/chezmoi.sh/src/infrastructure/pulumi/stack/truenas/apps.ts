@@ -19,6 +19,13 @@ const config = new pulumi.Config();
 // diff against the (broken) state -- the next `pulumi up` here will push
 // `values` for real to both production apps (update-in-place, not a
 // replace, but still a real redeploy). Confirm before running `up`.
+//
+// Every published port's `host_ips` now also includes `10.128.0.6`
+// (talosnet, see ./network.ts) alongside the existing `10.0.0.31` --
+// additive only, existing reachability on 10.0.0.31 is unchanged. Lets
+// talosnet pods reach Garage/nginx directly on that subnet instead of
+// through the SDN's SNAT path, which drops forwarded return traffic due to
+// an asymmetric conntrack-zone assignment on pve-01.
 
 new truenas.Catalog("truenas-catalog", {
 	preferredTrains: ["community", "stable"],
@@ -43,18 +50,18 @@ new truenas.Catalog("truenas-catalog", {
 					additional_ports: [],
 					http_port: {
 						bind_mode: "published",
-						host_ips: ["10.0.0.31"],
+						host_ips: ["10.0.0.31", "10.128.0.6"],
 						port_number: 80,
 					},
 					https_port: {
 						bind_mode: "published",
-						host_ips: ["10.0.0.31"],
+						host_ips: ["10.0.0.31", "10.128.0.6"],
 						port_number: 443,
 					},
 					networks: [],
 					web_port: {
 						bind_mode: "published",
-						host_ips: ["10.0.0.31"],
+						host_ips: ["10.0.0.31", "10.128.0.6"],
 						port_number: 30020,
 					},
 				},
@@ -130,7 +137,7 @@ new truenas.Catalog("truenas-catalog", {
 				network: {
 					admin_port: {
 						bind_mode: "published",
-						host_ips: ["10.0.0.31"],
+						host_ips: ["10.0.0.31", "10.128.0.6"],
 						port_number: 3903,
 					},
 					networks: [
@@ -154,22 +161,22 @@ new truenas.Catalog("truenas-catalog", {
 					],
 					rpc_port: {
 						bind_mode: "published",
-						host_ips: ["10.0.0.31"],
+						host_ips: ["10.0.0.31", "10.128.0.6"],
 						port_number: 3901,
 					},
 					s3_port: {
 						bind_mode: "published",
-						host_ips: ["10.0.0.31"],
+						host_ips: ["10.0.0.31", "10.128.0.6"],
 						port_number: 3900,
 					},
 					s3_web_port: {
 						bind_mode: "published",
-						host_ips: ["10.0.0.31"],
+						host_ips: ["10.0.0.31", "10.128.0.6"],
 						port_number: 3902,
 					},
 					web_port: {
 						bind_mode: "published",
-						host_ips: ["10.0.0.31"],
+						host_ips: ["10.0.0.31", "10.128.0.6"],
 						port_number: 3904,
 					},
 				},

@@ -45,6 +45,21 @@ const networkInterfaces: NetworkInterfaceSpec[] = [
 		mtu: 1500,
 		aliases: [{ address: "172.31.255.253", netmask: 30 }],
 	},
+	// talosnet (Proxmox SDN VNet shared by all Talos/Omni clusters) -- gives
+	// Garage/nginx a static IP directly on that subnet so talosnet pods can
+	// reach them without traversing the SDN's SNAT path, which drops
+	// forwarded (non-locally-destined) return traffic due to an asymmetric
+	// conntrack-zone assignment on pve-01 (see the DR drill session that
+	// diagnosed this). Backing NIC (net1 on VM 2022100, bridge=talosnet) was
+	// added directly on pve-01, matching how `ens18`/net0 was provisioned --
+	// the VM's virtual NICs aren't Pulumi-managed, only the TrueNAS-side
+	// interface config here is. Confirmed via the TrueNAS API
+	// (GET /api/v2.0/interface) that the new NIC surfaced as `ens19`.
+	{
+		name: "ens19",
+		mtu: 1500,
+		aliases: [{ address: "10.128.0.6", netmask: 24 }],
+	},
 ];
 
 for (const iface of networkInterfaces) {
