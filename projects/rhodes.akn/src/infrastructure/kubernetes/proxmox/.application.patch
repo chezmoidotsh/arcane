@@ -31,3 +31,12 @@ spec:
   syncPolicy:
     automated:
       enabled: false # Manual apply until Pulumi-delivered token_secret wiring (#370) lands; avoid automatic updates due to potential storage disruptions
+
+    # proxmox-csi-plugin's node DaemonSet needs privileged/hostPath access
+    # (mounting Proxmox-attached block devices into kubelet's pod dir) --
+    # the "restricted" Pod Security default rejects that, so relax
+    # enforcement for the namespace ArgoCD creates for this Application.
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/enforce-version: v1.33

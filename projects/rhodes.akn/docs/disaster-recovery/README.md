@@ -54,6 +54,7 @@ for ns in proxmox-system cert-manager-system cloudnative-pg-system external-secr
   kubectl --context <CLUSTER_CONTEXT> create namespace "$ns" --dry-run=client -o yaml \
     | kubectl --context <CLUSTER_CONTEXT> apply --server-side -f -
 done
+kubectl --context <CLUSTER_CONTEXT> annotate namespace proxmox-system pod-security.kubernetes.io/enforce=privileged pod-security.kubernetes.io/enforce-version=v1.33
 ```
 
 Then apply each app, one at a time:
