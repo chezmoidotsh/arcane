@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# [MISE] description="Build the talosnet-dns LXC template"
+# [MISE] dir="{{config_root}}"
+
+set -euo pipefail
+
+CONFIG_ROOT="$(pwd)"
+# shellcheck source=/dev/null
+source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
+
+lxc_init "talosnet-dns" "${CONFIG_ROOT}" _talosnet_dns
+lxc_secret "secrets/bind.sops.env" BIND_TSIG_SECRET
+lxc_build
