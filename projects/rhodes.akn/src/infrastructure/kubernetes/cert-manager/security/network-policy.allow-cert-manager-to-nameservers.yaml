@@ -1,0 +1,25 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the cert-manager controller to query ns.chezmoi.sh directly on port 53. cert-manager's
+      DNS-01 self-check queries the challenge record's authoritative nameserver directly (bypassing
+      CoreDNS) before telling Let's Encrypt the challenge is ready, to avoid relying on a possibly
+      stale recursive cache. For the chezmoi.sh zone that nameserver is ns.chezmoi.sh, not one of
+      the zone's public Cloudflare NS records.
+  name: allow-cert-manager-to-nameservers
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: cert-manager
+      app.kubernetes.io/component: controller
+  egress:
+    - toFQDNs:
+        - matchName: ns.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP

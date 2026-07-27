@@ -8,17 +8,24 @@ metadata:
       cloud-controller-manager/csi-plugin — components with connectivity needs far broader than
       "DNS + ingress gateway" (apiserver, inter-agent health checks and overlay traffic, Hubble,
       CoreDNS's own ingress from every pod in the cluster on port 53, Proxmox API egress, etc).
+      allow-dns-and-ingress-gateway's clusterwide endpointSelector: {} also selects kube-system's
+      pods, so this policy exists to keep kube-system unrestricted in both directions, explicitly
+      and auditably rather than by omission.
 
-      Before allow-dns-and-ingress-gateway existed, kube-system had no CiliumNetworkPolicy
-      selecting it at all, so it was implicitly allow-all. That clusterwide policy selects every
-      pod including kube-system's, which would otherwise newly default-deny both directions for
-      these pods. This policy keeps kube-system's original unrestricted behavior, made explicit
-      and auditable instead of implicit.
+      Uses `fromEntities`/`toEntities: [all]`, not a bare `- {}` rule. Risk: under Cilium's
+      `enableDefaultDeny` semantics (1.16+), a completely empty rule item matches nothing rather
+      than "allow all" once another policy selecting the same endpoint (here,
+      allow-dns-and-ingress-gateway) has already turned on default-deny — the union then silently
+      drops every packet in that direction instead of allowing everything, with no error surfaced
+      anywhere (CNP status stays Valid, `cilium status` stays OK). If this policy is ever rewritten
+      back to `- {}` for brevity, kube-system connectivity breaks silently.
   name: allow-kube-system-full
   namespace: kube-system
 spec:
   egress:
-  - {}
+  - toEntities:
+    - all
   endpointSelector: {}
   ingress:
-  - {}
+  - fromEntities:
+    - all

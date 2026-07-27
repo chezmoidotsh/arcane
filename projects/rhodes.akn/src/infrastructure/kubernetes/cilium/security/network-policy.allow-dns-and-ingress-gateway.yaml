@@ -16,8 +16,14 @@ metadata:
       policy (endpointSelector: {} matches every pod cluster-wide), which would otherwise put
       them into default-deny for both directions with only DNS+ingress-gateway allowed —
       breaking CoreDNS's own ingress and Cilium's/Proxmox's much broader connectivity needs.
-      network-policy.allow-kube-system-full.yaml keeps kube-system unrestricted, same as before
-      this policy existed.
+      network-policy.allow-kube-system-full.yaml keeps kube-system unrestricted.
+
+      endpointSelector: {} also matches Cilium's own per-node `reserved:health` endpoint (used
+      for inter-agent connectivity health checks on port 4240, both TCP and ICMP) — it is a real
+      Cilium-managed endpoint, not a namespaced pod, so allow-kube-system-full's namespace-scoped
+      selector never covers it. Without the fromEntities/toEntities rule below, every node pair's
+      health check is dropped in both directions, which `cilium status` surfaces as failing
+      cluster connectivity health.
   name: allow-dns-and-ingress-gateway
 spec:
   endpointSelector: {}
@@ -33,6 +39,12 @@ spec:
           rules:
             dns:
               - matchPattern: "*"
+    - toEntities:
+        - remote-node
+        - health
   ingress:
     - fromEntities:
         - ingress
+    - fromEntities:
+        - remote-node
+        - health

@@ -6,4 +6,5 @@ resources:
   - network-policy.allow-cert-manager-to-kubernetes-api.yaml
   - network-policy.allow-cert-manager-to-letsencrypt.yaml
   - network-policy.allow-cert-manager-to-cloudflare.yaml
+  - network-policy.allow-cert-manager-to-nameservers.yaml
   - network-policy.allow-webhook-from-kubernetes-api.yaml
