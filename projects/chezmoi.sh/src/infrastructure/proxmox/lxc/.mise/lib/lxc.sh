@@ -192,10 +192,16 @@ lxc_build() {
   nix:build:lxc --impure --output-name "${LXC_NAME}.${LXC_VERSION}-amd64" "${LXC_CONFIG_ROOT}"
 
   # Cleanup secrets from environment
-  local k
-  for k in "${extracted[@]}"; do
-    unset "${k}"
-  done
+  # Guarded by array length: macOS's bash 3.2 (set -u) treats a genuinely
+  # empty array as unbound, and under set -e a `[[ ]] && cmd` compound
+  # exits the script the moment the test is false — only hit by appliances
+  # with zero registered secrets (e.g. talosnet-dns), never triggered before.
+  if ((${#extracted[@]})); then
+    local k
+    for k in "${extracted[@]}"; do
+      unset "${k}"
+    done
+  fi
 }
 
 # ============================================================================
