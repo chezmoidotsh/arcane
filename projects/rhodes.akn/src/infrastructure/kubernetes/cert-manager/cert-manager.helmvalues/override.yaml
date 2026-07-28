@@ -1,0 +1,9 @@
+---
+# talosnet's internal DNS answers "chezmoi.sh NS" with ns.chezmoi.sh (a
+# split-horizon-only resolver), not the zone's real Cloudflare nameservers —
+# cert-manager's DNS-01 self-check queries whatever NS the lookup returns, so
+# it stalls forever checking a server that never has the TXT record. Force
+# Quad9 (9.9.9.9 / 149.112.112.112) instead — rhodes.akn-specific, not a
+# repo-wide default.
+dns01RecursiveNameservers: "9.9.9.9:53,149.112.112.112:53"
+dns01RecursiveNameserversOnly: true
