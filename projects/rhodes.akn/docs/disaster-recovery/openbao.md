@@ -95,8 +95,14 @@ kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/app
 # openbao-database-credentials: generated locally by an ESO Generator, no Vault
 # involved — requires ESO already deployed (see docs/disaster-recovery/README.md
 # Step 2, done before this document)
-kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/src/apps/vault/database.externalsecret.yaml
+kubectl --context <CLUSTER_CONTEXT> apply -n vault -f projects/rhodes.akn/src/apps/vault/database.externalsecret.yaml
 ```
+
+> [!WARNING]
+>
+> `-n vault` is required — this file has no `namespace:` field of its own (relies on `kustomization.yaml`'s
+> `namespace: vault`, which this ad-hoc apply bypasses). Without it, both resources land in your kubectl context's
+> default namespace instead.
 
 ```sh
 # Verify all three landed
@@ -273,3 +279,5 @@ this instance's operators ever change.
   document and `pocket-id.md`, in `README.md`'s Step 3.
 - _2026-07-26_ (review follow-up): Trimmed the intro to a single sentence pointing at `README.md` — it duplicated
   prerequisites already listed there. Removed the `dr:openbao:secrets` mise task — two commands, not worth a wrapper.
+- _2026-07-28_: Fixed Step 1's `database.externalsecret.yaml` apply landing in the wrong namespace — added the missing
+  `-n vault` flag.
