@@ -14,7 +14,7 @@
 #
 # Overrides relative to the base:
 #   Cluster.name                   rhodes-akn
-#   cluster.network.podSubnets     172.30.0.0/19   (ADR-014 / docs/network/vlans.md: rhodes = cluster ID 1)
+#   cluster.network.podSubnets     172.30.0.0/19   (ADR-014 / docs/network/ipam.md: rhodes = cluster ID 1)
 #   machine.kubelet.extraArgs.cloud-provider  external  (REQUIRED from day one — the
 #     Proxmox CCM silently no-ops without it, and providerID is immutable once a
 #     node registers; fixing this later means delete+recreate the node. See
@@ -22,7 +22,7 @@
 #
 # NOTE: serviceSubnets (172.31.0.0/19) and clusterDNS (172.31.0.10) match the SHARED
 # defaults in the base template — all clusters share the same service CIDR for
-# ClusterMesh readiness (see ADR-014, vlans.md). Do not change them.
+# ClusterMesh readiness (see ADR-014, ipam.md). Do not change them.
 #
 # Topology: 1 control-plane + 2 workers. Worker class is w1.large (4 vCPU /
 # 8 GiB each), not the lighter w1.medium — the rolling upgrade strategy below
@@ -58,7 +58,7 @@
 #   catalog/omni/clustertemplates/base.yaml                     (reference base)
 #   projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml (sibling example)
 #   ADR-014  docs/decisions/014-network-topology.md             (CIDR / DNS decisions)
-#   docs/network/vlans.md                                       (VLAN 5 / SDN VNet layout, LB IP pool)
+#   docs/network/ipam.md                                        (VLAN 5 / SDN VNet layout, LB IP pool)
 #   docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md (bring-up procedure)
 #   catalog/omni/machineclasses/                                (machine class defs)
 # =============================================================================

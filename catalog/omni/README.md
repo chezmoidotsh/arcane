@@ -75,7 +75,7 @@ online, authenticated, state-changing operation and does not belong in a per-clu
 
 - [ADR-014 — Network topology](../../docs/decisions/014-network-topology.md) — pod/service CIDRs and the kube-dns IP
   decision.
-- [VLAN / SDN VNet layout](../../docs/network/vlans.md) — VLAN 5 and the `vnet-talos` SDN.
+- [VLAN / SDN VNet layout](../../docs/network/ipam.md) — VLAN 5 and the `talosnet` SDN.
 - [Machine-class catalog README](machineclasses/README.md) — detailed sizing, naming, and provider tuning (includes the
   YAML).
 - [Proxmox infra provider README](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/README.md)

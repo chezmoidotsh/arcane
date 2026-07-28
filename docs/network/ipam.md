@@ -1,11 +1,11 @@
-# Homelab Network Reference
+# Homelab IPAM
 
-Single source of truth for all IP addressing, VLAN layout, SDN design, and firewall rules. Update this document before
-adding new clusters, services, or static IPs.
+Single source of truth for all IP addressing: VLANs, the SDN VNet, Kubernetes CIDRs, and the firewall rules that bound
+what each range can reach. Update this document before adding new clusters, services, or static IPs. For the physical
+topology and a diagram, see [`README.md`](README.md).
 
 ## Table of Contents
 
-- [Physical Topology](#physical-topology)
 - [VLANs](#vlans)
   - [VLAN Placement Guide](#vlan-placement-guide)
   - [FAQ](#faq)
@@ -13,7 +13,8 @@ adding new clusters, services, or static IPs.
   - [Sub-ranges](#sub-ranges)
   - [Static Assignments — Management Zone](#static-assignments--management-zone)
   - [Cilium LoadBalancer Pools](#cilium-loadbalancer-pools)
-- [Proxmox SDN — VXLAN VNets](#proxmox-sdn--vxlan-vnets)
+- [Proxmox SDN — talosnet VNet](#proxmox-sdn--talosnet-vnet)
+  - [Internal LoadBalancer Pools (talosnet)](#internal-loadbalancer-pools-talosnet)
 - [Kubernetes CIDRs](#kubernetes-cidrs)
   - [Service CIDR — shared across all clusters (ClusterMesh-ready)](#service-cidr--shared-across-all-clusters-clustermesh-ready)
   - [Pod CIDRs — unique per cluster (ClusterMesh prerequisite)](#pod-cidrs--unique-per-cluster-clustermesh-prerequisite)
@@ -21,25 +22,6 @@ adding new clusters, services, or static IPs.
 - [Firewall Rules](#firewall-rules)
   - [UDM Pro — Inter-VLAN](#udm-pro--inter-vlan)
   - [Proxmox — Per-LXC](#proxmox--per-lxc-nic-level)
-
----
-
-## Physical Topology
-
-```text
-Internet
-    │
-[UDM Pro] ─────────────────────────────── [pve-01]
-    │         NIC 1: VLAN trunk (vmbr1)        │
-    │         NIC 2: VLAN 5 mgmt (vmbr0)  vmbr0 (management — VLAN 5, 10.0.0.11)
-    │                                      vmbr1 (VLAN-aware trunk → VMs and LXCs)
-    └── WiFi AP
-```
-
-**pve-01** connects directly to the UDM Pro via 2 physical NICs (no intermediate switch):
-
-- `vmbr0` — Management bridge on NIC 2; VLAN 5 access port (`10.0.0.11` static)
-- `vmbr1` — Guest bridge on NIC 1; VLAN trunk, carries all VLANs to VM/LXC ports
 
 ---
 
@@ -123,18 +105,19 @@ All active addressing is consolidated in `10.0.0.0/24`. The remaining three `/24
 Allocation convention within `10.0.0.0/26`: `.1` gateway, `.10–.19` hypervisor, `.20–.29` system LXCs, `.30–.62` other
 devices.
 
-| IP        | Host                            | DNS                                                        | Notes                                                    |
-| --------- | ------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------- |
-| 10.0.0.1  | Gateway (UDM Pro)               |                                                            |                                                          |
-| 10.0.0.10 | pve-01 IPMI                     |                                                            | BMC remote management                                    |
-| 10.0.0.11 | pve-01 OS                       | pve-01.pve.chezmoi.sh                                      | Hypervisor management IP                                 |
-| 10.0.0.21 | omni LXC                        | omni.chezmoi.sh, api.omni.chezmoi.sh, kube.omni.chezmoi.sh | Omni UI/API SideroLink Machine API, Kubernetes API proxy |
-| 10.0.0.22 | o11y LXC                        | o11y.chezmoi.sh                                            | Victoria stack — central metrics/logs/traces             |
-| 10.0.0.23 | oci-registry LXC                | oci.chezmoi.sh                                             | Zot — pull-through OCI cache + first-party images        |
-| 10.0.0.24 | pve-exporter LXC                |                                                            |                                                          |
-| 10.0.0.25 | omni-infra-provider-proxmox LXC |                                                            |                                                          |
-| 10.0.0.30 | NAS                             | nas.chezmoi.sh                                             | Primary interface                                        |
-| 10.0.0.31 | NAS (applications)              |                                                            | Dedicated IP for the applications (Garage, etc.)         |
+| IP        | Host                            | DNS                                                        | Notes                                                                                                                                                                                                          |
+| --------- | ------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 10.0.0.1  | Gateway (UDM Pro)               |                                                            |                                                                                                                                                                                                                |
+| 10.0.0.10 | pve-01 IPMI                     |                                                            | BMC remote management                                                                                                                                                                                          |
+| 10.0.0.11 | pve-01 OS                       | pve-01.pve.chezmoi.sh                                      | Hypervisor management IP                                                                                                                                                                                       |
+| 10.0.0.21 | omni LXC                        | omni.chezmoi.sh, api.omni.chezmoi.sh, kube.omni.chezmoi.sh | Omni UI/API SideroLink Machine API, Kubernetes API proxy. Dual-NIC: also `10.128.0.2` on talosnet (`eth1`)                                                                                                     |
+| 10.0.0.22 | o11y LXC                        | o11y.chezmoi.sh                                            | Victoria stack — central metrics/logs/traces. Dual-NIC: also `10.128.0.5` on talosnet (`eth1`)                                                                                                                 |
+| 10.0.0.23 | oci-registry LXC                | oci.chezmoi.sh                                             | Zot — pull-through OCI cache + first-party images. Dual-NIC: also `10.128.0.4` on talosnet (`eth1`)                                                                                                            |
+| 10.0.0.24 | pve-exporter LXC                |                                                            | Single-NIC (VLAN 5 only)                                                                                                                                                                                       |
+| 10.0.0.25 | omni-infra-provider-proxmox LXC |                                                            | Single-NIC (VLAN 5 only)                                                                                                                                                                                       |
+| 10.0.0.26 | talosnet-dns LXC                | ns.chezmoi.sh                                              | BIND — see [Internal LoadBalancer Pools (talosnet)](#internal-loadbalancer-pools-talosnet). Dual-NIC: `10.128.0.3` on talosnet (`eth1`) is where it actually serves DNS; the VLAN 5 address is unused for that |
+| 10.0.0.30 | NAS                             | nas.chezmoi.sh                                             | Primary interface. Also on talosnet (`10.128.0.6`)                                                                                                                                                             |
+| 10.0.0.31 | NAS (applications)              |                                                            | Dedicated IP for the applications (Garage, etc.)                                                                                                                                                               |
 
 > `*.omni.chezmoi.sh` is a wildcard record pointing to the public Pangolin gateway (`195.201.114.83`, kazimierz.akn) —
 > it resolves outside VLAN 5 entirely and isn't tied to any IP in this table.
@@ -145,6 +128,11 @@ devices.
 > ever stood up.
 
 ### Cilium LoadBalancer Pools
+
+Each cluster runs two `CiliumLoadBalancerIPPool`s, named `external` and `internal`. `external` has no `serviceSelector`
+— it's the catch-all default, so any Service/Gateway that doesn't explicitly opt into `internal` lands here
+automatically. This section covers the `external` pools (VLAN 5, reachable from the home network); see
+[Internal LoadBalancer Pools (talosnet)](#internal-loadbalancer-pools-talosnet) for `internal`.
 
 Each cluster gets a `/29` block (6 usable IPs). The `/26` holds exactly 8 × `/29`. Order follows cluster creation
 sequence; sandbox takes the last slot.
@@ -162,39 +150,80 @@ sequence; sandbox takes the last slot.
 
 ---
 
-## Proxmox SDN — VXLAN VNets
+## Proxmox SDN — talosnet VNet
 
-Internal node-to-node network for Talos clusters. Not routed on physical VLANs — VXLAN-encapsulated over the PVE
-management network.
+Internal node-to-node network for Talos clusters, provisioned in the `pvenet` SDN zone. Not routed on physical VLANs.
+**Zone type is `simple`, not `vxlan`** — PVE 9 requires `--peers`/`--fabric` to create a `vxlan` zone, which needs a
+second Proxmox node; on today's single-node homelab that's impossible, so `simple` is used instead. Codified in Pulumi
+at `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/sdn.ts` (`pvenetZone`/`talosnetVnet`/`talosnetSubnet`),
+which superseded the manual `pvesh`/`pveum` recipe in
+[INF-20260627-00](../procedures/infrastructure/INF-20260627-00.proxmox-sdn-setup.md) — that procedure still has the full
+design rationale and the migration path once a second node joins.
 
 **Parent range:** `10.128.0.0/16` — no conflict with any existing subnet. A single `/24` is currently allocated to the
 shared Talos VNet (see table below).
 
-`vnet-talos` is configured with:
+`talosnet` (VNet names are capped at 8 alphanumeric characters on PVE 9, hence not `vnet-talos`) is configured with:
 
 - **Gateway:** `10.128.0.1` (PVE node acts as L3 router)
 - **DHCP:** dnsmasq with stable leases per MAC (node IPs survive reboots), range `.10`–`.250`
+- **DNS:** `10.128.0.3` (talosnet-dns/BIND) handed out to nodes via DHCP (`dhcpDnsServer` on the Pulumi subnet) — this
+  is what lets talosnet clients resolve split-horizon names, see
+  [Internal LoadBalancer Pools (talosnet)](#internal-loadbalancer-pools-talosnet)
 - **SNAT:** enabled so nodes can reach `pve-01.pve.chezmoi.sh:8006` (required for proxmox-csi-plugin)
-- **MTU:** 1450 (standard 1500 minus 50-byte VXLAN header)
+- **MTU:** not set on the SDN zone/VNet itself (`SdnZoneSimple.mtu` is left unset in `sdn.ts`, so PVE's default applies
+  there) — `1450` is instead set directly on each Talos node's `eth1` interface via the Omni cluster templates
+  (`catalog/omni/clustertemplates/base.yaml`), pre-sized for a future `vxlan` migration (50-byte encapsulation overhead)
+  even though today's `simple` zone doesn't need it
 
-| VNet         | Subnet          | Block                           | Purpose                                           |
-| ------------ | --------------- | ------------------------------- | ------------------------------------------------- |
-| `vnet-talos` | `10.128.0.0/24` | `.1` gateway, `.10`–`.250` DHCP | Shared node traffic (eth1) for all Talos clusters |
+| VNet       | Subnet          | Block                           | Purpose                                           |
+| ---------- | --------------- | ------------------------------- | ------------------------------------------------- |
+| `talosnet` | `10.128.0.0/24` | `.1` gateway, `.10`–`.250` DHCP | Shared node traffic (eth1) for all Talos clusters |
 
-> **Why a single shared VNet?** The original design allocated one VNet per cluster (`vnet-rhodes`, `vnet-lungmen`,
-> `vnet-sandbox`). Implementation of [#1038](https://github.com/chezmoidotsh/arcane/issues/1038) uncovered an Omni
-> constraint: cluster-template `patches[]` are Talos machine-config patches only and cannot override a `MachineClass`'s
-> `providerdata` (where `additional_nics[].bridge` lives), and MachineClasses are non-kustomizable shared COSI
-> resources. Per-cluster VNets would force one MachineClass set per cluster, so all Talos clusters now share
-> `vnet-talos`. Per-cluster isolation of _external_ LoadBalancer traffic is unaffected — it is provided by the
-> per-cluster VLAN 5 LB pools, not by the SDN VNet. See
-> [ADR-014 (Revision 2026-06-27)](../decisions/014-network-topology.md) for the full rationale and trade-offs.
+> **Why a single shared VNet?** Omni `MachineClass` resources are shared, non-kustomizable COSI objects, and
+> cluster-template `patches[]` can only apply Talos machine-config patches — neither can override a `MachineClass`'s
+> `providerdata` (where `additional_nics[].bridge` lives) per cluster. A per-cluster VNet would need a per-cluster
+> `MachineClass`, so all Talos clusters share `talosnet` instead. External LoadBalancer traffic stays isolated
+> per-cluster via the VLAN 5 LB pools above, independently of this VNet. See
+> [ADR-014](../decisions/014-network-topology.md) for the full rationale.
 
-> **ACL:** `SDN.Use` must be granted to `omni@pve` on each VNet before the Omni infra provider can attach VMs to it:
+> **ACL:** `SDN.Use` is granted to `omni@pve` on the VNet so the Omni infra provider can attach VMs to it — codified as
+> `omniSdnTalosnetAcl` in `stack/proxmox/sdn.ts` (equivalent manual command below; `omni@pve` also needs the same role
+> on `localnetwork/vmbr1` for the VLAN5/eth0 plane, granted in `stack/proxmox/access/omni.ts`):
 >
 > ```sh
 > pveum acl modify /sdn/zones/<zone>/<vnet> --users omni@pve --roles PVESDNUser
 > ```
+
+### Internal LoadBalancer Pools (talosnet)
+
+`talosnet` has no route from any physical VLAN — it's only reachable from other Talos nodes or hosts explicitly attached
+to the SDN VNet. Each cluster can expose a second `CiliumLoadBalancerIPPool`, named `internal`, that is genuinely
+internal-only (unlike the `external` pools above, which are reachable from the home network via the VLAN 2 → VLAN 5
+rule). `internal` carries a `serviceSelector` so it's opt-in only — it never competes with `external` as a second
+catch-all.
+
+Split-horizon DNS, not a separate hostname, is what makes this useful: talosnet-dns (BIND, `10.128.0.3`) lets
+external-dns (RFC2136) dynamically publish the same `*.chezmoi.sh` name a cluster already has externally (e.g.
+`vault.chezmoi.sh`), pointed at the internal IP instead — see `talosnet-dns/modules/bind.nix`.
+
+Free space outside the `.1` gateway and the `.10`–`.250` DHCP range: `.2`–`.9` (8 IPs, reserved) and `.240`–`.254` (15
+IPs, `.255` is the `/24` broadcast address). `internal` pools get a 2-IP block each, same cluster order as the
+`external` pools — sandbox excluded, it doesn't need an internal-only path.
+
+| Block                 | Usable IPs | Cluster                          |
+| --------------------- | ---------- | -------------------------------- |
+| `10.128.0.240`–`.241` | 2          | rhodes.akn                       |
+| `10.128.0.242`–`.243` | 2          | lungmen.akn                      |
+| `10.128.0.244`–`.245` | 2          | —                                |
+| `10.128.0.246`–`.247` | 2          | —                                |
+| `10.128.0.248`–`.249` | 2          | —                                |
+| `10.128.0.250`–`.251` | 2          | —                                |
+| `10.128.0.252`–`.253` | 2          | —                                |
+| `10.128.0.254`        | 1          | — spare                          |
+| `10.128.0.2`–`.9`     | 8          | — reserved (outside `.240-.254`) |
+
+Sandbox has no row: it's a throwaway cluster with no internal-only workload, so it doesn't get an `internal` pool.
 
 ---
 
@@ -215,11 +244,8 @@ SDN subnets, or LB pools.
 All clusters share a single service CIDR: **`172.31.0.0/19`** — kube-dns at `172.31.0.10` everywhere. This is
 intentional and **ClusterMesh-compatible**: Cilium performs service load-balancing at the source node via eBPF, so the
 ClusterIP is rewritten to a backend pod IP _before_ the packet leaves the node. ClusterIPs never traverse the
-inter-cluster link, making overlapping service CIDRs between clusters transparent.
-
-> **Previous design (pre-2026-06-29):** Each cluster had its own `/19` service CIDR carved from `172.31.0.0/16`. Unified
-> to a single shared CIDR for ClusterMesh readiness and simpler cluster templates. The rest of `172.31.0.0/16` is
-> reserved.
+inter-cluster link, making overlapping service CIDRs between clusters transparent. The rest of `172.31.0.0/16` is
+reserved.
 
 ### Pod CIDRs — unique per cluster (ClusterMesh prerequisite)
 
@@ -243,16 +269,16 @@ its own `/19` within `172.30.0.0/16`.
 
 <!-- markdownlint-disable MD060 -->
 
-| Prerequisite                                | Status | Notes                                                                                                   |
-| ------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------- |
-| Pod CIDRs unique per cluster                | ✅     | 8 × /19 from `172.30.0.0/16`, non-overlapping                                                           |
-| Shared service CIDR across clusters         | ✅     | `172.31.0.0/19` — ClusterMesh-compatible (service LB at source via eBPF)                                |
-| `ipv4NativeRoutingCIDR` = pod supernet      | ✅     | `172.30.0.0/16` — Cilium skips SNAT for inter-cluster pod traffic                                       |
-| `routingMode=native` + kubeProxyReplacement | ✅     | Native routing, no overlay, kube-proxy disabled                                                         |
-| `cluster.name` unique per cluster           | ⏳     | Allocated above. Must be set in Cilium config per cluster (NOT in the shared install manifest).         |
-| `cluster.id` unique per cluster (1–255)     | ⏳     | Allocated above. Encoded into security identities — set at install time, effectively immutable.         |
-| `clustermesh-apiserver` reachable           | ⏳     | Control plane exposure via LoadBalancer (TCP 2379). Mechanism TBD (SDN `vnet-talos` or VLAN 5 LB pool). |
-| Shared `cilium-ca` across clusters          | ⏳     | Required for cross-cluster mTLS identity verification.                                                  |
+| Prerequisite                                | Status | Notes                                                                                                 |
+| ------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
+| Pod CIDRs unique per cluster                | ✅     | 8 × /19 from `172.30.0.0/16`, non-overlapping                                                         |
+| Shared service CIDR across clusters         | ✅     | `172.31.0.0/19` — ClusterMesh-compatible (service LB at source via eBPF)                              |
+| `ipv4NativeRoutingCIDR` = pod supernet      | ✅     | `172.30.0.0/16` — Cilium skips SNAT for inter-cluster pod traffic                                     |
+| `routingMode=native` + kubeProxyReplacement | ✅     | Native routing, no overlay, kube-proxy disabled                                                       |
+| `cluster.name` unique per cluster           | ⏳     | Allocated above. Must be set in Cilium config per cluster (NOT in the shared install manifest).       |
+| `cluster.id` unique per cluster (1–255)     | ⏳     | Allocated above. Encoded into security identities — set at install time, effectively immutable.       |
+| `clustermesh-apiserver` reachable           | ⏳     | Control plane exposure via LoadBalancer (TCP 2379). Mechanism TBD (SDN `talosnet` or VLAN 5 LB pool). |
+| Shared `cilium-ca` across clusters          | ⏳     | Required for cross-cluster mTLS identity verification.                                                |
 
 <!-- markdownlint-enable MD060 -->
 
@@ -274,7 +300,7 @@ source node, not routed natively. See the comment in `catalog/talos/manifests/ci
 | 10.0.0.0/22       | VLAN 5 (Homelab)  |
 | 10.0.0.64/26      | Cilium LB pools   |
 | 10.10.10.0/24     | VLAN 1 (Backbone) |
-| 10.128.0.0/16     | SDN VXLAN         |
+| 10.128.0.0/16     | SDN (`talosnet`)  |
 | 192.168.10.0/25   | VLAN 2 (Home)     |
 | 192.168.10.128/25 | VLAN 3 (Guest)    |
 | 192.168.3.0/25    | VLAN 4 (IoT)      |

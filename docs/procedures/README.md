@@ -42,17 +42,17 @@ by either a human operator or an AI agent.
 
 - **[MIGR-20260628-00: Migrate Talos nodes from VLAN 2 to VLAN 5 (V1→V2 dual-NIC)](./infrastructure/MIGR-20260628-00.vlan2-to-vlan5.md)**:
   Rolling migration of existing Omni-managed Talos VMs from the legacy VLAN 2 single-NIC layout to the V2 dual-NIC
-  layout (VLAN 5 on eth0, vnet-talos on eth1). Required after applying the updated V2 machine classes.
+  layout (VLAN 5 on eth0, talosnet on eth1). Required after applying the updated V2 machine classes.
 - **[INF-20260525-00: Upgrade Talos OS on a Single-Node Cluster](./infrastructure/INF-20260525-00.upgrade-talos.md)**:
   Full lifecycle upgrade of the Talos OS version on a single-node cluster, including pre-upgrade checks, image pre-pull,
   upgrade execution, post-upgrade verification, and rollback.
 - **[INF-20260525-01: Upgrade Kubernetes on a Talos Single-Node Cluster](./infrastructure/INF-20260525-01.upgrade-kubernetes.md)**:
   Kubernetes version upgrade using `talosctl upgrade-k8s`, covering the six-phase upgrade process with dry-run
   validation, post-upgrade verification, and interrupted-upgrade recovery.
-- **[INF-20260627-00: Provisioning the Proxmox SDN (VXLAN VNet for Talos clusters)](./infrastructure/INF-20260627-00.proxmox-sdn-setup.md)**:
-  Provisions the Proxmox VE SDN backing the single shared `vnet-talos` for all Talos clusters (VXLAN zone, gateway/SNAT
-  so nodes reach `pve-01:8006` for proxmox-csi-plugin, dnsmasq DHCP, MTU 1450) and the per-VNet `SDN.Use` ACL for
-  `omni@pve`. References ADR-014 and `docs/network/vlans.md`.
+- **[INF-20260627-00: Provisioning the Proxmox SDN (simple zone + VNet for Talos clusters)](./infrastructure/INF-20260627-00.proxmox-sdn-setup.md)**:
+  Provisions the Proxmox VE SDN backing the single shared `talosnet` VNet for all Talos clusters (`simple` zone —
+  `vxlan` needs a second Proxmox node — gateway/SNAT so nodes reach `pve-01:8006` for proxmox-csi-plugin, dnsmasq DHCP,
+  MTU 1450) and the per-VNet `SDN.Use` ACL for `omni@pve`. References ADR-014 and `docs/network/ipam.md`.
 - **[Bootstrap VPS with Pangolin and CrowdSec](../../projects/kazimierz.akn/docs/bootstrap-vps.md)**: Complete bootstrap
   process for deploying a VPS with Pangolin VPN and CrowdSec security monitoring using Tailscale for secure remote
   access.

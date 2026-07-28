@@ -119,7 +119,7 @@ spec:
             - --set
             - gatewayAPI.enabled=true
             # ClusterMesh prerequisite: ipv4NativeRoutingCIDR must cover the pod CIDR
-            # supernet (172.30.0.0/16 = 8 × /19, one per cluster — see ADR-014, vlans.md).
+            # supernet (172.30.0.0/16 = 8 × /19, one per cluster — see ADR-014, ipam.md).
             # With native routing, Cilium skips SNAT for destinations in this range, so
             # inter-cluster pod-to-pod traffic retains its source identity. Without it,
             # ClusterMesh traffic would be masqueraded to the node IP, breaking cross-
@@ -129,7 +129,7 @@ spec:
             # because services are resolved by eBPF at the source node, not routed natively.
             #
             # ClusterMesh TODO (not yet set in this shared manifest):
-            #   cluster.name  — unique per cluster (e.g. "lungmen-akn"); see vlans.md table
+            #   cluster.name  — unique per cluster (e.g. "lungmen-akn"); see ipam.md table
             #   cluster.id    — unique integer 1–255 per cluster; encoded in security identities
             # These MUST be set per-cluster post-install (the shared URL manifest can't
             # differentiate clusters). Mechanism TBD (cilium config set / Helm overlay).
