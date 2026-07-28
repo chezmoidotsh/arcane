@@ -4,24 +4,14 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      kube-system hosts Cilium itself (agent, operator, envoy), CoreDNS, and the Proxmox
-      cloud-controller-manager/csi-plugin — components with connectivity needs far broader than
-      "DNS + ingress gateway" (apiserver, inter-agent health checks and overlay traffic, Hubble,
-      CoreDNS's own ingress from every pod in the cluster on port 53, Proxmox API egress, etc).
-      allow-dns-and-ingress-gateway's clusterwide endpointSelector: {} also selects kube-system's
-      pods, so this policy exists to keep kube-system unrestricted in both directions, explicitly
-      and auditably rather than by omission.
-
-      Uses `fromEntities`/`toEntities: [all]`, not a bare `- {}` rule. Risk: under Cilium's
-      `enableDefaultDeny` semantics (1.16+), a completely empty rule item matches nothing rather
-      than "allow all" once another policy selecting the same endpoint (here,
-      allow-dns-and-ingress-gateway) has already turned on default-deny — the union then silently
-      drops every packet in that direction instead of allowing everything, with no error surfaced
-      anywhere (CNP status stays Valid, `cilium status` stays OK). If this policy is ever rewritten
-      back to `- {}` for brevity, kube-system connectivity breaks silently.
+      kube-system (Cilium, CoreDNS, Kubernetes API, ...) needs far broader access than DNS/ingress
+      alone, so keep it fully open rather than relying on omission. Uses fromEntities/
+      toEntities: [all], not a bare `- {}` — under enableDefaultDeny, an empty rule item matches
+      nothing once another policy already default-denies this endpoint, silently dropping all
+      kube-system traffic with no error surfaced anywhere.
   name: allow-kube-system-full
   namespace: kube-system
-# trunk-ignore(trivy/KSV-0037): intentional — see the description annotation above
+# trunk-ignore(trivy/KSV-0037): intentional, kube-system needs broad access — see description
 spec:
   endpointSelector: {}
   ingress:
