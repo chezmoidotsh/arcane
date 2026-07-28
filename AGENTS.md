@@ -288,6 +288,11 @@ Skip session docs for one-off questions, single-file edits, or trivial changes.
 - Surface deviations from the stated objective explicitly.
 - For unrelated bugs or improvements discovered along the way, propose a separate GitHub issue rather than expanding the
   current change.
+- **Exception — serious bugs, filed automatically:** when what you found is evidenced (not a hunch), would cause real
+  harm if it recurred (outage, data loss, security exposure, silent corruption), and doesn't require expanding the
+  current task to fix, don't just propose it — file the issue yourself, without waiting for a go-ahead. Do this via a
+  fresh subagent (not a context-inheriting fork) carrying a self-contained brief, so drafting the issue doesn't cost the
+  current conversation's context. See `.agents/skills/auto-file-bug/SKILL.md` for the exact severity bar and workflow.
 - Ask permission before spending time on investigations that aren't strictly required to complete the user's request.
 
 ## Operational quick reference
