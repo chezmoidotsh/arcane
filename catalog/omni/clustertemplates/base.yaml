@@ -58,10 +58,8 @@
 #
 # SHA PINNING
 # -----------
-# extraManifests and cni.urls must point to commits on `main`. URLs in this
-# file reference the commit that added the manifests to this branch. After
-# merging, re-pin to the resulting merge commit SHA before applying to a live
-# cluster. A squash merge changes the SHA — repin immediately after.
+# extraManifests and cni.urls must point to commits on `main`. Repin whenever
+# a branch touching these manifests merges — squash merges change the SHA.
 #
 # Cross-references:
 #   ADR-014                    docs/decisions/014-network-topology.md
@@ -124,11 +122,9 @@ patches:
           cni:
             name: custom
             urls:
-              # SHA points to the commit on this branch that added 1.19.5-native.yaml.
-              # After merging, update to the resulting merge commit SHA (or a tag).
-              # Squash-merge risk: the branch SHA leaves main's history — repin before
-              # applying to a live cluster.
-              - https://raw.githubusercontent.com/chezmoidotsh/arcane/97c8cb69f5c648d8b7ac687603d429092e5f0b2d/catalog/talos/manifests/cilium/1.19.5-native.yaml
+              # Pinned to a commit SHA on `main` — repin after merging any branch
+              # that touches these manifests (squash merges change the SHA).
+              - https://raw.githubusercontent.com/chezmoidotsh/arcane/6d788a6d733c3d9ff67cf61a3cbf1d947262fb4d/catalog/talos/manifests/cilium/1.19.5-native.yaml
           podSubnets:
             # MANDATORY OVERRIDE — unique per cluster (ClusterMesh hard prerequisite).
             # Uncomment ONE line and set it to the cluster's allocated /19 from vlans.md.
@@ -154,10 +150,8 @@ patches:
           extraArgs:
             feature-gates: UserNamespacesSupport=true,ImageVolume=true
         extraManifests:
-          # Pinned to the commit on this branch that added these manifests.
-          # Update to the merge commit SHA after merging (same squash-merge caveat as above).
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/97c8cb69f5c648d8b7ac687603d429092e5f0b2d/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/97c8cb69f5c648d8b7ac687603d429092e5f0b2d/catalog/talos/manifests/metric-server/0.8.1.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/6d788a6d733c3d9ff67cf61a3cbf1d947262fb4d/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/6d788a6d733c3d9ff67cf61a3cbf1d947262fb4d/catalog/talos/manifests/metric-server/0.8.1.yaml
 ---
 kind: ControlPlane
 machineClass:
