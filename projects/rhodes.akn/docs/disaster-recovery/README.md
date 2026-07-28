@@ -99,11 +99,11 @@ kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/d
 >   surface once at the start of each invocation, so a CRD it just created isn't visible yet to a later resource in that
 >   same batch. Re-run the exact same `apply -f <dir>` command a second time — the CRD is registered by then and it goes
 >   through clean.
-> - **`failed calling webhook "webhook.cert-manager.io" / "....external-secrets.io"`: dial tcp ...: connect: operation
->   not permitted`** on `cert-manager`'s `ClusterIssuer`, `cloudnative-pg`'s two `Certificate`s
->   (`barman-cloud-client`/`barman-cloud-server`), `external-secrets`'s `ClusterSecretStore`, one `ExternalSecret` in
->   `external-dns`, and one webhook-gated resource in `ingress-gateway`. Root cause: the `cert-manager-webhook` and
->   `external-secrets-webhook` pods stay `Pending` (nodes still carry the
+> - **Webhook calls failing with `dial tcp ...: connect: operation not permitted`** (the full error names
+>   `webhook.cert-manager.io` or `....external-secrets.io`) on `cert-manager`'s `ClusterIssuer`, `cloudnative-pg`'s two
+>   `Certificate`s (`barman-cloud-client`/`barman-cloud-server`), `external-secrets`'s `ClusterSecretStore`, one
+>   `ExternalSecret` in `external-dns`, and one webhook-gated resource in `ingress-gateway`. Root cause: the
+>   `cert-manager-webhook` and `external-secrets-webhook` pods stay `Pending` (nodes still carry the
 >   `node.cloudprovider.kubernetes.io/uninitialized` taint) until the Proxmox CCM pod is actually running — and the CCM
 >   pod itself can't start until it can mount its `proxmox-cloud-provider` credential `Secret`, which **Step 3's
 >   `pulumi up` delivers, not this step**. This is expected at this point in the chain, not something to fix here —
