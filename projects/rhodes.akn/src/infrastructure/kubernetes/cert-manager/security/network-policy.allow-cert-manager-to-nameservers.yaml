@@ -3,11 +3,13 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows the cert-manager controller to query ns.chezmoi.sh directly on port 53. cert-manager's
-      DNS-01 self-check queries the challenge record's authoritative nameserver directly (bypassing
-      CoreDNS) before telling Let's Encrypt the challenge is ready, to avoid relying on a possibly
-      stale recursive cache. For the chezmoi.sh zone that nameserver is ns.chezmoi.sh, not one of
-      the zone's public Cloudflare NS records.
+      Allows the cert-manager controller to query public recursive resolvers (1.1.1.1, 8.8.8.8) on
+      port 53 for its DNS-01 self-check. This network's internal DNS answers "chezmoi.sh NS" with
+      ns.chezmoi.sh (a split-horizon-only BIND resolver, not one of the zone's real public Cloudflare
+      NS records) - querying it directly for the self-check meant the ACME TXT record written via the
+      Cloudflare solver was never found there, stalling every DNS-01 challenge forever. cert-manager
+      is configured with dns01RecursiveNameservers/dns01RecursiveNameserversOnly (catalog default
+      Helm values) to bypass that split-horizon NS answer entirely.
   name: allow-cert-manager-to-nameservers
 spec:
   endpointSelector:
@@ -15,8 +17,9 @@ spec:
       app.kubernetes.io/name: cert-manager
       app.kubernetes.io/component: controller
   egress:
-    - toFQDNs:
-        - matchName: ns.chezmoi.sh
+    - toCIDR:
+        - 1.1.1.1/32
+        - 8.8.8.8/32
       toPorts:
         - ports:
             - port: "53"

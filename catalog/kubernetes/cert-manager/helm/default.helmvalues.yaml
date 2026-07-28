@@ -6,3 +6,17 @@
 crds:
   enabled: true
   keep: true
+
+# chezmoi.sh's zone (Cloudflare-hosted, NS: aron/aragorn.ns.cloudflare.com) has a
+# split-horizon override on this network: talosnet's internal DNS answers
+# `chezmoi.sh NS` with `ns.chezmoi.sh` (the internal-only BIND resolver) instead
+# of Cloudflare's real public nameservers. cert-manager's DNS-01 self-check
+# queries whatever NS the domain's own lookup returns before telling the ACME
+# server the challenge is ready — on this network that resolves to ns.chezmoi.sh,
+# which never has the TXT record the Cloudflare solver just wrote (it's a
+# different, non-authoritative server), so every DNS-01 challenge stalls forever
+# on "not yet propagated". Forcing a public recursive resolver bypasses the
+# split-horizon NS answer entirely. Found live during a rhodes.akn DR drill
+# (2026-07-28) restoring the Gateway's wildcard certificate.
+dns01RecursiveNameservers: "1.1.1.1:53,8.8.8.8:53"
+dns01RecursiveNameserversOnly: true
