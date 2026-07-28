@@ -83,7 +83,9 @@ in
       slaves = lib.optionals (bindTsigSecret != "") [ ''key "external-dns."'' ];
       extraConfig = lib.mkIf (bindTsigSecret != "") ''
         update-policy {
-          grant "external-dns." zonesub chezmoi.sh. A TXT;
+          # zonesub takes no name argument -- it implicitly means "this zone" (chezmoi.sh,
+          # the enclosing zone block). Anything after it is the type list.
+          grant "external-dns." zonesub A TXT;
         };
       '';
     };
