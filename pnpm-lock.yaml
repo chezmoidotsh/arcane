@@ -52,6 +52,9 @@ catalogs:
       specifier: ^5.9.3
       version: 5.9.3
 
+overrides:
+  serialize-javascript: ^7.0.7
+
 importers:
 
   .: {}
@@ -1456,9 +1459,6 @@ packages:
     peerDependencies:
       '@pulumi/pulumi': '>=3.190.0 <4'
 
-  randombytes@2.1.0:
-    resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}
-
   read-cmd-shim@6.0.0:
     resolution: {integrity: sha512-1zM5HuOfagXCBWMN83fuFI/x+T/UhZ7k+KIzhrHXcQoeX5+7gmaDYjELQHmmzIodumBHeByBJT4QYS7ufAgs7A==}
     engines: {node: ^20.17.0 || >=22.9.0}
@@ -1484,9 +1484,6 @@ packages:
     engines: {node: '>= 0.4'}
     hasBin: true
 
-  safe-buffer@5.2.1:
-    resolution: {integrity: sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==}
-
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
 
@@ -1495,8 +1492,9 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  serialize-javascript@6.0.2:
-    resolution: {integrity: sha512-Saa1xPByTTq2gdeFZYLLo+RFE35NHZkAbqZeWNd3BpzppeVisAqpDjcp8dyf6uIvEqJRd46jemmyA4iFIeVk8g==}
+  serialize-javascript@7.0.7:
+    resolution: {integrity: sha512-YAy8Od6KV+uuwUuU50np8fGB/Aues6Y0nAhA9y/hId74PlKUcme4pXcBD46NWKr1Q4osN/iseZ17YqO1XfmI8g==}
+    engines: {node: '>=20.0.0'}
 
   shebang-command@2.0.0:
     resolution: {integrity: sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==}
@@ -2782,7 +2780,7 @@ snapshots:
       log-symbols: 4.1.0
       minimatch: 5.1.9
       ms: 2.1.3
-      serialize-javascript: 6.0.2
+      serialize-javascript: 7.0.7
       strip-json-comments: 3.1.1
       supports-color: 8.1.1
       workerpool: 6.5.1
@@ -2966,10 +2964,6 @@ snapshots:
       '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       async-mutex: 0.5.0
 
-  randombytes@2.1.0:
-    dependencies:
-      safe-buffer: 5.2.1
-
   read-cmd-shim@6.0.0: {}
 
   readdirp@3.6.0:
@@ -2995,16 +2989,12 @@ snapshots:
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
 
-  safe-buffer@5.2.1: {}
-
   safer-buffer@2.1.2:
     optional: true
 
   semver@7.8.5: {}
 
-  serialize-javascript@6.0.2:
-    dependencies:
-      randombytes: 2.1.0
+  serialize-javascript@7.0.7: {}
 
   shebang-command@2.0.0:
     dependencies:
