@@ -1,0 +1,70 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+  labels:
+    app.kubernetes.io/name: hubble-generate-certs
+    app.kubernetes.io/part-of: cilium
+    k8s-app: hubble-generate-certs
+  name: hubble-generate-certs
+  namespace: kube-system
+spec:
+  template:
+    metadata:
+      labels:
+        k8s-app: hubble-generate-certs
+    spec:
+      affinity: null
+      automountServiceAccountToken: true
+      containers:
+      - args:
+        - --ca-generate=true
+        - --ca-reuse-secret
+        - --ca-secret-namespace=kube-system
+        - --ca-secret-name=cilium-ca
+        - --ca-common-name=Cilium CA
+        command:
+        - /usr/bin/cilium-certgen
+        env:
+        - name: CILIUM_CERTGEN_CONFIG
+          value: |
+            certs:
+            - name: hubble-server-certs
+              namespace: kube-system
+              commonName: "*.default.hubble-grpc.cilium.io"
+              hosts:
+              - "*.default.hubble-grpc.cilium.io"
+              usage:
+              - signing
+              - key encipherment
+              - server auth
+              - client auth
+              validity: 8760h
+            - name: hubble-relay-client-certs
+              namespace: kube-system
+              commonName: "*.hubble-relay.cilium.io"
+              hosts:
+              - "*.hubble-relay.cilium.io"
+              usage:
+              - signing
+              - key encipherment
+              - client auth
+              validity: 8760h
+        image: quay.io/cilium/certgen:v0.4.3@sha256:d63d1cb3ee6db2167cb1ca9e7e31f30b6197846fcf42505d8f59e2f090a42c86
+        imagePullPolicy: IfNotPresent
+        name: certgen
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      hostNetwork: false
+      restartPolicy: OnFailure
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccount: hubble-generate-certs
+      serviceAccountName: hubble-generate-certs
+  ttlSecondsAfterFinished: 1800

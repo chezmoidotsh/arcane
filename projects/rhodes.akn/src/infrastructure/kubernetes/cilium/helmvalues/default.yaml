@@ -85,3 +85,17 @@ gatewayAPI:
     # Forcing "true" ensures the manifest is always emitted regardless of whether the
     # Gateway API CRDs are detectable at render time.
     create: "true"
+
+# Hubble Observability (flow visibility + UI)
+# hubble.enabled is already true by default; relay/UI are opt-in.
+hubble:
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+  tls:
+    auto:
+      # cronJob runs cert generation as a Kubernetes Job against the live API,
+      # so it only creates certs that are missing (reusing the existing CA)
+      # instead of Helm templating fresh random certs on every render.
+      method: cronJob
