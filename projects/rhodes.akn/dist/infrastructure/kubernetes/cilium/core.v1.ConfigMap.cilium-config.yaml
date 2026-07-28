@@ -31,6 +31,7 @@ data:
   debug: "false"
   debug-verbose: ""
   default-lb-service-ipam: lbipam
+  devices: eth0 eth1
   direct-routing-skip-unreachable: "false"
   dnsproxy-enable-transparent-mode: "true"
   dnsproxy-socket-linger-timeout: "10"
