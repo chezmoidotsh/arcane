@@ -46,8 +46,7 @@ spec:
         - --provider=rfc2136
         - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
         - --crd-source-kind=DNSEndpoint
-        - --annotation-filter=external-dns.alpha.kubernetes.io/include-bind in (true)
-        - --domain-filter=talosnet.chezmoi.sh
+        - --gateway-label-filter=external-dns.chezmoi.sh/zone in (internal)
         - --rfc2136-host=10.128.0.3
         - --rfc2136-port=53
         - --rfc2136-zone=chezmoi.sh

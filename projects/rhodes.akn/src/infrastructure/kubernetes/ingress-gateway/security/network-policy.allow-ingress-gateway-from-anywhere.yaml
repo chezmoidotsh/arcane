@@ -3,10 +3,12 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows the Cilium-managed Envoy proxy backing the "default" Gateway to receive traffic from
-      anywhere, on the ports exposed by its listeners: web (HTTP/80) and the chezmoi.sh /
-      akn.chezmoi.sh websecure listeners (HTTPS/443). This is the cluster's public/internal
-      ingress entrypoint.
+      Allows the Cilium-managed Envoy proxy backing any Gateway in this namespace to receive
+      traffic on HTTP/80 and HTTPS/443, regardless of source identity. Actual reachability is
+      bounded upstream of this policy by which CiliumLoadBalancerIPPool/interface each Gateway's
+      LB IP comes from: "external" gets a VLAN5 IP (reachable from the home network), "internal"
+      gets a talosnet-only IP (reachable only from other Talos nodes/SDN-attached hosts) — see
+      docs/network/ipam.md "Internal LoadBalancer Pools (talosnet)".
   name: allow-ingress-gateway-from-anywhere
 spec:
   endpointSelector: {}

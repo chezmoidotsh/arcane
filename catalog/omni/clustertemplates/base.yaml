@@ -27,7 +27,7 @@
 #
 # ClusterMesh: READY — shared service CIDR (172.31.0.0/19), unique pod CIDRs per cluster,
 #   ipv4NativeRoutingCIDR=172.30.0.0/16 (pod supernet). cluster.name/id not yet set
-#   (post-install prerequisite — see docs/network/vlans.md §ClusterMesh prerequisites).
+#   (post-install prerequisite — see docs/network/ipam.md §ClusterMesh prerequisites).
 #
 # VERSION MATRIX (Talos ↔ Kubernetes; never skip Talos minor versions)
 # -----------------------------------------------------------------------
@@ -63,7 +63,7 @@
 #
 # Cross-references:
 #   ADR-014                    docs/decisions/014-network-topology.md
-#   VLAN / SDN layout          docs/network/vlans.md
+#   VLAN / SDN layout          docs/network/ipam.md
 #   Machine class definitions  catalog/omni/machineclasses/
 # =============================================================================
 ---
@@ -127,7 +127,7 @@ patches:
               - https://raw.githubusercontent.com/chezmoidotsh/arcane/6d788a6d733c3d9ff67cf61a3cbf1d947262fb4d/catalog/talos/manifests/cilium/1.19.5-native.yaml
           podSubnets:
             # MANDATORY OVERRIDE — unique per cluster (ClusterMesh hard prerequisite).
-            # Uncomment ONE line and set it to the cluster's allocated /19 from vlans.md.
+            # Uncomment ONE line and set it to the cluster's allocated /19 from ipam.md.
             # A forgotten override makes Talos fall back to its built-in CIDR (NOT in our
             # 172.30.0.0/16 range) — this is intentional: fail-safe, not silent collision.
             # - 172.30.0.0/19   # rhodes-akn   (cluster.id 1)

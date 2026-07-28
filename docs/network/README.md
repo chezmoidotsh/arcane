@@ -7,7 +7,7 @@ services, or static IPs.
 
 | File                           | Purpose                                                                                           |
 | ------------------------------ | ------------------------------------------------------------------------------------------------- |
-| [`vlans.md`](vlans.md)         | Operational reference: VLANs, VLAN 5 IP plan, Proxmox SDN VNets, Kubernetes CIDRs, firewall rules |
+| [`ipam.md`](ipam.md)           | Operational reference: VLANs, VLAN 5 IP plan, Proxmox SDN VNets, Kubernetes CIDRs, firewall rules |
 | [`topology.d2`](topology.d2)   | D2 source for the topology diagram below                                                          |
 | [`topology.svg`](topology.svg) | Generated diagram (regenerate with `d2 topology.d2 topology.svg`)                                 |
 
@@ -54,7 +54,7 @@ per-cluster VLAN 5 LB pools. See [ADR-014](../decisions/014-network-topology.md)
 
 ## Quick Reference
 
-For full detail see [`vlans.md`](vlans.md). Key numbers:
+For full detail see [`ipam.md`](ipam.md). Key numbers:
 
 | Resource                     | Range                                             |
 | ---------------------------- | ------------------------------------------------- |

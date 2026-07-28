@@ -2,13 +2,21 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: default
+  name: external
   annotations:
     argocd.argoproj.io/description: |
-      Cilium Gateway API gateway for rhodes.akn cluster.
-      Handles all HTTP/HTTPS ingress traffic with TLS termination.
+      Cilium Gateway API gateway for rhodes.akn's VLAN5-facing ingress plane. Gets its
+      LoadBalancer IP from the "external" CiliumLoadBalancerIPPool — the catch-all default (no
+      Service/Gateway needs to opt in), reachable from the home network. See docs/network/ipam.md
+      "Cilium LoadBalancer Pools" and "Internal LoadBalancer Pools (talosnet)" for the "internal"
+      counterpart. Labeled external-dns.chezmoi.sh/zone=external so external-dns-unifi's
+      --gateway-label-filter picks it up as a valid parent for any HTTPRoute attached here,
+      regardless of whether that route is also attached to "internal".
 spec:
   gatewayClassName: cilium
+  infrastructure:
+    labels:
+      external-dns.chezmoi.sh/zone: external
   listeners:
     - name: web
       port: 80

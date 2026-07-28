@@ -3,9 +3,9 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows the Cilium-managed Envoy proxy backing the "default" Gateway to forward traffic to
-      backend Services across the cluster, as required to route HTTPRoutes attached from any
-      namespace.
+      Allows the Cilium-managed Envoy proxy backing any Gateway in this namespace ("external" on
+      VLAN5, talosnet-only "internal") to forward traffic to backend Services across the cluster,
+      as required to route HTTPRoutes attached from any namespace.
   name: allow-ingress-gateway-to-cluster
 spec:
   endpointSelector: {}

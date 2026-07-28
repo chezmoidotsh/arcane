@@ -69,5 +69,8 @@ extraArgs:
   # Configure CRD source with specific API version and kind
   - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
   - --crd-source-kind=DNSEndpoint
-  # Exclude resources with the annotation external-dns.alpha.kubernetes.io/exclude-unifi=true
-  - --annotation-filter=external-dns.alpha.kubernetes.io/include-unifi in (true)
+  # Apps attach one HTTPRoute to both the "external" and "internal" Gateways rather than a
+  # route per Gateway. Filtering on the Gateway's own label (not a per-route annotation) means
+  # this only ever resolves the "external" parent's address, even for a route that's also
+  # attached to "internal" -- see ingress-gateway/external.gateway.yaml.
+  - --gateway-label-filter=external-dns.chezmoi.sh/zone in (external)

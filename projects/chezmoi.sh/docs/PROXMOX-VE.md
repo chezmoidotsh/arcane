@@ -44,7 +44,7 @@ bounded by this one machine's availability; the mitigation is backups, not redun
 | Network | 1 × IPMI · 2 × 1GbE (onboard) · 1 × 10GbE |
 
 Addressing (management IP, IPMI, LoadBalancer pools, VLAN layout) is not repeated here — it lives in
-[`docs/network/vlans.md`](../../../docs/network/vlans.md), the single source of truth for the homelab's IPAM.
+[`docs/network/ipam.md`](../../../docs/network/ipam.md), the single source of truth for the homelab's IPAM.
 
 ### Bridges
 
@@ -144,7 +144,7 @@ reach the Proxmox API — and `proxmox-csi-plugin` calls that API on every volum
 A single shared VNet, rather than one per cluster, is an Omni constraint: MachineClasses are shared COSI resources
 whose `providerdata` a cluster template cannot override, so per-cluster VNets would force a duplicate MachineClass set
 per cluster. Isolation of _external_ traffic is unaffected — it comes from the per-cluster LoadBalancer pools in
-[`vlans.md`](../../../docs/network/vlans.md), not from the SDN.
+[`ipam.md`](../../../docs/network/ipam.md), not from the SDN.
 
 > [!NOTE]
 > SDN changes are staged by Proxmox VE and inert until applied. The stack applies them automatically after any zone,
@@ -304,7 +304,7 @@ are stored in OpenBao (`vault.chezmoi.sh`) — see
 ### Rebuild the host
 
 1. Install Proxmox VE; restore the management address and both bridges per
-   [`vlans.md`](../../../docs/network/vlans.md).
+   [`ipam.md`](../../../docs/network/ipam.md).
 2. Restore the PBS datastore encryption key — without it, every backup is unreadable. The keyfile and paperkey are
    stored in OpenBao (`vault.chezmoi.sh`) — but OpenBao itself runs on a cluster hosted by this very machine, so with
    the whole host gone, only an **offline** copy of the paperkey can start the recovery. Make sure one exists *before*
@@ -358,7 +358,7 @@ See
 - [`stack/proxmox/README.md`](../src/infrastructure/pulumi/stack/proxmox/README.md) — the stack managing this host
 - [`PROXMOX_BACKUP_SERVER.md`](./PROXMOX_BACKUP_SERVER.md) — the backup server this host pushes to
 - [`TRUENAS.md`](./TRUENAS.md) — the NAS guest running on this host
-- [`docs/network/vlans.md`](../../../docs/network/vlans.md) — VLAN layout and address plan (IPAM)
+- [`docs/network/ipam.md`](../../../docs/network/ipam.md) — VLAN layout and address plan (IPAM)
 - [ADR-014](../../../docs/decisions/014-network-topology.md) — dual-NIC Talos topology
 - [ADR-015](../../../docs/decisions/015-migrate-crossplane-to-pulumi.md) — why VM/LXC lifecycle stays manual
 - [`INF-20260627-00.proxmox-sdn-setup.md`](../../../docs/procedures/infrastructure/INF-20260627-00.proxmox-sdn-setup.md) — SDN setup

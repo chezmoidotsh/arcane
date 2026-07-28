@@ -1,10 +1,10 @@
 vars: {
   d2-config: {
     layout-engine: elk
-    sketch: true
+    sketch: false
   }
 }
-...@../assets/d2/styles.architecture.d2
+...@"../assets/d2/styles.architecture.d2"
 
 explanation: |md
   # Homelab Network Topology
@@ -14,8 +14,10 @@ explanation: |md
   via two NICs: vmbr0 (VLAN 5 management) and vmbr1 (full VLAN trunk).\
   pve-01 hosts all clusters and standalone services as Proxmox guests.\
   Talos VMs use a dual-NIC design: eth0 on vmbr1 for Cilium L2\
-  LoadBalancer ARP announcements, eth1 on the shared vnet-talos\
-  SDN VNet for inter-node traffic (kubelet, etcd).
+  LoadBalancer ARP announcements, eth1 on the shared talosnet\
+  SDN VNet for inter-node traffic (kubelet, etcd).\
+  Most LXCs/VMs are dual-homed the same way (VLAN 5 + talosnet), including\
+  talosnet-dns, the BIND server nodes use for split-horizon resolution.
 | {
   near: center-left
 }
@@ -93,90 +95,113 @@ pve-01: {
     omni: {
       class: [application-system]
       label: omni\n10.0.0.21
-      tooltip: Omni cluster manager — API, dashboard, Wireguard tunnel
+      tooltip: Omni cluster manager — API, dashboard, Wireguard tunnel. Dual-NIC — also eth1 10.128.0.2 on talosnet.
     }
     o11y: {
       class: [application-system]
       label: o11y\n10.0.0.22
-      tooltip: Observability — VictoriaMetrics, VictoriaLogs, Alertmanager
+      tooltip: Observability — VictoriaMetrics, VictoriaLogs, Alertmanager. Dual-NIC — also eth1 10.128.0.5 on talosnet.
     }
     oci-registry: {
       class: [application-system]
       label: oci-registry\n10.0.0.23
-      tooltip: OCI container registry (Zot)
+      tooltip: OCI container registry (Zot). Dual-NIC — also eth1 10.128.0.4 on talosnet.
+    }
+    talosnet-dns: {
+      class: [application-system]
+      label: talosnet-dns\n10.0.0.26
+      tooltip: BIND — static records for talosnet-only hostnames + split-horizon (RFC2136/TSIG from external-dns), forwards everything else upstream. Dual-NIC, but only serves DNS on eth1 (talosnet) — the VLAN 5 address isn't used for that.
     }
     pve-exporter: {
       class: [application-system]
-      label: pve-exporter\n(dynamic)
-      tooltip: Prometheus PVE exporter — scrapes Proxmox API; TCP 9221 inbound only
+      label: pve-exporter\n10.0.0.24
+      tooltip: Prometheus PVE exporter — scrapes the Proxmox API for host/VM metrics. Single-NIC (VLAN 5 only).
     }
     omni-provider: {
       class: [application-system]
-      label: omni-infra-provider-proxmox\n(dynamic)
-      tooltip: Omni infrastructure provider for Proxmox — provisions Talos VMs
+      label: omni-infra-provider-proxmox\n10.0.0.25
+      tooltip: Omni infrastructure provider for Proxmox — provisions Talos VMs. Single-NIC (VLAN 5 only).
     }
   }
 
-  # ── Proxmox SDN VXLAN ───────────────────────────────────────────────────────
+  # ── NAS (VM, not an LXC) ────────────────────────────────────────────────────
+  nas: {
+    class: [application-system]
+    label: NAS (VM)\n10.0.0.30 / .31
+    tooltip: TrueNAS — Garage/nginx app publishing, SMB shares. 3 NICs: ens18 (VLAN 5, this node), ens19 (talosnet, 10.128.0.6 — Garage/nginx reachable from talosnet without SNAT), ens27 (172.31.255.253/30).
+  }
+
+  # ── Proxmox SDN (talosnet) ──────────────────────────────────────────────────
   sdn: {
     class: [namespace]
-    label: SDN — VXLAN zone\n10.128.0.0/16
+    label: SDN zone (simple)\n10.128.0.0/16
     style.fill-pattern: none
-    tooltip: Shared VXLAN VNet (vnet-talos) for all Talos clusters — SNAT to Proxmox API; MTU 1450
+    tooltip: "Shared VNet (talosnet, simple zone -- not VXLAN, single-node PVE can't create vxlan without peers) for all Talos clusters — SNAT to Proxmox API; DNS 10.128.0.3 via DHCP"
 
     vnet-talos: {
       class: [application-system]
-      label: vnet-talos\n10.128.0.0/24
-      tooltip: Shared node traffic (eth1) for all Talos/Omni clusters — kubelet, etcd, inter-node; DHCP stable per MAC (.10–.250)
+      label: talosnet\n10.128.0.0/24
+      tooltip: "Shared node traffic (eth1) for all Talos/Omni clusters — kubelet, etcd, inter-node; DHCP stable per MAC (.10–.250). Also carries internal-only Cilium LB IPs (.2–.9, .240–.254) for talosnet-only Gateways, 2 per cluster (sandbox excluded)."
     }
   }
 
-  # ── Talos VMs ───────────────────────────────────────────────────────────────
+  # ── Talos VMs (one per cluster — rhodes.akn, lungmen.akn, sandbox, ...) ────────
   talos: {
     class: [namespace]
-    label: Talos VMs — lungmen.akn
-    style.fill-pattern: none
-    tooltip: Dual-NIC Talos VMs — separate Cilium L2 and node traffic planes
+    label: Talos VM (per cluster)
+    style: {
+      fill-pattern: none
+      multiple: true
+    }
+    tooltip: Dual-NIC Talos VMs — same eth0/eth1 split for every cluster (rhodes.akn, lungmen.akn, sandbox, ...), each with its own /29 LB slice and talosnet lease.
 
     vm-eth0: {
       class: [application-system]
-      label: eth0 → vmbr1 (VLAN 5)\nNo node IP — L2 ARP only\nCilium LB: 10.0.0.64/29 (lungmen.akn slice)
-      tooltip: Cilium L2Announcement ARP responses for lungmen.akn's /29 slice of the /26 pool; no kubelet/etcd traffic
+      label: eth0 → vmbr1 (VLAN 5)\nNo node IP — L2 ARP only\nCilium LB: cluster's /29 slice of 10.0.0.64/26
+      tooltip: Cilium L2Announcement ARP responses for this cluster's /29 slice of the /26 pool. No node management traffic here — that's eth1.
     }
     vm-eth1: {
       class: [application-system]
-      label: eth1 → vnet-talos\n10.128.0.x (DHCP, stable per MAC)\nkubelet · etcd · inter-node
-      tooltip: Node management plane; SNAT to pve-01:8006 (Proxmox API for proxmox-csi-plugin)
+      label: eth1 → talosnet\n10.128.0.x (DHCP, stable per MAC)\nkubelet · etcd · inter-node
+      tooltip: Node management plane (kubelet, etcd). Also SNATs out to reach the Proxmox API, which proxmox-csi-plugin needs to attach/detach volumes.
     }
   }
 }
 
 # ── Physical connections ───────────────────────────────────────────────────────
 internet -> udm-pro: "WAN" {class: [connect-from-internet]}
-udm-pro -> wifi-ap: "AP trunk" {class: [connect-network]}
-udm-pro -> pve-01.vmbr1: "VLAN trunk (NIC 1)" {class: [connect-network]}
-udm-pro -> pve-01.vmbr0: "VLAN 5 access (NIC 2)" {class: [connect-network]}
+udm-pro -- wifi-ap: "AP trunk" {class: [connect-network]}
+udm-pro -- pve-01.vmbr1: "VLAN trunk (NIC 1)" {class: [connect-network]}
+udm-pro -- pve-01.vmbr0: "VLAN 5 access (NIC 2)" {class: [connect-network]}
 
-# ── UDM Pro → VLANs ──────────────────────────────────────────────────────────
-udm-pro -> vlan1
-udm-pro -> vlan2
-udm-pro -> vlan3
-udm-pro -> vlan4
-udm-pro -> vlan5
+# ── UDM Pro — VLANs ──────────────────────────────────────────────────────────
+udm-pro -- vlan1
+udm-pro -- vlan2
+udm-pro -- vlan3
+udm-pro -- vlan4
+udm-pro -- vlan5
 
-# WiFi AP → VLANs
-wifi-ap -> vlan2: "Home SSID"
-wifi-ap -> vlan3: "Guest SSID"
-wifi-ap -> vlan4: "IoT SSID"
+# WiFi AP — VLANs
+wifi-ap -- vlan2: "Home SSID"
+wifi-ap -- vlan3: "Guest SSID"
+wifi-ap -- vlan4: "IoT SSID"
 
-# ── pve-01 bridge → VLAN / guest attachment ───────────────────────────────────
-pve-01.vmbr0 -> vlan5: "10.0.0.11 (static)"
-pve-01.vmbr1 -> vlan5: "VLAN 5 tagged"
-pve-01.vmbr1 -> pve-01.lxcs: "VLAN 5 ports"
-pve-01.vmbr1 -> pve-01.talos.vm-eth0: "VLAN 5 tagged (no node IP)"
+# ── pve-01 bridge — VLAN / guest attachment ───────────────────────────────────
+pve-01.vmbr0 -- vlan5: "10.0.0.11 (static)"
+pve-01.vmbr1 -- vlan5: "VLAN 5 tagged"
+pve-01.vmbr1 -- pve-01.lxcs: "VLAN 5 ports (eth0, all LXCs)"
+pve-01.vmbr1 -- pve-01.nas: "VLAN 5 tagged (ens18)"
+pve-01.vmbr1 -- pve-01.talos.vm-eth0: "VLAN 5 tagged (no node IP)"
 
-# SDN VNet → Talos eth1
-pve-01.sdn.vnet-talos -> pve-01.talos.vm-eth1: "VXLAN DHCP (stable per MAC)"
+# ── SDN VNet — dual-homed LXCs/VMs (eth1/ens19) ────────────────────────────────
+pve-01.lxcs.omni -- pve-01.sdn.vnet-talos
+pve-01.lxcs.o11y -- pve-01.sdn.vnet-talos
+pve-01.lxcs.oci-registry -- pve-01.sdn.vnet-talos
+pve-01.lxcs.talosnet-dns -- pve-01.sdn.vnet-talos: "DNS server (10.128.0.3)"
+pve-01.nas -- pve-01.sdn.vnet-talos: "ens19 (10.128.0.6)"
+
+# SDN VNet — Talos eth1
+pve-01.sdn.vnet-talos -- pve-01.talos.vm-eth1: "DHCP (stable per MAC)"
 
 # ── Inter-VLAN firewall (UDM Pro) ─────────────────────────────────────────────
 vlan2 -> vlan5: "Allowed: home → services" {

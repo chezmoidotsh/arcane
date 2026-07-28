@@ -15,9 +15,10 @@ the two Proxmox components below).
 
 ## [Cilium](https://cilium.io/) — `cilium/` (namespace `kube-system`)
 
-eBPF-based CNI: pod networking, `CiliumNetworkPolicy` enforcement, L2 announcement for LoadBalancer IPs
-(`primary.ippool.yaml`, `10.0.0.64/29` — see `docs/network/vlans.md`), and the cluster's **Gateway API** implementation
-— no separate ingress controller.
+eBPF-based CNI: pod networking, `CiliumNetworkPolicy` enforcement, L2 announcement for LoadBalancer IPs — two
+`CiliumLoadBalancerIPPool`s, `external.ippool.yaml` (VLAN5, `10.0.0.64/29`, the catch-all default) and
+`internal.ippool.yaml` (talosnet-only, opt-in — see `docs/network/ipam.md`) — and the cluster's **Gateway API**
+implementation, no separate ingress controller.
 
 **Why this choice**: one component covers both CNI and ingress instead of stacking Cilium + a dedicated Gateway
 controller. Envoy Gateway used to run alongside it on this cluster; that's gone now — Cilium's own Gateway API
@@ -26,12 +27,16 @@ resources).
 
 ## [Ingress Gateway](https://gateway-api.sigs.k8s.io/) — `ingress-gateway/` (namespace `ingress-gateway-system`)
 
-Not a separate operator — this is the `Gateway`, HTTP→HTTPS redirect `HTTPRoute`, and wildcard `*.chezmoi.sh`
-`Certificate` that Cilium's Gateway API controller (above) reconciles. Every app's own `HTTPRoute` (e.g.
-`src/apps/pocket-id/main.httproute.yaml`) attaches to the `Gateway` defined here via a cross-namespace `ReferenceGrant`.
+Not a separate operator — this is where the two `Gateway`s Cilium's Gateway API controller (above) reconciles live:
+`external` (VLAN5, `external.ippool.yaml`) and `internal` (talosnet-only, `internal.ippool.yaml`), plus the HTTP→HTTPS
+redirect `HTTPRoute` and wildcard `*.chezmoi.sh` `Certificate` shared by both. Each `Gateway` carries an
+`external-dns.chezmoi.sh/zone: external|internal` label — that's what external-dns' `--gateway-label-filter` uses to
+pick the right IP per plane (see `external-dns/` below). An app that needs split-horizon exposure attaches a single
+`HTTPRoute` to both `Gateway`s at once (two `parentRefs`, same hostname) instead of one route per Gateway — e.g.
+`src/apps/pocket-id/main.httproute.yaml`.
 
 **Why a separate folder**: keeps the Gateway/certificate lifecycle (rarely changes) decoupled from Cilium's own Helm
-release (upgraded independently), and gives every app a single, stable `parentRef` to attach to.
+release (upgraded independently), and gives every app a stable set of `parentRef`s to attach to.
 
 ## [CloudNative-PG](https://cloudnative-pg.io/) — `cloudnative-pg/` (namespace `cloudnative-pg-system`)
 
@@ -62,12 +67,21 @@ every other component that needs a credential (see the top-level README's Disast
 
 ## [ExternalDNS](https://github.com/kubernetes-sigs/external-dns) — `external-dns/` (namespace `external-dns-system`)
 
-Publishes DNS records to the local UDM-Pro (UniFi) controller from Kubernetes `Ingress`/`Gateway` resources, via the
-[external-dns-unifi-webhook](https://github.com/kashalls/external-dns-unifi-webhook) provider.
+Two releases, one per Gateway/network plane, each restricted to its plane via `--gateway-label-filter` matching the
+`external-dns.chezmoi.sh/zone` label on the `Gateway` a route is attached to (`ingress-gateway/` above) — not an
+annotation on the route itself, so a route attached to both `Gateway`s needs nothing extra to appear correctly in both:
+
+- `external-dns-unifi` (filters on `zone=external`) — publishes to the local UDM-Pro (UniFi) controller via the
+  [external-dns-unifi-webhook](https://github.com/kashalls/external-dns-unifi-webhook) provider. VLAN5-reachable records
+  only.
+- `external-dns-bind` (filters on `zone=internal`) — publishes to talosnet-dns (BIND, RFC2136/TSIG) for split-horizon:
+  the same `*.chezmoi.sh` hostname, resolved to the `internal` Gateway's talosnet-only IP instead.
 
 **Why this choice**: DNS records stay declarative and in sync with what's actually deployed, without a manual UniFi
-console step per service. UniFi provider, not Cloudflare — these are internal-only records; Cert-Manager (above) is the
-one talking to Cloudflare, for ACME DNS-01 only.
+console step per service. Filtering on the Gateway's label instead of a per-route annotation means an app's single
+`HTTPRoute` (attached to both Gateways) needs no split-horizon-specific configuration of its own — the two `parentRefs`
+already say everything each `external-dns` instance needs to know. Neither talks to Cloudflare — these are
+homelab-internal records; Cert-Manager (above) is the one talking to Cloudflare, for ACME DNS-01 only.
 
 ## [Proxmox Cloud Controller Manager](https://github.com/sergelogvinov/proxmox-cloud-controller-manager) — `proxmox-cloud-controller-manager/` (namespace `kube-system`)
 

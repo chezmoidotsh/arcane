@@ -3,7 +3,6 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   annotations:
-    external-dns.alpha.kubernetes.io/include-unifi: "true"
     link.argocd.argoproj.io/external-link: https://vault.chezmoi.sh
   labels:
     app.kubernetes.io/name: vault
@@ -15,7 +14,12 @@ spec:
   parentRefs:
   - group: gateway.networking.k8s.io
     kind: Gateway
-    name: default
+    name: external
+    namespace: ingress-gateway-system
+    sectionName: chezmoi.sh-websecure
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: internal
     namespace: ingress-gateway-system
     sectionName: chezmoi.sh-websecure
   rules:

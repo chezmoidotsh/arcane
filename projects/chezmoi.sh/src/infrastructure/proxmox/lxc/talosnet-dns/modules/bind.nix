@@ -5,11 +5,18 @@
 # answered. Serves two roles from one daemon:
 #   - static records for talosnet-only hostnames (avoiding SNAT + cross-zone
 #     conntrack issues): omni/api.omni/oci/o11y/nas/s3.chezmoi.sh
+#   - dynamic split-horizon records via external-dns/RFC2136: clusters publish
+#     the same *.chezmoi.sh hostname they already have externally (e.g.
+#     vault.chezmoi.sh, auth.chezmoi.sh), pointed at their internal Gateway's
+#     talosnet IP instead -- so talosnet clients get an address they can
+#     actually reach instead of the VLAN5 one
 #   - forwarding everything else upstream (10.10.10.10, 1.1.1.1/1.0.0.1 fallback)
 #
-# talosnet.chezmoi.sh is a separate, dynamically-updatable subdomain: external-
-# dns (RFC2136, TSIG-authenticated) can push records there without being able
-# to touch the static entries above, which live outside that subdomain.
+# The "external-dns." TSIG key can update A/TXT records anywhere in the
+# chezmoi.sh zone (not just a subdomain -- a per-subdomain restriction here
+# just pushes clusters toward inventing throwaway names instead of real
+# split-horizon). It still can't touch NS/SOA/MX/etc, so a compromised key
+# can redirect hostnames but not take over the zone.
 # bindTsigSecret (secrets/bind.sops.env, key BIND_TSIG_SECRET) is shared with
 # rhodes.akn's external-dns-bind release -- rotating it here also means
 # updating projects/rhodes.akn/src/infrastructure/kubernetes/external-dns/sops/bind.secret.yaml
@@ -76,7 +83,7 @@ in
       slaves = lib.optionals (bindTsigSecret != "") [ ''key "external-dns."'' ];
       extraConfig = lib.mkIf (bindTsigSecret != "") ''
         update-policy {
-          grant "external-dns." subdomain talosnet.chezmoi.sh.;
+          grant "external-dns." zonesub chezmoi.sh. A TXT;
         };
       '';
     };

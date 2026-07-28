@@ -14,7 +14,7 @@
 # NOTE: serviceSubnets (172.31.0.0/19) and clusterDNS (172.31.0.10) match the SHARED
 # defaults in the base template. They are duplicated here because this is a standalone
 # full-copy (omnictl requires all fields present — no overlays). All clusters share the
-# same service CIDR for ClusterMesh readiness (see ADR-014, vlans.md).
+# same service CIDR for ClusterMesh readiness (see ADR-014, ipam.md).
 #
 # Validate (offline, no Omni connectivity):
 #   omnictl cluster template validate -f <file>
@@ -28,7 +28,7 @@
 # Cross-references:
 #   catalog/omni/clustertemplates/base.yaml              (reference base)
 #   ADR-014  docs/decisions/014-network-topology.md      (CIDR / DNS decisions)
-#   docs/network/vlans.md                                (VLAN 5 / SDN VNet layout)
+#   docs/network/ipam.md                                (VLAN 5 / SDN VNet layout)
 #   catalog/omni/machineclasses/                          (machine class defs)
 # =============================================================================
 ---
