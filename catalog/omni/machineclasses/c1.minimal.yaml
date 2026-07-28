@@ -1,14 +1,19 @@
 ---
-# c1.small — minimal single-node control plane (2 GiB).
+# c1.minimal — dedicated single-node control plane (4 GiB / 4 vCPU).
 #
-# Compute-lean family (c1): just enough RAM for etcd + API server on a quiet
-# homelab mono-CP. Intentionally below Sidero's recommended etcd floor (4 GiB);
-# see README.md for the etcd-OOM caveat before reusing this for an HA control
-# plane.
+# Compute-lean family (c1): enough RAM to clear Sidero's etcd floor, enough
+# cores for etcd/kube-apiserver to burst during compaction/restore without
+# starving the box. Control-plane taint stays on (allowSchedulingOnControlPlanes:
+# false in the cluster template) so only Kube + CNI/CCM/CSI land here.
+#
+# ponytail: no CPU share/burst tuning (cpuunits/cpulimit) — the Proxmox
+# provider schema only exposes cores/sockets/cpu_type, nothing for relative
+# priority under host-level contention. Revisit if the provider adds it, or
+# tune cpuunits by hand on the Proxmox VM if two VMs actually fight for CPU.
 metadata:
   namespace: default
   type: MachineClasses.omni.sidero.dev
-  id: c1.small
+  id: c1.minimal
 spec:
   matchlabels: []
   autoprovision:
@@ -23,13 +28,12 @@ spec:
       # outside the pool is denied by Proxmox with a 403.
       pool: talos
 
-      # c1 = compute-lean control-plane family. 2 vCPU is enough for etcd +
-      # kube-apiserver on a single-node homelab control plane.
+      # c1 = compute-lean control-plane family. 4 vCPU covers etcd/kube-apiserver
+      # bursts (compaction, defrag, snapshot restore) on a single-node CP.
       sockets: 1
-      cores: 2
-      # 2 GiB — deliberately below Sidero's etcd floor (4 GiB). Fine for a quiet
-      # mono-CP; risky under etcd compaction/restore. See README caveat.
-      memory: 2048
+      cores: 4
+      # 4 GiB — meets Sidero's recommended etcd floor.
+      memory: 4096
 
       # Fixed 32 GB on every class for now (root/ephemeral only — Talos system
       # partitions + container images + emptyDir). Persistent data lives on the
@@ -75,4 +79,4 @@ spec:
         - kubernetes
         - talos
         - control-plane
-        - c1.small
+        - c1.minimal
