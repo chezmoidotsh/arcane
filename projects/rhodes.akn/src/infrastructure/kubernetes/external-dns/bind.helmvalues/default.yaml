@@ -1,0 +1,74 @@
+# ExternalDNS configuration for the talosnet-dns BIND server (RFC2136/TSIG)
+# This configuration sets up ExternalDNS to manage records under
+# talosnet.chezmoi.sh, the dynamic subdomain talosnet-dns delegates to it.
+
+---
+# Kubernetes resource kinds ExternalDNS watches for DNS record management.
+sources:
+  - crd
+  - gateway-grpcroute
+  - gateway-httproute
+  - gateway-tcproute
+  - gateway-tlsroute
+  - gateway-udproute
+  - ingress
+  - service
+
+# Distinguishes this instance's TXT ownership records from any other
+# external-dns instance/cluster writing into the same zone.
+txtOwnerId: external-dns.rhodesakn
+
+rbac:
+  create: true
+serviceAccount:
+  create: true
+  name: external-dns-bind
+
+# sync (not upsert-only/create-only): ExternalDNS also deletes records for
+# resources that disappear from the cluster.
+policy: sync
+
+# Provider configuration -- rfc2136 is a native provider (no webhook sidecar).
+# The TSIG secret is injected via env instead of extraArgs, to keep it out of
+# the pod spec / process arguments.
+provider:
+  name: rfc2136
+
+env:
+  - name: EXTERNAL_DNS_RFC2136_TSIG_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: external-dns-bind-secret
+        key: tsig-secret
+
+# Restricted to what talosnet.chezmoi.sh actually needs (host + ownership
+# records). Broadening this list widens what ExternalDNS is authorized to
+# write into the zone without a concrete need for it.
+managedRecordTypes:
+  - A
+  - TXT
+
+extraArgs:
+  - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
+  - --crd-source-kind=DNSEndpoint
+  # Only resources explicitly opted in are synced to BIND -- without this
+  # filter every Ingress/HTTPRoute/Service cluster-wide would be a candidate.
+  - --annotation-filter=external-dns.alpha.kubernetes.io/include-bind in (true)
+  # talosnet-dns (10.128.0.3) serves chezmoi.sh as a whole, but the
+  # update-policy grant (catalog/proxmox/lxc/talosnet-dns/modules/bind.nix)
+  # only lets this key touch names under talosnet.chezmoi.sh -- everything
+  # outside that subdomain is hand-curated on the server itself.
+  # --rfc2136-zone must be the real zone BIND serves (chezmoi.sh); it's what
+  # ExternalDNS puts in the `zone` field of every UPDATE/AXFR it sends --
+  # using the subdomain there gets NOTAUTH, since BIND has no zone by that
+  # name. --domain-filter is what actually scopes it to the subdomain.
+  - --domain-filter=talosnet.chezmoi.sh
+  - --rfc2136-host=10.128.0.3
+  - --rfc2136-port=53
+  - --rfc2136-zone=chezmoi.sh
+  - --rfc2136-tsig-keyname=external-dns.
+  - --rfc2136-tsig-secret-alg=hmac-sha256
+  # The zone's allow-transfer requires the same TSIG key for AXFR (not just
+  # updates) -- without this flag ExternalDNS's pre-sync zone read is
+  # unsigned and BIND rejects it.
+  - --rfc2136-tsig-axfr

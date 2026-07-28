@@ -37,7 +37,10 @@ before(async () => {
 				// something under mocks, matching how the real provider behaves.
 				const state: Record<string, unknown> = { ...args.inputs };
 				if (args.type === TYPE_TOKEN) {
-					state.value = "mock-token-secret";
+					// Matches the real Proxmox provider's actual shape: `value` is
+					// the complete `USER@REALM!TOKENID=SECRET` string, not the bare
+					// secret (see index.ts's tokenSecret comment).
+					state.value = `${args.inputs.userId}!${args.inputs.tokenName}=mock-secret-uuid`;
 				}
 				return { id: (args.inputs.name ?? args.name) + "_id", state };
 			},
@@ -144,6 +147,8 @@ describe("ProxmoxClusterIdentityComponent", () => {
 		expect(await unwrap(component.tokenId)).to.equal(
 			"kubernetes-cloud-provider@pve!cloud-provider",
 		);
-		expect(await unwrap(component.tokenSecret)).to.be.a("string");
+		// Must be just the bare secret, not the full `id=secret` string
+		// token.value actually resolves to (see index.ts's tokenSecret comment).
+		expect(await unwrap(component.tokenSecret)).to.equal("mock-secret-uuid");
 	});
 });

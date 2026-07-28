@@ -40,24 +40,74 @@ last.
 
 ## Step 2 — Deploy `dist/infrastructure/kubernetes/`
 
-> [!NOTE] None of this depends on Vault, ESO, or ArgoCD. Unlike other clusters, these apps don't get their secrets from
-> ESO/Vault at all — Pulumi writes them directly (Step 3), so everything here, including cert-manager, is fully
-> functional as soon as it's applied.
+> [!NOTE] None of this depends on Vault, ESO, or ArgoCD — Pulumi writes every secret these apps need directly (Step 3),
+> not through ESO. It is not, however, all immediately healthy: `cert-manager`, `cloudnative-pg`, and `external-secrets`
+> each ship at least one resource gated behind a validating webhook that only comes up once the Proxmox CCM/CSI
+> credentials arrive in Step 3 — see the callout below the apply commands.
+
+First, create the namespaces these apps don't create for themselves — unlike `cilium` (whose chart creates
+`cilium-secrets`), none of the rest ship a `Namespace` object; they normally rely on ArgoCD's `CreateNamespace=true`,
+which doesn't exist yet at this point in the chain:
 
 ```sh
-kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/dist/infrastructure/kubernetes/cilium/
-kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/dist/infrastructure/kubernetes/proxmox/
-kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/dist/infrastructure/kubernetes/cert-manager/
-kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/dist/infrastructure/kubernetes/cloudnative-pg/
-kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-secrets/
-kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-dns/
-kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/dist/infrastructure/kubernetes/ingress-gateway/
+for ns in proxmox-system cert-manager-system cloudnative-pg-system external-secrets-system external-dns-system ingress-gateway-system; do
+  kubectl --context <CLUSTER_CONTEXT> create namespace "$ns" --dry-run=client -o yaml \
+    | kubectl --context <CLUSTER_CONTEXT> apply --server-side -f -
+done
+kubectl --context <CLUSTER_CONTEXT> label namespace proxmox-system pod-security.kubernetes.io/enforce=privileged pod-security.kubernetes.io/enforce-version=v1.33
+```
+
+> [!WARNING] Use `kubectl label`, not `kubectl annotate` — Pod Security Admission reads namespace **labels**, not
+> annotations. `annotate` silently no-ops (the namespace keeps the cluster's default `baseline` policy) and the
+> `proxmox-csi-plugin-node` DaemonSet fails every pod with `violates PodSecurity "baseline:latest"`, 0/3 nodes ever
+> getting a CSI node pod. First hit during a live drill (2026-07-28) — `describe daemonset` in the CSI/CCM validation
+> below is what surfaces it if it recurs.
+
+Then apply each app, one at a time:
+
+```sh
+kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/dist/infrastructure/kubernetes/cilium/
+kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/dist/infrastructure/kubernetes/proxmox/
+kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/dist/infrastructure/kubernetes/cert-manager/
+kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/dist/infrastructure/kubernetes/cloudnative-pg/
+kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-secrets/
+kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-dns/
+kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/dist/infrastructure/kubernetes/ingress-gateway/
 ```
 
 > [!WARNING] Run these one at a time and confirm each succeeds before the next — the list above doesn't chain with `&&`,
 > so pasting the whole block at once won't stop on a failure. Two pairs must stay in this order: `cert-manager` before
 > `cloudnative-pg` (its `Issuer`/`Certificate` need cert-manager's CRDs already registered), and `cilium` before
-> `ingress-gateway` (its `Gateway` needs the `GatewayClass` `cilium` ships).
+> `ingress-gateway` (its `Gateway` needs the `GatewayClass` `cilium` ships). `--server-side` is required, not optional:
+> client-side apply rejects the Gateway API `httproutes` CRD outright
+> (`metadata.annotations: Too long: may not be more than 262144 bytes` — its schema exceeds the
+> `last-applied-configuration` annotation size limit).
+
+> [!WARNING] The `cilium` apply fails with several `Apply failed with N conflicts` errors on first try — Talos's own
+> bootstrap `extraManifests` (Step 1's CNI, applied under the Omni-managed field manager `cilium`) already owns the
+> DaemonSet/Deployment/ConfigMap objects, and this step's `kubectl` field manager conflicts with it on SSA. Re-run with
+> `--force-conflicts` added; this adopts ownership from the bootstrap manifest onto the `dist/`-rendered one (same
+> pattern as ArgoCD adopting hand-applied resources in Step 9) and triggers a short rolling update of the Cilium
+> DaemonSet — expected, see the ~2-minute connectivity blip called out in
+> [OMNI-20260721-00 § Known issues](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md#2-minute-connectivity-blip-during-cilium-kubeproxyreplacement-takeover).
+
+> [!NOTE] Expect two harmless, self-resolving classes of error on first pass — neither means Step 2 failed:
+>
+> - **`no matches for kind "X" ... ensure CRDs are installed first`** on a resource whose CRD was created earlier in the
+>   _same_ `apply -f <dir>` command (seen on `cilium`'s `GatewayClass`, `cert-manager`'s `ClusterIssuer`,
+>   `cloudnative-pg`'s `ClusterImageCatalog`, `external-secrets`'s `ClusterSecretStore`). `kubectl` resolves the API
+>   surface once at the start of each invocation, so a CRD it just created isn't visible yet to a later resource in that
+>   same batch. Re-run the exact same `apply -f <dir>` command a second time — the CRD is registered by then and it goes
+>   through clean.
+> - **Webhook calls failing with `dial tcp ...: connect: operation not permitted`** (the full error names
+>   `webhook.cert-manager.io` or `....external-secrets.io`) on `cert-manager`'s `ClusterIssuer`, `cloudnative-pg`'s two
+>   `Certificate`s (`barman-cloud-client`/`barman-cloud-server`), `external-secrets`'s `ClusterSecretStore`, one
+>   `ExternalSecret` in `external-dns`, and one webhook-gated resource in `ingress-gateway`. Root cause: the
+>   `cert-manager-webhook` and `external-secrets-webhook` pods stay `Pending` (nodes still carry the
+>   `node.cloudprovider.kubernetes.io/uninitialized` taint) until the Proxmox CCM pod is actually running — and the CCM
+>   pod itself can't start until it can mount its `proxmox-cloud-provider` credential `Secret`, which **Step 3's
+>   `pulumi up` delivers, not this step**. This is expected at this point in the chain, not something to fix here —
+>   re-apply just these six resources once Step 3 has run (or fold the retry into Step 4's validation).
 
 ## Step 3 — Turn Pulumi into recovery mode
 
@@ -66,9 +116,20 @@ kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/dist/infrastruc
 > reconcile those resources against an OpenBao that doesn't exist yet on the new cluster, and fail before OpenBao is
 > even restored.
 
+> [!IMPORTANT] Run `chezmoi.sh`'s own `pulumi up` **before** rhodes.akn's, at least once. `rhodes.akn/stack/proxmox.ts`
+> authenticates its Proxmox provider using the `rhodes-akn-bootstrap@pve` credential, which `chezmoi.sh`'s stack
+> (`stack/proxmox/access/rhodes-akn-bootstrap.ts`) delivers as a direct Kubernetes `Secret`
+> (`kube-system/rhodes-akn-bootstrap-pve`) into this cluster — not through a Pulumi `StackReference`, deliberately (see
+> that file's own comments: cross-project `StackReference` secret reads need the _exporting_ stack's passphrase, which
+> this repo does not share across projects). If that Secret doesn't exist yet, rhodes.akn's `pulumi up` fails outright
+> trying to read it.
+
 ```sh
-kubectl --context <CLUSTER_CONTEXT> create namespace vault --dry-run=client -o yaml | kubectl --context <CLUSTER_CONTEXT> apply -f -
-kubectl --context <CLUSTER_CONTEXT> create namespace pocket-id --dry-run=client -o yaml | kubectl --context <CLUSTER_CONTEXT> apply -f -
+cd projects/chezmoi.sh/src/infrastructure/pulumi
+pulumi up --refresh --parallel 15
+
+kubectl --context <CLUSTER_CONTEXT> create namespace vault --dry-run=client -o yaml | kubectl --context <CLUSTER_CONTEXT> apply --server-side -f -
+kubectl --context <CLUSTER_CONTEXT> create namespace pocket-id --dry-run=client -o yaml | kubectl --context <CLUSTER_CONTEXT> apply --server-side -f -
 
 cd projects/rhodes.akn/src/infrastructure/pulumi
 pulumi config set recovery true
@@ -79,6 +140,11 @@ This creates `cnpg-backup-credentials` in both the `vault` and `pocket-id` names
 (`stack/cloudnative-pg.ts`, a direct Kubernetes-provider write, not gated by `recovery` either way) — the S3 credentials
 the CNPG restores in Steps 5 and 6 need so that the CNPG operator deployed in Step 2 has something to restore from. Do
 this once, here; the per-app procedures below no longer repeat it.
+
+> [!NOTE] This same `pulumi up` is also what mints the `kubernetes-cloud-provider@pve` Proxmox identity and delivers the
+> `proxmox-cloud-provider` Secret the CCM/CSI pods (deployed in Step 2) need to actually start — it's the direct
+> resolution for the taint-blocked pods called out in Step 2's second callout. Give the CCM pod a minute to pick up the
+> Secret and untaint all 3 nodes before moving on to Step 4.
 
 ## Step 4 — Validate the cluster is operational
 
@@ -99,8 +165,10 @@ Also confirm ESO and the CNPG operator are up, since Steps 5-6 depend on both:
 
 ```sh
 kubectl --context <CLUSTER_CONTEXT> get pods -n external-secrets-system
-kubectl --context <CLUSTER_CONTEXT> get pods -n cnpg-system
+kubectl --context <CLUSTER_CONTEXT> get pods -n cloudnative-pg-system
 # → both Running (the vault.chezmoi.sh ClusterSecretStore itself stays unhealthy until Step 5 — expected)
+# → external-dns pods may CrashLoopBackOff/CreateContainerConfigError here too: their ExternalSecrets can't
+#   sync until Step 5 restores OpenBao — same root cause as the ClusterSecretStore, also expected
 ```
 
 ## Step 5 — Restore OpenBao
@@ -164,8 +232,9 @@ applied by hand — and reconcile it through GitOps from here on. No further man
 
 - **CNI/CSI/CCM**: `cilium status --wait` and OMNI-20260721-00's own validation checklist pass (Step 1-2, gated in
   Step 4)
-- **ESO / CNPG operator up**: `kubectl get pods -n external-secrets-system` and `-n cnpg-system` show `Running`
-  (`ClusterSecretStore vault.chezmoi.sh` itself stays unhealthy until Step 5 — expected) (Step 2, gated in Step 4)
+- **ESO / CNPG operator up**: `kubectl get pods -n external-secrets-system` and `-n cloudnative-pg-system` show
+  `Running` (`ClusterSecretStore vault.chezmoi.sh` itself stays unhealthy until Step 5 — expected) (Step 2, gated in
+  Step 4)
 - **Pulumi in recovery mode**: `pulumi config get recovery` reports `true`, `cnpg-backup-credentials` exists in both the
   `vault` and `pocket-id` namespaces (Step 3)
 - **OpenBao**: see [openbao.md § Quick verifications](openbao.md#quick-verifications) (Step 5)
@@ -197,3 +266,23 @@ applied by hand — and reconcile it through GitOps from here on. No further man
 - _2026-07-26_ (review follow-up): Refactored `stack/cert-manager.ts` to write the Cloudflare token as a direct
   Kubernetes `Secret` instead of via Vault — cert-manager is now functional right after Step 2, not gated on Step 7.
   Removed the redundant `dr:*:secrets`/`dr:pulumi:recovery-mode` mise tasks and trimmed intros.
+- _2026-07-27_: First real drill of Step 2 against a live `rhodes.akn` cluster. Switched every `kubectl apply` in the
+  step to `--server-side` (client-side apply rejects the Gateway API `httproutes` CRD on annotation size). Added the
+  missing namespace-creation sub-step (`proxmox-system`, `cert-manager-system`, `cloudnative-pg-system`,
+  `external-secrets-system`, `external-dns-system`, `ingress-gateway-system` — none of these apps ship their own
+  `Namespace` object). Added the two-error callout explaining the harmless discovery-cache re-run case and the
+  CCM-credential/webhook dependency chain that blocks six specific resources until Step 3 has run. Also fixed a separate
+  real gap found during the same drill: `rhodes.akn` had no source for the upstream Gateway API core CRDs
+  (`cilium/kustomization.yaml` now pulls the pinned `v1.5.1` experimental-channel bundle) — tracked in the `cilium`
+  app's own source, not this document.
+- _2026-07-27_ (Step 3): added the `chezmoi.sh`-before-`rhodes.akn` `pulumi up` ordering requirement — a new hard
+  dependency introduced by the same drill's fix moving the `rhodes-akn-bootstrap@pve` credential off a Pulumi
+  `StackReference` onto a direct Kubernetes `Secret` (see `stack/proxmox/access/rhodes-akn-bootstrap.ts`). Also noted
+  that this step's `pulumi up` is what actually resolves the CCM/CSI-taint-blocked pods flagged in Step 2.
+- _2026-07-28_: Second full drill, Steps 1-4. Fixed Step 2's namespace fix using `kubectl annotate` instead of
+  `kubectl label` — Pod Security Admission reads namespace labels, not annotations, so the `proxmox-system` PSA override
+  silently no-op'd and blocked the entire `proxmox-csi-plugin-node` DaemonSet (0/3 pods). Added a callout for the
+  `--force-conflicts` needed on `cilium`'s apply (SSA ownership conflict between Talos's bootstrap-applied manifest and
+  this step's `dist/`-rendered one). Fixed `-n cnpg-system` to the actual `-n cloudnative-pg-system` in Step 4 and Quick
+  verifications, and noted external-dns pods also block on Step 5 (their `ExternalSecret`s can't sync until OpenBao is
+  restored).

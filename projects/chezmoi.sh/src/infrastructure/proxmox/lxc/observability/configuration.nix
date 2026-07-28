@@ -48,6 +48,19 @@
     gateway = "10.0.0.1";
   };
 
+  # ── talosnet interface ──────────────────────────────────────────────────────
+  # eth1 is the second NIC added to CT 103 via Proxmox (bridge=talosnet,
+  # firewall=0). This provides a direct path to o11y without SNAT or conntrack
+  # zone crossing (host-level NAT zone 0 vs. the LXC firewall bridge zone 1,
+  # which causes RSTs). The talosnet-dns LXC resolves o11y.chezmoi.sh to this
+  # IP for clients on the talosnet subnet.
+  networking.interfaces.eth1 = {
+    ipv4.addresses = [{
+      address = "10.128.0.5";
+      prefixLength = 24;
+    }];
+  };
+
   time.timeZone = "Etc/UTC";
   i18n.defaultLocale = "C.UTF-8";
 

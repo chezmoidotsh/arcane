@@ -1,0 +1,20 @@
+# =============================================================================
+# talosnet-dns LXC — Task Automation
+# =============================================================================
+# Tasks for building, uploading, and maintaining the Proxmox LXC template that
+# runs the talosnet split-horizon BIND resolver + Vector agent.
+#
+# Usage:
+#   mise run lxc:build                                # Build the LXC tarball
+#   mise run lxc:push -- <pve-host>                   # Upload template to Proxmox (local storage)
+#   mise run lxc:upgrade -- <pve-host> --vmid <vmid>  # Upgrade a running LXC in place
+#
+# File-based tasks (bash scripts):
+#   .mise/tasks/lxc/build    — build task
+#   .mise/tasks/lxc/push     — upload task
+#   .mise/tasks/lxc/upgrade  — upgrade task
+#
+# Prerequisites:
+#   - Docker (for the Nix build container)
+#   - SSH key-based access to root@<pve-host> (for lxc:push)
+# =============================================================================

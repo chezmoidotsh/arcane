@@ -75,6 +75,22 @@ k8sClientRateLimit:
 l2announcements:
   enabled: true
 
+# eth0 (VLAN5 trunk, no IP - see the machine class comments) is excluded by
+# Cilium's default device auto-detection, which only selects interfaces that
+# carry an IP/default route. Without an explicit devices list, eth0 is never
+# "Selected" (confirm with `cilium-dbg shell -- db/show devices`), so L2
+# announcement never actually ARPs for any LoadBalancer IP on VLAN5 despite a
+# leader being elected for it - every external client gets "no route to host"
+# reaching the Gateway's IP. eth1 (talosnet SDN, has a DHCP IP) is selected by
+# default already; listed here anyway to keep this explicit and not rely on
+# auto-detection for either interface. Found live during a rhodes.akn DR
+# drill (2026-07-28) - the first cluster to use this V2 dual-NIC pattern, so
+# this gap never surfaced before (lungmen.akn is single-NIC with a real IP on
+# eth0, selected automatically).
+devices:
+  - eth0
+  - eth1
+
 gatewayAPI:
   enabled: true
   externalTrafficPolicy: Cluster
@@ -85,3 +101,17 @@ gatewayAPI:
     # Forcing "true" ensures the manifest is always emitted regardless of whether the
     # Gateway API CRDs are detectable at render time.
     create: "true"
+
+# Hubble Observability (flow visibility + UI)
+# hubble.enabled is already true by default; relay/UI are opt-in.
+hubble:
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+  tls:
+    auto:
+      # cronJob runs cert generation as a Kubernetes Job against the live API,
+      # so it only creates certs that are missing (reusing the existing CA)
+      # instead of Helm templating fresh random certs on every render.
+      method: cronJob

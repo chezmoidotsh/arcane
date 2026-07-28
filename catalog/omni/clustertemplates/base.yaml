@@ -161,8 +161,8 @@ patches:
 ---
 kind: ControlPlane
 machineClass:
-  name: c1.small # V2 dual-NIC (catalog/omni/machineclasses/c1.small.yaml)
-  size: 1 # single control-plane; c1.small is sized for etcd + API server only
+  name: c1.minimal # V2 dual-NIC (catalog/omni/machineclasses/c1.minimal.yaml)
+  size: 1 # single control-plane; c1.minimal is sized for etcd + API server
 ---
 kind: Workers
 name: workers

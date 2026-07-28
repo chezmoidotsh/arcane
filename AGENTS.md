@@ -119,8 +119,10 @@ mise run ansible:install    # Sync Python venv for Ansible roles
   automatically appends `-system` to the directory name to form the target namespace (e.g. `in-gateway/` → namespace
   `in-gateway-system`).
 - **Infrastructure (cloud)**: `projects/<cluster>/src/infrastructure/pulumi/<name>/`.
-- **Helm overlays**: per-app `helmvalues/` directory (`default.yaml`, `hardened.yaml`, …) with cluster-specific
-  `override.helmvalues.yaml` patched via Kustomize.
+- **Helm overlays**: per-chart `<chart>.helmvalues/` directory (e.g. `cert-manager.helmvalues/`, `openbao.helmvalues/`)
+  holding `default.yaml`; cluster-specific overrides live in the same directory (e.g. `override.yaml`) and are wired in
+  via the kustomization's `additionalValuesFiles`. Shared catalog defaults instead use
+  `catalog/kubernetes/<chart>/helm/default.helmvalues.yaml` / `hardened.helmvalues.yaml`.
 - **OIDC** via Pocket-Id (hosted on `amiya.akn`) for the ArgoCD UI and other admin interfaces. Envoy Gateway
   `SecurityPolicy` resources protect HTTPRoutes that need authentication (see
   `docs/decisions/005-envoy-gateway-oidc-authentication.md`).

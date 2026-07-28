@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# [MISE] description="Upload the talosnet-dns LXC template to Proxmox"
+# [MISE] depends=["lxc:build"]
+# [MISE] dir="{{config_root}}"
+# [USAGE] arg "<pve_host>" help="Hostname or IP of the Proxmox node (e.g. pve.lan)"
+
+set -euo pipefail
+
+CONFIG_ROOT="$(pwd)"
+# shellcheck source=/dev/null
+source "${CONFIG_ROOT}/../.mise/lib/lxc.sh"
+
+lxc_init "talosnet-dns" "${CONFIG_ROOT}" _talosnet_dns
+lxc_push "${usage_pve_host}"

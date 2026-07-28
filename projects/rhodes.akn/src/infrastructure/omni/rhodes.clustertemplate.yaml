@@ -39,10 +39,17 @@
 # and OpenBao tolerates a short outage (single instance, no HA) — both just
 # need to fit on one node, not stay spread across two.
 #
-# CNI/extraManifests are pinned to daa8852ced5d4526c776654d08214788cf2488c6,
-# reachable on `main` as of this writing — re-verify with
+# CNI/extraManifests are pinned to 234ce9db7cdcf62bd3af608724c8d6cd9165798c,
+# a commit on this branch (issue-370/rhodes-akn-dr-drill-fixes), NOT yet on
+# `main` — pushed to origin so raw.githubusercontent.com resolves today, but
+# this pin 404s once the branch is squash-merged/deleted. Repin to the
+# equivalent `main` SHA once this branch merges (see
+# OMNI-20260629-03.sha-repin.md's squash-merge trap). Picked over the
+# previous daa8852c pin because it adds the CiliumNetworkPolicy for
+# kubelet-serving-cert-approver (default-deny otherwise blocks its apiserver
+# watch and no serving cert is ever approved) — re-verify with
 # `git merge-base --is-ancestor <sha> origin/main` before `omnictl apply` if
-# this file has aged (see OMNI-20260629-03.sha-repin.md's squash-merge trap).
+# this file has aged.
 #
 # Validate (offline, no Omni connectivity):
 #   omnictl cluster template validate -f <file>
@@ -120,8 +127,8 @@ patches:
           cni:
             name: custom
             urls:
-              # TODO(rhodes.akn): repin to a commit reachable on `main` at apply time.
-              - https://raw.githubusercontent.com/chezmoidotsh/arcane/daa8852ced5d4526c776654d08214788cf2488c6/catalog/talos/manifests/cilium/1.19.5-native.yaml
+              # TODO(rhodes.akn): repin to a commit reachable on `main` once issue-370 merges.
+              - https://raw.githubusercontent.com/chezmoidotsh/arcane/234ce9db7cdcf62bd3af608724c8d6cd9165798c/catalog/talos/manifests/cilium/1.19.5-native.yaml
           podSubnets:
             - 172.30.0.0/19
           serviceSubnets:
@@ -135,14 +142,14 @@ patches:
           extraArgs:
             feature-gates: UserNamespacesSupport=true,ImageVolume=true
         extraManifests:
-          # TODO(rhodes.akn): repin to a commit reachable on `main` at apply time.
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/daa8852ced5d4526c776654d08214788cf2488c6/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/daa8852ced5d4526c776654d08214788cf2488c6/catalog/talos/manifests/metric-server/0.8.1.yaml
+          # TODO(rhodes.akn): repin to a commit reachable on `main` once issue-370 merges.
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/234ce9db7cdcf62bd3af608724c8d6cd9165798c/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/234ce9db7cdcf62bd3af608724c8d6cd9165798c/catalog/talos/manifests/metric-server/0.8.1.yaml
 ---
 kind: ControlPlane
 machineClass:
-  name: c1.small # V2 dual-NIC (catalog/omni/machineclasses/c1.small.yaml)
-  size: 1 # single control-plane; c1.small is sized for etcd + API server only
+  name: c1.minimal # V2 dual-NIC (catalog/omni/machineclasses/c1.minimal.yaml)
+  size: 1 # single control-plane; c1.minimal is sized for etcd + API server
 ---
 kind: Workers
 name: workers

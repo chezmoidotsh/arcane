@@ -4,6 +4,13 @@ packages:
   - catalog/pulumi/sdks/*
   - projects/*/src/infrastructure/pulumi
 
+allowBuilds:
+  "@pulumi/kubernetes": true
+  protobufjs: true
+
+overrides:
+  serialize-javascript: ^7.0.7
+
 catalog:
   "@axnic/pulumi-garage": ^1.0.1
   "@pulumi/cloudflare": ^6.17.0
@@ -23,6 +30,8 @@ catalog:
 
 onlyBuiltDependencies:
   - "@pulumi/b2"
+  - "@pulumi/kubernetes"
   - "@pulumi/truenas"
   - "@pulumi/proxmox-backup-server"
   - "@pulumi/proxmox"
+  - protobufjs

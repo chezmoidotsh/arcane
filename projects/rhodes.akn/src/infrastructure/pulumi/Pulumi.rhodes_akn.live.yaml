@@ -1,19 +1,10 @@
+encryptionsalt: v1:Wt1bfB4ve84=:v1:6wL09ObsKmol4mF2:/xUOa8xDysLoYvRxQtRc5bpdnjfwFw==
 config:
   garage:endpoint: https://admin.s3.chezmoi.sh
+  kubernetes:context: omni-rhodes-akn
+  rhodes-akn-infra:recovery: "true"
+  rhodes-akn-infra:cloudflare_account_id:
+    secure: v1:tNkng2PoAuAXDU7F:zIp4TL6TrpJaYth3cwUAcYcjXerZi3aj8KfvXzro6AxjvM7b4w+2nR78Lbe1Pb5z
+  rhodes-akn-infra:cloudflare_zone_id:
+    secure: v1:aItyDk7gbUAT43Dp:438Chai41N+guAPmPgDc99ln4xVwCnYXhYGw71IjBEh/1yrd0rERiFwNqDaQXWsG
   vault:vaultVersionOverride: 2.2.2
-  # Kubernetes provider for stack/cloudnative-pg.ts's direct Secret writes
-  # (cnpg-backup-credentials into vault/pocket-id) — not hardcoded in code, so
-  # a `pulumi up` run against the wrong ambient kubectl context can't silently
-  # write to the wrong cluster. Must be set once per environment:
-  #   pulumi config set kubernetes:context admin@rhodes.akn
-  # TODO(rhodes.akn): the following were secure (encrypted) values in amiya.akn's
-  # stack config and are NOT copied here — they are stack-specific secrets that
-  # must be set fresh against this stack (`pulumi config set --secret <key>
-  # <value>` from src/infrastructure/pulumi/, never via a hand-edited `secure:`
-  # blob copy-pasted from another stack's config). Pulumi generates its own
-  # encryptionsalt the first time a secret is set on this stack.
-  #   - cloudflare_account_id
-  #   - cloudflare_zone_id
-  #   - pocket_id_oidc_client_secret
-  # tailscale:tailnet was also present on amiya.akn; not needed here (no
-  # Tailscale for now).

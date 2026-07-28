@@ -3,6 +3,10 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+  # Gateway API core CRDs (GatewayClass, Gateway, HTTPRoute, TCPRoute, ...) — Cilium's chart doesn't
+  # bundle these.
+  - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
+
   - default.l2announcementpolicy.yaml
   - primary.ippool.yaml
   - security/
@@ -16,25 +20,3 @@ helmCharts:
     namespace: kube-system
 
     valuesFile: helmvalues/default.yaml
-
-patches:
-  # Helm generates random self-signed certs on every render; Cilium creates and
-  # rotates these at runtime so they must not be committed to dist/.
-  - patch: |-
-      $patch: delete
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: cilium-ca
-    target:
-      kind: Secret
-      name: cilium-ca
-  - patch: |-
-      $patch: delete
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: hubble-server-certs
-    target:
-      kind: Secret
-      name: hubble-server-certs

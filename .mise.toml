@@ -18,6 +18,24 @@
 _.file = "{{ config_root }}/.mise/.env.yaml" # Local environment variables file
 
 # -----------------------------------------------------------------------------
+# Path Extensions
+# -----------------------------------------------------------------------------
+# Additional directories added to PATH for tool accessibility
+_.path = [
+  "{{ config_root }}/scripts",        # Arcane operational scripts
+  "{{ config_root }}/.mise/krew/bin", # Kubectl plugins installed via Krew
+]
+
+# -----------------------------------------------------------------------------
+# Python Virtual Environment
+# -----------------------------------------------------------------------------
+# Isolated Python environment for any Python-based tools or scripts
+_.python.venv = { path = "{{ config_root }}/.mise/python", create = true, uv_create_args = [
+  '--seed',
+  '--link-mode=copy',
+] }
+
+# -----------------------------------------------------------------------------
 # Kubernetes Configuration
 # -----------------------------------------------------------------------------
 # Kubernetes client configuration file containing cluster access credentials
@@ -66,24 +84,6 @@ TALOSCONFIG = "{{ env.TALOS_CONFIG_DIR }}/config"
 # Omni/Talos Configuration
 # -----------------------------------------------------------------------------
 OMNICONFIG = "{{ config_root }}/.mise/omni/omniconfig.yaml"
-
-# -----------------------------------------------------------------------------
-# Path Extensions
-# -----------------------------------------------------------------------------
-# Additional directories added to PATH for tool accessibility
-_.path = [
-  "{{ config_root }}/scripts",        # Arcane operational scripts
-  "{{ config_root }}/.mise/krew/bin", # Kubectl plugins installed via Krew
-]
-
-# -----------------------------------------------------------------------------
-# Python Virtual Environment
-# -----------------------------------------------------------------------------
-# Isolated Python environment for any Python-based tools or scripts
-_.python.venv = { path = "{{ config_root }}/.mise/python", create = true, uv_create_args = [
-  '--seed',
-  '--link-mode=copy',
-] }
 
 # =============================================================================
 # Tool Installation Matrix
@@ -155,7 +155,17 @@ uv = "latest"                    # Extremely fast Python package and project man
 # -----------------------------------------------------------------------------
 # Tools for managing Omni cluster templates and configurations
 
-omnictl = "1.8.2"
+omnictl = "1.9.3"
+"github:Handfish/talos-pilot" = "0.1.11"
+
+# -----------------------------------------------------------------------------
+# Cilium Observability Tools
+# -----------------------------------------------------------------------------
+# CLIs for inspecting and debugging Cilium's CNI/NetworkPolicy state and
+# Hubble flow observability across every cluster's context
+
+cilium-cli = "latest"
+cilium-hubble = "latest"
 
 # =============================================================================
 # Tasks definition

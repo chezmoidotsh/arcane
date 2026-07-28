@@ -1,0 +1,19 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Lets the Cilium Gateway API reach any pod's serving port (proxied traffic carries
+      the reserved:ingress identity). Scoped to pods with a namespace label, never
+      endpointSelector: {} — matching reserved:ingress with ANY policy breaks Cilium's
+      Gateway request handling entirely (every proxied request gets a bare 403).
+  name: allow-ingress-gateway
+spec:
+  endpointSelector:
+    matchExpressions:
+      - key: io.kubernetes.pod.namespace
+        operator: Exists
+  ingress:
+    - fromEntities:
+        - ingress

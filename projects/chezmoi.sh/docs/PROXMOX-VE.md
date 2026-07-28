@@ -62,18 +62,17 @@ traffic never touches the home L2 domain.
 
 ## Identities & access
 
-Four service accounts, each scoped to the narrowest path that works.
+Three service accounts, each scoped to the narrowest path that works.
 
 | Identity | Purpose | Granted |
 | --- | --- | --- |
-| `kubernetes-ccm@pve` | Kubernetes cloud-controller-manager - node labels and VM state | `KubernetesCCM` on `/nodes/pve`, `KubernetesCCM` on `/pool/talos` |
-| `kubernetes-csi@pve` | Kubernetes CSI plugin - dynamic volume provisioning | `KubernetesCSI` on `/pool/talos` |
-| `omni@pve` | Omni infra provider - VM lifecycle scoped to /pool/talos | `OmniProviderNode` on `/nodes/pve-01`, `OmniProvider` on `/pool/talos`, `PVESDNUser` on `/sdn/zones/localnetwork/vmbr1`, `PVESDNUser` on `/sdn/zones/pvenet/talosnet` |
+| `omni@pve` | Omni infra provider - VM lifecycle scoped to /pool/talos | `OmniProviderCluster` on `/`, `OmniProviderNode` on `/nodes/pve-01`, `OmniProvider` on `/pool/talos`, `PVESDNUser` on `/sdn/zones/localnetwork/vmbr1`, `PVESDNUser` on `/sdn/zones/pvenet/talosnet`, `OmniProviderCreate` on `/vms` |
 | `prometheus@pve` | prometheus-pve-exporter monitoring | `Exporter` on `/` |
+| `rhodes-akn-bootstrap@pve` | Delegated access-control admin for rhodes.akn's own Pulumi program (scoped to /access) | `Administrator` on `/access`, `RhodesAknBootstrapDelegate` on `/nodes/pve-01`, `RhodesAknBootstrapDelegate` on `/pool/talos` |
 
-`prometheus@pve` is the only identity granted anything at `/`, and its role carries audit privileges exclusively — it can read the whole host and change none of it. Every other grant is bounded by a resource pool or a single node.
+Two identities hold a grant at `/`, all of them audit-only — they can read the whole host and change none of it. Every other grant is bounded by a resource pool or a single node.
 
-Three identities authenticate with an API token (`kubernetes-ccm@pve!ccm`, `kubernetes-csi@pve!csi` and `prometheus@pve!exporter`), all with privilege separation disabled — each token therefore carries exactly its user's permissions, no more.
+Two identities authenticate with an API token (`prometheus@pve!exporter` and `rhodes-akn-bootstrap@pve!bootstrap`), all with privilege separation disabled — each token therefore carries exactly its user's permissions, no more.
 `omni@pve` has no token: it authenticates with a password held outside this stack, which Pulumi never reads or writes.
 Token secrets are one-time values Proxmox VE never returns again; they are not in this document and not recoverable
 from stack state either.
@@ -84,10 +83,11 @@ from stack state either.
 | Role | Privileges |
 | --- | --- |
 | `Exporter` | `Datastore.Audit`, `Pool.Audit`, `Sys.Audit`, `VM.Audit` |
-| `KubernetesCCM` | `Sys.Audit`, `VM.Audit`, `VM.GuestAgent.Audit` |
-| `KubernetesCSI` | `Datastore.Allocate`, `Datastore.AllocateSpace`, `Datastore.Audit`, `VM.Allocate`, `VM.Audit`, `VM.Clone`, `VM.Config.CPU`, `VM.Config.Disk`, `VM.Config.HWType`, `VM.Config.Memory`, `VM.Config.Options`, `VM.Migrate`, `VM.PowerMgmt` |
 | `OmniProvider` | `Datastore.Allocate`, `Datastore.AllocateSpace`, `Datastore.AllocateTemplate`, `Datastore.Audit`, `Pool.Allocate`, `Pool.Audit`, `VM.Allocate`, `VM.Audit`, `VM.Clone`, `VM.Config.CDROM`, `VM.Config.CPU`, `VM.Config.Disk`, `VM.Config.HWType`, `VM.Config.Memory`, `VM.Config.Network`, `VM.Config.Options`, `VM.Console`, `VM.PowerMgmt` |
+| `OmniProviderCluster` | `Sys.Audit` |
+| `OmniProviderCreate` | `VM.Allocate`, `VM.Audit`, `VM.Config.CDROM`, `VM.Config.CPU`, `VM.Config.Disk`, `VM.Config.HWType`, `VM.Config.Memory`, `VM.Config.Network`, `VM.Config.Options` |
 | `OmniProviderNode` | `Sys.AccessNetwork`, `Sys.Audit` |
+| `RhodesAknBootstrapDelegate` | `Permissions.Modify`, `Pool.Allocate` |
 
 </details>
 
@@ -96,30 +96,25 @@ from stack state either.
 
 | Path | Grantee | Role | Propagates |
 | --- | --- | --- | --- |
+| `/` | `omni@pve` | `OmniProviderCluster` | no |
 | `/` | `prometheus@pve` | `Exporter` | yes |
-| `/nodes/pve` | `kubernetes-ccm@pve` | `KubernetesCCM` | yes |
+| `/access` | `rhodes-akn-bootstrap@pve` | `Administrator` | yes |
 | `/nodes/pve-01` | `omni@pve` | `OmniProviderNode` | yes |
-| `/pool/talos` | `kubernetes-ccm@pve` | `KubernetesCCM` | yes |
-| `/pool/talos` | `kubernetes-csi@pve` | `KubernetesCSI` | yes |
+| `/nodes/pve-01` | `rhodes-akn-bootstrap@pve` | `RhodesAknBootstrapDelegate` | yes |
 | `/pool/talos` | `omni@pve` | `OmniProvider` | yes |
+| `/pool/talos` | `rhodes-akn-bootstrap@pve` | `RhodesAknBootstrapDelegate` | yes |
 | `/sdn/zones/localnetwork/vmbr1` | `omni@pve` | `PVESDNUser` | yes |
 | `/sdn/zones/pvenet/talosnet` | `omni@pve` | `PVESDNUser` | yes |
+| `/vms` | `omni@pve` | `OmniProviderCreate` | yes |
 
 </details>
-
-> [!NOTE]
-> The `KubernetesCCM` grant on `/nodes/pve` (not `/nodes/pve-01`) is a known quirk, not a choice: the live ACL predates
-> this stack and was imported as-is for zero recreation. It is harmless while there is a single node — `pve` and
-> `pve-01` cover the same host — but must be corrected to `/nodes/pve-01` the day a second node exists. See the
-> comment on `kubernetesCcmNodeAcl` in
-> [`stack/proxmox/access.ts`](../src/infrastructure/pulumi/stack/proxmox/access.ts).
 
 ### Resource pools
 
 | Pool | Purpose | Referenced by ACLs |
 | --- | --- | --- |
 | `core` | Critical platform LXCs — required for everything else (oci-registry, o11y, omni) | no |
-| `talos` | Omni-managed Talos VMs | yes — 3 grants |
+| `talos` | Omni-managed Talos VMs | yes — 2 grants |
 
 `talos` is referenced by ACL bindings, which makes it an enforcement boundary rather than a label: the identities
 granted on `/pool/talos` can see and act on guests **inside that pool and nowhere else**.
