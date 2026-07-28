@@ -3,7 +3,6 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   annotations:
-    external-dns.alpha.kubernetes.io/zone: external
     link.argocd.argoproj.io/external-link: https://argocd.akn.chezmoi.sh
   name: argocd
 spec:

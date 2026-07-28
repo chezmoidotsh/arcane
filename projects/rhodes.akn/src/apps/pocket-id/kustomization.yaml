@@ -12,8 +12,7 @@ labels:
 
 resources:
   - main.deployment.yaml
-  - main.ext.httproute.yaml
-  - main.int.httproute.yaml
+  - main.httproute.yaml
   - database.externalsecret.yaml
   - cnpg.cluster.yaml
   - cnpg.objectstore.amiya-akn.yaml

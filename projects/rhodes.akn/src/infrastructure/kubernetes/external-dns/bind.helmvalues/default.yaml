@@ -2,8 +2,8 @@
 # This configuration sets up ExternalDNS to manage A/TXT records anywhere in the
 # chezmoi.sh zone that talosnet-dns serves -- used for split-horizon: the same
 # *.chezmoi.sh hostname a cluster already has externally, resolved here to its
-# internal (talosnet-only) Gateway IP instead. Scoped to Services/Gateways that
-# opt in via the external-dns.alpha.kubernetes.io/zone=internal annotation.
+# internal (talosnet-only) Gateway IP instead. Scoped by the "internal" Gateway's
+# own label (--gateway-label-filter below), not a per-route annotation.
 
 ---
 # Kubernetes resource kinds ExternalDNS watches for DNS record management.
@@ -55,8 +55,11 @@ managedRecordTypes:
 extraArgs:
   - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
   - --crd-source-kind=DNSEndpoint
-  # Only allow objects using external-dns.alpha.kubernetes.io/zone=internal annotation
-  - --annotation-filter=external-dns.alpha.kubernetes.io/zone in (internal)
+  # Apps attach one HTTPRoute to both the "external" and "internal" Gateways rather than a
+  # route per Gateway. Filtering on the Gateway's own label (not a per-route annotation) means
+  # this only ever resolves the "internal" parent's address, and naturally skips routes that
+  # aren't attached to "internal" at all (e.g. argocd) with nothing to declare on those routes.
+  - --gateway-label-filter=external-dns.chezmoi.sh/zone in (internal)
   # talosnet-dns (10.128.0.3) serves chezmoi.sh. The update-policy grant
   # (catalog/proxmox/lxc/talosnet-dns/modules/bind.nix) lets this key update
   # A/TXT records anywhere in the zone -- record type, not name, is what

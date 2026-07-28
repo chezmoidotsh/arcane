@@ -12,10 +12,9 @@ labels:
 resources:
   - config.externalsecret.yaml
   - database.externalsecret.yaml
-  - main.ext.httproute.yaml
-  - main.int.httproute.yaml
+  - main.httproute.yaml
   # TODO(rhodes.akn): no Tailscale for now — an ingress.yaml (Tailscale
-  # ingressClass) was dropped. main.ext.httproute.yaml (Cilium Gateway,
+  # ingressClass) was dropped. main.httproute.yaml (Cilium Gateway,
   # vault.chezmoi.sh) covers non-Tailscale access.
   - cnpg.cluster.yaml
   - cnpg.objectstore.amiya-akn.yaml
