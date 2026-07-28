@@ -3,24 +3,23 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   annotations:
-    external-dns.alpha.kubernetes.io/include-unifi: "true"
-    link.argocd.argoproj.io/external-link: https://auth.chezmoi.sh
-  name: pocket-id
+    external-dns.alpha.kubernetes.io/zone: internal
+  name: openbao-internal
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway
-      name: default
+      name: internal
       namespace: ingress-gateway-system
       sectionName: chezmoi.sh-websecure
   hostnames:
-    - auth.chezmoi.sh
+    - vault.chezmoi.sh
   rules:
     - backendRefs:
         - group: ""
           kind: Service
-          name: pocket-id
-          port: 80
+          name: openbao-ui
+          port: 8200
           weight: 1
       matches:
         - path:

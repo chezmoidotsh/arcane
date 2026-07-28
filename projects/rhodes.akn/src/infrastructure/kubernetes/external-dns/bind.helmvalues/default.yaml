@@ -1,6 +1,9 @@
 # ExternalDNS configuration for the talosnet-dns BIND server (RFC2136/TSIG)
-# This configuration sets up ExternalDNS to manage records under
-# talosnet.chezmoi.sh, the dynamic subdomain talosnet-dns delegates to it.
+# This configuration sets up ExternalDNS to manage A/TXT records anywhere in the
+# chezmoi.sh zone that talosnet-dns serves -- used for split-horizon: the same
+# *.chezmoi.sh hostname a cluster already has externally, resolved here to its
+# internal (talosnet-only) Gateway IP instead. Scoped to Services/Gateways that
+# opt in via the external-dns.alpha.kubernetes.io/zone=internal annotation.
 
 ---
 # Kubernetes resource kinds ExternalDNS watches for DNS record management.
@@ -41,9 +44,10 @@ env:
         name: external-dns-bind-secret
         key: tsig-secret
 
-# Restricted to what talosnet.chezmoi.sh actually needs (host + ownership
-# records). Broadening this list widens what ExternalDNS is authorized to
-# write into the zone without a concrete need for it.
+# Kept to host + ownership records only. Broadening this list widens what
+# ExternalDNS is authorized to write into the zone without a concrete need
+# for it -- the update-policy grant (bind.nix) is scoped to A/TXT for the
+# same reason.
 managedRecordTypes:
   - A
   - TXT
@@ -51,18 +55,14 @@ managedRecordTypes:
 extraArgs:
   - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
   - --crd-source-kind=DNSEndpoint
-  # Only resources explicitly opted in are synced to BIND -- without this
-  # filter every Ingress/HTTPRoute/Service cluster-wide would be a candidate.
-  - --annotation-filter=external-dns.alpha.kubernetes.io/include-bind in (true)
-  # talosnet-dns (10.128.0.3) serves chezmoi.sh as a whole, but the
-  # update-policy grant (catalog/proxmox/lxc/talosnet-dns/modules/bind.nix)
-  # only lets this key touch names under talosnet.chezmoi.sh -- everything
-  # outside that subdomain is hand-curated on the server itself.
+  # Only allow objects using external-dns.alpha.kubernetes.io/zone=internal annotation
+  - --annotation-filter=external-dns.alpha.kubernetes.io/zone in (internal)
+  # talosnet-dns (10.128.0.3) serves chezmoi.sh. The update-policy grant
+  # (catalog/proxmox/lxc/talosnet-dns/modules/bind.nix) lets this key update
+  # A/TXT records anywhere in the zone -- record type, not name, is what
+  # bounds this key's blast radius; it still can't touch NS/SOA/MX/etc.
   # --rfc2136-zone must be the real zone BIND serves (chezmoi.sh); it's what
   # ExternalDNS puts in the `zone` field of every UPDATE/AXFR it sends --
-  # using the subdomain there gets NOTAUTH, since BIND has no zone by that
-  # name. --domain-filter is what actually scopes it to the subdomain.
-  - --domain-filter=talosnet.chezmoi.sh
   - --rfc2136-host=10.128.0.3
   - --rfc2136-port=53
   - --rfc2136-zone=chezmoi.sh

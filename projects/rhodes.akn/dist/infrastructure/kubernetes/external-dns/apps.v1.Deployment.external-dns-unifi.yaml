@@ -46,7 +46,7 @@ spec:
         - --provider=webhook
         - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
         - --crd-source-kind=DNSEndpoint
-        - --annotation-filter=external-dns.alpha.kubernetes.io/include-unifi in (true)
+        - --annotation-filter=external-dns.alpha.kubernetes.io/zone in (external)
         image: oci.chezmoi.sh/registry.k8s.io/external-dns/external-dns:v0.21.0
         imagePullPolicy: IfNotPresent
         livenessProbe:

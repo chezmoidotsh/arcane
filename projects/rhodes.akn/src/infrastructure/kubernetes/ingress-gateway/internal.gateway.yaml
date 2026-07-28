@@ -1,0 +1,35 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: internal
+  annotations:
+    argocd.argoproj.io/description: |
+      Cilium Gateway API gateway for rhodes.akn's talosnet-only ingress plane. Gets its
+      LoadBalancer IP from the "internal" CiliumLoadBalancerIPPool (rhodes.akn's 2-address slice
+      of talosnet, 10.128.0.240/241) instead of "external" (VLAN5, the catch-all default) —
+      reachable only from other Talos nodes/SDN-attached hosts, never from VLAN2/VLAN5
+      home-network clients. See docs/network/ipam.md "Internal LoadBalancer Pools (talosnet)".
+      Same *.chezmoi.sh hostnames as the "external" Gateway (e.g. vault.chezmoi.sh) —
+      split-horizon: talosnet-dns (BIND, RFC2136-updated by external-dns) answers this IP for
+      those names, everyone else gets "external"'s VLAN5 IP via Unifi. See
+      projects/chezmoi.sh/src/infrastructure/proxmox/lxc/talosnet-dns/modules/bind.nix.
+spec:
+  gatewayClassName: cilium
+  infrastructure:
+    labels:
+      io.cilium/lb-ipam-pool: internal
+  listeners:
+    - name: chezmoi.sh-websecure
+      port: 443
+      protocol: HTTPS
+      hostname: "*.chezmoi.sh"
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: wildcard.chezmoi.sh-certificate
