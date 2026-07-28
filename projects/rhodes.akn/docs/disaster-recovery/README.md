@@ -54,8 +54,14 @@ for ns in proxmox-system cert-manager-system cloudnative-pg-system external-secr
   kubectl --context <CLUSTER_CONTEXT> create namespace "$ns" --dry-run=client -o yaml \
     | kubectl --context <CLUSTER_CONTEXT> apply --server-side -f -
 done
-kubectl --context <CLUSTER_CONTEXT> annotate namespace proxmox-system pod-security.kubernetes.io/enforce=privileged pod-security.kubernetes.io/enforce-version=v1.33
+kubectl --context <CLUSTER_CONTEXT> label namespace proxmox-system pod-security.kubernetes.io/enforce=privileged pod-security.kubernetes.io/enforce-version=v1.33
 ```
+
+> [!WARNING] Use `kubectl label`, not `kubectl annotate` — Pod Security Admission reads namespace **labels**, not
+> annotations. `annotate` silently no-ops (the namespace keeps the cluster's default `baseline` policy) and the
+> `proxmox-csi-plugin-node` DaemonSet fails every pod with `violates PodSecurity "baseline:latest"`, 0/3 nodes ever
+> getting a CSI node pod. First hit during a live drill (2026-07-28) — `describe daemonset` in the CSI/CCM validation
+> below is what surfaces it if it recurs.
 
 Then apply each app, one at a time:
 
@@ -76,6 +82,14 @@ kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/d
 > client-side apply rejects the Gateway API `httproutes` CRD outright
 > (`metadata.annotations: Too long: may not be more than 262144 bytes` — its schema exceeds the
 > `last-applied-configuration` annotation size limit).
+
+> [!WARNING] The `cilium` apply fails with several `Apply failed with N conflicts` errors on first try — Talos's own
+> bootstrap `extraManifests` (Step 1's CNI, applied under the Omni-managed field manager `cilium`) already owns the
+> DaemonSet/Deployment/ConfigMap objects, and this step's `kubectl` field manager conflicts with it on SSA. Re-run with
+> `--force-conflicts` added; this adopts ownership from the bootstrap manifest onto the `dist/`-rendered one (same
+> pattern as ArgoCD adopting hand-applied resources in Step 9) and triggers a short rolling update of the Cilium
+> DaemonSet — expected, see the ~2-minute connectivity blip called out in
+> [OMNI-20260721-00 § Known issues](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md#2-minute-connectivity-blip-during-cilium-kubeproxyreplacement-takeover).
 
 > [!NOTE] Expect two harmless, self-resolving classes of error on first pass — neither means Step 2 failed:
 >
@@ -151,8 +165,10 @@ Also confirm ESO and the CNPG operator are up, since Steps 5-6 depend on both:
 
 ```sh
 kubectl --context <CLUSTER_CONTEXT> get pods -n external-secrets-system
-kubectl --context <CLUSTER_CONTEXT> get pods -n cnpg-system
+kubectl --context <CLUSTER_CONTEXT> get pods -n cloudnative-pg-system
 # → both Running (the vault.chezmoi.sh ClusterSecretStore itself stays unhealthy until Step 5 — expected)
+# → external-dns pods may CrashLoopBackOff/CreateContainerConfigError here too: their ExternalSecrets can't
+#   sync until Step 5 restores OpenBao — same root cause as the ClusterSecretStore, also expected
 ```
 
 ## Step 5 — Restore OpenBao
@@ -216,8 +232,9 @@ applied by hand — and reconcile it through GitOps from here on. No further man
 
 - **CNI/CSI/CCM**: `cilium status --wait` and OMNI-20260721-00's own validation checklist pass (Step 1-2, gated in
   Step 4)
-- **ESO / CNPG operator up**: `kubectl get pods -n external-secrets-system` and `-n cnpg-system` show `Running`
-  (`ClusterSecretStore vault.chezmoi.sh` itself stays unhealthy until Step 5 — expected) (Step 2, gated in Step 4)
+- **ESO / CNPG operator up**: `kubectl get pods -n external-secrets-system` and `-n cloudnative-pg-system` show
+  `Running` (`ClusterSecretStore vault.chezmoi.sh` itself stays unhealthy until Step 5 — expected) (Step 2, gated in
+  Step 4)
 - **Pulumi in recovery mode**: `pulumi config get recovery` reports `true`, `cnpg-backup-credentials` exists in both the
   `vault` and `pocket-id` namespaces (Step 3)
 - **OpenBao**: see [openbao.md § Quick verifications](openbao.md#quick-verifications) (Step 5)
@@ -262,3 +279,10 @@ applied by hand — and reconcile it through GitOps from here on. No further man
   dependency introduced by the same drill's fix moving the `rhodes-akn-bootstrap@pve` credential off a Pulumi
   `StackReference` onto a direct Kubernetes `Secret` (see `stack/proxmox/access/rhodes-akn-bootstrap.ts`). Also noted
   that this step's `pulumi up` is what actually resolves the CCM/CSI-taint-blocked pods flagged in Step 2.
+- _2026-07-28_: Second full drill, Steps 1-4. Fixed Step 2's namespace fix using `kubectl annotate` instead of
+  `kubectl label` — Pod Security Admission reads namespace labels, not annotations, so the `proxmox-system` PSA override
+  silently no-op'd and blocked the entire `proxmox-csi-plugin-node` DaemonSet (0/3 pods). Added a callout for the
+  `--force-conflicts` needed on `cilium`'s apply (SSA ownership conflict between Talos's bootstrap-applied manifest and
+  this step's `dist/`-rendered one). Fixed `-n cnpg-system` to the actual `-n cloudnative-pg-system` in Step 4 and Quick
+  verifications, and noted external-dns pods also block on Step 5 (their `ExternalSecret`s can't sync until OpenBao is
+  restored).
