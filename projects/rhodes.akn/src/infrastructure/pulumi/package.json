@@ -14,8 +14,7 @@
 		"@pulumi/kubernetes": "catalog:",
 		"@pulumi/proxmox": "workspace:*",
 		"@pulumi/pulumi": "catalog:",
-		"@pulumi/vault": "catalog:",
-		"pulumi-time": "^0.14.0"
+		"@pulumi/vault": "catalog:"
 	},
 	"devDependencies": {
 		"typescript": "catalog:"

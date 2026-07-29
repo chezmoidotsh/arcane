@@ -7,7 +7,8 @@ prerequisites and where this fits in the full recovery chain.
 This document covers restoring a **previously-initialized** instance whose storage (all mounts, policies, roles, auth
 backends, secrets) is restored from backup and arrives already configured — there is no `bao operator init`, no
 `bao auth enable` here, both already happened on the source instance and are baked into the data being restored. What
-this document solves is **regaining admin access** to that already-configured instance without a root token.
+this document solves is **regaining admin access** to that already-configured instance using the root token held outside
+this repo.
 
 ## Technical framework and conventions
 
@@ -20,22 +21,10 @@ this document solves is **regaining admin access** to that already-configured in
   (`sops/softhsm-tokens.secret.yaml`) — this is the second, and only other, piece of state needed to bring OpenBao back.
   **If this secret is ever lost, the restored Postgres data can never be decrypted again** — there is no fallback; the
   instance would have to be reinitialized from empty, discarding all data.
-- **No root token and no recovery keys are held for this instance.** Two admin-recovery paths exist instead of the usual
-  `bao operator generate-root` ceremony (which requires recovery key shares this instance's operators do not have):
-  1. **Pocket-Id SSO**, logging in as a member of the `admin` OIDC group → binds `sso-admin-policy` (`stack/vault.ts`),
-     which grants `path "*"` except seal/unseal, replication, rekey/rotate, and the root-token endpoint —
-     root-equivalent for virtually every practical recovery action. Depends on Pocket-Id itself being reachable — see
-     `projects/rhodes.akn/docs/disaster-recovery/pocket-id.md`.
-  2. **The `dr-recovery-admin-token`** — a Pulumi-managed break-glass token (`stack/vault.ts`, same `sso-admin-policy`,
-     `noParent: true`, `ttl: 8760h`), recreated on roughly a 6-month cadence via a rotation trigger. It is independent
-     of the cluster and of Pocket-Id entirely — retrievable from Pulumi state (Garage S3) alone.
-
-  > [!WARNING]
-  >
-  > **If both paths are unavailable** (Pocket-Id also unrecoverable, and the break-glass token expired with no
-  > `pulumi up` having run in over a year), Vault admin access is **unrecoverable** short of a full `bao operator init`,
-  > which destroys all existing data. This is a known, accepted gap for this instance, not something this procedure
-  > closes — see Known issues.
+- **A root token and its Shamir recovery key shares are held for this instance**, in the operator's personal secret
+  manager — outside git, outside Pulumi, never in this repo. There is no Pulumi-managed break-glass token and no
+  dependency on Pocket-Id (or anything else) being reachable first: the root token works the moment OpenBao is unsealed
+  (Step 4), full stop. See Step 5 below for how to use it.
 
 - **Kubernetes auth backends should self-heal, but this is unverified in practice.** Both the `kubernetes/` backend
   (used for the Pulumi Vault provider's own authentication) and the `rhodes.akn` ESO backend are configured via the
@@ -70,10 +59,8 @@ You must also have:
 - `s3cmd`, `kustomize`, `ksops` on PATH (`s3cmd` needs no config file; credentials are passed as flags in each command
   below). `kustomize` and `ksops` need no configuration either.
 - A valid `SOPS_AGE_KEY_FILE` (via `mise install` / this repo's environment) to decrypt the `vault/sops/` secrets.
-- **Either** Pocket-Id already restored and reachable (`projects/rhodes.akn/docs/disaster-recovery/pocket-id.md`),
-  **or** access to the `rhodes.akn` Pulumi stack (`pulumi login`, correct stack selected) to retrieve the break-glass
-  token — you need at least one of these for Step 5, and **Option B (Pocket-Id) additionally requires the Gateway and a
-  valid TLS certificate to be up** (see the callout in Step 5).
+- The root token, retrieved ahead of time from the operator's personal secret manager — needed for Step 5. Not tracked
+  anywhere in this repo.
 
 ## Required inputs
 
@@ -171,39 +158,27 @@ token/PIN restored in Step 1 correctly decrypts it via PKCS#11 auto-unseal.
 
 ## Step 5 — Regain admin access
 
-Pick whichever of the two paths from Technical framework is available:
-
-**Option A — break-glass Pulumi token (no dependency on Pocket-Id, no dependency on the Gateway):**
-
-```sh
-cd projects/rhodes.akn/src/infrastructure/pulumi
-pulumi stack output drRecoveryAdminTokenValue --show-secrets
-```
-
-At this point in a real recovery, the Gateway and a valid TLS certificate are unlikely to be up yet (ArgoCD hasn't
-bootstrapped, cert-manager may not have issued anything). Reach OpenBao directly instead of through `vault.chezmoi.sh`:
+Retrieve the root token from your personal secret manager (out of band — not tracked anywhere in this repo). At this
+point in a real recovery, the Gateway and a valid TLS certificate are unlikely to be up yet (ArgoCD hasn't bootstrapped,
+cert-manager may not have issued anything), so reach OpenBao directly instead of through `vault.chezmoi.sh`:
 
 ```sh
 kubectl --context <CLUSTER_CONTEXT> port-forward -n vault svc/openbao 8200:8200 &
 
 export VAULT_ADDR=http://localhost:8200
-export VAULT_TOKEN="<value from above>"
-bao token lookup   # → confirms the token is valid and shows its policies
+export VAULT_TOKEN="<root token from your secret manager>"
+bao token lookup   # → confirms it's the root token (policies: ["root"])
 ```
 
-Once the Gateway and a valid certificate are confirmed up (see Known issues / regular operation), `VAULT_ADDR` can
-switch to `https://vault.chezmoi.sh`.
+From here, `VAULT_TOKEN` is a root session — use it like any admin token for the rest of the chain: `bao secrets list` /
+`bao auth list` to confirm mounts and backends restored correctly, the manual `bao write auth/rhodes.akn/config ...` in
+Step 6 if the Kubernetes auth backend didn't self-heal, or simply keeping the port-forward/env vars exported so
+`rhodes-akn-infra`'s own `pulumi up` (Step 7) can authenticate its Vault provider against the same `VAULT_ADDR` — export
+the same `VAULT_TOKEN` before running it.
 
-**Option B — Pocket-Id SSO (requires `projects/rhodes.akn/docs/disaster-recovery/pocket-id.md` already done):**
-
-> [!IMPORTANT]
->
-> Unlike Option A, this path is **not** available until the Gateway and a valid TLS certificate are serving
-> `vault.chezmoi.sh`. Pocket-Id's OIDC device-flow login requires HTTPS — there is no port-forward equivalent for it. If
-> the Gateway/cert-manager aren't up yet, use Option A first, even if Pocket-Id itself is already restored.
-
-Log into the OpenBao UI (`https://vault.chezmoi.sh/ui`) via the Pocket-Id OIDC method, as a user in the `admin` OIDC
-group. This binds `sso-admin-policy` automatically — no CLI steps needed beyond a normal SSO login.
+Once the Gateway and a valid certificate are confirmed up, `VAULT_ADDR` can switch to `https://vault.chezmoi.sh`, and
+Pocket-Id SSO (as a member of the `admin` OIDC group, binding `sso-admin-policy`) becomes available as an ongoing
+day-to-day admin path — see [README.md](README.md)'s Step 8 for confirming that round-trip.
 
 ## Step 6 — Verify Kubernetes auth backends self-healed
 
@@ -229,34 +204,24 @@ verification flagged in Technical framework for the next operator.
 
 - **CNPG cluster healthy**: `kubectl --context <CTX> get cluster openbao-database -n vault` → `Cluster in healthy state`
 - **Unsealed**: `bao status -tls-skip-verify` (via `kubectl exec`) → `Sealed: false`
-- **Admin access**: `bao token lookup` (Option A) or a successful OIDC login (Option B)
+- **Admin access**: `bao token lookup` with the root token exported as `VAULT_TOKEN` → `policies: ["root"]`
 - **Kubernetes auth**: ESO `ExternalSecret`s across the cluster report `SecretSynced`, not `SecretSyncedError`
 - **UI reachable**: `https://vault.chezmoi.sh/ui` loads and shows the unsealed/unauthenticated login screen
 
 ## Known issues
 
-### No fallback if both admin-recovery paths fail
+### Admin recovery depends on the external secret manager
 
-Neither the root token nor recovery keys are held for this instance. If Pocket-Id cannot be restored (see its own
-disaster recovery doc) **and** the break-glass Pulumi token has expired with no `pulumi up` run in the preceding year,
-there is no way to authenticate as an admin to the restored OpenBao. The only remaining option is a full
-`bao operator init` against empty storage, which discards every secret, policy, and role this instance holds for every
-downstream cluster. Mitigate by periodically exercising this document as an actual drill (not just reading it), which
-exercises both recovery paths and catches an expired break-glass token before it's needed for real.
-
-### Recovery keys were never generated for this instance
-
-Because no recovery keys exist, neither `bao operator generate-root` nor `bao operator rekey -target=recovery` can ever
-be used on this instance — both require providing a threshold of the _existing_ recovery keys as authorization, which is
-a Shamir-style ceremony, not an ACL-gated one; a privileged token (even `sso-admin-policy`) cannot substitute for it.
-This was a deliberate trade-off in favor of the two paths in Step 5, not an oversight, but it is worth revisiting if
-this instance's operators ever change.
+The root token and its Shamir recovery key shares live in the operator's personal secret manager, entirely outside this
+repo. If that secret manager is itself unreachable, Vault admin access to the restored instance is blocked until it
+comes back — this procedure has no fallback of its own for that case. Mitigate via the secret manager's own
+backup/recovery procedures, out of scope here.
 
 ## References
 
 - [DB-20260723-00: Restore a CNPG cluster from its S3 object-store backup](../../../../docs/procedures/databases/DB-20260723-00.cnpg-restore-from-object-store.md)
   — the CNPG restore mechanics used in Step 2
-- [Pocket-Id Disaster Recovery](pocket-id.md) — the SSO admin-recovery dependency in Step 5, Option B
+- [Pocket-Id Disaster Recovery](pocket-id.md) — restoring Pocket-Id itself, independent of OpenBao's own recovery
 - [ADR-002: OpenBao Secrets Mount Topology and Organizational Structure](../../../../docs/decisions/002-openbao-secrets-topology.md),
   [ADR-003: OpenBao Path and Naming Conventions](../../../../docs/decisions/003-openbao-path-naming-conventions.md),
   [ADR-004: OpenBao Policy Naming and Scope Conventions](../../../../docs/decisions/004-openbao-policy-naming-conventions.md)
@@ -281,3 +246,10 @@ this instance's operators ever change.
   prerequisites already listed there. Removed the `dr:openbao:secrets` mise task — two commands, not worth a wrapper.
 - _2026-07-28_: Fixed Step 1's `database.externalsecret.yaml` apply landing in the wrong namespace — added the missing
   `-n vault` flag.
+- _2026-07-29_: Replaced the whole break-glass admin-token mechanism (a Pulumi-managed `sso-admin-policy` token,
+  previously drafted as its own `rhodes-akn-recovery-token` stack to keep it out of `rhodes-akn-infra`'s `recovery`
+  gate) with the actual root token: it and its Shamir recovery key shares are held in the operator's personal secret
+  manager, which makes the whole Pulumi-managed-token indirection unnecessary. Simplified Step 5 to a single path
+  (retrieve the root token, export `VAULT_TOKEN`, done) — dropped the Option A/B split and the Pocket-Id-readiness
+  dependency it implied, and dropped the "no fallback if both paths fail" and "no recovery keys exist" Known Issues,
+  both now factually wrong.

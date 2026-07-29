@@ -1,15 +1,8 @@
 import { ClusterVaultComponent } from "@chezmoi.sh/pulumi-cluster-vault";
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
-import * as time from "pulumi-time";
 
 const config = new pulumi.Config();
-
-// DR break-glass admin token — see projects/rhodes.akn/docs/disaster-recovery/openbao.md.
-// Exported so it can be retrieved from Pulumi state (`pulumi stack output
-// drRecoveryAdminTokenValue --show-secrets`) even if the cluster itself is
-// unreachable, since Pulumi state lives on Garage S3, independent of the cluster.
-export let drRecoveryAdminTokenValue: pulumi.Output<string> | undefined;
 
 // Everything that configures Vault/OpenBao itself for this cluster: the cluster's own
 // auth backend + mounts, the shared/personal KV mounts, and pocket-id's SSO auth
@@ -196,41 +189,6 @@ path "sys/rotate/*" { capabilities = ["deny"] }
 path "auth/token/root" { capabilities = ["deny"] }
 `,
 	});
-
-	// ---------------------------------------------------------------------------
-	// DR break-glass admin token
-	// ---------------------------------------------------------------------------
-	// Root token and recovery keys are not held anywhere for this instance (see
-	// projects/rhodes.akn/docs/disaster-recovery/openbao.md) — Pocket-Id SSO is the normal admin recovery path,
-	// but that depends on Pocket-Id itself being reachable. This token is the
-	// fallback that doesn't depend on anything else being up. Recreated every
-	// ~6 months via the `rotation` trigger below; ttl is intentionally longer
-	// (8760h, this cluster's max_lease_ttl ceiling) than the rotation cadence so
-	// a missed `pulumi up` doesn't silently let the token expire before the next
-	// one runs. `pulumi up` is never run on a schedule in this repo, so
-	// "rotates every 6 months" means "at the next manual apply after 6 months
-	// have elapsed," not wall-clock automation.
-	const drRecoveryAdminTokenRotation = new time.Rotating(
-		"dr-recovery-admin-token-rotation",
-		{
-			rotationDays: 182,
-		},
-	);
-
-	const drRecoveryAdminToken = new vault.Token(
-		"dr-recovery-admin-token",
-		{
-			displayName: pulumi.interpolate`dr-recovery-admin-${drRecoveryAdminTokenRotation.id}`,
-			policies: [ssoAdminPolicy.name],
-			noParent: true,
-			renewable: true,
-			ttl: "8760h",
-			metadata: { purpose: "dr-break-glass-admin" },
-		},
-		{ replaceOnChanges: ["displayName"] },
-	);
-
-	drRecoveryAdminTokenValue = pulumi.secret(drRecoveryAdminToken.clientToken);
 
 	// ---------------------------------------------------------------------------
 	// Pocket-ID OIDC roles
