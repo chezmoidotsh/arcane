@@ -75,8 +75,16 @@ kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f pro
 kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cloudnative-pg/
 kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-secrets/
 kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-dns/
+kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/infrastructure/kubernetes/external-dns/sops \
+  | kubectl --context <CLUSTER_CONTEXT> apply -f -
 kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/ingress-gateway/
 ```
+
+> [!NOTE] The `external-dns/sops` line above is separate because `dist:render` never bakes ksops-sourced secrets into
+> `dist/` (see its `_has_ksops` check) — every `sops/` directory in this chain needs this same explicit
+> `kustomize build ... | kubectl apply` treatment, same as `openbao.md` Step 1 and `pocket-id.md` Step 1 already do for
+> their own `sops/` directories. This one delivers the BIND RFC2136/TSIG credential the `external-dns-bind` release
+> (applied by the `dist/` line just above) needs.
 
 > [!WARNING] Run these one at a time and confirm each succeeds before the next — the list above doesn't chain with `&&`,
 > so pasting the whole block at once won't stop on a failure. Two pairs must stay in this order: `cert-manager` before
@@ -246,6 +254,8 @@ applied by hand — and reconcile it through GitOps from here on. No further man
 - **ESO fully synced**: `kubectl get externalsecret -A` shows `SecretSynced`, not `SecretSyncedError` (Step 7)
 - **Cert-manager / ExternalDNS / Gateway**: a `Certificate` issues successfully and DNS records appear in Cloudflare
   (Step 2, functional immediately)
+- **external-dns/sops applied**: `kubectl --context <CTX> get secret external-dns-bind-secret -n external-dns-system`
+  exists (Step 2)
 - **ArgoCD**: the `seed` `Application` and every adopted `Application` report `Synced`/`Healthy` (Step 9)
 
 ## References
@@ -294,3 +304,6 @@ applied by hand — and reconcile it through GitOps from here on. No further man
   recovery key shares are held in the operator's personal secret manager instead, making it unnecessary. Step 5 no
   longer has an Option A/B split or a Pocket-Id-readiness dependency; Step 7 now calls out exporting the same root token
   so its `pulumi up` can authenticate its Vault provider. See `openbao.md`'s History for the full rationale.
+- _2026-07-29_: Added the missing external-dns/sops apply to Step 2 — dist:render never bakes ksops-sourced secrets into
+  dist/, so this one needed the same explicit kustomize+ksops treatment openbao.md/pocket-id.md already use for their
+  own sops/ dirs.
