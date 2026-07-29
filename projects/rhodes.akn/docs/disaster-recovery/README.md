@@ -66,13 +66,13 @@ kubectl --context <CLUSTER_CONTEXT> label namespace proxmox-system pod-security.
 Then apply each app, one at a time:
 
 ```sh
-kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/dist/infrastructure/kubernetes/cilium/
-kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/dist/infrastructure/kubernetes/proxmox/
-kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/dist/infrastructure/kubernetes/cert-manager/
-kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/dist/infrastructure/kubernetes/cloudnative-pg/
-kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-secrets/
-kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-dns/
-kubectl --context <CLUSTER_CONTEXT> apply --server-side -f projects/rhodes.akn/dist/infrastructure/kubernetes/ingress-gateway/
+kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cilium/
+kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/proxmox/
+kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cert-manager/
+kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cloudnative-pg/
+kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-secrets/
+kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-dns/
+kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/ingress-gateway/
 ```
 
 > [!WARNING] Run these one at a time and confirm each succeeds before the next — the list above doesn't chain with `&&`,
