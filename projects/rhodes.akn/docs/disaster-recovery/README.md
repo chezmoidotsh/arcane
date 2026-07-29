@@ -17,9 +17,12 @@ You must also have:
 - Access to Omni (`omnictl config new/add` already run) to provision the cluster in Step 1.
 - A valid `SOPS_AGE_KEY_FILE` (via `mise install` / this repo's environment) to decrypt every `sops/` secret applied
   along this chain (`vault/sops`, `pocket-id/sops`, `argocd/sops`).
-- Access to the `rhodes.akn` Pulumi stack (`pulumi login`, correct stack selected) — needed for Step 3's recovery-mode
-  `pulumi up`, OpenBao's break-glass admin token (Step 5), and for the Cloudflare/DNS-01 credentials cert-manager
-  (applied in Step 2) expects from ESO once Step 7 pushes them into Vault.
+- Access to the `rhodes-akn-infra` Pulumi stack (`pulumi login`, correct stack selected) — needed for Step 3's
+  recovery-mode `pulumi up` and for the Cloudflare/DNS-01 credentials cert-manager (applied in Step 2) expects from ESO
+  once Step 7 pushes them into Vault.
+- The root token, retrieved ahead of time from your personal secret manager — needed for Step 5 (regaining OpenBao admin
+  access) and for Step 7's `pulumi up`. Not tracked anywhere in this repo — see
+  [openbao.md § Technical framework](openbao.md#technical-framework-and-conventions).
 
 ## Required inputs
 
@@ -173,10 +176,6 @@ kubectl --context <CLUSTER_CONTEXT> get pods -n cloudnative-pg-system
 
 ## Step 5 — Restore OpenBao
 
-> [!NOTE] Pocket-Id hasn't been restored yet (Step 6 comes after this one), so use **Option A (break-glass Pulumi
-> token)** from `openbao.md`'s own Step 5 — Option B (Pocket-Id SSO) only becomes available once Pocket-Id and the
-> Gateway are both up, which isn't guaranteed until Step 7.
-
 Follow [OpenBao Disaster Recovery](openbao.md) in full. It restores the `openbao-database` CNPG cluster from its Garage
 S3 backup and regains admin access to the already-configured instance. Return here once its own Quick verifications
 pass.
@@ -190,9 +189,14 @@ into OpenBao is validated later, in Step 8.
 
 ## Step 7 — Turn Pulumi's `recovery` flag off
 
-OpenBao being reachable and unsealed (Step 5) is the signal to flip Pulumi back out of recovery mode:
+OpenBao being reachable and unsealed (Step 5) is the signal to flip Pulumi back out of recovery mode. This `pulumi up`
+talks to Vault directly (creating ESO's auth backend, KV mount, role, and Pocket-Id's SSO auth backend), so its Vault
+provider needs to authenticate — export the same root token from Step 5:
 
 ```sh
+export VAULT_ADDR=http://localhost:8200   # or https://vault.chezmoi.sh if the Gateway/cert are already up
+export VAULT_TOKEN="<root token from your secret manager>"
+
 cd projects/rhodes.akn/src/infrastructure/pulumi
 pulumi config set recovery false
 pulumi up --refresh --parallel 15
@@ -205,8 +209,8 @@ own OIDC `ExternalSecret` (Step 9) depends on this having succeeded.
 
 Walk the [Quick verifications](#quick-verifications) list below for Steps 1-7. Now that Step 7 has run, also confirm the
 one thing that couldn't be checked earlier: **Pocket-Id SSO into OpenBao** — log into `https://vault.chezmoi.sh/ui` via
-Pocket-Id OIDC as an `admin`-group user. This is [openbao.md](openbao.md)'s Option B, and confirms Pocket-Id's OIDC
-round-trip end to end.
+Pocket-Id OIDC as an `admin`-group user. This confirms Pocket-Id's OIDC round-trip into Vault end to end, now that both
+are up — day-to-day admin access no longer needs the root token past this point.
 
 ## Step 9 — Bootstrap ArgoCD and final validation
 
@@ -286,3 +290,7 @@ applied by hand — and reconcile it through GitOps from here on. No further man
   this step's `dist/`-rendered one). Fixed `-n cnpg-system` to the actual `-n cloudnative-pg-system` in Step 4 and Quick
   verifications, and noted external-dns pods also block on Step 5 (their `ExternalSecret`s can't sync until OpenBao is
   restored).
+- _2026-07-29_: Dropped OpenBao's Pulumi-managed break-glass admin token entirely — the root token and its Shamir
+  recovery key shares are held in the operator's personal secret manager instead, making it unnecessary. Step 5 no
+  longer has an Option A/B split or a Pocket-Id-readiness dependency; Step 7 now calls out exporting the same root token
+  so its `pulumi up` can authenticate its Vault provider. See `openbao.md`'s History for the full rationale.
