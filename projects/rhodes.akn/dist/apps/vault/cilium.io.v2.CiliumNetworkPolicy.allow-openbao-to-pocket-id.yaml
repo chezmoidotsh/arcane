@@ -4,18 +4,21 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows OpenBao server pods to reach Pocket-ID OIDC endpoints at auth.chezmoi.sh,
-      via both FQDN (external path) and cluster entity (in-cluster Cilium Gateway LB).
+      Allows OpenBao server pods to reach Pocket-ID OIDC endpoints at auth.chezmoi.sh. Uses the
+      "ingress" entity (traffic proxied by Cilium Gateway API carries the reserved:ingress
+      identity) rather than toFQDNs: the internal Gateway's LB IP is shared by every
+      *.chezmoi.sh hostname, and Cilium's ipcache assigns one fqdn identity per IP cluster-wide
+      -- whichever toFQDNs rule claims that IP first wins, silently denying every other policy
+      trying to reach the same IP under a different hostname (e.g. external-secrets reaching
+      vault.chezmoi.sh).
   labels:
     app.kubernetes.io/name: vault
   name: allow-openbao-to-pocket-id
   namespace: vault
 spec:
   egress:
-  - toFQDNs:
-    - matchName: auth.chezmoi.sh
   - toEntities:
-    - cluster
+    - ingress
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: vault
