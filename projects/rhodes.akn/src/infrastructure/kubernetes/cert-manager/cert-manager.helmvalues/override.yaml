@@ -7,3 +7,13 @@
 # repo-wide default.
 dns01RecursiveNameservers: "9.9.9.9:53,149.112.112.112:53"
 dns01RecursiveNameserversOnly: true
+
+# The other cert-manager images (controller/webhook/cainjector) are mirrored via the
+# kustomize images: transformer, which rewrites container image: fields. The acmesolver
+# image is passed as a --acme-http01-solver-image= CLI flag value instead, a plain string
+# the transformer can't reach, so it needs a real Helm value override here. Dead in
+# practice today (rhodes.akn only uses DNS-01), but keeps it correct if HTTP-01 is ever
+# used.
+acmesolver:
+  image:
+    repository: oci.chezmoi.sh/quay.io/jetstack/cert-manager-acmesolver

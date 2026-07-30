@@ -42,5 +42,3 @@ images:
     newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-startupapicheck
   - name: quay.io/jetstack/cert-manager-webhook
     newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-webhook
-  - name: quay.io/jetstack/cert-manager-acmesolver
-    newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-acmesolver
