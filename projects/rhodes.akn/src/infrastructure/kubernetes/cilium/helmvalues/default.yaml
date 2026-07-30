@@ -109,6 +109,18 @@ devices:
   - eth0
   - eth1
 
+# BPF masquerading is required for BPF host routing (enable-host-legacy-routing=false).
+# Without it, Cilium falls back to legacy (kernel) host routing, which breaks reply
+# traffic for any userspace-terminated service (e.g. the Gateway API's embedded Envoy) on
+# eth0: the kernel has no IPv4 route on that interface (VLAN5 trunk, no IP, see dual-nic
+# machine patch), so replies for external clients take the only default route (via eth1,
+# talosnet) and never make it back. BPF host routing keeps replies symmetric with their
+# ingress device, sidestepping kernel routing entirely for this path. Found live via
+# packet capture + host-netns curl during a rhodes.akn Gateway access investigation
+# (2026-07-30).
+bpf:
+  masquerade: true
+
 gatewayAPI:
   enabled: true
   externalTrafficPolicy: Cluster

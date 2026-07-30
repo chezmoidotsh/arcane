@@ -43,6 +43,7 @@ data:
   egress-gateway-reconciliation-trigger-interval: 1s
   enable-auto-protect-node-port-range: "true"
   enable-bpf-clock-probe: "false"
+  enable-bpf-masquerade: "true"
   enable-datapath-plugins: "false"
   enable-drift-checker: "true"
   enable-dynamic-config: "true"
