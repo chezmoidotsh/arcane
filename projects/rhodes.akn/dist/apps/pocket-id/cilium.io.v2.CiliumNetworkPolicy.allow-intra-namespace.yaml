@@ -1,0 +1,22 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Permits intra-namespace communication in the pocket-id namespace.
+  labels:
+    app.kubernetes.io/instance: pocket-id
+    app.kubernetes.io/name: pocket-id
+  name: allow-intra-namespace
+  namespace: pocket-id
+spec:
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: pocket-id
+  endpointSelector: {}
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: pocket-id

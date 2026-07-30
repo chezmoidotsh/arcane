@@ -6,7 +6,7 @@ metadata:
     policy.networking.k8s.io/description: |
       Allows the Kubernetes API server to reach the cert-manager admission webhook.
       cert-manager-webhook's MutatingWebhookConfiguration and ValidatingWebhookConfiguration
-      both set failurePolicy: Fail, and default-hardened only allows intra-namespace ingress —
+      both set failurePolicy: Fail, and allow-intra-namespace only allows intra-namespace ingress —
       without this rule the apiserver's admission calls are dropped and all Certificate/Issuer
       writes are rejected.
   name: allow-webhook-from-kubernetes-api

@@ -6,7 +6,7 @@ metadata:
     policy.networking.k8s.io/description: |
       Allows the Kubernetes API server to reach the external-secrets admission webhook.
       Both externalsecret-validate and secretstore-validate ValidatingWebhookConfigurations
-      set failurePolicy: Fail, and default-hardened only allows intra-namespace ingress —
+      set failurePolicy: Fail, and allow-intra-namespace only allows intra-namespace ingress —
       without this rule the apiserver's admission calls are dropped and all
       ExternalSecret/SecretStore writes are rejected.
   name: allow-webhook-from-kubernetes-api
