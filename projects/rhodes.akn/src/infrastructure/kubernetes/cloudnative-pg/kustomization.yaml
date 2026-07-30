@@ -20,8 +20,9 @@ resources:
     ../../../../../../catalog/kubernetes/cloudnative-pg/kustomize
   - security/
 
+patches:
+  - path: plugin-barman-cloud.secret-sidecar-image.patch.yaml
+
 images:
-  - name: ghcr.io/cloudnative-pg/cloudnative-pg
-    newName: oci.chezmoi.sh/ghcr.io/cloudnative-pg/cloudnative-pg
   - name: ghcr.io/cloudnative-pg/plugin-barman-cloud-testing
     newName: oci.chezmoi.sh/ghcr.io/cloudnative-pg/plugin-barman-cloud-testing

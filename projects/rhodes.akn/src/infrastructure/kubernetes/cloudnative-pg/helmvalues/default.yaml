@@ -1,4 +1,14 @@
 ---
+# The operator's own Deployment image. Setting this directly (rather than relying only on
+# the kustomize images: transformer) also fixes the OPERATOR_IMAGE_NAME env var the chart
+# renders from this same value -- the transformer only rewrites container image: fields, not
+# env var values, so OPERATOR_IMAGE_NAME stayed unmirrored even though the transformer
+# correctly covered the Deployment's actual image field.
+# No tag override: leave it empty so the chart falls back to .Chart.AppVersion, keeping the
+# operator version in sync with the chart bump instead of a second place to remember.
+image:
+  repository: oci.chezmoi.sh/ghcr.io/cloudnative-pg/cloudnative-pg
+
 # This config is read by the CloudNative-PG operator at startup to override default
 # image names for PostgreSQL clusters, PgBouncer poolers, and instance manager components.
 # See: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/operator_conf.md
