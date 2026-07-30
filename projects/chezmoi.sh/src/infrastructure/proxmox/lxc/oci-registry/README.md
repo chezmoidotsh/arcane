@@ -168,7 +168,7 @@ ssh root@${NODE} pct create ${VMID} local:vztmpl/${TEMPLATE} \
     --unprivileged 1 \
     --features     nesting=0,keyctl=0 \
     --cores        1 \
-    --memory       512 \
+    --memory       1024 \
     --swap         0 \
     --rootfs       local-zfs:2 \
     --mp0          local-zfs:100,mp=/var/lib/zot \
@@ -210,10 +210,14 @@ the LXC.
 | Workload            | Recommended                         |
 | ------------------- | ----------------------------------- |
 | CPU                 | 1 vCPU                              |
-| Memory              | 512 MiB                             |
+| Memory              | 1024 MiB                            |
 | Root disk (OS only) | 2 GiB                               |
 | Zot data volume     | 100 GiB (mounted at `/var/lib/zot`) |
 | Swap                | 0 (let OOM kill on overrun)         |
+
+> 512 MiB was the original tested value but proved insufficient once the cache filled up: zot's startup GC/scrub/CVE
+> scan walks every repo in `/var/lib/zot`, and that memory spike pushed the cgroup over the limit, causing recurring
+> OOM-kills of the `zot` process.
 
 The 2 GiB root is intentionally minimal — the LXC is stateless (rebuilt from the flake) and carries no user data. The
 Nix closure for the image typically lands under 1.5 GiB. The trivy vulnerability database is stored inside Zot's storage
