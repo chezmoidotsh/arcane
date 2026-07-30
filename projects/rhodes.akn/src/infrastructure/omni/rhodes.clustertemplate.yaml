@@ -39,11 +39,13 @@
 # and OpenBao tolerates a short outage (single instance, no HA) — both just
 # need to fit on one node, not stay spread across two.
 #
-# CNI/extraManifests are pinned to 6d788a6d733c3d9ff67cf61a3cbf1d947262fb4d on
-# `main`, which adds the CiliumNetworkPolicy for kubelet-serving-cert-approver
-# (default-deny otherwise blocks its apiserver watch and no serving cert is
-# ever approved) — re-verify with `git merge-base --is-ancestor <sha>
-# origin/main` before `omnictl apply` if this file has aged.
+# CNI/extraManifests are pinned to 9a58e751d48be11bc7e67f3f2a6bf676973ea440
+# on `main`, which bumps the bootstrap CNI manifest to Cilium 1.20.0 (see
+# catalog/talos/manifests/cilium/1.20.0-native.yaml) and, further back, adds
+# the CiliumNetworkPolicy for kubelet-serving-cert-approver (default-deny
+# otherwise blocks its apiserver watch and no serving cert is ever approved)
+# — re-verify with `git merge-base --is-ancestor <sha> origin/main` before
+# `omnictl apply` if this file has aged.
 #
 # Validate (offline, no Omni connectivity):
 #   omnictl cluster template validate -f <file>
@@ -121,7 +123,7 @@ patches:
           cni:
             name: custom
             urls:
-              - https://raw.githubusercontent.com/chezmoidotsh/arcane/6d788a6d733c3d9ff67cf61a3cbf1d947262fb4d/catalog/talos/manifests/cilium/1.19.5-native.yaml
+              - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/cilium/1.20.0-native.yaml
           podSubnets:
             - 172.30.0.0/19
           serviceSubnets:
@@ -135,8 +137,8 @@ patches:
           extraArgs:
             feature-gates: UserNamespacesSupport=true,ImageVolume=true
         extraManifests:
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/6d788a6d733c3d9ff67cf61a3cbf1d947262fb4d/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/6d788a6d733c3d9ff67cf61a3cbf1d947262fb4d/catalog/talos/manifests/metric-server/0.8.1.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/metric-server/0.8.1.yaml
 ---
 kind: ControlPlane
 machineClass:

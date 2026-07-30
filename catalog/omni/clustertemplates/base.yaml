@@ -124,7 +124,7 @@ patches:
             urls:
               # Pinned to a commit SHA on `main` — repin after merging any branch
               # that touches these manifests (squash merges change the SHA).
-              - https://raw.githubusercontent.com/chezmoidotsh/arcane/6d788a6d733c3d9ff67cf61a3cbf1d947262fb4d/catalog/talos/manifests/cilium/1.19.5-native.yaml
+              - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/cilium/1.20.0-native.yaml
           podSubnets:
             # MANDATORY OVERRIDE — unique per cluster (ClusterMesh hard prerequisite).
             # Uncomment ONE line and set it to the cluster's allocated /19 from ipam.md.
@@ -150,8 +150,8 @@ patches:
           extraArgs:
             feature-gates: UserNamespacesSupport=true,ImageVolume=true
         extraManifests:
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/6d788a6d733c3d9ff67cf61a3cbf1d947262fb4d/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/6d788a6d733c3d9ff67cf61a3cbf1d947262fb4d/catalog/talos/manifests/metric-server/0.8.1.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/metric-server/0.8.1.yaml
 ---
 kind: ControlPlane
 machineClass:
