@@ -4,8 +4,14 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows the cert-manager controller to access the Kubernetes API server to watch and manage
-      Certificate, Issuer and other cert-manager custom resources cluster-wide.
+      Allows every cert-manager component (controller, cainjector, webhook) to access the
+      Kubernetes API server to watch/manage Certificate, Issuer and other cert-manager custom
+      resources, and CA bundles injected into webhooks/CRDs cluster-wide. Scoped by instance, not
+      just the "controller" component -- cainjector and webhook need the same apiserver access
+      and previously had no egress-restricting policy of their own, so they relied on the
+      absence of a matching policy (unrestricted egress) rather than an explicit grant. Once the
+      cluster-wide allow-intra-namespace rollout started selecting every pod in the namespace for
+      egress, that implicit allowance stopped applying and both were silently dropped.
   name: allow-cert-manager-to-kubernetes-api
   namespace: cert-manager-system
 spec:
@@ -14,5 +20,4 @@ spec:
     - kube-apiserver
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/component: controller
-      app.kubernetes.io/name: cert-manager
+      app.kubernetes.io/instance: cert-manager
