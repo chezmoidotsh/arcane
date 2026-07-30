@@ -311,7 +311,7 @@ spec:
           value: /helm-working-dir
         - name: HELM_DATA_HOME
           value: /helm-working-dir
-        image: quay.io/argoproj/argocd:v3.4.2
+        image: oci.chezmoi.sh/quay.io/argoproj/argocd:v3.4.2
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
@@ -383,7 +383,7 @@ spec:
         command:
         - sh
         - -c
-        image: quay.io/argoproj/argocd:v3.4.2
+        image: oci.chezmoi.sh/quay.io/argoproj/argocd:v3.4.2
         imagePullPolicy: IfNotPresent
         name: copyutil
         resources: {}
@@ -405,7 +405,7 @@ spec:
         command:
         - /bin/sh
         - -c
-        image: viaductoss/ksops:v4.3.3@sha256:6b5ec4b6144307f78bcddffd8f09020482836eee34cf77bf4ce8614b0452a73c
+        image: oci.chezmoi.sh/docker.io/viaductoss/ksops:v4.3.3@sha256:6b5ec4b6144307f78bcddffd8f09020482836eee34cf77bf4ce8614b0452a73c
         name: install-ksops
         securityContext:
           allowPrivilegeEscalation: false

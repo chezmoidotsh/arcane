@@ -8,6 +8,10 @@ params:
 server:
   extensions:
     enabled: true
+    # rhodes.akn has no direct internet egress for image pulls -- mirror
+    # through oci.chezmoi.sh (same pattern as global.image.repository above).
+    image:
+      repository: oci.chezmoi.sh/quay.io/argoprojlabs/argocd-extension-installer
     extensionList:
       - name: extension-application-map
         env:

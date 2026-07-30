@@ -6,9 +6,21 @@ global:
   # default domain used by all ingress resources
   domain: argocd.akn.chezmoi.sh
 
+  # rhodes.akn's nodes have no direct internet egress for image pulls -- every
+  # image must go through the oci.chezmoi.sh pull-through cache (same pattern
+  # as cilium's helmvalues). Covers server/repo-server/controller/
+  # applicationset/notifications/redis-secret-init, which all default to this.
+  image:
+    repository: oci.chezmoi.sh/quay.io/argoproj/argocd
+
 # disable DEX as we are using our own OIDC provider
 dex:
   enabled: false
+
+# Redis defaults to ecr-public.aws.com upstream -- also needs the mirror.
+redis:
+  image:
+    repository: oci.chezmoi.sh/ecr-public.aws.com/docker/library/redis
 
 # Argo Configs
 configs:
