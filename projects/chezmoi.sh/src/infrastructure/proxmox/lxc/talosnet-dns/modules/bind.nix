@@ -28,6 +28,7 @@ let
     @ IN SOA ns.chezmoi.sh. hostmaster.chezmoi.sh. ( 1 3600 900 604800 300 )
     @ IN NS ns.chezmoi.sh.
     ns IN A 10.128.0.3
+    dns.talosnet IN A 10.128.0.3
 
     pve-01.pve IN A 10.128.0.1
     omni IN A 10.128.0.2

@@ -47,7 +47,7 @@ spec:
         - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
         - --crd-source-kind=DNSEndpoint
         - --gateway-label-filter=external-dns.chezmoi.sh/zone in (internal)
-        - --rfc2136-host=10.128.0.3
+        - --rfc2136-host=dns.talosnet.chezmoi.sh
         - --rfc2136-port=53
         - --rfc2136-zone=chezmoi.sh
         - --rfc2136-tsig-keyname=external-dns.

@@ -10,8 +10,8 @@ metadata:
   namespace: external-dns-system
 spec:
   egress:
-  - toCIDR:
-    - 10.128.0.3/32
+  - toFQDNs:
+    - matchName: dns.talosnet.chezmoi.sh
     toPorts:
     - ports:
       - port: "53"

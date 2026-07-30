@@ -167,9 +167,10 @@ shared Talos VNet (see table below).
 
 - **Gateway:** `10.128.0.1` (PVE node acts as L3 router)
 - **DHCP:** dnsmasq with stable leases per MAC (node IPs survive reboots), range `.10`–`.250`
-- **DNS:** `10.128.0.3` (talosnet-dns/BIND) handed out to nodes via DHCP (`dhcpDnsServer` on the Pulumi subnet) — this
-  is what lets talosnet clients resolve split-horizon names, see
-  [Internal LoadBalancer Pools (talosnet)](#internal-loadbalancer-pools-talosnet)
+- **DNS:** `10.128.0.3` (talosnet-dns/BIND, also reachable as `dns.talosnet.chezmoi.sh` from anything that can already
+  resolve names — not from `dhcpDnsServer` itself, which is a raw DHCP option 6 value and can't be a hostname) handed
+  out to nodes via DHCP (`dhcpDnsServer` on the Pulumi subnet) — this is what lets talosnet clients resolve
+  split-horizon names, see [Internal LoadBalancer Pools (talosnet)](#internal-loadbalancer-pools-talosnet)
 - **SNAT:** enabled so nodes can reach `pve-01.pve.chezmoi.sh:8006` (required for proxmox-csi-plugin)
 - **MTU:** not set on the SDN zone/VNet itself (`SdnZoneSimple.mtu` is left unset in `sdn.ts`, so PVE's default applies
   there) — `1450` is instead set directly on each Talos node's `eth1` interface via the Omni cluster templates

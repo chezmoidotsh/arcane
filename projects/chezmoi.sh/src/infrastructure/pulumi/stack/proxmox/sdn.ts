@@ -36,7 +36,9 @@ export const talosnetSubnet = new proxmox.SdnSubnet("pve-sdn-subnet-talosnet", {
 	snat: true,
 	// talosnet-dns (BIND, catalog/proxmox/lxc/talosnet-dns) -- resolves the
 	// handful of chezmoi.sh services that need a talosnet-local IP, forwards
-	// everything else upstream.
+	// everything else upstream. Also reachable as dns.talosnet.chezmoi.sh, but
+	// this specific field is a raw DHCP option 6 value handed to clients
+	// before they can resolve anything, so it must stay a literal IP.
 	dhcpDnsServer: "10.128.0.3",
 	dhcpRange: {
 		startAddress: "10.128.0.10",
