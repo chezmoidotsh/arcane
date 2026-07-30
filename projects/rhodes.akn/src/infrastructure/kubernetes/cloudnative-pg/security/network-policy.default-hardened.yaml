@@ -13,6 +13,11 @@ metadata:
   name: default-hardened
   namespace: cloudnative-pg-system
 spec:
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: cloudnative-pg-system
   egress:
     - toEndpoints:
         - matchLabels:
@@ -26,10 +31,5 @@ spec:
             dns:
               - matchPattern: "*"
     - toEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: cloudnative-pg-system
-  endpointSelector: {}
-  ingress:
-    - fromEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: cloudnative-pg-system
