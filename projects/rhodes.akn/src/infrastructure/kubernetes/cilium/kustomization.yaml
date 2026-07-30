@@ -12,6 +12,15 @@ resources:
   - internal.ippool.yaml
   - security/
 
+  # Gateway/HTTPRoute/Certificate live here, not in their own component, because Cilium's Gateway
+  # API implementation has no separate per-Gateway pod: traffic is proxied by the same
+  # Envoy embedded in cilium-agent (envoy.enabled), which ships as part of this Helm release and is
+  # therefore stuck in this release's namespace (kube-system) — there's no chart value to move it.
+  - external.gateway.yaml
+  - internal.gateway.yaml
+  - redirect-http-to-https.httproute.yaml
+  - wildcard.chezmoi.sh.certificate.yaml
+
 helmCharts:
   - repo: https://helm.cilium.io/
     name: cilium

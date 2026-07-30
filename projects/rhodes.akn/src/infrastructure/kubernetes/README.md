@@ -20,23 +20,23 @@ eBPF-based CNI: pod networking, `CiliumNetworkPolicy` enforcement, L2 announceme
 `internal.ippool.yaml` (talosnet-only, opt-in — see `docs/network/ipam.md`) — and the cluster's **Gateway API**
 implementation, no separate ingress controller.
 
-**Why this choice**: one component covers both CNI and ingress instead of stacking Cilium + a dedicated Gateway
-controller. Envoy Gateway used to run alongside it on this cluster; that's gone now — Cilium's own Gateway API
-implementation handles all in-cluster routing (see `../ingress-gateway/` below for the actual `Gateway`/`HTTPRoute`
-resources).
-
-## [Ingress Gateway](https://gateway-api.sigs.k8s.io/) — `ingress-gateway/` (namespace `ingress-gateway-system`)
-
-Not a separate operator — this is where the two `Gateway`s Cilium's Gateway API controller (above) reconciles live:
-`external` (VLAN5, `external.ippool.yaml`) and `internal` (talosnet-only, `internal.ippool.yaml`), plus the HTTP→HTTPS
-redirect `HTTPRoute` and wildcard `*.chezmoi.sh` `Certificate` shared by both. Each `Gateway` carries an
+This folder also carries the two `Gateway`s Cilium's Gateway API controller reconciles — `external` (VLAN5,
+`external.ippool.yaml`) and `internal` (talosnet-only, `internal.ippool.yaml`) — plus the HTTP→HTTPS redirect
+`HTTPRoute` and wildcard `*.chezmoi.sh` `Certificate` shared by both. Each `Gateway` carries an
 `external-dns.chezmoi.sh/zone: external|internal` label — that's what external-dns' `--gateway-label-filter` uses to
 pick the right IP per plane (see `external-dns/` below). An app that needs split-horizon exposure attaches a single
 `HTTPRoute` to both `Gateway`s at once (two `parentRefs`, same hostname) instead of one route per Gateway — e.g.
 `src/apps/pocket-id/main.httproute.yaml`.
 
-**Why a separate folder**: keeps the Gateway/certificate lifecycle (rarely changes) decoupled from Cilium's own Helm
-release (upgraded independently), and gives every app a stable set of `parentRef`s to attach to.
+**Why one component covers both CNI and ingress**: instead of stacking Cilium + a dedicated Gateway controller. Envoy
+Gateway used to run alongside it on this cluster; that's gone now — Cilium's own Gateway API implementation handles all
+in-cluster routing.
+
+**Why the `Gateway`/`HTTPRoute`/`Certificate` live here and not in their own folder**: Cilium's Gateway API
+implementation has no separate per-Gateway pod — traffic is proxied by the same Envoy embedded in `cilium-agent`
+(`envoy.enabled`), which ships as part of this Helm release and is therefore stuck in this release's namespace
+(`kube-system`); there's no chart value to move it elsewhere. Keeping the `Gateway` objects in a separate namespace
+while their dataplane runs in `kube-system` would just be misleading, so they live together instead.
 
 ## [CloudNative-PG](https://cloudnative-pg.io/) — `cloudnative-pg/` (namespace `cloudnative-pg-system`)
 
@@ -68,8 +68,8 @@ every other component that needs a credential (see the top-level README's Disast
 ## [ExternalDNS](https://github.com/kubernetes-sigs/external-dns) — `external-dns/` (namespace `external-dns-system`)
 
 Two releases, one per Gateway/network plane, each restricted to its plane via `--gateway-label-filter` matching the
-`external-dns.chezmoi.sh/zone` label on the `Gateway` a route is attached to (`ingress-gateway/` above) — not an
-annotation on the route itself, so a route attached to both `Gateway`s needs nothing extra to appear correctly in both:
+`external-dns.chezmoi.sh/zone` label on the `Gateway` a route is attached to (`cilium/` above) — not an annotation on
+the route itself, so a route attached to both `Gateway`s needs nothing extra to appear correctly in both:
 
 - `external-dns-unifi` (filters on `zone=external`) — publishes to the local UDM-Pro (UniFi) controller via the
   [external-dns-unifi-webhook](https://github.com/kashalls/external-dns-unifi-webhook) provider. VLAN5-reachable records

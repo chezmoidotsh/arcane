@@ -53,7 +53,7 @@ First, create the namespaces these apps don't create for themselves — unlike `
 which doesn't exist yet at this point in the chain:
 
 ```sh
-for ns in proxmox-system cert-manager-system cloudnative-pg-system external-secrets-system external-dns-system ingress-gateway-system; do
+for ns in proxmox-system cert-manager-system cloudnative-pg-system external-secrets-system external-dns-system; do
   kubectl --context <CLUSTER_CONTEXT> create namespace "$ns" --dry-run=client -o yaml \
     | kubectl --context <CLUSTER_CONTEXT> apply --server-side -f -
 done
@@ -77,7 +77,7 @@ kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f pro
 kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-dns/
 kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/infrastructure/kubernetes/external-dns/sops \
   | kubectl --context <CLUSTER_CONTEXT> apply -f -
-kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/ingress-gateway/
+kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cilium/
 ```
 
 > [!NOTE] The `external-dns/sops` line above is separate because `dist:render` never bakes ksops-sourced secrets into
@@ -86,13 +86,21 @@ kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f pro
 > their own `sops/` directories. This one delivers the BIND RFC2136/TSIG credential the `external-dns-bind` release
 > (applied by the `dist/` line just above) needs.
 
+> [!NOTE] `cilium/` is applied twice: first (above) to bring up the CNI, then again here at the end. Its `Gateway`s and
+> wildcard `Certificate` live in this same directory (Cilium's Gateway API has no separate per-Gateway pod — the
+> dataplane is the Envoy embedded in `cilium-agent`, stuck in this Helm release's `kube-system` namespace with no chart
+> value to move it — see `src/infrastructure/kubernetes/README.md`), but the `Certificate` needs cert-manager's CRD,
+> which doesn't exist yet on the first pass. The second apply is a no-op on everything already reconciled (same field
+> manager, unchanged content) and only picks up what failed the first time. `--server-side --force-conflicts` on this
+> second pass does **not** repeat the rolling-update blip from the first pass — that was a one-time field manager
+> ownership transfer from Talos's bootstrap `extraManifests`, already resolved by then.
+
 > [!WARNING] Run these one at a time and confirm each succeeds before the next — the list above doesn't chain with `&&`,
-> so pasting the whole block at once won't stop on a failure. Two pairs must stay in this order: `cert-manager` before
-> `cloudnative-pg` (its `Issuer`/`Certificate` need cert-manager's CRDs already registered), and `cilium` before
-> `ingress-gateway` (its `Gateway` needs the `GatewayClass` `cilium` ships). `--server-side` is required, not optional:
-> client-side apply rejects the Gateway API `httproutes` CRD outright
-> (`metadata.annotations: Too long: may not be more than 262144 bytes` — its schema exceeds the
-> `last-applied-configuration` annotation size limit).
+> so pasting the whole block at once won't stop on a failure. `cert-manager` must come before `cloudnative-pg` (its
+> `Issuer`/`Certificate` need cert-manager's CRDs already registered) and before the second `cilium` apply (same reason,
+> for its wildcard `Certificate`). `--server-side` is required, not optional: client-side apply rejects the Gateway API
+> `httproutes` CRD outright (`metadata.annotations: Too long: may not be more than 262144 bytes` — its schema exceeds
+> the `last-applied-configuration` annotation size limit).
 
 > [!WARNING] The `cilium` apply fails with several `Apply failed with N conflicts` errors on first try — Talos's own
 > bootstrap `extraManifests` (Step 1's CNI, applied under the Omni-managed field manager `cilium`) already owns the
@@ -105,15 +113,16 @@ kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f pro
 > [!NOTE] Expect two harmless, self-resolving classes of error on first pass — neither means Step 2 failed:
 >
 > - **`no matches for kind "X" ... ensure CRDs are installed first`** on a resource whose CRD was created earlier in the
->   _same_ `apply -f <dir>` command (seen on `cilium`'s `GatewayClass`, `cert-manager`'s `ClusterIssuer`,
->   `cloudnative-pg`'s `ClusterImageCatalog`, `external-secrets`'s `ClusterSecretStore`). `kubectl` resolves the API
->   surface once at the start of each invocation, so a CRD it just created isn't visible yet to a later resource in that
->   same batch. Re-run the exact same `apply -f <dir>` command a second time — the CRD is registered by then and it goes
->   through clean.
+>   _same_ `apply -f <dir>` command (seen on `cilium`'s `GatewayClass`). `kubectl` resolves the API surface once at the
+>   start of each invocation, so a CRD it just created isn't visible yet to a later resource in that same batch. Re-run
+>   the exact same `apply -f <dir>` command a second time — the CRD is registered by then and it goes through clean. The
+>   first `cilium` apply also fails on its wildcard `Certificate` with the same-looking error, but for a different
+>   reason — `cert-manager.io`'s CRD doesn't exist at all yet at that point (`cert-manager` hasn't been applied), so an
+>   immediate retry of `cilium/` won't fix it. That one only resolves at the second `cilium` apply, below.
 > - **Webhook calls failing with `dial tcp ...: connect: operation not permitted`** (the full error names
 >   `webhook.cert-manager.io` or `....external-secrets.io`) on `cert-manager`'s `ClusterIssuer`, `cloudnative-pg`'s two
 >   `Certificate`s (`barman-cloud-client`/`barman-cloud-server`), `external-secrets`'s `ClusterSecretStore`, one
->   `ExternalSecret` in `external-dns`, and one webhook-gated resource in `ingress-gateway`. Root cause: the
+>   `ExternalSecret` in `external-dns`, and the second `cilium` apply's wildcard `Certificate`. Root cause: the
 >   `cert-manager-webhook` and `external-secrets-webhook` pods stay `Pending` (nodes still carry the
 >   `node.cloudprovider.kubernetes.io/uninitialized` taint) until the Proxmox CCM pod is actually running — and the CCM
 >   pod itself can't start until it can mount its `proxmox-cloud-provider` credential `Secret`, which **Step 3's
@@ -352,3 +361,11 @@ applied by hand — and reconcile it through GitOps from here on. No further man
   `external-dns-unifi` specifically, not both releases. Moved the `/etc/hosts` real-HTTPS validation step out of the
   amiya.akn→rhodes.akn migration doc into a new section here (Between Steps 6 and 9) — it isn't actually
   migration-specific, just optional in a genuine DR since production DNS already targets this same cluster.
+- _2026-07-30_: Folded the `ingress-gateway/` component into `cilium/` — Cilium's Gateway API has no separate
+  per-Gateway pod, so the `Gateway`/`HTTPRoute`/`Certificate` objects previously kept in their own
+  `ingress-gateway-system` namespace were always going to have their actual Envoy dataplane running in `cilium`'s own
+  `kube-system` namespace regardless; the separate namespace only isolated the control-plane objects, not the traffic
+  path. Step 2's `ingress-gateway/` apply and namespace pre-creation are gone; `cilium/` is now applied twice (CNI
+  first, then again at the end of Step 2 once cert-manager's CRD/webhook exist for the wildcard `Certificate`) — see the
+  new `[!NOTE]` after the apply block. `ingress-gateway/`'s three `CiliumNetworkPolicy`s were dropped as redundant once
+  their pods live in `kube-system`, already covered by `cilium/security/network-policy.allow-kube-system-full.yaml`.

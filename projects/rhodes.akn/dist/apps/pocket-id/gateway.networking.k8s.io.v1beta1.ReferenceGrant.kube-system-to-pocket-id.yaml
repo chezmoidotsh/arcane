@@ -4,18 +4,19 @@ kind: ReferenceGrant
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows the Cilium Gateway from the ingress-gateway-system namespace to access the pocket-id service
-      to enable SSO access from the local network.
+      Allows the Cilium Gateway from the kube-system namespace (where Cilium's Gateway API Envoy
+      dataplane lives — see cilium/kustomization.yaml) to access the pocket-id service to enable SSO
+      access from the local network.
   labels:
     app.kubernetes.io/instance: pocket-id
     app.kubernetes.io/name: pocket-id
-  name: ingress-gateway-system-to-pocket-id
+  name: kube-system-to-pocket-id
   namespace: pocket-id
 spec:
   from:
   - group: gateway.networking.k8s.io
     kind: Gateway
-    namespace: ingress-gateway-system
+    namespace: kube-system
   to:
   - group: ""
     kind: Service

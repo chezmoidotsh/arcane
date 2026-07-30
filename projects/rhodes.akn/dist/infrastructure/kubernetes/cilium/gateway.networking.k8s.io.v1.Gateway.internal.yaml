@@ -2,9 +2,6 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: internal
-  labels:
-    external-dns.chezmoi.sh/zone: internal
   annotations:
     argocd.argoproj.io/description: |
       Cilium Gateway API gateway for rhodes.akn's talosnet-only ingress plane. Gets its
@@ -20,22 +17,26 @@ metadata:
       than a route per Gateway — external-dns-bind's --gateway-label-filter
       (external-dns.chezmoi.sh/zone=internal) picks this Gateway's parent out of the route's
       status.parents and ignores "external"'s, so no per-route annotation is needed either.
+  labels:
+    external-dns.chezmoi.sh/zone: internal
+  name: internal
+  namespace: kube-system
 spec:
   gatewayClassName: cilium
   infrastructure:
     labels:
       io.cilium/lb-ipam-pool: internal
   listeners:
-    - name: chezmoi.sh-websecure
-      port: 443
-      protocol: HTTPS
-      hostname: "*.chezmoi.sh"
-      allowedRoutes:
-        namespaces:
-          from: All
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - group: ""
-            kind: Secret
-            name: wildcard.chezmoi.sh-certificate
+  - allowedRoutes:
+      namespaces:
+        from: All
+    hostname: '*.chezmoi.sh'
+    name: chezmoi.sh-websecure
+    port: 443
+    protocol: HTTPS
+    tls:
+      certificateRefs:
+      - group: ""
+        kind: Secret
+        name: wildcard.chezmoi.sh-certificate
+      mode: Terminate
