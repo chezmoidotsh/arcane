@@ -37,21 +37,13 @@ does.
 
 ## Between DR Steps 5/6 and Step 9 — validate over real HTTPS via `/etc/hosts`
 
-Once OpenBao (DR Step 5) and Pocket-Id (DR Step 6) are both up, add temporary entries on the operator's own machine:
+Follow the DR's own
+[Between Steps 6 and 9 — validate over real HTTPS via `/etc/hosts` section](../../projects/rhodes.akn/docs/disaster-recovery/README.md#between-steps-6-and-9---validate-over-real-https-via-etchosts-optional)
+as written — same entries, same IP.
 
-```text
-<rhodes external Gateway IP>  vault.chezmoi.sh
-<rhodes external Gateway IP>  auth.chezmoi.sh
-```
-
-The IP comes from rhodes's `external` Cilium LoadBalancer pool, `10.0.0.64/29` (see
-[docs/network/ipam.md](../network/ipam.md)).
-
-> [!IMPORTANT] This validates against the real hostname over a real, already-valid TLS certificate (issued by
-> cert-manager in DR Step 2/9) instead of the port-forward fallback `openbao.md` Step 5 / `pocket-id.md` Step 4 describe
-> for a genuine DR drill. This matters specifically for Pocket-Id: passkey/WebAuthn login requires a secure context
-> (HTTPS + correct hostname) and does not work over a bare port-forward (see `pocket-id.md`'s own `[!IMPORTANT]`
-> callout). The hosts-file override is what lets passkey login be validated end to end before touching production DNS.
+> [!IMPORTANT] There, it's optional (production DNS already targets `rhodes.akn` since it's the same cluster being
+> recovered). Here, it's mandatory: DNS for both hostnames still resolves to `amiya.akn` until the cutover below, so
+> this is the only way to reach `rhodes.akn`'s instances at all before that point, not just a convenience.
 
 Remove these entries only once the real DNS cutover below is confirmed working — do not leave them in place
 indefinitely.
@@ -128,3 +120,6 @@ Verify with `kubectl get externalsecret -A` on `lungmen.akn`'s own context — a
 ## History
 
 - _2026-07-29_: Initial creation.
+- _2026-07-30_: The `/etc/hosts` real-HTTPS validation step turned out not to be migration-specific — moved its content
+  into the DR's own README.md (Between Steps 6 and 9), this page now only documents why it's mandatory here (DNS still
+  points at `amiya.akn`) instead of merely optional as in a genuine DR.

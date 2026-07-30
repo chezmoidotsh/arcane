@@ -120,6 +120,15 @@ kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f pro
 >   `pulumi up` delivers, not this step**. This is expected at this point in the chain, not something to fix here —
 >   re-apply just these six resources once Step 3 has run (or fold the retry into Step 4's validation).
 
+> [!NOTE] The `external-dns` app runs two `external-dns` releases (`external-dns-unifi`, `external-dns-bind`) in the
+> same namespace. `security/network-policy.allow-external-dns-to-kubernetes-api.yaml`'s `endpointSelector` must match
+> both — on `app.kubernetes.io/name: external-dns` alone, not a per-instance `app.kubernetes.io/instance` label — and
+> its egress rule must target the `kube-apiserver` reserved Cilium entity, not `toEndpoints` matched on the apiserver's
+> pod labels or `toEntities: host`. `kube-apiserver` runs `hostNetwork: true` on a control-plane node, which is a
+> different node than the workers external-dns runs on, so Cilium resolves that traffic as the `remote-node` identity,
+> not `host` — a plain `toEntities: host` rule never matches it. Same pattern as
+> `catalog/kubernetes/cloudnative-pg/kustomize/cnpg.cluster-policy.allow-to-kubernetes-api.yaml`.
+
 ## Step 3 — Turn Pulumi into recovery mode
 
 > [!IMPORTANT] `recovery` must be `true` here, not its normal (unset/`false`) value. `stack/vault.ts` gates every
@@ -178,8 +187,10 @@ Also confirm ESO and the CNPG operator are up, since Steps 5-6 depend on both:
 kubectl --context <CLUSTER_CONTEXT> get pods -n external-secrets-system
 kubectl --context <CLUSTER_CONTEXT> get pods -n cloudnative-pg-system
 # → both Running (the vault.chezmoi.sh ClusterSecretStore itself stays unhealthy until Step 5 — expected)
-# → external-dns pods may CrashLoopBackOff/CreateContainerConfigError here too: their ExternalSecrets can't
-#   sync until Step 5 restores OpenBao — same root cause as the ClusterSecretStore, also expected
+# → external-dns-unifi specifically may CrashLoopBackOff/CreateContainerConfigError here too: its
+#   ExternalSecret (external-dns-unifi-secret, sourced from vault.chezmoi.sh) can't sync until Step 5
+#   restores OpenBao — same root cause as the ClusterSecretStore, also expected and intended.
+#   external-dns-bind is unaffected — its credential comes from the sops/ apply above, not Vault.
 ```
 
 ## Step 5 — Restore OpenBao
@@ -194,6 +205,30 @@ Follow [Pocket-Id Disaster Recovery](pocket-id.md) in full. It restores Pocket-I
 independent of OpenBao and of Vault. HTTPS/passkey login isn't verifiable yet at this point — the Gateway's certificate
 isn't valid until Step 7 — `pocket-id.md`'s own Step 4 covers the port-forward fallback for that. The OIDC round-trip
 into OpenBao is validated later, in Step 8.
+
+## Between Steps 6 and 9 — validate over real HTTPS via `/etc/hosts` (optional)
+
+Once OpenBao (Step 5) and Pocket-Id (Step 6) are both up, their apps' own `HTTPRoute`s and `Certificate`s already exist
+(`pocket-id.md` Step 3 and the equivalent in `openbao.md`) and are valid, independent of whether the operator's own
+machine has picked up the new DNS records yet. Add temporary entries on the operator's own machine to validate against
+the real hostnames over a real, already-valid TLS certificate instead of relying only on the port-forward fallbacks
+(`openbao.md` Step 5 / `pocket-id.md` Step 4):
+
+```text
+<rhodes external Gateway IP>  vault.chezmoi.sh
+<rhodes external Gateway IP>  auth.chezmoi.sh
+```
+
+The IP comes from rhodes's `external` Cilium LoadBalancer pool, `10.0.0.64/29` (see
+[docs/network/ipam.md](../../../../docs/network/ipam.md)).
+
+> [!IMPORTANT] This matters specifically for Pocket-Id: passkey/WebAuthn login requires a secure context (HTTPS +
+> correct hostname) and does not work over a bare port-forward (see `pocket-id.md`'s own `[!IMPORTANT]` callout). The
+> hosts-file override lets passkey login (Step 6) and the Pocket-Id → OpenBao SSO round-trip (Step 8) be validated end
+> to end without waiting on DNS resolver caching/propagation.
+
+Remove these entries once normal DNS resolution to `rhodes.akn` is confirmed correct — do not leave them in place
+indefinitely.
 
 ## Step 7 — Turn Pulumi's `recovery` flag off
 
@@ -217,8 +252,9 @@ own OIDC `ExternalSecret` (Step 9) depends on this having succeeded.
 
 Walk the [Quick verifications](#quick-verifications) list below for Steps 1-7. Now that Step 7 has run, also confirm the
 one thing that couldn't be checked earlier: **Pocket-Id SSO into OpenBao** — log into `https://vault.chezmoi.sh/ui` via
-Pocket-Id OIDC as an `admin`-group user. This confirms Pocket-Id's OIDC round-trip into Vault end to end, now that both
-are up — day-to-day admin access no longer needs the root token past this point.
+Pocket-Id OIDC as an `admin`-group user (use the `/etc/hosts` override above if local DNS hasn't caught up yet). This
+confirms Pocket-Id's OIDC round-trip into Vault end to end, now that both are up — day-to-day admin access no longer
+needs the root token past this point.
 
 ## Step 9 — Bootstrap ArgoCD and final validation
 
@@ -307,3 +343,12 @@ applied by hand — and reconcile it through GitOps from here on. No further man
 - _2026-07-29_: Added the missing external-dns/sops apply to Step 2 — dist:render never bakes ksops-sourced secrets into
   dist/, so this one needed the same explicit kustomize+ksops treatment openbao.md/pocket-id.md already use for their
   own sops/ dirs.
+- _2026-07-30_: Fixed `allow-external-dns-to-kubernetes-api`'s `endpointSelector` only matching `external-dns-unifi`,
+  leaving `external-dns-bind` with no egress path to the apiserver under the namespace's default-deny baseline — found
+  live via `external-dns-bind` CrashLoopBackOff (`failed to determine if *v1alpha1.DNSEndpoint is namespaced`). Selector
+  now matches both instances; egress rule switched from `toEndpoints`/`toEntities: host` to the `kube-apiserver`
+  reserved entity, since the apiserver runs `hostNetwork` on a different node than external-dns, which Cilium resolves
+  as `remote-node`, not `host`. Clarified Step 4's callout to attribute the Vault-gated CrashLoop to
+  `external-dns-unifi` specifically, not both releases. Moved the `/etc/hosts` real-HTTPS validation step out of the
+  amiya.akn→rhodes.akn migration doc into a new section here (Between Steps 6 and 9) — it isn't actually
+  migration-specific, just optional in a genuine DR since production DNS already targets this same cluster.

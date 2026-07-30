@@ -176,9 +176,11 @@ Step 6 if the Kubernetes auth backend didn't self-heal, or simply keeping the po
 `rhodes-akn-infra`'s own `pulumi up` (Step 7) can authenticate its Vault provider against the same `VAULT_ADDR` — export
 the same `VAULT_TOKEN` before running it.
 
-Once the Gateway and a valid certificate are confirmed up, `VAULT_ADDR` can switch to `https://vault.chezmoi.sh`, and
-Pocket-Id SSO (as a member of the `admin` OIDC group, binding `sso-admin-policy`) becomes available as an ongoing
-day-to-day admin path — see [README.md](README.md)'s Step 8 for confirming that round-trip.
+Once the Gateway and a valid certificate are confirmed up, `VAULT_ADDR` can switch to `https://vault.chezmoi.sh` (use
+[README.md's `/etc/hosts` override](README.md#between-steps-6-and-9---validate-over-real-https-via-etchosts-optional) if
+local DNS hasn't caught up yet), and Pocket-Id SSO (as a member of the `admin` OIDC group, binding `sso-admin-policy`)
+becomes available as an ongoing day-to-day admin path — see [README.md](README.md)'s Step 8 for confirming that
+round-trip.
 
 ## Step 6 — Verify Kubernetes auth backends self-healed
 
@@ -253,3 +255,5 @@ backup/recovery procedures, out of scope here.
   (retrieve the root token, export `VAULT_TOKEN`, done) — dropped the Option A/B split and the Pocket-Id-readiness
   dependency it implied, and dropped the "no fallback if both paths fail" and "no recovery keys exist" Known Issues,
   both now factually wrong.
+- _2026-07-30_: Pointed Step 5's `VAULT_ADDR` switch-over at README.md's new `/etc/hosts` override section as a way to
+  reach the real hostname before local DNS catches up.

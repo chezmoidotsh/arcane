@@ -110,7 +110,9 @@ curl -sI https://auth.chezmoi.sh/ | head -1
 # → HTTP/2 200 (or a redirect to the login page)
 ```
 
-Otherwise, a port-forward confirms the app itself is healthy (but not passkey login — see the callout above):
+To validate passkey login specifically, prefer
+[README.md's `/etc/hosts` override](README.md#between-steps-6-and-9---validate-over-real-https-via-etchosts-optional)
+instead — a port-forward confirms the app itself is healthy, but not passkey login (see the callout above):
 
 ```sh
 kubectl --context <CLUSTER_CONTEXT> port-forward -n pocket-id svc/pocket-id 8080:80 &
@@ -155,3 +157,5 @@ client registrations all live in the CNPG database restored in Step 2. Verifying
   this document and `openbao.md`, in `README.md`'s Step 3.
 - _2026-07-26_ (review follow-up): Trimmed the intro to a single sentence pointing at `README.md`. Removed the
   `dr:pocket-id:secrets` mise task — two commands, not worth a wrapper.
+- _2026-07-30_: Pointed Step 4's passkey validation at README.md's new `/etc/hosts` override section instead of only the
+  port-forward fallback, since the latter can't validate passkey login at all (no secure context).
