@@ -17,13 +17,14 @@ These manifests are deployed at bootstrap for several critical reasons:
 
 ### 🌐 Cilium
 
-**Available versions:** `1.19.5-native`, `1.18.1`, `1.17.3`
+**Available versions:** `1.20.0-native`, `1.19.5-native`, `1.18.1`, `1.17.3`
 
 Cilium is a CNI (Container Network Interface) that provides the network layer for the Kubernetes cluster. It replaces
 flannel/kube-proxy and offers a more efficient and secure networking solution with support for Network Policies, Service
 Mesh, and Kubernetes Gateway.
 
-- `1.19.5-native` — active, native-routing variant for Proxmox/SDN clusters
+- `1.20.0-native` — active, native-routing variant for Proxmox/SDN clusters
+- `1.19.5-native` — legacy, native-routing; retained for reference
 - `1.18.1` — legacy, non-native; retained for pre-Omni bootstrap reference
 - `1.17.3` — legacy, non-native; retained for pre-Omni bootstrap reference
 

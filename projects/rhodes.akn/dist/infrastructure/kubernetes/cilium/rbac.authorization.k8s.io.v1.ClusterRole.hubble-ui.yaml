@@ -4,21 +4,13 @@ kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/part-of: cilium
+    helm.sh/chart: cilium-1.20.0
   name: hubble-ui
 rules:
-- apiGroups:
-  - networking.k8s.io
-  resources:
-  - networkpolicies
-  verbs:
-  - get
-  - list
-  - watch
 - apiGroups:
   - ""
   resources:
   - componentstatuses
-  - endpoints
   - namespaces
   - nodes
   - pods
@@ -31,14 +23,6 @@ rules:
   - apiextensions.k8s.io
   resources:
   - customresourcedefinitions
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - cilium.io
-  resources:
-  - '*'
   verbs:
   - get
   - list

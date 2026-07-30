@@ -5,7 +5,7 @@ kind: Kustomization
 resources:
   # Gateway API core CRDs (GatewayClass, Gateway, HTTPRoute, TCPRoute, ...) — Cilium's chart doesn't
   # bundle these.
-  - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
+  - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/experimental-install.yaml
 
   - default.l2announcementpolicy.yaml
   - external.ippool.yaml
@@ -15,7 +15,7 @@ resources:
 helmCharts:
   - repo: https://helm.cilium.io/
     name: cilium
-    version: 1.18.10
+    version: 1.20.0
 
     releaseName: cilium
     namespace: kube-system

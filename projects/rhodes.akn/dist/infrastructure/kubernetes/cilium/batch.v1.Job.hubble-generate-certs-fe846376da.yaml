@@ -2,13 +2,12 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  annotations:
-    helm.sh/hook: post-install,post-upgrade
   labels:
     app.kubernetes.io/name: hubble-generate-certs
     app.kubernetes.io/part-of: cilium
+    helm.sh/chart: cilium-1.20.0
     k8s-app: hubble-generate-certs
-  name: hubble-generate-certs
+  name: hubble-generate-certs-fe846376da
   namespace: kube-system
 spec:
   template:
@@ -16,7 +15,6 @@ spec:
       labels:
         k8s-app: hubble-generate-certs
     spec:
-      affinity: null
       automountServiceAccountToken: true
       containers:
       - args:
@@ -25,6 +23,7 @@ spec:
         - --ca-secret-namespace=kube-system
         - --ca-secret-name=cilium-ca
         - --ca-common-name=Cilium CA
+        - --ca-enforce-validity-throughout-leaves-duration=true
         command:
         - /usr/bin/cilium-certgen
         env:
@@ -52,7 +51,7 @@ spec:
               - key encipherment
               - client auth
               validity: 8760h
-        image: quay.io/cilium/certgen:v0.4.3@sha256:d63d1cb3ee6db2167cb1ca9e7e31f30b6197846fcf42505d8f59e2f090a42c86
+        image: oci.chezmoi.sh/quay.io/cilium/certgen:v0.4.8@sha256:e65f1d15a0ffaf2df32797c8ad1c797fc64dad11c274cd96a2eafa89d712cdc3
         imagePullPolicy: IfNotPresent
         name: certgen
         securityContext:
@@ -65,6 +64,4 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
-      serviceAccount: hubble-generate-certs
       serviceAccountName: hubble-generate-certs
-  ttlSecondsAfterFinished: 1800
