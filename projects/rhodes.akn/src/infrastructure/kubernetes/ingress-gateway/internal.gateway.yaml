@@ -3,6 +3,8 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: internal
+  labels:
+    external-dns.chezmoi.sh/zone: internal
   annotations:
     argocd.argoproj.io/description: |
       Cilium Gateway API gateway for rhodes.akn's talosnet-only ingress plane. Gets its
@@ -23,7 +25,6 @@ spec:
   infrastructure:
     labels:
       io.cilium/lb-ipam-pool: internal
-      external-dns.chezmoi.sh/zone: internal
   listeners:
     - name: chezmoi.sh-websecure
       port: 443

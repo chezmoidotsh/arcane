@@ -17,13 +17,14 @@ metadata:
       than a route per Gateway — external-dns-bind's --gateway-label-filter
       (external-dns.chezmoi.sh/zone=internal) picks this Gateway's parent out of the route's
       status.parents and ignores "external"'s, so no per-route annotation is needed either.
+  labels:
+    external-dns.chezmoi.sh/zone: internal
   name: internal
   namespace: ingress-gateway-system
 spec:
   gatewayClassName: cilium
   infrastructure:
     labels:
-      external-dns.chezmoi.sh/zone: internal
       io.cilium/lb-ipam-pool: internal
   listeners:
   - allowedRoutes:
