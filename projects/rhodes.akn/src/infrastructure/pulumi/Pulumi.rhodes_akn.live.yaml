@@ -2,9 +2,11 @@ encryptionsalt: v1:Wt1bfB4ve84=:v1:6wL09ObsKmol4mF2:/xUOa8xDysLoYvRxQtRc5bpdnjfw
 config:
   garage:endpoint: https://admin.s3.chezmoi.sh
   kubernetes:context: omni-rhodes-akn
-  rhodes-akn-infra:recovery: "true"
+  rhodes-akn-infra:recovery: "false"
   rhodes-akn-infra:cloudflare_account_id:
     secure: v1:tNkng2PoAuAXDU7F:zIp4TL6TrpJaYth3cwUAcYcjXerZi3aj8KfvXzro6AxjvM7b4w+2nR78Lbe1Pb5z
   rhodes-akn-infra:cloudflare_zone_id:
     secure: v1:aItyDk7gbUAT43Dp:438Chai41N+guAPmPgDc99ln4xVwCnYXhYGw71IjBEh/1yrd0rERiFwNqDaQXWsG
   vault:vaultVersionOverride: 2.2.2
+  rhodes-akn-infra:pocket_id_oidc_client_secret:
+    secure: v1:sYY+AUYQyrAcmDrd:53yWPqUdEHTQWKkGZoW6u6v36IYdowMZcgZT9VZx8cRlz4DPGwjEl57OI7TSmq7+
