@@ -7,4 +7,3 @@ resources:
   - network-policy.allow-to-analytics.yaml
   - network-policy.allow-to-internet.yaml
   - network-policy.allow-postgres-to-s3-backup.yaml
-  - reference-grant.ingress-gateway.yaml
