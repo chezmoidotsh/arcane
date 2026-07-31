@@ -11,13 +11,12 @@ metadata:
       counterpart. Labeled external-dns.chezmoi.sh/zone=external so external-dns-unifi's
       --gateway-label-filter picks it up as a valid parent for any HTTPRoute attached here,
       regardless of whether that route is also attached to "internal".
+  labels:
+    external-dns.chezmoi.sh/zone: external
   name: external
   namespace: kube-system
 spec:
   gatewayClassName: cilium
-  infrastructure:
-    labels:
-      external-dns.chezmoi.sh/zone: external
   listeners:
   - allowedRoutes:
       namespaces:

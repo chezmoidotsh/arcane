@@ -4,6 +4,8 @@ kind: Gateway
 metadata:
   name: external
   namespace: kube-system
+  labels:
+    external-dns.chezmoi.sh/zone: external
   annotations:
     argocd.argoproj.io/description: |
       Cilium Gateway API gateway for rhodes.akn's VLAN5-facing ingress plane. Gets its
@@ -15,9 +17,6 @@ metadata:
       regardless of whether that route is also attached to "internal".
 spec:
   gatewayClassName: cilium
-  infrastructure:
-    labels:
-      external-dns.chezmoi.sh/zone: external
   listeners:
     - name: web
       port: 80
