@@ -3,7 +3,14 @@ kind: CiliumLoadBalancerIPPool
 metadata:
   name: external
 spec:
-  # No serviceSelector: this is the catch-all default. Any Service/Gateway that doesn't
-  # explicitly opt into "internal" (see internal.ippool.yaml) lands here automatically.
+  # Excludes "internal" (see internal.ippool.yaml): a bare catch-all with no serviceSelector would
+  # otherwise match every Service unconditionally, competing with "internal" for the same Services
+  # since Cilium's LB-IPAM tie-break isn't label-aware.
+  serviceSelector:
+    matchExpressions:
+      - key: io.cilium/lb-ipam-pool
+        operator: NotIn
+        values:
+          - internal
   blocks:
-    - cidr: 10.0.0.64/29 # 6 allowed IPs (10.0.0.65 - 10.0.0.70) — docs/network/ipam.md "Cilium LoadBalancer Pools"
+    - cidr: 10.0.0.64/29 # 8 allowed IPs (10.0.0.64 - 10.0.0.71) — docs/network/ipam.md "Cilium LoadBalancer Pools"

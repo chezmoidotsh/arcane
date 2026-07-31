@@ -94,7 +94,7 @@ All active addressing is consolidated in `10.0.0.0/24`. The remaining three `/24
 | Block           | Range       | Purpose                                                         |
 | --------------- | ----------- | --------------------------------------------------------------- |
 | `10.0.0.0/26`   | .1 – .62    | PVE host + core LXCs (management zone)                          |
-| `10.0.0.64/26`  | .65 – .126  | Cilium LoadBalancer pools (8 clusters × /29, 6 usable IPs each) |
+| `10.0.0.64/26`  | .64 – .127  | Cilium LoadBalancer pools (8 clusters × /29, 8 usable IPs each) |
 | `10.0.0.128/25` | .129 – .254 | Reserved                                                        |
 | `10.0.1.0/24`   | —           | Free / future                                                   |
 | `10.0.2.0/24`   | —           | Free / future                                                   |
@@ -129,24 +129,27 @@ devices.
 
 ### Cilium LoadBalancer Pools
 
-Each cluster runs two `CiliumLoadBalancerIPPool`s, named `external` and `internal`. `external` has no `serviceSelector`
-— it's the catch-all default, so any Service/Gateway that doesn't explicitly opt into `internal` lands here
-automatically. This section covers the `external` pools (VLAN 5, reachable from the home network); see
-[Internal LoadBalancer Pools (talosnet)](#internal-loadbalancer-pools-talosnet) for `internal`.
+Each cluster runs two `CiliumLoadBalancerIPPool`s, named `external` and `internal`. `external` is the catch-all default
+(any Service/Gateway that doesn't opt into `internal` lands here) — it must explicitly exclude the `internal` label
+(`io.cilium/lb-ipam-pool NotIn [internal]`), or it competes with `internal` for the same Services, since Cilium's
+LB-IPAM tie-break isn't label-aware. See `projects/rhodes.akn/src/infrastructure/kubernetes/cilium/external.ippool.yaml`
+for the reference implementation. This section covers the `external` pools (VLAN 5, reachable from the home network);
+see [Internal LoadBalancer Pools (talosnet)](#internal-loadbalancer-pools-talosnet) for `internal`.
 
-Each cluster gets a `/29` block (6 usable IPs). The `/26` holds exactly 8 × `/29`. Order follows cluster creation
-sequence; sandbox takes the last slot.
+Each cluster gets a `/29` block, all 8 addresses usable — these are flat L2-announced address pools, not routed subnets,
+so unlike a real `/29` the block's own network/broadcast addresses aren't reserved. The `/26` holds exactly 8 × `/29`.
+Order follows cluster creation sequence; sandbox takes the last slot.
 
 | Block           | Usable IPs | Cluster                     |
 | --------------- | ---------- | --------------------------- |
-| `10.0.0.64/29`  | .65–.70    | rhodes.akn                  |
-| `10.0.0.72/29`  | .73–.78    | lungmen.akn                 |
-| `10.0.0.80/29`  | .81–.86    | —                           |
-| `10.0.0.88/29`  | .89–.94    | —                           |
-| `10.0.0.96/29`  | .97–.102   | —                           |
-| `10.0.0.104/29` | .105–.110  | —                           |
-| `10.0.0.112/29` | .113–.118  | —                           |
-| `10.0.0.120/29` | .121–.126  | sandbox / last prod cluster |
+| `10.0.0.64/29`  | .64–.71    | rhodes.akn                  |
+| `10.0.0.72/29`  | .72–.79    | lungmen.akn                 |
+| `10.0.0.80/29`  | .80–.87    | —                           |
+| `10.0.0.88/29`  | .88–.95    | —                           |
+| `10.0.0.96/29`  | .96–.103   | —                           |
+| `10.0.0.104/29` | .104–.111  | —                           |
+| `10.0.0.112/29` | .112–.119  | —                           |
+| `10.0.0.120/29` | .120–.127  | sandbox / last prod cluster |
 
 ---
 
@@ -201,8 +204,8 @@ shared Talos VNet (see table below).
 `talosnet` has no route from any physical VLAN — it's only reachable from other Talos nodes or hosts explicitly attached
 to the SDN VNet. Each cluster can expose a second `CiliumLoadBalancerIPPool`, named `internal`, that is genuinely
 internal-only (unlike the `external` pools above, which are reachable from the home network via the VLAN 2 → VLAN 5
-rule). `internal` carries a `serviceSelector` so it's opt-in only — it never competes with `external` as a second
-catch-all.
+rule). `internal` carries a `serviceSelector` so it's opt-in only — see
+[Cilium LoadBalancer Pools](#cilium-loadbalancer-pools) above for why `external` also needs to exclude it.
 
 Split-horizon DNS, not a separate hostname, is what makes this useful: talosnet-dns (BIND, `10.128.0.3`) lets
 external-dns (RFC2136) dynamically publish the same `*.chezmoi.sh` name a cluster already has externally (e.g.
