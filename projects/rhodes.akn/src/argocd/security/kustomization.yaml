@@ -3,6 +3,7 @@ kind: Kustomization
 
 resources:
   - network-policy.allow-intra-namespace.yaml
+  - network-policy.allow-to-kube-dns.yaml
   - network-policy.allow-from-ingress-gateway.yaml
   - network-policy.allow-to-kubernetes-api.yaml
   - network-policy.allow-to-pocket-id.yaml

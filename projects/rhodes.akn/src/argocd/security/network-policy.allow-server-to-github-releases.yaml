@@ -5,8 +5,9 @@ metadata:
     policy.networking.k8s.io/description: |
       Allows the ArgoCD server's extension-installer init container to download the
       extension-application-map UI extension tarball from its GitHub release
-      (helmvalues/extensions.yaml), including the objects.githubusercontent.com host GitHub
-      redirects release asset downloads to.
+      (helmvalues/extensions.yaml), including release-assets.githubusercontent.com, the host
+      GitHub actually redirects release asset downloads to (confirmed via hubble DNS flows on
+      rhodes.akn - objects.githubusercontent.com is a different, no longer used, host).
   name: allow-argocd-server-to-github-releases
 spec:
   endpointSelector:
@@ -16,6 +17,7 @@ spec:
     - toFQDNs:
         - matchName: github.com
         - matchName: objects.githubusercontent.com
+        - matchName: release-assets.githubusercontent.com
       toPorts:
         - ports:
             - port: "443"
