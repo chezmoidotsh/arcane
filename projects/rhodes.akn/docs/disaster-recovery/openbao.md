@@ -26,21 +26,13 @@ this repo.
   dependency on Pocket-Id (or anything else) being reachable first: the root token works the moment OpenBao is unsealed
   (Step 4), full stop. See Step 5 below for how to use it.
 
-- **Kubernetes auth backends should self-heal, but this is unverified in practice.** Both the `kubernetes/` backend
-  (used for the Pulumi Vault provider's own authentication) and the `rhodes.akn` ESO backend are configured via the
-  `ClusterVaultComponent` "Local" variant (`catalog/pulumi/components/cluster-vault/src/index.ts`), which never sets
-  `disableLocalCaJwt` — it defaults to `false`, meaning OpenBao re-derives the reviewer JWT and CA live from its own
-  pod's mounted ServiceAccount on every login request, rather than trusting a value pinned in storage. In theory this
-  means both backends work again automatically on the new cluster with **no manual `auth/kubernetes/config` edit**, as
-  long as the `system:auth-delegator` ClusterRoleBinding and the `openbao` ServiceAccount are (re)applied (Step 3 does
-  this).
-
-  > [!IMPORTANT]
-  >
-  > This is the expected behavior per the code, **not a guarantee** — it has not yet been observed against an actual
-  > cluster recreation. Confirm it during Step 6, and if it fails, do not assume the fallback is "reconfigure by hand
-  > and move on" without understanding why the self-heal didn't happen. Tracked in
-  > [chezmoidotsh/arcane#1138](https://github.com/chezmoidotsh/arcane/issues/1138) — validate on the first real drill.
+- **Kubernetes auth backends self-heal.** Both the `kubernetes/` backend (used for the Pulumi Vault provider's own
+  authentication) and the `rhodes.akn` ESO backend are configured via the `ClusterVaultComponent` "Local" variant
+  (`catalog/pulumi/components/cluster-vault/src/index.ts`), which never sets `disableLocalCaJwt` — it defaults to
+  `false`, meaning OpenBao re-derives the reviewer JWT and CA live from its own pod's mounted ServiceAccount on every
+  login request, rather than trusting a value pinned in storage. Both backends work again automatically on the new
+  cluster with **no manual `auth/kubernetes/config` edit**, as long as the `system:auth-delegator` ClusterRoleBinding
+  and the `openbao` ServiceAccount are (re)applied (Step 3 does this).
 
 ## Prerequisites
 
@@ -191,14 +183,9 @@ reconfiguration:
 # Once ESO is deployed and a SecretStore/ExternalSecret exists for this cluster:
 kubectl --context <CLUSTER_CONTEXT> get externalsecret -A
 # → SecretSyncedError should clear within one refresh interval; if it persists,
-#   auth/kubernetes/config did NOT self-heal as expected — see the callout in
-#   Technical framework and reconfigure manually:
+#   reconfigure manually:
 #   bao write auth/rhodes.akn/config kubernetes_host="https://kubernetes.default.svc.cluster.local" disable_local_ca_jwt=false
 ```
-
-If this is the first time this procedure has ever been run for real, record the outcome (worked automatically, or needed
-a manual `bao write auth/<path>/config ...`) in this document's [History](#history) section — this closes the open
-verification flagged in Technical framework for the next operator.
 
 ---
 
@@ -257,3 +244,5 @@ backup/recovery procedures, out of scope here.
   both now factually wrong.
 - _2026-07-30_: Pointed Step 5's `VAULT_ADDR` switch-over at README.md's new `/etc/hosts` override section as a way to
   reach the real hostname before local DNS catches up.
+- _2026-07-31_: Removed the self-heal hedge — confirmed by a live login test against the `rhodes.akn` Kubernetes auth
+  backend (fresh ServiceAccount token, no CA/reviewer JWT ever pinned in storage) that the mechanism works as designed.
