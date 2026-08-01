@@ -1,0 +1,32 @@
+# =============================================================================
+# kazimierz.akn NixOS image — Task Automation
+# =============================================================================
+# Builds the immutable qcow2 image running Pangolin (issue 1077). Uses
+# scripts/nix:build:qcow2 (Docker-wrapped Nix build — the dev host doesn't
+# run Nix/Linux natively; see that script for the worktree/cache-volume
+# handling shared with the LXC appliances' nix:build:lxc).
+#
+# Usage:
+#   SSH_AUTHORIZED_KEYS="ssh-ed25519 AAAA... you@host" mise run image:build:amd64
+#   SSH_AUTHORIZED_KEYS="ssh-ed25519 AAAA... you@host" mise run image:build:arm64
+#
+# SSH_AUTHORIZED_KEYS is required (see configuration.nix) — a public key
+# isn't secret, but it still has to come from the operator, never baked in
+# blind. --impure is what lets builtins.getEnv read it inside the flake.
+#
+# See README.md for the full build -> Proxmox validate -> OCI upload ->
+# recreate-instance procedure.
+#
+# Prerequisites:
+#   - Docker (for the Nix build container)
+# =============================================================================
+
+[tasks."image:build:amd64"]
+description = "Build the x86_64 qcow2 image (Proxmox validation)"
+run = "nix:build:qcow2 --impure --system x86_64-linux --output-name kazimierz.$(date +%Y.%m.%d)-amd64 ."
+dir = "{{config_root}}"
+
+[tasks."image:build:arm64"]
+description = "Build the aarch64 qcow2 image (OCI Ampere A1 production target)"
+run = "nix:build:qcow2 --impure --system aarch64-linux --output-name kazimierz.$(date +%Y.%m.%d)-arm64 ."
+dir = "{{config_root}}"

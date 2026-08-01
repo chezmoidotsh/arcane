@@ -1,0 +1,56 @@
+{
+  description = "kazimierz.akn — immutable NixOS image running Pangolin (issue 1077)";
+
+  # ---------------------------------------------------------------------------
+  # Immutable qcow2 image for kazimierz.akn's public gateway (Pangolin + Gerbil
+  # + Traefik, no CrowdSec — see docs/decisions and issue 1010/1076/1077 for
+  # the full migration rationale). The OS disk is disposable: config changes
+  # mean rebuilding and redeploying this image, never mutating a running host.
+  # All mutable state (Pangolin DB, Gerbil keys, TLS certs, GeoIP db) lives on
+  # a separate block volume mounted by storage.nix, so recreating the
+  # instance from a new image never loses that state.
+  #
+  # Two architectures:
+  #   x86_64-linux  — fast local validation on Proxmox before every rollout
+  #   aarch64-linux — the production target (OCI Ampere A1, VM.Standard.A1.Flex)
+  #
+  # Build (produces a qcow2 image next to flake.nix):
+  #   mise run image:build:amd64
+  #   mise run image:build:arm64
+  # ---------------------------------------------------------------------------
+
+  inputs.nixpkgs.url = "nixpkgs/nixos-26.05";
+
+  inputs.nixos-generators.url = "github:nix-community/nixos-generators";
+  inputs.nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
+
+  outputs =
+    { self, nixpkgs, nixos-generators }:
+    let
+      systems = [ "x86_64-linux" "aarch64-linux" ];
+
+      modules = [
+        ./modules
+        ./configuration.nix
+      ];
+
+      imageFor = system: nixos-generators.nixosGenerate {
+        inherit system modules;
+        pkgs = import nixpkgs { inherit system; };
+        format = "qcow-efi";
+      };
+    in
+    {
+      packages = nixpkgs.lib.genAttrs systems (system: {
+        default = imageFor system;
+      });
+
+      # The production system, evaluable directly (nix eval, nixos-rebuild
+      # build-vm, …) without going through nixos-generators' image-building
+      # wrapper — useful to inspect config or run the module's own checks.
+      nixosConfigurations.kazimierz = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        inherit modules;
+      };
+    };
+}
