@@ -49,15 +49,61 @@ export const routeTable = new oci.core.RouteTable("kazimierz-akn-rt", {
 	],
 });
 
-// No securityListIds: the subnet uses the VCN's default (empty, unmanaged)
-// SecurityList by convention. All traffic control goes through the NSG
-// below, which is attached at the VNIC level instead of the subnet level --
-// that decouples network topology from application-level security rules.
+// Leaving securityListIds unset attaches the VCN's auto-created default
+// SecurityList, which is NOT empty -- it ships with OCI's own default
+// "quick create VCN" rules, including a blanket SSH (tcp/22 from 0.0.0.0/0
+// and ::/0) ingress rule. That rule was verified live to let SSH through
+// even with the NSG's own SSH rule deleted (the `unsecure` toggle appearing
+// to work while doing nothing, since Security Lists and NSGs are evaluated
+// independently -- either one allowing a packet lets it through).
+//
+// Can't just detach it either: OCI's API rejects an empty securityListIds
+// array outright ("Subnet securityListIds must have at least 1 element",
+// verified live). So this replicates the ICMP ingress allowances from
+// OCI's own default rules (fetched live from "Default Security List for
+// kazimierz-akn-vcn") -- path MTU discovery and packet-too-big, neither
+// covered by the NSG below -- minus the two SSH ingress rules that made
+// SSH reachable regardless of the NSG.
+//
+// No egressSecurityRules: the NSG already allows all egress (TCP/UDP,
+// dual-stack), and Security Lists/NSGs are evaluated with OR semantics --
+// an egress-all rule here would be pure duplication, not an additional
+// permission.
+export const defaultSecurityList = new oci.core.SecurityList(
+	"kazimierz-akn-default-sl",
+	{
+		compartmentId: kazimierz.id,
+		vcnId: vcn.id,
+		displayName: "kazimierz-akn-default-sl",
+		ingressSecurityRules: [
+			{
+				protocol: "1", // ICMP
+				source: "0.0.0.0/0",
+				sourceType: "CIDR_BLOCK",
+				icmpOptions: { type: 3, code: 4 }, // fragmentation needed (path MTU discovery)
+			},
+			{
+				protocol: "1", // ICMP
+				source: "172.16.0.0/26", // VCN CIDR
+				sourceType: "CIDR_BLOCK",
+				icmpOptions: { type: 3 },
+			},
+			{
+				protocol: "58", // ICMPv6
+				source: "::/0",
+				sourceType: "CIDR_BLOCK",
+				icmpOptions: { type: 2, code: 0 }, // packet too big
+			},
+		],
+	},
+);
+
 export const subnet = new oci.core.Subnet("kazimierz-akn-subnet", {
 	compartmentId: kazimierz.id,
 	vcnId: vcn.id,
 	cidrBlock: "172.16.0.0/28",
 	routeTableId: routeTable.id,
+	securityListIds: [defaultSecurityList.id],
 });
 
 export const nsg = new oci.core.NetworkSecurityGroup("kazimierz-akn-nsg", {
