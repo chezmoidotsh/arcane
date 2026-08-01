@@ -1,0 +1,4 @@
+encryptionsalt: v1:agX4pNhPZ3Y=:v1:39UQDzNp+0o/rxa9:2tGZNL4YATbjQ2Qa1pVS/OTsrjnP2w==
+config:
+  kazimierz-akn-infra:ssh_authorized_keys: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPH7IEv+Q6s6WSPlWVva6UlCbkhePQdZYbN1TbI7rCDx
+  kazimierz-akn-infra:unsecure: "true"

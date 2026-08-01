@@ -4,14 +4,15 @@
 # OCI Free Tier infrastructure for kazimierz.akn, managed as a Pulumi stack
 # (state in the Garage S3 backend, see Pulumi.yaml).
 #
-# No stack exists yet — `pulumi stack init kazimierz_akn.live` plus `pulumi
-# config set`/`--secret` for oci_tenancy_ocid/oci_user_ocid/oci_fingerprint/
-# oci_private_key/oci_region/oci_compartment_id/oci_availability_domain/
-# oci_image_id/ssh_authorized_keys/cloudflare_zone_id come first (see
-# stack/network.ts and stack/dns.ts for what each key feeds). Once a stack
-# exists, mirror amiya.akn's `.mise/env.yaml` (SOPS-encrypted
-# PULUMI_STACK/PULUMI_CONFIG_PASSPHRASE, loaded via `[env] _.file` below) so
-# these tasks don't prompt.
+# Stack `kazimierz_akn.live` exists; `.mise/env.yaml` (SOPS-encrypted
+# PULUMI_STACK/PULUMI_CONFIG_PASSPHRASE, loaded via `[env] _.file` below,
+# mirroring amiya.akn) is set up so these tasks don't prompt.
+# `ssh_authorized_keys`/`unsecure` are set. Still needed before `pulumi up`
+# can run: OCI provider creds as TF_VAR_tenancy_ocid/TF_VAR_user_ocid/
+# TF_VAR_fingerprint/TF_VAR_private_key/TF_VAR_region (see compartments.ts,
+# not pulumi config -- git-tracked file), plus `pulumi config set
+# cloudflare_zone_id` (see stack/dns.ts). The boot image is resolved live
+# from OCI's platform images, no config key needed for it.
 #
 # `node = "24"` (fuzzy, not an exact patch) overrides the root .mise.toml's
 # exact `24.16.0` pin — that specific patch's built-in TypeScript stripping
