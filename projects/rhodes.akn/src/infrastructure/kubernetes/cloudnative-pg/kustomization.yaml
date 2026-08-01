@@ -6,7 +6,7 @@ namespace: cloudnative-pg-system
 helmCharts:
   - repo: https://cloudnative-pg.github.io/charts
     name: cloudnative-pg
-    version: 0.28.2
+    version: 0.29.0
 
     releaseName: cloudnative-pg
     namespace: cloudnative-pg-system
@@ -14,8 +14,12 @@ helmCharts:
     valuesFile: helmvalues/default.yaml
 
 resources:
-  - # Install Barman Cloud CNPG-I plugin (v0.6.0)
-    https://raw.githubusercontent.com/cloudnative-pg/plugin-barman-cloud/e0c8b64470cc31f36b0511b80bbac6ecaa8bd283/manifest.yaml
+  - # Install Barman Cloud CNPG-I plugin (v0.14.0). Crosses the v0.8.0 RBAC
+    # rename (barman-plugin- prefix) — after sync, verify ArgoCD pruned the
+    # old cluster-scoped metrics-reader/objectstore-viewer/-editor roles and
+    # leader-election-role/-rolebinding, since metrics-reader is a generic
+    # name other components could also claim.
+    https://raw.githubusercontent.com/cloudnative-pg/plugin-barman-cloud/1e13020fe5f09fd8fc29ea03828f7b61375b3721/manifest.yaml
   - # Configure defaults for CloudNativePG
     ../../../../../../catalog/kubernetes/cloudnative-pg/kustomize
   - security/

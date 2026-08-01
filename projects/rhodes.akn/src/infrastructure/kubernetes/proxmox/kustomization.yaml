@@ -7,7 +7,7 @@ helmCharts:
   - repo: oci://ghcr.io/sergelogvinov/charts
     name: proxmox-cloud-controller-manager
     # renovate: datasource=helm depName=proxmox-cloud-controller-manager registryUrl=oci://ghcr.io/sergelogvinov/charts
-    version: 0.2.28
+    version: 0.2.29
 
     releaseName: proxmox-cloud-controller-manager
     namespace: proxmox-system
@@ -17,7 +17,7 @@ helmCharts:
   - repo: oci://ghcr.io/sergelogvinov/charts
     name: proxmox-csi-plugin
     # renovate: datasource=helm depName=proxmox-csi-plugin registryUrl=oci://ghcr.io/sergelogvinov/charts
-    version: 0.5.7
+    version: 0.5.9
 
     releaseName: proxmox-csi-plugin
     namespace: proxmox-system

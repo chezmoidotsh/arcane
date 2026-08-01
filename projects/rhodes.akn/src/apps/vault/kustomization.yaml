@@ -26,7 +26,7 @@ resources:
 helmCharts:
   - repo: https://openbao.github.io/openbao-helm
     name: openbao
-    version: 0.28.3
+    version: 0.28.6
 
     releaseName: openbao
     namespace: vault
