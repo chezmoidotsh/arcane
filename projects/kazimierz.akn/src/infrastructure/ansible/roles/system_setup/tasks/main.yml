@@ -174,13 +174,25 @@
 # ==========================================================================
 # Tailscale VPN Installation
 # ==========================================================================
+# --accept-dns=false: Tailscale otherwise tries to rewrite /etc/resolv.conf
+# for MagicDNS, but that file is made immutable above (chattr +i) so Quad9
+# stays authoritative -- without this flag Tailscale fails to write it on
+# every startup and reports it as a permanent health warning (verified live:
+# "remove of /etc/resolv.conf failed: operation not permitted").
+# ephemeral: false -- kazimierz is a permanent gateway, not a CI runner.
+# Ephemeral nodes get *deleted* by Tailscale (not just marked offline) the
+# moment they disconnect, forcing a full fresh registration (new authURL,
+# manual approval) on the next reconnect instead of a normal resume --
+# verified live: this is almost certainly what turned a routine `tailscale
+# up` re-run (for the --accept-dns fix) into "machineAuthorized=false,
+# authURL=true" and a login that had to be approved by hand.
 - name: Ensure Tailscale VPN is installed and configured
   ansible.builtin.include_role:
     name: artis3n.tailscale.machine
   vars:
-    tailscale_args: --ssh --hostname {{ tailscale_hostname }}
+    tailscale_args: --ssh --accept-dns=false --hostname {{ tailscale_hostname }}
     tailscale_authkey: "{{ tailscale_auth_key }}"
-    tailscale_oauth_ephemeral: true
+    tailscale_oauth_ephemeral: false
     tailscale_oauth_preauthorized: true
     tailscale_tags:
       - svc-pangolin
