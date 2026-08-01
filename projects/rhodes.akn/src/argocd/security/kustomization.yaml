@@ -9,3 +9,4 @@ resources:
   - network-policy.allow-to-pocket-id.yaml
   - network-policy.allow-repo-server-to-github.yaml
   - network-policy.allow-server-to-github-releases.yaml
+  - network-policy.allow-to-lungmen-api.yaml
