@@ -23,7 +23,7 @@ spec:
         app.kubernetes.io/instance: openbao
         app.kubernetes.io/name: vault
         component: server
-        helm.sh/chart: openbao-0.28.3
+        helm.sh/chart: openbao-0.28.6
     spec:
       affinity:
         podAntiAffinity:

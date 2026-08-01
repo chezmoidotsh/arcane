@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: openbao
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: vault
-    helm.sh/chart: openbao-0.28.3
+    helm.sh/chart: openbao-0.28.6
   name: openbao
   namespace: vault
 spec:

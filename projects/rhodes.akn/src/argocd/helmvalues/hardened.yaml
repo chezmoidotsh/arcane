@@ -1,6 +1,13 @@
 ---
 # This file defines security hardening measures for the ArgoCD deployment
 global:
+  # Chart >=10 defaults this to true, generating a permissive `ingress: [{}]`
+  # (allow-all) NetworkPolicy per component. Kubernetes NetworkPolicies are
+  # additive, so that would widen ingress beyond what security/'s
+  # Cilium-enforced policies intend. Keep it disabled.
+  networkPolicy:
+    create: false
+
   # Pod-level security context applied globally to all ArgoCD components
   securityContext:
     # Specific non-root user ID to run ArgoCD containers
