@@ -43,8 +43,9 @@ FINGERPRINT=$(oci iam user api-key upload --user-id "${USER_OCID}" \
   --key-file "${WORKDIR}/key_public.pem" --query "data.fingerprint" --raw-output)
 
 echo "Writing TF_VAR_* into ${ENV_FILE} (merged with existing keys)..."
+TF_KEY=$(cat "${WORKDIR}/key.pem")
 TF_TENANCY="${TENANCY_OCID}" TF_USER="${USER_OCID}" TF_FP="${FINGERPRINT}" \
-  TF_REGION="${REGION}" TF_KEY="$(cat "${WORKDIR}/key.pem")" \
+  TF_REGION="${REGION}" TF_KEY="${TF_KEY}" \
   yq -i '
     .TF_VAR_tenancy_ocid = strenv(TF_TENANCY) |
     .TF_VAR_user_ocid = strenv(TF_USER) |
