@@ -7,73 +7,227 @@
 #   visualization, accessible via Tailscale Serve.
 #
 # Components Configured:
-#   - ARA API Server running in Docker container (SQLite backend)
+#   - ARA API server running as a native systemd service (Ubuntu's own
+#     ara-server package, not a container -- see below)
 #   - ARA Ansible callback plugin for automatic run recording
-#   - Tailscale Serve for secure HTTPS access to web interface
-#   - Systemd service for ARA lifecycle management
+#   - Tailscale Serve for secure HTTPS access to the web interface
+#
+# Why not the recordsansible/ara-api Docker image:
+#   That image only ever gets published for amd64 -- there is no arm64
+#   build, so it fails outright ("exec format error") on this Ampere A1
+#   host. Ubuntu's own universe repo ships ara-server/python3-ara built for
+#   whatever the host's actual architecture is, with a systemd unit
+#   included, so a container was never actually necessary here.
 #
 # Access:
 #   - ARA web interface: https://<tailscale-hostname>.ts.net
-#   - API endpoint: http://127.0.0.1:8000
+#   - API endpoint: http://127.0.0.1:<ara_port> (default 8000)
 #
 # Data Storage:
-#   - SQLite database: Docker volume 'ara-data' at /opt/ara/ansible.sqlite
-#   - Persistent across container restarts
+#   - SQLite database at /opt/ara/ansible.sqlite, owned by the `ara` system
+#     user/group the package creates.
 #
 # Security Considerations:
-#   - ARA API exposed only to localhost (127.0.0.1:8000)
-#   - Web interface accessible only via Tailscale network
-#   - HTTPS automatically configured via Tailscale Serve
-#   - Systemd service hardened with PrivateTmp and NoNewPrivileges
+#   - ARA API bound to 127.0.0.1 only, reached externally through Tailscale
+#     Serve.
+#   - ALLOWED_HOSTS restricted to localhost and *.ts.net in settings.yaml.
 #
 # Dependencies:
-#   - Docker Engine and docker CLI
+#   - ara-server / python3-ara packages (Ubuntu universe)
 #   - Tailscale daemon (tailscaled.service)
-#   - python3-ara package for callback plugin
 #
 # Tags:
 #   - ara: All ARA-related tasks
-#   - systemd: Systemd unit configuration
+#   - systemd: Systemd unit/drop-in configuration
 #   - ansible: Ansible callback configuration
 # ==============================================================================
 
 # ==========================================================================
-# ARA Systemd Service Configuration
+# Cleanup: retire the old Docker-based deployment
 # ==========================================================================
-- name: Ensure ARA systemd service is configured with Docker and Tailscale Serve integration
-  ansible.builtin.template:
-    src: ara.service.j2
-    dest: /etc/systemd/system/ara.service
-    mode: "0644"
-  register: ara_service_file # Drives the restart below -- `state: started` alone is a no-op on an already-running service
+# Idempotent no-ops once this has run once -- kept so re-running this role
+# against a host still on the old Docker-based unit cleans it up instead of
+# leaving two competing listeners on the same port.
+- name: Check for the old Docker-based ara systemd unit
+  ansible.builtin.stat:
+    path: /etc/systemd/system/ara.service
+  register: ara_old_unit_file
+  tags:
+    - ara
+    - systemd
+
+- name: Stop and disable the old Docker-based ara systemd unit
+  ansible.builtin.systemd:
+    name: ara
+    state: stopped
+    enabled: false
+  when: ara_old_unit_file.stat.exists
+  tags:
+    - ara
+    - systemd
+
+- name: Remove the old Docker-based ara systemd unit file
+  ansible.builtin.file:
+    path: /etc/systemd/system/ara.service
+    state: absent
+  when: ara_old_unit_file.stat.exists
   notify:
     - Reload systemd daemon configuration
   tags:
     - ara
     - systemd
 
-- name: Flush handlers to reload systemd daemon
-  ansible.builtin.meta: flush_handlers
+- name: Remove the old ara-api Docker container (wrong-architecture image)
+  community.docker.docker_container:
+    name: ara-api
+    state: absent
+  when: ara_old_unit_file.stat.exists
   tags:
     - ara
 
-# Without this, a changed unit file (e.g. ara_docker_image_tag bump) would be
-# written to disk but the already-running container would keep serving the
-# old image indefinitely -- `state: started` below never restarts a service
-# that's already active.
-- name: Restart ARA systemd service if its unit file changed
-  ansible.builtin.systemd:
-    name: ara
-    state: restarted
-  when: ara_service_file.changed
+# ==========================================================================
+# ARA Server Package Installation
+# ==========================================================================
+- name: Ensure ara-server package is installed
+  ansible.builtin.apt:
+    name: ara-server
+    state: present
+    update_cache: true
   tags:
     - ara
 
-- name: Ensure ARA systemd service is enabled and started
+- name: Ensure /opt/ara data directory exists
+  ansible.builtin.file:
+    path: /opt/ara
+    state: directory
+    mode: "0750"
+    owner: ara
+    group: ara
+  tags:
+    - ara
+
+# ARA_BASE_DIR is read directly via os.environ.get() in ARA's settings.py,
+# bypassing dynaconf entirely -- unlike pointing ARA_SETTINGS at a file
+# elsewhere, which was tried first and silently didn't take (dynaconf kept
+# falling back to its own BASE_DIR/DATABASE_NAME defaults, verified live:
+# the configured DATABASE_NAME was never used, three different unintended
+# sqlite files appeared under /root and /var/lib/ara-server instead).
+# Settings.yaml is colocated with the data it configures for the same
+# reason: it's BASE_DIR's own default settings-file location, no override
+# indirection involved.
+- name: Check if ARA secret key file exists
+  ansible.builtin.stat:
+    path: /opt/ara/.secret_key
+  register: ara_secret_key_file
+  tags:
+    - ara
+
+- name: Generate ARA secret key
+  ansible.builtin.shell: openssl rand -base64 40 | tr -d '\n' > /opt/ara/.secret_key
+  when: not ara_secret_key_file.stat.exists
+  tags:
+    - ara
+
+- name: Ensure ARA secret key file has correct permissions
+  ansible.builtin.file:
+    path: /opt/ara/.secret_key
+    mode: "0600"
+    owner: ara
+    group: ara
+  tags:
+    - ara
+
+- name: Read ARA secret key
+  ansible.builtin.slurp:
+    src: /opt/ara/.secret_key
+  register: ara_secret_key_content
+  no_log: true
+  tags:
+    - ara
+
+- name: Set ARA secret key fact
+  ansible.builtin.set_fact:
+    ara_secret_key: "{{ ara_secret_key_content.content | b64decode | trim }}"
+  no_log: true
+  tags:
+    - ara
+
+- name: Deploy ARA API server settings
+  ansible.builtin.template:
+    src: ara-settings.yaml.j2
+    dest: /opt/ara/settings.yaml
+    mode: "0640"
+    owner: ara
+    group: ara
+  notify:
+    - Restart ara-server
+  tags:
+    - ara
+
+- name: Deploy ARA server environment overrides
+  ansible.builtin.template:
+    src: ara-server-env.j2
+    dest: /etc/default/ara-server
+    mode: "0644"
+  notify:
+    - Restart ara-server
+  tags:
+    - ara
+
+# Runs as root (not become_user: ara). Without the `acl` package installed
+# on the target, become_user falls back through setfacl -> chown -> a
+# macOS-specific `chmod +a` ACL syntax that fails outright on Linux --
+# documented ansible-core behavior, see
+# https://github.com/ansible/ansible/issues/74830 and
+# https://github.com/ansible/ansible/issues/85503. Simpler to just not use
+# become_user for one command; ownership is fixed up below instead, since
+# ara-server.service itself runs as the ara user.
+- name: Apply ARA database migrations
+  ansible.builtin.command: ara-manage migrate
+  environment:
+    ARA_BASE_DIR: /opt/ara
+  register: ara_migrate
+  changed_when: "'Applying' in ara_migrate.stdout"
+  tags:
+    - ara
+
+- name: Ensure /opt/ara stays owned by the ara user after migrations
+  ansible.builtin.file:
+    path: /opt/ara
+    state: directory
+    recurse: true
+    owner: ara
+    group: ara
+  tags:
+    - ara
+
+- name: Deploy Tailscale Serve systemd drop-in for ara-server
+  ansible.builtin.file:
+    path: /etc/systemd/system/ara-server.service.d
+    state: directory
+    mode: "0755"
+  tags:
+    - ara
+    - systemd
+
+- name: Configure Tailscale Serve integration for ara-server
+  ansible.builtin.template:
+    src: ara-server-tailscale-serve.conf.j2
+    dest: /etc/systemd/system/ara-server.service.d/tailscale-serve.conf
+    mode: "0644"
+  notify:
+    - Reload systemd daemon configuration
+    - Restart ara-server
+  tags:
+    - ara
+    - systemd
+
+- name: Ensure ara-server systemd service is enabled and started
   ansible.builtin.systemd:
-    name: ara
+    name: ara-server
     enabled: true
     state: started
+    daemon_reload: true
   tags:
     - ara
 

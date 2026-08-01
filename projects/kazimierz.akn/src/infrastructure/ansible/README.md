@@ -110,8 +110,8 @@ journalctl -u ansible-pull.service -f
 docker compose -f /opt/pangolin/docker-compose.yml ps
 docker compose -f /opt/pangolin/docker-compose.yml logs -f
 
-# ARA (run history/analysis)
-systemctl status ara.service
+# ARA (run history/analysis) -- native ara-server package, not a container
+systemctl status ara-server.service
 # Web UI: the Tailscale Serve URL configured in roles/ara_server
 ```
 

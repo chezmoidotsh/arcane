@@ -1,0 +1,12 @@
+# Managed by Ansible - DO NOT EDIT MANUALLY
+# Overrides the ara-server package's own /etc/default/ara-server defaults
+# (which bind 0.0.0.0:8080 with no settings file override).
+
+# 127.0.0.1-only: same perimeter as before, reached externally through
+# Tailscale Serve (see the systemd drop-in) rather than a public bind.
+ARGS="127.0.0.1:{{ ara_port }}"
+
+# Read directly via os.environ.get(), not through dynaconf -- see the
+# comment on the "Generate ARA secret key" task for why ARA_SETTINGS was
+# dropped in favor of this.
+ARA_BASE_DIR="/opt/ara"
