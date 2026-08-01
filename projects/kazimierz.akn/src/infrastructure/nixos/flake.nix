@@ -45,9 +45,12 @@
         default = imageFor system;
       });
 
-      # The production system, evaluable directly (nix eval, nixos-rebuild
-      # build-vm, …) without going through nixos-generators' image-building
-      # wrapper — useful to inspect config or run the module's own checks.
+      # For inspecting individual option values without going through
+      # nixos-generators' image-building wrapper, e.g.:
+      #   nix eval .#nixosConfigurations.kazimierz.config.services.pangolin.settings
+      # NOT directly buildable as a full system (config.system.build.toplevel):
+      # nixos-generators' qcow-efi format injects the root filesystem and
+      # bootloader config that a bare nixosSystem eval here doesn't have.
       nixosConfigurations.kazimierz = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
         inherit modules;
