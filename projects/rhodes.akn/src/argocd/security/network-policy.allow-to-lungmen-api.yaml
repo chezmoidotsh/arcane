@@ -1,0 +1,23 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the ArgoCD application-controller to reach lungmen.akn's Kubernetes API for
+      reconciling the lungmen.akn spoke cluster registration. Uses a toCIDR rule for the
+      talosnet bridge IP rather than the kubernetes.lungmen.akn.chezmoi.sh DNS name (VLAN 2),
+      which stays unreachable from rhodes independently of this bridge — same reasoning as
+      vault's allow-to-lungmen-api policy, see MIGR-20260801-00.
+  name: allow-argocd-to-lungmen-api
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-application-controller
+  egress:
+    - toCIDR:
+        - 10.128.0.19/32 # temporary — talosnet bridge, see MIGR-20260801-00. Revert to
+        # kubernetes.lungmen.akn.chezmoi.sh once lungmen is recreated under #1072
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
