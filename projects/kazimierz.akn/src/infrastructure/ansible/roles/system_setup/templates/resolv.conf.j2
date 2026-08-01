@@ -6,7 +6,8 @@
 #
 # Purpose:
 #   Configure DNS resolution to use reliable public DNS servers instead of
-#   Hetzner's default DNS which blocks api.tailscale.com with invalid responses.
+#   the cloud provider's default resolver, so DNS reliability is independent
+#   of the underlying infrastructure.
 #
 # DNS Servers Priority:
 #   1. Quad9 DNS (9.9.9.9, 149.112.112.112)
@@ -16,13 +17,13 @@
 # ==============================================================================
 
 # Primary DNS - Quad9 (security and privacy focused)
-nameserver {{ dns_servers[0] | default('9.9.9.9') }}
+nameserver {{ dns_servers[0] }}
 {% if dns_servers | length > 1 %}
-nameserver {{ dns_servers[1] | default('149.112.112.112') }}
+nameserver {{ dns_servers[1] }}
 {% endif %}
 
 # Fallback DNS servers
-{% for server in dns_fallback_servers | default(['208.67.222.222', '208.67.220.220', '1.1.1.1', '1.0.0.1', '8.8.8.8', '8.8.4.4']) %}
+{% for server in dns_fallback_servers %}
 nameserver {{ server }}
 {% endfor %}
 

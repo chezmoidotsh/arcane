@@ -1,6 +1,6 @@
 ---
 # Ansible inventory for Kazimierz.AKN VPS
-# Host: kazimierz (Hetzner Cloud - Helsinki)
+# Host: kazimierz-pangolin (OCI Always Free, eu-paris-1)
 
 all:
   hosts:

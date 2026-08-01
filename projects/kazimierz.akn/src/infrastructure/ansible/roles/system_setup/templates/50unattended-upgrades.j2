@@ -7,7 +7,7 @@ Unattended-Upgrade::Allowed-Origins {
 
 // Automatically reboot if required
 Unattended-Upgrade::Automatic-Reboot "true";
-Unattended-Upgrade::Automatic-Reboot-Time "03:00";
+Unattended-Upgrade::Automatic-Reboot-Time "{{ unattended_upgrades_reboot_time }}";
 
 // Send email notifications
 Unattended-Upgrade::Mail "root";

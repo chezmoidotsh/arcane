@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Managed by Ansible - DO NOT EDIT MANUALLY
+#
+# Posts a Slack message when unattended-upgrades actually installed
+# something today. Scoped to today's log lines rather than a separate
+# stamp file -- this only runs once a day (see the .timer), right after
+# unattended-upgrades' own 03:00 reboot window, so "today" always means
+# "this run".
+set -euo pipefail
+
+LOG=/var/log/unattended-upgrades/unattended-upgrades.log
+CONF=/etc/unattended-upgrades-notify.conf
+TODAY=$(date +%Y-%m-%d)
+
+[[ -f "${LOG}" ]] || exit 0
+[[ -f "${CONF}" ]] || exit 0
+# shellcheck source=/dev/null
+source "${CONF}"
+[[ -n "${SLACK_TOKEN:-}" ]] || exit 0
+
+UPGRADED=$(grep "^${TODAY}" "${LOG}" | grep "Packages that were upgraded:" | tail -1 | sed 's/.*Packages that were upgraded: //')
+[[ -n "${UPGRADED}" ]] || exit 0
+
+REBOOT_NOTE=""
+if [[ -f /var/run/reboot-required ]]; then
+  REBOOT_NOTE=$'\n:arrows_counterclockwise: A reboot was required and performed at 03:00.'
+fi
+
+curl -sf -X POST https://slack.com/api/chat.postMessage \
+  -H "Authorization: Bearer ${SLACK_TOKEN}" \
+  -H "Content-Type: application/json; charset=utf-8" \
+  -d "$(python3 -c '
+import json, sys
+channel, host, upgraded, note = sys.argv[1:5]
+print(json.dumps({
+    "channel": channel,
+    "username": "Unattended Upgrades",
+    "icon_emoji": ":shield:",
+    "text": f"*Security updates installed on {host}*\n```{upgraded}```{note}",
+}))
+' "${SLACK_CHANNEL}" "$(hostname)" "${UPGRADED}" "${REBOOT_NOTE}")" \
+  >/dev/null

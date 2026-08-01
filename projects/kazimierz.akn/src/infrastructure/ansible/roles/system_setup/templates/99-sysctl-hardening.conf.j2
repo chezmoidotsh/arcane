@@ -1,0 +1,32 @@
+# ==============================================================================
+# Kernel Network Hardening
+# ==============================================================================
+# Managed by Ansible - DO NOT EDIT MANUALLY
+#
+# Standard baseline for an internet-facing host: reject ICMP redirects and
+# source-routed packets (nothing here should ever legitimately reroute this
+# box), enable SYN cookies and reverse-path filtering, restrict kernel
+# pointer/log exposure. Deliberately does not touch net.ipv4.ip_forward --
+# Docker manages that itself for container networking.
+# ==============================================================================
+
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.default.accept_redirects = 0
+net.ipv4.conf.all.secure_redirects = 0
+net.ipv4.conf.all.send_redirects = 0
+net.ipv4.conf.all.accept_source_route = 0
+net.ipv4.conf.all.rp_filter = 1
+net.ipv4.conf.default.rp_filter = 1
+net.ipv4.icmp_echo_ignore_broadcasts = 1
+net.ipv4.icmp_ignore_bogus_error_responses = 1
+net.ipv4.tcp_syncookies = 1
+net.ipv4.conf.all.log_martians = 1
+
+net.ipv6.conf.all.accept_redirects = 0
+net.ipv6.conf.default.accept_redirects = 0
+net.ipv6.conf.all.accept_source_route = 0
+net.ipv6.conf.default.accept_source_route = 0
+
+kernel.dmesg_restrict = 1
+kernel.kptr_restrict = 2
+fs.suid_dumpable = 0

@@ -1,0 +1,18 @@
+# ==============================================================================
+# fail2ban Configuration
+# ==============================================================================
+# Managed by Ansible - DO NOT EDIT MANUALLY
+#
+# Local, host-scoped bans -- unlike CrowdSec's shared threat-intel bouncer
+# (dropped: guest IPs were getting caught by unrelated global blacklists),
+# this only reacts to what this host itself observes.
+# ==============================================================================
+
+[DEFAULT]
+bantime = 1h
+findtime = 10m
+maxretry = 5
+backend = systemd
+
+[sshd]
+enabled = true

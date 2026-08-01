@@ -30,7 +30,11 @@ tailscale_hostname: kazimierz-akn
 # -------------------------------------------------------------------------
 # UFW Firewall Configuration
 # -------------------------------------------------------------------------
-# Note: SSH port 22 enabled for initial setup - Tailscale SSH recommended
+# SSH exposure is controlled at the OCI network security group level (the
+# `unsecure` Pulumi config toggle in stack/oci/network.ts), not here -- UFW
+# just stays out of the way. sshd itself is still hardened (see
+# 99-hardening.conf.j2) and Tailscale SSH (`--ssh` below) works regardless
+# of what this list allows.
 ufw_allowed_ports:
   - { port: 22, proto: tcp, comment: "SSH" }
   - { port: 80, proto: tcp, comment: "HTTP" }
@@ -96,15 +100,6 @@ pangolin_smtp_from: Pangolin <no-reply@chezmoi.sh>
 pangolin_cors_allowed_origins:
   - https://pangolin.chezmoi.sh
   - https://ai.chezmoi.sh
-
-# -------------------------------------------------------------------------
-# CrowdSec Configuration
-# -------------------------------------------------------------------------
-crowdsec_appsec_domains:
-  jellyfin:
-    - streaming.chezmoi.sh
-  immich:
-    - photos.chezmoi.sh
 
 # -------------------------------------------------------------------------
 # Error Pages Configuration
