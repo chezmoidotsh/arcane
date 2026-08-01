@@ -43,10 +43,6 @@ by either a human operator or an AI agent.
 - **[MIGR-20260628-00: Migrate Talos nodes from VLAN 2 to VLAN 5 (V1→V2 dual-NIC)](./infrastructure/MIGR-20260628-00.vlan2-to-vlan5.md)**:
   Rolling migration of existing Omni-managed Talos VMs from the legacy VLAN 2 single-NIC layout to the V2 dual-NIC
   layout (VLAN 5 on eth0, talosnet on eth1). Required after applying the updated V2 machine classes.
-- **[MIGR-20260801-00: Bridge lungmen.akn onto talosnet (temporary, single-NIC add)](./infrastructure/MIGR-20260801-00.lungmen-talosnet-bridge.md)**:
-  Adds a second NIC (`eth1`, DHCP on `talosnet`) to lungmen.akn's single control-plane node, keeping `eth0`/VLAN 2
-  untouched, so rhodes.akn can reach its kube-apiserver. Temporary bridge unblocking #370 Phase 10, obsoleted by
-  lungmen's recreation under #1072.
 - **[INF-20260525-00: Upgrade Talos OS on a Single-Node Cluster](./infrastructure/INF-20260525-00.upgrade-talos.md)**:
   Full lifecycle upgrade of the Talos OS version on a single-node cluster, including pre-upgrade checks, image pre-pull,
   upgrade execution, post-upgrade verification, and rollback.
