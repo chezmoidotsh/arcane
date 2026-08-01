@@ -15,6 +15,9 @@ catalogs:
     '@pulumi/kubernetes':
       specifier: ^4.33.0
       version: 4.33.0
+    '@pulumi/oci':
+      specifier: ^4.20.0
+      version: 4.20.0
     '@pulumi/pulumi':
       specifier: ^3.250.0
       version: 3.250.0
@@ -404,6 +407,22 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
+  projects/kazimierz.akn/src/infrastructure/pulumi:
+    dependencies:
+      '@pulumi/cloudflare':
+        specifier: 'catalog:'
+        version: 6.17.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/oci':
+        specifier: 'catalog:'
+        version: 4.20.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi':
+        specifier: 'catalog:'
+        version: 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
   projects/lungmen.akn/src/infrastructure/pulumi:
     dependencies:
       '@axnic/pulumi-garage':
@@ -723,6 +742,9 @@ packages:
 
   '@pulumi/kubernetes@4.33.0':
     resolution: {integrity: sha512-tSMUDEWNl1pqOrANVqQRao5KRKB9waghbjpC29MUqCaqiVLZe6V0biVGC0TRDMy3hKXdP2VjiLAZ7DMnqts7rw==}
+
+  '@pulumi/oci@4.20.0':
+    resolution: {integrity: sha512-jYyIR+GeT/spFRPOCi3Kf1+YnJrRVFIbnCkFTqPg9u6gafjj2Amg5AOEx5QqWADthExu/m+prBsT6nyp9uY7jw==}
 
   '@pulumi/pulumi@3.250.0':
     resolution: {integrity: sha512-/CaE4gWlOGNFt9eWxip2SscL1Nh1i9ZzzFSkjbrNQol5u9dOjGWNzWlOCerA6riH0603MkT9xNlRnJ4TGstXrw==}
@@ -2080,6 +2102,14 @@ snapshots:
       '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       glob: 12.0.0
       shell-quote: 1.10.0
+    transitivePeerDependencies:
+      - supports-color
+      - ts-node
+      - typescript
+
+  '@pulumi/oci@4.20.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
+    dependencies:
+      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
