@@ -281,9 +281,9 @@ its own `/19` within `172.30.0.0/16`.
 > **`lungmen-legacy` (slot 7) is a bookkeeping reservation, not a live pod-CIDR change.** The live lungmen.akn cluster's
 > actual pod CIDR remains `10.244.0.0/16` (legacy, pre-Omni) — this row only reserves cluster ID 7 / `172.30.192.0/19`
 > for the duration of the temporary `talosnet` bridge documented in
-> [MIGR-20260801-00](../procedures/infrastructure/MIGR-20260801-00.lungmen-talosnet-bridge.md), so no other cluster
-> claims that slot while the bridge exists. Slot 2 (`lungmen.akn`) stays reserved for the real cluster recreated under
-> #1072. Remove this row once the bridge is decommissioned.
+> [MIGR-20260801-00](../archives/2026-08-01-MIGR-20260801-00.lungmen-talosnet-bridge.md), so no other cluster claims
+> that slot while the bridge exists. Slot 2 (`lungmen.akn`) stays reserved for the real cluster recreated under #1072.
+> Remove this row once the bridge is decommissioned.
 
 ### ClusterMesh prerequisites
 
