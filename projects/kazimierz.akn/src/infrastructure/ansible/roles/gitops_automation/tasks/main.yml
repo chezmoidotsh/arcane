@@ -24,7 +24,7 @@
 #   - Systemd service runs with PrivateTmp and NoNewPrivileges hardening
 #
 # Dependencies:
-#   - community.general collection (v8.0.0+)
+#   - community.general collection (see ../../../requirements.yml for the pinned version)
 #   - Git version control system
 #   - Python 3 with docker module
 #
