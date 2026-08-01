@@ -19,7 +19,7 @@
   #   mise run image:build:arm64
   # ---------------------------------------------------------------------------
 
-  inputs.nixpkgs.url = "nixpkgs/nixos-26.05";
+  inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
 
   inputs.nixos-generators.url = "github:nix-community/nixos-generators";
   inputs.nixos-generators.inputs.nixpkgs.follows = "nixpkgs";

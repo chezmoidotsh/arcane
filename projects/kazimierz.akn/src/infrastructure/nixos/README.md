@@ -57,22 +57,33 @@ Verify:
 
 Destroy the test VM once satisfied — it's throwaway (`qm stop <vmid> && qm destroy <vmid>`).
 
-## 3. Upload to OCI and import as a custom image
+## 3. Build + push the arm64 image to OCI
 
 No conversion needed — OCI's image import API accepts qcow2 directly (`--source-image-type QCOW2`). This assumes an
 Object Storage bucket already exists for these images (the abandoned Crossplane design provisioned one at
 `sh-chezmoi-akn-kazimierz-nixos` in namespace `ax25b8ybxdyk` — the Pulumi stack in `stack/oci/` doesn't recreate that
-bucket yet; provision one before this step if it isn't already there).
+bucket yet; provision one before this step if it isn't already there. Namespace/bucket names below match that design).
 
 ```sh
-COMPARTMENT_ID="<kazimierz compartment OCID — stack/oci/compartments.ts>"
-NAMESPACE="<object storage namespace>"
-BUCKET="<bucket name>"
+# 1. Build (see step 1 above — repeated here for a one-shot copy/paste)
+SSH_AUTHORIZED_KEYS="ssh-ed25519 AAAA... you@host" mise run image:build:arm64
+
+# 2. Resolve the kazimierz.akn compartment OCID (child of the chezmoi.sh
+#    compartment — created by stack/oci/compartments.ts; requires an `oci`
+#    CLI session already authenticated, see AGENTS.md)
+CHEZMOI_SH_ID="ocid1.compartment.oc1..aaaaaaaajyh7a5rbs3gcnvmxffcwewtuftrakz5ndd6ojwxcjyjecuvnafaq"
+COMPARTMENT_ID=$(oci iam compartment list --compartment-id "$CHEZMOI_SH_ID" \
+  --query "data[?name=='kazimierz.akn'].id | [0]" --raw-output)
+
+NAMESPACE="ax25b8ybxdyk"
+BUCKET="sh-chezmoi-akn-kazimierz-nixos"
 DATE=$(date +%Y.%m.%d)
 
+# 3. Push the built image to the bucket
 oci os object put --namespace "$NAMESPACE" --bucket-name "$BUCKET" \
   --name "kazimierz-${DATE}-arm64.qcow2" --file "kazimierz.${DATE}-arm64.qcow2"
 
+# 4. Import it as a custom compute image
 oci compute image import from-object \
   --compartment-id "$COMPARTMENT_ID" \
   --namespace "$NAMESPACE" --bucket-name "$BUCKET" \
@@ -106,6 +117,23 @@ The block volume survives instance deletion — recreating from a new image neve
 pulumi config set oci_image_id <new-image-ocid>
 pulumi up   # projects/kazimierz.akn/src/infrastructure/pulumi
 ```
+
+## Updating nixpkgs
+
+`inputs.nixpkgs.url` tracks `nixos-unstable` (rolling, not a stable point release like `nixos-26.05`) — expect more
+frequent breaking changes than a stable channel, in exchange for picking up `services.pangolin` fixes/features faster.
+
+```sh
+docker run --rm -v nix-store-cache:/nix -v "$(pwd)/../../../../..:/src" \
+  -w /src/projects/kazimierz.akn/src/infrastructure/nixos \
+  nixos/nix nix --extra-experimental-features "nix-command flakes" flake update
+```
+
+This rewrites `flake.lock` to the latest `nixos-unstable` + `nixos-generators` revisions — commit the updated lock file,
+then rebuild and go through steps 1-3 above as usual (build, validate on Proxmox, push + recreate). Nothing here is
+automatic: an update is a deliberate rebuild-and-redeploy, same as any other image change.
+
+To pin a single input instead of updating everything: `nix flake lock --update-input nixpkgs`.
 
 ## Known simplifications / open questions
 
