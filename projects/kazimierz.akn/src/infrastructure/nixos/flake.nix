@@ -24,8 +24,16 @@
   inputs.nixos-generators.url = "github:nix-community/nixos-generators";
   inputs.nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
 
+  # EXPERIMENTAL -- only used by nixosConfigurations.kazimierz-anywhere-test
+  # below, while evaluating nixos-anywhere as a replacement for the
+  # qcow-efi/KVM-requiring build above (see the Proxmox VM test in
+  # docs/network or the session's own notes). Not wired into the production
+  # aarch64 config or the packages.*.default outputs yet.
+  inputs.disko.url = "github:nix-community/disko";
+  inputs.disko.inputs.nixpkgs.follows = "nixpkgs";
+
   outputs =
-    { self, nixpkgs, nixos-generators }:
+    { self, nixpkgs, nixos-generators, disko }:
     let
       systems = [ "x86_64-linux" "aarch64-linux" ];
 
@@ -54,6 +62,20 @@
       nixosConfigurations.kazimierz = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
         inherit modules;
+      };
+
+      # EXPERIMENTAL: nixos-anywhere target for the Proxmox VM test (see
+      # flake input comment above). x86_64-linux to match the throwaway
+      # Proxmox test VM; disko.nix's /dev/vda assumption is also what OCI's
+      # paravirtualized attachment uses, so this should carry over.
+      #   nix run github:nix-community/nixos-anywhere -- \
+      #     --flake .#kazimierz-anywhere-test root@<test-vm-ip>
+      nixosConfigurations.kazimierz-anywhere-test = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = modules ++ [
+          disko.nixosModules.disko
+          ./modules/disko.nix
+        ];
       };
     };
 }
