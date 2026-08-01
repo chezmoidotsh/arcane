@@ -59,41 +59,24 @@ Destroy the test VM once satisfied — it's throwaway (`qm stop <vmid> && qm des
 
 ## 3. Build + push the arm64 image to OCI
 
-No conversion needed — OCI's image import API accepts qcow2 directly (`--source-image-type QCOW2`). This assumes an
-Object Storage bucket already exists for these images (the abandoned Crossplane design provisioned one at
-`sh-chezmoi-akn-kazimierz-nixos` in namespace `ax25b8ybxdyk` — the Pulumi stack in `stack/oci/` doesn't recreate that
-bucket yet; provision one before this step if it isn't already there. Namespace/bucket names below match that design).
-
 ```sh
-# 1. Build (see step 1 above — repeated here for a one-shot copy/paste)
-SSH_AUTHORIZED_KEYS="ssh-ed25519 AAAA... you@host" mise run image:build:arm64
-
-# 2. Resolve the kazimierz.akn compartment OCID (child of the chezmoi.sh
-#    compartment — created by stack/oci/compartments.ts; requires an `oci`
-#    CLI session already authenticated, see AGENTS.md)
-CHEZMOI_SH_ID="ocid1.compartment.oc1..aaaaaaaajyh7a5rbs3gcnvmxffcwewtuftrakz5ndd6ojwxcjyjecuvnafaq"
-COMPARTMENT_ID=$(oci iam compartment list --compartment-id "$CHEZMOI_SH_ID" \
-  --query "data[?name=='kazimierz.akn'].id | [0]" --raw-output)
-
-NAMESPACE="ax25b8ybxdyk"
-BUCKET="sh-chezmoi-akn-kazimierz-nixos"
-DATE=$(date +%Y.%m.%d)
-
-# 3. Push the built image to the bucket
-oci os object put --namespace "$NAMESPACE" --bucket-name "$BUCKET" \
-  --name "kazimierz-${DATE}-arm64.qcow2" --file "kazimierz.${DATE}-arm64.qcow2"
-
-# 4. Import it as a custom compute image
-oci compute image import from-object \
-  --compartment-id "$COMPARTMENT_ID" \
-  --namespace "$NAMESPACE" --bucket-name "$BUCKET" \
-  --name "kazimierz-${DATE}-arm64.qcow2" \
-  --display-name "kazimierz-${DATE}" \
-  --launch-mode CUSTOM \
-  --source-image-type QCOW2
+SSH_AUTHORIZED_KEYS="ssh-ed25519 AAAA... you@host" mise run image:push
 ```
 
-Note the resulting image OCID — it's `pulumi config set oci_image_id <ocid>` in the Pulumi stack.
+`image:push` depends on `image:build:arm64`, so this alone builds and pushes. It assumes an Object Storage bucket
+already exists for these images (the abandoned Crossplane design provisioned one at `sh-chezmoi-akn-kazimierz-nixos` in
+namespace `ax25b8ybxdyk` — the Pulumi stack in `stack/oci/` doesn't recreate that bucket yet; provision one before this
+step if it isn't already there) and an authenticated `oci` CLI session.
+
+What it does (`.mise/tasks/image/push`):
+
+1. Picks the most recently built `kazimierz.*-arm64.qcow2` in this directory
+2. Resolves the `kazimierz.akn` compartment OCID (child of `chezmoi.sh`, created by `stack/oci/compartments.ts`)
+3. `oci os object put` — uploads the image to the bucket
+4. `oci compute image import from-object --source-image-type QCOW2` — imports it as a custom compute image (no
+   conversion needed, OCI accepts qcow2 directly)
+
+Prints the resulting image OCID and the `pulumi config set oci_image_id <ocid>` command to run next.
 
 ## 4. Provision runtime secrets (once, survives every recreate)
 
