@@ -45,6 +45,7 @@
     src: ara.service.j2
     dest: /etc/systemd/system/ara.service
     mode: "0644"
+  register: ara_service_file # Drives the restart below -- `state: started` alone is a no-op on an already-running service
   notify:
     - Reload systemd daemon configuration
   tags:
@@ -56,7 +57,19 @@
   tags:
     - ara
 
-- name: Enable and start ARA systemd service
+# Without this, a changed unit file (e.g. ara_docker_image_tag bump) would be
+# written to disk but the already-running container would keep serving the
+# old image indefinitely -- `state: started` below never restarts a service
+# that's already active.
+- name: Restart ARA systemd service if its unit file changed
+  ansible.builtin.systemd:
+    name: ara
+    state: restarted
+  when: ara_service_file.changed
+  tags:
+    - ara
+
+- name: Ensure ARA systemd service is enabled and started
   ansible.builtin.systemd:
     name: ara
     enabled: true

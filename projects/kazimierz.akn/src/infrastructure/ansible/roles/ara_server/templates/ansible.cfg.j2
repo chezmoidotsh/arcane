@@ -3,6 +3,9 @@
 callback_plugins=/usr/lib/python3/dist-packages/ara/plugins/callback
 action_plugins=/usr/lib/python3/dist-packages/ara/plugins/action
 lookup_plugins=/usr/lib/python3/dist-packages/ara/plugins/lookup
+# Registering the plugin path isn't enough on its own -- it still has to be
+# switched on, or no run ever gets recorded.
+callbacks_enabled=ara_default
 
 [ara]
 # ARA API configuration
