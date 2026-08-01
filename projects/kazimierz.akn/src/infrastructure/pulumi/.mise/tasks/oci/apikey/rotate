@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# [MISE] description="Generate a new OCI API signing key and store the Pulumi TF_VAR_* creds in .mise/env.yaml"
+# [MISE] dir="{{config_root}}"
+
+set -euo pipefail
+
+CONFIG_ROOT="$(pwd)"
+ENV_FILE="${CONFIG_ROOT}/.mise/env.yaml"
+
+# Single-user personal tenancy (verified live with `oci iam user list --all`:
+# exactly one ACTIVE user) -- hardcoded rather than looked up every run.
+TENANCY_OCID="ocid1.tenancy.oc1..aaaaaaaafeeoyrhgtgjvfruptzctounvrltlygstnkvpdvyr5b6ulos5jiua"
+USER_OCID="ocid1.user.oc1..aaaaaaaajxjktzu2pzn2tdotchm2hkkj6havth2f7la6o5txy75fooxs2iiq"
+REGION="eu-paris-1"
+
+if [[ ! -f ${ENV_FILE} ]]; then
+  echo "ERROR: ${ENV_FILE} not found -- run 'pulumi stack init kazimierz_akn.live' first" >&2
+  exit 1
+fi
+
+WORKDIR=$(mktemp -d)
+trap 'rm -rf "${WORKDIR}"' EXIT
+
+echo "Decrypting ${ENV_FILE}..."
+sops --decrypt "${ENV_FILE}" >"${WORKDIR}/env.yaml"
+
+# Delete the previous key this task uploaded, if any -- OCI caps API keys at
+# 3 per user, so re-running this task to rotate would eventually hit that
+# limit otherwise.
+PREVIOUS_FINGERPRINT=$(yq -r '.TF_VAR_fingerprint // ""' "${WORKDIR}/env.yaml")
+if [[ -n ${PREVIOUS_FINGERPRINT} ]]; then
+  echo "Deleting previous key ${PREVIOUS_FINGERPRINT}..."
+  oci iam user api-key delete --user-id "${USER_OCID}" \
+    --fingerprint "${PREVIOUS_FINGERPRINT}" --force || true
+fi
+
+echo "Generating a new RSA keypair..."
+openssl genrsa -out "${WORKDIR}/key.pem" 2048 >/dev/null 2>&1
+openssl rsa -pubout -in "${WORKDIR}/key.pem" -out "${WORKDIR}/key_public.pem" >/dev/null 2>&1
+
+echo "Uploading the public key to OCI (user ${USER_OCID})..."
+FINGERPRINT=$(oci iam user api-key upload --user-id "${USER_OCID}" \
+  --key-file "${WORKDIR}/key_public.pem" --query "data.fingerprint" --raw-output)
+
+echo "Writing TF_VAR_* into ${ENV_FILE} (merged with existing keys)..."
+TF_TENANCY="${TENANCY_OCID}" TF_USER="${USER_OCID}" TF_FP="${FINGERPRINT}" \
+  TF_REGION="${REGION}" TF_KEY="$(cat "${WORKDIR}/key.pem")" \
+  yq -i '
+    .TF_VAR_tenancy_ocid = strenv(TF_TENANCY) |
+    .TF_VAR_user_ocid = strenv(TF_USER) |
+    .TF_VAR_fingerprint = strenv(TF_FP) |
+    .TF_VAR_region = strenv(TF_REGION) |
+    .TF_VAR_private_key = strenv(TF_KEY)
+  ' "${WORKDIR}/env.yaml"
+
+cp "${WORKDIR}/env.yaml" "${ENV_FILE}"
+sops --encrypt -i "${ENV_FILE}"
+
+echo ""
+echo "Done. New fingerprint: ${FINGERPRINT}"
+echo "TF_VAR_* now load automatically via [env] _.file -- re-run 'mise x -- pulumi preview' to pick them up."
