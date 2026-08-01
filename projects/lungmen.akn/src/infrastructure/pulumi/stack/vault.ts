@@ -22,7 +22,8 @@ path "lungmen.akn/metadata/+/database/*" { capabilities = ["create", "read", "up
 `,
 	},
 	remote: {
-		host: "https://kubernetes.lungmen.akn.chezmoi.sh:6443",
+		host: "https://10.128.0.19:6443", // temporary — talosnet bridge, see MIGR-20260801-00. Revert to
+		// kubernetes.lungmen.akn.chezmoi.sh once lungmen is recreated under #1072
 		caCert: config.remoteCluster.kubernetesCaCert,
 		tokenReviewerJwt: config.remoteCluster.tokenReviewerJwt,
 	},
