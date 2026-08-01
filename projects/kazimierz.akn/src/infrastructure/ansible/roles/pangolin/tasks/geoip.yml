@@ -3,13 +3,20 @@
 # Task: geoip
 # ==============================================================================
 # Purpose:
-#   Manage the MaxMind GeoLite2 database required by Pangolin's geoblocking
+#   Manage the GeoLite2-Country database required by Pangolin's geoblocking
 #   middleware. Ensures the database is seeded, kept up to date, and refreshed
 #   automatically without manual intervention.
 #
+# Database Source:
+#   Downloaded from github.com/GitSquared/node-geolite2-redist, a community
+#   redistribution mirror -- not MaxMind's own API. No MaxMind account or
+#   license key involved anywhere in this flow; accepted knowingly, to avoid
+#   the account-creation/key-management overhead for a single low-stakes
+#   geoblocking database. Revisit if that mirror ever proves unreliable.
+#
 # Components Managed:
 #   - GeoIP configuration directory under the Pangolin compose tree
-#   - update-pangolin-geoip helper script (wraps MaxMind download workflow)
+#   - update-pangolin-geoip helper script (downloads and installs the .mmdb)
 #   - systemd oneshot service and timer to execute nightly refreshes
 #
 # Idempotency Strategy:
@@ -21,15 +28,11 @@
 #      templates change.
 #
 # Operational Schedule:
-#   - update-pangolin-geoip handles license key retrieval and checksum
-#     verification.
-#   - pangolin-geoip-update.timer triggers the service nightly (default 02:15)
-#     to keep IP metadata fresh for blocking decisions.
+#   pangolin-geoip-update.timer triggers the service nightly (default 02:15)
+#   to keep IP metadata fresh for blocking decisions.
 #
 # Dependencies:
 #   - pangolin_compose_dir variable must point to Pangolin's config root.
-#   - MaxMind license key must be provided via environment or config consumed by
-#     update-pangolin-geoip.
 #   - systemd is assumed to be the init system for timers/services.
 # ==============================================================================
 
