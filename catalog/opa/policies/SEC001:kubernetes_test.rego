@@ -504,11 +504,11 @@ test_combine_mode_bootstrap_namespace_local_registry_denied if {
     count(violations) == 1
 }
 
-test_excluded_namespace_argocd if {
-    is_excluded_namespace({"metadata": {"namespace": "argocd"}})
+test_argocd_namespace_not_excluded if {
+    not is_excluded_namespace({"metadata": {"namespace": "argocd"}})
 }
 
-test_argocd_namespace_allows_public_registry if {
+test_argocd_namespace_denies_public_registry if {
     violations := {msg | some msg in deny with input as {
         "apiVersion": "apps/v1",
         "kind": "Deployment",
@@ -523,10 +523,10 @@ test_argocd_namespace_allows_public_registry if {
             },
         },
     }}
-    count(violations) == 0
+    count(violations) == 1
 }
 
-test_argocd_namespace_denies_local_registry if {
+test_argocd_namespace_allows_local_registry if {
     violations := {msg | some msg in deny with input as {
         "apiVersion": "apps/v1",
         "kind": "Deployment",
@@ -541,6 +541,6 @@ test_argocd_namespace_denies_local_registry if {
             },
         },
     }}
-    count(violations) == 1
+    count(violations) == 0
 }
 
