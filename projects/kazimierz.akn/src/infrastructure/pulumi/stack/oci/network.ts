@@ -1,6 +1,13 @@
 import * as oci from "@pulumi/oci";
+import * as pulumi from "@pulumi/pulumi";
 
 import { kazimierz } from "./compartments";
+
+const config = new pulumi.Config();
+
+// Opt-in: SSH (tcp/22) ingress is only created when explicitly enabled.
+// Defaults to closed -- flip with `pulumi config set unsecure true`.
+const unsecure = config.getBoolean("unsecure") ?? false;
 
 // Dual-stack VCN/subnet/NSG for kazimierz.akn, ported from the abandoned
 // Crossplane implementation (issue 1010/1076 -- see
@@ -60,18 +67,21 @@ export const nsg = new oci.core.NetworkSecurityGroup("kazimierz-akn-nsg", {
 	freeformTags: { project: "kazimierz.akn", managed_by: "pulumi" },
 });
 
-// Ingress: SSH (pubkey-only), HTTP/HTTPS (Traefik), and the two WireGuard
-// (Newt) ports -- dual-stack. NSG rules are always stateful (OCI doesn't
-// allow stateless rules in NSGs, unlike SecurityLists).
-const ingressRules = [
-	{ name: "tcp22", protocol: "6", port: 22 },
-	{ name: "tcp80", protocol: "6", port: 80 },
-	{ name: "tcp443", protocol: "6", port: 443 },
-	{ name: "udp51820", protocol: "17", port: 51820 },
-	{ name: "udp21820", protocol: "17", port: 21820 },
+// Ingress: SSH (pubkey-only, only when `unsecure` is on), HTTP/HTTPS
+// (Traefik), and the two WireGuard (Newt) ports -- dual-stack. NSG rules are
+// always stateful (OCI doesn't allow stateless rules in NSGs, unlike
+// SecurityLists).
+const allIngressRules = [
+	{ name: "ssh", protocol: "6", port: 22 },
+	{ name: "http", protocol: "6", port: 80 },
+	{ name: "https", protocol: "6", port: 443 },
+	{ name: "newt-site", protocol: "17", port: 51820 },
+	{ name: "newt-client", protocol: "17", port: 21820 },
 ] as const;
 
-for (const { name, protocol, port } of ingressRules) {
+const unsecure_mode = (rule: { name: string }) =>
+	unsecure || rule.name !== "ssh";
+for (const { name, protocol, port } of allIngressRules.filter(unsecure_mode)) {
 	const portRange = { destinationPortRange: { min: port, max: port } };
 	for (const [suffix, source] of [
 		["ipv4", "0.0.0.0/0"],
