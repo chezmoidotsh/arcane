@@ -10,8 +10,14 @@ server:
     enabled: true
     # rhodes.akn has no direct internet egress for image pulls -- mirror
     # through oci.chezmoi.sh (same pattern as global.image.repository above).
+    #
+    # Pinned to v1.0.0: v1.0.1 switched checksum matching from substring grep
+    # to an exact match on the checksums.txt filename field, which breaks
+    # against extension-application-map's checksums.txt (lists paths as
+    # "./dist/<file>" rather than the bare filename).
     image:
       repository: oci.chezmoi.sh/quay.io/argoprojlabs/argocd-extension-installer
+      tag: v1.0.0
     extensionList:
       - name: extension-application-map
         env:
