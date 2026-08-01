@@ -148,8 +148,13 @@ Order follows cluster creation sequence; sandbox takes the last slot.
 | `10.0.0.88/29`  | .88–.95    | —                           |
 | `10.0.0.96/29`  | .96–.103   | —                           |
 | `10.0.0.104/29` | .104–.111  | —                           |
-| `10.0.0.112/29` | .112–.119  | —                           |
+| `10.0.0.112/29` | .112–.119  | lungmen-legacy              |
 | `10.0.0.120/29` | .120–.127  | sandbox / last prod cluster |
+
+> `lungmen-legacy` (slot 7) is the same bookkeeping reservation explained in the
+> [Pod CIDRs table](#pod-cidrs--unique-per-cluster-clustermesh-prerequisite) below — no live IP consumed here, since the
+> talosnet bridge needs no LoadBalancer pool at all. Slot 2 (`lungmen.akn`, `10.0.0.72/29`) is also aspirational, not
+> what's actually deployed — see that same note.
 
 ---
 
@@ -223,11 +228,15 @@ IPs, `.255` is the `/24` broadcast address). `internal` pools get a 2-IP block e
 | `10.128.0.246`–`.247` | 2          | —                                |
 | `10.128.0.248`–`.249` | 2          | —                                |
 | `10.128.0.250`–`.251` | 2          | —                                |
-| `10.128.0.252`–`.253` | 2          | —                                |
+| `10.128.0.252`–`.253` | 2          | lungmen-legacy                   |
 | `10.128.0.254`        | 1          | — spare                          |
 | `10.128.0.2`–`.9`     | 8          | — reserved (outside `.240-.254`) |
 
 Sandbox has no row: it's a throwaway cluster with no internal-only workload, so it doesn't get an `internal` pool.
+
+> `lungmen-legacy` (slot 7) is the same bookkeeping reservation explained in the
+> [Pod CIDRs table](#pod-cidrs--unique-per-cluster-clustermesh-prerequisite) below — lungmen also has no
+> `internal.ippool.yaml` at all today, having had no `talosnet` presence before this bridge.
 
 ---
 
@@ -258,16 +267,23 @@ its own `/19` within `172.30.0.0/16`.
 
 > **Sizing note:** A `/16` fits exactly 8 × `/19`. 8,192 pod IPs per cluster is well above any homelab requirement.
 
-| Cluster     | cluster.name   | cluster.id | Pod CIDR          | Service CIDR    | kube-dns    |
-| ----------- | -------------- | ---------- | ----------------- | --------------- | ----------- |
-| rhodes.akn  | rhodes-akn     | 1          | `172.30.0.0/19`   | `172.31.0.0/19` | 172.31.0.10 |
-| lungmen.akn | lungmen-akn    | 2          | `172.30.32.0/19`  | `172.31.0.0/19` | 172.31.0.10 |
-| cluster 3   | _(unassigned)_ | 3          | `172.30.64.0/19`  | `172.31.0.0/19` | 172.31.0.10 |
-| cluster 4   | _(unassigned)_ | 4          | `172.30.96.0/19`  | `172.31.0.0/19` | 172.31.0.10 |
-| cluster 5   | _(unassigned)_ | 5          | `172.30.128.0/19` | `172.31.0.0/19` | 172.31.0.10 |
-| cluster 6   | _(unassigned)_ | 6          | `172.30.160.0/19` | `172.31.0.0/19` | 172.31.0.10 |
-| cluster 7   | _(unassigned)_ | 7          | `172.30.192.0/19` | `172.31.0.0/19` | 172.31.0.10 |
-| sandbox     | sandbox        | 8          | `172.30.224.0/19` | `172.31.0.0/19` | 172.31.0.10 |
+| Cluster        | cluster.name   | cluster.id | Pod CIDR          | Service CIDR    | kube-dns    |
+| -------------- | -------------- | ---------- | ----------------- | --------------- | ----------- |
+| rhodes.akn     | rhodes-akn     | 1          | `172.30.0.0/19`   | `172.31.0.0/19` | 172.31.0.10 |
+| lungmen.akn    | lungmen-akn    | 2          | `172.30.32.0/19`  | `172.31.0.0/19` | 172.31.0.10 |
+| cluster 3      | _(unassigned)_ | 3          | `172.30.64.0/19`  | `172.31.0.0/19` | 172.31.0.10 |
+| cluster 4      | _(unassigned)_ | 4          | `172.30.96.0/19`  | `172.31.0.0/19` | 172.31.0.10 |
+| cluster 5      | _(unassigned)_ | 5          | `172.30.128.0/19` | `172.31.0.0/19` | 172.31.0.10 |
+| cluster 6      | _(unassigned)_ | 6          | `172.30.160.0/19` | `172.31.0.0/19` | 172.31.0.10 |
+| lungmen-legacy | lungmen-legacy | 7          | `172.30.192.0/19` | `172.31.0.0/19` | 172.31.0.10 |
+| sandbox        | sandbox        | 8          | `172.30.224.0/19` | `172.31.0.0/19` | 172.31.0.10 |
+
+> **`lungmen-legacy` (slot 7) is a bookkeeping reservation, not a live pod-CIDR change.** The live lungmen.akn cluster's
+> actual pod CIDR remains `10.244.0.0/16` (legacy, pre-Omni) — this row only reserves cluster ID 7 / `172.30.192.0/19`
+> for the duration of the temporary `talosnet` bridge documented in
+> [MIGR-20260801-00](../procedures/infrastructure/MIGR-20260801-00.lungmen-talosnet-bridge.md), so no other cluster
+> claims that slot while the bridge exists. Slot 2 (`lungmen.akn`) stays reserved for the real cluster recreated under
+> #1072. Remove this row once the bridge is decommissioned.
 
 ### ClusterMesh prerequisites
 

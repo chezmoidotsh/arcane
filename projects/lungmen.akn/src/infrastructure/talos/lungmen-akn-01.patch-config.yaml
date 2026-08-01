@@ -3,6 +3,13 @@ machine:
   type: controlplane
   network:
     hostname: lungmen-akn-01
+    interfaces:
+      # talosnet SDN VNet — temporary bridge to rhodes.akn so ESO/OpenBao can reach this node's
+      # kube-apiserver (see docs/procedures/infrastructure/MIGR-20260801-00.lungmen-talosnet-bridge.md
+      # and issue #1155). eth0/VLAN 2 stays untouched. Remove once lungmen is recreated under #1072.
+      - interface: eth1
+        dhcp: true
+        mtu: 1450 # matches rhodes's eth1 (pre-sized for a future VXLAN migration, see ADR-014)
 
   # -- Machine installation
   install:
