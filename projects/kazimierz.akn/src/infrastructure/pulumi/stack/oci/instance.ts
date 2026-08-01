@@ -10,13 +10,11 @@ const config = new pulumi.Config();
 // list`) -- not a config knob, it will never be anything else.
 const availabilityDomain = "jbln:EU-PARIS-1-AD-1";
 
-// The OS disk is disposable: instance updates come from a fresh immutable
-// NixOS image (#1077), never in-place mutation. All mutable Pangolin/Gerbil/
-// Traefik state lives on this volume instead, decoupled from the instance's
-// own lifecycle -- recreating the instance re-attaches the same volume.
-// retainOnDelete mirrors the abandoned Crossplane version's `deletionPolicy:
-// Orphan`: never let a `pulumi destroy` or accidental removal take the OCI
-// block volume with it.
+// Pangolin/Gerbil/Traefik state lives on this volume, decoupled from the
+// instance's own lifecycle -- recreating the instance re-attaches the same
+// volume. retainOnDelete mirrors the abandoned Crossplane version's
+// `deletionPolicy: Orphan`: never let a `pulumi destroy` or accidental
+// removal take the OCI block volume with it.
 export const volume = new oci.core.Volume(
 	"kazimierz-akn-pangolin-data",
 	{
@@ -33,6 +31,34 @@ export const volume = new oci.core.Volume(
 	{ retainOnDelete: true },
 );
 
+// Latest Canonical Ubuntu Minimal ARM platform image, whatever version that
+// currently is (no version pinned) -- resolved live instead of a pinned
+// OCID, since OCI drops dated platform-image OCIDs from the list once a
+// newer one ships. Minimal variant: smaller boot footprint, the
+// `system_setup`/`pangolin` Ansible roles handle the rest.
+//
+// Sorted by DISPLAYNAME, not TIMECREATED: OCI republishes older LTS builds
+// (e.g. 22.04) on maintenance schedules independent of the newest release,
+// so TIMECREATED DESC can put a stale 22.04 rebuild ahead of 24.04 (verified
+// live: a 22.04 rebuild had a later timestamp than the current 24.04 image).
+// Display names sort correctly by version because they share the same
+// "Canonical-Ubuntu-<ver>-Minimal-aarch64-<date>-<rev>" format at every
+// position that matters.
+const ubuntuImage = oci.core.getImagesOutput({
+	compartmentId: kazimierz.id,
+	operatingSystem: "Canonical Ubuntu",
+	shape: "VM.Standard.A1.Flex",
+	sortBy: "DISPLAYNAME",
+	sortOrder: "DESC",
+	filters: [
+		{
+			name: "display-name",
+			regex: true,
+			values: ["^Canonical-Ubuntu-\\d+\\.\\d+-Minimal-aarch64-"],
+		},
+	],
+});
+
 // VM.Standard.A1.Flex, sized to this tenancy's actual Always Free ARM quota:
 // 2 OCPU / 12 GB in eu-paris-1 (verified with `oci limits value list
 // --compartment-id <tenancy> --service-name compute`, standard-a1-core-count
@@ -46,10 +72,7 @@ export const instance = new oci.core.Instance("kazimierz-pangolin", {
 	shapeConfig: { ocpus: 2, memoryInGbs: 12 },
 	sourceDetails: {
 		sourceType: "image",
-		// Produced by #1077 (immutable NixOS image, not yet built). Set with
-		// `pulumi config set oci_image_id <ocid>` once the first custom image
-		// is imported into OCI.
-		sourceId: config.require("oci_image_id"),
+		sourceId: ubuntuImage.apply((image) => image.images[0].id),
 		bootVolumeSizeInGbs: "50",
 	},
 	createVnicDetails: {
@@ -69,8 +92,9 @@ export const instance = new oci.core.Instance("kazimierz-pangolin", {
 });
 
 // Paravirtualized attachment -- required for ARM Ampere instances. Detached
-// and re-created on every instance replacement (see storage.nix's
-// first-boot vs. re-attach handling in #1077); the Volume itself survives.
+// and re-created on every instance replacement; the Volume itself survives
+// and the Ansible role handles first-boot init vs. re-attach of existing
+// state on it.
 export const volumeAttachment = new oci.core.VolumeAttachment(
 	"kazimierz-akn-pangolin-data-attachment",
 	{
