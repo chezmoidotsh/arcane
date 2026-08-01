@@ -100,27 +100,21 @@ working.
 - Created and destroyed/recreated Proxmox VM 9077 twice while diagnosing the BIOS/UEFI mismatch; VM currently still
   exists (10.0.0.200), stuck mid-hang after the OVMF switch, pending a decision on whether to inspect (real console/VNC)
   or destroy.
+- **Confirmed direction: Ansible.** Closed issue 1077 as not planned, with a comment explaining the KVM/Packer/
+  nixos-anywhere-OVMF findings above.
+- Deleted `projects/kazimierz.akn/src/infrastructure/nixos/` and `scripts/nix:build:qcow2` from this branch.
+- Retargeted `stack/oci/instance.ts`: `sourceDetails.sourceId` now resolves the latest Canonical Ubuntu 24.04 Minimal
+  ARM platform image live via `oci.core.getImagesOutput` (filtered to `VM.Standard.A1.Flex`, sorted by `TIMECREATED`
+  desc) instead of requiring a `pulumi config set oci_image_id` pointing at a custom image imported from an Object
+  Storage bucket. Dropped the now-stale `#1077` comment references in that file and in `pulumi/.mise.toml`.
 
 ## Attention points
 
 - **VM 9077 on pve-01 (10.0.0.200)** is still running, hung. Needs `qm stop 9077; qm destroy 9077 --purge` once no
-  longer needed for inspection.
-- **`projects/kazimierz.akn/src/infrastructure/nixos/`** (committed on this branch) is now expected to be abandoned in
-  favor of Ansible. Decide: delete, or keep on this branch as reference/in case the calculus changes later (e.g. if the
-  OVMF issue turns out to be trivial once someone has real console access).
-- **Pulumi stack impact**: `stack/oci/instance.ts`'s `sourceDetails.sourceId` (currently `oci_image_id`, meant for a
-  custom NixOS image) needs to instead reference a stock Ubuntu/Oracle Linux image OCID if Ansible is confirmed —
-  matching what the Hetzner side already boots (Ubuntu 24.04). Not yet changed.
-- **Issue 1077** ("Build immutable NixOS qcow2 images…") no longer matches the chosen direction and needs reworking or
-  replacing with an "Ansible on OCI" issue, mirroring how issue 1010 itself was already reworked once (Crossplane →
-  Pulumi).
+  longer needed for inspection — not yet decided.
 
 ## Next steps
 
-- [ ] Confirm: Ansible + Docker Compose on OCI, CrowdSec tasks dropped, is the final direction
 - [ ] Decide fate of VM 9077 (destroy vs. inspect via real console first)
-- [ ] Decide fate of the NixOS flake work on this branch (delete vs. keep dormant)
-- [ ] Update `stack/oci/instance.ts` to target a stock Ubuntu/OL image instead of a custom NixOS image
 - [ ] Retarget the Ansible role's `host_vars` from Hetzner to the OCI instance; stop including `crowdsec.yml`
-- [ ] Rework issue 1077 (or open a replacement issue) to reflect the Ansible-on-OCI direction
 - [ ] Optional: `ansible-pull` + notification webhook for auto-update, once the base deployment works
