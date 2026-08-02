@@ -131,18 +131,32 @@ constraints.
 
 **On a `CLOSED` (not merged) event:** tell the user and ask whether to keep working on the branch or drop it.
 
-**On a `[comment]` / `[review comment]` / `[review CHANGES_REQUESTED]` event:** read the feedback and decide whether
-it's mechanical enough to act on without a round-trip:
+**On a `[comment]` / `[review comment]` / `[review CHANGES_REQUESTED]` event:** first judge whether the feedback is
+actually pertinent — a reviewer (human or bot) can be wrong, out of date, or flagging something already handled
+elsewhere. Don't act just because a comment exists.
 
-- **Mechanical and unambiguous** (typo, requested rename, missing test the reviewer pointed at, lint/CI fix, a small
+- **Pertinent and mechanical** (typo, requested rename, missing test the reviewer pointed at, lint/CI fix, a small
   clarification) — implement it directly: edit, then follow "Pushing follow-up commits to an existing PR" below
-  (validate commits, `trunk check`, push). Reply on the same thread (`gh pr comment <n> --body "..."` for top-level,
-  `gh api repos/<owner>/<repo>/pulls/<n>/comments/<comment-id>/replies` for inline) summarizing what changed and in
-  which commit.
-- **A design change, ambiguous, or touches security/secrets/shared infra** — do not push unilaterally. Surface the
-  comment to the user and wait for direction, same as any other risky/hard-to-reverse action.
+  (validate commits, `trunk check`, push).
+- **Pertinent but a design change, ambiguous, or touches security/secrets/shared infra** — do not push unilaterally.
+  Surface the comment to the user and wait for direction, same as any other risky/hard-to-reverse action. Leave the
+  thread unresolved until that direction lands.
+- **Not pertinent** (already handled, misunderstanding, doesn't apply here) — reply explaining why, don't change code
+  just to appease the comment.
 - **A `[review APPROVED]` or plain `[review COMMENTED]` with no actionable ask** — no action needed, just note it to the
-  user if relevant.
+  user if relevant. Reviews themselves aren't resolvable on GitHub, only their individual review-comment threads are.
+
+**Always reply on the specific thread, never a generic top-level summary comment** — a reviewer re-reading the PR should
+see the answer to their exact comment, in place, not have to cross-reference a separate comment listing everything at
+once:
+
+- Top-level PR conversation comment (`[comment]`): `gh pr comment <n> --body "..."`.
+- Inline review comment (`[review comment]`) that was pertinent and is now addressed (code changed, or a valid "not
+  applicable, because …" explanation given): reply **and** mark the thread resolved in one step —
+  `bash .agents/skills/create-pr/scripts/resolve-review-comment.sh <pr-number> <comment-id> "<reply-body>"`. Only
+  resolve once the fix is actually pushed (or the explanation is final) — a promise to fix later stays unresolved.
+- Inline review comment that's pertinent but needs the user's call: reply (if there's something worth saying yet) but
+  leave the thread unresolved — resolving is a claim that the concern is settled, and it isn't yet.
 
 This mirrors the existing "confirm before pushing/commenting" rule in `AGENTS.md`: the monitor's job is to bring
 feedback to your attention immediately, not to grant blanket authority to push unreviewed changes.
@@ -436,6 +450,8 @@ gh pr create \
 - [ ] Issue referenced (`Closes #number` or `Addresses #number (Phase N)`)
 - [ ] Post-creation monitor launched (`.agents/skills/create-pr/scripts/monitor-pr.sh`, `Monitor` tool,
       `persistent: true`)
+- [ ] Every actioned review comment got a reply on its own thread (not a generic summary comment), and pertinent ones
+      that are now addressed were marked resolved
 
 ## References
 
@@ -445,3 +461,4 @@ gh pr create \
 - Project overview: `AGENTS.md`
 - Commit config: `.commitlintrc.js`
 - Post-creation watcher: `.agents/skills/create-pr/scripts/monitor-pr.sh`
+- Reply-and-resolve helper: `.agents/skills/create-pr/scripts/resolve-review-comment.sh`
