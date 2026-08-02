@@ -76,8 +76,10 @@
     # -------------------------------------------------------------------------
     # API server URL (uses environment variable if set, otherwise public URL)
     arnos_ara_api_server: "{{ lookup('env', 'ARA_API_SERVER') | default(arnos_ara_public_url) }}"
-    # Public URL accessible via Tailscale
-    arnos_ara_public_url: https://kazimierz-akn.tail831c5d.ts.net
+    # Public URL accessible via Tailscale -- ARA has its own dedicated
+    # Tailscale Serve listener on :10000 (see ara_server role), separate
+    # from Pangolin's Integration API on :443.
+    arnos_ara_public_url: "https://kazimierz-akn.tail831c5d.ts.net:10000"
 
   pre_tasks:
     - name: "[Notification] Send Slack notification about playbook start"

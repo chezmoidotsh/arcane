@@ -20,7 +20,7 @@
 #   included, so a container was never actually necessary here.
 #
 # Access:
-#   - ARA web interface: https://<tailscale-hostname>.ts.net
+#   - ARA web interface: https://<tailscale-hostname>.ts.net:10000
 #   - API endpoint: http://127.0.0.1:<ara_port> (default 8000)
 #
 # Data Storage:
