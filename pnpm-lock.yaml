@@ -409,6 +409,9 @@ importers:
 
   projects/kazimierz.akn/src/infrastructure/pulumi:
     dependencies:
+      '@chezmoi.sh/pulumi-cloudflare-dns01-token':
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/components/cloudflare-dns01-token
       '@pulumi/cloudflare':
         specifier: 'catalog:'
         version: 6.17.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
