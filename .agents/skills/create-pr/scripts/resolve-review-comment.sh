@@ -14,6 +14,19 @@ set -euo pipefail
 pr_number=${1:?usage: resolve-review-comment.sh <pr-number> <comment-id> <reply-body>}
 comment_id=${2:?usage: resolve-review-comment.sh <pr-number> <comment-id> <reply-body>}
 reply_body=${3:?usage: resolve-review-comment.sh <pr-number> <comment-id> <reply-body>}
+
+# comment_id gets interpolated into a jq filter below (gh api --jq has no
+# --arg passthrough); reject anything non-numeric here so a bad id fails
+# fast with a clear message instead of a cryptic jq parse error downstream.
+[[ ${pr_number} =~ ^[0-9]+$ ]] || {
+  echo "pr-number must be numeric, got: ${pr_number}" >&2
+  exit 1
+}
+[[ ${comment_id} =~ ^[0-9]+$ ]] || {
+  echo "comment-id must be numeric, got: ${comment_id}" >&2
+  exit 1
+}
+
 repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
 owner=${repo%%/*}
 name=${repo##*/}
@@ -28,12 +41,12 @@ thread_id=$(gh api graphql -f query='
     repository(owner:$owner, name:$repo) {
       pullRequest(number:$pr) {
         reviewThreads(first:100) {
-          nodes { id comments(first:1) { nodes { databaseId } } }
+          nodes { id comments(first:100) { nodes { databaseId } } }
         }
       }
     }
   }' -f owner="${owner}" -f repo="${name}" -F pr="${pr_number}" \
-  --jq ".data.repository.pullRequest.reviewThreads.nodes[] | select(.comments.nodes[0].databaseId == ${comment_id}) | .id")
+  --jq ".data.repository.pullRequest.reviewThreads.nodes[] | select(any(.comments.nodes[]; .databaseId == ${comment_id})) | .id")
 
 if [[ -z ${thread_id} ]]; then
   echo "No review thread found starting at comment ${comment_id} -- reply posted, nothing to resolve" >&2
