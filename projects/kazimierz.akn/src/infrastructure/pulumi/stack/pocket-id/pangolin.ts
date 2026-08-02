@@ -1,6 +1,6 @@
-import * as pocketid from "@pulumi/pocket-id";
+import { oidcApp } from "@chezmoi.sh/pulumi-lib";
 
-import { appIconUrl, pocketIdProvider } from "./index";
+import { familleGroupId, maisonGroupId } from "./index";
 
 // The Pocket-Id side of Pangolin's SSO login only (Pangolin dashboard IDP
 // id 1, "https://pangolin.chezmoi.sh/auth/idp/1/oidc/callback"). Imported
@@ -11,25 +11,12 @@ import { appIconUrl, pocketIdProvider } from "./index";
 // itself, via the `pangolin` provider) isn't managed here: it needs
 // `pangolin_enable_integration_api` turned on (currently false in the
 // Ansible role defaults) and a Pangolin API key that doesn't exist yet --
-// deferred until that's set up. Group restriction (allowedUserGroups) is
-// managed by hand in the Pocket-Id UI: the generated SDK exposes it as
-// read-only, so Pulumi can't own that part of the relationship either.
-export const pangolinOidcClient = new pocketid.oidc.OidcClients(
-	"pangolin",
-	{
-		name: "Pangolin",
-		description: "Tunnel / reverse-proxy d'accès public",
-		logoUrl: appIconUrl("pangolin", "light"),
-		darkLogoUrl: appIconUrl("pangolin", "dark"),
-		launchURL: "https://pangolin.chezmoi.sh/",
-		callbackURLs: ["https://pangolin.chezmoi.sh/auth/idp/1/oidc/callback"],
-		logoutCallbackURLs: [],
-		isPublic: false,
-		isGroupRestricted: true,
-		pkceEnabled: true,
-		requiresPushedAuthorizationRequests: false,
-		requiresReauthentication: false,
-		skipConsent: false,
-	},
-	{ provider: pocketIdProvider, ignoreChanges: ["logoUrl", "darkLogoUrl"] },
-);
+// deferred until that's set up.
+export const pangolinOidcClient = oidcApp("pangolin", {
+	name: "Pangolin",
+	description: "Tunnel / reverse-proxy d'accès public",
+	application: "pangolin",
+	launchURL: "https://pangolin.chezmoi.sh/",
+	callbackURLs: ["https://pangolin.chezmoi.sh/auth/idp/1/oidc/callback"],
+	groupIds: [maisonGroupId, familleGroupId],
+}).client;

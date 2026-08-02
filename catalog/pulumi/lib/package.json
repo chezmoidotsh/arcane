@@ -10,6 +10,7 @@
 		"typecheck:test": "tsc --noEmit -p tsconfig.test.json"
 	},
 	"dependencies": {
+		"@pulumi/pocket-id": "workspace:*",
 		"@pulumi/pulumi": "catalog:"
 	},
 	"devDependencies": {

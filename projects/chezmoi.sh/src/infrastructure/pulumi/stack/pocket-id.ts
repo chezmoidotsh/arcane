@@ -1,29 +1,7 @@
+import { pocketIdProvider } from "@chezmoi.sh/pulumi-lib";
 import * as pocketid from "@pulumi/pocket-id";
-import * as pulumi from "@pulumi/pulumi";
 
-// Pocket-Id is the SSO provider for every cluster/app in this homelab.
-// baseUrl/apiKeyHeader are non-secret connection details, set via Pulumi
-// config (`pulumi config set pocket-id-api:baseUrl/apiKeyHeader`) rather than
-// hardcoded here. The API key itself needs an admin key that Pocket-Id has no
-// way to issue without one already existing -- so it comes from
-// POCKET_ID_API_KEY, set inline for the single `pulumi` invocation that needs
-// it (e.g. from the manually-created key stored in Vault at
-// shared/third-parties/pocket-id) rather than Pulumi config, which would
-// commit it -- encrypted or not -- to the git-tracked stack file.
-const pocketIdConfig = new pulumi.Config("pocket-id-api");
-
-const apiKey = process.env.POCKET_ID_API_KEY;
-if (!apiKey) {
-	throw new Error(
-		"POCKET_ID_API_KEY must be set to manage Pocket-Id resources",
-	);
-}
-
-const provider = new pocketid.Provider("pocket-id", {
-	baseUrl: pocketIdConfig.require("baseUrl"),
-	apiKeyHeader: pocketIdConfig.require("apiKeyHeader"),
-	apiKey: pulumi.secret(apiKey),
-});
+const provider = pocketIdProvider();
 
 // Groups shared across every cluster: Vault, ArgoCD and every app below bind
 // their access policies to these group names via OIDC group claims. Which OIDC
@@ -47,3 +25,11 @@ export const familleGroup = new pocketid.usergroups.UserGroups(
 	{ name: "famille", friendlyName: "Famille" },
 	{ provider },
 );
+
+// Named string outputs for cross-stack consumption (StackReference outputs
+// only see plain exported values cleanly -- exporting the whole resource
+// object works too, but callers would need to know its full shape just to
+// pull `.id` back out).
+export const adminGroupId = adminGroup.id;
+export const maisonGroupId = maisonGroup.id;
+export const familleGroupId = familleGroup.id;
