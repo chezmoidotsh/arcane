@@ -1,0 +1,19 @@
+# ==============================================================================
+# SSH Daemon Hardening
+# ==============================================================================
+# Managed by Ansible - DO NOT EDIT MANUALLY
+#
+# Tailscale SSH (--ssh) is the primary access path and doesn't go through
+# this daemon at all. This hardens the sshd that's still reachable locally
+# and, during initial bootstrap, over the public interface before the
+# `unsecure` toggle is turned off on the OCI side.
+# ==============================================================================
+
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitRootLogin prohibit-password
+X11Forwarding no
+AllowTcpForwarding no
+MaxAuthTries 3
+ClientAliveInterval 300
+ClientAliveCountMax 2

@@ -1,0 +1,21 @@
+# Managed by Ansible - DO NOT EDIT MANUALLY
+# Drop-in override -- extends the ara-server package's own unit
+# (/lib/systemd/system/ara-server.service) rather than replacing it.
+
+[Unit]
+After=tailscaled.service
+
+[Service]
+# `+` runs this specific line as root regardless of the unit's own
+# User=ara -- `tailscale serve` needs root (or a configured Tailscale
+# operator) to write the serve config; running it as ara fails with
+# "Access denied: serve config denied" (verified live in the unit's log).
+#
+# Leading `-` makes systemd ignore this command's exit code: if Tailscale
+# is down or logged out, ARA itself should still come up -- the web
+# interface just won't be reachable over the tailnet until Tailscale
+# recovers. Without it, a failing ExecStartPost fails the whole unit
+# (verified live: "netMap is nil" from a logged-out tailscaled took down
+# ara-server entirely, even though ARA itself would have started fine).
+ExecStartPost=-+/usr/bin/tailscale serve --bg http://127.0.0.1:{{ ara_port }}
+ExecStopPost=-+/usr/bin/tailscale serve reset

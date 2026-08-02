@@ -1,0 +1,14 @@
+{
+	"name": "kazimierz-akn-infra",
+	"version": "0.1.0",
+	"private": true,
+	"main": "index.ts",
+	"dependencies": {
+		"@pulumi/cloudflare": "catalog:",
+		"@pulumi/oci": "catalog:",
+		"@pulumi/pulumi": "catalog:"
+	},
+	"devDependencies": {
+		"typescript": "catalog:"
+	}
+}

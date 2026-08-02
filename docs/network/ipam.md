@@ -19,6 +19,7 @@ topology and a diagram, see [`README.md`](README.md).
   - [Service CIDR — shared across all clusters (ClusterMesh-ready)](#service-cidr--shared-across-all-clusters-clustermesh-ready)
   - [Pod CIDRs — unique per cluster (ClusterMesh prerequisite)](#pod-cidrs--unique-per-cluster-clustermesh-prerequisite)
   - [ClusterMesh prerequisites](#clustermesh-prerequisites)
+- [OCI Cloud — kazimierz.akn](#oci-cloud--kazimierzakn)
 - [Firewall Rules](#firewall-rules)
   - [UDM Pro — Inter-VLAN](#udm-pro--inter-vlan)
   - [Proxmox — Per-LXC](#proxmox--per-lxc-nic-level)
@@ -324,6 +325,25 @@ source node, not routed natively. See the comment in `catalog/talos/manifests/ci
 | 192.168.10.0/25   | VLAN 2 (Home)     |
 | 192.168.10.128/25 | VLAN 3 (Guest)    |
 | 192.168.3.0/25    | VLAN 4 (IoT)      |
+
+---
+
+## OCI Cloud — kazimierz.akn
+
+kazimierz.akn (Oracle Cloud Infrastructure Free Tier) is outside the homelab's L3 topology entirely — it has no route to
+any VLAN, SDN VNet, or Kubernetes CIDR above. It's reachable only via WireGuard (Pangolin/Newt tunnels), never natively
+routed. Its address space is therefore allowed to overlap the `172.16.0.0/12` block reserved for Kubernetes CIDRs above
+— that overlap is safe only as long as OCI stays tunnel-only; revisit if a native routing path (e.g. a future
+ClusterMesh peer) is ever added.
+
+| Resource                      | CIDR            | Purpose                                                     |
+| ----------------------------- | --------------- | ----------------------------------------------------------- |
+| VCN `kazimierz-akn-vcn`       | `172.16.0.0/26` | kazimierz.akn's OCI VCN (dual-stack: IPv4 + Oracle GUA /56) |
+| Subnet `kazimierz-akn-subnet` | `172.16.0.0/28` | Pangolin gateway instance                                   |
+
+Provisioned via Pulumi: `projects/kazimierz.akn/src/infrastructure/pulumi/stack/oci/network.ts`. The VCN's IPv6 /56 is
+Oracle-assigned at creation time; the subnet's /64 is retrieved from the live VCN once provisioned (not knowable ahead
+of time).
 
 ---
 

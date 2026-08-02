@@ -11,16 +11,20 @@
 # -------------------------------------------------------------------------
 # System Setup Configuration
 # -------------------------------------------------------------------------
-# Tailscale authentication key (ephemeral, one-time use)
+# Tailscale OAuth client secret (tskey-client-...), not a plain one-time
+# auth key -- doesn't expire on its own, mints a fresh short-lived auth key
+# via the API on every playbook run instead. Needs the auth_keys scope and
+# must be limited to tag:svc-pangolin in the Tailscale admin console.
 tailscale_auth_key: !vault |
   $ANSIBLE_VAULT;1.1;AES256
-  36366335616364373432646531633861613233366432313037666465376662363731373034336165
-  3335303232393439393837343263383530383939313037320a393035333462383739633634633964
-  32363731306233346431393434663333306664343234353836383533623636616366313438313739
-  6363343666626161310a326439626332613663656238633034353164333461353230623133643835
-  65336632313633336461393139656331656561616137393635383365316562626330316333376637
-  63336438613761366563343235643833396534393466323137333536616438653134396162313830
-  316461393563653164613139366539663334
+  62626531666666336131613437643864633364323137363165616562373732366561656664313765
+  3632663531386630643030306464636130353361323439650a343563666366613936343833323537
+  63373538323739303335303363333436656134363865626639613735633165356130386166646639
+  6263623864623862320a393238373135363732623161643261336131366138353131373739303037
+  65363139373635636432373335313565313265326166346539666635363736373635356266373864
+  35336665383535663830653964613133396165613961333734646132363634333566663735323238
+  36636166366335306437333339343538353230373764303631633930656666313231386664356364
+  66626137636538386436
 
 # -------------------------------------------------------------------------
 # Tailscale Configuration
@@ -30,7 +34,11 @@ tailscale_hostname: kazimierz-akn
 # -------------------------------------------------------------------------
 # UFW Firewall Configuration
 # -------------------------------------------------------------------------
-# Note: SSH port 22 enabled for initial setup - Tailscale SSH recommended
+# SSH exposure is controlled at the OCI network security group level (the
+# `unsecure` Pulumi config toggle in stack/oci/network.ts), not here -- UFW
+# just stays out of the way. sshd itself is still hardened (see
+# 99-hardening.conf.j2) and Tailscale SSH (`--ssh` below) works regardless
+# of what this list allows.
 ufw_allowed_ports:
   - { port: 22, proto: tcp, comment: "SSH" }
   - { port: 80, proto: tcp, comment: "HTTP" }
@@ -96,15 +104,6 @@ pangolin_smtp_from: Pangolin <no-reply@chezmoi.sh>
 pangolin_cors_allowed_origins:
   - https://pangolin.chezmoi.sh
   - https://ai.chezmoi.sh
-
-# -------------------------------------------------------------------------
-# CrowdSec Configuration
-# -------------------------------------------------------------------------
-crowdsec_appsec_domains:
-  jellyfin:
-    - streaming.chezmoi.sh
-  immich:
-    - photos.chezmoi.sh
 
 # -------------------------------------------------------------------------
 # Error Pages Configuration

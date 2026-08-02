@@ -1,0 +1,13 @@
+name: kazimierz-akn-infra
+description: >-
+  OCI Free Tier infrastructure for kazimierz.akn: VCN + NSG, ARM compute instance,
+  persistent block volume, and Cloudflare DNS records.
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+
+backend:
+  # Garage S3 backend. See docs/procedures/infrastructure/
+  # INF-20260705-00.pulumi-state-and-import.md.
+  url: "s3://pulumi-states?endpoint=s3.chezmoi.sh&region=fr-par-1"

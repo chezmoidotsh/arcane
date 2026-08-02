@@ -1,0 +1,13 @@
+# Managed by Ansible - DO NOT EDIT MANUALLY
+# ARA API server settings -- https://ara.readthedocs.io/en/latest/api-configuration.html
+
+BASE_DIR: /opt/ara
+ALLOWED_HOSTS:
+  - "127.0.0.1"
+  - ".ts.net"
+DATABASE_ENGINE: django.db.backends.sqlite3
+DATABASE_NAME: /opt/ara/ansible.sqlite
+LOG_LEVEL: INFO
+# Persisted at /opt/ara/.secret_key so it survives restarts -- otherwise
+# ARA generates a new random one on every start, invalidating sessions.
+SECRET_KEY: "{{ ara_secret_key }}"

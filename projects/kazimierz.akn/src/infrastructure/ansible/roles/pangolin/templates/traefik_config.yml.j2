@@ -56,9 +56,6 @@ experimental:
     badger:
       moduleName: "github.com/fosrl/badger"
       version: "v1.2.0"
-    crowdsec:
-      moduleName: "github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
-      version: "v1.4.4"
 
 log:
   level: "{{ pangolin_log_level | upper }}"
@@ -84,7 +81,6 @@ entryPoints:
     http:
       middlewares:
         - error-pages@file
-        - crowdsec@file
       tls:
         certResolver: "letsencrypt"
 

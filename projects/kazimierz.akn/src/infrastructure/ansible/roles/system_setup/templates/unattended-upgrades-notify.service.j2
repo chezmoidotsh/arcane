@@ -1,0 +1,7 @@
+[Unit]
+Description=Notify Slack about unattended-upgrades activity
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/notify-unattended-upgrades-slack

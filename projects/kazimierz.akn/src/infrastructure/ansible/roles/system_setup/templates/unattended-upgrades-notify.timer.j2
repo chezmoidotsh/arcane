@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the unattended-upgrades Slack notifier daily
+
+[Timer]
+# Runs after Unattended-Upgrade::Automatic-Reboot-Time ({{ unattended_upgrades_reboot_time }})
+# so a reboot, if one happened, has already completed.
+OnCalendar=*-*-* {{ unattended_upgrades_notify_time }}:00
+Persistent=true
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

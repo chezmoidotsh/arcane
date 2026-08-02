@@ -10,26 +10,34 @@
 #   - Docker Engine with Docker Compose v2 plugin
 #   - Tailscale VPN mesh networking with SSH enabled
 #   - UFW firewall with secure default-deny policy
-#   - Unattended security upgrades with automatic reboot
+#   - sshd hardening (key-only auth, no forwarding) + fail2ban
+#   - Kernel network hardening (sysctl)
+#   - Unattended security upgrades with automatic reboot, plus a Slack
+#     notification when packages actually get installed
 #
 # Security Considerations:
 #   - Direct DNS configuration with immutable /etc/resolv.conf
 #   - systemd-resolved disabled to prevent DNS interference
-#   - SSH port 22 enabled initially (switch to Tailscale SSH after bootstrap)
+#   - SSH exposure to the internet is controlled at the OCI network security
+#     group level (the `unsecure` Pulumi config toggle), not here -- UFW
+#     allows port 22 so SSH actually works whenever the NSG lets traffic
+#     through. Tailscale SSH is available regardless of either.
 #   - UFW default-deny incoming, allow outgoing
+#   - sshd: password auth off, root only via key, no TCP forwarding
+#   - fail2ban on sshd, local bans only (no shared threat-intel)
 #   - Docker daemon logs limited to 3x10MB files
 #   - Automatic security updates with 03:00 reboot window
 #
 # DNS Configuration:
 #   - Primary DNS: Quad9 (9.9.9.9, 149.112.112.112)
 #   - Fallback DNS: OpenDNS, Cloudflare, Google DNS
-#   - Fixes Hetzner DNS blocking api.tailscale.com with invalid responses
+#   - Reliable public resolvers, independent of the cloud provider's own DNS
 #   - /etc/resolv.conf set immutable (chattr +i) to prevent modifications
 #
 # Dependencies:
-#   - geerlingguy.docker role (v7.6.1+)
-#   - artis3n.tailscale.machine role (v4.2.1+)
-#   - community.general collection (v8.0.0+)
+#   - geerlingguy.docker role
+#   - artis3n.tailscale.machine role
+#   - community.general collection
 #
 # Tags:
 #   - system: All system configuration tasks
@@ -37,6 +45,9 @@
 #   - docker: Docker installation and configuration
 #   - tailscale: Tailscale VPN setup
 #   - ufw: Firewall configuration
+#   - ssh: sshd hardening
+#   - fail2ban: fail2ban configuration
+#   - sysctl: Kernel network hardening
 #   - networking: Network-related tasks
 #   - security: Security-related tasks
 # ==============================================================================
@@ -74,10 +85,9 @@
 # ==========================================================================
 # DNS Configuration (Direct /etc/resolv.conf)
 # ==========================================================================
-# Fix for Hetzner DNS blocking api.tailscale.com with invalid responses
-# (AAAA -> ::, A -> 0.0.0.0). Use Quad9 DNS (primary) with OpenDNS,
-# Cloudflare, and Google DNS as fallbacks to ensure Tailscale
-# authentication and API connectivity function properly.
+# Use Quad9 DNS (primary) with OpenDNS, Cloudflare, and Google DNS as
+# fallbacks -- decouples Tailscale authentication and API connectivity from
+# whatever DNS the cloud provider hands out by default.
 #
 # NOTE: systemd-resolved is unreliable and causes issues. We disable it
 # and configure DNS directly via /etc/resolv.conf with immutable flag.
@@ -164,13 +174,25 @@
 # ==========================================================================
 # Tailscale VPN Installation
 # ==========================================================================
+# --accept-dns=false: Tailscale otherwise tries to rewrite /etc/resolv.conf
+# for MagicDNS, but that file is made immutable above (chattr +i) so Quad9
+# stays authoritative -- without this flag Tailscale fails to write it on
+# every startup and reports it as a permanent health warning (verified live:
+# "remove of /etc/resolv.conf failed: operation not permitted").
+# ephemeral: false -- kazimierz is a permanent gateway, not a CI runner.
+# Ephemeral nodes get *deleted* by Tailscale (not just marked offline) the
+# moment they disconnect, forcing a full fresh registration (new authURL,
+# manual approval) on the next reconnect instead of a normal resume --
+# verified live: this is almost certainly what turned a routine `tailscale
+# up` re-run (for the --accept-dns fix) into "machineAuthorized=false,
+# authURL=true" and a login that had to be approved by hand.
 - name: Ensure Tailscale VPN is installed and configured
   ansible.builtin.include_role:
     name: artis3n.tailscale.machine
   vars:
-    tailscale_args: --ssh --hostname {{ tailscale_hostname }}
+    tailscale_args: --ssh --accept-dns=false --hostname {{ tailscale_hostname }}
     tailscale_authkey: "{{ tailscale_auth_key }}"
-    tailscale_oauth_ephemeral: true
+    tailscale_oauth_ephemeral: false
     tailscale_oauth_preauthorized: true
     tailscale_tags:
       - svc-pangolin
@@ -221,6 +243,73 @@
     - security
 
 # ==========================================================================
+# SSH Daemon Hardening
+# ==========================================================================
+# Tailscale SSH bypasses this daemon entirely, but sshd is still reachable
+# locally and, during initial bootstrap, over the public interface -- so it
+# gets hardened too, not just relied-on-by-obscurity.
+- name: Ensure sshd hardening drop-in is deployed
+  ansible.builtin.template:
+    src: 99-hardening.conf.j2
+    dest: /etc/ssh/sshd_config.d/99-hardening.conf
+    mode: "0644"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Restart sshd
+  tags:
+    - system
+    - ssh
+    - security
+
+# ==========================================================================
+# fail2ban (SSH brute-force protection)
+# ==========================================================================
+# Local-only bans, deliberately not a CrowdSec-style shared threat-intel
+# bouncer -- see jail.local.j2 for why.
+- name: Ensure fail2ban is installed
+  ansible.builtin.apt:
+    name: fail2ban
+    state: present
+  tags:
+    - system
+    - fail2ban
+    - security
+
+- name: Configure fail2ban jails
+  ansible.builtin.template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+    mode: "0644"
+  notify: Restart fail2ban
+  tags:
+    - system
+    - fail2ban
+    - security
+
+- name: Ensure fail2ban systemd service is enabled and started
+  ansible.builtin.systemd:
+    name: fail2ban
+    enabled: true
+    state: started
+  tags:
+    - system
+    - fail2ban
+    - security
+
+# ==========================================================================
+# Kernel Network Hardening (sysctl)
+# ==========================================================================
+- name: Ensure sysctl hardening drop-in is deployed
+  ansible.builtin.template:
+    src: 99-sysctl-hardening.conf.j2
+    dest: /etc/sysctl.d/99-hardening.conf
+    mode: "0644"
+  notify: Apply sysctl settings
+  tags:
+    - system
+    - sysctl
+    - security
+
+# ==========================================================================
 # Unattended Upgrades Configuration
 # ==========================================================================
 - name: Ensure unattended-upgrades and apt-listchanges packages are installed
@@ -259,6 +348,54 @@
     name: unattended-upgrades
     enabled: true
     state: started
+  tags:
+    - system
+    - unattended-upgrades
+    - security
+
+# ==========================================================================
+# Unattended Upgrades Slack Notification
+# ==========================================================================
+# Independent daily timer rather than hooking unattended-upgrades' own
+# systemd unit directly -- decouples from apt/systemd internals that vary
+# across Ubuntu versions. Runs 15 min after the reboot window, checks
+# today's log for actual package changes, no-ops otherwise.
+- name: Deploy unattended-upgrades Slack notifier config
+  ansible.builtin.template:
+    src: unattended-upgrades-notify.conf.j2
+    dest: /etc/unattended-upgrades-notify.conf
+    mode: "0600"
+    owner: root
+    group: root
+  no_log: true # SECURITY: contains the Slack bot token
+  tags:
+    - system
+    - unattended-upgrades
+    - security
+
+- name: Deploy unattended-upgrades Slack notifier script
+  ansible.builtin.template:
+    src: notify-unattended-upgrades-slack.sh.j2
+    dest: /usr/local/bin/notify-unattended-upgrades-slack
+    mode: "0755"
+    owner: root
+    group: root
+  tags:
+    - system
+    - unattended-upgrades
+    - security
+
+- name: Deploy unattended-upgrades Slack notifier systemd unit and timer
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop:
+    - unattended-upgrades-notify.service
+    - unattended-upgrades-notify.timer
+  notify:
+    - Reload systemd daemon configuration
+    - Enable and start unattended-upgrades-notify timer
   tags:
     - system
     - unattended-upgrades
