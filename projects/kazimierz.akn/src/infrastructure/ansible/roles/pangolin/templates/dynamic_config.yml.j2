@@ -14,6 +14,13 @@ http:
           - "400-599"
         service: error-pages-service
         query: "/{status}.html"
+    # Forces the themed 404 template regardless of the requested path --
+    # used by the catch-all router below, which points directly at
+    # error-pages-service rather than through the `errors` middleware (there
+    # is no real backend to produce a 400-599 status for it to intercept).
+    force-404-page:
+      replacePath:
+        path: "/404.html"
 
   routers:
     # HTTP to HTTPS redirect router
@@ -57,6 +64,21 @@ http:
         - error-pages
       tls:
         certResolver: letsencrypt
+
+    # Catch-all router for hosts that don't match any of the routers above
+    # (e.g. a made-up toto.chezmoi.sh) -- without it, Traefik never enters
+    # any router's middleware chain for an unmatched Host and falls back to
+    # its own bare "404 page not found" instead of the themed error page.
+    # Lowest priority so it never shadows the domain-specific routers.
+    catchall-router:
+      rule: "HostRegexp(`.+`)"
+      service: error-pages-service
+      entryPoints:
+        - websecure
+      priority: 1
+      middlewares:
+        - force-404-page
+      tls: {}
 
   services:
     next-service:
