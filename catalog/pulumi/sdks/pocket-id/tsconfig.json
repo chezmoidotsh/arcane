@@ -1,0 +1,42 @@
+{
+    "compilerOptions": {
+        // Output
+        "outDir": "bin",
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "stripInternal": true,
+        // Environment
+        "target": "ES2022",
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
+        "moduleDetection": "force",
+        "types": ["node"],
+        // Type Checking
+        "strict": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitReturns": true,
+        "skipLibCheck": true
+    },
+    "files": [
+        "apikeys/apiKeys.ts",
+        "apikeys/index.ts",
+        "apis.ts",
+        "config/index.ts",
+        "config/vars.ts",
+        "index.ts",
+        "oidc/index.ts",
+        "oidc/oidcClients.ts",
+        "provider.ts",
+        "scimServiceProvider.ts",
+        "types/index.ts",
+        "types/input.ts",
+        "types/output.ts",
+        "usergroups/index.ts",
+        "usergroups/userGroups.ts",
+        "users/index.ts",
+        "users/signupTokens.ts",
+        "users/users.ts",
+        "utilities.ts"
+    ]
+}

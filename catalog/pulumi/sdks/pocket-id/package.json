@@ -1,0 +1,26 @@
+{
+    "name": "@pulumi/pocket-id",
+    "version": "1.0.0",
+    "description": "A Pulumi provider generated from the pocket-id OpenAPI spec.",
+    "repository": "https://pocket-id.org/swagger.yaml",
+    "main": "bin/index.js",
+    "scripts": {
+        "build": "tsc",
+        "postinstall": "node ./scripts/postinstall.js"
+    },
+    "dependencies": {
+        "@pulumi/pulumi": "^3.238.0",
+        "@types/node": "^20",
+        "typescript": "^4.7.0"
+    },
+    "pulumi": {
+        "resource": true,
+        "name": "openapi-provider",
+        "version": "0.8.3",
+        "parameterization": {
+            "name": "pocket-id-api",
+            "version": "1.0.0",
+            "value": "eyJzcGVjIjoiaHR0cHM6Ly9wb2NrZXQtaWQub3JnL3N3YWdnZXIueWFtbCJ9"
+        }
+    }
+}
