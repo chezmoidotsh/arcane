@@ -35,4 +35,6 @@ onlyBuiltDependencies:
   - "@pulumi/truenas"
   - "@pulumi/proxmox-backup-server"
   - "@pulumi/proxmox"
+  - "@pulumi/pocket-id"
+  - "@pulumi/pangolin"
   - protobufjs
