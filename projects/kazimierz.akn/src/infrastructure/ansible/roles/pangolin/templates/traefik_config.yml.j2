@@ -91,16 +91,6 @@ entryPoints:
         - error-pages@file
       tls:
         certResolver: "letsencrypt"
-{% if pangolin_acme_wildcard_domain %}
-        # Eagerly requests one wildcard cert at startup instead of Traefik
-        # trying to mint a cert per literal SNI -- also becomes this
-        # entrypoint's default cert for any unmatched Host (see
-        # dynamic_config.yml.j2's catchall-router).
-        domains:
-          - main: "{{ pangolin_acme_wildcard_domain }}"
-            sans:
-              - "*.{{ pangolin_acme_wildcard_domain }}"
-{% endif %}
 
 serversTransport:
   insecureSkipVerify: true

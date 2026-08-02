@@ -78,7 +78,20 @@ http:
       priority: 1
       middlewares:
         - force-404-page
-      tls: {}
+      tls:
+{% if pangolin_acme_wildcard_domain %}
+        certResolver: letsencrypt
+        # tls.domains belongs on a router, not the entrypoint -- Traefik
+        # silently ignores it if placed at entryPoints.websecure.http.tls,
+        # with no error or log line at all (verified live). This is what
+        # actually triggers the wildcard cert request; without a router
+        # carrying it, no request is ever made regardless of the
+        # certificatesResolvers.letsencrypt.acme.dnsChallenge config.
+        domains:
+          - main: "{{ pangolin_acme_wildcard_domain }}"
+            sans:
+              - "*.{{ pangolin_acme_wildcard_domain }}"
+{% endif %}
 
   services:
     next-service:
