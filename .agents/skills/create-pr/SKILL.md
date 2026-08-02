@@ -6,7 +6,7 @@ description: >
   symbol-based `type[scope]: Subject` format stays on commits — labels carry type and scope on the PR), branch naming
   conventions, structured PR body, and Assisted-by transparency trailer. Arms a background monitor after creation that
   watches for merges and new comments/reviews so follow-up feedback gets picked up automatically.
-compatibility: Requires git and GitHub CLI (gh)
+compatibility: Requires git, GitHub CLI (gh), and jq
 ---
 
 # Arcane Pull Request Skill
@@ -117,8 +117,8 @@ Monitor({
 });
 ```
 
-The script (`scripts/monitor-pr.sh`) polls every 60s and emits one line per event, then exits once the PR leaves the
-`OPEN` state:
+The script (`.agents/skills/create-pr/scripts/monitor-pr.sh`) polls every 60s and emits one line per event, then exits
+once the PR leaves the `OPEN` state:
 
 - `[comment] <user>: <body>` — a top-level PR conversation comment
 - `[review comment] <user> on <path>:<line>: <body>` — an inline diff comment
@@ -434,7 +434,8 @@ gh pr create \
 - [ ] File paths in Changes Made use `[`path`](path)` link syntax
 - [ ] Attribution footer included
 - [ ] Issue referenced (`Closes #number` or `Addresses #number (Phase N)`)
-- [ ] Post-creation monitor launched (`scripts/monitor-pr.sh`, `Monitor` tool, `persistent: true`)
+- [ ] Post-creation monitor launched (`.agents/skills/create-pr/scripts/monitor-pr.sh`, `Monitor` tool,
+      `persistent: true`)
 
 ## References
 

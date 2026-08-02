@@ -15,6 +15,11 @@ repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
 since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 while true; do
+  # Captured before this iteration's API calls, not after -- an event posted
+  # mid-iteration is still >= poll_start, so the next iteration's `since`
+  # filter is guaranteed to include it instead of skipping it.
+  poll_start=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
   state=$(gh pr view "${pr_number}" --repo "${repo}" --json state --jq .state)
   if [[ ${state} != "OPEN" ]]; then
     echo "[state] PR #${pr_number} is now ${state}"
@@ -35,6 +40,6 @@ while true; do
   gh api "repos/${repo}/pulls/${pr_number}/reviews" | jq -r --arg since "${since}" \
     '.[] | select(.submitted_at > $since and (.body != "" or .state != "COMMENTED")) | "[review \(.state)] \(.user.login): \(.body | gsub("\n";" "))"' || true
 
-  since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  since=${poll_start}
   sleep "${poll_seconds}"
 done
