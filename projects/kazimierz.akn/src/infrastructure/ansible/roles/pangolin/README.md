@@ -40,6 +40,32 @@ pangolin_public_ip: "" # e.g. "{{ ansible_default_ipv4.address }}"
 `pangolin_bind_ip` should be set to the host's public IP whenever Tailscale (or anything else) also wants port 443 --
 otherwise Traefik and that other listener fight over the same port on all interfaces.
 
+### Wildcard certificate (DNS-01)
+
+By default Traefik requests one Let's Encrypt certificate per domain in `pangolin_domains` via the HTTP-01 challenge --
+any hostname not in that list (a typo, a made-up subdomain, a resource not yet added to Pangolin) gets Traefik's own
+untrusted default certificate instead of a real one.
+
+Set `pangolin_acme_wildcard_domain` (e.g. `"chezmoi.sh"`) and `pangolin_cloudflare_dns_api_token` to switch to a DNS-01
+challenge and request a single wildcard certificate (`chezmoi.sh` + `*.chezmoi.sh`) that covers every subdomain, whether
+or not it's configured as a Pangolin resource yet. This also sets `prefer_wildcard_cert: true` on every
+`pangolin_domains` entry in `config.yml`, per
+[Pangolin's own wildcard domains docs](https://docs.pangolin.net/self-host/advanced/wild-card-domains).
+
+```yaml
+pangolin_acme_wildcard_domain: "chezmoi.sh"
+pangolin_cloudflare_dns_api_token: "" # ansible-vault encrypted string, Zone:Read + DNS:Edit scoped to the zone
+```
+
+Create the Cloudflare API token with `Zone:Read` + `DNS:Edit` permissions scoped to the wildcard domain's zone, then
+encrypt it before adding it to `host_vars`:
+
+```bash
+ansible-vault encrypt_string 'the-actual-token' --name 'pangolin_cloudflare_dns_api_token'
+```
+
+Leave both variables unset (the default) to keep the current HTTP-01, per-domain behavior.
+
 ### Integration API (tailnet-only remote control)
 
 Set `pangolin_enable_integration_api: true` to turn on Pangolin's
@@ -85,11 +111,13 @@ templates are idempotent and the role stops/restarts the stack automatically whe
 
 ### Troubleshooting
 
-| Symptom                           | Check                                                                                                                  |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| No TLS certificate                | Ports 80/443 reachable from the internet, DNS actually resolves to this host, `traefik` logs, `acme.json` is mode 0600 |
-| Pangolin container unhealthy      | `pangolin_server_secret` length, `config.yml` is valid YAML, `pangolin` container logs                                 |
-| Gerbil / Newt tunnels not working | WireGuard ports open in UFW/NSG, `gerbil` container logs, `config/key` was generated                                   |
+| Symptom                                                 | Check                                                                                                                  |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| No TLS certificate                                      | Ports 80/443 reachable from the internet, DNS actually resolves to this host, `traefik` logs, `acme.json` is mode 0600 |
+| Untrusted cert on a subdomain not in `pangolin_domains` | Expected with HTTP-01 (default) -- enable the wildcard DNS-01 challenge above, or add the domain to `pangolin_domains` |
+| DNS-01 challenge failing                                | `pangolin_cloudflare_dns_api_token` has Zone:Read + DNS:Edit on the right zone, `traefik` logs for the lego/ACME error |
+| Pangolin container unhealthy                            | `pangolin_server_secret` length, `config.yml` is valid YAML, `pangolin` container logs                                 |
+| Gerbil / Newt tunnels not working                       | WireGuard ports open in UFW/NSG, `gerbil` container logs, `config/key` was generated                                   |
 
 ## Tags
 
@@ -110,3 +138,5 @@ templates are idempotent and the role stops/restarts the stack automatically whe
 - [Pangolin](https://github.com/fosrl/pangolin) / [Gerbil](https://github.com/fosrl/gerbil) /
   [Newt](https://github.com/fosrl/newt)
 - [Traefik documentation](https://doc.traefik.io/traefik/)
+- [Pangolin wildcard domains](https://docs.pangolin.net/self-host/advanced/wild-card-domains)
+- [Traefik Cloudflare DNS-01 provider (lego)](https://go-acme.github.io/lego/dns/cloudflare/)

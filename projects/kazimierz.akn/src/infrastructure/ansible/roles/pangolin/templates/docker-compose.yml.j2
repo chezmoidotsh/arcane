@@ -72,6 +72,13 @@ services:
     container_name: {{ pangolin_traefik_container_name }}
     restart: {{ pangolin_docker_restart_policy }}
     network_mode: service:gerbil # Ports appear on the gerbil service
+{% if pangolin_acme_wildcard_domain %}
+    environment:
+      # DNS-01 challenge credentials for the wildcard cert (see
+      # traefik_config.yml.j2) -- Cloudflare API token scoped to
+      # Zone:Read + DNS:Edit for pangolin_acme_wildcard_domain's zone.
+      CF_DNS_API_TOKEN: "{{ pangolin_cloudflare_dns_api_token }}"
+{% endif %}
     depends_on:
       pangolin:
         condition: service_healthy

@@ -64,8 +64,16 @@ log:
 certificatesResolvers:
   letsencrypt:
     acme:
+{% if pangolin_acme_wildcard_domain %}
+      # DNS-01 -- required for wildcard certs (Let's Encrypt only issues
+      # wildcards through DNS-01). Provider credentials are passed to the
+      # traefik container as CF_DNS_API_TOKEN (see docker-compose.yml.j2).
+      dnsChallenge:
+        provider: cloudflare
+{% else %}
       httpChallenge:
         entryPoint: web
+{% endif %}
       email: {{ pangolin_acme_email }}
       storage: "/letsencrypt/acme.json"
       caServer: "{{ pangolin_acme_ca_server }}"

@@ -4,6 +4,7 @@
 	"private": true,
 	"main": "index.ts",
 	"dependencies": {
+		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "workspace:*",
 		"@pulumi/cloudflare": "catalog:",
 		"@pulumi/oci": "catalog:",
 		"@pulumi/pulumi": "catalog:"
