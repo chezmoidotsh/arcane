@@ -17,10 +17,18 @@ After=tailscaled.service
 # recovers. Without it, a failing ExecStartPost fails the whole unit
 # (verified live: "netMap is nil" from a logged-out tailscaled took down
 # ara-server entirely, even though ARA itself would have started fine).
-# Served at /ara-report rather than the root path, since the Pangolin
-# Integration API (pangolin role) shares this same :443 serve listener at /.
-# ExecStopPost targets only this path -- a bare `tailscale serve reset` would
-# wipe the whole tailnet serve config, including Pangolin's mapping, on
-# every ara-server restart.
-ExecStartPost=-+/usr/bin/tailscale serve --bg --https=443 --set-path=/ara-report http://127.0.0.1:{{ ara_port }}
-ExecStopPost=-+/usr/bin/tailscale serve --https=443 --set-path=/ara-report off
+# Served on :10000 (Tailscale Serve's other valid HTTPS port, alongside
+# 443 and 8443) rather than sharing :443's root path with the Pangolin
+# Integration API (pangolin role). ARA is a Django app with no subpath
+# awareness configured (no FORCE_SCRIPT_NAME) -- its static assets and
+# internal links are absolute-root, so mounting it at a path under :443
+# via --set-path would break navigation/assets once Tailscale strips the
+# prefix on the way in but doesn't rewrite those absolute paths back out
+# (see https://github.com/tailscale/tailscale/issues/12413 for the same
+# failure mode on another app). A dedicated port keeps ARA at its own
+# root, sidestepping that entirely.
+# ExecStopPost targets only :10000 -- a bare `tailscale serve reset` would
+# wipe the whole tailnet serve config, including Pangolin's mapping on
+# :443, on every ara-server restart.
+ExecStartPost=-+/usr/bin/tailscale serve --bg --https=10000 http://127.0.0.1:{{ ara_port }}
+ExecStopPost=-+/usr/bin/tailscale serve --https=10000 off

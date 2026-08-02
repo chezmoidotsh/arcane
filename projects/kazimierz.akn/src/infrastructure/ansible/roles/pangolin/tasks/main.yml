@@ -264,13 +264,12 @@
 # The Integration API is bound to 127.0.0.1 only (docker-compose.yml.j2) and
 # re-exposed on the tailnet via `tailscale serve` at the root path (/) on
 # :443. Tailscale Serve only accepts 443, 8443 or 10000 as HTTPS serve ports
-# (pangolin_integration_port, 3003, is just the local target port) so this
-# and the ara_server role's /ara-report mapping are path-multiplexed on the
-# same :443 listener rather than each claiming their own port. It is never
-# routed through the public Traefik domain. Idempotent, so safe to run on
-# every play; if the flag is later turned off, the stale serve mapping is
-# left in place and must be removed manually with
-# `tailscale serve --https=443 off`.
+# (pangolin_integration_port, 3003, is just the local target port) -- the
+# ara_server role uses its own dedicated listener on :10000, so the two
+# never share a port or a path. It is never routed through the public
+# Traefik domain. Idempotent, so safe to run on every play; if the flag is
+# later turned off, the stale serve mapping is left in place and must be
+# removed manually with `tailscale serve --https=443 off`.
 - name: Expose Integration API on the tailnet via Tailscale Serve
   ansible.builtin.command:
     cmd: >-
