@@ -60,9 +60,10 @@ pangolin_log_level: "info"
 
 # Integration API (programmatic remote control, separate from the /api/v1
 # the dashboard itself already exposes publicly). Disabled by default; when
-# enabled it is bound to 127.0.0.1 only and re-exposed on the tailnet via
-# `tailscale serve` (see tasks/main.yml) -- never routed through the public
-# Traefik domain.
+# enabled it is bound to 127.0.0.1 only and re-exposed on the tailnet at the
+# root path (/) via `tailscale serve` (see tasks/main.yml) -- never routed
+# through the public Traefik domain. This is just the local target port;
+# the tailnet serve port is always 443 (see tasks/main.yml).
 pangolin_enable_integration_api: false
 pangolin_integration_port: 3003
 

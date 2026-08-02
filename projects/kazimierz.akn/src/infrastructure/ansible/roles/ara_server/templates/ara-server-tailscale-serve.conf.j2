@@ -17,5 +17,10 @@ After=tailscaled.service
 # recovers. Without it, a failing ExecStartPost fails the whole unit
 # (verified live: "netMap is nil" from a logged-out tailscaled took down
 # ara-server entirely, even though ARA itself would have started fine).
-ExecStartPost=-+/usr/bin/tailscale serve --bg http://127.0.0.1:{{ ara_port }}
-ExecStopPost=-+/usr/bin/tailscale serve reset
+# Served at /ara-report rather than the root path, since the Pangolin
+# Integration API (pangolin role) shares this same :443 serve listener at /.
+# ExecStopPost targets only this path -- a bare `tailscale serve reset` would
+# wipe the whole tailnet serve config, including Pangolin's mapping, on
+# every ara-server restart.
+ExecStartPost=-+/usr/bin/tailscale serve --bg --https=443 --set-path=/ara-report http://127.0.0.1:{{ ara_port }}
+ExecStopPost=-+/usr/bin/tailscale serve --https=443 --set-path=/ara-report off
