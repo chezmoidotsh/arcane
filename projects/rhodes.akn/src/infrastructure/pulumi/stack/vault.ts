@@ -2,6 +2,8 @@ import { ClusterVaultComponent } from "@chezmoi.sh/pulumi-cluster-vault";
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
+import { vaultOidcClient } from "./pocket-id";
+
 const config = new pulumi.Config();
 
 // Everything that configures Vault/OpenBao itself for this cluster: the cluster's own
@@ -65,25 +67,39 @@ if (!config.getBoolean("recovery")) {
 	// instead of provisioning separate Vault-local users or tokens. The
 	// pocket-id-default/pocket-id-admin roles further down bind this backend to
 	// the policies below based on OIDC group claims.
-	const pocketIdAuthBackend = new vault.jwt.AuthBackend("pocket-id", {
-		path: "pocket-id",
-		type: "oidc",
-		description: "pocket-id sso auth backend for UI/CLI user authentication",
-		oidcDiscoveryUrl: "https://auth.chezmoi.sh",
-		boundIssuer: "https://auth.chezmoi.sh",
-		defaultRole: "default",
-		// Copied verbatim from amiya.akn: valid as long as Pocket-Id is restored
-		// from amiya's data (same OIDC client). Re-verify against the actual
-		// Pocket-Id instance once it's live on rhodes.akn (Phase 6 of #370).
-		oidcClientId: "762ac35a-f6ea-4831-ab61-a7e923e4b5cf",
-		oidcClientSecret: config.requireSecret("pocket_id_oidc_client_secret"),
-		tune: {
-			defaultLeaseTtl: "6h",
-			maxLeaseTtl: "6h",
-			listingVisibility: "unauth",
-			tokenType: "default-service",
+	// Client ID comes from the Pocket-Id-managed resource in pocket-id.ts rather
+	// than being hardcoded, so there's a single source of truth for this
+	// client's identity. The secret can't come from there too -- Pocket-Id
+	// never returns a client's secret after creation -- so it comes from
+	// VAULT_OIDC_CLIENT_SECRET, set inline for the one apply that needs it,
+	// never from Pulumi config, which would commit it -- encrypted or not --
+	// to the git-tracked stack file. Not required on every run: this backend
+	// already exists, so `ignoreChanges` below means the env var only matters
+	// again if the secret is ever deliberately rotated.
+	const vaultOidcClientSecret = process.env.VAULT_OIDC_CLIENT_SECRET;
+
+	const pocketIdAuthBackend = new vault.jwt.AuthBackend(
+		"pocket-id",
+		{
+			path: "pocket-id",
+			type: "oidc",
+			description: "pocket-id sso auth backend for UI/CLI user authentication",
+			oidcDiscoveryUrl: "https://auth.chezmoi.sh",
+			boundIssuer: "https://auth.chezmoi.sh",
+			defaultRole: "default",
+			oidcClientId: vaultOidcClient.id,
+			oidcClientSecret: vaultOidcClientSecret
+				? pulumi.secret(vaultOidcClientSecret)
+				: undefined,
+			tune: {
+				defaultLeaseTtl: "6h",
+				maxLeaseTtl: "6h",
+				listingVisibility: "unauth",
+				tokenType: "default-service",
+			},
 		},
-	});
+		{ ignoreChanges: ["oidcClientSecret"] },
+	);
 
 	// ---------------------------------------------------------------------------
 	// Personal namespace access policies
