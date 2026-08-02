@@ -71,12 +71,14 @@
       - pangolin_acme_email != "admin@example.com"
       - pangolin_domains is defined
       - pangolin_domains | length > 0
+      - pangolin_acme_wildcard_domain | length == 0 or pangolin_cloudflare_dns_api_token | length > 0
     fail_msg: |
       Required variables are missing or invalid:
       - pangolin_dashboard_url must be set to your actual domain URL
       - pangolin_server_secret must be at least 8 characters (32+ recommended)
       - pangolin_acme_email must be set to your actual email address
       - pangolin_domains must contain at least one domain configuration
+      - pangolin_cloudflare_dns_api_token is required when pangolin_acme_wildcard_domain is set
     quiet: true # Suppress detailed assertion output for cleaner logs
 
 # ==========================================================================

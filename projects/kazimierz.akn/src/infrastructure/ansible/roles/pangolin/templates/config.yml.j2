@@ -14,6 +14,9 @@ domains:
   domain{{ loop.index }}:
     base_domain: "{{ domain }}"
     cert_resolver: "letsencrypt"
+{% if pangolin_acme_wildcard_domain %}
+    prefer_wildcard_cert: true
+{% endif %}
 {% endfor %}
 
 server:

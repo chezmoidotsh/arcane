@@ -99,6 +99,19 @@ pangolin_acme_email: "admin@example.com"
 # Let's Encrypt server (set to staging for testing)
 pangolin_acme_ca_server: "https://acme-v02.api.letsencrypt.org/directory"
 
+# Wildcard domain for a DNS-01 challenge (e.g. "chezmoi.sh" requests one
+# cert covering both chezmoi.sh and *.chezmoi.sh, so any subdomain gets a
+# valid cert -- not just the ones listed in pangolin_domains). Empty
+# disables DNS-01 and keeps the HTTP-01 per-domain challenge instead.
+# REQUIRED alongside pangolin_cloudflare_dns_api_token to enable.
+pangolin_acme_wildcard_domain: ""
+
+# Cloudflare API token for the DNS-01 challenge -- needs Zone:Read + DNS:Edit
+# scoped to pangolin_acme_wildcard_domain's zone. REQUIRED when
+# pangolin_acme_wildcard_domain is set. Store as an ansible-vault encrypted
+# string in host_vars -- never in plaintext.
+pangolin_cloudflare_dns_api_token: ""
+
 # -------------------------------------------------------------------------
 # Advanced Configuration
 # -------------------------------------------------------------------------
