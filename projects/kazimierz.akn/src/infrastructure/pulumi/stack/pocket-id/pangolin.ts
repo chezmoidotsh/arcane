@@ -1,4 +1,5 @@
-import { oidcApp } from "@chezmoi.sh/pulumi-lib";
+import { AllowedUserGroups, pocketIdProvider } from "@chezmoi.sh/pulumi-lib";
+import * as pocketid from "@pulumi/pocket-id";
 
 import { familleGroupId, maisonGroupId } from "./index";
 
@@ -12,11 +13,29 @@ import { familleGroupId, maisonGroupId } from "./index";
 // `pangolin_enable_integration_api` turned on (currently false in the
 // Ansible role defaults) and a Pangolin API key that doesn't exist yet --
 // deferred until that's set up.
-export const pangolinOidcClient = oidcApp("pangolin", {
-	name: "Pangolin",
-	description: "Tunnel / reverse-proxy d'accès public",
-	application: "pangolin",
-	launchURL: "https://pangolin.chezmoi.sh/",
-	callbackURLs: ["https://pangolin.chezmoi.sh/auth/idp/1/oidc/callback"],
+export const pangolinOidcClient = new pocketid.oidc.OidcClients(
+	"pangolin",
+	{
+		name: "Pangolin",
+		description: "Tunnel / reverse-proxy d'accès public",
+		logoUrl:
+			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/pangolin-light.svg",
+		darkLogoUrl:
+			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/pangolin-dark.svg",
+		launchURL: "https://pangolin.chezmoi.sh/",
+		callbackURLs: ["https://pangolin.chezmoi.sh/auth/idp/1/oidc/callback"],
+		isGroupRestricted: true,
+		isPublic: false,
+		pkceEnabled: true,
+		logoutCallbackURLs: [],
+		requiresPushedAuthorizationRequests: false,
+		requiresReauthentication: false,
+		skipConsent: false,
+	},
+	{ provider: pocketIdProvider(), ignoreChanges: ["logoUrl", "darkLogoUrl"] },
+);
+
+new AllowedUserGroups("pangolin-groups", {
+	clientId: pangolinOidcClient.id,
 	groupIds: [maisonGroupId, familleGroupId],
-}).client;
+});
