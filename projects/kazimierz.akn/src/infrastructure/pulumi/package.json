@@ -5,8 +5,10 @@
 	"main": "index.ts",
 	"dependencies": {
 		"@chezmoi.sh/pulumi-cloudflare-dns01-token": "workspace:*",
+		"@chezmoi.sh/pulumi-lib": "workspace:*",
 		"@pulumi/cloudflare": "catalog:",
 		"@pulumi/oci": "catalog:",
+		"@pulumi/pocket-id": "workspace:*",
 		"@pulumi/pulumi": "catalog:"
 	},
 	"devDependencies": {

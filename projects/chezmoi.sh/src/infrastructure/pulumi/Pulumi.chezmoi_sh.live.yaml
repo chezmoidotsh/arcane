@@ -23,3 +23,5 @@ config:
   proxmox:endpoint: https://pve-01.pve.chezmoi.sh:8006/api2/json
   proxmox:insecure: "true"
   chezmoi-sh-infra:rhodesAknKubernetesContext: omni-rhodes-akn
+  pocket-id-api:baseUrl: https://auth.chezmoi.sh
+  pocket-id-api:apiKeyHeader: X-API-KEY

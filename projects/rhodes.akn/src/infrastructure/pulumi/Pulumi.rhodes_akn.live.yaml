@@ -8,5 +8,5 @@ config:
   rhodes-akn-infra:cloudflare_zone_id:
     secure: v1:aItyDk7gbUAT43Dp:438Chai41N+guAPmPgDc99ln4xVwCnYXhYGw71IjBEh/1yrd0rERiFwNqDaQXWsG
   vault:vaultVersionOverride: 2.2.2
-  rhodes-akn-infra:pocket_id_oidc_client_secret:
-    secure: v1:sYY+AUYQyrAcmDrd:53yWPqUdEHTQWKkGZoW6u6v36IYdowMZcgZT9VZx8cRlz4DPGwjEl57OI7TSmq7+
+  pocket-id-api:baseUrl: https://auth.chezmoi.sh
+  pocket-id-api:apiKeyHeader: X-API-KEY

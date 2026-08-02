@@ -12,6 +12,7 @@
 		"@chezmoi.sh/pulumi-proxmox-cluster-identity": "workspace:*",
 		"@pulumi/cloudflare": "catalog:",
 		"@pulumi/kubernetes": "catalog:",
+		"@pulumi/pocket-id": "workspace:*",
 		"@pulumi/proxmox": "workspace:*",
 		"@pulumi/pulumi": "catalog:",
 		"@pulumi/vault": "catalog:"

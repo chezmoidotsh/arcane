@@ -7,3 +7,5 @@ config:
   oci:region: eu-paris-1
   kazimierz-akn-infra:cloudflare_account_id:
     secure: v1:74yL2K4KuCM0Kyez:itTM6JfYAJNCu/oOavcacVzRrLsGigd6T8/Ejdc/iltxPIi+NpW96dZ72T489Wc8
+  pocket-id-api:baseUrl: https://auth.chezmoi.sh
+  pocket-id-api:apiKeyHeader: X-API-KEY
