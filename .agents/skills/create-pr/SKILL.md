@@ -4,8 +4,9 @@ description: >
   Opens a well-formed pull request for the Arcane repository following project conventions. Use when asked to create,
   open, or submit a pull request, or to push a branch and request a review. Enforces sentence-form PR titles (the
   symbol-based `type[scope]: Subject` format stays on commits — labels carry type and scope on the PR), branch naming
-  conventions, structured PR body, and Assisted-by transparency trailer.
-compatibility: Requires git and GitHub CLI (gh)
+  conventions, structured PR body, and Assisted-by transparency trailer. Arms a background monitor after creation that
+  watches for merges and new comments/reviews so follow-up feedback gets picked up automatically.
+compatibility: Requires git, GitHub CLI (gh), and jq
 ---
 
 # Arcane Pull Request Skill
@@ -100,6 +101,65 @@ Before pushing anything:
 7. Apply the scope label(s) matching the changed paths (`project`, `catalog`, `agents:skills`, `agents:sessions`,
    `agents:knowledge`, `gh`, `deps`) — see `.github/labels.yaml`. There is no `type::*` label for PRs; type is a
    GitHub-native Issue Type field on issues only. Add `size::*` when you have signal.
+8. Launch the post-creation monitor (see "Post-creation monitoring" below) so merges and new comments are picked up
+   without the user having to check back manually.
+
+### Post-creation monitoring
+
+Right after `gh pr create` succeeds, arm a watcher for that PR number using the Monitor tool — persistent, so it keeps
+running for the rest of the session instead of timing out:
+
+```js
+Monitor({
+  command: "bash .agents/skills/create-pr/scripts/monitor-pr.sh <pr-number> 60",
+  description: "PR #<pr-number> merge/comments watch",
+  persistent: true,
+});
+```
+
+The script (`.agents/skills/create-pr/scripts/monitor-pr.sh`) polls every 60s and emits one line per event, then exits
+once the PR leaves the `OPEN` state:
+
+- `[comment] <user>: <body>` — a top-level PR conversation comment
+- `[review comment] <user> on <path>:<line>: <body>` — an inline diff comment
+- `[review <STATE>] <user>: <body>` — a submitted review (`APPROVED` / `CHANGES_REQUESTED` / `COMMENTED` with a body)
+- `[state] PR #<n> is now MERGED` or `CLOSED` — terminal, the monitor exits after this line
+
+**On a `MERGED` event:** tell the user the PR merged, stop treating the branch as active work. Do not delete the local
+or remote branch automatically — offer to, but deletion is destructive and needs confirmation per the repo's operating
+constraints.
+
+**On a `CLOSED` (not merged) event:** tell the user and ask whether to keep working on the branch or drop it.
+
+**On a `[comment]` / `[review comment]` / `[review CHANGES_REQUESTED]` event:** first judge whether the feedback is
+actually pertinent — a reviewer (human or bot) can be wrong, out of date, or flagging something already handled
+elsewhere. Don't act just because a comment exists.
+
+- **Pertinent and mechanical** (typo, requested rename, missing test the reviewer pointed at, lint/CI fix, a small
+  clarification) — implement it directly: edit, then follow "Pushing follow-up commits to an existing PR" below
+  (validate commits, `trunk check`, push).
+- **Pertinent but a design change, ambiguous, or touches security/secrets/shared infra** — do not push unilaterally.
+  Surface the comment to the user and wait for direction, same as any other risky/hard-to-reverse action. Leave the
+  thread unresolved until that direction lands.
+- **Not pertinent** (already handled, misunderstanding, doesn't apply here) — reply explaining why, don't change code
+  just to appease the comment.
+- **A `[review APPROVED]` or plain `[review COMMENTED]` with no actionable ask** — no action needed, just note it to the
+  user if relevant. Reviews themselves aren't resolvable on GitHub, only their individual review-comment threads are.
+
+**Always reply on the specific thread, never a generic top-level summary comment** — a reviewer re-reading the PR should
+see the answer to their exact comment, in place, not have to cross-reference a separate comment listing everything at
+once:
+
+- Top-level PR conversation comment (`[comment]`): `gh pr comment <n> --body "..."`.
+- Inline review comment (`[review comment]`) that was pertinent and is now addressed (code changed, or a valid "not
+  applicable, because …" explanation given): reply **and** mark the thread resolved in one step —
+  `bash .agents/skills/create-pr/scripts/resolve-review-comment.sh <pr-number> <comment-id> "<reply-body>"`. Only
+  resolve once the fix is actually pushed (or the explanation is final) — a promise to fix later stays unresolved.
+- Inline review comment that's pertinent but needs the user's call: reply (if there's something worth saying yet) but
+  leave the thread unresolved — resolving is a claim that the concern is settled, and it isn't yet.
+
+This mirrors the existing "confirm before pushing/commenting" rule in `AGENTS.md`: the monitor's job is to bring
+feedback to your attention immediately, not to grant blanket authority to push unreviewed changes.
 
 ### Pushing follow-up commits to an existing PR
 
@@ -388,6 +448,10 @@ gh pr create \
 - [ ] File paths in Changes Made use `[`path`](path)` link syntax
 - [ ] Attribution footer included
 - [ ] Issue referenced (`Closes #number` or `Addresses #number (Phase N)`)
+- [ ] Post-creation monitor launched (`.agents/skills/create-pr/scripts/monitor-pr.sh`, `Monitor` tool,
+      `persistent: true`)
+- [ ] Every actioned review comment got a reply on its own thread (not a generic summary comment), and pertinent ones
+      that are now addressed were marked resolved
 
 ## References
 
@@ -396,3 +460,5 @@ gh pr create \
 - Real PR examples: `.agents/skills/create-pr/references/pr-examples.md`
 - Project overview: `AGENTS.md`
 - Commit config: `.commitlintrc.js`
+- Post-creation watcher: `.agents/skills/create-pr/scripts/monitor-pr.sh`
+- Reply-and-resolve helper: `.agents/skills/create-pr/scripts/resolve-review-comment.sh`
