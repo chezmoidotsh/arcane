@@ -19,6 +19,9 @@ domains:
 server:
   secret: "{{ pangolin_server_secret | trim }}"
   maxmind_db_path: "./config/geoip/GeoLite2-Country.mmdb"
+{% if pangolin_enable_integration_api %}
+  integration_port: {{ pangolin_integration_port }}
+{% endif %}
   cors:
     allowed_origins: {{ pangolin_cors_allowed_origins | to_json }}
 
@@ -29,6 +32,7 @@ flags:
   require_email_verification: {{ pangolin_require_email_verification | lower }}
   disable_signup_without_invite: {{ pangolin_disable_signup_without_invite | lower }}
   disable_user_create_org: {{ pangolin_disable_user_create_org | lower }}
+  enable_integration_api: {{ pangolin_enable_integration_api | lower }}
 
 {% if pangolin_postgres_connection_string %}
 postgres:
