@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { describe, it } from "mocha";
 
-import { sameIds } from "./oidc-app";
+import { sameIds } from "./pocket-id";
 
 describe("sameIds", () => {
 	it("is true for identical sets regardless of order", () => {
