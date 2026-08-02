@@ -9,6 +9,12 @@ services:
     restart: {{ pangolin_docker_restart_policy }}
     volumes:
       - ./config:/app/config
+{% if pangolin_enable_integration_api %}
+    ports:
+      # Integration API -- localhost only, re-exposed on the tailnet via
+      # `tailscale serve` (see tasks/main.yml). Never published publicly.
+      - 127.0.0.1:{{ pangolin_integration_port }}:{{ pangolin_integration_port }}
+{% endif %}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/"]
       interval: "3s"

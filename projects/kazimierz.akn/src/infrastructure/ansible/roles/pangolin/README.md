@@ -40,6 +40,15 @@ pangolin_public_ip: "" # e.g. "{{ ansible_default_ipv4.address }}"
 `pangolin_bind_ip` should be set to the host's public IP whenever Tailscale (or anything else) also wants port 443 --
 otherwise Traefik and that other listener fight over the same port on all interfaces.
 
+### Integration API (tailnet-only remote control)
+
+Set `pangolin_enable_integration_api: true` to turn on Pangolin's
+[Integration API](https://docs.pangolin.net/self-host/advanced/integration-api) for programmatic control (creating
+sites, resources, users, etc. via API key). This is a separate service from the `/api/v1` the web dashboard itself
+already routes publicly through Traefik -- it listens on its own port (`pangolin_integration_port`, default 3003), bound
+to `127.0.0.1` only, and is re-exposed on the tailnet via `tailscale serve` (requires `tailscaled` running and logged in
+on the host). It is never reachable from the public internet. Swagger docs are served at `/v1/docs` once enabled.
+
 ## Directory Structure
 
 ```text
@@ -94,6 +103,7 @@ templates are idempotent and the role stops/restarts the stack automatically whe
 | `setup`         | Setup-token extraction only        |
 | `scripts`       | GeoIP update script                |
 | `systemd`       | GeoIP update timer/service         |
+| `tailscale`     | Integration API Tailscale Serve    |
 
 ## References
 

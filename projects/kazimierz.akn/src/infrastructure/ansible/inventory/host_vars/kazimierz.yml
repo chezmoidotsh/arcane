@@ -81,6 +81,10 @@ pangolin_domains:
 # Gerbil WireGuard tunnel base endpoint
 pangolin_gerbil_base_endpoint: "pangolin.chezmoi.sh"
 
+# Integration API for remote/programmatic control -- tailnet-only, see
+# roles/pangolin/README.md
+pangolin_enable_integration_api: true
+
 # SMTP configuration
 pangolin_smtp_host: in-v3.mailjet.com
 pangolin_smtp_port: 465
