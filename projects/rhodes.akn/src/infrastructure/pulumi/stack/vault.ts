@@ -78,8 +78,8 @@ if (!config.getBoolean("recovery")) {
 		oidcClientId: "762ac35a-f6ea-4831-ab61-a7e923e4b5cf",
 		oidcClientSecret: config.requireSecret("pocket_id_oidc_client_secret"),
 		tune: {
-			defaultLeaseTtl: "30m",
-			maxLeaseTtl: "2h",
+			defaultLeaseTtl: "6h",
+			maxLeaseTtl: "6h",
 			listingVisibility: "unauth",
 			tokenType: "default-service",
 		},
