@@ -4,7 +4,8 @@ description: >
   Opens a well-formed pull request for the Arcane repository following project conventions. Use when asked to create,
   open, or submit a pull request, or to push a branch and request a review. Enforces sentence-form PR titles (the
   symbol-based `type[scope]: Subject` format stays on commits — labels carry type and scope on the PR), branch naming
-  conventions, structured PR body, and Assisted-by transparency trailer.
+  conventions, structured PR body, and Assisted-by transparency trailer. Arms a background monitor after creation that
+  watches for merges and new comments/reviews so follow-up feedback gets picked up automatically.
 compatibility: Requires git and GitHub CLI (gh)
 ---
 
@@ -100,6 +101,51 @@ Before pushing anything:
 7. Apply the scope label(s) matching the changed paths (`project`, `catalog`, `agents:skills`, `agents:sessions`,
    `agents:knowledge`, `gh`, `deps`) — see `.github/labels.yaml`. There is no `type::*` label for PRs; type is a
    GitHub-native Issue Type field on issues only. Add `size::*` when you have signal.
+8. Launch the post-creation monitor (see "Post-creation monitoring" below) so merges and new comments are picked up
+   without the user having to check back manually.
+
+### Post-creation monitoring
+
+Right after `gh pr create` succeeds, arm a watcher for that PR number using the Monitor tool — persistent, so it keeps
+running for the rest of the session instead of timing out:
+
+```js
+Monitor({
+  command: "bash .agents/skills/create-pr/scripts/monitor-pr.sh <pr-number> 60",
+  description: "PR #<pr-number> merge/comments watch",
+  persistent: true,
+});
+```
+
+The script (`scripts/monitor-pr.sh`) polls every 60s and emits one line per event, then exits once the PR leaves the
+`OPEN` state:
+
+- `[comment] <user>: <body>` — a top-level PR conversation comment
+- `[review comment] <user> on <path>:<line>: <body>` — an inline diff comment
+- `[review <STATE>] <user>: <body>` — a submitted review (`APPROVED` / `CHANGES_REQUESTED` / `COMMENTED` with a body)
+- `[state] PR #<n> is now MERGED` or `CLOSED` — terminal, the monitor exits after this line
+
+**On a `MERGED` event:** tell the user the PR merged, stop treating the branch as active work. Do not delete the local
+or remote branch automatically — offer to, but deletion is destructive and needs confirmation per the repo's operating
+constraints.
+
+**On a `CLOSED` (not merged) event:** tell the user and ask whether to keep working on the branch or drop it.
+
+**On a `[comment]` / `[review comment]` / `[review CHANGES_REQUESTED]` event:** read the feedback and decide whether
+it's mechanical enough to act on without a round-trip:
+
+- **Mechanical and unambiguous** (typo, requested rename, missing test the reviewer pointed at, lint/CI fix, a small
+  clarification) — implement it directly: edit, then follow "Pushing follow-up commits to an existing PR" below
+  (validate commits, `trunk check`, push). Reply on the same thread (`gh pr comment <n> --body "..."` for top-level,
+  `gh api repos/<owner>/<repo>/pulls/<n>/comments/<comment-id>/replies` for inline) summarizing what changed and in
+  which commit.
+- **A design change, ambiguous, or touches security/secrets/shared infra** — do not push unilaterally. Surface the
+  comment to the user and wait for direction, same as any other risky/hard-to-reverse action.
+- **A `[review APPROVED]` or plain `[review COMMENTED]` with no actionable ask** — no action needed, just note it to the
+  user if relevant.
+
+This mirrors the existing "confirm before pushing/commenting" rule in `AGENTS.md`: the monitor's job is to bring
+feedback to your attention immediately, not to grant blanket authority to push unreviewed changes.
 
 ### Pushing follow-up commits to an existing PR
 
@@ -388,6 +434,7 @@ gh pr create \
 - [ ] File paths in Changes Made use `[`path`](path)` link syntax
 - [ ] Attribution footer included
 - [ ] Issue referenced (`Closes #number` or `Addresses #number (Phase N)`)
+- [ ] Post-creation monitor launched (`scripts/monitor-pr.sh`, `Monitor` tool, `persistent: true`)
 
 ## References
 
@@ -396,3 +443,4 @@ gh pr create \
 - Real PR examples: `.agents/skills/create-pr/references/pr-examples.md`
 - Project overview: `AGENTS.md`
 - Commit config: `.commitlintrc.js`
+- Post-creation watcher: `.agents/skills/create-pr/scripts/monitor-pr.sh`
