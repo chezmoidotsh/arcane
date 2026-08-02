@@ -4,10 +4,12 @@ import * as pocketid from "@pulumi/pocket-id";
 const provider = pocketIdProvider();
 
 // Groups shared across every cluster: Vault, ArgoCD and every app below bind
-// their access policies to these group names via OIDC group claims. Which OIDC
-// clients each group is allowed to sign into is managed by hand in the Pocket-Id
-// UI -- the generated SDK exposes that relationship (allowedUserGroups /
-// allowedOidcClients) as read-only on both resources, so Pulumi can't own it.
+// their access policies to these group names via OIDC group claims. Which
+// groups each OIDC client allows is managed by Pulumi too, via
+// AllowedUserGroups (catalog/pulumi/lib/src/pocket-id.ts) at each app's own
+// call site -- the generated SDK exposes that relationship as read-only, so
+// AllowedUserGroups calls Pocket-Id's real (but SDK-unwrapped) endpoint
+// directly instead.
 export const adminGroup = new pocketid.usergroups.UserGroups(
 	"admin",
 	{ name: "admin", friendlyName: "Administrateur" },

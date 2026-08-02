@@ -87,7 +87,7 @@ async function putAllowedUserGroups(
 	);
 	if (!response.ok) {
 		throw new Error(
-			`Failed to set allowed user groups for client ${clientId}: HTTP ${response.status}`,
+			`Failed to set allowed user groups for client ${clientId}: HTTP ${response.status}: ${await response.text()}`,
 		);
 	}
 }
@@ -178,7 +178,7 @@ async function generateOidcClientSecret(clientId: string): Promise<string> {
 	);
 	if (!response.ok) {
 		throw new Error(
-			`Failed to generate the secret for client ${clientId}: HTTP ${response.status}`,
+			`Failed to generate the secret for client ${clientId}: HTTP ${response.status}: ${await response.text()}`,
 		);
 	}
 	return ((await response.json()) as { secret: string }).secret;
