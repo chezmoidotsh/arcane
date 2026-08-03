@@ -148,9 +148,7 @@ in
   # Caddy is the sole public TCP surface — all Omni services are routed
   # through subdomains on 443. The catalog omni module opens 8091 (event
   # sink, WireGuard-internal) and the WireGuard UDP port separately.
-  # Do NOT use lib.mkDefault for allowedTCPPorts — nixos-generators' lxc
-  # format sets it to [] at normal priority and would silently win over
-  # mkDefault (1000). Normal-priority assignments from multiple modules are
-  # concatenated by lib.concatLists, so this adds [80 443] on top.
+  # Normal-priority assignments from multiple modules are concatenated by
+  # lib.concatLists, so this adds [80 443] on top of whatever else runs.
   networking.firewall.allowedTCPPorts = [ 80 443 ];
 }

@@ -62,8 +62,6 @@
   };
 
   networking.firewall.enable = lib.mkDefault true;
-  # Do NOT use lib.mkDefault for allowedTCPPorts — nixos-generators' lxc format
-  # sets it to [] at normal priority and would silently win over mkDefault (1000).
   # :5140 is the syslog TCP ingest port (PVE host log forwarding via rsyslog omfwd).
   networking.firewall.allowedTCPPorts = [ 5140 ];
   networking.firewall.allowedUDPPorts = lib.mkDefault [ ];

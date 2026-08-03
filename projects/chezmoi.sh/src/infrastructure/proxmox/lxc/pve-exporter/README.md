@@ -72,7 +72,7 @@ flowchart TB
 ```text
 .
 ├── README.md              ← you are here
-├── flake.nix              ← LXC image build (nixos-generators)
+├── flake.nix              ← LXC image build (nixos-rebuild build-image)
 ├── flake.lock             ← pinned inputs
 ├── configuration.nix      ← site identity, locale, console toolbox
 ├── .mise.toml             ← mise tasks (secrets / build)
@@ -313,8 +313,7 @@ severity/facility, …) and forwards it to o11y. Query in VictoriaLogs at `https
 forwarding off, source-routing off, ICMP redirects off, SYN cookies on, rp_filter on, ptrace YAMA, SUID coredumps off. |
 \| **Services** | Avahi, CUPS, Polkit, UDisks2 disabled with `mkForce`. | \| **Docs** | man-db / info / nixos-docs
 disabled. | \| **Journald** | `Storage=volatile`, `RuntimeMaxUse=64M`, `ForwardToConsole=yes`. | \| **Firewall (NixOS)**
-| Default-deny; only TCP `:5140` (syslog) open. Set at normal priority, not `mkDefault` (nixos-generators sets `[]` at
-normal priority and would beat `mkDefault`). | \| **Firewall (PVE)** | Layered on top — `policy_in: DROP`, only TCP
+| Default-deny; only TCP `:5140` (syslog) open. | \| **Firewall (PVE)** | Layered on top — `policy_in: DROP`, only TCP
 `:5140` from the bridge subnet. | \| **pve-exporter** | `NoNewPrivileges`, `RestrictSUIDSGID`, `RestrictRealtime`,
 `LockPersonality`, `SystemCallArchitectures=native`, `LimitNOFILE=65536`. |
 
@@ -383,8 +382,8 @@ The upgrade script does a rootfs-swap and copies the PVE firewall config from th
 ## Known gaps / follow-ups
 
 1. **`flake.lock` is seeded from the observability sibling.** This LXC shares the exact input set
-   (`nixpkgs/nixos-26.05`, `nixos-generators`, `arcane-catalog`) with `../observability`, so its lock was copied from
-   there to give a valid pin. Run `nix flake lock` here to refresh it independently when bumping inputs.
+   (`nixpkgs/nixos-26.05`, `arcane-catalog`) with `../observability`, so its lock was copied from there to give a valid
+   pin. Run `nix flake lock` here to refresh it independently when bumping inputs.
 
 2. **PVE token baked into image.** Rotating `prometheus@pve!exporter` requires a rebuild and redeploy. There is no
    runtime secret injection. For a homelab this is acceptable; a production system would use OpenBao + a sidecar to

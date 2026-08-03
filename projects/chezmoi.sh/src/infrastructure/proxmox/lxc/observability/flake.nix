@@ -32,17 +32,13 @@
 
   inputs.nixpkgs.url = "nixpkgs/nixos-26.05";
 
-  inputs.nixos-generators.url = "github:nix-community/nixos-generators";
-  inputs.nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
-
   inputs.arcane-catalog.url = "path:../../../../../../../catalog/nix";
   inputs.arcane-catalog.inputs.nixpkgs.follows = "nixpkgs";
 
   outputs =
-    { self, nixpkgs, nixos-generators, arcane-catalog }:
+    { self, nixpkgs, arcane-catalog }:
     let
       system = "x86_64-linux";
-      pkgs = import nixpkgs { inherit system; };
 
       # Appliance image version — CalVer (YYYY.MM.DD), used only to name the
       # Proxmox template (observability.<date>-amd64.tar.xz). Component
@@ -70,9 +66,8 @@
       };
     in
     {
-      packages.${system}.default = nixos-generators.nixosGenerate {
-        inherit system pkgs;
-        format = "lxc";
+      nixosConfigurations.observability = nixpkgs.lib.nixosSystem {
+        inherit system;
         modules = [
           arcane-catalog.nixosModules.lxcAgent
           arcane-catalog.nixosModules.staticNetwork
@@ -81,5 +76,12 @@
           { _module.args = { inherit secrets; }; }
         ];
       };
+
+      # `nixos-rebuild build-image --image-variant lxc` builds this same
+      # attribute; exposed as the default package so `nix build` and the
+      # existing `mise run lxc:build` / `scripts/nix:build:lxc` pipeline
+      # (which expects a `tarball/*.tar.xz` output) keep working unchanged.
+      packages.${system}.default =
+        self.nixosConfigurations.observability.config.system.build.images.lxc;
     };
 }

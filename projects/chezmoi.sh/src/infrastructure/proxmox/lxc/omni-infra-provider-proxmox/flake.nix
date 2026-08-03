@@ -23,18 +23,13 @@
 
   inputs.nixpkgs.url = "nixpkgs/nixos-26.05";
 
-  inputs.nixos-generators.url = "github:nix-community/nixos-generators";
-  inputs.nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
-
   inputs.arcane-catalog.url = "path:../../../../../../../catalog/nix";
   inputs.arcane-catalog.inputs.nixpkgs.follows = "nixpkgs";
 
   outputs =
-    { self, nixpkgs, nixos-generators, arcane-catalog }:
+    { self, nixpkgs, arcane-catalog }:
     let
       system = "x86_64-linux";
-      # allowUnfree required: omni-infra-provider-proxmox is BSL-1.1.
-      pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
 
       # Appliance image version — CalVer (YYYY.MM.DD). Bump before each build;
       # append -N for multiple builds on the same day.
@@ -51,10 +46,11 @@
       omniServiceAccountKey = builtins.getEnv "OMNI_SERVICE_ACCOUNT_KEY";
     in
     {
-      packages.${system}.default = nixos-generators.nixosGenerate {
-        inherit system pkgs;
-        format = "lxc";
+      nixosConfigurations.omni-infra-provider-proxmox = nixpkgs.lib.nixosSystem {
+        inherit system;
         modules = [
+          # allowUnfree required: omni-infra-provider-proxmox is BSL-1.1.
+          { nixpkgs.config.allowUnfree = true; }
           arcane-catalog.nixosModules.lxcAgent
           arcane-catalog.nixosModules.staticNetwork
           ./modules
@@ -62,5 +58,12 @@
           { _module.args = { inherit proxmoxPassword omniServiceAccountKey; }; }
         ];
       };
+
+      # `nixos-rebuild build-image --image-variant lxc` builds this same
+      # attribute; exposed as the default package so `nix build` and the
+      # existing `mise run lxc:build` / `scripts/nix:build:lxc` pipeline
+      # (which expects a `tarball/*.tar.xz` output) keep working unchanged.
+      packages.${system}.default =
+        self.nixosConfigurations.omni-infra-provider-proxmox.config.system.build.images.lxc;
     };
 }

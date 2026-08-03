@@ -58,9 +58,7 @@
   };
 
   networking.firewall.enable = lib.mkDefault true;
-  # Do NOT use lib.mkDefault for allowedTCPPorts/allowedUDPPorts —
-  # nixos-generators' lxc format sets them to [] at normal priority and
-  # would silently win over mkDefault (1000). :53 is BIND's DNS port.
+  # :53 is BIND's DNS port.
   networking.firewall.allowedTCPPorts = [ 53 ];
   networking.firewall.allowedUDPPorts = [ 53 ];
   networking.firewall.logRefusedConnections = lib.mkDefault false;

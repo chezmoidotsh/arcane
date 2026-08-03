@@ -78,12 +78,7 @@
   };
 
   # ── Firewall ───────────────────────────────────────────────────────────────
-  # Default deny; only :80 and :443 cross the LXC boundary. Do NOT use
-  # lib.mkDefault for allowedTCPPorts — nixos-generators' lxc format sets it
-  # to [] at normal priority and would silently win over mkDefault (1000).
-  # Normal-priority assignments from multiple modules are concatenated by
-  # lib.concatLists, so this adds [80 443] on top of whatever the generator
-  # contributes.
+  # Default deny; only :80 and :443 cross the LXC boundary.
   networking.firewall.enable = lib.mkDefault true;
   networking.firewall.allowedTCPPorts = [ 80 443 ];
   networking.firewall.allowedUDPPorts = lib.mkDefault [ ];

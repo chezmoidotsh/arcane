@@ -78,7 +78,7 @@ just a configuration tweak or a misconfigured pull.
 ```text
 .
 ├── README.md              ← you are here
-├── flake.nix              ← LXC image build (nixos-generators)
+├── flake.nix              ← LXC image build (nixos-rebuild build-image)
 ├── flake.lock             ← pinned inputs
 ├── configuration.nix      ← site identity, locale, console toolbox (modules own service config)
 ├── upstreams.nix          ← 12 pull-through cache definitions

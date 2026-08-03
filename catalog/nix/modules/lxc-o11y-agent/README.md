@@ -91,12 +91,21 @@ inputs = {
 
 ```nix
 # flake.nix — outputs
-outputs = { self, nixpkgs, nixos-generators, arcane-catalog, ... }:
-  nixos-generators.nixosGenerate {
-    modules = [
-      arcane-catalog.nixosModules.lxcAgent
-      ./modules                          # your LXC-specific modules
-    ];
+outputs = { self, nixpkgs, arcane-catalog, ... }:
+  let
+    system = "x86_64-linux";
+  in {
+    nixosConfigurations.default = nixpkgs.lib.nixosSystem {
+      inherit system;
+      modules = [
+        arcane-catalog.nixosModules.lxcAgent
+        ./modules                          # your LXC-specific modules
+      ];
+    };
+
+    # `nixos-rebuild build-image --image-variant lxc` builds this attribute.
+    packages.${system}.default =
+      self.nixosConfigurations.default.config.system.build.images.lxc;
   };
 ```
 

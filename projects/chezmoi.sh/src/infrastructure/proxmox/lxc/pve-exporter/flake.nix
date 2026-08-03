@@ -23,17 +23,13 @@
 
   inputs.nixpkgs.url = "nixpkgs/nixos-26.05";
 
-  inputs.nixos-generators.url = "github:nix-community/nixos-generators";
-  inputs.nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
-
   inputs.arcane-catalog.url = "path:../../../../../../../catalog/nix";
   inputs.arcane-catalog.inputs.nixpkgs.follows = "nixpkgs";
 
   outputs =
-    { self, nixpkgs, nixos-generators, arcane-catalog }:
+    { self, nixpkgs, arcane-catalog }:
     let
       system = "x86_64-linux";
-      pkgs = import nixpkgs { inherit system; };
 
       # Appliance image version — CalVer (YYYY.MM.DD), used only to name the
       # Proxmox template (pve-exporter.<date>-amd64.tar.xz). Component
@@ -55,9 +51,8 @@
       pveTokenValue = builtins.getEnv "PVE_TOKEN_VALUE";
     in
     {
-      packages.${system}.default = nixos-generators.nixosGenerate {
-        inherit system pkgs;
-        format = "lxc";
+      nixosConfigurations.pve-exporter = nixpkgs.lib.nixosSystem {
+        inherit system;
         modules = [
           arcane-catalog.nixosModules.lxcAgent
           arcane-catalog.nixosModules.staticNetwork
@@ -66,5 +61,12 @@
           { _module.args = { inherit pveHost pveTokenValue; }; }
         ];
       };
+
+      # `nixos-rebuild build-image --image-variant lxc` builds this same
+      # attribute; exposed as the default package so `nix build` and the
+      # existing `mise run lxc:build` / `scripts/nix:build:lxc` pipeline
+      # (which expects a `tarball/*.tar.xz` output) keep working unchanged.
+      packages.${system}.default =
+        self.nixosConfigurations.pve-exporter.config.system.build.images.lxc;
     };
 }
