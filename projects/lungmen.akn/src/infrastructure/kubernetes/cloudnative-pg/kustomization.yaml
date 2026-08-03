@@ -14,13 +14,26 @@ helmCharts:
     valuesFile: default.helmvalues.yaml
 
 resources:
-  - # Install Barman Cloud CNPG-I plugin (v0.6.0)
-    https://raw.githubusercontent.com/cloudnative-pg/plugin-barman-cloud/e0c8b64470cc31f36b0511b80bbac6ecaa8bd283/manifest.yaml
+  - # Install Barman Cloud CNPG-I plugin (v0.14.0), from the release-published
+    # manifest asset -- NOT the git-tracked manifest.yaml (raw.githubusercontent.com),
+    # which always hardcodes the floating `-testing:main` images regardless of ref.
+    # Only the release asset bakes in the immutable, versioned vX.Y.Z images. See
+    # issue 1144: running `-testing:main` meant the sidecar silently floated to
+    # whatever `main` built to at each pod restart, including builds where
+    # WAL retention cleanup was broken for months.
+    # Crosses the v0.8.0 RBAC rename (barman-plugin- prefix) — after sync, verify
+    # ArgoCD pruned the old cluster-scoped metrics-reader/objectstore-viewer/-editor
+    # roles and leader-election-role/-rolebinding, since metrics-reader is a generic
+    # name other components could also claim.
+    https://github.com/cloudnative-pg/plugin-barman-cloud/releases/download/v0.14.0/manifest.yaml
   - # Configure defaults for CloudNativePG
     ../../../../../../catalog/kubernetes/cloudnative-pg/kustomize
+
+patches:
+  - path: plugin-barman-cloud.secret-sidecar-image.patch.yaml
 
 images:
   - name: ghcr.io/cloudnative-pg/cloudnative-pg
     newName: oci.chezmoi.sh/ghcr.io/cloudnative-pg/cloudnative-pg
-  - name: ghcr.io/cloudnative-pg/plugin-barman-cloud-testing
-    newName: oci.chezmoi.sh/ghcr.io/cloudnative-pg/plugin-barman-cloud-testing
+  - name: ghcr.io/cloudnative-pg/plugin-barman-cloud
+    newName: oci.chezmoi.sh/ghcr.io/cloudnative-pg/plugin-barman-cloud

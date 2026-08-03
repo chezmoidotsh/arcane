@@ -14,12 +14,18 @@ helmCharts:
     valuesFile: helmvalues/default.yaml
 
 resources:
-  - # Install Barman Cloud CNPG-I plugin (v0.14.0). Crosses the v0.8.0 RBAC
-    # rename (barman-plugin- prefix) — after sync, verify ArgoCD pruned the
-    # old cluster-scoped metrics-reader/objectstore-viewer/-editor roles and
-    # leader-election-role/-rolebinding, since metrics-reader is a generic
+  - # Install Barman Cloud CNPG-I plugin (v0.14.0), from the release-published
+    # manifest asset -- NOT the git-tracked manifest.yaml (raw.githubusercontent.com),
+    # which always hardcodes the floating `-testing:main` images regardless of ref.
+    # Only the release asset bakes in the immutable, versioned vX.Y.Z images. See
+    # issue 1144: running `-testing:main` meant the sidecar silently floated to
+    # whatever `main` built to at each pod restart, including builds where
+    # WAL retention cleanup was broken for months.
+    # Crosses the v0.8.0 RBAC rename (barman-plugin- prefix) — after sync, verify
+    # ArgoCD pruned the old cluster-scoped metrics-reader/objectstore-viewer/-editor
+    # roles and leader-election-role/-rolebinding, since metrics-reader is a generic
     # name other components could also claim.
-    https://raw.githubusercontent.com/cloudnative-pg/plugin-barman-cloud/1e13020fe5f09fd8fc29ea03828f7b61375b3721/manifest.yaml
+    https://github.com/cloudnative-pg/plugin-barman-cloud/releases/download/v0.14.0/manifest.yaml
   - # Configure defaults for CloudNativePG
     ../../../../../../catalog/kubernetes/cloudnative-pg/kustomize
   - security/
@@ -28,5 +34,5 @@ patches:
   - path: plugin-barman-cloud.secret-sidecar-image.patch.yaml
 
 images:
-  - name: ghcr.io/cloudnative-pg/plugin-barman-cloud-testing
-    newName: oci.chezmoi.sh/ghcr.io/cloudnative-pg/plugin-barman-cloud-testing
+  - name: ghcr.io/cloudnative-pg/plugin-barman-cloud
+    newName: oci.chezmoi.sh/ghcr.io/cloudnative-pg/plugin-barman-cloud
