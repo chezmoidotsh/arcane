@@ -1,0 +1,158 @@
+# Single-node MinIO used as the S3-compatible backup target for this sandbox.
+# Raw manifests instead of a Helm chart, same reasoning as the Garage manifest
+# in docs/experiments/20260702-pulumi-crossplane-evaluation/manifests/garage.yaml:
+# this is throwaway sandbox infra, not a component under evaluation.
+#
+# MinIO is used here (not Garage) because the real target for #1054 is
+# "existing MinIO or Backblaze B2" — matching the production backend keeps
+# the S3 config (s3ForcePathStyle, region) representative.
+#
+# Storage is emptyDir: this sandbox is torn down and recreated on every run,
+# state resetting on every bootstrap is a feature, not a bug.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: velero-poc
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-credentials
+  namespace: velero-poc
+type: Opaque
+stringData:
+  # Dev-only fixed values — this cluster is local, disposable, and never
+  # reachable from outside the pod.
+  root_user: veleropoc
+  root_password: veleropocsecretkey
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: velero-poc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: minio
+          image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+          args: ["server", "/data", "--console-address", ":9001"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: root_user
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: root_password
+          ports:
+            - name: s3-api
+              containerPort: 9000
+            - name: console
+              containerPort: 9001
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: velero-poc
+spec:
+  selector:
+    app: minio
+  ports:
+    - name: s3-api
+      port: 9000
+      targetPort: 9000
+    - name: console
+      port: 9001
+      targetPort: 9001
+---
+# One-shot bucket creation — MinIO doesn't auto-create buckets on boot the
+# way Garage's --default-bucket flag does.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-create-bucket
+  namespace: velero-poc
+spec:
+  backoffLimit: 6
+  template:
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: mc
+          image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              mc alias set velero-poc http://minio.velero-poc.svc:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+              mc mb --ignore-existing velero-poc/velero-backups
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: root_user
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-credentials
+                  key: root_password
+          volumeMounts:
+            - name: mc-config
+              mountPath: /.mc
+      volumes:
+        - name: mc-config
+          emptyDir: {}

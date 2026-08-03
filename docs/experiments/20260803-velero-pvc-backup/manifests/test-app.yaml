@@ -1,0 +1,155 @@
+# Minimal stateful app to prove Kopia file-level backup/restore round-trips
+# real PV data. Postgres + a written marker row (not just raw files) so the
+# restore check proves an application actually reads its data back, not just
+# that bytes survived on disk — closer to what backing up a real CNPG/
+# Paperless PVC needs to guarantee. Pattern reused from
+# docs/experiments/20260617-proxmox-csi-ccm/manifests/test-pvc.yaml.
+#
+# Uses a static `local`-type PV, not kind's default "standard" StorageClass.
+# kind's bundled local-path-provisioner creates PVs of type hostPath, which
+# Velero's fs-backup explicitly refuses ("is a hostPath volume which is not
+# supported for pod volume backup, skipping" — pkg/podvolume/backupper.go).
+# `local` PVs are mounted the same way but aren't hostPath-typed, so Kopia
+# backs them up fine — the same reason Velero's own e2e suite uses the CSI
+# hostpath driver (a heavier stand-in) rather than local-path-provisioner.
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: velero-poc-app
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: manual
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: velero-poc-data
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  # Retain (not Delete): "manual" has no provisioner, so nothing would ever
+  # execute a Delete — a PVC deletion would leave the PV stuck Failed. The
+  # POC's restore step clears spec.claimRef to make it bindable again
+  # instead (see scripts/validate.sh).
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  local:
+    path: /mnt/velero-poc-data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - velero-poc-control-plane
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: test-app
+  namespace: velero-poc-app
+spec:
+  serviceName: test-app
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-app
+  template:
+    metadata:
+      labels:
+        app: test-app
+      annotations:
+        # Explicit opt-in, the documented, reliable way to select which pod
+        # volumes Kopia backs up. configuration.defaultVolumesToFsBackup
+        # (Velero's global opt-out setting) was tried first and silently
+        # skipped this PVC-backed volume with no error or log line — not
+        # investigated further, this annotation is the supported mechanism
+        # for exactly this per-pod case anyway. See README §3 for details.
+        backup.velero.io/backup-volumes: data
+    spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # kind's local-path-provisioner hostPath volumes are root-owned.
+        # postgres's entrypoint calls chmod on PGDATA, which needs actual
+        # ownership (not just fsGroup's group-write bit) — chown as root
+        # once before the non-root postgres container starts.
+        - name: fix-permissions
+          image: postgres:17-alpine
+          command: ["sh", "-c", "chown -R 70:70 /var/lib/postgresql/data /var/run/postgresql"]
+          securityContext:
+            # Needs CAP_CHOWN/CAP_FOWNER to chown paths it doesn't already
+            # own — dropping ALL would leave even uid 0 unable to chown.
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: run
+              mountPath: /var/run/postgresql
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 70
+            runAsGroup: 70
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          env:
+            - name: POSTGRES_DB
+              value: testdb
+            - name: POSTGRES_USER
+              value: test
+            - name: POSTGRES_PASSWORD
+              value: test
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: tmp
+              mountPath: /tmp
+            - name: run
+              mountPath: /var/run/postgresql
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "test"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "test"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: run
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: manual
+        resources:
+          requests:
+            storage: 1Gi
