@@ -14,7 +14,7 @@ const site = new pangolin.Site("lungmen.akn", {
 new vault.kv.SecretV2(
 	"lungmen-akn-newt-vault-secret",
 	{
-		mount: "shared",
+		mount: "lungmen.akn",
 		name: "third-parties/pangolin/newt/lungmen.akn",
 		dataJson: pulumi.jsonStringify({
 			endpoint: "https://pangolin.chezmoi.sh",

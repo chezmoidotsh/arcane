@@ -14,7 +14,7 @@ const site = new pangolin.Site("rhodes.akn", {
 new vault.kv.SecretV2(
 	"rhodes-akn-newt-vault-secret",
 	{
-		mount: "shared",
+		mount: "rhodes.akn",
 		name: "third-parties/pangolin/newt/rhodes.akn",
 		dataJson: pulumi.jsonStringify({
 			endpoint: "https://pangolin.chezmoi.sh",
