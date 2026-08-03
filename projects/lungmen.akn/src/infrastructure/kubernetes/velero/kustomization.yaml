@@ -34,6 +34,13 @@ patches:
   # treatment: ArgoCD applies every PreSync hook before any plain Sync-phase resource, so
   # without this the Job would run before its own RBAC exists on a genuinely fresh install
   # (a pod stuck on "ServiceAccount not found" that ArgoCD would then wait on forever).
+  #
+  # hook-delete-policy is BeforeHookCreation,HookSucceeded (matching the chart's own
+  # helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded exactly) rather than
+  # just HookSucceeded: a Job that failed once would otherwise sit there forever — Jobs
+  # are immutable, so ArgoCD can't recreate one under the same name until the old one is
+  # gone. BeforeHookCreation clears out whatever's left (succeeded or failed) right before
+  # the next retry creates a fresh one.
   - target:
       kind: Job
       name: velero-upgrade-crds
@@ -43,7 +50,7 @@ patches:
         value: PreSync
       - op: add
         path: /metadata/annotations/argocd.argoproj.io~1hook-delete-policy
-        value: HookSucceeded
+        value: BeforeHookCreation,HookSucceeded
   - target:
       kind: ServiceAccount
       name: velero-server-upgrade-crds
