@@ -1,0 +1,58 @@
+# Velero, Kopia backend only (issue #1054's baseline path). The CSI-snapshot
+# path is NOT configured here — it needs the real Proxmox CSI driver's
+# VolumeSnapshotClass, which doesn't exist in a local kind sandbox. See the
+# experiment README for how that part gets validated separately, on real
+# infra.
+image:
+  repository: docker.io/velero/velero
+  tag: v1.18.1
+
+initContainers:
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.13.1
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+
+deployNodeAgent: true
+
+credentials:
+  useSecret: true
+  # checkov:skip=CKV_SECRET_6: This is a Secret *name* reference, not a credential value.
+  existingSecret: cloud-credentials
+
+configuration:
+  # Kopia only backs up a pod's volumes when opted in. Using the explicit
+  # per-pod backup.velero.io/backup-volumes annotation (manifests/test-app.yaml)
+  # instead of this global opt-out flag — see that manifest's comment for why.
+  backupStorageLocation:
+    - name: default
+      provider: aws
+      bucket: velero-backups
+      default: true
+      credential:
+        name: cloud-credentials
+        key: cloud
+      config:
+        region: minio
+        s3Url: http://minio.velero-poc.svc:9000
+        s3ForcePathStyle: "true"
+  # No CSI VolumeSnapshotLocation in this sandbox — that path needs the real
+  # Proxmox CSI driver's VolumeSnapshotClass, which doesn't exist in kind.
+  volumeSnapshotLocation: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 256Mi
+
+nodeAgent:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
