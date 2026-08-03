@@ -23,16 +23,17 @@ export const chezmoiShIdp = new pangolin.Idp("chezmoi-sh-pocket-id", {
 });
 
 // roleMapping is a JMESPath expression evaluated against the ID token on
-// every login: pangolin:role is a custom claim carrying the target role
-// name (e.g. Admin or Privileged, see ./role.ts). `||` falls back to the
-// built-in "member" role whenever the claim is absent or empty, which is
-// the case for every Pocket-Id user until that claim is explicitly set.
+// every login: "pangolin:role" is a custom claim carrying the target role
+// name (e.g. Admin or Privileged, see ./role.ts), quoted because JMESPath
+// unquoted identifiers can't contain ":". `||` falls back to the built-in
+// "member" role whenever the claim is absent or empty, which is the case
+// for every Pocket-Id user until that claim is explicitly set.
 new pangolin.IdpOrg(
 	"chezmoi-sh-pocket-id",
 	{
 		idpId: chezmoiShIdp.idpId,
 		orgId: chezmoiShOrg.orgId,
-		roleMapping: "pangolin:role || 'member'",
+		roleMapping: `"pangolin:role" || 'member'`,
 		orgMapping: pulumi.interpolate`'${chezmoiShOrg.orgId}'`,
 	},
 	{ parent: chezmoiShIdp },
