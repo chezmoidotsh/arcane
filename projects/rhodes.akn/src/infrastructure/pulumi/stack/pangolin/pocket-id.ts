@@ -1,4 +1,4 @@
-import { blockHighRiskCountries } from "@chezmoi.sh/pulumi-lib";
+import { blockHighRiskCountries, must } from "@chezmoi.sh/pulumi-lib";
 import * as pangolin from "@pulumi/pangolin";
 
 import { rhodesSiteId } from "./index";
@@ -10,11 +10,13 @@ import { rhodesSiteId } from "./index";
 export const authResource = new pangolin.Resource("auth-chezmoi-sh", {
 	name: "Pocket-Id",
 	mode: "http",
-	domainId: pangolin
-		.getDomainsOutput()
-		.apply(
-			(r) => r.domains.find((d) => d.baseDomain === "chezmoi.sh")!.domainId,
-		),
+	domainId: pangolin.getDomainsOutput().apply(
+		(r) =>
+			must(
+				r.domains.find((d) => d.baseDomain === "chezmoi.sh"),
+				"chezmoi.sh base domain not found in Pangolin",
+			).domainId,
+	),
 	subdomain: "auth",
 	sso: false,
 	applyRules: true,
