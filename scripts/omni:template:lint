@@ -27,7 +27,10 @@ if ! command -v yq >/dev/null 2>&1; then
   exit 1
 fi
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
+if ! REPO_ROOT="$(git rev-parse --show-toplevel)"; then
+  echo >&2 "Error: not inside a git checkout (git rev-parse --show-toplevel failed)."
+  exit 1
+fi
 FAILURES=0
 
 # Octet/prefix pattern: "0" or a non-zero-leading 1-3 digit run. Rejects
@@ -65,7 +68,9 @@ in_adr014_range() {
 }
 
 check_field() {
-  local file="$1" label="$2" query="$3"
+  # kind: "cidr" (podSubnets/serviceSubnets — must carry a /prefix) or
+  # "ip" (clusterDNS — a bare address, no /prefix).
+  local file="$1" label="$2" query="$3" kind="$4"
   local values yq_error yq_status
   yq_error="$(mktemp)"
   values="$(yq eval-all "${query}" "${file}" 2>"${yq_error}")"
@@ -88,6 +93,18 @@ check_field() {
   local value
   while IFS= read -r value; do
     [[ -z ${value} ]] && continue
+
+    if [[ ${kind} == "cidr" && ${value} != *"/"* ]]; then
+      echo "FAIL ${file}: ${label} value '${value}' is missing a /prefix (must be CIDR notation)"
+      FAILURES=$((FAILURES + 1))
+      continue
+    fi
+    if [[ ${kind} == "ip" && ${value} == *"/"* ]]; then
+      echo "FAIL ${file}: ${label} value '${value}' must be a bare IP, not a CIDR"
+      FAILURES=$((FAILURES + 1))
+      continue
+    fi
+
     if ! in_adr014_range "${value}"; then
       echo "FAIL ${file}: ${label} value '${value}' is outside ADR-014's 172.16.0.0/12 range"
       FAILURES=$((FAILURES + 1))
@@ -97,11 +114,14 @@ check_field() {
 
 while IFS= read -r -d '' file; do
   check_field "${file}" "cluster.network.podSubnets" \
-    'select(.kind == "Cluster") | .patches[] | select(.name == "cluster-common") | .inline.cluster.network.podSubnets[]'
+    'select(.kind == "Cluster") | .patches[] | select(.name == "cluster-common") | .inline.cluster.network.podSubnets[]' \
+    "cidr"
   check_field "${file}" "cluster.network.serviceSubnets" \
-    'select(.kind == "Cluster") | .patches[] | select(.name == "cluster-common") | .inline.cluster.network.serviceSubnets[]'
+    'select(.kind == "Cluster") | .patches[] | select(.name == "cluster-common") | .inline.cluster.network.serviceSubnets[]' \
+    "cidr"
   check_field "${file}" "machine.kubelet.clusterDNS" \
-    'select(.kind == "Cluster") | .patches[] | select(.name == "machine-common") | .inline.machine.kubelet.clusterDNS[]'
+    'select(.kind == "Cluster") | .patches[] | select(.name == "machine-common") | .inline.machine.kubelet.clusterDNS[]' \
+    "ip"
 done < <(find "${REPO_ROOT}/projects" -path "*/src/infrastructure/omni/*.clustertemplate.yaml" -print0 || true)
 
 if ((FAILURES > 0)); then
