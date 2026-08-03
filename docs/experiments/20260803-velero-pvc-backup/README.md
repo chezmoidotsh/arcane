@@ -227,17 +227,6 @@ mise run poc:validate
 === Results: 7 passed, 0 failed ===
 ```
 
-Two real bugs were found and fixed along the way (both already folded into the manifests/scripts above, not left as open
-issues in this repeatable POC):
-
-- A `((pass++))`-style post-increment in `check()` evaluates to `0` (falsy) the first time `pass` goes from 0 → 1, which
-  trips `set -e` and silently kills the script right after the first `PASS` line. Fixed with `pass=$((pass + 1))`. Worth
-  a quick check if `docs/experiments/20260617-proxmox-csi-ccm/scripts/validate.sh` (same pattern) has ever been re-run
-  since — out of scope to fix here since that experiment is already closed.
-- The `minio-create-bucket` Job originally used `envFrom: secretRef` with secret keys named `root_user`/ `root_password`
-  while the script referenced `$MINIO_ROOT_USER`/`$MINIO_ROOT_PASSWORD` — `envFrom` propagates the secret's own key
-  names as env-var names, not a chosen alias. Fixed with explicit `env: valueFrom: secretKeyRef` entries.
-
 ## 8. Conclusions
 
 **The Kopia file-system-backup path works** — a real Postgres PVC's data survives a full delete → restore cycle intact,
