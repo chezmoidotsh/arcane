@@ -50,11 +50,17 @@
 # 3. Document overrides in the cluster template header (see lungmen as example).
 # 4. Validate offline (no Omni connectivity):
 #      omnictl cluster template validate -f <file>
+#    NOTE: this base file itself is NOT expected to pass validate — the
+#    podSubnets sentinel below is deliberately not a valid CIDR. Validate only
+#    the cloned, overridden copy.
 # 5. Apply (requires OMNICONFIG from `mise run bao:login:admin` in chezmoi.sh):
 #      omnictl cluster template sync -f <file>
 #    Re-applying is idempotent. `omnictl apply -f` does NOT work here — it's the generic COSI resource
 #    command (metadata/spec YAML), not the kind:Cluster/ControlPlane/Workers template DSL, and fails with
 #    "yaml: construct errors: ... expected 4 elements node, got N".
+# 6. `scripts/omni:template:lint` checks every per-cluster template's
+#    podSubnets/serviceSubnets/clusterDNS fall within ADR-014's 172.16.0.0/12
+#    range; it runs in CI on any change under projects/*/src/infrastructure/omni/.
 #
 # SHA PINNING
 # -----------
@@ -65,6 +71,7 @@
 #   ADR-014                    docs/decisions/014-network-topology.md
 #   VLAN / SDN layout          docs/network/ipam.md
 #   Machine class definitions  catalog/omni/machineclasses/
+#   CIDR lint script           scripts/omni:template:lint
 # =============================================================================
 ---
 kind: Cluster
@@ -127,10 +134,14 @@ patches:
               - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/cilium/1.20.0-native.yaml
           podSubnets:
             # MANDATORY OVERRIDE — unique per cluster (ClusterMesh hard prerequisite).
-            # Uncomment ONE line and set it to the cluster's allocated /19 from ipam.md.
-            # A forgotten override makes Talos fall back to its built-in CIDR (NOT in our
-            # 172.30.0.0/16 range) — this is intentional: fail-safe, not silent collision.
-            # - 172.30.0.0/19   # rhodes-akn   (cluster.id 1)
+            # Replace the sentinel below with ONE of the /19s from ipam.md. The
+            # sentinel is not a valid CIDR on purpose: a forgotten override fails
+            # `omnictl cluster template validate` loudly instead of silently
+            # falling back to Talos's built-in CIDR (NOT in our 172.16.0.0/12
+            # range — ADR-014). `scripts/omni:template:lint` also enforces this
+            # field (and serviceSubnets/clusterDNS) on every per-cluster template.
+            - MUST-OVERRIDE-SEE-IPAM.MD # not a CIDR — validate fails until replaced
+            # - 172.30.0.0/19   # rhodes-akn   (cluster.id 1) — ALREADY IN USE
             # - 172.30.32.0/19  # lungmen-akn  (cluster.id 2) — ALREADY IN USE
             # - 172.30.64.0/19  # cluster 3    (cluster.id 3)
             # - 172.30.96.0/19  # cluster 4    (cluster.id 4)

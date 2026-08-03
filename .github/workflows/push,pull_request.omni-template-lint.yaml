@@ -1,0 +1,42 @@
+---
+name: 🧪 Omni Cluster Template CIDR Lint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/push,pull_request.omni-template-lint.yaml"
+      - "scripts/omni:template:lint"
+      - "projects/*/src/infrastructure/omni/**"
+
+  pull_request:
+    paths:
+      - ".github/workflows/push,pull_request.omni-template-lint.yaml"
+      - "scripts/omni:template:lint"
+      - "projects/*/src/infrastructure/omni/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: 🔍 Check ADR-014 CIDR compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 🛠️ Set up mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        with:
+          install: false
+
+      - name: ⬇️ Install yq
+        run: mise install yq
+
+      - name: 🔍 Lint Omni cluster templates
+        run: scripts/omni:template:lint
