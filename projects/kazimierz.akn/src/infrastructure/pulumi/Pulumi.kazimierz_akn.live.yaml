@@ -9,3 +9,5 @@ config:
     secure: v1:74yL2K4KuCM0Kyez:itTM6JfYAJNCu/oOavcacVzRrLsGigd6T8/Ejdc/iltxPIi+NpW96dZ72T489Wc8
   pocket-id-api:baseUrl: https://auth.chezmoi.sh
   pocket-id-api:apiKeyHeader: X-API-KEY
+  pangolin:orgId: chezmoi-sh
+  pangolin:url: https://kazimierz-akn.tail831c5d.ts.net

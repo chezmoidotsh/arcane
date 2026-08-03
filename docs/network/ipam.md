@@ -345,6 +345,17 @@ Provisioned via Pulumi: `projects/kazimierz.akn/src/infrastructure/pulumi/stack/
 Oracle-assigned at creation time; the subnet's /64 is retrieved from the live VCN once provisioned (not knowable ahead
 of time).
 
+**Pangolin org overlay (not an OCI resource — app-level WireGuard addressing hosted on kazimierz):**
+
+| Resource                                 | CIDR            | Purpose                          |
+| ---------------------------------------- | --------------- | -------------------------------- |
+| Pangolin org `chezmoi-sh` subnet         | `172.16.1.0/24` | WireGuard overlay for Newt sites |
+| Pangolin org `chezmoi-sh` utility subnet | `172.16.2.0/24` | Pangolin/Gerbil utility subnet   |
+
+Provisioned via Pulumi: `projects/kazimierz.akn/src/infrastructure/pulumi/stack/pangolin/org.ts`. Fixed at org creation,
+can't be changed afterwards. Same overlap reasoning as the VCN above: tunnel-only, never routed, so safe to share the
+`172.16.0.0/12` Kubernetes block.
+
 ---
 
 ## Firewall Rules

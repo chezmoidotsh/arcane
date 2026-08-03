@@ -8,6 +8,7 @@
 		"@chezmoi.sh/pulumi-lib": "workspace:*",
 		"@pulumi/cloudflare": "catalog:",
 		"@pulumi/oci": "catalog:",
+		"@pulumi/pangolin": "workspace:*",
 		"@pulumi/pocket-id": "workspace:*",
 		"@pulumi/pulumi": "catalog:"
 	},
