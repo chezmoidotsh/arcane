@@ -1,0 +1,54 @@
+---
+# Kopia file-system-backup path only (validated in docs/experiments/20260803-velero-pvc-backup,
+# EXP-2026-007). The CSI-snapshot path (volumeSnapshotLocation) is deliberately left empty and
+# stays that way — Proxmox CSI volume snapshots are not something this project intends to adopt,
+# so Kopia fs-backup is the permanent backup path here.
+initContainers:
+  - name: velero-plugin-for-aws
+    # renovate: datasource=docker depName=velero/velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.13.1
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+
+deployNodeAgent: true
+
+credentials:
+  useSecret: true
+  # checkov:skip=CKV_SECRET_6: This is a Secret *name* reference, not a credential value.
+  existingSecret: velero-credentials
+
+configuration:
+  backupStorageLocation:
+    - name: default
+      provider: aws
+      bucket: velero-lungmen-akn
+      default: true
+      credential:
+        name: velero-credentials
+        key: cloud
+      config:
+        region: fr-par-1
+        s3Url: https://s3.chezmoi.sh
+        s3ForcePathStyle: "true"
+  # Kopia only backs up a pod's volumes when explicitly opted in via the
+  # backup.velero.io/backup-volumes annotation on each workload — the global
+  # defaultVolumesToFsBackup flag was found (in the POC) to silently skip a PVC
+  # with no error. Left unset here on purpose; annotate workloads individually.
+  volumeSnapshotLocation: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+
+nodeAgent:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 512Mi

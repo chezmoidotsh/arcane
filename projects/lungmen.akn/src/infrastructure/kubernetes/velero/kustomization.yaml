@@ -1,0 +1,43 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: velero-system
+
+resources:
+  - velero-credentials.externalsecret.yaml
+  - security
+
+helmCharts:
+  - repo: https://vmware-tanzu.github.io/helm-charts
+    name: velero
+    # renovate: datasource=helm depName=velero registryUrl=https://vmware-tanzu.github.io/helm-charts
+    version: 12.1.0
+
+    releaseName: velero
+    namespace: velero-system
+
+    valuesFile: velero.helmvalues/default.yaml
+
+patches:
+  # The Helm chart marks this Job with helm.sh/hook annotations so a real `helm install`
+  # runs it before anything else. Kustomize's helmCharts inflator renders the chart to
+  # plain manifests and drops that hook semantics, so ArgoCD was syncing this Job in the
+  # same wave as the BackupStorageLocation CR it must create the CRD for first — failing
+  # with "could not find velero.io/BackupStorageLocation ... CRD is installed". Translating
+  # to an ArgoCD PreSync hook restores the "CRDs before CRs" ordering Helm would have given.
+  - target:
+      kind: Job
+      name: velero-upgrade-crds
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1hook
+        value: PreSync
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1hook-delete-policy
+        value: HookSucceeded
+
+images:
+  - name: docker.io/velero/velero
+    newName: oci.chezmoi.sh/docker.io/velero/velero
+  - name: velero/velero-plugin-for-aws
+    newName: oci.chezmoi.sh/docker.io/velero/velero-plugin-for-aws

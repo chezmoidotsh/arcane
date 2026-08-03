@@ -1,0 +1,19 @@
+---
+# Velero (the controller Deployment and the node-agent DaemonSet) watches/manages
+# Backup, Restore, and PodVolumeBackup CRs plus PVCs across the whole cluster —
+# it needs Kubernetes API access unconditionally.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows all velero-system pods (controller + node-agent) to reach the Kubernetes API server.
+      Required for watching/managing Backup, Restore, and PodVolumeBackup custom resources plus PVCs
+      cluster-wide.
+  name: allow-to-kube-apiserver
+  namespace: velero-system
+spec:
+  endpointSelector: {}
+  egress:
+    - toEntities:
+        - kube-apiserver
