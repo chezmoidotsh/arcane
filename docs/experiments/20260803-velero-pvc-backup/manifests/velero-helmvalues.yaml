@@ -19,6 +19,7 @@ deployNodeAgent: true
 
 credentials:
   useSecret: true
+  # checkov:skip=CKV_SECRET_6: This is a Secret *name* reference, not a credential value.
   existingSecret: cloud-credentials
 
 configuration:

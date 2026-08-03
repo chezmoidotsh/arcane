@@ -25,7 +25,7 @@ stringData:
   # Dev-only fixed values — this cluster is local, disposable, and never
   # reachable from outside the pod.
   root_user: veleropoc
-  root_password: veleropocsecretkey
+  root_password: veleropocsecretkey # checkov:skip=CKV_SECRET_6: Fake dev-only value, disposable local sandbox.
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -42,15 +42,19 @@ spec:
       labels:
         app: minio
     spec:
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
+        runAsUser: 10001
+        runAsGroup: 10001
         seccompProfile:
           type: RuntimeDefault
       containers:
         - name: minio
           image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+          # imagePullPolicy left at the IfNotPresent default rather than
+          # Always: the tag is a pinned, immutable release, so re-pulling on
+          # every restart would just waste time. checkov:skip=CKV_K8S_15
           args: ["server", "/data", "--console-address", ":9001"]
           securityContext:
             allowPrivilegeEscalation: false
@@ -62,18 +66,15 @@ spec:
               cpu: 50m
               memory: 128Mi
             limits:
+              cpu: 500m
               memory: 512Mi
+          # _FILE variants read the credential from a mounted volume instead
+          # of the pod's env — keeps it out of `kubectl describe pod` output.
           env:
-            - name: MINIO_ROOT_USER
-              valueFrom:
-                secretKeyRef:
-                  name: minio-credentials
-                  key: root_user
-            - name: MINIO_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: minio-credentials
-                  key: root_password
+            - name: MINIO_ROOT_USER_FILE
+              value: /etc/minio-credentials/root_user
+            - name: MINIO_ROOT_PASSWORD_FILE
+              value: /etc/minio-credentials/root_password
           ports:
             - name: s3-api
               containerPort: 9000
@@ -84,11 +85,29 @@ spec:
               mountPath: /data
             - name: tmp
               mountPath: /tmp
+            - name: credentials
+              mountPath: /etc/minio-credentials
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: s3-api
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: s3-api
+            initialDelaySeconds: 5
+            periodSeconds: 10
       volumes:
         - name: data
           emptyDir: {}
         - name: tmp
           emptyDir: {}
+        - name: credentials
+          secret:
+            secretName: minio-credentials
 ---
 apiVersion: v1
 kind: Service
@@ -118,41 +137,48 @@ spec:
   template:
     spec:
       restartPolicy: OnFailure
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
+        runAsUser: 10001
+        runAsGroup: 10001
         seccompProfile:
           type: RuntimeDefault
       containers:
         - name: mc
           image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+          # imagePullPolicy left at IfNotPresent — see the minio container's
+          # comment above. checkov:skip=CKV_K8S_15
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
           command:
             - sh
             - -c
             - |
               set -eu
+              MINIO_ROOT_USER="$(cat /etc/minio-credentials/root_user)"
+              MINIO_ROOT_PASSWORD="$(cat /etc/minio-credentials/root_password)"
               mc alias set velero-poc http://minio.velero-poc.svc:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
               mc mb --ignore-existing velero-poc/velero-backups
-          env:
-            - name: MINIO_ROOT_USER
-              valueFrom:
-                secretKeyRef:
-                  name: minio-credentials
-                  key: root_user
-            - name: MINIO_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: minio-credentials
-                  key: root_password
           volumeMounts:
             - name: mc-config
               mountPath: /.mc
+            - name: credentials
+              mountPath: /etc/minio-credentials
+              readOnly: true
       volumes:
         - name: mc-config
           emptyDir: {}
+        - name: credentials
+          secret:
+            secretName: minio-credentials

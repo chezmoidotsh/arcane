@@ -75,6 +75,7 @@ spec:
         # for exactly this per-pod case anyway. See README §3 for details.
         backup.velero.io/backup-volumes: data
     spec:
+      automountServiceAccountToken: false
       securityContext:
         seccompProfile:
           type: RuntimeDefault
@@ -90,6 +91,12 @@ spec:
             # Needs CAP_CHOWN/CAP_FOWNER to chown paths it doesn't already
             # own — dropping ALL would leave even uid 0 unable to chown.
             allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
