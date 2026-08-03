@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - network-policy.allow-intra-namespace.yaml
   - network-policy.allow-from-ingress-gateway.yaml
+  - network-policy.allow-pocket-id-from-newt.yaml
   - network-policy.allow-to-analytics.yaml
   - network-policy.allow-to-internet.yaml
   - network-policy.allow-postgres-to-s3-backup.yaml

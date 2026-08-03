@@ -5,6 +5,7 @@ namespace: newt-system
 
 resources:
   - newt.externalsecret.yaml
+  - newt.dnsendpoint.yaml
 
   # Include security policies
   - security/
