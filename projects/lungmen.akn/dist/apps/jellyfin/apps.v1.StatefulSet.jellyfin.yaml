@@ -16,6 +16,8 @@ spec:
   serviceName: jellyfin
   template:
     metadata:
+      annotations:
+        backup.velero.io/backup-volumes: persistent
       labels:
         app.kubernetes.io/instance: jellyfin
         app.kubernetes.io/name: jellyfin

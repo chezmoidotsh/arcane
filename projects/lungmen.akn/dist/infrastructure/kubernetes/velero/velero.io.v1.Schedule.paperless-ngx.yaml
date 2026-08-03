@@ -1,0 +1,17 @@
+---
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: paperless-ngx
+  namespace: velero-system
+spec:
+  schedule: 0 */12 * * *
+  template:
+    includedNamespaces:
+    - paperless-ngx
+    includedResources:
+    - pods
+    - persistentvolumeclaims
+    - persistentvolumes
+    storageLocation: default
+    ttl: 168h0m0s

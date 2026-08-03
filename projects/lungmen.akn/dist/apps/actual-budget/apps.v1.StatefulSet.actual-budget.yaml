@@ -16,6 +16,8 @@ spec:
   serviceName: actual-budget
   template:
     metadata:
+      annotations:
+        backup.velero.io/backup-volumes: persistent
       labels:
         app.kubernetes.io/instance: actual-budget
         app.kubernetes.io/name: actual-budget

@@ -1,0 +1,20 @@
+---
+# One Schedule per app (rather than one shared Schedule across namespaces) so each
+# app's backups have their own timeline/name prefix — simpler to target for restore
+# (`velero restore create --from-backup actual-budget-<timestamp>`) without needing
+# to filter a multi-app backup down to one namespace.
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: actual-budget
+spec:
+  schedule: "0 */12 * * *"
+  template:
+    includedNamespaces:
+      - actual-budget
+    includedResources:
+      - pods
+      - persistentvolumeclaims
+      - persistentvolumes
+    storageLocation: default
+    ttl: 168h0m0s

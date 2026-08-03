@@ -16,6 +16,8 @@ spec:
       app.kubernetes.io/name: atuin
   template:
     metadata:
+      annotations:
+        backup.velero.io/backup-volumes: atuin-data
       labels:
         app.kubernetes.io/instance: atuin
         app.kubernetes.io/name: atuin
