@@ -149,7 +149,7 @@ Components in `catalog/fluxcd/` exist for the legacy `maison` cluster, which is 
 ### Secrets
 
 - Source of truth: **OpenBao** at `https://vault.chezmoi.sh`.
-- KV mounts follow `projects-<cluster>/` and `shared/`.
+- KV mounts follow `<cluster>/` (e.g. `amiya.akn/`), plus `shared/` and `personal/`.
 - **External Secrets Operator** syncs OpenBao → Kubernetes `Secret` objects.
 - **SOPS + age** encrypts secrets that must live in Git; key path is `SOPS_AGE_KEY_FILE`.
 - Never commit plaintext secrets. Network policies are mandatory for any app touching secrets.
