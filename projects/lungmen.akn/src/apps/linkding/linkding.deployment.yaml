@@ -94,6 +94,12 @@ spec:
             httpGet:
               path: /health
               port: http
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
