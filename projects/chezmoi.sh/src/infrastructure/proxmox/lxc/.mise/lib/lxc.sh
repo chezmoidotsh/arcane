@@ -563,10 +563,21 @@ lxc_upgrade() {
   fi
   _ok "NixOS activation passed"
 
-  _lxc_ssh "${pve_host}" "pct exec ${smoke_id} -- /run/current-system/sw/bin/bash -lc '
-    systemctl is-system-running
+  local systemd_check
+  systemd_check=$(_lxc_ssh "${pve_host}" "pct exec ${smoke_id} -- /run/current-system/sw/bin/bash -lc '
+    systemctl is-system-running || true
     systemctl --failed --no-legend
-  '" >&2 || true
+  '" || true)
+  echo "${systemd_check}" >&2
+
+  local failed_units
+  failed_units=$(tail -n +2 <<< "${systemd_check}")
+  if [[ -n ${failed_units} ]]; then
+    _fail "Smoke test failed — systemd unit(s) not running: $(tr '\n' ',' <<< "${failed_units}" | sed 's/,$//')"
+    _lxc_ssh "${pve_host}" "pct stop ${smoke_id}" 2>/dev/null || true
+    _lxc_ssh "${pve_host}" "pct destroy ${smoke_id}" 2>/dev/null || true
+    return 1
+  fi
 
   _lxc_ssh "${pve_host}" "pct stop ${smoke_id}; pct destroy ${smoke_id}"
   _ok "Smoke test passed — temporary CT ${smoke_id} destroyed"
