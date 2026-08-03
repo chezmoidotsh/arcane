@@ -97,6 +97,12 @@ spec:
           runAsGroup: 23281
           runAsNonRoot: true
           runAsUser: 23281
+        startupProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /health
+            port: http
+          periodSeconds: 5
         volumeMounts:
         - mountPath: /etc/linkding/data
           name: linkding-data
