@@ -15,7 +15,7 @@ new vault.kv.SecretV2(
 	"lungmen-akn-newt-vault-secret",
 	{
 		mount: "lungmen.akn",
-		name: "third-parties/pangolin/newt/lungmen.akn",
+		name: "pangolin/newt/site",
 		dataJson: pulumi.jsonStringify({
 			endpoint: "https://pangolin.chezmoi.sh",
 			token_id: site.newtId,
