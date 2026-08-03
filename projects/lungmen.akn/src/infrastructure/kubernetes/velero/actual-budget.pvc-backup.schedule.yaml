@@ -15,6 +15,10 @@ spec:
     includedResources:
       - pods
       - persistentvolumeclaims
+      # PersistentVolume is cluster-scoped but Velero still correlates it to
+      # includedNamespaces via spec.claimRef.namespace — see jellyfin's Schedule
+      # for the full reasoning (verified live, and dropping this was tried and
+      # reverted).
       - persistentvolumes
     storageLocation: default
     ttl: 168h0m0s

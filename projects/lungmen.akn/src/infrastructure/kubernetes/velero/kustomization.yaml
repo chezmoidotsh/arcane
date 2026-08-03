@@ -29,6 +29,11 @@ patches:
   # same wave as the BackupStorageLocation CR it must create the CRD for first — failing
   # with "could not find velero.io/BackupStorageLocation ... CRD is installed". Translating
   # to an ArgoCD PreSync hook restores the "CRDs before CRs" ordering Helm would have given.
+  #
+  # Its ServiceAccount and ClusterRole/ClusterRoleBinding need the exact same PreSync hook
+  # treatment: ArgoCD applies every PreSync hook before any plain Sync-phase resource, so
+  # without this the Job would run before its own RBAC exists on a genuinely fresh install
+  # (a pod stuck on "ServiceAccount not found" that ArgoCD would then wait on forever).
   - target:
       kind: Job
       name: velero-upgrade-crds
@@ -39,6 +44,27 @@ patches:
       - op: add
         path: /metadata/annotations/argocd.argoproj.io~1hook-delete-policy
         value: HookSucceeded
+  - target:
+      kind: ServiceAccount
+      name: velero-server-upgrade-crds
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1hook
+        value: PreSync
+  - target:
+      kind: ClusterRole
+      name: velero-upgrade-crds
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1hook
+        value: PreSync
+  - target:
+      kind: ClusterRoleBinding
+      name: velero-upgrade-crds
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1hook
+        value: PreSync
 
 images:
   - name: docker.io/velero/velero

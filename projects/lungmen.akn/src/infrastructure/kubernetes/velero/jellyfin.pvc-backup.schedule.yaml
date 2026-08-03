@@ -15,6 +15,13 @@ spec:
     includedResources:
       - pods
       - persistentvolumeclaims
+      # PersistentVolume is cluster-scoped, but Velero still correlates it to
+      # includedNamespaces via spec.claimRef.namespace — confirmed live: this
+      # namespace's 5 PVs made it in, not all 32 cluster-wide. Dropping this
+      # was tried and reverted: PVs aren't pulled in as a related item the way
+      # PVCs are from Pods, so omitting it silently drops the PV manifest
+      # entirely (matters for our statically-bound SMB volumes, which have no
+      # provisioner to recreate them on restore without it).
       - persistentvolumes
     storageLocation: default
     ttl: 168h0m0s
