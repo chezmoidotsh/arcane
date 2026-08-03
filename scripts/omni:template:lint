@@ -48,8 +48,12 @@ valid_ipv4() {
 
 # ADR-014: every Talos/Omni CIDR must live inside 172.16.0.0/12. Validates
 # the full IPv4 (all four octets) and, if a CIDR prefix is present, that it
-# is a non-empty 0-32 value — not just the two octets the range check
-# itself inspects, and not a bare trailing "/" with nothing after it.
+# is a non-empty 12-32 value — not just the two octets the range check
+# itself inspects, and not a bare trailing "/" with nothing after it. A
+# prefix shorter than /12 must be rejected even if the base address happens
+# to fall in range: the base address landing in 172.16.0.0/12 only proves a
+# single point is in range, not that the whole (wider) block is contained
+# within it — e.g. 172.16.0.0/1 covers half the entire IPv4 space.
 in_adr014_range() {
   local value="$1" ip="${1%%/*}" prefix=""
 
@@ -57,7 +61,7 @@ in_adr014_range() {
   if [[ ${value} == *"/"* ]]; then
     prefix="${value#*/}"
     [[ ${prefix} =~ ^${_OCTET_RE}$ ]] || return 1
-    ((10#${prefix} <= 32)) || return 1
+    ((10#${prefix} >= 12 && 10#${prefix} <= 32)) || return 1
   fi
 
   local o1 rest o2
