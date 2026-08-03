@@ -5,15 +5,19 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: plugin-barman-cloud
-  name: objectstore-viewer-role
+  name: barman-plugin-objectstore-editor-role
 rules:
 - apiGroups:
   - barmancloud.cnpg.io
   resources:
   - objectstores
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - barmancloud.cnpg.io

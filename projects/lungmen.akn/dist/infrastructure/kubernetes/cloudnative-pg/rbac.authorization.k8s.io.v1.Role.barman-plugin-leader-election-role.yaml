@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: plugin-barman-cloud
-  name: leader-election-role
+  name: barman-plugin-leader-election-role
   namespace: cloudnative-pg-system
 rules:
 - apiGroups:
