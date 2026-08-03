@@ -20,9 +20,9 @@ export const linkdingOidcClient = new pocketid.oidc.OidcClients(
 		name: "Bookmarks",
 		description: "Gestionnaire de favoris",
 		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/linkding-light.svg",
-		darkLogoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/linkding-dark.svg",
+		darkLogoUrl:
+			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/linkding-light.svg",
 		launchURL: "https://bookmarks.chezmoi.sh",
 		callbackURLs: ["https://bookmarks.chezmoi.sh/oidc/callback/"],
 		isGroupRestricted: true,

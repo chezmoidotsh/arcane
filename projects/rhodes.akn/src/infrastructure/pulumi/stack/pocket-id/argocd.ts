@@ -21,9 +21,9 @@ export const argocdOidcClient = new pocketid.oidc.OidcClients(
 		name: "ArgoCD",
 		description: "Déploiement continu (GitOps)",
 		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-light.svg",
-		darkLogoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-dark.svg",
+		darkLogoUrl:
+			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-light.svg",
 		launchURL: "https://argocd.akn.chezmoi.sh/",
 		callbackURLs: ["https://argocd.akn.chezmoi.sh/auth/callback"],
 		isGroupRestricted: true,

@@ -17,9 +17,9 @@ export const immichOidcClient = new pocketid.oidc.OidcClients(
 		name: "Photos",
 		description: "Sauvegarde et partage de photos/vidéos",
 		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/immich-light.svg",
-		darkLogoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/immich-dark.svg",
+		darkLogoUrl:
+			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/immich-light.svg",
 		launchURL: "https://photos.chezmoi.sh",
 		callbackURLs: [
 			"app.immich:///oauth-callback",

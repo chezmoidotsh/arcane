@@ -20,9 +20,9 @@ export const paperlessNgxOidcClient = new pocketid.oidc.OidcClients(
 		name: "Archives",
 		description: "Archivage et gestion de documents",
 		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/paperless-ngx-light.svg",
-		darkLogoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/paperless-ngx-dark.svg",
+		darkLogoUrl:
+			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/paperless-ngx-light.svg",
 		launchURL: "https://paperless.chezmoi.sh",
 		callbackURLs: [
 			"https://paperless.chezmoi.sh/accounts/oidc/pocket-id/login/callback/",

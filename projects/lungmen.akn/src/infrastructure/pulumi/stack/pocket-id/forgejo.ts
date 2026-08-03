@@ -17,9 +17,9 @@ export const forgejoOidcClient = new pocketid.oidc.OidcClients(
 		name: "Forgejo",
 		description: "Hébergement Git",
 		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/forgejo-light.svg",
-		darkLogoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/forgejo-dark.svg",
+		darkLogoUrl:
+			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/forgejo-light.svg",
 		launchURL: "https://git.chezmoi.sh",
 		callbackURLs: [
 			"https://git.chezmoi.sh/user/oauth2/auth.chezmoi.sh/callback",

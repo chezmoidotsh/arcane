@@ -14,9 +14,9 @@ export const vaultOidcClient = new pocketid.oidc.OidcClients(
 		// "Vault" for protocol/UI-compat reasons, so use OpenBao's icon, not a
 		// nonexistent "vault" one.
 		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/openbao-light.svg",
-		darkLogoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/openbao-dark.svg",
+		darkLogoUrl:
+			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/openbao-light.svg",
 		launchURL: "https://vault.chezmoi.sh/ui/vault/auth?with=pocket-id%2F",
 		callbackURLs: [
 			"https://vault.chezmoi.sh/ui/vault/auth/pocket-id/oidc/callback",
