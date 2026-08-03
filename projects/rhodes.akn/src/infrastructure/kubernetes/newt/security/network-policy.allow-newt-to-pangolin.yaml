@@ -1,0 +1,22 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Newt to connect to the Pangolin API and tunnel endpoint.
+  name: allow-newt-to-pangolin
+  namespace: newt-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: newt
+  egress:
+    - toFQDNs:
+        - matchName: "pangolin.chezmoi.sh"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+        - ports:
+            - port: "51820"
+              protocol: UDP

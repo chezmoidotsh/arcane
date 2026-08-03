@@ -1,0 +1,23 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Permits intra-namespace communication in the newt-system namespace.
+      DNS is not repeated here -- the cluster-wide allow-dns
+      CiliumClusterwideNetworkPolicy already covers every namespaced pod.
+  labels:
+    app.kubernetes.io/name: newt
+  name: allow-intra-namespace
+  namespace: newt-system
+spec:
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: newt-system
+  endpointSelector: {}
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: newt-system
