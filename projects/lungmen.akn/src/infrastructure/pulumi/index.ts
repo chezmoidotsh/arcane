@@ -4,3 +4,4 @@ export * from "./stack/pangolin";
 export * from "./stack/pocket-id";
 export * from "./stack/tailscale-operator";
 export * from "./stack/vault";
+export * from "./stack/velero";
