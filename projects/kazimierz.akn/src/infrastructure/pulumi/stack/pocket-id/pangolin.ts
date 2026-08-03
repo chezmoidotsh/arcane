@@ -20,9 +20,9 @@ export const pangolinOidcClient = new pocketid.oidc.OidcClients(
 		name: "Pangolin",
 		description: "Tunnel / reverse-proxy d'accès public",
 		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/pangolin-light.svg",
-		darkLogoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/pangolin-dark.svg",
+		darkLogoUrl:
+			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/pangolin-light.svg",
 		launchURL: "https://pangolin.chezmoi.sh/",
 		callbackURLs: ["https://pangolin.chezmoi.sh/auth/idp/2/oidc/callback"], // TODO: use idp callback value to configure it
 		isGroupRestricted: true,

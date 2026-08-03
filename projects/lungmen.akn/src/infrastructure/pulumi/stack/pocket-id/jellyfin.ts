@@ -13,9 +13,9 @@ export const jellyfinOidcClient = new pocketid.oidc.OidcClients(
 		name: "Streaming",
 		description: "Films, séries et musique",
 		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/jellyfin-light.svg",
-		darkLogoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/jellyfin-dark.svg",
+		darkLogoUrl:
+			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/jellyfin-light.svg",
 		launchURL: "https://streaming.chezmoi.sh/sso/OID/start/pocket-id",
 		callbackURLs: ["https://streaming.chezmoi.sh/sso/OID/redirect/pocket-id"],
 		isGroupRestricted: true,

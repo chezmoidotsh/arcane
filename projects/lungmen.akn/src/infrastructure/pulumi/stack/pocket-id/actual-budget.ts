@@ -20,9 +20,9 @@ export const actualBudgetOidcClient = new pocketid.oidc.OidcClients(
 		name: "Gestion du budget",
 		description: "Suivi du budget",
 		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/actual-budget-light.svg",
-		darkLogoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/actual-budget-dark.svg",
+		darkLogoUrl:
+			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/actual-budget-light.svg",
 		launchURL: "https://budget.chezmoi.sh",
 		callbackURLs: ["https://budget.chezmoi.sh/openid/callback"],
 		isGroupRestricted: true,
