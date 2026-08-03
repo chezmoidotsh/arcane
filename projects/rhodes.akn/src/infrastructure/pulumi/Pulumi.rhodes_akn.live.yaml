@@ -10,3 +10,5 @@ config:
   vault:vaultVersionOverride: 2.2.2
   pocket-id-api:baseUrl: https://auth.chezmoi.sh
   pocket-id-api:apiKeyHeader: X-API-KEY
+  pangolin:orgId: chezmoi-sh
+  pangolin:url: https://kazimierz-akn.tail831c5d.ts.net

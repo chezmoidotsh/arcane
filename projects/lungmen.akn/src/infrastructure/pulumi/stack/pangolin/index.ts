@@ -1,0 +1,38 @@
+import { vaultSecretMetadata } from "@chezmoi.sh/pulumi-lib";
+import * as pangolin from "@pulumi/pangolin";
+import * as pulumi from "@pulumi/pulumi";
+import * as vault from "@pulumi/vault";
+
+// No Docker host behind this site -- Newt runs as a Kubernetes pod.
+const site = new pangolin.Site("lungmen.akn", {
+	name: "lungmen.akn",
+	dockerSocketEnabled: false,
+});
+
+// Newt reads endpoint/token_id/token_secret from this exact Vault path --
+// see infrastructure/kubernetes/newt/newt.externalsecret.yaml.
+new vault.kv.SecretV2(
+	"lungmen-akn-newt-vault-secret",
+	{
+		mount: "lungmen.akn",
+		name: "pangolin/newt/site",
+		dataJson: pulumi.jsonStringify({
+			endpoint: "https://pangolin.chezmoi.sh",
+			token_id: site.newtId,
+			token_secret: site.newtSecret,
+		}),
+		customMetadata: {
+			data: {
+				description: "Pangolin Newt site credentials for lungmen.akn",
+				application: "pangolin",
+				...vaultSecretMetadata(site),
+			},
+		},
+	},
+	{ parent: site },
+);
+
+export const lungmenSiteId = site.siteId;
+
+export * from "./immich";
+export * from "./jellyfin";

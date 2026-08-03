@@ -222,6 +222,9 @@ importers:
 
   catalog/pulumi/lib:
     dependencies:
+      '@pulumi/pangolin':
+        specifier: workspace:*
+        version: link:../sdks/pangolin
       '@pulumi/pocket-id':
         specifier: workspace:*
         version: link:../sdks/pocket-id
@@ -451,6 +454,9 @@ importers:
       '@pulumi/oci':
         specifier: 'catalog:'
         version: 4.20.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pangolin':
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/sdks/pangolin
       '@pulumi/pocket-id':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/sdks/pocket-id
@@ -479,6 +485,9 @@ importers:
       '@chezmoi.sh/pulumi-lib':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/lib
+      '@pulumi/pangolin':
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/sdks/pangolin
       '@pulumi/pocket-id':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/sdks/pocket-id
@@ -522,6 +531,9 @@ importers:
       '@pulumi/kubernetes':
         specifier: 'catalog:'
         version: 4.33.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pangolin':
+        specifier: workspace:*
+        version: link:../../../../../catalog/pulumi/sdks/pangolin
       '@pulumi/pocket-id':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/sdks/pocket-id
