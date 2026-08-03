@@ -110,7 +110,7 @@ rootfs).
 ```text
 .
 ├── README.md              ← you are here
-├── flake.nix              ← LXC image build (nixos-generators)
+├── flake.nix              ← LXC image build (nixos-rebuild build-image)
 ├── flake.lock             ← pinned inputs
 ├── configuration.nix      ← site identity, Omni / Dex options, fixed uid
 ├── .mise.toml             ← mise tasks (build / push / secrets)

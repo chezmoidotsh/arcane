@@ -157,7 +157,7 @@ Architecture diagram source: [`architecture.d2`](./architecture.d2).
 .
 ├── README.md              ← you are here
 ├── architecture.d2        ← diagram source (→ assets/architecture.svg)
-├── flake.nix              ← LXC image build (nixos-generators) + image version
+├── flake.nix              ← LXC image build (nixos-rebuild build-image) + image version
 ├── flake.lock             ← pinned inputs
 ├── configuration.nix      ← site identity, shared `o11y` user, console toolbox
 ├── config/

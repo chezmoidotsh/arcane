@@ -84,8 +84,6 @@
   # pve-exporter LXC, which now owns syslog ingest and forwards parsed events
   # here. Vector's OTLP (:4317/:4318) ports bind loopback only and need no
   # firewall rule.
-  # Do NOT use lib.mkDefault for allowedTCPPorts — nixos-generators' lxc format
-  # sets it to [] at normal priority and would silently win over mkDefault (1000).
   networking.firewall.enable = lib.mkDefault true;
 
   # UDP 41641 enables direct (non-DERP) Tailscale WireGuard connections. tsnet
