@@ -10,8 +10,8 @@ show_usage() {
 Usage: $(basename "$0") [--no-sandbox] [--impure] [--system <platform>] [--output-name <basename>] <path-to-flake-dir>
 
 Builds a Proxmox LXC template from a NixOS flake using a Docker-wrapped Nix build.
-Tarballs are written alongside flake.nix. Without --output-name, files keep their
-default nixpkgs image name (nixos-image-lxc-*.tar.xz).
+Tarballs are written alongside flake.nix. Without --output-name, files keep
+  their default nixpkgs image name (nixos-image-lxc-*.tar.xz).
 
 Options:
   --no-sandbox             Disable Nix sandbox (useful in certain CI environments)
