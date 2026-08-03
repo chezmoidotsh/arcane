@@ -1,4 +1,4 @@
-import { blockHighRiskCountries } from "@chezmoi.sh/pulumi-lib";
+import { blockHighRiskCountries, must } from "@chezmoi.sh/pulumi-lib";
 import * as pangolin from "@pulumi/pangolin";
 
 import { lungmenSiteId } from "./index";
@@ -10,11 +10,13 @@ import { lungmenSiteId } from "./index";
 export const streamingResource = new pangolin.Resource("streaming-chezmoi-sh", {
 	name: "Streaming",
 	mode: "http",
-	domainId: pangolin
-		.getDomainsOutput()
-		.apply(
-			(r) => r.domains.find((d) => d.baseDomain === "chezmoi.sh")!.domainId,
-		),
+	domainId: pangolin.getDomainsOutput().apply(
+		(r) =>
+			must(
+				r.domains.find((d) => d.baseDomain === "chezmoi.sh"),
+				"chezmoi.sh base domain not found in Pangolin",
+			).domainId,
+	),
 	subdomain: "streaming",
 	sso: false,
 	applyRules: true,
