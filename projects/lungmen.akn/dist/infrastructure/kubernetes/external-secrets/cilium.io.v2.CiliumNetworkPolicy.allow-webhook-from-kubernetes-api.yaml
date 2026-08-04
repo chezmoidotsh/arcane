@@ -1,0 +1,27 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Kubernetes API server to reach the external-secrets admission webhook.
+      Both externalsecret-validate and secretstore-validate ValidatingWebhookConfigurations
+      set failurePolicy: Fail, and allow-intra-namespace only allows intra-namespace ingress —
+      without this rule the apiserver's admission calls are dropped and all
+      ExternalSecret/SecretStore writes are rejected. Also allows remote-node: BPF masquerade
+      SNATs the apiserver's call before it reaches this cross-node webhook (control-plane is
+      NoSchedule-tainted), so it lands as remote-node instead of kube-apiserver.
+  name: allow-webhook-from-kubernetes-api
+  namespace: external-secrets-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: external-secrets-webhook
+  ingress:
+  - fromEntities:
+    - kube-apiserver
+    - remote-node
+    toPorts:
+    - ports:
+      - port: "10250"
+        protocol: TCP

@@ -18,6 +18,7 @@ helmCharts:
 
 resources:
   - ../../../../../../catalog/kubernetes/external-secrets/kustomize
+  - security/
 
 patches:
   - patch: |-
