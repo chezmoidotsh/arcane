@@ -570,8 +570,21 @@ lxc_upgrade() {
   '" || true)
   echo "${systemd_check}" >&2
 
+  # Known false-positives in the disposable smoke-test CT, not signals of a
+  # broken image:
+  #   - network-addresses-eth{0,1}.service: `pct create` here never clones
+  #     the source CT's net0/net1, so these interfaces don't exist in the
+  #     smoke CT and the unit has nothing to configure. Cloning real bridged
+  #     NICs instead would make the smoke CT bring up the same static IPs as
+  #     the live CT (baked into the image by
+  #     catalog/nix/modules/lxc-static-network and any per-site
+  #     networking.interfaces.<if> config) — a real duplicate-IP conflict on
+  #     the live network, worse than the false-positive it would fix.
+  #   - sys-kernel-debug.mount: debugfs isn't available in every LXC
+  #     profile; harmless and unrelated to image correctness.
   local failed_units
-  failed_units=$(tail -n +2 <<< "${systemd_check}")
+  failed_units=$(tail -n +2 <<< "${systemd_check}" \
+    | grep -vE 'network-addresses-eth[0-9]+\.service|sys-kernel-debug\.mount' || true)
   if [[ -n ${failed_units} ]]; then
     _fail "Smoke test failed — systemd unit(s) not running: $(tr '\n' ',' <<< "${failed_units}" | sed 's/,$//')"
     _lxc_ssh "${pve_host}" "pct stop ${smoke_id}" 2>/dev/null || true
