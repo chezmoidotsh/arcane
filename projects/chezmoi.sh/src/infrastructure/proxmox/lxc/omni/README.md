@@ -68,6 +68,10 @@ flowchart TB
 - **Omni UI/API** binds on `127.0.0.1:8443` (loopback, PKI TLS). **Dex** binds on `127.0.0.1:5557` (loopback, plain
   HTTP). Both are only reachable through Caddy.
 - **No SSH.** Console access goes through `pct enter <vmid>` on the Proxmox host.
+- **Session lifetime** — Dex issues ID tokens valid for **24h**, with refresh tokens valid for **7 days** (both
+  unused-window and absolute lifetime), configured via `services.omni.dex.expiry` in `configuration.nix`. 24h was chosen
+  over the stricter 12h option since this is a single-admin homelab login, not a multi-tenant system; tighten it in
+  `configuration.nix` if that trade-off changes.
 
 ### Host kernel prerequisites — WireGuard + TUN device
 

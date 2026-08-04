@@ -195,6 +195,16 @@
         username = "admin";
         hashEnvVar = "DEX_ADMIN_PASSWORD_HASH";
       }];
+      # Single-admin personal homelab login, not a high-security multi-tenant
+      # system — 24h ID tokens and a 7-day refresh window trade a little
+      # session-hijack exposure for not having to re-authenticate daily.
+      expiry = {
+        idTokens = "24h";
+        refreshTokens = {
+          validIfNotUsedFor = "168h"; # 7 days
+          absoluteLifetime = "168h"; # 7 days
+        };
+      };
       # Set to a nix-store file so dex.nix can read DEX_ADMIN_PASSWORD_HASH
       # at Nix eval time (builtins.readFile only works on build-accessible
       # paths). When dexAdminPasswordHash is empty (pure build), null so

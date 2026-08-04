@@ -84,6 +84,41 @@ in
         [{ email = "admin@example.com"; username = "admin"; hashEnvVar = "DEX_ADMIN_PASSWORD_HASH"; }]
       '';
     };
+
+    expiry = {
+      idTokens = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        example = "24h";
+        description = ''
+          ID-token lifetime, as a Go duration string. Left unset (null),
+          Dex uses its own compiled-in default.
+        '';
+      };
+
+      refreshTokens = {
+        validIfNotUsedFor = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          example = "168h";
+          description = ''
+            How long an unused refresh token stays valid, as a Go duration
+            string. Left unset (null), Dex uses its own compiled-in default.
+          '';
+        };
+
+        absoluteLifetime = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          example = "168h";
+          description = ''
+            Maximum lifetime of a refresh token regardless of use, as a Go
+            duration string. Left unset (null), Dex uses its own
+            compiled-in default.
+          '';
+        };
+      };
+    };
   };
 
   config =
@@ -128,6 +163,16 @@ in
           hash = mkHashOrEmpty u;
         })
         dex.users;
+
+      # Only emit expiry.* keys the user actually set — an unset option must
+      # fall through to Dex's own compiled-in default, not a guessed value.
+      refreshTokensBlock = lib.filterAttrs (_: v: v != null) {
+        inherit (dex.expiry.refreshTokens) validIfNotUsedFor absoluteLifetime;
+      };
+      expiryBlock = lib.filterAttrs (_: v: v != null && v != { }) {
+        idTokens = dex.expiry.idTokens;
+        refreshTokens = lib.optionalAttrs (refreshTokensBlock != { }) refreshTokensBlock;
+      };
     in
     lib.mkIf (cfg.enable && dex.enable) {
       services.dex = {
@@ -157,7 +202,7 @@ in
           }];
 
           staticPasswords = passwordUsers;
-        };
+        } // lib.optionalAttrs (expiryBlock != { }) { expiry = expiryBlock; };
       };
     };
 }
