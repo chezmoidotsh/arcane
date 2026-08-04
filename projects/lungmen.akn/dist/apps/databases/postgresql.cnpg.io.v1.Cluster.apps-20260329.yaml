@@ -21,22 +21,6 @@ spec:
   instances: 1
   managed:
     roles:
-    - comment: Managed role for atuin/atuin
-      connectionLimit: -1
-      ensure: present
-      inherit: true
-      login: true
-      name: atuin
-      passwordSecret:
-        name: cnpg.apps-atuin-atuin-credentials
-    - comment: Managed role for n8n/n8n
-      connectionLimit: -1
-      ensure: present
-      inherit: true
-      login: true
-      name: n8n
-      passwordSecret:
-        name: cnpg.apps-n8n-n8n-credentials
     - comment: Managed role for linkding/linkding
       connectionLimit: -1
       ensure: present
@@ -45,14 +29,6 @@ spec:
       name: linkding
       passwordSecret:
         name: cnpg.apps-linkding-linkding-credentials
-    - comment: Managed role for forgejo/forgejo
-      connectionLimit: -1
-      ensure: present
-      inherit: true
-      login: true
-      name: forgejo
-      passwordSecret:
-        name: cnpg.apps-forgejo-forgejo-credentials
   plugins:
   - enabled: true
     isWALArchiver: false

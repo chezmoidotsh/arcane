@@ -4,7 +4,6 @@
 # Manages all database infrastructure for lungmen.akn:
 #   - Two CNPG clusters via the mutualized-cnpg-databases Helm chart
 #   - ObjectStore resources for S3 backup
-#   - Qdrant vector database (independent of CNPG)
 #   - Namespace-level security baseline (incl. S3 backup egress policies)
 #
 # Chart: catalog/helm/mutualized-cnpg-databases (referenced via helmGlobals.chartHome)
@@ -18,9 +17,7 @@
 # Resources NOT managed by the chart (kept as standalone manifests):
 #   - ObjectStore CRs (barmancloud.cnpg.io/v1) — one per cluster, in *.objectstore.yaml
 #   - cnpg-backup-credentials ExternalSecret — shared S3 credentials for both clusters
-#   - Qdrant (vector database, unrelated to CNPG PostgreSQL)
 #   - default-hardened CiliumNetworkPolicy (namespace-wide baseline, not cluster-specific)
-#   - allow-qdrant-from-n8n CiliumNetworkPolicy (Qdrant-specific, not CNPG)
 #   - allow-cnpg-to-s3-backup CiliumNetworkPolicy (S3 backup egress, uses operator:Exists — cluster-name-agnostic)
 #
 # Resources managed by the chart (DO NOT duplicate here):
