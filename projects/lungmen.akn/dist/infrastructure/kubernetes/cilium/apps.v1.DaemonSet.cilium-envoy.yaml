@@ -5,6 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: cilium-envoy
     app.kubernetes.io/part-of: cilium
+    helm.sh/chart: cilium-1.20.0
     k8s-app: cilium-envoy
     name: cilium-envoy
   name: cilium-envoy
@@ -19,6 +20,7 @@ spec:
       labels:
         app.kubernetes.io/name: cilium-envoy
         app.kubernetes.io/part-of: cilium
+        helm.sh/chart: cilium-1.20.0
         k8s-app: cilium-envoy
         name: cilium-envoy
     spec:
@@ -67,7 +69,7 @@ spec:
           value: localhost
         - name: KUBERNETES_SERVICE_PORT
           value: "7445"
-        image: quay.io/cilium/cilium-envoy:v1.36.6-1778235340-b87d1e32f522b33bd51701c6476d199326f01496@sha256:71d4fa0ec45e8d546dbd5604e169dc77fe92be63b799313bff031d00d89762e3
+        image: oci.chezmoi.sh/quay.io/cilium/cilium-envoy:v1.37.5-1782911245-7cffc778c923f68a77954a53b1a98d6b5353f004@sha256:583057dd4f7d54cd41efff3c413aa0b148ac201f522e2c3336851fa89c78b039
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 10
@@ -76,6 +78,7 @@ spec:
             path: /healthz
             port: 9878
             scheme: HTTP
+          initialDelaySeconds: 0
           periodSeconds: 30
           successThreshold: 1
           timeoutSeconds: 5
@@ -92,6 +95,7 @@ spec:
             path: /healthz
             port: 9878
             scheme: HTTP
+          initialDelaySeconds: 0
           periodSeconds: 30
           successThreshold: 1
           timeoutSeconds: 5
@@ -115,6 +119,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 2
           successThreshold: 1
+          timeoutSeconds: 5
         terminationMessagePolicy: FallbackToLogsOnError
         volumeMounts:
         - mountPath: /var/run/cilium/envoy/sockets
@@ -130,6 +135,7 @@ spec:
           mountPropagation: HostToContainer
           name: bpf-maps
       hostNetwork: true
+      hostUsers: true
       nodeSelector:
         kubernetes.io/os: linux
       priorityClassName: system-node-critical

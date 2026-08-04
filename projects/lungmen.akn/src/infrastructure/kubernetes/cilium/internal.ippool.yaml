@@ -1,0 +1,18 @@
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: internal
+spec:
+  # Opt-in only: without a restrictive selector this pool would compete with "external" as a
+  # second catch-all for every unlabeled Service. Only Services/Gateways explicitly requesting
+  # this pool (spec.infrastructure.labels on a Gateway, or the io.cilium/lb-ipam-pool annotation)
+  # get an IP from here.
+  serviceSelector:
+    matchLabels:
+      io.cilium/lb-ipam-pool: internal
+  blocks:
+    # lungmen.akn's 2-address slice of the internal talosnet range — docs/network/ipam.md
+    # "Internal LoadBalancer Pools (talosnet)" (10.128.0.242-243).
+    - start: 10.128.0.242
+      stop: 10.128.0.243

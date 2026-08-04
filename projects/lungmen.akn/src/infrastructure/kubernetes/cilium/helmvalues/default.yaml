@@ -1,0 +1,149 @@
+---
+# Cilium Helm Values Configuration
+# This file contains the default configuration values for deploying Cilium on Talos Linux
+# Reference: https://www.talos.dev/latest/kubernetes-guides/network/deploying-cilium/#installation-using-helm
+
+# Image registry overrides
+# lungmen-akn's nodes have no direct internet egress for image pulls -- every image must
+# go through the oci.chezmoi.sh pull-through cache, mirrored under
+# oci.chezmoi.sh/<upstream-registry>/<upstream-path> (same pattern as external-dns's
+# kustomize image override). Only the components actually enabled below need one.
+image:
+  repository: oci.chezmoi.sh/quay.io/cilium/cilium
+
+envoy:
+  image:
+    repository: oci.chezmoi.sh/quay.io/cilium/cilium-envoy
+
+certgen:
+  image:
+    repository: oci.chezmoi.sh/quay.io/cilium/certgen
+
+# Cilium Operator Configuration
+operator:
+  replicas: 1
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 100%
+  image:
+    repository: oci.chezmoi.sh/quay.io/cilium/operator
+
+# IP Address Management (IPAM) Configuration
+# Specifies how Cilium manages IP addresses for pods
+# 'kubernetes' mode uses the Kubernetes API to manage IP addresses
+ipam:
+  mode: kubernetes
+
+# Kube-Proxy Replacement
+# When enabled, Cilium replaces kube-proxy functionality for service handling
+# This provides better performance and more features than the standard kube-proxy
+kubeProxyReplacement: true
+
+# Security Context Configuration
+# Defines the Linux capabilities required by Cilium components
+# These capabilities are necessary for Cilium to function properly
+securityContext:
+  capabilities:
+    # Capabilities for the Cilium agent
+    # Required for network management, system operations, and security features
+    ciliumAgent:
+      - CHOWN
+      - KILL
+      - NET_ADMIN
+      - NET_RAW
+      - IPC_LOCK
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    # Capabilities for cleaning up Cilium state
+    cleanCiliumState:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+
+# Cgroup Configuration
+# Controls how Cilium interacts with cgroups
+# Disabled auto-mounting as it's handled by the container runtime
+cgroup:
+  autoMount:
+    enabled: false
+  # Path to the host's cgroup filesystem
+  hostRoot: /sys/fs/cgroup
+
+# Kubernetes Service Configuration
+# Specifies how Cilium connects to the Kubernetes API server
+# Using localhost and port 7445 for Talos Linux compatibility
+k8sServiceHost: localhost
+k8sServicePort: 7445
+
+# K8s Client Rate Limit Configuration
+# Controls the rate limit for the Kubernetes client, required because
+# L2 announcements increase the number of requests to the Kubernetes API server
+k8sClientRateLimit:
+  qps: 5 # NOTE: increase this if you see the rate limit being hit
+  burst: 20 # NOTE: increase this if you see the rate limit being hit
+
+# L2 Announcements Configuration
+# Enables L2 announcements for the cluster
+l2announcements:
+  enabled: true
+
+# eth0 (VLAN5 trunk, no IP - dual-NIC V2 layout, see the machine class comments)
+# is excluded by Cilium's default device auto-detection, which only selects
+# interfaces that carry an IP/default route. Without an explicit devices list,
+# eth0 is never "Selected" (confirm with `cilium-dbg shell -- db/show devices`),
+# so L2 announcement never actually ARPs for any LoadBalancer IP on VLAN5
+# despite a leader being elected for it - every external client gets "no
+# route to host" reaching the Gateway's IP. eth1 (talosnet SDN, has a DHCP IP)
+# is selected by default already; listed here anyway to keep this explicit
+# and not rely on auto-detection for either interface.
+devices:
+  - eth0
+  - eth1
+
+# BPF masquerading is required for BPF host routing (enable-host-legacy-routing=false).
+# Without it, Cilium falls back to legacy (kernel) host routing, which breaks reply
+# traffic for any userspace-terminated service (e.g. the Gateway API's embedded Envoy) on
+# eth0: the kernel has no IPv4 route on that interface (VLAN5 trunk, no IP, see dual-nic
+# machine patch), so replies for external clients take the only default route (via eth1,
+# talosnet) and never make it back. BPF host routing keeps replies symmetric with their
+# ingress device, sidestepping kernel routing entirely for this path.
+bpf:
+  masquerade: true
+
+gatewayAPI:
+  enabled: true
+  externalTrafficPolicy: Cluster
+  gatewayClass:
+    # Force GatewayClass creation unconditionally. The default "auto" relies on
+    # .Capabilities.APIVersions which is empty during local Helm rendering (kustomize
+    # build / dist:render), causing the GatewayClass to be silently skipped in dist/.
+    # Forcing "true" ensures the manifest is always emitted regardless of whether the
+    # Gateway API CRDs are detectable at render time.
+    create: "true"
+
+# Hubble Observability (flow visibility + UI)
+# hubble.enabled is already true by default; relay/UI are opt-in.
+hubble:
+  relay:
+    enabled: true
+    image:
+      repository: oci.chezmoi.sh/quay.io/cilium/hubble-relay
+  ui:
+    enabled: true
+    backend:
+      image:
+        repository: oci.chezmoi.sh/quay.io/cilium/hubble-ui-backend
+    frontend:
+      image:
+        repository: oci.chezmoi.sh/quay.io/cilium/hubble-ui
+  tls:
+    auto:
+      # cronJob runs cert generation as a Kubernetes Job against the live API,
+      # so it only creates certs that are missing (reusing the existing CA)
+      # instead of Helm templating fresh random certs on every render.
+      method: cronJob

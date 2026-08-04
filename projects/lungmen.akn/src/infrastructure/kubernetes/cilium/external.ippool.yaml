@@ -1,0 +1,16 @@
+apiVersion: cilium.io/v2alpha1
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: external
+spec:
+  # Excludes "internal" (see internal.ippool.yaml): a bare catch-all with no serviceSelector would
+  # otherwise match every Service unconditionally, competing with "internal" for the same Services
+  # since Cilium's LB-IPAM tie-break isn't label-aware.
+  serviceSelector:
+    matchExpressions:
+      - key: io.cilium/lb-ipam-pool
+        operator: NotIn
+        values:
+          - internal
+  blocks:
+    - cidr: 10.0.0.72/29 # 8 allowed IPs (10.0.0.72 - 10.0.0.79) — docs/network/ipam.md "Cilium LoadBalancer Pools"
