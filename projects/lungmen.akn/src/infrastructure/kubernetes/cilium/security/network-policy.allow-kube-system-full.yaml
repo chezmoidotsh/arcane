@@ -8,10 +8,10 @@ metadata:
       alone, so keep it fully open rather than relying on omission. Uses fromEntities/
       toEntities: [all], not a bare `- {}` — under enableDefaultDeny, an empty rule item matches
       nothing once another policy already default-denies this endpoint, silently dropping all
-      kube-system traffic with no error surfaced anywhere. Confirmed live on lungmen-akn
-      (chezmoidotsh/arcane issue 1188): without this, allow-dns.yaml's broad endpointSelector
-      catches CoreDNS's own pods too, cutting off their forward to the Talos host-DNS link-local
-      resolver (169.254.116.108) and turning every external DNS query into a silent SERVFAIL.
+      kube-system traffic with no error surfaced anywhere — including allow-dns.yaml's broad
+      endpointSelector, which also catches CoreDNS's own pods and would otherwise cut off their
+      forward to the Talos host-DNS link-local resolver (169.254.116.108), turning every
+      external DNS query into a silent SERVFAIL.
   name: allow-kube-system-full
   namespace: kube-system
 # trunk-ignore(trivy/KSV-0037): intentional, kube-system needs broad access — see description

@@ -18,8 +18,7 @@
 #                                                          leaves 16Gi allocatable on the 2 survivors)
 #   machine.kubelet.extraArgs.cloud-provider  external  (REQUIRED from day one — the
 #     Proxmox CCM silently no-ops without it, and providerID is immutable once a
-#     node registers; fixing this later means delete+recreate the node. See
-#     rhodes.clustertemplate.yaml and .agents/sessions/20260720-rhodes-cluster-bringup-planning.md.)
+#     node registers; fixing this later means delete+recreate the node)
 #
 # NOTE: serviceSubnets (172.31.0.0/19) and clusterDNS (172.31.0.10) match the SHARED
 # defaults in the base template. They are duplicated here because this is a standalone
@@ -85,8 +84,7 @@ patches:
           extraArgs:
             rotate-server-certificates: "true" # enables kubelet-serving-cert-approver
             # REQUIRED from day one — Proxmox CCM silently no-ops otherwise, and
-            # providerID is immutable post-registration (see rhodes.clustertemplate.yaml
-            # and .agents/sessions/20260720-rhodes-cluster-bringup-planning.md).
+            # providerID is immutable post-registration.
             cloud-provider: external
           extraConfig:
             featureGates:
@@ -101,12 +99,11 @@ patches:
           cni:
             name: custom
             urls:
-              # Pinned to the same SHA rhodes.akn uses (already proven live): the
-              # 1.19.5-native.yaml pin previously here predates the fix that adds a
-              # toleration for node.cloudprovider.kubernetes.io/uninitialized on the
-              # installer Job. Without it, cloud-provider=external (below) taints every
-              # node and the Job can never schedule — a permanent deadlock, not a
-              # transient delay (see the manifest's own comment).
+              # The installer Job's tolerations must include
+              # node.cloudprovider.kubernetes.io/uninitialized (see this manifest's own
+              # comment) — cloud-provider=external (below) taints every node from boot,
+              # and without that toleration the Job can never schedule: a permanent
+              # deadlock, not a transient delay.
               - https://raw.githubusercontent.com/chezmoidotsh/arcane/09f0b0a42929e86bedc882f894884b5eb1d80e59/catalog/talos/manifests/cilium/1.20.0-native.yaml
           podSubnets:
             - 172.30.32.0/19
@@ -121,7 +118,7 @@ patches:
           extraArgs:
             feature-gates: UserNamespacesSupport=true,ImageVolume=true
         extraManifests:
-          # Pinned to the same SHA as the Cilium manifest above (matches rhodes.akn).
+          # Pinned to the same SHA as the Cilium manifest above.
           - https://raw.githubusercontent.com/chezmoidotsh/arcane/09f0b0a42929e86bedc882f894884b5eb1d80e59/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
           - https://raw.githubusercontent.com/chezmoidotsh/arcane/09f0b0a42929e86bedc882f894884b5eb1d80e59/catalog/talos/manifests/metric-server/0.8.1.yaml
 ---

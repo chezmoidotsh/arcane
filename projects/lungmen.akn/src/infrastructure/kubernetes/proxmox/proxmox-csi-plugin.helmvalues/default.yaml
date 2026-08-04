@@ -2,14 +2,12 @@
 # proxmox-csi-plugin — dynamic provisioning of block volumes on the Proxmox
 # hypervisor side. Volumes are decoupled from VM lifecycle (survive VM
 # rebuilds, reattach to any VM on the same Proxmox node). Replaces Longhorn
-# on this cluster (chezmoidotsh/arcane issue 1188 recreation) — same
-# rationale as rhodes.akn (see docs/experiments/20260617-proxmox-csi-ccm/,
+# on this cluster (see docs/experiments/20260617-proxmox-csi-ccm/,
 # conclusion #9).
 
-# storageClass entries below match rhodes.akn's (same pve-01 hypervisor,
-# same nvme-lvm storage backend — confirmed against this cluster's own
-# machine classes, catalog/omni/machineclasses/, which pin
-# storage_selector: 'name == "nvme-lvm"').
+# storageClass entries below use pve-01's nvme-lvm storage backend — matches
+# this cluster's machine classes (catalog/omni/machineclasses/), which pin
+# storage_selector: 'name == "nvme-lvm"'.
 
 # config.clusters is intentionally left unset (chart default: []) — same
 # Pulumi-owned token delivery as proxmox-cloud-controller-manager.helmvalues

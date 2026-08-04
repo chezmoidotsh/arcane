@@ -2,8 +2,7 @@
 # proxmox-cloud-controller-manager — provides node topology labels and
 # providerID that proxmox-csi-plugin relies on for volume scheduling.
 # Cilium handles all networking (route/service controllers stay disabled).
-# Same setup as rhodes.akn — see that project's own copy of this file for
-# the validated experiment reference.
+# Validated in docs/experiments/20260617-proxmox-csi-ccm/.
 
 # config.clusters is intentionally left unset (chart default: []), which
 # also keeps the chart from rendering its own Secret/proxmox-cloud-controller-
