@@ -16,6 +16,10 @@
 #                                                          w1.large's ~7.5-7.8Gi allocatable during a
 #                                                          one-at-a-time rolling Talos update; 3 nodes
 #                                                          leaves 16Gi allocatable on the 2 survivors)
+#   machine.kubelet.extraArgs.cloud-provider  external  (REQUIRED from day one — the
+#     Proxmox CCM silently no-ops without it, and providerID is immutable once a
+#     node registers; fixing this later means delete+recreate the node. See
+#     rhodes.clustertemplate.yaml and .agents/sessions/20260720-rhodes-cluster-bringup-planning.md.)
 #
 # NOTE: serviceSubnets (172.31.0.0/19) and clusterDNS (172.31.0.10) match the SHARED
 # defaults in the base template. They are duplicated here because this is a standalone
@@ -80,6 +84,10 @@ patches:
             - 172.31.0.10 # Shared service CIDR default (all clusters, ClusterMesh-ready)
           extraArgs:
             rotate-server-certificates: "true" # enables kubelet-serving-cert-approver
+            # REQUIRED from day one — Proxmox CCM silently no-ops otherwise, and
+            # providerID is immutable post-registration (see rhodes.clustertemplate.yaml
+            # and .agents/sessions/20260720-rhodes-cluster-bringup-planning.md).
+            cloud-provider: external
           extraConfig:
             featureGates:
               UserNamespacesSupport: true
