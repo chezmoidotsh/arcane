@@ -1,0 +1,17 @@
+---
+# Migration-specific: the old lungmen.akn cluster's PVCs (actual-budget, jellyfin, paperless-ngx
+# backup schedules) were provisioned on Longhorn, which this recreated cluster doesn't have
+# (issue 1188 supersedes issue 1028 — proxmox-csi-plugin from day one, no Longhorn). Without
+# this mapping, Velero recreates restored PVCs with the backup's original storageClassName
+# verbatim, which stays Pending forever with no matching provisioner on the new cluster.
+# Remove once every app has been restored and cut over in PR3 — nothing new will ever be
+# backed up on Longhorn again.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: change-storage-class-config
+  labels:
+    velero.io/plugin-config: ""
+    velero.io/change-storage-class: RestoreItemAction
+data:
+  longhorn: proxmox-lvmthin-ext4
