@@ -5,9 +5,9 @@ import * as pulumi from "@pulumi/pulumi";
 
 // -----------------------------------------------------------------------------
 // Proxmox CCM/CSI identity + Secret delivery (Pulumi-owned end-to-end, never
-// Vault/ESO). Mirrors rhodes.akn's stack/proxmox.ts — see that file's header
-// comment for the full reasoning (chezmoidotsh/arcane#1188 recreates
-// lungmen.akn the same way #370 recreated amiya.akn as rhodes.akn).
+// Vault/ESO): Pulumi already needs privileged kubeconfig access to deliver
+// the Secret below, so routing it through Vault/ESO would add indirection
+// with no confidentiality benefit.
 // -----------------------------------------------------------------------------
 // This stack mints the kubernetes-cloud-provider@pve identity itself,
 // directly against pve-01, using a delegated, narrowly-scoped credential
@@ -16,21 +16,23 @@ import * as pulumi from "@pulumi/pulumi";
 // purpose. See catalog/pulumi/components/proxmox-cluster-identity's README
 // for the full pattern.
 //
-// CCM and CSI share a single identity/token/Secret (same trade-off accepted
-// on rhodes.akn — see rhodes.akn's stack/proxmox.ts for the reasoning).
+// CCM and CSI deliberately share a single identity/token/Secret rather than
+// one least-privilege role each. Risk: a compromise of this one token
+// carries both concerns' privileges (node/VM audit AND volume/VM lifecycle)
+// instead of being contained to one — acceptable for this single-node,
+// single-cluster deployment.
 //
 // The delegated credential arrives as a Kubernetes Secret chezmoi.sh's own
 // stack writes directly into the new lungmen-akn cluster (kube-system), not
-// through a Pulumi StackReference (per-project passphrase isolation, see
+// through a Pulumi StackReference — reading a *secret* StackReference output
+// requires holding the exporting stack's own passphrase, and this repo
+// deliberately keeps every project's Pulumi state passphrase separate (see
 // docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md).
 //
-// Explicit named provider, not the ambient default: unlike rhodes.akn (a
-// single-context project), this project's existing stack files
-// (cert-manager.ts, vault.ts, cloudnative-pg.ts, ...) all go through
-// Vault/ESO and never touch Kubernetes directly, and during the old-cluster/
-// new-cluster transition an ambient default could too easily end up pointed
-// at the wrong one. Pinning explicitly to the new cluster's Omni context
-// avoids that class of mistake entirely.
+// Explicit named provider, not the ambient default: this project's other
+// stack files (cert-manager.ts, vault.ts, cloudnative-pg.ts, ...) all go
+// through Vault/ESO and never touch Kubernetes directly, so there is no
+// ambient default provider to depend on here.
 const lungmenAkn = new k8s.Provider("lungmen-akn", {
 	context: "omni-lungmen-akn",
 });
@@ -40,9 +42,9 @@ const bootstrapSecret = k8s.core.v1.Secret.get(
 	"kube-system/lungmen-akn-bootstrap-pve",
 	{ provider: lungmenAkn },
 );
-// Already the complete, ready-to-use `USER@REALM!TOKENID=SECRET` string — see
-// chezmoi.sh's stack/proxmox/access/lungmen-akn-bootstrap.ts for why this
-// must not be rebuilt from separate id/secret parts.
+// Already the complete, ready-to-use `USER@REALM!TOKENID=SECRET` string.
+// Re-concatenating userId!tokenName onto it produces a doubly-prefixed,
+// invalid token — pass it through as-is, don't rebuild it.
 const bootstrapApiToken = bootstrapSecret.data["api-token"].apply((v) =>
 	Buffer.from(v, "base64").toString("utf-8"),
 );
@@ -56,12 +58,8 @@ const pveProvider = new proxmox.Provider("pve-01", {
 const cloudProviderIdentity = new ProxmoxClusterIdentityComponent(
 	"kubernetes-cloud-provider",
 	{
-		// userId/roleId are global on pve-01, not scoped per Kubernetes cluster —
-		// rhodes.akn's stack/proxmox.ts already owns the unqualified
-		// "kubernetes-cloud-provider@pve" / "KubernetesCloudProvider" names
-		// (confirmed live: creating this identity without the "-lungmen" suffix
-		// failed with "resource already exists"). Every cluster's identity needs
-		// its own distinct name.
+		// userId/roleId are global on pve-01, not scoped per Kubernetes cluster:
+		// each cluster's cloud-provider identity needs its own distinct name.
 		userId: "kubernetes-cloud-provider-lungmen@pve",
 		comment:
 			"Kubernetes CCM+CSI (lungmen.akn) - node/VM audit and volume lifecycle",
@@ -89,8 +87,8 @@ const cloudProviderIdentity = new ProxmoxClusterIdentityComponent(
 			],
 		},
 		// Node-scoped: topology + lifecycle status (CCM). Pool-scoped: every
-		// Talos VM's disk/config lifecycle (CSI) — same shared `talos` pool
-		// rhodes.akn uses (see chezmoi.sh's stack/proxmox/pools.ts).
+		// Talos VM's disk/config lifecycle (CSI) — the shared `talos` pool every
+		// cluster's VMs belong to (see chezmoi.sh's stack/proxmox/pools.ts).
 		aclPaths: ["/nodes/pve-01", "/pool/talos"],
 		tokenName: "cloud-provider",
 		tokenComment: "proxmox-cloud-controller-manager + proxmox-csi-plugin token",
@@ -98,16 +96,36 @@ const cloudProviderIdentity = new ProxmoxClusterIdentityComponent(
 	},
 );
 
+// proxmox-cloud-controller-manager and proxmox-csi-plugin both run in this
+// namespace (projects/lungmen.akn/src/infrastructure/kubernetes/proxmox/).
+// Created here rather than left to ArgoCD's CreateNamespace=true (not yet
+// adopted by ArgoCD) so the config Secret below has somewhere to land.
+// retainOnDelete: a `pulumi destroy` must not take the namespace (and every
+// live CCM/CSI pod in it) down with it.
+const proxmoxSystemNamespace = new k8s.core.v1.Namespace(
+	"proxmox-system",
+	{
+		metadata: {
+			name: "proxmox-system",
+			labels: {
+				// proxmox-csi-plugin's node DaemonSet needs privileged/hostPath
+				// access (mounting Proxmox-attached block devices into kubelet's
+				// pod dir) — the "restricted" Pod Security default rejects that.
+				"pod-security.kubernetes.io/enforce": "privileged",
+				"pod-security.kubernetes.io/enforce-version": "v1.33",
+			},
+		},
+	},
+	{ provider: lungmenAkn, retainOnDelete: true },
+);
+
 // The Secret shape below matches what each chart's own templates/secrets.yaml
-// would otherwise generate — see rhodes.akn's stack/proxmox.ts for the
-// verification references. A single config.yaml key holding the full
-// clusters/features config as YAML (also valid JSON).
-//
-// Namespaces aren't created by this stack (ArgoCD's CreateNamespace=true sync
-// option does, once ArgoCD adopts this cluster) — this Secret can only be
-// applied once proxmox-system already exists (created via `kubectl apply` on
-// the dist/-rendered namespace manifest during bootstrap, before ArgoCD
-// exists on lungmen-akn).
+// would otherwise generate (verified against
+// https://artifacthub.io/packages/helm/proxmox-ccm/proxmox-cloud-controller-manager?modal=template&template=secrets.yaml
+// and the vendored proxmox-csi-plugin chart's equivalent template): a single
+// config.yaml key holding the full clusters/features config as YAML — which
+// is also valid JSON, so pulumi.jsonStringify is enough, no YAML library
+// needed.
 new k8s.core.v1.Secret(
 	"proxmox-cloud-provider-config",
 	{
@@ -127,5 +145,5 @@ new k8s.core.v1.Secret(
 			}),
 		},
 	},
-	{ provider: lungmenAkn },
+	{ provider: lungmenAkn, dependsOn: [proxmoxSystemNamespace] },
 );
