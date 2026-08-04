@@ -107,7 +107,7 @@ patches:
               # installer Job. Without it, cloud-provider=external (below) taints every
               # node and the Job can never schedule — a permanent deadlock, not a
               # transient delay (see the manifest's own comment).
-              - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/cilium/1.20.0-native.yaml
+              - https://raw.githubusercontent.com/chezmoidotsh/arcane/09f0b0a42929e86bedc882f894884b5eb1d80e59/catalog/talos/manifests/cilium/1.20.0-native.yaml
           podSubnets:
             - 172.30.32.0/19
           serviceSubnets:
@@ -122,8 +122,8 @@ patches:
             feature-gates: UserNamespacesSupport=true,ImageVolume=true
         extraManifests:
           # Pinned to the same SHA as the Cilium manifest above (matches rhodes.akn).
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/metric-server/0.8.1.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/09f0b0a42929e86bedc882f894884b5eb1d80e59/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/09f0b0a42929e86bedc882f894884b5eb1d80e59/catalog/talos/manifests/metric-server/0.8.1.yaml
 ---
 kind: ControlPlane
 machineClass:
