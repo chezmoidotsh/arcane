@@ -107,10 +107,6 @@ spec:
       labels:
         app.kubernetes.io/instance: jellyfin
         app.kubernetes.io/name: jellyfin
-        recurring-job-group.longhorn.io/auto-snapshots: enabled
-        recurring-job-group.longhorn.io/daily: enabled
-        recurring-job-group.longhorn.io/monthly: enabled
-        recurring-job-group.longhorn.io/weekly: enabled
       name: persistent
     spec:
       accessModes:

@@ -167,9 +167,6 @@ spec:
         labels:
           app.kubernetes.io/component: webserver
           app.kubernetes.io/instance: paperless-ngx-webserver
-          recurring-job-group.longhorn.io/daily: enabled
-          recurring-job-group.longhorn.io/weekly: enabled
-          recurring-job-group.longhorn.io/monthly: enabled
         name: persistent-storage
       spec:
         accessModes:
