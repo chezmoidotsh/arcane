@@ -39,8 +39,10 @@ spec:
         - --v=2
         - --cluster-resource-namespace=$(POD_NAMESPACE)
         - --leader-election-namespace=kube-system
-        - --acme-http01-solver-image=quay.io/jetstack/cert-manager-acmesolver:v1.20.2
+        - --acme-http01-solver-image=oci.chezmoi.sh/quay.io/jetstack/cert-manager-acmesolver:v1.20.2
         - --max-concurrent-challenges=60
+        - --dns01-recursive-nameservers-only=true
+        - --dns01-recursive-nameservers=9.9.9.9:53,149.112.112.112:53
         env:
         - name: POD_NAMESPACE
           valueFrom:
