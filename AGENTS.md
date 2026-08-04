@@ -239,6 +239,14 @@ Agents cannot drive interactive tools or scroll through pagers. Always:
 If the user requests an interactive flow, explain the limitation and propose the non-interactive equivalent
 (`git rebase --continue`, `git add file1 file2`, `cat file`, …).
 
+### kubectl apply: always use --server-side
+
+Client-side `kubectl apply` writes the full manifest into the `kubectl.kubernetes.io/last-applied-configuration`
+annotation. Kubernetes caps total `metadata.annotations` size at 262144 bytes per object; large CRDs (CloudNativePG's
+`Cluster`/`Pooler` schemas, for example) can exceed that on their own, and once the annotation is oversized any further
+write to the object — server-side apply included — is rejected until the annotation is removed. Always pass
+`--server-side` for manual `kubectl apply` against this repo's clusters; it never writes that annotation.
+
 ### Destructive and shared-state operations
 
 - Never force-push, `git reset --hard`, drop branches, or rewrite published history without explicit user confirmation
