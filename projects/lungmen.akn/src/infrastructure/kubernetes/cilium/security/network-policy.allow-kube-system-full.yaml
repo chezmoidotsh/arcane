@@ -14,6 +14,7 @@ metadata:
       resolver (169.254.116.108) and turning every external DNS query into a silent SERVFAIL.
   name: allow-kube-system-full
   namespace: kube-system
+# trunk-ignore(trivy/KSV-0037): intentional, kube-system needs broad access — see description
 spec:
   endpointSelector: {}
   ingress:
