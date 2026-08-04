@@ -101,11 +101,13 @@ patches:
           cni:
             name: custom
             urls:
-              # SHA points to the commit on this branch that added 1.19.5-native.yaml.
-              # After merging, update to the resulting merge commit SHA (or a tag).
-              # Squash-merge risk: the branch SHA leaves main's history — repin before
-              # applying to a live cluster.
-              - https://raw.githubusercontent.com/chezmoidotsh/arcane/97c8cb69f5c648d8b7ac687603d429092e5f0b2d/catalog/talos/manifests/cilium/1.19.5-native.yaml
+              # Pinned to the same SHA rhodes.akn uses (already proven live): the
+              # 1.19.5-native.yaml pin previously here predates the fix that adds a
+              # toleration for node.cloudprovider.kubernetes.io/uninitialized on the
+              # installer Job. Without it, cloud-provider=external (below) taints every
+              # node and the Job can never schedule — a permanent deadlock, not a
+              # transient delay (see the manifest's own comment).
+              - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/cilium/1.20.0-native.yaml
           podSubnets:
             - 172.30.32.0/19
           serviceSubnets:
@@ -119,10 +121,9 @@ patches:
           extraArgs:
             feature-gates: UserNamespacesSupport=true,ImageVolume=true
         extraManifests:
-          # Pinned to the commit on this branch that added these manifests.
-          # Update to the merge commit SHA after merging (same squash-merge caveat as above).
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/97c8cb69f5c648d8b7ac687603d429092e5f0b2d/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/97c8cb69f5c648d8b7ac687603d429092e5f0b2d/catalog/talos/manifests/metric-server/0.8.1.yaml
+          # Pinned to the same SHA as the Cilium manifest above (matches rhodes.akn).
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/metric-server/0.8.1.yaml
 ---
 kind: ControlPlane
 machineClass:
