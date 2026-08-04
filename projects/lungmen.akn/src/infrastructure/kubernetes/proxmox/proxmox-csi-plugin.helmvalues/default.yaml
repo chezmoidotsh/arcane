@@ -1,0 +1,53 @@
+---
+# proxmox-csi-plugin — dynamic provisioning of block volumes on the Proxmox
+# hypervisor side. Volumes are decoupled from VM lifecycle (survive VM
+# rebuilds, reattach to any VM on the same Proxmox node). Replaces Longhorn
+# on this cluster (chezmoidotsh/arcane issue 1188 recreation) — same
+# rationale as rhodes.akn (see docs/experiments/20260617-proxmox-csi-ccm/,
+# conclusion #9).
+
+# storageClass entries below match rhodes.akn's (same pve-01 hypervisor,
+# same nvme-lvm storage backend — confirmed against this cluster's own
+# machine classes, catalog/omni/machineclasses/, which pin
+# storage_selector: 'name == "nvme-lvm"').
+
+# config.clusters is intentionally left unset (chart default: []) — same
+# Pulumi-owned token delivery as proxmox-cloud-controller-manager.helmvalues
+# /default.yaml in this same directory (see that file's comment for the full
+# rationale and the exact Secret shape Pulumi creates). CCM and CSI
+# deliberately share the same kubernetes-cloud-provider-lungmen@pve
+# identity/token and the same Secret here — a simplification over having two
+# separate least-privilege identities; see stack/proxmox.ts's header comment
+# for the trade-off. existingConfigSecret/existingConfigSecretKey below
+# point this chart's controller and node pods at that shared, Pulumi-owned
+# Secret.
+existingConfigSecret: proxmox-cloud-provider # trunk-ignore(checkov/CKV_SECRET_6): false positive; this is a reference to an existing secret, not a secret value.
+existingConfigSecretKey: config.yaml
+
+storageClass:
+  - name: proxmox-lvmthin-ext4
+    storage: nvme-lvm
+    reclaimPolicy: Delete
+    fstype: ext4
+    cache: writethrough
+    ssd: false
+    annotations:
+      storageclass.kubernetes.io/is-default-class: "true"
+  - name: proxmox-lvmthin-xfs
+    storage: nvme-lvm
+    reclaimPolicy: Delete
+    fstype: xfs
+    cache: directsync
+    ssd: false
+
+controller:
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: ""
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      effect: NoSchedule
+
+node:
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      effect: NoSchedule
