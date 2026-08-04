@@ -1,0 +1,80 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: velero-system
+
+resources:
+  - actual-budget.pvc-backup.schedule.yaml
+  - atuin.pvc-backup.schedule.yaml
+  - jellyfin.pvc-backup.schedule.yaml
+  - paperless-ngx.pvc-backup.schedule.yaml
+  - velero-credentials.externalsecret.yaml
+  - security
+
+helmCharts:
+  - repo: https://vmware-tanzu.github.io/helm-charts
+    name: velero
+    # renovate: datasource=helm depName=velero registryUrl=https://vmware-tanzu.github.io/helm-charts
+    version: 12.1.0
+
+    releaseName: velero
+    namespace: velero-system
+
+    valuesFile: velero.helmvalues/default.yaml
+
+patches:
+  # The Helm chart marks this Job with helm.sh/hook annotations so a real `helm install`
+  # runs it before anything else. Kustomize's helmCharts inflator renders the chart to
+  # plain manifests and drops that hook semantics, so ArgoCD was syncing this Job in the
+  # same wave as the BackupStorageLocation CR it must create the CRD for first — failing
+  # with "could not find velero.io/BackupStorageLocation ... CRD is installed". Translating
+  # to an ArgoCD PreSync hook restores the "CRDs before CRs" ordering Helm would have given.
+  #
+  # Its ServiceAccount and ClusterRole/ClusterRoleBinding need the exact same PreSync hook
+  # treatment: ArgoCD applies every PreSync hook before any plain Sync-phase resource, so
+  # without this the Job would run before its own RBAC exists on a genuinely fresh install
+  # (a pod stuck on "ServiceAccount not found" that ArgoCD would then wait on forever).
+  #
+  # hook-delete-policy is BeforeHookCreation,HookSucceeded (matching the chart's own
+  # helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded exactly) rather than
+  # just HookSucceeded: a Job that failed once would otherwise sit there forever — Jobs
+  # are immutable, so ArgoCD can't recreate one under the same name until the old one is
+  # gone. BeforeHookCreation clears out whatever's left (succeeded or failed) right before
+  # the next retry creates a fresh one.
+  - target:
+      kind: Job
+      name: velero-upgrade-crds
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1hook
+        value: PreSync
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1hook-delete-policy
+        value: BeforeHookCreation,HookSucceeded
+  - target:
+      kind: ServiceAccount
+      name: velero-server-upgrade-crds
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1hook
+        value: PreSync
+  - target:
+      kind: ClusterRole
+      name: velero-upgrade-crds
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1hook
+        value: PreSync
+  - target:
+      kind: ClusterRoleBinding
+      name: velero-upgrade-crds
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1hook
+        value: PreSync
+
+images:
+  - name: docker.io/velero/velero
+    newName: oci.chezmoi.sh/docker.io/velero/velero
+  - name: velero/velero-plugin-for-aws
+    newName: oci.chezmoi.sh/docker.io/velero/velero-plugin-for-aws

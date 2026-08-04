@@ -21,6 +21,8 @@ spec:
       labels:
         app.kubernetes.io/component: webserver
         app.kubernetes.io/instance: paperless-ngx-webserver
+      annotations:
+        backup.velero.io/backup-volumes: persistent-storage
     spec:
       automountServiceAccountToken: false
       containers:

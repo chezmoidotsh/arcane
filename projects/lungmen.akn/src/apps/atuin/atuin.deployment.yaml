@@ -22,6 +22,8 @@ spec:
       labels:
         app.kubernetes.io/name: atuin
         app.kubernetes.io/instance: atuin
+      annotations:
+        backup.velero.io/backup-volumes: atuin-data
     spec:
       automountServiceAccountToken: false
       containers:

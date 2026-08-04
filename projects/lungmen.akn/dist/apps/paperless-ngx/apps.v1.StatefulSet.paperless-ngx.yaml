@@ -23,6 +23,8 @@ spec:
   serviceName: paperless-ngx
   template:
     metadata:
+      annotations:
+        backup.velero.io/backup-volumes: persistent-storage
       labels:
         app.kubernetes.io/component: webserver
         app.kubernetes.io/instance: paperless-ngx

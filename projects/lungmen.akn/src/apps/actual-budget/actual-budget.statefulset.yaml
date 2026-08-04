@@ -8,6 +8,9 @@ spec:
   serviceName: actual-budget
   replicas: 1
   template:
+    metadata:
+      annotations:
+        backup.velero.io/backup-volumes: persistent
     spec:
       automountServiceAccountToken: false
       containers:

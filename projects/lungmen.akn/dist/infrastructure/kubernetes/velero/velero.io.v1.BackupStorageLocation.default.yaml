@@ -1,0 +1,25 @@
+---
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  labels:
+    app.kubernetes.io/instance: velero
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: velero
+    app.kubernetes.io/version: 1.18.1
+    helm.sh/chart: velero-12.1.0
+  name: default
+  namespace: velero-system
+spec:
+  accessMode: ReadWrite
+  config:
+    region: fr-par-1
+    s3ForcePathStyle: "true"
+    s3Url: https://s3.chezmoi.sh
+  credential:
+    key: cloud
+    name: velero-credentials
+  default: true
+  objectStorage:
+    bucket: velero-lungmen-akn
+  provider: aws

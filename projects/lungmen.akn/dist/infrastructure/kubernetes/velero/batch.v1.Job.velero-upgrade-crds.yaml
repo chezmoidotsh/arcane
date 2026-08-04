@@ -1,0 +1,36 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+    helm.sh/hook: pre-install,pre-upgrade,pre-rollback
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "5"
+  labels:
+    app.kubernetes.io/instance: velero
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: velero
+    helm.sh/chart: velero-12.1.0
+  name: velero-upgrade-crds
+  namespace: velero-system
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      name: velero-upgrade-crds
+    spec:
+      automountServiceAccountToken: true
+      containers:
+      - args:
+        - install
+        - --crds-only
+        - --apply
+        command:
+        - /velero
+        image: oci.chezmoi.sh/docker.io/velero/velero:v1.18.1
+        imagePullPolicy: IfNotPresent
+        name: velero
+      restartPolicy: OnFailure
+      serviceAccountName: velero-server-upgrade-crds

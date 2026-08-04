@@ -1,0 +1,22 @@
+---
+# S3 backup egress for Velero (controller + node-agent DaemonSet Kopia uploader).
+# Allows reaching the S3-compatible backup endpoint (s3.chezmoi.sh:443) that
+# backupStorageLocation "default" points at (velero.helmvalues/default.yaml).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows all velero-system pods to reach the S3-compatible backup endpoint (s3.chezmoi.sh:443)
+      for Kopia backup/restore data transfer.
+  name: allow-to-s3-backup
+  namespace: velero-system
+spec:
+  endpointSelector: {}
+  egress:
+    - toFQDNs:
+        - matchName: s3.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
