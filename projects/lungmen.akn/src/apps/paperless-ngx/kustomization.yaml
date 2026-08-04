@@ -20,6 +20,14 @@ resources:
 
   - security/
 
+# -- Held at 0 until PVs are restored from the old lungmen.akn cluster (issue 1188, PR2).
+# Revert in PR3 once volume restoration is validated and it's time to cut over.
+replicas:
+  - name: paperless-ngx-redis
+    count: 0
+  - name: paperless-ngx
+    count: 0
+
 images:
   # renovate: datasource=docker depName=ghcr.io/paperless-ngx/paperless-ngx
   - name: ghcr.io/paperless-ngx/paperless-ngx

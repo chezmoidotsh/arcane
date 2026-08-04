@@ -8,7 +8,7 @@ metadata:
   name: immich-machine-learning
   namespace: immich
 spec:
-  replicas: 1
+  replicas: 0
   revisionHistoryLimit: 3
   selector:
     matchLabels:

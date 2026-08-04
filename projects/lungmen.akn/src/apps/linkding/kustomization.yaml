@@ -18,6 +18,14 @@ resources:
 
   - security/
 
+# -- Held at 0 until cutover (issue 1188, PR2) — even though linkding has no PVC of its own
+# (bookmarks live in the already-restored CNPG database), starting it now would let it write
+# to this cluster's DB clone while the old cluster's live linkding keeps writing to its own,
+# diverging the two. Revert in PR3.
+replicas:
+  - name: linkding
+    count: 0
+
 images:
   # renovate: datasource=docker depName=docker.io/sissbruecker/linkding
   - name: docker.io/sissbruecker/linkding

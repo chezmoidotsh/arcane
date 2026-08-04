@@ -14,7 +14,7 @@ metadata:
   name: paperless-ngx
   namespace: paperless-ngx
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app.kubernetes.io/component: webserver
