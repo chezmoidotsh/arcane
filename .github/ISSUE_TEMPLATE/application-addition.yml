@@ -31,18 +31,6 @@ body:
     validations:
       required: true
 
-  - type: dropdown
-    id: cluster
-    attributes:
-      label: Target cluster
-      options:
-        - project:amiya.akn (core platform — auth, secrets, GitOps)
-        - project:lungmen.akn (home applications — media, productivity, personal)
-        - project:kazimierz.akn (public-access gateway)
-        - project:hass (Home Assistant ecosystem)
-    validations:
-      required: true
-
   - type: checkboxes
     id: integration
     attributes:
