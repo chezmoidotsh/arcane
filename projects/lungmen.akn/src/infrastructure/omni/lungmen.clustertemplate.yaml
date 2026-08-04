@@ -9,7 +9,13 @@
 # Overrides relative to the base:
 #   Cluster.name                   lungmen-akn            (was base-default)
 #   cluster.network.podSubnets     172.30.32.0/19         (ADR-014: lungmen pod CIDR — unique per cluster)
-#   Workers.machineClass.size      2                      (same as base default — kept explicit)
+#   Workers.machineClass.size      3                      (base default is 2; lungmen's real workload —
+#                                                          immich/jellyfin/n8n/paperless/forgejo/databases —
+#                                                          measured ~9Gi steady-state on the current
+#                                                          all-in-one node, which doesn't fit a single
+#                                                          w1.large's ~7.5-7.8Gi allocatable during a
+#                                                          one-at-a-time rolling Talos update; 3 nodes
+#                                                          leaves 16Gi allocatable on the 2 survivors)
 #
 # NOTE: serviceSubnets (172.31.0.0/19) and clusterDNS (172.31.0.10) match the SHARED
 # defaults in the base template. They are duplicated here because this is a standalone
@@ -119,7 +125,7 @@ kind: Workers
 name: workers
 machineClass:
   name: w1.large # V2 dual-NIC (catalog/omni/machineclasses/w1.large.yaml)
-  size: 2 # lungmen topology: 2 workers (matches base default)
+  size: 3 # lungmen topology: sized to survive a one-at-a-time Talos reboot under real load, see note above
 updateStrategy:
   rolling:
     maxParallelism: 1
