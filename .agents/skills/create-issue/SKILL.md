@@ -99,6 +99,15 @@ What does the issue ask for?
 | Security hardening, vulnerability, secret management      | `Security`    |
 | Clarification or discussion, no concrete change requested | `Question`    |
 
+`Feature` and `Improvement` both describe things getting better, and `Task` and `Docs` both describe indirect work —
+that's where mistyping happens. Resolve them with the test in each row below, not by how the title reads:
+
+| Ambiguous pair              | Ask                                                                                  | Resolution                                                                                                                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Feature` vs. `Task`        | Could a user/operator already do this before the change, just via a worse mechanism? | Yes → `Task` (only the implementation changes — e.g. swapping a generated/bridged SDK for a hand-written one). No, this capability didn't exist at all → `Feature`.                             |
+| `Feature` vs. `Improvement` | Does the target system/service run at all today?                                     | No → `Feature`, even if the rollout is framed as "fleet-wide" or "standardization" — that describes the rollout shape, not whether the thing is new. Yes, it's already running → `Improvement`. |
+| `Docs` vs. `Task`           | Does closing the issue change anything besides a document?                           | No, purely descriptive output → `Docs`. Yes, it also commits to fixing/resolving what it investigates → `Task`, even though a document ships alongside it.                                      |
+
 Breaking variants of any change add the `breaking-change` label.
 
 ### Scope-label decision tree
