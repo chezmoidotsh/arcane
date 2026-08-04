@@ -3,21 +3,13 @@
 # This file contains the default configuration values for deploying Cilium on Talos Linux
 # Reference: https://www.talos.dev/latest/kubernetes-guides/network/deploying-cilium/#installation-using-helm
 
-# Image registry overrides
-# lungmen-akn's nodes have no direct internet egress for image pulls -- every image must
-# go through the oci.chezmoi.sh pull-through cache, mirrored under
-# oci.chezmoi.sh/<upstream-registry>/<upstream-path> (same pattern as external-dns's
-# kustomize image override). Only the components actually enabled below need one.
-image:
-  repository: oci.chezmoi.sh/quay.io/cilium/cilium
-
-envoy:
-  image:
-    repository: oci.chezmoi.sh/quay.io/cilium/cilium-envoy
-
-certgen:
-  image:
-    repository: oci.chezmoi.sh/quay.io/cilium/certgen
+# No image registry overrides: everything in this release lives in kube-system,
+# a bootstrap namespace (SEC001, catalog/opa/policies/) that must stay
+# schedulable even if the internal oci.chezmoi.sh mirror is down — Cilium
+# itself provides the networking oci.chezmoi.sh needs to be reachable at all,
+# so it can't depend on it. Images pull straight from their upstream
+# registries (quay.io/...), same as the bootstrap-only installer this release
+# replaces.
 
 # Cilium Operator Configuration
 operator:
@@ -26,8 +18,6 @@ operator:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 100%
-  image:
-    repository: oci.chezmoi.sh/quay.io/cilium/operator
 
 # IP Address Management (IPAM) Configuration
 # Specifies how Cilium manages IP addresses for pods
@@ -131,16 +121,8 @@ gatewayAPI:
 hubble:
   relay:
     enabled: true
-    image:
-      repository: oci.chezmoi.sh/quay.io/cilium/hubble-relay
   ui:
     enabled: true
-    backend:
-      image:
-        repository: oci.chezmoi.sh/quay.io/cilium/hubble-ui-backend
-    frontend:
-      image:
-        repository: oci.chezmoi.sh/quay.io/cilium/hubble-ui
   tls:
     auto:
       # cronJob runs cert generation as a Kubernetes Job against the live API,
