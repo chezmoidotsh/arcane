@@ -9,7 +9,16 @@
 # Overrides relative to the base:
 #   Cluster.name                   lungmen-akn            (was base-default)
 #   cluster.network.podSubnets     172.30.32.0/19         (ADR-014: lungmen pod CIDR — unique per cluster)
-#   Workers.machineClass.size      2                      (same as base default — kept explicit)
+#   Workers.machineClass.size      3                      (base default is 2; lungmen's real workload —
+#                                                          immich/jellyfin/n8n/paperless/forgejo/databases —
+#                                                          measured ~9Gi steady-state on the current
+#                                                          all-in-one node, which doesn't fit a single
+#                                                          w1.large's ~7.5-7.8Gi allocatable during a
+#                                                          one-at-a-time rolling Talos update; 3 nodes
+#                                                          leaves 16Gi allocatable on the 2 survivors)
+#   machine.kubelet.extraArgs.cloud-provider  external  (REQUIRED from day one — the
+#     Proxmox CCM silently no-ops without it, and providerID is immutable once a
+#     node registers; fixing this later means delete+recreate the node)
 #
 # NOTE: serviceSubnets (172.31.0.0/19) and clusterDNS (172.31.0.10) match the SHARED
 # defaults in the base template. They are duplicated here because this is a standalone
@@ -74,6 +83,9 @@ patches:
             - 172.31.0.10 # Shared service CIDR default (all clusters, ClusterMesh-ready)
           extraArgs:
             rotate-server-certificates: "true" # enables kubelet-serving-cert-approver
+            # REQUIRED from day one — Proxmox CCM silently no-ops otherwise, and
+            # providerID is immutable post-registration.
+            cloud-provider: external
           extraConfig:
             featureGates:
               UserNamespacesSupport: true
@@ -87,11 +99,12 @@ patches:
           cni:
             name: custom
             urls:
-              # SHA points to the commit on this branch that added 1.19.5-native.yaml.
-              # After merging, update to the resulting merge commit SHA (or a tag).
-              # Squash-merge risk: the branch SHA leaves main's history — repin before
-              # applying to a live cluster.
-              - https://raw.githubusercontent.com/chezmoidotsh/arcane/97c8cb69f5c648d8b7ac687603d429092e5f0b2d/catalog/talos/manifests/cilium/1.19.5-native.yaml
+              # The installer Job's tolerations must include
+              # node.cloudprovider.kubernetes.io/uninitialized (see this manifest's own
+              # comment) — cloud-provider=external (below) taints every node from boot,
+              # and without that toleration the Job can never schedule: a permanent
+              # deadlock, not a transient delay.
+              - https://raw.githubusercontent.com/chezmoidotsh/arcane/09f0b0a42929e86bedc882f894884b5eb1d80e59/catalog/talos/manifests/cilium/1.20.0-native.yaml
           podSubnets:
             - 172.30.32.0/19
           serviceSubnets:
@@ -105,10 +118,9 @@ patches:
           extraArgs:
             feature-gates: UserNamespacesSupport=true,ImageVolume=true
         extraManifests:
-          # Pinned to the commit on this branch that added these manifests.
-          # Update to the merge commit SHA after merging (same squash-merge caveat as above).
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/97c8cb69f5c648d8b7ac687603d429092e5f0b2d/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/97c8cb69f5c648d8b7ac687603d429092e5f0b2d/catalog/talos/manifests/metric-server/0.8.1.yaml
+          # Pinned to the same SHA as the Cilium manifest above.
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/09f0b0a42929e86bedc882f894884b5eb1d80e59/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/09f0b0a42929e86bedc882f894884b5eb1d80e59/catalog/talos/manifests/metric-server/0.8.1.yaml
 ---
 kind: ControlPlane
 machineClass:
@@ -119,7 +131,7 @@ kind: Workers
 name: workers
 machineClass:
   name: w1.large # V2 dual-NIC (catalog/omni/machineclasses/w1.large.yaml)
-  size: 2 # lungmen topology: 2 workers (matches base default)
+  size: 3 # lungmen topology: sized to survive a one-at-a-time Talos reboot under real load, see note above
 updateStrategy:
   rolling:
     maxParallelism: 1

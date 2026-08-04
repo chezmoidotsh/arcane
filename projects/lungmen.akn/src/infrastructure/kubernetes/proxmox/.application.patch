@@ -1,0 +1,42 @@
+apiVersion: arcane.chezmoi.sh/v1alpha1
+kind: ApplicationPatch
+metadata: {}
+spec:
+  info:
+    # -- Application metadata
+    - name: Description
+      value: Proxmox VE integration — cloud-controller-manager (node providerID/topology) and CSI plugin (dynamic block-volume provisioning), bundled together since the CSI plugin depends on the CCM's node labels
+    - name: Category
+      value: Infrastructure / Cloud Provider
+    - name: CCM Version
+      # renovate: datasource=helm depName=proxmox-cloud-controller-manager registryUrl=oci://ghcr.io/sergelogvinov/charts
+      value: "0.2.29"
+    - name: CSI Version
+      # renovate: datasource=helm depName=proxmox-csi-plugin registryUrl=oci://ghcr.io/sergelogvinov/charts
+      value: "0.5.9"
+    # -- Documentation & Resources
+    - name: CCM Documentation
+      value: https://github.com/sergelogvinov/proxmox-cloud-controller-manager/blob/main/docs/install.md
+    - name: CSI Documentation
+      value: https://github.com/sergelogvinov/proxmox-csi-plugin/blob/main/docs/options.md
+    - name: CCM GitHub Repository
+      value: https://github.com/sergelogvinov/proxmox-cloud-controller-manager
+    - name: CSI GitHub Repository
+      value: https://github.com/sergelogvinov/proxmox-csi-plugin
+    - name: CCM Helm Chart
+      value: oci://ghcr.io/sergelogvinov/charts/proxmox-cloud-controller-manager
+    - name: CSI Helm Chart
+      value: oci://ghcr.io/sergelogvinov/charts/proxmox-csi-plugin
+
+  syncPolicy:
+    automated:
+      enabled: false # Manual apply: this Application's CCM/CSI credentials come from a Pulumi-delivered Secret, not ArgoCD/ESO, so auto-sync could apply a config update against a stale or not-yet-rotated token and disrupt in-flight storage operations.
+
+    # proxmox-csi-plugin's node DaemonSet needs privileged/hostPath access
+    # (mounting Proxmox-attached block devices into kubelet's pod dir) --
+    # the "restricted" Pod Security default rejects that, so relax
+    # enforcement for the namespace ArgoCD creates for this Application.
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: privileged
+        pod-security.kubernetes.io/enforce-version: v1.33

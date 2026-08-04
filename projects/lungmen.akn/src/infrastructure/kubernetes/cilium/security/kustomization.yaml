@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# NOT yet wired into ../kustomization.yaml: this holds the full Cilium
+# Helm-managed release (cluster.name/id for ClusterMesh, L2 announcement
+# policy), which isn't adopted yet. allow-ingress-gateway.yaml is omitted —
+# no ingress gateway exists on this cluster yet.
+resources:
+  - network-policy.allow-dns.yaml
+  - network-policy.allow-kube-system-full.yaml

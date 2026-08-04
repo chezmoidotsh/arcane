@@ -9,8 +9,11 @@
 		"@chezmoi.sh/pulumi-cluster-vault": "workspace:*",
 		"@chezmoi.sh/pulumi-garage-cnpg-backup": "workspace:*",
 		"@chezmoi.sh/pulumi-lib": "workspace:*",
+		"@chezmoi.sh/pulumi-proxmox-cluster-identity": "workspace:*",
+		"@pulumi/kubernetes": "catalog:",
 		"@pulumi/pangolin": "workspace:*",
 		"@pulumi/pocket-id": "workspace:*",
+		"@pulumi/proxmox": "workspace:*",
 		"@pulumi/pulumi": "catalog:",
 		"@pulumi/tailscale": "catalog:",
 		"@pulumi/vault": "catalog:"
