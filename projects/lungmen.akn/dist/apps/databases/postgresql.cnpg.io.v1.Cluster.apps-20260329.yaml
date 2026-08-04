@@ -11,8 +11,20 @@ metadata:
     mutualized.cloudnative-pg.io/group: apps
   name: apps-20260329
 spec:
+  bootstrap:
+    recovery:
+      source: "2026-03-29T09:29:29.483Z"
   description: Shared PostgreSQL database cluster for common applications
   enablePDB: false
+  externalClusters:
+  - name: "2026-03-29T09:29:29.483Z"
+    plugin:
+      enabled: true
+      isWALArchiver: false
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: apps-selfhosted
+        serverName: 01KMWETKMBK0MYNB3X7RH6BT0X
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
     kind: ClusterImageCatalog
@@ -35,7 +47,7 @@ spec:
     name: barman-cloud.cloudnative-pg.io
     parameters:
       barmanObjectName: apps-selfhosted
-      serverName: 01KMWETKMBK0MYNB3X7RH6BT0X
+      serverName: 01KZ6Z12N7M9TZ4GK83C992AVD
   postgresql:
     parameters:
       max_slot_wal_keep_size: 900MB

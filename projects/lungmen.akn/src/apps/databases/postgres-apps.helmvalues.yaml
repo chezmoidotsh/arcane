@@ -41,6 +41,26 @@ spec:
       parameters:
         max_slot_wal_keep_size: 900MB
         max_wal_size: 100MB
+
+    # -- Bootstrap from the old lungmen.akn cluster's last backup, as part of the Omni
+    # cluster recreation (issue 1188). CNPG restores the base backup and replays available
+    # WALs to reach consistency. After bootstrap this block is ignored on subsequent
+    # reconciliations — see docs/procedures/databases/DB-20260723-00.cnpg-restore-from-object-store.md.
+    bootstrap:
+      recovery:
+        source: "2026-03-29T09:29:29.483Z"
+
+    # -- Source cluster for bootstrap recovery: the old cluster's own ongoing archive stream.
+    externalClusters:
+      - name: "2026-03-29T09:29:29.483Z"
+        plugin:
+          enabled: true
+          isWALArchiver: false
+          name: barman-cloud.cloudnative-pg.io
+          parameters:
+            barmanObjectName: apps-selfhosted
+            serverName: "01KMWETKMBK0MYNB3X7RH6BT0X" # 2026-03-29T09:29:29.483Z
+
     plugins:
       - enabled: true
         # -- WAL archiving disabled: PostgreSQL recycles WALs automatically after checkpoint.
@@ -50,7 +70,9 @@ spec:
         name: barman-cloud.cloudnative-pg.io
         parameters:
           barmanObjectName: apps-selfhosted
-          serverName: 01KMWETKMBK0MYNB3X7RH6BT0X
+          # -- Fresh ULID for this new physical cluster's own archive stream — must not reuse
+          # the recovered serverName above, which the old cluster keeps writing to until cutover.
+          serverName: "01KZ6Z12N7M9TZ4GK83C992AVD" # 2026-08-04T18:02:01.255Z
 
   databases:
     - name: linkding
