@@ -14,7 +14,7 @@ metadata:
 spec:
   egress:
   - toCIDR:
-    - 10.128.0.19/32
+    - 10.128.0.20/32
     toPorts:
     - ports:
       - port: "6443"
