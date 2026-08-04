@@ -85,7 +85,13 @@ spec:
           - ApplyOutOfSyncOnly=false # Only sync out-of-sync resources, rather than applying every object in the application
           - CreateNamespace=true # Namespace Auto-Creation ensures that namespace specified as the application destination exists in the destination cluster.
           - Delete=confirm # Confirm before deleting resources
-          - Prune=confirm # Confirm before pruning resources
+          # NOT Prune=confirm: automated.enabled + automated.prune above mean sync
+          # runs unattended, and a confirmation can only be supplied via manual
+          # UI/CLI/annotation action. Combined with Prune=confirm, an orphaned
+          # resource stops confirming forever, which silently blocks the whole
+          # Application's sync (not just the pending prune) with no signal in
+          # health.status. See issue #1195.
+          - Prune=true # Prune resources without requiring manual confirmation
           - PruneLast=true # Allow the ability for resource pruning to happen as a final, implicit wave of a sync operation
           - PrunePropagationPolicy=foreground # Supported policies are background, foreground and orphan.
           - Replace=false # Argo CD will use kubectl replace or kubectl create command to apply changes.
