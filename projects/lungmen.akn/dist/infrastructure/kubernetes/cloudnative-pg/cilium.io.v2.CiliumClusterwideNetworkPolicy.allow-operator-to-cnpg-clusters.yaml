@@ -1,0 +1,37 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the CloudNative-PG operator to reach any CNPG Cluster pod in any namespace, for
+      lifecycle management, health checks and metrics collection. This is the egress-side
+      counterpart of the shared allow-cnpg-from-operator ClusterwideNetworkPolicy
+      (catalog/kubernetes/cloudnative-pg/kustomize), which grants the matching ingress on the
+      Cluster pods but does not itself open egress on the operator's own allow-intra-namespace
+      namespace policy.
+      NOTE: must stay a CiliumClusterwideNetworkPolicy, not a namespaced CiliumNetworkPolicy — a
+      namespaced CiliumNetworkPolicy implicitly scopes toEndpoints/fromEndpoints selectors to its
+      own namespace unless the label selector is a matchExpressions-only rule with no namespace
+      key, and even then Cilium was observed (2026-07-28 rhodes.akn DR drill) to still bake in an
+      io.kubernetes.pod.namespace=cloudnative-pg-system constraint on the realized policy, silently
+      blocking egress to any Cluster pod outside cloudnative-pg-system (e.g. vault, pocket-id).
+      ClusterwideNetworkPolicy has no home namespace, so this scoping bug doesn't apply.
+  name: allow-operator-to-cnpg-clusters
+  namespace: cloudnative-pg-system
+spec:
+  egress:
+  - toEndpoints:
+    - matchExpressions:
+      - key: cnpg.io/cluster
+        operator: Exists
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP
+      - port: "8000"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: cloudnative-pg
+      io.kubernetes.pod.namespace: cloudnative-pg-system

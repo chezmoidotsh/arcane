@@ -1,4 +1,14 @@
 ---
+# The operator's own Deployment image. Setting this directly (rather than relying only on
+# the kustomize images: transformer) also fixes the OPERATOR_IMAGE_NAME env var the chart
+# renders from this same value -- the transformer only rewrites container image: fields, not
+# env var values, so OPERATOR_IMAGE_NAME stayed unmirrored even though the transformer
+# correctly covered the Deployment's actual image field.
+# No tag override: leave it empty so the chart falls back to .Chart.AppVersion, keeping the
+# operator version in sync with the chart bump instead of a second place to remember.
+image:
+  repository: oci.chezmoi.sh/ghcr.io/cloudnative-pg/cloudnative-pg
+
 # This config is read by the CloudNative-PG operator at startup to override default
 # image names for PostgreSQL clusters, PgBouncer poolers, and instance manager components.
 # See: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/operator_conf.md
@@ -12,7 +22,7 @@ config:
     # Overrides the default operator image to use the local ZOT registry mirror.
     # The operator uses this image for instance manager pods and maintenance operations.
     # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/cloudnative-pg
-    OPERATOR_IMAGE_NAME: oci.chezmoi.sh/ghcr.io/cloudnative-pg/cloudnative-pg:1.28.0-ubi9@sha256:0869f9b996923aaf3eb761abe032b10ef482eaaef32fc6c604605a7223c13c1b
+    OPERATOR_IMAGE_NAME: oci.chezmoi.sh/ghcr.io/cloudnative-pg/cloudnative-pg:1.29.1@sha256:0dfff19ba7b52ca25851a1010028b6940fff2e233290465af1cfb08a5f3f4661
 
     # PgBouncer connection pooler image override
     # Overrides the default PgBouncer image to use the local ZOT registry mirror.

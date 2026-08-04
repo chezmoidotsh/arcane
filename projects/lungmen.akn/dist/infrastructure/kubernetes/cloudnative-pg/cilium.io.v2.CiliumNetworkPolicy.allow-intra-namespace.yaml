@@ -1,0 +1,21 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Permits intra-namespace communication (operator <-> barman-cloud plugin) in the
+      cloudnative-pg-system namespace. Cross-namespace access to/from CNPG Cluster pods and the
+      Kubernetes API is granted by the other policies in this directory, not here.
+  name: allow-intra-namespace
+  namespace: cloudnative-pg-system
+spec:
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: cloudnative-pg-system
+  endpointSelector: {}
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: cloudnative-pg-system
