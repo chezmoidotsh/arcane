@@ -26,6 +26,14 @@ by either a human operator or an AI agent.
   `projects/rhodes.akn/docs/disaster-recovery/openbao.md` and `projects/rhodes.akn/docs/disaster-recovery/pocket-id.md`
   as their database-restore step.
 
+### Backups
+
+- **[BKP-20260805-00: Restore a Velero-backed PVC on a GitOps-managed cluster](./backups/BKP-20260805-00.velero-restore-gitops-pvc.md)**:
+  Restores a workload-managed PVC (StatefulSet or Deployment) from a Velero (Kopia) backup when a controller already
+  owns the target pod — covers why the naive restore and the documented `existingResourcePolicy: update` workaround both
+  silently fail, and the delete-workload-and-PVC-first procedure that actually works. Validated end to end against
+  `lungmen.akn`'s `jellyfin` app.
+
 ### Omni
 
 - **[OMNI-20260721-00: Talos cluster bring-up on Proxmox](./omni/OMNI-20260721-00.omni-cluster-creation.md)**: Full
