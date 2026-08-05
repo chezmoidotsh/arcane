@@ -1,0 +1,126 @@
+# Minimal stateful app to prove k8up's restic-based backup/restore round-trips real PV
+# data into an *already-existing* PVC — the exact case Velero's restore controller
+# never progresses on a GitOps-managed cluster (see docs/experiments/20260803-velero-pvc-backup
+# and issue 1188). Same Postgres + marker-row pattern as that POC, reused because it
+# already proved a live filesystem-level backup round-trips real application data, not
+# just raw bytes.
+#
+# Two differences from the Velero POC's test-app.yaml, both because k8up's backup
+# mechanism works differently from Velero's fs-backup:
+#
+# 1. No static `local`-type PV / `manual` StorageClass workaround. Velero's fs-backup
+#    inspects the *PV's own type* and explicitly refuses hostPath volumes (kind's
+#    default provisioner produces hostPath PVs). k8up's backup Job mounts the PVC
+#    directly into its own throwaway pod instead — it never inspects the underlying PV
+#    type, so kind's bundled "standard" StorageClass works with zero workaround.
+#
+# 2. No `backup.velero.io/backup-volumes`-style opt-in annotation. k8up is opt-out: a
+#    Schedule (manifests/schedule.yaml) covers every PVC in its namespace by default
+#    (`k8up.io/backup: "false"` to exclude one) — Velero's fs-backup is opt-in per pod,
+#    which is what let a PVC get silently skipped in the sibling POC (its README §3.1).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: k8up-poc-app
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: test-app
+  namespace: k8up-poc-app
+spec:
+  serviceName: test-app
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-app
+  template:
+    metadata:
+      labels:
+        app: test-app
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # kind's local-path-provisioner hostPath volumes are root-owned.
+        # postgres's entrypoint calls chmod on PGDATA, which needs actual
+        # ownership (not just fsGroup's group-write bit) — chown as root
+        # once before the non-root postgres container starts.
+        - name: fix-permissions
+          image: postgres:17-alpine
+          command: ["sh", "-c", "chown -R 70:70 /var/lib/postgresql/data /var/run/postgresql"]
+          securityContext:
+            # Needs CAP_CHOWN/CAP_FOWNER to chown paths it doesn't already
+            # own — dropping ALL would leave even uid 0 unable to chown.
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: run
+              mountPath: /var/run/postgresql
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 70
+            runAsGroup: 70
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          env:
+            - name: POSTGRES_DB
+              value: testdb
+            - name: POSTGRES_USER
+              value: test
+            - name: POSTGRES_PASSWORD
+              value: test
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: tmp
+              mountPath: /tmp
+            - name: run
+              mountPath: /var/run/postgresql
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "test"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "test"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: run
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

@@ -1,0 +1,39 @@
+# =============================================================================
+# k8up local POC — Development Environment (issue #1208)
+# =============================================================================
+# Disposable local kind cluster only — MinIO stands in for the real S3 backup
+# target, Postgres stands in for a real stateful app's PVC. Nothing here
+# touches lungmen.akn, rhodes.akn, or any real infrastructure.
+#
+# Usage:
+#   cd docs/experiments/20260805-k8up-pvc-restore
+#   mise install
+#   mise run poc:bootstrap   # create kind cluster + MinIO + k8up + test app
+#   mise run poc:validate    # run the backup/restore/prune cycle
+#   mise run poc:teardown    # delete the kind cluster
+# =============================================================================
+
+[env]
+KUBECONFIG = "{{ config_root }}/.mise/kubeconfig"
+KIND_CLUSTER_NAME = "k8up-poc"
+
+[tools]
+kind = "latest"
+kubectl = "latest"
+helm = "3"
+
+[tasks."poc:bootstrap"]
+description = "Create the kind sandbox, MinIO, k8up, and the test app"
+run = "scripts/bootstrap.sh"
+dir = "{{config_root}}"
+
+[tasks."poc:validate"]
+alias = "poc:test"
+description = "Run the backup/restore/prune validation cycle"
+run = "scripts/validate.sh"
+dir = "{{config_root}}"
+
+[tasks."poc:teardown"]
+description = "Delete the kind sandbox"
+run = "scripts/teardown.sh"
+dir = "{{config_root}}"

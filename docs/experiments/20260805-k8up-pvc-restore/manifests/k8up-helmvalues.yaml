@@ -1,0 +1,31 @@
+# k8up operator, chart 4.10.0 / app v2.16.0. S3 backend and restic repository
+# password are configured globally via operator env vars (BACKUP_GLOBAL* — see
+# operator/cfg/config.go and operator/executor/envvarconverter.go in k8up-io/k8up)
+# rather than repeated on every CR: this is what lets manifests/schedule.yaml and
+# every Backup/Restore/Prune CR created in scripts/validate.sh omit `spec.backend`
+# entirely, confirmed against config/samples/k8up_v1_restore.yaml's "restore-s3-global"
+# example (`backend: {s3: {}}`/omitted, relying on these same env vars).
+image:
+  tag: v2.16.0
+
+k8up:
+  envVars:
+    - name: BACKUP_GLOBALS3ENDPOINT
+      value: http://minio.k8up-poc.svc:9000
+    - name: BACKUP_GLOBALS3BUCKET
+      value: k8up-backups
+    - name: BACKUP_GLOBALACCESSKEYID
+      valueFrom:
+        secretKeyRef:
+          name: k8up-repo-credentials
+          key: username
+    - name: BACKUP_GLOBALSECRETACCESSKEY
+      valueFrom:
+        secretKeyRef:
+          name: k8up-repo-credentials
+          key: password
+    - name: BACKUP_GLOBALREPOPASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: k8up-repo-credentials
+          key: repository-password
