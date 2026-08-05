@@ -56,21 +56,19 @@ spec:
     # cluster recreation (issue 1188). CNPG restores the base backup and replays available
     # WALs to reach consistency. After bootstrap this block is ignored on subsequent
     # reconciliations — see docs/procedures/databases/DB-20260723-00.cnpg-restore-from-object-store.md.
-    # Supersedes the previous recovery-from-apps-secured-20260329 block (that generation's
-    # backup is no longer the live data — 20260530 has been the running cluster since).
     bootstrap:
       recovery:
-        source: "2026-05-30T16:56:54.678Z"
+        source: 2026-05-30T16:56:54.678Z
 
-    # -- Source cluster for bootstrap recovery: the old cluster's own ongoing archive stream.
+    # -- Source cluster for bootstrap recovery
     externalClusters:
-      - name: "2026-05-30T16:56:54.678Z"
+      - name: 2026-05-30T16:56:54.678Z
         plugin:
           name: barman-cloud.cloudnative-pg.io
           isWALArchiver: false
           parameters:
             barmanObjectName: apps-secured-selfhosted
-            serverName: "01KSWX2DMP9RNXX19Z23W2T57M" # 2026-05-30T16:56:54.678Z
+            serverName: 01KSWX2DMP9RNXX19Z23W2T57M # 2026-05-30T16:56:54.678Z
 
     plugins:
       - enabled: true
@@ -81,9 +79,7 @@ spec:
         name: barman-cloud.cloudnative-pg.io
         parameters:
           barmanObjectName: apps-secured-selfhosted
-          # -- Fresh ULID for this new physical cluster's own archive stream — must not reuse
-          # the recovered serverName above, which the old cluster keeps writing to until cutover.
-          serverName: "01KZ6Z12NPR25Z5AZRS935KP8D" # 2026-08-04T18:02:01.270Z
+          serverName: 01KZ6Z12NPR25Z5AZRS935KP8D # 2026-08-04T18:02:01.270Z
 
   databases:
     - name: immich
