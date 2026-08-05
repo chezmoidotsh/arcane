@@ -175,3 +175,4 @@ spec:
       resources:
         requests:
           storage: 10Gi
+      storageClassName: proxmox-lvmthin-ext4-retain

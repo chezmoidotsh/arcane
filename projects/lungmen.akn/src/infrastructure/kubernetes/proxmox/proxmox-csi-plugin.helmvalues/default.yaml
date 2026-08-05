@@ -37,6 +37,17 @@ storageClass:
     fstype: xfs
     cache: directsync
     ssd: false
+  # -- Retain variant for volumes that hold data restored from backup outside CNPG's own
+  # S3 recovery (actual-budget, jellyfin, paperless-ngx — see their volumeClaimTemplates).
+  # A stray `kubectl delete pvc`/StatefulSet mistake on the default (Delete) class destroys
+  # the underlying disk along with the PVC; this class only detaches it (PV goes Released,
+  # data recoverable) — same nvme-lvm backend and fstype as proxmox-lvmthin-ext4 otherwise.
+  - name: proxmox-lvmthin-ext4-retain
+    storage: nvme-lvm
+    reclaimPolicy: Retain
+    fstype: ext4
+    cache: writethrough
+    ssd: false
 
 controller:
   nodeSelector:
