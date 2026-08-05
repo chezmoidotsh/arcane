@@ -1,0 +1,13 @@
+---
+allowVolumeExpansion: true
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: proxmox-lvmthin-ext4-retain
+parameters:
+  cache: writethrough
+  csi.storage.k8s.io/fstype: ext4
+  storage: nvme-lvm
+provisioner: csi.proxmox.sinextra.dev
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer
