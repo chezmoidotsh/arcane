@@ -47,11 +47,14 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
+        # trivy:ignore:KSV-0125
+        # Raw docker.io image, not mirrored through oci.chezmoi.sh: this
+        # sandbox is local-only and torn down after use, never exposed
+        # outside the disposable kind cluster — unlike real cluster
+        # manifests, there's no registry-mirror policy to satisfy here.
         - name: minio
           image: minio/minio:RELEASE.2025-09-07T16-13-09Z
-          # imagePullPolicy left at the IfNotPresent default rather than
-          # Always: the tag is a pinned, immutable release, so re-pulling on
-          # every restart would just waste time. checkov:skip=CKV_K8S_15
+          imagePullPolicy: Always
           args: ["server", "/data", "--console-address", ":9001"]
           securityContext:
             allowPrivilegeEscalation: false
@@ -141,10 +144,11 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
+        # trivy:ignore:KSV-0125
+        # Raw docker.io image — see the minio container's comment above.
         - name: mc
           image: minio/mc:RELEASE.2025-08-13T08-35-41Z
-          # imagePullPolicy left at IfNotPresent — see the minio container's
-          # comment above. checkov:skip=CKV_K8S_15
+          imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

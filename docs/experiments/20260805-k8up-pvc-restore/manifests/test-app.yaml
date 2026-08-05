@@ -48,19 +48,40 @@ spec:
         # kind's local-path-provisioner hostPath volumes are root-owned.
         # postgres's entrypoint calls chmod on PGDATA, which needs actual
         # ownership (not just fsGroup's group-write bit) — chown as root
-        # once before the non-root postgres container starts.
+        # once before the non-root postgres container starts. Dropping ALL
+        # capabilities and adding back only CHOWN/FOWNER was tried first and
+        # broke restoring into this PVC specifically: after a k8up restore,
+        # the directory restic faithfully restored is already mode 0700
+        # owned by uid 70 (exactly what backup-1 captured), and without
+        # CAP_DAC_OVERRIDE even a uid-0 process can't traverse into a 0700
+        # directory it doesn't own — confirmed by running it, "chown:
+        # /var/lib/postgresql/data: Permission denied" on the very first
+        # restored pod. A totally fresh, empty PVC never exercises this
+        # path (permissive default dir perms), which is why bootstrap alone
+        # doesn't catch it. CHOWN+FOWNER+DAC_OVERRIDE is the minimal set
+        # that actually works for both the fresh and the restored case.
+        # checkov:skip=CKV_K8S_37:see comment above, this is the minimal set
+        # trivy:ignore:KSV-0012 trivy:ignore:KSV-0020 trivy:ignore:KSV-0021
+        # trivy:ignore:KSV-0022 trivy:ignore:KSV-0105
+        # checkov:skip=CKV_K8S_40:root init container, see comment above
         - name: fix-permissions
           image: postgres:17-alpine
+          imagePullPolicy: Always
           command: ["sh", "-c", "chown -R 70:70 /var/lib/postgresql/data /var/run/postgresql"]
           securityContext:
-            # Needs CAP_CHOWN/CAP_FOWNER to chown paths it doesn't already
-            # own — dropping ALL would leave even uid 0 unable to chown.
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsUser: 0
+            runAsGroup: 0
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN", "FOWNER", "DAC_OVERRIDE"]
           resources:
             requests:
               cpu: 50m
               memory: 32Mi
             limits:
+              cpu: 100m
               memory: 64Mi
           volumeMounts:
             - name: data
@@ -70,16 +91,21 @@ spec:
       containers:
         - name: postgres
           image: postgres:17-alpine
+          imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsNonRoot: true
+            # trivy:ignore:KSV-0020 trivy:ignore:KSV-0021
+            # uid/gid 70 is the postgres image's own fixed account, not
+            # configurable — real Postgres images don't run above 10000.
             runAsUser: 70
             runAsGroup: 70
             capabilities:
               drop: ["ALL"]
           resources:
             limits:
+              cpu: 250m
               memory: 256Mi
             requests:
               cpu: 100m

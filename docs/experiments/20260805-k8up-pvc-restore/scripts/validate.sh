@@ -68,6 +68,10 @@ write_marker() {
   psql_exec "INSERT INTO k8up_poc_marker (value) VALUES ('${marker}');"
 }
 
+# shellcheck disable=SC2329 # invoked indirectly, inside `check`'s eval'd strings below
+# shellcheck disable=SC2310 # `|| true` here is intentional: the query legitimately
+# fails ("relation does not exist") right after the simulated data-loss step, and
+# that must read back as an empty string, not abort the script under set -e.
 read_marker() {
   psql_exec "SELECT value FROM k8up_poc_marker;" 2>/dev/null || true
 }
@@ -86,6 +90,7 @@ run_k8up_job() {
   kubectl -n "${NS}" wait --for=condition=Completed "${kind}.k8up.io/${name}" --timeout=180s
 }
 
+# shellcheck disable=SC2329 # invoked indirectly, inside `check`'s eval'd strings below
 k8up_job_succeeded() {
   local kind="$1" name="$2"
   local reason
@@ -113,6 +118,9 @@ EOF
 
 check "V-001" "backup-1 completed successfully" "k8up_job_succeeded backup backup-1"
 
+# shellcheck disable=SC2312 # exit codes of comm/sort/head deliberately unchecked —
+# an empty SNAPSHOT1_ID surfaces on its own via the "<none>" fallback below and
+# fails downstream at V-004 (the Restore CR would be rejected with an empty snapshot).
 SNAPSHOT1_ID="$(comm -13 <(echo "${IDS_BEFORE_1}" | sort) <(list_snapshot_ids | sort) | head -1)"
 echo "backup-1 snapshot: ${SNAPSHOT1_ID:-<none>}"
 
@@ -133,6 +141,7 @@ EOF
 
 check "V-002" "backup-2 completed successfully" "k8up_job_succeeded backup backup-2"
 
+# shellcheck disable=SC2312 # same reasoning as SNAPSHOT1_ID above
 SNAPSHOT2_ID="$(comm -13 <(echo "${IDS_BEFORE_2}" | sort) <(list_snapshot_ids | sort) | head -1)"
 echo "backup-2 snapshot: ${SNAPSHOT2_ID:-<none>}"
 
@@ -219,6 +228,7 @@ EOF
 
 check "V-009" "prune-1 completed successfully" "k8up_job_succeeded prune prune-1"
 
+# shellcheck disable=SC2016 # single-quoted on purpose: expands inside eval, not here
 check "V-010" "exactly 1 snapshot remains after pruning" \
   '[ "$(list_snapshot_ids | grep -c .)" = 1 ]'
 
