@@ -35,8 +35,9 @@ simple/deterministic enough for a small local model, or a human on a short runbo
 5. [Test Environment](#5-test-environment)
 6. [Validation Criteria](#6-validation-criteria)
 7. [Results](#7-results)
-8. [Conclusions](#8-conclusions)
-9. [Actionable Next Steps](#9-actionable-next-steps)
+8. [Comparison with Velero](#8-comparison-with-velero)
+9. [Conclusions](#9-conclusions)
+10. [Actionable Next Steps](#10-actionable-next-steps)
 
 ---
 
@@ -238,7 +239,34 @@ the actual error), both documented as findings above rather than smoothed over:
    silent-empty-backup UID mismatch), not a restore bug at all; the _backups themselves_ were empty. Fixed by setting
    `podSecurityContext` on every CR.
 
-## 8. Conclusions
+## 8. Comparison with Velero
+
+| Dimension                               | Velero (EXP-2026-007)                                                                                                                                                                                                              | k8up (this POC)                                                                                                                                                                                |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Restore into an already-existing PVC    | **Structurally broken on this cluster** — `PodVolumeRestore` only progresses if Velero itself creates/owns the target pod, which never happens once ArgoCD already declared it (#1188, the reason this whole investigation exists) | **Works** — the restore Job mounts the target PVC directly, never needs to own/create the pod (V-004/V-005)                                                                                    |
+| Explicit snapshot targeting             | Not exercised in the Velero POC                                                                                                                                                                                                    | Explicitly tested against k8up-io/k8up#1062's failure mode — correct (V-007/V-008)                                                                                                             |
+| Backend config                          | Global (`BackupStorageLocation`), but the fs-backup annotation is still per-workload                                                                                                                                               | Fully global (`BACKUP_GLOBAL*` env vars) — every CR in this POC omits `spec.backend` (§3.1)                                                                                                    |
+| PVC discovery                           | Opt-in per pod (`backup.velero.io/backup-volumes`); the global opt-out flag silently skips volumes with zero error (Velero POC §3.1)                                                                                               | Opt-out per namespace by default (§3.2) — no annotation needed, no silent-skip failure mode found                                                                                              |
+| Underlying PV type dependency           | fs-backup explicitly refuses hostPath-typed PVs (Velero POC §3.2) — needed a static `local` PV workaround in kind                                                                                                                  | None — the backup Job mounts the PVC directly regardless of PV type (§3.2)                                                                                                                     |
+| **Default backup consistency (freeze)** | **No freeze.** Velero's own docs: fs-backup "backs up data from the live file system, in which way the data is not captured at the same point in time, so is less consistent than the snapshot approaches"                         | **No freeze either.** k8up's own docs warn the direct-PVC-mount method "does not work when files are kept open for a long period of time, like databases do"                                   |
+| App-aware / consistent backup path      | Pre/post exec hooks (`pre.hook.backup.velero.io/command`) — documented pattern is literally calling `fsfreeze`/`fsunfreeze` around the backup                                                                                      | `k8up.io/backupcommand` annotation (exec inside the app pod) or a separate `PreBackupPod` — same idea, different shape. Neither Velero's hooks nor k8up's exec paths were tested in either POC |
+| Storage-level atomic snapshot option    | **Yes** — CSI `VolumeSnapshotLocation`, genuinely atomic at the storage layer, no app-level freeze needed (out of scope for both POCs — needs a real CSI driver)                                                                   | **No equivalent.** k8up is restic-based file backup only; there is no CSI-snapshot alternative to fall back on for consistency                                                                 |
+| Silent-failure modes found              | `defaultVolumesToFsBackup` silently skips a PVC with zero error/warning (Velero POC §3.1)                                                                                                                                          | Backup Job silently backs up 0 files on a UID mismatch, `Backup` CR still reports `Succeeded` (§3.3, confirmed as open upstream bug k8up-io/k8up#1032)                                         |
+| Retention footguns found                | None found in the Velero POC                                                                                                                                                                                                       | `keepDaily` silently defaults to 14 regardless of what's requested (§3.4, confirmed as open upstream bug k8up-io/k8up#1106)                                                                    |
+| Community / maturity                    | Larger community, CNCF-adjacent, VMware/Broadcom-backed                                                                                                                                                                            | Smaller (VSHN-backed), but active — weekly/monthly release cadence                                                                                                                             |
+
+**On the freeze question specifically** (researched directly against both projects' docs, not assumed): **neither tool
+freezes anything by default.** Both Velero's fs-backup and k8up's direct-PVC-mount backup are a live read of whatever
+the filesystem looks like at scan time — both projects' own documentation carries the identical warning about open
+files/databases. Consistency for a real database is entirely opt-in and entirely the same shape on both sides: an
+exec-based hook that runs a tool with its own consistency guarantees (`pg_dump`, `fsfreeze`, …) before the raw files are
+read. The one **structural** difference is that Velero additionally offers CSI volume snapshots — an atomic,
+storage-layer mechanism that sidesteps the freeze question entirely because the snapshot itself is a single
+point-in-time copy-on-write operation — which k8up has no equivalent for. That gap doesn't matter for this repo
+specifically (the issue that started this investigation already ruled CSI snapshots out of scope for `lungmen.akn`), but
+it's a real capability Velero has and k8up structurally doesn't.
+
+## 9. Conclusions
 
 **k8up solves the specific problem that sent this investigation down this path.** Restore into an already-existing,
 ArgoCD-owned PVC works cleanly and deterministically — no controller-timing flakiness, no "Velero must own the pod"
@@ -260,7 +288,7 @@ check at rollout time, not something the CR status alone can be trusted to surfa
 apps: Velero doesn't solve the restore problem this cluster actually has, so keeping it alongside k8up buys nothing but
 a second thing to maintain.
 
-### 8.1 Not answered by this POC
+### 9.1 Not answered by this POC
 
 - **CNPG-specific backup behavior** — this POC uses a plain Postgres StatefulSet, not a CNPG cluster. CNPG's own
   backup/WAL-archiving machinery may interact with a concurrent restic snapshot differently. Worth a follow-up check
@@ -290,16 +318,17 @@ a second thing to maintain.
   tested, so whether stale files survive a restore and give a false sense of a clean recovery is an open question, not
   an assumption this POC can back up.
 - **Backup consistency under concurrent writes / app-aware hooks** — backup-1 and backup-2 were both taken while
-  Postgres was live and serving queries, and the round trip preserved the marker row correctly both times — but that's
-  the same crash-consistency argument the Velero POC relied on (§3 of that POC), not a guarantee under real write load.
-  k8up supports an app-aware alternative to the raw file-level backup, the `k8up.io/backupcommand` annotation (exec a
-  command — e.g. a `pg_dump`, or a pause/flush — instead of reading the mounted files directly), mirroring Velero's own
-  pre/post backup hooks. Neither this POC nor the Velero one tested the hook-based path; both only validated the naive
-  file-level backup. For lungmen.akn's actual CNPG clusters this matters more than it did here, since CNPG already has
-  its own WAL-archiving backup machinery that a concurrent restic snapshot could interact with unpredictably (see the
-  CNPG bullet above).
+  Postgres was live and serving queries, and the round trip preserved the marker row correctly both times. That worked
+  here, but neither tool freezes anything by default (confirmed against both projects' own docs, see
+  [§8](#8-comparison-with-velero)): k8up's direct-PVC-mount backup and Velero's fs-backup carry the identical warning
+  about open files/databases. k8up's app-aware alternative to the raw file-level backup, the `k8up.io/backupcommand`
+  annotation (exec a command — e.g. a `pg_dump`, or a pause/flush — instead of reading the mounted files directly),
+  mirrors Velero's own pre/post backup hooks exactly. Neither this POC nor the Velero one tested the hook-based path;
+  both only validated the naive file-level backup. For lungmen.akn's actual CNPG clusters this matters more than it did
+  here, since CNPG already has its own WAL-archiving backup machinery that a concurrent restic snapshot could interact
+  with unpredictably (see the CNPG bullet above).
 
-### 8.2 References
+### 9.2 References
 
 - Issue: [#1208](https://github.com/chezmoidotsh/arcane/issues/1208)
 - Related: [#1188](https://github.com/chezmoidotsh/arcane/issues/1188) (lungmen.akn recreation — where the Velero
@@ -311,10 +340,16 @@ a second thing to maintain.
 - k8up-io/k8up#1062, #803, #1210 (named in #1208's own research)
 - k8up-io/k8up#1032 (§3.3 — silent empty backup, open), #1106 (§3.4 — undocumented `keepDaily: 14` default, open) —
   found independently by searching upstream after reproducing both locally, confirming neither is a sandbox artifact
+- k8up backup consistency: <https://docs.k8up.io/k8up/2.16/explanations/backup.html> (direct-PVC-mount method, open
+  files/database warning), `k8up.io/backupcommand` and `PreBackupPod` samples
+  (`config/samples/k8up_v1_prebackuppod.yaml` in k8up-io/k8up)
+- Velero backup consistency: <https://velero.io/docs/main/file-system-backup/> ("data is not captured at the same point
+  in time" caveat), <https://velero.io/docs/main/backup-hooks/> (`fsfreeze` pre/post hook pattern) — read directly for
+  §8's comparison, not assumed from memory
 
 ---
 
-## 9. Actionable Next Steps
+## 10. Actionable Next Steps
 
 - Deploy this same k8up configuration on `lungmen.akn` against the real S3 target (`s3.chezmoi.sh`), scoped to one or
   two apps with local PVCs (actual-budget, jellyfin, or paperless-ngx per #1208), with `podSecurityContext` matched to
@@ -325,7 +360,7 @@ a second thing to maintain.
 - Package as a reusable ArgoCD Application, matching this repo's `<chart>.helmvalues/` convention (Velero POC's own
   deferred item, same shape here).
 - Validate CNPG-specific behavior directly on `lungmen.akn` before relying on this for real CNPG clusters
-  ([§8.1](#81-not-answered-by-this-poc)).
+  ([§9.1](#91-not-answered-by-this-poc)).
 - **Build an operational script for the full restore procedure**, matching the `scripts/*` convention already used for
   other stateful operations in this repo (`argocd:app:sync`, `cnpg:db:migrate`, `bao:kv:copy`). A raw `kubectl apply` of
   a `Restore` CR isn't the real procedure on an ArgoCD-managed cluster — per the pod-concurrency finding above, it needs
