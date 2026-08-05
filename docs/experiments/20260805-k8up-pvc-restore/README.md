@@ -274,6 +274,30 @@ a second thing to maintain.
 - **k8up-io/k8up#803 (single-file restore) and #1210 (restoreMethod misconfiguration error UX)** — not specifically
   exercised; this POC's restore is a whole-folder restore into an existing PVC, not a single-file restore, and every CR
   here is correctly configured by construction.
+- **Whether the target pod can stay up during restore** — `scripts/validate.sh` explicitly scales the StatefulSet to 0
+  before creating the Restore CR and only scales back up once it completes (see the "Scaling down" step). This wasn't
+  arbitrary — restoring restic-managed files into a directory a live Postgres has open risks corruption regardless of
+  which backup tool is involved — but it means **restoring with the pod left running was never exercised**, only "stop,
+  restore, start." On `lungmen.akn`, the StatefulSet is ArgoCD-managed: if self-heal is enabled, a manual
+  `kubectl scale --replicas=0` done out-of-band (not through Git) is likely to get fought and reverted by ArgoCD's own
+  reconciliation before the restore Job ever gets exclusive access to the PVC. Not tested here — kind has no ArgoCD. The
+  real procedure almost certainly needs to pause/unsync the Application first, not just scale the workload.
+- **Whether restore is destructive or additive** — every restore in this POC targets a PVC that was just freshly
+  (re)created and is genuinely empty (§3.5's data-loss simulation deletes and recreates it). `restic restore` is not
+  necessarily a wipe-then-restore operation — by default it writes/overwrites the files present in the snapshot but does
+  not clearly guarantee removal of files that exist in the target but aren't in the snapshot. Restoring "in place" onto
+  a PVC that already has some (possibly partial or corrupted) data — rather than a freshly emptied one — was never
+  tested, so whether stale files survive a restore and give a false sense of a clean recovery is an open question, not
+  an assumption this POC can back up.
+- **Backup consistency under concurrent writes / app-aware hooks** — backup-1 and backup-2 were both taken while
+  Postgres was live and serving queries, and the round trip preserved the marker row correctly both times — but that's
+  the same crash-consistency argument the Velero POC relied on (§3 of that POC), not a guarantee under real write load.
+  k8up supports an app-aware alternative to the raw file-level backup, the `k8up.io/backupcommand` annotation (exec a
+  command — e.g. a `pg_dump`, or a pause/flush — instead of reading the mounted files directly), mirroring Velero's own
+  pre/post backup hooks. Neither this POC nor the Velero one tested the hook-based path; both only validated the naive
+  file-level backup. For lungmen.akn's actual CNPG clusters this matters more than it did here, since CNPG already has
+  its own WAL-archiving backup machinery that a concurrent restic snapshot could interact with unpredictably (see the
+  CNPG bullet above).
 
 ### 8.2 References
 
@@ -302,3 +326,11 @@ a second thing to maintain.
   deferred item, same shape here).
 - Validate CNPG-specific behavior directly on `lungmen.akn` before relying on this for real CNPG clusters
   ([§8.1](#81-not-answered-by-this-poc)).
+- **Build an operational script for the full restore procedure**, matching the `scripts/*` convention already used for
+  other stateful operations in this repo (`argocd:app:sync`, `cnpg:db:migrate`, `bao:kv:copy`). A raw `kubectl apply` of
+  a `Restore` CR isn't the real procedure on an ArgoCD-managed cluster — per the pod-concurrency finding above, it needs
+  at minimum: unsync/pause the app's ArgoCD `Application` (so self-heal doesn't fight the scale-down), scale the
+  workload to 0, create and wait on the `Restore`, scale back up and confirm the rollout, then re-sync ArgoCD. Building
+  this as a reusable script (rather than a one-off manual sequence during an actual incident) is exactly the kind of
+  simple, deterministic tooling #1208's own bar for "a small local model can operate this" calls for — worked out and
+  tested once, not improvised live during a real recovery.
