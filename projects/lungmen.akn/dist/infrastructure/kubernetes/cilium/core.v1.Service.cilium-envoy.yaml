@@ -8,6 +8,7 @@ metadata:
   labels:
     app.kubernetes.io/name: cilium-envoy
     app.kubernetes.io/part-of: cilium
+    helm.sh/chart: cilium-1.20.0
     io.cilium/app: proxy
     k8s-app: cilium-envoy
   name: cilium-envoy
@@ -18,7 +19,7 @@ spec:
   - name: envoy-metrics
     port: 9964
     protocol: TCP
-    targetPort: envoy-metrics
+    targetPort: 9964
   selector:
     k8s-app: cilium-envoy
   type: ClusterIP

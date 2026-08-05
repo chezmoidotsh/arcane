@@ -1,0 +1,15 @@
+# Both lungmen clusters (old and new) run external-dns-unifi with the same txtOwnerId,
+# so with the default policy: sync each instance deletes DNS records for apps it doesn't
+# see in its own HTTPRoute set. The old cluster is still authoritative for production
+# traffic (n8n, forgejo, mealie, etc. not yet migrated). Kept at 0 replicas until PR3
+# cutover; re-enable only once ownership is resolved (distinct txtOwnerId + upsert-only,
+# or the old instance is decommissioned). The chart has no replicaCount value — replicas
+# is hardcoded in its Deployment template — hence a kustomize patch instead of a values
+# override.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: external-dns-unifi
+  namespace: external-dns-system
+spec:
+  replicas: 0

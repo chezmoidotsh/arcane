@@ -1,0 +1,28 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Kubernetes API server to reach the CloudNative-PG admission webhook.
+      cnpg-mutating-webhook-configuration and cnpg-validating-webhook-configuration both set
+      failurePolicy: Fail, and allow-intra-namespace only allows intra-namespace ingress — without
+      this rule the apiserver's admission calls are dropped and all Cluster/Backup writes are
+      rejected. Unlike cert-manager/external-secrets, CNPG serves its webhook from the same
+      pod as the controller (port 9443, not a separate deployment). Also allows remote-node: BPF
+      masquerade SNATs the apiserver's call before it reaches this cross-node webhook
+      (control-plane is NoSchedule-tainted), so it lands as remote-node instead of kube-apiserver.
+  name: allow-webhook-from-kubernetes-api
+  namespace: cloudnative-pg-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: cloudnative-pg
+  ingress:
+    - fromEntities:
+        - kube-apiserver
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "9443"
+              protocol: TCP

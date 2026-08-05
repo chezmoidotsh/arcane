@@ -11,7 +11,7 @@ metadata:
   name: external-dns-unifi
   namespace: external-dns-system
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app.kubernetes.io/instance: external-dns-unifi

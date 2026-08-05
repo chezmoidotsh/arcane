@@ -15,9 +15,11 @@ helmCharts:
     valuesFile: ../../../../../../catalog/kubernetes/cert-manager/helm/default.helmvalues.yaml
     additionalValuesFiles:
       - ../../../../../../catalog/kubernetes/cert-manager/helm/hardened.helmvalues.yaml
+      - cert-manager.helmvalues/override.yaml
 
 resources:
   - ../../../../../../catalog/kubernetes/cert-manager/kustomize
+  - security/
 
 patches:
   - path: letsencrypt-issuer-credentials.externalsecret.yaml

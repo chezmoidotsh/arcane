@@ -1,0 +1,17 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/part-of: cilium
+    helm.sh/chart: cilium-1.20.0
+  name: hubble-generate-certs
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: hubble-generate-certs
+subjects:
+- kind: ServiceAccount
+  name: hubble-generate-certs
+  namespace: kube-system

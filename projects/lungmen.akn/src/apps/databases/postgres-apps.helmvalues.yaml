@@ -41,6 +41,26 @@ spec:
       parameters:
         max_slot_wal_keep_size: 900MB
         max_wal_size: 100MB
+
+    # -- Bootstrap from the old lungmen.akn cluster's last backup, as part of the Omni
+    # cluster recreation (issue 1188). CNPG restores the base backup and replays available
+    # WALs to reach consistency. After bootstrap this block is ignored on subsequent
+    # reconciliations — see docs/procedures/databases/DB-20260723-00.cnpg-restore-from-object-store.md.
+    bootstrap:
+      recovery:
+        source: 2026-03-29T09:29:29.483Z
+
+    # -- Source cluster for bootstrap recovery
+    externalClusters:
+      - name: 2026-03-29T09:29:29.483Z
+        plugin:
+          enabled: true
+          isWALArchiver: false
+          name: barman-cloud.cloudnative-pg.io
+          parameters:
+            barmanObjectName: apps-selfhosted
+            serverName: 01KMWETKMBK0MYNB3X7RH6BT0X # 2026-03-29T09:29:29.483Z
+
     plugins:
       - enabled: true
         # -- WAL archiving disabled: PostgreSQL recycles WALs automatically after checkpoint.
@@ -50,31 +70,9 @@ spec:
         name: barman-cloud.cloudnative-pg.io
         parameters:
           barmanObjectName: apps-selfhosted
-          serverName: 01KMWETKMBK0MYNB3X7RH6BT0X
+          serverName: 01KZ6Z12N7M9TZ4GK83C992AVD # 2026-08-04T18:02:01.255Z
 
   databases:
-    - name: atuin
-      users:
-        - name: atuin
-          vault:
-            path: lungmen.akn/data/atuin/database/postgresql
-      allowedApplicationSelector:
-        - endpointSelector:
-            - matchLabels:
-                io.kubernetes.pod.namespace: atuin
-                app.kubernetes.io/name: atuin
-
-    - name: n8n
-      users:
-        - name: n8n
-          vault:
-            path: lungmen.akn/data/n8n/database/postgresql
-      allowedApplicationSelector:
-        - endpointSelector:
-            - matchLabels:
-                io.kubernetes.pod.namespace: n8n
-                app.kubernetes.io/name: n8n
-
     - name: linkding
       users:
         - name: linkding
@@ -85,14 +83,3 @@ spec:
             - matchLabels:
                 io.kubernetes.pod.namespace: linkding
                 app.kubernetes.io/name: linkding
-
-    - name: forgejo
-      users:
-        - name: forgejo
-          vault:
-            path: lungmen.akn/data/forgejo/database/postgresql
-      allowedApplicationSelector:
-        - endpointSelector:
-            - matchLabels:
-                io.kubernetes.pod.namespace: forgejo
-                app.kubernetes.io/name: forgejo

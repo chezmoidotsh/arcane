@@ -14,7 +14,7 @@ metadata:
   name: paperless-ngx
   namespace: paperless-ngx
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app.kubernetes.io/component: webserver
@@ -168,9 +168,6 @@ spec:
         app.kubernetes.io/component: webserver
         app.kubernetes.io/instance: paperless-ngx
         app.kubernetes.io/name: paperless-ngx
-        recurring-job-group.longhorn.io/daily: enabled
-        recurring-job-group.longhorn.io/monthly: enabled
-        recurring-job-group.longhorn.io/weekly: enabled
       name: persistent-storage
     spec:
       accessModes:

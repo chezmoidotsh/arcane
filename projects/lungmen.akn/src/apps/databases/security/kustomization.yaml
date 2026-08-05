@@ -14,7 +14,4 @@ resources:
   - network-policy.allow-to-s3-backup.yaml
 
   # Application-specific network policies allowing access to the mutualized PostgreSQL clusters
-  - network-policy.allow-apps-database-from-atuin.yaml
-  - network-policy.allow-apps-database-from-n8n.yaml
   - network-policy.allow-apps-database-from-linkding.yaml
-  - network-policy.allow-apps-database-from-forgejo.yaml

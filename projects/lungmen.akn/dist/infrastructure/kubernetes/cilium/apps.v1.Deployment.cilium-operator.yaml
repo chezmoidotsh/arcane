@@ -5,6 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: cilium-operator
     app.kubernetes.io/part-of: cilium
+    helm.sh/chart: cilium-1.20.0
     io.cilium/app: operator
     name: cilium-operator
   name: cilium-operator
@@ -28,6 +29,7 @@ spec:
       labels:
         app.kubernetes.io/name: cilium-operator
         app.kubernetes.io/part-of: cilium
+        helm.sh/chart: cilium-1.20.0
         io.cilium/app: operator
         name: cilium-operator
     spec:
@@ -66,19 +68,22 @@ spec:
           value: localhost
         - name: KUBERNETES_SERVICE_PORT
           value: "7445"
-        image: quay.io/cilium/operator-generic:v1.18.10@sha256:ab08d58fd12e98d9a9601d4b52beee839ff2537fba73d262aabad222454a16b3
+        image: quay.io/cilium/operator-generic:v1.20.0@sha256:80744a8cc7c91c2f9e6347629406844eb35d79b30a732c6d41c15b17232a74f3
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:
             host: 127.0.0.1
             path: /healthz
-            port: 9234
+            port: health
             scheme: HTTP
           initialDelaySeconds: 60
           periodSeconds: 10
           timeoutSeconds: 3
         name: cilium-operator
         ports:
+        - containerPort: 9234
+          hostPort: 9234
+          name: health
         - containerPort: 9963
           hostPort: 9963
           name: prometheus
@@ -88,7 +93,7 @@ spec:
           httpGet:
             host: 127.0.0.1
             path: /healthz
-            port: 9234
+            port: health
             scheme: HTTP
           initialDelaySeconds: 0
           periodSeconds: 5
@@ -104,6 +109,7 @@ spec:
           name: cilium-config-path
           readOnly: true
       hostNetwork: true
+      hostUsers: true
       nodeSelector:
         kubernetes.io/os: linux
       priorityClassName: system-cluster-critical

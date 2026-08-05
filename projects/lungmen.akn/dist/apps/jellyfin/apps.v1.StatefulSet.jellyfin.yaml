@@ -8,7 +8,7 @@ metadata:
   name: jellyfin
   namespace: jellyfin
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app.kubernetes.io/instance: jellyfin
@@ -107,10 +107,6 @@ spec:
       labels:
         app.kubernetes.io/instance: jellyfin
         app.kubernetes.io/name: jellyfin
-        recurring-job-group.longhorn.io/auto-snapshots: enabled
-        recurring-job-group.longhorn.io/daily: enabled
-        recurring-job-group.longhorn.io/monthly: enabled
-        recurring-job-group.longhorn.io/weekly: enabled
       name: persistent
     spec:
       accessModes:

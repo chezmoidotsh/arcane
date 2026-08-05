@@ -104,11 +104,6 @@ spec:
     - apiVersion: v1
       kind: PersistentVolumeClaim
       metadata:
-        labels:
-          recurring-job-group.longhorn.io/auto-snapshots: enabled
-          recurring-job-group.longhorn.io/daily: enabled
-          recurring-job-group.longhorn.io/weekly: enabled
-          recurring-job-group.longhorn.io/monthly: enabled
         name: persistent
       spec:
         accessModes:

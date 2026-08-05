@@ -6,12 +6,12 @@ namespace: cloudnative-pg-system
 helmCharts:
   - repo: https://cloudnative-pg.github.io/charts
     name: cloudnative-pg
-    version: 0.28.2
+    version: 0.29.0
 
     releaseName: cloudnative-pg
     namespace: cloudnative-pg-system
 
-    valuesFile: default.helmvalues.yaml
+    valuesFile: helmvalues/default.yaml
 
 resources:
   - # Install Barman Cloud CNPG-I plugin (v0.14.0), from the release-published
@@ -28,12 +28,11 @@ resources:
     https://github.com/cloudnative-pg/plugin-barman-cloud/releases/download/v0.14.0/manifest.yaml
   - # Configure defaults for CloudNativePG
     ../../../../../../catalog/kubernetes/cloudnative-pg/kustomize
+  - security/
 
 patches:
   - path: plugin-barman-cloud.secret-sidecar-image.patch.yaml
 
 images:
-  - name: ghcr.io/cloudnative-pg/cloudnative-pg
-    newName: oci.chezmoi.sh/ghcr.io/cloudnative-pg/cloudnative-pg
   - name: ghcr.io/cloudnative-pg/plugin-barman-cloud
     newName: oci.chezmoi.sh/ghcr.io/cloudnative-pg/plugin-barman-cloud

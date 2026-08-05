@@ -5,7 +5,7 @@ namespace: velero-system
 
 resources:
   - actual-budget.pvc-backup.schedule.yaml
-  - atuin.pvc-backup.schedule.yaml
+  - change-storage-class.configmap.yaml
   - jellyfin.pvc-backup.schedule.yaml
   - paperless-ngx.pvc-backup.schedule.yaml
   - velero-credentials.externalsecret.yaml

@@ -1,0 +1,27 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Lets every real pod resolve DNS via CoreDNS. Scoped to pods with a namespace label
+      (not endpointSelector: {}) to avoid matching Cilium's reserved identities like
+      reserved:ingress — see rhodes.akn's allow-ingress-gateway.yaml for why that matters.
+  name: allow-dns
+spec:
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        io.kubernetes.pod.namespace: kube-system
+        k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+      rules:
+        dns:
+        - matchPattern: '*'
+  endpointSelector:
+    matchExpressions:
+    - key: io.kubernetes.pod.namespace
+      operator: Exists
