@@ -10,7 +10,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      cnpg.io/cluster: postgres-apps
+      cnpg.io/cluster: apps-20260329
   ingress:
     - fromEndpoints:
         - matchLabels:
