@@ -15,3 +15,4 @@ resources:
 
   # Application-specific network policies allowing access to the mutualized PostgreSQL clusters
   - network-policy.allow-apps-database-from-linkding.yaml
+  - network-policy.allow-apps-secured-database-from-immich-and-paperless-ngx.yaml

@@ -1,0 +1,26 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Immich and Paperless-ngx to access the secured mutualized PostgreSQL
+      cluster (apps-secured) in the databases namespace.
+  name: allow-apps-secured-database-from-immich-and-paperless-ngx
+  namespace: databases
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: apps-secured-20260530
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: immich
+        io.kubernetes.pod.namespace: immich
+    - matchLabels:
+        app.kubernetes.io/component: webserver
+        io.kubernetes.pod.namespace: paperless-ngx
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP
