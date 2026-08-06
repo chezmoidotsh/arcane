@@ -30,9 +30,9 @@ Both `projects/rhodes.akn/src/apps/vault/cnpg.cluster.yaml` and
 `amiya.akn`'s own Garage S3 backups, not `rhodes.akn`'s own (`cnpg.objectstore.yaml`, `selfhosted`).
 
 This means when walking `openbao.md`/`pocket-id.md` Step 2 —
-[DB-20260723-00](../procedures/databases/DB-20260723-00.cnpg-restore-from-object-store.md) — for this migration, the
+[BKP-20260723-00](../procedures/backups/BKP-20260723-00.cnpg-restore-from-object-store.md) — for this migration, the
 manifests already resolve against the right source. There is nothing to edit; just verify the restore against the
-`amiya-akn` `externalClusters` entry instead of assuming `rhodes.akn`'s own object store, as DB-20260723-00 generically
+`amiya-akn` `externalClusters` entry instead of assuming `rhodes.akn`'s own object store, as BKP-20260723-00 generically
 does.
 
 ## Between DR Steps 5/6 and Step 9 — validate over real HTTPS via `/etc/hosts`
@@ -109,7 +109,7 @@ Verify with `kubectl get externalsecret -A` on `lungmen.akn`'s own context — a
   restore steps
 - [OMNI-20260721-00: Talos cluster bring-up on Proxmox](../procedures/omni/OMNI-20260721-00.omni-cluster-creation.md) —
   cluster provisioning (Step 1)
-- [DB-20260723-00: Restore a CNPG cluster from its S3 object-store backup](../procedures/databases/DB-20260723-00.cnpg-restore-from-object-store.md)
+- [BKP-20260723-00: Restore a CNPG cluster from its S3 object-store backup](../procedures/backups/BKP-20260723-00.cnpg-restore-from-object-store.md)
   — the generic CNPG restore procedure used by `openbao.md`/`pocket-id.md` Step 2
 - [ADR-014: Homelab network topology (dual-NIC + SDN VNet)](../decisions/014-network-topology.md) — pod CIDR allocation
   referenced in Step 1

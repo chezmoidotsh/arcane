@@ -74,7 +74,7 @@ kubectl --context <CLUSTER_CONTEXT> get secrets -n pocket-id
 > `mise run dr:pocket-id:patch-recovery -- <SERVER_NAME>` writes it into `cnpg.cluster.yaml` — it edits the file only,
 > it does not `kubectl apply` anything.
 
-Follow [DB-20260723-00](../../../../docs/procedures/databases/DB-20260723-00.cnpg-restore-from-object-store.md) in full,
+Follow [BKP-20260723-00](../../../../docs/procedures/backups/BKP-20260723-00.cnpg-restore-from-object-store.md) in full,
 with:
 
 - `NAMESPACE=pocket-id`
@@ -138,7 +138,7 @@ client registrations all live in the CNPG database restored in Step 2. Verifying
 
 ## References
 
-- [DB-20260723-00: Restore a CNPG cluster from its S3 object-store backup](../../../../docs/procedures/databases/DB-20260723-00.cnpg-restore-from-object-store.md)
+- [BKP-20260723-00: Restore a CNPG cluster from its S3 object-store backup](../../../../docs/procedures/backups/BKP-20260723-00.cnpg-restore-from-object-store.md)
   — the CNPG restore mechanics used in Step 2
 - [OpenBao Disaster Recovery](openbao.md) — the reverse dependency (OpenBao admin recovery needs this document done
   first, and its Step 5 Option B is where the SSO round-trip into OpenBao is actually verified)
