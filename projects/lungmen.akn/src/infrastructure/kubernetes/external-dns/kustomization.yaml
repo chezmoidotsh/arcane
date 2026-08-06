@@ -15,12 +15,21 @@ helmCharts:
       - unifi.helmvalues/hardened.yaml
     includeCRDs: true
 
+  - repo: https://kubernetes-sigs.github.io/external-dns
+    name: external-dns
+    version: 1.21.1
+
+    releaseName: external-dns-bind
+    namespace: external-dns-system
+
+    valuesFile: bind.helmvalues/default.yaml
+    additionalValuesFiles:
+      - bind.helmvalues/hardened.yaml
+    includeCRDs: false # already installed by the unifi release above
+
 resources:
   - unifi.externalsecret.yaml
   - security/
-
-patches:
-  - path: unifi.replicas-zero.patch.yaml
 
 images:
   - name: registry.k8s.io/external-dns/external-dns
