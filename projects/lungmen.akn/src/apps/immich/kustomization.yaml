@@ -21,16 +21,6 @@ resources:
 
   - security/
 
-# -- Held at 0 until PVs are restored from the old lungmen.akn cluster (issue 1188, PR2).
-# Revert in PR3 once volume restoration is validated and it's time to cut over.
-replicas:
-  - name: immich-server
-    count: 0
-  - name: immich-machine-learning
-    count: 0
-  - name: immich-redis
-    count: 0
-
 images:
   # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server
   - name: ghcr.io/immich-app/immich-server

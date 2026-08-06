@@ -8,7 +8,7 @@ metadata:
   name: actual-budget
   namespace: actual-budget
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/instance: actual-budget
