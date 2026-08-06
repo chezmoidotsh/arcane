@@ -14,7 +14,7 @@ metadata:
   name: paperless-ngx
   namespace: paperless-ngx
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/component: webserver
@@ -122,7 +122,7 @@ spec:
           runAsNonRoot: true
           runAsUser: 21473
         startupProbe:
-          failureThreshold: 30
+          failureThreshold: 60
           httpGet:
             path: /
             port: http
