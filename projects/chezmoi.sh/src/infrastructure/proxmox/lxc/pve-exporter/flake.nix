@@ -35,7 +35,7 @@
       # Proxmox template (pve-exporter.<date>-amd64.tar.xz). Component
       # versions track the nixpkgs pin. Bump this date before every
       # `mise run lxc:build`; append -N for multiple builds on the same day.
-      version = "2026.07.26";
+      version = "2026.08.07";
 
       # -----------------------------------------------------------------------
       # Build-time secrets, forwarded to the modules via _module.args.
