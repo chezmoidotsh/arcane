@@ -50,7 +50,7 @@ let
             channel: '#notifications'
             send_resolved: true
             title: '{{ template "slack.default.title" . }}'
-            title_link: 'https://o11y.chezmoi.sh/alerts'
+            title_link: 'https://data.o11y.chezmoi.sh/alerts'
             text: '{{ template "slack.default.text" . }}'
             color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
             icon_emoji: ':fire:'
@@ -110,7 +110,7 @@ in
         # applies to ALL paths: API at /alerts/api/v2, metrics at /alerts/metrics
         # — kept consistent in vmalert.nix and the VM self-scrape config.
         "--web.route-prefix=/alerts"
-        "--web.external-url=https://o11y.chezmoi.sh/alerts"
+        "--web.external-url=https://data.o11y.chezmoi.sh/alerts"
         "--log.format=json"
       ];
       ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";

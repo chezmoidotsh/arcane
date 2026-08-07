@@ -1,5 +1,5 @@
 {
-  description = "o11y.chezmoi.sh — VictoriaMetrics observability LXC image (Proxmox)";
+  description = "data.o11y.chezmoi.sh — VictoriaMetrics observability LXC image (Proxmox)";
 
   # ---------------------------------------------------------------------------
   # All-in-one flake: NixOS modules + site config for the homelab observability

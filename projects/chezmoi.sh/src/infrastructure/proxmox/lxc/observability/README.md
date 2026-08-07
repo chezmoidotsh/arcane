@@ -1,6 +1,6 @@
-# `o11y.chezmoi.sh` — VictoriaMetrics observability LXC (Proxmox)
+# `data.o11y.chezmoi.sh` — VictoriaMetrics observability LXC (Proxmox)
 
-Standalone Proxmox LXC running NixOS + the VictoriaMetrics stack. Serves `https://o11y.chezmoi.sh` as the homelab's
+Standalone Proxmox LXC running NixOS + the VictoriaMetrics stack. Serves `https://data.o11y.chezmoi.sh` as the homelab's
 central, cluster-independent observability appliance: metrics, logs, traces, and _existential_ alerting.
 
 It deliberately lives **outside** every Kubernetes cluster's failure domain. When a cluster (or its node) goes down, the
@@ -9,8 +9,8 @@ signal" gap that drove every recent post-mortem (see [#1013][], [#1018][]). Same
 single-purpose-appliance philosophy as the `lxc-oci-registry`.
 
 > **Status** — implements the metrics + logs ingest and existential alerting of \#1018 (ADR-013). Per-cluster alerting +
-> recording rules live in each cluster's own vmalert (`VMRule`/`PrometheusRule`); Grafana on `amiya` holds dashboards.
-> Cluster-side resources are tracked separately (see [Known gaps](#known-gaps--follow-ups)).
+> recording rules live in each cluster's own vmalert (`VMRule`/`PrometheusRule`); Grafana on `rhodes.akn` holds
+> dashboards. Cluster-side resources are tracked separately (see [Known gaps](#known-gaps--follow-ups)).
 
 ## Table of contents
 
@@ -52,7 +52,7 @@ flowchart LR
 
     page(["Slack #notifications<br/>+ healthchecks.io (DMS)"])
     clam(["per-cluster AM"])
-    grafana(["amiya Grafana<br/>dashboards + non-paging alerts"])
+    grafana(["rhodes.akn Grafana<br/>dashboards + non-paging alerts"])
 
     vmagent -->|"/metrics"| caddy
     clvector -->|"Vector native :6000"| vector
@@ -125,7 +125,7 @@ Architecture diagram source: [`architecture.d2`](./architecture.d2).
   (Grafana cannot persist these) and any **page-worthy** alerts against the central VM, writes records back, and
   notifies its **own Alertmanager**. Rules live in the cluster's ArgoCD repo — no LXC rebuild. Edge cardinality
   reduction is `vmagent` stream aggregation. The LXC keeps a _minimal_ set of **existential, cluster-independent** page
-  rules so paging survives even an amiya outage.
+  rules so paging survives even a rhodes.akn outage.
 - **Two Alertmanager tiers: per-cluster AM + LXC AM** — per-cluster AM handles cluster-specific alerts; LXC AM handles
   existential alerts and the DMS heartbeat to healthchecks.io. LXC AM exposed under `/alerts` (CIDR-restricted) for
   loopback access from the LXC vmalert. Grafana never gates paging.
@@ -398,7 +398,7 @@ spec:
   externalLabels:
     cluster: lungmen # ← the label everything routes on
   remoteWrite:
-    - url: https://o11y.chezmoi.sh/metrics/api/v1/write
+    - url: https://data.o11y.chezmoi.sh/metrics/api/v1/write
   # Optional: stream aggregation — reduce cardinality at the edge BEFORE
   # remote_write (windowed total/increase/rate/histogram/dedup). This is the
   # "agent does aggregations" path; it is NOT PromQL recording rules (those are
@@ -419,9 +419,9 @@ kind: VMAlert
 metadata: { name: o11y-rules }
 spec:
   evaluationInterval: 30s
-  datasource: { url: https://o11y.chezmoi.sh/metrics } # query central VM
-  remoteWrite: { url: https://o11y.chezmoi.sh/metrics/api/v1/write } # recording-rule results
-  remoteRead: { url: https://o11y.chezmoi.sh/metrics } # restore alert state
+  datasource: { url: https://data.o11y.chezmoi.sh/metrics } # query central VM
+  remoteWrite: { url: https://data.o11y.chezmoi.sh/metrics/api/v1/write } # recording-rule results
+  remoteRead: { url: https://data.o11y.chezmoi.sh/metrics } # restore alert state
   notifiers:
     - url: http://alertmanager.monitoring.svc:9093 # per-cluster AM
 ---
@@ -466,7 +466,7 @@ conversion):
 [sinks.o11y_vector]
 type = "vector"
 inputs = ["kubernetes_logs"]            # add a transform to set cluster=<name>
-address = "o11y.chezmoi.sh:6000"
+address = "data.o11y.chezmoi.sh:6000"
 mode = "grpc"
 ```
 
@@ -481,7 +481,7 @@ validation):
 [sinks.victorialogs]
 type = "elasticsearch"                # VictoriaLogs ES-compatible ingest
 inputs = ["kubernetes_logs"]
-endpoints = ["https://o11y.chezmoi.sh/logs/insert/elasticsearch"]
+endpoints = ["https://data.o11y.chezmoi.sh/logs/insert/elasticsearch"]
 [sinks.victorialogs.query]
 _msg_field = "message"
 _stream_fields = "cluster,namespace,pod,container"   # set cluster=<name> in a transform
@@ -493,18 +493,18 @@ Point any OTLP trace exporter (Vector `opentelemetry` sink, an OTEL collector, o
 VictoriaTraces ingest path:
 
 ```text
-https://o11y.chezmoi.sh/traces/insert/opentelemetry/v1/traces
+https://data.o11y.chezmoi.sh/traces/insert/opentelemetry/v1/traces
 ```
 
 Set a `cluster=<name>` resource attribute for correlation. Query from Grafana via the Jaeger/VictoriaTraces datasource
-at `https://o11y.chezmoi.sh/traces`.
+at `https://data.o11y.chezmoi.sh/traces`.
 
 ### Proxmox host — metrics (pve-exporter LXC)
 
 PVE host and guest metrics (`pve_*`) are collected by the [`pve-exporter`](../pve-exporter/README.md) LXC, which scrapes
 the PVE API via prometheus-pve-exporter and remote-writes to the appliance at
-`https://o11y.chezmoi.sh/metrics/api/v1/write` with `cluster=pve`. No configuration is needed on the appliance side. See
-the pve-exporter README for the scrape config and the required PVE API token.
+`https://data.o11y.chezmoi.sh/metrics/api/v1/write` with `cluster=pve`. No configuration is needed on the appliance
+side. See the pve-exporter README for the scrape config and the required PVE API token.
 
 > Proxmox OTEL push (`/metrics/opentelemetry/v1/metrics`) is not yet active; VictoriaMetrics already exposes that
 > endpoint if it is enabled later.
@@ -517,7 +517,8 @@ it here over Vector native. The rsyslog `omfwd` config and the `target` (the pve
 LXC's README under [Proxmox host — syslog forwarding](../pve-exporter/README.md#proxmox-host--syslog-forwarding).
 
 Parsed logs arrive here via Vector native (`:6000`) already in SemConv form (`log.source=syslog`, `host.name`,
-`service.name`, severity/facility, …). Query them at `https://o11y.chezmoi.sh/logs` (LogsQL: `attr.log.source:syslog`).
+`service.name`, severity/facility, …). Query them at `https://data.o11y.chezmoi.sh/logs` (LogsQL:
+`attr.log.source:syslog`).
 
 ### kazimierz (VPS, Docker) — over Tailscale
 
@@ -525,12 +526,15 @@ The appliance joins the tailnet as `observability` (tag `tag:o11y`) via caddy-ta
 (Docker, Ansible-managed) reach it over the encrypted tailnet — `externalLabels: { cluster: kazimierz }`. Point them at
 `https://observability.<tailnet>.ts.net` directly; TLS is valid for that MagicDNS name without any split-DNS override.
 
-### Grafana (amiya) — dashboards
+### Grafana (rhodes.akn) — dashboards
 
-Two datasources (no auth): Prometheus-type → `https://o11y.chezmoi.sh/metrics`, VictoriaLogs-type →
-`https://o11y.chezmoi.sh/logs` _(verify the query path for the installed VictoriaLogs version — see Known gaps)_.
-Grafana is for **dashboards** and **non-paging alert routing** — page-tier alerting/recording rules live in VMRule per
-cluster (above). Grafana is not wired to the DMS heartbeat; the LXC Alertmanager owns that path entirely.
+Deployed via the Grafana Operator on `rhodes.akn` (issue 1159) — not part of this appliance, and not this LXC's domain:
+reachable at `https://o11y.chezmoi.sh` (the appliance itself moved to `data.o11y.chezmoi.sh` to free that name up). Two
+datasources (no auth from Grafana's side — network-policy-scoped instead): Prometheus-type →
+`https://data.o11y.chezmoi.sh/metrics`, VictoriaLogs-type → `https://data.o11y.chezmoi.sh/logs` _(verify the query path
+for the installed VictoriaLogs version — see Known gaps)_. Grafana is for **dashboards** and **non-paging alert
+routing** — page-tier alerting/recording rules live in VMRule per cluster (above). Grafana is not wired to the DMS
+heartbeat; the LXC Alertmanager owns that path entirely.
 
 ## Hardening reference
 
@@ -555,7 +559,7 @@ ssh root@pve.lan pct exec <vmid> -- journalctl -u vmalert -f
 
 ```sh
 # From an allow-listed homelab client (no auth):
-curl -sSf 'https://o11y.chezmoi.sh/metrics/api/v1/query?query=up' | jq .
+curl -sSf 'https://data.o11y.chezmoi.sh/metrics/api/v1/query?query=up' | jq .
 
 # Existential alerts (over loopback, from inside the LXC):
 ssh root@pve.lan pct exec <vmid> -- curl -s 127.0.0.1:8880/api/alerts | jq .
@@ -578,7 +582,7 @@ a full Nix build.
 ### Editing alert rules
 
 - **Existential rules** (this LXC): edit a `*.yaml` in [`alerts/`](./alerts/), bump the image `version` in `flake.nix`,
-  then build/push/upgrade. Baked into the image on purpose (rare, signed, must survive an amiya outage).
+  then build/push/upgrade. Baked into the image on purpose (rare, signed, must survive a rhodes.akn outage).
 - **Everything else** (per-cluster alerting + recording rules): edit the `VMRule` / `PrometheusRule` CRDs in that
   cluster's repo — ArgoCD deploys, the VM Operator reloads the cluster's vmalert, no LXC rebuild.
 
@@ -651,8 +655,9 @@ or extra cert SAN needed for tailnet clients — they connect to the MagicDNS na
    against the installed version.
 
 4. **Cluster-side resources not included.** VMAgent (+ optional streamAggr), VMAlert + VMRule/PrometheusRule, Vector
-   (logs + optional trace export), the Proxmox OTEL push, and Grafana (datasources for metrics/logs/traces +
-   dashboards + non-paging alert routing) live in their own projects and are tracked as separate phases of [#1018][].
+   (logs + optional trace export), and the Proxmox OTEL push live in their own projects and are tracked as separate
+   phases of [#1018][]. **Grafana — closed by [#1159][]**: Grafana Operator on every cluster, single instance on
+   `rhodes.akn`, datasources for metrics/logs/traces against this appliance, dashboards + non-paging alert routing.
 
 5. **No HA.** Single LXC, single Proxmox node. If the node dies, the LXC deadman stops and the external monitor pages;
    collection halts until the LXC is brought up elsewhere. Agents buffer on disk and backfill on reconnect.
@@ -671,3 +676,4 @@ or extra cert SAN needed for tailnet clients — they connect to the MagicDNS na
 
 [#1013]: https://github.com/chezmoidotsh/arcane/issues/1013
 [#1018]: https://github.com/chezmoidotsh/arcane/issues/1018
+[#1159]: https://github.com/chezmoidotsh/arcane/issues/1159

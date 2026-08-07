@@ -120,7 +120,7 @@ outputs = { self, nixpkgs, arcane-catalog, ... }:
     enable      = true;
 
     o11y.logsAddress = "10.0.0.252:6000";
-    o11y.metricsUrl  = "https://o11y.chezmoi.sh/metrics/api/v1/write";
+    o11y.metricsUrl  = "https://data.o11y.chezmoi.sh/metrics/api/v1/write";
   };
 }
 ```
@@ -134,8 +134,8 @@ outputs = { self, nixpkgs, arcane-catalog, ... }:
     enable      = true;
 
     o11y = {
-      logsAddress = "o11y.chezmoi.sh:6000";    # hostname resolved via hostsOverride
-      metricsUrl  = "https://o11y.chezmoi.sh/metrics/api/v1/write";
+      logsAddress = "data.o11y.chezmoi.sh:6000";    # hostname resolved via hostsOverride
+      metricsUrl  = "https://data.o11y.chezmoi.sh/metrics/api/v1/write";
     };
 
     metrics = {
@@ -146,10 +146,10 @@ outputs = { self, nixpkgs, arcane-catalog, ... }:
       ];
     };
 
-    # Resolve o11y.chezmoi.sh to the Proxmox bridge IP instead of the public IP
+    # Resolve data.o11y.chezmoi.sh to the Proxmox bridge IP instead of the public IP
     # (avoids hairpin NAT through the firewall)
     hostsOverride = {
-      "10.0.0.252" = [ "o11y.chezmoi.sh" ];
+      "10.0.0.252" = [ "data.o11y.chezmoi.sh" ];
     };
   };
 }
@@ -173,8 +173,8 @@ modules/
   catalog.lxcAgent = {
     enable      = true;
 
-    o11y.logsAddress = "o11y.chezmoi.sh:6000";
-    o11y.metricsUrl  = "https://o11y.chezmoi.sh/metrics/api/v1/write";
+    o11y.logsAddress = "data.o11y.chezmoi.sh:6000";
+    o11y.metricsUrl  = "https://data.o11y.chezmoi.sh/metrics/api/v1/write";
 
     logs.extraTransforms = [
       {

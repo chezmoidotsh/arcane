@@ -260,7 +260,7 @@ in
       metricsUrl = lib.mkOption {
         type = lib.types.str;
         description = "Prometheus remote_write endpoint on the o11y appliance.";
-        example = "https://o11y.chezmoi.sh/metrics/api/v1/write";
+        example = "https://data.o11y.chezmoi.sh/metrics/api/v1/write";
       };
       sourceKind = lib.mkOption {
         type = lib.types.str;
@@ -403,7 +403,7 @@ in
         hostname resolves publicly but must be reached over a private bridge
         (e.g. Proxmox bridge) to avoid hairpin NAT.
       '';
-      example = lib.literalExpression ''{ "10.0.0.252" = [ "o11y.chezmoi.sh" ]; }'';
+      example = lib.literalExpression ''{ "10.0.0.252" = [ "data.o11y.chezmoi.sh" ]; }'';
     };
   };
 

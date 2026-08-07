@@ -6,15 +6,16 @@
 #   - remaining fields → attributes."omni-provider.json" blob
 # See o11y.extraTransforms/README.md for available fields and query examples.
 #
-# hostsOverride resolves o11y.chezmoi.sh to the Proxmox bridge IP (10.0.0.22)
-# — same trick used by the other proxmox/lxc appliances to avoid hairpin NAT.
+# hostsOverride resolves data.o11y.chezmoi.sh to the Proxmox bridge IP
+# (10.0.0.22) — same trick used by the other proxmox/lxc appliances to avoid
+# hairpin NAT.
 { ... }: {
   catalog.lxcAgent = {
     enable = true;
 
     o11y = {
-      logsAddress = "o11y.chezmoi.sh:6000";
-      metricsUrl = "https://o11y.chezmoi.sh/metrics/api/v1/write";
+      logsAddress = "data.o11y.chezmoi.sh:6000";
+      metricsUrl = "https://data.o11y.chezmoi.sh/metrics/api/v1/write";
     };
 
     logs.extraTransforms = [
@@ -26,7 +27,7 @@
     nodeExporter.enable = true;
 
     hostsOverride = {
-      "10.0.0.22" = [ "o11y.chezmoi.sh" ];
+      "10.0.0.22" = [ "data.o11y.chezmoi.sh" ];
     };
   };
 }

@@ -8,12 +8,12 @@ vars: {
 ...@../../../../../../docs/assets/d2/styles.architecture.d2
 
 explanation: |md
-  # o11y.chezmoi.sh — Observability Appliance
+  # data.o11y.chezmoi.sh — Observability Appliance
 
   Centralized VictoriaMetrics stack on a single NixOS LXC (Proxmox), \
   independent of every Kubernetes cluster's failure domain. \
   Clusters and the Proxmox host push (metrics + logs); the appliance \
-  stores and runs existential alerting. Grafana (on amiya) owns the \
+  stores and runs existential alerting. Grafana (on rhodes.akn) owns the \
   rich, per-cluster alerting and dashboards. No ingest auth — access \
   control is the Proxmox firewall by source CIDR (ADR-013).
 | {
@@ -53,9 +53,9 @@ lungmen: {
   vmalert: {class: application-system; label: "VMAlert\n(VMRule: alerts + records)"}
   vector: {class: application-system; label: "Vector\n(pod logs)"}
 }
-amiya: {
+rhodes: {
   class: namespace
-  label: "amiya.akn (K8s)"
+  label: "rhodes.akn (K8s)"
 
   vmagent: {class: application-system; label: "VMAgent"}
   vmalert: {class: application-system; label: "VMAlert (VMRule)"}
@@ -115,8 +115,8 @@ proxmox: {
 # Ingest paths (write) — TLS, access-controlled by source CIDR at the PVE firewall
 lungmen.vmagent -> proxmox.lxc.caddy: "remote_write" {class: connect-network}
 lungmen.vector -> proxmox.lxc.caddy: "logs" {class: connect-network}
-amiya.vmagent -> proxmox.lxc.caddy: "remote_write" {class: connect-network}
-amiya.vector -> proxmox.lxc.caddy: "logs" {class: connect-network}
+rhodes.vmagent -> proxmox.lxc.caddy: "remote_write" {class: connect-network}
+rhodes.vector -> proxmox.lxc.caddy: "logs" {class: connect-network}
 proxmox.otel -> proxmox.lxc.caddy: "OTLP metrics" {class: connect-network}
 kazimierz.vmagent -> tailnet: {class: connect-vpn}
 kazimierz.vector -> tailnet: {class: connect-vpn}
@@ -124,13 +124,13 @@ tailnet -> proxmox.lxc.tailscale: "remote_write + logs\n(over Tailscale)" {class
 
 # Rule evaluation (per cluster) — query central VM, notify central Alertmanager
 lungmen.vmalert -> proxmox.lxc.caddy: "query + records + alerts" {class: connect-network}
-amiya.vmalert -> proxmox.lxc.caddy: "query + records + alerts" {class: connect-network}
+rhodes.vmalert -> proxmox.lxc.caddy: "query + records + alerts" {class: connect-network}
 
 # Query path (read) — Grafana dashboards
-amiya.grafana -> proxmox.lxc.caddy: "query metrics + logs" {class: connect-network}
+rhodes.grafana -> proxmox.lxc.caddy: "query metrics + logs" {class: connect-network}
 
 # Egress — notifications + heartbeats + cert issuance
 proxmox.lxc.alertmanager -> notify: "alerts (existential + per-cluster)" {class: connect-to-internet}
 proxmox.lxc.alertmanager -> deadman: "heartbeat (1m)\nappliance Watchdog" {class: connect-to-internet}
-amiya.grafana -> deadman: "heartbeat\nGrafana/amiya alive" {class: connect-to-internet}
+rhodes.grafana -> deadman: "heartbeat\nGrafana/rhodes alive" {class: connect-to-internet}
 proxmox.lxc.caddy -> cloudflare: "DNS-01" {class: connect-to-internet}

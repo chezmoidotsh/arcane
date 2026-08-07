@@ -1,6 +1,6 @@
 # Observability agent for the PVE exporter LXC.
-# Ships systemd logs, PVE-host syslog, and PVE exporter metrics to o11y via
-# catalog.lxcAgent.
+# Ships systemd logs, PVE-host syslog, and PVE exporter metrics to
+# data.o11y.chezmoi.sh via catalog.lxcAgent.
 #
 # The PVE exporter uses a multi-target URL (query params instead of /metrics),
 # so the target is passed as a path — catalog.lxcAgent prefixes http:// without
@@ -18,14 +18,14 @@
 # journal still reaches o11y alongside syslog. Both fragments expose a *_to_o11y
 # component consumed by the out_logs sink.
 #
-# hostsOverride resolves o11y.chezmoi.sh to the Proxmox bridge IP (10.0.0.22).
+# hostsOverride resolves data.o11y.chezmoi.sh to the Proxmox bridge IP (10.0.0.22).
 { pveHost, ... }: {
   catalog.lxcAgent = {
     enable = true;
 
     o11y = {
-      logsAddress = "o11y.chezmoi.sh:6000";
-      metricsUrl = "https://o11y.chezmoi.sh/metrics/api/v1/write";
+      logsAddress = "data.o11y.chezmoi.sh:6000";
+      metricsUrl = "https://data.o11y.chezmoi.sh/metrics/api/v1/write";
     };
 
     logs.extraTransforms = [
@@ -59,7 +59,7 @@
     nodeExporter.enable = true;
 
     hostsOverride = {
-      "10.0.0.22" = [ "o11y.chezmoi.sh" ];
+      "10.0.0.22" = [ "data.o11y.chezmoi.sh" ];
     };
   };
 }

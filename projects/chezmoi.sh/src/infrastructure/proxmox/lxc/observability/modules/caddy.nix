@@ -1,9 +1,12 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Caddy reverse proxy — TLS termination + path routing for o11y.chezmoi.sh
+# Caddy reverse proxy — TLS termination + path routing for data.o11y.chezmoi.sh
 # ─────────────────────────────────────────────────────────────────────────────
-# The single public surface of the appliance. Two listeners, same route table:
+# The public surface of the appliance's raw backend (metrics/logs/traces/alerts).
+# o11y.chezmoi.sh itself is Grafana's alone (served from Kubernetes, not this
+# LXC) — this Caddy instance no longer answers on that name at all. Two
+# listeners, same route table:
 #
-#   :80 / :443 (public)   — TLS via Cloudflare DNS-01 ACME for o11y.chezmoi.sh
+#   :80 / :443 (public)   — TLS via Cloudflare DNS-01 ACME for data.o11y.chezmoi.sh
 #   tailnet (tsnet)       — caddy-tailscale (embedded Tailscale, userspace)
 #                           TLS issued automatically by Tailscale's ACME
 #                           reachable at o11y-ep.<tailnet>.ts.net
@@ -135,12 +138,16 @@ in
       }
 
       # ─── HTTP → HTTPS redirect ─────────────────────────────────────────────
-      http://o11y.chezmoi.sh {
+      http://data.o11y.chezmoi.sh {
         redir https://{host}{uri} permanent
       }
 
       # ─── HTTPS — public hostname, Cloudflare DNS-01 TLS ───────────────────
-      https://o11y.chezmoi.sh {
+      # o11y.chezmoi.sh is Grafana's alone now (Kubernetes, not this LXC) --
+      # every consumer that used to point here (pve-exporter, oci-registry,
+      # talosnet-dns, omni, omni-infra-provider-proxmox) is migrated to
+      # data.o11y.chezmoi.sh as part of the same change (issue 1159).
+      https://data.o11y.chezmoi.sh {
         import routes
         tls {
           dns cloudflare {env.CLOUDFLARE_API_TOKEN}

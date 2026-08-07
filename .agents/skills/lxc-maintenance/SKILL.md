@@ -176,7 +176,7 @@ The `<mp-id>` must match the Proxmox config key (e.g. `mp0`, `mp1`).
 Print a one-liner end-to-end check command after step 6 (informational only).
 
 ```bash
-lxc_e2e_hint "curl -sSf https://o11y.chezmoi.sh/metrics/api/v1/query?query=up"
+lxc_e2e_hint "curl -sSf https://data.o11y.chezmoi.sh/metrics/api/v1/query?query=up"
 ```
 
 ### `lxc_upgrade [flags]`

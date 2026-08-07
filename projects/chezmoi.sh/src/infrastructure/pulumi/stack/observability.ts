@@ -4,7 +4,7 @@ import * as tailscale from "@pulumi/tailscale";
 
 const config = new pulumi.Config();
 
-// Everything the observability LXC (o11y.chezmoi.sh) needs: a Caddy DNS-01 token for its
+// Everything the observability LXC (data.o11y.chezmoi.sh) needs: a Caddy DNS-01 token for its
 // own TLS certificate, and a Tailscale identity to join the tailnet (kernel TUN mode) so
 // off-LAN sources (notably the kazimierz.akn VPS) can reach the appliance over the tailnet.
 //
