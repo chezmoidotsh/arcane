@@ -1,0 +1,16 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: victoriametrics-overview
+  namespace: o11y-system
+spec:
+  datasources:
+  - datasourceName: VictoriaMetrics
+    inputName: ds
+  grafanaCom:
+    id: 10229
+    revision: 56
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana

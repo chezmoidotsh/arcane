@@ -1,0 +1,16 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Grafana Operator to reach the Kubernetes API server to watch/reconcile
+      Grafana, GrafanaDashboard, and GrafanaDatasource custom resources cluster-wide, and to
+      manage the Grafana instance's Deployment/Service/Secret objects.
+  name: allow-o11y-system-to-kubernetes-api
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana-operator
+  egress:
+    - toEntities:
+        - kube-apiserver

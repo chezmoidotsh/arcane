@@ -1,0 +1,18 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Newt to route traffic to Grafana (public Pangolin exposure, sso-gated).
+  name: allow-grafana-from-newt
+spec:
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: newt-system
+            app.kubernetes.io/name: newt
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP

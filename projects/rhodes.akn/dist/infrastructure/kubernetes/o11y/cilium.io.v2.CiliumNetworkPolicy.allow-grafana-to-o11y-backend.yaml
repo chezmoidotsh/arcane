@@ -1,0 +1,19 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Grafana to query its VictoriaMetrics/VictoriaLogs/VictoriaTraces datasources on the
+      o11y LXC appliance (data.o11y.chezmoi.sh, LAN-only, not proxied through any Gateway).
+  name: allow-grafana-to-o11y-backend
+  namespace: o11y-system
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: data.o11y.chezmoi.sh
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+  endpointSelector: {}

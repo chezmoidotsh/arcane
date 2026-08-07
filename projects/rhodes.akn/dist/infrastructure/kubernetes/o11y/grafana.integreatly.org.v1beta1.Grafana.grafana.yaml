@@ -1,0 +1,32 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  labels:
+    dashboards: grafana
+  name: grafana
+  namespace: o11y-system
+spec:
+  config:
+    auth.generic_oauth:
+      allow_sign_up: "true"
+      api_url: https://auth.chezmoi.sh/api/oidc/userinfo
+      auth_url: https://auth.chezmoi.sh/authorize
+      enabled: "true"
+      name: Pocket ID
+      scopes: openid profile email
+      token_url: https://auth.chezmoi.sh/api/oidc/token
+      use_pkce: "true"
+    server:
+      root_url: https://o11y.chezmoi.sh
+  deployment:
+    spec:
+      template:
+        spec:
+          containers:
+          - envFrom:
+            - secretRef:
+                name: grafana-oidc-client
+            - secretRef:
+                name: grafana-admin-credentials
+            name: grafana

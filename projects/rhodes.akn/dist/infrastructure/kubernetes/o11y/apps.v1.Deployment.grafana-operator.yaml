@@ -1,0 +1,96 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: operator
+    app.kubernetes.io/instance: grafana-operator
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: grafana-operator
+    app.kubernetes.io/part-of: grafana-operator
+    app.kubernetes.io/version: v5.24.0
+    helm.sh/chart: grafana-operator-5.24.0
+  name: grafana-operator
+  namespace: o11y-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: grafana-operator
+      app.kubernetes.io/name: grafana-operator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: operator
+        app.kubernetes.io/instance: grafana-operator
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: grafana-operator
+        app.kubernetes.io/part-of: grafana-operator
+        app.kubernetes.io/version: v5.24.0
+        helm.sh/chart: grafana-operator-5.24.0
+    spec:
+      containers:
+      - args:
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=0.0.0.0:9090
+        - --pprof-addr=0.0.0.0:8888
+        - --zap-encoder=console
+        - --zap-log-level=info
+        - --zap-time-encoding=rfc3339
+        - --default-resync-period=10m
+        - --leader-elect
+        - --max-concurrent-reconciles=1
+        env:
+        - name: WATCH_NAMESPACE
+          value: ""
+        - name: WATCH_NAMESPACE_SELECTOR
+          value: ""
+        - name: WATCH_LABEL_SELECTORS
+          value: ""
+        - name: ENFORCE_CACHE_LABELS
+          value: safe
+        - name: CLUSTER_DOMAIN
+          value: ""
+        image: oci.chezmoi.sh/ghcr.io/grafana/grafana-operator:v5.24.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+        name: grafana-operator
+        ports:
+        - containerPort: 9090
+          name: metrics
+          protocol: TCP
+        - containerPort: 8888
+          name: pprof
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+        volumeMounts:
+        - mountPath: /tmp/dashboards
+          name: dashboards-dir
+        - mountPath: /var/run/secrets/grafana.com/serviceaccount
+          name: kubeauth-token-volume
+          readOnly: true
+      hostUsers: true
+      serviceAccountName: grafana-operator
+      volumes:
+      - emptyDir: {}
+        name: dashboards-dir
+      - name: kubeauth-token-volume
+        projected:
+          sources:
+          - serviceAccountToken:
+              audience: operator.grafana.com
+              expirationSeconds: 3600
+              path: token

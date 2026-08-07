@@ -1,0 +1,16 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: victoriatraces
+  namespace: o11y-system
+spec:
+  datasource:
+    access: proxy
+    editable: false
+    name: VictoriaTraces
+    type: jaeger
+    url: https://data.o11y.chezmoi.sh/traces
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana

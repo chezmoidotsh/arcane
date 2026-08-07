@@ -1,0 +1,16 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: victoriatraces
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana
+  datasource:
+    name: VictoriaTraces
+    # VictoriaTraces exposes a Jaeger-compatible query API -- no plugin needed.
+    type: jaeger
+    access: proxy
+    url: https://data.o11y.chezmoi.sh/traces
+    editable: false

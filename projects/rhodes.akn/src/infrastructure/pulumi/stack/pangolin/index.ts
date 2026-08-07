@@ -34,4 +34,5 @@ new vault.kv.SecretV2(
 
 export const rhodesSiteId = site.siteId;
 
+export * from "./grafana";
 export * from "./pocket-id";

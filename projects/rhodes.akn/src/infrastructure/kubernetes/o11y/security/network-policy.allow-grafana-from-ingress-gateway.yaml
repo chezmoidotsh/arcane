@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Cilium Gateway API (both internal and external Gateways -- the dual-parentRef
+      HTTPRoute) to route traffic to Grafana. Traffic proxied by Cilium Gateway API carries the
+      reserved:ingress identity, as per
+      https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
+  name: allow-grafana-from-ingress-gateway
+spec:
+  endpointSelector: {}
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
