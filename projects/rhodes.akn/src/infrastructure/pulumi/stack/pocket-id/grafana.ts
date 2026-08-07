@@ -11,10 +11,12 @@ import * as vault from "@pulumi/vault";
 import { adminGroupId } from "./index";
 
 // Grafana's single instance (issue 1159, deployed via the Grafana Operator on
-// rhodes.akn) reads client_id/client_secret/issuer_url straight from Vault
+// rhodes.akn) reads client_id/client_secret straight from Vault
 // (rhodes.akn/grafana/auth/oidc-client), same shape as every non-ArgoCD OIDC
-// client in this repo. Group-restricted to admins -- Grafana surfaces
-// homelab-wide metrics/logs, not a single-app dashboard.
+// client in this repo. The OIDC endpoints themselves are hardcoded in
+// grafana.instance.yaml's auth.generic_oauth config, not templated from
+// Vault. Group-restricted to admins -- Grafana surfaces homelab-wide
+// metrics/logs, not a single-app dashboard.
 export const grafanaOidcClient = new pocketid.oidc.OidcClients(
 	"grafana",
 	{
@@ -53,7 +55,6 @@ new vault.kv.SecretV2(
 		dataJson: pulumi.jsonStringify({
 			client_id: grafanaOidcClient.id,
 			client_secret: grafanaSecret.secret,
-			issuer_url: "https://auth.chezmoi.sh",
 		}),
 		customMetadata: {
 			data: {
