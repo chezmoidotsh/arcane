@@ -29,7 +29,9 @@ const serviceAccount = new grafana.oss.ServiceAccount(
 	"lungmen-akn",
 	{
 		name: "lungmen.akn",
-		role: "Viewer",
+		// Editor, not Viewer: the operator must create/update this cluster's
+		// own GrafanaDashboard CRs against the external instance's API.
+		role: "Editor",
 	},
 	{ provider: grafanaProvider },
 );

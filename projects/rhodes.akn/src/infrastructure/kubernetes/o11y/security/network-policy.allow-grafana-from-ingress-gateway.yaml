@@ -9,7 +9,9 @@ metadata:
       https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
   name: allow-grafana-from-ingress-gateway
 spec:
-  endpointSelector: {}
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
   ingress:
     - fromEntities:
         - ingress

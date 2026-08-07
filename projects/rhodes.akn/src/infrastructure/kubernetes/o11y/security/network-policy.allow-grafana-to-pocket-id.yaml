@@ -6,7 +6,9 @@ metadata:
       Allows Grafana to reach Pocket-Id (auth.chezmoi.sh) for its generic_oauth login flow.
   name: allow-grafana-to-pocket-id
 spec:
-  endpointSelector: {}
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
   egress:
     - toFQDNs:
         - matchName: auth.chezmoi.sh
