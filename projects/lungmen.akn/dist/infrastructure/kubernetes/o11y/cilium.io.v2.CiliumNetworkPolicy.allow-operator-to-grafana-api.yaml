@@ -1,0 +1,22 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Grafana Operator to reach the external Grafana instance's API
+      (o11y.chezmoi.sh, on rhodes.akn) to manage the external-mode Grafana CR and
+      import this cluster's own GrafanaDashboard CRs into it.
+  name: allow-operator-to-grafana-api
+  namespace: o11y-system
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: o11y.chezmoi.sh
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana-operator
