@@ -30,6 +30,9 @@ catalogs:
     '@pulumi/vault':
       specifier: ^7.10.0
       version: 7.10.0
+    '@pulumiverse/grafana':
+      specifier: ^2.37.0
+      version: 2.37.0
     '@types/chai':
       specifier: ^4.3.0
       version: 4.3.20
@@ -509,6 +512,9 @@ importers:
       '@pulumi/vault':
         specifier: 'catalog:'
         version: 7.10.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumiverse/grafana':
+        specifier: 'catalog:'
+        version: 2.37.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       typescript:
         specifier: 'catalog:'
@@ -552,6 +558,9 @@ importers:
       '@pulumi/pulumi':
         specifier: 'catalog:'
         version: 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/random':
+        specifier: 'catalog:'
+        version: 4.21.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/vault':
         specifier: 'catalog:'
         version: 7.10.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
@@ -832,6 +841,9 @@ packages:
 
   '@pulumi/vault@7.10.0':
     resolution: {integrity: sha512-nIhb1UqMpn+VsXTSy7k4tOQ7RYn89plDUEBp2uJghPIriQ8T2zWpE5sIm0GS3wVF4r4noc1+sbgzbmXg7pSVwA==}
+
+  '@pulumiverse/grafana@2.37.0':
+    resolution: {integrity: sha512-zqHSrLmRzXK5pxS8MtG2M3EciWyA9W3M1rMYLd6I3c4qDj3MwL6EUAdBw2oFRXByezBYxDDoDuGZZqxWfYqpxw==}
 
   '@sigstore/bundle@4.0.0':
     resolution: {integrity: sha512-NwCl5Y0V6Di0NexvkTqdoVfmjTaQwoLM236r89KEojGmq/jMls8S+zb7yOwAPdXvbwfKDlP+lmXgAL4vKSQT+A==}
@@ -2282,6 +2294,14 @@ snapshots:
       - ts-node
       - typescript
 
+  '@pulumi/random@4.21.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
+    dependencies:
+      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+    transitivePeerDependencies:
+      - supports-color
+      - ts-node
+      - typescript
+
   '@pulumi/tailscale@0.28.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
       '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
@@ -2307,6 +2327,14 @@ snapshots:
       - typescript
 
   '@pulumi/vault@7.10.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
+    dependencies:
+      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+    transitivePeerDependencies:
+      - supports-color
+      - ts-node
+      - typescript
+
+  '@pulumiverse/grafana@2.37.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
       '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
