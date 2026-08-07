@@ -16,6 +16,7 @@
 		"@pulumi/pocket-id": "workspace:*",
 		"@pulumi/proxmox": "workspace:*",
 		"@pulumi/pulumi": "catalog:",
+		"@pulumi/random": "catalog:",
 		"@pulumi/vault": "catalog:"
 	},
 	"devDependencies": {

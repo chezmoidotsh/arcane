@@ -1,0 +1,22 @@
+---
+# This Helm values file contains all default values used by the Grafana
+# Operator Helm chart, shared by every cluster running it.
+
+# Cluster-wide watch: GrafanaDashboard/GrafanaDatasource CRs are authored next
+# to each app's own manifests (per issue 1159), not confined to this chart's
+# own namespace — the operator must see the whole cluster, not just its own.
+watchNamespaceSelector: ""
+namespaceScope: false
+
+# The chart's default (crds.immutable: true) ships CRDs only via Helm's special
+# crds/ subchart folder, which `helm template` -- and therefore Kustomize's
+# helmCharts inflator -- never renders at all (by Helm design, since that
+# folder is meant for `helm install`'s own one-time CRD-install phase, which
+# doesn't exist in this GitOps/kustomize-rendered pipeline). Setting this to
+# false switches the chart to templates/crds.yaml, which renders the same
+# CRDs as ordinary resources instead -- the only way they reach ArgoCD at all.
+crds:
+  immutable: false
+
+serviceAccount:
+  create: true

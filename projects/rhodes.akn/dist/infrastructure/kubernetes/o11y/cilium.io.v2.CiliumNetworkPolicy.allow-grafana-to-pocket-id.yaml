@@ -1,0 +1,20 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Grafana to reach Pocket-Id (auth.chezmoi.sh) for its generic_oauth login flow.
+  name: allow-grafana-to-pocket-id
+  namespace: o11y-system
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: auth.chezmoi.sh
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana

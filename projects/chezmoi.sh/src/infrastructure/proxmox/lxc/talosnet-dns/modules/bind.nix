@@ -4,12 +4,14 @@
 # DNS only. Listens on eth1 (talosnet) so LAN queries on eth0 are never
 # answered. Serves two roles from one daemon:
 #   - static records for talosnet-only hostnames (avoiding SNAT + cross-zone
-#     conntrack issues): omni/api.omni/oci/o11y/nas/s3.chezmoi.sh
+#     conntrack issues): omni/api.omni/oci/data.o11y/nas/s3.chezmoi.sh
 #   - dynamic split-horizon records via external-dns/RFC2136: clusters publish
 #     the same *.chezmoi.sh hostname they already have externally (e.g.
 #     vault.chezmoi.sh, auth.chezmoi.sh), pointed at their internal Gateway's
 #     talosnet IP instead -- so talosnet clients get an address they can
-#     actually reach instead of the VLAN5 one
+#     actually reach instead of the VLAN5 one. o11y.chezmoi.sh (Grafana) joins
+#     this category once its HTTPRoute exists on rhodes.akn -- deliberately not
+#     a static entry above, so external-dns/RFC2136 owns it outright
 #   - forwarding everything else upstream (10.10.10.10, 1.1.1.1/1.0.0.1 fallback)
 #
 # The "external-dns." TSIG key can update A/TXT records anywhere in the
@@ -34,7 +36,7 @@ let
     omni IN A 10.128.0.2
     api.omni IN A 10.128.0.2
     oci IN A 10.128.0.4
-    o11y IN A 10.128.0.5
+    data.o11y IN A 10.128.0.5
     s3 IN A 10.128.0.6
     nas IN A 10.128.0.6
   '';

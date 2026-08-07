@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: o11y-system
+
+helmCharts:
+  - repo: https://grafana.github.io/helm-charts
+    name: grafana-operator
+    # renovate: datasource=helm depName=grafana-operator registryUrl=https://grafana.github.io/helm-charts
+    version: v5.24.0
+    releaseName: grafana-operator
+    namespace: o11y-system
+    valuesFile: ../../../../../../catalog/kubernetes/o11y/helm/grafana/default.helmvalues.yaml
+
+resources:
+  - security/
+  - grafana.external-instance.yaml
+  - grafana.api-token.externalsecret.yaml
+  - dashboards/
+
+images:
+  - name: ghcr.io/grafana/grafana-operator
+    newName: oci.chezmoi.sh/ghcr.io/grafana/grafana-operator

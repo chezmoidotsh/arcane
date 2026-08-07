@@ -1,7 +1,8 @@
 # `pve-exporter` — Proxmox VE Metrics Exporter LXC (Proxmox)
 
 Standalone Proxmox LXC running NixOS + prometheus-pve-exporter + Vector. A lightweight monitoring sidecar that scrapes
-the Proxmox VE API and ships host-level metrics and logs to the central observability appliance (`o11y.chezmoi.sh`).
+the Proxmox VE API and ships host-level metrics and logs to the central observability appliance
+(`data.o11y.chezmoi.sh`).
 
 It also owns **PVE syslog ingest**: the Proxmox host forwards its syslog here (not to o11y directly), and this LXC
 parses RFC 5424 into the OTLP-style internal format before forwarding to o11y. The o11y appliance no longer listens on
@@ -33,7 +34,7 @@ protocol) and can be rebuilt and replaced at any time without data loss. Its onl
 flowchart TB
     api(["Proxmox VE API<br/>:8006"])
     host(["Proxmox host rsyslog<br/>(omfwd RFC 5424)"])
-    o11y(["o11y.chezmoi.sh<br/>10.0.0.22"])
+    o11y(["data.o11y.chezmoi.sh<br/>10.0.0.22"])
 
     subgraph lxc["LXC: pve-exporter — unprivileged NixOS"]
         exp["prometheus-pve-exporter<br/>127.0.0.1:9221"]
@@ -63,8 +64,8 @@ flowchart TB
   `catalog.lxcAgent`'s automatic one.
 - **Only inbound port is `:5140`** (syslog). The exporter binds loopback; metrics and logs are push-only. There is no
   Caddy, no TLS termination, no public surface.
-- **`hostsOverride`** in `modules/o11y.nix` resolves `o11y.chezmoi.sh` to the Proxmox bridge IP (`10.0.0.22`) inside the
-  LXC, bypassing public DNS for the push paths.
+- **`hostsOverride`** in `modules/o11y.nix` resolves `data.o11y.chezmoi.sh` to the Proxmox bridge IP (`10.0.0.22`)
+  inside the LXC, bypassing public DNS for the push paths.
 - **No SSH.** Console access goes through `pct enter <vmid>` on the Proxmox host.
 
 ## What's in this directory
@@ -211,7 +212,7 @@ ssh root@${NODE} pct create ${VMID} local:vztmpl/${TEMPLATE} \
     --hostname     pve-exporter \
     --description  "$(cat <<'EOF'
 # Proxmox VE metrics exporter
-Scrapes the PVE API and ships host-level metrics and logs to o11y.chezmoi.sh. Also ingests Proxmox host syslog (RFC 5424) and forwards parsed events to o11y. No inbound ports except :5140 (syslog TCP).
+Scrapes the PVE API and ships host-level metrics and logs to data.o11y.chezmoi.sh. Also ingests Proxmox host syslog (RFC 5424) and forwards parsed events to o11y. No inbound ports except :5140 (syslog TCP).
 EOF
 )" \
     --ostype       nixos \
@@ -271,8 +272,8 @@ pve-firewall restart
 `policy_out: ACCEPT` is required for:
 
 - The PVE API scrape (HTTPS to `<pve-host>:8006`)
-- The remote_write push to `o11y.chezmoi.sh`
-- The Vector protocol push to `o11y.chezmoi.sh:6000`
+- The remote_write push to `data.o11y.chezmoi.sh`
+- The Vector protocol push to `data.o11y.chezmoi.sh:6000`
 - DNS, NTP
 
 ## Proxmox host — syslog forwarding
@@ -302,7 +303,7 @@ rsyslogd -N1 && systemctl restart rsyslog
 ```
 
 Vector parses each RFC 5424 record into the OTLP-style format (`log.source=syslog`, `host.name`, `service.name`,
-severity/facility, …) and forwards it to o11y. Query in VictoriaLogs at `https://o11y.chezmoi.sh/logs` (LogsQL:
+severity/facility, …) and forwards it to o11y. Query in VictoriaLogs at `https://data.o11y.chezmoi.sh/logs` (LogsQL:
 `attr.log.source:syslog`).
 
 ## Hardening reference
@@ -341,7 +342,7 @@ ssh root@pve.lan pct exec <vmid> -- journalctl -u lxc-agent -f   # Vector (catal
 ssh root@pve.lan pct exec <vmid> -- ss -tlnp | grep 5140
 
 # After the PVE host rsyslog is configured, query forwarded logs in VictoriaLogs:
-curl -sSf 'https://o11y.chezmoi.sh/logs/select/logsql/query' \
+curl -sSf 'https://data.o11y.chezmoi.sh/logs/select/logsql/query' \
   --data-urlencode 'query=attr.log.source:syslog' | head
 ```
 
@@ -357,7 +358,7 @@ curl -s "http://127.0.0.1:9221/pve?target=<pve-host>&cluster=1&node=1" | head -3
 
 ```sh
 # From an allow-listed homelab client:
-curl -sSf 'https://o11y.chezmoi.sh/metrics/api/v1/query?query=pve_up' | jq .
+curl -sSf 'https://data.o11y.chezmoi.sh/metrics/api/v1/query?query=pve_up' | jq .
 # → should return a non-empty result set
 ```
 

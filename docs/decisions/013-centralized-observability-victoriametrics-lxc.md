@@ -279,12 +279,12 @@ serve well.
 ```mermaid
 flowchart LR
   subgraph sources["Sources (push)"]
-    LA["lungmen / amiya<br/>VMAgent (+streamAggr) + Vector<br/>VMAlert (VMRule: records + alerts) → per-cluster AM"]
+    LA["lungmen / rhodes<br/>VMAgent (+streamAggr) + Vector<br/>VMAlert (VMRule: records + alerts) → per-cluster AM"]
     KZ["kazimierz (VPS)<br/>vmagent + Vector (Docker)<br/>via tailnet (caddy-tailscale tsnet)"]
     PVEXP["pve-exporter LXC<br/>pve_* metrics (remote_write)<br/>+ Vector logs (SemConv)"]
   end
 
-  subgraph lxc["NixOS LXC — o11y.chezmoi.sh (Proxmox)"]
+  subgraph lxc["NixOS LXC — data.o11y.chezmoi.sh (Proxmox)"]
     CADDY["Caddy :443<br/>TLS (ACME) + path routing<br/>(+ tailnet via tsnet)"]
     VECTOR["Vector :4317/:4318/:6000<br/>OTLP + Vector native → VLogs"]
     VM["VictoriaMetrics :8428<br/>(+ OTLP)"]
@@ -302,7 +302,7 @@ flowchart LR
     VMALERT --> AM
   end
 
-  GRAF["Grafana on amiya<br/>(OIDC Pocket-Id)<br/>dashboards + non-paging alerts"]
+  GRAF["Grafana on rhodes.akn<br/>(OIDC Pocket-Id)<br/>dashboards + non-paging alerts"]
   EXT["Slack #notifications<br/>+ healthchecks.io (DMS)"]
   CRAM["per-cluster AM<br/>(node / disk / PVC / crash-loop)"]
 
@@ -394,18 +394,18 @@ A terse normative checklist (the _why_ is in Supporting design decisions above):
 
 ### Status
 
-- **Completed (scaffolded, not yet deployed):** NixOS flake, service modules (VictoriaMetrics + OTLP, VictoriaLogs,
+- **Completed and deployed:** the LXC (`data.o11y.chezmoi.sh`, formerly `o11y.chezmoi.sh` — renamed to free that name
+  for Grafana, see below) is live on Proxmox: NixOS flake, service modules (VictoriaMetrics + OTLP, VictoriaLogs,
   VictoriaTraces, existential vmalert, Alertmanager exposed under `/alerts`, Caddy with `/<signal>` path routing +
   caddy-tailscale tsnet, appliance-side Vector pipeline, hardening), existential alert rules (watchdog, self,
   cluster-availability incl. Grafana-down, disk via pve-exporter, PVE host/guest, OCI registry), mise build/push/upgrade
-  tasks, and the Crossplane Cloudflare APIToken + Tailscale OAuth client (`cloudflare.iam.observability.yaml`,
-  `tailscale.oauth.observability.yaml`).
-- **Pending:** verify nixpkgs package/attribute names (incl. `victoriatraces` + its port) on the pinned channel;
-  `dist:render` the new Crossplane resources and let them reconcile; deploy the LXC; set the Proxmox firewall
-  source-CIDR allowlist; deploy cluster-side `VMAgent` (+ optional streamAggr), `VMAlert` + `VMRule`, Vector, and trace
-  export (and the `kazimierz` Docker equivalents); configure the Proxmox OTEL push; wire Grafana datasources
-  (metrics/logs/traces) + dashboards + non-paging alert routing + the Grafana-side deadman on `amiya`; render
-  `architecture.svg`. Tracked under the phases of [#1018][].
+  tasks, and the Cloudflare DNS-01 token + Tailscale OAuth client (Pulumi-provisioned, see `stack/observability.ts`).
+  **Grafana — closed by [#1159][]:** Grafana Operator on every cluster, single instance on `rhodes.akn`
+  (`o11y.chezmoi.sh`), datasources for metrics/logs/traces against this appliance, dashboards + non-paging alert
+  routing + the Grafana-side deadman.
+- **Pending:** deploy cluster-side `VMAgent` (+ optional streamAggr), `VMAlert` + `VMRule`, Vector, and trace export
+  (and the `kazimierz` Docker equivalents); configure the Proxmox OTEL push; render `architecture.svg`. Tracked under
+  the remaining phases of [#1018][].
 
 ## References and Related Decisions
 
@@ -455,3 +455,4 @@ A terse normative checklist (the _why_ is in Supporting design decisions above):
 
 [#1013]: https://github.com/chezmoidotsh/arcane/issues/1013
 [#1018]: https://github.com/chezmoidotsh/arcane/issues/1018
+[#1159]: https://github.com/chezmoidotsh/arcane/issues/1159

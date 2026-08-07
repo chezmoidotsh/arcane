@@ -1,0 +1,16 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: node-exporter-full
+  namespace: o11y-system
+spec:
+  datasources:
+  - datasourceName: VictoriaMetrics
+    inputName: ds_prometheus
+  grafanaCom:
+    id: 1860
+    revision: 45
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana

@@ -1,14 +1,14 @@
 # Observability agent for the OCI registry LXC.
 # Ships systemd logs to o11y via Vector native protocol, and scrapes Zot
-# metrics for remote_write. hostsOverride resolves o11y.chezmoi.sh to the
+# metrics for remote_write. hostsOverride resolves data.o11y.chezmoi.sh to the
 # Proxmox bridge IP (10.0.0.22) — same trick used by the previous vmagent.
 { ... }: {
   catalog.lxcAgent = {
     enable = true;
 
     o11y = {
-      logsAddress = "o11y.chezmoi.sh:6000";
-      metricsUrl = "https://o11y.chezmoi.sh/metrics/api/v1/write";
+      logsAddress = "data.o11y.chezmoi.sh:6000";
+      metricsUrl = "https://data.o11y.chezmoi.sh/metrics/api/v1/write";
     };
 
     metrics = {
@@ -26,7 +26,7 @@
     ];
 
     hostsOverride = {
-      "10.0.0.22" = [ "o11y.chezmoi.sh" ];
+      "10.0.0.22" = [ "data.o11y.chezmoi.sh" ];
     };
   };
 }

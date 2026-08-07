@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - network-policy.allow-intra-namespace.yaml
+  - network-policy.allow-o11y-system-to-kubernetes-api.yaml
+  - network-policy.allow-grafana-to-o11y-backend.yaml
+  - network-policy.allow-grafana-to-pocket-id.yaml
+  - network-policy.allow-grafana-from-ingress-gateway.yaml
+  - network-policy.allow-grafana-from-newt.yaml

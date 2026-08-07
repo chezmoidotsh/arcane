@@ -16,7 +16,8 @@
 		"@pulumi/proxmox": "workspace:*",
 		"@pulumi/pulumi": "catalog:",
 		"@pulumi/tailscale": "catalog:",
-		"@pulumi/vault": "catalog:"
+		"@pulumi/vault": "catalog:",
+		"@pulumiverse/grafana": "catalog:"
 	},
 	"devDependencies": {
 		"typescript": "catalog:"

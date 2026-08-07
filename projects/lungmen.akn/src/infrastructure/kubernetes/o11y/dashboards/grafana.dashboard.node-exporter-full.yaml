@@ -1,0 +1,19 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: node-exporter-full
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana
+  # Official "Node Exporter Full" dashboard: https://grafana.com/grafana/dashboards/1860
+  # Renders real data: every standalone LXC appliance (pve-exporter, oci-registry,
+  # omni, omni-infra-provider-proxmox, talosnet-dns, o11y itself) already ships
+  # prometheus-node-exporter metrics into the shared VictoriaMetrics instance.
+  grafanaCom:
+    id: 1860
+    revision: 45
+  datasources:
+    - inputName: ds_prometheus
+      datasourceName: VictoriaMetrics

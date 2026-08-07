@@ -1,0 +1,23 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Newt to route traffic to Grafana (public Pangolin exposure, sso: false --
+      Grafana gates its own login via generic_oauth against Pocket-Id).
+  name: allow-grafana-from-newt
+  namespace: o11y-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: newt
+        io.kubernetes.pod.namespace: newt-system
+    toPorts:
+    - ports:
+      - port: "3000"
+        protocol: TCP

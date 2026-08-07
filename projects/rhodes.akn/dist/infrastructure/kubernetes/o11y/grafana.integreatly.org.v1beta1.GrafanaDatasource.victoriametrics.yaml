@@ -1,0 +1,17 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: victoriametrics
+  namespace: o11y-system
+spec:
+  datasource:
+    access: proxy
+    editable: false
+    isDefault: true
+    name: VictoriaMetrics
+    type: prometheus
+    url: https://data.o11y.chezmoi.sh/metrics
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana

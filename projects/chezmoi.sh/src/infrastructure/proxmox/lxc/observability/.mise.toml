@@ -2,7 +2,7 @@
 # observability LXC — Task Automation
 # =============================================================================
 # Tasks for building, uploading, and maintaining the Proxmox LXC template that
-# runs the VictoriaMetrics observability stack (o11y.chezmoi.sh) with Caddy
+# runs the VictoriaMetrics observability stack (data.o11y.chezmoi.sh) with Caddy
 # HTTPS termination, path routing, and embedded Tailscale (caddy-tailscale).
 #
 # Usage:

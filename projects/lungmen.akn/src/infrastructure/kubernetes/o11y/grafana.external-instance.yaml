@@ -1,0 +1,13 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: Grafana
+metadata:
+  name: grafana
+  labels:
+    dashboards: grafana
+spec:
+  external:
+    url: https://o11y.chezmoi.sh
+    apiKey:
+      name: grafana-api-token
+      key: token

@@ -1,0 +1,21 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: victorialogs
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana
+  plugins:
+    - name: victoriametrics-logs-datasource
+      version: 0.31.0
+  datasource:
+    name: VictoriaLogs
+    # Query path confirmed live against the deployed VictoriaLogs version before
+    # this datasource is considered done -- see the o11y LXC README's "Known
+    # gaps" (VictoriaLogs query path may drift between versions).
+    type: victoriametrics-logs-datasource
+    access: proxy
+    url: https://data.o11y.chezmoi.sh/logs
+    editable: false
