@@ -35,5 +35,21 @@ spec:
               envFrom:
                 - secretRef:
                     name: grafana-oidc-client
-                - secretRef:
-                    name: grafana-admin-credentials
+              # GF_SECURITY_ADMIN_USER/_PASSWORD must be named `env:` entries, not
+              # bulk-imported via envFrom: the operator's own API client (used to
+              # provision GrafanaDatasource/GrafanaDashboard) reads admin
+              # credentials straight off the container's env list by name -- it
+              # never looks inside envFrom-referenced secrets, so those would
+              # otherwise resolve to an empty user/password and every API call
+              # fails with "ensure connectivity and valid credentials".
+              env:
+                - name: GF_SECURITY_ADMIN_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: grafana-admin-credentials
+                      key: GF_SECURITY_ADMIN_USER
+                - name: GF_SECURITY_ADMIN_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: grafana-admin-credentials
+                      key: GF_SECURITY_ADMIN_PASSWORD
