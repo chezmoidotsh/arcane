@@ -5,3 +5,4 @@ resources:
   - network-policy.allow-intra-namespace.yaml
   - network-policy.allow-o11y-system-to-kubernetes-api.yaml
   - network-policy.allow-operator-to-grafana-api.yaml
+  - network-policy.allow-operator-to-grafana-com.yaml
