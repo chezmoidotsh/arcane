@@ -1,5 +1,7 @@
+import * as pulumi from "@pulumi/pulumi";
 import * as random from "@pulumi/random";
 import * as truenas from "@pulumi/truenas";
+import * as vault from "@pulumi/vault";
 
 import { managedApplicationsGroup, type Nfs4AclAssignment } from "../acls";
 import { builtInUsersGroup } from "../identities";
@@ -42,6 +44,24 @@ export const immichUser = new truenas.User(
 		home: "/var/empty",
 		shell: "/usr/sbin/nologin",
 		sudoCommands: [],
+	},
+	{ parent: immichPassword },
+);
+
+// Keeps OpenBao's lungmen.akn/immich/storage/smb secret (read by the
+// ExternalSecret backing immich's SMB CSI mount) in sync with this
+// account's actual password. Previously nothing in the repo did this --
+// Vault's copy was populated by hand once and silently drifted from
+// Pulumi's state afterward. See issue 1212.
+new vault.kv.SecretV2(
+	"smb-secret-immich",
+	{
+		mount: "lungmen.akn",
+		name: "immich/storage/smb",
+		dataJson: pulumi.jsonStringify({
+			username: "immich",
+			password: immichPassword.result,
+		}),
 	},
 	{ parent: immichPassword },
 );

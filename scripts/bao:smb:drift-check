@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+#
+# Detects drift between Pulumi's random.RandomPassword state (TrueNAS SMB
+# service accounts) and the password actually stored in OpenBao. Read-only,
+# hash-compare only -- the raw password is never printed, logged, or written
+# to disk anywhere in this script.
+#
+# Background: projects/chezmoi.sh/src/infrastructure/pulumi/stack/truenas/
+# users/{immich,jellyfin,paperless-ngx}.ts each provision an SMB service
+# account with a random.RandomPassword exported as a stack output. Nothing
+# in the repo syncs that output into OpenBao (lungmen.akn/<app>/storage/smb,
+# read by the ExternalSecrets backing each app's SMB CSI mount) -- it was set
+# there by hand. If Pulumi's state and Vault ever disagree and a `pulumi up`
+# (or `--target-replace`) forces recreation of one of these
+# random.RandomPassword resources, Pulumi pushes its own stale password to
+# TrueNAS and silently breaks that app's SMB auth. See issue #1212.
+#
+# Usage:
+#   scripts/bao:smb:drift-check
+#
+# Requires:
+#   - `pulumi` with a stack selected for
+#     projects/chezmoi.sh/src/infrastructure/pulumi (PULUMI_STACK env, see
+#     that project's .mise/env.yaml)
+#   - `bao` on PATH with a session that can read lungmen.akn/<app>/storage/smb
+#     (`mise run bao:login`)
+#
+# When to run:
+#   - Before any `pulumi up`/`pulumi preview --target-replace` touching the
+#     truenas stack's `users/*` resources -- confirms a forced replacement
+#     won't push a stale password.
+#   - After rotating one of these SMB passwords by hand on TrueNAS/Vault, to
+#     confirm Pulumi's state was brought back in sync.
+#   - Periodically (e.g. monthly), same rationale as bao:secret:audit.
+#
+# Resyncing a rotated password: treat whichever side changed as the source of
+# truth and bring the other side to match by hand -- this script only
+# detects drift, it does not resync automatically, and neither direction is
+# safe to script blindly (a Vault write is a live production secret change;
+# a Pulumi-side fix touches `random.RandomPassword` state). Coordinate with
+# whoever owns the change before touching either side.
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+PULUMI_DIR="${REPO_ROOT}/projects/chezmoi.sh/src/infrastructure/pulumi"
+
+APPS=(immich jellyfin paperless-ngx)
+
+# macOS ships bash 3.2 (no associative arrays) -- a case statement keeps
+# this portable instead of relying on `declare -A`.
+pulumi_output_name() {
+  case "$1" in
+  immich) echo "immichPasswordSecret" ;;
+  jellyfin) echo "jellyfinPasswordSecret" ;;
+  paperless-ngx) echo "paperlessPasswordSecret" ;;
+  *)
+    error "no known Pulumi output for app '$1'"
+    exit 1
+    ;;
+  esac
+}
+
+info() { echo "Info: $1" >&2; }
+error() { echo "Error: $1" >&2; }
+
+hash_stdin() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum | awk '{print $1}'
+  else
+    shasum -a 256 | awk '{print $1}'
+  fi
+}
+
+# Reads the given Pulumi stack output and returns its SHA-256 hash. The raw
+# value only ever lives in this function's local scope, never echoed.
+pulumi_password_hash() {
+  local output_name="$1" raw hash
+  if ! raw="$(pulumi stack output "${output_name}" --show-secrets --cwd "${PULUMI_DIR}" 2>&1)"; then
+    error "Pulumi output '${output_name}' failed: ${raw}"
+    exit 1
+  fi
+  hash="$(printf '%s' "${raw}" | hash_stdin)"
+  unset raw
+  printf '%s\n' "${hash}"
+}
+
+# Reads the SMB password field for the given app from Vault and returns its
+# SHA-256 hash. Same rule: the raw value never leaves this function's scope.
+vault_password_hash() {
+  local app="$1" raw hash
+  if ! raw="$(bao kv get -mount=lungmen.akn -field=password "${app}/storage/smb" 2>&1)"; then
+    error "Vault read for lungmen.akn/${app}/storage/smb failed: ${raw}"
+    exit 1
+  fi
+  hash="$(printf '%s' "${raw}" | hash_stdin)"
+  unset raw
+  printf '%s\n' "${hash}"
+}
+
+drifted=()
+for app in "${APPS[@]}"; do
+  info "Checking ${app}..."
+  output_name="$(pulumi_output_name "${app}")"
+  pulumi_hash="$(pulumi_password_hash "${output_name}")"
+  vault_hash="$(vault_password_hash "${app}")"
+  if [[ ${pulumi_hash} != "${vault_hash}" ]]; then
+    drifted+=("${app}")
+  fi
+done
+
+if [[ ${#drifted[@]} -gt 0 ]]; then
+  error "Password drift detected for: ${drifted[*]}"
+  error "Pulumi's random.RandomPassword state disagrees with the Vault-stored password at lungmen.akn/<app>/storage/smb."
+  exit 1
+fi
+
+info "No drift: Pulumi and Vault agree on the SMB password hash for ${APPS[*]}."

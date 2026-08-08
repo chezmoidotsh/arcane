@@ -14,6 +14,7 @@
 #   mise run pulumi:cloudflare-token:omni           # Inject Pulumi's Cloudflare token into omni's SOPS secret
 #   mise run pulumi:cloudflare-token:oci-registry   # Inject Pulumi's Cloudflare token into oci-registry's SOPS secret
 #   mise run pulumi:tailscale-oauth:observability   # Inject Pulumi's Tailscale OAuth key into observability's SOPS secret
+#   mise run bao:smb:drift-check                    # Check Pulumi vs. Vault drift for TrueNAS SMB passwords (hash-only)
 #
 # Prerequisites:
 #   - SSH key-based access to nas.chezmoi.sh as root user
@@ -131,3 +132,16 @@ run = '''
     '["CLOUDFLARE_API_TOKEN"]' "\"${TOKEN}\""
   echo "[SUCCESS] CLOUDFLARE_API_TOKEN updated in oci-registry/secrets/caddy.sops.env" >&2
 '''
+
+# -----------------------------------------------------------------------------
+# TrueNAS SMB Password Drift Check
+# -----------------------------------------------------------------------------
+# The immich/jellyfin/paperless-ngx TrueNAS SMB service-account passwords are
+# provisioned by Pulumi (stack/truenas/users/*.ts) but nothing syncs that
+# state into OpenBao automatically — see scripts/bao:smb:drift-check for the
+# full rationale and issue #1212. This task hash-compares the two sides;
+# never reads or prints an actual password value.
+
+[tasks."bao:smb:drift-check"]
+description = "Compare Pulumi's TrueNAS SMB password state against Vault (hash-only, never prints secret values)"
+run = "scripts/bao:smb:drift-check"

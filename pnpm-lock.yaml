@@ -404,6 +404,9 @@ importers:
       '@pulumi/truenas':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/sdks/truenas
+      '@pulumi/vault':
+        specifier: 'catalog:'
+        version: 7.10.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       handlebars:
         specifier: 'catalog:'
         version: 4.7.9

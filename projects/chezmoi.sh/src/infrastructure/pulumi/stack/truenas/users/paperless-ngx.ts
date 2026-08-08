@@ -1,5 +1,7 @@
+import * as pulumi from "@pulumi/pulumi";
 import * as random from "@pulumi/random";
 import * as truenas from "@pulumi/truenas";
+import * as vault from "@pulumi/vault";
 
 import { managedApplicationsGroup, type Nfs4AclAssignment } from "../acls";
 import { builtInUsersGroup } from "../identities";
@@ -47,6 +49,26 @@ export const paperlessUser = new truenas.User(
 		home: "/var/empty",
 		shell: "/usr/sbin/nologin",
 		sudoCommands: [],
+	},
+	{ parent: paperlessPassword },
+);
+
+// Keeps OpenBao's lungmen.akn/paperless-ngx/storage/smb secret (read by
+// the ExternalSecret backing paperless-ngx's SMB CSI mount) in sync with
+// this account's actual password. Previously nothing in the repo did
+// this -- Vault's copy was populated by hand once and silently drifted
+// from Pulumi's state afterward. See issue 1212. The Vault path key is
+// `paperless-ngx` (the app), the `username` field inside is `paperless`
+// (the actual TrueNAS account, see the note above).
+new vault.kv.SecretV2(
+	"smb-secret-paperless",
+	{
+		mount: "lungmen.akn",
+		name: "paperless-ngx/storage/smb",
+		dataJson: pulumi.jsonStringify({
+			username: "paperless",
+			password: paperlessPassword.result,
+		}),
 	},
 	{ parent: paperlessPassword },
 );
