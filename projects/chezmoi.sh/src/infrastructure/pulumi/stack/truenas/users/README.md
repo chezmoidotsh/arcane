@@ -51,25 +51,26 @@ as a resource before the account referencing it can be constructed -- that order
 which one can structurally be the other's parent. Grouping them this way keeps a password and the one account it belongs
 to together in the resource tree (`pulumi stack`, state explorer), instead of two unrelated top-level resources.
 
-Most of these passwords are never pushed into OpenBao/Vault by this stack. This stack provisions the NAS, which sits
-below Vault in the dependency chain -- OpenBao's own storage can live on this NAS. A Vault write from here would make
-"the NAS exists" and "Vault is reachable" depend on each other, breaking both normal apply order and disaster recovery
-(this stack must be able to apply cleanly with Vault entirely down). Retrieve a generated password after `pulumi up`
-with:
+Any account whose password is read back out by a Kubernetes `ExternalSecret` also declares a `vault.kv.SecretV2`,
+writing the password straight to the path that `ExternalSecret` reads (`lungmen.akn/<app>/storage/smb`) -- that's the
+baseline, not an add-on: a credential Vault is supposed to hand out has no business being anything other than what
+Pulumi actually generated. `immich.ts`, `jellyfin.ts`, and `paperless-ngx.ts` do this today. Before this, nothing kept
+Vault's copy in sync with Pulumi's, and the two drifted apart (issue 1212).
+
+Accounts with no `ExternalSecret` reading them from Vault -- `home-assistant.ts` (consumed directly in Home Assistant's
+own backup config, never through Kubernetes) and `firesticktv.ts` (an on-device SMB login, no software consumer at all)
+-- have nothing to push and stay manual: retrieve the password after `pulumi up` with
 
 ```sh
 pulumi stack output <name>PasswordSecret --show-secrets
 ```
 
-and copy it to wherever it's consumed (OpenBao, Home Assistant's own backup config, ...) by hand.
+and copy it to wherever it's actually consumed, by hand.
 
-**Exception: `immich.ts`, `jellyfin.ts`, `paperless-ngx.ts`.** Each also declares a `vault.kv.SecretV2` writing its
-password to `lungmen.akn/<app>/storage/smb`, the path the app's own ExternalSecret reads for its SMB CSI mount -- these
-three drove real drift between Pulumi's state and Vault's stored value (issue 1212), since nothing else in the repo ever
-kept them in sync. That reintroduces the exact NAS/Vault circularity described above, but scoped narrowly: these are
-downstream app accounts, not anything Vault's own bootstrap depends on, so a `pulumi up` on this stack with Vault down
-fails only these three specific resources -- the rest of the stack (zpools, shares, every other account) still applies
-cleanly. Whether that's an acceptable trade-off for the stack as a whole, or whether these should move to a separate
-Vault-dependent stack instead, is exactly the kind of question issue 1109 (bootstrap circularity audit) is meant to
-settle -- treat this as a deliberate, narrow exception pending that review, not a precedent for adding more `vault.*`
-resources here.
+One real constraint on the `vault.kv.SecretV2` pattern: this stack provisions the NAS, which sits below Vault in the
+dependency chain whenever OpenBao's own storage lives on it, and a `vault.kv.SecretV2` resource needs Vault reachable to
+apply. None of the accounts here back Vault's own storage today, so this only ever costs those specific Vault-writing
+resources a failed apply if Vault happens to be down -- the rest of the stack (zpools, shares, every other account)
+still applies cleanly regardless. If an account backing Vault's own storage bootstrap is ever added to this stack, it
+must NOT get a `vault.kv.SecretV2` -- see issue 1109 for the broader NAS/Vault/Pulumi circularity this would otherwise
+reintroduce.
