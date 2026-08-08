@@ -7,10 +7,16 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: grafana
+  uid: victoriatraces-tempo
   datasource:
     name: VictoriaTraces
-    # VictoriaTraces exposes a Jaeger-compatible query API -- no plugin needed.
-    type: jaeger
+    # VictoriaTraces implements the Tempo HTTP API (min version v0.9.4,
+    # confirmed live) -- gives TraceQL and the Grafana Traces Drilldown plugin,
+    # which the plain Jaeger API doesn't support. The Jaeger API is also kept
+    # (victoriatraces-jaeger.yaml) purely as a link target for VictoriaLogs'
+    # OpenTelemetry preset, whose trace-linking currently only supports Jaeger
+    # datasources.
+    type: tempo
     access: proxy
-    url: https://data.o11y.chezmoi.sh/traces
+    url: https://data.o11y.chezmoi.sh/traces/select/tempo
     editable: false

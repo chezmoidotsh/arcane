@@ -1,0 +1,22 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: victoriatraces-jaeger
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: grafana
+  # Fixed uid so the VictoriaLogs OpenTelemetry preset (grafana.datasource.
+  # victorialogs.yaml) can reference it as jsonData.otelPreset.tracesDatasourceUid
+  # -- that feature currently only supports Jaeger-type datasources, not Tempo.
+  uid: victoriatraces-jaeger
+  datasource:
+    name: VictoriaTraces (Jaeger -- log links)
+    # Same VictoriaTraces backend as victoriatraces.yaml (Tempo), exposed via
+    # its Jaeger-compatible query API instead. Not meant to be browsed
+    # directly -- exists only as the OTel-preset trace-link target.
+    type: jaeger
+    access: proxy
+    url: https://data.o11y.chezmoi.sh/traces/select/jaeger
+    editable: false
