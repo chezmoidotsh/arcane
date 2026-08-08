@@ -14,6 +14,16 @@ spec:
   config:
     server:
       root_url: https://o11y.chezmoi.sh
+    database:
+      # Moves Grafana off its default embedded SQLite -- this deployment has no
+      # persistent volume, so every pod restart previously wiped all users,
+      # datasources, and dashboards. GF_DATABASE_PASSWORD (below) supplies the
+      # password; this section only holds non-secret connection settings.
+      type: postgres
+      host: grafana-database-rw:5432
+      name: grafana
+      user: grafana
+      ssl_mode: disable
     users:
       # The OIDC client is already group-restricted to the admin group (see
       # stack/pocket-id/grafana.ts) -- anyone who can log in at all is meant
@@ -62,3 +72,8 @@ spec:
                     secretKeyRef:
                       name: grafana-admin-credentials
                       key: GF_SECURITY_ADMIN_PASSWORD
+                - name: GF_DATABASE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: grafana-database-credentials
+                      key: password

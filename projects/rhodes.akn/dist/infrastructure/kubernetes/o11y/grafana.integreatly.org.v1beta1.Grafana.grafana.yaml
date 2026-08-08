@@ -17,6 +17,12 @@ spec:
       scopes: openid profile email
       token_url: https://auth.chezmoi.sh/api/oidc/token
       use_pkce: "true"
+    database:
+      host: grafana-database-rw:5432
+      name: grafana
+      ssl_mode: disable
+      type: postgres
+      user: grafana
     server:
       root_url: https://o11y.chezmoi.sh
     users:
@@ -40,6 +46,11 @@ spec:
                 secretKeyRef:
                   key: GF_SECURITY_ADMIN_PASSWORD
                   name: grafana-admin-credentials
+            - name: GF_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: grafana-database-credentials
             envFrom:
             - secretRef:
                 name: grafana-oidc-client

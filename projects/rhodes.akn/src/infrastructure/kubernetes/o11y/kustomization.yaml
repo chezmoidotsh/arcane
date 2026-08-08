@@ -16,6 +16,10 @@ resources:
   - grafana.instance.yaml
   - grafana.oidc.externalsecret.yaml
   - grafana.admin-credentials.externalsecret.yaml
+  - grafana.database.externalsecret.yaml
+  - grafana.cnpg.objectstore.yaml
+  - grafana.cnpg.cluster.yaml
+  - grafana.cnpg.scheduledbackup.yaml
   - grafana.main.httproute.yaml
   - datasources/
   - dashboards/

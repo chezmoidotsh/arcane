@@ -37,3 +37,35 @@ export const grafanaAdminCredentials = new vault.kv.SecretV2(
 	},
 	{ parent: grafanaAdminPassword },
 );
+
+// Grafana's own CNPG-backed database (issue 1159 follow-up) -- moves it off
+// the default embedded SQLite, which has no persistent volume on this
+// deployment and was losing all users/dashboards on every pod restart.
+const grafanaDatabasePassword = new random.RandomPassword(
+	"password-grafana-database",
+	{
+		length: 32,
+		special: false,
+	},
+);
+
+export const grafanaDatabaseCredentials = new vault.kv.SecretV2(
+	"grafana-database-vault-secret",
+	{
+		mount: "rhodes.akn",
+		name: "grafana/database/credentials",
+		dataJson: pulumi.jsonStringify({
+			username: "grafana",
+			password: grafanaDatabasePassword.result,
+		}),
+		customMetadata: {
+			data: {
+				description:
+					"Grafana's CNPG-managed role password (grafana.cnpg.cluster.yaml)",
+				application: "grafana",
+				...vaultSecretMetadata(grafanaDatabasePassword),
+			},
+		},
+	},
+	{ parent: grafanaDatabasePassword },
+);

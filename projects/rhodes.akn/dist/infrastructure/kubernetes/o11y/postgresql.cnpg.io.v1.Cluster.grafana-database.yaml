@@ -1,0 +1,47 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: grafana-database
+  name: grafana-database
+  namespace: o11y-system
+spec:
+  bootstrap:
+    initdb:
+      database: grafana
+      owner: grafana
+  description: PostgreSQL database dedicated to Grafana
+  enablePDB: false
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    major: 18
+    name: default
+  instances: 1
+  managed:
+    roles:
+    - comment: PostgreSQL role for grafana
+      connectionLimit: -1
+      ensure: present
+      inherit: true
+      login: true
+      name: grafana
+      passwordSecret:
+        name: grafana-database-credentials
+  plugins:
+  - enabled: true
+    isWALArchiver: true
+    name: barman-cloud.cloudnative-pg.io
+    parameters:
+      barmanObjectName: selfhosted
+      serverName: grafana-database
+  postgresql:
+    parameters:
+      max_slot_wal_keep_size: 900MB
+      max_wal_size: 100MB
+  storage:
+    size: 250Mi
+  walStorage:
+    size: 1Gi

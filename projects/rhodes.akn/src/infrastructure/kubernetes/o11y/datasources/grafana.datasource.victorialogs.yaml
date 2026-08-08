@@ -19,3 +19,16 @@ spec:
     access: proxy
     url: https://data.o11y.chezmoi.sh/logs
     editable: false
+    jsonData:
+      otelPreset:
+        enabled: true
+        # Only Jaeger-type datasources are supported as a trace-link target.
+        tracesDatasourceUid: victoriatraces-jaeger
+        detection:
+          # Field names set by the o11y LXC's Vector pipeline
+          # (config/vector/transforms.validate.yaml's to_vlogs_format).
+          traceIdField: trace_id
+          severity:
+            field: severity_text
+            valueCase: string
+            source: manual
