@@ -1,0 +1,24 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Grafana to reach the Grafana Cloud Assistant backend
+      (grafana-assistant-app forwards every request there, even when the
+      instance is otherwise self-managed -- there is no fully local mode).
+      Distinct from allow-operator-to-grafana-com, which only covers plugin
+      catalog downloads, not the Assistant's own runtime traffic.
+  name: allow-grafana-to-grafana-cloud-assistant
+  namespace: o11y-system
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: assistant-prod-eu-west-2.grafana.net
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
