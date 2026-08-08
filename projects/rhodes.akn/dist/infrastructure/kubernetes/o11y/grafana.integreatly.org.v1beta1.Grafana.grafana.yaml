@@ -33,3 +33,4 @@ spec:
             - secretRef:
                 name: grafana-admin-credentials
             name: grafana
+  disableDefaultAdminSecret: true

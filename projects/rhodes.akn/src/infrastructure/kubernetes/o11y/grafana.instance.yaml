@@ -6,6 +6,11 @@ metadata:
   labels:
     dashboards: grafana
 spec:
+  # The admin credentials come from our own ExternalSecret (grafana-admin-credentials,
+  # sourced from Vault), not the operator's own auto-generated one -- both want to own
+  # a Secret of that same name otherwise, which the operator refuses (already owned by
+  # another controller).
+  disableDefaultAdminSecret: true
   config:
     server:
       root_url: https://o11y.chezmoi.sh
