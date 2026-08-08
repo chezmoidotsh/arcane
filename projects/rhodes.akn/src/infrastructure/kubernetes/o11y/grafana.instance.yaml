@@ -23,6 +23,12 @@ spec:
       scopes: openid profile email
       use_pkce: "true"
       allow_sign_up: "true"
+      # The OIDC client is already group-restricted to the admin group (see
+      # stack/pocket-id/grafana.ts) -- anyone who can log in at all is an
+      # admin, so a constant role expression is simpler and more robust than
+      # matching a groups claim (which would also need "groups" added to
+      # scopes above).
+      role_attribute_path: "'Admin'"
   deployment:
     spec:
       template:
