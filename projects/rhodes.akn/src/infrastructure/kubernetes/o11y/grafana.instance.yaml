@@ -97,4 +97,5 @@ spec:
                     nikosc-percenttrend-panel 1.0.8,
                     novatec-sdg-panel 4.2.0,
                     grafana-advisor-app 1.0.2,
-                    grafana-llm-app 1.0.8
+                    grafana-llm-app 1.0.8,
+                    grafana-assistant-app 2.0.46
