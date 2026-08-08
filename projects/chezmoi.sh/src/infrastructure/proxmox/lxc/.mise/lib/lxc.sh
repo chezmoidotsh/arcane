@@ -700,6 +700,36 @@ lxc_upgrade() {
   _lxc_step "Health check" "(30s warm-up)"
   sleep 30
 
+  # Safety net: kill any tracked-service process still running from a
+  # stale Nix store generation. Leaked workers (observed with caddy) have
+  # been seen to survive the stop/rootfs-swap/start cycle above, each
+  # holding onto RSS indefinitely — on memory-constrained CTs this has
+  # OOM-killed unrelated services. By this point /run/current-system
+  # unambiguously points at the new generation, so any tracked-service
+  # process whose binary resolves outside that path is provably stale.
+  # This does not explain *why* the old process survives the stop — only
+  # catches it after the fact.
+  local svc_names="${_LXC_SERVICES[*]}"
+  local stale_procs
+  stale_procs=$(_lxc_ssh "${pve_host}" "pct exec ${vmid} -- /run/current-system/sw/bin/bash -lc '
+    CURRENT=\$(readlink -f /run/current-system)
+    for svc in ${svc_names}; do
+      for pid in \$(pgrep -x \"\${svc}\" 2>/dev/null); do
+        EXE=\$(readlink -f /proc/\${pid}/exe 2>/dev/null) || continue
+        case \"\${EXE}\" in
+          \"\${CURRENT}\"/*) ;;
+          *) echo \"\${svc} pid=\${pid} exe=\${EXE}\"; kill -9 \"\${pid}\" 2>/dev/null || true ;;
+        esac
+      done
+    done
+  '" || true)
+  if [[ -n ${stale_procs} ]]; then
+    while IFS= read -r line; do
+      [[ -n ${line} ]] || continue
+      _warn "Killed stale-generation process: ${line}"
+    done <<< "${stale_procs}"
+  fi
+
   local svc_list=""
   local s
   for s in "${_LXC_SERVICES[@]}"; do
