@@ -100,6 +100,12 @@ spec:
                 # required by datasources/grafana.datasource.victorialogs.yaml) -- any
                 # plugin required by a datasource/dashboard CR must also be listed here
                 # explicitly, or that CR's plugin silently goes missing at runtime.
+                #
+                # grafana-assistant-app is intentionally left out for now: it routes
+                # through Grafana Cloud's own LLM billing, not the OpenRouter key
+                # configured on grafana-llm-app, so there's no visibility/control over
+                # its token consumption. Re-add "grafana-assistant-app 2.0.46" below
+                # once that's addressed.
                 - name: GF_INSTALL_PLUGINS
                   value: >-
                     taminomara-hostoverview-panel 1.2.0,
@@ -113,7 +119,6 @@ spec:
                     novatec-sdg-panel 4.2.0,
                     grafana-advisor-app 1.0.2,
                     grafana-llm-app 1.0.8,
-                    grafana-assistant-app 2.0.46,
                     victoriametrics-logs-datasource 0.31.0
           volumes:
             - name: plugins
