@@ -39,6 +39,17 @@
 # safe to script blindly (a Vault write is a live production secret change;
 # a Pulumi-side fix touches `random.RandomPassword` state). Coordinate with
 # whoever owns the change before touching either side.
+#
+# After a `pulumi up --target-replace` rotates one of these passwords:
+# the three ExternalSecrets (<app>-smb-credentials, lungmen-akn) have a
+# 1h refreshInterval and do NOT pick up the new Vault value immediately.
+# Restarting the app's pod before they resync makes the SMB CSI mount try
+# the *old* cached K8s Secret against the *new* TrueNAS password and fail
+# with `mount error(13): Permission denied` -- confirmed live during the
+# issue 1212 rollout. Force an immediate resync first:
+#   kubectl annotate externalsecret <app>-smb-credentials -n <app> \
+#     force-sync="$(date +%s)" --overwrite
+# then re-check this script agrees before restarting the pod.
 
 set -euo pipefail
 
