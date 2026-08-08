@@ -14,6 +14,15 @@ spec:
   config:
     server:
       root_url: https://o11y.chezmoi.sh
+    users:
+      # The OIDC client is already group-restricted to the admin group (see
+      # stack/pocket-id/grafana.ts) -- anyone who can log in at all is meant
+      # to be an admin. role_attribute_path: "'Admin'" (a JMESPath raw-string
+      # literal) did not produce that in practice -- the first-ever login
+      # still landed as Viewer despite the config rendering correctly on
+      # disk -- so auto_assign_org_role is used instead, which needs no
+      # claims evaluation at all.
+      auto_assign_org_role: Admin
     auth.generic_oauth:
       enabled: "true"
       name: Pocket ID
@@ -23,12 +32,6 @@ spec:
       scopes: openid profile email
       use_pkce: "true"
       allow_sign_up: "true"
-      # The OIDC client is already group-restricted to the admin group (see
-      # stack/pocket-id/grafana.ts) -- anyone who can log in at all is an
-      # admin, so a constant role expression is simpler and more robust than
-      # matching a groups claim (which would also need "groups" added to
-      # scopes above).
-      role_attribute_path: "'Admin'"
   deployment:
     spec:
       template:

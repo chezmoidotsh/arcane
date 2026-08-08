@@ -14,12 +14,13 @@ spec:
       auth_url: https://auth.chezmoi.sh/authorize
       enabled: "true"
       name: Pocket ID
-      role_attribute_path: '''Admin'''
       scopes: openid profile email
       token_url: https://auth.chezmoi.sh/api/oidc/token
       use_pkce: "true"
     server:
       root_url: https://o11y.chezmoi.sh
+    users:
+      auto_assign_org_role: Admin
   deployment:
     spec:
       template:
