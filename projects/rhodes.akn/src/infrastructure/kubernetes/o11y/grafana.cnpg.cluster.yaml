@@ -1,0 +1,52 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/instance: grafana-database
+  name: grafana-database
+spec:
+  # Fresh instance -- unlike pocket-id/vault, Grafana never lived on amiya.akn,
+  # so this bootstraps from scratch rather than recovering from a backup. Moving
+  # Grafana off its default embedded SQLite (which has no persistent volume on
+  # this deployment -- every pod restart wipes users/dashboards) is the whole
+  # point of this Cluster.
+  bootstrap:
+    initdb:
+      database: grafana
+      owner: grafana
+  description: PostgreSQL database dedicated to Grafana
+  enablePDB: false
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: default
+    major: 18
+  instances: 1
+  managed:
+    roles:
+      - name: grafana
+        connectionLimit: -1
+        comment: PostgreSQL role for grafana
+        ensure: present
+        inherit: true
+        login: true
+        passwordSecret:
+          name: grafana-database-credentials
+  plugins:
+    - enabled: true
+      isWALArchiver: true
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: selfhosted
+        serverName: grafana-database
+  postgresql:
+    parameters:
+      # Limit WAL retention to avoid DB crash due to storage bloat
+      max_slot_wal_keep_size: 900MB
+      max_wal_size: 100MB
+  storage:
+    size: 250Mi
+  walStorage:
+    size: 1Gi

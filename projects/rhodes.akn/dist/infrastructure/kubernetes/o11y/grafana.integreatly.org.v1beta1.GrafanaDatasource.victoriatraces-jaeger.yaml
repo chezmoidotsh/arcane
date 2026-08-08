@@ -2,16 +2,16 @@
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
 metadata:
-  name: victoriatraces
+  name: victoriatraces-jaeger
   namespace: o11y-system
 spec:
   datasource:
     access: proxy
     editable: false
-    name: VictoriaTraces
-    type: tempo
-    url: https://data.o11y.chezmoi.sh/traces/select/tempo
+    name: VictoriaTraces (Jaeger -- log links)
+    type: jaeger
+    url: https://data.o11y.chezmoi.sh/traces/select/jaeger
   instanceSelector:
     matchLabels:
       dashboards: grafana
-  uid: victoriatraces-tempo
+  uid: victoriatraces-jaeger

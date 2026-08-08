@@ -8,6 +8,16 @@ spec:
   datasource:
     access: proxy
     editable: false
+    jsonData:
+      otelPreset:
+        detection:
+          severity:
+            field: severity_text
+            source: manual
+            valueCase: string
+          traceIdField: trace_id
+        enabled: true
+        tracesDatasourceUid: victoriatraces-jaeger
     name: VictoriaLogs
     type: victoriametrics-logs-datasource
     url: https://data.o11y.chezmoi.sh/logs
