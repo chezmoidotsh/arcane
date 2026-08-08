@@ -9,7 +9,9 @@ metadata:
       on the pod network and need no egress policy. Also covers the Grafana instance
       pod itself: a GrafanaDatasource's spec.plugins (e.g. victoriametrics-logs-
       datasource) makes Grafana install that plugin from grafana.com at startup, and a
-      failed install is fatal to the whole process, not just a missing feature.
+      failed install is fatal to the whole process, not just a missing feature. The
+      plugin archive itself is served from storage.googleapis.com (Grafana's plugin
+      catalog CDN), not grafana.com -- both are needed for the install to succeed.
   name: allow-operator-to-grafana-com
 spec:
   endpointSelector:
@@ -22,6 +24,7 @@ spec:
   egress:
     - toFQDNs:
         - matchName: grafana.com
+        - matchName: storage.googleapis.com
       toPorts:
         - ports:
             - port: "443"
