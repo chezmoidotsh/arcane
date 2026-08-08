@@ -93,6 +93,13 @@ spec:
                 # GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS override is needed. Versions
                 # are pinned to what was verified compatible with the deployed Grafana
                 # (13.0.1) at evaluation time -- bump deliberately, not blindly.
+                #
+                # This env entry replaces, not merges with, whatever the operator would
+                # otherwise generate here from GrafanaDatasource/GrafanaDashboard
+                # spec.plugins declarations (e.g. victoriametrics-logs-datasource,
+                # required by datasources/grafana.datasource.victorialogs.yaml) -- any
+                # plugin required by a datasource/dashboard CR must also be listed here
+                # explicitly, or that CR's plugin silently goes missing at runtime.
                 - name: GF_INSTALL_PLUGINS
                   value: >-
                     taminomara-hostoverview-panel 1.2.0,
@@ -106,7 +113,8 @@ spec:
                     novatec-sdg-panel 4.2.0,
                     grafana-advisor-app 1.0.2,
                     grafana-llm-app 1.0.8,
-                    grafana-assistant-app 2.0.46
+                    grafana-assistant-app 2.0.46,
+                    victoriametrics-logs-datasource 0.31.0
           volumes:
             - name: plugins
               persistentVolumeClaim:
