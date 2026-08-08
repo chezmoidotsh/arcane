@@ -67,6 +67,8 @@ spec:
             volumeMounts:
             - mountPath: /var/lib/grafana/plugins
               name: plugins
+          securityContext:
+            fsGroup: 10001
           volumes:
           - name: plugins
             persistentVolumeClaim:
