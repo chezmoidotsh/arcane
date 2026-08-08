@@ -144,4 +144,4 @@ run = '''
 
 [tasks."bao:smb:drift-check"]
 description = "Compare Pulumi's TrueNAS SMB password state against Vault (hash-only, never prints secret values)"
-run = "scripts/bao:smb:drift-check"
+run = "bao:smb:drift-check"

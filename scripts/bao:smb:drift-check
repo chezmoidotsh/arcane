@@ -76,7 +76,12 @@ hash_stdin() {
 # value only ever lives in this function's local scope, never echoed.
 pulumi_password_hash() {
   local output_name="$1" raw hash
-  if ! raw="$(pulumi stack output "${output_name}" --show-secrets --cwd "${PULUMI_DIR}" 2>&1)"; then
+  # `mise exec` resolves PULUMI_CONFIG_PASSPHRASE from PULUMI_DIR's own
+  # .mise/env.yaml based on the actual process cwd -- `pulumi --cwd` alone
+  # only redirects pulumi itself, it doesn't make mise load that directory's
+  # env, so this has to `cd` there first rather than pass `--cwd` from
+  # wherever the caller happens to be.
+  if ! raw="$(cd "${PULUMI_DIR}" && mise exec -- pulumi stack output "${output_name}" --show-secrets 2>&1)"; then
     error "Pulumi output '${output_name}' failed: ${raw}"
     exit 1
   fi
