@@ -9,6 +9,13 @@ spec:
     access: proxy
     editable: false
     jsonData:
+      derivedFields:
+      - datasourceUid: victoriatraces-tempo
+        matcherRegex: trace_id
+        matcherType: label
+        name: trace_id
+        url: ${__value.raw}
+        urlDisplayLabel: View trace
       otelPreset:
         detection:
           severity:
@@ -17,7 +24,6 @@ spec:
             valueCase: string
           traceIdField: trace_id
         enabled: true
-        tracesDatasourceUid: victoriatraces-jaeger
     name: VictoriaLogs
     type: victoriametrics-logs-datasource
     url: https://data.o11y.chezmoi.sh/logs
