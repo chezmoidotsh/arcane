@@ -43,9 +43,12 @@ spec:
       use_pkce: "true"
       allow_sign_up: "true"
     feature_toggles:
-      # Required for the Advisor app plugin (grafana-advisor-app) below -- it's gated
-      # behind this toggle even when the plugin itself is installed.
-      enable: grafanaAdvisor
+      # grafanaAdvisor: required for the Advisor app plugin (grafana-advisor-app)
+      # below -- it's gated behind this toggle even when the plugin is installed.
+      # externalServiceAccounts: required by consensys-asko11y-app (Ask O11y) below
+      # to provision the managed service account it uses to authenticate its own
+      # LLM/MCP calls -- an OSS toggle since Grafana 11, not Enterprise-gated.
+      enable: grafanaAdvisor, externalServiceAccounts
   deployment:
     spec:
       template:
@@ -89,6 +92,11 @@ spec:
                     secretKeyRef:
                       name: grafana-database-credentials
                       key: password
+                # Required alongside the externalServiceAccounts toggle above for
+                # consensys-asko11y-app to provision its own managed service account --
+                # per the plugin's own docs, "without these, the plugin will not work".
+                - name: GF_AUTH_MANAGED_SERVICE_ACCOUNTS_ENABLED
+                  value: "true"
                 # All plugins below are Grafana community-signed, so no
                 # GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS override is needed. Versions
                 # are pinned to what was verified compatible with the deployed Grafana
@@ -101,11 +109,13 @@ spec:
                 # plugin required by a datasource/dashboard CR must also be listed here
                 # explicitly, or that CR's plugin silently goes missing at runtime.
                 #
-                # grafana-assistant-app is intentionally left out for now: it routes
-                # through Grafana Cloud's own LLM billing, not the OpenRouter key
-                # configured on grafana-llm-app, so there's no visibility/control over
-                # its token consumption. Re-add "grafana-assistant-app 2.0.46" below
-                # once that's addressed.
+                # grafana-assistant-app was dropped in favor of consensys-asko11y-app
+                # (Ask O11y) below: Assistant routes through Grafana Cloud's own LLM
+                # billing regardless of self-hosting, while Ask O11y is MIT-licensed,
+                # runs on the already-configured grafana-llm-app (OpenRouter), and
+                # requires no external account -- see externalServiceAccounts toggle
+                # and GF_AUTH_MANAGED_SERVICE_ACCOUNTS_ENABLED above, both required for
+                # it to provision its own service account.
                 - name: GF_INSTALL_PLUGINS
                   value: >-
                     taminomara-hostoverview-panel 1.2.0,
@@ -119,7 +129,8 @@ spec:
                     novatec-sdg-panel 4.2.0,
                     grafana-advisor-app 1.0.2,
                     grafana-llm-app 1.0.8,
-                    victoriametrics-logs-datasource 0.31.0
+                    victoriametrics-logs-datasource 0.31.0,
+                    consensys-asko11y-app 0.3.2
           volumes:
             - name: plugins
               persistentVolumeClaim:
