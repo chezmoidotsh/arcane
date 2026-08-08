@@ -4,20 +4,21 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows the cert-manager controller to query public recursive resolvers (1.1.1.1, 8.8.8.8) on
-      port 53 for its DNS-01 self-check. This network's internal DNS answers "chezmoi.sh NS" with
+      Allows the cert-manager controller to query public recursive resolvers (9.9.9.9, 149.112.112.112)
+      on port 53 for its DNS-01 self-check. This network's internal DNS answers "chezmoi.sh NS" with
       ns.chezmoi.sh (a split-horizon-only BIND resolver, not one of the zone's real public Cloudflare
       NS records) - querying it directly for the self-check meant the ACME TXT record written via the
       Cloudflare solver was never found there, stalling every DNS-01 challenge forever. cert-manager
-      is configured with dns01RecursiveNameservers/dns01RecursiveNameserversOnly (catalog default
-      Helm values) to bypass that split-horizon NS answer entirely.
+      is configured with dns01RecursiveNameservers/dns01RecursiveNameserversOnly (rhodes.akn-specific
+      Helm values, see cert-manager.helmvalues/override.yaml) to bypass that split-horizon NS answer
+      entirely.
   name: allow-cert-manager-to-nameservers
   namespace: cert-manager-system
 spec:
   egress:
   - toCIDR:
-    - 1.1.1.1/32
-    - 8.8.8.8/32
+    - 9.9.9.9/32
+    - 149.112.112.112/32
     toPorts:
     - ports:
       - port: "53"
