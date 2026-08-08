@@ -25,6 +25,7 @@
 		"@pulumi/random": "catalog:",
 		"@pulumi/tailscale": "catalog:",
 		"@pulumi/truenas": "workspace:*",
+		"@pulumi/vault": "catalog:",
 		"handlebars": "catalog:"
 	},
 	"devDependencies": {

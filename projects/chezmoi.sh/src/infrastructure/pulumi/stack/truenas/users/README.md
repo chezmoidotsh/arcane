@@ -51,14 +51,25 @@ as a resource before the account referencing it can be constructed -- that order
 which one can structurally be the other's parent. Grouping them this way keeps a password and the one account it belongs
 to together in the resource tree (`pulumi stack`, state explorer), instead of two unrelated top-level resources.
 
-None of these passwords are ever pushed into OpenBao/Vault by this stack (no `vault.*` resource anywhere here, despite
-`@pulumi/vault` being available elsewhere in this monorepo). This stack provisions the NAS, which sits below Vault in
-the dependency chain -- OpenBao's own storage can live on this NAS. A Vault write from here would make "the NAS exists"
-and "Vault is reachable" depend on each other, breaking both normal apply order and disaster recovery (this stack must
-be able to apply cleanly with Vault entirely down). Retrieve a generated password after `pulumi up` with:
+Most of these passwords are never pushed into OpenBao/Vault by this stack. This stack provisions the NAS, which sits
+below Vault in the dependency chain -- OpenBao's own storage can live on this NAS. A Vault write from here would make
+"the NAS exists" and "Vault is reachable" depend on each other, breaking both normal apply order and disaster recovery
+(this stack must be able to apply cleanly with Vault entirely down). Retrieve a generated password after `pulumi up`
+with:
 
 ```sh
 pulumi stack output <name>PasswordSecret --show-secrets
 ```
 
 and copy it to wherever it's consumed (OpenBao, Home Assistant's own backup config, ...) by hand.
+
+**Exception: `immich.ts`, `jellyfin.ts`, `paperless-ngx.ts`.** Each also declares a `vault.kv.SecretV2` writing its
+password to `lungmen.akn/<app>/storage/smb`, the path the app's own ExternalSecret reads for its SMB CSI mount -- these
+three drove real drift between Pulumi's state and Vault's stored value (issue 1212), since nothing else in the repo ever
+kept them in sync. That reintroduces the exact NAS/Vault circularity described above, but scoped narrowly: these are
+downstream app accounts, not anything Vault's own bootstrap depends on, so a `pulumi up` on this stack with Vault down
+fails only these three specific resources -- the rest of the stack (zpools, shares, every other account) still applies
+cleanly. Whether that's an acceptable trade-off for the stack as a whole, or whether these should move to a separate
+Vault-dependent stack instead, is exactly the kind of question issue 1109 (bootstrap circularity audit) is meant to
+settle -- treat this as a deliberate, narrow exception pending that review, not a precedent for adding more `vault.*`
+resources here.
