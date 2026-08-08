@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Grafana to reach OpenRouter (openrouter.ai), the OpenAI-compatible
+      LLM provider configured for grafana-llm-app. The LLM app proxies calls
+      from other Grafana features (Advisor, dashboards, alerting) to whatever
+      backend is configured in its plugin settings.
+  name: allow-grafana-to-openrouter
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+  egress:
+    - toFQDNs:
+        - matchName: openrouter.ai
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
