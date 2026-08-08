@@ -14,6 +14,7 @@ spec:
       app.kubernetes.io/component: database
       app.kubernetes.io/managed-by: cloudnative-pg
       app.kubernetes.io/name: postgresql
+      cnpg.io/cluster: grafana-database
   egress:
     - toFQDNs:
         - matchName: s3.chezmoi.sh
