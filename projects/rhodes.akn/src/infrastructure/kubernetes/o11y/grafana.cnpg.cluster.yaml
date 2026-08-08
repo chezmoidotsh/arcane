@@ -16,6 +16,15 @@ spec:
     initdb:
       database: grafana
       owner: grafana
+      # Gives initdb the owner role's password directly, instead of declaring
+      # "grafana" a second time under managed.roles -- CNPG docs: managed.roles
+      # takes precedence over an initdb-created role of the same name, but in
+      # practice (confirmed live) that reconciliation never actually applied
+      # the password because the Secret didn't exist yet at the cluster's
+      # first bootstrap. This field is CNPG's documented, initdb-time way to
+      # set it once, correctly, with no separate reconciler in the loop.
+      secret:
+        name: grafana-database-credentials
   description: PostgreSQL database dedicated to Grafana
   enablePDB: false
   imageCatalogRef:
@@ -24,16 +33,6 @@ spec:
     name: default
     major: 18
   instances: 1
-  managed:
-    roles:
-      - name: grafana
-        connectionLimit: -1
-        comment: PostgreSQL role for grafana
-        ensure: present
-        inherit: true
-        login: true
-        passwordSecret:
-          name: grafana-database-credentials
   plugins:
     - enabled: true
       isWALArchiver: true

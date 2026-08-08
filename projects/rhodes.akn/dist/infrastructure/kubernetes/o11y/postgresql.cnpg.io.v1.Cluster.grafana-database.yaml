@@ -12,6 +12,8 @@ spec:
     initdb:
       database: grafana
       owner: grafana
+      secret:
+        name: grafana-database-credentials
   description: PostgreSQL database dedicated to Grafana
   enablePDB: false
   imageCatalogRef:
@@ -20,16 +22,6 @@ spec:
     major: 18
     name: default
   instances: 1
-  managed:
-    roles:
-    - comment: PostgreSQL role for grafana
-      connectionLimit: -1
-      ensure: present
-      inherit: true
-      login: true
-      name: grafana
-      passwordSecret:
-        name: grafana-database-credentials
   plugins:
   - enabled: true
     isWALArchiver: true
