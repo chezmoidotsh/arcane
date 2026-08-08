@@ -14,6 +14,7 @@ helmCharts:
 resources:
   - security/
   - grafana.instance.yaml
+  - grafana.plugins.persistentvolumeclaim.yaml
   - grafana.oidc.externalsecret.yaml
   - grafana.admin-credentials.externalsecret.yaml
   - grafana.database.externalsecret.yaml

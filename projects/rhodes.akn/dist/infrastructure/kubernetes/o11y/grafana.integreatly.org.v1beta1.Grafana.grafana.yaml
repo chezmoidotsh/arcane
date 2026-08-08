@@ -64,4 +64,11 @@ spec:
             - secretRef:
                 name: grafana-oidc-client
             name: grafana
+            volumeMounts:
+            - mountPath: /var/lib/grafana/plugins
+              name: plugins
+          volumes:
+          - name: plugins
+            persistentVolumeClaim:
+              claimName: grafana-plugins
   disableDefaultAdminSecret: true

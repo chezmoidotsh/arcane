@@ -58,6 +58,9 @@ spec:
               envFrom:
                 - secretRef:
                     name: grafana-oidc-client
+              volumeMounts:
+                - name: plugins
+                  mountPath: /var/lib/grafana/plugins
               # GF_SECURITY_ADMIN_USER/_PASSWORD must be named `env:` entries, not
               # bulk-imported via envFrom: the operator's own API client (used to
               # provision GrafanaDatasource/GrafanaDashboard) reads admin
@@ -99,3 +102,7 @@ spec:
                     grafana-advisor-app 1.0.2,
                     grafana-llm-app 1.0.8,
                     grafana-assistant-app 2.0.46
+          volumes:
+            - name: plugins
+              persistentVolumeClaim:
+                claimName: grafana-plugins

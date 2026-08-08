@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-plugins
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: proxmox-lvmthin-ext4
+  resources:
+    requests:
+      # Installed plugin set currently sits at ~140Mi; leaves headroom for
+      # further additions without needing a resize.
+      storage: 1Gi
