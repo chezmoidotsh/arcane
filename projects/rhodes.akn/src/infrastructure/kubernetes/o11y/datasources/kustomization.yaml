@@ -5,4 +5,3 @@ resources:
   - grafana.datasource.victoriametrics.yaml
   - grafana.datasource.victorialogs.yaml
   - grafana.datasource.victoriatraces.yaml
-  - grafana.datasource.victoriatraces-jaeger.yaml

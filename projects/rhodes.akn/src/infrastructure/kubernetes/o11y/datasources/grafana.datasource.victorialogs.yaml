@@ -22,8 +22,11 @@ spec:
     jsonData:
       otelPreset:
         enabled: true
-        # Only Jaeger-type datasources are supported as a trace-link target.
-        tracesDatasourceUid: victoriatraces-jaeger
+        # otelPreset's own trace-link (tracesDatasourceUid) only supports
+        # Jaeger-type targets -- omitted here since the traces datasource is
+        # Tempo. Severity log-level rules still apply; the trace_id link
+        # itself is done via the plain derivedFields entry below instead,
+        # which supports any tracing datasource type.
         detection:
           # Field names set by the o11y LXC's Vector pipeline
           # (config/vector/transforms.validate.yaml's to_vlogs_format).
@@ -32,3 +35,10 @@ spec:
             field: severity_text
             valueCase: string
             source: manual
+      derivedFields:
+        - name: trace_id
+          matcherType: label
+          matcherRegex: trace_id
+          url: "${__value.raw}"
+          urlDisplayLabel: View trace
+          datasourceUid: victoriatraces-tempo
