@@ -18,5 +18,12 @@ spec:
             - port: "443"
               protocol: TCP
         - ports:
+            # Gerbil (Pangolin's WireGuard manager) listens on two separate UDP
+            # ports: pangolin_wireguard_site_port (51820, site/Newt tunnels) and
+            # pangolin_wireguard_client_port (21820, direct WireGuard clients) --
+            # see projects/kazimierz.akn's pangolin role defaults/main.yml. Newt
+            # uses both depending on connection mode, so both must stay open.
             - port: "51820"
+              protocol: UDP
+            - port: "21820"
               protocol: UDP
