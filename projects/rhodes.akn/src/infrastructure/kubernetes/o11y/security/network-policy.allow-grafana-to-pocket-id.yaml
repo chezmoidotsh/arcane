@@ -4,15 +4,17 @@ metadata:
   annotations:
     policy.networking.k8s.io/description: |
       Allows Grafana to reach Pocket-Id (auth.chezmoi.sh) for its generic_oauth login flow.
+      Uses "cluster", not toFQDNs: the internal Gateway's LB IP is shared by every
+      *.chezmoi.sh hostname, and Cilium's ipcache assigns one fqdn identity per IP
+      cluster-wide, so a toFQDNs rule here breaks Cilium's Gateway API hairpin routing
+      (a pod reaching its own cluster's Gateway VIP) for every hostname sharing that IP,
+      not just this one -- unconditional 403 from Envoy regardless of policy content
+      elsewhere. Same pattern as argocd's allow-argocd-to-pocket-id.
   name: allow-grafana-to-pocket-id
 spec:
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: grafana
   egress:
-    - toFQDNs:
-        - matchName: auth.chezmoi.sh
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
+    - toEntities:
+        - cluster
