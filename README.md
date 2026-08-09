@@ -81,11 +81,11 @@ mise install
 │   ├── procedures                  # Operational procedures
 │   └── reports                     # Automated reports
 ├── projects                        # Infrastructure projects
-│   ├── amiya.akn                   # Amiya cluster configuration
 │   ├── chezmoi.sh                  # Shared resources
 │   ├── hass                        # Home Assistant configuration
 │   ├── kazimierz.akn               # Kazimierz cluster configuration
 │   ├── lungmen.akn                 # Lungmen cluster configuration
+│   ├── rhodes.akn                  # Rhodes cluster configuration
 │   └── shodan.akn                  # Shodan cluster configuration
 ├── scripts                         # Utility scripts
 ├── .mise.toml                      # Development environment configuration

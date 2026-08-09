@@ -329,40 +329,6 @@ importers:
         specifier: ^4.7.0
         version: 4.9.5
 
-  projects/amiya.akn/src/infrastructure/pulumi:
-    dependencies:
-      '@axnic/pulumi-garage':
-        specifier: 'catalog:'
-        version: 1.0.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@chezmoi.sh/pulumi-cloudflare-dns01-token':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/components/cloudflare-dns01-token
-      '@chezmoi.sh/pulumi-cluster-vault':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/components/cluster-vault
-      '@chezmoi.sh/pulumi-garage-cnpg-backup':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/components/garage-cnpg-backup
-      '@chezmoi.sh/pulumi-lib':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/lib
-      '@pulumi/cloudflare':
-        specifier: 'catalog:'
-        version: 6.17.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/pulumi':
-        specifier: 'catalog:'
-        version: 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/tailscale':
-        specifier: 'catalog:'
-        version: 0.28.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/vault':
-        specifier: 'catalog:'
-        version: 7.10.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
-    devDependencies:
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-
   projects/chezmoi.sh/src/infrastructure/pulumi:
     dependencies:
       '@chezmoi.sh/pulumi-cloudflare-dns01-token':

@@ -45,6 +45,9 @@ spec:
   walStorage:
     size: 1Gi
 
+  # barmanObjectName: amiya-akn below is not stale naming — it points at the real
+  # amiya.akn-era backup bucket, kept as-is on purpose (see
+  # cnpg.objectstore.amiya-akn.yaml for why).
   externalClusters:
     - name: 2026-05-30T13:01:34.815Z
       plugin:

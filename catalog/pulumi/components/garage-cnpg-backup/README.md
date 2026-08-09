@@ -20,8 +20,8 @@ The bucket name is always `cnpg-<cluster>` with dots replaced by hyphens (e.g. `
 
 It has no opinion on where the credentials end up — that's the calling stack's decision. Most clusters push them to
 Vault so External Secrets Operator can sync them into Kubernetes as a `Secret` for CNPG to consume. The core platform
-cluster (amiya) can't use Vault for its own backup credentials (chicken-and-egg), so it exports the key outputs for a
-`mise run` task to sync into SOPS instead.
+cluster (rhodes.akn) can't use Vault for its own backup credentials (chicken-and-egg), so it writes a Kubernetes
+`Secret` directly instead.
 
 ## Usage
 
@@ -74,22 +74,34 @@ new vault.kv.SecretV2(
 CNPG picks these up via an `ExternalSecret` referencing the Vault path — no `Secret` resource is created by this
 component.
 
-### Without Vault (core platform — exports for SOPS)
+### Without Vault (core platform — direct Kubernetes Secret)
 
 ```typescript
+import * as k8s from "@pulumi/kubernetes";
 import { GarageCloudNativePGObjectStore } from "@chezmoi.sh/pulumi-garage-cnpg-backup";
 
 const backup = new GarageCloudNativePGObjectStore("garage-cnpg-backup", {
-  projectName: "amiya.akn",
+  projectName: "rhodes.akn",
 });
 
-export const garageBackupBucket = backup.bucketName;
-export const garageBackupAccessKeyId = backup.accessKeyId;
-export const garageBackupSecretAccessKey = backup.secretAccessKey;
+new k8s.core.v1.Secret(
+  "cnpg-backup-credentials",
+  {
+    metadata: { name: "cnpg-backup-credentials", namespace: "vault" },
+    type: "Opaque",
+    stringData: {
+      access_key_id: backup.accessKeyId,
+      access_secret_key: backup.secretAccessKey,
+      endpoint_url: "https://s3.chezmoi.sh",
+      region: "fr-par-1",
+    },
+  },
+  { parent: backup },
+);
 ```
 
-The exports are consumed by a `mise run` task that syncs them into SOPS-encrypted Kubernetes `Secret` manifests, since
-amiya hosts Vault itself and can't depend on it for its own credentials.
+The Secret is written straight into the cluster via the Kubernetes provider — no SOPS, no recovery-mode gating — since
+rhodes.akn hosts Vault itself and can't depend on it for its own backup credentials (chicken-and-egg).
 
 ## Installation
 
@@ -159,8 +171,8 @@ export interface GarageCloudNativePGObjectStoreArgs {
 
 ## References
 
-- Live consumers: [`amiya.akn`](../../../projects/amiya.akn/src/infrastructure/pulumi/stack/cloudnative-pg.ts) (SOPS
-  export), [`lungmen.akn`](../../../projects/lungmen.akn/src/infrastructure/pulumi/stack/cloudnative-pg.ts) (Vault
+- Live consumers: [`rhodes.akn`](../../../projects/rhodes.akn/src/infrastructure/pulumi/stack/cloudnative-pg.ts) (direct
+  Secret), [`lungmen.akn`](../../../projects/lungmen.akn/src/infrastructure/pulumi/stack/cloudnative-pg.ts) (Vault
   secret)
 
 ## License

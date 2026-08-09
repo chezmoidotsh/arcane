@@ -38,16 +38,16 @@ Local and Tailscaled, and **defaults to enabled** for Remote (set `remote.enable
 - No CA certificate or token-reviewer JWT override is needed — Vault uses the local cluster's service-account token and
   CA automatically.
 
-**Usage example** (see [`projects/amiya.akn`](../../../projects/amiya.akn/src/infrastructure/pulumi/src/platform.ts)):
+**Usage example** (see [`projects/rhodes.akn`](../../../projects/rhodes.akn/src/infrastructure/pulumi/stack/vault.ts)):
 
 ```typescript
 import { ClusterVaultComponent } from "@chezmoi.sh/pulumi-cluster-vault";
 
-new ClusterVaultComponent("amiya.akn", {
-  name: "amiya.akn",
+new ClusterVaultComponent("rhodes.akn", {
+  name: "rhodes.akn",
   // The component creates and names each policy itself — see additionalPolicies below.
   additionalPolicies: {
-    monitoring: `path "amiya.akn/data/monitoring/*" { capabilities = ["read"] }`,
+    monitoring: `path "rhodes.akn/data/monitoring/*" { capabilities = ["read"] }`,
   },
 });
 ```
@@ -310,7 +310,7 @@ pnpm test      # inside the pnpm workspace
 - [ADR-003 — OpenBao Path Naming Conventions](../../../docs/decisions/003-openbao-path-naming-conventions.md)
 - [ADR-004 — OpenBao Policy Naming and Scope Conventions](../../../docs/decisions/004-openbao-policy-naming-conventions.md)
 - [`catalog/pulumi/README.md`](../README.md) — workspace / `file:` protocol rationale
-- Live consumers: [`amiya.akn` (Local)](../../../projects/amiya.akn/src/infrastructure/pulumi/src/platform.ts),
+- Live consumers: [`rhodes.akn` (Local)](../../../projects/rhodes.akn/src/infrastructure/pulumi/stack/vault.ts),
   [`lungmen.akn` (Remote)](../../../projects/lungmen.akn/src/infrastructure/pulumi/src/platform.ts)
 
 ## License
