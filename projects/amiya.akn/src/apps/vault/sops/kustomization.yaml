@@ -14,6 +14,5 @@ generators:
           exec:
             path: ksops
     files:
-      - ../cnpg.backup-credentials.secret.yaml
       - ../openbao-softhsm-tokens.secret.yaml
       - ../openbao-database-credentials.secret.yaml
