@@ -37,11 +37,11 @@ defaults/       Baseline Helm values / Talos configs used across projects
 docs/           ADRs (decisions/), experiments/, procedures/, reports/
 
 projects/       One subdirectory per cluster or standalone app
-├── amiya.akn/      Core platform — Talos + ArgoCD, OpenBao, Pocket-Id, Zot (production)
 ├── chezmoi.sh/     Shared Pulumi stacks (AWS, Cloudflare, Vault, Tailscale)
 ├── hass/           Home Assistant app project (not a cluster)
 ├── kazimierz.akn/  VPS public-access gateway (Pangolin + Gerbil + Traefik + CrowdSec)
 ├── lungmen.akn/    Home applications cluster — Talos + ArgoCD (active dev)
+├── rhodes.akn/     Core platform — Talos + ArgoCD, OpenBao, Pocket-Id (production)
 └── shodan.akn/     Future AI stack cluster (planning)
 
 scripts/        Operational scripts (added to PATH by mise)
@@ -63,7 +63,7 @@ scripts/        Operational scripts (added to PATH by mise)
 | TLS                | cert-manager with DNS-01 validation                                              |
 | Storage            | Longhorn (distributed block), SMB CSI driver, NAS-backed PVCs                    |
 | Databases          | CloudNative-PG (PostgreSQL), Percona Operator (MongoDB)                          |
-| Container registry | Zot (`projects/amiya.akn/src/apps/zot-registry/`)                                |
+| Container registry | Zot (`projects/chezmoi.sh/src/infrastructure/pulumi/stack/zot-registry.ts`)      |
 | Secrets            | OpenBao (Vault fork) + External Secrets Operator; SOPS + age for in-Git secrets  |
 | Identity / OIDC    | Pocket-Id (current). Authelia is legacy and being phased out; yaLDAP is retired. |
 | Connectivity       | Tailscale (mandatory for clusters outside the homelab) and Pangolin/Newt tunnels |
@@ -123,12 +123,12 @@ mise run ansible:install    # Sync Python venv for Ansible roles
   holding `default.yaml`; cluster-specific overrides live in the same directory (e.g. `override.yaml`) and are wired in
   via the kustomization's `additionalValuesFiles`. Shared catalog defaults instead use
   `catalog/kubernetes/<chart>/helm/default.helmvalues.yaml` / `hardened.helmvalues.yaml`.
-- **OIDC** via Pocket-Id (hosted on `amiya.akn`) for the ArgoCD UI and other admin interfaces. Envoy Gateway
+- **OIDC** via Pocket-Id (hosted on `rhodes.akn`) for the ArgoCD UI and other admin interfaces. Envoy Gateway
   `SecurityPolicy` resources protect HTTPRoutes that need authentication (see
   `docs/decisions/005-envoy-gateway-oidc-authentication.md`).
 
-`amiya.akn` is the **core platform cluster** — it hosts the services every other cluster depends on (OpenBao, Authelia,
-monitoring). Treat it as production: any change there must preserve availability for downstream clusters.
+`rhodes.akn` is the **core platform cluster** — it hosts the services every other cluster depends on (OpenBao,
+Pocket-Id, monitoring). Treat it as production: any change there must preserve availability for downstream clusters.
 
 `lungmen.akn` is under active development (replacing the legacy `maison` FluxCD cluster). See
 `projects/lungmen.akn/src/apps/` for the current app inventory; do not enumerate it here.
@@ -149,7 +149,7 @@ Components in `catalog/fluxcd/` exist for the legacy `maison` cluster, which is 
 ### Secrets
 
 - Source of truth: **OpenBao** at `https://vault.chezmoi.sh`.
-- KV mounts follow `<cluster>/` (e.g. `amiya.akn/`), plus `shared/` and `personal/`.
+- KV mounts follow `<cluster>/` (e.g. `rhodes.akn/`), plus `shared/` and `personal/`.
 - **External Secrets Operator** syncs OpenBao → Kubernetes `Secret` objects.
 - **SOPS + age** encrypts secrets that must live in Git; key path is `SOPS_AGE_KEY_FILE`.
 - Never commit plaintext secrets. Network policies are mandatory for any app touching secrets.
@@ -190,7 +190,7 @@ This repository uses a **symbol-based commit type convention** with mandatory sq
 `commitlint` (`.commitlintrc.js` is the authoritative source for allowed types and scopes).
 
 Format: `type[scope]: Subject` — e.g. `+[project:lungmen.akn]: Add Forgejo`, `^[deps]: cert-manager to v1.16.0`,
-`![project:amiya.akn]: Fix OIDC redirect loop`. Breaking changes use `+!`, `~!`, or `-!` as the type.
+`![project:rhodes.akn]: Fix OIDC redirect loop`. Breaking changes use `+!`, `~!`, or `-!` as the type.
 
 Detailed conventions, formats, and validation tooling live in skill definitions:
 
