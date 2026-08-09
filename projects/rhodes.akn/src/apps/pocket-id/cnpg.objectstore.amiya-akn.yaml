@@ -1,4 +1,12 @@
 ---
+# NOT renamed to rhodes-akn: destinationPath below is the literal
+# amiya.akn-era Garage bucket (s3://cnpg-amiya-akn/pocket-id), and
+# cnpg.cluster.yaml's externalClusters reference this object store by name to
+# point-in-time-recover from amiya's real backup/WAL history (specific
+# barman serverName IDs). Renaming this resource would desync it from that
+# bucket name and risk breaking the recovery chain for no benefit — this
+# ObjectStore is read-only bootstrap/DR access, not where new backups land
+# (see cloudnative-pg.ts's "selfhosted" store for that).
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
 metadata:
