@@ -22,10 +22,10 @@ resources:
   - security/
 
 images:
-  # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server
+  # Personal fork of immich-server (github.com/xunleii/immich)
   - name: ghcr.io/immich-app/immich-server
-    newName: oci.chezmoi.sh/ghcr.io/immich-app/immich-server
-    newTag: v3.1.0
+    newName: oci.chezmoi.sh/ghcr.io/xunleii/immich-server
+    newTag: v3.2.0-rc.1-fork-202608291401
   # renovate: datasource=docker depName=ghcr.io/immich-app/immich-machine-learning
   - name: ghcr.io/immich-app/immich-machine-learning
     newName: oci.chezmoi.sh/ghcr.io/immich-app/immich-machine-learning
