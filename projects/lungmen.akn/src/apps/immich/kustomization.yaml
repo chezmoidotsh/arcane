@@ -25,11 +25,11 @@ images:
   # renovate: datasource=docker depName=ghcr.io/immich-app/immich-server
   - name: ghcr.io/immich-app/immich-server
     newName: oci.chezmoi.sh/ghcr.io/immich-app/immich-server
-    newTag: v2.7.5
+    newTag: v3.1.0
   # renovate: datasource=docker depName=ghcr.io/immich-app/immich-machine-learning
   - name: ghcr.io/immich-app/immich-machine-learning
     newName: oci.chezmoi.sh/ghcr.io/immich-app/immich-machine-learning
-    newTag: v2.7.5
+    newTag: v3.1.0
   # renovate: datasource=docker depName=docker.io/library/redis
   - name: docker.io/library/redis
     newName: oci.chezmoi.sh/docker.io/library/redis
