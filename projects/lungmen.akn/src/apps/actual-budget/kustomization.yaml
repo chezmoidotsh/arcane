@@ -20,4 +20,4 @@ images:
   # renovate: datasource=docker depName=ghcr.io/actualbudget/actual-server
   - name: ghcr.io/actualbudget/actual-server
     newName: oci.chezmoi.sh/ghcr.io/actualbudget/actual-server
-    newTag: "26.5.2"
+    newTag: "26.8.1"
