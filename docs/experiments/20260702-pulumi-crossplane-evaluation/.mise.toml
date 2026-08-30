@@ -20,7 +20,7 @@ VAULT_TOKEN = "root"
 PULUMI_CONFIG_PASSPHRASE = "pulumipocpassphrase"
 
 [tools]
-"ubi:runmedev/runme" = "latest" # Interactive markdown execution tool for runbooks and documentation
+"github:runmedev/runme" = "latest" # Interactive markdown execution tool for runbooks and documentation
 kind = "latest"                 # Lightweight Kubernetes cluster for local development and testing
 pulumi = "latest"               # Pulumi CLI for evaluating IaC stacks against the S3 state backend (#1089 POC)
 
