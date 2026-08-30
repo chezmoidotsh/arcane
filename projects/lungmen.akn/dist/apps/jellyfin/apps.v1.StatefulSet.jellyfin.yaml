@@ -24,7 +24,7 @@ spec:
     spec:
       automountServiceAccountToken: false
       containers:
-      - image: oci.chezmoi.sh/ghcr.io/jellyfin/jellyfin:10.11.10
+      - image: oci.chezmoi.sh/ghcr.io/jellyfin/jellyfin:10.11.11
         livenessProbe:
           httpGet:
             path: /health
