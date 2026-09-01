@@ -1,0 +1,21 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Grafana to reach the Home Assistant PostgreSQL recorder database
+      (hass.chezmoi.sh, LAN-only, not proxied through any Gateway).
+  name: allow-grafana-to-home-assistant
+  namespace: o11y-system
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: hass.chezmoi.sh
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana

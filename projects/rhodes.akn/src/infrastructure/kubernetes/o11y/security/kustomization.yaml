@@ -12,3 +12,4 @@ resources:
   - network-policy.allow-grafana-database-to-s3-backup.yaml
   - network-policy.allow-grafana-to-grafana-cloud-assistant.yaml
   - network-policy.allow-grafana-to-openrouter.yaml
+  - network-policy.allow-grafana-to-home-assistant.yaml
