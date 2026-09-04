@@ -4,3 +4,5 @@ config:
     secure: v1:ksU027FQTYLln8BD:nN9vju7WXBjgdFjiulG8yCHftJwJLxOor//LU54ww9CoWsaGf/sxwSQdP9xdNVef
   hass-infra:cloudflare_zone_id:
     secure: v1:sePkNtxN2LmlyEyO:5eIxCxB4sV8A01cdhsGPty+pPvF8mFPSKgySv02/p9BvYPhF09XBOjozib8dkptk
+  pocket-id-api:baseUrl: https://auth.chezmoi.sh
+  pocket-id-api:apiKeyHeader: X-API-KEY

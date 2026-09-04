@@ -1,11 +1,12 @@
 # =============================================================================
 # hass Project Development Environment Configuration
 # =============================================================================
-# This mise configuration provides task automation for retrieving the
-# Pulumi-provisioned Cloudflare token Home Assistant needs.
+# This mise configuration provides task automation for retrieving
+# Pulumi-provisioned secrets Home Assistant needs.
 #
 # Usage:
 #   mise run pulumi:cloudflare-token  # Print the Cloudflare token for manual copy into secrets.yaml
+#   mise run pulumi:oidc-client       # Print the Pocket-Id OIDC client_id/client_secret for manual setup
 #
 # Prerequisites:
 #   - Pulumi CLI configured for the hass stack (see
@@ -34,4 +35,26 @@ run = '''
   TOKEN=$(pulumi stack output homeAssistantDns01Token --show-secrets)
   [[ -n "${TOKEN}" ]] || { echo "[ERROR] Empty token — did 'pulumi up' run?" >&2; exit 1; }
   echo "${TOKEN}"
+'''
+
+# -----------------------------------------------------------------------------
+# Pocket-Id OIDC Client — Pulumi to the hass-oidc-auth integration
+# -----------------------------------------------------------------------------
+# Same reasoning as the Cloudflare token above: the client_id/client_secret
+# only exist as Pulumi stack outputs, not in Vault. Paste them into
+# Settings -> Devices & Services -> OpenID Connect/SSO Authentication in the
+# Home Assistant UI, alongside the discovery URL
+# https://auth.chezmoi.sh/.well-known/openid-configuration.
+
+[tasks."pulumi:oidc-client"]
+description = "Print the Home Assistant Pocket-Id OIDC client_id/client_secret for manual setup in the hass-oidc-auth integration"
+dir = "{{ config_root }}/src/infrastructure/pulumi"
+run = '''
+  set -euo pipefail
+  CLIENT_ID=$(pulumi stack output homeAssistantOidcClientId)
+  CLIENT_SECRET=$(pulumi stack output homeAssistantOidcClientSecret --show-secrets)
+  [[ -n "${CLIENT_ID}" && -n "${CLIENT_SECRET}" ]] || { echo "[ERROR] Empty output — did 'pulumi up' run?" >&2; exit 1; }
+  echo "client_id: ${CLIENT_ID}"
+  echo "client_secret: ${CLIENT_SECRET}"
+  echo "discovery URL: https://auth.chezmoi.sh/.well-known/openid-configuration"
 '''
