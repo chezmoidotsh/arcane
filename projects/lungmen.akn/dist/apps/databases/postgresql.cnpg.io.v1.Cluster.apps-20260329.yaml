@@ -41,6 +41,14 @@ spec:
       name: linkding
       passwordSecret:
         name: cnpg.apps-linkding-linkding-credentials
+    - comment: Managed role for spoolman/spoolman
+      connectionLimit: -1
+      ensure: present
+      inherit: true
+      login: true
+      name: spoolman
+      passwordSecret:
+        name: cnpg.apps-spoolman-spoolman-credentials
   plugins:
   - enabled: true
     isWALArchiver: false

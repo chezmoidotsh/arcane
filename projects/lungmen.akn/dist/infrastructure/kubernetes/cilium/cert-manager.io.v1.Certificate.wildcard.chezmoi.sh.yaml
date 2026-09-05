@@ -9,6 +9,7 @@ spec:
   - '*.chezmoi.sh'
   - '*.akn.chezmoi.sh'
   - '*.lungmen.akn.chezmoi.sh'
+  - '*.lab.chezmoi.sh'
   duration: 2160h
   issuerRef:
     kind: ClusterIssuer
