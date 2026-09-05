@@ -137,7 +137,7 @@ yq = "latest"       # YAML/JSON processor for configuration file manipulation
 
 "aqua:terrastruct/d2" = "latest" # Diagram-as-code tool for generating architecture visualizations
 "cargo:ulid-cli" = "latest"      # ULID generator for unique identifiers in distributed systems
-"ubi:runmedev/runme" = "latest"  # Interactive markdown execution tool for runbooks and documentation
+"github:runmedev/runme" = "latest" # Interactive markdown execution tool for runbooks and documentation
 gum = "latest"                   # Terminal UI framework for interactive scripts and prompts
 node = "24.16.0"                 # JavaScript runtime for running Node-based tools and scripts
 pnpm = "latest"                  # Workspace-aware package manager for catalog/pulumi + Pulumi stacks (ADR-015)
