@@ -1,5 +1,5 @@
 ---
-# trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_12,checkov/CKV_K8S_13): We will address resource limits when we have consumption data for Spoolman
+# trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_12,checkov/CKV_K8S_13,trivy/KSV-0015,trivy/KSV-0016,trivy/KSV-0018): We will address resource limits when we have consumption data for Spoolman
 # trunk-ignore(checkov/CKV_K8S_35): Spoolman cannot be configured using a file for the database credentials.
 # trunk-ignore(checkov/CKV2_K8S_6): Network policy will be handled separately
 apiVersion: apps/v1
@@ -25,6 +25,7 @@ spec:
     spec:
       automountServiceAccountToken: false
       containers:
+        # trunk-ignore(trivy/KSV-0125): ghcr.io/donkie is trusted registry for Spoolman official images
         - name: spoolman
           env:
             - name: SPOOLMAN_DB_TYPE
