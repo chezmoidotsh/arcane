@@ -28,6 +28,12 @@ spec:
         # trunk-ignore(trivy/KSV-0125): ghcr.io/donkie is trusted registry for Spoolman official images
         - name: spoolman
           env:
+            # Running as an arbitrary UID (no /etc/passwd entry) leaves the
+            # image's default HOME=/ in place, so platformdirs would resolve
+            # the data dir to /.local/share/spoolman on the read-only rootfs
+            # instead of the mounted volume below.
+            - name: HOME
+              value: /home/app
             - name: SPOOLMAN_DB_TYPE
               value: postgres
             - name: SPOOLMAN_DB_NAME

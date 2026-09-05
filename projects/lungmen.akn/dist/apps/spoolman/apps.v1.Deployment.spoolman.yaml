@@ -23,6 +23,8 @@ spec:
       automountServiceAccountToken: false
       containers:
       - env:
+        - name: HOME
+          value: /home/app
         - name: SPOOLMAN_DB_TYPE
           value: postgres
         - name: SPOOLMAN_DB_NAME
