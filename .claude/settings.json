@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(env)",
+      "Bash(env *)",
+      "Bash(mise env)",
+      "Bash(mise env *)",
+      "Bash(printenv)",
+      "Bash(set)",
+      "Bash(export)",
+      "Bash(declare -x)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // empty' | { cmd=$(cat); r1='(^|&&|\\|\\||;|\\|)[[:space:]]*(mise[[:space:]]+env|env)([[:space:]]|$)'; r2='(^|&&|\\|\\||;|\\|)[[:space:]]*(printenv|set|export)[[:space:]]*(&&|\\|\\||;|\\||$)'; r3='(^|&&|\\|\\||;|\\|)[[:space:]]*declare[[:space:]]+-x[[:space:]]*(&&|\\|\\||;|\\||$)'; if [[ \"$cmd\" =~ $r1 ]] || [[ \"$cmd\" =~ $r2 ]] || [[ \"$cmd\" =~ $r3 ]]; then printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"Blocked: this command contains an environment-dump invocation (env, mise env, printenv, set, or export with no target, or declare -x with no assignment) somewhere in the chain -- these print every secret in plaintext regardless of position. Use mise exec -- <command>, mise run <task>, or read a single named variable instead.\"}}'; fi; }"
+          },
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // empty' | { cmd=$(cat); if [[ -z \"$cmd\" ]] || [[ \"$cmd\" =~ (^|&&|\\|\\||;)[[:space:]]*cd([[:space:]]+[^&|;]*)?[[:space:]]*$ ]] || [[ \"$cmd\" =~ (^|[^\\<])\\<\\<[^\\<] ]]; then printf '{}'; else jq -n --arg cmd \"set -o pipefail; ${cmd} 2>&1 | '$CLAUDE_PROJECT_DIR/.claude/hooks/redact-secrets'\" '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"updatedInput\":{\"command\":$cmd}}}'; fi; }"
+          }
+        ]
+      }
+    ]
+  }
+}

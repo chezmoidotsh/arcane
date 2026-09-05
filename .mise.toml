@@ -125,6 +125,7 @@ vector = "0.55.0"   # Vector CLI for observability and log aggregation
 
 conftest = "latest" # OPA policy testing for Kubernetes manifests
 dive = "latest"     # Container image analysis tool for security scanning
+gitleaks = "latest" # Secret detection engine, also used to redact Bash output (see .claude/hooks/redact-secrets)
 opa = "latest"      # Open Policy Agent engine for policy evaluation
 sops = "latest"     # Secrets OPerationS CLI for encrypting/decrypting secrets in Git
 yq = "latest"       # YAML/JSON processor for configuration file manipulation
