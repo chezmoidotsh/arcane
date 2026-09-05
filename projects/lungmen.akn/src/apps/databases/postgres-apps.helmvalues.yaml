@@ -83,3 +83,14 @@ spec:
             - matchLabels:
                 io.kubernetes.pod.namespace: linkding
                 app.kubernetes.io/name: linkding
+
+    - name: spoolman
+      users:
+        - name: spoolman
+          vault:
+            path: lungmen.akn/data/spoolman/database/postgresql
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                io.kubernetes.pod.namespace: spoolman
+                app.kubernetes.io/name: spoolman

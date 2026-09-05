@@ -8,6 +8,7 @@ spec:
   dnsNames:
   - '*.chezmoi.sh'
   - '*.akn.chezmoi.sh'
+  - '*.lab.chezmoi.sh'
   - '*.lungmen.akn.chezmoi.sh'
   duration: 2160h
   issuerRef:

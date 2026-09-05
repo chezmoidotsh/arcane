@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/instance: spoolman
+    app.kubernetes.io/name: spoolman
+    app.kubernetes.io/part-of: spoolman
+  name: spoolman
+  namespace: spoolman
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app.kubernetes.io/instance: spoolman
+    app.kubernetes.io/name: spoolman
