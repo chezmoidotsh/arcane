@@ -64,7 +64,7 @@ Grouped by concern rather than alphabetically, since agents usually need "what h
 | Cluster bootstrap     | Sidero Omni (`catalog/omni/` — cluster templates + machine classes) + Talos machine config patches (`catalog/talos/`); replaced Kairos bundles                                                                           |
 | GitOps engine         | ArgoCD — the sole GitOps engine on every Kubernetes cluster (ADR-011)                                                                                                                                                    |
 | Manifest rendering    | Pre-rendered `dist/` manifests generated from `src/` (ADR-011) — hardens the supply chain and keeps ArgoCD diffs readable. **Never hand-edit `dist/`**; run `dist:render`                                                |
-| Cloud/host IaC        | Pulumi (TypeScript). Crossplane still runs a handful of legacy resources (Proxmox, OCI) but is being migrated to Pulumi (ADR-015, accepted) — don't add new Crossplane resources                                         |
+| Cloud/host IaC        | Pulumi (TypeScript), sole tool in use. Crossplane was migrated away entirely per ADR-015 — no Provider/Composition/controller exists anywhere in the tree, only a vestigial empty ArgoCD AppProject left behind          |
 | Bare-metal/VPS config | Ansible (`catalog/ansible/`) — used where Kubernetes isn't (`kazimierz.akn`, Proxmox host prep)                                                                                                                          |
 | CNI / NetworkPolicies | Cilium, default-deny by default                                                                                                                                                                                          |
 | Ingress / Gateway     | Cilium Gateway API (HTTPRoute, TCPRoute). Envoy Gateway still runs a couple of routes during migration — new routes go on the `cilium` GatewayClass, not Envoy                                                           |
@@ -173,7 +173,7 @@ workloads migrated to `lungmen.akn`) and nothing in `projects/` references this 
 historical reference. Don't add new dependencies on FluxCD; treat this directory as dead code, not an active migration
 target.
 
-### Pulumi and Crossplane
+### Pulumi (Crossplane's full replacement)
 
 - Shared components live in `catalog/pulumi/`.
 - Per-project stacks live in `projects/<cluster>/src/infrastructure/pulumi/`.
@@ -181,8 +181,12 @@ target.
 - The `cluster-vault` component (`catalog/pulumi/components/cluster-vault/`) provisions OpenBao mounts, policies, and
   auth backends per cluster.
 - Crossplane originally ran all cloud/cloud-adjacent infrastructure (`amiya.akn`, now merged into `rhodes.akn`) via ~12
-  provider packages and custom XRDs/Compositions. ADR-015 (accepted) moves this to plain Pulumi stacks — don't grow the
-  Crossplane footprint further; port what you touch to Pulumi instead when practical.
+  provider packages and custom XRDs/Compositions. ADR-015 moved this to plain Pulumi stacks, and the migration is
+  actually done — every remaining `crossplane` mention in the tree is either a comment pointing at "the abandoned
+  Crossplane version" (`proxmox/`, `oci/` stacks) or the empty `crossplane` ArgoCD AppProject left over as an unused
+  permission scaffold (`projects/rhodes.akn/src/argocd/appprojects.yaml`); no Provider/Composition/controller runs
+  anywhere. Treat Crossplane as gone, not "being phased out" — don't resurrect it, and the leftover AppProject/
+  `catalog:crossplane` commit scope are safe to clean up as a small follow-up if you're in the area.
 
 ### Secrets
 

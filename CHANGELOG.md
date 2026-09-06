@@ -376,8 +376,12 @@ A few tools I picked early in this Age didn't survive it, and I think that's a h
 | Longhorn                      | **Proxmox CSI + CCM** (LVM-thin, `EXP-2026-005`) | Volumes now live on the hypervisor and survive a VM rebuild instead of being tied to node storage. |
 | Kyverno                       | **OPA/Rego** via conftest (ADR-012)              | CI-time policy checks instead of an in-cluster admission webhook to operate and upgrade.           |
 | Envoy Gateway _(in progress)_ | **Cilium Gateway API**                           | One fewer moving part now that Cilium's own Gateway API implementation is good enough.             |
-| Crossplane _(in progress)_    | **Pulumi** (ADR-015)                             | ~12 provider packages and custom XRDs for what plain TypeScript stacks now do directly.            |
+| Crossplane                    | **Pulumi** (ADR-015)                             | ~12 provider packages and custom XRDs for what plain TypeScript stacks now do directly.            |
 | Gitmoji commits               | **Symbol-based commit types** (ADR-010)          | A fixed type/scope grammar that `commitlint` can actually enforce, instead of emoji-as-vibes.      |
+
+Crossplane's migration is actually finished, not just accepted on paper — nothing in the tree runs a Provider,
+Composition, or the controller itself anymore. The only things left are an empty `crossplane` ArgoCD AppProject (unused
+permission scaffold) and a `catalog:crossplane` commit scope that both deserve a quick cleanup PR.
 
 I also finally centralized observability instead of running Prometheus/Grafana per cluster: a single unprivileged NixOS
 LXC on the Proxmox host now runs VictoriaMetrics, VictoriaLogs, vmalert, and Alertmanager, with each cluster running
@@ -412,5 +416,7 @@ guardrails as a human contributor turned out to matter more than I expected goin
 ### Still open
 
 - Consolidating per-app CloudNative-PG clusters into shared ones is proposed but not implemented (ADR-009).
-- The Envoy Gateway → Cilium Gateway API and Crossplane → Pulumi migrations are both accepted but not finished.
+- The Envoy Gateway → Cilium Gateway API migration is accepted but not finished (a couple of routes remain on Envoy).
 - `shodan.akn`, the planned AI-stack cluster, is still just a README and an architecture diagram.
+- Small cleanup: the leftover `crossplane` ArgoCD AppProject and `catalog:crossplane` commit scope, both unused now that
+  the Crossplane → Pulumi migration (ADR-015) is actually complete.
