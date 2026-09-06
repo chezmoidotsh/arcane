@@ -70,7 +70,7 @@ Grouped by concern rather than alphabetically, since agents usually need "what h
 | Ingress / Gateway     | Cilium Gateway API (HTTPRoute, TCPRoute). Envoy Gateway still runs a couple of routes during migration — new routes go on the `cilium` GatewayClass, not Envoy                                                           |
 | Internal DNS          | external-dns with the UniFi and BIND/rfc2136 providers (LAN + internal DNS server) — no public DNS record management in this repo                                                                                        |
 | TLS                   | cert-manager, DNS-01 validation. Cloudflare's role is limited to the ACME DNS-01 API token (wildcard `chezmoi.sh` certs); it does not manage DNS records or tunnels                                                      |
-| Public access         | Pangolin + Gerbil + Traefik + CrowdSec on `kazimierz.akn` (a VPS), with a Newt tunnel client in `lungmen.akn`. Cloudflare Tunnel was fully retired in favor of this (see `projects/lungmen.akn/README.md` history)       |
+| Public access         | Pangolin + Gerbil + Traefik on `kazimierz.akn` (a VPS; CrowdSec was tried and dropped), with Newt tunnel clients in both `lungmen.akn` and `rhodes.akn`. Cloudflare Tunnel was fully retired in favor of this            |
 | Cluster connectivity  | Tailscale — mandatory for any cluster-to-cluster traffic outside the homelab                                                                                                                                             |
 | Block storage         | Proxmox CSI plugin + Proxmox CCM (LVM-thin volumes decoupled from VM lifecycle) — **not Longhorn**; Longhorn was deliberately dropped for new clusters (issue #1028/#1188, `docs/experiments/20260617-proxmox-csi-ccm/`) |
 | Bulk/NAS storage      | SMB CSI driver, mounting NAS shares for Immich, Jellyfin, Paperless-ngx                                                                                                                                                  |
@@ -205,9 +205,11 @@ target.
   namespace (`projects/*/src/infrastructure/kubernetes/in-gateway/`).
 - **cert-manager** with DNS-01 validation. **external-dns** manages internal-only DNS records via the UniFi and
   BIND/rfc2136 providers — there is no public/Cloudflare-managed DNS zone in this repo.
-- **Public access** to home services goes through Pangolin (`kazimierz.akn` VPS) with a Newt tunnel client running in
-  `lungmen.akn`. **Tailscale** remains mandatory for cluster-to-cluster connectivity outside the homelab. Cloudflare
-  Tunnel, used in an earlier iteration, has been fully retired.
+- **Public access** to home services goes through Pangolin (`kazimierz.akn` VPS; CrowdSec was evaluated and dropped)
+  with Newt tunnel clients running in both `lungmen.akn` and `rhodes.akn`. Pocket-Id and Grafana on `rhodes.akn` are
+  deliberately exposed this way with `sso: false` at the Pangolin layer (each app gates its own login instead of a
+  double auth check) — see the Observability section. **Tailscale** remains mandatory for cluster-to-cluster
+  connectivity outside the homelab. Cloudflare Tunnel, used in an earlier iteration, has been fully retired.
 - **Network topology**: dual-NIC Proxmox host + Proxmox SDN VXLAN, per ADR-014 (`docs/network/`); migrated off a single
   flat VLAN.
 
@@ -226,10 +228,17 @@ target.
 ### Observability
 
 - **VictoriaMetrics + VictoriaLogs + vmalert + Alertmanager** run centrally on a single NixOS LXC on the Proxmox host
-  (ADR-013), fronted by Caddy.
-- Each cluster runs lightweight collection agents only: **vmagent** for metrics, **Vector** for logs — both push to the
-  central LXC.
-- **Grafana** provides dashboards and non-paging alerts, with OIDC via Pocket-Id.
+  (ADR-013), fronted by Caddy. Most clusters only run lightweight collection agents against it: **vmagent** for metrics,
+  **Vector** for logs.
+- `rhodes.akn` is the exception: **Grafana** itself moved off the LXC and now runs in-cluster there as a full Grafana
+  Operator instance with its own CNPG database (`projects/rhodes.akn/src/infrastructure/kubernetes/o11y/`, since
+  2026-08-08 — `o11y.chezmoi.sh` used to be served straight off the LXC, see `docs/network/ipam.md`). It reads the LXC's
+  Victoria stack as datasources and authenticates via Pocket-Id OIDC. Don't assume Grafana is just a dashboard the LXC
+  serves — check the actual cluster before changing anything observability-related.
+- Both Pocket-Id (`auth.chezmoi.sh`) and this Grafana (`o11y.chezmoi.sh`) are publicly exposed through Pangolin
+  (`projects/rhodes.akn/src/infrastructure/pulumi/stack/pangolin/`, `sso: false` at the Pangolin layer — by design, each
+  app authenticates its own users, so this isn't "no auth", just no double gate). OpenBao (`vault.chezmoi.sh`) is not
+  exposed this way and stays LAN/Tailscale-only.
 
 ### Important paths
 

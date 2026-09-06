@@ -397,9 +397,16 @@ and then the migration to `rhodes.akn` was executed by literally following that 
 (`docs/migrations/amiya.akn->rhodes.akn.md`). If the DR plan couldn't survive being used for a real migration, it wasn't
 a real DR plan.
 
-One deliberate regression came out of it: `amiya.akn` had exposed `vault.chezmoi.sh` and `auth.chezmoi.sh` to the public
-internet via a Cloudflare tunnel and `cloudflare-operator`. `rhodes.akn` doesn't run either — both hostnames are now
-LAN/Tailscale-only. Fewer things facing the internet is a feature, not a gap to backfill.
+One thing changed on purpose along the way: `amiya.akn` had exposed `vault.chezmoi.sh` and `auth.chezmoi.sh` to the
+public internet via a Cloudflare tunnel and `cloudflare-operator`. `rhodes.akn` doesn't run either of those — right
+after the migration both hostnames were LAN/Tailscale-only, and I initially counted that as a net win (fewer things
+facing the internet). It didn't last: about a week later I put Pocket-Id (`auth.chezmoi.sh`) back on the public internet
+through Pangolin, and Grafana followed it there when it moved in-cluster. Both go through Pangolin with `sso: false` at
+that layer — not "no auth", each app gates its own login (Pocket-Id is the identity provider itself; Grafana OIDCs
+against it) — geo-blocking on a handful of high-risk countries is the only edge protection. OpenBao (`vault.chezmoi.sh`)
+is the one that actually stayed LAN/Tailscale-only. In hindsight, "fewer things facing the internet" was the right
+instinct for secrets (OpenBao), less obviously so for an app that already does its own auth (Pocket-Id, Grafana) —
+Pangolin without Cloudflare in front of it is enough of a smaller attack surface on its own.
 
 `amiya.akn` has since been fully decommissioned; every reference to it left in the tree is historical (migration
 records, ADRs explaining a since-superseded decision).
