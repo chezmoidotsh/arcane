@@ -56,8 +56,9 @@ while maintaining control over my data and infrastructure.
 - **[kgateway](https://github.com/kgateway-dev/kgateway)**: Cloud-native API Gateway and AI Gateway. <br/> Envoy-based
   gateway with Kubernetes Gateway API support, optimized for AI workloads and LLM routing.
 
-- **[Longhorn](https://longhorn.io/)**: Distributed block storage. <br/> Lightweight, reliable, and powerful distributed
-  block storage system for Kubernetes.
+- **[proxmox-csi-plugin](https://github.com/sergelogvinov/proxmox-csi-plugin)**: Block storage CSI driver. <br/>
+  Provisions LVM-thin volumes on the Proxmox hypervisor, decoupled from VM lifecycle — the platform-wide default since
+  `EXP-2026-005`; not Longhorn.
 
 - **[CloudNativePG](https://cloudnativepg.io/)**: PostgreSQL operator. <br/> Comprehensive platform designed to
   seamlessly manage PostgreSQL databases within Kubernetes environments.
@@ -82,8 +83,8 @@ while maintaining control over my data and infrastructure.
   database for RAG. <br/> Open-source vector similarity search for storing and querying AI embeddings, managed by
   CloudNativePG operator.
 
-- **[Longhorn](https://longhorn.io/)**: Persistent volume storage. <br/> Provides reliable distributed block storage for
-  all stateful applications and database persistence.
+- **proxmox-csi-plugin**: Persistent volume storage. <br/> Provides reliable block storage for all stateful applications
+  and database persistence, backed by the Proxmox hypervisor rather than in-cluster nodes.
 
 ## 🚀 How to use / How to develop on it
 
@@ -125,8 +126,9 @@ This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based depl
 
 ## 💀 Disaster Recovery Plan (DRP)
 
-The recovery process is largely automated through the `amiya.akn` project, which hosts ArgoCD and automatically
-bootstraps any Kubernetes clusters it detects in the Tailscale mesh.
+The recovery process is largely automated through the `rhodes.akn` project (the core-platform cluster — `amiya.akn`
+filled this role until it was decommissioned in favor of `rhodes.akn` in July 2026), which hosts ArgoCD and
+automatically bootstraps any Kubernetes clusters it detects in the Tailscale mesh.
 
 ### Automated Recovery Process
 
@@ -154,7 +156,7 @@ bootstraps any Kubernetes clusters it detects in the Tailscale mesh.
      --wait
    ```
 
-3. **Automatic Detection** - Once the cluster joins the Tailscale mesh, `amiya.akn` detects it automatically
+3. **Automatic Detection** - Once the cluster joins the Tailscale mesh, `rhodes.akn` detects it automatically
 
 4. **Auto-Bootstrap** - ArgoCD deploys all applications and configurations via GitOps
 
@@ -162,7 +164,7 @@ bootstraps any Kubernetes clusters it detects in the Tailscale mesh.
 
 - Check cluster status: `kubectl get pods --all-namespaces`
 - Verify Tailscale connectivity: `tailscale status`
-- Confirm ArgoCD sync status in the `amiya.akn` console
+- Confirm ArgoCD sync status in the `rhodes.akn` console
 
 > The entire platform is designed for zero-touch recovery once Tailscale is configured.
 
@@ -176,7 +178,7 @@ bootstraps any Kubernetes clusters it detects in the Tailscale mesh.
 - [ ] **Step 1**: Initial deployment
   - [ ] Deploy base infrastructure (Talos, Cilium)
   - [ ] Configure core services (External Secrets, DNS, cert-manager)
-  - [ ] Deploy Longhorn for distributed storage
+  - [ ] Deploy proxmox-csi-plugin for block storage
   - [ ] Deploy kgateway as API/AI Gateway
 - [ ] **Step 2**: Data Layer
   - [ ] Deploy CloudNativePG operator

@@ -31,7 +31,7 @@ Garage S3 backend on the NAS (see
 [`INF-20260705-00.pulumi-state-and-import.md`](../../docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md)),
 and applying it regenerates the reference documents below, so they never drift from what is deployed.
 
-> \[!NOTE] Even if this project is the "root" one, it relies on the [`amiya.akn`](../amiya.akn/README.md) project to
+> \[!NOTE] Even if this project is the "root" one, it relies on the [`rhodes.akn`](../rhodes.akn/README.md) project to
 > provide the Kubernetes cluster used by `OpenBao` and `Pulumi` _(IaC)_.
 
 ## 📚 Documentation
@@ -60,14 +60,13 @@ For the code behind them:
 
 ## 🏗️ Project structure
 
-| Path                              | Contents                                                                                                                    |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `src/infrastructure/pulumi/`      | The `chezmoi-sh-infra` Pulumi stack — Proxmox VE, PBS, TrueNAS, cloud tokens — and the doc generators                       |
-| `src/infrastructure/proxmox/lxc/` | Platform LXC appliances (Nix-built): `omni`, `omni-infra-provider-proxmox`, `observability`, `oci-registry`, `pve-exporter` |
-| `src/infrastructure/omni/`        | Omni machine classes for the Talos clusters                                                                                 |
-| `src/infrastructure/ansible/`     | **Legacy** — superseded by the Pulumi stack (see below)                                                                     |
-| `docs/`                           | The generated reference documents above                                                                                     |
-| `dist/`                           | Rendered outputs (regenerate with `dist:render`, never edit)                                                                |
+| Path                              | Contents                                                                                                                                    |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/infrastructure/pulumi/`      | The `chezmoi-sh-infra` Pulumi stack — Proxmox VE, PBS, TrueNAS, cloud tokens — and the doc generators                                       |
+| `src/infrastructure/proxmox/lxc/` | Platform LXC appliances (Nix-built): `omni`, `omni-infra-provider-proxmox`, `observability`, `oci-registry`, `pve-exporter`, `talosnet-dns` |
+| `src/infrastructure/ansible/`     | **Legacy** — superseded by the Pulumi stack (see below)                                                                                     |
+| `docs/`                           | The generated reference documents above                                                                                                     |
+| `dist/`                           | Rendered outputs (regenerate with `dist:render`, never edit)                                                                                |
 
 ### Legacy: Ansible TrueNAS collection
 
