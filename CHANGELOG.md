@@ -212,7 +212,6 @@ to maintain and share with others, but will probably be less consistent with my 
 >     the drawbacks.
 >
 >   - I need to find how I will handle Helm deployments in a declarative way.
->
 > - [ ] **Everything MUST be versioned and immutable _(the second GitOps rule)_**
 >   - Nothing changes for the versioned portion because I continue to utilize **Git** for it.
 >   - Since Kubernetes is a declarative system, all changes made to any resource will be reflected as a new version of
@@ -350,3 +349,68 @@ Below are the main objectives I want to achieve:
 
 This iteration represents a shift toward practicality, emphasizing ease of use\
 and maintainability over universality and exhaustive testing.
+
+### Where it actually landed
+
+> \[!NOTE] Written in September 2026, looking back at roughly a year and a half of Steel Age work. The section above was
+> my intent going in; this is what I actually did with it.
+
+The **ArgoCD** transition happened, and it's now the sole GitOps engine on every Kubernetes cluster. But getting there
+raised a question the original objectives didn't anticipate: letting ArgoCD fetch Helm charts and evaluate Kustomize
+live at every sync cycle means the cluster runs whatever an upstream registry hands back that day, and a GitOps PR diff
+shows source templates instead of the manifest that will actually change on the cluster. I settled this with the
+**pre-rendered manifests pattern** (ADR-011, `dist:render`): `src/` is the editable source, `dist/` is what ArgoCD
+actually syncs, fully rendered and committed. It adds a render step to every change, but it means a PR diff is the
+literal cluster diff, and nothing from an upstream chart lands in the cluster without a human having seen it in the diff
+first.
+
+Secrets moved off "SOPS scattered across the Git tree" and onto **OpenBao** (a HashiCorp Vault fork) as the single
+source of truth, synced into clusters via External Secrets Operator (ADR-001–004). SOPS + age didn't go away — it's
+still what encrypts the handful of secrets that have to live in Git itself — but it stopped being the primary mechanism.
+
+A few tools I picked early in this Age didn't survive it, and I think that's a healthy sign rather than a failure:
+
+| Replaced                      | Replaced by                                      | Why                                                                                                |
+| ----------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| Kairos bundles                | **Sidero Omni** (`catalog/omni/`)                | Cluster lifecycle and machine classes needed a real management plane, not a bundle format.         |
+| Longhorn                      | **Proxmox CSI + CCM** (LVM-thin, `EXP-2026-005`) | Volumes now live on the hypervisor and survive a VM rebuild instead of being tied to node storage. |
+| Kyverno                       | **OPA/Rego** via conftest (ADR-012)              | CI-time policy checks instead of an in-cluster admission webhook to operate and upgrade.           |
+| Envoy Gateway _(in progress)_ | **Cilium Gateway API**                           | One fewer moving part now that Cilium's own Gateway API implementation is good enough.             |
+| Crossplane _(in progress)_    | **Pulumi** (ADR-015)                             | ~12 provider packages and custom XRDs for what plain TypeScript stacks now do directly.            |
+| Gitmoji commits               | **Symbol-based commit types** (ADR-010)          | A fixed type/scope grammar that `commitlint` can actually enforce, instead of emoji-as-vibes.      |
+
+I also finally centralized observability instead of running Prometheus/Grafana per cluster: a single unprivileged NixOS
+LXC on the Proxmox host now runs VictoriaMetrics, VictoriaLogs, vmalert, and Alertmanager, with each cluster running
+only lightweight `vmagent`/Vector collection agents (ADR-013). And the homelab's network grew up from a single flat VLAN
+to a dual-NIC host with Proxmox SDN VXLAN (ADR-014) — documented in `docs/network/` rather than tribal knowledge.
+
+### The `amiya.akn` → `rhodes.akn` migration (July 2026)
+
+`amiya.akn`, stood up in April 2025, was this Age's original core-platform cluster — it ran OpenBao, Pocket-Id, and the
+ArgoCD hub that every other cluster depended on. In July 2026 I replaced it with `rhodes.akn`, and did it in a way I'm
+genuinely proud of: `rhodes.akn`'s disaster-recovery procedure was written first, as if `amiya.akn` had already failed —
+and then the migration to `rhodes.akn` was executed by literally following that DR runbook step by step
+(`docs/migrations/amiya.akn->rhodes.akn.md`). If the DR plan couldn't survive being used for a real migration, it wasn't
+a real DR plan.
+
+One deliberate regression came out of it: `amiya.akn` had exposed `vault.chezmoi.sh` and `auth.chezmoi.sh` to the public
+internet via a Cloudflare tunnel and `cloudflare-operator`. `rhodes.akn` doesn't run either — both hostnames are now
+LAN/Tailscale-only. Fewer things facing the internet is a feature, not a gap to backfill.
+
+`amiya.akn` has since been fully decommissioned; every reference to it left in the tree is historical (migration
+records, ADRs explaining a since-superseded decision).
+
+### AI agents as a first-class part of the workflow
+
+This wasn't one of the original Steel Age objectives, but it's become a real part of "usability" as I defined it above:
+the repo now carries `AGENTS.md` as the single source of truth for coding agents, 17 reusable skills under
+`.agents/skills/` covering everything from CNPG troubleshooting to postmortems to PR creation, and — after a string of
+credential-leak near-misses — a Claude Code hook that blocks environment-dump commands outright and redacts secrets out
+of every other command's output before it reaches a model. Treating an AI agent as a collaborator that needs the same
+guardrails as a human contributor turned out to matter more than I expected going into this Age.
+
+### Still open
+
+- Consolidating per-app CloudNative-PG clusters into shared ones is proposed but not implemented (ADR-009).
+- The Envoy Gateway → Cilium Gateway API and Crossplane → Pulumi migrations are both accepted but not finished.
+- `shodan.akn`, the planned AI-stack cluster, is still just a README and an architecture diagram.
