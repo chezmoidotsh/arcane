@@ -419,7 +419,7 @@ kubectl get storageclass                       # expect proxmox-lvmthin-* as def
 kubectl get pvc -A -o wide
 ```
 
-### Observability
+### Observability checks
 
 ```sh
 # Metrics/logs live on the central NixOS LXC, not in-cluster — check vmagent/Vector shipping first

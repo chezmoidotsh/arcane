@@ -1,31 +1,31 @@
 {
-  "permissions": {
-    "deny": [
-      "Bash(env)",
-      "Bash(env *)",
-      "Bash(mise env)",
-      "Bash(mise env *)",
-      "Bash(printenv)",
-      "Bash(set)",
-      "Bash(export)",
-      "Bash(declare -x)"
-    ]
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "jq -r '.tool_input.command // empty' | sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/deny-env-dump\""
-          },
-          {
-            "type": "command",
-            "command": "jq -r '.tool_input.command // empty' | sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/pipe-redact\""
-          }
-        ]
-      }
-    ]
-  }
+	"permissions": {
+		"deny": [
+			"Bash(env)",
+			"Bash(env *)",
+			"Bash(mise env)",
+			"Bash(mise env *)",
+			"Bash(printenv)",
+			"Bash(set)",
+			"Bash(export)",
+			"Bash(declare -x)"
+		]
+	},
+	"hooks": {
+		"PreToolUse": [
+			{
+				"matcher": "Bash",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "jq -r '.tool_input.command // empty' | sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/deny-env-dump\""
+					},
+					{
+						"type": "command",
+						"command": "jq -r '.tool_input.command // empty' | sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/pipe-redact\""
+					}
+				]
+			}
+		]
+	}
 }

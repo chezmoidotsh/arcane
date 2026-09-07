@@ -212,6 +212,7 @@ to maintain and share with others, but will probably be less consistent with my 
 >     the drawbacks.
 >
 >   - I need to find how I will handle Helm deployments in a declarative way.
+>
 > - [ ] **Everything MUST be versioned and immutable _(the second GitOps rule)_**
 >   - Nothing changes for the versioned portion because I continue to utilize **Git** for it.
 >   - Since Kubernetes is a declarative system, all changes made to any resource will be reflected as a new version of
