@@ -126,9 +126,8 @@ This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based depl
 
 ## 💀 Disaster Recovery Plan (DRP)
 
-The recovery process is largely automated through the `rhodes.akn` project (the core-platform cluster — `amiya.akn`
-filled this role until it was decommissioned in favor of `rhodes.akn` in July 2026), which hosts ArgoCD and
-automatically bootstraps any Kubernetes clusters it detects in the Tailscale mesh.
+The recovery process is largely automated through the `rhodes.akn` project (the core-platform cluster), which hosts
+ArgoCD and automatically bootstraps any Kubernetes clusters it detects in the Tailscale mesh.
 
 ### Automated Recovery Process
 

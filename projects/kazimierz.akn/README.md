@@ -41,9 +41,8 @@ The solution is a **single VPS** (no Kubernetes) running Pangolin with integrate
 - **Pulumi**: Provisions the OCI instance, network (VCN/NSG), and DNS records the VPS runs on
 
 > **Note**: The instance/network itself (compartment, VCN, instance, DNS) is provisioned by a separate Pulumi stack --
-> see `src/infrastructure/pulumi/`. CrowdSec was evaluated for WAF/IPS on Traefik but dropped: its shared threat-intel
-> bouncer produced false positives that blacklisted legitimate guests, so Pangolin's own access controls (including its
-> GeoIP-based geoblocking) are relied on instead (see
+> see `src/infrastructure/pulumi/`. No WAF/IPS layer runs on Traefik; Pangolin's own access controls (including its
+> GeoIP-based geoblocking) provide edge protection instead (see
 > [roles/pangolin/README.md](./src/infrastructure/ansible/roles/pangolin/README.md)).
 
 **Backend Cluster Connection**:
