@@ -1,0 +1,12 @@
+#!/bin/sh
+# PreToolUse(Bash) hook: deny any command that dumps the whole environment
+# (env, mise env, printenv, set, export, declare -x) anywhere in the chain --
+# these print every secret in plaintext regardless of position in the command.
+# Reads the raw Bash command on stdin (see .claude/settings.json).
+cmd=$(cat)
+r1='(^|&&|\|\||;|\|)[[:space:]]*(mise[[:space:]]+env|env)([[:space:]]|$)'
+r2='(^|&&|\|\||;|\|)[[:space:]]*(printenv|set|export)[[:space:]]*(&&|\|\||;|\||$)'
+r3='(^|&&|\|\||;|\|)[[:space:]]*declare[[:space:]]+-x[[:space:]]*(&&|\|\||;|\||$)'
+if printf '%s' "$cmd" | grep -Eq "$r1" || printf '%s' "$cmd" | grep -Eq "$r2" || printf '%s' "$cmd" | grep -Eq "$r3"; then
+  printf '%s' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"Blocked: this command contains an environment-dump invocation (env, mise env, printenv, set, or export with no target, or declare -x with no assignment) somewhere in the chain -- these print every secret in plaintext regardless of position. Use mise exec -- <command>, mise run <task>, or read a single named variable instead."}}'
+fi
