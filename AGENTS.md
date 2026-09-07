@@ -214,10 +214,10 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 - **VictoriaMetrics + VictoriaLogs + vmalert + Alertmanager** run centrally on a single NixOS LXC on the Proxmox host
   (ADR-013), fronted by Caddy. Most clusters only run lightweight collection agents against it: **vmagent** for metrics,
   **Vector** for logs.
-- `rhodes.akn` is the exception: **Grafana** runs in-cluster there as a full Grafana Operator instance with its own
-  CNPG database (`projects/rhodes.akn/src/infrastructure/kubernetes/o11y/`). It reads the LXC's Victoria stack as
-  datasources and authenticates via Pocket-Id OIDC. Don't assume Grafana is just a dashboard the LXC serves — check the
-  actual cluster before changing anything observability-related.
+- `rhodes.akn` is the exception: **Grafana** runs in-cluster there as a full Grafana Operator instance with its own CNPG
+  database (`projects/rhodes.akn/src/infrastructure/kubernetes/o11y/`). It reads the LXC's Victoria stack as datasources
+  and authenticates via Pocket-Id OIDC. Don't assume Grafana is just a dashboard the LXC serves — check the actual
+  cluster before changing anything observability-related.
 - Both Pocket-Id (`auth.chezmoi.sh`) and this Grafana (`o11y.chezmoi.sh`) are publicly exposed through Pangolin
   (`projects/rhodes.akn/src/infrastructure/pulumi/stack/pangolin/`, `sso: false` at the Pangolin layer — by design, each
   app authenticates its own users, so this isn't "no auth", just no double gate). OpenBao (`vault.chezmoi.sh`) is not
@@ -273,12 +273,11 @@ In short:
 ### Never dump the full environment
 
 A Claude Code hook (`.claude/settings.json` + `.claude/hooks/redact-secrets`) denies any Bash command that dumps the
-whole environment — `env`, `mise env`, `printenv`, `set`, `export`,
-`declare -x` — even mid-chain (`build && env`). All other Bash output is piped through a gitleaks-based filter that
-replaces detected secrets with `[REDACTED:<rule>]` before it reaches the model. Don't try to work around either
-mechanism (e.g. by reading `/proc/self/environ`); read a single named variable instead, or use `mise exec -- <cmd>` /
-`mise run <task>`. This applies to Claude Code specifically — check for equivalent guardrails if you're a different
-agent.
+whole environment — `env`, `mise env`, `printenv`, `set`, `export`, `declare -x` — even mid-chain (`build && env`). All
+other Bash output is piped through a gitleaks-based filter that replaces detected secrets with `[REDACTED:<rule>]`
+before it reaches the model. Don't try to work around either mechanism (e.g. by reading `/proc/self/environ`); read a
+single named variable instead, or use `mise exec -- <cmd>` / `mise run <task>`. This applies to Claude Code specifically
+— check for equivalent guardrails if you're a different agent.
 
 ### Asking questions — always use the interactive tool
 
