@@ -12,7 +12,7 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git&logoColor=white&logoWidth=20)](../../LICENSE)
 
 <a href="#about">About</a> · <a href="#services-overview">Services</a> · <a href="#usage-and-development">Usage</a> ·
-<a href="#disaster-recovery">Recovery</a> · <a href="#roadmap">Roadmap</a> · <a href="#license">License</a>
+<a href="#disaster-recovery">Recovery</a> · <a href="#license">License</a>
 
 </div>
 
@@ -165,39 +165,6 @@ procedure, including cluster identity, machine classes, and registering the clus
 
 - Check cluster status: `kubectl get pods --all-namespaces`
 - Confirm ArgoCD sync status in the `rhodes.akn`-hosted ArgoCD console
-
-## Roadmap
-
-<!-- trunk-ignore-begin(remark-lint/list-item-content-indent) -->
-
-- [x] **Step 0**: Define project scope and architecture
-  - [x] List all services to be deployed
-  - [x] Create architecture diagram
-
-- [x] **Step 1**: Initial deployment
-  - [x] Deploy base infrastructure (Talos via Sidero Omni, Cilium)
-  - [x] Configure core services (External Secrets, DNS, cert-manager)
-  - [x] Deploy Proxmox CSI plugin for distributed storage (no Longhorn — proxmox-csi-plugin from day one)
-  - [x] Deploy Cilium Gateway API as API Gateway
-
-- [x] **Step 2**: Data Layer
-  - [x] Deploy CloudNativePG operator
-  - [x] Deploy PostgreSQL for application data
-
-- [x] **Step 3**: Services Deployment (Partial)
-  - [x] Deploy media services (Jellyfin)
-  - [x] Deploy Immich ~~with Cloudflare Tunnel for external access~~
-  - [x] Deploy life management services (Actual Budget)
-  - [x] Deploy Paperless-ngx for document management
-  - [x] Deploy Linkding for bookmarks
-  - [x] Deploy Spoolman for filament inventory tracking
-
-- [ ] **Step 4**: Security and Optimization
-  - [x] Implement network policies
-  - [x] Configure backup solutions
-  - [ ] Optimize resource usage
-
-<!-- trunk-ignore-end(remark-lint/list-item-content-indent) -->
 
 ## License
 

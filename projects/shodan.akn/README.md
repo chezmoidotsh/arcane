@@ -12,7 +12,7 @@
 
 <a href="#ℹ%EF%B8%8F-about">About</a> · <a href="#%EF%B8%8F-architecture">Architecture</a> ·
 <a href="#-how-to-use--how-to-develop-on-it">How to use</a> · <a href="#-recovery--bootstrap">Recovery</a> ·
-<a href="#%EF%B8%8F-roadmap">Roadmap</a> · <a href="#%EF%B8%8F-license">License</a>
+<a href="#%EF%B8%8F-license">License</a>
 
 <!-- trunk-ignore-end(markdown-link-check/404) -->
 
@@ -167,33 +167,6 @@ automatically bootstraps any Kubernetes clusters it detects in the Tailscale mes
 - Confirm ArgoCD sync status in the `rhodes.akn` console
 
 > The entire platform is designed for zero-touch recovery once Tailscale is configured.
-
-## 🗺️ Roadmap
-
-<!-- trunk-ignore-begin(remark-lint/list-item-content-indent) -->
-
-- [x] **Step 0**: Define project scope and architecture
-  - [x] List all AI services to be deployed
-  - [x] Create architecture diagram
-- [ ] **Step 1**: Initial deployment
-  - [ ] Deploy base infrastructure (Talos, Cilium)
-  - [ ] Configure core services (External Secrets, DNS, cert-manager)
-  - [ ] Deploy proxmox-csi-plugin for block storage
-  - [ ] Deploy kgateway as API/AI Gateway
-- [ ] **Step 2**: Data Layer
-  - [ ] Deploy CloudNativePG operator
-  - [ ] Deploy PostgreSQL with pgvector for vector storage
-- [ ] **Step 3**: AI Services Deployment
-  - [ ] Deploy OpenWebUI for LLM interactions
-  - [ ] Set up AgentGateway for MCP routing
-  - [ ] Configure n8n for AI workflows
-  - [ ] Deploy selected MCP servers
-- [ ] **Step 4**: Security and Optimization
-  - [ ] Implement network policies
-  - [ ] Configure backup solutions
-  - [ ] Optimize resource usage
-
-<!-- trunk-ignore-end(remark-lint/list-item-content-indent) -->
 
 ## 🛡️ License
 
