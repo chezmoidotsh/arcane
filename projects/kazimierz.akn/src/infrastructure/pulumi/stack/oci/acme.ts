@@ -16,9 +16,11 @@ const config = new pulumi.Config();
 // that, but Traefik runs as a Docker Compose service via Ansible, not a
 // Pulumi resource -- so the token only exists as a Pulumi stack output here,
 // same pattern as ../../../chezmoi.sh/src/infrastructure/pulumi/stack/observability.ts.
-// Not pushed to Vault: OpenBao lives inside amiya.akn, and kazimierz.akn is
-// the public gateway every cluster (including amiya.akn) depends on to be
-// reachable -- it can't depend on Vault being up first.
+// Not pushed to Vault: OpenBao lives inside rhodes.akn (the core-platform
+// cluster; amiya.akn filled this role until it was decommissioned in favor
+// of rhodes.akn in July 2026), and kazimierz.akn is the public gateway every
+// cluster (including rhodes.akn) depends on to be reachable -- it can't
+// depend on Vault being up first.
 const traefikDns01Token = new Dns01TokenComponent("kazimierz-traefik-dns01", {
 	owner: "kazimierz.akn",
 	application: "Traefik DNS-01 wildcard cert (*.chezmoi.sh)",

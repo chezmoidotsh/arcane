@@ -31,7 +31,9 @@ To create a real cluster:
 The worked example is lungmen —
 [`../../projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml`](../../projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml)
 (`lungmen-akn`, pod CIDR `172.30.32.0/19`, service CIDR `172.31.0.0/19` and clusterDNS `172.31.0.10` are shared defaults
-(all clusters, ClusterMesh-ready) per [ADR-014][], `c1.minimal`×1 control plane, `w1.large`×2 workers).
+(all clusters, ClusterMesh-ready) per [ADR-014][], `c1.minimal`×1 control plane, `w1.large`×3 workers — sized to survive
+a one-at-a-time Talos reboot under real load; `rhodes.akn`'s copy overrides this back down to 2, so worker count is a
+genuine per-cluster override, not a fixed default).
 
 ### Why standalone copies (no kustomize)
 

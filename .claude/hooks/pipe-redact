@@ -1,0 +1,11 @@
+#!/bin/sh
+# PreToolUse(Bash) hook: wrap the command so its output is piped through
+# redact-secrets, unless the command is empty, a bare `cd`, or contains a
+# heredoc (which can't safely be wrapped in a pipeline like this).
+# Reads the raw Bash command on stdin (see .claude/settings.json).
+cmd=$(cat)
+if [ -z "${cmd}" ] || printf '%s' "${cmd}" | grep -Eq '(^|&&|\|\||;)[[:space:]]*cd([[:space:]]+[^&|;]*)?[[:space:]]*$' || printf '%s' "${cmd}" | grep -Eq '(^|[^<])<<[^<]'; then
+  printf '{}'
+else
+  jq -n --arg cmd "set -o pipefail; ${cmd} 2>&1 | '${CLAUDE_PROJECT_DIR}/.claude/hooks/redact-secrets'" '{"hookSpecificOutput":{"hookEventName":"PreToolUse","updatedInput":{"command":$cmd}}}'
+fi

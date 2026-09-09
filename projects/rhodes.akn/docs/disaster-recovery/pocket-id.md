@@ -5,18 +5,19 @@ This document covers restoring Pocket-Id's state onto a **new** Kubernetes clust
 prerequisites and where this fits in the full recovery chain.
 
 Unlike [OpenBao Disaster Recovery](openbao.md), this one is genuinely simple: Pocket-Id has no HSM, no seal to unseal,
-and no admin-access chicken-and-egg — restore its database and its app secret, and it serves logins again. It's still
-worth its own document because **OpenBao's own admin-recovery path (Option B in `openbao.md` Step 5) depends on
-Pocket-Id being reachable** — if both instances are being restored together after a full cluster loss, restore Pocket-Id
-first, or at least in parallel, rather than after OpenBao.
+and no admin-access chicken-and-egg — restore its database and its app secret, and it serves logins again. OpenBao's own
+admin recovery no longer depends on Pocket-Id being reachable (the root token works standalone — see
+[openbao.md](openbao.md) Step 5), so the two are restored independently and in either order; this document is still kept
+separate because Pocket-Id's own procedure is different enough in shape (no HSM, no seal) to be confusing folded into
+OpenBao's.
 
 > [!IMPORTANT]
 >
 > Pocket-Id requires the Gateway and a valid TLS certificate (cert-manager) to be serving `auth.chezmoi.sh` before it is
 > usable end to end: passkeys (WebAuthn) require a "secure context," i.e. HTTPS, and will not register or authenticate
 > over plain HTTP or a port-forward. If the Gateway/cert-manager aren't up yet on the new cluster, Step 4's reachability
-> check will pass over a port-forward, but passkey login will not work until HTTPS is live — plan accordingly if this is
-> blocking OpenBao's Option B (see `openbao.md`).
+> check will pass over a port-forward, but passkey login will not work until HTTPS is live — plan accordingly if this
+> blocks the Pocket-Id → OpenBao SSO round-trip verification (see `README.md` Step 8).
 
 ## Prerequisites
 
@@ -122,8 +123,8 @@ curl -sI http://localhost:8080/ | head -1
 
 This confirms Pocket-Id's own database and app secret are correctly restored — its login UI, user accounts, and OIDC
 client registrations all live in the CNPG database restored in Step 2. Verifying the actual SSO round-trip into OpenBao
-(as a consumer of Pocket-Id, not a property of Pocket-Id itself) is covered in [openbao.md](openbao.md) Step 5 Option B
-— not repeated here.
+(as a consumer of Pocket-Id, not a property of Pocket-Id itself) is covered in [README.md](README.md) Step 8 — not
+repeated here.
 
 ---
 
@@ -140,8 +141,8 @@ client registrations all live in the CNPG database restored in Step 2. Verifying
 
 - [BKP-20260723-00: Restore a CNPG cluster from its S3 object-store backup](../../../../docs/procedures/backups/BKP-20260723-00.cnpg-restore-from-object-store.md)
   — the CNPG restore mechanics used in Step 2
-- [OpenBao Disaster Recovery](openbao.md) — the reverse dependency (OpenBao admin recovery needs this document done
-  first, and its Step 5 Option B is where the SSO round-trip into OpenBao is actually verified)
+- [OpenBao Disaster Recovery](openbao.md) — OpenBao's own recovery, restored independently of this document; see
+  [README.md](README.md) Step 8 for verifying the Pocket-Id → OpenBao SSO round-trip once both are up
 
 ## History
 
@@ -159,3 +160,7 @@ client registrations all live in the CNPG database restored in Step 2. Verifying
   `dr:pocket-id:secrets` mise task — two commands, not worth a wrapper.
 - _2026-07-30_: Pointed Step 4's passkey validation at README.md's new `/etc/hosts` override section instead of only the
   port-forward fallback, since the latter can't validate passkey login at all (no secure context).
+- _2026-09-06_: Removed stale references to an "Option A/B" split and a Pocket-Id-readiness dependency in `openbao.md`
+  Step 5 — that split was dropped on 2026-07-29 (see `openbao.md`'s own History) when the break-glass token mechanism
+  was replaced by the standalone root token, but this document's intro, Step 4, and References still pointed at the old
+  "Option B". Repointed the SSO round-trip references at README.md Step 8, where that verification actually lives.

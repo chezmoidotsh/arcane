@@ -12,7 +12,7 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue?logo=git&logoColor=white&logoWidth=20)](../../LICENSE)
 
 <a href="#about">About</a> · <a href="#services-overview">Services</a> · <a href="#usage-and-development">Usage</a> ·
-<a href="#disaster-recovery">Recovery</a> · <a href="#roadmap">Roadmap</a> · <a href="#license">License</a>
+<a href="#disaster-recovery">Recovery</a> · <a href="#license">License</a>
 
 </div>
 
@@ -62,8 +62,8 @@ control over media libraries.\*
 
 High-performance self-hosted photo and video management solution with mobile app support.
 
-**\*Why this choice**: Modern Google Photos alternative with AI-powered features, mobile sync, and Cloudflare Tunnel
-integration for secure external access.\*
+**\*Why this choice**: Modern Google Photos alternative with AI-powered features, mobile sync, and secure external
+access via Pangolin/Newt.\*
 
 </div>
 </div>
@@ -126,14 +126,14 @@ seamless link collection.\*
 
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
-<img src="../../docs/assets/icons/apps/atuin.svg" alt="Atuin Logo" width="120" align="right" style="margin-left: 16px;">
+<img src="../../docs/assets/icons/apps/spoolman.svg" alt="Spoolman Logo" width="120" align="right" style="margin-left: 16px;">
 
-### [Atuin](https://docs.atuin.sh/)
+### [Spoolman](https://github.com/Donkie/Spoolman)
 
-Encrypted shell history sync, storing all your shell commands in one place with powerful search.
+Filament inventory tracker for 3D printing, keeping stock levels and usage in one place.
 
-**\*Why this choice**: Enhanced shell history with encryption, synchronization across devices, and intelligent command
-search with context preservation.\*
+**\*Why this choice**: Self-hosted, printer-agnostic spool tracking with a simple REST API other tools (slicers, printer
+front-ends) can integrate against.\*
 
 </div>
 </div>
@@ -145,78 +145,26 @@ search with context preservation.\*
 This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based deployment and
 [Kustomize](https://kustomize.io/) for configuration management.
 
-All configurations are located in the `catalog` directory and organized by service. To add or modify a service, update
-the corresponding Kustomize files. ArgoCD will automatically sync the changes to the cluster.
+Application and infrastructure manifests are hand-written under `src/apps/` and `src/infrastructure/`, then rendered
+into `dist/` via `dist:render` — **never hand-edit `dist/`**. ArgoCD syncs `dist/`, not `src/`, to the cluster. To add
+or modify a service, update the corresponding sources under `src/`, run `dist:render`, and let ArgoCD pick up the
+change. See [`src/apps/`](./src/apps/) for the current, authoritative app inventory — this README highlights a subset
+and may lag behind additions/removals there.
 
 ## Disaster Recovery
 
-The recovery process is largely automated through the `amiya.akn` project, which hosts ArgoCD and automatically
-bootstraps any Kubernetes clusters it detects.
+lungmen.akn is provisioned through [Sidero Omni](https://omni.siderolabs.com) and registers as a GitOps **spoke** into
+the ArgoCD hub hosted on `rhodes.akn` — it does not run its own ArgoCD instance.
 
 ### Recovery Process
 
-> \[!NOTE] If the system cannot be managed using Talosctl, reboot on a live CD
-
-1. **Reset/Reinstall Talos OS**:
-
-   See [Talos Recovery](https://www.talos.dev/v1.10/advanced/disaster-recovery/) for more information about recovering
-   from a Talos cluster and the [Bootstrap documentation](./docs/HOW_TO_BOOTSTRAP.md) for more information about
-   bootstrapping the cluster.
-
-2. **Link to ArgoCD**:
-
-   > \[!NOTE] This is only required if the cluster is not already linked to ArgoCD or if the cluster has been reset. You
-   > also need to have the context `admin@amiya.akn` in your kubeconfig.
-
-   Because this project is designed to be run in the same "network" as the `amiya.akn` project, we must link the cluster
-   manually to ArgoCD.
-
-   ```bash
-   argocd --kube-context admin@amiya.akn cluster add admin@lungmen.akn --name lungmen.akn --label device.tailscale.com/os=linux
-   ```
-
-3. **Automatic Detection** - Once the cluster joins the Tailscale mesh, `amiya.akn` detects it automatically
+See the [Bootstrap documentation](./docs/HOW_TO_BOOTSTRAP.md) for the full, step-by-step Omni-based provisioning
+procedure, including cluster identity, machine classes, and registering the cluster into `rhodes.akn`'s ArgoCD.
 
 ### Manual Verification
 
 - Check cluster status: `kubectl get pods --all-namespaces`
-- Verify Tailscale connectivity: `tailscale status`
-- Confirm ArgoCD sync status in the `amiya.akn` console
-
-> The entire platform is designed for zero-touch recovery once Tailscale is configured.
-
-## Roadmap
-
-<!-- trunk-ignore-begin(remark-lint/list-item-content-indent) -->
-
-- [x] **Step 0**: Define project scope and architecture
-  - [x] List all services to be deployed
-  - [x] Create architecture diagram
-
-- [x] **Step 1**: Initial deployment
-  - [x] Deploy base infrastructure (Talos, Cilium)
-  - [x] Configure core services (External Secrets, DNS, cert-manager)
-  - [x] Deploy Longhorn for distributed storage
-  - [x] Deploy Envoy Gateway as API Gateway
-
-- [x] **Step 2**: Data Layer
-  - [x] Deploy CloudNativePG operator
-  - [x] Deploy PostgreSQL for application data
-
-- [x] **Step 3**: Services Deployment (Partial)
-  - [x] Deploy media services (Jellyfin)
-  - [x] Deploy Immich ~~with Cloudflare Tunnel for external access~~
-  - [x] Deploy life management services (Actual Budget)
-  - [x] Deploy Paperless-ngx for document management
-  - [x] Deploy Linkding for bookmarks
-  - [x] Deploy Atuin for shell history sync
-
-- [ ] **Step 4**: Security and Optimization
-  - [ ] Implement network policies
-  - [x] Configure backup solutions
-  - [ ] Optimize resource usage
-
-<!-- trunk-ignore-end(remark-lint/list-item-content-indent) -->
+- Confirm ArgoCD sync status in the `rhodes.akn`-hosted ArgoCD console
 
 ## License
 

@@ -30,18 +30,20 @@ as the first line of defense for exposing services to the internet.
 
 The solution is a **single VPS** (no Kubernetes) running Pangolin with integrated security:
 
-**VPS Layer (Hetzner Cloud - Europe)**:
+**VPS Layer (Oracle Cloud Infrastructure - eu-paris-1, Always Free ARM)**:
 
 - **Pangolin**: Tunneled reverse proxy controller with web dashboard
 - **Gerbil**: WireGuard tunnel manager (site/client tunnels)
 - **Traefik**: HTTP reverse proxy with automatic Let's Encrypt SSL
-- **CrowdSec**: Collaborative IPS/IDS with WAF and threat intelligence
 - **Tailscale**: Mesh VPN for secure SSH access and monitoring
 - **Ansible**: GitOps automation via ansible-pull (15-minute sync)
 - **ARA**: Playbook execution monitoring and auditing
+- **Pulumi**: Provisions the OCI instance, network (VCN/NSG), and DNS records the VPS runs on
 
-> **Note**: Initially deployed on Hetzner Cloud for flexibility. After 6 months of validation, potential migration to
-> HostUp for cost optimization (annual commitment).
+> **Note**: The instance/network itself (compartment, VCN, instance, DNS) is provisioned by a separate Pulumi stack --
+> see `src/infrastructure/pulumi/`. No WAF/IPS layer runs on Traefik; Pangolin's own access controls (including its
+> GeoIP-based geoblocking) provide edge protection instead (see
+> [roles/pangolin/README.md](./src/infrastructure/ansible/roles/pangolin/README.md)).
 
 **Backend Cluster Connection**:
 
@@ -58,8 +60,9 @@ The solution is a **single VPS** (no Kubernetes) running Pangolin with integrate
 This architecture provides:
 
 - **Simple access** for non-technical users (browser-only, no client installation required)
-- **Strong security** with WAF, IPS/IDS, threat intelligence (CrowdSec), and automated SSL
-- **Self-hosted control** with no third-party MITM risks (unlike Cloudflare)
+- **Strong security** with automated SSL, GeoIP geoblocking, and Pangolin's own identity-aware access control
+- **Self-hosted control** with no third-party MITM risks (Cloudflare's only role is issuing the DNS-01 token for
+  wildcard TLS certs -- it never proxies traffic)
 - **Isolation** with the VPS as a sacrificial layer that can be compromised without impacting internal infrastructure
 - **Simple management** with no Kubernetes overhead on the edge
 - **GitOps automation** via ansible-pull for infrastructure-as-code drift prevention
@@ -115,28 +118,12 @@ tunnels to backend services without manual key management.\*
 
 ### [Traefik](https://traefik.io/)
 
-Modern HTTP reverse proxy and load balancer with automatic Let's Encrypt SSL certificate management. Provides dynamic
-routing configuration and integrates with CrowdSec for threat prevention.
+Modern HTTP reverse proxy and load balancer with automatic Let's Encrypt SSL certificate management and dynamic routing
+configuration in front of Pangolin.
 
-**\*Why this choice**: Dynamic configuration updates without restarts, native Let's Encrypt integration, and excellent
-CrowdSec bouncer support. Well-suited for managing multiple domains with automated SSL.\*
-
-</div>
-</div>
-
-<br/><br/>
-
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../docs/assets/icons/apps/crowdsec.svg" alt="CrowdSec Logo" width="120" align="right" style="margin-left: 16px;">
-
-### [CrowdSec](https://crowdsec.net/)
-
-Collaborative intrusion prevention system (IPS/IDS) with Web Application Firewall (WAF) capabilities. Analyzes Traefik
-logs for behavioral threat detection and blocks malicious IPs using community threat intelligence.
-
-**\*Why this choice**: Community-driven threat intelligence provides better protection than traditional rule-based
-systems, with native Traefik integration via bouncer plugin. Includes OWASP CRS and virtual patching.\*
+**\*Why this choice**: Dynamic configuration updates without restarts, and native Let's Encrypt integration (HTTP-01
+per-domain by default, or a DNS-01 wildcard cert via Cloudflare). Well-suited for managing multiple domains with
+automated SSL.\*
 
 </div>
 </div>
@@ -245,40 +232,49 @@ kazimierz.akn/
 │   │   ├── architecture-dark.svg               # Dark theme architecture diagram
 │   │   └── architecture-light.svg              # Light theme architecture diagram
 │   ├── BOOTSTRAP.md                            # Complete VPS bootstrap procedure
-│   ├── CROWDSEC-INTEGRATION.md                 # CrowdSec integration details
 │   └── archives/                               # Historical documents
+│       ├── CROWDSEC-INTEGRATION.md             # CrowdSec integration (tried and dropped)
 │       └── REFLEXION-KUBERNETES-DEPLOYMENT.md  # Initial architecture decisions
 └── src/
     └── infrastructure/
-        └── ansible/                            # Ansible infrastructure-as-code
-            ├── site.yml                        # Main playbook (4 phases)
-            ├── requirements.yml                # External roles and collections
-            ├── inventory/
-            │   ├── local.yml                   # Local inventory (ansible-pull)
-            │   ├── remote.yml                  # Remote inventory (manual deployment)
-            │   └── host_vars/
-            │       └── kazimierz.yml           # Host-specific variables (vault-encrypted)
-            └── roles/
-                ├── system_setup/               # Base system (Docker, Tailscale, UFW, etc.)
-                ├── gitops_automation/          # ansible-pull systemd timer setup
-                ├── ara_server/                 # ARA playbook monitoring
-                ├── pangolin/                   # Pangolin stack (Pangolin, Gerbil, Traefik, CrowdSec)
-                └── ansible-run-notification-on-slack/ # Slack notifications
+        ├── ansible/                            # Ansible infrastructure-as-code
+        │   ├── site.yml                        # Main playbook (4 phases)
+        │   ├── requirements.yml                # External roles and collections
+        │   ├── inventory/
+        │   │   ├── local.yml                   # Local inventory (ansible-pull)
+        │   │   ├── remote.yml                  # Remote inventory (manual deployment)
+        │   │   └── host_vars/
+        │   │       └── kazimierz.yml           # Host-specific variables (vault-encrypted)
+        │   └── roles/
+        │       ├── system_setup/               # Base system (Docker, Tailscale, UFW, etc.)
+        │       ├── gitops_automation/          # ansible-pull systemd timer setup
+        │       ├── ara_server/                 # ARA playbook monitoring
+        │       └── pangolin/                   # Pangolin stack (Pangolin, Gerbil, Traefik)
+        └── pulumi/                             # Provisions the OCI instance, network and DNS
+            └── stack/
+                ├── oci/                        # Compartment, VCN/NSG, instance, DNS records
+                ├── pangolin/                    # Pangolin dashboard OIDC IdP/org/role
+                └── pocket-id/                   # Pocket-ID side of the Pangolin SSO client
 ```
 
 ## Installation and Setup
 
+The OCI instance and network are provisioned first via the Pulumi stack in `src/infrastructure/pulumi/`. The VPS itself
+is then configured using Ansible, which self-manages via `ansible-pull` from then on:
+
 ```bash
-sops decrypt .vault-password.sops | \
-  ANSIBLE_PULL_BRANCH=issue-458/prepare-kazimierz-pangolin-ansible \
-  ansible-playbook site.yml \
-    --inventory inventory/remote.yml \
-    --diff \
-    --vault-id kazimierz@/dev/stdin
+export ANSIBLE_VAULT_PASSWORD="..."
+ansible-pull \
+  --url https://github.com/chezmoidotsh/arcane \
+  --checkout main \
+  --directory /opt/chezmoidotsh/arcane \
+  --inventory projects/kazimierz.akn/src/infrastructure/ansible/inventory/local.yml \
+  --vault-password-file <(echo "$ANSIBLE_VAULT_PASSWORD") \
+  projects/kazimierz.akn/src/infrastructure/ansible/site.yml
 ```
 
-The VPS is provisioned and configured using Ansible. See [docs/BOOTSTRAP.md](./docs/BOOTSTRAP.md) for the complete
-bootstrap procedure.
+See [docs/BOOTSTRAP.md](./docs/BOOTSTRAP.md) for the complete bootstrap procedure and
+[src/infrastructure/ansible/README.md](./src/infrastructure/ansible/README.md) for the full Ansible architecture.
 
 ## Security Considerations
 

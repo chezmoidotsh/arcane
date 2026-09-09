@@ -1,4 +1,14 @@
-# CrowdSec Integration with Pangolin
+# CrowdSec Integration with Pangolin (Historical Document)
+
+> **⚠️ This document is ARCHIVED and for historical reference only.**
+>
+> **Final decision**: CrowdSec was tried and dropped -- its shared threat-intel bouncer produced false positives that
+> blacklisted legitimate guests. The `pangolin` Ansible role no longer deploys a CrowdSec service, Traefik plugin, or
+> bouncer of any kind; Pangolin's own access controls (including its GeoIP-based geoblocking) are relied on instead. See
+> [roles/pangolin/README.md](../../src/infrastructure/ansible/roles/pangolin/README.md) for the current state, and
+> `roles/system_setup` for the `fail2ban`-based SSH brute-force protection that remains.
+>
+> The rest of this document describes the CrowdSec integration as it existed before it was removed.
 
 ## Overview
 
