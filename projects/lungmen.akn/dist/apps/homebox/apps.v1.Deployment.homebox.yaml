@@ -1,0 +1,132 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: homebox
+    app.kubernetes.io/name: homebox
+    app.kubernetes.io/part-of: homebox
+  name: homebox
+  namespace: homebox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: homebox
+      app.kubernetes.io/name: homebox
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: homebox
+        app.kubernetes.io/name: homebox
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - env:
+        - name: HBOX_DATABASE_DRIVER
+          value: postgres
+        - name: HBOX_DATABASE_DATABASE
+          valueFrom:
+            secretKeyRef:
+              key: dbname
+              name: homebox-database-homebox
+        - name: HBOX_DATABASE_HOST
+          valueFrom:
+            secretKeyRef:
+              key: host
+              name: homebox-database-homebox
+        - name: HBOX_DATABASE_PORT
+          valueFrom:
+            secretKeyRef:
+              key: port
+              name: homebox-database-homebox
+        - name: HBOX_DATABASE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: homebox-database-homebox
+        - name: HBOX_DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: homebox-database-homebox
+        - name: HBOX_OIDC_ENABLED
+          value: "true"
+        - name: HBOX_OIDC_ISSUER_URL
+          value: https://auth.chezmoi.sh
+        - name: HBOX_OIDC_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              key: oidc_client_id
+              name: homebox-oidc-credentials
+        - name: HBOX_OIDC_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: oidc_client_secret
+              name: homebox-oidc-credentials
+        - name: HBOX_OPTIONS_TRUST_PROXY
+          value: "true"
+        - name: HBOX_OPTIONS_HOSTNAME
+          value: homebox.chezmoi.sh
+        - name: HBOX_AUTH_API_KEY_PEPPER
+          valueFrom:
+            secretKeyRef:
+              key: pepper
+              name: homebox-auth-pepper
+        - name: HBOX_STORAGE_CONN_STRING
+          value: s3://homebox-lungmen-akn?endpoint=https://s3.chezmoi.sh&region=fr-par-1&use_path_style=true
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              key: access_key_id
+              name: homebox-storage-credentials
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              key: secret_access_key
+              name: homebox-storage-credentials
+        image: oci.chezmoi.sh/ghcr.io/sysadminsmedia/homebox:0.26.2
+        livenessProbe:
+          httpGet:
+            path: /api/v1/status
+            port: http
+        name: homebox
+        ports:
+        - containerPort: 7745
+          name: http
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /api/v1/status
+            port: http
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 23281
+          runAsNonRoot: true
+          runAsUser: 23281
+        startupProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /api/v1/status
+            port: http
+          periodSeconds: 5
+        volumeMounts:
+        - mountPath: /data
+          name: homebox-data
+        - mountPath: /tmp
+          name: tmp
+      securityContext:
+        fsGroup: 23281
+        runAsGroup: 23281
+        runAsUser: 23281
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - emptyDir: {}
+        name: homebox-data
+      - emptyDir: {}
+        name: tmp
