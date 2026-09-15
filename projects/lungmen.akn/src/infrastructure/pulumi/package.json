@@ -15,6 +15,7 @@
 		"@pulumi/pocket-id": "workspace:*",
 		"@pulumi/proxmox": "workspace:*",
 		"@pulumi/pulumi": "catalog:",
+		"@pulumi/random": "catalog:",
 		"@pulumi/tailscale": "catalog:",
 		"@pulumi/vault": "catalog:",
 		"@pulumiverse/grafana": "catalog:"

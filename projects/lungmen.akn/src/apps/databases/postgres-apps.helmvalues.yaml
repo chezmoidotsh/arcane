@@ -73,6 +73,17 @@ spec:
           serverName: 01KZ6Z12N7M9TZ4GK83C992AVD # 2026-08-04T18:02:01.255Z
 
   databases:
+    - name: homebox
+      users:
+        - name: homebox
+          vault:
+            path: lungmen.akn/data/homebox/database/postgresql
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                io.kubernetes.pod.namespace: homebox
+                app.kubernetes.io/name: homebox
+
     - name: linkding
       users:
         - name: linkding

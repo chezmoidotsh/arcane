@@ -1,0 +1,157 @@
+---
+# trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_12,checkov/CKV_K8S_13,trivy/KSV-0015,trivy/KSV-0016,trivy/KSV-0018): We will address resource limits when we have consumption data for Homebox
+# trunk-ignore(checkov/CKV_K8S_35): Homebox cannot be configured using a file for the database credentials.
+# trunk-ignore(checkov/CKV2_K8S_6): Network policy will be handled separately
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homebox
+  namespace: homebox
+  labels:
+    app.kubernetes.io/name: homebox
+    app.kubernetes.io/instance: homebox
+    app.kubernetes.io/part-of: homebox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: homebox
+      app.kubernetes.io/instance: homebox
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: homebox
+        app.kubernetes.io/instance: homebox
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: homebox
+          env:
+            - name: HBOX_DATABASE_DRIVER
+              value: postgres
+            - name: HBOX_DATABASE_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: homebox-database-homebox
+                  key: dbname
+            - name: HBOX_DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: homebox-database-homebox
+                  key: host
+            - name: HBOX_DATABASE_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: homebox-database-homebox
+                  key: port
+            - name: HBOX_DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: homebox-database-homebox
+                  key: username
+            - name: HBOX_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: homebox-database-homebox
+                  key: password
+
+            - name: HBOX_OIDC_ENABLED
+              value: "true"
+            - name: HBOX_OIDC_ISSUER_URL
+              value: https://auth.chezmoi.sh
+            - name: HBOX_OIDC_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: homebox-oidc-credentials
+                  key: oidc_client_id
+            - name: HBOX_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: homebox-oidc-credentials
+                  key: oidc_client_secret
+            - name: HBOX_OPTIONS_TRUST_PROXY
+              value: "true"
+            - name: HBOX_OPTIONS_HOSTNAME
+              value: homebox.chezmoi.sh
+
+            - name: HBOX_AUTH_API_KEY_PEPPER
+              valueFrom:
+                secretKeyRef:
+                  name: homebox-auth-pepper
+                  key: pepper
+
+            - name: HBOX_STORAGE_CONN_STRING
+              value: "s3://homebox-lungmen-akn?endpoint=https://s3.chezmoi.sh&region=fr-par-1&use_path_style=true"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: homebox-storage-credentials
+                  key: access_key_id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: homebox-storage-credentials
+                  key: secret_access_key
+          image: ghcr.io/sysadminsmedia/homebox
+          livenessProbe:
+            httpGet:
+              path: /api/v1/status
+              port: http
+          ports:
+            - name: http
+              containerPort: 7745
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /api/v1/status
+              port: http
+          startupProbe:
+            httpGet:
+              path: /api/v1/status
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsGroup: 23281
+            runAsNonRoot: true
+            runAsUser: 23281
+          volumeMounts:
+            - name: homebox-data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      securityContext:
+        fsGroup: 23281
+        runAsGroup: 23281
+        runAsUser: 23281
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: homebox-data
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: homebox
+  namespace: homebox
+  labels:
+    app.kubernetes.io/name: homebox
+    app.kubernetes.io/instance: homebox
+    app.kubernetes.io/part-of: homebox
+spec:
+  selector:
+    app.kubernetes.io/name: homebox
+    app.kubernetes.io/instance: homebox
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

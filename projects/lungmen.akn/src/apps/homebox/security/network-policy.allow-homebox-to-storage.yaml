@@ -1,0 +1,19 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Homebox to store item photos and attachments in the Garage S3 bucket.
+  name: allow-homebox-to-storage
+  namespace: homebox
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: homebox
+  egress:
+    - toFQDNs:
+        - matchName: s3.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
