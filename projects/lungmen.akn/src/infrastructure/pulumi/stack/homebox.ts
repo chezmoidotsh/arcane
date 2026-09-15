@@ -52,10 +52,13 @@ new vault.kv.SecretV2(
 // ---------------------------------------------------------------------------
 // HBOX_AUTH_API_KEY_PEPPER -- stable secret, HMAC-keyed into API key hashes
 // ---------------------------------------------------------------------------
-const homeboxAuthPepper = new random.RandomPassword("password-homebox-auth-pepper", {
-	length: 48,
-	special: false,
-});
+const homeboxAuthPepper = new random.RandomPassword(
+	"password-homebox-auth-pepper",
+	{
+		length: 48,
+		special: false,
+	},
+);
 
 new vault.kv.SecretV2(
 	"homebox-auth-pepper-vault-secret",
