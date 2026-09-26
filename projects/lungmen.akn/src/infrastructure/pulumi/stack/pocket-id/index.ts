@@ -18,6 +18,7 @@ export const familleGroupId = chezmoiSh.getOutput(
 
 export * from "./actual-budget";
 export * from "./forgejo";
+export * from "./homebox";
 export * from "./immich";
 export * from "./jellyfin";
 export * from "./linkding";

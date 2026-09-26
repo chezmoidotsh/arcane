@@ -33,6 +33,14 @@ spec:
   instances: 1
   managed:
     roles:
+    - comment: Managed role for homebox/homebox
+      connectionLimit: -1
+      ensure: present
+      inherit: true
+      login: true
+      name: homebox
+      passwordSecret:
+        name: cnpg.apps-homebox-homebox-credentials
     - comment: Managed role for linkding/linkding
       connectionLimit: -1
       ensure: present
