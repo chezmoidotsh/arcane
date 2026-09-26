@@ -46,7 +46,7 @@ name: lungmen-akn
 kubernetes:
   version: v1.35.0
 talos:
-  version: v1.13.7 # v-prefix mandatory for omnictl validate
+  version: v1.14.1 # v-prefix mandatory for omnictl validate
 features:
   diskEncryption: false # PVE VMs have no vTPM by default
   enableWorkloadProxy: false
@@ -104,7 +104,7 @@ patches:
               # comment) — cloud-provider=external (below) taints every node from boot,
               # and without that toleration the Job can never schedule: a permanent
               # deadlock, not a transient delay.
-              - https://raw.githubusercontent.com/chezmoidotsh/arcane/09f0b0a42929e86bedc882f894884b5eb1d80e59/catalog/talos/manifests/cilium/1.20.0-native.yaml
+              - https://raw.githubusercontent.com/chezmoidotsh/arcane/934e67a9b70724c834bc1ac7c0221551bb7772e9/catalog/talos/manifests/cilium/1.20.2-native.yaml
           podSubnets:
             - 172.30.32.0/19
           serviceSubnets:
@@ -119,8 +119,8 @@ patches:
             feature-gates: UserNamespacesSupport=true,ImageVolume=true
         extraManifests:
           # Pinned to the same SHA as the Cilium manifest above.
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/09f0b0a42929e86bedc882f894884b5eb1d80e59/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/09f0b0a42929e86bedc882f894884b5eb1d80e59/catalog/talos/manifests/metric-server/0.8.1.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/934e67a9b70724c834bc1ac7c0221551bb7772e9/catalog/talos/manifests/kubelet-serving-cert-approver/0.12.1.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/934e67a9b70724c834bc1ac7c0221551bb7772e9/catalog/talos/manifests/metric-server/0.9.0.yaml
 ---
 kind: ControlPlane
 machineClass:

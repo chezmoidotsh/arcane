@@ -32,7 +32,7 @@
 # VERSION MATRIX (Talos ↔ Kubernetes; never skip Talos minor versions)
 # -----------------------------------------------------------------------
 # Talos   │ Kubernetes            │ Notes
-# v1.13.x │ v1.34.x – v1.35.x   │ current baseline
+# v1.14.x │ v1.32.x – v1.37.x   │ current baseline (range as reported by Omni 1.12)
 # See https://www.talos.dev/latest/introduction/support-matrix/
 #
 # HOW TO CLONE
@@ -79,7 +79,7 @@ name: base-default # override per cluster
 kubernetes:
   version: v1.35.0
 talos:
-  version: v1.13.2 # v-prefix mandatory for omnictl validate
+  version: v1.14.1 # v-prefix mandatory for omnictl validate
 features:
   diskEncryption: false # PVE VMs have no vTPM by default
   enableWorkloadProxy: false
@@ -131,7 +131,7 @@ patches:
             urls:
               # Pinned to a commit SHA on `main` — repin after merging any branch
               # that touches these manifests (squash merges change the SHA).
-              - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/cilium/1.20.0-native.yaml
+              - https://raw.githubusercontent.com/chezmoidotsh/arcane/934e67a9b70724c834bc1ac7c0221551bb7772e9/catalog/talos/manifests/cilium/1.20.2-native.yaml
           podSubnets:
             # MANDATORY OVERRIDE — unique per cluster (ClusterMesh hard prerequisite).
             # Replace the sentinel below with ONE of the /19s from ipam.md. The
@@ -161,8 +161,8 @@ patches:
           extraArgs:
             feature-gates: UserNamespacesSupport=true,ImageVolume=true
         extraManifests:
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/kubelet-serving-cert-approver/0.11.0.yaml
-          - https://raw.githubusercontent.com/chezmoidotsh/arcane/9a58e751d48be11bc7e67f3f2a6bf676973ea440/catalog/talos/manifests/metric-server/0.8.1.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/934e67a9b70724c834bc1ac7c0221551bb7772e9/catalog/talos/manifests/kubelet-serving-cert-approver/0.12.1.yaml
+          - https://raw.githubusercontent.com/chezmoidotsh/arcane/934e67a9b70724c834bc1ac7c0221551bb7772e9/catalog/talos/manifests/metric-server/0.9.0.yaml
 ---
 kind: ControlPlane
 machineClass:
