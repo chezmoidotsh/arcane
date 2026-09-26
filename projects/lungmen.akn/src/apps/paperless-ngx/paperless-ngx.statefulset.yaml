@@ -66,6 +66,10 @@ spec:
                 secretKeyRef:
                   name: paperless-ngx-database-paperless
                   key: password
+            - name: PAPERLESS_DISABLE_REGULAR_LOGIN
+              value: "true"
+            - name: PAPERLESS_REDIRECT_LOGIN_TO_SSO
+              value: "true"
 
             - name: PAPERLESS_REDIS
               value: redis://paperless-ngx-redis:6379
