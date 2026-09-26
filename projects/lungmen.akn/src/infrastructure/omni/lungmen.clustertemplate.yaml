@@ -44,7 +44,7 @@
 kind: Cluster
 name: lungmen-akn
 kubernetes:
-  version: v1.35.0
+  version: v1.37.1
 talos:
   version: v1.14.1 # v-prefix mandatory for omnictl validate
 features:
@@ -104,7 +104,7 @@ patches:
               # comment) — cloud-provider=external (below) taints every node from boot,
               # and without that toleration the Job can never schedule: a permanent
               # deadlock, not a transient delay.
-              - https://raw.githubusercontent.com/chezmoidotsh/arcane/934e67a9b70724c834bc1ac7c0221551bb7772e9/catalog/talos/manifests/cilium/1.20.2-native.yaml
+              - https://raw.githubusercontent.com/chezmoidotsh/arcane/934e67a9b70724c834bc1ac7c0221551bb7772e9/catalog/talos/manifests/cilium/1.20.0-native.yaml
           podSubnets:
             - 172.30.32.0/19
           serviceSubnets:
