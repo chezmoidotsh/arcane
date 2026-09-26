@@ -64,6 +64,26 @@ spec:
             secretKeyRef:
               key: oidc_client_secret
               name: homebox-oidc-credentials
+        - name: HBOX_OPTIONS_ALLOW_LOCAL_LOGIN
+          value: "false"
+        - name: HBOX_OPTIONS_ALLOW_REGISTRATION
+          value: "false"
+        - name: HBOX_OPTIONS_ALLOW_ANALYTICS
+          value: "false"
+        - name: HBOX_OPTIONS_GITHUB_RELEASE_CHECK
+          value: "false"
+        - name: HBOX_LABEL_MAKER_WIDTH
+          value: "320"
+        - name: HBOX_LABEL_MAKER_HEIGHT
+          value: "240"
+        - name: HBOX_LABEL_MAKER_PADDING
+          value: "16"
+        - name: HBOX_LABEL_MAKER_MARGIN
+          value: "8"
+        - name: HBOX_LABEL_MAKER_FONT_SIZE
+          value: "24"
+        - name: HBOX_LABEL_MAKER_DYNAMIC_LENGTH
+          value: "false"
         - name: HBOX_OPTIONS_TRUST_PROXY
           value: "true"
         - name: HBOX_OPTIONS_HOSTNAME
