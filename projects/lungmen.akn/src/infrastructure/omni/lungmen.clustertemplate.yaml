@@ -44,7 +44,7 @@
 kind: Cluster
 name: lungmen-akn
 kubernetes:
-  version: v1.35.0
+  version: v1.37.1
 talos:
   version: v1.14.1 # v-prefix mandatory for omnictl validate
 features:
