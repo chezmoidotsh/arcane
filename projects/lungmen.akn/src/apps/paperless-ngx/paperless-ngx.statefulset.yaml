@@ -69,6 +69,11 @@ spec:
 
             - name: PAPERLESS_REDIS
               value: redis://paperless-ngx-redis:6379
+            - name: PAPERLESS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-configuration
+                  key: secret_key
             - name: PAPERLESS_SOCIALACCOUNT_PROVIDERS
               valueFrom:
                 secretKeyRef:
