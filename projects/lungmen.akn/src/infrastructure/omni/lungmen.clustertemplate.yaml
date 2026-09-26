@@ -46,7 +46,7 @@ name: lungmen-akn
 kubernetes:
   version: v1.35.0
 talos:
-  version: v1.13.2 # v-prefix mandatory for omnictl validate
+  version: v1.13.7 # v-prefix mandatory for omnictl validate
 features:
   diskEncryption: false # PVE VMs have no vTPM by default
   enableWorkloadProxy: false
