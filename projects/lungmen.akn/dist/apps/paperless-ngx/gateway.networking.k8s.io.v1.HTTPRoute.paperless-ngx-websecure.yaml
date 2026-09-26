@@ -3,7 +3,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   annotations:
-    link.argocd.argoproj.io/external-link: https://paperless.chezmoi.sh
+    link.argocd.argoproj.io/external-link: https://archives.chezmoi.sh
   labels:
     app.kubernetes.io/instance: paperless-ngx
     app.kubernetes.io/name: paperless-ngx
@@ -11,7 +11,7 @@ metadata:
   namespace: paperless-ngx
 spec:
   hostnames:
-  - paperless.chezmoi.sh
+  - archives.chezmoi.sh
   parentRefs:
   - group: gateway.networking.k8s.io
     kind: Gateway

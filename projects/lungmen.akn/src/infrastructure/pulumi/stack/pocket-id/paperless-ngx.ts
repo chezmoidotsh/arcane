@@ -23,9 +23,9 @@ export const paperlessNgxOidcClient = new pocketid.oidc.OidcClients(
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/paperless-ngx-dark.svg",
 		darkLogoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/paperless-ngx-light.svg",
-		launchURL: "https://paperless.chezmoi.sh",
+		launchURL: "https://archives.chezmoi.sh",
 		callbackURLs: [
-			"https://paperless.chezmoi.sh/accounts/oidc/pocket-id/login/callback/",
+			"https://archives.chezmoi.sh/accounts/oidc/pocket-id/login/callback/",
 		],
 		isGroupRestricted: true,
 		isPublic: false,

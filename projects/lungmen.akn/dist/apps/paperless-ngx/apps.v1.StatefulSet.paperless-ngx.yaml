@@ -38,9 +38,9 @@ spec:
         - name: PAPERLESS_CONSUMER_POLLING
           value: "60"
         - name: PAPERLESS_CORS_ALLOWED_HOSTS
-          value: https://paperless.chezmoi.sh
+          value: https://archives.chezmoi.sh
         - name: PAPERLESS_CSRF_TRUSTED_ORIGINS
-          value: https://paperless.chezmoi.sh
+          value: https://archives.chezmoi.sh
         - name: PAPERLESS_DBENGINE
           value: postgresql
         - name: PAPERLESS_DBHOST
