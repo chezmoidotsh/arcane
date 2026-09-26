@@ -156,7 +156,7 @@ uv = "latest"                      # Extremely fast Python package and project m
 # -----------------------------------------------------------------------------
 # Tools for managing Omni cluster templates and configurations
 
-omnictl = "1.9.3"
+omnictl = "1.12.2"
 "github:Handfish/talos-pilot" = "0.1.11"
 
 # -----------------------------------------------------------------------------
