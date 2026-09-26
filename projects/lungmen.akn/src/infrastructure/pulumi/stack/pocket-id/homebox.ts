@@ -13,7 +13,7 @@ import { maisonGroupId } from "./index";
 export const homeboxOidcClient = new pocketid.oidc.OidcClients(
 	"homebox",
 	{
-		name: "Homebox",
+		name: "Catalogue",
 		description: "Inventaire du foyer",
 		logoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/homebox-dark.svg",
