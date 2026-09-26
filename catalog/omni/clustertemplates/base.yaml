@@ -67,6 +67,13 @@
 # extraManifests and cni.urls must point to commits on `main`. Repin whenever
 # a branch touching these manifests merges — squash merges change the SHA.
 #
+# The Cilium installer Job is IMMUTABLE (spec.template). Once a cluster is up, its
+# cni.urls entry must keep pointing at the exact manifest that created the Job
+# (image digest and --version included): any other content makes Talos fail its
+# manifest dry-run with "field is immutable" (Manifest Sync Error). This base uses the
+# latest Cilium manifest for NEW clusters only; do not bump it in a running
+# cluster's template. Runtime Cilium upgrades are driven by ArgoCD.
+#
 # Cross-references:
 #   ADR-014                    docs/decisions/014-network-topology.md
 #   VLAN / SDN layout          docs/network/ipam.md
