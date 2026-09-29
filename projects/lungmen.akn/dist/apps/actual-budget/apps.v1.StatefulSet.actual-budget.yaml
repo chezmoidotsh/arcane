@@ -31,7 +31,7 @@ spec:
           value: "false"
         - name: ACTUAL_TOKEN_EXPIRATION
           value: openid-provider
-        image: oci.chezmoi.sh/ghcr.io/actualbudget/actual-server:26.8.1
+        image: oci.chezmoi.sh/ghcr.io/actualbudget/actual-server:26.9.0
         livenessProbe:
           httpGet:
             path: /
