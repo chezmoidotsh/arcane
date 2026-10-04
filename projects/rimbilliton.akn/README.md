@@ -157,7 +157,7 @@ OIDC/OAuth2 provider serving as the SSO solution for the admin panel.
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
 
-### [Backblaze B2](https://www.backblaze.com/cloud-storage)
+### Backblaze B2
 
 S3-compatible object storage holding the restic repository, in a private bucket with a key scoped to that bucket only.
 
