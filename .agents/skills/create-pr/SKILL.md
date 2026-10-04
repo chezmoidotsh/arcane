@@ -62,17 +62,17 @@ Before pushing anything:
      attestation that only the human committer can make. Surface the warning to the user and let them decide. Do not add
      `-s` to any commit command yourself.
 
-6. Run trunk check on the changed files and fix all issues before pushing:
+6. Run rtunk check on the changed files and fix all issues before pushing:
 
    ```sh
-   trunk check --filter=-conftest
+   rtunk check
    ```
 
-   - **`ISSUES` reported** — fix every lint/format error before creating the PR. Do not suppress trunk warnings with
+   - **`ISSUES` reported** — fix every lint/format error before creating the PR. Do not suppress rtunk warnings with
      `trunk-ignore` unless the warning is a known false positive; explain why in a comment when you do.
    - **`No issues`** — proceed to push.
 
-   Run trunk check locally rather than relying on the CI to catch it: a failed CI run after the PR is open costs a
+   Run rtunk check locally rather than relying on the CI to catch it: a failed CI run after the PR is open costs a
    round-trip and blocks review.
 
 ## Branch naming
@@ -92,7 +92,7 @@ Before pushing anything:
 
 1. Create a branch following the naming conventions above.
 2. Run the commit validator (step 5 above) and fix any `FAIL` items; surface `WARN` items to the user.
-3. Run `trunk check --filter=-conftest` (step 6 above) and fix all issues.
+3. Run `rtunk check` (step 6 above) and fix all issues.
 4. Push: `git push -u origin <branch-name>`
 5. Draft the PR body following the selected template — see `.github/PULL_REQUEST_TEMPLATE/<type>.md` and
    `references/pr-examples.md`.
@@ -137,7 +137,7 @@ elsewhere. Don't act just because a comment exists.
 
 - **Pertinent and mechanical** (typo, requested rename, missing test the reviewer pointed at, lint/CI fix, a small
   clarification) — implement it directly: edit, then follow "Pushing follow-up commits to an existing PR" below
-  (validate commits, `trunk check`, push).
+  (validate commits, `rtunk check`, push).
 - **Pertinent but a design change, ambiguous, or touches security/secrets/shared infra** — do not push unilaterally.
   Surface the comment to the user and wait for direction, same as any other risky/hard-to-reverse action. Leave the
   thread unresolved until that direction lands.
@@ -165,7 +165,7 @@ feedback to your attention immediately, not to grant blanket authority to push u
 
 When adding a commit to a branch that already has an open PR:
 
-1. Run the commit validator and trunk check as above.
+1. Run the commit validator and rtunk check as above.
 2. Push the commit.
 3. **Ask the user** whether the PR body needs updating to reflect the new changes:
 
@@ -439,7 +439,7 @@ gh pr create \
 
 - [ ] Branch name follows convention
 - [ ] Commit validator shows no `FAIL` lines; `WARN` lines surfaced to user
-- [ ] `trunk check --filter=-conftest` reports `No issues` locally
+- [ ] `rtunk check` reports `No issues` locally
 - [ ] PR title is a sentence — verb-first, no symbol prefix, no bracketed scope
 - [ ] PR labels include the scope label(s) matching the changed paths
 - [ ] PR body matches the selected template skeleton: Summary, Changes Made (with subsystem headings), Technical Impact

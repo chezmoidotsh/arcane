@@ -1,4 +1,14 @@
----
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Omni cluster template lint — ADR-014 CIDRs
+# =============================================================================
+# Checks that the Omni cluster templates use the CIDRs mandated by ADR-014 (`scripts/omni:template:lint`).
+#
+# Events:      push (main), pull_request, on the Omni templates and the script only
+# Permissions: contents: read
+# =============================================================================
+
 name: 🧪 Omni Cluster Template CIDR Lint
 
 on:
@@ -19,13 +29,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
+# Minimal top-level permissions — each job declares what it needs.
+permissions: {}
 
 jobs:
   lint:
     name: 🔍 Check ADR-014 CIDR compliance
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

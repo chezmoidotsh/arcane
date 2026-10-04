@@ -1,6 +1,7 @@
 ---
-# This file controls the behavior of Trunk: https://docs.trunk.io/cli
-# To learn more about the format of this file, see https://docs.trunk.io/reference/trunk-yaml
+# Configuration of rtunk for this repository: the linters, runtimes and plugin sources that
+# `rtunk check` and `rtunk fmt` use here. rtunk reads the trunk.yaml format
+# (https://docs.trunk.io/reference/trunk-yaml).
 version: 0.1
 cli:
   version: 1.25.0
@@ -8,14 +9,14 @@ cli:
 plugins:
   sources:
     - id: trunk
-      ref: v1.10.2
+      ref: v1.11.0
       uri: https://github.com/trunk-io/plugins
 # Many linters and tools depend on runtimes - configure them here. (https://docs.trunk.io/runtimes)
 runtimes:
   enabled:
     - python@3.14.4
     - rust@>=1.94.0
-    - go@>=1.26.0
+    - go@1.27.1
     - node@24.14.0
 # This is the section where you override some tools' configurations.
 tools:
@@ -32,6 +33,10 @@ lint:
     - codespell
     - eslint
     - isort
+    - osv-scanner # Disabled until rtunk can acknowledge individual findings by rule ID
+      # (https://github.com/axnic/rtunk/issues/56): it reports advisories on pnpm-lock.yaml
+      # that cannot be fixed in this PR, and the only alternative is a permanently red CI.
+      # Re-enable (osv-scanner@2.5.1) once those findings can be acked.
     - markdown-table-prettify
     - rome
     - terrascan
@@ -41,32 +46,31 @@ lint:
       # Prettier (now the sole markdown formatter, proseWrap/printWidth) --
       # `trunk fmt` loops ("Unable to resolve autofixes from incompatible
       # linters") when both try to format the same .md file. markdownlint
-      # (already Prettier-compatible, see .trunk/configs/.markdownlint.yaml)
+      # (already Prettier-compatible, see .rtunk/configs/.markdownlint.yaml)
       # covers the same class of content-quality checks.
   enabled:
-    - pinact@4.1.0
+    - gitleaks@8.30.1
+    - pinact@4.1.1
     - dotenv-linter@4.0.0
     - nixpkgs-fmt@1.3.0
     - actionlint@1.7.12
     - biome@2.5.0
-    - checkov@3.3.1
+    - checkov@3.3.16
     - git-diff-check
-    - hadolint@2.14.0
+    - hadolint@2.15.1
     - markdown-link-check@3.14.2
     - markdownlint@0.49.0
-    - osv-scanner@2.4.0
-    - oxipng@10.1.1
+    - oxipng@10.2.0
     - prettier@3.8.4
     - renovate@43.233.3
-    - ruff@0.15.18
+    - ruff@0.16.5
     - shellcheck@0.11.0
-    - shfmt@3.6.0
+    - shfmt@3.14.0
     - sort-package-json@4.0.0
     - svgo@4.0.1
-    - trivy@0.71.2
+    - trivy@0.74.0
     - taplo@0.10.0
     - trufflehog@3.95.6
-    - conftest
   threshold:
     - linters: [checkov, trivy]
       level: none
@@ -119,7 +123,7 @@ lint:
       linters: [ALL]
       paths:
         - catalog/pulumi/sdks/**
-    - # dist/ folders contain generated manifests — excluded from all linters except conftest
+    - # dist/ folders contain generated manifests — excluded from all linters (the compliance workflows run the OPA policies on them)
       linters:
         - nixpkgs-fmt
         - actionlint
@@ -143,16 +147,6 @@ lint:
         - trufflehog
       paths:
         - "**/dist/**"
-    - # conftest validates only rendered manifests in dist/
-      linters: [conftest]
-      paths:
-        - catalog/**
-        - defaults/**
-        - docs/**
-        - .github/**
-        - .trunk/**
-        - scripts/**
-        - projects/*/src/**
 
   # This is the section where you override some linters' configurations.
   definitions:
@@ -160,15 +154,6 @@ lint:
       commands:
         - name: lint
           run: markdown-link-check --config .mlc_config.json -q "${target}"
-    - name: conftest
-      files: [yaml]
-      commands:
-        - output: regex
-          run: conftest test "${target}" -p catalog/opa/policies/ --no-color
-          read_output_from: stdout
-          run_linter_from: workspace
-          success_codes: [0, 1, 2]
-          parse_regex: 'FAIL - (?P<path>.+?) - \w+ - (?P<message>.+)'
 
 actions:
   definitions:
@@ -185,8 +170,6 @@ actions:
   enabled:
     - commitlint
     - submodule-init-update
-    - trunk-announce
     - trunk-check-pre-push
     - trunk-fmt-pre-commit
-    - trunk-upgrade-available
     - dist-render-pre-commit

@@ -1,18 +1,36 @@
----
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Sync issue labels to project fields
+# =============================================================================
+# Mirrors the `priority::*` and `size::*` labels of an issue onto the Priority and Effort
+# fields of the Arcane Roadmap project (user project #1), so triage done with labels shows up in
+# the project board. Removing a label clears the field. Labels outside the two maps are ignored.
+#
+# Events:      issues labeled / unlabeled
+# Permissions: issues: read, repository-projects: write
+# =============================================================================
+
 name: 🔄 Sync issue labels to project fields
 
 on:
   issues:
     types: [labeled, unlabeled]
 
-permissions:
-  issues: read
-  repository-projects: write
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+# Minimal top-level permissions — each job declares what it needs.
+permissions: {}
 
 jobs:
   sync:
     name: 🔄 Sync labels to Arcane Roadmap fields
     runs-on: ubuntu-latest
+    permissions:
+      issues: read
+      repository-projects: write
     steps:
       - name: "🔄 Sync priority:: and size:: labels to project fields"
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0

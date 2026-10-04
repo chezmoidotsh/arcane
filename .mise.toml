@@ -40,7 +40,8 @@ _.python.venv = { path = "{{ config_root }}/.mise/python", create = true, uv_cre
 # -----------------------------------------------------------------------------
 # Kubernetes client configuration file containing cluster access credentials
 # Supports multiple cluster contexts for the Arcane infrastructure
-KUBECONFIG = "{{ config_root }}/.mise/kubeconfig"
+KUBECONFIG = "{{ config_root }}/.mise/kubernetes/config"
+KUBECACHEDIR = "{{ config_root }}/.mise/kubernetes/cache"
 
 # Krew plugin manager root directory for kubectl plugins
 # Extends kubectl functionality with community and vendor plugins
@@ -103,6 +104,7 @@ krew = "latest"      # Kubectl plugin manager for extending functionality
 ksops = "latest"     # KSOPS plugin for Kustomize to handle SOPS-encrypted secrets
 kubectl = "latest"   # Kubernetes CLI for managing clusters and resources
 kustomize = "latest" # Kubernetes configuration management tool for customizing manifests
+kubelogin = "latest"
 
 # -----------------------------------------------------------------------------
 # Infrastructure Management Tools
@@ -141,7 +143,7 @@ yq = "latest"       # YAML/JSON processor for configuration file manipulation
 gum = "latest"                     # Terminal UI framework for interactive scripts and prompts
 node = "24.16.0"                   # JavaScript runtime for running Node-based tools and scripts
 pnpm = "latest"                    # Workspace-aware package manager for catalog/pulumi + Pulumi stacks (ADR-015)
-trunk = "latest"                   # Metalinter and formatter for all
+"github:axnic/rtunk" = "latest"    # Metalinter and formatter for all (trunk-compatible, replaces trunk)
 uv = "latest"                      # Extremely fast Python package and project manager
 
 # -----------------------------------------------------------------------------
@@ -172,6 +174,18 @@ cilium-hubble = "latest"
 # Tasks definition
 # =============================================================================
 
+
+[tasks.lint]
+description = "Lint all files with rtunk (check only)"
+alias = "l"
+run = "rtunk check ."
+dir = "{{ config_root }}"
+
+[tasks."lint:fix"]
+description = "Lint all files with rtunk and auto-fix safe issues"
+alias = "lf"
+run = "rtunk check --fix ."
+dir = "{{ config_root }}"
 
 [tasks."ansible:install"]
 description = "Install Ansible and dependencies"

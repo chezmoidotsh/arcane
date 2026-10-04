@@ -1,4 +1,19 @@
----
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Lint — rtunk check on the changed files
+# =============================================================================
+# Runs rtunk (linters and formatters configured in .rtunk/rtunk.yaml) through the axnic/rtunk
+# action on every pull request and merge-queue entry: the files changed since the base branch
+# only, findings become annotations. The OPA policies are not part of the linter stack: the
+# compliance workflows run them against the rendered manifests.
+#
+# Locally: `mise run lint` (check) and `mise run lint:fix` (apply the safe fixes).
+#
+# Events:      pull_request, merge_group
+# Permissions: contents: read
+# =============================================================================
+
 name: 🚨 Lint Everything
 
 on:
@@ -6,23 +21,26 @@ on:
   pull_request: {}
 
 concurrency:
-  group: ${{ github.action }}-${{ github.event.pull_request.id }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
+# Minimal top-level permissions — each job declares what it needs.
 permissions: {}
 
 jobs:
-  trunk:
+  rtunk:
     name: ✅ Validate code quality
     permissions:
       contents: read
-      checks: write
     runs-on: ubuntu-latest
     steps:
+      # Full history is needed by check-mode: changed-since-base.
       - name: ⬇️ Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      # - name: ✏️ Overrides Trunk configuration for Github Action
-      #   run: mv .trunk/gha.yaml .trunk/user.yaml
-      - name: ⚡️ Run `trunk check`
-        uses: trunk-io/trunk-action@75699af9e26881e564e9d832ef7dc3af25ec031b # v1.2.4
         with:
-          arguments: --filter=-conftest
+          fetch-depth: 0
+
+      - name: 🧹 Run rtunk check
+        uses: axnic/rtunk@f6b1c69721d83631620791e82d1bdab9a50ecea6 # v0.16.0
+        with:
+          check-mode: changed-since-base
