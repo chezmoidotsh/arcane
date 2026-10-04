@@ -20,8 +20,8 @@ export const minecraftOidcClient = new pocketid.oidc.OidcClients(
 	{
 		name: "Minecraft",
 		description: "Panel d'administration du serveur Minecraft",
-		launchURL: "https://mc-admin.chezmoi.sh/",
-		callbackURLs: ["https://mc-admin.chezmoi.sh/oauth2/callback"],
+		launchURL: "https://minecraft.chezmoi.sh/",
+		callbackURLs: ["https://minecraft.chezmoi.sh/oauth2/callback"],
 		logoutCallbackURLs: [],
 		isGroupRestricted: true,
 		isPublic: false,

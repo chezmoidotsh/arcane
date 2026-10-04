@@ -1,0 +1,14 @@
+# =============================================================================
+# Rimbilliton.akn - Mise Configuration
+# =============================================================================
+
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram for rimbilliton.akn"
+# Converts the D2 diagram source to SVG format for documentation
+# Input: architecture.d2 (diagram-as-code source)
+# Output: docs/assets/architecture-{light,dark}.svg (embedded in the README)
+run = [
+  "d2 --theme 0 architecture.d2 docs/assets/architecture-light.svg",
+  "d2 --theme 200 architecture.d2 docs/assets/architecture-dark.svg",
+]
+dir = "{{ config_root }}"

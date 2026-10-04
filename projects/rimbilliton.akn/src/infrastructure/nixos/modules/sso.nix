@@ -19,7 +19,7 @@
     email.domains = [ "*" ];
     scope = "openid email profile groups";
     httpAddress = "http://127.0.0.1:4180";
-    redirectURL = "https://mc-admin.chezmoi.sh/oauth2/callback";
+    redirectURL = "https://minecraft.chezmoi.sh/oauth2/callback";
     upstream = [ "https://127.0.0.1:8443" ];
     reverseProxy = true;
     extraConfig = {
@@ -35,7 +35,7 @@
 
   services.caddy = {
     enable = true;
-    virtualHosts."mc-admin.chezmoi.sh".extraConfig = ''
+    virtualHosts."minecraft.chezmoi.sh".extraConfig = ''
       reverse_proxy 127.0.0.1:4180
     '';
   };

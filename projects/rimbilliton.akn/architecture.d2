@@ -1,0 +1,186 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@../../docs/assets/d2/styles.architecture.d2
+
+explanation: |md
+  # rimbilliton.akn Architecture
+
+  This document describes the architecture \
+  of the rimbilliton.akn Minecraft server in a \
+  visual way with all the components and how they \
+  interact with each other.
+
+  rimbilliton.akn is a **single OCI Always Free ARM VM** \
+  running NixOS. Crafty Controller manages the Minecraft \
+  server, its admin panel is protected by Pocket-ID SSO, \
+  and world backups are shipped daily to Backblaze B2.
+| {
+  near: top-left
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   Resources external to the rimbilliton.akn VM that it interacts with:     │
+# │   players, administrators and third-party services.                        │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Networks
+
+internet: {class: network}
+
+tailnet: {class: network}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# External Services
+
+pocket-id: {
+  class: [application]
+  label: Pocket-ID\n(auth.chezmoi.sh)
+  icon: docs/assets/icons/apps/pocket-id.svg
+  link: https://pocket-id.org/
+  tooltip: OIDC SSO provider (admin group only)
+}
+
+letsencrypt: {
+  class: [application]
+  label: Let's Encrypt
+  icon: docs/assets/icons/platform/letsencrypt.svg
+  link: https://letsencrypt.org/
+  tooltip: ACME certificate authority (HTTP-01)
+}
+
+backblaze: {
+  class: [application]
+  label: Backblaze B2
+  link: https://www.backblaze.com/cloud-storage
+  tooltip: Off-site backup bucket
+}
+
+cloudflare: {
+  class: [application]
+  label: Cloudflare DNS
+  icon: docs/assets/icons/platform/cloudflare.svg
+  link: https://www.cloudflare.com/
+  tooltip: DNS-only records mc and minecraft (no proxy)
+}
+
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                            rimbilliton.akn VM                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   NixOS on VM.Standard.A1.Flex (1 OCPU / 6 GB) in a dedicated OCI VCN.     │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+vm: {
+  label: rimbilliton.akn\n(OCI A1.Flex · NixOS)
+  class: namespace
+
+  style.fill-pattern: none
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Admin panel (SSO)
+
+  caddy: {
+    class: [application-system]
+    label: Caddy
+    icon: docs/assets/icons/apps/caddy.svg
+    link: https://caddyserver.com/
+    tooltip: Reverse proxy with automatic TLS for minecraft.chezmoi.sh
+  }
+
+  oauth2-proxy: {
+    class: [application-system]
+    label: oauth2-proxy
+    link: https://oauth2-proxy.github.io/oauth2-proxy/
+    tooltip: OIDC gate, only members of the admin group get through
+  }
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Game server
+
+  crafty: {
+    class: [application]
+    label: Crafty Controller
+    link: https://craftycontrol.com/
+    tooltip: Minecraft server manager (Podman container)
+  }
+
+  minecraft: {
+    class: [application]
+    label: Minecraft Java\n(25565)
+    link: https://www.minecraft.net/
+    tooltip: Game server created and managed from Crafty
+  }
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # System
+
+  restic: {
+    class: [application-system]
+    label: restic
+    link: https://restic.net/
+    tooltip: Daily encrypted backups of Crafty archives and config
+  }
+
+  tailscale: {
+    class: [application-system]
+    label: Tailscale
+    icon: docs/assets/icons/platform/tailscale.svg
+    link: https://tailscale.com/
+    tooltip: SSH and deployments, OCI SSH stays closed
+  }
+}
+
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Players and administrators
+
+internet -> vm.minecraft: |md
+    Minecraft Java
+    (TCP 25565)
+  | { class: [connect-from-internet] }
+
+internet -> vm.caddy: |md
+    HTTP (80)
+    HTTPS (443)
+  | { class: [connect-from-internet] }
+
+tailnet -> vm.tailscale: "SSH (22)\nnixos-rebuild" { class: [connect-vpn] }
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Admin panel flow
+
+vm.caddy -> vm.oauth2-proxy: "Reverse proxy\n(127.0.0.1:4180)"
+
+vm.oauth2-proxy -> vm.crafty: "Authenticated requests\n(127.0.0.1:8443)"
+
+vm.oauth2-proxy -> pocket-id: "OIDC (group: admin)\n(auth.chezmoi.sh:443)" { class: [connect-to-internet] }
+
+vm.crafty -> vm.minecraft: "Start / stop / console\nscheduled backups"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Backups and certificates
+
+vm.restic -> vm.crafty: "Read backup archives\n(/var/lib/crafty/backups)"
+
+vm.restic -> backblaze: |md
+    restic over S3
+    (daily, 04:30)
+  | { class: [connect-to-internet] }
+
+vm.caddy -> letsencrypt: "ACME HTTP-01\n(acme-v02.api.letsencrypt.org:443)" { class: [connect-to-internet] }
+
+cloudflare -> vm.caddy: "mc.chezmoi.sh · minecraft.chezmoi.sh\n(A records)" { class: [connect-to-internet] }
