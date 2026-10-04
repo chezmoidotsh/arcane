@@ -1,0 +1,30 @@
+# =============================================================================
+# rimbilliton.akn Pulumi stack - Mise configuration
+# =============================================================================
+# Minecraft server on OCI Always Free (see ../../../README.md).
+#
+# First run:
+#   pulumi stack init rimbilliton_akn.live
+#   pulumi config set oci:region eu-paris-1
+#   pulumi config set ssh_authorized_keys "<pubkey>"
+#   pulumi config set --secret cloudflare_account_id <id>
+#   pulumi config set --secret cloudflare_zone_id <id>
+#   pulumi config set pocket-id-api:baseUrl https://auth.chezmoi.sh
+#   pulumi config set pocket-id-api:apiKeyHeader X-API-KEY
+#   pulumi config set --secret tailscale:tailnet <tailnet>
+# OCI creds and POCKET_ID_API_KEY are passed inline as env vars, never as
+# Pulumi config (git-tracked file) -- same as kazimierz.akn.
+# =============================================================================
+
+[tools]
+node = "24"
+
+[tasks."pulumi:diff"]
+description = "Preview pending changes for the current Pulumi stack"
+run = "pulumi preview --refresh --parallel 15"
+dir = "{{ config_root }}"
+
+[tasks."pulumi:apply"]
+description = "Apply pending changes to the current Pulumi stack"
+run = ["pulumi up --refresh --parallel 15"]
+dir = "{{ config_root }}"
