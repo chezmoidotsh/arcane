@@ -40,7 +40,8 @@ _.python.venv = { path = "{{ config_root }}/.mise/python", create = true, uv_cre
 # -----------------------------------------------------------------------------
 # Kubernetes client configuration file containing cluster access credentials
 # Supports multiple cluster contexts for the Arcane infrastructure
-KUBECONFIG = "{{ config_root }}/.mise/kubeconfig"
+KUBECONFIG = "{{ config_root }}/.mise/kubernetes/config"
+KUBECACHEDIR = "{{ config_root }}/.mise/kubernetes/cache"
 
 # Krew plugin manager root directory for kubectl plugins
 # Extends kubectl functionality with community and vendor plugins
@@ -103,6 +104,7 @@ krew = "latest"      # Kubectl plugin manager for extending functionality
 ksops = "latest"     # KSOPS plugin for Kustomize to handle SOPS-encrypted secrets
 kubectl = "latest"   # Kubernetes CLI for managing clusters and resources
 kustomize = "latest" # Kubernetes configuration management tool for customizing manifests
+kubelogin = "latest"
 
 # -----------------------------------------------------------------------------
 # Infrastructure Management Tools
