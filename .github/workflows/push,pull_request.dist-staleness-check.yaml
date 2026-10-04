@@ -1,3 +1,16 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# dist/ staleness check
+# =============================================================================
+# dist/ holds the manifests rendered from src/ (ADR-011) and is what ArgoCD syncs: it must never be
+# edited by hand. Re-renders every dist/ with `scripts/dist:render --all` and fails when the
+# result differs from what is committed.
+#
+# Events:      push, pull_request, merge_group (on projects/ and catalog/helm/)
+# Permissions: contents: read
+# =============================================================================
+
 name: 🏗️ dist/ Staleness Check
 on:
   push:

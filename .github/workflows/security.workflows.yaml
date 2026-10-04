@@ -1,4 +1,15 @@
----
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Security hardening of the GitHub Actions workflows
+# =============================================================================
+# Lints the workflows with actionlint and requires every third-party action to be pinned to a
+# commit SHA, whenever a workflow changes.
+#
+# Events:      pull_request (on .github/workflows/**), merge_group
+# Permissions: contents: read
+# =============================================================================
+
 name: 🔒️ Security hardening (Github Actions workflows)
 
 on:

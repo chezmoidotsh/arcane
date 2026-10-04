@@ -1,4 +1,16 @@
----
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Sync GitHub labels
+# =============================================================================
+# Makes the repository labels match .github/labels.yaml. `prune: true` deletes any label that is
+# not in the file, so the file is the single source of truth. Runs on a change to the file, daily
+# (to undo manual edits) and on demand.
+#
+# Events:      push (main, on the labels file), schedule, workflow_dispatch
+# Permissions: issues: write
+# =============================================================================
+
 name: 🏷️ Sync Github labels
 
 on:
@@ -10,6 +22,11 @@ on:
     - cron: 0 0 * * *
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+# Minimal top-level permissions — each job declares what it needs.
 permissions: {}
 
 jobs:

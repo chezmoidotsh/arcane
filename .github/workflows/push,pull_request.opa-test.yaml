@@ -1,3 +1,14 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# OPA policy tests
+# =============================================================================
+# Runs the unit tests of the OPA/Rego policies (`opa test`) when a policy changes.
+#
+# Events:      push (main), pull_request, on catalog/opa/ only
+# Permissions: contents: read
+# =============================================================================
+
 name: 🧪 OPA Policy Tests
 
 on:
@@ -16,13 +27,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
+# Minimal top-level permissions — each job declares what it needs.
+permissions: {}
 
 jobs:
   opa-test:
     name: Run OPA unit tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

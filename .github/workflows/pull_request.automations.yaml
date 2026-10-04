@@ -1,10 +1,27 @@
----
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Issue / PR automation — title convention
+# =============================================================================
+# Rejects pull request and issue titles that use the commit symbol format (`+[scope]: ...`) or a
+# gitmoji prefix: titles are sentence-form, the `type[scope]: Subject` format is for commits only.
+# The rule lives in .github/scripts/check-title.sh.
+#
+# Events:      pull_request, issues opened / reopened / edited
+# Permissions: contents: read
+# =============================================================================
+
 name: 🤖 Issue/PR Automation
 on:
   pull_request:
   issues:
     types: [opened, reopened, edited]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+# Minimal top-level permissions — each job declares what it needs.
 permissions: {}
 
 jobs:

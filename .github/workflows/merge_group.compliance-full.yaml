@@ -1,3 +1,17 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Full Compliance — OPA policies and Zot coverage on every dist/
+# =============================================================================
+# Merge-queue counterpart of push,pull_request.compliance-partial.yaml: when a watched path changed
+# (the OPA policies or any rendered manifest), checks EVERY dist/ directory instead of only the
+# changed ones, so a policy change cannot break an untouched app unnoticed. One matrix job per
+# directory: conftest against catalog/opa/policies/, then the Zot registry coverage check.
+#
+# Events:      merge_group
+# Permissions: contents: read
+# =============================================================================
+
 name: 🏛️ Full Compliance
 
 on:

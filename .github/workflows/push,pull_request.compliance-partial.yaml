@@ -1,3 +1,17 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Partial Compliance — OPA policies and Zot coverage on changed dist/
+# =============================================================================
+# On a change to a rendered manifest, a Helm catalog entry or the checkers themselves:
+# re-renders every dist/ and fails when one is stale, then runs, for each changed dist/ directory
+# (one matrix job each), conftest against catalog/opa/policies/ and the Zot registry coverage
+# check. The full run over every directory is merge_group.compliance-full.yaml.
+#
+# Events:      push (main), pull_request, on the watched paths only
+# Permissions: contents: read, pull-requests: read (changed files)
+# =============================================================================
+
 name: 🏛️ Partial Compliance
 
 on:

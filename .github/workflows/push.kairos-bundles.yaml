@@ -1,4 +1,16 @@
----
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Kairos bundles — (re)build and push to GHCR
+# =============================================================================
+# Rebuilds every Kairos bundle of catalog/kairos-bundles/ (multi-arch, with provenance and SBOM)
+# and pushes it to ghcr.io/<owner>/kairos-bundles:<bundle>. All bundles are rebuilt on any change,
+# since the list is derived from the directory.
+#
+# Events:      push (main), on catalog/kairos-bundles/ only
+# Permissions: contents: read, packages: write (build job only)
+# =============================================================================
+
 name: 📦 (re)Build all Kairos bundles
 
 on:
@@ -8,14 +20,19 @@ on:
       - .github/workflows/push.kairos-bundles.yaml
       - catalog/kairos-bundles/**
 
-permissions:
-  contents: read
-  packages: write
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+# Minimal top-level permissions — each job declares what it needs.
+permissions: {}
 
 jobs:
   list_all_bundles:
     name: 📄 List all bundles
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       all_bundles: ${{ steps.list_bundles.outputs.all }}
     steps:
@@ -39,6 +56,9 @@ jobs:
     name: 🏗️ Build bundle (${{ matrix.bundle }})
     needs: list_all_bundles
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     strategy:
       matrix:
         bundle: ${{ fromJson(needs.list_all_bundles.outputs.all_bundles) }}

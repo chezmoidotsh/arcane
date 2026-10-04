@@ -1,4 +1,15 @@
----
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Vector pipeline tests
+# =============================================================================
+# Validates the Vector configuration of the observability LXC (syntax and component graph),
+# then runs its unit and end-to-end tests when it changes.
+#
+# Events:      push (main), pull_request, on the Vector config directory only
+# Permissions: contents: read
+# =============================================================================
+
 name: 🧪 Vector Pipeline Tests
 
 on:
@@ -17,8 +28,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
+# Minimal top-level permissions — each job declares what it needs.
+permissions: {}
 
 env:
   VECTOR_CONFIG_DIR: projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/config/vector
@@ -27,6 +38,8 @@ jobs:
   validate:
     name: 🔍 Validate config syntax
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -48,6 +61,8 @@ jobs:
   test:
     name: 🧪 Run all tests (unit + e2e)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [validate]
     steps:
       - name: ⬇️ Checkout repo
