@@ -160,6 +160,10 @@ const scopes = [
 		value: "project:rhodes.akn",
 	},
 	{
+		name: "project:rimbilliton.akn - Anything related to the rimbilliton.akn project",
+		value: "project:rimbilliton.akn",
+	},
+	{
 		name: "project:shodan.akn    - Anything related to the shodan project",
 		value: "project:shodan.akn",
 	},
