@@ -69,7 +69,7 @@ cloudflare: {
   label: Cloudflare DNS
   icon: docs/assets/icons/platform/cloudflare.svg
   link: https://www.cloudflare.com/
-  tooltip: DNS-only records mc and minecraft (no proxy)
+  tooltip: DNS-only record minecraft (no proxy)
 }
 
 
@@ -183,4 +183,4 @@ vm.restic -> backblaze: |md
 
 vm.caddy -> letsencrypt: "ACME HTTP-01\n(acme-v02.api.letsencrypt.org:443)" { class: [connect-to-internet] }
 
-cloudflare -> vm.caddy: "mc.chezmoi.sh · minecraft.chezmoi.sh\n(A records)" { class: [connect-to-internet] }
+cloudflare -> vm.caddy: "minecraft.chezmoi.sh\n(A record)" { class: [connect-to-internet] }

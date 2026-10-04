@@ -10,19 +10,13 @@ const zoneId = config.requireSecret("cloudflare_zone_id");
 // no DNS-01 token is needed on this host.
 //
 // DNS-only (not proxied): Cloudflare's proxy doesn't carry Minecraft's TCP.
-// mc.chezmoi.sh = game address, minecraft.chezmoi.sh = SSO-gated panel.
-export const dnsRecords = [
-	{ name: "mc", comment: "rimbilliton.akn -> Minecraft server" },
-	{ name: "minecraft", comment: "rimbilliton.akn -> Crafty panel (SSO)" },
-].map(
-	({ name, comment }) =>
-		new cloudflare.DnsRecord(`rimbilliton-${name}`, {
-			zoneId,
-			name,
-			type: "A",
-			content: instance.publicIp,
-			ttl: 300,
-			proxied: false,
-			comment,
-		}),
-);
+// A single name serves both the game (25565/tcp) and the SSO-gated panel (443).
+export const dnsRecord = new cloudflare.DnsRecord("rimbilliton-minecraft", {
+	zoneId,
+	name: "minecraft",
+	type: "A",
+	content: instance.publicIp,
+	ttl: 300,
+	proxied: false,
+	comment: "rimbilliton.akn -> Minecraft server and Crafty panel",
+});
