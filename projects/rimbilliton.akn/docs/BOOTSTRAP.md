@@ -62,8 +62,9 @@ cp secrets/rimbilliton.example.yaml secrets/rimbilliton.sops.yaml   # fill from 
 sops --encrypt --in-place secrets/rimbilliton.sops.yaml
 ```
 
-Then set `clientID` (`modules/sso.nix`), `bucket` (`modules/backup.nix`), pin the Crafty image tag
-(`modules/crafty.nix`) and add your SSH public key (`configuration.nix`). Do not commit `extra/`.
+Generate and commit the lock file (`nix flake lock`) so every build uses the same input revisions, then set `clientID`
+(`modules/sso.nix`), `bucket` (`modules/backup.nix`), pin the Crafty image tag (`modules/crafty.nix`) and add your SSH
+public key (`configuration.nix`). Do not commit `extra/`.
 
 ### 3. Install NixOS
 

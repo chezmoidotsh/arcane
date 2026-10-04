@@ -52,7 +52,6 @@ export const instance = new oci.core.Instance(
 		createVnicDetails: {
 			subnetId: subnet.id,
 			assignPublicIp: "true",
-			assignIpv6ip: true,
 			nsgIds: [nsg.id],
 		},
 		metadata: { ssh_authorized_keys: config.require("ssh_authorized_keys") },

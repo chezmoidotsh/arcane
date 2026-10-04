@@ -227,7 +227,7 @@ See [docs/BOOTSTRAP.md](./docs/BOOTSTRAP.md) for the complete bootstrap procedur
 - **SSO Integration**: The admin panel is only reachable through Pocket-ID (auth.chezmoi.sh), `admin` and `minecraft`
   groups only
 - **SSH Access**: VM management via Tailscale only, SSH never exposed to the public internet
-- **Exposed ports**: 25565 (Minecraft), 80 and 443 (Caddy) only, on both IPv4 and IPv6
+- **Exposed ports**: 25565 (Minecraft), 80 and 443 (Caddy) only (IPv4: the subnet is not dual-stack)
 
 ### Data & Secrets Protection
 
