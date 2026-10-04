@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Wiki — publish wiki/ to the GitHub Wiki of the repository
+# =============================================================================
+# Mirrors the wiki/ directory as-is to the wiki repository, on every push to main that touches
+# it and on demand. Runs are serialized (cancel-in-progress: false) so two publications never
+# race on the wiki repository.
+#
+#   publish — mirror wiki/ to the wiki
+#
+# One-time setup: the wiki must be enabled (Settings > Features > Wikis) and initialized (one
+# page created by hand in the UI), otherwise the wiki repository does not exist yet.
+#
+# Secrets:     none (the job token is used)
+# Permissions: contents: write (pushes to the wiki repository)
+# =============================================================================
+
+name: 📚 Wiki
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - wiki/**
+      - .github/workflows/push,workflow_dispatch.wiki.yaml
+  workflow_dispatch: {}
+
+concurrency:
+  group: wiki
+  cancel-in-progress: false
+
+# Minimal top-level permissions — each job declares what it needs.
+permissions: {}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # publish — mirror wiki/ to the wiki
+  # ---------------------------------------------------------------------------
+  publish:
+    name: 📚 Publish wiki
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 📤 Publish wiki/ to the wiki
+        uses: Andrew-Chen-Wang/github-wiki-action@1bbb4280446f9630e8e21a18012cbacf3b0f992e # v5.0.6
+        with:
+          path: wiki
+          disable-empty-commits: true

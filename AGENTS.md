@@ -79,8 +79,9 @@ Grouped by concern rather than alphabetically, since agents usually need "what h
 | Secrets source        | OpenBao (`https://vault.chezmoi.sh`), synced to Kubernetes `Secret`s via External Secrets Operator; SOPS + age for secrets that must live in Git (ADR-001–004)            |
 | Identity / SSO        | Pocket-Id is the **sole** identity provider                                                                                                                               |
 | Observability         | VictoriaMetrics + VictoriaLogs + vmalert + Alertmanager on a single NixOS LXC (ADR-013), fed by per-cluster vmagent (metrics) and Vector (logs); Grafana for dashboards   |
-| Policy enforcement    | OPA/Rego, CI-time only via conftest + trunk (ADR-012) — no in-cluster admission webhook                                                                                   |
+| Policy enforcement    | OPA/Rego, CI-time only via conftest in the compliance workflows (ADR-012) — no in-cluster admission webhook                                                               |
 | Network topology      | Dual-NIC Proxmox host + Proxmox SDN VXLAN (ADR-014, `docs/network/`)                                                                                                      |
+| Linting               | rtunk (trunk-compatible, `.rtunk/rtunk.yaml`) — `mise run lint` / `mise run lint:fix`; CI runs it through the `axnic/rtunk` action                                        |
 | Dev environment       | mise (tool versions), Nix flakes (reproducible OCI images), an experimental DevContainer under `docs/experiments/` (not repo-wide)                                        |
 
 ## Development environment
@@ -267,6 +268,22 @@ In short:
 - Commits must be GPG-signed (`-S`); `Signed-off-by` (`-s`) is the human committer's responsibility — agents must not
   add it on the user's behalf.
 - Use `Assisted-by: <provider>:<model>` to attribute AI involvement.
+
+## CI and linting
+
+Workflows live in `.github/workflows/`, named `<sorted triggers>.<action>.yaml`. House style: a banner (purpose, events,
+permissions), SHA-pinned actions, `permissions: {}` at the top with each job declaring what it needs, and a
+`concurrency` group.
+
+- **Linting** is rtunk (`.rtunk/rtunk.yaml`, trunk-compatible): `mise run lint`, `mise run lint:fix`. CI runs it through
+  the `axnic/rtunk` action (`merge_group,pull_request.all.lint.yaml`). OPA policies are _not_ part of it: the compliance
+  workflows run conftest on the rendered `dist/` directories.
+- **PR Agent** (`issue_comment,pull_request.pr-agent.yaml`) answers `/describe`, `/review`, `/improve`, `/ask` and
+  `/help` in pull request comments — nothing runs automatically, and its answers are advisory. It needs the repository
+  secret `OPENROUTER_API_KEY` (created by hand) and the repository variable `PR_AGENT_ALLOWED_USERS` (JSON list of
+  GitHub logins, e.g. `["xunleii"]`); without them it does nothing.
+- **Wiki** (`push,workflow_dispatch.wiki.yaml`) mirrors `wiki/` to the GitHub wiki on every push to `main` that touches
+  it. The wiki must be enabled and initialised once by hand (create one page in the UI).
 
 ## Operating constraints for AI agents
 
