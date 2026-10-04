@@ -273,7 +273,7 @@ Run the full upgrade flow. Flags:
 
 4. Register the tasks in `lxc/<name>/.mise.toml` (the task discovery file for mise).
 
-5. Run `trunk check --filter=-conftest` on the new scripts before committing.
+5. Run `rtunk check` on the new scripts before committing.
 
 ## Common issues
 

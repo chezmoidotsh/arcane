@@ -1,6 +1,7 @@
 ---
-# This file controls the behavior of Trunk: https://docs.trunk.io/cli
-# To learn more about the format of this file, see https://docs.trunk.io/reference/trunk-yaml
+# Configuration of rtunk for this repository: the linters, runtimes and plugin sources that
+# `rtunk check` and `rtunk fmt` use here. rtunk reads the trunk.yaml format
+# (https://docs.trunk.io/reference/trunk-yaml).
 version: 0.1
 cli:
   version: 1.25.0
@@ -41,7 +42,7 @@ lint:
       # Prettier (now the sole markdown formatter, proseWrap/printWidth) --
       # `trunk fmt` loops ("Unable to resolve autofixes from incompatible
       # linters") when both try to format the same .md file. markdownlint
-      # (already Prettier-compatible, see .trunk/configs/.markdownlint.yaml)
+      # (already Prettier-compatible, see .rtunk/configs/.markdownlint.yaml)
       # covers the same class of content-quality checks.
   enabled:
     - pinact@4.1.0
@@ -66,7 +67,6 @@ lint:
     - trivy@0.71.2
     - taplo@0.10.0
     - trufflehog@3.95.6
-    - conftest
   threshold:
     - linters: [checkov, trivy]
       level: none
@@ -119,7 +119,7 @@ lint:
       linters: [ALL]
       paths:
         - catalog/pulumi/sdks/**
-    - # dist/ folders contain generated manifests — excluded from all linters except conftest
+    - # dist/ folders contain generated manifests — excluded from all linters (the compliance workflows run the OPA policies on them)
       linters:
         - nixpkgs-fmt
         - actionlint
@@ -143,16 +143,6 @@ lint:
         - trufflehog
       paths:
         - "**/dist/**"
-    - # conftest validates only rendered manifests in dist/
-      linters: [conftest]
-      paths:
-        - catalog/**
-        - defaults/**
-        - docs/**
-        - .github/**
-        - .trunk/**
-        - scripts/**
-        - projects/*/src/**
 
   # This is the section where you override some linters' configurations.
   definitions:
@@ -160,15 +150,6 @@ lint:
       commands:
         - name: lint
           run: markdown-link-check --config .mlc_config.json -q "${target}"
-    - name: conftest
-      files: [yaml]
-      commands:
-        - output: regex
-          run: conftest test "${target}" -p catalog/opa/policies/ --no-color
-          read_output_from: stdout
-          run_linter_from: workspace
-          success_codes: [0, 1, 2]
-          parse_regex: 'FAIL - (?P<path>.+?) - \w+ - (?P<message>.+)'
 
 actions:
   definitions:
@@ -185,8 +166,6 @@ actions:
   enabled:
     - commitlint
     - submodule-init-update
-    - trunk-announce
     - trunk-check-pre-push
     - trunk-fmt-pre-commit
-    - trunk-upgrade-available
     - dist-render-pre-commit

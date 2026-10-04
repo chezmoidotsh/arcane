@@ -141,7 +141,7 @@ yq = "latest"       # YAML/JSON processor for configuration file manipulation
 gum = "latest"                     # Terminal UI framework for interactive scripts and prompts
 node = "24.16.0"                   # JavaScript runtime for running Node-based tools and scripts
 pnpm = "latest"                    # Workspace-aware package manager for catalog/pulumi + Pulumi stacks (ADR-015)
-trunk = "latest"                   # Metalinter and formatter for all
+"github:axnic/rtunk" = "latest"    # Metalinter and formatter for all (trunk-compatible, replaces trunk)
 uv = "latest"                      # Extremely fast Python package and project manager
 
 # -----------------------------------------------------------------------------
@@ -172,6 +172,18 @@ cilium-hubble = "latest"
 # Tasks definition
 # =============================================================================
 
+
+[tasks.lint]
+description = "Lint all files with rtunk (check only)"
+alias = "l"
+run = "rtunk check ."
+dir = "{{ config_root }}"
+
+[tasks."lint:fix"]
+description = "Lint all files with rtunk and auto-fix safe issues"
+alias = "lf"
+run = "rtunk check --fix ."
+dir = "{{ config_root }}"
 
 [tasks."ansible:install"]
 description = "Install Ansible and dependencies"
