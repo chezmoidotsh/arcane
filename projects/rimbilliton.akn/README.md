@@ -34,7 +34,7 @@ The solution is a **single VM** (no Kubernetes) provisioned by Pulumi and config
 
 - **NixOS**: Installed over a bootstrap Ubuntu image with `nixos-anywhere`, fully declarative
 - **Crafty Controller**: Web UI to create, run and back up Minecraft servers (Podman container)
-- **Caddy + oauth2-proxy**: TLS and OIDC gate in front of Crafty, restricted to the Pocket-ID `admin` group
+- **Caddy + oauth2-proxy**: TLS and OIDC gate in front of Crafty, restricted to the Pocket-ID `admin` and `minecraft` groups
 - **restic**: Daily encrypted backups of Crafty archives to Backblaze B2
 - **Tailscale**: Mesh VPN for SSH access and deployments
 - **Pulumi**: Provisions the OCI compartment, dedicated VCN/subnet/NSG, the instance, DNS records, the B2 bucket and the
@@ -43,7 +43,7 @@ The solution is a **single VM** (no Kubernetes) provisioned by Pulumi and config
 This architecture provides:
 
 - **Declarative setup** from the cloud resources down to the OS, rebuildable from this repository
-- **SSO-protected administration** with admins managed in Pocket-ID
+- **Delegated administration**: anyone added to the Pocket-ID `minecraft` group can create and manage their own server from Crafty, without access to the rest of the infrastructure
 - **Free hosting** within the Always Free quota (1 OCPU / 6 GB, shared with kazimierz.akn)
 - **Resilient data** with backups outside OCI, so losing the VM never loses the world
 
@@ -92,7 +92,7 @@ HTTP reverse proxy with automatic Let's Encrypt certificates (HTTP-01), exposing
 
 ### [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/)
 
-OIDC authentication proxy between Caddy and Crafty. Only members of the Pocket-ID `admin` group get through.
+OIDC authentication proxy between Caddy and Crafty. Only members of the Pocket-ID `admin` and `minecraft` groups get through (the restriction is enforced by the OIDC client).
 
 **\*Why this choice**: Adds SSO to an application without OIDC support, with a native NixOS module.\*
 
@@ -221,7 +221,7 @@ See [docs/BOOTSTRAP.md](./docs/BOOTSTRAP.md) for the complete bootstrap procedur
 
 ### Authentication & Access Control
 
-- **SSO Integration**: The admin panel is only reachable through Pocket-ID (auth.chezmoi.sh), `admin` group only
+- **SSO Integration**: The admin panel is only reachable through Pocket-ID (auth.chezmoi.sh), `admin` and `minecraft` groups only
 - **SSH Access**: VM management via Tailscale only, SSH never exposed to the public internet
 - **Exposed ports**: 25565 (Minecraft), 80 and 443 (Caddy) only, on both IPv4 and IPv6
 

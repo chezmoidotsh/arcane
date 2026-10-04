@@ -6,15 +6,23 @@ import {
 import * as pocketid from "@pulumi/pocket-id";
 import * as pulumi from "@pulumi/pulumi";
 
-// Groups live in chezmoi.sh (single source of truth).
+// The `admin` group lives in chezmoi.sh (single source of truth).
 const chezmoiSh = new pulumi.StackReference("chezmoi.sh", {
 	name: "organization/chezmoi-sh-infra/chezmoi_sh.live",
 });
 const adminGroupId = chezmoiSh.getOutput("adminGroupId") as pulumi.Output<string>;
 
+// Members of this group can reach the Crafty panel and run their own Minecraft
+// server (create, configure, back up). Add users from the Pocket-Id UI.
+export const minecraftGroup = new pocketid.usergroups.UserGroups(
+	"minecraft",
+	{ name: "minecraft", friendlyName: "Minecraft" },
+	{ provider: pocketIdProvider() },
+);
+
 // OIDC client used by oauth2-proxy (NixOS) in front of the Crafty panel.
-// Restricted to the `admin` group: being admin in Pocket-Id is what gives
-// access to the Minecraft admin panel.
+// Restricted to `admin` and `minecraft`: Pocket-Id itself enforces who may log
+// in, oauth2-proxy has no group filter of its own.
 export const minecraftOidcClient = new pocketid.oidc.OidcClients(
 	"minecraft",
 	{
@@ -35,9 +43,10 @@ export const minecraftOidcClient = new pocketid.oidc.OidcClients(
 
 new AllowedUserGroups("minecraft-groups", {
 	clientId: minecraftOidcClient.id,
-	groupIds: [adminGroupId],
+	groupIds: [adminGroupId, minecraftGroup.id],
 });
 
+export const minecraftGroupId = minecraftGroup.id;
 export const minecraftOidcClientId = minecraftOidcClient.id;
 export const minecraftOidcClientSecret = new OidcClientSecret(
 	"minecraft-secret",

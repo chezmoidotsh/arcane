@@ -14,7 +14,7 @@ installed over it with `nixos-anywhere`, which is the only manual step.
 
 - **configuration.nix**: Boot, network, SSH (Tailscale only), Tailscale, sops-nix
 - **modules/crafty.nix**: Crafty Controller as a Podman container
-- **modules/sso.nix**: Caddy and oauth2-proxy in front of Crafty (Pocket-ID, `admin` group)
+- **modules/sso.nix**: Caddy and oauth2-proxy in front of Crafty (Pocket-ID, `admin` and `minecraft` groups)
 - **modules/backup.nix**: restic backups to Backblaze B2
 
 ## Prerequisites
@@ -71,13 +71,18 @@ tailscale status | grep rimbilliton                      # the host joined the t
 ssh root@rimbilliton systemctl status podman-crafty oauth2-proxy caddy
 ```
 
-Open `https://minecraft.chezmoi.sh`: the Pocket-ID login must appear, and refuse a user outside the `admin` group.
+Open `https://minecraft.chezmoi.sh`: the Pocket-ID login must appear, and refuse a user outside the `admin` and `minecraft` groups.
 
 ## Post-Bootstrap Configuration
 
 1. **Crafty**: get the initial password from `/var/lib/crafty/config/default-creds.txt`, create a Paper server on port
    25565, set `-Xmx4G`, and schedule a backup every 6 hours (keep 3).
-2. **Backups**: run `systemctl start restic-backups-minecraft`, then check the snapshot with `restic snapshots` against
+2. **Give someone their own server**: add the user to the `minecraft` group in the Pocket-ID UI (they can then reach
+   the panel), then create their account in Crafty (Config > Users) with a role allowing server creation and
+   management. Only one server can listen on 25565 at a time (the only game port open on the OCI network security
+   group): extra servers must be stopped, or another port opened in `network.ts` and `crafty.nix`. The VM has 1 OCPU
+   and 6 GB: about 4 GB of Java heap, which suits Paper/Fabric for a few players, not heavy modpacks.
+3. **Backups**: run `systemctl start restic-backups-minecraft`, then check the snapshot with `restic snapshots` against
    the B2 repository.
 
 Later changes are deployed over Tailscale:
