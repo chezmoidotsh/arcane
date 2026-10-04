@@ -41,6 +41,6 @@ jobs:
           fetch-depth: 0
 
       - name: 🧹 Run rtunk check
-        uses: axnic/rtunk@main
+        uses: axnic/rtunk@f6b1c69721d83631620791e82d1bdab9a50ecea6 # v0.16.0
         with:
           check-mode: changed-since-base
