@@ -10,7 +10,9 @@ import * as pulumi from "@pulumi/pulumi";
 const chezmoiSh = new pulumi.StackReference("chezmoi.sh", {
 	name: "organization/chezmoi-sh-infra/chezmoi_sh.live",
 });
-const adminGroupId = chezmoiSh.getOutput("adminGroupId") as pulumi.Output<string>;
+const adminGroupId = chezmoiSh.getOutput(
+	"adminGroupId",
+) as pulumi.Output<string>;
 
 // Members of this group can reach the Crafty panel and run their own Minecraft
 // server (create, configure, back up). Add users from the Pocket-Id UI.

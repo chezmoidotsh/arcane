@@ -14,7 +14,12 @@ in
   virtualisation.oci-containers.backend = "podman";
 
   systemd.tmpfiles.rules = map (d: "d ${dataDir}/${d} 0755 root root -") [
-    "" "backups" "logs" "servers" "config" "import"
+    ""
+    "backups"
+    "logs"
+    "servers"
+    "config"
+    "import"
   ];
 
   virtualisation.oci-containers.containers.crafty = {

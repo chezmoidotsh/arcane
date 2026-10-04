@@ -3,17 +3,7 @@
 # =============================================================================
 # Minecraft server on OCI Always Free (see ../../../README.md).
 #
-# First run:
-#   pulumi stack init rimbilliton_akn.live
-#   pulumi config set oci:region eu-paris-1
-#   pulumi config set ssh_authorized_keys "<pubkey>"
-#   pulumi config set --secret cloudflare_account_id <id>
-#   pulumi config set --secret cloudflare_zone_id <id>
-#   pulumi config set pocket-id-api:baseUrl https://auth.chezmoi.sh
-#   pulumi config set pocket-id-api:apiKeyHeader X-API-KEY
-#   pulumi config set --secret tailscale:tailnet <tailnet>
-# OCI creds and POCKET_ID_API_KEY are passed inline as env vars, never as
-# Pulumi config (git-tracked file) -- same as kazimierz.akn.
+# First run: see docs/BOOTSTRAP.md (Pulumi configuration).
 # =============================================================================
 
 [tools]
