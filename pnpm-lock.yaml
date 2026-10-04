@@ -13,14 +13,14 @@ catalogs:
       specifier: ^6.17.0
       version: 6.17.0
     '@pulumi/kubernetes':
-      specifier: ^4.33.0
-      version: 4.33.0
+      specifier: ^4.34.1
+      version: 4.34.1
     '@pulumi/oci':
       specifier: ^4.20.0
       version: 4.20.0
     '@pulumi/pulumi':
-      specifier: ^3.250.0
-      version: 3.250.0
+      specifier: ^3.262.0
+      version: 3.262.0
     '@pulumi/random':
       specifier: ^4.18.0
       version: 4.21.0
@@ -28,11 +28,11 @@ catalogs:
       specifier: ^0.28.0
       version: 0.28.0
     '@pulumi/vault':
-      specifier: ^7.10.0
-      version: 7.10.0
+      specifier: ^7.12.0
+      version: 7.12.0
     '@pulumiverse/grafana':
-      specifier: ^2.37.0
-      version: 2.37.0
+      specifier: ^2.39.1
+      version: 2.39.1
     '@types/chai':
       specifier: ^4.3.0
       version: 4.3.20
@@ -72,7 +72,7 @@ importers:
         version: 6.17.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/pulumi':
         specifier: 'catalog:'
-        version: 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       '@types/chai':
         specifier: 'catalog:'
@@ -100,10 +100,10 @@ importers:
     dependencies:
       '@pulumi/pulumi':
         specifier: 'catalog:'
-        version: 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/vault':
         specifier: 'catalog:'
-        version: 7.10.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 7.12.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       '@types/chai':
         specifier: 'catalog:'
@@ -134,7 +134,7 @@ importers:
         version: 1.0.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/pulumi':
         specifier: 'catalog:'
-        version: 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       '@types/chai':
         specifier: 'catalog:'
@@ -165,7 +165,7 @@ importers:
         version: link:../../sdks/proxmox
       '@pulumi/pulumi':
         specifier: 'catalog:'
-        version: 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       '@types/chai':
         specifier: 'catalog:'
@@ -196,7 +196,7 @@ importers:
         version: link:../../lib
       '@pulumi/pulumi':
         specifier: 'catalog:'
-        version: 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/truenas':
         specifier: workspace:*
         version: link:../../sdks/truenas
@@ -233,7 +233,7 @@ importers:
         version: link:../sdks/pocket-id
       '@pulumi/pulumi':
         specifier: 'catalog:'
-        version: 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       '@types/chai':
         specifier: 'catalog:'
@@ -348,7 +348,7 @@ importers:
         version: 6.17.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/kubernetes':
         specifier: 'catalog:'
-        version: 4.33.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 4.34.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/pocket-id':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/sdks/pocket-id
@@ -360,7 +360,7 @@ importers:
         version: link:../../../../../catalog/pulumi/sdks/proxmox-backup-server
       '@pulumi/pulumi':
         specifier: 'catalog:'
-        version: 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/random':
         specifier: 'catalog:'
         version: 4.21.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
@@ -372,7 +372,7 @@ importers:
         version: link:../../../../../catalog/pulumi/sdks/truenas
       '@pulumi/vault':
         specifier: 'catalog:'
-        version: 7.10.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 7.12.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       handlebars:
         specifier: 'catalog:'
         version: 4.7.9
@@ -412,7 +412,7 @@ importers:
         version: link:../../../../../catalog/pulumi/sdks/pocket-id
       '@pulumi/pulumi':
         specifier: 'catalog:'
-        version: 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       typescript:
         specifier: 'catalog:'
@@ -440,7 +440,7 @@ importers:
         version: link:../../../../../catalog/pulumi/sdks/pocket-id
       '@pulumi/pulumi':
         specifier: 'catalog:'
-        version: 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       typescript:
         specifier: 'catalog:'
@@ -468,7 +468,7 @@ importers:
         version: link:../../../../../catalog/pulumi/components/proxmox-cluster-identity
       '@pulumi/kubernetes':
         specifier: 'catalog:'
-        version: 4.33.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 4.34.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/pangolin':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/sdks/pangolin
@@ -480,7 +480,7 @@ importers:
         version: link:../../../../../catalog/pulumi/sdks/proxmox
       '@pulumi/pulumi':
         specifier: 'catalog:'
-        version: 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/random':
         specifier: 'catalog:'
         version: 4.21.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
@@ -489,10 +489,10 @@ importers:
         version: 0.28.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/vault':
         specifier: 'catalog:'
-        version: 7.10.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 7.12.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumiverse/grafana':
         specifier: 'catalog:'
-        version: 2.37.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 2.39.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       typescript:
         specifier: 'catalog:'
@@ -523,7 +523,7 @@ importers:
         version: 6.17.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/kubernetes':
         specifier: 'catalog:'
-        version: 4.33.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 4.34.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/pangolin':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/sdks/pangolin
@@ -535,13 +535,13 @@ importers:
         version: link:../../../../../catalog/pulumi/sdks/proxmox
       '@pulumi/pulumi':
         specifier: 'catalog:'
-        version: 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/random':
         specifier: 'catalog:'
         version: 4.21.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@pulumi/vault':
         specifier: 'catalog:'
-        version: 7.10.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+        version: 7.12.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       typescript:
         specifier: 'catalog:'
@@ -655,6 +655,10 @@ packages:
     resolution: {integrity: sha512-mGUWr1uMnf0le2TwfOZY4SFxZGXGfm4Jtay/nwAa2FLNAKXUoUwaGwBMNH36UHPtinWfTSJ3nqFQr0091CxVGg==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
+  '@opentelemetry/api-logs@0.220.0':
+    resolution: {integrity: sha512-CmVa4ImJ+ynfrPMNaAXHET6Bhb44SwzmfyVJFq9ni2jgXJR/l7C6gfVFddNmHP+ZOkP9cf4f9DBe68qVLTHc9w==}
+    engines: {node: '>=8.0.0'}
+
   '@opentelemetry/api-logs@0.57.2':
     resolution: {integrity: sha512-uIX52NnTM0iBh84MShlpouI7UKqkZ7MrUszTmaypHBu4r7NofznSnQRfJ+uUeDtQDj6w8eFGg5KBLDAwAPz1+A==}
     engines: {node: '>=14'}
@@ -669,11 +673,35 @@ packages:
     peerDependencies:
       '@opentelemetry/api': '>=1.0.0 <1.10.0'
 
+  '@opentelemetry/context-async-hooks@2.11.0':
+    resolution: {integrity: sha512-Tr79DyWI8itsBdg+jH+opjfrwLzX+erk1/ExkIwhWoAVjVrJIn2y5+cGjTC0Vy8fyNIA/y8wuJPZwr1T3xCZeQ==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.0.0 <1.10.0'
+
   '@opentelemetry/core@1.30.1':
     resolution: {integrity: sha512-OOCM2C/QIURhJMuKaekP3TRBxBKxG/TWWA0TL2J6nXUtDnuCtccy49LUJF8xPFXMX+0LMcxFpCo8M9cGY1W6rQ==}
     engines: {node: '>=14'}
     peerDependencies:
       '@opentelemetry/api': '>=1.0.0 <1.10.0'
+
+  '@opentelemetry/core@2.11.0':
+    resolution: {integrity: sha512-7YP44XH0tV6+Mb54x2YGf84i7yi+31MBZlE8JwvozkxyTvXbSp10X7cI7YE49ChJ3shMJoBmCJF3+1QFBJctGA==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.0.0 <1.10.0'
+
+  '@opentelemetry/core@2.9.0':
+    resolution: {integrity: sha512-m2nckMT80NnmjTYSPjJQObBJ+8dgkoajEOUbznL8AHZ3T3yHRk2P7gI1PhEBc1+lOnrYE9UWrWHqJDsmqjmNbw==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.0.0 <1.10.0'
+
+  '@opentelemetry/exporter-trace-otlp-grpc@0.220.0':
+    resolution: {integrity: sha512-bv1xmNhmNwIM6MdUBw4yYuJeVcEViVLk3uD69vOQMwueHBnfyl/u0HnBlB1FNY/Te0UOzJzvcbyR8wN6b+iGbA==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': ^1.3.0
 
   '@opentelemetry/exporter-trace-otlp-grpc@0.57.2':
     resolution: {integrity: sha512-gHU1vA3JnHbNxEXg5iysqCWxN9j83d7/epTYBZflqQnTyCC4N7yZXn/dMM+bEmyhQPGjhCkNZLx4vZuChH1PYw==}
@@ -687,9 +715,27 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.0.0
 
+  '@opentelemetry/exporter-zipkin@2.11.0':
+    resolution: {integrity: sha512-mFibA45yXLEETIj+VcTVycFFe4R91iD41d+r3CU0f3DDWJCrICiHxUIjmYBTCZIuywXEeNo++2lncQeWnH7lWQ==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': ^1.0.0
+
+  '@opentelemetry/instrumentation-grpc@0.220.0':
+    resolution: {integrity: sha512-U1EF8KKu52XwH2ybUkjVDmaVQZGf3mXirRSw1KJQrOV5aymgJgkPJV7+kRPqawZe0rpVc/BK+pPSyMWuQoyJJQ==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': ^1.3.0
+
   '@opentelemetry/instrumentation-grpc@0.57.2':
     resolution: {integrity: sha512-TR6YQA67cLSZzdxbf2SrbADJy2Y8eBW1+9mF15P0VK2MYcpdoUSmQTF1oMkBwa3B9NwqDFA2fq7wYTTutFQqaQ==}
     engines: {node: '>=14'}
+    peerDependencies:
+      '@opentelemetry/api': ^1.3.0
+
+  '@opentelemetry/instrumentation@0.220.0':
+    resolution: {integrity: sha512-xQx3E2WxP1mDvKzxLxX+CTCtNLa560YJZ3087qYHerl2YmiKpv7AH+dAy7vmx+eVrZ5BwhfWUAVoKOoxCNHcpw==}
+    engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
@@ -699,15 +745,33 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
+  '@opentelemetry/otlp-exporter-base@0.220.0':
+    resolution: {integrity: sha512-CXYo8UD5Mn9YbgebO2EL4wejtA+gxLmLiu6HCk2KH2BR7XhFN6/6p1UlCb23DYCjeYkndevLHuejCCN1yx4+OQ==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': ^1.3.0
+
   '@opentelemetry/otlp-exporter-base@0.57.2':
     resolution: {integrity: sha512-XdxEzL23Urhidyebg5E6jZoaiW5ygP/mRjxLHixogbqwDy2Faduzb5N0o/Oi+XTIJu+iyxXdVORjXax+Qgfxag==}
     engines: {node: '>=14'}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
+  '@opentelemetry/otlp-grpc-exporter-base@0.220.0':
+    resolution: {integrity: sha512-/eIkBPMBTIvM3x/0mDX4aJeSkYifYClnBPr68PL1h5LV4VQv4+SV6CGrpiZ4fIWDnobVmhTWCm1J/QRdAWUfvA==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': ^1.3.0
+
   '@opentelemetry/otlp-grpc-exporter-base@0.57.2':
     resolution: {integrity: sha512-USn173KTWy0saqqRB5yU9xUZ2xdgb1Rdu5IosJnm9aV4hMTuFFRTUsQxbgc24QxpCHeoKzzCSnS/JzdV0oM2iQ==}
     engines: {node: '>=14'}
+    peerDependencies:
+      '@opentelemetry/api': ^1.3.0
+
+  '@opentelemetry/otlp-transformer@0.220.0':
+    resolution: {integrity: sha512-lXGrv7KXZ0gNH9SVNUaa6vv6phVYGvJxfXAlMbzbakiXru75f5MZl8Z7oqiMMQD77riVHJCFlQvbZs/VVN2/4A==}
+    engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
@@ -735,6 +799,24 @@ packages:
     peerDependencies:
       '@opentelemetry/api': '>=1.0.0 <1.10.0'
 
+  '@opentelemetry/resources@2.11.0':
+    resolution: {integrity: sha512-Ie7+8q8MDF4FAEQCKVMTx3ReUvxiIAgIiiW3c9JdmP8+HMcDy20puT+AHjexnExgnbvBxjQ9fjkFDWrikJ2jQA==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.3.0 <1.10.0'
+
+  '@opentelemetry/resources@2.9.0':
+    resolution: {integrity: sha512-jyA5MBLQ+Dkl3+JsZkUoUvL7yHvU64kLsvpXKarWm6347Sl1t1bXFTFykUePNpT5WH5pm9a2Qtt03iIYQhZ1Fg==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.3.0 <1.10.0'
+
+  '@opentelemetry/sdk-logs@0.220.0':
+    resolution: {integrity: sha512-WywcTkQtv2iNmt+6y5Kcd4rzvx9bLVsBa2Nwcmg01IUaBTkTow3W4d9KE5vNBpEDtb9tp21WcRBY/lANRrApYA==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.4.0 <1.10.0'
+
   '@opentelemetry/sdk-logs@0.57.2':
     resolution: {integrity: sha512-TXFHJ5c+BKggWbdEQ/inpgIzEmS2BGQowLE9UhsMd7YYlUfBQJ4uax0VF/B5NYigdM/75OoJGhAV3upEhK+3gg==}
     engines: {node: '>=14'}
@@ -747,11 +829,23 @@ packages:
     peerDependencies:
       '@opentelemetry/api': '>=1.3.0 <1.10.0'
 
+  '@opentelemetry/sdk-metrics@2.9.0':
+    resolution: {integrity: sha512-Xx8RGS4H5XEBl01WuCreMIpiah9cCXMbSkeuIePPdD2cUpq/vUzYmj8E/MK1OsbOc93FuAD4jfn2WOacKwLn7Q==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.9.0 <1.10.0'
+
   '@opentelemetry/sdk-trace-base@1.30.1':
     resolution: {integrity: sha512-jVPgBbH1gCy2Lb7X0AVQ8XAfgg0pJ4nvl8/IiQA6nxOsPvS+0zMJaFSs2ltXe0J6C8dqjcnpyqINDJmU30+uOg==}
     engines: {node: '>=14'}
     peerDependencies:
       '@opentelemetry/api': '>=1.0.0 <1.10.0'
+
+  '@opentelemetry/sdk-trace-base@2.11.0':
+    resolution: {integrity: sha512-H19x/TX/LZdqiYOjM7fqtSxwlplC5pgelavqbQdHbhdq0q/AI/TGkM2dfGuuynTXmJPeF2HoZVoPDu+TGoW78A==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.3.0 <1.10.0'
 
   '@opentelemetry/sdk-trace-node@1.30.1':
     resolution: {integrity: sha512-cBjYOINt1JxXdpw1e5MlHmFRc5fgj4GW/86vsKFxJCJ8AL4PdVtYH41gWwl4qd4uQjqEL1oJVrXkSy5cnduAnQ==}
@@ -759,8 +853,30 @@ packages:
     peerDependencies:
       '@opentelemetry/api': '>=1.0.0 <1.10.0'
 
+  '@opentelemetry/sdk-trace-node@2.11.0':
+    resolution: {integrity: sha512-CuvCMJmZxswhNLlM2LfuLOW3h3fZujA4hsG4B+Sz4dX2zvaXO8Ng74cnDHWD64gLszTlhiG3c0iNUjj4g+0/sA==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.0.0 <1.10.0'
+
+  '@opentelemetry/sdk-trace@2.11.0':
+    resolution: {integrity: sha512-fFnTqGm8/G73GQVnxYi7LXa1ZVYEUvgL6XI1LpvV0bPC7WQ/ZGgKxCSl8FnlZBKto9JHHEFTO6s6CUpvvtwFrA==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.3.0 <1.10.0'
+
+  '@opentelemetry/sdk-trace@2.9.0':
+    resolution: {integrity: sha512-sGA19HvtrrSKYsseHphluH6j3p6Xa3fqc7c7y8f/7mYWejc1lyDFcpSdD1kYa50HCLUeEo4zA5bW0pniaPszuw==}
+    engines: {node: ^18.19.0 || >=20.6.0}
+    peerDependencies:
+      '@opentelemetry/api': '>=1.3.0 <1.10.0'
+
   '@opentelemetry/semantic-conventions@1.28.0':
     resolution: {integrity: sha512-lp4qAiMTD4sNWW4DbKLBkfiMZ4jbAboJIGOQr5DvciMRI494OapieI9qiODpOt0XBr1LjIDy1xAGAnVs5supTA==}
+    engines: {node: '>=14'}
+
+  '@opentelemetry/semantic-conventions@1.43.0':
+    resolution: {integrity: sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg==}
     engines: {node: '>=14'}
 
   '@protobufjs/aspromise@1.1.2':
@@ -793,8 +909,8 @@ packages:
   '@pulumi/cloudflare@6.17.0':
     resolution: {integrity: sha512-sIL1rfjNavy+yZQ/OjyFHD4owe2E/TpHLFCVsogQJOC+Y6Bj7JxrhoTfsJdxVEXEFBGlNCu68T+g9im8iEZM9A==}
 
-  '@pulumi/kubernetes@4.33.0':
-    resolution: {integrity: sha512-tSMUDEWNl1pqOrANVqQRao5KRKB9waghbjpC29MUqCaqiVLZe6V0biVGC0TRDMy3hKXdP2VjiLAZ7DMnqts7rw==}
+  '@pulumi/kubernetes@4.34.1':
+    resolution: {integrity: sha512-WU0mxW6MHTVJbCfIi8Pie/V/2LqF7XYyTq7lYn6s07mro1ztewP1Sr7GcrvSYDFfXUIAFQgu9uX3VadvoiXhIA==}
 
   '@pulumi/oci@4.20.0':
     resolution: {integrity: sha512-jYyIR+GeT/spFRPOCi3Kf1+YnJrRVFIbnCkFTqPg9u6gafjj2Amg5AOEx5QqWADthExu/m+prBsT6nyp9uY7jw==}
@@ -811,17 +927,29 @@ packages:
       typescript:
         optional: true
 
+  '@pulumi/pulumi@3.262.0':
+    resolution: {integrity: sha512-fsYlQ5sr0g5DCxW25LTLwBsSkgkTMxXDfKdZGGvb880zXEQZd509uUSgUTX608fca9FAxjfflPNGYKgB9ps3ow==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      ts-node: '>= 7.0.1 < 12'
+      typescript: '>= 3.8.3 < 7'
+    peerDependenciesMeta:
+      ts-node:
+        optional: true
+      typescript:
+        optional: true
+
   '@pulumi/random@4.21.0':
     resolution: {integrity: sha512-k4JHqQFOKXWkbSLZtX37xBlRsurfgZbLd1Zib0cLSDP4Dt3uTllR3CBWfMLSnXJGAoTr9MlwyHCer/5tmSaF0Q==}
 
   '@pulumi/tailscale@0.28.0':
     resolution: {integrity: sha512-cBmzs+8+A1yJSRiQD/Snb2CI6mLYz1S2Q5Lm6WShZEVTxfvXW1lIAJ5hpX1EQuhHnrmbym9pLf45/bL4kljRog==}
 
-  '@pulumi/vault@7.10.0':
-    resolution: {integrity: sha512-nIhb1UqMpn+VsXTSy7k4tOQ7RYn89plDUEBp2uJghPIriQ8T2zWpE5sIm0GS3wVF4r4noc1+sbgzbmXg7pSVwA==}
+  '@pulumi/vault@7.12.0':
+    resolution: {integrity: sha512-m/jYIhvIq3wQHkexvvcXOeALoekdFVUNys7+/nwJd8ariqXLFDb9WgOlzcFF91fqP7sIol+KUMln84DBuUsJGg==}
 
-  '@pulumiverse/grafana@2.37.0':
-    resolution: {integrity: sha512-zqHSrLmRzXK5pxS8MtG2M3EciWyA9W3M1rMYLd6I3c4qDj3MwL6EUAdBw2oFRXByezBYxDDoDuGZZqxWfYqpxw==}
+  '@pulumiverse/grafana@2.39.1':
+    resolution: {integrity: sha512-LUo+Lfm/qkl9op/t0jXUYCUxeKTWmCvtIMcsF5VMpqmsvXn6Bu0cztceUr+mUqBaWFI7QIR166B0NB8SDJ8NCA==}
 
   '@sigstore/bundle@4.0.0':
     resolution: {integrity: sha512-NwCl5Y0V6Di0NexvkTqdoVfmjTaQwoLM236r89KEojGmq/jMls8S+zb7yOwAPdXvbwfKDlP+lmXgAL4vKSQT+A==}
@@ -1000,6 +1128,9 @@ packages:
   cjs-module-lexer@1.4.3:
     resolution: {integrity: sha512-9z8TZaGM1pfswYeXrUpzPrkx8UnWYdhJclsiYMm6x/w5+nN+8Tf/LnAgfLGQCm59qAOxU8WwHEq2vNwF6i4j+Q==}
 
+  cjs-module-lexer@2.2.1:
+    resolution: {integrity: sha512-Ca8swihM+/4yKecYHY52kgJd300hi2lADU/a1RxNTRe+RJ9jvqQlESpbz9DnG9mowez8qwXHB8qYdIUw9e+F5Q==}
+
   cliui@7.0.4:
     resolution: {integrity: sha512-OcRE68cOsVMXp1Yvonl/fzkQOyjLSu/8bhPDfQt0e0/Eb283TKP20Fs2MqoPsr9SwA595rRCA+QMzYc9nBP+JQ==}
 
@@ -1069,6 +1200,9 @@ packages:
   es-errors@1.3.0:
     resolution: {integrity: sha512-Zf5H2Kxt2xjTvbJvP2ZWLEICxA6j+hAmMzIlypy4xcBg1vKVnx89Wy0GbS+kf5cwCVFFzdCFh2XSCFNULS6csw==}
     engines: {node: '>= 0.4'}
+
+  es-module-lexer@3.0.2:
+    resolution: {integrity: sha512-BuIB67FngDSyQ/dpQNOZybwdEBDUGJQvOqwWr4ha/ufYiqzuEwPkKO2zLhRAgay28tStRIHUeWmszZAJo3GCOg==}
 
   escalade@3.2.0:
     resolution: {integrity: sha512-WUj2qlxaQtO4g6Pq5c29GTcWGDyd8itL8zTlipgECz3JesAiiOKotd8JU6otB3PACgG6xkJUyVhboMS+bje/jA==}
@@ -1210,6 +1344,10 @@ packages:
 
   import-in-the-middle@1.15.0:
     resolution: {integrity: sha512-bpQy+CrsRmYmoPMAE/0G33iwRqwW4ouqdRg8jgbH3aKuCtOc8lxgmYXg2dMM92CRiGP660EtBcymH/eVUpCSaA==}
+
+  import-in-the-middle@3.5.1:
+    resolution: {integrity: sha512-mPKuL8bPQzecui2KK6Gb+M8JvJoHnhS1FeYGa22QopBmlevF5F0FE6ued/B5EgHDeIoMTONIpDWWFKUPOG0DBQ==}
+    engines: {node: '>=18'}
 
   inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
@@ -1546,6 +1684,10 @@ packages:
     resolution: {integrity: sha512-gAZ+kLqBdHarXB64XpAe2VCjB7rIRv+mU8tfRWziHRJ5umKsIHN2tLLv6EtMw7WCdP19S0ERVMldNvxYCHnhSQ==}
     engines: {node: '>=8.6.0'}
 
+  require-in-the-middle@8.0.1:
+    resolution: {integrity: sha512-QT7FVMXfWOYFbeRBF6nu+I6tr2Tf3u0q8RIEjNob/heKY/nh7drD/k7eeMFmSQgnTtCzLDcCu/XEnpW2wk4xCQ==}
+    engines: {node: '>=9.3.0 || >=8.10.0 <9.0.0'}
+
   resolve@1.22.12:
     resolution: {integrity: sha512-TyeJ1zif53BPfHootBGwPRYT1RUt6oGWsaQr8UyZW/eAm9bKoijtvruSDEmZHm92CwS9nj7/fWttqPCgzep8CA==}
     engines: {node: '>= 0.4'}
@@ -1809,7 +1951,7 @@ snapshots:
 
   '@axnic/pulumi-garage@1.0.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -1817,7 +1959,7 @@ snapshots:
 
   '@axnic/pulumi-garage@1.0.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -1980,6 +2122,10 @@ snapshots:
       node-gyp: 12.4.0
       proc-log: 6.1.0
 
+  '@opentelemetry/api-logs@0.220.0':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+
   '@opentelemetry/api-logs@0.57.2':
     dependencies:
       '@opentelemetry/api': 1.9.1
@@ -1990,10 +2136,33 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.9.1
 
+  '@opentelemetry/context-async-hooks@2.11.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+
   '@opentelemetry/core@1.30.1(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/semantic-conventions': 1.28.0
+
+  '@opentelemetry/core@2.11.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/semantic-conventions': 1.43.0
+
+  '@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/semantic-conventions': 1.43.0
+
+  '@opentelemetry/exporter-trace-otlp-grpc@0.220.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@grpc/grpc-js': 1.14.4
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/otlp-exporter-base': 0.220.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/otlp-grpc-exporter-base': 0.220.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/otlp-transformer': 0.220.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/sdk-trace': 2.9.0(@opentelemetry/api@1.9.1)
 
   '@opentelemetry/exporter-trace-otlp-grpc@0.57.2(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -2014,11 +2183,36 @@ snapshots:
       '@opentelemetry/sdk-trace-base': 1.30.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.28.0
 
+  '@opentelemetry/exporter-zipkin@2.11.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/resources': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/sdk-trace': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
+
+  '@opentelemetry/instrumentation-grpc@0.220.0(@opentelemetry/api@1.9.1)(supports-color@8.1.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/instrumentation': 0.220.0(@opentelemetry/api@1.9.1)(supports-color@8.1.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
+    transitivePeerDependencies:
+      - supports-color
+
   '@opentelemetry/instrumentation-grpc@0.57.2(@opentelemetry/api@1.9.1)(supports-color@8.1.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/instrumentation': 0.57.2(@opentelemetry/api@1.9.1)(supports-color@8.1.1)
       '@opentelemetry/semantic-conventions': 1.28.0
+    transitivePeerDependencies:
+      - supports-color
+
+  '@opentelemetry/instrumentation@0.220.0(@opentelemetry/api@1.9.1)(supports-color@8.1.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/api-logs': 0.220.0
+      import-in-the-middle: 3.5.1
+      require-in-the-middle: 8.0.1(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -2034,11 +2228,25 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@opentelemetry/otlp-exporter-base@0.220.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/otlp-transformer': 0.220.0(@opentelemetry/api@1.9.1)
+
   '@opentelemetry/otlp-exporter-base@0.57.2(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/core': 1.30.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/otlp-transformer': 0.57.2(@opentelemetry/api@1.9.1)
+
+  '@opentelemetry/otlp-grpc-exporter-base@0.220.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@grpc/grpc-js': 1.14.4
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/otlp-exporter-base': 0.220.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/otlp-transformer': 0.220.0(@opentelemetry/api@1.9.1)
 
   '@opentelemetry/otlp-grpc-exporter-base@0.57.2(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -2047,6 +2255,16 @@ snapshots:
       '@opentelemetry/core': 1.30.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/otlp-exporter-base': 0.57.2(@opentelemetry/api@1.9.1)
       '@opentelemetry/otlp-transformer': 0.57.2(@opentelemetry/api@1.9.1)
+
+  '@opentelemetry/otlp-transformer@0.220.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/api-logs': 0.220.0
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/resources': 2.9.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/sdk-logs': 0.220.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/sdk-metrics': 2.9.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/sdk-trace': 2.9.0(@opentelemetry/api@1.9.1)
 
   '@opentelemetry/otlp-transformer@0.57.2(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -2075,6 +2293,26 @@ snapshots:
       '@opentelemetry/core': 1.30.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.28.0
 
+  '@opentelemetry/resources@2.11.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
+
+  '@opentelemetry/resources@2.9.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
+
+  '@opentelemetry/sdk-logs@0.220.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/api-logs': 0.220.0
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/resources': 2.9.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
+
   '@opentelemetry/sdk-logs@0.57.2(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
@@ -2088,12 +2326,26 @@ snapshots:
       '@opentelemetry/core': 1.30.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.1)
 
+  '@opentelemetry/sdk-metrics@2.9.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/resources': 2.9.0(@opentelemetry/api@1.9.1)
+
   '@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/core': 1.30.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.28.0
+
+  '@opentelemetry/sdk-trace-base@2.11.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/resources': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/sdk-trace': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
 
   '@opentelemetry/sdk-trace-node@1.30.1(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -2105,7 +2357,30 @@ snapshots:
       '@opentelemetry/sdk-trace-base': 1.30.1(@opentelemetry/api@1.9.1)
       semver: 7.8.5
 
+  '@opentelemetry/sdk-trace-node@2.11.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/context-async-hooks': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/sdk-trace-base': 2.11.0(@opentelemetry/api@1.9.1)
+
+  '@opentelemetry/sdk-trace@2.11.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/resources': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
+
+  '@opentelemetry/sdk-trace@2.9.0(@opentelemetry/api@1.9.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@opentelemetry/core': 2.9.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/resources': 2.9.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
+
   '@opentelemetry/semantic-conventions@1.28.0': {}
+
+  '@opentelemetry/semantic-conventions@1.43.0': {}
 
   '@protobufjs/aspromise@1.1.2': {}
 
@@ -2129,7 +2404,7 @@ snapshots:
 
   '@pulumi/cloudflare@6.17.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -2137,15 +2412,15 @@ snapshots:
 
   '@pulumi/cloudflare@6.17.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
       - typescript
 
-  '@pulumi/kubernetes@4.33.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)':
+  '@pulumi/kubernetes@4.34.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       glob: 12.0.0
       shell-quote: 1.10.0
     transitivePeerDependencies:
@@ -2153,9 +2428,9 @@ snapshots:
       - ts-node
       - typescript
 
-  '@pulumi/kubernetes@4.33.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
+  '@pulumi/kubernetes@4.34.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       glob: 12.0.0
       shell-quote: 1.10.0
     transitivePeerDependencies:
@@ -2165,7 +2440,7 @@ snapshots:
 
   '@pulumi/oci@4.20.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -2202,19 +2477,21 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@pulumi/pulumi@3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)':
+  '@pulumi/pulumi@3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
       '@grpc/grpc-js': 1.14.4
       '@logdna/tail-file': 2.2.0
       '@npmcli/arborist': 9.9.0(supports-color@8.1.1)
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/exporter-trace-otlp-grpc': 0.57.2(@opentelemetry/api@1.9.1)
-      '@opentelemetry/exporter-zipkin': 1.30.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation': 0.57.2(@opentelemetry/api@1.9.1)(supports-color@8.1.1)
-      '@opentelemetry/instrumentation-grpc': 0.57.2(@opentelemetry/api@1.9.1)(supports-color@8.1.1)
-      '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/sdk-trace-base': 1.30.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/sdk-trace-node': 1.30.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/exporter-trace-otlp-grpc': 0.220.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/exporter-zipkin': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/instrumentation': 0.220.0(@opentelemetry/api@1.9.1)(supports-color@8.1.1)
+      '@opentelemetry/instrumentation-grpc': 0.220.0(@opentelemetry/api@1.9.1)(supports-color@8.1.1)
+      '@opentelemetry/resources': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/sdk-trace-base': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/sdk-trace-node': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
       '@types/google-protobuf': 3.15.12
       '@types/semver': 7.7.1
       execa: 5.1.1
@@ -2233,19 +2510,21 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@pulumi/pulumi@3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
+  '@pulumi/pulumi@3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
       '@grpc/grpc-js': 1.14.4
       '@logdna/tail-file': 2.2.0
       '@npmcli/arborist': 9.9.0(supports-color@8.1.1)
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/exporter-trace-otlp-grpc': 0.57.2(@opentelemetry/api@1.9.1)
-      '@opentelemetry/exporter-zipkin': 1.30.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation': 0.57.2(@opentelemetry/api@1.9.1)(supports-color@8.1.1)
-      '@opentelemetry/instrumentation-grpc': 0.57.2(@opentelemetry/api@1.9.1)(supports-color@8.1.1)
-      '@opentelemetry/resources': 1.30.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/sdk-trace-base': 1.30.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/sdk-trace-node': 1.30.1(@opentelemetry/api@1.9.1)
+      '@opentelemetry/core': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/exporter-trace-otlp-grpc': 0.220.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/exporter-zipkin': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/instrumentation': 0.220.0(@opentelemetry/api@1.9.1)(supports-color@8.1.1)
+      '@opentelemetry/instrumentation-grpc': 0.220.0(@opentelemetry/api@1.9.1)(supports-color@8.1.1)
+      '@opentelemetry/resources': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/sdk-trace-base': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/sdk-trace-node': 2.11.0(@opentelemetry/api@1.9.1)
+      '@opentelemetry/semantic-conventions': 1.43.0
       '@types/google-protobuf': 3.15.12
       '@types/semver': 7.7.1
       execa: 5.1.1
@@ -2266,7 +2545,7 @@ snapshots:
 
   '@pulumi/random@4.21.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -2274,7 +2553,7 @@ snapshots:
 
   '@pulumi/random@4.21.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -2282,7 +2561,7 @@ snapshots:
 
   '@pulumi/tailscale@0.28.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -2290,31 +2569,31 @@ snapshots:
 
   '@pulumi/tailscale@0.28.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
       - typescript
 
-  '@pulumi/vault@7.10.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)':
+  '@pulumi/vault@7.12.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
       - typescript
 
-  '@pulumi/vault@7.10.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
+  '@pulumi/vault@7.12.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
       - typescript
 
-  '@pulumiverse/grafana@2.37.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
+  '@pulumiverse/grafana@2.39.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@pulumi/pulumi': 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - supports-color
       - ts-node
@@ -2503,6 +2782,8 @@ snapshots:
 
   cjs-module-lexer@1.4.3: {}
 
+  cjs-module-lexer@2.2.1: {}
+
   cliui@7.0.4:
     dependencies:
       string-width: 4.2.3
@@ -2556,6 +2837,8 @@ snapshots:
   env-paths@2.2.1: {}
 
   es-errors@1.3.0: {}
+
+  es-module-lexer@3.0.2: {}
 
   escalade@3.2.0: {}
 
@@ -2700,6 +2983,12 @@ snapshots:
       acorn: 8.17.0
       acorn-import-attributes: 1.9.5(acorn@8.17.0)
       cjs-module-lexer: 1.4.3
+      module-details-from-path: 1.0.4
+
+  import-in-the-middle@3.5.1:
+    dependencies:
+      cjs-module-lexer: 2.2.1
+      es-module-lexer: 3.0.2
       module-details-from-path: 1.0.4
 
   inflight@1.0.6:
@@ -3058,6 +3347,13 @@ snapshots:
       debug: 4.4.3(supports-color@8.1.1)
       module-details-from-path: 1.0.4
       resolve: 1.22.12
+    transitivePeerDependencies:
+      - supports-color
+
+  require-in-the-middle@8.0.1(supports-color@8.1.1):
+    dependencies:
+      debug: 4.4.3(supports-color@8.1.1)
+      module-details-from-path: 1.0.4
     transitivePeerDependencies:
       - supports-color
 
