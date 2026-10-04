@@ -16,7 +16,7 @@ runtimes:
   enabled:
     - python@3.14.4
     - rust@>=1.94.0
-    - go@>=1.26.0
+    - go@1.27.1
     - node@24.14.0
 # This is the section where you override some tools' configurations.
 tools:
