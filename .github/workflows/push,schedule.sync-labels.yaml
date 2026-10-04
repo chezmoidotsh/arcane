@@ -41,7 +41,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: 🏷️ Sync Github labels with the definition
-        uses: brpaz/action-label-syncer@32e516ae73bbf7c7c0548897be07080795336e15 # main
+        uses: brpaz/action-label-syncer@32e516ae73bbf7c7c0548897be07080795336e15 # 0.2.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
