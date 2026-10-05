@@ -10,7 +10,10 @@ const zoneId = config.requireSecret("cloudflare_zone_id");
 // no DNS-01 token is needed on this host.
 //
 // DNS-only (not proxied): Cloudflare's proxy doesn't carry Minecraft's TCP.
-// A single name serves both the game (25565/tcp) and the SSO-gated panel (443).
+// `minecraft` serves the game ports and the Pelican panel (443); the wildcard
+// covers `wings.minecraft` (Wings, called by browsers) and any per-server name.
+// Caddy only serves the names it is configured for, each with its own
+// certificate (HTTP-01 does not issue wildcards).
 export const dnsRecord = new cloudflare.DnsRecord("rimbilliton-minecraft", {
 	zoneId,
 	name: "minecraft",
@@ -18,5 +21,18 @@ export const dnsRecord = new cloudflare.DnsRecord("rimbilliton-minecraft", {
 	content: instance.publicIp,
 	ttl: 300,
 	proxied: false,
-	comment: "rimbilliton.akn -> Minecraft server and Crafty panel",
+	comment: "rimbilliton.akn -> Minecraft servers and Pelican panel",
 });
+
+export const dnsWildcardRecord = new cloudflare.DnsRecord(
+	"rimbilliton-minecraft-wildcard",
+	{
+		zoneId,
+		name: "*.minecraft",
+		type: "A",
+		content: instance.publicIp,
+		ttl: 300,
+		proxied: false,
+		comment: "rimbilliton.akn -> Pelican Wings and per-server names",
+	},
+);
