@@ -244,8 +244,12 @@ it a configuration.
 
    The node must turn green. To rotate the token, reset it in the Panel and update the three values.
 
-5. **Allocations**: add the 16 game ports `25565` to `25580` to the node's allocations (the same range is open in the
-   OCI network security group and the host firewall). Each server takes one of them.
+5. **Allocations**: declared in `modules/pelican.nix` (`allocations`: the 16 game ports `25565-25580` on `0.0.0.0`,
+   aliased to `minecraft.chezmoi.sh` so the Panel shows players the DNS name). Once the node exists, apply them with
+   `systemctl restart pelican-allocations; journalctl -u pelican-allocations --no-pager -n 10`. Idempotent: it only
+   creates the missing ports, and prints a message if the node (matched on its FQDN) is not found. The same range is
+   open in the OCI network security group and the host firewall; keep the three in sync. Each server takes one
+   allocation.
 
 Wings' `config.yml` is rendered at boot from the SOPS secrets (it is mounted from `/run/secrets/rendered`, never written
 to the disk in clear text). The node token lives in the SOPS file, not in the backups of the Panel data.

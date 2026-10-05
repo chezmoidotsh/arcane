@@ -50,6 +50,40 @@ let
     }
   '';
 
+  # Game ports of the node, created by `pelican-allocations`. Keep the range in sync with the host firewall
+  # (configuration.nix) and the OCI network security group (Pulumi stack). The alias is what the Panel shows players
+  # instead of the bind IP.
+  allocations = {
+    nodeFqdn = "wings.minecraft.chezmoi.sh";
+    ip = "0.0.0.0";
+    alias = "minecraft.chezmoi.sh";
+    ports = "25565-25580";
+  };
+  allocationsScript = pkgs.writeText "pelican-allocations.php" ''
+    use App\Models\Allocation;
+    use App\Models\Node;
+    use App\Services\Allocations\AssignmentService;
+
+    $conf = json_decode('${builtins.toJSON allocations}', true);
+    $node = Node::where('fqdn', $conf['nodeFqdn'])->first();
+    if (!$node) {
+      echo "node " . $conf['nodeFqdn'] . " not found: create it in the Panel first\n";
+      return;
+    }
+
+    [$first, $last] = array_map('intval', explode('-', $conf['ports']));
+    $existing = Allocation::where('node_id', $node->id)->where('ip', $conf['ip'])->pluck('port')->all();
+    $missing = array_values(array_diff(range($first, $last), $existing));
+    if ($missing) {
+      app(AssignmentService::class)->handle($node, [
+        'allocation_ip' => $conf['ip'],
+        'allocation_alias' => $conf['alias'],
+        'allocation_ports' => array_map('strval', $missing),
+      ]);
+    }
+    echo count($missing) . " allocations created, " . count($existing) . " already present\n";
+  '';
+
   # First-party plugin letting users create their own servers within the resource limits an admin sets per user.
   # It lives in the monorepo of the first-party plugins, pinned here to a commit.
   pelicanPlugins = pkgs.fetchzip {
@@ -240,6 +274,30 @@ in
       done
       docker exec -u www-data pelican-panel php artisan tinker --execute "$(cat ${rolesScript})" || \
         echo "roles not applied (is the Panel installed?)"
+    '';
+  };
+
+  # Declarative allocations: the node itself is created by hand in the Panel (its token comes from there), this adds
+  # the missing game ports to it. Idempotent; does nothing until the node exists (`systemctl restart pelican-allocations`).
+  systemd.services.pelican-allocations = {
+    description = "Create the Pelican allocations declared in NixOS";
+    after = [ "docker-pelican-panel.service" "pelican-roles.service" ];
+    requires = [ "docker-pelican-panel.service" ];
+    wantedBy = [ "multi-user.target" ];
+    path = [ config.virtualisation.docker.package pkgs.coreutils ];
+    restartTriggers = [ allocationsScript ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      set -eu
+      for _ in $(seq 1 40); do
+        docker exec pelican-panel php artisan --version >/dev/null 2>&1 && break
+        sleep 3
+      done
+      docker exec -u www-data pelican-panel php artisan tinker --execute "$(cat ${allocationsScript})" || \
+        echo "allocations not applied (is the Panel installed?)"
     '';
   };
 }
