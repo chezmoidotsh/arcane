@@ -33,6 +33,10 @@ by either a human operator or an AI agent.
   owns the target pod — covers why the naive restore and the documented `existingResourcePolicy: update` workaround both
   silently fail, and the delete-workload-and-PVC-first procedure that actually works. Validated end to end against
   `lungmen.akn`'s `jellyfin` app.
+- **[BKP-20261005-00: Restore the Minecraft server (Pelican) from its restic backups](./backups/BKP-20261005-00.rimbilliton-minecraft-restore-from-restic.md)**:
+  Restores a world, the Panel data (SQLite database and `APP_KEY`) or the whole `rimbilliton.akn` host from the restic
+  repository on Backblaze B2 — snapshot inspection, per-server restore, full disaster recovery order and a quarterly
+  restore test.
 
 ### Omni
 
