@@ -1,0 +1,13 @@
+name: rimbilliton-akn-infra
+description: >-
+  OCI Free Tier infrastructure for rimbilliton.akn (Minecraft server): dedicated VCN/subnet,
+  ARM instance, Cloudflare DNS, Backblaze B2 backup bucket, Tailscale key, Pocket-Id OIDC client.
+runtime:
+  name: nodejs
+  options:
+    packagemanager: pnpm
+
+backend:
+  # Garage S3 backend. See docs/procedures/infrastructure/
+  # INF-20260705-00.pulumi-state-and-import.md.
+  url: "s3://pulumi-states?endpoint=s3.chezmoi.sh&region=fr-par-1"

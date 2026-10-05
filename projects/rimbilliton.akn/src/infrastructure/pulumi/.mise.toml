@@ -1,0 +1,23 @@
+# =============================================================================
+# rimbilliton.akn Pulumi stack - Mise configuration
+# =============================================================================
+# Minecraft server on OCI Always Free (see ../../../README.md).
+#
+# First run: see docs/BOOTSTRAP.md (Pulumi configuration).
+# =============================================================================
+
+[tools]
+node = "24"
+
+[env]
+_.file = "{{ config_root }}/.mise/env.yaml"
+
+[tasks."pulumi:diff"]
+description = "Preview pending changes for the current Pulumi stack"
+run = "pulumi preview --refresh --parallel 15"
+dir = "{{ config_root }}"
+
+[tasks."pulumi:apply"]
+description = "Apply pending changes to the current Pulumi stack"
+run = ["pulumi up --refresh --parallel 15"]
+dir = "{{ config_root }}"

@@ -1,0 +1,188 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    sketch: true
+  }
+}
+
+...@"../../docs/assets/d2/styles.architecture.d2"
+
+explanation: |md
+  # rimbilliton.akn Architecture
+
+  This document describes the architecture \
+  of the rimbilliton.akn Minecraft server in a \
+  visual way with all the components and how they \
+  interact with each other.
+
+  rimbilliton.akn is a **single OCI Always Free ARM VM** \
+  running NixOS. Pelican (Panel and Wings) manages the Minecraft \
+  servers, users sign in with Pocket-ID SSO, \
+  and world backups are shipped daily to Backblaze B2.
+| {
+  near: top-left
+}
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                              External Objects                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   Resources external to the rimbilliton.akn VM that it interacts with:     │
+# │   players, administrators and third-party services.                        │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Networks
+
+internet: {class: network}
+
+tailnet: {class: network}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# External Services
+
+pocket-id: {
+  class: [application]
+  label: Pocket-ID\n(auth.chezmoi.sh)
+  icon: docs/assets/icons/apps/pocket-id.svg
+  link: https://pocket-id.org/
+  tooltip: OIDC SSO provider (admin and minecraft groups)
+}
+
+letsencrypt: {
+  class: [application]
+  label: Let's Encrypt
+  icon: docs/assets/icons/platform/letsencrypt.svg
+  link: https://letsencrypt.org/
+  tooltip: ACME certificate authority (HTTP-01)
+}
+
+backblaze: {
+  class: [application]
+  label: Backblaze B2
+  link: https://www.backblaze.com/cloud-storage
+  tooltip: Off-site backup bucket
+}
+
+cloudflare: {
+  class: [application]
+  label: Cloudflare DNS
+  icon: docs/assets/icons/platform/cloudflare.svg
+  link: https://www.cloudflare.com/
+  tooltip: DNS-only record minecraft (no proxy)
+}
+
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                            rimbilliton.akn VM                              │
+# ├────────────────────────────────────────────────────────────────────────────┤
+# │ Desc:                                                                      │
+# │   NixOS on VM.Standard.A1.Flex (1 OCPU / 6 GB) in a dedicated OCI VCN.     │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+vm: {
+  label: rimbilliton.akn\n(OCI A1.Flex · NixOS)
+  class: namespace
+
+  style.fill-pattern: none
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Admin panel (SSO)
+
+  caddy: {
+    class: [application-system]
+    label: Caddy
+    icon: docs/assets/icons/apps/caddy.svg
+    link: https://caddyserver.com/
+    tooltip: Reverse proxy with automatic TLS for minecraft.chezmoi.sh and main.minecraft.chezmoi.sh
+  }
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Game server
+
+  pelican-panel: {
+    class: [application]
+    label: Pelican Panel
+    link: https://pelican.dev/
+    tooltip: Web UI and API, sign-in through Pocket-ID (Docker container)
+  }
+
+  wings: {
+    class: [application]
+    label: Pelican Wings
+    link: https://pelican.dev/
+    tooltip: Daemon that runs each game server in a Docker container (Docker container)
+  }
+
+  minecraft: {
+    class: [application]
+    label: Minecraft Java\n(25565-25580)
+    link: https://www.minecraft.net/
+    tooltip: Game servers created and managed from Pelican, one port each from the pool
+  }
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # System
+
+  restic: {
+    class: [application-system]
+    label: restic
+    link: https://restic.net/
+    tooltip: Daily encrypted backups of Pelican archives and panel data
+  }
+
+  tailscale: {
+    class: [application-system]
+    label: Tailscale
+    icon: docs/assets/icons/platform/tailscale.svg
+    link: https://tailscale.com/
+    tooltip: SSH and deployments, OCI SSH stays closed
+  }
+}
+
+
+# ╭────────────────────────────────────────────────────────────────────────────╮
+# │                                Connections                                 │
+# ╰────────────────────────────────────────────────────────────────────────────╯
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Players and administrators
+
+internet -> vm.minecraft: |md
+    Minecraft Java
+    (TCP 25565-25580)
+  | { class: [connect-from-internet] }
+
+internet -> vm.caddy: |md
+    HTTP (80)
+    HTTPS (443)
+  | { class: [connect-from-internet] }
+
+tailnet -> vm.tailscale: "SSH (22)\nnixos-rebuild" { class: [connect-vpn] }
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Admin panel flow
+
+vm.caddy -> vm.pelican-panel: "minecraft.chezmoi.sh\n(127.0.0.1:81)"
+
+vm.caddy -> vm.wings: "main.minecraft.chezmoi.sh\n(127.0.0.1:8080)"
+
+vm.pelican-panel -> pocket-id: "OIDC sign-in\n(auth.chezmoi.sh:443)" { class: [connect-to-internet] }
+
+vm.pelican-panel -> vm.wings: "Create / configure servers"
+
+vm.wings -> vm.minecraft: "Start / stop / console\nscheduled backups"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Backups and certificates
+
+vm.restic -> vm.wings: "Read backup archives\n(/var/lib/pelican/backups)"
+
+vm.restic -> backblaze: |md
+    restic over S3
+    (daily, 04:30)
+  | { class: [connect-to-internet] }
+
+vm.caddy -> letsencrypt: "ACME HTTP-01\n(acme-v02.api.letsencrypt.org:443)" { class: [connect-to-internet] }
+
+cloudflare -> vm.caddy: "minecraft.chezmoi.sh\n(A record)" { class: [connect-to-internet] }

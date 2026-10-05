@@ -32,3 +32,10 @@ creation_rules:
   - path_regex: projects/[^/]+/src/infrastructure/pulumi/\.mise/env\.yaml$
     age: >-
       age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
+
+  # rimbilliton.akn NixOS host secrets (sops-nix, decrypted on the host with its SSH host key).
+  # Recipients: the admin key and the host key (`ssh-to-age < extra/etc/ssh/ssh_host_ed25519_key.pub`,
+  # see projects/rimbilliton.akn/docs/BOOTSTRAP.md).
+  - path_regex: projects/rimbilliton\.akn/src/infrastructure/nixos/secrets/rimbilliton\.sops\.yaml$
+    age: >-
+      age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9,age1cpyfsxgl6eer583rhnralx54h60xjjpr3up7hgcd4wc4d44xjcaqdklwxp

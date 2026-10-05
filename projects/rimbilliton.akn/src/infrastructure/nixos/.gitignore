@@ -1,0 +1,4 @@
+extra/
+secrets/*.yaml
+!secrets/*.example.yaml
+!secrets/*.sops.yaml

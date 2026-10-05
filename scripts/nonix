@@ -15,12 +15,21 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
 # Show usage information
 show_usage() {
   cat <<EOF
-Usage: $(basename "$0") [nix-command] [nix-args...]
+Usage: $(basename "$0") [options] [nix-command] [nix-args...]
 
 This script runs Nix commands in a Docker container, making Nix available
 without installing it on the host machine.
 
+Options (must come before the nix command, repeatable):
+  --docker ARGS         Extra 'docker run' arguments, split on whitespace
+                        (e.g. --docker '--network host --cpus 4')
+  -h, --help            Show this help
+
+Use -e/--env rather than --docker for values containing spaces.
+
 Examples:
+  $(basename "$0") -e NIX_CONFIG='accept-flake-config = true' flake show
+  $(basename "$0") --docker '--network host' --docker '-v /tmp/cache:/cache' build .#default
   $(basename "$0") --version
   $(basename "$0") flake show
   $(basename "$0") build .#default
@@ -37,6 +46,45 @@ The script automatically:
 Note: Interactive commands like 'nix develop' work seamlessly.
 EOF
 }
+
+# Extra container environment variables (-e/--env) and raw docker arguments (--docker),
+# given before the nix command
+EXTRA_ENV=()
+EXTRA_DOCKER=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -e | --env)
+      if [[ $# -lt 2 ]]; then
+        log_error "$1 requires an argument (KEY or KEY=VALUE)"
+        exit 1
+      fi
+      EXTRA_ENV+=("$2")
+      shift 2
+      ;;
+    --docker)
+      if [[ $# -lt 2 ]]; then
+        log_error "--docker requires an argument (e.g. '--network host')"
+        exit 1
+      fi
+      read -r -a docker_words <<<"$2"
+      EXTRA_DOCKER+=("${docker_words[@]}")
+      shift 2
+      ;;
+    --docker=*)
+      read -r -a docker_words <<<"${1#--docker=}"
+      EXTRA_DOCKER+=("${docker_words[@]}")
+      shift
+      ;;
+    *) break ;;
+  esac
+done
+
+for var in "${EXTRA_ENV[@]-}"; do
+  if [[ -n ${var} && ! ${var} =~ ^[A-Za-z_][A-Za-z0-9_]*(=.*)?$ ]]; then
+    log_error "Invalid environment variable '${var%%=*}': expected KEY or KEY=VALUE"
+    exit 1
+  fi
+done
 
 # Check if help was requested
 if [[ $# -eq 0 ]] || [[ $1 == "--help" ]] || [[ $1 == "-h" ]]; then
@@ -95,6 +143,9 @@ fi
 
 # Add environment variables that might be useful
 DOCKER_ARGS+=(--env "TERM=${TERM:-xterm}")
+if [[ ${#EXTRA_DOCKER[@]} -gt 0 ]]; then
+  DOCKER_ARGS+=("${EXTRA_DOCKER[@]}")
+fi
 
 # Execute the Nix command in the container
 EXIT_CODE=0
@@ -109,7 +160,8 @@ docker run "${DOCKER_ARGS[@]-}" nixos/nix sh -c '
     export PATH="/tools/bin:$PATH"
 
     # Set proper experimental features and options
-    export NIX_CONFIG="
+    # (appended to any NIX_CONFIG passed with -e/--env instead of replacing it)
+    export NIX_CONFIG="${NIX_CONFIG:-}
         experimental-features = nix-command flakes
     "
 
