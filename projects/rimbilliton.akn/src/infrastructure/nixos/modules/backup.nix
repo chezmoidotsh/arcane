@@ -1,9 +1,9 @@
 # Off-site backups to Backblaze B2 with restic.
 #
-# Crafty writes consistent world archives to /var/lib/crafty/backups (schedule
-# them in the Crafty UI: server -> Backups -> "Schedule", every 6h, keep 3).
-# restic then ships that directory + Crafty's config to B2 daily, so we never
-# snapshot a live, mid-write world.
+# Wings writes consistent world archives to /var/lib/pelican/backups (schedule
+# them in the Pelican panel: server -> Schedules, every 6h, keep 3). restic then
+# ships that directory + the panel data (SQLite database, APP_KEY, plugins) to
+# B2 daily, so we never snapshot a live, mid-write world.
 { config, ... }:
 let
   # Backblaze S3 endpoint of the account (same one as pbs-vm-backup).
@@ -23,8 +23,8 @@ in
     passwordFile = config.sops.secrets.restic_password.path;
     environmentFile = config.sops.secrets.restic_b2_env.path;
     paths = [
-      "/var/lib/crafty/backups"
-      "/var/lib/crafty/config"
+      "/var/lib/pelican/backups"
+      "/var/lib/pelican-panel/data"
     ];
     initialize = true;
     timerConfig = {

@@ -17,7 +17,9 @@
   networking.useDHCP = true;
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 80 443 25565 ];
+    allowedTCPPorts = [ 80 443 ];
+    # Pool of 16 game ports: the allocations to give to Pelican's servers (same range in the OCI NSG).
+    allowedTCPPortRanges = [ { from = 25565; to = 25580; } ];
     # SSH is only reachable through the tailnet (OCI NSG keeps 22 closed too).
     interfaces.tailscale0.allowedTCPPorts = [ 22 ];
   };

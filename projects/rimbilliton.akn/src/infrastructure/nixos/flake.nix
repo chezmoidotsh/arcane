@@ -1,5 +1,5 @@
 {
-  description = "rimbilliton.akn — Minecraft server (Crafty + SSO + B2 backups) on OCI Always Free ARM";
+  description = "rimbilliton.akn — Minecraft server (Pelican + B2 backups) on OCI Always Free ARM";
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-26.05";
@@ -21,8 +21,8 @@
         sops-nix.nixosModules.sops
         ./disko.nix
         ./configuration.nix
-        ./modules/crafty.nix
-        ./modules/sso.nix
+        ./modules/pelican.nix
+        ./modules/caddy.nix
         ./modules/backup.nix
       ];
     };
