@@ -1,6 +1,0 @@
-creation_rules:
-  - path_regex: secrets/rimbilliton\.sops\.yaml$
-    age:
-      - age1REPLACE_WITH_YOUR_ADMIN_KEY
-      # host key: `ssh-keyscan <ip> | ssh-to-age` after the first nixos-anywhere run
-      - age1REPLACE_WITH_HOST_KEY
