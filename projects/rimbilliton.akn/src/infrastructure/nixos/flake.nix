@@ -14,7 +14,7 @@
   };
 
   outputs = { nixpkgs, disko, sops-nix, ... }: {
-    nixosConfigurations.rimbilliton = nixpkgs.lib.nixosSystem {
+    nixosConfigurations.rimbilliton-akn = nixpkgs.lib.nixosSystem {
       system = "aarch64-linux";
       modules = [
         disko.nixosModules.disko

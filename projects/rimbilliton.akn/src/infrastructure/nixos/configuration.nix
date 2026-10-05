@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 {
   system.stateVersion = "26.05";
-  networking.hostName = "rimbilliton";
+  networking.hostName = "rimbilliton-akn";
   time.timeZone = "UTC";
 
   # --- Boot (OCI aarch64, UEFI) ------------------------------------------------
@@ -38,7 +38,7 @@
   services.tailscale = {
     enable = true;
     authKeyFile = config.sops.secrets.tailscale_authkey.path;
-    extraUpFlags = [ "--advertise-tags=tag:minecraft" "--ssh" ];
+    extraUpFlags = [ "--advertise-tags=tag:svc-minecraft" "--ssh" ];
   };
 
   # --- Secrets (sops-nix, age) -------------------------------------------------
