@@ -94,7 +94,7 @@ vm: {
     label: Caddy
     icon: docs/assets/icons/apps/caddy.svg
     link: https://caddyserver.com/
-    tooltip: Reverse proxy with automatic TLS for minecraft.chezmoi.sh and wings.minecraft.chezmoi.sh
+    tooltip: Reverse proxy with automatic TLS for minecraft.chezmoi.sh and main.minecraft.chezmoi.sh
   }
 
   # ────────────────────────────────────────────────────────────────────────────
@@ -165,7 +165,7 @@ tailnet -> vm.tailscale: "SSH (22)\nnixos-rebuild" { class: [connect-vpn] }
 
 vm.caddy -> vm.pelican-panel: "minecraft.chezmoi.sh\n(127.0.0.1:81)"
 
-vm.caddy -> vm.wings: "wings.minecraft.chezmoi.sh\n(127.0.0.1:8080)"
+vm.caddy -> vm.wings: "main.minecraft.chezmoi.sh\n(127.0.0.1:8080)"
 
 vm.pelican-panel -> pocket-id: "OIDC sign-in\n(auth.chezmoi.sh:443)" { class: [connect-to-internet] }
 

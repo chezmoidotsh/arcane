@@ -54,7 +54,7 @@ let
   # (configuration.nix) and the OCI network security group (Pulumi stack). The alias is what the Panel shows players
   # instead of the bind IP.
   allocations = {
-    nodeFqdn = "wings.minecraft.chezmoi.sh";
+    nodeFqdn = "main.minecraft.chezmoi.sh";
     ip = "0.0.0.0";
     alias = "minecraft.chezmoi.sh";
     ports = "25565-25580";

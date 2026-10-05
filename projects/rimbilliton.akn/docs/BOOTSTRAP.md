@@ -17,7 +17,7 @@ step.
 - **configuration.nix**: Boot, network, SSH (Tailscale only), Tailscale, sops-nix
 - **modules/pelican.nix**: Pelican Panel and Wings as Docker containers (pinned beta releases)
 - **modules/caddy.nix**: Caddy (TLS) in front of the Panel (`minecraft.chezmoi.sh`) and Wings
-  (`wings.minecraft.chezmoi.sh`)
+  (`main.minecraft.chezmoi.sh`)
 - **modules/backup.nix**: restic backups to Backblaze B2
 
 ## Prerequisites
@@ -230,7 +230,7 @@ it a configuration.
    server, the module caps allocations at 1 and backups at 2 (`UCS_DEFAULT_*` in `modules/pelican.nix`).
 
 4. **Node**: in the admin area create a node for this host.
-   - FQDN `wings.minecraft.chezmoi.sh`, port 443, "Behind Proxy" enabled (Caddy terminates TLS)
+   - FQDN `main.minecraft.chezmoi.sh`, port 443, "Behind Proxy" enabled (Caddy terminates TLS)
    - memory and disk limited (about 4096 MiB and 30000 MiB), CPU 100 %, daemon base directory `/var/lib/pelican/volumes`
    - tag `user_creatable_servers` (Advanced Settings, Tags) so that users can create servers on it
    - from the node's Configuration tab, copy only `uuid`, `token_id` and `token` into the SOPS file: the rest of Wings'

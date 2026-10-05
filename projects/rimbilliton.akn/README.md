@@ -82,7 +82,7 @@ community plugin, and a pool of game ports that Wings allocates to servers on de
 ### [Caddy](https://caddyserver.com/)
 
 HTTP reverse proxy with automatic Let's Encrypt certificates (HTTP-01), exposing the Panel on `minecraft.chezmoi.sh` and
-Wings on `wings.minecraft.chezmoi.sh`.
+Wings on `main.minecraft.chezmoi.sh`.
 
 **\*Why this choice**: Native NixOS module and zero-config TLS.\*
 
