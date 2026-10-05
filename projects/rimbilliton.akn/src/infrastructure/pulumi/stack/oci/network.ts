@@ -94,17 +94,18 @@ export const nsg = new oci.core.NetworkSecurityGroup("rimbilliton-akn-nsg", {
 });
 
 // Ingress, dual-stack:
-//  - 25565/tcp: Minecraft Java
-//  - 80/443 tcp: Caddy (ACME + SSO-gated admin panel)
+//  - 25565-25580/tcp: pool of 16 game ports, allocated to Pelican's servers
+//  - 80/443 tcp: Caddy (ACME, Pelican panel and Wings)
 //  - 22/tcp: only when `unsecure`
+// Keep the game range in sync with `allowedTCPPortRanges` in nixos/configuration.nix.
 const ingressRules = [
-	{ name: "minecraft", protocol: "6", port: 25565 },
-	{ name: "http", protocol: "6", port: 80 },
-	{ name: "https", protocol: "6", port: 443 },
-	{ name: "ssh", protocol: "6", port: 22 },
+	{ name: "minecraft", protocol: "6", min: 25565, max: 25580 },
+	{ name: "http", protocol: "6", min: 80, max: 80 },
+	{ name: "https", protocol: "6", min: 443, max: 443 },
+	{ name: "ssh", protocol: "6", min: 22, max: 22 },
 ] as const;
 
-for (const { name, protocol, port } of ingressRules.filter(
+for (const { name, protocol, min, max } of ingressRules.filter(
 	(rule) => unsecure || rule.name !== "ssh",
 )) {
 	for (const [suffix, source] of [
@@ -119,7 +120,7 @@ for (const { name, protocol, port } of ingressRules.filter(
 				protocol,
 				source,
 				sourceType: "CIDR_BLOCK",
-				tcpOptions: { destinationPortRange: { min: port, max: port } },
+				tcpOptions: { destinationPortRange: { min, max } },
 			},
 		);
 	}
