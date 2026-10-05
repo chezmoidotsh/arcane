@@ -5,7 +5,7 @@
   </picture>
 </h1>
 
-<h4 align="center">Rimbilliton·AKN - Minecraft Server with Crafty Controller</h4>
+<h4 align="center">Rimbilliton·AKN - Minecraft Server with Pelican</h4>
 
 <div align="center">
 
@@ -23,8 +23,8 @@ Considerations</a> · <a href="#license">License</a>
 
 Rimbilliton·AKN is a **Minecraft Java server** declared entirely as code and running on a single OCI Always Free ARM
 instance. Named after Rim Billiton, the mining city from Arknights, this project documents the setup of a NixOS host
-that runs [Crafty Controller](https://craftycontrol.com/) as its management interface, protected by Pocket-ID SSO, with
-daily off-site backups to Backblaze B2.
+that runs [Pelican](https://pelican.dev/) as its management interface, with Pocket-ID SSO and daily off-site backups to
+Backblaze B2.
 
 ### Architecture Overview
 
@@ -33,19 +33,18 @@ The solution is a **single VM** (no Kubernetes) provisioned by Pulumi and config
 **VM Layer (Oracle Cloud Infrastructure - eu-paris-1, Always Free ARM)**:
 
 - **NixOS**: Installed over a bootstrap Ubuntu image with `nixos-anywhere`, fully declarative
-- **Crafty Controller**: Web UI to create, run and back up Minecraft servers (Podman container)
-- **Caddy + oauth2-proxy**: TLS and OIDC gate in front of Crafty, restricted to the Pocket-ID `admin` and `minecraft`
-  groups
-- **restic**: Daily encrypted backups of Crafty archives to Backblaze B2
+- **Pelican (Panel + Wings)**: Web UI to create, run and back up Minecraft servers, each one in its own Docker container
+- **Caddy**: TLS in front of the Panel and Wings
+- **restic**: Daily encrypted backups of Pelican's archives and panel data to Backblaze B2
 - **Tailscale**: Mesh VPN for SSH access and deployments
-- **Pulumi**: Provisions the OCI compartment, dedicated VCN/subnet/NSG, the instance, DNS records, the B2 bucket and the
-  Pocket-ID OIDC client
+- **Pulumi**: Provisions the OCI compartment, dedicated VCN/subnet/NSG, the instance, DNS records and the B2 bucket (the
+  Pocket-ID group and OIDC client are created by hand, the Pulumi provider being no longer functional)
 
 This architecture provides:
 
 - **Declarative setup** from the cloud resources down to the OS, rebuildable from this repository
-- **Delegated administration**: anyone added to the Pocket-ID `minecraft` group can create and manage their own server
-  from Crafty, without access to the rest of the infrastructure
+- **Delegated administration**: anyone allowed by the Pocket-ID client signs in to Pelican with their own account and
+  can be given their own server, without access to the rest of the infrastructure
 - **Free hosting** within the Always Free quota (1 OCPU / 6 GB, shared with kazimierz.akn)
 - **Resilient data** with backups outside OCI, so losing the VM never loses the world
 
@@ -61,13 +60,15 @@ This architecture provides:
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
 
-### [Crafty Controller](https://craftycontrol.com/)
+### [Pelican](https://pelican.dev/)
 
-Web-based Minecraft server manager: server creation (Paper, Fabric, ...), console, file manager, scheduled backups and
-per-user permissions. Runs as a Podman container, listening on loopback only.
+Game server manager made of a **Panel** (web UI and API: users, server creation, console, file manager, schedules and
+backups) and **Wings** (the daemon that starts each game server in a Docker container). Both run as Docker containers
+pinned to a beta release, the Panel on loopback and Wings behind its own hostname, since browsers talk to Wings directly
+for the console and the file manager.
 
-**\*Why this choice**: Best fit among the panels evaluated for a single self-hosted server. It has no native OIDC, so
-SSO is enforced in front of it (see [Security Considerations](#security-considerations)).\*
+**\*Why this choice**: Multi-user by design (each user can own servers), native OAuth sign-in with Pocket-ID through a
+community plugin, and a pool of game ports that Wings allocates to servers on demand.\*
 
 </div>
 </div>
@@ -80,7 +81,8 @@ SSO is enforced in front of it (see [Security Considerations](#security-consider
 
 ### [Caddy](https://caddyserver.com/)
 
-HTTP reverse proxy with automatic Let's Encrypt certificates (HTTP-01), exposing the panel on `minecraft.chezmoi.sh`.
+HTTP reverse proxy with automatic Let's Encrypt certificates (HTTP-01), exposing the Panel on `minecraft.chezmoi.sh` and
+Wings on `wings.minecraft.chezmoi.sh`.
 
 **\*Why this choice**: Native NixOS module and zero-config TLS.\*
 
@@ -92,27 +94,12 @@ HTTP reverse proxy with automatic Let's Encrypt certificates (HTTP-01), exposing
 <div align="center" style="max-width: 1000px; margin: 0 auto;">
 <div align="left">
 
-### [oauth2-proxy](https://oauth2-proxy.github.io/oauth2-proxy/)
-
-OIDC authentication proxy between Caddy and Crafty. Only members of the Pocket-ID `admin` and `minecraft` groups get
-through (the restriction is enforced by the OIDC client).
-
-**\*Why this choice**: Adds SSO to an application without OIDC support, with a native NixOS module.\*
-
-</div>
-</div>
-
-<br/><br/>
-
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-
 ### [restic](https://restic.net/)
 
-Encrypted, deduplicated backups of Crafty's backup archives and configuration to Backblaze B2 every day (7 daily, 4
-weekly, 6 monthly snapshots kept).
+Encrypted, deduplicated backups of Pelican's backup archives and the Panel data (database, keys, plugins) to Backblaze
+B2 every day (7 daily, 4 weekly, 6 monthly snapshots kept).
 
-**\*Why this choice**: Native S3 support (B2 compatible), and it ships the consistent archives Crafty produces rather
+**\*Why this choice**: Native S3 support (B2 compatible), and it ships the consistent archives Pelican produces rather
 than snapshotting a live world.\*
 
 </div>
@@ -145,7 +132,7 @@ Mesh VPN providing SSH access and `nixos-rebuild` deployments. SSH is closed on 
 
 ### [Pocket-ID](https://pocket-id.org/) (auth.chezmoi.sh)
 
-OIDC/OAuth2 provider serving as the SSO solution for the admin panel.
+OIDC/OAuth2 provider serving as the SSO solution for the Pelican panel, through the "Pocket ID Provider" Pelican plugin.
 
 **\*Why this choice**: This is the single identity provider of the homelab.\*
 
@@ -192,8 +179,8 @@ rimbilliton.akn/
         │   ├── disko.nix                       # Disk layout
         │   ├── configuration.nix               # Base system (boot, network, SSH, Tailscale, sops)
         │   ├── modules/
-        │   │   ├── crafty.nix                  # Crafty Controller container
-        │   │   ├── sso.nix                     # Caddy + oauth2-proxy (Pocket-ID)
+        │   │   ├── pelican.nix                 # Pelican Panel and Wings containers (Docker)
+        │   │   ├── caddy.nix                   # Caddy: TLS for the Panel and Wings
         │   │   └── backup.nix                  # restic to Backblaze B2
         │   └── secrets/                        # SOPS secrets (template only)
         └── pulumi/                             # Provisions the OCI VM, network, DNS, B2 and SSO client
@@ -201,7 +188,7 @@ rimbilliton.akn/
                 ├── oci/                        # Compartment, VCN/NSG, instance
                 ├── backblaze.ts                # Backup bucket and scoped key
                 ├── dns.ts                      # Cloudflare DNS records
-                ├── pocket-id.ts                # OIDC client for the admin panel
+                ├── pocket-id.ts                # OIDC client for the admin panel (disabled, provider broken)
                 └── tailscale.ts                # First-boot auth key
 ```
 
@@ -211,7 +198,7 @@ The OCI resources are provisioned first via the Pulumi stack in `src/infrastruct
 over the bootstrap image and managed with `nixos-rebuild` from then on:
 
 ```bash
-nix run github:nix-community/nixos-anywhere -- --flake ./src/infrastructure/nixos#rimbilliton \
+nonix run github:nix-community/nixos-anywhere -- --flake ./src/infrastructure/nixos#rimbilliton-akn \
   --extra-files ./src/infrastructure/nixos/extra --target-host ubuntu@<public-ip>
 ```
 
@@ -219,15 +206,15 @@ See [docs/BOOTSTRAP.md](./docs/BOOTSTRAP.md) for the complete bootstrap procedur
 
 ## Security Considerations
 
-> \[!NOTE] Crafty Controller has no native OIDC support that could be confirmed. SSO is enforced in front of the panel,
-> which keeps its own local login behind it.
+> \[!NOTE] Pelican is a beta release (Panel and Wings are pinned), and sign-in relies on a community plugin ("Pocket ID
+> Provider" by Ebnater). Pelican keeps its own accounts and permissions behind it.
 
 ### Authentication & Access Control
 
-- **SSO Integration**: The admin panel is only reachable through Pocket-ID (auth.chezmoi.sh), `admin` and `minecraft`
-  groups only
+- **SSO Integration**: Users sign in to Pelican with Pocket-ID (auth.chezmoi.sh); the OIDC client is restricted to the
+  `admin` and `minecraft` groups, and Pelican accounts and server ownership are managed in the Panel
 - **SSH Access**: VM management via Tailscale only, SSH never exposed to the public internet
-- **Exposed ports**: 25565 (Minecraft), 80 and 443 (Caddy) only (IPv4: the subnet is not dual-stack)
+- **Exposed ports**: 25565-25580 (pool of 16 game ports), 80 and 443 (Caddy) only (IPv4: the subnet is not dual-stack)
 
 ### Data & Secrets Protection
 

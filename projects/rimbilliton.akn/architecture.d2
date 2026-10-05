@@ -16,8 +16,8 @@ explanation: |md
   interact with each other.
 
   rimbilliton.akn is a **single OCI Always Free ARM VM** \
-  running NixOS. Crafty Controller manages the Minecraft \
-  server, its admin panel is protected by Pocket-ID SSO, \
+  running NixOS. Pelican (Panel and Wings) manages the Minecraft \
+  servers, users sign in with Pocket-ID SSO, \
   and world backups are shipped daily to Backblaze B2.
 | {
   near: top-left
@@ -94,31 +94,31 @@ vm: {
     label: Caddy
     icon: docs/assets/icons/apps/caddy.svg
     link: https://caddyserver.com/
-    tooltip: Reverse proxy with automatic TLS for minecraft.chezmoi.sh
-  }
-
-  oauth2-proxy: {
-    class: [application-system]
-    label: oauth2-proxy
-    link: https://oauth2-proxy.github.io/oauth2-proxy/
-    tooltip: OIDC gate, only members of the admin and minecraft groups get through
+    tooltip: Reverse proxy with automatic TLS for minecraft.chezmoi.sh and wings.minecraft.chezmoi.sh
   }
 
   # ────────────────────────────────────────────────────────────────────────────
   # Game server
 
-  crafty: {
+  pelican-panel: {
     class: [application]
-    label: Crafty Controller
-    link: https://craftycontrol.com/
-    tooltip: Minecraft server manager (Podman container)
+    label: Pelican Panel
+    link: https://pelican.dev/
+    tooltip: Web UI and API, sign-in through Pocket-ID (Docker container)
+  }
+
+  wings: {
+    class: [application]
+    label: Pelican Wings
+    link: https://pelican.dev/
+    tooltip: Daemon that runs each game server in a Docker container (Docker container)
   }
 
   minecraft: {
     class: [application]
-    label: Minecraft Java\n(25565)
+    label: Minecraft Java\n(25565-25580)
     link: https://www.minecraft.net/
-    tooltip: Game server created and managed from Crafty
+    tooltip: Game servers created and managed from Pelican, one port each from the pool
   }
 
   # ────────────────────────────────────────────────────────────────────────────
@@ -128,7 +128,7 @@ vm: {
     class: [application-system]
     label: restic
     link: https://restic.net/
-    tooltip: Daily encrypted backups of Crafty archives and config
+    tooltip: Daily encrypted backups of Pelican archives and panel data
   }
 
   tailscale: {
@@ -150,7 +150,7 @@ vm: {
 
 internet -> vm.minecraft: |md
     Minecraft Java
-    (TCP 25565)
+    (TCP 25565-25580)
   | { class: [connect-from-internet] }
 
 internet -> vm.caddy: |md
@@ -163,18 +163,20 @@ tailnet -> vm.tailscale: "SSH (22)\nnixos-rebuild" { class: [connect-vpn] }
 # ──────────────────────────────────────────────────────────────────────────────
 # Admin panel flow
 
-vm.caddy -> vm.oauth2-proxy: "Reverse proxy\n(127.0.0.1:4180)"
+vm.caddy -> vm.pelican-panel: "minecraft.chezmoi.sh\n(127.0.0.1:81)"
 
-vm.oauth2-proxy -> vm.crafty: "Authenticated requests\n(127.0.0.1:8443)"
+vm.caddy -> vm.wings: "wings.minecraft.chezmoi.sh\n(127.0.0.1:8080)"
 
-vm.oauth2-proxy -> pocket-id: "OIDC (groups: admin, minecraft)\n(auth.chezmoi.sh:443)" { class: [connect-to-internet] }
+vm.pelican-panel -> pocket-id: "OIDC sign-in\n(auth.chezmoi.sh:443)" { class: [connect-to-internet] }
 
-vm.crafty -> vm.minecraft: "Start / stop / console\nscheduled backups"
+vm.pelican-panel -> vm.wings: "Create / configure servers"
+
+vm.wings -> vm.minecraft: "Start / stop / console\nscheduled backups"
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Backups and certificates
 
-vm.restic -> vm.crafty: "Read backup archives\n(/var/lib/crafty/backups)"
+vm.restic -> vm.wings: "Read backup archives\n(/var/lib/pelican/backups)"
 
 vm.restic -> backblaze: |md
     restic over S3
