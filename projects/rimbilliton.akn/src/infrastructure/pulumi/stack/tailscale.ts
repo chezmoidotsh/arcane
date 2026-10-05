@@ -10,6 +10,6 @@ const authKey = new tailscale.TailnetKey("rimbilliton-tailscale-key", {
 	preauthorized: true,
 	expiry: 3600 * 24 * 7,
 	tags: ["tag:minecraft"],
-	description: "rimbilliton.akn first boot",
+	description: "rimbilliton-akn first boot",
 });
 export const tailscaleAuthKey = authKey.key;
