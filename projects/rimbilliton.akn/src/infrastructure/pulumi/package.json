@@ -8,7 +8,6 @@
 		"@pulumi/b2": "workspace:*",
 		"@pulumi/cloudflare": "catalog:",
 		"@pulumi/oci": "catalog:",
-		"@pulumi/pocket-id": "workspace:*",
 		"@pulumi/pulumi": "catalog:",
 		"@pulumi/random": "catalog:",
 		"@pulumi/tailscale": "catalog:"
