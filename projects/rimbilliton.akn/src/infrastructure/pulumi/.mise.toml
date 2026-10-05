@@ -9,6 +9,9 @@
 [tools]
 node = "24"
 
+[env]
+_.file = "{{ config_root }}/.mise/env.yaml"
+
 [tasks."pulumi:diff"]
 description = "Preview pending changes for the current Pulumi stack"
 run = "pulumi preview --refresh --parallel 15"
