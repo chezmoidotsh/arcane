@@ -9,6 +9,9 @@ catalogs:
     '@axnic/pulumi-garage':
       specifier: ^1.0.1
       version: 1.0.1
+    '@axnic/pulumi-pocket-id':
+      specifier: ^0.1.0
+      version: 0.1.0
     '@pulumi/cloudflare':
       specifier: ^6.17.0
       version: 6.17.0
@@ -228,9 +231,6 @@ importers:
       '@pulumi/pangolin':
         specifier: workspace:*
         version: link:../sdks/pangolin
-      '@pulumi/pocket-id':
-        specifier: workspace:*
-        version: link:../sdks/pocket-id
       '@pulumi/pulumi':
         specifier: 'catalog:'
         version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
@@ -281,18 +281,6 @@ importers:
         specifier: ^4.7.0
         version: 4.9.5
 
-  catalog/pulumi/sdks/pocket-id:
-    dependencies:
-      '@pulumi/pulumi':
-        specifier: ^3.238.0
-        version: 3.250.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@20.19.43)(typescript@4.9.5))(typescript@4.9.5)
-      '@types/node':
-        specifier: ^20
-        version: 20.19.43
-      typescript:
-        specifier: ^4.7.0
-        version: 4.9.5
-
   catalog/pulumi/sdks/proxmox:
     dependencies:
       '@pulumi/pulumi':
@@ -331,6 +319,9 @@ importers:
 
   projects/chezmoi.sh/src/infrastructure/pulumi:
     dependencies:
+      '@axnic/pulumi-pocket-id':
+        specifier: 'catalog:'
+        version: 0.1.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
       '@chezmoi.sh/pulumi-cloudflare-dns01-token':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/components/cloudflare-dns01-token
@@ -349,9 +340,6 @@ importers:
       '@pulumi/kubernetes':
         specifier: 'catalog:'
         version: 4.34.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
-      '@pulumi/pocket-id':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/sdks/pocket-id
       '@pulumi/proxmox':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/sdks/proxmox
@@ -401,15 +389,15 @@ importers:
 
   projects/hass/src/infrastructure/pulumi:
     dependencies:
+      '@axnic/pulumi-pocket-id':
+        specifier: 'catalog:'
+        version: 0.1.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@chezmoi.sh/pulumi-cloudflare-dns01-token':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/components/cloudflare-dns01-token
       '@chezmoi.sh/pulumi-lib':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/lib
-      '@pulumi/pocket-id':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/sdks/pocket-id
       '@pulumi/pulumi':
         specifier: 'catalog:'
         version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
@@ -420,6 +408,9 @@ importers:
 
   projects/kazimierz.akn/src/infrastructure/pulumi:
     dependencies:
+      '@axnic/pulumi-pocket-id':
+        specifier: 'catalog:'
+        version: 0.1.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@chezmoi.sh/pulumi-cloudflare-dns01-token':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/components/cloudflare-dns01-token
@@ -435,9 +426,6 @@ importers:
       '@pulumi/pangolin':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/sdks/pangolin
-      '@pulumi/pocket-id':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/sdks/pocket-id
       '@pulumi/pulumi':
         specifier: 'catalog:'
         version: 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
@@ -451,6 +439,9 @@ importers:
       '@axnic/pulumi-garage':
         specifier: 'catalog:'
         version: 1.0.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@axnic/pulumi-pocket-id':
+        specifier: 'catalog:'
+        version: 0.1.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@chezmoi.sh/pulumi-cloudflare-dns01-token':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/components/cloudflare-dns01-token
@@ -472,9 +463,6 @@ importers:
       '@pulumi/pangolin':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/sdks/pangolin
-      '@pulumi/pocket-id':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/sdks/pocket-id
       '@pulumi/proxmox':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/sdks/proxmox
@@ -503,6 +491,9 @@ importers:
       '@axnic/pulumi-garage':
         specifier: 'catalog:'
         version: 1.0.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+      '@axnic/pulumi-pocket-id':
+        specifier: 'catalog:'
+        version: 0.1.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@chezmoi.sh/pulumi-cloudflare-dns01-token':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/components/cloudflare-dns01-token
@@ -527,9 +518,6 @@ importers:
       '@pulumi/pangolin':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/sdks/pangolin
-      '@pulumi/pocket-id':
-        specifier: workspace:*
-        version: link:../../../../../catalog/pulumi/sdks/pocket-id
       '@pulumi/proxmox':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/sdks/proxmox
@@ -551,6 +539,9 @@ packages:
 
   '@axnic/pulumi-garage@1.0.1':
     resolution: {integrity: sha512-3Kaob/uMaUEyyaWBliEyHhbFDGHyXzAFb0lqmKBl6/Wxp2IeTEa+81oLUeK6wbjctlAQudvtZdJnyInv4je6AA==}
+
+  '@axnic/pulumi-pocket-id@0.1.0':
+    resolution: {integrity: sha512-RU6CexMQgd8jzpYRezU16AbfU5Y5bCswUkRhxNDvgzjgb53015vdN1n2bXHchX3fQYFp1lQp8c5Yr4d5Spk+Vg==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -1958,6 +1949,22 @@ snapshots:
       - typescript
 
   '@axnic/pulumi-garage@1.0.1(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
+    dependencies:
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
+    transitivePeerDependencies:
+      - supports-color
+      - ts-node
+      - typescript
+
+  '@axnic/pulumi-pocket-id@0.1.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)':
+    dependencies:
+      '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@22.20.0)(typescript@5.9.3))(typescript@5.9.3)
+    transitivePeerDependencies:
+      - supports-color
+      - ts-node
+      - typescript
+
+  '@axnic/pulumi-pocket-id@0.1.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
       '@pulumi/pulumi': 3.262.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
