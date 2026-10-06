@@ -9,7 +9,7 @@
 		"@pulumi/cloudflare": "catalog:",
 		"@pulumi/oci": "catalog:",
 		"@pulumi/pangolin": "workspace:*",
-		"@pulumi/pocket-id": "workspace:*",
+		"@axnic/pulumi-pocket-id": "catalog:",
 		"@pulumi/pulumi": "catalog:"
 	},
 	"devDependencies": {

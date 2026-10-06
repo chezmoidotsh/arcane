@@ -1,9 +1,4 @@
-import {
-	AllowedUserGroups,
-	OidcClientSecret,
-	pocketIdProvider,
-} from "@chezmoi.sh/pulumi-lib";
-import * as pocketid from "@pulumi/pocket-id";
+import * as pocketid from "@axnic/pulumi-pocket-id";
 
 import { maisonGroupId } from "./index";
 
@@ -18,34 +13,28 @@ import { maisonGroupId } from "./index";
 // the secret is exposed as a Pulumi stack output instead of a
 // vault.kv.SecretV2, retrieved with `mise run pulumi:oidc-client` and pasted
 // into the integration setup by hand.
-export const homeAssistantOidcClient = new pocketid.oidc.OidcClients(
+export const homeAssistantOidcClient = new pocketid.OidcClient(
 	"home-assistant",
 	{
+		allowedUserGroupIds: [maisonGroupId],
 		name: "Home Assistant",
 		description: "Domotique et supervision de la maison",
 		logoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/home-assistant-dark.svg",
 		darkLogoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/home-assistant-light.svg",
-		launchURL: "https://hass.chezmoi.sh/",
-		callbackURLs: ["https://hass.chezmoi.sh/auth/oidc/callback"],
-		isGroupRestricted: true,
+		launchUrl: "https://hass.chezmoi.sh/",
+		callbackUrls: ["https://hass.chezmoi.sh/auth/oidc/callback"],
 		isPublic: false,
 		pkceEnabled: true,
-		logoutCallbackURLs: [],
+		logoutCallbackUrls: [],
 		requiresPushedAuthorizationRequests: false,
 		requiresReauthentication: false,
 		skipConsent: false,
 	},
-	{ provider: pocketIdProvider(), ignoreChanges: ["logoUrl", "darkLogoUrl"] },
 );
 
-new AllowedUserGroups("home-assistant-groups", {
-	clientId: homeAssistantOidcClient.id,
-	groupIds: [maisonGroupId],
-});
-
-const homeAssistantSecret = new OidcClientSecret("home-assistant-secret", {
+const homeAssistantSecret = new pocketid.OidcClientSecret("home-assistant-secret", {
 	clientId: homeAssistantOidcClient.id,
 });
 
