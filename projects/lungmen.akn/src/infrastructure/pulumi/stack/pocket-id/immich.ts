@@ -1,9 +1,7 @@
 import {
-	OidcClientSecret,
-	pocketIdProvider,
 	vaultSecretMetadata,
 } from "@chezmoi.sh/pulumi-lib";
-import * as pocketid from "@pulumi/pocket-id";
+import * as pocketid from "@axnic/pulumi-pocket-id";
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
@@ -11,7 +9,7 @@ import * as vault from "@pulumi/vault";
 // client already exists and is already in use by the live Immich deployment,
 // whose ExternalSecret reads client_id/client_secret straight from Vault
 // (lungmen.akn/immich/auth/oidc-client). Not group-restricted.
-export const immichOidcClient = new pocketid.oidc.OidcClients(
+export const immichOidcClient = new pocketid.OidcClient(
 	"immich",
 	{
 		name: "Photos",
@@ -20,24 +18,22 @@ export const immichOidcClient = new pocketid.oidc.OidcClients(
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/immich-dark.svg",
 		darkLogoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/immich-light.svg",
-		launchURL: "https://photos.chezmoi.sh",
-		callbackURLs: [
+		launchUrl: "https://photos.chezmoi.sh",
+		callbackUrls: [
 			"app.immich:///oauth-callback",
 			"https://photos.chezmoi.sh/auth/login",
 			"https://photos.chezmoi.sh/user-settings",
 		],
-		isGroupRestricted: false,
 		isPublic: false,
 		pkceEnabled: true,
-		logoutCallbackURLs: [],
+		logoutCallbackUrls: [],
 		requiresPushedAuthorizationRequests: false,
 		requiresReauthentication: false,
 		skipConsent: false,
 	},
-	{ provider: pocketIdProvider(), ignoreChanges: ["logoUrl", "darkLogoUrl"] },
 );
 
-const immichSecret = new OidcClientSecret("immich-secret", {
+const immichSecret = new pocketid.OidcClientSecret("immich-secret", {
 	clientId: immichOidcClient.id,
 });
 

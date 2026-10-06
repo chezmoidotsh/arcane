@@ -1,9 +1,7 @@
 import {
-	OidcClientSecret,
-	pocketIdProvider,
 	vaultSecretMetadata,
 } from "@chezmoi.sh/pulumi-lib";
-import * as pocketid from "@pulumi/pocket-id";
+import * as pocketid from "@axnic/pulumi-pocket-id";
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
@@ -11,7 +9,7 @@ import * as vault from "@pulumi/vault";
 // client already exists and is already in use by the live Forgejo deployment,
 // whose ExternalSecret reads client_id/client_secret straight from Vault
 // (lungmen.akn/forgejo/auth/oidc-client). Not group-restricted.
-export const forgejoOidcClient = new pocketid.oidc.OidcClients(
+export const forgejoOidcClient = new pocketid.OidcClient(
 	"forgejo",
 	{
 		name: "Forgejo",
@@ -20,22 +18,20 @@ export const forgejoOidcClient = new pocketid.oidc.OidcClients(
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/forgejo-dark.svg",
 		darkLogoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/forgejo-light.svg",
-		launchURL: "https://git.chezmoi.sh",
-		callbackURLs: [
+		launchUrl: "https://git.chezmoi.sh",
+		callbackUrls: [
 			"https://git.chezmoi.sh/user/oauth2/auth.chezmoi.sh/callback",
 		],
-		isGroupRestricted: false,
 		isPublic: false,
 		pkceEnabled: false,
-		logoutCallbackURLs: [],
+		logoutCallbackUrls: [],
 		requiresPushedAuthorizationRequests: false,
 		requiresReauthentication: false,
 		skipConsent: false,
 	},
-	{ provider: pocketIdProvider(), ignoreChanges: ["logoUrl", "darkLogoUrl"] },
 );
 
-const forgejoSecret = new OidcClientSecret("forgejo-secret", {
+const forgejoSecret = new pocketid.OidcClientSecret("forgejo-secret", {
 	clientId: forgejoOidcClient.id,
 });
 

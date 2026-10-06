@@ -12,7 +12,7 @@
 		"@chezmoi.sh/pulumi-proxmox-cluster-identity": "workspace:*",
 		"@pulumi/kubernetes": "catalog:",
 		"@pulumi/pangolin": "workspace:*",
-		"@pulumi/pocket-id": "workspace:*",
+		"@axnic/pulumi-pocket-id": "catalog:",
 		"@pulumi/proxmox": "workspace:*",
 		"@pulumi/pulumi": "catalog:",
 		"@pulumi/random": "catalog:",

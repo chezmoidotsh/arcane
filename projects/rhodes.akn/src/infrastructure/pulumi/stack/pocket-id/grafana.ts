@@ -1,10 +1,7 @@
 import {
-	AllowedUserGroups,
-	OidcClientSecret,
-	pocketIdProvider,
 	vaultSecretMetadata,
 } from "@chezmoi.sh/pulumi-lib";
-import * as pocketid from "@pulumi/pocket-id";
+import * as pocketid from "@axnic/pulumi-pocket-id";
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
@@ -17,33 +14,27 @@ import { adminGroupId } from "./index";
 // grafana.instance.yaml's auth.generic_oauth config, not templated from
 // Vault. Group-restricted to admins -- Grafana surfaces homelab-wide
 // metrics/logs, not a single-app dashboard.
-export const grafanaOidcClient = new pocketid.oidc.OidcClients(
+export const grafanaOidcClient = new pocketid.OidcClient(
 	"grafana",
 	{
+		allowedUserGroupIds: [adminGroupId],
 		name: "Grafana",
 		description: "Tableaux de bord et métriques",
 		logoUrl: "https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/grafana.svg",
 		darkLogoUrl:
 			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/grafana.svg",
-		launchURL: "https://o11y.chezmoi.sh/",
-		callbackURLs: ["https://o11y.chezmoi.sh/login/generic_oauth"],
-		isGroupRestricted: true,
+		launchUrl: "https://o11y.chezmoi.sh/",
+		callbackUrls: ["https://o11y.chezmoi.sh/login/generic_oauth"],
 		isPublic: false,
 		pkceEnabled: true,
-		logoutCallbackURLs: [],
+		logoutCallbackUrls: [],
 		requiresPushedAuthorizationRequests: false,
 		requiresReauthentication: false,
 		skipConsent: false,
 	},
-	{ provider: pocketIdProvider(), ignoreChanges: ["logoUrl", "darkLogoUrl"] },
 );
 
-new AllowedUserGroups("grafana-groups", {
-	clientId: grafanaOidcClient.id,
-	groupIds: [adminGroupId],
-});
-
-const grafanaSecret = new OidcClientSecret("grafana-secret", {
+const grafanaSecret = new pocketid.OidcClientSecret("grafana-secret", {
 	clientId: grafanaOidcClient.id,
 });
 
