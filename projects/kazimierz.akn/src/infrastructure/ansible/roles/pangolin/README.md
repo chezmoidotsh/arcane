@@ -106,8 +106,9 @@ docker compose -f /opt/pangolin/docker-compose.yml logs -f [pangolin|gerbil|trae
 docker compose -f /opt/pangolin/docker-compose.yml restart
 ```
 
-Re-running the playbook (or letting `ansible-pull` do it) is the supported way to update or reconfigure the stack --
-templates are idempotent and the role stops/restarts the stack automatically when `docker-compose.yml` changes.
+Re-running the playbook from the operator machine (see the [Ansible README](../../README.md)) is the supported way to
+update or reconfigure the stack -- templates are idempotent and the role stops/restarts the stack automatically when
+`docker-compose.yml` changes.
 
 ### Troubleshooting
 

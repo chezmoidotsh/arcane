@@ -36,7 +36,7 @@ The solution is a **single VPS** (no Kubernetes) running Pangolin with integrate
 - **Gerbil**: WireGuard tunnel manager (site/client tunnels)
 - **Traefik**: HTTP reverse proxy with automatic Let's Encrypt SSL
 - **Tailscale**: Mesh VPN for secure SSH access and monitoring
-- **Ansible**: GitOps automation via ansible-pull (15-minute sync)
+- **Ansible**: Configuration management, run remotely over SSH from an operator machine
 - **ARA**: Playbook execution monitoring and auditing
 - **Pulumi**: Provisions the OCI instance, network (VCN/NSG), and DNS records the VPS runs on
 
@@ -65,7 +65,7 @@ This architecture provides:
   wildcard TLS certs -- it never proxies traffic)
 - **Isolation** with the VPS as a sacrificial layer that can be compromised without impacting internal infrastructure
 - **Simple management** with no Kubernetes overhead on the edge
-- **GitOps automation** via ansible-pull for infrastructure-as-code drift prevention
+- **Declarative configuration** with Ansible, versioned in Git and applied by re-running the playbook
 - **Execution monitoring** with ARA for tracking configuration changes and debugging
 
 ## Services Overview
@@ -154,11 +154,11 @@ dashboard.\*
 
 ### [Ansible](https://www.ansible.com/)
 
-Configuration management and GitOps automation via `ansible-pull` systemd timer (15-minute interval). Pulls latest
-configurations from Git repository and applies changes idempotently.
+Configuration management run remotely over SSH from an operator machine (`ansible-playbook`). Configuration lives in Git
+and is applied idempotently by re-running the playbook.
 
-**\*Why this choice**: Self-pulling GitOps model eliminates need for external CI/CD infrastructure. Systemd timer
-ensures VPS stays in sync with repository state. Integrates with ARA for execution monitoring.\*
+**\*Why this choice**: Agentless and simple, no external CI/CD infrastructure and nothing running on the VPS to keep the
+configuration in sync. Integrates with ARA for execution monitoring.\*
 
 </div>
 </div>
@@ -174,8 +174,8 @@ ensures VPS stays in sync with repository state. Integrates with ARA for executi
 Ansible playbook execution recorder providing web UI for tracking changes, debugging failures, and auditing
 configuration drift. Accessible via Tailscale Serve HTTPS endpoint.
 
-**\*Why this choice**: Provides visibility into ansible-pull executions without additional monitoring infrastructure.
-SQLite backend keeps it lightweight. Tailscale Serve provides secure access without public exposure.\*
+**\*Why this choice**: Provides visibility into playbook executions without additional monitoring infrastructure. SQLite
+backend keeps it lightweight. Tailscale Serve provides secure access without public exposure.\*
 
 </div>
 </div>
@@ -238,16 +238,15 @@ kazimierz.akn/
 └── src/
     └── infrastructure/
         ├── ansible/                            # Ansible infrastructure-as-code
-        │   ├── site.yml                        # Main playbook (4 phases)
+        │   ├── site.yml                        # Main playbook (3 steps)
         │   ├── requirements.yml                # External roles and collections
         │   ├── inventory/
-        │   │   ├── local.yml                   # Local inventory (ansible-pull)
+        │   │   ├── local.yml                   # Local inventory (run the playbook on the host)
         │   │   ├── remote.yml                  # Remote inventory (manual deployment)
         │   │   └── host_vars/
         │   │       └── kazimierz.yml           # Host-specific variables (vault-encrypted)
         │   └── roles/
         │       ├── system_setup/               # Base system (Docker, Tailscale, UFW, etc.)
-        │       ├── gitops_automation/          # ansible-pull systemd timer setup
         │       ├── ara_server/                 # ARA playbook monitoring
         │       └── pangolin/                   # Pangolin stack (Pangolin, Gerbil, Traefik)
         └── pulumi/                             # Provisions the OCI instance, network and DNS
@@ -260,18 +259,16 @@ kazimierz.akn/
 ## Installation and Setup
 
 The OCI instance and network are provisioned first via the Pulumi stack in `src/infrastructure/pulumi/`. The VPS itself
-is then configured using Ansible, which self-manages via `ansible-pull` from then on:
+is then configured using Ansible, run remotely over SSH from a machine with access to the VPS (the vault password is
+stored sops-encrypted in `src/infrastructure/ansible/.vault-password.sops`):
 
 ```bash
-export ANSIBLE_VAULT_PASSWORD="..."
-ansible-pull \
-  --url https://github.com/chezmoidotsh/arcane \
-  --checkout main \
-  --directory /opt/chezmoidotsh/arcane \
-  --inventory projects/kazimierz.akn/src/infrastructure/ansible/inventory/local.yml \
-  --vault-password-file <(echo "$ANSIBLE_VAULT_PASSWORD") \
-  projects/kazimierz.akn/src/infrastructure/ansible/site.yml
+export ANSIBLE_VAULT_PASSWORD="$(sops --decrypt projects/kazimierz.akn/src/infrastructure/ansible/.vault-password.sops)"
+cd projects/kazimierz.akn/src/infrastructure/ansible
+ansible-playbook -i inventory/remote.yml site.yml --vault-password-file <(echo "$ANSIBLE_VAULT_PASSWORD")
 ```
+
+Configuration changes are applied by re-running this command; nothing syncs automatically.
 
 See [docs/BOOTSTRAP.md](./docs/BOOTSTRAP.md) for the complete bootstrap procedure and
 [src/infrastructure/ansible/README.md](./src/infrastructure/ansible/README.md) for the full Ansible architecture.

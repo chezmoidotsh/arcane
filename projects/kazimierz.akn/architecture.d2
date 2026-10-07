@@ -163,7 +163,7 @@ vps: {
     label: Ansible
     icon: docs/assets/icons/apps/ansible.svg
     link: https://www.ansible.com/
-    tooltip: GitOps automation via ansible-pull (15-minute sync)
+    tooltip: Configuration management, run remotely over SSH from an operator machine
   }
 
   ara: {
@@ -207,8 +207,6 @@ vps.proxy-stack.traefik -> internet: |md
   | {class: [connect-to-internet]}
 
 vps.tailscale -> internet: "Tailscale API\n(api.tailscale.com:443)" {class: [connect-to-internet]}
-
-vps.ansible -> internet: "Git Pull\n(github.com:443)" {class: [connect-to-internet]}
 
 
 # ──────────────────────────────────────────────────────────────────────────────
