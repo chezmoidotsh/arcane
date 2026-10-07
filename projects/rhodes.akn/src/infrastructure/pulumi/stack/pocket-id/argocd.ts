@@ -15,6 +15,7 @@ import { adminGroupId } from "./index";
 export const argocdOidcClient = new pocketid.OidcClient(
 	"argocd",
 	{
+		clientId: "e93aeea8-22dd-4af2-b6b1-a1ebdeadd88a",
 		allowedUserGroupIds: [adminGroupId],
 		name: "ArgoCD",
 		description: "Déploiement continu (GitOps)",

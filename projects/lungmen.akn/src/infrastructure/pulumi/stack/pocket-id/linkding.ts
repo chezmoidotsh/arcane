@@ -14,6 +14,7 @@ import { maisonGroupId } from "./index";
 export const linkdingOidcClient = new pocketid.OidcClient(
 	"linkding",
 	{
+		clientId: "c296c34a-f7d8-420b-9d19-4bbfaae966a8",
 		allowedUserGroupIds: [maisonGroupId],
 		name: "Bookmarks",
 		description: "Gestionnaire de favoris",

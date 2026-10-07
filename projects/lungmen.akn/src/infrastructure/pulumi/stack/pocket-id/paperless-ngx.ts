@@ -14,6 +14,7 @@ import { maisonGroupId } from "./index";
 export const paperlessNgxOidcClient = new pocketid.OidcClient(
 	"paperless-ngx",
 	{
+		clientId: "10a5c5ba-ef7e-4385-b826-fd87d0b4fc40",
 		allowedUserGroupIds: [maisonGroupId],
 		name: "Archives",
 		description: "Archivage et gestion de documents",

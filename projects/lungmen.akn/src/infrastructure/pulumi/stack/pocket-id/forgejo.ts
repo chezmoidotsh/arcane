@@ -12,6 +12,7 @@ import * as vault from "@pulumi/vault";
 export const forgejoOidcClient = new pocketid.OidcClient(
 	"forgejo",
 	{
+		clientId: "624217ac-b163-4f25-847a-9a2c645dc22d",
 		name: "Forgejo",
 		description: "Hébergement Git",
 		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/forgejo-dark.svg"),

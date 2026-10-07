@@ -10,6 +10,7 @@ import { maisonGroupId } from "./index";
 export const homeboxOidcClient = new pocketid.OidcClient(
 	"homebox",
 	{
+		clientId: "737ecc0b-e9c1-426c-aa68-873047dac113",
 		allowedUserGroupIds: [maisonGroupId],
 		name: "Catalogue",
 		description: "Inventaire du foyer",

@@ -17,11 +17,12 @@ import { adminGroupId } from "./index";
 export const grafanaOidcClient = new pocketid.OidcClient(
 	"grafana",
 	{
+		clientId: "08133fea-c845-4460-a507-d53706a790f7",
 		allowedUserGroupIds: [adminGroupId],
 		name: "Grafana",
 		description: "Tableaux de bord et métriques",
-		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/grafana.svg"),
-		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/grafana.svg"),
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/grafana-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/grafana-light.svg"),
 		launchUrl: "https://o11y.chezmoi.sh/",
 		callbackUrls: ["https://o11y.chezmoi.sh/login/generic_oauth"],
 		isPublic: false,

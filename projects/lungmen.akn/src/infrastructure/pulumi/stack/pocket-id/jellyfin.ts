@@ -10,6 +10,7 @@ import { familleGroupId, maisonGroupId } from "./index";
 export const jellyfinOidcClient = new pocketid.OidcClient(
 	"jellyfin",
 	{
+		clientId: "dd81ad1f-ab38-4e99-9b1e-fb5572275edf",
 		allowedUserGroupIds: [maisonGroupId, familleGroupId],
 		name: "Streaming",
 		description: "Films, séries et musique",

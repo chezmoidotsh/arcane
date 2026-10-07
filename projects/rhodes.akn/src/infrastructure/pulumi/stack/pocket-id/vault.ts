@@ -8,6 +8,7 @@ import { adminGroupId } from "./index";
 export const vaultOidcClient = new pocketid.OidcClient(
 	"vault",
 	{
+		clientId: "762ac35a-f6ea-4831-ab61-a7e923e4b5cf",
 		allowedUserGroupIds: [adminGroupId],
 		name: "Vault",
 		description: "Coffre-fort de secrets",

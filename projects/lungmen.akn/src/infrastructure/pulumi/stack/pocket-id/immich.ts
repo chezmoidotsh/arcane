@@ -12,6 +12,7 @@ import * as vault from "@pulumi/vault";
 export const immichOidcClient = new pocketid.OidcClient(
 	"immich",
 	{
+		clientId: "b0b33757-fe5e-4e9b-be42-9fec81d2affb",
 		name: "Photos",
 		description: "Sauvegarde et partage de photos/vidéos",
 		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/immich-dark.svg"),

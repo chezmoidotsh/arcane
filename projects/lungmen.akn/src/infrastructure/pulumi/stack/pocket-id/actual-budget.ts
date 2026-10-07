@@ -14,6 +14,7 @@ import { maisonGroupId } from "./index";
 export const actualBudgetOidcClient = new pocketid.OidcClient(
 	"actual-budget",
 	{
+		clientId: "afc54ffc-425f-4806-82d8-4a3f4ecaddc6",
 		allowedUserGroupIds: [maisonGroupId],
 		name: "Gestion du budget",
 		description: "Suivi du budget",

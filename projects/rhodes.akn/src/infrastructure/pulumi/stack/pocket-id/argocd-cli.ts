@@ -10,6 +10,7 @@ import { adminGroupId } from "./index";
 export const argocdCliOidcClient = new pocketid.OidcClient(
 	"argocd-cli",
 	{
+		clientId: "344b3e80-14a0-4012-9126-19185bd3f4a4",
 		allowedUserGroupIds: [adminGroupId],
 		name: "ArgoCD (CLI)",
 		description: "Déploiement continu (GitOps) — CLI",
