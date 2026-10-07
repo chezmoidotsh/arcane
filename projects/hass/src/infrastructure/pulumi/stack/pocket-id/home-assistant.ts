@@ -1,4 +1,5 @@
 import * as pocketid from "@axnic/pulumi-pocket-id";
+import * as pulumi from "@pulumi/pulumi";
 
 import { maisonGroupId } from "./index";
 
@@ -19,10 +20,8 @@ export const homeAssistantOidcClient = new pocketid.OidcClient(
 		allowedUserGroupIds: [maisonGroupId],
 		name: "Home Assistant",
 		description: "Domotique et supervision de la maison",
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/home-assistant-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/home-assistant-light.svg",
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/home-assistant-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/home-assistant-light.svg"),
 		launchUrl: "https://hass.chezmoi.sh/",
 		callbackUrls: ["https://hass.chezmoi.sh/auth/oidc/callback"],
 		isPublic: false,

@@ -1,4 +1,5 @@
 import * as pocketid from "@axnic/pulumi-pocket-id";
+import * as pulumi from "@pulumi/pulumi";
 
 import { adminGroupId } from "./index";
 
@@ -13,10 +14,8 @@ export const vaultOidcClient = new pocketid.OidcClient(
 		// The app running is OpenBao (a Vault fork); the client is named
 		// "Vault" for protocol/UI-compat reasons, so use OpenBao's icon, not a
 		// nonexistent "vault" one.
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/openbao-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/openbao-light.svg",
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/openbao-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/openbao-light.svg"),
 		launchUrl: "https://vault.chezmoi.sh/ui/vault/auth?with=pocket-id%2F",
 		callbackUrls: [
 			"https://vault.chezmoi.sh/ui/vault/auth/pocket-id/oidc/callback",

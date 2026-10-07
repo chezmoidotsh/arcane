@@ -18,10 +18,8 @@ export const argocdOidcClient = new pocketid.OidcClient(
 		allowedUserGroupIds: [adminGroupId],
 		name: "ArgoCD",
 		description: "Déploiement continu (GitOps)",
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-light.svg",
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-light.svg"),
 		launchUrl: "https://argocd.akn.chezmoi.sh/",
 		callbackUrls: ["https://argocd.akn.chezmoi.sh/auth/callback"],
 		isPublic: false,

@@ -20,9 +20,8 @@ export const grafanaOidcClient = new pocketid.OidcClient(
 		allowedUserGroupIds: [adminGroupId],
 		name: "Grafana",
 		description: "Tableaux de bord et métriques",
-		logoUrl: "https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/grafana.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/grafana.svg",
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/grafana.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/grafana.svg"),
 		launchUrl: "https://o11y.chezmoi.sh/",
 		callbackUrls: ["https://o11y.chezmoi.sh/login/generic_oauth"],
 		isPublic: false,

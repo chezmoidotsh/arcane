@@ -1,4 +1,5 @@
 import * as pocketid from "@axnic/pulumi-pocket-id";
+import * as pulumi from "@pulumi/pulumi";
 
 import { adminGroupId } from "./index";
 
@@ -12,10 +13,8 @@ export const argocdCliOidcClient = new pocketid.OidcClient(
 		allowedUserGroupIds: [adminGroupId],
 		name: "ArgoCD (CLI)",
 		description: "Déploiement continu (GitOps) — CLI",
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-light.svg",
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-light.svg"),
 		callbackUrls: ["http://localhost:8085/auth/callback"],
 		isPublic: true,
 		pkceEnabled: true,
