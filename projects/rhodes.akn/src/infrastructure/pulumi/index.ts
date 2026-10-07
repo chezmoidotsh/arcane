@@ -1,7 +1,9 @@
-export * from "./stack/cert-manager";
-export * from "./stack/cloudnative-pg";
-export * from "./stack/grafana";
-export * from "./stack/pangolin";
-export * from "./stack/pocket-id";
-export * from "./stack/proxmox";
-export * from "./stack/vault";
+// Nothing is read from outside this stack (secrets go to Vault): import for side
+// effects only, so no resource or token leaks into the stack outputs.
+import "./stack/cert-manager";
+import "./stack/cloudnative-pg";
+import "./stack/grafana";
+import "./stack/pangolin";
+import "./stack/pocket-id";
+import "./stack/proxmox";
+import "./stack/vault";

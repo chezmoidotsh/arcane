@@ -3,6 +3,8 @@ import * as k8s from "@pulumi/kubernetes";
 import * as proxmox from "@pulumi/proxmox";
 import * as pulumi from "@pulumi/pulumi";
 
+import { rhodesAknProvider } from "./kubernetes";
+
 // -----------------------------------------------------------------------------
 // Proxmox CCM/CSI identity + Secret delivery (Pulumi-owned end-to-end, never
 // Vault/ESO — same reasoning as cloudnative-pg.ts's direct Kubernetes
@@ -36,11 +38,12 @@ import * as pulumi from "@pulumi/pulumi";
 // keeps every project's Pulumi state passphrase separate (see
 // docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md
 // and chezmoi.sh's stack/proxmox/access/rhodes-akn-bootstrap.ts for the full
-// reasoning). Uses the default Kubernetes provider — same ambient
-// `kubernetes:context` as everything else in this file.
+// reasoning). Goes through the explicit `rhodesAknProvider` (./kubernetes.ts), like
+// everything else in this file.
 const bootstrapSecret = k8s.core.v1.Secret.get(
 	"rhodes-akn-bootstrap-pve",
 	"kube-system/rhodes-akn-bootstrap-pve",
+	{ provider: rhodesAknProvider },
 );
 // Already the complete, ready-to-use `USER@REALM!TOKENID=SECRET` string — see
 // chezmoi.sh's stack/proxmox/access/rhodes-akn-bootstrap.ts for why this must
@@ -131,4 +134,4 @@ new k8s.core.v1.Secret("proxmox-cloud-provider-config", {
 			features: { provider: "default" },
 		}),
 	},
-});
+}, { provider: rhodesAknProvider });

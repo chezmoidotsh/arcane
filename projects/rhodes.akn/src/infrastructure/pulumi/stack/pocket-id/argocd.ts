@@ -1,10 +1,7 @@
+import * as pocketid from "@axnic/pulumi-pocket-id";
 import {
-	AllowedUserGroups,
-	OidcClientSecret,
-	pocketIdProvider,
 	vaultSecretMetadata,
 } from "@chezmoi.sh/pulumi-lib";
-import * as pocketid from "@pulumi/pocket-id";
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
@@ -15,34 +12,27 @@ import { adminGroupId } from "./index";
 // client already exists and is already in use by the live ArgoCD deployment's
 // web UI login. The CLI login uses a separate public client, see
 // ./argocd-cli.ts.
-export const argocdOidcClient = new pocketid.oidc.OidcClients(
+export const argocdOidcClient = new pocketid.OidcClient(
 	"argocd",
 	{
+		clientId: "e93aeea8-22dd-4af2-b6b1-a1ebdeadd88a",
+		allowedUserGroupIds: [adminGroupId],
 		name: "ArgoCD",
 		description: "Déploiement continu (GitOps)",
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-light.svg",
-		launchURL: "https://argocd.akn.chezmoi.sh/",
-		callbackURLs: ["https://argocd.akn.chezmoi.sh/auth/callback"],
-		isGroupRestricted: true,
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-light.svg"),
+		launchUrl: "https://argocd.akn.chezmoi.sh/",
+		callbackUrls: ["https://argocd.akn.chezmoi.sh/auth/callback"],
 		isPublic: false,
 		pkceEnabled: true,
-		logoutCallbackURLs: [],
+		logoutCallbackUrls: [],
 		requiresPushedAuthorizationRequests: false,
 		requiresReauthentication: false,
 		skipConsent: false,
 	},
-	{ provider: pocketIdProvider(), ignoreChanges: ["logoUrl", "darkLogoUrl"] },
 );
 
-new AllowedUserGroups("argocd-groups", {
-	clientId: argocdOidcClient.id,
-	groupIds: [adminGroupId],
-});
-
-const argocdSecret = new OidcClientSecret("argocd-secret", {
+const argocdSecret = new pocketid.OidcClientSecret("argocd-secret", {
 	clientId: argocdOidcClient.id,
 });
 

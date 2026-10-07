@@ -1,3 +1,4 @@
+import { kubeconfigFor } from "@chezmoi.sh/pulumi-lib";
 import { ProxmoxClusterIdentityComponent } from "@chezmoi.sh/pulumi-proxmox-cluster-identity";
 import * as k8s from "@pulumi/kubernetes";
 import * as proxmox from "@pulumi/proxmox";
@@ -35,6 +36,7 @@ import * as pulumi from "@pulumi/pulumi";
 // ambient default provider to depend on here.
 const lungmenAkn = new k8s.Provider("lungmen-akn", {
 	context: "omni-lungmen-akn",
+	kubeconfig: kubeconfigFor("omni-lungmen-akn"),
 });
 
 const bootstrapSecret = k8s.core.v1.Secret.get(

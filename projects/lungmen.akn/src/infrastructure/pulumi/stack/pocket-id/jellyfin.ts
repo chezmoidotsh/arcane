@@ -1,5 +1,5 @@
-import { AllowedUserGroups, pocketIdProvider } from "@chezmoi.sh/pulumi-lib";
-import * as pocketid from "@pulumi/pocket-id";
+import * as pocketid from "@axnic/pulumi-pocket-id";
+import * as pulumi from "@pulumi/pulumi";
 
 import { familleGroupId, maisonGroupId } from "./index";
 
@@ -7,29 +7,22 @@ import { familleGroupId, maisonGroupId } from "./index";
 // it isn't deployed yet (jellyfin.statefulset.yaml has no plugin mechanism at
 // all), so this client sits unused until that's built out separately.
 // Imported from Pocket-Id (auth.chezmoi.sh) rather than created here.
-export const jellyfinOidcClient = new pocketid.oidc.OidcClients(
+export const jellyfinOidcClient = new pocketid.OidcClient(
 	"jellyfin",
 	{
+		clientId: "dd81ad1f-ab38-4e99-9b1e-fb5572275edf",
+		allowedUserGroupIds: [maisonGroupId, familleGroupId],
 		name: "Streaming",
 		description: "Films, séries et musique",
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/jellyfin-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/jellyfin-light.svg",
-		launchURL: "https://streaming.chezmoi.sh/sso/OID/start/pocket-id",
-		callbackURLs: ["https://streaming.chezmoi.sh/sso/OID/redirect/pocket-id"],
-		isGroupRestricted: true,
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/jellyfin-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/jellyfin-light.svg"),
+		launchUrl: "https://streaming.chezmoi.sh/sso/OID/start/pocket-id",
+		callbackUrls: ["https://streaming.chezmoi.sh/sso/OID/redirect/pocket-id"],
 		isPublic: false,
 		pkceEnabled: true,
-		logoutCallbackURLs: [],
+		logoutCallbackUrls: [],
 		requiresPushedAuthorizationRequests: false,
 		requiresReauthentication: false,
 		skipConsent: false,
 	},
-	{ provider: pocketIdProvider(), ignoreChanges: ["logoUrl", "darkLogoUrl"] },
 );
-
-new AllowedUserGroups("jellyfin-groups", {
-	clientId: jellyfinOidcClient.id,
-	groupIds: [maisonGroupId, familleGroupId],
-});

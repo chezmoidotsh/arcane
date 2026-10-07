@@ -13,6 +13,7 @@ overrides:
 
 catalog:
   "@axnic/pulumi-garage": ^1.0.1
+  "@axnic/pulumi-pocket-id": ^1.0.0
   "@pulumi/cloudflare": ^6.17.0
   "@pulumi/kubernetes": ^4.34.1
   "@pulumi/oci": ^4.20.0
@@ -36,6 +37,8 @@ onlyBuiltDependencies:
   - "@pulumi/truenas"
   - "@pulumi/proxmox-backup-server"
   - "@pulumi/proxmox"
-  - "@pulumi/pocket-id"
   - "@pulumi/pangolin"
   - protobufjs
+
+minimumReleaseAgeExclude:
+  - "@axnic/pulumi-pocket-id@1.0.0"

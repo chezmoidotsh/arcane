@@ -1,10 +1,7 @@
+import * as pocketid from "@axnic/pulumi-pocket-id";
 import {
-	AllowedUserGroups,
-	OidcClientSecret,
-	pocketIdProvider,
 	vaultSecretMetadata,
 } from "@chezmoi.sh/pulumi-lib";
-import * as pocketid from "@pulumi/pocket-id";
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
@@ -14,34 +11,27 @@ import { maisonGroupId } from "./index";
 // client already exists and is already in use by the live Actual-budget
 // deployment, whose ExternalSecret reads client_id/client_secret straight
 // from Vault (lungmen.akn/actual-budget/auth/oidc-client).
-export const actualBudgetOidcClient = new pocketid.oidc.OidcClients(
+export const actualBudgetOidcClient = new pocketid.OidcClient(
 	"actual-budget",
 	{
+		clientId: "afc54ffc-425f-4806-82d8-4a3f4ecaddc6",
+		allowedUserGroupIds: [maisonGroupId],
 		name: "Gestion du budget",
 		description: "Suivi du budget",
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/actual-budget-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/actual-budget-light.svg",
-		launchURL: "https://budget.chezmoi.sh",
-		callbackURLs: ["https://budget.chezmoi.sh/openid/callback"],
-		isGroupRestricted: true,
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/actual-budget-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/actual-budget-light.svg"),
+		launchUrl: "https://budget.chezmoi.sh",
+		callbackUrls: ["https://budget.chezmoi.sh/openid/callback"],
 		isPublic: false,
 		pkceEnabled: true,
-		logoutCallbackURLs: [],
+		logoutCallbackUrls: [],
 		requiresPushedAuthorizationRequests: false,
 		requiresReauthentication: false,
 		skipConsent: false,
 	},
-	{ provider: pocketIdProvider(), ignoreChanges: ["logoUrl", "darkLogoUrl"] },
 );
 
-new AllowedUserGroups("actual-budget-groups", {
-	clientId: actualBudgetOidcClient.id,
-	groupIds: [maisonGroupId],
-});
-
-const actualBudgetSecret = new OidcClientSecret("actual-budget-secret", {
+const actualBudgetSecret = new pocketid.OidcClientSecret("actual-budget-secret", {
 	clientId: actualBudgetOidcClient.id,
 });
 

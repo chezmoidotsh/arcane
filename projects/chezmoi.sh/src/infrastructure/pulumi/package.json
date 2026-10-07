@@ -18,7 +18,7 @@
 		"@pulumi/b2": "workspace:*",
 		"@pulumi/cloudflare": "catalog:",
 		"@pulumi/kubernetes": "catalog:",
-		"@pulumi/pocket-id": "workspace:*",
+		"@axnic/pulumi-pocket-id": "catalog:",
 		"@pulumi/proxmox": "workspace:*",
 		"@pulumi/proxmox-backup-server": "workspace:*",
 		"@pulumi/pulumi": "catalog:",

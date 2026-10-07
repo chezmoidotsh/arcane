@@ -1,3 +1,4 @@
+import { kubeconfigFor } from "@chezmoi.sh/pulumi-lib";
 import * as k8s from "@pulumi/kubernetes";
 import * as proxmox from "@pulumi/proxmox";
 import * as pulumi from "@pulumi/pulumi";
@@ -45,8 +46,12 @@ const rhodesAknBootstrapApiToken = rhodesAknBootstrapToken.value;
 // into the target cluster sidesteps that: it's also what a future in-cluster
 // operator reconciling rhodes.akn's own stack would need anyway (RBAC read
 // access to a Secret in its own cluster), not a second Pulumi decrypt key.
+const rhodesAknContext = new pulumi.Config().require(
+	"rhodesAknKubernetesContext",
+);
 const rhodesAkn = new k8s.Provider("rhodes-akn", {
-	context: new pulumi.Config().require("rhodesAknKubernetesContext"),
+	context: rhodesAknContext,
+	kubeconfig: kubeconfigFor(rhodesAknContext),
 });
 
 new k8s.core.v1.Secret(

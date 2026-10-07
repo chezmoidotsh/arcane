@@ -9,7 +9,6 @@ config:
   lungmen-akn-infra:lungmen_kubernetes_ca_cert:
     secure: v1:/k69Du7DVxp0Fhmv:hkz/bK8xEUUF5IUCMZEUzGJGxZD3WiqLYyBs/b3fQ6ntZpHbhtwWt3i44CIF/TpzDFW9AdTuWYn/6B6T//riFMJ1xfjPbK2k9WeBjxyhvwKbjR9feyGCu5m9jduvBxhem22PkNpEyv1/KS0avvV2LEmZs7psmeKpIC6DfIGq968GasQoMctjcJddt6HC3BIkqdKnjZZWr58NGM8qYs4Nj8FPGSn8+z83X3yMpPV1RQx9ecUGqNyiJS0oINTm8vXqMoYk8hy7rU+ntEs1vTT4+n/fO/AV6/9ZpGly31WbN55EHBnA+mqyuk4nDy+olNCaMmoUH692Pujj9CdZcKESTYvEoUfd+24aviHY48ukrgT/bjNPfaLPSJu9AsV9ckzS+5fsmfP3DTQeqwJpLeOv/4zID+a3uBzHV+JJV4oJukf8CJvYz+jw6ZRfbM557vVfGosYBOeaJ6bZAinpuG07xQ1nM8xx4y18tRgxpXo1FgKAD3PAtkA3D8uPMwSIyd4cayup036uONitY0Yv2sXCvHJaE7dSvAjVkkXiekXTbttfbLgIRobVWehRh6Z6WVKK2aG4oHx26iZKMDM+zwWOLkrgojw6z6FGALqGAHCjNQf2V5hit/z+umopdZ5aiYTulCT6sjpLdUlWULiWOBkQ7cfD7Quq9z+aVIpfR5HzcCzt5WMQ10BGWchqkpKw+aSVqWlJwO/ODKRKVDSWMafATL9VzAEcL0kRDY+QPxd6oxHtdNK7kSxD00Y2Rde8S7hHaoOLXQQ+vMnycncu3bJN285U7MmxfLaL0PZZPt+IFJjevw==
   garage:endpoint: https://admin.s3.chezmoi.sh
-  pocket-id-api:baseUrl: https://auth.chezmoi.sh
-  pocket-id-api:apiKeyHeader: X-API-KEY
+  pocket-id:baseUrl: https://auth.chezmoi.sh
   pangolin:orgId: chezmoi-sh
   pangolin:url: https://kazimierz-akn.tail831c5d.ts.net

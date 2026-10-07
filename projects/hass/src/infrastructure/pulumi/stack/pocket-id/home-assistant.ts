@@ -1,9 +1,5 @@
-import {
-	AllowedUserGroups,
-	OidcClientSecret,
-	pocketIdProvider,
-} from "@chezmoi.sh/pulumi-lib";
-import * as pocketid from "@pulumi/pocket-id";
+import * as pocketid from "@axnic/pulumi-pocket-id";
+import * as pulumi from "@pulumi/pulumi";
 
 import { maisonGroupId } from "./index";
 
@@ -18,35 +14,25 @@ import { maisonGroupId } from "./index";
 // the secret is exposed as a Pulumi stack output instead of a
 // vault.kv.SecretV2, retrieved with `mise run pulumi:oidc-client` and pasted
 // into the integration setup by hand.
-export const homeAssistantOidcClient = new pocketid.oidc.OidcClients(
-	"home-assistant",
-	{
-		name: "Home Assistant",
-		description: "Domotique et supervision de la maison",
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/home-assistant-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/home-assistant-light.svg",
-		launchURL: "https://hass.chezmoi.sh/",
-		callbackURLs: ["https://hass.chezmoi.sh/auth/oidc/callback"],
-		isGroupRestricted: true,
-		isPublic: false,
-		pkceEnabled: true,
-		logoutCallbackURLs: [],
-		requiresPushedAuthorizationRequests: false,
-		requiresReauthentication: false,
-		skipConsent: false,
-	},
-	{ provider: pocketIdProvider(), ignoreChanges: ["logoUrl", "darkLogoUrl"] },
-);
-
-new AllowedUserGroups("home-assistant-groups", {
-	clientId: homeAssistantOidcClient.id,
-	groupIds: [maisonGroupId],
+const homeAssistantOidcClient = new pocketid.OidcClient("home-assistant", {
+  clientId: "e044b00f-9596-4d92-b36a-bd1db8aa18b4",
+  allowedUserGroupIds: [maisonGroupId],
+  name: "Home Assistant",
+  description: "Domotique et supervision de la maison",
+  logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/home-assistant-dark.svg"),
+  darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/home-assistant-light.svg"),
+  launchUrl: "https://hass.chezmoi.sh/",
+  callbackUrls: ["https://hass.chezmoi.sh/auth/oidc/callback"],
+  isPublic: false,
+  pkceEnabled: true,
+  logoutCallbackUrls: [],
+  requiresPushedAuthorizationRequests: false,
+  requiresReauthentication: false,
+  skipConsent: false,
 });
 
-const homeAssistantSecret = new OidcClientSecret("home-assistant-secret", {
-	clientId: homeAssistantOidcClient.id,
+const homeAssistantSecret = new pocketid.OidcClientSecret("home-assistant-secret", {
+  clientId: homeAssistantOidcClient.id,
 });
 
 export const homeAssistantOidcClientId = homeAssistantOidcClient.id;

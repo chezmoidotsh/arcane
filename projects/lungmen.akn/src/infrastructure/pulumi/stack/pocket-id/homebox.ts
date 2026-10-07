@@ -1,45 +1,35 @@
+import * as pocketid from "@axnic/pulumi-pocket-id";
 import {
-	AllowedUserGroups,
-	OidcClientSecret,
-	pocketIdProvider,
 	vaultSecretMetadata,
 } from "@chezmoi.sh/pulumi-lib";
-import * as pocketid from "@pulumi/pocket-id";
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
 import { maisonGroupId } from "./index";
 
-export const homeboxOidcClient = new pocketid.oidc.OidcClients(
+export const homeboxOidcClient = new pocketid.OidcClient(
 	"homebox",
 	{
+		clientId: "737ecc0b-e9c1-426c-aa68-873047dac113",
+		allowedUserGroupIds: [maisonGroupId],
 		name: "Catalogue",
 		description: "Inventaire du foyer",
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/homebox-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/homebox-light.svg",
-		launchURL: "https://catalogue.chezmoi.sh",
-		callbackURLs: [
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/homebox-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/homebox-light.svg"),
+		launchUrl: "https://catalogue.chezmoi.sh",
+		callbackUrls: [
 			"https://catalogue.chezmoi.sh/api/v1/users/login/oidc/callback",
 		],
-		isGroupRestricted: true,
 		isPublic: false,
 		pkceEnabled: true,
-		logoutCallbackURLs: [],
+		logoutCallbackUrls: [],
 		requiresPushedAuthorizationRequests: false,
 		requiresReauthentication: false,
 		skipConsent: false,
 	},
-	{ provider: pocketIdProvider(), ignoreChanges: ["logoUrl", "darkLogoUrl"] },
 );
 
-new AllowedUserGroups("homebox-groups", {
-	clientId: homeboxOidcClient.id,
-	groupIds: [maisonGroupId],
-});
-
-const homeboxSecret = new OidcClientSecret("homebox-secret", {
+const homeboxSecret = new pocketid.OidcClientSecret("homebox-secret", {
 	clientId: homeboxOidcClient.id,
 });
 

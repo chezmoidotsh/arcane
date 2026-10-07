@@ -2,6 +2,8 @@ import { Dns01TokenComponent } from "@chezmoi.sh/pulumi-cloudflare-dns01-token";
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
+import { rhodesAknProvider } from "./kubernetes";
+
 const config = new pulumi.Config();
 
 // -----------------------------------------------------------------------------
@@ -35,5 +37,5 @@ new k8s.core.v1.Secret(
 			"api-token": certManagerToken.tokenValue,
 		},
 	},
-	{ parent: certManagerToken },
+	{ parent: certManagerToken, provider: rhodesAknProvider },
 );

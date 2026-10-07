@@ -1,5 +1,5 @@
-import { AllowedUserGroups, pocketIdProvider } from "@chezmoi.sh/pulumi-lib";
-import * as pocketid from "@pulumi/pocket-id";
+import * as pocketid from "@axnic/pulumi-pocket-id";
+import * as pulumi from "@pulumi/pulumi";
 
 import { adminGroupId } from "./index";
 
@@ -7,28 +7,21 @@ import { adminGroupId } from "./index";
 // public client already exists and is already in use by `argocd login`'s
 // PKCE flow. The web UI login uses a separate confidential client, see
 // ./argocd.ts.
-export const argocdCliOidcClient = new pocketid.oidc.OidcClients(
+export const argocdCliOidcClient = new pocketid.OidcClient(
 	"argocd-cli",
 	{
+		clientId: "344b3e80-14a0-4012-9126-19185bd3f4a4",
+		allowedUserGroupIds: [adminGroupId],
 		name: "ArgoCD (CLI)",
 		description: "Déploiement continu (GitOps) — CLI",
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-light.svg",
-		callbackURLs: ["http://localhost:8085/auth/callback"],
-		isGroupRestricted: true,
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/argo-cd-light.svg"),
+		callbackUrls: ["http://localhost:8085/auth/callback"],
 		isPublic: true,
 		pkceEnabled: true,
-		logoutCallbackURLs: [],
+		logoutCallbackUrls: [],
 		requiresPushedAuthorizationRequests: false,
 		requiresReauthentication: false,
 		skipConsent: false,
 	},
-	{ provider: pocketIdProvider(), ignoreChanges: ["logoUrl", "darkLogoUrl"] },
 );
-
-new AllowedUserGroups("argocd-cli-groups", {
-	clientId: argocdCliOidcClient.id,
-	groupIds: [adminGroupId],
-});

@@ -24,5 +24,4 @@ config:
   proxmox:insecure: "true"
   chezmoi-sh-infra:rhodesAknKubernetesContext: omni-rhodes-akn
   chezmoi-sh-infra:lungmenAknKubernetesContext: omni-lungmen-akn
-  pocket-id-api:baseUrl: https://auth.chezmoi.sh
-  pocket-id-api:apiKeyHeader: X-API-KEY
+  pocket-id:baseUrl: https://auth.chezmoi.sh
