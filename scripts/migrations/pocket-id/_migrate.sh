@@ -104,30 +104,72 @@ current="${tmp}/current.json"
 jq -r '.deployment.resources[].urn' "${current}" >"${tmp}/present.txt"
 
 del=()
+: >"${tmp}/todelete.txt"
 while read -r urn; do
 	[[ -n ${urn} ]] || continue
 	if grep -qxF -- "${urn}" "${tmp}/present.txt"; then
 		del+=("pulumi state delete '${urn}' --force --yes")
+		echo "${urn}" >>"${tmp}/todelete.txt"
 	fi
 done <"${work}/del.txt"
 
-imp=()
-while read -r type name id; do
-	[[ -n ${id:-} ]] || continue
-	if ! jq -e --arg t "${type}" --arg n "${name}" \
-		'.deployment.resources[] | select(.type == $t and (.urn | endswith("::" + $n)))' \
-		"${current}" >/dev/null; then
-		imp+=("pulumi import --yes --skip-preview --generate-code=false --protect=false ${type} ${name} ${id}")
-	fi
+# Resources already imported under the new type with the CLI (previous versions of
+# this script) sit behind a stale default provider: drop them and that provider too,
+# they are re-imported from the code below.
+: >"${tmp}/stale.txt"
+while read -r type name _; do
+	[[ -n ${name:-} ]] || continue
+	jq -r --arg t "${type}" --arg n "${name}" '.deployment.resources[]
+		| select(.type == $t and (.urn | endswith("::" + $n))) | .urn' "${current}" >>"${tmp}/stale.txt"
 done <"${work}/import.txt"
+if [[ -s "${tmp}/stale.txt" ]]; then
+	jq -r '.deployment.resources[] | select(.type | startswith("pulumi:providers:pocket-id"))
+		| select(.type | startswith("pulumi:providers:pocket-id-api") | not) | .urn' "${current}" >>"${tmp}/stale.txt"
+	while read -r urn; do
+		if [[ -n ${urn} ]]; then
+			del+=("pulumi state delete '${urn}' --force --yes")
+			echo "${urn}" >>"${tmp}/todelete.txt"
+		fi
+	done <"${tmp}/stale.txt"
+fi
 
 # --- 3. state delete ---------------------------------------------------------
+# `pulumi state delete` refuses a resource other resources depend on (e.g. the Vault
+# auth backend and roles built from the Vault OIDC client) and --target-dependents
+# would drop those from the state too. Only the dependency *references* to the
+# resources about to be deleted are removed from the others; the next `pulumi up`
+# records the dependencies again from the program.
+strip_dependencies() {
+	jq -Rs 'split("\n") | map(select(length > 0))' "${tmp}/todelete.txt" >"${tmp}/todelete.json"
+	pulumi stack export >"${tmp}/before-strip.json"
+	jq --slurpfile del "${tmp}/todelete.json" '($del[0]) as $d
+		| (.deployment.resources |= map(
+			(if has("dependencies") then .dependencies |= map(select(. as $u | ($d | index($u)) | not)) else . end)
+			| (if has("propertyDependencies") then .propertyDependencies |= with_entries(.value |= map(select(. as $u | ($d | index($u)) | not))) else . end)))' \
+		"${tmp}/before-strip.json" >"${tmp}/after-strip.json"
+	cp "${tmp}/before-strip.json" "${work}/state.before-strip.json"
+	pulumi stack import --file "${tmp}/after-strip.json"
+}
+count_references() {
+	jq -Rs 'split("\n") | map(select(length > 0))' "${tmp}/todelete.txt" >"${tmp}/todelete.json"
+	jq --slurpfile del "${tmp}/todelete.json" '($del[0]) as $d
+		| [.deployment.resources[]
+			| ((.dependencies // []) + ((.propertyDependencies // {}) | [.[][]]))
+			| map(select(. as $u | ($d | index($u)) != null)) | length] | add // 0' "${current}"
+}
+
 echo
 echo "## 3. state delete (state only -- nothing is destroyed in Pocket-Id/Vault)"
 if ((${#del[@]})); then
+	refs="$(count_references)"
 	printf '  %s\n' "${del[@]}"
-	echo "  backup: ${work}/state.backup.json"
+	echo "  backups: ${work}/state.backup.json (original), ${work}/state.before-strip.json"
+	echo "  first: strip ${refs} dependency reference(s) to these resources from the other resources"
 	confirm "run the ${#del[@]} deletions?"
+	if ((refs)); then
+		echo "+ pulumi stack import (dependencies stripped)"
+		strip_dependencies
+	fi
 	for c in "${del[@]}"; do
 		echo "+ ${c}"
 		eval "${c}"
@@ -136,19 +178,54 @@ else
 	echo "  nothing left to delete"
 fi
 
-# --- 4. import ---------------------------------------------------------------
+# --- 4. declare the imports in the code --------------------------------------
+# `pulumi import` would register the resources under a provider whose inputs differ
+# from the program's (apiKey), which makes the engine replace them. Declaring
+# `import: "<id>"` in the code imports them with the program's own provider.
+# clientId stays after the migration: the provider replaces a client whose clientId
+# changes, and the imported state records it.
 echo
-echo "## 4. import"
-if ((${#imp[@]})); then
-	printf '  %s\n' "${imp[@]}"
-	confirm "run the ${#imp[@]} imports?"
-	for c in "${imp[@]}"; do
-		echo "+ ${c}"
-		eval "${c}"
-	done
-else
-	echo "  nothing left to import"
+echo "## 4. import options written in the code (undone later by _finish.sh)"
+patch_import() {
+	NAME="$2" ID="$3" perl -0pi -e '
+		my ($n, $id) = ($ENV{NAME}, $ENV{ID});
+		if (index($_, "import: \"$id\"") < 0) {
+			s{(new pocketid\.OidcClient\(\n\t"\Q$n\E",\n\t\{\n)(.*?\n\t\},\n)\);}{
+				my ($h, $b) = ($1, $2);
+				$h .= "\t\tclientId: \"$id\",\n" unless $b =~ /^\t\tclientId:/m;
+				"$h$b\t{ import: \"$id\" },\n);"
+			}se;
+			s{(new pocketid\.UserGroup\("\Q$n\E", \{\n.*?\n\})\);}{$1, { import: "$id" });}s;
+		}
+	' "$1"
+}
+patched=0
+: >"${tmp}/patched-files.txt"
+grep -rlE 'new pocketid\.(OidcClient|UserGroup)\(' stack --include='*.ts' >"${tmp}/files.txt" || true
+while read -r type name id; do
+	[[ -n ${id:-} ]] || continue
+	found=""
+	while read -r file; do
+		patch_import "${file}" "${name}" "${id}"
+		if grep -qF "import: \"${id}\"" "${file}"; then
+			found="${file}"
+			break
+		fi
+	done <"${tmp}/files.txt"
+	if [[ -z ${found} ]]; then
+		echo "  warning: no code found for ${type} ${name}" >&2
+		continue
+	fi
+	echo "  ${found}: ${name} -> import ${id}"
+	echo "${found}" >>"${tmp}/patched-files.txt"
+	patched=$((patched + 1))
+done <"${work}/import.txt"
+echo "  ${patched} import(s) declared, taken from the saved plan: that includes the resources already"
+echo "  removed from the state by a previous run, which are re-imported by the next pulumi up"
+if ((patched)); then
+	sort -u "${tmp}/patched-files.txt" | xargs rtunk fmt --no-progress >/dev/null 2>&1 || true
 fi
 
 echo
-echo "done. Now run: pulumi preview   (expect only secrets + logo updates)"
+echo "done. Now: pulumi preview   (expect '= import' lines, no replace), then pulumi up,"
+echo "then scripts/migrations/pocket-id/_finish.sh ${project} to drop the import options."
