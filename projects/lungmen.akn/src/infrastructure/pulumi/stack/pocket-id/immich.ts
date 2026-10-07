@@ -14,10 +14,8 @@ export const immichOidcClient = new pocketid.OidcClient(
 	{
 		name: "Photos",
 		description: "Sauvegarde et partage de photos/vidéos",
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/immich-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/immich-light.svg",
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/immich-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/immich-light.svg"),
 		launchUrl: "https://photos.chezmoi.sh",
 		callbackUrls: [
 			"app.immich:///oauth-callback",

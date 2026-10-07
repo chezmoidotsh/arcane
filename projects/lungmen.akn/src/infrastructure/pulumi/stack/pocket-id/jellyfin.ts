@@ -1,4 +1,5 @@
 import * as pocketid from "@axnic/pulumi-pocket-id";
+import * as pulumi from "@pulumi/pulumi";
 
 import { familleGroupId, maisonGroupId } from "./index";
 
@@ -12,10 +13,8 @@ export const jellyfinOidcClient = new pocketid.OidcClient(
 		allowedUserGroupIds: [maisonGroupId, familleGroupId],
 		name: "Streaming",
 		description: "Films, séries et musique",
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/jellyfin-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/jellyfin-light.svg",
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/jellyfin-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/jellyfin-light.svg"),
 		launchUrl: "https://streaming.chezmoi.sh/sso/OID/start/pocket-id",
 		callbackUrls: ["https://streaming.chezmoi.sh/sso/OID/redirect/pocket-id"],
 		isPublic: false,

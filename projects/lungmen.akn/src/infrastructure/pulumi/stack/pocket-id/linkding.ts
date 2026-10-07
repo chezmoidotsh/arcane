@@ -17,10 +17,8 @@ export const linkdingOidcClient = new pocketid.OidcClient(
 		allowedUserGroupIds: [maisonGroupId],
 		name: "Bookmarks",
 		description: "Gestionnaire de favoris",
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/linkding-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/linkding-light.svg",
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/linkding-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/linkding-light.svg"),
 		launchUrl: "https://bookmarks.chezmoi.sh",
 		callbackUrls: ["https://bookmarks.chezmoi.sh/oidc/callback/"],
 		isPublic: false,

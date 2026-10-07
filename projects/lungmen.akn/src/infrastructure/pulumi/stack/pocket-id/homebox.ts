@@ -13,10 +13,8 @@ export const homeboxOidcClient = new pocketid.OidcClient(
 		allowedUserGroupIds: [maisonGroupId],
 		name: "Catalogue",
 		description: "Inventaire du foyer",
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/homebox-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/homebox-light.svg",
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/homebox-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/homebox-light.svg"),
 		launchUrl: "https://catalogue.chezmoi.sh",
 		callbackUrls: [
 			"https://catalogue.chezmoi.sh/api/v1/users/login/oidc/callback",

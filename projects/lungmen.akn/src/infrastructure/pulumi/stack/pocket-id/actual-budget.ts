@@ -17,10 +17,8 @@ export const actualBudgetOidcClient = new pocketid.OidcClient(
 		allowedUserGroupIds: [maisonGroupId],
 		name: "Gestion du budget",
 		description: "Suivi du budget",
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/actual-budget-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/actual-budget-light.svg",
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/actual-budget-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/actual-budget-light.svg"),
 		launchUrl: "https://budget.chezmoi.sh",
 		callbackUrls: ["https://budget.chezmoi.sh/openid/callback"],
 		isPublic: false,

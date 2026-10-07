@@ -17,10 +17,8 @@ export const paperlessNgxOidcClient = new pocketid.OidcClient(
 		allowedUserGroupIds: [maisonGroupId],
 		name: "Archives",
 		description: "Archivage et gestion de documents",
-		logoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/paperless-ngx-dark.svg",
-		darkLogoUrl:
-			"https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/paperless-ngx-light.svg",
+		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/paperless-ngx-dark.svg"),
+		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/paperless-ngx-light.svg"),
 		launchUrl: "https://archives.chezmoi.sh",
 		callbackUrls: [
 			"https://archives.chezmoi.sh/accounts/oidc/pocket-id/login/callback/",
