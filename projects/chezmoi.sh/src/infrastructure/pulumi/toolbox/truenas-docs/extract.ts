@@ -81,15 +81,16 @@ export interface SmbShareDoc {
 }
 
 /**
- * `name` is the Pulumi resource's own logical name (from its URN), not
- * `outputs.name` -- that field is the TrueNAS-side display name (e.g.
- * `"Mes Documents"`), a different thing entirely.
+ * `name` is the share name TrueNAS exposes (`outputs.name`, e.g. `"Mes
+ * Documents"`) -- what SMB clients actually mount, and what shows up when a
+ * share is renamed on the NAS. It falls back on the Pulumi resource's logical
+ * name (from its URN) when the state doesn't carry one.
  */
 export function extractSmbShares(resources: ExportedResource[]): SmbShareDoc[] {
 	return resourcesOfType(resources, "truenas:index/shareSmb:ShareSmb")
 		.map(
 			(r): SmbShareDoc => ({
-				name: logicalName(r.urn),
+				name: out<string>(r, "name") ?? logicalName(r.urn),
 				comment: out(r, "comment"),
 				purpose: out(r, "purpose"),
 				enabled: out(r, "enabled"),
