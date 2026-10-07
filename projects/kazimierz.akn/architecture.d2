@@ -5,7 +5,7 @@ vars: {
   }
 }
 
-...@../../docs/assets/d2/styles.architecture.d2
+...@"../../docs/assets/d2/styles.architecture.d2"
 
 explanation: |md
   # kazimierz.akn Architecture
@@ -163,15 +163,7 @@ vps: {
     label: Ansible
     icon: docs/assets/icons/apps/ansible.svg
     link: https://www.ansible.com/
-    tooltip: GitOps automation via ansible-pull (15-minute sync)
-  }
-
-  ara: {
-    class: [application-system]
-    label: ARA
-    icon: docs/assets/icons/apps/ara-records-ansible.svg
-    link: https://ara.recordsansible.org/
-    tooltip: Playbook execution monitoring and auditing
+    tooltip: Configuration management, run remotely over SSH from an operator machine
   }
 }
 
@@ -208,8 +200,6 @@ vps.proxy-stack.traefik -> internet: |md
 
 vps.tailscale -> internet: "Tailscale API\n(api.tailscale.com:443)" {class: [connect-to-internet]}
 
-vps.ansible -> internet: "Git Pull\n(github.com:443)" {class: [connect-to-internet]}
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Proxy Stack Internal Connections
@@ -228,9 +218,6 @@ vps.proxy-stack.crowdsec -> internet: "CrowdSec API\n(api.crowdsec.net:443)" { c
 # ──────────────────────────────────────────────────────────────────────────────
 # Infrastructure Connections
 
-vps.ansible -> vps.ara: "Callback Plugin\nPlaybook Recording"
-
-vps.tailscale -> vps.ara: "Tailscale Serve\n(HTTPS Access)"
 
 
 # ──────────────────────────────────────────────────────────────────────────────

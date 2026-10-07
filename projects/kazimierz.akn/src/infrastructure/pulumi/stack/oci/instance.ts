@@ -69,45 +69,54 @@ const ubuntuImage = oci.core.getImagesOutput({
 // Free bottleneck) -- a smaller OCPU request is more likely to find a free
 // slot on a fragmented host pool. Bump back to 2/12 once capacity allows and
 // more headroom is actually needed.
-export const instance = new oci.core.Instance("kazimierz-pangolin", {
-	availabilityDomain,
-	compartmentId: kazimierz.id,
-	shape: "VM.Standard.A1.Flex",
-	shapeConfig: { ocpus: 1, memoryInGbs: 6 },
-	sourceDetails: {
-		sourceType: "image",
-		sourceId: ubuntuImage.apply((image) => {
-			const minimalAarch64 = /^Canonical-Ubuntu-\d+\.\d+-Minimal-aarch64-/;
-			const candidates = image.images
-				.filter((img) => minimalAarch64.test(img.displayName ?? ""))
-				.sort((a, b) =>
-					(b.displayName ?? "").localeCompare(a.displayName ?? ""),
-				);
-			if (candidates.length === 0) {
-				throw new Error(
-					"No Ubuntu Minimal aarch64 platform image found in " +
-						`${image.images.length} images returned by getImages`,
-				);
-			}
-			return candidates[0].id;
-		}),
-		bootVolumeSizeInGbs: "50",
+export const instance = new oci.core.Instance(
+	"kazimierz-pangolin",
+	{
+		availabilityDomain,
+		compartmentId: kazimierz.id,
+		shape: "VM.Standard.A1.Flex",
+		shapeConfig: { ocpus: 1, memoryInGbs: 6 },
+		sourceDetails: {
+			sourceType: "image",
+			sourceId: ubuntuImage.apply((image) => {
+				const minimalAarch64 = /^Canonical-Ubuntu-\d+\.\d+-Minimal-aarch64-/;
+				const candidates = image.images
+					.filter((img) => minimalAarch64.test(img.displayName ?? ""))
+					.sort((a, b) =>
+						(b.displayName ?? "").localeCompare(a.displayName ?? ""),
+					);
+				if (candidates.length === 0) {
+					throw new Error(
+						"No Ubuntu Minimal aarch64 platform image found in " +
+							`${image.images.length} images returned by getImages`,
+					);
+				}
+				return candidates[0].id;
+			}),
+			bootVolumeSizeInGbs: "50",
+		},
+		createVnicDetails: {
+			subnetId: subnet.id,
+			// Typed as a string, not a boolean, in this resource's bridged args --
+			// confirmed against the installed @pulumi/oci types (verified with tsc).
+			assignPublicIp: "true",
+			nsgIds: [nsg.id],
+		},
+		metadata: { ssh_authorized_keys: config.require("ssh_authorized_keys") },
+		displayName: "kazimierz-pangolin",
+		freeformTags: {
+			project: "kazimierz.akn",
+			role: "gateway",
+			managed_by: "pulumi",
+		},
 	},
-	createVnicDetails: {
-		subnetId: subnet.id,
-		// Typed as a string, not a boolean, in this resource's bridged args --
-		// confirmed against the installed @pulumi/oci types (verified with tsc).
-		assignPublicIp: "true",
-		nsgIds: [nsg.id],
-	},
-	metadata: { ssh_authorized_keys: config.require("ssh_authorized_keys") },
-	displayName: "kazimierz-pangolin",
-	freeformTags: {
-		project: "kazimierz.akn",
-		role: "gateway",
-		managed_by: "pulumi",
-	},
-});
+	// The image is the newest Ubuntu published by Oracle at plan time. Changing
+	// `source_id` on an existing instance reimages it: the boot volume is replaced
+	// and the old one deleted (isPreserveBootVolumeEnabled is false), so a new
+	// Oracle image would wipe the running gateway on the next `pulumi up`. Keep the
+	// image the instance was created (or last deliberately rebuilt) with.
+	{ ignoreChanges: ["sourceDetails.sourceId"] },
+);
 
 // Paravirtualized attachment -- required for ARM Ampere instances. Detached
 // and re-created on every instance replacement; the Volume itself survives

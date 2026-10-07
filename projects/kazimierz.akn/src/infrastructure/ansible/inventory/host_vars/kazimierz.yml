@@ -89,9 +89,13 @@ pangolin_cloudflare_dns_api_token: !vault |
   33373765336138376130363532383263323366303834323262663930623734663265663966613630
   326535343565303538316266373763666131
 
-# Domain configuration for Pangolin
+# Domain configuration for Pangolin: the dashboard's own host, plus the base
+# domain the exposed resources (auth, grafana, photos, streaming, ...) hang off
+# -- the rhodes.akn/lungmen.akn Pulumi stacks look "chezmoi.sh" up among the
+# org's domains to create them.
 pangolin_domains:
   - "pangolin.chezmoi.sh"
+  - "chezmoi.sh"
 
 # Gerbil WireGuard tunnel base endpoint
 pangolin_gerbil_base_endpoint: "pangolin.chezmoi.sh"
