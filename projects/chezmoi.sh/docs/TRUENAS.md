@@ -167,16 +167,16 @@ Machine.
 > - **`PRIVATE_DATASETS_SHARE`** — meant for one dataset per user.
 > - **`TIMEMACHINE_SHARE`** — enables the SMB extensions macOS Time Machine needs.
 
-- `smb-share-animes` (Accès aux animés de la médiathèque) — **LEGACY_SHARE**
-- `smb-share-application-immich` (Stockage applicatif Immich (Kubernetes)) — **LEGACY_SHARE**
-- `smb-share-application-paperless` (Stockage applicatif Paperless-ngx (Kubernetes)) — **LEGACY_SHARE**
-- `smb-share-films` (Accès aux films de la médiathèque) — **LEGACY_SHARE**
-- `smb-share-hass-chezmoi-sh` (Sauvegardes Home Assistant) — **DEFAULT_SHARE**
-- `smb-share-livres` (Accès aux livres de la médiathèque) — **DEFAULT_SHARE**
-- `smb-share-mes-documents` (Documents personnels) — **PRIVATE_DATASETS_SHARE**
-- `smb-share-musique` (Accès aux musiques de la médiathèque) — **DEFAULT_SHARE**
-- `smb-share-series-tv` (Accès aux séries TV/streaming de la médiathèque) — **LEGACY_SHARE**
-- `smb-share-shared-documents` (Documents partagés) — **LEGACY_SHARE**
+- `Animes` (Accès aux animés de la médiathèque) — **LEGACY_SHARE**
+- `application-immich` (Stockage applicatif Immich (Kubernetes)) — **LEGACY_SHARE**
+- `application-paperless` (Stockage applicatif Paperless-ngx (Kubernetes)) — **LEGACY_SHARE**
+- `backups-hass` (Sauvegardes Home Assistant) — **DEFAULT_SHARE**
+- `Documents partagés` (Documents partagés) — **LEGACY_SHARE**
+- `Films` (Accès aux films de la médiathèque) — **LEGACY_SHARE**
+- `Livres` (Accès aux livres de la médiathèque) — **DEFAULT_SHARE**
+- `Mes Documents` (Documents personnels) — **PRIVATE_DATASETS_SHARE**
+- `Musiques` (Accès aux musiques de la médiathèque) — **DEFAULT_SHARE**
+- `Series TV` (Accès aux séries TV/streaming de la médiathèque) — **LEGACY_SHARE**
 
 ## Permissions
 

@@ -110,7 +110,7 @@ new truenas.ShareSmb(
 new truenas.ShareSmb(
 	"smb-share-hass-chezmoi-sh",
 	{
-		name: "hass.chezmoi.sh",
+		name: "backups-hass",
 		path: zp1hs01.get("backups/hass.chezmoi.sh").resource.mountPoint,
 		purpose: "DEFAULT_SHARE",
 		comment: "Sauvegardes Home Assistant",

@@ -78,8 +78,8 @@ const resources: ExportedResource[] = [
 		parent:
 			"urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::chezmoi:truenas:Pool$truenas:index/dataset:Dataset::zp1hs01-userspace",
 		outputs: {
-			// TrueNAS-side display name -- deliberately different from the
-			// resource's own logical name, to prove extractSmbShares ignores it.
+			// TrueNAS-side share name -- deliberately different from the
+			// resource's own logical name, to prove extractSmbShares uses it.
 			name: "Mes Documents",
 			comment: "Documents personnels",
 			enabled: true,
@@ -310,10 +310,21 @@ describe("extractNfsShares()", () => {
 });
 
 describe("extractSmbShares()", () => {
-	it("uses the resource's own logical name, ignoring outputs.name (the TrueNAS-side display name)", () => {
+	it("uses outputs.name, the share name TrueNAS exposes to SMB clients", () => {
 		const [share] = extractSmbShares(resources);
-		expect(share.name).to.equal("smb-share-mes-documents");
+		expect(share.name).to.equal("Mes Documents");
 		expect(share.purpose).to.equal("PRIVATE_DATASETS_SHARE");
+	});
+
+	it("falls back on the resource's logical name when the state has no outputs.name", () => {
+		const [share] = extractSmbShares([
+			{
+				urn: "urn:pulumi:chezmoi_sh.live::chezmoi-sh-infra::truenas:index/shareSmb:ShareSmb::smb-share-sans-nom",
+				type: "truenas:index/shareSmb:ShareSmb",
+				outputs: { purpose: "DEFAULT_SHARE", enabled: true },
+			},
+		]);
+		expect(share.name).to.equal("smb-share-sans-nom");
 	});
 });
 

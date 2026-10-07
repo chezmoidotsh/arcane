@@ -62,7 +62,7 @@ const fixtureContext = {
 	],
 	smbShares: [
 		{
-			name: "smb-share-films",
+			name: "Films",
 			comment: "Dossier partagé des films",
 			purpose: "LEGACY_SHARE",
 			enabled: true,
@@ -237,7 +237,7 @@ describe("TRUENAS.md template", () => {
 		const md = render(fixtureContext);
 		expect(md).to.include("**`DEFAULT_SHARE`** — the general-purpose preset.");
 		expect(md).to.include(
-			"- `smb-share-films` (Dossier partagé des films) — **LEGACY_SHARE**",
+			"- `Films` (Dossier partagé des films) — **LEGACY_SHARE**",
 		);
 	});
 
