@@ -1,6 +1,6 @@
 ---
 status: "implemented"
-date: 2026-10-07
+date: 2026-10-08
 implementation-completed: 2025-11-15
 decision-makers: ["Alexandre"]
 assisted-by: ["claude-4.5-sonnet", "claude-sonnet-5.5"]
@@ -345,7 +345,8 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 
 > [!CAUTION] Deprecated since 2026-10-07: the `ansible-pull` systemd service and timer (`gitops_automation` role) and
 > the Slack run notifications were removed. The section below, the "GitOps Setup" bootstrap phase and the
-> `ansible-pull Failure` risk describe the original design only. Unattended OS upgrades and ARA are unchanged.
+> `ansible-pull Failure` risk describe the original design only. Unattended OS upgrades are unchanged; ARA was removed
+> later (2026-10-08).
 
 **Tool**: `ansible-pull` with systemd timer (15-minute interval)
 
@@ -358,11 +359,15 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 
 ### Deployment Components
 
+> [!CAUTION] Deprecated since 2026-10-08: ARA (the `ara_server` role and its Tailscale Serve listener) was removed too,
+> leaving three phases in practice.
+
 **4-Phase Bootstrap**:
 
 1. **System Installation**: Docker, Tailscale VPN, UFW firewall, unattended upgrades
 2. **GitOps Setup**: Ansible installation, ansible-pull systemd service/timer, Galaxy collections
-3. **Observability**: ARA Records Ansible for playbook execution tracking (Tailscale Serve HTTPS)
+3. **Observability**: ARA Records Ansible for playbook execution tracking (Tailscale Serve HTTPS) -- removed on
+   2026-10-08, see [Post-Implementation Change](#post-implementation-change-removal-of-ansible-pull-2026-10-07)
 4. **Application Stack**: Pangolin + Gerbil + Traefik via custom Ansible role
 
 ### Risks and Mitigations
@@ -410,6 +415,10 @@ change to Ubuntu 26.04, support it:
 **Trade-off accepted**: there is no automatic drift correction anymore. Configuration changes take effect only when the
 operator re-runs the playbook.
 
+**ARA removed (2026-10-08)**: following the owner's review of PR 1262, ARA (Ansible Run Analysis, the `ara_server` role
+and its dedicated Tailscale Serve listener on port 10000) was removed as well: it is not needed anymore. Tailscale Serve
+remains in use by the `pangolin` role to expose Pangolin's Integration API on the tailnet.
+
 ### Lessons Learned
 
 #### When Kubernetes Makes Sense
@@ -448,6 +457,9 @@ operator re-runs the playbook.
 
 ## Changelog
 
+- **2026-10-08**: **DEPRECATION**: Removed ARA (the `ara_server` role and its Tailscale Serve listener): not needed
+  anymore, per the owner's review of PR 1262. Status kept as `implemented`. The original observability passage is kept
+  and flagged.
 - **2026-10-07**: **DEPRECATION**: Removed the `ansible-pull` self-sync (systemd service + 15-minute timer,
   `gitops_automation` role) and the Slack run notifications; the playbook is now run manually from an operator machine.
   Status kept as `implemented`: the Ansible + Docker Compose decision still stands. Original GitOps passages are kept
