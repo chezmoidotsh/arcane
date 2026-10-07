@@ -1,9 +1,9 @@
 ---
 status: "implemented"
-date: 2026-05-24
+date: 2026-10-07
 implementation-completed: 2025-11-15
 decision-makers: ["Alexandre"]
-assisted-by: ["claude-4.5-sonnet"]
+assisted-by: ["claude-4.5-sonnet", "claude-sonnet-5.5"]
 informed: []
 ---
 
@@ -39,6 +39,7 @@ informed: []
   - [Risks and Mitigations](#risks-and-mitigations)
 - [Decision Evolution](#decision-evolution)
   - [Implementation Challenges Encountered (8 major iterations)](#implementation-challenges-encountered-8-major-iterations)
+  - [Post-Implementation Change: Removal of `ansible-pull` (2026-10-07)](#post-implementation-change-removal-of-ansible-pull-2026-10-07)
   - [Lessons Learned](#lessons-learned)
     - [When Kubernetes Makes Sense](#when-kubernetes-makes-sense)
     - [When Docker Compose + Ansible Makes Sense](#when-docker-compose--ansible-makes-sense)
@@ -142,6 +143,10 @@ Deploy Pangolin on Kubernetes using industry-standard orchestration patterns con
 Use Ansible for configuration management with official Pangolin Docker Compose deployment.
 
 #### Technology Stack (Ansible)
+
+> [!CAUTION] The `ansible-pull` GitOps automation (15-minute systemd timer) listed below and the "GitOps Maintained"
+> benefit were removed on 2026-10-07; the playbook is now run manually. See
+> [Post-Implementation Change](#post-implementation-change-removal-of-ansible-pull-2026-10-07).
 
 - **Configuration Management**: Ansible for system provisioning and application deployment
 
@@ -288,6 +293,9 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 
 ### Positive
 
+> [!CAUTION] The "GitOps Maintained" item below no longer holds since 2026-10-07: `ansible-pull` was removed and
+> configuration is applied only when the operator runs the playbook.
+
 - ✅ **Resource Efficiency**: Saves \~750MB RAM (Docker daemon <256MB vs Kubernetes control plane \~1GB)
 - ✅ **Operational Simplicity**: Standard Docker Compose commands for debugging and management
 - ✅ **Upstream Alignment**: Uses official Pangolin `docker-compose.yml` maintained by upstream developers
@@ -335,6 +343,10 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 
 ### GitOps Automation Model
 
+> [!CAUTION] Deprecated since 2026-10-07: the `ansible-pull` systemd service and timer (`gitops_automation` role) and
+> the Slack run notifications were removed. The section below, the "GitOps Setup" bootstrap phase and the
+> `ansible-pull Failure` risk describe the original design only. Unattended OS upgrades and ARA are unchanged.
+
 **Tool**: `ansible-pull` with systemd timer (15-minute interval)
 
 **Workflow**:
@@ -377,6 +389,27 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 7. Cert-manager addition: TLS certificate automation with Let's Encrypt
 8. Final pivot: Complete abandonment of Kubernetes approach
 
+### Post-Implementation Change: Removal of `ansible-pull` (2026-10-07)
+
+The core decision (Ansible + Docker Compose on a VPS instead of Kubernetes) is unchanged. Only the self-pulling GitOps
+element was dropped: the `ansible-pull` self-sync (systemd service + 15-minute timer, `gitops_automation` role) and the
+Slack run notifications of the playbook were removed from `kazimierz.akn`. The playbook
+(`projects/kazimierz.akn/src/infrastructure/ansible/site.yml`) is now run only by hand from an operator machine over SSH
+(`ansible-playbook -i inventory/remote.yml site.yml`), with the Ansible Vault password read from the sops-encrypted
+`.vault-password.sops`.
+
+**Why**: the owner's assessment is that the self-pulling GitOps loop was elegant but brought nothing in practice and was
+complex to maintain. Two incidents observed on 2026-10-07, while re-bootstrapping the VPS after an unplanned OS image
+change to Ubuntu 26.04, support it:
+
+- The role depended on the Ansible PPA, whose signing key could not be fetched on that release, which failed the whole
+  run.
+- The role wrote the Ansible Vault password in clear text on the host (`/root/.local/ansible/vault-secret`), a secret
+  that no longer needs to be on the VPS.
+
+**Trade-off accepted**: there is no automatic drift correction anymore. Configuration changes take effect only when the
+operator re-runs the playbook.
+
 ### Lessons Learned
 
 #### When Kubernetes Makes Sense
@@ -415,6 +448,10 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 
 ## Changelog
 
+- **2026-10-07**: **DEPRECATION**: Removed the `ansible-pull` self-sync (systemd service + 15-minute timer,
+  `gitops_automation` role) and the Slack run notifications; the playbook is now run manually from an operator machine.
+  Status kept as `implemented`: the Ansible + Docker Compose decision still stands. Original GitOps passages are kept
+  and flagged.
 - **2026-05-24**: **CHORE**: Renamed `consulted` to `assisted-by` in frontmatter; removed `ai/` prefix from model
   identifiers.
 - **2026-03-19**: **CHORE**: Migrated ADR to the new YAML frontmatter and template format.
