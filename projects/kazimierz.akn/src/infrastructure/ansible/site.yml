@@ -14,12 +14,7 @@
 #      - UFW firewall
 #      - Unattended security upgrades
 #
-#   2. ARA Records Ansible (ara_server role)
-#      - ARA API server (Ubuntu package)
-#      - Ansible callback plugin
-#      - Tailscale Serve HTTPS access
-#
-#   3. Pangolin Application Stack (pangolin role)
+#   2. Pangolin Application Stack (pangolin role)
 #      - Pangolin reverse proxy
 #      - Gerbil WireGuard manager
 #      - Traefik with Let's Encrypt
@@ -51,16 +46,6 @@
     arnos_slack_channel: "#notifications"
     arnos_slack_username: Ansible (kazimierz.akn)
 
-    # -------------------------------------------------------------------------
-    # ARA Records Ansible Configuration
-    # -------------------------------------------------------------------------
-    # API server URL (uses environment variable if set, otherwise public URL)
-    arnos_ara_api_server: "{{ lookup('env', 'ARA_API_SERVER') | default(arnos_ara_public_url) }}"
-    # Public URL accessible via Tailscale -- ARA has its own dedicated
-    # Tailscale Serve listener on :10000 (see ara_server role), separate
-    # from Pangolin's Integration API on :443.
-    arnos_ara_public_url: "https://kazimierz-akn.tail831c5d.ts.net:10000"
-
   tasks:
     - block:
         - name: "[Step 1] Install and configure system components"
@@ -68,16 +53,7 @@
             name: system_setup
           tags: [system]
 
-        # ARA is installed from Ubuntu's own `ara-server`/`python3-ara` packages,
-        # which Ubuntu 26.04 (resolute) no longer ships: skip it there until the
-        # role is ported (pip/venv install) instead of failing the whole run.
-        - name: "[Step 2] Deploy and configure ARA Records Ansible"
-          ansible.builtin.include_role:
-            name: ara_server
-          when: ansible_facts['distribution'] != 'Ubuntu' or ansible_facts['distribution_version'] is version('26.04', '<')
-          tags: [ara]
-
-        - name: "[Step 3] Deploy Pangolin application stack"
+        - name: "[Step 2] Deploy Pangolin application stack"
           ansible.builtin.include_role:
             name: pangolin
           tags: [pangolin]

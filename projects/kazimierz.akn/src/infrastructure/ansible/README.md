@@ -19,7 +19,6 @@ Operator machine (this repository)
               Kazimierz.AKN VPS (OCI, eu-paris-1)
 
   system_setup        -- OS baseline: DNS, Docker, Tailscale, UFW, sshd/fail2ban/sysctl hardening, unattended-upgrades
-  ara_server           -- ARA (Ansible Run Analysis) API, exposed over Tailscale Serve
   pangolin              -- Pangolin + Gerbil + Traefik stack (Docker Compose)
 ```
 
@@ -39,7 +38,6 @@ ansible/
 │   └── host_vars/kazimierz.yml   # Host-specific secrets and config (ansible-vault encrypted values)
 └── roles/
     ├── system_setup/            # Base OS, hardening
-    ├── ara_server/                # Run tracking
     └── pangolin/                  # See roles/pangolin/README.md
 ```
 
@@ -74,8 +72,6 @@ the NSG state.
 
 `inventory/local.yml` can be used to run the playbook locally on the host itself (`ansible_connection: local`).
 
-> **Note**: the instance runs Ubuntu 26.04, where the `ara_server` step is currently skipped (see `site.yml`).
-
 ## Configuration Workflow
 
 ```bash
@@ -95,10 +91,6 @@ ansible-playbook -i inventory/remote.yml site.yml --vault-password-file <(echo "
 # Pangolin stack
 docker compose -f /opt/pangolin/docker-compose.yml ps
 docker compose -f /opt/pangolin/docker-compose.yml logs -f
-
-# ARA (run history/analysis) -- native ara-server package, not a container
-systemctl status ara-server.service
-# Web UI: the Tailscale Serve URL configured in roles/ara_server
 ```
 
 ## Security

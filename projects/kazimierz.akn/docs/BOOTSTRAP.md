@@ -15,7 +15,6 @@ manually, over SSH, from a machine running Ansible.
 
 - **system_setup**: OS baseline (DNS, Docker, Tailscale with SSH, UFW, sshd/fail2ban/sysctl hardening,
   unattended-upgrades)
-- **ara_server**: ARA (Ansible Run Analysis) API, native systemd service, exposed over Tailscale Serve
 - **pangolin**: Pangolin + Gerbil + Traefik stack via Docker Compose
 
 ## Prerequisites
@@ -43,10 +42,7 @@ ansible-playbook -i inventory/remote.yml site.yml --vault-password-file <(echo "
 ```
 
 This single run installs Tailscale (enrolled with `--ssh`, so Tailscale SSH becomes available as an additional access
-path), ARA, and the Pangolin stack.
-
-> **Note**: the instance runs Ubuntu 26.04, where the `ara_server` step is currently skipped: Ubuntu 26.04 no longer
-> ships the `ara-server`/`python3-ara` packages, so the role needs to be ported to a pip/venv install.
+path), and the Pangolin stack.
 
 ### 2. Verify Deployment
 

@@ -37,7 +37,6 @@ The solution is a **single VPS** (no Kubernetes) running Pangolin with integrate
 - **Traefik**: HTTP reverse proxy with automatic Let's Encrypt SSL
 - **Tailscale**: Mesh VPN for secure SSH access and monitoring
 - **Ansible**: Configuration management, run remotely over SSH from an operator machine
-- **ARA**: Playbook execution monitoring and auditing
 - **Pulumi**: Provisions the OCI instance, network (VCN/NSG), and DNS records the VPS runs on
 
 > **Note**: The instance/network itself (compartment, VCN, instance, DNS) is provisioned by a separate Pulumi stack --
@@ -66,7 +65,6 @@ This architecture provides:
 - **Isolation** with the VPS as a sacrificial layer that can be compromised without impacting internal infrastructure
 - **Simple management** with no Kubernetes overhead on the edge
 - **Declarative configuration** with Ansible, versioned in Git and applied by re-running the playbook
-- **Execution monitoring** with ARA for tracking configuration changes and debugging
 
 ## Services Overview
 
@@ -136,12 +134,12 @@ automated SSL.\*
 
 ### [Tailscale](https://tailscale.com/)
 
-Mesh VPN providing secure SSH access for VPS administration and configuration. Also serves ARA monitoring interface via
-Tailscale Serve for encrypted playbook execution tracking.
+Mesh VPN providing secure SSH access for VPS administration and configuration. Also re-exposes Pangolin's Integration
+API on the tailnet via Tailscale Serve, so the Pulumi stacks can reach it without a public endpoint.
 
 **\*Why this choice**: Already used across the homelab infrastructure. Provides secure, zero-trust access for VPS
-management without exposing SSH to the public internet. Tailscale Serve eliminates need for public monitoring
-dashboard.\*
+management without exposing SSH to the public internet. Tailscale Serve keeps the Integration API off the public
+internet.\*
 
 </div>
 </div>
@@ -158,24 +156,7 @@ Configuration management run remotely over SSH from an operator machine (`ansibl
 and is applied idempotently by re-running the playbook.
 
 **\*Why this choice**: Agentless and simple, no external CI/CD infrastructure and nothing running on the VPS to keep the
-configuration in sync. Integrates with ARA for execution monitoring.\*
-
-</div>
-</div>
-
-<br/><br/>
-
-<div align="center" style="max-width: 1000px; margin: 0 auto;">
-<div align="left">
-<img src="../../docs/assets/icons/apps/ara-records-ansible.svg" alt="ARA Logo" width="120" align="left" style="margin-right: 16px;">
-
-### [ARA Records Ansible](https://ara.recordsansible.org/)
-
-Ansible playbook execution recorder providing web UI for tracking changes, debugging failures, and auditing
-configuration drift. Accessible via Tailscale Serve HTTPS endpoint.
-
-**\*Why this choice**: Provides visibility into playbook executions without additional monitoring infrastructure. SQLite
-backend keeps it lightweight. Tailscale Serve provides secure access without public exposure.\*
+configuration in sync.\*
 
 </div>
 </div>
@@ -238,7 +219,7 @@ kazimierz.akn/
 └── src/
     └── infrastructure/
         ├── ansible/                            # Ansible infrastructure-as-code
-        │   ├── site.yml                        # Main playbook (3 steps)
+        │   ├── site.yml                        # Main playbook (2 steps)
         │   ├── requirements.yml                # External roles and collections
         │   ├── inventory/
         │   │   ├── local.yml                   # Local inventory (run the playbook on the host)
@@ -247,7 +228,6 @@ kazimierz.akn/
         │   │       └── kazimierz.yml           # Host-specific variables (vault-encrypted)
         │   └── roles/
         │       ├── system_setup/               # Base system (Docker, Tailscale, UFW, etc.)
-        │       ├── ara_server/                 # ARA playbook monitoring
         │       └── pangolin/                   # Pangolin stack (Pangolin, Gerbil, Traefik)
         └── pulumi/                             # Provisions the OCI instance, network and DNS
             └── stack/

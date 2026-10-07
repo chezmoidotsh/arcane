@@ -165,14 +165,6 @@ vps: {
     link: https://www.ansible.com/
     tooltip: Configuration management, run remotely over SSH from an operator machine
   }
-
-  ara: {
-    class: [application-system]
-    label: ARA
-    icon: docs/assets/icons/apps/ara-records-ansible.svg
-    link: https://ara.recordsansible.org/
-    tooltip: Playbook execution monitoring and auditing
-  }
 }
 
 
@@ -226,9 +218,6 @@ vps.proxy-stack.crowdsec -> internet: "CrowdSec API\n(api.crowdsec.net:443)" { c
 # ──────────────────────────────────────────────────────────────────────────────
 # Infrastructure Connections
 
-vps.ansible -> vps.ara: "Callback Plugin\nPlaybook Recording"
-
-vps.tailscale -> vps.ara: "Tailscale Serve\n(HTTPS Access)"
 
 
 # ──────────────────────────────────────────────────────────────────────────────
