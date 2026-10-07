@@ -12,12 +12,16 @@ import { chezmoiShOrg } from "./org";
 // restricted Pocket-Id-side (../pocket-id/pangolin.ts's AllowedUserGroups)
 // -- this side just has to trust whoever comes through.
 export const chezmoiShIdp = new pangolin.Idp("chezmoi-sh-pocket-id", {
-	name: "auth.chezmoi.sh (pocket-id)",
+	name: "auth.chezmoi.sh",
 	authUrl: "https://auth.chezmoi.sh/authorize",
 	tokenUrl: "https://auth.chezmoi.sh/api/oidc/token",
 	clientId: pangolinOidcClient.id,
 	clientSecret: pangolinOidcClientSecret.secret,
+	// `sub` stays the account key (immutable); email and name only feed what the
+	// dashboard displays for the user.
 	identifierPath: "sub",
+	emailPath: "email",
+	namePath: "name",
 	scopes: "openid profile email",
 	autoProvision: true,
 });
@@ -26,14 +30,14 @@ export const chezmoiShIdp = new pangolin.Idp("chezmoi-sh-pocket-id", {
 // every login: "pangolin:role" is a custom claim carrying the target role
 // name (e.g. Admin or Privileged, see ./role.ts), quoted because JMESPath
 // unquoted identifiers can't contain ":". `||` falls back to the built-in
-// "member" role whenever the claim is absent or empty, which is the case
+// "Member" role (role names are case-sensitive in Pangolin) whenever the claim is absent or empty, which is the case
 // for every Pocket-Id user until that claim is explicitly set.
 new pangolin.IdpOrg(
 	"chezmoi-sh-pocket-id",
 	{
 		idpId: chezmoiShIdp.idpId,
 		orgId: chezmoiShOrg.orgId,
-		roleMapping: `"pangolin:role" || 'member'`,
+		roleMapping: `"pangolin:role" || 'Member'`,
 		orgMapping: pulumi.interpolate`'${chezmoiShOrg.orgId}'`,
 	},
 	{ parent: chezmoiShIdp },
