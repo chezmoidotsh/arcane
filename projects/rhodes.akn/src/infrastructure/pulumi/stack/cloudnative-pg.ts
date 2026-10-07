@@ -3,6 +3,8 @@ import { GarageCloudNativePGObjectStore } from "@chezmoi.sh/pulumi-garage-cnpg-b
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 
+import { rhodesAknProvider } from "./kubernetes";
+
 // ---------------------------------------------------------------------------
 // Garage S3 bucket + credentials for CNPG backup object stores (rhodes)
 // ---------------------------------------------------------------------------
@@ -37,7 +39,7 @@ for (const namespace of ["vault", "pocket-id", "o11y-system"]) {
 				region: "fr-par-1",
 			},
 		},
-		{ parent: component },
+		{ parent: component, provider: rhodesAknProvider },
 	);
 }
 
