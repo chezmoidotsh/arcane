@@ -14,27 +14,25 @@ import { maisonGroupId } from "./index";
 // the secret is exposed as a Pulumi stack output instead of a
 // vault.kv.SecretV2, retrieved with `mise run pulumi:oidc-client` and pasted
 // into the integration setup by hand.
-export const homeAssistantOidcClient = new pocketid.OidcClient(
-	"home-assistant",
-	{
-		allowedUserGroupIds: [maisonGroupId],
-		name: "Home Assistant",
-		description: "Domotique et supervision de la maison",
-		logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/home-assistant-dark.svg"),
-		darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/home-assistant-light.svg"),
-		launchUrl: "https://hass.chezmoi.sh/",
-		callbackUrls: ["https://hass.chezmoi.sh/auth/oidc/callback"],
-		isPublic: false,
-		pkceEnabled: true,
-		logoutCallbackUrls: [],
-		requiresPushedAuthorizationRequests: false,
-		requiresReauthentication: false,
-		skipConsent: false,
-	},
-);
+const homeAssistantOidcClient = new pocketid.OidcClient("home-assistant", {
+  clientId: "e044b00f-9596-4d92-b36a-bd1db8aa18b4",
+  allowedUserGroupIds: [maisonGroupId],
+  name: "Home Assistant",
+  description: "Domotique et supervision de la maison",
+  logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/home-assistant-dark.svg"),
+  darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/home-assistant-light.svg"),
+  launchUrl: "https://hass.chezmoi.sh/",
+  callbackUrls: ["https://hass.chezmoi.sh/auth/oidc/callback"],
+  isPublic: false,
+  pkceEnabled: true,
+  logoutCallbackUrls: [],
+  requiresPushedAuthorizationRequests: false,
+  requiresReauthentication: false,
+  skipConsent: false,
+});
 
 const homeAssistantSecret = new pocketid.OidcClientSecret("home-assistant-secret", {
-	clientId: homeAssistantOidcClient.id,
+  clientId: homeAssistantOidcClient.id,
 });
 
 export const homeAssistantOidcClientId = homeAssistantOidcClient.id;
