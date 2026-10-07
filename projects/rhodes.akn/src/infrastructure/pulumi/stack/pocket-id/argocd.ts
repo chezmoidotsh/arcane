@@ -1,7 +1,7 @@
+import * as pocketid from "@axnic/pulumi-pocket-id";
 import {
 	vaultSecretMetadata,
 } from "@chezmoi.sh/pulumi-lib";
-import * as pocketid from "@axnic/pulumi-pocket-id";
 import * as pulumi from "@pulumi/pulumi";
 import * as vault from "@pulumi/vault";
 
