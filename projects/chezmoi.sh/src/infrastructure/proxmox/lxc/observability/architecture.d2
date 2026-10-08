@@ -5,7 +5,7 @@ vars: {
   }
 }
 
-...@../../../../../../docs/assets/d2/styles.architecture.d2
+...@"../../../../../../../docs/assets/d2/styles.architecture.d2"
 
 explanation: |md
   # data.o11y.chezmoi.sh — Observability Appliance
@@ -32,11 +32,11 @@ tailnet: {
 # Notification targets (external, off-homelab on purpose)
 notify: {
   class: platform
-  label: "ntfy / Slack\n(notifications)"
+  label: "Slack\n(#notifications webhook)"
 }
 deadman: {
   class: platform
-  label: "external monitor — TBD\n(healthchecks.io / Cloudflare?)\nDead-Man's-Switch ×2"
+  label: "healthchecks.io\nDead-Man's-Switch ×2"
 }
 cloudflare: {
   class: platform
@@ -49,17 +49,17 @@ lungmen: {
   class: namespace
   label: "lungmen.akn (K8s)"
 
-  vmagent: {class: application-system; label: "VMAgent\n(ServiceMonitor → scrape\n+ streamAggr)"}
-  vmalert: {class: application-system; label: "VMAlert\n(VMRule: alerts + records)"}
-  vector: {class: application-system; label: "Vector\n(pod logs)"}
+  vmagent: {class: [application-system; undeployed]; label: "VMAgent\n(ServiceMonitor → scrape\n+ streamAggr)"}
+  vmalert: {class: [application-system; undeployed]; label: "VMAlert\n(VMRule: alerts + records)"}
+  vector: {class: [application-system; undeployed]; label: "Vector\n(pod logs)"}
 }
 rhodes: {
   class: namespace
   label: "rhodes.akn (K8s)"
 
-  vmagent: {class: application-system; label: "VMAgent"}
-  vmalert: {class: application-system; label: "VMAlert (VMRule)"}
-  vector: {class: application-system; label: "Vector"}
+  vmagent: {class: [application-system; undeployed]; label: "VMAgent"}
+  vmalert: {class: [application-system; undeployed]; label: "VMAlert (VMRule)"}
+  vector: {class: [application-system; undeployed]; label: "Vector"}
   grafana: {
     class: application
     label: "Grafana\n(OIDC Pocket-Id + local break-glass)\ndashboards only + deadman"
@@ -69,8 +69,8 @@ kazimierz: {
   class: namespace
   label: "kazimierz.akn (VPS, Docker)"
 
-  vmagent: {class: application-system; label: "vmagent\n(container)"}
-  vector: {class: application-system; label: "Vector\n(container)"}
+  vmagent: {class: [application-system; undeployed]; label: "vmagent\n(container)"}
+  vector: {class: [application-system; undeployed]; label: "Vector\n(container)"}
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -80,13 +80,18 @@ proxmox: {
   label: "Proxmox host"
 
   otel: {class: application-system; label: "OTEL metric server\n(host metrics → OTLP)"}
+  pve-exporter: {class: application-system; label: "pve-exporter LXC\n(pve_* metrics + Vector logs)"}
 
   lxc: {
     class: namespace
     label: "LXC (unprivileged) — nixos / observability"
 
-    tailscale: {class: tailscaled; label: "tailscaled\n(tag:o11y, kernel TUN)"}
-    caddy: {class: application-system; label: "Caddy :80/:443\nTLS (ACME) + path routing"}
+    caddy: {
+      class: application-system
+      label: "Caddy :80/:443\nTLS (ACME) + path routing\n+ caddy-tailscale (tsnet, tag:o11y)"
+      icon: docs/assets/icons/apps/caddy.svg
+    }
+    vector: {class: application-system; label: "Vector\n:6000 native / OTLP"}
 
     vm: {class: application-datastore; label: "VictoriaMetrics\n:8428 — 6mo (+ OTLP)"}
     vlogs: {class: application-datastore; label: "VictoriaLogs\n:9428 — 30d"}
@@ -97,7 +102,7 @@ proxmox: {
     data: {class: application-datastore; label: "/var/lib/victoria\n(mp0 — snapshot/backup)"}
 
     # internal wiring — Caddy routes by /<signal> path, no auth proxy
-    tailscale -> caddy: "tailnet → :443"
+    vector -> vlogs: "jsonline"
     caddy -> vm: "/metrics/*"
     caddy -> vlogs: "/logs/*"
     caddy -> vtraces: "/traces/*"
@@ -118,9 +123,11 @@ lungmen.vector -> proxmox.lxc.caddy: "logs" {class: connect-network}
 rhodes.vmagent -> proxmox.lxc.caddy: "remote_write" {class: connect-network}
 rhodes.vector -> proxmox.lxc.caddy: "logs" {class: connect-network}
 proxmox.otel -> proxmox.lxc.caddy: "OTLP metrics" {class: connect-network}
+proxmox.pve-exporter -> proxmox.lxc.caddy: "/metrics" {class: connect-network}
+proxmox.pve-exporter -> proxmox.lxc.vector: "logs (Vector native :6000)" {class: connect-network}
 kazimierz.vmagent -> tailnet: {class: connect-vpn}
 kazimierz.vector -> tailnet: {class: connect-vpn}
-tailnet -> proxmox.lxc.tailscale: "remote_write + logs\n(over Tailscale)" {class: connect-vpn-backbone}
+tailnet -> proxmox.lxc.caddy: "remote_write + logs\n(over Tailscale)" {class: connect-vpn-backbone}
 
 # Rule evaluation (per cluster) — query central VM, notify central Alertmanager
 lungmen.vmalert -> proxmox.lxc.caddy: "query + records + alerts" {class: connect-network}

@@ -98,7 +98,8 @@ existential alerts and the healthchecks.io DMS heartbeat — Grafana is not in t
 > pipeline (Vector native + OTLP sources) runs SemConv validation and loki-like conversion before pushing to
 > VictoriaLogs.
 
-Architecture diagram source: [`architecture.d2`](./architecture.d2).
+Architecture diagram: [`docs/assets/architecture.svg`](./docs/assets/architecture.svg), source
+[`architecture.d2`](./architecture.d2) (regenerate with `mise run diagram:generate`).
 
 ### Design decisions (the short version — full rationale in ADR-013)
 
@@ -156,7 +157,7 @@ Architecture diagram source: [`architecture.d2`](./architecture.d2).
 ```text
 .
 ├── README.md              ← you are here
-├── architecture.d2        ← diagram source (→ assets/architecture.svg)
+├── architecture.d2        ← diagram source (→ docs/assets/architecture.svg)
 ├── flake.nix              ← LXC image build (nixos-rebuild build-image) + image version
 ├── flake.lock             ← pinned inputs
 ├── configuration.nix      ← site identity, shared `o11y` user, console toolbox
@@ -665,10 +666,7 @@ or extra cert SAN needed for tailnet clients — they connect to the MagicDNS na
 6. **No NixOS smoke test.** A `pkgs.testers.runNixOSTest` booting the image and asserting every unit is `active` would
    catch module regressions pre-Proxmox.
 
-7. **`assets/architecture.svg` not yet rendered.** Generate with
-   `mise exec -- d2 architecture.d2 assets/architecture.svg`.
-
-8. **No auth is a deliberate trade-off.** Any host on the allow-listed subnet can read and write all data. If the
+7. **No auth is a deliberate trade-off.** Any host on the allow-listed subnet can read and write all data. If the
    appliance is ever exposed beyond the trusted LAN/Tailnet, re-introduce `vmauth` (write/read credentials) in front of
    the backends before doing so.
 
