@@ -69,6 +69,12 @@ configs:
       jsonPointers:
         - /spec/preserveUnknownFields
 
+    # ignore the field defaulted by the API server on CSIDriver (Kubernetes 1.37+) that Argo CD's
+    # embedded schema doesn't know yet ("field not declared in schema" on structured merge diff)
+    resource.customizations.ignoreDifferences.storage.k8s.io_CSIDriver: |
+      jqPathExpressions:
+        - .spec.preventPodSchedulingIfMissing
+
     # ignores differences on ExternalSecret resources
     resource.customizations.ignoreDifferences.external-secrets.io_ExternalSecret: |
       jqPathExpressions:
