@@ -61,8 +61,38 @@ mailjet: {
 }
 
 
+cloudflare: {
+  class: [application]
+  label: Cloudflare
+  icon: docs/assets/icons/platform/cloudflare.svg
+  link: https://www.cloudflare.com/
+  tooltip: DNS API used only for ACME DNS-01 validation (wildcard certificate)
+}
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Backend Clusters
+
+rhodes·akn: {
+  class: namespace
+  label: rhodes·akn
+
+  style.fill-pattern: none
+
+  newt: {
+    class: [application]
+    label: Newt
+    icon: docs/assets/icons/system/pangolin.svg
+    link: https://pangolin.net/
+    tooltip: Pangolin site node (Kubernetes pod) providing secure tunnel to Pocket-ID and Grafana
+  }
+
+  services: {
+    class: [application]
+    label: Backend Services\n(Pocket-ID, Grafana)
+    icon: docs/assets/icons/platform/kubernetes.svg
+    tooltip: Services exposed through Newt
+  }
+}
 
 lungmen·akn: {
   class: namespace
@@ -136,6 +166,12 @@ vps: {
       link: https://traefik.io/
       tooltip: HTTP reverse proxy with automatic Let's Encrypt SSL
     }
+
+    error-pages: {
+      class: [application]
+      label: error-pages
+      tooltip: Branded HTTP error pages served through Traefik
+    }
   }
 
 
@@ -183,12 +219,19 @@ internet -> vps.proxy-stack.traefik: |md
 
 vps.proxy-stack.pangolin -> pocket-id: "OIDC Authentication\n(auth.chezmoi.sh:443)" {class: [connect-to-internet]}
 
-vps.proxy-stack.pangolin -> mailjet: "SMTP\n(in-v3.mailjet.com:587)" {class: [connect-to-internet]}
+vps.proxy-stack.pangolin -> mailjet: "SMTP\n(in-v3.mailjet.com:465)" {class: [connect-to-internet]}
 
 vps.proxy-stack.traefik -> internet: |md
     Let's Encrypt
     (acme-v02.api.letsencrypt.org:443)
   | {class: [connect-to-internet]}
+
+vps.proxy-stack.traefik -> cloudflare: |md
+    DNS-01 wildcard (*.chezmoi.sh)
+    (api.cloudflare.com:443)
+  | {class: [connect-to-internet]}
+
+vps.proxy-stack.traefik -> vps.proxy-stack.error-pages: "Error pages"
 
 vps.tailscale -> internet: "Tailscale API\n(api.tailscale.com:443)" {class: [connect-to-internet]}
 
@@ -213,5 +256,12 @@ vps.proxy-stack.gerbil -> lungmen·akn.newt: |md
     WireGuard Site Tunnel
     (UDP 51820)
   | { class: [connect-from-vpn-backbone] }
+
+vps.proxy-stack.gerbil -> rhodes·akn.newt: |md
+    WireGuard Site Tunnel
+    (UDP 51820)
+  | { class: [connect-from-vpn-backbone] }
+
+rhodes·akn.newt -> rhodes·akn.services: "Proxied Requests"
 
 lungmen·akn.newt -> lungmen·akn.services: "Proxied Requests"
