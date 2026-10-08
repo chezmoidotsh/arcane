@@ -38,7 +38,7 @@ catalog/        Reusable components (charts, compositions, OCI images, …)
 └── talos/          Talos Linux bootstrap manifests + machine config patches
 
 defaults/       Baseline Helm values / Talos configs used across projects
-docs/           ADRs (decisions/), procedures/, experiments/, incidents/, migrations/, network/, archives/
+docs/           ADRs (decisions/), procedures/, experiments/, incidents/, migrations/, network/, reports/, archives/
 
 projects/       One subdirectory per cluster or standalone app
 ├── chezmoi.sh/     Shared Pulumi stacks — Proxmox host, OpenBao, Tailscale, observability LXC, OCI registry
