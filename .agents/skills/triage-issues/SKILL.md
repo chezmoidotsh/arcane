@@ -25,7 +25,7 @@ A critical bug with a well-understood one-line fix stays `size::S` — effort do
 because the effort is `size::XL`. See references/calibration-examples.md#33 and #34 for the cleanest proof: identical
 fix, identical effort, opposite priority, based purely on whether someone is actually affected today.
 
-Both procedures below were calibrated against 40 concrete scenarios rated by the repo maintainer (full data:
+Both procedures below were calibrated against 41 concrete scenarios rated by the repo maintainer (full data:
 `references/calibration-examples.md`). When a rule below feels wrong for a specific issue, check that file for the
 closest precedent before overriding it.
 
@@ -209,7 +209,7 @@ env -u GITHUB_TOKEN -u GH_TOKEN gh project item-edit 1 --owner chezmoidotsh \
 ## References
 
 - `.github/labels.yaml` — canonical label list and the time-band anchors for `size::*`
-- `references/calibration-examples.md` — full 40-scenario calibration data these rules were derived from, plus the two
+- `references/calibration-examples.md` — full 41-scenario calibration data these rules were derived from, plus the two
   confirmed soft-vs-hard-rule notes (#4/#12, #35/#39)
 - `.agents/skills/create-issue/SKILL.md` — issue title/body/label conventions for filing new issues; this skill covers
   sizing specifically, for both new and existing issues
