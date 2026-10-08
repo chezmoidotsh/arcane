@@ -527,6 +527,31 @@ The appliance joins the tailnet as `observability` (tag `tag:o11y`) via caddy-ta
 (Docker, Ansible-managed) reach it over the encrypted tailnet — `externalLabels: { cluster: kazimierz }`. Point them at
 `https://observability.<tailnet>.ts.net` directly; TLS is valid for that MagicDNS name without any split-DNS override.
 
+### Labeling convention (logs <-> metrics correlation)
+
+All signals describe a host with the OTel `host.name` resource attribute (`cluster` is shared by every signal and stays
+as is). Prometheus label names cannot contain dots, so metrics carry the standard OTel-to-Prometheus form (`.` becomes
+`_`). The **value** is identical: the machine's hostname.
+
+| Concept | Logs / traces (VictoriaLogs)   | Metrics (VictoriaMetrics) | Set by                                                                                    |
+| ------- | ------------------------------ | ------------------------- | ----------------------------------------------------------------------------------------- |
+| Host    | `host.name`                    | `host_name`               | LXC: `catalog.lxcAgent` (`get_hostname!()`, override with `extraLabels`); o11y Vector too |
+| Service | `service.name`                 | `service_name`            | Logs: syslog identifier. Metrics: not set yet (see below)                                 |
+| Cluster | `cluster` / `k8s.cluster.name` | `cluster`                 | Sender (external label)                                                                   |
+
+Rules for any new signal source (notably the future Kubernetes metrics and log agents, not deployed yet):
+
+- Stamp `host_name` on every metric series and `host.name` on every log record, same value on both sides. When an agent
+  scrapes another machine (e.g. pve-exporter scraping `pve-01`), set the label to the scraped machine, not the scraper.
+- `service_name` is only added on metrics where its value equals the logs' `service.name` for the same workload
+  (Kubernetes: workload/container name on both sides). It is not set for LXC scrape jobs because their job name
+  (`victoriametrics`) differs from the journald identifier (`victoria-metrics`).
+- Keep the existing `node` label on LXC metrics (alert rules use it).
+
+Grafana derived field on the VictoriaLogs datasource (log line to host metrics): matcher type "Label", name `host.name`,
+internal link to the Prometheus datasource, query `node_load1{host_name="${__value.raw}"}`. Reverse direction (metric to
+logs): the LogsQL query `{host.name="<host_name of the series>"}`.
+
 ### Grafana (rhodes.akn) — dashboards
 
 Deployed via the Grafana Operator on `rhodes.akn` (issue 1159) — not part of this appliance, and not this LXC's domain:

@@ -16,3 +16,6 @@ sources:
   in_internal_metrics:
     type: internal_metrics
     scrape_interval_secs: 30
+    tags:
+      # OTel host.name in Prometheus label form (same value as logs' host.name).
+      host_key: host_name

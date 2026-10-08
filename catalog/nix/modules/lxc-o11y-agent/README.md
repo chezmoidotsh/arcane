@@ -44,7 +44,7 @@ One Vector process runs two independent pipelines on the LXC:
 │       ▼                                                                    │
 │  out_metrics ───────────────────────────────────▶  o11y VictoriaMetrics    │
 │              prometheus_remote_write · 256 MiB disk buffer (drop-newest)   │
-│              every series tagged `node`  (machine identity)                │
+│              every series tagged `node` + `host_name` (OTel host.name)     │
 │                                                                            │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -54,7 +54,7 @@ VictoriaLogs loki-like layout and forwarded over the Vector native protocol. A 2
 without dropping events.
 
 **Metrics** — One `prometheus_scrape` source per job (required for per-job labels). A remap transform stamps every
-series with `job` labels before shipping via `prometheus_remote_write`. Vector's own internal metrics are always
+series with `job`, `node` and `host_name` (OTel `host.name`, same value as logs) labels before shipping via `prometheus_remote_write`. Vector's own internal metrics are always
 included. A 256 MiB disk buffer absorbs outages; newest samples are dropped when full (point-in-time data is
 replaceable).
 
