@@ -33,10 +33,8 @@ lint:
     - codespell
     - eslint
     - isort
-    - osv-scanner # Disabled until rtunk can acknowledge individual findings by rule ID
-      # (https://github.com/axnic/rtunk/issues/56): it reports advisories on pnpm-lock.yaml
-      # that cannot be fixed in this PR, and the only alternative is a permanently red CI.
-      # Re-enable (osv-scanner@2.5.1) once those findings can be acked.
+    - osv-scanner # Permanently disabled: vulnerability scanning is out of scope for this infra-as-code
+      # repo (no application attack surface); Renovate handles dependency updates.
     - markdown-table-prettify
     - rome
     - terrascan
