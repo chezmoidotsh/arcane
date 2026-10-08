@@ -40,9 +40,15 @@ internet: {
     icon: docs/assets/icons/platform/mailjet.blueprint.svg
   }
 
+  pangolin: {
+    class: platform
+    label: Pangolin (kazimierz.akn)
+    icon: docs/assets/icons/system/pangolin.svg
+  }
+
   cloudflare: {
     class: platform
-    label: Cloudflare
+    label: Cloudflare (ACME DNS-01 API)
     icon: docs/assets/icons/platform/cloudflare.blueprint.svg
   }
 
@@ -88,6 +94,16 @@ localnet: {
     class: hardware
     label: UDM-Pro
     icon: docs/assets/icons/hardware/ubiquiti_unifi.blueprint.svg
+  }
+
+  talosnet-dns: {
+    class: hardware
+    label: talosnet-dns (BIND)
+  }
+
+  o11y-backend: {
+    class: hardware
+    label: Observability LXC (VictoriaMetrics/Logs/Traces)
   }
 
   omni: {
@@ -210,12 +226,52 @@ rhodes·akn: {
     icon: docs/assets/icons/system/cilium.blueprint.svg
   }
 
-  infrastructure.cilium-gateway: {
-    class: [application-system]
-    label: Cilium Gateway
-    icon: docs/assets/icons/system/cilium.blueprint.svg
+  # Two Gateways (kube-system, GatewayClass cilium): "external" (VLAN5, home
+  # network) and "internal" (talosnet only). Apps attach their HTTPRoute to both
+  # (same hostname, split-horizon DNS), so edges target the group.
+  infrastructure.gateways: {
+    class: [namespace]
+    label: Cilium Gateways
+
+    external: {
+      class: [application-system]
+      label: "external\n(VLAN5)"
+      icon: docs/assets/icons/system/cilium.blueprint.svg
+    }
+
+    internal: {
+      class: [application-system]
+      label: "internal\n(talosnet)"
+      icon: docs/assets/icons/system/cilium.blueprint.svg
+    }
   }
 
+  infrastructure.newt: {
+    class: [application-system]
+    label: Newt
+    icon: docs/assets/icons/system/pangolin.svg # no blueprint variant of the Pangolin mark yet
+  }
+
+  infrastructure.o11y-stack: {
+    class: [namespace]
+    label: Grafana Stack
+
+    grafana-operator: {
+      class: [application-system]
+      label: Grafana Operator
+    }
+
+    grafana: {
+      class: [application]
+      label: Grafana
+    }
+
+    postgresql: {
+      class: [application-datastore]
+      label: PostgreSQL
+      icon: docs/assets/icons/system/cloudnativepg.blueprint.svg
+    }
+  }
 }
 
 # ╭────────────────────────────────────────────────────────────────────────────╮
@@ -234,22 +290,22 @@ rhodes·akn: {
 # ──────────────────────────────────────────────────────────────────────────────
 # Internal Connections
 
-rhodes·akn.applications.argocd <- rhodes·akn.infrastructure.cilium-gateway: "Serve web UI (HTTP)" {source-arrowhead: 8080; class: [connect-local]}
+rhodes·akn.applications.argocd <- rhodes·akn.infrastructure.gateways: "Serve web UI (HTTP)" {source-arrowhead: 8080; class: [connect-local]}
 
 rhodes·akn.applications.openbao-stack.openbao -> rhodes·akn.applications.openbao-stack.postgresql: "Store secrets (PostgreSQL)" {target-arrowhead: 5432; class: [connect-app]}
-rhodes·akn.applications.openbao-stack.openbao <- rhodes·akn.infrastructure.cilium-gateway: "Serve API (HTTP)" {source-arrowhead: 8200; class: [connect-local]}
-rhodes·akn.applications.openbao-stack.postgresql -> localnet.garage: "Store backups (S3)" {target-arrowhead: 9200; class: [connect-local]}
+rhodes·akn.applications.openbao-stack.openbao <- rhodes·akn.infrastructure.gateways: "Serve API (HTTP)" {source-arrowhead: 8200; class: [connect-local]}
+rhodes·akn.applications.openbao-stack.postgresql -> localnet.garage: "Store backups (S3, HTTPS)" {target-arrowhead: 443; class: [connect-local]}
 
 rhodes·akn.applications.pocket-id-stack.pocket-id -> rhodes·akn.applications.pocket-id-stack.postgresql: "Store user data (PostgreSQL)" {target-arrowhead: 5432; class: [connect-app]}
-rhodes·akn.applications.pocket-id-stack.pocket-id <- rhodes·akn.infrastructure.cilium-gateway: "Serve UI (HTTP)" {source-arrowhead: 1411; class: [connect-local]}
-rhodes·akn.applications.pocket-id-stack.postgresql -> localnet.garage: "Store backups (S3)" {target-arrowhead: 9200; class: [connect-local]}
+rhodes·akn.applications.pocket-id-stack.pocket-id <- rhodes·akn.infrastructure.gateways: "Serve UI (HTTP)" {source-arrowhead: 1411; class: [connect-local]}
+rhodes·akn.applications.pocket-id-stack.postgresql -> localnet.garage: "Store backups (S3, HTTPS)" {target-arrowhead: 443; class: [connect-local]}
 
 rhodes·akn.applications.openbao-stack.postgresql <- rhodes·akn.infrastructure.cloudnative-pg: "Provision database (Kubernetes CRDs)" {source-arrowhead: 6443; class: [connect-management]}
 rhodes·akn.applications.pocket-id-stack.postgresql <- rhodes·akn.infrastructure.cloudnative-pg: "Provision database (Kubernetes CRDs)" {source-arrowhead: 6443; class: [connect-management]}
 
-rhodes·akn.infrastructure.cilium -> rhodes·akn.infrastructure.cilium-gateway: "Configure gateway (Kubernetes CRDs)" {target-arrowhead: 6443; class: [connect-management]}
+rhodes·akn.infrastructure.cilium -> rhodes·akn.infrastructure.gateways: "Configure gateway (Kubernetes CRDs)" {target-arrowhead: 6443; class: [connect-management]}
 
-rhodes·akn.infrastructure.cilium-gateway <- localnet: {
+rhodes·akn.infrastructure.gateways <- localnet: {
   label: Route inbound traffic (HTTP/HTTPS)
   source-arrowhead: |md
     80
@@ -258,6 +314,8 @@ rhodes·akn.infrastructure.cilium-gateway <- localnet: {
   class: [connect-network]
 }
 
+rhodes·akn.applications.openbao-stack.openbao -> localnet.other-clusters: "Validate Kubernetes tokens (lungmen.akn API)" {target-arrowhead: 6443; class: [connect-local]}
+
 rhodes·akn.applications.openbao-stack.openbao <- rhodes·akn.infrastructure.external-secret: "Fetch secrets (HTTP)" {source-arrowhead: 8200; class: [connect-app]}
 
 rhodes·akn.infrastructure.proxmox-ccm -> localnet.proxmox: "Fetch node metadata (HTTPS API)" {target-arrowhead: 8006; class: [connect-management]}
@@ -265,8 +323,19 @@ rhodes·akn.infrastructure.proxmox-csi-plugin -> localnet.proxmox: "Provision vi
 
 rhodes·akn <- localnet.omni: "Access Kubernetes API (SideroLink)" {source-arrowhead: 6443; class: [connect-management]}
 
-rhodes·akn.infrastructure.cilium-gateway <- localnet.other-clusters: "Authenticate/Fetch secret to OpenBao (HTTPS)" {target-arrowhead: 443; class: [connect-local]}
-rhodes·akn.infrastructure.cilium-gateway <- localnet.other-clusters: "Authenticate via SSO (OIDC)" {target-arrowhead: 443; class: [connect-local]}
+rhodes·akn.infrastructure.gateways <- localnet.other-clusters: "Authenticate/Fetch secret to OpenBao (HTTPS)" {target-arrowhead: 443; class: [connect-local]}
+rhodes·akn.infrastructure.gateways <- localnet.other-clusters: "Authenticate via SSO (OIDC)" {target-arrowhead: 443; class: [connect-local]}
+
+rhodes·akn.infrastructure.o11y-stack.grafana -> rhodes·akn.infrastructure.o11y-stack.postgresql: "Store dashboards and users (PostgreSQL)" {target-arrowhead: 5432; class: [connect-app]}
+rhodes·akn.infrastructure.o11y-stack.grafana <- rhodes·akn.infrastructure.o11y-stack.grafana-operator: "Manage instance (Kubernetes CRDs)" {class: [connect-management]}
+rhodes·akn.infrastructure.o11y-stack.grafana <- rhodes·akn.infrastructure.gateways: "Serve UI (HTTP)" {source-arrowhead: 3000; class: [connect-local]}
+rhodes·akn.infrastructure.o11y-stack.grafana -> rhodes·akn.applications.pocket-id-stack.pocket-id: "Authenticate users (OIDC)" {target-arrowhead: 443; class: [connect-app]}
+rhodes·akn.infrastructure.o11y-stack.grafana -> localnet.o11y-backend: "Query metrics, logs and traces (HTTPS)" {target-arrowhead: 443; class: [connect-local]}
+rhodes·akn.infrastructure.o11y-stack.postgresql -> localnet.garage: "Store backups (S3, HTTPS)" {target-arrowhead: 443; class: [connect-local]}
+rhodes·akn.infrastructure.o11y-stack.postgresql <- rhodes·akn.infrastructure.cloudnative-pg: "Provision database (Kubernetes CRDs)" {source-arrowhead: 6443; class: [connect-management]}
+
+rhodes·akn.infrastructure.newt -> rhodes·akn.applications.pocket-id-stack.pocket-id: "Expose Pocket-ID (HTTP)" {target-arrowhead: 1411; class: [connect-local]}
+rhodes·akn.infrastructure.newt -> rhodes·akn.infrastructure.o11y-stack.grafana: "Expose Grafana (HTTP)" {target-arrowhead: 3000; class: [connect-local]}
 
 # ──────────────────────────────────────────────────────────────────────────────
 # External Connections
@@ -282,7 +351,16 @@ rhodes·akn.applications.argocd -> internet.github: "Sync Git repositories (HTTP
 rhodes·akn.applications.pocket-id-stack.pocket-id -> internet.mailjet: "Send transactional emails (SMTPS)" {target-arrowhead: 465; class: [connect-to-internet]}
 rhodes·akn.applications.pocket-id-stack.pocket-id -> internet: "Send anonymous analytics (HTTPS)" {target-arrowhead: 443; class: [connect-to-internet]}
 
-rhodes·akn.infrastructure.cert-manager -> internet.cloudflare: "Create DNS Records (HTTPS)" {target-arrowhead: 443; class: [connect-management-to-internet]}
+rhodes·akn.infrastructure.cert-manager -> internet.cloudflare: "Solve DNS-01 challenges (TXT records via API, HTTPS)" {target-arrowhead: 443; class: [connect-management-to-internet]}
 rhodes·akn.infrastructure.cert-manager -> internet.letsencrypt: "Request new certificates (HTTPS)" {target-arrowhead: 443; class: [connect-management-to-internet]}
 
-rhodes·akn.infrastructure.externaldns -> localnet.udm-pro: "Create DNS Records (HTTPS)" {target-arrowhead: 443; class: [connect-management]}
+rhodes·akn.infrastructure.externaldns -> localnet.udm-pro: "Create external DNS records (HTTPS)" {target-arrowhead: 443; class: [connect-management]}
+rhodes·akn.infrastructure.externaldns -> localnet.talosnet-dns: "Create internal DNS records (RFC2136)" {target-arrowhead: 53; class: [connect-management]}
+
+rhodes·akn.infrastructure.newt -> internet.pangolin: "Open tunnel (HTTPS/WireGuard)" {
+  target-arrowhead: |md
+    443
+    51820
+  |
+  class: [connect-to-internet]
+}
