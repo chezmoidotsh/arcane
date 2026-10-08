@@ -36,6 +36,9 @@ data:
       - .. | .conversionStrategy? | select(. == "Default")
       - .. | .decodingStrategy? | select(. == "None")
       - .. | .metadataPolicy? | select(. == "None")
+  resource.customizations.ignoreDifferences.storage.k8s.io_CSIDriver: |
+    jqPathExpressions:
+      - .spec.preventPodSchedulingIfMissing
   resource.customizations.ignoreResourceUpdates.ConfigMap: |
     jqPathExpressions:
       # Ignore the cluster-autoscaler status
