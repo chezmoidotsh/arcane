@@ -137,7 +137,9 @@ yq = "latest"       # YAML/JSON processor for configuration file manipulation
 # -----------------------------------------------------------------------------
 # Tools supporting development workflows and documentation generation
 
-"aqua:terrastruct/d2" = "latest"   # Diagram-as-code tool for generating architecture visualizations
+# Pinned below 0.9: d2 0.9.0 rejects `shape: none` nodes in PNG export ("unsupported typed geometry for none"),
+# which breaks rhodes.akn `diagram:generate` (styles.blueprint.d2 platform/hardware classes).
+"aqua:terrastruct/d2" = "0.8.2"    # Diagram-as-code tool for generating architecture visualizations
 "cargo:ulid-cli" = "latest"        # ULID generator for unique identifiers in distributed systems
 "github:runmedev/runme" = "latest" # Interactive markdown execution tool for runbooks and documentation
 gum = "latest"                     # Terminal UI framework for interactive scripts and prompts
