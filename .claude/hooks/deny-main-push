@@ -1,0 +1,26 @@
+#!/bin/sh
+# PreToolUse(Bash) hook: deny any `git push` that could land on main/master --
+# an agent that pushes there skips the pull request and its review entirely.
+# Pushes must name the remote AND the target explicitly (`git push origin HEAD:refs/heads/<branch>`),
+# because an implicit target follows push.default/upstream, which silently resolves to main
+# for a branch created from origin/main.
+# Reads the raw Bash command on stdin (see .claude/settings.json).
+cmd=$(cat)
+reason=$(printf '%s\n' "${cmd}" | sed 's/&&/\n/g; s/||/\n/g; s/;/\n/g; s/|/\n/g' | awk '
+  !/^[[:space:]]*git([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+push([[:space:]]|$)/ { next }
+  {
+    seen = 0; pos = 0; bad = ""
+    for (i = 1; i <= NF; i++) {
+      if (!seen) { if ($i == "push") seen = 1; continue }
+      if ($i == "--all" || $i == "--mirror") bad = "--all/--mirror pushes every branch, main included"
+      if ($i ~ /^-/) continue
+      pos++
+      if ($i ~ /(^|[:\/+])(main|master)$/) bad = "the target is main/master"
+      if ($i == "HEAD") bad = "a bare HEAD takes the name of the current branch, which can be main"
+    }
+    if (bad == "" && pos < 2) bad = "no explicit remote and target (an implicit target follows the upstream, which can be main)"
+    if (bad != "") { print bad; exit }
+  }')
+if [ -n "${reason}" ]; then
+  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"Blocked git push: %s. Push a feature branch with an explicit target: git push origin HEAD:refs/heads/<branch>. Changes reach main through a pull request only; if a push to main is really wanted, the user runs it themselves."}}' "${reason}"
+fi
