@@ -5,7 +5,7 @@ vars: {
   }
 }
 
-...@../../docs/assets/d2/architecture-styles
+...@"../../docs/assets/d2/styles.architecture.d2"
 
 explanation: |md
   # lungmen.akn Architecture
@@ -56,10 +56,10 @@ udm-pro: {
 # ──────────────────────────────────────────────────────────────────────────────
 # External Clusters
 
-amiya·akn: {
+rhodes·akn: {
   class: [application]
-  label: amiya·akn
-  icon: ../amiya.akn/docs/assets/logo.svg
+  label: rhodes·akn
+  icon: ../rhodes.akn/docs/assets/logo.light.svg # light variant: this diagram renders with the default (light) theme
   tooltip: Mission-critical services cluster (SSO, Secrets, etc.)
 
   pocket-id: {
@@ -388,7 +388,7 @@ lungmen·akn: {
   others.silverbullet: {
     class: [application]
     label: Silverbullet
-    icon: docs/assets/icons/apps/silverbullet.png
+    icon: docs/assets/icons/apps/silverbullet.svg # upstream favicon.svg (silverbulletmd/silverbullet, MIT)
     link: https://silverbullet.md/
     tooltip: Personal productivity platform and wiki built on Markdown with Lua scripting capabilities.
   }
@@ -421,7 +421,7 @@ lungmen·akn.system.cert-manager -> internet: "ACME certificate validation (443)
 
 lungmen·akn.system.external-dns -> udm-pro: "Automated DNS record management (443)"
 
-lungmen·akn.system.external-secrets -> amiya·akn.openbao: "Secure secrets retrieval from vault (443)"
+lungmen·akn.system.external-secrets -> rhodes·akn.openbao: "Secure secrets retrieval from vault (443)"
 
 lungmen·akn.system.tailscale -> internet: "VPN tunnel establishment (443)" {class: [connect-to-internet]}
 
@@ -430,7 +430,7 @@ lungmen·akn.system.newt -> kazimierz·akn.pangolin: "Secure tunnel establishmen
 # ──────────────────────────────────────────────────────────────────────────────
 # Media Services Flow
 
-lungmen·akn.media.immich-stack.immich -> amiya·akn.pocket-id: "SSO authentication (443)"
+lungmen·akn.media.immich-stack.immich -> rhodes·akn.pocket-id: "SSO authentication (443)"
 lungmen·akn.media.immich-stack.immich -> lungmen·akn.media.immich-stack.postgresql: "Database operations (5432)"
 lungmen·akn.media.immich-stack.immich -> lungmen·akn.media.immich-stack.redis: "Cache operations (6379)"
 lungmen·akn.media.immich-stack.immich <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (2283)" {}
@@ -438,7 +438,7 @@ lungmen·akn.media.immich-stack.immich <- lungmen·akn.system.newt: "Tunnel traf
 lungmen·akn.media.immich-stack.postgresql -> nas.minio: "Database backups (S3)"
 lungmen·akn.media.immich-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
-lungmen·akn.media.jellyfin -> amiya·akn.pocket-id: "SSO authentication (443)"
+lungmen·akn.media.jellyfin -> rhodes·akn.pocket-id: "SSO authentication (443)"
 lungmen·akn.media.jellyfin -> internet: "Metadata and external content fetching (443)" {class: [connect-to-internet]}
 lungmen·akn.media.jellyfin <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8096)"
 lungmen·akn.media.jellyfin <- lungmen·akn.system.newt: "Tunnel traffic proxy (8096)" {class: [secured-connect-from-internet]}
@@ -446,10 +446,10 @@ lungmen·akn.media.jellyfin <- lungmen·akn.system.newt: "Tunnel traffic proxy (
 # ──────────────────────────────────────────────────────────────────────────────
 # Life Management Flow
 
-lungmen·akn.life.actual-budget -> amiya·akn.pocket-id: "SSO authentication (443)"
+lungmen·akn.life.actual-budget -> rhodes·akn.pocket-id: "SSO authentication (443)"
 lungmen·akn.life.actual-budget <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (5006)"
 
-lungmen·akn.life.paperless-stack.paperless -> amiya·akn.pocket-id: "SSO authentication (443)"
+lungmen·akn.life.paperless-stack.paperless -> rhodes·akn.pocket-id: "SSO authentication (443)"
 lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.life.paperless-stack.postgresql: "Database operations (5432)"
 lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.life.paperless-stack.redis: "Cache operations (6379)"
 lungmen·akn.life.paperless-stack.paperless <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8000)"
@@ -469,7 +469,7 @@ lungmen·akn.others.atuin-stack.postgresql <- lungmen·akn.system.cloudnativepg:
 lungmen·akn.databases.shared -> nas.minio: "Database backups (S3)"
 lungmen·akn.databases.shared <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
-lungmen·akn.others.linkding-stack.linkding -> amiya·akn.pocket-id: "SSO authentication (443)"
+lungmen·akn.others.linkding-stack.linkding -> rhodes·akn.pocket-id: "SSO authentication (443)"
 lungmen·akn.others.linkding-stack.linkding -> lungmen·akn.others.linkding-stack.postgresql: "Database operations (5432)"
 lungmen·akn.others.linkding-stack.linkding -> internet: "Website information fetching (443)" {class: [connect-to-internet]}
 lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (9090)"
