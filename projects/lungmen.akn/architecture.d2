@@ -77,6 +77,13 @@ rhodes·akn: {
     link: https://openbao.org/
     tooltip: OpenBao is an open-source, community-driven fork of Vault managed by the Linux Foundation.
   }
+
+  o11y: {
+    class: [application]
+    label: o11y.chezmoi.sh
+    link: https://grafana.com/
+    tooltip: External Grafana instance (rhodes.akn) managed by the Grafana operator of lungmen.akn.
+  }
 }
 
 kazimierz·akn: {
@@ -96,6 +103,13 @@ kazimierz·akn: {
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Hardware & Infrastructure
+
+pve: {
+  class: hardware
+  label: Proxmox VE
+  icon: docs/assets/icons/platform/proxmox.svg
+  tooltip: Proxmox hypervisor hosting the cluster nodes and their LVM-thin volumes
+}
 
 nas: {
   class: namespace
@@ -201,6 +215,35 @@ lungmen·akn: {
     tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
   }
 
+  system.proxmox-csi: {
+    class: [application-system]
+    label: Proxmox CSI + CCM
+    icon: docs/assets/icons/platform/proxmox.svg
+    link: https://github.com/sergelogvinov/proxmox-csi-plugin
+    tooltip: Proxmox CSI plugin and cloud controller manager provisioning LVM-thin block volumes decoupled from VM lifecycle.
+  }
+
+  system.smb-csi: {
+    class: [application-system]
+    label: SMB CSI Driver
+    link: https://github.com/kubernetes-csi/csi-driver-smb
+    tooltip: CSI driver mounting NAS SMB shares (Immich, Jellyfin, Paperless-ngx).
+  }
+
+  system.velero: {
+    class: [application-system]
+    label: Velero
+    link: https://velero.io/
+    tooltip: Velero schedules PVC backups for Actual Budget, Jellyfin and Paperless-ngx.
+  }
+
+  system.grafana-operator: {
+    class: [application-system]
+    label: Grafana Operator
+    link: https://grafana.github.io/grafana-operator/
+    tooltip: Grafana operator pushing dashboards to the external Grafana instance on rhodes.akn.
+  }
+
   system.tailscale: {
     class: [application-system]
     label: Tailscale
@@ -286,6 +329,21 @@ lungmen·akn: {
   # ────────────────────────────────────────────────────────────────────────────
   # Other Components
 
+  others.homebox: {
+    class: [application]
+    label: Homebox
+    link: https://homebox.software/
+    tooltip: Home inventory management application with OIDC authentication.
+  }
+
+  others.spoolman: {
+    class: [application]
+    label: Spoolman
+    icon: docs/assets/icons/apps/spoolman.svg
+    link: https://github.com/Donkie/Spoolman
+    tooltip: 3D printer filament spool inventory manager.
+  }
+
   others.linkding-stack: {
     class: [namespace]
     label: Linkding Stack
@@ -326,6 +384,7 @@ tailnet -> lungmen·akn.system.tailscale: {class: [connect-vpn-backbone]}
 lungmen·akn.system.cert-manager -> internet: "ACME certificate validation (443)" {class: [connect-to-internet]}
 
 lungmen·akn.system.external-dns -> udm-pro: "Automated DNS record management (443)"
+lungmen·akn.system.external-dns -> localnet: "BIND DNS updates, rfc2136 (53)"
 
 lungmen·akn.system.external-secrets -> rhodes·akn.openbao: "Secure secrets retrieval from vault (443)"
 
@@ -375,3 +434,30 @@ lungmen·akn.databases.apps -> nas.garage: "Database backups (S3, 443)"
 lungmen·akn.databases.apps <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 lungmen·akn.databases.apps-secured -> nas.garage: "Database backups (S3, 443)"
 lungmen·akn.databases.apps-secured <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Other Services (Homebox, Spoolman)
+
+lungmen·akn.others.homebox -> rhodes·akn.pocket-id: "SSO authentication (443)"
+lungmen·akn.others.homebox -> lungmen·akn.databases.apps: "Database operations (5432)"
+lungmen·akn.others.homebox -> nas.garage: "Attachments storage (S3, 443)"
+lungmen·akn.others.homebox <- lungmen·akn.system.cilium-gateway: "HTTP traffic proxy (7745)"
+
+lungmen·akn.others.spoolman -> lungmen·akn.databases.apps: "Database operations (5432)"
+lungmen·akn.others.spoolman -> internet: "Filament database fetching (443)" {class: [connect-to-internet]}
+lungmen·akn.others.spoolman <- lungmen·akn.system.cilium-gateway: "HTTP traffic proxy (8000)"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Storage and Backup Connections
+
+lungmen·akn.system.proxmox-csi -> pve: "Volume provisioning (8006)"
+lungmen·akn.system.smb-csi -> nas: "Share mounts (SMB)"
+lungmen·akn.system.velero -> nas.garage: "Backups (S3, 443)"
+lungmen·akn.system.velero -> lungmen·akn.life.actual-budget: "PVC backup schedule" {class: [connect-management]}
+lungmen·akn.system.velero -> lungmen·akn.media.jellyfin: "PVC backup schedule" {class: [connect-management]}
+lungmen·akn.system.velero -> lungmen·akn.life.paperless-stack.paperless: "PVC backup schedule" {class: [connect-management]}
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Observability
+
+lungmen·akn.system.grafana-operator -> rhodes·akn.o11y: "Dashboards provisioning (443)"
