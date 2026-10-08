@@ -68,7 +68,6 @@ mise install
 │   ├── ansible                     # Ansible roles and collections
 │   ├── pulumi                      # Pulumi components and stacks
 │   ├── flakes                      # Nix flakes for OCI images
-│   ├── fluxcd                      # FluxCD definitions
 │   ├── kairos-bundles              # Kairos bundles
 │   ├── kustomize                   # Kustomize bases
 │   └── talos                       # Talos configuration patches

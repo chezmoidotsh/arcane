@@ -700,9 +700,5 @@ opencode.json
 !projects/*/dist/
 !projects/*/dist/**
 
-# Tests/lib directory in yaldap flake — re-included after Python's lib/ rule
-!catalog/flakes/chezmoi.sh/yaldap/tests/lib
-!catalog/flakes/chezmoi.sh/yaldap/tests/lib/**
-
 # Allow pulumi library folder
 !catalog/pulumi/lib
