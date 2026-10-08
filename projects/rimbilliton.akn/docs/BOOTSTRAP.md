@@ -5,10 +5,9 @@ This document describes how to bootstrap the Rimbilliton.AKN server from nothing
 
 ## Overview
 
-The OCI resources (compartment, VCN/subnet/NSG, instance), the DNS records, the B2 bucket and the Tailscale key are
-provisioned by the Pulumi stack in `src/infrastructure/pulumi/`. The Pocket-ID group and OIDC client are created by hand
-(see step 2): the Pulumi Pocket-ID provider is no longer functional, so that part of the stack is disabled (see
-`stack/pocket-id.ts`). The instance boots from a stock Ubuntu image with only an SSH key injected via cloud-init
+The OCI resources (compartment, VCN/subnet/NSG, instance), the DNS records, the B2 bucket, the Tailscale key and the
+Pocket-ID `minecraft` group and OIDC client (`stack/pocket-id.ts`) are provisioned by the Pulumi stack in
+`src/infrastructure/pulumi/`. The OIDC client secret is the exception: it is never managed by Pulumi (see step 2). The instance boots from a stock Ubuntu image with only an SSH key injected via cloud-init
 (Pulumi's `ssh_authorized_keys` config). NixOS is then installed over it with `nixos-anywhere`, which is the only manual
 step.
 
@@ -29,7 +28,7 @@ step.
    `TF_VAR_region` (same as kazimierz.akn), and the Backblaze, Cloudflare and Tailscale provider credentials.
 3. **Tailnet ACL**: `tag:minecraft` declared in `tagOwners`.
 4. **Pulumi stack**: `kazimierz_akn.live` (parent compartment) already applied.
-5. **Pocket-ID**: admin access to create a group and an OIDC client (no Pulumi involved, see step 2).
+5. **Pocket-ID**: an API key for the Pulumi provider (see step 2); the group and client themselves are Pulumi-managed.
 
 ## Bootstrap Procedure
 
@@ -53,22 +52,35 @@ Pulumi configuration (`pulumi config set <key> <value>`, add `--secret` for the 
 
 If OCI answers `Out of host capacity`, retry later (known Always Free A1 issue).
 
-### 2. Create the Pocket-ID group and OIDC client by hand
+### 2. Pocket-ID group and OIDC client
 
-Pelican signs users in with Pocket-ID itself through a plugin that NixOS installs (step 6). Only the client has to be
-created by hand, and its ID and secret go into the SOPS file (step 3). In the Pocket-ID UI (`https://auth.chezmoi.sh`),
-as an admin:
+`stack/pocket-id.ts` declares the `minecraft` group and the `Minecraft` OIDC client (launch URL
+`https://minecraft.chezmoi.sh/`, callback `https://minecraft.chezmoi.sh/auth/oauth/callback/pocketid`, confidential,
+consent skipped, **PKCE disabled** because Pelican's Pocket ID plugin sends no `code_challenge`, allowed groups `admin`
+and `minecraft`). Pelican signs users in through that client (plugin installed by NixOS, step 6).
 
-1. Create the user group `minecraft` (friendly name `Minecraft`). Members can sign in to Pelican.
-2. Create an OIDC client named `Minecraft` with:
-   - launch URL `https://minecraft.chezmoi.sh/`
-   - callback URL `https://minecraft.chezmoi.sh/auth/oauth/callback/pocketid` (Pelican builds it as
-     `/auth/oauth/callback/<provider id>`; the exact URL is also shown in Settings > OAuth once the plugin is active)
-   - confidential client (not public), consent skipped, **PKCE disabled**: Pelican's Pocket ID plugin sends no
-     `code_challenge`, so a client that requires PKCE answers `invalid_request ... requires PKCE`
-   - group restriction enabled, allowed groups `admin` and `minecraft`
-3. Keep the client ID and the client secret: they go in the SOPS file as `oauth_pocketid_client_id` and
-   `oauth_pocketid_client_secret` (step 3).
+The client secret is **not** managed by Pulumi: generating it from the stack would invalidate the one Pelican uses. Read
+it from the Pocket-ID UI (`https://auth.chezmoi.sh`) and put it in the SOPS file with the client ID as
+`oauth_pocketid_client_id` and `oauth_pocketid_client_secret` (step 3).
+
+**Fresh setup** (nothing exists in Pocket-ID yet): create the group and the client by hand in the UI with the values
+above, then follow the import procedure below. A stack never creates either object itself: `pocketIdMinecraftGroupId` and
+`pocketIdMinecraftClientId` are required config keys, and both resources use the Pulumi `import` option.
+
+**Import procedure** (run once by a human, before the first `pulumi up` that includes this file):
+
+```bash
+# Pocket-ID UI: group > minecraft, client > Minecraft; both UUIDs are in the page URL.
+pulumi config set pocketIdMinecraftGroupId  <group uuid>
+pulumi config set pocketIdMinecraftClientId <client uuid>   # same value as oauth_pocketid_client_id in the SOPS file
+export POCKET_ID_API_KEY=<Pocket-ID API key>   # or: pulumi config set --secret pocket-id:apiKey ...
+mise run pulumi:diff
+```
+
+The preview must show the two resources (and the `allowedUserGroupIds` of the client) as **import** or no-op, with at
+most in-place updates of cosmetic fields. If it shows a `create` or a `replace` of the client or the group, stop: the
+ID or a field is wrong, and applying would break the Pelican login. Only then `mise run pulumi:apply`, and check that
+signing in to `https://minecraft.chezmoi.sh/` with Pocket-ID still works.
 
 ### 3. Prepare the host key and secrets
 

@@ -1,8 +1,7 @@
 encryptionsalt: v1:hpZGCFYFYyA=:v1:6uPDz5WOSbrf7IJC:SRYn+T5dbqHIMR3NIz6Iv28m3Bgo5A==
 config:
   oci:region: eu-paris-1
-  pocket-id-api:apiKeyHeader: X-API-KEY
-  pocket-id-api:baseUrl: https://auth.chezmoi.sh
+  pocket-id:baseUrl: https://auth.chezmoi.sh
   rimbilliton-akn-infra:ssh_authorized_keys: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPH7IEv+Q6s6WSPlWVva6UlCbkhePQdZYbN1TbI7rCDx
   rimbilliton-akn-infra:cloudflare_account_id:
     secure: v1:8CHJlecjlnaZANaq:XWrKh89BIHqMGBHP9XzO462m1H3lNyCSoRtvhz7a/ImJlZdXejASoPH4MSlYiSB0

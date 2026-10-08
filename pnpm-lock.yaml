@@ -537,6 +537,9 @@ importers:
 
   projects/rimbilliton.akn/src/infrastructure/pulumi:
     dependencies:
+      '@axnic/pulumi-pocket-id':
+        specifier: 'catalog:'
+        version: 1.0.0(supports-color@8.1.1)(ts-node@10.9.2(@types/node@26.1.0)(typescript@5.9.3))(typescript@5.9.3)
       '@chezmoi.sh/pulumi-lib':
         specifier: workspace:*
         version: link:../../../../../catalog/pulumi/lib
