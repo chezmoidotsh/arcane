@@ -47,6 +47,11 @@
 # NOTE: requires `pulumi up` to have run in src/infrastructure/pulumi so the
 # stack outputs exist.
 
+[tasks."diagram:generate"]
+description = "Generate the architecture diagram for the observability appliance"
+run = "d2 architecture.d2 docs/assets/architecture.svg"
+dir = "{{ config_root }}"
+
 [tasks."lxc:secrets:sync"]
 description = "Sync Pulumi tokens (Cloudflare + Tailscale) into secrets/caddy.sops.env"
 dir = "{{ config_root }}"
