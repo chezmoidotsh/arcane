@@ -332,6 +332,10 @@ write to the object — server-side apply included — is rejected until the ann
 
 - Never force-push, `git reset --hard`, drop branches, or rewrite published history without explicit user confirmation
   in this turn.
+- Never push to `main`: changes reach it through a pull request only. A Claude Code hook
+  (`.claude/hooks/deny-main-push`) denies any `git push` that targets main/master or lacks an explicit remote and target;
+  push with `git push origin HEAD:refs/heads/<branch>` (this repo has `push.default=upstream`, so an implicit target can
+  resolve to `main` for a branch created from `origin/main`).
 - Never auto-update or close GitHub issues; propose the action and wait.
 - For anything that affects shared state (pushes, PR creation/comments, deployments), confirm before acting — even if a
   similar action was authorized earlier in the session.

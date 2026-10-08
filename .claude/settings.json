@@ -22,6 +22,10 @@
 					},
 					{
 						"type": "command",
+						"command": "jq -r '.tool_input.command // empty' | sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/deny-main-push\""
+					},
+					{
+						"type": "command",
 						"command": "jq -r '.tool_input.command // empty' | sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/pipe-redact\""
 					}
 				]
