@@ -46,6 +46,7 @@ projects/       One subdirectory per cluster or standalone app
 ├── kazimierz.akn/  VPS public-access gateway — Ansible + Docker Compose, deliberately not Kubernetes (ADR-008)
 ├── lungmen.akn/    Home applications cluster — Talos + ArgoCD (active dev, apps added/bumped frequently)
 ├── rhodes.akn/     Core platform — Talos + ArgoCD, OpenBao, Pocket-Id (production)
+├── rimbilliton.akn/ Minecraft (Pelican) host on an OCI Always Free ARM instance — Pulumi + NixOS, not Kubernetes
 └── shodan.akn/     Future AI stack cluster (planning only — README + architecture diagram, no manifests yet)
 
 scripts/        Operational scripts (added to PATH by mise)
