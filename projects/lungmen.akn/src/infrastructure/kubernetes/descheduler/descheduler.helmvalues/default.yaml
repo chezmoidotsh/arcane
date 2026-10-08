@@ -1,0 +1,66 @@
+---
+# See ../README.md for how to read the dry-run logs and flip to real evictions.
+kind: CronJob
+
+# Every 6 hours: pod churn on 2 workers is slow, and each eviction restarts a
+# workload, so a frequent schedule would only add disruption.
+schedule: "0 */6 * * *"
+# Must stay shorter than the schedule interval.
+startingDeadlineSeconds: 600
+activeDeadlineSeconds: 600
+successfulJobsHistoryLimit: 3
+failedJobsHistoryLimit: 3
+
+cmdOptions:
+  v: 3
+  # ROLLOUT SAFETY: log what would be evicted, evict nothing. Remove this line
+  # (or set it to false) once the logs have been reviewed (see ../README.md).
+  dry-run: true
+
+deschedulerPolicy:
+  # Hard caps per run, whatever the plugin computes.
+  maxNoOfPodsToEvictPerNode: 3
+  maxNoOfPodsToEvictPerNamespace: 2
+  profiles:
+    - name: default
+      pluginConfig:
+        - name: DefaultEvictor
+          args:
+            # Evictions go through the Eviction API: PodDisruptionBudgets are honoured.
+            evictSystemCriticalPods: false
+            nodeFit: true
+            podProtections:
+              # Keep the default protections (pods with emptyDir/hostPath local storage,
+              # bare pods, DaemonSet pods, ...) ...
+              defaultDisabled: []
+              # ... and also protect pods with a PVC: Proxmox CSI block volumes cannot
+              # follow a pod to another node without a detach/attach cycle.
+              extraEnabled:
+                - PodsWithPVC
+        - name: LowNodeUtilization
+          args:
+            # Computed from pod *requests* (no metrics-server dependency), in percent
+            # of node allocatable. A node is "underutilized" when ALL of these values
+            # are above its usage.
+            thresholds:
+              cpu: 30
+              memory: 30
+              pods: 25
+            # A node is "overutilized" when ANY of these values is below its usage.
+            targetThresholds:
+              cpu: 60
+              memory: 60
+              pods: 50
+            # Storage/data and cluster-critical namespaces are never touched.
+            evictableNamespaces:
+              exclude:
+                - databases
+                - cloudnative-pg-system
+                - velero-system
+                - smb-csi-driver-system
+                - proxmox-system
+                - kube-system
+      plugins:
+        balance:
+          enabled:
+            - LowNodeUtilization

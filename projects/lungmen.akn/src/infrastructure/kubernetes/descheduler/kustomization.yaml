@@ -1,0 +1,22 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: descheduler-system
+
+resources:
+  - security
+
+helmCharts:
+  - repo: https://kubernetes-sigs.github.io/descheduler/
+    name: descheduler
+    # renovate: datasource=helm depName=descheduler registryUrl=https://kubernetes-sigs.github.io/descheduler/
+    version: 0.37.0
+
+    releaseName: descheduler
+    namespace: descheduler-system
+
+    valuesFile: descheduler.helmvalues/default.yaml
+
+images:
+  - name: registry.k8s.io/descheduler/descheduler
+    newName: oci.chezmoi.sh/registry.k8s.io/descheduler/descheduler
