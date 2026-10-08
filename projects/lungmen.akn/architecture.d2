@@ -103,12 +103,12 @@ nas: {
   icon: docs/assets/icons/hardware/truenas-scale.svg
   tooltip: Home Network Attached Storage (NAS)
 
-  minio: {
+  garage: {
     class: [application]
-    label: MinIO
-    icon: docs/assets/icons/apps/minio.svg
-    link: https://min.io/
-    tooltip: MinIO is a high-performance, distributed object storage system.
+    label: Garage (s3.chezmoi.sh)
+    icon: docs/assets/icons/apps/garage.svg
+    link: https://garagehq.deuxfleurs.fr/
+    tooltip: Garage is a lightweight S3-compatible distributed object storage system.
   }
 }
 
@@ -134,13 +134,20 @@ lungmen·akn: {
   # ────────────────────────────────────────────────────────────────────────────
   # Shared Databases
 
-  databases.shared: {
+  databases.apps: {
     class: [application-datastore]
-    shared: "Shared PostgreSQL Cluster" {
-      icon: docs/assets/icons/system/cloudnativepg.svg
-    }
+    label: "apps"
+    icon: docs/assets/icons/system/cloudnativepg.svg
     link: https://postgresql.org/
-    tooltip: Shared PostgreSQL database cluster for multiple applications, managed by CloudNative-PG operator with automated backups to S3.
+    tooltip: Shared PostgreSQL cluster (CloudNative-PG) used by Linkding (and the other small apps), with automated backups to S3.
+  }
+
+  databases.apps-secured: {
+    class: [application-datastore]
+    label: "apps-secured"
+    icon: docs/assets/icons/system/cloudnativepg.svg
+    link: https://postgresql.org/
+    tooltip: Shared PostgreSQL cluster (CloudNative-PG) with VectorChord, used by Immich and Paperless-ngx, with automated backups to S3.
   }
 
   # ────────────────────────────────────────────────────────────────────────────
@@ -170,12 +177,12 @@ lungmen·akn: {
     tooltip: CloudNativePG is a comprehensive platform designed to seamlessly manage PostgreSQL databases within Kubernetes environments.
   }
 
-  system.envoy-gateway: {
+  system.cilium-gateway: {
     class: [application-system]
-    label: Envoy Gateway
-    icon: docs/assets/icons/system/envoy-gateway.svg
-    link: https://gateway.envoyproxy.io/
-    tooltip: Envoy Gateway is a Kubernetes-native API Gateway powered by Envoy Proxy with support for Gateway API.
+    label: Cilium Gateway
+    icon: docs/assets/icons/system/cilium.svg
+    link: https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/
+    tooltip: Cilium Gateway API implementation (external and internal gateways) routing HTTP traffic to the applications.
   }
 
   system.external-dns: {
@@ -192,22 +199,6 @@ lungmen·akn: {
     icon: docs/assets/icons/system/external-secret.svg
     link: https://external-secrets.io/
     tooltip: External-Secret is a Kubernetes controller that allows you to use external secret management systems.
-  }
-
-  system.cloudnativepg: {
-    class: [application-system]
-    label: CloudNativePG
-    icon: docs/assets/icons/system/cloudnativepg.svg
-    link: https://cloudnativepg.io/
-    tooltip: CloudNativePG is a comprehensive platform designed to seamlessly manage PostgreSQL databases within Kubernetes environments.
-  }
-
-  system.longhorn: {
-    class: [application-system]
-    label: Longhorn
-    icon: docs/assets/icons/system/longhorn.svg
-    link: https://longhorn.io/
-    tooltip: Longhorn is a lightweight, reliable, and powerful distributed block storage system for Kubernetes.
   }
 
   system.tailscale: {
@@ -232,7 +223,7 @@ lungmen·akn: {
   media.immich-stack: {
     class: [namespace]
     label: Immich Stack
-    tooltip: Immich photo and video management stack with PostgreSQL backend and Redis cache
+    tooltip: Immich photo and video management stack with Redis cache (PostgreSQL on the shared cluster)
 
     immich: {
       class: [application]
@@ -240,14 +231,6 @@ lungmen·akn: {
       icon: docs/assets/icons/apps/immich.svg
       link: https://immich.app/
       tooltip: High-performance self-hosted photo and video management solution with mobile app support.
-    }
-
-    postgresql: {
-      class: [application-datastore]
-      label: PostgreSQL
-      icon: docs/assets/icons/system/cloudnativepg.svg
-      link: https://postgresql.org/
-      tooltip: PostgreSQL database backend for Immich with VectorChord extension, managed by CloudNative-PG operator with automated backups to S3.
     }
 
     redis: {
@@ -281,7 +264,7 @@ lungmen·akn: {
   life.paperless-stack: {
     class: [namespace]
     label: Paperless Stack
-    tooltip: Paperless document management stack with PostgreSQL backend and Redis cache
+    tooltip: Paperless document management stack with Redis cache (PostgreSQL on the shared cluster)
 
     paperless: {
       class: [application]
@@ -289,14 +272,6 @@ lungmen·akn: {
       icon: docs/assets/icons/apps/paperless.svg
       link: https://docs.paperless-ngx.com/
       tooltip: Document management system to store, search and share documents.
-    }
-
-    postgresql: {
-      class: [application-datastore]
-      label: PostgreSQL
-      icon: docs/assets/icons/system/cloudnativepg.svg
-      link: https://postgresql.org/
-      tooltip: PostgreSQL database backend for Paperless, managed by CloudNative-PG operator with automated backups to S3.
     }
 
     redis: {
@@ -311,32 +286,10 @@ lungmen·akn: {
   # ────────────────────────────────────────────────────────────────────────────
   # Other Components
 
-  others.atuin-stack: {
-    class: [namespace]
-    label: Atuin Stack
-    tooltip: Atuin shell history sync stack with PostgreSQL backend
-
-    atuin: {
-      class: [application]
-      label: Atuin
-      icon: docs/assets/icons/apps/atuin.svg
-      link: https://docs.atuin.sh/
-      tooltip: Encrypted shell history sync, storing all your shell commands in one place.
-    }
-
-    postgresql: {
-      class: [application-datastore]
-      label: PostgreSQL
-      icon: docs/assets/icons/system/cloudnativepg.svg
-      link: https://postgresql.org/
-      tooltip: PostgreSQL database backend for Atuin, managed by CloudNative-PG operator with automated backups to S3.
-    }
-  }
-
   others.linkding-stack: {
     class: [namespace]
     label: Linkding Stack
-    tooltip: Linkding bookmarking stack with PostgreSQL backend
+    tooltip: Linkding bookmarking stack (PostgreSQL on the shared cluster)
 
     linkding: {
       class: [application]
@@ -345,45 +298,8 @@ lungmen·akn: {
       link: https://github.com/sissbruecker/linkding
       tooltip: Self-hosted bookmarking and link aggregation service with OIDC authentication.
     }
-
-    postgresql: {
-      class: [application-datastore]
-      label: PostgreSQL
-      icon: docs/assets/icons/system/cloudnativepg.svg
-      link: https://postgresql.org/
-      tooltip: PostgreSQL database backend for Linkding, managed by CloudNative-PG operator with automated backups to S3.
-    }
   }
 
-  others.n8n-stack: {
-    class: [namespace]
-    label: n8n Stack
-    tooltip: n8n workflow automation stack with PostgreSQL backend and Redis queue
-
-    n8n: {
-      class: [application]
-      label: n8n
-      icon: docs/assets/icons/apps/n8n.svg
-      link: https://n8n.io/
-      tooltip: Workflow automation platform with visual editor and extensive integrations.
-    }
-
-    postgresql: {
-      class: [application-datastore]
-      label: PostgreSQL
-      icon: docs/assets/icons/system/cloudnativepg.svg
-      link: https://postgresql.org/
-      tooltip: PostgreSQL database backend for n8n, managed by CloudNative-PG operator with automated backups to S3.
-    }
-
-    redis: {
-      class: [application-datastore]
-      label: Redis
-      icon: docs/assets/icons/apps/redis.svg
-      link: https://redis.io/
-      tooltip: Redis queue for n8n workflow execution in queue mode with workers.
-    }
-  }
 }
 
 # ╭────────────────────────────────────────────────────────────────────────────╮
@@ -397,7 +313,7 @@ lungmen·akn: {
 # ──────────────────────────────────────────────────────────────────────────────
 # Network to Platform Flow
 
-localnet -> lungmen·akn.system.envoy-gateway: |md
+localnet -> lungmen·akn.system.cilium-gateway: |md
   HTTP (80)
   HTTPS (443)
 |
@@ -415,67 +331,47 @@ lungmen·akn.system.external-secrets -> rhodes·akn.openbao: "Secure secrets ret
 
 lungmen·akn.system.tailscale -> internet: "VPN tunnel establishment (443)" {class: [connect-to-internet]}
 
-lungmen·akn.system.newt -> kazimierz·akn.pangolin: "Secure tunnel establishment (443)" {class: [connect-to-internet]}
+lungmen·akn.system.newt -> kazimierz·akn.pangolin: "Secure tunnel establishment (443, 51820/UDP)" {class: [connect-to-internet]}
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Media Services Flow
 
 lungmen·akn.media.immich-stack.immich -> rhodes·akn.pocket-id: "SSO authentication (443)"
-lungmen·akn.media.immich-stack.immich -> lungmen·akn.media.immich-stack.postgresql: "Database operations (5432)"
+lungmen·akn.media.immich-stack.immich -> lungmen·akn.databases.apps-secured: "Database operations (5432)"
 lungmen·akn.media.immich-stack.immich -> lungmen·akn.media.immich-stack.redis: "Cache operations (6379)"
-lungmen·akn.media.immich-stack.immich <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (2283)" {}
+lungmen·akn.media.immich-stack.immich <- lungmen·akn.system.cilium-gateway: "HTTP traffic proxy (2283)"
 lungmen·akn.media.immich-stack.immich <- lungmen·akn.system.newt: "Tunnel traffic proxy (2283)" {class: [secured-connect-from-internet]}
-lungmen·akn.media.immich-stack.postgresql -> nas.minio: "Database backups (S3)"
-lungmen·akn.media.immich-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
 lungmen·akn.media.jellyfin -> rhodes·akn.pocket-id: "SSO authentication (443)"
 lungmen·akn.media.jellyfin -> internet: "Metadata and external content fetching (443)" {class: [connect-to-internet]}
-lungmen·akn.media.jellyfin <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8096)"
+lungmen·akn.media.jellyfin <- lungmen·akn.system.cilium-gateway: "HTTP traffic proxy (8096)"
 lungmen·akn.media.jellyfin <- lungmen·akn.system.newt: "Tunnel traffic proxy (8096)" {class: [secured-connect-from-internet]}
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Life Management Flow
 
 lungmen·akn.life.actual-budget -> rhodes·akn.pocket-id: "SSO authentication (443)"
-lungmen·akn.life.actual-budget <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (5006)"
+lungmen·akn.life.actual-budget <- lungmen·akn.system.cilium-gateway: "HTTP traffic proxy (5006)"
 
 lungmen·akn.life.paperless-stack.paperless -> rhodes·akn.pocket-id: "SSO authentication (443)"
-lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.life.paperless-stack.postgresql: "Database operations (5432)"
+lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.databases.apps-secured: "Database operations (5432)"
 lungmen·akn.life.paperless-stack.paperless -> lungmen·akn.life.paperless-stack.redis: "Cache operations (6379)"
-lungmen·akn.life.paperless-stack.paperless <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8000)"
+lungmen·akn.life.paperless-stack.paperless <- lungmen·akn.system.cilium-gateway: "HTTP traffic proxy (8000)"
 lungmen·akn.life.paperless-stack.paperless -> internet: "IMAP email access (993)" {class: [connect-to-internet]}
-lungmen·akn.life.paperless-stack.postgresql -> nas.minio: "Database backups (S3)"
-lungmen·akn.life.paperless-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Other Services Flow
 
-lungmen·akn.others.atuin-stack.atuin -> lungmen·akn.others.atuin-stack.postgresql: "Database operations (5432)"
-lungmen·akn.others.atuin-stack.atuin <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (8888)"
-lungmen·akn.others.atuin-stack.atuin <- lungmen·akn.system.tailscale: "VPN access (8888)" {class: [connect-vpn-backbone]}
-lungmen·akn.others.atuin-stack.postgresql -> nas.minio: "Database backups (S3)"
-lungmen·akn.others.atuin-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
-
-lungmen·akn.databases.shared -> nas.minio: "Database backups (S3)"
-lungmen·akn.databases.shared <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
-
 lungmen·akn.others.linkding-stack.linkding -> rhodes·akn.pocket-id: "SSO authentication (443)"
-lungmen·akn.others.linkding-stack.linkding -> lungmen·akn.others.linkding-stack.postgresql: "Database operations (5432)"
+lungmen·akn.others.linkding-stack.linkding -> lungmen·akn.databases.apps: "Database operations (5432)"
 lungmen·akn.others.linkding-stack.linkding -> internet: "Website information fetching (443)" {class: [connect-to-internet]}
-lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (9090)"
+lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.cilium-gateway: "HTTP traffic proxy (9090)"
 lungmen·akn.others.linkding-stack.linkding <- lungmen·akn.system.newt: "Tunnel traffic proxy (9090)" {class: [secured-connect-from-internet]}
-lungmen·akn.others.linkding-stack.postgresql -> nas.minio: "Database backups (S3)"
-lungmen·akn.others.linkding-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
-
-lungmen·akn.others.n8n-stack.n8n -> lungmen·akn.others.n8n-stack.postgresql: "Database operations (5432)"
-lungmen·akn.others.n8n-stack.n8n -> lungmen·akn.others.n8n-stack.redis: "Queue operations (6379)"
-lungmen·akn.others.n8n-stack.n8n -> internet: "Workflow integrations and external APIs (443)" {class: [connect-to-internet]}
-lungmen·akn.others.n8n-stack.n8n <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (5678)"
-lungmen·akn.others.n8n-stack.n8n <- lungmen·akn.system.newt: "Tunnel traffic proxy (5678)" {class: [secured-connect-from-internet]}
-lungmen·akn.others.n8n-stack.postgresql -> nas.minio: "Database backups (S3)"
-lungmen·akn.others.n8n-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Storage and Backup Connections
+# Shared Databases Flow
 
-lungmen·akn.system.longhorn -> nas.minio: "Volume backups (S3)"
+lungmen·akn.databases.apps -> nas.garage: "Database backups (S3, 443)"
+lungmen·akn.databases.apps <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
+lungmen·akn.databases.apps-secured -> nas.garage: "Database backups (S3, 443)"
+lungmen·akn.databases.apps-secured <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
