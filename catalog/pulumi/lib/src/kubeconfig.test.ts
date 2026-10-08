@@ -1,3 +1,4 @@
+import * as pulumi from "@pulumi/pulumi";
 import { expect } from "chai";
 import { describe, it } from "mocha";
 
@@ -18,6 +19,12 @@ describe("kubeconfigFor", () => {
 		expect(await new Promise((r) => out.apply(r))).to.equal(
 			"apiVersion: v1\nkind: Config\n",
 		);
+	});
+
+	it("returns a secret output, so the provider keeps it secret in the state", async () => {
+		const out = kubeconfigFor("omni-rhodes-akn", () => "apiVersion: v1\n");
+
+		expect(await pulumi.isSecret(out)).to.equal(true);
 	});
 
 	it("propagates a kubectl failure instead of falling back on a path", () => {
