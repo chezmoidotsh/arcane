@@ -384,16 +384,6 @@ lungmen·akn: {
       tooltip: Redis queue for n8n workflow execution in queue mode with workers.
     }
   }
-
-  others.silverbullet: {
-    class: [application]
-    label: Silverbullet
-    icon: docs/assets/icons/apps/silverbullet.svg # upstream favicon.svg (silverbulletmd/silverbullet, MIT)
-    link: https://silverbullet.md/
-    tooltip: Personal productivity platform and wiki built on Markdown with Lua scripting capabilities.
-  }
-
-
 }
 
 # ╭────────────────────────────────────────────────────────────────────────────╮
@@ -484,12 +474,6 @@ lungmen·akn.others.n8n-stack.n8n <- lungmen·akn.system.envoy-gateway: "HTTP tr
 lungmen·akn.others.n8n-stack.n8n <- lungmen·akn.system.newt: "Tunnel traffic proxy (5678)" {class: [secured-connect-from-internet]}
 lungmen·akn.others.n8n-stack.postgresql -> nas.minio: "Database backups (S3)"
 lungmen·akn.others.n8n-stack.postgresql <- lungmen·akn.system.cloudnativepg: "Database management" {class: [connect-management]}
-
-lungmen·akn.others.silverbullet -> internet: "Plug downloads (443)" {class: [connect-to-internet]}
-lungmen·akn.others.silverbullet <- lungmen·akn.system.envoy-gateway: "HTTP traffic proxy (3000)"
-lungmen·akn.others.silverbullet <- lungmen·akn.system.tailscale: "VPN access (3000)" {class: [connect-vpn-backbone]}
-
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Storage and Backup Connections
