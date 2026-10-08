@@ -5,11 +5,12 @@ services, or static IPs.
 
 ## Contents
 
-| File                           | Purpose                                                                                           |
-| ------------------------------ | ------------------------------------------------------------------------------------------------- |
-| [`ipam.md`](ipam.md)           | Operational reference: VLANs, VLAN 5 IP plan, Proxmox SDN VNets, Kubernetes CIDRs, firewall rules |
-| [`topology.d2`](topology.d2)   | D2 source for the topology diagram below                                                          |
-| [`topology.svg`](topology.svg) | Generated diagram (regenerate with `d2 topology.d2 topology.svg`)                                 |
+| File                                           | Purpose                                                                                                                             |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| [`ipam.md`](ipam.md)                           | Operational reference: VLANs, VLAN 5 IP plan, Proxmox SDN VNets, Kubernetes CIDRs, firewall rules                                   |
+| [`gateway-dns-split.md`](gateway-dns-split.md) | Internal (talosnet) vs external (home LAN) Gateways, which DNS answers for each, known external-dns-unifi gap, diagnostic checklist |
+| [`topology.d2`](topology.d2)                   | D2 source for the topology diagram below                                                                                            |
+| [`topology.svg`](topology.svg)                 | Generated diagram (regenerate with `d2 topology.d2 topology.svg`)                                                                   |
 
 ---
 
