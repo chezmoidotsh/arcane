@@ -61,6 +61,9 @@ by either a human operator or an AI agent.
 - **[INF-20260525-01: Upgrade Kubernetes on a Talos Single-Node Cluster](./infrastructure/INF-20260525-01.upgrade-kubernetes.md)**:
   Kubernetes version upgrade using `talosctl upgrade-k8s`, covering the six-phase upgrade process with dry-run
   validation, post-upgrade verification, and interrupted-upgrade recovery.
+- **[INF-20260525-02: Draining a node hosting CNPG instances](./infrastructure/INF-20260525-02.drain-nodes-with-cnpg.md)**:
+  What a node drain does to single- and multi-instance CloudNative-PG clusters (PDB convention, expected downtime) and the
+  pre-upgrade checks.
 - **[INF-20260627-00: Provisioning the Proxmox SDN (simple zone + VNet for Talos clusters)](./infrastructure/INF-20260627-00.proxmox-sdn-setup.md)**:
   Provisions the Proxmox VE SDN backing the single shared `talosnet` VNet for all Talos clusters (`simple` zone —
   `vxlan` needs a second Proxmox node — gateway/SNAT so nodes reach `pve-01:8006` for proxmox-csi-plugin, dnsmasq DHCP,
