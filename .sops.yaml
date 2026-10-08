@@ -1,3 +1,10 @@
+# Root SOPS config: generic rules, admin key only.
+#
+# SOPS uses the NEAREST .sops.yaml walking up from the file being encrypted, and never merges
+# configs: a nested .sops.yaml fully shadows this one for everything below it. Rules needing
+# extra recipients (e.g. a host key) live next to the files they cover:
+#   - projects/rimbilliton.akn/src/infrastructure/nixos/.sops.yaml
+# A nested config must therefore also list the admin key.
 creation_rules:
   # Generic - Encrypt all .decrypted~ files
   - path_regex: projects/.*/\.decrypted~.+\.yaml$
@@ -32,10 +39,3 @@ creation_rules:
   - path_regex: projects/[^/]+/src/infrastructure/pulumi/\.mise/env\.yaml$
     age: >-
       age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
-
-  # rimbilliton.akn NixOS host secrets (sops-nix, decrypted on the host with its SSH host key).
-  # Recipients: the admin key and the host key (`ssh-to-age < extra/etc/ssh/ssh_host_ed25519_key.pub`,
-  # see projects/rimbilliton.akn/docs/BOOTSTRAP.md).
-  - path_regex: projects/rimbilliton\.akn/src/infrastructure/nixos/secrets/rimbilliton\.sops\.yaml$
-    age: >-
-      age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9,age1cpyfsxgl6eer583rhnralx54h60xjjpr3up7hgcd4wc4d44xjcaqdklwxp
