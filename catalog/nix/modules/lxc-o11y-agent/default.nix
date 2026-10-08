@@ -45,8 +45,13 @@ let
   # `node` identifies the originating machine following the node_exporter
   # convention — it refers to the host rather than the scrape endpoint.
   # The (job, node) pair uniquely identifies a series for remote_write.
+  # `host_name` is the OTel `host.name` resource attribute in Prometheus label
+  # form (dots are not valid in label names, OTel->Prometheus translation maps
+  # them to `_`). It carries the same value as logs' `host.name` (journald
+  # _HOSTNAME = get_hostname) so logs and metrics correlate on one host key.
   metricProvenance = ''
     .tags.node = get_hostname!()
+    .tags.host_name = get_hostname!()
   '';
 
   # When nodeExporter is enabled, inject its scrape target automatically so
@@ -99,7 +104,8 @@ let
             type = "remap";
             inputs = [ "scrape_${target.jobName}" ];
             # extraLabels are applied after metricProvenance so they can
-            # override the hostname-derived `node` label for remote targets.
+            # override the hostname-derived `node` / `host_name` labels for
+            # remote targets (set both to keep logs correlation correct).
             source =
               ''.tags.job = "${target.jobName}"'' + "\n" + metricProvenance
                 + lib.concatStrings (lib.mapAttrsToList

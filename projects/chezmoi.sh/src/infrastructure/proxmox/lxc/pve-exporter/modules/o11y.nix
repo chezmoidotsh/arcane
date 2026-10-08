@@ -49,9 +49,10 @@
         {
           jobName = "node_exporter_pve";
           targets = [ "10.0.0.11:9100" ];
-          # Override `node` so series are attributed to the PVE host, not the
+          # Override `node` and `host_name` (OTel host.name, matches the PVE
+          # syslog logs) so series are attributed to the PVE host, not the
           # LXC doing the scraping. get_hostname!() would give "pve-exporter".
-          extraLabels = { node = "pve-01"; };
+          extraLabels = { node = "pve-01"; host_name = "pve-01"; };
         }
       ];
     };
