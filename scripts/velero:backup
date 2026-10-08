@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+# =============================================================================
+# velero:backup
+# =============================================================================
+# Trigger ad-hoc Velero backups and restores per app (one Velero Schedule per
+# app, see projects/<cluster>/src/infrastructure/kubernetes/velero/).
+#
+# Usage:
+#   velero:backup [-c <context>] [-n <velero-namespace>]            # interactive picker
+#   velero:backup [opts] list                                       # apps with a Schedule
+#   velero:backup [opts] backup <app>                               # backup now, from the app's Schedule
+#   velero:backup [opts] backups <app>                              # list the app's backups
+#   velero:backup [opts] restore <app> [<backup>] [--apply] [--confirm <app>]
+#
+# Options:
+#   -c, --context     kubectl context (default: ${KUBE_CONTEXT}, else lungmen.akn)
+#   -n, --namespace   namespace Velero runs in (default: velero-system)
+#
+# <app> is the Schedule name (== app name). Backups are cheap; restores are
+# destructive, so `restore` is a DRY RUN unless --apply is given, and --apply
+# still requires typing the app name (or --confirm <app> for non-interactive use).
+#
+# Restore semantics: a Velero Restore into the app's own namespace, with
+# --existing-resource-policy=none (Velero's default: resources that already
+# exist are SKIPPED, never overwritten). Because a skipped PVC means the data is
+# silently not restored, the script refuses to run while the namespace still has
+# PVCs: delete the workload and PVCs first, exactly as in
+# docs/procedures/backups/BKP-20260805-00.velero-restore-gitops-pvc.md.
+# =============================================================================
+
+set -euo pipefail
+
+CTX="${KUBE_CONTEXT:-lungmen.akn}"
+VNS="velero-system"
+ARGS=()
+while [[ $# -gt 0 ]]; do
+  case "${1}" in
+    -c | --context) CTX="${2}"; shift 2 ;;
+    -n | --namespace) VNS="${2}"; shift 2 ;;
+    -h | --help) sed -n '3,28p' "${0}"; exit 0 ;;
+    *) ARGS+=("${1}"); shift ;;
+  esac
+done
+set -- "${ARGS[@]+"${ARGS[@]}"}"
+
+die() { echo "Error: $*" >&2; exit 1; }
+k() { kubectl --context "${CTX}" "$@"; }
+v() { velero --kubecontext "${CTX}" -n "${VNS}" "$@"; }
+
+# Fully-qualified CRD names: CloudNativePG also registers Backup/Restore kinds.
+list_apps() {
+  k -n "${VNS}" get schedules.velero.io \
+    -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.template.includedNamespaces[0]}{"\n"}{end}'
+}
+
+app_ns() {
+  local ns
+  ns=$(list_apps | awk -F'\t' -v a="${1}" '$1==a {print $2}')
+  [[ -n ${ns} ]] || die "no Velero Schedule named '${1}' in ${VNS} (try: velero:backup list)"
+  echo "${ns}"
+}
+
+list_backups() { # oldest first, so the latest is last
+  k -n "${VNS}" get backups.velero.io -l "velero.io/schedule-name=${1}" --sort-by=.metadata.creationTimestamp \
+    -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.phase}{"\t"}errors={.status.errors}{"\t"}warnings={.status.warnings}{"\t"}{.status.completionTimestamp}{"\n"}{end}'
+}
+
+cmd_backup() {
+  app_ns "${1}" >/dev/null
+  v backup create --from-schedule "${1}" --wait
+}
+
+cmd_restore() {
+  local app="${1}" backup="${2}" apply="${3}" confirm="${4}" ns phase pvcs ts
+  ns=$(app_ns "${app}")
+  if [[ -z ${backup} ]]; then
+    backup=$(list_backups "${app}" | awk -F'\t' '$2=="Completed" {b=$1} END {print b}')
+    [[ -n ${backup} ]] || die "no Completed backup for '${app}'"
+    echo "No backup given: using the latest Completed one."
+  fi
+  phase=$(k -n "${VNS}" get backups.velero.io "${backup}" -o jsonpath='{.status.phase}')
+  [[ ${phase} == Completed ]] || die "backup '${backup}' is in phase '${phase}', not Completed"
+
+  echo "=== Restore plan (cluster context: ${CTX}) ==="
+  echo "App:                      ${app}"
+  echo "Backup:                   ${backup}"
+  echo "Target namespace:         ${ns} (same namespace as the backup)"
+  echo "Existing-resource policy: none (resources already present are skipped, not overwritten)"
+  echo "Volumes in the backup:"
+  k -n "${VNS}" get podvolumebackups.velero.io -l "velero.io/backup-name=${backup}" \
+    -o jsonpath='{range .items[*]}  {.metadata.name}{"\t"}{.status.phase}{"\t"}bytes={.status.progress.bytesDone}/{.status.progress.totalBytes}{"\n"}{end}'
+
+  pvcs=$(k -n "${ns}" get pvc -o name)
+  if [[ -n ${pvcs} ]]; then
+    echo "PVCs still present in '${ns}':"
+    echo "  ${pvcs//$'\n'/$'\n  '}"
+    die "restore would skip them and restore nothing. Delete the workload and PVCs first (docs/procedures/backups/BKP-20260805-00.velero-restore-gitops-pvc.md)."
+  fi
+
+  if [[ ${apply} != true ]]; then
+    echo "DRY RUN: nothing done. Re-run with --apply to restore."
+    return 0
+  fi
+  if [[ -z ${confirm} ]]; then
+    read -r -p "Type the app name ('${app}') to confirm the restore: " confirm
+  fi
+  [[ ${confirm} == "${app}" ]] || die "confirmation mismatch, aborting."
+  ts=$(date +%Y%m%d%H%M%S)
+  v restore create "${app}-restore-${ts}" --from-backup "${backup}" \
+    --existing-resource-policy none --wait
+}
+
+# Interactive layer: only picks arguments, then calls the core above.
+pick() { # choices on stdin, selected line on stdout
+  if command -v gum >/dev/null 2>&1; then
+    gum choose
+  else
+    local items=() line it PS3="> "
+    while IFS= read -r line; do items+=("${line}"); done
+    select it in "${items[@]}"; do [[ -n ${it} ]] && { echo "${it}"; break; }; done </dev/tty >/dev/tty
+  fi
+}
+
+interactive() {
+  local app action backup yn
+  app=$(list_apps | cut -f1 | pick)
+  action=$(printf '%s\n' backup restore | pick)
+  if [[ ${action} == backup ]]; then
+    cmd_backup "${app}"
+  else
+    backup=$(list_backups "${app}" | sort -r | pick | cut -f1)
+    cmd_restore "${app}" "${backup}" false ""
+    read -r -p "Apply this restore? [y/N] " yn
+    [[ ${yn} == y ]] && cmd_restore "${app}" "${backup}" true ""
+  fi
+}
+
+case "${1-}" in
+  "") interactive ;;
+  list) list_apps ;;
+  backup) [[ $# -eq 2 ]] || die "usage: backup <app>"; cmd_backup "${2}" ;;
+  backups) [[ $# -eq 2 ]] || die "usage: backups <app>"; app_ns "${2}" >/dev/null; list_backups "${2}" ;;
+  restore)
+    shift
+    app="" backup="" apply=false confirm=""
+    while [[ $# -gt 0 ]]; do
+      case "${1}" in
+        --apply) apply=true ;;
+        --confirm) confirm="${2-}"; shift ;;
+        *) if [[ -z ${app} ]]; then app="${1}"; elif [[ -z ${backup} ]]; then backup="${1}"; else die "too many arguments"; fi ;;
+      esac
+      shift
+    done
+    [[ -n ${app} ]] || die "usage: restore <app> [<backup>] [--apply] [--confirm <app>]"
+    cmd_restore "${app}" "${backup}" "${apply}" "${confirm}"
+    ;;
+  *) die "unknown command '${1}' (list|backup|backups|restore)" ;;
+esac
