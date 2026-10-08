@@ -17,7 +17,7 @@ These manifests are deployed at bootstrap for several critical reasons:
 
 ### 🌐 Cilium
 
-**Available versions:** `1.20.2-native`, `1.20.0-native`, `1.19.5-native`, `1.18.1`, `1.17.3`
+**Available versions:** `1.20.2-native`, `1.20.0-native`, `1.19.5-native`
 
 Cilium is a CNI (Container Network Interface) that provides the network layer for the Kubernetes cluster. It replaces
 flannel/kube-proxy and offers a more efficient and secure networking solution with support for Network Policies, Service
@@ -26,8 +26,6 @@ Mesh, and Kubernetes Gateway.
 - `1.20.2-native` — active, native-routing variant for Proxmox/SDN clusters
 - `1.20.0-native` — previous active native-routing variant; retained for reference
 - `1.19.5-native` — legacy, native-routing; retained for reference
-- `1.18.1` — legacy, non-native; retained for pre-Omni bootstrap reference
-- `1.17.3` — legacy, non-native; retained for pre-Omni bootstrap reference
 
 The `-native` variants use native routing mode (`routingMode=native`, `kubeProxyReplacement=true`,
 `l2announcements=true`) for Proxmox/SDN clusters where pod CIDRs are routable between nodes without overlay
@@ -49,7 +47,7 @@ configuration is made for TalosOS with the service CIDR `10.96.0.0/16`.
 
 ### 📜 Kubelet Serving Cert Approver
 
-**Available versions:** `0.9.1`, `0.11.0`, `0.12.1`
+**Available versions:** `0.12.1`
 
 Component that automates the approval of TLS certificates for kubelets. Required for the Metrics Server to function
 properly and collect node metrics.
@@ -60,7 +58,7 @@ properly and collect node metrics.
 
 ### 📊 Metrics Server
 
-**Available versions:** `0.7.2`, `0.8.1`, `0.9.0`
+**Available versions:** `0.8.1`, `0.9.0`
 
 > \[!TODO] This component should not be deployed at bootstrap and should be managed by ArgoCD instead. It's currently
 > here temporarily.
