@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# Copyright (C) 2026 Alexandre Nicolaie (xunleii@users.noreply.github.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ----------------------------------------------------------------------------
+# mise alias="omni:drift:check"
+# mise description="Exit non-zero if live Omni machine classes / cluster templates differ from Git (READ-ONLY)."
+#
+# Wraps the two read-only previews omnictl offers, which both exit 0 even when
+# they show a diff:
+#   - omnictl apply --dry-run                 (catalog/omni/machineclasses)
+#   - omnictl cluster template diff -f <file> (projects/*/src/infrastructure/omni)
+# Any output from them (minus "unchanged"-style lines) counts as drift.
+# Requires an authenticated omnictl (OMNICONFIG); never writes to Omni.
+#
+# Usage: omni:drift:check [--machineclasses|--templates]   (default: both)
+# Exit:  0 no drift, 1 drift, 2 usage/tooling error.
+# OMNICTL overrides the binary (used to test against a fake).
+set -o nounset
+set -o pipefail
+
+OMNICTL="${OMNICTL:-omnictl}"
+scope="${1:-all}"
+case "${scope}" in
+  all | --machineclasses | --templates) ;;
+  *)
+    echo >&2 "Usage: omni:drift:check [--machineclasses|--templates]"
+    exit 2
+    ;;
+esac
+
+if ! command -v "${OMNICTL}" >/dev/null 2>&1; then
+  echo >&2 "Error: ${OMNICTL} is required (mise install)."
+  exit 2
+fi
+if ! REPO_ROOT="$(git rev-parse --show-toplevel)"; then
+  echo >&2 "Error: not inside a git checkout."
+  exit 2
+fi
+
+DRIFT=0
+ERRORS=0
+
+# check <label> <command...>: drift if the command prints anything meaningful.
+check() {
+  local label="$1" out status
+  shift
+  out="$("$@" 2>&1)"
+  status=$?
+  if ((status != 0)); then
+    echo "ERROR ${label}: command failed (${status}): ${out}"
+    ERRORS=$((ERRORS + 1))
+    return
+  fi
+  # ponytail: wording of "no change" lines is unverified against a live Omni; extend this filter if needed.
+  out="$(grep -v -i -E '^\s*$|unchanged|no changes|up[- ]to[- ]date' <<<"${out}")"
+  if [[ -n ${out} ]]; then
+    echo "DRIFT ${label}:"
+    echo "${out}"
+    DRIFT=$((DRIFT + 1))
+  else
+    echo "OK    ${label}"
+  fi
+}
+
+if [[ ${scope} != "--templates" ]]; then
+  check "machine classes" "${OMNICTL}" apply --dry-run --file "${REPO_ROOT}/catalog/omni/machineclasses"
+fi
+if [[ ${scope} != "--machineclasses" ]]; then
+  while IFS= read -r -d '' file; do
+    check "${file#"${REPO_ROOT}"/}" "${OMNICTL}" cluster template diff --file "${file}"
+  done < <(find "${REPO_ROOT}/projects" -path "*/src/infrastructure/omni/*.clustertemplate.yaml" -print0 || true)
+fi
+
+if ((ERRORS > 0)); then
+  echo >&2 "${ERRORS} check(s) could not run (auth? OMNICONFIG?)."
+  exit 2
+fi
+if ((DRIFT > 0)); then
+  echo >&2 "${DRIFT} Omni resource set(s) differ from Git."
+  exit 1
+fi
+echo "No drift between Git and Omni."
