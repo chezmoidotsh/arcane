@@ -49,7 +49,7 @@ permissions: {}
 
 env:
   # OpenRouter model ids used by PR Agent (main, then fallback when the main one fails).
-  PR_AGENT_MODEL: openrouter/unbiased/pareto-26.10-preview
+  PR_AGENT_MODEL: openrouter/mistralai/mistral-large-4-0
   PR_AGENT_FALLBACK_MODEL: openrouter/anthropic/claude-sonnet-5.5
 
 jobs:
@@ -140,10 +140,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENROUTER.KEY: ${{ secrets.OPENROUTER_API_KEY }}
           # OpenRouter ids are unknown to PR Agent's token table, so the context size is declared
-          # explicitly (default models: ~1M).
+          # explicitly (Mistral Large: 256k).
           config.model: ${{ env.PR_AGENT_MODEL }}
           config.fallback_models: ${{ format('[{0}]', toJSON(env.PR_AGENT_FALLBACK_MODEL)) }}
-          config.custom_model_max_tokens: "1000000"
+          config.custom_model_max_tokens: "256000"
           # Never edit the pull request itself: the description goes to one persistent comment
           # instead of overwriting the body, and the title is left alone.
           PR_DESCRIPTION.PUBLISH_DESCRIPTION_AS_COMMENT: "true"
