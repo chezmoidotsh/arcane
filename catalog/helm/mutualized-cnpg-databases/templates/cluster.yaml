@@ -33,6 +33,10 @@ Managed roles (managed.roles) are dynamically built from the combined
 {{- $managed := $clusterSpec.managed | default dict -}}
 {{- $_ := set $managed "roles" $roles -}}
 {{- $_  = set $clusterSpec "managed" $managed -}}
+{{- /* A single instance cannot satisfy a PDB: default enablePDB to false (an explicit value wins). */ -}}
+{{- if and (not (hasKey $clusterSpec "enablePDB")) (eq (int ($clusterSpec.instances | default 1)) 1) -}}
+  {{- $_ = set $clusterSpec "enablePDB" false -}}
+{{- end -}}
 ---
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
