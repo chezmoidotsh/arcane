@@ -11,3 +11,10 @@ all:
           ansible_user: root
           ansible_connection: ssh
           ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+    pve:
+      hosts:
+        pve-01.pve.chezmoi.sh:
+          ansible_host: pve-01.pve.chezmoi.sh
+          ansible_user: root
+          ansible_connection: ssh
+          ansible_ssh_common_args: "-o StrictHostKeyChecking=accept-new"
