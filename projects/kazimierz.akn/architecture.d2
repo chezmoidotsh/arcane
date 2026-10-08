@@ -136,14 +136,6 @@ vps: {
       link: https://traefik.io/
       tooltip: HTTP reverse proxy with automatic Let's Encrypt SSL
     }
-
-    crowdsec: {
-      class: [application]
-      label: CrowdSec
-      icon: docs/assets/icons/apps/crowdsec.svg
-      link: https://crowdsec.net/
-      tooltip: Collaborative IPS/IDS with WAF and threat intelligence
-    }
   }
 
 
@@ -204,15 +196,9 @@ vps.tailscale -> internet: "Tailscale API\n(api.tailscale.com:443)" {class: [con
 # ──────────────────────────────────────────────────────────────────────────────
 # Proxy Stack Internal Connections
 
-vps.proxy-stack.traefik -> vps.proxy-stack.crowdsec: "Bouncer API\nIP Blocklist"
-
 vps.proxy-stack.traefik -> vps.proxy-stack.gerbil: "Proxied Traffic"
 
-vps.proxy-stack.crowdsec -> vps.proxy-stack.traefik: "Log Analysis"
-
 vps.proxy-stack.gerbil -> vps.proxy-stack.pangolin: "Configuration Sync\n(API)"
-
-vps.proxy-stack.crowdsec -> internet: "CrowdSec API\n(api.crowdsec.net:443)" { class: [connect-to-internet] }
 
 
 # ──────────────────────────────────────────────────────────────────────────────

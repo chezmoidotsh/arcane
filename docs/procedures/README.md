@@ -65,10 +65,5 @@ by either a human operator or an AI agent.
   Provisions the Proxmox VE SDN backing the single shared `talosnet` VNet for all Talos clusters (`simple` zone —
   `vxlan` needs a second Proxmox node — gateway/SNAT so nodes reach `pve-01:8006` for proxmox-csi-plugin, dnsmasq DHCP,
   MTU 1450) and the per-VNet `SDN.Use` ACL for `omni@pve`. References ADR-014 and `docs/network/ipam.md`.
-- **[Bootstrap VPS with Pangolin and CrowdSec](../../projects/kazimierz.akn/docs/bootstrap-vps.md)**: Complete bootstrap
-  process for deploying a VPS with Pangolin VPN and CrowdSec security monitoring using Tailscale for secure remote
-  access.
-- **[Add Site to Pangolin VPN](../../projects/kazimierz.akn/docs/add-site-to-pangolin.md)**: Expose applications and
-  services through Pangolin VPN using Helm or Kustomize deployments.
-- **[Configure Watchtower for Automatic Updates](../../projects/kazimierz.akn/docs/configure-watchtower.md)**: Add and
-  configure Watchtower for automatic Docker container updates with docker-compose compatibility.
+- **[Bootstrap the kazimierz.akn VPS with Pangolin](../../projects/kazimierz.akn/docs/BOOTSTRAP.md)**: Bootstrap
+  process for the public-access VPS running Pangolin, Gerbil and Traefik, using Tailscale for secure remote access.
