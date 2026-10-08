@@ -1,0 +1,32 @@
+---
+# =============================================================================
+# Proxmox host (pve-01) Configuration Playbook
+# =============================================================================
+#
+# Installs the conntrack NOTRACK hook for the Cilium external LB pool block, so
+# a host rebuild does not break external reachability of Gateway VIPs.
+# See docs/procedures/infrastructure/INF-20260730-00.pve-firewall-conntrack-notrack-external-lb.md
+#
+# Usage:
+#   ansible-playbook -i inventory/production.yaml pve.yaml
+#   Preview: ansible-playbook -i inventory/production.yaml pve.yaml --check --diff
+# =============================================================================
+
+- name: Configure Proxmox host
+  hosts: pve
+  become: false
+  tasks:
+    - name: Install the NOTRACK hook for the Cilium LB pool
+      ansible.builtin.copy:
+        src: 99-talosnet-lb-notrack
+        dest: /etc/network/if-up.d/99-talosnet-lb-notrack
+        owner: root
+        group: root
+        mode: "0755"
+      register: notrack_hook
+
+    - name: Apply the hook now (guarded by iptables -C, so never duplicates rules)
+      ansible.builtin.command: /etc/network/if-up.d/99-talosnet-lb-notrack
+      environment:
+        IFACE: lo
+      changed_when: notrack_hook.changed

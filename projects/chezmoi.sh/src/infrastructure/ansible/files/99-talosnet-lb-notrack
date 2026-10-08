@@ -1,0 +1,20 @@
+#!/bin/sh
+# Exempt each cluster's Cilium external LB pool from conntrack, so replies to
+# L2-announced VIPs (dual-NIC Talos setup, ADR-014) aren't misclassified as
+# ctstate INVALID by PVEFW-FORWARD. The reply leaves via talosnet/vmbr0,
+# never through a fwbr+ interface, so it never gets the CT zone 1 tag PVE
+# assigns to firewalled VM/CT bridge traffic -- from that mismatched zone's
+# view it looks like an orphan SYN-ACK, which PVEFW-FORWARD's first rule
+# drops as INVALID. NOTRACK sidesteps conntrack entirely for this traffic so
+# no ctstate check can apply. Runs on every ifreload (incl. SDN applies);
+# guarded on ${IFACE}=lo so it fires once per reload, not once per interface.
+[ "${IFACE}" = "lo" ] || exit 0
+
+# 10.0.0.64/26 is the whole Cilium LB pool block (docs/network/ipam.md),
+# reserved for all 8 cluster slots (/29 each) -- covers every current and
+# future cluster's external Gateway without per-cluster edits here.
+POOL=10.0.0.64/26
+iptables -t raw -C PREROUTING -d "${POOL}" -j NOTRACK 2>/dev/null || \
+  iptables -t raw -I PREROUTING 1 -d "${POOL}" -j NOTRACK
+iptables -t raw -C PREROUTING -s "${POOL}" -j NOTRACK 2>/dev/null || \
+  iptables -t raw -I PREROUTING 1 -s "${POOL}" -j NOTRACK
