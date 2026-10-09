@@ -198,8 +198,7 @@ The OCI resources are provisioned first via the Pulumi stack in `src/infrastruct
 over the bootstrap image and managed with `nixos-rebuild` from then on:
 
 ```bash
-nonix run github:nix-community/nixos-anywhere -- --flake ./src/infrastructure/nixos#rimbilliton-akn-aarch64 \
-  --extra-files ./src/infrastructure/nixos/extra --target-host ubuntu@<public-ip>
+mise run nixos:oci:install ubuntu@<public-ip>   # then: mise run nixos:oci:update
 ```
 
 See [docs/BOOTSTRAP.md](./docs/BOOTSTRAP.md) for the complete bootstrap procedure.

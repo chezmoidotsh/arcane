@@ -4,7 +4,8 @@ This document describes how to replace the Ubuntu + Ansible + Docker Compose set
 host installed by `nixos-anywhere`, the way `rimbilliton.akn` is (see
 [its bootstrap](../../rimbilliton.akn/docs/BOOTSTRAP.md), which this procedure follows closely). The NixOS definition
 lives in `src/infrastructure/nixos/`. Nothing in it has been applied yet: until the cutover below is done, **Ansible
-remains the source of truth** for the running host (see [BOOTSTRAP.md](./BOOTSTRAP.md)).
+remains the source of truth** for the running host (see the [Ansible README](../src/infrastructure/ansible/README.md)).
+[BOOTSTRAP.md](./BOOTSTRAP.md) is the same install for a fresh instance, without state to restore.
 
 > [!IMPORTANT] `nixos-anywhere` repartitions the boot volume. There is no side-by-side migration: the tenancy's Always
 > Free A1 quota (2 OCPU / 12 GB) is fully used by `kazimierz-pangolin` and `rimbilliton-minecraft`, so a second instance
@@ -86,16 +87,14 @@ mkdir -p extra/var/lib/pangolin/config
 tar -C extra/var/lib/pangolin/config -xzf kazimierz-state.tgz db key letsencrypt
 ```
 
-Then record the instance's private IP, which Docker publishes ports 80/443 on (`pangolin.bindIp`, set by the platform
-file). The Pulumi stack exports it, and the OCI platform (`platforms/oci.a1.nix`) reads it from `private-ip`:
-
-```bash
-mise run nixos:private-ip   # = pulumi stack output privateIp > private-ip; commit it, it is a VCN address, not a secret
-```
-
-The build refuses an empty `private-ip`. The test platform (`platforms/proxmox.kvm.nix`) sets its own address
-(`pangolin.bindIp`, overridable). Set the public key in `configuration.nix` too. Do not commit `extra/`. If the build
-complains about an untracked path, `git add -N flake.lock secrets/kazimierz.sops.yaml private-ip`.
+The binding IP, which Docker publishes ports 80/443 on (`pangolin.bindIp`), is the instance's private (VCN) address, the
+only one its network interface has: the public IP is NAT-ed by OCI and never shows up on the host. It lives in
+`extra/etc/pangolin/binding-ip`, git-ignored like the rest of `extra/` (and copied onto the host by `nixos-anywhere`).
+`mise run nixos:binding-ip` writes it from the Pulumi output (`pulumi stack output bindingIp`) and
+`mise run nixos:oci:install` / `nixos:oci:update` do it first; the platform reads it at evaluation time. The build
+refuses a missing or empty file. Set the public key in `configuration.nix` too. Do not commit `extra/`. If the build
+complains about an untracked path, `git add -N flake.lock secrets/kazimierz.sops.yaml` (the tasks already run
+`git add -f -N` on the binding IP file).
 
 ### 3. Free the Tailscale name
 
@@ -112,26 +111,46 @@ IP=<public IP of kazimierz-pangolin>   # OCI console; the Pulumi stack does not 
 ssh ubuntu@"$IP" 'sudo apt-get update -qq && sudo apt-get install -y cpio'
 ```
 
-Then, exactly as for `rimbilliton.akn` (agent forwarding flags per OS and the troubleshooting table are in
+Then install, exactly as for `rimbilliton.akn` (troubleshooting table in
 [its bootstrap](../../rimbilliton.akn/docs/BOOTSTRAP.md#4-install-nixos)):
 
 ```bash
-cd projects/kazimierz.akn/src/infrastructure/nixos
-nonix --docker '-v /run/host-services/ssh-auth.sock:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent' \
-  run github:nix-community/nixos-anywhere -- --flake .#kazimierz-akn-aarch64 \
-  --extra-files extra --kexec-extra-flags '--kexec-syscall' --target-host ubuntu@"$IP"
+mise run nixos:oci:install ubuntu@"$IP"
 ```
 
-Shortcut for the command above (`nonix` forwards your `$SSH_AUTH_SOCK` to the container on its own, no agent flags
-needed): `mise run nixos:install ubuntu@"$IP"`. Add `--arch x86_64` for the test VM.
+The task refreshes the binding IP (`nixos:binding-ip`), then runs `nixos-anywhere` (pinned by commit) through `nonix`
+with `--flake .#kazimierz-akn-aarch64 --extra-files extra --kexec-extra-flags --kexec-syscall`. `nonix` forwards your
+SSH agent to the container, and that agent must hold the key matching `ssh_authorized_keys` in the Pulumi config:
+
+> [!IMPORTANT] **macOS (OrbStack, Docker Desktop): the containers run in a Linux VM**, so `nonix` cannot mount your
+> agent's socket directly (the file shows up, but connecting to it fails with `Connection refused`). It uses the relay
+> the runtime offers instead, `/run/host-services/ssh-auth.sock`, which forwards the agent of the **macOS login
+> session** (the `SSH_AUTH_SOCK` known to `launchd`), not the one of your current shell. With the default macOS agent
+> nothing is needed. With a custom agent (Bitwarden, Secretive, 1Password, ...), point `launchd` at its socket and
+> restart the runtime:
+>
+> ```bash
+> launchctl getenv SSH_AUTH_SOCK                                  # what the relay will forward
+> launchctl setenv SSH_AUTH_SOCK "<path of your agent's socket>"  # e.g. $HOME/.bitwarden-ssh-agent.sock
+> orb stop && orb start                                           # OrbStack; restart Docker Desktop otherwise
+> ```
+>
+> `launchctl setenv` does not survive a reboot. Check what the container sees before an install: your key must be listed
+> (`docker run --rm -v /run/host-services/ssh-auth.sock:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent nixos/nix ssh-add -l`).
+> On Linux the socket is mounted directly from `$SSH_AUTH_SOCK`.
 
 `nixos-anywhere` cannot detect the target architecture, so the flake exposes one output per architecture (`platforms/`):
-`.#kazimierz-akn-aarch64` is the OCI A1 (UEFI, production) and `.#kazimierz-akn-x86_64` an x86_64 legacy-BIOS VM, used
-to rehearse this procedure on a test machine. There is no un-suffixed output: always pass the architecture. On an x86_64
-target from an arm64 Mac, add `--build-on remote`.
+`.#kazimierz-akn-aarch64` is the OCI A1 (UEFI, production) and `.#kazimierz-akn-x86_64` an x86_64 legacy-BIOS VM. There
+is no un-suffixed output. To rehearse this procedure on a Proxmox KVM test VM instead of the real host:
 
-The Oracle arm64 kernel needs `--kexec-syscall` (same as rimbilliton). If the run fails after the kexec, resume as
-`root` with `--phases disko,install,reboot` (see the rimbilliton troubleshooting table).
+```bash
+mise run nixos:e2e <user@host>   # the target is mandatory; its address (IP, DNS name or ssh_config alias) becomes the binding IP
+```
+
+The Oracle arm64 kernel needs `--kexec-syscall` (the task passes it). If the run fails after the kexec, the host is no
+longer Ubuntu: resume as `root` from the disk step (`cd src/infrastructure/nixos`, then
+`nonix run github:nix-community/nixos-anywhere -- --flake .#kazimierz-akn-aarch64 --extra-files extra --phases disko,install,reboot --target-host root@"$IP"`;
+see the rimbilliton troubleshooting table).
 
 ### 5. Verify
 
@@ -152,20 +171,20 @@ curl -sI https://pangolin.chezmoi.sh | head -n1
 ### 6. Day-2 operations
 
 ```bash
-nixos-rebuild switch --flake .#kazimierz-akn-aarch64 --target-host root@kazimierz-akn
+mise run nixos:oci:update
 ```
 
-Or simply `mise run nixos:deploy` (`--arch x86_64` for the test VM).
+It refreshes the binding IP from the Pulumi stack, then runs
+`nixos-rebuild switch --flake .#kazimierz-akn-aarch64 --target-host root@kazimierz-akn` (nixos-rebuild taken from the
+nixpkgs revision locked in `flake.lock`) over the tailnet.
 
-Image tags are bumped in `modules/pangolin.nix`. `pangolin` and `gerbil` still follow `latest`/`ee-latest` as in the
-Ansible defaults: pin them when you have a version you want to freeze.
+Image tags and their digests are bumped together in `modules/pangolin.nix`.
 
 ### 7. Clean up (after a few days of stable operation)
 
 - Delete the backup tarball and `extra/`.
-- Remove `src/infrastructure/ansible/` and `.vault-password.sops`, replace `docs/BOOTSTRAP.md` with a NixOS one (copy
-  of this file's steps 2-5 without the backup/restore parts), update `README.md` (project tree, "Installation and
-  Setup", Ansible mentions) and `architecture.d2`.
+- Remove `src/infrastructure/ansible/` and `.vault-password.sops`, update `README.md` (project tree, "Installation and
+  Setup", Ansible mentions) and `architecture.d2`. `docs/BOOTSTRAP.md` already describes the NixOS install.
 - Record the decision: ADR-008 is `implemented` as "Ansible + Docker Compose"; write a new ADR (see
   `.agents/skills/adr-authoring/SKILL.md`) that supersedes its configuration-management choice. The earlier NixOS
   attempt ([session notes](../../../.agents/sessions/20260801-kazimierz-nixos-vs-ansible.md)) was abandoned for a local
@@ -176,5 +195,6 @@ Ansible defaults: pin them when you have a version you want to freeze.
 
 The boot volume is wiped by step 4, so there is no in-place rollback after that point. If the new host cannot be made to
 work: recreate the instance (`pulumi up` with the instance replaced, it boots a stock Ubuntu again), run the Ansible
-playbook as described in [BOOTSTRAP.md](./BOOTSTRAP.md), and restore `db/`, `key` and `letsencrypt/` from the backup into
-`/opt/pangolin/config` before the first start. This is why the Ansible code stays in the tree until step 7.
+playbook as described in the [Ansible README](../src/infrastructure/ansible/README.md), and restore `db/`, `key` and
+`letsencrypt/` from the backup into `/opt/pangolin/config` before the first start. This is why the Ansible code stays in
+the tree until step 7.
