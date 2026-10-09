@@ -20,7 +20,13 @@ const backupsBucket = new b2.Bucket(
 			},
 		],
 	},
-	{ protect: true, retainOnDelete: true },
+	{
+		protect: true,
+		retainOnDelete: true,
+		// The b2 provider (0.13) reports these back on refresh although our inputs
+		// are unchanged, which yields a permanent no-op update.
+		ignoreChanges: ["defaultServerSideEncryption", "revision"],
+	},
 );
 
 const backupsKey = new b2.ApplicationKey("rimbilliton-backups", {

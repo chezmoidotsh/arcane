@@ -8,8 +8,7 @@ const kazimierzStack = new pulumi.StackReference("kazimierz.akn", {
 	name: "organization/kazimierz-akn-infra/kazimierz_akn.live",
 });
 const chezmoiShCompartmentId = kazimierzStack
-	.getOutput("chezmoiSh")
-	.apply((compartment) => compartment.id as string);
+	.getOutput("chezmoiShCompartmentId") as pulumi.Output<string>;
 
 // Dedicated compartment: isolates rimbilliton.akn's VCN/instance from the rest.
 export const rimbilliton = new oci.identity.Compartment("rimbilliton", {
