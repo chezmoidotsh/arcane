@@ -1,0 +1,10 @@
+# SOPS creation rules for rimbilliton.akn. There is no root .sops.yaml: each project that encrypts files owns one.
+# sops looks for it from the *current directory* upward (not from the file's), so run sops from inside the project.
+# path_regex is relative to this file's directory.
+# The NixOS host secrets have their own config in src/infrastructure/nixos/.sops.yaml (used at build time).
+creation_rules:
+  # Pulumi stack env (PULUMI_CONFIG_PASSPHRASE, PULUMI_STACK) — loaded automatically by
+  # mise's `[env] _.file` on cd into the stack directory; mise decrypts SOPS transparently.
+  - path_regex: src/infrastructure/pulumi/\.mise/env\.yaml$
+    age: >-
+      age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9

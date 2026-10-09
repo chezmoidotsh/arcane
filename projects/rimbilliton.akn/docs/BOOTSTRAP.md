@@ -77,7 +77,7 @@ sops-nix decrypts secrets with the host SSH key, which must therefore exist befo
 ```bash
 cd ../nixos
 mkdir -p extra/etc/ssh && ssh-keygen -t ed25519 -N '' -f extra/etc/ssh/ssh_host_ed25519_key
-nonix run nixpkgs#ssh-to-age -- -i extra/etc/ssh/ssh_host_ed25519_key.pub   # host age key, already in the rimbilliton rule of the root .sops.yaml
+nonix run nixpkgs#ssh-to-age -- -i extra/etc/ssh/ssh_host_ed25519_key.pub   # host age key, already in the rule of the nixos .sops.yaml
 cp secrets/rimbilliton.example.yaml secrets/rimbilliton.sops.yaml   # fill from `pulumi stack output --show-secrets`
 sops --encrypt --in-place secrets/rimbilliton.sops.yaml
 ```
@@ -86,8 +86,11 @@ Fill `tailscale_authkey`, `restic_*` and the Pocket-ID client (`oauth_pocketid_c
 `oauth_pocketid_client_secret`); the three `wings_*` values only exist once the node is created in the Panel (step 6),
 so add them then.
 
-The file must be named `rimbilliton.sops.yaml`: that is the name matched by the `rimbilliton.akn` creation rule of the
-root `.sops.yaml` (admin key + host key as recipients), and the one `configuration.nix` reads. `secrets/*.yaml` is
+The file must be named `rimbilliton.sops.yaml`: that is the name matched by the creation rule of
+`src/infrastructure/nixos/.sops.yaml` (admin key + host key as recipients), and the one `configuration.nix` reads. This
+is the one exception to the per-project layout (the rest lives in `projects/rimbilliton.akn/.sops.yaml`) because the
+secret is consumed at build time. sops looks for `.sops.yaml` from the current directory upward and never merges, so run
+it from this directory and keep the admin key in any new rule. `secrets/*.yaml` is
 git-ignored except `*.example.yaml` and `*.sops.yaml`, so a plaintext copy cannot be committed by accident.
 
 `flake.lock` is committed so every build uses the same input revisions (refresh it with `nonix flake update`). Then set

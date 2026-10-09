@@ -213,7 +213,7 @@ Architecture diagram: [`docs/assets/architecture.svg`](./docs/assets/architectur
 
 ## Secrets
 
-Two SOPS/age-encrypted dotenv files, both baked into the image at build time and matched by the `.sops.yaml` rule for
+Two SOPS/age-encrypted dotenv files, both baked into the image at build time and matched by the `projects/chezmoi.sh/.sops.yaml` rule for
 `proxmox/*/secrets/*.sops.env`. **No ingest/query credentials** — access control is the host firewall.
 
 | File                             | Keys                                            | Source   |

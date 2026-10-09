@@ -1,0 +1,11 @@
+# Exception to the per-project layout (projects/rimbilliton.akn/.sops.yaml): these secrets are consumed at build time
+# (sops-nix, `sops.defaultSopsFile`), so their rule lives next to them. sops looks for .sops.yaml from the *current
+# directory* upward and never merges configs, so run sops from this directory (or below) and keep the admin key here.
+# path_regex is relative to this file's directory.
+creation_rules:
+  # NixOS host secrets (sops-nix, decrypted on the host with its SSH host key).
+  # Recipients: the admin key and the host key (`ssh-to-age < extra/etc/ssh/ssh_host_ed25519_key.pub`,
+  # see projects/rimbilliton.akn/docs/BOOTSTRAP.md).
+  - path_regex: secrets/rimbilliton\.sops\.yaml$
+    age: >-
+      age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9,age1cpyfsxgl6eer583rhnralx54h60xjjpr3up7hgcd4wc4d44xjcaqdklwxp
