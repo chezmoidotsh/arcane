@@ -14,8 +14,8 @@ USER_OCID="ocid1.user.oc1..aaaaaaaajxjktzu2pzn2tdotchm2hkkj6havth2f7la6o5txy75fo
 REGION="eu-paris-1"
 
 if [[ ! -f ${ENV_FILE} ]]; then
-  echo "ERROR: ${ENV_FILE} not found -- run 'pulumi stack init kazimierz_akn.live' first" >&2
-  exit 1
+	echo "ERROR: ${ENV_FILE} not found -- run 'pulumi stack init kazimierz_akn.live' first" >&2
+	exit 1
 fi
 
 WORKDIR=$(mktemp -d)
@@ -29,9 +29,9 @@ sops --decrypt "${ENV_FILE}" >"${WORKDIR}/env.yaml"
 # limit otherwise.
 PREVIOUS_FINGERPRINT=$(yq -r '.TF_VAR_fingerprint // ""' "${WORKDIR}/env.yaml")
 if [[ -n ${PREVIOUS_FINGERPRINT} ]]; then
-  echo "Deleting previous key ${PREVIOUS_FINGERPRINT}..."
-  oci iam user api-key delete --user-id "${USER_OCID}" \
-    --fingerprint "${PREVIOUS_FINGERPRINT}" --force || true
+	echo "Deleting previous key ${PREVIOUS_FINGERPRINT}..."
+	oci iam user api-key delete --user-id "${USER_OCID}" \
+		--fingerprint "${PREVIOUS_FINGERPRINT}" --force || true
 fi
 
 echo "Generating a new RSA keypair..."
@@ -40,13 +40,13 @@ openssl rsa -pubout -in "${WORKDIR}/key.pem" -out "${WORKDIR}/key_public.pem" >/
 
 echo "Uploading the public key to OCI (user ${USER_OCID})..."
 FINGERPRINT=$(oci iam user api-key upload --user-id "${USER_OCID}" \
-  --key-file "${WORKDIR}/key_public.pem" --query "data.fingerprint" --raw-output)
+	--key-file "${WORKDIR}/key_public.pem" --query "data.fingerprint" --raw-output)
 
 echo "Writing TF_VAR_* into ${ENV_FILE} (merged with existing keys)..."
 TF_KEY=$(cat "${WORKDIR}/key.pem")
 TF_TENANCY="${TENANCY_OCID}" TF_USER="${USER_OCID}" TF_FP="${FINGERPRINT}" \
-  TF_REGION="${REGION}" TF_KEY="${TF_KEY}" \
-  yq -i '
+	TF_REGION="${REGION}" TF_KEY="${TF_KEY}" \
+	yq -i '
     .TF_VAR_tenancy_ocid = strenv(TF_TENANCY) |
     .TF_VAR_user_ocid = strenv(TF_USER) |
     .TF_VAR_fingerprint = strenv(TF_FP) |
