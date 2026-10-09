@@ -16,13 +16,13 @@
     allowedTCPPorts = [ 80 443 ];
     # Pool of 16 game ports: the allocations to give to Pelican's servers (same range in the OCI NSG).
     allowedTCPPortRanges = [ { from = 25565; to = 25580; } ];
-    # SSH is only reachable through the tailnet (OCI NSG keeps 22 closed too).
-    interfaces.tailscale0.allowedTCPPorts = [ 22 ];
   };
 
   services.openssh = {
     enable = true;
-    openFirewall = false;
+    # Port 22 is open in the host firewall; who can reach it is decided by the OCI NSG (closed by default, see the
+    # `unsecure` Pulumi toggle), so SSH goes through Tailscale unless that toggle is on.
+    openFirewall = true;
     settings = {
       PasswordAuthentication = false;
       PermitRootLogin = "prohibit-password";
@@ -30,7 +30,7 @@
   };
   # Same key as the `ssh_authorized_keys` Pulumi config (nixos-anywhere + deploys).
   users.users.root.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAA... TODO-replace-with-your-public-key"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPH7IEv+Q6s6WSPlWVva6UlCbkhePQdZYbN1TbI7rCDx"
   ];
 
   services.tailscale = {
