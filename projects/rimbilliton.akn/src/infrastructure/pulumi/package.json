@@ -4,6 +4,7 @@
 	"private": true,
 	"main": "index.ts",
 	"dependencies": {
+		"@axnic/pulumi-pocket-id": "catalog:",
 		"@chezmoi.sh/pulumi-lib": "workspace:*",
 		"@pulumi/b2": "workspace:*",
 		"@pulumi/cloudflare": "catalog:",
