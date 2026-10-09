@@ -70,9 +70,9 @@ export POCKET_ID_API_KEY=<Pocket-ID API key>   # or: pulumi config set --secret 
 mise run pulumi:diff
 ```
 
-The preview must show the group and the client as **import** or no-op, with at most in-place updates of cosmetic
-fields, plus the **create** of `minecraft-secret`. If it shows a `create` or a `replace` of the client or the group,
-stop: a UUID or a field is wrong. Then:
+The preview must show the group and the client as **import** or no-op, with at most in-place updates of cosmetic fields,
+plus the **create** of `minecraft-secret`. If it shows a `create` or a `replace` of the client or the group, stop: a
+UUID or a field is wrong. Then:
 
 1. `mise run pulumi:apply`: the new secret **replaces** the old one in Pocket-ID. If Pelican is already running, its
    login is broken from this point.
@@ -104,8 +104,8 @@ The file must be named `rimbilliton.sops.yaml`: that is the name matched by the 
 `src/infrastructure/nixos/.sops.yaml` (admin key + host key as recipients), and the one `configuration.nix` reads. This
 is the one exception to the per-project layout (the rest lives in `projects/rimbilliton.akn/.sops.yaml`) because the
 secret is consumed at build time. sops looks for `.sops.yaml` from the current directory upward and never merges, so run
-it from this directory and keep the admin key in any new rule. `secrets/*.yaml` is
-git-ignored except `*.example.yaml` and `*.sops.yaml`, so a plaintext copy cannot be committed by accident.
+it from this directory and keep the admin key in any new rule. `secrets/*.yaml` is git-ignored except `*.example.yaml`
+and `*.sops.yaml`, so a plaintext copy cannot be committed by accident.
 
 `flake.lock` is committed so every build uses the same input revisions (refresh it with `nonix flake update`). Then set
 `bucket` (`modules/backup.nix`), check the Pelican image tags (`modules/pelican.nix`, Panel and Wings are betas bumped
