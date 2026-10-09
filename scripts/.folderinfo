@@ -1,7 +1,0 @@
----
-files:
-  argocd:app:sync: Create or sync an ArgoCD application on the current branch
-  cnpg:backup:create: Create a backup of a PostgreSQL cluster for a given PostgreSql cluster
-  nix:build:image: Build an OCI image from a Nix flake definition
-  nix:hash:update: Update the hash of a Nix flake definition
-  nonix: Run nix commands locally inside a container
