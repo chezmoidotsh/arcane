@@ -41,6 +41,24 @@ Each appliance has the same layout:
 
 ## Daily operations
 
+### Bump the version first (always)
+
+Before **every** rebuild, set the version in `flake.nix` to today's date (`YYYY.MM.DD`, append `-N` for a second build
+the same day). The version names the template (`<name>.<ver>-amd64.tar.xz`) and is what `lxc:push` / `lxc:upgrade`
+use, so rebuilding under an unchanged version ships an artifact that looks identical to the one already on the PVE
+host.
+
+```sh
+# from the lxc/ directory, bump every date-versioned appliance at once
+perl -pi -e 's/^(\s*(?:version|imageVersion) = ")20\d\d\.\d\d\.\d\d(?:-\d+)?";/${1}'"$(date +%Y.%m.%d)"'";/' \
+  */flake.nix
+```
+
+`oci-registry` is the exception: its `version` is the upstream Zot release (`vX.Y.Z`, managed by Renovate) and is left
+alone — only its `imageVersion` is a date. Note that the shared library takes the **first** match of `version` or
+`imageVersion`, so for `oci-registry` the template keeps being named after the Zot version regardless of
+`imageVersion`.
+
 ### Build a template
 
 ```sh
