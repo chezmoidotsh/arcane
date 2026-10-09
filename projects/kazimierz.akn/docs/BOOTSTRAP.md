@@ -3,6 +3,11 @@
 This document describes how to bootstrap the Kazimierz.AKN VPS from a freshly provisioned OCI instance into a fully
 configured node, using Ansible run remotely over SSH.
 
+> [!NOTE]
+> This Ansible procedure is being replaced by a NixOS install, see [MIGRATION_NIXOS.md](./MIGRATION_NIXOS.md). The Pulumi
+> stack now also exports `privateIp` (instance private address, read by the NixOS flake) and `tailscaleAuthKey`
+> (pre-authorized key for the NixOS first boot); the Ansible flow does not use them.
+
 ## Overview
 
 The OCI instance and network (compartment, VCN/NSG, instance, DNS records) are provisioned by the Pulumi stack in

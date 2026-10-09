@@ -131,9 +131,17 @@ for the `ubuntu` user:
 
 ```bash
 nonix --docker '-v /run/host-services/ssh-auth.sock:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent' \
-  run github:nix-community/nixos-anywhere -- --flake .#rimbilliton-akn \
+  run github:nix-community/nixos-anywhere -- --flake .#rimbilliton-akn-aarch64 \
   --extra-files extra --kexec-extra-flags '--kexec-syscall' --target-host ubuntu@"$IP"
 ```
+
+Shortcut (`nonix` forwards your `$SSH_AUTH_SOCK` to the container on its own, so the per-OS agent flags below are only
+needed for a custom setup): `mise run nixos:install ubuntu@"$IP"`, plus `--arch x86_64` for a test VM.
+
+`nixos-anywhere` cannot detect the target architecture, so the flake exposes one output per architecture (`platforms/`):
+`.#rimbilliton-akn-aarch64` is the OCI A1 (UEFI, production) and `.#rimbilliton-akn-x86_64` an x86_64 legacy-BIOS VM, used
+to rehearse this procedure on a test machine. There is no un-suffixed output: always pass the architecture. On an x86_64
+target from an arm64 Mac, add `--build-on remote`.
 
 `--kexec-extra-flags '--kexec-syscall'` forces the legacy `kexec_load` syscall: with the default `kexec_file_load`, the
 Oracle arm64 kernel fails with `kexec_file_load failed: Address not available`.
@@ -144,7 +152,7 @@ disk step, as `root`:
 
 ```bash
 nonix --docker '-v /run/host-services/ssh-auth.sock:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent' \
-  run github:nix-community/nixos-anywhere -- --flake .#rimbilliton-akn \
+  run github:nix-community/nixos-anywhere -- --flake .#rimbilliton-akn-aarch64 \
   --extra-files extra --phases disko,install,reboot --target-host root@"$IP"
 ```
 
@@ -256,7 +264,7 @@ it a configuration.
    ```bash
    cd src/infrastructure/nixos
    sops secrets/rimbilliton.sops.yaml   # add wings_uuid, wings_token_id, wings_token (see secrets/rimbilliton.example.yaml)
-   nonix --docker '...' run nixpkgs#nixos-rebuild -- switch --flake .#rimbilliton-akn --target-host root@rimbilliton-akn
+   nonix --docker '...' run nixpkgs#nixos-rebuild -- switch --flake .#rimbilliton-akn-aarch64 --target-host root@rimbilliton-akn
    ```
 
    The node must turn green. To rotate the token, reset it in the Panel and update the three values.
@@ -286,5 +294,7 @@ to the disk in clear text). The node token lives in the SOPS file, not in the ba
 Later changes are deployed over Tailscale:
 
 ```bash
-nixos-rebuild switch --flake .#rimbilliton-akn --target-host root@rimbilliton-akn
+nixos-rebuild switch --flake .#rimbilliton-akn-aarch64 --target-host root@rimbilliton-akn
 ```
+
+Or simply `mise run nixos:deploy` (`--arch x86_64` for a test VM).
