@@ -14,7 +14,7 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
 
 # Show usage information
 show_usage() {
-  cat <<EOF
+	cat <<EOF
 Usage: $(basename "$0") [options] [nix-command] [nix-args...]
 
 This script runs Nix commands in a Docker container, making Nix available
@@ -39,6 +39,9 @@ Examples:
 
 The script automatically:
   - Mounts the current directory (or git root if available)
+  - Forwards the host SSH agent to the container as /ssh-agent (\${SSH_AUTH_SOCK} on Linux, the
+    Docker Desktop/OrbStack relay on macOS)
+    (skipped if you already pass SSH_AUTH_SOCK with -e or mount /ssh-agent with --docker)
   - Uses cached Nix store for faster subsequent runs
   - Preserves file permissions and ownership where possible
   - Copies result content directly as local files after build commands
@@ -52,55 +55,55 @@ EOF
 EXTRA_ENV=()
 EXTRA_DOCKER=()
 while [[ $# -gt 0 ]]; do
-  case "$1" in
-    -e | --env)
-      if [[ $# -lt 2 ]]; then
-        log_error "$1 requires an argument (KEY or KEY=VALUE)"
-        exit 1
-      fi
-      EXTRA_ENV+=("$2")
-      shift 2
-      ;;
-    --docker)
-      if [[ $# -lt 2 ]]; then
-        log_error "--docker requires an argument (e.g. '--network host')"
-        exit 1
-      fi
-      read -r -a docker_words <<<"$2"
-      EXTRA_DOCKER+=("${docker_words[@]}")
-      shift 2
-      ;;
-    --docker=*)
-      read -r -a docker_words <<<"${1#--docker=}"
-      EXTRA_DOCKER+=("${docker_words[@]}")
-      shift
-      ;;
-    *) break ;;
-  esac
+	case "$1" in
+	-e | --env)
+		if [[ $# -lt 2 ]]; then
+			log_error "$1 requires an argument (KEY or KEY=VALUE)"
+			exit 1
+		fi
+		EXTRA_ENV+=("$2")
+		shift 2
+		;;
+	--docker)
+		if [[ $# -lt 2 ]]; then
+			log_error "--docker requires an argument (e.g. '--network host')"
+			exit 1
+		fi
+		read -r -a docker_words <<<"$2"
+		EXTRA_DOCKER+=("${docker_words[@]}")
+		shift 2
+		;;
+	--docker=*)
+		read -r -a docker_words <<<"${1#--docker=}"
+		EXTRA_DOCKER+=("${docker_words[@]}")
+		shift
+		;;
+	*) break ;;
+	esac
 done
 
 for var in "${EXTRA_ENV[@]-}"; do
-  if [[ -n ${var} && ! ${var} =~ ^[A-Za-z_][A-Za-z0-9_]*(=.*)?$ ]]; then
-    log_error "Invalid environment variable '${var%%=*}': expected KEY or KEY=VALUE"
-    exit 1
-  fi
+	if [[ -n ${var} && ! ${var} =~ ^[A-Za-z_][A-Za-z0-9_]*(=.*)?$ ]]; then
+		log_error "Invalid environment variable '${var%%=*}': expected KEY or KEY=VALUE"
+		exit 1
+	fi
 done
 
 # Check if help was requested
 if [[ $# -eq 0 ]] || [[ $1 == "--help" ]] || [[ $1 == "-h" ]]; then
-  show_usage
-  exit 0
+	show_usage
+	exit 0
 fi
 
 # Basic validation - ensure Docker is available
 if ! command -v docker >/dev/null 2>&1; then
-  log_error "Docker is not installed or not in PATH"
-  exit 1
+	log_error "Docker is not installed or not in PATH"
+	exit 1
 fi
 
 if ! docker info >/dev/null 2>&1; then
-  log_error "Docker is not running or not accessible"
-  exit 1
+	log_error "Docker is not running or not accessible"
+	exit 1
 fi
 
 # Use named Docker volumes to cache the Nix store and profile for faster subsequent builds
@@ -112,11 +115,11 @@ docker volume create "${NIX_CACHE_VOLUME}" >/dev/null 2>&1 || true
 
 # Get the root directory of the git repository, fallback to current directory
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  REPO_ROOT="$(git rev-parse --show-toplevel)"
-  RELATIVE_CURRENT_PATH="$(git rev-parse --show-prefix)"
+	REPO_ROOT="$(git rev-parse --show-toplevel)"
+	RELATIVE_CURRENT_PATH="$(git rev-parse --show-prefix)"
 else
-  REPO_ROOT="$(pwd)"
-  RELATIVE_CURRENT_PATH=""
+	REPO_ROOT="$(pwd)"
+	RELATIVE_CURRENT_PATH=""
 fi
 # Strip trailing slash if present
 RELATIVE_CURRENT_PATH="${RELATIVE_CURRENT_PATH%/}"
@@ -126,25 +129,39 @@ rm -rf result
 
 # Build the Docker command arguments
 DOCKER_ARGS=(
-  --rm
-  --volume "${NIX_CACHE_VOLUME}:/nix"
-  --volume "${NIX_TOOLS_VOLUME}:/tools"
-  --volume "${REPO_ROOT}:/src"
-  --workdir "/src/${RELATIVE_CURRENT_PATH:-.}"
+	--rm
+	--volume "${NIX_CACHE_VOLUME}:/nix"
+	--volume "${NIX_TOOLS_VOLUME}:/tools"
+	--volume "${REPO_ROOT}:/src"
+	--workdir "/src/${RELATIVE_CURRENT_PATH:-.}"
 )
 
 # Allocate tty and interactive mode if attached to a terminal
 if [[ -t 0 ]]; then
-  DOCKER_ARGS+=(--interactive)
+	DOCKER_ARGS+=(--interactive)
 fi
 if [[ -t 1 ]]; then
-  DOCKER_ARGS+=(--tty)
+	DOCKER_ARGS+=(--tty)
 fi
 
 # Add environment variables that might be useful
 DOCKER_ARGS+=(--env "TERM=${TERM:-xterm}")
+
+# Forward the host SSH agent (e.g. nixos-anywhere / nixos-rebuild --target-host) unless the caller already did.
+# On macOS the Linux VM running Docker cannot bind-mount the host's agent socket (connecting fails): the runtime offers
+# a relay instead, which forwards the agent of the login session (launchd's SSH_AUTH_SOCK).
+if [[ -n ${SSH_AUTH_SOCK:-} ]] &&
+	[[ " ${EXTRA_ENV[*]-} ${EXTRA_DOCKER[*]-} " != *" SSH_AUTH_SOCK"* && " ${EXTRA_DOCKER[*]-} " != *":/ssh-agent"* ]]; then
+	kernel="$(uname -s)"
+	if [[ ${kernel} == "Darwin" ]]; then
+		DOCKER_ARGS+=(--volume "/run/host-services/ssh-auth.sock:/ssh-agent" --env "SSH_AUTH_SOCK=/ssh-agent")
+	elif [[ -S ${SSH_AUTH_SOCK} ]]; then
+		DOCKER_ARGS+=(--volume "${SSH_AUTH_SOCK}:/ssh-agent" --env "SSH_AUTH_SOCK=/ssh-agent")
+	fi
+fi
+
 if [[ ${#EXTRA_DOCKER[@]} -gt 0 ]]; then
-  DOCKER_ARGS+=("${EXTRA_DOCKER[@]}")
+	DOCKER_ARGS+=("${EXTRA_DOCKER[@]}")
 fi
 
 # Execute the Nix command in the container
