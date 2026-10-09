@@ -93,19 +93,32 @@ execution model, not as a manual item.
 
 Manual by omission only. Nothing here has been filed. The order is not a triage.
 
-| #   | Candidate                                                                                                 | Why                                                                                                  | Evidence                                                 |
-| --- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| 1   | Codify the `pve-01` NOTRACK hook (Ansible role for `pve-01`, or at least a versioned script)              | A host rebuild silently breaks external reachability of every Cilium Gateway VIP                     | `INF-20260730-00`                                        |
-| 2   | Manage the Tailnet ACL as code (`tailscale.Acl`)                                                          | `tagOwners` is a prerequisite for rimbilliton and nothing in the repo records the ACL                | `rimbilliton.akn/docs/BOOTSTRAP.md:30`                   |
-| 3   | Re-enable rimbilliton's Pocket-Id group and OIDC client with `@axnic/pulumi-pocket-id`                    | The provider used by the other stacks works; the current file is dead code waiting on issue 1170     | `rimbilliton.akn/.../stack/pocket-id.ts`                 |
-| 4   | Declare ArgoCD spoke registration (cluster `Secret`) instead of `argocd cluster add`                      | The only record of lungmen's registration is the live ArgoCD; a hub rebuild needs a manual step      | `OMNI-20260721-00` Step 11                               |
-| 5   | Reconcile Omni machine classes and cluster templates from Git, or add a drift check                       | State lives in the Omni instance and is lost on reset; diff and apply are manual `mise` tasks        | `.mise.toml` omni tasks; `OMNI-20260721-00` known issues |
-| 6   | Delete `catalog/fluxcd/`                                                                                  | Unreferenced leftover of a GitOps engine the repo no longer uses                                     | repo-wide search; `AGENTS.md`                            |
-| 7   | Script the TrueNAS NFS4 ACL application and add a drift check                                             | Re-applied by hand after every NAS rebuild, no drift detection                                       | `docs/TRUENAS.md` Permissions and Rebuild                |
-| 8   | Script or document as its own procedure the Garage application-key bootstrap for the Pulumi state         | Needed before any `pulumi up` after a disaster; today a snippet inside another procedure             | `INF-20260705-00`                                        |
-| 9   | Drive the Pelican node and Wings token bootstrap from a NixOS unit, like roles and allocations            | Last UI-only part of the rimbilliton bootstrap                                                       | `rimbilliton.akn/docs/BOOTSTRAP.md` step 6               |
-| 10  | Fix documentation drift: OMNI procedure Steps 9/10 TODOs, `AGENTS.md` project tree, `talosnet-dns` README | Found while building this inventory                                                                  | cross-cutting findings                                   |
-| 11  | Decide whether `kazimierz.akn` needs an automatic apply again                                             | The `ansible-pull` removal leaves a VPS without scheduled reconciliation and without a stated reason | `kazimierz.akn/docs/BOOTSTRAP.md`; ADR-008               |
+- [ ] **1. Codify the `pve-01` NOTRACK hook (Ansible role for `pve-01`, or at least a versioned script)** — A host
+      rebuild silently breaks external reachability of every Cilium Gateway VIP. Evidence: `INF-20260730-00`.
+- [ ] **2. Manage the Tailnet ACL as code (`tailscale.Acl`)** — `tagOwners` is a prerequisite for rimbilliton and
+      nothing in the repo records the ACL. Evidence: `rimbilliton.akn/docs/BOOTSTRAP.md:30`.
+- [ ] **3. Re-enable rimbilliton's Pocket-Id group and OIDC client with `@axnic/pulumi-pocket-id`** — The provider used
+      by the other stacks works; the current file is dead code waiting on issue 1170. Evidence:
+      `rimbilliton.akn/.../stack/pocket-id.ts`.
+- [ ] **4. Declare ArgoCD spoke registration (cluster `Secret`) instead of `argocd cluster add`** — The only record of
+      lungmen's registration is the live ArgoCD; a hub rebuild needs a manual step. Evidence: `OMNI-20260721-00`
+      Step 11.
+- [ ] **5. Reconcile Omni machine classes and cluster templates from Git, or add a drift check** — State lives in the
+      Omni instance and is lost on reset; diff and apply are manual `mise` tasks. Evidence: `.mise.toml` omni tasks;
+      `OMNI-20260721-00` known issues.
+- [ ] **6. Delete `catalog/fluxcd/`** — Unreferenced leftover of a GitOps engine the repo no longer uses. Evidence:
+      repo-wide search; `AGENTS.md`.
+- [ ] **7. Script the TrueNAS NFS4 ACL application and add a drift check** — Re-applied by hand after every NAS rebuild,
+      no drift detection. Evidence: `docs/TRUENAS.md` Permissions and Rebuild.
+- [ ] **8. Script or document as its own procedure the Garage application-key bootstrap for the Pulumi state** — Needed
+      before any `pulumi up` after a disaster; today a snippet inside another procedure. Evidence: `INF-20260705-00`.
+- [ ] **9. Drive the Pelican node and Wings token bootstrap from a NixOS unit, like roles and allocations** — Last
+      UI-only part of the rimbilliton bootstrap. Evidence: `rimbilliton.akn/docs/BOOTSTRAP.md` step 6.
+- [ ] **10. Fix documentation drift: OMNI procedure Steps 9/10 TODOs, `AGENTS.md` project tree, `talosnet-dns` README**
+      — Found while building this inventory. Evidence: cross-cutting findings.
+- [ ] **11. Decide whether `kazimierz.akn` needs an automatic apply again** — The `ansible-pull` removal leaves a VPS
+      without scheduled reconciliation and without a stated reason. Evidence: `kazimierz.akn/docs/BOOTSTRAP.md`;
+      ADR-008.
 
 ## Unverified points
 
