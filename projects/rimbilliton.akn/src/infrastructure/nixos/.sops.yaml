@@ -1,8 +1,9 @@
-# Shadows the root .sops.yaml for everything under this directory (SOPS picks the nearest config
-# and does not merge), so the admin key is repeated here next to the host key.
+# Exception to the per-project layout (projects/rimbilliton.akn/.sops.yaml): these secrets are consumed at build time
+# (sops-nix, `sops.defaultSopsFile`), so their rule lives next to them. sops looks for .sops.yaml from the *current
+# directory* upward and never merges configs, so run sops from this directory (or below) and keep the admin key here.
 # path_regex is relative to this file's directory.
 creation_rules:
-  # rimbilliton.akn NixOS host secrets (sops-nix, decrypted on the host with its SSH host key).
+  # NixOS host secrets (sops-nix, decrypted on the host with its SSH host key).
   # Recipients: the admin key and the host key (`ssh-to-age < extra/etc/ssh/ssh_host_ed25519_key.pub`,
   # see projects/rimbilliton.akn/docs/BOOTSTRAP.md).
   - path_regex: secrets/rimbilliton\.sops\.yaml$
