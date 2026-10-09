@@ -3,13 +3,10 @@ import * as pulumi from "@pulumi/pulumi";
 
 // Both objects below were created by hand in the Pocket-Id UI before this
 // stack managed them, and the client is the one Pelican already signs in with.
-// They are therefore IMPORTED, never created: their ids come from the stack
-// config so that `pulumi preview` fails loudly (missing config) instead of
-// silently creating a second group/client. See docs/BOOTSTRAP.md, step 2, for
-// the one-off import procedure.
-const config = new pulumi.Config();
-const minecraftGroupUuid = config.require("pocketIdMinecraftGroupId");
-const minecraftClientUuid = config.require("pocketIdMinecraftClientId");
+// They are therefore IMPORTED (Pulumi `import` option), never created. The
+// option is a no-op once the resources are in the state.
+const minecraftGroupUuid = "63433895-1598-4755-88fd-be11da3c225c";
+const minecraftClientUuid = "daf37fa0-3508-47d0-8dee-7180e8bd9437";
 
 // The `admin` group lives in chezmoi.sh (single source of truth).
 const chezmoiSh = new pulumi.StackReference("chezmoi.sh", {
@@ -30,11 +27,6 @@ export const minecraftGroup = new pocketid.UserGroup(
 // OIDC client used by Pelican's "Pocket ID Provider" plugin to sign users in.
 // Restricted to `admin` and `minecraft`: Pocket-Id itself enforces who may log
 // in, Pelican has no group filter of its own.
-//
-// Deliberately NO `OidcClientSecret` here: creating one generates a new secret
-// and invalidates the one Pelican reads from SOPS
-// (`oauth_pocketid_client_secret`), which would break the login until the host
-// secret is rotated.
 export const minecraftOidcClient = new pocketid.OidcClient(
 	"minecraft",
 	{
@@ -54,5 +46,15 @@ export const minecraftOidcClient = new pocketid.OidcClient(
 	{ import: minecraftClientUuid },
 );
 
+// The pre-existing secret was not imported: Pulumi never touches it. This one
+// is generated on the first `pulumi up` and REPLACES it in Pocket-Id, so
+// `oauth_pocketid_client_secret` in the NixOS SOPS file must be updated right
+// after (docs/BOOTSTRAP.md, step 2).
+const minecraftOidcClientSecretResource = new pocketid.OidcClientSecret(
+	"minecraft-secret",
+	{ clientId: minecraftOidcClient.id },
+);
+
 export const minecraftGroupId = minecraftGroup.id;
 export const minecraftOidcClientId = minecraftOidcClient.id;
+export const minecraftOidcClientSecret = minecraftOidcClientSecretResource.secret;
