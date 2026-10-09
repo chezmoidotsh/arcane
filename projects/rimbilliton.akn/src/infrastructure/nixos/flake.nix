@@ -13,18 +13,25 @@
     };
   };
 
-  outputs = { nixpkgs, disko, sops-nix, ... }: {
-    nixosConfigurations.rimbilliton-akn = nixpkgs.lib.nixosSystem {
-      system = "aarch64-linux";
-      modules = [
-        disko.nixosModules.disko
-        sops-nix.nixosModules.sops
-        ./disko.nix
-        ./configuration.nix
-        ./modules/pelican.nix
-        ./modules/caddy.nix
-        ./modules/backup.nix
-      ];
+  outputs = { nixpkgs, disko, sops-nix, ... }:
+    let
+      mk = system: platform: nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          disko.nixosModules.disko
+          sops-nix.nixosModules.sops
+          platform
+          ./configuration.nix
+          ./modules/pelican.nix
+          ./modules/caddy.nix
+          ./modules/backup.nix
+        ];
+      };
+    in
+    {
+      # Production: OCI Always Free A1. nixos-anywhere cannot guess the target, pick the output with `--flake .#<host>-<arch>`.
+      nixosConfigurations.rimbilliton-akn-aarch64 = mk "aarch64-linux" ./platforms/oci.a1.nix;
+      # Test VM (x86_64, legacy BIOS) to rehearse the install procedure.
+      nixosConfigurations.rimbilliton-akn-x86_64 = mk "x86_64-linux" ./platforms/proxmox.kvm.nix;
     };
-  };
 }

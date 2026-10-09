@@ -12,3 +12,36 @@ run = [
   "d2 --theme 200 architecture.d2 docs/assets/architecture-dark.svg",
 ]
 dir = "{{ config_root }}"
+
+# -----------------------------------------------------------------------------
+# NixOS host (src/infrastructure/nixos). Run from anywhere: `mise run nixos:<task>`.
+# nonix forwards $SSH_AUTH_SOCK to the container, so the key must be in your agent.
+# -----------------------------------------------------------------------------
+
+[tasks."nixos:install"]
+description = "(Re)install the host with nixos-anywhere (DESTRUCTIVE: repartitions the target disk)"
+# The OCI host needs `unsecure=true` on the Pulumi stack (SSH closed otherwise). Example:
+#   mise run nixos:install ubuntu@<public-ip>            # OCI A1 (aarch64)
+#   mise run nixos:install nixos@192.168.10.63 --arch x86_64   # Proxmox KVM test VM
+usage = '''
+arg "<target>" help="SSH target, user@host"
+flag "--arch <arch>" default="aarch64" help="Platform to install" {
+  choices "aarch64" "x86_64"
+}
+'''
+run = '''
+if [ "$usage_arch" = aarch64 ]; then extra="--kexec-extra-flags --kexec-syscall"; else extra="--build-on remote"; fi
+nonix run github:nix-community/nixos-anywhere -- --flake ".#rimbilliton-akn-$usage_arch" --extra-files extra $extra \
+  --target-host "$usage_target"
+'''
+dir = "{{ config_root }}/src/infrastructure/nixos"
+
+[tasks."nixos:deploy"]
+description = "Apply the configuration to the running host over the tailnet"
+usage = '''
+flag "--arch <arch>" default="aarch64" help="Platform to deploy" {
+  choices "aarch64" "x86_64"
+}
+'''
+run = 'nonix run nixpkgs#nixos-rebuild -- switch --flake ".#rimbilliton-akn-$usage_arch" --target-host root@rimbilliton-akn'
+dir = "{{ config_root }}/src/infrastructure/nixos"

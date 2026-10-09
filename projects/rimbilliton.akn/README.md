@@ -176,7 +176,7 @@ rimbilliton.akn/
     └── infrastructure/
         ├── nixos/                              # NixOS flake (infrastructure-as-code)
         │   ├── flake.nix                       # Inputs and host definition
-        │   ├── disko.nix                       # Disk layout
+        │   ├── platforms/                      # Boot + disk layout: oci.a1.nix (prod, aarch64), proxmox.kvm.nix (test VM)
         │   ├── configuration.nix               # Base system (boot, network, SSH, Tailscale, sops)
         │   ├── modules/
         │   │   ├── pelican.nix                 # Pelican Panel and Wings containers (Docker)
@@ -198,7 +198,7 @@ The OCI resources are provisioned first via the Pulumi stack in `src/infrastruct
 over the bootstrap image and managed with `nixos-rebuild` from then on:
 
 ```bash
-nonix run github:nix-community/nixos-anywhere -- --flake ./src/infrastructure/nixos#rimbilliton-akn \
+nonix run github:nix-community/nixos-anywhere -- --flake ./src/infrastructure/nixos#rimbilliton-akn-aarch64 \
   --extra-files ./src/infrastructure/nixos/extra --target-host ubuntu@<public-ip>
 ```
 

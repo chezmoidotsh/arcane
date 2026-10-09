@@ -4,11 +4,7 @@
   networking.hostName = "rimbilliton-akn";
   time.timeZone = "UTC";
 
-  # --- Boot (OCI aarch64, UEFI) ------------------------------------------------
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-  boot.initrd.availableKernelModules = [ "virtio_pci" "virtio_scsi" "sd_mod" "nvme" ];
-  boot.kernelParams = [ "console=ttyAMA0" ];
+  # Boot loader, disk layout and console live in platforms/ (selected by the flake output).
 
   # 6 GB RAM, ~4 GB Java heap: compressed swap as a safety net.
   zramSwap.enable = true;

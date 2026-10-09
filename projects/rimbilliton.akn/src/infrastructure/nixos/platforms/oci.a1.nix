@@ -1,5 +1,10 @@
-# OCI A1 boot volume (paravirtualized -> /dev/sda), UEFI.
+# OCI Always Free A1 (aarch64): UEFI, boot volume paravirtualized -> /dev/sda.
 {
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+  boot.initrd.availableKernelModules = [ "virtio_pci" "virtio_scsi" "sd_mod" "nvme" ];
+  boot.kernelParams = [ "console=ttyAMA0" ];
+
   disko.devices.disk.main = {
     device = "/dev/sda";
     type = "disk";
