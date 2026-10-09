@@ -1,8 +1,12 @@
 # OCI Always Free A1 (aarch64): UEFI, boot volume paravirtualized -> /dev/sda.
 { lib, ... }:
 {
-  # Private (VCN) address of the instance, exported by the Pulumi stack: `pulumi stack output privateIp > private-ip`.
-  pangolin.bindIp = lib.removeSuffix "\n" (builtins.readFile ../private-ip);
+  # Binding IP = private (VCN) address of the instance. Written by `mise run nixos:binding-ip` (Pulumi output) into the
+  # git-ignored extra/, which nixos-anywhere also copies onto the host. Empty when missing: the build then refuses it.
+  pangolin.bindIp =
+    let f = ../extra/etc/pangolin/binding-ip;
+    in if builtins.pathExists f then lib.removeSuffix "
+" (builtins.readFile f) else "";
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;

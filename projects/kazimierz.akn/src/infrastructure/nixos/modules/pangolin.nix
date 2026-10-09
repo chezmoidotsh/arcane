@@ -195,7 +195,7 @@ let
   dockerBin = "${config.virtualisation.docker.package}/bin/docker";
 in
 {
-  # Private (VCN) address of the instance, set by the platform file (platforms/). Docker publishes 80/443 on it only, so
+  # Binding IP: private (VCN) address of the instance, set by the platform file (platforms/). Docker publishes 80/443 on it only, so
   # that `tailscale serve` can own :443 on the tailnet address without a port clash.
   options.pangolin.bindIp = lib.mkOption {
     type = lib.types.str;
@@ -205,7 +205,7 @@ in
   config = {
   assertions = [{
     assertion = bindIp != "";
-    message = "pangolin.bindIp is empty: run `pulumi stack output privateIp > private-ip` (see docs/MIGRATION_NIXOS.md).";
+    message = "pangolin.bindIp is empty: run `mise run nixos:binding-ip` (or nixos:oci:*, nixos:e2e) to write extra/etc/pangolin/binding-ip (see docs/MIGRATION_NIXOS.md).";
   }];
 
   virtualisation.docker.enable = true;
