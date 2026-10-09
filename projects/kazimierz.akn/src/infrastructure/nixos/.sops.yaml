@@ -1,0 +1,12 @@
+# Exception to the per-project layout (projects/kazimierz.akn/.sops.yaml): these secrets are consumed at build time
+# (sops-nix, `sops.defaultSopsFile`), so their rule lives next to them. sops looks for .sops.yaml from the *current
+# directory* upward and never merges configs, so run sops from this directory (or below) and keep the admin key here.
+# path_regex is relative to this file's directory.
+creation_rules:
+  # NixOS host secrets (sops-nix, decrypted on the host with its SSH host key).
+  # Recipients: the admin key and the host key. The host key only exists once generated during the migration:
+  # append `ssh-to-age < extra/etc/ssh/ssh_host_ed25519_key.pub` here and run `sops updatekeys`
+  # (see projects/kazimierz.akn/docs/MIGRATION_NIXOS.md).
+  - path_regex: secrets/kazimierz\.sops\.yaml$
+    age: >-
+      age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9

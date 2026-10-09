@@ -34,8 +34,10 @@ export const volume = new oci.core.Volume(
 // Latest Canonical Ubuntu Minimal ARM platform image, whatever version that
 // currently is (no version pinned) -- resolved live instead of a pinned
 // OCID, since OCI drops dated platform-image OCIDs from the list once a
-// newer one ships. Minimal variant: smaller boot footprint, the
-// `system_setup`/`pangolin` Ansible roles handle the rest.
+// newer one ships. Minimal variant: smaller boot footprint. It is only a
+// *bootstrap* OS: NixOS (src/infrastructure/nixos) is installed over it with
+// nixos-anywhere, see docs/MIGRATION_NIXOS.md. Until that migration is done,
+// the `system_setup`/`pangolin` Ansible roles configure it instead.
 //
 // Filtering/sorting happens here in JS, not via getImages' own `filters`/
 // `sortBy` args: those are applied server-side by the bridged Go provider,
