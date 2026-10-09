@@ -6,8 +6,8 @@ This document describes how to bootstrap the Rimbilliton.AKN server from nothing
 ## Overview
 
 The OCI resources (compartment, VCN/subnet/NSG, instance), the DNS records, the B2 bucket, the Tailscale key and the
-Pocket-ID `minecraft` group and OIDC client (`stack/pocket-id.ts`) are provisioned by the Pulumi stack in
-`src/infrastructure/pulumi/`. The OIDC client secret is the exception: it is never managed by Pulumi (see step 2). The instance boots from a stock Ubuntu image with only an SSH key injected via cloud-init
+Pocket-ID `minecraft` group, OIDC client and client secret (`stack/pocket-id.ts`) are provisioned by the Pulumi stack in
+`src/infrastructure/pulumi/`. The instance boots from a stock Ubuntu image with only an SSH key injected via cloud-init
 (Pulumi's `ssh_authorized_keys` config). NixOS is then installed over it with `nixos-anywhere`, which is the only manual
 step.
 
@@ -74,11 +74,12 @@ The preview must show the group and the client as **import** or no-op, with at m
 fields, plus the **create** of `minecraft-secret`. If it shows a `create` or a `replace` of the client or the group,
 stop: a UUID or a field is wrong. Then:
 
-1. `mise run pulumi:apply`: the new secret **replaces** the old one in Pocket-ID, so the Pelican login is broken from
-   this point.
+1. `mise run pulumi:apply`: the new secret **replaces** the old one in Pocket-ID. If Pelican is already running, its
+   login is broken from this point.
 2. Put `pulumi stack output --show-secrets minecraftOidcClientSecret` in the SOPS file as `oauth_pocketid_client_secret`
-   (step 3) and redeploy the host (step 6).
-3. Check that signing in to `https://minecraft.chezmoi.sh/` with Pocket-ID works.
+   (step 3). If the host is already running, redeploy it (`nixos-rebuild switch`, see step 6.4); on a first bootstrap
+   the secret is simply picked up by the install (step 4).
+3. Once Pelican is up, check that signing in to `https://minecraft.chezmoi.sh/` with Pocket-ID works.
 
 **Fresh setup** (nothing exists in Pocket-ID yet): create the group and the client by hand in the UI with the values
 above, replace the two UUIDs in `stack/pocket-id.ts`, then follow the same procedure.
@@ -96,8 +97,8 @@ sops --encrypt --in-place secrets/rimbilliton.sops.yaml
 ```
 
 Fill `tailscale_authkey`, `restic_*` and the Pocket-ID client (`oauth_pocketid_client_id` and
-`oauth_pocketid_client_secret`, both from the stack outputs); the three `wings_*` values only exist once the node is created in the Panel (step 6),
-so add them then.
+`oauth_pocketid_client_secret`, both from the stack outputs); the three `wings_*` values only exist once the node is
+created in the Panel (step 6), so add them then.
 
 The file must be named `rimbilliton.sops.yaml`: that is the name matched by the `rimbilliton.akn` creation rule of the
 root `.sops.yaml` (admin key + host key as recipients), and the one `configuration.nix` reads. `secrets/*.yaml` is
