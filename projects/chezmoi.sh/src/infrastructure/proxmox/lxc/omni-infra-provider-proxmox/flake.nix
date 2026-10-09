@@ -33,7 +33,7 @@
 
       # Appliance image version — CalVer (YYYY.MM.DD). Bump before each build;
       # append -N for multiple builds on the same day.
-      version = "2026.08.07";
+      version = "2026.10.09";
 
       # -----------------------------------------------------------------------
       # Build-time secrets, read from the environment so the build stays pure
