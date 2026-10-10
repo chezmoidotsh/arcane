@@ -98,8 +98,8 @@ remains operationally light enough for a single maintainer?**
 - **Existing skill stack is Prometheus-shaped** — zero prior ClickHouse experience (per [#1018][]).
 - **Proxmox is the substrate** — clusters run as VMs; standalone services already run as NixOS LXCs (the
   `oci.chezmoi.sh` precedent, see ADR-008's sibling reasoning).
-- **`kazimierz.akn` is not Kubernetes** — it is an Ansible + Docker Compose VPS (ADR-008), reachable only over
-  Tailscale. Any "agent per cluster" model must accommodate a non-K8s, remote target.
+- **`kazimierz.akn` is not Kubernetes** — it is a standalone VPS (ADR-008; NixOS since ADR-016, Ansible + Docker
+  Compose when this ADR was written), reachable only over Tailscale. Any "agent per cluster" model must accommodate a non-K8s, remote target.
 - **Single-maintainer resource budget** — no appetite for operating a multi-node storage cluster for a homelab.
 
 ## Considered Options
