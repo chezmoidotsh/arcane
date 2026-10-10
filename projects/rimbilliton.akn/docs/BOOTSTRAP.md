@@ -280,3 +280,6 @@ mise run nixos:oci:update
 
 It runs `nixos-rebuild switch --flake .#rimbilliton-akn-aarch64 --target-host root@rimbilliton-akn` (nixos-rebuild taken
 from the nixpkgs revision locked in `flake.lock`) through `nonix`.
+
+There is no automatic update, on purpose: the instance is not supervised yet and a rollback is hard to do cleanly (see
+ADR-008, which covers `kazimierz.akn` and applies here too).

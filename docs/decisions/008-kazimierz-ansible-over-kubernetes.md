@@ -419,6 +419,11 @@ operator re-runs the playbook.
 and its dedicated Tailscale Serve listener on port 10000) was removed as well: it is not needed anymore. Tailscale Serve
 remains in use by the `pangolin` role to expose Pangolin's Integration API on the tailnet.
 
+**No automatic update on NixOS either (2026-10-10)**: `kazimierz.akn` (and `rimbilliton.akn`) moved to NixOS with
+`nixos-rebuild` run by hand (PR 1304), and `system.autoUpgrade` is deliberately left off. Neither instance has
+supervision yet, so a bad unattended upgrade would go unnoticed, and the rollback is complex. Revisit once the
+instances are monitored.
+
 ### Lessons Learned
 
 #### When Kubernetes Makes Sense
