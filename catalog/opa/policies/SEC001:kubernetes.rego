@@ -4,18 +4,13 @@ import rego.v1
 
 default local_registry := "oci.chezmoi.sh"
 
-default excluded_namespaces := {
-    "kube-system",    # Kubernetes system components (e.g. CoreDNS, kube-proxy) may pull from public registries — avoid OCI dependency for critical cluster components
-    "kube-public",    # Public namespace, typically read-only and used for cluster info — exclude from OCI enforcement
-    "kube-node-lease", # Node lease namespace, used for node heartbeats — exclude from OCI enforcement
-    "longhorn-system", # Longhorn images still pull from docker.io — migrate to oci.chezmoi.sh in a dedicated follow-up PR
-}
-
 # ──────────────────────────────────────────────────────────────────────────────
 # SEC001 — Enforce Local OCI Registry
 #
 # All container images must be pulled through the local Zot mirror at
-# oci.chezmoi.sh. This applies to containers, initContainers,
+# oci.chezmoi.sh, in every namespace (kube-system included: the registry runs
+# outside Kubernetes, so it cannot create a bootstrap circular dependency). This
+# applies to containers, initContainers,
 # ephemeralContainers, and OCI image volumes.
 #
 # Supports both conftest invocation modes:
@@ -44,15 +39,6 @@ resources contains r if {
 
 is_local_image(image) if {
     startswith(image, local_registry)
-}
-
-# Bootstrap namespaces bypass the "must use OCI" rule — but they must also NOT
-# use oci.chezmoi.sh: if the registry is KO, these namespaces must still be
-# schedulable to allow recovery (circular-dependency hazard).
-# Cluster-scoped resources (no namespace) follow the same rule as normal
-# namespaces: images must use the local registry.
-is_excluded_namespace(res) if {
-    res.metadata.namespace in excluded_namespaces
 }
 
 # ── Container extraction ──────────────────────────────────────────────────────
@@ -98,7 +84,6 @@ resource_volume_images(res) := {v |
 
 deny contains msg if {
     some res in resources
-    not is_excluded_namespace(res)
     some c in resource_containers(res)
     not is_local_image(c.image)
     ns := object.get(res.metadata, "namespace", "<no namespace in manifest>")
@@ -107,25 +92,8 @@ deny contains msg if {
 
 deny contains msg if {
     some res in resources
-    not is_excluded_namespace(res)
     some v in resource_volume_images(res)
     not is_local_image(v.image)
     ns := object.get(res.metadata, "namespace", "<no namespace in manifest>")
     msg := sprintf("SEC001: OCI volume %q in namespace %q must use local registry prefix %q (got %q)", [v.name, ns, local_registry, v.image])
-}
-
-deny contains msg if {
-    some res in resources
-    res.metadata.namespace in excluded_namespaces
-    some c in resource_containers(res)
-    is_local_image(c.image)
-    msg := sprintf("SEC001: container %q in bootstrap namespace %q must NOT use local registry %q — namespace must be schedulable before the registry is available (got %q)", [c.name, res.metadata.namespace, local_registry, c.image])
-}
-
-deny contains msg if {
-    some res in resources
-    res.metadata.namespace in excluded_namespaces
-    some v in resource_volume_images(res)
-    is_local_image(v.image)
-    msg := sprintf("SEC001: OCI volume %q in bootstrap namespace %q must NOT use local registry %q — namespace must be schedulable before the registry is available (got %q)", [v.name, res.metadata.namespace, local_registry, v.image])
 }
