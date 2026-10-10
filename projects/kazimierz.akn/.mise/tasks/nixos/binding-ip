@@ -7,6 +7,6 @@ set -euo pipefail
 
 f=../nixos/extra/etc/pangolin/binding-ip
 mkdir -p "$(dirname "$f")"
-pulumi stack output bindingIp >"$f.tmp"
+pulumi stack output --stack kazimierz_akn.live bindingIp >"$f.tmp"
 mv "$f.tmp" "$f"
 git add -f -N "$f"

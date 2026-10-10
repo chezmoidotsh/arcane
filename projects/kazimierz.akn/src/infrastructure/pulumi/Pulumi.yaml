@@ -1,7 +1,7 @@
 name: kazimierz-akn-infra
 description: >-
   OCI Free Tier infrastructure for kazimierz.akn: VCN + NSG, ARM compute instance,
-  persistent block volume, and Cloudflare DNS records.
+  Cloudflare DNS records.
 runtime:
   name: nodejs
   options:
