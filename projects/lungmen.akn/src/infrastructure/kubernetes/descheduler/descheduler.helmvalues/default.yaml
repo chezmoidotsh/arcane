@@ -1,5 +1,4 @@
 ---
-# See ../README.md for how to read the dry-run logs and flip to real evictions.
 kind: CronJob
 
 # Every 6 hours: pod churn on 2 workers is slow, and each eviction restarts a
@@ -13,9 +12,6 @@ failedJobsHistoryLimit: 3
 
 cmdOptions:
   v: 3
-  # ROLLOUT SAFETY: log what would be evicted, evict nothing. Remove this line
-  # (or set it to false) once the logs have been reviewed (see ../README.md).
-  dry-run: true
 
 deschedulerPolicy:
   # Hard caps per run, whatever the plugin computes.

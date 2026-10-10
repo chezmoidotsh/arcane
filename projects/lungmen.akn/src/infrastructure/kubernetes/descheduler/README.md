@@ -21,19 +21,15 @@ per node and 2 per namespace per run.
   `velero-system`, `smb-csi-driver-system`, `proxmox-system`, `kube-system`.
 - Egress is limited to the kube-apiserver and DNS (CiliumNetworkPolicy, default-deny).
 
-## Rollout: dry-run first
+## Reading the logs
 
-`cmdOptions.dry-run: true` is set in `descheduler.helmvalues/default.yaml`: the Job only logs what it would evict.
+Evictions are real (the initial dry-run phase is over).
 
 ```sh
 kubectl -n descheduler-system create job --from=cronjob/descheduler descheduler-manual   # optional: don't wait 6h
-kubectl -n descheduler-system logs job/descheduler-manual | grep -iE 'evict|underutilized|overutilized|dry'
+kubectl -n descheduler-system logs job/descheduler-manual | grep -iE 'evict|underutilized|overutilized'
 ```
 
-Look for `"Node is underutilized"` / `"Node is overutilized"` lines (the computed usage per node) and
-`"Evicted pod in dry run mode"` lines (pod, namespace, node). Check that the pods it would move are the ones you
-accept to restart, and that it does not oscillate between runs.
-
-To go live (human step, after a few cycles of sane logs): remove `dry-run: true` from `default.yaml`, run
-`dist:render`, commit, then watch the first real cycle and confirm no PodDisruptionBudget or availability issue.
-Extending to other clusters is a separate decision.
+`"Node is underutilized"` / `"Node is overutilized"` lines give the computed usage per node, `"Evicted pod"` lines
+the pod, namespace and node. To pause evictions, add `cmdOptions.dry-run: true` back in `default.yaml` and run
+`dist:render`. Extending to other clusters is a separate decision.

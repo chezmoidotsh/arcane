@@ -28,7 +28,6 @@ spec:
           containers:
           - args:
             - --policy-config-file=/policy-dir/policy.yaml
-            - --dry-run=true
             - --v=3
             command:
             - /bin/descheduler
