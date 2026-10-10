@@ -165,13 +165,13 @@ restored, so:
 
 ## Troubleshooting
 
-| Symptom                                                                                       | Cause and fix                                                                                                                                                                                                                                  |
-| --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Please login as the user ubuntu` when connecting as `root`                                   | Ubuntu OCI images prefix `/root/.ssh/authorized_keys` with a `command="echo 'Please login as the user ubuntu'..."` restriction. Copy the `ubuntu` user's `authorized_keys` to root before `nixos-anywhere`, or install as `ubuntu@<ip>`.        |
-| `Too many authentication failures`                                                            | The host's sshd has `MaxAuthTries 3` and an agent offering several keys exhausts it. Use `IdentitiesOnly yes` (with `-i <key>`) or a dedicated agent holding only the right key.                                                                |
-| `Connection refused` on the agent socket from `nonix` (macOS)                                 | The container only sees the `launchd`-session agent: `launchctl setenv SSH_AUTH_SOCK ...` then restart OrbStack (see the macOS note in step 2).                                                                                                |
-| Tailscale does not register, or the node is `kazimierz-akn-1`                                 | The `tailscaleAuthKey` (Pulumi `TailnetKey`, single use, 7 days) is consumed by a first boot, so a redone install or an old key needs a new one: `pulumi up --replace <urn of kazimierz-tailscale-key>`, then update `tailscale_authkey` in the SOPS file. Delete the stale node from the Tailscale admin console **before** the first boot, or it becomes `kazimierz-akn-1`. |
-| `pulumi stack output` fails or targets the wrong stack                                        | The live stack is `kazimierz_akn.live`: pass `--stack kazimierz_akn.live` (the `nixos:*` tasks already do).                                                                                                                                    |
+| Symptom | Cause and fix |
+| --- | --- |
+| `Please login as the user ubuntu` when connecting as `root` | Ubuntu OCI images prefix `/root/.ssh/authorized_keys` with a `command="echo 'Please login as the user ubuntu'..."` restriction. Copy the `ubuntu` user's `authorized_keys` to root before `nixos-anywhere`, or install as `ubuntu@<ip>`. |
+| `Too many authentication failures` | The host's sshd has `MaxAuthTries 3` and an agent offering several keys exhausts it. Use `IdentitiesOnly yes` (with `-i <key>`) or a dedicated agent holding only the right key. |
+| `Connection refused` on the agent socket from `nonix` (macOS) | The container only sees the `launchd`-session agent: `launchctl setenv SSH_AUTH_SOCK ...` then restart OrbStack (see the macOS note in step 2). |
+| Tailscale does not register, or the node is `kazimierz-akn-1` | The `tailscaleAuthKey` (Pulumi `TailnetKey`, single use, 7 days) is consumed by a first boot, so a redone install or an old key needs a new one: `pulumi up --replace <urn of kazimierz-tailscale-key>`, then update `tailscale_authkey` in the SOPS file. Delete the stale node from the Tailscale admin console **before** the first boot, or it becomes `kazimierz-akn-1`. |
+| `pulumi stack output` fails or targets the wrong stack | The live stack is `kazimierz_akn.live`: pass `--stack kazimierz_akn.live` (the `nixos:*` tasks already do). |
 
 ## Post-Bootstrap Configuration
 
