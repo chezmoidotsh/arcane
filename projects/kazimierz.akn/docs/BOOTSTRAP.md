@@ -155,4 +155,5 @@ mise run nixos:oci:update
 The task refreshes the binding IP, then runs
 `nixos-rebuild switch --flake .#kazimierz-akn-aarch64 --target-host root@kazimierz-akn` (taken from the nixpkgs revision
 locked in `flake.lock`). `nixos-rebuild --rollback` on the host goes back to the previous generation. There is no
-automatic update: refresh the inputs with `nonix flake update`, then deploy.
+automatic update, on purpose: the instance is not supervised yet and a rollback is hard to do cleanly (see ADR-008).
+Refresh the inputs with `nonix flake update`, then deploy.
