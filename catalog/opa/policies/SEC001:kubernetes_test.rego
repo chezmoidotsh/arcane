@@ -18,23 +18,6 @@ test_local_image_rejected_ghcr if {
     not is_local_image("ghcr.io/atuinsh/atuin:latest")
 }
 
-test_excluded_namespace_kube_system if {
-    is_excluded_namespace({"metadata": {"namespace": "kube-system"}})
-}
-
-test_non_excluded_namespace if {
-    not is_excluded_namespace({"metadata": {"namespace": "default"}})
-}
-
-test_excluded_namespace_longhorn if {
-    is_excluded_namespace({"metadata": {"namespace": "longhorn-system"}})
-}
-
-# zot-registry namespace is removed with the Kubernetes zot-registry deployment
-test_zot_registry_no_longer_excluded if {
-    not is_excluded_namespace({"metadata": {"namespace": "zot-registry"}})
-}
-
 test_deployment_compliant if {
     violations := {msg | some msg in deny with input as {
         "apiVersion": "apps/v1",
@@ -144,60 +127,6 @@ test_pod_spec_direct_ephemeral_containers if {
             "ephemeralContainers": [
                 {"name": "debug", "image": "busybox:1.36"},
             ],
-        },
-    }}
-    count(violations) == 1
-}
-
-test_bootstrap_namespace_allows_public_registry if {
-    violations := {msg | some msg in deny with input as {
-        "apiVersion": "apps/v1",
-        "kind": "DaemonSet",
-        "metadata": {"name": "app", "namespace": "kube-system"},
-        "spec": {
-            "template": {
-                "spec": {
-                    "containers": [
-                        {"name": "app", "image": "docker.io/library/nginx:latest"},
-                    ],
-                },
-            },
-        },
-    }}
-    count(violations) == 0
-}
-
-test_bootstrap_namespace_denies_local_registry if {
-    violations := {msg | some msg in deny with input as {
-        "apiVersion": "apps/v1",
-        "kind": "DaemonSet",
-        "metadata": {"name": "app", "namespace": "kube-system"},
-        "spec": {
-            "template": {
-                "spec": {
-                    "containers": [
-                        {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
-                    ],
-                },
-            },
-        },
-    }}
-    count(violations) == 1
-}
-
-test_bootstrap_namespace_denies_local_registry_longhorn if {
-    violations := {msg | some msg in deny with input as {
-        "apiVersion": "apps/v1",
-        "kind": "DaemonSet",
-        "metadata": {"name": "longhorn-manager", "namespace": "longhorn-system"},
-        "spec": {
-            "template": {
-                "spec": {
-                    "containers": [
-                        {"name": "longhorn-manager", "image": "oci.chezmoi.sh/docker.io/longhornio/longhorn-manager:latest"},
-                    ],
-                },
-            },
         },
     }}
     count(violations) == 1
@@ -343,24 +272,6 @@ test_all_container_types_mixed if {
     count(violations) == 2
 }
 
-test_kube_system_public_registry_allowed if {
-    violations := {msg | some msg in deny with input as {
-        "apiVersion": "apps/v1",
-        "kind": "Deployment",
-        "metadata": {"name": "app", "namespace": "kube-system"},
-        "spec": {
-            "template": {
-                "spec": {
-                    "containers": [
-                        {"name": "app", "image": "docker.io/library/nginx:latest"},
-                    ],
-                },
-            },
-        },
-    }}
-    count(violations) == 0
-}
-
 test_cronjob_non_compliant if {
     violations := {msg | some msg in deny with input as {
         "apiVersion": "batch/v1",
@@ -480,7 +391,33 @@ test_combine_mode_only_non_compliant_flagged if {
     count(violations) == 1
 }
 
-test_combine_mode_bootstrap_namespace_public_registry_allowed if {
+# Every namespace, kube-system included, must use the registry: it runs outside
+# Kubernetes, so there is no bootstrap circular dependency to protect against.
+test_kube_system_public_registry_denied if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "metadata": {"name": "app", "namespace": "kube-system"},
+        "spec": {"template": {"spec": {"containers": [
+            {"name": "app", "image": "docker.io/library/nginx:latest"},
+        ]}}},
+    }}
+    count(violations) == 1
+}
+
+test_kube_system_local_registry_allowed if {
+    violations := {msg | some msg in deny with input as {
+        "apiVersion": "apps/v1",
+        "kind": "DaemonSet",
+        "metadata": {"name": "app", "namespace": "kube-system"},
+        "spec": {"template": {"spec": {"containers": [
+            {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
+        ]}}},
+    }}
+    count(violations) == 0
+}
+
+test_combine_mode_kube_system_public_registry_denied if {
     violations := {msg | some msg in deny with input as [{"path": "ds.yaml", "contents": {
         "apiVersion": "apps/v1",
         "kind": "DaemonSet",
@@ -489,18 +426,5 @@ test_combine_mode_bootstrap_namespace_public_registry_allowed if {
             {"name": "app", "image": "docker.io/library/nginx:latest"},
         ]}}},
     }}]}
-    count(violations) == 0
-}
-
-test_combine_mode_bootstrap_namespace_local_registry_denied if {
-    violations := {msg | some msg in deny with input as [{"path": "ds.yaml", "contents": {
-        "apiVersion": "apps/v1",
-        "kind": "DaemonSet",
-        "metadata": {"name": "app", "namespace": "longhorn-system"},
-        "spec": {"template": {"spec": {"containers": [
-            {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
-        ]}}},
-    }}]}
     count(violations) == 1
 }
-

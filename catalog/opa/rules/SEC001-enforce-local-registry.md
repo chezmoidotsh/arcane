@@ -5,7 +5,7 @@
 | ID          | SEC001                                      |
 | Severity    | Medium                                      |
 | Category    | Supply-chain security / Air-gapped registry |
-| Scope       | All namespaces (exclusions listed below)    |
+| Scope       | All namespaces, no exclusion                |
 | Enforcement | CI-time (conftest)                          |
 
 ## Rationale
@@ -45,7 +45,6 @@ committed with the correct registry prefix, eliminating the need for runtime mut
 | ------------------------------------- | -------------------------------------------------------------- |
 | `policies/SEC001:kubernetes.rego`     | Native Kubernetes resources (Pods, Deployments, DaemonSets, …) |
 | `policies/SEC001:cloudnative-pg.rego` | CloudNative-PG `ImageCatalog` and `ClusterImageCatalog`        |
-| `policies/SEC001:crossplane.rego`     | Crossplane `Provider` and `Function` (`.spec.package`)         |
 
 ## What is checked
 
@@ -81,26 +80,13 @@ These resources are cluster-scoped; namespace exclusions do not apply.
 
 ## Namespace enforcement model
 
-SEC001 applies two complementary rules depending on namespace:
+SEC001 applies to **every namespace**, `kube-system` included, and to cluster-scoped resources: images must use the
+`oci.chezmoi.sh` prefix. There is no exclusion list.
 
-| Namespace class                                | Rule                                            |
-| ---------------------------------------------- | ----------------------------------------------- |
-| Normal namespaces and cluster-scoped resources | Images **must** use `oci.chezmoi.sh` prefix     |
-| Bootstrap namespaces                           | Images **must NOT** use `oci.chezmoi.sh` prefix |
-
-Bootstrap namespaces host infrastructure that must be schedulable before the local registry mirror is available. Pulling
-from `oci.chezmoi.sh` in these namespaces risks a circular dependency: if the registry itself is degraded, these
-critical components cannot be scheduled, potentially preventing the registry from recovering.
-
-| Namespace         | Reason                     |
-| ----------------- | -------------------------- |
-| `kube-system`     | Core Kubernetes components |
-| `kube-public`     | Cluster metadata           |
-| `kube-node-lease` | Node heartbeat leases      |
-
-`longhorn-system`, `zot-registry`, and `argocd` were previously excluded due to the circular bootstrap dependency
-introduced by running Zot on Kubernetes with Longhorn storage. Since Zot now runs as a standalone Proxmox LXC
-(independent of any Kubernetes cluster), these exclusions are no longer necessary and have been removed.
+Zot runs as a standalone Proxmox LXC, independent of any Kubernetes cluster, so the registry cannot depend on the
+workloads it serves. The circular bootstrap dependency that used to justify exempting `kube-system`, `kube-public`,
+`kube-node-lease`, `longhorn-system`, `zot-registry` and `argocd` no longer exists, and neither does the former
+requirement that bootstrap namespaces must _not_ use the mirror.
 
 ## Enforcement
 
