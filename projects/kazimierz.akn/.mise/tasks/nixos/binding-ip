@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+#MISE description="Write the binding IP (instance private address, Pulumi output) to nixos/extra/etc/pangolin/binding-ip"
+#MISE dir="{{ config_root }}/src/infrastructure/pulumi"
+#
+# extra/ is git-ignored (and copied onto the host by nixos-anywhere); `git add -f -N` makes the flake see the file.
+set -euo pipefail
+
+f=../nixos/extra/etc/pangolin/binding-ip
+mkdir -p "$(dirname "$f")"
+pulumi stack output bindingIp >"$f.tmp"
+mv "$f.tmp" "$f"
+git add -f -N "$f"

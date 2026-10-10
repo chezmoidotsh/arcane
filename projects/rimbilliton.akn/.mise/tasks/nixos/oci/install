@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#MISE description="(Re)install the OCI A1 host with nixos-anywhere (DESTRUCTIVE: repartitions the boot volume)"
+#MISE dir="{{ config_root }}/src/infrastructure/nixos"
+#USAGE arg "<target>" help="SSH target of the stock Ubuntu instance, user@host"
+#
+# Needs `unsecure=true` on the Pulumi stack (SSH closed otherwise). Example: mise run nixos:oci:install ubuntu@<public-ip>
+set -euo pipefail
+
+nonix run github:nix-community/nixos-anywhere/b6be7b277b468d55082584441cbef1fed8530eb3 -- --flake ".#rimbilliton-akn-aarch64" --extra-files extra \
+  --kexec-extra-flags --kexec-syscall --target-host "$usage_target"
