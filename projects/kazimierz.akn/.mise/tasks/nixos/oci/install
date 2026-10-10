@@ -14,5 +14,40 @@ mise run nixos:binding-ip
 # Evaluate the whole system before touching the instance: nixos-anywhere only does it after kexec and partitioning.
 nonix eval --raw ".#nixosConfigurations.kazimierz-akn-aarch64.config.system.build.toplevel.drvPath" >/dev/null
 
+# Last thing before the point of no return: show the latest Pangolin backup and ask. Fresh (< 24h, see
+# KAZIMIERZ_BACKUP_MAX_AGE_HOURS): just confirm. Missing or stale: warn, offer to take one from the running host first.
+[ -t 0 ] || { echo "needs a terminal to ask for confirmation" >&2; exit 1; }
+dir="${KAZIMIERZ_BACKUP_DIR:-$HOME/.local/share/kazimierz.akn/backups}"
+max_age=$((${KAZIMIERZ_BACKUP_MAX_AGE_HOURS:-24} * 3600))
+
+ask() { # ask <prompt> <default y|n>
+  local a; read -r -p "$1" a
+  a="${a:-$2}"; [ "$a" = y ] || [ "$a" = Y ] || [ "$a" = yes ]
+}
+
+show_backup() {
+  f="$(ls -1t "$dir"/kazimierz-pangolin-*.tgz 2>/dev/null | head -n1 || true)"
+  if [ -z "$f" ]; then
+    echo "Latest backup: NONE (looked in $dir)"; age=-1; return
+  fi
+  age=$(($(date +%s) - $(stat -c %Y "$f" 2>/dev/null || stat -f %m "$f")))
+  echo "Latest backup: $f"
+  echo "               $((age / 3600))h$(((age % 3600) / 60))m old, $(du -h "$f" | cut -f1)"
+}
+
+show_backup
+if [ "$age" -lt 0 ] || [ "$age" -gt "$max_age" ]; then
+  echo
+  echo "WARNING: no recent backup (older than $((max_age / 3600))h or missing)."
+  echo "         This repartitions the boot volume: ALL Pangolin state (users, sites, resources, API keys,"
+  echo "         WireGuard key, certificates) is lost if it is not backed up."
+  if ask "Take a backup now from the running host? [Y/n] " y; then
+    mise run nixos:backup
+    echo; show_backup
+  fi
+fi
+echo
+ask "Proceed? This will ERASE $usage_target. [y/N] " n || { echo "aborted." >&2; exit 1; }
+
 nonix run github:nix-community/nixos-anywhere/b6be7b277b468d55082584441cbef1fed8530eb3 -- --flake ".#kazimierz-akn-aarch64" --extra-files extra \
   --kexec-extra-flags --kexec-syscall --target-host "$usage_target"

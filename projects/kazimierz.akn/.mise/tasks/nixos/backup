@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+#MISE description="Back up Pangolin's state from the running host (hot copy, no downtime) into a local tarball"
+#USAGE arg "[host]" default="root@kazimierz-akn" help="SSH target of the running host (Ubuntu/Ansible or NixOS)"
+#
+# Content: db/ (SQLite, copied through the SQLite backup API so it is consistent while Pangolin runs), key (Gerbil's
+# WireGuard key), letsencrypt/, config.yml, traefik/*.yml. geoip/, logs/ and openapi.yaml are regenerated.
+# The tarball holds secrets in clear text: it lands OUTSIDE the repo, 0600, in $KAZIMIERZ_BACKUP_DIR
+# (default ~/.local/share/kazimierz.akn/backups). Keep it encrypted at rest once moved elsewhere.
+set -euo pipefail
+umask 077
+
+dir="${KAZIMIERZ_BACKUP_DIR:-$HOME/.local/share/kazimierz.akn/backups}"
+out="$dir/kazimierz-pangolin-$(date +%Y%m%d-%H%M%S).tgz"
+mkdir -p "$dir"
+
+# Ansible-era layout first, NixOS layout otherwise.
+ssh "${usage_host}" 'set -eu
+C=/opt/pangolin/config; [ -d "$C" ] || C=/var/lib/pangolin/config
+[ -f "$C/db/db.sqlite" ] || { echo "no Pangolin state found in /opt/pangolin/config nor /var/lib/pangolin/config" >&2; exit 1; }
+T=$(mktemp -d); trap "rm -rf $T" EXIT
+mkdir "$T/db" "$T/traefik"
+python3 - "$C/db/db.sqlite" "$T/db/db.sqlite" <<PY
+import sqlite3, sys
+src = sqlite3.connect("file:%s?mode=ro" % sys.argv[1], uri=True); dst = sqlite3.connect(sys.argv[2])
+src.backup(dst)
+ok = dst.execute("pragma integrity_check").fetchone()[0]
+if ok != "ok": sys.exit("integrity_check: " + ok)
+PY
+cp -a "$C/key" "$C/config.yml" "$C/letsencrypt" "$T/"
+cp -a "$C"/traefik/*.yml "$T/traefik/"
+tar -C "$T" -czf - .' >"$out.part"
+
+tar -tzf "$out.part" ./db/db.sqlite ./key >/dev/null
+mv "$out.part" "$out"
+echo "backup written: $out ($(du -h "$out" | cut -f1))"

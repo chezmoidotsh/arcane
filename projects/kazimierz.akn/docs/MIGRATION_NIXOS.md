@@ -50,12 +50,14 @@ ssh root@kazimierz-akn 'findmnt /opt/pangolin; lsblk -f; du -sh /opt/pangolin/co
 ```
 
 If `/opt/pangolin` is on the data volume, say so before going further: the layout below must then mount that volume
-instead of restoring a backup. Otherwise, copy the state out (it contains secrets, keep it encrypted at rest):
+instead of restoring a backup. Otherwise, copy the state out (it contains secrets, keep it encrypted at rest and out of the repo):
 
 ```bash
-ssh root@kazimierz-akn 'docker compose -f /opt/pangolin/docker-compose.yml stop && \
-  tar -C /opt/pangolin/config -czf - db key letsencrypt config.yml' > kazimierz-state.tgz
+mise run nixos:backup   # hot copy, no downtime -> $KAZIMIERZ_BACKUP_DIR (default ~/.local/share/kazimierz.akn/backups)
 ```
+
+`mise run nixos:oci:install` shows the latest backup and its age, warns if there is none (or if it is older than 24h),
+offers to take one, and asks for confirmation before wiping the host.
 
 - `db/`: Pangolin's SQLite database (users, sites, resources, API keys).
 - `key`: Gerbil's WireGuard private key.
@@ -84,7 +86,7 @@ Put the backup where `nixos-anywhere --extra-files` will copy it onto the new ro
 
 ```bash
 mkdir -p extra/var/lib/pangolin/config
-tar -C extra/var/lib/pangolin/config -xzf kazimierz-state.tgz db key letsencrypt
+tar -C extra/var/lib/pangolin/config -xzf <path of the backup>.tgz --exclude=./docker-compose.yml --exclude=./traefik
 ```
 
 The binding IP, which Docker publishes ports 80/443 on (`pangolin.bindIp`), is the instance's private (VCN) address, the
