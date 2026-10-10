@@ -35,3 +35,6 @@ patches:
 images:
   - name: oci.external-secrets.io/external-secrets/external-secrets
     newName: oci.chezmoi.sh/oci.external-secrets.io/external-secrets/external-secrets
+  # chart >= 2.x pulls from ghcr.io instead of oci.external-secrets.io
+  - name: ghcr.io/external-secrets/external-secrets
+    newName: oci.chezmoi.sh/ghcr.io/external-secrets/external-secrets
