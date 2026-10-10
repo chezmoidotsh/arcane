@@ -43,7 +43,7 @@ docs/           ADRs (decisions/), procedures/, experiments/, incidents/, migrat
 projects/       One subdirectory per cluster or standalone app
 ├── chezmoi.sh/     Shared Pulumi stacks — Proxmox host, OpenBao, Tailscale, observability LXC, OCI registry
 ├── hass/           Home Assistant app project (not a cluster)
-├── kazimierz.akn/  VPS public-access gateway — Ansible + Docker Compose, deliberately not Kubernetes (ADR-008)
+├── kazimierz.akn/  VPS public-access gateway — NixOS (flake), deliberately not Kubernetes (ADR-008, ADR-016)
 ├── lungmen.akn/    Home applications cluster — Talos + ArgoCD (active dev, apps added/bumped frequently)
 ├── rhodes.akn/     Core platform — Talos + ArgoCD, OpenBao, Pocket-Id (production)
 ├── rimbilliton.akn/ Minecraft (Pelican) host on an OCI Always Free ARM instance — Pulumi + NixOS, not Kubernetes
@@ -65,7 +65,7 @@ Grouped by concern rather than alphabetically, since agents usually need "what h
 | GitOps engine         | ArgoCD — the sole GitOps engine on every Kubernetes cluster (ADR-011)                                                                                                     |
 | Manifest rendering    | Pre-rendered `dist/` manifests generated from `src/` (ADR-011) — hardens the supply chain and keeps ArgoCD diffs readable. **Never hand-edit `dist/`**; run `dist:render` |
 | Cloud/host IaC        | Pulumi (TypeScript), sole tool in use — no Crossplane anywhere in the tree                                                                                                |
-| Bare-metal/VPS config | Ansible (`catalog/ansible/`) — used where Kubernetes isn't (`kazimierz.akn`, Proxmox host prep)                                                                           |
+| Bare-metal/VPS config | NixOS (`nixos-anywhere` + sops-nix) on the OCI VPSes (`kazimierz.akn`, `rimbilliton.akn`); Ansible (`catalog/ansible/`) for Proxmox host prep only                        |
 | CNI / NetworkPolicies | Cilium, default-deny by default                                                                                                                                           |
 | Ingress / Gateway     | Cilium Gateway API (HTTPRoute, TCPRoute) is the primary GatewayClass; a few routes still run on Envoy Gateway — new routes go on `cilium`                                 |
 | Internal DNS          | external-dns with the UniFi and BIND/rfc2136 providers (LAN + internal DNS server) — no public DNS record management in this repo                                         |
@@ -156,8 +156,9 @@ clusters.
 `lungmen.akn` is the home applications cluster and is under active development — apps are added and bumped frequently.
 See `projects/lungmen.akn/src/apps/` for the current app inventory; do not enumerate it here.
 
-`kazimierz.akn` and `shodan.akn` are **not** part of the ArgoCD fleet: `kazimierz.akn` is a VPS run with Ansible +
-Docker Compose by deliberate choice (ADR-008), and `shodan.akn` has no manifests yet (planning stage only).
+`kazimierz.akn` and `shodan.akn` are **not** part of the ArgoCD fleet: `kazimierz.akn` is a NixOS VPS (Pangolin stack as
+containers) by deliberate choice (ADR-008; its configuration management moved from Ansible to NixOS in ADR-016), and
+`shodan.akn` has no manifests yet (planning stage only).
 
 ### Rendered manifests pattern (ADR-011)
 
