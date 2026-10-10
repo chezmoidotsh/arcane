@@ -42,15 +42,8 @@ Whether the host should reconcile itself automatically is the open question alre
 
 ### 1. Check where the state lives, then back it up
 
-The Pulumi stack attaches a 50 GB data volume, but the Ansible roles never mount it: Pangolin's state is expected to be
-in `/opt/pangolin/config` **on the boot volume**, which the install wipes. Verify on the host first:
-
-```bash
-ssh root@kazimierz-akn 'findmnt /opt/pangolin; lsblk -f; du -sh /opt/pangolin/config/*'
-```
-
-If `/opt/pangolin` is on the data volume, say so before going further: the layout below must then mount that volume
-instead of restoring a backup. Otherwise, copy the state out (it contains secrets, keep it encrypted at rest and out of the repo):
+Pangolin's state lives in `/opt/pangolin/config` **on the boot volume**, which the install wipes, so copy it out first
+(it contains secrets, keep it encrypted at rest and out of the repo):
 
 ```bash
 mise run nixos:backup   # hot copy, no downtime -> $KAZIMIERZ_BACKUP_DIR (default ~/.local/share/kazimierz.akn/backups)
