@@ -13,6 +13,7 @@ spec:
     recovery:
       source: "2026-01-11T15:09:11.586Z"
   description: PostgreSQL database dedicated to OpenBao
+  enablePDB: false
   externalClusters:
   - name: "2026-01-11T08:07:53.126Z"
     plugin:
