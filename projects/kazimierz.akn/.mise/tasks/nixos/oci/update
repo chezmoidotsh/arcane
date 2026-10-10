@@ -4,5 +4,6 @@
 set -euo pipefail
 
 mise run nixos:binding-ip
+# shellcheck disable=SC2312  # jq failure aborts nonix anyway (invalid flake ref)
 nonix run "github:NixOS/nixpkgs/$(jq -r .nodes.nixpkgs.locked.rev flake.lock)#nixos-rebuild" -- switch \
   --flake ".#kazimierz-akn-aarch64" --target-host root@kazimierz-akn

@@ -9,9 +9,9 @@
 set -euo pipefail
 umask 077
 
-dir="${KAZIMIERZ_BACKUP_DIR:-$HOME/.local/share/kazimierz.akn/backups}"
-out="$dir/kazimierz-pangolin-$(date +%Y%m%d-%H%M%S).tgz"
-mkdir -p "$dir"
+dir="${KAZIMIERZ_BACKUP_DIR:-${HOME}/.local/share/kazimierz.akn/backups}"
+out="${dir}/kazimierz-pangolin-$(date +%Y%m%d-%H%M%S).tgz"
+mkdir -p "${dir}"
 
 ssh "${usage_host}" 'set -eu
 C=/var/lib/pangolin/config
@@ -27,8 +27,9 @@ if ok != "ok": sys.exit("integrity_check: " + ok)
 PY
 cp -a "$C/key" "$C/config.yml" "$C/letsencrypt" "$T/"
 cp -a "$C"/traefik/*.yml "$T/traefik/"
-tar -C "$T" -czf - .' >"$out.part"
+tar -C "$T" -czf - .' >"${out}.part"
 
-tar -tzf "$out.part" ./db/db.sqlite ./key >/dev/null
-mv "$out.part" "$out"
-echo "backup written: $out ($(du -h "$out" | cut -f1))"
+tar -tzf "${out}.part" ./db/db.sqlite ./key >/dev/null
+mv "${out}.part" "${out}"
+# shellcheck disable=SC2312  # cosmetic size in a message, a failing du must not abort
+echo "backup written: ${out} ($(du -h "${out}" | cut -f1))"

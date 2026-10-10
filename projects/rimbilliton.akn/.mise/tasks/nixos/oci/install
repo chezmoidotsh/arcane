@@ -7,4 +7,4 @@
 set -euo pipefail
 
 nonix run github:nix-community/nixos-anywhere/b6be7b277b468d55082584441cbef1fed8530eb3 -- --flake ".#rimbilliton-akn-aarch64" --extra-files extra \
-  --kexec-extra-flags --kexec-syscall --target-host "$usage_target"
+  --kexec-extra-flags --kexec-syscall --target-host "${usage_target}"

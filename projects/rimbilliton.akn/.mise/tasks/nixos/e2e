@@ -5,4 +5,4 @@
 set -euo pipefail
 
 nonix run github:nix-community/nixos-anywhere/b6be7b277b468d55082584441cbef1fed8530eb3 -- --flake ".#rimbilliton-akn-x86_64" --extra-files extra \
-  --build-on remote --target-host "$usage_target"
+  --build-on remote --target-host "${usage_target}"
