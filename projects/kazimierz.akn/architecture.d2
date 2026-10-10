@@ -129,7 +129,7 @@ lungmen·akn: {
 # ╰────────────────────────────────────────────────────────────────────────────╯
 
 vps: {
-  label: kazimierz.akn
+  label: kazimierz.akn\n(OCI A1 · NixOS)
   class: namespace
 
   style.fill-pattern: none
@@ -186,12 +186,11 @@ vps: {
     tooltip: Mesh VPN for secure SSH access and VPS administration
   }
 
-  ansible: {
+  nixos: {
     class: [application-system]
-    label: Ansible
-    icon: docs/assets/icons/apps/ansible.svg
-    link: https://www.ansible.com/
-    tooltip: Configuration management, run remotely over SSH from an operator machine
+    label: NixOS
+    link: https://nixos.org/
+    tooltip: Declarative OS installed with nixos-anywhere, deployed with nixos-rebuild from an operator machine
   }
 }
 
