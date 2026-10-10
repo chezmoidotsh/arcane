@@ -1,4 +1,4 @@
-# Pangolin stack as Docker containers, a 1:1 port of the former Ansible role (roles/pangolin):
+# Pangolin stack as Docker containers, ported 1:1 from the former Ansible role (removed, see ADR-016):
 #  - pangolin    controller + dashboard (SQLite), Integration API on 127.0.0.1:3003 re-exposed on the tailnet
 #  - gerbil      WireGuard tunnel manager; owns the public ports, Traefik shares its network namespace
 #  - traefik     reverse proxy, wildcard certificate through Let's Encrypt DNS-01 (Cloudflare)
@@ -23,7 +23,7 @@ let
   integrationPort = 3003;
   configDir = "/var/lib/pangolin/config";
 
-  # Images: pinned by tag and digest, bump them here (previously Renovate-annotated in the Ansible role defaults).
+  # Images: pinned by tag and digest, bump them here.
   # renovate: datasource=docker depName=fosrl/pangolin versioning=docker
   pangolinImage = "docker.io/fosrl/pangolin:ee-1.24.0@sha256:1700457b2d42e3db664edc43760528a11f1d423a5364b8af720474e1b049a8ea"; # Enterprise Edition (was ee-latest)
   # renovate: datasource=docker depName=fosrl/gerbil versioning=docker
@@ -205,7 +205,7 @@ in
   config = {
   assertions = [{
     assertion = bindIp != "";
-    message = "pangolin.bindIp is empty: run `mise run nixos:binding-ip` (or nixos:oci:*, nixos:e2e) to write extra/etc/pangolin/binding-ip (see docs/MIGRATION_NIXOS.md).";
+    message = "pangolin.bindIp is empty: run `mise run nixos:binding-ip` (or nixos:oci:*, nixos:e2e) to write extra/etc/pangolin/binding-ip (see docs/BOOTSTRAP.md).";
   }];
 
   virtualisation.docker.enable = true;
@@ -243,7 +243,7 @@ in
       # Traefik refuses to start if acme.json is not 0600 (and its directory should not be readable by others).
       install -d -m 0700 ${configDir}/letsencrypt
       [ -e ${configDir}/letsencrypt/acme.json ] || install -m 0600 /dev/null ${configDir}/letsencrypt/acme.json
-      chmod 0600 ${configDir}/letsencrypt/acme.json # also covers a file restored from the Ansible-era backup
+      chmod 0600 ${configDir}/letsencrypt/acme.json # also covers a file restored from a backup
       install -m 0644 ${traefikConfig} ${configDir}/traefik/traefik_config.yml
       install -m 0644 ${dynamicConfig} ${configDir}/traefik/dynamic_config.yml
       ${dockerBin} network inspect pangolin >/dev/null 2>&1 || ${dockerBin} network create pangolin >/dev/null
