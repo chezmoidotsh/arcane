@@ -100,9 +100,9 @@ The order is not a triage.
 - [ ] **2. Manage the Tailnet ACL as code (`tailscale.Acl`)** — `tagOwners` is a prerequisite for rimbilliton and
       nothing in the repo records the ACL. Evidence: `rimbilliton.akn/docs/BOOTSTRAP.md:30`. Status: issue #1280, no PR
       yet.
-- [ ] **3. Re-enable rimbilliton's Pocket-Id group and OIDC client with `@axnic/pulumi-pocket-id`** — The provider used
+- [x] **3. Re-enable rimbilliton's Pocket-Id group and OIDC client with `@axnic/pulumi-pocket-id`** — The provider used
       by the other stacks works; the current file is dead code waiting on issue 1170. Evidence:
-      `rimbilliton.akn/.../stack/pocket-id.ts`. Status: issue #1281, PR #1293 open.
+      `rimbilliton.akn/.../stack/pocket-id.ts`. Status: issue #1281, PR #1293 merged.
 - [ ] **4. Declare ArgoCD spoke registration (cluster `Secret`) instead of `argocd cluster add`** — The only record of
       lungmen's registration is the live ArgoCD; a hub rebuild needs a manual step. Evidence: `OMNI-20260721-00`
       Step 11. Status: issue #1282, no PR yet.
@@ -121,9 +121,9 @@ The order is not a triage.
       #1286, no PR yet.
 - [x] **10. Fix documentation drift: OMNI procedure Steps 9/10 TODOs, `AGENTS.md` project tree, `talosnet-dns` README**
       — Found while building this inventory. Evidence: cross-cutting findings. Status: done in #1291, issue #1287.
-- [ ] **11. Decide whether `kazimierz.akn` needs an automatic apply again** — The `ansible-pull` removal leaves a VPS
+- [x] **11. Decide whether `kazimierz.akn` needs an automatic apply again** — The `ansible-pull` removal leaves a VPS
       without scheduled reconciliation and without a stated reason. Evidence: `kazimierz.akn/docs/BOOTSTRAP.md`;
-      ADR-008. Status: no issue, NixOS migration PR #1304 open.
+      ADR-008. Status: decided no (no supervision, hard rollback), documented in ADR-008; NixOS migration PR #1304 open.
 
 ## Unverified points
 
