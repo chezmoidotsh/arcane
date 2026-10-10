@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#MISE description="Rehearse the install on a Proxmox KVM test VM (x86_64, DESTRUCTIVE for the target)"
+#MISE dir="{{ config_root }}/src/infrastructure/nixos"
+#USAGE arg "<target>" help="SSH target of the test VM, user@host (required)"
+set -euo pipefail
+
+nonix run github:nix-community/nixos-anywhere/b6be7b277b468d55082584441cbef1fed8530eb3 -- --flake ".#rimbilliton-akn-x86_64" --extra-files extra \
+  --build-on remote --target-host "${usage_target}"

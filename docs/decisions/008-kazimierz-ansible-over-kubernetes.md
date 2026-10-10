@@ -1,6 +1,6 @@
 ---
 status: "implemented"
-date: 2026-10-08
+date: 2026-10-10
 implementation-completed: 2025-11-15
 decision-makers: ["Alexandre"]
 assisted-by: ["claude-4.5-sonnet", "claude-sonnet-5.5"]
@@ -8,6 +8,12 @@ informed: []
 ---
 
 # `kazimierz`.AKN: Ansible + Docker Compose over Kubernetes
+
+> [!CAUTION] **Partially superseded by [ADR-016](./016-kazimierz-nixos-over-ansible.md) (2026-10-10).** The
+> configuration-management choice (Ansible + Docker Compose) was replaced by NixOS installed with `nixos-anywhere` and
+> `sops-nix`; the Ansible code was removed. The other decisions stand: a single VPS rather than Kubernetes, and Pangolin
+> as the gateway. The Ansible-specific passages below are kept as the historical record. The status stays `implemented`
+> because the decision against Kubernetes is still in force.
 
 ## Table of Contents
 
@@ -456,12 +462,18 @@ instances are monitored.
   [community.general](https://docs.ansible.com/ansible/latest/collections/community/general/),
   [community.docker](https://docs.ansible.com/ansible/latest/collections/community/docker/)
 - **Architecture References**:
-  [`kazimierz` Ansible README](../../projects/kazimierz.akn/src/infrastructure/ansible/README.md)
+  `kazimierz` Ansible README (removed on 2026-10-10, see Git history); current setup in the
+  [`kazimierz` bootstrap](../../projects/kazimierz.akn/docs/BOOTSTRAP.md) and
+  [ADR-016](./016-kazimierz-nixos-over-ansible.md)
 
 ---
 
 ## Changelog
 
+- **2026-10-10**: **DEPRECATION**: The configuration-management choice (Ansible + Docker Compose) is superseded by
+  [ADR-016](./016-kazimierz-nixos-over-ansible.md) (NixOS via `nixos-anywhere` and `sops-nix`); the Ansible code was
+  removed. Status kept as `implemented`: the Kubernetes-versus-VPS decision still stands. The Ansible passages and the
+  link to the former `kazimierz` Ansible README (now deleted, see Git history) are kept as the historical record.
 - **2026-10-08**: **DEPRECATION**: Removed ARA (the `ara_server` role and its Tailscale Serve listener): not needed
   anymore, per the owner's review of PR 1262. Status kept as `implemented`. The original observability passage is kept
   and flagged.

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+#MISE description="Rehearse the install on a Proxmox KVM test VM (x86_64, DESTRUCTIVE for the target)"
+#MISE dir="{{ config_root }}/src/infrastructure/nixos"
+#USAGE arg "<target>" help="SSH target of the test VM, user@host or an ssh_config alias (required)"
+set -euo pipefail
+
+# The binding IP is the address of the target: resolve the host part (ssh_config aliases and DNS names included).
+host="$(ssh -G "${usage_target}" | awk '$1 == "hostname" { print $2; exit }')"
+case "${host}" in
+  "" | *[!0-9.]*) host="$(python3 -c 'import socket, sys; print(socket.gethostbyname(sys.argv[1]))' "${host:-${usage_target#*@}}")" ;;
+  *) ;;
+esac
+echo "nixos:e2e: binding IP of ${usage_target} is ${host}"
+
+# Docker publishes 80/443 on this address; read by platforms/proxmox.kvm.nix (git-ignored, but flakes only see tracked files)
+mkdir -p extra/etc/pangolin
+printf '%s\n' "${host}" >extra/etc/pangolin/binding-ip
+git add -f -N extra/etc/pangolin/binding-ip
+
+# The SOPS file is not committed until the real host key is a recipient; a flake only sees files known to git.
+[[ -f secrets/kazimierz.sops.yaml ]] || { echo "missing secrets/kazimierz.sops.yaml: see docs/BOOTSTRAP.md, step 1" >&2; exit 1; }
+
+# Evaluate the whole system before touching the VM: nixos-anywhere only does it after kexec and partitioning, and a
+# failure there (empty binding IP, untracked secrets file, ...) leaves the target wiped but not installed.
+if ! nonix eval --raw ".#nixosConfigurations.kazimierz-akn-x86_64.config.system.build.toplevel.drvPath" >/dev/null; then
+  echo "nixos:e2e: the system does not evaluate (see above); the target was not touched" >&2
+  exit 1
+fi
+nonix run github:nix-community/nixos-anywhere/b6be7b277b468d55082584441cbef1fed8530eb3 -- --flake ".#kazimierz-akn-x86_64" --extra-files extra \
+  --build-on remote --target-host "${usage_target}"

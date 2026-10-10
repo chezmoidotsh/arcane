@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#MISE description="Apply the configuration to the running OCI A1 host over the tailnet"
+#MISE dir="{{ config_root }}/src/infrastructure/nixos"
+set -euo pipefail
+
+# shellcheck disable=SC2312  # jq failure aborts nonix anyway (invalid flake ref)
+nonix run "github:NixOS/nixpkgs/$(jq -r .nodes.nixpkgs.locked.rev flake.lock)#nixos-rebuild" -- switch \
+  --flake ".#rimbilliton-akn-aarch64" --target-host root@rimbilliton-akn

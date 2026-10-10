@@ -6,16 +6,15 @@ const config = new pulumi.Config();
 // -----------------------------------------------------------------------------
 // Cloudflare DNS-01 token for Pangolin's wildcard *.chezmoi.sh certificate
 // -----------------------------------------------------------------------------
-// Traefik (behind Pangolin, see the pangolin Ansible role) requests one Let's
-// Encrypt certificate per domain in pangolin_domains via HTTP-01 -- any other
-// hostname on this same VPS (a typo, a made-up subdomain, a resource not yet
-// added to Pangolin) gets Traefik's own untrusted default certificate instead
-// of a real one, confirmed live against the production host. Switching to a
-// DNS-01 wildcard cert for chezmoi.sh (see pangolin role's
-// pangolin_acme_wildcard_domain / pangolin_cloudflare_dns_api_token) fixes
-// that, but Traefik runs as a Docker Compose service via Ansible, not a
-// Pulumi resource -- so the token only exists as a Pulumi stack output here,
-// same pattern as ../../../chezmoi.sh/src/infrastructure/pulumi/stack/observability.ts.
+// Traefik (behind Pangolin, see nixos/modules/pangolin.nix) requests one Let's
+// Encrypt certificate per Pangolin domain via HTTP-01 -- any other hostname
+// on this same VPS (a typo, a made-up subdomain, a resource not yet added to
+// Pangolin) gets Traefik's own untrusted default certificate instead of a
+// real one, confirmed live against the production host. Switching to a DNS-01
+// wildcard cert for chezmoi.sh fixes that, but Traefik runs as a container on
+// the NixOS host, not a Pulumi resource -- so the token only exists as a
+// Pulumi stack output here, same pattern as
+// ../../../chezmoi.sh/src/infrastructure/pulumi/stack/observability.ts.
 // Not pushed to Vault: OpenBao lives inside rhodes.akn (the core-platform
 // cluster; amiya.akn filled this role until it was decommissioned in favor
 // of rhodes.akn in July 2026), and kazimierz.akn is the public gateway every

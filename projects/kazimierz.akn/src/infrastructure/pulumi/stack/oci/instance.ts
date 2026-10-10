@@ -10,34 +10,12 @@ const config = new pulumi.Config();
 // list`) -- not a config knob, it will never be anything else.
 const availabilityDomain = "jbln:EU-PARIS-1-AD-1";
 
-// Pangolin/Gerbil/Traefik state lives on this volume, decoupled from the
-// instance's own lifecycle -- recreating the instance re-attaches the same
-// volume. retainOnDelete mirrors the abandoned Crossplane version's
-// `deletionPolicy: Orphan`: never let a `pulumi destroy` or accidental
-// removal take the OCI block volume with it.
-export const volume = new oci.core.Volume(
-	"kazimierz-akn-pangolin-data",
-	{
-		availabilityDomain,
-		compartmentId: kazimierz.id,
-		displayName: "kazimierz-pangolin-data",
-		sizeInGbs: "50",
-		freeformTags: {
-			project: "kazimierz.akn",
-			role: "data",
-			managed_by: "pulumi",
-		},
-	},
-	{ retainOnDelete: true },
-);
-
 // Latest Canonical Ubuntu Minimal ARM platform image, whatever version that
 // currently is (no version pinned) -- resolved live instead of a pinned
 // OCID, since OCI drops dated platform-image OCIDs from the list once a
 // newer one ships. Minimal variant: smaller boot footprint. It is only a
 // *bootstrap* OS: NixOS (src/infrastructure/nixos) is installed over it with
-// nixos-anywhere, see docs/MIGRATION_NIXOS.md. Until that migration is done,
-// the `system_setup`/`pangolin` Ansible roles configure it instead.
+// nixos-anywhere, see docs/BOOTSTRAP.md.
 //
 // Filtering/sorting happens here in JS, not via getImages' own `filters`/
 // `sortBy` args: those are applied server-side by the bridged Go provider,
@@ -118,24 +96,4 @@ export const instance = new oci.core.Instance(
 	// Oracle image would wipe the running gateway on the next `pulumi up`. Keep the
 	// image the instance was created (or last deliberately rebuilt) with.
 	{ ignoreChanges: ["sourceDetails.sourceId"] },
-);
-
-// Paravirtualized attachment -- required for ARM Ampere instances. Detached
-// and re-created on every instance replacement; the Volume itself survives
-// and the Ansible role handles first-boot init vs. re-attach of existing
-// state on it.
-export const volumeAttachment = new oci.core.VolumeAttachment(
-	"kazimierz-akn-pangolin-data-attachment",
-	{
-		attachmentType: "paravirtualized",
-		instanceId: instance.id,
-		volumeId: volume.id,
-		// This Always Free A1.Flex instance rejects in-transit encryption on
-		// paravirtualized attachments outright ("Instance ... does not support
-		// pv encryption in-transit", verified live against the real instance
-		// OCID) -- not a config choice, OCI's own capability check for this
-		// shape/tier.
-		isPvEncryptionInTransitEnabled: false,
-		isShareable: false,
-	},
 );

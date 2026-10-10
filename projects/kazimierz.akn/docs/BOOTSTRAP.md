@@ -2,12 +2,13 @@
 
 This document describes how to bootstrap the Kazimierz.AKN VPS from a freshly provisioned OCI instance into a fully
 configured node: a stock Ubuntu image on which NixOS is installed with `nixos-anywhere`, the way `rimbilliton.akn` is
-(see [its bootstrap](../../rimbilliton.akn/docs/BOOTSTRAP.md)). To move the **running** host from Ansible to NixOS
-(backup and restore of Pangolin's state, downtime), follow [MIGRATION_NIXOS.md](./MIGRATION_NIXOS.md) instead.
+(see [its bootstrap](../../rimbilliton.akn/docs/BOOTSTRAP.md)). The host was migrated from Ubuntu + Ansible + Docker
+Compose to NixOS on 2026-10-10 (see [MIGRATION_NIXOS.md](./MIGRATION_NIXOS.md) for that record, and
+[ADR-016](../../../docs/decisions/016-kazimierz-nixos-over-ansible.md) for the decision).
 
-> [!NOTE] The former Ansible + Docker Compose procedure is still in the tree (`src/infrastructure/ansible/`) as the
-> rollback path of the migration, and is removed in its last step. Until the cutover is done, **Ansible remains the
-> source of truth for the running host**: do not run this procedure against it.
+> [!WARNING] `mise run nixos:oci:install` **repartitions the boot volume**, which is where Pangolin's state lives
+> (`/var/lib/pangolin/config`). On a host that is already running, see
+> [Reinstalling](#reinstalling-and-restoring-the-state) first.
 
 ## Overview
 
@@ -64,8 +65,9 @@ sops --encrypt --in-place secrets/kazimierz.sops.yaml
   state)
 - `pangolin_smtp_user` / `pangolin_smtp_pass`: the Mailjet API and secret keys
 
-Set your public key in `configuration.nix` if it is not already. Do not commit `extra/`. If the build complains about an
-untracked path, `git add -N flake.lock secrets/kazimierz.sops.yaml`.
+Set your public key in `configuration.nix` if it is not already. `secrets/kazimierz.sops.yaml` is committed (encrypted);
+`extra/` is git-ignored and must never be committed. If the build complains about an untracked path, `git add -N
+flake.lock` (a flake only sees files known to git).
 
 The **binding IP**, which Docker publishes ports 80/443 on (`pangolin.bindIp`), is the instance's private (VCN) address,
 the only one its network interface has: the public IP is NAT-ed by OCI and never shows up on the host. It lives in
@@ -140,6 +142,37 @@ curl -sI https://pangolin.chezmoi.sh | head -n1
   `pangolin` resources.
 - Close SSH again: `pulumi config set unsecure false && pulumi up`.
 
+## Reinstalling and Restoring the State
+
+Pangolin's state (users, sites, resources, API keys, Gerbil's WireGuard key, certificates) lives in
+`/var/lib/pangolin/config` **on the boot volume**: there is no separate data volume. A reinstall wipes it unless it is
+restored, so:
+
+1. `mise run nixos:backup` takes a hot backup (SQLite backup API, no downtime) into `$KAZIMIERZ_BACKUP_DIR` (default
+   `~/.local/share/kazimierz.akn/backups`). The tarball holds secrets in clear text: keep it encrypted at rest.
+   `nixos:oci:install` shows the latest backup and its age, offers to take one if it is missing or older than 24h, and
+   asks `y/N` before wiping.
+2. Extract it where `nixos-anywhere --extra-files` will put it on the new root:
+
+   ```bash
+   cd projects/kazimierz.akn/src/infrastructure/nixos
+   mkdir -p extra/var/lib/pangolin/config
+   tar -C extra/var/lib/pangolin/config -xzf <backup>.tgz
+   ```
+
+3. Reuse the current `pangolin_server_secret` in the SOPS file (Pangolin's data is bound to it) and install as in step 2.
+   The new host key must replace the old one as SOPS recipient (`sops updatekeys`).
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+| --- | --- |
+| `Please login as the user ubuntu` when connecting as `root` | Ubuntu OCI images prefix `/root/.ssh/authorized_keys` with a `command="echo 'Please login as the user ubuntu'..."` restriction. Copy the `ubuntu` user's `authorized_keys` to root before `nixos-anywhere`, or install as `ubuntu@<ip>`. |
+| `Too many authentication failures` | The host's sshd has `MaxAuthTries 3` and an agent offering several keys exhausts it. Use `IdentitiesOnly yes` (with `-i <key>`) or a dedicated agent holding only the right key. |
+| `Connection refused` on the agent socket from `nonix` (macOS) | The container only sees the `launchd`-session agent: `launchctl setenv SSH_AUTH_SOCK ...` then restart OrbStack (see the macOS note in step 2). |
+| Tailscale does not register, or the node is `kazimierz-akn-1` | The `tailscaleAuthKey` (Pulumi `TailnetKey`, single use, 7 days) is consumed by a first boot, so a redone install or an old key needs a new one: `pulumi up --replace <urn of kazimierz-tailscale-key>`, then update `tailscale_authkey` in the SOPS file. Delete the stale node from the Tailscale admin console **before** the first boot, or it becomes `kazimierz-akn-1`. |
+| `pulumi stack output` fails or targets the wrong stack | The live stack is `kazimierz_akn.live`: pass `--stack kazimierz_akn.live` (the `nixos:*` tasks already do). |
+
 ## Post-Bootstrap Configuration
 
 Configuration and secrets both live in Git (the flake and the SOPS file); there is nothing to edit by hand on the host.
@@ -155,5 +188,6 @@ mise run nixos:oci:update
 The task refreshes the binding IP, then runs
 `nixos-rebuild switch --flake .#kazimierz-akn-aarch64 --target-host root@kazimierz-akn` (taken from the nixpkgs revision
 locked in `flake.lock`). `nixos-rebuild --rollback` on the host goes back to the previous generation. There is no
-automatic update, on purpose: the instance is not supervised yet and a rollback is hard to do cleanly (see ADR-008).
+automatic update, on purpose: the instance is not supervised yet and a rollback is hard to do cleanly (see
+[ADR-008](../../../docs/decisions/008-kazimierz-ansible-over-kubernetes.md)).
 Refresh the inputs with `nonix flake update`, then deploy.
