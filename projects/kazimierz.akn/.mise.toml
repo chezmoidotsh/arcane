@@ -12,3 +12,84 @@ run = [
   "d2 --theme 200 architecture.d2 docs/assets/architecture-dark.svg",
 ]
 dir = "{{ config_root }}"
+
+# -----------------------------------------------------------------------------
+# NixOS host (src/infrastructure/nixos). Run from anywhere: `mise run nixos:<task>`.
+# nonix forwards $SSH_AUTH_SOCK to the container, so the key must be in your agent.
+# nixos-anywhere is pinned by commit; nixos-rebuild comes from the nixpkgs revision locked in flake.lock.
+# -----------------------------------------------------------------------------
+
+[tasks."nixos:binding-ip"]
+description = "Write the binding IP (instance private address, Pulumi output) to nixos/extra/etc/pangolin/binding-ip"
+# extra/ is git-ignored (and copied onto the host by nixos-anywhere); `git add -f -N` makes the flake see the file.
+run = '''
+set -eu
+f=../nixos/extra/etc/pangolin/binding-ip
+mkdir -p "$(dirname "$f")"
+pulumi stack output bindingIp > "$f.tmp"
+mv "$f.tmp" "$f"
+git add -f -N "$f"
+'''
+dir = "{{ config_root }}/src/infrastructure/pulumi"
+
+[tasks."nixos:oci:install"]
+description = "(Re)install the OCI A1 host with nixos-anywhere (DESTRUCTIVE: repartitions the boot volume)"
+# Needs `unsecure=true` on the Pulumi stack (SSH closed otherwise). Example: mise run nixos:oci:install ubuntu@<public-ip>
+usage = '''
+arg "<target>" help="SSH target of the stock Ubuntu instance, user@host"
+'''
+depends = ["nixos:binding-ip"]
+run = '''
+set -eu
+
+# The SOPS file is not committed until the real host key is a recipient; a flake only sees files known to git.
+[ -f secrets/kazimierz.sops.yaml ] || { echo "missing secrets/kazimierz.sops.yaml: see docs/BOOTSTRAP.md, step 1" >&2; exit 1; }
+
+# Evaluate the whole system before touching the instance: nixos-anywhere only does it after kexec and partitioning.
+nonix eval --raw ".#nixosConfigurations.kazimierz-akn-aarch64.config.system.build.toplevel.drvPath" >/dev/null
+nonix run github:nix-community/nixos-anywhere/b6be7b277b468d55082584441cbef1fed8530eb3 -- --flake ".#kazimierz-akn-aarch64" --extra-files extra \
+  --kexec-extra-flags --kexec-syscall --target-host "$usage_target"
+'''
+dir = "{{ config_root }}/src/infrastructure/nixos"
+
+[tasks."nixos:oci:update"]
+description = "Apply the configuration to the running OCI A1 host over the tailnet"
+depends = ["nixos:binding-ip"]
+run = '''
+nonix run "github:NixOS/nixpkgs/$(jq -r .nodes.nixpkgs.locked.rev flake.lock)#nixos-rebuild" -- switch \
+  --flake ".#kazimierz-akn-aarch64" --target-host root@kazimierz-akn
+'''
+dir = "{{ config_root }}/src/infrastructure/nixos"
+
+[tasks."nixos:e2e"]
+description = "Rehearse the install on a Proxmox KVM test VM (x86_64, DESTRUCTIVE for the target): mise run nixos:e2e user@host"
+usage = '''
+arg "<target>" help="SSH target of the test VM, user@host or an ssh_config alias (required)"
+'''
+run = '''
+set -eu
+
+# The binding IP is the address of the target: resolve the host part (ssh_config aliases and DNS names included).
+host="$(ssh -G "$usage_target" | awk '$1 == "hostname" { print $2; exit }')"
+case "$host" in
+  "" | *[!0-9.]*) host="$(python3 -c 'import socket, sys; print(socket.gethostbyname(sys.argv[1]))' "${host:-${usage_target#*@}}")" ;;
+esac
+echo "nixos:e2e: binding IP of $usage_target is $host"
+
+# Docker publishes 80/443 on this address; read by platforms/proxmox.kvm.nix (git-ignored, but flakes only see tracked files)
+mkdir -p extra/etc/pangolin
+printf '%s\n' "$host" > extra/etc/pangolin/binding-ip
+git add -f -N extra/etc/pangolin/binding-ip
+
+# The SOPS file is not committed until the real host key is a recipient; a flake only sees files known to git.
+[ -f secrets/kazimierz.sops.yaml ] || { echo "missing secrets/kazimierz.sops.yaml: see docs/BOOTSTRAP.md, step 1" >&2; exit 1; }
+
+# Evaluate the whole system before touching the VM: nixos-anywhere only does it after kexec and partitioning, and a
+# failure there (empty binding IP, untracked secrets file, ...) leaves the target wiped but not installed.
+if ! nonix eval --raw ".#nixosConfigurations.kazimierz-akn-x86_64.config.system.build.toplevel.drvPath" >/dev/null; then
+  echo "nixos:e2e: the system does not evaluate (see above); the target was not touched" >&2; exit 1
+fi
+nonix run github:nix-community/nixos-anywhere/b6be7b277b468d55082584441cbef1fed8530eb3 -- --flake ".#kazimierz-akn-x86_64" --extra-files extra \
+  --build-on remote --target-host "$usage_target"
+'''
+dir = "{{ config_root }}/src/infrastructure/nixos"

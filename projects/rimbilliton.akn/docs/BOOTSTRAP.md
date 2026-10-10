@@ -70,9 +70,9 @@ export POCKET_ID_API_KEY=<Pocket-ID API key>   # or: pulumi config set --secret 
 mise run pulumi:diff
 ```
 
-The preview must show the group and the client as **import** or no-op, with at most in-place updates of cosmetic
-fields, plus the **create** of `minecraft-secret`. If it shows a `create` or a `replace` of the client or the group,
-stop: a UUID or a field is wrong. Then:
+The preview must show the group and the client as **import** or no-op, with at most in-place updates of cosmetic fields,
+plus the **create** of `minecraft-secret`. If it shows a `create` or a `replace` of the client or the group, stop: a
+UUID or a field is wrong. Then:
 
 1. `mise run pulumi:apply`: the new secret **replaces** the old one in Pocket-ID. If Pelican is already running, its
    login is broken from this point.
@@ -104,8 +104,8 @@ The file must be named `rimbilliton.sops.yaml`: that is the name matched by the 
 `src/infrastructure/nixos/.sops.yaml` (admin key + host key as recipients), and the one `configuration.nix` reads. This
 is the one exception to the per-project layout (the rest lives in `projects/rimbilliton.akn/.sops.yaml`) because the
 secret is consumed at build time. sops looks for `.sops.yaml` from the current directory upward and never merges, so run
-it from this directory and keep the admin key in any new rule. `secrets/*.yaml` is
-git-ignored except `*.example.yaml` and `*.sops.yaml`, so a plaintext copy cannot be committed by accident.
+it from this directory and keep the admin key in any new rule. `secrets/*.yaml` is git-ignored except `*.example.yaml`
+and `*.sops.yaml`, so a plaintext copy cannot be committed by accident.
 
 `flake.lock` is committed so every build uses the same input revisions (refresh it with `nonix flake update`). Then set
 `bucket` (`modules/backup.nix`), check the Pelican image tags (`modules/pelican.nix`, Panel and Wings are betas bumped
@@ -124,15 +124,40 @@ IP=$(pulumi -C ../pulumi stack output publicIp)
 ssh ubuntu@"$IP" 'sudo apt-get update -qq && sudo apt-get install -y cpio'
 ```
 
-nixos-anywhere runs inside the `nonix` container, so the SSH client doing the install is the container's, not yours. It
-needs your SSH agent (see [Reaching your SSH agent from the container](#reaching-your-ssh-agent-from-the-container)),
-and that agent must hold the private key matching `ssh_authorized_keys` in the Pulumi config, which cloud-init installs
-for the `ubuntu` user:
+nixos-anywhere runs inside the `nonix` container, which forwards your SSH agent (see the callout below). That agent must
+hold the private key matching `ssh_authorized_keys` in the Pulumi config, which cloud-init installs for the `ubuntu`
+user:
 
 ```bash
-nonix --docker '-v /run/host-services/ssh-auth.sock:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent' \
-  run github:nix-community/nixos-anywhere -- --flake .#rimbilliton-akn \
-  --extra-files extra --kexec-extra-flags '--kexec-syscall' --target-host ubuntu@"$IP"
+mise run nixos:oci:install ubuntu@"$IP"
+```
+
+The task runs `nixos-anywhere` (pinned by commit) with
+`--flake .#rimbilliton-akn-aarch64 --extra-files extra --kexec-extra-flags --kexec-syscall`.
+
+> [!IMPORTANT] **macOS (OrbStack, Docker Desktop): the containers run in a Linux VM**, so `nonix` cannot mount your
+> agent's socket directly (the file shows up, but connecting to it fails with `Connection refused`). It uses the relay
+> the runtime offers instead, `/run/host-services/ssh-auth.sock`, which forwards the agent of the **macOS login
+> session** (the `SSH_AUTH_SOCK` known to `launchd`), not the one of your current shell. With the default macOS agent
+> nothing is needed. With a custom agent (Bitwarden, Secretive, 1Password, ...), point `launchd` at its socket and
+> restart the runtime:
+>
+> ```bash
+> launchctl getenv SSH_AUTH_SOCK                                  # what the relay will forward
+> launchctl setenv SSH_AUTH_SOCK "<path of your agent's socket>"  # e.g. $HOME/.bitwarden-ssh-agent.sock
+> orb stop && orb start                                           # OrbStack; restart Docker Desktop otherwise
+> ```
+>
+> `launchctl setenv` does not survive a reboot. Check what the container sees before an install: your key must be listed
+> (`docker run --rm -v /run/host-services/ssh-auth.sock:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent nixos/nix ssh-add -l`).
+> On Linux the socket is mounted directly from `$SSH_AUTH_SOCK`.
+
+`nixos-anywhere` cannot detect the target architecture, so the flake exposes one output per architecture (`platforms/`):
+`.#rimbilliton-akn-aarch64` is the OCI A1 (UEFI, production) and `.#rimbilliton-akn-x86_64` an x86_64 legacy-BIOS VM.
+There is no un-suffixed output. To rehearse the install on a Proxmox KVM test VM:
+
+```bash
+mise run nixos:e2e <user@host>   # the target is mandatory
 ```
 
 `--kexec-extra-flags '--kexec-syscall'` forces the legacy `kexec_load` syscall: with the default `kexec_file_load`, the
@@ -143,52 +168,16 @@ If the run fails after the kexec step, the instance is no longer Ubuntu: it alre
 disk step, as `root`:
 
 ```bash
-nonix --docker '-v /run/host-services/ssh-auth.sock:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent' \
-  run github:nix-community/nixos-anywhere -- --flake .#rimbilliton-akn \
+nonix run github:nix-community/nixos-anywhere -- --flake .#rimbilliton-akn-aarch64 \
   --extra-files extra --phases disko,install,reboot --target-host root@"$IP"
 ```
 
 A flake only sees files known to git: run `git add -N flake.lock secrets/rimbilliton.sops.yaml` if the build complains
 about an untracked path.
 
-The `--docker` value above is for Docker Desktop or OrbStack on macOS; use the matching row of the table below
-otherwise.
-
-#### Reaching your SSH agent from the container
-
-`nonix` accepts extra `docker run` arguments before the Nix command:
-
-| Flag                    | Effect                                                                              |
-| ----------------------- | ----------------------------------------------------------------------------------- |
-| `--docker '<args>'`     | Extra `docker run` arguments, split on whitespace, repeatable (`--docker '-v a:b'`) |
-| `-e`, `--env KEY=VALUE` | Set an environment variable in the container (`-e KEY` forwards the host's value)   |
-
-Which arguments expose an agent depends on where Docker runs:
-
-| Docker runs on                   | `--docker` value                                                                                                                             |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Linux (native Docker)            | `'-v "$SSH_AUTH_SOCK:/ssh-agent" -e SSH_AUTH_SOCK=/ssh-agent'` (the socket is mounted directly; it must be readable by the container's root) |
-| macOS (Docker Desktop, OrbStack) | `'-v /run/host-services/ssh-auth.sock:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent'`                                                               |
-| Any, no agent (key file on disk) | `'-v "$HOME/.ssh/id_ed25519:/root/.ssh/id_ed25519:ro"'`, then pass `-i /root/.ssh/id_ed25519` to nixos-anywhere                              |
-
-On macOS the host's agent socket cannot be bind-mounted into the Linux VM that runs the containers: the file appears,
-but connecting to it fails with `Connection refused`. The runtime instead offers a relay at
-`/run/host-services/ssh-auth.sock`, which forwards the agent exposed by the macOS login session (the `SSH_AUTH_SOCK`
-known to `launchd`), not the one of your current shell. With the default macOS agent nothing more is needed. With a
-custom agent (Bitwarden, Secretive, 1Password, ...), point `launchd` at its socket and restart the runtime:
-
-```bash
-launchctl getenv SSH_AUTH_SOCK                                  # what the relay will forward
-launchctl setenv SSH_AUTH_SOCK "<path of your agent's socket>"  # e.g. $HOME/.bitwarden-ssh-agent.sock
-orb stop && orb start                                           # OrbStack; restart Docker Desktop otherwise
-```
-
-`launchctl setenv` does not survive a reboot. Check what the container sees before running the install: your key must be
-listed.
-
-```bash
-docker run --rm -v /run/host-services/ssh-auth.sock:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent nixos/nix ssh-add -l
-```
+For a setup `nonix` does not cover (no agent, a key file on disk), pass the Docker arguments yourself:
+`nonix --docker '-v "$HOME/.ssh/id_ed25519:/root/.ssh/id_ed25519:ro"' run github:nix-community/nixos-anywhere -- ... -i /root/.ssh/id_ed25519`.
+As soon as you pass `SSH_AUTH_SOCK` with `-e` or mount `/ssh-agent` with `--docker`, `nonix` leaves the agent alone.
 
 #### Troubleshooting the install
 
@@ -197,9 +186,9 @@ docker run --rm -v /run/host-services/ssh-auth.sock:/ssh-agent -e SSH_AUTH_SOCK=
 | `Permission denied (publickey)`, `Identity file ... not accessible` | The container has no agent, or the agent lacks the key from `ssh_authorized_keys`. Check with `ssh-add -l` above     |
 | `Connection closed by <ip> port 22`                                 | sshd throttles after repeated failures. Fix the cause, wait a minute or two, retry                                   |
 | `no cpio command found, but required to build the new initrd`       | Install `cpio` on the instance (see above)                                                                           |
-| `kexec_file_load failed: Address not available`                     | Add `--kexec-extra-flags '--kexec-syscall'` (see above)                                                              |
+| `kexec_file_load failed: Address not available`                     | Use `mise run nixos:oci:install` (it passes `--kexec-syscall`), see above                                            |
 | `ubuntu@...` asks for a password after a failed run                 | The kexec already happened: the host is the NixOS installer. Resume with `root@` and `--phases disko,install,reboot` |
-| `Connection refused` from `ssh-add -l` in the container             | The agent socket was bind-mounted from macOS. Use the relay row of the table instead                                 |
+| `Connection refused` from `ssh-add -l` in the container             | The agent socket was bind-mounted from macOS. Use the relay, see the macOS callout above                             |
 | `ssh-add -l` lists another agent's keys or "no identities"          | `launchd` points at a different agent: see `launchctl getenv SSH_AUTH_SOCK` above                                    |
 
 ### 5. Verify Deployment
@@ -256,7 +245,7 @@ it a configuration.
    ```bash
    cd src/infrastructure/nixos
    sops secrets/rimbilliton.sops.yaml   # add wings_uuid, wings_token_id, wings_token (see secrets/rimbilliton.example.yaml)
-   nonix --docker '...' run nixpkgs#nixos-rebuild -- switch --flake .#rimbilliton-akn --target-host root@rimbilliton-akn
+   mise run nixos:oci:update
    ```
 
    The node must turn green. To rotate the token, reset it in the Panel and update the three values.
@@ -286,5 +275,11 @@ to the disk in clear text). The node token lives in the SOPS file, not in the ba
 Later changes are deployed over Tailscale:
 
 ```bash
-nixos-rebuild switch --flake .#rimbilliton-akn --target-host root@rimbilliton-akn
+mise run nixos:oci:update
 ```
+
+It runs `nixos-rebuild switch --flake .#rimbilliton-akn-aarch64 --target-host root@rimbilliton-akn` (nixos-rebuild taken
+from the nixpkgs revision locked in `flake.lock`) through `nonix`.
+
+There is no automatic update, on purpose: the instance is not supervised yet and a rollback is hard to do cleanly (see
+ADR-008, which covers `kazimierz.akn` and applies here too).

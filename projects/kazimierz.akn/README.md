@@ -250,8 +250,10 @@ ansible-playbook -i inventory/remote.yml site.yml --vault-password-file <(echo "
 
 Configuration changes are applied by re-running this command; nothing syncs automatically.
 
-See [docs/BOOTSTRAP.md](./docs/BOOTSTRAP.md) for the complete bootstrap procedure and
-[src/infrastructure/ansible/README.md](./src/infrastructure/ansible/README.md) for the full Ansible architecture.
+The NixOS definition that replaces this setup is described in [docs/BOOTSTRAP.md](./docs/BOOTSTRAP.md) (fresh install)
+and [docs/MIGRATION_NIXOS.md](./docs/MIGRATION_NIXOS.md) (cutover of the running host). See
+[src/infrastructure/ansible/README.md](./src/infrastructure/ansible/README.md) for the full Ansible architecture until
+then.
 
 ## Security Considerations
 

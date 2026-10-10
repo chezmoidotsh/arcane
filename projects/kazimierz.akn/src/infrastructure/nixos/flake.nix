@@ -1,5 +1,5 @@
 {
-  description = "rimbilliton.akn — Minecraft server (Pelican + B2 backups) on OCI Always Free ARM";
+  description = "kazimierz.akn — Pangolin + Gerbil + Traefik public gateway on OCI Always Free ARM";
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-26.05";
@@ -22,16 +22,15 @@
           sops-nix.nixosModules.sops
           platform
           ./configuration.nix
-          ./modules/pelican.nix
-          ./modules/caddy.nix
-          ./modules/backup.nix
+          ./modules/pangolin.nix
+          ./modules/geoip.nix
         ];
       };
     in
     {
       # Production: OCI Always Free A1. nixos-anywhere cannot guess the target, pick the output with `--flake .#<host>-<arch>`.
-      nixosConfigurations.rimbilliton-akn-aarch64 = mk "aarch64-linux" ./platforms/oci.a1.nix;
+      nixosConfigurations.kazimierz-akn-aarch64 = mk "aarch64-linux" ./platforms/oci.a1.nix;
       # Test VM (x86_64, legacy BIOS) to rehearse the install procedure.
-      nixosConfigurations.rimbilliton-akn-x86_64 = mk "x86_64-linux" ./platforms/proxmox.kvm.nix;
+      nixosConfigurations.kazimierz-akn-x86_64 = mk "x86_64-linux" ./platforms/proxmox.kvm.nix;
     };
 }

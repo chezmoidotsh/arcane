@@ -11,8 +11,8 @@
 { config, lib, pkgs, ... }:
 let
   # Beta releases: pin them, and bump the two together (see the Pelican changelog).
-  panelImage = "ghcr.io/pelican/panel:v1.0.0-beta38";
-  wingsImage = "ghcr.io/pelican/wings:v1.0.0-beta29";
+  panelImage = "ghcr.io/pelican/panel:v1.0.0-beta38@sha256:46f356f3fda423b1d43f0dc3c71efc056cd8b9bec365d1d7817306a17ee5694a";
+  wingsImage = "ghcr.io/pelican/wings:v1.0.0-beta29@sha256:39837cfc49b0513313e57dc4b977a769cb784cf81af3f25a5ea46d869b4b0846";
 
   # Community plugin giving Pocket-Id as an OAuth provider (https://hub.pelican.dev/plugins/pocketid-provider).
   # The ZIP has its files at its root: it is unpacked as the plugin directory.
