@@ -201,7 +201,7 @@ philosophie d'auto-hébergement du homelab fondée sur des outils natifs de Kube
 
 ## Pour aller plus loin
 
-- [ADR-007 Structure des projets et conventions de nommage](./ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md)
+- [ADR-007 Structure des projets et conventions de nommage](../archives/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md)
   : les conventions de nommage des projets, dont celles des clusters.
 - [Chart mutualized-cnpg-databases](../../catalog/helm/mutualized-cnpg-databases/README.md) : le chart qui produit les
   clusters partagés `postgres-apps` et `postgres-apps-secured`.

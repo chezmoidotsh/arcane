@@ -55,7 +55,7 @@ Répartition relevée dans `projects/` et `catalog/` (hors `dist/`) :
 | `github-releases` | 4           | Versions de binaires dans les modules Nix                  |
 
 Le nom de la datasource est `github-releases` dans le dépôt ;
-[ADR-007](../decisions/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md) écrit `github-release`, qui n'est pas
+[ADR-007](../archives/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md) écrit `github-release`, qui n'est pas
 le nom de la datasource Renovate.
 
 ### Formes reconnues
@@ -85,7 +85,7 @@ Règles de saisie :
 > [!WARNING]\
 > Aucun `kustomization.yaml` du dépôt ne porte aujourd'hui de label `app.kubernetes.io/version` (0 occurrence sous
 > `projects/`). L'exigence de label de version de
-> [ADR-007](../decisions/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md) et le manager de labels ci-dessous
+> [ADR-007](../archives/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md) et le manager de labels ci-dessous
 > ne s'appliquent donc à aucun fichier existant. Les annotations des `kustomization.yaml` suivent le champ `images`.
 
 ## Managers personnalisés
@@ -149,7 +149,7 @@ Renovate.
 ## Pour aller plus loin
 
 - [`renovate.json5`](../../renovate.json5) : la configuration locale.
-- [ADR-007 Structure des projets et conventions de nommage](../decisions/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md)
+- [ADR-007 Structure des projets et conventions de nommage](../archives/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md)
   : la convention de labels de version et d'annotations.
 - [ADR-010 Replace Gitmoji With Symbol Commit Types](../decisions/010-replace-gitmoji-with-symbol-commit-types.md) : le
   format de commit en vigueur.
