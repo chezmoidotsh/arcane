@@ -1,19 +1,18 @@
 # Audit de la documentation Arcane — étape 0 de #1257
 
-> Audit en lecture seule, fait le 2026-10-11 sur le worktree `docs-wiki-migration-1257` (HEAD `58520c30`).
-> Chaque constat "périmé" ou "cassé" s'appuie sur une vérification dans l'arbre (`ls`, `grep`, un vérificateur de liens
+> Audit en lecture seule, fait le 2026-10-11 sur le worktree `docs-wiki-migration-1257` (HEAD `58520c30`). Chaque
+> constat "périmé" ou "cassé" s'appuie sur une vérification dans l'arbre (`ls`, `grep`, un vérificateur de liens
 > relatifs). Quand une vérification n'a pas pu être faite (comportement du rendu GitHub Wiki, état réel des clusters),
 > c'est indiqué.
 
-> [!IMPORTANT]
-> **Décisions modifiées depuis cet audit** (voir le commentaire de mise à jour de #1257 et le style guide
+> [!IMPORTANT] **Décisions modifiées depuis cet audit** (voir le commentaire de mise à jour de #1257 et le style guide
 > `.agents/skills/documentation-writer/references/style-guide.md`, qui font foi) :
 >
 > - Le `wiki/` plat (décision D1, colonnes « Destination », sections (a) et (f)) est remplacé : la source de vérité est
 >   `docs/`, organisé en dossiers par type de page (`guides/`, `reference/`, `procedures/`, `decisions/`, `incidents/`,
 >   `experiments/`, `projects/`). Lire chaque « `wiki/` » ou « wiki plat » de ce document comme `docs/<type>/`.
-> - Les liens au format wiki `[x](Page-Name)` et `preprocess: false` (D1b) sont remplacés par des liens relatifs vers les
->   fichiers `.md`, réécrits à la publication par `scripts/wiki:publish`.
+> - Les liens au format wiki `[x](Page-Name)` et `preprocess: false` (D1b) sont remplacés par des liens relatifs vers
+>   les fichiers `.md`, réécrits à la publication par `scripts/wiki:publish`.
 > - Ce qui n'est pas encore migré est listé dans `docs/.wiki-legacy`.
 > - Le commentaire `firewall.ts:23` qui citait encore `vlans.md` (oublié de la liste (e)) est corrigé dans la même PR.
 >
@@ -83,23 +82,23 @@ Ignorés : 2 `LICENSE.md` vendored sous `.mise/python/`, `dist/`, `node_modules`
    `schedule.postmortem-followup.yaml`, ainsi que les skills `cnpg-troubleshoot` et `postmortem`. Déplacer les
    post-mortems impose de modifier ces scripts **et** de garder le front matter intact, donc pas de pré-traitement
    remark.
-8. **Trois documents sont générés par du code** (`projects/chezmoi.sh/docs/{PROXMOX-VE,TRUENAS,PROXMOX_BACKUP_SERVER}.md`,
-   produits par `toolbox/*-docs` depuis l'état Pulumi, exclus de Prettier dans `.rtunk/rtunk.yaml`). Les déplacer
-   oblige à changer le chemin de sortie du générateur. Le template `partials.host.hbs` pointe encore vers
-   `docs/network/vlans.md` (inexistant) alors que le fichier généré pointe vers `ipam.md` : la prochaine régénération
-   réintroduira le lien cassé.
+8. **Trois documents sont générés par du code**
+   (`projects/chezmoi.sh/docs/{PROXMOX-VE,TRUENAS,PROXMOX_BACKUP_SERVER}.md`, produits par `toolbox/*-docs` depuis
+   l'état Pulumi, exclus de Prettier dans `.rtunk/rtunk.yaml`). Les déplacer oblige à changer le chemin de sortie du
+   générateur. Le template `partials.host.hbs` pointe encore vers `docs/network/vlans.md` (inexistant) alors que le
+   fichier généré pointe vers `ipam.md` : la prochaine régénération réintroduira le lien cassé.
 9. **Deux couplages code/doc empêchent un déplacement simple.** `projects/rhodes.akn/docs/disaster-recovery/` contient
    `.mise.toml` et `.mise/tasks/dr/cnpg/patch-recovery-source`, des tâches appelées par le runbook. Les expériences
    `docs/experiments/*/` contiennent des scripts, manifests, `package.json` et un devcontainer. Seule la prose peut
    partir ; le code reste.
-10. **`docs/assets/` doit rester** : les READMEs de projets y chargent leurs icônes (`../../docs/assets/icons/...`) et les
-    styles D2 y sont rangés (`docs/assets/d2/`).
+10. **`docs/assets/` doit rester** : les READMEs de projets y chargent leurs icônes (`../../docs/assets/icons/...`) et
+    les styles D2 y sont rangés (`docs/assets/d2/`).
 
 ## (b) Inventaire
 
 Légende. **État** : OK / À corriger / Périmé. **Format** : ADR, SOP (procédure), PM (post-mortem), EXP (expérience),
-Guide, Réf (référence), Journal, Index, README (doc de répertoire), Agent. **Destination** : chemin proposé
-dans le wiki (plat, voir (f)), ou "en place".
+Guide, Réf (référence), Journal, Index, README (doc de répertoire), Agent. **Destination** : chemin proposé dans le wiki
+(plat, voir (f)), ou "en place".
 
 ### Racine
 
@@ -181,21 +180,21 @@ en retard.
 
 ### `docs/experiments/`, `docs/network/`, `docs/migrations/`, `docs/archives/`, `docs/reports/`, `docs/RENOVATE.md`
 
-| Chemin                                                            | Sujet                                | État (preuve)                                                                                                                                                     | Duplication                                         | Format       | Destination                                                                                                   |
-| ----------------------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------- |
-| `experiments/20260617-proxmox-csi-ccm/README.md`                  | Faisabilité Proxmox CSI/CCM          | OK (conclu) ; `scripts/validate.sh` est réutilisé par OMNI-20260721 et le DR rhodes                                                                               | —                                                   | EXP          | README → wiki `Experiment-2026-06-17-…` ; `manifests/` et `scripts/` restent (ou partent vers `catalog/`, D5) |
-| `experiments/20260702-pulumi-crossplane-evaluation/README.md`     | POC Pulumi vs Crossplane             | **Statut faux** : `IN_PROGRESS`, alors qu'ADR-015 a tranché et que Crossplane est retiré                                                                          | ADR-015                                             | EXP          | Wiki (statut → concluded) ; code en place ou supprimé                                                         |
-| `experiments/20260702-…/catalog/cluster-vault/README.md`          | README du composant du POC           | Historique ; lien relatif cassé                                                                                                                                   | `catalog/pulumi/components/cluster-vault/README.md` | README       | En place avec le code du POC (ou supprimé avec lui)                                                           |
-| `experiments/20260803-velero-pvc-backup/README.md`                | POC Velero                           | OK                                                                                                                                                                | BKP-20260805-00                                     | EXP          | Wiki ; code en place                                                                                          |
-| `experiments/argocd-application-properties/README.md`             | `.application.patch`                 | Pas de date ni de statut ; le mécanisme est en production (ADR-007)                                                                                               | ADR-007                                             | EXP          | Wiki, archive                                                                                                 |
-| `experiments/tailscale-argocd-zero-trust/README.md`               | Tailscale + ArgoCD                   | Pas de date ni de statut, emojis, tutoriel ; c'est le devcontainer cité par `AGENTS.md`                                                                           | —                                                   | EXP/tutoriel | Wiki, archive ; devcontainer en place                                                                         |
-| `network/README.md`                                               | Vue réseau + diagramme D2            | OK                                                                                                                                                                | `ipam.md`, ADR-014, `PROXMOX-VE.md` (réseau)        | Réf          | Wiki `Network-Overview` (+ `topology.svg` copié dans le wiki)                                                 |
-| `network/ipam.md`                                                 | IPAM, source de vérité               | OK ; **cité par ~20 fichiers de code** (YAML Cilium, templates Omni, `.ts`, `.nix`, Ansible)                                                                      | `PROXMOX-VE.md`                                     | Réf          | Wiki `IPAM-Reference` ; commentaires de code mis à jour (voir (e))                                            |
-| `network/gateway-dns-split.md`                                    | Gateways interne/externe, DNS        | OK (vérifié : deux Gateways Cilium, external-dns bind + unifi)                                                                                                    | ADR-014                                             | Réf/Guide    | Wiki `Gateway-And-DNS-Split`                                                                                  |
-| `migrations/amiya.akn->rhodes.akn.md`                             | Récit de la migration amiya → rhodes | Terminée, historique ; `>` dans le nom de fichier                                                                                                                 | DR rhodes                                           | Journal      | Wiki archive `Migration-Amiya-To-Rhodes`                                                                      |
-| `archives/2026-08-01-MIGR-20260801-00.lungmen-talosnet-bridge.md` | Pont temporaire                      | Archivé ; chemin `lungmen-akn-01.patch-config.yaml` absent                                                                                                        | —                                                   | SOP archivée | Wiki archive, ou suppression (D6)                                                                             |
-| `reports/20261008-manual-infrastructure-inventory.md`             | Inventaire du manuel (#1285)         | Instantané daté ; mentionne `catalog/fluxcd` (absent)                                                                                                             | —                                                   | Rapport      | Wiki `Report-2026-10-08-…`, ou issue #1285 (D6)                                                               |
-| `RENOVATE.md`                                                     | Guide Renovate                       | **Périmé** : cite `renovate.json` (le fichier est `renovate.json5`) ; ne dit pas que Renovate est désactivé (`"enabled": false`) ni qu'il étend encore `:gitmoji` | ADR-007 (labels de version)                         | Guide        | Wiki `Renovate-Reference` après correction                                                                    |
+| Chemin                                                            | Sujet                                | État (preuve)                                                                                                                                                     | Duplication                                         | Format       | Destination                                                                                                        |
+| ----------------------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `experiments/20260617-proxmox-csi-ccm/README.md`                  | Faisabilité Proxmox CSI/CCM          | OK (conclu) ; `scripts/validate.sh` est réutilisé par OMNI-20260721 et le DR rhodes                                                                               | —                                                   | EXP          | README → wiki `Experimentation-2026-06-17-…` ; `manifests/` et `scripts/` restent (ou partent vers `catalog/`, D5) |
+| `experiments/20260702-pulumi-crossplane-evaluation/README.md`     | POC Pulumi vs Crossplane             | **Statut faux** : `IN_PROGRESS`, alors qu'ADR-015 a tranché et que Crossplane est retiré                                                                          | ADR-015                                             | EXP          | Wiki (statut → concluded) ; code en place ou supprimé                                                              |
+| `experiments/20260702-…/catalog/cluster-vault/README.md`          | README du composant du POC           | Historique ; lien relatif cassé                                                                                                                                   | `catalog/pulumi/components/cluster-vault/README.md` | README       | En place avec le code du POC (ou supprimé avec lui)                                                                |
+| `experiments/20260803-velero-pvc-backup/README.md`                | POC Velero                           | OK                                                                                                                                                                | BKP-20260805-00                                     | EXP          | Wiki ; code en place                                                                                               |
+| `experiments/argocd-application-properties/README.md`             | `.application.patch`                 | Pas de date ni de statut ; le mécanisme est en production (ADR-007)                                                                                               | ADR-007                                             | EXP          | Wiki, archive                                                                                                      |
+| `experiments/tailscale-argocd-zero-trust/README.md`               | Tailscale + ArgoCD                   | Pas de date ni de statut, emojis, tutoriel ; c'est le devcontainer cité par `AGENTS.md`                                                                           | —                                                   | EXP/tutoriel | Wiki, archive ; devcontainer en place                                                                              |
+| `network/README.md`                                               | Vue réseau + diagramme D2            | OK                                                                                                                                                                | `ipam.md`, ADR-014, `PROXMOX-VE.md` (réseau)        | Réf          | Wiki `Network-Overview` (+ `topology.svg` copié dans le wiki)                                                      |
+| `network/ipam.md`                                                 | IPAM, source de vérité               | OK ; **cité par ~20 fichiers de code** (YAML Cilium, templates Omni, `.ts`, `.nix`, Ansible)                                                                      | `PROXMOX-VE.md`                                     | Réf          | Wiki `IPAM-Reference` ; commentaires de code mis à jour (voir (e))                                                 |
+| `network/gateway-dns-split.md`                                    | Gateways interne/externe, DNS        | OK (vérifié : deux Gateways Cilium, external-dns bind + unifi)                                                                                                    | ADR-014                                             | Réf/Guide    | Wiki `Gateway-And-DNS-Split`                                                                                       |
+| `migrations/amiya.akn->rhodes.akn.md`                             | Récit de la migration amiya → rhodes | Terminée, historique ; `>` dans le nom de fichier                                                                                                                 | DR rhodes                                           | Journal      | Wiki archive `Migration-Amiya-To-Rhodes`                                                                           |
+| `archives/2026-08-01-MIGR-20260801-00.lungmen-talosnet-bridge.md` | Pont temporaire                      | Archivé ; chemin `lungmen-akn-01.patch-config.yaml` absent                                                                                                        | —                                                   | SOP archivée | Wiki archive, ou suppression (D6)                                                                                  |
+| `reports/20261008-manual-infrastructure-inventory.md`             | Inventaire du manuel (#1285)         | Instantané daté ; mentionne `catalog/fluxcd` (absent)                                                                                                             | —                                                   | Rapport      | Wiki `Report-2026-10-08-…`, ou issue #1285 (D6)                                                                    |
+| `RENOVATE.md`                                                     | Guide Renovate                       | **Périmé** : cite `renovate.json` (le fichier est `renovate.json5`) ; ne dit pas que Renovate est désactivé (`"enabled": false`) ni qu'il étend encore `:gitmoji` | ADR-007 (labels de version)                         | Guide        | Wiki `Renovate-Reference` après correction                                                                         |
 
 ### `projects/*/docs/`
 
@@ -224,7 +223,7 @@ part dans le wiki, et le README pointe alors vers elle.
 
 | Chemin / groupe                                                                                                                                        | Sujet                       | État (preuve)                                                                                                                                                                                                                                                                        | Duplication                                                                                                                                                      | Destination                                                                                                                                           |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `projects/{chezmoi.sh,hass,kazimierz.akn,lungmen.akn,rhodes.akn,rimbilliton.akn,shodan.akn}/README.md` (7)                                             | Vitrines de projet          | `lungmen` : OK (dit lui-même qu'il peut prendre du retard). `kazimierz` / `rimbilliton` : OK. `shodan` : à corriger (workflow `src/apps/*/overlays/dev` sans aucun manifeste ; ce motif d'overlays n'existe nulle part ; cite `EXP-2026-005`). `rhodes` / `hass` / `chezmoi.sh` : OK | Les sections Installation et DR dupliquent les BOOTSTRAP et le DR                                                                                                | En place, sections guide réduites à un lien vers le wiki ; chacune a aussi une page `Project-<name>` dans le wiki (vue d'ensemble)                    |
+| `projects/{chezmoi.sh,hass,kazimierz.akn,lungmen.akn,rhodes.akn,rimbilliton.akn,shodan.akn}/README.md` (7)                                             | Vitrines de projet          | `lungmen` : OK (dit lui-même qu'il peut prendre du retard). `kazimierz` / `rimbilliton` : OK. `shodan` : à corriger (workflow `src/apps/*/overlays/dev` sans aucun manifeste ; ce motif d'overlays n'existe nulle part ; cite `EXP-2026-005`). `rhodes` / `hass` / `chezmoi.sh` : OK | Les sections Installation et DR dupliquent les BOOTSTRAP et le DR                                                                                                | En place, sections guide réduites à un lien vers le wiki ; chacune a aussi une page `Projet-<name>` dans le wiki (vue d'ensemble)                     |
 | `rhodes.akn/src/argocd/README.md`                                                                                                                      | Bootstrap ArgoCD et AppSets | OK                                                                                                                                                                                                                                                                                   | ADR-007, ADR-011                                                                                                                                                 | En place                                                                                                                                              |
 | `rhodes.akn/src/infrastructure/kubernetes/README.md`                                                                                                   | Composants infra de rhodes  | OK (la mention d'Envoy concerne l'Envoy embarqué de Cilium, c'est correct)                                                                                                                                                                                                           | `AGENTS.md`                                                                                                                                                      | En place                                                                                                                                              |
 | `lungmen.akn/src/apps/actual-budget/README.md`                                                                                                         | Architecture Actual Budget  | **Périmé** : "protégé par OIDC via Envoy Gateway", alors que l'HTTPRoute pointe vers la Gateway Cilium `external` et qu'il n'y a pas de `SecurityPolicy`                                                                                                                             | —                                                                                                                                                                | En place, corrigé (ou supprimé)                                                                                                                       |
@@ -351,7 +350,8 @@ part dans le wiki, et le README pointe alors vers elle.
 ## (e) Références à mettre à jour lors des déplacements
 
 Hors `CHANGELOG.md`, `.agents/sessions/` et les liens internes entre fichiers `docs/` (qui seront réécrits pendant la
-migration). L'extraction brute fait 375 lignes (`grep -rIn "docs/(decisions|procedures|incidents|experiments|network|migrations|archives|reports|RENOVATE)|DISASTER_RECOVERY_PLAN|projects/[a-z.]+/docs"`).
+migration). L'extraction brute fait 375 lignes
+(`grep -rIn "docs/(decisions|procedures|incidents|experiments|network|migrations|archives|reports|RENOVATE)|DISASTER_RECOVERY_PLAN|projects/[a-z.]+/docs"`).
 
 ### Automatisations (cassent si on ne les modifie pas)
 
@@ -389,13 +389,15 @@ migration). L'extraction brute fait 375 lignes (`grep -rIn "docs/(decisions|proc
 ### Commentaires de code et READMEs qui pointent vers `docs/`
 
 - **`docs/network/ipam.md`** (référence la plus citée) :
-  - `projects/{rhodes,lungmen}.akn/src/infrastructure/kubernetes/cilium/{internal,external}.{gateway,ippool}.yaml` (8 fichiers), et les `dist/` correspondants une fois re-rendus ;
+  - `projects/{rhodes,lungmen}.akn/src/infrastructure/kubernetes/cilium/{internal,external}.{gateway,ippool}.yaml` (8
+    fichiers), et les `dist/` correspondants une fois re-rendus ;
   - `projects/{rhodes,lungmen}.akn/src/infrastructure/omni/*.clustertemplate.yaml` ;
   - `catalog/omni/clustertemplates/base.yaml` ;
   - `projects/kazimierz.akn/src/infrastructure/pulumi/stack/pangolin/org.ts` ;
   - `projects/chezmoi.sh/src/infrastructure/ansible/files/99-talosnet-lb-notrack` ;
   - `catalog/omni/README.md` ; `projects/rhodes.akn/src/infrastructure/kubernetes/README.md`.
-- **`docs/decisions/014-…`** : les 2 clustertemplates, `catalog/omni/clustertemplates/base.yaml`, `catalog/omni/README.md`.
+- **`docs/decisions/014-…`** : les 2 clustertemplates, `catalog/omni/clustertemplates/base.yaml`,
+  `catalog/omni/README.md`.
 - **`docs/decisions/015-…`** : `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/{pools,firewall}.ts`,
   `stack/proxmox-backup-server/access.ts`, `stack/proxmox/README.md`, `stack/proxmox-backup-server/README.md`.
 - **`docs/procedures/infrastructure/` (INF-20260705)** :
@@ -404,8 +406,10 @@ migration). L'extraction brute fait 375 lignes (`grep -rIn "docs/(decisions|proc
   - `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/access/{rhodes,lungmen}-akn-bootstrap.ts` ;
   - `projects/chezmoi.sh/README.md` ; `projects/chezmoi.sh/docs/*.md` (générés).
 - **`docs/procedures/infrastructure/` (INF-20260627, INF-20260730)** : `stack/proxmox/sdn.ts`, `ansible/pve.yaml`.
-- **`docs/experiments/20260617-proxmox-csi-ccm/`** : `projects/{rhodes,lungmen}.akn/src/infrastructure/kubernetes/proxmox/*.helmvalues/default.yaml` (4 fichiers).
-- **`docs/experiments/20260803-velero-pvc-backup`** : `projects/lungmen.akn/src/infrastructure/kubernetes/velero/velero.helmvalues/default.yaml`.
+- **`docs/experiments/20260617-proxmox-csi-ccm/`** :
+  `projects/{rhodes,lungmen}.akn/src/infrastructure/kubernetes/proxmox/*.helmvalues/default.yaml` (4 fichiers).
+- **`docs/experiments/20260803-velero-pvc-backup`** :
+  `projects/lungmen.akn/src/infrastructure/kubernetes/velero/velero.helmvalues/default.yaml`.
 - **`docs/incidents/`** : `catalog/opa/policies/NET001:kubernetes.rego`, `catalog/opa/rules/{NET001,SEC001}-*.md`.
 - **`docs/decisions/003/004`** : `catalog/pulumi/components/cluster-vault/README.md`.
 - **`docs/decisions/007`** : `projects/rhodes.akn/src/argocd/README.md`.
@@ -430,6 +434,7 @@ migration). L'extraction brute fait 375 lignes (`grep -rIn "docs/(decisions|proc
      sous-dossiers crée donc une collision ;
    - les noms qui contiennent des points (`INF-20260525-00.upgrade-talos`) se comportent peut-être mal ; mieux vaut
      n'utiliser que des tirets.
+
 2. **D1b — `preprocess` de l'action.** Je recommande `preprocess: false` et des liens écrits au format wiki. En l'état,
    remark sans `remark-gfm` ni `remark-frontmatter` réécrit probablement le front matter YAML (ADR, PM), les tableaux et
    les admonitions des pages racine. À valider avec `dry-run: true`. Conséquence : il faudra un vérificateur de liens
@@ -445,13 +450,13 @@ migration). L'extraction brute fait 375 lignes (`grep -rIn "docs/(decisions|proc
 5. **D4 — OIDC et SecurityPolicy.** ADR-005 et SEC-20250808 décrivent un mécanisme disparu. Faut-il écrire un ADR qui
    supplante ADR-005 (Pocket-Id + Pangolin `sso: false` + authentification propre à chaque app) ou simplement marquer
    ADR-005 `deprecated` ? Et SEC-20250808 : archiver ou réécrire ?
-6. **D5 — Code dans `docs/`.** Où va le code des expériences (`manifests/`, `scripts/`, `package.json`, devcontainer)
-   et les tâches mise du DR rhodes, une fois la prose dans le wiki ? Options : laisser `docs/experiments/<x>/` sans
-   README (le README devient un pointeur), déplacer vers `projects/rhodes.akn/.mise/tasks/` ou vers `scripts/`, ou
-   supprimer les POC conclus (Crossplane).
-7. **D6 — Archives.** Que faire des archives et récits terminés : MIGR-20260628, MIGR-20260801, migration
-   amiya→rhodes, `kazimierz/docs/archives/*`, `MIGRATION_NIXOS`, le rapport du 2026-10-08 ? Une catégorie wiki
-   "Archives", ou une suppression (git garde l'historique) ?
+6. **D5 — Code dans `docs/`.** Où va le code des expériences (`manifests/`, `scripts/`, `package.json`, devcontainer) et
+   les tâches mise du DR rhodes, une fois la prose dans le wiki ? Options : laisser `docs/experiments/<x>/` sans README
+   (le README devient un pointeur), déplacer vers `projects/rhodes.akn/.mise/tasks/` ou vers `scripts/`, ou supprimer
+   les POC conclus (Crossplane).
+7. **D6 — Archives.** Que faire des archives et récits terminés : MIGR-20260628, MIGR-20260801, migration amiya→rhodes,
+   `kazimierz/docs/archives/*`, `MIGRATION_NIXOS`, le rapport du 2026-10-08 ? Une catégorie wiki "Archives", ou une
+   suppression (git garde l'historique) ?
 8. **D7 — Racine.** `CHANGELOG.md` reste à la racine (récit, cité par le README) ou devient la page wiki `History` ?
    `DISASTER_RECOVERY_PLAN.md` est supprimé et remplacé par la page wiki `Disaster-Recovery-Plan` (#1109) ?
 9. **D8 — TrueNAS.** Ansible (`truenas.yaml`, `application_datasets`) ou Pulumi (`stack/truenas`) : lequel fait foi ?
@@ -486,7 +491,7 @@ migration). L'extraction brute fait 375 lignes (`grep -rIn "docs/(decisions|proc
    - `lxc-static-network/default.nix` ;
    - liens à la mauvaise profondeur dans les READMEs de `catalog/pulumi` et `chezmoi.sh`.
 2. **Procédures et guides de projet** (les plus lus pendant un incident) :
-   - réécrire et vérifier : OMNI-20260721, OMNI-20260629-03, BKP-*, DB-20260530 (sans Longhorn), INF-20260525-02,
+   - réécrire et vérifier : OMNI-20260721, OMNI-20260629-03, BKP-\*, DB-20260530 (sans Longhorn), INF-20260525-02,
      INF-20260605 (fusionné avec les sections LXC communes), INF-20260620, INF-20260627, INF-20260705, INF-20260730 ;
    - réécrire pour Omni : INF-20260525-00/01 ;
    - archiver : SEC-20250808, MIGR-20260628 ;
@@ -505,8 +510,8 @@ migration). L'extraction brute fait 375 lignes (`grep -rIn "docs/(decisions|proc
    - mettre à jour `adr-authoring`, `.commitlintrc.js`, `scripts/dist:render`, `scripts/bao:secret:audit` et les
      commentaires `.ts` et clustertemplates.
 5. **Post-mortems** (retouche légère, front matter intact) avec, dans la même PR, `postmortem-index.py`,
-   `postmortem-followup.py`, le workflow planifié, les skills `postmortem` et `cnpg-troubleshoot`, `.agents/knowledge/*`,
-   les fiches OPA NET001/SEC001 et `NET001:kubernetes.rego`.
+   `postmortem-followup.py`, le workflow planifié, les skills `postmortem` et `cnpg-troubleshoot`,
+   `.agents/knowledge/*`, les fiches OPA NET001/SEC001 et `NET001:kubernetes.rego`.
 6. **Expériences, migrations, archives, rapports** : prose vers le wiki (catégorie "Archives / Experiments"), code selon
    D5, suppressions selon D6.
 7. **Fin** :

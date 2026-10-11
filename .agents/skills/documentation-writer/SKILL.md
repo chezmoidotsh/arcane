@@ -3,9 +3,9 @@ name: documentation-writer
 description: >
   Single entry point for writing, rewriting, reviewing and migrating any documentation of this repository: guides,
   references, project overviews, procedures / SOPs / runbooks, Architecture Decision Records (ADR), post-mortems and
-  root-cause analyses, experiment write-ups. Routes to the right page type, template and rules. Use it for "document
-  X", "write a guide / a reference page", "write a procedure for X", "turn this into a runbook", "add an SOP", "write
-  an ADR", "document this decision", "update ADR-00N", "write a post-mortem", "what went wrong", "why did this fail",
+  root-cause analyses, experiment write-ups. Routes to the right page type, template and rules. Use it for "document X",
+  "write a guide / a reference page", "write a procedure for X", "turn this into a runbook", "add an SOP", "write an
+  ADR", "document this decision", "update ADR-00N", "write a post-mortem", "what went wrong", "why did this fail",
   "lessons learned", "move this doc to the wiki", "fix the docs", and right after a significant design decision, a
   multi-step manual operation or an incident worth preserving, even if nobody asked. Do not use it for code comments,
   component READMEs that describe a directory, OPA rule sheets under catalog/opa/, or agent files (AGENTS.md, .agents/).
@@ -29,18 +29,18 @@ Match the intent to one row, then read the files in the last column **in that or
 
 | The reader needs to...                                             | Page type        | Read                                                                                                                                                     |
 | ------------------------------------------------------------------ | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Get from a starting point to a result (bootstrap, set up, operate) | Guide            | [page-templates.md](references/page-templates.md#guide)                                                                                                  |
-| Look up a value, a list or a contract                              | Reference        | [page-templates.md](references/page-templates.md#reference)                                                                                              |
+| Get from a starting point to a result (bootstrap, set up, operate) | Guide            | [guide-template.md](references/guide-template.md)                                                                                                        |
+| Look up a value, a list or a contract                              | Reference        | [reference-template.md](references/reference-template.md)                                                                                                |
 | Execute a repeatable operation under pressure, command by command  | Procedure (SOP)  | [procedure.md](references/procedure.md), then [procedure-template.md](references/procedure-template.md)                                                  |
 | Understand _why_ a technical choice was made                       | ADR              | [adr.md](references/adr.md), then [adr-template.md](references/adr-template.md)                                                                          |
 | Learn from a failure, an outage or a missed target                 | Post-mortem      | [postmortem.md](references/postmortem.md), then [templates/postmortem.md](templates/postmortem.md) or [postmortem-lite.md](templates/postmortem-lite.md) |
-| Know what was tried, what was concluded, and where the code lives  | Experiment       | [page-templates.md](references/page-templates.md#experiment)                                                                                             |
-| Get the overview of a project under `projects/`                    | Project overview | [page-templates.md](references/page-templates.md#project-overview)                                                                                       |
+| Know what was tried, what was concluded, and where the code lives  | Experiment       | [experiment-template.md](references/experiment-template.md)                                                                                              |
+| Get the overview of a project under `projects/`                    | Project overview | [project-template.md](references/project-template.md)                                                                                                    |
 
 Tell-apart rules when two rows seem to fit:
 
-- **ADR or procedure?** If you are justifying a choice or comparing options, it is an ADR. If you are listing commands to
-  run, it is a procedure. A procedure links to the ADR; it never argues the choice.
+- **ADR or procedure?** If you are justifying a choice or comparing options, it is an ADR. If you are listing commands
+  to run, it is a procedure. A procedure links to the ADR; it never argues the choice.
 - **Post-mortem or procedure?** The post-mortem tells what happened and why. The fix steps that will be needed again
   become a procedure that the post-mortem links to.
 - **Guide or procedure?** A guide teaches and can be read start to finish at leisure. A procedure is followed literally,
@@ -60,12 +60,14 @@ Tell-apart rules when two rows seem to fit:
 
 A README section that is really a guide moves to `docs/`, and the README links to it.
 
-> [!NOTE]
-> The documentation is being migrated to the standard below category by category (issue #1257). `docs/.wiki-legacy`
-> lists what is not migrated yet: those pages are neither linted nor published. Until a category has migrated, new
-> procedures go in `docs/procedures/`, ADRs in `docs/decisions/` and post-mortems in `docs/incidents/`, with the
-> numbering and front matter their reference file describes. A new page of any other type, or a migrated category,
-> follows the naming and directory rules of the style guide.
+> [!NOTE] The documentation is being migrated to the standard below category by category (issue #1257).
+> `docs/.wiki-legacy` lists what is not migrated yet: those pages are neither linted nor published. Until a category has
+> migrated, new procedures go in `docs/procedures/`, ADRs in `docs/decisions/` and post-mortems in `docs/incidents/`,
+> with the numbering and front matter their reference file describes. A new page of any other type, or a migrated
+> category, follows the naming and directory rules of the style guide.
+>
+> Pages are written in French. A document is translated when it is migrated, not before: a page still listed in
+> `.wiki-legacy` keeps its current language.
 
 ## 3. Workflow
 
@@ -74,9 +76,10 @@ A README section that is really a guide moves to `docs/`, and the README links t
    cluster when it describes live state. A page that cannot be verified says so.
 3. **Write to the rules** in the [style guide](references/style-guide.md). The short version: one topic per page, answer
    first, example before explanation, tables for anything enumerable, one fact in one place, present tense, no filler.
-4. **Wire it in.** Add the page to `_Sidebar.md` under the right heading, link it from the pages that mention it, and end
-   it with `## Where to go next`.
-5. **Run `scripts/wiki:lint`** and fix every finding. It also runs in `rtunk check` (linter `wiki-lint`), so it runs on every pull request.
+4. **Wire it in.** Add the page to `_Sidebar.md` under the right heading, link it from the pages that mention it, and
+   end it with `## Pour aller plus loin`.
+5. **Run `scripts/wiki:lint`** and fix every finding. It also runs in `rtunk check` (linter `wiki-lint`), so it runs on
+   every pull request.
 6. **Moving a document? Use `git mv`** so the history stays traceable, then rewrite in the same pull request. Update
    every reference to the old path
    (`grep -rn "<old path>" --include='*.md' --include='*.yaml' --include='*.py' --include='*.sh' .`).
@@ -97,6 +100,7 @@ of the style guide.
 - Describing the planned state as if it were deployed.
 - Putting the reasoning of a decision in a procedure, or the fix steps in a post-mortem.
 - Adding a page and forgetting `_Sidebar.md`.
+- Writing a page in English, or ending it with a section other than `## Pour aller plus loin`.
 
 ## Files
 

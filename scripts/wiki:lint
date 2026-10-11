@@ -18,8 +18,9 @@
 #
 # Enforces the [lint] rules of .agents/skills/documentation-writer/references/style-guide.md on every page of docs/ that
 # is not listed in docs/.wiki-legacy: lower-case directory names, page names, page names unique across the whole tree
-# (case-insensitive), one H1 matching the page name, "Where to go next" last, relative links that resolve to an existing
-# file, every page reachable from _Sidebar.md, no filler words, no emoji. Standard library only.
+# (case-insensitive), one H1 matching the page name (case, accents and hyphens ignored), "Pour aller plus loin" last,
+# relative links that resolve to an existing file, every page reachable from _Sidebar.md, no French filler words, no
+# emoji. Pages are written in French. Standard library only.
 #
 # Output: one `path:line: message` per finding (rtunk parses it), exit 1 when there is any.
 # Usage: scripts/wiki:lint [--root docs] | --self-test
@@ -28,22 +29,26 @@ import fnmatch
 import re
 import sys
 import tempfile
+import unicodedata
 from pathlib import Path
 from urllib.parse import unquote
 
 PAGE_RE = re.compile(r"^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$")
 DIR_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
-SPECIAL = {"Home", "_Sidebar", "_Footer"}  # root pages exempt from the title, naming and "Where to go next" rules
-FILLER_RE = re.compile(r"\b(simply|just|easily|basically|obviously|of course|please note)\b", re.I)
+SPECIAL = {"Home", "_Sidebar", "_Footer"}  # root pages exempt from the title, naming and "Pour aller plus loin" rules
+FILLER_RE = re.compile(
+    r"\b(simplement|juste|facilement|évidemment|bien sûr|il suffit de|veuillez noter|tout simplement)\b", re.I)
 EMOJI_RE = re.compile("[\U0001f000-\U0001faff☀-➿⬀-⯿️]")
 LINK_RE = re.compile(r"!?\[[^\]]*\]\(<?([^)\s>]+)>?(?:\s+(?:\"[^\"]*\"|'[^']*'))?\)")  # inline link or image
 REF_RE = re.compile(r"^\s{0,3}\[[^\]]+\]:\s*<?([^\s>]+)")  # reference definition: [id]: target
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
-NEXT_HEADING = "where to go next"
+NEXT_HEADING = "pour aller plus loin"
 
 
 def norm(s: str) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+    """Lower-case, strip accents, collapse everything that is not a letter or a digit to one space."""
+    ascii_ = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]+", " ", ascii_.lower()).strip()
 
 
 def legacy_patterns(root: Path) -> list[str]:
@@ -143,7 +148,7 @@ def lint(root: Path, label: str = "docs") -> list[str]:
             elif norm(h1[0][1]) != norm(stem):
                 err(page, h1[0][0], f"title '{h1[0][1]}' does not match the file name")
             if not h2 or norm(h2[-1]) != NEXT_HEADING:
-                err(page, 1, "last '##' section must be 'Where to go next'")
+                err(page, 1, "last '##' section must be 'Pour aller plus loin'")
 
     if sidebar.exists():
         for page in pages:
@@ -153,26 +158,26 @@ def lint(root: Path, label: str = "docs") -> list[str]:
 
 
 def self_test() -> None:
-    good = "# Good Page\n\nShort version.\n\n```sh\njust run\n```\n\n## Where to go next\n\n- [Home](../Home.md)\n"
+    good = "# Page réussie\n\nVersion courte.\n\n```sh\njust run\n```\n\n## Pour aller plus loin\n\n- [Accueil](../Home.md)\n"
     with tempfile.TemporaryDirectory() as d:
         root = Path(d)
         (root / "guides").mkdir()
-        (root / "Home.md").write_text("# Home\n\n[Good](guides/Good-Page.md)\n")
-        (root / "_Sidebar.md").write_text("- [Good](guides/Good-Page.md)\n")
-        (root / "guides" / "Good-Page.md").write_text(good)
+        (root / "Home.md").write_text("# Home\n\n[Good](guides/Page-Reussie.md)\n")
+        (root / "_Sidebar.md").write_text("- [Good](guides/Page-Reussie.md)\n")
+        (root / "guides" / "Page-Reussie.md").write_text(good)
         (root / "old").mkdir()
-        (root / "old" / "legacy.md").write_text("no title, simply wrong\n")
+        (root / "old" / "legacy.md").write_text("no title, simplement faux\n")
         (root / ".wiki-legacy").write_text("# not migrated yet\nold/*\n")
         assert lint(root) == [], lint(root)
         (root / "Reference").mkdir()
-        (root / "Reference" / "good-page.md").write_text(
-            "# Other Title\n\nIt is simply easy. [x](Nope.md) [y](../guides/Good-Page).\n"
+        (root / "Reference" / "page-reussie.md").write_text(
+            "# Autre titre\n\nC'est simplement facile. [x](Nope.md) [y](../guides/Page-Reussie).\n"
             "[ok](<../Home.md> 'title') [bad](<Gone.md>)\n[ref]: Lost.md\n")
         errs = "\n".join(lint(root))
         assert "broken link '../Home.md'" not in errs, errs  # <...> form with a title is a valid link
         for expected in ("filler word", "does not match", "broken link 'Nope.md'", "broken link 'Gone.md'",
                          "broken link 'Lost.md'", "link to the .md file",
-                         "Where to go next", "not reachable", "name conflicts", "directory 'Reference'"):
+                         "Pour aller plus loin", "not reachable", "name conflicts", "directory 'Reference'"):
             assert expected in errs, (expected, errs)
     print("self-test ok")
 

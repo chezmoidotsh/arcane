@@ -190,8 +190,7 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 - **Cilium NetworkPolicies** for microsegmentation — required for every app.
 - **Cilium Gateway API** for ingress (HTTPRoute, TCPRoute), all on the `cilium` GatewayClass. Routes are not wrapped in
   an OIDC filter: apps that need authentication handle it themselves (Pocket-Id). The Gateway lives in the
-  `in-gateway-system` namespace
-  (`projects/*/src/infrastructure/kubernetes/in-gateway/`).
+  `in-gateway-system` namespace (`projects/*/src/infrastructure/kubernetes/in-gateway/`).
 - **cert-manager** with DNS-01 validation. **external-dns** manages internal-only DNS records via the UniFi and
   BIND/rfc2136 providers — there is no public/Cloudflare-managed DNS zone in this repo.
 - **Public access** to home services goes through Pangolin (`kazimierz.akn` VPS) with Newt tunnel clients running in
@@ -205,9 +204,9 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 - **Proxmox CSI plugin + Proxmox CCM** provision block storage as LVM-thin volumes on the Proxmox hypervisor, decoupled
   from VM lifecycle — not Longhorn (see `docs/experiments/20260617-proxmox-csi-ccm/`).
 - **SMB CSI driver** mounts NAS shares for bulk media (Immich, Jellyfin, Paperless-ngx).
-- **CloudNative-PG** for PostgreSQL clusters with automated S3 backups
-  (backup resources live next to each cluster definition under `projects/*/src/`). Consolidating into fewer shared
-  clusters is partly done on `lungmen.akn` (ADR-009).
+- **CloudNative-PG** for PostgreSQL clusters with automated S3 backups (backup resources live next to each cluster
+  definition under `projects/*/src/`). Consolidating into fewer shared clusters is partly done on `lungmen.akn`
+  (ADR-009).
 - No MongoDB/Percona workloads currently exist in the tree — don't assume that stack is available.
 - Database migrations between CNPG clusters use `scripts/cnpg:db:migrate` (see `.agents/skills/cnpg-backup/SKILL.md` for
   the backup procedure, `.agents/skills/cnpg-troubleshoot/SKILL.md` for troubleshooting).
@@ -229,8 +228,8 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 ### Important paths
 
 - Documentation: `docs/`, with the migration state in `docs/.wiki-legacy` — see "Documentation" below
-- Bootstrap docs: `projects/*/docs/BOOTSTRAP.md` (`kazimierz.akn`, `rimbilliton.akn`), `projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md`
-  and `projects/rhodes.akn/docs/disaster-recovery/`
+- Bootstrap docs: `projects/*/docs/BOOTSTRAP.md` (`kazimierz.akn`, `rimbilliton.akn`),
+  `projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md` and `projects/rhodes.akn/docs/disaster-recovery/`
 - Architecture diagrams: `projects/*/architecture.d2` → `projects/*/docs/assets/architecture.svg`
 - Shared D2 styles: `docs/assets/d2/styles.architecture.d2`
 - ADRs: `docs/decisions/` — check `status` (proposed/accepted/implemented) before treating one as current behavior
@@ -250,9 +249,12 @@ neither linted nor published, and `docs/migrations/20261011-documentation-audit-
 destination.
 
 - Write and edit pages with the `documentation-writer` skill (style guide, page templates). `scripts/wiki:lint` enforces
-  the mechanical rules; it runs as the `wiki-lint` linter of rtunk (`.rtunk/local-plugin/`), so `mise run lint` and the CI
-  both run it.
-- Page names are unique across `docs/`, directories are lower-case, file names are `Title-Case-With-Hyphens.md`.
+  the mechanical rules; it runs as the `wiki-lint` linter of rtunk (`.rtunk/local-plugin/`), so `mise run lint` and the
+  CI both run it.
+- Pages are written in **French** (the repository's code, commits, issues and agent files stay in English). A document
+  is translated when its category is migrated; the last section of a page is `## Pour aller plus loin`.
+- Page names are unique across `docs/`, directories are lower-case, file names are `Title-Case-With-Hyphens.md` (ASCII,
+  no accents).
 - READMEs that describe a directory stay next to the code. OPA policy documentation (`catalog/opa/`) never goes in
   `docs/`.
 
@@ -276,8 +278,8 @@ running `git commit` or opening a PR, they enforce project conventions and surfa
 - `.github/PULL_REQUEST_TEMPLATE/` — feature / bugfix / refactoring templates
 
 `.agents/skills/` holds 16 skills in total (operational runbooks like `cnpg-troubleshoot`, `omni-talos-troubleshoot`,
-`lxc-maintenance`, `provider-upgrade`; process skills like `documentation-writer`, `triage-issues`,
-`auto-file-bug`; Pulumi-specific ones like `pulumi-overview`, `pulumi-best-practices`, `pulumi-component`,
+`lxc-maintenance`, `provider-upgrade`; process skills like `documentation-writer`, `triage-issues`, `auto-file-bug`;
+Pulumi-specific ones like `pulumi-overview`, `pulumi-best-practices`, `pulumi-component`,
 `pulumi-debug-failed-operation`) — check that directory for something matching your task before improvising a procedure
 from scratch.
 
@@ -354,9 +356,9 @@ write to the object — server-side apply included — is rejected until the ann
 - Never force-push, `git reset --hard`, drop branches, or rewrite published history without explicit user confirmation
   in this turn.
 - Never push to `main`: changes reach it through a pull request only. A Claude Code hook
-  (`.claude/hooks/deny-main-push`) denies any `git push` that targets main/master or lacks an explicit remote and target;
-  push with `git push origin HEAD:refs/heads/<branch>` (this repo has `push.default=upstream`, so an implicit target can
-  resolve to `main` for a branch created from `origin/main`).
+  (`.claude/hooks/deny-main-push`) denies any `git push` that targets main/master or lacks an explicit remote and
+  target; push with `git push origin HEAD:refs/heads/<branch>` (this repo has `push.default=upstream`, so an implicit
+  target can resolve to `main` for a branch created from `origin/main`).
 - Never auto-update or close GitHub issues; propose the action and wait.
 - For anything that affects shared state (pushes, PR creation/comments, deployments), confirm before acting — even if a
   similar action was authorized earlier in the session.
