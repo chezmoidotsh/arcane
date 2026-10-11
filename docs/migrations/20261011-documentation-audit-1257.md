@@ -1,0 +1,503 @@
+# Audit de la documentation Arcane — étape 0 de #1257
+
+> Audit en lecture seule, fait le 2026-10-11 sur le worktree `docs-wiki-migration-1257` (HEAD `58520c30`).
+> Chaque constat "périmé" ou "cassé" s'appuie sur une vérification dans l'arbre (`ls`, `grep`, un vérificateur de liens
+> relatifs). Quand une vérification n'a pas pu être faite (comportement du rendu GitHub Wiki, état réel des clusters),
+> c'est indiqué.
+
+## (a) Résumé exécutif
+
+### Chiffres
+
+| Périmètre                                                     | Fichiers `.md` |
+| ------------------------------------------------------------- | -------------: |
+| `docs/` (ADR 16, procédures 17, incidents 12, expériences 6, network 3, archives 1, migrations 1, reports 1, RENOVATE 1) | 58 |
+| `projects/*/docs/` (guides et DR)                             | 12             |
+| `projects/**/README.md`                                       | 33             |
+| `catalog/**` (26 READMEs + 3 fiches de règles OPA)            | 29             |
+| Racine (`AGENTS.md`, `CLAUDE.md`, `README.md`, `CHANGELOG.md`, `DISASTER_RECOVERY_PLAN.md`) | 5 |
+| `.agents/skills/**` (18 skills, SKILL.md + references/templates) | 31          |
+| `.agents/knowledge/` + `.agents/sessions/`                    | 7 + 4          |
+| `.github/` (templates de PR)                                  | 4              |
+| **Total audité**                                              | **183**        |
+
+Ignorés : 2 `LICENSE.md` vendored sous `.mise/python/`, `dist/`, `node_modules`, `.pnpm-store`, les autres worktrees.
+`wiki/` existe et ne contient que `.gitkeep`.
+
+### Destination proposée
+
+| Destination                                              | Fichiers |
+| -------------------------------------------------------- | -------: |
+| Migrer vers `wiki/` (réécrits)                           | ~62      |
+| Migrer vers `wiki/` en tant qu'archive (historique)      | ~8       |
+| Rester en place (READMEs de code, fichiers d'agents, règles OPA, sorties générées, templates GitHub) | ~105 |
+| Supprimer (ou réduire à un pointeur)                     | ~8       |
+
+### Constats majeurs
+
+1. **Les chiffres de l'issue sont faux sur deux points.** `SECURITY_TODO.md` n'existe pas (ni à la racine ni ailleurs).
+   Il n'y a pas "~118" READMEs de composants mais 59 (33 sous `projects/`, 26 sous `catalog/`).
+2. **Le workflow wiki ne gère pas les sous-répertoires comme on le croit.** L'action épinglée
+   (`Andrew-Chen-Wang/github-wiki-action@1bbb428…`, v5.0.6, `cli.ts` lu) copie `wiki/` récursivement. En revanche, son
+   pré-traitement (`preprocess: true` par défaut) ne parcourt que les fichiers **à la racine** (`readdir(d)` sans
+   récursion) : il renomme `README.md` en `Home.md` et retire les `.md` des liens uniquement là. Il repasse aussi chaque
+   page racine dans `remark()` **sans** `remark-gfm` ni `remark-frontmatter`. Risque probable, à confirmer par un
+   `dry-run` : front matter YAML des ADR et post-mortems transformé en `***` + titre setext, tableaux GFM et admonitions
+   `> [!NOTE]` réécrits ou échappés. Conclusion : `wiki/` plat, noms de pages uniques et préfixés, liens écrits
+   directement au format wiki (`[x](Page-Name)`), et `preprocess: false`. Voir la section (f).
+3. **La vérification des liens est aveugle aux liens relatifs.** `.mlc_config.json` ignore tous les liens qui commencent
+   par `../`. Résultat : **plus de 40 liens relatifs cassés** passent la CI (profondeur de `../` fausse, fichiers
+   déplacés ou supprimés). Liste en (d).
+4. **`AGENTS.md`, pourtant présenté comme "vérifié contre l'arbre", contient au moins 8 affirmations fausses** :
+   `defaults/` n'existe pas ; `.github/ISSUE_TEMPLATE/AGENT_TEMPLATES/` n'existe pas ; aucune ressource Envoy Gateway ni
+   `SecurityPolicy` n'existe dans `projects/*/src` (tous les `gatewayClassName` valent `cilium`) ; le motif
+   `<app>.postgresql-backup.yaml` ne correspond à aucun fichier ; `projects/*/docs/BOOTSTRAP_*.md` et
+   `projects/*/docs/bootstrap/` n'existent pas ; il y a 18 skills et non 17 ; ADR-009 est partiellement implémenté sur
+   lungmen (`postgres-apps`, `postgres-apps-secured` via `mutualized-cnpg-databases`) ; "Ansible pour la préparation
+   Proxmox seulement" contredit `projects/chezmoi.sh/src/infrastructure/ansible/truenas.yaml`.
+5. **Le statut des ADR dérive de la réalité dans 9 cas sur 16.** ADR-005 est `implemented` alors qu'Envoy Gateway et
+   Authelia ont disparu des projets. ADR-008 est `implemented` alors qu'ADR-016 le supplante. ADR-010, 011, 012, 013,
+   014 et 015 sont `accepted` alors que tout est en place. ADR-009 est `proposed` alors qu'il est partiellement fait.
+   ADR-006 manque : le numéro est sauté, sans fichier ni mention.
+6. **Plusieurs procédures sont périmées sur la méthode, pas seulement sur un détail.** INF-20260525-00 et 01 (montée de
+   version Talos et Kubernetes) décrivent `talosctl upgrade` sur le cluster mono-nœud `amiya.akn`. Or les versions sont
+   aujourd'hui pilotées par les templates Omni (`kubernetes.version: v1.37.1` dans `rhodes.clustertemplate.yaml`).
+   SEC-20250808-00 décrit Authelia + Envoy `SecurityPolicy` sur des fichiers `amiya.akn` qui n'existent plus.
+   `DISASTER_RECOVERY_PLAN.md` décrit `nex·rpi` (`projects/nx`, `just`), qui n'existe plus (#1109).
+7. **Des scripts et des automatisations dépendent de `docs/incidents/` et de son front matter** :
+   `.github/scripts/postmortem-index.py` et `postmortem-followup.py` (`INCIDENTS_DIR = Path("docs/incidents")`),
+   `schedule.postmortem-followup.yaml`, ainsi que les skills `cnpg-troubleshoot` et `postmortem`. Déplacer les
+   post-mortems impose de modifier ces scripts **et** de garder le front matter intact, donc pas de pré-traitement
+   remark.
+8. **Trois documents sont générés par du code** (`projects/chezmoi.sh/docs/{PROXMOX-VE,TRUENAS,PROXMOX_BACKUP_SERVER}.md`,
+   produits par `toolbox/*-docs` depuis l'état Pulumi, exclus de Prettier dans `.rtunk/rtunk.yaml`). Les déplacer
+   oblige à changer le chemin de sortie du générateur. Le template `partials.host.hbs` pointe encore vers
+   `docs/network/vlans.md` (inexistant) alors que le fichier généré pointe vers `ipam.md` : la prochaine régénération
+   réintroduira le lien cassé.
+9. **Deux couplages code/doc empêchent un déplacement simple.** `projects/rhodes.akn/docs/disaster-recovery/` contient
+   `.mise.toml` et `.mise/tasks/dr/cnpg/patch-recovery-source`, des tâches appelées par le runbook. Les expériences
+   `docs/experiments/*/` contiennent des scripts, manifests, `package.json` et un devcontainer. Seule la prose peut
+   partir ; le code reste.
+10. **`docs/assets/` doit rester** : les READMEs de projets y chargent leurs icônes (`../../docs/assets/icons/...`) et les
+    styles D2 y sont rangés (`docs/assets/d2/`).
+
+## (b) Inventaire
+
+Légende. **État** : OK / À corriger / Périmé. **Format** : ADR, SOP (procédure), PM (post-mortem), EXP (expérience),
+Guide, Réf (référence), Journal, Index, README (doc de répertoire), Agent. **Destination** : chemin proposé
+dans le wiki (plat, voir (f)), ou "en place".
+
+### Racine
+
+| Chemin | Sujet | État | Duplication | Format | Destination |
+| --- | --- | --- | --- | --- | --- |
+| `README.md` | Vitrine du dépôt, arborescence, roadmap | À corriger : arbo cite `catalog/kairos-bundles` et `defaults/` (absents) ; il manque `nix`, `omni`, `opa`, `helm`, `kubernetes` et `rimbilliton.akn` | Arbo dupliquée avec `AGENTS.md` (Project structure) | README racine | En place (vitrine GitHub), réduite : pitch + lien vers le wiki `Home` |
+| `AGENTS.md` | Consignes pour les agents, stack, conventions | À corriger : 8 erreurs prouvées (constat 4) | Recoupe `README.md`, ADR-011/012/013/014, `docs/network`, skills git-commit/create-pr | Agent | En place (fichier d'agent) ; pointe vers le wiki pour le contenu de référence |
+| `CLAUDE.md` | `@AGENTS.md` | OK | — | Agent | En place |
+| `CHANGELOG.md` | Récit des 4 "âges" | OK (récit historique assumé) | Roadmap du `README.md` | Journal | En place, ou wiki `History` avec un lien depuis la racine (décision D7) |
+| `DISASTER_RECOVERY_PLAN.md` | PRA de `nex·rpi` | **Périmé** : 21 mentions de `nex·rpi`, `projects/nx` et `just` absents (#1109) | Remplacé de fait par `projects/rhodes.akn/docs/disaster-recovery/*` et le README DR de lungmen | Guide | Réécrit en `Disaster-Recovery-Plan` (hub des runbooks DR) ; l'ancien fichier est supprimé |
+
+### `docs/decisions/` (ADR)
+
+Destination commune : wiki, avec le nom `ADR-NNN-Title-Case` et une structure seulement retouchée (numéros, décisions et
+changelog conservés, comme l'exige l'issue).
+
+| Chemin | Sujet | État (preuve) | Duplication | Format |
+| --- | --- | --- | --- | --- |
+| `000-adr-template.md` | Pointeur vers le skill | OK, mais inutile dans le wiki | Skill `adr-authoring` | **Supprimer** (le skill fait foi) |
+| `001-centralized-secret-management.md` | Adoption d'OpenBao | À corriger : la section "Pending" cite l'OIDC via Authelia | — | ADR |
+| `002-openbao-secrets-topology.md` | Topologie des montages | OK pour la décision ; 5 mentions d'amiya (historique) | `rhodes/.../openbao.md` | ADR |
+| `003-openbao-path-naming-conventions.md` | Nommage des chemins | À corriger : exemples `/amiya.akn/...` et Authelia ; mentions de Crossplane | Skill `bao-secret-audit`, README `cluster-vault` | ADR |
+| `004-openbao-policy-naming-conventions.md` | Nommage des policies | À corriger : 12 mentions d'Authelia, 13 d'amiya | README `cluster-vault` | ADR |
+| `005-envoy-gateway-oidc-authentication.md` | OIDC via Envoy `SecurityPolicy` | **Statut faux** : `implemented`, alors qu'aucun `SecurityPolicy` ni Envoy Gateway n'existe dans `projects/*/src` et qu'Authelia a été remplacé par Pocket-Id | SEC-20250808-00, `AGENTS.md` | ADR → `deprecated`/`superseded` |
+| `007-project-structure-and-naming-conventions.md` | Conventions de structure (1525 lignes) | À corriger : lien vers `projects/amiya.akn/src/apps/argocd/README.md` et chemin `lungmen.../longhorn/` absents ; taille excessive | `AGENTS.md`, `RENOVATE.md`, README `rhodes/src/argocd` | ADR (à scinder : décision + page `Project-Structure-Reference`) |
+| `008-kazimierz-ansible-over-kubernetes.md` | Ansible plutôt que K8s pour kazimierz | Statut `implemented`, mais un bandeau dit "partiellement supplanté par ADR-016" ; `src/infrastructure/ansible/site.yml` n'existe plus | ADR-016 | ADR → `superseded` (partiel) |
+| `009-consolidate-postgresql-databases.md` | Clusters CNPG mutualisés | **Statut faux** : `proposed`, alors que `lungmen/src/apps/databases` déploie `postgres-apps` et `postgres-apps-secured` via `catalog/helm/mutualized-cnpg-databases` ; `postgres-security` sur amiya est obsolète | `AGENTS.md` ("not yet implemented") | ADR → `accepted` + état partiel |
+| `010-replace-gitmoji-with-symbol-commit-types.md` | Types de commit symboliques | Statut `accepted`, mais c'est implémenté (`.commitlintrc.js`) ; `renovate.json5` étend encore le preset `:gitmoji` | Skill `git-commit` (copie la table des types) | ADR → `implemented` |
+| `011-rendered-manifests-pattern.md` | `dist/` pré-rendu | Statut `accepted` ; "Pending: lungmen.akn migration", alors que `projects/lungmen.akn/dist` existe | `AGENTS.md`, `scripts/dist:render` | ADR → `implemented` |
+| `012-replace-kyverno-with-opa.md` | OPA en CI | Statut `accepted` ; cite `.trunk/trunk.yaml` et `.github/workflows/pull_request.conftest.yaml`, tous deux absents (remplacés par `.rtunk/` et `*.compliance-*.yaml`) | `catalog/opa/README.md`, SEC001 | ADR → `implemented` |
+| `013-centralized-observability-victoriametrics-lxc.md` | Observabilité sur LXC | Statut `accepted`, mais le LXC `observability/` existe | README du LXC observability (702 lignes) | ADR → `implemented` |
+| `014-network-topology.md` | Bi-NIC + SDN | Statut `accepted`, mais le SDN existe (`stack/proxmox/sdn.ts`) | `docs/network/*`, `PROXMOX-VE.md`, INF-20260627 | ADR → `implemented` |
+| `015-migrate-crossplane-to-pulumi.md` | Crossplane vers Pulumi | Statut `accepted` ; "Phase 1… while Crossplane is still reconciling", alors que `catalog/crossplane` est absent | Expérience `20260702-pulumi-crossplane-evaluation` | ADR → `implemented` |
+| `016-kazimierz-nixos-over-ansible.md` | NixOS pour kazimierz | OK | `kazimierz/docs/MIGRATION_NIXOS.md` | ADR |
+
+### `docs/procedures/` (SOP)
+
+Destination commune : wiki, avec le nom `Procedure-<ID>-<Verb-Phrase>` (garder l'ID pour les citations).
+
+| Chemin | Sujet | État (preuve) | Duplication | Format / action |
+| --- | --- | --- | --- | --- |
+| `README.md` | Index des SOP | À corriger : il **manque** INF-20260605-00, INF-20260620-00, INF-20260705-00 et INF-20260730-00 ; décrit SEC-20250808 comme "Envoy + Authelia" ; décrit le bootstrap kazimierz comme "Pangolin + Tailscale" (c'est NixOS désormais) | Sidebar du futur wiki | Index → remplacé par `_Sidebar.md` et une page `Procedures` ; à supprimer |
+| `security/SEC-20250808-00.add-securitypolicy-on-httproute.md` | Ajouter un `SecurityPolicy` OIDC | **Périmé** : 37 mentions d'Authelia, fichiers `projects/amiya.akn/...` absents, aucun `SecurityPolicy` dans l'arbre | ADR-005 | **Archiver** (ou réécrire pour Pocket-Id si le besoin existe encore, décision D4) |
+| `databases/DB-20260530-00.cnpg-wal-disk-full-recovery.md` | WAL plein sur CNPG | À corriger : l'étape d'expansion suppose Longhorn (7 mentions ; "Longhorn expands online"), alors que le stockage est Proxmox CSI | Incident 2026-05-30, skill `cnpg-troubleshoot` (table de correspondance) | SOP |
+| `backups/BKP-20260723-00.cnpg-restore-from-object-store.md` | Restaurer CNPG depuis S3 | OK (liens valides) ; dépend de `rhodes/docs/disaster-recovery/.mise/tasks/...` | Étape 2 de `openbao.md` et `pocket-id.md` | SOP |
+| `backups/BKP-20260805-00.velero-restore-gitops-pvc.md` | Restaurer un PVC Velero | OK ; référencé par `scripts/velero:backup` | Expérience Velero | SOP |
+| `backups/BKP-20261005-00.rimbilliton-minecraft-restore-from-restic.md` | Restauration restic Minecraft | OK (le `docs/BOOTSTRAP.md` en backticks est relatif au projet) | `rimbilliton/docs/BOOTSTRAP.md` (étape DR) | SOP |
+| `infrastructure/INF-20260525-00.upgrade-talos.md` | Montée de version Talos mono-nœud | **Périmé** : 27 mentions d'amiya, `projects/amiya.akn/docs/bootstrap/talos/` absent ; les versions sont désormais dans les templates Omni | `.agents/knowledge/talos.md` | Réécrire en "Upgrade Talos via Omni template" ou archiver |
+| `infrastructure/INF-20260525-01.upgrade-kubernetes.md` | Montée de version K8s mono-nœud | **Périmé** : même raison (exemple `--context amiya.akn`, `talosctl upgrade-k8s`) ; seul le pré-contrôle des feature gates reste utile | Incident 1.35 feature gate | Réécrire (Omni) |
+| `infrastructure/INF-20260525-02.drain-nodes-with-cnpg.md` | Drain et CNPG | OK (court) | Règle OPA REL001 | SOP |
+| `infrastructure/INF-20260605-00.upgrade-lxc-rootfs-swap.md` | Mettre à jour un LXC (rootfs swap) | OK ; absent de l'index | Skill `lxc-maintenance`, sections "Build & deploy" des 5 READMEs de LXC | SOP (source unique ; le skill et les READMEs pointent vers lui) |
+| `infrastructure/INF-20260620-00.proxmox-node-exporter.md` | node-exporter sur l'hôte PVE | OK sur le fond ; format hors gabarit (pas d'ID dans le nom, pas d'historique) ; absent de l'index | README `pve-exporter` | SOP (à remettre au gabarit) |
+| `infrastructure/INF-20260627-00.proxmox-sdn-setup.md` | Provisionner le SDN | À corriger : 7 liens relatifs cassés (`../network/ipam.md` et `../decisions/014…` au lieu de `../../`) ; le SDN est déjà en Pulumi (`sdn.ts`) | ADR-014, `ipam.md`, `PROXMOX-VE.md` (section SDN générée) | SOP (vérifier ce qui reste manuel) |
+| `infrastructure/INF-20260705-00.pulumi-state-and-import.md` | État Pulumi sur Garage, import | OK ; le chemin `projects/amiya.akn/src/infrastructure/pulumi` est cité ; absent de l'index | Référencé par 5 fichiers `.ts` et `Pulumi.yaml` | SOP |
+| `infrastructure/INF-20260730-00.pve-firewall-conntrack-notrack-external-lb.md` | NOTRACK pour les pools LB | À corriger : 2 liens relatifs cassés (même erreur de profondeur) ; absent de l'index | `ansible/pve.yaml` le cite | SOP |
+| `infrastructure/MIGR-20260628-00.vlan2-to-vlan5.md` | Migration VLAN 2 → 5 | Terminée (migration ponctuelle) ; chemin `projects/chezmoi.sh/src/infrastructure/omni/machineclasses/` déplacé vers `catalog/omni/machineclasses/` | ADR-014 | **Archiver** |
+| `omni/OMNI-20260629-03.sha-repin.md` | Ré-épingler les SHA après un squash-merge | OK (les templates épinglent toujours des SHA `raw.githubusercontent`) | Skill `omni-talos-troubleshoot` | SOP |
+| `omni/OMNI-20260721-00.omni-cluster-creation.md` | Création d'un cluster Omni | Quasi OK ; cite `stack/proxmox/access.ts` (c'est désormais `access/`) | `lungmen/docs/HOW_TO_BOOTSTRAP.md`, étape 1 de `rhodes/.../disaster-recovery/README.md`, skill `omni-talos-troubleshoot` | SOP (page pivot) |
+
+### `docs/incidents/` (post-mortems)
+
+| Chemin | Sujet | État | Duplication | Destination |
+| --- | --- | --- | --- | --- |
+| `README.md` | Conventions et recherche par `grep` | OK, mais repose sur des chemins `docs/incidents/` | Skill `postmortem`, skill `cnpg-troubleshoot` | Wiki `Incidents` (hub), ou en place (D3) |
+| `INDEX.md` | Index généré par `postmortem-index.py` | OK (généré) | — | Suit les post-mortems ; le script doit écrire dans la nouvelle cible |
+| `2026-05-25-lungmen-clustersecretstore-vault-auth-failure.md` | ESO/Vault auth | Historique ; chemins Crossplane et `.agents/knowledge/crossplane.md` absents (normal pour un PM) | `.agents/knowledge/openbao.md` | Wiki `Incident-2026-05-25-…` (retouche légère, timeline conservée) |
+| `2026-05-25-zot-disk-full-imagepullbackoff.md` | Zot disque plein | Historique (Longhorn, amiya) | `knowledge/zot.md` | idem |
+| `2026-05-26-amiya-kyverno-zot-circular-imagepullbackoff.md` | Kyverno/Zot/Longhorn | Historique | ADR-012, SEC001, `knowledge/kyverno.md` | idem |
+| `2026-05-26-lungmen-k8s-1.35-removed-featuregate.md` | Feature gate retirée en 1.35 | Historique | INF-20260525-01, `knowledge/talos.md` | idem |
+| `2026-05-27-cilium-1.19-upgrade-failure.md` | Cilium 1.19 | Historique ; 4 faux liens `[**BPF**]` de type glossaire | `knowledge/cilium.md` | idem |
+| `2026-05-30-cnpg-wal-disk-full-apps-secured.md` | WAL plein | Historique ; pas de `# Titre` (front matter seul) | DB-20260530-00, skill `cnpg-troubleshoot` | idem |
+| `2026-05-30-lungmen-databases-pushsecrets-504-vault-netpol.md` | PushSecret 504 | Historique ; pas de `# Titre` | — | idem |
+| `2026-05-30-redis-imagepullbackoff-zot-corrupted-index.md` | Index Zot corrompu | Historique ; pas de `# Titre` | `knowledge/zot.md` | idem |
+| `2026-05-31-amiya-cilium-gateway-api-agent-drift-netpol.md` | Gateway API / netpol | Historique ; pas de `# Titre` | NET001 | idem |
+| `2026-06-19-argocd-inaccessible-cilium-wildcard-mismatch.md` | Wildcard Cilium | Format "lite" ; pas de `# Titre` | — | idem |
+
+Les 10 post-mortems sont tous `status: Open` : `postmortem-followup.py` les lit pour ouvrir des issues sur les actions
+en retard.
+
+### `docs/experiments/`, `docs/network/`, `docs/migrations/`, `docs/archives/`, `docs/reports/`, `docs/RENOVATE.md`
+
+| Chemin | Sujet | État (preuve) | Duplication | Format | Destination |
+| --- | --- | --- | --- | --- | --- |
+| `experiments/20260617-proxmox-csi-ccm/README.md` | Faisabilité Proxmox CSI/CCM | OK (conclu) ; `scripts/validate.sh` est réutilisé par OMNI-20260721 et le DR rhodes | — | EXP | README → wiki `Experiment-2026-06-17-…` ; `manifests/` et `scripts/` restent (ou partent vers `catalog/`, D5) |
+| `experiments/20260702-pulumi-crossplane-evaluation/README.md` | POC Pulumi vs Crossplane | **Statut faux** : `IN_PROGRESS`, alors qu'ADR-015 a tranché et que Crossplane est retiré | ADR-015 | EXP | Wiki (statut → concluded) ; code en place ou supprimé |
+| `experiments/20260702-…/catalog/cluster-vault/README.md` | README du composant du POC | Historique ; lien relatif cassé | `catalog/pulumi/components/cluster-vault/README.md` | README | En place avec le code du POC (ou supprimé avec lui) |
+| `experiments/20260803-velero-pvc-backup/README.md` | POC Velero | OK | BKP-20260805-00 | EXP | Wiki ; code en place |
+| `experiments/argocd-application-properties/README.md` | `.application.patch` | Pas de date ni de statut ; le mécanisme est en production (ADR-007) | ADR-007 | EXP | Wiki, archive |
+| `experiments/tailscale-argocd-zero-trust/README.md` | Tailscale + ArgoCD | Pas de date ni de statut, emojis, tutoriel ; c'est le devcontainer cité par `AGENTS.md` | — | EXP/tutoriel | Wiki, archive ; devcontainer en place |
+| `network/README.md` | Vue réseau + diagramme D2 | OK | `ipam.md`, ADR-014, `PROXMOX-VE.md` (réseau) | Réf | Wiki `Network-Overview` (+ `topology.svg` copié dans le wiki) |
+| `network/ipam.md` | IPAM, source de vérité | OK ; **cité par ~20 fichiers de code** (YAML Cilium, templates Omni, `.ts`, `.nix`, Ansible) | `PROXMOX-VE.md` | Réf | Wiki `IPAM-Reference` ; commentaires de code mis à jour (voir (e)) |
+| `network/gateway-dns-split.md` | Gateways interne/externe, DNS | OK (vérifié : deux Gateways Cilium, external-dns bind + unifi) | ADR-014 | Réf/Guide | Wiki `Gateway-And-DNS-Split` |
+| `migrations/amiya.akn->rhodes.akn.md` | Récit de la migration amiya → rhodes | Terminée, historique ; `>` dans le nom de fichier | DR rhodes | Journal | Wiki archive `Migration-Amiya-To-Rhodes` |
+| `archives/2026-08-01-MIGR-20260801-00.lungmen-talosnet-bridge.md` | Pont temporaire | Archivé ; chemin `lungmen-akn-01.patch-config.yaml` absent | — | SOP archivée | Wiki archive, ou suppression (D6) |
+| `reports/20261008-manual-infrastructure-inventory.md` | Inventaire du manuel (#1285) | Instantané daté ; mentionne `catalog/fluxcd` (absent) | — | Rapport | Wiki `Report-2026-10-08-…`, ou issue #1285 (D6) |
+| `RENOVATE.md` | Guide Renovate | **Périmé** : cite `renovate.json` (le fichier est `renovate.json5`) ; ne dit pas que Renovate est désactivé (`"enabled": false`) ni qu'il étend encore `:gitmoji` | ADR-007 (labels de version) | Guide | Wiki `Renovate-Reference` après correction |
+
+### `projects/*/docs/`
+
+| Chemin | Sujet | État (preuve) | Duplication | Format | Destination |
+| --- | --- | --- | --- | --- | --- |
+| `chezmoi.sh/docs/PROXMOX-VE.md` | Réf Proxmox VE (**générée**) | À corriger : lien `../src/.../proxmox/access.ts` cassé ; le template diverge (`vlans.md`) | `stack/proxmox/README.md`, `ipam.md` | Réf générée | **En place** tant que le générateur écrit ici (D2). Sinon, générer dans `wiki/` |
+| `chezmoi.sh/docs/TRUENAS.md` | Réf TrueNAS (générée) | OK | `stack/truenas/README.md`, `zpools/README.md` | Réf générée | idem |
+| `chezmoi.sh/docs/PROXMOX_BACKUP_SERVER.md` | Réf PBS (générée) | OK | `stack/proxmox-backup-server/README.md` | Réf générée | idem |
+| `kazimierz.akn/docs/BOOTSTRAP.md` | Bootstrap NixOS du VPS | OK | Section "Installation" du README kazimierz ; `rimbilliton/docs/BOOTSTRAP.md` (même schéma) | Guide | Wiki `Bootstrap-Kazimierz` |
+| `kazimierz.akn/docs/MIGRATION_NIXOS.md` | Bascule vers NixOS | Terminée (2026-10-10) | ADR-016 | Journal | Wiki archive |
+| `kazimierz.akn/docs/archives/CROWDSEC-INTEGRATION.md` | CrowdSec (historique) | Historique ; lien vers le rôle Ansible absent | — | Archive | Wiki archive, ou suppression |
+| `kazimierz.akn/docs/archives/REFLEXION-KUBERNETES-DEPLOYMENT.md` | Tentatives K8s (historique) | Historique | ADR-008 | Archive | Wiki archive, ou suppression |
+| `lungmen.akn/docs/HOW_TO_BOOTSTRAP.md` | Bootstrap lungmen via Omni | OK (suit OMNI-20260721) | OMNI-20260721-00, étape 1 du DR rhodes | Guide | Wiki `Bootstrap-Lungmen` (mince : identité + écarts + lien vers OMNI) |
+| `rhodes.akn/docs/disaster-recovery/README.md` | DR rhodes en 9 étapes | OK | Récit de migration amiya, OMNI-20260721 | SOP | Wiki `Recover-Rhodes` ; `.mise/` reste en place (déplacer vers `projects/rhodes.akn/.mise/` ou `scripts/`, D5) |
+| `rhodes.akn/docs/disaster-recovery/openbao.md` | DR OpenBao | OK | BKP-20260723-00 | SOP | Wiki `Recover-OpenBao` |
+| `rhodes.akn/docs/disaster-recovery/pocket-id.md` | DR Pocket-Id | OK | BKP-20260723-00 | SOP | Wiki `Recover-Pocket-Id` |
+| `rimbilliton.akn/docs/BOOTSTRAP.md` | Bootstrap Minecraft NixOS | OK | `kazimierz/docs/BOOTSTRAP.md`, BKP-20261005-00 | Guide | Wiki `Bootstrap-Rimbilliton` |
+
+Les `projects/*/docs/assets/` (logos, architecture en SVG/PNG) et `projects/*/docs/.gitignore` (sorties Talos) restent
+en place : les READMEs les utilisent.
+
+### `projects/**/README.md` (33)
+
+Règle : un README qui décrit un répertoire de code reste à côté du code. Seule une section qui est en réalité un guide
+part dans le wiki, et le README pointe alors vers elle.
+
+| Chemin / groupe | Sujet | État (preuve) | Duplication | Destination |
+| --- | --- | --- | --- | --- |
+| `projects/{chezmoi.sh,hass,kazimierz.akn,lungmen.akn,rhodes.akn,rimbilliton.akn,shodan.akn}/README.md` (7) | Vitrines de projet | `lungmen` : OK (dit lui-même qu'il peut prendre du retard). `kazimierz` / `rimbilliton` : OK. `shodan` : à corriger (workflow `src/apps/*/overlays/dev` sans aucun manifeste ; ce motif d'overlays n'existe nulle part ; cite `EXP-2026-005`). `rhodes` / `hass` / `chezmoi.sh` : OK | Les sections Installation et DR dupliquent les BOOTSTRAP et le DR | En place, sections guide réduites à un lien vers le wiki ; chacune a aussi une page `Project-<name>` dans le wiki (vue d'ensemble) |
+| `rhodes.akn/src/argocd/README.md` | Bootstrap ArgoCD et AppSets | OK | ADR-007, ADR-011 | En place |
+| `rhodes.akn/src/infrastructure/kubernetes/README.md` | Composants infra de rhodes | OK (la mention d'Envoy concerne l'Envoy embarqué de Cilium, c'est correct) | `AGENTS.md` | En place |
+| `lungmen.akn/src/apps/actual-budget/README.md` | Architecture Actual Budget | **Périmé** : "protégé par OIDC via Envoy Gateway", alors que l'HTTPRoute pointe vers la Gateway Cilium `external` et qu'il n'y a pas de `SecurityPolicy` | — | En place, corrigé (ou supprimé) |
+| `lungmen.akn/src/infrastructure/kubernetes/descheduler/README.md` | Réglages du descheduler | OK | — | En place |
+| `chezmoi.sh/src/infrastructure/proxmox/lxc/{observability,oci-registry,omni,omni-infra-provider-proxmox,pve-exporter}/README.md` (5, 400 à 700 lignes) | Appliances LXC | OK en général ; `oci-registry` cite `projects/amiya.akn/src/apps/zot-registry/` | Sections "Build & deploy", "Proxmox LXC creation", "Proxmox host firewall" et "Hardening" répétées 5 fois ; recoupent le skill `lxc-maintenance` et INF-20260605 | En place pour la référence ; les sections procédurales communes deviennent une page wiki `Deploy-An-LXC-Appliance` vers laquelle chaque README pointe |
+| `.../lxc/talosnet-dns/README.md` | LXC DNS talosnet | À corriger : lien `../../../../../../docs/network/...` (profondeur fausse) | `gateway-dns-split.md` | En place |
+| `.../lxc/*/modules/o11y.extraTransforms/README.md` (4) + `observability/config/vector/README.md` | Transformations Vector | OK (référence du code) | Même structure dans les 4 | En place |
+| `chezmoi.sh/src/infrastructure/pulumi/README.md` | Stack partagée | OK (chemins `docs/*.md` relatifs au projet) | — | En place |
+| `.../pulumi/stack/{proxmox,proxmox-backup-server,truenas}/README.md` + `truenas/{users,zpools}/README.md` (5) | Stacks Pulumi | À corriger : `proxmox` et `proxmox-backup-server` ont des liens cassés (profondeur `../` vers `catalog/` et `docs/`) | Docs générées dans `chezmoi.sh/docs/` | En place |
+| `.../pulumi/toolbox/{proxmox-docs,proxmox-backup-server-docs,truenas-docs}/README.md` (3) | Générateurs de doc | `proxmox-docs` : lien `../../../../docs/PROXMOX-VE.md` cassé | — | En place (à mettre à jour si la sortie bouge) |
+| `chezmoi.sh/src/infrastructure/ansible/roles/application_datasets/README.md` | Rôle Ansible TrueNAS | À vérifier : TrueNAS est aussi géré par Pulumi (`stack/truenas`). Lequel est actif ? (D8) | `stack/truenas/README.md` | En place |
+
+### `catalog/**` (29)
+
+| Chemin / groupe | Sujet | État (preuve) | Destination |
+| --- | --- | --- | --- |
+| `catalog/opa/README.md` + `catalog/opa/rules/{NET001,REL001,SEC001}-*.md` | Politiques OPA et fiches de règles | OK (les 3 règles correspondent aux 8 fichiers `policies/`) ; SEC001 garde des mentions historiques de Kyverno et Longhorn | **En place** (règle imposée : l'OPA ne va pas dans le wiki). La page wiki `Policy-Enforcement` pointe vers `catalog/opa/` |
+| `catalog/pulumi/README.md`, `lib/README.md`, `components/{cloudflare-dns01-token,cluster-vault,garage-cnpg-backup,proxmox-cluster-identity,truenas-pool}/README.md` | Composants Pulumi | À corriger : `cluster-vault` (8 liens `../../../docs/decisions` cassés, plus `projects/lungmen.akn/.../src/platform.ts` absent) ; `garage-cnpg-backup` (2 liens à la mauvaise profondeur) ; `proxmox-cluster-identity` (`access.ts` → `access/`) ; `truenas-pool` (`pulumi/src/truenas/zpools` → `stack/truenas/zpools`) ; `lib` (exemple `projects/amiya.akn/...`) | En place |
+| `catalog/pulumi/sdks/{b2,pangolin,proxmox,proxmox-backup-server,truenas}/README.md` | Avis de licence des SDK générés | OK (générés, 3 à 11 lignes) | En place |
+| `catalog/ansible/collections/.../truenas_scale/README.md`, `roles/truenas/README.md`, `roles/truenas/audit_report/README.md` | Collection et rôles TrueNAS | OK sur le fond (utilisés par `truenas.yaml` et `truenas-audit.yaml`) | En place |
+| `catalog/ansible/roles/ansible-run-notification-on-slack/README.md` | Notification Slack | **Code orphelin** : aucun playbook n'y fait référence ; ADR-008 dit que les notifications Slack ont été retirées le 2026-10-07 | En place, mais signaler la suppression du rôle (hors périmètre doc, issue séparée) |
+| `catalog/kubernetes/README.md` | Bases kustomize partagées | À corriger : le tableau liste `envoy-gateway` (aucun projet ne l'utilise) et omet `o11y/` (le répertoire existe) | En place |
+| `catalog/kustomize/README.md` | — | **Vide (0 ligne)** ; le répertoire contient `tun-device-plugin` | En place, à remplir ou supprimer |
+| `catalog/talos/README.md` | Manifests de bootstrap Talos | OK (les versions Cilium 1.19.5, 1.20.0 et 1.20.2 correspondent) | En place |
+| `catalog/omni/README.md`, `catalog/omni/machineclasses/README.md` | Template Omni et classes | OK | En place |
+| `catalog/nix/modules/lxc-o11y-agent/README.md`, `catalog/nix/siderolabs/omni/README.md` | Modules Nix | OK | En place |
+| `catalog/helm/mutualized-cnpg-databases/README.md` | Chart CNPG mutualisé | OK | En place |
+| `catalog/flakes/openbao/openbao/README.md` | Image OpenBao + SoftHSM | Non vérifié en détail (version citée v0.14.0) | En place |
+
+### Fichiers d'agents et `.github/`
+
+| Chemin / groupe | Sujet | État (preuve) | Destination |
+| --- | --- | --- | --- |
+| `.agents/skills/*/SKILL.md` + `references/` + `templates/` (31) | Skills | Fonctionnels, mais : `git-commit` liste les scopes morts `project:amiya.akn`, `catalog:crossplane` et `catalog:kairos-bundle` (cohérent avec `.commitlintrc.js`, mais les répertoires n'existent plus) ; `cnpg-backup`, `create-pr/references`, `create-issue/references` prennent amiya en exemple ; `postmortem` cite `postmortem-extract-knowledge.py` (déclaré "not yet implemented") ; les liens `docs/...` de `cnpg-troubleshoot` sont relatifs au skill, donc cassés au rendu | **En place** (confirmé : ce sont des fichiers d'agents). Mettre à jour les chemins `docs/` (voir (e)) ; `adr-authoring` et `sop-authoring` écriront dans `wiki/` |
+| `.agents/knowledge/*.md` (7) | Connaissances tirées des PM | `longhorn.md` et `kyverno.md` couvrent des composants retirés (kyverno est marqué comme tel ; longhorn ne l'est pas) | En place (agent) ; marquer `longhorn.md` "retiré", ou supprimer les deux (D9) |
+| `.agents/sessions/*.md` (4, suivis par git) | Notes de session (FR) | Travaux terminés (bring-up rhodes, panne pve01, kazimierz NixOS, plugins Grafana) ; plusieurs chemins morts | **Supprimer** après accord (règle d'`AGENTS.md` : on demande avant de supprimer une fois la PR fusionnée) |
+| `.github/pull_request_template.md`, `.github/PULL_REQUEST_TEMPLATE/{bugfix,feature,refactoring}.md` | Templates de PR | OK, sans chemin `docs/` | En place |
+| `.github/ISSUE_TEMPLATE/config.yml` (yml) | Lien de contact | Pointe vers `https://github.com/chezmoidotsh/arcane/tree/main/docs` | En place, URL à remplacer par le wiki |
+
+## (c) Duplications
+
+| Sujet | Fichiers qui se recoupent | Source unique proposée |
+| --- | --- | --- |
+| Arborescence du dépôt | `README.md` (Project Structure) ↔ `AGENTS.md` (Project structure) ↔ ADR-007 | Wiki `Repository-Layout` ; `AGENTS.md` en garde un résumé |
+| Stack technique | `AGENTS.md` (table) ↔ ADR-011/012/013/014/015 ↔ `CHANGELOG.md` (Steel Age) | Wiki `Architecture-Overview` ; les ADR gardent le "pourquoi" |
+| Bring-up d'un cluster Talos/Omni | OMNI-20260721-00 ↔ `lungmen/docs/HOW_TO_BOOTSTRAP.md` ↔ étape 1 de `rhodes/docs/disaster-recovery/README.md` ↔ skill `omni-talos-troubleshoot` ↔ `catalog/omni/README.md` (Workflow) | OMNI-20260721-00 ; les autres n'en gardent que le delta |
+| Restauration CNPG | BKP-20260723-00 ↔ étape 2 de `openbao.md` / `pocket-id.md` ↔ skill `cnpg-backup` | BKP-20260723-00 |
+| WAL plein CNPG | DB-20260530-00 ↔ incident 2026-05-30 ↔ table "cache" du skill `cnpg-troubleshoot` ↔ `incidents/README.md` (exemples grep) | DB-20260530-00 (fix), incident (récit) ; le skill garde des pointeurs |
+| Déploiement et mise à jour de LXC | INF-20260605-00 ↔ skill `lxc-maintenance` ↔ sections "Build & deploy" et "Proxmox LXC creation" des 5 READMEs LXC | Page wiki `Deploy-An-LXC-Appliance` + INF-20260605 |
+| Bootstrap VPS NixOS | `kazimierz/docs/BOOTSTRAP.md` ↔ `rimbilliton/docs/BOOTSTRAP.md` (même schéma, kazimierz renvoie à rimbilliton) ↔ sections "Installation and Setup" des deux READMEs | Une page `Bootstrap-A-NixOS-VPS` + deltas par projet |
+| Réseau | `docs/network/README.md` ↔ `ipam.md` ↔ ADR-014 ↔ `PROXMOX-VE.md` (section SDN générée) ↔ INF-20260627 ↔ `gateway-dns-split.md` | `IPAM-Reference` pour les valeurs ; ADR-014 pour la décision |
+| Conventions OpenBao | ADR-003/004 ↔ `catalog/pulumi/components/cluster-vault/README.md` ↔ skill `bao-secret-audit` | ADR-003/004 |
+| OIDC des routes | ADR-005 ↔ SEC-20250808-00 ↔ `AGENTS.md` (SecurityPolicy) ↔ README actual-budget | Tous périmés : à réécrire autour de Pocket-Id et Pangolin (`sso: false`) |
+| Types de commit | ADR-010 ↔ skill `git-commit` ↔ `.commitlintrc.js` | `.commitlintrc.js` (fait foi) |
+| Gabarit d'ADR | `docs/decisions/000-adr-template.md` ↔ `adr-authoring/references/adr-template.md` | Le skill (le 000 n'est qu'un pointeur) |
+| Index des procédures | `docs/procedures/README.md` ↔ skill `sop-authoring` (qui impose de l'alimenter) | `_Sidebar.md` + page `Procedures` |
+| Connaissances post-mortem | Sections `## Agent Knowledge` des PM ↔ `.agents/knowledge/*.md` | Voulu (vue transverse) ; à garder |
+| Vitrines de projet | Une section DR dans chaque `projects/*/README.md` ↔ `DISASTER_RECOVERY_PLAN.md` ↔ `rhodes/docs/disaster-recovery/` | Wiki `Disaster-Recovery-Plan` (hub) |
+| Docs Proxmox, TrueNAS, PBS | `chezmoi.sh/docs/*.md` (générés) ↔ `stack/*/README.md` | Générées = état ; README = comment modifier |
+| Renovate et labels de version | `RENOVATE.md` ↔ ADR-007 | `Renovate-Reference` |
+
+## (d) Documents périmés ou incohérents, avec preuves
+
+### Périmés (à réécrire ou archiver)
+
+| Document | Preuve |
+| --- | --- |
+| `DISASTER_RECOVERY_PLAN.md` | `projects/nx` absent ; 21 mentions de `nex·rpi` ; commandes `just` (aucun `justfile` pour ces projets) |
+| `docs/procedures/security/SEC-20250808-00…` | `projects/amiya.akn/src/apps/sso/authelia/*` absent ; `grep -rn "SecurityPolicy\|envoyproxy" projects/*/src` ne trouve qu'une entrée d'allow-list dans `appprojects.yaml` |
+| `docs/procedures/infrastructure/INF-20260525-00…` / `-01…` | `projects/amiya.akn/docs/bootstrap/talos/` absent ; les clusters sont gérés par Omni (`kubernetes.version` dans `*.clustertemplate.yaml`) |
+| `docs/procedures/infrastructure/MIGR-20260628-00…` | Migration terminée ; `projects/chezmoi.sh/src/infrastructure/omni/machineclasses/` est devenu `catalog/omni/machineclasses/` |
+| `docs/RENOVATE.md` | Cite `../renovate.json` (absent ; le fichier est `renovate.json5`) ; `"enabled": false` dans `renovate.json5` n'est pas mentionné |
+| `docs/experiments/20260702-pulumi-crossplane-evaluation/README.md` | `status: IN_PROGRESS`, alors qu'ADR-015 est décidé et que `catalog/crossplane` n'existe pas |
+| `lungmen.akn/src/apps/actual-budget/README.md` | "OIDC via Envoy Gateway" ; `actual-budget.httproute.yaml` → `parentRefs: name: external` (Gateway Cilium) |
+| `projects/shodan.akn/README.md` (section dev) | Pas de `src/` ; le workflow `overlays/dev` n'existe nulle part dans le dépôt |
+
+### Incohérences d'état (ADR et `AGENTS.md`)
+
+| Élément | Constat |
+| --- | --- |
+| ADR-005 `implemented` | Plus d'Envoy Gateway, de SecurityPolicy ni d'Authelia → `deprecated` |
+| ADR-008 `implemented` | Supplanté par ADR-016 (son propre bandeau le dit) |
+| ADR-009 `proposed` | `postgres-apps` et `postgres-apps-secured` déployés sur lungmen |
+| ADR-010, 011, 012, 013, 014, 015 `accepted` | Implémentés ; les sections "Pending" sont fausses (ADR-011 : migration de lungmen ; ADR-012 : `.trunk`, `pull_request.conftest.yaml` ; ADR-015 : "Crossplane still reconciling") |
+| ADR-006 | Numéro absent, sans trace |
+| `AGENTS.md` | `defaults/` ; `AGENT_TEMPLATES/` ; Envoy Gateway et SecurityPolicy ; `<app>.postgresql-backup.yaml` ; `BOOTSTRAP_*.md` et `docs/bootstrap/` ; "17 skills" (il y en a 18) ; ADR-009 "not yet implemented" ; "Ansible pour la préparation Proxmox seulement" (`truenas.yaml` existe) |
+| `README.md` | Arborescence avec `catalog/kairos-bundles` et `defaults/` |
+| `docs/procedures/README.md` | 4 procédures non indexées ; descriptions SEC et kazimierz périmées |
+| `catalog/kubernetes/README.md` | `envoy-gateway` listé mais inutilisé ; `o11y/` absent du tableau |
+| DB-20260530-00 | Expansion de PVC décrite pour Longhorn (le stockage est Proxmox CSI) |
+| `.commitlintrc.js` + skill `git-commit` | Scopes `project:amiya.akn`, `catalog:crossplane` et `catalog:kairos-bundle` sans répertoire ; pas de scope pour la doc ni le wiki (à décider pour les commits de migration) |
+| `.github/workflows/push.kairos-bundles.yaml` | Workflow sans `catalog/kairos-bundles` (hors périmètre doc, à signaler) |
+
+### Liens relatifs cassés (vérifiés par script ; non attrapés car `.mlc_config.json` ignore `^\.\./`)
+
+| Fichier source | Cible cassée | Correction |
+| --- | --- | --- |
+| `catalog/pulumi/components/cluster-vault/README.md` | `../../../docs/decisions/00{3,4}-…` (×8), `../../../projects/rhodes.akn/.../stack/vault.ts`, `../../../projects/lungmen.akn/.../src/platform.ts`, `../README.md`, `../../../LICENSE` | Profondeur `../../../../` ; `platform.ts` → `stack/vault.ts` |
+| `catalog/pulumi/components/garage-cnpg-backup/README.md` | `../../../projects/*/…/stack/cloudnative-pg.ts` (×2) | Profondeur |
+| `catalog/pulumi/components/proxmox-cluster-identity/README.md` | `…/stack/proxmox/access.ts` | `access/` |
+| `catalog/pulumi/components/truenas-pool/README.md` | `…/pulumi/src/truenas/zpools/` | `stack/truenas/zpools/` |
+| `docs/procedures/infrastructure/INF-20260627-00…` | `../network/ipam.md` (×3), `../decisions/014…` (×2), `../../projects/.../omni-infra-provider-proxmox/README.md` (×2) | `../../` |
+| `docs/procedures/infrastructure/INF-20260730-00…` | `../network/ipam.md`, `../decisions/014…` | `../../` |
+| `docs/decisions/007-…` | `../../projects/amiya.akn/src/apps/argocd/README.md` | → `projects/rhodes.akn/src/argocd/README.md` |
+| `docs/RENOVATE.md` | `../renovate.json` (×2) | `../renovate.json5` |
+| `DISASTER_RECOVERY_PLAN.md` | `projects/nx/docs/INSTALLATION.md` | Réécriture |
+| `projects/chezmoi.sh/docs/PROXMOX-VE.md` (généré) | `../src/infrastructure/pulumi/stack/proxmox/access.ts` | Corriger le template |
+| `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/talosnet-dns/README.md` | `../../../../../../docs/network/gateway-dns-split.md` | 7 niveaux |
+| `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/README.md` | `…/catalog/pulumi/sdks/proxmox/`, `…/docs/decisions/015…` | 7 niveaux |
+| `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox-backup-server/README.md` | `…/catalog/pulumi/sdks/proxmox-backup-server/`, `../../../docs/PROXMOX_BACKUP_SERVER.md` (×2) | Profondeur |
+| `projects/chezmoi.sh/src/infrastructure/pulumi/toolbox/proxmox-docs/README.md` | `../../../../docs/PROXMOX-VE.md` | Profondeur |
+| `projects/kazimierz.akn/docs/archives/CROWDSEC-INTEGRATION.md` | Rôle Ansible pangolin | Historique, accepté |
+| `docs/experiments/20260702-…/catalog/cluster-vault/README.md` | `../../../docs/experiments/…` | Profondeur |
+| `.agents/skills/cnpg-troubleshoot/SKILL.md` | `docs/incidents/…`, `docs/procedures/…` (×3, relatifs au skill) | Liens absolus depuis la racine, ou URL wiki |
+
+### Chemins morts dans du code et des commentaires (pas du Markdown)
+
+| Fichier | Référence morte |
+| --- | --- |
+| `projects/lungmen.akn/src/apps/databases/postgres-apps.helmvalues.yaml:48`, `postgres-apps-secured.helmvalues.yaml:58` | `docs/procedures/databases/DB-20260723-00…` → c'est `backups/BKP-20260723-00…` |
+| `projects/chezmoi.sh/src/infrastructure/pulumi/toolbox/proxmox-docs/templates/partials.{host,procedures,sdn.talosnet,appendix}.hbs` | `docs/network/vlans.md` (×4) → `ipam.md` ; template et sortie générée divergent |
+| `catalog/nix/modules/lxc-static-network/default.nix:11` | `docs/network/vlans.md` |
+
+## (e) Références à mettre à jour lors des déplacements
+
+Hors `CHANGELOG.md`, `.agents/sessions/` et les liens internes entre fichiers `docs/` (qui seront réécrits pendant la
+migration). L'extraction brute fait 375 lignes (`grep -rIn "docs/(decisions|procedures|incidents|experiments|network|migrations|archives|reports|RENOVATE)|DISASTER_RECOVERY_PLAN|projects/[a-z.]+/docs"`).
+
+### Automatisations (cassent si on ne les modifie pas)
+
+| Fichier | Référence | Impact |
+| --- | --- | --- |
+| `.github/scripts/postmortem-index.py` | `INCIDENTS_DIR = Path("docs/incidents")`, écrit `docs/incidents/INDEX.md` | Génération de l'index |
+| `.github/scripts/postmortem-followup.py` | `INCIDENTS_DIR = Path("docs/incidents")`, parse le front matter | Issues de suivi automatiques |
+| `.github/workflows/schedule.postmortem-followup.yaml` | Commentaire `docs/incidents/` (et peut-être des `paths:`) | Workflow |
+| `projects/chezmoi.sh/src/infrastructure/pulumi/toolbox/{proxmox-docs,truenas-docs,proxmox-backup-server-docs}/index.ts` + `templates/*.hbs` | Écrivent dans `projects/chezmoi.sh/docs/*.md` ; liens `../../../docs/procedures/…`, `docs/decisions/014…`, `015…` | Générateurs de doc |
+| `projects/chezmoi.sh/src/infrastructure/pulumi/.mise.toml` (l.43, 48, 53) | Descriptions des tâches de régénération | — |
+| `.rtunk/rtunk.yaml` (l.105-107) | Exclusion Prettier des 3 docs générées ; l.79 `projects/*/docs/assets/architecture.svg` | Lint |
+| `.mlc_config.json` | `ignorePatterns: ^\.\./` | Rend les liens relatifs invérifiables : à revoir pour `wiki/` |
+| `projects/rhodes.akn/docs/disaster-recovery/.mise.toml` + `.mise/tasks/dr/cnpg/patch-recovery-source` | Tâches appelées par le runbook DR | Doivent rester dans le dépôt |
+| `scripts/velero:backup` (l.28, 97) | `docs/procedures/backups/BKP-20260805-00…` (message d'erreur affiché à l'utilisateur) | UX du script |
+| `scripts/dist:render` (l.15) | `docs/decisions/011-…` | Aide |
+| `scripts/bao:secret:audit` (l.13) | `docs/decisions/003-…` | Aide |
+| `.commitlintrc.js` (l.24) | `@see docs/decisions/010-…` | Commentaire |
+| `.github/ISSUE_TEMPLATE/config.yml` (l.4) | `tree/main/docs` | Lien de contact |
+| `folderinfo` | **Introuvable** dans le dépôt (`grep -rl folderinfo` = 0) ; l'issue le cite à tort | — |
+
+### Fichiers d'agents
+
+| Fichier | Nombre de références |
+| --- | ---: |
+| `AGENTS.md` (l.22, 75, 84, 86, 200, 205, 233-237) | 11 |
+| `.agents/skills/sop-authoring/SKILL.md` (+ `references/procedure-template.md`) | 15 + 1 |
+| `.agents/skills/cnpg-troubleshoot/SKILL.md` (dont des `grep -rl … docs/incidents/` exécutables) | 15 |
+| `.agents/skills/postmortem/SKILL.md` (+ `templates/postmortem.md`) | 10 + 2 |
+| `.agents/skills/omni-talos-troubleshoot/SKILL.md` | 10 |
+| `.agents/skills/adr-authoring/SKILL.md` (+ `references/adr-template.md`) | 6 + 1 |
+| `.agents/skills/git-commit/SKILL.md` | 1 |
+| `.agents/skills/bao-secret-audit/SKILL.md` | 1 |
+| `.agents/knowledge/{README,cilium,kyverno,longhorn,openbao,talos,zot}.md` | 1 à 3 chacun |
+
+### Commentaires de code et READMEs qui pointent vers `docs/`
+
+- **`docs/network/ipam.md`** (référence la plus citée) :
+  - `projects/{rhodes,lungmen}.akn/src/infrastructure/kubernetes/cilium/{internal,external}.{gateway,ippool}.yaml` (8 fichiers), et les `dist/` correspondants une fois re-rendus ;
+  - `projects/{rhodes,lungmen}.akn/src/infrastructure/omni/*.clustertemplate.yaml` ;
+  - `catalog/omni/clustertemplates/base.yaml` ;
+  - `projects/kazimierz.akn/src/infrastructure/pulumi/stack/pangolin/org.ts` ;
+  - `projects/chezmoi.sh/src/infrastructure/ansible/files/99-talosnet-lb-notrack` ;
+  - `catalog/omni/README.md` ; `projects/rhodes.akn/src/infrastructure/kubernetes/README.md`.
+- **`docs/decisions/014-…`** : les 2 clustertemplates, `catalog/omni/clustertemplates/base.yaml`, `catalog/omni/README.md`.
+- **`docs/decisions/015-…`** : `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/{pools,firewall}.ts`,
+  `stack/proxmox-backup-server/access.ts`, `stack/proxmox/README.md`, `stack/proxmox-backup-server/README.md`.
+- **`docs/procedures/infrastructure/` (INF-20260705)** :
+  - `Pulumi.yaml` de `chezmoi.sh`, `rhodes.akn`, `lungmen.akn`, `kazimierz.akn`, `rimbilliton.akn` et `hass` ;
+  - `projects/{rhodes,lungmen}.akn/src/infrastructure/pulumi/stack/proxmox.ts` ;
+  - `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/access/{rhodes,lungmen}-akn-bootstrap.ts` ;
+  - `projects/chezmoi.sh/README.md` ; `projects/chezmoi.sh/docs/*.md` (générés).
+- **`docs/procedures/infrastructure/` (INF-20260627, INF-20260730)** : `stack/proxmox/sdn.ts`, `ansible/pve.yaml`.
+- **`docs/experiments/20260617-proxmox-csi-ccm/`** : `projects/{rhodes,lungmen}.akn/src/infrastructure/kubernetes/proxmox/*.helmvalues/default.yaml` (4 fichiers).
+- **`docs/experiments/20260803-velero-pvc-backup`** : `projects/lungmen.akn/src/infrastructure/kubernetes/velero/velero.helmvalues/default.yaml`.
+- **`docs/incidents/`** : `catalog/opa/policies/NET001:kubernetes.rego`, `catalog/opa/rules/{NET001,SEC001}-*.md`.
+- **`docs/decisions/003/004`** : `catalog/pulumi/components/cluster-vault/README.md`.
+- **`docs/decisions/007`** : `projects/rhodes.akn/src/argocd/README.md`.
+- **`docs/decisions/008/016`** : `projects/kazimierz.akn/README.md`.
+- **`projects/*/docs/*`** (si on les déplace) :
+  - `projects/rimbilliton.akn/src/infrastructure/nixos/.sops.yaml` ;
+  - `projects/{lungmen,rhodes,kazimierz,rimbilliton}.akn/README.md` ;
+  - `projects/chezmoi.sh/src/infrastructure/pulumi/{README.md,stack/*/README.md,toolbox/*/README.md}` ;
+  - `projects/chezmoi.sh/src/infrastructure/pulumi/stack/truenas/zpools/README.md`.
+
+## (f) Décisions ouvertes et questions pour l'utilisateur
+
+1. **D1 — Nommage et structure de `wiki/`.** Je recommande un `wiki/` **plat** avec des noms préfixés et uniques
+   (`ADR-014-Network-Topology.md`, `Procedure-BKP-20260723-00-Restore-CNPG-From-Object-Store.md`,
+   `Incident-2026-05-30-CNPG-WAL-Disk-Full.md`, `Bootstrap-Lungmen.md`, `IPAM-Reference.md`). Raisons vérifiées dans
+   l'action :
+   - le pré-traitement ne touche que les fichiers à la racine ;
+   - `README.md` → `Home.md` ne se fait qu'à la racine.
+
+   Raisons non vérifiées ici, à confirmer par une publication de test :
+   - GitHub Wiki adresse les pages par nom de fichier, sans le dossier ; un `basename` en double entre deux
+     sous-dossiers crée donc une collision ;
+   - les noms qui contiennent des points (`INF-20260525-00.upgrade-talos`) se comportent peut-être mal ; mieux vaut
+     n'utiliser que des tirets.
+2. **D1b — `preprocess` de l'action.** Je recommande `preprocess: false` et des liens écrits au format wiki. En l'état,
+   remark sans `remark-gfm` ni `remark-frontmatter` réécrit probablement le front matter YAML (ADR, PM), les tableaux et
+   les admonitions des pages racine. À valider avec `dry-run: true`. Conséquence : il faudra un vérificateur de liens
+   adapté aux liens wiki sans `.md` (`markdown-link-check` ne les résoudra pas), par exemple un petit script qui vérifie
+   que chaque `[x](Page)` correspond à `wiki/Page.md`.
+3. **D2 — Docs générées de `chezmoi.sh`.** Les laisser dans `projects/chezmoi.sh/docs/` (référence d'état, liée au code)
+   et ajouter un lien depuis le wiki ? Ou changer la sortie des générateurs vers `wiki/` ? Je penche pour les laisser en
+   place, au moins jusqu'à ce que les templates soient corrigés (`vlans.md`).
+4. **D3 — Post-mortems.** Les migrer vers le wiki implique de modifier `postmortem-index.py`, `postmortem-followup.py`,
+   le workflow planifié et les skills, et de garder le front matter. On les migre, ou on les garde dans
+   `docs/incidents/` avec seulement un hub dans le wiki ? L'issue veut les migrer : c'est faisable, mais il faut
+   `preprocess: false` (D1b).
+5. **D4 — OIDC et SecurityPolicy.** ADR-005 et SEC-20250808 décrivent un mécanisme disparu. Faut-il écrire un ADR qui
+   supplante ADR-005 (Pocket-Id + Pangolin `sso: false` + authentification propre à chaque app) ou simplement marquer
+   ADR-005 `deprecated` ? Et SEC-20250808 : archiver ou réécrire ?
+6. **D5 — Code dans `docs/`.** Où va le code des expériences (`manifests/`, `scripts/`, `package.json`, devcontainer)
+   et les tâches mise du DR rhodes, une fois la prose dans le wiki ? Options : laisser `docs/experiments/<x>/` sans
+   README (le README devient un pointeur), déplacer vers `projects/rhodes.akn/.mise/tasks/` ou vers `scripts/`, ou
+   supprimer les POC conclus (Crossplane).
+7. **D6 — Archives.** Que faire des archives et récits terminés : MIGR-20260628, MIGR-20260801, migration
+   amiya→rhodes, `kazimierz/docs/archives/*`, `MIGRATION_NIXOS`, le rapport du 2026-10-08 ? Une catégorie wiki
+   "Archives", ou une suppression (git garde l'historique) ?
+8. **D7 — Racine.** `CHANGELOG.md` reste à la racine (récit, cité par le README) ou devient la page wiki `History` ?
+   `DISASTER_RECOVERY_PLAN.md` est supprimé et remplacé par la page wiki `Disaster-Recovery-Plan` (#1109) ?
+9. **D8 — TrueNAS.** Ansible (`truenas.yaml`, `application_datasets`) ou Pulumi (`stack/truenas`) : lequel fait foi ?
+   Cela conditionne `AGENTS.md` et le README du rôle.
+10. **D9 — `.agents/`.** Supprimer les 4 sessions (travaux finis) ? Supprimer `knowledge/longhorn.md` et
+    `knowledge/kyverno.md` (composants retirés) ?
+11. **D10 — Scope de commit.** Aucun scope `docs` ou `wiki` dans `.commitlintrc.js`. Lequel utiliser pour les PR de
+    migration (`gh`, ou un nouveau scope) ?
+12. **D11 — Corrections préalables.** Corriger d'abord les liens cassés et les statuts d'ADR en place (petite PR
+    séparée, facile à relire), ou tout faire pendant la réécriture ? Je recommande une PR préalable pour les points de
+    la section (d) qui touchent du code (helmvalues `DB-20260723`, templates `vlans.md`, `lxc-static-network`) : ils
+    restent vrais quelle que soit la destination de la doc.
+13. **Hors périmètre, à signaler en issues séparées** (pas de dépôt automatique : rien d'urgent ni de dangereux) :
+    - rôle `ansible-run-notification-on-slack` orphelin ;
+    - `push.kairos-bundles.yaml` sans catalogue ;
+    - scopes commitlint morts ;
+    - `renovate.json5` désactivé et encore lié à `:gitmoji` ;
+    - `catalog/kubernetes/envoy-gateway` inutilisé.
+
+## (g) Ordre de migration proposé
+
+0. **PR préalable "standard + outillage"** (étape 1 de l'issue) :
+   - style guide et gabarits (skill) ;
+   - `preprocess: false` + `dry-run` du workflow ;
+   - vérificateur de liens wiki ;
+   - correction de `.mlc_config.json` (au moins pour `wiki/`) ;
+   - décision D1 sur le nommage ;
+   - `Home.md` et `_Sidebar.md` en squelette.
+1. **PR "corrections de références dans le code"** (indépendante de la destination) :
+   - helmvalues lungmen (`DB-20260723` → `BKP-20260723`) ;
+   - templates `proxmox-docs` (`vlans.md` → `ipam.md`, `access.ts` → `access/`) puis régénération ;
+   - `lxc-static-network/default.nix` ;
+   - liens à la mauvaise profondeur dans les READMEs de `catalog/pulumi` et `chezmoi.sh`.
+2. **Procédures et guides de projet** (les plus lus pendant un incident) :
+   - réécrire et vérifier : OMNI-20260721, OMNI-20260629-03, BKP-*, DB-20260530 (sans Longhorn), INF-20260525-02,
+     INF-20260605 (fusionné avec les sections LXC communes), INF-20260620, INF-20260627, INF-20260705, INF-20260730 ;
+   - réécrire pour Omni : INF-20260525-00/01 ;
+   - archiver : SEC-20250808, MIGR-20260628 ;
+   - guides : `Disaster-Recovery-Plan` (#1109, hub), `Recover-Rhodes`, `Recover-OpenBao`, `Recover-Pocket-Id`,
+     `Bootstrap-Lungmen`, `Bootstrap-A-NixOS-VPS` (kazimierz + rimbilliton) ;
+   - mettre à jour les skills `sop-authoring`, `omni-talos-troubleshoot`, `cnpg-troubleshoot`, `lxc-maintenance`, les
+     liens des READMEs de projets et des `Pulumi.yaml`, et `scripts/velero:backup`.
+3. **Référence** :
+   - `IPAM-Reference`, `Network-Overview`, `Gateway-And-DNS-Split` (avec la mise à jour des ~20 commentaires de code) ;
+   - `Renovate-Reference` (corrigée) ; `Architecture-Overview` et `Repository-Layout` (dédoublonnés avec `AGENTS.md` et
+     `README.md`) ;
+   - `Policy-Enforcement` (pointeur vers `catalog/opa/`).
+4. **ADR** (retouche légère) :
+   - corriger les statuts (005, 008, 009, 010 à 015) dans la même PR, ou juste avant ;
+   - supprimer `000` ;
+   - mettre à jour `adr-authoring`, `.commitlintrc.js`, `scripts/dist:render`, `scripts/bao:secret:audit` et les
+     commentaires `.ts` et clustertemplates.
+5. **Post-mortems** (retouche légère, front matter intact) avec, dans la même PR, `postmortem-index.py`,
+   `postmortem-followup.py`, le workflow planifié, les skills `postmortem` et `cnpg-troubleshoot`, `.agents/knowledge/*`,
+   les fiches OPA NET001/SEC001 et `NET001:kubernetes.rego`.
+6. **Expériences, migrations, archives, rapports** : prose vers le wiki (catégorie "Archives / Experiments"), code selon
+   D5, suppressions selon D6.
+7. **Fin** :
+   - `AGENTS.md` corrigé (8 erreurs) et renvoyant vers le wiki ;
+   - `README.md` allégé ;
+   - `ISSUE_TEMPLATE/config.yml` ;
+   - `docs/` réduit à `docs/assets/` (et au code des expériences si D5 le garde) ;
+   - le `grep` d'acceptation de l'issue ne trouve plus rien hors `CHANGELOG.md` et archives.

@@ -37,8 +37,9 @@ catalog/        Reusable components (charts, compositions, OCI images, …)
 ├── pulumi/         Pulumi components and stacks
 └── talos/          Talos Linux bootstrap manifests + machine config patches
 
-defaults/       Baseline Helm values / Talos configs used across projects
 docs/           ADRs (decisions/), procedures/, experiments/, incidents/, migrations/, network/, reports/, archives/
+                (being moved to wiki/, see "Documentation" below)
+wiki/           Source of the GitHub Wiki, mirrored on every push to main
 
 projects/       One subdirectory per cluster or standalone app
 ├── chezmoi.sh/     Shared Pulumi stacks — Proxmox host, OpenBao, Tailscale, observability LXC, OCI registry
@@ -58,32 +59,32 @@ scripts/        Operational scripts (added to PATH by mise)
 
 Grouped by concern rather than alphabetically, since agents usually need "what handles X" more than an inventory.
 
-| Concern               | Current choice                                                                                                                                                            |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Kubernetes distro     | Talos Linux, on every cluster                                                                                                                                             |
-| Cluster bootstrap     | Sidero Omni (`catalog/omni/` — cluster templates + machine classes) + Talos machine config patches (`catalog/talos/`)                                                     |
-| GitOps engine         | ArgoCD — the sole GitOps engine on every Kubernetes cluster (ADR-011)                                                                                                     |
-| Manifest rendering    | Pre-rendered `dist/` manifests generated from `src/` (ADR-011) — hardens the supply chain and keeps ArgoCD diffs readable. **Never hand-edit `dist/`**; run `dist:render` |
-| Cloud/host IaC        | Pulumi (TypeScript), sole tool in use — no Crossplane anywhere in the tree                                                                                                |
-| Bare-metal/VPS config | NixOS (`nixos-anywhere` + sops-nix) on the OCI VPSes (`kazimierz.akn`, `rimbilliton.akn`); Ansible (`catalog/ansible/`) for Proxmox host prep only                        |
-| CNI / NetworkPolicies | Cilium, default-deny by default                                                                                                                                           |
-| Ingress / Gateway     | Cilium Gateway API (HTTPRoute, TCPRoute) is the primary GatewayClass; a few routes still run on Envoy Gateway — new routes go on `cilium`                                 |
-| Internal DNS          | external-dns with the UniFi and BIND/rfc2136 providers (LAN + internal DNS server) — no public DNS record management in this repo                                         |
-| TLS                   | cert-manager, DNS-01 validation. Cloudflare's role is limited to the ACME DNS-01 API token (wildcard `chezmoi.sh` certs); it does not manage DNS records or tunnels       |
-| Public access         | Pangolin + Gerbil + Traefik on `kazimierz.akn` (a VPS), with Newt tunnel clients in both `lungmen.akn` and `rhodes.akn`                                                   |
-| Cluster connectivity  | Tailscale — mandatory for any cluster-to-cluster traffic outside the homelab                                                                                              |
-| Block storage         | Proxmox CSI plugin + Proxmox CCM (LVM-thin volumes decoupled from VM lifecycle) — not Longhorn (`docs/experiments/20260617-proxmox-csi-ccm/`)                             |
-| Bulk/NAS storage      | SMB CSI driver, mounting NAS shares for Immich, Jellyfin, Paperless-ngx                                                                                                   |
-| Relational databases  | CloudNative-PG (PostgreSQL) with automated S3 backups. Consolidating per-app clusters into shared CNPG clusters is proposed but not yet implemented (ADR-009)             |
-| Other databases       | None currently deployed                                                                                                                                                   |
-| Container registry    | Zot (`projects/chezmoi.sh/src/infrastructure/pulumi/stack/zot-registry.ts`)                                                                                               |
-| Secrets source        | OpenBao (`https://vault.chezmoi.sh`), synced to Kubernetes `Secret`s via External Secrets Operator; SOPS + age for secrets that must live in Git (ADR-001–004)            |
-| Identity / SSO        | Pocket-Id is the **sole** identity provider                                                                                                                               |
-| Observability         | VictoriaMetrics + VictoriaLogs + vmalert + Alertmanager on a single NixOS LXC (ADR-013), fed by per-cluster vmagent (metrics) and Vector (logs); Grafana for dashboards   |
-| Policy enforcement    | OPA/Rego, CI-time only via conftest in the compliance workflows (ADR-012) — no in-cluster admission webhook                                                               |
-| Network topology      | Dual-NIC Proxmox host + Proxmox SDN VXLAN (ADR-014, `docs/network/`)                                                                                                      |
-| Linting               | rtunk (trunk-compatible, `.rtunk/rtunk.yaml`) — `mise run lint` / `mise run lint:fix`; CI runs it through the `axnic/rtunk` action                                        |
-| Dev environment       | mise (tool versions), Nix flakes (reproducible OCI images), an experimental DevContainer under `docs/experiments/` (not repo-wide)                                        |
+| Concern               | Current choice                                                                                                                                                                                |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Kubernetes distro     | Talos Linux, on every cluster                                                                                                                                                                 |
+| Cluster bootstrap     | Sidero Omni (`catalog/omni/` — cluster templates + machine classes) + Talos machine config patches (`catalog/talos/`)                                                                         |
+| GitOps engine         | ArgoCD — the sole GitOps engine on every Kubernetes cluster (ADR-011)                                                                                                                         |
+| Manifest rendering    | Pre-rendered `dist/` manifests generated from `src/` (ADR-011) — hardens the supply chain and keeps ArgoCD diffs readable. **Never hand-edit `dist/`**; run `dist:render`                     |
+| Cloud/host IaC        | Pulumi (TypeScript), sole tool in use — no Crossplane anywhere in the tree                                                                                                                    |
+| Bare-metal/VPS config | NixOS (`nixos-anywhere` + sops-nix) on the OCI VPSes (`kazimierz.akn`, `rimbilliton.akn`); Ansible (`catalog/ansible/`) for the Proxmox host and TrueNAS playbooks                            |
+| CNI / NetworkPolicies | Cilium, default-deny by default                                                                                                                                                               |
+| Ingress / Gateway     | Cilium Gateway API (HTTPRoute, TCPRoute), GatewayClass `cilium` — the only one in use, Envoy Gateway is gone from `projects/*/src`                                                            |
+| Internal DNS          | external-dns with the UniFi and BIND/rfc2136 providers (LAN + internal DNS server) — no public DNS record management in this repo                                                             |
+| TLS                   | cert-manager, DNS-01 validation. Cloudflare's role is limited to the ACME DNS-01 API token (wildcard `chezmoi.sh` certs); it does not manage DNS records or tunnels                           |
+| Public access         | Pangolin + Gerbil + Traefik on `kazimierz.akn` (a VPS), with Newt tunnel clients in both `lungmen.akn` and `rhodes.akn`                                                                       |
+| Cluster connectivity  | Tailscale — mandatory for any cluster-to-cluster traffic outside the homelab                                                                                                                  |
+| Block storage         | Proxmox CSI plugin + Proxmox CCM (LVM-thin volumes decoupled from VM lifecycle) — not Longhorn (`docs/experiments/20260617-proxmox-csi-ccm/`)                                                 |
+| Bulk/NAS storage      | SMB CSI driver, mounting NAS shares for Immich, Jellyfin, Paperless-ngx                                                                                                                       |
+| Relational databases  | CloudNative-PG (PostgreSQL) with automated S3 backups. Shared CNPG clusters (`postgres-apps`, `postgres-apps-secured`) exist on `lungmen.akn`; consolidation of the rest is partial (ADR-009) |
+| Other databases       | None currently deployed                                                                                                                                                                       |
+| Container registry    | Zot (`projects/chezmoi.sh/src/infrastructure/pulumi/stack/zot-registry.ts`)                                                                                                                   |
+| Secrets source        | OpenBao (`https://vault.chezmoi.sh`), synced to Kubernetes `Secret`s via External Secrets Operator; SOPS + age for secrets that must live in Git (ADR-001–004)                                |
+| Identity / SSO        | Pocket-Id is the **sole** identity provider                                                                                                                                                   |
+| Observability         | VictoriaMetrics + VictoriaLogs + vmalert + Alertmanager on a single NixOS LXC (ADR-013), fed by per-cluster vmagent (metrics) and Vector (logs); Grafana for dashboards                       |
+| Policy enforcement    | OPA/Rego, CI-time only via conftest in the compliance workflows (ADR-012) — no in-cluster admission webhook                                                                                   |
+| Network topology      | Dual-NIC Proxmox host + Proxmox SDN VXLAN (ADR-014, `docs/network/`)                                                                                                                          |
+| Linting               | rtunk (trunk-compatible, `.rtunk/rtunk.yaml`) — `mise run lint` / `mise run lint:fix`; CI runs it through the `axnic/rtunk` action                                                            |
+| Dev environment       | mise (tool versions), Nix flakes (reproducible OCI images), an experimental DevContainer under `docs/experiments/` (not repo-wide)                                                            |
 
 ## Development environment
 
@@ -146,8 +147,9 @@ mise run ansible:install                # Sync Python venv for Ansible roles
   holding `default.yaml`; cluster-specific overrides live in the same directory (e.g. `override.yaml`) and are wired in
   via the kustomization's `additionalValuesFiles`. Shared catalog defaults instead use
   `catalog/kubernetes/<chart>/helm/default.helmvalues.yaml` / `hardened.helmvalues.yaml`.
-- **OIDC** via Pocket-Id (hosted on `rhodes.akn`) for the ArgoCD UI and other admin interfaces. Envoy Gateway
-  `SecurityPolicy` resources protect HTTPRoutes that need authentication (ADR-005).
+- **OIDC** via Pocket-Id (hosted on `rhodes.akn`) for the ArgoCD UI and other admin interfaces. There is no
+  gateway-level OIDC filter: each app authenticates its own users (ADR-005, which described Envoy Gateway
+  `SecurityPolicy` resources, no longer matches the tree).
 
 `rhodes.akn` is the **core platform cluster** — it hosts the services every other cluster depends on (OpenBao,
 Pocket-Id, monitoring collection). Treat it as production: any change there must preserve availability for downstream
@@ -187,9 +189,9 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 ### Network and security
 
 - **Cilium NetworkPolicies** for microsegmentation — required for every app.
-- **Cilium Gateway API** for ingress (HTTPRoute, TCPRoute). Public-facing routes are wrapped in a `SecurityPolicy`
-  enforcing OIDC via Pocket-Id when authentication is required. A few routes still run on Envoy Gateway; new routes go
-  on the `cilium` GatewayClass. The Gateway lives in the `in-gateway-system` namespace
+- **Cilium Gateway API** for ingress (HTTPRoute, TCPRoute), all on the `cilium` GatewayClass. Routes are not wrapped in
+  an OIDC filter: apps that need authentication handle it themselves (Pocket-Id). The Gateway lives in the
+  `in-gateway-system` namespace
   (`projects/*/src/infrastructure/kubernetes/in-gateway/`).
 - **cert-manager** with DNS-01 validation. **external-dns** manages internal-only DNS records via the UniFi and
   BIND/rfc2136 providers — there is no public/Cloudflare-managed DNS zone in this repo.
@@ -205,8 +207,8 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
   from VM lifecycle — not Longhorn (see `docs/experiments/20260617-proxmox-csi-ccm/`).
 - **SMB CSI driver** mounts NAS shares for bulk media (Immich, Jellyfin, Paperless-ngx).
 - **CloudNative-PG** for PostgreSQL clusters with automated S3 backups
-  (`projects/*/src/apps/<app>/<app>.postgresql-backup.yaml`). Consolidating into fewer shared clusters is proposed, not
-  yet done (ADR-009).
+  (backup resources live next to each cluster definition under `projects/*/src/`). Consolidating into fewer shared
+  clusters is partly done on `lungmen.akn` (ADR-009).
 - No MongoDB/Percona workloads currently exist in the tree — don't assume that stack is available.
 - Database migrations between CNPG clusters use `scripts/cnpg:db:migrate` (see `.agents/skills/cnpg-backup/SKILL.md` for
   the backup procedure, `.agents/skills/cnpg-troubleshoot/SKILL.md` for troubleshooting).
@@ -227,7 +229,9 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 
 ### Important paths
 
-- Bootstrap docs: `projects/*/docs/BOOTSTRAP_*.md` and `projects/*/docs/bootstrap/`
+- Wiki (documentation source): `wiki/` — see "Documentation" below
+- Bootstrap docs: `projects/*/docs/BOOTSTRAP.md` (`kazimierz.akn`, `rimbilliton.akn`), `projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md`
+  and `projects/rhodes.akn/docs/disaster-recovery/`
 - Architecture diagrams: `projects/*/architecture.d2` → `projects/*/docs/assets/architecture.svg`
 - Shared D2 styles: `docs/assets/d2/styles.architecture.d2`
 - ADRs: `docs/decisions/` — check `status` (proposed/accepted/implemented) before treating one as current behavior
@@ -253,13 +257,26 @@ running `git commit` or opening a PR, they enforce project conventions and surfa
 - `.agents/skills/adr-authoring/SKILL.md` — Architecture Decision Records
 - `.agents/skills/create-issue/SKILL.md` — issue drafting conventions
 - `.github/PULL_REQUEST_TEMPLATE/` — feature / bugfix / refactoring templates
-- `.github/ISSUE_TEMPLATE/AGENT_TEMPLATES/` — AI-friendly issue templates
+- `.agents/skills/wiki-docs/SKILL.md` — documentation style guide, page templates and the `wiki/` workflow
 
-`.agents/skills/` holds 17 skills in total (operational runbooks like `cnpg-troubleshoot`, `omni-talos-troubleshoot`,
+`.agents/skills/` holds 19 skills in total (operational runbooks like `cnpg-troubleshoot`, `omni-talos-troubleshoot`,
 `lxc-maintenance`, `provider-upgrade`; process skills like `postmortem`, `triage-issues`, `sop-authoring`,
-`auto-file-bug`; Pulumi-specific ones like `pulumi-overview`, `pulumi-best-practices`, `pulumi-component`,
+`wiki-docs`, `auto-file-bug`; Pulumi-specific ones like `pulumi-overview`, `pulumi-best-practices`, `pulumi-component`,
 `pulumi-debug-failed-operation`) — check that directory for something matching your task before improvising a procedure
 from scratch.
+
+## Documentation
+
+The documentation is moving from `docs/`, `projects/*/docs/` and the repository root into `wiki/`, which the
+`wiki` workflow mirrors to the GitHub Wiki on every push to `main` (issue #1257). Until a category is migrated, its
+documents stay where they are; `docs/migrations/20261011-documentation-audit-1257.md` lists every document with its
+destination.
+
+- Write and edit pages with the `wiki-docs` skill (style guide, page templates). `scripts/wiki:lint` enforces the
+  mechanical rules and runs on every pull request touching `wiki/`.
+- `wiki/` is flat, with `Title-Case-With-Hyphens.md` names and wiki-form links (`[x](Page)`, no `.md`).
+- READMEs that describe a directory stay next to the code. OPA policy documentation (`catalog/opa/`) never goes in the
+  wiki.
 
 In short:
 
