@@ -268,7 +268,7 @@ Validation is enforced by the cz-git prompt instead.
 
 ### Parser pattern
 
-```
+```text
 headerPattern: /^(?<type>\S+?)\[(?<scope>[^\]]+)\]:\s(?<subject>.+)$/
 breakingHeaderPattern: /^(?<type>[+~-]!)\[(?<scope>[^\]]+)\]:\s(?<subject>.+)$/
 ```
@@ -506,7 +506,7 @@ git commit -S -m "!![project:amiya.akn]: Fix OIDC redirect loop"
 
 ## References
 
-- ADR-010: `docs/decisions/010-replace-gitmoji-with-symbol-commit-types.md`
+- ADR-010: `docs/decisions/ADR-010-Remplacer-Gitmoji-par-des-Symboles-de-Type-de-Commit.md`
 - <https://allthingsopen.org/articles/open-source-ai-contributions-assisted-by-git-trailer-standard>
 - <https://github.com/rust-lang/rust-forge/blob/8a1ce25d78f9d20a85201bf8808f1c8081be41cf/src/policies/llm-usage.md>
 - <https://docs.kernel.org/process/coding-assistants.html>

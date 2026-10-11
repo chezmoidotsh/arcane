@@ -104,7 +104,8 @@ Les accès suivants sont également nécessaires :
 
 Le SDN doit être configuré au préalable ([Provisionner le SDN Proxmox](INF-20260627-00-Provisionner-le-SDN-Proxmox.md)).
 Cette procédure est aussi à rejouer après toute reconstruction ou réinstallation de `pve-01` (voir
-[ADR-014](../../decisions/014-network-topology.md) pour la configuration réseau de l'hôte).
+[ADR-014](../../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md) pour la configuration réseau de
+l'hôte).
 
 ## Entrées requises
 
@@ -223,8 +224,8 @@ les 8 tranches de cluster par conception.
 
 `/etc/network/if-up.d/` est sur le disque local, pas dans `/etc/pve/` (le magasin de configuration répliqué du cluster,
 où vivent `cluster.fw` et consorts). Lorsqu'un second nœud Proxmox rejoindra le cluster (voir la migration `vxlan`
-d'[ADR-014](../../decisions/014-network-topology.md)), ajouter l'hôte au groupe d'inventaire `pve` et relancer le
-playbook : il n'apparaît pas automatiquement.
+d'[ADR-014](../../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md)), ajouter l'hôte au groupe
+d'inventaire `pve` et relancer le playbook : il n'apparaît pas automatiquement.
 
 ### SNAT non actif sur talosnet à la date de la découverte
 
@@ -242,10 +243,11 @@ n'avait pas encore fait l'objet d'une issue. Cet état n'a pas été revérifié
   ajoutée), commandes de l'étape 3 découpées et exécutées par `ssh`, ajout de l'exemple complet.
 - _2026-10-11_ : Migration vers le standard de documentation (issue #1257) : page traduite en français, structure
   alignée sur le gabarit de procédure. Liens relatifs corrigés (`../reference/IPAM-Reference.md` et
-  `../decisions/014-network-topology.md` devenus `../../reference/IPAM-Reference.md` et
-  `../../decisions/014-network-topology.md`, la page étant à deux niveaux sous `docs/`). Contenu revérifié contre le
-  dépôt : hook `99-talosnet-lb-notrack`, playbook `pve.yaml`, bloc `10.0.0.64/26` d'IPAM, `accept-new` de l'inventaire
-  et `snat: true` de `sdn.ts` sont conformes.
+  `../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md` devenus
+  `../../reference/IPAM-Reference.md` et
+  `../../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md`, la page étant à deux niveaux sous
+  `docs/`). Contenu revérifié contre le dépôt : hook `99-talosnet-lb-notrack`, playbook `pve.yaml`, bloc `10.0.0.64/26`
+  d'IPAM, `accept-new` de l'inventaire et `snat: true` de `sdn.ts` sont conformes.
 - _2026-10-08_ : Hook déplacé d'une copie en ligne vers un fichier versionné installé par `pve.yaml` (Ansible).
 - _2026-07-30_ : Portée de NOTRACK élargie du `/29` de `rhodes.akn` à tout le bloc `10.0.0.64/26` des pools LB (tous les
   clusters). Ajout des notes sur l'absence de mécanisme natif PVE et sur l'inutilité d'une réapplication par cron.
@@ -254,8 +256,8 @@ n'avait pas encore fait l'objet d'une issue. Cet état n'a pas été revérifié
 
 ## Pour aller plus loin
 
-- [ADR-014 — Topologie réseau du homelab](../../decisions/014-network-topology.md) : la décision de design à deux
-  interfaces et l'entrée d'évolution du 2026-07-30 qui décrit ce correctif.
+- [ADR-014 — Topologie réseau du homelab](../../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md)
+  : la décision de design à deux interfaces et l'entrée d'évolution du 2026-07-30 qui décrit ce correctif.
 - [Provisionner le SDN Proxmox](INF-20260627-00-Provisionner-le-SDN-Proxmox.md) : la procédure de mise en place du SDN,
   préalable à celle-ci.
 - [IPAM](../../reference/IPAM-Reference.md) : le plan d'adressage, dont le bloc `10.0.0.64/26` des pools LB Cilium.

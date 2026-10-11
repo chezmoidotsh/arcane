@@ -23,6 +23,6 @@ rule below is meaningless without knowing which bridge it sits on:
 | `{{name}}` | {{{role}}} |
 {{/each}}
 
-Talos nodes are dual-NIC (see [ADR-014](../../../docs/decisions/014-network-topology.md)): `eth0` on `vmbr1` so
+Talos nodes are dual-NIC (see [ADR-014](../../../docs/decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md)): `eth0` on `vmbr1` so
 Cilium's L2 LoadBalancer announcements stay reachable from home devices, and `eth1` on the SDN below so node-to-node
 traffic never touches the home L2 domain.

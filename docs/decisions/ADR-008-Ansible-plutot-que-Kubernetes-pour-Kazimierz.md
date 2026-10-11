@@ -424,10 +424,10 @@ le retour arrière est complexe. À réexaminer une fois les instances supervis�
   `projects/kazimierz.akn/src/infrastructure/` ne contient plus que `nixos/` et `pulumi/`. Décision, options,
   chronologie et dates d'origine inchangées.
 - _2026-10-10_ : **DEPRECATION** : Le choix de gestion de configuration (Ansible + Docker Compose) est supplanté par
-  l'[ADR-016](./016-kazimierz-nixos-over-ansible.md) (NixOS via `nixos-anywhere` et `sops-nix`) ; le code Ansible a été
-  supprimé. Statut conservé à `implemented` : la décision Kubernetes contre VPS reste valable. Les passages sur Ansible
-  et le lien vers l'ancien README Ansible de `kazimierz` (désormais supprimé, voir l'historique Git) sont conservés
-  comme historique.
+  l'[ADR-016](./ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md) (NixOS via `nixos-anywhere` et `sops-nix`) ; le code
+  Ansible a été supprimé. Statut conservé à `implemented` : la décision Kubernetes contre VPS reste valable. Les
+  passages sur Ansible et le lien vers l'ancien README Ansible de `kazimierz` (désormais supprimé, voir l'historique
+  Git) sont conservés comme historique.
 - _2026-10-08_ : **DEPRECATION** : Suppression d'ARA (le rôle `ara_server` et son listener Tailscale Serve) : plus
   nécessaire, d'après la revue du propriétaire sur la PR 1262. Statut conservé à `implemented`. Le passage d'origine sur
   l'observabilité est conservé et signalé.
@@ -445,8 +445,8 @@ le retour arrière est complexe. À réexaminer une fois les instances supervis�
 
 ## Pour aller plus loin
 
-- [ADR-016 NixOS plutôt qu'Ansible pour Kazimierz](./016-kazimierz-nixos-over-ansible.md) : l'ADR qui supplante le choix
-  de gestion de configuration de cette décision.
+- [ADR-016 NixOS plutôt qu'Ansible pour Kazimierz](./ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md) : l'ADR qui
+  supplante le choix de gestion de configuration de cette décision.
 - [Initialiser Kazimierz](../guides/Initialiser-Kazimierz.md) : la mise en place actuelle du serveur, sous NixOS.
 - [Initialiser Rimbilliton](../guides/Initialiser-Rimbilliton.md) : l'hôte OCI de référence dont le modèle NixOS a été
   repris.

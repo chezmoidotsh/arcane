@@ -75,7 +75,7 @@
 # cluster's template. Runtime Cilium upgrades are driven by ArgoCD.
 #
 # Cross-references:
-#   ADR-014                    docs/decisions/014-network-topology.md
+#   ADR-014                    docs/decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md
 #   VLAN / SDN layout          docs/reference/IPAM-Reference.md
 #   Machine class definitions  catalog/omni/machineclasses/
 #   CIDR lint script           scripts/omni:template:lint

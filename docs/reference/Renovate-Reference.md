@@ -36,7 +36,7 @@ Oripathy indique quel composant mettre à jour ; la configuration ci-dessous ne 
 | Contenu des presets | Non vérifié : ils vivent dans un autre dépôt (`chezmoidotsh/renovate-config`)                                                                       |
 
 Le preset `:gitmoji` est hérité tel quel. Le dépôt n'utilise plus Gitmoji depuis
-[ADR-010](../decisions/010-replace-gitmoji-with-symbol-commit-types.md) : les commits suivent le format
+[ADR-010](../decisions/ADR-010-Remplacer-Gitmoji-par-des-Symboles-de-Type-de-Commit.md) : les commits suivent le format
 `type[scope]: Subject`, avec le scope `deps` pour les dépendances (`^[deps]: cert-manager to v1.16.0`). Le format réel
 des messages que Renovate produirait n'est pas vérifiable depuis ce dépôt ; l'ancien exemple de PR
 (`:arrow_up:(deps): ...`) est retiré faute de preuve.
@@ -94,6 +94,6 @@ Renovate.
 - [Oripathy Reference](Oripathy-Reference.md) : les annotations `# oripathy:` qui remplacent `# renovate:`.
 - [ADR-007 Structure des projets et conventions de nommage](../archives/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md)
   : la convention de labels de version et d'annotations.
-- [ADR-010 Replace Gitmoji With Symbol Commit Types](../decisions/010-replace-gitmoji-with-symbol-commit-types.md) : le
-  format de commit en vigueur.
+- [ADR-010 Replace Gitmoji With Symbol Commit Types](../decisions/ADR-010-Remplacer-Gitmoji-par-des-Symboles-de-Type-de-Commit.md)
+  : le format de commit en vigueur.
 - [Documentation Renovate](https://docs.renovatebot.com/) : référence amont des managers et des règles de paquets.

@@ -18,7 +18,7 @@ appliance pattern used elsewhere in `projects/chezmoi.sh/src/infrastructure/prox
 `observability`, `oci-registry`, `omni`), there is no reason to fight PBS into that mold, and PBS is not officially
 supported inside an LXC container (its storage stack expects a full VM or bare metal). The VM itself — disk layout,
 network, initial `root@pam` setup — is a manual, one-time install, the same way any vendor-image install is handled in
-this repo (see `docs/decisions/015-migrate-crossplane-to-pulumi.md`, "Non-Goals": Proxmox itself stays outside
+this repo (see `docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md`, "Non-Goals": Proxmox itself stays outside
 Pulumi/GitOps). Everything from that point on — datastore, notifications, users/ACLs, prune/verify jobs — is this
 stack's job.
 

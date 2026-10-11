@@ -158,7 +158,7 @@ Declarative operating system, installed over the stock Ubuntu image with `nixos-
 hardening live in a flake; secrets are encrypted with SOPS + age and decrypted on the host by `sops-nix`.
 
 **\*Why this choice**: One tool for the OS and the services, with a one-command rollback to the previous generation.
-Same pattern as `rimbilliton.akn` ([ADR-016](../../docs/decisions/016-kazimierz-nixos-over-ansible.md)).\*
+Same pattern as `rimbilliton.akn` ([ADR-016](../../docs/decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md)).\*
 
 </div>
 </div>

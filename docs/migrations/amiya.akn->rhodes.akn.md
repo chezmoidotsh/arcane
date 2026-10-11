@@ -114,8 +114,8 @@ Verify with `kubectl get externalsecret -A` on `lungmen.akn`'s own context — a
   — cluster provisioning (Step 1)
 - [DB-20260723-00: Restore a CNPG cluster from its S3 object-store backup](../procedures/databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md)
   — the generic CNPG restore procedure used by `openbao.md`/`pocket-id.md` Step 2
-- [ADR-014: Homelab network topology (dual-NIC + SDN VNet)](../decisions/014-network-topology.md) — pod CIDR allocation
-  referenced in Step 1
+- [ADR-014: Homelab network topology (dual-NIC + SDN VNet)](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md)
+  — pod CIDR allocation referenced in Step 1
 - [docs/reference/IPAM-Reference.md](../reference/IPAM-Reference.md) — pod CIDR, Cilium LoadBalancer pool allocations
 - [external-dns TXT registry](https://kubernetes-sigs.github.io/external-dns/latest/docs/registry/txt/) — ownership
   model behind the DNS cutover section
