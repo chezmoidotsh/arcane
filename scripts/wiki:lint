@@ -36,7 +36,8 @@ DIR_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 SPECIAL = {"Home", "_Sidebar", "_Footer"}  # root pages exempt from the title, naming and "Where to go next" rules
 FILLER_RE = re.compile(r"\b(simply|just|easily|basically|obviously|of course|please note)\b", re.I)
 EMOJI_RE = re.compile("[\U0001f000-\U0001faff☀-➿⬀-⯿️]")
-LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+LINK_RE = re.compile(r"!?\[[^\]]*\]\(<?([^)\s>]+)>?(?:\s+(?:\"[^\"]*\"|'[^']*'))?\)")  # inline link or image
+REF_RE = re.compile(r"^\s{0,3}\[[^\]]+\]:\s*<?([^\s>]+)")  # reference definition: [id]: target
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 NEXT_HEADING = "where to go next"
 
@@ -125,7 +126,7 @@ def lint(root: Path, label: str = "docs") -> list[str]:
                 err(page, n, f"filler word '{f.group(0)}'")
             if EMOJI_RE.search(line):
                 err(page, n, "emoji")
-            for target in LINK_RE.findall(plain):
+            for target in LINK_RE.findall(plain) + REF_RE.findall(plain):
                 if re.match(r"^([a-z][a-z0-9+.-]*:|#)", target, re.I):
                     continue
                 path = unquote(target.split("#", 1)[0])
@@ -165,9 +166,12 @@ def self_test() -> None:
         assert lint(root) == [], lint(root)
         (root / "Reference").mkdir()
         (root / "Reference" / "good-page.md").write_text(
-            "# Other Title\n\nIt is simply easy. [x](Nope.md) [y](../guides/Good-Page).\n")
+            "# Other Title\n\nIt is simply easy. [x](Nope.md) [y](../guides/Good-Page).\n"
+            "[ok](<../Home.md> 'title') [bad](<Gone.md>)\n[ref]: Lost.md\n")
         errs = "\n".join(lint(root))
-        for expected in ("filler word", "does not match", "broken link 'Nope.md'", "link to the .md file",
+        assert "broken link '../Home.md'" not in errs, errs  # <...> form with a title is a valid link
+        for expected in ("filler word", "does not match", "broken link 'Nope.md'", "broken link 'Gone.md'",
+                         "broken link 'Lost.md'", "link to the .md file",
                          "Where to go next", "not reachable", "name conflicts", "directory 'Reference'"):
             assert expected in errs, (expected, errs)
     print("self-test ok")

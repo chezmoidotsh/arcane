@@ -7,7 +7,7 @@ lint:
     # checked at once because some rules span pages (unique names, pages reachable from _Sidebar.md); the pages still
     # to migrate are listed in docs/.wiki-legacy and skipped. Findings are `path:line: message` lines.
     - name: wiki-lint
-      files: [markdown]
+      files: [markdown, wiki-legacy]
       commands:
         - name: lint
           run: scripts/wiki:lint
