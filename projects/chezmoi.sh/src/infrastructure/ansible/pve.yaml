@@ -5,7 +5,7 @@
 #
 # Installs the conntrack NOTRACK hook for the Cilium external LB pool block, so
 # a host rebuild does not break external reachability of Gateway VIPs.
-# See docs/procedures/infrastructure/INF-20260730-00.pve-firewall-conntrack-notrack-external-lb.md
+# See docs/procedures/infrastructure/INF-20260730-00-Desactiver-le-Suivi-de-Connexion-des-Pools-LB.md
 #
 # Usage:
 #   ansible-playbook -i inventory/production.yaml pve.yaml

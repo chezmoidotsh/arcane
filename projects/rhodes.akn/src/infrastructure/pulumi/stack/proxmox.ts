@@ -36,7 +36,7 @@ import { rhodesAknProvider } from "./kubernetes";
 // Pulumi StackReference — reading a *secret* StackReference output requires
 // holding the exporting stack's own passphrase, and this repo deliberately
 // keeps every project's Pulumi state passphrase separate (see
-// docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md
+// docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md
 // and chezmoi.sh's stack/proxmox/access/rhodes-akn-bootstrap.ts for the full
 // reasoning). Goes through the explicit `rhodesAknProvider` (./kubernetes.ts), like
 // everything else in this file.

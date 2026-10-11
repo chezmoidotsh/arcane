@@ -37,7 +37,7 @@ const rhodesAknBootstrapApiToken = rhodesAknBootstrapToken.value;
 // Delivered as a direct Kubernetes Secret into rhodes.akn's own cluster —
 // deliberately NOT as a Pulumi StackReference output. Each project's Pulumi
 // state is encrypted with its own, unique passphrase (see
-// docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md);
+// docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md);
 // a cross-project StackReference read of a *secret* output only decrypts if
 // the reading stack also holds the exporting stack's passphrase, which this
 // repo deliberately does not share (keeps each project's blast radius

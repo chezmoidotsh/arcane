@@ -28,7 +28,7 @@ import * as pulumi from "@pulumi/pulumi";
 // through a Pulumi StackReference — reading a *secret* StackReference output
 // requires holding the exporting stack's own passphrase, and this repo
 // deliberately keeps every project's Pulumi state passphrase separate (see
-// docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md).
+// docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md).
 //
 // Explicit named provider, not the ambient default: this project's other
 // stack files (cert-manager.ts, vault.ts, cloudnative-pg.ts, ...) all go

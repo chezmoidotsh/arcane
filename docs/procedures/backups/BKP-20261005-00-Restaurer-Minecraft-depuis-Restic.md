@@ -301,8 +301,8 @@ SQLite vide et une nouvelle `APP_KEY` (installeur), puis une sauvegarde de cet �
 
    Si l'état Pulumi lui-même est perdu, le bucket B2 contient toujours les sauvegardes. L'état de cette stack est stocké
    sur Garage (`backend` de `Pulumi.yaml`) : le restaurer ou importer le bucket existant comme décrit dans
-   `docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md`, puis créer une nouvelle clé
-   d'application B2 limitée à ce bucket (`restic_b2_env`). Ne pas laisser Pulumi créer un second bucket.
+   `docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md`, puis créer une
+   nouvelle clé d'application B2 limitée à ce bucket (`restic_b2_env`). Ne pas laisser Pulumi créer un second bucket.
 
 2. **Réinstaller NixOS** avec les étapes 3 et 4 de BOOTSTRAP.md (clé d'hôte, fichier SOPS, `nixos-anywhere` via
    `nonix`). Conserver le même `restic_password` qu'avant : une nouvelle valeur ne peut pas ouvrir le dépôt existant.
@@ -473,7 +473,7 @@ rm -rf "${RESTORE_DIR}"
 
 - [BOOTSTRAP de rimbilliton.akn](../../../projects/rimbilliton.akn/docs/BOOTSTRAP.md) : provisionnement, clé d'hôte,
   installation de NixOS et configuration du nœud Wings.
-- [Pulumi : état sur Garage et import](../infrastructure/INF-20260705-00.pulumi-state-and-import.md) : récupération de
-  l'état d'une stack et import de ressources existantes.
+- [Pulumi : état sur Garage et import](../infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
+  : récupération de l'état d'une stack et import de ressources existantes.
 - [Documentation restic : restaurer une sauvegarde](https://restic.readthedocs.io/en/stable/050_restore.html) : options
   de `restic restore` utilisées aux étapes 2 à 4.
