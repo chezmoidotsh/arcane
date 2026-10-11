@@ -4,8 +4,8 @@ Cette procédure débloque l'archivage WAL d'un cluster CloudNative-PG que `barm
 l'erreur `Expected empty archive` : le dossier `serverName` du bucket S3 contient déjà des données, l'archivage échoue
 donc en continu et les WAL s'accumulent jusqu'à saturer le PVC WAL. Elle déplace ce dossier vers un suffixe `.bak`,
 vérifie que l'archivage repart, puis déclenche une sauvegarde. Elle découle de l'incident
-[CNPG WAL PVC saturation](../../incidents/2026-05-30-cnpg-wal-disk-full-apps-secured.md). Si le PVC WAL est déjà plein,
-rétablir d'abord le cluster avec [DB-20260530-00](DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md).
+[CNPG WAL PVC saturation](../../incidents/Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured.md). Si le PVC WAL est déjà
+plein, rétablir d'abord le cluster avec [DB-20260530-00](DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md).
 
 > [!WARNING]\
 > Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur un cluster.
@@ -220,7 +220,8 @@ configuration suivante est retenue :
 
 Cette configuration est en place sur `lungmen.akn`
 (`projects/lungmen.akn/src/apps/databases/postgres-apps-secured.helmvalues.yaml`, `apps-secured.scheduledbackup.yaml`).
-Le raisonnement complet est dans [l'incident d'origine](../../incidents/2026-05-30-cnpg-wal-disk-full-apps-secured.md).
+Le raisonnement complet est dans
+[l'incident d'origine](../../incidents/Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured.md).
 
 ## Historique
 
@@ -233,7 +234,7 @@ Le raisonnement complet est dans [l'incident d'origine](../../incidents/2026-05-
 
 - [DB-20260530-00](DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md) : rétablir un cluster dont le PVC WAL est
   plein, à faire avant celle-ci si les Pods ne démarrent pas.
-- [Incident CNPG WAL PVC saturation](../../incidents/2026-05-30-cnpg-wal-disk-full-apps-secured.md) : l'incident
+- [Incident CNPG WAL PVC saturation](../../incidents/Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured.md) : l'incident
   d'origine, avec la chronologie et l'analyse de cause racine.
 - [Restaurer CNPG depuis le stockage objet](DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md) : reconstruction
   d'un cluster depuis une sauvegarde, si le rétablissement échoue.

@@ -25,7 +25,8 @@
 - [Restaurer Minecraft depuis restic](procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md)
 - [Rétablir un cluster CNPG au WAL plein](procedures/databases/DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md)
 - [Corriger l'erreur Expected empty archive de barman-cloud](procedures/databases/DB-20260530-01-Corriger-l-Erreur-Expected-Empty-Archive-de-barman-cloud.md)
-- [Incidents](incidents/README.md)
+- [Incidents](incidents/Incidents.md)
+- [Index des incidents](incidents/Index-des-Incidents.md)
 
 ### Référence
 
@@ -34,6 +35,19 @@
 - [Oripathy](reference/Oripathy-Reference.md)
 - [Passerelles et DNS](reference/Passerelles-et-DNS-Reference.md)
 - [Renovate](reference/Renovate-Reference.md)
+
+### Post-mortems
+
+- [Échec d'authentification Vault du ClusterSecretStore de Lungmen](incidents/Incident-2026-05-25-Echec-Authentification-Vault-ClusterSecretStore-Lungmen.md)
+- [Saturation du disque de Zot](incidents/Incident-2026-05-25-Saturation-Disque-Zot-ImagePullBackOff.md)
+- [ImagePullBackOff circulaire Kyverno et Zot sur Amiya](incidents/Incident-2026-05-26-ImagePullBackOff-Circulaire-Kyverno-Zot-Amiya.md)
+- [Feature gate supprimée dans Kubernetes 1.35 sur Lungmen](incidents/Incident-2026-05-26-Feature-Gate-Supprime-Kubernetes-1-35-Lungmen.md)
+- [Échec de la mise à jour de Cilium 1.19](incidents/Incident-2026-05-27-Echec-Mise-a-Jour-Cilium-1-19.md)
+- [WAL plein sur le cluster CNPG apps-secured](incidents/Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured.md)
+- [PushSecrets en 504 : NetworkPolicy de Vault](incidents/Incident-2026-05-30-PushSecrets-504-Vault-NetworkPolicy-Lungmen.md)
+- [ImagePullBackOff de Redis : index Zot corrompu](incidents/Incident-2026-05-30-ImagePullBackOff-Redis-Index-Zot-Corrompu.md)
+- [Dérive de l'agent Cilium et de la Gateway API sur Amiya](incidents/Incident-2026-05-31-Derive-Agent-Cilium-Gateway-API-NetworkPolicy-Amiya.md)
+- [ArgoCD inaccessible : wildcard Cilium incohérent](incidents/Incident-2026-06-19-ArgoCD-Inaccessible-Wildcard-Cilium-Incoherent.md)
 
 ### Décisions d'Architecture
 

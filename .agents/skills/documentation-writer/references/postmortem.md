@@ -14,7 +14,7 @@ effort:**
 2. **Feedback loop** — guarantee that in N weeks we know whether the system actually changed (verifiable outcomes, dated
    actions, automated follow-up via `.github/workflows/schedule.postmortem-followup.yaml`).
 3. **Structural pressure** — force an architectural or process change that makes the _class_ of incident improbable
-   (Systemic Lessons → From Lesson to Control → linked artifact).
+   ("Leçons systémiques" → "De la leçon au contrôle" → linked artifact).
 
 Post-mortems are only useful if they're honest. In this homelab context, honesty mostly means not letting an AI agent
 fabricate a plausible-sounding root cause to "complete" the document. When the cause is genuinely unknown, say so
@@ -27,6 +27,15 @@ explicitly (cf. Cilium 1.19 incident).
 - **Incident response** (active outage management) — this is for after the dust settles.
 - **Trivial deviations** — a 5-minute deployment delay or minor config typo with zero impact doesn't need a post-mortem.
   Reserve this for events with real impact (see severity grid).
+
+## Language and section names
+
+This guide is in English; the post-mortem itself is written in **French**. Section titles come from the templates and
+must not be renamed. Full template: Résumé exécutif, Résumé de l'événement, Chronologie, Ce qui a bien fonctionné,
+Analyse des causes racines, Signaux d'alerte manqués, Analyse du contrôle, Leçons systémiques, De la leçon au contrôle,
+Registre des changements, Connaissances pour les agents, Suivi de résolution, Calendrier de vérification, Pour aller
+plus loin. The entry point of the category is `docs/incidents/README.md`. The English names used in the steps below
+(Change Register, Agent Knowledge, …) are the same sections.
 
 ## Lite vs full format
 
@@ -64,14 +73,41 @@ downgrader — a 45-min API-server outage is a 45-min outage.
 
 The `status:` frontmatter field has four values:
 
-| Status   | Meaning                                                                     |
-| -------- | --------------------------------------------------------------------------- |
-| Draft    | In progress, not yet committed to `main`                                    |
-| Open     | Merged to `main`, follow-up actions pending. **Default state after merge.** |
-| Verified | All Change Register items have verified outcomes (not just checked boxes)   |
-| Closed   | Archived; no further action expected                                        |
+| Status   | Meaning                                                                              |
+| -------- | ------------------------------------------------------------------------------------ |
+| Draft    | In progress, not yet committed to `main`                                             |
+| Open     | Merged to `main`, follow-up actions pending. **Default state after merge.**          |
+| Verified | All "Registre des changements" items have verified outcomes (not just checked boxes) |
+| Closed   | Archived; no further action expected                                                 |
 
 The followup GitHub Action only operates on `status: Open` post-mortems.
+
+## Front matter that agents and scripts read
+
+The front matter is a contract, not decoration: `postmortem-index.py`, `postmortem-followup.py` and the
+`cnpg-troubleshoot` skill parse it. Keys and enum values stay in English and are never translated.
+
+| Field               | Rule                                                                                                |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
+| `severity`          | `Critical`, `High`, `Medium` or `Low`, per the severity grid above                                  |
+| `status`            | `Draft`, `Open`, `Verified` or `Closed`, per the status workflow above                              |
+| `root-cause-family` | A list, even for one value; reuse the vocabulary above before creating a family                     |
+| `error_signatures`  | Exact strings that appeared in events, pod logs or conditions; the retrieval key of the post-mortem |
+| `procedures`        | Paths of the `docs/procedures/` pages that fix this class of incident                               |
+| `related-incidents` | Earlier post-mortems with the same shape, each with a `relation` saying why                         |
+
+`error_signatures` is how a future reader (or the `cnpg-troubleshoot` skill) goes from a live error to this page with
+`grep -rl "<string>" docs/incidents/`. Write it for that search:
+
+- Copy strings verbatim from the source (log line, event message, condition reason); never paraphrase or translate.
+- Keep the stable part. Drop timestamps, pod names, UIDs and IPs, which never match a later occurrence.
+- Prefer 3 to 6 distinctive strings over one generic string such as `ImagePullBackOff` alone, which matches half of the
+  directory.
+- No string observed (silent failure, human discovery)? Leave the list empty and say so in the post-mortem rather than
+  inventing one.
+
+A post-mortem whose fix steps will be needed again is incomplete without a linked procedure: write the procedure (see
+`references/procedure.md`) and list it in `procedures`. If the fix was a one-off, leave `procedures` empty.
 
 ## Root-cause family tagging
 
@@ -93,20 +129,20 @@ existing tag.
 | `upstream-regression`       | Vendor or upstream release introduced the failure                        |
 | `bootstrap-coupling`        | Implicit setup step not encoded in code or runbook                       |
 
-When `docs/incidents/INDEX.md` shows a family at **3+ incidents**, that family becomes a **candidate for a dedicated
-structural project** (probably an ADR + an infrastructure change), not another individual fix.
+When `docs/incidents/Index-des-Incidents.md` shows a family at **3+ incidents**, that family becomes a **candidate for a
+dedicated structural project** (probably an ADR + an infrastructure change), not another individual fix.
 
 ## Choosing a root-cause technique
 
 Default to **5 Whys**. Escalate when the 5 Whys hits one of these signals:
 
-| Symptom in your 5 Whys analysis                                  | Escalate to                                                       |
-| ---------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Blocks at a "Why" with no honest answer (you don't know)         | Stop. Document the unknown. Use Ishikawa to enumerate hypotheses. |
-| Branches into >1 independent cause chain                         | Ishikawa (groups multiple causes by category)                     |
-| Multiple defenses failed in sequence (each could have caught it) | Swiss Cheese (models defense-in-depth gaps)                       |
-| Same shape of incident already happened 3+ times                 | Pareto across the family of incidents (cf. INDEX.md)              |
-| Engineering system with named components and clear failure modes | Fault Tree                                                        |
+| Symptom in your 5 Whys analysis                                  | Escalate to                                                        |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Blocks at a "Why" with no honest answer (you don't know)         | Stop. Document the unknown. Use Ishikawa to enumerate hypotheses.  |
+| Branches into >1 independent cause chain                         | Ishikawa (groups multiple causes by category)                      |
+| Multiple defenses failed in sequence (each could have caught it) | Swiss Cheese (models defense-in-depth gaps)                        |
+| Same shape of incident already happened 3+ times                 | Pareto across the family of incidents (cf. Index-des-Incidents.md) |
+| Engineering system with named components and clear failure modes | Fault Tree                                                         |
 
 **The escalation rule is mandatory**: do not write "no root cause identified" with 5 Whys unresolved. Either escalate to
 another technique or document explicitly what you couldn't investigate and why (lack of expertise, missing telemetry,
@@ -133,11 +169,24 @@ across frontmatter, timeline, and change register:
 
 This mirrors the `Assisted-by: provider:model` trailer convention used in git commits.
 
-**Ownership rules:** An AI agent can own a Change Register item only when it will execute the fix autonomously in the
-same session. Any item requiring future judgment, approval, manual verification, or external interaction must be owned
-by a human.
+**Ownership rules:** An AI agent can own a "Registre des changements" item only when it will execute the fix
+autonomously in the same session. Any item requiring future judgment, approval, manual verification, or external
+interaction must be owned by a human.
 
 ---
+
+## Before writing: search what already exists
+
+Run these from the repository root before Step 1. The same class of incident often already has a post-mortem, and a
+repeated shape changes the analysis (see "Root-cause family tagging" and "Choosing a root-cause technique").
+
+```sh
+grep -rl "<exact error string>" docs/incidents/    # same error signature
+grep -rlE "<component>|<keyword>" docs/incidents/  # same component
+```
+
+Then open `docs/incidents/Index-des-Incidents.md`: if one of your candidate families already has 2 incidents, yours is
+the third and the Pareto rule applies. Every hit worth keeping goes into `related-incidents` with its relation.
 
 ## Workflow
 
@@ -223,8 +272,8 @@ three real entries is more useful than ten with five invented.
 ### Step 4 — Choose and justify the technique
 
 Pick the technique per §"Choosing a root-cause technique". Write the choice and a one-sentence justification at the top
-of the Root-Cause Analysis section. **Do not skip the justification** — it is what forces honesty about whether the
-technique fits.
+of the "Analyse des causes racines" section. **Do not skip the justification** — it is what forces honesty about whether
+the technique fits.
 
 ### Step 5 — Separate root causes from contributing factors
 
@@ -262,7 +311,7 @@ future architecture change.
 ### Step 9 — Surface systemic lessons and convert them to controls
 
 A systemic lesson is a structural condition that will produce similar failures until addressed. **Every systemic lesson
-must map to a concrete artifact** in the "From Lesson to Control" table:
+must map to a concrete artifact** in the "De la leçon au contrôle" table:
 
 | Artifact type    | When to use                                                              |
 | ---------------- | ------------------------------------------------------------------------ |
@@ -277,14 +326,14 @@ must map to a concrete artifact** in the "From Lesson to Control" table:
 
 If no artifact type fits, document why explicitly. Lessons without controls are theatre.
 
-### Step 10 — Build the Change Register (parseable format)
+### Step 10 — Build the Change Register ("Registre des changements", parseable format)
 
 Every action item must be parseable by `.github/workflows/schedule.postmortem-followup.yaml`. Format:
 
 ```markdown
 - [ ] [due:: YYYY-MM-DD] [priority:: high|medium|low] [size:: S|M|L] [owner:: Name] Action
-  - **Verification:** Observable outcome of the system
-  - **If not done:** Concrete consequence
+  - **Vérification :** Observable outcome of the system
+  - **Sinon :** Concrete consequence
 ```
 
 **Priority semantics (homelab):**
@@ -305,8 +354,8 @@ Every action item must be parseable by `.github/workflows/schedule.postmortem-fo
 
 ### Step 11 — Distill Agent Knowledge
 
-In the "Agent Knowledge" section, distill 1–5 declarative bullets that future AI agents (or you in 6 months) need to
-know before touching the components involved.
+In the "Connaissances pour les agents" section, distill 1–5 declarative bullets that future AI agents (or you in 6
+months) need to know before touching the components involved.
 
 - Format: standalone facts, not narrative.
 - Each bullet readable without the surrounding PM context.
@@ -321,16 +370,24 @@ human checkpoint.
 
 ## Saving the output
 
-Save the completed post-mortem in `docs/incidents/`, named:
+Save the completed post-mortem in `docs/incidents/`, written in **French**, named:
 
 ```text
-docs/incidents/YYYY-MM-DD-<short-description>.md
+docs/incidents/Incident-YYYY-MM-DD-<Titre-En-Francais>.md
 ```
+
+The `# Incident YYYY-MM-DD Titre` heading matches the file name (case, accents and hyphens ignored). The last `##`
+section is `## Pour aller plus loin`. Front matter keys and enum values (`status: Open`, severity, …) and the action
+syntax stay exactly as documented: scripts read them.
+
+A post-mortem is a record: once merged, its facts, timeline and front matter are not rewritten, even when the cluster
+has changed since. Corrections of a factual error are a new commit with the reason in the message. Never add a "migrated
+on" or "state as of" notice to the page; the current state belongs in a procedure, an ADR or a knowledge file.
 
 Examples:
 
-- `docs/incidents/2026-05-25-zot-disk-full-imagepullbackoff.md`
-- `docs/incidents/2026-05-26-amiya-kyverno-zot-circular-imagepullbackoff.md`
+- `docs/incidents/Incident-2026-05-25-Saturation-Disque-Zot-ImagePullBackOff.md`
+- `docs/incidents/Incident-2026-05-26-ImagePullBackOff-Circulaire-Kyverno-Zot-Amiya.md`
 
 Commit with the `@` type: `@[docs]: Post-mortem for <event>` — read `.agents/skills/git-commit/SKILL.md` for the full
 commit format and signing requirements.
@@ -342,15 +399,15 @@ Three pieces of automation operate on post-mortems. Be aware of them when author
 | Automation                                            | Trigger                          | What it does                                                                                                     |
 | ----------------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `.github/workflows/schedule.postmortem-followup.yaml` | Daily cron                       | Parses `[due:: …]` items in `status: Open` PMs; opens GitHub issues for items past due without an existing issue |
-| `.github/scripts/postmortem-index.py`                 | On PR touching `docs/incidents/` | Regenerates `docs/incidents/INDEX.md` grouped by `root-cause-family`                                             |
-| `.github/scripts/postmortem-extract-knowledge.py`     | On PR touching `docs/incidents/` | Aggregates "Agent Knowledge" sections into `.agents/knowledge/<topic>.md` _(not yet implemented)_                |
+| `.github/scripts/postmortem-index.py`                 | On PR touching `docs/incidents/` | Regenerates `docs/incidents/Index-des-Incidents.md` and the list of `docs/incidents/README.md`                   |
+| `.github/scripts/postmortem-extract-knowledge.py`     | On PR touching `docs/incidents/` | Aggregates "Connaissances pour les agents" sections into `.agents/knowledge/<topic>.md` _(not yet implemented)_  |
 
 For these to work:
 
 - Frontmatter `status:` must be one of the four documented values.
 - Frontmatter `root-cause-family:` must be a list (even if a single value).
-- Change Register items must follow the exact `- [ ] [due:: YYYY-MM-DD] …` format.
-- "Agent Knowledge" bullets must start with `[Component]:` for topic extraction.
+- "Registre des changements" items must follow the exact `- [ ] [due:: YYYY-MM-DD] …` format.
+- "Connaissances pour les agents" bullets must start with `[Component] :` for topic extraction.
 
 ## Good vs bad output
 
@@ -377,13 +434,13 @@ For these to work:
 
 ---
 
-**Good — actionable Change Register entry:**
+**Good — actionable "Registre des changements" entry:**
 
 ```markdown
 - [ ] [due:: 2026-06-02] [priority:: high] [size:: S] [owner:: Alexandre] Add pre-upgrade check: cross-reference all
       `extraArgs` and `feature-gates` against the K8s changelog for the target version
-  - **Verification:** Next minor-version K8s upgrade completes without `unrecognized flag` crash
-  - **If not done:** Same incident shape on next K8s minor bump (likely within 2 months)
+  - **Vérification :** Next minor-version K8s upgrade completes without `unrecognized flag` crash
+  - **Sinon :** Same incident shape on next K8s minor bump (likely within 2 months)
 ```
 
 **Bad — vague entry:**
@@ -391,6 +448,20 @@ For these to work:
 ```markdown
 | 1 | P1 | Improve upgrade process | Alex | TBD | — |
 ```
+
+## Definition of done
+
+Check each item before opening the pull request. The mechanical ones are enforced by `scripts/wiki:lint` and
+`.github/scripts/postmortem-index.py --check`; the others only you can check.
+
+- [ ] Every timestamp has a source and a precision marker; no interpolated value.
+- [ ] The technique choice is justified at the top of "Analyse des causes racines", and the root cause is a condition,
+      not a symptom.
+- [ ] Every systemic lesson maps to an artifact in "De la leçon au contrôle".
+- [ ] Every "Registre des changements" item has an owner, a due date, an observable verification and a consequence.
+- [ ] `error_signatures` holds verbatim strings, and `procedures` lists the fix pages (or is empty on purpose).
+- [ ] `related-incidents` lists the earlier incidents found by the search above.
+- [ ] `.github/scripts/postmortem-index.py` was run, so `Index-des-Incidents.md` and the list of `README.md` are fresh.
 
 ## Guardrails
 
@@ -403,16 +474,16 @@ For these to work:
 - **Don't stop at the first "why."** Keep drilling until you reach the structural condition. If you can't, **escalate to
   another technique** — don't write "no root cause".
 - **Don't write vague action items.** Without owner, due date, observable verification, and consequence-if-skipped, the
-  Change Register is theatre.
+  "Registre des changements" is theatre.
 - **Don't claim verification with git outputs.** "Commit present" is not verification. The system's behavior is.
 - **Don't sanitize blame into vagueness.** "The deployment process had no required gate" is honest and blame-free.
   "There were some process gaps" is vague.
 - **Don't write a post-mortem for trivial events.** Reserve for incidents that pass the severity grid threshold (Medium
   or above, or any data/security exposure).
-- **Don't skip Agent Knowledge.** If the incident taught you a non-obvious operational truth, it must be distilled —
-  otherwise future agents will rediscover it the same way you did.
-- **Don't skip From Lesson to Control.** Every systemic lesson must point to a concrete artifact. If it can't, document
-  why.
+- **Don't skip "Connaissances pour les agents".** If the incident taught you a non-obvious operational truth, it must be
+  distilled — otherwise future agents will rediscover it the same way you did.
+- **Don't skip "De la leçon au contrôle".** Every systemic lesson must point to a concrete artifact. If it can't,
+  document why.
 
 ## Tone
 
@@ -427,5 +498,5 @@ feature gate" is blame. Both may be true — but only the first prevents recurre
 - Output templates: `templates/postmortem.md` (full) · `templates/postmortem-lite.md` (lite)
 - Committing the output: `.agents/skills/git-commit/SKILL.md`
 - Documenting structural lessons as ADRs: `.agents/skills/documentation-writer/references/adr.md`
-- Cross-PM index (auto-generated): `docs/incidents/INDEX.md`
+- Cross-PM index (auto-generated): `docs/incidents/Index-des-Incidents.md`; entry point: `docs/incidents/README.md`
 - Knowledge extraction target: `.agents/knowledge/<topic>.md`

@@ -17,7 +17,7 @@
 # mise description="Check the mechanical rules of the documentation style guide on docs/."
 #
 # Enforces the [lint] rules of .agents/skills/documentation-writer/references/style-guide.md on every page of docs/ that
-# is not listed in docs/.wiki-legacy: lower-case directory names, page names, page names unique across the whole tree
+# is not listed in docs/.wiki-legacy (a README.md is never checked: it describes its directory): lower-case directory names, page names, page names unique across the whole tree
 # (case-insensitive), one H1 matching the page name (case, accents and hyphens ignored), "Pour aller plus loin" last,
 # relative links that resolve to an existing file, every page reachable from _Sidebar.md, no French filler words, no
 # emoji, callout markers alone on their line (GitHub does not render "> [!NOTE] text" as an alert). Pages are written in
@@ -86,7 +86,7 @@ def lint(root: Path, label: str = "docs") -> list[str]:
     legacy = legacy_patterns(root)
     pages = [
         p for p in sorted(root.rglob("*.md"))
-        if not any(fnmatch.fnmatch(p.relative_to(root).as_posix(), pat) for pat in legacy)
+        if p.name != "README.md" and not any(fnmatch.fnmatch(p.relative_to(root).as_posix(), pat) for pat in legacy)
     ]
     sidebar = root / "_Sidebar.md"
     linked: set[Path] = set()

@@ -138,7 +138,7 @@ def main() -> int:
         return 0
 
     for pm_path in sorted(INCIDENTS_DIR.glob("*.md")):
-        if pm_path.name in {"INDEX.md", "README.md"}:
+        if pm_path.name in {"Index-des-Incidents.md", "README.md"}:
             continue
         text = pm_path.read_text(encoding="utf-8")
         fm, body = parse_frontmatter(text)

@@ -1,248 +1,246 @@
 ---
-title: "[Event Name]"
+title: "[Nom de l'événement]"
 date: YYYY-MM-DD
-author: "Name"                            # human: Name · AI agent: [provider:model]
+author: "Nom"                             # humain : Nom · agent IA : [fournisseur:modèle]
 participants:
-  - "Name"                                # human: Name · AI agent: [provider:model] · system: [system:name]
+  - "Nom"                                 # humain : Nom · agent IA : [fournisseur:modèle] · système : [system:nom]
   - "[anthropic:claude-sonnet-4-6]"
-severity: "Critical | High | Medium | Low"   # see SKILL.md §"Severity grid" — homelab-calibrated
-status: "Draft | Open | Verified | Closed"   # Draft: in progress · Open: merged, follow-up pending
-                                              # Verified: all actions confirmed · Closed: archived
+severity: "Critical | High | Medium | Low"   # voir SKILL.md §"Severity grid" — calibrée pour le homelab
+status: "Draft | Open | Verified | Closed"   # Draft : en cours · Open : fusionné, suivi en attente
+                                              # Verified : toutes les actions confirmées · Closed : archivé
 detection-method: "Alert | User report | Manual discovery | External report | AI anomaly detection"
-duration: ""                              # free-form: "~45min" / "5h20m" / "3 days, 8 attempts"
+duration: ""                              # libre : "~45min" / "5h20m" / "3 jours, 8 tentatives"
 services-affected: []
-users-affected: ""                        # qualitative: "family — NAS down" / "me only" / "no impact"
-root-cause-family:                        # tag with one or more families (used by INDEX.md + Pareto review)
-  - ""                                    # e.g. observability-gap, dependency-cycle, merge-vs-replace,
+users-affected: ""                        # qualitatif : "famille — NAS indisponible" / "moi seul" / "aucun impact"
+root-cause-family:                        # une ou plusieurs familles (utilisées par Index-des-Incidents.md + revue de Pareto)
+  - ""                                    # ex. observability-gap, dependency-cycle, merge-vs-replace,
                                           #     policy-scope-too-broad, missing-pre-deploy-check,
                                           #     state-drift, network-policy-incomplete, …
-related-incidents:                        # list with explicit relation
-  - path: "docs/incidents/YYYY-MM-DD-other.md"
-    relation: "Same auth chain" | "Same dependency cycle" | "Recurring on same component" | …
-related-adrs: []                          # e.g. ADR-005 (envoy-gateway-oidc)
-related-issues: []                        # GitHub issue links
+error_signatures: []                      # chaînes exactes relevées (événements, journaux, conditions) : clé de recherche par grep
+procedures: []                            # chemins des procédures de docs/procedures/ qui corrigent cette classe d'incident
+related-incidents:                        # liste avec la relation explicite
+  - path: "docs/incidents/Incident-AAAA-MM-JJ-Autre-Titre.md"
+    relation: "Même chaîne d'authentification" | "Même cycle de dépendances" | "Récurrent sur le même composant" | …
+related-adrs: []                          # ex. ADR-005 (envoy-gateway-oidc)
+related-issues: []                        # liens d'issues GitHub
 ---
 
-> **Authoring instructions:** Fill in every section. Remove all lines starting with `>` (they are instructions, not
-> content). Save to `docs/incidents/YYYY-MM-DD-<short-description>.md`.
+> **Instructions de rédaction :** remplir chaque section. Supprimer toutes les lignes qui commencent par `>` (ce sont
+> des instructions, pas du contenu), ainsi que les commentaires HTML sauf `skew`. Enregistrer dans
+> `docs/incidents/Incident-AAAA-MM-JJ-Titre-En-Francais.md`. Le titre `#` reprend le nom du fichier, sans tirets. Le
+> post-mortem est rédigé en français ; les clés du front matter, leurs valeurs et la syntaxe des actions ne sont pas
+> traduites (des scripts les lisent).
 >
-> **For incidents <2h with no data loss and no systemic lesson:** use the **lite format** instead (see SKILL.md §"Lite
-> format"). The full template below is reserved for Critical/High incidents or any incident that surfaces a structural
-> lesson.
+> **Pour les incidents de moins de 2 h, sans perte de données et sans leçon systémique :** utiliser le **format allégé**
+> (voir SKILL.md §"Lite format"). Le gabarit complet ci-dessous est réservé aux incidents Critical/High ou à tout
+> incident qui révèle une leçon structurelle.
 
-## Executive Summary
+# Incident AAAA-MM-JJ Titre
 
-> 3–5 sentences for non-technical readers. No jargon, no acronyms. What failed, what the impact was, why it happened at
-> the highest level, and what the main fix is.
+> Un ou deux paragraphes : ce qui s'est passé et ce que la page contient. Le résumé détaillé suit dans la section
+> suivante.
 
-\[3–5 sentence plain-language summary]
+## Résumé exécutif
 
----
+> 3 à 5 phrases pour un lecteur non technique. Pas de jargon ni d'acronymes. Ce qui a échoué, l'impact, pourquoi cela
+> s'est produit au plus haut niveau, et le correctif principal.
 
-## Event Summary
+\[Résumé de 3 à 5 phrases en langage courant]
 
-**Expected outcome:** \[What was supposed to happen — specific, quantified]
+## Résumé de l'événement
 
-**Actual outcome:** \[What happened — same level of specificity]
+**Résultat attendu :** \[Ce qui devait se passer — précis, chiffré]
 
-**Impact:** \[Operational, data, security, family — qualitative for homelab]
+**Résultat obtenu :** \[Ce qui s'est passé — avec le même niveau de précision]
 
-**Duration:** \[Incident start → fully resolved, with timestamps]
+**Impact :** \[Opérationnel, données, sécurité, famille — qualitatif pour un homelab]
 
-**First signal:** \[When did the divergence first become visible?]
+**Durée :** \[Du début de l'incident à la résolution complète, avec les horodatages]
 
----
+**Premier signal :** \[Quand l'écart est-il devenu visible pour la première fois ?]
 
-## Timeline
+## Chronologie
 
-> Chronological sequence from first signal to full resolution. Actor format: `Name` (human) · `[provider:model]` (AI) ·
-> `[system:name]` (alerts, ArgoCD, CI…).
+> Suite chronologique du premier signal à la résolution complète. Format de l'acteur : `Nom` (humain) ·
+> `[fournisseur:modèle]` (IA) · `[system:nom]` (alertes, ArgoCD, CI…).
 >
-> Timestamp format (UTC, ISO 8601): `YYYY-MM-DDTHH:mm[:ss]` Prefix `±Xm` when skew is known, `±?` when approximate but
-> not quantifiable. Always add a `<!-- skew: ... -->` comment before the table.
+> Format d'horodatage (UTC, ISO 8601) : `AAAA-MM-JJTHH:mm[:ss]`. Préfixer par `±Xm` quand le décalage d'horloge est
+> connu, par `±?` quand l'heure est approximative sans pouvoir la quantifier. Toujours ajouter un commentaire
+> `<!-- skew: ... -->` avant le tableau.
 >
-> **DO NOT invent timestamps.** Every entry must come from a real source: a log line, shell history, commit time, pod
-> age, or explicit human recall. Interpolating "+5 min" between two known points to fill the timeline is fabrication. If
-> no source exists for a step, either omit the time column or write `±? — unsourced`. See SKILL.md §"Timestamp
-> sourcing".
+> **N'INVENTE PAS d'horodatages.** Chaque ligne doit venir d'une vraie source : une ligne de journal, l'historique du
+> shell, l'heure d'un commit, l'âge d'un pod ou un souvenir explicite d'un humain. Interpoler « +5 min » entre deux
+> points connus pour remplir la chronologie est de la fabrication. Sans source pour une étape, omettre la colonne
+> d'heure ou écrire `±? — sans source`. Voir SKILL.md §"Timestamp sourcing".
 >
-> To measure clock skew on Talos: `talosctl time --nodes <node-ip>` then `date -u +"%Y-%m-%dT%H:%M:%S.%3NZ"` for local
-> UTC reference.
+> Pour mesurer le décalage d'horloge sur Talos : `talosctl time --nodes <ip-du-nœud>` puis
+> `date -u +"%Y-%m-%dT%H:%M:%S.%3NZ"` pour la référence UTC locale.
 >
-> **Optional — omit the table when timestamps are unreliable.** If no structured logs are available, the incident was
-> observed only retrospectively, or every timestamp would be `±?` with unknown skew, **omit the timeline entirely**
-> rather than including inaccurate data. Note the omission in Event Summary: "Timeline omitted — timestamps not reliably
-> reconstructable." Consistent with the anti-fabrication rule in SKILL.md.
+> **Facultatif — omettre le tableau quand les horodatages ne sont pas fiables.** Sans journaux structurés, si l'incident
+> n'a été observé qu'après coup, ou si chaque heure serait `±?` avec un décalage inconnu, **omettre toute la
+> chronologie** plutôt que d'inclure des données inexactes. Signaler l'omission dans le résumé de l'événement : «
+> Chronologie omise : horodatages non reconstituables de façon fiable. » Cohérent avec la règle anti-fabrication de
+> SKILL.md.
 
-<!-- skew: ±? — [src of uncertainty] -->
+<!-- skew: ±? — [source de l'incertitude] -->
 
-| Time (UTC)           | Actor                    | Event or decision   |
-| -------------------- | ------------------------ | ------------------- |
-| YYYY-MM-DDTHH:mm     | Name / \[provider:model] | \[What happened]    |
-| ±5m YYYY-MM-DDTHH:mm | Name / \[provider:model] | \[What was decided] |
-| ±? YYYY-MM-DDTHH:mm  | \[system:name]           | \[Automated event]  |
+| Heure (UTC)          | Acteur                      | Événement ou décision    |
+| -------------------- | --------------------------- | ------------------------ |
+| AAAA-MM-JJTHH:mm     | Nom / \[fournisseur:modèle] | \[Ce qui s'est passé]    |
+| ±5m AAAA-MM-JJTHH:mm | Nom / \[fournisseur:modèle] | \[Ce qui a été décidé]   |
+| ±? AAAA-MM-JJTHH:mm  | \[system:nom]               | \[Événement automatique] |
 
----
+## Ce qui a bien fonctionné
 
-## What Went Well
+> Les contrôles qui ont réellement joué leur rôle. Pas de la décoration : cela identifie les comportements et les
+> contrôles à conserver quand le système évolue.
 
-> Controls that actually worked. Not decoration — identifies behaviors and controls worth keeping when the system
-> evolves.
+- \[Ce qui a fonctionné et pourquoi cela a compté]
 
-- \[What worked and why it mattered]
+## Analyse des causes racines
 
----
+**Technique :** \[5 Whys | Ishikawa | Swiss Cheese | Fault Tree | Pareto] **Pourquoi cette technique :** \[Une phrase de
+justification — voir SKILL.md §"Choosing a technique"]
 
-## Root-Cause Analysis
+> **Règle d'escalade :** si les 5 Whys bloquent sur un « pourquoi » (aucune réponse honnête) ou se divisent en plus
+> d'une chaîne indépendante, **changer** pour Ishikawa ou Swiss Cheese — ne pas conclure « pas de cause racine ».
 
-**Technique:** \[5 Whys | Ishikawa | Swiss Cheese | Fault Tree | Pareto] **Why this technique:** \[One-sentence
-justification — see SKILL.md §"Choosing a technique"]
+### Analyse
 
-> **Escalation rule:** if 5 Whys blocks at a "Why" (no honest answer) or branches into >1 independent chains, **switch**
-> to Ishikawa or Swiss Cheese — don't stop with "no root cause".
+> Appliquer la technique choisie (voir `references/` pour les guides pas à pas). Montrer le raisonnement, pas seulement
+> la conclusion.
 
-### Analysis
+1. **Pourquoi \[symptôme] ?** → Parce que \[cause]
+2. **Pourquoi \[cause] ?** → Parce que \[cause plus profonde]
+3. **Pourquoi \[cause plus profonde] ?** → Parce que \[encore plus profonde]
+4. **Pourquoi \[encore plus profonde] ?** → Parce que \[proche de la racine]
+5. **Pourquoi \[proche de la racine] ?** → Parce que **\[CAUSE RACINE]**
 
-> Apply the chosen technique (see `references/` for step-by-step guides). Show the reasoning chain, not just the
-> conclusion.
+### Causes racines
 
-1. **Why did \[symptom]?** → Because \[cause]
-2. **Why did \[cause]?** → Because \[deeper cause]
-3. **Why did \[deeper cause]?** → Because \[deeper still]
-4. **Why did \[deeper still]?** → Because \[near root]
-5. **Why did \[near root]?** → Because **\[ROOT CAUSE]**
+> **Tester chaque candidate :** « Si je corrige ceci, cette _classe_ de problème cesse-t-elle de se reproduire ? » Si
+> non, la déplacer dans les facteurs contributifs.
 
-### Root Causes
+- **\[Cause racine]** — \[Une phrase expliquant pourquoi cette condition rendait l'échec probable]
 
-> **Test each candidate:** "If I fix this, does this _class_ of problem stop recurring?" If no, move it to Contributing
-> Factors.
+### Facteurs contributifs
 
-- **\[Root cause]** — \[One sentence explaining why this condition made the failure probable]
+- **\[Facteur]** — \[Comment il a aggravé la situation, et pourquoi ce n'est pas une cause racine]
 
-### Contributing Factors
+## Signaux d'alerte manqués
 
-- **\[Factor]** — \[How it made things worse, and why it's not a root cause]
+> Signaux visibles avec le recul. Pour chacun : quand il était visible, pourquoi on n'a pas agi. « Nous n'avions pas de
+> visibilité » → manque de supervision. « Il avait été signalé mais écarté » → priorisation.
 
----
+| Signal                     | Quand il était visible | Pourquoi on n'a pas agi                                            |
+| -------------------------- | ---------------------- | ------------------------------------------------------------------ |
+| \[Ce qui était observable] | \[Date ou phase]       | \[Écarté / sans responsable / sans visibilité / biais d'optimisme] |
 
-## Warning Signs Missed
+## Analyse du contrôle
 
-> Signals visible in retrospect. For each: when it was visible, why it wasn't acted on. "We didn't have visibility" →
-> monitoring gap. "It was flagged but dismissed" → prioritization.
+### Sous contrôle (ce que nous aurions pu changer)
 
-| Signal                 | When visible     | Why it wasn't acted on                                  |
-| ---------------------- | ---------------- | ------------------------------------------------------- |
-| \[What was observable] | \[Date or phase] | \[Dismissed / no owner / no visibility / optimism bias] |
+- \[Décision interne, manque de processus, choix d'outillage]
 
----
+### Hors de contrôle (facteurs externes)
 
-## Control Analysis
+| Facteur externe | Qu'est-ce qui réduirait l'exposition ? |
+| --------------- | -------------------------------------- |
+| \[Facteur]      | \[Mesure de résilience précise]        |
 
-### In Control (what we could have changed)
+## Leçons systémiques
 
-- \[Internal decision, process gap, tooling choice]
+> Le constat plus large au-delà de cet incident : une condition structurelle qui produira des défaillances similaires
+> tant qu'elle ne sera pas traitée. Lier les ADR ou incidents liés qui partagent le même motif.
 
-### Out of Control (external factors)
+- **\[Leçon]** — \[Pourquoi elle est systémique et non propre à l'incident. Référencer l'ADR ou l'incident lié.]
 
-| External factor | What would reduce exposure?    |
-| --------------- | ------------------------------ |
-| \[Factor]       | \[Specific resilience measure] |
+## De la leçon au contrôle
 
----
-
-## Systemic Lessons
-
-> The broader insight beyond this specific incident — a structural condition that will produce similar failures until
-> addressed. Link related ADRs or incidents sharing the same pattern.
-
-- **\[Lesson]** — \[Why this is systemic, not incident-specific. Reference related ADR/incident.]
-
----
-
-## From Lesson to Control
-
-> **Mandatory section.** Every systemic lesson above must map to a concrete artifact that will enforce or surface it in
-> the future. If a lesson cannot be converted (no artifact type fits), say so explicitly — but the default expectation
-> is that lessons become controls.
+> **Section obligatoire.** Chaque leçon systémique ci-dessus doit correspondre à un artefact concret qui la fera
+> appliquer ou la rendra visible à l'avenir. Si une leçon ne peut pas être convertie (aucun type d'artefact ne
+> convient), le dire explicitement — mais l'attente par défaut est que les leçons deviennent des contrôles.
 >
-> **Artifact types:** ADR · OPA rule · Runbook step · Alert rule · CI test · Pre-deploy check · Comment in code ·
-> Knowledge file in `.agents/knowledge/`
+> **Types d'artefact :** ADR · règle OPA · étape de procédure · règle d'alerte · test CI · vérification avant
+> déploiement · commentaire dans le code · fichier de connaissances dans `.agents/knowledge/`
 
-| Lesson                | Artifact type | Linked artifact (path / link / "TBD")             |
-| --------------------- | ------------- | ------------------------------------------------- |
-| \[Lesson short title] | \[Type]       | \[Path or "TBD with deadline in Change Register"] |
+| Leçon                      | Type d'artefact | Artefact lié (chemin / lien / « À définir »)                          |
+| -------------------------- | --------------- | --------------------------------------------------------------------- |
+| \[Titre court de la leçon] | \[Type]         | \[Chemin ou « À définir, échéance dans le registre des changements »] |
 
----
+## Registre des changements
 
-## Change Register
-
-> Every action: what changes, who owns it, when it's due, what proves it worked.
+> Chaque action : ce qui change, qui en est responsable, l'échéance, ce qui prouve que cela a fonctionné.
 >
-> **Format** (parseable by `.github/workflows/schedule.postmortem-followup.yaml`):
-> `- [ ] [due:: YYYY-MM-DD] [priority:: high|medium|low] [size:: S|M|L] [owner:: Name] Action`
+> **Format** (lu par `.github/workflows/schedule.postmortem-followup.yaml`, les mots-clés ne sont pas traduits) :
+> `- [ ] [due:: AAAA-MM-JJ] [priority:: high|medium|low] [size:: S|M|L] [owner:: Nom] Action`
 >
-> **Priority semantics (homelab):**
+> **Sens des priorités (homelab) :**
 >
-> - `high` = without this, the same class of incident recurs likely within 1 month
-> - `medium` = mitigation or hardening; recurrence possible but not immediate
-> - `low` = improvement, cleanup, or nice-to-have
+> - `high` = sans cette action, la même classe d'incident se reproduit probablement dans le mois
+> - `medium` = atténuation ou durcissement ; récidive possible mais pas immédiate
+> - `low` = amélioration, nettoyage ou confort
 >
-> **Size:** S = <2h work · M = half-day to 1 day · L = multi-day or requires research
+> **Taille :** S = moins de 2 h · M = une demi-journée à une journée · L = plusieurs jours ou demande de la recherche
 >
-> **Verification = observable outcome of the system, not output (no "commit done").**
+> **Vérification = résultat observable du système, pas une production (pas de « commit fait »).**
 
-- [ ] \[due:: YYYY-MM-DD] \[priority:: high] \[size:: S] \[owner:: Name] \[Specific action]
-  - **Verification:** \[Observable system behavior, not "file present in git"]
-  - **If not done:** \[Concrete consequence — what breaks or recurs]
+- [ ] \[due:: AAAA-MM-JJ] \[priority:: high] \[size:: S] \[owner:: Nom] \[Action précise]
+  - **Vérification :** \[Comportement observable du système, pas « fichier présent dans git »]
+  - **Sinon :** \[Conséquence concrète — ce qui casse ou se reproduit]
 
-- [ ] \[due:: YYYY-MM-DD] \[priority:: medium] \[size:: M] \[owner:: Name] \[Specific action]
-  - **Verification:** \[Observable]
-  - **If not done:** \[Consequence]
+- [ ] \[due:: AAAA-MM-JJ] \[priority:: medium] \[size:: M] \[owner:: Nom] \[Action précise]
+  - **Vérification :** \[Observable]
+  - **Sinon :** \[Conséquence]
 
----
+## Connaissances pour les agents
 
-## Agent Knowledge
-
-> **Mandatory if any non-obvious operational truth was discovered.** Distill 1–5 bullets that future AI agents (or you,
-> in 6 months) should know before touching this component. These bullets get extracted to `.agents/knowledge/<topic>.md`
-> and loaded by relevant skills.
+> **Obligatoire si une vérité opérationnelle non évidente a été découverte.** Distiller 1 à 5 puces que les futurs
+> agents IA (ou toi dans six mois) doivent connaître avant de toucher ce composant. Ces puces sont extraites vers
+> `.agents/knowledge/<sujet>.md` et chargées par les skills concernés.
 >
-> Format: declarative facts, not narrative. Each bullet stands alone without PM context.
+> Format : faits déclaratifs, pas de récit. Chaque puce se comprend seule, sans le contexte du post-mortem. Chaque puce
+> commence par `[Composant] :` (l'extraction par sujet en dépend).
 
-- \[Component or command]: \[Behavior or gotcha in one sentence]
-- \[Component]: \[Heuristic to apply in the future]
+- \[Composant ou commande] : \[Comportement ou piège en une phrase]
+- \[Composant] : \[Heuristique à appliquer à l'avenir]
 
----
+## Suivi de résolution
 
-## Resolution Tracker
-
-> **What to write:** A living checklist of what has been done and what remains outstanding. Unlike the Change Register
-> (planning artifact with owners and dates), this section tracks actual execution status with links to GitHub issues and
-> PRs. Update it as items complete. Group by natural dependency boundaries (e.g., "pending merge", "pending alerting").
-> Every item that has a corresponding GitHub issue or PR must link to it.
+> **À écrire :** une liste vivante de ce qui est fait et de ce qui reste. Contrairement au registre des changements
+> (artefact de planification avec responsables et dates), cette section suit l'état réel d'exécution avec des liens vers
+> les issues et PR GitHub. La mettre à jour au fil de l'eau. Regrouper selon les dépendances naturelles (par exemple «
+> en attente de fusion », « en attente d'alerting »). Chaque élément qui a une issue ou une PR la référence.
 
 <!-- trunk-ignore-begin(markdown-link-check): URL is a placeholder, not a real link -->
 
-### Done
+### Fait
 
-- [x] \[What was completed] — [PR #N](URL) / [Issue #N](URL)
+- [x] \[Ce qui est terminé] — [PR #N](URL) / [Issue #N](URL)
 
-### Pending — \[group label, e.g. "after PR #N merges"]
+### En attente — \[libellé du groupe, par exemple « après la fusion de la PR #N »]
 
-- [ ] \[What remains] — [Issue #N](URL) if applicable — \[brief note on blocker if any]
+- [ ] \[Ce qui reste] — [Issue #N](URL) le cas échéant — \[note brève sur le blocage éventuel]
 
 <!-- trunk-ignore-end(markdown-link-check) -->
 
----
+## Calendrier de vérification
 
-## Verification Schedule
+> **À ne pas sauter.** Un registre des changements sans suivi est du théâtre. L'action GitHub
+> `.github/workflows/schedule.postmortem-followup.yaml` ouvre des issues quand une date `[due::]` passe sans issue
+> existante, mais cette revue finale est le point de contrôle humain.
 
-> **Don't skip.** A change register without follow-up is theatre. The GA at
-> `.github/workflows/schedule.postmortem-followup.yaml` opens GitHub issues when `[due::]` dates pass without an issue
-> existing — but this final review is the human checkpoint.
+| Point de contrôle | Date       | Ce que nous vérifierons                                        | Instance      |
+| ----------------- | ---------- | -------------------------------------------------------------- | ------------- |
+| 1 semaine         | AAAA-MM-JJ | \[Actions prioritaires terminées ? Régression ?]               | Revue en solo |
+| 1 mois            | AAAA-MM-JJ | \[Actions medium terminées ? L'indicateur s'est-il amélioré ?] | Revue en solo |
+| 3 mois            | AAAA-MM-JJ | \[Cette classe d'incident s'est-elle reproduite ?]             | Revue en solo |
 
-| Checkpoint | Date       | What we'll check                                 | Forum       |
-| ---------- | ---------- | ------------------------------------------------ | ----------- |
-| 1-week     | YYYY-MM-DD | \[High-priority items complete? Any regression?] | Solo review |
-| 1-month    | YYYY-MM-DD | \[Medium items done? Has metric improved?]       | Solo review |
-| 3-month    | YYYY-MM-DD | \[Has this class of incident recurred?]          | Solo review |
+## Pour aller plus loin
+
+> Deux à cinq liens relatifs vers des fichiers `.md`, chacun avec une phrase d'introduction. Cette section est la
+> dernière section `##` de la page.
+
+- [{Procédure}]({../procedures/Procedure-XXX-AAAAMMJJ-NN-Titre.md}) : {La procédure suivie ou créée à la suite de
+  l'incident}
+- [{ADR}]({../decisions/ADR-NNN-Titre.md}) : {La décision liée ou issue de la leçon systémique}

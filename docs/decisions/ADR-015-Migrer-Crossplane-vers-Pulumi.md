@@ -79,8 +79,8 @@ Crossplane, tout en restant exploitable pendant la reconstruction de `rhodes` al
   reconstruction de `rhodes` (#370).
 - **Opérateur Kubernetes mature pour la future exécution dans le cluster** : l'exécution dans le cluster reste la cible
   finale ; cette phase est différée, pas abandonnée.
-- **Fournisseurs natifs faciles à écrire** : l'outil doit permettre d'écrire simplement un fournisseur natif sur l'API
-  propre à un produit, pour couvrir des produits comme Garage, Talos Omni ou Pocket-Id.
+- **Fournisseurs natifs faciles à écrire** : l'outil doit permettre d'écrire un fournisseur natif sur l'API propre à un
+  produit, pour couvrir des produits comme Garage, Talos Omni ou Pocket-Id.
 - **Sûreté pendant la migration** : l'adoption doit importer les ressources existantes sans aucune recréation
   (`pulumi import`, `pulumi preview` propre) et n'introduire aucune fenêtre où deux contrôleurs réconcilient la même
   ressource.
