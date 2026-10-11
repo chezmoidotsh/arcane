@@ -1,0 +1,18 @@
+---
+# Repository-local rtunk plugin: linters specific to Arcane (referenced from ../rtunk.yaml, `plugins.sources`).
+version: 0.1
+lint:
+  definitions:
+    # Documentation style guide (.agents/skills/documentation-writer/references/style-guide.md). The whole of docs/ is
+    # checked at once because some rules span pages (unique names, pages reachable from _Sidebar.md); the pages still
+    # to migrate are listed in docs/.wiki-legacy and skipped. Findings are `path:line: message` lines.
+    - name: wiki-lint
+      files: [markdown]
+      commands:
+        - name: lint
+          run: scripts/wiki:lint
+          output: regex
+          parse_regex: "(?P<path>[^:]+):(?P<line>\\d+): (?P<message>.*)"
+          success_codes: [0, 1]
+          read_output_from: stdout
+          batch: true

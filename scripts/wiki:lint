@@ -14,22 +14,26 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 # mise alias="wiki:lint"
-# mise description="Check the mechanical rules of the wiki style guide on wiki/."
+# mise description="Check the mechanical rules of the documentation style guide on docs/."
 #
-# Enforces the [lint] rules of .agents/skills/documentation-writer/references/style-guide.md: flat wiki, file names, one H1
-# matching the file name, "Where to go next" last, wiki-form links that resolve, every page in _Sidebar.md, no filler
-# words, no emoji. Standard library only.
+# Enforces the [lint] rules of .agents/skills/documentation-writer/references/style-guide.md on every page of docs/ that
+# is not listed in docs/.wiki-legacy: lower-case directory names, page names, page names unique across the whole tree
+# (case-insensitive), one H1 matching the page name, "Where to go next" last, relative links that resolve to an existing
+# file, every page reachable from _Sidebar.md, no filler words, no emoji. Standard library only.
 #
-# Usage: scripts/wiki:lint [--root wiki] | --self-test
+# Output: one `path:line: message` per finding (rtunk parses it), exit 1 when there is any.
+# Usage: scripts/wiki:lint [--root docs] | --self-test
 import argparse
+import fnmatch
 import re
 import sys
 import tempfile
 from pathlib import Path
 from urllib.parse import unquote
 
-NAME_RE = re.compile(r"^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$")
-SPECIAL = {"Home", "_Sidebar", "_Footer"}  # exempt from the title, naming and "Where to go next" rules
+PAGE_RE = re.compile(r"^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$")
+DIR_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+SPECIAL = {"Home", "_Sidebar", "_Footer"}  # root pages exempt from the title, naming and "Where to go next" rules
 FILLER_RE = re.compile(r"\b(simply|just|easily|basically|obviously|of course|please note)\b", re.I)
 EMOJI_RE = re.compile("[\U0001f000-\U0001faff☀-➿⬀-⯿️]")
 LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
@@ -39,6 +43,14 @@ NEXT_HEADING = "where to go next"
 
 def norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+
+
+def legacy_patterns(root: Path) -> list[str]:
+    f = root / ".wiki-legacy"
+    if not f.is_file():
+        return []
+    lines = (ln.strip() for ln in f.read_text(encoding="utf-8").splitlines())
+    return [ln for ln in lines if ln and not ln.startswith("#")]
 
 
 def body_lines(text: str):
@@ -59,29 +71,40 @@ def body_lines(text: str):
             yield n + 1, lines[n], fenced
 
 
-def lint(root: Path) -> list[str]:
+def lint(root: Path, label: str = "docs") -> list[str]:
     errs: list[str] = []
-    pages = sorted(p for p in root.glob("*.md"))
-    names = {p.stem for p in pages}
-    assets = {str(p.relative_to(root)) for p in (root / "assets").rglob("*") if p.is_file()} if (root / "assets").is_dir() else set()
-
-    for entry in sorted(root.iterdir()):
-        if entry.is_dir() and entry.name != "assets":
-            errs.append(f"{entry}: the wiki is flat, no subdirectory other than assets/")
-        elif entry.is_file() and entry.suffix != ".md" and entry.name != ".gitkeep":
-            errs.append(f"{entry}: only .md pages live in wiki/ (binary files go in assets/)")
-
+    root = root.resolve()
+    legacy = legacy_patterns(root)
+    pages = [
+        p for p in sorted(root.rglob("*.md"))
+        if not any(fnmatch.fnmatch(p.relative_to(root).as_posix(), pat) for pat in legacy)
+    ]
     sidebar = root / "_Sidebar.md"
-    linked: set[str] = set()
+    linked: set[Path] = set()
+
+    def err(page: Path, line: int, msg: str) -> None:
+        errs.append(f"{label}/{page.relative_to(root).as_posix()}:{line}: {msg}")
+
+    seen: dict[str, Path] = {}
+    for page in pages:
+        key = page.stem.lower()
+        if key in seen:
+            err(page, 1, f"name conflicts with {seen[key].relative_to(root).as_posix()} (page names are unique)")
+        seen[key] = page
+
     if pages and not sidebar.exists():
-        errs.append(f"{sidebar}: missing, every page must be reachable from the sidebar")
+        errs.append(f"{label}/_Sidebar.md:1: missing, every page must be reachable from the sidebar")
 
     for page in pages:
+        rel = page.relative_to(root)
         stem = page.stem
         text = page.read_text(encoding="utf-8")
-        special = stem in SPECIAL
-        if not special and not NAME_RE.match(stem):
-            errs.append(f"{page}: file name must be Title-Case-With-Hyphens (letters, digits, hyphens)")
+        special = stem in SPECIAL and len(rel.parts) == 1
+        if not special and not PAGE_RE.match(stem):
+            err(page, 1, "file name must be Title-Case-With-Hyphens (letters, digits, hyphens)")
+        for d in rel.parts[:-1]:
+            if not DIR_RE.match(d):
+                err(page, 1, f"directory '{d}' must be lower-case-with-hyphens")
 
         h1: list[tuple[int, str]] = []
         h2: list[str] = []
@@ -96,56 +119,63 @@ def lint(root: Path) -> list[str]:
                 elif level == 2:
                     h2.append(title)
                 elif level > 3:
-                    errs.append(f"{page}:{n}: heading deeper than ### (split the page)")
+                    err(page, n, "heading deeper than ### (split the page)")
             plain = re.sub(r"`[^`]*`", "", line)
             if f := FILLER_RE.search(plain):
-                errs.append(f"{page}:{n}: filler word '{f.group(0)}'")
+                err(page, n, f"filler word '{f.group(0)}'")
             if EMOJI_RE.search(line):
-                errs.append(f"{page}:{n}: emoji")
+                err(page, n, "emoji")
             for target in LINK_RE.findall(plain):
                 if re.match(r"^([a-z][a-z0-9+.-]*:|#)", target, re.I):
                     continue
                 path = unquote(target.split("#", 1)[0])
-                if path.endswith(".md"):
-                    errs.append(f"{page}:{n}: link '{target}' must use the wiki form (no .md)")
-                elif path in names or path in assets:
-                    if page.name == "_Sidebar.md":
-                        linked.add(path)
-                else:
-                    errs.append(f"{page}:{n}: broken link '{target}'")
+                dest = (page.parent / path).resolve()
+                if not dest.is_file():
+                    hint = " (link to the .md file, not the page name)" if (page.parent / (path + ".md")).is_file() else ""
+                    err(page, n, f"broken link '{target}'{hint}")
+                elif page == sidebar:
+                    linked.add(dest)
 
         if not special:
             if len(h1) != 1:
-                errs.append(f"{page}: expected exactly one '# Title', found {len(h1)}")
+                err(page, 1, f"expected exactly one '# Title', found {len(h1)}")
             elif norm(h1[0][1]) != norm(stem):
-                errs.append(f"{page}:{h1[0][0]}: title '{h1[0][1]}' does not match the file name")
+                err(page, h1[0][0], f"title '{h1[0][1]}' does not match the file name")
             if not h2 or norm(h2[-1]) != NEXT_HEADING:
-                errs.append(f"{page}: last '##' section must be 'Where to go next'")
+                err(page, 1, "last '##' section must be 'Where to go next'")
 
     if sidebar.exists():
-        for stem in sorted(names - SPECIAL - linked):
-            errs.append(f"{sidebar}: page '{stem}' is not reachable from the sidebar")
+        for page in pages:
+            if page.stem not in SPECIAL and page not in linked:
+                err(page, 1, "page is not reachable from _Sidebar.md")
     return errs
 
 
 def self_test() -> None:
-    good = "# Good Page\n\nShort version.\n\n```sh\njust run\n```\n\n## Where to go next\n\n- [Home](Home)\n"
+    good = "# Good Page\n\nShort version.\n\n```sh\njust run\n```\n\n## Where to go next\n\n- [Home](../Home.md)\n"
     with tempfile.TemporaryDirectory() as d:
         root = Path(d)
-        (root / "Home.md").write_text("# Home\n\n[Good](Good-Page)\n")
-        (root / "_Sidebar.md").write_text("- [Good](Good-Page)\n")
-        (root / "Good-Page.md").write_text(good)
+        (root / "guides").mkdir()
+        (root / "Home.md").write_text("# Home\n\n[Good](guides/Good-Page.md)\n")
+        (root / "_Sidebar.md").write_text("- [Good](guides/Good-Page.md)\n")
+        (root / "guides" / "Good-Page.md").write_text(good)
+        (root / "old").mkdir()
+        (root / "old" / "legacy.md").write_text("no title, simply wrong\n")
+        (root / ".wiki-legacy").write_text("# not migrated yet\nold/*\n")
         assert lint(root) == [], lint(root)
-        (root / "Bad-Page.md").write_text("# Other Title\n\nIt is simply easy. See [x](Nope.md) and [y](Missing).\n")
+        (root / "Reference").mkdir()
+        (root / "Reference" / "good-page.md").write_text(
+            "# Other Title\n\nIt is simply easy. [x](Nope.md) [y](../guides/Good-Page).\n")
         errs = "\n".join(lint(root))
-        for expected in ("filler word", "does not match", "wiki form", "broken link", "Where to go next", "not reachable"):
+        for expected in ("filler word", "does not match", "broken link 'Nope.md'", "link to the .md file",
+                         "Where to go next", "not reachable", "name conflicts", "directory 'Reference'"):
             assert expected in errs, (expected, errs)
     print("self-test ok")
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--root", default="wiki")
+    ap.add_argument("--root", default="docs")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
     if args.self_test:
@@ -155,10 +185,9 @@ def main() -> int:
     if not root.is_dir():
         print(f"error: {root} is not a directory", file=sys.stderr)
         return 2
-    errs = lint(root)
+    errs = lint(root, args.root.rstrip("/"))
     for e in errs:
         print(e)
-    print(f"{len(errs)} problem(s)" if errs else "wiki lint ok")
     return 1 if errs else 0
 
 
