@@ -95,7 +95,7 @@ are stored in OpenBao (`vault.chezmoi.sh`) — see
 ### Rebuild the host
 
 1. Install Proxmox VE; restore the management address and both bridges per
-   [`ipam.md`](../../../docs/network/ipam.md).
+   [`ipam.md`](../../../docs/reference/IPAM-Reference.md).
 2. Restore the PBS datastore encryption key — without it, every backup is unreadable. The keyfile and paperkey are
    stored in OpenBao (`vault.chezmoi.sh`) — but OpenBao itself runs on a cluster hosted by this very machine, so with
    the whole host gone, only an **offline** copy of the paperkey can start the recovery. Make sure one exists *before*

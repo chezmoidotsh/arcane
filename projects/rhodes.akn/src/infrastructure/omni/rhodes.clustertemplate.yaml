@@ -14,7 +14,7 @@
 #
 # Overrides relative to the base:
 #   Cluster.name                   rhodes-akn
-#   cluster.network.podSubnets     172.30.0.0/19   (ADR-014 / docs/network/ipam.md: rhodes = cluster ID 1)
+#   cluster.network.podSubnets     172.30.0.0/19   (ADR-014 / docs/reference/IPAM-Reference.md: rhodes = cluster ID 1)
 #   machine.kubelet.extraArgs.cloud-provider  external  (REQUIRED from day one — the
 #     Proxmox CCM silently no-ops without it, and providerID is immutable once a
 #     node registers; fixing this later means delete+recreate the node. See
@@ -60,7 +60,7 @@
 #   catalog/omni/clustertemplates/base.yaml                     (reference base)
 #   projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml (sibling example)
 #   ADR-014  docs/decisions/014-network-topology.md             (CIDR / DNS decisions)
-#   docs/network/ipam.md                                        (VLAN 5 / SDN VNet layout, LB IP pool)
+#   docs/reference/IPAM-Reference.md                                        (VLAN 5 / SDN VNet layout, LB IP pool)
 #   docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md (bring-up procedure)
 #   catalog/omni/machineclasses/                                (machine class defs)
 # =============================================================================

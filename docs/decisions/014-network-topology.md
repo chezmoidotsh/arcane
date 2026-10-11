@@ -77,7 +77,7 @@ VLAN where home devices can reach them?**
 - **VXLAN overhead is acceptable** — 50-byte header over a 1G link at homelab inter-node bandwidth (typically < 100
   Mbps) is negligible.
 - **Declarative + versioned** — GitOps rules #1 and #2; network topology must be captured in code (this document +
-  `docs/network/ipam.md`), not only in GUI state.
+  `docs/reference/IPAM-Reference.md`), not only in GUI state.
 
 ### Constraints
 
@@ -220,8 +220,8 @@ but at the cost of a permanent UDM Pro GUI dependency for every new cluster — 
 only one on the table until that changes.
 
 The SDN operational surface is an accepted trade-off. The SDN is managed declaratively in Pulumi
-(`stack/proxmox/sdn.ts`) and documented in `docs/network/ipam.md`. The Omni infra provider handles VNet attachment
-automatically when provisioning VMs.
+(`stack/proxmox/sdn.ts`) and documented in `docs/reference/IPAM-Reference.md`. The Omni infra provider handles VNet
+attachment automatically when provisioning VMs.
 
 ### Rationale
 
@@ -250,7 +250,7 @@ source IP for that call. This is a targeted exception that does not expose node 
   MachineClasses, and no UDM Pro changes.
 - ✅ VLAN 5 ARP broadcast domain carries only Cilium LB announcements, not cluster node traffic.
 - ✅ Node IPs are stable across reboots (DHCP stable leases per MAC from SDN dnsmasq).
-- ✅ Network topology is fully documented and reproducible (this ADR + `docs/network/ipam.md`).
+- ✅ Network topology is fully documented and reproducible (this ADR + `docs/reference/IPAM-Reference.md`).
 - ✅ All clusters share one Cilium install manifest — the pod CIDR supernet `172.30.0.0/16` is set as
   `ipv4NativeRoutingCIDR` (`catalog/talos/manifests/cilium/`). This is a **ClusterMesh prerequisite**: Cilium skips SNAT
   for destinations within the supernet, so inter-cluster pod traffic retains its source identity. Each cluster still
@@ -259,7 +259,7 @@ source IP for that call. This is a targeted exception that does not expose node 
 - ✅ **Service CIDR unified across all clusters** — all clusters share `172.31.0.0/19` (kube-dns `172.31.0.10`
   everywhere) instead of per-cluster `/19` ranges. This is ClusterMesh-compatible: Cilium resolves ClusterIPs at the
   source node via eBPF, so they never traverse the inter-cluster link. Pod CIDRs remain unique per cluster (mandatory).
-  See the ClusterMesh prerequisites table in `docs/network/ipam.md`.
+  See the ClusterMesh prerequisites table in `docs/reference/IPAM-Reference.md`.
 
 ### Negative
 
@@ -333,8 +333,8 @@ source IP for that call. This is a targeted exception that does not expose node 
 
 - **Tracking issue**: [#1038 — Omni cluster template dual-NIC / SDN](https://github.com/chezmoidotsh/arcane/issues/1038)
 - **Blocking issue**: [#1032 — Document homelab network topology][#1032]
-- **Network reference**: [`docs/network/ipam.md`](../network/ipam.md)
-- **Network diagram**: [`docs/network/topology.d2`](../network/topology.d2)
+- **Network reference**: [`docs/reference/IPAM-Reference.md`](../reference/IPAM-Reference.md)
+- **Network diagram**: [`docs/assets/network/topology.d2`](../assets/network/topology.d2)
 - **Pulumi implementation**:
   [`projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/sdn.ts`](../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/sdn.ts)
 - **Setup procedure**: [INF-20260627-00](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md)
@@ -376,8 +376,8 @@ source IP for that call. This is a targeted exception that does not expose node 
   MachineClass's `providerdata` (NIC bridge). Trade-off: per-cluster L2 node isolation is sacrificed for a simple shared
   MachineClass catalog; per-cluster external-LB isolation is preserved via the VLAN 5 LB pools.
 - **2026-06-27**: **ACCEPTED**: Initial ADR documenting V1 (single-NIC, single cluster) and V2 (dual-NIC + Proxmox SDN
-  VXLAN, multi-cluster) network design. Created alongside `docs/network/ipam.md` and `docs/network/topology.d2` as the
-  full network reference.
+  VXLAN, multi-cluster) network design. Created alongside `docs/reference/IPAM-Reference.md` and
+  `docs/assets/network/topology.d2` as the full network reference.
 
 <!-- Issue reference links -->
 

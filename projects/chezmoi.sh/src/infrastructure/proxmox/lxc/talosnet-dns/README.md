@@ -1,9 +1,10 @@
 # `talosnet-dns` — talosnet split-horizon DNS LXC (Proxmox)
 
 Standalone Proxmox LXC running NixOS + BIND + Vector. It is the DNS server of the `talosnet` Proxmox SDN subnet
-(`10.128.0.0/24`): talosnet DHCP advertises it (`10.128.0.3`, `dns.talosnet.chezmoi.sh`) as the resolver for every
-Talos node. See [`docs/network/gateway-dns-split.md`](../../../../../../docs/network/gateway-dns-split.md) for how it
-fits in the internal/external Gateway split.
+(`10.128.0.0/24`): talosnet DHCP advertises it (`10.128.0.3`, `dns.talosnet.chezmoi.sh`) as the resolver for every Talos
+node. See
+[`docs/reference/Passerelles-et-DNS-Reference.md`](../../../../../../docs/reference/Passerelles-et-DNS-Reference.md) for
+how it fits in the internal/external Gateway split.
 
 ## Architecture
 
@@ -21,8 +22,8 @@ fits in the internal/external Gateway split.
      `*.chezmoi.sh` hostname as the external one, pointed at the internal Gateway's talosnet IP. The key may update `A`
      and `TXT` records anywhere in the zone and may AXFR it, nothing else.
 - **Forwarding** — everything else goes to `10.10.10.10`, then `1.1.1.1` / `1.0.0.1`.
-- **Observability** — Vector (`catalog.lxcAgent`) ships journald logs and node metrics to `data.o11y.chezmoi.sh`,
-  pinned to `10.128.0.5` in `/etc/hosts` so shipping does not depend on this very resolver being up.
+- **Observability** — Vector (`catalog.lxcAgent`) ships journald logs and node metrics to `data.o11y.chezmoi.sh`, pinned
+  to `10.128.0.5` in `/etc/hosts` so shipping does not depend on this very resolver being up.
 
 ## What's in this directory
 

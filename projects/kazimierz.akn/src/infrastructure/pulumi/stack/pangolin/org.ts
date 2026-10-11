@@ -12,7 +12,7 @@ import * as pangolin from "@pulumi/pangolin";
 // subnet/utilitySubnet are the WireGuard overlay ranges Pangolin allocates to
 // Newt sites under this org -- fixed at creation, never modifiable
 // afterwards. Carved out of 172.16.0.0/12 right next to kazimierz's own OCI
-// VCN (172.16.0.0/26, see docs/network/ipam.md "OCI Cloud -- kazimierz.akn")
+// VCN (172.16.0.0/26, see docs/reference/IPAM-Reference.md "OCI Cloud -- kazimierz.akn")
 // rather than 10.x/192.168.x -- same reasoning as that VCN: kazimierz sits
 // outside the homelab's L3 topology entirely and this overlay is tunnel-only
 // (WireGuard between kazimierz and K8s pods, never natively routed), so
