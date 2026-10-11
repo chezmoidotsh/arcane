@@ -26,7 +26,7 @@ export const talosPool = new proxmox.VirtualEnvironmentPool("pve-pool-talos", {
 // creation (Omni machine classes set `pool: talos` in their provider data;
 // see omni-infra-provider-proxmox/README.md, "Machine classes"), which stays
 // manual along with the rest of VM/LXC lifecycle (see
-// docs/decisions/015-migrate-crossplane-to-pulumi.md, "Non-Goals").
+// docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md, "Non-Goals").
 // Declaring per-VM pool membership here would make this stack reachable from
 // VM resources it must stay structurally isolated from.
 export const talosPoolLocalStorage = new proxmox.PoolMembership(

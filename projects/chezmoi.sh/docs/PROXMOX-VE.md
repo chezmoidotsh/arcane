@@ -57,9 +57,9 @@ rule below is meaningless without knowing which bridge it sits on:
 | `vmbr0` | Management only — VLAN 5 access port, carries the host's own address |
 | `vmbr1` | Guest trunk — VLAN-aware, carries every VM/LXC port on its own tag   |
 
-Talos nodes are dual-NIC (see [ADR-014](../../../docs/decisions/014-network-topology.md)): `eth0` on `vmbr1` so Cilium's
-L2 LoadBalancer announcements stay reachable from home devices, and `eth1` on the SDN below so node-to-node traffic
-never touches the home L2 domain.
+Talos nodes are dual-NIC (see [ADR-014](../../../docs/decisions/ADR-014-Topologie-Reseau.md)): `eth0` on `vmbr1` so
+Cilium's L2 LoadBalancer announcements stay reachable from home devices, and `eth1` on the SDN below so node-to-node
+traffic never touches the home L2 domain.
 
 ## Identities & access
 
@@ -203,14 +203,14 @@ rather than baked into the baseline. Attaching a VM to the group is part of that
 
 ## What this stack does not manage
 
-| Not managed                      | Why                                                                                                                                                                                                                                                                 |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **VM / LXC lifecycle**           | Proxmox hosts the Kubernetes clusters; letting those clusters manage Proxmox would close a trust cycle. Structurally excluded — no VM resource type is imported anywhere in this stack. See [ADR-015](../../../docs/decisions/015-migrate-crossplane-to-pulumi.md). |
-| **Backup jobs**                  | Which guest is backed up on what schedule is VM-lifecycle-adjacent; same reasoning. This stack only prepares the destination.                                                                                                                                       |
-| **Host storage and network**     | Local storage and the bridges are part of the OS install, same layer as the hypervisor itself.                                                                                                                                                                      |
-| **PCI/USB passthrough mappings** | They encode host-specific IOMMU addresses needing rediscovery on any rebuild anyway, and are consumed by exactly one guest.                                                                                                                                         |
-| **Realms**                       | `pam` and `pve` are built-ins; nothing custom exists to codify.                                                                                                                                                                                                     |
-| **Notifications**                | The bridged provider exposes no Proxmox VE notification resource. The node stays on its built-in `sendmail` → `root@pam` matcher.                                                                                                                                   |
+| Not managed                      | Why                                                                                                                                                                                                                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **VM / LXC lifecycle**           | Proxmox hosts the Kubernetes clusters; letting those clusters manage Proxmox would close a trust cycle. Structurally excluded — no VM resource type is imported anywhere in this stack. See [ADR-015](../../../docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md). |
+| **Backup jobs**                  | Which guest is backed up on what schedule is VM-lifecycle-adjacent; same reasoning. This stack only prepares the destination.                                                                                                                                            |
+| **Host storage and network**     | Local storage and the bridges are part of the OS install, same layer as the hypervisor itself.                                                                                                                                                                           |
+| **PCI/USB passthrough mappings** | They encode host-specific IOMMU addresses needing rediscovery on any rebuild anyway, and are consumed by exactly one guest.                                                                                                                                              |
+| **Realms**                       | `pam` and `pve` are built-ins; nothing custom exists to codify.                                                                                                                                                                                                          |
+| **Notifications**                | The bridged provider exposes no Proxmox VE notification resource. The node stays on its built-in `sendmail` → `root@pam` matcher.                                                                                                                                        |
 
 ## Procedures
 
@@ -364,8 +364,8 @@ See
 - [`PROXMOX_BACKUP_SERVER.md`](./PROXMOX_BACKUP_SERVER.md) — the backup server this host pushes to
 - [`TRUENAS.md`](./TRUENAS.md) — the NAS guest running on this host
 - [`docs/reference/IPAM-Reference.md`](../../../docs/reference/IPAM-Reference.md) — VLAN layout and address plan (IPAM)
-- [ADR-014](../../../docs/decisions/014-network-topology.md) — dual-NIC Talos topology
-- [ADR-015](../../../docs/decisions/015-migrate-crossplane-to-pulumi.md) — why VM/LXC lifecycle stays manual
+- [ADR-014](../../../docs/decisions/ADR-014-Topologie-Reseau.md) — dual-NIC Talos topology
+- [ADR-015](../../../docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md) — why VM/LXC lifecycle stays manual
 - [`INF-20260627-00-Provisionner-le-SDN-Proxmox.md`](../../../docs/procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md)
   — SDN setup
 - [`INF-20260620-00-Installer-Node-Exporter-sur-Proxmox.md`](../../../docs/procedures/infrastructure/INF-20260620-00-Installer-Node-Exporter-sur-Proxmox.md)

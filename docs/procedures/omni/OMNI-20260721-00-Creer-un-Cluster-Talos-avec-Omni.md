@@ -360,7 +360,7 @@ aucun job du dépôt n'applique les stacks Pulumi à intervalle régulier.
 
 Le Proxmox CCM (`proxmox-cloud-controller-manager`) et le plugin CSI (`proxmox-csi-plugin`) se déploient dans
 `proxmox-system` à partir des manifests rendus dans `dist/` du projet (voir
-l'[ADR-011](../../decisions/011-rendered-manifests-pattern.md)), selon la convention habituelle
+l'[ADR-011](../../decisions/ADR-011-Motif-des-Manifestes-Rendus.md)), selon la convention habituelle
 `src/infrastructure/kubernetes/<nom>/` du dépôt. Ils sont appliqués à la main
 (`kubectl apply --server-side -f dist/...`), car aucun ArgoCD n'existe encore sur ce cluster à ce stade de l'amorçage.
 
@@ -503,11 +503,11 @@ une commande de réépinglage sont suivies par l'issue [#1357](https://github.co
 
 ## Pour aller plus loin
 
-- [ADR-014 : topologie réseau du homelab](../../decisions/014-network-topology.md) : définit le supernet des CIDR de Pod
-  (`172.30.0.0/16`) et l'allocation d'un `/19` par cluster. La table de référence des CIDR de Pod par cluster est dans
-  [Allocation IPAM](../../reference/IPAM-Reference.md).
-- [ADR-011 : motif des manifests rendus](../../decisions/011-rendered-manifests-pattern.md) : le motif de pré-rendu dans
-  `dist/` utilisé à l'étape 10.
+- [ADR-014 : topologie réseau du homelab](../../decisions/ADR-014-Topologie-Reseau.md) : définit le supernet des CIDR de
+  Pod (`172.30.0.0/16`) et l'allocation d'un `/19` par cluster. La table de référence des CIDR de Pod par cluster est
+  dans [Allocation IPAM](../../reference/IPAM-Reference.md).
+- [ADR-011 : motif des manifests rendus](../../decisions/ADR-011-Motif-des-Manifestes-Rendus.md) : le motif de pré-rendu
+  dans `dist/` utilisé à l'étape 10.
 - [Expérience Proxmox CSI/CCM](../../experiments/20260617-proxmox-csi-ccm/README.md) : architecture, ordre de
   déploiement, rôles et tokens Proxmox, contrainte du drapeau cloud-provider (étape 6) et critères V-001 à V-010.
 - [Documentation d'Omni](https://omni.sidero.dev/) : référence d'`omnictl` et des templates de cluster.

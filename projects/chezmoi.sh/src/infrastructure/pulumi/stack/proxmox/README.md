@@ -8,7 +8,7 @@ dynamically bridged from the [`bpg/terraform-provider-proxmox`](https://github.c
 Terraform provider.
 
 See
-[docs/decisions/015-migrate-crossplane-to-pulumi.md](../../../../../../docs/decisions/015-migrate-crossplane-to-pulumi.md),
+[docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md](../../../../../../docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md),
 "Non-Goals" for why this scope is narrow: Proxmox VE's **VM/LXC lifecycle** stays fully manual — this stack manages
 administrative config objects (ACLs, SDN, backup-storage registration, resource pools, ACME) that don't carry the
 `Proxmox → hosts K8s → K8s manages Proxmox` trust-cycle risk that non-goal exists to block.
@@ -27,9 +27,9 @@ administrative config objects (ACLs, SDN, backup-storage registration, resource 
 ### Intentionally not managed via Pulumi
 
 - **VM/LXC lifecycle** (create/modify/delete compute) — the actual trust-cycle risk
-  `docs/decisions/015-migrate-crossplane-to-pulumi.md`'s Proxmox non-goal protects against. Structurally unreachable
-  from this stack's code: no `VirtualEnvironmentVm`/`VirtualEnvironmentContainer`/`ClonedVm` import anywhere here, even
-  though the bridged SDK exposes them.
+  `docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md`'s Proxmox non-goal protects against. Structurally
+  unreachable from this stack's code: no `VirtualEnvironmentVm`/`VirtualEnvironmentContainer`/`ClonedVm` import anywhere
+  here, even though the bridged SDK exposes them.
 - **Realms** (`pam`, `pve`) — both are Proxmox VE built-ins; no `pocket-id` or other custom realm exists on this host.
   Not worth codifying two realms that ship with every install.
 - **Local storage config** (`local`, `nvme-lvm`) — stays manual, same reasoning as the VM/OS layer. Only the

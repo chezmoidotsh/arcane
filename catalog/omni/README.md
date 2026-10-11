@@ -92,7 +92,7 @@ holds today. Wiring it into a scheduled workflow requires creating that secret �
 
 ## Cross-references
 
-- [ADR-014 — Network topology](../../docs/decisions/014-network-topology.md) — pod/service CIDRs and the kube-dns IP
+- [ADR-014 — Network topology](../../docs/decisions/ADR-014-Topologie-Reseau.md) — pod/service CIDRs and the kube-dns IP
   decision.
 - [VLAN / SDN VNet layout](../../docs/reference/IPAM-Reference.md) — VLAN 5 and the `talosnet` SDN.
 - [Machine-class catalog README](machineclasses/README.md) — detailed sizing, naming, and provider tuning (includes the
@@ -102,4 +102,4 @@ holds today. Wiring it into a scheduled workflow requires creating that secret �
 
 <!-- link references -->
 
-[ADR-014]: ../../docs/decisions/014-network-topology.md
+[ADR-014]: ../../docs/decisions/ADR-014-Topologie-Reseau.md

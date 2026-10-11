@@ -98,5 +98,5 @@ Ce qui n'est pas établi : l'exécution réelle des Pods, l'authentification aup
 
 - [IPAM Reference](IPAM-Reference.md) : pools de Load Balancer, adresses de `talosnet-dns` et de l'UDM Pro.
 - [Réseau Reference](Reseau-Reference.md) : topologie et vue d'ensemble du réseau.
-- [ADR-014 Network Topology](../decisions/014-network-topology.md) : justification du découpage réseau (double NIC et SDN VXLAN).
+- [ADR-014 Network Topology](../decisions/ADR-014-Topologie-Reseau.md) : justification du découpage réseau (double NIC et SDN VXLAN).
 - [talosnet-dns](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/talosnet-dns/README.md) : construction et mise à jour du LXC BIND.

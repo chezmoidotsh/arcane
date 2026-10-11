@@ -27,7 +27,7 @@ d'exécution ni l'ACL de `vmbr1`.
   ([siderolabs/omni#2593](https://github.com/siderolabs/omni/issues/2593)). Un VNet par cluster imposerait un jeu de
   `MachineClass` par cluster, d'où un unique VNet. L'isolation du trafic LoadBalancer externe vient des pools `/29` par
   cluster sur le VLAN 5 (`eth0`), pas du VNet. Le détail est dans la note de révision du 2026-06-27 de
-  l'[ADR-014](../../decisions/014-network-topology.md).
+  l'[ADR-014](../../decisions/ADR-014-Topologie-Reseau.md).
 - **Plan d'adressage de référence** : les noms de VNet, sous-réseaux, passerelles et options viennent de
   l'[IPAM](../../reference/IPAM-Reference.md) (section « Proxmox SDN — talosnet VNet »). En cas d'écart avec cette page,
   l'IPAM fait foi.
@@ -80,7 +80,7 @@ Les objets suivants doivent exister (créés par Pulumi dans
 : l'utilisateur `omni@pve`, le pool `talos` et l'ACL de `/sdn/zones/localnetwork/vmbr1`. Cette procédure étend cette ACL
 sans la recréer.
 
-Lire aussi l'[ADR-014](../../decisions/014-network-topology.md) et la table SDN de
+Lire aussi l'[ADR-014](../../decisions/ADR-014-Topologie-Reseau.md) et la table SDN de
 l'[IPAM](../../reference/IPAM-Reference.md) pour comprendre la conception à double interface (`eth0` = Cilium L2 sur le
 VLAN 5, `eth1` = trafic des nœuds sur le VNet SDN).
 
@@ -416,7 +416,7 @@ VXLAN (`catalog/omni/clustertemplates/base.yaml`).
   VNet mais sur `eth1` dans les cluster templates Omni. Le prérequis « le pool et l'utilisateur sont créés par le
   provider Omni » est complété par leur déclaration Pulumi (`access/omni.ts`, `pools.ts`).
 - _2026-07-28_ : Zone, VNet, sous-réseau, ACL et application du SDN codifiés dans Pulumi (`stack/proxmox/sdn.ts`), selon
-  l'[ADR-014](../../decisions/014-network-topology.md).
+  l'[ADR-014](../../decisions/ADR-014-Topologie-Reseau.md).
 - _2026-06-28_ : Appliquée sur PVE 9.2.3. Écarts PVE 9 : API SDN sous `/cluster/sdn/` ; noms de zone et de VNet limités
   à 8 caractères alphanumériques (`vnet-talos` devient `talosnet`) ; zone VXLAN impossible sans `--peers` ou `--fabric`,
   repli sur `simple` ; indicateur `--dhcp dnsmasq` explicite ; paquet `dnsmasq` à installer et `dnsmasq.service` nu à
@@ -430,8 +430,8 @@ VXLAN (`catalog/omni/clustertemplates/base.yaml`).
 
 ## Pour aller plus loin
 
-- [ADR-014 Topologie réseau](../../decisions/014-network-topology.md) : la décision de conception à double interface et
-  la justification du VNet unique.
+- [ADR-014 Topologie réseau](../../decisions/ADR-014-Topologie-Reseau.md) : la décision de conception à double interface
+  et la justification du VNet unique.
 - [IPAM](../../reference/IPAM-Reference.md) : plan d'adressage de référence, dont la section « Proxmox SDN — talosnet
   VNet ».
 - [Gérer l'état Pulumi et importer des ressources](INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md) :

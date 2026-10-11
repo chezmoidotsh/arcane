@@ -70,7 +70,7 @@ flowchart TD
 
 | Couche                        | Exige des couches au-dessus                                                                                                                   | Source                                                                                                                                                                                                                      |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| UDM Pro (UniFi)               | Rien : configuration manuelle dans l'interface                                                                                                | [ADR-014](../decisions/014-network-topology.md), [IPAM](../reference/IPAM-Reference.md)                                                                                                                                     |
+| UDM Pro (UniFi)               | Rien : configuration manuelle dans l'interface                                                                                                | [ADR-014](../decisions/ADR-014-Topologie-Reseau.md), [IPAM](../reference/IPAM-Reference.md)                                                                                                                                 |
 | `pve-01`                      | Réseau (VLAN 5) ; puis, pour sa configuration, la stack Pulumi `chezmoi-sh-infra`, donc Garage                                                | [`PROXMOX-VE.md`](../../projects/chezmoi.sh/docs/PROXMOX-VE.md), [`stack/proxmox/`](../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/README.md)                                                            |
 | PBS                           | `pve-01` ; clé d'application B2 et datastore créés par Pulumi ; clé de chiffrement côté client conservée dans OpenBao                         | [`PROXMOX_BACKUP_SERVER.md`](../../projects/chezmoi.sh/docs/PROXMOX_BACKUP_SERVER.md), [`stack/proxmox-backup-server/README.md`](../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox-backup-server/README.md) |
 | NAS (TrueNAS)                 | `pve-01` (VM, disques en passthrough) ; PBS pour restaurer la VM ; Pulumi pour datasets, partages, utilisateurs et apps                       | [`TRUENAS.md`](../../projects/chezmoi.sh/docs/TRUENAS.md)                                                                                                                                                                   |
@@ -148,7 +148,7 @@ La clé age vient en premier : elle déchiffre les passphrases Pulumi
 
 - **Exige** : rien d'autre que le matériel.
 - **Référence** : le plan d'adressage est dans [IPAM](../reference/IPAM-Reference.md), la topologie dans
-  [ADR-014](../decisions/014-network-topology.md). La configuration de l'UDM Pro est manuelle par décision ; sa
+  [ADR-014](../decisions/ADR-014-Topologie-Reseau.md). La configuration de l'UDM Pro est manuelle par décision ; sa
   reconstruction est non documentée.
 
 ### 2. Reconstruire l'hôte `pve-01`
@@ -435,4 +435,5 @@ synchronise les mots de passe SMB vers OpenBao, ce que la PR #1228 a changé.
   : l'emplacement de l'état Pulumi et l'accès au backend.
 - [Proxmox VE](../../projects/chezmoi.sh/docs/PROXMOX-VE.md) : l'hôte, ses sauvegardes et sa reconstruction.
 - [TrueNAS](../../projects/chezmoi.sh/docs/TRUENAS.md) : le NAS, Garage et la synchronisation vers B2.
-- [ADR-015](../decisions/015-migrate-crossplane-to-pulumi.md) : pourquoi le cycle de vie des VM et des LXC reste manuel.
+- [ADR-015](../decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md) : pourquoi le cycle de vie des VM et des LXC reste
+  manuel.
