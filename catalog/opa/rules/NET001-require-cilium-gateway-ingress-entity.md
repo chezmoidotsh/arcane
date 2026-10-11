@@ -27,7 +27,7 @@ to Cilium Gateway API left all HTTPRoute-backed applications unreachable. The ap
 matched `in-gateway-system` pods — valid for Envoy Gateway, which ran dedicated proxy pods there, but incorrect for
 Cilium Gateway API.
 
-Full post-mortem: `docs/incidents/2026-05-31-amiya-cilium-gateway-api-agent-drift-netpol.md`
+Full post-mortem: `docs/incidents/Incident-2026-05-31-Derive-Agent-Cilium-Gateway-API-NetworkPolicy-Amiya.md`
 
 ## Applicable best practices
 

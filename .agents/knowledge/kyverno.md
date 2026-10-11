@@ -33,6 +33,6 @@ Distilled from incident post-mortems. Each bullet stands alone.
 
 ## Sources
 
-- `docs/incidents/2026-05-26-amiya-kyverno-zot-circular-imagepullbackoff.md`
-- `docs/incidents/2026-05-25-zot-disk-full-imagepullbackoff.md`
+- `docs/incidents/Incident-2026-05-26-ImagePullBackOff-Circulaire-Kyverno-Zot-Amiya.md`
+- `docs/incidents/Incident-2026-05-25-Saturation-Disque-Zot-ImagePullBackOff.md`
 - [issue #1005](https://github.com/chezmoidotsh/arcane/issues/1005) — replacement design

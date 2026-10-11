@@ -37,7 +37,7 @@ ses images alors que le PVC de stockage de Zot reposait sur Longhorn. Lors des r
 rompue et a provoqué des `ImagePullBackOff` en cascade sur tout le cluster.
 
 Kyverno a été retiré entièrement par le commit `8780c40f`, par mesure d'urgence. L'incident est documenté dans
-[l'incident du 2026-05-26](../incidents/2026-05-26-amiya-kyverno-zot-circular-imagepullbackoff.md).
+[l'incident du 2026-05-26](../incidents/Incident-2026-05-26-ImagePullBackOff-Circulaire-Kyverno-Zot-Amiya.md).
 
 La question stratégique à laquelle cet ADR répond est la suivante : **comment imposer que toutes les images de
 conteneurs passent par le miroir OCI local, sans réintroduire un contrôleur d'admission à l'exécution capable de créer
@@ -217,8 +217,8 @@ mêmes politiques Rego, sans remplacer la couche de CI.
 
 - [ADR-011 Motif des manifestes rendus](./ADR-011-Motif-des-Manifestes-Rendus.md) : le durcissement complémentaire de la
   chaîne d'approvisionnement, dont les `dist/` que conftest vérifie.
-- [Incident du 2026-05-26](../incidents/2026-05-26-amiya-kyverno-zot-circular-imagepullbackoff.md) : l'incident qui a
-  déclenché cette décision.
+- [Incident du 2026-05-26](../incidents/Incident-2026-05-26-ImagePullBackOff-Circulaire-Kyverno-Zot-Amiya.md) :
+  l'incident qui a déclenché cette décision.
 - [Documentation des politiques OPA](../../catalog/opa/README.md) : les politiques et les règles en vigueur.
 - [conftest](https://www.conftest.dev/) : l'outil d'application des politiques sur les manifestes Kubernetes.
 - [OPA Gatekeeper](https://open-policy-agent.github.io/gatekeeper/) : l'option d'application à l'exécution différée.

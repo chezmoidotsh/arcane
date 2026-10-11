@@ -253,7 +253,7 @@ Les voies de reprise établies sont les suivantes :
   valider, puis relancer `omnictl cluster template sync -f $TEMPLATE_FILE`. La reprise d'une mise à jour interrompue par
   ce moyen est à confirmer sur Omni. La correction par `talosctl patch machineconfig`, qui ne supprime jamais de clé,
   est inefficace et ne doit pas être tentée : voir
-  [l'incident](../../incidents/2026-05-26-lungmen-k8s-1.35-removed-featuregate.md).
+  [l'incident](../../incidents/Incident-2026-05-26-Feature-Gate-Supprime-Kubernetes-1-35-Lungmen.md).
 - **Cluster irrécupérable** : restaurer depuis la sauvegarde etcd. La procédure de restauration n'est pas documentée
   dans le dépôt : se reporter à la
   [documentation d'Omni](https://docs.siderolabs.com/omni/cluster-management/upgrading-clusters).
@@ -268,7 +268,7 @@ Les voies de reprise établies sont les suivantes :
   Les commandes n'ont pas été rejouées sur Omni ni sur les clusters.
 - _2026-05-26_ : Ajout du contrôle préalable des feature gates (étape 1) et de l'avertissement sur la fusion stratégique
   (étape 5), à la suite de l'incident
-  [Kubernetes 1.35 : feature gate retiré](../../incidents/2026-05-26-lungmen-k8s-1.35-removed-featuregate.md).
+  [Kubernetes 1.35 : feature gate retiré](../../incidents/Incident-2026-05-26-Feature-Gate-Supprime-Kubernetes-1-35-Lungmen.md).
 - _2026-05-25_ : Utilisation de `--context` à la place de `--nodes` ; départ de la version 1.34.
 - _2026-05-25_ : Création initiale.
 
@@ -278,7 +278,7 @@ Les voies de reprise établies sont les suivantes :
   d'abord si la version cible de Kubernetes l'exige.
 - [Créer un cluster Talos avec Omni](../omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md) : format des
   templates, validation et application avec `omnictl`.
-- [Incident Kubernetes 1.35 : feature gate retiré](../../incidents/2026-05-26-lungmen-k8s-1.35-removed-featuregate.md) :
-  l'incident à l'origine du contrôle de l'étape 2.
+- [Incident Kubernetes 1.35 : feature gate retiré](../../incidents/Incident-2026-05-26-Feature-Gate-Supprime-Kubernetes-1-35-Lungmen.md)
+  : l'incident à l'origine du contrôle de l'étape 2.
 - [Upgrading Clusters (documentation d'Omni, consultée le 2026-10-11)](https://docs.siderolabs.com/omni/cluster-management/upgrading-clusters)
   : déroulement d'une mise à jour et résolution d'une mise à jour bloquée.
