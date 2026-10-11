@@ -12,7 +12,7 @@
 
 [tools]
 # Needed for CNPG object-store disaster-recovery work (finding/restoring
-# backups) — see docs/disaster-recovery/{openbao,pocket-id}.md.
+# backups) — see docs/guides/Restaurer-OpenBao.md and docs/guides/Restaurer-Pocket-Id.md.
 "pipx:s3cmd" = "latest"
 
 [tasks."diagram:generate"]

@@ -16,7 +16,10 @@
 
 ### Reprendre après une panne
 
-- [Restaurer Rhodes](../projects/rhodes.akn/docs/disaster-recovery/README.md)
+- [Plan de reprise après sinistre](guides/Plan-de-Reprise-apres-Sinistre.md)
+- [Restaurer Rhodes](guides/Restaurer-Rhodes.md)
+- [Restaurer OpenBao](guides/Restaurer-OpenBao.md)
+- [Restaurer Pocket-Id](guides/Restaurer-Pocket-Id.md)
 - [Restaurer CNPG depuis le stockage objet](procedures/databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md)
 - [Restaurer un PVC Velero sous GitOps](procedures/backups/BKP-20260805-00-Restaurer-un-PVC-Velero-sous-GitOps.md)
 - [Restaurer Minecraft depuis restic](procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md)

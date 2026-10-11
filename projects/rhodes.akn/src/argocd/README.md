@@ -23,7 +23,7 @@ For more information, please refer to the [official documentation](https://argo-
 
 ArgoCD self-hosts on `rhodes.akn` (the hub pattern) and, like every other bootstrap-order component on this cluster
 (Cilium, OpenBao, ESO, cert-manager, Pocket-Id), it can't depend on ArgoCD to exist yet — see
-[docs/disaster-recovery/README.md](../../docs/disaster-recovery/README.md). It's applied by hand as the last step of
+[Restaurer Rhodes](../../../docs/guides/Restaurer-Rhodes.md). It's applied by hand as the last step of
 that chain, not synced automatically like a regular app:
 
 ```sh

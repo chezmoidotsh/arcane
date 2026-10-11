@@ -26,10 +26,13 @@ documentation du dépôt. Il fait foi, se lit directement dans Git et est reflé
 
 ## Reprendre après une panne
 
-| Page                                                                        | Rôle                                                        |
-| --------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| [Restaurer Rhodes](../projects/rhodes.akn/docs/disaster-recovery/README.md) | Reprise après sinistre du cluster de la plateforme centrale |
-| [Incidents](incidents/README.md)                                            | Post-mortems des incidents de production passés             |
+| Page                                                                       | Rôle                                                                     |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| [Plan de reprise après sinistre](guides/Plan-de-Reprise-apres-Sinistre.md) | Carte des interdépendances et ordre de reconstruction de toute la flotte |
+| [Restaurer Rhodes](guides/Restaurer-Rhodes.md)                             | Reprise après sinistre du cluster de la plateforme centrale              |
+| [Restaurer OpenBao](guides/Restaurer-OpenBao.md)                           | Restaurer la base de données d'OpenBao après la perte de rhodes          |
+| [Restaurer Pocket-Id](guides/Restaurer-Pocket-Id.md)                       | Restaurer la base de données de Pocket-Id après la perte de rhodes       |
+| [Incidents](incidents/README.md)                                           | Post-mortems des incidents de production passés                          |
 
 ## Référence
 

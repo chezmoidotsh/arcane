@@ -1,18 +1,18 @@
 # Migration: amiya.akn → rhodes.akn (core platform)
 
 This migrates the core-platform role (OpenBao, Pocket-Id, ArgoCD hub) from `amiya.akn` to `rhodes.akn`. It follows the
-[Rhodes·AKN Disaster Recovery](../../projects/rhodes.akn/docs/disaster-recovery/README.md) chain almost exactly — same 9
-steps, same order, same tooling — because `rhodes.akn`'s DR procedure was written for this migration in the first place:
-`amiya.akn` becoming unreachable and `amiya.akn` being decommissioned in favor of `rhodes.akn` are the same event from
-the new cluster's point of view. Follow that document step by step; this page only covers where this migration actually
-diverges from a genuine DR drill.
+[Rhodes·AKN Disaster Recovery](../guides/Restaurer-Rhodes.md) chain almost exactly — same 9 steps, same order, same
+tooling — because `rhodes.akn`'s DR procedure was written for this migration in the first place: `amiya.akn` becoming
+unreachable and `amiya.akn` being decommissioned in favor of `rhodes.akn` are the same event from the new cluster's
+point of view. Follow that document step by step; this page only covers where this migration actually diverges from a
+genuine DR drill.
 
 ## Step 1 — this is a real first run, not a recreation
 
 DR's Step 1 assumes the cluster template and machine classes already existed and are being re-applied after a loss.
 Here, `projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml` is being applied for real for the first
 time — it was drafted proactively on 2026-07-23, ahead of this migration (see that file's own history and
-[README.md's History](../../projects/rhodes.akn/docs/disaster-recovery/README.md#history)).
+[README.md's History](../guides/Restaurer-Rhodes.md#historique)).
 
 > [!NOTE]\
 > The action itself is identical to DR's own Step 1: apply the cluster template via `omnictl`, following
@@ -39,7 +39,7 @@ generically does.
 ## Between DR Steps 5/6 and Step 9 — validate over real HTTPS via `/etc/hosts`
 
 Follow the DR's own
-[Between Steps 6 and 9 — validate over real HTTPS via `/etc/hosts` section](../../projects/rhodes.akn/docs/disaster-recovery/README.md#between-steps-6-and-9---validate-over-real-https-via-etchosts-optional)
+[Between Steps 6 and 9 — validate over real HTTPS via `/etc/hosts` section](../guides/Restaurer-Rhodes.md#entre-les-étapes-6-et-9--valider-en-https-réel-via-etchosts-optionnel)
 as written — same entries, same IP.
 
 > [!IMPORTANT]\
@@ -105,11 +105,9 @@ Verify with `kubectl get externalsecret -A` on `lungmen.akn`'s own context — a
 
 ## References
 
-- [Rhodes·AKN Disaster Recovery](../../projects/rhodes.akn/docs/disaster-recovery/README.md) — the 9-step chain this
-  migration follows
-- [OpenBao Disaster Recovery](../../projects/rhodes.akn/docs/disaster-recovery/openbao.md),
-  [Pocket-Id Disaster Recovery](../../projects/rhodes.akn/docs/disaster-recovery/pocket-id.md) — component-specific
-  restore steps
+- [Rhodes·AKN Disaster Recovery](../guides/Restaurer-Rhodes.md) — the 9-step chain this migration follows
+- [OpenBao Disaster Recovery](../guides/Restaurer-OpenBao.md),
+  [Pocket-Id Disaster Recovery](../guides/Restaurer-Pocket-Id.md) — component-specific restore steps
 - [OMNI-20260721-00: Talos cluster bring-up on Proxmox](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)
   — cluster provisioning (Step 1)
 - [DB-20260723-00: Restore a CNPG cluster from its S3 object-store backup](../procedures/databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md)

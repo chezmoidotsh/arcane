@@ -89,7 +89,6 @@ mise install
 ├── scripts                         # Utility scripts
 ├── .mise.toml                      # Development environment configuration
 ├── CHANGELOG.md                    # Project history and evolution
-├── DISASTER_RECOVERY_PLAN.md       # Disaster recovery plan
 └── README.md                       # Project documentation
 ```
 
