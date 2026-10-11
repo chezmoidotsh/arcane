@@ -36,11 +36,13 @@ documentation du dépôt. Il fait foi, se lit directement dans Git et est reflé
 
 ## Référence
 
-| Page                                                                       | Rôle                                            |
-| -------------------------------------------------------------------------- | ----------------------------------------------- |
-| [Architecture & Documentation Réseau](network/README.md)                   | Topologie, plan d'adressage, passerelles et DNS |
-| [Renovate](RENOVATE.md)                                                    | Configuration des mises à jour de dépendances   |
-| [Décisions d'Architecture](decisions/001-centralized-secret-management.md) | Pourquoi le dépôt est construit ainsi (ADR)     |
+| Page                                                                       | Rôle                                                        |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| [Architecture & Documentation Réseau](reference/Reseau-Reference.md)       | Topologie, plan d'adressage, passerelles et DNS             |
+| [Plan d'adressage (IPAM)](reference/IPAM-Reference.md)                     | Réseaux, VLAN, pools d'adresses et identifiants de clusters |
+| [Passerelles et DNS](reference/Passerelles-et-DNS-Reference.md)            | Passerelles interne et externe, répartition du DNS          |
+| [Renovate](reference/Renovate-Reference.md)                                | Configuration des mises à jour de dépendances               |
+| [Décisions d'Architecture](decisions/001-centralized-secret-management.md) | Pourquoi le dépôt est construit ainsi (ADR)                 |
 
 ## Pour aller plus loin
 

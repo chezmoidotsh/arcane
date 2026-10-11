@@ -81,7 +81,7 @@ Grouped by concern rather than alphabetically, since agents usually need "what h
 | Identity / SSO        | Pocket-Id is the **sole** identity provider                                                                                                                                                                                       |
 | Observability         | VictoriaMetrics + VictoriaLogs + vmalert + Alertmanager on a single NixOS LXC (ADR-013), fed by per-cluster vmagent (metrics) and Vector (logs); Grafana for dashboards                                                           |
 | Policy enforcement    | OPA/Rego, CI-time only via conftest in the compliance workflows (ADR-012) — no in-cluster admission webhook                                                                                                                       |
-| Network topology      | Dual-NIC Proxmox host + Proxmox SDN VXLAN (ADR-014, `docs/network/`)                                                                                                                                                              |
+| Network topology      | Dual-NIC Proxmox host + Proxmox SDN VXLAN (ADR-014, `docs/reference/`)                                                                                                                                                            |
 | Linting               | rtunk (trunk-compatible, `.rtunk/rtunk.yaml`) — `mise run lint` / `mise run lint:fix`; CI runs it through the `axnic/rtunk` action                                                                                                |
 | Dev environment       | mise (tool versions), Nix flakes (reproducible OCI images), an experimental DevContainer under `docs/experiments/` (not repo-wide)                                                                                                |
 
@@ -197,7 +197,7 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
   both `lungmen.akn` and `rhodes.akn`. Pocket-Id and Grafana on `rhodes.akn` are deliberately exposed this way with
   `sso: false` at the Pangolin layer (each app gates its own login instead of a double auth check) — see the
   Observability section. **Tailscale** is mandatory for cluster-to-cluster connectivity outside the homelab.
-- **Network topology**: dual-NIC Proxmox host + Proxmox SDN VXLAN, per ADR-014 (`docs/network/`).
+- **Network topology**: dual-NIC Proxmox host + Proxmox SDN VXLAN, per ADR-014 (`docs/reference/`).
 
 ### Storage and databases
 
@@ -238,7 +238,7 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 - Experiments: `docs/experiments/`
 - Incidents: `docs/incidents/` — postmortems for production issues
 - Migrations: `docs/migrations/` — cross-cluster migration records (e.g. `amiya.akn->rhodes.akn.md`)
-- Network reference: `docs/network/` (topology, IPAM)
+- Network reference: `docs/reference/Reseau-Reference.md` (topology), `docs/reference/IPAM-Reference.md` (IPAM)
 
 ## Documentation
 

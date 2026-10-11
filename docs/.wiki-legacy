@@ -8,6 +8,4 @@ decisions/*
 experiments/*
 incidents/*
 migrations/*
-network/*
 reports/*
-RENOVATE.md
