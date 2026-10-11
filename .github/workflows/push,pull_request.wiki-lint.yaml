@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Wiki lint — style guide rules on wiki/
+# =============================================================================
+# Runs `scripts/wiki:lint`: flat wiki, file names, one title matching the file name, "Where to go next"
+# last, wiki-form links that resolve, every page in _Sidebar.md, no filler word, no emoji. The rules
+# are those marked [lint] in .agents/skills/wiki-docs/references/style-guide.md.
+#
+# Events:      push (main), pull_request, on wiki/ and the script only
+# Permissions: contents: read
+# =============================================================================
+
+name: 🧪 Wiki Lint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/push,pull_request.wiki-lint.yaml"
+      - "scripts/wiki:lint"
+      - "wiki/**"
+
+  pull_request:
+    paths:
+      - ".github/workflows/push,pull_request.wiki-lint.yaml"
+      - "scripts/wiki:lint"
+      - "wiki/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Minimal top-level permissions — each job declares what it needs.
+permissions: {}
+
+jobs:
+  lint:
+    name: 🔍 Check the wiki style guide rules
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 🧪 Run the linter self-test
+        run: scripts/wiki:lint --self-test
+
+      - name: 🔍 Lint wiki/
+        run: scripts/wiki:lint

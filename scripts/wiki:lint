@@ -1,0 +1,166 @@
+#!/usr/bin/env python3
+# Copyright (C) 2026 Alexandre Nicolaie (xunleii@users.noreply.github.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ----------------------------------------------------------------------------
+# mise alias="wiki:lint"
+# mise description="Check the mechanical rules of the wiki style guide on wiki/."
+#
+# Enforces the [lint] rules of .agents/skills/wiki-docs/references/style-guide.md: flat wiki, file names, one H1
+# matching the file name, "Where to go next" last, wiki-form links that resolve, every page in _Sidebar.md, no filler
+# words, no emoji. Standard library only.
+#
+# Usage: scripts/wiki:lint [--root wiki] | --self-test
+import argparse
+import re
+import sys
+import tempfile
+from pathlib import Path
+from urllib.parse import unquote
+
+NAME_RE = re.compile(r"^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$")
+SPECIAL = {"Home", "_Sidebar", "_Footer"}  # exempt from the title, naming and "Where to go next" rules
+FILLER_RE = re.compile(r"\b(simply|just|easily|basically|obviously|of course|please note)\b", re.I)
+EMOJI_RE = re.compile("[\U0001f000-\U0001faff☀-➿⬀-⯿️]")
+LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+FENCE_RE = re.compile(r"^\s*(```|~~~)")
+NEXT_HEADING = "where to go next"
+
+
+def norm(s: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
+
+
+def body_lines(text: str):
+    """Yield (lineno, line, in_code) after the front matter, so rules can skip code blocks."""
+    lines = text.splitlines()
+    start = 0
+    if lines and lines[0].strip() == "---":
+        for i in range(1, len(lines)):
+            if lines[i].strip() == "---":
+                start = i + 1
+                break
+    fenced = False
+    for n in range(start, len(lines)):
+        if FENCE_RE.match(lines[n]):
+            fenced = not fenced
+            yield n + 1, lines[n], True
+        else:
+            yield n + 1, lines[n], fenced
+
+
+def lint(root: Path) -> list[str]:
+    errs: list[str] = []
+    pages = sorted(p for p in root.glob("*.md"))
+    names = {p.stem for p in pages}
+    assets = {str(p.relative_to(root)) for p in (root / "assets").rglob("*") if p.is_file()} if (root / "assets").is_dir() else set()
+
+    for entry in sorted(root.iterdir()):
+        if entry.is_dir() and entry.name != "assets":
+            errs.append(f"{entry}: the wiki is flat, no subdirectory other than assets/")
+        elif entry.is_file() and entry.suffix != ".md" and entry.name != ".gitkeep":
+            errs.append(f"{entry}: only .md pages live in wiki/ (binary files go in assets/)")
+
+    sidebar = root / "_Sidebar.md"
+    linked: set[str] = set()
+    if pages and not sidebar.exists():
+        errs.append(f"{sidebar}: missing, every page must be reachable from the sidebar")
+
+    for page in pages:
+        stem = page.stem
+        text = page.read_text(encoding="utf-8")
+        special = stem in SPECIAL
+        if not special and not NAME_RE.match(stem):
+            errs.append(f"{page}: file name must be Title-Case-With-Hyphens (letters, digits, hyphens)")
+
+        h1: list[tuple[int, str]] = []
+        h2: list[str] = []
+        for n, line, code in body_lines(text):
+            if code:
+                continue
+            m = re.match(r"^(#{1,6})\s+(.*?)\s*#*\s*$", line)
+            if m:
+                level, title = len(m.group(1)), m.group(2)
+                if level == 1:
+                    h1.append((n, title))
+                elif level == 2:
+                    h2.append(title)
+                elif level > 3:
+                    errs.append(f"{page}:{n}: heading deeper than ### (split the page)")
+            plain = re.sub(r"`[^`]*`", "", line)
+            if f := FILLER_RE.search(plain):
+                errs.append(f"{page}:{n}: filler word '{f.group(0)}'")
+            if EMOJI_RE.search(line):
+                errs.append(f"{page}:{n}: emoji")
+            for target in LINK_RE.findall(plain):
+                if re.match(r"^([a-z][a-z0-9+.-]*:|#)", target, re.I):
+                    continue
+                path = unquote(target.split("#", 1)[0])
+                if path.endswith(".md"):
+                    errs.append(f"{page}:{n}: link '{target}' must use the wiki form (no .md)")
+                elif path in names or path in assets:
+                    if page.name == "_Sidebar.md":
+                        linked.add(path)
+                else:
+                    errs.append(f"{page}:{n}: broken link '{target}'")
+
+        if not special:
+            if len(h1) != 1:
+                errs.append(f"{page}: expected exactly one '# Title', found {len(h1)}")
+            elif norm(h1[0][1]) != norm(stem):
+                errs.append(f"{page}:{h1[0][0]}: title '{h1[0][1]}' does not match the file name")
+            if not h2 or norm(h2[-1]) != NEXT_HEADING:
+                errs.append(f"{page}: last '##' section must be 'Where to go next'")
+
+    if sidebar.exists():
+        for stem in sorted(names - SPECIAL - linked):
+            errs.append(f"{sidebar}: page '{stem}' is not reachable from the sidebar")
+    return errs
+
+
+def self_test() -> None:
+    good = "# Good Page\n\nShort version.\n\n```sh\njust run\n```\n\n## Where to go next\n\n- [Home](Home)\n"
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        (root / "Home.md").write_text("# Home\n\n[Good](Good-Page)\n")
+        (root / "_Sidebar.md").write_text("- [Good](Good-Page)\n")
+        (root / "Good-Page.md").write_text(good)
+        assert lint(root) == [], lint(root)
+        (root / "Bad-Page.md").write_text("# Other Title\n\nIt is simply easy. See [x](Nope.md) and [y](Missing).\n")
+        errs = "\n".join(lint(root))
+        for expected in ("filler word", "does not match", "wiki form", "broken link", "Where to go next", "not reachable"):
+            assert expected in errs, (expected, errs)
+    print("self-test ok")
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--root", default="wiki")
+    ap.add_argument("--self-test", action="store_true")
+    args = ap.parse_args()
+    if args.self_test:
+        self_test()
+        return 0
+    root = Path(args.root)
+    if not root.is_dir():
+        print(f"error: {root} is not a directory", file=sys.stderr)
+        return 2
+    errs = lint(root)
+    for e in errs:
+        print(e)
+    print(f"{len(errs)} problem(s)" if errs else "wiki lint ok")
+    return 1 if errs else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

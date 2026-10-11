@@ -105,6 +105,11 @@ lint:
         - projects/chezmoi.sh/docs/TRUENAS.md
         - projects/chezmoi.sh/docs/PROXMOX_BACKUP_SERVER.md
         - projects/chezmoi.sh/docs/PROXMOX-VE.md
+    - # Wiki pages link to each other by page name (`[x](Page)`, no `.md`), which markdown-link-check cannot
+      # resolve; scripts/wiki:lint (workflow push,pull_request.wiki-lint) checks those links instead.
+      linters: [markdown-link-check]
+      paths:
+        - wiki/**
     - # Prettier should not lint/format templated YAML files
       linters: [prettier]
       paths:
