@@ -4,7 +4,7 @@
 # Patterns are relative to docs/ (fnmatch: `*` also matches `/`). Delete a line when its category has been migrated;
 # the file is gone when the migration is complete.
 archives/2026-*
-decisions/*
+decisions/0*
 experiments/*
 incidents/*
 migrations/*
