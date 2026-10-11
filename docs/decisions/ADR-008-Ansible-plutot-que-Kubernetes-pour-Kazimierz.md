@@ -1,6 +1,6 @@
 ---
-status: "implemented"
-date: 2026-10-11
+status: "superseded by ADR-016"
+date: 2026-10-18
 implementation-completed: 2025-11-15
 decision-makers: ["Alexandre"]
 assisted-by: ["claude-4.5-sonnet", "claude-sonnet-5.5"]
@@ -10,17 +10,12 @@ template-version: "2.0.0"
 
 # ADR-008 Ansible plutôt que Kubernetes pour Kazimierz
 
-> [!WARNING]\
-> Migré le 2026-10-11. Statut et chemins vérifiés contre les fichiers du dépôt ; l'état des VPS `kazimierz.akn` et `rimbilliton.akn` n'a pas été revérifié.
-
 > [!CAUTION]\
-> **Partiellement supplanté par l'[ADR-016](./016-kazimierz-nixos-over-ansible.md) (2026-10-10, vérifié le
-> 2026-10-11).** Reste valable : la décision de fond (un VPS unique plutôt qu'un cluster Kubernetes), Pangolin comme passerelle avec Pangolin, Gerbil et Traefik en conteneurs, et `kazimierz.akn` hors du parc ArgoCD. Supplanté : le
-> choix de gestion de configuration (Ansible + Docker Compose), remplacé par NixOS installé avec `nixos-anywhere` et
-> `sops-nix` ; l'ADR-016 déclare ne supplanter que ce choix. Preuves : `projects/kazimierz.akn/src/infrastructure/` ne
-> contient plus que `nixos/` et `pulumi/`, et le playbook `src/infrastructure/ansible/site.yml` cité plus bas n'existe
-> plus. Les passages propres à Ansible (dont `ansible-pull`, ARA et ce chemin) sont conservés comme historique. Le
-> statut reste `implemented`, car la décision contre Kubernetes est toujours appliquée.
+> **Supplanté par l'[ADR-016](./016-kazimierz-nixos-over-ansible.md) (2026-10-10).** `kazimierz.akn` tourne
+> entièrement sous NixOS : `projects/kazimierz.akn/src/infrastructure/` ne contient plus que `nixos/` et `pulumi/`, et le
+> playbook `src/infrastructure/ansible/site.yml` cité plus bas n'existe plus. L'ADR-016 ne supplante formellement que le
+> choix de gestion de configuration, et la décision de ne pas utiliser Kubernetes n'a pas été remise en cause. Les
+> passages propres à Ansible (dont `ansible-pull`, ARA et ce chemin) sont conservés comme historique.
 
 ## Contexte et problème
 
@@ -416,7 +411,18 @@ le retour arrière est complexe. À réexaminer une fois les instances supervis�
 
 ## Historique des modifications
 
-- _2026-10-11_ : **CHORE** : Migration vers le gabarit d'ADR 2.0.0 (version française) : traduction, sections renommées, sommaire manuel supprimé, titre aligné sur le nom de fichier, section `Pour aller plus loin`, `template-version` ajouté, statut explicite ajouté à l'option 1 d'après le texte de la décision, émojis retirés, avertissements `> [!CAUTION]` ramenés à trois au plus (les autres deviennent des notes en italique), lien vers le guide d'amorçage mis à jour, bandeau de tête remplacé par une note datée qui distingue ce qui reste valable de ce qui est supplanté, `date` mise à jour. Statut conservé à `implemented` : l'ADR-016 déclare ne supplanter que le choix de gestion de configuration (« This supersedes only the configuration-management choice ») et `projects/kazimierz.akn/src/infrastructure/` ne contient plus que `nixos/` et `pulumi/`. Décision, options, chronologie et dates d'origine inchangées.
+- _2026-10-18_ : **DEPRECATION** : Statut passé de `implemented` à `superseded by ADR-016` à la demande du mainteneur,
+  lors de la relecture de la migration : `kazimierz.akn` est entièrement sous NixOS et le choix Ansible + Docker Compose
+  n'est plus d'actualité. Bandeau de vérification retiré, `date` mise à jour.
+- _2026-10-11_ : **CHORE** : Migration vers le gabarit d'ADR 2.0.0 (version française) : traduction, sections renommées,
+  sommaire manuel supprimé, titre aligné sur le nom de fichier, section `Pour aller plus loin`, `template-version`
+  ajouté, statut explicite ajouté à l'option 1 d'après le texte de la décision, émojis retirés, avertissements `>
+  [!CAUTION]` ramenés à trois au plus (les autres deviennent des notes en italique), lien vers le guide d'amorçage mis à
+  jour, bandeau de tête remplacé par une note datée qui distingue ce qui reste valable de ce qui est supplanté, `date`
+  mise à jour. Statut conservé à `implemented` : l'ADR-016 déclare ne supplanter que le choix de gestion de
+  configuration (« This supersedes only the configuration-management choice ») et
+  `projects/kazimierz.akn/src/infrastructure/` ne contient plus que `nixos/` et `pulumi/`. Décision, options,
+  chronologie et dates d'origine inchangées.
 - _2026-10-10_ : **DEPRECATION** : Le choix de gestion de configuration (Ansible + Docker Compose) est supplanté par
   l'[ADR-016](./016-kazimierz-nixos-over-ansible.md) (NixOS via `nixos-anywhere` et `sops-nix`) ; le code Ansible a été
   supprimé. Statut conservé à `implemented` : la décision Kubernetes contre VPS reste valable. Les passages sur Ansible
