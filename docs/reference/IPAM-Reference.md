@@ -234,7 +234,7 @@ depuis son propre `/19` dans `172.30.0.0/16` (un `/16` contient exactement 8 × 
 > `lungmen-legacy` (emplacement 7) est une réservation de comptabilité, pas un changement de CIDR de pods en production.
 > D'après l'ancienne version de cette page, le cluster lungmen.akn en service garde son CIDR de pods `10.244.0.0/16`
 > (hérité, antérieur à Omni) ; la ligne réserve l'identifiant 7 et `172.30.192.0/19` pendant la durée du pont `talosnet`
-> temporaire décrit dans [MIGR-20260801-00](../archives/2026-08-01-MIGR-20260801-00.lungmen-talosnet-bridge.md), pour
+> temporaire décrit dans [MIGR-20260801-00](../archives/MIGR-20260801-00-Relier-Lungmen-au-Reseau-Talosnet.md), pour
 > qu'aucun autre cluster ne prenne cet emplacement. L'emplacement 2 (`lungmen.akn`) reste réservé au vrai cluster recréé
 > sous #1072. La ligne est à supprimer à la fin du pont.
 
@@ -356,7 +356,7 @@ dans son `.fw` (étape manuelle).
 - _2026-10-11_ : l'ancien lien `README.md` désignait la vue d'ensemble réseau, maintenant
   [Réseau Reference](Reseau-Reference.md). Les anciens liens vers
   [INF-20260627-00](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md) et
-  [MIGR-20260801-00](../archives/2026-08-01-MIGR-20260801-00.lungmen-talosnet-bridge.md) pointent vers les fichiers
+  [MIGR-20260801-00](../archives/MIGR-20260801-00-Relier-Lungmen-au-Reseau-Talosnet.md) pointent vers les fichiers
   migrés.
 - _2026-10-11_ : valeurs confirmées par le dépôt : pools `external` (`10.0.0.64/29` rhodes, `10.0.0.72/29` lungmen) et
   `internal` (`10.128.0.240`-`.241` rhodes, `.242`-`.243` lungmen) dans
