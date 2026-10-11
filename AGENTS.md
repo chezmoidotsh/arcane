@@ -37,9 +37,8 @@ catalog/        Reusable components (charts, compositions, OCI images, …)
 ├── pulumi/         Pulumi components and stacks
 └── talos/          Talos Linux bootstrap manifests + machine config patches
 
-docs/           ADRs (decisions/), procedures/, experiments/, incidents/, migrations/, network/, reports/, archives/
-                (being moved to wiki/, see "Documentation" below)
-wiki/           Source of the GitHub Wiki, mirrored on every push to main
+docs/           Documentation, source of the GitHub Wiki: decisions/ (ADRs), procedures/, incidents/, experiments/,
+                migrations/, network/, reports/, archives/ (see "Documentation" below)
 
 projects/       One subdirectory per cluster or standalone app
 ├── chezmoi.sh/     Shared Pulumi stacks — Proxmox host, OpenBao, Tailscale, observability LXC, OCI registry
@@ -229,7 +228,7 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 
 ### Important paths
 
-- Wiki (documentation source): `wiki/` — see "Documentation" below
+- Documentation: `docs/`, with the migration state in `docs/.wiki-legacy` — see "Documentation" below
 - Bootstrap docs: `projects/*/docs/BOOTSTRAP.md` (`kazimierz.akn`, `rimbilliton.akn`), `projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md`
   and `projects/rhodes.akn/docs/disaster-recovery/`
 - Architecture diagrams: `projects/*/architecture.d2` → `projects/*/docs/assets/architecture.svg`
@@ -239,6 +238,23 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 - Incidents: `docs/incidents/` — postmortems for production issues
 - Migrations: `docs/migrations/` — cross-cluster migration records (e.g. `amiya.akn->rhodes.akn.md`)
 - Network reference: `docs/network/` (topology, IPAM)
+
+## Documentation
+
+`docs/` is the documentation of the repository and the source of the GitHub Wiki. It is organised in directories by page
+type and its pages link to each other with relative `.md` links, so it reads well when browsing the repository. The
+`wiki` workflow publishes it to the GitHub Wiki on every push to `main` (`scripts/wiki:publish` rewrites the links).
+
+It is being migrated to a common standard (issue #1257): `docs/.wiki-legacy` lists the paths not migrated yet, which are
+neither linted nor published, and `docs/migrations/20261011-documentation-audit-1257.md` lists every document with its
+destination.
+
+- Write and edit pages with the `documentation-writer` skill (style guide, page templates). `scripts/wiki:lint` enforces
+  the mechanical rules; it runs as the `wiki-lint` linter of rtunk (`.rtunk/local-plugin/`), so `mise run lint` and the CI
+  both run it.
+- Page names are unique across `docs/`, directories are lower-case, file names are `Title-Case-With-Hyphens.md`.
+- READMEs that describe a directory stay next to the code. OPA policy documentation (`catalog/opa/`) never goes in
+  `docs/`.
 
 ## Commits and pull requests
 
@@ -265,19 +281,6 @@ running `git commit` or opening a PR, they enforce project conventions and surfa
 `pulumi-debug-failed-operation`) — check that directory for something matching your task before improvising a procedure
 from scratch.
 
-## Documentation
-
-The documentation is moving from `docs/`, `projects/*/docs/` and the repository root into `wiki/`, which the
-`wiki` workflow mirrors to the GitHub Wiki on every push to `main` (issue #1257). Until a category is migrated, its
-documents stay where they are; `docs/migrations/20261011-documentation-audit-1257.md` lists every document with its
-destination.
-
-- Write and edit pages with the `documentation-writer` skill (style guide, page templates). `scripts/wiki:lint` enforces the
-  mechanical rules and runs on every pull request touching `wiki/`.
-- `wiki/` is flat, with `Title-Case-With-Hyphens.md` names and wiki-form links (`[x](Page)`, no `.md`).
-- READMEs that describe a directory stay next to the code. OPA policy documentation (`catalog/opa/`) never goes in the
-  wiki.
-
 In short:
 
 - One logical change per commit; multiple scopes allowed when atomic (`scope1,scope2`).
@@ -300,8 +303,8 @@ permissions), SHA-pinned actions, `permissions: {}` at the top with each job dec
   `/help` in pull request comments — nothing runs automatically, and its answers are advisory. It needs the repository
   secret `OPENROUTER_API_KEY` (created by hand) and the repository variable `PR_AGENT_ALLOWED_USERS` (JSON list of
   GitHub logins, e.g. `["xunleii"]`); without them it does nothing.
-- **Wiki** (`push,workflow_dispatch.wiki.yaml`) mirrors `wiki/` to the GitHub wiki on every push to `main` that touches
-  it. The wiki must be enabled and initialised once by hand (create one page in the UI).
+- **Wiki** (`push,workflow_dispatch.wiki.yaml`) publishes the migrated pages of `docs/` to the GitHub wiki on every push
+  to `main` that touches it. The wiki must be enabled and initialised once by hand (create one page in the UI).
 
 ## Operating constraints for AI agents
 

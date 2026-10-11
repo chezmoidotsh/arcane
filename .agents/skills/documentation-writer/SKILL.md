@@ -15,9 +15,11 @@ description: >
 
 # Documentation writer
 
-The documentation of this repository lives in `wiki/` and is mirrored to the GitHub Wiki on every push to `main`
-(`.github/workflows/push,workflow_dispatch.wiki.yaml`). The wiki has no pull requests, so `wiki/` in the repository is
-the source of truth: changes are reviewed like code and nobody edits the wiki in the web UI.
+The documentation of this repository lives in `docs/`, organised in directories by page type, and is mirrored to the
+GitHub Wiki on every push to `main` (`.github/workflows/push,workflow_dispatch.wiki.yaml`, which runs
+`scripts/wiki:publish`). The wiki has no pull requests, so `docs/` in the repository is the source of truth: changes are
+reviewed like code, pages link to each other with relative `.md` links so they read well in Git, and nobody edits the
+wiki in the web UI.
 
 This skill is the only place that says how a page is written. It routes to the page type you need, and every page type
 shares the same rules.
@@ -51,20 +53,21 @@ Tell-apart rules when two rows seem to fit:
 
 | Content                                                                  | Where it lives                     |
 | ------------------------------------------------------------------------ | ---------------------------------- |
-| Guides, references, procedures, ADRs, post-mortems, experiments          | `wiki/`                            |
+| Guides, references, procedures, ADRs, post-mortems, experiments          | `docs/`, in its type directory     |
 | A README that describes a directory (what it contains, how to change it) | Next to the code, as a `README.md` |
-| OPA policies and their rule sheets                                       | `catalog/opa/`, never in the wiki  |
+| OPA policies and their rule sheets                                       | `catalog/opa/`, never in `docs/`   |
 | Agent instructions, skills and knowledge                                 | `AGENTS.md`, `.agents/`            |
 | Output of a generator (`projects/chezmoi.sh/docs/*.md`)                  | Where its generator writes it      |
 | Diagrams and icons used by READMEs                                       | `docs/assets/`                     |
 
-A README section that is really a guide moves to the wiki, and the README links to it.
+A README section that is really a guide moves to `docs/`, and the README links to it.
 
 > [!NOTE]
-> The documentation is moving to `wiki/` category by category (issue #1257). Until a category has migrated, new
-> procedures go in `docs/procedures/`, ADRs in `docs/decisions/` and post-mortems in `docs/incidents/`, with the numbering
-> and front matter their reference file describes. Once it has migrated, they go in `wiki/` under the names the style
-> guide gives (`Procedure-<ID>-<Verb-Phrase>`, `ADR-NNN-<Title>`, `Incident-YYYY-MM-DD-<Title>`).
+> The documentation is being migrated to the standard below category by category (issue #1257). `docs/.wiki-legacy`
+> lists what is not migrated yet: those pages are neither linted nor published. Until a category has migrated, new
+> procedures go in `docs/procedures/`, ADRs in `docs/decisions/` and post-mortems in `docs/incidents/`, with the
+> numbering and front matter their reference file describes. A new page of any other type, or a migrated category,
+> follows the naming and directory rules of the style guide.
 
 ## 3. Workflow
 
@@ -75,7 +78,7 @@ A README section that is really a guide moves to the wiki, and the README links 
    first, example before explanation, tables for anything enumerable, one fact in one place, present tense, no filler.
 4. **Wire it in.** Add the page to `_Sidebar.md` under the right heading, link it from the pages that mention it, and end
    it with `## Where to go next`.
-5. **Run `scripts/wiki:lint`** and fix every finding. The same check runs on every pull request touching `wiki/`.
+5. **Run `scripts/wiki:lint`** and fix every finding. It also runs in `rtunk check` (linter `wiki-lint`), so it runs on every pull request.
 6. **Moving a document? Use `git mv`** so the history stays traceable, then rewrite in the same pull request. Update
    every reference to the old path
    (`grep -rn "<old path>" --include='*.md' --include='*.yaml' --include='*.py' --include='*.sh' .`).
@@ -90,8 +93,9 @@ of the style guide.
 ## 5. Common mistakes
 
 - Copying a CIDR, a version or a command from another page instead of linking to it.
-- Writing `[x](Page.md)` instead of `[x](Page)`: the wiki resolves page names and the publication does not rewrite links.
-- Creating `wiki/some/sub/dir/Page.md`: the wiki is flat.
+- Writing `[x](Page)` or an absolute `/wiki/...` link instead of a relative link to the `.md` file: it breaks in Git.
+- Giving a page the same name as one in another directory: page names are unique across `docs/`.
+- Putting a page outside the directory of its type, or inventing a new top-level directory.
 - Describing the planned state as if it were deployed.
 - Putting the reasoning of a decision in a procedure, or the fix steps in a post-mortem.
 - Adding a page and forgetting `_Sidebar.md`.

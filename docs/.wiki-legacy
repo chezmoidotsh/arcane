@@ -1,0 +1,14 @@
+# Documents not migrated to the new documentation standard yet (issue #1257).
+#
+# A path listed here is not linted by scripts/wiki:lint and is not published to the GitHub Wiki.
+# Patterns are relative to docs/ (fnmatch: `*` also matches `/`). Delete a line when its category has been migrated;
+# the file is gone when the migration is complete.
+archives/*
+decisions/*
+experiments/*
+incidents/*
+migrations/*
+network/*
+procedures/*
+reports/*
+RENOVATE.md

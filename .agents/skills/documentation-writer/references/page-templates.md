@@ -1,20 +1,20 @@
-# Arcane wiki page templates
+# Arcane page templates
 
-One skeleton per page type. Copy the one that fits, delete the comments, keep the section order. Every page ends with
-`## Where to go next`. The rules behind them are in [style-guide.md](style-guide.md).
+One template per page type. Copy it, delete the comments, keep the section order. Every page ends with
+`## Where to go next`. Where a page lives and how it is named is in the [style guide](style-guide.md#naming-and-navigation).
 
-| Page type        | File name                        | Template                              |
-| ---------------- | -------------------------------- | ------------------------------------- |
-| Guide            | `Verb-Phrase.md`                 | [Guide](#guide)                       |
-| Reference        | `Topic-Reference.md`             | [Reference](#reference)               |
-| Procedure        | `Procedure-<ID>-Verb-Phrase.md`  | [Procedure](#procedure)               |
-| ADR              | `ADR-NNN-Title.md`               | [ADR](#adr)                           |
-| Post-mortem      | `Incident-YYYY-MM-DD-Title.md`   | [Post-mortem](#post-mortem)           |
-| Experiment       | `Experiment-YYYY-MM-DD-Title.md` | [Experiment](#experiment)             |
-| Project overview | `Project-<name>.md`              | [Project overview](#project-overview) |
+| Page type        | Template                                                                                                                                      |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guide            | [Guide](#guide), below                                                                                                                        |
+| Reference        | [Reference](#reference), below                                                                                                                |
+| Procedure        | [procedure-template.md](procedure-template.md), with the rules in [procedure.md](procedure.md)                                                |
+| ADR              | [adr-template.md](adr-template.md), with the rules in [adr.md](adr.md)                                                                        |
+| Post-mortem      | [postmortem.md](../templates/postmortem.md) or [postmortem-lite.md](../templates/postmortem-lite.md), rules in [postmortem.md](postmortem.md) |
+| Experiment       | [Experiment](#experiment), below                                                                                                              |
+| Project overview | [Project overview](#project-overview), below                                                                                                  |
 
-Procedures, ADRs and post-mortems keep the detailed structure described in [procedure.md](procedure.md), [adr.md](adr.md) and
-[postmortem.md](postmortem.md). The skeletons below fix the frame around them: title, short version, and `Where to go next`.
+A procedure, an ADR or a post-mortem also gets the shared frame: a title that matches the file name, a short first
+paragraph, and `## Where to go next` as the last section.
 
 ## Guide
 
@@ -47,8 +47,8 @@ omnictl cluster template sync -f projects/lungmen.akn/src/infrastructure/omni/lu
 
 ## Where to go next
 
-- [Operate the cluster](Operate-Lungmen): day-two tasks.
-- [IPAM](IPAM-Reference): the address plan used above.
+- [Operate the cluster](Operate-Lungmen.md): day-two tasks.
+- [IPAM](../reference/IPAM-Reference.md): the address plan used above.
 ````
 
 ## Reference
@@ -70,48 +70,8 @@ Address plan for every VLAN and pool in the homelab. Verified against Proxmox SD
 
 ## Where to go next
 
-- [ADR-014 Network Topology](ADR-014-Network-Topology): why the network is split this way.
+- [ADR-014 Network Topology](../decisions/ADR-014-Network-Topology.md): why the network is split this way.
 ````
-
-## Procedure
-
-For a repeatable operation. Keep the structure from `.agents/skills/documentation-writer/references/procedure-template.md`
-(metadata, prerequisites, numbered steps with expected output, rollback, history) and add the frame:
-
-````markdown
-# Procedure BKP-20260723-00 Restore CNPG From Object Store
-
-<!-- Short version: when to use it and how long it takes. Then the sections of procedure.md. -->
-
-## Where to go next
-
-- [Incident 2026-05-30 CNPG WAL Disk Full](Incident-2026-05-30-CNPG-WAL-Disk-Full): a case where it was needed.
-````
-
-## ADR
-
-Keep the front matter and sections from `.agents/skills/documentation-writer/references/adr-template.md`. A moved ADR keeps its
-number, title, decision and changelog; only the frame is added.
-
-````markdown
----
-status: accepted
-date: 2026-07-02
----
-
-# ADR-015 Migrate Crossplane To Pulumi
-
-<!-- sections from adr.md: Context, Decision, Consequences, Changelog -->
-
-## Where to go next
-
-- [ADR-014 Network Topology](ADR-014-Network-Topology): the decision this one builds on.
-````
-
-## Post-mortem
-
-Keep the front matter and sections from `.agents/skills/documentation-writer/templates/postmortem.md` untouched (the scripts in
-`.github/scripts/postmortem-*.py` read the front matter).
 
 ## Experiment
 
@@ -136,7 +96,7 @@ An experiment records a question, what was tried and what was concluded. The cod
 
 ## Where to go next
 
-- [ADR-015 Migrate Crossplane To Pulumi](ADR-015-Migrate-Crossplane-To-Pulumi): the decision this fed.
+- [ADR-015 Migrate Crossplane To Pulumi](../decisions/ADR-015-Migrate-Crossplane-To-Pulumi.md): the decision this fed.
 ````
 
 ## Project overview
@@ -161,5 +121,5 @@ One per project under `projects/`. It states what the project is and links to ev
 
 ## Where to go next
 
-- [Recover Rhodes](Recover-Rhodes): disaster recovery.
+- [Recover Rhodes](../guides/Recover-Rhodes.md): disaster recovery.
 ````

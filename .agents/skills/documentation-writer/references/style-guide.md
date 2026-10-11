@@ -1,6 +1,6 @@
-# Arcane wiki style guide
+# Arcane documentation style guide
 
-Rules for every page under `wiki/`. They are adapted from the `axnic/rtunk` wiki style guide to an infrastructure
+Rules for every page of `docs/` that has been migrated. They are adapted from the `axnic/rtunk` wiki style guide to an infrastructure
 repository, where a page is often read during an incident and a wrong sentence costs more than a missing one.
 
 Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull request. The others are a review checklist.
@@ -20,20 +20,38 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
 
 ## Naming and navigation
 
-1. **The wiki is flat [lint].** GitHub Wiki addresses pages by file name alone, so a subdirectory only creates name
-   collisions. Binary assets go in `wiki/assets/` and nothing else.
+1. **A page lives in the directory of its type.** `docs/` is organised in directories so the documentation is browsable
+   and ordered in Git; the same paths become the page paths of the wiki. Directory names are
+   `lower-case-with-hyphens` [lint]; a type may add sub-directories (`procedures/backups/`).
+
+   | Page type        | Directory       | File name                          |
+   | ---------------- | --------------- | ---------------------------------- |
+   | Guide            | `guides/`       | `Verb-Phrase.md`                   |
+   | Reference        | `reference/`    | `Topic-Reference.md`               |
+   | Procedure        | `procedures/`   | `Procedure-<ID>-Verb-Phrase.md`    |
+   | ADR              | `decisions/`    | `ADR-NNN-Title.md`                 |
+   | Post-mortem      | `incidents/`    | `Incident-YYYY-MM-DD-Title.md`     |
+   | Experiment       | `experiments/`  | `Experiment-YYYY-MM-DD-Title.md`   |
+   | Project overview | `projects/`     | `Project-<name>.md`                |
+
+   Everything else (a diagram, an image) goes in `docs/assets/`. `Home.md`, `_Sidebar.md` and `_Footer.md` stay at the
+   root of `docs/`.
 2. **File names use `Title-Case-With-Hyphens.md` [lint].** Letters, digits and hyphens only: no dots, spaces,
-   underscores or non-ASCII characters. Exceptions are `Home.md`, `_Sidebar.md` and `_Footer.md`.
-3. **The name signals the page type.** Guides start with a verb (`Bootstrap-Lungmen`, `Recover-OpenBao`), references end
+   underscores or non-ASCII characters.
+3. **Page names are unique across the whole tree [lint].** Two pages with the same name (case ignored) in different
+   directories are rejected, so a page can always be found by its name and moved without a collision.
+4. **The name signals the page type.** Guides start with a verb (`Bootstrap-Lungmen`, `Recover-OpenBao`), references end
    with `-Reference` (`IPAM-Reference`). Records keep their identifier: `ADR-014-Network-Topology`,
    `Procedure-BKP-20260723-00-Restore-CNPG-From-Object-Store`, `Incident-2026-05-30-CNPG-WAL-Disk-Full`.
-4. **Every page is reachable from `_Sidebar.md` [lint].** The sidebar is curated by what the reader is trying to do
+5. **Every page is reachable from `_Sidebar.md` [lint].** The sidebar is curated by what the reader is trying to do
    (get started, operate, recover, reference, internals), not by file type. Records (ADR, incidents) are grouped under
    their own heading and listed in order.
-5. **Links use the wiki form [lint].** Write `[IPAM](IPAM-Reference)`, never `IPAM-Reference.md`: the wiki resolves page
-   names and the publication workflow does not rewrite links. A link to a section is `[x](Page#section)`. A link to the
-   code is an absolute URL on `main` (`https://github.com/chezmoidotsh/arcane/blob/main/<path>`), so it keeps working
-   from the wiki.
+6. **Links are relative and point to the `.md` file [lint].** Write `[IPAM](../reference/IPAM-Reference.md)`, never
+   `IPAM-Reference` or an absolute path: relative links work when browsing Git, and the link must resolve to an existing
+   file. A link to a section is `[x](Page.md#section)`. A link to code outside `docs/` is relative too
+   (`../projects/rhodes.akn/README.md`). `scripts/wiki:publish` rewrites them for the wiki when publishing.
+7. **Not migrated yet? List it in `docs/.wiki-legacy`.** A path listed there is neither linted nor published. Delete the
+   line when its category has migrated; the file disappears when the migration is complete.
 
 ## Content
 
@@ -73,7 +91,7 @@ ADRs and post-mortems are history. When they move to the wiki:
 
 ## Review checklist
 
-Before opening a pull request that touches `wiki/`:
+Before opening a pull request that touches `docs/`:
 
 - [ ] `scripts/wiki:lint` passes.
 - [ ] The first paragraph answers "what is this page for?".
