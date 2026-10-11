@@ -1484,7 +1484,7 @@ For each new application:
 - [ADR-004: OpenBao Policy Naming Conventions](./004-openbao-policy-naming-conventions.md) - Policy standards
 - [CLAUDE.md](../../CLAUDE.md) - Repository structure overview
 - [ArgoCD README](../../projects/amiya.akn/src/apps/argocd/README.md) - ArgoCD app structure and sync conventions
-- [Renovate Configuration Guide](../RENOVATE.md) - Automated dependency management with label and image tracking
+- [Renovate Configuration Guide](../reference/Renovate-Reference.md) - Automated dependency management with label and image tracking
 
 ### Kubernetes Standards
 

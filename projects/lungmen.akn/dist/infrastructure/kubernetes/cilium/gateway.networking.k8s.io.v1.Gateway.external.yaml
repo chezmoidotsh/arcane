@@ -6,7 +6,7 @@ metadata:
     argocd.argoproj.io/description: |
       Cilium Gateway API gateway for lungmen.akn's VLAN5-facing ingress plane. Gets its
       LoadBalancer IP from the "external" CiliumLoadBalancerIPPool — the catch-all default (no
-      Service/Gateway needs to opt in), reachable from the home network. See docs/network/ipam.md
+      Service/Gateway needs to opt in), reachable from the home network. See docs/reference/IPAM-Reference.md
       "Pools LoadBalancer de Cilium" and "Pools LoadBalancer internes (talosnet)" for the "internal"
       counterpart. Labeled external-dns.chezmoi.sh/zone=external so external-dns-unifi's
       --gateway-label-filter picks it up as a valid parent for any HTTPRoute attached here,

@@ -83,9 +83,9 @@ Omni gère les clusters Talos avec trois briques indépendantes :
 ### Allocation des CIDR de Pod
 
 Chaque cluster reçoit son propre `/19` de Pod dans le supernet `172.30.0.0/16`, sans recouvrement avec les autres :
-c'est un prérequis de ClusterMesh. La table d'allocation fait foi, elle est dans [`ipam.md`](../../network/ipam.md). Le
-prochain CIDR libre s'obtient en incrémentant l'identifiant de cluster de cette table (identifiant 3 :
-`172.30.64.0/19`).
+c'est un prérequis de ClusterMesh. La table d'allocation fait foi, elle est dans
+[`ipam.md`](../../reference/IPAM-Reference.md). Le prochain CIDR libre s'obtient en incrémentant l'identifiant de
+cluster de cette table (identifiant 3 : `172.30.64.0/19`).
 
 Le **CIDR de Services `172.31.0.0/19`** et le **clusterDNS `172.31.0.10`** sont **communs à tous les clusters** et ne se
 changent pas : la section « Service CIDR » de la même page en donne la raison.
@@ -505,7 +505,7 @@ une commande de réépinglage sont suivies par l'issue [#1357](https://github.co
 
 - [ADR-014 : topologie réseau du homelab](../../decisions/014-network-topology.md) : définit le supernet des CIDR de Pod
   (`172.30.0.0/16`) et l'allocation d'un `/19` par cluster. La table de référence des CIDR de Pod par cluster est dans
-  [Allocation IPAM](../../network/ipam.md).
+  [Allocation IPAM](../../reference/IPAM-Reference.md).
 - [ADR-011 : motif des manifests rendus](../../decisions/011-rendered-manifests-pattern.md) : le motif de pré-rendu dans
   `dist/` utilisé à l'étape 10.
 - [Expérience Proxmox CSI/CCM](../../experiments/20260617-proxmox-csi-ccm/README.md) : architecture, ordre de

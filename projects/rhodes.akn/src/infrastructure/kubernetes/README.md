@@ -17,8 +17,8 @@ the two Proxmox components below).
 
 eBPF-based CNI: pod networking, `CiliumNetworkPolicy` enforcement, L2 announcement for LoadBalancer IPs — two
 `CiliumLoadBalancerIPPool`s, `external.ippool.yaml` (VLAN5, `10.0.0.64/29`, the catch-all default) and
-`internal.ippool.yaml` (talosnet-only, opt-in — see `docs/network/ipam.md`) — and the cluster's **Gateway API**
-implementation, no separate ingress controller.
+`internal.ippool.yaml` (talosnet-only, opt-in — see `docs/reference/IPAM-Reference.md`) — and the cluster's **Gateway
+API** implementation, no separate ingress controller.
 
 This folder also carries the two `Gateway`s Cilium's Gateway API controller reconciles — `external` (VLAN5,
 `external.ippool.yaml`) and `internal` (talosnet-only, `internal.ippool.yaml`) — plus the HTTP→HTTPS redirect

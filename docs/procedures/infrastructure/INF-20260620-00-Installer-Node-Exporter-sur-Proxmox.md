@@ -27,7 +27,7 @@ Les accès suivants sont également nécessaires :
 ## Entrées requises
 
 Exporter ces variables une fois ; toutes les commandes suivantes se copient ensuite telles quelles. L'adresse de l'hôte
-est tenue à jour dans [IPAM](../../network/ipam.md).
+est tenue à jour dans [IPAM](../../reference/IPAM-Reference.md).
 
 ```sh
 export PVE_HOST=<nom d'hôte du nœud Proxmox>    # ex. pve-01.pve.chezmoi.sh
@@ -91,7 +91,7 @@ curl -s http://${PVE_IP}:${PORT}/metrics | grep node_uname_info
 
 Si le pare-feu du datacenter ou du nœud est actif, autoriser le TCP `${PORT}` en entrée depuis le VLAN 5, où se trouve
 le LXC `pve-exporter`. Aucun hôte n'est listé individuellement : le VLAN 5 sert de source, comme pour les autres règles
-du dépôt (voir [IPAM](../../network/ipam.md)).
+du dépôt (voir [IPAM](../../reference/IPAM-Reference.md)).
 
 ```sh
 # Afficher la règle à ajouter sous [RULES]
@@ -209,7 +209,7 @@ Supprimer ensuite la règle `IN ACCEPT` ajoutée à l'étape 4 de `/etc/pve/node
 - _2026-10-11_ : Réseau corrigé. Le LXC `pve-exporter` est sur `vmbr1` avec le tag 5 (`10.0.0.24/22`), et non sur
   `vmbr0` : `vmbr0` porte uniquement l'adresse de gestion de l'hôte (`projects/chezmoi.sh/docs/PROXMOX-VE.md`,
   `pve-exporter/README.md`). La source de la règle de pare-feu passe de `10.0.0.0/24` à `10.0.0.0/22`, soit tout le VLAN
-  5 (`docs/network/ipam.md`). La syntaxe de la règle utilise `-source` et `-dport`, comme dans le README de
+  5 (`docs/reference/IPAM-Reference.md`). La syntaxe de la règle utilise `-source` et `-dport`, comme dans le README de
   `pve-exporter`.
 - _2026-10-11_ : Migration vers le standard de documentation (issue #1257) : page traduite en français, remise au
   gabarit de procédure (identifiant dans le titre, entrées requises, exemple complet, retour arrière, historique).
@@ -223,4 +223,4 @@ Supprimer ensuite la règle `IN ACCEPT` ajoutée à l'étape 4 de `/etc/pve/node
   mécanisme du `lxc:upgrade` utilisé à l'étape 5.
 - [ADR-013](../../decisions/013-centralized-observability-victoriametrics-lxc.md) : la pile d'observabilité centralisée
   qui reçoit ces métriques.
-- [IPAM](../../network/ipam.md) : plan d'adressage du VLAN 5 et adresse de l'hôte.
+- [IPAM](../../reference/IPAM-Reference.md) : plan d'adressage du VLAN 5 et adresse de l'hôte.

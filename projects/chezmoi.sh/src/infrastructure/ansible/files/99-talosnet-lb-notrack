@@ -10,7 +10,7 @@
 # guarded on ${IFACE}=lo so it fires once per reload, not once per interface.
 [ "${IFACE}" = "lo" ] || exit 0
 
-# 10.0.0.64/26 is the whole Cilium LB pool block (docs/network/ipam.md),
+# 10.0.0.64/26 is the whole Cilium LB pool block (docs/reference/IPAM-Reference.md),
 # reserved for all 8 cluster slots (/29 each) -- covers every current and
 # future cluster's external Gateway without per-cluster edits here.
 POOL=10.0.0.64/26

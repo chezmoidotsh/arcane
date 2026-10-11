@@ -261,7 +261,8 @@ port-forward :
 <IP de la Gateway externe de rhodes>  auth.chezmoi.sh
 ```
 
-L'IP provient du pool LoadBalancer Cilium `external` de rhodes, `10.0.0.64/29` (voir l'[IPAM](../../network/ipam.md)).
+L'IP provient du pool LoadBalancer Cilium `external` de rhodes, `10.0.0.64/29` (voir
+l'[IPAM](../../reference/IPAM-Reference.md)).
 
 Cela compte surtout pour Pocket-Id : la connexion passkey/WebAuthn exige un contexte sécurisé (HTTPS et nom d'hôte
 correct) et ne fonctionne pas sur un simple port-forward (voir l'encart `[!IMPORTANT]` de
@@ -356,9 +357,9 @@ devrait être nécessaire.
   ce guide ne cite plus la version). (7) L'étape 1 demandait de suivre OMNI-20260721-00 « jusqu'à sa liste de validation
   CNI/CSI/CCM » alors que le CSI et le CCM sont déployés aux étapes 2 et 3 de ce guide : l'étape 1 s'arrête à l'étape 8
   de la procédure, et la liste de validation est passée à l'étape 4. (8) Le lien vers la documentation réseau pointe
-  vers `docs/network/ipam.md`, qui existe ; le pool `external` de rhodes (`10.0.0.64/29`) y est confirmé. Les chemins
-  `projects/rhodes.akn/dist/...`, `src/...` et `.mise.toml` du dossier `disaster-recovery/` ont été contrôlés ; les
-  commandes n'ont pas été rejouées.
+  vers `docs/reference/IPAM-Reference.md`, qui existe ; le pool `external` de rhodes (`10.0.0.64/29`) y est confirmé.
+  Les chemins `projects/rhodes.akn/dist/...`, `src/...` et `.mise.toml` du dossier `disaster-recovery/` ont été
+  contrôlés ; les commandes n'ont pas été rejouées.
 - _2026-07-30_ : Le composant `ingress-gateway/` est replié dans `cilium/` : la Gateway API de Cilium n'a pas de Pod
   dédié par Gateway, donc les objets `Gateway`, `HTTPRoute` et `Certificate` gardés dans leur propre namespace
   `ingress-gateway-system` avaient de toute façon leur plan de données Envoy dans le namespace `kube-system` de `cilium`
