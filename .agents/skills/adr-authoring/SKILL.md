@@ -8,6 +8,12 @@ description: >
 
 # Architecture Decision Record (ADR) Authoring Skill
 
+> [!NOTE]
+> Style, naming, navigation and the `Where to go next` section come from the `wiki-docs` skill
+> (`.agents/skills/wiki-docs/`); this skill adds the structure of an ADR on top of it. ADRs are moving from
+> `docs/decisions/` to `wiki/` as `ADR-NNN-Title.md` (issue #1257): write new ones where the directory currently holds
+> them until the ADR category has migrated, then in `wiki/`. Numbers never change.
+
 ## Why we write ADRs
 
 An ADR is not documentation — it is institutional memory. Its purpose is to let a future reader (including the author,

@@ -11,6 +11,12 @@ description: >
 
 # Standard Operating Procedure (SOP) Authoring Skill
 
+> [!NOTE]
+> Style, naming, navigation and the `Where to go next` section come from the `wiki-docs` skill
+> (`.agents/skills/wiki-docs/`); this skill adds the structure of a procedure on top of it. Procedures are moving from
+> `docs/procedures/` to `wiki/` as `Procedure-<ID>-<Verb-Phrase>.md` (issue #1257): write new ones where the directory
+> currently holds them until their category has migrated, then in `wiki/`.
+
 ## Why we write procedures
 
 A procedure is not documentation for its own sake — it is the thing that lets a repeatable operational task be executed
