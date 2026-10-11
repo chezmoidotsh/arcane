@@ -154,8 +154,8 @@ internet.\*
 ### [NixOS](https://nixos.org/)
 
 Declarative operating system, installed over the stock Ubuntu image with `nixos-anywhere` and updated with
-`nixos-rebuild switch` over the tailnet from an operator machine. The system, the Pangolin stack (as containers) and
-the hardening live in a flake; secrets are encrypted with SOPS + age and decrypted on the host by `sops-nix`.
+`nixos-rebuild switch` over the tailnet from an operator machine. The system, the Pangolin stack (as containers) and the
+hardening live in a flake; secrets are encrypted with SOPS + age and decrypted on the host by `sops-nix`.
 
 **\*Why this choice**: One tool for the OS and the services, with a one-command rollback to the previous generation.
 Same pattern as `rimbilliton.akn` ([ADR-016](../../docs/decisions/016-kazimierz-nixos-over-ansible.md)).\*
@@ -243,7 +243,8 @@ mise run nixos:backup                           # hot backup of Pangolin's state
 ```
 
 Nothing is applied automatically, on purpose (see
-[ADR-008](../../docs/decisions/008-kazimierz-ansible-over-kubernetes.md)). See [Amorcer Kazimierz](../../docs/guides/Amorcer-Kazimierz.md) for the complete bootstrap procedure.
+[ADR-008](../../docs/decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md)). See
+[Initialiser Kazimierz](../../docs/guides/Initialiser-Kazimierz.md) for the complete bootstrap procedure.
 
 ## Security Considerations
 
@@ -263,8 +264,8 @@ Nothing is applied automatically, on purpose (see
 - **No critical data on VPS**: VPS only stores proxy configuration, no application data (Pangolin's state lives on the
   boot volume, back it up with `mise run nixos:backup`)
 - **Stateless proxy**: All requests proxied in real-time, no caching of sensitive data
-- **No secrets managed**: No secrets or credentials must be stored on the VPS _(or at least nothing too sensitive)_;
-  the few it needs are SOPS-encrypted in Git (sops-nix)
+- **No secrets managed**: No secrets or credentials must be stored on the VPS _(or at least nothing too sensitive)_; the
+  few it needs are SOPS-encrypted in Git (sops-nix)
 - **End-to-end encryption**: TLS from internet → VPS, encrypted VPN → backend
 
 ### Sacrificial Design Philosophy

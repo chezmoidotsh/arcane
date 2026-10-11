@@ -96,7 +96,8 @@ flowchart TD
 
 Individual apps and infrastructure components control their own ArgoCD sync policy via a per-directory
 `.application.patch` file (manual vs. automated sync — see
-[ADR-007](../../../../docs/decisions/007-project-structure-and-naming-conventions.md)), not a folder naming convention.
+[ADR-007](../../../../docs/decisions/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md)), not a folder naming
+convention.
 
 ## 🚀 ArgoCD Bootstrap
 

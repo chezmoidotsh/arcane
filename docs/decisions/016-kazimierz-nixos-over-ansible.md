@@ -30,12 +30,12 @@ template-version: "1.1.0"
 
 ## Context and Problem Statement
 
-[ADR-008](./008-kazimierz-ansible-over-kubernetes.md) settled that `kazimierz.akn`, the public Pangolin gateway, is a
-single VPS and not a Kubernetes cluster, and chose Ansible + Docker Compose to configure it. The VPS now lives on an
-Oracle Cloud Always Free A1 instance provisioned by Pulumi, which boots a stock Ubuntu image. On top of it, an Ansible
-playbook (`system_setup` and `pangolin` roles) installed Docker, Tailscale, UFW and unattended upgrades, and rendered
-the Pangolin, Gerbil and Traefik Compose stack from Jinja2 templates, with secrets in ansible-vault `host_vars`. The
-playbook was run by hand from an operator machine since the removal of `ansible-pull` (2026-10-07).
+[ADR-008](./ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md) settled that `kazimierz.akn`, the public Pangolin
+gateway, is a single VPS and not a Kubernetes cluster, and chose Ansible + Docker Compose to configure it. The VPS now
+lives on an Oracle Cloud Always Free A1 instance provisioned by Pulumi, which boots a stock Ubuntu image. On top of it,
+an Ansible playbook (`system_setup` and `pangolin` roles) installed Docker, Tailscale, UFW and unattended upgrades, and
+rendered the Pangolin, Gerbil and Traefik Compose stack from Jinja2 templates, with secrets in ansible-vault
+`host_vars`. The playbook was run by hand from an operator machine since the removal of `ansible-pull` (2026-10-07).
 
 Meanwhile `rimbilliton.akn`, a second OCI A1 host, was built the other way: NixOS installed over the same stock Ubuntu
 image with `nixos-anywhere`, then managed with `nixos-rebuild`, secrets handled by `sops-nix`. That left the repository
@@ -165,8 +165,8 @@ of the cutover in `docs/archives/Migration-de-Kazimierz-vers-NixOS.md`.
 
 ## References and Related Decisions
 
-- **Related ADRs**: [ADR-008](./008-kazimierz-ansible-over-kubernetes.md) (superseded in part: configuration
-  management), [ADR-001](./ADR-001-Gestion-Centralisee-des-Secrets.md) (secrets)
+- **Related ADRs**: [ADR-008](./ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md) (superseded in part:
+  configuration management), [ADR-001](./ADR-001-Gestion-Centralisee-des-Secrets.md) (secrets)
 - **Project documentation**: [`kazimierz.akn` bootstrap](../guides/Amorcer-Kazimierz.md),
   [migration record](../archives/Migration-de-Kazimierz-vers-NixOS.md),
   [`rimbilliton.akn` bootstrap](../guides/Amorcer-Rimbilliton.md)

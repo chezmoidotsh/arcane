@@ -300,7 +300,7 @@ projects/<cluster>/
 ## References and Related Decisions
 
 - **Related ADRs**:
-  - [ADR-007: Project Structure and Naming Conventions](./007-project-structure-and-naming-conventions.md)
+  - [ADR-007: Project Structure and Naming Conventions](./ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md)
   - [ADR-001: Centralized Secret Management](./ADR-001-Gestion-Centralisee-des-Secrets.md)
   - [ADR-002: OpenBao Secrets Topology](./ADR-002-Topologie-des-Secrets-OpenBao.md)
 
