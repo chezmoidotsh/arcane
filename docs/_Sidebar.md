@@ -34,6 +34,7 @@
 - [Plan d'adressage (IPAM)](reference/IPAM-Reference.md)
 - [Passerelles et DNS](reference/Passerelles-et-DNS-Reference.md)
 - [Renovate](reference/Renovate-Reference.md)
+- [Infrastructure manuelle](reference/Infrastructure-Manuelle-Reference.md)
 
 ### Post-mortems
 
@@ -66,8 +67,19 @@
 - [ADR-015 Migrer Crossplane vers Pulumi](decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md)
 - [ADR-016 NixOS plutôt qu'Ansible pour Kazimierz](decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md)
 
+### Expérimentations
+
+- [Proxmox CSI et CCM](experiments/Experimentation-2026-06-17-Proxmox-CSI-et-CCM.md)
+- [Évaluation de Pulumi contre Crossplane](experiments/Experimentation-2026-07-02-Evaluation-Pulumi-contre-Crossplane.md)
+- [Sauvegarde de PVC avec Velero](experiments/Experimentation-2026-08-03-Sauvegarde-de-PVC-avec-Velero.md)
+- [Propriétés des applications ArgoCD](experiments/Experimentation-2025-01-10-Proprietes-des-Applications-ArgoCD.md)
+- [ArgoCD en Zero Trust avec Tailscale](experiments/Experimentation-2025-03-12-ArgoCD-Zero-Trust-avec-Tailscale.md)
+
 ### Archives
 
+- [Migrer Amiya vers Rhodes](archives/MIGR-20260729-00-Migrer-Amiya-vers-Rhodes.md)
+- [Relier Lungmen au réseau Talosnet](archives/MIGR-20260801-00-Relier-Lungmen-au-Reseau-Talosnet.md)
+- [Audit de la documentation](archives/AUDIT-20261011-00-Audit-de-la-Documentation.md)
 - [Migrer les nœuds Talos du VLAN 2 au VLAN 5](archives/MIGR-20260628-00-Migrer-les-Noeuds-Talos-du-VLAN-2-au-VLAN-5.md)
 - [Ajouter une SecurityPolicy OIDC sur une HTTPRoute](archives/SEC-20250808-00-Ajouter-une-SecurityPolicy-OIDC-sur-une-HTTPRoute.md)
 - [Migration de Kazimierz vers NixOS](archives/Migration-de-Kazimierz-vers-NixOS.md)
