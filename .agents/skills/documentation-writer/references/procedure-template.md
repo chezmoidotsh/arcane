@@ -1,6 +1,6 @@
 <!--
   PROCEDURE TEMPLATE v1.0.0 — see the "Template Versioning" section of
-  .agents/skills/sop-authoring/SKILL.md for the changelog and the rules that govern
+  .agents/skills/documentation-writer/references/procedure.md for the changelog and the rules that govern
   this file. Delete this HTML comment when authoring. Unlike ADRs, procedures carry
   no version frontmatter — provenance lives in git history and the History section.
 -->

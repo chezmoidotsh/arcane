@@ -1,7 +1,7 @@
 # Incidents
 
 Post-mortems for production incidents in this repository. Each document follows the template in
-`.agents/skills/postmortem/templates/postmortem.md` and includes structured frontmatter with `error_signatures` for
+`.agents/skills/documentation-writer/templates/postmortem.md` and includes structured frontmatter with `error_signatures` for
 programmatic lookup.
 
 ## Finding a relevant incident
@@ -44,5 +44,5 @@ route from a live error to the appropriate procedure.
 - **Severity** — Critical (data loss / full cluster down) · High (services unavailable) · Medium (degraded) · Low (no
   user impact).
 
-New incidents: copy `.agents/skills/postmortem/templates/postmortem.md`, add `error_signatures` and `procedures` fields
+New incidents: copy `.agents/skills/documentation-writer/templates/postmortem.md`, add `error_signatures` and `procedures` fields
 to the frontmatter, and add a row to the table above.

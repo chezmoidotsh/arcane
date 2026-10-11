@@ -10,7 +10,7 @@ template-version: "1.1.0"
 
 <!--
   ADR TEMPLATE v1.1.0 — see the "Template Versioning" section of
-  .agents/skills/adr-authoring/SKILL.md for the changelog and the rules that govern
+  .agents/skills/documentation-writer/references/adr.md for the changelog and the rules that govern
   this file. Keep the `template-version` frontmatter field above so each ADR records
   which template revision produced it. Delete this HTML comment when authoring.
 -->

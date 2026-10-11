@@ -1,11 +1,3 @@
----
-name: adr-authoring
-description: >
-  Writes and updates Architecture Decision Records (ADR) in docs/decisions/. Use it to document an architectural choice
-  or record why a technology was selected ("write an ADR", "document this decision", "update ADR-00N", "this should be
-  an ADR"), or right after a significant design decision worth preserving — even if an ADR wasn't explicitly requested.
----
-
 # Architecture Decision Record (ADR) Authoring Skill
 
 ## Why we write ADRs

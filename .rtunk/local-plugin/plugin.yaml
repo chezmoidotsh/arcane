@@ -1,0 +1,9 @@
+---
+# Repository-local rtunk plugin: file types and linters specific to Arcane (referenced from ../rtunk.yaml,
+# `plugins.sources`). The linters themselves live in linters/<name>/plugin.yaml.
+version: 0.1
+lint:
+  files:
+    # The list of pages not migrated yet: changing it changes what wiki-lint checks, so it triggers it too.
+    - name: wiki-legacy
+      filenames: [.wiki-legacy]

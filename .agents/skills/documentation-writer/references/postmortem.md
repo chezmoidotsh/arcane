@@ -1,17 +1,3 @@
----
-name: postmortem
-description: >
-  Produces a rigorous, blame-free post-mortem analysis of a failure event — missed targets, failed launches, broken
-  processes, bad hires, outages, or any outcome that diverged significantly from expectations. Use this skill whenever
-  the user wants to analyze what went wrong, understand root causes, write a post-mortem, do a retrospective on a
-  failure, figure out why something failed, debrief after a missed deadline or quarter, review a production incident, or
-  extract lessons from a negative outcome. Also trigger when phrases like "what went wrong", "why did this fail", "let's
-  look back at what happened", "retrospective on the incident", "lessons learned", "we need to understand why X
-  happened", or "postmortem" / "post-mortem" / "blameless postmortem" appear. Even when the user doesn't use those exact
-  words — if they describe a failure and want to understand causes and prevent recurrence, this is the right skill.
-compatibility: none required
----
-
 # Post-Mortem Analysis Skill
 
 ## Why we write post-mortems
@@ -337,7 +323,7 @@ human checkpoint.
 
 Save the completed post-mortem in `docs/incidents/`, named:
 
-```
+```text
 docs/incidents/YYYY-MM-DD-<short-description>.md
 ```
 
@@ -440,6 +426,6 @@ feature gate" is blame. Both may be true — but only the first prevents recurre
   fault-tree-analysis)
 - Output templates: `templates/postmortem.md` (full) · `templates/postmortem-lite.md` (lite)
 - Committing the output: `.agents/skills/git-commit/SKILL.md`
-- Documenting structural lessons as ADRs: `.agents/skills/adr-authoring/SKILL.md`
+- Documenting structural lessons as ADRs: `.agents/skills/documentation-writer/references/adr.md`
 - Cross-PM index (auto-generated): `docs/incidents/INDEX.md`
 - Knowledge extraction target: `.agents/knowledge/<topic>.md`

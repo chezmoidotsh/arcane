@@ -11,6 +11,9 @@ plugins:
     - id: trunk
       ref: v1.11.0
       uri: https://github.com/trunk-io/plugins
+    # Linters specific to this repository (wiki-lint: documentation style guide).
+    - id: arcane
+      local: local-plugin
 # Many linters and tools depend on runtimes - configure them here. (https://docs.trunk.io/runtimes)
 runtimes:
   enabled:
@@ -67,6 +70,7 @@ lint:
     - sort-package-json@4.0.0
     - svgo@4.0.1
     - trivy@0.74.0
+    - wiki-lint
     - taplo@0.10.0
     - trufflehog@3.95.6
   threshold:
