@@ -16,11 +16,11 @@ by either a human operator or an AI agent.
 
 ### Databases
 
-- **[DB-20260530-00: CNPG WAL disk full recovery](./databases/DB-20260530-00.cnpg-wal-disk-full-recovery.md)**: Recovery
-  procedure for a CloudNative-PG cluster whose WAL PVC has reached 100% capacity. Covers PVC expansion,
+- **[DB-20260530-00: CNPG WAL disk full recovery](./databases/DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md)**:
+  Recovery procedure for a CloudNative-PG cluster whose WAL PVC has reached 100% capacity. Covers PVC expansion,
   `Expected empty archive` S3 fix, WAL archiving verification, and backup trigger. Origin:
   `docs/incidents/2026-05-30-cnpg-wal-disk-full-apps-secured.md`.
-- **[DB-20260723-00: Restore a CNPG cluster from its S3 object-store backup](./backups/DB-20260723-00.cnpg-restore-from-object-store.md)**:
+- **[DB-20260723-00: Restore a CNPG cluster from its S3 object-store backup](./databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md)**:
   Generic, app-agnostic bootstrap of a CNPG `Cluster` from an existing `barman-cloud.cloudnative-pg.io` backup — finding
   the latest `serverName` on S3, wiring `bootstrap.recovery`/`externalClusters`, and verifying the restore. Used by
   `projects/rhodes.akn/docs/disaster-recovery/openbao.md` and `projects/rhodes.akn/docs/disaster-recovery/pocket-id.md`
@@ -28,12 +28,12 @@ by either a human operator or an AI agent.
 
 ### Backups
 
-- **[BKP-20260805-00: Restore a Velero-backed PVC on a GitOps-managed cluster](./backups/BKP-20260805-00.velero-restore-gitops-pvc.md)**:
+- **[BKP-20260805-00: Restore a Velero-backed PVC on a GitOps-managed cluster](./backups/BKP-20260805-00-Restaurer-un-PVC-Velero-sous-GitOps.md)**:
   Restores a workload-managed PVC (StatefulSet or Deployment) from a Velero (Kopia) backup when a controller already
   owns the target pod — covers why the naive restore and the documented `existingResourcePolicy: update` workaround both
   silently fail, and the delete-workload-and-PVC-first procedure that actually works. Validated end to end against
   `lungmen.akn`'s `jellyfin` app.
-- **[BKP-20261005-00: Restore the Minecraft server (Pelican) from its restic backups](./backups/BKP-20261005-00.rimbilliton-minecraft-restore-from-restic.md)**:
+- **[BKP-20261005-00: Restore the Minecraft server (Pelican) from its restic backups](./backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md)**:
   Restores a world, the Panel data (SQLite database and `APP_KEY`) or the whole `rimbilliton.akn` host from the restic
   repository on Backblaze B2 — snapshot inspection, per-server restore, full disaster recovery order and a quarterly
   restore test.

@@ -25,7 +25,7 @@ error_signatures:
   - "WAL archive check failed for server"
   - "barman-cloud-check-wal-archive"
 procedures:
-  - "docs/procedures/databases/DB-20260530-00.cnpg-wal-disk-full-recovery.md"
+  - "docs/procedures/databases/DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md"
 related-incidents: []
 related-adrs: []
 ---
@@ -190,13 +190,13 @@ alerts. Each "why" converges cleanly toward the structural observability gap.
 
 ## From Lesson to Control
 
-| Lesson                                                                                  | Artifact type | Linked artifact                                                                                                     |
-| --------------------------------------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------- |
-| CNPG `ContinuousArchivingFailing` is silent without explicit alerting                   | Alert rule    | TBD — part of meta-pattern `observability-gap` (see INDEX.md)                                                       |
-| A CNPG failover leaves S3 `serverName/` populated; next pod restart blocks archiving    | Runbook step  | `docs/procedures/databases/DB-20260530-00.cnpg-wal-disk-full-recovery.md` (post-failover S3 cleanup section to add) |
-| Homelab clusters that don't need PITR should use `isWALArchiver: false` + daily backups | ADR / pattern | ADR-TBD on CNPG operational profile (PITR vs daily-only)                                                            |
-| WAL PVC capacity is a silent failure mode                                               | Alert rule    | TBD — same `observability-gap` meta-pattern                                                                         |
-| MinIO CLI (`mc`) gap during recovery slows incident response                            | Tooling       | `.mise.toml` (lungmen.akn or global)                                                                                |
+| Lesson                                                                                  | Artifact type | Linked artifact                                                                                                               |
+| --------------------------------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| CNPG `ContinuousArchivingFailing` is silent without explicit alerting                   | Alert rule    | TBD — part of meta-pattern `observability-gap` (see INDEX.md)                                                                 |
+| A CNPG failover leaves S3 `serverName/` populated; next pod restart blocks archiving    | Runbook step  | `docs/procedures/databases/DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md` (post-failover S3 cleanup section to add) |
+| Homelab clusters that don't need PITR should use `isWALArchiver: false` + daily backups | ADR / pattern | ADR-TBD on CNPG operational profile (PITR vs daily-only)                                                                      |
+| WAL PVC capacity is a silent failure mode                                               | Alert rule    | TBD — same `observability-gap` meta-pattern                                                                                   |
+| MinIO CLI (`mc`) gap during recovery slows incident response                            | Tooling       | `.mise.toml` (lungmen.akn or global)                                                                                          |
 
 ---
 

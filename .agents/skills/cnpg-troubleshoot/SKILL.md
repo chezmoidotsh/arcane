@@ -186,7 +186,7 @@ Broken cluster: apps-secured-20260329 (namespace: databases, context: admin@lung
 Matched incident: docs/incidents/2026-05-30-cnpg-wal-disk-full-apps-secured.md
 Error: "Not enough disk space" + "Expected empty archive" (ContinuousArchivingFailing)
 
-Procedure: docs/procedures/databases/DB-20260530-00.cnpg-wal-disk-full-recovery.md
+Procedure: docs/procedures/databases/DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md
 
 This will:
   1. Expand WAL PVCs (apps-secured-20260329-1-wal and -2-wal) from current size to 10Gi
@@ -238,17 +238,17 @@ with the exact kubectl output.
 
 Quick reference for routing without needing to grep first:
 
-| Error / Phase                                                                     | Matched incident                                                                              | Procedure                                                                                 |
-| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `Not enough disk space` + `Expected empty archive` + `ContinuousArchivingFailing` | [2026-05-30 cnpg-wal-disk-full](docs/incidents/2026-05-30-cnpg-wal-disk-full-apps-secured.md) | [DB-20260530-00](docs/procedures/databases/DB-20260530-00.cnpg-wal-disk-full-recovery.md) |
+| Error / Phase                                                                     | Matched incident                                                                              | Procedure                                                                                           |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `Not enough disk space` + `Expected empty archive` + `ContinuousArchivingFailing` | [2026-05-30 cnpg-wal-disk-full](docs/incidents/2026-05-30-cnpg-wal-disk-full-apps-secured.md) | [DB-20260530-00](docs/procedures/databases/DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md) |
 
 ### Node drain blocked by a `*-primary` PDB
 
-Symptom: `kubectl drain` / Omni Talos upgrade fails with `Cannot evict pod ... disruption budget`
-(`kubectl get pdb -A` shows `<cluster>-primary` with `ALLOWED DISRUPTIONS: 0`). Cause: a single-instance cluster with
-the CNPG default `enablePDB: true`. Convention: **`instances: 1` => `enablePDB: false`** (the `mutualized-cnpg-databases`
-chart applies it by default; raw `Cluster` manifests must set it explicitly), **`instances > 1` => keep the PDB**. Fix it
-in `src/` and re-render, never by patching the live cluster (ArgoCD selfHeal reverts it). See
+Symptom: `kubectl drain` / Omni Talos upgrade fails with `Cannot evict pod ... disruption budget` (`kubectl get pdb -A`
+shows `<cluster>-primary` with `ALLOWED DISRUPTIONS: 0`). Cause: a single-instance cluster with the CNPG default
+`enablePDB: true`. Convention: **`instances: 1` => `enablePDB: false`** (the `mutualized-cnpg-databases` chart applies
+it by default; raw `Cluster` manifests must set it explicitly), **`instances > 1` => keep the PDB**. Fix it in `src/`
+and re-render, never by patching the live cluster (ArgoCD selfHeal reverts it). See
 [INF-20260525-02](docs/procedures/infrastructure/INF-20260525-02.drain-nodes-with-cnpg.md).
 
 This table is a cache for common cases. Always verify against `docs/incidents/` — new incidents and procedures supersede
