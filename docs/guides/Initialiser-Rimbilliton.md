@@ -303,7 +303,7 @@ Les changements ultérieurs se déploient par Tailscale avec `mise run nixos:oci
 `nixos-rebuild switch --flake .#rimbilliton-akn-aarch64 --target-host root@rimbilliton-akn` via `nonix`. Il n'y a pas de
 mise à jour automatique, volontairement : l'instance n'est pas encore supervisée et un retour arrière propre est
 difficile (voir [ADR-008](../decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md), qui traite de
-`kazimierz.akn` et s'applique ici aussi, et [ADR-016](../decisions/016-kazimierz-nixos-over-ansible.md)).
+`kazimierz.akn` et s'applique ici aussi, et [ADR-016](../decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md)).
 
 ## Historique
 

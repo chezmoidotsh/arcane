@@ -30,8 +30,8 @@ L'état du dépôt confirme l'abandon (vérifié le 2026-10-11). Aucune occurren
 n'existe sous `projects/kazimierz.akn/`, ni dans la configuration NixOS (`src/infrastructure/nixos/`) ni dans les stacks
 Pulumi. Le répertoire `src/infrastructure/` ne contient que `nixos` et `pulumi` : le rôle Ansible `pangolin` cité dans
 l'ancien texte n'existe plus, la configuration de `kazimierz.akn` ayant migré d'Ansible vers NixOS
-([ADR-016](../decisions/016-kazimierz-nixos-over-ansible.md)). La seule mention restante dans `docs/decisions/` est une
-ligne de l'historique de l'ADR-008 (« CrowdSec addition »), qui relate l'ajout passé.
+([ADR-016](../decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md)). La seule mention restante dans
+`docs/decisions/` est une ligne de l'historique de l'ADR-008 (« CrowdSec addition »), qui relate l'ajout passé.
 
 La raison de l'abandon (faux positifs du bouncer partagé) provient de l'en-tête de l'ancien document ; aucune autre
 source du dépôt ne la confirme.
@@ -46,5 +46,5 @@ Le texte d'origine, en anglais, est figé à
 ## Pour aller plus loin
 
 - [Initialiser Kazimierz](../guides/Initialiser-Kazimierz.md) : la mise en place actuelle de `kazimierz.akn`.
-- [ADR-016 Kazimierz NixOS plutôt qu'Ansible](../decisions/016-kazimierz-nixos-over-ansible.md) : la décision qui a
-  remplacé la configuration Ansible.
+- [ADR-016 Kazimierz NixOS plutôt qu'Ansible](../decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md) : la
+  décision qui a remplacé la configuration Ansible.

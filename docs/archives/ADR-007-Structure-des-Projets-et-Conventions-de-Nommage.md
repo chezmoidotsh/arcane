@@ -39,7 +39,7 @@ Proxmox CSI et Envoy Gateway à la Gateway Cilium.
 Aucune page ne remplace le document en entier. Les conventions vivent dans le code de `projects/` ; la structure du dépôt
 est décrite dans [AGENTS.md](../../AGENTS.md), les labels de version et les datasources dans
 [la référence Renovate](../reference/Renovate-Reference.md), et les manifestes pré-rendus de `dist/` dans
-[l'ADR-011](../decisions/011-rendered-manifests-pattern.md).
+[l'ADR-011](../decisions/ADR-011-Pre-rendre-les-Manifestes-Kubernetes-dans-Git.md).
 
 ## Texte intégral
 
@@ -51,7 +51,7 @@ l'historique de la pull request 1321.
 
 - [Référence Renovate](../reference/Renovate-Reference.md) : les datasources et les labels de version qui complétaient cet
   ADR.
-- [ADR-011 Motif des manifestes rendus](../decisions/011-rendered-manifests-pattern.md) : le motif des manifestes
+- [ADR-011 Pré-rendre les manifestes Kubernetes dans Git](../decisions/ADR-011-Pre-rendre-les-Manifestes-Kubernetes-dans-Git.md) : le motif des manifestes
   pré-rendus de `dist/`.
-- [ADR-015 Migrer Crossplane vers Pulumi](../decisions/015-migrate-crossplane-to-pulumi.md) : le remplacement de
+- [ADR-015 Migrer Crossplane vers Pulumi](../decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md) : le remplacement de
   Crossplane cité par l'ADR archivé.

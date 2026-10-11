@@ -11,7 +11,7 @@ template-version: "2.0.0"
 # ADR-008 Ansible plutôt que Kubernetes pour Kazimierz
 
 > [!CAUTION]\
-> **Supplanté par l'[ADR-016](./016-kazimierz-nixos-over-ansible.md) (2026-10-10).** `kazimierz.akn` tourne
+> **Supplanté par l'[ADR-016](./ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md) (2026-10-10).** `kazimierz.akn` tourne
 > entièrement sous NixOS : `projects/kazimierz.akn/src/infrastructure/` ne contient plus que `nixos/` et `pulumi/`, et le
 > playbook `src/infrastructure/ansible/site.yml` cité plus bas n'existe plus. L'ADR-016 ne supplante formellement que le
 > choix de gestion de configuration, et la décision de ne pas utiliser Kubernetes n'a pas été remise en cause. Les

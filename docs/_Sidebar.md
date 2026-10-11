@@ -44,11 +44,17 @@
 - [ADR-005 Authentification OIDC par Envoy Gateway](decisions/ADR-005-Authentification-OIDC-par-Envoy-Gateway.md)
 - [ADR-008 Ansible plutôt que Kubernetes pour Kazimierz](decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md)
 - [ADR-009 Consolider les bases PostgreSQL](decisions/ADR-009-Consolider-les-Bases-PostgreSQL.md)
+- [ADR-010 Remplacer Gitmoji par des symboles de type de commit](decisions/ADR-010-Remplacer-Gitmoji-par-des-Symboles-de-Type-de-Commit.md)
+- [ADR-011 Pré-rendre les manifestes Kubernetes dans Git](decisions/ADR-011-Pre-rendre-les-Manifestes-Kubernetes-dans-Git.md)
+- [ADR-012 Remplacer Kyverno par OPA](decisions/ADR-012-Remplacer-Kyverno-par-OPA.md)
+- [ADR-013 Observabilité centralisée VictoriaMetrics sur LXC](decisions/ADR-013-Observabilite-Centralisee-VictoriaMetrics-sur-LXC.md)
+- [ADR-014 Séparer le trafic des nœuds Talos du VLAN Homelab](decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md)
+- [ADR-015 Migrer Crossplane vers Pulumi](decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md)
+- [ADR-016 NixOS plutôt qu'Ansible pour Kazimierz](decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md)
 
 ### Archives
 
 - [ADR-007 Structure des projets et conventions de nommage](archives/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md)
-
 
 - [Migrer les nœuds Talos du VLAN 2 au VLAN 5](archives/MIGR-20260628-00-Migrer-les-Noeuds-Talos-du-VLAN-2-au-VLAN-5.md)
 - [Ajouter une SecurityPolicy OIDC sur une HTTPRoute](archives/SEC-20250808-00-Ajouter-une-SecurityPolicy-OIDC-sur-une-HTTPRoute.md)
