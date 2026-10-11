@@ -1,13 +1,15 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 #
 # =============================================================================
-# Wiki — publish wiki/ to the GitHub Wiki of the repository
+# Wiki — publish docs/ to the GitHub Wiki of the repository
 # =============================================================================
-# Mirrors the wiki/ directory as-is to the wiki repository, on every push to main that touches
-# it and on demand. Runs are serialized (cancel-in-progress: false) so two publications never
-# race on the wiki repository.
+# docs/ is the source of truth, written with relative links so it reads well in Git. On every push to
+# main that touches it (and on demand), the migrated pages (those not listed in docs/.wiki-legacy) are
+# copied by `scripts/wiki:publish` with their links rewritten for the wiki, then mirrored to the wiki
+# repository. Runs are serialized (cancel-in-progress: false) so two publications never race on the
+# wiki repository.
 #
-#   publish — mirror wiki/ to the wiki
+#   publish — prepare the pages and mirror them to the wiki
 #
 # One-time setup: the wiki must be enabled (Settings > Features > Wikis) and initialized (one
 # page created by hand in the UI), otherwise the wiki repository does not exist yet.
@@ -22,7 +24,8 @@ on:
   push:
     branches: [main]
     paths:
-      - wiki/**
+      - docs/**
+      - scripts/wiki:publish
       - .github/workflows/push,workflow_dispatch.wiki.yaml
   workflow_dispatch: {}
 
@@ -35,10 +38,10 @@ permissions: {}
 
 jobs:
   # ---------------------------------------------------------------------------
-  # publish — mirror wiki/ to the wiki
+  # publish — prepare the pages and mirror them to the wiki
   # ---------------------------------------------------------------------------
   publish:
-    name: 📚 Publish wiki
+    name: 📚 Publish docs/ to the wiki
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -47,12 +50,18 @@ jobs:
       - name: ⬇️ Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: 📤 Publish wiki/ to the wiki
+      - name: 🧪 Self-test the publication script
+        run: scripts/wiki:publish --self-test
+
+      - name: 🔗 Prepare the pages (links rewritten for the wiki)
+        run: scripts/wiki:publish docs "${{ runner.temp }}/wiki" --repo "${{ github.repository }}"
+
+      - name: 📤 Publish the pages to the wiki
         uses: Andrew-Chen-Wang/github-wiki-action@1bbb4280446f9630e8e21a18012cbacf3b0f992e # v5.0.6
         with:
-          path: wiki
-          # The default preprocessing only touches root pages and runs them through remark without GFM or front matter
-          # support, which mangles tables, admonitions and the ADR/post-mortem front matter. Links are written in wiki
-          # form (see .agents/skills/documentation-writer) and checked by scripts/wiki:lint instead.
+          path: ${{ runner.temp }}/wiki
+          # The action's own preprocessing only handles root pages and runs them through remark without GFM or front
+          # matter support, which mangles tables, admonitions and front matter. scripts/wiki:publish rewrites the
+          # links instead.
           preprocess: false
           disable-empty-commits: true

@@ -1,0 +1,129 @@
+#!/usr/bin/env python3
+# Copyright (C) 2026 Alexandre Nicolaie (xunleii@users.noreply.github.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ----------------------------------------------------------------------------
+# mise alias="wiki:publish"
+# mise description="Prepare docs/ for publication to the GitHub Wiki (copy the migrated pages, rewrite their links)."
+#
+# docs/ is the source of truth and is written with relative links to `.md` files, which work when browsing Git. The
+# GitHub Wiki serves a page at /<owner>/<repo>/wiki/<path without .md>, so this script copies the pages that are not
+# listed in docs/.wiki-legacy into DST and rewrites every relative link:
+#   - to a published page        -> /<owner>/<repo>/wiki/<path without .md>[#anchor]
+#   - to any other file of repo  -> https://github.com/<owner>/<repo>/blob/main/<path>[#anchor]
+# DST is then what the wiki action pushes. Standard library only.
+#
+# Usage: scripts/wiki:publish SRC DST [--repo owner/name] [--repo-root .] | --self-test
+import argparse
+import fnmatch
+import os
+import re
+import shutil
+import sys
+import tempfile
+from pathlib import Path
+from urllib.parse import unquote
+
+LINK_RE = re.compile(r"(!?\[[^\]]*\]\()([^)\s]+)((?:\s+\"[^\"]*\")?\))")
+FENCE_RE = re.compile(r"^\s*(```|~~~)")
+
+
+def published_pages(src: Path) -> list[Path]:
+    f = src / ".wiki-legacy"
+    pats = [ln.strip() for ln in f.read_text(encoding="utf-8").splitlines()] if f.is_file() else []
+    pats = [p for p in pats if p and not p.startswith("#")]
+    return [p for p in sorted(src.rglob("*.md")) if not any(fnmatch.fnmatch(p.relative_to(src).as_posix(), x) for x in pats)]
+
+
+def rewrite(text: str, page: Path, src: Path, pages: set[Path], repo: str, repo_root: Path) -> str:
+    out, fenced = [], False
+    for line in text.split("\n"):
+        if FENCE_RE.match(line):
+            fenced = not fenced
+        if not fenced:
+            def sub(m: re.Match) -> str:
+                target = m.group(2)
+                if re.match(r"^([a-z][a-z0-9+.-]*:|#)", target, re.I):
+                    return m.group(0)
+                path, _, anchor = target.partition("#")
+                dest = (page.parent / unquote(path)).resolve()
+                frag = f"#{anchor}" if anchor else ""
+                if dest in pages:
+                    url = f"/{repo}/wiki/{dest.relative_to(src).with_suffix('').as_posix()}{frag}"
+                elif dest.is_file() and repo_root in dest.parents:
+                    url = f"https://github.com/{repo}/blob/main/{dest.relative_to(repo_root).as_posix()}{frag}"
+                else:
+                    return m.group(0)
+                return f"{m.group(1)}{url}{m.group(3)}"
+            line = LINK_RE.sub(sub, line)
+        out.append(line)
+    return "\n".join(out)
+
+
+def publish(src: Path, dst: Path, repo: str, repo_root: Path) -> int:
+    src, repo_root = src.resolve(), repo_root.resolve()
+    pages = published_pages(src)
+    known = set(p.resolve() for p in pages)
+    if dst.exists():
+        shutil.rmtree(dst)
+    for page in pages:
+        target = dst / page.relative_to(src)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(rewrite(page.read_text(encoding="utf-8"), page.resolve(), src, known, repo, repo_root), encoding="utf-8")
+    return len(pages)
+
+
+def self_test() -> None:
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        (root / "docs" / "guides").mkdir(parents=True)
+        (root / "docs" / "old").mkdir()
+        (root / "projects").mkdir()
+        (root / "projects" / "x.md").write_text("x")
+        (root / "docs" / "old" / "a.md").write_text("legacy")
+        (root / "docs" / ".wiki-legacy").write_text("old/*\n")
+        (root / "docs" / "Home.md").write_text("[g](guides/Page.md#top) [p](../projects/x.md) [o](old/a.md) [e](https://e.org)\n")
+        (root / "docs" / "guides" / "Page.md").write_text("[h](../Home.md)\n```\n[h](../Home.md)\n```\n")
+        n = publish(root / "docs", root / "out", "o/r", root)
+        assert n == 2, n
+        home = (root / "out" / "Home.md").read_text()
+        assert "(/o/r/wiki/guides/Page#top)" in home, home
+        assert "(https://github.com/o/r/blob/main/projects/x.md)" in home, home
+        assert "(https://github.com/o/r/blob/main/docs/old/a.md)" in home, home
+        assert "(https://e.org)" in home, home
+        page = (root / "out" / "guides" / "Page.md").read_text()
+        assert page.startswith("[h](/o/r/wiki/Home)") and "```\n[h](../Home.md)\n```" in page, page
+        assert not (root / "out" / "old").exists()
+    print("self-test ok")
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("src", nargs="?")
+    ap.add_argument("dst", nargs="?")
+    ap.add_argument("--repo", default=os.environ.get("GITHUB_REPOSITORY", "chezmoidotsh/arcane"))
+    ap.add_argument("--repo-root", default=".")
+    ap.add_argument("--self-test", action="store_true")
+    args = ap.parse_args()
+    if args.self_test:
+        self_test()
+        return 0
+    if not (args.src and args.dst):
+        ap.error("SRC and DST are required")
+    n = publish(Path(args.src), Path(args.dst), args.repo, Path(args.repo_root))
+    print(f"{n} page(s) prepared in {args.dst}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
