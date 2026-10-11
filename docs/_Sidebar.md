@@ -29,9 +29,15 @@
 
 ### Référence
 
-- [Architecture & Documentation Réseau](network/README.md)
-- [Renovate](RENOVATE.md)
+- [Architecture & Documentation Réseau](reference/Reseau-Reference.md)
+- [Plan d'adressage (IPAM)](reference/IPAM-Reference.md)
+- [Passerelles et DNS](reference/Passerelles-et-DNS-Reference.md)
+- [Renovate](reference/Renovate-Reference.md)
 - [Décisions d'Architecture](decisions/001-centralized-secret-management.md)
+
+8 other conflicted commits exist — scope with `but resolve conflicts <branch>`. Resolve with
+`but resolve apply <path>[:<N>] --commit docs/balayage-final --ours|--theirs` or pipe mixed content into
+`but resolve apply <path>:<N> --commit docs/balayage-final`. `but resolve --ai` resolves everything at once.
 
 ### Archives
 
