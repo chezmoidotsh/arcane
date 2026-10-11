@@ -208,8 +208,8 @@ La tâche rafraîchit l'IP de liaison, puis lance
 `nixos-rebuild switch --flake .#kazimierz-akn-aarch64 --target-host root@kazimierz-akn` (récupéré depuis la révision de
 nixpkgs verrouillée dans `flake.lock`). `nixos-rebuild --rollback` sur l'hôte revient à la génération précédente. Il n'y
 a volontairement aucune mise à jour automatique : l'instance n'est pas encore supervisée et un rollback est difficile à
-faire proprement (voir l'[ADR-008](../decisions/008-kazimierz-ansible-over-kubernetes.md)). Rafraîchir les entrées avec
-`nonix flake update`, puis déployer.
+faire proprement (voir l'[ADR-008](../decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md)). Rafraîchir
+les entrées avec `nonix flake update`, puis déployer.
 
 ## Historique
 
@@ -227,4 +227,5 @@ faire proprement (voir l'[ADR-008](../decisions/008-kazimierz-ansible-over-kuber
 - [Vue d'ensemble de `kazimierz.akn`](../../projects/kazimierz.akn/README.md) : rôle du VPS et architecture de la
   passerelle Pangolin.
 - [ADR-016](../decisions/016-kazimierz-nixos-over-ansible.md) : pourquoi NixOS remplace Ansible et Docker Compose.
-- [ADR-008](../decisions/008-kazimierz-ansible-over-kubernetes.md) : pourquoi la passerelle reste hors de Kubernetes.
+- [ADR-008](../decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md) : pourquoi la passerelle reste hors de
+  Kubernetes.

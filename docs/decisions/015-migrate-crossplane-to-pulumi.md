@@ -302,8 +302,8 @@ Phase 1 (now): local, no cluster              Phase 2 (deferred): in-cluster
   - [ADR-003: OpenBao Path Naming Conventions](./ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md) and
     [ADR-004: OpenBao Policy Naming Conventions](./ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md) —
     conventions the migrated Vault/OpenBao resources must keep following.
-  - [ADR-008: `kazimierz`.AKN — Ansible + Docker Compose over Kubernetes](./008-kazimierz-ansible-over-kubernetes.md) —
-    an earlier case of choosing a lighter execution model over forcing an in-cluster pattern.
+  - [ADR-008: `kazimierz`.AKN — Ansible + Docker Compose over Kubernetes](./ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md)
+    — an earlier case of choosing a lighter execution model over forcing an in-cluster pattern.
 - **Issue Tracking**:
   - [#1091](https://github.com/chezmoidotsh/arcane/issues/1091) — the migration this ADR decides;
     import/per-family/decommissioning work is tracked there.
