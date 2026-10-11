@@ -5,6 +5,20 @@
 > relatifs). Quand une vérification n'a pas pu être faite (comportement du rendu GitHub Wiki, état réel des clusters),
 > c'est indiqué.
 
+> [!IMPORTANT]
+> **Décisions modifiées depuis cet audit** (voir le commentaire de mise à jour de #1257 et le style guide
+> `.agents/skills/documentation-writer/references/style-guide.md`, qui font foi) :
+>
+> - Le `wiki/` plat (décision D1, colonnes « Destination », sections (a) et (f)) est remplacé : la source de vérité est
+>   `docs/`, organisé en dossiers par type de page (`guides/`, `reference/`, `procedures/`, `decisions/`, `incidents/`,
+>   `experiments/`, `projects/`). Lire chaque « `wiki/` » ou « wiki plat » de ce document comme `docs/<type>/`.
+> - Les liens au format wiki `[x](Page-Name)` et `preprocess: false` (D1b) sont remplacés par des liens relatifs vers les
+>   fichiers `.md`, réécrits à la publication par `scripts/wiki:publish`.
+> - Ce qui n'est pas encore migré est listé dans `docs/.wiki-legacy`.
+> - Le commentaire `firewall.ts:23` qui citait encore `vlans.md` (oublié de la liste (e)) est corrigé dans la même PR.
+>
+> Le reste de l'audit (constats d'état, doublons, références à mettre à jour) reste valable.
+
 ## (a) Résumé exécutif
 
 ### Chiffres

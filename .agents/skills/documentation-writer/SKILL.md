@@ -1,16 +1,14 @@
 ---
 name: documentation-writer
 description: >
-  Single entry point for writing, rewriting, reviewing and migrating any documentation of this repository: wiki pages
-  (guides, references, project overviews), procedures / SOPs / runbooks, Architecture Decision Records (ADR),
-  post-mortems and root-cause analyses, and experiment write-ups. Routes to the right page type, template and rules.
-  Use it for "document X", "write a guide / a reference page", "write a procedure for X", "turn this into a runbook",
-  "add an SOP", "write an ADR", "document this decision", "update ADR-00N", "this should be an ADR", "write a
-  post-mortem", "what went wrong", "why did this fail", "lessons learned", "retrospective on the incident", "move this
-  doc to the wiki", "fix the docs", and right after a significant design decision, a successful multi-step manual
-  operation or an incident worth preserving, even if nobody asked for documentation. Do not use it for code comments,
-  component READMEs that describe a directory, OPA rule sheets under catalog/opa/, or agent files (AGENTS.md,
-  .agents/).
+  Single entry point for writing, rewriting, reviewing and migrating any documentation of this repository: guides,
+  references, project overviews, procedures / SOPs / runbooks, Architecture Decision Records (ADR), post-mortems and
+  root-cause analyses, experiment write-ups. Routes to the right page type, template and rules. Use it for "document
+  X", "write a guide / a reference page", "write a procedure for X", "turn this into a runbook", "add an SOP", "write
+  an ADR", "document this decision", "update ADR-00N", "write a post-mortem", "what went wrong", "why did this fail",
+  "lessons learned", "move this doc to the wiki", "fix the docs", and right after a significant design decision, a
+  multi-step manual operation or an incident worth preserving, even if nobody asked. Do not use it for code comments,
+  component READMEs that describe a directory, OPA rule sheets under catalog/opa/, or agent files (AGENTS.md, .agents/).
 ---
 
 # Documentation writer

@@ -16,7 +16,7 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
 5. **Example before explanation.** Show the command, the manifest or the output first, then comment on it.
 6. **End with `## Where to go next` [lint].** Two to five links, each with a one-line lead. No page is a dead end.
    `Home`, `_Sidebar` and `_Footer` are exempt.
-7. **Shallow headings.** Use `##` and `###` only. A page that needs `####` is two pages.
+7. **Shallow headings [lint].** Use `##` and `###` only. A page that needs `####` is two pages.
 
 ## Naming and navigation
 
