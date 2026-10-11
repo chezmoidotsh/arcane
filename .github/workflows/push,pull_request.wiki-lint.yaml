@@ -5,7 +5,7 @@
 # =============================================================================
 # Runs `scripts/wiki:lint`: flat wiki, file names, one title matching the file name, "Where to go next"
 # last, wiki-form links that resolve, every page in _Sidebar.md, no filler word, no emoji. The rules
-# are those marked [lint] in .agents/skills/wiki-docs/references/style-guide.md.
+# are those marked [lint] in .agents/skills/documentation-writer/references/style-guide.md.
 #
 # Events:      push (main), pull_request, on wiki/ and the script only
 # Permissions: contents: read

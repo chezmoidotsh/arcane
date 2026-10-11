@@ -1,21 +1,4 @@
----
-name: sop-authoring
-description: >
-  Writes and updates technical procedures (Standard Operating Procedures / runbooks) in docs/procedures/. Use it to turn
-  a repeatable operational task — a cluster bring-up, an OS/Kubernetes upgrade, an incident recovery, a network
-  migration, adding a security control — into a step-by-step, copy-pasteable procedure ("write a procedure for X",
-  "document these recovery steps", "turn this into a runbook", "add an SOP", "this should be a procedure"). Also use it
-  right after successfully performing a manual multi-step operation worth repeating, even if a procedure wasn't
-  explicitly requested — this is how tribal knowledge in this repo gets captured before it's lost.
----
-
 # Standard Operating Procedure (SOP) Authoring Skill
-
-> [!NOTE]
-> Style, naming, navigation and the `Where to go next` section come from the `wiki-docs` skill
-> (`.agents/skills/wiki-docs/`); this skill adds the structure of a procedure on top of it. Procedures are moving from
-> `docs/procedures/` to `wiki/` as `Procedure-<ID>-<Verb-Phrase>.md` (issue #1257): write new ones where the directory
-> currently holds them until their category has migrated, then in `wiki/`.
 
 ## Why we write procedures
 
@@ -29,7 +12,7 @@ This repo's procedures are read under pressure as often as not — a WAL disk fu
 so the bar is "can this be followed literally, in order, by someone who is stressed and unfamiliar with this specific
 incident." That is a higher bar than "can this be understood," which is the bar a design document has to clear.
 
-Procedures are the operational counterpart to ADRs: an ADR (`docs/decisions/`, see `.agents/skills/adr-authoring/`)
+Procedures are the operational counterpart to ADRs: an ADR (`docs/decisions/`, see `.agents/skills/documentation-writer/references/adr.md`)
 records _why_ a decision was made; a procedure records _how_ to execute the recurring operational task that decision
 created. If you find yourself justifying a tool choice or an architectural trade-off while writing a procedure, that
 content belongs in an ADR instead — link to it and move on.
@@ -250,9 +233,9 @@ Check the PVC usage and expand it if needed using kubectl patch.
 - `docs/procedures/README.md` — the index every new procedure must be added to.
 - `docs/incidents/README.md` and `.agents/skills/cnpg-troubleshoot/SKILL.md` — how incidents and procedures
   cross-reference each other, and how a troubleshooting skill routes from a live error to a procedure.
-- `.agents/skills/adr-authoring/SKILL.md` — the sibling skill for decisions; a procedure documents the "how" of a choice
+- `.agents/skills/documentation-writer/references/adr.md` — the sibling skill for decisions; a procedure documents the "how" of a choice
   an ADR already argued for.
-- `.agents/skills/postmortem/SKILL.md` — the "From Lesson to Control" table classifies a "Runbook step" as one of the
+- `.agents/skills/documentation-writer/references/postmortem.md` — the "From Lesson to Control" table classifies a "Runbook step" as one of the
   concrete artifacts a post-mortem's systemic lessons should produce; that artifact is a procedure written with this
   skill.
 

@@ -47,7 +47,7 @@ Auto-generated cross-incident view. Post-mortems are grouped by `root-cause-fami
 (declared in each PM's frontmatter). A family reaching **{threshold}+** incidents is a
 **Pareto trigger** — fix the family, not the next incident.
 
-See `.agents/skills/postmortem/SKILL.md` §"Root-cause family tagging" for the family
+See `.agents/skills/documentation-writer/references/postmortem.md` §"Root-cause family tagging" for the family
 vocabulary.
 
 """

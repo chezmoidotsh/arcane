@@ -13,8 +13,8 @@ One skeleton per page type. Copy the one that fits, delete the comments, keep th
 | Experiment       | `Experiment-YYYY-MM-DD-Title.md` | [Experiment](#experiment)             |
 | Project overview | `Project-<name>.md`              | [Project overview](#project-overview) |
 
-Procedures, ADRs and post-mortems keep the detailed structure of their own skills (`sop-authoring`, `adr-authoring`,
-`postmortem`). The skeletons below fix the frame around them: title, short version, and `Where to go next`.
+Procedures, ADRs and post-mortems keep the detailed structure described in [procedure.md](procedure.md), [adr.md](adr.md) and
+[postmortem.md](postmortem.md). The skeletons below fix the frame around them: title, short version, and `Where to go next`.
 
 ## Guide
 
@@ -75,13 +75,13 @@ Address plan for every VLAN and pool in the homelab. Verified against Proxmox SD
 
 ## Procedure
 
-For a repeatable operation. Keep the structure from `.agents/skills/sop-authoring/references/procedure-template.md`
+For a repeatable operation. Keep the structure from `.agents/skills/documentation-writer/references/procedure-template.md`
 (metadata, prerequisites, numbered steps with expected output, rollback, history) and add the frame:
 
 ````markdown
 # Procedure BKP-20260723-00 Restore CNPG From Object Store
 
-<!-- Short version: when to use it and how long it takes. Then the sop-authoring sections. -->
+<!-- Short version: when to use it and how long it takes. Then the sections of procedure.md. -->
 
 ## Where to go next
 
@@ -90,7 +90,7 @@ For a repeatable operation. Keep the structure from `.agents/skills/sop-authorin
 
 ## ADR
 
-Keep the front matter and sections from `.agents/skills/adr-authoring/references/adr-template.md`. A moved ADR keeps its
+Keep the front matter and sections from `.agents/skills/documentation-writer/references/adr-template.md`. A moved ADR keeps its
 number, title, decision and changelog; only the frame is added.
 
 ````markdown
@@ -101,7 +101,7 @@ date: 2026-07-02
 
 # ADR-015 Migrate Crossplane To Pulumi
 
-<!-- sections from adr-authoring: Context, Decision, Consequences, Changelog -->
+<!-- sections from adr.md: Context, Decision, Consequences, Changelog -->
 
 ## Where to go next
 
@@ -110,7 +110,7 @@ date: 2026-07-02
 
 ## Post-mortem
 
-Keep the front matter and sections from `.agents/skills/postmortem/templates/postmortem.md` untouched (the scripts in
+Keep the front matter and sections from `.agents/skills/documentation-writer/templates/postmortem.md` untouched (the scripts in
 `.github/scripts/postmortem-*.py` read the front matter).
 
 ## Experiment

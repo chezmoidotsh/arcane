@@ -36,4 +36,4 @@ documentation of that repository, published from the `wiki/` directory on every 
 ## Where to go next
 
 - [Repository README](https://github.com/chezmoidotsh/arcane/blob/main/README.md): the project at a glance and its history.
-- [Writing documentation](https://github.com/chezmoidotsh/arcane/blob/main/.agents/skills/wiki-docs/SKILL.md): how a page is written, and the style guide it follows.
+- [Writing documentation](https://github.com/chezmoidotsh/arcane/blob/main/.agents/skills/documentation-writer/SKILL.md): how a page is written, and the style guide it follows.

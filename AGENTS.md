@@ -254,14 +254,14 @@ running `git commit` or opening a PR, they enforce project conventions and surfa
 
 - `.agents/skills/git-commit/SKILL.md` — commit format, scopes, body rules, validation
 - `.agents/skills/create-pr/SKILL.md` — branch naming, PR templates, pre-flight checks, post-creation monitoring
-- `.agents/skills/adr-authoring/SKILL.md` — Architecture Decision Records
+- `.agents/skills/documentation-writer/SKILL.md` — every document: wiki pages, procedures (SOP), ADRs, post-mortems;
+  routes to the right template and holds the style guide
 - `.agents/skills/create-issue/SKILL.md` — issue drafting conventions
 - `.github/PULL_REQUEST_TEMPLATE/` — feature / bugfix / refactoring templates
-- `.agents/skills/wiki-docs/SKILL.md` — documentation style guide, page templates and the `wiki/` workflow
 
-`.agents/skills/` holds 19 skills in total (operational runbooks like `cnpg-troubleshoot`, `omni-talos-troubleshoot`,
-`lxc-maintenance`, `provider-upgrade`; process skills like `postmortem`, `triage-issues`, `sop-authoring`,
-`wiki-docs`, `auto-file-bug`; Pulumi-specific ones like `pulumi-overview`, `pulumi-best-practices`, `pulumi-component`,
+`.agents/skills/` holds 16 skills in total (operational runbooks like `cnpg-troubleshoot`, `omni-talos-troubleshoot`,
+`lxc-maintenance`, `provider-upgrade`; process skills like `documentation-writer`, `triage-issues`,
+`auto-file-bug`; Pulumi-specific ones like `pulumi-overview`, `pulumi-best-practices`, `pulumi-component`,
 `pulumi-debug-failed-operation`) — check that directory for something matching your task before improvising a procedure
 from scratch.
 
@@ -272,7 +272,7 @@ The documentation is moving from `docs/`, `projects/*/docs/` and the repository 
 documents stay where they are; `docs/migrations/20261011-documentation-audit-1257.md` lists every document with its
 destination.
 
-- Write and edit pages with the `wiki-docs` skill (style guide, page templates). `scripts/wiki:lint` enforces the
+- Write and edit pages with the `documentation-writer` skill (style guide, page templates). `scripts/wiki:lint` enforces the
   mechanical rules and runs on every pull request touching `wiki/`.
 - `wiki/` is flat, with `Title-Case-With-Hyphens.md` names and wiki-form links (`[x](Page)`, no `.md`).
 - READMEs that describe a directory stay next to the code. OPA policy documentation (`catalog/opa/`) never goes in the

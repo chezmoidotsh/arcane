@@ -1,18 +1,4 @@
----
-name: adr-authoring
-description: >
-  Writes and updates Architecture Decision Records (ADR) in docs/decisions/. Use it to document an architectural choice
-  or record why a technology was selected ("write an ADR", "document this decision", "update ADR-00N", "this should be
-  an ADR"), or right after a significant design decision worth preserving — even if an ADR wasn't explicitly requested.
----
-
 # Architecture Decision Record (ADR) Authoring Skill
-
-> [!NOTE]
-> Style, naming, navigation and the `Where to go next` section come from the `wiki-docs` skill
-> (`.agents/skills/wiki-docs/`); this skill adds the structure of an ADR on top of it. ADRs are moving from
-> `docs/decisions/` to `wiki/` as `ADR-NNN-Title.md` (issue #1257): write new ones where the directory currently holds
-> them until the ADR category has migrated, then in `wiki/`. Numbers never change.
 
 ## Why we write ADRs
 

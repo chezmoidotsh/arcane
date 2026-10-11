@@ -16,7 +16,7 @@
 # mise alias="wiki:lint"
 # mise description="Check the mechanical rules of the wiki style guide on wiki/."
 #
-# Enforces the [lint] rules of .agents/skills/wiki-docs/references/style-guide.md: flat wiki, file names, one H1
+# Enforces the [lint] rules of .agents/skills/documentation-writer/references/style-guide.md: flat wiki, file names, one H1
 # matching the file name, "Where to go next" last, wiki-form links that resolve, every page in _Sidebar.md, no filler
 # words, no emoji. Standard library only.
 #

@@ -53,6 +53,6 @@ jobs:
           path: wiki
           # The default preprocessing only touches root pages and runs them through remark without GFM or front matter
           # support, which mangles tables, admonitions and the ADR/post-mortem front matter. Links are written in wiki
-          # form (see .agents/skills/wiki-docs) and checked by scripts/wiki:lint instead.
+          # form (see .agents/skills/documentation-writer) and checked by scripts/wiki:lint instead.
           preprocess: false
           disable-empty-commits: true
