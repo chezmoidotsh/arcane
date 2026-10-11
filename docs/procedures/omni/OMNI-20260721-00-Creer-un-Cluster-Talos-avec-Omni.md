@@ -260,9 +260,11 @@ omnictl cluster template sync -f $TEMPLATE_FILE
 étape.** Le Proxmox CCM (étape 10) en dépend entièrement : sans lui, il ignore l'initialisation des nœuds sans erreur ni
 log. Si le drapeau manque et qu'un nœud s'est déjà enregistré, la correction exige de **supprimer et recréer le nœud**,
 car le champ `providerID` de Kubernetes est immuable une fois défini : redémarrer le kubelet avec le bon drapeau ne
-corrige pas un nœud déjà enregistré. Source : `docs/experiments/20260617-proxmox-csi-ccm/README.md`, section « 9.1 Known
-Considerations ». Le template de base (`catalog/omni/clustertemplates/base.yaml`) ne contient **pas** ce patch : les
-templates de `rhodes.akn` et de `lungmen.akn` l'ajoutent explicitement. Vérifier que la copie contient :
+corrige pas un nœud déjà enregistré. Source :
+[l'expérimentation Proxmox CSI/CCM](../../experiments/Experimentation-2026-06-17-Proxmox-CSI-et-CCM.md), section «
+Résultats », « Points d'attention relevés ». Le template de base (`catalog/omni/clustertemplates/base.yaml`) ne contient
+**pas** ce patch : les templates de `rhodes.akn` et de `lungmen.akn` l'ajoutent explicitement. Vérifier que la copie
+contient :
 
 ```yaml
 machine:
@@ -508,6 +510,7 @@ une commande de réépinglage sont suivies par l'issue [#1357](https://github.co
   des CIDR de Pod par cluster est dans [Allocation IPAM](../../reference/IPAM-Reference.md).
 - [ADR-011 : pré-rendre les manifestes Kubernetes dans Git](../../decisions/ADR-011-Pre-rendre-les-Manifestes-Kubernetes-dans-Git.md)
   : le motif de pré-rendu dans `dist/` utilisé à l'étape 10.
-- [Expérience Proxmox CSI/CCM](../../experiments/20260617-proxmox-csi-ccm/README.md) : architecture, ordre de
-  déploiement, rôles et tokens Proxmox, contrainte du drapeau cloud-provider (étape 6) et critères V-001 à V-010.
+- [Expérimentation Proxmox CSI/CCM](../../experiments/Experimentation-2026-06-17-Proxmox-CSI-et-CCM.md) : architecture,
+  ordre de déploiement, rôles et tokens Proxmox, contrainte du drapeau cloud-provider (étape 6) et critères V-001 à
+  V-010.
 - [Documentation d'Omni](https://omni.sidero.dev/) : référence d'`omnictl` et des templates de cluster.

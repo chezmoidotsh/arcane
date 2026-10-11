@@ -1,4 +1,10 @@
-# Audit de la documentation Arcane — étape 0 de #1257
+# AUDIT-20261011-00 Audit De La Documentation
+
+> [!NOTE]\
+> **Archive : instantané du 2026-10-11 avant la migration ; les chemins cités sont ceux d'avant et ne sont pas tous
+> valides aujourd'hui. Les noms actuels sont dans l'arborescence de `docs/` et dans la barre latérale.**
+
+Audit de la documentation Arcane, étape 0 de #1257.
 
 > Audit en lecture seule, fait le 2026-10-11 sur le worktree `docs-wiki-migration-1257` (HEAD `58520c30`). Chaque
 > constat "périmé" ou "cassé" s'appuie sur une vérification dans l'arbre (`ls`, `grep`, un vérificateur de liens
@@ -144,7 +150,7 @@ Destination commune : wiki, avec le nom `Procedure-<ID>-<Verb-Phrase>` (garder l
 | `README.md`                                                                    | Index des SOP                             | À corriger : il **manque** INF-20260605-00, INF-20260620-00, INF-20260705-00 et INF-20260730-00 ; décrit SEC-20250808 comme "Envoy + Authelia" ; décrit le bootstrap kazimierz comme "Pangolin + Tailscale" (c'est NixOS désormais) | Sidebar du futur wiki                                                                                                    | Index → remplacé par `_Sidebar.md` et une page `Procedures` ; à supprimer         |
 | `security/SEC-20250808-00.add-securitypolicy-on-httproute.md`                  | Ajouter un `SecurityPolicy` OIDC          | **Périmé** : 37 mentions d'Authelia, fichiers `projects/amiya.akn/...` absents, aucun `SecurityPolicy` dans l'arbre                                                                                                                 | ADR-005                                                                                                                  | **Archiver** (ou réécrire pour Pocket-Id si le besoin existe encore, décision D4) |
 | `databases/DB-20260530-00.cnpg-wal-disk-full-recovery.md`                      | WAL plein sur CNPG                        | À corriger : l'étape d'expansion suppose Longhorn (7 mentions ; "Longhorn expands online"), alors que le stockage est Proxmox CSI                                                                                                   | Incident 2026-05-30, skill `cnpg-troubleshoot` (table de correspondance)                                                 | SOP                                                                               |
-| `backups/DB-20260723-00.cnpg-restore-from-object-store.md`                     | Restaurer CNPG depuis S3                  | OK (liens valides) ; dépend de `rhodes/docs/disaster-recovery/.mise/tasks/...`                                                                                                                                                      | Étape 2 de `openbao.md` et `pocket-id.md`                                                                                | SOP                                                                               |
+| `backups/BKP-20260723-00.cnpg-restore-from-object-store.md`                    | Restaurer CNPG depuis S3                  | OK (liens valides) ; dépend de `rhodes/docs/disaster-recovery/.mise/tasks/...`                                                                                                                                                      | Étape 2 de `openbao.md` et `pocket-id.md`                                                                                | SOP                                                                               |
 | `backups/BKP-20260805-00.velero-restore-gitops-pvc.md`                         | Restaurer un PVC Velero                   | OK ; référencé par `scripts/velero:backup`                                                                                                                                                                                          | Expérience Velero                                                                                                        | SOP                                                                               |
 | `backups/BKP-20261005-00.rimbilliton-minecraft-restore-from-restic.md`         | Restauration restic Minecraft             | OK (le `docs/BOOTSTRAP.md` en backticks est relatif au projet)                                                                                                                                                                      | `rimbilliton/docs/BOOTSTRAP.md` (étape DR)                                                                               | SOP                                                                               |
 | `infrastructure/INF-20260525-00.upgrade-talos.md`                              | Montée de version Talos mono-nœud         | **Périmé** : 27 mentions d'amiya, `projects/amiya.akn/docs/bootstrap/talos/` absent ; les versions sont désormais dans les templates Omni                                                                                           | `.agents/knowledge/talos.md`                                                                                             | Réécrire en "Upgrade Talos via Omni template" ou archiver                         |
@@ -210,8 +216,8 @@ en retard.
 | `kazimierz.akn/docs/archives/REFLEXION-KUBERNETES-DEPLOYMENT.md` | Tentatives K8s (historique)  | Historique                                                                                | ADR-008                                                                                    | Archive     | Wiki archive, ou suppression                                                                                   |
 | `lungmen.akn/docs/HOW_TO_BOOTSTRAP.md`                           | Bootstrap lungmen via Omni   | OK (suit OMNI-20260721)                                                                   | OMNI-20260721-00, étape 1 du DR rhodes                                                     | Guide       | Wiki `Bootstrap-Lungmen` (mince : identité + écarts + lien vers OMNI)                                          |
 | `rhodes.akn/docs/disaster-recovery/README.md`                    | DR rhodes en 9 étapes        | OK                                                                                        | Récit de migration amiya, OMNI-20260721                                                    | SOP         | Wiki `Recover-Rhodes` ; `.mise/` reste en place (déplacer vers `projects/rhodes.akn/.mise/` ou `scripts/`, D5) |
-| `rhodes.akn/docs/disaster-recovery/openbao.md`                   | DR OpenBao                   | OK                                                                                        | DB-20260723-00                                                                             | SOP         | Wiki `Recover-OpenBao`                                                                                         |
-| `rhodes.akn/docs/disaster-recovery/pocket-id.md`                 | DR Pocket-Id                 | OK                                                                                        | DB-20260723-00                                                                             | SOP         | Wiki `Recover-Pocket-Id`                                                                                       |
+| `rhodes.akn/docs/disaster-recovery/openbao.md`                   | DR OpenBao                   | OK                                                                                        | BKP-20260723-00                                                                            | SOP         | Wiki `Recover-OpenBao`                                                                                         |
+| `rhodes.akn/docs/disaster-recovery/pocket-id.md`                 | DR Pocket-Id                 | OK                                                                                        | BKP-20260723-00                                                                            | SOP         | Wiki `Recover-Pocket-Id`                                                                                       |
 | `rimbilliton.akn/docs/BOOTSTRAP.md`                              | Bootstrap Minecraft NixOS    | OK                                                                                        | `kazimierz/docs/BOOTSTRAP.md`, BKP-20261005-00                                             | Guide       | Wiki `Bootstrap-Rimbilliton`                                                                                   |
 
 Les `projects/*/docs/assets/` (logos, architecture en SVG/PNG) et `projects/*/docs/.gitignore` (sorties Talos) restent
@@ -271,7 +277,7 @@ part dans le wiki, et le README pointe alors vers elle.
 | Arborescence du dépôt             | `README.md` (Project Structure) ↔ `AGENTS.md` (Project structure) ↔ ADR-007                                                                                                          | Wiki `Repository-Layout` ; `AGENTS.md` en garde un résumé                |
 | Stack technique                   | `AGENTS.md` (table) ↔ ADR-011/012/013/014/015 ↔ `CHANGELOG.md` (Steel Age)                                                                                                           | Wiki `Architecture-Overview` ; les ADR gardent le "pourquoi"             |
 | Bring-up d'un cluster Talos/Omni  | OMNI-20260721-00 ↔ `lungmen/docs/HOW_TO_BOOTSTRAP.md` ↔ étape 1 de `rhodes/docs/disaster-recovery/README.md` ↔ skill `omni-talos-troubleshoot` ↔ `catalog/omni/README.md` (Workflow) | OMNI-20260721-00 ; les autres n'en gardent que le delta                  |
-| Restauration CNPG                 | DB-20260723-00 ↔ étape 2 de `openbao.md` / `pocket-id.md` ↔ skill `cnpg-backup`                                                                                                      | DB-20260723-00                                                           |
+| Restauration CNPG                 | BKP-20260723-00 ↔ étape 2 de `openbao.md` / `pocket-id.md` ↔ skill `cnpg-backup`                                                                                                     | BKP-20260723-00                                                          |
 | WAL plein CNPG                    | DB-20260530-00 ↔ incident 2026-05-30 ↔ table "cache" du skill `cnpg-troubleshoot` ↔ `incidents/README.md` (exemples grep)                                                            | DB-20260530-00 (fix), incident (récit) ; le skill garde des pointeurs    |
 | Déploiement et mise à jour de LXC | INF-20260605-00 ↔ skill `lxc-maintenance` ↔ sections "Build & deploy" et "Proxmox LXC creation" des 5 READMEs LXC                                                                    | Page wiki `Deploy-An-LXC-Appliance` + INF-20260605                       |
 | Bootstrap VPS NixOS               | `kazimierz/docs/BOOTSTRAP.md` ↔ `rimbilliton/docs/BOOTSTRAP.md` (même schéma, kazimierz renvoie à rimbilliton) ↔ sections "Installation and Setup" des deux READMEs                  | Une page `Bootstrap-A-NixOS-VPS` + deltas par projet                     |
@@ -344,7 +350,7 @@ part dans le wiki, et le README pointe alors vers elle.
 
 | Fichier                                                                                                                             | Référence morte                                                                 |
 | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `projects/lungmen.akn/src/apps/databases/postgres-apps.helmvalues.yaml:48`, `postgres-apps-secured.helmvalues.yaml:58`              | `docs/procedures/databases/DB-20260723-00…` → c'est `backups/DB-20260723-00…`   |
+| `projects/lungmen.akn/src/apps/databases/postgres-apps.helmvalues.yaml:48`, `postgres-apps-secured.helmvalues.yaml:58`              | `docs/procedures/databases/DB-20260723-00…` → c'est `backups/BKP-20260723-00…`  |
 | `projects/chezmoi.sh/src/infrastructure/pulumi/toolbox/proxmox-docs/templates/partials.{host,procedures,sdn.talosnet,appendix}.hbs` | `docs/network/vlans.md` (×4) → `ipam.md` ; template et sortie générée divergent |
 | `catalog/nix/modules/lxc-static-network/default.nix:11`                                                                             | `docs/network/vlans.md`                                                         |
 
@@ -424,7 +430,7 @@ migration). L'extraction brute fait 375 lignes
 ## (f) Décisions ouvertes et questions pour l'utilisateur
 
 1. **D1 — Nommage et structure de `wiki/`.** Je recommande un `wiki/` **plat** avec des noms préfixés et uniques
-   (`ADR-014-Network-Topology.md`, `Procedure-DB-20260723-00-Restore-CNPG-From-Object-Store.md`,
+   (`ADR-014-Network-Topology.md`, `Procedure-BKP-20260723-00-Restore-CNPG-From-Object-Store.md`,
    `Incident-2026-05-30-CNPG-WAL-Disk-Full.md`, `Bootstrap-Lungmen.md`, `IPAM-Reference.md`). Raisons vérifiées dans
    l'action :
    - le pré-traitement ne touche que les fichiers à la racine ;
@@ -449,8 +455,8 @@ migration). L'extraction brute fait 375 lignes
    `docs/incidents/` avec seulement un hub dans le wiki ? L'issue veut les migrer : c'est faisable, mais il faut
    `preprocess: false` (D1b).
 5. **D4 — OIDC et SecurityPolicy.** ADR-005 et SEC-20250808 décrivent un mécanisme disparu. Faut-il écrire un ADR qui
-   supplante ADR-005 (Pocket-Id + Pangolin `sso: false` + authentification propre à chaque app) ou simplement marquer
-   ADR-005 `deprecated` ? Et SEC-20250808 : archiver ou réécrire ?
+   supplante ADR-005 (Pocket-Id + Pangolin `sso: false` + authentification propre à chaque app) ou marquer ADR-005
+   `deprecated` ? Et SEC-20250808 : archiver ou réécrire ?
 6. **D5 — Code dans `docs/`.** Où va le code des expériences (`manifests/`, `scripts/`, `package.json`, devcontainer) et
    les tâches mise du DR rhodes, une fois la prose dans le wiki ? Options : laisser `docs/experiments/<x>/` sans README
    (le README devient un pointeur), déplacer vers `projects/rhodes.akn/.mise/tasks/` ou vers `scripts/`, ou supprimer
@@ -506,7 +512,7 @@ migration). L'extraction brute fait 375 lignes
      `README.md`) ;
    - `Policy-Enforcement` (pointeur vers `catalog/opa/`).
 4. **ADR** (retouche légère) :
-   - corriger les statuts (005, 008, 009, 010 à 015) dans la même PR, ou juste avant ;
+   - corriger les statuts (005, 008, 009, 010 à 015) dans la même PR, ou immédiatement avant ;
    - supprimer `000` ;
    - mettre à jour `adr-authoring`, `.commitlintrc.js`, `scripts/dist:render`, `scripts/bao:secret:audit` et les
      commentaires `.ts` et clustertemplates.
@@ -521,3 +527,37 @@ migration). L'extraction brute fait 375 lignes
    - `ISSUE_TEMPLATE/config.yml` ;
    - `docs/` réduit à `docs/assets/` (et au code des expériences si D5 le garde) ;
    - le `grep` d'acceptation de l'issue ne trouve plus rien hors `CHANGELOG.md` et archives.
+
+## Résultat de la migration
+
+La migration a suivi l'ordre de la section (g), catégorie par catégorie. L'état ci-dessous est celui de `docs/` à la
+date de cette page ; les noms viennent de l'arborescence et de la barre latérale.
+
+- **Structure** : la source de vérité est `docs/`, rangé par type de page (`decisions/`, `procedures/`, `incidents/`,
+  `guides/`, `reference/`, `archives/`), et non le `wiki/` plat proposé par l'audit. Les noms sont en français,
+  `Title-Case-With-Hyphens.md`, et uniques dans `docs/`.
+- **ADR** : les quinze ADR sont migrés en `ADR-NNN-<Titre>.md` dans `docs/decisions/`. Le gabarit `000` n'existe plus et
+  le numéro 006 reste absent.
+- **Procédures** : elles sont renommées `Procedure-<ID>-<Verbe-Et-Objet>.md` dans `docs/procedures/` (`backups/`,
+  `databases/`, `infrastructure/`, `omni/`). Les procédures Talos et Kubernetes (INF-20260525-00 et 01) sont réécrites
+  pour Omni. Le dossier `security/` a disparu.
+- **Archives** : SEC-20250808-00 et MIGR-20260628-00 sont archivées sous `docs/archives/<ID>-<Titre>.md`, de même que
+  trois documents de `kazimierz.akn` (CrowdSec, bascule vers NixOS, réflexion sur le déploiement Kubernetes).
+- **Post-mortems** : les dix post-mortems sont renommés `Incident-<date>-<Titre>.md` dans `docs/incidents/`, avec les
+  pages `Incidents.md` (hub) et `Index-des-Incidents.md`.
+- **Guides** : le plan de reprise après sinistre (`Plan-de-Reprise-apres-Sinistre.md`), les guides `Restaurer-Rhodes`,
+  `Restaurer-OpenBao` et `Restaurer-Pocket-Id`, ainsi que `Initialiser-Lungmen`, `Initialiser-Kazimierz` et
+  `Initialiser-Rimbilliton` sont dans `docs/guides/`.
+- **Référence** : le réseau, l'IPAM, les passerelles et le DNS, et Renovate sont dans `docs/reference/`
+  (`Reseau-Reference.md`, `IPAM-Reference.md`, `Passerelles-et-DNS-Reference.md`, `Renovate-Reference.md`).
+- **Expériences** : les cinq récits sont des pages `Experiment-<date>-<Titre>.md` dans `docs/experiments/`. Le code
+  reste dans le sous-dossier de chaque expérience, dont le `README.md` est réduit au mode d'emploi (ces `README.md` sont
+  exclus du wiki par `docs/.wiki-legacy`).
+- **Archives et rapport** : la migration `amiya.akn` vers `rhodes.akn` (MIGR-20260729-00), le pont Talosnet de lungmen
+  (MIGR-20260801-00) et cet audit sont des archives. Le rapport d'inventaire manuel est la page
+  `Infrastructure-Manuelle-Reference.md`. Les dossiers `docs/migrations/` et `docs/reports/` n'existent plus.
+
+## Pour aller plus loin
+
+- [Skill documentation-writer](../../.agents/skills/documentation-writer/SKILL.md)
+- [Archive MIGR-20260729-00 Migrer Amiya vers Rhodes](MIGR-20260729-00-Migrer-Amiya-vers-Rhodes.md)
