@@ -1,6 +1,7 @@
 ---
-status: "accepted"
-date: 2026-10-11
+status: "implemented"
+date: 2026-10-18
+implementation-completed: 2026-10-18
 decision-makers: ["Alexandre"]
 assisted-by: ["gemini"]
 informed: []
@@ -9,19 +10,18 @@ template-version: "2.0.0"
 
 # ADR-009 Consolider les bases PostgreSQL
 
-> [!WARNING]\
-> Migré le 2026-10-11. État vérifié contre les fichiers de `projects/` le 2026-10-18 ; l'état des clusters n'a pas été revérifié.
-
 > [!NOTE]\
-> **État au 2026-10-18 : décision adoptée et partiellement appliquée.** Deux des trois clusters partagés existent sur
+> **État au 2026-10-18 : décision appliquée, avec un écart assumé.** Deux des trois clusters partagés existent sur
 > `lungmen.akn` : `postgres-apps` (`homebox`, `linkding`, `n8n`, `spoolman`) dans
 > `projects/lungmen.akn/src/apps/databases/postgres-apps.helmvalues.yaml` et `postgres-apps-secured` (`immich`,
 > `paperless`) dans `projects/lungmen.akn/src/apps/databases/postgres-apps-secured.helmvalues.yaml`, tous deux produits
-> par le chart `catalog/helm/mutualized-cnpg-databases`. `postgres-security` n'existe pas : `pocket-id`
-> (`projects/rhodes.akn/src/apps/pocket-id/cnpg.cluster.yaml`) et `openbao`
-> (`projects/rhodes.akn/src/apps/vault/cnpg.cluster.yaml`) gardent chacun un cluster dédié, comme `grafana`
-> (`projects/rhodes.akn/src/infrastructure/kubernetes/o11y/grafana.cnpg.cluster.yaml`), et le cluster `amiya.akn` cité
-> plus bas n'existe plus dans `projects/`. Les applications `atuin` et `jellyseerr`, citées dans le texte, n'ont plus de manifeste sous `projects/lungmen.akn/src/apps/` ; `n8n`, redéployée le 2026-10-14, utilise `postgres-apps`. Le texte ci-dessous est conservé tel que décidé.
+> par le chart `catalog/helm/mutualized-cnpg-databases`. `postgres-security` ne sera pas créé : le mainteneur garde un
+> cluster dédié à OpenBao (`projects/rhodes.akn/src/apps/vault/cnpg.cluster.yaml`) et un autre à Pocket-Id
+> (`projects/rhodes.akn/src/apps/pocket-id/cnpg.cluster.yaml`) sur `rhodes.akn`, pour isoler les composants les plus
+> critiques. Grafana garde aussi son cluster dédié
+> (`projects/rhodes.akn/src/infrastructure/kubernetes/o11y/grafana.cnpg.cluster.yaml`). Le cluster `amiya.akn` cité plus
+> bas n'existe plus dans `projects/`, et les applications `atuin` et `jellyseerr`, citées dans le texte, n'ont plus de
+> manifeste sous `projects/lungmen.akn/src/apps/`. Le texte ci-dessous est conservé tel que décidé.
 
 ## Contexte et problème
 
@@ -43,12 +43,12 @@ infrastructure de homelab en croissance ?
 ## Facteurs de décision
 
 - **Exigences non fonctionnelles** :
-  - Réduire la surcharge de ressources de 40 à 60 % grâce à des instances PostgreSQL partagées.
-  - Passer de plus de 7 planifications de sauvegarde à 3 planifications consolidées.
+  - Réduire la surcharge de ressources (RAM, stockage) des instances PostgreSQL, avec une cible de 40 à 60 %.
+  - Réduire la charge cognitive de la gestion des sauvegardes et des cycles de mise à jour.
   - Standardiser la configuration de PostgreSQL pour toutes les applications.
-  - Maintenir l'isolation de sécurité entre les données des applications grâce aux schémas et aux rôles.
-  - Faciliter la gestion des versions de PostgreSQL, avec moins de clusters à mettre à jour.
-  - Haute disponibilité pour les clusters `postgres-security` et `postgres-apps-secured`.
+  - Maintenir l'isolation de sécurité entre les données des applications.
+  - Faciliter la gestion des versions de PostgreSQL.
+  - Haute disponibilité pour les applications d'authentification et pour celles aux données sensibles.
   - Capacité de restauration à un instant donné (PITR) par base de données.
   - Aucun accès à une base de données d'une autre application.
   - Intégration d'OpenBao pour le stockage des identifiants.
@@ -163,13 +163,16 @@ philosophie d'auto-hébergement du homelab fondée sur des outils natifs de Kube
 
 ## Détails de mise en œuvre et état
 
-- **Composants terminés** : conception de l'architecture à trois clusters CloudNative-PG partagés (`postgres-security`,
-  `postgres-apps`, `postgres-apps-secured`) et de leur stratégie d'allocation, conformément à l'issue #661.
-- **Composants restants** : création effective des clusters CNPG partagés, configuration des sauvegardes S3 avec les
-  identifiants OpenBao, mise en place des NetworkPolicies d'accès aux bases, configuration des ServiceMonitors
-  Prometheus et migration des bases de données des applications existantes.
+- **Composants terminés** : les clusters partagés `postgres-apps` et `postgres-apps-secured` sur `lungmen.akn`, leurs
+  sauvegardes vers le stockage objet (`apps.objectstore.yaml`, `apps.scheduledbackup.yaml` et leurs équivalents
+  `apps-secured`, identifiants dans `cnpg-backup-credentials.externalsecret.yaml`) et leurs NetworkPolicies
+  (`projects/lungmen.akn/src/apps/databases/security/`).
+- **Écart assumé** : `postgres-security` n'est pas créé. OpenBao et Pocket-Id gardent chacun un cluster dédié sur
+  `rhodes.akn`, pour isoler les composants les plus critiques.
+- **Non vérifié** : les ServiceMonitors Prometheus de la liste d'origine, la supervision passant par VictoriaMetrics
+  depuis l'[ADR-013](./013-centralized-observability-victoriametrics-lxc.md).
 - **Architecture** :
-  - **`postgres-security` (amiya.akn)** : dédié à l'authentification et à la gestion des secrets critiques (par exemple
+  - **`postgres-security` (amiya.akn), abandonné** : prévu pour l'authentification et la gestion des secrets critiques (par exemple
     `pocket-id`, `openbao`). Configuré avec 1 primaire et 1 réplica pour la haute disponibilité.
   - **`postgres-apps` (lungmen.akn)** : héberge les applications utilisateur standard à sensibilité de données modérée
     (par exemple `atuin`, `jellyseerr`, `n8n`). Configuré avec une seule instance primaire.
@@ -183,6 +186,11 @@ philosophie d'auto-hébergement du homelab fondée sur des outils natifs de Kube
 
 ## Historique des modifications
 
+- _2026-10-18_ : **FEATURE** : Passage de `status` de `accepted` à `implemented`, avec `implementation-completed`, à la
+  demande du mainteneur lors de la relecture de la migration : `postgres-security` n'est pas créé et OpenBao et
+  Pocket-Id gardent chacun un cluster dédié sur `rhodes.akn`, pour isoler les composants les plus critiques. Facteurs de
+  décision reformulés pour ne plus contenir la solution (cibles chiffrées gardées). Note d'état et section de mise en
+  œuvre mises à jour, bandeau de vérification retiré.
 - _2026-10-11_ : **CHORE** : Migration vers le gabarit d'ADR 2.0.0 (version française) : traduction, sections renommées,
   sommaire manuel supprimé, titre aligné sur le nom de fichier, section `Pour aller plus loin`, statuts explicites
   ajoutés aux options d'après le texte de la décision, émojis des conséquences remplacés par les marqueurs du gabarit,
