@@ -12,12 +12,17 @@ documentation du dépôt. Il fait foi, se lit directement dans Git et est reflé
 
 ## Exploiter les clusters
 
-| Page                                                                     | Rôle                                                                           |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| [Procédures](procedures/README.md)                                       | Runbooks pas à pas : mises à jour, sauvegardes et restaurations, Omni, Proxmox |
-| [Initialiser Lungmen](../projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md)  | Création, configuration et amorçage du cluster des applications domestiques    |
-| [Initialiser Kazimierz](../projects/kazimierz.akn/docs/BOOTSTRAP.md)     | Création et installation de la passerelle d'accès public (Gateway)             |
-| [Initialiser Rimbilliton](../projects/rimbilliton.akn/docs/BOOTSTRAP.md) | Création et installation du serveur Pelican (gaming)                           |
+| Page                                                                                                                                          | Rôle                                                                              |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| [Créer un cluster Talos avec Omni](procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)                                      | Monter un cluster Talos sur Proxmox, du provisionnement à l'enregistrement GitOps |
+| [Mettre à jour Talos avec Omni](procedures/infrastructure/INF-20260525-00-Mettre-a-Jour-Talos-avec-Omni.md)                                   | Changer la version de Talos d'un cluster                                          |
+| [Mettre à jour Kubernetes avec Omni](procedures/infrastructure/INF-20260525-01-Mettre-a-Jour-Kubernetes-avec-Omni.md)                         | Changer la version de Kubernetes d'un cluster                                     |
+| [Mettre à jour un LXC par échange du rootfs](procedures/infrastructure/INF-20260605-00-Mettre-a-Jour-un-LXC-par-Echange-du-Rootfs.md)         | Déployer une nouvelle image d'un conteneur LXC                                    |
+| [Provisionner le SDN Proxmox](procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md)                                       | Réseau défini par logiciel des clusters Talos                                     |
+| [Gérer l'état Pulumi et importer des ressources](procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md) | Backend d'état Pulumi et import de ressources existantes                          |
+| [Initialiser Lungmen](../projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md)                                                                       | Création, configuration et amorçage du cluster des applications domestiques       |
+| [Initialiser Kazimierz](../projects/kazimierz.akn/docs/BOOTSTRAP.md)                                                                          | Création et installation de la passerelle d'accès public (Gateway)                |
+| [Initialiser Rimbilliton](../projects/rimbilliton.akn/docs/BOOTSTRAP.md)                                                                      | Création et installation du serveur Pelican (gaming)                              |
 
 ## Reprendre après une panne
 

@@ -3,15 +3,11 @@
 # A path listed here is not linted by scripts/wiki:lint and is not published to the GitHub Wiki.
 # Patterns are relative to docs/ (fnmatch: `*` also matches `/`). Delete a line when its category has been migrated;
 # the file is gone when the migration is complete.
-archives/*
+archives/2026-*
 decisions/*
 experiments/*
 incidents/*
 migrations/*
 network/*
-procedures/README.md
-procedures/infrastructure/INF-????????-??.*
-procedures/infrastructure/MIGR-*
-procedures/security/*
 reports/*
 RENOVATE.md
