@@ -3,6 +3,11 @@
 ### Exploiter les clusters
 
 - [Procédures](procedures/README.md)
+- [Créer un cluster Talos avec Omni](procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)
+- [Réépingler les SHA après un squash-merge](procedures/omni/OMNI-20260629-03-Reepingler-les-SHA-apres-un-Squash-Merge.md)
+- [Mettre à jour Talos avec Omni](procedures/infrastructure/INF-20260525-00-Mettre-a-Jour-Talos-avec-Omni.md)
+- [Mettre à jour Kubernetes avec Omni](procedures/infrastructure/INF-20260525-01-Mettre-a-Jour-Kubernetes-avec-Omni.md)
+- [Drainer un nœud hébergeant des instances CNPG](procedures/infrastructure/INF-20260525-02-Drainer-un-Noeud-Hebergeant-des-Instances-CNPG.md)
 - [Initialiser Lungmen](../projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md)
 - [Initialiser Kazimierz](../projects/kazimierz.akn/docs/BOOTSTRAP.md)
 - [Initialiser Rimbilliton](../projects/rimbilliton.akn/docs/BOOTSTRAP.md)
