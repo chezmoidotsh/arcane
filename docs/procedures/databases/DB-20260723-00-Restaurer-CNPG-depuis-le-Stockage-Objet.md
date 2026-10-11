@@ -37,7 +37,7 @@ Les accès suivants sont également nécessaires :
 - Accès `kubectl` au cluster cible, avec le droit de créer et modifier des ressources dans le namespace cible.
 - Opérateur CNPG et plugin `barman-cloud.cloudnative-pg.io` déjà installés sur le cluster cible (hors périmètre ici :
   cela fait partie du démarrage du cluster, par exemple
-  [OMNI-20260721-00](../omni/OMNI-20260721-00.omni-cluster-creation.md)).
+  [OMNI-20260721-00](../omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)).
 - Accès en lecture au bucket S3 de l'`ObjectStore` source (les identifiants viennent du secret `cnpg-backup-credentials`
   du namespace de l'application ; appliquer d'abord le dossier `sops/` de l'application s'il n'y est pas encore).
 

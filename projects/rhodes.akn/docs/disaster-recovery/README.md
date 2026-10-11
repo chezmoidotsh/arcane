@@ -37,8 +37,8 @@ You must also have:
 > `GatewayClass`, `NetworkPolicy`s — is applied by hand in Step 2, not here.
 
 Apply `src/infrastructure/omni/rhodes.clustertemplate.yaml` via `omnictl`, following
-[OMNI-20260721-00](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md) **up through its
-CNI/CSI/CCM validation checklist only** — stop short of that procedure's GitOps registration step. ArgoCD bootstraps
+[OMNI-20260721-00](../../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md) **up through
+its CNI/CSI/CCM validation checklist only** — stop short of that procedure's GitOps registration step. ArgoCD bootstraps
 last.
 
 ## Step 2 — Deploy `dist/infrastructure/kubernetes/`
@@ -108,7 +108,7 @@ kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f pro
 > `--force-conflicts` added; this adopts ownership from the bootstrap manifest onto the `dist/`-rendered one (same
 > pattern as ArgoCD adopting hand-applied resources in Step 9) and triggers a short rolling update of the Cilium
 > DaemonSet — expected, see the ~2-minute connectivity blip called out in
-> [OMNI-20260721-00 § Known issues](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md#2-minute-connectivity-blip-during-cilium-kubeproxyreplacement-takeover).
+> [OMNI-20260721-00 § Known issues](../../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md#coupure-de-connectivité-de-2-minutes-pendant-la-reprise-de-kube-proxy-par-cilium).
 
 > [!NOTE] Expect two harmless, self-resolving classes of error on first pass — neither means Step 2 failed:
 >
@@ -184,7 +184,7 @@ cilium status --wait
 ```
 
 Then walk OMNI-20260721-00's own
-[Validation checklist](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md#validation-checklist)
+[Validation checklist](../../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md#liste-de-validation)
 (criteria V-001 through V-010). There is no dedicated, ready-to-run script for this yet —
 `docs/experiments/20260617-proxmox-csi-ccm/scripts/validate.sh` covers the same criteria but is hardcoded to that
 experiment's own `StorageClass`/`StatefulSet` names, not `rhodes.akn`'s; treat it as a reference for what to check by
@@ -275,7 +275,7 @@ kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/src/bootstrap.a
 ```
 
 > [!NOTE] ArgoCD self-hosts on `rhodes.akn` (the hub pattern — see
-> [OMNI-20260721-00 § Hub & spoke GitOps topology](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md#hub--spoke-gitops-topology)),
+> [OMNI-20260721-00 § Hub & spoke GitOps topology](../../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md#topologie-gitops-hub-et-spoke)),
 > and bootstraps last, deliberately: it **adopts** every resource already applied by hand in Steps 2-8 instead of being
 > a dependency of them, and its own OIDC `ExternalSecret` needs Step 7 already done.
 
@@ -305,7 +305,7 @@ applied by hand — and reconcile it through GitOps from here on. No further man
 
 ## References
 
-- [OMNI-20260721-00: Talos cluster bring-up on Proxmox](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md)
+- [OMNI-20260721-00: Talos cluster bring-up on Proxmox](../../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)
   — cluster provisioning, CNI/CSI/CCM bring-up, and validation checklist (Steps 1, 4)
 - [OpenBao Disaster Recovery](openbao.md) — the OpenBao restore procedure (Step 5)
 - [Pocket-Id Disaster Recovery](pocket-id.md) — the Pocket-Id restore procedure (Step 6)

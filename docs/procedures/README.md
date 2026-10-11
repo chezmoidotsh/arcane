@@ -40,12 +40,12 @@ by either a human operator or an AI agent.
 
 ### Omni
 
-- **[OMNI-20260721-00: Talos cluster bring-up on Proxmox](./omni/OMNI-20260721-00.omni-cluster-creation.md)**: Full
-  cluster bring-up, from Omni provisioning to GitOps registration. Covers cluster identity and pod CIDR allocation
+- **[OMNI-20260721-00: Talos cluster bring-up on Proxmox](./omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)**:
+  Full cluster bring-up, from Omni provisioning to GitOps registration. Covers cluster identity and pod CIDR allocation
   (ADR-014), cluster template generation, SHA reachability checks, machine-class application, template validation and
   application, convergence monitoring, kubeconfig/CNI verification, Proxmox CCM/CSI credential bootstrap, CSI/CCM
   deployment via `dist/`, ArgoCD hub/spoke registration, and a CNI/CSI/CCM validation checklist.
-- **[OMNI-20260629-03: SHA pinning — repinning Omni bootstrap manifests after a squash-merge](./omni/OMNI-20260629-03.sha-repin.md)**:
+- **[OMNI-20260629-03: SHA pinning — repinning Omni bootstrap manifests after a squash-merge](./omni/OMNI-20260629-03-Reepingler-les-SHA-apres-un-Squash-Merge.md)**:
   Repins the Talos bootstrap manifest SHA references in Omni cluster templates after a pull request is squash-merged to
   `main`. Covers why SHA pinning exists, the squash-merge 404 problem, reachability verification, template updates,
   application, and a recommended CI guard.
@@ -55,13 +55,13 @@ by either a human operator or an AI agent.
 - **[MIGR-20260628-00: Migrate Talos nodes from VLAN 2 to VLAN 5 (V1→V2 dual-NIC)](./infrastructure/MIGR-20260628-00.vlan2-to-vlan5.md)**:
   Rolling migration of existing Omni-managed Talos VMs from the legacy VLAN 2 single-NIC layout to the V2 dual-NIC
   layout (VLAN 5 on eth0, talosnet on eth1). Required after applying the updated V2 machine classes.
-- **[INF-20260525-00: Upgrade Talos OS on a Single-Node Cluster](./infrastructure/INF-20260525-00.upgrade-talos.md)**:
+- **[INF-20260525-00: Upgrade Talos OS on a Single-Node Cluster](./infrastructure/INF-20260525-00-Mettre-a-Jour-Talos-avec-Omni.md)**:
   Full lifecycle upgrade of the Talos OS version on a single-node cluster, including pre-upgrade checks, image pre-pull,
   upgrade execution, post-upgrade verification, and rollback.
-- **[INF-20260525-01: Upgrade Kubernetes on a Talos Single-Node Cluster](./infrastructure/INF-20260525-01.upgrade-kubernetes.md)**:
+- **[INF-20260525-01: Upgrade Kubernetes on a Talos Single-Node Cluster](./infrastructure/INF-20260525-01-Mettre-a-Jour-Kubernetes-avec-Omni.md)**:
   Kubernetes version upgrade using `talosctl upgrade-k8s`, covering the six-phase upgrade process with dry-run
   validation, post-upgrade verification, and interrupted-upgrade recovery.
-- **[INF-20260525-02: Draining a node hosting CNPG instances](./infrastructure/INF-20260525-02.drain-nodes-with-cnpg.md)**:
+- **[INF-20260525-02: Draining a node hosting CNPG instances](./infrastructure/INF-20260525-02-Drainer-un-Noeud-Hebergeant-des-Instances-CNPG.md)**:
   What a node drain does to single- and multi-instance CloudNative-PG clusters (PDB convention, expected downtime) and
   the pre-upgrade checks.
 - **[INF-20260627-00: Provisioning the Proxmox SDN (simple zone + VNet for Talos clusters)](./infrastructure/INF-20260627-00.proxmox-sdn-setup.md)**:

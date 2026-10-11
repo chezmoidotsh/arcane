@@ -15,8 +15,8 @@ time — it was drafted proactively on 2026-07-23, ahead of this migration (see 
 [README.md's History](../../projects/rhodes.akn/docs/disaster-recovery/README.md#history)).
 
 > [!NOTE] The action itself is identical to DR's own Step 1: apply the cluster template via `omnictl`, following
-> [OMNI-20260721-00](../procedures/omni/OMNI-20260721-00.omni-cluster-creation.md) through its CNI/CSI/CCM validation
-> checklist. `rhodes.akn` is already allocated cluster ID 1 / pod CIDR `172.30.0.0/19` in
+> [OMNI-20260721-00](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md) through its CNI/CSI/CCM
+> validation checklist. `rhodes.akn` is already allocated cluster ID 1 / pod CIDR `172.30.0.0/19` in
 > [docs/network/ipam.md](../network/ipam.md) — that decision predates this migration and needs no revisiting here.
 
 ## Step 2 (openbao.md / pocket-id.md) — CNPG restore already points at amiya's backups
@@ -107,8 +107,8 @@ Verify with `kubectl get externalsecret -A` on `lungmen.akn`'s own context — a
 - [OpenBao Disaster Recovery](../../projects/rhodes.akn/docs/disaster-recovery/openbao.md),
   [Pocket-Id Disaster Recovery](../../projects/rhodes.akn/docs/disaster-recovery/pocket-id.md) — component-specific
   restore steps
-- [OMNI-20260721-00: Talos cluster bring-up on Proxmox](../procedures/omni/OMNI-20260721-00.omni-cluster-creation.md) —
-  cluster provisioning (Step 1)
+- [OMNI-20260721-00: Talos cluster bring-up on Proxmox](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)
+  — cluster provisioning (Step 1)
 - [DB-20260723-00: Restore a CNPG cluster from its S3 object-store backup](../procedures/databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md)
   — the generic CNPG restore procedure used by `openbao.md`/`pocket-id.md` Step 2
 - [ADR-014: Homelab network topology (dual-NIC + SDN VNet)](../decisions/014-network-topology.md) — pod CIDR allocation

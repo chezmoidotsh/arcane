@@ -40,7 +40,7 @@ argocd cluster add lungmen-akn --name lungmen.akn
 This is the **lungmen.akn-specific** entry point for (re)provisioning the cluster: its cluster identity, template file,
 and where it forks from the generic procedure. For the full step-by-step (SHA reachability checks, CSI/CCM validation
 criteria, known issues, etc.), follow
-[Procedure OMNI-20260721-00 — Talos cluster bring-up on Proxmox](../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md)
+[Procedure OMNI-20260721-00 — Talos cluster bring-up on Proxmox](../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)
 using the parameters below.
 
 > [!NOTE] This cluster was recreated from scratch after issue 1188 (superseding issue 1028): **proxmox-csi-plugin from
@@ -80,8 +80,8 @@ than layered on top.
 
 ## Steps
 
-Follow [OMNI-20260721-00](../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md) in full, using the
-identity table above. In short:
+Follow [OMNI-20260721-00](../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md) in full,
+using the identity table above. In short:
 
 1. **Machine classes** (Step 1) — apply once, shared repo-wide.
 2. **Cluster identity already allocated** (Step 2) — lungmen is cluster ID 2, `172.30.32.0/19`; no new allocation needed
