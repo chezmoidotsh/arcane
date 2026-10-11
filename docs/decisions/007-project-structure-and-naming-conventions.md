@@ -140,7 +140,7 @@ cognitive load and reducing operational velocity.
 > \[!CAUTION] **DEPRECATED**: This option has been superseded by Option 1.4 (`.application.patch` files). The asterisk
 > prefix approach is no longer recommended and should be migrated to the new pattern.
 
-```
+```text
 projects/amiya.akn/src/apps/
 ├── *argocd/       # Manual sync - critical infrastructure
 ├── *vault/        # Manual sync - secrets management
@@ -153,9 +153,9 @@ projects/amiya.akn/src/apps/
 - **Pros**: Clear visual indicator, functional mechanism
 - **Cons**: Non-standard filesystem naming, limited extensibility, binary control only
 
-**Option 1.2: No Prefix with Metadata Labels**
+#### Option 1.2: No Prefix with Metadata Labels
 
-```
+```text
 projects/lungmen.akn/src/apps/
 ├── argocd/
 ├── vault/
@@ -168,9 +168,9 @@ Sync policy controlled through Application-level annotations or labels.
 - **Pros**: Clean filesystem listing, standard Kubernetes naming
 - **Cons**: Requires additional metadata, less obvious sync behavior, harder to implement in ApplicationSets
 
-**Option 1.3: Separate Directories by Sync Policy**
+#### Option 1.3: Separate Directories by Sync Policy
 
-```
+```text
 projects/cluster/src/
 ├── apps/manual/
 │   ├── argocd/
@@ -185,7 +185,7 @@ projects/cluster/src/
 
 **Option 1.4: ApplicationPatch Files** (NEW - Recommended)
 
-```
+```text
 projects/lungmen.akn/src/infrastructure/kubernetes/
 ├── cilium/
 │   ├── .application.patch      # Sync policy and metadata
@@ -378,7 +378,7 @@ This decision establishes a complete, consistent structure across all Arcane pro
 
 **Standard**: Lowercase with hyphens, sync policy controlled via `.application.patch` files
 
-```
+```text
 projects/{cluster-name}/src/apps/{application-name}/
 projects/{cluster-name}/src/infrastructure/kubernetes/{component-name}/
 ```
@@ -393,7 +393,7 @@ Each application directory may contain an optional `.application.patch` file tha
 
 **Directory Structure**:
 
-```
+```text
 {application-name}/
 ├── .application.patch          # Sync policy and metadata (optional)
 ├── kustomization.yaml          # Main Kustomize configuration
@@ -469,7 +469,7 @@ spec:
 
 #### 1.2 Application Structure
 
-```
+```text
 {application-name}/
 ├── kustomization.yaml          # Main Kustomize configuration
 ├── {app}.{resource}.yaml       # Resource files
@@ -1104,7 +1104,7 @@ kind: Component
 
 #### 8.1 Standard Structure
 
-```
+```text
 security/
 ├── kustomization.yaml
 ├── network-policy.default-hardened.yaml
@@ -1136,7 +1136,7 @@ resources:
 
 **Per-Application Secrets**:
 
-```
+```text
 /{cluster-name}/{application-name}/{category}/{secret-name}
 ```
 
@@ -1316,7 +1316,7 @@ metadata:
 
 #### 12.1 Core Platform Cluster (amiya.akn pattern)
 
-```
+```text
 projects/amiya.akn/
 ├── README.md
 ├── architecture.d2
@@ -1363,7 +1363,7 @@ projects/amiya.akn/
 
 #### 12.2 Application Cluster (lungmen.akn pattern)
 
-```
+```text
 projects/lungmen.akn/
 ├── README.md
 ├── architecture.d2
@@ -1412,7 +1412,7 @@ projects/lungmen.akn/
 
 #### 12.3 Shared Infrastructure (chezmoi.sh pattern)
 
-```
+```text
 projects/chezmoi.sh/
 ├── README.md
 └── src/
