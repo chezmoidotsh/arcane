@@ -10,13 +10,9 @@
 - [Provisionner le SDN Proxmox](procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md)
 - [Gérer l'état Pulumi et importer des ressources](procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
 - [Désactiver le suivi de connexion des pools LB](procedures/infrastructure/INF-20260730-00-Desactiver-le-Suivi-de-Connexion-des-Pools-LB.md)
-- [Initialiser Lungmen](../projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md)
-- [Initialiser Kazimierz](../projects/kazimierz.akn/docs/BOOTSTRAP.md)
-- [Initialiser Rimbilliton](../projects/rimbilliton.akn/docs/BOOTSTRAP.md)
-
-10 other conflicted commits exist — scope with `but resolve conflicts <branch>`. Resolve with
-`but resolve apply <path>[:<N>] --commit docs/balayage-final --ours|--theirs` or pipe mixed content into
-`but resolve apply <path>:<N> --commit docs/balayage-final`. `but resolve --ai` resolves everything at once.
+- [Initialiser Lungmen](guides/Initialiser-Lungmen.md)
+- [Initialiser Kazimierz](guides/Initialiser-Kazimierz.md)
+- [Initialiser Rimbilliton](guides/Initialiser-Rimbilliton.md)
 
 ### Reprendre après une panne
 
@@ -38,3 +34,10 @@
 
 - [Migrer les nœuds Talos du VLAN 2 au VLAN 5](archives/MIGR-20260628-00-Migrer-les-Noeuds-Talos-du-VLAN-2-au-VLAN-5.md)
 - [Ajouter une SecurityPolicy OIDC sur une HTTPRoute](archives/SEC-20250808-00-Ajouter-une-SecurityPolicy-OIDC-sur-une-HTTPRoute.md)
+- [Migration de Kazimierz vers NixOS](archives/Migration-de-Kazimierz-vers-NixOS.md)
+- [Intégration de CrowdSec dans Kazimierz](archives/Integration-de-CrowdSec-dans-Kazimierz.md)
+- [Réflexion sur le déploiement Kubernetes de Kazimierz](archives/Reflexion-sur-le-Deploiement-Kubernetes-de-Kazimierz.md)
+
+9 other conflicted commits exist — scope with `but resolve conflicts <branch>`. Resolve with
+`but resolve apply <path>[:<N>] --commit docs/balayage-final --ours|--theirs` or pipe mixed content into
+`but resolve apply <path>:<N> --commit docs/balayage-final`. `but resolve --ai` resolves everything at once.

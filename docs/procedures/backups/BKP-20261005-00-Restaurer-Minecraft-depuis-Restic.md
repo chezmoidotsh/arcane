@@ -5,12 +5,12 @@ dépôt restic sur Backblaze B2, alimenté chaque jour par le job restic `minecr
 (`src/infrastructure/nixos/modules/backup.nix`). Elle couvre quatre cas : inspecter les snapshots (étape 1), restaurer
 le monde d'un serveur (étape 2), restaurer les données du Panel (étape 3) et reconstruire l'hôte après la perte de la VM
 (étape 4). Compter quelques minutes pour les étapes 1 à 3 et plusieurs heures pour l'étape 4, qui inclut le réamorçage
-complet décrit dans [BOOTSTRAP](../../../projects/rimbilliton.akn/docs/BOOTSTRAP.md).
+complet décrit dans [BOOTSTRAP](../../guides/Initialiser-Rimbilliton.md).
 
 > [!CAUTION]\
 > Cette procédure n'a encore jamais été testée : aucune restauration n'a été rejouée sur l'hôte. Elle a seulement été
 > vérifiée contre le dépôt le 2026-10-11 (`modules/backup.nix`, `modules/pelican.nix`, `stack/backblaze.ts`,
-> `docs/BOOTSTRAP.md` du projet).
+> `docs/guides/Initialiser-Rimbilliton.md`).
 
 ## Cadre technique et conventions
 
@@ -49,7 +49,7 @@ Le fonctionnement des sauvegardes dicte tous les chemins de restauration :
 
 Avant de commencer, vérifier que les outils suivants sont installés et configurés : `mise` (fournit `sops`), `pulumi`,
 `ssh`, ainsi que Docker et `nonix` pour la reconstruction complète (voir
-[BOOTSTRAP](../../../projects/rimbilliton.akn/docs/BOOTSTRAP.md)).
+[BOOTSTRAP](../../guides/Initialiser-Rimbilliton.md)).
 
 Les accès suivants sont également nécessaires :
 
@@ -471,8 +471,8 @@ rm -rf "${RESTORE_DIR}"
 
 ## Pour aller plus loin
 
-- [BOOTSTRAP de rimbilliton.akn](../../../projects/rimbilliton.akn/docs/BOOTSTRAP.md) : provisionnement, clé d'hôte,
-  installation de NixOS et configuration du nœud Wings.
+- [BOOTSTRAP de rimbilliton.akn](../../guides/Initialiser-Rimbilliton.md) : provisionnement, clé d'hôte, installation de
+  NixOS et configuration du nœud Wings.
 - [Pulumi : état sur Garage et import](../infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
   : récupération de l'état d'une stack et import de ressources existantes.
 - [Documentation restic : restaurer une sauvegarde](https://restic.readthedocs.io/en/stable/050_restore.html) : options

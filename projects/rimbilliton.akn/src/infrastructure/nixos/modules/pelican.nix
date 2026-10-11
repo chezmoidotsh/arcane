@@ -6,7 +6,7 @@
 #
 # Wings does not start until it knows its node: create the node in the Panel,
 # then put its `uuid`, `token_id` and `token` (from the node's Configuration tab)
-# in the SOPS file (see docs/BOOTSTRAP.md). The rest of Wings' config.yml is
+# in the SOPS file (see docs/guides/Initialiser-Rimbilliton.md). The rest of Wings' config.yml is
 # declared below and rendered by sops-nix, so nothing is written by hand.
 { config, lib, pkgs, ... }:
 let
@@ -121,7 +121,7 @@ in
     "d /tmp/pelican 0755 root root -"
   ];
 
-  # Pocket-Id sign-in (the client is created by hand in Pocket-Id, see docs/BOOTSTRAP.md).
+  # Pocket-Id sign-in (the client is created by hand in Pocket-Id, see docs/guides/Initialiser-Rimbilliton.md).
   sops.secrets.oauth_pocketid_client_id = { };
   sops.secrets.oauth_pocketid_client_secret = { };
   sops.templates."pelican-panel.env".content = ''

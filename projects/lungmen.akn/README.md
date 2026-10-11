@@ -158,8 +158,9 @@ the ArgoCD hub hosted on `rhodes.akn` — it does not run its own ArgoCD instanc
 
 ### Recovery Process
 
-See the [Bootstrap documentation](./docs/HOW_TO_BOOTSTRAP.md) for the full, step-by-step Omni-based provisioning
-procedure, including cluster identity, machine classes, and registering the cluster into `rhodes.akn`'s ArgoCD.
+See the [Bootstrap documentation](../../docs/guides/Initialiser-Lungmen.md) for the full, step-by-step Omni-based
+provisioning procedure, including cluster identity, machine classes, and registering the cluster into `rhodes.akn`'s
+ArgoCD.
 
 ### Manual Verification
 

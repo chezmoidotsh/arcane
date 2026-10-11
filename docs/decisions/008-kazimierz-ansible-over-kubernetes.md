@@ -466,8 +466,7 @@ are monitored.
   [community.general](https://docs.ansible.com/ansible/latest/collections/community/general/),
   [community.docker](https://docs.ansible.com/ansible/latest/collections/community/docker/)
 - **Architecture References**: `kazimierz` Ansible README (removed on 2026-10-10, see Git history); current setup in the
-  [`kazimierz` bootstrap](../../projects/kazimierz.akn/docs/BOOTSTRAP.md) and
-  [ADR-016](./016-kazimierz-nixos-over-ansible.md)
+  [`kazimierz` bootstrap](../guides/Amorcer-Kazimierz.md) and [ADR-016](./016-kazimierz-nixos-over-ansible.md)
 
 ---
 
