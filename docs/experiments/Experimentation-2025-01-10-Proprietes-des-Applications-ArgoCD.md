@@ -300,8 +300,8 @@ ApplicationSets de production.
 
 ## Pour aller plus loin
 
-- [ADR-011 Motif des manifestes rendus](../decisions/ADR-011-Motif-des-Manifestes-Rendus.md) : les ApplicationSets
-  lisent aujourd'hui les chemins `dist/`.
+- [ADR-011 Pré-rendre les manifestes Kubernetes dans Git](../decisions/ADR-011-Pre-rendre-les-Manifestes-Kubernetes-dans-Git.md)
+  : les ApplicationSets lisent aujourd'hui les chemins `dist/`.
 - [Générateur Merge d'ArgoCD](https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Merge/)
   : la documentation du générateur utilisé.
 - [Générateur Matrix d'ArgoCD](https://argo-cd.readthedocs.io/en/stable/operator-manual/applicationset/Generators-Matrix/)

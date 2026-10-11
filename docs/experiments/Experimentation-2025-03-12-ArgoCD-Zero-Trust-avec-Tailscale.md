@@ -298,8 +298,8 @@ en œuvre.
 
 ## Pour aller plus loin
 
-- [ADR-011 Motif Des Manifestes Rendus](../decisions/ADR-011-Motif-des-Manifestes-Rendus.md) : le motif de rendu des
-  manifestes qu'ArgoCD synchronise dans le dépôt.
+- [ADR-011 Pré-rendre les manifestes Kubernetes dans Git](../decisions/ADR-011-Pre-rendre-les-Manifestes-Kubernetes-dans-Git.md)
+  : le motif de rendu des manifestes qu'ArgoCD synchronise dans le dépôt.
 - [ADR-014 Topologie Réseau](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md) : la topologie
   réseau dans laquelle s'insèrent les clusters.
 - [Code de l'expérience](tailscale-argocd-zero-trust/README.md) : environnement, manifestes et prérequis d'exécution.
