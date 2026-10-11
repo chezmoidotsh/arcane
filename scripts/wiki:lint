@@ -46,9 +46,10 @@ NEXT_HEADING = "pour aller plus loin"
 
 
 def norm(s: str) -> str:
-    """Lower-case, strip accents, collapse everything that is not a letter or a digit to one space."""
+    """Lower-case, strip accents (œ and æ become oe and ae), collapse everything else to one space."""
+    s = s.lower().replace("œ", "oe").replace("æ", "ae")
     ascii_ = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
-    return re.sub(r"[^a-z0-9]+", " ", ascii_.lower()).strip()
+    return re.sub(r"[^a-z0-9]+", " ", ascii_).strip()
 
 
 def legacy_patterns(root: Path) -> list[str]:
@@ -136,7 +137,7 @@ def lint(root: Path, label: str = "docs") -> list[str]:
                     continue
                 path = unquote(target.split("#", 1)[0])
                 dest = (page.parent / path).resolve()
-                if not dest.is_file():
+                if not dest.exists():
                     hint = " (link to the .md file, not the page name)" if (page.parent / (path + ".md")).is_file() else ""
                     err(page, n, f"broken link '{target}'{hint}")
                 elif page == sidebar:
@@ -158,6 +159,7 @@ def lint(root: Path, label: str = "docs") -> list[str]:
 
 
 def self_test() -> None:
+    assert norm("Drainer un nœud") == norm("Drainer-Un-Noeud"), "œ must match oe"
     good = "# Page réussie\n\nVersion courte.\n\n```sh\njust run\n```\n\n## Pour aller plus loin\n\n- [Accueil](../Home.md)\n"
     with tempfile.TemporaryDirectory() as d:
         root = Path(d)
