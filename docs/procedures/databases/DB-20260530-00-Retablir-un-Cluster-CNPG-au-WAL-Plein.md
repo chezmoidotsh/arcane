@@ -2,8 +2,8 @@
 
 Cette procédure rétablit un cluster CloudNative-PG dont le PVC WAL a atteint 100 % de sa capacité, ce qui empêche CNPG
 de démarrer postgres (`Not enough disk space`) : elle agrandit les PVC WAL pour que postgres puisse repartir. Elle
-découle de l'incident [CNPG WAL PVC saturation](../../incidents/2026-05-30-cnpg-wal-disk-full-apps-secured.md). Quand la
-saturation vient d'un archivage WAL bloqué par `Expected empty archive`, elle se prolonge par
+découle de l'incident [CNPG WAL PVC saturation](../../incidents/Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured.md).
+Quand la saturation vient d'un archivage WAL bloqué par `Expected empty archive`, elle se prolonge par
 [DB-20260530-01](DB-20260530-01-Corriger-l-Erreur-Expected-Empty-Archive-de-barman-cloud.md), qui traite la cause.
 
 > [!WARNING]\
@@ -174,7 +174,7 @@ ne casse rien.
 
 - [DB-20260530-01](DB-20260530-01-Corriger-l-Erreur-Expected-Empty-Archive-de-barman-cloud.md) : corriger l'archivage
   WAL bloqué par `Expected empty archive`, cause la plus fréquente de l'accumulation de WAL.
-- [Incident CNPG WAL PVC saturation](../../incidents/2026-05-30-cnpg-wal-disk-full-apps-secured.md) : l'incident
+- [Incident CNPG WAL PVC saturation](../../incidents/Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured.md) : l'incident
   d'origine, avec la chronologie et l'analyse de cause racine.
 - [Restaurer CNPG depuis le stockage objet](DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md) : reconstruction
   d'un cluster depuis une sauvegarde, si le rétablissement échoue.

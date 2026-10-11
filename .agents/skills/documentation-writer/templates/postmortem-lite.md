@@ -1,46 +1,60 @@
 ---
-title: "[Event Name]"
+title: "[Nom de l'événement]"
 date: YYYY-MM-DD
-author: "Name" # human: Name · AI agent: [provider:model]
-participants: ["Name", "[anthropic:claude-sonnet-4-6]"]
-severity: "Medium | Low" # lite format is for Medium/Low only — escalate if higher
+author: "Nom" # humain : Nom · agent IA : [fournisseur:modèle]
+participants: ["Nom", "[anthropic:claude-sonnet-4-6]"]
+severity: "Medium | Low" # le format allégé ne vaut que pour Medium/Low — passer au complet si plus grave
 status: "Draft | Open | Verified | Closed"
 detection-method: "Alert | User report | Manual discovery"
-duration: "" # e.g. "~45min"
+duration: "" # ex. "~45min"
 services-affected: []
 users-affected: ""
-root-cause-family: [""] # required even in lite format
+root-cause-family: [""] # obligatoire même en format allégé
 related-incidents: []
 ---
 
-> **When to use lite format:** incident <2h, no data loss, no security exposure, no systemic lesson, severity ≤ Medium.
-> If any of these conditions fail, use the full template instead.
+> **Quand utiliser le format allégé :** incident de moins de 2 h, sans perte de données, sans exposition de sécurité,
+> sans leçon systémique, gravité Medium ou moins. Si l'une de ces conditions n'est pas remplie, utiliser le gabarit
+> complet.
 >
-> Remove all `>` instruction lines before committing.
+> Enregistrer dans `docs/incidents/Incident-AAAA-MM-JJ-Titre-En-Francais.md`. Supprimer toutes les lignes `>` avant de
+> committer. Les clés du front matter, leurs valeurs et la syntaxe des actions ne sont pas traduites.
 
-## Event
+# Incident AAAA-MM-JJ Titre
 
-**Expected:** \[What should have happened] **Actual:** \[What happened — quantified] **Impact:** \[Scope, duration, who
-was affected] **Resolution:** \[What fixed it]
+> Une ou deux phrases : ce qui s'est passé et ce que la page contient.
 
-> If you include any timestamps in this section, they must have a real source (log, shell history, commit time). See
-> SKILL.md §"Timestamp sourcing". Don't fill gaps with `+5min` intervals — incomplete and honest beats complete and
-> fabricated.
+## Événement
 
-## Root Cause
+**Attendu :** \[Ce qui devait se passer] **Obtenu :** \[Ce qui s'est passé — chiffré] **Impact :** \[Périmètre, durée,
+qui a été touché] **Résolution :** \[Ce qui a corrigé le problème]
 
-**Technique:** \[5 Whys] _(lite format defaults to 5 Whys; escalate to full template otherwise)_
+> Si cette section contient des horodatages, ils doivent avoir une vraie source (journal, historique du shell, heure
+> d'un commit). Voir SKILL.md §"Timestamp sourcing". Ne pas combler les trous avec des intervalles `+5min` : incomplet
+> et honnête vaut mieux que complet et fabriqué.
 
-\[Compact analysis — 3–5 lines max. State the root cause in bold.]
+## Cause racine
 
-**Root cause:** **\[One-sentence structural condition]**
+**Technique :** \[5 Whys] _(le format allégé utilise les 5 Whys par défaut ; sinon passer au gabarit complet)_
 
-## Change Register
+\[Analyse compacte — 3 à 5 lignes maximum. Énoncer la cause racine en gras.]
 
-- [ ] \[due:: YYYY-MM-DD] \[priority:: high|medium|low] \[size:: S|M|L] \[owner:: Name] \[Action]
-  - **Verification:** \[Observable outcome]
-  - **If not done:** \[Consequence]
+**Cause racine :** **\[Une phrase décrivant la condition structurelle]**
 
-## Agent Knowledge (optional)
+## Registre des changements
 
-- \[Component]: \[Gotcha or heuristic, one line]
+- [ ] \[due:: AAAA-MM-JJ] \[priority:: high|medium|low] \[size:: S|M|L] \[owner:: Nom] \[Action]
+  - **Vérification :** \[Résultat observable]
+  - **Sinon :** \[Conséquence]
+
+## Connaissances pour les agents [Facultatif]
+
+- \[Composant] : \[Piège ou heuristique, en une ligne]
+
+## Pour aller plus loin
+
+> Un à trois liens relatifs vers des fichiers `.md`, chacun avec une phrase d'introduction. Cette section est la
+> dernière section `##` de la page.
+
+- [{Procédure}]({../procedures/Procedure-XXX-AAAAMMJJ-NN-Titre.md}) : {La procédure suivie ou créée à la suite de
+  l'incident}

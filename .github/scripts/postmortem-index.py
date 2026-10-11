@@ -8,19 +8,19 @@
 # Copyright (C) 2026 Alexandre Nicolaie (xunleii@users.noreply.github.com)
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
-"""Generate docs/incidents/INDEX.md grouped by `root-cause-family`.
+"""Generate docs/incidents/Index-des-Incidents.md grouped by `root-cause-family`.
 
 Drives the Pareto meta-analysis: any family reaching 3+ incidents is flagged
 as a candidate for a dedicated structural project (ADR + infrastructure change),
 not another isolated fix.
 
-Reads every `docs/incidents/*.md` post-mortem (excluding INDEX.md, README.md),
+Reads every `docs/incidents/*.md` post-mortem (excluding Index-des-Incidents.md, Incidents.md),
 parses frontmatter, and writes the index sorted by family popularity then by
 date (newest first).
 
 Usage:
-    ./.github/scripts/postmortem-index.py               # write INDEX.md
-    ./.github/scripts/postmortem-index.py --check       # exit 1 if INDEX.md is stale (for CI)
+    ./.github/scripts/postmortem-index.py               # write Index-des-Incidents.md
+    ./.github/scripts/postmortem-index.py --check       # exit 1 if Index-des-Incidents.md is stale (for CI)
 """
 
 from __future__ import annotations
@@ -33,7 +33,8 @@ from pathlib import Path
 import yaml
 
 INCIDENTS_DIR = Path("docs/incidents")
-INDEX_PATH = INCIDENTS_DIR / "INDEX.md"
+INDEX_PATH = INCIDENTS_DIR / "Index-des-Incidents.md"
+NON_POSTMORTEM = {"Index-des-Incidents.md", "Incidents.md"}
 PARETO_THRESHOLD = 3
 
 HEADER = """<!--
@@ -41,14 +42,14 @@ HEADER = """<!--
   Update the source post-mortems and regenerate.
 -->
 
-# Post-Mortem Index
+# Index des incidents
 
-Auto-generated cross-incident view. Post-mortems are grouped by `root-cause-family`
-(declared in each PM's frontmatter). A family reaching **{threshold}+** incidents is a
-**Pareto trigger** — fix the family, not the next incident.
+Vue transverse générée automatiquement. Les post-mortems sont regroupés par `root-cause-family`
+(déclarée dans le front matter de chacun). Une famille qui atteint **{threshold}+** incidents est
+un **déclencheur de Pareto** : corriger la famille, pas le prochain incident.
 
-See `.agents/skills/documentation-writer/references/postmortem.md` §"Root-cause family tagging" for the family
-vocabulary.
+Le vocabulaire des familles est décrit dans `.agents/skills/documentation-writer/references/postmortem.md`,
+section « Root-cause family tagging ».
 
 """
 
@@ -71,7 +72,7 @@ def load_postmortems() -> list[dict]:
     if not INCIDENTS_DIR.exists():
         return pms
     for path in sorted(INCIDENTS_DIR.glob("*.md")):
-        if path.name in {"INDEX.md", "README.md"}:
+        if path.name in NON_POSTMORTEM:
             continue
         fm = parse_frontmatter(path.read_text(encoding="utf-8"))
         if fm is None:
@@ -109,33 +110,41 @@ def render_index(pms: list[dict]) -> str:
 
     pareto = [(f, items) for f, items in families_sorted if len(items) >= PARETO_THRESHOLD]
     if pareto:
-        out.append("## 🚨 Pareto triggers\n")
-        out.append(f"Families at {PARETO_THRESHOLD}+ incidents — treat as structural projects:\n")
+        out.append("## Déclencheurs de Pareto\n")
+        out.append(f"Familles à {PARETO_THRESHOLD}+ incidents, à traiter comme des projets structurels :\n")
         for family, items in pareto:
-            out.append(f"- **`{family}`** — {len(items)} incidents")
+            out.append(f"- **`{family}`** : {len(items)} incidents")
         out.append("")
 
-    out.append("## All families\n")
-    out.append(f"Total: **{len(pms)}** post-mortems across **{len(by_family)}** families.\n")
+    out.append("## Toutes les familles\n")
+    out.append(f"Total : **{len(pms)}** post-mortems répartis en **{len(by_family)}** familles.\n")
 
     for family, items in families_sorted:
-        marker = " 🚨" if len(items) >= PARETO_THRESHOLD else ""
-        out.append(f"### `{family}` — {len(items)} incident(s){marker}\n")
-        out.append("| Date | Severity | Status | Post-mortem |")
-        out.append("|------|----------|--------|-------------|")
+        marker = " (déclencheur de Pareto)" if len(items) >= PARETO_THRESHOLD else ""
+        out.append(f"### `{family}` : {len(items)} incident(s){marker}\n")
         items_sorted = sorted(items, key=lambda p: p["date"], reverse=True)
-        for pm in items_sorted:
-            link = f"[{pm['title']}]({pm['path'].name})"
-            out.append(f"| {pm['date']} | {pm['severity']} | {pm['status']} | {link} |")
+        rows = [("Date", "Sévérité", "Statut", "Post-mortem")] + [
+            (pm["date"], pm["severity"], pm["status"], f"[{pm['title']}]({pm['path'].name})")
+            for pm in items_sorted
+        ]
+        widths = [max(len(r[i]) for r in rows) for i in range(4)]  # aligned columns (markdownlint MD060)
+        fmt = lambda r: "| " + " | ".join(c.ljust(w) for c, w in zip(r, widths)) + " |"
+        out.append(fmt(rows[0]))
+        out.append("| " + " | ".join("-" * w for w in widths) + " |")
+        out.extend(fmt(r) for r in rows[1:])
         out.append("")
 
+    out.append("## Pour aller plus loin\n")
+    out.append("- [Incidents](Incidents.md) : comment lire, chercher et écrire un post-mortem.")
+    out.append("- [Plan de reprise après sinistre](../guides/Plan-de-Reprise-apres-Sinistre.md) : l'ordre de reconstruction de la flotte.")
+    out.append("")
     return "\n".join(out).rstrip() + "\n"
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true",
-                        help="Exit 1 if INDEX.md is stale (does not write)")
+                        help="Exit 1 if Index-des-Incidents.md is stale (does not write)")
     args = parser.parse_args()
 
     pms = load_postmortems()
