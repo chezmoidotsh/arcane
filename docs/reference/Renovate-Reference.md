@@ -150,7 +150,7 @@ Renovate.
 ## Pour aller plus loin
 
 - [`renovate.json5`](../../renovate.json5) : la configuration locale.
-- [ADR-007 Project Structure And Naming Conventions](../decisions/007-project-structure-and-naming-conventions.md) : la
+- [ADR-007 Structure des projets et conventions de nommage](../decisions/007-project-structure-and-naming-conventions.md) : la
   convention de labels de version et d'annotations.
 - [ADR-010 Replace Gitmoji With Symbol Commit Types](../decisions/010-replace-gitmoji-with-symbol-commit-types.md) : le
   format de commit en vigueur.
