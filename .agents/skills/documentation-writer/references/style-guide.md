@@ -69,6 +69,8 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
 7. **Admonitions are for exceptions.** At most three per page (`> [!NOTE]`, `> [!WARNING]`). A page full of warnings
    has none.
 8. **Never put a secret in a page.** Name the OpenBao path or the SOPS file, never the value.
+9. **Markdown only, no HTML.** Links, images and tables are Markdown. `scripts/wiki:lint` and `scripts/wiki:publish`
+   read Markdown links only: an `<a href>` or `<img src>` is neither checked nor rewritten for the wiki.
 
 ## Voice
 
