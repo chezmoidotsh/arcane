@@ -166,7 +166,7 @@ of the cutover in `docs/archives/Migration-de-Kazimierz-vers-NixOS.md`.
 ## References and Related Decisions
 
 - **Related ADRs**: [ADR-008](./008-kazimierz-ansible-over-kubernetes.md) (superseded in part: configuration
-  management), [ADR-001](./001-centralized-secret-management.md) (secrets)
+  management), [ADR-001](./ADR-001-Gestion-Centralisee-des-Secrets.md) (secrets)
 - **Project documentation**: [`kazimierz.akn` bootstrap](../guides/Amorcer-Kazimierz.md),
   [migration record](../archives/Migration-de-Kazimierz-vers-NixOS.md),
   [`rimbilliton.akn` bootstrap](../guides/Amorcer-Rimbilliton.md)

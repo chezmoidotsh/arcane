@@ -7,13 +7,14 @@ at `<name>`, a **least-privilege ESO read policy** (`<name>-eso-policy`), and an
 bound to the `external-secrets` ServiceAccount.
 
 One component covers all three connectivity variants (Local, Remote, Tailscaled) — the arg shape selects which one
-applies. Path layout follows [ADR-003](../../../docs/decisions/003-openbao-path-naming-conventions.md) and policy
-naming/scoping follows [ADR-004](../../../docs/decisions/004-openbao-policy-naming-conventions.md).
+applies. Path layout follows [ADR-003](../../../docs/decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md)
+and policy naming/scoping follows
+[ADR-004](../../../docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md).
 
 > \[!WARNING] This component encodes the conventions defined in
-> [ADR-003](../../../docs/decisions/003-openbao-path-naming-conventions.md) (path naming) and
-> [ADR-004](../../../docs/decisions/004-openbao-policy-naming-conventions.md) (policy naming and scope). Consult those
-> ADRs before changing the generated policy HCL, mount paths, or role bindings.
+> [ADR-003](../../../docs/decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md) (path naming) and
+> [ADR-004](../../../docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md) (policy naming and scope).
+> Consult those ADRs before changing the generated policy HCL, mount paths, or role bindings.
 
 ## Variants overview
 
@@ -204,11 +205,11 @@ For a cluster `<name>` with no `additionalPolicies`, the component registers fiv
 - `<name>/*` — the cluster's own mount (always).
 - `shared/+/third-parties/+/+/<name>` and `shared/+/third-parties/+/+/<name>/*` — this cluster's third-party credentials
   under the shared mount (when shared access is enabled; the `+/+` glob spans `{provider}/{service}` per
-  [ADR-003](../../../docs/decisions/003-openbao-path-naming-conventions.md)).
+  [ADR-003](../../../docs/decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md)).
 - `shared/+/certificates/*` — shared certificates (when shared access is enabled).
 
 This matches the **ESO – cluster** policy family in
-[ADR-004](../../../docs/decisions/004-openbao-policy-naming-conventions.md).
+[ADR-004](../../../docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md).
 
 **`<name>-<key>`** (`vault.Policy`, one per `additionalPolicies` entry) — the component creates and names these itself
 from the caller-supplied policy document; the caller never creates the `vault.Policy` resource directly.
@@ -307,8 +308,8 @@ pnpm test      # inside the pnpm workspace
 
 ## References
 
-- [ADR-003 — OpenBao Path Naming Conventions](../../../docs/decisions/003-openbao-path-naming-conventions.md)
-- [ADR-004 — OpenBao Policy Naming and Scope Conventions](../../../docs/decisions/004-openbao-policy-naming-conventions.md)
+- [ADR-003 — OpenBao Path Naming Conventions](../../../docs/decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md)
+- [ADR-004 — OpenBao Policy Naming and Scope Conventions](../../../docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md)
 - [`catalog/pulumi/README.md`](../README.md) — workspace / `file:` protocol rationale
 - Live consumers: [`rhodes.akn` (Local)](../../../projects/rhodes.akn/src/infrastructure/pulumi/stack/vault.ts),
   [`lungmen.akn` (Remote)](../../../projects/lungmen.akn/src/infrastructure/pulumi/src/platform.ts)
