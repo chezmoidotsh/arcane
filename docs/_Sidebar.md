@@ -33,3 +33,8 @@
 - [Architecture & Documentation Réseau](network/README.md)
 - [Renovate](RENOVATE.md)
 - [Décisions d'Architecture](decisions/001-centralized-secret-management.md)
+
+### Archives
+
+- [Migrer les nœuds Talos du VLAN 2 au VLAN 5](archives/MIGR-20260628-00-Migrer-les-Noeuds-Talos-du-VLAN-2-au-VLAN-5.md)
+- [Ajouter une SecurityPolicy OIDC sur une HTTPRoute](archives/SEC-20250808-00-Ajouter-une-SecurityPolicy-OIDC-sur-une-HTTPRoute.md)
