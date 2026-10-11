@@ -23,7 +23,7 @@ All container images must be pulled through the local Zot registry mirror at `oc
 
 This rule replaces the Kyverno `enforce-local-registry` MutatingPolicy that was removed after the **2026-05-26
 circular-dependency incident** (full post-mortem:
-`docs/incidents/2026-05-26-amiya-kyverno-zot-circular-imagepullbackoff.md`).
+`docs/incidents/Incident-2026-05-26-ImagePullBackOff-Circulaire-Kyverno-Zot-Amiya.md`).
 
 Kyverno ran as an in-cluster mutating webhook that rewrote image references at admission time. Because Kyverno itself
 ran as a pod needing images from Zot, and Zot relied on Longhorn for storage, whose workloads also needed image pulls, a

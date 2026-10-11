@@ -23,7 +23,7 @@ import rego.v1
 #
 # References:
 #   https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
-#   docs/incidents/2026-05-31-amiya-cilium-gateway-api-agent-drift-netpol.md
+#   docs/incidents/Incident-2026-05-31-Derive-Agent-Cilium-Gateway-API-NetworkPolicy-Amiya.md
 # ──────────────────────────────────────────────────────────────────────────────
 
 # ── Input normalization ───────────────────────────────────────────────────────

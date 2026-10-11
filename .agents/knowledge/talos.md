@@ -33,4 +33,4 @@ Distilled from incident post-mortems. Each bullet stands alone.
 
 ## Sources
 
-- `docs/incidents/2026-05-26-lungmen-k8s-1.35-removed-featuregate.md`
+- `docs/incidents/Incident-2026-05-26-Feature-Gate-Supprime-Kubernetes-1-35-Lungmen.md`

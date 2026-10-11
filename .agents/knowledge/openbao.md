@@ -31,4 +31,4 @@ Distilled from incident post-mortems. Each bullet stands alone.
 
 ## Sources
 
-- `docs/incidents/2026-05-25-lungmen-clustersecretstore-vault-auth-failure.md`
+- `docs/incidents/Incident-2026-05-25-Echec-Authentification-Vault-ClusterSecretStore-Lungmen.md`
