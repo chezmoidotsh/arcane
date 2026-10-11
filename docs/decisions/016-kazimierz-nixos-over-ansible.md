@@ -58,13 +58,13 @@ pattern already used by `rimbilliton.akn`?
 ## Decision Drivers
 
 - **One toolchain for the OCI hosts**: the same install, deploy and secret workflow as `rimbilliton.akn`.
-- **Declarative OS and services**: the OS configuration, not only the application stack, should be reproducible from Git,
-  to support rebuilding a sacrificial VPS.
+- **Declarative OS and services**: the OS configuration, not only the application stack, should be reproducible from
+  Git, to support rebuilding a sacrificial VPS.
 - **Secrets in Git without a second secret**: SOPS + age is already the repository's mechanism for secrets that must
   live in Git (ADR-001 to ADR-004); an ansible-vault password adds a parallel one.
 - **Rollback**: a bad change should be revertible to the previous generation.
-- **Constraint**: the tenancy's Always Free A1 quota is fully used (`kazimierz-pangolin` and `rimbilliton-minecraft`), so
-  a side-by-side migration on a second instance is impossible.
+- **Constraint**: the tenancy's Always Free A1 quota is fully used (`kazimierz-pangolin` and `rimbilliton-minecraft`),
+  so a side-by-side migration on a second instance is impossible.
 
 ## Considered Options
 
@@ -72,9 +72,9 @@ pattern already used by `rimbilliton.akn`?
 
 > **Status: REJECTED**
 
-Keep the playbook and its roles, run by hand over SSH. Nothing to migrate and no downtime. It remains a working,
-proven setup, but it stays a second stack to maintain next to the NixOS one of `rimbilliton.akn`, and it only converges
-what the roles describe: packages, kernel settings and anything changed by hand on the mutable Ubuntu host persist.
+Keep the playbook and its roles, run by hand over SSH. Nothing to migrate and no downtime. It remains a working, proven
+setup, but it stays a second stack to maintain next to the NixOS one of `rimbilliton.akn`, and it only converges what
+the roles describe: packages, kernel settings and anything changed by hand on the mutable Ubuntu host persist.
 
 - `+` No migration, no downtime
 - `+` Proven in production until the migration
@@ -148,8 +148,8 @@ containers remain, and ADR-008's decision against Kubernetes is unchanged.
 
 Implemented and in production since 2026-10-10: flake outputs `kazimierz-akn-aarch64` (OCI A1) and
 `kazimierz-akn-x86_64` (test VM), host secrets in a committed, SOPS-encrypted file, and `nixos:*` mise tasks for
-install, update, backup and end-to-end rehearsal. The procedure is in `projects/kazimierz.akn/docs/BOOTSTRAP.md` and the
-record of the cutover in `projects/kazimierz.akn/docs/MIGRATION_NIXOS.md`.
+install, update, backup and end-to-end rehearsal. The procedure is in `docs/guides/Amorcer-Kazimierz.md` and the record
+of the cutover in `docs/archives/Migration-de-Kazimierz-vers-NixOS.md`.
 
 ---
 
@@ -158,8 +158,8 @@ record of the cutover in `projects/kazimierz.akn/docs/MIGRATION_NIXOS.md`.
 - **2026-08-01**: A first NixOS attempt (an immutable qcow2 image built locally) was abandoned in favor of Ansible: the
   image build required local KVM, unavailable on the Apple Silicon workstation, and a `nixos-anywhere` test on a Proxmox
   VM stalled on an unresolved OVMF boot issue (see the session notes in `.agents/sessions/`).
-- **2026-10-10**: Revised decision, NixOS through `nixos-anywhere` over the stock OCI image. Neither blocker applies: the
-  closure is built without a local VM, and the target is a real OCI instance, a method proven on `rimbilliton.akn`.
+- **2026-10-10**: Revised decision, NixOS through `nixos-anywhere` over the stock OCI image. Neither blocker applies:
+  the closure is built without a local VM, and the target is a real OCI instance, a method proven on `rimbilliton.akn`.
 
 ---
 
@@ -167,9 +167,9 @@ record of the cutover in `projects/kazimierz.akn/docs/MIGRATION_NIXOS.md`.
 
 - **Related ADRs**: [ADR-008](./008-kazimierz-ansible-over-kubernetes.md) (superseded in part: configuration
   management), [ADR-001](./001-centralized-secret-management.md) (secrets)
-- **Project documentation**: [`kazimierz.akn` bootstrap](../../projects/kazimierz.akn/docs/BOOTSTRAP.md),
-  [migration record](../../projects/kazimierz.akn/docs/MIGRATION_NIXOS.md),
-  [`rimbilliton.akn` bootstrap](../../projects/rimbilliton.akn/docs/BOOTSTRAP.md)
+- **Project documentation**: [`kazimierz.akn` bootstrap](../guides/Amorcer-Kazimierz.md),
+  [migration record](../archives/Migration-de-Kazimierz-vers-NixOS.md),
+  [`rimbilliton.akn` bootstrap](../guides/Amorcer-Rimbilliton.md)
 - **Earlier attempt**: [session notes](../../.agents/sessions/20260801-kazimierz-nixos-vs-ansible.md)
 - **Implementation References**: [nixos-anywhere](https://github.com/nix-community/nixos-anywhere),
   [sops-nix](https://github.com/Mic92/sops-nix)

@@ -211,14 +211,9 @@ kazimierz.akn/
 ├── README.md                                   # This documentation
 ├── architecture.d2                             # Architecture diagram source (D2 format)
 ├── docs/
-│   ├── assets/                                 # Generated diagrams and assets
-│   │   ├── architecture-dark.svg               # Dark theme architecture diagram
-│   │   └── architecture-light.svg              # Light theme architecture diagram
-│   ├── BOOTSTRAP.md                            # Complete VPS bootstrap procedure
-│   ├── MIGRATION_NIXOS.md                      # Record of the 2026-10-10 Ansible to NixOS migration
-│   └── archives/                               # Historical documents
-│       ├── CROWDSEC-INTEGRATION.md             # CrowdSec integration (tried and dropped)
-│       └── REFLEXION-KUBERNETES-DEPLOYMENT.md  # Initial architecture decisions
+│   └── assets/                                 # Generated diagrams and assets
+│       ├── architecture-dark.svg               # Dark theme architecture diagram
+│       └── architecture-light.svg              # Light theme architecture diagram
 └── src/
     └── infrastructure/
         ├── nixos/                              # NixOS flake (infrastructure-as-code)
@@ -248,7 +243,7 @@ mise run nixos:backup                           # hot backup of Pangolin's state
 ```
 
 Nothing is applied automatically, on purpose (see
-[ADR-008](../../docs/decisions/008-kazimierz-ansible-over-kubernetes.md)). See [docs/BOOTSTRAP.md](./docs/BOOTSTRAP.md) for the complete bootstrap procedure.
+[ADR-008](../../docs/decisions/008-kazimierz-ansible-over-kubernetes.md)). See [Amorcer Kazimierz](../../docs/guides/Amorcer-Kazimierz.md) for the complete bootstrap procedure.
 
 ## Security Considerations
 

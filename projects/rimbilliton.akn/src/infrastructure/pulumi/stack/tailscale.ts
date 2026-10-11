@@ -2,7 +2,7 @@ import * as tailscale from "@pulumi/tailscale";
 
 // Admin access (SSH, deploys) goes through the tailnet; OCI SSH stays closed.
 // Single-use pre-authorized key consumed by tailscaled on first boot
-// (injected into the host's SOPS secrets, see docs/BOOTSTRAP.md).
+// (injected into the host's SOPS secrets, see docs/guides/Initialiser-Rimbilliton.md).
 // `tag:svc-minecraft` must exist in the tailnet ACL `tagOwners`.
 const authKey = new tailscale.TailnetKey("rimbilliton-tailscale-key", {
   reusable: false,
