@@ -12,7 +12,7 @@ metadata:
       LoadBalancer IP from the "internal" CiliumLoadBalancerIPPool (rhodes.akn's 2-address slice
       of talosnet, 10.128.0.240/241) instead of "external" (VLAN5, the catch-all default) —
       reachable only from other Talos nodes/SDN-attached hosts, never from VLAN2/VLAN5
-      home-network clients. See docs/network/ipam.md "Internal LoadBalancer Pools (talosnet)".
+      home-network clients. See docs/network/ipam.md "Pools LoadBalancer internes (talosnet)".
       Same *.chezmoi.sh hostnames as the "external" Gateway (e.g. vault.chezmoi.sh) —
       split-horizon: talosnet-dns (BIND, RFC2136-updated by external-dns) answers this IP for
       those names, everyone else gets "external"'s VLAN5 IP via Unifi. See

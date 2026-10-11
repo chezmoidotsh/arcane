@@ -27,7 +27,7 @@
 #
 # ClusterMesh: READY — shared service CIDR (172.31.0.0/19), unique pod CIDRs per cluster,
 #   ipv4NativeRoutingCIDR=172.30.0.0/16 (pod supernet). cluster.name/id not yet set
-#   (post-install prerequisite — see docs/network/ipam.md §ClusterMesh prerequisites).
+#   (post-install prerequisite — see docs/network/ipam.md §Prérequis ClusterMesh).
 #
 # VERSION MATRIX (Talos ↔ Kubernetes; never skip Talos minor versions)
 # -----------------------------------------------------------------------
