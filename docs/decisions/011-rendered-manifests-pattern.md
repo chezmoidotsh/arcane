@@ -254,7 +254,7 @@ caught at the earliest possible point without blocking normal development workfl
 
 - **Architecture — directory convention**:
 
-```
+```text
 projects/<cluster>/
 ├── src/                             # Authoring interface — kustomization files, Helm values, SOPS secrets
 │   ├── apps/<app>/
@@ -301,8 +301,8 @@ projects/<cluster>/
 
 - **Related ADRs**:
   - [ADR-007: Project Structure and Naming Conventions](./007-project-structure-and-naming-conventions.md)
-  - [ADR-001: Centralized Secret Management](./001-centralized-secret-management.md)
-  - [ADR-002: OpenBao Secrets Topology](./002-openbao-secrets-topology.md)
+  - [ADR-001: Centralized Secret Management](./ADR-001-Gestion-Centralisee-des-Secrets.md)
+  - [ADR-002: OpenBao Secrets Topology](./ADR-002-Topologie-des-Secrets-OpenBao.md)
 
 - **Security References**:
   - CISA Advisory AA23-131A — 3CX Supply Chain Attack; illustrates how upstream registry compromise translates to
