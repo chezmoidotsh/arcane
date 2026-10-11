@@ -20,14 +20,14 @@ by either a human operator or an AI agent.
   procedure for a CloudNative-PG cluster whose WAL PVC has reached 100% capacity. Covers PVC expansion,
   `Expected empty archive` S3 fix, WAL archiving verification, and backup trigger. Origin:
   `docs/incidents/2026-05-30-cnpg-wal-disk-full-apps-secured.md`.
-
-### Backups
-
-- **[BKP-20260723-00: Restore a CNPG cluster from its S3 object-store backup](./backups/BKP-20260723-00.cnpg-restore-from-object-store.md)**:
+- **[DB-20260723-00: Restore a CNPG cluster from its S3 object-store backup](./backups/DB-20260723-00.cnpg-restore-from-object-store.md)**:
   Generic, app-agnostic bootstrap of a CNPG `Cluster` from an existing `barman-cloud.cloudnative-pg.io` backup — finding
   the latest `serverName` on S3, wiring `bootstrap.recovery`/`externalClusters`, and verifying the restore. Used by
   `projects/rhodes.akn/docs/disaster-recovery/openbao.md` and `projects/rhodes.akn/docs/disaster-recovery/pocket-id.md`
   as their database-restore step.
+
+### Backups
+
 - **[BKP-20260805-00: Restore a Velero-backed PVC on a GitOps-managed cluster](./backups/BKP-20260805-00.velero-restore-gitops-pvc.md)**:
   Restores a workload-managed PVC (StatefulSet or Deployment) from a Velero (Kopia) backup when a controller already
   owns the target pod — covers why the naive restore and the documented `existingResourcePolicy: update` workaround both
@@ -62,11 +62,11 @@ by either a human operator or an AI agent.
   Kubernetes version upgrade using `talosctl upgrade-k8s`, covering the six-phase upgrade process with dry-run
   validation, post-upgrade verification, and interrupted-upgrade recovery.
 - **[INF-20260525-02: Draining a node hosting CNPG instances](./infrastructure/INF-20260525-02.drain-nodes-with-cnpg.md)**:
-  What a node drain does to single- and multi-instance CloudNative-PG clusters (PDB convention, expected downtime) and the
-  pre-upgrade checks.
+  What a node drain does to single- and multi-instance CloudNative-PG clusters (PDB convention, expected downtime) and
+  the pre-upgrade checks.
 - **[INF-20260627-00: Provisioning the Proxmox SDN (simple zone + VNet for Talos clusters)](./infrastructure/INF-20260627-00.proxmox-sdn-setup.md)**:
   Provisions the Proxmox VE SDN backing the single shared `talosnet` VNet for all Talos clusters (`simple` zone —
   `vxlan` needs a second Proxmox node — gateway/SNAT so nodes reach `pve-01:8006` for proxmox-csi-plugin, dnsmasq DHCP,
   MTU 1450) and the per-VNet `SDN.Use` ACL for `omni@pve`. References ADR-014 and `docs/network/ipam.md`.
-- **[Bootstrap the kazimierz.akn VPS with Pangolin](../../projects/kazimierz.akn/docs/BOOTSTRAP.md)**: Bootstrap
-  process for the public-access VPS running Pangolin, Gerbil and Traefik, using Tailscale for secure remote access.
+- **[Bootstrap the kazimierz.akn VPS with Pangolin](../../projects/kazimierz.akn/docs/BOOTSTRAP.md)**: Bootstrap process
+  for the public-access VPS running Pangolin, Gerbil and Traefik, using Tailscale for secure remote access.

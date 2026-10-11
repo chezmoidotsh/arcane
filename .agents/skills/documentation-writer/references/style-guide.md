@@ -12,7 +12,7 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
    `Étapes` in a file name), per the naming rules below.
 2. **Page names are French when they are a verb or a common noun** (`Initialiser-Lungmen`,
    `Restaurer-CNPG-Depuis-Le-Stockage-Objet`). Record identifiers do not change (`ADR-014-...`,
-   `Procedure-BKP-20260723-00-...`, `Incident-2026-05-30-...`) and the reference suffix stays `-Reference`.
+   `Procedure-DB-20260723-00-...`, `Incident-2026-05-30-...`) and the reference suffix stays `-Reference`.
 3. **End with `## Pour aller plus loin` [lint].** It is the last section of every page, in French, whatever the page
    type.
 4. **The title matches the file name [lint].** Case, accents and hyphens are ignored when comparing `# Title` to the
@@ -62,7 +62,7 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
    directories are rejected, so a page can always be found by its name and moved without a collision.
 4. **The name signals the page type.** Guides start with a verb (`Initialiser-Lungmen`, `Restaurer-OpenBao`), references
    end with `-Reference` (`IPAM-Reference`). Records keep their identifier: `ADR-014-Network-Topology`,
-   `Procedure-BKP-20260723-00-Restore-CNPG-From-Object-Store`, `Incident-2026-05-30-CNPG-WAL-Disk-Full`.
+   `Procedure-DB-20260723-00-Restore-CNPG-From-Object-Store`, `Incident-2026-05-30-CNPG-WAL-Disk-Full`.
 5. **Every page is reachable from `_Sidebar.md` [lint].** The sidebar is curated by what the reader is trying to do (get
    started, operate, recover, reference, internals), not by file type. Records (ADR, incidents) are grouped under their
    own heading and listed in order.
