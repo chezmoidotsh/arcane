@@ -7,7 +7,7 @@ import { omniUser } from "./access";
 // pvenet / talosnet -- shared node-traffic network for all Talos/Omni
 // clusters (lungmen.akn, rhodes.akn, the sandbox, and any future cluster)
 // -----------------------------------------------------------------------------
-// See docs/procedures/infrastructure/INF-20260627-00.proxmox-sdn-setup.md for
+// See docs/procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md for
 // the full design rationale (dual-NIC ADR-014, why a single shared VNet
 // instead of one per cluster, and why `simple` instead of `vxlan` on this
 // single-node cluster). This declares the same zone/VNet/subnet that
