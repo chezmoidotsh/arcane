@@ -50,8 +50,10 @@ source du dépôt ne la confirme.
 
 ## Texte intégral
 
-La version complète est dans l'historique Git du fichier `projects/kazimierz.akn/docs/archives/CROWDSEC-INTEGRATION.md`,
-avant son déplacement vers `docs/archives/` lors de la migration de la documentation (issue #1257).
+Le texte d'origine, en anglais, est figé à
+[`projects/kazimierz.akn/docs/archives/CROWDSEC-INTEGRATION.md`](https://github.com/chezmoidotsh/arcane/blob/7cc2722063ade67d993ef8f20851b6c96a86d636/projects/kazimierz.akn/docs/archives/CROWDSEC-INTEGRATION.md)
+(commit `7cc27220`, dernière version avant la migration de la documentation, issue #1257). Le lien pointe sur un commit
+: il reste valable après la suppression du fichier.
 
 ## Pour aller plus loin
 

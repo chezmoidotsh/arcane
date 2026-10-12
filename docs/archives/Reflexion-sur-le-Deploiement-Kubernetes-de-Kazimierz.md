@@ -36,9 +36,10 @@ correspondent plus à aucun état du dépôt.
 
 ## Texte intégral
 
-Le texte d'origine est dans l'historique Git, sous le chemin
-`projects/kazimierz.akn/docs/archives/REFLEXION-KUBERNETES-DEPLOYMENT.md`, dans le dernier commit qui précède son
-archivage (issue #1257).
+Le texte d'origine, en anglais, est figé à
+[`projects/kazimierz.akn/docs/archives/REFLEXION-KUBERNETES-DEPLOYMENT.md`](https://github.com/chezmoidotsh/arcane/blob/996fced241ffce850399e83fbca2755549fbd40f/projects/kazimierz.akn/docs/archives/REFLEXION-KUBERNETES-DEPLOYMENT.md)
+(commit `996fced2`, dernière version avant la migration de la documentation, issue #1257). Le lien pointe sur un commit
+: il reste valable après la suppression du fichier.
 
 ## Pour aller plus loin
 

@@ -47,8 +47,10 @@ concernée.
 
 ## Texte intégral
 
-Le texte complet se trouve dans l'historique Git de
-`docs/procedures/security/SEC-20250808-00.add-securitypolicy-on-httproute.md`, avant son archivage (issue #1257).
+Le texte d'origine, en anglais, est figé à
+[`docs/procedures/security/SEC-20250808-00.add-securitypolicy-on-httproute.md`](https://github.com/chezmoidotsh/arcane/blob/996fced241ffce850399e83fbca2755549fbd40f/docs/procedures/security/SEC-20250808-00.add-securitypolicy-on-httproute.md)
+(commit `996fced2`, dernière version avant la migration de la documentation, issue #1257). Le lien pointe sur un commit
+: il reste valable après la suppression du fichier.
 
 ## Pour aller plus loin
 
