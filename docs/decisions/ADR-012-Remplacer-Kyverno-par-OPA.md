@@ -11,6 +11,8 @@ template-version: "2.0.0"
 
 Migré le 2026-10-11 ; l'état des clusters n'a pas été revérifié.
 
+Titre d'origine : « Replace Kyverno with OPA/Rego CI-time policy enforcement ».
+
 > [!NOTE]\
 > **État au 2026-10-11 : décision appliquée dans le dépôt.** Les politiques Rego vivent dans `catalog/opa/policies/`
 > (`SEC001`, `NET001` et `REL001`, chacune avec ses tests `*_test.rego`) et sont exécutées par conftest sur chaque

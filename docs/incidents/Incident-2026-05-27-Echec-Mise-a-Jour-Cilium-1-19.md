@@ -26,7 +26,7 @@ related-issues:
 related-adrs: []
 ---
 
-# Incident 2026-05-27 Échec mise à jour Cilium 1-19
+# Incident 2026-05-27 Échec mise à jour Cilium 1.19
 
 Migré le 2026-10-11 ; les faits décrits sont ceux de l'époque et n'ont pas été revérifiés.
 

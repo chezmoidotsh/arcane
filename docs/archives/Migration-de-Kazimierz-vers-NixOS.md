@@ -61,7 +61,7 @@ Le texte d'origine, en anglais, est figé à
 ## Pour aller plus loin
 
 - [Initialiser Kazimierz](../guides/Initialiser-Kazimierz.md) : le guide courant d'installation et de réinstallation.
-- [ADR-016 Kazimierz NixOS over Ansible](../decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md) : la décision
-  qui a motivé la migration.
+- [ADR-016 NixOS plutôt qu'Ansible pour Kazimierz](../decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md) : la
+  décision qui a motivé la migration.
 - [Initialiser Rimbilliton](../guides/Initialiser-Rimbilliton.md) : le modèle NixOS + `nixos-anywhere` suivi par la
   migration.

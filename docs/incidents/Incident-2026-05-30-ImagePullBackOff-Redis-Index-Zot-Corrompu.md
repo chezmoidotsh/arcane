@@ -36,7 +36,7 @@ related-adrs: []
 
 # Incident 2026-05-30 ImagePullBackOff Redis Index Zot Corrompu
 
-> Migré le 2026-10-11 ; les faits décrits sont ceux de l'époque et n'ont pas été revérifiés.
+Migré le 2026-10-11 ; les faits décrits sont ceux de l'époque et n'ont pas été revérifiés.
 
 Le 2026-05-30, les pods Redis d'`immich` et de `paperless-ngx` sont restés en `ImagePullBackOff` pendant environ 8 h. Le
 registre Zot de `amiya.akn` avait un `index.json` corrompu pour `docker.io/library/redis`, et la resynchronisation

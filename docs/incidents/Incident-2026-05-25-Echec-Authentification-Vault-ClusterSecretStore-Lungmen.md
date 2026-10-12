@@ -35,7 +35,7 @@ related-adrs:
   - "docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md"
 ---
 
-# Incident 2026-05-25 Echec Authentification Vault ClusterSecretStore Lungmen
+# Incident 2026-05-25 Échec Authentification Vault ClusterSecretStore Lungmen
 
 Le 2026-05-25, le ClusterSecretStore `vault.chezmoi.sh` de `lungmen.akn` n'a plus pu s'authentifier auprès d'OpenBao, ce
 qui a bloqué la synchronisation de tous les ExternalSecrets et PushSecrets du cluster. Cette page décrit la chronologie,

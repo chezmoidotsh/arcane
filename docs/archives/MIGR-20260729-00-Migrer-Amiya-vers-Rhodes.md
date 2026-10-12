@@ -136,7 +136,7 @@ La vérification se faisait avec `kubectl get externalsecret -A` dans le context
   cluster (étape 1).
 - [BKP-20260723-00](../procedures/databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md) : restauration
   CNPG depuis le stockage objet, utilisée à l'étape 2.
-- [ADR-014 Network Topology](../decisions/ADR-014-Topologie-Reseau.md) : allocation des CIDR de pods.
+- [ADR-014 Topologie réseau](../decisions/ADR-014-Topologie-Reseau.md) : allocation des CIDR de pods.
 - [Plan d'adressage IP](../reference/IPAM-Reference.md) : CIDR de pods et pools LoadBalancer Cilium.
 - [Registre TXT d'external-dns](https://kubernetes-sigs.github.io/external-dns/latest/docs/registry/txt/) : modèle de
   propriété derrière la bascule DNS.

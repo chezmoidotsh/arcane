@@ -12,6 +12,8 @@ template-version: "2.0.0"
 
 Migré le 2026-10-11 ; l'état des serveurs n'a pas été revérifié.
 
+Titre d'origine : « `kazimierz`.AKN: NixOS (nixos-anywhere + sops-nix) over Ansible + Docker Compose ».
+
 ## Contexte et problème
 
 L'[ADR-008](./ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md) a établi que `kazimierz.akn`, la passerelle

@@ -393,7 +393,7 @@ dans son `.fw` (étape manuelle).
 
 - [Réseau Reference](Reseau-Reference.md) : topologie physique, double interface des nœuds Talos et SDN.
 - [Passerelles Et DNS Reference](Passerelles-et-DNS-Reference.md) : Gateways `internal` et `external` et DNS associé.
-- [ADR-014 Network Topology](../decisions/ADR-014-Topologie-Reseau.md) : pourquoi le réseau est conçu ainsi.
+- [ADR-014 Topologie réseau](../decisions/ADR-014-Topologie-Reseau.md) : pourquoi le réseau est conçu ainsi.
 - [Provisionner le SDN Proxmox](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md) : création
   de la zone et du VNet.
 - [Créer un cluster Talos avec Omni](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md) : où ces

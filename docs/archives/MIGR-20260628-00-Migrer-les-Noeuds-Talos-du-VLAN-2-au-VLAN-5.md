@@ -56,7 +56,7 @@ Le texte d'origine, en anglais, est figé à
 
 ## Pour aller plus loin
 
-- [ADR-014 Network Topology](../decisions/ADR-014-Topologie-Reseau.md) : la décision qui a motivé la migration (VLAN 5,
+- [ADR-014 Topologie réseau](../decisions/ADR-014-Topologie-Reseau.md) : la décision qui a motivé la migration (VLAN 5,
   double carte, SDN).
 - [Plan d'adressage IP](../reference/IPAM-Reference.md) : VLAN, sous-réseaux et règles inter-VLAN.
 - [Provisionner le SDN Proxmox](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md) : prérequis

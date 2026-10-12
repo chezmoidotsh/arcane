@@ -12,6 +12,8 @@ template-version: "2.0.0"
 
 Migré le 2026-10-11 ; les affirmations sur l'état des clusters n'ont pas été revérifiées.
 
+Titre d'origine : « Envoy Gateway Authentication Strategy: OIDC over External Authorization ».
+
 > [!CAUTION]\
 > **Décision dépréciée le 2026-10-11.** Le dépôt contredit l'état `implemented` : aucune `SecurityPolicy` ni ressource
 > Envoy Gateway n'existe dans `projects/*/src` (`grep -rl SecurityPolicy projects` ne renvoie aucun fichier), toutes les
@@ -222,6 +224,9 @@ de sécurité. Cette décision reste proposée jusqu'à ce que les critères de 
 - **2025-07-05** : Décision initiale — authentification OIDC avec Envoy Gateway par route (proposée), parce qu'elle
   promet un mécanisme plus direct et conforme aux standards, tout en s'alignant sur les capacités d'exploitation et les
   exigences de sécurité.
+- **2026-10-11** : Décision dépréciée. Envoy Gateway n'est plus déployé : aucune ressource `gateway.envoyproxy.io` ni
+  `SecurityPolicy` dans `projects/`, et toutes les `Gateway` utilisent `gatewayClassName: cilium`. Les applications
+  authentifient elles-mêmes leurs utilisateurs auprès de Pocket-Id. Aucun ADR ne remplace celui-ci.
 
 ---
 

@@ -86,7 +86,7 @@ Le texte d'origine, en anglais, est figé à
 
 ## Pour aller plus loin
 
-- [ADR-014 Network Topology](../decisions/ADR-014-Topologie-Reseau.md) : le VNet `talosnet` et le motif à deux cartes
+- [ADR-014 Topologie réseau](../decisions/ADR-014-Topologie-Reseau.md) : le VNet `talosnet` et le motif à deux cartes
   réutilisé ici.
 - [Réseau](../reference/Reseau-Reference.md) : la topologie réseau actuelle.
 - [Plan d'adressage IP](../reference/IPAM-Reference.md) : le VNet `talosnet` et la réservation `lungmen-legacy`.

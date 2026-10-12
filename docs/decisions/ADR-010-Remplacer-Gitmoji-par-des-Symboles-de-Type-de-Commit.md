@@ -11,6 +11,8 @@ template-version: "2.0.0"
 
 Migré le 2026-10-11 ; l'état des services n'a pas été revérifié.
 
+Titre d'origine : « Replace Gitmoji with a Symbol-Based Commit Type Convention ».
+
 > [!NOTE]
 > **État au 2026-10-11 : décision appliquée dans le dépôt.** `.commitlintrc.js` définit les 12 types symboliques de la
 > table ci-dessous, les trois variantes de rupture (`+!`, `~!`, `-!`), le motif d'en-tête `type[scope]: Subject` et
