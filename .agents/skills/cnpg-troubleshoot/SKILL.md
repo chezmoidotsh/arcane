@@ -238,9 +238,9 @@ with the exact kubectl output.
 
 Quick reference for routing without needing to grep first:
 
-| Error / Phase                                                                     | Matched incident                                                                                   | Procedure                                                                                           |
-| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `Not enough disk space` + `Expected empty archive` + `ContinuousArchivingFailing` | [2026-05-30 cnpg-wal-disk-full](docs/incidents/Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured.md) | [DB-20260530-00](docs/procedures/databases/DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md) |
+| Error / Phase                                                                     | Matched incident                                                                                            | Procedure                                                                                                    |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `Not enough disk space` + `Expected empty archive` + `ContinuousArchivingFailing` | [2026-05-30 cnpg-wal-disk-full](../../../docs/incidents/Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured.md) | [DB-20260530-00](../../../docs/procedures/databases/DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md) |
 
 ### Node drain blocked by a `*-primary` PDB
 
