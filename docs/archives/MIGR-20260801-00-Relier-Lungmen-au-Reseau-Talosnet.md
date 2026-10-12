@@ -65,9 +65,10 @@ actuellement attribuée à `eth1` et la raison du passage de `10.128.0.19` à `1
 
 ## Texte intégral
 
-Le texte complet (commandes et historique compris) reste dans l'historique Git du fichier
-`docs/archives/2026-08-01-MIGR-20260801-00.lungmen-talosnet-bridge.md`, dans la version précédant sa migration (issue
-#1257).
+Le texte d'origine, en anglais, est figé à
+[`docs/archives/2026-08-01-MIGR-20260801-00.lungmen-talosnet-bridge.md`](https://github.com/chezmoidotsh/arcane/blob/60b1b896fdeeadf83e4e979356fcba60c59f8516/docs/archives/2026-08-01-MIGR-20260801-00.lungmen-talosnet-bridge.md)
+(commit `60b1b896`, dernière version avant la migration de la documentation, issue #1257). Le lien pointe sur un commit
+: il reste valable après la suppression du fichier.
 
 ## Pour aller plus loin
 
