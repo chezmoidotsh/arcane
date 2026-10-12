@@ -4,7 +4,7 @@
 # Wiki — publish docs/ to the GitHub Wiki of the repository
 # =============================================================================
 # docs/ is the source of truth, written with relative links so it reads well in Git. On every push to
-# main that touches it (and on demand), the migrated pages (those not listed in docs/.wiki-legacy) are
+# main that touches it (and on demand), the pages (except those listed in docs/.wiki-legacy) are
 # copied by `scripts/wiki:publish` with their links rewritten for the wiki, then mirrored to the wiki
 # repository. Runs are serialized (cancel-in-progress: false) so two publications never race on the
 # wiki repository.
