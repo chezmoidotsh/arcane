@@ -164,6 +164,11 @@ l'[ADR-014](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Home
 | `10.128.0.10` à `.250`  | Plage DHCP des nœuds Talos                                                       |
 | `10.128.0.240` à `.254` | Pools `internal` (chevauchent la fin de la plage DHCP, voir la section suivante) |
 
+> [!WARNING]\
+> La plage DHCP déclarée dans `sdn.ts` (`10.128.0.10` à `.250`) contient les pools `internal` en service (`10.128.0.240`
+> à `.243`, `internal.ippool.yaml` de `rhodes.akn` et de `lungmen.akn`). Rien dans le dépôt n'exclut ces adresses du
+> DHCP : dnsmasq peut attribuer à un nœud une IP que Cilium annonce déjà pour un Service.
+
 ### Pools LoadBalancer internes (talosnet)
 
 `talosnet` n'a aucune route depuis un VLAN physique : seuls les nœuds Talos et les hôtes explicitement rattachés au VNet
