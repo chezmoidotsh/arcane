@@ -206,7 +206,7 @@ traversé le bootstrap sans jamais être validé. La chaîne de causes converge 
 
 ## Registre des changements
 
-- [ ] [due:: 2026-06-15] [priority:: high] [size:: M] [owner:: Alexandre] Ajouter la validation de la revendication
+- [ ] \[due:: 2026-06-15] \[priority:: high] \[size:: M] \[owner:: Alexandre] Ajouter la validation de la revendication
       `iss` dans le chemin de bootstrap de la composition `RemoteClusterVault` (ou une règle OPA de contrôle préalable)
       afin qu'un token issu du mauvais cluster ne puisse pas être accepté silencieusement
   - **Vérification :** test manuel : stocker un token d'amiya dans l'emplacement de lungmen ; la composition le rejette
@@ -214,15 +214,15 @@ traversé le bootstrap sans jamais être validé. La chaîne de causes converge 
   - **Sinon :** la même classe de défaillance d'authentification latente reste possible à chaque nouveau
     `RemoteClusterVault`
 
-- [ ] [due:: 2026-06-22] [priority:: high] [size:: L] [owner:: Alexandre] Planifier une pile d'observabilité couvrant la
-      disponibilité des ClusterSecretStores et des ExternalSecrets (c'est le méta-motif de la famille
+- [ ] \[due:: 2026-06-22] \[priority:: high] \[size:: L] \[owner:: Alexandre] Planifier une pile d'observabilité
+      couvrant la disponibilité des ClusterSecretStores et des ExternalSecrets (c'est le méta-motif de la famille
       `observability-gap`)
   - **Vérification :** une proposition de supervision concrète (jeu de règles Prometheus ou alternative) est documentée
     et versionnée dans `docs/decisions/` ou `docs/experiments/`
   - **Sinon :** la prochaine défaillance d'authentification ESO/Vault sera encore découverte par un utilisateur, pas par
     un signal
 
-- [ ] [due:: 2026-06-08] [priority:: medium] [size:: S] [owner:: Alexandre] Documenter dans la composition
+- [ ] \[due:: 2026-06-08] \[priority:: medium] \[size:: S] \[owner:: Alexandre] Documenter dans la composition
       `RemoteClusterVault` la procédure de rotation manuelle (Crossplane ne réappliquant pas automatiquement la
       configuration du backend d'authentification)
   - **Vérification :** un bloc de commentaire est visible dans `remote.x.v1alpha1.openbao.yaml` ; la prochaine rotation

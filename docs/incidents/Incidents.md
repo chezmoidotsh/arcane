@@ -65,7 +65,9 @@ candidate à un chantier structurel dédié plutôt qu'à un énième correctif.
 Les actions du « Registre des changements » portent une échéance au format `[due:: AAAA-MM-JJ]`. Le workflow
 `.github/workflows/schedule.postmortem-followup.yaml` s'exécute chaque jour et appelle
 `.github/scripts/postmortem-followup.py` : pour chaque post-mortem en `status: Open`, les actions échues sans issue
-existante deviennent des issues GitHub.
+existante deviennent des issues GitHub. Les post-mortems déjà rédigés écrivent leurs balises `\[due::`, `\[priority::`,
+`\[size::` et `\[owner::` avec un crochet échappé : ce sont des archives, le workflow les ignore et n'ouvre aucune issue
+pour elles.
 
 ## Écrire un post-mortem
 

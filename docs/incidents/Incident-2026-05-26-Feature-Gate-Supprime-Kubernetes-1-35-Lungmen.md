@@ -221,13 +221,13 @@ manquant a laissé un flag non reconnu atteindre le binaire en cours d'exécutio
 
 ## Registre des changements
 
-- [ ] [due:: 2026-06-02] [priority:: high] [size:: S] [owner:: Alexandre] Annoter chaque feature gate de
+- [ ] \[due:: 2026-06-02] \[priority:: high] \[size:: S] \[owner:: Alexandre] Annoter chaque feature gate de
       `patch-config.yaml` avec sa version d'introduction dans Kubernetes et sa version de suppression connue
   - **Vérification :** Le dry-run de la prochaine montée de version mineure de Kubernetes recoupe chaque gate annoté
     avec le changelog sans trouver de gate orphelin
   - **Sinon :** Même forme d'incident à la prochaine mise à jour mineure de Kubernetes (probablement d'ici 2 mois)
 
-- [ ] [due:: 2026-06-02] [priority:: high] [size:: S] [owner:: Alexandre] Ajouter dans `INF-20260525-01` une
+- [ ] \[due:: 2026-06-02] \[priority:: high] \[size:: S] \[owner:: Alexandre] Ajouter dans `INF-20260525-01` une
       vérification explicite préalable à la mise à jour : recouper chaque entrée `extraArgs` / `extraConfig` /
       `feature-gates` avec le changelog de Kubernetes de la version cible
   - **Vérification :** Le dry-run de la prochaine mise à jour mineure de Kubernetes produit une sortie de contrôle
@@ -235,7 +235,7 @@ manquant a laissé un flag non reconnu atteindre le binaire en cours d'exécutio
   - **Sinon :** La même classe de défaillance « flag non reconnu → panique de l'apiserver » se reproduit à la prochaine
     version mineure de Kubernetes
 
-- [ ] [due:: 2026-06-09] [priority:: medium] [size:: S] [owner:: Alexandre] Documenter la sémantique fusion contre
+- [ ] \[due:: 2026-06-09] \[priority:: medium] \[size:: S] \[owner:: Alexandre] Documenter la sémantique fusion contre
       remplacement de `talosctl patch machineconfig` dans `INF-20260525-01` et dans le commentaire d'en-tête de
       `patch-config.yaml`
   - **Vérification :** Le prochain agent ou opérateur confronté à une suppression de clé utilise directement

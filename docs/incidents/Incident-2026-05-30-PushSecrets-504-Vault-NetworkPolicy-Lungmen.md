@@ -150,7 +150,7 @@ symptôme à la condition structurelle ; aucune ramification vers des causes ind
 
 ## Registre des changements
 
-- [ ] [due:: 2026-06-06] [priority:: medium] [size:: S] [owner:: Alexandre] Ajouter un commentaire dans
+- [ ] \[due:: 2026-06-06] \[priority:: medium] \[size:: S] \[owner:: Alexandre] Ajouter un commentaire dans
       `remote.x.v1alpha1.openbao.yaml` (Composition Crossplane) indiquant qu'une CNP du namespace vault est requise pour
       chaque nouveau `RemoteClusterVault`
   - **Vérification :** commentaire visible dans la Composition ; la prochaine création d'un `RemoteClusterVault` est
@@ -158,7 +158,7 @@ symptôme à la condition structurelle ; aucune ramification vers des causes ind
   - **Sinon :** le prochain nouveau cluster distant casse silencieusement les PushSecrets, et l'incident se reproduit
     sous la même forme
 
-- [ ] [due:: 2026-06-15] [priority:: medium] [size:: S] [owner:: Alexandre] Ajouter une liste de contrôle de test de
+- [ ] \[due:: 2026-06-15] \[priority:: medium] \[size:: S] \[owner:: Alexandre] Ajouter une liste de contrôle de test de
       fumée après NetPol dans `docs/guides/Initialiser-Lungmen.md` : vérifier que le `ClusterSecretStore` est Ready et
       que les PushSecrets sont Synced
   - **Vérification :** section « Validation après NetPol » présente dans le document ; le prochain changement de NetPol

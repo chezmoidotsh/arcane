@@ -225,43 +225,43 @@ manuelle.
 
 ## Registre des changements
 
-- [ ] [due:: 2026-06-06] [priority:: high] [size:: S] [owner:: Alexandre] Ajouter des identifiants Docker Hub à la
+- [ ] \[due:: 2026-06-06] \[priority:: high] \[size:: S] \[owner:: Alexandre] Ajouter des identifiants Docker Hub à la
       configuration de synchronisation de Zot (champ `credentials:` sous le registre `docker.io` dans les valeurs Helm)
   - **Vérification :** la synchronisation `docker.io` dans les journaux Zot montre des requêtes authentifiées ; un test
     contrôlé tire plus de 50 images sans atteindre le HTTP 429
   - **Sinon :** le prochain événement à fort volume de pulls (déploiement d'un tag, tentatives de synchronisation)
     épuise le quota anonyme de 100/6 h et bloque la récupération
 
-- [ ] [due:: 2026-06-06] [priority:: high] [size:: M] [owner:: Alexandre] Ajouter une alerte basée sur les journaux pour
-      le motif Zot `failed to run scrub … repository not found`
+- [ ] \[due:: 2026-06-06] \[priority:: high] \[size:: M] \[owner:: Alexandre] Ajouter une alerte basée sur les journaux
+      pour le motif Zot `failed to run scrub … repository not found`
   - **Vérification :** test contrôlé : corrompre un `index.json` sur un Zot hors production, attendre le prochain cycle
     de scrub de 24 h, l'alerte se déclenche
   - **Sinon :** la prochaine corruption d'index reste non détectée jusqu'à une tentative de pull (potentiellement des
     jours)
 
-- [ ] [due:: 2026-06-06] [priority:: medium] [size:: S] [owner:: Alexandre] Ajouter une alerte Prometheus : pod en
+- [ ] \[due:: 2026-06-06] \[priority:: medium] \[size:: S] \[owner:: Alexandre] Ajouter une alerte Prometheus : pod en
       `ImagePullBackOff` depuis plus de 5 minutes dans n'importe quel namespace
   - **Vérification :** test contrôlé : fixer une image sur un tag inexistant ; l'alerte se déclenche en moins de 5 min
   - **Sinon :** le MTTD du prochain échec de pull reste de plusieurs heures, pas de minutes
 
-- [ ] [due:: 2026-06-06] [priority:: medium] [size:: S] [owner:: Alexandre] Ajouter une alerte Prometheus : taux de HTTP
-      5xx de Zot > 0 pendant plus de 2 minutes
+- [ ] \[due:: 2026-06-06] \[priority:: medium] \[size:: S] \[owner:: Alexandre] Ajouter une alerte Prometheus : taux de
+      HTTP 5xx de Zot > 0 pendant plus de 2 minutes
   - **Vérification :** test contrôlé sur un Zot hors production ; l'alerte se déclenche quand `index.json` est corrompu
   - **Sinon :** les erreurs côté serveur restent silencieuses jusqu'à l'échec de pull des pods en aval
 
-- [ ] [due:: 2026-06-15] [priority:: medium] [size:: M] [owner:: Alexandre] Écrire la procédure de scan d'intégrité OCI
-      (JSON valide, liste de manifestes non vide pour tous les dépôts)
+- [ ] \[due:: 2026-06-15] \[priority:: medium] \[size:: M] \[owner:: Alexandre] Écrire la procédure de scan d'intégrité
+      OCI (JSON valide, liste de manifestes non vide pour tous les dépôts)
   - **Vérification :** procédure documentée dans `docs/procedures/` ; exécutée une fois sur le Zot de production avec
     les résultats consignés
   - **Sinon :** une corruption cachée peut persister sans être détectée pendant des semaines
 
-- [ ] [due:: 2026-06-15] [priority:: medium] [size:: S] [owner:: Alexandre] Ajouter une liste de contrôle post-événement
-      au runbook d'urgence de Zot : scanner tous les dépôts OCI après tout crash, redémarrage ou incident de stockage de
-      Zot
+- [ ] \[due:: 2026-06-15] \[priority:: medium] \[size:: S] \[owner:: Alexandre] Ajouter une liste de contrôle
+      post-événement au runbook d'urgence de Zot : scanner tous les dépôts OCI après tout crash, redémarrage ou incident
+      de stockage de Zot
   - **Vérification :** élément de liste visible dans `docs/procedures/` ; répété une fois sur l'environnement de test
   - **Sinon :** le schéma de découverte par la défaillance se répète après chaque événement Zot
 
-- [ ] [due:: 2026-06-15] [priority:: low] [size:: S] [owner:: Alexandre] Enquêter sur l'origine de la corruption de
+- [ ] \[due:: 2026-06-15] \[priority:: low] \[size:: S] \[owner:: Alexandre] Enquêter sur l'origine de la corruption de
       l'`index.json` de `redis` (\~2026-05-26T21:04Z) — vraisemblablement une écriture concurrente pendant le crash du
       cluster provoqué par Kyverno
   - **Vérification :** constat documenté, soit dans une mise à jour du post-mortem Kyverno, soit dans une nouvelle note
