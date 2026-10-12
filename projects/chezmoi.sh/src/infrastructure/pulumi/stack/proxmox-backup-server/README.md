@@ -4,11 +4,11 @@ This folder contains the Pulumi TypeScript stack that manages `pbs.pve.chezmoi.s
 declarative code. It follows the same config-as-code pattern already established for TrueNAS SCALE
 ([`../truenas/`](../truenas/), `@pulumi/truenas`): the appliance's **operating system is installed manually** (see
 "Deployment target" below), and **everything above the OS layer is managed here** through
-[`@pulumi/proxmox-backup-server`](../../../../../../catalog/pulumi/sdks/proxmox-backup-server/), a Pulumi provider
+[`@pulumi/proxmox-backup-server`](../../../../../../../catalog/pulumi/sdks/proxmox-backup-server/), a Pulumi provider
 dynamically bridged from the [`yavasura/pbs`](https://registry.terraform.io/providers/yavasura/pbs) Terraform provider.
 
 The generated human-facing documentation (including step-by-step Proxmox VE integration instructions) is published at
-[`../../../docs/PROXMOX_BACKUP_SERVER.md`](../../../docs/PROXMOX_BACKUP_SERVER.md) (see
+[`../../../docs/PROXMOX_BACKUP_SERVER.md`](../../../../../docs/PROXMOX_BACKUP_SERVER.md) (see
 `toolbox/proxmox-backup-server-docs`'s own README).
 
 ## Deployment target
@@ -192,8 +192,8 @@ disaster recovery. One-time setup, after the PBS VM is installed and reachable:
 
 7. **Configure Proxmox VE's `pbs`-type storage** using the `pveBackupTokenId`/`pveBackupTokenSecret` outputs from step 5
    and the encryption key from step 6 — see
-   [`../../../docs/PROXMOX_BACKUP_SERVER.md`](../../../docs/PROXMOX_BACKUP_SERVER.md), "Configuring Proxmox VE to use
-   this datastore", for the exact UI/CLI steps, generated per-datastore from this stack's own state.
+   [`../../../docs/PROXMOX_BACKUP_SERVER.md`](../../../../../docs/PROXMOX_BACKUP_SERVER.md), "Configuring Proxmox VE to
+   use this datastore", for the exact UI/CLI steps, generated per-datastore from this stack's own state.
 
 ## Adding or editing a prune/verify job
 
