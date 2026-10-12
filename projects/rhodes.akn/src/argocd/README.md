@@ -27,10 +27,10 @@ ArgoCD self-hosts on `rhodes.akn` (the hub pattern) and, like every other bootst
 of that chain, not synced automatically like a regular app:
 
 ```sh
-kubectl apply -f projects/rhodes.akn/dist/argocd/
+kubectl apply --server-side --force-conflicts -f projects/rhodes.akn/dist/argocd/
 kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/argocd/sops \
-  | kubectl apply -f -
-kubectl apply -f projects/rhodes.akn/src/bootstrap.applications.yaml
+  | kubectl apply --server-side -f -
+kubectl apply --server-side -f projects/rhodes.akn/src/bootstrap.applications.yaml
 ```
 
 [`bootstrap.applications.yaml`](../bootstrap.applications.yaml) is what makes ArgoCD **adopt** itself and its own

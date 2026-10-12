@@ -45,8 +45,7 @@ Avant de commencer, vérifier que les outils suivants sont installés et configu
 
 Les accès suivants sont également nécessaires :
 
-- `OMNICONFIG` renseigné par la connexion à Omni (`omnictl config new` ou `omnictl config add`, ou
-  `mise run bao:login:admin` dans `chezmoi.sh` pour le rôle admin) ;
+- `OMNICONFIG` renseigné par la connexion à Omni (`omnictl config new` ou `omnictl config add`) ;
 - un kubeconfig du cluster (`omnictl kubeconfig`), voir l'étape 1 ;
 - une version cible de Talos compatible avec la version de Kubernetes déclarée dans le même template : le tableau de
   `catalog/omni/clustertemplates/base.yaml` donne `v1.14.x` pour Kubernetes `v1.32.x` à `v1.37.x` (plage rapportée par
@@ -126,8 +125,8 @@ omnictl cluster template validate -f $TEMPLATE_FILE
 # → pas d'erreur
 ```
 
-Pour `lungmen.akn` et `rhodes.akn`, la tâche `mise run omni:clustertemplate:validate` (depuis `projects/<cluster>/`)
-exécute cette validation.
+La tâche `mise run omni:clustertemplate:validate`, lancée depuis `projects/lungmen.akn/` ou `projects/rhodes.akn/`,
+exécute cette validation sur le template du cluster.
 
 Contrôler que le diff Git ne contient que la ligne `version` attendue :
 

@@ -188,8 +188,8 @@ tout le dépôt : il n'existe pas encore d'équivalent générique en dehors de 
 ## Étape 4 — Appliquer l'ObjectStore et le Cluster
 
 ```sh
-kubectl --context $CLUSTER_CONTEXT apply -f $OBJECTSTORE_MANIFEST
-kubectl --context $CLUSTER_CONTEXT apply -f $CLUSTER_MANIFEST
+kubectl --context $CLUSTER_CONTEXT apply --server-side -f $OBJECTSTORE_MANIFEST
+kubectl --context $CLUSTER_CONTEXT apply --server-side -f $CLUSTER_MANIFEST
 
 # Suivre la restauration
 kubectl --context $CLUSTER_CONTEXT get cluster -n $NAMESPACE -w
@@ -216,7 +216,7 @@ Appliquer aussi à ce stade le manifeste `ScheduledBackup` correspondant (même 
 reprenne son propre rythme de backup au lieu de dépendre seulement de l'historique récupéré :
 
 ```sh
-kubectl --context $CLUSTER_CONTEXT apply -f $SCHEDULEDBACKUP_MANIFEST
+kubectl --context $CLUSTER_CONTEXT apply --server-side -f $SCHEDULEDBACKUP_MANIFEST
 ```
 
 ## Vérifications rapides

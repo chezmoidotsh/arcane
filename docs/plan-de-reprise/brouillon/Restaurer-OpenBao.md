@@ -74,11 +74,11 @@ Le namespace `vault` et le secret `cnpg-backup-credentials` existent déjà (ét
 # openbao-softhsm-tokens : le seul secret qui doit rester chiffré avec SOPS dans Git
 # (aucune solution de repli en cas de perte, voir l'avertissement ci-dessous)
 kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/apps/vault/sops \
-  | kubectl --context ${CLUSTER_CONTEXT} apply -f -
+  | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
 
 # openbao-database-credentials : généré localement par un Generator ESO, sans Vault
 # (ESO doit déjà être déployé, voir Restaurer Rhodes, étape 2)
-kubectl --context ${CLUSTER_CONTEXT} apply -n vault -f projects/rhodes.akn/src/apps/vault/database.externalsecret.yaml
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side -n vault -f projects/rhodes.akn/src/apps/vault/database.externalsecret.yaml
 ```
 
 L'option `-n vault` est indispensable : `database.externalsecret.yaml` n'a pas de champ `namespace:` (il s'appuie sur le
@@ -133,7 +133,7 @@ Revenir ici quand les vérifications rapides de la procédure passent (`Cluster 
 ### 3. Appliquer le reste de l'application `vault`
 
 ```sh
-kubectl --context ${CLUSTER_CONTEXT} apply -f projects/rhodes.akn/dist/apps/vault/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/apps/vault/
 ```
 
 Cette commande applique le `StatefulSet` OpenBao, le `ServiceAccount` `openbao` et le `ClusterRoleBinding`
@@ -226,6 +226,8 @@ lui-même, hors périmètre ici.
 
 ## Historique
 
+- _2026-10-12_ : chaque `kubectl apply` passe en `--server-side` (et `--force-conflicts` pour `dist/apps/vault/`), comme
+  l'impose `AGENTS.md` pour toute application manuelle.
 - _2026-10-11_ : migration vers le standard de documentation (issue #1257) : guide traduit en français, déplacé dans
   `docs/guides/`, tâches `mise` laissées dans `projects/rhodes.akn/docs/disaster-recovery/`. Vérification contre le
   dépôt : noms de ressources, chemins et variante « Local » de `ClusterVaultComponent` confirmés. Ajout d'un

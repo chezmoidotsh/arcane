@@ -92,7 +92,8 @@ kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f pr
 kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-dns/
 
 kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/infrastructure/kubernetes/external-dns/sops \
-  | kubectl --context ${CLUSTER_CONTEXT} apply -f -
+  | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
+
 kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cilium/
 ```
 
@@ -309,10 +310,12 @@ Le namespace `argocd` n'est livré par aucun fichier de `dist/argocd/` (l'`Appli
 
 ```sh
 kubectl --context ${CLUSTER_CONTEXT} create namespace argocd --dry-run=client -o yaml | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
-kubectl --context ${CLUSTER_CONTEXT} apply -f projects/rhodes.akn/dist/argocd/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/argocd/
+
 kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/argocd/sops \
-  | kubectl --context ${CLUSTER_CONTEXT} apply -f -
-kubectl --context ${CLUSTER_CONTEXT} apply -f projects/rhodes.akn/src/bootstrap.applications.yaml
+  | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
+
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f projects/rhodes.akn/src/bootstrap.applications.yaml
 ```
 
 ArgoCD s'auto-héberge sur `rhodes.akn` (modèle hub, voir la
@@ -342,6 +345,10 @@ devrait être nécessaire.
 
 ## Historique
 
+- _2026-10-12_ : L'étape 9 applique `dist/argocd/` en `--server-side --force-conflicts` : la CRD
+  `applicationsets.argoproj.io` (environ 1,4 Mo) dépasse la limite de 262 144 octets de l'annotation
+  `last-applied-configuration` d'une application côté client. Les autres `kubectl apply` du guide passent aussi en
+  `--server-side`.
 - _2026-10-11_ : Migration vers le standard de documentation (#1257), traduction en français et vérification contre le
   dépôt. Corrections : (1) l'étape 3 écrit `cnpg-backup-credentials` dans trois namespaces, `vault`, `pocket-id` et
   `o11y-system` (boucle de `stack/cloudnative-pg.ts`), pas deux, et `o11y-system` n'est créé par aucun fichier de

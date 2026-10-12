@@ -82,7 +82,7 @@ d2 docs/assets/network/topology.d2 docs/assets/network/topology.svg
   `vmbr1` ; le Gateway `internal` sur `talosnet` est ajouté d'après
   `projects/<cluster>/src/infrastructure/kubernetes/cilium/internal.gateway.yaml` (voir
   [Passerelles Et DNS Reference](Passerelles-et-DNS-Reference.md)). Écarts relevés : `AGENTS.md` parle de « Proxmox SDN
-  VXLAN » alors que `sdn.ts` déclare une zone `simple` (seul le MTU de `eth1` anticipe VXLAN) ; le nœud du diagramme
+  VXLAN » alors que `sdn.ts` déclare une zone `simple` (seul le MTU de `eth1` anticipe VXLAN), écart corrigé depuis dans `AGENTS.md` ; le nœud du diagramme
   garde l'identifiant interne `vnet-talos`, alors que le VNet s'appelle `talosnet`.
 
 ## Pour aller plus loin

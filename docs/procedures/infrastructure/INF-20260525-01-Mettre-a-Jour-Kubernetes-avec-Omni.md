@@ -32,8 +32,7 @@ Avant de commencer, vérifier que `omnictl` et `kubectl` sont installés (`mise 
 
 Les accès suivants sont également nécessaires :
 
-- `OMNICONFIG` renseigné par la connexion à Omni (`omnictl config new` ou `omnictl config add`, ou
-  `mise run bao:login:admin` dans `chezmoi.sh` pour le rôle admin) ;
+- `OMNICONFIG` renseigné par la connexion à Omni (`omnictl config new` ou `omnictl config add`) ;
 - droits d'écriture sur le dépôt, pour modifier le template et ouvrir une pull request ;
 - une sauvegarde etcd récente et réussie du cluster. La documentation d'Omni la désigne comme voie de reprise principale
   si une mise à jour laisse le cluster irrécupérable. Le template de `rhodes.akn` déclare

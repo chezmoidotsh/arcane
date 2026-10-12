@@ -86,8 +86,8 @@ exemple les LXC du VLAN 5) ne voient jamais les réponses de BIND.
   dépôt :
   - Les Gateways sont dans `kube-system` (`metadata.namespace: kube-system` dans les quatre fichiers
     `{external,internal}.gateway.yaml`, et dans les `parentRefs` des HTTPRoute). `AGENTS.md` indique `in-gateway-system`
-    et `projects/*/src/infrastructure/kubernetes/in-gateway/` : ce dossier n'existe pas dans l'arbre. L'écart est dans
-    `AGENTS.md`, pas dans cette page.
+    et `projects/*/src/infrastructure/kubernetes/in-gateway/` : ce dossier n'existe pas dans l'arbre. L'écart était dans
+    `AGENTS.md`, pas dans cette page ; il est corrigé depuis.
   - Vérifié : deux Gateways Cilium par cluster, `external-dns` avec les providers `bind` (rfc2136) et `unifi` (webhook).
   - Vérifié : seules les routes `vault`, `pocket-id` et Grafana de `rhodes.akn` sont attachées à `internal` ; aucune
     route de `lungmen.akn` ne l'est. La route `argocd` n'est attachée qu'à `external`.
