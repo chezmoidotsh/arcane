@@ -25,8 +25,7 @@
 - [Restaurer Minecraft depuis restic](procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md)
 - [Rétablir un cluster CNPG au WAL plein](procedures/databases/DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md)
 - [Corriger l'erreur Expected empty archive de barman-cloud](procedures/databases/DB-20260530-01-Corriger-l-Erreur-Expected-Empty-Archive-de-barman-cloud.md)
-- [Incidents](incidents/Incidents.md)
-- [Index des incidents](incidents/Index-des-Incidents.md)
+- [Incidents](incidents/Index-des-Incidents.md)
 
 ### Référence
 

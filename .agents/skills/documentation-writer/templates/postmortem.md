@@ -185,11 +185,11 @@ justification — voir SKILL.md §"Choosing a technique"]
 >
 > **Vérification = résultat observable du système, pas une production (pas de « commit fait »).**
 
-- [ ] \[due:: AAAA-MM-JJ] \[priority:: high] \[size:: S] \[owner:: Nom] \[Action précise]
+- [ ] [due:: AAAA-MM-JJ] [priority:: high] [size:: S] [owner:: Nom] \[Action précise]
   - **Vérification :** \[Comportement observable du système, pas « fichier présent dans git »]
   - **Sinon :** \[Conséquence concrète — ce qui casse ou se reproduit]
 
-- [ ] \[due:: AAAA-MM-JJ] \[priority:: medium] \[size:: M] \[owner:: Nom] \[Action précise]
+- [ ] [due:: AAAA-MM-JJ] [priority:: medium] [size:: M] [owner:: Nom] \[Action précise]
   - **Vérification :** \[Observable]
   - **Sinon :** \[Conséquence]
 
