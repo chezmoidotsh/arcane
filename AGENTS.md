@@ -38,7 +38,7 @@ catalog/        Reusable components (charts, compositions, OCI images, …)
 └── talos/          Talos Linux bootstrap manifests + machine config patches
 
 docs/           Documentation, source of the GitHub Wiki: guides/, reference/, procedures/, decisions/ (ADRs),
-                incidents/, experiments/, archives/ (see "Documentation" below)
+                incidents/, experiments/, archives/, plan-de-reprise/ (draft, being reworked) (see "Documentation" below)
 
 projects/       One subdirectory per cluster or standalone app
 ├── chezmoi.sh/     Shared Pulumi stacks — Proxmox host, OpenBao, Tailscale, observability LXC, OCI registry
@@ -79,9 +79,9 @@ Grouped by concern rather than alphabetically, since agents usually need "what h
 | Container registry    | Zot (`projects/chezmoi.sh/src/infrastructure/pulumi/stack/zot-registry.ts`)                                                                                                                                                       |
 | Secrets source        | OpenBao (`https://vault.chezmoi.sh`), synced to Kubernetes `Secret`s via External Secrets Operator; SOPS + age for secrets that must live in Git (ADR-001–004)                                                                    |
 | Identity / SSO        | Pocket-Id is the **sole** identity provider                                                                                                                                                                                       |
-| Observability         | VictoriaMetrics + VictoriaLogs + vmalert + Alertmanager on a single NixOS LXC (ADR-013), fed by per-cluster vmagent (metrics) and Vector (logs); Grafana for dashboards                                                           |
+| Observability         | VictoriaMetrics + VictoriaLogs + vmalert + Alertmanager on a single NixOS LXC (ADR-013), fed by LXC-side agents (the per-cluster vmagent + Vector of ADR-013 are not deployed yet); Grafana on `rhodes.akn`                       |
 | Policy enforcement    | OPA/Rego, CI-time only via conftest in the compliance workflows (ADR-012) — no in-cluster admission webhook                                                                                                                       |
-| Network topology      | Dual-NIC Proxmox host + Proxmox SDN VXLAN (ADR-014, `docs/reference/`)                                                                                                                                                            |
+| Network topology      | Dual-NIC Talos VMs + Proxmox SDN zone of type `simple` (`vxlan` deferred, ADR-014, `docs/reference/`)                                                                                                                             |
 | Linting               | rtunk (trunk-compatible, `.rtunk/rtunk.yaml`) — `mise run lint` / `mise run lint:fix`; CI runs it through the `axnic/rtunk` action                                                                                                |
 | Dev environment       | mise (tool versions), Nix flakes (reproducible OCI images), an experimental DevContainer under `docs/experiments/` (not repo-wide)                                                                                                |
 
@@ -139,8 +139,9 @@ mise run ansible:install                # Sync Python venv for Ansible roles
 - **App-of-Apps via ApplicationSets**, bootstrapped by `seed.application.yaml`.
 - **Apps**: `projects/<cluster>/src/apps/*<name>/` (leading `*` = ArgoCD-managed).
 - **Infrastructure (in-cluster)**: `projects/<cluster>/src/infrastructure/kubernetes/<name>/`. The ArgoCD ApplicationSet
-  automatically appends `-system` to the directory name to form the target namespace (e.g. `in-gateway/` → namespace
-  `in-gateway-system`).
+  automatically appends `-system` to the directory name to form the target namespace (e.g. `cert-manager/` → namespace
+  `cert-manager-system`). A manifest that sets its own `metadata.namespace` keeps it (the Gateways of `cilium/` live in
+  `kube-system`).
 - **Infrastructure (cloud/host)**: `projects/<cluster>/src/infrastructure/pulumi/<name>/`.
 - **Helm overlays**: per-chart `<chart>.helmvalues/` directory (e.g. `cert-manager.helmvalues/`, `openbao.helmvalues/`)
   holding `default.yaml`; cluster-specific overrides live in the same directory (e.g. `override.yaml`) and are wired in
@@ -189,15 +190,16 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 
 - **Cilium NetworkPolicies** for microsegmentation — required for every app.
 - **Cilium Gateway API** for ingress (HTTPRoute, TCPRoute), all on the `cilium` GatewayClass. Routes are not wrapped in
-  an OIDC filter: apps that need authentication handle it themselves (Pocket-Id). The Gateway lives in the
-  `in-gateway-system` namespace (`projects/*/src/infrastructure/kubernetes/in-gateway/`).
+  an OIDC filter: apps that need authentication handle it themselves (Pocket-Id). The `internal` and `external` Gateways
+  live in the `kube-system` namespace (`projects/*/src/infrastructure/kubernetes/cilium/*.gateway.yaml`).
 - **cert-manager** with DNS-01 validation. **external-dns** manages internal-only DNS records via the UniFi and
   BIND/rfc2136 providers — there is no public/Cloudflare-managed DNS zone in this repo.
 - **Public access** to home services goes through Pangolin (`kazimierz.akn` VPS) with Newt tunnel clients running in
   both `lungmen.akn` and `rhodes.akn`. Pocket-Id and Grafana on `rhodes.akn` are deliberately exposed this way with
   `sso: false` at the Pangolin layer (each app gates its own login instead of a double auth check) — see the
   Observability section. **Tailscale** is mandatory for cluster-to-cluster connectivity outside the homelab.
-- **Network topology**: dual-NIC Proxmox host + Proxmox SDN VXLAN, per ADR-014 (`docs/reference/`).
+- **Network topology**: dual-NIC Talos VMs + a Proxmox SDN zone of type `simple` (`pvenet`, VNet `talosnet`), per
+  ADR-014 (`docs/reference/`); the move to a `vxlan` zone waits for a second Proxmox node.
 
 ### Storage and databases
 
@@ -214,8 +216,9 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 ### Observability
 
 - **VictoriaMetrics + VictoriaLogs + vmalert + Alertmanager** run centrally on a single NixOS LXC on the Proxmox host
-  (ADR-013), fronted by Caddy. Most clusters only run lightweight collection agents against it: **vmagent** for metrics,
-  **Vector** for logs.
+  (ADR-013), fronted by Caddy. Today it is fed by LXC-side agents (a `vmagent` on the `oci-registry` LXC, the
+  `pve-exporter` LXC, `catalog/nix/modules/lxc-o11y-agent/`). The per-cluster **vmagent** + **Vector** agents planned by
+  ADR-013 are not deployed: no `VMAgent` or Vector exists under `projects/lungmen.akn/` or `projects/rhodes.akn/`.
 - `rhodes.akn` is the exception: **Grafana** runs in-cluster there as a full Grafana Operator instance with its own CNPG
   database (`projects/rhodes.akn/src/infrastructure/kubernetes/o11y/`). It reads the LXC's Victoria stack as datasources
   and authenticates via Pocket-Id OIDC. Don't assume Grafana is just a dashboard the LXC serves — check the actual
@@ -228,13 +231,13 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 ### Important paths
 
 - Documentation: `docs/` — see "Documentation" below
-- Bootstrap guides: `docs/guides/Amorcer-*.md` (`lungmen.akn`, `kazimierz.akn`, `rimbilliton.akn`); disaster recovery of
-  `rhodes.akn`: `projects/rhodes.akn/docs/disaster-recovery/`
-
+- Bootstrap guides: `docs/guides/Initialiser-*.md` (`lungmen.akn`, `kazimierz.akn`, `rimbilliton.akn`); disaster
+  recovery: `docs/plan-de-reprise/brouillon/Plan-de-Reprise-apres-Sinistre.md`, and for `rhodes.akn`
+  `docs/plan-de-reprise/brouillon/Restaurer-Rhodes.md`
 - Architecture diagrams: `projects/*/architecture.d2` → `projects/*/docs/assets/architecture.svg`
 - Shared D2 styles: `docs/assets/d2/styles.architecture.d2`
 - ADRs: `docs/decisions/` — check `status` (proposed/accepted/implemented) before treating one as current behavior
-- Experiments: `docs/experiments/Experiment-*.md` (write-ups); the code sits in the sub-directories next to them
+- Experiments: `docs/experiments/Experimentation-*.md` (write-ups); the code sits in the sub-directories next to them
 - Incidents: `docs/incidents/` — postmortems for production issues
 - Archives: `docs/archives/` — records of finished migrations and past audits (e.g. the documentation audit of #1257)
 - Network reference: `docs/reference/Reseau-Reference.md` (topology), `docs/reference/IPAM-Reference.md` (IPAM)
@@ -451,6 +454,6 @@ kubectl get pvc -A -o wide
 ### Observability checks
 
 ```sh
-# Metrics/logs live on the central NixOS LXC, not in-cluster — check vmagent/Vector shipping first
+# Metrics/logs live on the central NixOS LXC; no in-cluster collector yet. o11y-system holds Grafana (rhodes.akn)
 kubectl get pods -n o11y-system
 ```

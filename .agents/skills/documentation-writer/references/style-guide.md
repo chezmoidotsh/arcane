@@ -52,10 +52,11 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
    | Post-mortem      | `incidents/`   | `Incident-YYYY-MM-DD-Title.md`        |
    | Experiment       | `experiments/` | `Experimentation-YYYY-MM-DD-Title.md` |
    | Project overview | `projects/`    | `Projet-<name>.md`                    |
-   | Archive          | `archives/`    | `<ID>-Titre.md`                       |
+   | Archive          | `archives/`    | `[<ID>-]Titre.md`                     |
 
-   Everything else (a diagram, an image) goes in `docs/assets/`. `Home.md`, `_Sidebar.md` and `_Footer.md` stay at the
-   root of `docs/`.
+   An archive keeps the identifier of the document it replaces (`MIGR-20260628-00-...`); a document that had none is
+   archived without one (`Migration-de-Kazimierz-vers-NixOS`). Everything else (a diagram, an image) goes in
+   `docs/assets/`. `Home.md`, `_Sidebar.md` and `_Footer.md` stay at the root of `docs/`.
 
 2. **File names use `Title-Case-With-Hyphens.md` [lint].** Letters, digits and hyphens only: no dots, spaces,
    underscores or non-ASCII characters. Function words (articles, prepositions, conjunctions: _le_, _la_, _les_, _un_,
@@ -66,8 +67,8 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
 3. **Page names are unique across the whole tree [lint].** Two pages with the same name (case ignored) in different
    directories are rejected, so a page can always be found by its name and moved without a collision.
 4. **The name signals the page type.** Guides start with a verb (`Initialiser-Lungmen`, `Restaurer-OpenBao`), references
-   end with `-Reference` (`IPAM-Reference`). Records keep their identifier: `ADR-014-Network-Topology`,
-   `Procedure-DB-20260723-00-Restore-CNPG-From-Object-Store`, `Incident-2026-05-30-CNPG-WAL-Disk-Full`.
+   end with `-Reference` (`IPAM-Reference`). Records keep their identifier: `ADR-014-Topologie-Reseau`,
+   `DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet`, `Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured`.
 5. **Every page is reachable from `_Sidebar.md` [lint].** The sidebar is curated by what the reader is trying to do (get
    started, operate, recover, reference, internals), not by file type. Records (ADR, incidents) are grouped under their
    own heading and listed in order.
@@ -122,7 +123,9 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
 
 ADRs and post-mortems are history. When they move to the wiki:
 
-- keep the number, the title, the decision, the timeline and the front matter exactly as written;
+- keep the number, the decision, the timeline and the front matter keys exactly as written;
+- translate the title and the free-text values (`title`, `duration`, the comments on `severity`, `users-affected`) into
+  French when the page is translated;
 - fix structure and wording only: headings, links, the `Pour aller plus loin` section;
 - change a status only when the repository proves it changed, and say why in the changelog section of the record;
 - never rewrite a past decision to match the present: write a new ADR that supersedes it.
