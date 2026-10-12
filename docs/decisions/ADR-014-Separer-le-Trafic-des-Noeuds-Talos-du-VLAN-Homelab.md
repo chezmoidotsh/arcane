@@ -1,6 +1,6 @@
 ---
-status: "implemented"
-date: 2026-10-11
+status: "accepted"
+date: 2026-07-30
 decision-makers: ["Alexandre"]
 assisted-by: ["claude-sonnet-4-6", "glm-5.2", "claude-sonnet-5"]
 informed: []
