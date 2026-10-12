@@ -37,8 +37,8 @@ catalog/        Reusable components (charts, compositions, OCI images, …)
 ├── pulumi/         Pulumi components and stacks
 └── talos/          Talos Linux bootstrap manifests + machine config patches
 
-docs/           Documentation, source of the GitHub Wiki: decisions/ (ADRs), procedures/, incidents/, experiments/,
-                migrations/, network/, reports/, archives/ (see "Documentation" below)
+docs/           Documentation, source of the GitHub Wiki: guides/, reference/, procedures/, decisions/ (ADRs),
+                incidents/, experiments/, archives/ (see "Documentation" below)
 
 projects/       One subdirectory per cluster or standalone app
 ├── chezmoi.sh/     Shared Pulumi stacks — Proxmox host, OpenBao, Tailscale, observability LXC, OCI registry
@@ -72,7 +72,7 @@ Grouped by concern rather than alphabetically, since agents usually need "what h
 | TLS                   | cert-manager, DNS-01 validation. Cloudflare's role is limited to the ACME DNS-01 API token (wildcard `chezmoi.sh` certs); it does not manage DNS records or tunnels                                                               |
 | Public access         | Pangolin + Gerbil + Traefik on `kazimierz.akn` (a VPS), with Newt tunnel clients in both `lungmen.akn` and `rhodes.akn`                                                                                                           |
 | Cluster connectivity  | Tailscale — mandatory for any cluster-to-cluster traffic outside the homelab                                                                                                                                                      |
-| Block storage         | Proxmox CSI plugin + Proxmox CCM (LVM-thin volumes decoupled from VM lifecycle) — not Longhorn (`docs/experiments/20260617-proxmox-csi-ccm/`)                                                                                     |
+| Block storage         | Proxmox CSI plugin + Proxmox CCM (LVM-thin volumes decoupled from VM lifecycle) — not Longhorn (`docs/experiments/Experimentation-2026-06-17-Proxmox-CSI-et-CCM.md`)                                                              |
 | Bulk/NAS storage      | SMB CSI driver, mounting NAS shares for Immich, Jellyfin, Paperless-ngx                                                                                                                                                           |
 | Relational databases  | CloudNative-PG (PostgreSQL) with automated S3 backups. Shared CNPG clusters (`postgres-apps`, `postgres-apps-secured`) exist on `lungmen.akn`; consolidation of the rest is partial (ADR-009)                                     |
 | Other databases       | None currently deployed                                                                                                                                                                                                           |
@@ -202,7 +202,7 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 ### Storage and databases
 
 - **Proxmox CSI plugin + Proxmox CCM** provision block storage as LVM-thin volumes on the Proxmox hypervisor, decoupled
-  from VM lifecycle — not Longhorn (see `docs/experiments/20260617-proxmox-csi-ccm/`).
+  from VM lifecycle — not Longhorn (see `docs/experiments/Experimentation-2026-06-17-Proxmox-CSI-et-CCM.md`).
 - **SMB CSI driver** mounts NAS shares for bulk media (Immich, Jellyfin, Paperless-ngx).
 - **CloudNative-PG** for PostgreSQL clusters with automated S3 backups (backup resources live next to each cluster
   definition under `projects/*/src/`). Consolidating into fewer shared clusters is partly done on `lungmen.akn`
@@ -227,17 +227,16 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 
 ### Important paths
 
-- Documentation: `docs/`, with the migration state in `docs/.wiki-legacy` — see "Documentation" below
+- Documentation: `docs/` — see "Documentation" below
 - Bootstrap guides: `docs/guides/Amorcer-*.md` (`lungmen.akn`, `kazimierz.akn`, `rimbilliton.akn`); disaster recovery of
   `rhodes.akn`: `projects/rhodes.akn/docs/disaster-recovery/`
-
 
 - Architecture diagrams: `projects/*/architecture.d2` → `projects/*/docs/assets/architecture.svg`
 - Shared D2 styles: `docs/assets/d2/styles.architecture.d2`
 - ADRs: `docs/decisions/` — check `status` (proposed/accepted/implemented) before treating one as current behavior
-- Experiments: `docs/experiments/`
+- Experiments: `docs/experiments/Experiment-*.md` (write-ups); the code sits in the sub-directories next to them
 - Incidents: `docs/incidents/` — postmortems for production issues
-- Migrations: `docs/migrations/` — cross-cluster migration records (e.g. `amiya.akn->rhodes.akn.md`)
+- Archives: `docs/archives/` — records of finished migrations and past audits (e.g. the documentation audit of #1257)
 - Network reference: `docs/reference/Reseau-Reference.md` (topology), `docs/reference/IPAM-Reference.md` (IPAM)
 
 ## Documentation
@@ -246,15 +245,16 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 type and its pages link to each other with relative `.md` links, so it reads well when browsing the repository. The
 `wiki` workflow publishes it to the GitHub Wiki on every push to `main` (`scripts/wiki:publish` rewrites the links).
 
-It is being migrated to a common standard (issue #1257): `docs/.wiki-legacy` lists the paths not migrated yet, which are
-neither linted nor published, and `docs/migrations/20261011-documentation-audit-1257.md` lists every document with its
-destination.
+It follows a common standard (issue #1257, migration finished on 2026-10-11).
+`docs/archives/AUDIT-20261011-00-Audit-de-la-Documentation.md` records the audit it was based on. `docs/.wiki-legacy`
+lists the paths that are neither linted nor published: only the README of the experiment code directories
+(`experiments/*/*`).
 
 - Write and edit pages with the `documentation-writer` skill (style guide, page templates). `scripts/wiki:lint` enforces
   the mechanical rules; it runs as the `wiki-lint` linter of rtunk (`.rtunk/local-plugin/`), so `mise run lint` and the
   CI both run it.
-- Pages are written in **French** (the repository's code, commits, issues and agent files stay in English). A document
-  is translated when its category is migrated; the last section of a page is `## Pour aller plus loin`.
+- Pages are written in **French** (the repository's code, commits, issues and agent files stay in English). Records
+  (ADRs, post-mortems, archives) keep the facts of their time; the last section of a page is `## Pour aller plus loin`.
 - Page names are unique across `docs/`, directories are lower-case, file names are `Title-Case-With-Hyphens.md` (ASCII,
   no accents).
 - READMEs that describe a directory stay next to the code. OPA policy documentation (`catalog/opa/`) never goes in

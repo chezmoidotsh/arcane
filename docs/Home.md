@@ -5,11 +5,6 @@ déployés en GitOps (ArgoCD), avec Pulumi pour l'infrastructure et OpenBao pour
 documentation du dépôt. Il fait foi, se lit directement dans Git et est reflété sur le GitHub Wiki à chaque fusion dans
 `main`.
 
-> [!NOTE]\
-> La documentation est en cours de migration vers un standard commun (issue
-> [#1257](https://github.com/chezmoidotsh/arcane/issues/1257)). Les pages listées dans [`.wiki-legacy`](.wiki-legacy) ne
-> sont pas encore migrées : elles sont liées ci-dessous depuis leur emplacement actuel.
-
 ## Exploiter les clusters
 
 | Page                                                                                                                                          | Rôle                                                                              |
