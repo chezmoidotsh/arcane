@@ -9,7 +9,7 @@ const config = new pulumi.Config();
 // Caddy on the zot-registry LXC (registry.chezmoi.sh, dir name oci-registry)
 // needs this token to complete DNS-01 challenges for its own TLS certificate.
 // This stack runs upstream of any Kubernetes cluster, so the token isn't
-// pushed to Vault here — Vault itself runs inside amiya.akn and can't be a
+// pushed to Vault here — Vault itself runs inside rhodes.akn and can't be a
 // dependency of something that has to exist before it. It's exported as a
 // Pulumi stack output instead and injected into the LXC's SOPS-encrypted
 // secrets file with `mise run pulumi:cloudflare-token:oci-registry` (see the
