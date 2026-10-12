@@ -16,7 +16,7 @@ Vérifiée contre le dépôt le 2026-10-11 ; l'état réel de Proxmox, de l'UDM 
 | 4    | IoT        | 192.168.3.0/25    | Oui (HASS statique, prévu)     | Appareils IoT                  | Sans internet (sauf HASS) ; IoT vers HASS uniquement |
 | 5    | Homelab    | 10.0.0.0/22       | Désactivé : tout est statique  | PVE, LXC, LB Talos, tunnel SDN | Plan d'adressage ci-dessous                          |
 
-### VLAN Placement Guide
+### Choisir le VLAN
 
 | Type d'appareil                                         | VLAN                                                       |
 | ------------------------------------------------------- | ---------------------------------------------------------- |
@@ -40,7 +40,7 @@ Raisons du découpage :
 | 4 (IoT)      | La plupart des appareils IoT ont une sécurité faible ; seul HASS fait le pont d'intégration                                      |
 | 5 (Homelab)  | Toute l'infrastructure sur un VLAN : pas de saut inter-VLAN entre clusters et NAS ; VLAN 2 vers VLAN 5 est le seul accès entrant |
 
-### FAQ
+### Questions fréquentes
 
 | Question                                                        | Réponse                                                                                                                                                                                                                       |
 | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -52,11 +52,11 @@ Raisons du découpage :
 > La découverte SMB de Windows utilise aussi WSD, que le relais mDNS de l'UDM Pro ne relaie pas. Les clients Windows
 > peuvent nécessiter une entrée DNS statique ou un proxy WSD.
 
-## VLAN 5 Address Plan
+## Plan d'adressage du VLAN 5
 
 Tout l'adressage actif tient dans `10.0.0.0/24`. Les trois autres blocs `/24` sont réservés.
 
-### Sub-ranges
+### Sous-plages
 
 | Bloc            | Plage       | Usage                                                                   |
 | --------------- | ----------- | ----------------------------------------------------------------------- |
@@ -67,7 +67,7 @@ Tout l'adressage actif tient dans `10.0.0.0/24`. Les trois autres blocs `/24` so
 | `10.0.2.0/24`   | n/a         | Libre                                                                   |
 | `10.0.3.0/24`   | n/a         | Libre                                                                   |
 
-### Static Assignments — Management Zone
+### Adresses statiques de la zone de gestion
 
 Convention dans `10.0.0.0/26` : `.1` passerelle, `.10` à `.19` hyperviseur, `.20` à `.29` LXC système, `.30` à `.62`
 autres appareils.
@@ -122,8 +122,8 @@ contient exactement 8 × `/29`. L'ordre suit la création des clusters ; le bac 
 | `10.0.0.120/29` | .120 à .127    | sandbox / dernier cluster de production |
 
 `lungmen-legacy` (emplacement 7) est une réservation de comptabilité, expliquée dans la note du tableau des
-[Pod CIDRs](#pod-cidrs--unique-per-cluster-clustermesh-prerequisite) : aucune IP réelle n'est consommée, le pont
-talosnet n'a besoin d'aucun pool LoadBalancer.
+[Pod CIDRs](#cidr-de-pods-unique-par-cluster-prérequis-clustermesh) : aucune IP réelle n'est consommée, le pont talosnet
+n'a besoin d'aucun pool LoadBalancer.
 
 Pour désactiver le suivi de connexion (conntrack) sur ces pools, voir
 [Désactiver le suivi de connexion des pools LB](../procedures/infrastructure/INF-20260730-00-Desactiver-le-Suivi-de-Connexion-des-Pools-LB.md).
@@ -167,6 +167,11 @@ l'[ADR-014](../decisions/ADR-014-Topologie-Reseau.md).
 | `10.128.0.10` à `.250`  | Plage DHCP des nœuds Talos                                                       |
 | `10.128.0.240` à `.254` | Pools `internal` (chevauchent la fin de la plage DHCP, voir la section suivante) |
 
+> [!WARNING]\
+> La plage DHCP déclarée dans `sdn.ts` (`10.128.0.10` à `.250`) contient les pools `internal` en service (`10.128.0.240`
+> à `.243`, `internal.ippool.yaml` de `rhodes.akn` et de `lungmen.akn`). Rien dans le dépôt n'exclut ces adresses du
+> DHCP : dnsmasq peut attribuer à un nœud une IP que Cilium annonce déjà pour un Service.
+
 ### Internal LoadBalancer Pools (talosnet)
 
 `talosnet` n'a aucune route depuis un VLAN physique : seuls les nœuds Talos et les hôtes explicitement rattachés au VNet
@@ -195,7 +200,7 @@ jetable sans charge de travail interne.
 `lungmen-legacy` (emplacement 7) est la même réservation de comptabilité que pour les pools `external`. Un fichier
 `internal.ippool.yaml` existe pour `rhodes.akn` (`10.128.0.240` à `.241`) et `lungmen.akn` (`10.128.0.242` à `.243`).
 
-## Kubernetes CIDRs
+## CIDR Kubernetes
 
 Alloués exclusivement dans `172.16.0.0/12`, sans plage `10.x` ni `192.168.x`, pour éviter tout conflit avec les VLAN
 physiques, les sous-réseaux SDN et les pools LB.
@@ -207,14 +212,14 @@ physiques, les sous-réseaux SDN et les pools LB.
 | `172.30.0.0/16` | CIDR de pods (8 clusters × `/19` = 8 192 IP chacun ; unique par cluster)     |
 | `172.31.0.0/16` | Réservé ; le premier `/19` (`172.31.0.0/19`) est le CIDR de Services partagé |
 
-### Service CIDR — shared across all clusters (ClusterMesh-ready)
+### CIDR de services, commun à tous les clusters (compatible ClusterMesh)
 
 Tous les clusters partagent un CIDR de Services unique : `172.31.0.0/19`, avec kube-dns en `172.31.0.10` partout. Ce
 choix est compatible ClusterMesh : Cilium fait la répartition de charge des Services sur le nœud source par eBPF, donc
 la ClusterIP est réécrite en IP de Pod backend avant de quitter le nœud. Les ClusterIP ne traversent jamais le lien
 inter-clusters, et un recouvrement des CIDR de Services est sans effet. Le reste de `172.31.0.0/16` est réservé.
 
-### Pod CIDRs — unique per cluster (ClusterMesh prerequisite)
+### CIDR de pods, unique par cluster (prérequis ClusterMesh)
 
 Les CIDR de pods ne doivent pas se recouvrir entre clusters : c'est une exigence ClusterMesh. Chaque cluster alloue
 depuis son propre `/19` dans `172.30.0.0/16` (un `/16` contient exactement 8 × `/19`).
@@ -261,7 +266,7 @@ ArgoCD). Le mécanisme exact sera arrêté à l'activation de ClusterMesh.
 vers une IP de Pod de ce supernet, ce qui est indispensable à la connectivité Pod à Pod inter-clusters. Le CIDR de
 Services en est volontairement exclu : les Services sont résolus par eBPF sur le nœud source, pas routés nativement.
 
-### Conflict check
+### Contrôle des conflits
 
 Aucun recouvrement avec les plages existantes :
 
@@ -275,7 +280,7 @@ Aucun recouvrement avec les plages existantes :
 | 192.168.10.128/25 | VLAN 3 (Guest)    |
 | 192.168.3.0/25    | VLAN 4 (IoT)      |
 
-## OCI Cloud — kazimierz.akn
+## Cloud OCI : kazimierz.akn
 
 kazimierz.akn (Oracle Cloud Infrastructure Free Tier) est hors de la topologie L3 du homelab : aucune route vers un
 VLAN, un VNet SDN ou un CIDR Kubernetes ci-dessus. Il n'est joignable que par WireGuard (tunnels Pangolin/Newt), jamais
@@ -304,7 +309,7 @@ routé.
 
 ## Firewall Rules
 
-### UDM Pro — Inter-VLAN
+### UDM Pro : entre VLAN
 
 Tout chemin inter-VLAN non listé est refusé implicitement. Les règles s'appliquent au niveau VLAN uniquement (pas de
 règle par port sur l'UDM Pro).
@@ -317,7 +322,7 @@ règle par port sur l'UDM Pro).
 | 4 (IoT)        | Non (exception HASS) | Vers HASS uniquement       | Pas d'internet par défaut ; HASS a internet ; VLAN 2 vers HASS autorisé ; exceptions par appareil possibles |
 | 5 (Homelab)    | Oui                  | Aucune sortante vers Home  | Le VLAN 2 atteint le VLAN 5 ; le VLAN 5 n'initie rien vers le VLAN 2                                        |
 
-### Proxmox — Per-LXC (NIC-level)
+### Proxmox : par LXC (au niveau de la carte)
 
 Politique : inbound refusé par défaut (default-drop). Les règles se définissent par protocole et port, sans liste
 blanche d'IP par hôte : les restrictions par VLAN ou sous-réseau s'appliquent quand la source est stable (par exemple
@@ -349,15 +354,32 @@ dans son `.fw` (étape manuelle).
 
 ## Historique
 
-- _2026-10-11_ : migration vers le standard de documentation, en français ; page déplacée de `docs/network/ipam.md`.
-  Aucune valeur (CIDR, VLAN, identifiant de cluster, pool) n'est modifiée. Les titres de section cités par le code («
-  Cilium LoadBalancer Pools », « Internal LoadBalancer Pools (talosnet) », « OCI Cloud — kazimierz.akn », « Firewall
-  Rules ») sont conservés tels quels.
-- _2026-10-11_ : l'ancien lien `README.md` désignait la vue d'ensemble réseau, maintenant
-  [Réseau Reference](Reseau-Reference.md). Les anciens liens vers
-  [INF-20260627-00](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md) et
-  [MIGR-20260801-00](../archives/MIGR-20260801-00-Relier-Lungmen-au-Reseau-Talosnet.md) pointent vers les fichiers
-  migrés.
+- _2026-10-12_ : traduction des titres de section qu'aucun fichier du dépôt ne cite (les titres cités par des
+  commentaires de manifestes ou de code, comme « Cilium LoadBalancer Pools », restent en anglais) ; ajout d'un
+  avertissement sur le chevauchement entre la plage DHCP de `talosnet` et les pools `internal`.
+- _2026-10-11_ : emoji de l'ancien tableau « ClusterMesh prerequisites » remplacés par des mots (Fait, À faire) ; le
+  groupe de sécurité `talos` (`firewall.ts`) est ajouté, il n'était pas dans l'ancienne page.
+- _2026-10-11_ : non vérifiable dans le dépôt, repris de l'ancienne version : DHCP et VLAN de l'UDM Pro, adresses `.10`,
+  `.11`, `.30` et `.31`, règles inter-VLAN, ports par LXC (la section dit qu'ils sont arrêtés au déploiement).
+- _2026-10-11_ : écart hors de cette page :
+  `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/oci-registry/modules/log-shipper.nix` épingle `10.0.0.252` pour
+  `o11y.chezmoi.sh`, adresse absente de ce plan.
+- _2026-10-11_ : écart signalé : `10.128.0.2` à `.9` était décrit comme réservé ; `.2` à `.6` sont utilisées (LXC omni,
+  talosnet-dns, oci-registry, o11y, NAS). La section « Adresses de talosnet » les liste ; le tableau des pools
+  `internal` garde sa ligne d'origine. Les pools `internal` (`.240` à `.254`) chevauchent la fin de la plage DHCP
+  (`.250`) : la page d'origine annonçait des plages « hors DHCP » alors que `sdn.ts` fixe la fin du DHCP à `.250`.
+  Valeurs inchangées.
+- _2026-10-11_ : écart signalé : la note `lungmen-legacy` de l'ancienne page affirme que le lungmen.akn en service garde
+  `10.244.0.0/16`, alors que `lungmen.clustertemplate.yaml` définit `podSubnets` à `172.30.32.0/19` et que `base.yaml`
+  marque cet emplacement « ALREADY IN USE ». Non tranché : l'état réel du cluster n'a pas été vérifié ; la note est
+  conservée avec son attribution à l'ancienne version.
+- _2026-10-11_ : écart sans changement de valeur : l'ancienne page citait seulement `1.19.5-native.yaml` pour Cilium ;
+  le dépôt contient trois manifestes (`1.19.5`, `1.20.0`, `1.20.2`), utilisés respectivement par rhodes, lungmen et
+  `base.yaml`, tous avec `ipv4NativeRoutingCIDR=172.30.0.0/16`. `cluster-name` et `cluster-id` ne sont définis dans
+  aucun d'eux.
+- _2026-10-11_ : adresses des LXC `.21` à `.26` et leurs adresses `eth1` (`10.128.0.2` à `.5`) confirmées par les
+  `configuration.nix` de `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/`. `10.128.0.6` (NAS) est confirmée par
+  `talosnet-dns/modules/bind.nix`.
 - _2026-10-11_ : valeurs confirmées par le dépôt : pools `external` (`10.0.0.64/29` rhodes, `10.0.0.72/29` lungmen) et
   `internal` (`10.128.0.240`-`.241` rhodes, `.242`-`.243` lungmen) dans
   `projects/*/src/infrastructure/kubernetes/cilium/` ; `sdn.ts` (zone `simple`, `10.128.0.0/24`, gateway `.1`, DHCP
@@ -365,29 +387,15 @@ dans son `.fw` (étape manuelle).
   `172.31.0.0/19` dans les templates Omni ; `172.16.1.0/24` et `172.16.2.0/24` dans `pangolin/org.ts` ; VCN
   `172.16.0.0/26` et subnet `172.16.0.0/28` dans `oci/network.ts` ; `mtu: 1450` sur `eth1` dans `base.yaml` ;
   `network_firewall: false` dans `w1.medium.yaml`.
-- _2026-10-11_ : adresses des LXC `.21` à `.26` et leurs adresses `eth1` (`10.128.0.2` à `.5`) confirmées par les
-  `configuration.nix` de `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/`. `10.128.0.6` (NAS) est confirmée par
-  `talosnet-dns/modules/bind.nix`.
-- _2026-10-11_ : écart sans changement de valeur : l'ancienne page citait seulement `1.19.5-native.yaml` pour Cilium ;
-  le dépôt contient trois manifestes (`1.19.5`, `1.20.0`, `1.20.2`), utilisés respectivement par rhodes, lungmen et
-  `base.yaml`, tous avec `ipv4NativeRoutingCIDR=172.30.0.0/16`. `cluster-name` et `cluster-id` ne sont définis dans
-  aucun d'eux.
-- _2026-10-11_ : écart signalé : la note `lungmen-legacy` de l'ancienne page affirme que le lungmen.akn en service garde
-  `10.244.0.0/16`, alors que `lungmen.clustertemplate.yaml` définit `podSubnets` à `172.30.32.0/19` et que `base.yaml`
-  marque cet emplacement « ALREADY IN USE ». Non tranché : l'état réel du cluster n'a pas été vérifié ; la note est
-  conservée avec son attribution à l'ancienne version.
-- _2026-10-11_ : écart signalé : `10.128.0.2` à `.9` était décrit comme réservé ; `.2` à `.6` sont utilisées (LXC omni,
-  talosnet-dns, oci-registry, o11y, NAS). La section « Adresses de talosnet » les liste ; le tableau des pools
-  `internal` garde sa ligne d'origine. Les pools `internal` (`.240` à `.254`) chevauchent la fin de la plage DHCP
-  (`.250`) : la page d'origine annonçait des plages « hors DHCP » alors que `sdn.ts` fixe la fin du DHCP à `.250`.
-  Valeurs inchangées.
-- _2026-10-11_ : écart hors de cette page :
-  `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/oci-registry/modules/log-shipper.nix` épingle `10.0.0.252` pour
-  `o11y.chezmoi.sh`, adresse absente de ce plan.
-- _2026-10-11_ : non vérifiable dans le dépôt, repris de l'ancienne version : DHCP et VLAN de l'UDM Pro, adresses `.10`,
-  `.11`, `.30` et `.31`, règles inter-VLAN, ports par LXC (la section dit qu'ils sont arrêtés au déploiement).
-- _2026-10-11_ : emoji de l'ancien tableau « ClusterMesh prerequisites » remplacés par des mots (Fait, À faire) ; le
-  groupe de sécurité `talos` (`firewall.ts`) est ajouté, il n'était pas dans l'ancienne page.
+- _2026-10-11_ : l'ancien lien `README.md` désignait la vue d'ensemble réseau, maintenant
+  [Réseau Reference](Reseau-Reference.md). Les anciens liens vers
+  [INF-20260627-00](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md) et
+  [MIGR-20260801-00](../archives/MIGR-20260801-00-Relier-Lungmen-au-Reseau-Talosnet.md) pointent vers les fichiers
+  migrés.
+- _2026-10-11_ : migration vers le standard de documentation, en français ; page déplacée de `docs/network/ipam.md`.
+  Aucune valeur (CIDR, VLAN, identifiant de cluster, pool) n'est modifiée. Les titres de section cités par le code («
+  Cilium LoadBalancer Pools », « Internal LoadBalancer Pools (talosnet) », « OCI Cloud — kazimierz.akn », « Firewall
+  Rules ») sont conservés tels quels.
 
 ## Pour aller plus loin
 

@@ -1,8 +1,8 @@
-# Documents not migrated to the new documentation standard yet (issue #1257), and files kept out of the wiki.
+# Files under docs/ that are kept out of the wiki for good (the documentation migration of issue #1257 is finished).
 #
 # A path listed here is not linted by scripts/wiki:lint and is not published to the GitHub Wiki.
 # Patterns are relative to docs/ (fnmatch: `*` also matches `/`).
 #
 # Code directories of the experiments: their README.md describes the code next to it (how to run it), the write-up is
-# the Experiment-*.md page one level up. These stay here for good.
+# the Experimentation-*.md page one level up.
 experiments/*/*

@@ -1,13 +1,11 @@
 # Initialiser Lungmen
 
-Vérifié contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées pour cette migration.
-
-## Version courte
-
 `lungmen.akn` est provisionné de bout en bout par [Sidero Omni](https://omni.siderolabs.com), sans création manuelle de
 VM ni `talosctl`. Ce guide donne les paramètres propres à `lungmen.akn` et ses écarts avec la
 [procédure générique de création d'un cluster Talos avec Omni](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md),
 dont `lungmen.akn` est l'exemple concret (voir aussi [`catalog/omni/README.md`](../../catalog/omni/README.md)).
+
+Vérifié contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées pour cette migration.
 
 ```bash
 # OMNICONFIG doit être renseigné (omnictl config new ou omnictl config add).

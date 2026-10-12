@@ -382,43 +382,15 @@ Ce que ce plan ne peut pas affirmer depuis le dépôt :
 
 ## Suites à donner
 
-### Commentaires obsolètes sur l'emplacement d'OpenBao
+Aucune issue n'est ouverte à ce jour pour ces points :
 
-Les fichiers suivants affirment encore que Vault tourne dans `amiya.akn` ; il tourne sur `rhodes.akn`, le raisonnement
-(OpenBao est en aval) reste valable. Ils ne sont pas modifiés par ce plan.
-
-| Fichier                                                                             | Ligne |
-| ----------------------------------------------------------------------------------- | ----- |
-| `projects/chezmoi.sh/src/infrastructure/pulumi/stack/omni.ts`                       | 12    |
-| `projects/chezmoi.sh/src/infrastructure/pulumi/stack/observability.ts`              | 13    |
-| `projects/chezmoi.sh/src/infrastructure/pulumi/stack/zot-registry.ts`               | 12    |
-| `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox-backup-server/acme.ts` | 15    |
-| `projects/chezmoi.sh/.mise.toml`                                                    | 68    |
-
-Autres mentions du même cluster dans `projects/chezmoi.sh/` : `src/infrastructure/pulumi/.mise.toml` (lignes 9 et 17),
-`lxc/observability/alerts/cluster-availability.rules.yaml` (règle `ClusterAbsent` sur `cluster="amiya"`, sans règle
-équivalente pour `rhodes`), `lxc/observability/alerts/self.rules.yaml` (ligne 10),
-`lxc/observability/alerts/oci-registry.rules.yaml` (ligne 7), `lxc/observability/modules/vmalert.nix` (ligne 7),
-`lxc/oci-registry/modules/vmagent.nix` (ligne 14) et `lxc/oci-registry/README.md` (lignes 6, 9, 524, 526, 544). Le
-commentaire de la tâche `bao:smb:drift-check` (`projects/chezmoi.sh/.mise.toml`, ligne 140) dit aussi que rien ne
-synchronise les mots de passe SMB vers OpenBao, ce que la PR #1228 a changé.
-
-### Issues de suivi proposées
-
-À relire avant création ; aucune n'est ouverte.
-
-- **Copier l'état Pulumi et les clés B2 de démarrage hors du NAS** : un export chiffré périodique de `pulumi-states` et
-  une copie hors Pulumi des clés `truenas-replication` et `pbs-vm-backup` (circularités 1 et 2).
-- **Documenter la configuration de PBS sans l'état Pulumi** : créer une clé B2 et déclarer le datastore à la main pour
-  restaurer le NAS après la perte de l'hôte (circularités 1 et 2).
-- **Écrire la procédure de relance manuelle de Garage et de rapatriement depuis B2** : application TrueNAS, valeurs de
-  `apps.ts`, dataset depuis B2, puis import Pulumi (circularité 3).
-- **Documenter la copie de secours de la clé age et de la paperkey PBS** : emplacement hors ligne, test de lecture
-  (circularité 4).
-- **Sortir de `chezmoi-sh-infra` les ressources qui exigent OpenBao, Pocket-Id ou un cluster** : stack appliquée après
-  `rhodes.akn`, ou `--target` documenté dans Restaurer Rhodes (circularité 5).
-- **Mettre à jour les commentaires et la règle d'alerte qui citent l'ancien cluster** : la liste ci-dessus, dont la
-  règle `ClusterAbsent` sans équivalent pour `rhodes`.
+- Copier l'état Pulumi et les clés B2 de démarrage hors du NAS (circularités 1 et 2).
+- Documenter la configuration de PBS sans l'état Pulumi (circularités 1 et 2).
+- Écrire la procédure de relance manuelle de Garage et de rapatriement depuis B2 (circularité 3).
+- Documenter la copie de secours de la clé age et de la paperkey PBS (circularité 4).
+- Sortir de `chezmoi-sh-infra` les ressources qui exigent OpenBao, Pocket-Id ou un cluster (circularité 5).
+- Corriger les commentaires de `projects/chezmoi.sh/` qui placent encore OpenBao sur `amiya.akn`, et la règle d'alerte
+  `ClusterAbsent` sans équivalent pour `rhodes`.
 
 ## Historique
 
