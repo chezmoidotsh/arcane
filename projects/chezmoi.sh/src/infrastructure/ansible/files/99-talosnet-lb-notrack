@@ -14,7 +14,7 @@
 # reserved for all 8 cluster slots (/29 each) -- covers every current and
 # future cluster's external Gateway without per-cluster edits here.
 POOL=10.0.0.64/26
-iptables -t raw -C PREROUTING -d "${POOL}" -j NOTRACK 2>/dev/null || \
-  iptables -t raw -I PREROUTING 1 -d "${POOL}" -j NOTRACK
-iptables -t raw -C PREROUTING -s "${POOL}" -j NOTRACK 2>/dev/null || \
-  iptables -t raw -I PREROUTING 1 -s "${POOL}" -j NOTRACK
+iptables -t raw -C PREROUTING -d "${POOL}" -j NOTRACK 2>/dev/null ||
+	iptables -t raw -I PREROUTING 1 -d "${POOL}" -j NOTRACK
+iptables -t raw -C PREROUTING -s "${POOL}" -j NOTRACK 2>/dev/null ||
+	iptables -t raw -I PREROUTING 1 -s "${POOL}" -j NOTRACK

@@ -19,8 +19,8 @@ BUCKET_PATH="$(yq -r '.spec.configuration.destinationPath' "${usage_objectstore_
 ENDPOINT="$(yq -r '.spec.configuration.endpointURL' "${usage_objectstore_manifest}" | sed -E 's#^https?://##')"
 
 if [[ -z ${BUCKET_PATH} ]] || [[ -z ${ENDPOINT} ]]; then
-  echo "Could not read destinationPath/endpointURL from ${usage_objectstore_manifest}" >&2
-  exit 1
+	echo "Could not read destinationPath/endpointURL from ${usage_objectstore_manifest}" >&2
+	exit 1
 fi
 
 # Split into separate statements (not one nested `eval "$(cmd | cmd)"`) so a
@@ -43,12 +43,12 @@ eval "${ENV_ASSIGNMENTS}"
 [[ -z ${ACCESS_SECRET_KEY} ]] && echo "ACCESS_SECRET_KEY is empty or missing... see ${usage_credentials_secret}" >&2 && exit 1
 
 LATEST="$(mise exec pipx:s3cmd -- s3cmd --access_key="${ACCESS_KEY_ID}" --secret_key="${ACCESS_SECRET_KEY}" \
-  --host="${ENDPOINT}" --host-bucket="${ENDPOINT}" ls "s3://${BUCKET_PATH}/" |
-  awk '{print $NF}' | grep -oE '[0-9A-Z]{26}' | sort | tail -1)"
+	--host="${ENDPOINT}" --host-bucket="${ENDPOINT}" ls "s3://${BUCKET_PATH}/" |
+	awk '{print $NF}' | grep -oE '[0-9A-Z]{26}' | sort | tail -1)"
 
 if [[ -z ${LATEST} ]]; then
-  echo "No backup folders found under s3://${BUCKET_PATH}/" >&2
-  exit 1
+	echo "No backup folders found under s3://${BUCKET_PATH}/" >&2
+	exit 1
 fi
 
 echo "${LATEST}"
