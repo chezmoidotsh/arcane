@@ -6,4 +6,5 @@ resources:
   - network-policy.allow-intra-namespace.yaml
   - network-policy.allow-tailscale-to-kubernetes-api.yaml
   - network-policy.allow-tailscale-to-control-plane.yaml
+  - network-policy.allow-tailscale-to-derp.yaml
   - network-policy.allow-tailscale-proxies-to-n8n.yaml
