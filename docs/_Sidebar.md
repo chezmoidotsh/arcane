@@ -1,19 +1,19 @@
-**[Home](Home.md)**
+**[Accueil](Home.md)**
 
-### Operate
+### Exploiter les clusters
 
-- [Procedures](procedures/README.md)
-- [Bootstrap Lungmen](../projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md)
-- [Bootstrap Kazimierz](../projects/kazimierz.akn/docs/BOOTSTRAP.md)
-- [Bootstrap Rimbilliton](../projects/rimbilliton.akn/docs/BOOTSTRAP.md)
+- [Procédures](procedures/README.md)
+- [Initialiser Lungmen](../projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md)
+- [Initialiser Kazimierz](../projects/kazimierz.akn/docs/BOOTSTRAP.md)
+- [Initialiser Rimbilliton](../projects/rimbilliton.akn/docs/BOOTSTRAP.md)
 
-### Recover
+### Reprendre après une panne
 
-- [Recover Rhodes](../projects/rhodes.akn/docs/disaster-recovery/README.md)
+- [Restaurer Rhodes](../projects/rhodes.akn/docs/disaster-recovery/README.md)
 - [Incidents](incidents/README.md)
 
-### Reference
+### Référence
 
-- [Network](network/README.md)
+- [Architecture & Documentation Réseau](network/README.md)
 - [Renovate](RENOVATE.md)
-- [Architecture decisions](decisions/001-centralized-secret-management.md)
+- [Décisions d'Architecture](decisions/001-centralized-secret-management.md)

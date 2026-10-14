@@ -1,40 +1,40 @@
 # Home
 
-Arcane is a personal homelab managed as code: two Talos Linux Kubernetes clusters and a few standalone hosts, deployed
-through GitOps (ArgoCD), with Pulumi for the infrastructure and OpenBao for the secrets. This directory is the
-documentation of that repository. It is the source of truth, readable in Git and mirrored to the GitHub Wiki on every
-merge to `main`.
+Arcane est un homelab personnel géré via du code : deux clusters Kubernetes Talos Linux et quelques hôtes autonomes,
+déployés en GitOps (ArgoCD), avec Pulumi pour l'infrastructure et OpenBao pour les secrets. Ce répertoire contient la
+documentation du dépôt. Il fait foi, se lit directement dans Git et est reflété sur le GitHub Wiki à chaque fusion dans
+`main`.
 
-> [!NOTE]
-> The documentation is being migrated to a common standard (issue
-> [#1257](https://github.com/chezmoidotsh/arcane/issues/1257)). Pages listed in [`.wiki-legacy`](.wiki-legacy) are
-> not migrated yet: they are linked below from their current location.
+> [!NOTE] La documentation est en cours de migration vers un standard commun (issue
+> [#1257](https://github.com/chezmoidotsh/arcane/issues/1257)). Les pages listées dans [`.wiki-legacy`](.wiki-legacy) ne
+> sont pas encore migrées : elles sont liées ci-dessous depuis leur emplacement actuel.
 
-## Operate the clusters
+## Exploiter les clusters
 
-| Page                                                                   | What it is for                                                       |
-| ---------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| [Procedures](procedures/README.md)                                     | Step-by-step runbooks: upgrades, backups and restores, Omni, Proxmox |
-| [Bootstrap Lungmen](../projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md)  | Bring up the home applications cluster                               |
-| [Bootstrap Kazimierz](../projects/kazimierz.akn/docs/BOOTSTRAP.md)     | Install the public-access VPS                                        |
-| [Bootstrap Rimbilliton](../projects/rimbilliton.akn/docs/BOOTSTRAP.md) | Install the Minecraft host                                           |
+| Page                                                                     | Rôle                                                                           |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| [Procédures](procedures/README.md)                                       | Runbooks pas à pas : mises à jour, sauvegardes et restaurations, Omni, Proxmox |
+| [Initialiser Lungmen](../projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md)  | Création, configuration et amorçage du cluster des applications domestiques    |
+| [Initialiser Kazimierz](../projects/kazimierz.akn/docs/BOOTSTRAP.md)     | Création et installation de la passerelle d'accès public (Gateway)             |
+| [Initialiser Rimbilliton](../projects/rimbilliton.akn/docs/BOOTSTRAP.md) | Création et installation du serveur Pelican (gaming)                           |
 
-## Recover from a failure
+## Reprendre après une panne
 
-| Page                                                                      | What it is for                                 |
-| ------------------------------------------------------------------------- | ---------------------------------------------- |
-| [Recover Rhodes](../projects/rhodes.akn/docs/disaster-recovery/README.md) | Disaster recovery of the core platform cluster |
-| [Incidents](incidents/README.md)                                          | Post-mortems of past production incidents      |
+| Page                                                                        | Rôle                                                        |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| [Restaurer Rhodes](../projects/rhodes.akn/docs/disaster-recovery/README.md) | Reprise après sinistre du cluster de la plateforme centrale |
+| [Incidents](incidents/README.md)                                            | Post-mortems des incidents de production passés             |
 
-## Reference
+## Référence
 
-| Page                                                                     | What it is for                                   |
-| ------------------------------------------------------------------------ | ------------------------------------------------ |
-| [Network](network/README.md)                                             | Topology, address plan, gateways and DNS         |
-| [Renovate](RENOVATE.md)                                                  | How dependency updates are configured            |
-| [Architecture decisions](decisions/001-centralized-secret-management.md) | Why the repository is built the way it is (ADRs) |
+| Page                                                                       | Rôle                                            |
+| -------------------------------------------------------------------------- | ----------------------------------------------- |
+| [Architecture & Documentation Réseau](network/README.md)                   | Topologie, plan d'adressage, passerelles et DNS |
+| [Renovate](RENOVATE.md)                                                    | Configuration des mises à jour de dépendances   |
+| [Décisions d'Architecture](decisions/001-centralized-secret-management.md) | Pourquoi le dépôt est construit ainsi (ADR)     |
 
-## Where to go next
+## Pour aller plus loin
 
-- [Repository README](../README.md): the project at a glance and its history.
-- [Writing documentation](../.agents/skills/documentation-writer/SKILL.md): how a page is written, and the style guide it follows.
+- [README du dépôt](../README.md) : le projet en un coup d'œil et son histoire.
+- [Skill : écrire la documentation](../.agents/skills/documentation-writer/SKILL.md) : comment une page est écrite et le
+  guide de style associé.
