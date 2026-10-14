@@ -1,0 +1,55 @@
+---
+# Standalone mode: a single n8n process (UI, webhooks and executions) backed by
+# the mutualized PostgreSQL cluster. Queue mode (workers + Valkey) can be enabled
+# later without migrating data, everything lives in PostgreSQL.
+queueMode:
+  enabled: false
+redis:
+  enabled: false
+
+# docker.n8n.io (the chart default) is not mirrored by the OCI registry.
+image:
+  repository: ghcr.io/n8n-io/n8n
+
+# Matches the PVC access mode (ReadWriteOnce): never run two pods at once.
+strategy:
+  type: Recreate
+
+persistence:
+  enabled: true
+  size: 1Gi
+
+database:
+  type: postgresdb
+  useExternal: true
+  host: apps-20260329-rw.databases.svc.cluster.local
+  port: 5432
+  database: n8n
+  user: n8n
+  passwordSecret:
+    name: n8n-database-n8n
+    key: password
+
+# N8N_ENCRYPTION_KEY, N8N_HOST, N8N_PORT and N8N_PROTOCOL come from the
+# `n8n-conf` Secret (see n8n.configuration.externalsecret.yaml).
+secretRefs:
+  existingSecret: n8n-conf
+
+editor:
+  url: https://n8n.chezmoi.sh
+webhook:
+  url: https://n8n.chezmoi.sh
+
+config:
+  timezone: Europe/Paris
+  extraEnv:
+    # Traffic reaches n8n through Pangolin (Traefik) or the Cilium Gateway.
+    - name: N8N_PROXY_HOPS
+      value: "1"
+
+# Ingress is handled by the Gateway API (n8n.httproute.yaml); network policies
+# by Cilium (security/).
+ingress:
+  enabled: false
+networkPolicy:
+  enabled: false

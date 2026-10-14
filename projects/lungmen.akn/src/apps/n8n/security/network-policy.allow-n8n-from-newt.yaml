@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Newt to route traffic to n8n application.
+  name: allow-n8n-from-newt
+  namespace: n8n
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: n8n
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: newt-system
+            app.kubernetes.io/name: newt
+      toPorts:
+        - ports:
+            - port: "5678"
+              protocol: TCP

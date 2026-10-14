@@ -49,6 +49,14 @@ spec:
       name: linkding
       passwordSecret:
         name: cnpg.apps-linkding-linkding-credentials
+    - comment: Managed role for n8n/n8n
+      connectionLimit: -1
+      ensure: present
+      inherit: true
+      login: true
+      name: n8n
+      passwordSecret:
+        name: cnpg.apps-n8n-n8n-credentials
     - comment: Managed role for spoolman/spoolman
       connectionLimit: -1
       ensure: present

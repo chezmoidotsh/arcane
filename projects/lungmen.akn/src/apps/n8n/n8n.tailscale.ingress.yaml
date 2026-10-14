@@ -1,0 +1,20 @@
+---
+# Full access to n8n (editor, REST API, test webhooks) from the tailnet only,
+# served as https://n8n.<tailnet>.ts.net. The public side (webhooks) goes through
+# Pangolin, see infrastructure/pulumi/stack/pangolin/n8n.ts.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    tailscale.com/proxy-class: restricted
+  name: n8n-tailscale
+spec:
+  ingressClassName: tailscale
+  defaultBackend:
+    service:
+      name: n8n-main
+      port:
+        number: 5678
+  tls:
+    - hosts:
+        - n8n

@@ -1,0 +1,200 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: main
+    app.kubernetes.io/instance: n8n
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: n8n
+    app.kubernetes.io/version: 2.43.5
+    helm.sh/chart: n8n-1.16.0
+  name: n8n-main
+  namespace: n8n
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: main
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        checksum/config: 65799a56d5b2fd5d943e067ab5c54f93e465467952b48cd5e8ffdfc5dc75238e
+        checksum/secret: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+      labels:
+        app.kubernetes.io/component: main
+        app.kubernetes.io/instance: n8n
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: n8n
+        app.kubernetes.io/version: 2.43.5
+        helm.sh/chart: n8n-1.16.0
+    spec:
+      containers:
+      - env:
+        - name: TZ
+          valueFrom:
+            configMapKeyRef:
+              key: TZ
+              name: n8n
+        - name: DB_TYPE
+          valueFrom:
+            configMapKeyRef:
+              key: DB_TYPE
+              name: n8n
+        - name: DB_POSTGRESDB_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              key: DB_POSTGRESDB_DATABASE
+              name: n8n
+        - name: DB_POSTGRESDB_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: DB_POSTGRESDB_HOST
+              name: n8n
+        - name: DB_POSTGRESDB_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: DB_POSTGRESDB_PORT
+              name: n8n
+        - name: DB_POSTGRESDB_USER
+          valueFrom:
+            configMapKeyRef:
+              key: DB_POSTGRESDB_USER
+              name: n8n
+        - name: DB_POSTGRESDB_SCHEMA
+          valueFrom:
+            configMapKeyRef:
+              key: DB_POSTGRESDB_SCHEMA
+              name: n8n
+        - name: N8N_WEBHOOK_URL
+          valueFrom:
+            configMapKeyRef:
+              key: N8N_WEBHOOK_URL
+              name: n8n
+        - name: N8N_WEBHOOK_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              key: N8N_WEBHOOK_TIMEOUT
+              name: n8n
+        - name: N8N_EDITOR_BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              key: N8N_EDITOR_BASE_URL
+              name: n8n
+        - name: DB_POSTGRESDB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: n8n-database-n8n
+        - name: EXECUTIONS_TIMEOUT_MAX
+          value: "3600"
+        - name: EXECUTIONS_DATA_SAVE_ON_ERROR
+          value: all
+        - name: EXECUTIONS_DATA_SAVE_ON_SUCCESS
+          value: all
+        - name: EXECUTIONS_DATA_SAVE_ON_PROGRESS
+          value: "false"
+        - name: EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS
+          value: "true"
+        - name: EXECUTIONS_DATA_PRUNE
+          value: "true"
+        - name: EXECUTIONS_DATA_MAX_AGE
+          value: "336"
+        - name: EXECUTIONS_DATA_PRUNE_MAX_COUNT
+          value: "10000"
+        - name: EXECUTIONS_DATA_HARD_DELETE_BUFFER
+          value: "1"
+        - name: EXECUTIONS_DATA_PRUNE_HARD_DELETE_INTERVAL
+          value: "15"
+        - name: EXECUTIONS_DATA_PRUNE_SOFT_DELETE_INTERVAL
+          value: "60"
+        - name: N8N_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              key: N8N_ENCRYPTION_KEY
+              name: n8n-conf
+        - name: N8N_HOST
+          valueFrom:
+            secretKeyRef:
+              key: N8N_HOST
+              name: n8n-conf
+        - name: N8N_PORT
+          valueFrom:
+            secretKeyRef:
+              key: N8N_PORT
+              name: n8n-conf
+        - name: N8N_PROTOCOL
+          valueFrom:
+            secretKeyRef:
+              key: N8N_PROTOCOL
+              name: n8n-conf
+        - name: N8N_PROXY_HOPS
+          value: "1"
+        image: oci.chezmoi.sh/ghcr.io/n8n-io/n8n:2.43.5
+        imagePullPolicy: IfNotPresent
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - sleep 10
+        livenessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /healthz
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 5
+        name: n8n-main
+        ports:
+        - containerPort: 5678
+          name: http
+        readinessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /healthz/readiness
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 512Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        startupProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /healthz
+            port: http
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /home/node/.n8n
+          name: data
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: n8n
+      terminationGracePeriodSeconds: 60
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: n8n

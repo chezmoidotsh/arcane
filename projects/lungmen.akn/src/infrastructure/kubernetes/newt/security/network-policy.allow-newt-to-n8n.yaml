@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Newt to access n8n service.
+  name: allow-newt-to-n8n
+  namespace: newt-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: newt
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: n8n
+            app.kubernetes.io/name: n8n
+      toPorts:
+        - ports:
+            - port: "5678"
+              protocol: TCP
