@@ -1,0 +1,16 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Tailscale operator and the proxies it creates to access the Kubernetes API
+      server. The operator reconciles Ingress/Connector resources and stores its state in a
+      Secret, and every proxy keeps its own state in a Secret too. The cluster-wide allow-dns
+      policy selects every pod for egress, so without this grant the operator cannot start
+      ("creating kube store ... context deadline exceeded") and restarts in a loop.
+  name: allow-tailscale-to-kubernetes-api
+spec:
+  endpointSelector: {}
+  egress:
+    - toEntities:
+        - kube-apiserver
