@@ -20,6 +20,7 @@ resources:
   - n8n.configuration.externalsecret.yaml
   - n8n.database.externalsecret.yaml
   - n8n.httproute.yaml
+  - n8n.tailscale.ingress.yaml
 
   - security/
 
@@ -39,13 +40,3 @@ patches:
       metadata:
         name: n8n-task-runners
         namespace: n8n
-
-  # The chart hashes its own Secret template into `checksum/secret`, but n8n reads
-  # its secrets from ExternalSecrets (`secretRefs.existingSecret`), so the hash
-  # never changes anything. gitleaks mistakes it for an API key.
-  - target:
-      kind: Deployment
-      name: n8n-main
-    patch: |
-      - op: remove
-        path: /spec/template/metadata/annotations/checksum~1secret
