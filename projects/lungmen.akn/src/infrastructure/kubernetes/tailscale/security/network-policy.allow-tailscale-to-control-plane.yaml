@@ -3,24 +3,22 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows the Tailscale operator and proxies to reach the Tailscale control plane and DERP
-      relays: HTTPS (TCP 443) and STUN (UDP 3478), nothing else.
-      This cannot be a toFQDNs list. tailscaled dials the DERP relays directly by the IP
-      addresses of the DERP map, without resolving their names, so Cilium never learns them
-      from a DNS answer and drops the connections (proxies registered but unreachable).
-      Tailscale's own firewall guidance is the same two ports to any destination, as the relay
-      addresses change over time: https://tailscale.com/kb/1082/firewall-ports
-      Direct WireGuard connections to peers (UDP) are not allowed: traffic goes through the
-      DERP relays over HTTPS.
+      Allows the Tailscale operator and proxies to reach the Tailscale control plane and API
+      over HTTPS: coordination, login, logging and the API used by the operator to mint auth
+      keys with its OAuth client. These are reached by name, so a toFQDNs list works.
+      The DERP relays and STUN servers are not reached by name, see
+      network-policy.allow-tailscale-to-derp.yaml (generated).
+      Hostnames and ports: https://tailscale.com/kb/1082/firewall-ports
   name: allow-tailscale-to-control-plane
 spec:
   endpointSelector: {}
   egress:
-    - toCIDR:
-        - 0.0.0.0/0
+    - toFQDNs:
+        - matchName: controlplane.tailscale.com
+        - matchName: login.tailscale.com
+        - matchName: log.tailscale.com
+        - matchName: api.tailscale.com
       toPorts:
         - ports:
             - port: "443"
               protocol: TCP
-            - port: "3478"
-              protocol: UDP
