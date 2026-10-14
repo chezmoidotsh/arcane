@@ -36,3 +36,4 @@ export const lungmenSiteId = site.siteId;
 
 export * from "./immich";
 export * from "./jellyfin";
+export * from "./n8n";
