@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+data:
+  DB_POSTGRESDB_DATABASE: n8n
+  DB_POSTGRESDB_HOST: apps-20260329-rw.databases.svc.cluster.local
+  DB_POSTGRESDB_PORT: "5432"
+  DB_POSTGRESDB_SCHEMA: public
+  DB_POSTGRESDB_USER: n8n
+  DB_TYPE: postgresdb
+  N8N_EDITOR_BASE_URL: https://n8n.chezmoi.sh
+  N8N_WEBHOOK_TIMEOUT: "120000"
+  N8N_WEBHOOK_URL: https://n8n.chezmoi.sh
+  TZ: Europe/Paris
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/instance: n8n
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: n8n
+    app.kubernetes.io/version: 2.43.5
+    helm.sh/chart: n8n-1.16.0
+  name: n8n
+  namespace: n8n

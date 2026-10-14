@@ -1,0 +1,51 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: n8n
+
+helmCharts:
+  # Official chart, maintained by n8n-io (https://github.com/n8n-io/n8n-hosting)
+  - repo: oci://ghcr.io/n8n-io/n8n-helm-chart
+    name: n8n
+    # renovate: datasource=helm depName=n8n registryUrl=oci://ghcr.io/n8n-io/n8n-helm-chart
+    version: 1.16.0
+
+    releaseName: n8n
+    namespace: n8n
+    skipTests: true
+
+    valuesFile: n8n.helmvalues/default.yaml
+
+resources:
+  - n8n.configuration.externalsecret.yaml
+  - n8n.database.externalsecret.yaml
+  - n8n.httproute.yaml
+
+  - security/
+
+images:
+  # renovate: datasource=docker depName=ghcr.io/n8n-io/n8n
+  - name: ghcr.io/n8n-io/n8n
+    newName: oci.chezmoi.sh/ghcr.io/n8n-io/n8n
+    newTag: 2.43.5
+
+patches:
+  # Task runners are disabled, but the chart still renders a Secret holding a random
+  # token that changes on every render. Nothing references it, so drop it.
+  - patch: |
+      $patch: delete
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: n8n-task-runners
+        namespace: n8n
+
+  # The chart hashes its own Secret template into `checksum/secret`, but n8n reads
+  # its secrets from ExternalSecrets (`secretRefs.existingSecret`), so the hash
+  # never changes anything. gitleaks mistakes it for an API key.
+  - target:
+      kind: Deployment
+      name: n8n-main
+    patch: |
+      - op: remove
+        path: /spec/template/metadata/annotations/checksum~1secret
