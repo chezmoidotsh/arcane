@@ -8,6 +8,8 @@ resources:
   - restricted.proxyclass.yaml
   - operator-oauth.externalsecret.yaml
 
+  - security/
+
 helmCharts:
   - repo: https://pkgs.tailscale.com/helmcharts
     name: tailscale-operator

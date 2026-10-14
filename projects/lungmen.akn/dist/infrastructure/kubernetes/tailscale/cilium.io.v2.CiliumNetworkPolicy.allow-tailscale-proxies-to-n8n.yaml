@@ -1,0 +1,23 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Tailscale proxy created for the n8n-tailscale Ingress to reach n8n.
+      Proxies carry the tailscale.com/managed label set by the operator.
+  name: allow-tailscale-proxies-to-n8n
+  namespace: tailscale-system
+spec:
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: n8n
+        io.kubernetes.pod.namespace: n8n
+    toPorts:
+    - ports:
+      - port: "5678"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      tailscale.com/managed: "true"
