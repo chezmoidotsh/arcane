@@ -9,6 +9,9 @@ const chezmoiSh = new pulumi.StackReference("chezmoi.sh", {
 	name: "organization/chezmoi-sh-infra/chezmoi_sh.live",
 });
 
+export const adminGroupId = chezmoiSh.getOutput(
+	"adminGroupId",
+) as pulumi.Output<string>;
 export const maisonGroupId = chezmoiSh.getOutput(
 	"maisonGroupId",
 ) as pulumi.Output<string>;
@@ -22,4 +25,5 @@ export * from "./homebox";
 export * from "./immich";
 export * from "./jellyfin";
 export * from "./linkding";
+export * from "./n8n";
 export * from "./paperless-ngx";

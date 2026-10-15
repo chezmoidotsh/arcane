@@ -19,6 +19,8 @@ helmCharts:
 resources:
   - n8n.configuration.externalsecret.yaml
   - n8n.database.externalsecret.yaml
+  - n8n.egress-inspection-ca.certificate.yaml
+  - n8n.enterprise.externalsecret.yaml
   - n8n.httproute.yaml
   - n8n.tailscale.ingress.yaml
 
@@ -27,7 +29,10 @@ resources:
 images:
   # renovate: datasource=docker depName=ghcr.io/n8n-io/n8n
   - name: ghcr.io/n8n-io/n8n
-    newName: oci.chezmoi.sh/ghcr.io/n8n-io/n8n
+    newName: oci.chezmoi.sh/chezmoidotsh/n8n
+    newTag: 2.43.5
+    # renovate: datasource=docker depName=ghcr.io/n8n-io/n8n
+  - name: oci.chezmoi.sh/chezmoidotsh/n8n-self-license
     newTag: 2.43.5
 
 patches:

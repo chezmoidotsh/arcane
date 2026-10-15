@@ -1,0 +1,26 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Egress allowlist of n8n towards external services, over HTTPS (TCP 443) and restricted
+      by FQDN. Open any new external dependency here (integrations, APIs, licence server, ...)
+      rather than in a dedicated policy. Everything not listed stays denied by default-hardened;
+      the database and inbound traffic have their own policies.
+  name: allow-n8n-egress
+  namespace: n8n
+spec:
+  egress:
+  - toFQDNs:
+    - matchName: s3.chezmoi.sh
+    - matchName: auth.chezmoi.sh
+    - matchName: data.o11y.chezmoi.sh
+    - matchName: vault.chezmoi.sh
+    toPorts:
+    - ports:
+      - port: "443"
+        protocol: TCP
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: n8n
