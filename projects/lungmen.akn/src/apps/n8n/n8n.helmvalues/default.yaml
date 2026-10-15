@@ -134,7 +134,7 @@ extraVolumes:
           path: ca.crt
   - name: n8n-nodes-actual
     image:
-      reference: ghcr.io/chezmoidotsh/n8n-nodes/actual:26.10.9
+      reference: oci.chezmoi.sh/ghcr.io/chezmoidotsh/n8n-nodes/actual:26.10.9
       pullPolicy: IfNotPresent
 extraVolumeMounts:
   - name: egress-inspection-ca

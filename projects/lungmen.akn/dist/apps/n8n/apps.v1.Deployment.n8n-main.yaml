@@ -257,5 +257,5 @@ spec:
           secretName: n8n-egress-inspection-ca
       - image:
           pullPolicy: IfNotPresent
-          reference: ghcr.io/chezmoidotsh/n8n-nodes/actual:26.10.9
+          reference: oci.chezmoi.sh/ghcr.io/chezmoidotsh/n8n-nodes/actual:26.10.9
         name: n8n-nodes-actual
