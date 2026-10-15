@@ -1,0 +1,117 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# n8n community nodes — build with Nix and push to GHCR
+# =============================================================================
+# Builds the modified flakes of catalog/flakes/n8n/ (one community node per directory; all of them
+# when this workflow changes) into an OCI image
+# and, on main, pushes it to ghcr.io/<owner>/n8n-nodes/<dir>:<version>. Pull requests only build.
+# The images are mounted in n8n as Kubernetes image volumes (n8n itself never installs nodes).
+#
+# Events:      push (main), pull_request, on catalog/flakes/n8n/ only
+# Permissions: contents: read, packages: write (build job only)
+# =============================================================================
+
+name: 📦 Build n8n community nodes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/push,pull_request.n8n-nodes.yaml
+      - catalog/flakes/n8n/**
+  pull_request:
+    paths:
+      - .github/workflows/push,pull_request.n8n-nodes.yaml
+      - catalog/flakes/n8n/**
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Minimal top-level permissions — each job declares what it needs.
+permissions: {}
+
+jobs:
+  list_nodes:
+    name: 📄 List nodes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      nodes: ${{ steps.list.outputs.nodes }}
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Detect modified nodes
+        id: changed
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: catalog/flakes/n8n/**
+          dir_names: true
+          dir_names_max_depth: 4
+          json: true
+
+      - name: 🔍 Detect workflow change
+        id: workflow
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: .github/workflows/push,pull_request.n8n-nodes.yaml
+
+      - name: 📄 List nodes
+        id: list
+        env:
+          CHANGED: ${{ steps.changed.outputs.all_changed_files }}
+          WORKFLOW_CHANGED: ${{ steps.workflow.outputs.any_changed }}
+        run: |
+          # Every node when the workflow itself changed, otherwise only the modified ones (still existing)
+          if [[ ${WORKFLOW_CHANGED} == true ]]; then
+            nodes="$(ls -1 catalog/flakes/n8n)"
+          else
+            nodes="$(jq --raw-output '.[] | split("/")[3]' <<<"${CHANGED}")"
+          fi
+          existing=()
+          while read -r n; do
+            if [[ -n ${n} && -d catalog/flakes/n8n/${n} ]]; then existing+=("${n}"); fi
+          done <<<"${nodes}"
+          echo "nodes=$(jq --null-input --compact-output '$ARGS.positional' --args "${existing[@]}")" >> "${GITHUB_OUTPUT}"
+
+  build_node:
+    name: 🏗️ Build node (${{ matrix.node }})
+    needs: list_nodes
+    if: needs.list_nodes.outputs.nodes != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ${{ fromJson(needs.list_nodes.outputs.nodes) }}
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: 🛠️ Install Nix
+        uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+
+      - name: 🏗️ Build image
+        working-directory: catalog/flakes/n8n/${{ matrix.node }}
+        run: nix build --print-build-logs
+
+      - name: 🚀 Push image to GHCR
+        if: github.event_name == 'push'
+        working-directory: catalog/flakes/n8n/${{ matrix.node }}
+        env:
+          OWNER: ${{ github.repository_owner }}
+          NODE: ${{ matrix.node }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          tag="$(nix eval --raw '.#default.imageTag')"
+          skopeo copy --dest-creds "${ACTOR}:${TOKEN}" \
+            "docker-archive:$(readlink -f result)" \
+            "docker://ghcr.io/${OWNER}/n8n-nodes/${NODE}:${tag}"
