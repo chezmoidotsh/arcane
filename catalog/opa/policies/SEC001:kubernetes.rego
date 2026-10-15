@@ -65,7 +65,8 @@ resource_containers(res) := {c |
 
 # ── OCI image volume extraction ───────────────────────────────────────────────
 # KEP-127 / Kubernetes 1.31+ (ImageVolume feature gate) adds an `image` field
-# directly on volume entries. Only volumes with a string `image` are matched.
+# on volume entries: an object {reference, pullPolicy}. Only volumes with a string
+# `image.reference` are matched.
 
 _volume_paths := [
     ["spec", "volumes"],
@@ -76,8 +77,8 @@ _volume_paths := [
 resource_volume_images(res) := {v |
     some path in _volume_paths
     some vol in object.get(res, path, [])
-    is_string(vol.image)
-    v := {"name": vol.name, "image": vol.image}
+    is_string(vol.image.reference)
+    v := {"name": vol.name, "image": vol.image.reference}
 }
 
 # ── Deny rules ────────────────────────────────────────────────────────────────
