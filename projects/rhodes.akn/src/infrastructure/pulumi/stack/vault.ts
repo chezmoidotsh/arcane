@@ -181,6 +181,10 @@ path "*" { capabilities = ["create", "read", "update", "delete", "list"] }
 path "personal/data/*" { capabilities = ["list"] }
 path "personal/metadata/*" { capabilities = ["list"] }
 
+# Enabling/tuning/disabling an auth method requires the explicit "sudo" capability
+# ("*" above does not grant it), e.g. Pulumi creating an AppRole backend.
+path "sys/auth/*" { capabilities = ["create", "read", "update", "delete", "sudo"] }
+
 # EXPLICITLY READ ONLY: Plugin catalog (view available plugins)
 path "sys/plugins/catalog/*" { capabilities = ["read", "list"] }
 
