@@ -3,8 +3,10 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+  - network-policy.allow-n8n-egress.yaml
   - network-policy.allow-n8n-from-cilium-gateway.yaml
   - network-policy.allow-n8n-from-newt.yaml
   - network-policy.allow-n8n-from-tailscale.yaml
   - network-policy.allow-n8n-to-databases.yaml
+  - network-policy.allow-n8n-to-n8n-api.yaml
   - network-policy.default-hardened.yaml

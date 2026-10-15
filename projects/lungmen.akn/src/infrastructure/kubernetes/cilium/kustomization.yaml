@@ -10,6 +10,7 @@ resources:
   - default.l2announcementpolicy.yaml
   - external.ippool.yaml
   - internal.ippool.yaml
+  - egress-inspection.yaml
   - security/
 
   # Gateway/HTTPRoute/Certificate live here, not in their own component, because Cilium's Gateway

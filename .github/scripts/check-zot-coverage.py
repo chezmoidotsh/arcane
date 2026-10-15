@@ -61,6 +61,10 @@ ZOT_CONFIGMAP_DEFAULT = (
     "projects/amiya.akn/dist/apps/zot-registry/core.v1.ConfigMap.zot-config.yaml"
 )
 
+# Prefixes hosted natively on Zot (images are pushed, not pulled through an
+# upstream), so they have no sync entry by design.
+PUSHED_PREFIXES = {"chezmoidotsh"}
+
 # Matches any occurrence of oci.chezmoi.sh/<segment> in a text file.
 # Captures only the first path segment after the host so that
 # "oci.chezmoi.sh/ghcr.io/foo/bar:latest" yields "ghcr.io".
@@ -191,7 +195,7 @@ def main() -> None:
 
     used_prefixes = collect_used_prefixes(args.dist)
 
-    missing = used_prefixes - destinations
+    missing = used_prefixes - destinations - PUSHED_PREFIXES
     if missing:
         for prefix in sorted(missing):
             print(

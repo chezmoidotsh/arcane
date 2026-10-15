@@ -10,11 +10,13 @@ export const adminGroup = new pocketid.UserGroup("admin", {
 });
 
 // Pangolin reads this claim to pick the role of whoever signs in through
-// Pocket-Id (see kazimierz.akn's stack/pangolin/idp.ts). The set of claims is
-// authoritative: anything not listed here is removed from the group.
+// Pocket-Id (see kazimierz.akn's stack/pangolin/idp.ts); n8n reads
+// `n8n_instance_role` the same way (everyone else falls back to global:member).
+// The set of claims is authoritative: anything not listed here is removed from
+// the group.
 new pocketid.UserGroupCustomClaims("admin-claims", {
 	userGroupId: adminGroup.id,
-	claims: { "pangolin:role": "Admin" },
+	claims: { "pangolin:role": "Admin", n8n_instance_role: "global:admin" },
 });
 
 export const maisonGroup = new pocketid.UserGroup("maison", {
