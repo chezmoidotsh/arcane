@@ -73,8 +73,11 @@ jobs:
           else
             nodes="$(jq --raw-output '.[] | split("/")[3]' <<<"${CHANGED}")"
           fi
-          nodes="$(for n in ${nodes}; do [[ -d catalog/flakes/n8n/${n} ]] && echo "${n}"; done)"
-          echo "nodes=$(jq --null-input --compact-output '$ARGS.positional' --args ${nodes})" >> "${GITHUB_OUTPUT}"
+          existing=()
+          while read -r n; do
+            if [[ -n ${n} && -d catalog/flakes/n8n/${n} ]]; then existing+=("${n}"); fi
+          done <<<"${nodes}"
+          echo "nodes=$(jq --null-input --compact-output '$ARGS.positional' --args "${existing[@]}")" >> "${GITHUB_OUTPUT}"
 
   build_node:
     name: 🏗️ Build node (${{ matrix.node }})
