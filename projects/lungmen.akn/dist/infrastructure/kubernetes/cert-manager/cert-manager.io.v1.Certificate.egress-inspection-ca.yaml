@@ -1,0 +1,19 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: egress-inspection-ca
+  namespace: cert-manager-system
+spec:
+  commonName: egress-inspection-ca.lungmen.akn.chezmoi.sh
+  duration: 87600h
+  isCA: true
+  issuerRef:
+    kind: ClusterIssuer
+    name: egress-inspection-bootstrap
+  privateKey:
+    algorithm: ECDSA
+    rotationPolicy: Always
+    size: 256
+  renewBefore: 8760h
+  secretName: egress-inspection-ca

@@ -19,6 +19,7 @@ helmCharts:
 
 resources:
   - ../../../../../../catalog/kubernetes/cert-manager/kustomize
+  - egress-inspection-ca.yaml
   - security/
 
 patches:
