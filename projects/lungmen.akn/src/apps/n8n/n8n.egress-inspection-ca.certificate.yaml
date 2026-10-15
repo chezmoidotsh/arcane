@@ -1,0 +1,19 @@
+---
+# Only used for the `ca.crt` key of its Secret (the egress-inspection CA, populated by
+# cert-manager in every certificate it issues): mounted in the pod so Node.js trusts the
+# certificates Cilium presents on inspected connections (NODE_EXTRA_CA_CERTS).
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: n8n-egress-inspection-ca
+spec:
+  commonName: n8n-egress-inspection-ca
+  secretName: n8n-egress-inspection-ca
+  duration: 8760h
+  renewBefore: 720h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: egress-inspection-ca
+    kind: ClusterIssuer
