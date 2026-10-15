@@ -8,9 +8,8 @@
       pname = "n8n-nodes-actual";
       version = "26.10.9";
 
-      # The image only carries files, so aarch64 builds (local Docker on Apple silicon) are fine to check
-      # the flake, but the package vendors a linux-x64 better-sqlite3 binary: publish from x86_64 (CI).
-      systems = [ "x86_64-linux" "aarch64-linux" ];
+      # The package vendors a linux-x64 better-sqlite3 binary, so x86_64 is the only supported system.
+      systems = [ "x86_64-linux" ];
 
       mkImage = system:
         let
