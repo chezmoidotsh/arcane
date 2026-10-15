@@ -172,7 +172,7 @@ test_oci_volume_non_compliant if {
                         {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
                     ],
                     "volumes": [
-                        {"name": "tools", "image": "ghcr.io/tools/tool:v1"},
+                        {"name": "tools", "image": {"reference": "ghcr.io/tools/tool:v1"}},
                     ],
                 },
             },
@@ -193,7 +193,7 @@ test_oci_volume_compliant if {
                         {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
                     ],
                     "volumes": [
-                        {"name": "tools", "image": "oci.chezmoi.sh/ghcr.io/tools/tool:v1"},
+                        {"name": "tools", "image": {"reference": "oci.chezmoi.sh/ghcr.io/tools/tool:v1"}},
                     ],
                 },
             },
@@ -212,7 +212,7 @@ test_pod_direct_oci_volume_non_compliant if {
                 {"name": "app", "image": "oci.chezmoi.sh/docker.io/library/nginx:latest"},
             ],
             "volumes": [
-                {"name": "tools", "image": "ghcr.io/tools/tool:v1"},
+                {"name": "tools", "image": {"reference": "ghcr.io/tools/tool:v1"}},
             ],
         },
     }}

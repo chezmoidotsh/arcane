@@ -58,9 +58,9 @@ Every resource that embeds a Pod spec is checked. The following container and vo
 - `spec.ephemeralContainers[].image`
 - `spec.template.spec.{containers,initContainers,ephemeralContainers}[].image`
 - `spec.jobTemplate.spec.template.spec.{containers,initContainers,ephemeralContainers}[].image`
-- `spec.volumes[].image`
-- `spec.template.spec.volumes[].image`
-- `spec.jobTemplate.spec.template.spec.volumes[].image`
+- `spec.volumes[].image.reference`
+- `spec.template.spec.volumes[].image.reference`
+- `spec.jobTemplate.spec.template.spec.volumes[].image.reference`
 
 ### CloudNative-PG resources
 
