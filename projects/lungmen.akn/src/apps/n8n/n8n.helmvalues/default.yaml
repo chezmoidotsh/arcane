@@ -75,6 +75,13 @@ config:
     - name: NODE_EXTRA_CA_CERTS
       value: /etc/egress-inspection/ca.crt
 
+    # Community nodes are baked into OCI images (catalog/flakes/n8n/) and mounted below: n8n
+    # must never install packages by itself.
+    - name: N8N_COMMUNITY_PACKAGES_ENABLED
+      value: "false"
+    - name: N8N_CUSTOM_EXTENSIONS
+      value: /opt/n8n-nodes/actual
+
     # Binary data in S3 (Enterprise external storage). Credentials in `n8n-enterprise`.
     - name: N8N_AVAILABLE_BINARY_DATA_MODES
       value: filesystem,s3
@@ -125,9 +132,16 @@ extraVolumes:
       items:
         - key: ca.crt
           path: ca.crt
+  - name: n8n-nodes-actual
+    image:
+      reference: ghcr.io/chezmoidotsh/n8n-nodes/actual:26.10.9
+      pullPolicy: IfNotPresent
 extraVolumeMounts:
   - name: egress-inspection-ca
     mountPath: /etc/egress-inspection
+    readOnly: true
+  - name: n8n-nodes-actual
+    mountPath: /opt/n8n-nodes/actual
     readOnly: true
 
 # Ingress is handled by the Gateway API (n8n.httproute.yaml); network policies
