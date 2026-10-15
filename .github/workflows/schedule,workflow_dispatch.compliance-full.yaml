@@ -3,53 +3,31 @@
 # =============================================================================
 # Full Compliance — OPA policies and Zot coverage on every dist/
 # =============================================================================
-# Merge-queue counterpart of push,pull_request.compliance-partial.yaml: when a watched path changed
-# (the OPA policies or any rendered manifest), checks EVERY dist/ directory instead of only the
-# changed ones, so a policy change cannot break an untouched app unnoticed. One matrix job per
-# directory: conftest against catalog/opa/policies/, then the Zot registry coverage check.
+# Daily counterpart of push,pull_request.compliance-partial.yaml: checks EVERY dist/ directory
+# instead of only the changed ones, so a policy change cannot break an untouched app unnoticed.
+# One matrix job per directory: conftest against catalog/opa/policies/, then the Zot registry
+# coverage check.
 #
-# Events:      merge_group
+# Events:      schedule (daily), workflow_dispatch
 # Permissions: contents: read
 # =============================================================================
 
 name: 🏛️ Full Compliance
 
 on:
-  merge_group: {}
+  schedule:
+    - cron: "37 3 * * *" # daily at 03:37 UTC
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}
   cancel-in-progress: true
 
 permissions: {}
 
 jobs:
-  detect-changes:
-    name: Detect watched path changes
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    outputs:
-      any_changed: ${{ steps.diff.outputs.any_changed }}
-    steps:
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
-
-      - name: 🔍 Detect watched path changes
-        id: diff
-        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
-        with:
-          files: |
-            .github/workflows/merge_group.compliance-full.yaml
-            catalog/opa/policies/**
-            projects/*/dist/**
-
   collect-directories:
     name: Collect all dist/ directories
-    needs: detect-changes
-    if: needs.detect-changes.outputs.any_changed == 'true'
     permissions:
       contents: read
     runs-on: ubuntu-latest
