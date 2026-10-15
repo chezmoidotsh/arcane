@@ -20,10 +20,13 @@
             hash = "sha512-n4JIkmo0ObStKTSghCvdWQUiorTRwk6lkWOXf/LXn61ly+PLY+lzdV+HJbcVut2k05NwhCJETOYtYNbmyk7WGw==";
           };
 
-          # The npm tarball is self-contained (dependencies are bundled in dist/), so unpacking it is enough.
+          # The npm tarball is self-contained: dependencies are bundled in dist/nodes/ActualBudget/ActualBudget.node.js,
+          # the only entry point declared in package.json. N8N_CUSTOM_EXTENSIONS, however, loads every *.node.js it
+          # finds, including the unbundled v1/ and v2/ node versions, which require @actual-app/api (not installed).
           rootfs = pkgs.runCommand "${pname}-${version}" { } ''
             mkdir -p $out
             tar -xzf ${src} --strip-components=1 -C $out
+            rm $out/dist/nodes/ActualBudget/v*/*.node.js
           '';
         in
         pkgs.dockerTools.buildImage {
