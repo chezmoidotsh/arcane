@@ -54,6 +54,7 @@ jobs:
           dir_names: true
           dir_names_max_depth: 4
           json: true
+          escape_json: false # raw JSON, jq cannot parse the escaped quotes
 
       - name: 🔍 Detect workflow change
         id: workflow

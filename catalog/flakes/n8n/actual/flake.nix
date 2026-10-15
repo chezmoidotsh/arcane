@@ -8,9 +8,8 @@
       pname = "n8n-nodes-actual";
       version = "26.10.9";
 
-      # The image only carries files, so aarch64 builds (local Docker on Apple silicon) are fine to check
-      # the flake, but the package vendors a linux-x64 better-sqlite3 binary: publish from x86_64 (CI).
-      systems = [ "x86_64-linux" "aarch64-linux" ];
+      # The package vendors a linux-x64 better-sqlite3 binary, so x86_64 is the only supported system.
+      systems = [ "x86_64-linux" ];
 
       mkImage = system:
         let
@@ -20,10 +19,13 @@
             hash = "sha512-n4JIkmo0ObStKTSghCvdWQUiorTRwk6lkWOXf/LXn61ly+PLY+lzdV+HJbcVut2k05NwhCJETOYtYNbmyk7WGw==";
           };
 
-          # The npm tarball is self-contained (dependencies are bundled in dist/), so unpacking it is enough.
+          # The npm tarball is self-contained: dependencies are bundled in dist/nodes/ActualBudget/ActualBudget.node.js,
+          # the only entry point declared in package.json. N8N_CUSTOM_EXTENSIONS, however, loads every *.node.js it
+          # finds, including the unbundled v1/ and v2/ node versions, which require @actual-app/api (not installed).
           rootfs = pkgs.runCommand "${pname}-${version}" { } ''
             mkdir -p $out
             tar -xzf ${src} --strip-components=1 -C $out
+            rm $out/dist/nodes/ActualBudget/v*/*.node.js
           '';
         in
         pkgs.dockerTools.buildImage {
