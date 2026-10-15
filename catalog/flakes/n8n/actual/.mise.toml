@@ -1,0 +1,19 @@
+# =============================================================================
+# n8n-nodes-actual OCI image — Task Automation
+# =============================================================================
+# Usage:
+#   mise run oci:lock    # Create/refresh flake.lock (commit it)
+#   mise run oci:build   # Build the OCI image archive (same build as the CI)
+#
+# Prerequisites: Docker (nonix runs Nix in a container, see scripts/nonix)
+# =============================================================================
+
+[tasks."oci:lock"]
+description = "Create or refresh flake.lock"
+dir = "{{ config_root }}"
+run = "nonix flake lock"
+
+[tasks."oci:build"]
+description = "Build the OCI image archive (result)"
+dir = "{{ config_root }}"
+run = "nonix build --option build-users-group '' --option sandbox false --print-build-logs"
