@@ -1,0 +1,86 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    checksum/config: 40981fa5429dd9811c36768770bb27bbd8af4a17aaee43ea62c1dd0d44be9711
+  labels:
+    app.kubernetes.io/instance: litellm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: litellm
+    app.kubernetes.io/version: 1.105.1
+    helm.sh/chart: litellm-helm-1.105.1
+  name: litellm-migrations
+spec:
+  activeDeadlineSeconds: 1800
+  backoffLimit: 4
+  template:
+    metadata:
+      annotations: null
+      labels:
+        app.kubernetes.io/instance: litellm
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: litellm
+        app.kubernetes.io/version: 1.105.1
+        helm.sh/chart: litellm-helm-1.105.1
+    spec:
+      containers:
+      - command:
+        - python
+        - litellm/proxy/prisma_migration.py
+        env:
+        - name: DATABASE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: litellm-database-litellm
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: litellm-database-litellm
+        - name: DATABASE_HOST
+          value: apps-20260329-rw.databases.svc.cluster.local
+        - name: DATABASE_NAME
+          value: litellm
+        - name: DATABASE_URL
+          value: postgresql://$(DATABASE_USERNAME):$(DATABASE_PASSWORD)@$(DATABASE_HOST)/$(DATABASE_NAME)
+        - name: ANONYMIZED_TELEMETRY
+          value: "False"
+        - name: GENERIC_AUTHORIZATION_ENDPOINT
+          value: https://auth.chezmoi.sh/authorize
+        - name: GENERIC_SCOPE
+          value: openid profile email
+        - name: GENERIC_TOKEN_ENDPOINT
+          value: https://auth.chezmoi.sh/api/oidc/token
+        - name: GENERIC_USERINFO_ENDPOINT
+          value: https://auth.chezmoi.sh/api/oidc/userinfo
+        - name: GENERIC_USER_DISPLAY_NAME_ATTRIBUTE
+          value: name
+        - name: GENERIC_USER_EMAIL_ATTRIBUTE
+          value: email
+        - name: GENERIC_USER_ID_ATTRIBUTE
+          value: sub
+        - name: LITELLM_TELEMETRY
+          value: "False"
+        - name: PROXY_BASE_URL
+          value: https://llm.lab.chezmoi.sh
+        - name: DISABLE_SCHEMA_UPDATE
+          value: "false"
+        image: oci.chezmoi.sh/ghcr.io/berriai/litellm:1.105.1
+        imagePullPolicy: IfNotPresent
+        name: prisma-migrations
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        workingDir: /app
+      restartPolicy: OnFailure
+      securityContext: {}
+      serviceAccountName: default
+  ttlSecondsAfterFinished: 120
