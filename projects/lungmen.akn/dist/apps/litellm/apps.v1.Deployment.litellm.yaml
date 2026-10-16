@@ -1,0 +1,148 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/instance: litellm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: litellm
+    app.kubernetes.io/version: 1.105.1
+    helm.sh/chart: litellm-helm-1.105.1
+  name: litellm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: litellm
+      app.kubernetes.io/name: litellm
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        checksum/config: c5222c0ea0dfc58e97446940a638a6e4b6b6597fee760d6cd0b16e3f00f6beb8
+      labels:
+        app.kubernetes.io/instance: litellm
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: litellm
+        app.kubernetes.io/version: 1.105.1
+        helm.sh/chart: litellm-helm-1.105.1
+    spec:
+      containers:
+      - args:
+        - --config
+        - /etc/litellm/config.yaml
+        env:
+        - name: HOST
+          value: 0.0.0.0
+        - name: PORT
+          value: "4000"
+        - name: DATABASE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: litellm-database-litellm
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: litellm-database-litellm
+        - name: DATABASE_HOST
+          value: apps-20260329-rw.databases.svc.cluster.local
+        - name: DATABASE_NAME
+          value: litellm
+        - name: DATABASE_URL
+          value: postgresql://$(DATABASE_USERNAME):$(DATABASE_PASSWORD)@$(DATABASE_HOST)/$(DATABASE_NAME)
+        - name: PROXY_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              key: masterkey
+              name: litellm-conf
+        - name: LITELLM_LOG
+          value: INFO
+        - name: ANONYMIZED_TELEMETRY
+          value: "False"
+        - name: GENERIC_AUTHORIZATION_ENDPOINT
+          value: https://auth.chezmoi.sh/authorize
+        - name: GENERIC_SCOPE
+          value: openid profile email
+        - name: GENERIC_TOKEN_ENDPOINT
+          value: https://auth.chezmoi.sh/api/oidc/token
+        - name: GENERIC_USERINFO_ENDPOINT
+          value: https://auth.chezmoi.sh/api/oidc/userinfo
+        - name: GENERIC_USER_DISPLAY_NAME_ATTRIBUTE
+          value: name
+        - name: GENERIC_USER_EMAIL_ATTRIBUTE
+          value: email
+        - name: GENERIC_USER_ID_ATTRIBUTE
+          value: sub
+        - name: LITELLM_TELEMETRY
+          value: "False"
+        - name: PROXY_BASE_URL
+          value: https://llm.lab.chezmoi.sh
+        - name: DISABLE_SCHEMA_UPDATE
+          value: "true"
+        envFrom:
+        - secretRef:
+            name: litellm-conf
+        image: oci.chezmoi.sh/ghcr.io/berriai/litellm:1.105.1
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /health/liveliness
+            port: http
+          initialDelaySeconds: 0
+          periodSeconds: 15
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: litellm
+        ports:
+        - containerPort: 4000
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health/readiness
+            port: http
+          initialDelaySeconds: 0
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources:
+          limits:
+            memory: 1536Mi
+          requests:
+            cpu: 100m
+            memory: 512Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+        startupProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /health/readiness
+            port: http
+          initialDelaySeconds: 0
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /etc/litellm/config.yaml
+          name: litellm-config
+          subPath: config.yaml
+      securityContext: {}
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 90
+      volumes:
+      - configMap:
+          items:
+          - key: config.yaml
+            path: config.yaml
+          name: litellm-config
+        name: litellm-config
