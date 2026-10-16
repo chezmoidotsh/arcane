@@ -1,0 +1,18 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows LiteLLM to reach the OpenRouter API (internal use of hosted models).
+  name: allow-litellm-to-openrouter
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: litellm
+  egress:
+    - toFQDNs:
+        - matchName: openrouter.ai
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

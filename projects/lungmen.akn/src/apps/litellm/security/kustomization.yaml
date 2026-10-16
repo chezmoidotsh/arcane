@@ -1,0 +1,11 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - network-policy.allow-litellm-from-cilium-gateway.yaml
+  - network-policy.allow-litellm-to-databases.yaml
+  - network-policy.allow-litellm-to-lmstudio.yaml
+  - network-policy.allow-litellm-to-openrouter.yaml
+  - network-policy.allow-litellm-to-sso.yaml
+  - network-policy.default-hardened.yaml
