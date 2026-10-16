@@ -95,6 +95,17 @@ spec:
                 io.kubernetes.pod.namespace: linkding
                 app.kubernetes.io/name: linkding
 
+    - name: litellm
+      users:
+        - name: litellm
+          vault:
+            path: lungmen.akn/data/litellm/database/postgresql
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                io.kubernetes.pod.namespace: litellm
+                app.kubernetes.io/name: litellm
+
     - name: n8n
       users:
         - name: n8n

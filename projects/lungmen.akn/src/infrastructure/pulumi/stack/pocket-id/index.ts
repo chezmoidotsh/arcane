@@ -25,5 +25,6 @@ export * from "./homebox";
 export * from "./immich";
 export * from "./jellyfin";
 export * from "./linkding";
+export * from "./litellm";
 export * from "./n8n";
 export * from "./paperless-ngx";
