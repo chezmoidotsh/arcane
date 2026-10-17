@@ -49,6 +49,14 @@ spec:
       name: linkding
       passwordSecret:
         name: cnpg.apps-linkding-linkding-credentials
+    - comment: Managed role for litellm/litellm
+      connectionLimit: -1
+      ensure: present
+      inherit: true
+      login: true
+      name: litellm
+      passwordSecret:
+        name: cnpg.apps-litellm-litellm-credentials
     - comment: Managed role for n8n/n8n
       connectionLimit: -1
       ensure: present

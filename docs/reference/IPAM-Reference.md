@@ -85,6 +85,7 @@ autres appareils.
 | 10.0.0.26 | LXC talosnet-dns                | ns.chezmoi.sh                                              | BIND. Double interface : `10.128.0.3` sur talosnet (`eth1`) sert le DNS ; l'adresse VLAN 5 n'est pas utilisée pour cela                                       |
 | 10.0.0.30 | NAS                             | nas.chezmoi.sh                                             | Interface principale. Aussi sur talosnet (`10.128.0.6`)                                                                                                       |
 | 10.0.0.31 | NAS (applications)              |                                                            | IP dédiée aux applications (Garage, etc.)                                                                                                                     |
+| 10.0.0.32 | Mac Studio (LM Studio)          | macstudio-kh37.lia.chezmoi.sh                              | Serveur d'inférence LM Studio (TCP 1234), appelé par LiteLLM. Enregistrement DNS créé à la main                                                               |
 
 Le wildcard `*.omni.chezmoi.sh` pointe vers la gateway Pangolin publique (`195.201.114.83`, kazimierz.akn) : il se
 résout hors du VLAN 5 et n'est lié à aucune IP de ce tableau.
