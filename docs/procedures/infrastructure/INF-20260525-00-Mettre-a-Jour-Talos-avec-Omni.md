@@ -5,11 +5,10 @@ en modifiant `talos.version` dans le cluster template du dépôt, puis en appliq
 charge de la mise à jour des nœuds ; la procédure couvre les vérifications avant, la surveillance de la convergence, les
 contrôles après et le retour arrière.
 
-Réécrite le 2026-10-11 pour Omni à partir du dépôt ; les commandes n'ont pas été rejouées sur Omni ni sur les clusters.
-L'ancienne version décrivait un `talosctl upgrade` sur le cluster mono-nœud `amiya.akn`, qui n'existe plus. Le
-comportement d'Omni cité ci-dessous vient de la documentation officielle (voir
-[Pour aller plus loin](#pour-aller-plus-loin)), consultée le 2026-10-11 ; ce qui n'y figure pas est signalé « à
-confirmer sur Omni ».
+> [!WARNING] Procédure réécrite le 2026-10-11 pour Omni à partir du dépôt : ses commandes n'ont pas été rejouées sur
+> Omni ni sur les clusters. Le comportement d'Omni cité ci-dessous vient de la documentation officielle (voir
+> [Pour aller plus loin](#pour-aller-plus-loin)), consultée le 2026-10-11 ; ce qui n'y figure pas est signalé « à
+> confirmer sur Omni ».
 
 ## Cadre technique et conventions
 
@@ -52,16 +51,17 @@ Les accès suivants sont également nécessaires :
   `catalog/omni/clustertemplates/base.yaml` donne `v1.14.x` pour Kubernetes `v1.32.x` à `v1.37.x` (plage rapportée par
   Omni 1.12) ; la matrice officielle fait foi ;
 - les workloads sensibles identifiés : sur `rhodes.akn`, un nœud drainé interrompt brièvement OpenBao et Grafana (voir
-  l'étape 3).
+  les étapes 2 et 4).
 
 ## Entrées requises
 
-- `CLUSTER_NAME` : nom du cluster dans Omni, par exemple `rhodes-akn`.
-- `TEMPLATE_FILE` : chemin du cluster template, par exemple
-  `projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml`.
-- `TARGET_VERSION` : version cible de Talos avec préfixe `v`, par exemple `v1.14.2`.
+Exporter ces variables une fois ; toutes les commandes suivantes se copient ensuite telles quelles.
 
-Les marqueurs sont écrits entre chevrons (`<CLUSTER_NAME>`) dans les commandes.
+```sh
+export CLUSTER_NAME=<nom du cluster dans Omni>       # ex. rhodes-akn
+export TEMPLATE_FILE=<chemin du cluster template>    # ex. projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml
+export TARGET_VERSION=<version cible de Talos>       # ex. v1.14.2 (préfixe v obligatoire)
+```
 
 ## Étape 1 — Vérifier l'état du cluster et le chemin de mise à jour
 
@@ -70,19 +70,23 @@ template.
 
 ```sh
 # Santé globale du cluster dans Omni
-omnictl cluster status <CLUSTER_NAME>
+omnictl cluster status $CLUSTER_NAME
 # → tous les machine sets Ready, aucune machine en Reconfiguring ou Config Outdated
 
 # Version de Talos actuellement déclarée
-grep -A1 '^talos:' <TEMPLATE_FILE>
+grep -A1 '^talos:' $TEMPLATE_FILE
 # → version: vX.Y.Z
 
 # Vue Kubernetes
-omnictl kubeconfig -c <CLUSTER_NAME> --service-account --user admin -f /tmp/<CLUSTER_NAME>-kubeconfig
-export KUBECONFIG=/tmp/<CLUSTER_NAME>-kubeconfig
+omnictl kubeconfig -c $CLUSTER_NAME --service-account --user admin -f /tmp/$CLUSTER_NAME-kubeconfig
+export KUBECONFIG=/tmp/$CLUSTER_NAME-kubeconfig
 kubectl get nodes -o wide
 # → tous les nœuds Ready
 ```
+
+Ce kubeconfig est de type service account (`--service-account --user admin`) : il évite la connexion OIDC interactive,
+ce qui convient à une mise à jour longue. `-f` force l'écrasement du fichier, dont le chemin est l'argument de la
+commande. Son jeton vaut 8760 h par défaut (`--ttl`) : supprimer le fichier de `/tmp` une fois la mise à jour terminée.
 
 Les commandes `omnictl` mettent couramment 60 à 120 secondes à répondre : ce délai est normal.
 
@@ -130,7 +134,7 @@ talos:
 Valider le template hors ligne, sans connexion à Omni :
 
 ```sh
-omnictl cluster template validate -f <TEMPLATE_FILE>
+omnictl cluster template validate -f $TEMPLATE_FILE
 # → pas d'erreur
 ```
 
@@ -140,7 +144,7 @@ validation.
 Contrôler que le diff Git ne contient que la ligne `version` attendue :
 
 ```sh
-git --no-pager diff -- <TEMPLATE_FILE>
+git --no-pager diff -- $TEMPLATE_FILE
 ```
 
 > [!WARNING] Les URL de manifests de bootstrap (`cni.urls`, `extraManifests`) du template sont épinglées sur un commit.
@@ -152,7 +156,7 @@ git --no-pager diff -- <TEMPLATE_FILE>
 Cette étape est en ligne et déclenche la mise à jour des nœuds.
 
 ```sh
-omnictl cluster template sync -f <TEMPLATE_FILE>
+omnictl cluster template sync -f $TEMPLATE_FILE
 # → Omni affiche les ressources modifiées (le Cluster, avec la nouvelle version de Talos)
 ```
 
@@ -168,7 +172,7 @@ ne sont pas reprogrammés. La durée totale n'est pas documentée dans le dépô
 
 ```sh
 # Suivre l'avancement machine par machine
-omnictl cluster status <CLUSTER_NAME>
+omnictl cluster status $CLUSTER_NAME
 omnictl machine status
 # → les machines passent en mise à jour une à la fois, puis reviennent Ready
 
@@ -188,9 +192,9 @@ quelle (à confirmer sur Omni).
 
 ```sh
 # Tous les nœuds sur la nouvelle version
-omnictl cluster status <CLUSTER_NAME>
+omnictl cluster status $CLUSTER_NAME
 kubectl get nodes -o wide
-# → colonne OS-IMAGE : Talos (<TARGET_VERSION>) sur chaque nœud, STATUS Ready
+# → colonne OS-IMAGE : Talos ($TARGET_VERSION) sur chaque nœud, STATUS Ready
 
 # Composants système
 kubectl get pods -n kube-system
@@ -224,8 +228,8 @@ omnictl cluster status rhodes-akn
 
 ## Vérifications rapides
 
-- **État du cluster** : `omnictl cluster status <CLUSTER_NAME>` — tous les machine sets `Ready`.
-- **Version de Talos** : `kubectl get nodes -o wide` — `OS-IMAGE` indique `<TARGET_VERSION>` sur chaque nœud.
+- **État du cluster** : `omnictl cluster status $CLUSTER_NAME` — tous les machine sets `Ready`.
+- **Version de Talos** : `kubectl get nodes -o wide` — `OS-IMAGE` indique `$TARGET_VERSION` sur chaque nœud.
 - **Nœuds** : `kubectl get nodes` — tous `Ready`, aucun `SchedulingDisabled` résiduel.
 - **Pods système** : `kubectl get pods -n kube-system` — `Running` ou `Completed`.
 - **Template commité** : la version de `talos.version` dans Git correspond à celle appliquée, pour que le prochain
@@ -242,9 +246,9 @@ pas décrite dans le dépôt : à confirmer sur Omni (la documentation décrit l
 **Après la mise à jour** : rétablir la version précédente dans le template, valider et re-synchroniser.
 
 ```sh
-# Remettre la version précédente de talos.version dans <TEMPLATE_FILE>
-omnictl cluster template validate -f <TEMPLATE_FILE>
-omnictl cluster template sync -f <TEMPLATE_FILE>
+# Remettre la version précédente de talos.version dans $TEMPLATE_FILE
+omnictl cluster template validate -f $TEMPLATE_FILE
+omnictl cluster template sync -f $TEMPLATE_FILE
 ```
 
 Cette descente est une nouvelle mise à jour, soumise aux mêmes contraintes. La prise en charge d'un retour à un minor
@@ -253,6 +257,9 @@ les workloads tournent longtemps sur la nouvelle version, moins le retour est s�
 
 ## Historique
 
+- _2026-10-17_ : Reprise après revue : l'état de vérification est un callout `WARNING`, les entrées sont des variables
+  `export` utilisées dans les commandes, le renvoi vers le drain pointe sur les étapes 2 et 4 et le kubeconfig de
+  service account est expliqué.
 - _2026-10-11_ : Réécriture pour Omni à partir du dépôt, sans rejouer les commandes. Remplacement de `talosctl upgrade`
   sur le cluster mono-nœud `amiya.akn` (supprimé du dépôt) par la modification de `talos.version` dans le cluster
   template, la validation et l'application avec `omnictl cluster template`. Suppression du pré-téléchargement de

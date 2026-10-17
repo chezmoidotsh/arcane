@@ -5,11 +5,12 @@ modifiant `kubernetes.version` dans son cluster template, puis en synchronisant 
 avant la vérification préalable des feature gates et des flags retirés dans la version cible, à l'origine de l'incident
 Kubernetes 1.35, et la compatibilité avec la version de Talos.
 
-Réécrite le 2026-10-11 pour Omni à partir du dépôt ; les commandes n'ont pas été rejouées sur Omni ni sur les clusters.
-L'ancienne version décrivait `talosctl upgrade-k8s` sur le cluster mono-nœud `amiya.akn`, qui n'existe plus : la version
-de Kubernetes est désormais fixée dans le template (`projects/*/src/infrastructure/omni/*.clustertemplate.yaml`) et Omni
-réalise la mise à jour. Les points marqués « à confirmer sur Omni » ne sont établis ni par le dépôt ni par la
-documentation officielle consultée.
+La version de Kubernetes est fixée dans le template (`projects/*/src/infrastructure/omni/*.clustertemplate.yaml`) et
+Omni réalise la mise à jour.
+
+> [!WARNING] Procédure réécrite le 2026-10-11 pour Omni à partir du dépôt : ses commandes n'ont pas été rejouées sur
+> Omni ni sur les clusters. Les points marqués « à confirmer sur Omni » ne sont établis ni par le dépôt ni par la
+> documentation officielle consultée.
 
 ## Cadre technique et conventions
 
@@ -48,12 +49,15 @@ Les accès suivants sont également nécessaires :
 
 ## Entrées requises
 
-- `CLUSTER_NAME` : nom du cluster dans Omni, par exemple `rhodes-akn`.
-- `TEMPLATE_FILE` : chemin du template du cluster, par exemple
-  `projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml`.
-- `TARGET_K8S_VERSION` : version cible avec préfixe `v`, au format `v1.XX.Y`.
+Exporter ces variables une fois ; toutes les commandes suivantes se copient ensuite telles quelles.
 
-Les marqueurs sont écrits entre chevrons (`<CLUSTER_NAME>`) dans les commandes.
+```sh
+export CLUSTER_NAME=<nom du cluster dans Omni>               # ex. rhodes-akn
+export TEMPLATE_FILE=<chemin du template du cluster>         # ex. projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml
+export TARGET_K8S_VERSION=<version cible de Kubernetes>      # ex. v1.37.2 (préfixe v obligatoire, format v1.XX.Y)
+```
+
+Dans les extraits YAML de l'étape 3, remplacer les marqueurs `<…>` par ces valeurs.
 
 ## Étape 1 — Vérifier l'état actuel
 
@@ -61,18 +65,22 @@ Relever la version déclarée dans Git, celle que le cluster exécute et la sant
 
 ```sh
 # Version déclarée dans le template
-grep -n -A1 '^kubernetes:' <TEMPLATE_FILE>
+grep -n -A1 '^kubernetes:' $TEMPLATE_FILE
 # → version: v1.XX.Y
 
 # Santé du cluster dans Omni
-omnictl cluster status <CLUSTER_NAME>
+omnictl cluster status $CLUSTER_NAME
 # → cluster et machines à l'état Ready, sans opération en cours
 
 # Version de Kubernetes réellement exécutée
-omnictl kubeconfig -c <CLUSTER_NAME> --service-account --user admin -f /tmp/<CLUSTER_NAME>-kubeconfig
-KUBECONFIG=/tmp/<CLUSTER_NAME>-kubeconfig kubectl get nodes -o wide
+omnictl kubeconfig -c $CLUSTER_NAME --service-account --user admin -f /tmp/$CLUSTER_NAME-kubeconfig
+KUBECONFIG=/tmp/$CLUSTER_NAME-kubeconfig kubectl get nodes -o wide
 # → tous les nœuds Ready, colonne VERSION identique à la version du template
 ```
+
+Même kubeconfig de service account que dans [INF-20260525-00](./INF-20260525-00-Mettre-a-Jour-Talos-avec-Omni.md) : il
+évite la connexion OIDC interactive, son jeton vaut 8760 h par défaut et le fichier de `/tmp` est à supprimer une fois
+la mise à jour terminée.
 
 Ne pas continuer si le cluster n'est pas sain : une mise à jour sur un cluster déjà dégradé complique le diagnostic.
 Voir [le skill omni-talos-troubleshoot](../../../.agents/skills/omni-talos-troubleshoot/SKILL.md).
@@ -88,13 +96,13 @@ injectés par les patches.
 Lister d'abord tout ce que le template injecte :
 
 ```sh
-grep -n -i -B1 -A3 'featureGates\|feature-gates\|extraArgs\|extraConfig' <TEMPLATE_FILE>
+grep -n -i -B1 -A3 'featureGates\|feature-gates\|extraArgs\|extraConfig' $TEMPLATE_FILE
 # → pour rhodes-akn : UserNamespacesSupport et ImageVolume (kubelet et kube-apiserver), plus
 #   rotate-server-certificates et cloud-provider dans kubelet.extraArgs
 ```
 
 Pour chaque gate et chaque flag listé, chercher son nom dans les notes de version de Kubernetes pour la version
-`<TARGET_K8S_VERSION>` ([CHANGELOG](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/)) et dans la
+`$TARGET_K8S_VERSION` ([CHANGELOG](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/)) et dans la
 [liste des feature gates](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/). Un gate
 retiré ou passé en GA (donc supprimé de la liste des gates configurables) dans la version cible doit être retiré du
 template avant la mise à jour, dans le même commit.
@@ -102,7 +110,7 @@ template avant la mise à jour, dans le même commit.
 Ensuite, demander à Omni de vérifier la compatibilité de la version cible :
 
 ```sh
-omnictl cluster kubernetes upgrade-pre-checks <CLUSTER_NAME> --to <TARGET_K8S_VERSION>
+omnictl cluster kubernetes upgrade-pre-checks $CLUSTER_NAME --to $TARGET_K8S_VERSION
 # → la commande vérifie la compatibilité de version et les API dépréciées (documentation d'omnictl)
 ```
 
@@ -129,10 +137,10 @@ Le `v` est requis : le template de référence le note pour `talos.version` (`v-
 Valider le template hors ligne, puis comparer l'état d'Omni avec le template modifié.
 
 ```sh
-omnictl cluster template validate -f <TEMPLATE_FILE>
+omnictl cluster template validate -f $TEMPLATE_FILE
 # → validation sans erreur
 
-omnictl cluster template diff -f <TEMPLATE_FILE>
+omnictl cluster template diff -f $TEMPLATE_FILE
 # → seule la ligne kubernetes.version (et les gates retirés à l'étape 2) doit différer
 ```
 
@@ -148,10 +156,10 @@ du template (CNI, `extraManifests`) restent joignables sur `main` ; sinon appliq
 
 ```sh
 # Prévisualiser sans rien modifier
-omnictl cluster template sync -f <TEMPLATE_FILE> --dry-run
-# → seul le Cluster <CLUSTER_NAME> est mis à jour
+omnictl cluster template sync -f $TEMPLATE_FILE --dry-run
+# → seul le Cluster $CLUSTER_NAME est mis à jour
 
-omnictl cluster template sync -f <TEMPLATE_FILE>
+omnictl cluster template sync -f $TEMPLATE_FILE
 ```
 
 Omni conduit ensuite la mise à jour. D'après sa documentation, les images des nouveaux composants sont préchargées sur
@@ -163,10 +171,10 @@ jour et le redémarrage éventuel des Pods applicatifs sont à confirmer sur Omn
 ## Étape 6 — Surveiller la convergence
 
 ```sh
-omnictl cluster template status -f <TEMPLATE_FILE> --wait 30m
+omnictl cluster template status -f $TEMPLATE_FILE --wait 30m
 # → le cluster converge vers l'état Ready
 
-omnictl cluster status <CLUSTER_NAME>
+omnictl cluster status $CLUSTER_NAME
 ```
 
 Si un nœud semble bloqué, attendre avant d'agir : la documentation d'Omni indique que certaines opérations prennent plus
@@ -186,21 +194,38 @@ cause de l'incident 1.35.
 ## Étape 7 — Vérifier après la mise à jour
 
 ```sh
-KUBECONFIG=/tmp/<CLUSTER_NAME>-kubeconfig kubectl get nodes -o wide
-# → tous les nœuds Ready, VERSION = <TARGET_K8S_VERSION>
+KUBECONFIG=/tmp/$CLUSTER_NAME-kubeconfig kubectl get nodes -o wide
+# → tous les nœuds Ready, VERSION = $TARGET_K8S_VERSION
 
-KUBECONFIG=/tmp/<CLUSTER_NAME>-kubeconfig kubectl version
-# → Server Version = <TARGET_K8S_VERSION>
+KUBECONFIG=/tmp/$CLUSTER_NAME-kubeconfig kubectl version
+# → Server Version = $TARGET_K8S_VERSION
 
-KUBECONFIG=/tmp/<CLUSTER_NAME>-kubeconfig kubectl get pods -A
+KUBECONFIG=/tmp/$CLUSTER_NAME-kubeconfig kubectl get pods -A
 # → aucun Pod en CrashLoopBackOff ou Error
+```
+
+## Exemple complet : mise à jour de `rhodes-akn` de `v1.37.1` vers `v1.37.2`
+
+Exemple de forme, non rejoué : `v1.37.1` est la version déclarée aujourd'hui dans `rhodes.clustertemplate.yaml` ; la
+version `v1.37.2` est un exemple de patch dans le même minor, à remplacer par une version réellement publiée.
+
+```sh
+omnictl cluster status rhodes-akn
+omnictl cluster kubernetes upgrade-pre-checks rhodes-akn --to v1.37.2
+
+# édition de projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml : kubernetes.version: v1.37.2
+omnictl cluster template validate -f projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml
+omnictl cluster template diff -f projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml
+
+omnictl cluster template sync -f projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml
+omnictl cluster template status -f projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml --wait 30m
 ```
 
 ## Vérifications rapides
 
-- **Version du template** : `grep -n -A1 '^kubernetes:' <TEMPLATE_FILE>` — la version cible, fusionnée sur `main`.
-- **Absence de dérive** : `omnictl cluster template diff -f <TEMPLATE_FILE>` — aucun écart.
-- **Santé du cluster** : `omnictl cluster status <CLUSTER_NAME>` — cluster et machines `Ready`.
+- **Version du template** : `grep -n -A1 '^kubernetes:' $TEMPLATE_FILE` — la version cible, fusionnée sur `main`.
+- **Absence de dérive** : `omnictl cluster template diff -f $TEMPLATE_FILE` — aucun écart.
+- **Santé du cluster** : `omnictl cluster status $CLUSTER_NAME` — cluster et machines `Ready`.
 - **Version des nœuds** : `kubectl get nodes` — colonne `VERSION` égale à la version cible.
 - **Pods système** : `kubectl get pods -n kube-system` — tous `Running` ou `Completed`.
 - **Cilium** : `kubectl get pods -n kube-system | grep cilium` — tous `Running`.
@@ -215,9 +240,9 @@ rétrogradation d'un `kube-apiserver`.
 Les voies de reprise établies sont les suivantes :
 
 - **Cause identifiée dans le template** (par exemple un gate retiré) : corriger le template (retirer le gate fautif),
-  valider, puis relancer `omnictl cluster template sync -f <TEMPLATE_FILE>`. La reprise d'une mise à jour interrompue
-  par ce moyen est à confirmer sur Omni. La correction par `talosctl patch machineconfig`, qui ne supprime jamais de
-  clé, est inefficace et ne doit pas être tentée : voir
+  valider, puis relancer `omnictl cluster template sync -f $TEMPLATE_FILE`. La reprise d'une mise à jour interrompue par
+  ce moyen est à confirmer sur Omni. La correction par `talosctl patch machineconfig`, qui ne supprime jamais de clé,
+  est inefficace et ne doit pas être tentée : voir
   [l'incident](../../incidents/2026-05-26-lungmen-k8s-1.35-removed-featuregate.md).
 - **Cluster irrécupérable** : restaurer depuis la sauvegarde etcd. La procédure de restauration n'est pas documentée
   dans le dépôt : se reporter à la
@@ -225,6 +250,8 @@ Les voies de reprise établies sont les suivantes :
 
 ## Historique
 
+- _2026-10-17_ : Reprise après revue : l'état de vérification est un callout `WARNING`, les entrées sont des variables
+  `export` utilisées dans les commandes, le kubeconfig de service account est expliqué et un exemple complet est ajouté.
 - _2026-10-11_ : Migration vers le standard de documentation (issue #1257) et réécriture pour Omni. La version de
   Kubernetes est fixée dans `kubernetes.version` du cluster template, appliquée par `omnictl cluster template sync` ; le
   contenu propre à `talosctl upgrade-k8s` sur le cluster mono-nœud `amiya.akn` (six phases, dry-run, exemple 1.34.2 vers

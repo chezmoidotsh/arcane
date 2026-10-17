@@ -4,7 +4,7 @@ Cette procédure remplace le SHA épinglé dans les templates de cluster Omni pa
 le squash-merge d'une pull request. Sans cela, les URL `raw.githubusercontent.com` des manifests de bootstrap Talos
 (Cilium, metric-server, kubelet-serving-cert-approver) renvoient une erreur 404, et le cluster reste bloqué sans réseau.
 
-Vérifiée contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées sur Omni pour cette migration.
+> [!WARNING] Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur Omni.
 
 Les templates de cluster Omni référencent les manifests de bootstrap par un SHA de commit Git exact. Omni télécharge ces
 URL à la création du cluster et à chaque réconciliation. Si le SHA est inaccessible, le manifest n'est jamais récupéré
@@ -22,8 +22,8 @@ indéfiniment un réseau qui n'arrive pas.
   plus référencés et GitHub finit par les supprimer. L'URL `raw.githubusercontent.com/<org>/<repo>/<sha>/...` renvoie
   alors 404, les nœuds Talos n'obtiennent pas Cilium et le cluster n'a aucun réseau.
 - **URL épinglées** : elles embarquent un SHA de 40 caractères, sous la forme
-  `https://raw.githubusercontent.com/chezmoidotsh/arcane/<SHA>/catalog/talos/manifests/...`. Le SHA doit exister sur la
-  branche `main` de GitHub pour que l'URL se résolve.
+  `https://raw.githubusercontent.com/chezmoidotsh/arcane/$NEW_SHA/catalog/talos/manifests/...`. Le SHA doit exister sur
+  la branche `main` de GitHub pour que l'URL se résolve.
 - **Outils** : `git` (lire le commit de fusion), `curl` (vérifier l'accessibilité des URL), `sed` (réécrire le SHA) et
   `omnictl` (valider et appliquer le template), installé par `mise`.
 
@@ -59,13 +59,13 @@ Les accès suivants sont également nécessaires :
 
 ## Entrées requises
 
-- `OLD_SHA` : SHA actuellement épinglé dans les templates, par exemple `934e67a9b70724c834bc1ac7c0221551bb7772e9`. La
-  commande de l'étape 3 l'affiche.
-- `NEW_SHA` : SHA complet (40 caractères) du commit de fusion sur `origin/main`, relevé à l'étape 1.
-- `TEMPLATE` : chemin du template du cluster à valider et à appliquer, par exemple
-  `projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml`.
+Exporter ces variables une fois ; toutes les commandes suivantes se copient ensuite telles quelles.
 
-Les marqueurs sont écrits entre chevrons (`<NEW_SHA>`) dans les commandes.
+```sh
+export OLD_SHA=<SHA actuellement épinglé dans les templates>      # ex. 934e67a9b70724c834bc1ac7c0221551bb7772e9 ; l'étape 3 l'affiche
+export NEW_SHA=<SHA complet du commit de fusion sur origin/main>  # 40 caractères, relevé à l'étape 1
+export TEMPLATE=<template du cluster à valider et à appliquer>    # ex. projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml
+```
 
 ## Étape 1 — Identifier le commit de fusion sur `main`
 
@@ -74,12 +74,14 @@ accessible sur GitHub.
 
 ```sh
 git fetch origin
+git rev-parse origin/main
+# → le SHA complet de 40 caractères du commit de fusion
 git log --oneline -1 origin/main
-# → a1b2c3d4e5f6...  *[scope]: Subject
+# → a1b2c3d  *[scope]: Subject
 ```
 
-Noter le SHA complet de 40 caractères du commit de fusion affiché sur `origin/main` : c'est la valeur `NEW_SHA` sur
-laquelle repinner les templates.
+Le SHA complet de 40 caractères affiché par `git rev-parse` est la valeur `NEW_SHA` sur laquelle repinner les templates.
+`git log --oneline` ne sert qu'à contrôler qu'il s'agit bien du commit de fusion : il abrège le SHA.
 
 Lire `origin/main` (le dépôt distant) plutôt que le `main` local garantit de lire le commit que GitHub sert réellement
 via `raw.githubusercontent.com`.
@@ -90,11 +92,11 @@ Avant de toucher aux templates, confirmer que chaque URL épinglée se résout a
 renvoyer `HTTP/2 200` (adapter le chemin des manifests aux versions de l'état ci-dessus) :
 
 ```sh
-curl -sI "https://raw.githubusercontent.com/chezmoidotsh/arcane/<NEW_SHA>/catalog/talos/manifests/cilium/1.20.2-native.yaml" | head -1
+curl -sI "https://raw.githubusercontent.com/chezmoidotsh/arcane/$NEW_SHA/catalog/talos/manifests/cilium/1.20.2-native.yaml" | head -1
 # → HTTP/2 200
-curl -sI "https://raw.githubusercontent.com/chezmoidotsh/arcane/<NEW_SHA>/catalog/talos/manifests/metric-server/0.9.0.yaml" | head -1
+curl -sI "https://raw.githubusercontent.com/chezmoidotsh/arcane/$NEW_SHA/catalog/talos/manifests/metric-server/0.9.0.yaml" | head -1
 # → HTTP/2 200
-curl -sI "https://raw.githubusercontent.com/chezmoidotsh/arcane/<NEW_SHA>/catalog/talos/manifests/kubelet-serving-cert-approver/0.12.1.yaml" | head -1
+curl -sI "https://raw.githubusercontent.com/chezmoidotsh/arcane/$NEW_SHA/catalog/talos/manifests/kubelet-serving-cert-approver/0.12.1.yaml" | head -1
 # → HTTP/2 200
 ```
 
@@ -117,9 +119,9 @@ porte aussi le SHA épinglé.
 grep -ohE '[0-9a-f]{40}' \
   projects/*/src/infrastructure/omni/*.clustertemplate.yaml \
   catalog/omni/clustertemplates/base.yaml | sort -u
-# → <OLD_SHA>
+# → $OLD_SHA
 
-sed -i "s/<OLD_SHA>/<NEW_SHA>/g" \
+sed -i "s/$OLD_SHA/$NEW_SHA/g" \
   projects/*/src/infrastructure/omni/*.clustertemplate.yaml \
   catalog/omni/clustertemplates/base.yaml
 ```
@@ -132,7 +134,7 @@ sed -i "s/<OLD_SHA>/<NEW_SHA>/g" \
 La validation hors ligne confirme que le template reste bien formé après l'édition :
 
 ```sh
-omnictl cluster template validate -f <TEMPLATE>
+omnictl cluster template validate -f $TEMPLATE
 # → aucune erreur
 ```
 
@@ -155,7 +157,7 @@ Une fois validé, appliquer le template repinné à Omni. Cette étape est en li
 prérequis) :
 
 ```sh
-omnictl cluster template sync -f <TEMPLATE>
+omnictl cluster template sync -f $TEMPLATE
 ```
 
 > [!IMPORTANT] Utiliser `omnictl cluster template sync -f <fichier>` et non `omnictl apply -f`. `apply` est la commande
@@ -167,18 +169,20 @@ omnictl cluster template sync -f <TEMPLATE>
 ## Garde-fou CI recommandé
 
 Aucun workflow ne vérifie aujourd'hui les SHA épinglés : `push,pull_request.omni-template-lint.yaml` ne contrôle que les
-CIDR (ADR-014). Un job CI peut échouer avant qu'un SHA cassé n'atterrisse sur `main` : il extrait chaque SHA de 40
-caractères hexadécimaux des templates et vérifie que chacun existe dans le clone local.
+CIDR (ADR-014). Un job CI exécuté sur `push` vers `main` détecte, après le merge, un SHA qui n'appartient pas à `main`
+(typiquement un SHA propre à une branche, détruit par le squash-merge). C'est une détection a posteriori : elle ne peut
+pas empêcher le SHA d'atterrir, mais elle alerte avant que le cluster ne soit recréé ou réconcilié. Le job extrait
+chaque SHA de 40 caractères hexadécimaux des templates et vérifie que chacun est un ancêtre de `origin/main`.
 
 ```sh
-# Extraire les SHA épinglés des templates et vérifier que chacun existe dans le clone
+# Extraire les SHA épinglés des templates et vérifier que chacun appartient à l'historique de origin/main
 grep -ohE '[0-9a-f]{40}' \
   projects/*/src/infrastructure/omni/*.clustertemplate.yaml \
   catalog/omni/clustertemplates/base.yaml \
   | sort -u \
   | while read -r sha; do
-      if ! git cat-file -t "$sha" >/dev/null 2>&1; then
-        echo "BROKEN SHA: $sha is not reachable in this clone" >&2
+      if ! git merge-base --is-ancestor "$sha" origin/main; then
+        echo "BROKEN SHA: $sha is not an ancestor of origin/main" >&2
         exit 1
       fi
     done
@@ -187,11 +191,16 @@ grep -ohE '[0-9a-f]{40}' \
 Fonctionnement :
 
 1. Extraction de tous les SHA de 40 caractères hexadécimaux (`[0-9a-f]{40}`) des templates.
-2. Vérification de chacun avec `git cat-file -t <SHA>` : l'objet commit doit exister dans le clone local.
-3. Échec du job si un SHA est introuvable (un SHA propre à une branche, qui renverra 404 après le squash-merge).
+2. Vérification de chacun avec `git merge-base --is-ancestor <SHA> origin/main` : le commit doit appartenir à
+   l'historique de `main`.
+3. Échec du job si un SHA n'en fait pas partie (un SHA propre à une branche, qui renverra 404 après le squash-merge).
 
-Limiter le job aux pull requests qui touchent un template (filtre de chemins) et l'exécuter sur le résultat fusionné
-(commit de fusion du `pull_request` GitHub ou `push` sur `main`), pour contrôler le SHA qui vivra réellement sur `main`.
+Le test n'est pas `git cat-file -t`. Dans le clone d'une pull request, les commits de la branche sont présents : la
+commande réussirait pour un SHA qui échouera après le squash-merge. À l'inverse, avec le checkout superficiel par défaut
+d'`actions/checkout`, un SHA pourtant légitime de `main` pourrait échouer : le job clone l'historique complet
+(`fetch-depth: 0`).
+
+Limiter le job aux `push` sur `main` qui touchent un template (filtre de chemins).
 
 ## Vérifications rapides
 
@@ -199,12 +208,15 @@ Limiter le job aux pull requests qui touchent un template (filtre de chemins) et
   `grep -ohE '[0-9a-f]{40}' projects/*/src/infrastructure/omni/*.clustertemplate.yaml catalog/omni/clustertemplates/base.yaml`
   — chaque SHA doit correspondre à un commit de `main`.
 - **Accessibilité** :
-  `curl -sI "https://raw.githubusercontent.com/chezmoidotsh/arcane/<SHA>/catalog/talos/manifests/cilium/1.20.2-native.yaml" | head -1`
+  `curl -sI "https://raw.githubusercontent.com/chezmoidotsh/arcane/$NEW_SHA/catalog/talos/manifests/cilium/1.20.2-native.yaml" | head -1`
   — doit renvoyer `HTTP/2 200`.
 - **Template appliqué** : `omnictl get cluster <nom>` — le cluster se réconcilie avec les manifests repinnés.
 
 ## Historique
 
+- _2026-10-17_ : Reprise après revue : l'état de vérification est un callout `WARNING`, les entrées sont des variables
+  `export`, le SHA complet se lit avec `git rev-parse` et le garde-fou CI teste `git merge-base --is-ancestor` après le
+  merge au lieu de `git cat-file -t`.
 - _2026-10-11_ : Données alignées sur le dépôt. Le SHA épinglé est `934e67a9b70724c834bc1ac7c0221551bb7772e9` (et non
   `06e860db…`) dans les trois templates ; les versions de manifest sont `1.20.2-native` (base), `1.20.0-native`
   (`lungmen.akn`) et `1.19.5-native` (`rhodes.akn`), `metric-server/0.9.0.yaml` et

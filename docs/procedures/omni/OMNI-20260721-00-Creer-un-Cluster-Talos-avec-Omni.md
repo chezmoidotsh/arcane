@@ -6,9 +6,8 @@ du cluster dans le GitOps du dépôt (comme hub ArgoCD ou comme spoke) et valida
 l'intégration cloud-provider. À la fin, le cluster est `Ready`, Cilium, le Proxmox CSI et le Proxmox CCM fonctionnent et
 ont été vérifiés un par un, et ArgoCD gère le cluster.
 
-Vérifiée contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées sur Omni ni sur les clusters pour cette
-migration. La version précédente, rédigée à partir du déroulé de la création de `lungmen.akn`, avait été corrigée le
-2026-07-22 (voir l'historique).
+> [!WARNING] Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur Omni ni sur les
+> clusters.
 
 Les étapes sont ordonnées volontairement : le CNI vient en premier, car rien ne fonctionne sans réseau de Pods ; les
 identifiants Proxmox, le CSI et le CCM suivent, car la plupart des charges de travail ont besoin du stockage et de la
@@ -137,15 +136,15 @@ Les accès et états suivants sont également nécessaires :
 
 ## Entrées requises
 
-- `CLUSTER_NAME` : nom du cluster dans Omni, par exemple `rhodes-akn` (choisi à l'étape 2).
-- `PROJECT_DIR` : dossier du projet du cluster, par exemple `projects/rhodes.akn`.
-- `TEMPLATE_FILE` : chemin du template, par exemple
-  `projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml` (créé à l'étape 3).
-- `KUBECONFIG_OUT` : chemin local du kubeconfig téléchargé, par exemple `~/.kube/config-rhodes-akn`.
-- `GITOPS_ROLE` : `hub` ou `spoke`, décidé selon la [topologie GitOps](#topologie-gitops-hub-et-spoke) et utilisé à
-  l'étape 11.
+Exporter ces variables une fois ; toutes les commandes suivantes se copient ensuite telles quelles.
 
-Les marqueurs sont écrits entre chevrons (`<CLUSTER_NAME>`) dans les commandes.
+```sh
+export CLUSTER_NAME=<nom du cluster dans Omni>            # ex. rhodes-akn (choisi à l'étape 2)
+export PROJECT_DIR=<dossier du projet du cluster>         # ex. projects/rhodes.akn
+export TEMPLATE_FILE=<chemin du template du cluster>      # ex. projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml (créé à l'étape 3)
+export KUBECONFIG_OUT=<chemin local du kubeconfig>        # ex. ~/.kube/config-rhodes-akn
+export GITOPS_ROLE=<hub|spoke>                            # selon la topologie GitOps ; utilisé à l'étape 11
+```
 
 ## Étape 1 — Appliquer les machine classes
 
@@ -183,7 +182,7 @@ de Pod (`podSubnets`) diffère par cluster.
 Copier le template de base dans le projet du cluster, puis modifier les champs sur place :
 
 ```sh
-cp catalog/omni/clustertemplates/base.yaml <TEMPLATE_FILE>
+cp catalog/omni/clustertemplates/base.yaml $TEMPLATE_FILE
 ```
 
 Champs à modifier par rapport à la base :
@@ -214,7 +213,7 @@ Avant l'amorçage, le SHA de commit épinglé doit exister sur la branche `main`
 branche, contrôler que les URL de bootstrap du template répondent :
 
 ```sh
-grep -oE 'https://raw\.githubusercontent\.com/[^ ]+' <TEMPLATE_FILE> | sort -u | while read -r url; do
+grep -oE 'https://raw\.githubusercontent\.com/[^ ]+' $TEMPLATE_FILE | sort -u | while read -r url; do
   echo "${url}"
   curl -sI "${url}" | head -1
 done
@@ -234,7 +233,7 @@ squash-merge). Il doit être réépinglé sur le SHA du commit de merge avant de
 Lancer la validation hors ligne pour confirmer que le template est bien formé :
 
 ```sh
-omnictl cluster template validate -f <TEMPLATE_FILE>
+omnictl cluster template validate -f $TEMPLATE_FILE
 # → pas d'erreur
 ```
 
@@ -254,7 +253,7 @@ respectent la plage de l'ADR-014 ; la CI l'exécute à chaque changement sous `p
 Une fois validé, appliquer le template à Omni. Cette étape est en ligne et demande une authentification :
 
 ```sh
-omnictl cluster template sync -f <TEMPLATE_FILE>
+omnictl cluster template sync -f $TEMPLATE_FILE
 ```
 
 > [!IMPORTANT] Utiliser `omnictl cluster template sync -f <fichier>`, **pas** `omnictl apply -f`. `apply` est la
@@ -285,7 +284,7 @@ machine:
 Omni commence à provisionner les VM sur Proxmox et à amorcer Talos. Suivre la convergence :
 
 ```sh
-omnictl cluster status <CLUSTER_NAME>
+omnictl cluster status $CLUSTER_NAME
 omnictl machine status
 ```
 
@@ -302,13 +301,17 @@ le diagnostic.
 Quand le cluster est `Ready`, télécharger le kubeconfig et vérifier l'état des nœuds et des Pods :
 
 ```sh
-export KUBECONFIG=<KUBECONFIG_OUT>
-omnictl kubeconfig --cluster <CLUSTER_NAME> $KUBECONFIG
+export KUBECONFIG=$KUBECONFIG_OUT
+omnictl kubeconfig --cluster $CLUSTER_NAME $KUBECONFIG
 
 kubectl get nodes -o wide
 kubectl get pods -A
 # → tous les nœuds Ready
 ```
+
+Ce kubeconfig utilise l'authentification OIDC d'Omni (interactive). Les procédures de mise à jour utilisent un
+kubeconfig de service account, voir
+[INF-20260525-00](../infrastructure/INF-20260525-00-Mettre-a-Jour-Talos-avec-Omni.md).
 
 Vérifier que Cilium tourne :
 
@@ -338,28 +341,13 @@ Le composant sous-jacent est `catalog/pulumi/components/proxmox-cluster-identity
 Secret d'amorçage dans `kube-system` : le kubeconfig de l'étape 8 doit donc être utilisable par le provider Kubernetes
 de Pulumi.
 
-Le namespace `proxmox-system` n'est pas créé par Pulumi : appliquer le Secret **après** la création du namespace
-(premier bloc de l'étape 10), puis lancer la stack avec les outils habituels du projet (`mise run pulumi:diff`, puis
-`mise run pulumi:apply`, tâches définies dans le dossier `src/infrastructure/pulumi/` du projet).
-
-La rotation n'est pas automatique à heure fixe : elle ne prend effet qu'à la prochaine application de la stack, car
-aucun job du dépôt n'applique les stacks Pulumi à intervalle régulier.
-
-## Étape 10 — Déployer le CSI et le CCM
-
-Le Proxmox CCM (`proxmox-cloud-controller-manager`) et le plugin CSI (`proxmox-csi-plugin`) se déploient dans
-`proxmox-system` à partir des manifests rendus dans `dist/` du projet (voir
-l'[ADR-011](../../decisions/011-rendered-manifests-pattern.md)), selon la convention habituelle
-`src/infrastructure/kubernetes/<nom>/` du dépôt. Ils sont appliqués à la main (`kubectl apply -f dist/...`), car aucun
-ArgoCD n'existe encore sur ce cluster à ce stade de l'amorçage.
-
-Le DaemonSet de nœud de `proxmox-csi-plugin` a besoin d'un accès privilégié et `hostPath` pour monter les périphériques
-bloc attachés par Proxmox, que le niveau Pod Security « restricted » par défaut du cluster refuse. Créer le namespace
-avec l'application relâchée avant le déploiement, puisqu'aucune métadonnée de namespace gérée par ArgoCD n'existe encore
-:
+Le namespace `proxmox-system` n'est pas créé par Pulumi : le créer avant de lancer la stack. Le DaemonSet de nœud de
+`proxmox-csi-plugin` (étape 10) a besoin d'un accès privilégié et `hostPath` pour monter les périphériques bloc attachés
+par Proxmox, que le niveau Pod Security « restricted » par défaut du cluster refuse : le namespace reçoit donc
+l'application relâchée dès sa création, puisqu'aucune métadonnée de namespace gérée par ArgoCD n'existe encore.
 
 ```sh
-kubectl apply -f - <<'EOF'
+kubectl apply --server-side -f - <<'EOF'
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -369,6 +357,22 @@ metadata:
     pod-security.kubernetes.io/enforce-version: v1.33
 EOF
 ```
+
+Lancer ensuite la stack avec les outils habituels du projet (`mise run pulumi:diff`, puis `mise run pulumi:apply`,
+tâches définies dans le dossier `src/infrastructure/pulumi/` du projet).
+
+La rotation n'est pas automatique à heure fixe : elle ne prend effet qu'à la prochaine application de la stack, car
+aucun job du dépôt n'applique les stacks Pulumi à intervalle régulier.
+
+## Étape 10 — Déployer le CSI et le CCM
+
+Le Proxmox CCM (`proxmox-cloud-controller-manager`) et le plugin CSI (`proxmox-csi-plugin`) se déploient dans
+`proxmox-system` à partir des manifests rendus dans `dist/` du projet (voir
+l'[ADR-011](../../decisions/011-rendered-manifests-pattern.md)), selon la convention habituelle
+`src/infrastructure/kubernetes/<nom>/` du dépôt. Ils sont appliqués à la main
+(`kubectl apply --server-side -f dist/...`), car aucun ArgoCD n'existe encore sur ce cluster à ce stade de l'amorçage.
+
+Le namespace `proxmox-system` a été créé à l'étape 9, avec le niveau Pod Security relâché que demande le CSI.
 
 `rhodes.akn` et `lungmen.akn` ont déjà la source du CCM et du CSI sous
 `projects/<cluster>/src/infrastructure/kubernetes/proxmox/` (valeurs Helm des deux charts) et leur rendu sous
@@ -398,7 +402,7 @@ Appliquer la branche décidée dans la [topologie GitOps hub et spoke](#topologi
 - **Spoke** : enregistrement dans l'ArgoCD du hub.
 
   ```sh
-  argocd cluster add <CLUSTER_NAME> --name <CLUSTER_NAME>
+  argocd cluster add $CLUSTER_NAME --name $CLUSTER_NAME
   ```
 
   Prérequis : le CLI ArgoCD est authentifié et le contexte kubeconfig du nouveau cluster est actif. Vérifier avec
@@ -467,6 +471,9 @@ branche renvoie 404 une fois les commits de la branche supprimés par le ramasse
 
 ## Historique
 
+- _2026-10-17_ : Reprise après revue : l'état de vérification est un callout `WARNING`, les entrées sont des variables
+  `export`, le namespace `proxmox-system` est créé à l'étape 9 (avant le Secret) avec `--server-side`, le kubeconfig
+  OIDC est distingué de celui des mises à jour et la dernière puce de Pour aller plus loin est scindée.
 - _2026-10-11_ : Corrections vérifiées contre le dépôt. Le template de base `catalog/omni/clustertemplates/base.yaml` ne
   contient pas `kubelet.extraArgs.cloud-provider: external` (seuls les templates de `rhodes.akn` et de `lungmen.akn`
   l'ajoutent) : l'étape 3 demande de l'ajouter et l'étape 6 ne prétend plus que la base le porte. L'étape 11 ne cite
@@ -495,13 +502,12 @@ branche renvoie 404 une fois les commits de la branche supprimés par le ramasse
 ## Pour aller plus loin
 
 - [ADR-014 : topologie réseau du homelab](../../decisions/014-network-topology.md) : définit le supernet des CIDR de Pod
-  (`172.30.0.0/16`) et l'allocation d'un `/19` par cluster.
+  (`172.30.0.0/16`) et l'allocation d'un `/19` par cluster. La table de référence des CIDR de Pod par cluster est dans
+  [Allocation IPAM](../../network/ipam.md).
 - [ADR-011 : motif des manifests rendus](../../decisions/011-rendered-manifests-pattern.md) : le motif de pré-rendu dans
   `dist/` utilisé à l'étape 10.
-- [Allocation IPAM et CIDR de Pod](../../network/ipam.md) : table de référence des CIDR de Pod par cluster (prérequis
-  ClusterMesh).
 - [Réépingler les SHA après un squash-merge](./OMNI-20260629-03-Reepingler-les-SHA-apres-un-Squash-Merge.md) :
   réparation d'un SHA épinglé devenu inaccessible.
 - [Expérience Proxmox CSI/CCM](../../experiments/20260617-proxmox-csi-ccm/README.md) : architecture, ordre de
   déploiement, rôles et tokens Proxmox, contrainte du drapeau cloud-provider (étape 6) et critères V-001 à V-010.
-  Documentation d'Omni : <https://omni.sidero.dev/>.
+- [Documentation d'Omni](https://omni.sidero.dev/) : référence d'`omnictl` et des templates de cluster.

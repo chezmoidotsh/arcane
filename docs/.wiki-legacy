@@ -10,7 +10,7 @@ incidents/*
 migrations/*
 network/*
 procedures/README.md
-procedures/infrastructure/INF-*
+procedures/infrastructure/INF-????????-??.*
 procedures/infrastructure/MIGR-*
 procedures/security/*
 reports/*

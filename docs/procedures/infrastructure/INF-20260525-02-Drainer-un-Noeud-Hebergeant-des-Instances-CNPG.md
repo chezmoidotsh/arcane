@@ -5,9 +5,9 @@ Un nœud est drainé pendant une mise à jour de Talos pilotée par Omni (voir
 procédure décrit ce qui arrive aux Pods CloudNative-PG (CNPG) du nœud et vérifie, avant le drain, qu'aucun cluster
 mono-instance ne le bloque.
 
-Vérifiée contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées sur les clusters pour cette migration. Le
-comportement de CNPG pendant un drain (PodDisruptionBudget, bascule du primaire) décrit ci-dessous vient de CNPG et
-n'est pas prouvé par le dépôt.
+> [!WARNING] Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur les clusters.
+> Le comportement de CNPG pendant un drain (PodDisruptionBudget, bascule du primaire) décrit ci-dessous vient de CNPG et
+> n'est pas prouvé par le dépôt.
 
 ## Prérequis
 
@@ -18,6 +18,15 @@ Les accès suivants sont également nécessaires :
 
 - accès `kubectl` en lecture aux `Cluster` CNPG et aux `PodDisruptionBudget` du cluster à drainer ;
 - accès au dépôt pour corriger `src/` et exécuter `dist:render` si un cluster doit être modifié.
+
+## Entrées requises
+
+Exporter ces variables une fois ; toutes les commandes suivantes se copient ensuite telles quelles.
+
+```sh
+export CLUSTER_NAME=<cluster CNPG multi-instance à contrôler>    # ex. apps-secured-20260530 (relevé à l'étape 1)
+export NAMESPACE=<namespace de ce cluster>                       # ex. databases
+```
 
 ## Comportement d'un drain
 
@@ -79,15 +88,21 @@ kubectl get clusters.postgresql.cnpg.io -A
 Après le drain, contrôler l'état et le primaire de chaque cluster multi-instance.
 
 ```sh
-kubectl get cluster <CLUSTER_NAME> -n <NAMESPACE>
+kubectl get cluster $CLUSTER_NAME -n $NAMESPACE
 # → "Cluster in healthy state", avec un primaire désigné
 ```
 
-`<CLUSTER_NAME>` et `<NAMESPACE>` désignent le cluster et le namespace relevés à l'étape 1 (par exemple
-`apps-secured-20260530` dans `databases` sur `lungmen.akn`).
+## Vérifications rapides
+
+- **PDB** : `kubectl get pdb -A | grep -- '-primary'` — aucun sur un cluster `INST=1`.
+- **Clusters CNPG** : `kubectl get clusters.postgresql.cnpg.io -A` — tous en `Cluster in healthy state`.
+- **Primaire** : `kubectl get cluster $CLUSTER_NAME -n $NAMESPACE` — un primaire désigné sur chaque cluster
+  multi-instance.
 
 ## Historique
 
+- _2026-10-17_ : Reprise après revue : l'état de vérification est un callout `WARNING`, la section Entrées requises
+  (variables `export`) et les vérifications rapides sont ajoutées.
 - _2026-10-11_ : Ajout du cas `instances > 1` avec `enablePDB: false` et de l'inventaire des clusters CNPG :
   `pocket-id-20260530` (`rhodes.akn`) compte 2 instances sans PDB
   (`projects/rhodes.akn/src/apps/pocket-id/cnpg.cluster.yaml`), ce qui contredit l'idée que seuls les clusters
