@@ -87,6 +87,7 @@ autres appareils.
 | 10.0.0.30 | NAS                             | nas.chezmoi.sh                                             | Interface principale. Aussi sur talosnet (`10.128.0.6`)                                                                                                       |
 | 10.0.0.31 | NAS (applications)              |                                                            | IP dédiée aux applications (Garage, etc.)                                                                                                                     |
 | 10.0.0.32 | Mac Studio (LM Studio)          | macstudio-kh37.lia.chezmoi.sh                              | Serveur d'inférence LM Studio (TCP 1234), appelé par LiteLLM. Enregistrement DNS créé à la main                                                               |
+| 10.0.0.33 | Raspberry Pi 5 (sandbox n8n)    | sndbx-3or5.lia.chezmoi.sh                                  | NixOS (`projects/shodan.akn`). Caddy en TLS sur 443 devant `sandbox-api` ; runner Docker-in-Docker privilégié. Pas de DMZ : pare-feu de l'hôte uniquement     |
 
 Le wildcard `*.omni.chezmoi.sh` pointe vers la gateway Pangolin publique (`195.201.114.83`, kazimierz.akn) : il se
 résout hors du VLAN 5 et n'est lié à aucune IP de ce tableau.
