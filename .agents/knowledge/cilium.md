@@ -34,4 +34,4 @@ Distilled from incident post-mortems. Each bullet stands alone.
 
 ## Sources
 
-- `docs/incidents/2026-05-27-cilium-1.19-upgrade-failure.md`
+- `docs/incidents/Incident-2026-05-27-Echec-Mise-a-Jour-Cilium-1-19.md`

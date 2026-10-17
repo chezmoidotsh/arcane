@@ -258,7 +258,7 @@ Vérifier l'usage des PVC et les agrandir si besoin avec kubectl patch.
 - `docs/_Sidebar.md` — the navigation every new page must be added to.
 - `.agents/skills/documentation-writer/references/style-guide.md` — language, naming and lint rules shared by every
   page.
-- `docs/incidents/README.md` and `.agents/skills/cnpg-troubleshoot/SKILL.md` — how incidents and procedures
+- `docs/incidents/Incidents.md` and `.agents/skills/cnpg-troubleshoot/SKILL.md` — how incidents and procedures
   cross-reference each other, and how a troubleshooting skill routes from a live error to a procedure.
 - `.agents/skills/documentation-writer/references/adr.md` — the sibling skill for decisions; a procedure documents the
   "how" of a choice an ADR already argued for.
