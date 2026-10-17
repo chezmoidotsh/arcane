@@ -62,14 +62,8 @@ Tell-apart rules when two rows seem to fit:
 A README section that is really a guide moves to `docs/`, and the README links to it.
 
 > [!NOTE]\
-> The documentation is being migrated to the standard below category by category (issue #1257). `docs/.wiki-legacy`
-> lists what is not migrated yet: those pages are neither linted nor published. Until a category has migrated, new
-> procedures go in `docs/procedures/`, ADRs in `docs/decisions/` and post-mortems in `docs/incidents/`, with the
-> numbering and front matter their reference file describes. A new page of any other type, or a migrated category,
-> follows the naming and directory rules of the style guide.
->
-> Pages are written in French. A document is translated when it is migrated, not before: a page still listed in
-> `.wiki-legacy` keeps its current language.
+> The documentation migration (issue #1257) is finished. `docs/.wiki-legacy` only keeps the README of the experiment
+> code directories out of the wiki. Pages are written in French.
 
 ## 3. Workflow
 

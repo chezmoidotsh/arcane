@@ -76,9 +76,11 @@ mise install
 │   └── talos                       # Default Talos configurations
 ├── docs                            # Documentation
 │   ├── decisions                   # Architecture Decision Records (ADR)
-│   ├── experiments                 # Experimental projects
+│   ├── experiments                 # Experiment write-ups and their code
+│   ├── guides                      # Bootstrap and disaster-recovery guides
+│   ├── incidents                   # Post-mortems
 │   ├── procedures                  # Operational procedures
-│   └── reports                     # Automated reports
+│   └── reference                   # Network, IPAM and configuration reference
 ├── projects                        # Infrastructure projects
 │   ├── chezmoi.sh                  # Shared resources
 │   ├── hass                        # Home Assistant configuration

@@ -53,8 +53,10 @@ configuration de l'ADR-008.
 
 ## Texte intégral
 
-Le récit complet (procédure détaillée, section de retour arrière historique) reste dans l'historique Git, dans
-`projects/kazimierz.akn/docs/MIGRATION_NIXOS.md` avant son archivage (migration de la documentation, issue #1257).
+Le texte d'origine, en anglais, est figé à
+[`projects/kazimierz.akn/docs/MIGRATION_NIXOS.md`](https://github.com/chezmoidotsh/arcane/blob/e49ecbea67da5582b6a28b14832f12d9c662f6fe/projects/kazimierz.akn/docs/MIGRATION_NIXOS.md)
+(commit `e49ecbea`, dernière version avant la migration de la documentation, issue #1257). Le lien pointe sur un commit
+: il reste valable après la suppression du fichier.
 
 ## Pour aller plus loin
 

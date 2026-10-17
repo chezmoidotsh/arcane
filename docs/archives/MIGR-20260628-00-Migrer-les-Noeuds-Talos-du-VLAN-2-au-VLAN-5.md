@@ -49,9 +49,10 @@ son utilisation par les nœuds Talos a disparu.
 
 ## Texte intégral
 
-Le texte complet de la procédure (commandes comprises) reste dans l'historique Git du fichier
-`docs/procedures/infrastructure/MIGR-20260628-00.vlan2-to-vlan5.md`, dans la version précédant son archivage (issue
-#1257).
+Le texte d'origine, en anglais, est figé à
+[`docs/procedures/infrastructure/MIGR-20260628-00.vlan2-to-vlan5.md`](https://github.com/chezmoidotsh/arcane/blob/a4b94da36d2a779878ea80850a76272e5e4cc524/docs/procedures/infrastructure/MIGR-20260628-00.vlan2-to-vlan5.md)
+(commit `a4b94da3`, dernière version avant la migration de la documentation, issue #1257). Le lien pointe sur un commit
+: il reste valable après la suppression du fichier.
 
 ## Pour aller plus loin
 

@@ -75,8 +75,8 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
    `IPAM-Reference` or an absolute path: relative links work when browsing Git, and the link must resolve to an existing
    file. A link to a section is `[x](Page.md#section)`. A link to code outside `docs/` is relative too
    (`../projects/rhodes.akn/README.md`). `scripts/wiki:publish` rewrites them for the wiki when publishing.
-7. **Not migrated yet? List it in `docs/.wiki-legacy`.** A path listed there is neither linted nor published. Delete the
-   line when its category has migrated; the file disappears when the migration is complete.
+7. **Keep a file out of the wiki by listing it in `docs/.wiki-legacy`.** A path listed there is neither linted nor
+   published. It is used for the README of experiment code directories, which describes code and not a topic.
 8. **A link to a skill says so.** A skill is an instruction for an agent, not a page for a human. Its link text starts
    with `Skill :` (`[Skill : écrire la documentation](…/SKILL.md)`), so a reader can tell it from a documentation page.
    Link texts for documentation pages keep Title Case for proper names such as `Décisions d'Architecture`.
