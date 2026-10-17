@@ -12,7 +12,7 @@ const config = new pulumi.Config();
 // Proxmox Backup Server's built-in ACME client supports Cloudflare as a DNS
 // plugin directly, no Caddy involved. This stack runs upstream of any
 // Kubernetes cluster, so the token isn't pushed to Vault here -- Vault itself
-// lives inside amiya.akn and can't be a dependency of something that has to
+// lives inside rhodes.akn and can't be a dependency of something that has to
 // exist before it. Exported as a Pulumi stack output for manual injection into
 // Proxmox Backup Server's ACME DNS plugin configuration (see ./README.md,
 // "Bootstrapping").
