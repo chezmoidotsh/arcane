@@ -27,11 +27,7 @@ bootstrap), et Omni provisionne et réconcilie les VM Proxmox sur cet état.
 Omni tourne dans un **LXC Proxmox autonome**
 ([NixOS, Omni, un fournisseur OIDC Dex colocalisé et Caddy](../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni))
 sur l'[hôte Proxmox `pve-01.pve.chezmoi.sh`](../../../projects/chezmoi.sh/docs/PROXMOX-VE.md). Il n'est une charge de
-travail d'aucun cluster Kubernetes. La variable `OMNICONFIG` pointe vers un fichier local (`.mise/omni/omniconfig.yaml`,
-défini par la configuration `mise` du dépôt) que remplit le flux de connexion d'Omni (`omnictl config new` ou
-`omnictl config add`).
-
-Omni gère tous les clusters, quel que soit celui qui héberge le hub GitOps : les deux sujets sont indépendants.
+travail d'aucun cluster Kubernetes.
 
 ### Talos
 
@@ -86,20 +82,13 @@ Omni gère les clusters Talos avec trois briques indépendantes :
 
 ### Allocation des CIDR de Pod
 
-L'[ADR-014](../../decisions/014-network-topology.md) définit le supernet des CIDR de Pod (`172.30.0.0/16`) et le
-principe d'un `/19` sans recouvrement par cluster. La table de référence est dans [`ipam.md`](../../network/ipam.md). Le
-prochain CIDR libre s'obtient en incrémentant l'identifiant de cluster :
+Chaque cluster reçoit son propre `/19` de Pod dans le supernet `172.30.0.0/16`, sans recouvrement avec les autres :
+c'est un prérequis de ClusterMesh. La table d'allocation fait foi, elle est dans [`ipam.md`](../../network/ipam.md). Le
+prochain CIDR libre s'obtient en incrémentant l'identifiant de cluster de cette table (identifiant 3 :
+`172.30.64.0/19`).
 
-| Identifiant | Cluster     | CIDR de Pod       |
-| ----------- | ----------- | ----------------- |
-| 1           | rhodes      | `172.30.0.0/19`   |
-| 2           | lungmen     | `172.30.32.0/19`  |
-| 3           | _(suivant)_ | `172.30.64.0/19`  |
-| …           | …           | …                 |
-| 8           | sandbox     | `172.30.224.0/19` |
-
-Le **CIDR de Services `172.31.0.0/19`** et le **clusterDNS `172.31.0.10`** sont **communs à tous les clusters** (prêts
-pour ClusterMesh) et ne se changent pas.
+Le **CIDR de Services `172.31.0.0/19`** et le **clusterDNS `172.31.0.10`** sont **communs à tous les clusters** et ne se
+changent pas : la section « Service CIDR » de la même page en donne la raison.
 
 ### Catalogue des machine classes
 
@@ -172,10 +161,10 @@ l'identifiant 3 et le CIDR de Pod `172.30.64.0/19`.
 Choisir un nom de cluster (par exemple `rhodes-akn`) et un dossier de projet (`projects/<cluster>.akn/`).
 
 **Ne pas changer le CIDR de Services ni le clusterDNS.** `serviceSubnets` reste `172.31.0.0/19` et `clusterDNS` reste
-`172.31.0.10`. Les garder identiques sur tous les clusters, au lieu d'allouer une plage par cluster comme pour le CIDR
-de Pod, supprime tout risque de collision d'IP de Service quand ClusterMesh relie les clusters, et une valeur unique de
-`clusterDNS` simplifie les résolutions DNS personnalisées (par exemple un DNS qui résout vers Tailscale). Seul le CIDR
-de Pod (`podSubnets`) diffère par cluster.
+`172.31.0.10`. Ce recouvrement entre clusters est sans effet sur ClusterMesh : Cilium résout les ClusterIP par eBPF sur
+le nœud source, qui les remplace par l'IP d'un Pod backend avant que le paquet quitte le nœud, donc les ClusterIP ne
+circulent jamais entre les clusters. Seuls les CIDR de Pod (`podSubnets`) doivent être uniques. Une valeur unique de
+`clusterDNS` simplifie en plus les résolutions DNS personnalisées (par exemple un DNS qui résout vers Tailscale).
 
 ## Étape 3 — Créer le template de cluster
 
@@ -223,7 +212,7 @@ done
 
 Si une URL renvoie `404`, le SHA est inaccessible (la pointe de la branche n'a pas été conservée sur `main` après le
 squash-merge). Il doit être réépinglé sur le SHA du commit de merge avant de continuer : voir
-[Réépingler les SHA après un squash-merge](./OMNI-20260629-03-Reepingler-les-SHA-apres-un-Squash-Merge.md).
+[Problèmes connus](#problèmes-connus).
 
 > [!WARNING]\
 > Appliquer un template dont le SHA épinglé renvoie 404 produit un cluster **sans CNI** : Cilium n'est jamais
@@ -451,9 +440,7 @@ Cette section décrit des problèmes réellement rencontrés en suivant cette pr
 
 Si le SHA épinglé est inaccessible (HTTP 404), Cilium n'est jamais téléchargé et le cluster n'a aucun réseau : les Pods
 restent en `ContainerCreating`. Contournement : vérifier l'accessibilité du SHA (étape 4) avant d'appliquer. Si l'échec
-a déjà eu lieu, réépingler le SHA
-([Réépingler les SHA après un squash-merge](./OMNI-20260629-03-Reepingler-les-SHA-apres-un-Squash-Merge.md)) et
-réappliquer le template.
+a déjà eu lieu, réépingler le SHA (voir le dernier problème de cette section) et réappliquer le template.
 
 ### Coupure de connectivité de 2 minutes pendant la reprise de kube-proxy par Cilium
 
@@ -469,11 +456,32 @@ restent dans Git.
 ### Le SHA épinglé doit rester accessible après un squash-merge
 
 Toujours s'assurer que le SHA épinglé est accessible sur `main` après un squash-merge. Un SHA présent seulement sur une
-branche renvoie 404 une fois les commits de la branche supprimés par le ramasse-miettes de GitHub. Voir
-[Réépingler les SHA après un squash-merge](./OMNI-20260629-03-Reepingler-les-SHA-apres-un-Squash-Merge.md).
+branche renvoie 404 une fois les commits de la branche supprimés par le ramasse-miettes de GitHub. Pour réépingler,
+remplacer l'ancien SHA par celui du commit de fusion dans tous les templates, valider, puis appliquer le template du
+cluster :
+
+```sh
+export OLD_SHA=<SHA actuellement épinglé>       # ex. 934e67a9b70724c834bc1ac7c0221551bb7772e9
+export NEW_SHA=<SHA complet du commit de fusion> # git fetch origin && git rev-parse origin/main
+
+# Relever le SHA actuellement épinglé (un seul SHA doit apparaître)
+grep -ohE '[0-9a-f]{40}' projects/*/src/infrastructure/omni/*.clustertemplate.yaml catalog/omni/clustertemplates/base.yaml | sort -u
+
+# Remplacer le SHA (avec le sed BSD de macOS : sed -i '')
+sed -i "s/$OLD_SHA/$NEW_SHA/g" projects/*/src/infrastructure/omni/*.clustertemplate.yaml catalog/omni/clustertemplates/base.yaml
+
+omnictl cluster template validate -f $TEMPLATE_FILE
+omnictl cluster template sync -f $TEMPLATE_FILE
+```
+
+Contrôler d'abord que les URL des manifests répondent avec `NEW_SHA` (étape 4). La détection automatique de ce cas et
+une commande de réépinglage sont suivies par l'issue [#1357](https://github.com/chezmoidotsh/arcane/issues/1357).
 
 ## Historique
 
+- _2026-10-17_ : Seconde revue : les phrases sur `OMNICONFIG` et sur l'indépendance d'Omni sont retirées, la table des
+  CIDR de Pod renvoie à la référence IPAM, la raison du CIDR de Services commun est corrigée et la procédure de
+  réépinglage supprimée est remplacée par sa commande dans les problèmes connus.
 - _2026-10-17_ : Reprise après revue : l'état de vérification est un callout `WARNING`, les entrées sont des variables
   `export`, le namespace `proxmox-system` est créé à l'étape 9 (avant le Secret) avec `--server-side`, le kubeconfig
   OIDC est distingué de celui des mises à jour et la dernière puce de Pour aller plus loin est scindée.
@@ -509,8 +517,6 @@ branche renvoie 404 une fois les commits de la branche supprimés par le ramasse
   [Allocation IPAM](../../network/ipam.md).
 - [ADR-011 : motif des manifests rendus](../../decisions/011-rendered-manifests-pattern.md) : le motif de pré-rendu dans
   `dist/` utilisé à l'étape 10.
-- [Réépingler les SHA après un squash-merge](./OMNI-20260629-03-Reepingler-les-SHA-apres-un-Squash-Merge.md) :
-  réparation d'un SHA épinglé devenu inaccessible.
 - [Expérience Proxmox CSI/CCM](../../experiments/20260617-proxmox-csi-ccm/README.md) : architecture, ordre de
   déploiement, rôles et tokens Proxmox, contrainte du drapeau cloud-provider (étape 6) et critères V-001 à V-010.
 - [Documentation d'Omni](https://omni.sidero.dev/) : référence d'`omnictl` et des templates de cluster.

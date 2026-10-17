@@ -89,11 +89,12 @@ Voir [le skill omni-talos-troubleshoot](../../../.agents/skills/omni-talos-troub
 
 ## Étape 2 — Vérifier les feature gates et les flags retirés
 
-Cette étape est la protection contre l'incident du 2026-05-26 : un feature gate retiré de Kubernetes 1.35, resté dans
-les patches, a fait paniquer `kube-apiserver` et `kubelet` (`unrecognized feature gate`) et coupé l'API pendant environ
-45 minutes. Les contrôles de compatibilité ne remplacent pas cette lecture manuelle : l'incident a montré que le
-contrôle des flags de l'outil de mise à jour de l'époque ne couvrait pas les `extraArgs`, `extraConfig` et feature gates
-injectés par les patches.
+> [!NOTE]\
+> Cette étape est la protection contre l'incident du 2026-05-26 : un feature gate retiré de Kubernetes 1.35, resté dans
+> les patches, a fait paniquer `kube-apiserver` et `kubelet` (`unrecognized feature gate`) et coupé l'API pendant
+> environ 45 minutes. Les contrôles de compatibilité ne remplacent pas cette lecture manuelle : l'incident a montré que
+> le contrôle des flags de l'outil de mise à jour de l'époque ne couvrait pas les `extraArgs`, `extraConfig` et feature
+> gates injectés par les patches.
 
 Lister d'abord tout ce que le template injecte :
 
@@ -154,8 +155,8 @@ loin. Le script `omni:drift:check --templates` fait la même comparaison pour to
 ## Étape 5 — Appliquer le template
 
 Fusionner le changement sur `main` par pull request, puis appliquer le template. Vérifier que les URL épinglées par SHA
-du template (CNI, `extraManifests`) restent joignables sur `main` ; sinon appliquer d'abord
-[Réépingler les SHA après un squash merge](../omni/OMNI-20260629-03-Reepingler-les-SHA-apres-un-Squash-Merge.md).
+du template (CNI, `extraManifests`) restent joignables sur `main` ; sinon réépingler d'abord le SHA (section « Problèmes
+connus » de [OMNI-20260721-00](../omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)).
 
 ```sh
 # Prévisualiser sans rien modifier
@@ -254,6 +255,8 @@ Les voies de reprise établies sont les suivantes :
 
 ## Historique
 
+- _2026-10-17_ : Seconde revue : le paragraphe sur l'incident Kubernetes 1.35 est un callout, la procédure de drain CNPG
+  supprimée n'est plus citée et le réépinglage renvoie à la création de cluster.
 - _2026-10-17_ : Reprise après revue : l'état de vérification est un callout `WARNING`, les entrées sont des variables
   `export` utilisées dans les commandes, le kubeconfig de service account est expliqué et un exemple complet est ajouté.
 - _2026-10-11_ : Migration vers le standard de documentation (issue #1257) et réécriture pour Omni. La version de
@@ -271,8 +274,6 @@ Les voies de reprise établies sont les suivantes :
 
 - [Mettre à jour Talos avec Omni](./INF-20260525-00-Mettre-a-Jour-Talos-avec-Omni.md) : mise à jour de Talos, à faire
   d'abord si la version cible de Kubernetes l'exige.
-- [Drainer un nœud hébergeant des instances CNPG](./INF-20260525-02-Drainer-un-Noeud-Hebergeant-des-Instances-CNPG.md) :
-  comportement des instances CNPG quand un nœud est vidé pendant une mise à jour progressive.
 - [Créer un cluster Talos avec Omni](../omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md) : format des
   templates, validation et application avec `omnictl`.
 - [Incident Kubernetes 1.35 : feature gate retiré](../../incidents/2026-05-26-lungmen-k8s-1.35-removed-featuregate.md) :

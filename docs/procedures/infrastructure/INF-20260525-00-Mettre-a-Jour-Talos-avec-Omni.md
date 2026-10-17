@@ -91,8 +91,9 @@ commande. Son jeton vaut 8760 h par défaut (`--ttl`) : supprimer le fichier de 
 
 Les commandes `omnictl` mettent couramment 60 à 120 secondes à répondre : ce délai est normal.
 
-Si le cluster n'est pas `Ready`, ne pas poursuivre : diagnostiquer d'abord avec le skill
-[omni-talos-troubleshoot](../../../.agents/skills/omni-talos-troubleshoot/SKILL.md).
+> [!WARNING]\
+> Si le cluster n'est pas `Ready`, ne pas poursuivre : diagnostiquer d'abord avec le skill
+> [omni-talos-troubleshoot](../../../.agents/skills/omni-talos-troubleshoot/SKILL.md).
 
 Vérifier ensuite le chemin de mise à jour :
 
@@ -119,9 +120,11 @@ kubectl get pdb -A | grep -- '-primary'
 kubectl get clusters.postgresql.cnpg.io -A -o custom-columns=NS:.metadata.namespace,NAME:.metadata.name,INST:.spec.instances,PDB:.spec.enablePDB
 ```
 
-Appliquer les vérifications et les conséquences décrites dans
-[Drainer un nœud hébergeant des instances CNPG](./INF-20260525-02-Drainer-un-Noeud-Hebergeant-des-Instances-CNPG.md). Un
-cluster CNPG à une instance avec PDB bloque le drain et donc la mise à jour du nœud.
+Un cluster CNPG à une instance qui garde son PDB bloque le drain et donc la mise à jour du nœud : la règle OPA
+[REL001](../../../catalog/opa/rules/REL001-single-instance-cnpg-disable-pdb.md) l'interdit en CI. Le cas inverse, un
+cluster à plusieurs instances sans PDB, n'est pas contrôlé ([#1356](https://github.com/chezmoidotsh/arcane/issues/1356))
+: relever dans la sortie ci-dessus ceux dont `PDB` vaut `false`, car rien ne protège alors leur primaire pendant le
+drain.
 
 ## Étape 3 — Modifier la version de Talos dans le template
 
@@ -140,8 +143,8 @@ omnictl cluster template validate -f $TEMPLATE_FILE
 # → pas d'erreur
 ```
 
-Pour `lungmen.akn`, la tâche `mise run omni:clustertemplate:validate` (depuis `projects/lungmen.akn/`) exécute cette
-validation.
+Pour `lungmen.akn` et `rhodes.akn`, la tâche `mise run omni:clustertemplate:validate` (depuis `projects/<cluster>/`)
+exécute cette validation.
 
 Contrôler que le diff Git ne contient que la ligne `version` attendue :
 
@@ -209,14 +212,6 @@ kubectl get pods -A | grep -v -e Running -e Completed
 # → vide, ou limité à des transitoires attendus
 ```
 
-Contrôler ensuite les composants qui dépendent des nœuds :
-
-- Cilium : `kubectl get pods -n kube-system | grep cilium`, tous `Running` ;
-- certificats kubelet : `kubectl get csr`, aucun `Pending` durable (le `kubelet-serving-cert-approver` approuve les
-  certificats de service) ;
-- bases de données CNPG : `kubectl get clusters.postgresql.cnpg.io -A`, tous en `Cluster in healthy state` ;
-- sur `rhodes.akn`, OpenBao et Pocket-Id à nouveau joignables.
-
 ## Exemple complet : mise à jour de `rhodes-akn` de `v1.14.1` vers `v1.14.2`
 
 Exemple de forme, non rejoué : `v1.14.1` est la version déclarée aujourd'hui dans `rhodes.clustertemplate.yaml` ; la
@@ -236,6 +231,11 @@ omnictl cluster status rhodes-akn
 - **Version de Talos** : `kubectl get nodes -o wide` — `OS-IMAGE` indique `$TARGET_VERSION` sur chaque nœud.
 - **Nœuds** : `kubectl get nodes` — tous `Ready`, aucun `SchedulingDisabled` résiduel.
 - **Pods système** : `kubectl get pods -n kube-system` — `Running` ou `Completed`.
+- **Cilium** : `kubectl get pods -n kube-system | grep cilium` — tous `Running`.
+- **Certificats kubelet** : `kubectl get csr` — aucun `Pending` durable (le `kubelet-serving-cert-approver` approuve les
+  certificats de service).
+- **Bases de données CNPG** : `kubectl get clusters.postgresql.cnpg.io -A` — tous en `Cluster in healthy state`.
+- **Applications qui dépendent des nœuds** : de nouveau joignables (par exemple OpenBao et Pocket-Id sur `rhodes.akn`).
 - **Template commité** : la version de `talos.version` dans Git correspond à celle appliquée, pour que le prochain
   `sync` ne rétrograde pas le cluster.
 
@@ -261,6 +261,9 @@ les workloads tournent longtemps sur la nouvelle version, moins le retour est s�
 
 ## Historique
 
+- _2026-10-17_ : Seconde revue : l'arrêt si le cluster n'est pas `Ready` est un callout, la tâche de validation est
+  citée pour `lungmen.akn` et `rhodes.akn`, la procédure de drain CNPG est supprimée (remplacée par la règle OPA
+  `REL001`) et les contrôles des composants passent dans les vérifications rapides.
 - _2026-10-17_ : Reprise après revue : l'état de vérification est un callout `WARNING`, les entrées sont des variables
   `export` utilisées dans les commandes, le renvoi vers le drain pointe sur les étapes 2 et 4 et le kubeconfig de
   service account est expliqué.
@@ -278,13 +281,11 @@ les workloads tournent longtemps sur la nouvelle version, moins le retour est s�
 
 ## Pour aller plus loin
 
+- [Règle REL001](../../../catalog/opa/rules/REL001-single-instance-cnpg-disable-pdb.md) : la règle OPA qui impose
+  `enablePDB: false` aux clusters CNPG mono-instance.
 - [Mettre à jour Kubernetes avec Omni](./INF-20260525-01-Mettre-a-Jour-Kubernetes-avec-Omni.md) : la mise à jour de
   Kubernetes, à coordonner avec celle de Talos.
-- [Drainer un nœud hébergeant des instances CNPG](./INF-20260525-02-Drainer-un-Noeud-Hebergeant-des-Instances-CNPG.md) :
-  effet du drain sur les bases CloudNative-PG.
 - [Créer un cluster Talos avec Omni](../omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md) : application du
   template avec `omnictl cluster template` et surveillance de la convergence.
-- [Réépingler les SHA après un squash merge](../omni/OMNI-20260629-03-Reepingler-les-SHA-apres-un-Squash-Merge.md) : si
-  les manifests épinglés du template deviennent injoignables.
 - [Mise à jour d'un cluster dans Omni](https://docs.siderolabs.com/omni/cluster-management/upgrading-clusters) :
   documentation officielle d'Omni sur l'ordre des nœuds, le drain et l'annulation, consultée le 2026-10-11.
