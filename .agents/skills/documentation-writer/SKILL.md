@@ -35,6 +35,7 @@ Match the intent to one row, then read the files in the last column **in that or
 | Understand _why_ a technical choice was made                       | ADR              | [adr.md](references/adr.md), then [adr-template.md](references/adr-template.md)                                                                          |
 | Learn from a failure, an outage or a missed target                 | Post-mortem      | [postmortem.md](references/postmortem.md), then [templates/postmortem.md](templates/postmortem.md) or [postmortem-lite.md](templates/postmortem-lite.md) |
 | Know what was tried, what was concluded, and where the code lives  | Experiment       | [experiment-template.md](references/experiment-template.md)                                                                                              |
+| Keep the trace of a finished or obsolete document                  | Archive          | [archive-template.md](references/archive-template.md)                                                                                                    |
 | Get the overview of a project under `projects/`                    | Project overview | [project-template.md](references/project-template.md)                                                                                                    |
 
 Tell-apart rules when two rows seem to fit:

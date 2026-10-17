@@ -28,7 +28,7 @@ observability, OCI registry) every other project depends on.
 
 The backbone is the [`chezmoi-sh-infra`](src/infrastructure/pulumi/README.md) Pulumi stack. Its state lives in the
 Garage S3 backend on the NAS (see
-[`INF-20260705-00.pulumi-state-and-import.md`](../../docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md)),
+[`INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md`](../../docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)),
 and applying it regenerates the reference documents below, so they never drift from what is deployed.
 
 > \[!NOTE] Even if this project is the "root" one, it relies on the [`rhodes.akn`](../rhodes.akn/README.md) project to

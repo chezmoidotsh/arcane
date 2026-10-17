@@ -166,8 +166,8 @@ Internal node-to-node network for Talos clusters, provisioned in the `pvenet` SD
 second Proxmox node; on today's single-node homelab that's impossible, so `simple` is used instead. Codified in Pulumi
 at `projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/sdn.ts` (`pvenetZone`/`talosnetVnet`/`talosnetSubnet`),
 which superseded the manual `pvesh`/`pveum` recipe in
-[INF-20260627-00](../procedures/infrastructure/INF-20260627-00.proxmox-sdn-setup.md) — that procedure still has the full
-design rationale and the migration path once a second node joins.
+[INF-20260627-00](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md) — that procedure still
+has the full design rationale and the migration path once a second node joins.
 
 **Parent range:** `10.128.0.0/16` — no conflict with any existing subnet. A single `/24` is currently allocated to the
 shared Talos VNet (see table below).

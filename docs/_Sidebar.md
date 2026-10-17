@@ -2,13 +2,21 @@
 
 ### Exploiter les clusters
 
-- [Procédures](procedures/README.md)
 - [Créer un cluster Talos avec Omni](procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)
 - [Mettre à jour Talos avec Omni](procedures/infrastructure/INF-20260525-00-Mettre-a-Jour-Talos-avec-Omni.md)
 - [Mettre à jour Kubernetes avec Omni](procedures/infrastructure/INF-20260525-01-Mettre-a-Jour-Kubernetes-avec-Omni.md)
+- [Mettre à jour un LXC par échange du rootfs](procedures/infrastructure/INF-20260605-00-Mettre-a-Jour-un-LXC-par-Echange-du-Rootfs.md)
+- [Installer node-exporter sur Proxmox](procedures/infrastructure/INF-20260620-00-Installer-Node-Exporter-sur-Proxmox.md)
+- [Provisionner le SDN Proxmox](procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md)
+- [Gérer l'état Pulumi et importer des ressources](procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
+- [Désactiver le suivi de connexion des pools LB](procedures/infrastructure/INF-20260730-00-Desactiver-le-Suivi-de-Connexion-des-Pools-LB.md)
 - [Initialiser Lungmen](../projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md)
 - [Initialiser Kazimierz](../projects/kazimierz.akn/docs/BOOTSTRAP.md)
 - [Initialiser Rimbilliton](../projects/rimbilliton.akn/docs/BOOTSTRAP.md)
+
+10 other conflicted commits exist — scope with `but resolve conflicts <branch>`. Resolve with
+`but resolve apply <path>[:<N>] --commit docs/balayage-final --ours|--theirs` or pipe mixed content into
+`but resolve apply <path>:<N> --commit docs/balayage-final`. `but resolve --ai` resolves everything at once.
 
 ### Reprendre après une panne
 

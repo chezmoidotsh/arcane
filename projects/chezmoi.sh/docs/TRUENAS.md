@@ -144,7 +144,7 @@ catalog itself plus two _Apps_:
 - **[Garage](https://garagehq.deuxfleurs.fr/)** — the homelab's S3-compatible object store (`s3.chezmoi.sh`), backed by
   the `zp1hs01/applications/truenas/fr.deuxfleurs.garage` dataset. Beyond database dumps, it holds the **Pulumi state of
   every stack in this repository** (`s3://pulumi-states` — see
-  [`INF-20260705-00.pulumi-state-and-import.md`](../../../docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md)):
+  [`INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md`](../../../docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)):
   while Garage is down, no `pulumi` command can run anywhere. Its dataset is covered by the daily off-site sync in
   [Backups](#backups), Layer 3.
 - **Nginx Proxy Manager** — the NAS-internal reverse proxy, backed by
@@ -366,7 +366,7 @@ pooling as first-class features rather than something bolted on with LVM/RAID.
 ### References
 
 - [`stack/truenas/README.md`](../src/infrastructure/pulumi/stack/truenas/README.md) — the stack managing this NAS
-- [`INF-20260705-00.pulumi-state-and-import.md`](../../../docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md)
+- [`INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md`](../../../docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)
   — the Pulumi state hosted on Garage
 - [`PROXMOX-VE.md`](./PROXMOX-VE.md) — the hypervisor this VM runs on
 - [`PROXMOX_BACKUP_SERVER.md`](./PROXMOX_BACKUP_SERVER.md) — where the VM's system disk is backed up
