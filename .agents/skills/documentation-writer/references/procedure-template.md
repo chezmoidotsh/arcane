@@ -14,6 +14,10 @@
 
 {Écrire l'introduction ici...}
 
+> [!WARNING] {Facultatif — à inclure tant que la procédure n'a pas été rejouée de bout en bout : « Vérifiée contre le
+> dépôt le AAAA-MM-JJ ; les commandes n'ont pas été rejouées sur le cluster. » Pour une procédure jamais exécutée,
+> utiliser un `[!CAUTION]` qui le dit.}
+
 ## Cadre technique et conventions [Facultatif]
 
 > À inclure quand la procédure impose des règles de nommage, des conventions de chemin ou une pile technique que le
@@ -40,10 +44,15 @@ Les accès suivants sont également nécessaires :
 
 > Nommer les variables à définir avant d'exécuter les étapes : ce sont les marqueurs utilisés partout (par exemple
 > `APP_DIR`, `CLUSTER`, `HOSTNAME`). Chaque étape référence ces variables au lieu de répéter des valeurs brutes, pour
-> que la procédure reste copiable d'une exécution à l'autre.
+> que la procédure reste copiable d'une exécution à l'autre. Les déclarer dans un seul bloc `export`, une variable par
+> ligne : un marqueur `<…>` pour la valeur attendue, un exemple en commentaire de fin de ligne.
 
-- `{VAR_1}` : {Ce que c'est, avec une valeur d'exemple, par exemple `projects/<cluster>/src/apps/<app>`}
-- `{VAR_2}` : {Ce que c'est, avec une valeur d'exemple}
+Exporter ces variables une fois ; toutes les commandes suivantes se copient ensuite telles quelles.
+
+```sh
+export {VAR_1}=<{Ce que c'est}>   # ex. projects/<cluster>/src/apps/<app>
+export {VAR_2}=<{Ce que c'est}>   # ex. {valeur d'exemple}
+```
 
 ## Étape 1 — {Titre de l'action}
 
@@ -113,6 +122,8 @@ commande se comprend d'elle-même.}
 {Ce qui se passe, la cause racine et le contournement.}
 
 ## Historique
+
+> Du plus récent au plus ancien.
 
 - _{AAAA-MM-JJ}_ : {Ce qui a changé dans cette procédure et pourquoi — pas ce qui a changé dans le système qu'elle
   opère}

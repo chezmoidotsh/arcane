@@ -78,8 +78,8 @@ A README section that is really a guide moves to `docs/`, and the README links t
    first, example before explanation, tables for anything enumerable, one fact in one place, present tense, no filler.
 4. **Wire it in.** Add the page to `_Sidebar.md` under the right heading, link it from the pages that mention it, and
    end it with `## Pour aller plus loin`.
-5. **Run `scripts/wiki:lint`** and fix every finding. It also runs in `rtunk check` (linter `wiki-lint`), so it runs on
-   every pull request.
+5. **Run `mise run lint:fix`** (Prettier wraps at 120 columns), then **`scripts/wiki:lint`** and fix every finding. It
+   also runs in `rtunk check` (linter `wiki-lint`), so it runs on every pull request.
 6. **Moving a document? Use `git mv`** so the history stays traceable, then rewrite in the same pull request. Update
    every reference to the old path
    (`grep -rn "<old path>" --include='*.md' --include='*.yaml' --include='*.py' --include='*.sh' .`).

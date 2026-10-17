@@ -137,18 +137,22 @@ in every procedure — match the set to the procedure's actual complexity:
 
 - **One command block per logical action**, not a paragraph describing what to click. The audience for this repo's
   procedures is an operator or agent with a terminal, not someone reading a printed manual — write for that.
+- **Space out long command blocks.** A block of more than four commands is split into logical groups (setup, action,
+  check) separated by one blank line. A command and its `# →` expected output stay together, and a comment that
+  introduces a group sticks to it. A short block stays compact.
 - **Annotate expected output inline** with a `# → ...` comment after the command, or a short prose line right after the
   block. This is the single most load-bearing convention in this repo's procedures: it lets the executor confirm success
   before proceeding, instead of finding out three steps later that something silently failed.
-- **Use ALL_CAPS placeholder variables** (`APP_DIR`, `CLUSTER`, `HOSTNAME`) declared in "Entrées requises" and reused
-  throughout, with a `# À adapter` comment on lines the reader must edit. Never hardcode a real cluster or app name into
-  the generic steps — that value belongs only in the "Exemple complet" section.
+- **Use ALL_CAPS placeholder variables** (`APP_DIR`, `CLUSTER`, `HOSTNAME`) declared in "Entrées requises" as `export`
+  lines and reused throughout, with a `# À adapter` comment on lines the reader must edit. Never hardcode a real cluster
+  or app name into the generic steps — that value belongs only in the "Exemple complet" section.
 - **State the "why" for non-obvious steps.** If a step exists because of a specific constraint (see SEC-20250808-00's
   note on why only the `openid` scope is requested by default, for least privilege), say so inline — a reader who
   understands why is far less likely to "simplify" the step incorrectly on the next run.
 - **Never invent a step.** Only document what was actually performed and confirmed. If a step is uncertain, ask the user
   rather than filling the gap with something plausible-looking.
-- **Use GitHub callout syntax** for asides, consistent with the rest of the repo's markdown:
+- **Use GitHub callout syntax** for asides. The marker and the text stay on the same line (`> [!NOTE] Text`), the way
+  Prettier formats them. One callout holds one kind of message: never mix information and warning in the same one.
 
   ```markdown
   > [!NOTE] Informational detail worth knowing.
@@ -157,14 +161,18 @@ in every procedure — match the set to the procedure's actual complexity:
 
   > [!IMPORTANT] A constraint that breaks a later step if missed.
 
-  > [!CAUTION] Something that must be done carefully, or a data-loss risk.
+  > [!WARNING] A risk of failure or of a wrong result, or a point not yet confirmed on the real system.
 
-  > [!WARNING] Deprecated content, or a risk discovered during a real run.
+  > [!CAUTION] An irreversible action or a data-loss risk. Also used for a procedure that was never run.
   ```
+
+- **Say how far the procedure was checked.** Right after the introduction, a `[!WARNING]` states that the commands were
+  checked against the repository but not replayed (with the date); a `[!CAUTION]` states that the procedure was never
+  tested at all. A procedure replayed end to end on a real system needs neither.
 
 - **History, not a changelog field.** Every procedure has a `## Historique` section, placed just before
   `## Pour aller plus loin`: a dated bullet log of what changed in the procedure itself (not in the system it operates
-  on) — `- _AAAA-MM-JJ_ : Description`.
+  on) — `- _AAAA-MM-JJ_ : Description`. Entries run from the most recent to the oldest, whatever the document.
 
 ### Registering the procedure
 

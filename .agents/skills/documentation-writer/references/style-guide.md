@@ -61,7 +61,7 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
    _une_, _de_, _du_, _des_, _d_, _depuis_, _sous_, _avec_, _par_, _pour_, _sur_, _dans_, _vers_, _et_, _ou_, _au_,
    _en_, _que_, _qu_) stay lowercase; verbs, nouns, adjectives, acronyms and proper names keep their capital, and so
    does the first word of the title (`Restaurer-CNPG-depuis-le-Stockage-Objet`). The directory already says the page is
-   a procedure, a decision or a guide: no `Procedure-` prefix.
+   a procedure, a decision or a guide: no prefix like `Procedure-`.
 3. **Page names are unique across the whole tree [lint].** Two pages with the same name (case ignored) in different
    directories are rejected, so a page can always be found by its name and moved without a collision.
 4. **The name signals the page type.** Guides start with a verb (`Initialiser-Lungmen`, `Restaurer-OpenBao`), references
@@ -109,6 +109,12 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
 4. **Name things as the code does.** Use the exact resource, file and command names, in backticks. Use `Pocket-Id`,
    `OpenBao`, `Talos`, `Cilium`, `CloudNative-PG` as the projects write them.
 5. **Dates are ISO 8601.** `2026-10-11`, never "last Tuesday" or "recently".
+6. **History is newest first.** Every dated log of a document (`Historique`, `Historique des modifications`, the
+   changelog of a template) lists the most recent entry first.
+7. **Kubernetes resources are code.** `PersistentVolumeClaim`, `StatefulSet`, `Pod`, `Application`: the kind of a
+   resource is always in backticks.
+8. **Format before committing.** Prettier wraps prose at 120 columns (`proseWrap: always`, `.prettierrc.json`); run
+   `mise run lint:fix` so no paragraph stays on one long line.
 
 ## Records (ADR, post-mortem)
 
