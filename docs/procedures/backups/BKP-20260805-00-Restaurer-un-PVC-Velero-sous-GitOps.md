@@ -1,13 +1,14 @@
 # BKP-20260805-00 Restaurer un PVC Velero sous GitOps
 
-Cette procédure restaure un PersistentVolumeClaim depuis une sauvegarde Velero (fs-backup Kopia), sur un cluster où un
-contrôleur (StatefulSet, ou ArgoCD/Kustomize pour un Deployment) possède déjà le Pod cible et le réconcilie. Cette
+Cette procédure restaure un `PersistentVolumeClaim` depuis une sauvegarde Velero (fs-backup Kopia), sur un cluster où un
+contrôleur (`StatefulSet`, ou ArgoCD/Kustomize pour un `Deployment`) possède déjà le `Pod` cible et le réconcilie. Cette
 propriété casse le flux de restauration par défaut de Velero, et aucune combinaison des options documentées de Velero ne
 la contourne : la solution est une séquence d'opérations, pas une option. Elle a été découverte et validée de bout en
 bout le 2026-08-05 sur l'application `jellyfin` de `lungmen.akn` (voir l'exemple complet). À utiliser quand le PVC d'une
 application est perdu ou corrompu ; la durée dépend surtout du volume à recopier (environ 1,1 Go dans l'exemple).
 
-Vérifiée contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées sur le cluster pour cette migration.
+> [!WARNING] Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur le cluster
+> depuis la validation du 2026-08-05.
 
 ## Cadre technique et conventions
 
@@ -76,13 +77,26 @@ export BACKUP_NAME=<Backup Velero source>                           # voir ci-de
 export RESTORE_NAME=<nom du nouvel objet Restore>                   # ex. ${WORKLOAD_NAME}-restore-$(date +%Y%m%d%H%M%S)
 ```
 
-Choisir `BACKUP_NAME` parmi les sauvegardes saines les plus récentes de `APP_NAMESPACE` (filtrer
-`kubectl get backups.velero.io -n $VELERO_NAMESPACE` par préfixe de nom).
+Choisir `BACKUP_NAME` parmi les sauvegardes saines les plus récentes de `APP_NAMESPACE`. Velero recrée dans le cluster
+les objets `Backup` présents dans le bucket de sauvegarde (synchronisation périodique de la zone de stockage) : après
+une reprise après sinistre, une fois Velero réinstallé et la zone de stockage `Available`, les sauvegardes d'avant le
+sinistre apparaissent donc sans action de plus.
+
+```sh
+# La zone de stockage doit être Available : c'est elle qui synchronise les Backup du bucket vers le cluster
+velero backup-location get --namespace $VELERO_NAMESPACE
+
+# Les sauvegardes de l'application, par date de création (les Backup portent le nom du Schedule suivi de l'horodatage)
+velero backup get --namespace $VELERO_NAMESPACE | grep "^$APP_NAMESPACE-"
+```
+
+`scripts/velero:backup backups <app>` donne la même liste, triée de la plus ancienne à la plus récente.
 
 ## Étape 1 — Confirmer la politique de rétention du PVC avant toute action
 
-Le PVC est supprimé à l'étape 3 dans tous les cas : cette vérification ne change aucune étape suivante. Elle indique à
-quel point la suppression est destructrice, donc le degré de confiance à accorder au Backup choisi.
+> [!CAUTION] Le PVC est supprimé à l'étape 3 dans tous les cas : cette vérification ne change aucune étape suivante.
+> Elle sert à savoir si cette suppression détruit aussi le volume (`Delete`) ; dans ce cas, il faut être certain que le
+> Backup choisi est sain et assez récent avant de continuer.
 
 ```sh
 PV_NAME=$(kubectl get pvc -n $APP_NAMESPACE $PVC_NAME -o jsonpath='{.spec.volumeName}')
@@ -164,10 +178,10 @@ kubectl get podvolumerestores.velero.io -n $VELERO_NAMESPACE \
 ```
 
 Si la phase du `PodVolumeRestore` reste vide ou non définie plus d'une à deux minutes avec zéro octet de progression, la
-restauration est tombée dans le mode d'échec décrit dans le cadre technique : le contrôleur propriétaire a recréé le Pod
-cible avant que Velero n'injecte son init container `restore-wait`. Revenir à l'étape 3, confirmer que le workload a
-bien été supprimé (et pas seulement mis à l'échelle), et vérifier que rien d'autre dans le cluster n'a recréé
-entre-temps un Pod portant le nom cible.
+restauration est tombée dans le mode d'échec décrit dans le cadre technique : le `StatefulSet` ou le `Deployment`
+propriétaire du `Pod` cible l'a recréé avant que Velero n'injecte son init container `restore-wait`. Revenir à l'étape
+3, confirmer que le workload a bien été supprimé (et pas seulement mis à l'échelle), et vérifier que rien d'autre dans
+le cluster n'a recréé entre-temps un Pod portant le nom cible.
 
 ## Étape 6 — Vérifier au niveau applicatif, pas seulement l'état du Pod
 
@@ -204,10 +218,11 @@ fi
 
 ## Exemple complet : `jellyfin` sur `lungmen.akn`
 
-Les valeurs ci-dessous sont celles de la validation du 2026-08-05. Depuis, le `volumeClaimTemplates` de `jellyfin`
-utilise la StorageClass `proxmox-lvmthin-ext4-retain`
-(`projects/lungmen.akn/src/apps/jellyfin/jellyfin.statefulset.yaml`) : un PVC provisionné aujourd'hui aurait une
-politique `Retain`, alors que le PV de la validation était en `Delete`.
+Les valeurs ci-dessous sont celles de la validation du 2026-08-05.
+
+> [!NOTE] Depuis, le `volumeClaimTemplates` de `jellyfin` utilise la `StorageClass` `proxmox-lvmthin-ext4-retain`
+> (`projects/lungmen.akn/src/apps/jellyfin/jellyfin.statefulset.yaml`) : un PVC provisionné aujourd'hui aurait une
+> politique `Retain`, alors que le PV de la validation était en `Delete`.
 
 ```sh
 export VELERO_NAMESPACE=velero-system
@@ -281,8 +296,8 @@ touchées.
 
 Avec un nombre de réplicas désiré à 0, le contrôleur supprime _tout_ Pod correspondant à son motif de nom dès qu'il
 apparaît, y compris celui que crée la restauration Velero. Confirmé par un événement `SuccessfulDelete` du contrôleur,
-quelques secondes après la création du `PodVolumeRestore` ; le PVR est alors orphelin pour toujours, en silence, comme
-sans contournement.
+quelques secondes après la création du `PodVolumeRestore` ; ce dernier reste alors orphelin, sans erreur visible : c'est
+le même échec silencieux que lors d'une restauration naïve, sans la séquence de cette procédure.
 
 ### Une restauration précédente a laissé un `PodVolumeRestore` orphelin qui bloque `kubectl delete`
 
@@ -303,6 +318,9 @@ procédure : un nombre désiré incohérent est ce qui a causé l'orphelinage.
 
 ## Historique
 
+- _2026-10-17_ : Reprise après revue : la liste des sauvegardes passe par la CLI `velero` et la synchronisation de la
+  zone de stockage (utile après un sinistre), l'avertissement de l'étape 1 devient un callout `CAUTION`, les ressources
+  Kubernetes sont en code, et l'état de vérification de la procédure est un callout `WARNING`.
 - _2026-10-11_ : Migration vers le standard de documentation en français (#1257). Vérification contre le dépôt : le
   `volumeClaimTemplates` de `jellyfin` utilise désormais `proxmox-lvmthin-ext4-retain` (la valeur `Delete` de l'exemple
   est celle de la validation du 2026-08-05) ; les Schedules Velero versionnés ne sauvegardent que pods, PVC et PV, et

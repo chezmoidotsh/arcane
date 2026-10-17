@@ -1,4 +1,4 @@
-# DB-20260723-00 Restaurer CNPG Depuis Le Stockage Objet
+# DB-20260723-00 Restaurer CNPG depuis le stockage objet
 
 Cette procédure amorce un `Cluster` CloudNative-PG à partir d'un backup existant du plugin
 `barman-cloud.cloudnative-pg.io`, soit pour recréer la même base logique sur un nouveau cluster Kubernetes (reprise
@@ -9,32 +9,23 @@ d'[OpenBao](../../../projects/rhodes.akn/docs/disaster-recovery/openbao.md) et d
 la base au lieu de dupliquer la mécanique. Durée : de quelques minutes à plusieurs dizaines de minutes, selon la taille
 du base backup et le volume de WAL à rejouer.
 
-Cette procédure n'est pas l'opération du skill `.agents/skills/cnpg-backup/SKILL.md` (backup à la demande d'un cluster
-sain en cours d'exécution) : ce skill renvoie ici les demandes de restauration au lieu de les improviser.
-
-Vérifiée contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées sur le cluster pour cette migration.
+> [!WARNING] Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur un cluster.
 
 ## Cadre technique et conventions
 
 Tout cluster CNPG de ce dépôt sauvegardé par le plugin `barman-cloud.cloudnative-pg.io` possède trois coordonnées que
 cette procédure relie, et qu'il est facile de confondre :
 
-| Champ                            | Rôle                                                                                                                                                                                                                                                |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `serverName`                     | ULID identifiant un dossier S3 précis sous le `destinationPath` de l'`ObjectStore` (`spec.plugins[].parameters.serverName`, ou sous `externalClusters[].plugin.parameters`), par exemple `s3://cnpg-rhodes-akn/openbao/01KEPSN912SSFFARX3YYZNA22Q/` |
-| `spec.bootstrap.recovery.source` | Libellé arbitraire (la convention du dépôt est le timestamp décodé de l'ULID, par exemple `2026-01-11T08:07:53.126Z`) qui doit correspondre exactement au `name` d'une entrée de `spec.externalClusters[]`                                          |
-| `spec.externalClusters[].name`   | Libellé référencé par `bootstrap.recovery.source` ; son propre `plugin.parameters.serverName` désigne le dossier S3 réel                                                                                                                            |
+| Champ                            | Rôle                                                                                                                                                                                                                                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `serverName`                     | ULID identifiant un dossier S3 précis sous le `destinationPath` de l'`ObjectStore` (`spec.plugins[].parameters.serverName`, ou sous `externalClusters[].plugin.parameters`), par exemple `01KEPSN912SSFFARX3YYZNA22Q` pour `s3://cnpg-rhodes-akn/openbao/01KEPSN912SSFFARX3YYZNA22Q/` |
+| `spec.bootstrap.recovery.source` | Libellé arbitraire (la convention du dépôt est le timestamp décodé de l'ULID, par exemple `2026-01-11T08:07:53.126Z`) qui doit correspondre exactement au `name` d'une entrée de `spec.externalClusters[]`                                                                            |
+| `spec.externalClusters[].name`   | Libellé référencé par `bootstrap.recovery.source` ; son propre `plugin.parameters.serverName` désigne le dossier S3 réel                                                                                                                                                              |
 
 Les ULID sont triables lexicographiquement par date de création : le dernier dossier d'un listing trié par ordre
 alphabétique est le plus récent. La chaîne de résolution est : `bootstrap.recovery.source`, puis recherche dans
 `externalClusters[].name`, puis `externalClusters[].plugin.parameters.serverName`, qui donne le dossier S3 réel. Deux de
 ces noms sont des libellés (le libellé de `source` et `name`), le troisième (l'ULID) se lit sur S3.
-
-Cette procédure utilise `s3cmd` pour les opérations S3, comme
-[DB-20260530-00](../databases/DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md), plutôt que le client MinIO
-(`mc`). `mc` exige une étape persistante `mc alias set`, un surcoût inutile pour une procédure en général exécutée une
-seule fois, depuis un poste sans alias Garage préalable (exercice de reprise ou nouveau poste d'opérateur). `s3cmd`
-reçoit ses identifiants en options à chaque appel, sans préparation.
 
 ## Prérequis
 
@@ -52,40 +43,36 @@ Les accès suivants sont également nécessaires :
 
 ## Entrées requises
 
-- `CLUSTER_CONTEXT` : contexte kubectl du cluster cible (par exemple `admin@rhodes.akn`).
-- `NAMESPACE` : namespace du cluster CNPG (par exemple `vault`).
-- `CLUSTER_MANIFEST` : chemin du manifeste `Cluster` à restaurer (par exemple
-  `projects/rhodes.akn/src/apps/vault/cnpg.cluster.yaml`).
-- `OBJECTSTORE_MANIFEST` : chemin du manifeste `ObjectStore` correspondant, dans le même dossier. Le nom du fichier
-  varie selon le projet : `cnpg.objectstore.yaml` sur `rhodes.akn`, `<nom>.objectstore.yaml` sur `lungmen.akn` (par
-  exemple `projects/lungmen.akn/src/apps/databases/apps.objectstore.yaml`).
-- `SCHEDULEDBACKUP_MANIFEST` : chemin du manifeste `ScheduledBackup` correspondant, dans le même dossier avec la même
-  réserve sur le nom (`cnpg.scheduledbackup.yaml` sur `rhodes.akn`, `<nom>.scheduledbackup.yaml` sur `lungmen.akn`).
-  Utilisé à l'étape 5 pour reprendre le rythme de backup du cluster restauré.
-- `CLUSTER_NAME` : `metadata.name` de la ressource `Cluster`. Il n'est pas connu d'avance si le cluster est renommé à
-  l'étape 3 ; `kubectl get cluster` après l'étape 4 confirme le nom réellement utilisé pour les sections Vérifications
-  rapides et Retour arrière.
+Exporter ces variables une fois ; toutes les commandes suivantes se copient ensuite telles quelles.
+
+```sh
+export CLUSTER_CONTEXT=<contexte kubectl du cluster cible>           # ex. admin@rhodes.akn
+export NAMESPACE=<namespace du cluster CNPG>                         # ex. vault
+export CLUSTER_MANIFEST=<manifeste du Cluster à restaurer>           # ex. projects/rhodes.akn/src/apps/vault/cnpg.cluster.yaml
+export OBJECTSTORE_MANIFEST=<manifeste de l'ObjectStore>             # ex. projects/rhodes.akn/src/apps/vault/cnpg.objectstore.yaml
+export SCHEDULEDBACKUP_MANIFEST=<manifeste du ScheduledBackup>       # ex. projects/rhodes.akn/src/apps/vault/cnpg.scheduledbackup.yaml
+export CLUSTER_NAME=<metadata.name du Cluster>                       # le nom choisi à l'étape 3 si le cluster est renommé
+```
+
+Les trois manifestes sont dans le même dossier. Leur nom varie selon le projet : `cnpg.*.yaml` sur `rhodes.akn`,
+`<nom>.objectstore.yaml` et `<nom>.scheduledbackup.yaml` sur `lungmen.akn` (par exemple
+`projects/lungmen.akn/src/apps/databases/apps.objectstore.yaml`). `kubectl get cluster` après l'étape 4 confirme le nom
+réellement utilisé pour `CLUSTER_NAME`.
 
 ## Étape 1 — Extraire les coordonnées S3 et les identifiants
 
 ```sh
 # Bucket et chemin, depuis le manifeste ObjectStore
-grep destinationPath <OBJECTSTORE_MANIFEST>
+grep destinationPath $OBJECTSTORE_MANIFEST
 # → par exemple : destinationPath: s3://cnpg-rhodes-akn/openbao
 
 # Endpoint, depuis le même manifeste
-grep endpointURL <OBJECTSTORE_MANIFEST>
+grep endpointURL $OBJECTSTORE_MANIFEST
 # → par exemple : endpointURL: https://s3.chezmoi.sh
 
 # Identifiants : décoder le secret cnpg-backup-credentials déjà appliqué
-kubectl --context <CLUSTER_CONTEXT> get secret cnpg-backup-credentials \
-  -n <NAMESPACE> -o json \
-  | python3 -c "
-import sys, json, base64
-s = json.load(sys.stdin)
-for k, v in s['data'].items():
-    print(f'{k}={base64.b64decode(v).decode()}')
-"
+kubectl --context $CLUSTER_CONTEXT get secret cnpg-backup-credentials -n $NAMESPACE \
+  -o go-template='{{range $k, $v := .data}}{{$k}}={{$v | base64decode}}{{"\n"}}{{end}}'
 # → access_key_id=...
 # → access_secret_key=...
 # → region=...
@@ -103,14 +90,9 @@ pour ses propres identifiants de backup : dépendance circulaire) l'obtient d'un
 cd projects/rhodes.akn/src/infrastructure/pulumi && pulumi up --refresh --parallel 15
 ```
 
-Le mot de passe PG du rôle (`managed.roles[].passwordSecret` dans `<CLUSTER_MANIFEST>`) suit la même exception : sur la
-plupart des clusters il vient de Vault par `ExternalSecret` ; sur `rhodes.akn` il est généré localement par une paire
-ESO `Generator`/`ExternalSecret` livrée avec l'application (`database.externalsecret.yaml`). Aucune action manuelle
-n'est nécessaire une fois ESO déployé et synchronisé, comme dans le cas Vault, mais sans Vault dans la boucle.
-
 Les procédures de reprise après sinistre d'[OpenBao](../../../projects/rhodes.akn/docs/disaster-recovery/openbao.md) et
 de [Pocket-Id](../../../projects/rhodes.akn/docs/disaster-recovery/pocket-id.md) sont toutes deux sur `rhodes.akn` et
-traitent ces deux points avant d'appeler cette procédure.
+traitent ce point avant d'appeler cette procédure.
 
 ## Étape 2 — Lister le bucket et identifier le dernier backup
 
@@ -122,10 +104,10 @@ est en lecture seule. Les documents de reprise après sinistre de `rhodes.akn` l
 application, `dr:openbao:backup:latest` et `dr:pocket-id:backup:latest`, qui figent le chemin du manifeste.
 
 ```sh
-ACCESS_KEY="<access_key_id de l'étape 1>"
-SECRET_KEY="<access_secret_key de l'étape 1>"
-ENDPOINT="s3.chezmoi.sh"          # hôte seul, sans schéma
-BUCKET_PATH="<bucket/chemin de l'étape 1, par exemple cnpg-rhodes-akn/openbao>"
+export ACCESS_KEY=<access_key_id de l'étape 1>
+export SECRET_KEY=<access_secret_key de l'étape 1>
+export ENDPOINT=s3.chezmoi.sh          # hôte seul, sans schéma
+export BUCKET_PATH=<bucket/chemin de l'étape 1>     # ex. cnpg-rhodes-akn/openbao
 
 # --host-bucket égal à --host (sans modèle "%(bucket)s") force l'adressage
 # path-style plutôt que virtual-hosted, nécessaire pour Garage. À vérifier au
@@ -139,7 +121,7 @@ s3cmd --access_key="$ACCESS_KEY" --secret_key="$SECRET_KEY" \
 #     DIR  s3://cnpg-rhodes-akn/openbao/01KEPSN912SSFFARX3YYZNA22Q/
 # Les ULID sont triés par date de création : le dernier listé est le plus récent.
 
-SERVER_NAME="<dernier ULID (le plus récent) du listing>"
+export SERVER_NAME=<dernier ULID (le plus récent) du listing>
 
 # Confirmer qu'il contient un base backup et des WAL
 s3cmd --access_key="$ACCESS_KEY" --secret_key="$SECRET_KEY" \
@@ -203,11 +185,11 @@ tout le dépôt : il n'existe pas encore d'équivalent générique en dehors de 
 ## Étape 4 — Appliquer l'ObjectStore et le Cluster
 
 ```sh
-kubectl --context <CLUSTER_CONTEXT> apply -f <OBJECTSTORE_MANIFEST>
-kubectl --context <CLUSTER_CONTEXT> apply -f <CLUSTER_MANIFEST>
+kubectl --context $CLUSTER_CONTEXT apply -f $OBJECTSTORE_MANIFEST
+kubectl --context $CLUSTER_CONTEXT apply -f $CLUSTER_MANIFEST
 
 # Suivre la restauration
-kubectl --context <CLUSTER_CONTEXT> get cluster -n <NAMESPACE> -w
+kubectl --context $CLUSTER_CONTEXT get cluster -n $NAMESPACE -w
 # → la phase progresse : "Setting up primary", "Recovering instance", puis "Cluster in healthy state"
 ```
 
@@ -218,11 +200,11 @@ kubectl --context <CLUSTER_CONTEXT> get cluster -n <NAMESPACE> -w
 
 ```sh
 # Phase du cluster
-kubectl --context <CLUSTER_CONTEXT> get cluster -n <NAMESPACE>
+kubectl --context $CLUSTER_CONTEXT get cluster -n $NAMESPACE
 # → Cluster in healthy state
 
 # Pods
-kubectl --context <CLUSTER_CONTEXT> get pods -n <NAMESPACE>
+kubectl --context $CLUSTER_CONTEXT get pods -n $NAMESPACE
 # → 2/2 Running (ou 1/2 pour un cluster à instance unique, par exemple openbao-database)
 ```
 
@@ -230,17 +212,18 @@ Appliquer aussi à ce stade le manifeste `ScheduledBackup` correspondant (même 
 reprenne son propre rythme de backup au lieu de dépendre seulement de l'historique récupéré :
 
 ```sh
-kubectl --context <CLUSTER_CONTEXT> apply -f <SCHEDULEDBACKUP_MANIFEST>
+kubectl --context $CLUSTER_CONTEXT apply -f $SCHEDULEDBACKUP_MANIFEST
 ```
 
 ## Vérifications rapides
 
-- **Phase du cluster** : `kubectl --context <CTX> get cluster <CLUSTER_NAME> -n <NS>` → `Cluster in healthy state`
-- **Pods Running** : `kubectl --context <CTX> get pods -n <NS>` → tous les conteneurs `Running`
+- **Phase du cluster** : `kubectl --context $CLUSTER_CONTEXT get cluster $CLUSTER_NAME -n $NAMESPACE` →
+  `Cluster in healthy state`
+- **Pods Running** : `kubectl --context $CLUSTER_CONTEXT get pods -n $NAMESPACE` → tous les conteneurs `Running`
 - **Archivage WAL repris** :
-  `kubectl --context <CTX> get cluster <CLUSTER_NAME> -n <NS> -o jsonpath='{.status.conditions}'` →
+  `kubectl --context $CLUSTER_CONTEXT get cluster $CLUSTER_NAME -n $NAMESPACE -o jsonpath='{.status.conditions}'` →
   `ContinuousArchivingSuccess`
-- **ScheduledBackup actif** : `kubectl --context <CTX> get scheduledbackup -n <NS>`
+- **ScheduledBackup actif** : `kubectl --context $CLUSTER_CONTEXT get scheduledbackup -n $NAMESPACE`
 
 ## Retour arrière
 
@@ -249,8 +232,8 @@ données inattendues :
 
 ```sh
 # Supprimer le Cluster en échec (et ses PVC ; rien n'est touché sur S3)
-kubectl --context <CLUSTER_CONTEXT> delete cluster <CLUSTER_NAME> -n <NAMESPACE>
-kubectl --context <CLUSTER_CONTEXT> delete pvc -n <NAMESPACE> -l cnpg.io/cluster=<CLUSTER_NAME>
+kubectl --context $CLUSTER_CONTEXT delete cluster $CLUSTER_NAME -n $NAMESPACE
+kubectl --context $CLUSTER_CONTEXT delete pvc -n $NAMESPACE -l cnpg.io/cluster=$CLUSTER_NAME
 
 # Reprendre à l'étape 3 avec le bon serverName
 ```
@@ -259,6 +242,13 @@ Cette procédure ne modifie jamais le backup S3, elle le lit seulement : réessa
 
 ## Historique
 
+- _2026-10-17_ : Reclassement de `BKP-20260723-00` en `DB-20260723-00` : la page restaure une base PostgreSQL, elle vit
+  donc avec les procédures CNPG de `databases/`. Aucun contenu modifié hors l'identifiant et les liens relatifs qui
+  traversaient le déplacement.
+- _2026-10-17_ : Reprise après revue : les entrées sont des variables `export` comme dans la restauration Velero, le
+  décodage des identifiants passe par un `go-template` kubectl, la justification de `s3cmd` et la précision sur le skill
+  `cnpg-backup` sont retirées, le paragraphe sur le mot de passe du rôle, redondant avec les procédures de reprise après
+  sinistre, est supprimé, et l'état de vérification de la procédure est un callout `WARNING`.
 - _2026-10-11_ : Migration vers le standard de documentation, en français. Correction : les noms de fichiers cités pour
   les manifestes `ObjectStore` et `ScheduledBackup` référençaient `amiya.akn` et un motif
   `{app}.postgresql-objectstore.yaml` qui n'existent plus dans `projects/` ; ils sont remplacés par

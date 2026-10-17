@@ -1,4 +1,4 @@
-# BKP-20261005-00 Restaurer Minecraft Depuis Restic
+# BKP-20261005-00 Restaurer Minecraft depuis Restic
 
 Cette procédure restaure l'hôte Minecraft de `rimbilliton.akn` (Pelican) à partir de ses sauvegardes hors site : un
 dépôt restic sur Backblaze B2, alimenté chaque jour par le job restic `minecraft`
@@ -7,8 +7,9 @@ le monde d'un serveur (étape 2), restaurer les données du Panel (étape 3) et 
 (étape 4). Compter quelques minutes pour les étapes 1 à 3 et plusieurs heures pour l'étape 4, qui inclut le réamorçage
 complet décrit dans [BOOTSTRAP](../../../projects/rimbilliton.akn/docs/BOOTSTRAP.md).
 
-Vérifiée contre le dépôt le 2026-10-11 (`modules/backup.nix`, `modules/pelican.nix`, `stack/backblaze.ts`,
-`docs/BOOTSTRAP.md` du projet) ; les commandes n'ont pas été rejouées sur l'hôte pour cette migration.
+> [!CAUTION] Cette procédure n'a encore jamais été testée : aucune restauration n'a été rejouée sur l'hôte. Elle a
+> seulement été vérifiée contre le dépôt le 2026-10-11 (`modules/backup.nix`, `modules/pelican.nix`,
+> `stack/backblaze.ts`, `docs/BOOTSTRAP.md` du projet).
 
 ## Cadre technique et conventions
 
@@ -167,8 +168,10 @@ arrêté, pour que ni Wings ni le jeu n'écrivent pendant l'extraction.
    VOLUME=/var/lib/pelican/volumes/${SERVER_UUID}
    ls -ld "${VOLUME}"
    # → le répertoire du serveur existe ; noter son propriétaire
+
    tar -tzf "/var/lib/pelican/backups/${BACKUP_UUID}.tar.gz" | head
    # → une liste sans erreur ; les chemins sont relatifs à la racine du serveur
+
    mv "${VOLUME}" "${VOLUME}.pre-restore"
    mkdir "${VOLUME}"
    ```
@@ -234,6 +237,7 @@ Localiser le fichier après la restauration avec `find /var/lib/pelican-panel/da
    cp -a "${RESTORE_DIR}/var/lib/pelican-panel/data" /var/lib/pelican-panel/data
    chown -R 82:82 /var/lib/pelican-panel/data
    chmod 0770 /var/lib/pelican-panel/data /var/lib/pelican-panel/data/plugins /var/lib/pelican-panel/data/database
+
    ls -ldn /var/lib/pelican-panel/data /var/lib/pelican-panel/data/database/database.sqlite
    # → propriétaire 82 82 sur les deux (le fichier de base est en 0660 dans la règle tmpfiles)
    ```
@@ -331,12 +335,15 @@ SQLite vide et une nouvelle `APP_KEY` (installeur), puis une sauvegarde de cet �
    ```bash
    rm -rf "${RESTORE_DIR}" && mkdir -p "${RESTORE_DIR}"
    restic restore "${SNAPSHOT_ID}" --target "${RESTORE_DIR}"
+
    rm -rf /var/lib/pelican-panel/data
    cp -a "${RESTORE_DIR}/var/lib/pelican-panel/data" /var/lib/pelican-panel/data
    chown -R 82:82 /var/lib/pelican-panel/data
    cp -a "${RESTORE_DIR}/var/lib/pelican/backups/." /var/lib/pelican/backups/
+
    nix shell nixpkgs#sqlite -c sqlite3 /var/lib/pelican-panel/data/database/database.sqlite 'PRAGMA integrity_check;'
    # → ok
+
    ls /var/lib/pelican/backups | head
    # → les archives <uuid de la sauvegarde>.tar.gz
    ```
@@ -447,6 +454,8 @@ rm -rf "${RESTORE_DIR}"
 
 ## Historique
 
+- _2026-10-17_ : Reprise après revue : l'état de vérification devient un callout `CAUTION` qui dit que la procédure n'a
+  jamais été testée, et les callouts `CAUTION` et `IMPORTANT` sont mis en forme pour que GitHub les affiche.
 - _2026-10-11_ : Migration vers le standard de documentation (rédaction en français, sections du gabarit de procédure).
   Correction : la référence à la tâche `mise run nixos:oci:update` pointait vers l'étape 6.3 de BOOTSTRAP.md, alors que
   la configuration du nœud et cette commande se trouvent à l'étape 6.4 (« Node »). Précision : la copie du mot de passe
