@@ -241,6 +241,5 @@ justification — voir SKILL.md §"Choosing a technique"]
 > Deux à cinq liens relatifs vers des fichiers `.md`, chacun avec une phrase d'introduction. Cette section est la
 > dernière section `##` de la page.
 
-- [{Procédure}]({../procedures/Procedure-XXX-AAAAMMJJ-NN-Titre.md}) : {La procédure suivie ou créée à la suite de
-  l'incident}
+- [{Procédure}]({../procedures/XXX-AAAAMMJJ-NN-Titre.md}) : {La procédure suivie ou créée à la suite de l'incident}
 - [{ADR}]({../decisions/ADR-NNN-Titre.md}) : {La décision liée ou issue de la leçon systémique}
