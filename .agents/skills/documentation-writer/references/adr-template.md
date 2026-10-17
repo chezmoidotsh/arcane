@@ -148,7 +148,8 @@ en jeu ou atténue les contraintes principales. Ne pas lésiner sur l'argumentat
 ## Historique des modifications
 
 > Consigner toute modification significative apportée à cet ADR après sa création. Utiliser les préfixes sémantiques
-> (FEATURE, FIX, SECURITY, DEPRECATION, CLARIFICATION, CHORE). Un changement de `status` y figure toujours.
+> (FEATURE, FIX, SECURITY, DEPRECATION, CLARIFICATION, CHORE). Un changement de `status` y figure toujours. Du plus
+> récent au plus ancien.
 
 - **AAAA-MM-JJ** : **PRÉFIXE** : {Description complète de la modification et de son impact}
 
