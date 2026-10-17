@@ -86,6 +86,14 @@ while maintaining control over my data and infrastructure.
 - **proxmox-csi-plugin**: Persistent volume storage. <br/> Provides reliable block storage for all stateful applications
   and database persistence, backed by the Proxmox hypervisor rather than in-cluster nodes.
 
+### 🧪 n8n Sandbox (Raspberry Pi 5)
+
+The n8n Assistant runs generated code in a sandbox (`n8n-sandbox` service: API + privileged Docker-in-Docker runner).
+Because of the privileged runner it does not live in a cluster: it runs on a dedicated Raspberry Pi 5 (NixOS, static
+`10.0.0.33` on VLAN 5), configured in `src/infrastructure/nixos/`. Caddy terminates TLS on `sndbx-3or5.lia.chezmoi.sh`,
+the host firewall only accepts the homelab VLAN and drops traffic from sandboxed code towards private ranges. See
+`docs/reference/IPAM-Reference.md` for the address.
+
 ## 🚀 How to use / How to develop on it
 
 This project uses [ArgoCD](https://argoproj.github.io/cd/) for GitOps-based deployment and

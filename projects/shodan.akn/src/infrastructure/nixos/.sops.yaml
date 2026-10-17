@@ -1,0 +1,9 @@
+# Same rule as rimbilliton.akn: these secrets are consumed at build time (sops-nix), so the rule lives next to them.
+# sops looks for .sops.yaml from the *current directory* upward and never merges configs: run sops from this directory.
+# path_regex is relative to this file's directory.
+creation_rules:
+  # Recipients: the admin key and, once the Pi is installed, its host key
+  # (`ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub`) — add it, then `sops updatekeys`.
+  - path_regex: secrets/sandbox\.sops\.yaml$
+    age: >-
+      age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9
