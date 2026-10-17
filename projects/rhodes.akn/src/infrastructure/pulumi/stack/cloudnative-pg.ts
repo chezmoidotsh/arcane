@@ -10,7 +10,7 @@ import { rhodesAknProvider } from "./kubernetes";
 // ---------------------------------------------------------------------------
 // rhodes can't depend on Vault for its own backup credentials (chicken-and-egg,
 // same reason vault.ts's own PG creds never come from Vault either — see
-// docs/disaster-recovery/README.md). Unlike a Vault-sourced secret, this one is
+// docs/guides/Restaurer-Rhodes.md). Unlike a Vault-sourced secret, this one is
 // written straight into the cluster below via the Kubernetes provider — no SOPS,
 // no recovery-mode gating, both vault and pocket-id read the same
 // cnpg-backup-credentials Secret from their own namespace.
@@ -24,7 +24,7 @@ const component = new GarageCloudNativePGObjectStore("garage-cnpg-backup", {
 // mistake if that config is ever unset.
 //
 // Namespaces aren't created by this stack (kubectl/ArgoCD does — see
-// docs/disaster-recovery/{openbao,pocket-id}.md Step 1) — this Secret can only
+// docs/guides/Restaurer-OpenBao.md and docs/guides/Restaurer-Pocket-Id.md, step 1) — this Secret can only
 // be applied once the target namespace already exists.
 for (const namespace of ["vault", "pocket-id", "o11y-system"]) {
 	new k8s.core.v1.Secret(
