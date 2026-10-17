@@ -58,20 +58,33 @@ Sources : `projects/<cluster>/src/infrastructure/kubernetes/external-dns/{bind,u
 
 ### Contenu de BIND
 
-La zone `chezmoi.sh` de `talosnet-dns` contient des enregistrements statiques réservés à talosnet (`ns`, `dns.talosnet`, `pve-01.pve`, `omni`, `api.omni`, `oci`, `data.o11y`, `s3`, `nas`) et les enregistrements `A` et `TXT` écrits dynamiquement par external-dns. Tout le reste est transmis à des résolveurs amont (UniFi, puis deux résolveurs publics). Les enregistrements statiques ne sont créés qu'au premier démarrage du volume. Sources : `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/talosnet-dns/modules/bind.nix` et le `README.md` du même dossier.
+La zone `chezmoi.sh` de `talosnet-dns` contient des enregistrements statiques réservés à talosnet (`ns`, `dns.talosnet`,
+`pve-01.pve`, `omni`, `api.omni`, `oci`, `data.o11y`, `s3`, `nas`) et les enregistrements `A` et `TXT` écrits
+dynamiquement par external-dns. Tout le reste est transmis à des résolveurs amont (UniFi, puis deux résolveurs publics).
+Les enregistrements statiques ne sont créés qu'au premier démarrage du volume. Sources :
+`projects/chezmoi.sh/src/infrastructure/proxmox/lxc/talosnet-dns/modules/bind.nix` et le `README.md` du même dossier.
 
-Les clients talosnet reçoivent `talosnet-dns` comme DNS par les options DHCP talosnet. Les hôtes hors talosnet (par exemple les LXC du VLAN 5) ne voient jamais les réponses de BIND.
+Les clients talosnet reçoivent `talosnet-dns` comme DNS par les options DHCP talosnet. Les hôtes hors talosnet (par
+exemple les LXC du VLAN 5) ne voient jamais les réponses de BIND.
 
 ## Écart connu : external-dns-unifi
 
-L'issue [#1224](https://github.com/chezmoidotsh/arcane/issues/1224) signale que `external-dns-unifi` aurait été retiré pendant la migration `amiya.akn` vers `rhodes.akn` : plus aucun enregistrement `*.chezmoi.sh` ne serait publié dans UniFi, et la vue LAN domestique dériverait. Le symptôme observé était `o11y.chezmoi.sh` résolu vers l'ancienne adresse du LXC o11y côté UniFi, alors que BIND répondait correctement.
+L'issue [#1224](https://github.com/chezmoidotsh/arcane/issues/1224) signale que `external-dns-unifi` aurait été retiré
+pendant la migration `amiya.akn` vers `rhodes.akn` : plus aucun enregistrement `*.chezmoi.sh` ne serait publié dans
+UniFi, et la vue LAN domestique dériverait. Le symptôme observé était `o11y.chezmoi.sh` résolu vers l'ancienne adresse
+du LXC o11y côté UniFi, alors que BIND répondait correctement.
 
 Ce que le dépôt montre :
 
-- `external-dns-unifi` est toujours déclaré dans `src/` et rendu dans `dist/` (`apps.v1.Deployment.external-dns-unifi.yaml`) pour les deux clusters.
-- Le document de migration [amiya.akn vers rhodes.akn](../migrations/amiya.akn-%3Erhodes.akn.md) décrit `external-dns-unifi` de `rhodes.akn` comme actif.
+- `external-dns-unifi` est toujours déclaré dans `src/` et rendu dans `dist/`
+  (`apps.v1.Deployment.external-dns-unifi.yaml`) pour les deux clusters.
+- Le document de migration [amiya.akn vers rhodes.akn](../archives/MIGR-20260729-00-Migrer-Amiya-vers-Rhodes.md) décrit
+  `external-dns-unifi` de `rhodes.akn` comme actif.
 
-Ce qui n'est pas établi : l'exécution réelle des Pods, l'authentification auprès d'UniFi, l'écriture des enregistrements et la cause de l'enregistrement périmé. Le chemin de la clé OpenBao diffère entre les deux clusters (`third-parties` contre `providers`), ce qui est une piste à vérifier. Réparer, remplacer ou gérer à la main les enregistrements UniFi reste une décision ouverte.
+Ce qui n'est pas établi : l'exécution réelle des Pods, l'authentification auprès d'UniFi, l'écriture des enregistrements
+et la cause de l'enregistrement périmé. Le chemin de la clé OpenBao diffère entre les deux clusters (`third-parties`
+contre `providers`), ce qui est une piste à vérifier. Réparer, remplacer ou gérer à la main les enregistrements UniFi
+reste une décision ouverte.
 
 ## Diagnostic : quel DNS répond pour un nom d'hôte
 
@@ -86,17 +99,26 @@ Ce qui n'est pas établi : l'exécution réelle des Pods, l'authentification aup
 
 ## Historique
 
-- _2026-10-11_ : migration vers le standard de documentation (page de référence, en français). Vérifications contre le dépôt :
-  - Les Gateways sont dans `kube-system` (`metadata.namespace: kube-system` dans les quatre fichiers `{external,internal}.gateway.yaml`, et dans les `parentRefs` des HTTPRoute). `AGENTS.md` indique `in-gateway-system` et `projects/*/src/infrastructure/kubernetes/in-gateway/` : ce dossier n'existe pas dans l'arbre. L'écart est dans `AGENTS.md`, pas dans cette page.
+- _2026-10-11_ : migration vers le standard de documentation (page de référence, en français). Vérifications contre le
+  dépôt :
+  - Les Gateways sont dans `kube-system` (`metadata.namespace: kube-system` dans les quatre fichiers
+    `{external,internal}.gateway.yaml`, et dans les `parentRefs` des HTTPRoute). `AGENTS.md` indique `in-gateway-system`
+    et `projects/*/src/infrastructure/kubernetes/in-gateway/` : ce dossier n'existe pas dans l'arbre. L'écart est dans
+    `AGENTS.md`, pas dans cette page.
   - Vérifié : deux Gateways Cilium par cluster, `external-dns` avec les providers `bind` (rfc2136) et `unifi` (webhook).
-  - Vérifié : seules les routes `vault`, `pocket-id` et Grafana de `rhodes.akn` sont attachées à `internal` ; aucune route de `lungmen.akn` ne l'est. La route `argocd` n'est attachée qu'à `external`.
-  - Ajouté : listeners de chaque Gateway (`*.akn.chezmoi.sh` côté `rhodes.akn`, `*.lab.chezmoi.sh` côté `lungmen.akn`), absents de l'ancienne version.
-  - Retiré : les valeurs d'adressage (pools, VIP, adresses DNS), désormais dans [IPAM Reference](IPAM-Reference.md). Les VIP citées par l'issue ne sont pas vérifiables depuis le dépôt.
+  - Vérifié : seules les routes `vault`, `pocket-id` et Grafana de `rhodes.akn` sont attachées à `internal` ; aucune
+    route de `lungmen.akn` ne l'est. La route `argocd` n'est attachée qu'à `external`.
+  - Ajouté : listeners de chaque Gateway (`*.akn.chezmoi.sh` côté `rhodes.akn`, `*.lab.chezmoi.sh` côté `lungmen.akn`),
+    absents de l'ancienne version.
+  - Retiré : les valeurs d'adressage (pools, VIP, adresses DNS), désormais dans [IPAM Reference](IPAM-Reference.md). Les
+    VIP citées par l'issue ne sont pas vérifiables depuis le dépôt.
   - Non revérifié : l'état réel des clusters et de l'écart `external-dns-unifi` (issue #1224).
 
 ## Pour aller plus loin
 
 - [IPAM Reference](IPAM-Reference.md) : pools de Load Balancer, adresses de `talosnet-dns` et de l'UDM Pro.
 - [Réseau Reference](Reseau-Reference.md) : topologie et vue d'ensemble du réseau.
-- [ADR-014 Network Topology](../decisions/ADR-014-Topologie-Reseau.md) : justification du découpage réseau (double NIC et SDN VXLAN).
-- [talosnet-dns](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/talosnet-dns/README.md) : construction et mise à jour du LXC BIND.
+- [ADR-014 Network Topology](../decisions/ADR-014-Topologie-Reseau.md) : justification du découpage réseau (double NIC
+  et SDN VXLAN).
+- [talosnet-dns](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/talosnet-dns/README.md) : construction et mise
+  à jour du LXC BIND.

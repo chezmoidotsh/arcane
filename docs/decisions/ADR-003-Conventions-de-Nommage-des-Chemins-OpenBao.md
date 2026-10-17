@@ -195,8 +195,8 @@ pour Authelia.
 
 > [!NOTE]\
 > Note du 2026-10-11 : les exemples ci-dessus citent `amiya.akn` et Authelia, qui ne sont plus en service. Le cluster
-> `amiya.akn` a été migré vers `rhodes.akn` (`docs/migrations/amiya.akn->rhodes.akn.md`) et `rhodes.akn` n'exécute pas
-> Authelia : Pocket-Id est le fournisseur d'identité (commentaire de
+> `amiya.akn` a été migré vers `rhodes.akn` (`docs/archives/MIGR-20260729-00-Migrer-Amiya-vers-Rhodes.md`) et
+> `rhodes.akn` n'exécute pas Authelia : Pocket-Id est le fournisseur d'identité (commentaire de
 > `projects/rhodes.akn/src/infrastructure/pulumi/stack/vault.ts`, lignes 29 à 31). La convention
 > `/{cluster}/{app}/auth/oidc-client` reste appliquée : les `ExternalSecret` de `projects/*/src` référencent par exemple
 > `rhodes.akn/argocd/auth/oidc-client` et `lungmen.akn/immich/auth/oidc-client`. Le script `scripts/bao:secret:audit`

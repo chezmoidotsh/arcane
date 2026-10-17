@@ -1398,7 +1398,7 @@ projects/chezmoi.sh/
 
 > [!NOTE]\
 > Note du 2026-10-11 : ces arborescences décrivent le dépôt à la date de la décision. `amiya.akn` a été remplacé par
-> `rhodes.akn` ([migration](../migrations/amiya.akn->rhodes.akn.md)), dont ArgoCD vit dans
+> `rhodes.akn` ([migration](../archives/MIGR-20260729-00-Migrer-Amiya-vers-Rhodes.md)), dont ArgoCD vit dans
 > `projects/rhodes.akn/src/argocd/` et non dans `src/apps/argocd/`. Crossplane a été remplacé par Pulumi
 > ([ADR-015](ADR-015-Migrer-Crossplane-vers-Pulumi.md)) : `projects/chezmoi.sh/src/infrastructure/` contient `ansible/`,
 > `proxmox/` et `pulumi/`. Envoy Gateway et les `reference-grant.*.yaml` ont disparu de `projects/*/src` au profit de la
