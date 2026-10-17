@@ -1,14 +1,16 @@
 # Proxmox VE (pve-01.pve.chezmoi.sh)
 
-> [!NOTE] This document is **auto-generated** from the `chezmoi-sh-infra` Pulumi stack's own live state — do not edit it
-> by hand. Regenerate it with `mise run proxmox:docs:generate` (already chained onto `mise run pulumi:apply`).
+> [!NOTE]\
+> This document is **auto-generated** from the `chezmoi-sh-infra` Pulumi stack's own live state — do not edit it by
+> hand. Regenerate it with `mise run proxmox:docs:generate` (already chained onto `mise run pulumi:apply`).
 
 `pve-01` is the single hypervisor this homelab runs on: every Kubernetes node, every platform LXC, and the NAS itself
 are guests on this one machine. It is the bottom of the dependency chain — nothing else in the homelab survives its loss
 — which is why its configuration is versioned as code rather than clicked into the web UI.
 
-> [!IMPORTANT] **This document describes what the stack manages, and nothing else.** Access control, resource pools,
-> SDN, backup storage, certificates, and the firewall baseline are declared in
+> [!IMPORTANT]\
+> **This document describes what the stack manages, and nothing else.** Access control, resource pools, SDN, backup
+> storage, certificates, and the firewall baseline are declared in
 > [`stack/proxmox/`](../src/infrastructure/pulumi/stack/proxmox/README.md) and rendered here from its deployed state.
 > Anything a human configured directly on the host — guests, their disks, their backup jobs — is out of scope by design
 > and does not appear below. See [What this stack does not manage](#what-this-stack-does-not-manage).
@@ -125,8 +127,9 @@ this document and not recoverable from stack state either.
 granted on `/pool/talos` can see and act on guests **inside that pool and nowhere else**. `core` is referenced by no
 grant at all, which is what keeps its members unreachable from any automation credential.
 
-> [!CAUTION] Adding a guest to `talos` silently grants every identity bound to that pool full access to it. Pool
-> membership _is_ the permission — there is no second check.
+> [!CAUTION]\
+> Adding a guest to `talos` silently grants every identity bound to that pool full access to it. Pool membership _is_
+> the permission — there is no second check.
 
 Storage-level membership is declared for `local` and `nvme-lvm`, so the CSI plugin can provision volumes there. Guest
 membership is not: it is set when Omni creates the VM, which is outside this stack.
@@ -149,8 +152,9 @@ A single shared VNet, rather than one per cluster, is an Omni constraint: Machin
 cluster. Isolation of _external_ traffic is unaffected — it comes from the per-cluster LoadBalancer pools in
 [`ipam.md`](../../../docs/network/ipam.md), not from the SDN.
 
-> [!NOTE] SDN changes are staged by Proxmox VE and inert until applied. The stack applies them automatically after any
-> zone, VNet, subnet, or SDN ACL change, so a completed `pulumi up` always leaves the fabric live.
+> [!NOTE]\
+> SDN changes are staged by Proxmox VE and inert until applied. The stack applies them automatically after any zone,
+> VNet, subnet, or SDN ACL change, so a completed `pulumi up` always leaves the fabric live.
 
 ## Backup storage
 
@@ -230,9 +234,10 @@ PROXMOX_VE_PASSWORD="$(security find-generic-password -a root@pam -s pve-01.pve.
   mise run pulumi:apply    # apply, then regenerate this document
 ```
 
-> [!IMPORTANT] The password never goes into Pulumi config — not even as `--secret`. `Pulumi.<stack>.yaml` is committed
-> to git, and encrypted-at-rest is not the same as safe to commit. Read it from a password manager inline, as above, and
-> never `export` it into a long-lived shell. The one-time Keychain setup is in
+> [!IMPORTANT]\
+> The password never goes into Pulumi config — not even as `--secret`. `Pulumi.<stack>.yaml` is committed to git, and
+> encrypted-at-rest is not the same as safe to commit. Read it from a password manager inline, as above, and never
+> `export` it into a long-lived shell. The one-time Keychain setup is in
 > [`stack/proxmox/README.md`](../src/infrastructure/pulumi/stack/proxmox/README.md), "Bootstrapping".
 
 Applying also regenerates this document from the resulting state, so it never drifts from what is deployed.
@@ -326,7 +331,8 @@ pulumi import proxmox:index/<type>:<Type> <name> <id>
 See
 [`INF-20260705-00.pulumi-state-and-import.md`](../../../docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md).
 
-> [!IMPORTANT] ACME resources cannot be imported or applied with an API token. Proxmox VE's ACME endpoints reject token
+> [!IMPORTANT]\
+> ACME resources cannot be imported or applied with an API token. Proxmox VE's ACME endpoints reject token
 > authentication outright — even a full-privilege one — and require a real `root@pam` password session. See
 > [`stack/proxmox/README.md`](../src/infrastructure/pulumi/stack/proxmox/README.md), "Bootstrapping".
 

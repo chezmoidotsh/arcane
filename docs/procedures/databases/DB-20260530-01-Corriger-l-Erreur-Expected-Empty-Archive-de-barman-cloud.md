@@ -7,9 +7,11 @@ vérifie que l'archivage repart, puis déclenche une sauvegarde. Elle découle d
 [CNPG WAL PVC saturation](../../incidents/2026-05-30-cnpg-wal-disk-full-apps-secured.md). Si le PVC WAL est déjà plein,
 rétablir d'abord le cluster avec [DB-20260530-00](DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md).
 
-> [!WARNING] Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur un cluster.
+> [!WARNING]\
+> Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur un cluster.
 
-> [!NOTE] Les clusters CNPG de `lungmen.akn` déclarent aujourd'hui `isWALArchiver: false`
+> [!NOTE]\
+> Les clusters CNPG de `lungmen.akn` déclarent aujourd'hui `isWALArchiver: false`
 > (`projects/lungmen.akn/src/apps/databases/postgres-apps*.helmvalues.yaml`) : l'archivage WAL y est désactivé, et cette
 > erreur ne les concerne plus. La procédure reste valable pour tout cluster qui archive ses WAL vers un stockage objet.
 
@@ -132,9 +134,10 @@ s3 ls "s3://${BUCKET_PATH}/"
 # → seul ${SERVER_NAME}.bak/ doit apparaître, brièvement
 ```
 
-> [!WARNING] Ne pas exécuter `s3cmd rm` sur le dossier. La copie `.bak` protège d'une perte de données si la nouvelle
-> sauvegarde de base échoue avant la fin. Supprimer `.bak` uniquement après avoir vérifié qu'une nouvelle sauvegarde de
-> base est terminée.
+> [!WARNING]\
+> Ne pas exécuter `s3cmd rm` sur le dossier. La copie `.bak` protège d'une perte de données si la nouvelle sauvegarde de
+> base échoue avant la fin. Supprimer `.bak` uniquement après avoir vérifié qu'une nouvelle sauvegarde de base est
+> terminée.
 
 ## Étape 4 — Vérifier que l'archivage WAL est actif
 
@@ -153,8 +156,9 @@ kubectl --context $CLUSTER_CONTEXT get cluster $CLUSTER_NAME -n $NAMESPACE -o js
 # → ContinuousArchivingSuccess
 ```
 
-> [!NOTE] Le Pod réplica (Pod 1) peut rester en `1/2 Running` longtemps pendant qu'il rejoue en streaming les WAL non
-> archivés. Ce comportement est normal : l'archivage réussi sur le primaire (Pod 2) suffit à confirmer le correctif.
+> [!NOTE]\
+> Le Pod réplica (Pod 1) peut rester en `1/2 Running` longtemps pendant qu'il rejoue en streaming les WAL non archivés.
+> Ce comportement est normal : l'archivage réussi sur le primaire (Pod 2) suffit à confirmer le correctif.
 
 ## Étape 5 — Déclencher une sauvegarde immédiate
 

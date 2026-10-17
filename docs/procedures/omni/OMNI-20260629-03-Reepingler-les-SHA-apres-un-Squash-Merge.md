@@ -4,7 +4,8 @@ Cette procédure remplace le SHA épinglé dans les templates de cluster Omni pa
 le squash-merge d'une pull request. Sans cela, les URL `raw.githubusercontent.com` des manifests de bootstrap Talos
 (Cilium, metric-server, kubelet-serving-cert-approver) renvoient une erreur 404, et le cluster reste bloqué sans réseau.
 
-> [!WARNING] Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur Omni.
+> [!WARNING]\
+> Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur Omni.
 
 Les templates de cluster Omni référencent les manifests de bootstrap par un SHA de commit Git exact. Omni télécharge ces
 URL à la création du cluster et à chaque réconciliation. Si le SHA est inaccessible, le manifest n'est jamais récupéré
@@ -103,10 +104,11 @@ curl -sI "https://raw.githubusercontent.com/chezmoidotsh/arcane/$NEW_SHA/catalog
 Pour les templates qui épinglent une autre version de Cilium (`1.20.0-native` pour `lungmen.akn`, `1.19.5-native` pour
 `rhodes.akn`), contrôler aussi cette URL.
 
-> [!IMPORTANT] Ne pas continuer si une URL renvoie 404. Un 404 signifie que le SHA n'est pas encore accessible : soit le
-> commit de fusion n'est pas poussé sur `main`, soit le CDN de GitHub ne s'est pas encore rafraîchi (en général moins
-> d'une minute après le push). Relancer `git fetch origin`, confirmer que le commit est sur `origin/main`, puis
-> réessayer. Repinner sur un SHA inaccessible reproduit exactement la panne que cette procédure corrige.
+> [!IMPORTANT]\
+> Ne pas continuer si une URL renvoie 404. Un 404 signifie que le SHA n'est pas encore accessible : soit le commit de
+> fusion n'est pas poussé sur `main`, soit le CDN de GitHub ne s'est pas encore rafraîchi (en général moins d'une minute
+> après le push). Relancer `git fetch origin`, confirmer que le commit est sur `origin/main`, puis réessayer. Repinner
+> sur un SHA inaccessible reproduit exactement la panne que cette procédure corrige.
 
 ## Étape 3 — Mettre à jour les templates
 
@@ -126,8 +128,9 @@ sed -i "s/$OLD_SHA/$NEW_SHA/g" \
   catalog/omni/clustertemplates/base.yaml
 ```
 
-> [!NOTE] Avec le `sed` BSD (celui de macOS), l'option `-i` exige un suffixe de sauvegarde : écrire `sed -i ''` au lieu
-> de `sed -i`. Le `sed` GNU (Linux, Nix) accepte `sed -i`.
+> [!NOTE]\
+> Avec le `sed` BSD (celui de macOS), l'option `-i` exige un suffixe de sauvegarde : écrire `sed -i ''` au lieu de
+> `sed -i`. Le `sed` GNU (Linux, Nix) accepte `sed -i`.
 
 ## Étape 4 — Valider le template
 
@@ -160,8 +163,9 @@ prérequis) :
 omnictl cluster template sync -f $TEMPLATE
 ```
 
-> [!IMPORTANT] Utiliser `omnictl cluster template sync -f <fichier>` et non `omnictl apply -f`. `apply` est la commande
-> générique des ressources COSI (YAML `metadata`/`spec`) et ne sait pas lire le DSL de template
+> [!IMPORTANT]\
+> Utiliser `omnictl cluster template sync -f <fichier>` et non `omnictl apply -f`. `apply` est la commande générique des
+> ressources COSI (YAML `metadata`/`spec`) et ne sait pas lire le DSL de template
 > (`kind: Cluster`/`ControlPlane`/`Workers`) : elle échoue avec
 > `yaml: construct errors: ... expected 4 elements node, got N`. Seule `cluster template sync` comprend ce DSL. Pointée
 > sur un fichier unique (et non un dossier), elle reste limitée à ce cluster.

@@ -151,19 +151,26 @@ in every procedure — match the set to the procedure's actual complexity:
   understands why is far less likely to "simplify" the step incorrectly on the next run.
 - **Never invent a step.** Only document what was actually performed and confirmed. If a step is uncertain, ask the user
   rather than filling the gap with something plausible-looking.
-- **Use GitHub callout syntax** for asides. The marker and the text stay on the same line (`> [!NOTE] Text`), the way
-  Prettier formats them. One callout holds one kind of message: never mix information and warning in the same one.
+- **Use GitHub callout syntax** for asides. The marker sits alone on its line and ends with a backslash (`> [!NOTE]\`),
+  then the text starts on the next `>` line: GitHub renders an alert only when the text is on the next line, and
+  Prettier would join the two lines without the backslash. One callout holds one kind of message: never mix information
+  and warning in the same one.
 
   ```markdown
-  > [!NOTE] Informational detail worth knowing.
+  > [!NOTE]\
+  > Informational detail worth knowing.
 
-  > [!TIP] A shortcut or optimization, not required for correctness.
+  > [!TIP]\
+  > A shortcut or optimization, not required for correctness.
 
-  > [!IMPORTANT] A constraint that breaks a later step if missed.
+  > [!IMPORTANT]\
+  > A constraint that breaks a later step if missed.
 
-  > [!WARNING] A risk of failure or of a wrong result, or a point not yet confirmed on the real system.
+  > [!WARNING]\
+  > A risk of failure or of a wrong result, or a point not yet confirmed on the real system.
 
-  > [!CAUTION] An irreversible action or a data-loss risk. Also used for a procedure that was never run.
+  > [!CAUTION]\
+  > An irreversible action or a data-loss risk. Also used for a procedure that was never run.
   ```
 
 - **Say how far the procedure was checked.** Right after the introduction, a `[!WARNING]` states that the commands were

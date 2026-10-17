@@ -8,9 +8,10 @@ Kubernetes 1.35, et la compatibilité avec la version de Talos.
 La version de Kubernetes est fixée dans le template (`projects/*/src/infrastructure/omni/*.clustertemplate.yaml`) et
 Omni réalise la mise à jour.
 
-> [!WARNING] Procédure réécrite le 2026-10-11 pour Omni à partir du dépôt : ses commandes n'ont pas été rejouées sur
-> Omni ni sur les clusters. Les points marqués « à confirmer sur Omni » ne sont établis ni par le dépôt ni par la
-> documentation officielle consultée.
+> [!WARNING]\
+> Procédure réécrite le 2026-10-11 pour Omni à partir du dépôt : ses commandes n'ont pas été rejouées sur Omni ni sur
+> les clusters. Les points marqués « à confirmer sur Omni » ne sont établis ni par le dépôt ni par la documentation
+> officielle consultée.
 
 ## Cadre technique et conventions
 
@@ -43,9 +44,10 @@ Les accès suivants sont également nécessaires :
   mis à jour, suivre [Mettre à jour Talos avec Omni](./INF-20260525-00-Mettre-a-Jour-Talos-avec-Omni.md) avant cette
   procédure.
 
-> [!IMPORTANT] Monter d'une seule version mineure de Kubernetes à la fois (par exemple `v1.36.x` vers `v1.37.x`). C'est
-> la règle de Kubernetes pour les mises à jour ; la documentation d'Omni consultée ne l'impose pas explicitement. Pour
-> franchir deux versions mineures, exécuter la procédure deux fois.
+> [!IMPORTANT]\
+> Monter d'une seule version mineure de Kubernetes à la fois (par exemple `v1.36.x` vers `v1.37.x`). C'est la règle de
+> Kubernetes pour les mises à jour ; la documentation d'Omni consultée ne l'impose pas explicitement. Pour franchir deux
+> versions mineures, exécuter la procédure deux fois.
 
 ## Entrées requises
 
@@ -114,9 +116,10 @@ omnictl cluster kubernetes upgrade-pre-checks $CLUSTER_NAME --to $TARGET_K8S_VER
 # → la commande vérifie la compatibilité de version et les API dépréciées (documentation d'omnictl)
 ```
 
-> [!WARNING] `upgrade-pre-checks` est décrite par la documentation d'Omni comme une vérification de la compatibilité de
-> version et des API dépréciées. Que cette commande inspecte aussi les feature gates des patches n'est pas établi : à
-> confirmer sur Omni. En attendant, la lecture manuelle ci-dessus reste obligatoire.
+> [!WARNING]\
+> `upgrade-pre-checks` est décrite par la documentation d'Omni comme une vérification de la compatibilité de version et
+> des API dépréciées. Que cette commande inspecte aussi les feature gates des patches n'est pas établi : à confirmer sur
+> Omni. En attendant, la lecture manuelle ci-dessus reste obligatoire.
 
 ## Étape 3 — Modifier le template
 
@@ -187,9 +190,10 @@ disponible : `talosctl containers -k` et `talosctl logs -k` (voir
 [.agents/knowledge/talos.md](../../../.agents/knowledge/talos.md)). Une erreur `unrecognized feature gate` désigne la
 cause de l'incident 1.35.
 
-> [!WARNING] Ne pas supprimer de machine hors d'Omni, ne pas lancer `kubectl delete node` sur un nœud de control plane
-> et ne pas ajouter de nœud de control plane pendant un problème de quorum : la documentation d'Omni déconseille ces
-> actions pendant une mise à jour bloquée.
+> [!WARNING]\
+> Ne pas supprimer de machine hors d'Omni, ne pas lancer `kubectl delete node` sur un nœud de control plane et ne pas
+> ajouter de nœud de control plane pendant un problème de quorum : la documentation d'Omni déconseille ces actions
+> pendant une mise à jour bloquée.
 
 ## Étape 7 — Vérifier après la mise à jour
 

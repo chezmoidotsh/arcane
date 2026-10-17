@@ -14,9 +14,10 @@
 
 {Écrire l'introduction ici...}
 
-> [!WARNING] {Facultatif — à inclure tant que la procédure n'a pas été rejouée de bout en bout : « Vérifiée contre le
-> dépôt le AAAA-MM-JJ ; les commandes n'ont pas été rejouées sur le cluster. » Pour une procédure jamais exécutée,
-> utiliser un `[!CAUTION]` qui le dit.}
+> [!WARNING]\
+> {Facultatif — à inclure tant que la procédure n'a pas été rejouée de bout en bout : « Vérifiée contre le dépôt le
+> AAAA-MM-JJ ; les commandes n'ont pas été rejouées sur le cluster. » Pour une procédure jamais exécutée, utiliser un
+> `[!CAUTION]` qui le dit.}
 
 ## Cadre technique et conventions [Facultatif]
 
@@ -65,8 +66,9 @@ commande se comprend d'elle-même.}
 # → {sortie attendue, ou comment la lire, pour que le lecteur se vérifie avant de continuer}
 ```
 
-> [!NOTE] {Ce que le lecteur doit savoir et qui ne tient pas en ligne — un choix de conception fait à cette étape, une
-> mise en garde non évidente.}
+> [!NOTE]\
+> {Ce que le lecteur doit savoir et qui ne tient pas en ligne — un choix de conception fait à cette étape, une mise en
+> garde non évidente.}
 
 ## Étape 2 — {Titre de l'action}
 
@@ -76,7 +78,8 @@ commande se comprend d'elle-même.}
 
 ...
 
-> [!IMPORTANT] {Pour une contrainte qui, si elle est ratée, casse une étape suivante ou provoque une perte de données.}
+> [!IMPORTANT]\
+> {Pour une contrainte qui, si elle est ratée, casse une étape suivante ou provoque une perte de données.}
 
 ## Exemple complet : {Cas réel concret} [Facultatif — recommandé quand les étapes utilisent des marqueurs]
 

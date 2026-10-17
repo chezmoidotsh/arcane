@@ -79,14 +79,14 @@ any privilege on the `core` pool (the platform LXCs this stack itself indirectly
 
 One-time setup before the first `pulumi up` against this stack:
 
-> [!IMPORTANT] **Credentials never go into Pulumi config, full stop — not even as `--secret`.**
-> `pulumi config set --secret` still writes an encrypted blob into `Pulumi.chezmoi_sh.live.yaml`, and that file is
-> committed to git. Encrypted-at-rest is not the same as "safe to commit" — this project's rule is that no credential
-> (password, API token, private key) ever lands in a git-tracked file, encrypted or not. Every credential below is
-> supplied through an **environment variable, set for a single command and never exported into the shell session** —
-> never through `pulumi config set`. Only non-sensitive connection details (`proxmox:endpoint`, `proxmox:insecure` — a
-> URL and a boolean, not credentials) belong in Pulumi config, matching the existing
-> `pbs:endpoint`/`pbs:insecure`/`truenas:url` convention.
+> [!IMPORTANT]\
+> **Credentials never go into Pulumi config, full stop — not even as `--secret`.** `pulumi config set --secret` still
+> writes an encrypted blob into `Pulumi.chezmoi_sh.live.yaml`, and that file is committed to git. Encrypted-at-rest is
+> not the same as "safe to commit" — this project's rule is that no credential (password, API token, private key) ever
+> lands in a git-tracked file, encrypted or not. Every credential below is supplied through an **environment variable,
+> set for a single command and never exported into the shell session** — never through `pulumi config set`. Only
+> non-sensitive connection details (`proxmox:endpoint`, `proxmox:insecure` — a URL and a boolean, not credentials)
+> belong in Pulumi config, matching the existing `pbs:endpoint`/`pbs:insecure`/`truenas:url` convention.
 
 1. **Authenticate as `root@pam` with a username/password, not an API token — mandatory, not optional.** Every other
    stack in this project (`../proxmox-backup-server/`, `../truenas/`) authenticates via a scoped API token, and that
@@ -100,8 +100,9 @@ One-time setup before the first `pulumi up` against this stack:
    preferable and this whole requirement would go away; it's in scope because managing the Cloudflare DNS-01 plugin
    without also managing the account it authenticates against doesn't accomplish anything (see `acme.ts`'s comment).
 
-   > [!CAUTION] The `root@pam!pulumi-import` token on this host is **not** the read-only credential its name suggests:
-   > it holds both `PVEAuditor` and `Administrator` at `/`, i.e. full cluster control including `Permissions.Modify` and
+   > [!CAUTION]\
+   > The `root@pam!pulumi-import` token on this host is **not** the read-only credential its name suggests: it holds
+   > both `PVEAuditor` and `Administrator` at `/`, i.e. full cluster control including `Permissions.Modify` and
    > `User.Modify`. The `Administrator` grant was added while trying to get the ACME import to work, before it was
    > established that no token can reach those endpoints — it served no purpose and was never rolled back. Nothing in
    > this stack needs that token any more, since every operation authenticates as `root@pam` with a password. Revoke it,
@@ -157,11 +158,12 @@ One-time setup before the first `pulumi up` against this stack:
    security add-generic-password -a "root@pam" -s "pve-01.pve.chezmoi.sh" -U -w
    ```
 
-   > [!WARNING] **`-w` must be the last argument, always.** `security`'s argument parser treats `-w` as taking a
-   > mandatory value, and it isn't fussy about that value starting with a dash: `-w -U` silently stores the literal
-   > string `-U` as the password — no prompt, no error, just a wrong secret sitting in the Keychain. Only when `-w` is
-   > the final token does `security` fall back to a secure interactive prompt. Confirmed live: `-a ... -s ... -w -U`
-   > created an entry with zero prompt. If you've ever run it in that order, delete and redo it:
+   > [!WARNING]\
+   > **`-w` must be the last argument, always.** `security`'s argument parser treats `-w` as taking a mandatory value,
+   > and it isn't fussy about that value starting with a dash: `-w -U` silently stores the literal string `-U` as the
+   > password — no prompt, no error, just a wrong secret sitting in the Keychain. Only when `-w` is the final token does
+   > `security` fall back to a secure interactive prompt. Confirmed live: `-a ... -s ... -w -U` created an entry with
+   > zero prompt. If you've ever run it in that order, delete and redo it:
    >
    > ```sh
    > security delete-generic-password -a "root@pam" -s "pve-01.pve.chezmoi.sh"

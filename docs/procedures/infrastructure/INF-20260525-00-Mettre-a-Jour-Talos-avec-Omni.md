@@ -5,8 +5,9 @@ en modifiant `talos.version` dans le cluster template du dépôt, puis en appliq
 charge de la mise à jour des nœuds ; la procédure couvre les vérifications avant, la surveillance de la convergence, les
 contrôles après et le retour arrière.
 
-> [!WARNING] Procédure réécrite le 2026-10-11 pour Omni à partir du dépôt : ses commandes n'ont pas été rejouées sur
-> Omni ni sur les clusters. Le comportement d'Omni cité ci-dessous vient de la documentation officielle (voir
+> [!WARNING]\
+> Procédure réécrite le 2026-10-11 pour Omni à partir du dépôt : ses commandes n'ont pas été rejouées sur Omni ni sur
+> les clusters. Le comportement d'Omni cité ci-dessous vient de la documentation officielle (voir
 > [Pour aller plus loin](#pour-aller-plus-loin)), consultée le 2026-10-11 ; ce qui n'y figure pas est signalé « à
 > confirmer sur Omni ».
 
@@ -101,10 +102,11 @@ Vérifier ensuite le chemin de mise à jour :
   aussi monter, suivre [Mettre à jour Kubernetes avec Omni](./INF-20260525-01-Mettre-a-Jour-Kubernetes-avec-Omni.md)
   dans l'ordre qu'impose la matrice de compatibilité.
 
-> [!IMPORTANT] Les `systemExtensions` du template (`qemu-guest-agent`, `iscsi-tools`, `util-linux-tools`) doivent
-> exister pour la version cible. Omni construit l'image d'installation (Image Factory) à partir de la liste du template
-> ; l'absence d'une extension pour la version cible n'est pas décrite dans le dépôt et reste à confirmer sur Omni.
-> Relire les notes de version de Talos pour détecter une extension retirée ou renommée.
+> [!IMPORTANT]\
+> Les `systemExtensions` du template (`qemu-guest-agent`, `iscsi-tools`, `util-linux-tools`) doivent exister pour la
+> version cible. Omni construit l'image d'installation (Image Factory) à partir de la liste du template ; l'absence
+> d'une extension pour la version cible n'est pas décrite dans le dépôt et reste à confirmer sur Omni. Relire les notes
+> de version de Talos pour détecter une extension retirée ou renommée.
 
 ## Étape 2 — Préparer les nœuds hébergeant des instances CNPG
 
@@ -147,9 +149,10 @@ Contrôler que le diff Git ne contient que la ligne `version` attendue :
 git --no-pager diff -- $TEMPLATE_FILE
 ```
 
-> [!WARNING] Les URL de manifests de bootstrap (`cni.urls`, `extraManifests`) du template sont épinglées sur un commit.
-> Ne pas les modifier pendant une mise à jour de Talos : le manifeste Cilium d'un cluster en service doit rester celui
-> qui a créé son installer Job (voir l'en-tête de `catalog/omni/clustertemplates/base.yaml`).
+> [!WARNING]\
+> Les URL de manifests de bootstrap (`cni.urls`, `extraManifests`) du template sont épinglées sur un commit. Ne pas les
+> modifier pendant une mise à jour de Talos : le manifeste Cilium d'un cluster en service doit rester celui qui a créé
+> son installer Job (voir l'en-tête de `catalog/omni/clustertemplates/base.yaml`).
 
 ## Étape 4 — Appliquer le template
 
@@ -160,9 +163,10 @@ omnictl cluster template sync -f $TEMPLATE_FILE
 # → Omni affiche les ressources modifiées (le Cluster, avec la nouvelle version de Talos)
 ```
 
-> [!IMPORTANT] Utiliser `sync -f <fichier>` sur un fichier unique, jamais `omnictl apply -f` (ne comprend pas ce format)
-> ni `sync` sur un répertoire (traite tous les templates, suppressions comprises). Faire valider le diff et la version
-> cible avant `sync` : l'application déclenche aussitôt le redémarrage progressif des nœuds.
+> [!IMPORTANT]\
+> Utiliser `sync -f <fichier>` sur un fichier unique, jamais `omnictl apply -f` (ne comprend pas ce format) ni `sync`
+> sur un répertoire (traite tous les templates, suppressions comprises). Faire valider le diff et la version cible avant
+> `sync` : l'application déclenche aussitôt le redémarrage progressif des nœuds.
 
 Selon le comportement décrit par la documentation d'Omni, les nœuds control plane sont mis à jour en premier, puis les
 workers un par un (`maxParallelism: 1`). Pendant le redémarrage d'un nœud, ses workloads sont indisponibles tant qu'ils

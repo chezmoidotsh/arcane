@@ -7,8 +7,9 @@ la contourne : la solution est une séquence d'opérations, pas une option. Elle
 bout le 2026-08-05 sur l'application `jellyfin` de `lungmen.akn` (voir l'exemple complet). À utiliser quand le PVC d'une
 application est perdu ou corrompu ; la durée dépend surtout du volume à recopier (environ 1,1 Go dans l'exemple).
 
-> [!WARNING] Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur le cluster
-> depuis la validation du 2026-08-05.
+> [!WARNING]\
+> Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur le cluster depuis la
+> validation du 2026-08-05.
 
 ## Cadre technique et conventions
 
@@ -38,10 +39,11 @@ application est perdu ou corrompu ; la durée dépend surtout du volume à recop
   Un Backup issu de ces Schedules ne contient donc pas le StatefulSet. La validation du 2026-08-05 portait sur un Backup
   qui le contenait (11 éléments restaurés) ; le comportement avec un Backup « PVC seul » n'a pas été vérifié.
 
-> [!WARNING] Cette procédure supprime le PVC cible. Vérifier `persistentVolumeReclaimPolicy` du PV lié avant de
-> commencer (étape 1) : avec `Delete` plutôt que `Retain`, le volume sous-jacent est détruit immédiatement et sans
-> retour possible hors de cette voie de restauration. Une politique `Retain` appliquée à l'échelle du cluster ne vaut
-> pas rétroactivement pour un PV provisionné avant elle : vérifier le PV concerné.
+> [!WARNING]\
+> Cette procédure supprime le PVC cible. Vérifier `persistentVolumeReclaimPolicy` du PV lié avant de commencer (étape 1)
+> : avec `Delete` plutôt que `Retain`, le volume sous-jacent est détruit immédiatement et sans retour possible hors de
+> cette voie de restauration. Une politique `Retain` appliquée à l'échelle du cluster ne vaut pas rétroactivement pour
+> un PV provisionné avant elle : vérifier le PV concerné.
 
 ## Prérequis
 
@@ -94,9 +96,10 @@ velero backup get --namespace $VELERO_NAMESPACE | grep "^$APP_NAMESPACE-"
 
 ## Étape 1 — Confirmer la politique de rétention du PVC avant toute action
 
-> [!CAUTION] Le PVC est supprimé à l'étape 3 dans tous les cas : cette vérification ne change aucune étape suivante.
-> Elle sert à savoir si cette suppression détruit aussi le volume (`Delete`) ; dans ce cas, il faut être certain que le
-> Backup choisi est sain et assez récent avant de continuer.
+> [!CAUTION]\
+> Le PVC est supprimé à l'étape 3 dans tous les cas : cette vérification ne change aucune étape suivante. Elle sert à
+> savoir si cette suppression détruit aussi le volume (`Delete`) ; dans ce cas, il faut être certain que le Backup
+> choisi est sain et assez récent avant de continuer.
 
 ```sh
 PV_NAME=$(kubectl get pvc -n $APP_NAMESPACE $PVC_NAME -o jsonpath='{.spec.volumeName}')
@@ -220,7 +223,8 @@ fi
 
 Les valeurs ci-dessous sont celles de la validation du 2026-08-05.
 
-> [!NOTE] Depuis, le `volumeClaimTemplates` de `jellyfin` utilise la `StorageClass` `proxmox-lvmthin-ext4-retain`
+> [!NOTE]\
+> Depuis, le `volumeClaimTemplates` de `jellyfin` utilise la `StorageClass` `proxmox-lvmthin-ext4-retain`
 > (`projects/lungmen.akn/src/apps/jellyfin/jellyfin.statefulset.yaml`) : un PVC provisionné aujourd'hui aurait une
 > politique `Retain`, alors que le PV de la validation était en `Delete`.
 

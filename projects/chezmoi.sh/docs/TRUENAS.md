@@ -8,8 +8,9 @@
 
 ---
 
-> [!NOTE] This document is **auto-generated** from the `chezmoi-sh-infra` Pulumi stack's own live state — do not edit it
-> by hand. Regenerate it with `mise run truenas:docs:generate` (already chained onto `mise run pulumi:apply`).
+> [!NOTE]\
+> This document is **auto-generated** from the `chezmoi-sh-infra` Pulumi stack's own live state — do not edit it by
+> hand. Regenerate it with `mise run truenas:docs:generate` (already chained onto `mise run pulumi:apply`).
 
 `nas.chezmoi.sh` is the household NAS. Its sole role is **data storage**: the media library (films, series, anime,
 music, books), personal documents and home archives, data volumes for select self-hosted applications (Immich,
@@ -160,7 +161,8 @@ Machine.
 
 ### SMB
 
-> [!NOTE] Each share applies one of TrueNAS's presets:
+> [!NOTE]\
+> Each share applies one of TrueNAS's presets:
 >
 > - **`DEFAULT_SHARE`** — the general-purpose preset.
 > - **`LEGACY_SHARE`** — skips presets entirely (options are set manually, not a sign the share is deprecated).
@@ -180,11 +182,12 @@ Machine.
 
 ## Permissions
 
-> [!WARNING] This stack cannot apply filesystem ACLs to a dataset -- `truenas.FilesystemAcl` only works for POSIX1E
-> through this provider; NFS4 entries built from its schema are rejected outright by the NAS's own API. It manages the
-> NFS4 ACL _templates_ below instead (named presets, visible in the TrueNAS UI's ACL editor) and documents which one to
-> apply, by hand, to which dataset. Datasets not listed in the assignment table keep whatever ACL is already set on the
-> NAS -- Pulumi doesn't manage them.
+> [!WARNING]\
+> This stack cannot apply filesystem ACLs to a dataset -- `truenas.FilesystemAcl` only works for POSIX1E through this
+> provider; NFS4 entries built from its schema are rejected outright by the NAS's own API. It manages the NFS4 ACL
+> _templates_ below instead (named presets, visible in the TrueNAS UI's ACL editor) and documents which one to apply, by
+> hand, to which dataset. Datasets not listed in the assignment table keep whatever ACL is already set on the NAS --
+> Pulumi doesn't manage them.
 
 ### Identities
 

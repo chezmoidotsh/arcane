@@ -6,8 +6,8 @@ du cluster dans le GitOps du dépôt (comme hub ArgoCD ou comme spoke) et valida
 l'intégration cloud-provider. À la fin, le cluster est `Ready`, Cilium, le Proxmox CSI et le Proxmox CCM fonctionnent et
 ont été vérifiés un par un, et ArgoCD gère le cluster.
 
-> [!WARNING] Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur Omni ni sur les
-> clusters.
+> [!WARNING]\
+> Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur Omni ni sur les clusters.
 
 Les étapes sont ordonnées volontairement : le CNI vient en premier, car rien ne fonctionne sans réseau de Pods ; les
 identifiants Proxmox, le CSI et le CCM suivent, car la plupart des charges de travail ont besoin du stockage et de la
@@ -200,9 +200,10 @@ Champs à modifier par rapport à la base :
 Les templates de `rhodes.akn` et `lungmen.akn` (`projects/*/src/infrastructure/omni/`) servent d'exemples de copie
 modifiée.
 
-> [!NOTE] Le CNI est défini ici et non par GitOps, car Talos est immuable et piloté par API : aucun `kubectl apply`
-> n'est possible tant que le cluster n'a pas de réseau de Pods, et ArgoCD lui-même a besoin d'un cluster fonctionnel
-> pour synchroniser quoi que ce soit. Le mécanisme `cni.urls` / `extraManifests` de Talos et d'Omni (voir
+> [!NOTE]\
+> Le CNI est défini ici et non par GitOps, car Talos est immuable et piloté par API : aucun `kubectl apply` n'est
+> possible tant que le cluster n'a pas de réseau de Pods, et ArgoCD lui-même a besoin d'un cluster fonctionnel pour
+> synchroniser quoi que ce soit. Le mécanisme `cni.urls` / `extraManifests` de Talos et d'Omni (voir
 > [Templates, machine classes et manifests de bootstrap](#templates-machine-classes-et-manifests-de-bootstrap)) est le
 > seul moyen d'obtenir un CNI avant que le cluster n'en ait un : Cilium est donc appliqué à l'amorçage d'Omni (étapes 6
 > et 8), et non par GitOps comme les autres composants.
@@ -224,7 +225,8 @@ Si une URL renvoie `404`, le SHA est inaccessible (la pointe de la branche n'a p
 squash-merge). Il doit être réépinglé sur le SHA du commit de merge avant de continuer : voir
 [Réépingler les SHA après un squash-merge](./OMNI-20260629-03-Reepingler-les-SHA-apres-un-Squash-Merge.md).
 
-> [!WARNING] Appliquer un template dont le SHA épinglé renvoie 404 produit un cluster **sans CNI** : Cilium n'est jamais
+> [!WARNING]\
+> Appliquer un template dont le SHA épinglé renvoie 404 produit un cluster **sans CNI** : Cilium n'est jamais
 > téléchargé, les Pods restent en `ContainerCreating` et l'échec est silencieux. Toujours vérifier l'accessibilité ici,
 > avant l'étape 6.
 
@@ -256,8 +258,9 @@ Une fois validé, appliquer le template à Omni. Cette étape est en ligne et de
 omnictl cluster template sync -f $TEMPLATE_FILE
 ```
 
-> [!IMPORTANT] Utiliser `omnictl cluster template sync -f <fichier>`, **pas** `omnictl apply -f`. `apply` est la
-> commande générique des ressources COSI (elle attend du YAML `metadata`/`spec`) et ne sait pas lire le DSL
+> [!IMPORTANT]\
+> Utiliser `omnictl cluster template sync -f <fichier>`, **pas** `omnictl apply -f`. `apply` est la commande générique
+> des ressources COSI (elle attend du YAML `metadata`/`spec`) et ne sait pas lire le DSL
 > `kind: Cluster`/`ControlPlane`/`Workers` des templates : elle échoue avec
 > `yaml: construct errors: ... expected 4 elements node, got N`. `sync` réconcilie avec une sémantique complète de
 > création, de mise à jour et de **suppression** : pointée sur un dossier, elle traite chaque template du dossier et

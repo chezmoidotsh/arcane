@@ -1,7 +1,8 @@
 # Migrate Kazimierz.AKN from Ansible + Docker Compose to NixOS
 
-> [!NOTE] **Status: COMPLETED on 2026-10-10.** The cutover was done and validated in production the same day (Pangolin
-> state restored, 4 containers running, Tailscale node registered, `tailscale serve` working). This file is kept as a
+> [!NOTE]\
+> **Status: COMPLETED on 2026-10-10.** The cutover was done and validated in production the same day (Pangolin state
+> restored, 4 containers running, Tailscale node registered, `tailscale serve` working). This file is kept as a
 > historical record; the Ansible code it mentions has been removed from the tree. For a (re)install today, follow
 > [BOOTSTRAP.md](./BOOTSTRAP.md). The decision is recorded in
 > [ADR-016](../../../docs/decisions/016-kazimierz-nixos-over-ansible.md).
@@ -9,12 +10,14 @@
 This document describes how to replace the Ubuntu + Ansible + Docker Compose setup of the Kazimierz.AKN VPS with a NixOS
 host installed by `nixos-anywhere`, the way `rimbilliton.akn` is (see
 [its bootstrap](../../rimbilliton.akn/docs/BOOTSTRAP.md), which this procedure follows closely). The NixOS definition
-lives in `src/infrastructure/nixos/`. [BOOTSTRAP.md](./BOOTSTRAP.md) is the same install for a fresh instance, without state to restore.
+lives in `src/infrastructure/nixos/`. [BOOTSTRAP.md](./BOOTSTRAP.md) is the same install for a fresh instance, without
+state to restore.
 
-> [!IMPORTANT] `nixos-anywhere` repartitions the boot volume. There is no side-by-side migration: the tenancy's Always
-> Free A1 quota (2 OCPU / 12 GB) is fully used by `kazimierz-pangolin` and `rimbilliton-minecraft`, so a second instance
-> cannot be created. Expect **a few minutes to tens of minutes of downtime of every service exposed through Pangolin**
-> (the Newt tunnels reconnect by themselves afterwards). Plan it, and keep the backup of step 1 until step 7 is done.
+> [!IMPORTANT]\
+> `nixos-anywhere` repartitions the boot volume. There is no side-by-side migration: the tenancy's Always Free A1 quota
+> (2 OCPU / 12 GB) is fully used by `kazimierz-pangolin` and `rimbilliton-minecraft`, so a second instance cannot be
+> created. Expect **a few minutes to tens of minutes of downtime of every service exposed through Pangolin** (the Newt
+> tunnels reconnect by themselves afterwards). Plan it, and keep the backup of step 1 until step 7 is done.
 
 ## What changes
 
@@ -124,12 +127,13 @@ The task refreshes the binding IP (`nixos:binding-ip`), then runs `nixos-anywher
 with `--flake .#kazimierz-akn-aarch64 --extra-files extra --kexec-extra-flags --kexec-syscall`. `nonix` forwards your
 SSH agent to the container, and that agent must hold the key matching `ssh_authorized_keys` in the Pulumi config:
 
-> [!IMPORTANT] **macOS (OrbStack, Docker Desktop): the containers run in a Linux VM**, so `nonix` cannot mount your
-> agent's socket directly (the file shows up, but connecting to it fails with `Connection refused`). It uses the relay
-> the runtime offers instead, `/run/host-services/ssh-auth.sock`, which forwards the agent of the **macOS login
-> session** (the `SSH_AUTH_SOCK` known to `launchd`), not the one of your current shell. With the default macOS agent
-> nothing is needed. With a custom agent (Bitwarden, Secretive, 1Password, ...), point `launchd` at its socket and
-> restart the runtime:
+> [!IMPORTANT]\
+> **macOS (OrbStack, Docker Desktop): the containers run in a Linux VM**, so `nonix` cannot mount your agent's socket
+> directly (the file shows up, but connecting to it fails with `Connection refused`). It uses the relay the runtime
+> offers instead, `/run/host-services/ssh-auth.sock`, which forwards the agent of the **macOS login session** (the
+> `SSH_AUTH_SOCK` known to `launchd`), not the one of your current shell. With the default macOS agent nothing is
+> needed. With a custom agent (Bitwarden, Secretive, 1Password, ...), point `launchd` at its socket and restart the
+> runtime:
 >
 > ```bash
 > launchctl getenv SSH_AUTH_SOCK                                  # what the relay will forward
@@ -185,8 +189,8 @@ Image tags and their digests are bumped together in `modules/pangolin.nix`.
 ### 7. Clean up
 
 - [x] Remove `src/infrastructure/ansible/` and `.vault-password.sops` (and its rule in `.sops.yaml`).
-- [x] Update `README.md` (project tree, "Installation and Setup", Ansible mentions) and `architecture.d2`, regenerate the
-      diagrams.
+- [x] Update `README.md` (project tree, "Installation and Setup", Ansible mentions) and `architecture.d2`, regenerate
+      the diagrams.
 - [x] Record the decision: [ADR-016](../../../docs/decisions/016-kazimierz-nixos-over-ansible.md) supersedes ADR-008's
       configuration-management choice. The earlier NixOS attempt
       ([session notes](../../../.agents/sessions/20260801-kazimierz-nixos-vs-ansible.md)) was abandoned for a local KVM

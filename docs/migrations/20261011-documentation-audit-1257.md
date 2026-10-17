@@ -5,7 +5,8 @@
 > relatifs). Quand une vérification n'a pas pu être faite (comportement du rendu GitHub Wiki, état réel des clusters),
 > c'est indiqué.
 
-> [!IMPORTANT] **Décisions modifiées depuis cet audit** (voir le commentaire de mise à jour de #1257 et le style guide
+> [!IMPORTANT]\
+> **Décisions modifiées depuis cet audit** (voir le commentaire de mise à jour de #1257 et le style guide
 > `.agents/skills/documentation-writer/references/style-guide.md`, qui font foi) :
 >
 > - Le `wiki/` plat (décision D1, colonnes « Destination », sections (a) et (f)) est remplacé : la source de vérité est

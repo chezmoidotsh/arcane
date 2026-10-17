@@ -43,8 +43,9 @@ criteria, known issues, etc.), follow
 [Procedure OMNI-20260721-00 — Talos cluster bring-up on Proxmox](../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)
 using the parameters below.
 
-> [!NOTE] This cluster was recreated from scratch after issue 1188 (superseding issue 1028): **proxmox-csi-plugin from
-> day one, no Longhorn**. If you are restoring application data rather than bringing up a bare cluster, see
+> [!NOTE]\
+> This cluster was recreated from scratch after issue 1188 (superseding issue 1028): **proxmox-csi-plugin from day one,
+> no Longhorn**. If you are restoring application data rather than bringing up a bare cluster, see
 > [`src/infrastructure/kubernetes/velero/`](../src/infrastructure/kubernetes/velero/) for the Velero restore path —
 > backups predating the recreation carry a `longhorn` storage-class name that must be remapped to
 > `proxmox-lvmthin-ext4`/`proxmox-lvmthin-xfs` on restore.

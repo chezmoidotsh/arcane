@@ -151,8 +151,9 @@ disaster recovery. One-time setup, after the PBS VM is installed and reachable:
    so a future PBS-side resource with the same kind of root-only restriction doesn't require rediscovering that the
    option exists.
 
-   > [!IMPORTANT] If ever needed, supply it as an **environment variable scoped to the single command that needs it —
-   > never via `pulumi config set`, not even `--secret`.** That still writes an encrypted blob into the git-tracked
+   > [!IMPORTANT]\
+   > If ever needed, supply it as an **environment variable scoped to the single command that needs it — never via
+   > `pulumi config set`, not even `--secret`.** That still writes an encrypted blob into the git-tracked
    > `Pulumi.chezmoi_sh.live.yaml`; encrypted-at-rest is not the same as safe to commit. See `../proxmox/README.md`,
    > "Bootstrapping" step 1, for the env-var-only pattern this stack would follow if it ever needs password auth
    > (`PBS_USERNAME`/`PBS_PASSWORD` or whatever the provider's actual env var names turn out to be — verify against the

@@ -5,8 +5,9 @@ Un nœud est drainé pendant une mise à jour de Talos pilotée par Omni (voir
 procédure décrit ce qui arrive aux Pods CloudNative-PG (CNPG) du nœud et vérifie, avant le drain, qu'aucun cluster
 mono-instance ne le bloque.
 
-> [!WARNING] Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur les clusters.
-> Le comportement de CNPG pendant un drain (PodDisruptionBudget, bascule du primaire) décrit ci-dessous vient de CNPG et
+> [!WARNING]\
+> Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur les clusters. Le
+> comportement de CNPG pendant un drain (PodDisruptionBudget, bascule du primaire) décrit ci-dessous vient de CNPG et
 > n'est pas prouvé par le dépôt.
 
 ## Prérequis

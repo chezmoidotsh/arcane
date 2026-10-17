@@ -14,7 +14,8 @@ Here, `projects/rhodes.akn/src/infrastructure/omni/rhodes.clustertemplate.yaml` 
 time — it was drafted proactively on 2026-07-23, ahead of this migration (see that file's own history and
 [README.md's History](../../projects/rhodes.akn/docs/disaster-recovery/README.md#history)).
 
-> [!NOTE] The action itself is identical to DR's own Step 1: apply the cluster template via `omnictl`, following
+> [!NOTE]\
+> The action itself is identical to DR's own Step 1: apply the cluster template via `omnictl`, following
 > [OMNI-20260721-00](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md) through its CNI/CSI/CCM
 > validation checklist. `rhodes.akn` is already allocated cluster ID 1 / pod CIDR `172.30.0.0/19` in
 > [docs/network/ipam.md](../network/ipam.md) — that decision predates this migration and needs no revisiting here.
@@ -41,9 +42,10 @@ Follow the DR's own
 [Between Steps 6 and 9 — validate over real HTTPS via `/etc/hosts` section](../../projects/rhodes.akn/docs/disaster-recovery/README.md#between-steps-6-and-9---validate-over-real-https-via-etchosts-optional)
 as written — same entries, same IP.
 
-> [!IMPORTANT] There, it's optional (production DNS already targets `rhodes.akn` since it's the same cluster being
-> recovered). Here, it's mandatory: DNS for both hostnames still resolves to `amiya.akn` until the cutover below, so
-> this is the only way to reach `rhodes.akn`'s instances at all before that point, not just a convenience.
+> [!IMPORTANT]\
+> There, it's optional (production DNS already targets `rhodes.akn` since it's the same cluster being recovered). Here,
+> it's mandatory: DNS for both hostnames still resolves to `amiya.akn` until the cutover below, so this is the only way
+> to reach `rhodes.akn`'s instances at all before that point, not just a convenience.
 
 Remove these entries only once the real DNS cutover below is confirmed working — do not leave them in place
 indefinitely.
@@ -56,8 +58,9 @@ Cloudflare DNS — genuinely internet-reachable). `rhodes.akn` only has `externa
 (`txtOwnerId: external-dns.rhodesakn`, `policy: sync`) and `external-dns-bind` (talosnet-internal split-horizon only) —
 there is no `cloudflare-operator` / `cloudflare-public-gateway` component on `rhodes.akn`.
 
-> [!IMPORTANT] This is an intended behavior change, not a gap to fill in later: after this migration, `vault.chezmoi.sh`
-> and `auth.chezmoi.sh` become LAN (VLAN 5) / Tailscale-only — no longer reachable from the public internet. If a
+> [!IMPORTANT]\
+> This is an intended behavior change, not a gap to fill in later: after this migration, `vault.chezmoi.sh` and
+> `auth.chezmoi.sh` become LAN (VLAN 5) / Tailscale-only — no longer reachable from the public internet. If a
 > public-facing entry point is wanted again later, that's a separate piece of work, out of scope here.
 
 Because `amiya`'s and `rhodes`'s `external-dns-unifi` instances use different `txtOwnerId` values, neither one will ever

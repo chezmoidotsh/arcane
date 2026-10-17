@@ -9,7 +9,8 @@ informed: []
 
 # `kazimierz`.AKN: Ansible + Docker Compose over Kubernetes
 
-> [!CAUTION] **Partially superseded by [ADR-016](./016-kazimierz-nixos-over-ansible.md) (2026-10-10).** The
+> [!CAUTION]\
+> **Partially superseded by [ADR-016](./016-kazimierz-nixos-over-ansible.md) (2026-10-10).** The
 > configuration-management choice (Ansible + Docker Compose) was replaced by NixOS installed with `nixos-anywhere` and
 > `sops-nix`; the Ansible code was removed. The other decisions stand: a single VPS rather than Kubernetes, and Pangolin
 > as the gateway. The Ansible-specific passages below are kept as the historical record. The status stays `implemented`
@@ -150,8 +151,9 @@ Use Ansible for configuration management with official Pangolin Docker Compose d
 
 #### Technology Stack (Ansible)
 
-> [!CAUTION] The `ansible-pull` GitOps automation (15-minute systemd timer) listed below and the "GitOps Maintained"
-> benefit were removed on 2026-10-07; the playbook is now run manually. See
+> [!CAUTION]\
+> The `ansible-pull` GitOps automation (15-minute systemd timer) listed below and the "GitOps Maintained" benefit were
+> removed on 2026-10-07; the playbook is now run manually. See
 > [Post-Implementation Change](#post-implementation-change-removal-of-ansible-pull-2026-10-07).
 
 - **Configuration Management**: Ansible for system provisioning and application deployment
@@ -299,8 +301,9 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 
 ### Positive
 
-> [!CAUTION] The "GitOps Maintained" item below no longer holds since 2026-10-07: `ansible-pull` was removed and
-> configuration is applied only when the operator runs the playbook.
+> [!CAUTION]\
+> The "GitOps Maintained" item below no longer holds since 2026-10-07: `ansible-pull` was removed and configuration is
+> applied only when the operator runs the playbook.
 
 - ✅ **Resource Efficiency**: Saves \~750MB RAM (Docker daemon <256MB vs Kubernetes control plane \~1GB)
 - ✅ **Operational Simplicity**: Standard Docker Compose commands for debugging and management
@@ -349,10 +352,10 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 
 ### GitOps Automation Model
 
-> [!CAUTION] Deprecated since 2026-10-07: the `ansible-pull` systemd service and timer (`gitops_automation` role) and
-> the Slack run notifications were removed. The section below, the "GitOps Setup" bootstrap phase and the
-> `ansible-pull Failure` risk describe the original design only. Unattended OS upgrades are unchanged; ARA was removed
-> later (2026-10-08).
+> [!CAUTION]\
+> Deprecated since 2026-10-07: the `ansible-pull` systemd service and timer (`gitops_automation` role) and the Slack run
+> notifications were removed. The section below, the "GitOps Setup" bootstrap phase and the `ansible-pull Failure` risk
+> describe the original design only. Unattended OS upgrades are unchanged; ARA was removed later (2026-10-08).
 
 **Tool**: `ansible-pull` with systemd timer (15-minute interval)
 
@@ -365,8 +368,9 @@ Running ArgoCD on `kazimierz` for a single Docker Compose application:
 
 ### Deployment Components
 
-> [!CAUTION] Deprecated since 2026-10-08: ARA (the `ara_server` role and its Tailscale Serve listener) was removed too,
-> leaving three phases in practice.
+> [!CAUTION]\
+> Deprecated since 2026-10-08: ARA (the `ara_server` role and its Tailscale Serve listener) was removed too, leaving
+> three phases in practice.
 
 **4-Phase Bootstrap**:
 
@@ -427,8 +431,8 @@ remains in use by the `pangolin` role to expose Pangolin's Integration API on th
 
 **No automatic update on NixOS either (2026-10-10)**: `kazimierz.akn` (and `rimbilliton.akn`) moved to NixOS with
 `nixos-rebuild` run by hand (PR 1304), and `system.autoUpgrade` is deliberately left off. Neither instance has
-supervision yet, so a bad unattended upgrade would go unnoticed, and the rollback is complex. Revisit once the
-instances are monitored.
+supervision yet, so a bad unattended upgrade would go unnoticed, and the rollback is complex. Revisit once the instances
+are monitored.
 
 ### Lessons Learned
 
@@ -461,8 +465,7 @@ instances are monitored.
   [artis3n.tailscale](https://github.com/artis3n/ansible-role-tailscale),
   [community.general](https://docs.ansible.com/ansible/latest/collections/community/general/),
   [community.docker](https://docs.ansible.com/ansible/latest/collections/community/docker/)
-- **Architecture References**:
-  `kazimierz` Ansible README (removed on 2026-10-10, see Git history); current setup in the
+- **Architecture References**: `kazimierz` Ansible README (removed on 2026-10-10, see Git history); current setup in the
   [`kazimierz` bootstrap](../../projects/kazimierz.akn/docs/BOOTSTRAP.md) and
   [ADR-016](./016-kazimierz-nixos-over-ansible.md)
 
