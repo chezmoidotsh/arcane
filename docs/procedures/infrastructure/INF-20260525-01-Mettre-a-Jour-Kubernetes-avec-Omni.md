@@ -232,10 +232,15 @@ omnictl cluster template status -f projects/rhodes.akn/src/infrastructure/omni/r
 - **Absence de dérive** : `omnictl cluster template diff -f $TEMPLATE_FILE` — aucun écart.
 - **Santé du cluster** : `omnictl cluster status $CLUSTER_NAME` — cluster et machines `Ready`.
 - **Version des nœuds** : `kubectl get nodes` — colonne `VERSION` égale à la version cible.
-- **Pods système** : `kubectl get pods -n kube-system` — tous `Running` ou `Completed`.
-- **Cilium** : `kubectl get pods -n kube-system | grep cilium` — tous `Running`.
+- **Pods** :
+  `kubectl get pods -A -o json | jq -r '.items[] | select(.status.phase != "Succeeded") | select(.status.phase != "Running" or any(.status.containerStatuses[]?; .ready | not)) | "\(.metadata.namespace)/\(.metadata.name)"'`
+  — aucune ligne.
 
 ## Retour arrière
+
+> [!WARNING]\
+> Le retour arrière n'a jamais été nécessaire sur ces clusters : cette section n'est pas documentée de bout en bout. Ce
+> qui suit vient de la documentation d'Omni et reste à compléter au premier besoin réel.
 
 Le retour à une version mineure antérieure n'est pas documenté par Omni : la documentation consultée ne décrit aucune
 rétrogradation de Kubernetes. Réécrire l'ancienne valeur dans `kubernetes.version` puis relancer `cluster template sync`
@@ -255,6 +260,8 @@ Les voies de reprise établies sont les suivantes :
 
 ## Historique
 
+- _2026-10-17_ : Troisième revue : le contrôle des pods est générique et la section « Retour arrière » porte un
+  avertissement.
 - _2026-10-17_ : Seconde revue : le paragraphe sur l'incident Kubernetes 1.35 est un callout, la procédure de drain CNPG
   supprimée n'est plus citée et le réépinglage renvoie à la création de cluster.
 - _2026-10-17_ : Reprise après revue : l'état de vérification est un callout `WARNING`, les entrées sont des variables
