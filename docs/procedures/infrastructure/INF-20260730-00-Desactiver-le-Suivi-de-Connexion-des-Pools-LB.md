@@ -5,10 +5,12 @@ Sans elle, avec le design Talos à deux interfaces réseau (ADR-014), les client
 Kubernetes du homelab) n'atteignent pas l'IP LoadBalancer ou Gateway externe d'un cluster : la requête arrive et Cilium
 y répond correctement en interne, mais la réponse est abandonnée par le pare-feu de l'hôte Proxmox.
 
-Vérifiée contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées sur l'hôte Proxmox pour cette migration.
-Le correctif a été validé en conditions réelles sur la Gateway externe de `rhodes.akn` (`10.0.0.64`, dans le bloc
-`10.0.0.64/26`) le 2026-07-30 : `HTTP/1.1 200 OK` depuis un vrai client du VLAN 2, avant et après un `ifreload -a` en
-direct.
+> [!WARNING]\
+> Vérifiée contre le dépôt le 2026-10-17 ; les commandes n'ont pas été rejouées sur l'hôte Proxmox pour cette migration.
+> Le correctif a été validé en conditions réelles sur la Gateway externe de `rhodes.akn` (`10.0.0.64`, dans le bloc
+> `10.0.0.64/26`) le 2026-07-30 : `HTTP/1.1 200 OK` depuis un vrai client du VLAN 2, avant et après un `ifreload -a` en
+> direct. Les constats faits sur `pve-01` (règles `raw`, compteurs, captures) datent de cette investigation et n'ont pas
+> été revérifiés.
 
 ## Cadre technique et conventions
 
@@ -106,18 +108,22 @@ Cette procédure est aussi à rejouer après toute reconstruction ou réinstalla
 
 ## Entrées requises
 
-- `HOSTNAME` : nom DNS servi par la Gateway à tester, par exemple le nom d'une route `HTTPRoute` du cluster.
-- `LB_IP` : IP externe LoadBalancer ou Gateway du cluster, prise dans le bloc `10.0.0.64/26`, par exemple `10.0.0.64`
-  pour `rhodes.akn`.
+Exporter ces variables une fois ; toutes les commandes suivantes se copient ensuite telles quelles.
+
+```sh
+export PVE_HOST=<nom DNS de l'hôte Proxmox>          # ex. pve-01.pve.chezmoi.sh
+export APP_HOSTNAME=<nom DNS servi par la Gateway>   # ex. le nom d'une HTTPRoute attachée à la Gateway externe
+export LB_IP=<IP LoadBalancer ou Gateway externe>    # ex. 10.0.0.64 (rhodes.akn), dans le bloc 10.0.0.64/26
+```
 
 ## Étape 1 — Supprimer l'ancienne clé SSH de l'hôte (après reconstruction)
 
 Cette étape ne concerne que le cas d'une reconstruction de `pve-01`. L'hôte présente alors une nouvelle clé SSH que
-l'option `accept-new` de l'inventaire ne fait pas confiance automatiquement (elle ne couvre que les hôtes inconnus).
-Supprimer l'entrée périmée avant de lancer le playbook :
+l'option `accept-new` de l'inventaire n'accepte pas automatiquement (elle ne couvre que les hôtes inconnus). Supprimer
+l'entrée périmée avant de lancer le playbook :
 
 ```sh
-ssh-keygen -R pve-01.pve.chezmoi.sh   # aussi l'IP de l'hôte, si la connexion s'est faite par IP
+ssh-keygen -R $PVE_HOST   # aussi l'IP de l'hôte, si la connexion s'est faite par IP
 ```
 
 ## Étape 2 — Installer le hook avec Ansible
@@ -133,29 +139,54 @@ ansible-playbook -i inventory/production.yaml pve.yaml
 # → "Apply the hook now" : changed uniquement si le hook vient d'être installé ou modifié
 ```
 
-Un aperçu sans modification est possible avec `--check --diff`.
+Pour un aperçu sans modification :
+
+```sh
+ansible-playbook -i inventory/production.yaml pve.yaml --check --diff
+```
 
 ## Étape 3 — Vérifier l'accès externe et la persistance
 
+Depuis un client hors des clusters du homelab (par exemple un poste sur le VLAN 2) :
+
 ```sh
-# Depuis l'extérieur des clusters du homelab (par exemple un poste sur le VLAN 2) :
-curl -m 5 --resolve <HOSTNAME>:443:<LB_IP> https://<HOSTNAME>/
+curl -m 5 --resolve ${APP_HOSTNAME}:443:${LB_IP} https://${APP_HOSTNAME}/
 # → une réponse HTTP (par exemple HTTP/1.1 200 OK) au lieu d'un délai dépassé
+```
 
-# Sur pve-01, confirmer que les règles NOTRACK sont présentes, au nombre de 2 exactement (aucun doublon) :
-iptables -t raw -L PREROUTING -n --line-numbers | grep NOTRACK
+Sur `pve-01`, confirmer que les règles `NOTRACK` sont présentes, au nombre de 2 exactement (aucun doublon) :
+
+```sh
+ssh root@${PVE_HOST} "iptables -t raw -L PREROUTING -n --line-numbers | grep NOTRACK"
 # → deux lignes : une avec destination 10.0.0.64/26, une avec source 10.0.0.64/26
+```
 
-# Confirmer qu'elles survivent à un vrai rechargement (ce que déclenche chaque application SDN) :
-ifreload -a
-iptables -t raw -L PREROUTING -n --line-numbers | grep NOTRACK
+Confirmer qu'elles survivent à un vrai rechargement, ce que déclenche chaque application SDN :
+
+```sh
+ssh root@${PVE_HOST} "ifreload -a"
+ssh root@${PVE_HOST} "iptables -t raw -L PREROUTING -n --line-numbers | grep NOTRACK"
 # → toujours exactement 2 lignes
 ```
 
+## Exemple complet : Gateway externe de `rhodes.akn`
+
+Cas validé le 2026-07-30 : la Gateway externe de `rhodes.akn` est servie par `10.0.0.64`, premier `/29` du bloc
+`10.0.0.64/26`. Le nom DNS à tester est celui d'une `HTTPRoute` attachée à cette Gateway (non vérifié ici : à relever
+dans `projects/rhodes.akn/src/`).
+
+```sh
+export PVE_HOST=pve-01.pve.chezmoi.sh
+export APP_HOSTNAME=<nom d'une HTTPRoute de la Gateway externe de rhodes.akn>
+export LB_IP=10.0.0.64
+```
+
+Les étapes 1 à 3 se jouent ensuite telles quelles.
+
 ## Vérifications rapides
 
-- **Accès externe** : `curl -m 5 --resolve <HOSTNAME>:443:<LB_IP> https://<HOSTNAME>/` depuis un client hors des
-  clusters — réponse HTTP reçue.
+- **Accès externe** : `curl -m 5 --resolve ${APP_HOSTNAME}:443:${LB_IP} https://${APP_HOSTNAME}/` depuis un client hors
+  des clusters — réponse HTTP reçue.
 - **Règles présentes** : `iptables -t raw -L PREROUTING -n --line-numbers | grep NOTRACK` sur `pve-01` — exactement 2
   lignes.
 - **Persistance** : mêmes règles après `ifreload -a` — toujours exactement 2 lignes.
@@ -206,6 +237,9 @@ n'avait pas encore fait l'objet d'une issue. Cet état n'a pas été revérifié
 
 ## Historique
 
+- _2026-10-17_ : Alignement sur le gabarit de procédure v2 : avertissement sur l'état de vérification en callout,
+  entrées en un bloc `export` (`HOSTNAME` renommée `APP_HOSTNAME` pour ne pas écraser la variable du shell, `PVE_HOST`
+  ajoutée), commandes de l'étape 3 découpées et exécutées par `ssh`, ajout de l'exemple complet.
 - _2026-10-11_ : Migration vers le standard de documentation (issue #1257) : page traduite en français, structure
   alignée sur le gabarit de procédure. Liens relatifs corrigés (`../network/ipam.md` et
   `../decisions/014-network-topology.md` devenus `../../network/ipam.md` et `../../decisions/014-network-topology.md`,

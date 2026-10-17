@@ -5,13 +5,15 @@ Proxmox : construction du template, envoi vers le nœud, puis remplacement du vo
 données persistants (`mp0`, `mp1`, …) ne sont jamais copiés : seules leurs références changent, ou elles ne bougent pas
 du tout, donc le risque de perte de données est nul.
 
-Vérifiée contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées sur Proxmox pour cette migration.
-L'ancienne version avait été validée sur l'appliance o11y en production (indisponibilité d'environ 19 s) ; la date de
-cette validation n'est pas consignée. Le chemin recommandé est le script `mise run lxc:upgrade`, qui met à jour le
-conteneur en place (même VMID) avec un snapshot comme filet de sécurité. La variante manuelle, qui passe par un second
-conteneur, reste documentée pour le cas où le script ne convient pas.
+Le chemin recommandé est le script `mise run lxc:upgrade`, qui met à jour le conteneur en place (même VMID) avec un
+snapshot comme filet de sécurité. La variante manuelle, qui passe par un second conteneur, reste documentée pour le cas
+où le script ne convient pas. L'indisponibilité cible est de 2 minutes au plus (arrêt de l'ancien CT, échange du rootfs,
+démarrage, services actifs).
 
-**Indisponibilité cible :** 2 minutes au plus (arrêt de l'ancien CT, échange du rootfs, démarrage, services actifs).
+> [!WARNING]\
+> Vérifiée contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées sur Proxmox pour cette migration.
+> L'ancienne version avait été validée sur l'appliance o11y en production (indisponibilité d'environ 19 s) ; la date de
+> cette validation n'est pas consignée.
 
 ## Cadre technique et conventions
 
@@ -33,13 +35,14 @@ conteneur, reste documentée pour le cas où le script ne convient pas.
 ## Prérequis
 
 Avant de commencer, vérifier que les outils suivants sont installés et configurés : `mise` (`mise install` exécuté),
-Docker (conteneur de build Nix), `sops` avec la clé age du dépôt (`SOPS_AGE_KEY_FILE`), `ssh`, `scp`.
+`git`, Docker (conteneur de build Nix), `sops` avec la clé age du dépôt (`SOPS_AGE_KEY_FILE`), `ssh`, `scp`.
 
 Les accès suivants sont également nécessaires :
 
 - accès SSH par clé à `root@<PVE_HOST>` ;
 - secrets de l'appliance présents dans `secrets/*.sops.env` (déchiffrés au moment du build puis effacés de
-  l'environnement) ; s'ils manquent, `mise run lxc:secrets:sync` les régénère pour les appliances qui le proposent ;
+  l'environnement) ; s'ils manquent, `mise run lxc:secrets:sync` les régénère pour les appliances qui le proposent
+  (`observability`, `oci-registry`, `omni` et `pve-exporter`) ;
 - pour la variante manuelle, un VMID cible libre (`TARGET_ID`, 199 par défaut) ou la disposition à détruire
   (`pct destroy`) un reliquat d'une exécution précédente ;
 - confirmation que l'uid/gid du service de la nouvelle image est inchangé par rapport au CT en cours. S'ils changent, la
@@ -47,36 +50,29 @@ Les accès suivants sont également nécessaires :
 
 ## Entrées requises
 
-| Variable     | Description                                                      | Exemple `observability`                                            | Exemple `oci-registry`                                            |
-| ------------ | ---------------------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| `PVE_HOST`   | Nom d'hôte du nœud Proxmox                                       | `pve-01.pve.chezmoi.sh`                                            | `pve-01.pve.chezmoi.sh`                                           |
-| `LXC_NAME`   | Préfixe du template (nom passé à `lxc_init` dans les tâches)     | `observability`                                                    | `oci-registry`                                                    |
-| `VERSION`    | Version de l'image lue dans `flake.nix`                          | `2026.10.09`                                                       | `v2.1.18`                                                         |
-| `BUILD_PATH` | Dossier de l'appliance dans le dépôt                             | `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability` | `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/oci-registry` |
-| `SOURCE_ID`  | VMID du CT en cours (variante manuelle ; auto-détecté sinon)     | `101`                                                              | `100`                                                             |
-| `TARGET_ID`  | VMID du nouveau CT (variante manuelle uniquement)                | `199`                                                              | `199`                                                             |
-| `STORAGE`    | Pool de stockage du rootfs et de `mp0` (variante manuelle)       | `nvme-lvm`                                                         | `nvme-lvm`                                                        |
-| `MP0_MOUNT`  | Point de montage de `mp0` dans le conteneur (variante manuelle)  | `/persistent`                                                      | `/var/lib/zot`                                                    |
-| `HOST_UID`   | uid côté hôte du propriétaire des données (`100000 + uid du CT`) | `100980` (sous-dossier `o11y`)                                     | `100994`                                                          |
-
-`VERSION` d'`oci-registry` suit la règle de nommage ci-dessus. Les couples sous-dossier/uid que le script enregistre
-pour chaque appliance (`lxc_mp`) figurent dans le tableau de l'étape 4.
-
-Exporter les variables une fois dans le shell pour garder la suite copiable :
+Exporter ces variables une fois ; toutes les commandes suivantes se copient ensuite telles quelles. Les variables
+`SOURCE_ID` à `HOST_UID` ne servent qu'à la variante manuelle ; `SNAPSHOT` et `NEW_VOLUME` ne servent qu'au retour
+arrière du script.
 
 ```sh
-export PVE_HOST=pve-01.pve.chezmoi.sh   # À adapter
-export LXC_NAME=observability           # À adapter
-export VERSION=2026.10.09               # À adapter
+export PVE_HOST=<nom d'hôte du nœud Proxmox>                  # ex. pve-01.pve.chezmoi.sh
+export LXC_NAME=<nom passé à lxc_init, préfixe du template>   # ex. observability
+export VERSION=<version de l'image lue dans flake.nix>        # ex. 2026.10.09 (v2.1.18 pour oci-registry)
 export BUILD_PATH=projects/chezmoi.sh/src/infrastructure/proxmox/lxc/${LXC_NAME}
 export TEMPLATE=/var/lib/vz/template/cache/${LXC_NAME}.${VERSION}-amd64.tar.xz
-
-# Variante manuelle uniquement
-export SOURCE_ID=101                    # À adapter
-export TARGET_ID=199
-export STORAGE=nvme-lvm                 # À adapter
-export MP0_MOUNT=/persistent            # À adapter
+export VMID=<VMID du CT en cours, ou du nouveau CT après la variante manuelle>   # ex. 101
+export SNAPSHOT=<snapshot pre-upgrade-* du CT>                # ex. pre-upgrade-20261017-101500
+export NEW_VOLUME=<volume rootfs créé par le script>          # ex. nvme-lvm:vm-101-disk-2
+export SOURCE_ID=<VMID du CT en cours>                        # ex. 101
+export TARGET_ID=<VMID du nouveau CT>                         # ex. 199
+export STORAGE=<pool de stockage du rootfs et de mp0>         # ex. nvme-lvm
+export MP0_MOUNT=<point de montage de mp0 dans le CT>         # ex. /persistent (/var/lib/zot pour oci-registry)
+export DATA_SUBDIR=<sous-dossier de mp0 à contrôler>          # ex. o11y
+export HOST_UID=<uid hôte du propriétaire, 100000 + uid du CT>   # ex. 100980 (o11y), 100994 (zot)
 ```
+
+Les couples sous-dossier/uid que le script enregistre pour chaque appliance (`lxc_mp`) figurent dans le tableau de
+l'étape 4.
 
 ## Étape 1 — Construire le template
 
@@ -127,16 +123,22 @@ points de montage ne changent pas. Un snapshot Proxmox sert de retour arrière.
 ```sh
 cd ${BUILD_PATH}
 mise run lxc:upgrade -- ${PVE_HOST}
-# Variantes :
-#   mise run lxc:upgrade -- ${PVE_HOST} --vmid <VMID>
-#   mise run lxc:upgrade -- ${PVE_HOST} --version <VERSION>
-#   mise run lxc:upgrade -- ${PVE_HOST} --yes     # sans confirmation
+# → récapitulatif du CT détecté, déroulé des phases 1 à 6, puis la question
+#   « CT <VMID> is working correctly? [y/N] »
+```
+
+Trois options modifient ce comportement :
+
+```sh
+mise run lxc:upgrade -- ${PVE_HOST} --vmid ${VMID}        # CT désigné, sans auto-détection
+mise run lxc:upgrade -- ${PVE_HOST} --version ${VERSION}  # version désignée, sans lecture de flake.nix
+mise run lxc:upgrade -- ${PVE_HOST} --yes                 # sans confirmation
 ```
 
 Sans `--vmid`, le script cherche le CT par tag Proxmox (le nom de l'appliance et son tag, par exemple `_o11y`), puis par
 nom d'hôte. Sans `--version`, il lit la version dans `flake.nix`.
 
-| Étape | Action                                                                                                                 |
+| Phase | Action                                                                                                                 |
 | ----- | ---------------------------------------------------------------------------------------------------------------------- |
 | 1     | Contrôles préalables : template présent, CT existant, aucun snapshot `pre-upgrade-*` résiduel, points de montage OK    |
 | 2     | Test sur un CT jetable créé depuis le nouveau template : activation NixOS et unités systemd, puis destruction du CT    |
@@ -146,14 +148,14 @@ nom d'hôte. Sans `--version`, il lit la version dans `flake.nix`.
 | 6     | Attente de 30 s puis contrôle de santé : `systemctl is-system-running`, unités en échec, état des services enregistrés |
 | 7     | Validation (suppression du snapshot et de l'ancien volume) ou retour arrière sur le snapshot                           |
 
-Le test de l'étape 2 ignore deux échecs attendus dans le CT jetable : `network-addresses-eth*.service` (le CT jetable
+Le test de la phase 2 ignore deux échecs attendus dans le CT jetable : `network-addresses-eth*.service` (le CT jetable
 n'a pas les interfaces du CT source ; les cloner dupliquerait les IP statiques sur le réseau réel) et
-`sys-kernel-debug.mount`. Toute autre unité en échec arrête le script. À l'étape 7, répondre `y` à la question « CT … is
-working correctly? » valide la mise à jour ; toute autre réponse déclenche le retour arrière.
+`sys-kernel-debug.mount`. Toute autre unité en échec arrête le script. À la phase 7, répondre `y` à la question « CT …
+is working correctly? » valide la mise à jour ; toute autre réponse déclenche le retour arrière.
 
 ## Étape 4 — Vérifier que le CT est sain
 
-Le contrôle de l'étape 6 du script affiche l'état de chaque service enregistré pour l'appliance. Le tableau reprend ces
+Le contrôle de la phase 6 du script affiche l'état de chaque service enregistré pour l'appliance. Le tableau reprend ces
 services, les propriétaires de données et la vérification de bout en bout que le script suggère.
 
 | Appliance                     | Services contrôlés                                                                                                 | `lxc_mp` (sous-dossier : uid hôte) | Vérification de bout en bout                                           |
@@ -168,7 +170,7 @@ services, les propriétaires de données et la vérification de bout en bout que
 Pour `observability`, des contrôles complémentaires depuis le nœud :
 
 ```sh
-ssh root@${PVE_HOST} "pct exec <VMID> -- /run/current-system/sw/bin/bash -lc '
+ssh root@${PVE_HOST} "pct exec ${VMID} -- /run/current-system/sw/bin/bash -lc '
 echo === VictoriaMetrics up ===
 curl -sSf \"127.0.0.1:8428/api/v1/query?query=up\" | head -c 400; echo
 echo === VictoriaLogs lignes sur 5 min ===
@@ -181,7 +183,7 @@ Résultat attendu : `degraded` possible pour `systemctl is-system-running` à ca
 conteneur non privilégié ne peut pas monter `/sys/kernel/debug`), tous les services du tableau `active`, et la
 vérification de bout en bout répond.
 
-## Variante manuelle : échange avec un second CT
+## Étape 5 — Variante manuelle : échange avec un second CT
 
 À utiliser quand `lxc:upgrade` ne convient pas. La méthode crée un CT parallèle avec le nouveau template, puis déplace
 les volumes de données de l'ancien CT vers le nouveau. Deux CT coexistent brièvement, mais un seul possède chaque point
@@ -191,14 +193,16 @@ jour.
 
 ### Contrôles préalables
 
-Aucune de ces commandes ne modifie l'état.
+Aucune de ces commandes ne modifie l'état, sauf la dernière qui détruit un reliquat éventuel du VMID cible.
 
 ```sh
 # Template présent sur le nœud
 ssh root@${PVE_HOST} "test -f ${TEMPLATE} && ls -lh ${TEMPLATE}"
+# → le fichier avec sa taille
 
 # Configuration source (relever les lignes rootfs et mp0)
 ssh root@${PVE_HOST} "cat /etc/pve/lxc/${SOURCE_ID}.conf"
+# → les lignes rootfs: et mp0:
 
 # VMID cible libre ? Un CT résiduel d'une exécution précédente est détruit ici : la
 # procédure suppose une table rase. pct destroy refuse de toucher aux volumes du CT
@@ -280,9 +284,10 @@ systemctl is-system-running
 echo === failed units ===
 systemctl --failed --no-legend
 '"
+# → degraded, avec uniquement les échecs de base décrits ci-dessous
 ```
 
-Résultat attendu :
+Lecture du résultat :
 
 - `OK activation` à la première sonde ;
 - `systemctl is-system-running` renvoie `degraded`, ce qui est acceptable : le CT jetable a toujours des échecs de base,
@@ -341,14 +346,15 @@ pct start ${TARGET_ID}
 "
 
 echo "cutover commands: $(( $(date +%s) - T0 ))s — services still warming up"
+# → durée des commandes de bascule, les services démarrent encore
 ```
 
 Contrôler la propriété des données, nécessaire seulement si l'uid du conteneur a changé entre les images (rarement) :
 
 ```sh
 # Confirmer que la propriété côté hôte correspond toujours au mapping uid conteneur → hôte
-ssh root@${PVE_HOST} "pct mount ${TARGET_ID} >/dev/null && stat -c '%u:%g %n' /var/lib/lxc/${TARGET_ID}/rootfs${MP0_MOUNT}/<SOUS_DOSSIER>; pct unmount ${TARGET_ID}"
-# → <HOST_UID>:<HOST_UID> pour chaque sous-dossier du tableau de l'étape 4
+ssh root@${PVE_HOST} "pct mount ${TARGET_ID} >/dev/null && stat -c '%u:%g %n' /var/lib/lxc/${TARGET_ID}/rootfs${MP0_MOUNT}/${DATA_SUBDIR}; pct unmount ${TARGET_ID}"
+# → ${HOST_UID}:${HOST_UID} pour chaque sous-dossier du tableau de l'étape 4
 ```
 
 Si la propriété est fausse, la corriger une fois, CT arrêté et **sous-dossier par sous-dossier** : sur `observability`
@@ -356,7 +362,7 @@ et `omni`, `mp0` contient deux sous-dossiers de propriétaires différents (`o11
 d'après `lxc_mp`), donc un `chown -R` global du point de montage casserait la propriété de l'un d'eux.
 
 ```sh
-ssh root@${PVE_HOST} "pct stop ${TARGET_ID} && pct mount ${TARGET_ID} && chown -R ${HOST_UID}:${HOST_UID} /var/lib/lxc/${TARGET_ID}/rootfs${MP0_MOUNT}/<SOUS_DOSSIER> && pct unmount ${TARGET_ID} && pct start ${TARGET_ID}"
+ssh root@${PVE_HOST} "pct stop ${TARGET_ID} && pct mount ${TARGET_ID} && chown -R ${HOST_UID}:${HOST_UID} /var/lib/lxc/${TARGET_ID}/rootfs${MP0_MOUNT}/${DATA_SUBDIR} && pct unmount ${TARGET_ID} && pct start ${TARGET_ID}"
 ```
 
 ### Vérifier que le nouveau CT est sain (l'indisponibilité s'arrête quand cette étape passe)
@@ -371,11 +377,12 @@ systemctl is-system-running
 echo === failed units ===
 systemctl --failed --no-legend
 '"
+# → degraded possible, avec seulement les échecs de base constatés pendant le test de fumée, et aucune nouvelle
+#   unité en échec
 ```
 
-Résultat attendu : `degraded` possible, avec seulement les échecs de base constatés pendant le test de fumée, et aucune
-nouvelle unité en échec. Contrôler ensuite les services et la vérification de bout en bout de l'appliance avec le
-tableau de l'étape 4, en remplaçant `<VMID>` par `${TARGET_ID}`. En cas d'échec, appliquer le retour arrière.
+Contrôler ensuite les services et la vérification de bout en bout de l'appliance avec le tableau de l'étape 4, en
+exportant `VMID=${TARGET_ID}`. En cas d'échec, appliquer le retour arrière.
 
 ### Désactiver l'ancien CT
 
@@ -392,6 +399,7 @@ sed -i '/^rootfs:/d; /^unused0:/d' /etc/pve/lxc/${SOURCE_ID}.conf
 pct destroy ${SOURCE_ID}
 pct list | head -10
 "
+# → ${SOURCE_ID} a disparu de la liste, ${TARGET_ID} est running
 ```
 
 Le nom LVM du volume persistant garde le préfixe de l'ancien VMID (`vm-${SOURCE_ID}-disk-1`) : c'est cosmétique. Le
@@ -404,39 +412,67 @@ Nettoyer les volumes LVM orphelins laissés par d'éventuelles opérations écho
 ```sh
 ssh root@${PVE_HOST} "lvs ${STORAGE} | grep vm-${SOURCE_ID}-"
 # → seul vm-${SOURCE_ID}-disk-1 (le mp0 vivant, "Vwi-aotz--" : le 'o' signifie ouvert)
-# S'il y a d'autres volumes vm-${SOURCE_ID}-disk-N, vérifier qu'ils n'apparaissent dans aucun
-# /etc/pve/{lxc,qemu-server}/*.conf, puis :
-#   ssh root@${PVE_HOST} "lvremove -f ${STORAGE}/vm-${SOURCE_ID}-disk-0"
+```
+
+S'il y a d'autres volumes `vm-${SOURCE_ID}-disk-N`, vérifier qu'ils n'apparaissent dans aucun
+`/etc/pve/{lxc,qemu-server}/*.conf`, puis les supprimer un par un :
+
+```sh
+ssh root@${PVE_HOST} "lvremove -f ${STORAGE}/vm-${SOURCE_ID}-disk-0"
 ```
 
 Rendre au CT son VMID d'origine n'est pas possible sur place : Proxmox ne renomme pas un VMID, et le faire reviendrait à
 rejouer toute la variante avec un troisième CT. Le plus simple est de garder le nouveau CT sous `TARGET_ID` et de mettre
 à jour les consommateurs qui référençaient l'ancien identifiant.
 
+## Exemple complet : mise à jour de l'appliance `observability` avec le script
+
+Exemple de forme, non rejoué. L'hôte, le nom de l'appliance et la version viennent du dépôt (`version = "2026.10.09"`
+dans `observability/flake.nix`). Le VMID `101` vient de l'ancienne version de la page et n'est pas vérifiable dans le
+dépôt : à relever sur le nœud avec `pct list`.
+
+```sh
+export PVE_HOST=pve-01.pve.chezmoi.sh
+export LXC_NAME=observability
+export VERSION=2026.10.09
+export BUILD_PATH=projects/chezmoi.sh/src/infrastructure/proxmox/lxc/${LXC_NAME}
+export VMID=101
+
+cd ${BUILD_PATH}
+git add config/ modules/ flake.nix
+mise run lxc:build
+mise run lxc:push -- ${PVE_HOST}
+mise run lxc:upgrade -- ${PVE_HOST} --vmid ${VMID}
+# → répondre y à « CT 101 is working correctly? » une fois la phase 6 saine
+
+curl -sSf https://data.o11y.chezmoi.sh/metrics/api/v1/query?query=up
+# → réponse JSON de VictoriaMetrics
+```
+
 ## Vérifications rapides
 
 - **Template en place** : `ssh root@${PVE_HOST} "ls -lh ${TEMPLATE}"` : le fichier existe avec la taille attendue.
 - **Système** :
-  `pct exec <VMID> -- /run/current-system/sw/bin/bash -lc 'systemctl is-system-running; systemctl --failed --no-legend'`
+  `pct exec ${VMID} -- /run/current-system/sw/bin/bash -lc 'systemctl is-system-running; systemctl --failed --no-legend'`
   : `running`, ou `degraded` avec uniquement les échecs de base (`sys-kernel-debug.mount`).
 - **Services** : `systemctl is-active <service>` pour chaque service du tableau de l'étape 4 : `active`.
 - **Bout en bout** : la commande de la dernière colonne du tableau de l'étape 4 répond.
-- **Plus de snapshot résiduel** (script) : `ssh root@${PVE_HOST} "pct listsnapshot <VMID>"` : aucun `pre-upgrade-*`,
+- **Plus de snapshot résiduel** (script) : `ssh root@${PVE_HOST} "pct listsnapshot ${VMID}"` : aucun `pre-upgrade-*`,
   sans quoi le prochain `lxc:upgrade` refuse de démarrer.
 
 ## Retour arrière
 
-**Script `lxc:upgrade`** : répondre autre chose que `y` à la question de validation (étape 7) arrête le CT, le restaure
+**Script `lxc:upgrade`** : répondre autre chose que `y` à la question de validation (phase 7) arrête le CT, le restaure
 depuis le snapshot `pre-upgrade-*`, le redémarre et libère le nouveau volume. Si le script s'interrompt après la
 création du snapshot, il tente le même retour arrière automatiquement. S'il échoue, le faire à la main :
 
 ```sh
-ssh root@${PVE_HOST} "pct stop <VMID>; pct rollback <VMID> <SNAPSHOT>; pct start <VMID>"
-ssh root@${PVE_HOST} "pvesm free <NOUVEAU_VOLUME>"
+ssh root@${PVE_HOST} "pct stop ${VMID}; pct rollback ${VMID} ${SNAPSHOT}; pct start ${VMID}"
+ssh root@${PVE_HOST} "pvesm free ${NEW_VOLUME}"
 ```
 
 **Variante manuelle** : si la vérification échoue, inverser le déplacement. Le budget d'indisponibilité est comparable
-(environ 20 s).
+(environ 20 s). Ce retour arrière n'est possible que tant que la source n'a pas été détruite.
 
 ```sh
 ssh root@${PVE_HOST} "
@@ -449,6 +485,7 @@ pct start ${SOURCE_ID}
 # Confirmer que l'ancien CT est revenu
 sleep 15
 ssh root@${PVE_HOST} "pct exec ${SOURCE_ID} -- /run/current-system/sw/bin/systemctl is-system-running"
+# → running, ou degraded avec uniquement les échecs de base
 
 # Détruire la cible en échec. Même piège qu'à la désactivation : pct set --delete mp0
 # laisse une entrée unused0 qui désigne le volume désormais rattaché ailleurs.
@@ -459,7 +496,6 @@ pct destroy ${TARGET_ID}
 ```
 
 Le volume de données persistant n'a jamais quitté son stockage : seules les configurations l'ont référencé différemment.
-Ce retour arrière n'est possible que tant que la source n'a pas été détruite.
 
 ## Problèmes connus
 
@@ -485,17 +521,21 @@ L'indicateur « open » dans la sortie de `lvs` permet de repérer le volume viv
 
 ### Snapshot `pre-upgrade-*` résiduel
 
-Un run précédent de `lxc:upgrade` interrompu avant l'étape 7 laisse un snapshot ; le script refuse alors d'en empiler un
-second. Restaurer le snapshot (`pct rollback`) ou, si le CT reflète déjà l'état voulu, le supprimer
-(`pct delsnapshot <VMID> <SNAPSHOT>`).
+Un run précédent de `lxc:upgrade` interrompu avant la phase 7 laisse un snapshot ; le script refuse alors d'en empiler
+un second. Restaurer le snapshot (`pct rollback`) ou, si le CT reflète déjà l'état voulu, le supprimer
+(`pct delsnapshot ${VMID} ${SNAPSHOT}`).
 
 ### Volume rootfs orphelin
 
-Après une exécution interrompue entre les étapes 5 et 7, vérifier `pvesm list <STORAGE>` et libérer à la main les
+Après une exécution interrompue entre les phases 5 et 7, vérifier `pvesm list ${STORAGE}` et libérer à la main les
 volumes non référencés.
 
 ## Historique
 
+- _2026-10-17_ : Alignement sur le gabarit de procédure v2 : intro en deux paragraphes et état de vérification en
+  callout `WARNING`, entrées regroupées dans un seul bloc `export` utilisé par toutes les étapes, variante manuelle
+  numérotée en étape 5, phases du script distinguées des étapes, sorties attendues ajoutées, exemple complet ajouté.
+  Liste des appliances proposant `lxc:secrets:sync` précisée d'après les `.mise.toml`.
 - _2026-10-11_ : Migration vers le standard de documentation (issue #1257) : page traduite en français, structure
   alignée sur le gabarit de procédure, liens vers les procédures renommées.
 - _2026-10-11_ : Procédure rendue autonome : ajout du chemin recommandé `mise run lxc:build`, `lxc:push` et
@@ -522,7 +562,7 @@ volumes non référencés.
 
 ## Pour aller plus loin
 
-- [Skill lxc-maintenance](../../../.agents/skills/lxc-maintenance/SKILL.md) : points d'entrée `mise` et bibliothèque
+- [Skill : lxc-maintenance](../../../.agents/skills/lxc-maintenance/SKILL.md) : points d'entrée `mise` et bibliothèque
   `lxc.sh` utilisés par cette procédure.
 - [README de l'appliance observability](../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/README.md)
   : création initiale du conteneur et configuration de l'appliance.
