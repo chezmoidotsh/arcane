@@ -28,8 +28,8 @@ Les arguments retenus contre Kubernetes :
 ## Pourquoi il est archivé
 
 La décision de ne pas utiliser Kubernetes pour `kazimierz.akn` est formalisée dans
-l'[ADR-008](../decisions/008-kazimierz-ansible-over-kubernetes.md). Le choix d'Ansible et de Docker Compose qui en
-découlait a ensuite été remplacé par NixOS (`nixos-anywhere` et `sops-nix`) dans
+l'[ADR-008](../decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md). Le choix d'Ansible et de Docker
+Compose qui en découlait a ensuite été remplacé par NixOS (`nixos-anywhere` et `sops-nix`) dans
 l'[ADR-016](../decisions/016-kazimierz-nixos-over-ansible.md), qui a supprimé le code Ansible. Ce texte n'est plus qu'un
 historique de réflexion : les manifestes Kubernetes et les étapes manuelles qu'il décrit ne correspondent plus à aucun
 état du dépôt.
@@ -42,7 +42,7 @@ archivage (issue #1257).
 
 ## Pour aller plus loin
 
-- [ADR-008 Ansible + Docker Compose plutôt que Kubernetes](../decisions/008-kazimierz-ansible-over-kubernetes.md) : la
-  décision de ne pas déployer `kazimierz.akn` sous Kubernetes.
+- [ADR-008 Ansible + Docker Compose plutôt que Kubernetes](../decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md)
+  : la décision de ne pas déployer `kazimierz.akn` sous Kubernetes.
 - [ADR-016 NixOS plutôt qu'Ansible](../decisions/016-kazimierz-nixos-over-ansible.md) : le remplacement d'Ansible et de
   Docker Compose par NixOS.
