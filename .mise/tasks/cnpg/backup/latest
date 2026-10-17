@@ -8,7 +8,7 @@
 #
 # Generic across every CNPG cluster in this repo backed by the
 # barman-cloud.cloudnative-pg.io plugin — see
-# docs/procedures/databases/DB-20260723-00.cnpg-restore-from-object-store.md
+# docs/procedures/databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md
 # (Steps 1-2) for the manual equivalent and the full restore procedure this
 # feeds into. Read-only: makes no cluster or S3 mutations.
 #

@@ -1,124 +1,141 @@
 <!--
-  PROCEDURE TEMPLATE v1.0.0 — see the "Template Versioning" section of
-  .agents/skills/documentation-writer/references/procedure.md for the changelog and the rules that govern
-  this file. Delete this HTML comment when authoring. Unlike ADRs, procedures carry
-  no version frontmatter — provenance lives in git history and the History section.
+  GABARIT DE PROCÉDURE v2.0.0 — voir la section "Template Versioning" de
+  .agents/skills/documentation-writer/references/procedure.md pour l'historique et les règles de ce fichier.
+  Supprimer ce commentaire HTML à la rédaction. Contrairement aux ADR, une procédure n'a pas de front matter de
+  version : la provenance est dans l'historique Git et dans la section Historique.
+  Le titre `#` reprend le nom du fichier (<ID>-<Verbes-en-Francais>.md), sans tirets entre les mots.
 -->
 
-## Procedure {PREFIX}-{YYYYMMDD}-{NN}: {Title}
+# {PREFIX}-{YYYYMMDD}-{NN} {Titre}
 
-> Opening paragraph(s), not bullets: what this procedure does, which components/stack it touches, and why it exists as a
-> standalone, reproducible procedure rather than tribal knowledge. Two or three sentences is usually enough — see
-> SEC-20250808-00 or INF-20260525-00 for the right length.
+> Un ou deux paragraphes (pas de puces) : ce que fait la procédure, quels composants elle touche et pourquoi elle existe
+> sous forme de procédure reproductible plutôt que de savoir tacite. Deux ou trois phrases suffisent en général — voir
+> SEC-20250808-00 ou INF-20260525-00 pour la bonne longueur.
 
-{Write the introduction here...}
+{Écrire l'introduction ici...}
 
-### Technical framework and conventions [Optional]
+> [!WARNING] {Facultatif — à inclure tant que la procédure n'a pas été rejouée de bout en bout : « Vérifiée contre le
+> dépôt le AAAA-MM-JJ ; les commandes n'ont pas été rejouées sur le cluster. » Pour une procédure jamais exécutée,
+> utiliser un `[!CAUTION]` qui le dit.}
 
-> Include this section when the procedure enforces naming rules, path conventions, or a specific technical stack the
-> reader must know before following the steps (SEC-20250808-00 is a strong example: Vault path convention,
-> SecurityPolicy file naming, Authelia ordering rule). Omit it when the procedure is a straightforward sequence with no
-> such conventions (MIGR-20260628-00 skips it).
+## Cadre technique et conventions [Facultatif]
 
-- **{Convention name}**: {The rule, stated precisely, and why it matters — reviews, conflicts, or reproducibility it
-  protects.}
+> À inclure quand la procédure impose des règles de nommage, des conventions de chemin ou une pile technique que le
+> lecteur doit connaître avant les étapes (SEC-20250808-00 en est un bon exemple : convention de chemin Vault, nommage
+> des fichiers SecurityPolicy, règle d'ordre Authelia). À omettre quand la procédure est une suite directe d'étapes sans
+> convention de ce genre (MIGR-20260628-00 l'omet).
 
-### Prerequisites
+- **{Nom de la convention}** : {La règle, énoncée précisément, et pourquoi elle compte — les revues, conflits ou
+  problèmes de reproductibilité qu'elle évite.}
 
-> List every tool that must already be installed/configured and every access/permission the reader needs. Be exhaustive
-> — an operator mid-incident should never discover a missing prerequisite three steps in.
+## Prérequis
 
-Before starting, ensure the following tools are installed and configured: `{tool1}`, `{tool2}`, ...
+> Lister chaque outil à installer ou configurer et chaque accès nécessaire. Être exhaustif : un opérateur en plein
+> incident ne doit jamais découvrir un prérequis manquant à la troisième étape.
 
-You must also have:
+Avant de commencer, vérifier que les outils suivants sont installés et configurés : `{outil1}`, `{outil2}`, ...
 
-- {Access requirement 1 — e.g. "kubectl access with permissions to manage resources in the target namespace"}
-- {Access requirement 2}
+Les accès suivants sont également nécessaires :
 
-### Required inputs
+- {Accès 1 — par exemple « accès `kubectl` avec les droits de gestion des ressources du namespace cible »}
+- {Accès 2}
 
-> Name the variables the reader must define before running the steps — these become the placeholders used throughout
-> (e.g. `APP_DIR`, `CLUSTER`, `HOSTNAME`). Every step below should reference these variables instead of repeating raw
-> values, so the procedure stays copy-pasteable across invocations.
+## Entrées requises
 
-- `{VAR_1}`: {What it is, with an example value, e.g. `projects/<cluster>/src/apps/<app>`}
-- `{VAR_2}`: {What it is, with an example value}
+> Nommer les variables à définir avant d'exécuter les étapes : ce sont les marqueurs utilisés partout (par exemple
+> `APP_DIR`, `CLUSTER`, `HOSTNAME`). Chaque étape référence ces variables au lieu de répéter des valeurs brutes, pour
+> que la procédure reste copiable d'une exécution à l'autre. Les déclarer dans un seul bloc `export`, une variable par
+> ligne : un marqueur `<…>` pour la valeur attendue, un exemple en commentaire de fin de ligne.
 
----
+Exporter ces variables une fois ; toutes les commandes suivantes se copient ensuite telles quelles.
 
-## Step 1 — {Action title}
-
-{One short paragraph of context if the step needs it: why this step exists, what state it changes. Skip this if the
-command is self-explanatory.}
-
-```bash
-# {Comment explaining what the command does, not just restating it}
-{command using the ${VAR_1} placeholders declared above}
-# → {expected output, or how to read the output, so the reader can self-verify before moving on}
+```sh
+export {VAR_1}=<{Ce que c'est}>   # ex. projects/<cluster>/src/apps/<app>
+export {VAR_2}=<{Ce que c'est}>   # ex. {valeur d'exemple}
 ```
 
-> [!NOTE] {Anything the reader needs that doesn't fit inline — a design choice made in this step, a non-obvious caveat.}
+## Étape 1 — {Titre de l'action}
 
-## Step 2 — {Action title}
+{Un court paragraphe de contexte si l'étape en a besoin : pourquoi elle existe, quel état elle modifie. L'omettre si la
+commande se comprend d'elle-même.}
+
+```bash
+# {Commentaire expliquant ce que fait la commande, pas seulement la reformulation de celle-ci}
+{commande utilisant les marqueurs ${VAR_1} déclarés plus haut}
+# → {sortie attendue, ou comment la lire, pour que le lecteur se vérifie avant de continuer}
+```
+
+> [!NOTE] {Ce que le lecteur doit savoir et qui ne tient pas en ligne — un choix de conception fait à cette étape, une
+> mise en garde non évidente.}
+
+## Étape 2 — {Titre de l'action}
 
 ...
 
-## Step N — {Action title}
+## Étape N — {Titre de l'action}
 
 ...
 
-> [!IMPORTANT] {Use for a constraint that, if missed, breaks a later step or causes data loss.}
+> [!IMPORTANT] {Pour une contrainte qui, si elle est ratée, casse une étape suivante ou provoque une perte de données.}
 
----
+## Exemple complet : {Cas réel concret} [Facultatif — recommandé quand les étapes utilisent des marqueurs]
 
-## Complete Example: {Concrete real case} [Optional — recommended when the steps above use placeholders]
+> Rejouer les étapes avec un cas réel et concret (un vrai cluster, une vraie application ou un vrai incident sur lequel
+> la procédure a été exécutée), avec les valeurs réelles à la place des marqueurs. C'est ce qui rend la procédure fiable
+> et copiable pour le prochain cas, au lieu d'obliger le lecteur à la redériver. À omettre seulement quand la procédure
+> ci-dessus est déjà entièrement concrète, sans marqueur à résoudre.
 
-> Walk through the steps again with one real, concrete case (an actual cluster/app/incident this procedure was run
-> against), using real values instead of placeholders. This is what makes the procedure trustworthy and directly
-> copy-pasteable for the next real case, instead of something the reader has to mentally re-derive. Omit only when the
-> procedure above is already fully concrete with no placeholders to resolve.
-
-### {Sub-step title}
+### {Titre de la sous-étape}
 
 ```bash
-{Same commands as above, with real values substituted}
+{Mêmes commandes que ci-dessus, avec les valeurs réelles}
 ```
 
----
+## Vérifications rapides
 
-## Quick verifications
+> Une liste de contrôle compacte pour savoir si c'est vraiment terminé, distincte de la sortie attendue de chaque étape.
+> Utile à un opérateur qui revient plus tard confirmer que le correctif tient, ou qui veut un récapitulatif rapide sans
+> relire toutes les étapes.
 
-> A compact "is this actually done" checklist, distinct from the per-step expected output above. Useful for an operator
-> returning later to confirm the fix held, or wanting a fast recap without rereading every step.
+- **{Nom du contrôle}** : `{commande}` — {à quoi ressemble un résultat sain}
+- **{Nom du contrôle}** : `{commande}` — {à quoi ressemble un résultat sain}
 
-- **{Check name}**: `{command}` — {what a healthy result looks like}
-- **{Check name}**: `{command}` — {what a healthy result looks like}
+## Retour arrière [Facultatif — à inclure dès qu'une étape n'est pas naturellement réversible]
 
-## Rollback [Optional — include whenever a step is not naturally reversible]
-
-> PVC resizes, S3 object moves, cluster resets, DNS cutovers, and similar irreversible-by-default operations need an
-> explicit escape hatch here. Give the exact reversal commands, not just "restore from backup".
+> Les redimensionnements de PVC, déplacements d'objets S3, réinitialisations de cluster, bascules DNS et opérations
+> similaires, irréversibles par défaut, ont besoin d'une issue de secours explicite. Donner les commandes exactes de
+> l'annulation, pas seulement « restaurer depuis la sauvegarde ».
 
 ```bash
-{Exact commands to undo the procedure's effects}
+{Commandes exactes pour annuler les effets de la procédure}
 ```
 
-## Known issues [Optional — for complex, multi-stage procedures]
+## Problèmes connus [Facultatif — pour les procédures complexes en plusieurs phases]
 
-> Include when the same edge cases keep recurring across runs of this procedure (OMNI-20260721-00 is the model: CNI
-> auto-apply silently failing, a connectivity blip during Cilium takeover, machine classes erased on reset). Each entry
-> names what happens, why, and the workaround — skip this section entirely for short, single-purpose procedures.
+> À inclure quand les mêmes cas limites reviennent à chaque exécution (OMNI-20260721-00 est le modèle : application
+> automatique du CNI qui échoue silencieusement, coupure de connectivité pendant la reprise par Cilium, machine classes
+> effacées lors d'une réinitialisation). Chaque entrée dit ce qui se passe, pourquoi et le contournement — omettre
+> entièrement la section pour une procédure courte à but unique.
 
-### {Issue title}
+### {Titre du problème}
 
-{What happens, the root cause, and the workaround.}
+{Ce qui se passe, la cause racine et le contournement.}
 
-## References
+## Historique
 
-- {Official docs, RFCs, or vendor guides the steps rely on}
-- {Related ADR, if a design decision this procedure implements is documented elsewhere}
-- {The incident in `docs/incidents/` that triggered this procedure, if any}
+> Du plus récent au plus ancien.
 
-## History
+- _{AAAA-MM-JJ}_ : {Ce qui a changé dans cette procédure et pourquoi — pas ce qui a changé dans le système qu'elle
+  opère}
 
-- _{YYYY-MM-DD}_: {What changed in this procedure and why — not what changed in the system it operates on}
+## Pour aller plus loin
+
+> Deux à cinq liens relatifs vers des fichiers `.md`, chacun avec une phrase d'introduction. Cette section est la
+> dernière section `##` de la page.
+
+- [{Page liée}]({../chemin/Page.md}) : {Documentation officielle, RFC ou guide éditeur sur lesquels s'appuient les
+  étapes}
+- [{ADR}]({../decisions/ADR-NNN-Titre.md}) : {La décision de conception que cette procédure met en œuvre, si elle est
+  documentée ailleurs}
+- [{Post-mortem}]({../incidents/Incident-AAAA-MM-JJ-Titre.md}) : {L'incident de `docs/incidents/` à l'origine de cette
+  procédure, le cas échéant}

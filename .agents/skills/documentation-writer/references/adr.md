@@ -203,13 +203,17 @@ architecture. ADR-001 and ADR-002 have good examples. The template supports Merm
 Use GitHub Markdown callouts for important asides:
 
 ```markdown
-> [!NOTE] Informational note a reader should be aware of.
+> [!NOTE]
+> Informational note a reader should be aware of.
 
-> [!CAUTION] Something that must be done carefully or could cause problems.
+> [!CAUTION]
+> Something that must be done carefully or could cause problems.
 
-> [!WARNING] Deprecated content or a risk that was discovered during implementation.
+> [!WARNING]
+> Deprecated content or a risk that was discovered during implementation.
 
-> [!IMPORTANT] A critical constraint or migration note.
+> [!IMPORTANT]
+> A critical constraint or migration note.
 ```
 
 ### External references
@@ -233,6 +237,8 @@ Every material change to an ADR after its creation gets a changelog entry:
 
 - **YYYY-MM-DD**: **PREFIX**: Description of what changed and why.
 ```
+
+Entries run from the most recent to the oldest.
 
 Prefixes: `FEATURE`, `FIX`, `SECURITY`, `DEPRECATION`, `CLARIFICATION`, `CHORE`.
 

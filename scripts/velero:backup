@@ -25,7 +25,7 @@
 # exist are SKIPPED, never overwritten). Because a skipped PVC means the data is
 # silently not restored, the script refuses to run while the namespace still has
 # PVCs: delete the workload and PVCs first, exactly as in
-# docs/procedures/backups/BKP-20260805-00.velero-restore-gitops-pvc.md.
+# docs/procedures/backups/BKP-20260805-00-Restaurer-un-PVC-Velero-sous-GitOps.md.
 # =============================================================================
 
 set -euo pipefail
@@ -94,7 +94,7 @@ cmd_restore() {
   if [[ -n ${pvcs} ]]; then
     echo "PVCs still present in '${ns}':"
     echo "  ${pvcs//$'\n'/$'\n  '}"
-    die "restore would skip them and restore nothing. Delete the workload and PVCs first (docs/procedures/backups/BKP-20260805-00.velero-restore-gitops-pvc.md)."
+    die "restore would skip them and restore nothing. Delete the workload and PVCs first (docs/procedures/backups/BKP-20260805-00-Restaurer-un-PVC-Velero-sous-GitOps.md)."
   fi
 
   if [[ ${apply} != true ]]; then

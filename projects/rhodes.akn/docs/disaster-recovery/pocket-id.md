@@ -75,8 +75,8 @@ kubectl --context <CLUSTER_CONTEXT> get secrets -n pocket-id
 > `mise run dr:pocket-id:patch-recovery -- <SERVER_NAME>` writes it into `cnpg.cluster.yaml` — it edits the file only,
 > it does not `kubectl apply` anything.
 
-Follow [BKP-20260723-00](../../../../docs/procedures/backups/BKP-20260723-00.cnpg-restore-from-object-store.md) in full,
-with:
+Follow [DB-20260723-00](../../../../docs/procedures/databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md)
+in full, with:
 
 - `NAMESPACE=pocket-id`
 - `CLUSTER_MANIFEST=projects/rhodes.akn/src/apps/pocket-id/cnpg.cluster.yaml`
@@ -139,7 +139,7 @@ repeated here.
 
 ## References
 
-- [BKP-20260723-00: Restore a CNPG cluster from its S3 object-store backup](../../../../docs/procedures/backups/BKP-20260723-00.cnpg-restore-from-object-store.md)
+- [DB-20260723-00: Restore a CNPG cluster from its S3 object-store backup](../../../../docs/procedures/databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md)
   — the CNPG restore mechanics used in Step 2
 - [OpenBao Disaster Recovery](openbao.md) — OpenBao's own recovery, restored independently of this document; see
   [README.md](README.md) Step 8 for verifying the Pocket-Id → OpenBao SSO round-trip once both are up

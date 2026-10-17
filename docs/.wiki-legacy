@@ -9,6 +9,9 @@ experiments/*
 incidents/*
 migrations/*
 network/*
-procedures/*
+procedures/README.md
+procedures/infrastructure/*
+procedures/omni/*
+procedures/security/*
 reports/*
 RENOVATE.md

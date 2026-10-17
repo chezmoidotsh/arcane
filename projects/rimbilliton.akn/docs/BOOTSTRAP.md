@@ -270,7 +270,7 @@ to the disk in clear text). The node token lives in the SOPS file, not in the ba
    can run at once, one per allocation.
 3. **Backups**: run `systemctl start restic-backups-minecraft`, then check the snapshot with `restic snapshots` against
    the B2 repository. To restore from these backups, see
-   [BKP-20261005-00](../../../docs/procedures/backups/BKP-20261005-00.rimbilliton-minecraft-restore-from-restic.md).
+   [BKP-20261005-00](../../../docs/procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md).
 
 Later changes are deployed over Tailscale:
 

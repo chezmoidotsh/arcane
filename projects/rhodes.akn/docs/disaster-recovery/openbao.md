@@ -103,8 +103,8 @@ kubectl --context <CLUSTER_CONTEXT> get secrets -n vault
 > edits the file only, it does not `kubectl apply` anything. Both wrap the manual steps; use whichever you trust more
 > mid-incident.
 
-Follow [BKP-20260723-00](../../../../docs/procedures/backups/BKP-20260723-00.cnpg-restore-from-object-store.md) in full,
-with:
+Follow [DB-20260723-00](../../../../docs/procedures/databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md)
+in full, with:
 
 - `NAMESPACE=vault`
 - `CLUSTER_MANIFEST=projects/rhodes.akn/src/apps/vault/cnpg.cluster.yaml`
@@ -208,7 +208,7 @@ backup/recovery procedures, out of scope here.
 
 ## References
 
-- [BKP-20260723-00: Restore a CNPG cluster from its S3 object-store backup](../../../../docs/procedures/backups/BKP-20260723-00.cnpg-restore-from-object-store.md)
+- [DB-20260723-00: Restore a CNPG cluster from its S3 object-store backup](../../../../docs/procedures/databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md)
   — the CNPG restore mechanics used in Step 2
 - [Pocket-Id Disaster Recovery](pocket-id.md) — restoring Pocket-Id itself, independent of OpenBao's own recovery
 - [ADR-002: OpenBao Secrets Mount Topology and Organizational Structure](../../../../docs/decisions/002-openbao-secrets-topology.md),

@@ -12,10 +12,10 @@ This repo's procedures are read under pressure as often as not — a WAL disk fu
 so the bar is "can this be followed literally, in order, by someone who is stressed and unfamiliar with this specific
 incident." That is a higher bar than "can this be understood," which is the bar a design document has to clear.
 
-Procedures are the operational counterpart to ADRs: an ADR (`docs/decisions/`, see `.agents/skills/documentation-writer/references/adr.md`)
-records _why_ a decision was made; a procedure records _how_ to execute the recurring operational task that decision
-created. If you find yourself justifying a tool choice or an architectural trade-off while writing a procedure, that
-content belongs in an ADR instead — link to it and move on.
+Procedures are the operational counterpart to ADRs: an ADR (`docs/decisions/`, see
+`.agents/skills/documentation-writer/references/adr.md`) records _why_ a decision was made; a procedure records _how_ to
+execute the recurring operational task that decision created. If you find yourself justifying a tool choice or an
+architectural trade-off while writing a procedure, that content belongs in an ADR instead — link to it and move on.
 
 ## When NOT to write a procedure
 
@@ -49,7 +49,8 @@ the cost of a stale procedure nobody trusts.
    - The precise commands used at each step — do not paraphrase or invent a plausible-looking command; if a step is
      fuzzy, ask.
    - What the expected output or success signal was at each step, and what tools/access are required upfront.
-   - Any failure modes hit along the way (these become "Quick verifications", "Rollback", or "Known issues").
+   - Any failure modes hit along the way (these become "Vérifications rapides", "Retour arrière", or "Problèmes
+     connus").
    - Whether this procedure is the resolution to a specific incident in `docs/incidents/` — if so, it needs a
      cross-reference both ways (see "Registering the procedure").
 
@@ -57,17 +58,19 @@ the cost of a stale procedure nobody trusts.
    plausible-sounding step — an invented step in a runbook that gets followed literally during an incident is worse than
    a gap the user has to fill in.
 
-3. **Draft:** Use the template at `references/procedure-template.md`. Read it, copy its structure, then strip the
-   `<!-- PROCEDURE TEMPLATE … -->` HTML comment, every `>` blockquote authoring instruction, and the `[Optional]` labels
-   on whichever optional sections you keep — see "Writing standards" below for which sections are worth including for a
-   given procedure's size and complexity.
+3. **Draft:** Use the template at `references/procedure-template.md`. It is written in French: the page is too, with
+   accents, following the "Language" section of `style-guide.md`. Read it, copy its structure, then strip the
+   `<!-- GABARIT DE PROCÉDURE … -->` HTML comment, every `>` blockquote authoring instruction, and the `[Facultatif …]`
+   labels on whichever optional sections you keep — see "Writing standards" below for which sections are worth including
+   for a given procedure's size and complexity.
 
 4. **Verify with fresh eyes:** Read the draft back against "Anti-patterns to avoid" below — does every step have an
    expected-output line? Are placeholders used consistently (never a hardcoded example value in the generic steps)?
    Could someone unfamiliar with this exact incident follow it end to end?
 
-5. **Register:** Save the file at the correct path, then update `docs/procedures/README.md` (see "Registering the
-   procedure"). If this procedure resolves a documented incident, add the cross-reference in both directions.
+5. **Register:** Save the file at the correct path, add it to `docs/_Sidebar.md` (every page must be reachable from it),
+   and run `scripts/wiki:lint`. If this procedure resolves a documented incident, add the cross-reference in both
+   directions (see "Registering the procedure").
 
 ### Updating an existing procedure
 
@@ -76,18 +79,21 @@ When a procedure needs a correction, a step revised after a re-run surfaced some
 1. Read the full procedure before touching it — a partial read risks a change that contradicts an earlier step.
 2. Make the minimal targeted update:
    - A step's command changed (tool upgrade, corrected typo, better approach discovered) → update the step in place.
-   - A new failure mode was hit → add it to "Quick verifications", "Known issues", or "Rollback" as appropriate.
-   - The procedure was re-run successfully on a new concrete case → consider whether the "Complete Example" section
+   - A new failure mode was hit → add it to "Vérifications rapides", "Problèmes connus", or "Retour arrière" as
+     appropriate.
+   - The procedure was re-run successfully on a new concrete case → consider whether the "Exemple complet" section
      should be refreshed to the more recent case, or left as-is if the original is still representative.
-3. Always add a `History` entry — every material change gets a dated log line, mirroring an ADR's `Changelog`.
+3. Always add an `Historique` entry — every material change gets a dated log line, mirroring an ADR's `Changelog`.
 4. If the change is significant, show the user a before/after of the affected steps.
 
 ## Writing standards
 
 ### Naming and location
 
-Files live in `docs/procedures/<category>/` and are named `<ID>.<kebab-slug>.md`, where `<ID>` is
-`<PREFIX>-<YYYYMMDD>-<NN>`:
+The page is written in French. Files live in `docs/procedures/<category>/` and are named `<ID>-<Verbes-en-Francais>.md`
+(Title-Case with hyphens, function words in lowercase, ASCII only, no accents, no dots, no `Procedure-` prefix since the
+directory says it — e.g. `DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md`), where `<ID>` is
+`<PREFIX>-<YYYYMMDD>-<NN>`. The identifier never changes, only the verb phrase is French:
 
 | Prefix | Category directory | Used for                                                                       |
 | ------ | ------------------ | ------------------------------------------------------------------------------ |
@@ -104,42 +110,49 @@ directory — follow the same pattern rather than overloading an unrelated one.
 sequence, incremented per prefix+date pair — check existing files under the category directory for the current max and
 increment from there; never reuse or backfill a number.
 
-The heading at the top of the file is `## Procedure <ID>: <Title>` (level 2 — this is the convention across every
-existing procedure except the largest end-to-end bring-up, which is the one file worth reading as a model for scale but
-not for heading level).
+The single `#` heading at the top of the file is `# <ID> <Titre>`: it matches the file name (hyphens become spaces, case
+and accents are ignored). Sections use `##` and `###` only. Links to other pages are relative and point to the `.md`
+file.
 
 ### Section structure
 
-The template (`references/procedure-template.md`) lays out the full skeleton. Not every section belongs in every
-procedure — match the set to the procedure's actual complexity:
+The template (`references/procedure-template.md`) lays out the full skeleton, in this order. Not every section belongs
+in every procedure — match the set to the procedure's actual complexity:
 
-- **Always include:** the opening paragraph(s), Prerequisites, Required inputs, the numbered Steps, Quick verifications,
-  References, History.
-- **Include when relevant:** Technical framework and conventions (only if the procedure enforces naming/path rules a
-  reader must know upfront), Complete Example (strongly recommended whenever the steps use placeholders — this is what
-  makes a generic procedure trustworthy), Rollback (whenever a step is not naturally reversible), Known issues (only for
-  complex, multi-stage procedures where the same edge cases recur across runs).
-- **Reserve for genuinely large procedures:** Overview, Contextual information, Validation checklist — these appear in
-  the Omni cluster bring-up procedure because it spans provisioning through GitOps registration across multiple systems.
-  Adding them to a five-step procedure is padding, not rigor.
+- **Always include:** the opening paragraph(s), `## Prérequis`, `## Entrées requises`, the numbered
+  `## Étape N — <Titre>` sections, `## Vérifications rapides`, `## Historique`, and `## Pour aller plus loin`.
+- **Include when relevant:** `## Cadre technique et conventions` (only if the procedure enforces naming/path rules a
+  reader must know upfront), `## Exemple complet : <cas>` (strongly recommended whenever the steps use placeholders —
+  this is what makes a generic procedure trustworthy), `## Retour arrière` (whenever a step is not naturally
+  reversible), `## Problèmes connus` (only for complex, multi-stage procedures where the same edge cases recur across
+  runs).
+- **Reserve for genuinely large procedures:** an overview, contextual information, a validation checklist — these appear
+  in the Omni cluster bring-up procedure because it spans provisioning through GitOps registration across multiple
+  systems. Adding them to a five-step procedure is padding, not rigor.
+- **`## Pour aller plus loin` is always the last `##` section** (enforced by `scripts/wiki:lint`), so `## Historique`
+  comes right before it. Two to five relative `.md` links, each with a one-line lead; official docs, the related ADR and
+  the originating incident go there.
 
 ### Step-writing rules
 
 - **One command block per logical action**, not a paragraph describing what to click. The audience for this repo's
   procedures is an operator or agent with a terminal, not someone reading a printed manual — write for that.
+- **Space out long command blocks.** A block of more than four commands is split into logical groups (setup, action,
+  check) separated by one blank line. A command and its `# →` expected output stay together, and a comment that
+  introduces a group sticks to it. A short block stays compact.
 - **Annotate expected output inline** with a `# → ...` comment after the command, or a short prose line right after the
   block. This is the single most load-bearing convention in this repo's procedures: it lets the executor confirm success
   before proceeding, instead of finding out three steps later that something silently failed.
-- **Use ALL_CAPS placeholder variables** (`APP_DIR`, `CLUSTER`, `HOSTNAME`) declared in "Required inputs" and reused
-  throughout, with a `# To adapt` or `# Adapt according to environment` comment on lines the reader must edit. Never
-  hardcode a real cluster or app name into the generic steps — that value belongs only in the "Complete Example"
-  section.
+- **Use ALL_CAPS placeholder variables** (`APP_DIR`, `CLUSTER`, `HOSTNAME`) declared in "Entrées requises" as `export`
+  lines and reused throughout, with a `# À adapter` comment on lines the reader must edit. Never hardcode a real cluster
+  or app name into the generic steps — that value belongs only in the "Exemple complet" section.
 - **State the "why" for non-obvious steps.** If a step exists because of a specific constraint (see SEC-20250808-00's
   note on why only the `openid` scope is requested by default, for least privilege), say so inline — a reader who
   understands why is far less likely to "simplify" the step incorrectly on the next run.
 - **Never invent a step.** Only document what was actually performed and confirmed. If a step is uncertain, ask the user
   rather than filling the gap with something plausible-looking.
-- **Use GitHub callout syntax** for asides, consistent with the rest of the repo's markdown:
+- **Use GitHub callout syntax** for asides. The marker and the text stay on the same line (`> [!NOTE] Text`), the way
+  Prettier formats them. One callout holds one kind of message: never mix information and warning in the same one.
 
   ```markdown
   > [!NOTE] Informational detail worth knowing.
@@ -148,24 +161,29 @@ procedure — match the set to the procedure's actual complexity:
 
   > [!IMPORTANT] A constraint that breaks a later step if missed.
 
-  > [!CAUTION] Something that must be done carefully, or a data-loss risk.
+  > [!WARNING] A risk of failure or of a wrong result, or a point not yet confirmed on the real system.
 
-  > [!WARNING] Deprecated content, or a risk discovered during a real run.
+  > [!CAUTION] An irreversible action or a data-loss risk. Also used for a procedure that was never run.
   ```
 
-- **History, not a changelog field.** Every procedure ends with a `## History` section: a dated bullet log of what
-  changed in the procedure itself (not in the system it operates on) — `- _YYYY-MM-DD_: Description`.
+- **Say how far the procedure was checked.** Right after the introduction, a `[!WARNING]` states that the commands were
+  checked against the repository but not replayed (with the date); a `[!CAUTION]` states that the procedure was never
+  tested at all. A procedure replayed end to end on a real system needs neither.
+
+- **History, not a changelog field.** Every procedure has a `## Historique` section, placed just before
+  `## Pour aller plus loin`: a dated bullet log of what changed in the procedure itself (not in the system it operates
+  on) — `- _AAAA-MM-JJ_ : Description`. Entries run from the most recent to the oldest, whatever the document.
 
 ### Registering the procedure
 
 Writing the file is not the last step. After saving it:
 
-1. Add an entry to `docs/procedures/README.md` under the matching category heading, in the same bullet format as the
-   existing entries: bold link with ID and title, followed by a one- or two-sentence summary of scope.
+1. Add the page to `docs/_Sidebar.md` under the matching heading — a page missing from the sidebar fails
+   `scripts/wiki:lint`.
 2. If this procedure is the resolution to a documented incident, add the procedure's path to that incident's
-   `procedures:` frontmatter field in `docs/incidents/<file>.md`, and reference the incident in the procedure's
-   `References` section — the link must work in both directions (see how DB-20260530-00 and its originating incident
-   cross-reference each other, and how the `cnpg-troubleshoot` skill routes between the two).
+   `procedures:` frontmatter field in `docs/incidents/<file>.md`, and link the incident from the procedure's
+   `## Pour aller plus loin` section — the link must work in both directions (see how DB-20260530-00 and its originating
+   incident cross-reference each other, and how the `cnpg-troubleshoot` skill routes between the two).
 3. If an existing troubleshooting skill (e.g. `cnpg-troubleshoot`) maintains a "known error patterns" routing table that
    this procedure now answers, ask the user whether that table should be updated too — don't update another skill's file
    without confirming.
@@ -177,8 +195,8 @@ Writing the file is not the last step. After saving it:
 - **Missing expected output** — a step with no way to verify success before moving on. This is the most common way a
   procedure silently rots: the command still runs, but nothing tells the reader whether it worked.
 - **Hardcoded example values in the generic steps** — real cluster/app names baked into "Step 3" instead of the declared
-  placeholders. This is what makes a procedure unusable for the next real case; save concrete values for the "Complete
-  Example" section only.
+  placeholders. This is what makes a procedure unusable for the next real case; save concrete values for the "Exemple
+  complet" section only.
 - **No rollback for an irreversible step** — a PVC resize, an S3 object move, a cluster reset, or a DNS cutover with no
   documented way back. If the step can't be undone, at least document that explicitly instead of leaving it implicit.
 - **Silent scope creep into a decision** — a procedure that also argues for a tool choice or an architectural trade-off
@@ -192,17 +210,17 @@ Writing the file is not the last step. After saving it:
 **Good — step with expected output and a placeholder:**
 
 ````markdown
-## Step 2 — Check WAL PVC usage and expand
+## Étape 2 — Vérifier l'usage des PVC WAL et les agrandir
 
 ​```bash
 
-# Check PVC sizes and usage
+# Vérifier la taille et l'usage des PVC
 
 kubectl get pvc -n ${NAMESPACE} | grep ${CLUSTER_NAME}
 
-# → look for <CLUSTER_NAME>-1-wal and <CLUSTER_NAME>-2-wal at 100%
+# → repérer <CLUSTER_NAME>-1-wal et <CLUSTER_NAME>-2-wal à 100 %
 
-# Expand both WAL PVCs (double the current size; adjust if needed)
+# Agrandir les deux PVC WAL (doubler la taille actuelle ; à adapter)
 
 kubectl patch pvc ${CLUSTER_NAME}-1-wal -n ${NAMESPACE} -p '{"spec":{"resources":{"requests":{"storage":"20Gi"}}}}' ​```
 ````
@@ -210,17 +228,17 @@ kubectl patch pvc ${CLUSTER_NAME}-1-wal -n ${NAMESPACE} -p '{"spec":{"resources"
 **Bad — same step without a way to self-verify:**
 
 ```markdown
-## Step 2 — Check WAL PVC usage and expand
+## Étape 2 — Vérifier l'usage des PVC WAL et les agrandir
 
-Check the PVC usage and expand it if needed using kubectl patch.
+Vérifier l'usage des PVC et les agrandir si besoin avec kubectl patch.
 ```
 
-**Good — concrete Complete Example section grounding the generic steps:**
+**Good — concrete "Exemple complet" section grounding the generic steps:**
 
 ```markdown
-## Complete Example: `home-dashboard` Application
+## Exemple complet : application `home-dashboard`
 
-### 1. Generate the OIDC client JSON
+### 1. Générer le JSON du client OIDC
 
 ​`bash APP_DIR="projects/amiya.akn/src/apps/home-dashboard" CLUSTER="amiya.akn" APP="home-dashboard" HOSTNAME="home.chezmoi.sh" ​`
 ```
@@ -230,29 +248,35 @@ Check the PVC usage and expand it if needed using kubectl patch.
 - Existing procedures: `docs/procedures/` — read the category-relevant ones before drafting, for style, numbering, and
   cross-referencing. `SEC-20250808-00` and `DB-20260530-00` are strong models for a medium-sized procedure;
   `OMNI-20260721-00` is the model for a large, multi-system one.
-- `docs/procedures/README.md` — the index every new procedure must be added to.
+- `docs/_Sidebar.md` — the navigation every new page must be added to.
+- `.agents/skills/documentation-writer/references/style-guide.md` — language, naming and lint rules shared by every
+  page.
 - `docs/incidents/README.md` and `.agents/skills/cnpg-troubleshoot/SKILL.md` — how incidents and procedures
   cross-reference each other, and how a troubleshooting skill routes from a live error to a procedure.
-- `.agents/skills/documentation-writer/references/adr.md` — the sibling skill for decisions; a procedure documents the "how" of a choice
-  an ADR already argued for.
-- `.agents/skills/documentation-writer/references/postmortem.md` — the "From Lesson to Control" table classifies a "Runbook step" as one of the
-  concrete artifacts a post-mortem's systemic lessons should produce; that artifact is a procedure written with this
-  skill.
+- `.agents/skills/documentation-writer/references/adr.md` — the sibling skill for decisions; a procedure documents the
+  "how" of a choice an ADR already argued for.
+- `.agents/skills/documentation-writer/references/postmortem.md` — the "From Lesson to Control" table classifies a
+  "Runbook step" as one of the concrete artifacts a post-mortem's systemic lessons should produce; that artifact is a
+  procedure written with this skill.
 
 ## Template Versioning
 
 The procedure template (`references/procedure-template.md`) is versioned in its own HTML comment so structural changes
 to the template are tracked independently of any single procedure. Unlike ADRs, procedures carry no per-file version
 frontmatter — the template's provenance lives in this changelog, and each procedure's own provenance lives in its
-`History` section.
+`Historique` section.
 
 - **Scheme:** semantic-ish `MAJOR.MINOR.PATCH`. `MAJOR` — a required section added/removed/renamed in a way that makes
   old procedures look structurally wrong. `MINOR` — a new optional section or non-breaking authoring guidance. `PATCH` —
   wording fixes in the template's instructions.
-- **When you change the template**, bump the version in the `<!-- PROCEDURE TEMPLATE vX.Y.Z -->` comment and add an
+- **When you change the template**, bump the version in the `<!-- GABARIT DE PROCÉDURE vX.Y.Z -->` comment and add an
   entry below. Existing procedures are not back-migrated.
 
 ### Template changelog
+
+- **2.0.0**: Template translated to French; every section renamed accordingly (`Prérequis`, `Entrées requises`,
+  `Étape N`, `Vérifications rapides`, …). `# Title` replaces the level-2 heading and matches the file name, `References`
+  is merged into the new mandatory last section `## Pour aller plus loin`, and `Historique` moves just before it.
 
 - **1.0.0**: Initial template, extracted from the recurring structure across `docs/procedures/security/`, `databases/`,
   `omni/`, and `infrastructure/` into this skill as the single source of truth.
@@ -261,5 +285,6 @@ frontmatter — the template's provenance lives in this changelog, and each proc
 
 The authoritative template is at `references/procedure-template.md` (relative to this skill). Read that file and copy
 its content verbatim as the starting point for a new procedure, then, before saving: delete the
-`<!-- PROCEDURE TEMPLATE … -->` HTML comment, remove all `>` blockquote authoring instructions, and strip the
-`[Optional]` labels from the headings of the optional sections you keep — dropping any optional section you don't use.
+`<!-- GABARIT DE PROCÉDURE … -->` HTML comment, remove all `>` blockquote authoring instructions, and strip the
+`[Facultatif …]` labels from the headings of the optional sections you keep — dropping any optional section you don't
+use.

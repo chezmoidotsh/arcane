@@ -45,7 +45,7 @@ spec:
     # -- Bootstrap from the old lungmen.akn cluster's last backup, as part of the Omni
     # cluster recreation (issue 1188). CNPG restores the base backup and replays available
     # WALs to reach consistency. After bootstrap this block is ignored on subsequent
-    # reconciliations — see docs/procedures/backups/BKP-20260723-00.cnpg-restore-from-object-store.md.
+    # reconciliations — see docs/procedures/databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md.
     bootstrap:
       recovery:
         source: 2026-03-29T09:29:29.483Z
