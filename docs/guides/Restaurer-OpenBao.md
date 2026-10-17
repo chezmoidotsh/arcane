@@ -259,8 +259,8 @@ lui-même, hors périmètre ici.
 - [Plan de reprise après sinistre](Plan-de-Reprise-apres-Sinistre.md) : le plan d'ensemble et les priorités de reprise.
 - [Procédure DB-20260723-00](../procedures/databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md) : la
   mécanique de restauration CNPG utilisée à l'étape 2.
-- [ADR-002](../decisions/002-openbao-secrets-topology.md),
-  [ADR-003](../decisions/003-openbao-path-naming-conventions.md) et
-  [ADR-004](../decisions/004-openbao-policy-naming-conventions.md) : les conventions de montages, de chemins et de
-  politiques de cette instance, provisionnés par le composant
+- [ADR-002](../decisions/ADR-002-Topologie-des-Secrets-OpenBao.md),
+  [ADR-003](../decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md) et
+  [ADR-004](../decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md) : les conventions de montages, de
+  chemins et de politiques de cette instance, provisionnés par le composant
   [`@chezmoi.sh/pulumi-cluster-vault`](../../catalog/pulumi/components/cluster-vault/README.md).

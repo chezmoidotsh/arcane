@@ -5,174 +5,162 @@ implementation-completed: { YYYY-MM-DD when the implementation was finalized (op
 decision-makers: ["Alexandre"]
 assisted-by: ["<model-name>"]
 informed: []
-template-version: "1.1.0"
+template-version: "2.0.0"
 ---
 
 <!--
-  ADR TEMPLATE v1.1.0 — see the "Template Versioning" section of
-  .agents/skills/documentation-writer/references/adr.md for the changelog and the rules that govern
-  this file. Keep the `template-version` frontmatter field above so each ADR records
-  which template revision produced it. Delete this HTML comment when authoring.
+  GABARIT D'ADR v2.0.0 — voir la section "Template Versioning" de
+  .agents/skills/documentation-writer/references/adr.md pour l'historique et les règles de ce fichier.
+  Conserver le champ `template-version` du front matter : il enregistre la révision du gabarit qui a produit l'ADR.
+  La version 2.0.0 traduit le gabarit en français (sections renommées). Les clés du front matter et les valeurs de
+  `status` restent en anglais : des scripts et la convention des ADR les lisent. Supprimer ce commentaire HTML à la
+  rédaction. Le titre `#` reprend le nom du fichier (ADR-NNN-Titre-En-Francais.md), sans tirets entre les mots.
 -->
 
-# {Short title, representative of solved problem and found solution}
+# ADR-{NNN} {Titre court, représentatif du problème résolu et de la solution retenue}
 
-## Table of Contents
+## Contexte et problème
 
-- [Context and Problem Statement](#context-and-problem-statement)
-- [Non-Goals \[Optional\]](#non-goals-optional)
-- [Decision Drivers](#decision-drivers)
-- [Considered Options](#considered-options)
-  - [Option 1: {title of option 1}](#option-1-title-of-option-1)
-  - [Option 2: {title of option 2}](#option-2-title-of-option-2)
-- [Decision Outcome](#decision-outcome)
-- [Consequences \[Optional\]](#consequences-optional)
-  - [Positive](#positive)
-  - [Negative](#negative)
-  - [Neutral](#neutral)
-- [Implementation Details / Status \[Optional\]](#implementation-details--status-optional)
-- [Decision Evolution \[Optional\]](#decision-evolution-optional)
-- [References and Related Decisions \[Optional\]](#references-and-related-decisions-optional)
-- [Changelog](#changelog)
-
-## Context and Problem Statement
-
-> Describe the context and problem statement using clear, complete paragraphs. Do not rely solely on bullet points.
-> Explain exactly why this decision is needed now and omit no technical details.
+> Décrire le contexte et le problème en paragraphes clairs et complets, pas seulement en puces. Expliquer précisément
+> pourquoi cette décision est nécessaire maintenant, sans omettre de détail technique.
 >
-> Ensure you explicitly cover:
+> Couvrir explicitement :
 >
-> - **Current Architecture Overview**: How things work today.
-> - **Critical Problems Identified**: What is broken, limiting, or missing with the current approach.
-> - **Strategic Question**: The core question this ADR aims to answer.
+> - **Vue d'ensemble de l'architecture actuelle** : comment les choses fonctionnent aujourd'hui.
+> - **Problèmes critiques identifiés** : ce qui est cassé, limitant ou manquant dans l'approche actuelle.
+> - **Question stratégique** : la question centrale à laquelle cet ADR répond.
 
-{Write comprehensive context here...}
+{Écrire ici un contexte complet...}
 
-## Non-Goals \[Optional]
+## Hors périmètre [Facultatif]
 
-> List what this ADR deliberately does NOT decide or cover. Non-goals prevent scope creep and stop a reader from
-> mistaking an omission for an oversight. Include this section when any of the following apply:
+> Lister ce que cet ADR ne décide délibérément PAS et ne couvre pas. Les points hors périmètre évitent la dérive du
+> champ et empêchent un lecteur de prendre une omission pour un oubli. Inclure cette section quand l'un des cas suivants
+> s'applique :
 >
-> - A related decision is already settled elsewhere and is a _premise_ here, not an option (state it, so the options
->   aren't misread as reopening it).
-> - The decision deliberately excludes a tempting adjacent area (say why — a future reader will otherwise re-propose
->   it).
-> - A capability of the superseded approach is intentionally given up.
+> - Une décision liée est déjà actée ailleurs et constitue une _prémisse_ ici, pas une option (l'énoncer, pour que les
+>   options ne soient pas lues comme la rouvrant).
+> - La décision exclut délibérément un domaine voisin tentant (dire pourquoi — sinon un futur lecteur le proposera à
+>   nouveau).
+> - Une capacité de l'approche remplacée est abandonnée volontairement.
 >
-> Keep each non-goal to a sentence or two with its reason. Omit the section entirely if the decision's scope is
-> self-evident — do not pad with truisms.
+> Garder chaque point à une ou deux phrases, avec sa raison. Omettre entièrement la section quand le périmètre de la
+> décision va de soi — ne pas la remplir de truismes.
 
-- {non-goal 1 — and why it is out of scope}
-- {non-goal 2 — and why it is out of scope}
+- {Point hors périmètre 1 — et pourquoi il est écarté}
+- {Point hors périmètre 2 — et pourquoi il est écarté}
 
-## Decision Drivers
+## Facteurs de décision
 
-> List the forces, concerns, and requirements that shape the decision. Categorize them to ensure no details are omitted:
+> Lister les forces, préoccupations et exigences qui orientent la décision. Les classer pour ne rien omettre :
 >
-> - **Functional Requirements**: What the solution must do.
-> - **Non-Functional Requirements**: Qualities the solution must have (Reliability, Security, Maintainability, etc.).
-> - **Constraints**: Limitations we must work within (Ecosystem, existing infrastructure, budget, etc.).
+> - **Exigences fonctionnelles** : ce que la solution doit faire.
+> - **Exigences non fonctionnelles** : les qualités attendues (fiabilité, sécurité, maintenabilité, etc.).
+> - **Contraintes** : les limites avec lesquelles composer (écosystème, infrastructure existante, budget, etc.).
 
-- {decision driver 1}
-- {decision driver 2}
+- {Facteur de décision 1}
+- {Facteur de décision 2}
 
-## Considered Options
+## Options envisagées
 
-> Detail the options considered. For complex decisions, you can group them by category. Provide a substantial, detailed
-> paragraph describing each option before listing its pros and cons. Mark the status of each option with a bold label:
-> ACCEPTED, REJECTED, or PROPOSED.
+> Détailler les options envisagées. Pour une décision complexe, on peut les regrouper par catégorie. Fournir un
+> paragraphe substantiel et détaillé pour chaque option avant de lister ses avantages et inconvénients. Marquer le
+> statut de chaque option par une étiquette en gras : ACCEPTÉE, REJETÉE ou PROPOSÉE.
 
-### Option 1: {title of option 1}
+### Option 1 : {Titre de l'option 1}
 
-> **Status: PROPOSED**
+> **Statut : PROPOSÉE**
 
-> Write a complete, concise description of how this option works, its architectural impact, and how it addresses the
-> drivers.
+> Écrire une description complète et concise du fonctionnement de l'option, de son impact architectural et de la façon
+> dont elle répond aux facteurs de décision.
 
-- `+` {pro 1}
-- `+` {pro 2}
-- `-` {con 1}
+- `+` {Avantage 1}
+- `+` {Avantage 2}
+- `-` {Inconvénient 1}
 
-### Option 2: {title of option 2}
+### Option 2 : {Titre de l'option 2}
 
-> **Status: PROPOSED**
+> **Statut : PROPOSÉE**
 
-> Write a complete, concise description of how this option works, its architectural impact, and how it addresses the
-> drivers.
+> Écrire une description complète et concise du fonctionnement de l'option, de son impact architectural et de la façon
+> dont elle répond aux facteurs de décision.
 
-- `+` {pro 1}
-- `-` {con 1}
+- `+` {Avantage 1}
+- `-` {Inconvénient 1}
 
-## Decision Outcome
+## Décision retenue
 
-**Chosen option: "{title of chosen option}"**, because {Provide a detailed, complete justification in paragraph form.
-Explain how it uniquely meets the critical decision drivers, resolves the forces at play, or mitigates the primary
-constraints. Do not skimp on the rationale}.
+**Option retenue : « {titre de l'option retenue} »**, parce que {Fournir une justification détaillée et complète, sous
+forme de paragraphe. Expliquer comment elle répond de façon unique aux facteurs de décision critiques, résout les forces
+en jeu ou atténue les contraintes principales. Ne pas lésiner sur l'argumentation}.
 
 ---
 
-## Consequences \[Optional]
+## Conséquences [Facultatif]
 
-> Detail the cascading effects of this decision. Be explicit about required mitigations.
+> Détailler les effets en cascade de cette décision. Être explicite sur les mesures d'atténuation nécessaires.
 
-### Positive
+### Positives
 
-- (+) {Good consequence, e.g., improvement of one or more desired qualities}
+- (+) {Bonne conséquence, par exemple l'amélioration d'une ou plusieurs qualités recherchées}
 
-### Negative
+### Négatives
 
-- (-) {Bad consequence, e.g., compromising one or more desired qualities}
+- (-) {Mauvaise conséquence, par exemple le compromis sur une ou plusieurs qualités recherchées}
 
-### Neutral
+### Neutres
 
-- (\~) {Neutral consequence or required mitigation}
+- (\~) {Conséquence neutre ou mesure d'atténuation nécessaire}
 
 ---
 
-## Implementation Details / Status \[Optional]
+## Détails de mise en œuvre et état [Facultatif]
 
-> Document the high-level architecture resulting from this decision (e.g., using Mermaid or ASCII diagrams).
+> Documenter l'architecture de haut niveau qui résulte de cette décision (par exemple avec des diagrammes Mermaid ou
+> ASCII).
 
-> \[!CAUTION] **ANTI-PATTERN**: DO NOT include step-by-step migration plans, tutorials, runbooks, or low-level technical
-> configurations (like specific Helm values, RBAC account names, or exact file paths) in this document.
+> [!CAUTION]\
+> **ANTI-MODÈLE** : NE PAS inclure dans ce document de plan de migration pas à pas, de tutoriel, de runbook ni de
+> configuration de bas niveau (valeurs Helm précises, noms de comptes RBAC, chemins de fichiers exacts).
 >
-> - **Migration plans and runbooks** belong in GitHub Issues, PRs, or `docs/procedures/`.
-> - **Low-level configurations** belong in the code itself, which is the only source of truth.
+> - Les **plans de migration et runbooks** vont dans les issues GitHub, les PR ou `docs/procedures/`.
+> - Les **configurations de bas niveau** vont dans le code, seule source de vérité.
 >
-> Keep this section focused on the _conceptual_ architecture and the _status_ of the implementation.
+> Garder cette section centrée sur l'architecture _conceptuelle_ et sur l'_état_ de la mise en œuvre.
 
-- **Completed Components**: {What has been successfully rolled out conceptually}
-- **Pending Components**: {What remains to be done conceptually}
-- **Architecture**: {Diagrams (e.g., Mermaid) or high-level technical breakdown}
-- **Standards Specification**: {Any new conventions, labels, or naming rules introduced by this ADR}
-
----
-
-## Decision Evolution \[Optional]
-
-> If the decision changes during implementation or over time, document the history and the exact technical reasons for
-> the pivot.
-
-- **YYYY-MM-DD**: Initial Decision — {Option}
-- **YYYY-MM-DD**: Revised Decision — {Option} because {Detailed Reason}
+- **Composants terminés** : {Ce qui a été déployé, sur le plan conceptuel}
+- **Composants restants** : {Ce qui reste à faire, sur le plan conceptuel}
+- **Architecture** : {Diagrammes (par exemple Mermaid) ou description technique de haut niveau}
+- **Spécification des standards** : {Les nouvelles conventions, étiquettes ou règles de nommage introduites par cet ADR}
 
 ---
 
-## References and Related Decisions \[Optional]
+## Évolution de la décision [Facultatif]
 
-> Provide links to other decisions, technical specifications, or external references that are crucial for understanding
-> this ADR.
+> Si la décision change pendant la mise en œuvre ou avec le temps, documenter l'historique et les raisons techniques
+> exactes du changement de cap.
 
-- **Related ADRs**: {e.g., ADR-001: Centralized Secret Management}
-- **Architecture Documentation**: {Links to internal or external architecture guides}
-- **Security Guidelines**: {Links to security best practices}
-- **Implementation References**: {Links to tool documentation}
+- **AAAA-MM-JJ** : Décision initiale — {Option}
+- **AAAA-MM-JJ** : Décision révisée — {Option}, parce que {Raison détaillée}
 
 ---
 
-## Changelog
+## Historique des modifications
 
-> Document any significant updates made to this ADR after its initial creation. Use semantic prefixes (FEATURE, FIX,
-> SECURITY, DEPRECATION, CLARIFICATION, CHORE).
+> Consigner toute modification significative apportée à cet ADR après sa création. Utiliser les préfixes sémantiques
+> (FEATURE, FIX, SECURITY, DEPRECATION, CLARIFICATION, CHORE). Un changement de `status` y figure toujours. Du plus
+> récent au plus ancien.
 
-- **YYYY-MM-DD**: **PREFIX**: {Complete description of the change and its impact}
+- **AAAA-MM-JJ** : **PRÉFIXE** : {Description complète de la modification et de son impact}
+
+---
+
+## Pour aller plus loin
+
+> Liens relatifs vers des fichiers `.md` (autres ADR, documentation d'architecture) et références externes
+> indispensables pour comprendre cet ADR, chacun avec une phrase d'introduction. Cette section est la dernière section
+> `##` de la page.
+
+- [{ADR lié}]({ADR-NNN-Titre-En-Francais.md}) : {Par exemple la gestion centralisée des secrets}
+- [{Documentation d'architecture}]({../reference/Page.md}) : {Guide d'architecture interne ou externe}
+- [{Référence externe}]({https://exemple.org}) : {Bonnes pratiques de sécurité ou documentation de l'outil}
