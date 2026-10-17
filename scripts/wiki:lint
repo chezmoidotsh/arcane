@@ -20,7 +20,8 @@
 # is not listed in docs/.wiki-legacy: lower-case directory names, page names, page names unique across the whole tree
 # (case-insensitive), one H1 matching the page name (case, accents and hyphens ignored), "Pour aller plus loin" last,
 # relative links that resolve to an existing file, every page reachable from _Sidebar.md, no French filler words, no
-# emoji. Pages are written in French. Standard library only.
+# emoji, callout markers alone on their line (GitHub does not render "> [!NOTE] text" as an alert). Pages are written in
+# French. Standard library only.
 #
 # Output: one `path:line: message` per finding (rtunk parses it), exit 1 when there is any.
 # Usage: scripts/wiki:lint [--root docs] | --self-test
@@ -41,6 +42,7 @@ FILLER_RE = re.compile(
 EMOJI_RE = re.compile("[\U0001f000-\U0001faff☀-➿⬀-⯿️]")
 LINK_RE = re.compile(r"!?\[[^\]]*\]\(<?([^)\s>]+)>?(?:\s+(?:\"[^\"]*\"|'[^']*'))?\)")  # inline link or image
 REF_RE = re.compile(r"^\s{0,3}\[[^\]]+\]:\s*<?([^\s>]+)")  # reference definition: [id]: target
+CALLOUT_RE = re.compile(r"^\s*>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*[^\s\\]", re.I)  # marker followed by text
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 NEXT_HEADING = "pour aller plus loin"
 
@@ -132,6 +134,8 @@ def lint(root: Path, label: str = "docs") -> list[str]:
                 err(page, n, f"filler word '{f.group(0)}'")
             if EMOJI_RE.search(line):
                 err(page, n, "emoji")
+            if CALLOUT_RE.match(line):
+                err(page, n, "callout marker must be alone on its line, ending with a backslash: '> [!NOTE]\\'")
             for target in LINK_RE.findall(plain) + REF_RE.findall(plain):
                 if re.match(r"^([a-z][a-z0-9+.-]*:|#)", target, re.I):
                     continue
@@ -171,6 +175,10 @@ def self_test() -> None:
         (root / "old" / "legacy.md").write_text("no title, simplement faux\n")
         (root / ".wiki-legacy").write_text("# not migrated yet\nold/*\n")
         assert lint(root) == [], lint(root)
+        (root / "guides" / "Page-Reussie.md").write_text(good.replace("Version courte.", "> [!NOTE] Inline.\n> [!TIP]\\\n> Ok."))
+        errs = lint(root)
+        assert len(errs) == 1 and ":3:" in errs[0] and "callout" in errs[0], errs
+        (root / "guides" / "Page-Reussie.md").write_text(good)
         (root / "Reference").mkdir()
         (root / "Reference" / "page-reussie.md").write_text(
             "# Autre titre\n\nC'est simplement facile. [x](Nope.md) [y](../guides/Page-Reussie).\n"
