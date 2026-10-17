@@ -11,7 +11,9 @@ template-version: "2.0.0"
 
 Migré le 2026-10-11 ; l'état des services n'a pas été revérifié.
 
-> [!NOTE]
+Titre d'origine : « Replace Gitmoji with a Symbol-Based Commit Type Convention ».
+
+> [!NOTE]\
 > **État au 2026-10-11 : décision appliquée dans le dépôt.** `.commitlintrc.js` définit les 12 types symboliques de la
 > table ci-dessous, les trois variantes de rupture (`+!`, `~!`, `-!`), le motif d'en-tête `type[scope]: Subject` et
 > l'obligation d'un scope ; `.agents/skills/git-commit/SKILL.md` documente le même format ; le hook `commitlint` est
@@ -20,9 +22,9 @@ Migré le 2026-10-11 ; l'état des services n'a pas été revérifié.
 > porte `"enabled": false`. Le format réel des commits de Renovate n'a pas pu être vérifié depuis ce dépôt. Le texte
 > ci-dessous est conservé tel que décidé.
 
-> [!NOTE]
-> **Scopes au 2026-10-11.** Cet ADR ne liste pas les scopes ; il renvoie à `.commitlintrc.js`, qui fait foi. Cette
-> liste contient des scopes sans équivalent dans l'arborescence actuelle (`project:amiya.akn`, `catalog:crossplane`,
+> [!NOTE]\
+> **Scopes au 2026-10-11.** Cet ADR ne liste pas les scopes ; il renvoie à `.commitlintrc.js`, qui fait foi. Cette liste
+> contient des scopes sans équivalent dans l'arborescence actuelle (`project:amiya.akn`, `catalog:crossplane`,
 > `catalog:kairos-bundle`) et ne contient ni `catalog:helm` ni `catalog:kubernetes`, alors que `catalog/helm/` et
 > `catalog/kubernetes/` existent. Les exemples ci-dessous citent `project:amiya.akn`, scope valide à la date de la
 > décision.
@@ -41,8 +43,8 @@ caractère visuel, n'existe que si l'emoji est rendu. Dans tous les contextes o�
 (`git log` dans un terminal, sortie de CI, correctifs par e-mail, diffs en texte brut), le code `:sparkles:` s'affiche
 tel quel. Le jeton est plus long que le mot qu'il remplace (`feat`) et n'apporte rien visuellement.
 
-**Le lexique est surdimensionné par rapport à l'usage réel.** `.commitlintrc.js` définit 48 types autorisés. L'analyse de
-tout l'historique git montre que 18 seulement ont déjà été utilisés, et 12 seulement plus de cinq fois. Les 30 autres
+**Le lexique est surdimensionné par rapport à l'usage réel.** `.commitlintrc.js` définit 48 types autorisés. L'analyse
+de tout l'historique git montre que 18 seulement ont déjà été utilisés, et 12 seulement plus de cinq fois. Les 30 autres
 types existent, mais alourdissent la charge cognitive à chaque choix de type.
 
 **Le lexique dessert l'expressivité au lieu de la servir.** Avec 48 types, choisir le bon type impose de consulter la
@@ -121,8 +123,8 @@ Le format complet devient `type[scope]: Sujet`.
 
 Chaque type tient en un caractère (deux pour les changements incompatibles, voir plus bas). L'ensemble des types valides
 est choisi pour couvrir les 12 usages réels extraits de l'historique git, avec un joker (`*`) pour tout ce qui n'entre
-pas dans une catégorie. Les changements incompatibles ajoutent `!` au type (`+!`, `~!`, `-!`), lisible comme « plus-bang »
-ou « change-bang », ce qui signale l'urgence visuellement sans jeton séparé. `#` a été délibérément écarté comme type,
+pas dans une catégorie. Les changements incompatibles ajoutent `!` au type (`+!`, `~!`, `-!`), lisible comme « plus-bang
+» ou « change-bang », ce qui signale l'urgence visuellement sans jeton séparé. `#` a été délibérément écarté comme type,
 car git traite les lignes qui commencent par `#` comme des commentaires dans les messages de commit.
 
 - `+` Types d'un seul caractère : densité d'information maximale dans `git log --oneline`.
@@ -147,8 +149,8 @@ exactement une frappe.
 
 Le suffixe `!` pour les changements incompatibles sacrifie un symbole (`!` pour le correctif) afin d'obtenir
 l'expression des ruptures dans l'en-tête. Ce compromis est acceptable pour deux raisons : (a) les correctifs sont rares
-dans un dépôt d'infrastructure où la plupart des changements sont des ajouts ou des montées de version délibérés, et
-(b) un changement incompatible dans un dépôt d'infrastructure de homelab exige de toute façon une documentation dans le
+dans un dépôt d'infrastructure où la plupart des changements sont des ajouts ou des montées de version délibérés, et (b)
+un changement incompatible dans un dépôt d'infrastructure de homelab exige de toute façon une documentation dans le
 corps du commit : le marqueur dans l'en-tête aide au balayage visuel, il ne remplace pas l'explication.
 
 ---
@@ -236,17 +238,17 @@ Assisted-by: github-copilot:claude-sonnet-4.6
 
 ## Historique des modifications
 
-- _2026-10-11_ : **CHORE** : Migration vers le gabarit d'ADR 2.0.0 (version française) : traduction, sections
-  renommées, sommaire manuel supprimé, titre aligné sur le nom de fichier, section `Pour aller plus loin`,
-  `template-version` ajouté. Décision, options, chronologie et dates d'origine inchangées.
-- _2026-10-11_ : **FEATURE** : Passage de `status` de `accepted` à `implemented`, sans `implementation-completed` (aucune
-  date de fin n'est établie par le texte de l'ADR). Le dépôt prouve l'application : `.commitlintrc.js` définit les 12
-  types symboliques, les variantes `+!` `~!` `-!`, le motif d'en-tête `type[scope]: Subject` et le scope obligatoire ;
-  `.agents/skills/git-commit/SKILL.md` documente le format ; le hook `commitlint` est activé dans `.rtunk/rtunk.yaml`.
-  L'écart du preset `:gitmoji` de `renovate.json5` et les scopes obsolètes ou manquants de `.commitlintrc.js` sont
-  signalés par deux notes `> [!NOTE]` ; `date` mise à jour.
-- _2026-05-24_ : **FEATURE** : Création initiale de l'ADR, qui documente le remplacement de Gitmoji par une convention de
-  types de commit symboliques.
+- _2026-10-11_ : **CHORE** : Migration vers le gabarit d'ADR 2.0.0 (version française) : traduction, sections renommées,
+  sommaire manuel supprimé, titre aligné sur le nom de fichier, section `Pour aller plus loin`, `template-version`
+  ajouté. Décision, options, chronologie et dates d'origine inchangées.
+- _2026-10-11_ : **FEATURE** : Passage de `status` de `accepted` à `implemented`, sans `implementation-completed`
+  (aucune date de fin n'est établie par le texte de l'ADR). Le dépôt prouve l'application : `.commitlintrc.js` définit
+  les 12 types symboliques, les variantes `+!` `~!` `-!`, le motif d'en-tête `type[scope]: Subject` et le scope
+  obligatoire ; `.agents/skills/git-commit/SKILL.md` documente le format ; le hook `commitlint` est activé dans
+  `.rtunk/rtunk.yaml`. L'écart du preset `:gitmoji` de `renovate.json5` et les scopes obsolètes ou manquants de
+  `.commitlintrc.js` sont signalés par deux notes `> [!NOTE]` ; `date` mise à jour.
+- _2026-05-24_ : **FEATURE** : Création initiale de l'ADR, qui documente le remplacement de Gitmoji par une convention
+  de types de commit symboliques.
 
 ## Pour aller plus loin
 

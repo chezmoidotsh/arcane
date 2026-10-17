@@ -83,9 +83,9 @@ omni:drift:check --templates        # cluster templates only
 
 Wraps `omnictl apply --dry-run` (machine classes) and `omnictl cluster template diff` (templates), which both exit 0
 even when they print a diff. Exit codes: `0` no drift, `1` drift (diff printed), `2` tooling/auth error. It never writes
-to Omni. Use it before a `sync`/`apply` or after a manual change in the Omni UI to catch Git/Omni divergence. The
-"no change" wording of `omnictl` is unverified against a live instance: if it reports false drift, extend the filter in
-the script.
+to Omni. Use it before a `sync`/`apply` or after a manual change in the Omni UI to catch Git/Omni divergence. The "no
+change" wording of `omnictl` is unverified against a live instance: if it reports false drift, extend the filter in the
+script.
 
 It is deliberately **not** run in CI: it needs an Omni service account (`OMNICONFIG` credentials), which no workflow
 holds today. Wiring it into a scheduled workflow requires creating that secret — a human decision.

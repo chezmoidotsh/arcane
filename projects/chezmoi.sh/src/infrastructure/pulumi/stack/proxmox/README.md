@@ -3,12 +3,12 @@
 This folder contains the Pulumi TypeScript stack that manages a narrow, deliberately scoped slice of
 `pve-01.pve.chezmoi.sh` — the Proxmox VE host every cluster in this homelab runs on — as declarative code. It follows
 the same bridged-provider pattern already established for [`../proxmox-backup-server/`](../proxmox-backup-server/) and
-[`../truenas/`](../truenas/): [`@pulumi/proxmox`](../../../../../../catalog/pulumi/sdks/proxmox/), a Pulumi provider
+[`../truenas/`](../truenas/): [`@pulumi/proxmox`](../../../../../../../catalog/pulumi/sdks/proxmox/), a Pulumi provider
 dynamically bridged from the [`bpg/terraform-provider-proxmox`](https://github.com/bpg/terraform-provider-proxmox)
 Terraform provider.
 
 See
-[docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md](../../../../../../docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md),
+[docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md](../../../../../../../docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md),
 "Non-Goals" for why this scope is narrow: Proxmox VE's **VM/LXC lifecycle** stays fully manual — this stack manages
 administrative config objects (ACLs, SDN, backup-storage registration, resource pools, ACME) that don't carry the
 `Proxmox → hosts K8s → K8s manages Proxmox` trust-cycle risk that non-goal exists to block.

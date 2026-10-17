@@ -1,6 +1,6 @@
 ---
-status: "implemented"
-date: 2026-10-11
+status: "accepted"
+date: 2026-07-30
 decision-makers: ["Alexandre"]
 assisted-by: ["claude-sonnet-4-6", "glm-5.2", "claude-sonnet-5"]
 informed: []
@@ -11,7 +11,7 @@ template-version: "2.0.0"
 
 Migré le 2026-10-11 ; l'état des serveurs n'a pas été revérifié.
 
-Titre d'origine : « Topologie réseau du homelab : du VLAN unique (V1) au double NIC avec Proxmox SDN VXLAN (V2) ».
+Titre d'origine : « Homelab network topology: single-VLAN (V1) to dual-NIC + Proxmox SDN VXLAN (V2) ».
 
 > [!NOTE]\
 > **État au 2026-10-11 : décision appliquée dans son périmètre actuel (zone SDN `simple`) ; le passage à `vxlan` reste

@@ -68,13 +68,11 @@ mise install
 │   ├── ansible                     # Ansible roles and collections
 │   ├── pulumi                      # Pulumi components and stacks
 │   ├── flakes                      # Nix flakes for OCI images
-│   ├── kairos-bundles              # Kairos bundles
 │   ├── kustomize                   # Kustomize bases
 │   └── talos                       # Talos configuration patches
-├── defaults                        # Default configurations
-│   ├── kubernetes                  # Default Kubernetes resources
-│   └── talos                       # Default Talos configurations
 ├── docs                            # Documentation
+│   ├── archives                    # Finished or obsolete documents
+│   ├── assets                      # Diagrams and icons used by the pages and READMEs
 │   ├── decisions                   # Architecture Decision Records (ADR)
 │   ├── experiments                 # Experiment write-ups and their code
 │   ├── guides                      # Bootstrap and disaster-recovery guides
@@ -87,6 +85,7 @@ mise install
 │   ├── kazimierz.akn               # Kazimierz cluster configuration
 │   ├── lungmen.akn                 # Lungmen cluster configuration
 │   ├── rhodes.akn                  # Rhodes cluster configuration
+│   ├── rimbilliton.akn             # Rimbilliton Minecraft host (OCI VPS, NixOS)
 │   └── shodan.akn                  # Shodan cluster configuration
 ├── scripts                         # Utility scripts
 ├── .mise.toml                      # Development environment configuration

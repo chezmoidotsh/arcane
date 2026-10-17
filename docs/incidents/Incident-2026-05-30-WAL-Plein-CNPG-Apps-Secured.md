@@ -214,38 +214,38 @@ aggravé par l'absence d'alertes ; chaque « pourquoi » converge vers le manque
 
 ## Registre des changements
 
-- [x] [due:: 2026-05-30] [priority:: high] [size:: M] [owner:: Alexandre] Agrandir les PVC WAL de 5 Gi à 10 Gi ;
+- [x] \[due:: 2026-05-30] \[priority:: high] \[size:: M] \[owner:: Alexandre] Agrandir les PVC WAL de 5 Gi à 10 Gi ;
       déplacer le dossier S3 périmé vers `.bak` ; rétablir l'archivage WAL sur `apps-secured-20260329`
   - **Vérification :** condition de cluster `ContinuousArchivingSuccess` ; les deux Pods en Running
   - **Sinon :** cluster irrécupérable ; données inaccessibles
 
-- [x] [due:: 2026-05-30] [priority:: high] [size:: S] [owner:: Alexandre] Déclencher la sauvegarde manuelle
+- [x] \[due:: 2026-05-30] \[priority:: high] \[size:: S] \[owner:: Alexandre] Déclencher la sauvegarde manuelle
       `apps-secured-20260329-on-demand-1780160586` avant toute autre modification
   - **Vérification :** statut `Completed` de la ressource CNPG `Backup`
   - **Sinon :** modifications sur un cluster fragile sans filet de sécurité
 
-- [x] [due:: 2026-05-30] [priority:: high] [size:: L] [owner:: Alexandre] Créer `apps-secured-20260530` avec
+- [x] \[due:: 2026-05-30] \[priority:: high] \[size:: L] \[owner:: Alexandre] Créer `apps-secured-20260530` avec
       `isWALArchiver: false`, 2 Gi de WAL, un `ScheduledBackup` quotidien (PR #1014)
   - **Vérification :** PR #1014 fusionnée ; nouveau cluster sain ; immich et paperless-ngx reconnectés
   - **Sinon :** la condition architecturale d'origine persiste ; même forme d'incident possible au prochain basculement
 
-- [ ] [due:: 2026-06-07] [priority:: high] [size:: M] [owner:: Alexandre] Ajouter une alerte Prometheus sur la condition
-      CNPG `ContinuousArchivingFailing` (déclenchement sous 1 h)
+- [ ] \[due:: 2026-06-07] \[priority:: high] \[size:: M] \[owner:: Alexandre] Ajouter une alerte Prometheus sur la
+      condition CNPG `ContinuousArchivingFailing` (déclenchement sous 1 h)
   - **Vérification :** règle d'alerte déployée ; test en cassant temporairement l'archivage sur un cluster hors
     production, l'alerte se déclenche sous 1 h
   - **Sinon :** le prochain échec d'archivage silencieux reste de nouveau indétecté pendant des jours
 
-- [ ] [due:: 2026-06-07] [priority:: high] [size:: S] [owner:: Alexandre] Ajouter une alerte Prometheus sur l'usage des
-      PVC WAL au-dessus de 70 % dans tous les namespaces CNPG
+- [ ] \[due:: 2026-06-07] \[priority:: high] \[size:: S] \[owner:: Alexandre] Ajouter une alerte Prometheus sur l'usage
+      des PVC WAL au-dessus de 70 % dans tous les namespaces CNPG
   - **Vérification :** alerte visible dans Alertmanager ; elle se déclenche quand un PVC de test atteint 70 %
   - **Sinon :** la prochaine accumulation de WAL reste indétectée jusqu'à la saturation
 
-- [ ] [due:: 2026-06-14] [priority:: medium] [size:: S] [owner:: Alexandre] Ajouter `mc` (client MinIO) à `.mise.toml`
-      pour que les opérations S3 soient disponibles sans installation manuelle pendant les récupérations
+- [ ] \[due:: 2026-06-14] \[priority:: medium] \[size:: S] \[owner:: Alexandre] Ajouter `mc` (client MinIO) à
+      `.mise.toml` pour que les opérations S3 soient disponibles sans installation manuelle pendant les récupérations
   - **Vérification :** `mise exec -- mc --version` fonctionne sans étape `mise install mc`
   - **Sinon :** le prochain incident lié à S3 perd 5 à 10 minutes en préparation d'outillage
 
-- [ ] [due:: 2026-06-14] [priority:: medium] [size:: S] [owner:: Alexandre] Supprimer le dossier S3 périmé
+- [ ] \[due:: 2026-06-14] \[priority:: medium] \[size:: S] \[owner:: Alexandre] Supprimer le dossier S3 périmé
       `01KMWETKMBK0MYNB3X7RH6BT0X.bak/` une fois `apps-secured-20260530` confirmé stable
   - **Vérification :** dossier absent de `mc ls myminio/cnpg-backups/lungmen.akn/apps-secured/`
   - **Sinon :** environ 200 Mo de données orphelines ; aucun impact opérationnel

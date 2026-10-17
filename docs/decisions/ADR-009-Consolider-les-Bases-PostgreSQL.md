@@ -11,6 +11,8 @@ template-version: "2.0.0"
 
 Migré le 2026-10-11 ; les affirmations sur l'état des clusters n'ont pas été revérifiées.
 
+Titre d'origine : « Consolidate PostgreSQL databases into shared CNPG clusters ».
+
 > [!NOTE]\
 > **État au 2026-10-11 : décision adoptée et partiellement appliquée.** Deux des trois clusters partagés existent sur
 > `lungmen.akn` : `postgres-apps` (`homebox`, `linkding`, `spoolman`) dans

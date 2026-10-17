@@ -12,6 +12,8 @@ template-version: "2.0.0"
 
 Migré le 2026-10-11 ; les affirmations sur l'état des serveurs n'ont pas été revérifiées.
 
+Titre d'origine : « `kazimierz`.AKN: Ansible + Docker Compose over Kubernetes ».
+
 > [!CAUTION]\
 > **Partiellement supplantée par l'[ADR-016](./ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md) (2026-10-10, vérifié
 > le 2026-10-11).** Reste valable : la décision de fond, un VPS unique et non un cluster Kubernetes, avec Pangolin comme

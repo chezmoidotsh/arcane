@@ -11,6 +11,8 @@ template-version: "2.0.0"
 
 Migré le 2026-10-11 ; l'état des clusters n'a pas été revérifié.
 
+Titre d'origine : « Migrate cloud infrastructure management from Crossplane to Pulumi ».
+
 > [!NOTE]\
 > **État au 2026-10-11 : migration réalisée, phase 1 (exécution locale) en vigueur.** Le dépôt ne contient plus de
 > Crossplane : `catalog/crossplane/` n'existe plus, aucun dossier `projects/*/src/infrastructure/crossplane/` n'existe

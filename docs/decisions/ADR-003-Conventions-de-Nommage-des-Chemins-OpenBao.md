@@ -12,6 +12,8 @@ template-version: "2.0.0"
 
 Migré le 2026-10-11 ; les affirmations sur l'état des clusters n'ont pas été revérifiées.
 
+Titre d'origine : « OpenBao Path and Naming Conventions ».
+
 ## Contexte et problème
 
 Après la mise en place de la topologie des montages de secrets OpenBao

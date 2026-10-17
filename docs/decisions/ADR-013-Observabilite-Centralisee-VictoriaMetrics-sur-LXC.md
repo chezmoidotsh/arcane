@@ -11,6 +11,8 @@ template-version: "2.0.0"
 
 Migré le 2026-10-11 ; l'état des serveurs n'a pas été revérifié.
 
+Titre d'origine : « Centralized observability stack on a NixOS LXC (VictoriaMetrics) ».
+
 > [!NOTE]\
 > **État au 2026-10-11 : décision adoptée et partiellement appliquée.** Le backend central existe dans le dépôt :
 > l'appliance NixOS `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/` (`flake.nix`,

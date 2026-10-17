@@ -3,8 +3,8 @@
 Standalone Proxmox LXC running NixOS + BIND + Vector. It is the DNS server of the `talosnet` Proxmox SDN subnet
 (`10.128.0.0/24`): talosnet DHCP advertises it (`10.128.0.3`, `dns.talosnet.chezmoi.sh`) as the resolver for every Talos
 node. See
-[`docs/reference/Passerelles-et-DNS-Reference.md`](../../../../../../docs/reference/Passerelles-et-DNS-Reference.md) for
-how it fits in the internal/external Gateway split.
+[`docs/reference/Passerelles-et-DNS-Reference.md`](../../../../../../../docs/reference/Passerelles-et-DNS-Reference.md)
+for how it fits in the internal/external Gateway split.
 
 ## Architecture
 

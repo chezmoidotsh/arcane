@@ -12,6 +12,8 @@ template-version: "2.0.0"
 
 Migré le 2026-10-11 ; les affirmations sur l'état des clusters n'ont pas été revérifiées.
 
+Titre d'origine : « Project Structure and Naming Conventions ».
+
 ## Contexte et problème
 
 L'infrastructure Arcane a évolué au fil de plusieurs clusters et applications. Trois types de projets principaux sont
@@ -1532,7 +1534,7 @@ Contrôle du 2026-10-11 contre le dépôt (lecture des fichiers seule, aucun acc
   structure des chemins de secrets.
 - [ADR-004 Conventions de nommage des politiques OpenBao](ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md) :
   les standards de nommage des politiques.
-- [ADR-011 Rendered manifests pattern](ADR-011-Motif-des-Manifestes-Rendus.md) : les manifestes pré-rendus de `dist/`
+- [ADR-011 Motif des manifestes rendus](ADR-011-Motif-des-Manifestes-Rendus.md) : les manifestes pré-rendus de `dist/`
   que synchronisent les ApplicationSets.
 - [AGENTS.md](../../AGENTS.md) : vue d'ensemble de la structure du dépôt.
 - [README ArgoCD](../../projects/rhodes.akn/src/argocd/README.md) : structure des applications ArgoCD et conventions de

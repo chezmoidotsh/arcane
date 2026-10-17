@@ -7,8 +7,8 @@ set -euo pipefail
 # The binding IP is the address of the target: resolve the host part (ssh_config aliases and DNS names included).
 host="$(ssh -G "${usage_target}" | awk '$1 == "hostname" { print $2; exit }')"
 case "${host}" in
-  "" | *[!0-9.]*) host="$(python3 -c 'import socket, sys; print(socket.gethostbyname(sys.argv[1]))' "${host:-${usage_target#*@}}")" ;;
-  *) ;;
+"" | *[!0-9.]*) host="$(python3 -c 'import socket, sys; print(socket.gethostbyname(sys.argv[1]))' "${host:-${usage_target#*@}}")" ;;
+*) ;;
 esac
 echo "nixos:e2e: binding IP of ${usage_target} is ${host}"
 

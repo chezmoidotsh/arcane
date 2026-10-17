@@ -12,6 +12,8 @@ template-version: "2.0.0"
 
 Migré le 2026-10-11 ; les affirmations sur l'état des clusters n'ont pas été revérifiées.
 
+Titre d'origine : « OpenBao Secrets Mount Topology and Organizational Structure ».
+
 ## Contexte et problème
 
 Après la mise en place réussie d'OpenBao comme solution centralisée de gestion des secrets (documentée dans

@@ -11,6 +11,9 @@ template-version: "2.0.0"
 
 Migré le 2026-10-11 ; l'état des clusters n'a pas été revérifié.
 
+Titre d'origine : « Adopt pre-rendered manifests pattern to harden supply-chain security and enable GitOps diffability
+».
+
 > [!NOTE]\
 > **État au 2026-10-11 : motif appliqué sur `rhodes.akn` et `lungmen.akn`.** Les deux projets ont un répertoire `dist/`
 > rendu par `scripts/dist:render` : `projects/rhodes.akn/dist/` (`apps/`, `argocd/`, `infrastructure/`) et
