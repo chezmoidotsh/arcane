@@ -46,7 +46,7 @@ ils s'enregistrent dans l'ArgoCD du hub avec `argocd cluster add` et n'ont pas d
 | Rôle  | Cluster actuel | Particularité dans le dépôt                                                                                             |
 | ----- | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Hub   | `rhodes.akn`   | Porte `projects/rhodes.akn/src/argocd/` et `projects/rhodes.akn/src/bootstrap.applications.yaml` (Application `argocd`) |
-| Spoke | `lungmen.akn`  | Aucun dossier `argocd/` ; enregistré avec `argocd cluster add` (voir `projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md`)   |
+| Spoke | `lungmen.akn`  | Aucun dossier `argocd/` ; enregistré avec `argocd cluster add` (voir `docs/guides/Initialiser-Lungmen.md`)              |
 
 L'étape 11 bifurque donc selon le rôle du nouveau cluster : auto-hébergement d'ArgoCD pour un hub, `argocd cluster add`
 pour un spoke. Le rôle se décide cluster par cluster (variable `GITOPS_ROLE` des [entrées requises](#entrées-requises))

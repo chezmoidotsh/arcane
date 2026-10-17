@@ -15,7 +15,7 @@ const availabilityDomain = "jbln:EU-PARIS-1-AD-1";
 // OCID, since OCI drops dated platform-image OCIDs from the list once a
 // newer one ships. Minimal variant: smaller boot footprint. It is only a
 // *bootstrap* OS: NixOS (src/infrastructure/nixos) is installed over it with
-// nixos-anywhere, see docs/BOOTSTRAP.md.
+// nixos-anywhere, see docs/guides/Initialiser-Kazimierz.md.
 //
 // Filtering/sorting happens here in JS, not via getImages' own `filters`/
 // `sortBy` args: those are applied server-side by the bridged Go provider,

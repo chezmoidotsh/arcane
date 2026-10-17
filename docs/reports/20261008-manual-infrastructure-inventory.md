@@ -48,7 +48,7 @@ execution model, not as a manual item.
 | `chezmoi.sh`                    | Scoped Cloudflare and Tailscale tokens (DNS-01, OAuth keys)                                                      | Declarative                      | `stack/{observability,omni,zot-registry}.ts`, `stack/proxmox-backup-server/`                                                                                                                        |
 | `chezmoi.sh`                    | Cloudflare zone and account, Tailscale tailnet, Backblaze account themselves                                     | Unverified                       | Only consumed as config (`cloudflare_account_id`, `cloudflare_zone_id`, `tailscale:tailnet`); no resource creates them                                                                              |
 | all                             | Pocket-Id shared groups (`admin`, `maison`, `famille`) and OIDC clients                                          | Declarative                      | `chezmoi.sh/.../stack/pocket-id.ts` and per-project `stack/pocket-id/` (provider `@axnic/pulumi-pocket-id`)                                                                                         |
-| `chezmoi.sh`, `rimbilliton.akn` | Tailnet ACL (`tagOwners`, `tag:minecraft`)                                                                       | Manual (omission)                | `rimbilliton.akn/docs/BOOTSTRAP.md` line 30 lists it as a prerequisite; no `tailscale.Acl` resource or ACL file in the repo                                                                         |
+| `chezmoi.sh`, `rimbilliton.akn` | Tailnet ACL (`tagOwners`, `tag:minecraft`)                                                                       | Manual (omission)                | `docs/guides/Amorcer-Rimbilliton.md` line 30 lists it as a prerequisite; no `tailscale.Acl` resource or ACL file in the repo                                                                        |
 | `rhodes.akn`                    | Talos cluster (Omni template)                                                                                    | Declarative, applied by hand     | `src/infrastructure/omni/rhodes.clustertemplate.yaml`; `omnictl` sync is manual (see `catalog/omni`)                                                                                                |
 | `rhodes.akn`                    | ArgoCD hub, apps, infrastructure manifests                                                                       | Declarative                      | `src/argocd/`, `bootstrap.applications.yaml`, `dist/` (ADR-011, `accepted`)                                                                                                                         |
 | `rhodes.akn`                    | Vault, Grafana, Pangolin site, Proxmox identity, cert-manager, CNPG credentials                                  | Declarative                      | `src/infrastructure/pulumi/stack/*`                                                                                                                                                                 |
@@ -98,7 +98,7 @@ The order is not a triage.
       rebuild silently breaks external reachability of every Cilium Gateway VIP. Evidence: `INF-20260730-00`. Status:
       done in #1289, issue #1279.
 - [ ] **2. Manage the Tailnet ACL as code (`tailscale.Acl`)** — `tagOwners` is a prerequisite for rimbilliton and
-      nothing in the repo records the ACL. Evidence: `rimbilliton.akn/docs/BOOTSTRAP.md:30`. Status: issue #1280, no PR
+      nothing in the repo records the ACL. Evidence: `docs/guides/Amorcer-Rimbilliton.md:30`. Status: issue #1280, no PR
       yet.
 - [x] **3. Re-enable rimbilliton's Pocket-Id group and OIDC client with `@axnic/pulumi-pocket-id`** — The provider used
       by the other stacks works; the current file is dead code waiting on issue 1170. Evidence:
@@ -117,12 +117,12 @@ The order is not a triage.
       before any `pulumi up` after a disaster; today a snippet inside another procedure. Evidence: `INF-20260705-00`.
       Status: issue #1285, no PR yet.
 - [ ] **9. Drive the Pelican node and Wings token bootstrap from a NixOS unit, like roles and allocations** — Last
-      UI-only part of the rimbilliton bootstrap. Evidence: `rimbilliton.akn/docs/BOOTSTRAP.md` step 6. Status: issue
+      UI-only part of the rimbilliton bootstrap. Evidence: `docs/guides/Amorcer-Rimbilliton.md` step 6. Status: issue
       #1286, no PR yet.
 - [x] **10. Fix documentation drift: OMNI procedure Steps 9/10 TODOs, `AGENTS.md` project tree, `talosnet-dns` README**
       — Found while building this inventory. Evidence: cross-cutting findings. Status: done in #1291, issue #1287.
 - [x] **11. Decide whether `kazimierz.akn` needs an automatic apply again** — The `ansible-pull` removal leaves a VPS
-      without scheduled reconciliation and without a stated reason. Evidence: `kazimierz.akn/docs/BOOTSTRAP.md`;
+      without scheduled reconciliation and without a stated reason. Evidence: `docs/guides/Amorcer-Kazimierz.md`;
       ADR-008. Status: decided no (no supervision, hard rollback), documented in ADR-008; NixOS migration PR #1304 open.
 
 ## Unverified points

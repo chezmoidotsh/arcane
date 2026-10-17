@@ -5,7 +5,7 @@
 #
 # Authentication is handled by Pelican itself: users sign in with Pocket-Id
 # through the community "Pocket ID Provider" plugin (by Ebnater, see
-# docs/BOOTSTRAP.md). Which Pocket-Id users may sign in is decided by the
+# docs/guides/Initialiser-Rimbilliton.md). Which Pocket-Id users may sign in is decided by the
 # client's group restriction there.
 { ... }:
 {

@@ -201,7 +201,7 @@ over the bootstrap image and managed with `nixos-rebuild` from then on:
 mise run nixos:oci:install ubuntu@<public-ip>   # then: mise run nixos:oci:update
 ```
 
-See [docs/BOOTSTRAP.md](./docs/BOOTSTRAP.md) for the complete bootstrap procedure.
+See [Initialiser Rimbilliton](../../docs/guides/Initialiser-Rimbilliton.md) for the complete bootstrap procedure.
 
 ## Security Considerations
 

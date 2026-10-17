@@ -228,8 +228,10 @@ on the cluster). Always run `dist:render` after touching anything under `src/`; 
 ### Important paths
 
 - Documentation: `docs/`, with the migration state in `docs/.wiki-legacy` — see "Documentation" below
-- Bootstrap docs: `projects/*/docs/BOOTSTRAP.md` (`kazimierz.akn`, `rimbilliton.akn`),
-  `projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md` and `projects/rhodes.akn/docs/disaster-recovery/`
+- Bootstrap guides: `docs/guides/Amorcer-*.md` (`lungmen.akn`, `kazimierz.akn`, `rimbilliton.akn`); disaster recovery of
+  `rhodes.akn`: `projects/rhodes.akn/docs/disaster-recovery/`
+
+
 - Architecture diagrams: `projects/*/architecture.d2` → `projects/*/docs/assets/architecture.svg`
 - Shared D2 styles: `docs/assets/d2/styles.architecture.d2`
 - ADRs: `docs/decisions/` — check `status` (proposed/accepted/implemented) before treating one as current behavior

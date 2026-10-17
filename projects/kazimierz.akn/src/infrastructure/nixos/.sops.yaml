@@ -5,7 +5,7 @@
 creation_rules:
   # NixOS host secrets (sops-nix, decrypted on the host with its SSH host key).
   # Recipients: the admin key and the host key. A reinstall generates a new host key: replace the second recipient
-  # (`ssh-to-age < extra/etc/ssh/ssh_host_ed25519_key.pub`) and run `sops updatekeys` (see docs/BOOTSTRAP.md).
+  # (`ssh-to-age < extra/etc/ssh/ssh_host_ed25519_key.pub`) and run `sops updatekeys` (see docs/guides/Initialiser-Kazimierz.md).
   - path_regex: secrets/kazimierz\.sops\.yaml$
     age: >-
       age1fj0yj3na3n5udfjmnxfwrlkp80tvj49w80wh699x33dh48clnvnshtjxe9,
