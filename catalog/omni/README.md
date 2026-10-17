@@ -94,7 +94,7 @@ holds today. Wiring it into a scheduled workflow requires creating that secret �
 
 - [ADR-014 — Network topology](../../docs/decisions/014-network-topology.md) — pod/service CIDRs and the kube-dns IP
   decision.
-- [VLAN / SDN VNet layout](../../docs/network/ipam.md) — VLAN 5 and the `talosnet` SDN.
+- [VLAN / SDN VNet layout](../../docs/reference/IPAM-Reference.md) — VLAN 5 and the `talosnet` SDN.
 - [Machine-class catalog README](machineclasses/README.md) — detailed sizing, naming, and provider tuning (includes the
   YAML).
 - [Proxmox infra provider README](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/README.md)

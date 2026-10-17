@@ -29,8 +29,8 @@ d'exécution ni l'ACL de `vmbr1`.
   cluster sur le VLAN 5 (`eth0`), pas du VNet. Le détail est dans la note de révision du 2026-06-27 de
   l'[ADR-014](../../decisions/014-network-topology.md).
 - **Plan d'adressage de référence** : les noms de VNet, sous-réseaux, passerelles et options viennent de
-  l'[IPAM](../../network/ipam.md) (section « Proxmox SDN — talosnet VNet »). En cas d'écart avec cette page, l'IPAM fait
-  foi.
+  l'[IPAM](../../reference/IPAM-Reference.md) (section « Proxmox SDN — talosnet VNet »). En cas d'écart avec cette page,
+  l'IPAM fait foi.
 - **Contraintes de nommage PVE 9** : les noms de zone et de VNet sont limités à 8 caractères alphanumériques, sans
   tiret. D'où `pvenet` et `talosnet` au lieu de `localnetwork` et `vnet-talos`. La zone s'est d'abord appelée `localnet`
   avant d'être renommée `pvenet`, pour éviter la confusion avec le chemin d'ACL `localnetwork`, préexistant.
@@ -51,11 +51,11 @@ Valeurs fixées par le plan d'adressage ; aucun choix n'est à faire à chaque e
 | --------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | Zone            | `pvenet` (type `simple`)                  | `pvenetZone` dans `sdn.ts`                                                                                      |
 | VNet            | `talosnet`                                | `talosnetVnet` dans `sdn.ts`                                                                                    |
-| Sous-réseau     | `10.128.0.0/24`, passerelle `10.128.0.1`  | `talosnetSubnet` dans `sdn.ts`, [IPAM](../../network/ipam.md)                                                   |
+| Sous-réseau     | `10.128.0.0/24`, passerelle `10.128.0.1`  | `talosnetSubnet` dans `sdn.ts`, [IPAM](../../reference/IPAM-Reference.md)                                       |
 | Plage DHCP      | `10.128.0.10` à `10.128.0.250`            | `talosnetSubnet.dhcpRange`                                                                                      |
 | DNS distribué   | `10.128.0.3` (talosnet-dns, BIND)         | `talosnetSubnet.dhcpDnsServer`                                                                                  |
 | SNAT            | activé                                    | `talosnetSubnet.snat`                                                                                           |
-| Nœud            | `pve-01.pve.chezmoi.sh` (IP `10.0.0.11`)  | [IPAM](../../network/ipam.md)                                                                                   |
+| Nœud            | `pve-01.pve.chezmoi.sh` (IP `10.0.0.11`)  | [IPAM](../../reference/IPAM-Reference.md)                                                                       |
 | Utilisateur PVE | `omni@pve`, rôle `PVESDNUser` (`SDN.Use`) | `omniSdnTalosnetAcl` dans `sdn.ts`                                                                              |
 | MTU             | `1450` sur `eth1` de chaque nœud Talos    | `catalog/omni/clustertemplates/base.yaml` ; non défini sur la zone ni sur le VNet (le défaut de PVE s'applique) |
 
@@ -80,9 +80,9 @@ Les objets suivants doivent exister (créés par Pulumi dans
 : l'utilisateur `omni@pve`, le pool `talos` et l'ACL de `/sdn/zones/localnetwork/vmbr1`. Cette procédure étend cette ACL
 sans la recréer.
 
-Lire aussi l'[ADR-014](../../decisions/014-network-topology.md) et la table SDN de l'[IPAM](../../network/ipam.md) pour
-comprendre la conception à double interface (`eth0` = Cilium L2 sur le VLAN 5, `eth1` = trafic des nœuds sur le VNet
-SDN).
+Lire aussi l'[ADR-014](../../decisions/014-network-topology.md) et la table SDN de
+l'[IPAM](../../reference/IPAM-Reference.md) pour comprendre la conception à double interface (`eth0` = Cilium L2 sur le
+VLAN 5, `eth1` = trafic des nœuds sur le VNet SDN).
 
 ## Entrées requises
 
@@ -432,7 +432,8 @@ VXLAN (`catalog/omni/clustertemplates/base.yaml`).
 
 - [ADR-014 Topologie réseau](../../decisions/014-network-topology.md) : la décision de conception à double interface et
   la justification du VNet unique.
-- [IPAM](../../network/ipam.md) : plan d'adressage de référence, dont la section « Proxmox SDN — talosnet VNet ».
+- [IPAM](../../reference/IPAM-Reference.md) : plan d'adressage de référence, dont la section « Proxmox SDN — talosnet
+  VNet ».
 - [Gérer l'état Pulumi et importer des ressources](INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md) :
   importer des objets Proxmox existants dans l'état Pulumi.
 - [Désactiver le suivi de connexion des pools LB](INF-20260730-00-Desactiver-le-Suivi-de-Connexion-des-Pools-LB.md) :

@@ -13,4 +13,4 @@ spec:
         values:
           - internal
   blocks:
-    - cidr: 10.0.0.64/29 # 8 allowed IPs (10.0.0.64 - 10.0.0.71) — docs/network/ipam.md "Cilium LoadBalancer Pools"
+    - cidr: 10.0.0.64/29 # 8 allowed IPs (10.0.0.64 - 10.0.0.71) — docs/reference/IPAM-Reference.md "Cilium LoadBalancer Pools"

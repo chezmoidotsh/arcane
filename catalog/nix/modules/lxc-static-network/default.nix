@@ -8,7 +8,7 @@
 # them, so a `pct` `net0` line with a static `ip=` is otherwise inert inside
 # the guest. Without this module the interface only comes up via whatever DHCP
 # client NixOS ships with by default, and VLAN 5 has DHCP disabled (see
-# docs/network/ipam.md) — the guest then falls back to a self-assigned
+# docs/reference/IPAM-Reference.md) — the guest then falls back to a self-assigned
 # link-local address (169.254.0.0/16) with no real connectivity.
 #
 # A container that has never restarted since VLAN 5's DHCP was disabled can
