@@ -32,19 +32,21 @@ You must also have:
 
 ## Step 1 — Provision the cluster
 
-> [!NOTE] Cilium comes up in two phases: Talos installs its base (DaemonSet, operator) automatically here via the
-> cluster template's `extraManifests`. Its remaining config — L2 announcements, the LoadBalancer IP pool, the
-> `GatewayClass`, `NetworkPolicy`s — is applied by hand in Step 2, not here.
+> [!NOTE]\
+> Cilium comes up in two phases: Talos installs its base (DaemonSet, operator) automatically here via the cluster
+> template's `extraManifests`. Its remaining config — L2 announcements, the LoadBalancer IP pool, the `GatewayClass`,
+> `NetworkPolicy`s — is applied by hand in Step 2, not here.
 
 Apply `src/infrastructure/omni/rhodes.clustertemplate.yaml` via `omnictl`, following
-[OMNI-20260721-00](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md) **up through its
-CNI/CSI/CCM validation checklist only** — stop short of that procedure's GitOps registration step. ArgoCD bootstraps
+[OMNI-20260721-00](../../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md) **up through
+its CNI/CSI/CCM validation checklist only** — stop short of that procedure's GitOps registration step. ArgoCD bootstraps
 last.
 
 ## Step 2 — Deploy `dist/infrastructure/kubernetes/`
 
-> [!NOTE] None of this depends on Vault, ESO, or ArgoCD — Pulumi writes every secret these apps need directly (Step 3),
-> not through ESO. It is not, however, all immediately healthy: `cert-manager`, `cloudnative-pg`, and `external-secrets`
+> [!NOTE]\
+> None of this depends on Vault, ESO, or ArgoCD — Pulumi writes every secret these apps need directly (Step 3), not
+> through ESO. It is not, however, all immediately healthy: `cert-manager`, `cloudnative-pg`, and `external-secrets`
 > each ship at least one resource gated behind a validating webhook that only comes up once the Proxmox CCM/CSI
 > credentials arrive in Step 3 — see the callout below the apply commands.
 
@@ -60,8 +62,9 @@ done
 kubectl --context <CLUSTER_CONTEXT> label namespace proxmox-system pod-security.kubernetes.io/enforce=privileged pod-security.kubernetes.io/enforce-version=v1.33
 ```
 
-> [!WARNING] Use `kubectl label`, not `kubectl annotate` — Pod Security Admission reads namespace **labels**, not
-> annotations. `annotate` silently no-ops (the namespace keeps the cluster's default `baseline` policy) and the
+> [!WARNING]\
+> Use `kubectl label`, not `kubectl annotate` — Pod Security Admission reads namespace **labels**, not annotations.
+> `annotate` silently no-ops (the namespace keeps the cluster's default `baseline` policy) and the
 > `proxmox-csi-plugin-node` DaemonSet fails every pod with `violates PodSecurity "baseline:latest"`, 0/3 nodes ever
 > getting a CSI node pod. First hit during a live drill (2026-07-28) — `describe daemonset` in the CSI/CCM validation
 > below is what surfaces it if it recurs.
@@ -80,37 +83,42 @@ kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/inf
 kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cilium/
 ```
 
-> [!NOTE] The `external-dns/sops` line above is separate because `dist:render` never bakes ksops-sourced secrets into
-> `dist/` (see its `_has_ksops` check) — every `sops/` directory in this chain needs this same explicit
+> [!NOTE]\
+> The `external-dns/sops` line above is separate because `dist:render` never bakes ksops-sourced secrets into `dist/`
+> (see its `_has_ksops` check) — every `sops/` directory in this chain needs this same explicit
 > `kustomize build ... | kubectl apply` treatment, same as `openbao.md` Step 1 and `pocket-id.md` Step 1 already do for
 > their own `sops/` directories. This one delivers the BIND RFC2136/TSIG credential the `external-dns-bind` release
 > (applied by the `dist/` line just above) needs.
 
-> [!NOTE] `cilium/` is applied twice: first (above) to bring up the CNI, then again here at the end. Its `Gateway`s and
-> wildcard `Certificate` live in this same directory (Cilium's Gateway API has no separate per-Gateway pod — the
-> dataplane is the Envoy embedded in `cilium-agent`, stuck in this Helm release's `kube-system` namespace with no chart
-> value to move it — see `src/infrastructure/kubernetes/README.md`), but the `Certificate` needs cert-manager's CRD,
-> which doesn't exist yet on the first pass. The second apply is a no-op on everything already reconciled (same field
-> manager, unchanged content) and only picks up what failed the first time. `--server-side --force-conflicts` on this
-> second pass does **not** repeat the rolling-update blip from the first pass — that was a one-time field manager
-> ownership transfer from Talos's bootstrap `extraManifests`, already resolved by then.
+> [!NOTE]\
+> `cilium/` is applied twice: first (above) to bring up the CNI, then again here at the end. Its `Gateway`s and wildcard
+> `Certificate` live in this same directory (Cilium's Gateway API has no separate per-Gateway pod — the dataplane is the
+> Envoy embedded in `cilium-agent`, stuck in this Helm release's `kube-system` namespace with no chart value to move it
+> — see `src/infrastructure/kubernetes/README.md`), but the `Certificate` needs cert-manager's CRD, which doesn't exist
+> yet on the first pass. The second apply is a no-op on everything already reconciled (same field manager, unchanged
+> content) and only picks up what failed the first time. `--server-side --force-conflicts` on this second pass does
+> **not** repeat the rolling-update blip from the first pass — that was a one-time field manager ownership transfer from
+> Talos's bootstrap `extraManifests`, already resolved by then.
 
-> [!WARNING] Run these one at a time and confirm each succeeds before the next — the list above doesn't chain with `&&`,
-> so pasting the whole block at once won't stop on a failure. `cert-manager` must come before `cloudnative-pg` (its
+> [!WARNING]\
+> Run these one at a time and confirm each succeeds before the next — the list above doesn't chain with `&&`, so pasting
+> the whole block at once won't stop on a failure. `cert-manager` must come before `cloudnative-pg` (its
 > `Issuer`/`Certificate` need cert-manager's CRDs already registered) and before the second `cilium` apply (same reason,
 > for its wildcard `Certificate`). `--server-side` is required, not optional: client-side apply rejects the Gateway API
 > `httproutes` CRD outright (`metadata.annotations: Too long: may not be more than 262144 bytes` — its schema exceeds
 > the `last-applied-configuration` annotation size limit).
 
-> [!WARNING] The `cilium` apply fails with several `Apply failed with N conflicts` errors on first try — Talos's own
-> bootstrap `extraManifests` (Step 1's CNI, applied under the Omni-managed field manager `cilium`) already owns the
+> [!WARNING]\
+> The `cilium` apply fails with several `Apply failed with N conflicts` errors on first try — Talos's own bootstrap
+> `extraManifests` (Step 1's CNI, applied under the Omni-managed field manager `cilium`) already owns the
 > DaemonSet/Deployment/ConfigMap objects, and this step's `kubectl` field manager conflicts with it on SSA. Re-run with
 > `--force-conflicts` added; this adopts ownership from the bootstrap manifest onto the `dist/`-rendered one (same
 > pattern as ArgoCD adopting hand-applied resources in Step 9) and triggers a short rolling update of the Cilium
 > DaemonSet — expected, see the ~2-minute connectivity blip called out in
-> [OMNI-20260721-00 § Known issues](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md#2-minute-connectivity-blip-during-cilium-kubeproxyreplacement-takeover).
+> [OMNI-20260721-00 § Known issues](../../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md#coupure-de-connectivité-de-2-minutes-pendant-la-reprise-de-kube-proxy-par-cilium).
 
-> [!NOTE] Expect two harmless, self-resolving classes of error on first pass — neither means Step 2 failed:
+> [!NOTE]\
+> Expect two harmless, self-resolving classes of error on first pass — neither means Step 2 failed:
 >
 > - **`no matches for kind "X" ... ensure CRDs are installed first`** on a resource whose CRD was created earlier in the
 >   _same_ `apply -f <dir>` command (seen on `cilium`'s `GatewayClass`). `kubectl` resolves the API surface once at the
@@ -129,24 +137,26 @@ kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f pro
 >   `pulumi up` delivers, not this step**. This is expected at this point in the chain, not something to fix here —
 >   re-apply just these six resources once Step 3 has run (or fold the retry into Step 4's validation).
 
-> [!NOTE] The `external-dns` app runs two `external-dns` releases (`external-dns-unifi`, `external-dns-bind`) in the
-> same namespace. `security/network-policy.allow-external-dns-to-kubernetes-api.yaml`'s `endpointSelector` must match
-> both — on `app.kubernetes.io/name: external-dns` alone, not a per-instance `app.kubernetes.io/instance` label — and
-> its egress rule must target the `kube-apiserver` reserved Cilium entity, not `toEndpoints` matched on the apiserver's
-> pod labels or `toEntities: host`. `kube-apiserver` runs `hostNetwork: true` on a control-plane node, which is a
-> different node than the workers external-dns runs on, so Cilium resolves that traffic as the `remote-node` identity,
-> not `host` — a plain `toEntities: host` rule never matches it. Same pattern as
+> [!NOTE]\
+> The `external-dns` app runs two `external-dns` releases (`external-dns-unifi`, `external-dns-bind`) in the same
+> namespace. `security/network-policy.allow-external-dns-to-kubernetes-api.yaml`'s `endpointSelector` must match both —
+> on `app.kubernetes.io/name: external-dns` alone, not a per-instance `app.kubernetes.io/instance` label — and its
+> egress rule must target the `kube-apiserver` reserved Cilium entity, not `toEndpoints` matched on the apiserver's pod
+> labels or `toEntities: host`. `kube-apiserver` runs `hostNetwork: true` on a control-plane node, which is a different
+> node than the workers external-dns runs on, so Cilium resolves that traffic as the `remote-node` identity, not `host`
+> — a plain `toEntities: host` rule never matches it. Same pattern as
 > `catalog/kubernetes/cloudnative-pg/kustomize/cnpg.cluster-policy.allow-to-kubernetes-api.yaml`.
 
 ## Step 3 — Turn Pulumi into recovery mode
 
-> [!IMPORTANT] `recovery` must be `true` here, not its normal (unset/`false`) value. `stack/vault.ts` gates every
-> Vault-side resource behind `if (!config.getBoolean("recovery"))` — without this, this `pulumi up` would also try to
-> reconcile those resources against an OpenBao that doesn't exist yet on the new cluster, and fail before OpenBao is
-> even restored.
+> [!IMPORTANT]\
+> `recovery` must be `true` here, not its normal (unset/`false`) value. `stack/vault.ts` gates every Vault-side resource
+> behind `if (!config.getBoolean("recovery"))` — without this, this `pulumi up` would also try to reconcile those
+> resources against an OpenBao that doesn't exist yet on the new cluster, and fail before OpenBao is even restored.
 
-> [!IMPORTANT] Run `chezmoi.sh`'s own `pulumi up` **before** rhodes.akn's, at least once. `rhodes.akn/stack/proxmox.ts`
-> authenticates its Proxmox provider using the `rhodes-akn-bootstrap@pve` credential, which `chezmoi.sh`'s stack
+> [!IMPORTANT]\
+> Run `chezmoi.sh`'s own `pulumi up` **before** rhodes.akn's, at least once. `rhodes.akn/stack/proxmox.ts` authenticates
+> its Proxmox provider using the `rhodes-akn-bootstrap@pve` credential, which `chezmoi.sh`'s stack
 > (`stack/proxmox/access/rhodes-akn-bootstrap.ts`) delivers as a direct Kubernetes `Secret`
 > (`kube-system/rhodes-akn-bootstrap-pve`) into this cluster — not through a Pulumi `StackReference`, deliberately (see
 > that file's own comments: cross-project `StackReference` secret reads need the _exporting_ stack's passphrase, which
@@ -170,7 +180,8 @@ This creates `cnpg-backup-credentials` in both the `vault` and `pocket-id` names
 the CNPG restores in Steps 5 and 6 need so that the CNPG operator deployed in Step 2 has something to restore from. Do
 this once, here; the per-app procedures below no longer repeat it.
 
-> [!NOTE] This same `pulumi up` is also what mints the `kubernetes-cloud-provider@pve` Proxmox identity and delivers the
+> [!NOTE]\
+> This same `pulumi up` is also what mints the `kubernetes-cloud-provider@pve` Proxmox identity and delivers the
 > `proxmox-cloud-provider` Secret the CCM/CSI pods (deployed in Step 2) need to actually start — it's the direct
 > resolution for the taint-blocked pods called out in Step 2's second callout. Give the CCM pod a minute to pick up the
 > Secret and untaint all 3 nodes before moving on to Step 4.
@@ -184,7 +195,7 @@ cilium status --wait
 ```
 
 Then walk OMNI-20260721-00's own
-[Validation checklist](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md#validation-checklist)
+[Validation checklist](../../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md#liste-de-validation)
 (criteria V-001 through V-010). There is no dedicated, ready-to-run script for this yet —
 `docs/experiments/20260617-proxmox-csi-ccm/scripts/validate.sh` covers the same criteria but is hardcoded to that
 experiment's own `StorageClass`/`StatefulSet` names, not `rhodes.akn`'s; treat it as a reference for what to check by
@@ -231,10 +242,11 @@ the real hostnames over a real, already-valid TLS certificate instead of relying
 The IP comes from rhodes's `external` Cilium LoadBalancer pool, `10.0.0.64/29` (see
 [docs/network/ipam.md](../../../../docs/network/ipam.md)).
 
-> [!IMPORTANT] This matters specifically for Pocket-Id: passkey/WebAuthn login requires a secure context (HTTPS +
-> correct hostname) and does not work over a bare port-forward (see `pocket-id.md`'s own `[!IMPORTANT]` callout). The
-> hosts-file override lets passkey login (Step 6) and the Pocket-Id → OpenBao SSO round-trip (Step 8) be validated end
-> to end without waiting on DNS resolver caching/propagation.
+> [!IMPORTANT]\
+> This matters specifically for Pocket-Id: passkey/WebAuthn login requires a secure context (HTTPS + correct hostname)
+> and does not work over a bare port-forward (see `pocket-id.md`'s own `[!IMPORTANT]` callout). The hosts-file override
+> lets passkey login (Step 6) and the Pocket-Id → OpenBao SSO round-trip (Step 8) be validated end to end without
+> waiting on DNS resolver caching/propagation.
 
 Remove these entries once normal DNS resolution to `rhodes.akn` is confirmed correct — do not leave them in place
 indefinitely.
@@ -274,8 +286,9 @@ kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/arg
 kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/src/bootstrap.applications.yaml
 ```
 
-> [!NOTE] ArgoCD self-hosts on `rhodes.akn` (the hub pattern — see
-> [OMNI-20260721-00 § Hub & spoke GitOps topology](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md#hub--spoke-gitops-topology)),
+> [!NOTE]\
+> ArgoCD self-hosts on `rhodes.akn` (the hub pattern — see
+> [OMNI-20260721-00 § Hub & spoke GitOps topology](../../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md#topologie-gitops-hub-et-spoke)),
 > and bootstraps last, deliberately: it **adopts** every resource already applied by hand in Steps 2-8 instead of being
 > a dependency of them, and its own OIDC `ExternalSecret` needs Step 7 already done.
 
@@ -305,7 +318,7 @@ applied by hand — and reconcile it through GitOps from here on. No further man
 
 ## References
 
-- [OMNI-20260721-00: Talos cluster bring-up on Proxmox](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md)
+- [OMNI-20260721-00: Talos cluster bring-up on Proxmox](../../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)
   — cluster provisioning, CNI/CSI/CCM bring-up, and validation checklist (Steps 1, 4)
 - [OpenBao Disaster Recovery](openbao.md) — the OpenBao restore procedure (Step 5)
 - [Pocket-Id Disaster Recovery](pocket-id.md) — the Pocket-Id restore procedure (Step 6)

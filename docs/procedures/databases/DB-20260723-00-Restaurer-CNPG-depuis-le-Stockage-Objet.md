@@ -9,7 +9,8 @@ d'[OpenBao](../../../projects/rhodes.akn/docs/disaster-recovery/openbao.md) et d
 la base au lieu de dupliquer la mécanique. Durée : de quelques minutes à plusieurs dizaines de minutes, selon la taille
 du base backup et le volume de WAL à rejouer.
 
-> [!WARNING] Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur un cluster.
+> [!WARNING]\
+> Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur un cluster.
 
 ## Cadre technique et conventions
 
@@ -37,7 +38,7 @@ Les accès suivants sont également nécessaires :
 - Accès `kubectl` au cluster cible, avec le droit de créer et modifier des ressources dans le namespace cible.
 - Opérateur CNPG et plugin `barman-cloud.cloudnative-pg.io` déjà installés sur le cluster cible (hors périmètre ici :
   cela fait partie du démarrage du cluster, par exemple
-  [OMNI-20260721-00](../omni/OMNI-20260721-00.omni-cluster-creation.md)).
+  [OMNI-20260721-00](../omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)).
 - Accès en lecture au bucket S3 de l'`ObjectStore` source (les identifiants viennent du secret `cnpg-backup-credentials`
   du namespace de l'application ; appliquer d'abord le dossier `sops/` de l'application s'il n'y est pas encore).
 
@@ -167,9 +168,10 @@ spec:
           serverName: "<SERVER_NAME de l'étape 2>" # le commentaire final est le timestamp décodé de SERVER_NAME
 ```
 
-> [!IMPORTANT] `isWALArchiver: false` sur l'entrée `externalClusters[]` est délibéré : l'entrée `spec.plugins[]` de
-> premier niveau du cluster (avec le **nouveau** `serverName` généré) archive les WAL pour la suite. Ne pas y réutiliser
-> le `serverName` récupéré, qui identifie un autre flux d'archive, déjà clos.
+> [!IMPORTANT]\
+> `isWALArchiver: false` sur l'entrée `externalClusters[]` est délibéré : l'entrée `spec.plugins[]` de premier niveau du
+> cluster (avec le **nouveau** `serverName` généré) archive les WAL pour la suite. Ne pas y réutiliser le `serverName`
+> récupéré, qui identifie un autre flux d'archive, déjà clos.
 
 Pour les appelants OpenBao et Pocket-Id de `rhodes.akn`,
 `projects/rhodes.akn/docs/disaster-recovery/.mise/tasks/dr/cnpg/patch-recovery-source` (tâche
@@ -178,9 +180,10 @@ automatise toute cette étape, y compris le décodage et la génération des ULI
 n'exécute aucun `kubectl apply`. Cette tâche est locale à ce dossier, contrairement à `cnpg:backup:latest` qui vaut pour
 tout le dépôt : il n'existe pas encore d'équivalent générique en dehors de `rhodes.akn`.
 
-> [!WARNING] Le renommage de `metadata.name` ne se limite pas à ce fichier. Le `spec.cluster.name` du manifeste
-> `ScheduledBackup` correspondant (et tout label `app.kubernetes.io/instance` ailleurs qui repose sur l'ancien nom) doit
-> être aligné à la main : ni cette étape ni la tâche ci-dessus ne le font.
+> [!WARNING]\
+> Le renommage de `metadata.name` ne se limite pas à ce fichier. Le `spec.cluster.name` du manifeste `ScheduledBackup`
+> correspondant (et tout label `app.kubernetes.io/instance` ailleurs qui repose sur l'ancien nom) doit être aligné à la
+> main : ni cette étape ni la tâche ci-dessus ne le font.
 
 ## Étape 4 — Appliquer l'ObjectStore et le Cluster
 
@@ -193,8 +196,9 @@ kubectl --context $CLUSTER_CONTEXT get cluster -n $NAMESPACE -w
 # → la phase progresse : "Setting up primary", "Recovering instance", puis "Cluster in healthy state"
 ```
 
-> [!NOTE] Une restauration dure de moins d'une minute à plusieurs dizaines de minutes, selon la taille du base backup et
-> le volume de WAL à rejouer depuis. Surveiller avant de conclure à un blocage.
+> [!NOTE]\
+> Une restauration dure de moins d'une minute à plusieurs dizaines de minutes, selon la taille du base backup et le
+> volume de WAL à rejouer depuis. Surveiller avant de conclure à un blocage.
 
 ## Étape 5 — Confirmer les données restaurées
 

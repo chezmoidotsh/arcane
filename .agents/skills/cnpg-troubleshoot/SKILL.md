@@ -248,8 +248,8 @@ Symptom: `kubectl drain` / Omni Talos upgrade fails with `Cannot evict pod ... d
 shows `<cluster>-primary` with `ALLOWED DISRUPTIONS: 0`). Cause: a single-instance cluster with the CNPG default
 `enablePDB: true`. Convention: **`instances: 1` => `enablePDB: false`** (the `mutualized-cnpg-databases` chart applies
 it by default; raw `Cluster` manifests must set it explicitly), **`instances > 1` => keep the PDB**. Fix it in `src/`
-and re-render, never by patching the live cluster (ArgoCD selfHeal reverts it). See
-[INF-20260525-02](docs/procedures/infrastructure/INF-20260525-02.drain-nodes-with-cnpg.md).
+and re-render, never by patching the live cluster (ArgoCD selfHeal reverts it). The OPA rule `REL001` enforces the
+single-instance part in CI.
 
 This table is a cache for common cases. Always verify against `docs/incidents/` — new incidents and procedures supersede
 it.

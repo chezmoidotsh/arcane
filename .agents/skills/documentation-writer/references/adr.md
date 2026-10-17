@@ -200,19 +200,20 @@ architecture. ADR-001 and ADR-002 have good examples. The template supports Merm
 
 ### Callout syntax
 
-Use GitHub Markdown callouts for important asides:
+Use GitHub Markdown callouts for important asides. The marker sits alone on its line and ends with a backslash, or
+Prettier joins it to the text and GitHub stops rendering the alert:
 
 ```markdown
-> [!NOTE]
+> [!NOTE]\
 > Informational note a reader should be aware of.
 
-> [!CAUTION]
+> [!CAUTION]\
 > Something that must be done carefully or could cause problems.
 
-> [!WARNING]
+> [!WARNING]\
 > Deprecated content or a risk that was discovered during implementation.
 
-> [!IMPORTANT]
+> [!IMPORTANT]\
 > A critical constraint or migration note.
 ```
 

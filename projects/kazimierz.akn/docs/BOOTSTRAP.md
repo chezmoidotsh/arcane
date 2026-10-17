@@ -6,7 +6,8 @@ configured node: a stock Ubuntu image on which NixOS is installed with `nixos-an
 Compose to NixOS on 2026-10-10 (see [MIGRATION_NIXOS.md](./MIGRATION_NIXOS.md) for that record, and
 [ADR-016](../../../docs/decisions/016-kazimierz-nixos-over-ansible.md) for the decision).
 
-> [!WARNING] `mise run nixos:oci:install` **repartitions the boot volume**, which is where Pangolin's state lives
+> [!WARNING]\
+> `mise run nixos:oci:install` **repartitions the boot volume**, which is where Pangolin's state lives
 > (`/var/lib/pangolin/config`). On a host that is already running, see
 > [Reinstalling](#reinstalling-and-restoring-the-state) first.
 
@@ -66,8 +67,8 @@ sops --encrypt --in-place secrets/kazimierz.sops.yaml
 - `pangolin_smtp_user` / `pangolin_smtp_pass`: the Mailjet API and secret keys
 
 Set your public key in `configuration.nix` if it is not already. `secrets/kazimierz.sops.yaml` is committed (encrypted);
-`extra/` is git-ignored and must never be committed. If the build complains about an untracked path, `git add -N
-flake.lock` (a flake only sees files known to git).
+`extra/` is git-ignored and must never be committed. If the build complains about an untracked path,
+`git add -N flake.lock` (a flake only sees files known to git).
 
 The **binding IP**, which Docker publishes ports 80/443 on (`pangolin.bindIp`), is the instance's private (VCN) address,
 the only one its network interface has: the public IP is NAT-ed by OCI and never shows up on the host. It lives in
@@ -90,12 +91,13 @@ The task refreshes the binding IP, then runs `nixos-anywhere` (pinned by commit)
 the legacy `kexec_load` syscall). `nonix` forwards your SSH agent to the container, which must hold the key matching
 `ssh_authorized_keys`:
 
-> [!IMPORTANT] **macOS (OrbStack, Docker Desktop): the containers run in a Linux VM**, so `nonix` cannot mount your
-> agent's socket directly (the file shows up, but connecting to it fails with `Connection refused`). It uses the relay
-> the runtime offers instead, `/run/host-services/ssh-auth.sock`, which forwards the agent of the **macOS login
-> session** (the `SSH_AUTH_SOCK` known to `launchd`), not the one of your current shell. With the default macOS agent
-> nothing is needed. With a custom agent (Bitwarden, Secretive, 1Password, ...), point `launchd` at its socket and
-> restart the runtime:
+> [!IMPORTANT]\
+> **macOS (OrbStack, Docker Desktop): the containers run in a Linux VM**, so `nonix` cannot mount your agent's socket
+> directly (the file shows up, but connecting to it fails with `Connection refused`). It uses the relay the runtime
+> offers instead, `/run/host-services/ssh-auth.sock`, which forwards the agent of the **macOS login session** (the
+> `SSH_AUTH_SOCK` known to `launchd`), not the one of your current shell. With the default macOS agent nothing is
+> needed. With a custom agent (Bitwarden, Secretive, 1Password, ...), point `launchd` at its socket and restart the
+> runtime:
 >
 > ```bash
 > launchctl getenv SSH_AUTH_SOCK                                  # what the relay will forward
@@ -160,18 +162,18 @@ restored, so:
    tar -C extra/var/lib/pangolin/config -xzf <backup>.tgz
    ```
 
-3. Reuse the current `pangolin_server_secret` in the SOPS file (Pangolin's data is bound to it) and install as in step 2.
-   The new host key must replace the old one as SOPS recipient (`sops updatekeys`).
+3. Reuse the current `pangolin_server_secret` in the SOPS file (Pangolin's data is bound to it) and install as in
+   step 2. The new host key must replace the old one as SOPS recipient (`sops updatekeys`).
 
 ## Troubleshooting
 
-| Symptom | Cause and fix |
-| --- | --- |
-| `Please login as the user ubuntu` when connecting as `root` | Ubuntu OCI images prefix `/root/.ssh/authorized_keys` with a `command="echo 'Please login as the user ubuntu'..."` restriction. Copy the `ubuntu` user's `authorized_keys` to root before `nixos-anywhere`, or install as `ubuntu@<ip>`. |
-| `Too many authentication failures` | The host's sshd has `MaxAuthTries 3` and an agent offering several keys exhausts it. Use `IdentitiesOnly yes` (with `-i <key>`) or a dedicated agent holding only the right key. |
-| `Connection refused` on the agent socket from `nonix` (macOS) | The container only sees the `launchd`-session agent: `launchctl setenv SSH_AUTH_SOCK ...` then restart OrbStack (see the macOS note in step 2). |
+| Symptom                                                       | Cause and fix                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Please login as the user ubuntu` when connecting as `root`   | Ubuntu OCI images prefix `/root/.ssh/authorized_keys` with a `command="echo 'Please login as the user ubuntu'..."` restriction. Copy the `ubuntu` user's `authorized_keys` to root before `nixos-anywhere`, or install as `ubuntu@<ip>`.                                                                                                                                      |
+| `Too many authentication failures`                            | The host's sshd has `MaxAuthTries 3` and an agent offering several keys exhausts it. Use `IdentitiesOnly yes` (with `-i <key>`) or a dedicated agent holding only the right key.                                                                                                                                                                                              |
+| `Connection refused` on the agent socket from `nonix` (macOS) | The container only sees the `launchd`-session agent: `launchctl setenv SSH_AUTH_SOCK ...` then restart OrbStack (see the macOS note in step 2).                                                                                                                                                                                                                               |
 | Tailscale does not register, or the node is `kazimierz-akn-1` | The `tailscaleAuthKey` (Pulumi `TailnetKey`, single use, 7 days) is consumed by a first boot, so a redone install or an old key needs a new one: `pulumi up --replace <urn of kazimierz-tailscale-key>`, then update `tailscale_authkey` in the SOPS file. Delete the stale node from the Tailscale admin console **before** the first boot, or it becomes `kazimierz-akn-1`. |
-| `pulumi stack output` fails or targets the wrong stack | The live stack is `kazimierz_akn.live`: pass `--stack kazimierz_akn.live` (the `nixos:*` tasks already do). |
+| `pulumi stack output` fails or targets the wrong stack        | The live stack is `kazimierz_akn.live`: pass `--stack kazimierz_akn.live` (the `nixos:*` tasks already do).                                                                                                                                                                                                                                                                   |
 
 ## Post-Bootstrap Configuration
 
@@ -189,5 +191,5 @@ The task refreshes the binding IP, then runs
 `nixos-rebuild switch --flake .#kazimierz-akn-aarch64 --target-host root@kazimierz-akn` (taken from the nixpkgs revision
 locked in `flake.lock`). `nixos-rebuild --rollback` on the host goes back to the previous generation. There is no
 automatic update, on purpose: the instance is not supervised yet and a rollback is hard to do cleanly (see
-[ADR-008](../../../docs/decisions/008-kazimierz-ansible-over-kubernetes.md)).
-Refresh the inputs with `nonix flake update`, then deploy.
+[ADR-008](../../../docs/decisions/008-kazimierz-ansible-over-kubernetes.md)). Refresh the inputs with
+`nonix flake update`, then deploy.

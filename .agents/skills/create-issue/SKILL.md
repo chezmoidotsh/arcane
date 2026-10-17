@@ -135,7 +135,8 @@ Five sections, in order. Drop any that don't apply rather than padding. Keep eac
 unambiguous.
 
 ```markdown
-> [!NOTE] **TL;DR**: One sentence — the outcome you want and the value it delivers.
+> [!NOTE]\
+> **TL;DR**: One sentence — the outcome you want and the value it delivers.
 
 ## Context
 
@@ -268,7 +269,8 @@ deferred from a PR, link both ways.
 **Body skeleton (excerpt):**
 
 ```markdown
-> [!NOTE] **TL;DR**: Deploy metrics + logs + alerting across all clusters, starting on lungmen.akn, so post-mortems stop
+> [!NOTE]\
+> **TL;DR**: Deploy metrics + logs + alerting across all clusters, starting on lungmen.akn, so post-mortems stop
 > concluding with "we had no data".
 
 ## Context
@@ -311,8 +313,9 @@ Recommend VictoriaMetrics for the first deploy; revisit ClickHouse once operatio
 **Body (excerpt):**
 
 ```markdown
-> [!NOTE] **TL;DR**: CNPG `apps-secured` WAL volume hit 100%; primary refused writes; immich and paperless have been
-> down for 4 days.
+> [!NOTE]\
+> **TL;DR**: CNPG `apps-secured` WAL volume hit 100%; primary refused writes; immich and paperless have been down for 4
+> days.
 
 ## Context
 

@@ -69,7 +69,8 @@ infrastructure as code, replacing Crossplane's per-provider CRD/controller model
   `Proxmox → hosts K8s → K8s manages Proxmox` trust cycle. Tracked as a deliberate case by the manual-infrastructure
   inventory (#1094); reasoning carried forward from the POC (§9).
 
-  > [!NOTE] **Narrow carve-out (#1118, see Decision Evolution).** Proxmox VE's ACLs (user/role/token creation), SDN
+  > [!NOTE]\
+  > **Narrow carve-out (#1118, see Decision Evolution).** Proxmox VE's ACLs (user/role/token creation), SDN
   > (zones/vnets), backup-storage registration, resource pools, and ACME are managed via Pulumi — these are
   > administrative config objects, not compute lifecycle, so they don't carry the trust-cycle risk this non-goal exists
   > to block. The carve-out only holds as long as `stack/proxmox/` (like every `chezmoi-sh-infra` stack today) executes

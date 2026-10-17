@@ -18,7 +18,8 @@ Why the scope label is `gh`, not `project:lungmen.akn`:
 Body skeleton — what to keep, what to drop:
 
 ```markdown
-> [!NOTE] **TL;DR**: One sentence with outcome and value.
+> [!NOTE]\
+> **TL;DR**: One sentence with outcome and value.
 
 ## Context
 
@@ -64,7 +65,8 @@ The title carries three things a triager needs at a glance:
 Body essentials:
 
 ```markdown
-> [!NOTE] **TL;DR**: Single-sentence symptom + impact + duration.
+> [!NOTE]\
+> **TL;DR**: Single-sentence symptom + impact + duration.
 
 ## Context
 

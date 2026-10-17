@@ -6,8 +6,9 @@ découle de l'incident [CNPG WAL PVC saturation](../../incidents/2026-05-30-cnpg
 saturation vient d'un archivage WAL bloqué par `Expected empty archive`, elle se prolonge par
 [DB-20260530-01](DB-20260530-01-Corriger-l-Erreur-Expected-Empty-Archive-de-barman-cloud.md), qui traite la cause.
 
-> [!WARNING] Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur un cluster. Le
-> dépôt ne dit pas si le redimensionnement d'un PVC avec Proxmox CSI se fait en ligne (voir l'étape 2).
+> [!WARNING]\
+> Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur un cluster. Le dépôt ne
+> dit pas si le redimensionnement d'un PVC avec Proxmox CSI se fait en ligne (voir l'étape 2).
 
 ## Cadre technique et conventions
 
@@ -59,12 +60,14 @@ Constats attendus quand la procédure s'applique :
 - phase du cluster : `Not enough disk space` ;
 - au moins un Pod en `CrashLoopBackOff`.
 
-> [!NOTE] Un nombre élevé de redémarrages ralentit la reprise. Au-delà de 500 redémarrages, le délai du CrashLoopBackOff
-> est d'environ 5 minutes : après l'agrandissement du PVC de l'étape 2, le Pod ne redémarre pas immédiatement et il faut
+> [!NOTE]\
+> Un nombre élevé de redémarrages ralentit la reprise. Au-delà de 500 redémarrages, le délai du CrashLoopBackOff est
+> d'environ 5 minutes : après l'agrandissement du PVC de l'étape 2, le Pod ne redémarre pas immédiatement et il faut
 > attendre le cycle suivant.
 
-> [!WARNING] Si la phase est autre (problème de driver de stockage, secret manquant, erreur réseau), la procédure ne
-> s'applique pas. S'arrêter et analyser le message réel du cluster avant de continuer.
+> [!WARNING]\
+> Si la phase est autre (problème de driver de stockage, secret manquant, erreur réseau), la procédure ne s'applique
+> pas. S'arrêter et analyser le message réel du cluster avant de continuer.
 
 ## Étape 2 — Contrôler les PVC WAL et les agrandir
 
@@ -91,13 +94,15 @@ Les trois `StorageClass` `proxmox-lvmthin-*` de `lungmen.akn` et les deux de `rh
 validé l'extension d'un volume (critère V-009 de `docs/experiments/20260617-proxmox-csi-ccm/README.md`,
 redimensionnement `kubectl patch` vers `2Gi`).
 
-> [!WARNING] Le dépôt ne dit pas si le redimensionnement se fait en ligne, sans redémarrage du Pod, ni quand le système
-> de fichiers est étendu : à confirmer sur le cluster. L'incident d'origine (2026-05-30) s'est déroulé sous Longhorn,
-> qui étendait les volumes en ligne ; ce comportement ne se déduit pas pour Proxmox CSI.
+> [!WARNING]\
+> Le dépôt ne dit pas si le redimensionnement se fait en ligne, sans redémarrage du Pod, ni quand le système de fichiers
+> est étendu : à confirmer sur le cluster. L'incident d'origine (2026-05-30) s'est déroulé sous Longhorn, qui étendait
+> les volumes en ligne ; ce comportement ne se déduit pas pour Proxmox CSI.
 
-> [!CAUTION] L'agrandissement d'un PVC est irréversible : un PVC ne se réduit pas. Choisir une taille qui laisse assez
-> de marge (au minimum de quoi vider les WAL existants, plus 2 à 3 jours de génération). Pour le cluster `apps-secured`
-> de l'incident, 10 Gi ont suffi. La taille déclarée dans Git (`walStorage.size` dans
+> [!CAUTION]\
+> L'agrandissement d'un PVC est irréversible : un PVC ne se réduit pas. Choisir une taille qui laisse assez de marge (au
+> minimum de quoi vider les WAL existants, plus 2 à 3 jours de génération). Pour le cluster `apps-secured` de
+> l'incident, 10 Gi ont suffi. La taille déclarée dans Git (`walStorage.size` dans
 > `projects/lungmen.akn/src/apps/databases/postgres-apps-secured.helmvalues.yaml`) n'est pas modifiée par ce `patch`.
 
 ```sh

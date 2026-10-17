@@ -7,9 +7,10 @@ le monde d'un serveur (étape 2), restaurer les données du Panel (étape 3) et 
 (étape 4). Compter quelques minutes pour les étapes 1 à 3 et plusieurs heures pour l'étape 4, qui inclut le réamorçage
 complet décrit dans [BOOTSTRAP](../../../projects/rimbilliton.akn/docs/BOOTSTRAP.md).
 
-> [!CAUTION] Cette procédure n'a encore jamais été testée : aucune restauration n'a été rejouée sur l'hôte. Elle a
-> seulement été vérifiée contre le dépôt le 2026-10-11 (`modules/backup.nix`, `modules/pelican.nix`,
-> `stack/backblaze.ts`, `docs/BOOTSTRAP.md` du projet).
+> [!CAUTION]\
+> Cette procédure n'a encore jamais été testée : aucune restauration n'a été rejouée sur l'hôte. Elle a seulement été
+> vérifiée contre le dépôt le 2026-10-11 (`modules/backup.nix`, `modules/pelican.nix`, `stack/backblaze.ts`,
+> `docs/BOOTSTRAP.md` du projet).
 
 ## Cadre technique et conventions
 
@@ -36,12 +37,13 @@ Le fonctionnement des sauvegardes dicte tous les chemins de restauration :
 - **Propriétaires** : le conteneur du Panel s'exécute en `www-data` (`82:82`) et possède tout
   `/var/lib/pelican-panel/data`. Wings s'exécute avec `WINGS_UID=988` / `WINGS_GID=988`.
 
-> [!CAUTION] Le mot de passe restic doit être conservé **hors de la VM**. Le modèle de secrets
-> (`secrets/rimbilliton.example.yaml`) demande d'en garder une copie dans OpenBao ; ce dépôt ne permet pas de vérifier
-> qu'elle existe. Sans ce mot de passe, le dépôt est illisible et toutes les sauvegardes sont perdues. Il se trouve
-> aussi dans `secrets/rimbilliton.sops.yaml` (dans Git, chiffré pour la clé age de l'administrateur et celle de l'hôte)
-> : la clé age de l'administrateur est donc le second moyen de le récupérer. Avant de compter sur cette procédure,
-> confirmer qu'il est récupérable sans la VM (voir les prérequis).
+> [!CAUTION]\
+> Le mot de passe restic doit être conservé **hors de la VM**. Le modèle de secrets (`secrets/rimbilliton.example.yaml`)
+> demande d'en garder une copie dans OpenBao ; ce dépôt ne permet pas de vérifier qu'elle existe. Sans ce mot de passe,
+> le dépôt est illisible et toutes les sauvegardes sont perdues. Il se trouve aussi dans `secrets/rimbilliton.sops.yaml`
+> (dans Git, chiffré pour la clé age de l'administrateur et celle de l'hôte) : la clé age de l'administrateur est donc
+> le second moyen de le récupérer. Avant de compter sur cette procédure, confirmer qu'il est récupérable sans la VM
+> (voir les prérequis).
 
 ## Prérequis
 
@@ -204,10 +206,11 @@ construction connue).
 Cette étape couvre la base SQLite, `.env` (avec `APP_KEY`) et les plugins, tous sous `/var/lib/pelican-panel/data`. Elle
 s'applique quand le Panel est cassé ou a perdu sa configuration. Wings reste configuré depuis SOPS et n'est pas affecté.
 
-> [!IMPORTANT] `APP_KEY` chiffre des valeurs sensibles stockées dans la base du Panel (typiquement des jetons d'API et
-> des secrets OAuth ou de plugins). Restaurer la base et le `.env` **depuis le même snapshot**. Une base restaurée avec
-> une `APP_KEY` différente (ou générée à neuf) rend ces valeurs illisibles : elles doivent être saisies à nouveau. Sans
-> la clé d'origine, il n'existe aucun moyen de les récupérer.
+> [!IMPORTANT]\
+> `APP_KEY` chiffre des valeurs sensibles stockées dans la base du Panel (typiquement des jetons d'API et des secrets
+> OAuth ou de plugins). Restaurer la base et le `.env` **depuis le même snapshot**. Une base restaurée avec une
+> `APP_KEY` différente (ou générée à neuf) rend ces valeurs illisibles : elles doivent être saisies à nouveau. Sans la
+> clé d'origine, il n'existe aucun moyen de les récupérer.
 
 Non vérifié : la liste exacte des champs chiffrés et l'emplacement de `.env` dans `/var/lib/pelican-panel/data` ne sont
 pas décrits dans ce dépôt (`modules/pelican.nix` monte ce répertoire en `/pelican-data` et définit `XDG_DATA_HOME`).
@@ -253,9 +256,10 @@ Localiser le fichier après la restauration avec `find /var/lib/pelican-panel/da
    # → ok
    ```
 
-   > [!WARNING] restic copie la base pendant que le Panel peut tourner (le job n'est pas arrêté autour de la
-   > sauvegarde). Un snapshot pris au milieu d'une écriture peut échouer à ce contrôle. Dans ce cas, refaire les étapes
-   > 2 à 4 avec le snapshot précédent (`restic snapshots`).
+   > [!WARNING]\
+   > restic copie la base pendant que le Panel peut tourner (le job n'est pas arrêté autour de la sauvegarde). Un
+   > snapshot pris au milieu d'une écriture peut échouer à ce contrôle. Dans ce cas, refaire les étapes 2 à 4 avec le
+   > snapshot précédent (`restic snapshots`).
 
 5. Démarrer le Panel, puis Wings :
 

@@ -61,7 +61,7 @@
 #   projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml (sibling example)
 #   ADR-014  docs/decisions/014-network-topology.md             (CIDR / DNS decisions)
 #   docs/network/ipam.md                                        (VLAN 5 / SDN VNet layout, LB IP pool)
-#   docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md (bring-up procedure)
+#   docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md (bring-up procedure)
 #   catalog/omni/machineclasses/                                (machine class defs)
 # =============================================================================
 ---

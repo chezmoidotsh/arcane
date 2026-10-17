@@ -28,10 +28,10 @@ Before starting, ensure the following tools are installed and configured: `kubec
 You must also have:
 
 - The new cluster up through CNI/CSI/CCM (see
-  [OMNI-20260721-00](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md)) and the CNPG
-  operator + `barman-cloud.cloudnative-pg.io` plugin and ESO deployed (see [docs/disaster-recovery/README.md](README.md)
-  Step 2). No ArgoCD and no OpenBao required — none of Pocket-Id's own secrets are sourced from the real Vault, only
-  from ESO's local `Generator` and this repo's Pulumi stack (see Step 1).
+  [OMNI-20260721-00](../../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)) and the
+  CNPG operator + `barman-cloud.cloudnative-pg.io` plugin and ESO deployed (see
+  [docs/disaster-recovery/README.md](README.md) Step 2). No ArgoCD and no OpenBao required — none of Pocket-Id's own
+  secrets are sourced from the real Vault, only from ESO's local `Generator` and this repo's Pulumi stack (see Step 1).
 - A valid `SOPS_AGE_KEY_FILE` (via `mise install` / this repo's environment) to decrypt the `pocket-id/sops/` secrets.
 - Access to the `rhodes.akn` Pulumi stack (`pulumi login`, correct stack selected) — needed for the S3 backup
   credentials in Step 1.

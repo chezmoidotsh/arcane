@@ -43,9 +43,9 @@ Before starting, ensure the following tools are installed and configured: `kubec
 You must also have:
 
 - The new cluster up through CNI/CSI/CCM (see
-  [OMNI-20260721-00](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md)) and the CNPG
-  operator + `barman-cloud.cloudnative-pg.io` plugin and ESO deployed (see [README.md](README.md) Step 2). No ArgoCD
-  required.
+  [OMNI-20260721-00](../../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)) and the
+  CNPG operator + `barman-cloud.cloudnative-pg.io` plugin and ESO deployed (see [README.md](README.md) Step 2). No
+  ArgoCD required.
 - `kubectl` access to the new cluster with permission to create namespaces and manage resources cluster-wide (RBAC
   bindings are part of what's restored) — configured per `OMNI-20260721-00`'s kubeconfig retrieval step.
 - `s3cmd`, `kustomize`, `ksops` on PATH (`s3cmd` needs no config file; credentials are passed as flags in each command
@@ -217,7 +217,7 @@ backup/recovery procedures, out of scope here.
   — the conventions this instance's mounts/policies follow
 - [`@chezmoi.sh/pulumi-cluster-vault`](../../../../catalog/pulumi/components/cluster-vault/README.md) — the component
   that provisions the KV mount, auth backend, and ESO role restored in Step 2
-- [OMNI-20260721-00: Talos cluster bring-up on Proxmox](../../../../docs/procedures/omni/OMNI-20260721-00.omni-cluster-creation.md)
+- [OMNI-20260721-00: Talos cluster bring-up on Proxmox](../../../../docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md)
   — the cluster-shell prerequisite for this document
 
 ## History

@@ -135,12 +135,13 @@ mise run nixos:oci:install ubuntu@"$IP"
 The task runs `nixos-anywhere` (pinned by commit) with
 `--flake .#rimbilliton-akn-aarch64 --extra-files extra --kexec-extra-flags --kexec-syscall`.
 
-> [!IMPORTANT] **macOS (OrbStack, Docker Desktop): the containers run in a Linux VM**, so `nonix` cannot mount your
-> agent's socket directly (the file shows up, but connecting to it fails with `Connection refused`). It uses the relay
-> the runtime offers instead, `/run/host-services/ssh-auth.sock`, which forwards the agent of the **macOS login
-> session** (the `SSH_AUTH_SOCK` known to `launchd`), not the one of your current shell. With the default macOS agent
-> nothing is needed. With a custom agent (Bitwarden, Secretive, 1Password, ...), point `launchd` at its socket and
-> restart the runtime:
+> [!IMPORTANT]\
+> **macOS (OrbStack, Docker Desktop): the containers run in a Linux VM**, so `nonix` cannot mount your agent's socket
+> directly (the file shows up, but connecting to it fails with `Connection refused`). It uses the relay the runtime
+> offers instead, `/run/host-services/ssh-auth.sock`, which forwards the agent of the **macOS login session** (the
+> `SSH_AUTH_SOCK` known to `launchd`), not the one of your current shell. With the default macOS agent nothing is
+> needed. With a custom agent (Bitwarden, Secretive, 1Password, ...), point `launchd` at its socket and restart the
+> runtime:
 >
 > ```bash
 > launchctl getenv SSH_AUTH_SOCK                                  # what the relay will forward

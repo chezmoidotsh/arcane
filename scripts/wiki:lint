@@ -20,7 +20,8 @@
 # is not listed in docs/.wiki-legacy: lower-case directory names, page names, page names unique across the whole tree
 # (case-insensitive), one H1 matching the page name (case, accents and hyphens ignored), "Pour aller plus loin" last,
 # relative links that resolve to an existing file, every page reachable from _Sidebar.md, no French filler words, no
-# emoji. Pages are written in French. Standard library only.
+# emoji, callout markers alone on their line (GitHub does not render "> [!NOTE] text" as an alert). Pages are written in
+# French. Standard library only.
 #
 # Output: one `path:line: message` per finding (rtunk parses it), exit 1 when there is any.
 # Usage: scripts/wiki:lint [--root docs] | --self-test
@@ -41,14 +42,16 @@ FILLER_RE = re.compile(
 EMOJI_RE = re.compile("[\U0001f000-\U0001faff☀-➿⬀-⯿️]")
 LINK_RE = re.compile(r"!?\[[^\]]*\]\(<?([^)\s>]+)>?(?:\s+(?:\"[^\"]*\"|'[^']*'))?\)")  # inline link or image
 REF_RE = re.compile(r"^\s{0,3}\[[^\]]+\]:\s*<?([^\s>]+)")  # reference definition: [id]: target
+CALLOUT_RE = re.compile(r"^\s*>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*[^\s\\]", re.I)  # marker followed by text
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 NEXT_HEADING = "pour aller plus loin"
 
 
 def norm(s: str) -> str:
-    """Lower-case, strip accents, collapse everything that is not a letter or a digit to one space."""
+    """Lower-case, strip accents (œ and æ become oe and ae), collapse everything else to one space."""
+    s = s.lower().replace("œ", "oe").replace("æ", "ae")
     ascii_ = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode()
-    return re.sub(r"[^a-z0-9]+", " ", ascii_.lower()).strip()
+    return re.sub(r"[^a-z0-9]+", " ", ascii_).strip()
 
 
 def legacy_patterns(root: Path) -> list[str]:
@@ -131,12 +134,14 @@ def lint(root: Path, label: str = "docs") -> list[str]:
                 err(page, n, f"filler word '{f.group(0)}'")
             if EMOJI_RE.search(line):
                 err(page, n, "emoji")
+            if CALLOUT_RE.match(line):
+                err(page, n, "callout marker must be alone on its line, ending with a backslash: '> [!NOTE]\\'")
             for target in LINK_RE.findall(plain) + REF_RE.findall(plain):
                 if re.match(r"^([a-z][a-z0-9+.-]*:|#)", target, re.I):
                     continue
                 path = unquote(target.split("#", 1)[0])
                 dest = (page.parent / path).resolve()
-                if not dest.is_file():
+                if not dest.exists():
                     hint = " (link to the .md file, not the page name)" if (page.parent / (path + ".md")).is_file() else ""
                     err(page, n, f"broken link '{target}'{hint}")
                 elif page == sidebar:
@@ -158,6 +163,7 @@ def lint(root: Path, label: str = "docs") -> list[str]:
 
 
 def self_test() -> None:
+    assert norm("Drainer un nœud") == norm("Drainer-Un-Noeud"), "œ must match oe"
     good = "# Page réussie\n\nVersion courte.\n\n```sh\njust run\n```\n\n## Pour aller plus loin\n\n- [Accueil](../Home.md)\n"
     with tempfile.TemporaryDirectory() as d:
         root = Path(d)
@@ -169,6 +175,10 @@ def self_test() -> None:
         (root / "old" / "legacy.md").write_text("no title, simplement faux\n")
         (root / ".wiki-legacy").write_text("# not migrated yet\nold/*\n")
         assert lint(root) == [], lint(root)
+        (root / "guides" / "Page-Reussie.md").write_text(good.replace("Version courte.", "> [!NOTE] Inline.\n> [!TIP]\\\n> Ok."))
+        errs = lint(root)
+        assert len(errs) == 1 and ":3:" in errs[0] and "callout" in errs[0], errs
+        (root / "guides" / "Page-Reussie.md").write_text(good)
         (root / "Reference").mkdir()
         (root / "Reference" / "page-reussie.md").write_text(
             "# Autre titre\n\nC'est simplement facile. [x](Nope.md) [y](../guides/Page-Reussie).\n"
