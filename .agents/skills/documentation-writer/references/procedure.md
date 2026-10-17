@@ -90,10 +90,10 @@ When a procedure needs a correction, a step revised after a re-run surfaced some
 
 ### Naming and location
 
-The page is written in French. Files live in `docs/procedures/<category>/` and are named
-`Procedure-<ID>-<Verbes-En-Francais>.md` (Title-Case with hyphens, ASCII only, no accents, no dots — e.g.
-`DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md`), where `<ID>` is `<PREFIX>-<YYYYMMDD>-<NN>`. The identifier
-never changes, only the verb phrase is French:
+The page is written in French. Files live in `docs/procedures/<category>/` and are named `<ID>-<Verbes-en-Francais>.md`
+(Title-Case with hyphens, function words in lowercase, ASCII only, no accents, no dots, no `Procedure-` prefix since the
+directory says it — e.g. `DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md`), where `<ID>` is
+`<PREFIX>-<YYYYMMDD>-<NN>`. The identifier never changes, only the verb phrase is French:
 
 | Prefix | Category directory | Used for                                                                       |
 | ------ | ------------------ | ------------------------------------------------------------------------------ |
@@ -110,9 +110,9 @@ directory — follow the same pattern rather than overloading an unrelated one.
 sequence, incremented per prefix+date pair — check existing files under the category directory for the current max and
 increment from there; never reuse or backfill a number.
 
-The single `#` heading at the top of the file is `# Procedure <ID> <Titre>`: it matches the file name (hyphens become
-spaces, case and accents are ignored). Sections use `##` and `###` only. Links to other pages are relative and point to
-the `.md` file.
+The single `#` heading at the top of the file is `# <ID> <Titre>`: it matches the file name (hyphens become spaces, case
+and accents are ignored). Sections use `##` and `###` only. Links to other pages are relative and point to the `.md`
+file.
 
 ### Section structure
 

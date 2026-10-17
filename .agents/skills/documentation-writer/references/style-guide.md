@@ -11,8 +11,8 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
 1. **Pages are written in French, with accents.** File and directory names stay in ASCII without accents (`Etapes` never
    `Étapes` in a file name), per the naming rules below.
 2. **Page names are French when they are a verb or a common noun** (`Initialiser-Lungmen`,
-   `Restaurer-CNPG-Depuis-Le-Stockage-Objet`). Record identifiers do not change (`ADR-014-...`,
-   `Procedure-DB-20260723-00-...`, `Incident-2026-05-30-...`) and the reference suffix stays `-Reference`.
+   `Restaurer-CNPG-depuis-le-Stockage-Objet`). Record identifiers do not change (`ADR-014-...`, `DB-20260723-00-...`,
+   `Incident-2026-05-30-...`) and the reference suffix stays `-Reference`.
 3. **End with `## Pour aller plus loin` [lint].** It is the last section of every page, in French, whatever the page
    type.
 4. **The title matches the file name [lint].** Case, accents and hyphens are ignored when comparing `# Title` to the
@@ -47,7 +47,7 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
    | ---------------- | -------------- | ------------------------------------- |
    | Guide            | `guides/`      | `Verb-Phrase.md`                      |
    | Reference        | `reference/`   | `Topic-Reference.md`                  |
-   | Procedure        | `procedures/`  | `Procedure-<ID>-Verb-Phrase.md`       |
+   | Procedure        | `procedures/`  | `<ID>-Verb-Phrase.md`                 |
    | ADR              | `decisions/`   | `ADR-NNN-Title.md`                    |
    | Post-mortem      | `incidents/`   | `Incident-YYYY-MM-DD-Title.md`        |
    | Experiment       | `experiments/` | `Experimentation-YYYY-MM-DD-Title.md` |
@@ -57,7 +57,11 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
    root of `docs/`.
 
 2. **File names use `Title-Case-With-Hyphens.md` [lint].** Letters, digits and hyphens only: no dots, spaces,
-   underscores or non-ASCII characters.
+   underscores or non-ASCII characters. Function words (articles, prepositions, conjunctions: _le_, _la_, _les_, _un_,
+   _une_, _de_, _du_, _des_, _d_, _depuis_, _sous_, _avec_, _par_, _pour_, _sur_, _dans_, _vers_, _et_, _ou_, _au_,
+   _en_, _que_, _qu_) stay lowercase; verbs, nouns, adjectives, acronyms and proper names keep their capital, and so
+   does the first word of the title (`Restaurer-CNPG-depuis-le-Stockage-Objet`). The directory already says the page is
+   a procedure, a decision or a guide: no `Procedure-` prefix.
 3. **Page names are unique across the whole tree [lint].** Two pages with the same name (case ignored) in different
    directories are rejected, so a page can always be found by its name and moved without a collision.
 4. **The name signals the page type.** Guides start with a verb (`Initialiser-Lungmen`, `Restaurer-OpenBao`), references

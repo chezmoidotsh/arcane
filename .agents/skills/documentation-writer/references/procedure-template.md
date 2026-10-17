@@ -3,10 +3,10 @@
   .agents/skills/documentation-writer/references/procedure.md pour l'historique et les règles de ce fichier.
   Supprimer ce commentaire HTML à la rédaction. Contrairement aux ADR, une procédure n'a pas de front matter de
   version : la provenance est dans l'historique Git et dans la section Historique.
-  Le titre `#` reprend le nom du fichier (Procedure-<ID>-<Verbes-En-Francais>.md), sans tirets entre les mots.
+  Le titre `#` reprend le nom du fichier (<ID>-<Verbes-en-Francais>.md), sans tirets entre les mots.
 -->
 
-# Procedure {PREFIX}-{YYYYMMDD}-{NN} {Titre}
+# {PREFIX}-{YYYYMMDD}-{NN} {Titre}
 
 > Un ou deux paragraphes (pas de puces) : ce que fait la procédure, quels composants elle touche et pourquoi elle existe
 > sous forme de procédure reproductible plutôt que de savoir tacite. Deux ou trois phrases suffisent en général — voir
