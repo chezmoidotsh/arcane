@@ -566,7 +566,7 @@ volumes non référencés.
   `lxc.sh` utilisés par cette procédure.
 - [README de l'appliance observability](../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/README.md)
   : création initiale du conteneur et configuration de l'appliance.
-- [ADR-013 Observabilité centralisée](../../decisions/013-centralized-observability-victoriametrics-lxc.md) : décision à
-  l'origine de l'appliance `observability`.
+- [ADR-013 Observabilité centralisée](../../decisions/ADR-013-Observabilite-Centralisee-VictoriaMetrics-sur-LXC.md) :
+  décision à l'origine de l'appliance `observability`.
 - [Installer node-exporter sur Proxmox](INF-20260620-00-Installer-Node-Exporter-sur-Proxmox.md) : autre procédure
   d'infrastructure sur le nœud Proxmox.

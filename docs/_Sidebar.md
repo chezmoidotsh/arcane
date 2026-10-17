@@ -44,6 +44,13 @@
 - [ADR-007 Structure des projets et conventions de nommage](decisions/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md)
 - [ADR-008 Ansible plutôt que Kubernetes pour Kazimierz](decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md)
 - [ADR-009 Consolider les bases PostgreSQL](decisions/ADR-009-Consolider-les-Bases-PostgreSQL.md)
+- [ADR-010 Remplacer Gitmoji par des symboles de type de commit](decisions/ADR-010-Remplacer-Gitmoji-par-des-Symboles-de-Type-de-Commit.md)
+- [ADR-011 Motif des manifestes rendus](decisions/ADR-011-Motif-des-Manifestes-Rendus.md)
+- [ADR-012 Remplacer Kyverno par OPA](decisions/ADR-012-Remplacer-Kyverno-par-OPA.md)
+- [ADR-013 Observabilité centralisée VictoriaMetrics sur LXC](decisions/ADR-013-Observabilite-Centralisee-VictoriaMetrics-sur-LXC.md)
+- [ADR-014 Topologie réseau](decisions/ADR-014-Topologie-Reseau.md)
+- [ADR-015 Migrer Crossplane vers Pulumi](decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md)
+- [ADR-016 NixOS plutôt qu'Ansible pour Kazimierz](decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md)
 
 ### Archives
 

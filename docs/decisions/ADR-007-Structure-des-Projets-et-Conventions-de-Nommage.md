@@ -1400,10 +1400,10 @@ projects/chezmoi.sh/
 > Note du 2026-10-11 : ces arborescences décrivent le dépôt à la date de la décision. `amiya.akn` a été remplacé par
 > `rhodes.akn` ([migration](../migrations/amiya.akn->rhodes.akn.md)), dont ArgoCD vit dans
 > `projects/rhodes.akn/src/argocd/` et non dans `src/apps/argocd/`. Crossplane a été remplacé par Pulumi
-> ([ADR-015](015-migrate-crossplane-to-pulumi.md)) : `projects/chezmoi.sh/src/infrastructure/` contient `ansible/`,
+> ([ADR-015](ADR-015-Migrer-Crossplane-vers-Pulumi.md)) : `projects/chezmoi.sh/src/infrastructure/` contient `ansible/`,
 > `proxmox/` et `pulumi/`. Envoy Gateway et les `reference-grant.*.yaml` ont disparu de `projects/*/src` au profit de la
 > Gateway Cilium (`network-policy.allow-immich-from-cilium-gateway.yaml`). ArgoCD synchronise les manifestes pré-rendus
-> de `dist/` ([ADR-011](011-rendered-manifests-pattern.md)).
+> de `dist/` ([ADR-011](ADR-011-Motif-des-Manifestes-Rendus.md)).
 
 ### Validation et conformité
 
@@ -1532,8 +1532,8 @@ Contrôle du 2026-10-11 contre le dépôt (lecture des fichiers seule, aucun acc
   structure des chemins de secrets.
 - [ADR-004 Conventions de nommage des politiques OpenBao](ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md) :
   les standards de nommage des politiques.
-- [ADR-011 Rendered manifests pattern](011-rendered-manifests-pattern.md) : les manifestes pré-rendus de `dist/` que
-  synchronisent les ApplicationSets.
+- [ADR-011 Rendered manifests pattern](ADR-011-Motif-des-Manifestes-Rendus.md) : les manifestes pré-rendus de `dist/`
+  que synchronisent les ApplicationSets.
 - [AGENTS.md](../../AGENTS.md) : vue d'ensemble de la structure du dépôt.
 - [README ArgoCD](../../projects/rhodes.akn/src/argocd/README.md) : structure des applications ArgoCD et conventions de
   synchronisation.

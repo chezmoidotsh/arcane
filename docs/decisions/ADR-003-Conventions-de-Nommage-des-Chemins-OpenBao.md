@@ -240,8 +240,8 @@ projet des autres.
 
 > [!NOTE]\
 > Note du 2026-10-11 : les exemples `amiya.akn/...` et la gestion par Crossplane sont historiques. Crossplane a été
-> remplacé par Pulumi ([ADR-015](015-migrate-crossplane-to-pulumi.md)) et aucune ressource Crossplane n'existe plus dans
-> `projects/*/src`. La convention `/shared/third-parties/{provider}/{service}/{cluster}/{app-or-purpose}` reste
+> remplacé par Pulumi ([ADR-015](ADR-015-Migrer-Crossplane-vers-Pulumi.md)) et aucune ressource Crossplane n'existe plus
+> dans `projects/*/src`. La convention `/shared/third-parties/{provider}/{service}/{cluster}/{app-or-purpose}` reste
 > appliquée, avec Pulumi comme producteur : `projects/lungmen.akn/src/infrastructure/pulumi/stack/cert-manager.ts` écrit
 > `third-parties/cloudflare/iam/lungmen.akn/cert-manager-rw` dans le montage `shared`, lu par
 > `letsencrypt-issuer-credentials.externalsecret.yaml`. Le compte Let's Encrypt est toujours à
@@ -417,7 +417,7 @@ Contrôle du 2026-10-11 contre le dépôt (aucun accès aux clusters ni à OpenB
   ADR détaille l'organisation interne.
 - [ADR-004 Conventions de nommage des politiques OpenBao](ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md) :
   les politiques qui s'appliquent à ces chemins.
-- [ADR-015 Migrer Crossplane vers Pulumi](015-migrate-crossplane-to-pulumi.md) : le remplacement de Crossplane par
+- [ADR-015 Migrer Crossplane vers Pulumi](ADR-015-Migrer-Crossplane-vers-Pulumi.md) : le remplacement de Crossplane par
   Pulumi pour les secrets tiers.
 - [Structure des espaces de noms Vault](https://developer.hashicorp.com/vault/tutorials/enterprise/namespace-structure)
   : bonnes pratiques de structure des chemins HashiCorp Vault.

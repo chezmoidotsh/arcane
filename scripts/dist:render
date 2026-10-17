@@ -12,7 +12,7 @@ Each non-SOPS, non-Component kustomization in src/ gets a mirrored dist/
 directory with one file per Kubernetes resource named:
   <group>.<version>.<Kind>.<name>.yaml
 
-See docs/decisions/011-rendered-manifests-pattern.md
+See docs/decisions/ADR-011-Motif-des-Manifestes-Rendus.md
 """
 
 from __future__ import annotations
