@@ -187,6 +187,7 @@ Matched incident: docs/incidents/Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured
 Error: "Not enough disk space" + "Expected empty archive" (ContinuousArchivingFailing)
 
 Procedure: docs/procedures/databases/DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md
+Then, for the cause: docs/procedures/databases/DB-20260530-01-Corriger-l-Erreur-Expected-Empty-Archive-de-barman-cloud.md
 
 This will:
   1. Expand WAL PVCs (apps-secured-20260329-1-wal and -2-wal) from current size to 10Gi
@@ -238,9 +239,9 @@ with the exact kubectl output.
 
 Quick reference for routing without needing to grep first:
 
-| Error / Phase                                                                     | Matched incident                                                                                            | Procedure                                                                                                    |
-| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `Not enough disk space` + `Expected empty archive` + `ContinuousArchivingFailing` | [2026-05-30 cnpg-wal-disk-full](../../../docs/incidents/Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured.md) | [DB-20260530-00](../../../docs/procedures/databases/DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md) |
+| Error / Phase                                                                     | Matched incident                                                                                            | Procedure                                                                                                                                                                                                                                                                                     |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Not enough disk space` + `Expected empty archive` + `ContinuousArchivingFailing` | [2026-05-30 cnpg-wal-disk-full](../../../docs/incidents/Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured.md) | [DB-20260530-00](../../../docs/procedures/databases/DB-20260530-00-Retablir-un-Cluster-CNPG-au-WAL-Plein.md) (PVC WAL plein), puis [DB-20260530-01](../../../docs/procedures/databases/DB-20260530-01-Corriger-l-Erreur-Expected-Empty-Archive-de-barman-cloud.md) (`Expected empty archive`) |
 
 ### Node drain blocked by a `*-primary` PDB
 
