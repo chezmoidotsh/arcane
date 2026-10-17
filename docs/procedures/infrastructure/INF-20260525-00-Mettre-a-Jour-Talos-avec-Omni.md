@@ -242,22 +242,12 @@ les workloads tournent longtemps sur la nouvelle version, moins le retour est s�
 
 ## Historique
 
-- _2026-10-17_ : Troisième revue : l'étape de préparation des nœuds CNPG est supprimée (les étapes suivantes sont
-  renumérotées), le contrôle des pods est générique et la section « Retour arrière » porte un avertissement.
-- _2026-10-17_ : Seconde revue : l'arrêt si le cluster n'est pas `Ready` est un callout, la tâche de validation est
-  citée pour `lungmen.akn` et `rhodes.akn`, la procédure de drain CNPG est supprimée (remplacée par la règle OPA
-  `REL001`) et les contrôles des composants passent dans les vérifications rapides.
-- _2026-10-17_ : Reprise après revue : l'état de vérification est un callout `WARNING`, les entrées sont des variables
-  `export` utilisées dans les commandes, le renvoi vers le drain pointe sur les étapes 2 et 4 et le kubeconfig de
-  service account est expliqué.
-- _2026-10-11_ : Réécriture pour Omni à partir du dépôt, sans rejouer les commandes. Remplacement de `talosctl upgrade`
-  sur le cluster mono-nœud `amiya.akn` (supprimé du dépôt) par la modification de `talos.version` dans le cluster
-  template, la validation et l'application avec `omnictl cluster template`. Suppression du pré-téléchargement de
-  l'image, de la mise à jour mono-nœud en deux redémarrages (`--stage`), de la mise à jour du patch-config de bootstrap
-  et de la mention de `udev` de Talos v1.9. Conservés : pré-vérifications, contrôle des extensions, nœuds CNPG,
-  vérifications et retour arrière.
-- _2026-10-11_ : Migration vers le standard de documentation (issue #1257) : page traduite en français et structurée
-  selon le gabarit de procédure.
+- _2026-10-17_ : Migration vers le standard de documentation (issue #1257) et réécriture pour Omni. `talosctl upgrade`
+  sur le cluster mono-nœud `amiya.akn` (supprimé du dépôt) est remplacé par la modification de `talos.version` dans le
+  cluster template, sa validation et son application avec `omnictl cluster template`. Sont retirés le pré-téléchargement
+  de l'image, la mise à jour mono-nœud en deux redémarrages (`--stage`), la mise à jour du patch-config de bootstrap, la
+  mention de `udev` de Talos v1.9 et la préparation des nœuds CNPG (la règle OPA `REL001` couvre le cas). Sont ajoutés
+  le contrôle générique des pods et un avertissement sur le retour arrière. Les commandes n'ont pas été rejouées.
 - _2026-05-25_ : Adaptation pour utiliser `--context` plutôt que `--nodes` ; ajout de l'étape de mise à jour du
   patch-config de bootstrap ; départ à la version v1.12.
 - _2026-05-25_ : Création initiale.

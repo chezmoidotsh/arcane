@@ -260,17 +260,12 @@ Les voies de reprise établies sont les suivantes :
 
 ## Historique
 
-- _2026-10-17_ : Troisième revue : le contrôle des pods est générique et la section « Retour arrière » porte un
-  avertissement.
-- _2026-10-17_ : Seconde revue : le paragraphe sur l'incident Kubernetes 1.35 est un callout, la procédure de drain CNPG
-  supprimée n'est plus citée et le réépinglage renvoie à la création de cluster.
-- _2026-10-17_ : Reprise après revue : l'état de vérification est un callout `WARNING`, les entrées sont des variables
-  `export` utilisées dans les commandes, le kubeconfig de service account est expliqué et un exemple complet est ajouté.
-- _2026-10-11_ : Migration vers le standard de documentation (issue #1257) et réécriture pour Omni. La version de
-  Kubernetes est fixée dans `kubernetes.version` du cluster template, appliquée par `omnictl cluster template sync` ; le
-  contenu propre à `talosctl upgrade-k8s` sur le cluster mono-nœud `amiya.akn` (six phases, dry-run, exemple 1.34.2 vers
-  1.35.0) est retiré. Conservés : le contrôle des feature gates et flags retirés, la compatibilité avec Talos, les
-  vérifications après mise à jour. Les commandes n'ont pas été rejouées sur Omni ni sur les clusters.
+- _2026-10-17_ : Migration vers le standard de documentation (issue #1257) et réécriture pour Omni. La version de
+  Kubernetes est fixée dans `kubernetes.version` du cluster template et appliquée par `omnictl cluster template sync` ;
+  le contenu propre à `talosctl upgrade-k8s` sur le cluster mono-nœud `amiya.akn` (six phases, dry-run, exemple 1.34.2
+  vers 1.35.0) est retiré. Sont conservés le contrôle des feature gates et flags retirés, la compatibilité avec Talos et
+  les vérifications après mise à jour, avec un contrôle générique des pods et un avertissement sur le retour arrière.
+  Les commandes n'ont pas été rejouées sur Omni ni sur les clusters.
 - _2026-05-26_ : Ajout du contrôle préalable des feature gates (étape 1) et de l'avertissement sur la fusion stratégique
   (étape 5), à la suite de l'incident
   [Kubernetes 1.35 : feature gate retiré](../../incidents/2026-05-26-lungmen-k8s-1.35-removed-featuregate.md).

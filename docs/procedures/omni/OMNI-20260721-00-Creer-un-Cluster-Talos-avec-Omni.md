@@ -479,25 +479,16 @@ une commande de réépinglage sont suivies par l'issue [#1357](https://github.co
 
 ## Historique
 
-- _2026-10-17_ : Seconde revue : les phrases sur `OMNICONFIG` et sur l'indépendance d'Omni sont retirées, la table des
-  CIDR de Pod renvoie à la référence IPAM, la raison du CIDR de Services commun est corrigée et la procédure de
-  réépinglage supprimée est remplacée par sa commande dans les problèmes connus.
-- _2026-10-17_ : Reprise après revue : l'état de vérification est un callout `WARNING`, les entrées sont des variables
-  `export`, le namespace `proxmox-system` est créé à l'étape 9 (avant le Secret) avec `--server-side`, le kubeconfig
-  OIDC est distingué de celui des mises à jour et la dernière puce de Pour aller plus loin est scindée.
-- _2026-10-11_ : Corrections vérifiées contre le dépôt. Le template de base `catalog/omni/clustertemplates/base.yaml` ne
-  contient pas `kubelet.extraArgs.cloud-provider: external` (seuls les templates de `rhodes.akn` et de `lungmen.akn`
-  l'ajoutent) : l'étape 3 demande de l'ajouter et l'étape 6 ne prétend plus que la base le porte. L'étape 11 ne cite
-  plus `seed.application.yaml`, absent du dépôt : le hub `rhodes.akn` s'amorce avec `projects/rhodes.akn/src/argocd/` et
-  `projects/rhodes.akn/src/bootstrap.applications.yaml`. Le critère V-001 utilise le label réel
-  `app.kubernetes.io/name=proxmox-cloud-controller-manager` (et non `app=`, absent des manifests rendus). L'étape 4
-  contrôle les URL lues dans le template au lieu de la seule URL Cilium `1.19.5` en dur (la base pointe sur `1.20.2`,
-  `rhodes.akn` sur `1.19.5`, `lungmen.akn` sur `1.20.0`). La mention « 169 lignes » de la base est retirée (186 lignes
-  aujourd'hui). La référence `stack/proxmox/access.ts` devient le dossier `stack/proxmox/access/` et les chemins
-  `access/` précis sont cités. Les tâches `pulumi:diff` et `pulumi:apply` sont précisées comme définies dans le dossier
-  Pulumi du projet. Le lien vers le dossier du LXC Omni est corrigé.
-- _2026-10-11_ : Migration vers le standard de documentation (issue #1257) : page traduite en français, structure
-  alignée sur le gabarit de procédure, liens vers les procédures renommées.
+- _2026-10-17_ : Migration vers le standard de documentation (issue #1257) : page traduite en français, structurée selon
+  le gabarit de procédure, entrées en variables `export`. Corrections vérifiées contre le dépôt : le template de base ne
+  contient pas `kubelet.extraArgs.cloud-provider: external` (seuls ceux de `rhodes.akn` et `lungmen.akn` l'ajoutent) ;
+  `seed.application.yaml` n'est plus cité, le hub `rhodes.akn` s'amorce avec `projects/rhodes.akn/src/argocd/` et
+  `bootstrap.applications.yaml` ; le critère V-001 utilise le label
+  `app.kubernetes.io/name=proxmox-cloud-controller-manager` ; les URL Cilium sont lues dans le template ; les chemins
+  `access/` sont précisés ; le namespace `proxmox-system` est créé avant le Secret avec `--server-side` ; le kubeconfig
+  OIDC est distingué de celui des mises à jour. La table des CIDR de Pod renvoie à la référence IPAM, la raison du CIDR
+  de Services commun est corrigée, et la procédure de réépinglage des SHA est supprimée au profit de sa commande dans
+  les problèmes connus.
 - _2026-07-22_ : Corrections factuelles (flux de connexion natif `omnictl config` d'Omni, syntaxe de
   `omnictl kubeconfig`, sémantique `apply` contre `sync`), suppression de références périmées (procédure SDN obsolète,
   runbook d'amorçage invalide, récit de migration hors sujet), table des fichiers de référence réduite, étapes
