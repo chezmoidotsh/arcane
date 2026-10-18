@@ -12,7 +12,7 @@
 
 [tools]
 # Needed for CNPG object-store disaster-recovery work (finding/restoring
-# backups) — see docs/disaster-recovery/{openbao,pocket-id}.md.
+# backups) — see docs/plan-de-reprise/brouillon/Restaurer-OpenBao.md and docs/plan-de-reprise/brouillon/Restaurer-Pocket-Id.md.
 "pipx:s3cmd" = "latest"
 
 [tasks."diagram:generate"]

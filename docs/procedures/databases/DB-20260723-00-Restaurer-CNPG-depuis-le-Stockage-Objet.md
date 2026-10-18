@@ -4,10 +4,10 @@ Cette procédure amorce un `Cluster` CloudNative-PG à partir d'un backup exista
 `barman-cloud.cloudnative-pg.io`, soit pour recréer la même base logique sur un nouveau cluster Kubernetes (reprise
 après sinistre), soit pour ramener un cluster à son dernier backup sain. Elle est volontairement générique et
 indépendante de l'application : les procédures de reprise après sinistre
-d'[OpenBao](../../../projects/rhodes.akn/docs/disaster-recovery/openbao.md) et de
-[Pocket-Id](../../../projects/rhodes.akn/docs/disaster-recovery/pocket-id.md) l'utilisent comme étape de restauration de
-la base au lieu de dupliquer la mécanique. Durée : de quelques minutes à plusieurs dizaines de minutes, selon la taille
-du base backup et le volume de WAL à rejouer.
+d'[OpenBao](../../plan-de-reprise/brouillon/Restaurer-OpenBao.md) et de
+[Pocket-Id](../../plan-de-reprise/brouillon/Restaurer-Pocket-Id.md) l'utilisent comme étape de restauration de la base
+au lieu de dupliquer la mécanique. Durée : de quelques minutes à plusieurs dizaines de minutes, selon la taille du base
+backup et le volume de WAL à rejouer.
 
 > [!WARNING]\
 > Procédure vérifiée contre le dépôt le 2026-10-11 ; ses commandes n'ont pas été rejouées sur un cluster.
@@ -91,9 +91,9 @@ pour ses propres identifiants de backup : dépendance circulaire) l'obtient d'un
 cd projects/rhodes.akn/src/infrastructure/pulumi && pulumi up --refresh --parallel 15
 ```
 
-Les procédures de reprise après sinistre d'[OpenBao](../../../projects/rhodes.akn/docs/disaster-recovery/openbao.md) et
-de [Pocket-Id](../../../projects/rhodes.akn/docs/disaster-recovery/pocket-id.md) sont toutes deux sur `rhodes.akn` et
-traitent ce point avant d'appeler cette procédure.
+Les procédures de reprise après sinistre d'[OpenBao](../../plan-de-reprise/brouillon/Restaurer-OpenBao.md) et de
+[Pocket-Id](../../plan-de-reprise/brouillon/Restaurer-Pocket-Id.md) sont toutes deux sur `rhodes.akn` et traitent ce
+point avant d'appeler cette procédure.
 
 ## Étape 2 — Lister le bucket et identifier le dernier backup
 

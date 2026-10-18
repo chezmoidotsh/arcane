@@ -107,7 +107,7 @@ Recovery is provision-order-dependent: Omni brings the cluster back up, then eve
 where each step only depends on what's already running — OpenBao, ESO, cert-manager/ExternalDNS, and Pocket-Id are all
 applied by hand before ArgoCD exists. ArgoCD is bootstrapped **last** precisely because of this: it adopts everything
 already running instead of being a dependency those earlier steps would otherwise have to work around. See
-[docs/disaster-recovery/README.md](./docs/disaster-recovery/README.md) for the full, step-by-step procedure.
+[Restaurer Rhodes](../../docs/plan-de-reprise/brouillon/Restaurer-Rhodes.md) for the full, step-by-step procedure.
 
 ## 📚 References
 
@@ -115,7 +115,8 @@ already running instead of being a dependency those earlier steps would otherwis
 
 - [`src/infrastructure/omni/rhodes.clustertemplate.yaml`](./src/infrastructure/omni/rhodes.clustertemplate.yaml) — this
   cluster's Omni template
-- [`docs/disaster-recovery/README.md`](./docs/disaster-recovery/README.md) — full cluster disaster-recovery procedure
+- [`docs/plan-de-reprise/brouillon/Restaurer-Rhodes.md`](../../docs/plan-de-reprise/brouillon/Restaurer-Rhodes.md) —
+  full cluster disaster-recovery procedure
 - [`src/argocd/README.md`](./src/argocd/README.md) — how the ApplicationSets discover and sync apps
 - [`src/infrastructure/pulumi/`](./src/infrastructure/pulumi/) — cloud resources managed out-of-cluster (Cloudflare
   DNS-01 tokens, Vault KV secrets, database credentials)

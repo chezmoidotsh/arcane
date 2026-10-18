@@ -83,7 +83,7 @@ L'instance exécute encore l'image Ubuntu d'origine, qui n'a pas `cpio` ; `nixos
 l'initrd kexec :
 
 ```sh
-IP=<IP publique de kazimierz-pangolin>   # console OCI ; la stack Pulumi ne l'exporte pas
+export IP=<IP publique de kazimierz-pangolin>   # console OCI ; la stack Pulumi ne l'exporte pas
 ssh ubuntu@"$IP" 'sudo apt-get update -qq && sudo apt-get install -y cpio'
 mise run nixos:oci:install ubuntu@"$IP"
 ```
