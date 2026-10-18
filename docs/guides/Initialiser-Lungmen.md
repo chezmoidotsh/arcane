@@ -1,16 +1,14 @@
 # Initialiser Lungmen
 
-Vérifié contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées pour cette migration.
-
-## Version courte
-
 `lungmen.akn` est provisionné de bout en bout par [Sidero Omni](https://omni.siderolabs.com), sans création manuelle de
 VM ni `talosctl`. Ce guide donne les paramètres propres à `lungmen.akn` et ses écarts avec la
 [procédure générique de création d'un cluster Talos avec Omni](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md),
 dont `lungmen.akn` est l'exemple concret (voir aussi [`catalog/omni/README.md`](../../catalog/omni/README.md)).
 
+> [!WARNING]\
+> Vérifié contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées pour cette migration.
+
 ```bash
-# OMNICONFIG doit être renseigné (omnictl config new ou omnictl config add).
 # Les machine classes doivent exister dans Omni (communes à tous les clusters).
 mise run omni:machineclass:apply
 
@@ -62,49 +60,33 @@ modifient donc directement dans le template.
 
 - `omnictl`, `kubectl` et `argocd`, installés par `mise install` (le `.mise.toml` à la racine fixe la version
   d'`omnictl`).
-- Une authentification Omni : `OMNICONFIG` renseigné par `omnictl config new` ou `omnictl config add`.
-- Les machine classes appliquées dans Omni (`mise run omni:machineclass:apply` depuis la racine du dépôt). Ce sont des
-  ressources COSI communes, hors du template de cluster, perdues si Omni est réinitialisé.
+- Un accès authentifié à Omni (`omnictl`).
 - Un accès à l'ArgoCD de `rhodes.akn` (le hub GitOps) pour l'enregistrement du cluster, voir la
   [topologie hub et spoke](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md#topologie-gitops-hub-et-spoke).
-- La stack Pulumi du projet
+
+Les machine classes sont des ressources COSI communes, hors du template de cluster, perdues si Omni est réinitialisé :
+`mise run omni:machineclass:apply`, depuis la racine du dépôt, les recrée.
+
+## Écarts avec la procédure générique
+
+Suivre la procédure générique avec le tableau d'identité ci-dessus. Pour `lungmen.akn` :
+
+- **Identité et template** (étapes 2 et 3) : le cluster ID 2 et `172.30.32.0/19` sont déjà alloués, et le template
+  existe. Modifier `lungmen.clustertemplate.yaml` sur place ; ne réallouer que si le template est recréé.
+- **Accessibilité du SHA** (étape 4) : à vérifier avant la synchronisation si le SHA des manifests de bootstrap du
+  template a changé.
+- **Application du template** (étape 6) : `omnictl cluster template sync`, détaillé à
+  l'[étape 6 de la procédure](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md#étape-6--appliquer-le-template-de-cluster).
+- **Identité Proxmox CCM/CSI** (étape 9) : ce n'est pas une étape manuelle. La stack Pulumi du projet
   ([`src/infrastructure/pulumi/stack/proxmox.ts`](../../projects/lungmen.akn/src/infrastructure/pulumi/stack/proxmox.ts))
-  livre l'identité du Proxmox CCM/CSI : ce n'est pas une étape manuelle. Elle s'applique quand le cluster est `Ready`,
-  avant le déploiement de `dist/infrastructure/kubernetes/proxmox/`.
-
-## Étapes
-
-Suivre la procédure générique en entier, avec le tableau d'identité ci-dessus. Les numéros d'étape renvoient à cette
-procédure.
-
-1. **Machine classes** (étape 1) : à appliquer une fois, communes à tous les clusters.
-2. **Identité du cluster** (étape 2) : déjà allouée (cluster ID 2, `172.30.32.0/19`). Une nouvelle allocation n'est
-   nécessaire que si le template est recréé.
-3. **Template** (étape 3) : existe déjà. Modifier `lungmen.clustertemplate.yaml` sur place au lieu d'en créer un
-   nouveau.
-4. **Accessibilité du SHA** (étape 4) : à vérifier avant la synchronisation si le SHA des manifests de bootstrap du
-   template a changé.
-5. **Validation hors ligne** (étape 5) : `mise run omni:clustertemplate:validate`.
-6. **Application** (étape 6) : `omnictl cluster template sync -f src/infrastructure/omni/lungmen.clustertemplate.yaml`.
-7. **Convergence et kubeconfig** (étapes 7 et 8).
-8. **Identité Proxmox CCM/CSI** (étape 9) : appliquer la stack Pulumi du projet, voir « Avant de commencer ».
-9. **CSI et CCM** (étape 10) : déployer depuis `dist/infrastructure/kubernetes/proxmox/`.
-10. **Enregistrement en spoke** (étape 11) dans le hub de `rhodes.akn` :
-
-    ```bash
-    argocd cluster add lungmen-akn --name lungmen.akn
-    ```
-
-    Une fois le cluster enregistré, les ApplicationSets d'ArgoCD prennent en charge tout `dist/apps/` et le reste de
-    `dist/infrastructure/kubernetes/` (voir le
-    [README du projet](../../projects/lungmen.akn/README.md#usage-and-development)).
-
-11. **Liste de validation** CNI/CSI/CCM : la dérouler dans la procédure générique
-    ([liste de validation](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md#liste-de-validation))
-    avant d'ouvrir le cluster au trafic applicatif.
-
-L'application du template est détaillée à
-l'[étape 6 de la procédure](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md#étape-6--appliquer-le-template-de-cluster).
+  la livre ; elle s'applique quand le cluster est `Ready`, avant le déploiement de
+  `dist/infrastructure/kubernetes/proxmox/` (étape 10).
+- **Enregistrement en spoke** (étape 11) : `argocd cluster add`, dans le hub de `rhodes.akn`. Ensuite, les
+  ApplicationSets d'ArgoCD prennent en charge tout `dist/apps/` et le reste de `dist/infrastructure/kubernetes/` (voir
+  le [README du projet](../../projects/lungmen.akn/README.md#usage-and-development)).
+- **Liste de validation** CNI/CSI/CCM : la dérouler dans la procédure générique
+  ([liste de validation](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md#liste-de-validation))
+  avant d'ouvrir le cluster au trafic applicatif.
 
 ## Après l'amorçage
 
@@ -116,12 +98,10 @@ l'[étape 6 de la procédure](../procedures/omni/OMNI-20260721-00-Creer-un-Clust
 
 ## Historique
 
-- _2026-10-11_ : Migration vers le standard de documentation (issue #1257) : page traduite en français, déplacée dans
-  `docs/guides/`, bloc `<details>` remplacé par la section « Version courte ».
-- _2026-10-11_ : Corrections vérifiées contre le dépôt. La remarque sur le remappage Velero citait
-  `proxmox-lvmthin-ext4` et `proxmox-lvmthin-xfs` ; `change-storage-class.configmap.yaml` ne remappe que `longhorn` vers
-  `proxmox-lvmthin-ext4`. La mention d'un `TODO` de l'étape 9 de la procédure générique pour les autres clusters est
-  retirée : la procédure liste désormais les programmes Pulumi de `rhodes.akn` et de `lungmen.akn`.
+- _2026-10-11_ : migration vers le standard de documentation (issue #1257) : page traduite en français et déplacée dans
+  `docs/guides/`. Corrections vérifiées contre le dépôt : le remappage Velero ne couvre que `longhorn` vers
+  `proxmox-lvmthin-ext4` (pas `proxmox-lvmthin-xfs`), et la mention d'un `TODO` de l'étape 9 pour les autres clusters
+  est retirée, la procédure listant les programmes Pulumi de `rhodes.akn` et de `lungmen.akn`.
 
 ## Pour aller plus loin
 

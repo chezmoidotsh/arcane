@@ -1,10 +1,11 @@
 # Initialiser Rimbilliton
 
-Monter l'hôte Minecraft de `rimbilliton.akn` depuis rien jusqu'à un NixOS qui exécute Pelican (Panel et Wings), avec
-l'authentification Pocket-Id et des sauvegardes restic vers Backblaze B2. Le guide couvre le provisionnement Pulumi,
+Ce guide monte l'hôte Minecraft de `rimbilliton.akn` depuis rien jusqu'à un NixOS qui exécute Pelican (Panel et Wings),
+avec l'authentification Pocket-Id et des sauvegardes restic vers Backblaze B2. Il couvre le provisionnement Pulumi,
 l'installation de NixOS avec `nixos-anywhere` et la configuration de Pelican.
 
-Vérifié contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées pour cette migration.
+> [!WARNING]\
+> Vérifié contre le dépôt le 2026-10-11 ; les commandes n'ont pas été rejouées pour cette migration.
 
 ## Vue d'ensemble
 
@@ -15,26 +16,24 @@ uniquement une clé SSH injectée par cloud-init (configuration Pulumi `ssh_auth
 par-dessus avec `nixos-anywhere`, la seule étape manuelle. Le guide jumeau
 [Initialiser Kazimierz](Initialiser-Kazimierz.md) suit le même schéma pour le VPS `kazimierz.akn`.
 
-Composants définis dans `projects/rimbilliton.akn/src/infrastructure/nixos/` :
-
-| Fichier               | Rôle                                                                                                |
-| --------------------- | --------------------------------------------------------------------------------------------------- |
-| `flake.nix`           | Une sortie par architecture : `rimbilliton-akn-aarch64` (OCI A1) et `rimbilliton-akn-x86_64` (test) |
-| `configuration.nix`   | Réseau, SSH, Tailscale, sops-nix                                                                    |
-| `platforms/`          | Chargeur de démarrage et disque par plateforme (`oci.a1.nix`, `proxmox.kvm.nix`)                    |
-| `modules/pelican.nix` | Pelican Panel et Wings en conteneurs Docker (versions bêta épinglées)                               |
-| `modules/caddy.nix`   | Caddy (TLS) devant le Panel (`minecraft.chezmoi.sh`) et Wings (`main.minecraft.chezmoi.sh`)         |
-| `modules/backup.nix`  | Sauvegardes restic vers Backblaze B2                                                                |
+Le flake NixOS vit dans `projects/rimbilliton.akn/src/infrastructure/nixos/` : `flake.nix` expose une sortie par
+architecture (`rimbilliton-akn-aarch64` pour l'OCI A1, `rimbilliton-akn-x86_64` pour un test), `configuration.nix` porte
+la base (réseau, SSH, Tailscale, sops-nix), et les modules `pelican.nix`, `caddy.nix` et `backup.nix` apportent Pelican
+(Panel et Wings en conteneurs, versions bêta épinglées), Caddy (TLS devant le Panel `minecraft.chezmoi.sh` et Wings
+`main.minecraft.chezmoi.sh`) et les sauvegardes restic.
 
 ## Avant de commencer
 
-| Prérequis     | Détail                                                                                                                                                                                                                                                                                         |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Outils        | `mise install` (fournit `sops`) et Docker. Nix n'est pas installé en local : toute commande Nix passe par `nonix` (`scripts/nonix`, dans le `PATH` après `mise install`), qui l'exécute dans un conteneur, y compris `ssh-to-age`                                                              |
-| Identifiants  | OCI sous la forme `TF_VAR_tenancy_ocid`, `TF_VAR_user_ocid`, `TF_VAR_fingerprint`, `TF_VAR_private_key` et `TF_VAR_region` (variables lues par `src/infrastructure/pulumi/.mise/env.yaml`, comme pour `kazimierz.akn`), puis les identifiants des providers Backblaze, Cloudflare et Tailscale |
-| ACL Tailscale | `tag:svc-minecraft` déclaré dans `tagOwners` (tag annoncé par l'hôte dans `configuration.nix` et posé sur la clé par `stack/tailscale.ts`)                                                                                                                                                     |
-| Stack parente | `kazimierz_akn.live` (compartiment parent, lu par `stack/oci/compartments.ts`) déjà appliquée                                                                                                                                                                                                  |
-| Pocket-Id     | Une clé d'API pour le provider Pulumi (voir l'étape 2) ; le groupe et le client sont gérés par Pulumi                                                                                                                                                                                          |
+- **Outils** : `mise install` (fournit `sops`) et Docker. Nix n'est pas installé en local : toute commande Nix passe par
+  `nonix` (`scripts/nonix`, dans le `PATH` après `mise install`), qui l'exécute dans un conteneur, y compris
+  `ssh-to-age`.
+- **Identifiants** : OCI sous la forme `TF_VAR_tenancy_ocid`, `TF_VAR_user_ocid`, `TF_VAR_fingerprint`,
+  `TF_VAR_private_key` et `TF_VAR_region` (lues par `src/infrastructure/pulumi/.mise/env.yaml`, comme pour
+  `kazimierz.akn`), puis ceux des providers Backblaze, Cloudflare et Tailscale.
+- **ACL Tailscale** : `tag:svc-minecraft` déclaré dans `tagOwners` (tag annoncé par l'hôte dans `configuration.nix` et
+  posé sur la clé par `stack/tailscale.ts`).
+- **Stack parente** : `kazimierz_akn.live` (compartiment parent, lu par `stack/oci/compartments.ts`) déjà appliquée.
+- **Pocket-Id** : une clé d'API pour le provider Pulumi (voir l'étape 2) ; le groupe et le client sont gérés par Pulumi.
 
 ## Procédure d'amorçage
 
@@ -61,11 +60,10 @@ Si OCI répond `Out of host capacity`, réessayer plus tard (limite connue des i
 
 ### 2. Groupe et client OIDC Pocket-Id
 
-`stack/pocket-id.ts` déclare le groupe `minecraft` et le client OIDC `Minecraft` (URL de lancement
-`https://minecraft.chezmoi.sh/`, callback `https://minecraft.chezmoi.sh/auth/oauth/callback/pocketid`, confidentiel,
-consentement ignoré, **PKCE désactivé** car le plugin Pocket ID de Pelican n'envoie pas de `code_challenge`, groupes
-autorisés `admin` et `minecraft`). Pelican authentifie les utilisateurs par ce client (plugin installé par NixOS, étape
-6).
+`stack/pocket-id.ts` déclare le groupe `minecraft` et le client OIDC `Minecraft` (callback
+`https://minecraft.chezmoi.sh/auth/oauth/callback/pocketid`, confidentiel, **PKCE désactivé** car le plugin Pocket ID de
+Pelican n'envoie pas de `code_challenge`, groupes autorisés `admin` et `minecraft`). Pelican authentifie les
+utilisateurs par ce client (plugin installé par NixOS, étape 6).
 
 Le groupe et le client existent déjà dans Pocket-Id (créés à la main avant cette stack) : la stack les importe avec
 l'option `import` de Pulumi, leurs UUID étant écrits en dur dans `stack/pocket-id.ts`. Le secret du client est généré
@@ -85,8 +83,8 @@ remplacement (`replace`) du client ou du groupe, s'arrêter : un UUID ou un cham
 1. Exécuter `mise run pulumi:apply`. Le nouveau secret **remplace** l'ancien dans Pocket-Id ; si Pelican tourne déjà, sa
    connexion est cassée à partir de cet instant.
 2. Placer la sortie de `pulumi stack output --show-secrets minecraftOidcClientSecret` dans le fichier SOPS sous la clé
-   `oauth_pocketid_client_secret` (étape 3). Si l'hôte tourne déjà, le redéployer avec `mise run nixos:oci:update` (voir
-   l'étape 6.4) ; lors d'un premier amorçage, l'installation (étape 4) reprend le secret.
+   `oauth_pocketid_client_secret` (étape 3). Si l'hôte tourne déjà, le redéployer avec `mise run nixos:oci:update` ;
+   lors d'un premier amorçage, l'installation (étape 4) reprend le secret.
 3. Une fois Pelican démarré, vérifier que la connexion à `https://minecraft.chezmoi.sh/` avec Pocket-Id fonctionne.
 
 Installation initiale (rien n'existe encore dans Pocket-Id) : créer le groupe et le client à la main dans l'interface
@@ -110,13 +108,11 @@ Renseigner `tailscale_authkey`, `restic_password`, `restic_b2_env` et le client 
 fois le nœud créé dans le Panel (étape 6), donc les ajouter à ce moment-là. La clé Tailscale (`tailscaleAuthKey`) est à
 usage unique et expire 7 jours après sa création (`stack/tailscale.ts`) : installer l'hôte dans ce délai.
 
-Le fichier doit s'appeler `rimbilliton.sops.yaml` : c'est le nom que cible la règle de création de
-`src/infrastructure/nixos/.sops.yaml` (clé de l'administrateur et clé de l'hôte comme destinataires), et celui que lit
-`configuration.nix`. C'est l'unique exception à l'organisation par projet (le reste vit dans
-`projects/rimbilliton.akn/.sops.yaml`), car le secret est consommé au moment du build. sops cherche `.sops.yaml` depuis
-le répertoire courant vers le haut et ne fusionne jamais les fichiers : exécuter sops depuis ce répertoire et conserver
-la clé de l'administrateur dans toute nouvelle règle. `secrets/*.yaml` est ignoré par Git, sauf `*.example.yaml` et
-`*.sops.yaml`, ce qui évite de committer une copie en clair par accident.
+Le fichier doit s'appeler `rimbilliton.sops.yaml` : c'est le nom que cible la règle de
+`src/infrastructure/nixos/.sops.yaml` (clé de l'administrateur et clé de l'hôte comme destinataires) et que lit
+`configuration.nix`. Exécuter sops depuis ce répertoire, car il cherche `.sops.yaml` vers le haut sans jamais fusionner
+les fichiers, et conserver la clé de l'administrateur dans toute nouvelle règle. `secrets/*.yaml` est ignoré par Git,
+sauf `*.example.yaml` et `*.sops.yaml`.
 
 `flake.lock` est versionné pour que chaque build utilise les mêmes révisions d'entrées (le rafraîchir avec
 `nonix flake update`). Ensuite :
@@ -236,12 +232,11 @@ continu) jusqu'à l'étape 6, qui lui donne une configuration.
 1. **Panel** : terminer l'installeur web sur `https://minecraft.chezmoi.sh/installer` et créer le compte administrateur.
    La base est une base SQLite dans `/var/lib/pelican-panel/data` (à sauvegarder : elle contient l'`APP_KEY`).
 2. **Connexion Pocket-Id** (déclarée dans `modules/pelican.nix`) : le plugin communautaire
-   [Pocket ID Provider](https://hub.pelican.dev/plugins/pocketid-provider) (par Ebnater) est téléchargé par Nix à une
-   version épinglée, copié dans le répertoire de plugins du Panel et enregistré par l'unité `pelican-plugins`, qui
-   installe aussi sa dépendance PHP et redémarre le Panel une fois. Les paramètres du fournisseur (`OAUTH_POCKETID_*`)
-   sont des variables d'environnement du conteneur, l'identifiant et le secret du client venant de SOPS : Paramètres >
-   OAuth ne fait que les refléter. Le plugin ne pouvant être enregistré qu'après l'installeur web, démarrer l'unité
-   après le point 1, puis vérifier Paramètres > OAuth et l'onglet OAuth du profil, où lier son propre compte :
+   [Pocket ID Provider](https://hub.pelican.dev/plugins/pocketid-provider) est téléchargé par Nix à une version
+   épinglée, copié dans le répertoire de plugins du Panel et enregistré par l'unité `pelican-plugins`. Les paramètres du
+   fournisseur (`OAUTH_POCKETID_*`) sont des variables d'environnement du conteneur, l'identifiant et le secret du
+   client venant de SOPS. Le plugin ne pouvant être enregistré qu'après l'installeur web, démarrer l'unité après le
+   point 1, puis vérifier Paramètres > OAuth et l'onglet OAuth du profil, où lier son propre compte :
 
    ```sh
    ssh root@rimbilliton-akn 'systemctl restart pelican-plugins; journalctl -u pelican-plugins --no-pager -n 20'
@@ -252,20 +247,18 @@ continu) jusqu'à l'étape 6, qui lui donne une configuration.
 
 3. **Rôles** (déclarés dans `modules/pelican.nix`) : l'unité `pelican-roles` crée le rôle `Full Admin` (toutes les
    permissions connues du Panel). L'attribuer aux utilisateurs dans la zone d'administration (Utilisateurs, champ Rôles)
-   ; `Root Admin` reste intégré et n'est pas géré par NixOS. Les utilisateurs qui créent seulement leurs propres
-   serveurs n'ont besoin d'aucun rôle (voir plus bas). Comme le plugin, l'unité exige que l'installeur web ait déjà
-   tourné :
+   ; `Root Admin` reste intégré et n'est pas géré par NixOS. Comme le plugin, l'unité exige que l'installeur web ait
+   déjà tourné :
 
    ```sh
    ssh root@rimbilliton-akn 'systemctl restart pelican-roles; journalctl -u pelican-roles --no-pager -n 10'
    ```
 
    **Serveurs créés par les utilisateurs** : le plugin officiel `user-creatable-servers` est installé de la même façon
-   (commit épinglé du dépôt de plugins, unité `pelican-plugins`). Il ajoute une action « créer un serveur » à la liste
-   des serveurs de chaque utilisateur. Les nœuds concernés doivent porter le tag `user_creatable_servers` (champ Tags du
-   nœud), et un administrateur fixe pour chaque utilisateur les limites de CPU, de mémoire, de disque et de serveurs
-   dans la zone d'administration (Utilisateurs, puis les limites de ressources de l'utilisateur). Par serveur, le module
-   plafonne les allocations à 1 et les sauvegardes à 2 (`UCS_DEFAULT_*` dans `modules/pelican.nix`).
+   (unité `pelican-plugins`) et ajoute une action « créer un serveur » à la liste des serveurs de chaque utilisateur.
+   Les nœuds concernés doivent porter le tag `user_creatable_servers` (champ Tags du nœud), et un administrateur fixe
+   pour chaque utilisateur les limites de CPU, de mémoire, de disque et de serveurs. Par serveur, le module plafonne les
+   allocations à 1 et les sauvegardes à 2 (`UCS_DEFAULT_*` dans `modules/pelican.nix`).
 
 4. **Nœud** : dans la zone d'administration, créer un nœud pour cet hôte.
    - FQDN `main.minecraft.chezmoi.sh`, port 443, « Behind Proxy » activé (Caddy termine le TLS)
@@ -287,9 +280,8 @@ continu) jusqu'à l'étape 6, qui lui donne une configuration.
 5. **Allocations** : déclarées dans `modules/pelican.nix` (`allocations` : les 16 ports de jeu `25565-25580` sur
    `0.0.0.0`, avec l'alias `minecraft.chezmoi.sh` pour que le Panel affiche le nom DNS aux joueurs). Une fois le nœud
    créé, les appliquer avec `systemctl restart pelican-allocations; journalctl -u pelican-allocations --no-pager -n 10`.
-   L'opération est idempotente : elle ne crée que les ports manquants et affiche un message si le nœud (retrouvé par son
-   FQDN) n'existe pas. La même plage est ouverte dans le NSG d'OCI et dans le pare-feu de l'hôte : garder les trois
-   synchronisées. Chaque serveur consomme une allocation.
+   L'opération est idempotente. La même plage est ouverte dans le NSG d'OCI et dans le pare-feu de l'hôte : garder les
+   trois synchronisées. Chaque serveur consomme une allocation.
 
 Le `config.yml` de Wings est rendu au démarrage à partir des secrets SOPS (monté depuis `/run/secrets/rendered`, jamais
 écrit en clair sur le disque). Le token du nœud vit dans le fichier SOPS, pas dans les sauvegardes des données du Panel.
@@ -307,38 +299,21 @@ Le `config.yml` de Wings est rendu au démarrage à partir des secrets SOPS (mon
    `restic snapshots` sur le dépôt B2. Pour restaurer depuis ces sauvegardes, voir
    [BKP-20261005-00](../procedures/backups/BKP-20261005-00-Restaurer-Minecraft-depuis-Restic.md).
 
-Les changements ultérieurs sont déployés par Tailscale :
-
-```sh
-mise run nixos:oci:update
-```
-
-La tâche exécute `nixos-rebuild switch --flake .#rimbilliton-akn-aarch64 --target-host root@rimbilliton-akn`
-(`nixos-rebuild` provient de la révision de nixpkgs verrouillée dans `flake.lock`) via `nonix`.
-
-Il n'y a pas de mise à jour automatique, volontairement : l'instance n'est pas encore supervisée et un retour arrière
-propre est difficile (voir [ADR-008](../decisions/008-kazimierz-ansible-over-kubernetes.md), qui traite de
-`kazimierz.akn` et s'applique ici aussi, et [ADR-016](../decisions/016-kazimierz-nixos-over-ansible.md)).
+Les changements ultérieurs se déploient par Tailscale avec `mise run nixos:oci:update`, qui exécute
+`nixos-rebuild switch --flake .#rimbilliton-akn-aarch64 --target-host root@rimbilliton-akn` via `nonix`. Il n'y a pas de
+mise à jour automatique, volontairement : l'instance n'est pas encore supervisée et un retour arrière propre est
+difficile (voir [ADR-008](../decisions/008-kazimierz-ansible-over-kubernetes.md), qui traite de `kazimierz.akn` et
+s'applique ici aussi, et [ADR-016](../decisions/016-kazimierz-nixos-over-ansible.md)).
 
 ## Historique
 
-- _2026-10-11_ : migration du guide `projects/rimbilliton.akn/docs/BOOTSTRAP.md` vers `docs/guides/` et traduction en
-  français. Le contenu a été confronté au dépôt.
-- _2026-10-11_ : correction du tag Tailscale. L'ancien texte exigeait `tag:minecraft` dans `tagOwners` ; le dépôt
-  utilise `tag:svc-minecraft` (`configuration.nix`, `extraUpFlags`, et `stack/tailscale.ts`, qui précise que ce tag doit
-  exister dans `tagOwners`).
-- _2026-10-11_ : table de configuration Pulumi corrigée. `cloudflare_account_id` figurait dans la table, mais aucun code
-  de `src/infrastructure/pulumi/` ne le lit (seul `cloudflare_zone_id` est lu, dans `stack/dns.ts`) ; il est retiré.
-  `pocket-id:baseUrl` (présent dans `Pulumi.rimbilliton_akn.live.yaml`) est ajouté.
-- _2026-10-11_ : l'étape 3 ne citait que `restic_*` à remplir sans nommer les clés. Elles sont explicitées
-  (`restic_password`, `restic_b2_env`, d'après `secrets/rimbilliton.example.yaml`). La durée de vie de la clé Tailscale
-  (usage unique, 7 jours, `stack/tailscale.ts`) est ajoutée.
-- _2026-10-11_ : le placeholder `REPLACE_WITH_PULUMI_OUTPUT_backupsBucketName` de `modules/backup.nix` est signalé à
-  l'étape 3, avec la commande qui donne la valeur (sortie `backupsBucketName`, exportée par `index.ts`).
-- _2026-10-11_ : `secrets/rimbilliton.sops.yaml` contient encore une clé `oauth2_proxy_env` qu'aucun module Nix du
-  projet ne lit (constaté par `grep`) ; le guide ne la mentionne pas.
-- _2026-10-11_ : le commentaire de `secrets/rimbilliton.example.yaml` indique que le client Pocket-Id est « créé à la
-  main », alors que `stack/pocket-id.ts` le gère désormais par import ; le guide suit `stack/pocket-id.ts`.
+- _2026-10-11_ : migration du guide `projects/rimbilliton.akn/docs/BOOTSTRAP.md` vers `docs/guides/`, traduit en
+  français et confronté au dépôt. Corrections : tag Tailscale `tag:svc-minecraft` (et non `tag:minecraft`),
+  configuration Pulumi sans `cloudflare_account_id` (jamais lu) et avec `pocket-id:baseUrl`, clés SOPS nommées
+  (`restic_password`, `restic_b2_env`), durée de vie de la clé Tailscale (usage unique, 7 jours) et placeholder
+  `REPLACE_WITH_PULUMI_OUTPUT_backupsBucketName` de `modules/backup.nix` signalés. La clé `oauth2_proxy_env` du fichier
+  SOPS, que plus aucun module ne lit, n'est pas mentionnée, et le guide suit `stack/pocket-id.ts` (client géré par
+  import) plutôt que le commentaire de `secrets/rimbilliton.example.yaml`.
 
 ## Pour aller plus loin
 

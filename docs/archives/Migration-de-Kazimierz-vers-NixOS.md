@@ -16,25 +16,19 @@ Le quota Always Free A1 de la tenancy étant entièrement consommé, aucune migr
 `nixos-anywhere` repartitionne le volume de démarrage, ce qui impliquait une interruption de tous les services exposés
 par Pangolin.
 
-Les grandes étapes :
+La bascule suivait un enchaînement simple. Il fallait d'abord sauvegarder l'état de Pangolin (base SQLite, clé WireGuard
+de Gerbil, certificats ACME), situé sur le volume de démarrage qui allait être effacé. On préparait ensuite la clé
+d'hôte SSH, le fichier SOPS (la valeur courante de `pangolin_server_secret` devait être conservée) et l'état restauré,
+copié sur la nouvelle racine par `--extra-files`, puis on supprimait l'ancien nœud `kazimierz-akn` de la console
+Tailscale pour libérer le nom. SSH était ouvert le temps de l'installation (`unsecure` dans la pile Pulumi), puis
+`mise run nixos:oci:install` s'exécutait. Le tableau de bord Pangolin, les sites Newt et l'Integration API se
+vérifiaient avant de refermer SSH. Le nettoyage retirait le code Ansible, mettait à jour le README et le diagramme
+d'architecture, et donnait lieu à l'ADR-016.
 
-1. Sauvegarder l'état de Pangolin (base SQLite, clé WireGuard de Gerbil, certificats ACME), situé sur le volume de
-   démarrage qui allait être effacé.
-2. Préparer la clé d'hôte SSH, le fichier SOPS (la valeur courante de `pangolin_server_secret` devait être conservée) et
-   l'état restauré, copié sur la nouvelle racine par `--extra-files`.
-3. Supprimer l'ancien nœud `kazimierz-akn` de la console Tailscale pour libérer le nom.
-4. Ouvrir SSH le temps de l'installation (`unsecure` dans la pile Pulumi), puis lancer `mise run nixos:oci:install`.
-5. Vérifier le tableau de bord Pangolin, les sites Newt et l'Integration API, puis refermer SSH.
-6. Nettoyer : retrait du code Ansible, mise à jour du README et du diagramme d'architecture, rédaction de l'ADR-016.
-
-Correspondances principales entre l'ancien et le nouveau montage :
-
-| Fonction              | Avant (Ansible)                         | Après (NixOS)                                       |
-| --------------------- | --------------------------------------- | --------------------------------------------------- |
-| Système, durcissement | rôle `system_setup`                     | `configuration.nix`                                 |
-| Conteneurs            | Docker Compose dans `/opt/pangolin`     | `modules/pangolin.nix` (`oci-containers`)           |
-| Secrets               | `host_vars` chiffrés avec ansible-vault | `secrets/kazimierz.sops.yaml` (SOPS + age)          |
-| Déploiement           | `ansible-playbook` sur SSH              | `nixos-rebuild switch --target-host` via le tailnet |
+Côté configuration, le rôle `system_setup` est devenu `configuration.nix`, et Docker Compose dans `/opt/pangolin` est
+devenu `modules/pangolin.nix` (`oci-containers`). Les `host_vars` chiffrés avec ansible-vault sont devenus
+`secrets/kazimierz.sops.yaml` (SOPS + age), et le déploiement par `ansible-playbook` sur SSH est devenu
+`nixos-rebuild switch --target-host` via le tailnet.
 
 Résultat : la bascule a été validée en production le jour même (état Pangolin restauré, 4 conteneurs en fonctionnement,
 nœud Tailscale enregistré, `tailscale serve` opérationnel). `unattended-upgrades` n'a volontairement pas été porté.
@@ -47,14 +41,16 @@ macOS, clé d'authentification Tailscale à usage unique.
 
 La migration est terminée et le code Ansible qu'elle mentionnait a été retiré de l'arbre (le dossier
 `src/infrastructure/ansible/` n'existe plus dans `projects/kazimierz.akn/`). Le guide courant pour une (ré)installation
-est [Amorcer Kazimierz](../guides/Initialiser-Kazimierz.md). La décision est portée par
+est [Initialiser Kazimierz](../guides/Initialiser-Kazimierz.md). La décision est portée par
 l'[ADR-016](../decisions/016-kazimierz-nixos-over-ansible.md), qui remplace le choix de gestion de configuration de
 l'ADR-008.
 
 ## Texte intégral
 
-Le récit complet (procédure détaillée, section de retour arrière historique) reste dans l'historique Git, dans
-`projects/kazimierz.akn/docs/MIGRATION_NIXOS.md` avant son archivage (migration de la documentation, issue #1257).
+Le texte d'origine, en anglais, est figé à
+[`projects/kazimierz.akn/docs/MIGRATION_NIXOS.md`](https://github.com/chezmoidotsh/arcane/blob/e49ecbea67da5582b6a28b14832f12d9c662f6fe/projects/kazimierz.akn/docs/MIGRATION_NIXOS.md)
+(commit `e49ecbea`, dernière version avant la migration de la documentation, issue #1257). Le lien pointe sur un commit
+: il reste valable après la suppression du fichier.
 
 ## Pour aller plus loin
 
