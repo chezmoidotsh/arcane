@@ -41,8 +41,13 @@
 - [ADR-003 Conventions de nommage des chemins OpenBao](decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md)
 - [ADR-004 Conventions de nommage des politiques OpenBao](decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md)
 - [ADR-005 Authentification OIDC par Envoy Gateway](decisions/ADR-005-Authentification-OIDC-par-Envoy-Gateway.md)
+- [ADR-008 Ansible plutôt que Kubernetes pour Kazimierz](decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md)
+- [ADR-009 Consolider les bases PostgreSQL](decisions/ADR-009-Consolider-les-Bases-PostgreSQL.md)
 
 ### Archives
+
+- [ADR-007 Structure des projets et conventions de nommage](archives/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md)
+
 
 - [Migrer les nœuds Talos du VLAN 2 au VLAN 5](archives/MIGR-20260628-00-Migrer-les-Noeuds-Talos-du-VLAN-2-au-VLAN-5.md)
 - [Ajouter une SecurityPolicy OIDC sur une HTTPRoute](archives/SEC-20250808-00-Ajouter-une-SecurityPolicy-OIDC-sur-une-HTTPRoute.md)
