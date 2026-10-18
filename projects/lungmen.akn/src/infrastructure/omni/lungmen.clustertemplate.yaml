@@ -37,7 +37,7 @@
 # Cross-references:
 #   catalog/omni/clustertemplates/base.yaml              (reference base)
 #   ADR-014  docs/decisions/014-network-topology.md      (CIDR / DNS decisions)
-#   docs/network/ipam.md                                (VLAN 5 / SDN VNet layout)
+#   docs/reference/IPAM-Reference.md                                (VLAN 5 / SDN VNet layout)
 #   catalog/omni/machineclasses/                          (machine class defs)
 # =============================================================================
 ---

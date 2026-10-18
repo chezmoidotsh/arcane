@@ -44,8 +44,8 @@ Ce qui ne peut pas être confirmé depuis le dépôt :
 - Le README de `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/omni-infra-provider-proxmox/` mentionne encore
   `vlan: 2` pour les VM Talos (ligne 275) : cette mention est probablement obsolète par rapport aux machine classes.
 
-Le VLAN 2 existe toujours dans le réseau (réseau résidentiel « Home », voir `docs/network/ipam.md`) ; seule son
-utilisation par les nœuds Talos a disparu.
+Le VLAN 2 existe toujours dans le réseau (réseau résidentiel « Home », voir `docs/reference/IPAM-Reference.md`) ; seule
+son utilisation par les nœuds Talos a disparu.
 
 ## Texte intégral
 
@@ -58,6 +58,6 @@ Le texte d'origine, en anglais, est figé à
 
 - [ADR-014 Network Topology](../decisions/014-network-topology.md) : la décision qui a motivé la migration (VLAN 5,
   double carte, SDN).
-- [Plan d'adressage IP](../network/ipam.md) : VLAN, sous-réseaux et règles inter-VLAN.
+- [Plan d'adressage IP](../reference/IPAM-Reference.md) : VLAN, sous-réseaux et règles inter-VLAN.
 - [Provisionner le SDN Proxmox](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md) : prérequis
   de la migration (VNet `talosnet`, trunk VLAN 5).

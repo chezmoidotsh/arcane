@@ -4,7 +4,7 @@ vars: {
     sketch: false
   }
 }
-...@"../assets/d2/styles.architecture.d2"
+...@"../d2/styles.architecture.d2"
 
 explanation: |md
   # Homelab Network Topology
@@ -29,14 +29,14 @@ internet: {class: [network]}
 udm-pro: {
   class: [hardware]
   label: UDM Pro\n10.0.0.1 (gateway)
-  icon: ../assets/icons/hardware/ubiquiti_unifi.svg
+  icon: ../icons/hardware/ubiquiti_unifi.svg
   tooltip: UniFi Dream Machine Pro — L3 gateway, DHCP, inter-VLAN firewall
 }
 
 wifi-ap: {
   class: [hardware]
   label: WiFi AP
-  icon: ../assets/icons/hardware/ubiquiti_unifi.svg
+  icon: ../icons/hardware/ubiquiti_unifi.svg
   tooltip: UniFi Access Point — SSID-to-VLAN mapping (Home/Guest/IoT)
 }
 

@@ -18,7 +18,8 @@ time — it was drafted proactively on 2026-07-23, ahead of this migration (see 
 > The action itself is identical to DR's own Step 1: apply the cluster template via `omnictl`, following
 > [OMNI-20260721-00](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md) through its CNI/CSI/CCM
 > validation checklist. `rhodes.akn` is already allocated cluster ID 1 / pod CIDR `172.30.0.0/19` in
-> [docs/network/ipam.md](../network/ipam.md) — that decision predates this migration and needs no revisiting here.
+> [docs/reference/IPAM-Reference.md](../reference/IPAM-Reference.md) — that decision predates this migration and needs
+> no revisiting here.
 
 ## Step 2 (openbao.md / pocket-id.md) — CNPG restore already points at amiya's backups
 
@@ -115,7 +116,7 @@ Verify with `kubectl get externalsecret -A` on `lungmen.akn`'s own context — a
   — the generic CNPG restore procedure used by `openbao.md`/`pocket-id.md` Step 2
 - [ADR-014: Homelab network topology (dual-NIC + SDN VNet)](../decisions/014-network-topology.md) — pod CIDR allocation
   referenced in Step 1
-- [docs/network/ipam.md](../network/ipam.md) — pod CIDR, Cilium LoadBalancer pool allocations
+- [docs/reference/IPAM-Reference.md](../reference/IPAM-Reference.md) — pod CIDR, Cilium LoadBalancer pool allocations
 - [external-dns TXT registry](https://kubernetes-sigs.github.io/external-dns/latest/docs/registry/txt/) — ownership
   model behind the DNS cutover section
 

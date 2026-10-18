@@ -73,10 +73,10 @@ sens, si bien qu'aucune classification `ctstate`, valide ou invalide, ne peut pl
 gère que les chaînes `PVEFW-*` de la table `filter` et les règles de zone CT de `raw`) : une règle `NOTRACK` ajoutée à
 la main n'est pas écrasée par un rechargement du pare-feu.
 
-La portée est `10.0.0.64/26`, soit tout le bloc que [IPAM](../../network/ipam.md) réserve aux pools LB Cilium (8
-clusters × /29, une tranche chacun), et non le `/29` d'un seul cluster. Cela couvre tous les clusters qui exposent une
-Gateway externe aujourd'hui comme à l'avenir, sans modification lors de l'ajout d'un cluster. Les règles équivalentes,
-en commandes directes :
+La portée est `10.0.0.64/26`, soit tout le bloc que [IPAM](../../reference/IPAM-Reference.md) réserve aux pools LB
+Cilium (8 clusters × /29, une tranche chacun), et non le `/29` d'un seul cluster. Cela couvre tous les clusters qui
+exposent une Gateway externe aujourd'hui comme à l'avenir, sans modification lors de l'ajout d'un cluster. Les règles
+équivalentes, en commandes directes :
 
 ```sh
 iptables -t raw -I PREROUTING 1 -d 10.0.0.64/26 -j NOTRACK   # tout le bloc des pools LB Cilium, tous les clusters
@@ -215,9 +215,9 @@ chaque chemin de rechargement légitime (`ifreload -a`, démarrage).
 
 ### Bloc de pools LB agrandi
 
-Si le bloc des pools LB dépasse un jour `10.0.0.64/26` (voir [IPAM](../../network/ipam.md)), mettre à jour le CIDR
-`POOL` du hook en conséquence. Aucune autre modification par cluster n'est nécessaire : le bloc est partagé par les 8
-tranches de cluster par conception.
+Si le bloc des pools LB dépasse un jour `10.0.0.64/26` (voir [IPAM](../../reference/IPAM-Reference.md)), mettre à jour
+le CIDR `POOL` du hook en conséquence. Aucune autre modification par cluster n'est nécessaire : le bloc est partagé par
+les 8 tranches de cluster par conception.
 
 ### Non répliqué sur un futur pve-02
 
@@ -241,11 +241,11 @@ n'avait pas encore fait l'objet d'une issue. Cet état n'a pas été revérifié
   entrées en un bloc `export` (`HOSTNAME` renommée `APP_HOSTNAME` pour ne pas écraser la variable du shell, `PVE_HOST`
   ajoutée), commandes de l'étape 3 découpées et exécutées par `ssh`, ajout de l'exemple complet.
 - _2026-10-11_ : Migration vers le standard de documentation (issue #1257) : page traduite en français, structure
-  alignée sur le gabarit de procédure. Liens relatifs corrigés (`../network/ipam.md` et
-  `../decisions/014-network-topology.md` devenus `../../network/ipam.md` et `../../decisions/014-network-topology.md`,
-  la page étant à deux niveaux sous `docs/`). Contenu revérifié contre le dépôt : hook `99-talosnet-lb-notrack`,
-  playbook `pve.yaml`, bloc `10.0.0.64/26` d'IPAM, `accept-new` de l'inventaire et `snat: true` de `sdn.ts` sont
-  conformes.
+  alignée sur le gabarit de procédure. Liens relatifs corrigés (`../reference/IPAM-Reference.md` et
+  `../decisions/014-network-topology.md` devenus `../../reference/IPAM-Reference.md` et
+  `../../decisions/014-network-topology.md`, la page étant à deux niveaux sous `docs/`). Contenu revérifié contre le
+  dépôt : hook `99-talosnet-lb-notrack`, playbook `pve.yaml`, bloc `10.0.0.64/26` d'IPAM, `accept-new` de l'inventaire
+  et `snat: true` de `sdn.ts` sont conformes.
 - _2026-10-08_ : Hook déplacé d'une copie en ligne vers un fichier versionné installé par `pve.yaml` (Ansible).
 - _2026-07-30_ : Portée de NOTRACK élargie du `/29` de `rhodes.akn` à tout le bloc `10.0.0.64/26` des pools LB (tous les
   clusters). Ajout des notes sur l'absence de mécanisme natif PVE et sur l'inutilité d'une réapplication par cron.
@@ -258,7 +258,7 @@ n'avait pas encore fait l'objet d'une issue. Cet état n'a pas été revérifié
   interfaces et l'entrée d'évolution du 2026-07-30 qui décrit ce correctif.
 - [Provisionner le SDN Proxmox](INF-20260627-00-Provisionner-le-SDN-Proxmox.md) : la procédure de mise en place du SDN,
   préalable à celle-ci.
-- [IPAM](../../network/ipam.md) : le plan d'adressage, dont le bloc `10.0.0.64/26` des pools LB Cilium.
+- [IPAM](../../reference/IPAM-Reference.md) : le plan d'adressage, dont le bloc `10.0.0.64/26` des pools LB Cilium.
 - [cilium/cilium#40521](https://github.com/cilium/cilium/issues/40521) et
   [cilium/cilium#43819](https://github.com/cilium/cilium/issues/43819) : l'annonce L2 ne pilote pas le routage des
   réponses, et le même mode de défaillance signalé pour Gateway API.

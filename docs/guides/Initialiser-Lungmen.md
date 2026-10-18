@@ -45,7 +45,7 @@ sans Longhorn.
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | Nom du cluster        | `lungmen-akn`                                                                                                                             |
 | Fichier de template   | [`src/infrastructure/omni/lungmen.clustertemplate.yaml`](../../projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml) |
-| CIDR de Pod (ADR-014) | `172.30.32.0/19` (cluster ID 2, voir l'[IPAM](../network/ipam.md))                                                                        |
+| CIDR de Pod (ADR-014) | `172.30.32.0/19` (cluster ID 2, voir l'[IPAM](../reference/IPAM-Reference.md))                                                            |
 | CIDR de Service / DNS | `172.31.0.0/19` / `172.31.0.10` (communs à tous les clusters, à ne pas modifier)                                                          |
 | Control plane         | `c1.minimal` × 1                                                                                                                          |
 | Workers               | `w1.large` × 3                                                                                                                            |
@@ -110,4 +110,4 @@ Suivre la procédure générique avec le tableau d'identité ci-dessus. Pour `lu
 - [Catalogue Omni](../../catalog/omni/README.md) : templates de base et machine classes partagés.
 - [README de `lungmen.akn`](../../projects/lungmen.akn/README.md) : services, développement et reprise après sinistre du
   cluster.
-- [IPAM](../network/ipam.md) : allocation des CIDR de Pod par cluster.
+- [IPAM](../reference/IPAM-Reference.md) : allocation des CIDR de Pod par cluster.

@@ -12,7 +12,7 @@ spec:
     matchLabels:
       io.cilium/lb-ipam-pool: internal
   blocks:
-    # lungmen.akn's 2-address slice of the internal talosnet range — docs/network/ipam.md
-    # "Internal LoadBalancer Pools (talosnet)" (10.128.0.242-243).
+    # lungmen.akn's 2-address slice of the internal talosnet range — docs/reference/IPAM-Reference.md
+    # "Pools LoadBalancer internes (talosnet)" (10.128.0.242-243).
     - start: 10.128.0.242
       stop: 10.128.0.243
