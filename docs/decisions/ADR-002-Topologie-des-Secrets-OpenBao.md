@@ -78,8 +78,8 @@ HashiCorp, l'organisation des secrets détermine directement les frontières de 
 - Intégration fluide avec le RBAC de Kubernetes
 - Distribution efficace des secrets vers plusieurs clusters
 
-La question stratégique à laquelle cet ADR répond : comment organiser les secrets au sein de l'instance OpenBao pour
-isoler les projets sans alourdir l'exploitation ?
+La question stratégique à laquelle cet ADR répond : **comment organiser les secrets au sein de l'instance OpenBao pour
+isoler les projets sans alourdir l'exploitation ?**
 
 ## Facteurs de décision
 

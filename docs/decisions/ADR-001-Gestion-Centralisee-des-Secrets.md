@@ -68,10 +68,10 @@ Ces limites affectent directement :
 
 ### Question stratégique
 
-Comment mettre en œuvre une solution moderne et centralisée de gestion des secrets, qui élimine les points de
+**Comment mettre en œuvre une solution moderne et centralisée de gestion des secrets, qui élimine les points de
 défaillance uniques, fournit des contrôles de sécurité de niveau entreprise et offre de meilleures capacités
 opérationnelles, tout en respectant les principes d'auto-hébergement et en s'intégrant à l'infrastructure existante (SSO
-Authelia, Kubernetes, ArgoCD) ?
+Authelia, Kubernetes, ArgoCD) ?**
 
 > [!NOTE]\
 > Note du 2026-10-11 : Authelia n'est plus le SSO du dépôt. Pocket-Id est le fournisseur d'identité unique : le backend
