@@ -49,7 +49,7 @@ export const minecraftOidcClient = new pocketid.OidcClient(
 // The pre-existing secret was not imported: Pulumi never touches it. This one
 // is generated on the first `pulumi up` and REPLACES it in Pocket-Id, so
 // `oauth_pocketid_client_secret` in the NixOS SOPS file must be updated right
-// after (docs/BOOTSTRAP.md, step 2).
+// after (docs/guides/Initialiser-Rimbilliton.md, step 2).
 const minecraftOidcClientSecretResource = new pocketid.OidcClientSecret(
 	"minecraft-secret",
 	{ clientId: minecraftOidcClient.id },

@@ -3,7 +3,7 @@
 # =============================================================================
 # Minecraft server on OCI Always Free (see ../../../README.md).
 #
-# First run: see docs/BOOTSTRAP.md (Pulumi configuration).
+# First run: see docs/guides/Initialiser-Rimbilliton.md (Pulumi configuration).
 # =============================================================================
 
 [tools]

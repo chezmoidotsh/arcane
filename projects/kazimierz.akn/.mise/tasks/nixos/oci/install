@@ -6,7 +6,10 @@
 # Needs `unsecure=true` on the Pulumi stack (SSH closed otherwise). Example: mise run nixos:oci:install ubuntu@<public-ip>
 set -euo pipefail
 
-[[ -f secrets/kazimierz.sops.yaml ]] || { echo "missing secrets/kazimierz.sops.yaml: see docs/BOOTSTRAP.md, step 1" >&2; exit 1; }
+[[ -f secrets/kazimierz.sops.yaml ]] || {
+	echo "missing secrets/kazimierz.sops.yaml: see docs/guides/Initialiser-Kazimierz.md, step 1" >&2
+	exit 1
+}
 
 mise run nixos:binding-ip
 

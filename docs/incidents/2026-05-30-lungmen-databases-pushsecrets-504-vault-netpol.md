@@ -139,10 +139,10 @@ structural condition; no branching into independent causes.
 
 ## From Lesson to Control
 
-| Lesson                                               | Artifact type    | Linked artifact                                                                    |
-| ---------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------- |
-| Broker namespace NetPols must model all egress paths | Pre-deploy check | `projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md` — post-NetPol smoke-test checklist |
-| Every RemoteClusterVault requires a vault CNP        | Comment in code  | `catalog/crossplane/clustervault.vault.chezmoi.sh/remote.x.v1alpha1.openbao.yaml`  |
+| Lesson                                               | Artifact type    | Linked artifact                                                                   |
+| ---------------------------------------------------- | ---------------- | --------------------------------------------------------------------------------- |
+| Broker namespace NetPols must model all egress paths | Pre-deploy check | `docs/guides/Amorcer-Lungmen.md` — post-NetPol smoke-test checklist               |
+| Every RemoteClusterVault requires a vault CNP        | Comment in code  | `catalog/crossplane/clustervault.vault.chezmoi.sh/remote.x.v1alpha1.openbao.yaml` |
 
 ---
 
@@ -156,7 +156,7 @@ structural condition; no branching into independent causes.
   - **If not done:** Next new remote cluster silently breaks PushSecrets, same incident shape recurs
 
 - [ ] \[due:: 2026-06-15] \[priority:: medium] \[size:: S] \[owner:: Alexandre] Add a post-NetPol smoke-test checklist
-      in `HOW_TO_BOOTSTRAP.md`: verify `ClusterSecretStore` Ready and PushSecrets Synced
+      in `docs/guides/Amorcer-Lungmen.md`: verify `ClusterSecretStore` Ready and PushSecrets Synced
   - **Verification:** "Post-NetPol validation" section present in the doc; next NetPol change in the vault namespace
     triggers the checklist
   - **If not done:** Future vault NetPol changes can silently break auth backends without detection
@@ -186,7 +186,7 @@ structural condition; no branching into independent causes.
 
 - [ ] Add comment in `catalog/crossplane/clustervault.vault.chezmoi.sh/remote.x.v1alpha1.openbao.yaml` noting
       CiliumNetworkPolicy requirement per `RemoteClusterVault`
-- [ ] Add post-NetPol smoke-test checklist in `projects/lungmen.akn/docs/HOW_TO_BOOTSTRAP.md`
+- [ ] Add post-NetPol smoke-test checklist in `docs/guides/Amorcer-Lungmen.md`
 
 ---
 
