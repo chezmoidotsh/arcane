@@ -196,11 +196,11 @@ One-time setup before the first `pulumi up` against this stack:
    it to a git-tracked file.
 
 4. **Import existing live resources** with zero recreation (see
-   `docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md` for the general procedure). Everything
-   declared in `access.ts`, `sdn.ts`, `pools.ts` and `storage.ts`, plus `acme.ts`'s `AcmeAccount`, `AcmeDnsPlugin` and
-   `AcmeCertificate`, already exists on `pve-01` — created by the manual recipes this stack replaces — and was imported
-   rather than recreated. The three ACME imports require the username/password credential from step 1: they fail under
-   an API token no matter how it is scoped, the same way `pulumi up` would.
+   `docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md` for the general
+   procedure). Everything declared in `access.ts`, `sdn.ts`, `pools.ts` and `storage.ts`, plus `acme.ts`'s
+   `AcmeAccount`, `AcmeDnsPlugin` and `AcmeCertificate`, already exists on `pve-01` — created by the manual recipes this
+   stack replaces — and was imported rather than recreated. The three ACME imports require the username/password
+   credential from step 1: they fail under an API token no matter how it is scoped, the same way `pulumi up` would.
 
    Genuinely new, not imported: the Cloudflare DNS-01 token in `acme.ts` (a deliberate rotation of the hand-configured
    one), `firewall.ts`'s `talos` Security Group (no Security Group was in use on this host before — see `firewall.ts`'s

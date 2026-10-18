@@ -147,7 +147,7 @@ one physical host.
 both require naming at least one other Proxmox node's address, and the homelab has only `pve-01`. This isn't a soft
 preference or a cost/benefit call; the API call to create the zone fails outright. `vxlan` cannot be chosen on this
 hardware today, full stop. See
-[INF-20260627-00](../procedures/infrastructure/INF-20260627-00.proxmox-sdn-setup.md#migrating-from-simple-to-vxlan-when-a-second-proxmox-node-joins)
+[INF-20260627-00](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md#migrer-de-simple-à-vxlan-quand-un-second-nœud-proxmox-rejoint-le-cluster)
 for the migration procedure to run when a second node joins and this option becomes viable again.
 
 - `+` The VNet's L2 domain can span multiple Proxmox hosts — required once there's more than one node.
@@ -173,8 +173,8 @@ Proxmox node. That's fine today (single-node homelab) and becomes the reason to 
 second node is added — this option is not a permanent substitute for Option 3, it's what today's hardware allows. The
 zone/VNet/subnet are codified in Pulumi (`projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/sdn.ts`), which
 superseded the manual `pvesh`/`pveum` steps
-[INF-20260627-00](../procedures/infrastructure/INF-20260627-00.proxmox-sdn-setup.md) originally documented. PVE 9 also
-caps VNet names at 8 alphanumeric characters, so the originally planned `vnet-talos` is named `talosnet`.
+[INF-20260627-00](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md) originally documented.
+PVE 9 also caps VNet names at 8 alphanumeric characters, so the originally planned `vnet-talos` is named `talosnet`.
 
 > **Revision (2026-06-27) — per-cluster VNets collapsed into `talosnet`.** The original design (either option) called
 > for one VNet per cluster (`vnet-lungmen`, `vnet-rhodes`, `vnet-sandbox`) carved from `10.128.0.0/16`, each providing
@@ -273,7 +273,7 @@ source IP for that call. This is a targeted exception that does not expose node 
   nodes (stable leases are persistent).
 - ⚠️ A userspace-terminated service on `eth0` (e.g. the Gateway API's embedded Envoy) needs a `pve-01` host-level
   conntrack exception to be reachable from real external clients — see the 2026-07-30 Decision Evolution entry and
-  [INF-20260730-00](../procedures/infrastructure/INF-20260730-00.pve-firewall-conntrack-notrack-external-lb.md).
+  [INF-20260730-00](../procedures/infrastructure/INF-20260730-00-Desactiver-le-Suivi-de-Connexion-des-Pools-LB.md).
 
 ### Neutral
 
@@ -337,7 +337,7 @@ source IP for that call. This is a targeted exception that does not expose node 
 - **Network diagram**: [`docs/network/topology.d2`](../network/topology.d2)
 - **Pulumi implementation**:
   [`projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/sdn.ts`](../../projects/chezmoi.sh/src/infrastructure/pulumi/stack/proxmox/sdn.ts)
-- **Setup procedure**: [INF-20260627-00](../procedures/infrastructure/INF-20260627-00.proxmox-sdn-setup.md)
+- **Setup procedure**: [INF-20260627-00](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md)
 - **Related ADRs**:
   - ADR-013: Centralized observability (NixOS LXC on Proxmox) — depends on VLAN 5 LXC networking and pve-exporter
     firewall rules documented here.
@@ -390,4 +390,4 @@ source IP for that call. This is a targeted exception that does not expose node 
 [omni-2593]: https://github.com/siderolabs/omni/issues/2593
 [cilium-40521]: https://github.com/cilium/cilium/issues/40521
 [cilium-43819]: https://github.com/cilium/cilium/issues/43819
-[inf-20260730-00]: ../procedures/infrastructure/INF-20260730-00.pve-firewall-conntrack-notrack-external-lb.md
+[inf-20260730-00]: ../procedures/infrastructure/INF-20260730-00-Desactiver-le-Suivi-de-Connexion-des-Pools-LB.md

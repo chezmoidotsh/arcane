@@ -52,6 +52,7 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
    | Post-mortem      | `incidents/`   | `Incident-YYYY-MM-DD-Title.md`        |
    | Experiment       | `experiments/` | `Experimentation-YYYY-MM-DD-Title.md` |
    | Project overview | `projects/`    | `Projet-<name>.md`                    |
+   | Archive          | `archives/`    | `<ID>-Titre.md`                       |
 
    Everything else (a diagram, an image) goes in `docs/assets/`. `Home.md`, `_Sidebar.md` and `_Footer.md` stay at the
    root of `docs/`.
@@ -94,7 +95,8 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
 6. **Diagrams as Mermaid.** A flow or a topology is a fenced `mermaid` block, not three paragraphs. Keep the source in
    the page; commit an SVG only when the diagram cannot be expressed in Mermaid (the D2 architecture diagrams).
 7. **Admonitions are for exceptions.** At most three per page (`> [!NOTE]\`, `> [!WARNING]\`). A page full of warnings
-   has none. The marker sits alone on its line and ends with a backslash, the text follows on the next `>` line **[lint]**.
+   has none. The marker sits alone on its line and ends with a backslash, the text follows on the next `>` line
+   **[lint]**.
 8. **Never put a secret in a page.** Name the OpenBao path or the SOPS file, never the value.
 9. **Markdown only, no HTML.** Links, images and tables are Markdown. `scripts/wiki:lint` and `scripts/wiki:publish`
    read Markdown links only: an `<a href>` or `<img src>` is neither checked nor rewritten for the wiki.
@@ -124,6 +126,11 @@ ADRs and post-mortems are history. When they move to the wiki:
 - fix structure and wording only: headings, links, the `Pour aller plus loin` section;
 - change a status only when the repository proves it changed, and say why in the changelog section of the record;
 - never rewrite a past decision to match the present: write a new ADR that supersedes it.
+
+Archives (`docs/archives/`) are written in sentences, without numbered lists, tables or command blocks: the full text is
+one link away. That link is an absolute URL to the last trunk commit that holds the original
+(`https://github.com/<owner>/<repo>/blob/<sha>/<path>`); a link that starts with `/` is read from the repository root at
+the current branch, so it does not work.
 
 ## Review checklist
 

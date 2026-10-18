@@ -73,7 +73,7 @@ it. The cluster's MachineClass references that VNet.
 
 Adding a _new_ VNet instead requires an ACL granting `PVESDNUser` to the Omni identity on it, or the infra provider
 cannot attach NICs to guests there. See
-[`INF-20260627-00.proxmox-sdn-setup.md`](../../../docs/procedures/infrastructure/INF-20260627-00.proxmox-sdn-setup.md).
+[`INF-20260627-00-Provisionner-le-SDN-Proxmox.md`](../../../docs/procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md).
 
 ### Restore a guest from backup
 
@@ -102,7 +102,7 @@ are stored in OpenBao (`vault.chezmoi.sh`) — see
    this procedure is ever needed.
 3. Re-register the PBS storage, then restore the NAS VM (`nas.chezmoi.sh`) first: Garage on the NAS holds this stack's
    own Pulumi state, so no `pulumi` command can run until it is back (see
-   [`INF-20260705-00.pulumi-state-and-import.md`](../../../docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md)).
+   [`INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md`](../../../docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md)).
 4. Restore the platform LXCs: Omni is what rebuilds the Talos clusters.
 5. Re-apply this stack (`mise run pulumi:apply`) to recreate roles, identities, ACLs, pools, SDN, and the firewall
    baseline.
@@ -117,7 +117,7 @@ pulumi import proxmox:index/<type>:<Type> <name> <id>
 ```
 
 See
-[`INF-20260705-00.pulumi-state-and-import.md`](../../../docs/procedures/infrastructure/INF-20260705-00.pulumi-state-and-import.md).
+[`INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md`](../../../docs/procedures/infrastructure/INF-20260705-00-Gerer-l-Etat-Pulumi-et-Importer-des-Ressources.md).
 
 > [!IMPORTANT]
 > ACME resources cannot be imported or applied with an API token. Proxmox VE's ACME endpoints reject token
