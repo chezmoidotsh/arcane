@@ -147,3 +147,11 @@ Before opening a pull request that touches `docs/`:
 - [ ] No fact is copied from another page: a link replaces it.
 - [ ] The page is written in French, with accents.
 - [ ] The page is in `_Sidebar.md` and ends with `Pour aller plus loin`.
+- [ ] The verification state (what was checked, what was not replayed) is a `[!WARNING]` callout, not a plain sentence.
+- [ ] The inputs of a guide or a procedure are declared once, in one `export` block.
+- [ ] An acronym is spelled out at its first use (Proxmox Backup Server, then PBS), and the prose says « hyperviseur
+      Proxmox » rather than the host name.
+- [ ] No English loanword where French has one (_conteneur_, not _appliance_).
+- [ ] The migration of a page is one history entry, not one entry per intermediate step.
+- [ ] An archive is written in sentences (no list, table or command block) and links the original text with an absolute
+      URL (`scripts/archive-link.sh`).
