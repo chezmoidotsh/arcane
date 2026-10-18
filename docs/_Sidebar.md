@@ -33,11 +33,14 @@
 - [Plan d'adressage (IPAM)](reference/IPAM-Reference.md)
 - [Passerelles et DNS](reference/Passerelles-et-DNS-Reference.md)
 - [Renovate](reference/Renovate-Reference.md)
-- [Décisions d'Architecture](decisions/001-centralized-secret-management.md)
 
-8 other conflicted commits exist — scope with `but resolve conflicts <branch>`. Resolve with
-`but resolve apply <path>[:<N>] --commit docs/balayage-final --ours|--theirs` or pipe mixed content into
-`but resolve apply <path>:<N> --commit docs/balayage-final`. `but resolve --ai` resolves everything at once.
+### Décisions d'Architecture
+
+- [ADR-001 Gestion centralisée des secrets](decisions/ADR-001-Gestion-Centralisee-des-Secrets.md)
+- [ADR-002 Topologie des secrets OpenBao](decisions/ADR-002-Topologie-des-Secrets-OpenBao.md)
+- [ADR-003 Conventions de nommage des chemins OpenBao](decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md)
+- [ADR-004 Conventions de nommage des politiques OpenBao](decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md)
+- [ADR-005 Authentification OIDC par Envoy Gateway](decisions/ADR-005-Authentification-OIDC-par-Envoy-Gateway.md)
 
 ### Archives
 

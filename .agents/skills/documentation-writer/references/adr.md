@@ -45,15 +45,15 @@ When in doubt, write a short draft and let the user decide whether it deserves a
    project-specific best practices — to anchor the reasoning in something a reader can follow up on independently. The
    existing ADRs set a high bar here.
 
-4. **Draft:** Use the template at the bottom of this skill. Strip its authoring scaffolding (the
-   `<!-- ADR TEMPLATE … -->` comment, every `>` blockquote block, and the `[Optional]` labels on any optional sections
-   you keep — see "ADR Template" below for the full list), but keep the `template-version` frontmatter field — it
+4. **Draft:** Use `references/adr-template.md` (see "ADR Template" below). The ADR is written in French. Strip the
+   template's authoring scaffolding (the `<!-- GABARIT D'ADR … -->` comment, every `>` blockquote block, and the
+   `[Facultatif]` labels on any optional sections you keep), but keep the `template-version` frontmatter field — it
    records which template revision produced the ADR. Then read the draft with fresh eyes against "Anti-patterns to
    avoid" below: is every claim either validated or explicitly marked as expected? Is the core argument stated once, not
    four times? Does the title name the _same single_ decision as the strategic question?
 
-5. **Cross-reference:** Link related ADRs in "References and Related Decisions". Scan existing files to find candidates
-   — the chain of decisions (001 → 002 → 003) in this repo is a model.
+5. **Cross-reference:** Link related ADRs in `## Pour aller plus loin` (relative `.md` links). Scan existing files to
+   find candidates — the chain of decisions (001 → 002 → 003) in this repo is a model.
 
 6. **Write:** Save the file and present it to the user for review.
 
@@ -63,11 +63,11 @@ When the user wants to change status, record a pivot, or add a changelog entry:
 
 1. Read the target ADR fully before touching it.
 2. Make the minimal targeted update:
-   - Status change → update `status` in frontmatter + add to `Decision Evolution` if the decision itself changed, + add
-     a `Changelog` entry.
-   - Implementation progress → update `Implementation Details / Status` + `Changelog`.
+   - Status change → update `status` in frontmatter + add to `Évolution de la décision` if the decision itself changed,
+     and add an `Historique des modifications` entry.
+   - Implementation progress → update `Détails de mise en œuvre et état` + `Historique des modifications`.
    - Post-implementation deprecation → update `status`, add `> [!CAUTION]` callout on deprecated content, update `date`,
-     add `Changelog` entry.
+     add `Historique des modifications` entry.
 3. Update `date` in frontmatter to today's date.
 4. If the change is significant, show the user a before/after of the key sections.
 
@@ -83,9 +83,11 @@ implementation-completed: YYYY-MM-DD # optional, add only once implemented
 decision-makers: ["Alexandre"] # the human(s) who own this decision
 assisted-by: ["claude-sonnet-4.6"] # AI models that contributed; format: <model-name>
 informed: []
-template-version: "1.1.0" # ADR template revision this file was created from
+template-version: "2.0.0" # ADR template revision this file was created from
 ---
 ```
+
+The keys and the `status` values stay in English: scripts and the ADR convention read them.
 
 The `assisted-by` field records which AI models contributed to the analysis or drafting during this session. Use the
 model identifier from the system prompt. `decision-makers` should always include the human responsible — in this repo,
@@ -93,11 +95,35 @@ that is "Alexandre" unless stated otherwise.
 
 ### Naming and location
 
-Files live in `docs/decisions/`. Names are lowercase kebab-case with a 3-digit zero-padded prefix, e.g.
-`010-migrate-to-postgresql.md`. Determine the next number by finding the highest existing number and incrementing — do
-not fill sequence gaps.
+Files live in `docs/decisions/`. Names are `ADR-NNN-Titre-En-Francais.md`: a 3-digit zero-padded number, then the French
+title in `Title-Case-With-Hyphens` (ASCII, no accents), e.g. `ADR-010-Migrer-Vers-PostgreSQL.md`. The single `#` title
+matches the file name: `# ADR-010 Migrer vers PostgreSQL`. Determine the next number by finding the highest existing
+number and incrementing — do not fill sequence gaps.
 
-### Context and Problem Statement — the most important section
+The ADR is written in French (see the "Language" section of the [style guide](style-guide.md)). When an existing ADR is
+migrated to this format, it keeps its number, its decision, its chronology and its frontmatter. Its `status` changes
+only if the repository proves the change (code, manifests, a later ADR), and that change gets an
+`Historique des modifications` entry.
+
+### Section names
+
+The sections of the template, in order. A `##` heading is never skipped or renamed; optional ones are dropped when
+empty.
+
+1. `## Contexte et problème` (Context and Problem Statement)
+2. `## Hors périmètre` (Non-Goals, optional)
+3. `## Facteurs de décision` (Decision Drivers)
+4. `## Options envisagées` (Considered Options, with `### Option N : …`)
+5. `## Décision retenue` (Decision Outcome)
+6. `## Conséquences` (optional, with `### Positives`, `### Négatives`, `### Neutres`)
+7. `## Détails de mise en œuvre et état` (Implementation Details / Status, optional)
+8. `## Évolution de la décision` (Decision Evolution, optional)
+9. `## Historique des modifications` (Changelog)
+10. `## Pour aller plus loin` (references and related decisions, always last)
+
+The sections below use these French names.
+
+### Contexte et problème — the most important section
 
 This section fails most often. A strong context does three things:
 
@@ -109,16 +135,16 @@ This section fails most often. A strong context does three things:
    (ADR-001), "How can we reduce resource overhead and operational complexity of PostgreSQL instances while maintaining
    security and performance…" (ADR-009).
 
-### Considered options — give them substance
+### Options envisagées — give them substance
 
 Each option should have a paragraph describing _how it works architecturally and what its impact would be_. Pros/cons
 bullets alone are not enough — a reader should be able to understand the option without any prior knowledge. Mark the
 status of each option using a bold text marker on the first line:
 
 ```markdown
-### Option N: Title
+### Option N : Titre
 
-> **Status: ACCEPTED** (or REJECTED, or PROPOSED)
+> **Statut : ACCEPTÉE** (ou REJETÉE, ou PROPOSÉE)
 
 Paragraph describing the option...
 
@@ -126,17 +152,16 @@ Paragraph describing the option...
 - `-` con
 ```
 
-When several options were rejected with strong reasoning, consider adding an "Alternatives Considered and Rejected"
-subsection (see ADR-002 for an example) that dedicates a paragraph to _why_ each rejected option was ruled out — not
-just that it was.
+When several options were rejected with strong reasoning, consider adding an "Alternatives écartées" subsection (see
+ADR-002 for an example) that dedicates a paragraph to _why_ each rejected option was ruled out — not just that it was.
 
-### Decision Outcome — argue, don't just state
+### Décision retenue — argue, don't just state
 
 "We chose X because it is better" is not a rationale. Explain specifically how the chosen option addresses each decision
 driver, what trade-offs were accepted and why they are acceptable given the context, and what would need to change for a
 different option to win.
 
-### Non-Goals — say what you are NOT deciding
+### Hors périmètre — say what you are NOT deciding
 
 State explicitly what the ADR does _not_ decide. This is not padding — it is the cheapest way to prevent three failure
 modes:
@@ -169,9 +194,9 @@ These are the recurring ways ADRs go wrong. Named anti-patterns follow Olaf Zimm
   option _the moment they are stated_, that option is not really discriminating the decision. Prefer options that all
   pass the hard constraints, so the rationale has to argue the _real_ trade-off (e.g. two viable designs separated by
   blast radius, not by a constraint one of them fails outright).
-- **Restating instead of arguing (repetition)** — the same argument appearing in Context, every option's cons, the
-  Decision Outcome, and Consequences reads as length without information. State the core argument _once_, sharply, in
-  the Decision Outcome; elsewhere refer to it, don't re-derive it. Density of reasoning per line matters more than word
+- **Restating instead of arguing (repetition)** — the same argument appearing in Contexte et problème, every option's
+  cons, Décision retenue, and Conséquences reads as length without information. State the core argument _once_, sharply,
+  in Décision retenue; elsewhere refer to it, don't re-derive it. Density of reasoning per line matters more than word
   count.
 - **Mega-ADR / more than one decision** — one ADR decides one thing. If the title says one decision but the options
   quietly bundle several (tool choice _and_ execution model _and_ operational policy), split them or narrow the framing.
@@ -181,21 +206,20 @@ These are the recurring ways ADRs go wrong. Named anti-patterns follow Olaf Zimm
 
 ### Optional sections — include when they add value
 
-| Section                                  | Include when                                                                                                                                               |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Non-Goals**                            | A settled premise, a deliberately excluded adjacent area, or a knowingly dropped capability could be misread as an oversight (see "Non-Goals" above)       |
-| **Consequences**                         | The decision has non-obvious downstream effects worth calling out explicitly                                                                               |
-| **Implementation Details / Status**      | A high-level architecture diagram or current rollout status is useful; avoid runbooks and low-level configs (those belong in Git or `docs/procedures/`)    |
-| **Decision Evolution**                   | The decision pivoted during implementation — document _why_ with the specific technical discovery that caused the pivot (ADR-001 is the canonical example) |
-| **Alternatives Considered and Rejected** | Multiple options were seriously considered and rejected with non-obvious reasons (ADR-002)                                                                 |
-| **Future Considerations**                | Specific, concrete future evolution paths are worth capturing (ADR-002)                                                                                    |
-| **References and Related Decisions**     | Always — link upstream ADRs, relevant RFCs, official docs, security frameworks                                                                             |
+| Section                                 | Include when                                                                                                                                               |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Hors périmètre**                      | A settled premise, a deliberately excluded adjacent area, or a knowingly dropped capability could be misread as an oversight (see "Hors périmètre" above)  |
+| **Conséquences**                        | The decision has non-obvious downstream effects worth calling out explicitly                                                                               |
+| **Détails de mise en œuvre et état**    | A high-level architecture diagram or current rollout status is useful; avoid runbooks and low-level configs (those belong in Git or `docs/procedures/`)    |
+| **Évolution de la décision**            | The decision pivoted during implementation — document _why_ with the specific technical discovery that caused the pivot (ADR-001 is the canonical example) |
+| **Alternatives écartées** (sub-section) | Multiple options were seriously considered and rejected with non-obvious reasons (ADR-002)                                                                 |
+| **Pour aller plus loin**                | Always, and always last — link upstream ADRs (relative `.md` links), relevant RFCs, official docs, security frameworks                                     |
 
 Never include a section just to have it. An omitted section is better than a section with placeholder text.
 
 ### Diagrams
 
-Use ASCII or Mermaid diagrams in "Implementation Details / Status" when a visual helps understand the resulting
+Use ASCII or Mermaid diagrams in `Détails de mise en œuvre et état` when a visual helps understand the resulting
 architecture. ADR-001 and ADR-002 have good examples. The template supports Mermaid code blocks natively.
 
 ### Callout syntax
@@ -229,14 +253,14 @@ Anchor reasoning in authoritative sources. Examples from existing ADRs:
 
 A reader who wants to go deeper should be able to follow the references independently.
 
-### Changelog
+### Historique des modifications
 
-Every material change to an ADR after its creation gets a changelog entry:
+Every material change to an ADR after its creation gets an entry, and so does every `status` change:
 
 ```markdown
-## Changelog
+## Historique des modifications
 
-- **YYYY-MM-DD**: **PREFIX**: Description of what changed and why.
+- **AAAA-MM-JJ** : **PRÉFIXE** : Description de ce qui a changé et pourquoi.
 ```
 
 Entries run from the most recent to the oldest.
@@ -278,14 +302,15 @@ boundaries (shared certificates, third-party credentials) live in a dedicated `s
 **Good — decision evolution capturing a real pivot:**
 
 ```markdown
-## Decision Evolution
+## Évolution de la décision
 
-- **2025-01-20**: Initial Decision — Infisical, chosen for its modern UI and apparent OIDC support in the open-source
-  version.
-- **2025-01-23**: Revised Decision — HashiCorp Vault, because OIDC SSO was discovered to be Enterprise-only in
-  Infisical, fundamentally breaking the Authelia integration.
-- **2025-01-24**: Revised Decision — OpenBao, because PKCS#11 auto-unseal (required to avoid storing unseal keys in the
-  cluster) is Enterprise-only in HashiCorp Vault. OpenBao includes this capability in its open-source release.
+- **2025-01-20** : Décision initiale — Infisical, choisi pour son interface moderne et son support OIDC apparent dans la
+  version open source.
+- **2025-01-23** : Décision révisée — HashiCorp Vault, parce que le SSO OIDC s'est révélé réservé à l'édition Enterprise
+  d'Infisical, ce qui cassait l'intégration avec Authelia.
+- **2025-01-24** : Décision révisée — OpenBao, parce que le déverrouillage automatique PKCS#11 (nécessaire pour ne pas
+  stocker les clés de déverrouillage dans le cluster) est réservé à l'édition Enterprise de HashiCorp Vault. OpenBao
+  l'inclut dans sa version open source.
 ```
 
 ## References
@@ -317,24 +342,32 @@ tracked, and so each ADR records the template revision it was born from (via the
   - `MAJOR` — a change that would make old ADRs look structurally wrong (a required section added/removed/renamed).
   - `MINOR` — a new optional section, or non-breaking authoring-guidance changes carried into the template.
   - `PATCH` — wording/typo fixes in the template's instructions.
-- **When you change the template**, bump the version in _three_ places in sync: the `<!-- ADR TEMPLATE vX.Y.Z -->`
-  comment, the `template-version` frontmatter default, and the changelog below. Existing ADRs are **not** back-migrated
-  — their `template-version` records the revision they were written under, which is the point.
+- **When you change the template**, bump the version in _four_ places in sync: the `<!-- GABARIT D'ADR vX.Y.Z -->`
+  comment, the `template-version` frontmatter default, the example in "Frontmatter" above, and the changelog below.
+  Existing ADRs are **not** back-migrated by a template change alone — their `template-version` records the revision
+  they were written under, which is the point. An ADR translated during the documentation migration is the exception: it
+  is rewritten on the current template and takes its version.
 
 ### Template changelog
 
+- **2.0.0** (2026-10-11): Template translated into French; sections renamed (`Contexte et problème`, `Hors périmètre`,
+  `Facteurs de décision`, `Options envisagées`, `Décision retenue`, `Conséquences`, `Détails de mise en œuvre et état`,
+  `Évolution de la décision`, `Historique des modifications`, `Pour aller plus loin`). The manual table of contents is
+  removed, `References and Related Decisions` becomes the final `Pour aller plus loin` section (relative `.md` links),
+  and the `#` title takes the form `# ADR-NNN Titre` to match the file name `ADR-NNN-Titre-En-Francais.md`. Frontmatter
+  keys and `status` values are unchanged.
 - **1.1.0** (2026-07-05): Added the **Non-Goals** optional section; introduced `template-version` provenance in
   frontmatter; expanded authoring guidance with the "Anti-patterns to avoid" and "Non-Goals" standards
   (unsupported/unmeasured claims, repetition, one-decision scope, dummy alternatives). Prompted by the ADR-015 review.
-- **1.0.0**: Initial template extracted from `docs/decisions/000-adr-template.md` into this skill as the single source
-  of truth.
+- **1.0.0**: Initial template, kept in this skill as the single source of truth.
 
 ---
 
 ## ADR Template
 
 The authoritative template is at `references/adr-template.md` (relative to this skill). Read that file and copy its
-content verbatim as the starting point for a new ADR, then, before saving: delete the `<!-- ADR TEMPLATE … -->` HTML
-comment (it sits just after the frontmatter), remove all `>` blockquote authoring instructions, strip the `[Optional]`
-labels from the headings (and TOC entries) of the optional sections you keep — dropping any optional section you don't
-use — and keep the `template-version` frontmatter field.
+content verbatim as the starting point for a new ADR, then, before saving: delete the `<!-- GABARIT D'ADR … -->` HTML
+comment (it sits just after the frontmatter), remove all `>` blockquote authoring instructions, strip the `[Facultatif]`
+labels from the headings of the optional sections you keep — dropping any optional section you don't use — and keep the
+`template-version` frontmatter field. The page keeps a single `#` title, no `####`, and ends with
+`## Pour aller plus loin`.

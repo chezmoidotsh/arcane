@@ -26,10 +26,10 @@ related-incidents:
   - path: "docs/incidents/2026-05-30-lungmen-databases-pushsecrets-504-vault-netpol.md"
     relation: "Same ESO → OpenBao → lungmen kube-apiserver auth chain — second failure mode on same path"
 related-adrs:
-  - "docs/decisions/001-centralized-secret-management.md"
-  - "docs/decisions/002-openbao-secrets-topology.md"
-  - "docs/decisions/003-openbao-path-naming-conventions.md"
-  - "docs/decisions/004-openbao-policy-naming-conventions.md"
+  - "docs/decisions/ADR-001-Gestion-Centralisee-des-Secrets.md"
+  - "docs/decisions/ADR-002-Topologie-des-Secrets-OpenBao.md"
+  - "docs/decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md"
+  - "docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md"
 ---
 
 # Post-Mortem: lungmen.akn ClusterSecretStore Vault Authentication Failure

@@ -40,9 +40,10 @@ false-positive shapes documented below — it's the source of truth for what eac
    progress signal — the recursive KV walk can take a few seconds per mount) and the Markdown report to stdout. Exit
    code is `1` if any finding exists, `0` if clean.
 3. **Read every section**, don't just report the finding count:
-   - **Naming convention drift** — cross-check against `docs/decisions/003-openbao-path-naming-conventions.md` before
-     treating a flag as real; the checker is deliberately conservative (character set, category enum for `shared/`,
-     minimum path depth for per-cluster mounts) and can't validate everything ADR-003 describes.
+   - **Naming convention drift** — cross-check against
+     `docs/decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md` before treating a flag as real; the checker
+     is deliberately conservative (character set, category enum for `shared/`, minimum path depth for per-cluster
+     mounts) and can't validate everything ADR-003 describes.
    - **Dangling references** — these are the highest-confidence findings. A `dist/` ExternalSecret or Pulumi call
      pointing at a path with no live secret means a sync is currently broken (`SecretSyncedError`) or a `pulumi up` will
      fail. If the fix is an obvious typo (compare against a working sibling reference to the same mount/category), fix

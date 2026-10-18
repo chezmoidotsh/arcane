@@ -1153,7 +1153,7 @@ resources:
 - `api-keys/` - Third-party API tokens
 - `certificates/` - Application-specific TLS certificates
 
-**Reference**: See [ADR-003: OpenBao Path Naming Conventions](./003-openbao-path-naming-conventions.md)
+**Reference**: See [ADR-003: OpenBao Path Naming Conventions](./ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md)
 
 #### 9.2 ExternalSecret Configuration
 
@@ -1480,11 +1480,14 @@ For each new application:
 
 ### Internal Documentation
 
-- [ADR-003: OpenBao Path Naming Conventions](./003-openbao-path-naming-conventions.md) - Secret path structure
-- [ADR-004: OpenBao Policy Naming Conventions](./004-openbao-policy-naming-conventions.md) - Policy standards
+- [ADR-003: OpenBao Path Naming Conventions](./ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md) - Secret path
+  structure
+- [ADR-004: OpenBao Policy Naming Conventions](./ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md) - Policy
+  standards
 - [CLAUDE.md](../../CLAUDE.md) - Repository structure overview
 - [ArgoCD README](../../projects/amiya.akn/src/apps/argocd/README.md) - ArgoCD app structure and sync conventions
-- [Renovate Configuration Guide](../reference/Renovate-Reference.md) - Automated dependency management with label and image tracking
+- [Renovate Configuration Guide](../reference/Renovate-Reference.md) - Automated dependency management with label and
+  image tracking
 
 ### Kubernetes Standards
 
