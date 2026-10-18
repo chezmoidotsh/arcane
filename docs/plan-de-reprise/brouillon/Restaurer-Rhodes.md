@@ -30,8 +30,11 @@ Accès et états requis :
 | Accès à la stack Pulumi `rhodes-akn-infra`   | `pulumi login` fait et stack sélectionnée, pour les `pulumi up` des étapes 3 et 7. Il faut aussi l'accès à la stack Pulumi de `chezmoi.sh` (étape 3). |
 | Token root d'OpenBao                         | Récupéré à l'avance dans le gestionnaire de secrets personnel : il sert aux étapes 5 et 7. Il n'est consigné nulle part dans le dépôt.                |
 
-Entrée requise : `CLUSTER_CONTEXT`, le contexte `kubectl` du nouveau cluster (par exemple `admin@rhodes.akn`), écrit
-`<CLUSTER_CONTEXT>` dans les commandes.
+Exporter le contexte `kubectl` du nouveau cluster une fois ; les commandes suivantes se copient ensuite telles quelles :
+
+```sh
+export CLUSTER_CONTEXT=<contexte kubectl du nouveau cluster>   # ex. admin@rhodes.akn
+```
 
 Le détail du token root et de la reprise d'accès à OpenBao est dans [Restaurer OpenBao](Restaurer-OpenBao.md).
 
@@ -63,11 +66,11 @@ d'ArgoCD, qui n'existe pas encore à ce stade.
 
 ```sh
 for ns in proxmox-system cert-manager-system cloudnative-pg-system external-secrets-system external-dns-system; do
-  kubectl --context <CLUSTER_CONTEXT> create namespace "$ns" --dry-run=client -o yaml \
-    | kubectl --context <CLUSTER_CONTEXT> apply --server-side -f -
+  kubectl --context ${CLUSTER_CONTEXT} create namespace "$ns" --dry-run=client -o yaml \
+    | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
 done
 
-kubectl --context <CLUSTER_CONTEXT> label namespace proxmox-system pod-security.kubernetes.io/enforce=privileged pod-security.kubernetes.io/enforce-version=v1.33
+kubectl --context ${CLUSTER_CONTEXT} label namespace proxmox-system pod-security.kubernetes.io/enforce=privileged pod-security.kubernetes.io/enforce-version=v1.33
 ```
 
 > [!WARNING]\
@@ -81,16 +84,16 @@ kubectl --context <CLUSTER_CONTEXT> label namespace proxmox-system pod-security.
 Appliquer ensuite chaque application, une à la fois :
 
 ```sh
-kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cilium/
-kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/proxmox/
-kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cert-manager/
-kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cloudnative-pg/
-kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-secrets/
-kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-dns/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cilium/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/proxmox/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cert-manager/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cloudnative-pg/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-secrets/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/external-dns/
 
 kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/infrastructure/kubernetes/external-dns/sops \
-  | kubectl --context <CLUSTER_CONTEXT> apply -f -
-kubectl --context <CLUSTER_CONTEXT> apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cilium/
+  | kubectl --context ${CLUSTER_CONTEXT} apply -f -
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/infrastructure/kubernetes/cilium/
 ```
 
 Notes sur ce bloc :
@@ -181,9 +184,9 @@ Le `pulumi up` de `rhodes.akn` écrit aussi `cnpg-backup-credentials` dans trois
 cd projects/chezmoi.sh/src/infrastructure/pulumi
 pulumi up --refresh --parallel 15
 
-kubectl --context <CLUSTER_CONTEXT> create namespace vault --dry-run=client -o yaml | kubectl --context <CLUSTER_CONTEXT> apply --server-side -f -
-kubectl --context <CLUSTER_CONTEXT> create namespace pocket-id --dry-run=client -o yaml | kubectl --context <CLUSTER_CONTEXT> apply --server-side -f -
-kubectl --context <CLUSTER_CONTEXT> create namespace o11y-system --dry-run=client -o yaml | kubectl --context <CLUSTER_CONTEXT> apply --server-side -f -
+kubectl --context ${CLUSTER_CONTEXT} create namespace vault --dry-run=client -o yaml | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
+kubectl --context ${CLUSTER_CONTEXT} create namespace pocket-id --dry-run=client -o yaml | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
+kubectl --context ${CLUSTER_CONTEXT} create namespace o11y-system --dry-run=client -o yaml | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
 
 cd projects/rhodes.akn/src/infrastructure/pulumi
 pulumi config set recovery true
@@ -222,8 +225,8 @@ qu'il faut contrôler à la main, pas comme un outil à lancer tel quel.
 Confirmer aussi qu'ESO et l'opérateur CNPG sont démarrés, car les étapes 5 et 6 dépendent des deux :
 
 ```sh
-kubectl --context <CLUSTER_CONTEXT> get pods -n external-secrets-system
-kubectl --context <CLUSTER_CONTEXT> get pods -n cloudnative-pg-system
+kubectl --context ${CLUSTER_CONTEXT} get pods -n external-secrets-system
+kubectl --context ${CLUSTER_CONTEXT} get pods -n cloudnative-pg-system
 # → les deux en Running (le ClusterSecretStore vault.chezmoi.sh reste lui-même en échec jusqu'à l'étape 5 : attendu)
 # → external-dns-unifi peut aussi passer en CrashLoopBackOff/CreateContainerConfigError ici : son
 #   ExternalSecret (external-dns-unifi-secret, issu de vault.chezmoi.sh) ne peut pas se synchroniser avant
@@ -304,11 +307,11 @@ Le namespace `argocd` n'est livré par aucun fichier de `dist/argocd/` (l'`Appli
 `CreateNamespace=true`) : le créer avant l'application.
 
 ```sh
-kubectl --context <CLUSTER_CONTEXT> create namespace argocd --dry-run=client -o yaml | kubectl --context <CLUSTER_CONTEXT> apply --server-side -f -
-kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/dist/argocd/
+kubectl --context ${CLUSTER_CONTEXT} create namespace argocd --dry-run=client -o yaml | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
+kubectl --context ${CLUSTER_CONTEXT} apply -f projects/rhodes.akn/dist/argocd/
 kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/argocd/sops \
-  | kubectl --context <CLUSTER_CONTEXT> apply -f -
-kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/src/bootstrap.applications.yaml
+  | kubectl --context ${CLUSTER_CONTEXT} apply -f -
+kubectl --context ${CLUSTER_CONTEXT} apply -f projects/rhodes.akn/src/bootstrap.applications.yaml
 ```
 
 ArgoCD s'auto-héberge sur `rhodes.akn` (modèle hub, voir la
@@ -333,7 +336,7 @@ devrait être nécessaire.
 | Pocket-Id                           | vérifications rapides de [Restaurer Pocket-Id](Restaurer-Pocket-Id.md)                                                                                                               | 6                              |
 | ESO entièrement synchronisé         | `kubectl get externalsecret -A` montre `SecretSynced`, pas `SecretSyncedError`                                                                                                       | 7                              |
 | cert-manager, external-dns, Gateway | Un `Certificate` est émis ; les enregistrements DNS internes sont publiés par external-dns (UniFi et BIND)                                                                           | 2, fonctionnels immédiatement  |
-| `external-dns/sops` appliqué        | `kubectl --context <CLUSTER_CONTEXT> get secret external-dns-bind-secret -n external-dns-system` existe                                                                              | 2                              |
+| `external-dns/sops` appliqué        | `kubectl --context ${CLUSTER_CONTEXT} get secret external-dns-bind-secret -n external-dns-system` existe                                                                             | 2                              |
 | ArgoCD                              | L'`Application` `seed` et chaque `Application` adoptée sont en `Synced`/`Healthy`                                                                                                    | 9                              |
 
 ## Historique

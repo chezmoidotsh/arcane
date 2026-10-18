@@ -140,7 +140,7 @@ L'instance exécute encore l'image Ubuntu d'origine, qui n'a pas `cpio` ; `nixos
 l'initrd kexec (`aborted: no cpio command found`). L'installer d'abord, depuis un shell qui atteint l'agent SSH :
 
 ```sh
-IP=$(pulumi -C ../pulumi stack output publicIp)
+export IP=$(pulumi -C ../pulumi stack output publicIp)
 ssh ubuntu@"$IP" 'sudo apt-get update -qq && sudo apt-get install -y cpio'
 ```
 

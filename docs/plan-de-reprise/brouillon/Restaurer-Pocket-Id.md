@@ -45,7 +45,11 @@ Accès et état requis :
 - Pour vérifier la connexion par passkey de bout en bout (étape 4), la Gateway et un certificat TLS valide pour
   `auth.chezmoi.sh` (voir l'encadré ci-dessus).
 
-Entrée requise : `CLUSTER_CONTEXT`, le contexte kubectl du nouveau cluster (par exemple `admin@rhodes.akn`).
+Exporter le contexte `kubectl` du nouveau cluster une fois ; les commandes suivantes se copient ensuite telles quelles :
+
+```sh
+export CLUSTER_CONTEXT=<contexte kubectl du nouveau cluster>   # ex. admin@rhodes.akn
+```
 
 ## Étapes
 
@@ -60,17 +64,17 @@ Vault (Pocket-Id n'a aucune dépendance à Vault, par conception) :
 # pocket-id-secrets : le seul secret qui reste chiffré avec SOPS dans le dépôt
 # (le secret de configuration de l'application, voir sops/config.secret.yaml)
 kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/apps/pocket-id/sops \
-  | kubectl --context <CLUSTER_CONTEXT> apply -f -
+  | kubectl --context ${CLUSTER_CONTEXT} apply -f -
 
 # pocket-id-database-pocket-id : généré localement par un Generator d'ESO, sans
 # Vault. ESO doit déjà être déployé (étape 2 de Restaurer Rhodes).
-kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/src/apps/pocket-id/database.externalsecret.yaml
+kubectl --context ${CLUSTER_CONTEXT} apply -f projects/rhodes.akn/src/apps/pocket-id/database.externalsecret.yaml
 ```
 
 Vérifier que les trois secrets sont présents :
 
 ```sh
-kubectl --context <CLUSTER_CONTEXT> get secrets -n pocket-id
+kubectl --context ${CLUSTER_CONTEXT} get secrets -n pocket-id
 # → pocket-id-secrets, cnpg-backup-credentials, pocket-id-database-pocket-id présents
 ```
 
@@ -79,15 +83,15 @@ kubectl --context <CLUSTER_CONTEXT> get secrets -n pocket-id
 Suivre en entier la procédure
 [DB-20260723-00](../../procedures/databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md), avec :
 
-| Entrée                     | Valeur                                                             |
-| -------------------------- | ------------------------------------------------------------------ |
-| `NAMESPACE`                | `pocket-id`                                                        |
-| `CLUSTER_MANIFEST`         | `projects/rhodes.akn/src/apps/pocket-id/cnpg.cluster.yaml`         |
-| `OBJECTSTORE_MANIFEST`     | `projects/rhodes.akn/src/apps/pocket-id/cnpg.objectstore.yaml`     |
-| `SCHEDULEDBACKUP_MANIFEST` | `projects/rhodes.akn/src/apps/pocket-id/cnpg.scheduledbackup.yaml` |
+```sh
+export NAMESPACE=pocket-id
+export CLUSTER_MANIFEST=projects/rhodes.akn/src/apps/pocket-id/cnpg.cluster.yaml
+export OBJECTSTORE_MANIFEST=projects/rhodes.akn/src/apps/pocket-id/cnpg.objectstore.yaml
+export SCHEDULEDBACKUP_MANIFEST=projects/rhodes.akn/src/apps/pocket-id/cnpg.scheduledbackup.yaml
+```
 
 Deux tâches `mise` (définies dans `projects/rhodes.akn/docs/disaster-recovery/.mise.toml`) allègent la procédure :
-`mise run dr:pocket-id:backup:latest -- <CLUSTER_CONTEXT>` affiche le dernier `serverName`, et
+`mise run dr:pocket-id:backup:latest -- ${CLUSTER_CONTEXT}` affiche le dernier `serverName`, et
 `mise run dr:pocket-id:patch-recovery -- <SERVER_NAME>` l'écrit dans `cnpg.cluster.yaml`. Cette seconde tâche modifie le
 fichier uniquement et n'exécute aucun `kubectl apply`.
 
@@ -109,13 +113,13 @@ nouveau `serverName`), régénérer `dist/` avant de l'appliquer, sans quoi `dis
 
 ```sh
 dist:render projects/rhodes.akn/src/apps/pocket-id
-kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/dist/apps/pocket-id/
+kubectl --context ${CLUSTER_CONTEXT} apply -f projects/rhodes.akn/dist/apps/pocket-id/
 ```
 
 Suivre le démarrage :
 
 ```sh
-kubectl --context <CLUSTER_CONTEXT> get pods -n pocket-id -w
+kubectl --context ${CLUSTER_CONTEXT} get pods -n pocket-id -w
 # → le Pod pocket-id-server est Running
 ```
 
@@ -133,7 +137,7 @@ Pour valider la connexion par passkey, préférer l'override `/etc/hosts` décri
 par passkey (voir l'encadré plus haut).
 
 ```sh
-kubectl --context <CLUSTER_CONTEXT> port-forward -n pocket-id svc/pocket-id 8080:80 &
+kubectl --context ${CLUSTER_CONTEXT} port-forward -n pocket-id svc/pocket-id 8080:80 &
 curl -sI http://localhost:8080/ | head -1
 # → HTTP/1.1 200 (ou une redirection vers la page de connexion)
 ```

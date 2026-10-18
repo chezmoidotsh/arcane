@@ -57,7 +57,11 @@ Accès et état requis :
 - Le root token, récupéré à l'avance dans le gestionnaire de secrets personnel de l'opérateur, nécessaire à l'étape 5.
   Il n'est suivi nulle part dans ce dépôt.
 
-Entrée requise : `CLUSTER_CONTEXT`, le contexte kubectl du nouveau cluster (par exemple `admin@rhodes.akn`).
+Exporter le contexte `kubectl` du nouveau cluster une fois ; les commandes suivantes se copient ensuite telles quelles :
+
+```sh
+export CLUSTER_CONTEXT=<contexte kubectl du nouveau cluster>   # ex. admin@rhodes.akn
+```
 
 ## Étapes
 
@@ -70,11 +74,11 @@ Le namespace `vault` et le secret `cnpg-backup-credentials` existent déjà (ét
 # openbao-softhsm-tokens : le seul secret qui doit rester chiffré avec SOPS dans Git
 # (aucune solution de repli en cas de perte, voir l'avertissement ci-dessous)
 kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/apps/vault/sops \
-  | kubectl --context <CLUSTER_CONTEXT> apply -f -
+  | kubectl --context ${CLUSTER_CONTEXT} apply -f -
 
 # openbao-database-credentials : généré localement par un Generator ESO, sans Vault
 # (ESO doit déjà être déployé, voir Restaurer Rhodes, étape 2)
-kubectl --context <CLUSTER_CONTEXT> apply -n vault -f projects/rhodes.akn/src/apps/vault/database.externalsecret.yaml
+kubectl --context ${CLUSTER_CONTEXT} apply -n vault -f projects/rhodes.akn/src/apps/vault/database.externalsecret.yaml
 ```
 
 L'option `-n vault` est indispensable : `database.externalsecret.yaml` n'a pas de champ `namespace:` (il s'appuie sur le
@@ -84,7 +88,7 @@ dans le namespace par défaut du contexte kubectl.
 Vérifier que les trois secrets sont présents :
 
 ```sh
-kubectl --context <CLUSTER_CONTEXT> get secrets -n vault
+kubectl --context ${CLUSTER_CONTEXT} get secrets -n vault
 # → openbao-softhsm-tokens, cnpg-backup-credentials, openbao-database-credentials présents
 ```
 
@@ -99,17 +103,17 @@ Suivre en entier la
 [Procédure DB-20260723-00](../../procedures/databases/DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet.md), avec
 les entrées suivantes :
 
-| Entrée                     | Valeur                                                         |
-| -------------------------- | -------------------------------------------------------------- |
-| `NAMESPACE`                | `vault`                                                        |
-| `CLUSTER_MANIFEST`         | `projects/rhodes.akn/src/apps/vault/cnpg.cluster.yaml`         |
-| `OBJECTSTORE_MANIFEST`     | `projects/rhodes.akn/src/apps/vault/cnpg.objectstore.yaml`     |
-| `SCHEDULEDBACKUP_MANIFEST` | `projects/rhodes.akn/src/apps/vault/cnpg.scheduledbackup.yaml` |
+```sh
+export NAMESPACE=vault
+export CLUSTER_MANIFEST=projects/rhodes.akn/src/apps/vault/cnpg.cluster.yaml
+export OBJECTSTORE_MANIFEST=projects/rhodes.akn/src/apps/vault/cnpg.objectstore.yaml
+export SCHEDULEDBACKUP_MANIFEST=projects/rhodes.akn/src/apps/vault/cnpg.scheduledbackup.yaml
+```
 
 Deux tâches `mise` (à lancer depuis `projects/rhodes.akn/docs/disaster-recovery/`) encapsulent les étapes manuelles :
 
 ```sh
-mise run dr:openbao:backup:latest -- <CLUSTER_CONTEXT>   # affiche le dernier serverName (étapes 1 et 2 de la procédure)
+mise run dr:openbao:backup:latest -- ${CLUSTER_CONTEXT}   # affiche le dernier serverName (étapes 1 et 2 de la procédure)
 mise run dr:openbao:patch-recovery -- <SERVER_NAME>      # l'écrit dans cnpg.cluster.yaml (étape 3 de la procédure)
 ```
 
@@ -129,7 +133,7 @@ Revenir ici quand les vérifications rapides de la procédure passent (`Cluster 
 ### 3. Appliquer le reste de l'application `vault`
 
 ```sh
-kubectl --context <CLUSTER_CONTEXT> apply -f projects/rhodes.akn/dist/apps/vault/
+kubectl --context ${CLUSTER_CONTEXT} apply -f projects/rhodes.akn/dist/apps/vault/
 ```
 
 Cette commande applique le `StatefulSet` OpenBao, le `ServiceAccount` `openbao` et le `ClusterRoleBinding`
@@ -137,16 +141,16 @@ Cette commande applique le `StatefulSet` OpenBao, le `ServiceAccount` `openbao` 
 `HTTPRoute`. Suivre le démarrage du Pod :
 
 ```sh
-kubectl --context <CLUSTER_CONTEXT> get pods -n vault -w
+kubectl --context ${CLUSTER_CONTEXT} get pods -n vault -w
 ```
 
 ### 4. Vérifier l'unseal automatique
 
 ```sh
-POD=$(kubectl --context <CLUSTER_CONTEXT> get pods -n vault -l app.kubernetes.io/name=vault \
+POD=$(kubectl --context ${CLUSTER_CONTEXT} get pods -n vault -l app.kubernetes.io/name=vault \
   -o jsonpath='{.items[0].metadata.name}')
 
-kubectl --context <CLUSTER_CONTEXT> exec -n vault "$POD" -- bao status -tls-skip-verify
+kubectl --context ${CLUSTER_CONTEXT} exec -n vault "$POD" -- bao status -tls-skip-verify
 # → Sealed: false
 # → Storage Type: postgresql
 ```
@@ -168,7 +172,7 @@ disponibles (ArgoCD n'est pas amorcé, cert-manager n'a peut-être rien émis) :
 `vault.chezmoi.sh`.
 
 ```sh
-kubectl --context <CLUSTER_CONTEXT> port-forward -n vault svc/openbao 8200:8200 &
+kubectl --context ${CLUSTER_CONTEXT} port-forward -n vault svc/openbao 8200:8200 &
 
 export VAULT_ADDR=http://localhost:8200
 export VAULT_TOKEN="<root token du gestionnaire de secrets>"
@@ -196,7 +200,7 @@ reconfiguration manuelle :
 
 ```sh
 # Une fois ESO déployé et un SecretStore/ExternalSecret existant pour ce cluster :
-kubectl --context <CLUSTER_CONTEXT> get externalsecret -A
+kubectl --context ${CLUSTER_CONTEXT} get externalsecret -A
 # → SecretSyncedError doit disparaître en un intervalle de rafraîchissement ; s'il persiste,
 #   reconfigurer à la main :
 #   bao write auth/rhodes.akn/config kubernetes_host="https://kubernetes.default.svc.cluster.local" disable_local_ca_jwt=false
