@@ -48,6 +48,8 @@ spec:
               name: newt-credentials
         - name: LOG_LEVEL
           value: INFO
+        - name: ACCEPT_CLIENTS
+          value: "true"
         image: oci.chezmoi.sh/docker.io/fosrl/newt:1.12.5
         imagePullPolicy: IfNotPresent
         name: newt

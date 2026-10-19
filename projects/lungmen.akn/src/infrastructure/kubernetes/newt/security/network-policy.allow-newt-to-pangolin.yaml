@@ -20,3 +20,7 @@ spec:
         - ports:
             - port: "51820"
               protocol: UDP
+        # Hole punching / relay towards Gerbil for Pangolin clients (private resources)
+        - ports:
+            - port: "21820"
+              protocol: UDP
