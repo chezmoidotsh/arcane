@@ -1,5 +1,5 @@
 import {
-	blockHighRiskCountries,
+	edgeAccess,
 	must,
 	withHealthcheck,
 } from "@chezmoi.sh/pulumi-lib";
@@ -11,8 +11,9 @@ import { lungmenSiteId } from "./index";
 // Pangolin just proxies), but unlike the other apps only the endpoints meant
 // to be called from the outside are published: the editor, the REST API and
 // the test webhooks stay reachable from the LAN only (through the HTTPRoute).
-// Rules are evaluated by ascending priority: geo-blocking (1-8), then the
-// allowed paths, then a catch-all DROP.
+// Rules are evaluated by ascending priority: the edge rules of
+// edgeAccess.apply (which end with the catch-all DROP) come with the
+// allowed paths.
 export const n8nResource = new pangolin.Resource("n8n-chezmoi-sh", {
 	name: "n8n",
 	mode: "http",
@@ -47,7 +48,7 @@ new pangolin.Target(
 	{ parent: n8nResource },
 );
 
-blockHighRiskCountries("n8n-chezmoi-sh", n8nResource.resourceId, {
+edgeAccess.apply("n8n-chezmoi-sh", n8nResource.resourceId, {
 	parent: n8nResource,
 });
 
@@ -74,15 +75,3 @@ PUBLIC_PATHS.forEach((path, i) => {
 		{ parent: n8nResource },
 	);
 });
-
-new pangolin.ResourceRule(
-	"n8n-chezmoi-sh-drop-everything-else",
-	{
-		resourceId: n8nResource.resourceId,
-		action: "DROP",
-		match: "PATH",
-		value: "/*",
-		priority: 100,
-	},
-	{ parent: n8nResource },
-);
