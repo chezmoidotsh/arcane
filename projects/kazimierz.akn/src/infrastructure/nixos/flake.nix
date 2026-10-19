@@ -2,7 +2,7 @@
   description = "kazimierz.akn — Pangolin + Gerbil + Traefik public gateway on OCI Always Free ARM";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-26.05";
+    nixpkgs.url = "nixpkgs/nixos-unstable";
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
