@@ -27,6 +27,9 @@ helmCharts:
               endpointKey: "PANGOLIN_ENDPOINT"
               idKey: "NEWT_ID"
               secretKey: "NEWT_SECRET"
+          # Required for Pangolin private resources (n8n.chezmoi.sh): without it
+          # Newt only serves public targets and refuses client (Olm) traffic.
+          acceptClients: true
           enabled: true
 
 # kustomize's namespace transformer does not post-process helmCharts resources.
