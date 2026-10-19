@@ -1,4 +1,5 @@
-# GeoLite2-Country database used by Pangolin's geoblocking, refreshed nightly.
+# GeoLite2 databases used by Pangolin, refreshed nightly: Country for the country rules and ASN for the ASN rules
+# (https://docs.pangolin.net/self-host/advanced/enable-asn-lookup).
 #
 # Source: github.com/GitSquared/node-geolite2-redist, a community mirror (no MaxMind account or license key involved;
 # accepted knowingly, see the former roles/pangolin/tasks/geoip.yml). Revisit if the mirror proves unreliable.
@@ -8,7 +9,7 @@ let
 in
 {
   systemd.services.pangolin-geoip-update = {
-    description = "Refresh the GeoLite2-Country database used by Pangolin";
+    description = "Refresh the GeoLite2 databases (Country and ASN) used by Pangolin";
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
     # Seeds the database on first boot, before Pangolin needs it.
@@ -24,14 +25,17 @@ in
       mkdir -p ${geoipDir}
       tmp=$(mktemp -d)
       trap 'rm -rf "$tmp"' EXIT
-      curl -fsSL --retry 3 -o "$tmp/geo.tar.gz" \
-        https://github.com/GitSquared/node-geolite2-redist/raw/refs/heads/master/redist/GeoLite2-Country.tar.gz
-      tar -xzf "$tmp/geo.tar.gz" -C "$tmp"
-      mmdb=$(find "$tmp" -name GeoLite2-Country.mmdb | head -n1)
-      test -n "$mmdb"
-      # Atomic replacement: Pangolin never sees a half-written file.
-      install -m 0644 "$mmdb" ${geoipDir}/.GeoLite2-Country.mmdb.new
-      mv ${geoipDir}/.GeoLite2-Country.mmdb.new ${geoipDir}/GeoLite2-Country.mmdb
+      for edition in Country ASN; do
+        curl -fsSL --retry 3 -o "$tmp/$edition.tar.gz" \
+          https://github.com/GitSquared/node-geolite2-redist/raw/refs/heads/master/redist/GeoLite2-$edition.tar.gz
+        mkdir "$tmp/$edition"
+        tar -xzf "$tmp/$edition.tar.gz" -C "$tmp/$edition"
+        mmdb=$(find "$tmp/$edition" -name GeoLite2-$edition.mmdb | head -n1)
+        test -n "$mmdb"
+        # Atomic replacement: Pangolin never sees a half-written file.
+        install -m 0644 "$mmdb" ${geoipDir}/.GeoLite2-$edition.mmdb.new
+        mv ${geoipDir}/.GeoLite2-$edition.mmdb.new ${geoipDir}/GeoLite2-$edition.mmdb
+      done
     '';
   };
 

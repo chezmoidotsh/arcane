@@ -30,4 +30,13 @@ export const chezmoiShOrg = new pangolin.Org("chezmoi-sh", {
 	name: "chezmoi.sh",
 	subnet: "172.16.1.0/24",
 	utilitySubnet: "172.16.2.0/24",
+	// Audit log retention in days (0 disables retention). Request logs are the
+	// biggest and only matter for short-term triage, so they and the connection
+	// (net) logs are kept briefly; auth/access and admin action logs are kept
+	// longer for incident investigation. The access, action and connection logs
+	// need an enterprise subscription on Pangolin Cloud.
+	logRetentionDaysRequest: 15,
+	logRetentionDaysConnection: 10,
+	logRetentionDaysAccess: 90,
+	logRetentionDaysAction: 90,
 });

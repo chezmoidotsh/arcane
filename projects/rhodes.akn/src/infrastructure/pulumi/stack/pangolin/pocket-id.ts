@@ -1,5 +1,5 @@
 import {
-	blockHighRiskCountries,
+	edgeAccess,
 	must,
 	withHealthcheck,
 } from "@chezmoi.sh/pulumi-lib";
@@ -9,8 +9,8 @@ import { rhodesSiteId } from "./index";
 
 // Full public bypass, per the org's security policy: no SSO in front of any
 // app behind this org (each app handles its own auth, Pangolin just
-// proxies). The only edge protection is geo-blocking a handful of
-// high-risk source countries below.
+// proxies). The only edge protection is the country/ASN rules below
+// (see edgeAccess.apply).
 export const authResource = new pangolin.Resource("auth-chezmoi-sh", {
 	name: "Pocket-Id",
 	mode: "http",
@@ -45,6 +45,6 @@ new pangolin.Target(
 	{ parent: authResource },
 );
 
-blockHighRiskCountries("auth-chezmoi-sh", authResource.resourceId, {
+edgeAccess.apply("auth-chezmoi-sh", authResource.resourceId, {
 	parent: authResource,
 });

@@ -1,5 +1,5 @@
 import {
-	blockHighRiskCountries,
+	edgeAccess,
 	must,
 	withHealthcheck,
 } from "@chezmoi.sh/pulumi-lib";
@@ -11,7 +11,8 @@ import { rhodesSiteId } from "./index";
 // app behind this org (each app handles its own auth, Pangolin just
 // proxies). Grafana already gates its own login via generic_oauth against
 // Pocket-Id (see infrastructure/kubernetes/o11y/grafana.instance.yaml) --
-// same shape as every other app here, not an exception.
+// same shape as every other app here, not an exception. The only edge
+// protection is the country/ASN rules below (see edgeAccess.apply).
 export const grafanaResource = new pangolin.Resource("grafana-chezmoi-sh", {
 	name: "Grafana",
 	mode: "http",
@@ -46,6 +47,6 @@ new pangolin.Target(
 	{ parent: grafanaResource },
 );
 
-blockHighRiskCountries("grafana-chezmoi-sh", grafanaResource.resourceId, {
+edgeAccess.apply("grafana-chezmoi-sh", grafanaResource.resourceId, {
 	parent: grafanaResource,
 });
