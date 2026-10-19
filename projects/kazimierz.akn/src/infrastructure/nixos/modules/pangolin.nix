@@ -173,6 +173,7 @@ let
     server = {
       secret = ph.pangolin_server_secret;
       maxmind_db_path = "./config/geoip/GeoLite2-Country.mmdb";
+      maxmind_asn_path = "./config/geoip/GeoLite2-ASN.mmdb";
       integration_port = integrationPort;
       cors.allowed_origins = corsAllowedOrigins;
     };
