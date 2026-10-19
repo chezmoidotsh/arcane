@@ -1,4 +1,8 @@
-import { blockHighRiskCountries, must } from "@chezmoi.sh/pulumi-lib";
+import {
+	blockHighRiskCountries,
+	must,
+	withHealthcheck,
+} from "@chezmoi.sh/pulumi-lib";
 import * as pangolin from "@pulumi/pangolin";
 
 import { rhodesSiteId } from "./index";
@@ -30,12 +34,15 @@ export const grafanaResource = new pangolin.Resource("grafana-chezmoi-sh", {
 
 new pangolin.Target(
 	"grafana-chezmoi-sh-target",
-	{
-		resourceId: grafanaResource.resourceId,
-		siteId: rhodesSiteId,
-		ip: "grafana-service.o11y-system.svc.cluster.local",
-		port: 3000,
-	},
+	withHealthcheck.http(
+		{
+			resourceId: grafanaResource.resourceId,
+			siteId: rhodesSiteId,
+			ip: "grafana-service.o11y-system.svc.cluster.local",
+			port: 3000,
+		},
+		{ path: "/api/health" },
+	),
 	{ parent: grafanaResource },
 );
 

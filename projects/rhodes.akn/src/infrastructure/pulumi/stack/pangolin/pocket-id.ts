@@ -1,4 +1,8 @@
-import { blockHighRiskCountries, must } from "@chezmoi.sh/pulumi-lib";
+import {
+	blockHighRiskCountries,
+	must,
+	withHealthcheck,
+} from "@chezmoi.sh/pulumi-lib";
 import * as pangolin from "@pulumi/pangolin";
 
 import { rhodesSiteId } from "./index";
@@ -29,12 +33,15 @@ export const authResource = new pangolin.Resource("auth-chezmoi-sh", {
 
 new pangolin.Target(
 	"auth-chezmoi-sh-target",
-	{
-		resourceId: authResource.resourceId,
-		siteId: rhodesSiteId,
-		ip: "pocket-id.pocket-id.svc.cluster.local",
-		port: 80,
-	},
+	withHealthcheck.http(
+		{
+			resourceId: authResource.resourceId,
+			siteId: rhodesSiteId,
+			ip: "pocket-id.pocket-id.svc.cluster.local",
+			port: 80,
+		},
+		{ path: "/healthz", status: 204 },
+	),
 	{ parent: authResource },
 );
 

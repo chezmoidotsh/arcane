@@ -49,3 +49,57 @@ export function blockHighRiskCountries(
 			new pangolin.ResourceRule(`${namePrefix}-${name}`, args, opts),
 	);
 }
+
+// -----------------------------------------------------------------------------
+// Health checks
+// -----------------------------------------------------------------------------
+/** Every `hc*` input of a `pangolin.Target`, without the `hc` prefix
+ * (`hcUnhealthyInterval` becomes `unhealthyInterval`). `enabled` and `mode`
+ * are set by the helper, `health` is an output. */
+export type HealthcheckOptions = {
+	[K in keyof pangolin.TargetArgs as K extends `hc${infer R}`
+		? Uncapitalize<R>
+		: never]?: pangolin.TargetArgs[K];
+};
+
+const HTTP_DEFAULTS = {
+	scheme: "http",
+	method: "GET",
+	status: 200,
+	followRedirects: true,
+	interval: 5,
+	unhealthyInterval: 30,
+	timeout: 5,
+	healthyThreshold: 1,
+	unhealthyThreshold: 1,
+};
+
+/** Adds an active health check to `pangolin.Target` arguments. Every field is
+ * set explicitly: left unset, Pangolin does not always apply server-side
+ * defaults (port/scheme/interval came back empty on some targets), and Newt
+ * then silently skips the probe, leaving the target `unhealthy`. */
+export const withHealthcheck = {
+	/** HTTP probe of the target's own `ip`:`port` on `path`. `hostname` and
+	 * `port` can be overridden, as can any other probe setting. */
+	http<T extends { ip: string; port: number }>(
+		args: T,
+		options: Omit<HealthcheckOptions, "enabled" | "mode" | "health"> & {
+			path: string;
+		},
+	): T & pangolin.TargetArgs {
+		const merged = {
+			...HTTP_DEFAULTS,
+			hostname: args.ip,
+			port: args.port,
+			...options,
+		};
+		const hc = Object.fromEntries(
+			Object.entries(merged).map(([k, v]) => [
+				`hc${k[0].toUpperCase()}${k.slice(1)}`,
+				v,
+			]),
+		);
+		return { ...args, ...hc, hcEnabled: true, hcMode: "http" } as T &
+			pangolin.TargetArgs;
+	},
+};

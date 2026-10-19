@@ -1,4 +1,8 @@
-import { blockHighRiskCountries, must } from "@chezmoi.sh/pulumi-lib";
+import {
+	blockHighRiskCountries,
+	must,
+	withHealthcheck,
+} from "@chezmoi.sh/pulumi-lib";
 import * as pangolin from "@pulumi/pangolin";
 
 import { lungmenSiteId } from "./index";
@@ -29,12 +33,15 @@ export const photosResource = new pangolin.Resource("photos-chezmoi-sh", {
 
 new pangolin.Target(
 	"photos-chezmoi-sh-target",
-	{
-		resourceId: photosResource.resourceId,
-		siteId: lungmenSiteId,
-		ip: "immich-server.immich.svc.cluster.local",
-		port: 2283,
-	},
+	withHealthcheck.http(
+		{
+			resourceId: photosResource.resourceId,
+			siteId: lungmenSiteId,
+			ip: "immich-server.immich.svc.cluster.local",
+			port: 2283,
+		},
+		{ path: "/api/server/ping" },
+	),
 	{ parent: photosResource },
 );
 

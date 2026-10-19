@@ -1,4 +1,8 @@
-import { blockHighRiskCountries, must } from "@chezmoi.sh/pulumi-lib";
+import {
+	blockHighRiskCountries,
+	must,
+	withHealthcheck,
+} from "@chezmoi.sh/pulumi-lib";
 import * as pangolin from "@pulumi/pangolin";
 
 import { lungmenSiteId } from "./index";
@@ -29,12 +33,15 @@ export const streamingResource = new pangolin.Resource("streaming-chezmoi-sh", {
 
 new pangolin.Target(
 	"streaming-chezmoi-sh-target",
-	{
-		resourceId: streamingResource.resourceId,
-		siteId: lungmenSiteId,
-		ip: "jellyfin.jellyfin.svc.cluster.local",
-		port: 80,
-	},
+	withHealthcheck.http(
+		{
+			resourceId: streamingResource.resourceId,
+			siteId: lungmenSiteId,
+			ip: "jellyfin.jellyfin.svc.cluster.local",
+			port: 80,
+		},
+		{ path: "/health" },
+	),
 	{ parent: streamingResource },
 );
 
