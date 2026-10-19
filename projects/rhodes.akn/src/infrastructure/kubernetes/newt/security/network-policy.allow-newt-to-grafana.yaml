@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows Newt to access the Grafana application.
+  name: allow-newt-to-grafana
+  namespace: newt-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: newt
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: o11y-system
+            app.kubernetes.io/name: grafana
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
