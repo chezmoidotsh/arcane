@@ -10,8 +10,9 @@ import {
 } from "./pangolin";
 
 describe("edgeAccess.ruleArgs", () => {
-	const { denyCountries, denyAsns, allowCountries } = edgeAccess.ruleArgs(42);
-	const all = [...denyCountries, ...denyAsns, ...allowCountries];
+	const { trustedIps, denyCountries, denyAsns, allowCountries } =
+		edgeAccess.ruleArgs(42, ["192.0.2.1"]);
+	const all = [...trustedIps, ...denyCountries, ...denyAsns, ...allowCountries];
 
 	it("emits one rule per list entry, on the given resource", () => {
 		expect(denyCountries).to.have.lengthOf(HIGH_RISK_COUNTRIES.length);
@@ -31,6 +32,21 @@ describe("edgeAccess.ruleArgs", () => {
 		for (const { args } of allowCountries) {
 			expect(args).to.include({ action: "ACCEPT", match: "COUNTRY" });
 		}
+	});
+
+	it("accepts the trusted IPs before every deny rule", () => {
+		expect(trustedIps).to.have.lengthOf(1);
+		for (const { args } of trustedIps) {
+			expect(args).to.include({
+				action: "ACCEPT",
+				match: "IP",
+				value: "192.0.2.1",
+			});
+		}
+		const prios = trustedIps.map((r) => r.args.priority as number);
+		expect(Math.max(...prios)).to.be.lessThan(
+			Math.min(...denyCountries.map((r) => r.args.priority as number)),
+		);
 	});
 
 	it("checks denied countries first, then ASNs, then the allow-list", () => {

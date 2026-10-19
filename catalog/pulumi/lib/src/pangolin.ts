@@ -1,11 +1,12 @@
 import * as pangolin from "@pulumi/pangolin";
-import type * as pulumi from "@pulumi/pulumi";
+import * as pulumi from "@pulumi/pulumi";
 
 // -----------------------------------------------------------------------------
 // Access rules
 // -----------------------------------------------------------------------------
 // Every fully public (no-SSO) resource gets the same edge rules, evaluated by
 // ascending priority (first match wins):
+//   0. ACCEPT the trusted IPs (our own egress), before any deny rule;
 //   1. DROP the countries at risk;
 //   2. DROP the ASNs of the big clouds, hosters and VPNs;
 //   3. ACCEPT Japan and Europe;
@@ -16,7 +17,19 @@ import type * as pulumi from "@pulumi/pulumi";
 // login. Residential and mobile ISPs are deliberately not listed, so a user
 // behind a VPN, iCloud Private Relay or a cloud-hosted device is dropped too.
 
-/** Countries dropped before anything else, hostile to the West or sources of
+/** Our own egress, accepted before every deny rule. The OCI ASN is denied,
+ * yet Pangolin on kazimierz calls the identity provider through its own public
+ * edge (OIDC token exchange), so it would otherwise be blocked. Read from the
+ * kazimierz.akn stack output, one StackReference shared by every caller. */
+let kazimierzEgressIp: pulumi.Output<string> | undefined;
+function getKazimierzEgressIp(): pulumi.Output<string> {
+	kazimierzEgressIp ??= new pulumi.StackReference("kazimierz.akn", {
+		name: "organization/kazimierz-akn-infra/kazimierz_akn.live",
+	}).getOutput("egressIp") as pulumi.Output<string>;
+	return kazimierzEgressIp;
+}
+
+/** Countries dropped right after the trusted IPs, hostile to the West or sources of
  * state-linked abuse. */
 export const HIGH_RISK_COUNTRIES = [
 	"US", // United States -- largest volume of automated scraping/credential-stuffing traffic
@@ -132,7 +145,8 @@ export const DENIED_ASNS = [
 ] as const;
 
 // Priorities leave room for each list to grow without renumbering.
-const DENY_COUNTRY_PRIORITY_BASE = 1;
+const TRUSTED_IP_PRIORITY_BASE = 1;
+const DENY_COUNTRY_PRIORITY_BASE = 10;
 const DENY_ASN_PRIORITY_BASE = 100;
 const ALLOW_COUNTRY_PRIORITY_BASE = 200;
 const DROP_ALL_PRIORITY = 500;
@@ -142,12 +156,26 @@ type NamedRuleArgs = { name: string; args: pangolin.ResourceRuleArgs };
 /** Pure resource-rule shapes of the three lists, kept separate from resource
  * creation below so the mapping itself is unit-testable without a Pulumi
  * runtime. */
-function edgeRuleArgs(resourceId: pulumi.Input<number>): {
+function edgeRuleArgs(
+	resourceId: pulumi.Input<number>,
+	trustedIps: pulumi.Input<string>[] = [],
+): {
+	trustedIps: NamedRuleArgs[];
 	denyCountries: NamedRuleArgs[];
 	denyAsns: NamedRuleArgs[];
 	allowCountries: NamedRuleArgs[];
 } {
 	return {
+		trustedIps: trustedIps.map((ip, i) => ({
+			name: `allow-trusted-ip-${i}`,
+			args: {
+				resourceId,
+				action: "ACCEPT",
+				match: "IP",
+				value: ip,
+				priority: TRUSTED_IP_PRIORITY_BASE + i,
+			},
+		})),
 		denyCountries: HIGH_RISK_COUNTRIES.map((code, i) => ({
 			name: `block-${code.toLowerCase()}`,
 			args: {
@@ -209,12 +237,15 @@ function applyEdgeAccessRules(
 	resourceId: pulumi.Input<number>,
 	opts?: pulumi.CustomResourceOptions,
 ): pangolin.ResourceRule[] {
-	const { denyCountries, denyAsns, allowCountries } = edgeRuleArgs(resourceId);
+	const { trustedIps, denyCountries, denyAsns, allowCountries } =
+		edgeRuleArgs(resourceId, [getKazimierzEgressIp()]);
 	const create = ({ name, args }: NamedRuleArgs) =>
 		new pangolin.ResourceRule(`${namePrefix}-${name}`, args, opts);
+	const trusted = trustedIps.map(create);
 	const denies = [...denyCountries, ...denyAsns].map(create);
 	const allows = allowCountries.map(create);
 	return [
+		...trusted,
 		...denies,
 		...allows,
 		dropEverything(namePrefix, resourceId, { ...opts, dependsOn: allows }),
@@ -227,7 +258,7 @@ export const edgeAccess = {
 	ruleArgs: edgeRuleArgs,
 	/** Catch-all DROP; alone, it denies the whole resource. */
 	dropEverything,
-	/** Country deny-list, ASN deny-list, country allow-list, then catch-all DROP. */
+	/** Trusted IPs, country deny-list, ASN deny-list, country allow-list, then catch-all DROP. */
 	apply: applyEdgeAccessRules,
 };
 
