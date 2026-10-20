@@ -17,6 +17,7 @@ resources:
   - security/
 
 images:
+  # oripathy: type=oci upstream=github.com/actualbudget/actual tagPrefix=v name=actual-budget
   # renovate: datasource=docker depName=ghcr.io/actualbudget/actual-server
   - name: ghcr.io/actualbudget/actual-server
     newName: oci.chezmoi.sh/ghcr.io/actualbudget/actual-server

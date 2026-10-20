@@ -21,10 +21,12 @@ resources:
   - security/
 
 images:
+  # oripathy: type=oci upstream=github.com/paperless-ngx/paperless-ngx tagPrefix=v
   # renovate: datasource=docker depName=ghcr.io/paperless-ngx/paperless-ngx
   - name: ghcr.io/paperless-ngx/paperless-ngx
     newName: oci.chezmoi.sh/ghcr.io/paperless-ngx/paperless-ngx
     newTag: 3.1.0@sha256:49eba766581b9134cfa6b584b9eb718355fb9cfbd44b2a7c9c72a427d4891648
+  # oripathy: type=oci upstream=github.com/redis/redis
   # renovate: datasource=docker depName=docker.io/library/redis
   - name: docker.io/library/redis
     newName: oci.chezmoi.sh/docker.io/library/redis

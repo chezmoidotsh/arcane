@@ -1,3 +1,4 @@
+# oripathy: type=nixpkg pkg=victorialogs upstream=github.com/VictoriaMetrics/VictoriaLogs tagPrefix=v
 # ─────────────────────────────────────────────────────────────────────────────
 # VictoriaLogs — central log store
 # ─────────────────────────────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+# oripathy: type=nixpkg pkg=docker upstream=github.com/moby/moby tagPrefix=v
 # Pelican (Minecraft server manager) as two Docker containers:
 #  - the Panel (web UI + API, SQLite), reachable on 127.0.0.1:81 behind Caddy;
 #  - Wings (daemon), which starts each game server in its own Docker container.
@@ -10,8 +11,10 @@
 # declared below and rendered by sops-nix, so nothing is written by hand.
 { config, lib, pkgs, ... }:
 let
+  # oripathy: type=oci upstream=github.com/pelican-dev/panel tagPrefix=v
   # Beta releases: pin them, and bump the two together (see the Pelican changelog).
   panelImage = "ghcr.io/pelican/panel:v1.0.0-beta38@sha256:46f356f3fda423b1d43f0dc3c71efc056cd8b9bec365d1d7817306a17ee5694a";
+  # oripathy: type=oci upstream=github.com/pelican-dev/wings tagPrefix=v
   wingsImage = "ghcr.io/pelican/wings:v1.0.0-beta29@sha256:39837cfc49b0513313e57dc4b977a769cb784cf81af3f25a5ea46d869b4b0846";
 
   # Community plugin giving Pocket-Id as an OAuth provider (https://hub.pelican.dev/plugins/pocketid-provider).
@@ -19,6 +22,7 @@ let
   pocketidPlugin = pkgs.runCommand "pelican-plugin-pocketid-provider" { nativeBuildInputs = [ pkgs.unzip ]; } ''
     mkdir -p $out
     unzip -q ${pkgs.fetchurl {
+      # oripathy: type=release name=pelican-pocketid-provider upstream=github.com/Ebnater/pelican-pocketid-provider
       url = "https://github.com/Ebnater/pelican-pocketid-provider/releases/download/pocketid-provider-1.1.0/pocketid-provider.zip";
       hash = "sha256-gy5IGAKvvCtKEwO7qZXrMTNikJRjqX1/DYIaccssDRg=";
     }} -d $out
@@ -87,6 +91,7 @@ let
   # First-party plugin letting users create their own servers within the resource limits an admin sets per user.
   # It lives in the monorepo of the first-party plugins, pinned here to a commit.
   pelicanPlugins = pkgs.fetchzip {
+    # oripathy: type=release name=pelican-plugins upstream=github.com/pelican/plugins
     url = "https://github.com/pelican/plugins/archive/d7165909a5d9c943573e1ccd0da8aa3069414ec0.tar.gz";
     hash = "sha256-976E7svXsyy/UaTgGsl+wR9zS07M24QvgL6Ur2RNYq0=";
   };

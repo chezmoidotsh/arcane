@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: n8n
 
 helmCharts:
+  # oripathy: type=helm upstream=github.com/n8n-io/n8n tagPrefix=n8n@
   # Official chart, maintained by n8n-io (https://github.com/n8n-io/n8n-hosting)
   - repo: oci://ghcr.io/n8n-io/n8n-helm-chart
     name: n8n

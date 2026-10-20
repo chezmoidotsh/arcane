@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: cert-manager-system
 
 helmCharts:
+  # oripathy: type=helm upstream=github.com/cert-manager/cert-manager tagPrefix=v
   - repo: https://charts.jetstack.io
     name: cert-manager
     # renovate: datasource=helm depName=cert-manager registryUrl=https://charts.jetstack.io

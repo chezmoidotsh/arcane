@@ -1,3 +1,4 @@
+# oripathy: type=nixpkg pkg=caddy upstream=github.com/caddyserver/caddy tagPrefix=v
 # ─────────────────────────────────────────────────────────────────────────────
 # Caddy reverse proxy — TLS termination + path routing for data.o11y.chezmoi.sh
 # ─────────────────────────────────────────────────────────────────────────────

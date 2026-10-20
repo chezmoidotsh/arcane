@@ -43,6 +43,7 @@
       # Bump: edit `version` + `hash` below, run `mise run nix:hash:update`.
       # Renovate opens PRs automatically (see `.github/renovate.json5`).
       # -----------------------------------------------------------------------
+      # oripathy: type=release name=zot upstream=github.com/project-zot/zot tagPrefix=v
       # renovate: datasource=github-releases depName=project-zot/zot
       version = "v2.1.18";
 

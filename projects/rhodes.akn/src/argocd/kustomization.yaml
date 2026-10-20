@@ -17,6 +17,7 @@ resources:
   # (see amiya.akn's kustomization.yaml history) once Tailscale returns.
 
 helmCharts:
+  # oripathy: type=helm upstream=github.com/argoproj/argo-cd tagPrefix=v
   - repo: https://argoproj.github.io/argo-helm
     name: argo-cd
     version: 10.2.2

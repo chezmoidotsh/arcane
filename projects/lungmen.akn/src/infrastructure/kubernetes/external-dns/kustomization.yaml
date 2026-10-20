@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: external-dns-system
 
 helmCharts:
+  # oripathy: type=helm upstream=github.com/kubernetes-sigs/external-dns tagPrefix=v
   - repo: https://kubernetes-sigs.github.io/external-dns
     name: external-dns
     version: 1.21.1

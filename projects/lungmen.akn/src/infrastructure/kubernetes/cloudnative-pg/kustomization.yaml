@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: cloudnative-pg-system
 
 helmCharts:
+  # oripathy: type=helm upstream=github.com/cloudnative-pg/cloudnative-pg tagPrefix=v
   - repo: https://cloudnative-pg.github.io/charts
     name: cloudnative-pg
     version: 0.29.0
@@ -15,6 +16,7 @@ helmCharts:
 
 resources:
   - # Install Barman Cloud CNPG-I plugin (v0.14.0), from the release-published
+    # oripathy: type=oci upstream=github.com/cloudnative-pg/plugin-barman-cloud tagPrefix=v image=cloudnative-pg/plugin-barman-cloud name=plugin-barman-cloud
     # manifest asset -- NOT the git-tracked manifest.yaml (raw.githubusercontent.com),
     # which always hardcodes the floating `-testing:main` images regardless of ref.
     # Only the release asset bakes in the immutable, versioned vX.Y.Z images. See

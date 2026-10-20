@@ -1,3 +1,4 @@
+# oripathy: type=nixpkg pkg=victoriatraces upstream=github.com/VictoriaMetrics/VictoriaTraces tagPrefix=v
 # ─────────────────────────────────────────────────────────────────────────────
 # VictoriaTraces — central distributed-tracing store
 # ─────────────────────────────────────────────────────────────────────────────

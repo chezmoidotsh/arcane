@@ -19,6 +19,7 @@ resources:
   - security/
 
 images:
+  # oripathy: type=oci upstream=github.com/sissbruecker/linkding
   # renovate: datasource=docker depName=docker.io/sissbruecker/linkding
   - name: docker.io/sissbruecker/linkding
     newName: oci.chezmoi.sh/docker.io/sissbruecker/linkding

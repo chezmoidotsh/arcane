@@ -4,6 +4,7 @@ kind: Kustomization
 namespace: proxmox-system
 
 helmCharts:
+  # oripathy: type=helm upstream=github.com/sergelogvinov/proxmox-cloud-controller-manager tagPrefix=v
   - repo: oci://ghcr.io/sergelogvinov/charts
     name: proxmox-cloud-controller-manager
     # renovate: datasource=helm depName=proxmox-cloud-controller-manager registryUrl=oci://ghcr.io/sergelogvinov/charts
@@ -14,6 +15,7 @@ helmCharts:
 
     valuesFile: proxmox-cloud-controller-manager.helmvalues/default.yaml
 
+  # oripathy: type=helm upstream=github.com/sergelogvinov/proxmox-csi-plugin tagPrefix=v
   - repo: oci://ghcr.io/sergelogvinov/charts
     name: proxmox-csi-plugin
     # renovate: datasource=helm depName=proxmox-csi-plugin registryUrl=oci://ghcr.io/sergelogvinov/charts

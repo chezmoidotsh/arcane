@@ -11,6 +11,7 @@ resources:
   - security/
 
 helmCharts:
+  # oripathy: type=helm upstream=github.com/fosrl/newt
   - repo: https://charts.fossorial.io
     name: newt
     version: 1.5.0

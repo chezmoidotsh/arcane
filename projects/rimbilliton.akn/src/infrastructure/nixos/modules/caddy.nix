@@ -1,3 +1,4 @@
+# oripathy: type=nixpkg pkg=caddy upstream=github.com/caddyserver/caddy tagPrefix=v
 # TLS front for Pelican: Caddy obtains the certificates (HTTP-01) and proxies
 #  - minecraft.chezmoi.sh       -> the Panel (127.0.0.1:81)
 #  - main.minecraft.chezmoi.sh  -> Wings (127.0.0.1:8080), called by browsers for

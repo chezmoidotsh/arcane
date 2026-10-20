@@ -18,6 +18,7 @@ resources:
   - security/
 
 images:
+  # oripathy: type=oci upstream=github.com/Donkie/Spoolman tagPrefix=v
   # renovate: datasource=docker depName=ghcr.io/donkie/spoolman
   - name: ghcr.io/donkie/spoolman
     newName: oci.chezmoi.sh/ghcr.io/donkie/spoolman

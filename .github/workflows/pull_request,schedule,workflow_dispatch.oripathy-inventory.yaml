@@ -3,11 +3,11 @@
 # =============================================================================
 # Oripathy inventory — list the deployed versions
 # =============================================================================
-# Runs scripts/oripathy:inventory (dist/ images and Helm charts, images pinned in the NixOS modules, nixpkgs packages
-# evaluated against their flake.lock) and publishes the result as the asset `inventory.json` of the rolling release
+# Runs scripts/oripathy:inventory (dist/ images and Helm charts, images, releases and nixpkgs packages of the NixOS
+# sources, each one declared by a `# oripathy:` annotation next to what it describes) and publishes the result as the asset `inventory.json` of the rolling release
 # `oripathy-inventory`. The Oripathy workflow in n8n reads that asset every morning. Nothing is pushed to main, and the file
 # only holds facts that are already public in this repository. Pull requests only build and validate the file, and fail
-# when a product of the repository is not declared in .github/workflows/config/oripathy.config.json.
+# when a product of the repository has no (valid) `# oripathy:` annotation: a new application needs a follow/ignore decision.
 #
 # Events:      pull_request, schedule (03:00 UTC, before the 06:00 Europe/Paris run), workflow_dispatch
 # Permissions: contents: write (release asset, never on pull requests from forks)
@@ -19,10 +19,12 @@ on:
   pull_request:
     paths:
       - .github/workflows/pull_request,schedule,workflow_dispatch.oripathy-inventory.yaml
-      - .github/workflows/config/oripathy.config.json
       - projects/*/dist/**
+      - projects/*/src/**/kustomization.yaml
       - projects/**/*.nix
       - projects/**/flake.lock
+      - catalog/nix/**
+      - catalog/flakes/**
       - scripts/oripathy:inventory
   schedule:
     - cron: 0 3 * * *

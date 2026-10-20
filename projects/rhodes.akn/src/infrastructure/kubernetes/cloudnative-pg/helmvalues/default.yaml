@@ -31,6 +31,7 @@ config:
     # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/pgbouncer
     PGBOUNCER_IMAGE_NAME: oci.chezmoi.sh/ghcr.io/cloudnative-pg/pgbouncer:1.25.1-trixie@sha256:ea65b515dafc6a86cd70005ab21c16671f2e2c1d618210a5d6b4b90637c89c27
 
+    # oripathy: type=oci upstream=github.com/cloudnative-pg/postgres-containers
     # PostgreSQL default image override
     # Overrides the default PostgreSQL image to use the local ZOT registry mirror.
     # This is the fallback PostgreSQL image used when no imageCatalogRef is specified
