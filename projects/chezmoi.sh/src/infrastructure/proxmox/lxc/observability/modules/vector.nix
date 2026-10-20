@@ -1,3 +1,4 @@
+# oripathy: type=nixpkg pkg=vector upstream=github.com/vectordotdev/vector tagPrefix=v
 # ─────────────────────────────────────────────────────────────────────────────
 # Vector — log processing middleware
 # ─────────────────────────────────────────────────────────────────────────────

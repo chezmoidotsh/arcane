@@ -1,3 +1,4 @@
+# oripathy: type=nixpkg pkg=prometheus-pve-exporter upstream=github.com/prometheus-pve/prometheus-pve-exporter tagPrefix=v
 # ─────────────────────────────────────────────────────────────────────────────
 # prometheus-pve-exporter — scrape PVE API and expose Prometheus metrics
 # ─────────────────────────────────────────────────────────────────────────────

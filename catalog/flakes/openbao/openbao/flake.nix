@@ -1,3 +1,4 @@
+# oripathy: type=nixpkg pkg=openbao upstream=github.com/openbao/openbao tagPrefix=v
 {
   description = "OpenBao Vault (with SoftHSMv2)";
 

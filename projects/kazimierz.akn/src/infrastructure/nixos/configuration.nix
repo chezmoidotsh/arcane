@@ -1,3 +1,6 @@
+# oripathy: type=nixpkg pkg=tailscale upstream=github.com/tailscale/tailscale tagPrefix=v
+# oripathy: type=nixpkg pkg=openssh upstream=github.com/openssh/openssh-portable
+# oripathy: type=nixpkg pkg=fail2ban upstream=github.com/fail2ban/fail2ban
 { config, lib, pkgs, ... }:
 {
   system.stateVersion = "26.05";

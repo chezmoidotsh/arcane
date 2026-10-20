@@ -21,6 +21,7 @@ resources:
   - security/
 
 images:
+  # oripathy: type=oci upstream=github.com/sysadminsmedia/homebox tagPrefix=v
   # renovate: datasource=docker depName=ghcr.io/sysadminsmedia/homebox
   - name: ghcr.io/sysadminsmedia/homebox
     newName: oci.chezmoi.sh/ghcr.io/sysadminsmedia/homebox

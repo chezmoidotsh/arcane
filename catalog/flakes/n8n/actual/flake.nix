@@ -5,6 +5,7 @@
 
   outputs = { self, nixpkgs, ... }:
     let
+      # oripathy: type=npm
       pname = "n8n-nodes-actual";
       version = "26.10.9";
 

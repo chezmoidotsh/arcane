@@ -1,3 +1,4 @@
+# oripathy: type=nixpkg pkg=docker upstream=github.com/moby/moby tagPrefix=v
 # Pangolin stack as Docker containers, ported 1:1 from the former Ansible role (removed, see ADR-016):
 #  - pangolin    controller + dashboard (SQLite), Integration API on 127.0.0.1:3003 re-exposed on the tailnet
 #  - gerbil      WireGuard tunnel manager; owns the public ports, Traefik shares its network namespace
@@ -23,13 +24,17 @@ let
   integrationPort = 3003;
   configDir = "/var/lib/pangolin/config";
 
+  # oripathy: type=oci upstream=github.com/fosrl/pangolin
   # Images: pinned by tag and digest, bump them here.
   # renovate: datasource=docker depName=fosrl/pangolin versioning=docker
   pangolinImage = "docker.io/fosrl/pangolin:ee-1.24.0@sha256:1700457b2d42e3db664edc43760528a11f1d423a5364b8af720474e1b049a8ea"; # Enterprise Edition (was ee-latest)
+  # oripathy: type=oci upstream=github.com/fosrl/gerbil
   # renovate: datasource=docker depName=fosrl/gerbil versioning=docker
   gerbilImage = "docker.io/fosrl/gerbil:1.5.2@sha256:1f6e64eaba7997282c7067ba19922fc7e46b5f73e1a27add3dd66a591d50512f";
+  # oripathy: type=oci upstream=github.com/traefik/traefik tagPrefix=v
   # renovate: datasource=docker depName=traefik versioning=docker
   traefikImage = "docker.io/library/traefik:v3.4.0@sha256:4cf907247939b5d20bf4eff73abd21cb413c339600dde76dbc94a874b2578a27";
+  # oripathy: type=oci upstream=github.com/tarampampam/error-pages tagPrefix=v
   # renovate: datasource=docker depName=ghcr.io/tarampampam/error-pages versioning=docker
   errorPagesImage = "ghcr.io/tarampampam/error-pages:3.7.1@sha256:0ce7e3798b1180d74432c38f4edd3e5072c672926646d79770b7aa48eb3a2d2f";
 

@@ -21,6 +21,7 @@ resources:
   - security/
 
 images:
+  # oripathy: type=oci upstream=github.com/pocket-id/pocket-id tagPrefix=v
   # renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id
   - name: ghcr.io/pocket-id/pocket-id
     newName: oci.chezmoi.sh/ghcr.io/pocket-id/pocket-id

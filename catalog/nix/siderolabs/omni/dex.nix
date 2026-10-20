@@ -1,3 +1,5 @@
+# oripathy: type=nixpkg pkg=dex-oidc upstream=github.com/dexidp/dex tagPrefix=v
+# oripathy: ignore pkg=dex
 # ─────────────────────────────────────────────────────────────────────────────
 # Dex OIDC — optional integration with services.omni
 # ─────────────────────────────────────────────────────────────────────────────

@@ -43,6 +43,7 @@ helmGlobals:
   chartHome: ../../../../../catalog/helm
 
 helmCharts:
+  # oripathy: ignore
   # postgres-apps: common applications cluster
   - name: mutualized-cnpg-databases
 

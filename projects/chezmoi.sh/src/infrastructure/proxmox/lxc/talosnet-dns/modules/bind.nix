@@ -1,3 +1,4 @@
+# oripathy: type=nixpkg pkg=bind upstream=github.com/isc-projects/bind9 tagPrefix=v
 # ─────────────────────────────────────────────────────────────────────────────
 # BIND — split-horizon DNS, talosnet-only
 # ─────────────────────────────────────────────────────────────────────────────

@@ -12,6 +12,7 @@ resources:
   - security
 
 helmCharts:
+  # oripathy: type=helm upstream=github.com/vmware-tanzu/velero tagPrefix=v
   - repo: https://vmware-tanzu.github.io/helm-charts
     name: velero
     # renovate: datasource=helm depName=velero registryUrl=https://vmware-tanzu.github.io/helm-charts

@@ -1,3 +1,4 @@
+# oripathy: type=nixpkg pkg=prometheus-alertmanager upstream=github.com/prometheus/alertmanager tagPrefix=v
 # ─────────────────────────────────────────────────────────────────────────────
 # Alertmanager — existential alert routing + the Dead-Man's-Switch
 # ─────────────────────────────────────────────────────────────────────────────
