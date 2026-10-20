@@ -1,0 +1,74 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+#
+# =============================================================================
+# Oripathy inventory — list the deployed versions
+# =============================================================================
+# Runs scripts/oripathy:inventory (dist/ images and Helm charts, images pinned in the NixOS modules, nixpkgs packages
+# evaluated against their flake.lock) and publishes the result as the asset `inventory.json` of the rolling release
+# `oripathy-inventory`. The Oripathy workflow in n8n reads that asset every morning. Nothing is pushed to main, and the file
+# only holds facts that are already public in this repository. Pull requests only build and validate the file, and fail
+# when a product of the repository is not declared in .github/workflows/config/oripathy.config.json.
+#
+# Events:      pull_request, schedule (03:00 UTC, before the 06:00 Europe/Paris run), workflow_dispatch
+# Permissions: contents: write (release asset, never on pull requests from forks)
+# =============================================================================
+
+name: 📡 Oripathy inventory
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/pull_request,schedule,workflow_dispatch.oripathy-inventory.yaml
+      - .github/workflows/config/oripathy.config.json
+      - projects/*/dist/**
+      - projects/**/*.nix
+      - projects/**/flake.lock
+      - scripts/oripathy:inventory
+  schedule:
+    - cron: 0 3 * * *
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Minimal top-level permissions — each job declares what it needs.
+permissions: {}
+
+jobs:
+  inventory:
+    name: 📡 Inventory
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # `deployedAt` is read from the history (git log -S).
+          fetch-depth: 0
+
+      - name: 🛠️ Install Nix
+        uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+
+      - name: 📡 Build the inventory
+        run: scripts/oripathy:inventory --output inventory.json
+
+      - name: ✅ Validate the inventory
+        run: |
+          jq -e '.schemaVersion == 1 and (.components | length) > 0' inventory.json
+          jq -r '"### Oripathy inventory\n\n\(.components | length) components at \(.repo.commit[0:10])"' inventory.json >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: 🔎 Check every product is declared
+        if: github.event_name == 'pull_request'
+        run: scripts/oripathy:inventory --check inventory.json
+
+      - name: 🚀 Publish the inventory
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release view oripathy-inventory >/dev/null 2>&1 \
+            || gh release create oripathy-inventory --latest=false --title "Oripathy inventory" \
+              --notes "Rolling release: the asset inventory.json is replaced on every run. Read by the Oripathy n8n workflow."
+          gh release upload oripathy-inventory inventory.json --clobber
