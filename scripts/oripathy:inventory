@@ -1,0 +1,319 @@
+#!/usr/bin/env python3
+# Copyright (C) 2026 Alexandre Nicolaie (xunleii@users.noreply.github.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ----------------------------------------------------------------------------
+# mise alias="oripathy:inventory"
+# mise description="List the software versions deployed from this repository as a JSON inventory (Oripathy input)."
+#
+# Reads three sources and writes `inventory.json` (schemaVersion 1; components[] carry id, name, cluster, source, kind,
+# version, image, images, chart, package, upstream, paths, deployedAt, notes):
+#   - projects/*/dist/: container images (`image:`) and Helm charts (`helm.sh/chart`, `app.kubernetes.io/version`);
+#   - projects/**/*.nix: container images pinned in the NixOS modules (`fooImage = "registry/repo:tag@sha256:..."`);
+#   - nixpkgs packages listed in .github/workflows/config/oripathy.config.json (`nixPackages`), evaluated with `nix eval` against the
+#     flake.lock next to them (skipped with a warning when `nix` is not installed).
+# Every product must be declared in the config (`components`, or `ignored` for the ones Oripathy must not follow):
+# `--check inventory.json` fails when the inventory holds an undeclared one, so a new application cannot slip in.
+# Only facts that are already public in this repository end up in the file: no CVE, no verdict, no exposure.
+# `deployedAt` is the commit date that introduced the current version (git log -S), so the history must be present
+# (`fetch-depth: 0` in CI). Standard library only.
+#
+# Usage: scripts/oripathy:inventory [--output inventory.json] [--config .github/workflows/config/oripathy.config.json]
+#        scripts/oripathy:inventory --check inventory.json | --self-test
+import argparse
+import contextlib
+import datetime
+import io
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+MIRROR = "oci.chezmoi.sh/"  # pull-through registry: oci.chezmoi.sh/<registry>/<repository>:<tag>
+IMAGE_RE = re.compile(r"""^\s*(?:-\s*)?image:\s*["']?([^\s"']+)""", re.M)
+NIX_IMAGE_RE = re.compile(r'\b\w*[iI]mage\s*=\s*"([a-z0-9.-]+(?::\d+)?/[^"\s]+)"')
+CHART_RE = re.compile(r"""helm\.sh/chart:\s*["']?([^\s"']+)""")
+APPVER_RE = re.compile(r"""app\.kubernetes\.io/version:\s*["']?([^\s"']+)""")
+CHART_SPLIT = re.compile(r"^(.+?)-(v?\d[\w.+]*)$")
+
+
+def parse_image(ref):
+    """`oci.chezmoi.sh/docker.io/fosrl/newt:1.12.5@sha256:..` -> registry, repository, tag, digest (mirror removed)."""
+    ref = ref.removeprefix(MIRROR)
+    ref, _, digest = ref.partition("@")
+    head, _, last = ref.rpartition("/")
+    name, _, tag = last.partition(":")
+    path = f"{head}/{name}" if head else name
+    first, _, rest = path.partition("/")
+    if rest and ("." in first or ":" in first or first == "localhost"):
+        registry, repository = first, rest
+    else:
+        registry, repository = "docker.io", path if "/" in path else f"library/{path}"
+    return {"registry": registry, "repository": repository, "tag": tag or None, "digest": digest or None}
+
+
+def parse_chart(label):
+    """`cilium-1.20.0` -> ('cilium', '1.20.0')."""
+    m = CHART_SPLIT.match(label)
+    return (m.group(1), m.group(2).removeprefix("v")) if m else (label, None)
+
+
+def normalize(version):
+    """Tag without its `v` prefix and its `-alpine` variant (`v1.4.2-alpine` -> `1.4.2`); prereleases are kept (`1.0.0-beta38`)."""
+    return version.removeprefix("v").removesuffix("-alpine") if version else None
+
+
+def guess_upstream(image, overrides):
+    """Upstream forge repo: config override first, then ghcr.io/<o>/<r> and docker.io/<o>/<r> read as github.com/<o>/<r>."""
+    key = f"{image['registry']}/{image['repository']}"
+    if key in overrides:
+        return overrides[key]
+    prefix = "v" if (image["tag"] or "").startswith("v") else ""
+    owner, _, repo = image["repository"].partition("/")
+    if image["registry"] in ("ghcr.io", "docker.io") and owner != "library" and repo:
+        return {"forge": "github", "repo": f"{owner}/{repo}", "tagPrefix": prefix, "guessed": True}
+    return None
+
+
+def git(root, *args):
+    r = subprocess.run(["git", "-C", str(root), "-c", "log.showSignature=false", *args], capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 else ""
+
+
+def deployed_at(root, path, needle):
+    """Commit date that introduced `needle` in `path` (pickaxe), else the last commit that touched the file."""
+    return git(root, "log", "-1", "--format=%cI", f"-S{needle}", "--", path) or git(root, "log", "-1", "--format=%cI", "--", path) or None
+
+
+def cluster_of(rel):
+    parts = Path(rel).parts
+    return parts[1] if len(parts) > 1 and parts[0] == "projects" else None
+
+
+def unique_name(components):
+    """Name = repository basename; two different repositories sharing it in one cluster become <owner>-<name>."""
+    seen = {}
+    for c in components:
+        seen.setdefault((c["cluster"], c["_base"]), set()).add(c["_repo"])
+    for c in components:
+        base = c["_base"]
+        if len(seen[(c["cluster"], base)]) > 1:
+            base = c["_repo"].replace("/", "-")
+        c["name"] = base
+        c["id"] = f"{c['cluster']}/{base}"
+
+
+def version_key(v):
+    return [int(x) for x in re.findall(r"\d+", v or "")] or [0]
+
+
+def tag_key(image):
+    return version_key(image["tag"])
+
+
+def lowest(versions):
+    return sorted(set(versions), key=version_key)[0]
+
+
+def scan_nix_images(root, overrides):
+    """Container images pinned in NixOS modules: one component per (cluster, repository), the lowest tag if several."""
+    found = {}
+    for path in sorted(p for p in root.glob("projects/**/*.nix") if "node_modules" not in p.parts):
+        rel = path.relative_to(root).as_posix()
+        cluster = cluster_of(rel)
+        for ref in NIX_IMAGE_RE.findall(path.read_text(errors="replace")) if cluster else []:
+            img = parse_image(ref)
+            if img["tag"] and "$" not in ref:
+                e = found.setdefault((cluster, img["repository"]), {"images": {}, "paths": []})
+                e["images"][img["tag"]] = img
+                e["paths"].append(rel) if rel not in e["paths"] else None
+    out = []
+    for (cluster, repository), e in found.items():
+        tag = lowest(e["images"])
+        img = e["images"][tag]
+        others = sorted(set(e["images"]) - {tag})
+        out.append({
+            "_base": repository.rsplit("/", 1)[-1], "_repo": repository, "cluster": cluster, "source": "nix", "kind": "oci",
+            "version": normalize(tag), "image": img, "images": [img], "chart": None, "package": None,
+            "upstream": guess_upstream(img, overrides), "paths": sorted(e["paths"]),
+            "deployedAt": deployed_at(root, e["paths"][0], tag),
+            "notes": f"also pinned: {', '.join(others)}" if others else None,
+        })
+    return out
+
+
+def product_dir(rel):
+    """projects/<cluster>/dist/apps/n8n/x.yaml -> ('apps/n8n', 'n8n'); infrastructure/kubernetes/<name> and top-level dirs likewise."""
+    parts = Path(rel).parts[3:-1]
+    depth = 2 if parts[:1] == ("apps",) else 3 if parts[:1] == ("infrastructure",) else 1
+    parts = parts[:depth]
+    return ("/".join(parts), parts[-1]) if parts else (None, None)
+
+
+def scan_dist(root, overrides):
+    """One component per product of dist/. A product is a directory (apps/<name>, infrastructure/kubernetes/<name>); a
+    directory rendering several Helm charts (proxmox) gives one product per chart. The version is the chart's appVersion,
+    else the tag of the image named like the product, else the lowest tag."""
+    files = {}
+    for path in sorted(root.glob("projects/*/dist/**/*.yaml")):
+        rel = path.relative_to(root).as_posix()
+        cluster, (sub, name) = cluster_of(rel), product_dir(rel)
+        if not (cluster and sub):
+            continue
+        text = path.read_text(errors="replace")
+        m, app = CHART_RE.search(text), APPVER_RE.search(text)
+        chart = None
+        if m:
+            cname, cversion = parse_chart(m.group(1))
+            chart = {"name": cname, "version": cversion, "appVersion": app.group(1).removeprefix("v") if app else None}
+        images = [parse_image(r) for r in IMAGE_RE.findall(text)]
+        files.setdefault((cluster, sub, name), []).append((rel, chart, [i for i in images if i["tag"]]))
+    groups = {}
+    for (cluster, sub, name), recs in files.items():
+        charts = {r[1]["name"] for r in recs if r[1]}
+        for rel, chart, images in recs:
+            gname = name if len(charts) <= 1 else (chart["name"] if chart else name)
+            g = groups.setdefault((cluster, sub, gname), {"chart": None, "images": {}, "files": {}})
+            if chart and not g["chart"]:
+                g["chart"], g["files"]["chart"] = chart, rel
+            for img in images:
+                g["images"][img["repository"]] = min(g["images"].get(img["repository"], img), img, key=tag_key)
+                g["files"].setdefault(img["repository"], rel)
+    out = []
+    for (cluster, sub, name), g in groups.items():
+        images = sorted(g["images"].values(), key=lambda i: i["repository"])
+        if not (images or g["chart"]):
+            continue
+        main = min(images, key=lambda i: (i["repository"].rsplit("/", 1)[-1] != name, name not in i["repository"], len(i["repository"]))) if images else None
+        app = (g["chart"] or {}).get("appVersion")
+        version = app or (normalize(main["tag"]) if main else g["chart"]["version"])
+        up = overrides.get(f"name:{name}") or (guess_upstream(main, overrides) if main else None)
+        anchor = g["files"][main["repository"]] if main else g["files"]["chart"]
+        needle = main["tag"] if main else f"helm.sh/chart: {g['chart']['name']}-{g['chart']['version']}"
+        out.append({
+            "_base": name, "_repo": f"{sub}/{name}", "cluster": cluster, "source": "dist", "kind": "helm" if g["chart"] else "oci",
+            "version": version, "image": main, "images": images, "chart": g["chart"], "package": None, "upstream": up,
+            "paths": [f"projects/{cluster}/dist/{sub}/"], "deployedAt": deployed_at(root, anchor, needle), "notes": None,
+        })
+    return out
+
+
+def scan_nixpkgs(root, packages, overrides):
+    """`nix eval --raw --inputs-from <flake dir> nixpkgs#<attr>.version`: the version the locked nixpkgs ships."""
+    out = []
+    for directory, attrs in packages.items():
+        flake = root / directory
+        cluster = cluster_of(directory) or "chezmoi.sh"
+        for attr in attrs:
+            if not shutil.which("nix"):
+                print(f"warning: nix not installed, skipping nixpkgs#{attr} ({directory})", file=sys.stderr)
+                continue
+            r = subprocess.run(["nix", "eval", "--raw", "--inputs-from", str(flake), f"nixpkgs#{attr}.version"], capture_output=True, text=True)
+            if r.returncode != 0:
+                print(f"warning: nix eval nixpkgs#{attr} failed in {directory}: {r.stderr.strip()[:200]}", file=sys.stderr)
+                continue
+            lock = f"{directory}/flake.lock"
+            out.append({
+                "_base": attr, "_repo": attr, "cluster": cluster, "source": "nix", "kind": "nix-package", "version": normalize(r.stdout),
+                "image": None, "images": [], "chart": None, "package": {"attr": attr, "version": r.stdout.strip()},
+                "upstream": overrides.get(f"nix:{attr}"), "paths": [lock], "deployedAt": deployed_at(root, lock, "narHash"), "notes": None,
+            })
+    return out
+
+
+def build(root, config):
+    overrides = config.get("upstream", {})
+    dist, nix_images = scan_dist(root, overrides), scan_nix_images(root, overrides)
+    packages = scan_nixpkgs(root, config.get("nixPackages", {}), overrides)
+    print(f"dist: {len(dist)}, nix images: {len(nix_images)}, nixpkgs: {', '.join(c['package']['attr'] for c in packages) or 'none'}", file=sys.stderr)
+    components = dist + nix_images + packages
+    unique_name(components)
+    for c in components:
+        c.pop("_base"), c.pop("_repo")
+    components.sort(key=lambda c: c["id"])
+    ids = [c["id"] for c in components]
+    assert len(ids) == len(set(ids)), "component ids must be unique"
+    repo = os.environ.get("GITHUB_REPOSITORY", "chezmoidotsh/arcane")
+    return {
+        "schemaVersion": 1,
+        "generatedAt": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "repo": {"url": f"https://github.com/{repo}", "ref": os.environ.get("GITHUB_REF") or git(root, "symbolic-ref", "-q", "HEAD") or None, "commit": git(root, "rev-parse", "HEAD")},
+        "components": components,
+    }
+
+
+def check(config, inventory):
+    """Undeclared products fail the check; declared products no longer found only warn (renamed or removed)."""
+    declared = set(config.get("components", [])) | set(config.get("ignored", []))
+    ids = {c["id"] for c in inventory["components"]}
+    for gone in sorted(set(config.get("components", [])) - ids):
+        print(f"warning: declared but not found in the inventory: {gone}", file=sys.stderr)
+    new = sorted(ids - declared)
+    if new:
+        print("error: products found in the repository but not declared in the Oripathy config:", file=sys.stderr)
+        print("\n".join(f'  "{i}",' for i in new), file=sys.stderr)
+        print('Add each one to "components" (followed by Oripathy) or to "ignored" (never followed).', file=sys.stderr)
+    return 1 if new else 0
+
+
+def self_test():
+    a = parse_image("oci.chezmoi.sh/docker.io/fosrl/newt:1.12.5")
+    assert (a["registry"], a["repository"], a["tag"], a["digest"]) == ("docker.io", "fosrl/newt", "1.12.5", None), a
+    b = parse_image("oci.chezmoi.sh/docker.io/library/redis:8.10.1-alpine@sha256:abc")
+    assert (b["repository"], b["tag"], b["digest"]) == ("library/redis", "8.10.1-alpine", "sha256:abc"), b
+    c = parse_image("ghcr.io/pelican/panel:v1.0.0-beta38@sha256:def")
+    assert (c["registry"], c["repository"], c["tag"]) == ("ghcr.io", "pelican/panel", "v1.0.0-beta38"), c
+    assert parse_image("traefik:v3.4.0")["repository"] == "library/traefik"
+    assert parse_chart("cilium-1.20.0") == ("cilium", "1.20.0")
+    assert parse_chart("cert-manager-v1.20.2") == ("cert-manager", "1.20.2")
+    assert normalize("v1.4.2-alpine") == "1.4.2" and normalize("v1.0.0-beta38") == "1.0.0-beta38" and normalize(None) is None
+    assert guess_upstream(c, {})["repo"] == "pelican/panel" and guess_upstream(parse_image("traefik:v3"), {}) is None
+    assert lowest(["1.10.0", "1.9.0", "1.9.1"]) == "1.9.0"
+    inv = {"components": [{"id": "a/x"}, {"id": "a/y"}]}
+    with contextlib.redirect_stderr(io.StringIO()):  # check() reports on stderr
+        assert check({"components": ["a/x", "a/y", "a/gone"]}, inv) == 0
+        assert check({"components": ["a/x"], "ignored": ["a/y"]}, inv) == 0
+        assert check({"components": ["a/x"]}, inv) == 1
+    assert NIX_IMAGE_RE.findall('panelImage = "ghcr.io/pelican/panel:v1@sha256:a";') == ["ghcr.io/pelican/panel:v1@sha256:a"]
+    print("self-test ok")
+
+
+def main():
+    ap = argparse.ArgumentParser(description="List deployed software versions as inventory.json.")
+    ap.add_argument("--output", help="write the JSON here instead of stdout")
+    ap.add_argument("--config", default=".github/workflows/config/oripathy.config.json")
+    ap.add_argument("--check", metavar="INVENTORY", help="fail when INVENTORY holds a product the config does not declare")
+    ap.add_argument("--self-test", action="store_true")
+    args = ap.parse_args()
+    if args.self_test:
+        self_test()
+        return 0
+    root = Path(git(Path.cwd(), "rev-parse", "--show-toplevel") or ".")
+    cfg = root / args.config
+    config = json.loads(cfg.read_text()) if cfg.exists() else {}
+    if args.check:
+        return check(config, json.loads(Path(args.check).read_text()))
+    text = json.dumps(build(root, config), indent=2, ensure_ascii=False) + "\n"
+    if args.output:
+        Path(args.output).write_text(text)
+        print(f"{len(json.loads(text)['components'])} components -> {args.output}", file=sys.stderr)
+    else:
+        sys.stdout.write(text)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

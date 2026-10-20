@@ -1,0 +1,222 @@
+{
+  "components": [
+    "chezmoi.sh/caddy",
+    "chezmoi.sh/prometheus-alertmanager",
+    "chezmoi.sh/victorialogs",
+    "chezmoi.sh/victoriametrics",
+    "chezmoi.sh/victoriatraces",
+    "kazimierz.akn/error-pages",
+    "kazimierz.akn/gerbil",
+    "kazimierz.akn/pangolin",
+    "kazimierz.akn/traefik",
+    "lungmen.akn/actual-budget",
+    "lungmen.akn/cert-manager",
+    "lungmen.akn/cilium",
+    "lungmen.akn/cloudnative-pg",
+    "lungmen.akn/databases",
+    "lungmen.akn/descheduler",
+    "lungmen.akn/external-dns",
+    "lungmen.akn/external-secrets",
+    "lungmen.akn/homebox",
+    "lungmen.akn/immich",
+    "lungmen.akn/jellyfin",
+    "lungmen.akn/linkding",
+    "lungmen.akn/litellm",
+    "lungmen.akn/n8n",
+    "lungmen.akn/newt",
+    "lungmen.akn/o11y",
+    "lungmen.akn/paperless-ngx",
+    "lungmen.akn/proxmox-cloud-controller-manager",
+    "lungmen.akn/proxmox-csi-plugin",
+    "lungmen.akn/smb-csi-driver",
+    "lungmen.akn/spoolman",
+    "lungmen.akn/tailscale",
+    "lungmen.akn/velero",
+    "rhodes.akn/argocd",
+    "rhodes.akn/cert-manager",
+    "rhodes.akn/cilium",
+    "rhodes.akn/cloudnative-pg",
+    "rhodes.akn/external-dns",
+    "rhodes.akn/external-secrets",
+    "rhodes.akn/newt",
+    "rhodes.akn/o11y",
+    "rhodes.akn/pocket-id",
+    "rhodes.akn/proxmox-cloud-controller-manager",
+    "rhodes.akn/proxmox-csi-plugin",
+    "rhodes.akn/vault",
+    "rimbilliton.akn/panel",
+    "rimbilliton.akn/wings"
+  ],
+  "ignored": [],
+  "upstream": {
+    "docker.io/library/traefik": {
+      "forge": "github",
+      "repo": "traefik/traefik",
+      "tagPrefix": "v"
+    },
+    "name:actual-budget": {
+      "forge": "github",
+      "repo": "actualbudget/actual",
+      "tagPrefix": "v"
+    },
+    "name:argo-cd": {
+      "forge": "github",
+      "repo": "argoproj/argo-cd",
+      "tagPrefix": "v"
+    },
+    "name:argocd": {
+      "forge": "github",
+      "repo": "argoproj/argo-cd",
+      "tagPrefix": "v"
+    },
+    "name:cert-manager": {
+      "forge": "github",
+      "repo": "cert-manager/cert-manager",
+      "tagPrefix": "v"
+    },
+    "name:cilium": {
+      "forge": "github",
+      "repo": "cilium/cilium",
+      "tagPrefix": "v"
+    },
+    "name:cloudnative-pg": {
+      "forge": "github",
+      "repo": "cloudnative-pg/cloudnative-pg",
+      "tagPrefix": "v"
+    },
+    "name:csi-driver-smb": {
+      "forge": "github",
+      "repo": "kubernetes-csi/csi-driver-smb",
+      "tagPrefix": "v"
+    },
+    "name:descheduler": {
+      "forge": "github",
+      "repo": "kubernetes-sigs/descheduler",
+      "tagPrefix": "v"
+    },
+    "name:external-dns": {
+      "forge": "github",
+      "repo": "kubernetes-sigs/external-dns",
+      "tagPrefix": "v"
+    },
+    "name:external-secrets": {
+      "forge": "github",
+      "repo": "external-secrets/external-secrets",
+      "tagPrefix": "v"
+    },
+    "name:grafana-operator": {
+      "forge": "github",
+      "repo": "grafana/grafana-operator",
+      "tagPrefix": "v"
+    },
+    "name:homebox": {
+      "forge": "github",
+      "repo": "sysadminsmedia/homebox",
+      "tagPrefix": "v"
+    },
+    "name:immich": {
+      "forge": "github",
+      "repo": "immich-app/immich",
+      "tagPrefix": "v"
+    },
+    "name:jellyfin": {
+      "forge": "github",
+      "repo": "jellyfin/jellyfin",
+      "tagPrefix": "v"
+    },
+    "name:linkding": {
+      "forge": "github",
+      "repo": "sissbruecker/linkding",
+      "tagPrefix": ""
+    },
+    "name:litellm": {
+      "forge": "github",
+      "repo": "BerriAI/litellm",
+      "tagPrefix": "v"
+    },
+    "name:n8n": {
+      "forge": "github",
+      "repo": "n8n-io/n8n",
+      "tagPrefix": "n8n@"
+    },
+    "name:newt": {
+      "forge": "github",
+      "repo": "fosrl/newt",
+      "tagPrefix": ""
+    },
+    "name:openbao": {
+      "forge": "github",
+      "repo": "openbao/openbao",
+      "tagPrefix": "v"
+    },
+    "name:paperless-ngx": {
+      "forge": "github",
+      "repo": "paperless-ngx/paperless-ngx",
+      "tagPrefix": "v"
+    },
+    "name:proxmox-cloud-controller-manager": {
+      "forge": "github",
+      "repo": "sergelogvinov/proxmox-cloud-controller-manager",
+      "tagPrefix": "v"
+    },
+    "name:proxmox-csi-plugin": {
+      "forge": "github",
+      "repo": "sergelogvinov/proxmox-csi-plugin",
+      "tagPrefix": "v"
+    },
+    "name:smb-csi-driver": {
+      "forge": "github",
+      "repo": "kubernetes-csi/csi-driver-smb",
+      "tagPrefix": "v"
+    },
+    "name:spoolman": {
+      "forge": "github",
+      "repo": "Donkie/Spoolman",
+      "tagPrefix": "v"
+    },
+    "name:tailscale": {
+      "forge": "github",
+      "repo": "tailscale/tailscale",
+      "tagPrefix": "v"
+    },
+    "name:velero": {
+      "forge": "github",
+      "repo": "vmware-tanzu/velero",
+      "tagPrefix": "v"
+    },
+    "nix:caddy": {
+      "forge": "github",
+      "repo": "caddyserver/caddy",
+      "tagPrefix": "v"
+    },
+    "nix:prometheus-alertmanager": {
+      "forge": "github",
+      "repo": "prometheus/alertmanager",
+      "tagPrefix": "v"
+    },
+    "nix:victorialogs": {
+      "forge": "github",
+      "repo": "VictoriaMetrics/VictoriaLogs",
+      "tagPrefix": "v"
+    },
+    "nix:victoriametrics": {
+      "forge": "github",
+      "repo": "VictoriaMetrics/VictoriaMetrics",
+      "tagPrefix": "v"
+    },
+    "nix:victoriatraces": {
+      "forge": "github",
+      "repo": "VictoriaMetrics/VictoriaTraces",
+      "tagPrefix": "v"
+    }
+  },
+  "nixPackages": {
+    "projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability": [
+      "victoriametrics",
+      "victorialogs",
+      "victoriatraces",
+      "prometheus-alertmanager",
+      "caddy"
+    ]
+  }
+}
