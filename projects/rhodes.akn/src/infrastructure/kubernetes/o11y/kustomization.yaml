@@ -3,10 +3,9 @@ kind: Kustomization
 namespace: o11y-system
 
 helmCharts:
-  # oripathy: type=helm upstream=github.com/grafana/grafana-operator tagPrefix=v
   - repo: https://grafana.github.io/helm-charts
     name: grafana-operator
-    # renovate: datasource=helm depName=grafana-operator registryUrl=https://grafana.github.io/helm-charts
+    # oripathy: type=helm upstream=github.com/grafana/grafana-operator tagPrefix=v
     version: v5.24.0
     releaseName: grafana-operator
     namespace: o11y-system
@@ -29,5 +28,7 @@ resources:
 images:
   - name: ghcr.io/grafana/grafana-operator
     newName: oci.chezmoi.sh/ghcr.io/grafana/grafana-operator
+    # oripathy: type=oci upstream=github.com/grafana/grafana-operator tagPrefix=v digest=false
+    newTag: v5.24.0
   - name: docker.io/grafana/grafana
     newName: oci.chezmoi.sh/docker.io/grafana/grafana

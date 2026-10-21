@@ -9,7 +9,7 @@ spec:
     - name: Category
       value: Networking / DNS
     - name: Version
-      # renovate: datasource=helm depName=external-dns registryUrl=https://kubernetes-sigs.github.io/external-dns
+      # oripathy: type=mirror
       value: "1.21.1"
     # -- Documentation & Resources
     - name: Documentation

@@ -4,11 +4,10 @@ kind: Kustomization
 namespace: n8n
 
 helmCharts:
-  # oripathy: type=helm upstream=github.com/n8n-io/n8n tagPrefix=n8n@
   # Official chart, maintained by n8n-io (https://github.com/n8n-io/n8n-hosting)
   - repo: oci://ghcr.io/n8n-io/n8n-helm-chart
     name: n8n
-    # renovate: datasource=helm depName=n8n registryUrl=oci://ghcr.io/n8n-io/n8n-helm-chart
+    # oripathy: type=helm upstream=github.com/n8n-io/n8n tagPrefix=n8n@
     version: 1.16.0
 
     releaseName: n8n
@@ -28,12 +27,12 @@ resources:
   - security/
 
 images:
-  # renovate: datasource=docker depName=ghcr.io/n8n-io/n8n
   - name: ghcr.io/n8n-io/n8n
     newName: oci.chezmoi.sh/chezmoidotsh/n8n
+    # oripathy: type=oci upstream=github.com/n8n-io/n8n tagPrefix=n8n@ digest=false
     newTag: 2.43.5
-    # renovate: datasource=docker depName=ghcr.io/n8n-io/n8n
   - name: oci.chezmoi.sh/chezmoidotsh/n8n-self-license
+    # oripathy: type=oci upstream=github.com/n8n-io/n8n tagPrefix=n8n@ digest=false
     newTag: 2.43.5
 
 patches:

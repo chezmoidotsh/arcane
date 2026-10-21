@@ -39,11 +39,10 @@ in
   options.services.omniInfraProviderProxmox = {
     enable = mkEnableOption "Omni Infrastructure Provider for Proxmox";
 
-    # oripathy: type=release name=omni-infra-provider-proxmox upstream=github.com/siderolabs/omni-infra-provider-proxmox tagPrefix=v
     # ── Binary ──────────────────────────────────────────────────────────────
-    # renovate: datasource=github-releases depName=siderolabs/omni-infra-provider-proxmox
     version = mkOption {
       type = types.str;
+      # oripathy: type=release name=omni-infra-provider-proxmox upstream=github.com/siderolabs/omni-infra-provider-proxmox tagPrefix=v
       default = "v0.2.0";
       description = "Release version to fetch from GitHub.";
     };

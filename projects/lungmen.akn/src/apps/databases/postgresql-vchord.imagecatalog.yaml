@@ -6,7 +6,6 @@ spec:
   images:
     - major: 15
       # oripathy: ignore
-      # oripathy: ignore
       image: oci.chezmoi.sh/ghcr.io/tensorchord/vchord-postgres:pg15-v1.1.1
     - major: 16
       image: oci.chezmoi.sh/ghcr.io/tensorchord/vchord-postgres:pg16-v1.1.1

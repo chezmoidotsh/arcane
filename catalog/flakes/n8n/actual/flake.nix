@@ -5,8 +5,8 @@
 
   outputs = { self, nixpkgs, ... }:
     let
-      # oripathy: type=npm
       pname = "n8n-nodes-actual";
+      # oripathy: type=npm
       version = "26.10.9";
 
       # The package vendors a linux-x64 better-sqlite3 binary, so x86_64 is the only supported system.

@@ -1,10 +1,10 @@
 # Renovate Reference
 
-Configuration des mises à jour automatiques de dépendances : fichier de configuration, annotations `# renovate:` posées
-dans le dépôt, managers personnalisés et règles de regroupement.
+Configuration des mises à jour automatiques de dépendances : fichier de configuration, règles de regroupement, et ce qui
+a été retiré au profit d'[Oripathy](Oripathy-Reference.md).
 
 > [!WARNING]\
-> Vérifiée contre le dépôt le 2026-10-11 ; l'état de l'application Renovate côté GitHub n'a pas été revérifié.
+> Vérifiée contre le dépôt le 2026-10-21 ; l'état de l'application Renovate côté GitHub n'a pas été revérifié.
 
 ## État actuel
 
@@ -12,16 +12,16 @@ Renovate est **désactivé** dans le dépôt. La clé `"enabled": false` figure 
 [`renovate.json5`](../../renovate.json5), avec le commentaire « Disable Renovate until the configuration has been
 reworked to avoid some annoying auto-upgrades ».
 
-| Question                                            | Réponse                                                                                                   |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Renovate ouvre-t-il des PR depuis cette config ?    | Non, tant que `enabled` vaut `false`                                                                      |
-| L'application GitHub Renovate est-elle installée ?  | Non établi par le dépôt (aucun workflow ne la lance ; elle s'exécute côté GitHub)                         |
-| Un autre mécanisme met-il les dépendances à jour ?  | Aucun trouvé : ni `.github/dependabot.yml`, ni workflow de mise à jour, ni tâche `mise` ou `package.json` |
-| Les annotations `# renovate:` sont-elles retirées ? | Non : 44 fichiers de `projects/` et `catalog/` les portent encore                                         |
+| Question                                            | Réponse                                                                                                                                                         |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Renovate ouvre-t-il des PR depuis cette config ?    | Non, tant que `enabled` vaut `false`                                                                                                                            |
+| L'application GitHub Renovate est-elle installée ?  | Non établi par le dépôt (aucun workflow ne la lance ; elle s'exécute côté GitHub)                                                                               |
+| Un autre mécanisme met-il les dépendances à jour ?  | Oripathy signale quoi mettre à jour, la mise à jour reste manuelle ; ni `.github/dependabot.yml`, ni workflow de mise à jour, ni tâche `mise` ou `package.json` |
+| Les annotations `# renovate:` sont-elles retirées ? | Oui, de tout le dépôt ; remplacées par `# oripathy:` (voir [Oripathy Reference](Oripathy-Reference.md))                                                         |
 
-Conséquence : les versions du dépôt (images, charts Helm, binaires Nix) sont aujourd'hui mises à jour à la main. Les
-annotations et les sections ci-dessous restent valables en cas de réactivation, après le retravail annoncé dans le
-commentaire de la configuration.
+Conséquence : les versions du dépôt (images, charts Helm, binaires Nix) sont aujourd'hui mises à jour à la main.
+Oripathy indique quel composant mettre à jour ; la configuration ci-dessous ne garde que `extends` et les deux
+`packageRules`.
 
 > [!NOTE]\
 > Le linter `renovate` de rtunk (`renovate@43.233.3` dans [`.rtunk/rtunk.yaml`](../../.rtunk/rtunk.yaml)) valide la
@@ -41,73 +41,15 @@ Le preset `:gitmoji` est hérité tel quel. Le dépôt n'utilise plus Gitmoji de
 des messages que Renovate produirait n'est pas vérifiable depuis ce dépôt ; l'ancien exemple de PR
 (`:arrow_up:(deps): ...`) est retiré faute de preuve.
 
-## Annotations `# renovate:`
+## Annotations et managers retirés
 
-Une annotation est un commentaire posé directement avant la valeur à suivre. Elle donne la source (`datasource`), le
-paquet (`depName`) et, pour Helm, le registre (`registryUrl`).
+Les commentaires `# renovate:` ont été retirés de tout le dépôt, et le bloc `regexManagers` de `renovate.json5` avec
+eux. Les versions à suivre sont désormais déclarées par des annotations `# oripathy:`, lues par l'inventaire décrit dans
+[Oripathy Reference](Oripathy-Reference.md) : Oripathy remplace le flux piloté par commentaires pour trouver quoi mettre
+à jour.
 
-Répartition relevée dans `projects/` et `catalog/` (hors `dist/`) :
-
-| Datasource        | Annotations | Usage typique                                              |
-| ----------------- | ----------- | ---------------------------------------------------------- |
-| `docker`          | 28          | Images, `newTag` Kustomize, valeur de `.application.patch` |
-| `helm`            | 28          | Charts Helm (`registryUrl` pour les dépôts OCI ou HTTP)    |
-| `github-releases` | 4           | Versions de binaires dans les modules Nix                  |
-
-Le nom de la datasource est `github-releases` dans le dépôt ;
-[ADR-007](../archives/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md) écrit `github-release`, qui n'est pas
-le nom de la datasource Renovate.
-
-### Formes reconnues
-
-| Cible                             | Fichier               | Exemple                                                                                             |
-| --------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------- |
-| Image Kustomize                   | `kustomization.yaml`  | `# renovate: datasource=docker depName=ghcr.io/actualbudget/actual-server` avant `- name:`          |
-| Valeur d'un patch d'application   | `*.application.patch` | `# renovate: datasource=docker depName=ghcr.io/pocket-id/pocket-id` avant `value: "v2.7.0"`         |
-| Label `app.kubernetes.io/version` | `kustomization.yaml`  | `# renovate: datasource=helm depName=immich registryUrl=https://immich-app.github.io/immich-charts` |
-
-Exemple d'image Kustomize, tel qu'il figure dans `projects/lungmen.akn/src/apps/actual-budget/kustomization.yaml` :
-
-```yaml
-images:
-  # renovate: datasource=docker depName=ghcr.io/actualbudget/actual-server
-  - name: ghcr.io/actualbudget/actual-server
-    newName: oci.chezmoi.sh/ghcr.io/actualbudget/actual-server
-    newTag: "26.9.0"
-```
-
-Règles de saisie :
-
-- Le commentaire est sur la ligne immédiatement avant l'entrée.
-- Les versions numériques sont entre guillemets (`"26.9.0"`) pour éviter une lecture YAML en flottant.
-- `depName` est le nom complet de l'image (registre et dépôt).
-
-> [!WARNING]\
-> Aucun `kustomization.yaml` du dépôt ne porte aujourd'hui de label `app.kubernetes.io/version` (0 occurrence sous
-> `projects/`). L'exigence de label de version de
-> [ADR-007](../archives/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md) et le manager de labels ci-dessous
-> ne s'appliquent donc à aucun fichier existant. Les annotations des `kustomization.yaml` suivent le champ `images`.
-
-## Managers personnalisés
-
-Deux managers `regexManagers` sont actifs dans `renovate.json5` (sous réserve de réactivation). Les deux managers «
-images inline `image:` » sont entièrement commentés : ils sont inactifs.
-
-| Description du manager                                         | `fileMatch`                     | Capture                                                            |
-| -------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------ |
-| Labels `app.kubernetes.io/version` dans les fichiers Kustomize | `(^\|/)kustomization\.yaml$`    | `datasource`, `depName`, `registryUrl` (optionnel), `currentValue` |
-| Valeur d'un fichier `.application.patch`                       | `\.application\.patch$`         | Mêmes captures, sur la ligne `value:` qui suit l'annotation        |
-| Tag et digest d'images inline (commentés)                      | `\.ya?ml$` hors `kustomization` | Inactif                                                            |
-
-Pour les deux managers actifs, la datasource par défaut est `docker` quand `datasource` est absent.
-
-Constats vérifiés dans le fichier :
-
-- Aucun manager personnalisé ne couvre le champ `images`/`newTag` de Kustomize : l'ancien texte décrivait une regex «
-  Image Override Updates » qui n'existe pas dans `renovate.json5`. La prise en charge de ce champ dépend donc du manager
-  Kustomize natif de Renovate ou des presets, ce que le dépôt ne permet pas de confirmer.
-- Aucun manager ne cible les fichiers `.nix`, `default.yaml`, `*.helmvalues.yaml` ni `README.md`, alors que 9 de ces
-  fichiers portent une annotation. Elles ne sont suivies que si un preset hérité les couvre (non vérifié).
+Si Renovate est réactivé, son manager Kustomize natif (pas les anciens `regexManagers`) peut lire les entrées `images:`
+et `helmCharts:` des `kustomization.yaml`. Rien dans le dépôt ne le confirme aujourd'hui.
 
 ## Règles de paquets
 
@@ -131,15 +73,15 @@ Renovate.
 
 ## Diagnostic
 
-| Symptôme                                     | Vérification                                                                                     |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Aucune PR de mise à jour                     | Vérifier d'abord que `"enabled": false` a été retiré de `renovate.json5`                         |
-| Version non détectée                         | Orthographe de `datasource` et `depName`, commentaire sur la ligne immédiatement avant la valeur |
-| PR séparées pour un même paquet              | `depName` identiques entre les annotations ; le regroupement ne vaut que pour `docker` et `helm` |
-| Annotation sans effet dans un fichier `.nix` | Aucun manager local ne couvre `.nix` : voir la section « Managers personnalisés »                |
+| Symptôme                          | Vérification                                                                         |
+| --------------------------------- | ------------------------------------------------------------------------------------ |
+| Aucune PR de mise à jour          | Vérifier d'abord que `"enabled": false` a été retiré de `renovate.json5`             |
+| Version non signalée par Oripathy | Voir [Oripathy Reference](Oripathy-Reference.md#lire-un-échec-de-la-ci) (annotation) |
 
 ## Historique
 
+- _2026-10-21_ : annotations `# renovate:` et `regexManagers` retirés ; Oripathy documenté comme remplaçant du flux
+  piloté par commentaires ; sections sur les annotations, les formes reconnues et les managers supprimées.
 - _2026-10-11_ : migration vers le standard de documentation, en français ; `renovate.json` corrigé en `renovate.json5`
   ; état désactivé (`"enabled": false`) documenté ; preset `:gitmoji` signalé comme incohérent avec ADR-010 ; exemple de
   PR en format Gitmoji retiré ; regex « Image Override Updates » retirée (absente de la configuration) ; affirmations
@@ -149,6 +91,7 @@ Renovate.
 ## Pour aller plus loin
 
 - [`renovate.json5`](../../renovate.json5) : la configuration locale.
+- [Oripathy Reference](Oripathy-Reference.md) : les annotations `# oripathy:` qui remplacent `# renovate:`.
 - [ADR-007 Structure des projets et conventions de nommage](../archives/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md)
   : la convention de labels de version et d'annotations.
 - [ADR-010 Replace Gitmoji With Symbol Commit Types](../decisions/010-replace-gitmoji-with-symbol-commit-types.md) : le

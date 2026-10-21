@@ -21,22 +21,19 @@ config:
     # CloudNative-PG operator image override
     # Overrides the default operator image to use the local ZOT registry mirror.
     # The operator uses this image for instance manager pods and maintenance operations.
-    # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/cloudnative-pg
     OPERATOR_IMAGE_NAME: oci.chezmoi.sh/ghcr.io/cloudnative-pg/cloudnative-pg:1.29.1@sha256:0dfff19ba7b52ca25851a1010028b6940fff2e233290465af1cfb08a5f3f4661
 
     # PgBouncer connection pooler image override
     # Overrides the default PgBouncer image to use the local ZOT registry mirror.
     # PgBouncer is used as a PostgreSQL connection pooler to reduce connection overhead
     # and improve database performance under high concurrent connection loads.
-    # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/pgbouncer
     PGBOUNCER_IMAGE_NAME: oci.chezmoi.sh/ghcr.io/cloudnative-pg/pgbouncer:1.25.1-trixie@sha256:ea65b515dafc6a86cd70005ab21c16671f2e2c1d618210a5d6b4b90637c89c27
 
-    # oripathy: type=oci upstream=github.com/cloudnative-pg/postgres-containers
     # PostgreSQL default image override
     # Overrides the default PostgreSQL image to use the local ZOT registry mirror.
     # This is the fallback PostgreSQL image used when no imageCatalogRef is specified
     # in the Cluster resource. The "standard-trixie" variant includes all locales
     # (en_US.UTF-8, fr_FR.UTF-8, etc.) required for international database configurations.
     # The minimal variant lacks locale data, causing "invalid value for parameter lc_time" errors.
-    # renovate: datasource=docker depName=ghcr.io/cloudnative-pg/postgresql
+    # oripathy: type=oci upstream=github.com/cloudnative-pg/postgres-containers digest=true
     POSTGRES_IMAGE_NAME: oci.chezmoi.sh/ghcr.io/cloudnative-pg/postgresql:17.7-202512150807-standard-trixie@sha256:30e7d6712f7c530dd6eed5d2604947472c84677754e0edda87a09dd329d5f33f

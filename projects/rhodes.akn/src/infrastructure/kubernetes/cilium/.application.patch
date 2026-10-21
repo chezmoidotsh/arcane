@@ -9,8 +9,8 @@ spec:
     - name: Category
       value: Networking / CNI
     - name: Version
-      # renovate: datasource=helm depName=cilium registryUrl=https://helm.cilium.io/
-      value: "1.18.10"
+      # oripathy: type=mirror
+      value: "1.20.0"
     # -- Documentation & Resources
     - name: Documentation
       value: https://docs.cilium.io/

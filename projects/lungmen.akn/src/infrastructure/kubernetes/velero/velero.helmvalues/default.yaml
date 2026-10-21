@@ -5,7 +5,6 @@
 # so Kopia fs-backup is the permanent backup path here.
 initContainers:
   - name: velero-plugin-for-aws
-    # renovate: datasource=docker depName=velero/velero-plugin-for-aws
     image: velero/velero-plugin-for-aws:v1.13.1
     imagePullPolicy: IfNotPresent
     volumeMounts:
@@ -16,8 +15,7 @@ deployNodeAgent: true
 
 credentials:
   useSecret: true
-  # checkov:skip=CKV_SECRET_6: This is a Secret *name* reference, not a credential value.
-  existingSecret: velero-credentials
+  existingSecret: velero-credentials # checkov:skip=CKV_SECRET_6: This is a Secret *name* reference, not a credential value.
 
 configuration:
   backupStorageLocation:

@@ -9,10 +9,10 @@ spec:
     - name: Category
       value: Infrastructure / Cloud Provider
     - name: CCM Version
-      # renovate: datasource=helm depName=proxmox-cloud-controller-manager registryUrl=oci://ghcr.io/sergelogvinov/charts
+      # oripathy: type=mirror of=proxmox-cloud-controller-manager
       value: "0.2.29"
     - name: CSI Version
-      # renovate: datasource=helm depName=proxmox-csi-plugin registryUrl=oci://ghcr.io/sergelogvinov/charts
+      # oripathy: type=mirror of=proxmox-csi-plugin
       value: "0.5.9"
     # -- Documentation & Resources
     - name: CCM Documentation

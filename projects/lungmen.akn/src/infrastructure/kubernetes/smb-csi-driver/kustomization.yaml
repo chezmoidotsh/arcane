@@ -9,9 +9,9 @@ resources:
   - namespace.yaml
 
 helmCharts:
-  # oripathy: type=helm upstream=github.com/kubernetes-csi/csi-driver-smb tagPrefix=v
   - repo: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-smb/master/charts
     name: csi-driver-smb
+    # oripathy: type=helm upstream=github.com/kubernetes-csi/csi-driver-smb tagPrefix=v
     version: 1.20.1
 
     releaseName: csi-driver-smb
@@ -20,11 +20,19 @@ helmCharts:
 images:
   - name: registry.k8s.io/sig-storage/csi-node-driver-registrar
     newName: oci.chezmoi.sh/registry.k8s.io/sig-storage/csi-node-driver-registrar
+    # oripathy: type=oci upstream=github.com/kubernetes-csi/node-driver-registrar tagPrefix=v digest=false
+    newTag: v2.16.0
   - name: registry.k8s.io/sig-storage/csi-provisioner
     newName: oci.chezmoi.sh/registry.k8s.io/sig-storage/csi-provisioner
+    # oripathy: type=oci upstream=github.com/kubernetes-csi/external-provisioner tagPrefix=v digest=false
+    newTag: v6.1.1
   - name: registry.k8s.io/sig-storage/csi-resizer
     newName: oci.chezmoi.sh/registry.k8s.io/sig-storage/csi-resizer
+    # oripathy: type=oci upstream=github.com/kubernetes-csi/external-resizer tagPrefix=v digest=false
+    newTag: v2.1.0
   - name: registry.k8s.io/sig-storage/livenessprobe
     newName: oci.chezmoi.sh/registry.k8s.io/sig-storage/livenessprobe
+    # oripathy: type=oci upstream=github.com/kubernetes-csi/livenessprobe tagPrefix=v digest=false
+    newTag: v2.18.0
   - name: registry.k8s.io/sig-storage/smbplugin
     newName: oci.chezmoi.sh/registry.k8s.io/sig-storage/smbplugin

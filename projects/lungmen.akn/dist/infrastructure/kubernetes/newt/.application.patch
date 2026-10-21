@@ -9,7 +9,7 @@ spec:
     - name: Category
       value: Networking / Tunnel
     - name: Version
-      # renovate: datasource=helm depName=newt registryUrl=https://charts.fossorial.io
+      # oripathy: type=mirror
       value: "1.5.0"
     # -- Documentation & Resources
     - name: Documentation

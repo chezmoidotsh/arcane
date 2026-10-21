@@ -14,30 +14,46 @@
 # limitations under the License.
 # ----------------------------------------------------------------------------
 # mise alias="oripathy:inventory"
-# mise description="List the software versions deployed from this repository as a JSON inventory (Oripathy input)."
+# mise description="List the software versions deployed from this repository as one CycloneDX BOM per application (Oripathy input)."
 #
-# Writes `inventory.json` (schemaVersion 1) from what is deployed, and from the `# oripathy:` annotations that say what to
-# follow. Like `# renovate:`, an annotation sits right above the line that configures the version, so each chart and each
-# image has its own. A chart or image that is deployed but not annotated is reported in `problems`; `--check
-# inventory.json` fails on them, so a new application cannot slip in without a follow/ignore decision.
+# An application is a Kubernetes product directory (`projects/*/src/apps/<app>`, `projects/*/src/infrastructure/kubernetes/<app>`,
+# `projects/*/src/argocd`) or a NixOS flake (the directory of a `flake.nix`). For each one this script lists what runs, from what
+# is deployed (`dist/` is generated, so the versions are annotated in `src/`) and from the `# oripathy:` annotations that say what
+# to follow. `--bundle` writes the BOMs (CycloneDX 1.6, one per application, no date, no commit: the same repository content gives
+# the same bytes) that `scripts/oripathy:seal` encrypts for n8n; `--output` writes the flat inventory the checks run on.
 #
 # Annotation: `# oripathy: type=<helm|oci|nixpkg|release|npm> upstream=github.com/<owner>/<repo> [tagPrefix=v] [name=..]
-# [pkg=..]`, or `# oripathy: ignore`. `upstream=codeberg.org/<owner>/<repo>` for Codeberg.
-#   - Kubernetes (projects/*/dist/ is generated, so the annotations live in src/): above a kustomization `images:` entry
-#     (type=oci) or `helmCharts:` entry (type=helm), above a manifest line `image: registry/repo:tag`, a values line holding
-#     an image reference, or a `repository:` line followed by `tag:`. One annotation covers every tag of that repository
-#     in the product; the images rendered by a Helm chart follow the chart.
-#   - NixOS (projects/**/*.nix, catalog/**/*.nix): above a pinned container image (`fooImage = "registry/repo:tag"`,
-#     type=oci), a binary fetched from a release (`version = "v1.2"` or a pinned GitHub URL, type=release), an npm tarball
-#     (type=npm). A nixpkgs package (`pkgs.x`, `services.x.enable`) is `type=nixpkg pkg=x` anywhere in a file of the
-#     cluster, evaluated with `nix eval` against the flake.lock next to it. Plumbing (coreutils...) is skipped.
+# [pkg=..] [digest=true|false]`, or `# oripathy: ignore`. `type=oci` must say `digest=true|false`: whether its version line pins
+# the image by digest (`@sha256:` or a kustomize `digest:`), so a bump moves the digest too; the check fails when it does not match. `upstream=codeberg.org/<owner>/<repo>` for Codeberg. The annotation is the line right
+# above the line that sets the version, so that the BOM can say which line to edit (`evidence.occurrences[].line`):
+#   - `version:` of a `helmCharts:` entry (type=helm). A local chart has no `version:`: its `ignore` is above `- name:`.
+#   - `newTag:` of an `images:` entry (type=oci). The image of a Helm chart must be overridden there (explicit version, one
+#     annotation per entry), or have its `tag:` written in the values, unless the chart pins it by digest (an override would
+#     drop it) or renders several tags of it. The images of a chart that follow its upstream at the same version are folded
+#     into the chart's component.
+#   - `tag:` under `repository:`, a line `image: registry/repo:tag`, or a release URL of a remote manifest.
+#   - NixOS (projects/**/*.nix, catalog/**/*.nix): a pinned container image (`fooImage = "registry/repo:tag"`, type=oci), a
+#     binary fetched from a release (`version = "v1.2"` or a pinned GitHub URL, type=release), an npm tarball (type=npm).
+#     A nixpkgs package (`pkgs.x`, `services.x.enable`) is `type=nixpkg pkg=x` anywhere in a file of the flake: it has no
+#     version line, its version is evaluated with `nix eval` against the flake.lock next to it, next to the one at the head of
+#     the channel (`channelVersion`: what a `nix flake update` would bring). Plumbing (coreutils...) is skipped. The `github:`
+#     inputs of every flake.lock (nixpkgs, disko...) are listed without being followed: a host is updated by moving them all.
+# A chart, image or fetched release that is deployed but not annotated is reported in `problems`; `--check inventory.json` fails
+# on them, so a new application cannot slip in without a follow/ignore decision.
 # Only facts that are already public in this repository end up in the file: no CVE, no verdict, no exposure.
+#   - `.application.patch` (the version Argo CD shows): `# oripathy: type=mirror of=<component> [regex=..]` between `- name: ...Version`
+#     and its `value:` line. It adds the line to the component's locations and fails when it shows another version than the
+#     component (its own, its chart's, or an image tag). `regex` (quote it when it has spaces; first group or the group `version`)
+#     says how to read the version in the line, default the scalar after `key:`. A `Version` entry without annotation fails.
+# The annotated image lines of `catalog/kubernetes/` (reference values and bases that projects copy) are listed too, as `catalog/<name>`.
 # `deployedAt` is the commit date that introduced the current version (git log -S), so the history must be present
-# (`fetch-depth: 0` in CI). Standard library only.
+# (`fetch-depth: 0` in CI). Standard library only. Each cluster (and `catalog`) is scanned on its own thread, and the `nix eval` calls run in
+# parallel too (`--jobs`, default the CPU count up to 8); the output is the same whatever the number of jobs.
 #
-# Usage: scripts/oripathy:inventory [--output inventory.json]
+# Usage: scripts/oripathy:inventory [--output inventory.json] [--bundle oripathy-boms.json] [--jobs N] [--changed-from origin/main]
 #        scripts/oripathy:inventory --check inventory.json | --self-test
 import argparse
+import concurrent.futures
 import contextlib
 import datetime
 import io
@@ -47,6 +63,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 from pathlib import Path
 
 MIRROR = "oci.chezmoi.sh/"  # pull-through registry: oci.chezmoi.sh/<registry>/<repository>:<tag>
@@ -65,7 +82,9 @@ ANN_RE = re.compile(r"#\s*oripathy:\s*(.+?)\s*$")
 CHART_RE = re.compile(r"""helm\.sh/chart:\s*["']?([^\s"']+)""")
 APPVER_RE = re.compile(r"""app\.kubernetes\.io/version:\s*["']?([^\s"']+)""")
 CHART_SPLIT = re.compile(r"^(.+?)-(v?\d[\w.+]*)$")
-TYPES = {"helm", "oci", "nixpkg", "release", "npm"}
+TYPES = {"helm", "oci", "nixpkg", "release", "npm", "mirror"}
+ANN_TOKEN = re.compile(r"""([\w-]+)=("[^"]*"|'[^']*'|\S*)|(\S+)""")  # k=v, v optionally quoted (a regex holds spaces); a bare word is a flag
+MIRROR_VALUE = re.compile(r"""^\s*(?:-\s*)?[\w-]+:\s*["']?([^"'\s#]+)""")  # default: the scalar after `key:`
 
 
 def parse_ann(line):
@@ -74,22 +93,17 @@ def parse_ann(line):
     if not m:
         return None
     ann = {}
-    for tok in m.group(1).split():
-        k, _, v = tok.partition("=")
-        ann[k] = v or True
+    for k, v, flag in ANN_TOKEN.findall(m.group(1)):
+        if flag:
+            ann[flag] = True
+        else:
+            ann[k] = v[1:-1] if v[:1] in "\"'" and v[-1:] == v[:1] and len(v) > 1 else v or True
     return ann
 
 
-def ann_above(lines, i, window=5):
-    """The annotation in the comment block right above line `i`."""
-    for j in range(i - 1, max(i - window - 1, -1), -1):
-        s = lines[j].strip()
-        if s.startswith("#"):
-            if (a := parse_ann(s)):
-                return a
-        elif s:
-            return None
-    return None
+def ann_above(lines, i):
+    """The annotation on the line right above line `i` (the annotation is the line before the one that sets the version)."""
+    return parse_ann(lines[i - 1]) if i > 0 and lines[i - 1].lstrip().startswith("#") else None
 
 
 def upstream_of(ann):
@@ -143,6 +157,30 @@ def tag_key(image):
     return version_key(image["tag"])
 
 
+JOBS = 1  # worker threads (the work is `git` and `nix` subprocesses, so threads do); 1 = everything inline
+_POOL, _POOL_LOCK, _WARNED = None, threading.Lock(), set()
+
+
+def submit(fn, *args):
+    """Run `fn(*args)` in the shared pool (or inline when JOBS is 1); a Future either way, so callers can request early and wait late."""
+    global _POOL
+    if JOBS <= 1:
+        f = concurrent.futures.Future()
+        f.set_result(fn(*args))
+        return f
+    with _POOL_LOCK:
+        if _POOL is None:
+            _POOL = concurrent.futures.ThreadPoolExecutor(max_workers=JOBS)
+    return _POOL.submit(fn, *args)
+
+
+def warn_once(message):
+    with _POOL_LOCK:
+        if message not in _WARNED:
+            _WARNED.add(message)
+            print(f"warning: {message}", file=sys.stderr)
+
+
 def git(root, *args):
     r = subprocess.run(["git", "-C", str(root), "-c", "log.showSignature=false", *args], capture_output=True, text=True)
     return r.stdout.strip() if r.returncode == 0 else ""
@@ -154,16 +192,18 @@ def deployed_at(root, path, needle):
 
 
 def cluster_of(rel):
-    """projects/<cluster>/...; the shared NixOS modules (catalog/nix) run on the chezmoi.sh LXCs, the other flakes are `catalog`."""
+    """projects/<cluster>/...; the shared NixOS modules (catalog/nix) run on the chezmoi.sh LXCs, the other flakes and the Kubernetes bases are `catalog`.
+    This is also the unit of parallelism: everything of one cluster is scanned together."""
     parts = Path(rel).parts
     if parts[:1] == ("projects",) and len(parts) > 1:
         return parts[1]
-    return "chezmoi.sh" if parts[:2] == ("catalog", "nix") else "catalog" if parts[:2] == ("catalog", "flakes") else None
+    return "chezmoi.sh" if parts[:2] == ("catalog", "nix") else "catalog" if parts[:2] in (("catalog", "flakes"), ("catalog", "kubernetes")) else None
 
 
 def component(cluster, name, source, kind, version, path, **extra):
     return {"id": f"{cluster}/{name}", "name": name, "cluster": cluster, "source": source, "kind": kind, "version": version,
-            "image": None, "images": [], "chart": None, "package": None, "upstream": None, "paths": [path], "deployedAt": None, "notes": None, **extra}
+            "image": None, "images": [], "chart": None, "package": None, "upstream": None, "paths": [path], "deployedAt": None, "notes": None,
+            "app": None, "appName": None, "locations": [], "digest": None, **extra}
 
 
 def product_dir(rel):
@@ -199,34 +239,57 @@ def list_entry(lines, j):
 
 
 def target_info(lines, j):
-    """What the line `j` configures: the image or Helm chart of a kustomization entry, an image reference, or `repository:` + `tag:`."""
+    """What the line `j` sets: the version of a `helmCharts:` / `images:` entry, an image reference, a release URL or a `tag:` under `repository:`.
+    `via` says where the version lives: `helmCharts`, `images` (kustomize override), or `line` (anything else, written in a manifest or values)."""
     line = lines[j]
-    if re.match(r"^\s*-\s*\w+:", line) or re.match(r"^\s*(version|newTag):", line):
+    m = re.match(r"^\s*(version|newTag):", line)
+    if m:
         header, f = list_entry(lines, j)
-        if header == "helmCharts" and f.get("name"):
-            return {"kind": "helm", "chart": {"name": f["name"], "version": (f.get("version") or "").removeprefix("v"), "appVersion": None}}
-        if header == "images" and f.get("newTag") and (f.get("newName") or f.get("name")):
+        if header == "helmCharts" and m.group(1) == "version" and f.get("name"):
+            return {"kind": "helm", "via": "helmCharts", "chart": {"name": f["name"], "version": (f.get("version") or "").removeprefix("v"), "appVersion": None, "repo": f.get("repo")}}
+        if header == "images" and m.group(1) == "newTag" and f.get("newTag") and (f.get("newName") or f.get("name")):
             img = parse_image(f"{f.get('newName') or f['name']}:{f['newTag']}")
-            return {"kind": "oci", "image": img} if img["tag"] else None
+            if f.get("digest"):  # kustomize `digest:` next to `newTag:`
+                img["digest"] = f["digest"]
+            return {"kind": "oci", "via": "images", "image": img} if img["tag"] else None
+        return None
+    if re.match(r"^\s*-\s*name:", line):  # a local chart has no `version:`: the annotation (an `ignore`) sits above its `- name:`
+        header, f = list_entry(lines, j)
+        if header == "helmCharts" and f.get("name") and "version" not in f:
+            return {"kind": "helm", "via": "helmCharts", "chart": {"name": f["name"], "version": "", "appVersion": None, "repo": None}}
     u = re.match(r"^\s*(?:-\s*)?https?://\S+/(?:releases/download|archive|raw)/([^/\s]+)/", line)
     if u:  # a release URL (remote manifest): the version is its tag
-        return {"kind": "url", "tag": u.group(1)}
+        return {"kind": "url", "via": "line", "tag": u.group(1)}
+    t = re.match(r"^\s*tag:\s*[\"']?([^\s\"']+)", line)
+    if t:  # `repository:` + `tag:` pair: the annotation sits above `tag:`
+        r = next((re.match(r"^\s*repository:\s*[\"']?([^\s\"']+)", l) for l in reversed(lines[max(j - 3, 0):j]) if re.match(r"^\s*repository:", l)), None)
+        return {"kind": "oci", "via": "line", "image": parse_image(f"{r.group(1)}:{t.group(1)}")} if r else None
     value = line.split("#")[0]
     m = IMGREF_RE.search(value.split(":", 1)[1] if ":" in value else "")
     if m and "://" not in m.group(1):
         img = parse_image(m.group(1))
-        return {"kind": "oci", "image": img} if img["tag"] else None
-    m = re.match(r"^\s*repository:\s*[\"']?([^\s\"']+)", line)
-    t = next((re.match(r"^\s*tag:\s*[\"']?([^\s\"']+)", l) for l in lines[j + 1:j + 4] if re.match(r"^\s*tag:", l)), None)
-    if m and t:
-        return {"kind": "oci", "image": parse_image(f"{m.group(1)}:{t.group(1)}")}
+        return {"kind": "oci", "via": "line", "image": img} if img["tag"] else None
     return None
 
 
-def scan_src(root, problems):
-    """Every annotation in src/: (cluster, product dir) -> list of entries with the chart or image they sit above."""
+def check_digest(problems, where, ann, image):
+    """`digest=true|false` on a `type=oci` annotation says whether the version line pins the image by digest (`@sha256:` or a
+    kustomize `digest:`); it is explicit so that a bump knows to move the digest too, and it must match the line."""
+    if ann.get("ignore") or ann.get("type") != "oci":
+        return
+    want = "true" if image and image["digest"] else "false"
+    got = ann.get("digest")
+    if got not in ("true", "false"):
+        problems.append({"where": where, "product": None, "message": f"type=oci needs digest=true|false: this line {'pins' if want == 'true' else 'does not pin'} a digest, write digest={want}"})
+    elif got != want:
+        problems.append({"where": where, "product": None, "message": f"digest={got} but the line {'pins' if want == 'true' else 'does not pin'} a digest, write digest={want}"})
+
+
+def scan_src(root, problems, unit):
+    """Every annotation in src/: (cluster, product dir) -> list of entries with the chart or image they sit above. The annotation
+    must be the line right above the one that sets the version, so the report can say which line to edit (`versionLine`)."""
     entries = {}
-    for path in sorted(root.glob("projects/*/src/**/*.y*ml")):
+    for path in sorted(root.glob(f"projects/{unit}/src/**/*.y*ml")):
         rel = path.relative_to(root).as_posix()
         if "/charts/" in rel or "node_modules" in rel:
             continue
@@ -236,20 +299,25 @@ def scan_src(root, problems):
             ann = parse_ann(line) if line.lstrip().startswith("#") else None
             if not ann or not cluster or not sub:
                 continue
-            j = next((k for k in range(i + 1, len(lines)) if lines[k].strip() and not lines[k].lstrip().startswith("#")), None)
+            j = i + 1 if i + 1 < len(lines) and lines[i + 1].strip() and not lines[i + 1].lstrip().startswith("#") else None
             info = target_info(lines, j) if j is not None else None
             if not info:
-                problems.append({"where": f"{rel}:{i + 1}", "product": None, "message": "annotation is not above an image, a chart (`helmCharts:` / `images:` entry) or a `repository:` + `tag:` pair"})
+                problems.append({"where": f"{rel}:{i + 1}", "product": None, "message": "annotation must sit right above the line that sets a version: `version:` of a `helmCharts:` entry, `newTag:` of an `images:` entry, `tag:` under `repository:`, an image reference or a release URL"})
                 continue
+            if info["kind"] == "oci":
+                check_digest(problems, f"{rel}:{i + 1}", ann, info["image"])
             needle = info["image"]["tag"] if info["kind"] == "oci" else info["chart"]["version"] if info["kind"] == "helm" else info["tag"]
-            entries.setdefault((cluster, sub), []).append({"rel": rel, "line": j + 1, "ann": ann, "info": info, "needle": needle})
+            entries.setdefault((cluster, sub), []).append({"rel": rel, "line": j + 1, "commentLine": i + 1, "ann": ann, "info": info, "needle": needle})
     return entries
 
 
-def dist_facts(root):
-    """What is rendered per product: Helm charts (with the images they run) and standalone images."""
+WORKLOADS = {"Deployment", "StatefulSet", "DaemonSet", "ReplicaSet", "Job", "CronJob", "Pod"}
+
+
+def dist_facts(root, unit):
+    """What is rendered per product: Helm charts (with the images they run, `workload` when a pod runs them) and standalone images."""
     facts = {}
-    for path in sorted(root.glob("projects/*/dist/**/*.yaml")):
+    for path in sorted(root.glob(f"projects/{unit}/dist/**/*.yaml")):
         rel = path.relative_to(root).as_posix()
         cluster, (sub, _) = cluster_of(rel), product_dir(rel)
         if not (cluster and sub):
@@ -261,19 +329,26 @@ def dist_facts(root):
         if m:
             cname, cversion = parse_chart(m.group(1))
             c = f["charts"].setdefault(cname, {"version": cversion, "appVersion": app.group(1).removeprefix("v") if app else None, "images": {}})
+            runs = bool(WORKLOADS & set(path.name.split(".")))  # dist files are named <group>.<version>.<Kind>.<name>.yaml
             for i in images:
-                c["images"][f"{i['registry']}/{i['repository']}:{i['tag']}"] = i
+                c["images"][f"{i['registry']}/{i['repository']}:{i['tag']}"] = {**i, "workload": runs or c["images"].get(f"{i['registry']}/{i['repository']}:{i['tag']}", {}).get("workload", False)}
         else:
             for i in images:
                 f["images"].setdefault(i["repository"], {})[i["tag"]] = i
     return facts
 
 
-def scan_dist(root, problems):
-    """One component per annotated chart or image of a product directory; what is deployed but not annotated is a problem."""
-    entries, facts, out = scan_src(root, problems), dist_facts(root), []
+def location(e):
+    return {"file": e["rel"], "commentLine": e["commentLine"], "versionLine": e["line"]}
+
+
+def scan_dist(root, problems, unit):
+    """One component per annotated chart or image of a product directory; what is deployed but not annotated is a problem.
+    The image of a Helm chart must have an explicit, annotated version (an `images:` override in the kustomization, or the `tag:`
+    of its values) unless the chart pins it by digest, which an override would drop, or renders several tags of it."""
+    entries, facts, out = scan_src(root, problems, unit), dist_facts(root, unit), []
     for (cluster, sub), f in sorted(facts.items()):
-        directory, src = sub.rsplit("/", 1)[-1], entries.get((cluster, sub), [])
+        directory, src, app = sub.rsplit("/", 1)[-1], entries.get((cluster, sub), []), f"projects/{cluster}/src/{sub}"
 
         def declare(name, kind, matches, hint, repo=None):
             e = next((e for e in src if (e["info"]["kind"] == kind and matches(e["info"])) or (repo and e["ann"].get("image") == repo)), None)
@@ -289,57 +364,129 @@ def scan_dist(root, problems):
                 return None
             return e
 
+        def ident(name):
+            return f"{cluster}/{directory}" if name == directory else f"{cluster}/{directory}/{name}"
+
         for cname, c in sorted(f["charts"].items()):
             e = declare(cname, "helm", lambda i, cname=cname: i["chart"]["name"] == cname,
-                        f"add `# oripathy: type=helm upstream=github.com/<owner>/<repo>` (or `ignore`) above the `{cname}` entry of `helmCharts:` in projects/{cluster}/src/{sub}/")
+                        f"add `# oripathy: type=helm upstream=github.com/<owner>/<repo>` (or `ignore`) right above `version:` of the `{cname}` entry of `helmCharts:` in projects/{cluster}/src/{sub}/kustomization.yaml")
             if e:
                 name = e["ann"].get("name") or cname
-                chart = {"name": cname, "version": c["version"], "appVersion": c["appVersion"]}
-                comp = component(cluster, name, "dist", "helm", c["appVersion"] or c["version"], f"projects/{cluster}/dist/{sub}/", chart=chart, images=sorted(c["images"].values(), key=lambda i: (i["repository"], i["tag"])), upstream=upstream_of(e["ann"]))
-                comp["id"] = f"{cluster}/{directory}" if name == directory else f"{cluster}/{directory}/{name}"
+                chart = {"name": cname, "version": c["version"], "appVersion": c["appVersion"], "repo": e["info"]["chart"].get("repo")}
+                comp = component(cluster, name, "dist", "helm", c["appVersion"] or c["version"], f"projects/{cluster}/dist/{sub}/", chart=chart, images=sorted(({k: v for k, v in i.items() if k != "workload"} for i in c["images"].values()), key=lambda i: (i["repository"], i["tag"])),
+                                 upstream=upstream_of(e["ann"]), app=app, appName=directory, locations=[{**location(e), "role": "chart"}])
+                comp["id"] = ident(name)
                 comp["deployedAt"] = deployed_at(root, e["rel"], e["needle"])
                 comp["paths"] = [f"projects/{cluster}/dist/{sub}/", e["rel"]]
                 out.append(comp)
+            tags = {}
+            for i in c["images"].values():
+                tags.setdefault(i["repository"], set()).add(i["tag"])
+            # a digest pin or several tags of one repository (a Windows variant) cannot be expressed by an override: the chart owns them
+            for i in sorted((i for i in c["images"].values() if i["workload"] and not i["digest"] and len(tags[i["repository"]]) == 1), key=lambda i: (i["repository"], i["tag"])):
+                repo = i["repository"]
+                e = declare(repo.rsplit("/", 1)[-1], "oci", lambda x, repo=repo: x["image"]["repository"] == repo,
+                            f"set the version of `{repo}` explicitly: override it in `images:` of projects/{cluster}/src/{sub}/kustomization.yaml (`newName` + `newTag`) or write its `tag:` in the values, with `# oripathy: type=oci upstream=github.com/<owner>/<repo>` right above the version")
+                if e:
+                    name, img = e["ann"].get("name") or repo.rsplit("/", 1)[-1], e["info"]["image"]
+                    comp = component(cluster, name, "dist", "oci", normalize(img["tag"]), e["rel"], image=img, images=[img], upstream=upstream_of(e["ann"]), digest=e["ann"].get("digest"),
+                                     app=app, appName=directory, locations=[{**location(e), "role": "image"}])
+                    comp["id"] = ident(name)
+                    comp["deployedAt"] = deployed_at(root, e["rel"], e["needle"])
+                    comp["paths"] = [e["rel"], f"projects/{cluster}/dist/{sub}/"]
+                    out.append(comp)
         for repo, tags in sorted(f["images"].items()):
             e = declare(repo.rsplit("/", 1)[-1], "oci", lambda i, repo=repo: i["image"]["repository"] == repo,
-                        f"add `# oripathy: type=oci upstream=github.com/<owner>/<repo>` (or `ignore`) above the line that sets the `{repo}` tag in projects/{cluster}/src/{sub}/", repo)
+                        f"add `# oripathy: type=oci upstream=github.com/<owner>/<repo>` (or `ignore`) right above the line that sets the `{repo}` tag in projects/{cluster}/src/{sub}/", repo)
             if e:
                 info, name = e["info"], e["ann"].get("name") or repo.rsplit("/", 1)[-1]
                 img = info["image"] if info["kind"] == "oci" else next(iter(tags.values()))
                 version = normalize(img["tag"]) if info["kind"] == "oci" else info["chart"]["version"] if info["kind"] == "helm" else tag_version(info["tag"])
                 comp = component(cluster, name, "dist", "helm" if info["kind"] == "helm" else "oci", version, e["rel"], image=img, images=sorted(tags.values(), key=lambda i: version_key(i["tag"])),
-                                 chart=info.get("chart") if info["kind"] == "helm" else None, upstream=upstream_of(e["ann"]))
-                comp["id"] = f"{cluster}/{directory}" if name == directory else f"{cluster}/{directory}/{name}"
+                                 chart=info.get("chart") if info["kind"] == "helm" else None, upstream=upstream_of(e["ann"]), digest=e["ann"].get("digest") if info["kind"] == "oci" else None,
+                                 app=app, appName=directory, locations=[{**location(e), "role": "image"}])
+                comp["id"] = ident(name)
                 comp["deployedAt"] = deployed_at(root, e["rel"], e["needle"])
                 comp["paths"] = [e["rel"], f"projects/{cluster}/dist/{sub}/"]
                 out.append(comp)
     return out
 
 
-def scan_nix(root, problems):
+def used_attrs(text):
+    """The nixpkgs attributes a Nix file uses: `pkgs.x`, enabled services and programs, Docker."""
+    docker = {"docker"} if re.search(r"virtualisation\.docker(?:\.enable|\s*=\s*\{[^{}]*?\benable)\s*=\s*true", text) else set()
+    return set(PKG_RE.findall(text)) | set(SERVICE_RE.findall(text)) | docker
+
+
+def nix_eval(flake, attr):
+    r = subprocess.run(["nix", "eval", "--raw", "--inputs-from", str(flake), f"nixpkgs#{attr}.version"], capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 else False
+
+
+def channel_eval(ref, attr):
+    r = subprocess.run(["nix", "eval", "--raw", f"github:NixOS/nixpkgs/{ref}#{attr}.version"], capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
+def scan_nix(root, problems, unit):
     """Images, fetched releases, npm tarballs and nixpkgs packages of the NixOS sources, from their annotations."""
-    out, evals, warned = [], {}, []
+    out, evals = [], {}
     plumbing = PLUMBING
 
     def flake_of(path):
         return next((d for d in path.parents if (d / "flake.lock").exists()), root / NIX_FALLBACK)
 
+    def app_of(path):
+        """The flake the file belongs to (nearest `flake.nix`): `projects/kazimierz.akn/src/infrastructure/nixos`."""
+        d = next((d for d in path.parents if (d / "flake.nix").exists()), path.parent)
+        return d.relative_to(root).as_posix()
+
+    def at(rel, i, role, version_line=True):
+        return {"file": rel, "commentLine": i, "versionLine": i + 1 if version_line else None, "role": role}
+
+    def nix_future(flake, attr):
+        """Request the version of `attr` at the locked nixpkgs early (the evaluations run in parallel), read it late."""
+        if (flake, attr) not in evals:
+            evals[(flake, attr)] = submit(nix_eval, flake, attr)
+        return evals[(flake, attr)]
+
     def nix_version(flake, attr):
         if not shutil.which("nix"):
-            if not warned:
-                print("warning: nix not installed, nixpkgs versions are left empty and unannotated packages are not detected", file=sys.stderr)
-                warned.append(1)
+            warn_once("nix not installed, nixpkgs versions are left empty and unannotated packages are not detected")
             return None
-        if (flake, attr) not in evals:
-            r = subprocess.run(["nix", "eval", "--raw", "--inputs-from", str(flake), f"nixpkgs#{attr}.version"], capture_output=True, text=True)
-            evals[(flake, attr)] = r.stdout.strip() if r.returncode == 0 else False
-        return evals[(flake, attr)]
+        return nix_future(flake, attr).result()
+
+    channel = {}
+
+    def channel_future(flake, attr):
+        """Version of `attr` at the head of the channel the flake follows (`nixos-26.05`): what a `nix flake update` would bring."""
+        try:
+            ref = json.loads((flake / "flake.lock").read_text())["nodes"]["nixpkgs"]["original"]["ref"]
+        except (OSError, KeyError, ValueError):
+            return None
+        if (ref, attr) not in channel:
+            channel[(ref, attr)] = submit(channel_eval, ref, attr)
+        return channel[(ref, attr)]
+
+    def channel_version(flake, attr):
+        fut = channel_future(flake, attr) if shutil.which("nix") else None
+        return fut.result() if fut else None
 
     def bad(rel, i, what):
         problems.append({"where": f"{rel}:{i + 1}", "product": None, "message": what})
 
     files = [(path.relative_to(root).as_posix(), path) for path in sorted(list(root.glob("projects/**/*.nix")) + list(root.glob("catalog/**/*.nix"))) if "node_modules" not in path.parts]
+    files = [(rel, path) for rel, path in files if cluster_of(rel) == unit]
     annotated = {(cluster_of(rel), a["pkg"]) for rel, path in files for a in map(parse_ann, path.read_text(errors="replace").splitlines()) if a and a.get("pkg")}
+    if shutil.which("nix"):  # start every evaluation now: they are independent, the loop below only waits for them
+        for rel, path in files:
+            text = path.read_text(errors="replace")
+            for attr in {a["pkg"] for a in map(parse_ann, text.splitlines()) if a and isinstance(a.get("pkg"), str)}:
+                nix_future(flake_of(path), attr)
+                channel_future(flake_of(path), attr)
+            for attr in used_attrs(text) - plumbing:
+                if (cluster_of(rel), attr) not in annotated and not HELPER_RE.match(attr):
+                    nix_future(flake_of(path), attr)
     for rel, path in files:
         lines = path.read_text(errors="replace").splitlines()
         cluster = cluster_of(rel)
@@ -354,22 +501,24 @@ def scan_nix(root, problems):
             if m:  # pinned container image
                 img, a = parse_image(m.group(1)), ann_above(lines, i)
                 if not a:
-                    bad(rel, i, "add `# oripathy: type=oci upstream=github.com/<owner>/<repo>` (or `ignore`) above this image")
+                    bad(rel, i, "add `# oripathy: type=oci upstream=github.com/<owner>/<repo>` (or `ignore`) on the line right above this image")
                 elif not a.get("ignore"):
+                    check_digest(problems, f"{rel}:{i}", a, img)
                     name = a.get("name") or img["repository"].rsplit("/", 1)[-1]
-                    c = component(cluster, name, "nix", "oci", normalize(img["tag"]), rel, image=img, images=[img], upstream=upstream_of(a))
+                    c = component(cluster, name, "nix", "oci", normalize(img["tag"]), rel, image=img, images=[img], upstream=upstream_of(a), digest=a.get("digest"),
+                                  app=app_of(path), appName=app_of(path).rsplit("/", 1)[-1], locations=[at(rel, i, "image")])
                     c["deployedAt"] = deployed_at(root, rel, img["tag"])
                     out.append(c)
                 continue
             g = GH_URL_RE.search(line)
             if g and ann_above(lines, i) is None:  # pinned release or archive of a GitHub project
-                bad(rel, i, "add `# oripathy: type=release upstream=github.com/<owner>/<repo>` (or `ignore`) above this URL")
+                bad(rel, i, "add `# oripathy: type=release upstream=github.com/<owner>/<repo>` (or `ignore`) on the line right above this URL")
         for i, line in enumerate(lines):  # annotations that carry a version
             ann = parse_ann(line)
             if not ann or ann.get("ignore") or ann.get("type") in (None, "oci", "helm"):
                 continue
             typ, up = ann["type"], upstream_of(ann)
-            body = [l for l in lines[i + 1:i + 9] if not l.strip().startswith("#")]
+            body = lines[i + 1:i + 2]  # the version is on the line right below the annotation
             if typ == "nixpkg":
                 attr = ann.get("pkg")
                 flake = flake_of(path)
@@ -378,7 +527,8 @@ def scan_nix(root, problems):
                     bad(rel, i, f"`pkg={attr}` is not a nixpkgs package with a version (type=nixpkg needs pkg=<attr>)")
                     continue
                 lock = (flake / "flake.lock").relative_to(root).as_posix() if (flake / "flake.lock").exists() else rel
-                c = component(cluster, ann.get("name") or attr, "nix", "nix-package", normalize(version), lock, package={"attr": attr, "version": version}, upstream=up)
+                c = component(cluster, ann.get("name") or attr, "nix", "nix-package", normalize(version), lock, package={"attr": attr, "version": version, "channelVersion": channel_version(flake, attr)}, upstream=up,
+                              app=app_of(path), appName=app_of(path).rsplit("/", 1)[-1], locations=[at(rel, i + 1, "package", version_line=False)])
                 c["paths"] = sorted({lock, rel})
                 c["deployedAt"] = git(root, "log", "-1", "--format=%cI", "--", lock) or None
                 c["notes"] = None if version else "nix not installed: version unresolved"
@@ -389,35 +539,250 @@ def scan_nix(root, problems):
                 pn = PNAME_RE.search(text) if typ == "npm" else None
                 name = ann.get("name") or (pn.group(1) if pn else None) or (up["repo"].rsplit("/", 1)[-1] if up else None)
                 if not (version and name and (up or typ == "npm")) or "$" in version:
-                    bad(rel, i, f"type={typ} needs upstream=github.com/<owner>/<repo> and a literal version or GitHub URL in the lines below")
+                    bad(rel, i, f"type={typ} needs upstream=github.com/<owner>/<repo> and a literal version or GitHub URL on the line right below")
                     continue
-                c = component(cluster, name, "nix", "nix-package", normalize(version), rel, package={"attr": name, "version": version}, upstream=up)
+                c = component(cluster, name, "nix", "nix-package", normalize(version), rel, package={"attr": name, "version": version}, upstream=up,
+                              app=app_of(path), appName=app_of(path).rsplit("/", 1)[-1], locations=[at(rel, i + 1, "release")])
                 c["deployedAt"] = deployed_at(root, rel, version)
             else:
                 bad(rel, i, f"unknown type={typ} (helm, oci, nixpkg, release, npm)")
                 continue
             out.append(c)
         if shutil.which("nix"):  # packages used by the file but not annotated
-            attrs = set(PKG_RE.findall(text)) | set(SERVICE_RE.findall(text)) | ({"docker"} if re.search(r"virtualisation\.docker(?:\.enable|\s*=\s*\{[^{}]*?\benable)\s*=\s*true", text) else set())
-            for attr in sorted(a for a in attrs - plumbing if (cluster, a) not in annotated):
+            for attr in sorted(a for a in used_attrs(text) - plumbing if (cluster, a) not in annotated):
                 if not HELPER_RE.match(attr) and nix_version(flake_of(path), attr):
                     problems.append({"where": rel, "product": f"{cluster}/{attr}", "message": f"add `# oripathy: type=nixpkg pkg={attr} upstream=github.com/<owner>/<repo>` (or `ignore pkg={attr}`) to {rel}"})
     return out
 
 
-def build(root):
+def scan_catalog(root, problems, unit):
+    """The reference values and bases of `catalog/kubernetes/` are not deployed as they are, but projects copy their versions: the
+    annotated image lines are listed (as `catalog/<name>`), without forcing an annotation on every line."""
+    out = []
+    for path in sorted(root.glob("catalog/kubernetes/**/*.y*ml")) if unit == "catalog" else []:
+        rel = path.relative_to(root).as_posix()
+        lines = path.read_text(errors="replace").splitlines()
+        for i, line in enumerate(lines):
+            ann = parse_ann(line) if line.lstrip().startswith("#") else None
+            if not ann:
+                continue
+            j = i + 1 if i + 1 < len(lines) and lines[i + 1].strip() and not lines[i + 1].lstrip().startswith("#") else None
+            info = target_info(lines, j) if j is not None else None
+            if not info or info["kind"] != "oci":
+                problems.append({"where": f"{rel}:{i + 1}", "product": None, "message": "annotation must sit right above an image reference (`image:`, `tag:` under `repository:`)"})
+                continue
+            img = info["image"]
+            check_digest(problems, f"{rel}:{i + 1}", ann, img)
+            up = upstream_of(ann)
+            if ann.get("ignore"):
+                continue
+            if ann.get("type") != "oci" or not up:
+                problems.append({"where": f"{rel}:{i + 1}", "product": None, "message": "annotation needs type=oci and upstream=github.com/<owner>/<repo>"})
+                continue
+            app = "/".join(Path(rel).parts[:3])
+            name = ann.get("name") or img["repository"].rsplit("/", 1)[-1]
+            c = component("catalog", name, "catalog", "oci", normalize(img["tag"]), rel, image=img, images=[img], upstream=up, digest=ann.get("digest"),
+                          app=app, appName=app.rsplit("/", 1)[-1], locations=[{"file": rel, "commentLine": i + 1, "versionLine": j + 1, "role": "image"}])
+            c["deployedAt"] = deployed_at(root, rel, img["tag"])
+            out.append(c)
+    return out
+
+
+def scan_flakes(root, unit):
+    """The `github:` inputs locked in every flake.lock (nixpkgs, disko, sops-nix...): they are pins too, and a host is updated by moving them
+    all together with `nix flake update`. They are reported for the BOM only: no upstream is followed, so no release is watched."""
+    out = []
+    for lock in sorted(list(root.glob("projects/**/flake.lock")) + list(root.glob("catalog/**/flake.lock"))):
+        if "node_modules" in lock.parts:
+            continue
+        rel, nodes = lock.relative_to(root).as_posix(), json.loads(lock.read_text())["nodes"]
+        cluster, d = cluster_of(rel), lock.parent.relative_to(root).as_posix()
+        if cluster != unit:
+            continue
+        for name, key in sorted(nodes["root"].get("inputs", {}).items()):
+            node = nodes.get(key if isinstance(key, str) else "", {})
+            lk, org = node.get("locked", {}), node.get("original", {})
+            if lk.get("type") != "github" or not cluster:
+                continue
+            c = component(cluster, f"{d.rsplit('/', 1)[-1]}/{name}", "nix", "flake-input", lk["rev"][:10], rel, package={"attr": name, "version": lk["rev"], "ref": org.get("ref")},
+                          app=d, appName=d.rsplit("/", 1)[-1], locations=[{"file": rel, "commentLine": None, "versionLine": None, "role": "flake-input"}])
+            c["vcs"] = f"https://github.com/{lk['owner']}/{lk['repo']}"
+            c["deployedAt"] = datetime.datetime.fromtimestamp(lk["lastModified"], datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ") if lk.get("lastModified") else None
+            out.append(c)
+    return out
+
+
+def merge(components, problems):
+    """One component per id; an image that follows the same upstream at the same version as another component of its app (the images
+    of a Helm chart) is folded into it. Same upstream with another version is only worth a warning."""
+    merged, by_up, out = {}, {}, []
+    for c in components:
+        if c["id"] in merged:
+            m = merged[c["id"]]
+            if (c["version"], c["upstream"]) != (m["version"], m["upstream"]):
+                problems.append({"where": c["paths"][0], "product": c["id"], "message": "declared twice with a different version or upstream (give each a distinct `name=`)"})
+                continue
+            m["paths"] = sorted(set(m["paths"]) | set(c["paths"]))
+            m["locations"] += [x for x in c["locations"] if x not in m["locations"]]
+            continue
+        up = c["upstream"] and (c["app"], c["upstream"]["url"], c["upstream"]["tagPrefix"])
+        if up and c["source"] == "dist" and up in by_up:
+            same = by_up[up]
+            if same["version"] == c["version"]:
+                same["images"] = sorted({i["registry"] + "/" + i["repository"] + ":" + i["tag"]: i for i in same["images"] + c["images"]}.values(), key=lambda i: (i["repository"], i["tag"]))
+                same["paths"] = sorted(set(same["paths"]) | set(c["paths"]))
+                same["locations"] += c["locations"]
+                continue
+            print(f"warning: {c['id']} ({c['version']}) and {same['id']} ({same['version']}) follow {c['upstream']['url']} at different versions", file=sys.stderr)
+        merged[c["id"]] = c
+        if up:
+            by_up.setdefault(up, c)
+        out.append(c)
+    return out
+
+
+def purl_of(c):
+    """Package URL of a component: the container image, or the release of its upstream."""
+    if c["image"]:
+        i = c["image"]
+        head, _, last = i["repository"].rpartition("/")
+        ref = (i["digest"] or i["tag"] or "").replace(":", "%3A")
+        return f"pkg:oci/{last}@{ref}?repository_url={i['registry']}/{head}" if head else f"pkg:oci/{last}@{ref}?repository_url={i['registry']}"
+    up = c["upstream"]
+    return f"pkg:github/{up['repo']}@{c['version']}" if up and up["forge"] == "github" and c["version"] else None
+
+
+def bom_of(app, comps):
+    """CycloneDX 1.6 BOM of one application (a Kubernetes product directory or a flake). Everything that is not standard goes in
+    `oripathy:` properties; `evidence.occurrences` points at the line to edit to change the version. No date and no commit, so the
+    same repository content gives the same bytes."""
+    def prop(k, v):
+        return {"name": f"oripathy:{k}", "value": v if isinstance(v, str) else json.dumps(v, sort_keys=True, separators=(",", ":"))}
+
+    out = []
+    for c in sorted(comps, key=lambda c: c["id"]):
+        props = [prop(k, c[k]) for k in ("id", "cluster", "source", "kind", "image", "chart", "package", "paths", "deployedAt", "notes", "digest") if c.get(k) not in (None, [], {})]
+        if c["upstream"]:
+            props += [prop("forge", c["upstream"]["forge"]), prop("repo", c["upstream"]["repo"]), prop("tagPrefix", c["upstream"]["tagPrefix"])]
+        if c["images"] and c["kind"] == "helm":
+            props.append(prop("images", [f"{i['registry']}/{i['repository']}:{i['tag']}" for i in c["images"]]))
+        x = {"type": "container" if c["kind"] == "oci" else "application", "bom-ref": c["id"], "name": c["name"], "version": c["version"] or "unknown", "properties": props}
+        if purl_of(c):
+            x["purl"] = purl_of(c)
+        url = c["upstream"]["url"] if c["upstream"] else c.get("vcs")
+        if url:
+            x["externalReferences"] = [{"type": "vcs", "url": url}]
+        occ = [{"location": l["file"], "line": l["versionLine"], "additionalContext": f"{l['role']}; annotation line {l['commentLine']}"} for l in c["locations"] if l["versionLine"]]
+        if occ:
+            x["evidence"] = {"occurrences": occ}
+        out.append(x)
+    first = comps[0]
+    return {"bomFormat": "CycloneDX", "specVersion": "1.6", "version": 1,
+            "metadata": {"component": {"type": "application", "bom-ref": f"app:{app}", "name": f"{first['cluster']}/{first['appName']}", "properties": [prop("app", app), prop("cluster", first["cluster"])]}},
+            "components": out}
+
+
+def bundle_of(components):
+    """What n8n reads: one BOM per application, sorted, with no timestamp."""
+    apps = {}
+    for c in components:
+        if c["app"]:
+            apps.setdefault(c["app"], []).append(c)
+    return {"format": "oripathy-boms", "schemaVersion": 1, "boms": [bom_of(a, cs) for a, cs in sorted(apps.items())]}
+
+
+def versions_of(c):
+    """Every version a component can legitimately be shown with: its own, its chart's (and app version), its image tags."""
+    out = {c["version"]} | {i["tag"] for i in c["images"]}
+    if c["chart"]:
+        out |= {c["chart"].get("version"), c["chart"].get("appVersion")}
+    return {normalize(v) for v in out if v}
+
+
+def scan_mirrors(root, components, problems, unit):
+    """`.application.patch` files show a `Version` in the Argo CD UI: a second place that states a version. A `type=mirror` annotation
+    right above such a `value:` line ties it to a component of the same application (`of=<name>`, default: the application's own),
+    adds the line to the component's locations, and fails when it shows another version than the component. `regex=` says how to
+    read the version in the line (first group, or the group named `version`); the default is the scalar after `key:`."""
+    by_app = {}
+    for c in components:
+        by_app.setdefault(c["app"], []).append(c)
+    for path in sorted(root.glob(f"projects/{unit}/src/**/.application.patch")):
+        rel = path.relative_to(root).as_posix()
+        cluster, (sub, _) = cluster_of(rel), product_dir(rel)
+        if not (cluster and sub):
+            continue
+        app, lines = f"projects/{cluster}/src/{sub}", path.read_text(errors="replace").splitlines()
+        for i, line in enumerate(lines):
+            if re.match(r"^\s*-\s*name:\s*.*Version\s*$", line):  # a displayed version must be declared
+                k = i + 1
+                if k < len(lines) and lines[k].lstrip().startswith("#"):
+                    k += 1
+                if not (k < len(lines) and re.match(r"^\s*value:", lines[k]) and k > i + 1 and parse_ann(lines[k - 1])):
+                    problems.append({"where": f"{rel}:{i + 1}", "product": None, "message": "add `# oripathy: type=mirror of=<component>` (or `ignore`) between this `name:` and its `value:` line"})
+            ann = parse_ann(line) if line.lstrip().startswith("#") else None
+            if not ann:
+                continue
+            if ann.get("type") != "mirror" and not ann.get("ignore"):
+                problems.append({"where": f"{rel}:{i + 1}", "product": None, "message": "only `type=mirror` (or `ignore`) is valid in an .application.patch"})
+                continue
+            if ann.get("ignore"):
+                continue
+            target = lines[i + 1] if i + 1 < len(lines) and lines[i + 1].strip() and not lines[i + 1].lstrip().startswith("#") else None
+            rx = re.compile(ann["regex"]) if isinstance(ann.get("regex"), str) else MIRROR_VALUE
+            m = rx.search(target) if target is not None else None
+            shown = (m.groupdict().get("version") or m.group(1)) if m and m.groups() else None
+            if not shown:
+                problems.append({"where": f"{rel}:{i + 1}", "product": None, "message": "a mirror annotation must sit right above a line whose version `regex=` (default: the scalar after `key:`) can read"})
+                continue
+            of = ann.get("of") if isinstance(ann.get("of"), str) else Path(rel).parent.name
+            comp = next((c for c in by_app.get(app, []) if c["name"] == of), None)
+            if not comp:
+                problems.append({"where": f"{rel}:{i + 1}", "product": None, "message": f"`of={of}` is not a component of {app} (components: {', '.join(sorted(c['name'] for c in by_app.get(app, []))) or 'none'})"})
+            elif normalize(shown) not in versions_of(comp):
+                problems.append({"where": f"{rel}:{i + 2}", "product": comp["id"], "message": f"shows {shown} but {comp['name']} is at {comp['version']} (chart {(comp['chart'] or {}).get('version')}): update this line"})
+            else:
+                comp["locations"].append({"file": rel, "commentLine": i + 1, "versionLine": i + 2, "role": "mirror"})
+
+
+def scan_unit(root, unit):
+    """Everything one cluster (or `catalog`) contributes: independent of the other units, so units run in parallel."""
     problems = []
-    components, merged = [], {}
-    for c in scan_dist(root, problems) + scan_nix(root, problems):
-        if c["id"] not in merged:
-            merged[c["id"]] = c
-            components.append(c)
-        elif (c["version"], c["upstream"]) == (merged[c["id"]]["version"], merged[c["id"]]["upstream"]):
-            merged[c["id"]]["paths"] = sorted(set(merged[c["id"]]["paths"]) | set(c["paths"]))  # same product annotated twice
-        else:
-            problems.append({"where": c["paths"][0], "product": c["id"], "message": "declared twice with a different version or upstream (give each a distinct `name=`)"})
-    counts = {s: sum(1 for c in components if c["source"] == s) for s in ("dist", "nix")}
-    print(f"dist: {counts['dist']}, nix: {counts['nix']} ({', '.join(c['name'] for c in components if c['source'] == 'nix') or 'none'}), problems: {len(problems)}", file=sys.stderr)
+    components = merge(scan_dist(root, problems, unit) + scan_nix(root, problems, unit) + scan_catalog(root, problems, unit) + scan_flakes(root, unit), problems)
+    scan_mirrors(root, components, problems, unit)
+    return components, problems
+
+
+ALL_UNITS = ("scripts/oripathy:", ".github/workflows/pull_request,schedule,workflow_dispatch.oripathy-inventory.yaml")  # a change here changes every result
+
+
+def changed_units(root, ref):
+    """The units a diff against `ref` touches (None = all of them): a file of `projects/<cluster>/`, of catalog/nix (the chezmoi.sh LXCs),
+    of catalog/flakes or catalog/kubernetes (`catalog`). The script and the workflow touch everything; other files touch nothing."""
+    r = subprocess.run(["git", "-C", str(root), "diff", "--name-only", f"{ref}...HEAD"], capture_output=True, text=True)
+    if r.returncode:
+        print(f"warning: git diff {ref}...HEAD failed, scanning everything", file=sys.stderr)
+        return None
+    files = r.stdout.split("\n")
+    if any(f.startswith(ALL_UNITS) for f in files):
+        return None
+    return {u for u in map(cluster_of, filter(None, files)) if u}
+
+
+def build(root, only=None):
+    units = sorted({p.name for p in root.glob("projects/*") if p.is_dir()} | {"catalog", "chezmoi.sh"})
+    if only is not None:
+        units = [u for u in units if u in only]
+        print(f"scanning {len(units)} unit(s): {', '.join(units) or 'none'}", file=sys.stderr)
+    if JOBS > 1:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(JOBS, len(units))) as ex:
+            results = list(ex.map(lambda u: scan_unit(root, u), units))  # in unit order: the output does not depend on JOBS
+    else:
+        results = [scan_unit(root, u) for u in units]
+    components = [c for comps, _ in results for c in comps]
+    problems = [p for _, probs in results for p in probs]
+    counts = {s: sum(1 for c in components if c["source"] == s) for s in ("dist", "nix", "catalog")}
+    print(f"dist: {counts['dist']}, nix: {counts['nix']}, catalog: {counts['catalog']}, apps: {len({c['app'] for c in components if c['app']})}, problems: {len(problems)}", file=sys.stderr)
     repo = os.environ.get("GITHUB_REPOSITORY", "chezmoidotsh/arcane")
     return {
         "schemaVersion": 1,
@@ -452,10 +817,49 @@ def self_test():
     assert upstream_of({"upstream": "codeberg.org/a/b"}) == {"forge": "codeberg", "repo": "a/b", "url": "https://codeberg.org/a/b", "tagPrefix": ""}
     assert upstream_of({"upstream": "github.com/a/b", "tagPrefix": "v"})["tagPrefix"] == "v"
     assert upstream_of({}) is None and upstream_of({"upstream": "a/b"}) is None and upstream_of({"upstream": "gitlab.com/a/b"}) is None
-    lines = ["# oripathy: type=oci upstream=github.com/a/b", "# renovate: datasource=docker", 'image = "ghcr.io/a/b:1";']
-    assert ann_above(lines, 2)["upstream"] == "github.com/a/b" and ann_above(["x = 1;", 'image = "a";'], 1) is None
+    lines = ["# oripathy: type=oci upstream=github.com/a/b", 'image = "ghcr.io/a/b:1";', "# comment", 'image = "ghcr.io/a/b:2";']
+    assert ann_above(lines, 1)["upstream"] == "github.com/a/b" and ann_above(lines, 3) is None and ann_above(["x = 1;", 'image = "a";'], 1) is None
     assert NIX_IMAGE_RE.findall('panelImage = "ghcr.io/pelican/panel:v1@sha256:a";') == ["ghcr.io/pelican/panel:v1@sha256:a"]
     assert GH_URL_RE.search('url = "https://github.com/o/r/releases/download/v1.2/x.zip"').groups() == ("o", "r", "v1.2", None)
+    tl = ["helmCharts:", "  - repo: https://h/", "    name: cilium", "    version: 1.20.0", "images:", "  - name: a/b", "    newName: oci.chezmoi.sh/a/b", "    newTag: v1.2.3",
+          "  repository: ghcr.io/x/y", "  tag: 2.0.0", "  - name: local-chart", "  - https://github.com/o/r/releases/download/v0.14.0/manifest.yaml"]
+    h = target_info(tl, 3)
+    assert (h["kind"], h["via"], h["chart"]["name"], h["chart"]["version"]) == ("helm", "helmCharts", "cilium", "1.20.0"), h
+    i = target_info(tl, 7)
+    assert (i["kind"], i["via"], i["image"]["repository"], i["image"]["tag"]) == ("oci", "images", "a/b", "v1.2.3"), i
+    t = target_info(tl, 9)
+    assert (t["via"], t["image"]["repository"], t["image"]["tag"]) == ("line", "x/y", "2.0.0"), t
+    assert target_info(tl, 11)["kind"] == "url" and target_info(tl, 2) is None and target_info(tl, 1) is None
+    mk = lambda id, v, up="a/b", app="p/x", imgs=(): component("c", id, "dist", "oci", v, "f", images=list(imgs), upstream=upstream_of({"upstream": f"github.com/{up}"}), app=app, appName=app.rsplit("/", 1)[-1], locations=[{"file": "f", "commentLine": 1, "versionLine": 2 + len(id), "role": "image"}])
+    with contextlib.redirect_stderr(io.StringIO()):
+        probs = []
+        out = merge([mk("x", "1.0"), mk("web", "1.0"), mk("db", "2.0"), mk("y", "1.0", up="z/z", app="p/y")], probs)
+    assert [c["id"] for c in out] == ["c/x", "c/db", "c/y"] and len(out[0]["locations"]) == 2 and not probs, (out, probs)
+    bundle = bundle_of(out)
+    assert [b["metadata"]["component"]["name"] for b in bundle["boms"]] == ["c/x", "c/y"] and bundle == bundle_of(out)
+    x = next(c for c in bundle["boms"][0]["components"] if c["bom-ref"] == "c/x")
+    occ = x["evidence"]["occurrences"]
+    assert [o["line"] for o in occ] == [3, 5] and occ[0]["location"] == "f" and x["externalReferences"][0]["url"] == "https://github.com/a/b"
+    assert purl_of({"image": parse_image("ghcr.io/a/b:v1@sha256:ab"), "upstream": None, "version": "1"}) == "pkg:oci/b@sha256%3Aab?repository_url=ghcr.io/a"
+    assert parse_ann("# oripathy: type=mirror of=cilium regex='value: \"([^\"]+)\"'") == {"type": "mirror", "of": "cilium", "regex": 'value: "([^"]+)"'}
+    assert MIRROR_VALUE.search('      value: "1.20.0"').group(1) == "1.20.0" and MIRROR_VALUE.search("  - value: v2.7.0 # x").group(1) == "v2.7.0"
+    assert versions_of(component("c", "x", "dist", "helm", "1.0", "f", chart={"version": "0.5", "appVersion": "v1.0"}, images=[{"tag": "v1.0"}])) == {"1.0", "0.5"}
+    assert cluster_of("projects/lungmen.akn/src/apps/n8n/kustomization.yaml") == "lungmen.akn" and cluster_of("catalog/nix/siderolabs/omni/omni.nix") == "chezmoi.sh"
+    assert cluster_of("catalog/kubernetes/cloudnative-pg/helm/default.helmvalues.yaml") == "catalog" and cluster_of("docs/reference/Oripathy-Reference.md") is None
+    assert submit(lambda x: x + 1, 2).result() == 3 and used_attrs("pkgs.caddy services.tailscale.enable = true;") == {"caddy", "tailscale"}
+    probs = []
+    pinned, plain = parse_image("ghcr.io/a/b:1@sha256:ab"), parse_image("ghcr.io/a/b:1")
+    check_digest(probs, "f:1", {"type": "oci", "digest": "true"}, pinned)
+    check_digest(probs, "f:1", {"type": "oci", "digest": "false"}, plain)
+    check_digest(probs, "f:1", {"type": "helm"}, plain)
+    check_digest(probs, "f:1", {"type": "oci", "ignore": True}, plain)
+    assert not probs, probs
+    check_digest(probs, "f:1", {"type": "oci"}, pinned)
+    check_digest(probs, "f:2", {"type": "oci", "digest": "false"}, pinned)
+    check_digest(probs, "f:3", {"type": "oci", "digest": "true"}, plain)
+    assert [p["where"] for p in probs] == ["f:1", "f:2", "f:3"] and "digest=true" in probs[0]["message"], probs
+    kz = ["images:", "  - name: a/b", "    newName: oci.chezmoi.sh/a/b", "    newTag: v1", "    digest: sha256:ab"]
+    assert target_info(kz, 3)["image"]["digest"] == "sha256:ab"
     with contextlib.redirect_stderr(io.StringIO()):  # check() reports on stderr
         assert check({"problems": []}) == 0 and check({"problems": [{"where": "f:1", "product": None, "message": "m"}]}) == 1
     print("self-test ok")
@@ -464,16 +868,25 @@ def self_test():
 def main():
     ap = argparse.ArgumentParser(description="List deployed software versions as inventory.json.")
     ap.add_argument("--output", help="write the JSON here instead of stdout")
+    ap.add_argument("--bundle", help="also write the per-application CycloneDX BOMs (what n8n reads) here; deterministic, safe to hash")
     ap.add_argument("--check", metavar="INVENTORY", help="fail when INVENTORY reports products that are not annotated")
+    ap.add_argument("--changed-from", metavar="REF", help="scan only the clusters that `git diff REF...HEAD` touches (pull requests); the script and the workflow touch all")
+    ap.add_argument("--jobs", type=int, default=min(8, os.cpu_count() or 1), help="worker threads (default: the CPU count, at most 8); the output does not depend on it")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
+    global JOBS
+    JOBS = max(1, args.jobs)
     if args.self_test:
         self_test()
         return 0
     if args.check:
         return check(json.loads(Path(args.check).read_text()))
     root = Path(git(Path.cwd(), "rev-parse", "--show-toplevel") or ".")
-    text = json.dumps(build(root), indent=2, ensure_ascii=False) + "\n"
+    inventory = build(root, changed_units(root, args.changed_from) if args.changed_from else None)
+    if args.bundle:
+        Path(args.bundle).write_text(json.dumps(bundle_of(inventory["components"]), indent=1, ensure_ascii=False) + "\n")
+        print(f"{len(bundle_of(inventory['components'])['boms'])} BOMs -> {args.bundle}", file=sys.stderr)
+    text = json.dumps(inventory, indent=2, ensure_ascii=False) + "\n"
     if args.output:
         Path(args.output).write_text(text)
         print(f"{len(json.loads(text)['components'])} components -> {args.output}", file=sys.stderr)

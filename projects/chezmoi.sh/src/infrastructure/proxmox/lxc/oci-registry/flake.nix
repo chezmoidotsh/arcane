@@ -44,7 +44,6 @@
       # Renovate opens PRs automatically (see `.github/renovate.json5`).
       # -----------------------------------------------------------------------
       # oripathy: type=release name=zot upstream=github.com/project-zot/zot tagPrefix=v
-      # renovate: datasource=github-releases depName=project-zot/zot
       version = "v2.1.18";
 
       # Image version — CalVer (YYYY.MM.DD), used only to name the Proxmox

@@ -3,14 +3,18 @@
 # =============================================================================
 # Oripathy inventory — list the deployed versions
 # =============================================================================
-# Runs scripts/oripathy:inventory (dist/ images and Helm charts, images, releases and nixpkgs packages of the NixOS
-# sources, each one declared by a `# oripathy:` annotation next to what it describes) and publishes the result as the asset `inventory.json` of the rolling release
-# `oripathy-inventory`. The Oripathy workflow in n8n reads that asset every morning. Nothing is pushed to main, and the file
-# only holds facts that are already public in this repository. Pull requests only build and validate the file, and fail
-# when a product of the repository has no (valid) `# oripathy:` annotation: a new application needs a follow/ignore decision.
+# Runs scripts/oripathy:inventory: for every application (a Kubernetes product directory or a NixOS flake) it lists the
+# images, Helm charts, fetched releases and nixpkgs packages that run, each one declared by a `# oripathy:` annotation placed
+# right above the line that sets its version. The result is one CycloneDX BOM per application, bundled, then encrypted by
+# scripts/oripathy:seal and published as assets of the rolling release `oripathy-inventory`: `oripathy-boms.json.enc` and
+# `oripathy-boms.sha256` (SHA-256 of the decrypted bundle). The release of a public repository is public, hence the
+# encryption: the Oripathy workflow in n8n holds the passphrase, reads those assets every morning and skips the run when the
+# hash did not change. Nothing is pushed to main. Pull requests only build and validate the BOMs, and fail when a product of
+# the repository has no (valid) annotation: a new application needs a follow/ignore decision.
 #
+# Secrets:     ORIPATHY_BOM_KEY (passphrase of the bundle, also stored in the n8n Crypto credential of Oripathy)
 # Events:      pull_request, schedule (03:00 UTC, before the 06:00 Europe/Paris run), workflow_dispatch
-# Permissions: contents: write (release asset, never on pull requests from forks)
+# Permissions: contents: write (release assets, never on pull requests from forks)
 # =============================================================================
 
 name: 📡 Oripathy inventory
@@ -21,11 +25,14 @@ on:
       - .github/workflows/pull_request,schedule,workflow_dispatch.oripathy-inventory.yaml
       - projects/*/dist/**
       - projects/*/src/**/kustomization.yaml
+      - projects/*/src/**/.application.patch
       - projects/**/*.nix
       - projects/**/flake.lock
       - catalog/nix/**
       - catalog/flakes/**
+      - catalog/kubernetes/**
       - scripts/oripathy:inventory
+      - scripts/oripathy:seal
   schedule:
     - cron: 0 3 * * *
   workflow_dispatch:
@@ -50,27 +57,65 @@ jobs:
           # `deployedAt` is read from the history (git log -S).
           fetch-depth: 0
 
+      - name: 🔎 Which parts changed
+        id: changes
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: origin/${{ github.base_ref }}
+        run: |
+          # Nix is only needed to evaluate NixOS packages: skip its installation when the pull request touches none
+          if git diff --name-only "${BASE}...HEAD" | grep -qE '\.nix$|flake\.lock$|^scripts/oripathy:|oripathy-inventory\.yaml$'; then
+            echo "nix=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "nix=false" >> "${GITHUB_OUTPUT}"
+          fi
+
       - name: 🛠️ Install Nix
+        if: github.event_name != 'pull_request' || steps.changes.outputs.nix == 'true'
         uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
 
-      - name: 📡 Build the inventory
-        run: scripts/oripathy:inventory --output inventory.json
+      - name: 🔐 Install the encryption library
+        run: python3 -m pip install --user cryptography==50.0.2
 
-      - name: ✅ Validate the inventory
+      - name: 🧪 Self-tests
         run: |
-          jq -e '.schemaVersion == 1 and (.components | length) > 0' inventory.json
-          jq -r '"### Oripathy inventory\n\n\(.components | length) components at \(.repo.commit[0:10])"' inventory.json >> "${GITHUB_STEP_SUMMARY}"
+          scripts/oripathy:inventory --self-test
+          scripts/oripathy:seal --self-test
+
+      - name: 📡 Build the BOMs
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          # A pull request only scans the clusters its diff touches (the script or this workflow touching all of them)
+          if [ "${GITHUB_EVENT_NAME}" = pull_request ]; then
+            scripts/oripathy:inventory --changed-from "origin/${BASE_REF}" --output inventory.json --bundle oripathy-boms.json
+          else
+            scripts/oripathy:inventory --output inventory.json --bundle oripathy-boms.json
+          fi
+
+      - name: ✅ Validate the bundle
+        run: |
+          jq -e --arg event "${GITHUB_EVENT_NAME}" '.format == "oripathy-boms" and ($event == "pull_request" or (.boms | length) > 0) and all(.boms[]; .bomFormat == "CycloneDX" and .specVersion == "1.6")' oripathy-boms.json
+          jq -r '"### Oripathy BOMs\n\n\(.boms | length) applications, \([.boms[].components | length] | add // 0) components"' oripathy-boms.json >> "${GITHUB_STEP_SUMMARY}"
 
       - name: 🔎 Check every product is declared
         if: github.event_name == 'pull_request'
         run: scripts/oripathy:inventory --check inventory.json
 
-      - name: 🚀 Publish the inventory
+      - name: 🔐 Encrypt the bundle
+        if: github.event_name != 'pull_request'
+        env:
+          ORIPATHY_BOM_KEY: ${{ secrets.ORIPATHY_BOM_KEY }}
+        run: scripts/oripathy:seal seal oripathy-boms.json oripathy-boms.json.enc oripathy-boms.sha256
+
+      - name: 🚀 Publish the bundle
         if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release view oripathy-inventory >/dev/null 2>&1 \
             || gh release create oripathy-inventory --latest=false --title "Oripathy inventory" \
-              --notes "Rolling release: the asset inventory.json is replaced on every run. Read by the Oripathy n8n workflow."
-          gh release upload oripathy-inventory inventory.json --clobber
+              --notes "Rolling release: the encrypted BOM bundle and its hash are replaced on every run. Read by the Oripathy n8n workflow."
+          gh release upload oripathy-inventory oripathy-boms.json.enc oripathy-boms.sha256 --clobber
+          # the plaintext inventory of the first version of this workflow must not stay public
+          gh release delete-asset oripathy-inventory inventory.json --yes 2>/dev/null || true

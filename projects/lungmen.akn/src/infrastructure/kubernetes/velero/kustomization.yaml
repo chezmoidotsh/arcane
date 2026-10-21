@@ -12,10 +12,9 @@ resources:
   - security
 
 helmCharts:
-  # oripathy: type=helm upstream=github.com/vmware-tanzu/velero tagPrefix=v
   - repo: https://vmware-tanzu.github.io/helm-charts
     name: velero
-    # renovate: datasource=helm depName=velero registryUrl=https://vmware-tanzu.github.io/helm-charts
+    # oripathy: type=helm upstream=github.com/vmware-tanzu/velero tagPrefix=v
     version: 12.1.0
 
     releaseName: velero
@@ -77,5 +76,9 @@ patches:
 images:
   - name: docker.io/velero/velero
     newName: oci.chezmoi.sh/docker.io/velero/velero
+    # oripathy: type=oci upstream=github.com/vmware-tanzu/velero tagPrefix=v digest=false
+    newTag: v1.18.1
   - name: velero/velero-plugin-for-aws
     newName: oci.chezmoi.sh/docker.io/velero/velero-plugin-for-aws
+    # oripathy: type=oci upstream=github.com/vmware-tanzu/velero-plugin-for-aws tagPrefix=v digest=false
+    newTag: v1.13.1

@@ -35,11 +35,10 @@ in
   options.services.omni = {
     enable = mkEnableOption "Omni Talos Linux management platform";
 
-    # oripathy: type=release name=omni upstream=github.com/siderolabs/omni tagPrefix=v
     # ── Binary ──────────────────────────────────────────────────────────────
-    # renovate: datasource=github-releases depName=siderolabs/omni
     version = mkOption {
       type = types.str;
+      # oripathy: type=release name=omni upstream=github.com/siderolabs/omni tagPrefix=v
       default = "v1.12.2";
       description = "Omni release version to fetch from GitHub.";
     };
