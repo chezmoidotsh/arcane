@@ -205,6 +205,14 @@ flowchart LR
   changé et le vérifie après déchiffrement.
 - L'ancien asset en clair `inventory.json` est supprimé de la release à chaque publication.
 - Sur une pull request, le workflow construit et valide les BOM, lance `--check`, ne chiffre ni ne publie rien.
+- **Périmètre d'une pull request** : le job lance `scripts/oripathy:inventory --changed-from origin/<base>` et ne scanne
+  que les clusters que `git diff <base>...HEAD` touche : un fichier de `projects/<cluster>/`, de `catalog/nix` (pour
+  `chezmoi.sh`), de `catalog/flakes` ou de `catalog/kubernetes` (pour `catalog`). Une modification du script ou du
+  workflow scanne tout ; les autres fichiers ne scannent rien, et le bundle peut alors être vide sur une pull request
+  (jamais sur les exécutions planifiées ou manuelles).
+- **Nix sur une pull request** : il n'est installé que si la pull request touche un `.nix`, un `flake.lock`, le script
+  ou le workflow ; sinon les versions nixpkgs restent vides dans ce contrôle.
+- **Exécutions planifiées et manuelles** : elles scannent toujours tout et publient.
 - Le job utilise `--jobs` par défaut (le nombre de CPU, au plus 8).
 
 ## Ajouter une application
@@ -240,7 +248,12 @@ scripts/oripathy:seal --self-test
 scripts/oripathy:inventory --output inventory.json --bundle oripathy-boms.json
 scripts/oripathy:inventory --jobs 4 --output inventory.json --bundle oripathy-boms.json
 scripts/oripathy:inventory --check inventory.json
+scripts/oripathy:inventory --changed-from origin/main
 ```
+
+`--changed-from <ref>` reproduit le périmètre d'une pull request : seuls les clusters touchés par
+`git diff <ref>...HEAD` sont scannés (tout, si le script ou le workflow change ; rien, si aucun fichier concerné ne
+change). Si `git diff` échoue, tout est scanné.
 
 `--jobs N` scanne chaque cluster (et `catalog`) sur son propre thread et lance les appels `nix eval` en parallèle ; par
 défaut, le nombre de CPU, au plus 8. `--jobs 1` exécute tout à la suite. L'inventaire et le bundle de BOM sont
