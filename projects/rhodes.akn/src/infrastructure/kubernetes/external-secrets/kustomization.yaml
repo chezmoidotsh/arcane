@@ -4,10 +4,9 @@ kind: Kustomization
 namespace: external-secrets-system
 
 helmCharts:
-  # oripathy: type=helm upstream=github.com/external-secrets/external-secrets tagPrefix=v
   - repo: https://charts.external-secrets.io/
     name: external-secrets
-    # renovate: datasource=helm depName=external-secrets registryUrl=https://charts.external-secrets.io
+    # oripathy: type=helm upstream=github.com/external-secrets/external-secrets tagPrefix=v
     version: 2.8.0
 
     releaseName: external-secrets
@@ -39,3 +38,5 @@ images:
   # chart >= 2.x pulls from ghcr.io instead of oci.external-secrets.io
   - name: ghcr.io/external-secrets/external-secrets
     newName: oci.chezmoi.sh/ghcr.io/external-secrets/external-secrets
+    # oripathy: type=oci upstream=github.com/external-secrets/external-secrets tagPrefix=v digest=false
+    newTag: v2.8.0

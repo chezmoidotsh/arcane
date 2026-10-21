@@ -7,10 +7,9 @@ resources:
   - security
 
 helmCharts:
-  # oripathy: type=helm upstream=github.com/kubernetes-sigs/descheduler tagPrefix=v
   - repo: https://kubernetes-sigs.github.io/descheduler/
     name: descheduler
-    # renovate: datasource=helm depName=descheduler registryUrl=https://kubernetes-sigs.github.io/descheduler/
+    # oripathy: type=helm upstream=github.com/kubernetes-sigs/descheduler tagPrefix=v
     version: 0.37.0
 
     releaseName: descheduler
@@ -21,3 +20,5 @@ helmCharts:
 images:
   - name: registry.k8s.io/descheduler/descheduler
     newName: oci.chezmoi.sh/registry.k8s.io/descheduler/descheduler
+    # oripathy: type=oci upstream=github.com/kubernetes-sigs/descheduler tagPrefix=v digest=false
+    newTag: v0.37.0

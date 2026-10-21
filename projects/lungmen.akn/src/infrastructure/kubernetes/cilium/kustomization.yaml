@@ -23,9 +23,9 @@ resources:
   - wildcard.chezmoi.sh.certificate.yaml
 
 helmCharts:
-  # oripathy: type=helm upstream=github.com/cilium/cilium tagPrefix=v
   - repo: https://helm.cilium.io/
     name: cilium
+    # oripathy: type=helm upstream=github.com/cilium/cilium tagPrefix=v
     version: 1.20.0
 
     releaseName: cilium

@@ -4,10 +4,9 @@ kind: Kustomization
 namespace: cert-manager-system
 
 helmCharts:
-  # oripathy: type=helm upstream=github.com/cert-manager/cert-manager tagPrefix=v
   - repo: https://charts.jetstack.io
     name: cert-manager
-    # renovate: datasource=helm depName=cert-manager registryUrl=https://charts.jetstack.io
+    # oripathy: type=helm upstream=github.com/cert-manager/cert-manager tagPrefix=v
     version: v1.21.1
 
     releaseName: cert-manager
@@ -37,9 +36,17 @@ patches:
 images:
   - name: quay.io/jetstack/cert-manager-cainjector
     newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-cainjector
+    # oripathy: type=oci upstream=github.com/cert-manager/cert-manager tagPrefix=v digest=false
+    newTag: v1.21.1
   - name: quay.io/jetstack/cert-manager-controller
     newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-controller
+    # oripathy: type=oci upstream=github.com/cert-manager/cert-manager tagPrefix=v digest=false
+    newTag: v1.21.1
   - name: quay.io/jetstack/cert-manager-startupapicheck
     newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-startupapicheck
+    # oripathy: type=oci upstream=github.com/cert-manager/cert-manager tagPrefix=v digest=false
+    newTag: v1.21.1
   - name: quay.io/jetstack/cert-manager-webhook
     newName: oci.chezmoi.sh/quay.io/jetstack/cert-manager-webhook
+    # oripathy: type=oci upstream=github.com/cert-manager/cert-manager tagPrefix=v digest=false
+    newTag: v1.21.1

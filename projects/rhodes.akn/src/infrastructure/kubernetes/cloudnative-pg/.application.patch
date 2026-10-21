@@ -9,8 +9,8 @@ spec:
     - name: Category
       value: Database / Operator
     - name: Version
-      # renovate: datasource=helm depName=cloudnative-pg registryUrl=https://cloudnative-pg.github.io/charts
-      value: "0.28.2"
+      # oripathy: type=mirror
+      value: "0.29.0"
     # -- Documentation & Resources
     - name: Documentation
       value: https://cloudnative-pg.io/documentation/

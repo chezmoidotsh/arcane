@@ -17,8 +17,7 @@ resources:
   - security/
 
 images:
-  # oripathy: type=oci upstream=github.com/jellyfin/jellyfin tagPrefix=v
-  # renovate: datasource=docker depName=ghcr.io/jellyfin/jellyfin
   - name: ghcr.io/jellyfin/jellyfin
     newName: oci.chezmoi.sh/ghcr.io/jellyfin/jellyfin
+    # oripathy: type=oci upstream=github.com/jellyfin/jellyfin tagPrefix=v digest=false
     newTag: 10.11.11

@@ -17,9 +17,9 @@ resources:
   # (see amiya.akn's kustomization.yaml history) once Tailscale returns.
 
 helmCharts:
-  # oripathy: type=helm upstream=github.com/argoproj/argo-cd tagPrefix=v
   - repo: https://argoproj.github.io/argo-helm
     name: argo-cd
+    # oripathy: type=helm upstream=github.com/argoproj/argo-cd tagPrefix=v
     version: 10.2.2
 
     releaseName: argocd
@@ -30,3 +30,11 @@ helmCharts:
       - helmvalues/hardened.yaml
       - helmvalues/extensions.yaml
       - helmvalues/addon:ksops.yaml
+
+images:
+  - name: oci.chezmoi.sh/quay.io/argoproj/argocd
+    # oripathy: type=oci upstream=github.com/argoproj/argo-cd tagPrefix=v digest=false
+    newTag: v3.4.6
+  - name: oci.chezmoi.sh/ecr-public.aws.com/docker/library/redis
+    # oripathy: type=oci upstream=github.com/redis/redis digest=false
+    newTag: 8.2.3-alpine

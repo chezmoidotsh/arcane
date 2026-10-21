@@ -9,7 +9,7 @@ spec:
     - name: Category
       value: Storage / Backup
     - name: Version
-      # renovate: datasource=helm depName=velero registryUrl=https://vmware-tanzu.github.io/helm-charts
+      # oripathy: type=mirror
       value: "12.1.0"
     # -- Documentation & Resources
     - name: Documentation

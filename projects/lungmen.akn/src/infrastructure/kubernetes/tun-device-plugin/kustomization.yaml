@@ -7,6 +7,5 @@ resources:
   - ../../../../../../catalog/kustomize/tun-device-plugin
 
 images:
-  # renovate: datasource=docker depName=ghcr.io/squat/generic-device-plugin
   - name: ghcr.io/squat/generic-device-plugin
     newName: oci.chezmoi.sh/ghcr.io/squat/generic-device-plugin

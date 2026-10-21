@@ -9,7 +9,7 @@ spec:
     - name: Category
       value: Scheduling
     - name: Version
-      # renovate: datasource=helm depName=descheduler registryUrl=https://kubernetes-sigs.github.io/descheduler/
+      # oripathy: type=mirror
       value: "0.37.0"
     # -- Documentation & Resources
     - name: Documentation

@@ -19,8 +19,8 @@ server:
     # You may need to build a custom image based on OpenBao.
     # For example: ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm:2.2.2-25.05-x86_64-linux
     registry: ghcr.io
-    # oripathy: type=oci upstream=github.com/openbao/openbao tagPrefix=v
     repository: chezmoidotsh/flakes/openbao/openbao-softhsm
+    # oripathy: type=oci upstream=github.com/openbao/openbao tagPrefix=v digest=false
     tag: 2.2.2-25.05-x86_64-linux
 
   # Configure the Update Strategy Type for the StatefulSet

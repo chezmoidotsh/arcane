@@ -11,9 +11,9 @@ resources:
   - security/
 
 helmCharts:
-  # oripathy: type=helm upstream=github.com/fosrl/newt
   - repo: https://charts.fossorial.io
     name: newt
+    # oripathy: type=helm upstream=github.com/fosrl/newt
     version: 1.5.0
 
     releaseName: newt
@@ -54,3 +54,5 @@ labels:
 images:
   - name: docker.io/fosrl/newt
     newName: oci.chezmoi.sh/docker.io/fosrl/newt
+    # oripathy: type=oci upstream=github.com/fosrl/newt digest=false
+    newTag: "1.12.5"

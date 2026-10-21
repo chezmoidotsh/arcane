@@ -9,8 +9,8 @@ spec:
     - name: Category
       value: Security / Secrets Management
     - name: Version
-      # renovate: datasource=helm depName=openbao registryUrl=https://openbao.github.io/openbao-helm
-      value: "0.28.3"
+      # oripathy: type=mirror of=openbao
+      value: "0.28.6"
     # -- Documentation & Resources
     - name: Documentation
       value: https://openbao.org/
