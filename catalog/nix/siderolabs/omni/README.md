@@ -220,14 +220,15 @@ Omni service account key) are baked into the image at build time via `_module.ar
 
 ## Version management
 
-Both `omni.nix` and `infra-provider/proxmox.nix` carry Renovate annotations:
+Both `omni.nix` and `infra-provider/proxmox.nix` carry an `# oripathy:` annotation right above the
+`default = "..."` line of their `version` option:
 
 ```nix
-# renovate: datasource=github-releases depName=siderolabs/omni
-version = "v1.8.2";
+# oripathy: type=release name=omni upstream=github.com/siderolabs/omni tagPrefix=v
+default = "v1.12.2";
 ```
 
-Bump `version` and `hashes` together. Renovate proposes these automatically.
+Bump `version` and `hashes` together, by hand. Oripathy reports when a release is worth bumping.
 
 ## Troubleshooting
 
