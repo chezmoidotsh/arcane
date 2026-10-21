@@ -57,7 +57,21 @@ jobs:
           # `deployedAt` is read from the history (git log -S).
           fetch-depth: 0
 
+      - name: 🔎 Which parts changed
+        id: changes
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: origin/${{ github.base_ref }}
+        run: |
+          # Nix is only needed to evaluate NixOS packages: skip its installation when the pull request touches none
+          if git diff --name-only "${BASE}...HEAD" | grep -qE '\.nix$|flake\.lock$|^scripts/oripathy:|oripathy-inventory\.yaml$'; then
+            echo "nix=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "nix=false" >> "${GITHUB_OUTPUT}"
+          fi
+
       - name: 🛠️ Install Nix
+        if: github.event_name != 'pull_request' || steps.changes.outputs.nix == 'true'
         uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
 
       - name: 🔐 Install the encryption library
@@ -69,12 +83,20 @@ jobs:
           scripts/oripathy:seal --self-test
 
       - name: 📡 Build the BOMs
-        run: scripts/oripathy:inventory --output inventory.json --bundle oripathy-boms.json
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          # A pull request only scans the clusters its diff touches (the script or this workflow touching all of them)
+          if [ "${GITHUB_EVENT_NAME}" = pull_request ]; then
+            scripts/oripathy:inventory --changed-from "origin/${BASE_REF}" --output inventory.json --bundle oripathy-boms.json
+          else
+            scripts/oripathy:inventory --output inventory.json --bundle oripathy-boms.json
+          fi
 
       - name: ✅ Validate the bundle
         run: |
-          jq -e '.format == "oripathy-boms" and (.boms | length) > 0 and all(.boms[]; .bomFormat == "CycloneDX" and .specVersion == "1.6")' oripathy-boms.json
-          jq -r '"### Oripathy BOMs\n\n\(.boms | length) applications, \([.boms[].components | length] | add) components"' oripathy-boms.json >> "${GITHUB_STEP_SUMMARY}"
+          jq -e --arg event "${GITHUB_EVENT_NAME}" '.format == "oripathy-boms" and ($event == "pull_request" or (.boms | length) > 0) and all(.boms[]; .bomFormat == "CycloneDX" and .specVersion == "1.6")' oripathy-boms.json
+          jq -r '"### Oripathy BOMs\n\n\(.boms | length) applications, \([.boms[].components | length] | add // 0) components"' oripathy-boms.json >> "${GITHUB_STEP_SUMMARY}"
 
       - name: 🔎 Check every product is declared
         if: github.event_name == 'pull_request'

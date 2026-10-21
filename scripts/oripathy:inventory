@@ -50,7 +50,7 @@
 # (`fetch-depth: 0` in CI). Standard library only. Each cluster (and `catalog`) is scanned on its own thread, and the `nix eval` calls run in
 # parallel too (`--jobs`, default the CPU count up to 8); the output is the same whatever the number of jobs.
 #
-# Usage: scripts/oripathy:inventory [--output inventory.json] [--bundle oripathy-boms.json] [--jobs N]
+# Usage: scripts/oripathy:inventory [--output inventory.json] [--bundle oripathy-boms.json] [--jobs N] [--changed-from origin/main]
 #        scripts/oripathy:inventory --check inventory.json | --self-test
 import argparse
 import concurrent.futures
@@ -753,8 +753,27 @@ def scan_unit(root, unit):
     return components, problems
 
 
-def build(root):
+ALL_UNITS = ("scripts/oripathy:", ".github/workflows/pull_request,schedule,workflow_dispatch.oripathy-inventory.yaml")  # a change here changes every result
+
+
+def changed_units(root, ref):
+    """The units a diff against `ref` touches (None = all of them): a file of `projects/<cluster>/`, of catalog/nix (the chezmoi.sh LXCs),
+    of catalog/flakes or catalog/kubernetes (`catalog`). The script and the workflow touch everything; other files touch nothing."""
+    r = subprocess.run(["git", "-C", str(root), "diff", "--name-only", f"{ref}...HEAD"], capture_output=True, text=True)
+    if r.returncode:
+        print(f"warning: git diff {ref}...HEAD failed, scanning everything", file=sys.stderr)
+        return None
+    files = r.stdout.split("\n")
+    if any(f.startswith(ALL_UNITS) for f in files):
+        return None
+    return {u for u in map(cluster_of, filter(None, files)) if u}
+
+
+def build(root, only=None):
     units = sorted({p.name for p in root.glob("projects/*") if p.is_dir()} | {"catalog", "chezmoi.sh"})
+    if only is not None:
+        units = [u for u in units if u in only]
+        print(f"scanning {len(units)} unit(s): {', '.join(units) or 'none'}", file=sys.stderr)
     if JOBS > 1:
         with concurrent.futures.ThreadPoolExecutor(max_workers=min(JOBS, len(units))) as ex:
             results = list(ex.map(lambda u: scan_unit(root, u), units))  # in unit order: the output does not depend on JOBS
@@ -825,6 +844,8 @@ def self_test():
     assert parse_ann("# oripathy: type=mirror of=cilium regex='value: \"([^\"]+)\"'") == {"type": "mirror", "of": "cilium", "regex": 'value: "([^"]+)"'}
     assert MIRROR_VALUE.search('      value: "1.20.0"').group(1) == "1.20.0" and MIRROR_VALUE.search("  - value: v2.7.0 # x").group(1) == "v2.7.0"
     assert versions_of(component("c", "x", "dist", "helm", "1.0", "f", chart={"version": "0.5", "appVersion": "v1.0"}, images=[{"tag": "v1.0"}])) == {"1.0", "0.5"}
+    assert cluster_of("projects/lungmen.akn/src/apps/n8n/kustomization.yaml") == "lungmen.akn" and cluster_of("catalog/nix/siderolabs/omni/omni.nix") == "chezmoi.sh"
+    assert cluster_of("catalog/kubernetes/cloudnative-pg/helm/default.helmvalues.yaml") == "catalog" and cluster_of("docs/reference/Oripathy-Reference.md") is None
     assert submit(lambda x: x + 1, 2).result() == 3 and used_attrs("pkgs.caddy services.tailscale.enable = true;") == {"caddy", "tailscale"}
     probs = []
     pinned, plain = parse_image("ghcr.io/a/b:1@sha256:ab"), parse_image("ghcr.io/a/b:1")
@@ -849,6 +870,7 @@ def main():
     ap.add_argument("--output", help="write the JSON here instead of stdout")
     ap.add_argument("--bundle", help="also write the per-application CycloneDX BOMs (what n8n reads) here; deterministic, safe to hash")
     ap.add_argument("--check", metavar="INVENTORY", help="fail when INVENTORY reports products that are not annotated")
+    ap.add_argument("--changed-from", metavar="REF", help="scan only the clusters that `git diff REF...HEAD` touches (pull requests); the script and the workflow touch all")
     ap.add_argument("--jobs", type=int, default=min(8, os.cpu_count() or 1), help="worker threads (default: the CPU count, at most 8); the output does not depend on it")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
@@ -860,7 +882,7 @@ def main():
     if args.check:
         return check(json.loads(Path(args.check).read_text()))
     root = Path(git(Path.cwd(), "rev-parse", "--show-toplevel") or ".")
-    inventory = build(root)
+    inventory = build(root, changed_units(root, args.changed_from) if args.changed_from else None)
     if args.bundle:
         Path(args.bundle).write_text(json.dumps(bundle_of(inventory["components"]), indent=1, ensure_ascii=False) + "\n")
         print(f"{len(bundle_of(inventory['components'])['boms'])} BOMs -> {args.bundle}", file=sys.stderr)
