@@ -90,6 +90,7 @@ jobs:
           if [ "${GITHUB_EVENT_NAME}" = pull_request ]; then
             scripts/oripathy:inventory --changed-from "origin/${BASE_REF}" --output inventory.json --bundle oripathy-boms.json
           else
+            # the published bundle carries the icons linked from docs/assets/icons/_all
             scripts/oripathy:inventory --output inventory.json --bundle oripathy-boms.json
           fi
 

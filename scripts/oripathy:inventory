@@ -672,7 +672,8 @@ def bom_of(app, comps):
         url = c["upstream"]["url"] if c["upstream"] else c.get("vcs")
         if url:
             x["externalReferences"] = [{"type": "vcs", "url": url}]
-        occ = [{"location": l["file"], "line": l["versionLine"], "additionalContext": f"{l['role']}; annotation line {l['commentLine']}"} for l in c["locations"] if l["versionLine"]]
+        occ = [{"location": l["file"], "line": l["versionLine"], **({"symbol": l["key"]} if l.get("key") else {}), "additionalContext": f"{l['role']}; annotation line {l['commentLine']}"}
+               for l in c["locations"] if l["versionLine"]]
         if occ:
             x["evidence"] = {"occurrences": occ}
         out.append(x)
@@ -682,13 +683,38 @@ def bom_of(app, comps):
             "components": out}
 
 
-def bundle_of(components):
-    """What n8n reads: one BOM per application, sorted, with no timestamp."""
+ICONS = "docs/assets/icons/_all"  # one symbolic link per component name, to its icon
+
+
+def logos_of(root, components):
+    """Icon of each component name, as {name: icon}, and the SVG text of each icon, as {icon: svg}: an icon is the file the link of
+    the name in ICONS points to, so components that share one ship it once. A name without a link is left out (the page shows a
+    coloured initial)."""
+    names, svgs = {}, {}
+    for name in sorted({c["name"] for c in components}):
+        link = root / ICONS / f"{name}.svg"
+        if link.exists():
+            real = link.resolve()
+            names[name] = real.stem
+            svgs.setdefault(real.stem, real.read_text())
+    return names, svgs
+
+
+def bundle_of(components, logos=None):
+    """What n8n reads: one BOM per application, sorted, with no timestamp; `logos` is what logos_of returns."""
     apps = {}
     for c in components:
         if c["app"]:
             apps.setdefault(c["app"], []).append(c)
-    return {"format": "oripathy-boms", "schemaVersion": 1, "boms": [bom_of(a, cs) for a, cs in sorted(apps.items())]}
+    bundle = {"format": "oripathy-boms", "schemaVersion": 1, "boms": [bom_of(a, cs) for a, cs in sorted(apps.items())]}
+    if logos is not None:
+        names, svgs = logos
+        bundle["logos"] = {k: svgs[k] for k in sorted(svgs)}
+        for bom in bundle["boms"]:
+            for x in bom["components"]:
+                if x["name"] in names:
+                    x["properties"].append({"name": "oripathy:logo", "value": names[x["name"]]})
+    return bundle
 
 
 def versions_of(c):
@@ -753,6 +779,7 @@ def scan_unit(root, unit):
     return components, problems
 
 
+KEY_RE = re.compile(r"""^\s*(?:-\s*)?["']?([\w.-]+)["']?\s*[:=](?!//)""")  # not the scheme of a URL list item
 ALL_UNITS = ("scripts/oripathy:", ".github/workflows/pull_request,schedule,workflow_dispatch.oripathy-inventory.yaml")  # a change here changes every result
 
 
@@ -780,6 +807,13 @@ def build(root, only=None):
     else:
         results = [scan_unit(root, u) for u in units]
     components = [c for comps, _ in results for c in comps]
+    lines = {}
+    for c in components:  # the key the version line sets (`newTag`, `version`, `value`, `panelImage`...): what to look for in the file
+        for loc in c["locations"]:
+            if loc.get("versionLine"):
+                text = lines.setdefault(loc["file"], (root / loc["file"]).read_text(errors="replace").splitlines())
+                m = KEY_RE.match(text[loc["versionLine"] - 1]) if loc["versionLine"] <= len(text) else None
+                loc["key"] = m.group(1) if m else None
     problems = [p for _, probs in results for p in probs]
     counts = {s: sum(1 for c in components if c["source"] == s) for s in ("dist", "nix", "catalog")}
     print(f"dist: {counts['dist']}, nix: {counts['nix']}, catalog: {counts['catalog']}, apps: {len({c['app'] for c in components if c['app']})}, problems: {len(problems)}", file=sys.stderr)
@@ -846,6 +880,9 @@ def self_test():
     assert versions_of(component("c", "x", "dist", "helm", "1.0", "f", chart={"version": "0.5", "appVersion": "v1.0"}, images=[{"tag": "v1.0"}])) == {"1.0", "0.5"}
     assert cluster_of("projects/lungmen.akn/src/apps/n8n/kustomization.yaml") == "lungmen.akn" and cluster_of("catalog/nix/siderolabs/omni/omni.nix") == "chezmoi.sh"
     assert cluster_of("catalog/kubernetes/cloudnative-pg/helm/default.helmvalues.yaml") == "catalog" and cluster_of("docs/reference/Oripathy-Reference.md") is None
+    assert KEY_RE.match("    newTag: v1").group(1) == "newTag" and KEY_RE.match('  panelImage = "x";').group(1) == "panelImage" and KEY_RE.match("  - image: a:b").group(1) == "image" and KEY_RE.match("  - https://x/y") is None
+    names, svgs = logos_of(Path(__file__).resolve().parent.parent, [{"name": "cilium"}, {"name": "omni/nixpkgs"}, {"name": "csi-provisioner"}, {"name": "csi-resizer"}, {"name": "nope"}])
+    assert names == {"cilium": "cilium", "omni/nixpkgs": "nixos", "csi-provisioner": "kubernetes", "csi-resizer": "kubernetes"} and sorted(svgs) == ["cilium", "kubernetes", "nixos"]
     assert submit(lambda x: x + 1, 2).result() == 3 and used_attrs("pkgs.caddy services.tailscale.enable = true;") == {"caddy", "tailscale"}
     probs = []
     pinned, plain = parse_image("ghcr.io/a/b:1@sha256:ab"), parse_image("ghcr.io/a/b:1")
@@ -884,8 +921,9 @@ def main():
     root = Path(git(Path.cwd(), "rev-parse", "--show-toplevel") or ".")
     inventory = build(root, changed_units(root, args.changed_from) if args.changed_from else None)
     if args.bundle:
-        Path(args.bundle).write_text(json.dumps(bundle_of(inventory["components"]), indent=1, ensure_ascii=False) + "\n")
-        print(f"{len(bundle_of(inventory['components'])['boms'])} BOMs -> {args.bundle}", file=sys.stderr)
+        bundle = bundle_of(inventory["components"], logos_of(root, inventory["components"]))
+        Path(args.bundle).write_text(json.dumps(bundle, indent=1, ensure_ascii=False) + "\n")
+        print(f"{len(bundle['boms'])} BOMs, {len(bundle.get('logos', {}))} logos -> {args.bundle}", file=sys.stderr)
     text = json.dumps(inventory, indent=2, ensure_ascii=False) + "\n"
     if args.output:
         Path(args.output).write_text(text)
