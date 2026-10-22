@@ -139,8 +139,9 @@ def parse_chart(label):
 
 
 def normalize(version):
-    """Tag without its `v` prefix and its `-alpine` variant (`v1.4.2-alpine` -> `1.4.2`); prereleases are kept (`1.0.0-beta38`)."""
-    return version.removeprefix("v").removesuffix("-alpine") if version else None
+    """Tag without its `v` prefix, its `-alpine` variant (`v1.4.2-alpine` -> `1.4.2`) and a variant prefix before a `v` (`pg17-v1.1.1`
+    -> `1.1.1`); prereleases are kept (`1.0.0-beta38`)."""
+    return re.sub(r"^[a-z]+\d*-(?=v\d)", "", version).removeprefix("v").removesuffix("-alpine") if version else None
 
 
 def tag_version(tag):
@@ -883,6 +884,7 @@ def self_test():
     assert KEY_RE.match("    newTag: v1").group(1) == "newTag" and KEY_RE.match('  panelImage = "x";').group(1) == "panelImage" and KEY_RE.match("  - image: a:b").group(1) == "image" and KEY_RE.match("  - https://x/y") is None
     names, svgs = logos_of(Path(__file__).resolve().parent.parent, [{"name": "cilium"}, {"name": "omni/nixpkgs"}, {"name": "csi-provisioner"}, {"name": "csi-resizer"}, {"name": "nope"}])
     assert names == {"cilium": "cilium", "omni/nixpkgs": "nixos", "csi-provisioner": "kubernetes", "csi-resizer": "kubernetes"} and sorted(svgs) == ["cilium", "kubernetes", "nixos"]
+    assert [normalize(t) for t in ("v1.4.2-alpine", "pg17-v1.1.1", "1.0.0-beta38", "ee-1.24.0")] == ["1.4.2", "1.1.1", "1.0.0-beta38", "ee-1.24.0"]
     assert submit(lambda x: x + 1, 2).result() == 3 and used_attrs("pkgs.caddy services.tailscale.enable = true;") == {"caddy", "tailscale"}
     probs = []
     pinned, plain = parse_image("ghcr.io/a/b:1@sha256:ab"), parse_image("ghcr.io/a/b:1")

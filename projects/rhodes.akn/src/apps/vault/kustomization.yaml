@@ -26,7 +26,9 @@ resources:
 helmCharts:
   - repo: https://openbao.github.io/openbao-helm
     name: openbao
-    # oripathy: type=helm upstream=github.com/openbao/openbao tagPrefix=v
+    # the chart has its own releases (openbao-0.x); the OpenBao binary is followed
+    # through the openbao-softhsm image below
+    # oripathy: type=helm upstream=github.com/openbao/openbao-helm tagPrefix=openbao-
     version: 0.28.6
 
     releaseName: openbao
