@@ -1,81 +1,7 @@
-import * as garage from "@axnic/pulumi-garage";
 import { vaultSecretMetadata } from "@chezmoi.sh/pulumi-lib";
 import * as pulumi from "@pulumi/pulumi";
-import * as random from "@pulumi/random";
 import * as vault from "@pulumi/vault";
 import { approle } from "@pulumi/vault";
-
-// N8N_ENCRYPTION_KEY encrypts every credential stored in n8n's database --
-// losing or rotating it makes them unreadable, so it must stay stable.
-const n8nEncryptionKey = new random.RandomPassword("password-n8n-encryption-key", {
-  length: 48,
-  special: false,
-});
-
-new vault.kv.SecretV2(
-  "n8n-encryption-key-vault-secret",
-  {
-    mount: "lungmen.akn",
-    name: "n8n/auth/encryption-key",
-    dataJson: pulumi.jsonStringify({
-      encryption_key: n8nEncryptionKey.result,
-    }),
-    customMetadata: {
-      data: {
-        description: "n8n N8N_ENCRYPTION_KEY -- must stay stable",
-        application: "n8n",
-        ...vaultSecretMetadata(n8nEncryptionKey),
-      },
-    },
-  },
-  { parent: n8nEncryptionKey },
-);
-
-// ---------------------------------------------------------------------------
-// Garage S3 bucket for n8n binary data (external storage, Enterprise)
-// ---------------------------------------------------------------------------
-// n8n does not prune S3 itself: add a Garage lifecycle rule if the bucket grows.
-const bucketName = "n8n-lungmen-akn";
-
-const bucket = new garage.Bucket("n8n-lungmen-akn-bucket", {
-  globalAlias: bucketName,
-});
-
-const key = new garage.Key("n8n-lungmen-akn-key", {
-  name: "n8n-lungmen.akn",
-});
-
-new garage.BucketKeyPermission("n8n-lungmen-akn-permission", {
-  accessKeyId: key.accessKeyId,
-  bucketId: bucket.id,
-  permissions: {
-    read: true,
-    write: true,
-  },
-});
-
-new vault.kv.SecretV2(
-  "n8n-storage-vault-secret",
-  {
-    mount: "lungmen.akn",
-    name: "n8n/storage/s3.chezmoi.sh",
-    dataJson: pulumi.jsonStringify({
-      access_key_id: key.accessKeyId,
-      secret_access_key: key.secretAccessKey,
-      region: "fr-par-1",
-      endpoint_url: "https://s3.chezmoi.sh",
-      bucket: bucketName,
-    }),
-    customMetadata: {
-      data: {
-        description: "Garage S3 credentials for n8n external binary storage",
-        application: "n8n",
-        ...vaultSecretMetadata(key),
-      },
-    },
-  },
-  { parent: key },
-);
 
 // ---------------------------------------------------------------------------
 // External secrets: dedicated read-only KV mount + AppRole for n8n
@@ -88,7 +14,7 @@ new vault.kv.SecretV2(
 // by hand (`bao kv put n8n.chezmoi.sh/<name> value=...`).
 const secretsMountPath = "n8n.chezmoi.sh";
 
-new vault.Mount("n8n-secrets-mount", {
+export const secretsMount = new vault.Mount("n8n-secrets-mount", {
   path: secretsMountPath,
   type: "kv",
   description: "Secrets read by n8n through its External Secrets feature",
