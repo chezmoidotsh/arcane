@@ -44,12 +44,12 @@
       # Renovate opens PRs automatically (see `.github/renovate.json5`).
       # -----------------------------------------------------------------------
       # oripathy: type=release name=zot upstream=github.com/project-zot/zot tagPrefix=v
-      version = "v2.1.18";
+      version = "v2.1.22";
 
       # Image version — CalVer (YYYY.MM.DD), used only to name the Proxmox
       # template (oci-registry.<date>-amd64.tar.xz). Bump before every
       # `mise run lxc:build`; append -N for multiple builds on the same day.
-      imageVersion = "2026.10.09";
+      imageVersion = "2026.10.24";
 
       zotPackage = pkgs.stdenvNoCC.mkDerivation {
         pname = "zot";
@@ -57,7 +57,7 @@
 
         src = pkgs.fetchurl {
           url = "https://github.com/project-zot/zot/releases/download/${version}/zot-linux-amd64";
-          hash = "sha256-o1mgrxWdtnWLJPjibWokSq6VyvP/OCxGKHX0LZ4IKJg=";
+          hash = "sha256-M7m1v+BdZ4jAdt6VGgGSBHfb1jlcMwFG4jzCNABz5S4=";
         };
 
         nativeBuildInputs = [ pkgs.autoPatchelfHook ];
