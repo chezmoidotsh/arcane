@@ -29,6 +29,40 @@
       # Custom configuration and scripts.
       entrypoint = pkgs.writeScript "docker-entrypoint.sh" (builtins.readFile ./docker-entrypoint.sh);
       generateTokens = pkgs.writeScript "softhsm:tokens:new" (builtins.readFile ./softhsm-tokens-new);
+
+      # Since OpenBao 2.7.0 the pkcs11 seal is no longer built in: it is the external
+      # kms-pkcs11 plugin, declared in the server configuration (`plugin "kms" "pkcs11"`).
+      # The upstream release binary is dynamically linked (cgo), so it is patched for Nix.
+      pkcs11PluginVersion = "0.2.1";
+      pkcs11PluginAsset = {
+        x86_64-linux = {
+          file = "linux_amd64_v1";
+          sha256 = "ed18e461bb2bf13e644194711f72aed79524fda8a7c212e8a2ef8548be761497";
+        };
+        aarch64-linux = {
+          file = "linux_arm64_v8";
+          sha256 = "d402f8857a88764abd8ab5b6ee7310e982873cc2b19a613d4da644a821aad3e1";
+        };
+      }.${system} or null;
+      pkcs11Plugin = pkgs.stdenvNoCC.mkDerivation {
+        pname = "openbao-plugin-kms-pkcs11";
+        version = pkcs11PluginVersion;
+
+        src = pkgs.fetchurl {
+          url = "https://github.com/openbao/openbao-plugins/releases/download/kms-pkcs11-v${pkcs11PluginVersion}/openbao-plugin-kms-pkcs11_${pkcs11PluginAsset.file}.tar.gz";
+          inherit (pkcs11PluginAsset) sha256;
+        };
+        sourceRoot = ".";
+
+        nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+        buildInputs = [ pkgs.glibc ];
+
+        dontConfigure = true;
+        dontBuild = true;
+        installPhase = ''
+          install -Dm755 openbao-plugin-kms-pkcs11_${pkcs11PluginAsset.file} $out/bin/openbao-plugin-kms-pkcs11
+        '';
+      };
     in
     {
       packages = {
@@ -41,7 +75,8 @@
         # └───────────────────────────────────────────────────────────────────────────┘
         default = pkgs.dockerTools.buildLayeredImage {
           name = "openbao-softhsm";
-          tag = "${version}-${nixversion}-${system}";
+          # The plugin version is part of the tag: the image changes when the plugin does.
+          tag = "${version}-${nixversion}-pkcs11.${pkcs11PluginVersion}-${system}";
 
           # Add OpenBao, SoftHSMv2, CA certificates, Tini and directories to the image.
           contents = [
@@ -59,9 +94,13 @@
             #!${pkgs.runtimeShell}
 
             # Create default OpenBao directories.
-            mkdir -p openbao/{config,logs,file}
+            mkdir -p openbao/{config,logs,file,plugins}
+
+            # Install the PKCS#11 seal plugin (`plugin_directory = "/openbao/plugins"`).
+            cp ${pkcs11Plugin}/bin/openbao-plugin-kms-pkcs11 openbao/plugins/
+
             chown -R 23169:42291 openbao
-            chmod 755 openbao openbao/{config,logs,file}
+            chmod 755 openbao openbao/{config,logs,file,plugins}
 
             # Create SoftHSMv2 token directory where the tokens are stored.
             mkdir -p run/secrets/openbao/pkcs11
