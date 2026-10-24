@@ -221,6 +221,6 @@ Supprimer ensuite la règle `IN ACCEPT` ajoutée à l'étape 4 de `/etc/pve/node
   architecture, déploiement et exploitation du LXC qui scrape l'hôte.
 - [Mettre à jour un LXC par échange du rootfs](INF-20260605-00-Mettre-a-Jour-un-LXC-par-Echange-du-Rootfs.md) :
   mécanisme du `lxc:upgrade` utilisé à l'étape 5.
-- [ADR-013](../../decisions/013-centralized-observability-victoriametrics-lxc.md) : la pile d'observabilité centralisée
-  qui reçoit ces métriques.
+- [ADR-013](../../decisions/ADR-013-Observabilite-Centralisee-VictoriaMetrics-sur-LXC.md) : la pile d'observabilité
+  centralisée qui reçoit ces métriques.
 - [IPAM](../../reference/IPAM-Reference.md) : plan d'adressage du VLAN 5 et adresse de l'hôte.

@@ -170,7 +170,7 @@ philosophie d'auto-hébergement du homelab fondée sur des outils natifs de Kube
 - **Écart assumé** : `postgres-security` n'est pas créé. OpenBao et Pocket-Id gardent chacun un cluster dédié sur
   `rhodes.akn`, pour isoler les composants les plus critiques.
 - **Non vérifié** : les ServiceMonitors Prometheus de la liste d'origine, la supervision passant par VictoriaMetrics
-  depuis l'[ADR-013](./013-centralized-observability-victoriametrics-lxc.md).
+  depuis l'[ADR-013](./ADR-013-Observabilite-Centralisee-VictoriaMetrics-sur-LXC.md).
 - **Architecture** :
   - **`postgres-security` (amiya.akn), abandonné** : prévu pour l'authentification et la gestion des secrets critiques (par exemple
     `pocket-id`, `openbao`). Configuré avec 1 primaire et 1 réplica pour la haute disponibilité.

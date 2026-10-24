@@ -112,7 +112,7 @@ Le défi consiste à définir des conventions de politiques qui soient :
 > `catalog/pulumi/components/cluster-vault/src/index.ts` crée `${clusterName}-eso-policy` (vérifié aussi par
 > `cluster-vault.test.ts`) et nomme toute politique additionnelle `${clusterName}-${policyName}`. Les exemples
 > `amiya.akn-*` restent historiques : `projects/amiya.akn/` n'existe plus (cluster migré vers `rhodes.akn`, voir
-> [ADR-015](015-migrate-crossplane-to-pulumi.md), Crossplane décommissionné) ; aucun `crossplane-policy` ni
+> [ADR-015](ADR-015-Migrer-Crossplane-vers-Pulumi.md), Crossplane décommissionné) ; aucun `crossplane-policy` ni
 > `cert-renewal-policy` n'est défini dans `catalog/` ni `projects/` ; `rhodes.akn` crée `rhodes.akn-eso-policy` via
 > `ClusterVaultComponent` (`projects/rhodes.akn/src/infrastructure/pulumi/stack/vault.ts`). Le motif de chemin ESO
 > actuel dans le composant est `shared/+/third-parties/+/+/<cluster>` (montage en première position), différent de celui
@@ -285,7 +285,7 @@ Le défi consiste à définir des conventions de politiques qui soient :
   lesquels reposent ces politiques
 - [ADR-003 : conventions de nommage des chemins OpenBao](ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md) : motifs
   de chemins utilisés dans les périmètres des politiques
-- [ADR-015 : migration de Crossplane vers Pulumi](015-migrate-crossplane-to-pulumi.md) : décommissionnement de
+- [ADR-015 : migration de Crossplane vers Pulumi](ADR-015-Migrer-Crossplane-vers-Pulumi.md) : décommissionnement de
   Crossplane et d'`amiya.akn`
 - [Politiques OpenBao](https://openbao.org/docs/concepts/policies/) : documentation officielle
 

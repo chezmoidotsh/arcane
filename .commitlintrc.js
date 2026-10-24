@@ -21,7 +21,7 @@
  * Format: type[scope]: Subject
  * Breaking change format: type![scope]: Subject (only +!, ~!, -! are valid)
  *
- * @see docs/decisions/010-replace-gitmoji-with-symbol-commit-types.md
+ * @see docs/decisions/ADR-010-Remplacer-Gitmoji-par-des-Symboles-de-Type-de-Commit.md
  */
 const types = [
 	{

@@ -8,7 +8,7 @@ import { backupsDatastore } from "./datastore";
 // integration
 // -----------------------------------------------------------------------------
 // Proxmox VE's `pbs` storage type (configured by hand -- Proxmox itself stays
-// outside Pulumi/GitOps, see docs/decisions/015-migrate-crossplane-to-pulumi.md,
+// outside Pulumi/GitOps, see docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md,
 // "Non-Goals"; see ./README.md, "Bootstrapping" for the exact `pvesm add`
 // invocation) needs an API token to push LXC/VM backups into the datastore
 // (`backupsDatastore`, see ./datastore.ts) -- never `root@pam` in steady

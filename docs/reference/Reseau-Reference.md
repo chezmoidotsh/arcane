@@ -27,7 +27,7 @@ Ils ont une adresse statique dans la zone de gestion du VLAN 5 et, pour la plupa
 ## Nœuds Talos : double carte réseau
 
 Chaque nœud Talos est une VM à deux interfaces, identiques pour tous les clusters
-([ADR-014](../decisions/014-network-topology.md)).
+([ADR-014](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md)).
 
 | Interface | Réseau                                                  | Adresse du nœud | Trafic                                                                         |
 | --------- | ------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------ |
@@ -89,6 +89,7 @@ d2 docs/assets/network/topology.d2 docs/assets/network/topology.svg
 
 - [IPAM Reference](IPAM-Reference.md) : VLAN, plages, CIDR Kubernetes et règles de pare-feu.
 - [Passerelles Et DNS Reference](Passerelles-et-DNS-Reference.md) : Gateways `internal` et `external` et DNS associé.
-- [ADR-014 Network Topology](../decisions/014-network-topology.md) : pourquoi le réseau est conçu ainsi.
+- [ADR-014 Network Topology](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md) : pourquoi le
+  réseau est conçu ainsi.
 - [Provisionner le SDN Proxmox](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md) : création
   de la zone et du VNet.

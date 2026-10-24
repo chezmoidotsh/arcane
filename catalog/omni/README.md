@@ -83,17 +83,17 @@ omni:drift:check --templates        # cluster templates only
 
 Wraps `omnictl apply --dry-run` (machine classes) and `omnictl cluster template diff` (templates), which both exit 0
 even when they print a diff. Exit codes: `0` no drift, `1` drift (diff printed), `2` tooling/auth error. It never writes
-to Omni. Use it before a `sync`/`apply` or after a manual change in the Omni UI to catch Git/Omni divergence. The
-"no change" wording of `omnictl` is unverified against a live instance: if it reports false drift, extend the filter in
-the script.
+to Omni. Use it before a `sync`/`apply` or after a manual change in the Omni UI to catch Git/Omni divergence. The "no
+change" wording of `omnictl` is unverified against a live instance: if it reports false drift, extend the filter in the
+script.
 
 It is deliberately **not** run in CI: it needs an Omni service account (`OMNICONFIG` credentials), which no workflow
 holds today. Wiring it into a scheduled workflow requires creating that secret — a human decision.
 
 ## Cross-references
 
-- [ADR-014 — Network topology](../../docs/decisions/014-network-topology.md) — pod/service CIDRs and the kube-dns IP
-  decision.
+- [ADR-014 — Network topology](../../docs/decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md) —
+  pod/service CIDRs and the kube-dns IP decision.
 - [VLAN / SDN VNet layout](../../docs/reference/IPAM-Reference.md) — VLAN 5 and the `talosnet` SDN.
 - [Machine-class catalog README](machineclasses/README.md) — detailed sizing, naming, and provider tuning (includes the
   YAML).
@@ -102,4 +102,4 @@ holds today. Wiring it into a scheduled workflow requires creating that secret �
 
 <!-- link references -->
 
-[ADR-014]: ../../docs/decisions/014-network-topology.md
+[ADR-014]: ../../docs/decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md

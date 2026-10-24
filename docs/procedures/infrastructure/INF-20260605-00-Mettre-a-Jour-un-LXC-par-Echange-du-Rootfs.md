@@ -281,9 +281,9 @@ volumes non référencés.
 
 - [Skill : lxc-maintenance](../../../.agents/skills/lxc-maintenance/SKILL.md) : points d'entrée `mise` et bibliothèque
   `lxc.sh` utilisés par cette procédure.
-- [README de l'appliance observability](../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/README.md)
-  : création initiale du conteneur et configuration de l'appliance.
-- [ADR-013 Observabilité centralisée](../../decisions/013-centralized-observability-victoriametrics-lxc.md) : décision à
-  l'origine de l'appliance `observability`.
+- [README du conteneur observability](../../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/observability/README.md)
+  : création initiale du conteneur et configuration du conteneur.
+- [ADR-013 Observabilité centralisée](../../decisions/ADR-013-Observabilite-Centralisee-VictoriaMetrics-sur-LXC.md) :
+  décision à l'origine du conteneur `observability`.
 - [Installer node-exporter sur Proxmox](INF-20260620-00-Installer-Node-Exporter-sur-Proxmox.md) : autre procédure
   d'infrastructure sur le nœud Proxmox.

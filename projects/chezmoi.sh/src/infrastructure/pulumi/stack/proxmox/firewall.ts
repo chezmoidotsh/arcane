@@ -26,7 +26,7 @@ import * as proxmox from "@pulumi/proxmox";
 // `toolbox/proxmox-docs/templates/partials.firewall.talos.hbs`.
 //
 // `+rfc1918` reuses the existing cluster-level IPSET (cluster.fw) rather
-// than duplicating the CIDR list -- see docs/decisions/015-migrate-crossplane-to-pulumi.md's
+// than duplicating the CIDR list -- see docs/decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md's
 // session notes on that IPSET being pre-existing/unmanaged by this stack.
 export const talosSecurityGroup =
 	new proxmox.VirtualEnvironmentClusterFirewallSecurityGroup("pve-sg-talos", {

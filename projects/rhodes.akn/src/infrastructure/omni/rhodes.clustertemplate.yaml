@@ -59,7 +59,7 @@
 # Cross-references:
 #   catalog/omni/clustertemplates/base.yaml                     (reference base)
 #   projects/lungmen.akn/src/infrastructure/omni/lungmen.clustertemplate.yaml (sibling example)
-#   ADR-014  docs/decisions/014-network-topology.md             (CIDR / DNS decisions)
+#   ADR-014  docs/decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md             (CIDR / DNS decisions)
 #   docs/reference/IPAM-Reference.md                                        (VLAN 5 / SDN VNet layout, LB IP pool)
 #   docs/procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md (bring-up procedure)
 #   catalog/omni/machineclasses/                                (machine class defs)

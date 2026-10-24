@@ -10,7 +10,7 @@ applique chaque modification.
 
 L'hôte est passé d'Ubuntu, Ansible et Docker Compose à NixOS le 2026-10-10 :
 [l'archive de la migration](../archives/Migration-de-Kazimierz-vers-NixOS.md) en garde la trace et
-l'[ADR-016](../decisions/016-kazimierz-nixos-over-ansible.md) la décision.
+l'[ADR-016](../decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md) la décision.
 
 > [!WARNING]\
 > `mise run nixos:oci:install` **repartitionne le volume de démarrage**, où vit l'état de Pangolin
@@ -187,6 +187,7 @@ l'[ADR-008](../decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md
   avec le dépannage de `nixos-anywhere`.
 - [Vue d'ensemble de `kazimierz.akn`](../../projects/kazimierz.akn/README.md) : rôle du VPS et architecture de la
   passerelle Pangolin.
-- [ADR-016](../decisions/016-kazimierz-nixos-over-ansible.md) : pourquoi NixOS remplace Ansible et Docker Compose.
+- [ADR-016](../decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md) : pourquoi NixOS remplace Ansible et Docker
+  Compose.
 - [ADR-008](../decisions/ADR-008-Ansible-plutot-que-Kubernetes-pour-Kazimierz.md) : pourquoi la passerelle reste hors de
   Kubernetes.
