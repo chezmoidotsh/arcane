@@ -7,7 +7,7 @@ helmCharts:
   - repo: https://charts.external-secrets.io/
     name: external-secrets
     # oripathy: type=helm upstream=github.com/external-secrets/external-secrets tagPrefix=v
-    version: 0.20.4
+    version: 2.14.0
 
     releaseName: external-secrets
     namespace: external-secrets-system
@@ -35,5 +35,8 @@ patches:
 images:
   - name: oci.external-secrets.io/external-secrets/external-secrets
     newName: oci.chezmoi.sh/oci.external-secrets.io/external-secrets/external-secrets
+  # chart >= 2.x pulls from ghcr.io instead of oci.external-secrets.io
+  - name: ghcr.io/external-secrets/external-secrets
+    newName: oci.chezmoi.sh/ghcr.io/external-secrets/external-secrets
     # oripathy: type=oci upstream=github.com/external-secrets/external-secrets tagPrefix=v digest=false
-    newTag: v0.20.4
+    newTag: v2.14.0
