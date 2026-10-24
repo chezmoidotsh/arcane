@@ -32,7 +32,7 @@ documentation du dépôt. Il fait foi, se lit directement dans Git et est reflé
 | [Restaurer Rhodes](plan-de-reprise/brouillon/Restaurer-Rhodes.md)                             | Reprise après sinistre du cluster de la plateforme centrale              |
 | [Restaurer OpenBao](plan-de-reprise/brouillon/Restaurer-OpenBao.md)                           | Restaurer la base de données d'OpenBao après la perte de rhodes          |
 | [Restaurer Pocket-Id](plan-de-reprise/brouillon/Restaurer-Pocket-Id.md)                       | Restaurer la base de données de Pocket-Id après la perte de rhodes       |
-| [Incidents](incidents/README.md)                                                              | Post-mortems des incidents de production passés                          |
+| [Incidents](incidents/Incidents.md)                                                           | Post-mortems des incidents de production passés                          |
 
 ## Référence
 

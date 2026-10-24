@@ -44,7 +44,7 @@ def published_pages(src: Path) -> list[Path]:
     f = src / ".wiki-legacy"
     pats = [ln.strip() for ln in f.read_text(encoding="utf-8").splitlines()] if f.is_file() else []
     pats = [p for p in pats if p and not p.startswith("#")]
-    return [p for p in sorted(src.rglob("*.md")) if not any(fnmatch.fnmatch(p.relative_to(src).as_posix(), x) for x in pats)]
+    return [p for p in sorted(src.rglob("*.md")) if p.name != "README.md" and not any(fnmatch.fnmatch(p.relative_to(src).as_posix(), x) for x in pats)]
 
 
 def rewrite(text: str, page: Path, src: Path, pages: set[Path], repo: str, repo_root: Path) -> str:

@@ -5,6 +5,5 @@
 # the file is gone when the migration is complete.
 archives/2026-*
 experiments/*
-incidents/*
 migrations/*
 reports/*

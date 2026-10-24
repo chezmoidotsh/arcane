@@ -28,8 +28,8 @@ Distilled from incident post-mortems. Each bullet stands alone.
 
 - Kyverno's image-rewrite policy (when present) could be bypassed for emergency pods via
   `priorityClassName: system-cluster-critical`. **Kyverno was removed in May 2026** — see
-  `docs/incidents/2026-05-26-amiya-kyverno-zot-circular-imagepullbackoff.md`. Any replacement supply-chain enforcer must
-  preserve a similar escape hatch.
+  `docs/incidents/Incident-2026-05-26-ImagePullBackOff-Circulaire-Kyverno-Zot-Amiya.md`. Any replacement supply-chain
+  enforcer must preserve a similar escape hatch.
 
 ## Longhorn PVC resize
 
@@ -38,5 +38,5 @@ Distilled from incident post-mortems. Each bullet stands alone.
 
 ## Sources
 
-- `docs/incidents/2026-05-25-zot-disk-full-imagepullbackoff.md`
-- `docs/incidents/2026-05-26-amiya-kyverno-zot-circular-imagepullbackoff.md`
+- `docs/incidents/Incident-2026-05-25-Saturation-Disque-Zot-ImagePullBackOff.md`
+- `docs/incidents/Incident-2026-05-26-ImagePullBackOff-Circulaire-Kyverno-Zot-Amiya.md`
