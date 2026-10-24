@@ -50,7 +50,7 @@ spec:
           value: INFO
         - name: ACCEPT_CLIENTS
           value: "true"
-        image: oci.chezmoi.sh/docker.io/fosrl/newt:1.12.5
+        image: oci.chezmoi.sh/docker.io/fosrl/newt:1.19.0
         imagePullPolicy: IfNotPresent
         name: newt
         ports:
