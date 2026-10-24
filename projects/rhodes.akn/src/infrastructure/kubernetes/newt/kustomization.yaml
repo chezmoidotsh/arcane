@@ -13,7 +13,7 @@ resources:
 helmCharts:
   - repo: https://charts.fossorial.io
     name: newt
-    # oripathy: type=helm upstream=github.com/fosrl/newt
+    # oripathy: ignore
     version: 1.5.0
 
     releaseName: newt
