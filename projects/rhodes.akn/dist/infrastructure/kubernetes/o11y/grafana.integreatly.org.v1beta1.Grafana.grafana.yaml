@@ -66,7 +66,7 @@ spec:
             envFrom:
             - secretRef:
                 name: grafana-oidc-client
-            image: oci.chezmoi.sh/docker.io/grafana/grafana:13.0.1
+            image: oci.chezmoi.sh/docker.io/grafana/grafana:13.2.4
             name: grafana
             volumeMounts:
             - mountPath: /var/lib/grafana/plugins

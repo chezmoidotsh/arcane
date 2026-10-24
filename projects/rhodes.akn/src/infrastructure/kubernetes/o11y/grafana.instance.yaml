@@ -66,7 +66,7 @@ spec:
               # Pinned here rather than left to the operator's default, so the
               # version is declared in Git and Oripathy can follow it.
               # oripathy: type=oci upstream=github.com/grafana/grafana tagPrefix=v digest=false
-              image: docker.io/grafana/grafana:13.0.1
+              image: docker.io/grafana/grafana:13.2.4
               envFrom:
                 - secretRef:
                     name: grafana-oidc-client
