@@ -3,7 +3,7 @@
   description = "OpenBao Vault (with SoftHSMv2)";
 
   # Nixpkgs / NixOS version to use.
-  inputs.nixpkgs.url = "nixpkgs/nixos-25.05";
+  inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
 
   inputs.systems.url = "github:nix-systems/default";
   inputs.flake-utils.url = "github:numtide/flake-utils";
