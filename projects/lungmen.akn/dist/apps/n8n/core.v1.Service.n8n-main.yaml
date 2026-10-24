@@ -6,8 +6,8 @@ metadata:
     app.kubernetes.io/instance: n8n
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: n8n
-    app.kubernetes.io/version: 2.43.5
-    helm.sh/chart: n8n-1.16.0
+    app.kubernetes.io/version: 2.44.5
+    helm.sh/chart: n8n-1.17.0
   name: n8n-main
   namespace: n8n
 spec:

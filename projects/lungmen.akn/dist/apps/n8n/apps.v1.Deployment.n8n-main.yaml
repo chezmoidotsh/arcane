@@ -7,8 +7,8 @@ metadata:
     app.kubernetes.io/instance: n8n
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: n8n
-    app.kubernetes.io/version: 2.43.5
-    helm.sh/chart: n8n-1.16.0
+    app.kubernetes.io/version: 2.44.5
+    helm.sh/chart: n8n-1.17.0
   name: n8n-main
   namespace: n8n
 spec:
@@ -24,15 +24,15 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: 65799a56d5b2fd5d943e067ab5c54f93e465467952b48cd5e8ffdfc5dc75238e
+        checksum/config: 3da88ed1c8a86fdde833fd77c6af6d2ad9c1477af79bb7f7b8663c8e928fe394
         checksum/secret: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
         app.kubernetes.io/component: main
         app.kubernetes.io/instance: n8n
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: n8n
-        app.kubernetes.io/version: 2.43.5
-        helm.sh/chart: n8n-1.16.0
+        app.kubernetes.io/version: 2.44.5
+        helm.sh/chart: n8n-1.17.0
     spec:
       containers:
       - env:
@@ -172,7 +172,7 @@ spec:
         envFrom:
         - secretRef:
             name: n8n-enterprise
-        image: oci.chezmoi.sh/chezmoidotsh/n8n:2.43.5
+        image: oci.chezmoi.sh/chezmoidotsh/n8n:2.44.6
         imagePullPolicy: IfNotPresent
         lifecycle:
           preStop:
@@ -228,7 +228,7 @@ spec:
         - mountPath: /opt/n8n-nodes/actual
           name: n8n-nodes-actual
           readOnly: true
-      - image: oci.chezmoi.sh/chezmoidotsh/n8n-self-license:2.43.5
+      - image: oci.chezmoi.sh/chezmoidotsh/n8n-self-license:2.44.6
         name: local-license-server
         resources:
           limits:

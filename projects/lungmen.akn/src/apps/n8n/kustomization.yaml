@@ -8,7 +8,7 @@ helmCharts:
   - repo: oci://ghcr.io/n8n-io/n8n-helm-chart
     name: n8n
     # oripathy: type=helm upstream=github.com/n8n-io/n8n tagPrefix=n8n@
-    version: 1.16.0
+    version: 1.17.0
 
     releaseName: n8n
     namespace: n8n
@@ -30,10 +30,10 @@ images:
   - name: ghcr.io/n8n-io/n8n
     newName: oci.chezmoi.sh/chezmoidotsh/n8n
     # oripathy: type=oci upstream=github.com/n8n-io/n8n tagPrefix=n8n@ digest=false
-    newTag: 2.43.5
+    newTag: 2.44.6
   - name: oci.chezmoi.sh/chezmoidotsh/n8n-self-license
     # oripathy: type=oci upstream=github.com/n8n-io/n8n tagPrefix=n8n@ digest=false
-    newTag: 2.43.5
+    newTag: 2.44.6
 
 patches:
   # Task runners are disabled, but the chart still renders a Secret holding a random
