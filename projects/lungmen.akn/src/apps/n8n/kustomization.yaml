@@ -22,6 +22,7 @@ resources:
   - n8n.egress-inspection-ca.certificate.yaml
   - n8n.enterprise.externalsecret.yaml
   - n8n.httproute.yaml
+  - n8n.internal.httproute.yaml
   - n8n.redis.yaml
 
   - security/

@@ -55,9 +55,14 @@ edgeAccess.dropEverything("n8n-chezmoi-sh", n8nResource.resourceId, {
 
 // Private side of n8n: the full app (editor, REST API, webhooks), reachable
 // on n8n.chezmoi.sh only from a device running the Pangolin client. Pangolin
-// grants it to the built-in Admin role on its own. It takes over the FQDN the
-// public resource used to have, so it must wait for that one to move to
-// `hooks`.
+// grants it to the built-in Admin role on its own. A private resource has a
+// single destination, so it goes through the Cilium Gateway (HTTP listener,
+// n8n.internal.httproute.yaml: Newt sends the Service name as Host), whose routes
+// send webhooks/forms/MCP to the webhook processor and the rest to main. It
+// takes over the FQDN the public resource used to have, so it must wait for
+// that one to move to `hooks`. Plain HTTP on port 80 on purpose: Newt uses the
+// destination name as SNI (the HTTPS listener only accepts *.chezmoi.sh) and
+// Pangolin keeps the original Host, hence the hostnames of the HTTPRoute.
 export const n8nPrivateResource = new pangolin.SiteResource(
 	"n8n-private-chezmoi-sh",
 	{
@@ -67,8 +72,8 @@ export const n8nPrivateResource = new pangolin.SiteResource(
 		domainId: chezmoiShDomainId,
 		subdomain: "n8n",
 		scheme: "http",
-		destination: "n8n-main.n8n.svc.cluster.local",
-		destinationPort: 5678,
+		destination: "cilium-gateway-external.kube-system.svc.cluster.local",
+		destinationPort: 80,
 	},
 	{ dependsOn: n8nResource },
 );
