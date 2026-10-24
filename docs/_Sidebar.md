@@ -65,6 +65,7 @@
 - [ADR-014 Séparer le trafic des nœuds Talos du VLAN Homelab](decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md)
 - [ADR-015 Migrer Crossplane vers Pulumi](decisions/ADR-015-Migrer-Crossplane-vers-Pulumi.md)
 - [ADR-016 NixOS plutôt qu'Ansible pour Kazimierz](decisions/ADR-016-NixOS-plutot-qu-Ansible-pour-Kazimierz.md)
+- [ADR-017 Conserver une phrase secrète Pulumi par projet](decisions/ADR-017-Conserver-une-Phrase-Secrete-Pulumi-par-Projet-et-Interdire-le-Partage-par-StackReference.md)
 
 ### Expérimentations
 
