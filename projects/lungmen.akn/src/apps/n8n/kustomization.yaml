@@ -7,7 +7,7 @@ helmCharts:
   # Official chart, maintained by n8n-io (https://github.com/n8n-io/n8n-hosting)
   - repo: oci://ghcr.io/n8n-io/n8n-helm-chart
     name: n8n
-    # oripathy: type=helm upstream=github.com/n8n-io/n8n tagPrefix=n8n@
+    # oripathy: ignore
     version: 1.17.0
 
     releaseName: n8n
