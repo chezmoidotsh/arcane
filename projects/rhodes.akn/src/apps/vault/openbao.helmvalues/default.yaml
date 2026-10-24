@@ -17,11 +17,11 @@ server:
     # As with the previous Vault setup, this image must contain the SoftHSM
     # PKCS#11 library for the auto-unseal mechanism to work.
     # You may need to build a custom image based on OpenBao.
-    # For example: ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm:2.2.2-25.05-x86_64-linux
+    # For example: ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm:2.7.1-26.11-x86_64-linux
     registry: ghcr.io
     repository: chezmoidotsh/flakes/openbao/openbao-softhsm
     # oripathy: type=oci upstream=github.com/openbao/openbao tagPrefix=v digest=false
-    tag: 2.2.2-25.05-x86_64-linux
+    tag: 2.7.1-26.11-x86_64-linux
 
   # Configure the Update Strategy Type for the StatefulSet
   # See https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
