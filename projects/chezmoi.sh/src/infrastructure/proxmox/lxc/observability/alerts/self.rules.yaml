@@ -7,7 +7,7 @@
 # external Dead-Man's-Switch, not by these rules.
 #
 # Ingest-health checks (per-cluster "are we still receiving data?") live in
-# Grafana on amiya, where they can be expressed per cluster as-code (ADR-013).
+# Grafana on rhodes, where they can be expressed per cluster as-code (ADR-013).
 # ─────────────────────────────────────────────────────────────────────────────
 groups:
   - name: self

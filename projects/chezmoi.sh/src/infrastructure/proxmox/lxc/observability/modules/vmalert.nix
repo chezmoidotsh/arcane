@@ -4,7 +4,7 @@
 # Scope (ADR-013): this evaluates ONLY the small, stable set of existential,
 # cluster-independent rules in ../alerts/ — cluster-absent, Grafana-down,
 # appliance self-monitoring, PVE host/guest/disk, OCI registry, and the Watchdog.
-# These must fire even when amiya (or any observed cluster) is down.
+# These must fire even when rhodes (or any observed cluster) is down.
 #
 # Per-cluster alerting AND recording rules (node/disk/PVC/crash-loop, recording
 # rules) live as VMRule/PrometheusRule CRDs evaluated by that cluster's OWN

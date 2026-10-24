@@ -11,7 +11,7 @@
 #
 # Trade-off: we lose the implicit external-path validation that the pull job
 # provided (DNS + TLS + Caddy + Zot). Replace it with a synthetic blackbox probe
-# from amiya if/when end-to-end TLS health monitoring becomes important.
+# from rhodes if/when end-to-end TLS health monitoring becomes important.
 #
 # external_labels.cluster=oci-registry — every series carries the source
 # cluster label, consistent with how other vmagents tag their data (see ADR-013).
