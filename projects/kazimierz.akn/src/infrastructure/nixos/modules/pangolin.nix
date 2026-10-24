@@ -30,7 +30,7 @@ let
   # oripathy: type=oci upstream=github.com/fosrl/gerbil digest=true
   gerbilImage = "docker.io/fosrl/gerbil:1.5.2@sha256:1f6e64eaba7997282c7067ba19922fc7e46b5f73e1a27add3dd66a591d50512f";
   # oripathy: type=oci upstream=github.com/traefik/traefik tagPrefix=v digest=true
-  traefikImage = "docker.io/library/traefik:v3.4.0@sha256:4cf907247939b5d20bf4eff73abd21cb413c339600dde76dbc94a874b2578a27";
+  traefikImage = "docker.io/library/traefik:v3.7.16@sha256:c8a121e4bb1347e8fd52657fab12f2cb70b68f8a018895e2068f92c9e519b9c2";
   # oripathy: type=oci upstream=github.com/tarampampam/error-pages tagPrefix=v digest=true
   errorPagesImage = "ghcr.io/tarampampam/error-pages:3.7.1@sha256:0ce7e3798b1180d74432c38f4edd3e5072c672926646d79770b7aa48eb3a2d2f";
 
