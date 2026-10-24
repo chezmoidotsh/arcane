@@ -1,8 +1,9 @@
 # =============================================================================
 # rhodes.akn disaster recovery — Mise configuration
 # =============================================================================
-# Exposes convenience tasks for the mechanical, low-risk parts of openbao.md /
-# pocket-id.md that are more than a couple of commands: finding the latest S3
+# Exposes convenience tasks for the mechanical, low-risk parts of
+# docs/plan-de-reprise/brouillon/Restaurer-OpenBao.md / docs/plan-de-reprise/brouillon/Restaurer-Pocket-Id.md that
+# are more than a couple of commands: finding the latest S3
 # backup (delegates to the repo-wide `cnpg:backup:latest` file task —
 # .mise/tasks/cnpg/backup/latest, generic across any CNPG cluster, not
 # rhodes-specific), and patching a Cluster manifest's recovery source.

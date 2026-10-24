@@ -164,6 +164,11 @@ l'[ADR-014](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Home
 | `10.128.0.10` à `.250`  | Plage DHCP des nœuds Talos                                                       |
 | `10.128.0.240` à `.254` | Pools `internal` (chevauchent la fin de la plage DHCP, voir la section suivante) |
 
+> [!WARNING]\
+> La plage DHCP déclarée dans `sdn.ts` (`10.128.0.10` à `.250`) contient les pools `internal` en service (`10.128.0.240`
+> à `.243`, `internal.ippool.yaml` de `rhodes.akn` et de `lungmen.akn`). Rien dans le dépôt n'exclut ces adresses du
+> DHCP : dnsmasq peut attribuer à un nœud une IP que Cilium annonce déjà pour un Service.
+
 ### Pools LoadBalancer internes (talosnet)
 
 `talosnet` n'a aucune route depuis un VLAN physique : seuls les nœuds Talos et les hôtes explicitement rattachés au VNet
@@ -359,8 +364,8 @@ dans son `.fw` (étape manuelle).
 
 - [Réseau Reference](Reseau-Reference.md) : topologie physique, double interface des nœuds Talos et SDN.
 - [Passerelles Et DNS Reference](Passerelles-et-DNS-Reference.md) : Gateways `internal` et `external` et DNS associé.
-- [ADR-014 Network Topology](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md) : pourquoi le
-  réseau est conçu ainsi.
+- [ADR-014 Séparer le trafic des nœuds Talos du VLAN Homelab](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md)
+  : pourquoi le réseau est conçu ainsi.
 - [Provisionner le SDN Proxmox](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md) : création
   de la zone et du VNet.
 - [Créer un cluster Talos avec Omni](../procedures/omni/OMNI-20260721-00-Creer-un-Cluster-Talos-avec-Omni.md) : où ces

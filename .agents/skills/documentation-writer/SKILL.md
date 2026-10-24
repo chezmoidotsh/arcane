@@ -83,9 +83,9 @@ A README section that is really a guide moves to `docs/`, and the README links t
 
 ## 4. Moving records (ADR, post-mortem)
 
-Keep the number, the title, the decision, the timeline and the front matter exactly as written. Only the structure and
-the wording around them change. A status changes only when the repository proves it changed. See the "Records" section
-of the style guide.
+Keep the number, the decision, the timeline and the front matter keys exactly as written. The title and free-text values
+are translated. Only the structure and the wording around them change. A status changes only when the repository proves
+it changed. See the "Records" section of the style guide.
 
 ## 5. Common mistakes
 

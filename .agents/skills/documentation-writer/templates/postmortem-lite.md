@@ -45,7 +45,7 @@ qui a été touché] **Résolution :** \[Ce qui a corrigé le problème]
 
 ## Registre des changements
 
-- [ ] \[due:: AAAA-MM-JJ] \[priority:: high|medium|low] \[size:: S|M|L] \[owner:: Nom] \[Action]
+- [ ] [due:: AAAA-MM-JJ] [priority:: high|medium|low] [size:: S|M|L] [owner:: Nom] \[Action]
   - **Vérification :** \[Résultat observable]
   - **Sinon :** \[Conséquence]
 

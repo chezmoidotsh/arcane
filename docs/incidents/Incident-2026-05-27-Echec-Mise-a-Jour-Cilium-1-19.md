@@ -26,7 +26,7 @@ related-issues:
 related-adrs: []
 ---
 
-# Incident 2026-05-27 Échec mise à jour Cilium 1-19
+# Incident 2026-05-27 Échec mise à jour Cilium 1.19
 
 Cette page est le post-mortem de l'échec de la mise à jour de Cilium 1.18.10 vers 1.19.4 sur le cluster mono-nœud
 `amiya.akn`, répétée en 8 tentatives sur 3 jours. Elle contient la chronologie, l'analyse des causes racines (Ishikawa),
@@ -219,14 +219,14 @@ _Processus / environnement_ :
 
 ## Registre des changements
 
-- [ ] [due:: 2026-06-10] [priority:: high] [size:: S] [owner:: Alexandre] Capturer `talosctl logs -f` dans un fichier
-      **avant** chaque future tentative de mise à jour de Cilium ; ajouter l'étape à la procédure de mise à jour
+- [x] [due:: 2026-06-10] [priority:: high] [size:: S] [owner:: Alexandre] Capturer `talosctl logs -f` dans un
+      fichier **avant** chaque future tentative de mise à jour de Cilium ; ajouter l'étape à la procédure de mise à jour
   - **Vérification :** la prochaine tentative de mise à jour de Cilium produit un fichier de journaux capturé (en cas de
     succès comme de crash) ; la tentative ne peut pas démarrer sans lui
   - **Sinon :** le prochain crash ne laisse aucun diagnostic exploitable, comme pour les tentatives 4 et 5 de cet
     incident
 
-- [ ] [due:: 2026-06-17] [priority:: medium] [size:: S] [owner:: Alexandre] Commenter
+- [x] [due:: 2026-06-17] [priority:: medium] [size:: S] [owner:: Alexandre] Commenter
       [`cilium/cilium#46010`](https://github.com/cilium/cilium/issues/46010) avec un reproducteur complet : Talos
       v1.13.3, noyau 6.18.33-talos, r8169 (PCI 10EC:8168), schéma de crash de 28 ms, liste des 8 hypothèses de
       configuration écartées
@@ -234,8 +234,8 @@ _Processus / environnement_ :
   - **Sinon :** l'amont ne peut pas aider s'il ne connaît pas l'environnement ; les hypothèses continuent d'être testées
     en isolation
 
-- [ ] [due:: 2026-08-01] [priority:: medium] [size:: S] [owner:: Alexandre] Surveiller les versions Cilium 1.19.5+ pour
-      des correctifs r8169 / noyau 6.18.x ; notification de release GitHub sur `cilium/cilium`
+- [x] [due:: 2026-08-01] [priority:: medium] [size:: S] [owner:: Alexandre] Surveiller les versions Cilium 1.19.5+
+      pour des correctifs r8169 / noyau 6.18.x ; notification de release GitHub sur `cilium/cilium`
   - **Vérification :** la prochaine version 1.19.x est examinée pour des mentions de correctif r8169/6.18 avant toute
     tentative de mise à jour
   - **Sinon :** même crash à la première tentative en 1.19.5, sans connaître d'éventuels correctifs partiels

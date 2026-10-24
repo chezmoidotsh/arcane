@@ -36,9 +36,9 @@ table, et le code s'affiche ensuite en texte brut dans le terminal. L'expressivi
 lorsque l'emoji est rendu ; en pratique, elle ajoute une étape de décision sans ajouter de signal. C'est le contraire de
 ce qu'une convention de types de commit doit apporter.
 
-La question stratégique à laquelle cet ADR répond est la suivante : comment simplifier le format de commit au point que
+La question stratégique à laquelle cet ADR répond est la suivante : **comment simplifier le format de commit au point que
 chaque type soit reconnaissable d'emblée dans un `git log` d'une ligne, que tout le vocabulaire tienne sur un écran et
-que le format reste non ambigu quel que soit l'environnement d'affichage ?
+que le format reste non ambigu quel que soit l'environnement d'affichage ?**
 
 ## Facteurs de décision
 

@@ -27,8 +27,8 @@ même image Ubuntu standard avec `nixos-anywhere`, puis géré avec `nixos-rebui
 mot de passe vault à protéger par un autre secret, et un OS qui dérive d'une exécution à l'autre (le ré-amorçage du
 2026-10-07 sur Ubuntu 26.04 a échoué sur la clé de signature du PPA d'Ansible, consigné dans l'ADR-008).
 
-La question stratégique : la gestion de configuration de `kazimierz.akn` doit-elle rester sur Ansible, ou passer au
-modèle NixOS déjà utilisé par `rimbilliton.akn` ?
+La question stratégique : **la gestion de configuration de `kazimierz.akn` doit-elle rester sur Ansible, ou passer au
+modèle NixOS déjà utilisé par `rimbilliton.akn` ?**
 
 ## Hors périmètre
 

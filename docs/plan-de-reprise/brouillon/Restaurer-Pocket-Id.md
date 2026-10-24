@@ -64,11 +64,11 @@ Vault (Pocket-Id n'a aucune dépendance à Vault, par conception) :
 # pocket-id-secrets : le seul secret qui reste chiffré avec SOPS dans le dépôt
 # (le secret de configuration de l'application, voir sops/config.secret.yaml)
 kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/apps/pocket-id/sops \
-  | kubectl --context ${CLUSTER_CONTEXT} apply -f -
+  | kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f -
 
 # pocket-id-database-pocket-id : généré localement par un Generator d'ESO, sans
 # Vault. ESO doit déjà être déployé (étape 2 de Restaurer Rhodes).
-kubectl --context ${CLUSTER_CONTEXT} apply -f projects/rhodes.akn/src/apps/pocket-id/database.externalsecret.yaml
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side -f projects/rhodes.akn/src/apps/pocket-id/database.externalsecret.yaml
 ```
 
 Vérifier que les trois secrets sont présents :
@@ -113,7 +113,7 @@ nouveau `serverName`), régénérer `dist/` avant de l'appliquer, sans quoi `dis
 
 ```sh
 dist:render projects/rhodes.akn/src/apps/pocket-id
-kubectl --context ${CLUSTER_CONTEXT} apply -f projects/rhodes.akn/dist/apps/pocket-id/
+kubectl --context ${CLUSTER_CONTEXT} apply --server-side --force-conflicts -f projects/rhodes.akn/dist/apps/pocket-id/
 ```
 
 Suivre le démarrage :
@@ -158,6 +158,8 @@ La vérification du SSO vers OpenBao (Pocket-Id y est un fournisseur, pas une pr
 
 ## Historique
 
+- _2026-10-12_ : chaque `kubectl apply` passe en `--server-side` (et `--force-conflicts` pour `dist/apps/pocket-id/`),
+  comme l'impose `AGENTS.md` pour toute application manuelle.
 - _2026-10-11_ : Migration vers le standard de documentation (issue #1257) : traduction en français, déplacement vers
   `docs/guides/`. Ajout du renommage en cascade (`uri` de l'`ExternalSecret` et `ScheduledBackup`), vérifié dans
   `database.externalsecret.yaml` (hôte `pocket-id-20260530-rw`) et `cnpg.scheduledbackup.yaml`

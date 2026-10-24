@@ -28,7 +28,7 @@ template-version: "2.0.0"
 >
 > - **Vue d'ensemble de l'architecture actuelle** : comment les choses fonctionnent aujourd'hui.
 > - **Problèmes critiques identifiés** : ce qui est cassé, limitant ou manquant dans l'approche actuelle.
-> - **Question stratégique** : la question centrale à laquelle cet ADR répond.
+> - **Question stratégique** : la question centrale à laquelle cet ADR répond, écrite en gras.
 
 {Écrire ici un contexte complet...}
 

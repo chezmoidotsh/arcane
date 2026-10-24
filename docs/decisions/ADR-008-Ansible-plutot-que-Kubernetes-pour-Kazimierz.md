@@ -34,8 +34,8 @@ d'usage précis. L'environnement de déploiement présente des contraintes parti
 - **Isolation du homelab** : aucune connectivité réseau directe avec les clusters internes
 - **Infrastructure sacrificielle** : conçue pour être détruite et reconstruite rapidement en cas de compromission
 
-La question centrale : la cohérence avec les autres clusters justifie-t-elle la charge d'exploitation de Kubernetes pour
-ce scénario de déploiement précis ?
+La question centrale : **la cohérence avec les autres clusters justifie-t-elle la charge d'exploitation de Kubernetes pour
+ce scénario de déploiement précis ?**
 
 ## Facteurs de décision
 

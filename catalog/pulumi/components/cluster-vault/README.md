@@ -7,14 +7,14 @@ at `<name>`, a **least-privilege ESO read policy** (`<name>-eso-policy`), and an
 bound to the `external-secrets` ServiceAccount.
 
 One component covers all three connectivity variants (Local, Remote, Tailscaled) — the arg shape selects which one
-applies. Path layout follows [ADR-003](../../../docs/decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md)
+applies. Path layout follows [ADR-003](../../../../docs/decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md)
 and policy naming/scoping follows
-[ADR-004](../../../docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md).
+[ADR-004](../../../../docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md).
 
 > \[!WARNING] This component encodes the conventions defined in
-> [ADR-003](../../../docs/decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md) (path naming) and
-> [ADR-004](../../../docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md) (policy naming and scope).
-> Consult those ADRs before changing the generated policy HCL, mount paths, or role bindings.
+> [ADR-003](../../../../docs/decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md) (path naming) and
+> [ADR-004](../../../../docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md) (policy naming and
+> scope). Consult those ADRs before changing the generated policy HCL, mount paths, or role bindings.
 
 ## Variants overview
 
@@ -39,7 +39,8 @@ Local and Tailscaled, and **defaults to enabled** for Remote (set `remote.enable
 - No CA certificate or token-reviewer JWT override is needed — Vault uses the local cluster's service-account token and
   CA automatically.
 
-**Usage example** (see [`projects/rhodes.akn`](../../../projects/rhodes.akn/src/infrastructure/pulumi/stack/vault.ts)):
+**Usage example** (see
+[`projects/rhodes.akn`](../../../../projects/rhodes.akn/src/infrastructure/pulumi/stack/vault.ts)):
 
 ```typescript
 import { ClusterVaultComponent } from "@chezmoi.sh/pulumi-cluster-vault";
@@ -63,7 +64,7 @@ new ClusterVaultComponent("rhodes.akn", {
 - You want the option to disable shared access for an isolated cluster.
 
 **Usage example** (see
-[`projects/lungmen.akn`](../../../projects/lungmen.akn/src/infrastructure/pulumi/src/platform.ts)):
+[`projects/lungmen.akn`](../../../../projects/lungmen.akn/src/infrastructure/pulumi/stack/vault.ts)):
 
 ```typescript
 import { ClusterVaultComponent } from "@chezmoi.sh/pulumi-cluster-vault";
@@ -158,7 +159,7 @@ This is a **self-contained, `private: true` package** — it is **not published 
 npm `workspace:*` dependency**. Consuming stacks depend on it through the **`file:` protocol**, the only protocol that
 resolves identically whether npm runs from the workspace root or in complete isolation inside a single stack directory
 (which is how Pulumi's runtime installs dependencies). The full rationale lives in
-[`catalog/pulumi/README.md`](../README.md).
+[`catalog/pulumi/README.md`](../../README.md).
 
 Add it to the consuming stack's `package.json`:
 
@@ -205,11 +206,11 @@ For a cluster `<name>` with no `additionalPolicies`, the component registers fiv
 - `<name>/*` — the cluster's own mount (always).
 - `shared/+/third-parties/+/+/<name>` and `shared/+/third-parties/+/+/<name>/*` — this cluster's third-party credentials
   under the shared mount (when shared access is enabled; the `+/+` glob spans `{provider}/{service}` per
-  [ADR-003](../../../docs/decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md)).
+  [ADR-003](../../../../docs/decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md)).
 - `shared/+/certificates/*` — shared certificates (when shared access is enabled).
 
 This matches the **ESO – cluster** policy family in
-[ADR-004](../../../docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md).
+[ADR-004](../../../../docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md).
 
 **`<name>-<key>`** (`vault.Policy`, one per `additionalPolicies` entry) — the component creates and names these itself
 from the caller-supplied policy document; the caller never creates the `vault.Policy` resource directly.
@@ -308,12 +309,13 @@ pnpm test      # inside the pnpm workspace
 
 ## References
 
-- [ADR-003 — OpenBao Path Naming Conventions](../../../docs/decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md)
-- [ADR-004 — OpenBao Policy Naming and Scope Conventions](../../../docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md)
-- [`catalog/pulumi/README.md`](../README.md) — workspace / `file:` protocol rationale
-- Live consumers: [`rhodes.akn` (Local)](../../../projects/rhodes.akn/src/infrastructure/pulumi/stack/vault.ts),
-  [`lungmen.akn` (Remote)](../../../projects/lungmen.akn/src/infrastructure/pulumi/src/platform.ts)
+- [ADR-003 — OpenBao Path Naming Conventions](../../../../docs/decisions/ADR-003-Conventions-de-Nommage-des-Chemins-OpenBao.md)
+- [ADR-004 — OpenBao Policy Naming and Scope Conventions](../../../../docs/decisions/ADR-004-Conventions-de-Nommage-des-Politiques-OpenBao.md)
+- [`catalog/pulumi/README.md`](../../README.md) — workspace / `file:` protocol rationale
+- Live consumers: [`rhodes.akn` (Local)](../../../../projects/rhodes.akn/src/infrastructure/pulumi/stack/vault.ts),
+  [`lungmen.akn` (Remote)](../../../../projects/lungmen.akn/src/infrastructure/pulumi/stack/vault.ts)
 
 ## License
 
-This package is released under the Apache 2.0 license. For more information, see the [LICENSE](../../../LICENSE) file.
+This package is released under the Apache 2.0 license. For more information, see the [LICENSE](../../../../LICENSE)
+file.

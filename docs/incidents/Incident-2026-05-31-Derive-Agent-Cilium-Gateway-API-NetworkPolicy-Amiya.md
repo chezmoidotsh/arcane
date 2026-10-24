@@ -227,37 +227,37 @@ Chaîne de défaillance 2 : 503 après le redémarrage de l'agent (NetworkPolicy
 
 ## Registre des changements
 
-- [x] [due:: 2026-05-31] [priority:: high] [size:: S] [owner:: Alexandre] Remplacer `fromEndpoints(in-gateway-system)`
-      par `fromEntities: [ingress]` dans la NetworkPolicy de Zot et renommer le fichier en
-      `allow-zot-from-cilium-gateway`
+- [x] [due:: 2026-05-31] [priority:: high] [size:: S] [owner:: Alexandre] Remplacer
+      `fromEndpoints(in-gateway-system)` par `fromEntities: [ingress]` dans la NetworkPolicy de Zot et renommer le
+      fichier en `allow-zot-from-cilium-gateway`
   - **Vérification :** `curl -sv https://oci.chezmoi.sh/v2/` renvoie HTTP 200
   - **Sinon :** le registre Zot reste inaccessible via la Gateway Cilium
 
-- [ ] [due:: 2026-06-07] [priority:: high] [size:: S] [owner:: Alexandre] Écrire `.agents/knowledge/cilium.md` avec deux
-      puces : (1) l'activation d'un drapeau de fonctionnalité exige un redémarrage du DaemonSet ; (2) l'identité du
+- [x] [due:: 2026-06-07] [priority:: high] [size:: S] [owner:: Alexandre] Écrire `.agents/knowledge/cilium.md` avec
+      deux puces : (1) l'activation d'un drapeau de fonctionnalité exige un redémarrage du DaemonSet ; (2) l'identité du
       trafic Gateway API est `reserved:ingress`
   - **Vérification :** les futures sessions d'agents IA qui touchent à Cilium chargent automatiquement le fichier de
     connaissances et ne répètent aucune des deux erreurs
   - **Sinon :** le prochain changement de configuration Cilium échoue silencieusement ; la prochaine migration vers
     Gateway API reproduit la mauvaise NetworkPolicy
 
-- [ ] [due:: 2026-06-14] [priority:: medium] [size:: S] [owner:: Alexandre] Ajouter à la checklist de migration des
+- [x] [due:: 2026-06-14] [priority:: medium] [size:: S] [owner:: Alexandre] Ajouter à la checklist de migration des
       passerelles une étape de test de fumée : `curl -sv https://<hostname>/` immédiatement après la création de
       l'HTTPRoute ; HTTP 200 ou 401 attendu (pas de connexion refusée)
   - **Vérification :** la prochaine migration de route Gateway API comprend un test d'accessibilité documenté avant que
     la migration soit déclarée terminée
   - **Sinon :** des pannes silencieuses de même durée restent possibles lors des prochaines migrations
 
-- [ ] [due:: 2026-06-14] [priority:: medium] [size:: M] [owner:: Alexandre] Passer en revue toutes les autres
+- [x] [due:: 2026-06-14] [priority:: medium] [size:: M] [owner:: Alexandre] Passer en revue toutes les autres
       applications d'`amiya.akn` dont le `fromEndpoints` cible le namespace `in-gateway-system` et les remplacer par
       `fromEntities: [ingress]` pour toute application derrière Cilium Gateway API
   - **Vérification :** `grep -r "in-gateway-system" projects/amiya.akn/src/apps/` ne renvoie aucune correspondance
     `fromEndpoints` de CiliumNetworkPolicy
   - **Sinon :** les autres applications migrées vers Cilium Gateway API rencontreront le même problème de 503
 
-- [ ] [due:: 2026-06-30] [priority:: low] [size:: M] [owner:: Alexandre] Ajouter une règle OPA dans `catalog/opa/` pour
-      avertir quand une CiliumNetworkPolicy ciblant une application derrière une Gateway Cilium utilise `fromEndpoints`
-      avec un namespace de passerelle plutôt que `fromEntities: [ingress]`
+- [x] [due:: 2026-06-30] [priority:: low] [size:: M] [owner:: Alexandre] Ajouter une règle OPA dans `catalog/opa/`
+      pour avertir quand une CiliumNetworkPolicy ciblant une application derrière une Gateway Cilium utilise
+      `fromEndpoints` avec un namespace de passerelle plutôt que `fromEntities: [ingress]`
   - **Vérification :** la CI rejette une PR qui ajoute une politique `fromEndpoints(in-gateway-system)` à une
     application dotée d'une HTTPRoute sur Gateway Cilium
   - **Sinon :** le motif se reproduit silencieusement à chaque migration d'application ; OPA n'offre aucun filet de

@@ -36,9 +36,9 @@ gestion de plus de 7 planifications de sauvegarde et cycles de mise à jour dist
 cluster à l'autre et stockage des sauvegardes peu efficace. Le cluster `lungmen.akn`, en particulier, subit une pression
 sur ses ressources à mesure que les déploiements d'applications augmentent.
 
-La question stratégique à laquelle cet ADR répond est la suivante : comment réduire la surcharge de ressources et la
+La question stratégique à laquelle cet ADR répond est la suivante : **comment réduire la surcharge de ressources et la
 complexité d'exploitation des instances PostgreSQL, tout en préservant la sécurité et les performances dans une
-infrastructure de homelab en croissance ?
+infrastructure de homelab en croissance ?**
 
 ## Facteurs de décision
 

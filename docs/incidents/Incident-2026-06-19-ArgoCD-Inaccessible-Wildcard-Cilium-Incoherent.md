@@ -49,18 +49,18 @@ des routes.**
 
 ## Registre des changements
 
-- [ ] [due:: 2026-06-26] [priority:: high] [size:: M] [owner:: Alexandre] Ajouter une alerte sur les redémarrages de
+- [x] [due:: 2026-06-26] [priority:: high] [size:: M] [owner:: Alexandre] Ajouter une alerte sur les redémarrages de
       l'opérateur Cilium et sur les conditions `Programmed=false` des listeners de Gateway
   - **Vérification :** l'alerte Grafana se déclenche dans les 5 min suivant un redémarrage de l'opérateur Cilium ou une
     dégradation d'un listener
   - **Sinon :** les prochains changements de Gateway échouent silencieusement, sans détection
 
-- [ ] [due:: 2026-06-26] [priority:: medium] [size:: S] [owner:: Alexandre] Auditer toutes les HTTPRoutes des clusters :
-      profondeur du nom d'hôte et compatibilité avec le wildcard du listener
+- [x] [due:: 2026-06-26] [priority:: medium] [size:: S] [owner:: Alexandre] Auditer toutes les HTTPRoutes des
+      clusters : profondeur du nom d'hôte et compatibilité avec le wildcard du listener
   - **Vérification :** aucune route à sous-domaine multi-niveaux ne pointe vers un listener wildcard à un seul niveau
   - **Sinon :** le même rejet se reproduit sur d'autres services
 
-- [ ] [due:: 2026-06-26] [priority:: low] [size:: S] [owner:: Alexandre] Ajouter un listener `*.akn.chezmoi.sh` à la
+- [x] [due:: 2026-06-26] [priority:: low] [size:: S] [owner:: Alexandre] Ajouter un listener `*.akn.chezmoi.sh` à la
       Gateway Cilium de lungmen.akn
   - **Vérification :** `kubectl get gateway` montre le listener `akn.chezmoi.sh-websecure` sur lungmen.akn
   - **Sinon :** les services de lungmen.akn qui utilisent `*.akn.chezmoi.sh` subissent la même incompatibilité de

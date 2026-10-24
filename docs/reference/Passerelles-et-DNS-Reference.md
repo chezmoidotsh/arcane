@@ -86,8 +86,8 @@ exemple les LXC du VLAN 5) ne voient jamais les réponses de BIND.
   dépôt :
   - Les Gateways sont dans `kube-system` (`metadata.namespace: kube-system` dans les quatre fichiers
     `{external,internal}.gateway.yaml`, et dans les `parentRefs` des HTTPRoute). `AGENTS.md` indique `in-gateway-system`
-    et `projects/*/src/infrastructure/kubernetes/in-gateway/` : ce dossier n'existe pas dans l'arbre. L'écart est dans
-    `AGENTS.md`, pas dans cette page.
+    et `projects/*/src/infrastructure/kubernetes/in-gateway/` : ce dossier n'existe pas dans l'arbre. L'écart était dans
+    `AGENTS.md`, pas dans cette page ; il est corrigé depuis.
   - Vérifié : deux Gateways Cilium par cluster, `external-dns` avec les providers `bind` (rfc2136) et `unifi` (webhook).
   - Vérifié : seules les routes `vault`, `pocket-id` et Grafana de `rhodes.akn` sont attachées à `internal` ; aucune
     route de `lungmen.akn` ne l'est. La route `argocd` n'est attachée qu'à `external`.
@@ -101,7 +101,7 @@ exemple les LXC du VLAN 5) ne voient jamais les réponses de BIND.
 
 - [IPAM Reference](IPAM-Reference.md) : pools de Load Balancer, adresses de `talosnet-dns` et de l'UDM Pro.
 - [Réseau Reference](Reseau-Reference.md) : topologie et vue d'ensemble du réseau.
-- [ADR-014 Network Topology](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md) : justification
-  du découpage réseau (double NIC et SDN VXLAN).
+- [ADR-014 Séparer le trafic des nœuds Talos du VLAN Homelab](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md)
+  : justification du découpage réseau (double NIC et zone SDN `simple`).
 - [talosnet-dns](../../projects/chezmoi.sh/src/infrastructure/proxmox/lxc/talosnet-dns/README.md) : construction et mise
   à jour du LXC BIND.

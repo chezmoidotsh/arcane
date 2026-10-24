@@ -202,29 +202,30 @@ cette structure en couches ; Swiss Cheese rend explicite l'absence de défenses 
 
 ## Registre des changements
 
-- [ ] [due:: 2026-06-01] [priority:: high] [size:: S] [owner:: Alexandre] Réduire le `gcInterval` de Zot de 168h à 24h
-      dans `zot.helmvalues/default.yaml`
+- [x] [due:: 2026-06-01] [priority:: high] [size:: S] [owner:: Alexandre] Réduire le `gcInterval` de Zot de 168h à
+      24h dans `zot.helmvalues/default.yaml`
   - **Vérification :** l'utilisation du PVC de Zot reste sous 70 % pendant 7 jours consécutifs après le changement
     (contrôle quotidien par l'utilisateur) ; une entrée de journal de GC est visible toutes les 24 h
   - **Sinon :** le cache continue de croître sans contrôle ; prochaine saturation attendue d'ici \~5 mois au rythme
     actuel de croissance des images amont
 
-- [ ] [due:: 2026-06-15] [priority:: high] [size:: M] [owner:: Alexandre] Ajouter une politique de rétention basée sur
-      la taille dans la configuration de Zot (`storage.retention`, taille totale maximale et/ou par dépôt)
+- [x] [due:: 2026-06-15] [priority:: high] [size:: M] [owner:: Alexandre] Ajouter une politique de rétention basée
+      sur la taille dans la configuration de Zot (`storage.retention`, taille totale maximale et/ou par dépôt)
   - **Vérification :** la configuration de Zot expose la politique de rétention ; le premier balayage de rétention est
     visible dans les journaux ; l'utilisation du PVC diminue après le déploiement
   - **Sinon :** le GC seul est insuffisant : les anciennes couches s'accumulent jusqu'à la prochaine saturation
 
-- [ ] [due:: 2026-06-15] [priority:: high] [size:: M] [owner:: Alexandre] Écrire une procédure de maintenance d'urgence
-      pour Zot couvrant la mise à l'échelle à 0, la suspension d'ArgoCD, le nettoyage des écritures partielles et le
-      contournement Kyverno par `system-cluster-critical`
+- [x] [due:: 2026-06-15] [priority:: high] [size:: M] [owner:: Alexandre] Écrire une procédure de maintenance
+      d'urgence pour Zot couvrant la mise à l'échelle à 0, la suspension d'ArgoCD, le nettoyage des écritures partielles
+      et le contournement Kyverno par `system-cluster-critical`
   - **Vérification :** la prochaine maintenance planifiée de Zot suit la procédure de bout en bout sans redécouvrir le
     conflit avec le `selfHeal` d'ArgoCD
   - **Sinon :** le prochain événement de disque plein ou de corruption répète les 20 minutes de lutte contre le
     `selfHeal` d'ArgoCD
 
-- [ ] [due:: 2026-06-22] [priority:: high] [size:: L] [owner:: Alexandre] Établir un plan d'observabilité de base pour
-      les PVC d'infrastructure partagée (Zot, système Longhorn) : c'est le méta-motif de la famille `observability-gap`
+- [x] [due:: 2026-06-22] [priority:: high] [size:: L] [owner:: Alexandre] Établir un plan d'observabilité de base
+      pour les PVC d'infrastructure partagée (Zot, système Longhorn) : c'est le méta-motif de la famille
+      `observability-gap`
   - **Vérification :** une proposition concrète est commitée (ADR ou document d'expérience) ; elle couvre les seuils
     d'utilisation des PVC et le canal d'alerte
   - **Sinon :** le prochain événement de type « soudainement plein » sur un PVC partagé sera découvert par la panne, pas

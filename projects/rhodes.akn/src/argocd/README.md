@@ -23,14 +23,14 @@ For more information, please refer to the [official documentation](https://argo-
 
 ArgoCD self-hosts on `rhodes.akn` (the hub pattern) and, like every other bootstrap-order component on this cluster
 (Cilium, OpenBao, ESO, cert-manager, Pocket-Id), it can't depend on ArgoCD to exist yet — see
-[Restaurer Rhodes](../../../docs/plan-de-reprise/brouillon/Restaurer-Rhodes.md). It's applied by hand as the last step
-of that chain, not synced automatically like a regular app:
+[Restaurer Rhodes](../../../../docs/plan-de-reprise/brouillon/Restaurer-Rhodes.md). It's applied by hand as the last
+step of that chain, not synced automatically like a regular app:
 
 ```sh
-kubectl apply -f projects/rhodes.akn/dist/argocd/
+kubectl apply --server-side --force-conflicts -f projects/rhodes.akn/dist/argocd/
 kustomize build --enable-alpha-plugins --enable-exec projects/rhodes.akn/src/argocd/sops \
-  | kubectl apply -f -
-kubectl apply -f projects/rhodes.akn/src/bootstrap.applications.yaml
+  | kubectl apply --server-side -f -
+kubectl apply --server-side -f projects/rhodes.akn/src/bootstrap.applications.yaml
 ```
 
 [`bootstrap.applications.yaml`](../bootstrap.applications.yaml) is what makes ArgoCD **adopt** itself and its own

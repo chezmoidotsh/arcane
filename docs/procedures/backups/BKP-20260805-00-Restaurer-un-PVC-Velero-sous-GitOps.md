@@ -148,7 +148,7 @@ kubectl get pod,pvc,$WORKLOAD_KIND -n $APP_NAMESPACE
 ## Étape 4 — Déclencher la restauration
 
 ```sh
-velero restore create $RESTORE_NAME --from-backup $BACKUP_NAME
+velero restore create $RESTORE_NAME --from-backup $BACKUP_NAME --namespace $VELERO_NAMESPACE
 # → Restore request "<RESTORE_NAME>" submitted successfully.
 ```
 
@@ -205,8 +205,10 @@ kubectl logs -n $APP_NAMESPACE $WORKLOAD_NAME-0 --tail=30
 
 ## Étape 7 — Réactiver la synchronisation ArgoCD
 
-Rétablir la synchronisation seulement si `SYNC_POLICY_BEFORE` (étape 3) n'était pas vide : une application déjà en
-synchronisation manuelle avant la procédure le reste, cette décision n'étant pas du ressort de la procédure.
+Rétablir la synchronisation automatique seulement si `SYNC_POLICY_BEFORE` (étape 3) n'était pas vide : une application
+déjà en synchronisation manuelle avant la procédure le reste, cette décision n'étant pas du ressort de la procédure.
+Lancer en revanche toujours une synchronisation : un Backup issu des Schedules versionnés ne contient pas le workload
+(voir le cadre technique), et seul ArgoCD le recrée depuis Git.
 
 ```sh
 if [ -n "$SYNC_POLICY_BEFORE" ]; then
@@ -217,6 +219,10 @@ if [ -n "$SYNC_POLICY_BEFORE" ]; then
 else
   echo "Synchronisation déjà manuelle avant la procédure : laissée en l'état."
 fi
+
+# Recrée le workload s'il ne venait pas du Backup ; sans effet s'il a été restauré à l'identique.
+argocd app sync $ARGOCD_APP_NAME
+# → l'Application revient en Synced ; kubectl get $WORKLOAD_KIND -n $APP_NAMESPACE $WORKLOAD_NAME existe
 ```
 
 ## Exemple complet : `jellyfin` sur `lungmen.akn`
@@ -269,6 +275,7 @@ kubectl logs -n jellyfin jellyfin-0 --tail=30
 if [ -n "$SYNC_POLICY_BEFORE" ]; then
   argocd app set jellyfin --sync-policy automated --auto-prune --self-heal
 fi
+argocd app sync jellyfin
 ```
 
 ## Vérifications rapides
@@ -284,6 +291,18 @@ fi
   l'omettre
 - **Synchronisation ArgoCD rétablie** : `argocd app get $ARGOCD_APP_NAME -o json | jq '.spec.syncPolicy.automated'` —
   correspond à `$SYNC_POLICY_BEFORE` de l'étape 3
+
+## Retour arrière
+
+L'étape 3 est la seule qui ne se défait pas : une fois le PVC supprimé, ses données ne reviennent que par une
+restauration Velero. Si la procédure s'arrête après l'étape 3 (Backup finalement inutilisable, restauration bloquée) :
+
+- **PV en `Retain`** : le PV orphelin garde les données. Ne pas le supprimer tant qu'une restauration n'a pas été
+  validée à l'étape 6.
+- **Restauration bloquée ou ratée** : supprimer le `Restore` et ses ressources restaurées, puis reprendre à l'étape 3
+  avec un autre `BACKUP_NAME` (voir les problèmes connus pour un `PodVolumeRestore` orphelin).
+- **Abandon** : exécuter l'étape 7. ArgoCD recrée le workload et un PVC **vide** depuis Git ; l'application redémarre
+  sans ses données.
 
 ## Problèmes connus
 
@@ -325,6 +344,9 @@ procédure : un nombre désiré incohérent est ce qui a causé l'orphelinage.
 - _2026-10-17_ : Reprise après revue : la liste des sauvegardes passe par la CLI `velero` et la synchronisation de la
   zone de stockage (utile après un sinistre), l'avertissement de l'étape 1 devient un callout `CAUTION`, les ressources
   Kubernetes sont en code, et l'état de vérification de la procédure est un callout `WARNING`.
+- _2026-10-12_ : `velero restore create` de l'étape 4 reçoit `--namespace $VELERO_NAMESPACE` (le namespace par défaut de
+  la CLI n'est pas forcément celui de Velero) ; l'étape 7 lance toujours `argocd app sync`, car un Backup des Schedules
+  versionnés ne contient pas le workload ; ajout d'une section « Retour arrière ».
 - _2026-10-11_ : Migration vers le standard de documentation en français (#1257). Vérification contre le dépôt : le
   `volumeClaimTemplates` de `jellyfin` utilise désormais `proxmox-lvmthin-ext4-retain` (la valeur `Delete` de l'exemple
   est celle de la validation du 2026-08-05) ; les Schedules Velero versionnés ne sauvegardent que pods, PVC et PV, et

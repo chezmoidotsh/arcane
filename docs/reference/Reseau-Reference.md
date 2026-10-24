@@ -82,14 +82,14 @@ d2 docs/assets/network/topology.d2 docs/assets/network/topology.svg
   `vmbr1` ; le Gateway `internal` sur `talosnet` est ajouté d'après
   `projects/<cluster>/src/infrastructure/kubernetes/cilium/internal.gateway.yaml` (voir
   [Passerelles Et DNS Reference](Passerelles-et-DNS-Reference.md)). Écarts relevés : `AGENTS.md` parle de « Proxmox SDN
-  VXLAN » alors que `sdn.ts` déclare une zone `simple` (seul le MTU de `eth1` anticipe VXLAN) ; le nœud du diagramme
+  VXLAN » alors que `sdn.ts` déclare une zone `simple` (seul le MTU de `eth1` anticipe VXLAN), écart corrigé depuis dans `AGENTS.md` ; le nœud du diagramme
   garde l'identifiant interne `vnet-talos`, alors que le VNet s'appelle `talosnet`.
 
 ## Pour aller plus loin
 
 - [IPAM Reference](IPAM-Reference.md) : VLAN, plages, CIDR Kubernetes et règles de pare-feu.
 - [Passerelles Et DNS Reference](Passerelles-et-DNS-Reference.md) : Gateways `internal` et `external` et DNS associé.
-- [ADR-014 Network Topology](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md) : pourquoi le
-  réseau est conçu ainsi.
+- [ADR-014 Séparer le trafic des nœuds Talos du VLAN Homelab](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md)
+  : pourquoi le réseau est conçu ainsi.
 - [Provisionner le SDN Proxmox](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md) : création
   de la zone et du VNet.
