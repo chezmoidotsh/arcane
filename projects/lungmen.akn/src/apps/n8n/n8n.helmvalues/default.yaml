@@ -3,8 +3,7 @@
 #   - main:              editor, REST API, test webhooks, triggers/schedules (single replica)
 #   - webhook-processor: production webhooks, forms and MCP endpoints (/webhook, /form, /mcp, ...)
 #   - worker:            runs the executions pulled from the Redis queue (n8n-redis)
-# Routing is done by n8n.httproute.yaml; the public (`hooks`) and private (`n8n`) Pangolin resources respectively
-# target the webhook processor and the Cilium Gateway (which applies that same split).
+# Routing is done by the Cilium Gateway (n8n.httproute.yaml, and n8n.internal.httproute.yaml for Pangolin).
 queueMode:
   enabled: true
   workerReplicaCount: 1
