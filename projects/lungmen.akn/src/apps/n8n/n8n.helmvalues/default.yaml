@@ -1,17 +1,30 @@
 ---
-# Standalone mode: a single n8n process (UI, webhooks and executions) backed by
-# the mutualized PostgreSQL cluster. Queue mode (workers + Valkey) can be enabled
-# later without migrating data, everything lives in PostgreSQL.
+# Queue mode: three kinds of pods sharing the same image, PostgreSQL and S3.
+#   - main:              editor, REST API, test webhooks, triggers/schedules (single replica)
+#   - webhook-processor: production webhooks, forms and MCP endpoints (/webhook, /form, /mcp, ...)
+#   - worker:            runs the executions pulled from the Redis queue (n8n-redis)
+# Routing is done by the Cilium Gateway (n8n.httproute.yaml, and n8n.internal.httproute.yaml for Pangolin).
 queueMode:
-  enabled: false
+  enabled: true
+  workerReplicaCount: 1
+  workerConcurrency: 10
+webhookProcessor:
+  enabled: true
+  replicaCount: 1
+  # Production webhooks only on the processor (main keeps the test webhooks, /webhook-test/).
+  disableProductionWebhooksOnMainProcess: true
+# Redis is a plain Deployment in this namespace (n8n.redis.yaml), not part of the chart.
 redis:
-  enabled: false
+  enabled: true
+  useExternal: true
+  host: n8n-redis.n8n.svc.cluster.local
+  port: 6379
 
 # docker.n8n.io (the chart default) is not mirrored by the OCI registry.
 image:
   repository: ghcr.io/n8n-io/n8n
 
-# Standalone mode with a single process: never run two pods at once (duplicated
+# A single main handles the triggers: never run two of them at once (duplicated
 # triggers during a rollout).
 strategy:
   type: Recreate
@@ -21,13 +34,26 @@ strategy:
 persistence:
   enabled: false
 
+# Sized per role: main only runs the editor and triggers, executions happen in the worker.
 resources:
   main:
+    requests:
+      cpu: 100m
+      memory: 1Gi
+    limits:
+      memory: 1Gi
+  worker:
     requests:
       cpu: 250m
       memory: 2Gi
     limits:
       memory: 2Gi
+  webhookProcessor:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 512Mi
 
 database:
   type: postgresdb

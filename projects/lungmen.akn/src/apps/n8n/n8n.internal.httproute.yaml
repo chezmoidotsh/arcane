@@ -1,0 +1,52 @@
+---
+# Entry point of the private Pangolin resource (n8n.chezmoi.sh). Newt cannot resolve *.chezmoi.sh from
+# the cluster and uses the destination name as SNI, so it targets the Gateway Service itself over plain
+# HTTP. Pangolin keeps the original Host (n8n.chezmoi.sh): it must match here, otherwise the catch-all
+# http-to-https redirect answers and loops back through Pangolin. Same path split as n8n.httproute.yaml.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: n8n-internal
+spec:
+  hostnames:
+    - n8n.chezmoi.sh
+    - cilium-gateway-external.kube-system.svc.cluster.local
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: external
+      namespace: kube-system
+      sectionName: web
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: n8n-webhook-processor
+          port: 5678
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /webhook/
+        - path:
+            type: PathPrefix
+            value: /webhook-waiting/
+        - path:
+            type: PathPrefix
+            value: /form/
+        - path:
+            type: PathPrefix
+            value: /form-waiting/
+        - path:
+            type: PathPrefix
+            value: /mcp/
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: n8n-main
+          port: 5678
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /

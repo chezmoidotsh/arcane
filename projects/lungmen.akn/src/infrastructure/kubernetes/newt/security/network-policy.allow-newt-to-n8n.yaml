@@ -3,7 +3,12 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows Newt to access n8n service.
+      Allows Newt to reach n8n through the Cilium Gateway (TCP 80): the private `n8n` Pangolin resource
+      targets the Gateway Service, which splits editor and webhook traffic
+      (apps/n8n/n8n.internal.httproute.yaml). n8n is not published publicly.
+      Plain HTTP on purpose: Newt uses the destination name as SNI and cannot resolve *.chezmoi.sh from the
+      cluster, so the HTTPS listener (*.chezmoi.sh only) would reset the connection. Gateway traffic carries
+      the reserved:ingress identity. This rule cannot be scoped to n8n: routing happens inside the Gateway.
   name: allow-newt-to-n8n
   namespace: newt-system
 spec:
@@ -11,11 +16,9 @@ spec:
     matchLabels:
       app.kubernetes.io/name: newt
   egress:
-    - toEndpoints:
-        - matchLabels:
-            io.kubernetes.pod.namespace: n8n
-            app.kubernetes.io/name: n8n
+    - toEntities:
+        - ingress
       toPorts:
         - ports:
-            - port: "5678"
+            - port: "80"
               protocol: TCP

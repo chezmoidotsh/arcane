@@ -6,7 +6,6 @@ resources:
   - network-policy.allow-n8n-egress.yaml
   - network-policy.allow-n8n-from-cilium-gateway.yaml
   - network-policy.allow-n8n-from-newt.yaml
-  - network-policy.allow-n8n-from-tailscale.yaml
   - network-policy.allow-n8n-to-actual-budget.yaml
   - network-policy.allow-n8n-to-databases.yaml
   - network-policy.allow-n8n-to-n8n-api.yaml

@@ -1,4 +1,7 @@
 ---
+# Editor and API go to main; webhooks, forms and MCP go to the webhook processor, which is the only pod
+# serving production webhooks (same paths as the chart's ingress-webhook.yaml). Keep in sync with
+# n8n.internal.httproute.yaml.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -15,6 +18,28 @@ spec:
       namespace: kube-system
       sectionName: chezmoi.sh-websecure
   rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: n8n-webhook-processor
+          port: 5678
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /webhook/
+        - path:
+            type: PathPrefix
+            value: /webhook-waiting/
+        - path:
+            type: PathPrefix
+            value: /form/
+        - path:
+            type: PathPrefix
+            value: /form-waiting/
+        - path:
+            type: PathPrefix
+            value: /mcp/
     - backendRefs:
         - group: ""
           kind: Service

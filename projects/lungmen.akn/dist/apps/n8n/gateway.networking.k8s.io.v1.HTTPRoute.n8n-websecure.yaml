@@ -19,6 +19,28 @@ spec:
   - backendRefs:
     - group: ""
       kind: Service
+      name: n8n-webhook-processor
+      port: 5678
+      weight: 1
+    matches:
+    - path:
+        type: PathPrefix
+        value: /webhook/
+    - path:
+        type: PathPrefix
+        value: /webhook-waiting/
+    - path:
+        type: PathPrefix
+        value: /form/
+    - path:
+        type: PathPrefix
+        value: /form-waiting/
+    - path:
+        type: PathPrefix
+        value: /mcp/
+  - backendRefs:
+    - group: ""
+      kind: Service
       name: n8n-main
       port: 5678
       weight: 1
