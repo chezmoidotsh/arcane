@@ -26,7 +26,7 @@ let
 
   # Images: pinned by tag and digest, bump them here.
   # oripathy: type=oci upstream=github.com/fosrl/pangolin digest=true
-  pangolinImage = "docker.io/fosrl/pangolin:ee-1.24.0@sha256:1700457b2d42e3db664edc43760528a11f1d423a5364b8af720474e1b049a8ea"; # Enterprise Edition (was ee-latest)
+  pangolinImage = "docker.io/fosrl/pangolin:ee-1.25.3@sha256:f2c0fc54e1b59efcd23b8685e8df84350f363e14ebe1c13ce88a681f181ca49e"; # Enterprise Edition (was ee-latest)
   # oripathy: type=oci upstream=github.com/fosrl/gerbil digest=true
   gerbilImage = "docker.io/fosrl/gerbil:1.5.2@sha256:1f6e64eaba7997282c7067ba19922fc7e46b5f73e1a27add3dd66a591d50512f";
   # oripathy: type=oci upstream=github.com/traefik/traefik tagPrefix=v digest=true
