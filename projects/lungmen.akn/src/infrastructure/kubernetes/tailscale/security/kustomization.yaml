@@ -8,4 +8,3 @@ resources:
   - network-policy.allow-tailscale-to-control-plane.yaml
   - network-policy.allow-tailscale-to-derp.yaml
   - network-policy.allow-tailscale-to-letsencrypt.yaml
-  - network-policy.allow-tailscale-proxies-to-n8n.yaml

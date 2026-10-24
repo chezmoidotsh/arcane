@@ -23,7 +23,6 @@ resources:
   - n8n.enterprise.externalsecret.yaml
   - n8n.httproute.yaml
   - n8n.redis.yaml
-  - n8n.tailscale.ingress.yaml
 
   - security/
 
