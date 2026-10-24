@@ -1,0 +1,20 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows LiteLLM to reach the LM Studio server running on the Mac Studio (OpenAI-compatible
+      API, plain HTTP on the LAN). Keep the host in sync with `api_base` in
+      litellm.helmvalues/default.yaml.
+  name: allow-litellm-to-lmstudio
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: litellm
+  egress:
+    - toFQDNs:
+        - matchName: macstudio-kh37.lia.chezmoi.sh
+      toPorts:
+        - ports:
+            - port: "1234"
+              protocol: TCP

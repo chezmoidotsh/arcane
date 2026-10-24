@@ -1,0 +1,29 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: litellm
+
+helmCharts:
+  # Official chart, maintained by BerriAI (https://github.com/BerriAI/litellm)
+  - repo: oci://ghcr.io/berriai
+    name: litellm-helm
+    # renovate: datasource=docker depName=ghcr.io/berriai/litellm-helm
+    version: 1.105.1
+
+    releaseName: litellm
+    namespace: litellm
+    skipTests: true
+
+    valuesFile: litellm.helmvalues/default.yaml
+
+resources:
+  - litellm.configuration.externalsecret.yaml
+  - litellm.database.externalsecret.yaml
+  - litellm.httproute.yaml
+
+  - security/
+
+images:
+  # The chart takes its tag from its appVersion: only the registry is rewritten.
+  - name: ghcr.io/berriai/litellm
+    newName: oci.chezmoi.sh/ghcr.io/berriai/litellm
