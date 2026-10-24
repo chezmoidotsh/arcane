@@ -8,8 +8,8 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: argocd-application-controller
     app.kubernetes.io/part-of: argocd
-    app.kubernetes.io/version: v3.4.6
-    helm.sh/chart: argo-cd-10.2.2
+    app.kubernetes.io/version: v3.5.6
+    helm.sh/chart: argo-cd-10.11.1
   name: argocd-application-controller
   namespace: argocd
 spec:
@@ -23,16 +23,16 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/cm: 81b051370c05bef2a89b8e60b734c4e1cc4dce97332be0f3a0427022e3676e66
-        checksum/cmd-params: ed351c0fc8fa61a7c68dbafc9304bde6c6b517071a6da4d2af036df10b886637
+        checksum/cm: 2c608ec5f78dc71afbc59edcd0178179a22d569f50758347ea140922cbb9cf29
+        checksum/cmd-params: 016723e09a37ae92518580a4e1ef3af6707820646e02fff886fb6155ee7d9e6c
       labels:
         app.kubernetes.io/component: application-controller
         app.kubernetes.io/instance: argocd
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: argocd-application-controller
         app.kubernetes.io/part-of: argocd
-        app.kubernetes.io/version: v3.4.6
-        helm.sh/chart: argo-cd-10.2.2
+        app.kubernetes.io/version: v3.5.6
+        helm.sh/chart: argo-cd-10.11.1
     spec:
       affinity:
         podAntiAffinity:
@@ -49,6 +49,12 @@ spec:
         - /usr/local/bin/argocd-application-controller
         - --metrics-port=8082
         env:
+        - name: GRPC_ENABLE_TXT_SERVICE_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              key: controller.grpc.enable.txt.service.config
+              name: argocd-cmd-params-cm
+              optional: true
         - name: ARGOCD_CONTROLLER_REPLICAS
           value: "1"
         - name: ARGOCD_APPLICATION_CONTROLLER_NAME
@@ -333,7 +339,7 @@ spec:
           value: /tmp/kubecache
         - name: GODEBUG
           value: tlsmaxrsasize=8192
-        image: oci.chezmoi.sh/quay.io/argoproj/argocd:v3.4.6
+        image: oci.chezmoi.sh/quay.io/argoproj/argocd:v3.5.6
         imagePullPolicy: IfNotPresent
         name: application-controller
         ports:
