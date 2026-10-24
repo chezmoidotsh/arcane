@@ -83,4 +83,4 @@ images:
   - name: ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm
     newName: oci.chezmoi.sh/ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm
     # oripathy: type=oci upstream=github.com/openbao/openbao tagPrefix=v digest=false
-    newTag: 2.7.1-26.11-x86_64-linux
+    newTag: 2.7.1-26.11-pkcs11.0.2.1-x86_64-linux
