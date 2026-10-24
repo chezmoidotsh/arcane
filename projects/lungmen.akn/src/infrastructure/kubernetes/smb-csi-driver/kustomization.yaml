@@ -12,7 +12,7 @@ helmCharts:
   - repo: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-smb/master/charts
     name: csi-driver-smb
     # oripathy: type=helm upstream=github.com/kubernetes-csi/csi-driver-smb tagPrefix=v
-    version: 1.20.1
+    version: 1.20.4
 
     releaseName: csi-driver-smb
     namespace: smb-csi-driver-system

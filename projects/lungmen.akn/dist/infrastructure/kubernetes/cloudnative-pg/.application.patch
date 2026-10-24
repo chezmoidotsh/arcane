@@ -10,7 +10,7 @@ spec:
       value: Database / Operator
     - name: Version
       # oripathy: type=mirror
-      value: "0.29.0"
+      value: "0.29.1"
     # -- Documentation & Resources
     - name: Documentation
       value: https://cloudnative-pg.io/documentation/

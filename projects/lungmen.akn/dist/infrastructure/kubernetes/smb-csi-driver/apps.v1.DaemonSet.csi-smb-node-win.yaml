@@ -6,8 +6,8 @@ metadata:
     app.kubernetes.io/instance: csi-driver-smb
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: csi-driver-smb
-    app.kubernetes.io/version: 1.20.1
-    helm.sh/chart: csi-driver-smb-1.20.1
+    app.kubernetes.io/version: 1.20.4
+    helm.sh/chart: csi-driver-smb-1.20.4
   name: csi-smb-node-win
   namespace: smb-csi-driver-system
 spec:
@@ -21,8 +21,8 @@ spec:
         app.kubernetes.io/instance: csi-driver-smb
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: csi-driver-smb
-        app.kubernetes.io/version: 1.20.1
-        helm.sh/chart: csi-driver-smb-1.20.1
+        app.kubernetes.io/version: 1.20.4
+        helm.sh/chart: csi-driver-smb-1.20.4
     spec:
       containers:
       - args:
@@ -64,6 +64,7 @@ spec:
         - --enable-get-volume-stats=true
         - --remove-smb-mapping-during-unmount=true
         - --enable-windows-host-process=true
+        - --require-privacy-for-global-mapping=true
         command:
         - smbplugin.exe
         env:
@@ -74,7 +75,7 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: spec.nodeName
-        image: oci.chezmoi.sh/registry.k8s.io/sig-storage/smbplugin:v1.20.1-windows-hp
+        image: oci.chezmoi.sh/registry.k8s.io/sig-storage/smbplugin:v1.20.4-windows-hp
         imagePullPolicy: IfNotPresent
         name: smb
         resources:
@@ -94,7 +95,7 @@ spec:
         - -c
         - New-Item -ItemType Directory -Path C:\var\lib\kubelet\plugins\smb.csi.k8s.io\
           -Force
-        image: oci.chezmoi.sh/registry.k8s.io/sig-storage/smbplugin:v1.20.1-windows-hp
+        image: oci.chezmoi.sh/registry.k8s.io/sig-storage/smbplugin:v1.20.4-windows-hp
         imagePullPolicy: IfNotPresent
         name: init
         securityContext:

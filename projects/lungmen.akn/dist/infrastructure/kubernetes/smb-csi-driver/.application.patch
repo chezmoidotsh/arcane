@@ -10,7 +10,7 @@ spec:
       value: Storage / CSI Driver
     - name: Version
       # oripathy: type=mirror of=csi-driver-smb
-      value: "1.20.1"
+      value: "1.20.4"
     # -- Documentation & Resources
     - name: Documentation
       value: https://github.com/kubernetes-csi/csi-driver-smb/blob/master/docs/driver-parameters.md
