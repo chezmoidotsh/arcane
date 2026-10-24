@@ -42,7 +42,9 @@ documentation du dépôt. Il fait foi, se lit directement dans Git et est reflé
 | [Plan d'adressage (IPAM)](reference/IPAM-Reference.md)                           | Réseaux, VLAN, pools d'adresses et identifiants de clusters |
 | [Passerelles et DNS](reference/Passerelles-et-DNS-Reference.md)                  | Passerelles interne et externe, répartition du DNS          |
 | [Renovate](reference/Renovate-Reference.md)                                      | Configuration des mises à jour de dépendances               |
+| [Infrastructure manuelle](reference/Infrastructure-Manuelle-Reference.md)        | Inventaire de ce qui n'est pas géré en code                 |
 | [Décisions d'Architecture](decisions/ADR-001-Gestion-Centralisee-des-Secrets.md) | Pourquoi le dépôt est construit ainsi (ADR)                 |
+| [Expérimentations](experiments/Experimentation-2026-06-17-Proxmox-CSI-et-CCM.md) | Ce qui a été essayé avant d'être adopté ou écarté           |
 
 ## Pour aller plus loin
 

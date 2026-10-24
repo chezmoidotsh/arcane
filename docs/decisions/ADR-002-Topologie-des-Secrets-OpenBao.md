@@ -33,12 +33,12 @@ d'exploitation variées :
 > [!NOTE]\
 > Note du 2026-10-11 : la liste ci-dessus est l'état de l'époque. Le répertoire `projects/` contient aujourd'hui
 > `chezmoi.sh`, `hass`, `kazimierz.akn`, `lungmen.akn`, `rhodes.akn`, `rimbilliton.akn` et `shodan.akn`. `amiya.akn` a
-> été remplacé par `rhodes.akn` comme plateforme centrale (le dossier `docs/migrations/amiya.akn->rhodes.akn.md` décrit
-> la migration, et `projects/rhodes.akn/src/infrastructure/pulumi/stack/vault.ts` mentionne explicitement le
-> remplacement d'`amiya.akn`). `maison` n'existe plus comme projet du dépôt : `lungmen.akn` est le cluster
-> d'applications domestiques (`AGENTS.md`), sans trace explicite de filiation. Aucune trace de `sof.akn` dans
-> l'arborescence. `shodan.akn` n'est plus un cluster de jeux : il est décrit comme la future pile IA, au stade de la
-> planification (`AGENTS.md`).
+> été remplacé par `rhodes.akn` comme plateforme centrale (le dossier
+> `docs/archives/MIGR-20260729-00-Migrer-Amiya-vers-Rhodes.md` décrit la migration, et
+> `projects/rhodes.akn/src/infrastructure/pulumi/stack/vault.ts` mentionne explicitement le remplacement d'`amiya.akn`).
+> `maison` n'existe plus comme projet du dépôt : `lungmen.akn` est le cluster d'applications domestiques (`AGENTS.md`),
+> sans trace explicite de filiation. Aucune trace de `sof.akn` dans l'arborescence. `shodan.akn` n'est plus un cluster
+> de jeux : il est décrit comme la future pile IA, au stade de la planification (`AGENTS.md`).
 
 ### Contexte actuel de l'infrastructure
 
