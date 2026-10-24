@@ -29,14 +29,6 @@ groups:
           description: "No metrics received from cluster=lungmen for >5m — possible cluster outage or lost connectivity."
 
       - alert: ClusterAbsent
-        expr: absent(up{cluster="amiya"} == 1)
-        for: 5m
-        labels: { severity: page, cluster: amiya }
-        annotations:
-          summary: "Cluster amiya is not reporting"
-          description: "No metrics received from cluster=amiya for >5m — possible cluster outage. Grafana also lives here."
-
-      - alert: ClusterAbsent
         expr: absent(up{cluster="kazimierz"} == 1)
         for: 10m
         labels: { severity: page, cluster: kazimierz }
@@ -46,9 +38,9 @@ groups:
 
       - alert: GrafanaDown
         # Grafana is the alert-routing brain for everything non-paging; if it is
-        # down we lose that path, so it pages. Depends on amiya's vmagent scraping
-        # Grafana's /metrics (a ServiceMonitor). The amiya-fully-down case is also
-        # covered by ClusterAbsent{amiya} and the Grafana deadman heartbeat.
+        # down we lose that path, so it pages. Depends on the Grafana cluster's vmagent scraping
+        # Grafana's /metrics (a ServiceMonitor). The cluster-fully-down case is also
+        # covered by ClusterAbsent and the Grafana deadman heartbeat.
         expr: up{job=~".*grafana.*"} == 0
         for: 5m
         labels: { severity: page }

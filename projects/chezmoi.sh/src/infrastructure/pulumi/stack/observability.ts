@@ -10,7 +10,7 @@ const config = new pulumi.Config();
 //
 // This stack runs upstream of any Kubernetes cluster — it provisions the LXC appliances
 // clusters later depend on — so neither secret is pushed to Vault here; Vault itself runs
-// inside amiya.akn and can't be a dependency of something that has to exist before it.
+// inside rhodes.akn and can't be a dependency of something that has to exist before it.
 // Both secrets are exported as Pulumi stack outputs instead and injected into the LXC's
 // SOPS-encrypted secrets file with `mise run pulumi:cloudflare-token:observability` (see
 // the top-level .mise.toml).

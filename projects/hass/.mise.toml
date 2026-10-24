@@ -19,7 +19,7 @@
 # Home Assistant's Cloudflare DNS-01 token is created by the Pulumi stack in
 # src/infrastructure/pulumi/, not pushed to Vault: hass isn't a Kubernetes
 # cluster and doesn't depend on one to run, so Vault (which itself lives
-# inside amiya.akn) can't be a dependency here. The token only exists as a
+# inside rhodes.akn) can't be a dependency here. The token only exists as a
 # Pulumi stack output.
 #
 # Unlike chezmoi.sh's LXC appliances, hass has no SOPS-encrypted secrets file

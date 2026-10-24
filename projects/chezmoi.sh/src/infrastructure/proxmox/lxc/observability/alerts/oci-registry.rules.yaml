@@ -4,7 +4,7 @@
 # Metrics arrive via remote_write from a vmagent running on the oci-registry
 # LXC (cluster="oci-registry"). The push model means we no longer observe the
 # external path (DNS + TLS + Caddy + Zot) — only that Zot itself is alive and
-# vmagent can reach o11y. Add a blackbox-style probe from amiya if end-to-end
+# vmagent can reach o11y. Add a blackbox-style probe from rhodes if end-to-end
 # public-path monitoring becomes necessary.
 #
 # OCIRegistryDown fires when no Zot scrape has succeeded for >5m, which can

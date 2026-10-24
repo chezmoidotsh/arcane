@@ -93,35 +93,3 @@ spec:
   namespaceResourceBlacklist: []
 
   roles: []
----
-apiVersion: argoproj.io/v1alpha1
-kind: AppProject
-metadata:
-  name: crossplane
-  # Finalizer that ensures that project is not deleted until it is not referenced by any application
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-spec:
-  description: |
-    This project is responsible for deploying all Crossplane resources inside current cluster.
-
-  sourceNamespaces:
-    - crossplane # NOTE: only allow crossplane resources to be installed in the crossplane namespace
-  sourceRepos:
-    - https://github.com/chezmoidotsh/arcane.git # NOTE: main repository
-  destinations:
-    - # NOTE: crossplane resources can land in any namespace (Tokens write connection
-      # secrets to their own namespace, so each project needs its own namespace)
-      namespace: "*"
-      server: https://kubernetes.default.svc
-  clusterResourceWhitelist: [{ group: "*", kind: "*" }]
-  clusterResourceBlacklist:
-    - group: rbac.authorization.k8s.io
-      kind: ClusterRole
-    - group: rbac.authorization.k8s.io
-      kind: ClusterRoleBinding
-
-  namespaceResourceWhitelist: [{ group: "*", kind: "*" }]
-  namespaceResourceBlacklist: []
-
-  roles: []

@@ -65,7 +65,7 @@ run = "ansible-playbook -i inventory/production.yaml truenas-audit.yaml"
 # Cloudflare DNS-01 tokens for the LXC appliances (observability, omni,
 # oci-registry) are created by the Pulumi stack in src/infrastructure/pulumi/,
 # not pushed to Vault: this stack runs upstream of any Kubernetes cluster, so
-# Vault (which itself lives inside amiya.akn) can't be a dependency here. Each
+# Vault (which itself lives inside rhodes.akn) can't be a dependency here. Each
 # token only exists as a Pulumi stack output.
 #
 # The observability appliance also needs a Tailscale OAuth key (for its
