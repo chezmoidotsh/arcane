@@ -1,0 +1,291 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: worker
+    app.kubernetes.io/instance: n8n
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: n8n
+    app.kubernetes.io/version: 2.44.5
+    helm.sh/chart: n8n-1.17.0
+  name: n8n-worker
+  namespace: n8n
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: worker
+      app.kubernetes.io/instance: n8n
+      app.kubernetes.io/name: n8n
+  template:
+    metadata:
+      annotations:
+        checksum/config: 6145cd18267e6b2c7e93a51ba48bcb42a091e7c0bdc5627895f946d27c4bcd70
+        checksum/secret: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
+      labels:
+        app.kubernetes.io/component: worker
+        app.kubernetes.io/instance: n8n
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: n8n
+        app.kubernetes.io/version: 2.44.5
+        helm.sh/chart: n8n-1.17.0
+    spec:
+      containers:
+      - args:
+        - worker
+        - --concurrency=10
+        command:
+        - n8n
+        env:
+        - name: TZ
+          valueFrom:
+            configMapKeyRef:
+              key: TZ
+              name: n8n
+        - name: DB_TYPE
+          valueFrom:
+            configMapKeyRef:
+              key: DB_TYPE
+              name: n8n
+        - name: DB_POSTGRESDB_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              key: DB_POSTGRESDB_DATABASE
+              name: n8n
+        - name: DB_POSTGRESDB_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: DB_POSTGRESDB_HOST
+              name: n8n
+        - name: DB_POSTGRESDB_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: DB_POSTGRESDB_PORT
+              name: n8n
+        - name: DB_POSTGRESDB_USER
+          valueFrom:
+            configMapKeyRef:
+              key: DB_POSTGRESDB_USER
+              name: n8n
+        - name: DB_POSTGRESDB_SCHEMA
+          valueFrom:
+            configMapKeyRef:
+              key: DB_POSTGRESDB_SCHEMA
+              name: n8n
+        - name: EXECUTIONS_MODE
+          valueFrom:
+            configMapKeyRef:
+              key: EXECUTIONS_MODE
+              name: n8n
+        - name: OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS
+          valueFrom:
+            configMapKeyRef:
+              key: OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS
+              name: n8n
+        - name: QUEUE_BULL_REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: QUEUE_BULL_REDIS_HOST
+              name: n8n
+        - name: QUEUE_BULL_REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: QUEUE_BULL_REDIS_PORT
+              name: n8n
+        - name: QUEUE_BULL_REDIS_TIMEOUT_THRESHOLD
+          valueFrom:
+            configMapKeyRef:
+              key: QUEUE_BULL_REDIS_TIMEOUT_THRESHOLD
+              name: n8n
+        - name: QUEUE_WORKER_LOCK_DURATION
+          valueFrom:
+            configMapKeyRef:
+              key: QUEUE_WORKER_LOCK_DURATION
+              name: n8n
+        - name: QUEUE_WORKER_LOCK_RENEW_TIME
+          valueFrom:
+            configMapKeyRef:
+              key: QUEUE_WORKER_LOCK_RENEW_TIME
+              name: n8n
+        - name: QUEUE_WORKER_STALLED_INTERVAL
+          valueFrom:
+            configMapKeyRef:
+              key: QUEUE_WORKER_STALLED_INTERVAL
+              name: n8n
+        - name: QUEUE_WORKER_MAX_STALLED_COUNT
+          valueFrom:
+            configMapKeyRef:
+              key: QUEUE_WORKER_MAX_STALLED_COUNT
+              name: n8n
+        - name: N8N_GRACEFUL_SHUTDOWN_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              key: N8N_GRACEFUL_SHUTDOWN_TIMEOUT
+              name: n8n
+        - name: N8N_WEBHOOK_URL
+          valueFrom:
+            configMapKeyRef:
+              key: N8N_WEBHOOK_URL
+              name: n8n
+        - name: N8N_EDITOR_BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              key: N8N_EDITOR_BASE_URL
+              name: n8n
+        - name: DB_POSTGRESDB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: n8n-database-n8n
+        - name: QUEUE_HEALTH_CHECK_ACTIVE
+          value: "true"
+        - name: QUEUE_HEALTH_CHECK_PORT
+          value: "5678"
+        - name: EXECUTIONS_TIMEOUT_MAX
+          value: "3600"
+        - name: EXECUTIONS_DATA_SAVE_ON_ERROR
+          value: all
+        - name: EXECUTIONS_DATA_SAVE_ON_SUCCESS
+          value: all
+        - name: EXECUTIONS_DATA_SAVE_ON_PROGRESS
+          value: "false"
+        - name: EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS
+          value: "true"
+        - name: EXECUTIONS_DATA_PRUNE
+          value: "true"
+        - name: EXECUTIONS_DATA_MAX_AGE
+          value: "336"
+        - name: EXECUTIONS_DATA_PRUNE_MAX_COUNT
+          value: "10000"
+        - name: EXECUTIONS_DATA_HARD_DELETE_BUFFER
+          value: "1"
+        - name: EXECUTIONS_DATA_PRUNE_HARD_DELETE_INTERVAL
+          value: "15"
+        - name: EXECUTIONS_DATA_PRUNE_SOFT_DELETE_INTERVAL
+          value: "60"
+        - name: N8N_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              key: N8N_ENCRYPTION_KEY
+              name: n8n-conf
+        - name: N8N_PROXY_HOPS
+          value: "1"
+        - name: N8N_DIAGNOSTICS_ENABLED
+          value: "false"
+        - name: N8N_VERSION_NOTIFICATIONS_ENABLED
+          value: "false"
+        - name: N8N_TEMPLATES_ENABLED
+          value: "true"
+        - name: N8N_EXTERNAL_SECRETS_PREFER_GET
+          value: "true"
+        - name: NODE_EXTRA_CA_CERTS
+          value: /etc/egress-inspection/ca.crt
+        - name: N8N_COMMUNITY_PACKAGES_ENABLED
+          value: "false"
+        - name: N8N_CUSTOM_EXTENSIONS
+          value: /opt/n8n-nodes/actual
+        - name: N8N_AVAILABLE_BINARY_DATA_MODES
+          value: filesystem,s3
+        - name: N8N_DEFAULT_BINARY_DATA_MODE
+          value: s3
+        - name: N8N_EXTERNAL_STORAGE_S3_HOST
+          value: s3.chezmoi.sh
+        - name: N8N_EXTERNAL_STORAGE_S3_BUCKET_NAME
+          value: n8n-lungmen-akn
+        - name: N8N_EXTERNAL_STORAGE_S3_BUCKET_REGION
+          value: fr-par-1
+        - name: N8N_EXTERNAL_STORAGE_S3_FORCE_PATH_STYLE
+          value: "true"
+        - name: N8N_SSO_MANAGED_BY_ENV
+          value: "true"
+        - name: N8N_SSO_OIDC_LOGIN_ENABLED
+          value: "true"
+        - name: N8N_SSO_OIDC_DISCOVERY_ENDPOINT
+          value: https://auth.chezmoi.sh/.well-known/openid-configuration
+        - name: N8N_SSO_USER_ROLE_PROVISIONING
+          value: instance_role
+        envFrom:
+        - secretRef:
+            name: n8n-enterprise
+        image: oci.chezmoi.sh/chezmoidotsh/n8n:2.44.6
+        imagePullPolicy: IfNotPresent
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - sleep 10
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: 5678
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+        name: n8n-worker
+        readinessProbe:
+          failureThreshold: 6
+          httpGet:
+            path: /healthz/readiness
+            port: 5678
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 250m
+            memory: 2Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        startupProbe:
+          failureThreshold: 30
+          httpGet:
+            path: /healthz
+            port: 5678
+          periodSeconds: 10
+        volumeMounts:
+        - mountPath: /etc/egress-inspection
+          name: egress-inspection-ca
+          readOnly: true
+        - mountPath: /opt/n8n-nodes/actual
+          name: n8n-nodes-actual
+          readOnly: true
+      - image: oci.chezmoi.sh/chezmoidotsh/n8n-self-license:2.44.6
+        name: local-license-server
+        resources:
+          limits:
+            cpu: 50m
+            memory: 50Mi
+          requests:
+            cpu: 10m
+            memory: 50Mi
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: n8n
+      terminationGracePeriodSeconds: 60
+      volumes:
+      - name: egress-inspection-ca
+        secret:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          secretName: n8n-egress-inspection-ca
+      - image:
+          pullPolicy: IfNotPresent
+          reference: oci.chezmoi.sh/ghcr.io/chezmoidotsh/n8n-nodes/actual:26.10.9
+        name: n8n-nodes-actual

@@ -22,11 +22,16 @@ resources:
   - n8n.egress-inspection-ca.certificate.yaml
   - n8n.enterprise.externalsecret.yaml
   - n8n.httproute.yaml
+  - n8n.redis.yaml
   - n8n.tailscale.ingress.yaml
 
   - security/
 
 images:
+  - name: docker.io/library/redis
+    newName: oci.chezmoi.sh/docker.io/library/redis
+    # oripathy: type=oci upstream=github.com/redis/redis digest=true
+    newTag: 8.10.1-alpine@sha256:becdda6c7f4b3fb42e42fd7f120bbf5c54c4caaaf16f26da24e4563d2c1f0576
   - name: ghcr.io/n8n-io/n8n
     newName: oci.chezmoi.sh/chezmoidotsh/n8n
     # oripathy: type=oci upstream=github.com/n8n-io/n8n tagPrefix=n8n@ digest=false

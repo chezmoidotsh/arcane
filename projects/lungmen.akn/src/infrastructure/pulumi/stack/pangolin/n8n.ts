@@ -15,8 +15,8 @@ const chezmoiShDomainId = pangolin.getDomainsOutput().apply(
 		).domainId,
 );
 
-// Public side of n8n: no SSO (n8n handles its own auth), and everything is
-// dropped for now. Webhooks will be added one by one as ACCEPT rules on
+// Public side of n8n, served by the webhook processor (never by main, which holds the editor): no SSO (n8n
+// handles its own auth), and everything is dropped for now. Webhooks will be added one by one as ACCEPT rules on
 // `hooks.chezmoi.sh`, ahead of the catch-all DROP (priority 100), so only an
 // explicitly allowed path is ever reachable from the outside. The editor and
 // the REST API are never published here: they live on the private resource
@@ -41,7 +41,7 @@ new pangolin.Target(
 		{
 			resourceId: n8nResource.resourceId,
 			siteId: lungmenSiteId,
-			ip: "n8n-main.n8n.svc.cluster.local",
+			ip: "n8n-webhook-processor.n8n.svc.cluster.local",
 			port: 5678,
 		},
 		{ path: "/healthz" },

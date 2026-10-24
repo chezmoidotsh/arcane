@@ -24,7 +24,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: 3da88ed1c8a86fdde833fd77c6af6d2ad9c1477af79bb7f7b8663c8e928fe394
+        checksum/config: 6145cd18267e6b2c7e93a51ba48bcb42a091e7c0bdc5627895f946d27c4bcd70
         checksum/secret: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
         app.kubernetes.io/component: main
@@ -71,6 +71,56 @@ spec:
             configMapKeyRef:
               key: DB_POSTGRESDB_SCHEMA
               name: n8n
+        - name: EXECUTIONS_MODE
+          valueFrom:
+            configMapKeyRef:
+              key: EXECUTIONS_MODE
+              name: n8n
+        - name: OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS
+          valueFrom:
+            configMapKeyRef:
+              key: OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS
+              name: n8n
+        - name: QUEUE_BULL_REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: QUEUE_BULL_REDIS_HOST
+              name: n8n
+        - name: QUEUE_BULL_REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: QUEUE_BULL_REDIS_PORT
+              name: n8n
+        - name: QUEUE_BULL_REDIS_TIMEOUT_THRESHOLD
+          valueFrom:
+            configMapKeyRef:
+              key: QUEUE_BULL_REDIS_TIMEOUT_THRESHOLD
+              name: n8n
+        - name: QUEUE_WORKER_LOCK_DURATION
+          valueFrom:
+            configMapKeyRef:
+              key: QUEUE_WORKER_LOCK_DURATION
+              name: n8n
+        - name: QUEUE_WORKER_LOCK_RENEW_TIME
+          valueFrom:
+            configMapKeyRef:
+              key: QUEUE_WORKER_LOCK_RENEW_TIME
+              name: n8n
+        - name: QUEUE_WORKER_STALLED_INTERVAL
+          valueFrom:
+            configMapKeyRef:
+              key: QUEUE_WORKER_STALLED_INTERVAL
+              name: n8n
+        - name: QUEUE_WORKER_MAX_STALLED_COUNT
+          valueFrom:
+            configMapKeyRef:
+              key: QUEUE_WORKER_MAX_STALLED_COUNT
+              name: n8n
+        - name: N8N_GRACEFUL_SHUTDOWN_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              key: N8N_GRACEFUL_SHUTDOWN_TIMEOUT
+              name: n8n
         - name: N8N_WEBHOOK_URL
           valueFrom:
             configMapKeyRef:
@@ -85,6 +135,11 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: N8N_EDITOR_BASE_URL
+              name: n8n
+        - name: N8N_DISABLE_PRODUCTION_MAIN_PROCESS
+          valueFrom:
+            configMapKeyRef:
+              key: N8N_DISABLE_PRODUCTION_MAIN_PROCESS
               name: n8n
         - name: DB_POSTGRESDB_PASSWORD
           valueFrom:
@@ -204,10 +259,10 @@ spec:
         resources:
           limits:
             cpu: "1"
-            memory: 2Gi
+            memory: 1Gi
           requests:
-            cpu: 250m
-            memory: 2Gi
+            cpu: 100m
+            memory: 1Gi
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
