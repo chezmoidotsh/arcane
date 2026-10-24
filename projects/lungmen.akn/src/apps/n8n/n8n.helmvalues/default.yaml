@@ -116,7 +116,7 @@ config:
 
 extraContainers:
   - name: local-license-server
-    image: oci.chezmoi.sh/chezmoidotsh/n8n-self-license:2.43.5
+    image: oci.chezmoi.sh/chezmoidotsh/n8n-self-license:2.44.6
     resources:
       requests:
         cpu: 10m
