@@ -26,7 +26,7 @@ related-issues:
 related-adrs: []
 ---
 
-# Incident 2026-05-27 Échec mise à jour Cilium 1-19
+# Incident 2026-05-27 Échec mise à jour Cilium 1.19
 
 Cette page est le post-mortem de l'échec de la mise à jour de Cilium 1.18.10 vers 1.19.4 sur le cluster mono-nœud
 `amiya.akn`, répétée en 8 tentatives sur 3 jours. Elle contient la chronologie, l'analyse des causes racines (Ishikawa),

@@ -67,7 +67,8 @@ Rules marked **[lint]** are checked by `scripts/wiki:lint` and fail the pull req
 3. **Page names are unique across the whole tree [lint].** Two pages with the same name (case ignored) in different
    directories are rejected, so a page can always be found by its name and moved without a collision.
 4. **The name signals the page type.** Guides start with a verb (`Initialiser-Lungmen`, `Restaurer-OpenBao`), references
-   end with `-Reference` (`IPAM-Reference`). Records keep their identifier: `ADR-014-Topologie-Reseau`,
+   end with `-Reference` (`IPAM-Reference`). Records keep their identifier:
+   `ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab`,
    `DB-20260723-00-Restaurer-CNPG-depuis-le-Stockage-Objet`, `Incident-2026-05-30-WAL-Plein-CNPG-Apps-Secured`.
 5. **Every page is reachable from `_Sidebar.md` [lint].** The sidebar is curated by what the reader is trying to do (get
    started, operate, recover, reference, internals), not by file type. Records (ADR, incidents) are grouped under their

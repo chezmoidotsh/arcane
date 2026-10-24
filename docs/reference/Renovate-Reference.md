@@ -94,6 +94,6 @@ Renovate.
 - [Oripathy Reference](Oripathy-Reference.md) : les annotations `# oripathy:` qui remplacent `# renovate:`.
 - [ADR-007 Structure des projets et conventions de nommage](../archives/ADR-007-Structure-des-Projets-et-Conventions-de-Nommage.md)
   : la convention de labels de version et d'annotations.
-- [ADR-010 Replace Gitmoji With Symbol Commit Types](../decisions/ADR-010-Remplacer-Gitmoji-par-des-Symboles-de-Type-de-Commit.md)
+- [ADR-010 Remplacer Gitmoji par des symboles de type de commit](../decisions/ADR-010-Remplacer-Gitmoji-par-des-Symboles-de-Type-de-Commit.md)
   : le format de commit en vigueur.
 - [Documentation Renovate](https://docs.renovatebot.com/) : référence amont des managers et des règles de paquets.

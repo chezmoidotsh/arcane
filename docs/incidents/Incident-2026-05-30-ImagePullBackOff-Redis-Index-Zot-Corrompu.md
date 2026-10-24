@@ -36,18 +36,10 @@ related-adrs: []
 
 # Incident 2026-05-30 ImagePullBackOff Redis Index Zot Corrompu
 
-> Migré le 2026-10-11 ; les faits décrits sont ceux de l'époque et n'ont pas été revérifiés.
-
 Le 2026-05-30, les pods Redis d'`immich` et de `paperless-ngx` sont restés en `ImagePullBackOff` pendant environ 8 h. Le
 registre Zot de `amiya.akn` avait un `index.json` corrompu pour `docker.io/library/redis`, et la resynchronisation
 automatique depuis Docker Hub était bloquée par la limitation de débit anonyme. Cette page décrit la chronologie, les
 causes racines, les leçons et les actions de suivi.
-
-> [!NOTE]\
-> Note du 2026-10-11 : Zot ne tourne plus dans le cluster `amiya.akn`. Il est désormais déployé dans un LXC
-> `oci-registry` sur l'hôte Proxmox, dont la configuration se trouve dans
-> `projects/chezmoi.sh/src/infrastructure/proxmox/lxc/oci-registry/` (vérifié par `ls` : `configuration.nix`,
-> `flake.nix`, `modules`, `upstreams.nix`, `secrets`). Le texte ci-dessous décrit l'architecture de l'époque.
 
 ## Résumé exécutif
 

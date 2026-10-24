@@ -56,8 +56,8 @@ Le texte d'origine, en anglais, est figé à
 
 ## Pour aller plus loin
 
-- [ADR-014 Network Topology](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md) : la décision
-  qui a motivé la migration (VLAN 5, double carte, SDN).
+- [ADR-014 Séparer le trafic des nœuds Talos du VLAN Homelab](../decisions/ADR-014-Separer-le-Trafic-des-Noeuds-Talos-du-VLAN-Homelab.md)
+  : la décision qui a motivé la migration (VLAN 5, double carte, SDN).
 - [Plan d'adressage IP](../reference/IPAM-Reference.md) : VLAN, sous-réseaux et règles inter-VLAN.
 - [Provisionner le SDN Proxmox](../procedures/infrastructure/INF-20260627-00-Provisionner-le-SDN-Proxmox.md) : prérequis
   de la migration (VNet `talosnet`, trunk VLAN 5).

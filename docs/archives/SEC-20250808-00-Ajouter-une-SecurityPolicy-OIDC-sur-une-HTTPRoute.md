@@ -47,6 +47,6 @@ Le texte d'origine, en anglais, est figé à
 
 ## Pour aller plus loin
 
-- [ADR-005 Envoy Gateway OIDC authentication](../decisions/ADR-005-Authentification-OIDC-par-Envoy-Gateway.md) : la
-  décision qui motivait cette procédure. Son statut `implemented` est contredit par le dépôt (plus de `SecurityPolicy`,
-  plus d'Envoy Gateway ni d'Authelia) ; il sera corrigé lors de la migration des ADR.
+- [ADR-005 Authentification OIDC par Envoy Gateway](../decisions/ADR-005-Authentification-OIDC-par-Envoy-Gateway.md) :
+  la décision qui motivait cette procédure, dépréciée depuis (plus de `SecurityPolicy`, plus d'Envoy Gateway ni
+  d'Authelia).
