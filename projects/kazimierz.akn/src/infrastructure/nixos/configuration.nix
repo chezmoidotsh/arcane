@@ -107,5 +107,5 @@
     options = "--delete-older-than 14d";
   };
 
-  environment.systemPackages = with pkgs; [ htop tmux ];
+  environment.systemPackages = with pkgs; [ htop tmux sqlite ];
 }

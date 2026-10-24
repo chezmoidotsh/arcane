@@ -18,13 +18,9 @@ C=/var/lib/pangolin/config
 [ -f "$C/db/db.sqlite" ] || { echo "no Pangolin state found in /var/lib/pangolin/config" >&2; exit 1; }
 T=$(mktemp -d); trap "rm -rf $T" EXIT
 mkdir "$T/db" "$T/traefik"
-python3 - "$C/db/db.sqlite" "$T/db/db.sqlite" <<PY
-import sqlite3, sys
-src = sqlite3.connect("file:%s?mode=ro" % sys.argv[1], uri=True); dst = sqlite3.connect(sys.argv[2])
-src.backup(dst)
-ok = dst.execute("pragma integrity_check").fetchone()[0]
-if ok != "ok": sys.exit("integrity_check: " + ok)
-PY
+sqlite3 -readonly "$C/db/db.sqlite" ".backup $T/db/db.sqlite"
+ok=$(sqlite3 "$T/db/db.sqlite" "pragma integrity_check")
+[ "$ok" = ok ] || { echo "integrity_check: $ok" >&2; exit 1; }
 cp -a "$C/key" "$C/config.yml" "$C/letsencrypt" "$T/"
 cp -a "$C"/traefik/*.yml "$T/traefik/"
 tar -C "$T" -czf - .' >"${out}.part"
