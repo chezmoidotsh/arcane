@@ -25,7 +25,7 @@ helmCharts:
   - repo: https://helm.cilium.io/
     name: cilium
     # oripathy: type=helm upstream=github.com/cilium/cilium tagPrefix=v
-    version: 1.20.0
+    version: 1.20.4
 
     releaseName: cilium
     namespace: kube-system

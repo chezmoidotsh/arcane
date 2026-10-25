@@ -10,7 +10,7 @@ spec:
       value: Networking / CNI
     - name: Version
       # oripathy: type=mirror
-      value: "1.20.0"
+      value: "1.20.4"
     # -- Documentation & Resources
     - name: Documentation
       value: https://docs.cilium.io/
