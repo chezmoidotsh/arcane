@@ -188,6 +188,8 @@ spec:
             secretKeyRef:
               key: N8N_PROTOCOL
               name: n8n-conf
+        - name: NODE_OPTIONS
+          value: --max-old-space-size-percentage=75
         - name: N8N_PROXY_HOPS
           value: "1"
         - name: N8N_DIAGNOSTICS_ENABLED
@@ -258,7 +260,6 @@ spec:
           timeoutSeconds: 3
         resources:
           limits:
-            cpu: "1"
             memory: 1Gi
           requests:
             cpu: 100m

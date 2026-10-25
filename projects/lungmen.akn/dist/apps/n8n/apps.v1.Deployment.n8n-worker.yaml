@@ -170,6 +170,8 @@ spec:
             secretKeyRef:
               key: N8N_ENCRYPTION_KEY
               name: n8n-conf
+        - name: NODE_OPTIONS
+          value: --max-old-space-size-percentage=75
         - name: N8N_PROXY_HOPS
           value: "1"
         - name: N8N_DIAGNOSTICS_ENABLED
