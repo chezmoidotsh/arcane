@@ -64,6 +64,7 @@ spec:
     externalClusters:
       - name: 2026-05-30T16:56:54.678Z
         plugin:
+          enabled: true
           name: barman-cloud.cloudnative-pg.io
           isWALArchiver: false
           parameters:
