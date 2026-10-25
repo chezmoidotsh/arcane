@@ -29,7 +29,7 @@ helmCharts:
     # the chart has its own releases (openbao-0.x); the OpenBao binary is followed
     # through the openbao-softhsm image below
     # oripathy: type=helm upstream=github.com/openbao/openbao-helm tagPrefix=openbao-
-    version: 0.28.6
+    version: 0.30.4
 
     releaseName: openbao
     namespace: vault

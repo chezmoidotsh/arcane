@@ -36,6 +36,15 @@ spec:
     image: oci.chezmoi.sh/ghcr.io/chezmoidotsh/flakes/openbao/openbao-softhsm:2.7.1-26.11-pkcs11.0.2.1-x86_64-linux
     imagePullPolicy: IfNotPresent
     name: openbao-server-test
+    securityContext:
+      allowPrivilegeEscalation: false
     volumeMounts: null
   restartPolicy: Never
+  securityContext:
+    fsGroup: 1000
+    runAsGroup: 1000
+    runAsNonRoot: true
+    runAsUser: 100
+    seccompProfile:
+      type: RuntimeDefault
   volumes: []
