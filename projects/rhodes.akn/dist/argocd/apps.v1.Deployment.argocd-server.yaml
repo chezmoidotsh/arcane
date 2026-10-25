@@ -418,36 +418,7 @@ spec:
           name: tmp
         - mountPath: /home/argocd/params
           name: argocd-cmd-params-cm
-        - mountPath: /tmp/extensions
-          name: extensions
       dnsPolicy: ClusterFirst
-      initContainers:
-      - env:
-        - name: EXTENSIONS_DIR
-          value: /tmp/extensions
-        - name: EXTENSION_URL
-          value: https://github.com/chezmoidotsh/argocd-extension-application-map/releases/download/v1.1.0/extension-application-map.tar
-        - name: EXTENSION_CHECKSUM_URL
-          value: https://github.com/chezmoidotsh/argocd-extension-application-map/releases/download/v1.1.0/extension-application-map_checksums.txt
-        image: oci.chezmoi.sh/quay.io/argoprojlabs/argocd-extension-installer:v1.1.0
-        imagePullPolicy: IfNotPresent
-        name: extension-application-map
-        resources: {}
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          runAsUser: 1000
-          seccompProfile:
-            type: RuntimeDefault
-        volumeMounts:
-        - mountPath: /tmp/extensions/
-          name: extensions
-        - mountPath: /tmp
-          name: tmp
       nodeSelector:
         kubernetes.io/os: linux
       securityContext:
@@ -457,8 +428,6 @@ spec:
       serviceAccountName: argocd-server
       terminationGracePeriodSeconds: 30
       volumes:
-      - emptyDir: {}
-        name: extensions
       - emptyDir: {}
         name: plugins-home
       - emptyDir: {}
