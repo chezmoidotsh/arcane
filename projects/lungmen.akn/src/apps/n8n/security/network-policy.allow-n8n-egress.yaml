@@ -3,24 +3,63 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Egress allowlist of n8n towards external services, over HTTPS (TCP 443) and restricted
-      by FQDN. Open any new external dependency here (integrations, APIs, licence server, ...)
-      rather than in a dedicated policy. Everything not listed stays denied by default-hardened;
-      the database and inbound traffic have their own policies.
+      Egress allowlist of n8n towards external services, over HTTPS (TCP 443) and restricted by
+      FQDN, one rule set per pod role. The main and the webhook processor only need the instance
+      itself (editor, OIDC login, binary data, logs, secrets); the worker runs the executions, so
+      it is the one calling what workflows call. Open any new workflow dependency in the worker
+      rule set. Everything not listed stays denied by default-hardened; the database, api.n8n.io
+      and inbound traffic have their own policies. Actual Budget is reachable in-cluster
+      (n8n-nodes-actual), paired with allow-actual-budget-from-n8n in the actual-budget namespace.
   name: allow-n8n-egress
   namespace: n8n
-spec:
-  endpointSelector:
-    matchLabels:
-      app.kubernetes.io/name: n8n
-  egress:
-    - toFQDNs:
-        # n8n required access for its feature
-        - matchName: s3.chezmoi.sh # Garage S3: binary data storage
-        - matchName: auth.chezmoi.sh # Pocket-Id: OIDC login
-        - matchName: data.o11y.chezmoi.sh # VictoriaLogs: log streaming
-        - matchName: vault.chezmoi.sh # OpenBao: External Secrets
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP
+specs:
+  # main and webhook-processor
+  - endpointSelector:
+      matchExpressions:
+        - key: app.kubernetes.io/name
+          operator: In
+          values: [n8n]
+        - key: app.kubernetes.io/component
+          operator: In
+          values: [main, webhook-processor, worker]
+    egress:
+      - toFQDNs:
+          - matchName: s3.chezmoi.sh # Garage S3: binary data storage
+          - matchName: auth.chezmoi.sh # Pocket-Id: OIDC login
+          - matchName: data.o11y.chezmoi.sh # VictoriaLogs: log streaming
+          - matchName: vault.chezmoi.sh # OpenBao: External Secrets
+          - matchName: github.com # GitHub credential: OAuth authorization from the editor
+          - matchName: api.github.com # GitHub credential: connection test from the editor
+        toPorts:
+          - ports:
+              - port: "443"
+                protocol: TCP
+
+  # worker
+  - endpointSelector:
+      matchLabels:
+        app.kubernetes.io/name: n8n
+        app.kubernetes.io/component: worker
+    egress:
+      - toFQDNs:
+          # Oripathy workflows
+          - matchName: openrouter.ai # LLM calls and key usage
+          - matchName: api.github.com # releases, advisories, repository files, issues
+          - matchName: github.com # inventory bundle (release asset, redirected below)
+          - matchName: release-assets.githubusercontent.com # target of the github.com release download redirect
+          - matchName: objects.githubusercontent.com # same redirect, older GitHub asset host
+          - matchName: api.osv.dev # vulnerability lookups
+        toPorts:
+          - ports:
+              - port: "443"
+                protocol: TCP
+
+      # Workflows
+      - toEndpoints:
+          - matchLabels:
+              io.kubernetes.pod.namespace: actual-budget
+              app.kubernetes.io/name: actual-budget
+        toPorts:
+          - ports:
+              - port: "5006"
+                protocol: TCP
