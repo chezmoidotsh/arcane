@@ -41,6 +41,8 @@ resources:
       cpu: 100m
       memory: 1Gi
     limits:
+      # null drops the chart's default CPU limit: throttling starved the event loop and the GC.
+      cpu: null
       memory: 1Gi
   worker:
     requests:
@@ -79,6 +81,11 @@ webhook:
 config:
   timezone: Europe/Paris
   extraEnv:
+    # Node caps its heap at ~50% of the container memory by default and aborts before the cgroup
+    # limit (main crashed with "heap out of memory" at ~510 MB of 1Gi): follow the limit instead.
+    - name: NODE_OPTIONS
+      value: --max-old-space-size-percentage=75
+
     # Traffic reaches n8n through Pangolin (Traefik) or the Cilium Gateway.
     - name: N8N_PROXY_HOPS
       value: "1"
