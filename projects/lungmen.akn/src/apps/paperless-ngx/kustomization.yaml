@@ -24,8 +24,8 @@ images:
   - name: ghcr.io/paperless-ngx/paperless-ngx
     newName: oci.chezmoi.sh/ghcr.io/paperless-ngx/paperless-ngx
     # oripathy: type=oci upstream=github.com/paperless-ngx/paperless-ngx tagPrefix=v digest=true
-    newTag: 3.1.0@sha256:49eba766581b9134cfa6b584b9eb718355fb9cfbd44b2a7c9c72a427d4891648
+    newTag: 3.3.4@sha256:9bc6e8248891bcfa6f52fffe8b81e4ea8cae75790c3ec1b9906961a7ba55c969
   - name: docker.io/library/redis
     newName: oci.chezmoi.sh/docker.io/library/redis
     # oripathy: type=oci upstream=github.com/redis/redis digest=true
-    newTag: 8.10.1-alpine@sha256:becdda6c7f4b3fb42e42fd7f120bbf5c54c4caaaf16f26da24e4563d2c1f0576
+    newTag: 8.10.2-alpine@sha256:0bf6577d7774e592b29d093e3ac9390eb91e13d72c21e506afce736de5e0eeb0
