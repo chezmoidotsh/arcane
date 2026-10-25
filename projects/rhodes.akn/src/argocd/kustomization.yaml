@@ -37,4 +37,4 @@ images:
     newTag: v3.5.6
   - name: oci.chezmoi.sh/ecr-public.aws.com/docker/library/redis
     # oripathy: type=oci upstream=github.com/redis/redis digest=false
-    newTag: 8.2.3-alpine
+    newTag: 8.10.2-alpine
