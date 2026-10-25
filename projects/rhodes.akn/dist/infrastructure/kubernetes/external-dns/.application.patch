@@ -10,7 +10,7 @@ spec:
       value: Networking / DNS
     - name: Version
       # oripathy: type=mirror
-      value: "1.21.1"
+      value: "1.23.0"
     # -- Documentation & Resources
     - name: Documentation
       value: https://kubernetes-sigs.github.io/external-dns/latest/

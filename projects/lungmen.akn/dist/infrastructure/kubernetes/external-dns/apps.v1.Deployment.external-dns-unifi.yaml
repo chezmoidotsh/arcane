@@ -6,8 +6,8 @@ metadata:
     app.kubernetes.io/instance: external-dns-unifi
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: external-dns
-    app.kubernetes.io/version: 0.21.0
-    helm.sh/chart: external-dns-1.21.1
+    app.kubernetes.io/version: 0.23.0
+    helm.sh/chart: external-dns-1.23.0
   name: external-dns-unifi
   namespace: external-dns-system
 spec:
@@ -47,7 +47,7 @@ spec:
         - --crd-source-apiversion=externaldns.k8s.io/v1alpha1
         - --crd-source-kind=DNSEndpoint
         - --gateway-label-filter=external-dns.chezmoi.sh/zone in (external)
-        image: oci.chezmoi.sh/registry.k8s.io/external-dns/external-dns:v0.21.0
+        image: oci.chezmoi.sh/registry.k8s.io/external-dns/external-dns:v0.23.0
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 2

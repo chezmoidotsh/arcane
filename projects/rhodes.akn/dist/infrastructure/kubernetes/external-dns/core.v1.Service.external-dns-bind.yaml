@@ -6,8 +6,8 @@ metadata:
     app.kubernetes.io/instance: external-dns-bind
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: external-dns
-    app.kubernetes.io/version: 0.21.0
-    helm.sh/chart: external-dns-1.21.1
+    app.kubernetes.io/version: 0.23.0
+    helm.sh/chart: external-dns-1.23.0
   name: external-dns-bind
   namespace: external-dns-system
 spec:
