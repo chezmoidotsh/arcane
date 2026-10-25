@@ -24,4 +24,4 @@ images:
   - name: ghcr.io/sysadminsmedia/homebox
     newName: oci.chezmoi.sh/ghcr.io/sysadminsmedia/homebox
     # oripathy: type=oci upstream=github.com/sysadminsmedia/homebox tagPrefix=v digest=false
-    newTag: "0.26.2"
+    newTag: "0.27.1"
