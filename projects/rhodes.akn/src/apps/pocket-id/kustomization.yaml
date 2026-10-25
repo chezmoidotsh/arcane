@@ -24,4 +24,4 @@ images:
   - name: ghcr.io/pocket-id/pocket-id
     newName: oci.chezmoi.sh/ghcr.io/pocket-id/pocket-id
     # oripathy: type=oci upstream=github.com/pocket-id/pocket-id tagPrefix=v digest=false
-    newTag: v2.18.0
+    newTag: v2.19.1
