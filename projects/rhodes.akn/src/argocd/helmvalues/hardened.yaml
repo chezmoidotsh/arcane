@@ -195,9 +195,6 @@ redisSecretInit:
 # Apply the restricted security context to the server components
 server:
   containerSecurityContext: *argocd_restricted_context
-  # Apply to server extension containers as well
-  extensions:
-    containerSecurityContext: *argocd_restricted_context
 
 # Apply the restricted security context to the repository server component
 # This container is responsible for Git operations

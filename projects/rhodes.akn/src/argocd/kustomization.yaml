@@ -28,7 +28,6 @@ helmCharts:
     valuesFile: helmvalues/default.yaml
     additionalValuesFiles:
       - helmvalues/hardened.yaml
-      - helmvalues/extensions.yaml
       - helmvalues/addon:ksops.yaml
 
 images:
