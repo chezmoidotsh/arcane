@@ -52,7 +52,7 @@ spec:
             secretKeyRef:
               key: username
               name: spoolman-database-spoolman
-        image: oci.chezmoi.sh/ghcr.io/donkie/spoolman:0.26.1
+        image: oci.chezmoi.sh/ghcr.io/donkie/spoolman:0.27.0
         livenessProbe:
           httpGet:
             path: /health

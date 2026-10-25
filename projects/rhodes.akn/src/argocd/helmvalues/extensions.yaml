@@ -18,7 +18,7 @@ server:
     image:
       repository: oci.chezmoi.sh/quay.io/argoprojlabs/argocd-extension-installer
       # oripathy: type=oci upstream=github.com/argoproj-labs/argocd-extension-installer tagPrefix=v digest=false
-      tag: v1.0.0
+      tag: v1.1.0
     extensionList:
       - name: extension-application-map
         env:

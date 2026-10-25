@@ -8,8 +8,8 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: grafana-operator
     app.kubernetes.io/part-of: grafana-operator
-    app.kubernetes.io/version: v5.24.0
-    helm.sh/chart: grafana-operator-5.24.0
+    app.kubernetes.io/version: v5.25.0
+    helm.sh/chart: grafana-operator-5.25.0
   name: grafana-operator
   namespace: o11y-system
 spec:
@@ -26,8 +26,8 @@ spec:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/name: grafana-operator
         app.kubernetes.io/part-of: grafana-operator
-        app.kubernetes.io/version: v5.24.0
-        helm.sh/chart: grafana-operator-5.24.0
+        app.kubernetes.io/version: v5.25.0
+        helm.sh/chart: grafana-operator-5.25.0
     spec:
       containers:
       - args:
@@ -40,6 +40,7 @@ spec:
         - --default-resync-period=10m
         - --leader-elect
         - --max-concurrent-reconciles=1
+        - --gomemlimit-ratio=0.9
         env:
         - name: WATCH_NAMESPACE
           value: ""
@@ -51,7 +52,7 @@ spec:
           value: safe
         - name: CLUSTER_DOMAIN
           value: ""
-        image: oci.chezmoi.sh/ghcr.io/grafana/grafana-operator:v5.24.0
+        image: oci.chezmoi.sh/ghcr.io/grafana/grafana-operator:v5.25.0
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:

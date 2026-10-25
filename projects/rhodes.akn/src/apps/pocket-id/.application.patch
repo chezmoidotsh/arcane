@@ -10,7 +10,7 @@ spec:
       value: Security / Identity
     - name: Version
       # oripathy: type=mirror
-      value: "v2.18.0"
+      value: "v2.19.1"
     # -- Documentation & Resources
     - name: Documentation
       value: https://github.com/pocket-id/pocket-id

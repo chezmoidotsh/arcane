@@ -43,7 +43,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        image: oci.chezmoi.sh/registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.16.0
+        image: oci.chezmoi.sh/registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.18.0
         imagePullPolicy: IfNotPresent
         name: node-driver-registrar
         resources:

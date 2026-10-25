@@ -15,7 +15,7 @@ helmCharts:
     valuesFile: helmvalues/default.yaml
 
 resources:
-  - # Install Barman Cloud CNPG-I plugin (v0.14.0), from the release-published
+  - # Install Barman Cloud CNPG-I plugin (v0.15.1), from the release-published
     # manifest asset -- NOT the git-tracked manifest.yaml (raw.githubusercontent.com),
     # which always hardcodes the floating `-testing:main` images regardless of ref.
     # Only the release asset bakes in the immutable, versioned vX.Y.Z images. See
@@ -27,7 +27,7 @@ resources:
     # roles and leader-election-role/-rolebinding, since metrics-reader is a generic
     # name other components could also claim.
     # oripathy: type=oci upstream=github.com/cloudnative-pg/plugin-barman-cloud tagPrefix=v image=cloudnative-pg/plugin-barman-cloud name=plugin-barman-cloud
-    https://github.com/cloudnative-pg/plugin-barman-cloud/releases/download/v0.14.0/manifest.yaml
+    https://github.com/cloudnative-pg/plugin-barman-cloud/releases/download/v0.15.1/manifest.yaml
   - # Configure defaults for CloudNativePG
     ../../../../../../catalog/kubernetes/cloudnative-pg/kustomize
   - security/

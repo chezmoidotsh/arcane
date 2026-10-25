@@ -6,8 +6,8 @@ metadata:
     app.kubernetes.io/instance: external-dns-bind
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: external-dns
-    app.kubernetes.io/version: 0.21.0
-    helm.sh/chart: external-dns-1.21.1
+    app.kubernetes.io/version: 0.23.0
+    helm.sh/chart: external-dns-1.23.0
   name: external-dns-bind
   namespace: external-dns-system
 spec:
@@ -59,7 +59,7 @@ spec:
             secretKeyRef:
               key: tsig-secret
               name: external-dns-bind-secret
-        image: oci.chezmoi.sh/registry.k8s.io/external-dns/external-dns:v0.21.0
+        image: oci.chezmoi.sh/registry.k8s.io/external-dns/external-dns:v0.23.0
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 2

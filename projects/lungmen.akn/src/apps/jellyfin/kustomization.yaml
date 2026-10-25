@@ -20,4 +20,4 @@ images:
   - name: ghcr.io/jellyfin/jellyfin
     newName: oci.chezmoi.sh/ghcr.io/jellyfin/jellyfin
     # oripathy: type=oci upstream=github.com/jellyfin/jellyfin tagPrefix=v digest=false
-    newTag: 10.11.11
+    newTag: "12.3"

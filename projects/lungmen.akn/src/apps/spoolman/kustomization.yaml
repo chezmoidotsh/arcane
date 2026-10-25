@@ -21,4 +21,4 @@ images:
   - name: ghcr.io/donkie/spoolman
     newName: oci.chezmoi.sh/ghcr.io/donkie/spoolman
     # oripathy: type=oci upstream=github.com/Donkie/Spoolman tagPrefix=v digest=false
-    newTag: "0.26.1"
+    newTag: "0.27.0"

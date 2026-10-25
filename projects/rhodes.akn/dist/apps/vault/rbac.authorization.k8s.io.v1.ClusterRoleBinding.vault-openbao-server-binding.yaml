@@ -6,8 +6,8 @@ metadata:
     app.kubernetes.io/instance: openbao
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: vault
-    helm.sh/chart: openbao-0.28.6
-  name: openbao-server-binding
+    helm.sh/chart: openbao-0.30.4
+  name: vault-openbao-server-binding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole

@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: cilium-operator
     app.kubernetes.io/part-of: cilium
-    helm.sh/chart: cilium-1.20.0
+    helm.sh/chart: cilium-1.20.4
     io.cilium/app: operator
     name: cilium-operator
   name: cilium-operator
@@ -29,7 +29,7 @@ spec:
       labels:
         app.kubernetes.io/name: cilium-operator
         app.kubernetes.io/part-of: cilium
-        helm.sh/chart: cilium-1.20.0
+        helm.sh/chart: cilium-1.20.4
         io.cilium/app: operator
         name: cilium-operator
     spec:
@@ -68,7 +68,7 @@ spec:
           value: localhost
         - name: KUBERNETES_SERVICE_PORT
           value: "7445"
-        image: oci.chezmoi.sh/quay.io/cilium/operator-generic:v1.20.0@sha256:80744a8cc7c91c2f9e6347629406844eb35d79b30a732c6d41c15b17232a74f3
+        image: oci.chezmoi.sh/quay.io/cilium/operator-generic:v1.20.4@sha256:7a7a3489dc66ad67e420d285c8a8d2e169b0957ad15e120f593d27081bf38d82
         imagePullPolicy: IfNotPresent
         livenessProbe:
           httpGet:

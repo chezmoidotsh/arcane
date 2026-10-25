@@ -22,4 +22,4 @@ images:
   - name: docker.io/sissbruecker/linkding
     newName: oci.chezmoi.sh/docker.io/sissbruecker/linkding
     # oripathy: type=oci upstream=github.com/sissbruecker/linkding digest=false
-    newTag: "1.46.2-alpine"
+    newTag: "1.47.0-alpine"
