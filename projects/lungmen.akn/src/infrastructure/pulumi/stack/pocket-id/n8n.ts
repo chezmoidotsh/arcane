@@ -12,7 +12,7 @@ export const n8nOidcClient = new pocketid.OidcClient("n8n", {
   logo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/n8n-dark.svg"),
   darkLogo: new pulumi.asset.RemoteAsset("https://cdn.jsdelivr.net/gh/selfhst/icons@main/svg/n8n-light.svg"),
   launchUrl: "https://n8n.chezmoi.sh",
-  callbackUrls: ["https://n8n.chezmoi.sh/rest/sso/oidc/callback", "https://n8n.tail831c5d.ts.net"],
+  callbackUrls: ["https://n8n.chezmoi.sh/rest/sso/oidc/callback"],
   isPublic: false,
 
   // n8n's OIDC login does not send a PKCE challenge: requiring it makes Pocket-Id
