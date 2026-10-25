@@ -92,6 +92,7 @@ data:
   envoy-config-retry-interval: 15s
   envoy-keep-cap-netbindservice: "false"
   envoy-node-locality-enabled: "false"
+  envoy-xds-mode: ads
   external-envoy-proxy: "true"
   gateway-api-hostnetwork-enabled: "false"
   gateway-api-hostnetwork-nodelabelselector: ""
