@@ -19,6 +19,9 @@ new ClusterVaultComponent("lungmen.akn", {
 		"mutualized-cnpg-databases": `
 path "lungmen.akn/data/+/database/*" { capabilities = ["create", "read", "update", "delete"] }
 path "lungmen.akn/metadata/+/database/*" { capabilities = ["create", "read", "update", "delete"] }
+# Credentials of the n8n workflows database, pushed to the mount n8n reads its external secrets from.
+path "n8n.chezmoi.sh/data/workflows-database" { capabilities = ["create", "read", "update", "delete"] }
+path "n8n.chezmoi.sh/metadata/workflows-database" { capabilities = ["create", "read", "update", "delete"] }
 `,
 	},
 	remote: {
