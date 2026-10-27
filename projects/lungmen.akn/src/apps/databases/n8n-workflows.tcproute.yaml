@@ -4,7 +4,7 @@ metadata:
   name: n8n-workflows-postgresql
   annotations:
     # external-dns-unifi publishes the Gateway address under this name (a TCPRoute has no hostnames).
-    external-dns.alpha.kubernetes.io/hostname: datastore.n8n.chezmoi.sh
+    external-dns.kubernetes.io/hostname: datastore.n8n.chezmoi.sh
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
