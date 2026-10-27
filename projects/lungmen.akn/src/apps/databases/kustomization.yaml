@@ -60,6 +60,16 @@ helmCharts:
 
     valuesFile: postgres-apps-secured.helmvalues.yaml
 
+  # postgres-n8n-workflows: data produced by n8n workflows (single instance, no backup),
+  # exposed through the external Gateway for Dataiku
+  # oripathy: ignore
+  - name: mutualized-cnpg-databases
+
+    releaseName: postgres-n8n-workflows
+    namespace: databases
+
+    valuesFile: postgres-n8n-workflows.helmvalues.yaml
+
 # ── Standalone resources ───────────────────────────────────────────────────────
 resources:
   # S3-compatible ObjectStore resources for CNPG WAL archiving and backups.
@@ -74,6 +84,9 @@ resources:
   - apps.scheduledbackup.yaml
   # Daily base backup for apps-secured-20260530 (WAL archiving disabled, PITR not available).
   - apps-secured.scheduledbackup.yaml
+
+  # Exposes the n8n-workflows cluster on the external Gateway (TCP 5432) for Dataiku.
+  - n8n-workflows.tcproute.yaml
 
   # Custom PG images using vchord to handle vectors
   - postgresql-vchord.imagecatalog.yaml

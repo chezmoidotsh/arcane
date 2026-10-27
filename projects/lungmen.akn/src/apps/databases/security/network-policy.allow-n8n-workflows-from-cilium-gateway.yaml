@@ -1,0 +1,21 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-n8n-workflows-from-cilium-gateway
+  namespace: databases
+  annotations:
+    policy.networking.k8s.io/description: |
+      Allows the Cilium Gateway API to route the TCPRoute n8n-workflows-postgresql to the
+      n8n-workflows PostgreSQL cluster. Traffic proxied by the Gateway carries the reserved:ingress
+      identity, as per https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: n8n-workflows-20261027
+  ingress:
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP

@@ -1,0 +1,50 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/instance: n8n-workflows-20261027
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mutualized-cnpg-databases
+    helm.sh/chart: mutualized-cnpg-databases-0.1.0
+    mutualized.cloudnative-pg.io/cluster: n8n-workflows-20261027
+    mutualized.cloudnative-pg.io/group: n8n-workflows
+  name: n8n-workflows-20261027
+spec:
+  description: PostgreSQL database for the data produced by n8n workflows, exposed
+    through the external Gateway
+  enablePDB: false
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    major: 17
+    name: default
+  instances: 1
+  managed:
+    roles:
+    - comment: Managed role for workflows/n8n
+      connectionLimit: -1
+      ensure: present
+      inherit: true
+      login: true
+      name: n8n
+      passwordSecret:
+        name: cnpg.n8n-workflows-workflows-n8n-credentials
+    - comment: Managed role for workflows/dataiku
+      connectionLimit: -1
+      ensure: present
+      inRoles:
+      - pg_read_all_data
+      - pg_write_all_data
+      inherit: true
+      login: true
+      name: dataiku
+      passwordSecret:
+        name: cnpg.n8n-workflows-workflows-dataiku-credentials
+  postgresql:
+    parameters:
+      max_wal_size: 100MB
+  storage:
+    size: 5Gi
+  walStorage:
+    size: 2Gi

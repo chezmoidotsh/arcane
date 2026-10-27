@@ -1,0 +1,29 @@
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  annotations:
+    policy.networking.k8s.io/description: Allow declared application endpoints to
+      connect to CNPG cluster 'n8n-workflows-20261027' for database 'workflows'.
+  labels:
+    app.kubernetes.io/instance: n8n-workflows-20261027
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mutualized-cnpg-databases
+    helm.sh/chart: mutualized-cnpg-databases-0.1.0
+    mutualized.cloudnative-pg.io/cluster: n8n-workflows-20261027
+    mutualized.cloudnative-pg.io/database: workflows
+    mutualized.cloudnative-pg.io/group: n8n-workflows
+  name: allow-n8n-workflows-from-workflows
+spec:
+  endpointSelector:
+    matchLabels:
+      cnpg.io/cluster: n8n-workflows-20261027
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app.kubernetes.io/name: n8n
+        io.kubernetes.pod.namespace: n8n
+    toPorts:
+    - ports:
+      - port: "5432"
+        protocol: TCP
