@@ -1,0 +1,66 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n-valkey
+  namespace: n8n
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: n8n-valkey
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: n8n-valkey
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - args:
+        - valkey-server
+        - --save
+        - ""
+        - --appendonly
+        - "no"
+        - --maxmemory
+        - 256mb
+        - --maxmemory-policy
+        - allkeys-lru
+        image: oci.chezmoi.sh/docker.io/valkey/valkey:9.1.3-alpine@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b
+        livenessProbe:
+          exec:
+            command:
+            - valkey-cli
+            - ping
+          periodSeconds: 10
+        name: valkey
+        ports:
+        - containerPort: 6379
+          name: valkey
+        readinessProbe:
+          exec:
+            command:
+            - valkey-cli
+            - ping
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsGroup: 52678
+          runAsNonRoot: true
+          runAsUser: 52678
+        volumeMounts:
+        - mountPath: /data
+          name: data
+      securityContext:
+        fsGroup: 52678
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - emptyDir: {}
+        name: data

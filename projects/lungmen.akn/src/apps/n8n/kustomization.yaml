@@ -24,6 +24,7 @@ resources:
   - n8n.httproute.yaml
   - n8n.internal.httproute.yaml
   - n8n.redis.yaml
+  - n8n.valkey.yaml
 
   - security/
 
@@ -32,6 +33,10 @@ images:
     newName: oci.chezmoi.sh/docker.io/library/redis
     # oripathy: type=oci upstream=github.com/redis/redis digest=true
     newTag: 8.10.2-alpine@sha256:0bf6577d7774e592b29d093e3ac9390eb91e13d72c21e506afce736de5e0eeb0
+  - name: docker.io/valkey/valkey
+    newName: oci.chezmoi.sh/docker.io/valkey/valkey
+    # oripathy: type=oci upstream=github.com/valkey-io/valkey digest=true
+    newTag: 9.1.3-alpine@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b
   - name: ghcr.io/n8n-io/n8n
     newName: oci.chezmoi.sh/chezmoidotsh/n8n
     # oripathy: type=oci upstream=github.com/n8n-io/n8n tagPrefix=n8n@ digest=false
