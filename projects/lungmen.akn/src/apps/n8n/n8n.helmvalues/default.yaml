@@ -60,7 +60,7 @@ resources:
 database:
   type: postgresdb
   useExternal: true
-  host: apps-20260329-rw.databases.svc.cluster.local
+  host: apps-secured-20260530-rw.databases.svc.cluster.local
   port: 5432
   database: n8n
   user: n8n

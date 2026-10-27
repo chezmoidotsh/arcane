@@ -3,7 +3,7 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows n8n to access the mutualized PostgreSQL database.
+      Allows n8n to access its database on the mutualized apps-secured PostgreSQL cluster.
   name: allow-n8n-to-databases
   namespace: n8n
 spec:
@@ -14,7 +14,7 @@ spec:
     - toEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: databases
-            cnpg.io/cluster: apps-20260329
+            cnpg.io/cluster: apps-secured-20260530
       toPorts:
         - ports:
             - port: "5432"
