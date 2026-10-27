@@ -3,13 +3,15 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows Newt to route traffic to n8n application.
-  name: allow-n8n-from-newt
+      Allows Newt to reach the n8n path-splitting proxy (TCP 8080): the private `n8n` Pangolin resource
+      targets its Service. The proxy then reaches main and the webhook processor through the namespace
+      rules of default-hardened.
+  name: allow-n8n-proxy-from-newt
   namespace: n8n
 spec:
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: n8n
+      app.kubernetes.io/name: n8n-proxy
   ingress:
     - fromEndpoints:
         - matchLabels:
@@ -17,5 +19,5 @@ spec:
             app.kubernetes.io/name: newt
       toPorts:
         - ports:
-            - port: "5678"
+            - port: "8080"
               protocol: TCP

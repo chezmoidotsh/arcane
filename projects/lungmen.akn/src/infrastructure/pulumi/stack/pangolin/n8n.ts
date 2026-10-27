@@ -13,9 +13,10 @@ const chezmoiShDomainId = pangolin.getDomainsOutput().apply(
 
 // n8n is never published: the full app (editor, REST API) is reachable on
 // n8n.chezmoi.sh only from a device running the Pangolin client. Pangolin grants
-// it to the built-in Admin role on its own. It targets n8n main directly: going
-// through the Cilium Gateway fails, Envoy answers 403 to any client outside the
-// n8n namespace.
+// it to the built-in Admin role on its own. It targets the n8n-proxy Service, which splits
+// webhooks/forms/MCP (webhook processor) from the rest (main): a private resource
+// has a single destination, and the Cilium Gateway fails (Envoy answers 403 to
+// any client outside the n8n namespace).
 export const n8nPrivateResource = new pangolin.SiteResource(
 	"n8n-private-chezmoi-sh",
 	{
@@ -25,7 +26,7 @@ export const n8nPrivateResource = new pangolin.SiteResource(
 		domainId: chezmoiShDomainId,
 		subdomain: "n8n",
 		scheme: "http",
-		destination: "n8n-main.n8n.svc.cluster.local",
-		destinationPort: 5678,
+		destination: "n8n-proxy.n8n.svc.cluster.local",
+		destinationPort: 8080,
 	},
 );

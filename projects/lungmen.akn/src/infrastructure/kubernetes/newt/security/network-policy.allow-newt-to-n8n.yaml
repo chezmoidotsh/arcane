@@ -3,9 +3,9 @@ kind: CiliumNetworkPolicy
 metadata:
   annotations:
     policy.networking.k8s.io/description: |
-      Allows Newt to reach n8n main (TCP 5678): the private `n8n` Pangolin resource targets its Service
-      directly. It does not go through the Cilium Gateway: Envoy denies (403) requests coming from outside
-      the n8n namespace.
+      Allows Newt to reach the n8n path-splitting proxy (TCP 8080): the private `n8n` Pangolin resource
+      targets its Service (apps/n8n/n8n.proxy.yaml). It does not go through the Cilium Gateway: Envoy
+      denies (403) requests coming from outside the n8n namespace.
   name: allow-newt-to-n8n
   namespace: newt-system
 spec:
@@ -16,9 +16,8 @@ spec:
     - toEndpoints:
         - matchLabels:
             io.kubernetes.pod.namespace: n8n
-            app.kubernetes.io/name: n8n
-            app.kubernetes.io/component: main
+            app.kubernetes.io/name: n8n-proxy
       toPorts:
         - ports:
-            - port: "5678"
+            - port: "8080"
               protocol: TCP
