@@ -30,9 +30,19 @@ specs:
           - matchName: vault.chezmoi.sh # OpenBao: External Secrets
           - matchName: github.com # GitHub credential: OAuth authorization from the editor
           - matchName: api.github.com # GitHub credential: connection test from the editor
+          - matchName: accounts.google.com # Google credential: OAuth authorization from the editor
+          - matchName: oauth2.googleapis.com # Google credential: token exchange and refresh
+          - matchName: www.googleapis.com # Google credential: user info and connection test
         toPorts:
           - ports:
               - port: "443"
+                protocol: TCP
+      - toFQDNs:
+          - matchName: imap.gmail.com # Gmail IMAP: Email Trigger (main) and IMAP nodes (worker)
+          - matchName: mail.infomaniak.com # Infomaniak IMAP: same usage
+        toPorts:
+          - ports:
+              - port: "993"
                 protocol: TCP
 
   # worker
@@ -49,6 +59,8 @@ specs:
           - matchName: release-assets.githubusercontent.com # target of the github.com release download redirect
           - matchName: objects.githubusercontent.com # same redirect, older GitHub asset host
           - matchName: api.osv.dev # vulnerability lookups
+          # Workflows
+          - matchPattern: "*.googleapis.com" # Google API nodes (Gmail, Sheets, Drive, …)
         toPorts:
           - ports:
               - port: "443"
@@ -62,4 +74,12 @@ specs:
         toPorts:
           - ports:
               - port: "5006"
+                protocol: TCP
+
+      # Workflows: Ollama on the LAN (plain HTTP)
+      - toCIDR:
+          - 192.168.10.23/32
+        toPorts:
+          - ports:
+              - port: "11434"
                 protocol: TCP
