@@ -1,0 +1,72 @@
+---
+apiVersion: helm.sh/v1alpha1
+kind: CNPGMutualizedCluster
+
+metadata:
+  # -- Dedicated cluster: it is exposed on the homelab network, so it must not share an instance
+  # with the databases of other applications.
+  name: n8n-workflows
+
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: vault.chezmoi.sh
+
+  behavior:
+    passwords:
+      pushInterval: "5m"
+    networkPolicies:
+      enabled: true
+
+  cluster:
+    name: "20261027"
+    description: "PostgreSQL database for the data produced by n8n workflows, readable from the homelab"
+    enablePDB: false
+    imageCatalogRef:
+      apiGroup: postgresql.cnpg.io
+      kind: ClusterImageCatalog
+      name: default
+      major: 17
+    # -- Rebuildable data: a single instance and no backup (no barman plugin, no ScheduledBackup).
+    instances: 1
+    storage:
+      size: 5Gi
+    walStorage:
+      size: 2Gi
+    postgresql:
+      parameters:
+        max_wal_size: 100MB
+
+    managed:
+      services:
+        # -- LoadBalancer on the read-write instance. The IP comes from the "external" Cilium pool
+        # (VLAN 5), reachable from the home network. Who may connect is decided by
+        # security/network-policy.allow-n8n-workflows-from-homelab.yaml.
+        additional:
+          - selectorType: rw
+            updateStrategy: patch
+            serviceTemplate:
+              metadata:
+                name: n8n-workflows-lb
+              spec:
+                type: LoadBalancer
+
+  databases:
+    - name: workflows
+      users:
+        # -- Owner: n8n creates and fills the tables.
+        - name: n8n
+          vault:
+            path: lungmen.akn/data/n8n/workflows-database/n8n
+        # -- External consumer (Dataiku): reads and writes the existing tables, cannot create objects.
+        - name: dataiku
+          inRoles:
+            - pg_read_all_data
+            - pg_write_all_data
+          vault:
+            path: lungmen.akn/data/n8n/workflows-database/dataiku
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                io.kubernetes.pod.namespace: n8n
+                app.kubernetes.io/name: n8n

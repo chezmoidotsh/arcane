@@ -60,6 +60,16 @@ helmCharts:
 
     valuesFile: postgres-apps-secured.helmvalues.yaml
 
+  # postgres-n8n-workflows: data produced by n8n workflows (single instance, no backup),
+  # exposed on the home network for Dataiku
+  # oripathy: ignore
+  - name: mutualized-cnpg-databases
+
+    releaseName: postgres-n8n-workflows
+    namespace: databases
+
+    valuesFile: postgres-n8n-workflows.helmvalues.yaml
+
 # ── Standalone resources ───────────────────────────────────────────────────────
 resources:
   # S3-compatible ObjectStore resources for CNPG WAL archiving and backups.
