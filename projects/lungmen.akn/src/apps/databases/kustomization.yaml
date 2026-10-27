@@ -87,6 +87,7 @@ resources:
 
   # Exposes the n8n-workflows cluster on the external Gateway (TCP 5432) for Dataiku.
   - n8n-workflows.tcproute.yaml
+  - n8n-workflows.datastore.dnsendpoint.yaml
 
   # Second database of the n8n-workflows cluster. Not in the chart values: roles are cluster-wide, and
   # the chart renders one role per user of each database (it would create n8n twice).
