@@ -3,6 +3,12 @@
 # n8n owns it (creates and fills the tables). dataiku is not declared: it is a member of
 # pg_read_all_data / pg_write_all_data on the whole cluster (see postgres-n8n-workflows.helmvalues.yaml),
 # which gives it read and write on the tables of this database too. CONNECT is granted to PUBLIC.
+#
+# dataiku may also create tables here. PostgreSQL 15+ reserves CREATE on the public schema to the database
+# owner, and neither this resource nor the chart manages grants, so it was given once by hand (idempotent):
+#   kubectl -n databases exec n8n-workflows-20261027-1 -c postgres -- \
+#     psql -U postgres -d mig_goog_infk -c 'GRANT CREATE ON SCHEMA public TO dataiku'
+# Replay it if the cluster is recreated.
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:

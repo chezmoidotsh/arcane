@@ -44,9 +44,14 @@ spec:
         # the one n8n reads through its External Secrets feature (see
         # infrastructure/pulumi/stack/n8n/external-secrets.ts), so a Postgres credential can use them.
         - name: n8n
+          # -- Reads and writes the tables dataiku creates in mig_goog_infk (it only owns its own).
+          inRoles:
+            - pg_read_all_data
+            - pg_write_all_data
           vault:
             path: n8n.chezmoi.sh/data/n8n-workflows-datastore-postgres
-        # -- External consumer (Dataiku): reads and writes the existing tables, cannot create objects.
+        # -- External consumer (Dataiku): reads and writes the existing tables. It may create tables in
+        # mig_goog_infk only (GRANT CREATE ON SCHEMA public, see n8n-workflows.mig-goog-infk.database.yaml).
         - name: dataiku
           inRoles:
             - pg_read_all_data
