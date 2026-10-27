@@ -36,6 +36,14 @@ spec:
             exit 0
           fi
 
+          # The scale-down lives in the n8n app, which ArgoCD does not order against this one: refuse to
+          # copy while n8n is still connected to the source (its role sees its own sessions).
+          active=$(src psql -qAt -c "select count(*) from pg_stat_activity where datname = 'n8n' and usename = 'n8n' and pid <> pg_backend_pid()")
+          if [ "$active" != "0" ]; then
+            echo "n8n still holds $active connection(s) on the source database: sync the n8n app first (scale to 0), then run this Job again"
+            exit 1
+          fi
+
           echo "copying the database"
           src pg_dump --format=custom --no-owner --no-acl --file=/tmp/n8n.dump
           dst pg_restore --no-owner --no-acl --exit-on-error --dbname=n8n /tmp/n8n.dump

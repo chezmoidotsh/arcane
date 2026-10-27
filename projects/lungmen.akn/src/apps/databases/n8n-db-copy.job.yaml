@@ -3,7 +3,8 @@
 # (apps-secured-20260530). n8n is scaled to 0 by the same change, so nothing writes meanwhile.
 #
 # Runs as a PostSync hook, once the new database exists. Safe to sync again: it does nothing when
-# the destination already holds tables, so it can never overwrite data written after the cutover.
+# the destination already holds tables, so it can never overwrite data written after the cutover, and
+# fails while n8n is still connected to the source database.
 # Remove this file (and the PostSync hook with it) once the migration is done.
 #
 # No NetworkPolicy needed: default-hardened lets pods of this namespace talk to the clusters.
@@ -52,6 +53,14 @@ spec:
               if [ "$tables" != "0" ]; then
                 echo "destination already holds $tables tables: nothing to do"
                 exit 0
+              fi
+
+              # The scale-down lives in the n8n app, which ArgoCD does not order against this one: refuse to
+              # copy while n8n is still connected to the source (its role sees its own sessions).
+              active=$(src psql -qAt -c "select count(*) from pg_stat_activity where datname = 'n8n' and usename = 'n8n' and pid <> pg_backend_pid()")
+              if [ "$active" != "0" ]; then
+                echo "n8n still holds $active connection(s) on the source database: sync the n8n app first (scale to 0), then run this Job again"
+                exit 1
               fi
 
               echo "copying the database"
