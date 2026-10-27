@@ -49,6 +49,16 @@ jobs:
       - name: ⬇️ Set up uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
+      # Same toolchain as local rendering: the helm preinstalled on the runner image renders some
+      # Cilium values differently (see dist-staleness-check.yaml).
+      - name: 🛠️ Set up mise
+        uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        with:
+          install: false
+
+      - name: ⬇️ Install helm and kustomize
+        run: mise install helm kustomize
+
       - name: 🏗️ Re-render all dist/ directories
         run: scripts/dist:render --all
 
