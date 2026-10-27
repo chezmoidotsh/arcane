@@ -5,16 +5,20 @@ metadata:
   namespace: databases
   annotations:
     policy.networking.k8s.io/description: |
-      Allows the Cilium Gateway API to route the TCPRoute n8n-workflows-postgresql to the
-      n8n-workflows PostgreSQL cluster. Traffic proxied by the Gateway carries the reserved:ingress
-      identity, as per https://docs.cilium.io/en/latest/security/policy/layer3/#entities-based
+      Allows the home network to reach the n8n-workflows PostgreSQL cluster through the TCPRoute
+      n8n-workflows-postgresql. Cilium implements a TCPRoute as a plain L4 load balancer straight to the
+      pod (no Envoy), so the clients are seen with the world identity, not reserved:ingress: either with
+      their own address (VLAN 2 and 5), or SNATed to the Cilium router IP of the node that received the
+      connection (lungmen.akn's pod CIDR, externalTrafficPolicy Cluster). Everything else stays denied.
 spec:
   endpointSelector:
     matchLabels:
       cnpg.io/cluster: n8n-workflows-20261027
   ingress:
-    - fromEntities:
-        - ingress
+    - fromCIDR:
+        - 192.168.10.0/25 # VLAN 2 (Home)
+        - 10.0.0.0/22 # VLAN 5 (Homelab)
+        - 172.30.32.0/19 # lungmen.akn pod CIDR: node router IPs after SNAT
       toPorts:
         - ports:
             - port: "5432"
