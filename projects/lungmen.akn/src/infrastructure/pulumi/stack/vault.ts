@@ -20,8 +20,8 @@ new ClusterVaultComponent("lungmen.akn", {
 path "lungmen.akn/data/+/database/*" { capabilities = ["create", "read", "update", "delete"] }
 path "lungmen.akn/metadata/+/database/*" { capabilities = ["create", "read", "update", "delete"] }
 # Credentials of the n8n workflows database, pushed to the mount n8n reads its external secrets from.
-path "n8n.chezmoi.sh/data/n8n-workflows-postgresql" { capabilities = ["create", "read", "update", "delete"] }
-path "n8n.chezmoi.sh/metadata/n8n-workflows-postgresql" { capabilities = ["create", "read", "update", "delete"] }
+path "n8n.chezmoi.sh/data/n8n-workflows-datastore-postgress" { capabilities = ["create", "read", "update", "delete"] }
+path "n8n.chezmoi.sh/metadata/n8n-workflows-datastore-postgress" { capabilities = ["create", "read", "update", "delete"] }
 `,
 	},
 	remote: {
