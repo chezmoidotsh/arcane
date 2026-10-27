@@ -7,7 +7,7 @@
 # edited by hand. Re-renders every dist/ with `scripts/dist:render --all` and fails when the
 # result differs from what is committed.
 #
-# Events:      push, pull_request, merge_group (on projects/ and catalog/helm/)
+# Events:      push, pull_request, merge_group (on projects/, catalog/helm/ and this workflow)
 # Permissions: contents: read
 # =============================================================================
 
@@ -17,10 +17,12 @@ on:
     paths:
       - "projects/*/**"
       - "catalog/helm/**"
+      - ".github/workflows/push,pull_request.dist-staleness-check.yaml"
   pull_request:
     paths:
       - "projects/*/**"
       - "catalog/helm/**"
+      - ".github/workflows/push,pull_request.dist-staleness-check.yaml"
   merge_group: {}
 
 concurrency:
