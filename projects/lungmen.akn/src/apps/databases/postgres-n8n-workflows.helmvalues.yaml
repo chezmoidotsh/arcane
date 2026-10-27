@@ -20,7 +20,7 @@ spec:
 
   cluster:
     name: "20261027"
-    description: "PostgreSQL database for the data produced by n8n workflows, readable from the homelab"
+    description: "PostgreSQL database for the data produced by n8n workflows, exposed through the external Gateway"
     enablePDB: false
     imageCatalogRef:
       apiGroup: postgresql.cnpg.io
@@ -36,20 +36,6 @@ spec:
     postgresql:
       parameters:
         max_wal_size: 100MB
-
-    managed:
-      services:
-        # -- LoadBalancer on the read-write instance. The IP comes from the "external" Cilium pool
-        # (VLAN 5), reachable from the home network. Who may connect is decided by
-        # security/network-policy.allow-n8n-workflows-from-homelab.yaml.
-        additional:
-          - selectorType: rw
-            updateStrategy: patch
-            serviceTemplate:
-              metadata:
-                name: n8n-workflows-lb
-              spec:
-                type: LoadBalancer
 
   databases:
     - name: workflows

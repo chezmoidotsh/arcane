@@ -11,8 +11,8 @@ metadata:
     mutualized.cloudnative-pg.io/group: n8n-workflows
   name: n8n-workflows-20261027
 spec:
-  description: PostgreSQL database for the data produced by n8n workflows, readable
-    from the homelab
+  description: PostgreSQL database for the data produced by n8n workflows, exposed
+    through the external Gateway
   enablePDB: false
   imageCatalogRef:
     apiGroup: postgresql.cnpg.io
@@ -41,15 +41,6 @@ spec:
       name: dataiku
       passwordSecret:
         name: cnpg.n8n-workflows-workflows-dataiku-credentials
-    services:
-      additional:
-      - selectorType: rw
-        serviceTemplate:
-          metadata:
-            name: n8n-workflows-lb
-          spec:
-            type: LoadBalancer
-        updateStrategy: patch
   postgresql:
     parameters:
       max_wal_size: 100MB

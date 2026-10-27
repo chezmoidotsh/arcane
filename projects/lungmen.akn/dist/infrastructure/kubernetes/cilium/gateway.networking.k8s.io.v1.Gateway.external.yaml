@@ -50,3 +50,15 @@ spec:
         kind: Secret
         name: wildcard.chezmoi.sh-certificate
       mode: Terminate
+  - allowedRoutes:
+      kinds:
+      - group: gateway.networking.k8s.io
+        kind: TCPRoute
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            kubernetes.io/metadata.name: databases
+    name: n8n-workflows-postgresql
+    port: 5432
+    protocol: TCP

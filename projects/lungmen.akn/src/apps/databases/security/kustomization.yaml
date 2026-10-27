@@ -13,5 +13,5 @@ resources:
   # ObjectStore and S3 network policy management was taken out of the chart scope.
   - network-policy.allow-to-s3-backup.yaml
 
-  # Home network (VLAN 2 and 5) access to the n8n-workflows cluster LoadBalancer.
-  - network-policy.allow-n8n-workflows-from-homelab.yaml
+  # External Gateway access (TCPRoute) to the n8n-workflows cluster.
+  - network-policy.allow-n8n-workflows-from-cilium-gateway.yaml
