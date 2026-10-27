@@ -78,6 +78,24 @@ resources:
   # Custom PG images using vchord to handle vectors
   - postgresql-vchord.imagecatalog.yaml
 
+  # One-shot copy of the n8n database to postgres-apps-secured (PostSync hook).
+  - n8n-db-copy.job.yaml
+
   # Namespace security baseline: default-hardened policy + Qdrant-specific rules.
   # CNPG cluster and per-database policies are rendered by the chart above.
   - security/
+
+# The n8n credentials of postgres-apps must not be pushed to Vault anymore: the same Vault path is now
+# written by postgres-apps-secured, and two PushSecrets would overwrite each other.
+patches:
+  - target:
+      group: external-secrets.io
+      version: v1alpha1
+      kind: PushSecret
+      name: cnpg.apps-n8n-n8n-credentials
+    patch: |-
+      $patch: delete
+      apiVersion: external-secrets.io/v1alpha1
+      kind: PushSecret
+      metadata:
+        name: cnpg.apps-n8n-n8n-credentials

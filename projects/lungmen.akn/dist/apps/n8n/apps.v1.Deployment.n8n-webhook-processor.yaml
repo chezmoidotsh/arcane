@@ -12,7 +12,7 @@ metadata:
   name: n8n-webhook-processor
   namespace: n8n
 spec:
-  replicas: 1
+  replicas: 0
   revisionHistoryLimit: 3
   selector:
     matchLabels:
