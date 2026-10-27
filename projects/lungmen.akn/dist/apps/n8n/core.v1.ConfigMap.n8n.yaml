@@ -2,7 +2,7 @@
 apiVersion: v1
 data:
   DB_POSTGRESDB_DATABASE: n8n
-  DB_POSTGRESDB_HOST: apps-20260329-rw.databases.svc.cluster.local
+  DB_POSTGRESDB_HOST: apps-secured-20260530-rw.databases.svc.cluster.local
   DB_POSTGRESDB_PORT: "5432"
   DB_POSTGRESDB_SCHEMA: public
   DB_POSTGRESDB_USER: n8n

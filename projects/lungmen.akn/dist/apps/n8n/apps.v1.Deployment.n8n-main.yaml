@@ -12,7 +12,7 @@ metadata:
   name: n8n-main
   namespace: n8n
 spec:
-  replicas: 0
+  replicas: 1
   revisionHistoryLimit: 3
   selector:
     matchLabels:
@@ -24,7 +24,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: 6145cd18267e6b2c7e93a51ba48bcb42a091e7c0bdc5627895f946d27c4bcd70
+        checksum/config: 185114e55b3517235405d023dfefcd92e2f2e4125453f347038a5b6b04eea754
         checksum/secret: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
         app.kubernetes.io/component: main

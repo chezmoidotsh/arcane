@@ -111,8 +111,8 @@ spec:
                 app.kubernetes.io/component: webserver
 
     # -- n8n database (credentials and OAuth tokens live there). It reuses the Vault path of the former
-    # database on postgres-apps: the chart pushes a new password there, which n8n picks up through its
-    # ExternalSecret. n8n is scaled to 0 while the data is copied (n8n-db-copy.job.yaml).
+    # database on postgres-apps: the chart pushes the password there, which n8n picks up through its
+    # ExternalSecret.
     - name: n8n
       users:
         - name: n8n

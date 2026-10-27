@@ -27,17 +27,6 @@ resources:
 
   - security/
 
-# TEMPORARY (database migration to apps-secured): nothing may write to the database while it is
-# copied. The chart schema refuses 0 replicas, so the Deployments are scaled here. Remove this block
-# to bring n8n back up on the new database.
-replicas:
-  - name: n8n-main
-    count: 0
-  - name: n8n-webhook-processor
-    count: 0
-  - name: n8n-worker
-    count: 0
-
 images:
   - name: docker.io/library/redis
     newName: oci.chezmoi.sh/docker.io/library/redis
