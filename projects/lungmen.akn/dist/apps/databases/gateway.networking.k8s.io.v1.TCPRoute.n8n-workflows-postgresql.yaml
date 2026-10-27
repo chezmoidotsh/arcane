@@ -2,6 +2,8 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: datastore.n8n.chezmoi.sh
   name: n8n-workflows-postgresql
   namespace: databases
 spec:
