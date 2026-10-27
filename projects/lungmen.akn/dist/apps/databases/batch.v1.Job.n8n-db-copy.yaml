@@ -1,0 +1,94 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+  name: n8n-db-copy
+  namespace: databases
+spec:
+  activeDeadlineSeconds: 900
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: n8n-db-copy
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - args:
+        - |
+          src() { PGPASSWORD="$(cat /secrets/src/password)" "$@" -h apps-20260329-rw -U n8n -d n8n; }
+          dst() { PGPASSWORD="$(cat /secrets/dst/password)" "$@" -h apps-secured-20260530-rw -U n8n -d n8n; }
+
+          # Exact row count of every table, one "table|count" line each.
+          counts='select table_name || chr(124) || (xpath($$/row/c/text()$$, query_to_xml(format($$select count(*) as c from %I.%I$$, table_schema, table_name), false, true, $$$$)))[1]::text from information_schema.tables where table_schema = $$public$$ and table_type = $$BASE TABLE$$ order by 1'
+
+          # The role and its password are reconciled by CNPG after the sync: wait until it can log in
+          # (bounded by activeDeadlineSeconds).
+          echo "waiting for the destination database"
+          until dst psql -qAt -c 'select 1' >/dev/null 2>&1; do sleep 5; done
+
+          tables=$(dst psql -qAt -c "select count(*) from information_schema.tables where table_schema = 'public'")
+          if [ "$tables" != "0" ]; then
+            echo "destination already holds $tables tables: nothing to do"
+            exit 0
+          fi
+
+          echo "copying the database"
+          src pg_dump --format=custom --no-owner --no-acl --file=/tmp/n8n.dump
+          dst pg_restore --no-owner --no-acl --exit-on-error --dbname=n8n /tmp/n8n.dump
+
+          echo "comparing row counts"
+          src psql -qAt -c "$counts" >/tmp/src.counts
+          dst psql -qAt -c "$counts" >/tmp/dst.counts
+          diff /tmp/src.counts /tmp/dst.counts
+          echo "done: $(wc -l </tmp/dst.counts) tables copied and identical"
+        command:
+        - bash
+        - -euo
+        - pipefail
+        - -c
+        image: oci.chezmoi.sh/ghcr.io/tensorchord/vchord-postgres:pg17-v1.1.1
+        imagePullPolicy: Always
+        name: copy
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /secrets/src
+          name: src-credentials
+          readOnly: true
+        - mountPath: /secrets/dst
+          name: dst-credentials
+          readOnly: true
+      restartPolicy: Never
+      securityContext:
+        runAsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - emptyDir:
+          sizeLimit: 1Gi
+        name: tmp
+      - name: src-credentials
+        secret:
+          secretName: cnpg.apps-n8n-n8n-credentials
+      - name: dst-credentials
+        secret:
+          secretName: cnpg.apps-secured-n8n-n8n-credentials

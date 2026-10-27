@@ -50,6 +50,14 @@ spec:
       name: paperless
       passwordSecret:
         name: cnpg.apps-secured-paperless-paperless-credentials
+    - comment: Managed role for n8n/n8n
+      connectionLimit: -1
+      ensure: present
+      inherit: true
+      login: true
+      name: n8n
+      passwordSecret:
+        name: cnpg.apps-secured-n8n-n8n-credentials
   plugins:
   - enabled: true
     isWALArchiver: false

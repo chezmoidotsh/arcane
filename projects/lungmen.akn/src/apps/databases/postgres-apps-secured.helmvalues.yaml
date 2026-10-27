@@ -109,3 +109,17 @@ spec:
             - matchLabels:
                 io.kubernetes.pod.namespace: paperless-ngx
                 app.kubernetes.io/component: webserver
+
+    # -- n8n database (credentials and OAuth tokens live there). It reuses the Vault path of the former
+    # database on postgres-apps: the chart pushes a new password there, which n8n picks up through its
+    # ExternalSecret. n8n is scaled to 0 while the data is copied (n8n-db-copy.job.yaml).
+    - name: n8n
+      users:
+        - name: n8n
+          vault:
+            path: lungmen.akn/data/n8n/database/postgresql
+      allowedApplicationSelector:
+        - endpointSelector:
+            - matchLabels:
+                io.kubernetes.pod.namespace: n8n
+                app.kubernetes.io/name: n8n
