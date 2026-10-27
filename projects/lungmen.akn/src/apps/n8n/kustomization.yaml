@@ -22,6 +22,7 @@ resources:
   - n8n.egress-inspection-ca.certificate.yaml
   - n8n.enterprise.externalsecret.yaml
   - n8n.httproute.yaml
+  - n8n.proxy.yaml
   - n8n.redis.yaml
 
   - security/
@@ -31,6 +32,10 @@ images:
     newName: oci.chezmoi.sh/docker.io/library/redis
     # oripathy: type=oci upstream=github.com/redis/redis digest=true
     newTag: 8.10.2-alpine@sha256:0bf6577d7774e592b29d093e3ac9390eb91e13d72c21e506afce736de5e0eeb0
+  - name: docker.io/library/nginx
+    newName: oci.chezmoi.sh/docker.io/library/nginx
+    # oripathy: type=oci upstream=github.com/nginx/nginx digest=true
+    newTag: 1.30.6-alpine@sha256:47928bf67eb62a1863cb08d9ecb52d3e704304ba614eaee17884204677702951
   - name: ghcr.io/n8n-io/n8n
     newName: oci.chezmoi.sh/chezmoidotsh/n8n
     # oripathy: type=oci upstream=github.com/n8n-io/n8n tagPrefix=n8n@ digest=false
