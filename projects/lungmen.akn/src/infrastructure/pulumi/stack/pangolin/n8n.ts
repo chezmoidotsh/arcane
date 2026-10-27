@@ -11,15 +11,11 @@ const chezmoiShDomainId = pangolin.getDomainsOutput().apply(
 		).domainId,
 );
 
-// n8n is never published: the full app (editor, REST API, webhooks) is reachable
-// on n8n.chezmoi.sh only from a device running the Pangolin client. Pangolin
-// grants it to the built-in Admin role on its own. A private resource has a
-// single destination, so it goes through the Cilium Gateway (HTTP listener,
-// n8n.internal.httproute.yaml: Newt sends the Service name as Host), whose routes
-// send webhooks/forms/MCP to the webhook processor and the rest to main. Plain
-// HTTP on port 80 on purpose: Newt uses the
-// destination name as SNI (the HTTPS listener only accepts *.chezmoi.sh) and
-// Pangolin keeps the original Host, hence the hostnames of the HTTPRoute.
+// n8n is never published: the full app (editor, REST API) is reachable on
+// n8n.chezmoi.sh only from a device running the Pangolin client. Pangolin grants
+// it to the built-in Admin role on its own. It targets n8n main directly: going
+// through the Cilium Gateway fails, Envoy answers 403 to any client outside the
+// n8n namespace.
 export const n8nPrivateResource = new pangolin.SiteResource(
 	"n8n-private-chezmoi-sh",
 	{
@@ -29,7 +25,7 @@ export const n8nPrivateResource = new pangolin.SiteResource(
 		domainId: chezmoiShDomainId,
 		subdomain: "n8n",
 		scheme: "http",
-		destination: "cilium-gateway-external.kube-system.svc.cluster.local",
-		destinationPort: 80,
+		destination: "n8n-main.n8n.svc.cluster.local",
+		destinationPort: 5678,
 	},
 );
