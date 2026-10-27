@@ -45,7 +45,7 @@ spec:
         # infrastructure/pulumi/stack/n8n/external-secrets.ts), so a Postgres credential can use them.
         - name: n8n
           vault:
-            path: n8n.chezmoi.sh/data/workflows-database
+            path: n8n.chezmoi.sh/data/n8n-workflows-postgresql
         # -- External consumer (Dataiku): reads and writes the existing tables, cannot create objects.
         - name: dataiku
           inRoles:
