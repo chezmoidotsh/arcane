@@ -25,6 +25,9 @@ spec:
     - comment: Managed role for workflows/n8n
       connectionLimit: -1
       ensure: present
+      inRoles:
+      - pg_read_all_data
+      - pg_write_all_data
       inherit: true
       login: true
       name: n8n
