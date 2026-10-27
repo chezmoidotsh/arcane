@@ -40,17 +40,19 @@ spec:
   databases:
     - name: workflows
       users:
-        # -- Owner: n8n creates and fills the tables.
+        # -- Owner: n8n creates and fills the tables. Its credentials go to the n8n.chezmoi.sh mount,
+        # the one n8n reads through its External Secrets feature (see
+        # infrastructure/pulumi/stack/n8n/external-secrets.ts), so a Postgres credential can use them.
         - name: n8n
           vault:
-            path: lungmen.akn/data/n8n/workflows-database/n8n
+            path: n8n.chezmoi.sh/data/n8n-workflows-datastore-postgres
         # -- External consumer (Dataiku): reads and writes the existing tables, cannot create objects.
         - name: dataiku
           inRoles:
             - pg_read_all_data
             - pg_write_all_data
           vault:
-            path: lungmen.akn/data/n8n/workflows-database/dataiku
+            path: lungmen.akn/data/n8n/database/workflows-dataiku
       allowedApplicationSelector:
         - endpointSelector:
             - matchLabels:

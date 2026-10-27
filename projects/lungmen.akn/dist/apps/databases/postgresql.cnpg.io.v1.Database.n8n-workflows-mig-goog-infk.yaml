@@ -1,0 +1,14 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  labels:
+    mutualized.cloudnative-pg.io/database: mig_goog_infk
+    mutualized.cloudnative-pg.io/group: n8n-workflows
+  name: n8n-workflows-mig-goog-infk
+  namespace: databases
+spec:
+  cluster:
+    name: n8n-workflows-20261027
+  name: mig_goog_infk
+  owner: n8n

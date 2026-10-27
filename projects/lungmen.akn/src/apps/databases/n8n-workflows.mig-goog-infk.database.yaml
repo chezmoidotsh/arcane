@@ -1,0 +1,17 @@
+---
+# Gmail to Infomaniak migration: list of the mails and services to move.
+# n8n owns it (creates and fills the tables). dataiku is not declared: it is a member of
+# pg_read_all_data / pg_write_all_data on the whole cluster (see postgres-n8n-workflows.helmvalues.yaml),
+# which gives it read and write on the tables of this database too. CONNECT is granted to PUBLIC.
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: n8n-workflows-mig-goog-infk
+  labels:
+    mutualized.cloudnative-pg.io/database: mig_goog_infk
+    mutualized.cloudnative-pg.io/group: n8n-workflows
+spec:
+  cluster:
+    name: n8n-workflows-20261027
+  name: mig_goog_infk
+  owner: n8n
