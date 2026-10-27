@@ -1,4 +1,4 @@
-# trunk-ignore-all(checkov/CKV_K8S_10,checkov/CKV_K8S_11,checkov/CKV_K8S_43,trivy/KSV015,trivy/KSV016): Stateless path splitter, small enough not to need limits
+# trunk-ignore-all(checkov/CKV_K8S_43): Image pinned by digest through the kustomization
 # trunk-ignore(checkov/CKV2_K8S_6): Reachable from Newt only (security/network-policy.allow-n8n-proxy-from-newt.yaml)
 # Entry point of the private Pangolin resource (n8n.chezmoi.sh). A private resource has a single
 # destination, while n8n needs two: main serves the editor (production webhooks are disabled on it),
@@ -75,14 +75,21 @@ spec:
             tcpSocket:
               port: http
             periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 64Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop: [ALL]
             readOnlyRootFilesystem: true
-            runAsGroup: 101
+            runAsGroup: 52678
             runAsNonRoot: true
-            runAsUser: 101
+            runAsUser: 52678
           volumeMounts:
             - name: config
               mountPath: /etc/nginx/nginx.conf
